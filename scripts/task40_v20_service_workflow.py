@@ -381,6 +381,9 @@ def _resolve_service_campaign(
             V32_REVIEW_COMMIT,
             V32_REVIEW_PATH,
             V32_REVIEW_SHA256,
+            V33_REVIEW_COMMIT,
+            V33_REVIEW_PATH,
+            V33_REVIEW_SHA256,
             v31_source_artifact_relative,
         )
 
@@ -392,13 +395,19 @@ def _resolve_service_campaign(
         ):
             v31_review_version = "V32"
         elif (
+            v31_contract.get("schema") == V32_CONTRACT_SCHEMA
+            and review
+            == {"path": V33_REVIEW_PATH, "commit": V33_REVIEW_COMMIT, "sha256": V33_REVIEW_SHA256}
+        ):
+            v31_review_version = "V33"
+        elif (
             v31_contract.get("schema") == V31_CONTRACT_SCHEMA
             and review
             == {"path": V31_REVIEW_PATH, "commit": V31_REVIEW_COMMIT, "sha256": V31_REVIEW_SHA256}
         ):
             v31_review_version = "V31"
         else:
-            raise ValueError("service campaign route requires the exact approved V31 or V32 contract")
+            raise ValueError("service campaign route requires the exact approved V31, V32, or V33 contract")
         execution = v31_contract.get("execution")
         v31_window = execution.get("window") if isinstance(execution, Mapping) else None
         if not isinstance(v31_window, Mapping):
@@ -617,12 +626,18 @@ def _resolve_service_campaign(
             v31_contract,
             review_version=v31_review_version,
         )
-        from src.runners.task40_v31_contract import V31_STAGE_SCOPE, V32_STAGE_SCOPE
+        from src.runners.task40_v31_contract import V31_STAGE_SCOPE, V32_STAGE_SCOPE, V33_STAGE_SCOPE
 
-        stage_scope = list(V32_STAGE_SCOPE if v31_review_version == "V32" else V31_STAGE_SCOPE)
+        stage_scope = list(
+            V33_STAGE_SCOPE
+            if v31_review_version == "V33"
+            else V32_STAGE_SCOPE
+            if v31_review_version == "V32"
+            else V31_STAGE_SCOPE
+        )
         campaign_version = "V31"
     else:
-        raise ValueError("service campaign window is not a registered V19 or V22–V32 path")
+        raise ValueError("service campaign window is not a registered V19 or V22–V33 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -8178,11 +8193,13 @@ def _check_partial_result(
                 raise ValueError("V31 selector bytes differ from the recorded selector SHA")
             q4_import_template = None
             q4_complete_import_template = None
-            if v31_binding.get("review_version") == "V32":
+            if v31_binding.get("review_version") in {"V32", "V33"}:
                 contract_path_text = os.environ.get("TASK40_V31_CONTRACT_PATH", "")
                 contract_sha256 = os.environ.get("TASK40_V31_CONTRACT_SHA256", "")
                 if not contract_path_text or not contract_sha256:
-                    raise ValueError("V32 partial checker requires the current approved execution contract")
+                    raise ValueError(
+                        f"{v31_binding.get('review_version')} partial checker requires the current approved execution contract"
+                    )
                 contract_path = Path(contract_path_text).resolve(strict=True)
                 contract, contract_sha = require_v31_execution_contract(
                     contract_path,
@@ -8238,7 +8255,9 @@ def _check_partial_result(
                     or execution.get("q_csr_import_authorizations")
                     != expected_import_authorizations
                 ):
-                    raise ValueError("V32 q4 import binding differs from the current approved contract or fixed old source")
+                    raise ValueError(
+                        f"{v31_binding.get('review_version')} q4 import binding differs from the current approved contract or fixed old source"
+                    )
                 q4_import_template = expected_template
                 q4_complete_import_template = expected_complete_template
             elif (
@@ -9363,10 +9382,17 @@ def run_service(
     case_args, v32_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v32-execution-contract"
     )
-    if v31_contract_path is not None and v32_contract_path is not None:
-        raise ValueError("supply only one Task40 V31/V32 execution contract")
-    if v32_contract_path is not None:
-        v31_contract_path = v32_contract_path
+    case_args, v33_contract_path = _extract_v29_path_arg(
+        case_args, "--task40-v33-execution-contract"
+    )
+    supplied_contracts = [
+        value for value in (v31_contract_path, v32_contract_path, v33_contract_path)
+        if value is not None
+    ]
+    if len(supplied_contracts) > 1:
+        raise ValueError("supply only one Task40 V31/V32/V33 execution contract")
+    if supplied_contracts:
+        v31_contract_path = supplied_contracts[0]
     v31_entry_sample = (
         clock_sample(include_boot_id=True) if v31_contract_path is not None else None
     )
@@ -9378,6 +9404,9 @@ def run_service(
             raise ValueError("V31 execution contract cannot be combined with a V29 or V30 route")
         from src.runners.task40_v31_contract import (
             V32_CONTRACT_SCHEMA,
+            V33_REVIEW_COMMIT,
+            V33_REVIEW_PATH,
+            V33_REVIEW_SHA256,
             require_v31_execution_contract,
             v31_source_artifact_relative,
         )
@@ -9388,6 +9417,7 @@ def run_service(
         if v31_contract_path.name not in {
             "execution_contract_v31.approved.json",
             "execution_contract_v32.approved.json",
+            "execution_contract_v33.approved.json",
         }:
             raise ValueError("Task40 approved contract filename is not registered")
         expected_contract_path = (
@@ -9404,8 +9434,17 @@ def run_service(
             expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
             current_root=repo_root,
         )
+        contract_review = v31_contract.get("review")
         v31_review_version = (
-            "V32" if v31_contract.get("schema") == V32_CONTRACT_SCHEMA else "V31"
+            "V33"
+            if contract_review == {
+                "path": V33_REVIEW_PATH,
+                "commit": V33_REVIEW_COMMIT,
+                "sha256": V33_REVIEW_SHA256,
+            }
+            else "V32"
+            if v31_contract.get("schema") == V32_CONTRACT_SCHEMA
+            else "V31"
         )
         execution = v31_contract["execution"]
 
@@ -9767,7 +9806,7 @@ def run_service(
     )
     v31_q4_complete_import_template = None
     v31_q4_complete_import_authorization = None
-    if v31_contract is not None and v31_review_version == "V32":
+    if v31_contract is not None and v31_review_version in {"V32", "V33"}:
         preparation = v31_contract.get("preparation", {})
         complete_template = (
             preparation.get("q4_complete_import")
@@ -9817,12 +9856,12 @@ def run_service(
             "selector_sha256": str(v31_contract["execution"]["selector_sha256"]),
             "q4_numeric_pending_import_template": (
                 dict(v31_contract["preparation"]["q4_numeric_pending_import"])
-                if v31_review_version == "V32"
+                if v31_review_version in {"V32", "V33"}
                 else None
             ),
             "q4_numeric_pending_import_authorization": (
                 dict(v31_contract["execution"]["q_csr_import_authorizations"]["numeric_pending"]["4"])
-                if v31_review_version == "V32"
+                if v31_review_version in {"V32", "V33"}
                 else None
             ),
             "q4_complete_import_template": (
@@ -10542,6 +10581,12 @@ def main(argv: list[str] | None = None) -> int:
     v32_prepare_parser = subparsers.add_parser("prepare-v32-p0")
     v32_prepare_parser.add_argument("--output-dir", type=Path)
     v32_prepare_parser.add_argument("--execution-root", type=Path)
+    v33_prepare_parser = subparsers.add_parser("prepare-v33-p0")
+    v33_prepare_parser.add_argument("--output-dir", type=Path)
+    v33_prepare_parser.add_argument("--execution-root", type=Path)
+    v33_prepare_parser.add_argument(
+        "--q4-complete-metadata-directory", type=Path
+    )
     v31_approved_parser = subparsers.add_parser("prepare-v31-approved")
     v31_approved_parser.add_argument("--pending-dir", type=Path, required=True)
     v31_approval = v31_approved_parser.add_mutually_exclusive_group(required=True)
@@ -10552,6 +10597,11 @@ def main(argv: list[str] | None = None) -> int:
     v32_approval = v32_approved_parser.add_mutually_exclusive_group(required=True)
     v32_approval.add_argument("--approval-receipt", type=Path)
     v32_approval.add_argument("--reuse-approved-contract", type=Path)
+    v33_approved_parser = subparsers.add_parser("prepare-v33-approved")
+    v33_approved_parser.add_argument("--pending-dir", type=Path, required=True)
+    v33_approval = v33_approved_parser.add_mutually_exclusive_group(required=True)
+    v33_approval.add_argument("--approval-receipt", type=Path)
+    v33_approval.add_argument("--reuse-approved-contract", type=Path)
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -10651,6 +10701,23 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+    if args.command == "prepare-v33-p0":
+        from src.runners.task40_v31_contract import prepare_v33_pending_package
+
+        print(
+            json.dumps(
+                prepare_v33_pending_package(
+                    repo_root=ROOT,
+                    output_directory=args.output_dir,
+                    execution_root=args.execution_root,
+                    q4_complete_metadata_directory=args.q4_complete_metadata_directory,
+                ),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
     if args.command == "prepare-v31-approved":
         from src.runners.task40_v31_contract import prepare_v31_approved_package
 
@@ -10674,6 +10741,23 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 prepare_v32_approved_package(
+                    repo_root=ROOT,
+                    pending_directory=args.pending_dir,
+                    approval_receipt=args.approval_receipt,
+                    reuse_approved_contract=args.reuse_approved_contract,
+                ),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v33-approved":
+        from src.runners.task40_v31_contract import prepare_v33_approved_package
+
+        print(
+            json.dumps(
+                prepare_v33_approved_package(
                     repo_root=ROOT,
                     pending_directory=args.pending_dir,
                     approval_receipt=args.approval_receipt,

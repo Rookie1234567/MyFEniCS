@@ -4425,7 +4425,7 @@ def _task40_v30_load_sector_q_csr_pair(
     context: Any,
     local_h: np.ndarray,
     profile: Any,
-    global_bundle: Mapping[str, Any],
+    mode_descriptor: Mapping[str, Any],
     mode_inventory: tuple[Any, Any, Any],
     runtime_identity: Mapping[str, Any],
     allocation_gate: Callable,
@@ -4453,11 +4453,13 @@ def _task40_v30_load_sector_q_csr_pair(
     expected_q0_identity = dict(runtime_identity["legacy_q0_identity"])
     expected_mode_manifest_sha = str(mode_inventory[2])
     if (
-        str(global_bundle["mode_sha256"]) != expected_mode_manifest_sha
+        str(mode_descriptor["mode_sha256"]) != expected_mode_manifest_sha
         or expected_q0_identity.get("mode_manifest_sha256") != expected_mode_manifest_sha
     ):
-        raise ValueError("current physical mode manifest differs from the frozen V20/V28 identity")
-    ordered_mode_key_sha = _task40_v30_ordered_mode_key_sha256(tuple(global_bundle["modes"]))
+        raise ValueError("runtime mode descriptor differs from the frozen V20/V28 identity")
+    ordered_mode_key_sha = _task40_v30_ordered_mode_key_sha256(
+        tuple(mode_descriptor["modes"])
+    )
     profile_sha = _task40_v30_profile_identity_sha256(profile)
     sector_matrices = {}
     qualified_receipts = []
@@ -5016,7 +5018,7 @@ def build_task40_v10_p6_local_sector_owner(
     system = None
     import time as _time
 
-    owner_id = f"twist{context.twist_index}:saved_port_local_owner"
+    owner_id = f"twist{context.twist_index}:local_sector_owner"
     boot_id_path = "/proc/sys/kernel/random/boot_id"
     try:
         boot_id = open(boot_id_path, encoding="ascii").read().strip()
@@ -5030,7 +5032,7 @@ def build_task40_v10_p6_local_sector_owner(
         start_facts: Mapping[str, Any] | None = None,
         complete_facts: Callable[[Any], Mapping[str, Any]] | None = None,
     ) -> Any:
-        if saved_port_owner is None or stage_callback is None:
+        if stage_callback is None:
             return operation()
         started_utc_ns = _time.time_ns()
         started_monotonic_ns = _time.perf_counter_ns()
@@ -5042,7 +5044,7 @@ def build_task40_v10_p6_local_sector_owner(
         common = {
             "phase": phase,
             "owner_id": owner_id,
-            "q_indices": [0, 4],
+            "q_indices": list(map(int, context.global_q_indices)),
             "twist_index": int(context.twist_index),
             "boot_id": boot_id,
             **dict(start_facts or {}),
@@ -5156,6 +5158,7 @@ def build_task40_v10_p6_local_sector_owner(
                 dtn_phase_gauge=BOUNDARY_PLANE,
                 verify_dtn_quadrature=True,
                 research_phase_override=phase_override,
+                stage_callback=stage_callback,
             )
             carrier = local_bundle["dtn_action"].carrier
             local_h = np.asarray(
@@ -5595,6 +5598,8 @@ def build_task40_v10_p6_reference_inverse(
     qualified_q_csr_identity: Mapping[str, Any] | None = None,
     qualified_q_csr_coverage_phase: str = "all_q",
     qualified_q_csr_preparer: Callable[..., tuple[Mapping[int, sparse.csr_matrix], Mapping[str, Any]]] | None = None,
+    sector_first: bool = False,
+    late_twist0_owner_preparer: Callable[..., tuple[Mapping[str, Any], Any | None]] | None = None,
     prebuilt_sector_owners: Mapping[int, Mapping[str, Any]] | None = None,
     prebuilt_sector_q_csr: Mapping[
         int, tuple[Mapping[int, sparse.csr_matrix], Mapping[str, Any]]
@@ -5674,8 +5679,10 @@ def build_task40_v10_p6_reference_inverse(
 
     prebuilt_owners = dict(prebuilt_sector_owners or {})
     prebuilt_q_csr = dict(prebuilt_sector_q_csr or {})
-    if set(prebuilt_owners) - {0} or set(prebuilt_q_csr) - {0}:
-        raise ValueError("V31 may prebuild only the saved-first twist-0 sector owner")
+    if type(sector_first) is not bool:
+        raise TypeError("sector-first reference scheduling must be an explicit boolean")
+    if any(type(index) is not int or index not in range(4) for index in (*prebuilt_owners, *prebuilt_q_csr)):
+        raise ValueError("prebuilt sectors are restricted to the registered twist indices 0..3")
     if any(
         not isinstance(value, dict)
         or not isinstance(value.get("context"), Task40V10SectorContext)
@@ -5735,26 +5742,66 @@ def build_task40_v10_p6_reference_inverse(
             cell_notch=None,
             geometry_identity=f"{SCHEMA}.regular_reference",
         )
-        global_levels = _build_same_mesh_levels(
-            regular_cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
-        )
-        global_bundle = build_same_mesh_physical_action(
-            global_levels,
-            regular_cfg,
-            6,
-            mode_inventory=mode_inventory,
-            jit_options=jit_options,
-            dtn_phase_gauge=BOUNDARY_PLANE,
-            verify_dtn_quadrature=True,
-        )
-        if identity_gate is not None:
-            identity_gate(global_bundle, global_levels)
-        modes = tuple(global_bundle["modes"])
-
         if profile is None:
             profile = TASK40_V10_P6_PROFILE
         if not isinstance(profile, Task40V10P6PeriodicProfile):
             raise TypeError("p6 reference builder requires a Task40 periodic case profile")
+        frozen_mode_rows: tuple[Any, ...] | None = None
+        frozen_mode_sha256: str | None = None
+
+        def global_physical_stage(facts: Mapping[str, Any]) -> None:
+            if event is not None:
+                event("task40_v33_global_physical_phase", facts)
+
+        if sector_first:
+            if not isinstance(mode_inventory, tuple) or len(mode_inventory) != 3:
+                raise ValueError("sector-first scheduling requires the frozen V20 mode inventory")
+            modes = tuple(mode_inventory[0])
+            frozen_mode_rows = tuple(mode_inventory[1])
+            frozen_mode_sha256 = str(mode_inventory[2])
+            if len(modes) != int(profile.mode_count) or len(frozen_mode_rows) != len(modes):
+                raise ValueError("sector-first mode descriptor differs from the registered profile")
+        else:
+            import time as _time
+
+            global_mesh_started = _time.perf_counter()
+            if event is not None:
+                event(
+                    "task40_v33_global_mesh_fe_mpc",
+                    {"status": "STARTED", "profile": profile.identity()},
+                )
+            global_levels = _build_same_mesh_levels(
+                regular_cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
+            )
+            owner["global_levels"] = global_levels
+            if event is not None:
+                event(
+                    "task40_v33_global_mesh_fe_mpc",
+                    {
+                        "status": "COMPLETE",
+                        "profile": profile.identity(),
+                        "elapsed_seconds": max(0.0, _time.perf_counter() - global_mesh_started),
+                        "global_cell_count": int(global_levels["mesh"].topology.index_map(3).size_local),
+                        "mpc_slave_count": int(len(global_levels["floquets"][6].mpc.slaves)),
+                    },
+                )
+
+            global_bundle = build_same_mesh_physical_action(
+                global_levels,
+                regular_cfg,
+                6,
+                mode_inventory=mode_inventory,
+                jit_options=jit_options,
+                dtn_phase_gauge=BOUNDARY_PLANE,
+                verify_dtn_quadrature=True,
+                stage_callback=global_physical_stage if event is not None else None,
+            )
+            owner["global_bundle"] = global_bundle
+            if identity_gate is not None:
+                identity_gate(global_bundle, global_levels)
+            modes = tuple(global_bundle["modes"])
+            frozen_mode_rows = tuple(global_bundle["mode_rows"])
+            frozen_mode_sha256 = str(global_bundle["mode_sha256"])
         if qualified_q_csr_provider is not None:
             if q_assembly_comparison_only:
                 raise ValueError("V30 qualified CSR injection cannot run in assembly-comparison mode")
@@ -5826,71 +5873,32 @@ def build_task40_v10_p6_reference_inverse(
             expected_q_counts=profile.q_port_counts,
             expected_sector_counts=profile.sector_port_counts,
         )
-        global_entities = collect_y_orbit_entities(
-            global_levels["spaces"][6],
-            global_levels["floquets"][6],
-            regular_cfg,
-            axes,
-            transform_bank=transform_bank,
-        )
-        full_layout = Task40V10FullLayout(
-            global_entities,
-            regular_cfg,
-            expected_inventory={
-                "ny": profile.q_count,
-                "width": profile.rows_per_q,
-                "independent_rows": profile.global_independent_rows,
-                "storage_rows": profile.global_storage_rows,
-                "interior_rows": profile.global_interior_rows,
-            },
-        )
-        if (
-            target_full_storage_rows is not None
-            and int(target_full_storage_rows) != int(full_layout.full_rows)
-        ):
-            raise ValueError(
-                "actual target and full-reference storage rows differ: "
-                f"{target_full_storage_rows} != {full_layout.full_rows}"
-            )
-        owner["full_storage_dimensions"] = {
-            "target_full_storage_rows": (
-                None if target_full_storage_rows is None else int(target_full_storage_rows)
-            ),
-            "actual_target_full_storage_rows": (
-                None if target_full_storage_rows is None else int(target_full_storage_rows)
-            ),
-            "planned_target_full_storage_rows": (
-                None
-                if planned_target_full_storage_rows is None
-                else int(planned_target_full_storage_rows)
-            ),
-            "reference_full_storage_rows": int(full_layout.full_rows),
-            "reference_independent_rows": int(len(global_entities.independent)),
-            "planned_target_rows_match_reference": (
-                planned_target_full_storage_rows is not None
-                and int(planned_target_full_storage_rows) == int(full_layout.full_rows)
-            ),
-            "actual_target_rows_match_reference": (
-                target_full_storage_rows is not None
-                and int(target_full_storage_rows) == int(full_layout.full_rows)
-            ),
-            "target_reference_rows_match": (
-                target_full_storage_rows is not None
-                and int(target_full_storage_rows) == int(full_layout.full_rows)
-            ),
-            "target_budget_status": (
-                "PLANNED_ROWS_RESERVED_ACTUAL_NOT_BUILT"
-                if planned_target_full_storage_rows is not None
-                and target_full_storage_rows is None
-                else "ACTUAL_TARGET_ROWS_RECORDED"
-                if target_full_storage_rows is not None
-                else "NOT_QUALIFIED_NO_TARGET_ROW_BUDGET"
-            ),
+        mode_descriptor = {
+            "modes": modes,
+            "mode_rows": frozen_mode_rows,
+            "mode_sha256": frozen_mode_sha256,
         }
-        global_h = np.asarray(
-            [entry.normalization_h for entry in global_bundle["dtn_action"].carrier.entries],
-            dtype=np.float64,
+        frozen_mode_inventory = (
+            modes,
+            tuple(frozen_mode_rows),
+            str(frozen_mode_sha256),
         )
+        if sector_first:
+            from .dtn_boundary_phase_gauge import assembly_projection_denominator
+
+            global_h = np.fromiter(
+                (
+                    assembly_projection_denominator(mode, regular_cfg, BOUNDARY_PLANE)
+                    for mode in modes
+                ),
+                dtype=np.float64,
+                count=len(modes),
+            )
+        else:
+            global_h = np.asarray(
+                [entry.normalization_h for entry in global_bundle["dtn_action"].carrier.entries],
+                dtype=np.float64,
+            )
         if (
             global_h.shape != (profile.mode_count,)
             or not np.isfinite(global_h).all()
@@ -5900,114 +5908,208 @@ def build_task40_v10_p6_reference_inverse(
                 "regular p6 reference carrier must retain all "
                 f"{profile.mode_count} positive original-H values"
             )
-        for twist_index, prebuilt in prebuilt_owners.items():
-            recorded_h_sha = prebuilt.get("global_h_sha256")
-            current_h_sha = hashlib.sha256(
-                np.ascontiguousarray(global_h).view(np.uint8)
-            ).hexdigest()
+        global_h_sha256 = hashlib.sha256(
+            np.ascontiguousarray(global_h).view(np.uint8)
+        ).hexdigest()
+
+        def validate_prebuilt_sector(
+            context: Task40V10SectorContext,
+            prebuilt: Mapping[str, Any],
+        ) -> None:
+            frozen_context = prebuilt.get("context")
+            local_inventory = prebuilt.get("mode_inventory")
+            selected = np.asarray(context.original_mode_indices, dtype=np.int64)
+            expected_modes = tuple(modes[int(index)] for index in selected)
+            expected_rows = tuple(frozen_mode_rows[int(index)] for index in selected)
+            receipt = prebuilt.get("owner_receipt", {})
             if (
-                type(twist_index) is not int
-                or twist_index != 0
-                or recorded_h_sha != current_h_sha
-                or prebuilt.get("owner_receipt", {}).get("created_before_global_reference")
-                is not True
+                not isinstance(frozen_context, Task40V10SectorContext)
+                or frozen_context.twist_index != context.twist_index
+                or tuple(frozen_context.global_q_indices) != tuple(context.global_q_indices)
+                or complex(frozen_context.eta) != complex(context.eta)
+                or complex(frozen_context.tau) != complex(context.tau)
+                or dict(frozen_context.local_axes) != dict(context.local_axes)
+                or not np.array_equal(frozen_context.original_mode_indices, context.original_mode_indices)
+                or not np.array_equal(frozen_context.local_branch_indices, context.local_branch_indices)
+                or receipt.get("global_mode_sha256") != str(frozen_mode_sha256)
+                or receipt.get("created_before_global_reference") is not True
+                or prebuilt.get("global_h_sha256") != global_h_sha256
                 or prebuilt.get("transform_bank") is not transform_bank
+                or not isinstance(local_inventory, tuple)
+                or len(local_inventory) != 3
+                or tuple(local_inventory[0]) != expected_modes
+                or tuple(local_inventory[1]) != expected_rows
+                or str(local_inventory[2]) != str(frozen_mode_sha256)
             ):
-                raise ValueError("V31 prebuilt twist-0 owner does not bind the current global mode/H/bank")
-        owner.update(
-            global_levels=global_levels,
-            global_bundle=global_bundle,
-            global_entities=global_entities,
-            full_layout=full_layout,
-        )
-        if event is not None and q_assembly_strategy in {
-            Q_ASSEMBLY_BOUNDED_V16,
-            Q_ASSEMBLY_ROW_TILE_V17,
-        }:
-            global_ready_event = (
-                "task40_v17_reference_global_ready"
-                if q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
-                else "task40_v16_reference_global_ready"
+                raise ValueError(
+                    f"prebuilt twist-{context.twist_index} owner differs from the frozen context/mode/H/bank"
+                )
+            owner_q_maps = prebuilt.get("q_maps_by_q")
+            if owner_q_maps is not None and (
+                not isinstance(owner_q_maps, Mapping)
+                or set(map(int, owner_q_maps)) != set(map(int, context.global_q_indices))
+            ):
+                raise ValueError("prebuilt sector q maps do not match its frozen q context")
+
+        context_by_twist = {int(context.twist_index): context for context in contexts}
+        for twist_index, prebuilt in prebuilt_owners.items():
+            context = context_by_twist.get(int(twist_index))
+            if context is None:
+                raise ValueError("prebuilt owner twist is absent from the registered profile")
+            validate_prebuilt_sector(context, prebuilt)
+
+        def build_global_reference_support() -> None:
+            nonlocal global_entities, full_layout, global_h
+            if sector_first:
+                actual_modes = tuple(global_bundle["modes"])
+                actual_rows = tuple(global_bundle["mode_rows"])
+                actual_mode_sha = str(global_bundle["mode_sha256"])
+                actual_h = np.asarray(
+                    [entry.normalization_h for entry in global_bundle["dtn_action"].carrier.entries],
+                    dtype=np.float64,
+                )
+                if (
+                    _task40_v30_ordered_mode_key_sha256(actual_modes)
+                    != _task40_v30_ordered_mode_key_sha256(modes)
+                    or actual_rows != tuple(frozen_mode_rows)
+                    or actual_mode_sha != str(frozen_mode_sha256)
+                    or actual_h.shape != global_h.shape
+                    or not np.array_equal(actual_h, global_h)
+                ):
+                    raise ValueError(
+                        "built global physical mode/H identity differs from the frozen sector descriptor"
+                    )
+                if identity_gate is not None:
+                    identity_gate(global_bundle, global_levels)
+                global_h = actual_h
+            global_entities = collect_y_orbit_entities(
+                global_levels["spaces"][6],
+                global_levels["floquets"][6],
+                regular_cfg,
+                axes,
+                transform_bank=transform_bank,
             )
-            event(
-                global_ready_event,
-                {
-                    "profile": profile.identity(),
-                    "global_storage_rows": int(full_layout.full_rows),
-                    "global_independent_rows": int(len(global_entities.independent)),
-                    "global_interior_rows": int(
-                        full_layout.audit["dimension_counts"][3]
-                    ),
-                    "global_mode_count": int(profile.mode_count),
-                    "ordered_mode_sha256": str(global_bundle["mode_sha256"]),
-                    "carrier_manifest_sha256": str(
-                        global_bundle["dtn_action"].carrier.mode_manifest_sha256
-                    ),
-                    "transform_bank_enabled": bool(share_transform_bank),
-                    "_named_arrays": global_entities.named_backing_arrays("global"),
+            owner["global_entities"] = global_entities
+            full_layout = Task40V10FullLayout(
+                global_entities,
+                regular_cfg,
+                expected_inventory={
+                    "ny": profile.q_count,
+                    "width": profile.rows_per_q,
+                    "independent_rows": profile.global_independent_rows,
+                    "storage_rows": profile.global_storage_rows,
+                    "interior_rows": profile.global_interior_rows,
                 },
             )
+            owner["full_layout"] = full_layout
+            if target_full_storage_rows is not None and int(target_full_storage_rows) != int(full_layout.full_rows):
+                raise ValueError(
+                    "actual target and full-reference storage rows differ: "
+                    f"{target_full_storage_rows} != {full_layout.full_rows}"
+                )
+            owner["full_storage_dimensions"] = {
+                "target_full_storage_rows": None if target_full_storage_rows is None else int(target_full_storage_rows),
+                "actual_target_full_storage_rows": None if target_full_storage_rows is None else int(target_full_storage_rows),
+                "planned_target_full_storage_rows": None if planned_target_full_storage_rows is None else int(planned_target_full_storage_rows),
+                "reference_full_storage_rows": int(full_layout.full_rows),
+                "reference_independent_rows": int(len(global_entities.independent)),
+                "planned_target_rows_match_reference": planned_target_full_storage_rows is not None and int(planned_target_full_storage_rows) == int(full_layout.full_rows),
+                "actual_target_rows_match_reference": target_full_storage_rows is not None and int(target_full_storage_rows) == int(full_layout.full_rows),
+                "target_reference_rows_match": target_full_storage_rows is not None and int(target_full_storage_rows) == int(full_layout.full_rows),
+                "target_budget_status": (
+                    "PLANNED_ROWS_RESERVED_ACTUAL_NOT_BUILT"
+                    if planned_target_full_storage_rows is not None and target_full_storage_rows is None
+                    else "ACTUAL_TARGET_ROWS_RECORDED"
+                    if target_full_storage_rows is not None
+                    else "NOT_QUALIFIED_NO_TARGET_ROW_BUDGET"
+                ),
+            }
+            current_h_sha = hashlib.sha256(np.ascontiguousarray(global_h).view(np.uint8)).hexdigest()
+            for twist_index, prebuilt in prebuilt_owners.items():
+                if prebuilt.get("global_h_sha256") != current_h_sha or prebuilt.get("transform_bank") is not transform_bank:
+                    raise ValueError("prebuilt sector owner no longer binds the actual global H/bank")
+            owner.update(
+                global_levels=global_levels,
+                global_bundle=global_bundle,
+                global_entities=global_entities,
+                full_layout=full_layout,
+            )
+            if event is not None and q_assembly_strategy in {
+                Q_ASSEMBLY_BOUNDED_V16,
+                Q_ASSEMBLY_ROW_TILE_V17,
+            }:
+                global_ready_event = (
+                    "task40_v17_reference_global_ready"
+                    if q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
+                    else "task40_v16_reference_global_ready"
+                )
+                event(
+                    global_ready_event,
+                    {
+                        "profile": profile.identity(),
+                        "global_storage_rows": int(full_layout.full_rows),
+                        "global_independent_rows": int(len(global_entities.independent)),
+                        "global_interior_rows": int(full_layout.audit["dimension_counts"][3]),
+                        "global_mode_count": int(profile.mode_count),
+                        "ordered_mode_sha256": str(global_bundle["mode_sha256"]),
+                        "carrier_manifest_sha256": str(global_bundle["dtn_action"].carrier.mode_manifest_sha256),
+                        "transform_bank_enabled": bool(share_transform_bank),
+                        "_named_arrays": global_entities.named_backing_arrays("global"),
+                    },
+                )
+
+        if not sector_first:
+            build_global_reference_support()
         all_q_matrices: dict[int, sparse.csr_matrix] = {}
         sector_audits = []
         q_assembly_pair_reports = []
         q_coverage: set[int] = set()
-        for context in contexts:
+        sector_contexts = (
+            tuple(context for context in contexts if context.twist_index != 0)
+            + tuple(context for context in contexts if context.twist_index == 0)
+            if sector_first
+            else contexts
+        )
+        for context in sector_contexts:
             pending_sector = prebuilt_owners.pop(int(context.twist_index), None)
+            if pending_sector is None and sector_first and context.twist_index == 0 and late_twist0_owner_preparer is not None:
+                late_owner_result = late_twist0_owner_preparer(
+                    transform_bank=transform_bank
+                )
+                if (
+                    not isinstance(late_owner_result, tuple)
+                    or len(late_owner_result) != 2
+                    or not isinstance(late_owner_result[0], Mapping)
+                ):
+                    raise TypeError("late twist-0 preparation must return owner and optional q-CSR handoff")
+                pending_sector = late_owner_result[0]
+                late_q_result = late_owner_result[1]
+                if late_q_result is not None:
+                    if 0 in prebuilt_q_csr:
+                        raise ValueError("twist-0 q CSR was supplied twice to the reference builder")
+                    prebuilt_q_csr[0] = late_q_result
             if pending_sector is None:
                 pending_sector = build_task40_v10_p6_local_sector_owner(
                     cfg,
                     axes,
                     context=context,
                     global_modes=modes,
-                    global_mode_rows=tuple(global_bundle["mode_rows"]),
-                    global_mode_sha256=str(global_bundle["mode_sha256"]),
+                    global_mode_rows=tuple(frozen_mode_rows),
+                    global_mode_sha256=str(frozen_mode_sha256),
                     global_h=global_h,
                     profile=profile,
                     allocation_gate=allocation_gate,
                     jit_options=jit_options,
                     transform_bank=transform_bank,
                     share_transform_bank=share_transform_bank,
+                    stage_callback=(
+                        (lambda facts: event("task40_v33_local_sector_owner_phase", facts))
+                        if sector_first and event is not None
+                        else None
+                    ),
                 )
             else:
-                prebuilt_context = pending_sector.get("context")
-                selected = np.asarray(context.original_mode_indices, dtype=np.int64)
-                current_local_modes = tuple(modes[int(i)] for i in selected)
-                current_local_rows = tuple(
-                    global_bundle["mode_rows"][int(i)] for i in selected
-                )
-                frozen_local_inventory = pending_sector.get("mode_inventory")
-                if not isinstance(prebuilt_context, Task40V10SectorContext) or (
-                    prebuilt_context.twist_index != context.twist_index
-                    or tuple(prebuilt_context.global_q_indices)
-                    != tuple(context.global_q_indices)
-                    or complex(prebuilt_context.eta) != complex(context.eta)
-                    or complex(prebuilt_context.tau) != complex(context.tau)
-                    or dict(prebuilt_context.local_axes) != dict(context.local_axes)
-                    or not np.array_equal(
-                        prebuilt_context.original_mode_indices,
-                        context.original_mode_indices,
-                    )
-                    or not np.array_equal(
-                        prebuilt_context.local_branch_indices,
-                        context.local_branch_indices,
-                    )
-                    or pending_sector.get("owner_receipt", {}).get(
-                        "global_mode_sha256"
-                    )
-                    != str(global_bundle["mode_sha256"])
-                    or not isinstance(frozen_local_inventory, tuple)
-                    or len(frozen_local_inventory) != 3
-                    or _task40_v30_ordered_mode_key_sha256(
-                        tuple(frozen_local_inventory[0])
-                    )
-                    != _task40_v30_ordered_mode_key_sha256(current_local_modes)
-                    or tuple(frozen_local_inventory[1]) != current_local_rows
-                    or str(frozen_local_inventory[2])
-                    != str(global_bundle["mode_sha256"])
-                ):
-                    raise ValueError(
-                        "V31 prebuilt sector context differs from the frozen global sector"
-                    )
+                validate_prebuilt_sector(context, pending_sector)
             if not any(existing is pending_sector for existing in sectors):
                 sectors.append(pending_sector)
             local_levels = pending_sector["levels"]
@@ -6018,14 +6120,16 @@ def build_task40_v10_p6_reference_inverse(
             local_h = np.asarray(pending_sector["local_h"], dtype=np.float64)
             local_modes = tuple(pending_sector["local_modes"])
             mode_inventory = pending_sector["mode_inventory"]
-            transport = TwoCellNativeTransport(
-                global_entities,
-                local_entities,
-                twist_index=context.twist_index,
-                eta=context.eta,
-                cfg=cfg,
-            )
-            pending_sector["transport"] = transport
+            transport = None
+            if not sector_first:
+                transport = TwoCellNativeTransport(
+                    global_entities,
+                    local_entities,
+                    twist_index=context.twist_index,
+                    eta=context.eta,
+                    cfg=cfg,
+                )
+                pending_sector["transport"] = transport
             prebuilt_q_result = prebuilt_q_csr.pop(int(context.twist_index), None)
             if prebuilt_q_result is not None:
                 sector_matrices = {
@@ -6036,7 +6140,46 @@ def build_task40_v10_p6_reference_inverse(
                     set(sector_matrices) != set(map(int, context.global_q_indices))
                     or block_audit.get("all_complete_native_pass") is not True
                 ):
-                    raise ValueError("V31 prebuilt twist-0 q CSR/native receipts are incomplete")
+                    raise ValueError(
+                        f"prebuilt twist-{context.twist_index} q CSR/native receipts are incomplete"
+                    )
+                if (
+                    qualified_q_csr_provider is None
+                    or not isinstance(qualified_q_csr_identity, Mapping)
+                ):
+                    raise ValueError("prebuilt q CSR requires the strict qualified provider identity")
+                from .task40_v30_qualified_q_csr import (
+                    _array_sha256 as v30_array_sha256,
+                    _csr_sha256 as v30_csr_sha256,
+                )
+                selector_by_q = {
+                    int(row.get("q_index", -1)): row
+                    for row in block_audit.get("selector_entries", ())
+                    if isinstance(row, Mapping)
+                }
+                if set(selector_by_q) != set(sector_matrices):
+                    raise ValueError("prebuilt q CSR audit does not bind every actual sector q")
+                q_maps_by_q = pending_sector.get("q_maps_by_q")
+                if not isinstance(q_maps_by_q, Mapping) or set(map(int, q_maps_by_q)) != set(sector_matrices):
+                    raise ValueError("prebuilt q CSR owner has no exact live map inventory")
+                current_h = np.ascontiguousarray(local_h, dtype=np.complex128)
+                for q_index in sorted(sector_matrices):
+                    entry_identity = dict(selector_by_q[q_index].get("operator_identity", {}))
+                    expected_identity = {
+                        "scientific_input_sha256": str(qualified_q_csr_identity["scientific_input_sha256"]),
+                        "profile_identity_sha256": _task40_v30_profile_identity_sha256(profile),
+                        "ordered_mode_sha256": _task40_v30_ordered_mode_key_sha256(modes),
+                        "q_map_sha256": v30_csr_sha256(q_maps_by_q[q_index]),
+                        "original_h_sha256": v30_array_sha256(
+                            current_h,
+                            np.dtype(np.complex128),
+                            f"twist{context.twist_index} original H",
+                        ),
+                    }
+                    if entry_identity != expected_identity:
+                        raise ValueError(
+                            f"prebuilt q={q_index} CSR identity differs from its actual map/H/modes"
+                        )
                 owner["qualified_q_csr_receipts"].extend(
                     block_audit.get("qualification_receipts", ())
                 )
@@ -6044,6 +6187,25 @@ def build_task40_v10_p6_reference_inverse(
                     dict(row) for row in block_audit.get("selector_entries", ())
                 )
             elif qualified_q_csr_provider is not None:
+                selector_load_started = None
+                if sector_first:
+                    import time as _time
+
+                    selector_load_started = _time.perf_counter()
+                    if event is not None:
+                        event(
+                            "task40_v33_qualified_selector_import",
+                            {
+                                "phase": "qualified_selector_import",
+                                "status": "STARTED",
+                                "twist_index": int(context.twist_index),
+                                "q_indices": sorted(
+                                    set(map(int, context.global_q_indices))
+                                    & set(qualified_q_csr_provider.entries)
+                                ),
+                                "provider_load_is_read_only": True,
+                            },
+                        )
                 sector_matrices, block_audit = _task40_v30_load_sector_q_csr_pair(
                     qualified_q_csr_provider,
                     action=action,
@@ -6051,7 +6213,7 @@ def build_task40_v10_p6_reference_inverse(
                     context=context,
                     local_h=local_h,
                     profile=profile,
-                    global_bundle=global_bundle,
+                    mode_descriptor=mode_descriptor,
                     mode_inventory=mode_inventory,
                     runtime_identity=qualified_q_csr_identity,
                     allocation_gate=allocation_gate,
@@ -6060,6 +6222,25 @@ def build_task40_v10_p6_reference_inverse(
                         & set(qualified_q_csr_provider.entries)
                     ),
                 )
+                if selector_load_started is not None and event is not None:
+                    event(
+                        "task40_v33_qualified_selector_import",
+                        {
+                            "phase": "qualified_selector_import",
+                            "status": "COMPLETE",
+                            "twist_index": int(context.twist_index),
+                            "q_indices": sorted(sector_matrices),
+                            "elapsed_seconds": max(
+                                0.0, _time.perf_counter() - selector_load_started
+                            ),
+                            "selector_entries": list(block_audit["selector_entries"]),
+                            "qualification_receipts": list(block_audit["qualification_receipts"]),
+                            "producer_invocations": 0,
+                            "pattern_build_invocations": 0,
+                            "numeric_fill_invocations": 0,
+                            "native_requalification_performed": False,
+                        },
+                    )
                 owner["qualified_q_csr_receipts"].extend(
                     block_audit["qualification_receipts"]
                 )
@@ -6083,7 +6264,7 @@ def build_task40_v10_p6_reference_inverse(
                         context=context,
                         local_h=local_h,
                         profile=profile,
-                        global_bundle=global_bundle,
+                        mode_descriptor=mode_descriptor,
                         local_bundle=local_bundle,
                         mode_inventory=mode_inventory,
                         q_indices=tuple(sorted(missing_sector_q)),
@@ -6104,6 +6285,9 @@ def build_task40_v10_p6_reference_inverse(
                             "V30 sector preparer lacks saved COMPLETE CSR and independent native PASS evidence"
                         )
                     sector_matrices.update(prepared_matrices)
+                    owner["qualified_q_csr_receipts"].extend(
+                        preparation_audit.get("qualification_receipts", ())
+                    )
                     owner["qualified_q_csr_selector_entries"].extend(
                         dict(row)
                         for row in preparation_audit.get("selector_entries", ())
@@ -6137,11 +6321,30 @@ def build_task40_v10_p6_reference_inverse(
                 raise ValueError(f"p6 q matrix supplied by more than one twist sector: {sorted(overlap)}")
             all_q_matrices.update(sector_matrices)
             sector = pending_sector
+            condensed = action.condensed
+            actual_inventory = (
+                int(condensed.full_rows),
+                int(condensed.active_rows),
+                int(condensed.active_interior_rows),
+                int(condensed.appended_rows),
+            )
+            expected_inventory = (
+                int(profile.local_storage_rows),
+                int(profile.local_trace_rows),
+                int(profile.local_interior_rows),
+                int(len(local_modes)),
+            )
+            if actual_inventory != expected_inventory:
+                raise ValueError(
+                    f"local p6 condensed inventory mismatch for twist {context.twist_index}: "
+                    f"{actual_inventory} != {expected_inventory}"
+                )
             sector.update(
                 transport=transport,
                 coordinates=coordinates,
                 entities=local_entities,
-                trace=trace,
+                trace=pending_sector["trace"],
+                mode_inventory=mode_inventory,
                 block_audit=block_audit,
             )
             sector_audits.append(block_audit)
@@ -6184,7 +6387,6 @@ def build_task40_v10_p6_reference_inverse(
                     else "task40_v10_p6_sector_ready"
                 )
                 event(sector_ready_event, sector_facts)
-            del compiled
         required_q = set(range(profile.q_count))
         if not q_assembly_comparison_only and set(all_q_matrices) != required_q:
             raise ValueError("p6 twist sectors did not produce every profile q matrix")
@@ -6209,6 +6411,63 @@ def build_task40_v10_p6_reference_inverse(
             owner["qualified_q_csr_final_selector"] = selector_facts
             if event is not None:
                 event("task40_v30_all_q_selector_complete", selector_facts)
+        if sector_first:
+            if event is not None:
+                event(
+                    "task40_v33_sector_products_durable",
+                    {
+                        "twist_order": [1, 2, 3, 0],
+                        "q_indices": sorted(all_q_matrices),
+                        "selector": owner.get("qualified_q_csr_final_selector"),
+                        "qualification_receipt_count": len(owner["qualified_q_csr_receipts"]),
+                        "global_physical_started": False,
+                    },
+                )
+            import time as _time
+
+            global_mesh_started = _time.perf_counter()
+            if event is not None:
+                event(
+                    "task40_v33_global_mesh_fe_mpc",
+                    {"status": "STARTED", "profile": profile.identity()},
+                )
+            global_levels = _build_same_mesh_levels(
+                regular_cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
+            )
+            owner["global_levels"] = global_levels
+            if event is not None:
+                event(
+                    "task40_v33_global_mesh_fe_mpc",
+                    {
+                        "status": "COMPLETE",
+                        "profile": profile.identity(),
+                        "elapsed_seconds": max(0.0, _time.perf_counter() - global_mesh_started),
+                        "global_cell_count": int(global_levels["mesh"].topology.index_map(3).size_local),
+                        "mpc_slave_count": int(len(global_levels["floquets"][6].mpc.slaves)),
+                    },
+                )
+            global_bundle = build_same_mesh_physical_action(
+                global_levels,
+                regular_cfg,
+                6,
+                mode_inventory=frozen_mode_inventory,
+                jit_options=jit_options,
+                dtn_phase_gauge=BOUNDARY_PLANE,
+                verify_dtn_quadrature=True,
+                stage_callback=global_physical_stage if event is not None else None,
+            )
+            owner["global_bundle"] = global_bundle
+            build_global_reference_support()
+            for sector in sectors:
+                context = sector["context"]
+                sector["transport"] = TwoCellNativeTransport(
+                    global_entities,
+                    sector["entities"],
+                    twist_index=context.twist_index,
+                    eta=context.eta,
+                    cfg=cfg,
+                )
+            sectors.sort(key=lambda value: int(value["context"].twist_index))
         if (
             event is not None
             and not q_assembly_comparison_only

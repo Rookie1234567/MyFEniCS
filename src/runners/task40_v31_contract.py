@@ -130,6 +130,35 @@ V32_STAGE_SCOPE = (
 )
 V32_APPROVAL_SCOPE = "V32_WINDOW_86400_NUMERIC_85200_CLOSEOUT_1200"
 V32_USER_APPROVAL_EVIDENCE_SCHEMA = "task40extra.review_v32_user_approval_evidence.v1"
+V33_REVIEW_COMMIT = "68cadd5731f4fb55bd661d3841754eb0ff79865a"
+V33_REVIEW_SHA256 = "34bb6cf9fde457cf554f255c199c627de6a72183a165f917b49af0e4758aac48"
+V33_REVIEW_PATH = "docs/task40extra_0p7nm_engineering/review_report_v33.md"
+# V33 deliberately reuses the V32 contract, selector, import checks, and service.
+V33_CONTRACT_SCHEMA = V32_CONTRACT_SCHEMA
+V33_REGISTRATION_SCHEMA = V32_REGISTRATION_SCHEMA
+V33_SELECTOR_SCHEMA = V32_SELECTOR_SCHEMA
+V33_PREPARATION_RELATIVE = V32_PREPARATION_RELATIVE
+V33_P0_Q4_COMPLETE_METADATA_RELATIVE = (
+    V33_PREPARATION_RELATIVE / "q4_complete_767323bb"
+)
+V33_TOTAL_SECONDS = 86_400
+V33_NUMERIC_SECONDS = 85_200
+V33_CLOSEOUT_SECONDS = 1_200
+V33_STAGE_SCOPE = (
+    "P0_narrow_sector_first_wiring_and_integration_fixture",
+    "P1_twist1_q1_q5_csr_and_native",
+    "P2_twist2_q2_q6_and_twist3_q3_q7_csr_and_native",
+    "P3_global_reference_and_transport",
+    "P4_all_q_resident_factor_bank",
+    "P5_complete_reference_and_conditional_original_size_target_pilot",
+    "P6_supervised_checker_and_closeout",
+)
+V33_APPROVAL_SCOPE = "V33_WINDOW_86400_NUMERIC_85200_CLOSEOUT_1200"
+V33_USER_APPROVAL_EVIDENCE_SCHEMA = V32_USER_APPROVAL_EVIDENCE_SCHEMA
+
+
+def _uses_v32_q4_imports(review_version: str) -> bool:
+    return review_version in {"V32", "V33"}
 
 
 def v31_source_artifact_relative(source_sha: str) -> Path:
@@ -185,25 +214,63 @@ def bind_v32_q4_pending_import(
     )
 
 
-def v32_q4_complete_import_template(*, execution_root: str | Path) -> dict[str, Any]:
-    """Bind the already-complete q4 CSR/native evidence without reading its large arrays."""
+def v32_q4_complete_import_template(
+    *,
+    execution_root: str | Path,
+    metadata_directory: str | Path | None = None,
+) -> dict[str, Any]:
+    """Bind the pinned q4 metadata while keeping payload paths under execution_root.
+
+    ``metadata_directory`` is only for the pending V33 P0 preparation. It supplies
+    the two small, hash-pinned JSON records; it does not relocate the CSR/native
+    artifact identities or scan any of their large arrays.
+    """
     root = Path(execution_root).resolve()
     manifest_path = (root / V32_Q4_COMPLETE_MANIFEST_RELATIVE).resolve()
     native_path = (root / V32_Q4_COMPLETE_NATIVE_RELATIVE).resolve()
+    metadata_root = None
+    if metadata_directory is None:
+        metadata_manifest_path = manifest_path
+        metadata_native_path = native_path
+    else:
+        supplied_metadata_root = Path(metadata_directory)
+        if not supplied_metadata_root.is_absolute():
+            supplied_metadata_root = root / supplied_metadata_root
+        try:
+            metadata_root = supplied_metadata_root.resolve(strict=True)
+            if (
+                supplied_metadata_root.is_symlink()
+                or metadata_root != supplied_metadata_root.absolute()
+                or not metadata_root.is_dir()
+            ):
+                raise V31ContractError(
+                    "V33 P0 q4 metadata directory must be an ordinary directory"
+                )
+            metadata_manifest_path = metadata_root / manifest_path.name
+            metadata_native_path = metadata_root / native_path.name
+            if metadata_manifest_path.is_symlink() or metadata_native_path.is_symlink():
+                raise V31ContractError("V33 P0 q4 metadata files must not be symlinks")
+        except OSError as error:
+            raise V31ContractError("V33 P0 q4 metadata directory cannot be read") from error
     try:
         if (
             not manifest_path.is_relative_to(root)
             or not native_path.is_relative_to(root)
-            or not manifest_path.is_file()
-            or not native_path.is_file()
-            or hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+            or not metadata_manifest_path.is_file()
+            or not metadata_native_path.is_file()
+        ):
+            raise V31ContractError("pinned V32 q4 COMPLETE/native evidence is missing or changed")
+        manifest_bytes = metadata_manifest_path.read_bytes()
+        native_bytes = metadata_native_path.read_bytes()
+        if (
+            hashlib.sha256(manifest_bytes).hexdigest()
             != V32_Q4_COMPLETE_MANIFEST_SHA256
-            or hashlib.sha256(native_path.read_bytes()).hexdigest()
+            or hashlib.sha256(native_bytes).hexdigest()
             != V32_Q4_COMPLETE_NATIVE_SHA256
         ):
             raise V31ContractError("pinned V32 q4 COMPLETE/native evidence is missing or changed")
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        native = json.loads(native_path.read_text(encoding="utf-8"))
+        manifest = json.loads(manifest_bytes)
+        native = json.loads(native_bytes)
     except (OSError, json.JSONDecodeError) as error:
         raise V31ContractError("pinned V32 q4 COMPLETE/native evidence cannot be read") from error
     operator = manifest.get("operator_identity")
@@ -278,14 +345,16 @@ def v32_q4_complete_import_template(*, execution_root: str | Path) -> dict[str, 
     )
     if dict(historical_authorization) != expected_historical:
         raise V31ContractError("pinned V32 q4 historical numeric-pending authorization changed")
-    from src.solvers.task40_v30_selected_q_csr import preflight_v32_q4_numeric_pending_import
+    historical_preflight = None
+    if metadata_root is None:
+        from src.solvers.task40_v30_selected_q_csr import preflight_v32_q4_numeric_pending_import
 
-    historical_preflight = preflight_v32_q4_numeric_pending_import(
-        expected_historical,
-        profile=V31_PROFILE,
-        execution_identity=V32_Q4_COMPLETE_EXECUTION_IDENTITY,
-        output_directory=expected_historical["consumer_output_root"],
-    )
+        historical_preflight = preflight_v32_q4_numeric_pending_import(
+            expected_historical,
+            profile=V31_PROFILE,
+            execution_identity=V32_Q4_COMPLETE_EXECUTION_IDENTITY,
+            output_directory=expected_historical["consumer_output_root"],
+        )
     import_execution = historical.get("numeric_pending_import_execution")
     if (
         historical.get("pending_record_path") != expected_historical["pending_record_path"]
@@ -304,7 +373,10 @@ def v32_q4_complete_import_template(*, execution_root: str | Path) -> dict[str, 
             import_execution.get(key) != 0
             for key in ("producer_invocations", "route_build_invocations", "pattern_build_invocations", "numeric_fill_invocations")
         )
-        or historical_preflight["array_sha256"] != V32_Q4_ARRAY_SHA256
+        or (
+            historical_preflight is not None
+            and historical_preflight["array_sha256"] != V32_Q4_ARRAY_SHA256
+        )
         or any(
             normalized_artifacts[name]["sha256"] != V32_Q4_ARRAY_SHA256[name]
             for name in ("data", "indices", "indptr")
@@ -579,14 +651,30 @@ def validate_v31_worker_execution_binding(
     v32_route = (
         review == {"path": V32_REVIEW_PATH, "commit": V32_REVIEW_COMMIT, "sha256": V32_REVIEW_SHA256}
     )
-    if not v32_route and review != {
+    v33_route = (
+        review == {"path": V33_REVIEW_PATH, "commit": V33_REVIEW_COMMIT, "sha256": V33_REVIEW_SHA256}
+    )
+    if not v32_route and not v33_route and review != {
         "path": V31_REVIEW_PATH,
         "commit": V31_REVIEW_COMMIT,
         "sha256": V31_REVIEW_SHA256,
     }:
-        raise V31ContractError("V31 worker binding is not registered to Review V31 or V32")
-    contract_filename = "execution_contract_v32.approved.json" if v32_route else "execution_contract_v31.approved.json"
-    window_filename = "campaign_window_v32.json" if v32_route else "campaign_window_v31.json"
+        raise V31ContractError("V31 worker binding is not registered to Review V31, V32, or V33")
+    review_version = "V33" if v33_route else "V32" if v32_route else "V31"
+    contract_filename = (
+        "execution_contract_v33.approved.json"
+        if v33_route
+        else "execution_contract_v32.approved.json"
+        if v32_route
+        else "execution_contract_v31.approved.json"
+    )
+    window_filename = (
+        "campaign_window_v33.json"
+        if v33_route
+        else "campaign_window_v32.json"
+        if v32_route
+        else "campaign_window_v31.json"
+    )
     contract_source_sha = str(contract.get("source_freeze", {}).get("source_sha", ""))
     source_root = root / v31_source_artifact_relative(contract_source_sha)
     expected_contract_path = (source_root / contract_filename).resolve()
@@ -694,7 +782,7 @@ def validate_v31_worker_execution_binding(
     for name in ("complete", "numeric_pending"):
         if name in imports and not isinstance(imports[name], dict):
             raise V31ContractError("V31 q-CSR import authorization section must be an object")
-    if v32_route:
+    if v32_route or v33_route:
         template = preparation.get("q4_numeric_pending_import")
         complete_template = preparation.get("q4_complete_import")
         contract_imports = execution.get("q_csr_import_authorizations")
@@ -735,7 +823,9 @@ def validate_v31_worker_execution_binding(
             or contract_imports != expected_contract_imports
             or staged_imports != expected_staged_imports
         ):
-            raise V31ContractError("V32 worker import route differs from its contract, staged DAT, or fixed q4 evidence")
+            raise V31ContractError(
+                f"{review_version} worker import route differs from its contract, staged DAT, or fixed q4 evidence"
+            )
         from src.solvers.task40_v30_selected_q_csr import preflight_v32_q4_numeric_pending_import
 
         preflight_v32_q4_numeric_pending_import(
@@ -754,7 +844,7 @@ def validate_v31_worker_execution_binding(
         raise V31ContractError("V31 worker target admission policy is not the closed reference-only policy")
     return {
         "schema": V31_WORKER_BINDING_SCHEMA,
-        "review_version": "V32" if v32_route else "V31",
+        "review_version": review_version,
         "contract_path": str(contract_path),
         "contract_sha256": contract_sha256,
         "execution_window_path": str(window_path),
@@ -769,16 +859,16 @@ def validate_v31_worker_execution_binding(
         "q_csr_worklist": [dict(row) for row in worklist],
         "q4_import_authorization_present": "4" in imports.get("numeric_pending", {}),
         "q4_numeric_pending_import_template": (
-            dict(expected_template) if v32_route else None
+            dict(expected_template) if v32_route or v33_route else None
         ),
         "q4_numeric_pending_import_authorization": (
-            dict(imports["numeric_pending"]["4"]) if v32_route else None
+            dict(imports["numeric_pending"]["4"]) if v32_route or v33_route else None
         ),
         "q4_complete_import_template": (
-            dict(expected_complete_template) if v32_route else None
+            dict(expected_complete_template) if v32_route or v33_route else None
         ),
         "q4_complete_import_authorization": (
-            dict(imports["complete"]["4"]) if v32_route else None
+            dict(imports["complete"]["4"]) if v32_route or v33_route else None
         ),
         "target_admission_phase": str(admission["phase"]),
         "official_result": False,
@@ -1083,6 +1173,23 @@ def prepare_v32_pending_package(
     )
 
 
+def prepare_v33_pending_package(
+    *, repo_root: str | Path,
+    output_directory: str | Path | None = None,
+    execution_root: str | Path | None = None,
+    consumer_window_sha256: str | None = None,
+    q4_complete_metadata_directory: str | Path | None = None,
+) -> dict[str, Any]:
+    return _prepare_review_pending_package(
+        repo_root=repo_root,
+        output_directory=output_directory,
+        execution_root=execution_root,
+        consumer_window_sha256=consumer_window_sha256,
+        review_version="V33",
+        q4_complete_metadata_directory=q4_complete_metadata_directory,
+    )
+
+
 def _prepare_review_pending_package(
     *,
     repo_root: str | Path,
@@ -1090,6 +1197,7 @@ def _prepare_review_pending_package(
     execution_root: str | Path | None,
     consumer_window_sha256: str | None,
     review_version: str,
+    q4_complete_metadata_directory: str | Path | None = None,
 ) -> dict[str, Any]:
     """Write immutable PENDING registration/selector/contract and source-bound commands.
 
@@ -1143,14 +1251,51 @@ def _prepare_review_pending_package(
         approval_scope = V32_APPROVAL_SCOPE
         q4_import_template = None
         q4_complete_template = None
+    elif review_version == "V33":
+        review_path_text = V33_REVIEW_PATH
+        review_commit = V33_REVIEW_COMMIT
+        review_sha256 = V33_REVIEW_SHA256
+        registration_schema = V33_REGISTRATION_SCHEMA
+        contract_schema = V33_CONTRACT_SCHEMA
+        selector_schema = V33_SELECTOR_SCHEMA
+        preparation_relative = V33_PREPARATION_RELATIVE
+        package_name = "v33_pending_package"
+        registration_name = "campaign_registration_v33.pending.json"
+        selector_name = "q_csr_selector_v33.pending.json"
+        contract_name = "execution_contract_v33.pending.json"
+        approved_contract_name = "execution_contract_v33.approved.json"
+        approved_selector_name = "q_csr_selector_v33.approved.json"
+        command_prefix = "v33"
+        registration_scope = "V33_REVIEW_ALL_Q_REFERENCE_WITH_CONDITIONAL_TARGET_PILOT"
+        total_seconds = V33_TOTAL_SECONDS
+        numeric_seconds = V33_NUMERIC_SECONDS
+        closeout_seconds = V33_CLOSEOUT_SECONDS
+        stage_scope = V33_STAGE_SCOPE
+        approval_scope = V33_APPROVAL_SCOPE
+        q4_import_template = None
+        q4_complete_template = None
     else:
-        raise V31ContractError("pending package review version must be exactly V31 or V32")
+        raise V31ContractError("pending package review version must be exactly V31, V32, or V33")
 
     root = Path(repo_root).resolve()
     target_root = Path(execution_root or V31_WORKSTATION_ROOT).resolve()
-    if review_version == "V32":
+    if q4_complete_metadata_directory is not None:
+        expected_metadata_directory = root / V33_P0_Q4_COMPLETE_METADATA_RELATIVE
+        supplied_metadata_directory = Path(q4_complete_metadata_directory)
+        if not supplied_metadata_directory.is_absolute():
+            supplied_metadata_directory = root / supplied_metadata_directory
+        if (
+            review_version != "V33"
+            or supplied_metadata_directory.absolute() != expected_metadata_directory
+        ):
+            raise V31ContractError(
+                "only V33 P0 may use the fixed local q4 COMPLETE metadata directory"
+            )
+        q4_complete_metadata_directory = supplied_metadata_directory.absolute()
+    if _uses_v32_q4_imports(review_version):
         q4_complete_template = v32_q4_complete_import_template(
-            execution_root=target_root
+            execution_root=target_root,
+            metadata_directory=q4_complete_metadata_directory,
         )
     branch = subprocess.check_output(
         ["git", "branch", "--show-current"], cwd=root, text=True
@@ -1253,7 +1398,7 @@ def _prepare_review_pending_package(
         V30_RUNTIME_RELATIVE,
     )
     source_root_relative = v31_source_artifact_relative(head)
-    if review_version == "V32":
+    if _uses_v32_q4_imports(review_version):
         q4_import_template = v32_q4_pending_import_template(
             execution_root=target_root,
             consumer_source_sha=head,
@@ -1415,17 +1560,43 @@ def _prepare_review_pending_package(
         f'v31_unit="{target_unit}"'
     )
     reuse_contract_variable = (
-        "V32_EXISTING_APPROVED_CONTRACT"
-        if review_version == "V32"
+        f"{review_version}_EXISTING_APPROVED_CONTRACT"
+        if _uses_v32_q4_imports(review_version)
         else "V31_EXISTING_APPROVED_CONTRACT"
     )
-    commands = {
-        "prepare_p0": (
+    if review_version == "V33":
+        local_runtime = Path(
+            "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        )
+        local_abi_receipt = Path(
+            "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/"
+            "continuation_attempt4/abi_receipt.json"
+        )
+        local_jit_cache = Path(
+            "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/"
+            "window_qualification_jit"
+        )
+        local_activation = "source scripts/task40_fresh_c1/activate_local_wsl_complex.sh " + " ".join(
+            shlex.quote(str(path))
+            for path in (local_runtime, local_abi_receipt, local_jit_cache)
+        )
+        prepare_p0_command = (
+            f"cd {shlex.quote(str(root))} && {local_activation} && "
+            f"python scripts/task40_v20_service_workflow.py prepare-v33-p0 "
+            f"--output-dir {shlex.quote(str(output))} "
+            f"--execution-root {target_root_text} "
+            f"--q4-complete-metadata-directory "
+            f"{shlex.quote(str(root / V33_P0_Q4_COMPLETE_METADATA_RELATIVE))}"
+        )
+    else:
+        prepare_p0_command = (
             f"cd {target_root_text} && {activation} && "
             f"python scripts/task40_v20_service_workflow.py prepare-{command_prefix}-p0 "
-            f"--output-dir {pending_directory} "
+            f"--output-dir {shlex.quote(str(output))} "
             f"--execution-root {target_root_text}"
-        ),
+        )
+    commands = {
+        "prepare_p0": prepare_p0_command,
         "prepare_approved_package_after_explicit_user_approval": (
             f"cd {target_root_text} && {activation} && "
             f"python scripts/task40_v20_service_workflow.py prepare-{command_prefix}-approved "
@@ -1466,14 +1637,16 @@ def _prepare_review_pending_package(
             f'--output "{target_run}/partial_checker_result.manual.json"'
         ),
     }
-    if review_version == "V32":
+    if _uses_v32_q4_imports(review_version):
+        approval_receipt_name = f"user_approval_{review_version.lower()}.receipt.json"
+        service_contract_flag = f"--task40-{review_version.lower()}-execution-contract"
         commands = {
             "prepare_p0": commands["prepare_p0"],
             "prepare_approved_package_after_explicit_user_approval": (
                 f"cd {target_root_text} && {activation} && "
-                "python scripts/task40_v20_service_workflow.py prepare-v32-approved "
+                f"python scripts/task40_v20_service_workflow.py prepare-{command_prefix}-approved "
                 f'--pending-dir "{pending_directory}" '
-                f'--approval-receipt "{pending_directory / "user_approval_v32.receipt.json"}"'
+                f'--approval-receipt "{pending_directory / approval_receipt_name}"'
             ),
             "prepare_same_window_after_source_fix": commands[
                 "prepare_same_window_after_source_fix"
@@ -1482,11 +1655,15 @@ def _prepare_review_pending_package(
                 f"cd {target_root_text} && {source_binding} && "
                 f"bash scripts/run_case_in_user_service.sh --service-unit \"$v31_unit\" "
                 f'"$v31_root/stage_inputs/full/{V30_CANONICAL_INPUT_RELATIVE.name}" '
-                f'--task40-v32-execution-contract "$v31_root/{approved_contract_name}"'
+                f'{service_contract_flag} "$v31_root/{approved_contract_name}"'
             ),
         }
     return {
-        "schema": f"task40extra.review_{review_version.lower()}_p0_command_registration.v1",
+        "schema": (
+            "task40extra.review_v32_p0_command_registration.v1"
+            if _uses_v32_q4_imports(review_version)
+            else "task40extra.review_v31_p0_command_registration.v1"
+        ),
         "status": (
             "PENDING_USER_APPROVAL_NO_WINDOW_CREATED"
             if frozen_source["clean"]
@@ -1506,7 +1683,7 @@ def _prepare_review_pending_package(
                     "check-partial command as supervised completion."
                 )
             }
-            if review_version == "V32"
+            if _uses_v32_q4_imports(review_version)
             else {}
         ),
         "created_payload_or_window": reused_canonical_input,
@@ -1546,6 +1723,22 @@ def prepare_v32_approved_package(
         approval_receipt=approval_receipt,
         reuse_approved_contract=reuse_approved_contract,
         review_version="V32",
+    )
+
+
+def prepare_v33_approved_package(
+    *,
+    repo_root: str | Path,
+    pending_directory: str | Path,
+    approval_receipt: str | Path | None = None,
+    reuse_approved_contract: str | Path | None = None,
+) -> dict[str, Any]:
+    return _prepare_review_approved_package(
+        repo_root=repo_root,
+        pending_directory=pending_directory,
+        approval_receipt=approval_receipt,
+        reuse_approved_contract=reuse_approved_contract,
+        review_version="V33",
     )
 
 
@@ -1601,8 +1794,26 @@ def _prepare_review_approved_package(
         contract_name = "execution_contract_v32.approved.json"
         anchor_schema = "task40extra.review_v32_t0_anchor.v1"
         campaign_name = "task40extra_v32_all_q_reference_conditional_target_pilot"
+    elif review_version == "V33":
+        review_path_text = V33_REVIEW_PATH
+        review_commit = V33_REVIEW_COMMIT
+        review_sha256 = V33_REVIEW_SHA256
+        contract_schema = V33_CONTRACT_SCHEMA
+        registration_schema = V33_REGISTRATION_SCHEMA
+        approval_schema = V33_USER_APPROVAL_EVIDENCE_SCHEMA
+        approval_scope = V33_APPROVAL_SCOPE
+        total_seconds = V33_TOTAL_SECONDS
+        numeric_seconds = V33_NUMERIC_SECONDS
+        closeout_seconds = V33_CLOSEOUT_SECONDS
+        stage_scope = V33_STAGE_SCOPE
+        preparation_relative = V33_PREPARATION_RELATIVE
+        package_name = "v33_pending_package"
+        window_name = "campaign_window_v33.json"
+        contract_name = "execution_contract_v33.approved.json"
+        anchor_schema = "task40extra.review_v32_t0_anchor.v1"
+        campaign_name = "task40extra_v33_all_q_reference_conditional_target_pilot"
     else:
-        raise V31ContractError("approved package review version must be exactly V31 or V32")
+        raise V31ContractError("approved package review version must be exactly V31, V32, or V33")
     resume_path = Path(reuse_approved_contract).resolve() if reuse_approved_contract else None
     approval_path = Path(approval_receipt).resolve() if approval_receipt else None
     if (resume_path is None) == (approval_path is None):
@@ -1853,7 +2064,13 @@ def _prepare_review_approved_package(
         approval_record = deepcopy(prior_contract["user_approval"])
         status = "USER_APPROVED_SAME_WINDOW_RESUME_READY"
 
-    pending_builder = prepare_v31_pending_package if review_version == "V31" else prepare_v32_pending_package
+    pending_builder = (
+        prepare_v31_pending_package
+        if review_version == "V31"
+        else prepare_v33_pending_package
+        if review_version == "V33"
+        else prepare_v32_pending_package
+    )
     pending = pending_builder(
         repo_root=root,
         output_directory=pending_directory,
@@ -1905,12 +2122,12 @@ def _prepare_review_approved_package(
         selector_sha256=str(execution.get("selector_sha256", "")),
         q4_numeric_pending_import=(
             pending_contract.get("preparation", {}).get("q4_numeric_pending_import")
-            if review_version == "V32"
+            if _uses_v32_q4_imports(review_version)
             else None
         ),
         q4_complete_import=(
             pending_contract.get("preparation", {}).get("q4_complete_import")
-            if review_version == "V32"
+            if _uses_v32_q4_imports(review_version)
             else None
         ),
     )
@@ -1936,7 +2153,7 @@ def _prepare_review_approved_package(
     contract["execution"]["campaign_window_path"] = window["window_path"]
     contract["execution"]["campaign_window_sha256"] = window_sha256
     contract["execution"]["run_source_sha"] = run_source_sha
-    if review_version == "V32":
+    if _uses_v32_q4_imports(review_version):
         q4_template = v32_q4_pending_import_template(
             execution_root=root,
             consumer_source_sha=run_source_sha,
@@ -1994,7 +2211,11 @@ def _prepare_review_approved_package(
     approved_registration_path = Path(pending["pending_directory"]) / f"campaign_registration_{review_version.lower()}.approved.json"
     approved_registration_sha = _write_once(approved_registration_path, registration)
     return {
-        "schema": f"task40extra.review_{review_version.lower()}_approved_package.v1",
+        "schema": (
+            "task40extra.review_v32_approved_package.v1"
+            if _uses_v32_q4_imports(review_version)
+            else "task40extra.review_v31_approved_package.v1"
+        ),
         "status": status,
         "run_source_sha": run_source_sha,
         "source_at_entry": window["source_at_entry"],
@@ -2053,6 +2274,16 @@ def require_v31_execution_contract(
         approval_scope = V32_APPROVAL_SCOPE
         contract_filename = "execution_contract_v32.approved.json"
         window_filename = "campaign_window_v32.json"
+    elif review == {"path": V33_REVIEW_PATH, "commit": V33_REVIEW_COMMIT, "sha256": V33_REVIEW_SHA256}:
+        review_version = "V33"
+        expected_schema = V33_CONTRACT_SCHEMA
+        expected_registration_schema = V33_REGISTRATION_SCHEMA
+        total_seconds = V33_TOTAL_SECONDS
+        numeric_seconds = V33_NUMERIC_SECONDS
+        closeout_seconds = V33_CLOSEOUT_SECONDS
+        approval_scope = V33_APPROVAL_SCOPE
+        contract_filename = "execution_contract_v33.approved.json"
+        window_filename = "campaign_window_v33.json"
     else:
         raise V31ContractError("Task40 execution contract review identity is not registered")
     if payload.get("schema") != expected_schema:
@@ -2128,7 +2359,7 @@ def require_v31_execution_contract(
     window_path = Path(window["window_path"]).resolve(strict=True)
     if hashlib.sha256(window_path.read_bytes()).hexdigest() != window["window_sha256"]:
         raise V31ContractError(f"{review_version} fixed campaign window is missing or changed")
-    if review_version == "V32":
+    if _uses_v32_q4_imports(review_version):
         preparation = payload.get("preparation")
         template = preparation.get("q4_numeric_pending_import") if isinstance(preparation, dict) else None
         complete_template = preparation.get("q4_complete_import") if isinstance(preparation, dict) else None
@@ -2194,14 +2425,15 @@ def require_v31_execution_contract(
                 cwd=root,
                 text=True,
             )
-            review_path = root / (V32_REVIEW_PATH if review_version == "V32" else V31_REVIEW_PATH)
+            review_identity = {
+                "V31": (V31_REVIEW_PATH, V31_REVIEW_COMMIT, V31_REVIEW_SHA256),
+                "V32": (V32_REVIEW_PATH, V32_REVIEW_COMMIT, V32_REVIEW_SHA256),
+                "V33": (V33_REVIEW_PATH, V33_REVIEW_COMMIT, V33_REVIEW_SHA256),
+            }[review_version]
+            review_path = root / review_identity[0]
             review_sha = hashlib.sha256(review_path.read_bytes()).hexdigest()
             ancestry = subprocess.run(
-                [
-                    "git", "merge-base", "--is-ancestor",
-                    V32_REVIEW_COMMIT if review_version == "V32" else V31_REVIEW_COMMIT,
-                    "HEAD",
-                ],
+                ["git", "merge-base", "--is-ancestor", review_identity[1], "HEAD"],
                 cwd=root,
                 check=False,
             )
@@ -2211,7 +2443,7 @@ def require_v31_execution_contract(
             branch != V31_BRANCH
             or head != source["source_sha"]
             or status.strip()
-            or review_sha != (V32_REVIEW_SHA256 if review_version == "V32" else V31_REVIEW_SHA256)
+            or review_sha != review_identity[2]
             or ancestry.returncode != 0
         ):
             raise V31ContractError(f"{review_version} execution requires the exact clean frozen source and review")
@@ -2232,7 +2464,7 @@ def require_v31_execution_contract(
                 raise V31ContractError(f"{review_version} {path_key} identity differs from the approved contract")
             if not identity_path.resolve().is_relative_to(source_root.resolve()):
                 raise V31ContractError(f"{review_version} {path_key} is outside the source-qualified native artifact root")
-        if review_version == "V32":
+        if _uses_v32_q4_imports(review_version):
             from src.runners.task40_v30_contract import V30_CANONICAL_INPUT_RELATIVE
 
             template = payload["preparation"]["q4_numeric_pending_import"]

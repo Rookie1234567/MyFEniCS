@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from pathlib import Path
+import time
 from typing import Any
 
 import numpy as np
@@ -37,29 +38,65 @@ def _surface_assemblers(
     jit_options: Mapping[str, Any] | None = None,
     dtn_phase_gauge: str = "global_z",
     verify_dtn_quadrature: bool = False,
+    progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
     from .dtn_boundary_phase_gauge import BOUNDARY_PLANE, validate_phase_gauge
 
     validate_phase_gauge(dtn_phase_gauge)
 
-    return {
-        (side, component): _ReusableSurfaceComponentAssembler(
-            function_space,
-            mesh_data,
-            cfg.tags.z_max if side == "top" else cfg.tags.z_min,
-            component,
-            quadrature_degree=qdegree,
-            jit_options=jit_options,
-            boundary_reference_z=(
-                float(cfg.physical_z_max if side == "top" else cfg.physical_z_min)
-                if dtn_phase_gauge == BOUNDARY_PLANE else None
-            ),
-            verify_compiled_gauss=verify_dtn_quadrature,
-        )
-        for side in ("top", "bottom")
-        for component in (0, 1)
-    }
+    if progress_callback is not None and not callable(progress_callback):
+        raise TypeError("surface assembler progress callback must be callable")
+    result = {}
+    targets = tuple((side, component) for side in ("top", "bottom") for component in (0, 1))
+    for completed, (side, component) in enumerate(targets, start=1):
+        started = time.perf_counter()
+        cpu_started = time.process_time()
+        base = {
+            "phase": "surface_form_jit",
+            "side": str(side),
+            "component": int(component),
+            "completed": completed - 1,
+            "total": len(targets),
+            "quadrature_degree": int(qdegree),
+        }
+        if progress_callback is not None:
+            progress_callback({**base, "status": "STARTED"})
+        try:
+            result[(side, component)] = _ReusableSurfaceComponentAssembler(
+                function_space,
+                mesh_data,
+                cfg.tags.z_max if side == "top" else cfg.tags.z_min,
+                component,
+                quadrature_degree=qdegree,
+                jit_options=jit_options,
+                boundary_reference_z=(
+                    float(cfg.physical_z_max if side == "top" else cfg.physical_z_min)
+                    if dtn_phase_gauge == BOUNDARY_PLANE else None
+                ),
+                verify_compiled_gauss=verify_dtn_quadrature,
+            )
+        except BaseException as error:
+            if progress_callback is not None:
+                progress_callback({
+                    **base,
+                    "status": "FAILED",
+                    "completed": completed - 1,
+                    "elapsed_seconds": max(0.0, time.perf_counter() - started),
+                    "process_cpu_seconds": max(0.0, time.process_time() - cpu_started),
+                    "error_type": type(error).__name__,
+                    "error_message": str(error),
+                })
+            raise
+        if progress_callback is not None:
+            progress_callback({
+                **base,
+                "status": "COMPLETE",
+                "completed": completed,
+                "elapsed_seconds": max(0.0, time.perf_counter() - started),
+                "process_cpu_seconds": max(0.0, time.process_time() - cpu_started),
+            })
+    return result
 
 
 def _build_split_volume_action(
@@ -109,6 +146,7 @@ def build_same_mesh_physical_action(
     dtn_phase_gauge: str = "global_z",
     verify_dtn_quadrature: bool = False,
     research_phase_override: tuple[complex, complex] | None = None,
+    stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -137,6 +175,41 @@ def build_same_mesh_physical_action(
     from .fullspace_physical_action import FullspacePhysicalAction
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
+    if stage_callback is not None and not callable(stage_callback):
+        raise TypeError("same-mesh physical action stage callback must be callable")
+
+    def stage_progress(facts: Mapping[str, Any]) -> None:
+        if stage_callback is not None:
+            stage_callback(dict(facts))
+
+    def run_stage(phase, operation, *, complete_facts=None):
+        if stage_callback is None:
+            return operation()
+        started = time.perf_counter()
+        cpu_started = time.process_time()
+        base = {"phase": str(phase)}
+        stage_progress({**base, "status": "STARTED"})
+        try:
+            result = operation()
+        except BaseException as error:
+            stage_progress({
+                **base,
+                "status": "FAILED",
+                "elapsed_seconds": max(0.0, time.perf_counter() - started),
+                "process_cpu_seconds": max(0.0, time.process_time() - cpu_started),
+                "error_type": type(error).__name__,
+                "error_message": str(error),
+            })
+            raise
+        stage_progress({
+            **base,
+            "status": "COMPLETE",
+            "elapsed_seconds": max(0.0, time.perf_counter() - started),
+            "process_cpu_seconds": max(0.0, time.process_time() - cpu_started),
+            **dict(complete_facts(result) if complete_facts is not None else {}),
+        })
+        return result
+
     degree = int(degree)
     validate_phase_gauge(dtn_phase_gauge)
     _validate_physical_split_profile(cfg)
@@ -162,14 +235,19 @@ def build_same_mesh_physical_action(
         raise ValueError("same-mesh physical mode inventory is incomplete")
     options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
     qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
-    assemblers = _surface_assemblers(
-        function_space,
-        setup["mesh_data"],
-        cfg,
-        qdegree,
-        jit_options=options,
-        dtn_phase_gauge=dtn_phase_gauge,
-        verify_dtn_quadrature=verify_dtn_quadrature,
+    assemblers = run_stage(
+        "surface_form_jit_all_sides",
+        lambda: _surface_assemblers(
+            function_space,
+            setup["mesh_data"],
+            cfg,
+            qdegree,
+            jit_options=options,
+            dtn_phase_gauge=dtn_phase_gauge,
+            verify_dtn_quadrature=verify_dtn_quadrature,
+            progress_callback=stage_progress if stage_callback is not None else None,
+        ),
+        complete_facts=lambda value: {"surface_assembler_count": len(value)},
     )
     carrier = None
     dtn_action = None
@@ -179,14 +257,22 @@ def build_same_mesh_physical_action(
     compiled_gauss = None
     try:
         if dtn_phase_gauge == BOUNDARY_PLANE:
-            assembly_context = build_gauge_assembly_context(
-                function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers,
-                phase_override=research_phase_override,
+            assembly_context = run_stage(
+                "boundary_plane_gauge_context",
+                lambda: build_gauge_assembly_context(
+                    function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers,
+                    phase_override=research_phase_override,
+                ),
             )
-        carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, floquet.mpc, cfg,
-            phase_gauge=dtn_phase_gauge,
-            assembly_context=assembly_context,
+        carrier = run_stage(
+            "dtn_carrier_build",
+            lambda: build_fullspace_dtn_carrier_from_surface(
+                modes, assemblers, floquet.mpc, cfg,
+                phase_gauge=dtn_phase_gauge,
+                assembly_context=assembly_context,
+                progress_callback=stage_progress if stage_callback is not None else None,
+            ),
+            complete_facts=lambda value: {"carrier_mode_count": len(value.entries)},
         )
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the
@@ -198,26 +284,37 @@ def build_same_mesh_physical_action(
             }
         del assemblers
     try:
-        dtn_action = build_fullspace_dtn_action(
-            carrier, comm=setup["mesh"].comm
+        dtn_action = run_stage(
+            "dtn_action_wrap",
+            lambda: build_fullspace_dtn_action(carrier, comm=setup["mesh"].comm),
         )
-        volume_action = _build_split_volume_action(
-            setup["mesh_data"],
-            cfg,
-            function_space,
-            floquet,
-            jit_options=options,
-            volume_quadrature_metadata=volume_quadrature_metadata,
+        volume_action = run_stage(
+            "volume_form_jit",
+            lambda: _build_split_volume_action(
+                setup["mesh_data"],
+                cfg,
+                function_space,
+                floquet,
+                jit_options=options,
+                volume_quadrature_metadata=volume_quadrature_metadata,
+            ),
         )
-        physical_action = FullspacePhysicalAction(volume_action, dtn_action)
+        physical_action = run_stage(
+            "physical_action_combine",
+            lambda: FullspacePhysicalAction(volume_action, dtn_action),
+        )
         owned_volume_action = volume_action
         owned_dtn_action = dtn_action
         dtn_action = None
         volume_action = None
-        incident_projections = tuple(
-            incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
-            if dtn_phase_gauge == BOUNDARY_PLANE else _incident_projection_onto_top_mode(mode, cfg)
-            for mode in modes
+        incident_projections = run_stage(
+            "incident_projection_inventory",
+            lambda: tuple(
+                incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
+                if dtn_phase_gauge == BOUNDARY_PLANE else _incident_projection_onto_top_mode(mode, cfg)
+                for mode in modes
+            ),
+            complete_facts=lambda value: {"completed": len(value), "total": len(modes)},
         )
         return {
             "dtn_phase_gauge": dtn_phase_gauge,

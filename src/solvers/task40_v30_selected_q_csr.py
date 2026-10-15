@@ -2739,6 +2739,7 @@ def prepare_selected_q_csr_sector(
     saved_native_witness_by_q: Mapping[int, Mapping[str, Any]] | None = None,
     direct_hhat_evidence_by_q: Mapping[int, Mapping[str, Any]] | None = None,
     precomputed_numeric_by_q: Mapping[int, Mapping[str, Any]] | None = None,
+    progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
     """Produce only missing q values and persist each with an independent native gate."""
     sector_qs = tuple(int(q) for q in sector_q_indices)
@@ -2760,6 +2761,21 @@ def prepare_selected_q_csr_sector(
         or not callable(allocation_gate)
     ):
         raise ValueError("V30 sector preparation must bind exactly its real missing q branches")
+    if progress_callback is not None and not callable(progress_callback):
+        raise TypeError("selected-q progress callback must be callable")
+
+    def progress(phase: str, status: str, q_index: int, **facts: Any) -> None:
+        if progress_callback is not None:
+            progress_callback(
+                {
+                    "phase": str(phase),
+                    "status": str(status),
+                    "q_index": int(q_index),
+                    "twist_index": int(twist_index),
+                    "sector_q_indices": list(sector_qs),
+                    **facts,
+                }
+            )
     saved_witnesses = {
         int(q): value for q, value in (saved_native_witness_by_q or {}).items()
     }
@@ -2796,6 +2812,8 @@ def prepare_selected_q_csr_sector(
     for q_index in selected:
         q_map = q_maps_by_q[q_index]
         q_directory = output_root / f"q{q_index}_twist{twist_index}"
+        numeric_started = time.perf_counter()
+        progress("selected_q_pattern_numeric_fill", "STARTED", q_index)
         if q_index in precomputed_numeric:
             numeric_stage = dict(precomputed_numeric[q_index])
             numeric_pending = dict(numeric_stage.get("numeric_pending", {}))
@@ -2820,25 +2838,48 @@ def prepare_selected_q_csr_sector(
                 raise ValueError("prebuilt selected-q numeric pending differs from the live sector identity")
             q_directory = Path(str(numeric_stage.get("output_directory", q_directory))).resolve()
         else:
-            numeric_stage = prepare_saved_selected_q_numeric_pending(
-                source=sources_by_q[q_index],
-                q_map=q_map,
-                q_index=q_index,
-                twist_index=twist_index,
-                trace_rows=int(trace_rows_by_q[q_index]),
-                allocation_gate=allocation_gate,
-                profile=profile,
-                operator_identity=operator_identity_by_q[q_index],
-                matrix_source_identity=matrix_source_identity_by_q[q_index],
-                execution_identity=execution_identity,
-                producer_identity=producer_identity_by_q[q_index],
-                output_directory=q_directory,
-                direct_hhat_evidence=direct_hhat_evidence.get(q_index),
-            )
+            try:
+                numeric_stage = prepare_saved_selected_q_numeric_pending(
+                    source=sources_by_q[q_index],
+                    q_map=q_map,
+                    q_index=q_index,
+                    twist_index=twist_index,
+                    trace_rows=int(trace_rows_by_q[q_index]),
+                    allocation_gate=allocation_gate,
+                    profile=profile,
+                    operator_identity=operator_identity_by_q[q_index],
+                    matrix_source_identity=matrix_source_identity_by_q[q_index],
+                    execution_identity=execution_identity,
+                    producer_identity=producer_identity_by_q[q_index],
+                    output_directory=q_directory,
+                    direct_hhat_evidence=direct_hhat_evidence.get(q_index),
+                )
+            except BaseException as error:
+                progress(
+                    "selected_q_pattern_numeric_fill",
+                    "FAILED",
+                    q_index,
+                    elapsed_seconds=max(0.0, time.perf_counter() - numeric_started),
+                    error_type=type(error).__name__,
+                    error_message=str(error),
+                )
+                raise
             matrix = numeric_stage["matrix"]
             pattern_record = numeric_stage["pattern_record"]
             numeric_facts = numeric_stage["numeric_facts"]
             numeric_pending = numeric_stage["numeric_pending"]
+        progress(
+            "selected_q_pattern_numeric_fill",
+            "COMPLETE",
+            q_index,
+            elapsed_seconds=max(0.0, time.perf_counter() - numeric_started),
+            numeric_pending_path=numeric_pending.get("record_path"),
+            numeric_pending_sha256=numeric_pending.get("record_sha256"),
+            shape=list(matrix.shape),
+            nnz=int(matrix.nnz),
+            numeric_fill_complete=bool(numeric_facts.get("numeric_fill_complete")),
+            reused_existing_numeric=bool(numeric_stage.get("reopened", False)),
+        )
         numeric_pending_by_q[q_index] = dict(numeric_pending)
         prepared[q_index] = matrix
         matrices[q_index] = matrix
@@ -2887,8 +2928,18 @@ def prepare_selected_q_csr_sector(
                 },
             )
             native_stage_records[stage] = dict(record)
+            progress(
+                "selected_q_native_stage_persisted",
+                "COMPLETE",
+                q_index,
+                native_stage=str(stage),
+                product_path=record.get("path"),
+                product_sha256=record.get("sha256"),
+            )
             return record
 
+        native_started = time.perf_counter()
+        progress("selected_q_native_actions", "STARTED", q_index)
         try:
             native_result = run_selected_q_native_actions(
                 action=action,
@@ -2912,6 +2963,14 @@ def prepare_selected_q_csr_sector(
                 },
             )
         except Exception as exc:
+            progress(
+                "selected_q_native_actions",
+                "FAILED",
+                q_index,
+                elapsed_seconds=max(0.0, time.perf_counter() - native_started),
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+            )
             from .task40_v25_selected_q0 import _write_json
 
             failure_path = (
@@ -2939,6 +2998,13 @@ def prepare_selected_q_csr_sector(
                 },
             )
             raise
+        progress(
+            "selected_q_native_actions",
+            "COMPLETE",
+            q_index,
+            elapsed_seconds=max(0.0, time.perf_counter() - native_started),
+            maximum_relative_error=native_result.get("maximum_relative_error"),
+        )
         manifest, qualification, entry = finalize_selected_q_csr(
             matrix=prepared[q_index],
             pattern_record=pattern_records[q_index],
@@ -2964,6 +3030,16 @@ def prepare_selected_q_csr_sector(
         if qualification.get("status") != "PASS" or entry.get("manifest_status") != "COMPLETE_CSR":
             raise RuntimeError("V30 selected q did not persist COMPLETE CSR and native PASS")
         selector_entries.append(entry)
+        progress(
+            "selected_q_complete_native",
+            "COMPLETE",
+            q_index,
+            csr_manifest_path=entry["csr_manifest"]["path"],
+            csr_manifest_sha256=entry["manifest_sha256"],
+            native_qualification_path=entry["native_qualification"]["path"],
+            native_qualification_sha256=entry["native_qualification_sha256"],
+            qualification_status=qualification.get("status"),
+        )
         qualification_receipts.append(
             {
                 "q_index": q_index,

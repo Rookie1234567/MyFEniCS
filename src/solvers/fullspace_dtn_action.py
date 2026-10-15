@@ -10,10 +10,11 @@ applied exactly once.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
 import json
+import time
 from types import MappingProxyType
 from typing import Any
 
@@ -24,6 +25,7 @@ from petsc4py import PETSc
 
 FULLSPACE_DTN_PROFILE = "full3d_scalable_v1"
 FULLSPACE_DTN_BATCH_SIZE = 8
+FULLSPACE_DTN_PROGRESS_INTERVAL = 64
 FULLSPACE_DTN_MANIFEST_SCHEMA = "fullspace-dtn.mode-manifest.v1"
 
 _MODE_IDENTITY_FIELDS = frozenset(
@@ -631,6 +633,8 @@ def iter_fullspace_dtn_functionals_from_surface(
     precomputed_mode_rows: Sequence[Mapping[str, Any]] | None = None,
     precomputed_physical_manifest_sha256: str | None = None,
     audit: dict[str, Any] | None = None,
+    progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    progress_interval: int = FULLSPACE_DTN_PROGRESS_INTERVAL,
 ):
     """Yield production B/D/H functionals one ordered mode at a time.
 
@@ -653,6 +657,10 @@ def iter_fullspace_dtn_functionals_from_surface(
     )
 
     validate_phase_gauge(phase_gauge)
+    if type(progress_interval) is not int or progress_interval < 1:
+        raise ValueError("DtN carrier progress interval must be a positive integer")
+    if progress_callback is not None and not callable(progress_callback):
+        raise TypeError("DtN carrier progress callback must be callable")
     modes = tuple(modes)
     if not modes:
         raise ValueError("dynamic DtN surface iterator requires a nonempty ordered mode table")
@@ -786,6 +794,8 @@ def iter_fullspace_dtn_functionals_from_surface(
     cached_components = None
     components = None
     functional = None
+    progress_started = time.perf_counter()
+    progress_cpu_started = time.process_time()
 
     def component_backing_bytes(component_pairs):
         owners = {}
@@ -872,6 +882,23 @@ def iter_fullspace_dtn_functionals_from_surface(
                 mode_identity=mode_identity,
             )
             emitted += 1
+            if progress_callback is not None and (
+                emitted % progress_interval == 0 or emitted == len(selected_indices)
+            ):
+                progress_callback(
+                    {
+                        "phase": "dtn_carrier_mode",
+                        "status": "PROGRESS",
+                        "completed": int(emitted),
+                        "total": int(len(selected_indices)),
+                        "mode_index": int(index),
+                        "side": str(mode.side),
+                        "polarization": str(mode.polarization),
+                        "throttle_interval": int(progress_interval),
+                        "elapsed_seconds": max(0.0, time.perf_counter() - progress_started),
+                        "process_cpu_seconds": max(0.0, time.process_time() - progress_cpu_started),
+                    }
+                )
             yield functional
             next_index = (
                 selected_indices[selection_position + 1]
@@ -934,6 +961,8 @@ def build_fullspace_dtn_carrier_from_surface(
     *,
     phase_gauge: str = "global_z",
     assembly_context: Mapping[str, Any] | None = None,
+    progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    progress_interval: int = FULLSPACE_DTN_PROGRESS_INTERVAL,
 ) -> FullspaceDtnCarrier:
     """Build the cached carrier by consuming the same production iterator."""
 
@@ -944,6 +973,8 @@ def build_fullspace_dtn_carrier_from_surface(
     entries = tuple(iter_fullspace_dtn_functionals_from_surface(
         modes, surface_assemblers, mpc, cfg, phase_gauge=phase_gauge,
         assembly_context=assembly_context, audit=iterator_audit,
+        progress_callback=progress_callback,
+        progress_interval=progress_interval,
     ))
     index_map = mpc.function_space.dofmap.index_map
     owned_start = int(index_map.local_range[0])
@@ -1002,6 +1033,7 @@ def build_fullspace_dtn_carrier_from_surface(
 
 __all__ = (
     "FULLSPACE_DTN_BATCH_SIZE",
+    "FULLSPACE_DTN_PROGRESS_INTERVAL",
     "FULLSPACE_DTN_MANIFEST_SCHEMA",
     "FULLSPACE_DTN_PROFILE",
     "FullspaceDtnAction",

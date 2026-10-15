@@ -88,7 +88,7 @@ def test_v30_reference_first_control_flow_passes_frozen_identity_and_sector_buil
     def target_builder(*, reference_owner, mode_inventory):
         events.append("target_builder")
         sector_inputs = _task40_v30_sector_builder_inputs(
-            global_bundle=reference_owner["global_bundle"],
+            mode_descriptor=reference_owner["global_bundle"],
             mode_inventory=mode_inventory,
             coordinates=coordinates,
             profile=profile,
@@ -113,6 +113,115 @@ def test_v30_reference_first_control_flow_passes_frozen_identity_and_sector_buil
     ]
     assert result["mode_manifest_sha256"] == mode_sha
     assert result["trace_rows_by_q"] == {0: 773568, 4: 773568}
+
+
+def test_v33_p0_reads_fixed_q4_metadata_copy_without_changing_target_paths(
+    tmp_path, monkeypatch
+):
+    import shutil
+
+    from src.runners import task40_v31_contract as v31_contract
+    from src.solvers import task40_v30_selected_q_csr
+
+    monkeypatch.setattr(
+        task40_v30_selected_q_csr,
+        "preflight_v32_q4_numeric_pending_import",
+        lambda *_args, **_kwargs: pytest.fail(
+            "V33 P0 must not scan the historical q4 arrays"
+        ),
+    )
+    metadata_directory = ROOT / v31_contract.V33_P0_Q4_COMPLETE_METADATA_RELATIVE
+    output_directory = (
+        ROOT
+        / v31_contract.V33_PREPARATION_RELATIVE
+        / f"pytest_v33_p0_{tmp_path.name}"
+    )
+    assert not output_directory.exists()
+    try:
+        result = v31_contract.prepare_v33_pending_package(
+            repo_root=ROOT,
+            output_directory=output_directory,
+            execution_root=v31_contract.V31_WORKSTATION_ROOT,
+            q4_complete_metadata_directory=metadata_directory,
+        )
+        contract = json.loads(Path(result["contract"]["path"]).read_text(encoding="utf-8"))
+        registration = json.loads(
+            Path(result["registration"]["path"]).read_text(encoding="utf-8")
+        )
+        complete = contract["preparation"]["q4_complete_import"]
+        target_root = Path(v31_contract.V31_WORKSTATION_ROOT).resolve()
+
+        assert complete["csr_manifest"] == {
+            "path": str(target_root / v31_contract.V32_Q4_COMPLETE_MANIFEST_RELATIVE),
+            "sha256": v31_contract.V32_Q4_COMPLETE_MANIFEST_SHA256,
+        }
+        assert complete["native_qualification"] == {
+            "path": str(target_root / v31_contract.V32_Q4_COMPLETE_NATIVE_RELATIVE),
+            "sha256": v31_contract.V32_Q4_COMPLETE_NATIVE_SHA256,
+            "status": "PASS",
+        }
+        assert {
+            name: row["sha256"] for name, row in complete["csr_artifacts"].items()
+        } == v31_contract.V32_Q4_ARRAY_SHA256
+        assert all(
+            Path(row["path"]).is_relative_to(target_root)
+            for row in complete["csr_artifacts"].values()
+        )
+        assert result["window_created"] is False
+        assert registration["window"]["t0_utc"] is None
+        assert registration["window"]["window_path"] is None
+        assert registration["window"]["window_sha256"] is None
+
+        p0_command = result["commands"]["prepare_p0"]
+        assert "activate_local_wsl_complex.sh" in p0_command
+        assert "--execution-root /home/fenics/Projects/laptop_share" in p0_command
+        assert f"--q4-complete-metadata-directory {metadata_directory}" in p0_command
+        approved_command = result["commands"][
+            "prepare_approved_package_after_explicit_user_approval"
+        ]
+        assert "activate_native_complex.sh" in approved_command
+        assert "--q4-complete-metadata-directory" not in approved_command
+        assert "run_case_in_user_service.sh" in result["commands"][
+            "single_supervised_service_after_approved_package"
+        ]
+
+        corrupted_metadata = tmp_path / "corrupted_q4_metadata"
+        shutil.copytree(metadata_directory, corrupted_metadata)
+        corrupted_manifest = (
+            corrupted_metadata / v31_contract.V32_Q4_COMPLETE_MANIFEST_RELATIVE.name
+        )
+        corrupted_manifest.write_bytes(corrupted_manifest.read_bytes() + b" ")
+        with pytest.raises(v31_contract.V31ContractError, match="missing or changed"):
+            v31_contract.v32_q4_complete_import_template(
+                execution_root=v31_contract.V31_WORKSTATION_ROOT,
+                metadata_directory=corrupted_metadata,
+            )
+
+        from scripts import task40_v20_service_workflow as service
+
+        cli_arguments = {}
+
+        def capture_p0_arguments(**kwargs):
+            cli_arguments.update(kwargs)
+            return {"window_created": False}
+
+        monkeypatch.setattr(
+            v31_contract, "prepare_v33_pending_package", capture_p0_arguments
+        )
+        assert service.main(
+            [
+                "prepare-v33-p0",
+                "--output-dir",
+                str(output_directory),
+                "--execution-root",
+                v31_contract.V31_WORKSTATION_ROOT,
+                "--q4-complete-metadata-directory",
+                str(metadata_directory),
+            ]
+        ) == 0
+        assert cli_arguments["q4_complete_metadata_directory"] == metadata_directory
+    finally:
+        shutil.rmtree(output_directory, ignore_errors=True)
 
 
 @pytest.mark.parametrize("source_qualified_attempt", [False, True])
@@ -1729,3 +1838,285 @@ def test_v30_launcher_has_separate_contract_route_and_no_q_selector_flag():
     assert "MemoryMax=${v30_values[4]}" in text
     assert "MemorySwapMax=${v30_values[9]}" in text
     assert "TASK40_V30_CONTRACT_SHA256" in text
+
+
+def test_v33_partial_checker_reuses_v32_q4_import_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from scripts import task40_v20_service_workflow as service
+    from src.runners import task40_v31_contract
+
+    root = tmp_path.resolve()
+    monkeypatch.setattr(service, "ROOT", root)
+    source_sha = "c" * 40
+    window_sha = "d" * 64
+    input_identity = {
+        "source_sha": source_sha,
+        "staged_input_sha256": "e" * 64,
+        "scientific_input_sha256": "f" * 64,
+    }
+    input_path = root / "fixture.dat"
+    input_path.write_text(
+        f'run_id = "v33-checker-fixture"\n[solver]\npreconditioner = "{service.V30_TARGET_PROFILE}"\n',
+        encoding="utf-8",
+    )
+    selector_path = root / "selector.json"
+    selector_path.write_text("{}\n", encoding="utf-8")
+    selector_sha = _sha(selector_path)
+    contract_path = root / "execution_contract_v33.approved.json"
+    contract_path.write_text("{}\n", encoding="utf-8")
+    contract_sha = _sha(contract_path)
+    template = task40_v31_contract.v32_q4_pending_import_template(
+        execution_root=root, consumer_source_sha=source_sha
+    )
+    authorization = task40_v31_contract.bind_v32_q4_pending_import(
+        template,
+        consumer_execution_identity={
+            "source_sha": source_sha,
+            "window_sha256": window_sha,
+        },
+    )
+    contract = {
+        "preparation": {"q4_numeric_pending_import": template},
+        "execution": {
+            "window": {"window_sha256": window_sha},
+            "q_csr_import_authorizations": {
+                "numeric_pending": {"4": authorization}
+            },
+        },
+    }
+
+    def require_contract(path, *, expected_sha256, current_root):
+        assert Path(path).resolve() == contract_path.resolve()
+        assert expected_sha256 == contract_sha
+        assert Path(current_root).resolve() == root
+        return contract, contract_sha
+
+    def require_input_identity(
+        _canonical_path,
+        staged_path,
+        *,
+        repo_root,
+        source_sha: str,
+        selector_sha256: str,
+        q4_numeric_pending_import,
+        q4_complete_import,
+    ):
+        assert Path(staged_path).resolve() == input_path.resolve()
+        assert Path(repo_root).resolve() == root
+        assert source_sha == input_identity["source_sha"]
+        assert selector_sha256 == selector_sha
+        assert q4_numeric_pending_import == template
+        assert q4_complete_import is None
+        return input_identity
+
+    monkeypatch.setattr(
+        task40_v31_contract, "require_v31_execution_contract", require_contract
+    )
+    monkeypatch.setattr(
+        task40_v31_contract, "require_v31_input_identity", require_input_identity
+    )
+    monkeypatch.setenv("TASK40_V31_CONTRACT_PATH", str(contract_path))
+    monkeypatch.setenv("TASK40_V31_CONTRACT_SHA256", contract_sha)
+    monkeypatch.delenv("TASK40_V29_STRICT_FACTOR_ONLY", raising=False)
+
+    manifest = {
+        "run_id": "v33-checker-fixture",
+        "source_sha": source_sha,
+        "input_sha256": input_identity["staged_input_sha256"],
+        "scientific_input_sha256": input_identity["scientific_input_sha256"],
+        "physical_model_sha256": "a" * 64,
+        "v31_input_identity": input_identity,
+        "v31_execution_contract_binding": {
+            "review_version": "V33",
+            "contract_path": str(contract_path.resolve()),
+            "contract_sha256": contract_sha,
+            "run_source_sha": source_sha,
+            "execution_window_sha256": window_sha,
+            "selector_path": str(selector_path.resolve()),
+            "selector_sha256": selector_sha,
+            "q4_numeric_pending_import_template": template,
+            "q4_numeric_pending_import_authorization": authorization,
+            "q4_complete_import_template": None,
+            "q4_complete_import_authorization": None,
+            "input_identity": input_identity,
+        },
+    }
+    manifest_path = root / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = root / "summary.json"
+    summary_path.write_text(
+        json.dumps({"status": "finished", "result_classification": "worker_exit0"}),
+        encoding="utf-8",
+    )
+    numerical_output = root / "numerical_output"
+    numerical_output.mkdir()
+    (numerical_output / "v20_partial_result.json").write_text(
+        json.dumps(
+            {
+                "schema": "task40extra.fixture_partial_result.v1",
+                "status": "controlled_stop",
+                "run_id": manifest["run_id"],
+                "source_sha": source_sha,
+                "input_sha256": input_identity["staged_input_sha256"],
+                "physical_model_sha256": manifest["physical_model_sha256"],
+                "requested_stop_stage": "preflight",
+                "completed_stages": ["preflight"],
+                "official_result": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = service._check_partial_result(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output=numerical_output,
+        expected_stop_stage="preflight",
+    )
+
+    assert result["checks"]["v31_input_identity_error_absent"] is True
+    assert result["checks"]["v31_raw_stage_and_scientific_identity_match"] is True
+    assert result["v31_reference_audit_status"] == "NOT_RUN_WORKER_SUMMARY_ABSENT"
+
+
+def test_v33_campaign_loader_recognizes_its_own_86400_second_window(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.runners import task40_v10_campaign as campaign
+    from src.runners import task40_v31_contract
+
+    root = tmp_path.resolve()
+    monkeypatch.setattr(
+        campaign,
+        "__file__",
+        str(root / "src/runners/task40_v10_campaign.py"),
+    )
+    source_sha = "a" * 40
+    t0_utc = "2026-01-01T00:00:00Z"
+    numeric_cutoff_utc = "2026-01-01T23:40:00Z"
+    deadline_utc = "2026-01-02T00:00:00Z"
+    boot_id = "12345678-1234-1234-1234-123456789abc"
+    window_path = (
+        root
+        / task40_v31_contract.V31_ARTIFACT_ROOT_RELATIVE
+        / f"source_{source_sha}"
+        / "campaign_window_v33.json"
+    )
+    payload = {
+        "schema": campaign.CAMPAIGN_SCHEMA,
+        "campaign": "task40extra_v33_all_q_reference_conditional_target_pilot",
+        "authority": "User-approved Review V33 execution window",
+        "active_review_sha": task40_v31_contract.V33_REVIEW_COMMIT,
+        "active_review_path": task40_v31_contract.V33_REVIEW_PATH,
+        "active_review_sha256": task40_v31_contract.V33_REVIEW_SHA256,
+        "source_at_entry": source_sha,
+        "review_at_registration": task40_v31_contract.V33_REVIEW_COMMIT,
+        "t0_utc": t0_utc,
+        "numeric_cutoff_utc": numeric_cutoff_utc,
+        "deadline_utc": deadline_utc,
+        "campaign_seconds": task40_v31_contract.V33_TOTAL_SECONDS,
+        "numeric_cutoff_seconds": float(task40_v31_contract.V33_NUMERIC_SECONDS),
+        "closeout_reserve_seconds": task40_v31_contract.V33_CLOSEOUT_SECONDS,
+        "time_policy": campaign.CONSERVATIVE_REALTIME,
+        "stage_scope": list(task40_v31_contract.V33_STAGE_SCOPE),
+        "forbidden_scope": [
+            "automatic_cap_increase", "window_refresh", "parameter_or_accuracy_scan",
+            "MUMPS_or_ABI_change", "OOC_or_BLR", "unrelated_project_mutation", "master_merge",
+        ],
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "artifact_execution_identity_separate": True,
+        "bootstrap_boottime_elapsed_seconds": None,
+        "first_full_three_clock_sample": {
+            "monotonic": 12.0,
+            "boottime": 13.0,
+            "utc_ns": 1_767_225_600_000_000_000,
+            "boot_id": boot_id,
+        },
+        "initial_boot_id": boot_id,
+        "bootstrap_utc_elapsed_seconds": 0.0,
+        "bootstrap_time_treatment": "fixture debit recorded",
+    }
+    window_path.parent.mkdir(parents=True, exist_ok=True)
+    window_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    window_sha = _sha(window_path)
+    contract = {
+        "status": "USER_APPROVED",
+        "source_freeze": {"source_sha": source_sha},
+        "user_approval": {
+            "approved": True,
+            "scope": task40_v31_contract.V33_APPROVAL_SCOPE,
+            "window_sha256": window_sha,
+        },
+        "execution": {
+            "run_source_sha": source_sha,
+            "window": {
+                "window_path": str(window_path),
+                "window_sha256": window_sha,
+                "source_at_entry": source_sha,
+                "t0_utc": t0_utc,
+                "numeric_cutoff_utc": numeric_cutoff_utc,
+                "deadline_utc": deadline_utc,
+            },
+        },
+    }
+
+    loaded = campaign.load_fixed_campaign_window(
+        window_path,
+        require_current_boot=False,
+        v31_contract=contract,
+    )
+
+    assert loaded.total_seconds == 86_400.0
+    assert loaded.closeout_seconds == 1_200.0
+    assert loaded.sha256 == window_sha
+
+
+def test_v33_approved_package_rejects_v32_approval_scope_before_t0(
+    tmp_path: Path,
+):
+    from src.runners import task40_v31_contract
+
+    root = tmp_path.resolve()
+    source_sha = "b" * 40
+    pending_directory = (
+        root
+        / task40_v31_contract.V33_PREPARATION_RELATIVE
+        / "v33_pending_package"
+        / f"source_{source_sha}"
+    )
+    pending_directory.mkdir(parents=True)
+    receipt_path = pending_directory / "user_approval_v33.receipt.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "schema": task40_v31_contract.V33_USER_APPROVAL_EVIDENCE_SCHEMA,
+                "origin": "direct_user_message",
+                "approved": True,
+                "scope": task40_v31_contract.V32_APPROVAL_SCOPE,
+                "review_sha256": task40_v31_contract.V33_REVIEW_SHA256,
+                "source_sha": source_sha,
+                "execution_root": str(root),
+                "user_message": "fixture only: V32 approval scope",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        task40_v31_contract.V31ContractError,
+        match="V33 approval receipt does not bind",
+    ):
+        task40_v31_contract.prepare_v33_approved_package(
+            repo_root=root,
+            pending_directory=pending_directory,
+            approval_receipt=receipt_path,
+        )
+
+    assert not (
+        root
+        / task40_v31_contract.v31_source_artifact_relative(source_sha)
+        / "campaign_window_v33.json"
+    ).exists()

@@ -868,47 +868,56 @@ def test_v31_same_window_new_source_contract_launcher_worker_and_campaign_route(
         )
 
 
-def test_v32_service_campaign_resolves_original_entry_window_with_current_contract(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize("review_version", ["V32", "V33"])
+def test_v32_v33_service_campaign_resolves_original_entry_window_with_current_contract(
+    tmp_path, monkeypatch, review_version
 ):
     from scripts import task40_v20_service_workflow as workflow
     from src.runners import task40_v10_campaign as campaign
     from src.runners import task40_v31_contract
 
+    total_seconds = getattr(task40_v31_contract, f"{review_version}_TOTAL_SECONDS")
+    numeric_seconds = getattr(task40_v31_contract, f"{review_version}_NUMERIC_SECONDS")
+    closeout_seconds = getattr(task40_v31_contract, f"{review_version}_CLOSEOUT_SECONDS")
+    review_commit = getattr(task40_v31_contract, f"{review_version}_REVIEW_COMMIT")
+    review_path = getattr(task40_v31_contract, f"{review_version}_REVIEW_PATH")
+    review_sha256 = getattr(task40_v31_contract, f"{review_version}_REVIEW_SHA256")
+    approval_scope = getattr(task40_v31_contract, f"{review_version}_APPROVAL_SCOPE")
+    stage_scope = getattr(task40_v31_contract, f"{review_version}_STAGE_SCOPE")
     run_source = "b" * 40
     source_at_entry = "a" * 40
     window_path = (
         tmp_path
         / task40_v31_contract.v31_source_artifact_relative(source_at_entry)
-        / "campaign_window_v32.json"
+        / f"campaign_window_{review_version.lower()}.json"
     )
     window_path.parent.mkdir(parents=True)
 
     t0 = dt.datetime(2026, 10, 13, tzinfo=dt.timezone.utc)
     t0_ns = int(t0.timestamp()) * 1_000_000_000
-    cutoff = t0 + dt.timedelta(seconds=task40_v31_contract.V32_NUMERIC_SECONDS)
-    deadline = t0 + dt.timedelta(seconds=task40_v31_contract.V32_TOTAL_SECONDS)
+    cutoff = t0 + dt.timedelta(seconds=numeric_seconds)
+    deadline = t0 + dt.timedelta(seconds=total_seconds)
     t0_text = t0.strftime("%Y-%m-%dT%H:%M:%SZ")
     cutoff_text = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
     deadline_text = deadline.strftime("%Y-%m-%dT%H:%M:%SZ")
     boot_id = "12345678-1234-1234-1234-123456789abc"
     payload = {
         "schema": CAMPAIGN_SCHEMA,
-        "campaign": "task40extra_v32_all_q_reference_conditional_target_pilot",
-        "authority": "User-approved Review V32 execution window",
-        "active_review_sha": task40_v31_contract.V32_REVIEW_COMMIT,
-        "active_review_path": task40_v31_contract.V32_REVIEW_PATH,
-        "active_review_sha256": task40_v31_contract.V32_REVIEW_SHA256,
+        "campaign": f"task40extra_{review_version.lower()}_all_q_reference_conditional_target_pilot",
+        "authority": f"User-approved Review {review_version} execution window",
+        "active_review_sha": review_commit,
+        "active_review_path": review_path,
+        "active_review_sha256": review_sha256,
         "source_at_entry": source_at_entry,
-        "review_at_registration": task40_v31_contract.V32_REVIEW_COMMIT,
+        "review_at_registration": review_commit,
         "t0_utc": t0_text,
         "numeric_cutoff_utc": cutoff_text,
         "deadline_utc": deadline_text,
-        "campaign_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
-        "numeric_cutoff_seconds": float(task40_v31_contract.V32_NUMERIC_SECONDS),
-        "closeout_reserve_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+        "campaign_seconds": total_seconds,
+        "numeric_cutoff_seconds": float(numeric_seconds),
+        "closeout_reserve_seconds": closeout_seconds,
         "time_policy": CONSERVATIVE_REALTIME,
-        "stage_scope": list(task40_v31_contract.V32_STAGE_SCOPE),
+        "stage_scope": list(stage_scope),
         "forbidden_scope": [
             "automatic_cap_increase", "window_refresh", "parameter_or_accuracy_scan",
             "MUMPS_or_ABI_change", "OOC_or_BLR", "unrelated_project_mutation", "master_merge",
@@ -934,14 +943,14 @@ def test_v32_service_campaign_resolves_original_entry_window_with_current_contra
         "status": "USER_APPROVED",
         "service_start_allowed": True,
         "review": {
-            "path": task40_v31_contract.V32_REVIEW_PATH,
-            "commit": task40_v31_contract.V32_REVIEW_COMMIT,
-            "sha256": task40_v31_contract.V32_REVIEW_SHA256,
+            "path": review_path,
+            "commit": review_commit,
+            "sha256": review_sha256,
         },
         "source_freeze": {"source_sha": run_source},
         "user_approval": {
             "approved": True,
-            "scope": task40_v31_contract.V32_APPROVAL_SCOPE,
+            "scope": approval_scope,
             "window_sha256": window_sha,
         },
         "execution": {
@@ -949,9 +958,9 @@ def test_v32_service_campaign_resolves_original_entry_window_with_current_contra
                 "window_path": str(window_path),
                 "window_sha256": window_sha,
                 "source_at_entry": source_at_entry,
-                "total_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
-                "numeric_seconds": task40_v31_contract.V32_NUMERIC_SECONDS,
-                "closeout_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+                "total_seconds": total_seconds,
+                "numeric_seconds": numeric_seconds,
+                "closeout_seconds": closeout_seconds,
                 "t0_utc": t0_text,
                 "numeric_cutoff_utc": cutoff_text,
                 "deadline_utc": deadline_text,
@@ -985,18 +994,21 @@ def test_v32_service_campaign_resolves_original_entry_window_with_current_contra
 
     assert source_at_entry != run_source
     assert route["version"] == "V31"  # internal compatibility route
-    assert route["review_version"] == "V32"
-    assert route["stage_scope"] == list(task40_v31_contract.V32_STAGE_SCOPE)
+    assert route["review_version"] == review_version
+    assert route["stage_scope"] == list(stage_scope)
     assert Path(route["path"]).resolve() == window_path.resolve()
     assert route["sha256"] == window_sha
     assert not (
         tmp_path
         / task40_v31_contract.v31_source_artifact_relative(run_source)
-        / "campaign_window_v32.json"
+        / f"campaign_window_{review_version.lower()}.json"
     ).exists()
 
 
-def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
+@pytest.mark.parametrize("review_version", ["V32", "V33"])
+def test_v32_v33_worker_binding_returns_fixed_q4_template(
+    tmp_path, monkeypatch, review_version
+):
     from src.runners import task40_v31_contract
     from src.solvers import task40_v30_selected_q_csr
     from src.solvers.task40_v30_qualified_q_csr import (
@@ -1004,6 +1016,12 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
     )
 
     contract, binding, payload, environment, contract_sha = _v31_worker_fixture(tmp_path)
+    review_path = getattr(task40_v31_contract, f"{review_version}_REVIEW_PATH")
+    review_commit = getattr(task40_v31_contract, f"{review_version}_REVIEW_COMMIT")
+    review_sha256 = getattr(task40_v31_contract, f"{review_version}_REVIEW_SHA256")
+    total_seconds = getattr(task40_v31_contract, f"{review_version}_TOTAL_SECONDS")
+    numeric_seconds = getattr(task40_v31_contract, f"{review_version}_NUMERIC_SECONDS")
+    closeout_seconds = getattr(task40_v31_contract, f"{review_version}_CLOSEOUT_SECONDS")
     run_source = contract["source_freeze"]["source_sha"]
     source_at_entry = contract["execution"]["window"]["source_at_entry"]
     source_root = tmp_path / V31_ARTIFACT_ROOT_RELATIVE / f"source_{run_source}"
@@ -1011,7 +1029,7 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
         tmp_path
         / V31_ARTIFACT_ROOT_RELATIVE
         / f"source_{source_at_entry}"
-        / "campaign_window_v32.json"
+        / f"campaign_window_{review_version.lower()}.json"
     ).resolve()
     template = task40_v31_contract.v32_q4_pending_import_template(
         execution_root=tmp_path,
@@ -1079,9 +1097,9 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
     }
     contract["schema"] = task40_v31_contract.V32_CONTRACT_SCHEMA
     contract["review"] = {
-        "path": task40_v31_contract.V32_REVIEW_PATH,
-        "commit": task40_v31_contract.V32_REVIEW_COMMIT,
-        "sha256": task40_v31_contract.V32_REVIEW_SHA256,
+        "path": review_path,
+        "commit": review_commit,
+        "sha256": review_sha256,
     }
     contract["preparation"]["q4_numeric_pending_import"] = template
     contract["preparation"]["q4_complete_import"] = complete_template
@@ -1089,15 +1107,15 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
         {
             "window_path": str(window_path),
             "window_sha256": window_sha,
-            "total_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
-            "numeric_seconds": task40_v31_contract.V32_NUMERIC_SECONDS,
-            "closeout_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+            "total_seconds": total_seconds,
+            "numeric_seconds": numeric_seconds,
+            "closeout_seconds": closeout_seconds,
         }
     )
     contract["execution"]["campaign_window_path"] = str(window_path)
     contract["execution"]["campaign_window_sha256"] = window_sha
     contract["execution"]["q_csr_import_authorizations"] = imports
-    contract_path = source_root / "execution_contract_v32.approved.json"
+    contract_path = source_root / f"execution_contract_{review_version.lower()}.approved.json"
     binding["contract_path"] = str(contract_path.resolve())
     binding["contract_sha256"] = contract_sha
     binding["execution_window_path"] = str(window_path)
@@ -1164,7 +1182,7 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
         repo_root=tmp_path,
     )
 
-    assert worker["review_version"] == "V32"
+    assert worker["review_version"] == review_version
     assert worker["q4_numeric_pending_import_template"] == template
     assert worker["q4_numeric_pending_import_authorization"] == authorization
     assert worker["q4_complete_import_template"] == complete_template
@@ -2809,8 +2827,8 @@ def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(
     )
 
 
-@pytest.mark.parametrize("review_version", ["V31", "V32"])
-def test_service_validates_prepared_v31_and_v32_stage_inputs(
+@pytest.mark.parametrize("review_version", ["V31", "V32", "V33"])
+def test_service_validates_prepared_v31_v32_and_v33_stage_inputs(
     tmp_path, monkeypatch, review_version
 ):
     import shutil
@@ -2819,6 +2837,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
     from scripts import task40_v20_service_workflow as service
     from src.runners import task40_v30_contract, task40_v31_contract
 
+    version_suffix = review_version.lower()
     source_root = Path(task40_v31_contract.__file__).resolve().parents[2]
     root = tmp_path / "repo"
     root.mkdir()
@@ -2843,10 +2862,12 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
     selector_donor_path.write_text(
         json.dumps(donor_selector, sort_keys=True) + "\n", encoding="utf-8"
     )
-    if review_version == "V32":
-        review_path_text = task40_v31_contract.V32_REVIEW_PATH
-        review_sha = task40_v31_contract.V32_REVIEW_SHA256
-        pending_builder = task40_v31_contract.prepare_v32_pending_package
+    if review_version in {"V32", "V33"}:
+        review_path_text = getattr(task40_v31_contract, f"{review_version}_REVIEW_PATH")
+        review_sha = getattr(task40_v31_contract, f"{review_version}_REVIEW_SHA256")
+        pending_builder = getattr(
+            task40_v31_contract, f"prepare_{version_suffix}_pending_package"
+        )
     else:
         review_path_text = task40_v31_contract.V31_REVIEW_PATH
         review_sha = task40_v31_contract.V31_REVIEW_SHA256
@@ -2871,7 +2892,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         "run",
         lambda command, **_kwargs: subprocess.CompletedProcess(command, 0),
     )
-    if review_version == "V32":
+    if review_version in {"V32", "V33"}:
         def q4_complete_template_fixture(*, execution_root):
             execution_root = Path(execution_root)
             return {
@@ -3004,7 +3025,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
     from scripts import run_case
 
     assert run_case.main([str(input_path), "--validate-only"]) == 0
-    if review_version == "V32":
+    if review_version in {"V32", "V33"}:
         expected_template = contract["preparation"]["q4_numeric_pending_import"]
         expected_complete_template = contract["preparation"]["q4_complete_import"]
         expected_identity_call = (expected_template, expected_complete_template)
@@ -3015,7 +3036,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         approved_contract = json.loads(json.dumps(contract))
         approved_contract["status"] = "USER_APPROVED"
         approved_contract["service_start_allowed"] = True
-        service_window_path = root / "fixture_campaign_window_v32.json"
+        service_window_path = root / f"fixture_campaign_window_{version_suffix}.json"
         service_window_sha = "d" * 64
         approved_contract["execution"]["campaign_window_path"] = str(service_window_path)
         approved_contract["execution"]["campaign_window_sha256"] = service_window_sha
@@ -3029,7 +3050,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         service_contract_path = (
             root
             / task40_v31_contract.v31_source_artifact_relative(source_sha)
-            / "execution_contract_v32.approved.json"
+            / f"execution_contract_{version_suffix}.approved.json"
         )
         service_contract_path.parent.mkdir(parents=True, exist_ok=True)
         service_contract_path.write_text("fixture approved contract\n", encoding="utf-8")
@@ -3063,12 +3084,12 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
             )
             with pytest.raises(ReachedCampaignRouting):
                 service.run_service(
-                    unit="task40-v32-identity-fixture.service",
+                    unit=f"task40-{version_suffix}-identity-fixture.service",
                     runtime_prefix=(root / task40_v30_contract.V30_RUNTIME_RELATIVE).resolve(),
                     abi_receipt=(root / task40_v30_contract.V30_ABI_RECEIPT_RELATIVE).resolve(),
                     jit_cache=(root / task40_v30_contract.V30_JIT_CACHE_RELATIVE).resolve(),
                     case_args=[
-                        "--task40-v32-execution-contract",
+                        f"--task40-{version_suffix}-execution-contract",
                         str(service_contract_path),
                         str(input_path),
                     ],
@@ -3091,7 +3112,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         window_path = (
             root
             / task40_v31_contract.V31_ARTIFACT_ROOT_RELATIVE
-            / f"source_{source_at_entry}/campaign_window_v32.json"
+            / f"source_{source_at_entry}/campaign_window_{version_suffix}.json"
         )
         window_sha = "9" * 64
         route_execution["window"].update(
@@ -3106,7 +3127,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         route_contract_path = (
             root
             / task40_v31_contract.V31_ARTIFACT_ROOT_RELATIVE
-            / f"source_{source_sha}/execution_contract_v32.approved.json"
+            / f"source_{source_sha}/execution_contract_{version_suffix}.approved.json"
         )
         route_contract_path.parent.mkdir(parents=True, exist_ok=True)
         route_contract_raw = (json.dumps(route_contract, sort_keys=True) + "\n").encode()
@@ -3163,7 +3184,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
             dispatched["payload"] = payload
             dispatched["directory"] = Path(directory)
             dispatched["kwargs"] = kwargs
-            return {"status": "V32_AUTHORITY_ROUTE_VALIDATED_NO_FE"}
+            return {"status": f"{review_version}_AUTHORITY_ROUTE_VALIDATED_NO_FE"}
 
         monkeypatch.setattr(
             task40_v20_stage_runner,
@@ -3175,7 +3196,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
             root / "dispatcher-output",
             source_sha=source_sha,
         )
-        assert dispatcher_result["status"] == "V32_AUTHORITY_ROUTE_VALIDATED_NO_FE"
+        assert dispatcher_result["status"] == f"{review_version}_AUTHORITY_ROUTE_VALIDATED_NO_FE"
         assert dispatched["payload"]["execution"][
             "task40_v31_q_csr_import_authorizations"
         ] == {

@@ -1243,7 +1243,14 @@ def test_real_worker_prefix_persists_q4_before_reference_and_calls_q1_q5_sector_
         lambda *_args, **_kwargs: (
             {0: sparse.eye(4, dtype=np.complex128, format="csr")},
             {
-                "qualification_receipts": [{"q_index": 0, "qualification_status": "PASS"}],
+                "qualification_receipts": [
+                    {
+                        "q_index": 0,
+                        "qualification_kind": "LEGACY_QUALIFICATION_IMPORTED_OPERATOR_BINDINGS_DERIVED",
+                        "qualification_status": "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK",
+                        "legacy_q0_import": {"status": "PASS"},
+                    }
+                ],
                 "selector_entries": [{"q_index": 0, "qualification_status": "PASS"}],
             },
         ),
@@ -1270,7 +1277,11 @@ def test_real_worker_prefix_persists_q4_before_reference_and_calls_q1_q5_sector_
                 {
                     "all_complete_native_pass": True,
                     "qualification_receipts": [
-                        {"q_index": 4, "qualification_status": "PASS"}
+                        {
+                            "q_index": 4,
+                            "qualification_kind": "V30_NATIVE_PASS",
+                            "qualification_status": "PASS",
+                        }
                     ],
                     "selector_entries": [
                         {"q_index": 4, "qualification_status": "PASS"}
@@ -1340,7 +1351,7 @@ def test_real_worker_prefix_persists_q4_before_reference_and_calls_q1_q5_sector_
             context=SimpleNamespace(global_q_indices=(1, 5), twist_index=1),
             local_h=original_h,
             profile=profile,
-            global_bundle={"modes": (mode,), "mode_sha256": mode_sha, "mode_rows": ()},
+            mode_descriptor={"modes": (mode,), "mode_sha256": mode_sha, "mode_rows": ()},
             local_bundle={},
             mode_inventory=((mode,), (), mode_sha),
             q_indices=(1, 5),

@@ -305,6 +305,26 @@ def _task40_v31_build_reference_after_q4_pending(
     return build_reference(pending), pending
 
 
+def _task40_v33_late_twist0_owner_preparer(
+    pending: Mapping[str, Any] | None,
+    *,
+    prepare_twist0_owner: Callable[..., Mapping[str, Any]],
+    prebuilt_q_csr: Callable[[], Any | None],
+) -> Callable[..., tuple[Mapping[str, Any], Any | None]]:
+    """Defer the saved q4 owner until the builder supplies its shared transform bank."""
+
+    if not isinstance(pending, Mapping):
+        raise ValueError("V33 sector-first continuation needs the accepted q4 saved-data import")
+    if not callable(prepare_twist0_owner) or not callable(prebuilt_q_csr):
+        raise TypeError("V33 late twist-0 preparation needs owner and q-CSR callbacks")
+
+    def prepare(*, transform_bank: Any) -> tuple[Mapping[str, Any], Any | None]:
+        owner = prepare_twist0_owner(pending, transform_bank=transform_bank)
+        return owner, prebuilt_q_csr()
+
+    return prepare
+
+
 def _task40_v31_merge_twist0_q_csr_audit(
     provider_matrices: Mapping[int, Any],
     provider_audit: Mapping[str, Any],
@@ -946,7 +966,7 @@ def _task40_v32_owner_bound_q_maps(
 ) -> Mapping[int, Any] | None:
     """Return only the V32 maps whose saved-pattern audits passed in the owner."""
 
-    if not isinstance(route_facts, Mapping) or route_facts.get("review_version") != "V32":
+    if not isinstance(route_facts, Mapping) or route_facts.get("review_version") not in {"V32", "V33"}:
         return None
     q_maps = local_owner.get("q_maps_by_q")
     binding = local_owner.get("owner_receipt", {}).get("saved_q0_q4_map_binding")
@@ -960,7 +980,7 @@ def _task40_v32_owner_bound_q_maps(
             for name in ("q0", "q4")
         )
     ):
-        raise ValueError("V32 owner maps lack a passing saved q0/q4 binding audit")
+        raise ValueError("saved twist-0 owner maps lack a passing saved q0/q4 binding audit")
     return q_maps
 
 
@@ -1289,7 +1309,7 @@ def _task40_v30_open_saved_q4_native_witness(
 
 def _task40_v30_sector_builder_inputs(
     *,
-    global_bundle: Mapping[str, Any],
+    mode_descriptor: Mapping[str, Any],
     mode_inventory: tuple[Any, Any, str],
     coordinates: Any,
     profile: Any,
@@ -1299,10 +1319,10 @@ def _task40_v30_sector_builder_inputs(
     """Bind the reference mode identity and per-q trace split passed to CSR builders."""
 
     if (
-        not isinstance(global_bundle, Mapping)
+        not isinstance(mode_descriptor, Mapping)
         or not isinstance(mode_inventory, tuple)
         or len(mode_inventory) != 3
-        or str(global_bundle.get("mode_sha256", "")) != str(mode_inventory[2])
+        or str(mode_descriptor.get("mode_sha256", "")) != str(mode_inventory[2])
     ):
         raise ValueError("V30 reference sector mode identity differs from its frozen inventory")
     return {
@@ -7695,7 +7715,7 @@ def run_task40_v10_p6_reference_worker(
             numeric_pending_import_authorizations=(
                 v31_q_csr_import_authorizations.get("numeric_pending", {})
                 if v31_route_facts is not None
-                and v31_route_facts.get("review_version") == "V32"
+                and v31_route_facts.get("review_version") in {"V32", "V33"}
                 and isinstance(v31_q_csr_import_authorizations, Mapping)
                 else None
             ),
@@ -7929,6 +7949,24 @@ def run_task40_v10_p6_reference_worker(
                 )
                 runtime.marker(name, snapshot)
                 return
+            if name.startswith("task40_v33_") and isinstance(facts, Mapping):
+                saved_facts = dict(facts)
+                if saved_facts.get("status") in {"COMPLETE", "PROGRESS", "FAILED"}:
+                    phase = str(saved_facts.get("phase", name.removeprefix("task40_v33_")))
+                    completed = saved_facts.get("completed")
+                    sample_label = f"v33_{phase}_{completed if completed is not None else saved_facts.get('status', 'event')}"
+                    try:
+                        saved_facts["resource_sample"] = runtime.sample(
+                            sample_label.replace("/", "_").replace(" ", "_")[:96],
+                            enforce=False,
+                        )
+                    except Exception as error:
+                        saved_facts["resource_sample_error"] = {
+                            "type": type(error).__name__,
+                            "message": str(error),
+                        }
+                runtime.marker(name, saved_facts)
+                return
             runtime.marker(name, facts)
 
         runtime.sample("v10_candidate_target_retained_and_fast_backend_complete")
@@ -8066,7 +8104,7 @@ def run_task40_v10_p6_reference_worker(
                 context,
                 local_h,
                 profile,
-                global_bundle,
+                mode_descriptor,
                 local_bundle,
                 mode_inventory,
                 q_indices,
@@ -8082,6 +8120,20 @@ def run_task40_v10_p6_reference_worker(
                 )
 
                 sector_qs = tuple(map(int, context.global_q_indices))
+                map_started = time.perf_counter()
+                v33_progress = isinstance(v31_route_facts, Mapping) and (
+                    v31_route_facts.get("review_version") == "V33"
+                )
+                if v33_progress:
+                    reference_event(
+                        "task40_v33_sector_q_map_build",
+                        {
+                            "phase": "sector_q_map_build",
+                            "status": "STARTED",
+                            "twist_index": int(context.twist_index),
+                            "q_indices": list(sector_qs),
+                        },
+                    )
                 q_maps_by_q = _task40_v30_resolve_sector_q_maps(
                     coordinates,
                     sector_qs,
@@ -8091,13 +8143,28 @@ def run_task40_v10_p6_reference_worker(
                 if v20_mode_inventory is None:
                     raise ValueError("V30 sector callback lacks the frozen mode inventory")
                 sector_builder_inputs = _task40_v30_sector_builder_inputs(
-                    global_bundle=global_bundle,
+                    mode_descriptor=mode_descriptor,
                     mode_inventory=v20_mode_inventory,
                     coordinates=coordinates,
                     profile=profile,
                     q_maps_by_q=q_maps_by_q,
                     sector_q_indices=sector_qs,
                 )
+                if v33_progress:
+                    reference_event(
+                        "task40_v33_sector_q_map_build",
+                        {
+                            "phase": "sector_q_map_build",
+                            "status": "COMPLETE",
+                            "twist_index": int(context.twist_index),
+                            "q_indices": list(sector_qs),
+                            "elapsed_seconds": max(0.0, time.perf_counter() - map_started),
+                            "map_shapes": {
+                                str(q): [int(value) for value in q_maps_by_q[q].shape]
+                                for q in sector_qs
+                            },
+                        },
+                    )
                 sources_by_q = {}
                 matrix_source_identity_by_q = {}
                 producer_identity_by_q = {}
@@ -8160,7 +8227,7 @@ def run_task40_v10_p6_reference_worker(
                             runtime_identity["scientific_input_sha256"]
                         ),
                         profile_identity=profile.identity(),
-                        ordered_modes=tuple(global_bundle["modes"]),
+                        ordered_modes=tuple(mode_descriptor["modes"]),
                         q_map=q_maps_by_q[int(q)],
                         original_h=current_h,
                     )
@@ -8197,7 +8264,7 @@ def run_task40_v10_p6_reference_worker(
                     allocation_gate=allocation_gate,
                     profile=str(profile.name),
                     profile_identity=profile.identity(),
-                    ordered_modes=tuple(global_bundle["modes"]),
+                    ordered_modes=tuple(mode_descriptor["modes"]),
                     original_h=current_h,
                     scientific_input_sha256=str(
                         runtime_identity["scientific_input_sha256"]
@@ -8209,6 +8276,13 @@ def run_task40_v10_p6_reference_worker(
                     saved_native_witness_by_q=saved_native_witness_by_q,
                     direct_hhat_evidence_by_q=direct_hhat_evidence_by_q,
                     precomputed_numeric_by_q=precomputed_numeric_by_q,
+                    progress_callback=(
+                        lambda facts: reference_event(
+                            "task40_v33_selected_q_phase", facts
+                        )
+                        if v33_progress
+                        else None
+                    ),
                     output_directory=(
                         Path(str(factor_config["output_directory"])) / "selected_q"
                     ),
@@ -8261,14 +8335,15 @@ def run_task40_v10_p6_reference_worker(
             )
 
         def v32_owner_stage_event(event: Mapping[str, Any]) -> None:
-            if not isinstance(v31_route_facts, Mapping) or v31_route_facts.get("review_version") != "V32":
+            if not isinstance(v31_route_facts, Mapping) or v31_route_facts.get("review_version") not in {"V32", "V33"}:
                 return
             phase = str(event.get("phase", "unknown"))
             status = str(event.get("status", "unknown")).lower()
+            version = str(v31_route_facts.get("review_version")).lower()
             runtime.marker(
-                f"task40_v32_owner_{phase}_{status}",
+                f"task40_{version}_owner_{phase}_{status}",
                 {
-                    "schema": "task40extra.review_v32_owner_phase_event.v1",
+                    "schema": f"task40extra.review_{version}_owner_phase_event.v1",
                     "attempt_id": directory.name,
                     "run_id": getattr(runtime, "run_id", None),
                     "execution_identity": dict(
@@ -8313,7 +8388,7 @@ def run_task40_v10_p6_reference_worker(
                 Path(str(factor_config["output_directory"]))
                 / "selected_q" / "q4_twist0"
             ).resolve()
-            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") == "V32":
+            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") in {"V32", "V33"}:
                 v32_q4_import = v31_route_facts.get(
                     "q4_numeric_pending_import_authorization"
                 )
@@ -8440,9 +8515,19 @@ def run_task40_v10_p6_reference_worker(
 
         def prepare_twist0_owner_with_phase(
             pending: Mapping[str, Any],
+            *,
+            transform_bank: Any | None = None,
         ) -> Mapping[str, Any]:
             numeric_pending = pending.get("numeric_pending", {})
-            phase = "task40_v31_twist0_owner_prebuild"
+            v33_deferred = (
+                isinstance(v31_route_facts, Mapping)
+                and v31_route_facts.get("review_version") == "V33"
+            )
+            phase = (
+                "task40_v33_twist0_owner_after_new_sectors"
+                if v33_deferred
+                else "task40_v31_twist0_owner_prebuild"
+            )
             started_ns = v31_phase_start(
                 phase,
                 q4_pending_path=numeric_pending.get("record_path"),
@@ -8450,7 +8535,9 @@ def run_task40_v10_p6_reference_worker(
                 global_reference_builder_started=False,
             )
             try:
-                owner = prepare_twist0_owner_before_global(pending)
+                owner = prepare_twist0_owner_before_global(
+                    pending, transform_bank=transform_bank
+                )
             except BaseException as error:
                 v31_phase_end(
                     phase,
@@ -8488,6 +8575,8 @@ def run_task40_v10_p6_reference_worker(
 
         def prepare_twist0_owner_before_global(
             pending: Mapping[str, Any],
+            *,
+            transform_bank: Any | None = None,
         ) -> Mapping[str, Any]:
             nonlocal q4_saved_numeric_prebuild, prebuilt_twist0_owner, prebuilt_twist0_q_csr
             if (
@@ -8559,7 +8648,7 @@ def run_task40_v10_p6_reference_worker(
             ).hexdigest()
             saved_port_owner = None
             saved_stage_callback = None
-            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") == "V32":
+            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") in {"V32", "V33"}:
                 producer_facts = donor.get("producer_facts", {})
                 support_evidence = donor.get("direct_hhat_evidence", {})
                 if not isinstance(producer_facts, Mapping) or not isinstance(
@@ -8614,6 +8703,7 @@ def run_task40_v10_p6_reference_worker(
                 profile=periodic_profile,
                 allocation_gate=allocation_gate,
                 jit_options=SAME_MESH_JIT_OPTIONS,
+                transform_bank=transform_bank,
                 share_transform_bank=share_transform_bank,
                 saved_port_owner=saved_port_owner,
                 stage_callback=saved_stage_callback,
@@ -8701,7 +8791,7 @@ def run_task40_v10_p6_reference_worker(
             provider_q_indices = {0}
             if (
                 isinstance(v31_route_facts, Mapping)
-                and v31_route_facts.get("review_version") == "V32"
+                and v31_route_facts.get("review_version") in {"V32", "V33"}
                 and 4 in qualified_q_csr_provider.entries
             ):
                 provider_q_indices.add(4)
@@ -8712,7 +8802,7 @@ def run_task40_v10_p6_reference_worker(
                 context=context,
                 local_h=np.asarray(local_owner["local_h"], dtype=np.float64),
                 profile=periodic_profile,
-                global_bundle=frozen_bundle_identity,
+                mode_descriptor=frozen_bundle_identity,
                 mode_inventory=local_owner["mode_inventory"],
                 runtime_identity=qualified_q_csr_identity,
                 allocation_gate=allocation_gate,
@@ -8746,7 +8836,7 @@ def run_task40_v10_p6_reference_worker(
                         context=context,
                         local_h=np.asarray(local_owner["local_h"], dtype=np.float64),
                         profile=periodic_profile,
-                        global_bundle=frozen_bundle_identity,
+                        mode_descriptor=frozen_bundle_identity,
                         local_bundle=local_owner["bundle"],
                         mode_inventory=local_owner["mode_inventory"],
                         q_indices=(4,),
@@ -8803,6 +8893,18 @@ def run_task40_v10_p6_reference_worker(
         ) -> Any:
             nonlocal q4_saved_numeric_prebuild
             q4_saved_numeric_prebuild = pending
+            v33_sector_first = (
+                isinstance(v31_route_facts, Mapping)
+                and v31_route_facts.get("review_version") == "V33"
+            )
+            late_twist0_owner_preparer = None
+            if v33_sector_first:
+                late_twist0_owner_preparer = _task40_v33_late_twist0_owner_preparer(
+                    pending,
+                    prepare_twist0_owner=prepare_twist0_owner_with_phase,
+                    prebuilt_q_csr=lambda: prebuilt_twist0_q_csr,
+                )
+
             if isinstance(prepared_owner, dict):
                 prepared_owner.setdefault("owner_receipt", {}).update(
                     handover_status="REFERENCE_BUILDER_RECEIVED_OWNER",
@@ -8861,6 +8963,8 @@ def run_task40_v10_p6_reference_worker(
                     qualified_q_csr_identity=qualified_q_csr_identity,
                     qualified_q_csr_coverage_phase=qualified_q_csr_coverage_phase,
                     qualified_q_csr_preparer=qualified_q_csr_preparer,
+                    sector_first=v33_sector_first,
+                    late_twist0_owner_preparer=late_twist0_owner_preparer,
                     prebuilt_sector_owners=(
                         {0: prepared_owner} if prepared_owner is not None else None
                     ),
@@ -8915,13 +9019,19 @@ def run_task40_v10_p6_reference_worker(
             qualified_q_csr_provider is not None
             and 0 in qualified_q_csr_provider.entries
         )
+        v33_sector_first = (
+            isinstance(v31_route_facts, Mapping)
+            and v31_route_facts.get("review_version") == "V33"
+        )
         reference, q4_saved_numeric_prebuild = _task40_v31_build_reference_after_q4_pending(
             prepare_saved_q4=(
                 prepare_saved_q4_with_phase if needs_saved_q4 else None
             ),
             build_reference=build_reference_from_saved_q4,
             prepare_twist0_owner=(
-                prepare_twist0_owner_with_phase if needs_saved_q4 else None
+                prepare_twist0_owner_with_phase
+                if needs_saved_q4 and not v33_sector_first
+                else None
             ),
         )
         if qualified_q_csr_provider is not None:

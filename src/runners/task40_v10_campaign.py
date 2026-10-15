@@ -464,6 +464,8 @@ TASK40_V31_CAMPAIGN_SECONDS = 43_200.0
 TASK40_V31_CLOSEOUT_RESERVE_SECONDS = 1_200.0
 TASK40_V32_CAMPAIGN_SECONDS = 86_400.0
 TASK40_V32_CLOSEOUT_RESERVE_SECONDS = 1_200.0
+TASK40_V33_CAMPAIGN_SECONDS = 86_400.0
+TASK40_V33_CLOSEOUT_RESERVE_SECONDS = 1_200.0
 TASK40_V30_CAMPAIGN_SHA256 = "0730454198abcee55401331d74f24a667d0d52036f67e1be817a3426a8d381a7"
 TASK40_V30_TARGET_CAMPAIGN_WINDOW = (
     Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl")
@@ -1321,6 +1323,8 @@ def _validate_v31_campaign_registration(
         V31_APPROVAL_SCOPE, V31_NUMERIC_SECONDS, V31_REVIEW_COMMIT, V31_REVIEW_PATH,
         V31_REVIEW_SHA256, V31_STAGE_SCOPE, V32_APPROVAL_SCOPE, V32_NUMERIC_SECONDS,
         V32_REVIEW_COMMIT, V32_REVIEW_PATH, V32_REVIEW_SHA256, V32_STAGE_SCOPE,
+        V33_APPROVAL_SCOPE, V33_NUMERIC_SECONDS, V33_REVIEW_COMMIT, V33_REVIEW_PATH,
+        V33_REVIEW_SHA256, V33_STAGE_SCOPE, V33_TOTAL_SECONDS, V33_CLOSEOUT_SECONDS,
     )
 
     if review_version == "V31":
@@ -1337,8 +1341,15 @@ def _validate_v31_campaign_registration(
         numeric_seconds = V32_NUMERIC_SECONDS
         closeout_seconds = TASK40_V32_CLOSEOUT_RESERVE_SECONDS
         stage_scope, approval_scope = V32_STAGE_SCOPE, V32_APPROVAL_SCOPE
+    elif review_version == "V33":
+        review_commit, review_path, review_sha = V33_REVIEW_COMMIT, V33_REVIEW_PATH, V33_REVIEW_SHA256
+        campaign = "task40extra_v33_all_q_reference_conditional_target_pilot"
+        total_seconds = V33_TOTAL_SECONDS
+        numeric_seconds = V33_NUMERIC_SECONDS
+        closeout_seconds = V33_CLOSEOUT_SECONDS
+        stage_scope, approval_scope = V33_STAGE_SCOPE, V33_APPROVAL_SCOPE
     else:
-        raise ValueError("review version must be V31 or V32")
+        raise ValueError("review version must be V31, V32, or V33")
 
     execution = contract.get("execution")
     window = execution.get("window") if isinstance(execution, Mapping) else None
@@ -1469,6 +1480,11 @@ def load_fixed_campaign_window(
         and resolved.parent.parent == v31_artifact_root
         and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
     )
+    is_v33 = (
+        resolved.name == "campaign_window_v33.json"
+        and resolved.parent.parent == v31_artifact_root
+        and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
+    )
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V22_CAMPAIGN_SECONDS
@@ -1505,8 +1521,8 @@ def load_fixed_campaign_window(
         _validate_v30_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V30_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V30_CLOSEOUT_RESERVE_SECONDS
-    elif is_v31 or is_v32:
-        review_version = "V32" if is_v32 else "V31"
+    elif is_v31 or is_v32 or is_v33:
+        review_version = "V33" if is_v33 else "V32" if is_v32 else "V31"
         if v31_contract is None:
             contract_path = os.environ.get("TASK40_V31_CONTRACT_PATH")
             contract_sha = os.environ.get("TASK40_V31_CONTRACT_SHA256")
@@ -1524,7 +1540,10 @@ def load_fixed_campaign_window(
             v31_contract,
             review_version=review_version,
         )
-        if is_v32:
+        if is_v33:
+            expected_total = TASK40_V33_CAMPAIGN_SECONDS
+            expected_closeout = TASK40_V33_CLOSEOUT_RESERVE_SECONDS
+        elif is_v32:
             expected_total = TASK40_V32_CAMPAIGN_SECONDS
             expected_closeout = TASK40_V32_CLOSEOUT_RESERVE_SECONDS
         else:
@@ -1556,7 +1575,7 @@ def load_fixed_campaign_window(
         raise ValueError("the initial boot identity is malformed or inconsistent")
     bootstrap_utc = float(payload.get("bootstrap_utc_elapsed_seconds", -1.0))
     bootstrap_boot_raw = payload.get("bootstrap_boottime_elapsed_seconds", -1.0)
-    if (is_v30 or is_v31 or is_v32) and bootstrap_boot_raw is None:
+    if (is_v30 or is_v31 or is_v32 or is_v33) and bootstrap_boot_raw is None:
         bootstrap_boot = None
     else:
         bootstrap_boot = float(bootstrap_boot_raw)
