@@ -1,3 +1,23 @@
+<!-- TASK42EXTRA_V47_CURRENT_BEGIN -->
+# V47：联合切线裁决的依赖组
+
+| 依赖组 | 变化 | 依赖与验证 |
+|---|---|---|
+| production numerical/core | 无合格production新默认 | ；原M5联合FAIL，不提升默认 |
+| research-only numerical | 实参数完整三项FTT JVP/VJP、阻尼LSMR、原子实际试步和恢复 | joint_least_squares、ftt_joint_tangent、ftt_joint_io、ftt_joint_training、ftt_joint_qualification；53本地定向case及fresh M5导数/三步；短投入门FAIL |
+| reusable runner/watchdog | 既有CoreWorkerProfile可选trainer钩子；schema17/profile与五输入 | research-only numerical、ftt_core_worker、ftt_joint_campaign、ftt_joint_worker；五dat validate、fresh串行资格/探针/compare；原watchdog和资源门复用 |
+| checker/benchmark | 旧双网逐点完整矩与FE compare-only沿用；design47允许 | reusable runner/watchdog、ftt_continuation_joint；fresh actual/producer分别全门，原参考只读，无重求 |
+| compact evidence/docs | 只保存本批新证据，更新入口与总账 | checker/benchmark；源/数组hash、数值门独立重算及有限Markdown/呈现 |
+| do-not-merge | ignored大PT/数组及未资格化研究默认；自动变体/0.7nm/生产merge | ；无production/master授权 |
+
+Review发布4439c45d666f0527eb659e01b8deeb74944c47b0，结果基线0efeaa97f6a2e109ef981c14dd3f7bc65ae2e7e2，原任务base fbac3d8777fcfd897d93b898cb9f460f79ddd6ff。本批资格/探针/compare实际source统一为ce8f1f5e89cbdb848488b671305188a39c824046；后续发布HEAD仅代表证据/文档。父PT由V46 run/index解析：committed_000033.pt，SHA256 3bfe977c9235ea4305a1eb4049401b098c30dce87bfce76f635e5c88e3bf8c58、6513249B；不是同名猜测或历史best。基网/修正模型、base/g/native/moments/phase及S/mask/h、实际c/r/RNG均绑定；模型hash不冒充PT文件hash。
+
+[选择性manifest](records/selective_merge_manifest_v47.json)、[source/hash](records/run_index_v47.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V47_CURRENT_END -->
+
 <!-- TASK42EXTRA_V46_CURRENT_BEGIN -->
 # V46：单份残差神经修正的依赖组
 

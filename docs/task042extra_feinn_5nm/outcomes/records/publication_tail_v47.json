@@ -1,0 +1,323 @@
+{
+  "schema": "task42extra.v47.publication-tail.v1",
+  "status": "SNAPSHOT_NOT_FINAL_COMMIT",
+  "unique_window": {
+    "campaign": "V47_FTT_JOINT_TANGENT_DECISION",
+    "version": 47,
+    "origin_monotonic": 1967584.374745181,
+    "origin_utc": "2026-10-15T05:42:49.355861+00:00",
+    "budget_s": 28800,
+    "final_reserve_s": 1800,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "single_window": true,
+    "first_readonly_head": "0efeaa97f6a2e109ef981c14dd3f7bc65ae2e7e2",
+    "first_host_inspection_monotonic": 1967884.374745181,
+    "initial_state": "NOT_STARTED_NO_V47_DIRECTORY_OR_RUN",
+    "initial_inspection_exact_cost_s": "NOT_RETAINED",
+    "initial_inspection_conservative_allowance_s": 300,
+    "authority_publication": "4439c45d666f0527eb659e01b8deeb74944c47b0",
+    "deadline_monotonic": 1996384.374745181
+  },
+  "numerical_cost_binding": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v47.json",
+    "sha256": "eee0572297f53170ecd4c6469a5bda2bfb6096b35b9a89c9aefe1715d665d0e2",
+    "bytes": 6816
+  },
+  "snapshots": [
+    {
+      "post_collection_resource_refusals": [
+        {
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_01/admission_failure_receipt.json",
+            "sha256": "d008e8fe3c920098dd89fad83b75a9f15642792f3df650a155066a712aa0f831",
+            "bytes": 531
+          },
+          "receipt": {
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_WORKER",
+            "reason": "No audited unoccupied physical core; bounded fresh samples exhausted after required PSI",
+            "worker_created": false,
+            "descendants_cleared": true,
+            "mandatory_PSI_observed_seconds": 60.002046648878604,
+            "actual_total_seconds": "NOT_RETAINED_INCLUDED_IN_SINGLE_MONOTONIC_WINDOW",
+            "sampled_tree_RSS_peak_bytes": "NOT_RETAINED_NO_WATCHDOG_CREATED",
+            "source_unchanged": true,
+            "numerical_rerun": false,
+            "recorded_monotonic": 1971327.869027459
+          }
+        }
+      ],
+      "label": "pre_C3_docs_commit",
+      "recorded_UTC": "2026-10-15T06:41:05.807273+00:00",
+      "monotonic": 1971460.52575785,
+      "conservative_elapsed_s": 3876.1510126688518,
+      "remaining_s": 24923.84898733115,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "5fe1d8248b2c50b35c5fc09d9e59da707b123a5d",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "ce8f1f5e89cbdb848488b671305188a39c824046",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "4439c45d666f0527eb659e01b8deeb74944c47b0",
+      "ahead": 2,
+      "behind": 0,
+      "worktree_clean": false,
+      "tracked_or_nonignored_untracked_status": [
+        "M docs/development_model_registry.md",
+        " M docs/development_progress.md",
+        " M docs/task042extra_feinn_5nm/README.md",
+        " M docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        " M docs/task042extra_feinn_5nm/outcomes/summary.md",
+        " M docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/ftt_joint_tangent_decision_v47.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v47.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/publication_tail_v47.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/render_check_v47.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v47.json",
+        "?? docs/task042extra_feinn_5nm/response_v47.md"
+      ],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD 5fe1d8248b2c50b35c5fc09d9e59da707b123a5d\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v47_joint_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt1",
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt2",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_tangent_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collect_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/collect_01/summary.json",
+            "sha256": "5c550eaf8008076cb30a3a663d8c8c5ad2bfd5b438161de1b790095b43c29195",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 86216704,
+          "swap_bytes": 0,
+          "supervised_s": 2.0576846711337566,
+          "mandatory_PSI_s": 60.001905067125335
+        },
+        {
+          "name": "delivery_numeric_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/delivery_numeric_01/summary.json",
+            "sha256": "27cb69b2b566036d87724fa539b621670fb11a8fd41d3f1dc4642dd52cf1ba4c",
+            "bytes": 1983
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 132526080,
+          "swap_bytes": 0,
+          "supervised_s": 2.8711580641102046,
+          "mandatory_PSI_s": 60.001890192972496
+        },
+        {
+          "name": "docs_02",
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_02/summary.json",
+            "sha256": "1595bed9a3d9123ee76311ca5ef529eed59061b6660fba313dbd35f4e5618c78",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 88932352,
+          "swap_bytes": 0,
+          "supervised_s": 2.7698105019517243,
+          "mandatory_PSI_s": 60.00188627792522
+        }
+      ],
+      "new_light_supervised_sum_s": 7.6986532371956855,
+      "new_light_PSI_sum_s": 180.00568153802305,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "all_observed_serial_formal_and_light_tree_peak_bytes": 621559808,
+      "overall_peak_scope": "max of serial sampled simultaneous own-tree peaks; browser light and numerical stages distinguished; not whole-host/cgroup exact peak",
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    },
+    {
+      "post_collection_resource_refusals": [
+        {
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_01/admission_failure_receipt.json",
+            "sha256": "d008e8fe3c920098dd89fad83b75a9f15642792f3df650a155066a712aa0f831",
+            "bytes": 531
+          },
+          "receipt": {
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_WORKER",
+            "reason": "No audited unoccupied physical core; bounded fresh samples exhausted after required PSI",
+            "worker_created": false,
+            "descendants_cleared": true,
+            "mandatory_PSI_observed_seconds": 60.002046648878604,
+            "actual_total_seconds": "NOT_RETAINED_INCLUDED_IN_SINGLE_MONOTONIC_WINDOW",
+            "sampled_tree_RSS_peak_bytes": "NOT_RETAINED_NO_WATCHDOG_CREATED",
+            "source_unchanged": true,
+            "numerical_rerun": false,
+            "recorded_monotonic": 1971327.869027459
+          }
+        },
+        {
+          "binding": {
+            "path": "tmp/task42extra/v47/markdown_final_01/admission_failure_receipt.json",
+            "sha256": "0eea54d2acf83452d44dcda47c28fdd928aea172c5aff315f16c115072531fda",
+            "bytes": 530
+          },
+          "receipt": {
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_WORKER",
+            "reason": "No audited unoccupied physical core; bounded fresh samples exhausted after required PSI",
+            "worker_created": false,
+            "descendants_cleared": true,
+            "mandatory_PSI_observed_seconds": 60.00195796811022,
+            "actual_total_seconds": "NOT_RETAINED_INCLUDED_IN_SINGLE_MONOTONIC_WINDOW",
+            "sampled_tree_RSS_peak_bytes": "NOT_RETAINED_NO_WATCHDOG_CREATED",
+            "source_unchanged": true,
+            "numerical_rerun": false,
+            "recorded_monotonic": 1971603.798143441
+          }
+        }
+      ],
+      "label": "pre_C3_complete_package",
+      "recorded_UTC": "2026-10-15T06:45:45.248105+00:00",
+      "monotonic": 1971739.952130622,
+      "conservative_elapsed_s": 4155.577385440934,
+      "remaining_s": 24644.422614559066,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "5fe1d8248b2c50b35c5fc09d9e59da707b123a5d",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "ce8f1f5e89cbdb848488b671305188a39c824046",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "4439c45d666f0527eb659e01b8deeb74944c47b0",
+      "ahead": 2,
+      "behind": 0,
+      "worktree_clean": false,
+      "tracked_or_nonignored_untracked_status": [
+        "M docs/development_model_registry.md",
+        " M docs/development_progress.md",
+        " M docs/task042extra_feinn_5nm/README.md",
+        " M docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        " M docs/task042extra_feinn_5nm/outcomes/summary.md",
+        " M docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/ftt_joint_tangent_decision_v47.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v47.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/publication_tail_v47.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/render_check_v47.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v47.json",
+        "?? docs/task042extra_feinn_5nm/response_v47.md"
+      ],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD 5fe1d8248b2c50b35c5fc09d9e59da707b123a5d\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v47_joint_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt1",
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt2",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_tangent_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collect_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/collect_01/summary.json",
+            "sha256": "5c550eaf8008076cb30a3a663d8c8c5ad2bfd5b438161de1b790095b43c29195",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 86216704,
+          "swap_bytes": 0,
+          "supervised_s": 2.0576846711337566,
+          "mandatory_PSI_s": 60.001905067125335
+        },
+        {
+          "name": "delivery_numeric_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/delivery_numeric_01/summary.json",
+            "sha256": "27cb69b2b566036d87724fa539b621670fb11a8fd41d3f1dc4642dd52cf1ba4c",
+            "bytes": 1983
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 132526080,
+          "swap_bytes": 0,
+          "supervised_s": 2.8711580641102046,
+          "mandatory_PSI_s": 60.001890192972496
+        },
+        {
+          "name": "docs_02",
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_02/summary.json",
+            "sha256": "1595bed9a3d9123ee76311ca5ef529eed59061b6660fba313dbd35f4e5618c78",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 88932352,
+          "swap_bytes": 0,
+          "supervised_s": 2.7698105019517243,
+          "mandatory_PSI_s": 60.00188627792522
+        },
+        {
+          "name": "markdown_final_02",
+          "binding": {
+            "path": "tmp/task42extra/v47/markdown_final_02/summary.json",
+            "sha256": "b494b1796f85d3e9f88ae0d9861020015bb18a5e7a435fc17f256506797d9041",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 100065280,
+          "swap_bytes": 0,
+          "supervised_s": 2.162261540070176,
+          "mandatory_PSI_s": 60.00186664890498
+        }
+      ],
+      "new_light_supervised_sum_s": 9.860914777265862,
+      "new_light_PSI_sum_s": 240.00754818692803,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "all_observed_serial_formal_and_light_tree_peak_bytes": 621559808,
+      "overall_peak_scope": "max of serial sampled simultaneous own-tree peaks; browser light and numerical stages distinguished; not whole-host/cgroup exact peak",
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    }
+  ],
+  "production_merge": false,
+  "only_allowed_push": "git push origin HEAD:refs/heads/task42extra_feinn_5nm",
+  "final_commit_sha_rule": "A commit cannot contain its own SHA; final pushed HEAD/0:0/clean is reported after final metadata commit in tmp/task42extra/v47/final_publication_receipt.json and the user response."
+}

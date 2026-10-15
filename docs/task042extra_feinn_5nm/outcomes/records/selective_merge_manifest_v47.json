@@ -1,0 +1,65 @@
+{
+  "schema": "task42extra.v47.selective.v1",
+  "production_merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "change": "无合格production新默认",
+      "dependencies": [],
+      "validation": "原M5联合FAIL，不提升默认"
+    },
+    {
+      "group": "research-only numerical",
+      "change": "实参数完整三项FTT JVP/VJP、阻尼LSMR、原子实际试步和恢复",
+      "dependencies": [
+        "joint_least_squares",
+        "ftt_joint_tangent",
+        "ftt_joint_io",
+        "ftt_joint_training",
+        "ftt_joint_qualification"
+      ],
+      "validation": "53本地定向case及fresh M5导数/三步；短投入门FAIL"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "change": "既有CoreWorkerProfile可选trainer钩子；schema17/profile与五输入",
+      "dependencies": [
+        "research-only numerical",
+        "ftt_core_worker",
+        "ftt_joint_campaign",
+        "ftt_joint_worker"
+      ],
+      "validation": "五dat validate、fresh串行资格/探针/compare；原watchdog和资源门复用"
+    },
+    {
+      "group": "checker/benchmark",
+      "change": "旧双网逐点完整矩与FE compare-only沿用；design47允许",
+      "dependencies": [
+        "reusable runner/watchdog",
+        "ftt_continuation_joint"
+      ],
+      "validation": "fresh actual/producer分别全门，原参考只读，无重求"
+    },
+    {
+      "group": "compact evidence/docs",
+      "change": "只保存本批新证据，更新入口与总账",
+      "dependencies": [
+        "checker/benchmark"
+      ],
+      "validation": "源/数组hash、数值门独立重算及有限Markdown/呈现"
+    },
+    {
+      "group": "do-not-merge",
+      "change": "ignored大PT/数组及未资格化研究默认；自动变体/0.7nm/生产merge",
+      "dependencies": [],
+      "validation": "无production/master授权"
+    }
+  ],
+  "order": [
+    "research-only numerical",
+    "reusable runner/watchdog",
+    "checker/benchmark",
+    "compact evidence/docs"
+  ],
+  "fresh_numerical_source": "ce8f1f5e89cbdb848488b671305188a39c824046"
+}

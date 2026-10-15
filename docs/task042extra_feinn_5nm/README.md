@@ -1,3 +1,14 @@
+<!-- TASK42EXTRA_V47_CURRENT_BEGIN -->
+# 当前执行入口：V47短试步FAIL，固定FTT组合关闭
+
+**导数资格通过，联合更新得到可信但过小的下降；短试步投入门FAIL，正式ALL/OUTPUT_ONLY均按合同未启动。独立磁盘重开探针末态后，actual与producer的原联合门均FAIL，无强研究信号。关闭此固定FTT求解组合：CLOSE_CURRENT_FTT_SOLVER_FAMILY / NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE。0.7nm未准入，不自动另开同类变体；这不构成所有神经网络不可能的结论。**
+
+[Review V46](review_report_v46.md)、[Response V47](response_v47.md)、[summary](outcomes/summary.md)、[专题](outcomes/ftt_joint_tangent_decision_v47.md)、[原Gate](outcomes/records/full_numerical_gates_v47.json)、[成本](outcomes/records/resource_costs_v47.json)。3次联合步接受，原残差相对下降8.66308e-8＜1e-3投入门；两条正式路线未准入，非资源截断的数值失败。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V47_CURRENT_END -->
+
 <!-- TASK42EXTRA_V46_CURRENT_BEGIN -->
 # 当前执行入口：V46单份神经修正已完整验收
 

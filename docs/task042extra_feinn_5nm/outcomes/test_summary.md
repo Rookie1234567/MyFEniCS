@@ -1,3 +1,24 @@
+<!-- TASK42EXTRA_V47_CURRENT_BEGIN -->
+# V47：全参数导数、增广小系统及实际短步
+
+本地53个不同定向case通过（重复不累加），覆盖复乘积网络、三种mask、增广LS对小SVD、接受/拒绝/恢复和实际微型保存流程；Ruff、compileall、五dat validate-only和diff检查通过。实际M5资格通过，但数值门独立FAIL。初次ML ABI现场准入无空闲核，未运行测试/PDE，原门重试后通过；无数值实现修复、full pytest、重装或CI声明。CPU-only/MPI1/math与Torch intra/inter1，一个现场合格物理核；numeric warn12/hard16GiB、规划12GiB、新增cache/AD1GiB、轻2GiB、原PSI/系统及384GiB邻增长保护不变。
+
+| 真实父状态方向 | 非零Jv范数 | 两档FD最大相对差 | 实伴随相对差 |
+|---|---|---|---|
+| hidden | 987.021433892 | 7.30880765673e-10 | 2.83426508684e-14 |
+| output | 1305.23668102 | 5.56292045259e-10 | 8.79285757671e-16 |
+| mixed | 2807.81282077 | 9.47039858522e-11 | 1.97617786863e-15 |
+
+真实隐藏/输出/混合非零方向FD、实伴随均通过；VJP对旧完整逐点梯度相对差1.501234336e-10≤1e-9，三轴退化到旧K最大差6.57689065044e-15≤1e-10。7项恢复负控、4类实际标签打开负控均拒绝。h=15384236452.3来自seed4214701的4次幂迭代末Rayleigh，仅为估计；lambda0=1e-3h，3次接受后为569786.535272。单次JVP/VJP/真实试步/保存合计11.1284737219s。没有大J/J*J/全网格AD/新全局因子或FE逆。
+
+定向测试和导数通过不等于物理通过。实际短门FAIL后仍独立验收保存的双网，actual/producer原联合门均FAIL。
+
+[测试/修复](records/tests_and_repairs_v47.json)、[资格](records/joint_qualification_v47.json)、[短门](records/joint_probe_v47.json)、[完整Gate](records/full_numerical_gates_v47.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V47_CURRENT_END -->
+
 <!-- TASK42EXTRA_V46_CURRENT_BEGIN -->
 # V46：残差接线、非零方向及独立双网验收
 
