@@ -1,0 +1,286 @@
+{
+  "schema": "balh108-original6656-restart32-cgs-refinement-control-publication.v1",
+  "status": "TERMINAL_INDEPENDENT_REVIEW_BOUND_ORIGINAL_PRECISION_FAILED_NO_MATERIAL_REORTHOGONALIZATION_GAIN",
+  "date_utc": "2026-10-15",
+  "configuration": {
+    "cells": 108,
+    "fine_degree": 6,
+    "retained_dimension": 24056,
+    "native_A": "unchanged",
+    "coarse": "p4",
+    "H": "H3",
+    "method": "right FGMRES BAL_H",
+    "restart": 32,
+    "old_CGS_refinement": "never",
+    "new_CGS_refinement": "always",
+    "only_mathematical_control_change": "CGS refinement never to always at original restart32",
+    "original_saved_checkpoint_path_label": 6656,
+    "improved_checkpoint_used": false,
+    "Krylov_reused": false,
+    "factors_reused": false,
+    "max_outer": 200,
+    "hard_wall_seconds": 600,
+    "full_V_or_Gram_measured": false,
+    "source_command_sha256": "7f654003a2e98fc5b2d9f7c05b002d81c43a5aae474fed04587929545b408266",
+    "actual_refine_always_option_consumed": true,
+    "actual_KSP_view_verified": true,
+    "actual_unpreconditioned_norm": true,
+    "source_tests_passed": 63
+  },
+  "terminal": {
+    "iterations": 200,
+    "path_label": 6856,
+    "reason": -3,
+    "reason_meaning": "Iteration cap exhausted; not proof of numerical divergence",
+    "native_true_relative": 0.020024030230521024,
+    "saved_true_relative": 0.020024030553639136,
+    "new_reported_native_absolute": 0.013799391316697367,
+    "old200_reported_native_absolute": 0.013799391316643032,
+    "old200_true_Ax_available": false,
+    "old200_vector_available": false,
+    "native_original_gate": 1e-11,
+    "saved_original_gate": 1e-09,
+    "original_gates_passed": false,
+    "qualified_field": false,
+    "elapsed_seconds": 275.7723769709992,
+    "sampled_tree_peak_RSS_bytes": 2633207808,
+    "child_exit_code": 1,
+    "cleanup_verified": true,
+    "remaining_processes": [],
+    "resource_samples": 1091,
+    "independent_saved_recheck_relative": 0.020024030553658922,
+    "native_true_over_reported": 0.9999999999967801,
+    "absolute_native_true_reported_norm_difference": 4.443147239019396e-14,
+    "native_fractional_reduction_from_original6656": 0.0071437652863530765,
+    "saved_fractional_reduction_from_original6656": 0.007143766438798105,
+    "stagnation_flag_iterations": [
+      128,
+      192
+    ],
+    "hard_stability_stop": false,
+    "conditional_recheck_pairs": 0,
+    "all_four_saved_Ax_rechecks_match": true,
+    "native_Ax_posthoc_replayed": false,
+    "latest200_matches_immutable_terminal_payload": true,
+    "total_PC_calls": 201,
+    "setup_PC_calls": 1,
+    "outer_PC_calls": 200,
+    "coarse_work": {
+      "extra_solves": 200,
+      "factor_solves": 602,
+      "logical_calls": 402,
+      "maximum_native_relative": 1.0144038751009637e-11
+    },
+    "resource_gates": {
+      "AS_cap": 6442450944,
+      "V_Gram_reserved": 0,
+      "admissions": 249,
+      "artifact_bytes": 21180806,
+      "artifact_cap": 536870912,
+      "disk_floor": 4294967296,
+      "events": 1588,
+      "full32_Krylov_reserved": 32370336,
+      "hard600": true,
+      "host_floor": 1073741824,
+      "max_VmSize": 3236237312,
+      "max_projected_AS": 5648602280,
+      "max_projected_tree": 5780088008,
+      "min_disk_free": 12894638080,
+      "min_host_available": 6781259776,
+      "original_snapshot_scratch_retained": 12237568,
+      "peak_tree_RSS": 2633207808,
+      "samples": 1091,
+      "tree_cap": 8589934592,
+      "wall_seconds": 275.7723769709992,
+      "zero_swap": true
+    },
+    "build_seconds_included_in_science_wall": 91.55565269500948,
+    "setup_seconds_included_in_science_wall": 0.00030276700272224844,
+    "solve_seconds_included_in_science_wall": 179.14004117698641,
+    "outer_PC_apply_seconds_already_inside_solve": 172.30212118304917
+  },
+  "comparison": {
+    "same_original_saved6656": true,
+    "old64_128_192_true_values_are_live_recorded_paired_Ax": true,
+    "old64_128_192_posthoc_replay_claimed": false,
+    "old200_only_recursive_absolute": true,
+    "native_RHS_norm": 0.68914155431206,
+    "saved_RHS_norm": 0.6891415543120595,
+    "rows": [
+      {
+        "iteration": 64,
+        "path_label": 6720,
+        "old_native_true_relative": 0.020114848902987346,
+        "new_native_true_relative": 0.02011484890294945,
+        "old_saved_true_relative": 0.02011484924413727,
+        "new_saved_true_relative": 0.020114849244089024,
+        "old_reported_native_absolute": 0.013861978237756936,
+        "independent_saved_recheck_relative": 0.020114849244149306,
+        "independent_saved_recheck_matches": true,
+        "independent_saved_gate_passed": false,
+        "new_reported_native_absolute": 0.01386197823773082,
+        "new_over_old_reported_native": 0.999999999998116,
+        "new_over_old_native_true": 0.999999999998116,
+        "new_over_old_saved_true": 0.9999999999976015
+      },
+      {
+        "iteration": 128,
+        "path_label": 6784,
+        "old_native_true_relative": 0.020070101796872672,
+        "new_native_true_relative": 0.020070101796902166,
+        "old_saved_true_relative": 0.020070102135122884,
+        "new_saved_true_relative": 0.020070102135142032,
+        "old_reported_native_absolute": 0.013831141147498102,
+        "independent_saved_recheck_relative": 0.020070102135173098,
+        "independent_saved_recheck_matches": true,
+        "independent_saved_gate_passed": false,
+        "new_reported_native_absolute": 0.013831141147518428,
+        "new_over_old_reported_native": 1.0000000000014695,
+        "new_over_old_native_true": 1.0000000000014695,
+        "new_over_old_saved_true": 1.0000000000009541
+      },
+      {
+        "iteration": 192,
+        "path_label": 6848,
+        "old_native_true_relative": 0.02002740403819845,
+        "new_native_true_relative": 0.020027404038285797,
+        "old_saved_true_relative": 0.020027404374277698,
+        "new_saved_true_relative": 0.020027404374276008,
+        "old_reported_native_absolute": 0.013801716347719708,
+        "independent_saved_recheck_relative": 0.020027404374299566,
+        "independent_saved_recheck_matches": true,
+        "independent_saved_gate_passed": false,
+        "new_reported_native_absolute": 0.0138017163477799,
+        "new_over_old_reported_native": 1.0000000000043612,
+        "new_over_old_native_true": 1.0000000000043614,
+        "new_over_old_saved_true": 0.9999999999999156
+      },
+      {
+        "iteration": 200,
+        "path_label": 6856,
+        "old_native_true_relative": null,
+        "new_native_true_relative": 0.020024030230521024,
+        "old_saved_true_relative": null,
+        "new_saved_true_relative": 0.020024030553639136,
+        "old_reported_native_absolute": 0.013799391316643032,
+        "independent_saved_recheck_relative": 0.020024030553658922,
+        "independent_saved_recheck_matches": true,
+        "independent_saved_gate_passed": false,
+        "new_reported_native_absolute": 0.013799391316697367,
+        "new_over_old_reported_native": 1.0000000000039375
+      }
+    ]
+  },
+  "accounting": {
+    "historical_charge_unchanged": 10000,
+    "prior_independent_charge": 1536,
+    "new_independent_charge": 200,
+    "new_remaining": 0,
+    "lost20_refunded": false,
+    "replay_credit": 0,
+    "final_ledger": {
+      "path": "phase4_execution_ledger_v84.json",
+      "bytes": 72959,
+      "sha256": "1a04781eac170d32f4e81a4d98a27e13176506e994f7b7ce1b1ea3a932d7eeb9"
+    },
+    "selected_chain_subtotal": 11736,
+    "current_group_independent_charge": 1736,
+    "scope": "Selected historical10000 plus the listed prior1536 and new200 chain only. Not a project-wide outer-iteration sum; p5, recycling and other diagnostics remain separately recorded in the complete ledger.",
+    "prior1536_contains_known_inflight_one": true,
+    "prior1536_not_all_completed": true,
+    "project_wide_total_outer_steps_not_claimed": true,
+    "sum_known_terminal_science_seconds": 23062.092474517078,
+    "sum_science_seconds_lower_bound": 31197.525687890084,
+    "sum_is_not_exact": true,
+    "preparation_elapsed_is_separate_and_not_zero": true,
+    "read_only_audit_costs": {
+      "four_checkpoint_saved_Ax_seconds": 21.761706291988958,
+      "four_checkpoint_saved_Ax_peak_RSS_bytes": 41803776,
+      "scalar_terminal_review_seconds": 0.15211727999849245,
+      "scalar_terminal_review_peak_RSS_bytes": 40939520,
+      "not_inside_science_stage_sum": true
+    }
+  },
+  "conclusions": {
+    "CGS_refinement_alone_supported_as_repair_for_original_restart32": false,
+    "long_restart512_gap_repair_invalidated": false,
+    "all_possible_bugs_ruled_out": false,
+    "restart32_full_root_cause_established": false,
+    "additional_outer_authorized_by_report": false,
+    "hp_convergence_claimed": false,
+    "next_work_status": "Static design of augmentation from historical long-cycle correction directions only; no implementation or numerical execution authorized or promised."
+  },
+  "scope": {
+    "only_two_small_reports_published": true,
+    "large_payloads_uploaded": false,
+    "no_numerical_execution_or_array_CSR_ELF_payload_reads_by_publication_worker": true,
+    "connector_publication_only": true,
+    "canonical_local_worktree_gate_claimed": false,
+    "GitHub_rendered_view_verified": false,
+    "CI_pass_claimed": false
+  },
+  "evidence": [
+    {
+      "path": "restart32_refinement_independent_review/independent_source_review.json",
+      "bytes": 31206,
+      "sha256": "d1a570f27fe4db66bc740e7844c399da07cf7cf176128185c03b3673a23d1c6a"
+    },
+    {
+      "path": "phase4_balh108_restart32_cgsrefine_candidate01/restart32_comparison_reference.json",
+      "bytes": 10357,
+      "sha256": "1012aa2b22caf61e191fc641f11af1144727df3b40a66ec4afe6d9cd68124d05"
+    },
+    {
+      "path": "phase4_native_cached02_incomplete_review.json",
+      "bytes": 5748,
+      "sha256": "552384520086ec48a9a7e4578a2af99773d3c4543f93bd8d7d833620fa5d66cf"
+    },
+    {
+      "path": "phase4_balh108_restart32_cgsrefine_attempt01/summary.json",
+      "bytes": 2215,
+      "sha256": "ee02db9e4e33de495c54296f5b59c4f1c583fb7a97d4f11a43c6577bbbb965d8"
+    },
+    {
+      "path": "phase4_balh108_restart32_cgsrefine_attempt01/linear_cleanup.json",
+      "bytes": 432,
+      "sha256": "2b810a4a45fc29d41abc363e3d66813a1bc91c03fa644eee7279e1310eb4d874"
+    },
+    {
+      "path": "phase4_restart32_refinement_terminal_review.json",
+      "bytes": 91791,
+      "sha256": "ad8622ba1fbeaa780fd760ed24b31e792990fb8a6d27af35f3aa2e5daf44c905"
+    },
+    {
+      "path": "phase4_restart32_refinement_checkpoint_ax_review.json",
+      "bytes": 15009,
+      "sha256": "ca7322873c18ba9a40b7fa77910cb1f77bad6bb23c677779daf0e2b5df939934"
+    },
+    {
+      "path": "phase4_execution_ledger_v84.json",
+      "bytes": 72959,
+      "sha256": "1a04781eac170d32f4e81a4d98a27e13176506e994f7b7ce1b1ea3a932d7eeb9"
+    },
+    {
+      "path": "phase4_balh108_restart32_cgsrefine_attempt01/linear_terminal_before_gate.json",
+      "bytes": 209439,
+      "sha256": "65b988cc39997f8fe8a6c5ca1818ccaca0fa11b52e5c7858680f60683616d1a7"
+    }
+  ],
+  "prior_report": {
+    "commit": "caa67ed41a1086e0d6cc3a75f4e0386baf54071c",
+    "path": "docs/task40extra_dot_parallel_cloud/reports/hp_reference_free/2026-10-13_uniform36p6_progress/balh108_restart512_recovery_20261014_zh.md"
+  },
+  "initial_mapping": {
+    "saved_typed_sha256": "d999ad5781e732717c286e8f5c12161d2c1b55535d026910179db82cc281ada6",
+    "mapped_native_typed_sha256": "d08a88092a092049460f08586a79da48ba0313a60649d8c5a37a72370f989e96",
+    "producer_native_typed_sha256": "d08a88092a092049460f08586a79da48ba0313a60649d8c5a37a72370f989e96",
+    "mapped_native_matches_producer_bytes_observed": true,
+    "old_restart32_initial_paired_identical": true,
+    "initial_native_true_relative": 0.020168106449264755,
+    "initial_saved_true_relative": 0.020168106798117626,
+    "native_producer_residual_comparison_is_observation_only": true,
+    "native_producer_reported_relative": 0.020168106798117612,
+    "no_new_scaling_or_normalization": true,
+    "saved_native_hashes_not_interchangeable": true
+  }
+}
