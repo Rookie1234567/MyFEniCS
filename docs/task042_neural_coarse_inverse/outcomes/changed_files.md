@@ -1,3 +1,7 @@
+## CPU准入误排维护
+
+`task042_shared.py`统一判定/排除表并按实际采样时间计算线程负载；收据checker兼容旧策略，新增纯CPU回归及快照说明。仅准入分类改变，物理数值核/旧窗口不变。
+
 ## V79变更边界
 
 新增保存场消费者scope/小接线、两个dat与合成回归；原PUBLIC_BASIX积分增加显式分项回调，差分分子增加一次遍历批列，原默认不改。科学消费因CPU门未运行，保留research-only，不授production/default或merge资格。

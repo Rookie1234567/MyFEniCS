@@ -7,6 +7,7 @@ Never inspects another task's smaps, acquires its lock, or sends it a signal.
 import fcntl
 from collections.abc import Mapping
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -189,35 +190,62 @@ def _thread_ticks():
     return result
 
 
-def spare_cores(topology, neighbors, cpu_busy_fraction, thread_deltas):
-    """V3: reserve narrow affinities; exclude active wide threads and busy CPUs.
+def _wide_thread_tick_limit(sample_interval_seconds, ticks_per_second):
+    """No timing means the original any-activity policy for historical replay."""
+    if sample_interval_seconds is None and ticks_per_second is None:
+        return None
+    if any(
+        value is None or isinstance(value, bool)
+        or not math.isfinite(value) or value <= 0
+        for value in (sample_interval_seconds, ticks_per_second)
+    ):
+        raise ValueError("CPU thread activity requires positive finite timing")
+    return 0.05 * sample_interval_seconds * ticks_per_second
 
-    A sleeping wide controller's last PSR is not a reservation of that core.
-    Wide controllers may migrate later; this is admission, not zero-impact proof.
+
+def spare_cores(topology, neighbors, cpu_busy_fraction, thread_deltas, *,
+                sample_interval_seconds=None, ticks_per_second=None):
+    """Reserve narrow affinities and busy SMT siblings, using sampled rates.
+
+    With timing, a wide thread's last PSR is reserved only above 5% sampled
+    occupancy, or when its activity is unknown. Short desktop/controller work
+    has no name-based exemption: the same CPU and thread limits apply to all.
+    This is a short-sample admission, not a guarantee of future noninterference.
     """
-    excluded = {cpu for cpu, fraction in cpu_busy_fraction.items() if fraction > 0.05}
+    decisions = cpu_exclusions(
+        topology, neighbors, cpu_busy_fraction, thread_deltas,
+        sample_interval_seconds=sample_interval_seconds,
+        ticks_per_second=ticks_per_second,
+    )
+    return [row["cpu"] for row in decisions if row["eligible"]]
+
+
+def cpu_exclusions(topology, neighbors, fractions, deltas, *,
+                   sample_interval_seconds=None, ticks_per_second=None):
+    """One policy for both admission and its replayable exclusion table."""
+    tick_limit = _wide_thread_tick_limit(sample_interval_seconds, ticks_per_second)
+    reasons = {}
+    for cpu, value in fractions.items():
+        if value > 0.05:
+            reasons.setdefault(cpu, []).append("sample_busy_fraction_gt_0.05")
     for row in neighbors:
         for thread in row["threads"]:
+            tid = thread["tid"]
             if len(thread["affinity"]) <= 16:
-                excluded.update(thread["affinity"])
-            elif thread_deltas.get(thread["tid"], 1) > 0:
-                excluded.add(thread["cpu"])
-    return [t["cpu"] for t in topology if not set(t["siblings"]) & excluded]
-
-
-def cpu_exclusions(topology, neighbors, fractions, deltas):
-    """Reporting only; the existing spare_cores policy remains authoritative."""
-    reasons={}
-    for cpu,value in fractions.items():
-        if value>0.05:reasons.setdefault(cpu,[]).append("sample_busy_fraction_gt_0.05")
-    for row in neighbors:
-        for thread in row["threads"]:
-            if len(thread["affinity"])<=16:
-                for cpu in thread["affinity"]:reasons.setdefault(cpu,[]).append("narrow_thread_affinity:"+str(thread["tid"]))
-            elif deltas.get(thread["tid"],1)>0:
-                reasons.setdefault(thread["cpu"],[]).append("active_wide_thread:"+str(thread["tid"]))
-    return [dict(**t,eligible=not any(cpu in reasons for cpu in t["siblings"]),
-        excluded_siblings={str(cpu):reasons[cpu] for cpu in t["siblings"] if cpu in reasons}) for t in topology]
+                for cpu in thread["affinity"]:
+                    reasons.setdefault(cpu, []).append("narrow_thread_affinity:" + str(tid))
+                continue
+            delta = deltas.get(tid)
+            if tick_limit is None:
+                reason = "active_wide_thread" if deltas.get(tid, 1) > 0 else None
+            elif delta is None or not math.isfinite(delta) or delta < 0:
+                reason = "unknown_wide_thread_activity"
+            else:
+                reason = "sustained_wide_thread" if delta > tick_limit else None
+            if reason:
+                reasons.setdefault(thread["cpu"], []).append(reason + ":" + str(tid))
+    return [dict(**t, eligible=not any(cpu in reasons for cpu in t["siblings"]),
+        excluded_siblings={str(cpu): reasons[cpu] for cpu in t["siblings"] if cpu in reasons}) for t in topology]
 
 
 def audit(*, observed_activity=False, receipt_path=None, input_path=None):
@@ -345,7 +373,12 @@ def _audit(*, observed_activity=False, observation=None):
             for tid, last in threads_after.items()
             if tid in threads_before and last[0] == threads_before[tid][0]
         }
-        candidates = spare_cores(topology, rows, cpu_busy_fraction, thread_deltas)
+        activity_timing = dict(sample_interval_seconds=interval,
+                               ticks_per_second=ticks_per_s)
+        candidates = spare_cores(topology, rows, cpu_busy_fraction, thread_deltas,
+                                  **activity_timing)
+        decisions = cpu_exclusions(topology, rows, cpu_busy_fraction, thread_deltas,
+                                    **activity_timing)
     if observation is not None:
         tids={t['tid'] for row in rows for t in row['threads']}
         observation.update(process_start_ticks=after.get(os.getpid(),{}).get('start_ticks'),
@@ -354,7 +387,9 @@ def _audit(*, observed_activity=False, observation=None):
             thread_ticks_before={tid:threads_before[tid] for tid in tids if tid in (threads_before or {})},
             thread_ticks_after={tid:threads_after[tid] for tid in tids if tid in (threads_after or {})},
             thread_delta_ticks=thread_deltas,candidate_cpus=candidates,
-            cpu_decisions=cpu_exclusions(topology,rows,cpu_busy_fraction,thread_deltas))
+            thread_activity_policy="sampled_fraction_v1" if observed_activity else "legacy_any_activity",
+            clock_ticks_per_second=ticks_per_s,
+            cpu_decisions=decisions if observed_activity else cpu_exclusions(topology,rows,cpu_busy_fraction,thread_deltas))
         observation['gates']['CPU_SMT']='PASS' if candidates else 'FAIL'
     if not candidates:
         raise RuntimeError(
@@ -424,9 +459,12 @@ def _audit(*, observed_activity=False, observation=None):
         "utc": datetime.now(timezone.utc).isoformat(),
         "cpu": candidates[0],
         "candidate_cpus": candidates,
-        "admission_policy": "V3 observed CPU/thread activity"
+        "admission_policy": "V4 observed CPU/thread rates"
         if observed_activity
         else "V2 conservative last-PSR",
+        "thread_activity_policy": "sampled_fraction_v1" if observed_activity else "legacy_any_activity",
+        "sample_interval_seconds": interval,
+        "clock_ticks_per_second": ticks_per_s,
         "cpu_busy_fractions": cpu_busy_fraction,
         "thread_delta_ticks": thread_deltas,
         "topology": topology,

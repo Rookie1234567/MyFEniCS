@@ -1,3 +1,7 @@
+## CPU准入误排维护
+
+26项纯元数据定点回归通过，含两冻结快照和旧策略重放；compile/Ruff通过。无PDE或科学数组消费，V79未重开。见[修复说明](cpu_admission_fix_20261015.md)。
+
 ## V79测试与实际未执行项
 
 初始5项合成测试通过，最终数值focused因两次CPU准入拒绝而NOT_RUN；不将它标PASS。最终compile/Ruff/两dat元数据validate通过，无PDE/KSP/numeric；一次文档检查及冻结stderr见[证据](records/known_error_budget_v79.json)。GitHub视觉NOT_VERIFIED，未full pytest/CI。
