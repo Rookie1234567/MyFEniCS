@@ -25,6 +25,9 @@ from src.io.input_validation import (
     TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
     TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
     TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE,
+    TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+    TASK041_V16_RESOURCE_HEADROOM_POLICY,
     task041_balh_case,
     task041_balh_profile_errors,
     task041_balh_service_contract,
@@ -79,6 +82,7 @@ TASK041_P4_W0P7_PILOT_TARGET_SCOPE = (
     TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE
 )
 TASK041_V8_SWAP_OBSERVE_CONTINUE = "task041_v8_swap_observe_continue"
+TASK041_V16_MEMAVAILABLE_POLICY = TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
 TASK041_V13_CONSISTENT_MODAL_POLICY_ID = (
     "task041_v13_consistent_fixed_balh_modal_surrogate"
 )
@@ -170,6 +174,40 @@ def task041_v8_resource_policy_binding(
         "review_sha256": hashlib.sha256(review_path.read_bytes()).hexdigest(),
         "swap_semantics": "observe_only_continue",
     }
+
+
+def task041_resource_policy_binding(
+    model_id: str, policy: str | None
+) -> dict[str, Any] | None:
+    """Resolve a versioned resource policy while preserving historical V8."""
+
+    if policy is None or policy == TASK041_V8_SWAP_OBSERVE_CONTINUE:
+        return task041_v8_resource_policy_binding(model_id, policy)
+    if policy != TASK041_V16_MEMAVAILABLE_POLICY:
+        raise ValueError(f"unsupported Task041 resource policy: {policy}")
+    if model_id != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID or task041_balh_service_contract(
+        model_id
+    ) is None:
+        raise ValueError("V16 MemAvailable policy is limited to the registered W0.7 pilot")
+    return {
+        "schema": "task041.resource_policy_binding.v1",
+        "policy": policy,
+        "model_id": model_id,
+        "memory_authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        "resource_headroom_policy": dict(TASK041_V16_RESOURCE_HEADROOM_POLICY),
+        "swap_semantics": "observe_only_continue",
+        "memfree_semantics": "observation_only",
+    }
+
+
+def task041_resource_headroom_policy(policy: str | None) -> dict[str, Any]:
+    """Return the resource formula selected by an explicit policy version."""
+
+    if policy == TASK041_V16_MEMAVAILABLE_POLICY:
+        return dict(TASK041_V16_RESOURCE_HEADROOM_POLICY)
+    if policy == TASK041_V8_SWAP_OBSERVE_CONTINUE:
+        return dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+    raise ValueError(f"unsupported Task041 resource policy: {policy}")
 
 
 def task041_is_explicit_p4_backend_pair(
@@ -904,7 +942,12 @@ def task041_fixed_h6_modal_gmres_binding(
         or mpi_size != TASK041_BALH_MPI_SIZE
         or isinstance(mode_count, bool)
         or mode_count != case.get("mode_count")
-        or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
+        or task041_resource_policy
+        not in {TASK041_V8_SWAP_OBSERVE_CONTINUE, TASK041_V16_MEMAVAILABLE_POLICY}
+        or (
+            task041_resource_policy == TASK041_V16_MEMAVAILABLE_POLICY
+            and modal_solver_policy != TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+        )
         or not target_matches
     ):
         target_label = "None" if expected_target is None else "5e-13"
@@ -933,7 +976,7 @@ def task041_fixed_h6_modal_gmres_binding(
         "p4_refinement_target_scope": (
             task041_p4_registered_formal_target_scope(model_id)
         ),
-        "task041_resource_policy": TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        "task041_resource_policy": task041_resource_policy,
         "expected_rank_cpus": list(supplied_cpus),
         "rank_cpu_map_source": "explicit_frozen_expected_rank_cpus",
     }
@@ -948,6 +991,9 @@ def task041_fixed_h6_modal_gmres_binding(
             modal_solver_policy
         )
     if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+        selected_resource_policy = task041_resource_headroom_policy(
+            task041_resource_policy
+        )
         binding.update(
             {
                 "memory_policy": TASK041_V13_MEMORY_POLICY,
@@ -955,11 +1001,11 @@ def task041_fixed_h6_modal_gmres_binding(
                 "required_thread_environment": dict(
                     TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
                 ),
-                "resource_headroom_policy": dict(
-                    TASK041_V13_RESOURCE_HEADROOM_POLICY
-                ),
+                "resource_headroom_policy": selected_resource_policy,
             }
         )
+        if task041_resource_policy == TASK041_V16_MEMAVAILABLE_POLICY:
+            binding["memory_authority_schema"] = TASK041_V16_MEMORY_AUTHORITY_SCHEMA
     return binding
 
 
@@ -1530,7 +1576,7 @@ def build_task041_balh_candidate_consumer_command(
             side_setup_schedule=side_setup_schedule,
             comparison_mode=comparison_mode,
         )
-    resource_policy_binding = task041_v8_resource_policy_binding(
+    resource_policy_binding = task041_resource_policy_binding(
         str(normalized["model_id"]), task041_resource_policy
     )
     fixed_h6_binding = task041_fixed_h6_modal_gmres_binding(
@@ -2272,7 +2318,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--task041-resource-policy",
-        choices=(TASK041_V8_SWAP_OBSERVE_CONTINUE,),
+        choices=(TASK041_V8_SWAP_OBSERVE_CONTINUE, TASK041_V16_MEMAVAILABLE_POLICY),
         default=None,
     )
     parser.add_argument(

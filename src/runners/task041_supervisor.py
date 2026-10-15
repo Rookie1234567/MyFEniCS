@@ -21,7 +21,10 @@ from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
-from benchmarks.task034_wsl_resources import resource_authority_sample
+from benchmarks.task034_wsl_resources import (
+    normal_memory_nodes,
+    resource_authority_sample,
+)
 from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
@@ -36,6 +39,9 @@ from src.io.input_validation import (
     TASK041_SHORTWAVE_MODEL_IDS,
     TASK041_SHORTWAVE_MPI_SIZE,
     TASK041_SHORTWAVE_WORKFLOW_LIMITS,
+    TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+    TASK041_V16_RESOURCE_HEADROOM_POLICY,
     task041_balh_case,
     task041_balh_diagnostic_output_enabled,
     task041_balh_phase_limits_for_model,
@@ -540,6 +546,7 @@ def _sample_record(
     *,
     authority_kind: str | None = None,
     swap_observe_only: bool = False,
+    require_kernel_memavailable: bool = False,
 ) -> dict[str, Any]:
     process_tree = authority.get("process_tree")
     if not isinstance(process_tree, Mapping):
@@ -553,6 +560,9 @@ def _sample_record(
     host_memory = authority.get("host_memory")
     if not isinstance(host_memory, Mapping):
         host_memory = {}
+    kernel_memavailable = host_memory.get("kernel_memavailable")
+    if not isinstance(kernel_memavailable, Mapping):
+        kernel_memavailable = {}
     global_swap = authority.get("global_swap")
     if not isinstance(global_swap, Mapping):
         global_swap = {}
@@ -565,7 +575,21 @@ def _sample_record(
     rss = _numeric(process_tree.get("rss_bytes"))
     process_swap = _numeric(process_tree.get("swap_bytes"))
     dedicated_swap = _numeric(job_cgroup.get("swap_current_bytes"))
-    host_memavailable = _numeric(host_memory.get("mem_available_bytes"))
+    legacy_host_memavailable = _numeric(host_memory.get("mem_available_bytes"))
+    kernel_memavailable_bytes = _numeric(kernel_memavailable.get("bytes"))
+    kernel_memavailable_valid = bool(
+        kernel_memavailable.get("schema") == TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        and kernel_memavailable.get("status") == "measured"
+        and type(kernel_memavailable_bytes) is int
+        and kernel_memavailable_bytes >= 0
+    )
+    host_memavailable = (
+        kernel_memavailable_bytes
+        if require_kernel_memavailable and kernel_memavailable_valid
+        else None
+        if require_kernel_memavailable
+        else legacy_host_memavailable
+    )
     host_memtotal = _numeric(host_memory.get("mem_total_bytes"))
     global_swap_used = _numeric(global_swap.get("used_bytes"))
     global_pswpin = _numeric(global_vmstat.get("pswpin_pages"))
@@ -591,6 +615,11 @@ def _sample_record(
     common = {
         "sample_elapsed_seconds": float(elapsed),
         "host_memavailable_bytes": host_memavailable,
+        "legacy_host_memavailable_observation_bytes": legacy_host_memavailable,
+        "kernel_memavailable_bytes": kernel_memavailable_bytes,
+        "kernel_memavailable_schema": kernel_memavailable.get("schema"),
+        "kernel_memavailable_status": kernel_memavailable.get("status"),
+        "kernel_memavailable_error": kernel_memavailable.get("error"),
         "host_memtotal_bytes": host_memtotal,
         "cgroup_memory_current_bytes": cgroup_memory,
         "cgroup_memory_peak_bytes": _numeric(job_cgroup.get("memory_peak_bytes")),
@@ -942,6 +971,110 @@ def _task041_v13_initial_resource_gate_record(
     }
 
 
+def _task041_v16_initial_resource_gate_record(
+    memavailable_bytes: int | None,
+    *,
+    memavailable_schema: str | None,
+    memavailable_status: str | None,
+    normal_ram_nodes: list[int] | None,
+    memfree_observation: Mapping[str, Any] | None = None,
+    error: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Record the V16 startup MemAvailable gate and nonbinding MemFree data."""
+
+    from src.io.input_validation import task041_v16_initial_memory_gate
+
+    gate = task041_v16_initial_memory_gate(
+        memavailable_bytes=memavailable_bytes
+    )
+    scope_valid = bool(
+        isinstance(normal_ram_nodes, list)
+        and normal_ram_nodes
+        and all(type(node) is int and node >= 0 for node in normal_ram_nodes)
+        and normal_ram_nodes == sorted(set(normal_ram_nodes))
+    )
+    errors = list(gate.get("errors", []))
+    memavailable_source_valid = (
+        memavailable_schema == TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        and memavailable_status == "measured"
+    )
+    if not memavailable_source_valid:
+        errors.append("kernel_MemAvailable_source_schema_or_status_is_unknown")
+    if not scope_valid:
+        errors.append("online_normal_ram_node_scope_is_unknown_or_invalid")
+    if isinstance(error, Mapping):
+        errors.append("initial_host_memory_observation_failed")
+    passed = (
+        gate.get("pass") is True
+        and memavailable_source_valid
+        and scope_valid
+        and error is None
+    )
+    return {
+        **gate,
+        "schema": "task041.v16.initial_memavailable_gate.v1",
+        "status": "passed" if passed else "refused",
+        "pass": passed,
+        "memavailable_source_schema": memavailable_schema,
+        "memavailable_source_status": memavailable_status,
+        "normal_ram_nodes": normal_ram_nodes if scope_valid else None,
+        "normal_ram_node_scope_status": "measured" if scope_valid else "unknown",
+        "memfree_observation": (
+            dict(memfree_observation)
+            if isinstance(memfree_observation, Mapping)
+            else None
+        ),
+        "errors": errors,
+        "error": dict(error) if isinstance(error, Mapping) else None,
+    }
+
+
+def _task041_v16_initial_resource_gate(
+    memavailable_bytes: Any,
+    *,
+    memavailable_schema: str | None,
+    memavailable_status: str | None,
+) -> dict[str, Any]:
+    """Read current online RAM-node scope; MemFree remains observation-only."""
+
+    try:
+        nodes = normal_memory_nodes()
+    except (OSError, ValueError, TypeError) as exc:
+        return _task041_v16_initial_resource_gate_record(
+            memavailable_bytes,
+            memavailable_schema=memavailable_schema,
+            memavailable_status=memavailable_status,
+            normal_ram_nodes=None,
+            error={"type": type(exc).__name__, "message": str(exc)[:240]},
+        )
+    values: dict[str, int | None] = {}
+    failures: dict[str, str] = {}
+    for node in nodes:
+        try:
+            values[str(node)] = _task041_node_memfree_bytes(node)
+        except (OSError, ValueError) as exc:
+            values[str(node)] = None
+            failures[str(node)] = f"{type(exc).__name__}: {exc}"
+    observed = [value for value in values.values() if type(value) is int]
+    observation = {
+        "schema": "task041.memfree_observation.v1",
+        "nodes_bytes": values,
+        "aggregate_bytes": (
+            sum(observed) if len(observed) == len(values) else None
+        ),
+        "status": "measured" if not failures else "partially_measured",
+        "errors": failures or None,
+        "admission_semantics": "observation_only",
+    }
+    return _task041_v16_initial_resource_gate_record(
+        memavailable_bytes,
+        memavailable_schema=memavailable_schema,
+        memavailable_status=memavailable_status,
+        normal_ram_nodes=nodes,
+        memfree_observation=observation,
+    )
+
+
 def _terminate_owned_session_members(
     session_id: int,
     initial_snapshot: Mapping[str, Any],
@@ -1227,6 +1360,7 @@ def _run_phase(
     enforce_time_stops: bool = True,
     swap_observe_only: bool = False,
     require_owned_session_empty: bool = False,
+    require_kernel_memavailable: bool = False,
 ) -> dict[str, Any]:
     if phase_root.exists():
         raise Task041SupervisorError(
@@ -1624,6 +1758,7 @@ def _run_phase(
                     now - workflow_started,
                     authority_kind=authority_kind,
                     swap_observe_only=swap_observe_only,
+                    require_kernel_memavailable=require_kernel_memavailable,
                 )
                 record = _annotate_sample(
                     record,
@@ -1715,6 +1850,7 @@ def _run_phase(
                     post_now - workflow_started,
                     authority_kind=post_kind,
                     swap_observe_only=swap_observe_only,
+                    require_kernel_memavailable=require_kernel_memavailable,
                 ),
                 sample_role="phase_end_public_root",
                 worker_pid=process.pid,
@@ -2042,10 +2178,9 @@ def run_task041_supervised_public_command(
     case_runtime_contract = task041_balh_service_contract(str(model_id))
     resource_policy_binding = profile_contract.get("task041_resource_policy")
     swap_observe_only = False
+    v16_memavailable_policy = False
     if resource_policy_binding is not None:
-        from benchmarks.task041_balh_workflow import (
-            task041_v8_resource_policy_binding,
-        )
+        from benchmarks.task041_balh_workflow import task041_resource_policy_binding
 
         if not isinstance(resource_policy_binding, Mapping):
             raise Task041SupervisorError(
@@ -2054,7 +2189,7 @@ def run_task041_supervised_public_command(
                 stage="supervised_public_profile",
             )
         try:
-            expected_policy = task041_v8_resource_policy_binding(
+            expected_policy = task041_resource_policy_binding(
                 str(model_id), str(resource_policy_binding.get("policy", ""))
             )
         except ValueError as exc:
@@ -2073,11 +2208,15 @@ def run_task041_supervised_public_command(
             != expected_policy
         ):
             raise Task041SupervisorError(
-                "V8 resource policy is not bound to the registered service launch",
+                "versioned resource policy is not bound to the registered service launch",
                 classification="task041_identity_failure",
                 stage="supervised_public_profile",
             )
         swap_observe_only = True
+        v16_memavailable_policy = (
+            resource_policy_binding.get("policy")
+            == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+        )
     p4_backend_pair_identity = profile_contract.get("p4_backend_pair_identity")
     p4_backend_pair_runtime = False
     if isinstance(p4_backend_pair_identity, Mapping):
@@ -2202,6 +2341,7 @@ def run_task041_supervised_public_command(
     if v13_default_memory and isinstance(fixed_binding, Mapping):
         from benchmarks.task041_balh_workflow import (
             task041_parse_expected_rank_cpus,
+            task041_resource_headroom_policy,
         )
 
         try:
@@ -2210,6 +2350,16 @@ def run_task041_supervised_public_command(
             )
         except (TypeError, ValueError):
             expected_v13_rank_cpus = None
+        try:
+            expected_v13_headroom_policy = task041_resource_headroom_policy(
+                str(resource_policy_binding.get("policy", ""))
+                if isinstance(resource_policy_binding, Mapping)
+                else None
+            )
+        except ValueError:
+            expected_v13_headroom_policy = None
+    else:
+        expected_v13_headroom_policy = None
     if expected_modal_solver_policy is not None:
         policy_binding = (
             fixed_binding.get("modal_solver_policy")
@@ -2246,8 +2396,12 @@ def run_task041_supervised_public_command(
             or launch_manifest.get("fixed_h6_modal_gmres_research")
             != dict(fixed_binding)
             or not isinstance(fixed_binding.get("resource_headroom_policy"), Mapping)
+            or fixed_binding.get("resource_headroom_policy")
+            != expected_v13_headroom_policy
             or fixed_binding["resource_headroom_policy"].get(
-                "aggregate_memfree_reserve_bytes"
+                "reserve_bytes"
+                if v16_memavailable_policy
+                else "aggregate_memfree_reserve_bytes"
             )
             != TASK041_V13_AGGREGATE_RESERVE_BYTES
             or fixed_binding.get("required_thread_environment")
@@ -2262,6 +2416,16 @@ def run_task041_supervised_public_command(
             or launch_manifest.get("memory_policy") != TASK041_V13_MEMORY_POLICY
             or "membind_node" not in launch_manifest
             or launch_manifest.get("membind_node") is not None
+            or (
+                v16_memavailable_policy
+                and fixed_binding.get("memory_authority_schema")
+                != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+            )
+            or (
+                v16_memavailable_policy
+                and launch_manifest.get("memory_authority_schema")
+                != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+            )
         ):
             raise Task041SupervisorError(
                 "V13 binding does not resolve default memory and the frozen MPI8 resource contract",
@@ -2429,6 +2593,8 @@ def run_task041_supervised_public_command(
                 ),
             }
         )
+        if v16_memavailable_policy:
+            result["memory_authority_schema"] = TASK041_V16_MEMORY_AUTHORITY_SCHEMA
     if launch_manifest_path is not None:
         result["launch_manifest"] = {
             "path": str(launch_manifest_path),
@@ -2492,6 +2658,7 @@ def run_task041_supervised_public_command(
                 or profile_contract["time_stop"]["consumer_enforced"]
             ),
             swap_observe_only=swap_observe_only,
+            require_kernel_memavailable=v16_memavailable_policy,
         )
         resource_failure = _phase_resource_failure(phase_result)
         if resource_failure:
@@ -10346,6 +10513,19 @@ def _v13_outer_authority_pass_matches_report(
         or authority.get("authority_receipt_sha256") != receipt_sha256
     ):
         return False
+    if (
+        authority.get("resource_policy_schema")
+        == TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"]
+        or receipt_payload.get("schema")
+        == "task041.v16.outer_resource_receipt_payload.v2"
+    ):
+        from src.io.input_validation import (
+            task041_v16_outer_resource_contract_errors,
+        )
+
+        return not task041_v16_outer_resource_contract_errors(
+            phase, report, authority, rank_count=rank_count
+        )
     target_restart = 32 if phase == "outer_restart32_workspace" else 64
     hard_cap = 85_899_345_920
     reserve = 8_589_934_592
@@ -10597,6 +10777,7 @@ def _task041_v13_outer_control_evidence(
     *,
     expected_rank_count: int | None,
     solve_record: Mapping[str, Any] | None = None,
+    expected_resource_policy: str | None = None,
 ) -> dict[str, Any]:
     """Recompute retained V13 outer-window, restart, and stop evidence.
 
@@ -10676,6 +10857,17 @@ def _task041_v13_outer_control_evidence(
                 return False
             payload = authority.get("authority_receipt_payload")
             if not isinstance(payload, Mapping):
+                return False
+            if expected_resource_policy == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY and (
+                authority.get("resource_policy_schema")
+                != TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"]
+                or authority.get("memory_authority_schema")
+                != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                or payload.get("resource_policy_schema")
+                != TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"]
+                or payload.get("memory_authority_schema")
+                != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+            ):
                 return False
             request_sha = hashlib.sha256(canonical(report).encode()).hexdigest()
             receipt_sha = hashlib.sha256(canonical(payload).encode()).hexdigest()
@@ -11402,10 +11594,20 @@ def _task041_v13_rank_runtime_evidence(
 
     from benchmarks.task041_balh_workflow import (
         TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
-        TASK041_V13_RESOURCE_HEADROOM_POLICY,
+        task041_resource_headroom_policy,
     )
 
     errors: list[str] = []
+    resource_policy = (
+        expected_binding.get("task041_resource_policy")
+        if isinstance(expected_binding, Mapping)
+        else None
+    )
+    try:
+        expected_headroom_policy = task041_resource_headroom_policy(resource_policy)
+    except ValueError:
+        expected_headroom_policy = None
+    v16_policy = resource_policy == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
     expected_rank_cpu_binding: tuple[int, ...] | None = None
     if isinstance(expected_binding, Mapping):
         from benchmarks.task041_balh_workflow import (
@@ -11429,7 +11631,12 @@ def _task041_v13_rank_runtime_evidence(
         or expected_binding.get("required_thread_environment")
         != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
         or expected_binding.get("resource_headroom_policy")
-        != TASK041_V13_RESOURCE_HEADROOM_POLICY
+        != expected_headroom_policy
+        or (
+            v16_policy
+            and expected_binding.get("memory_authority_schema")
+            != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        )
     ):
         errors.append("resolved_V13_memory_or_CPU_binding_invalid")
     session_id = (
@@ -11487,7 +11694,12 @@ def _task041_v13_rank_runtime_evidence(
             or stage_qualification.get("required_thread_environment")
             != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
             or stage_qualification.get("resource_headroom_policy")
-            != TASK041_V13_RESOURCE_HEADROOM_POLICY
+            != expected_headroom_policy
+            or (
+                v16_policy
+                and stage_qualification.get("memory_authority_schema")
+                != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+            )
         ):
             errors.append("rank_numa_stage_or_qualification_binding_invalid")
             continue
@@ -11496,6 +11708,18 @@ def _task041_v13_rank_runtime_evidence(
             errors.append("rank_numa_stage_name_missing")
         else:
             stage_names.append(stage_name)
+        normal_nodes = (
+            stage_qualification.get("normal_memory_nodes")
+            if isinstance(stage_qualification, Mapping)
+            else None
+        )
+        if v16_policy and (
+            not isinstance(normal_nodes, list)
+            or not normal_nodes
+            or any(type(node) is not int or node < 0 for node in normal_nodes)
+            or normal_nodes != sorted(set(normal_nodes))
+        ):
+            errors.append("V16 normal-memory-node binding is missing or malformed")
         rank_rows = stage_record.get("ranks")
         if (
             not isinstance(rank_rows, list)
@@ -11603,6 +11827,23 @@ def _task041_v13_rank_runtime_evidence(
                 != memory_scope.get("cgroup_identity_after")
             ):
                 errors.append(f"rank_{rank}_Mems_allowed_or_cgroup_scope_invalid")
+            if v16_policy:
+                from src.io.input_validation import task041_v16_memory_scope_errors
+
+                errors.extend(
+                    f"rank_{rank}_{error}"
+                    for error in task041_v16_memory_scope_errors(
+                        requested_memory_policy=(
+                            expected_binding.get("memory_policy")
+                            if isinstance(expected_binding, Mapping)
+                            else None
+                        ),
+                        task_policy=policy,
+                        allowed_nodes=allowed_nodes,
+                        effective_nodes=effective_nodes,
+                        normal_ram_nodes=normal_nodes,
+                    )
+                )
             threads = evidence.get("math_thread_environment")
             variables = threads.get("variables") if isinstance(threads, Mapping) else None
             if (
@@ -11785,6 +12026,11 @@ def _consumer_result(
                 actual_outer_control,
                 expected_rank_count=expected_rank_count,
                 solve_record=solve if isinstance(solve, Mapping) else None,
+                expected_resource_policy=(
+                    expected_fixed_h6_binding.get("task041_resource_policy")
+                    if isinstance(expected_fixed_h6_binding, Mapping)
+                    else None
+                ),
             )
         backup_policy_requested = (
             expected_modal_solver_policy
@@ -13881,6 +14127,7 @@ def run_task041_public_supervisor(
     registered_formal_target_scope: str | None = None
     p4_backend_pair_runtime = False
     v13_default_memory = False
+    v16_memavailable_policy = False
     compute_wall_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     compute_wall_phase_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     compute_wall_phase_group: str | None = None
@@ -14133,6 +14380,12 @@ def run_task041_public_supervisor(
                         != required_threads
                         or run_manifest.get("environment_threads")
                         != required_threads
+                        or (
+                            task041_resource_policy
+                            == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+                            and run_manifest.get("memory_authority_schema")
+                            != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                        )
                     ):
                         raise Task041SupervisorError(
                             "V13 run manifest does not bind actual default memory and six thread controls",
@@ -14218,6 +14471,13 @@ def run_task041_public_supervisor(
                         "environment_threads": observed_threads,
                     }
                 )
+                if (
+                    task041_resource_policy
+                    == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+                ):
+                    result["memory_authority_schema"] = (
+                        TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                    )
         elif (
             expected_rank_cpus is not None
             or modal_feedback_method is not None
@@ -14240,12 +14500,10 @@ def run_task041_public_supervisor(
                     stage="fixed_h6_research",
                 )
         if task041_resource_policy is not None:
-            from benchmarks.task041_balh_workflow import (
-                task041_v8_resource_policy_binding,
-            )
+            from benchmarks.task041_balh_workflow import task041_resource_policy_binding
 
             try:
-                resource_policy_binding = task041_v8_resource_policy_binding(
+                resource_policy_binding = task041_resource_policy_binding(
                     str(identity["model_id"]), task041_resource_policy
                 )
             except ValueError as exc:
@@ -14254,6 +14512,10 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="resource_policy",
                 ) from exc
+            v16_memavailable_policy = (
+                resource_policy_binding.get("policy")
+                == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+            )
             if (
                 task041_balh_service_contract(str(identity["model_id"])) is None
                 or performance_profile is not None
@@ -14266,14 +14528,14 @@ def run_task041_public_supervisor(
                 or task041_p4_backend_pair_side is not None
             ):
                 raise Task041SupervisorError(
-                    "V8 resource policy is limited to a registered formal BAL_H consumer",
+                    "versioned resource policy is limited to a registered formal BAL_H consumer",
                     classification="task041_identity_failure",
                     stage="resource_policy",
                 )
             manifest = _read_json(root / "run_manifest.json")
             if manifest.get("task041_resource_policy") != resource_policy_binding:
                 raise Task041SupervisorError(
-                    "run manifest does not bind the V8 resource policy",
+                    "run manifest does not bind the selected resource policy",
                     classification="task041_identity_failure",
                     stage="resource_policy",
                 )
@@ -14370,6 +14632,14 @@ def run_task041_public_supervisor(
                         "required_thread_environment": expected_threads,
                     }
                 )
+                if (
+                    isinstance(resource_policy_binding, Mapping)
+                    and resource_policy_binding.get("policy")
+                    == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+                ):
+                    case_runtime_contract["memory_authority_schema"] = (
+                        TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                    )
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_producer_execution_binding,
             )
@@ -15020,6 +15290,7 @@ def run_task041_public_supervisor(
                 monotonic() - started,
                 authority_kind=preflight_kind,
                 swap_observe_only=resource_policy_binding is not None,
+                require_kernel_memavailable=v16_memavailable_policy,
             )
             preflight.update(
                 {
@@ -15029,7 +15300,19 @@ def run_task041_public_supervisor(
                     "worker_process_group_gone": None,
                 }
             )
-            if v13_default_memory:
+            if v13_default_memory and v16_memavailable_policy:
+                initial_gate = _task041_v16_initial_resource_gate(
+                    preflight.get("kernel_memavailable_bytes"),
+                    memavailable_schema=preflight.get(
+                        "kernel_memavailable_schema"
+                    ),
+                    memavailable_status=preflight.get(
+                        "kernel_memavailable_status"
+                    ),
+                )
+                preflight["v16_initial_memavailable_gate"] = initial_gate
+                result["v16_initial_memavailable_gate"] = initial_gate
+            elif v13_default_memory:
                 initial_gate = _task041_v13_initial_resource_gate()
                 preflight["v13_initial_aggregate_resource_gate"] = initial_gate
                 result["v13_initial_aggregate_resource_gate"] = initial_gate
@@ -15038,14 +15321,25 @@ def run_task041_public_supervisor(
                 root / "numerical_output" / "log" / "memory_stages.jsonl",
                 preflight,
             )
-            if v13_default_memory and (
+            initial_v13_failed = v13_default_memory and not v16_memavailable_policy and (
                 result.get("v13_initial_aggregate_resource_gate", {}).get("pass")
                 is not True
-            ):
+            )
+            initial_v16_failed = v16_memavailable_policy and (
+                result.get("v16_initial_memavailable_gate", {}).get("pass")
+                is not True
+            )
+            if initial_v13_failed:
                 raise Task041SupervisorError(
                     "V13 initial node0+node1 MemFree gate failed or is unknown",
                     classification="task041_resource_sample_failure",
                     stage="v13_initial_aggregate_resource_gate",
+                )
+            if initial_v16_failed:
+                raise Task041SupervisorError(
+                    "V16 initial MemAvailable or normal-memory-node scope gate failed or is unknown",
+                    classification="task041_resource_sample_failure",
+                    stage="v16_initial_memavailable_gate",
                 )
             process_tree_rss_cap = runtime_limits.get(
                 "process_tree_rss_cap_bytes"
@@ -15207,6 +15501,7 @@ def run_task041_public_supervisor(
                 source_sha,
                 require_public_supervisor_summary=True,
                 swap_observe_only=resource_policy_binding is not None,
+                require_kernel_memavailable=v16_memavailable_policy,
             )
             if (
                 isinstance(packet_source_binding, Mapping)
@@ -15663,6 +15958,7 @@ def run_task041_public_supervisor(
             ),
             swap_observe_only=resource_policy_binding is not None,
             require_owned_session_empty=v13_default_memory,
+            require_kernel_memavailable=v16_memavailable_policy,
         )
         consumer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
             consumer_root

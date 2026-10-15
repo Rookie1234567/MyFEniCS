@@ -3713,9 +3713,9 @@ def launch_specification(
                 TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
                 TASK041_V13_MEMORY_POLICY,
                 TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
-                TASK041_V13_RESOURCE_HEADROOM_POLICY,
                 task041_fixed_h6_modal_gmres_binding,
                 task041_fixed_h6_packet_source_binding,
+                task041_resource_headroom_policy,
             )
 
             registered_case = task041_balh_case(model_id)
@@ -3810,11 +3810,11 @@ def launch_specification(
         if not task041_public_route:
             raise InputError("Task041 resource policy requires the Task041 public route")
         from benchmarks.task041_balh_workflow import (
-            task041_v8_resource_policy_binding,
+            task041_resource_policy_binding as resolve_task041_resource_policy_binding,
         )
 
         try:
-            task041_resource_policy_binding = task041_v8_resource_policy_binding(
+            task041_resource_policy_binding = resolve_task041_resource_policy_binding(
                 str(specification.identity.get("model_id", "")),
                 task041_resource_policy,
             )
@@ -4154,7 +4154,7 @@ def launch_specification(
                 or "membind_node" not in fixed_h6_binding
                 or fixed_h6_binding.get("membind_node") is not None
                 or fixed_h6_binding.get("resource_headroom_policy")
-                != TASK041_V13_RESOURCE_HEADROOM_POLICY
+                != task041_resource_headroom_policy(task041_resource_policy)
                 or fixed_h6_binding.get("required_thread_environment")
                 != required_threads
                 or observed_threads != required_threads
@@ -4167,12 +4167,18 @@ def launch_specification(
                     "memory_policy": TASK041_V13_MEMORY_POLICY,
                     "membind_node": None,
                     "resource_headroom_policy": dict(
-                        TASK041_V13_RESOURCE_HEADROOM_POLICY
+                        fixed_h6_binding["resource_headroom_policy"]
                     ),
                     "required_thread_environment": required_threads,
                     "environment_threads": observed_threads,
                 }
             )
+            if isinstance(task041_resource_policy_binding, Mapping):
+                memory_authority_schema = task041_resource_policy_binding.get(
+                    "memory_authority_schema"
+                )
+                if memory_authority_schema is not None:
+                    manifest["memory_authority_schema"] = memory_authority_schema
             _write_json(run_directory / "run_manifest.json", manifest)
     elif fixed_h6_binding is not None and "modal_solver_policy" in fixed_h6_binding:
         raise InputError(

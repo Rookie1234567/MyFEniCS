@@ -76,6 +76,216 @@ _P6_TOLERANCE = 5.0e-9
 _STRICT_TOLERANCE = 1.0e-10
 
 
+def _task041_v16_rank_ksp_fields(record: object) -> dict[str, int] | None:
+    """Read required solver outcomes from the sealed nested KSP record."""
+    if not isinstance(record, dict):
+        return None
+    ksp = record.get("ksp")
+    if not isinstance(ksp, dict):
+        return None
+    fields = {
+        "converged_reason": ksp.get("converged_reason"),
+        "iterations": ksp.get("iterations"),
+        "max_iterations": ksp.get("max_iterations"),
+    }
+    if any(
+        not isinstance(value, int) or isinstance(value, bool)
+        for value in fields.values()
+    ):
+        return None
+    if fields["iterations"] < 0 or fields["max_iterations"] < 1:
+        return None
+    return {
+        "converged_reason": int(fields["converged_reason"]),
+        "iterations": int(fields["iterations"]),
+        "max_iterations": int(fields["max_iterations"]),
+    }
+
+
+def _task041_v16_iteration_limit_candidate(
+    record: object,
+    iteration_limit_reasons: set[int],
+    *,
+    clean_pc_capture_evidence: bool,
+    residual_tolerance: float = _P6_TOLERANCE,
+) -> bool:
+    """Apply the per-rank R60 precondition without trusting summary fields."""
+    fields = _task041_v16_rank_ksp_fields(record)
+    if fields is None or not isinstance(record, dict):
+        return False
+    relative = record.get("ax_minus_f_relative")
+    return bool(
+        fields["converged_reason"] in iteration_limit_reasons
+        and fields["iterations"] == 600
+        and fields["max_iterations"] == 600
+        and isinstance(relative, (int, float))
+        and np.isfinite(float(relative))
+        and float(relative) > residual_tolerance
+        and record.get("rhs_unchanged") is True
+        and clean_pc_capture_evidence is True
+    )
+
+
+def _task041_v16_numeric_record_qualified(
+    record: object,
+    *,
+    clean_pc_capture_evidence: bool,
+    residual_tolerance: float = _P6_TOLERANCE,
+) -> bool:
+    """Check the per-rank KSP/result portion of tiny qualification."""
+    fields = _task041_v16_rank_ksp_fields(record)
+    if fields is None or not isinstance(record, dict):
+        return False
+    checks = record.get("checks")
+    relative = record.get("ax_minus_f_relative")
+    return bool(
+        fields["converged_reason"] > 0
+        and fields["iterations"] >= 2
+        and isinstance(relative, (int, float))
+        and np.isfinite(float(relative))
+        and float(relative) <= residual_tolerance
+        and isinstance(checks, dict)
+        and checks.get("successful_pc_applies_cover_iterations") is True
+        and checks.get("finite_ax_minus_f_relative") is True
+        and checks.get("ax_minus_f_within_tolerance") is True
+        and record.get("rhs_unchanged") is True
+        and clean_pc_capture_evidence is True
+    )
+
+
+def _task041_v16_validate_snapshot_arrays(
+    arrays: object,
+) -> dict[str, object]:
+    """Validate frozen row arrays with only the two defined log-zero cases."""
+    if not isinstance(arrays, dict) or not arrays:
+        return {"status": "failed", "reason": "arrays_missing_or_not_mapping"}
+    if any(not isinstance(value, np.ndarray) for value in arrays.values()):
+        return {"status": "failed", "reason": "array_value_has_wrong_type"}
+
+    log_pairs = {
+        "row_relative_log_error": ("row_relative_error", "d"),
+        "decomposition_row_relative_log_error": (
+            "decomposition_row_relative_error",
+            "decomposition_error",
+        ),
+    }
+    permitted_log_fields = set(log_pairs)
+    for name, value in arrays.items():
+        if value.dtype.kind not in "biufc":
+            return {
+                "status": "failed",
+                "reason": f"nonnumeric_array:{name}",
+            }
+        if name not in permitted_log_fields and not np.isfinite(value).all():
+            return {
+                "status": "failed",
+                "reason": f"nonfinite_physical_or_unrecognized_array:{name}",
+            }
+
+    permitted_negative_infinity: dict[str, list[int]] = {}
+    for log_name, (linear_name, actual_error_name) in log_pairs.items():
+        if log_name not in arrays:
+            continue
+        if linear_name not in arrays or actual_error_name not in arrays:
+            return {
+                "status": "failed",
+                "reason": f"log_pair_missing:{log_name}",
+            }
+        log_values = arrays[log_name]
+        linear_values = arrays[linear_name]
+        actual_error = arrays[actual_error_name]
+        if (
+            log_values.dtype.kind != "f"
+            or linear_values.dtype.kind != "f"
+            or log_values.shape != linear_values.shape
+            or log_values.shape != actual_error.shape
+            or log_values.ndim != 1
+        ):
+            return {
+                "status": "failed",
+                "reason": f"log_pair_shape_or_type_mismatch:{log_name}",
+            }
+        negative_infinity = np.isneginf(log_values)
+        if not np.isfinite(linear_values).all() or np.any(linear_values < 0.0):
+            return {
+                "status": "failed",
+                "reason": f"linear_error_invalid:{linear_name}",
+            }
+        if not np.all(np.isfinite(log_values) | negative_infinity):
+            return {
+                "status": "failed",
+                "reason": f"log_error_nan_or_positive_infinity:{log_name}",
+            }
+        if np.any(negative_infinity):
+            exact_zero = (linear_values == 0.0) & (actual_error == 0.0)
+            if not np.all(exact_zero[negative_infinity]):
+                return {
+                    "status": "failed",
+                    "reason": f"negative_infinity_without_exact_zero:{log_name}",
+                }
+            permitted_negative_infinity[log_name] = np.flatnonzero(
+                negative_infinity
+            ).astype(int).tolist()
+
+    if "row_relative_log_error" in arrays:
+        required = ("w_modal", "r_modal", "d")
+        if any(name not in arrays for name in required):
+            return {
+                "status": "failed",
+                "reason": "row_residual_reconstruction_fields_missing",
+            }
+        w_modal, r_modal, residual = (arrays[name] for name in required)
+        if (
+            w_modal.shape != r_modal.shape
+            or w_modal.shape != residual.shape
+            or not np.array_equal(residual, w_modal - r_modal)
+        ):
+            return {
+                "status": "failed",
+                "reason": "row_residual_does_not_match_w_minus_r",
+            }
+
+    if "decomposition_row_relative_log_error" in arrays:
+        required = (
+            "w_modal",
+            "t_constraint",
+            "t_bottom",
+            "t_top",
+            "decomposition_error",
+        )
+        if any(name not in arrays for name in required):
+            return {
+                "status": "failed",
+                "reason": "decomposition_reconstruction_fields_missing",
+            }
+        w_modal = arrays["w_modal"]
+        decomposition = arrays["t_constraint"].copy()
+        if any(
+            arrays[name].shape != w_modal.shape
+            for name in ("t_constraint", "t_bottom", "t_top", "decomposition_error")
+        ):
+            return {
+                "status": "failed",
+                "reason": "decomposition_shape_mismatch",
+            }
+        decomposition += arrays["t_bottom"]
+        decomposition += arrays["t_top"]
+        reconstructed_difference = w_modal - decomposition
+        if not np.array_equal(
+            arrays["decomposition_error"], reconstructed_difference
+        ):
+            return {
+                "status": "failed",
+                "reason": "decomposition_error_does_not_match_components",
+            }
+
+    return {
+        "status": "passed",
+        "array_count": len(arrays),
+        "permitted_negative_infinity_indices": permitted_negative_infinity,
+    }
+
+
 def _fixture_config(degree: int, *, condensed: bool) -> SimulationConfig3D:
     return SimulationConfig3D(
         stage_case="stage4_block_grating",
@@ -820,6 +1030,8 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
 
     from benchmarks import task041_exact_side_workflow as exact_side
 
+    test_body_started = time.perf_counter()
+
     evidence_root_text = (
         str(Path(tmp_path) / "v15-modal-evidence")
         if comm.rank == 0
@@ -1097,10 +1309,14 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
         layout = HybridAugmentedLayout.build(
             systems["bottom"], systems["top"], coupling.internal_equation_count
         )
+        original_action_started = time.perf_counter()
         original_operator, original_action_context = (
             create_hybrid_assembled_block_action(
                 systems["bottom"], systems["top"], coupling
             )
+        )
+        original_action_setup_wall_seconds = (
+            time.perf_counter() - original_action_started
         )
         pre_builder_side = {
             side: {
@@ -1115,6 +1331,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
             }
             for side, inverse in inverses.items()
         }
+        ldu_setup_started = time.perf_counter()
         ldu = create_side_balh_block_ldu_preconditioner(
             layout,
             systems["bottom"],
@@ -1134,6 +1351,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
             ),
             modal_snapshot_callback=modal_snapshot_callback,
         )
+        fixed_b_s_b_setup_wall_seconds = time.perf_counter() - ldu_setup_started
         post_builder_side = {
             side: {
                 "apply_count": int(inverse.diagnostics["apply_count"]),
@@ -1878,9 +2096,17 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
         rhs = layout.create_vector()
         solution = layout.create_vector()
         true_residual = layout.create_vector()
+        monitor_solution_scratch = original_operator.createVecRight()
+        monitor_residual_scratch = original_operator.createVecLeft()
         inputs.extend((exact_solution, rhs))
         outputs["tiny_fgmres_solution"] = solution
         outputs["tiny_fgmres_true_residual"] = true_residual
+        outputs["tiny_fgmres_monitor_solution_scratch"] = (
+            monitor_solution_scratch
+        )
+        outputs["tiny_fgmres_monitor_residual_scratch"] = (
+            monitor_residual_scratch
+        )
         first, last = (int(value) for value in exact_solution.getOwnershipRange())
         global_rows = np.arange(first, last, dtype=np.float64)
         exact_solution.getArray()[:] = np.asarray(
@@ -1891,8 +2117,20 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
         )
         exact_solution.assemble()
         original_operator.mult(exact_solution, rhs)
-        rhs_before = np.asarray(rhs.getArray(readonly=True)).copy()
         ksp = PETSc.KSP().create(comm)
+        missing_instance_apply = object()
+        prior_instance_apply = vars(ldu).get("apply", missing_instance_apply)
+        ldu_apply_wrapper_installed = False
+        apply_restore_error: dict[str, str] | None = None
+        ksp_destroy_error: dict[str, str] | None = None
+        ksp_destroy_primary: BaseException | None = None
+
+        def exception_message(error: BaseException) -> str:
+            try:
+                return str(error)[:320]
+            except BaseException as render_error:  # noqa: BLE001 - evidence is secondary
+                return f"<message unavailable: {type(render_error).__name__}>"
+
         try:
             ksp.setOperators(original_operator)
             ksp.setType(PETSc.KSP.Type.FGMRES)
@@ -1900,10 +2138,11 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
             pc = ksp.getPC()
             pc.setType(PETSc.PC.Type.PYTHON)
             pc.setPythonContext(ldu)
-            max_iterations = min(240, max(4, int(layout.global_size)))
+            max_iterations = min(600, max(4, int(layout.global_size)))
             ksp.setTolerances(rtol=5.0e-9, atol=0.0, max_it=max_iterations)
-            restart = min(30, max_iterations)
+            restart = 30
             ksp.setGMRESRestart(restart)
+            ksp.setInitialGuessNonzero(False)
 
             def finite_json_number(value: float) -> float | dict[str, object]:
                 number = float(value)
@@ -1911,12 +2150,6 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                     return number
                 label = "NaN" if np.isnan(number) else ("+Inf" if number > 0 else "-Inf")
                 return {"value": None, "nonfinite": label}
-
-            def exception_message(error: BaseException) -> str:
-                try:
-                    return str(error)[:320]
-                except BaseException as render_error:  # noqa: BLE001 - evidence is secondary
-                    return f"<message unavailable: {type(render_error).__name__}>"
 
             def json_safe(value: object) -> object:
                 if isinstance(value, np.generic):
@@ -2065,7 +2298,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                     "atol": 0.0,
                     "max_it": max_iterations,
                     "restart": restart,
-                    "initial_guess_nonzero": "existing_default_unchanged",
+                    "initial_guess_nonzero": False,
                     "norm_type": "existing_default_unchanged",
                 },
                 "readback": {
@@ -2089,56 +2322,505 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
             }
 
             ksp_monitor_samples: list[dict[str, object]] = []
-            ksp_monitor_errors: list[dict[str, str]] = []
+            ksp_monitor_errors: list[dict[str, object]] = []
             solve_started_monotonic = time.monotonic()
+            active_run_id = "R30"
+            active_restart = 30
+            active_run_observations: list[dict[str, object]] = []
+            active_run_observation_wall_seconds = 0.0
+
+            def persist_observation_exception(
+                error: BaseException,
+                *,
+                run_id: str,
+                iteration: int | None,
+                stage: str,
+                details: dict[str, object],
+            ) -> None:
+                payload = {
+                    "schema": "task041.v16.local_collective_observation_error.v1",
+                    "classification": "local_secondary_receipt_original_exception_reraised",
+                    "run_id": run_id,
+                    "rank": int(comm.rank),
+                    "iteration": iteration,
+                    "stage": stage,
+                    "error_type": type(error).__name__,
+                    "error_message": exception_message(error),
+                    "details": details,
+                    "other_rank_cleanup_status": "not_claimed_after_collective_exception",
+                }
+                receipt = write_rank_json(
+                    evidence_root
+                    / f"tiny_fgmres_{run_id}_{stage}_rank-{comm.rank}.json",
+                    payload,
+                )
+                try:
+                    error.add_note(
+                        "secondary Task041 observation receipt: "
+                        + json.dumps(receipt, sort_keys=True)
+                    )
+                except Exception as note_error:  # noqa: BLE001 - preserve original failure
+                    receipt["add_note_error"] = {
+                        "type": type(note_error).__name__,
+                        "message": exception_message(note_error),
+                    }
+
+            def fail_at_observation_safe_point(
+                stage: str,
+                iteration_number: int,
+                rows: list[dict[str, object]],
+                message: str,
+            ) -> None:
+                error = AssertionError(message + ": " + json.dumps(rows, sort_keys=True))
+                persist_observation_exception(
+                    error,
+                    run_id=active_run_id,
+                    iteration=int(iteration_number),
+                    stage=stage,
+                    details={"rank_rows": rows},
+                )
+                raise error
+
+            def capture_intermediate_true_residual(
+                current_ksp, iteration_number: int
+            ) -> dict[str, object]:
+                nonlocal active_run_observation_wall_seconds
+                started = time.perf_counter()
+                result: dict[str, object] = {
+                    "run_id": active_run_id,
+                    "iteration": int(iteration_number),
+                    "restart_window_index": (iteration_number - 1) // active_restart,
+                    "reported_norm_is_not_true_residual": True,
+                }
+
+                try:
+                    build_solution = getattr(current_ksp, "buildSolution", None)
+                    capability = {
+                        "rank": int(comm.rank),
+                        "callable": callable(build_solution),
+                        "lookup_error": None,
+                    }
+                except Exception as lookup_error:  # noqa: BLE001 - method lookup precedes buildSolution
+                    build_solution = None
+                    capability = {
+                        "rank": int(comm.rank),
+                        "callable": False,
+                        "lookup_error": {
+                            "type": type(lookup_error).__name__,
+                            "message": exception_message(lookup_error),
+                        },
+                    }
+                capabilities = comm.allgather(capability)
+                available = [bool(row["callable"]) for row in capabilities]
+                if any(row["lookup_error"] for row in capabilities) or len(
+                    set(available)
+                ) != 1:
+                    fail_at_observation_safe_point(
+                        "buildSolution_capability_preflight",
+                        iteration_number,
+                        capabilities,
+                        "buildSolution availability is inconsistent before invocation",
+                    )
+                if not available[0]:
+                    result.update(
+                        status="buildSolution_unavailable",
+                        rank_build_solution_probe=[
+                            {
+                                "rank": int(row["rank"]),
+                                "status": "unavailable",
+                                "call_attempted": False,
+                                "reason": "no_callable_buildSolution_before_call",
+                                "unsupported_invariants_unchanged": True,
+                            }
+                            for row in capabilities
+                        ],
+                    )
+                    result["observation_wall_seconds"] = finite_json_number(
+                        time.perf_counter() - started
+                    )
+                    active_run_observation_wall_seconds += float(
+                        result["observation_wall_seconds"]
+                    )
+                    active_run_observations.append(result)
+                    return result
+
+                context = original_operator.getPythonContext()
+                matmult_before = int(context._matmult_call_count)
+                pc_attempt_before = int(ldu._pc_apply_attempt_count)
+                pc_success_before = int(ldu._pc_apply_count)
+                capture_request_before = getattr(
+                    context, "_v13_modal_row_capture_request", None
+                )
+                capture_result_before = getattr(
+                    context, "_v13_modal_row_capture_result", None
+                )
+                scratch_handle = int(monitor_solution_scratch.handle)
+                monitor_solution_scratch.set(
+                    PETSc.ScalarType(12345.0 + 6789.0j)
+                )
+                preparation_error = None
+                try:
+                    scratch_before = np.asarray(
+                        monitor_solution_scratch.getArray(readonly=True)
+                    ).copy()
+                    rhs_before = np.asarray(rhs.getArray(readonly=True)).copy()
+                    solution_before = np.asarray(
+                        solution.getArray(readonly=True)
+                    ).copy()
+                except Exception as local_error:  # noqa: BLE001 - noncollective local reads
+                    preparation_error = {
+                        "type": type(local_error).__name__,
+                        "message": exception_message(local_error),
+                    }
+                    scratch_before = rhs_before = solution_before = np.empty(
+                        0, dtype=np.complex128
+                    )
+                preparation_rows = comm.allgather(
+                    {
+                        "rank": int(comm.rank),
+                        "status": "ready" if preparation_error is None else "error",
+                        "error": preparation_error,
+                    }
+                )
+                if any(row["status"] != "ready" for row in preparation_rows):
+                    fail_at_observation_safe_point(
+                        "buildSolution_local_preparation",
+                        iteration_number,
+                        preparation_rows,
+                        "local buildSolution preparation failed",
+                    )
+
+                try:
+                    returned = build_solution(monitor_solution_scratch)
+                except BaseException as build_error:  # preserve possibly collective PETSc failure
+                    persist_observation_exception(
+                        build_error,
+                        run_id=active_run_id,
+                        iteration=int(iteration_number),
+                        stage="buildSolution",
+                        details={
+                            "scratch_handle": scratch_handle,
+                            "original_A_matmult_delta_so_far": int(
+                                context._matmult_call_count
+                            ) - matmult_before,
+                            "pc_attempt_delta_so_far": int(
+                                ldu._pc_apply_attempt_count
+                            ) - pc_attempt_before,
+                            "pc_success_delta_so_far": int(
+                                ldu._pc_apply_count
+                            ) - pc_success_before,
+                        },
+                    )
+                    raise
+
+                try:
+                    scratch_after = np.asarray(
+                        monitor_solution_scratch.getArray(readonly=True)
+                    ).copy()
+                    returned_handle = getattr(returned, "handle", None)
+                    build_row: dict[str, object] = {
+                        "rank": int(comm.rank),
+                        "returned_uses_scratch": (
+                            returned is None
+                            or returned is monitor_solution_scratch
+                            or (
+                                returned_handle is not None
+                                and int(returned_handle) == scratch_handle
+                            )
+                        ),
+                        "scratch_written": not np.array_equal(
+                            scratch_after, scratch_before
+                        ),
+                        "scratch_finite": bool(np.isfinite(scratch_after).all()),
+                        "scratch_aliases_solution": (
+                            scratch_handle == int(solution.handle)
+                        ),
+                        "scratch_aliases_rhs": scratch_handle == int(rhs.handle),
+                        "rhs_unchanged": np.array_equal(
+                            np.asarray(rhs.getArray(readonly=True)), rhs_before
+                        ),
+                        "ksp_solution_unchanged": np.array_equal(
+                            np.asarray(solution.getArray(readonly=True)),
+                            solution_before,
+                        ),
+                        "pc_attempt_delta": int(
+                            ldu._pc_apply_attempt_count
+                        ) - pc_attempt_before,
+                        "pc_success_delta": int(
+                            ldu._pc_apply_count
+                        ) - pc_success_before,
+                        "original_A_matmult_delta": int(
+                            context._matmult_call_count
+                        ) - matmult_before,
+                        "capture_request_clear_before": (
+                            capture_request_before is None
+                        ),
+                        "capture_request_clear_after": (
+                            getattr(context, "_v13_modal_row_capture_request", None)
+                            is None
+                        ),
+                        "capture_result_clear_before": (
+                            capture_result_before is None
+                        ),
+                        "capture_result_clear_after": (
+                            getattr(context, "_v13_modal_row_capture_result", None)
+                            is None
+                        ),
+                    }
+                    build_checks = {
+                        "returned_uses_scratch": True,
+                        "scratch_written": True,
+                        "scratch_finite": True,
+                        "scratch_aliases_solution": False,
+                        "scratch_aliases_rhs": False,
+                        "rhs_unchanged": True,
+                        "ksp_solution_unchanged": True,
+                        "pc_attempt_delta": 0,
+                        "pc_success_delta": 0,
+                        "original_A_matmult_delta": 0,
+                        "capture_request_clear_before": True,
+                        "capture_request_clear_after": True,
+                        "capture_result_clear_before": True,
+                        "capture_result_clear_after": True,
+                    }
+                    build_row["status"] = (
+                        "supported"
+                        if all(
+                            build_row.get(key) == expected
+                            for key, expected in build_checks.items()
+                        )
+                        else "invariant_failed"
+                    )
+                except Exception as local_error:  # noqa: BLE001 - buildSolution returned before local inspection
+                    build_row = {
+                        "rank": int(comm.rank),
+                        "status": "local_inspection_error",
+                        "error_type": type(local_error).__name__,
+                        "error_message": exception_message(local_error),
+                    }
+                build_rows = comm.allgather(build_row)
+                result["rank_build_solution_probe"] = build_rows
+                if any(row.get("status") != "supported" for row in build_rows):
+                    result.update(status="buildSolution_invariant_failed", finite=False)
+                    active_run_observations.append(result)
+                    fail_at_observation_safe_point(
+                        "buildSolution_invariant",
+                        iteration_number,
+                        build_rows,
+                        "buildSolution scratch/input/PC/A invariant failed",
+                    )
+
+                matmult_before_A = int(context._matmult_call_count)
+                pc_attempt_before_A = int(ldu._pc_apply_attempt_count)
+                pc_success_before_A = int(ldu._pc_apply_count)
+                rhs_before_A = np.asarray(rhs.getArray(readonly=True)).copy()
+                solution_before_A = np.asarray(
+                    solution.getArray(readonly=True)
+                ).copy()
+                scratch_before_A = np.asarray(
+                    monitor_solution_scratch.getArray(readonly=True)
+                ).copy()
+                capture_request_clear_before_A = (
+                    getattr(context, "_v13_modal_row_capture_request", None)
+                    is None
+                )
+                capture_result_clear_before_A = (
+                    getattr(context, "_v13_modal_row_capture_result", None)
+                    is None
+                )
+                try:
+                    original_operator.mult(
+                        monitor_solution_scratch, monitor_residual_scratch
+                    )
+                    monitor_residual_scratch.axpy(PETSc.ScalarType(-1.0), rhs)
+                    rhs_norm = float(rhs.norm())
+                    residual_norm = float(monitor_residual_scratch.norm())
+                except BaseException as action_error:  # preserve A/norm failure; no recovery collective
+                    persist_observation_exception(
+                        action_error,
+                        run_id=active_run_id,
+                        iteration=int(iteration_number),
+                        stage="original_A_mult_or_norm",
+                        details={
+                            "original_A_matmult_delta_so_far": int(
+                                context._matmult_call_count
+                            ) - matmult_before_A,
+                            "pc_attempt_delta_so_far": int(
+                                ldu._pc_apply_attempt_count
+                            ) - pc_attempt_before_A,
+                            "pc_success_delta_so_far": int(
+                                ldu._pc_apply_count
+                            ) - pc_success_before_A,
+                        },
+                    )
+                    raise
+
+                relative = (
+                    residual_norm / rhs_norm if rhs_norm > 0.0 else float("inf")
+                )
+                try:
+                    action_row: dict[str, object] = {
+                        "rank": int(comm.rank),
+                        "scratch_unchanged": np.array_equal(
+                            np.asarray(
+                                monitor_solution_scratch.getArray(readonly=True)
+                            ),
+                            scratch_before_A,
+                        ),
+                        "rhs_unchanged": np.array_equal(
+                            np.asarray(rhs.getArray(readonly=True)), rhs_before_A
+                        ),
+                        "ksp_solution_unchanged": np.array_equal(
+                            np.asarray(solution.getArray(readonly=True)),
+                            solution_before_A,
+                        ),
+                        "capture_request_clear_before": (
+                            capture_request_clear_before_A
+                        ),
+                        "capture_result_clear_before": (
+                            capture_result_clear_before_A
+                        ),
+                        "original_A_matmult_delta": int(
+                            context._matmult_call_count
+                        ) - matmult_before_A,
+                        "pc_attempt_delta": int(
+                            ldu._pc_apply_attempt_count
+                        ) - pc_attempt_before_A,
+                        "pc_success_delta": int(
+                            ldu._pc_apply_count
+                        ) - pc_success_before_A,
+                        "residual_scratch_finite": bool(
+                            np.isfinite(
+                                np.asarray(
+                                    monitor_residual_scratch.getArray(
+                                        readonly=True
+                                    )
+                                )
+                            ).all()
+                        ),
+                        "rhs_norm": finite_json_number(rhs_norm),
+                        "ax_minus_f_numerator_norm": finite_json_number(
+                            residual_norm
+                        ),
+                        "ax_minus_f_relative": finite_json_number(relative),
+                        "finite": bool(
+                            np.isfinite(rhs_norm)
+                            and np.isfinite(residual_norm)
+                            and np.isfinite(relative)
+                        ),
+                        "capture_request_clear_after": (
+                            getattr(context, "_v13_modal_row_capture_request", None)
+                            is None
+                        ),
+                        "capture_result_clear_after": (
+                            getattr(context, "_v13_modal_row_capture_result", None)
+                            is None
+                        ),
+                    }
+                    action_checks = {
+                        "scratch_unchanged": True,
+                        "rhs_unchanged": True,
+                        "ksp_solution_unchanged": True,
+                        "capture_request_clear_before": True,
+                        "capture_result_clear_before": True,
+                        "original_A_matmult_delta": 1,
+                        "pc_attempt_delta": 0,
+                        "pc_success_delta": 0,
+                        "residual_scratch_finite": True,
+                        "finite": True,
+                        "capture_request_clear_after": True,
+                        "capture_result_clear_after": True,
+                    }
+                    action_row["status"] = (
+                        "ready"
+                        if all(
+                            action_row.get(key) == expected
+                            for key, expected in action_checks.items()
+                        )
+                        else "invariant_failed"
+                    )
+                except Exception as local_error:  # noqa: BLE001 - A/norm returned before local inspection
+                    action_row = {
+                        "rank": int(comm.rank),
+                        "status": "local_inspection_error",
+                        "error_type": type(local_error).__name__,
+                        "error_message": exception_message(local_error),
+                    }
+                action_rows = comm.allgather(action_row)
+                status = (
+                    "captured"
+                    if all(row.get("status") == "ready" for row in action_rows)
+                    else "original_A_observation_invariant_failed"
+                )
+                result.update(
+                    status=status,
+                    independent_A_action_by_rank=action_rows,
+                    original_A_matmult_delta=int(
+                        context._matmult_call_count - matmult_before
+                    ),
+                    rhs_norm=finite_json_number(rhs_norm),
+                    ax_minus_f_numerator_norm=finite_json_number(residual_norm),
+                    ax_minus_f_relative=finite_json_number(relative),
+                    finite=bool(
+                        np.isfinite(rhs_norm)
+                        and np.isfinite(residual_norm)
+                        and np.isfinite(relative)
+                    ),
+                )
+                result["observation_wall_seconds"] = finite_json_number(
+                    time.perf_counter() - started
+                )
+                active_run_observation_wall_seconds += float(
+                    result["observation_wall_seconds"]
+                )
+                active_run_observations.append(result)
+                if status != "captured":
+                    fail_at_observation_safe_point(
+                        "original_A_observation_invariant",
+                        iteration_number,
+                        action_rows,
+                        "original A observation input/PC/count invariant failed",
+                    )
+                return result
 
             def capture_ksp_monitor(
                 _current_ksp, iteration: int, reported_rnorm: float
             ) -> None:
-                try:
-                    iteration_number = int(iteration)
-                    ksp_monitor_samples.append(
-                        {
-                            "iteration": iteration_number,
-                            "petsc_reported_rnorm": finite_json_number(
-                                float(reported_rnorm)
-                            ),
-                            "seconds_since_solve_start": finite_json_number(
-                                time.monotonic() - solve_started_monotonic
-                            ),
-                            "restart_window_index": (
-                                None
-                                if iteration_number == 0
-                                else (iteration_number - 1) // restart
-                            ),
-                            "window": (
-                                "initial"
-                                if iteration_number == 0
-                                else "first_60"
-                                if iteration_number <= 60
-                                else "after_60"
-                            ),
-                            "run_scope": "this_new_max_it_240_diagnostic",
-                            "norm_semantics": "PETSc KSP reported norm; not an independent true residual",
-                        }
-                    )
-                except Exception as monitor_error:  # noqa: BLE001 - never alter the KSP path
-                    ksp_monitor_errors.append(
-                        {
-                            "error_type": type(monitor_error).__name__,
-                            "error_message": str(monitor_error)[:240],
-                        }
+                iteration_number = int(iteration)
+                ksp_monitor_samples.append(
+                    {
+                        "iteration": iteration_number,
+                        "petsc_reported_rnorm": finite_json_number(
+                            float(reported_rnorm)
+                        ),
+                        "seconds_since_solve_start": finite_json_number(
+                            time.monotonic() - solve_started_monotonic
+                        ),
+                        "restart_window_index": (
+                            None
+                            if iteration_number == 0
+                            else (iteration_number - 1) // active_restart
+                        ),
+                        "run_id": active_run_id,
+                        "window": (
+                            "initial"
+                            if iteration_number == 0
+                            else "first_60"
+                            if iteration_number <= 60
+                            else "after_60"
+                        ),
+                        "run_scope": "this_tiny_attempt_only",
+                        "norm_semantics": "PETSc KSP reported norm; not an independent true residual",
+                    }
+                )
+                if iteration_number > 0 and iteration_number % 30 == 0:
+                    capture_intermediate_true_residual(
+                        _current_ksp, iteration_number
                     )
 
             ksp.setMonitor(capture_ksp_monitor)
-            pc_attempts_before = int(ldu._pc_apply_attempt_count)
-            pc_successes_before = int(ldu._pc_apply_count)
             pc_apply_history: list[dict[str, object]] = []
             original_ldu_apply = ldu.apply
-            missing_instance_apply = object()
-            prior_instance_apply = vars(ldu).get(
-                "apply", missing_instance_apply
-            )
 
             def encode_complex_array(value: np.ndarray) -> dict[str, object]:
                 array = np.asarray(value, dtype=np.complex128)
@@ -2162,6 +2844,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                 primary_error: BaseException | None = None,
             ) -> None:
                 row: dict[str, object] = {
+                    "run_id": active_run_id,
                     "instrumentation_apply_ordinal": attempt_ordinal,
                     "production_attempt_count_before": attempt_before,
                     "production_success_count_before": successful_before,
@@ -2289,7 +2972,13 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                 pc_apply_history.append(row)
 
             def capture_ldu_apply(_pc, source, target) -> None:
-                attempt_ordinal = len(pc_apply_history) + 1
+                attempt_ordinal = (
+                    sum(
+                        row.get("run_id") == active_run_id
+                        for row in pc_apply_history
+                    )
+                    + 1
+                )
                 attempt_before = int(ldu._pc_apply_attempt_count)
                 successful_before = int(ldu._pc_apply_count)
                 try:
@@ -2312,123 +3001,635 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                     )
 
             ldu.apply = capture_ldu_apply
-            apply_restore_primary: BaseException | None = None
-            try:
-                ksp.solve(rhs, solution)
-            except BaseException as apply_error:
-                apply_restore_primary = apply_error
-                raise
-            finally:
-                try:
-                    if prior_instance_apply is missing_instance_apply:
-                        delattr(ldu, "apply")
-                    else:
-                        ldu.apply = prior_instance_apply
-                except BaseException as restore_error:
-                    if apply_restore_primary is None:
-                        raise
-                    try:
-                        apply_restore_primary.add_note(
-                            "secondary LDU apply instrumentation restore error: "
-                            + exception_message(restore_error)
-                        )
-                    except BaseException:  # noqa: BLE001, S110
-                        pass
-            converged_reason = int(ksp.getConvergedReason())
-            iteration_count = int(ksp.getIterationNumber())
-            original_operator.mult(solution, true_residual)
-            true_residual.axpy(PETSc.ScalarType(-1.0), rhs)
-            rhs_norm = float(rhs.norm())
-            true_residual_norm = float(true_residual.norm())
-            true_relative_residual = (
-                true_residual_norm / rhs_norm
-                if rhs_norm != 0.0
-                else float("inf")
-            )
-            rhs_unchanged = np.array_equal(
-                np.asarray(rhs.getArray(readonly=True)), rhs_before
-            )
-            pc_attempts_after = int(ldu._pc_apply_attempt_count)
-            pc_successes_after = int(ldu._pc_apply_count)
+            ldu_apply_wrapper_installed = True
+            completion_owner = int(ldu.action_modal_schur_system.modal_owner)
+            max_iterations = min(600, max(4, int(layout.global_size)))
+            iteration_limit_reasons = set()
+            for reason_name in ("DIVERGED_ITS", "DIVERGED_MAX_IT"):
+                reason_value = getattr(
+                    PETSc.KSP.ConvergedReason, reason_name, None
+                )
+                if reason_value is not None:
+                    iteration_limit_reasons.add(int(reason_value))
 
-            try:
-                proc_fields = Path("/proc/self/stat").read_text().rsplit(")", 1)[
-                    1
-                ].split()
-                actual_cpu = int(proc_fields[36])
-                allowed_cpus = sorted(int(cpu) for cpu in os.sched_getaffinity(0))
+            def current_factor_binding() -> dict[str, object]:
+                modal_system = ldu.action_modal_schur_system
+                pc_now = ksp.getPC()
+                pc_context = pc_now.getPythonContext()
+                return {
+                    "ksp_handle": int(ksp.handle),
+                    "pc_handle": int(pc_now.handle),
+                    "layout_identity": id(layout),
+                    "layout_global_size": int(layout.global_size),
+                    "pc_context_is_same_ldu": pc_context is ldu,
+                    "ldu_identity": id(ldu),
+                    "modal_system_identity": id(modal_system),
+                    "original_A_handle": int(original_operator.handle),
+                    "original_A_context_identity": id(
+                        original_operator.getPythonContext()
+                    ),
+                    "bottom_action_identity": id(ldu.bottom_action),
+                    "top_action_identity": id(ldu.top_action),
+                    "modal_C_identity": id(modal_system.modal_constraint),
+                    "owner_S_B_identity": id(modal_system.modal_schur),
+                    "bottom_p4_factor_identity": id(
+                        inverses["bottom"]._p4_factor
+                    ),
+                    "top_p4_factor_identity": id(
+                        inverses["top"]._p4_factor
+                    ),
+                    "rhs_vector_handle": int(rhs.handle),
+                    "exact_solution_vector_handle": int(exact_solution.handle),
+                    "solution_vector_handle": int(solution.handle),
+                    "true_residual_vector_handle": int(true_residual.handle),
+                    "rhs_ownership_range": [
+                        int(value) for value in rhs.getOwnershipRange()
+                    ],
+                    "exact_solution_ownership_range": [
+                        int(value)
+                        for value in exact_solution.getOwnershipRange()
+                    ],
+                    "solution_ownership_range": [
+                        int(value) for value in solution.getOwnershipRange()
+                    ],
+                }
+
+            def write_owner_json(
+                target_path: Path, payload: dict[str, object]
+            ) -> dict[str, object]:
+                write_status = None
+                if comm.rank == completion_owner:
+                    try:
+                        target_path.parent.mkdir(parents=True, exist_ok=True)
+                        temporary_path = target_path.with_name(
+                            f".{target_path.name}.{os.getpid()}.tmp"
+                        )
+                        if target_path.exists() or temporary_path.exists():
+                            raise FileExistsError(str(target_path))
+                        with temporary_path.open("x", encoding="utf-8") as stream:
+                            stream.write(
+                                json.dumps(
+                                    payload,
+                                    sort_keys=True,
+                                    indent=2,
+                                    allow_nan=False,
+                                )
+                                + "\n"
+                            )
+                            stream.flush()
+                            os.fsync(stream.fileno())
+                        os.replace(temporary_path, target_path)
+                        write_status = {
+                            "status": "written",
+                            "path": str(target_path),
+                            "sha256": hashlib.sha256(
+                                target_path.read_bytes()
+                            ).hexdigest(),
+                        }
+                    except BaseException as write_error:  # noqa: BLE001 - keep as secondary evidence
+                        write_status = {
+                            "status": "failed",
+                            "error_type": type(write_error).__name__,
+                            "error_message": exception_message(write_error),
+                        }
+                return comm.bcast(write_status, root=completion_owner)
+
+            def write_rank_json(
+                target_path: Path, payload: dict[str, object]
+            ) -> dict[str, object]:
+                try:
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    temporary_path = target_path.with_name(
+                        f".{target_path.name}.{os.getpid()}.tmp"
+                    )
+                    if target_path.exists() or temporary_path.exists():
+                        raise FileExistsError(str(target_path))
+                    with temporary_path.open("x", encoding="utf-8") as stream:
+                        stream.write(
+                            json.dumps(
+                                payload,
+                                sort_keys=True,
+                                indent=2,
+                                allow_nan=False,
+                            )
+                            + "\n"
+                        )
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(temporary_path, target_path)
+                    return {
+                        "status": "written",
+                        "path": str(target_path),
+                        "sha256": hashlib.sha256(
+                            target_path.read_bytes()
+                        ).hexdigest(),
+                    }
+                except BaseException as write_error:  # noqa: BLE001 - local evidence is secondary
+                    return {
+                        "status": "failed",
+                        "error_type": type(write_error).__name__,
+                        "error_message": exception_message(write_error),
+                    }
+
+            def freeze_rank_vectors(run_id: str) -> dict[str, object]:
+                arrays = {
+                    "x_star": np.asarray(
+                        exact_solution.getArray(readonly=True)
+                    ).copy(),
+                    "f": np.asarray(rhs.getArray(readonly=True)).copy(),
+                    "x": np.asarray(solution.getArray(readonly=True)).copy(),
+                }
+                target_path = evidence_root / (
+                    f"tiny_fgmres_{run_id}_state_rank-{comm.rank}.npz"
+                )
+                temporary_path = target_path.with_name(
+                    f".{target_path.name}.{os.getpid()}.tmp"
+                )
+                try:
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    if target_path.exists() or temporary_path.exists():
+                        raise FileExistsError(str(target_path))
+                    with temporary_path.open("xb") as stream:
+                        np.savez(stream, **arrays)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(temporary_path, target_path)
+                    return {
+                        "status": "written",
+                        "path": str(target_path),
+                        "sha256": hashlib.sha256(
+                            target_path.read_bytes()
+                        ).hexdigest(),
+                        "local_array_sha256": {
+                            name: hashlib.sha256(
+                                np.ascontiguousarray(value).view(np.uint8)
+                            ).hexdigest()
+                            for name, value in arrays.items()
+                        },
+                        "ownership": {
+                            "x_star": [
+                                int(value)
+                                for value in exact_solution.getOwnershipRange()
+                            ],
+                            "f": [
+                                int(value) for value in rhs.getOwnershipRange()
+                            ],
+                            "x": [
+                                int(value)
+                                for value in solution.getOwnershipRange()
+                            ],
+                        },
+                        "local_shapes": {
+                            name: list(value.shape)
+                            for name, value in arrays.items()
+                        },
+                        "dtype": {
+                            name: str(value.dtype)
+                            for name, value in arrays.items()
+                        },
+                    }
+                except BaseException as vector_write_error:  # noqa: BLE001 - preserve solve result
+                    return {
+                        "status": "failed",
+                        "error_type": type(vector_write_error).__name__,
+                        "error_message": exception_message(vector_write_error),
+                    }
+
+            def freeze_terminal_residual(
+                run_id: str, *, status: str
+            ) -> dict[str, object]:
+                target_path = evidence_root / (
+                    f"tiny_fgmres_{run_id}_terminal_ax_minus_f_rank-"
+                    f"{comm.rank}.npz"
+                )
+                temporary_path = target_path.with_name(
+                    f".{target_path.name}.{os.getpid()}.tmp"
+                )
+                try:
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    if target_path.exists() or temporary_path.exists():
+                        raise FileExistsError(str(target_path))
+                    residual_values = np.asarray(
+                        true_residual.getArray(readonly=True)
+                    ).copy()
+                    with temporary_path.open("xb") as stream:
+                        np.savez(stream, ax_minus_f=residual_values)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(temporary_path, target_path)
+                    return {
+                        "status": "written",
+                        "measurement_status": status,
+                        "path": str(target_path),
+                        "sha256": hashlib.sha256(
+                            target_path.read_bytes()
+                        ).hexdigest(),
+                        "ownership": [
+                            int(value)
+                            for value in true_residual.getOwnershipRange()
+                        ],
+                        "local_shape": list(residual_values.shape),
+                        "dtype": str(residual_values.dtype),
+                        "raw_nonfinite_values_preserved": True,
+                    }
+                except BaseException as vector_write_error:  # noqa: BLE001 - retain primary solve/measurement result
+                    return {
+                        "status": "failed",
+                        "measurement_status": status,
+                        "error_type": type(vector_write_error).__name__,
+                        "error_message": exception_message(vector_write_error),
+                    }
+
+            def make_run_configuration(
+                run_id: str, selected_restart: int
+            ) -> dict[str, object]:
+                configuration = copy.deepcopy(ksp_configuration)
+                requested = configuration["requested"]
+                requested.update(
+                    {
+                        "run_id": run_id,
+                        "max_it": max_iterations,
+                        "restart": selected_restart,
+                        "initial_guess_nonzero": False,
+                        "rtol": 5.0e-9,
+                        "atol": 0.0,
+                    }
+                )
+                readback = configuration["readback"]
+                readback["restart"] = read_ksp_value(
+                    ksp, "getGMRESRestart"
+                )
+                readback["initial_guess_nonzero"] = read_ksp_value(
+                    ksp, "getInitialGuessNonzero"
+                )
+                readback["tolerances"] = read_ksp_value(ksp, "getTolerances")
+                return configuration
+
+            def run_ksp_once(
+                run_id: str,
+                selected_restart: int,
+                *,
+                setup_body_seconds: float | None,
+                expected_factor_binding: dict[str, object] | None = None,
+            ) -> dict[str, object]:
+                nonlocal active_run_id
+                nonlocal active_restart
+                nonlocal active_run_observations
+                nonlocal active_run_observation_wall_seconds
+                nonlocal solve_started_monotonic
+
+                active_run_id = run_id
+                active_restart = selected_restart
+                active_run_observations = []
+                active_run_observation_wall_seconds = 0.0
+                solution.set(PETSc.ScalarType(0.0))
+                ksp.setInitialGuessNonzero(False)
+                initial_solution_zero = bool(
+                    np.equal(
+                        np.asarray(solution.getArray(readonly=True)),
+                        PETSc.ScalarType(0.0),
+                    ).all()
+                )
+                rhs_before_run = np.asarray(
+                    rhs.getArray(readonly=True)
+                ).copy()
+                exact_solution_before_run = np.asarray(
+                    exact_solution.getArray(readonly=True)
+                ).copy()
+                ksp.setGMRESRestart(selected_restart)
+                ksp.setTolerances(
+                    rtol=5.0e-9,
+                    atol=0.0,
+                    max_it=max_iterations,
+                )
+                binding_before = current_factor_binding()
+                same_factor_binding_as_r30 = (
+                    None
+                    if expected_factor_binding is None
+                    else binding_before == expected_factor_binding
+                )
+                run_configuration = make_run_configuration(
+                    run_id, selected_restart
+                )
+                pc_attempts_before_run = int(ldu._pc_apply_attempt_count)
+                pc_successes_before_run = int(ldu._pc_apply_count)
+                apply_history_start = len(pc_apply_history)
+                monitor_start = len(ksp_monitor_samples)
+                monitor_error_start = len(ksp_monitor_errors)
                 original_context = original_operator.getPythonContext()
-                local_completion = {
-                    "capture_status": "captured",
+                original_matmult_before = int(
+                    original_context._matmult_call_count
+                )
+                solve_started_monotonic = time.monotonic()
+                solve_started_perf = time.perf_counter()
+                ksp.solve(rhs, solution)
+                solve_wall_seconds = time.perf_counter() - solve_started_perf
+
+                converged_reason = int(ksp.getConvergedReason())
+                iteration_count = int(ksp.getIterationNumber())
+                pc_attempts_before_terminal_A = int(
+                    ldu._pc_apply_attempt_count
+                )
+                pc_successes_before_terminal_A = int(ldu._pc_apply_count)
+                # Persist this solve's owned x*, f and x before the terminal
+                # independent A action. A later A/norm failure must not erase
+                # the normally returned KSP state.
+                vector_freeze_started = time.perf_counter()
+                vector_archive = freeze_rank_vectors(run_id)
+                vector_freeze_wall_seconds = (
+                    time.perf_counter() - vector_freeze_started
+                )
+                state_arrays = {
+                    "rhs": np.asarray(rhs.getArray(readonly=True)),
+                    "exact_solution": np.asarray(
+                        exact_solution.getArray(readonly=True)
+                    ),
+                    "solution": np.asarray(
+                        solution.getArray(readonly=True)
+                    ),
+                }
+                preterminal_payload = {
+                    "schema": "task041.v16.tiny_fe_postsolve_state.v1",
+                    "classification": "pre_terminal_A_action_not_solver_pass",
+                    "run_id": run_id,
+                    "rank": int(comm.rank),
+                    "mpi_size": int(comm.size),
+                    "converged_reason": converged_reason,
+                    "iterations": iteration_count,
+                    "max_iterations": max_iterations,
+                    "restart": selected_restart,
+                    "rhs_handle": int(rhs.handle),
+                    "solution_handle": int(solution.handle),
+                    "exact_solution_handle": int(exact_solution.handle),
+                    "ownership": {
+                        "rhs": [int(value) for value in rhs.getOwnershipRange()],
+                        "solution": [
+                            int(value)
+                            for value in solution.getOwnershipRange()
+                        ],
+                        "exact_solution": [
+                            int(value)
+                            for value in exact_solution.getOwnershipRange()
+                        ],
+                    },
+                    "pc_attempted_during_solve": (
+                        int(ldu._pc_apply_attempt_count)
+                        - pc_attempts_before_run
+                    ),
+                    "pc_successful_during_solve": (
+                        int(ldu._pc_apply_count) - pc_successes_before_run
+                    ),
+                    "state_vector_archive": vector_archive,
+                    "local_array_sha256": {
+                        name: hashlib.sha256(
+                            np.ascontiguousarray(value).view(np.uint8)
+                        ).hexdigest()
+                        for name, value in state_arrays.items()
+                    },
+                }
+                preterminal_path = evidence_root / (
+                    f"tiny_fgmres_{run_id}_postsolve_rank-{comm.rank}.json"
+                )
+                preterminal_status = write_rank_json(
+                    preterminal_path, preterminal_payload
+                )
+                preterminal_status_by_rank = comm.allgather(
+                    {
+                        "rank": int(comm.rank),
+                        "status": preterminal_status,
+                    }
+                )
+
+                terminal_observation_started = time.perf_counter()
+                original_matmult_before_terminal = int(
+                    original_context._matmult_call_count
+                )
+                terminal_measurement_status = "measured"
+                terminal_measurement_errors: list[dict[str, object]] = []
+                try:
+                    original_operator.mult(solution, true_residual)
+                    true_residual.axpy(PETSc.ScalarType(-1.0), rhs)
+                    rhs_norm = float(rhs.norm())
+                    true_residual_norm = float(true_residual.norm())
+                    true_relative_residual = (
+                        true_residual_norm / rhs_norm
+                        if rhs_norm != 0.0
+                        else float("inf")
+                    )
+                except BaseException as terminal_error:  # preserve possibly collective PETSc failure
+                    terminal_measurement_status = "collective_action_or_norm_raised"
+                    persist_observation_exception(
+                        terminal_error,
+                        run_id=run_id,
+                        iteration=None,
+                        stage="terminal_original_A_or_norm",
+                        details={
+                            "reason": converged_reason,
+                            "iterations": iteration_count,
+                            "max_iterations": max_iterations,
+                            "original_A_matmult_delta_so_far": (
+                                int(original_context._matmult_call_count)
+                                - original_matmult_before_terminal
+                            ),
+                        },
+                    )
+                    raise
+                if not (
+                    np.isfinite(rhs_norm)
+                    and np.isfinite(true_residual_norm)
+                    and np.isfinite(true_relative_residual)
+                ):
+                    terminal_measurement_status = "nonfinite_terminal_measurement"
+                terminal_residual_archive = freeze_terminal_residual(
+                    run_id, status=terminal_measurement_status
+                )
+                terminal_observation_wall_seconds = (
+                    time.perf_counter() - terminal_observation_started
+                )
+                rhs_local_after = np.asarray(
+                    rhs.getArray(readonly=True)
+                ).copy()
+                rhs_unchanged = np.array_equal(
+                    rhs_local_after, rhs_before_run
+                )
+                exact_solution_unchanged = np.array_equal(
+                    np.asarray(exact_solution.getArray(readonly=True)),
+                    exact_solution_before_run,
+                )
+                pc_attempts_after_run = int(ldu._pc_apply_attempt_count)
+                pc_successes_after_run = int(ldu._pc_apply_count)
+                run_apply_history = pc_apply_history[apply_history_start:]
+                run_monitor_samples = ksp_monitor_samples[monitor_start:]
+                run_monitor_errors = ksp_monitor_errors[monitor_error_start:]
+                original_matmult_after = int(
+                    original_context._matmult_call_count
+                )
+                binding_after = current_factor_binding()
+                capture_status = "captured"
+                capture_error = None
+                try:
+                    proc_fields = Path("/proc/self/stat").read_text().rsplit(
+                        ")", 1
+                    )[1].split()
+                    actual_cpu = int(proc_fields[36])
+                    allowed_cpus = sorted(
+                        int(cpu) for cpu in os.sched_getaffinity(0)
+                    )
+                except BaseException as identity_error:  # noqa: BLE001 - record identity gap
+                    actual_cpu = None
+                    allowed_cpus = []
+                    capture_status = "failed"
+                    capture_error = {
+                        "type": type(identity_error).__name__,
+                        "message": exception_message(identity_error),
+                    }
+                local_record: dict[str, object] = {
+                    "run_id": run_id,
+                    "capture_status": capture_status,
+                    "capture_error": capture_error,
                     "rank": int(comm.rank),
                     "mpi_size": int(comm.size),
                     "actual_cpu": actual_cpu,
                     "allowed_cpus": allowed_cpus,
                     "fixture_binding": fixture_binding,
                     "test_source_sha256": test_source_sha,
+                    "run_vector_binding": {
+                        "rhs_handle": int(rhs.handle),
+                        "exact_solution_handle": int(exact_solution.handle),
+                        "solution_handle": int(solution.handle),
+                        "true_residual_handle": int(true_residual.handle),
+                        "initial_guess_nonzero_requested": False,
+                        "solution_zero_before_solve": initial_solution_zero,
+                        "exact_solution_unchanged": bool(
+                            exact_solution_unchanged
+                        ),
+                        "rhs_unchanged": bool(rhs_unchanged),
+                    },
+                    "pre_terminal_state_receipt_by_rank": (
+                        preterminal_status_by_rank
+                    ),
                     "original_A": {
                         "petsc_mat_type": type(original_operator).__name__,
                         "petsc_mat_handle": int(original_operator.handle),
                         "python_context_type": type(original_context).__name__,
                         "python_context_id": id(original_context),
-                        "python_context_matmult_call_count": int(
-                            original_context._matmult_call_count
+                        "python_context_matmult_call_count_before": (
+                            original_matmult_before
+                        ),
+                        "python_context_matmult_call_count_after": (
+                            original_matmult_after
+                        ),
+                        "python_context_matmult_delta": (
+                            original_matmult_after - original_matmult_before
+                        ),
+                        "terminal_A_mult_pc_attempt_delta": (
+                            int(ldu._pc_apply_attempt_count)
+                            - pc_attempts_before_terminal_A
+                        ),
+                        "terminal_A_mult_pc_success_delta": (
+                            int(ldu._pc_apply_count)
+                            - pc_successes_before_terminal_A
+                        ),
+                        "terminal_A_mult_delta": (
+                            int(original_matmult_after)
+                            - original_matmult_before_terminal
+                        ),
+                        "terminal_measurement_status": (
+                            terminal_measurement_status
+                        ),
+                        "terminal_measurement_errors": (
+                            terminal_measurement_errors
                         ),
                         "global_shape": [
-                            int(value) for value in original_operator.getSize()
+                            int(value)
+                            for value in original_operator.getSize()
                         ],
                         "ldu_bound_operator_identity": (
                             ldu._v13_original_operator_identity
                         ),
                     },
+                    "factor_binding": binding_after,
+                    "factor_binding_before_run": binding_before,
+                    "same_factor_binding_as_r30": (
+                        same_factor_binding_as_r30
+                    ),
+                    "timings": {
+                        "test_body_setup_before_R30_solve_seconds": (
+                            setup_body_seconds
+                        ),
+                        "setup_components_are_not_additive_to_test_body_setup": True,
+                        "original_A_action_setup_seconds": (
+                            original_action_setup_wall_seconds
+                        ),
+                        "fixed_B_S_B_LDU_builder_setup_seconds": (
+                            fixed_b_s_b_setup_wall_seconds
+                        ),
+                        "solve_wall_including_lazy_KSP_setup_and_monitors_seconds": (
+                            solve_wall_seconds
+                        ),
+                        "periodic_observations_are_subset_of_solve_wall": True,
+                        "timings_must_not_be_summed_as_disjoint": True,
+                        "periodic_true_residual_observation_seconds": (
+                            active_run_observation_wall_seconds
+                        ),
+                        "terminal_independent_Ax_minus_f_seconds": (
+                            terminal_observation_wall_seconds
+                        ),
+                        "rank_vector_freeze_seconds": (
+                            vector_freeze_wall_seconds
+                        ),
+                    },
                     "ksp": {
-                        "configuration": ksp_configuration,
+                        "configuration": run_configuration,
                         "iteration_budget": {
-                            "max_it_expression": "min(240, max(4, global_size))",
-                            "restart_expression": "min(30, max_it)",
+                            "max_it_expression": (
+                                "min(600, max(4, global_size))"
+                            ),
+                            "max_iterations": max_iterations,
+                            "restart": selected_restart,
                             "early_convergence_stops_normally": True,
-                            "further_budget_or_restart_changes_authorized": False,
+                            "R60_policy": (
+                                "only_after_clean_R30_iteration_limit_and_"
+                                "original_Ax_minus_f_miss"
+                            ),
                         },
                         "converged_reason": converged_reason,
                         "iterations": iteration_count,
                         "max_iterations": max_iterations,
-                        "restart": restart,
+                        "restart": selected_restart,
                         "monitor_norm_semantics": (
                             "PETSc reported rnorm; not an independent true residual"
                         ),
-                        "monitor_samples_first_60": [
-                            row
-                            for row in ksp_monitor_samples
-                            if row.get("window") in {"initial", "first_60"}
-                        ],
-                        "monitor_samples_after_60": [
-                            row
-                            for row in ksp_monitor_samples
-                            if row.get("window") == "after_60"
-                        ],
-                        "monitor_capture_errors": ksp_monitor_errors,
-                        "historical_60_step_run_curve": "not_reconstructed_or_reused",
+                        "reported_monitor_samples": run_monitor_samples,
+                        "independent_Ax_minus_f_samples": (
+                            list(active_run_observations)
+                        ),
+                        "monitor_capture_errors": run_monitor_errors,
+                        "historical_60_step_run_curve": (
+                            "not_reconstructed_or_reused"
+                        ),
                     },
                     "pc_apply_timeline": {
                         "rank": int(comm.rank),
+                        "run_id": run_id,
                         "instrumentation_ordinal_is_independent_of_ksp_iteration": True,
                         "no_one_to_one_iteration_mapping_claimed": True,
-                        "attempted_before": pc_attempts_before,
-                        "attempted_after": pc_attempts_after,
-                        "successful_before": pc_successes_before,
-                        "successful_after": pc_successes_after,
-                        "records": pc_apply_history,
+                        "attempted_before": pc_attempts_before_run,
+                        "attempted_after": pc_attempts_after_run,
+                        "successful_before": pc_successes_before_run,
+                        "successful_after": pc_successes_after_run,
+                        "records": run_apply_history,
                     },
                     "pc_apply_counts": {
-                        "attempted_before": pc_attempts_before,
-                        "attempted_after": pc_attempts_after,
+                        "attempted_before": pc_attempts_before_run,
+                        "attempted_after": pc_attempts_after_run,
                         "attempted_during_solve": (
-                            pc_attempts_after - pc_attempts_before
+                            pc_attempts_after_run - pc_attempts_before_run
                         ),
-                        "successful_before": pc_successes_before,
-                        "successful_after": pc_successes_after,
+                        "successful_before": pc_successes_before_run,
+                        "successful_after": pc_successes_after_run,
                         "successful_during_solve": (
-                            pc_successes_after - pc_successes_before
+                            pc_successes_after_run - pc_successes_before_run
                         ),
                     },
                     "rhs_norm": finite_json_number(rhs_norm),
@@ -2440,11 +3641,17 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                     ),
                     "ax_minus_f_tolerance": 5.0e-9,
                     "rhs_unchanged": bool(rhs_unchanged),
+                    "exact_solution_unchanged": bool(
+                        exact_solution_unchanged
+                    ),
+                    "vector_archive": vector_archive,
+                    "terminal_residual_archive": terminal_residual_archive,
                     "checks": {
                         "positive_ksp_reason": converged_reason > 0,
                         "at_least_two_iterations": iteration_count >= 2,
                         "successful_pc_applies_cover_iterations": (
-                            pc_successes_after >= iteration_count
+                            pc_successes_after_run - pc_successes_before_run
+                            >= iteration_count
                         ),
                         "finite_ax_minus_f_relative": bool(
                             np.isfinite(true_relative_residual)
@@ -2454,127 +3661,691 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                             and true_relative_residual <= 5.0e-9
                         ),
                         "rhs_unchanged": bool(rhs_unchanged),
+                        "terminal_measurement_passed": (
+                            terminal_measurement_status == "measured"
+                            and (
+                                int(original_context._matmult_call_count)
+                                - original_matmult_before_terminal
+                            )
+                            == 1
+                            and np.isfinite(rhs_norm)
+                            and np.isfinite(true_residual_norm)
+                            and np.isfinite(true_relative_residual)
+                            and terminal_residual_archive.get("status")
+                            == "written"
+                            and terminal_residual_archive.get(
+                                "measurement_status"
+                            )
+                            == "measured"
+                        ),
+                        "pre_terminal_state_written_on_all_ranks": all(
+                            row.get("status", {}).get("status") == "written"
+                            for row in preterminal_status_by_rank
+                        ),
+                        "terminal_solution_matches_frozen_state": (
+                            hashlib.sha256(
+                                np.ascontiguousarray(
+                                    np.asarray(
+                                        solution.getArray(readonly=True)
+                                    )
+                                ).view(np.uint8)
+                            ).hexdigest()
+                            == vector_archive.get(
+                                "local_array_sha256", {}
+                            ).get("x")
+                        ),
+                        "all_terminal_A_mult_calls_avoided_PC_apply": (
+                            int(ldu._pc_apply_attempt_count)
+                            == pc_attempts_before_terminal_A
+                            and int(ldu._pc_apply_count)
+                            == pc_successes_before_terminal_A
+                        ),
                     },
                 }
-            except BaseException as capture_error:  # noqa: BLE001 - synchronize capture failures
-                local_completion = {
-                    "capture_status": "failed",
-                    "rank": int(comm.rank),
-                    "error_type": type(capture_error).__name__,
-                    "error_message": str(capture_error)[:400],
+                if run_id == "R30":
+                    local_record["same_factor_binding_as_r30"] = True
+                return {
+                    "run_id": run_id,
+                    "rank_records": comm.allgather(local_record),
                 }
-            completion_rows = comm.allgather(local_completion)
+
+            def _inspect_run_rows_for_clean_pc_evidence(
+                rank_records: list[dict[str, object]],
+            ) -> bool:
+                for record in rank_records:
+                    ksp_fields = _task041_v16_rank_ksp_fields(record)
+                    if ksp_fields is None:
+                        return False
+                    if record.get("capture_status") != "captured":
+                        return False
+                    if record.get("same_factor_binding_as_r30") is not True:
+                        return False
+                    factor_before = record.get(
+                        "factor_binding_before_run"
+                    )
+                    factor_after = record.get("factor_binding")
+                    if (
+                        not isinstance(factor_before, dict)
+                        or not isinstance(factor_after, dict)
+                        or factor_before != factor_after
+                    ):
+                        return False
+                    if record.get("vector_archive", {}).get("status") != "written":
+                        return False
+                    if record.get("rhs_unchanged") is not True:
+                        return False
+                    if record.get("checks", {}).get(
+                        "terminal_measurement_passed"
+                    ) is not True:
+                        return False
+                    if record.get("checks", {}).get(
+                        "pre_terminal_state_written_on_all_ranks"
+                    ) is not True or record.get("checks", {}).get(
+                        "terminal_solution_matches_frozen_state"
+                    ) is not True:
+                        return False
+                    terminal_archive = record.get(
+                        "terminal_residual_archive", {}
+                    )
+                    if (
+                        terminal_archive.get("status") != "written"
+                        or terminal_archive.get("measurement_status")
+                        != "measured"
+                    ):
+                        return False
+                    original_A_record = record.get("original_A", {})
+                    if (
+                        original_A_record.get("terminal_A_mult_delta") != 1
+                        or original_A_record.get(
+                            "terminal_measurement_status"
+                        )
+                        != "measured"
+                        or original_A_record.get(
+                            "terminal_measurement_errors"
+                        )
+                    ):
+                        return False
+                    preterminal_receipts = record.get(
+                        "pre_terminal_state_receipt_by_rank", []
+                    )
+                    if (
+                        len(preterminal_receipts)
+                        != int(record.get("mpi_size", 0))
+                        or any(
+                            row.get("rank") != index
+                            or not isinstance(row.get("status"), dict)
+                            or row["status"].get("status") != "written"
+                            for index, row in enumerate(preterminal_receipts)
+                        )
+                    ):
+                        return False
+                    vector_binding = record.get("run_vector_binding", {})
+                    if (
+                        not isinstance(vector_binding, dict)
+                        or vector_binding.get("initial_guess_nonzero_requested")
+                        is not False
+                        or vector_binding.get("solution_zero_before_solve")
+                        is not True
+                        or vector_binding.get("rhs_unchanged") is not True
+                        or vector_binding.get("exact_solution_unchanged")
+                        is not True
+                    ):
+                        return False
+                    if record.get("checks", {}).get(
+                        "all_terminal_A_mult_calls_avoided_PC_apply"
+                    ) is not True:
+                        return False
+                    monitor_errors = record.get("ksp", {}).get(
+                        "monitor_capture_errors", []
+                    )
+                    if monitor_errors:
+                        return False
+                    monitor_samples = record.get("ksp", {}).get(
+                        "reported_monitor_samples", []
+                    )
+                    if not monitor_samples or any(
+                        not isinstance(
+                            sample.get("petsc_reported_rnorm"),
+                            (int, float),
+                        )
+                        or not np.isfinite(
+                            float(sample["petsc_reported_rnorm"])
+                        )
+                        for sample in monitor_samples
+                    ):
+                        return False
+                    counts = record.get("pc_apply_counts", {})
+                    apply_records = record.get("pc_apply_timeline", {}).get(
+                        "records", []
+                    )
+                    if (
+                        counts.get("attempted_during_solve")
+                        != len(apply_records)
+                        or counts.get("successful_during_solve", 0)
+                        != len(apply_records)
+                        or counts.get("successful_during_solve", 0)
+                        < ksp_fields["iterations"]
+                    ):
+                        return False
+                    if not apply_records:
+                        return False
+                    for apply_row in apply_records:
+                        row_gate = apply_row.get("row_gate", {})
+                        owner_solve = row_gate.get(
+                            "owner_lu_solve_record", {}
+                        )
+                        metrics = row_gate.get("metrics", {})
+                        p4_deltas = row_gate.get(
+                            "B_P4_counter_delta_by_rank"
+                        )
+                        if (
+                            apply_row.get("delegate_status") != "returned"
+                            or apply_row.get("row_capture_status")
+                            != "captured_current_attempt"
+                            or row_gate.get("status") != "passed"
+                            or row_gate.get("same_attempt_owner_solve")
+                            is not True
+                            or owner_solve.get("status") != "passed"
+                            or owner_solve.get("input_unchanged") is not True
+                            or row_gate.get("identity_or_evidence_errors")
+                            or row_gate.get("capture_array_errors")
+                            or row_gate.get("writer_errors")
+                            or metrics.get("decomposition_passed") is not True
+                            or not isinstance(metrics.get("eta_terms_inf"), (int, float))
+                            or not np.isfinite(float(metrics["eta_terms_inf"]))
+                            or float(metrics["eta_terms_inf"]) > 1.0e-10
+                            or not isinstance(
+                                metrics.get("decomposition_eta_terms_inf"),
+                                (int, float),
+                            )
+                            or not np.isfinite(
+                                float(metrics["decomposition_eta_terms_inf"])
+                            )
+                            or float(metrics["decomposition_eta_terms_inf"])
+                            > 1.0e-10
+                            or not isinstance(p4_deltas, list)
+                            or len(p4_deltas) != int(record.get("mpi_size", 0))
+                        ):
+                            return False
+                        for rank_delta in p4_deltas:
+                            side_deltas = rank_delta.get("p4_and_B_by_side")
+                            if not isinstance(side_deltas, dict) or any(
+                                not isinstance(side_deltas.get(side), dict)
+                                or side_deltas[side].get("action_apply_count")
+                                != 2
+                                or side_deltas[side].get("p4_factor_count")
+                                != 0
+                                for side in ("bottom", "top")
+                            ):
+                                return False
+                    observations = record.get("ksp", {}).get(
+                        "independent_Ax_minus_f_samples", []
+                    )
+                    expected_checkpoints = list(
+                        range(30, ksp_fields["iterations"] + 1, 30)
+                    )
+                    if [
+                        int(sample.get("iteration", -1))
+                        for sample in observations
+                    ] != expected_checkpoints:
+                        return False
+                    if any(
+                        sample.get("status")
+                        not in {"captured", "buildSolution_unavailable"}
+                        for sample in observations
+                    ):
+                        return False
+                    if any(
+                        sample.get("status") == "captured"
+                        and sample.get("finite") is not True
+                        for sample in observations
+                    ):
+                        return False
+                    for sample in observations:
+                        probe_rows = sample.get(
+                            "rank_build_solution_probe", []
+                        )
+                        if len(probe_rows) != int(
+                            record.get("mpi_size", 0)
+                        ):
+                            return False
+                        if sample.get("status") == "buildSolution_unavailable":
+                            if any(
+                                row.get("status") != "unavailable"
+                                or row.get(
+                                    "unsupported_invariants_unchanged"
+                                )
+                                is not True
+                                for row in probe_rows
+                            ):
+                                return False
+                        elif sample.get("status") == "captured" and any(
+                                row.get("status") != "supported"
+                                or row.get("returned_uses_scratch") is not True
+                                or row.get("scratch_written") is not True
+                                or row.get("scratch_finite") is not True
+                                or row.get("scratch_aliases_solution") is not False
+                                or row.get("scratch_aliases_rhs") is not False
+                                or row.get("rhs_unchanged") is not True
+                                or row.get("ksp_solution_unchanged") is not True
+                                or row.get("pc_attempt_delta") != 0
+                                or row.get("pc_success_delta") != 0
+                                or row.get("original_A_matmult_delta") != 0
+                                or row.get("capture_request_clear_before")
+                                is not True
+                                or row.get("capture_request_clear_after")
+                                is not True
+                                or row.get("capture_result_clear_before")
+                                is not True
+                                or row.get("capture_result_clear_after")
+                                is not True
+                                for row in probe_rows
+                            ):
+                            return False
+                    if any(
+                        sample.get("status") == "captured"
+                        and any(
+                            row.get("original_A_matmult_delta") != 1
+                            or row.get("scratch_unchanged") is not True
+                            or row.get("rhs_unchanged") is not True
+                            or row.get("ksp_solution_unchanged") is not True
+                            or row.get("pc_attempt_delta") != 0
+                            or row.get("pc_success_delta") != 0
+                            or row.get("residual_scratch_finite") is not True
+                            or row.get("capture_request_clear_before") is not True
+                            or row.get("capture_request_clear_after") is not True
+                            or row.get("capture_result_clear_before") is not True
+                            or row.get("capture_result_clear_after") is not True
+                            for row in sample.get(
+                                "independent_A_action_by_rank", []
+                            )
+                        )
+                        for sample in observations
+                    ):
+                        return False
+                return True
+
+            def run_rows_have_clean_pc_and_capture_evidence(
+                rank_records: list[dict[str, object]],
+            ) -> bool:
+                try:
+                    return _inspect_run_rows_for_clean_pc_evidence(
+                        rank_records
+                    )
+                except Exception:  # noqa: BLE001 - malformed evidence blocks R60/pass
+                    return False
+
+            def write_run_completion(
+                run_result: dict[str, object]
+            ) -> dict[str, object]:
+                run_id = str(run_result["run_id"])
+                run_path = evidence_root / (
+                    f"tiny_fgmres_{run_id}_completion.json"
+                )
+                payload = {
+                    "schema": "task041.v16.tiny_fe_fgmres_run_completion.v1",
+                    "classification": (
+                        "captured_before_final_assertions_not_a_solver_pass"
+                    ),
+                    "run_id": run_id,
+                    "selector": fixture_binding["selector"],
+                    "fixture_binding": fixture_binding,
+                    "test_source_sha256": test_source_sha,
+                    "mpi_size": int(comm.size),
+                    "modal_owner": completion_owner,
+                    "rank_records": run_result["rank_records"],
+                }
+                status = write_owner_json(run_path, payload)
+                run_result["completion_file"] = status
+                return status
+
+            def make_iteration_limit_decision(
+                rank_records: list[dict[str, object]],
+                completion_file: dict[str, object],
+            ) -> tuple[bool, str]:
+                if completion_file.get("status") != "written":
+                    return False, "R30_completion_write_failed"
+                if not rank_records:
+                    return False, "R30_rank_records_missing"
+                for record in rank_records:
+                    if not (
+                        _task041_v16_iteration_limit_candidate(
+                            record,
+                            iteration_limit_reasons,
+                            clean_pc_capture_evidence=(
+                                run_rows_have_clean_pc_and_capture_evidence(
+                                    [record]
+                                )
+                            ),
+                        )
+                    ):
+                        return False, (
+                            "R30_not_clean_full_iteration_limit_with_original_"
+                            "Ax_minus_f_miss"
+                        )
+                return True, "R30_clean_600_iteration_limit_original_residual_miss"
+
+            def run_is_numerically_qualified(
+                rank_records: list[dict[str, object]],
+            ) -> bool:
+                return bool(rank_records) and all(
+                    _task041_v16_numeric_record_qualified(
+                        record,
+                        clean_pc_capture_evidence=(
+                            run_rows_have_clean_pc_and_capture_evidence(
+                                [record]
+                            )
+                        ),
+                    )
+                    for record in rank_records
+                )
+
+            setup_before_r30_solve_seconds = (
+                time.perf_counter() - test_body_started
+            )
+            r30_result = run_ksp_once(
+                "R30",
+                30,
+                setup_body_seconds=setup_before_r30_solve_seconds,
+            )
+            r30_completion_status = write_run_completion(r30_result)
+            run_results: list[dict[str, object]] = [r30_result]
+            r30_eligible, r60_decision = make_iteration_limit_decision(
+                r30_result["rank_records"], r30_completion_status
+            )
+            r60_result: dict[str, object] | None = None
+            r60_execution_authorized = int(comm.size) == 1
+            if r60_execution_authorized:
+                r60_authorization_reason = (
+                    "single_rank_only_conditional_R60_authorization"
+                )
+            elif int(comm.size) == 2:
+                r60_authorization_reason = (
+                    "mpi2_R30_qualification_only_no_R60_authorization"
+                )
+            else:
+                r60_authorization_reason = (
+                    "multi_rank_R60_not_authorized"
+                )
+            r60_authorization = {
+                "authorized": r60_execution_authorized,
+                "reason": r60_authorization_reason,
+                "mpi_size": int(comm.size),
+            }
+            r60_not_run_reason = r60_decision
+            if not r60_execution_authorized:
+                r60_not_run_reason = r60_authorization_reason
+                r60_completion_status = {
+                    "status": "not_run",
+                    "reason": r60_not_run_reason,
+                }
+            elif r30_eligible:
+                local_factor_binding = current_factor_binding()
+                r30_local_binding = r30_result["rank_records"][comm.rank].get(
+                    "factor_binding"
+                )
+                local_reuse_identity = (
+                    isinstance(r30_local_binding, dict)
+                    and local_factor_binding == r30_local_binding
+                    and int(ksp.handle)
+                    == int(r30_local_binding.get("ksp_handle", -1))
+                    and int(ksp.getPC().handle)
+                    == int(r30_local_binding.get("pc_handle", -1))
+                    and ksp.getPC().getPythonContext() is ldu
+                    and ldu.action_modal_schur_system._destroyed is False
+                )
+                reuse_identity_by_rank = comm.allgather(
+                    bool(local_reuse_identity)
+                )
+                if all(reuse_identity_by_rank):
+                    r60_result = run_ksp_once(
+                        "R60",
+                        60,
+                        setup_body_seconds=None,
+                        expected_factor_binding=local_factor_binding,
+                    )
+                    run_results.append(r60_result)
+                    r60_completion_status = write_run_completion(r60_result)
+                    r60_not_run_reason = None
+                else:
+                    r60_not_run_reason = (
+                        "same_live_KSP_PC_LDU_B_S_B_factor_identity_not_proven"
+                    )
+                    r60_completion_status = {
+                        "status": "not_run",
+                        "reason": r60_not_run_reason,
+                    }
+            else:
+                r60_completion_status = {
+                    "status": "not_run",
+                    "reason": r60_not_run_reason,
+                }
+
             completion_payload = {
-                "schema": "task041.v15.tiny_fe_fgmres_completion.v2",
-                "diagnostic_status": "captured_before_numeric_assertions_not_a_solver_pass",
-                "status": "captured_before_numeric_assertions",
+                "schema": "task041.v16.tiny_fe_fgmres_completion.v1",
+                "classification": (
+                    "captured_before_final_assertions_not_a_solver_pass"
+                ),
                 "selector": fixture_binding["selector"],
                 "fixture_binding": fixture_binding,
                 "test_source_sha256": test_source_sha,
-                "modal_owner": int(ldu.action_modal_schur_system.modal_owner),
                 "mpi_size": int(comm.size),
-                "rank_records": completion_rows,
+                "modal_owner": completion_owner,
+                "historical_prior_attempt": "sealed_prior_raw_preserved_not_reused",
+                "primary_run": "R30",
+                "r30": {
+                    "completion_file": r30_completion_status,
+                    "iteration_limit_decision": r60_decision,
+                    "rank_summary": [
+                        {
+                            "rank": record.get("rank"),
+                            "reason": (
+                                _task041_v16_rank_ksp_fields(record) or {}
+                            ).get("converged_reason"),
+                            "iterations": (
+                                _task041_v16_rank_ksp_fields(record) or {}
+                            ).get("iterations"),
+                            "max_iterations": (
+                                _task041_v16_rank_ksp_fields(record) or {}
+                            ).get("max_iterations"),
+                            "restart": record.get("restart"),
+                            "ax_minus_f_relative": record.get(
+                                "ax_minus_f_relative"
+                            ),
+                            "rhs_unchanged": record.get("rhs_unchanged"),
+                            "vector_archive": record.get("vector_archive"),
+                            "factor_binding": record.get("factor_binding"),
+                        }
+                        for record in r30_result["rank_records"]
+                    ],
+                    "numerically_eligible_for_R60": bool(r30_eligible),
+                    "R60_eligibility_reason": r60_decision,
+                    "R60_authorization": r60_authorization,
+                },
+                "r60": (
+                    {
+                        "status": "run",
+                        "authorization": r60_authorization,
+                        "completion_file": r60_completion_status,
+                        "rank_summary": [
+                            {
+                                "rank": record.get("rank"),
+                                "reason": (
+                                    _task041_v16_rank_ksp_fields(record) or {}
+                                ).get("converged_reason"),
+                                "iterations": (
+                                    _task041_v16_rank_ksp_fields(record) or {}
+                                ).get("iterations"),
+                                "max_iterations": (
+                                    _task041_v16_rank_ksp_fields(record) or {}
+                                ).get("max_iterations"),
+                                "restart": record.get("restart"),
+                                "ax_minus_f_relative": record.get(
+                                    "ax_minus_f_relative"
+                                ),
+                                "rhs_unchanged": record.get("rhs_unchanged"),
+                                "vector_archive": record.get("vector_archive"),
+                                "factor_binding": record.get("factor_binding"),
+                                "same_factor_binding_as_r30": record.get(
+                                    "same_factor_binding_as_r30"
+                                ),
+                            }
+                            for record in r60_result["rank_records"]
+                        ],
+                    }
+                    if r60_result is not None
+                    else {
+                        "status": "not_run",
+                        "reason": r60_not_run_reason,
+                    "R30_numerically_eligible_for_R60": bool(r30_eligible),
+                    "R30_R60_eligibility_reason": r60_decision,
+                    "authorization": r60_authorization,
+                    }
+                ),
             }
-            completion_path = evidence_root / "tiny_fgmres_completion.json"
-            completion_status = None
-            completion_owner = int(ldu.action_modal_schur_system.modal_owner)
-            if comm.rank == completion_owner:
-                try:
-                    completion_path.parent.mkdir(parents=True, exist_ok=True)
-                    temporary_path = completion_path.with_name(
-                        f".{completion_path.name}.{os.getpid()}.tmp"
-                    )
-                    if completion_path.exists() or temporary_path.exists():
-                        raise FileExistsError(str(completion_path))
-                    with temporary_path.open("x", encoding="utf-8") as stream:
-                        stream.write(
-                            json.dumps(
-                                completion_payload,
-                                sort_keys=True,
-                                indent=2,
-                                allow_nan=False,
-                            )
-                            + "\n"
-                        )
-                        stream.flush()
-                        os.fsync(stream.fileno())
-                    os.replace(temporary_path, completion_path)
-                    completion_status = {
-                        "status": "written",
-                        "path": str(completion_path),
-                        "sha256": hashlib.sha256(
-                            completion_path.read_bytes()
-                        ).hexdigest(),
-                    }
-                except BaseException as write_error:  # noqa: BLE001 - broadcast secondary write failure
-                    completion_status = {
-                        "status": "failed",
-                        "error_type": type(write_error).__name__,
-                        "error_message": str(write_error)[:400],
-                    }
-            completion_status = comm.bcast(completion_status, root=completion_owner)
-            try:
-                assert converged_reason > 0
-                assert iteration_count >= 2
-                assert pc_successes_after >= iteration_count
-                assert np.isfinite(true_relative_residual)
-                assert true_relative_residual <= 5.0e-9
-                assert rhs_unchanged
-            except BaseException as numeric_error:  # retain numerical failure as primary
-                if completion_status.get("status") != "written":
-                    numeric_error.add_note(
-                        "secondary tiny FGMRES evidence write failure: "
-                        + str(completion_status)
-                    )
-                raise
-            assert all(
-                row.get("capture_status") == "captured"
-                for row in completion_rows
-            ), completion_rows
-            assert completion_status["status"] == "written", completion_status
-            assert ksp_monitor_samples, "KSP monitor produced no iteration samples"
-            assert not ksp_monitor_errors, ksp_monitor_errors
-            assert all(
-                isinstance(row.get("pc_apply_timeline"), dict)
-                and all(
-                    apply_row.get("row_capture_status")
-                    == "captured_current_attempt"
-                    for apply_row in row["pc_apply_timeline"].get("records", [])
-                )
-                for row in completion_rows
-            ), completion_rows
+            completion_status = write_owner_json(
+                evidence_root / "tiny_fgmres_completion.json",
+                completion_payload,
+            )
         except BaseException as solve_or_assertion_error:
             ksp_destroy_primary = solve_or_assertion_error
             raise
         else:
             ksp_destroy_primary = None
         finally:
+            ksp_cleanup_started = time.perf_counter()
+            if ldu_apply_wrapper_installed:
+                try:
+                    if prior_instance_apply is missing_instance_apply:
+                        delattr(ldu, "apply")
+                    else:
+                        ldu.apply = prior_instance_apply
+                except BaseException as restore_error:  # noqa: BLE001 - cleanup is secondary
+                    apply_restore_error = {
+                        "type": type(restore_error).__name__,
+                        "message": exception_message(restore_error),
+                    }
+                    if ksp_destroy_primary is not None:
+                        try:
+                            ksp_destroy_primary.add_note(
+                                "secondary LDU apply restore error: "
+                                + exception_message(restore_error)
+                            )
+                        except BaseException:  # noqa: BLE001, S110
+                            pass
             try:
                 ksp.destroy()
-            except BaseException as destroy_error:
-                if ksp_destroy_primary is None:
-                    raise
-                try:
-                    ksp_destroy_primary.add_note(
-                        "secondary KSP destroy error: "
-                        + exception_message(destroy_error)
+            except BaseException as destroy_error:  # noqa: BLE001 - record and continue frozen checks
+                ksp_destroy_error = {
+                    "type": type(destroy_error).__name__,
+                    "message": exception_message(destroy_error),
+                }
+                if ksp_destroy_primary is not None:
+                    try:
+                        ksp_destroy_primary.add_note(
+                            "secondary KSP destroy error: "
+                            + exception_message(destroy_error)
+                        )
+                    except BaseException:  # noqa: BLE001, S110
+                        pass
+                else:
+                    ksp_destroy_primary = destroy_error
+                    write_rank_json(
+                        evidence_root
+                        / f"tiny_fgmres_ksp_destroy_error_rank-{comm.rank}.json",
+                        {
+                            "schema": "task041.v16.local_cleanup_error.v1",
+                            "rank": int(comm.rank),
+                            "stage": "KSP.destroy",
+                            "error": ksp_destroy_error,
+                            "post_destroy_lifecycle_collectives": "not_run",
+                        },
                     )
-                except BaseException:  # noqa: BLE001, S110
-                    pass
+            finally:
+                ksp_cleanup_wall_seconds = (
+                    time.perf_counter() - ksp_cleanup_started
+                )
 
+        if ksp_destroy_error is not None:
+            raise ksp_destroy_primary
+
+        frozen_lifecycle_cleanup_started = time.perf_counter()
         modal_system_after_solve = ldu.action_modal_schur_system
-        ldu.destroy()
-        assert modal_system_after_solve._destroyed is True
-        frozen_row = modal_system_after_solve.frozen_original_modal_row()
-        assert isinstance(frozen_row, dict)
-        assert frozen_row["record"]["status"] == "passed"
-        assert frozen_row["record"]["classification"] == "numeric_gate_pass"
-        assert frozen_row["arrays"] is not None
-        assert "d" in frozen_row["arrays"]
-        assert np.isfinite(frozen_row["arrays"]["d"]).all()
+        ldu_destroy_error: dict[str, str] | None = None
+        try:
+            ldu.destroy()
+        except BaseException as destroy_error:  # preserve possible collective cleanup failure
+            ldu_destroy_error = {
+                "type": type(destroy_error).__name__,
+                "message": exception_message(destroy_error),
+            }
+            write_rank_json(
+                evidence_root
+                / f"tiny_fgmres_ldu_destroy_error_rank-{comm.rank}.json",
+                {
+                    "schema": "task041.v16.local_cleanup_error.v1",
+                    "rank": int(comm.rank),
+                    "stage": "LDU.destroy",
+                    "error": ldu_destroy_error,
+                    "post_destroy_lifecycle_collectives": "not_run",
+                },
+            )
+            raise
+
+        local_lifecycle: dict[str, object] = {
+            "rank": int(comm.rank),
+            "ldu_destroyed": modal_system_after_solve._destroyed is True,
+            "frozen_row_status": "unavailable",
+            "frozen_row_classification": None,
+            "frozen_arrays_readable": False,
+            "frozen_d_finite": False,
+        }
+        try:
+            frozen_row = modal_system_after_solve.frozen_original_modal_row()
+            if isinstance(frozen_row, dict):
+                frozen_record = frozen_row.get("record")
+                arrays = frozen_row.get("arrays")
+                local_lifecycle["frozen_row_status"] = (
+                    frozen_record.get("status")
+                    if isinstance(frozen_record, dict)
+                    else None
+                )
+                local_lifecycle["frozen_row_classification"] = (
+                    frozen_record.get("classification")
+                    if isinstance(frozen_record, dict)
+                    else None
+                )
+                local_lifecycle["frozen_arrays_readable"] = isinstance(
+                    arrays, dict
+                )
+                local_lifecycle["frozen_d_finite"] = bool(
+                    isinstance(arrays, dict)
+                    and isinstance(arrays.get("d"), np.ndarray)
+                    and np.isfinite(arrays["d"]).all()
+                )
+            else:
+                local_lifecycle["error"] = (
+                    "frozen_original_modal_row returned no mapping"
+                )
+        except BaseException as frozen_error:  # noqa: BLE001 - retain lifecycle failure
+            local_lifecycle["error"] = exception_message(frozen_error)
+        lifecycle_rank_rows = comm.allgather(local_lifecycle)
+
         snapshot_validation = None
         if comm.rank == modal_system_after_solve.modal_owner:
             try:
+                if not all(
+                    row.get("ldu_destroyed") is True
+                    and row.get("frozen_row_status") == "passed"
+                    and row.get("frozen_row_classification")
+                    == "numeric_gate_pass"
+                    and row.get("frozen_arrays_readable") is True
+                    and row.get("frozen_d_finite") is True
+                    for row in lifecycle_rank_rows
+                ):
+                    raise AssertionError(
+                        "post-destroy frozen row checks failed by rank"
+                    )
                 evidence_index_path = (
                     evidence_root
                     / "numerical_output"
@@ -2594,6 +4365,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                     raise AssertionError(
                         "required post-destroy evidence slots are absent"
                     )
+                snapshot_array_validations: dict[str, dict[str, object]] = {}
                 for slot in required_slots:
                     record = evidence_index["records"][slot]
                     artifact_path = evidence_root / record["path"]
@@ -2604,23 +4376,134 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                             f"post-destroy snapshot hash mismatch: {slot}"
                         )
                     with np.load(artifact_path, allow_pickle=False) as artifact:
-                        if not artifact.files or not all(
-                            np.isfinite(artifact[name]).all()
-                            for name in artifact.files
-                        ):
-                            raise AssertionError(
-                                f"post-destroy snapshot is invalid: {slot}"
+                        snapshot_arrays = {
+                            name: artifact[name] for name in artifact.files
+                        }
+                        array_validation = (
+                            _task041_v16_validate_snapshot_arrays(
+                                snapshot_arrays
                             )
-                snapshot_validation = {"status": "passed"}
-            except Exception as exc:  # noqa: BLE001 - broadcast owner read failure before asserting
+                        )
+                        if array_validation.get("status") != "passed":
+                            raise AssertionError(
+                                "post-destroy snapshot is invalid: "
+                                f"{slot}: {array_validation}"
+                            )
+                        snapshot_array_validations[slot] = array_validation
+                snapshot_validation = {
+                    "status": "passed",
+                    "required_slots": sorted(required_slots),
+                    "array_validation": {
+                        slot: snapshot_array_validations[slot]
+                        for slot in sorted(snapshot_array_validations)
+                    },
+                }
+            except BaseException as snapshot_error:  # noqa: BLE001 - broadcast before final assertion
                 snapshot_validation = {
                     "status": "failed",
-                    "error": f"{type(exc).__name__}: {str(exc)[:400]}",
+                    "error": exception_message(snapshot_error),
+                    "rank_rows": lifecycle_rank_rows,
                 }
         snapshot_validation = comm.bcast(
             snapshot_validation, root=modal_system_after_solve.modal_owner
         )
-        assert snapshot_validation["status"] == "passed", snapshot_validation
+        frozen_lifecycle_cleanup_wall_seconds = (
+            time.perf_counter() - frozen_lifecycle_cleanup_started
+        )
+        lifecycle_payload = {
+            "schema": "task041.v16.tiny_fe_post_destroy_lifecycle.v1",
+            "classification": "lifecycle_result_separate_from_solver_result",
+            "selector": fixture_binding["selector"],
+            "test_source_sha256": test_source_sha,
+            "mpi_size": int(comm.size),
+            "modal_owner": int(modal_system_after_solve.modal_owner),
+            "rank_rows": lifecycle_rank_rows,
+            "ksp_destroy_error": ksp_destroy_error,
+            "ldu_apply_restore_error": apply_restore_error,
+            "ldu_destroy_error": ldu_destroy_error,
+            "snapshot_validation": snapshot_validation,
+            "timings": {
+                "ksp_destroy_seconds": ksp_cleanup_wall_seconds,
+                "ldu_destroy_and_frozen_snapshot_check_seconds": (
+                    frozen_lifecycle_cleanup_wall_seconds
+                ),
+                "combined_cleanup_seconds": (
+                    ksp_cleanup_wall_seconds
+                    + frozen_lifecycle_cleanup_wall_seconds
+                ),
+            },
+        }
+        lifecycle_write_status = write_owner_json(
+            evidence_root / "tiny_fgmres_post_destroy_lifecycle.json",
+            lifecycle_payload,
+        )
+
+        selected_result = r60_result if r60_result is not None else r30_result
+        selected_run_passed = run_is_numerically_qualified(
+            selected_result["rank_records"]
+        )
+        all_run_completion_files_written = (
+            r30_completion_status.get("status") == "written"
+            and (
+                r60_result is None
+                or r60_completion_status.get("status") == "written"
+            )
+            and completion_status.get("status") == "written"
+        )
+        lifecycle_passed = (
+            snapshot_validation.get("status") == "passed"
+            and lifecycle_write_status.get("status") == "written"
+            and apply_restore_error is None
+            and ksp_destroy_error is None
+            and ldu_destroy_error is None
+        )
+        final_validation = {
+            "classification": (
+                "tiny_solve_and_lifecycle_pass"
+                if selected_run_passed
+                and all_run_completion_files_written
+                and lifecycle_passed
+                else "tiny_solve_or_evidence_or_lifecycle_failure"
+            ),
+            "selected_run": selected_result["run_id"],
+            "selected_run_numerically_qualified": selected_run_passed,
+            "R30_reason": [
+                (_task041_v16_rank_ksp_fields(row) or {}).get(
+                    "converged_reason"
+                )
+                for row in r30_result["rank_records"]
+            ],
+            "R30_iterations": [
+                (_task041_v16_rank_ksp_fields(row) or {}).get("iterations")
+                for row in r30_result["rank_records"]
+            ],
+            "R30_ax_minus_f_relative": [
+                row.get("ax_minus_f_relative")
+                for row in r30_result["rank_records"]
+            ],
+            "R60_status": (
+                "run" if r60_result is not None else "not_run"
+            ),
+            "R60_not_run_reason": r60_not_run_reason,
+            "R30_numerically_eligible_for_R60": bool(r30_eligible),
+            "R30_R60_eligibility_reason": r60_decision,
+            "R60_execution_authorized": r60_execution_authorized,
+            "R60_authorization_reason": r60_authorization_reason,
+            "run_completion_files_written": (
+                all_run_completion_files_written
+            ),
+            "post_destroy_snapshot_validation": snapshot_validation,
+            "lifecycle_record_write": lifecycle_write_status,
+            "ksp_destroy_error": ksp_destroy_error,
+            "ldu_apply_restore_error": apply_restore_error,
+            "ldu_destroy_error": ldu_destroy_error,
+            "lifecycle_passed": lifecycle_passed,
+        }
+        assert (
+            selected_run_passed
+            and all_run_completion_files_written
+            and lifecycle_passed
+        ), final_validation
     finally:
         primary_error = sys.exc_info()[1]
         cleanup_errors: list[BaseException] = []

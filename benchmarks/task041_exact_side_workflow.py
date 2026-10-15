@@ -26,7 +26,10 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from benchmarks.task034_wsl_resources import resource_authority_sample
+from benchmarks.task034_wsl_resources import (
+    normal_memory_nodes,
+    resource_authority_sample,
+)
 from benchmarks.task039_v4_selected_mode_packet import (
     TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
     TASK041_SELECTED_MODE_IDENTITY_SCHEMA,
@@ -42,6 +45,9 @@ from src.io.input_validation import (
     TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
     TASK041_MODEL_ID,
     TASK041_SHORTWAVE_MPI_SIZE,
+    TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+    TASK041_V16_RESOURCE_HEADROOM_POLICY,
     load_and_resolve,
     simulation_config_3d_from_normalized,
     task041_balh_case,
@@ -54,6 +60,9 @@ from src.io.input_validation import (
     task041_shortwave_phase_limits_for_model,
     task041_shortwave_profile_errors,
     task041_shortwave_workflow_limits,
+    task041_v16_memory_scope_errors,
+    task041_v16_phase_memory_gate,
+    task041_v16_rank_memory_scope_errors,
 )
 from src.io.resolved_config import resolved_config_sha256
 from src.solvers.full3d_lifecycle_packet import load_packet, write_packet
@@ -1489,6 +1498,29 @@ def _task041_node_memfree_bytes(node: int) -> int:
     )
 
 
+def _task041_memfree_observation(nodes: Sequence[int]) -> dict[str, Any]:
+    """Record NUMA MemFree without turning it into a V16 admission gate."""
+
+    values: dict[str, int | None] = {}
+    errors: dict[str, str] = {}
+    for node in nodes:
+        key = str(node)
+        try:
+            values[key] = _task041_node_memfree_bytes(int(node))
+        except (OSError, Task041ModePrepError, ValueError) as exc:
+            values[key] = None
+            errors[key] = f"{type(exc).__name__}: {exc}"
+    observed = [value for value in values.values() if type(value) is int]
+    return {
+        "schema": "task041.memfree_observation.v1",
+        "nodes_bytes": values,
+        "aggregate_bytes": sum(observed) if len(observed) == len(values) else None,
+        "status": "measured" if not errors else "partially_measured",
+        "errors": errors or None,
+        "admission_semantics": "observation_only",
+    }
+
+
 def _task041_v13_external_headroom_check(
     *,
     required_bytes: int | None,
@@ -1611,6 +1643,28 @@ def _task041_v13_external_headroom_check(
         ),
         "external_resource_gates": external,
     }, errors
+
+
+def _task041_v16_external_headroom_check(
+    *,
+    tree_rss_bytes: int | None,
+    cgroup_current_bytes: int | None,
+    phase_additional_bytes: int | None,
+    host_available_bytes: int | None,
+    ancestor_limit_state: str | None,
+    ancestor_memory: Any,
+) -> tuple[dict[str, Any], list[str]]:
+    """Evaluate the explicit V16 J/Delta/W policy on a production sample."""
+
+    result = task041_v16_phase_memory_gate(
+        tree_rss_bytes=tree_rss_bytes,
+        cgroup_current_bytes=cgroup_current_bytes,
+        phase_additional_bytes=phase_additional_bytes,
+        memavailable_bytes=host_available_bytes,
+        ancestor_limit_state=ancestor_limit_state,
+        ancestor_memory=ancestor_memory,
+    )
+    return result, list(result["errors"])
 
 
 def _task041_infog_positive_int(
@@ -2970,6 +3024,11 @@ def _task041_v13_resource_from(raw: Mapping[str, Any]) -> dict[str, Any]:
         raw.get("job_cgroup"),
         raw.get("host_memory"),
     )
+    kernel_available = (
+        host.get("kernel_memavailable")
+        if isinstance(host, Mapping)
+        else None
+    )
     if not isinstance(tree, Mapping) or not isinstance(cgroup, Mapping):
         raise Task041ModePrepError("whole-job tree/cgroup authority is unreadable")
     tree_rss = tree.get("rss_bytes")
@@ -2990,9 +3049,33 @@ def _task041_v13_resource_from(raw: Mapping[str, Any]) -> dict[str, Any]:
         "cgroup_current_bytes": cgroup_current,
         "cgroup_headroom_bytes": cgroup.get("ancestor_memory_headroom_bytes"),
         "cgroup_limit_state": cgroup.get("ancestor_hard_limit_state"),
+        "ancestor_memory": cgroup.get("ancestor_memory"),
         "host_available_bytes": host.get("mem_available_bytes")
         if isinstance(host, Mapping)
         else None,
+        "kernel_memavailable_bytes": (
+            kernel_available.get("bytes")
+            if isinstance(kernel_available, Mapping)
+            and kernel_available.get("schema")
+            == TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+            and kernel_available.get("status") == "measured"
+            else None
+        ),
+        "kernel_memavailable_schema": (
+            kernel_available.get("schema")
+            if isinstance(kernel_available, Mapping)
+            else None
+        ),
+        "kernel_memavailable_status": (
+            kernel_available.get("status")
+            if isinstance(kernel_available, Mapping)
+            else None
+        ),
+        "kernel_memavailable_error": (
+            kernel_available.get("error")
+            if isinstance(kernel_available, Mapping)
+            else "kernel_MemAvailable_sample_missing"
+        ),
     }
 
 
@@ -3356,8 +3439,24 @@ def _task041_v13_fresh_authority_callback(
     comm: MPI.Intracomm,
     supervisor_memory_binding: Mapping[str, Any],
     limits: Mapping[str, Any],
+    requested_memory_policy: str | None = None,
 ) -> dict[str, Any]:
-    """Run the production rank-0 fresh-resource and two-phase V13 cost gate."""
+    """Run the production rank-0 fresh-resource gate for the selected policy."""
+
+    resource_policy_binding = limits.get("task041_resource_policy")
+    v16_memavailable = (
+        isinstance(resource_policy_binding, Mapping)
+        and resource_policy_binding.get("policy")
+        == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+    )
+    if v16_memavailable and (
+        resource_policy_binding.get("memory_authority_schema")
+        != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        or resource_policy_binding.get("resource_headroom_policy")
+        != dict(TASK041_V16_RESOURCE_HEADROOM_POLICY)
+        or requested_memory_policy != TASK041_V13_MEMORY_POLICY
+    ):
+        raise Task041ModePrepError("V16 outer resource policy binding is malformed")
 
     # Bind the report collectively before rank 0 performs resource work or any
     # rank enters the response broadcast.  A malformed value on one rank must
@@ -3390,6 +3489,18 @@ def _task041_v13_fresh_authority_callback(
         )
     assert report_sha256 is not None
 
+    rank_scope_rows = None
+    if v16_memavailable:
+        from benchmarks.task041_rank_numa import collective_snapshot
+
+        rank_scope_local = collective_snapshot(
+            comm,
+            f"v16_outer_authority_{phase}",
+            include_probe=False,
+            include_memory_scope=True,
+            thread_environment_names=TASK041_V13_THREAD_ENV_NAMES,
+        )
+        rank_scope_rows = comm.gather(rank_scope_local, root=0)
     rank_pids = comm.allgather(int(os.getpid()))
     response = None
     if comm.rank == 0:
@@ -3400,8 +3511,27 @@ def _task041_v13_fresh_authority_callback(
             root_pid = monitor.get("sample_root_pid")
             age = monitor.get("file_age_seconds")
             resource = _task041_v13_resource_from(_resource_snapshot(root_pid))
-            node0_free = _task041_node_memfree_bytes(0)
-            node1_free = _task041_node_memfree_bytes(1)
+            normal_nodes = None
+            memfree_observation = None
+            if v16_memavailable:
+                normal_nodes = normal_memory_nodes()
+                memfree_observation = _task041_memfree_observation(normal_nodes)
+                memfree_nodes = memfree_observation.get("nodes_bytes", {})
+                node0_free = (
+                    memfree_nodes.get("0")
+                    if isinstance(memfree_nodes, Mapping)
+                    and type(memfree_nodes.get("0")) is int
+                    else None
+                )
+                node1_free = (
+                    memfree_nodes.get("1")
+                    if isinstance(memfree_nodes, Mapping)
+                    and type(memfree_nodes.get("1")) is int
+                    else None
+                )
+            else:
+                node0_free = _task041_node_memfree_bytes(0)
+                node1_free = _task041_node_memfree_bytes(1)
             cap = limits.get("hard_memory_bytes")
             warning = limits.get("process_tree_rss_warning_bytes")
             floor = limits.get("min_memavailable_bytes")
@@ -3487,21 +3617,52 @@ def _task041_v13_fresh_authority_callback(
                 )
             reserve = cap - warning
             required = sum(additional) + reserve
-            headroom, headroom_errors = _task041_v13_external_headroom_check(
-                required_bytes=required,
-                phase_additional_bytes=sum(additional),
-                node0_free_bytes=node0_free,
-                node1_free_bytes=node1_free,
-                host_available_bytes=resource.get("host_available_bytes"),
-                floor_bytes=floor,
-                cgroup_limit_state=resource.get("cgroup_limit_state"),
-                cgroup_headroom_bytes=resource.get("cgroup_headroom_bytes"),
-                initial_gate_required=False,
-            )
-            aggregate_headroom = headroom.get("aggregate_floor_headroom_bytes")
-            host_headroom = headroom.get(
-                "host_headroom_after_aggregate_reserve_bytes"
-            )
+            v16_phase_gate = None
+            if v16_memavailable:
+                if (
+                    resource.get("kernel_memavailable_schema")
+                    != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                    or resource.get("kernel_memavailable_status") != "measured"
+                    or type(resource.get("kernel_memavailable_bytes")) is not int
+                    or not isinstance(memfree_observation, Mapping)
+                ):
+                    raise Task041ModePrepError(
+                        "V16 kernel MemAvailable or RAM-node observation is unknown"
+                    )
+                v16_phase_gate = task041_v16_phase_memory_gate(
+                    tree_rss_bytes=resource.get("tree_rss_bytes"),
+                    cgroup_current_bytes=resource.get("cgroup_current_bytes"),
+                    phase_additional_bytes=sum(additional),
+                    memavailable_bytes=resource.get("kernel_memavailable_bytes"),
+                    ancestor_limit_state=resource.get("cgroup_limit_state"),
+                    ancestor_memory=resource.get("ancestor_memory"),
+                )
+                headroom = {
+                    "external_resource_gates": dict(
+                        v16_phase_gate["external_resource_gates"]
+                    )
+                }
+                headroom_errors = list(v16_phase_gate["errors"])
+                aggregate_headroom = None
+                host_headroom = (
+                    resource["kernel_memavailable_bytes"] - floor
+                )
+            else:
+                headroom, headroom_errors = _task041_v13_external_headroom_check(
+                    required_bytes=required,
+                    phase_additional_bytes=sum(additional),
+                    node0_free_bytes=node0_free,
+                    node1_free_bytes=node1_free,
+                    host_available_bytes=resource.get("host_available_bytes"),
+                    floor_bytes=floor,
+                    cgroup_limit_state=resource.get("cgroup_limit_state"),
+                    cgroup_headroom_bytes=resource.get("cgroup_headroom_bytes"),
+                    initial_gate_required=False,
+                )
+                aggregate_headroom = headroom.get("aggregate_floor_headroom_bytes")
+                host_headroom = headroom.get(
+                    "host_headroom_after_aggregate_reserve_bytes"
+                )
             rank_tree_pass = bool(
                 type(root_pid) is int
                 and root_pid == supervisor_memory_binding.get("supervisor_root_pid")
@@ -3509,6 +3670,22 @@ def _task041_v13_fresh_authority_callback(
                     resource.get("tree_pids"), root_pid, rank_pids
                 )
             )
+            rank_scope_evidence = None
+            rank_scope_errors: list[str] = []
+            if v16_memavailable:
+                rank_scope_evidence = {
+                    "schema": "task041.v16.outer_rank_memory_scope.v1",
+                    "requested_memory_policy": requested_memory_policy,
+                    "normal_ram_nodes": normal_nodes,
+                    "rank_pids": list(rank_pids),
+                    "ranks": rank_scope_rows,
+                }
+                rank_scope_errors = task041_v16_rank_memory_scope_errors(
+                    rank_rows=rank_scope_rows,
+                    expected_rank_pids=list(rank_pids),
+                    requested_memory_policy=requested_memory_policy,
+                    normal_ram_nodes=normal_nodes,
+                )
             monitor_pass = bool(
                 monitor.get("invocation_id")
                 == supervisor_memory_binding.get("invocation_id")
@@ -3522,11 +3699,25 @@ def _task041_v13_fresh_authority_callback(
                 and type(age) in (int, float)
                 and 0 <= float(age) <= 2.0
             )
-            cap_pass = resource["B_bytes"] + required <= cap
+            cap_pass = (
+                v16_phase_gate.get("external_resource_gates", {}).get(
+                    "resident_cap"
+                )
+                is True
+                if isinstance(v16_phase_gate, Mapping)
+                else resource["B_bytes"] + required <= cap
+            )
             external_headroom_gates = headroom["external_resource_gates"]
             external = {
                 "bound_fresh_supervisor_sample": monitor_pass,
                 "tree_cgroup_and_all_mpi_ranks": rank_tree_pass,
+                **(
+                    {
+                        "all_ranks_default_unbound_memory_scope": not rank_scope_errors
+                    }
+                    if v16_memavailable
+                    else {}
+                ),
                 **external_headroom_gates,
                 "case_cap_projection": cap_pass,
                 "sample_cost_contract": not cost_errors,
@@ -3536,12 +3727,53 @@ def _task041_v13_fresh_authority_callback(
                 reasons.append("bound supervisor memory sample is stale or mismatched")
             if not rank_tree_pass:
                 reasons.append("fresh process tree does not contain this MPI rank set")
+            if rank_scope_errors:
+                reasons.extend(
+                    "rank memory scope: " + error for error in rank_scope_errors
+                )
             if not cap_pass:
                 reasons.append(
-                    f"fresh B + stage increment + W={resource['B_bytes'] + required} exceeds cap={cap}"
+                    "fresh J + Delta + W exceeds the resident cap"
+                    if v16_memavailable
+                    else f"fresh B + stage increment + W={resource['B_bytes'] + required} exceeds cap={cap}"
                 )
             request_sha = report_sha256
-            receipt_payload = {
+            if v16_memavailable:
+                assert isinstance(v16_phase_gate, Mapping)
+                receipt_payload = {
+                    "schema": "task041.v16.outer_resource_receipt_payload.v2",
+                    "resource_policy_schema": TASK041_V16_RESOURCE_HEADROOM_POLICY[
+                        "schema"
+                    ],
+                    "memory_authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+                    "phase": phase,
+                    "request_sha256": request_sha,
+                    "invocation_id": supervisor_memory_binding.get("invocation_id"),
+                    "source_sha": supervisor_memory_binding.get("source_sha"),
+                    "unit": supervisor_memory_binding.get("unit"),
+                    "sample_row_sha256": monitor.get("sample_row_sha256"),
+                    "sample_root_pid": root_pid,
+                    "root_pid": root_pid,
+                    "rank_pids": list(rank_pids),
+                    "resource_B_bytes": v16_phase_gate.get("resident_J_bytes"),
+                    "tree_rss_bytes": resource.get("tree_rss_bytes"),
+                    "dedicated_cgroup_current_bytes": resource.get(
+                        "cgroup_current_bytes"
+                    ),
+                    "phase_additional_Delta_bytes": sum(additional),
+                    "MemAvailable_bytes": resource.get("kernel_memavailable_bytes"),
+                    "cap_bytes": cap,
+                    "reserve_bytes": floor,
+                    "workspace_W_bytes": reserve,
+                    "ancestor_limit_state": resource.get("cgroup_limit_state"),
+                    "ancestor_memory": resource.get("ancestor_memory"),
+                    "normal_ram_nodes": normal_nodes,
+                    "memfree_observation": memfree_observation,
+                    "rank_memory_scope_evidence": rank_scope_evidence,
+                    "phase_resource_gate": v16_phase_gate,
+                }
+            else:
+                receipt_payload = {
                 "phase": phase,
                 "request_sha256": request_sha,
                 "invocation_id": supervisor_memory_binding.get("invocation_id"),
@@ -3587,7 +3819,7 @@ def _task041_v13_fresh_authority_callback(
                 "projected_B_plus_delta_plus_W_bytes": (
                     resource.get("B_bytes", 0) + required
                 ),
-            }
+                }
             receipt_sha = hashlib.sha256(
                 json.dumps(
                     receipt_payload,
@@ -3633,9 +3865,16 @@ def _task041_v13_fresh_authority_callback(
                 "sample_age_seconds": float(age),
                 "root_pid": root_pid,
                 "rank_pids": list(rank_pids),
+                "invocation_id": supervisor_memory_binding.get("invocation_id"),
+                "source_sha": supervisor_memory_binding.get("source_sha"),
+                "unit": supervisor_memory_binding.get("unit"),
                 "tree_rss_bytes": resource["tree_rss_bytes"],
                 "cgroup_memory_current_bytes": resource["cgroup_current_bytes"],
-                "host_available_bytes": resource["host_available_bytes"],
+                "host_available_bytes": (
+                    resource.get("kernel_memavailable_bytes")
+                    if v16_memavailable
+                    else resource["host_available_bytes"]
+                ),
                 "host_headroom_after_aggregate_reserve_bytes": host_headroom,
                 "cgroup_headroom_bytes": resource["cgroup_headroom_bytes"],
                 "cgroup_limit_state": resource["cgroup_limit_state"],
@@ -3710,6 +3949,15 @@ def _task041_v13_fresh_authority_callback(
                     }
                 ),
             }
+            if v16_memavailable:
+                response.update(
+                    {
+                        "resource_policy_schema": TASK041_V16_RESOURCE_HEADROOM_POLICY[
+                            "schema"
+                        ],
+                        "memory_authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+                    }
+                )
         except Exception as exc:  # noqa: BLE001 - all ranks receive the same refusal
             request_sha = report_sha256
             reason = f"{type(exc).__name__}: {exc}"
@@ -3850,6 +4098,22 @@ def _build_task041_w0p7_stage_factory(
     if memory_policy not in (None, TASK041_V13_MEMORY_POLICY):
         raise Task041ModePrepError("unsupported W0.7 staged-factor memory policy")
     v13_default_memory = memory_policy == TASK041_V13_MEMORY_POLICY
+    resource_policy_binding = limits.get("task041_resource_policy")
+    v16_memavailable = (
+        isinstance(resource_policy_binding, Mapping)
+        and resource_policy_binding.get("policy")
+        == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+    )
+    if v16_memavailable and (
+        not v13_default_memory
+        or resource_policy_binding.get("memory_authority_schema")
+        != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        or resource_policy_binding.get("resource_headroom_policy")
+        != dict(TASK041_V16_RESOURCE_HEADROOM_POLICY)
+    ):
+        raise Task041ModePrepError(
+            "V16 stage gate requires the registered MemAvailable policy with default/unbound memory"
+        )
 
     icntl14_by_stage = {
         identity: row["icntl14"]
@@ -3869,9 +4133,29 @@ def _build_task041_w0p7_stage_factory(
             measured = resource_from(_resource_snapshot(pid))
             measured["root_pid"] = pid
             measured["sampled_unix_seconds"] = time.time()
-            node0_free = _task041_node0_memfree_bytes()
-            measured["node0_memfree_bytes"] = node0_free
-            if v13_default_memory:
+            if v16_memavailable:
+                nodes = normal_memory_nodes()
+                observation = _task041_memfree_observation(nodes)
+                observed_nodes = observation.get("nodes_bytes", {})
+                measured["normal_ram_nodes"] = nodes
+                measured["memfree_observation"] = observation
+                node0_free = (
+                    observed_nodes.get("0")
+                    if isinstance(observed_nodes, Mapping)
+                    and type(observed_nodes.get("0")) is int
+                    else None
+                )
+                measured["node0_memfree_bytes"] = node0_free
+                measured["node1_memfree_bytes"] = (
+                    observed_nodes.get("1")
+                    if isinstance(observed_nodes, Mapping)
+                    and type(observed_nodes.get("1")) is int
+                    else None
+                )
+            else:
+                node0_free = _task041_node0_memfree_bytes()
+                measured["node0_memfree_bytes"] = node0_free
+            if v13_default_memory and not v16_memavailable:
                 measured["node1_memfree_bytes"] = _task041_node_memfree_bytes(1)
             return measured, node0_free
 
@@ -4195,10 +4479,24 @@ def _build_task041_w0p7_stage_factory(
             and type(resource.get("B_bytes")) is int
             and type(resource.get("tree_rss_bytes")) is int
             and type(resource.get("cgroup_current_bytes")) is int
-            and type(resource.get("host_available_bytes")) is int
             and (
-                not v13_default_memory
+                v16_memavailable
+                or type(resource.get("host_available_bytes")) is int
+            )
+            and (
+                not v13_default_memory or v16_memavailable
                 or type(resource.get("node1_memfree_bytes")) is int
+            )
+            and (
+                not v16_memavailable
+                or (
+                    type(resource.get("kernel_memavailable_bytes")) is int
+                    and resource.get("kernel_memavailable_schema")
+                    == TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                    and resource.get("kernel_memavailable_status") == "measured"
+                    and isinstance(resource.get("normal_ram_nodes"), list)
+                    and bool(resource["normal_ram_nodes"])
+                )
             )
             and isinstance(tree_pids, list)
             and all(type(pid) is int for pid in tree_pids)
@@ -4347,7 +4645,53 @@ def _build_task041_w0p7_stage_factory(
             else max(0, screened_peak - b_live)
         )
         v13_headroom = None
-        if v13_default_memory:
+        v16_resource_gate = None
+        if v16_memavailable:
+            v16_resource_gate, external_headroom_errors = (
+                _task041_v16_external_headroom_check(
+                    tree_rss_bytes=(
+                        resource.get("tree_rss_bytes")
+                        if resources_complete and isinstance(resource, Mapping)
+                        else None
+                    ),
+                    cgroup_current_bytes=(
+                        resource.get("cgroup_current_bytes")
+                        if resources_complete and isinstance(resource, Mapping)
+                        else None
+                    ),
+                    phase_additional_bytes=estimate_bytes,
+                    host_available_bytes=(
+                        resource.get("kernel_memavailable_bytes")
+                        if resources_complete and isinstance(resource, Mapping)
+                        else None
+                    ),
+                    ancestor_limit_state=(
+                        resource.get("cgroup_limit_state")
+                        if resources_complete and isinstance(resource, Mapping)
+                        else None
+                    ),
+                    ancestor_memory=(
+                        resource.get("ancestor_memory")
+                        if resources_complete and isinstance(resource, Mapping)
+                        else None
+                    ),
+                )
+            )
+            aggregate_headroom = None
+            host_headroom = (
+                resource.get("kernel_memavailable_bytes")
+                - TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+                if resources_complete
+                and isinstance(resource, Mapping)
+                and type(resource.get("kernel_memavailable_bytes")) is int
+                else None
+            )
+            required = (
+                estimate_bytes + TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES
+                if type(estimate_bytes) is int and estimate_bytes >= 0
+                else None
+            )
+        elif v13_default_memory:
             v13_headroom, external_headroom_errors = (
                 _task041_v13_external_headroom_check(
                     required_bytes=required,
@@ -4399,6 +4743,12 @@ def _build_task041_w0p7_stage_factory(
             reasons.append("factor_lifecycle_mismatch")
         if not resources_complete:
             reasons.append("fresh whole-job resource authority unknown")
+        if v16_memavailable and (
+            not isinstance(resource, Mapping)
+            or not isinstance(resource.get("memfree_observation"), Mapping)
+            or resource.get("normal_ram_nodes") is None
+        ):
+            reasons.append("V16 host memory scope or observation record is missing")
         if not top_cleanup_pass:
             reasons.append("top pre-symbolic heap cleanup was not confirmed")
         if not numeric_cleanup_pass:
@@ -4535,6 +4885,14 @@ def _build_task041_w0p7_stage_factory(
             "factor_lifecycle_pass": bool(live_pass and release_pass),
             "authority": "one rank-0 sample: max(supervisor-root process-tree RSS, dedicated job cgroup memory.current)",
             "resource_snapshot": resource,
+            "resource_policy_schema": (
+                TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"]
+                if v16_memavailable
+                else None
+            ),
+            "memory_authority_schema": (
+                TASK041_V16_MEMORY_AUTHORITY_SCHEMA if v16_memavailable else None
+            ),
             "memory_policy": (
                 memory_policy
                 if v13_default_memory
@@ -4568,6 +4926,17 @@ def _build_task041_w0p7_stage_factory(
                 }
             ),
             "v13_resource_headroom_validation": v13_headroom,
+            "v16_resource_headroom_validation": v16_resource_gate,
+            "memfree_observation": (
+                resource.get("memfree_observation")
+                if v16_memavailable and isinstance(resource, Mapping)
+                else None
+            ),
+            "kernel_memavailable_bytes": (
+                resource.get("kernel_memavailable_bytes")
+                if v16_memavailable and isinstance(resource, Mapping)
+                else None
+            ),
             "top_cleanup": (
                 {
                     "before": root_record.get("before_cleanup"),
@@ -4681,6 +5050,7 @@ def _build_task041_w0p7_stage_factory(
             comm=comm,
             supervisor_memory_binding=supervisor_memory_binding,
             limits=limits,
+            requested_memory_policy=memory_policy,
         )
 
     def gated_stage_factory(
@@ -5067,30 +5437,69 @@ def _build_task041_w0p7_stage_factory(
                 if type(b_live) is not int or type(delta) is not int or type(reserve) is not int
                 else b_live + delta + reserve
             )
-            node0_headroom, host_headroom, _cgroup_room, ext_errors = (
-                _task041_w0p7_external_headroom_check(
-                    required_bytes=(
-                        required_bytes
-                    ),
-                    node0_free_bytes=node0_free,
-                    host_available_bytes=(
-                        resource.get("host_available_bytes")
-                        if isinstance(resource, Mapping)
-                        else None
-                    ),
-                    floor_bytes=floor if type(floor) is int else -1,
-                    cgroup_limit_state=(
-                        resource.get("cgroup_limit_state")
-                        if isinstance(resource, Mapping)
-                        else None
-                    ),
-                    cgroup_headroom_bytes=(
-                        resource.get("cgroup_headroom_bytes")
-                        if isinstance(resource, Mapping)
-                        else None
-                    ),
+            v16_phase_resource_gate = None
+            if v16_memavailable:
+                v16_phase_resource_gate, ext_errors = (
+                    _task041_v16_external_headroom_check(
+                        tree_rss_bytes=(
+                            resource.get("tree_rss_bytes")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                        cgroup_current_bytes=(
+                            resource.get("cgroup_current_bytes")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                        phase_additional_bytes=delta,
+                        host_available_bytes=(
+                            resource.get("kernel_memavailable_bytes")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                        ancestor_limit_state=(
+                            resource.get("cgroup_limit_state")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                        ancestor_memory=(
+                            resource.get("ancestor_memory")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                    )
                 )
-            )
+                node0_headroom = None
+                host_headroom = (
+                    resource.get("kernel_memavailable_bytes")
+                    - TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+                    if isinstance(resource, Mapping)
+                    and type(resource.get("kernel_memavailable_bytes")) is int
+                    else None
+                )
+            else:
+                node0_headroom, host_headroom, _cgroup_room, ext_errors = (
+                    _task041_w0p7_external_headroom_check(
+                        required_bytes=required_bytes,
+                        node0_free_bytes=node0_free,
+                        host_available_bytes=(
+                            resource.get("host_available_bytes")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                        floor_bytes=floor if type(floor) is int else -1,
+                        cgroup_limit_state=(
+                            resource.get("cgroup_limit_state")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                        cgroup_headroom_bytes=(
+                            resource.get("cgroup_headroom_bytes")
+                            if isinstance(resource, Mapping)
+                            else None
+                        ),
+                    )
+                )
             reasons.extend(ext_errors)
             if (
                 type(cap) is not int
@@ -5105,28 +5514,51 @@ def _build_task041_w0p7_stage_factory(
                 reasons.append("fresh B + full new KSP workspace + W exceeds case cap")
             external_shortages = []
             if type(required_bytes) is int:
-                for authority, available in (
-                    ("node0_MemFree_after_floor", node0_headroom),
-                    ("host_MemAvailable_after_floor", host_headroom),
-                    (
-                        "ancestor_cgroup_headroom",
-                        resource.get("cgroup_headroom_bytes")
-                        if isinstance(resource, Mapping)
-                        and resource.get("cgroup_limit_state") == "finite"
-                        else required_bytes
-                        if isinstance(resource, Mapping)
-                        and resource.get("cgroup_limit_state") == "max_or_unlimited"
-                        else None,
-                    ),
-                ):
-                    if type(available) is int and available < required_bytes:
-                        external_shortages.append(
-                            {
-                                "authority": authority,
-                                "available_after_floor_bytes": available,
-                                "shortfall_bytes": required_bytes - available,
-                            }
-                        )
+                if v16_memavailable:
+                    gate_values = (
+                        v16_phase_resource_gate.get("external_resource_gates", {})
+                        if isinstance(v16_phase_resource_gate, Mapping)
+                        else {}
+                    )
+                    authorities = (
+                        ("resident_J_plus_Delta_plus_W_cap", "resident_cap"),
+                        ("kernel_MemAvailable_reserve_plus_Delta_plus_W", "host_memavailable"),
+                        ("finite_ancestor_Delta_plus_W", "finite_ancestor_headroom"),
+                    )
+                    for authority, gate_name in authorities:
+                        if gate_values.get(gate_name) is not True:
+                            external_shortages.append(
+                                {
+                                    "authority": authority,
+                                    "available_after_floor_bytes": None,
+                                    "required_Delta_plus_W_bytes": required_bytes,
+                                    "shortfall_bytes": None,
+                                }
+                            )
+                else:
+                    authorities = (
+                        ("node0_MemFree_after_floor", node0_headroom),
+                        ("host_MemAvailable_after_floor", host_headroom),
+                        (
+                            "ancestor_cgroup_headroom",
+                            resource.get("cgroup_headroom_bytes")
+                            if isinstance(resource, Mapping)
+                            and resource.get("cgroup_limit_state") == "finite"
+                            else required_bytes
+                            if isinstance(resource, Mapping)
+                            and resource.get("cgroup_limit_state") == "max_or_unlimited"
+                            else None,
+                        ),
+                    )
+                    for authority, available in authorities:
+                        if type(available) is int and available < required_bytes:
+                            external_shortages.append(
+                                {
+                                    "authority": authority,
+                                    "available_after_floor_bytes": available,
+                                    "shortfall_bytes": required_bytes - available,
+                                }
+                            )
             requested_phase = request.get("phase")
             refused_object = {
                 "capture_restart32_rhs": "captured_restart32_rhs_vector",
@@ -5136,7 +5568,11 @@ def _build_task041_w0p7_stage_factory(
                 ),
             }.get(requested_phase)
             decision = {
-                "schema": "task041.v12.side_restart_memory_gate.v1",
+                "schema": (
+                    "task041.v16.side_restart_memory_gate.v1"
+                    if v16_memavailable
+                    else "task041.v12.side_restart_memory_gate.v1"
+                ),
                 "pass": not reasons,
                 "status": "admitted" if not reasons else "refused",
                 "phase": request.get("phase"),
@@ -5148,6 +5584,10 @@ def _build_task041_w0p7_stage_factory(
                     "phase object inventory; destroyed workspaces receive no credit except as reflected in this sample"
                 ),
                 "resource": resource,
+                "v16_phase_resource_gate": v16_phase_resource_gate,
+                "memfree_semantics": (
+                    "observation_only" if v16_memavailable else None
+                ),
                 "supervisor_sample": monitor,
                 "rank_layout": rows,
                 "local_vector_entries_sum": global_local_entries,
@@ -5222,10 +5662,22 @@ def _build_task041_w0p7_stage_factory(
     }
 
 def _memavailable_bytes() -> int:
-    for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
-        if line.startswith("MemAvailable:"):
-            return int(line.split()[1]) * 1024
-    raise Task041ModePrepError("/proc/meminfo has no MemAvailable")
+    rows = [
+        line.split(":", 1)[1].split()
+        for line in Path("/proc/meminfo").read_text(encoding="ascii").splitlines()
+        if line.startswith("MemAvailable:")
+    ]
+    if len(rows) != 1 or len(rows[0]) != 2 or rows[0][1] != "kB":
+        raise Task041ModePrepError(
+            "/proc/meminfo MemAvailable is missing, ambiguous, or not in kB"
+        )
+    try:
+        kib = int(rows[0][0])
+    except ValueError as exc:
+        raise Task041ModePrepError("/proc/meminfo MemAvailable is malformed") from exc
+    if kib < 0:
+        raise Task041ModePrepError("/proc/meminfo MemAvailable is negative")
+    return kib * 1024
 
 
 def _check_resource(
@@ -5260,7 +5712,11 @@ def _check_resource(
     resource_policy = active_limits.get("task041_resource_policy")
     swap_observe_only = bool(
         isinstance(resource_policy, Mapping)
-        and resource_policy.get("policy") == "task041_v8_swap_observe_continue"
+        and resource_policy.get("policy")
+        in {
+            "task041_v8_swap_observe_continue",
+            "task041_v16_memavailable_phase_v1",
+        }
         and resource_policy.get("swap_semantics") == "observe_only_continue"
     )
     if not swap_observe_only and sample.get("job_no_swap") is not True:
@@ -9883,6 +10339,8 @@ def _run_task041_balh_candidate_setup(
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        TASK041_V16_MEMAVAILABLE_POLICY,
         task041_fixed_h6_modal_gmres_binding,
         task041_p4_refinement_target_binding,
     )
@@ -9958,7 +10416,11 @@ def _run_task041_balh_candidate_setup(
             or observed_pord_source != expected_pord_source
             or p4_inverse_backend != "cell_condensed"
             or p4_refinement_target_tolerance != 5.0e-13
-            or task041_resource_policy != "task041_v8_swap_observe_continue"
+            or task041_resource_policy
+            not in {
+                TASK041_V8_SWAP_OBSERVE_CONTINUE,
+                TASK041_V16_MEMAVAILABLE_POLICY,
+            }
             or (
                 v13_policy_selected
                 and (
@@ -18816,12 +19278,13 @@ def run_task041_consumer(
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
         TASK041_V13_MEMORY_POLICY,
         TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
-        TASK041_V13_RESOURCE_HEADROOM_POLICY,
+        TASK041_V16_MEMAVAILABLE_POLICY,
         task041_balh_formal_physical_volume_context_factory,
         task041_fixed_h6_modal_gmres_binding,
         task041_fixed_h6_packet_source_binding,
         task041_p4_refinement_target_binding,
         task041_parse_expected_rank_cpus,
+        task041_resource_headroom_policy,
     )
 
     if not isinstance(a6_response_pair, bool):
@@ -18868,6 +19331,9 @@ def run_task041_consumer(
     v13_default_memory = (
         modal_solver_policy == TASK041_V13_MODAL_POLICY_ID
     )
+    v16_resource_policy = (
+        task041_resource_policy == TASK041_V16_MEMAVAILABLE_POLICY
+    )
     requested_rank_cpus = (
         task041_parse_expected_rank_cpus(expected_rank_cpus)
         if v13_default_memory
@@ -18881,6 +19347,11 @@ def run_task041_consumer(
         or requested_rank_cpus is None
         or fixed_h6_binding.get("expected_rank_cpus")
         != list(requested_rank_cpus)
+        or (
+            v16_resource_policy
+            and fixed_h6_binding.get("memory_authority_schema")
+            != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        )
     ):
         raise Task041ModePrepError(
             "V13 resolved memory/CPU binding does not match the explicit default-policy MPI8 request"
@@ -18899,7 +19370,7 @@ def run_task041_consumer(
         fixed_h6_binding.get("required_thread_environment")
         != v13_required_threads
         or fixed_h6_binding.get("resource_headroom_policy")
-        != TASK041_V13_RESOURCE_HEADROOM_POLICY
+        != task041_resource_headroom_policy(task041_resource_policy)
         or v13_observed_consumer_threads != v13_required_threads
     ):
         raise Task041ModePrepError(
@@ -19158,12 +19629,10 @@ def run_task041_consumer(
         )
     except ValueError as exc:
         raise Task041ModePrepError(str(exc)) from exc
-    from benchmarks.task041_balh_workflow import (
-        task041_v8_resource_policy_binding,
-    )
+    from benchmarks.task041_balh_workflow import task041_resource_policy_binding
 
     try:
-        resource_policy_binding = task041_v8_resource_policy_binding(
+        resource_policy_binding = task041_resource_policy_binding(
             str(normalized.get("model_id", "")), task041_resource_policy
         )
     except ValueError as exc:
@@ -19496,6 +19965,8 @@ def run_task041_consumer(
                 ),
             }
         )
+        if v16_resource_policy:
+            result["memory_authority_schema"] = TASK041_V16_MEMORY_AUTHORITY_SCHEMA
     if performance_contract is not None:
         result["performance_profile"] = performance_contract
         if side_setup_schedule is not None:
@@ -19772,6 +20243,13 @@ def run_task041_consumer(
                         gathered or [],
                         key=lambda item: int(item['rank']),
                     )
+                    normal_nodes = None
+                    normal_nodes_error = None
+                    if v16_resource_policy:
+                        try:
+                            normal_nodes = normal_memory_nodes()
+                        except (OSError, TypeError, ValueError) as exc:
+                            normal_nodes_error = f'{type(exc).__name__}: {exc}'
                     payload = {
                         'schema': 'task041.rank_numa_stage.v1',
                         'stage': str(stage),
@@ -19786,6 +20264,9 @@ def run_task041_consumer(
                         ),
                         'ranks': ordered,
                     }
+                    if v16_resource_policy:
+                        payload['normal_memory_nodes'] = normal_nodes
+                        payload['normal_memory_nodes_error'] = normal_nodes_error
                 payload = comm.bcast(payload, root=0)
                 if not isinstance(payload, Mapping):
                     raise Task041ModePrepError(
@@ -19808,6 +20289,52 @@ def run_task041_consumer(
                         else None
                     ),
                 )
+                normal_nodes = (
+                    payload.get('normal_memory_nodes')
+                    if v16_resource_policy
+                    else None
+                )
+                if v16_resource_policy:
+                    if not isinstance(normal_nodes, list):
+                        stage_errors.append(
+                            'online normal-memory-node scope is unknown'
+                        )
+                    for item in payload.get('ranks', []):
+                        if not isinstance(item, Mapping):
+                            stage_errors.append('rank memory-scope row is malformed')
+                            continue
+                        rank = item.get('rank')
+                        evidence = item.get('evidence')
+                        task_policy = (
+                            evidence.get('task_policy')
+                            if isinstance(evidence, Mapping)
+                            else None
+                        )
+                        memory_scope = (
+                            evidence.get('memory_scope')
+                            if isinstance(evidence, Mapping)
+                            else None
+                        )
+                        scope_errors = task041_v16_memory_scope_errors(
+                            requested_memory_policy=fixed_h6_binding.get(
+                                'memory_policy'
+                            ),
+                            task_policy=task_policy,
+                            allowed_nodes=(
+                                memory_scope.get('proc_allowed_nodes')
+                                if isinstance(memory_scope, Mapping)
+                                else None
+                            ),
+                            effective_nodes=(
+                                memory_scope.get('effective_nodes')
+                                if isinstance(memory_scope, Mapping)
+                                else None
+                            ),
+                            normal_ram_nodes=normal_nodes,
+                        )
+                        stage_errors.extend(
+                            f'rank {rank}: {error}' for error in scope_errors
+                        )
                 all_stage_errors = comm.allgather(stage_errors)
                 merged_errors = sorted(
                     {
@@ -19845,7 +20372,17 @@ def run_task041_consumer(
                                 TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
                             ),
                             'resource_headroom_policy': dict(
-                                TASK041_V13_RESOURCE_HEADROOM_POLICY
+                                fixed_h6_binding['resource_headroom_policy']
+                            ),
+                        }
+                    )
+                if v16_resource_policy:
+                    qualification.update(
+                        {
+                            'memory_authority_schema': TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+                            'normal_memory_nodes': normal_nodes,
+                            'resource_headroom_policy': dict(
+                                fixed_h6_binding['resource_headroom_policy']
                             ),
                         }
                     )

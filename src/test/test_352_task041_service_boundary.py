@@ -2744,12 +2744,14 @@ def test_v13_finite_stop_rhs_reader_uses_its_rank_local_binding_source():
     assert observed is None
 
 
-def _v13_rank_runtime_fixture(expected_rank_cpus=None):
+def _v13_rank_runtime_fixture(expected_rank_cpus=None, *, resource_policy=None):
     expected_cpus = list(
         task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS
         if expected_rank_cpus is None
         else expected_rank_cpus
     )
+    if resource_policy is None:
+        resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
     binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
         task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
         enabled=True,
@@ -2758,7 +2760,7 @@ def _v13_rank_runtime_fixture(expected_rank_cpus=None):
         mode_count=400,
         p4_inverse_backend="cell_condensed",
         p4_refinement_target_tolerance=5.0e-13,
-        task041_resource_policy=task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        task041_resource_policy=resource_policy,
         expected_rank_cpus=expected_cpus,
         modal_solver_policy=(
             "task041_v13_consistent_fixed_balh_modal_surrogate"
@@ -2768,8 +2770,9 @@ def _v13_rank_runtime_fixture(expected_rank_cpus=None):
     required_threads = dict(
         task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
     )
-    resource_policy = dict(
-        task041_balh_workflow.TASK041_V13_RESOURCE_HEADROOM_POLICY
+    resource_headroom_policy = dict(binding["resource_headroom_policy"])
+    v16_policy = (
+        resource_policy == task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY
     )
     cgroup_identity = {"path": "/user.slice/task041-v13-fixture.scope"}
     ranks = []
@@ -2826,7 +2829,17 @@ def _v13_rank_runtime_fixture(expected_rank_cpus=None):
                     "page_placement_semantics": "observation_only",
                     "expected_rank_cpus": expected_cpus,
                     "required_thread_environment": required_threads,
-                    "resource_headroom_policy": resource_policy,
+                    "resource_headroom_policy": resource_headroom_policy,
+                    **(
+                        {
+                            "memory_authority_schema": binding[
+                                "memory_authority_schema"
+                            ],
+                            "normal_memory_nodes": [0, 1],
+                        }
+                        if v16_policy
+                        else {}
+                    ),
                 },
                 "ranks": ranks,
             }
@@ -3056,6 +3069,1435 @@ def test_v13_run_phase_records_residual_session_cleanup_without_replacing_error(
     assert partial["mpi2"]["owned_session_cleanup"]["status"] == "empty"
 
 
+@pytest.mark.parametrize(
+    ("resource_policy", "expect_v16_schema"),
+    (
+        ("task041_v8_swap_observe_continue", False),
+        ("task041_v16_memavailable_phase_v1", True),
+    ),
+    ids=("legacy-v8", "v16-memavailable"),
+)
+def test_public_cli_binds_versioned_resource_policy_through_manifest(
+    tmp_path: Path, monkeypatch, capsys, resource_policy, expect_v16_schema
+):
+    from scripts import run_case
+    from src.io.input_validation import (
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+        TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    )
+    from src.runners import task038_launcher
+
+    repository_root = Path(__file__).resolve().parents[2]
+    input_path = (
+        repository_root
+        / "input/official/task041/side_balh/"
+        "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat"
+    )
+    model_id = TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    source_binding = {"source_type": "fresh_registered_producer"}
+    supervision_record = tmp_path / "service-request.json"
+    supervision_record.write_text(
+        json.dumps({"packet_source_binding": source_binding}), encoding="utf-8"
+    )
+
+    run_directories: list[Path] = []
+
+    def make_run_directory(_specification, _timestamp):
+        path = tmp_path / f"public-run-{len(run_directories)}"
+        path.mkdir()
+        run_directories.append(path)
+        return path
+
+    supervisor_requests: list[dict[str, object]] = []
+
+    def fake_public_supervisor(_specification, **kwargs):
+        supervisor_requests.append(dict(kwargs))
+        return {
+            "exit_status": 0,
+            "result_classification": "worker_exit0",
+            "resource_authority": {"status": "not_sampled"},
+        }
+
+    monkeypatch.setattr(
+        task038_launcher, "_timestamp_directory", make_run_directory
+    )
+    monkeypatch.setattr(
+        "src.runners.task041_supervisor.run_task041_public_supervisor",
+        fake_public_supervisor,
+    )
+    for name in task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT:
+        monkeypatch.setenv(name, "1")
+
+    arguments = [
+        str(input_path),
+        "--task041-resource-policy",
+        resource_policy,
+        "--task041-fixed-h6-modal-gmres-research",
+        "--task041-modal-solver-policy",
+        "task041_v13_consistent_fixed_balh_modal_surrogate",
+        "--task041-p4-refinement-target-tolerance",
+        "5e-13",
+        "--task041-expected-rank-cpus",
+        "0,1,2,3,4,5,6,7",
+        "--task041-supervision-record",
+        str(supervision_record),
+    ]
+    assert run_case._parser().parse_args(arguments).task041_resource_policy == (
+        resource_policy
+    )
+    assert run_case.main(arguments) == 0
+    capsys.readouterr()
+
+    manifest = json.loads(
+        (run_directories[-1] / "run_manifest.json").read_text(encoding="utf-8")
+    )
+    expected_resource_binding = task041_balh_workflow.task041_resource_policy_binding(
+        model_id, resource_policy
+    )
+    assert manifest["task041_resource_policy"] == expected_resource_binding
+    assert supervisor_requests[-1]["task041_resource_policy"] == resource_policy
+    assert manifest["fixed_h6_modal_gmres_research"]["expected_rank_cpus"] == list(
+        range(8)
+    )
+    assert manifest["fixed_h6_modal_gmres_research"][
+        "task041_resource_policy"
+    ] == resource_policy
+    if expect_v16_schema:
+        assert resource_policy == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+        assert manifest["memory_authority_schema"] == (
+            expected_resource_binding["memory_authority_schema"]
+        )
+        assert manifest["resource_headroom_policy"] == (
+            expected_resource_binding["resource_headroom_policy"]
+        )
+        assert manifest["fixed_h6_modal_gmres_research"][
+            "memory_authority_schema"
+        ] == expected_resource_binding["memory_authority_schema"]
+    else:
+        assert "memory_authority_schema" not in manifest
+        assert manifest["resource_headroom_policy"] == (
+            task041_balh_workflow.TASK041_V13_RESOURCE_HEADROOM_POLICY
+        )
+
+
+def test_v16_resource_policy_rejects_unknown_policy_and_non_task041_route(
+    capsys,
+):
+    from scripts import run_case
+    from src.io import load_and_resolve
+    from src.io.input_loader import InputError
+    from src.io.input_validation import TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+    from src.runners.task038_launcher import launch_specification
+
+    repository_root = Path(__file__).resolve().parents[2]
+    pilot = (
+        repository_root
+        / "input/official/task041/side_balh/"
+        "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat"
+    )
+    with pytest.raises(SystemExit):
+        run_case._parser().parse_args(
+            [str(pilot), "--task041-resource-policy", "unknown-policy"]
+        )
+
+    non_task041 = load_and_resolve(
+        repository_root / "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat"
+    )
+    with pytest.raises(InputError, match="Task041 public route"):
+        launch_specification(
+            non_task041,
+            task041_resource_policy=TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+        )
+
+    other_task041 = (
+        repository_root
+        / "input/official/task041/side_balh/"
+        "13p5nm_p6h10_m120_mpi8_cell_condensed.dat"
+    )
+    assert run_case.main(
+        [
+            str(other_task041),
+            "--task041-resource-policy",
+            TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+        ]
+    ) == 2
+    assert "registered W0.7 pilot" in capsys.readouterr().err
+
+
+def test_v16_memavailable_sample_is_consistent_across_resource_consumers(
+    tmp_path: Path,
+):
+    from benchmarks import task041_exact_side_workflow as exact_side
+    from benchmarks.task034_wsl_resources import _read_kernel_memavailable
+    from src.io.input_validation import (
+        TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+        TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
+        TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+        TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        TASK041_V16_RESOURCE_HEADROOM_POLICY,
+        task041_v16_initial_memory_gate,
+        task041_v16_memory_scope_errors,
+        task041_v16_outer_resource_contract_errors,
+        task041_v16_phase_memory_gate,
+    )
+    from src.runners.task041_service import _v16_initial_gate_matches
+    from src.runners.task041_supervisor import (
+        _task041_v16_initial_resource_gate_record,
+        _v13_outer_authority_pass_matches_report,
+    )
+    from src.solvers.hybrid_fem_modal_block_ldu import (
+        _task041_v13_outer_workspace_pass_resource_contract_valid,
+    )
+
+    gib = 2**30
+    resource_binding = task041_balh_workflow.task041_resource_policy_binding(
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+        TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    )
+    assert resource_binding["resource_headroom_policy"] == dict(
+        TASK041_V16_RESOURCE_HEADROOM_POLICY
+    )
+    assert resource_binding["memory_authority_schema"] == (
+        TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+    )
+    available = (
+        TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+        + TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+    )
+    memfree_observation = {
+        "schema": "task041.memfree_observation.v1",
+        "nodes_bytes": {"0": 10, "1": 20},
+        "aggregate_bytes": 30,
+        "status": "measured",
+        "errors": None,
+        "admission_semantics": "observation_only",
+    }
+    sample = {
+        "requested_memory_policy": "system_default_unbound",
+        "task_policy": {"status": "measured", "policy": "default", "mode": 0},
+        "allowed_nodes": [0, 1],
+        "effective_nodes": [0, 1],
+        "normal_ram_nodes": [0, 1],
+        "MemAvailable_bytes": available,
+        "memfree_observation": memfree_observation,
+    }
+    assert task041_v16_initial_memory_gate(
+        memavailable_bytes=sample["MemAvailable_bytes"]
+    )["pass"] is True
+    assert task041_v16_memory_scope_errors(
+        requested_memory_policy=sample["requested_memory_policy"],
+        task_policy=sample["task_policy"],
+        allowed_nodes=sample["allowed_nodes"],
+        effective_nodes=sample["effective_nodes"],
+        normal_ram_nodes=sample["normal_ram_nodes"],
+    ) == []
+
+    initial_gate = _task041_v16_initial_resource_gate_record(
+        sample["MemAvailable_bytes"],
+        memavailable_schema=TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        memavailable_status="measured",
+        normal_ram_nodes=sample["normal_ram_nodes"],
+        memfree_observation=sample["memfree_observation"],
+    )
+    assert initial_gate["pass"] is True
+    assert initial_gate["node1_memfree_semantics"] == "observation_only"
+    assert _v16_initial_gate_matches(
+        initial_gate,
+        expected_headroom_policy=resource_binding["resource_headroom_policy"],
+    ) is True
+
+    cap = TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+    reserve = TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+    workspace = TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES
+    tree_rss = 12 * gib
+    cgroup_current = 13 * gib
+    delta = 2 * gib
+    ancestor_headroom = delta + workspace
+    ancestors = [
+        {"memory_limit_state": "finite", "memory_headroom_bytes": ancestor_headroom}
+    ]
+    phase_gate = task041_v16_phase_memory_gate(
+        tree_rss_bytes=tree_rss,
+        cgroup_current_bytes=cgroup_current,
+        phase_additional_bytes=delta,
+        memavailable_bytes=available,
+        ancestor_limit_state="finite",
+        ancestor_memory=ancestors,
+    )
+    workflow_phase_gate, workflow_errors = exact_side._task041_v16_external_headroom_check(
+        tree_rss_bytes=tree_rss,
+        cgroup_current_bytes=cgroup_current,
+        phase_additional_bytes=delta,
+        host_available_bytes=available,
+        ancestor_limit_state="finite",
+        ancestor_memory=ancestors,
+    )
+    assert phase_gate["pass"] is True
+    assert workflow_errors == []
+    assert workflow_phase_gate == phase_gate
+    assert phase_gate["resident_J_bytes"] == cgroup_current
+    assert phase_gate["projected_J_plus_Delta_plus_W_bytes"] == (
+        cgroup_current + delta + workspace
+    )
+    exact_phase_boundary = task041_v16_phase_memory_gate(
+        tree_rss_bytes=cap - delta - workspace,
+        cgroup_current_bytes=cap - delta - workspace,
+        phase_additional_bytes=delta,
+        memavailable_bytes=reserve + delta + workspace,
+        ancestor_limit_state="finite",
+        ancestor_memory=[
+            {
+                "memory_limit_state": "finite",
+                "memory_headroom_bytes": delta + workspace,
+            }
+        ],
+    )
+    assert exact_phase_boundary["pass"] is True
+    assert exact_phase_boundary["projected_J_plus_Delta_plus_W_bytes"] == cap
+
+    phase = "outer_restart32_workspace"
+    phase_name = "outer_PC_with_retained_workspaces"
+    known = [3, 4]
+    temporary = [1, 2]
+    replicated = [2, 3]
+    additional = [6, 9]
+    report = {
+        "phase": phase,
+        "target_restart": 32,
+        "known_additional_bytes_by_rank": known,
+        "additional_temporary_bytes_by_rank": temporary,
+        "additional_replicated_bytes_by_rank": replicated,
+        "phase_memory_projection": {
+            "phase_reports": {
+                phase_name: {
+                    "known_additional_bytes_by_rank": known,
+                    "additional_temporary_bytes_by_rank": temporary,
+                    "additional_replicated_bytes_by_rank": replicated,
+                    "additional_bytes_by_rank": additional,
+                }
+            },
+            "phase_total_bytes": {phase_name: sum(additional)},
+            "selected_phase": phase_name,
+            "selected_phase_payload_bytes": sum(additional),
+        },
+    }
+    request_sha = hashlib.sha256(
+        json.dumps(report, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        .encode()
+    ).hexdigest()
+    outer_delta = sum(additional)
+    outer_available = sample["MemAvailable_bytes"]
+    outer_ancestors = [
+        {
+            "memory_limit_state": "finite",
+            "memory_headroom_bytes": outer_delta + workspace,
+        }
+    ]
+    outer_gate = task041_v16_phase_memory_gate(
+        tree_rss_bytes=tree_rss,
+        cgroup_current_bytes=cgroup_current,
+        phase_additional_bytes=outer_delta,
+        memavailable_bytes=outer_available,
+        ancestor_limit_state="finite",
+        ancestor_memory=outer_ancestors,
+    )
+    rank_pids = [12001, 12002]
+    sample_row_sha = "e" * 64
+    cgroup_identity = {"path": "/user.slice/task041-v16-fixture.scope"}
+    rank_scope_rows = [
+        {
+            "rank": rank,
+            "stage": f"v16_outer_authority_{phase}",
+            "collective_status": "measured",
+            "rank_error": None,
+            "evidence": {
+                "schema": "task041.rank_numa_snapshot.v1",
+                "rank_identity": {"pid": rank_pids[rank]},
+                "task_policy": {
+                    "status": "measured",
+                    "policy": "default",
+                    "mode": 0,
+                    "effective_nodemask": [],
+                },
+                "memory_scope": {
+                    "status": "measured",
+                    "pass": True,
+                    "allowed_nodes_match": True,
+                    "cgroup_identity_stable": True,
+                    "proc_allowed_nodes": [0, 1],
+                    "effective_nodes": [0, 1],
+                    "cgroup_identity_before": cgroup_identity,
+                    "cgroup_identity_after": cgroup_identity,
+                },
+            },
+        }
+        for rank in range(2)
+    ]
+    payload = {
+        "schema": "task041.v16.outer_resource_receipt_payload.v2",
+        "resource_policy_schema": TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"],
+        "memory_authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        "phase": phase,
+        "request_sha256": request_sha,
+        "invocation_id": "v16-shared-sample-fixture",
+        "source_sha": "f" * 40,
+        "unit": "task041-v16-shared-sample-fixture.service",
+        "sample_row_sha256": sample_row_sha,
+        "sample_root_pid": 12000,
+        "root_pid": 12000,
+        "rank_pids": rank_pids,
+        "resource_B_bytes": outer_gate["resident_J_bytes"],
+        "tree_rss_bytes": tree_rss,
+        "dedicated_cgroup_current_bytes": cgroup_current,
+        "phase_additional_Delta_bytes": outer_delta,
+        "MemAvailable_bytes": outer_available,
+        "cap_bytes": cap,
+        "reserve_bytes": reserve,
+        "workspace_W_bytes": workspace,
+        "ancestor_limit_state": "finite",
+        "ancestor_memory": outer_ancestors,
+        "normal_ram_nodes": [0, 1],
+        "memfree_observation": memfree_observation,
+        "rank_memory_scope_evidence": {
+            "schema": "task041.v16.outer_rank_memory_scope.v1",
+            "requested_memory_policy": "system_default_unbound",
+            "normal_ram_nodes": [0, 1],
+            "rank_pids": rank_pids,
+            "ranks": rank_scope_rows,
+        },
+        "phase_resource_gate": outer_gate,
+    }
+    receipt_sha = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        .encode()
+    ).hexdigest()
+    external_gates = {
+        name: True
+        for name in (
+            "bound_fresh_supervisor_sample",
+            "tree_cgroup_and_all_mpi_ranks",
+            "all_ranks_default_unbound_memory_scope",
+            "resident_cap",
+            "host_memavailable",
+            "finite_ancestor_headroom",
+            "case_cap_projection",
+            "sample_cost_contract",
+        )
+    }
+    response = {
+        "schema": "task041.v13.modal_builder_admission.v1",
+        "resource_policy_schema": TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"],
+        "memory_authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        "phase": phase,
+        "status": "pass",
+        "decision": "continue",
+        "request_sha256": request_sha,
+        "authority_receipt_payload": payload,
+        "authority_receipt_sha256": receipt_sha,
+        "external_resource_gates": external_gates,
+        "fresh_job_authority_bytes": outer_gate["resident_J_bytes"],
+        "tree_rss_bytes": tree_rss,
+        "cgroup_memory_current_bytes": cgroup_current,
+        "host_available_bytes": outer_available,
+        "cap_bytes": cap,
+        "floor_bytes": reserve,
+        "W_policy_reserve_bytes": workspace,
+        "projected_B_plus_delta_plus_W_bytes": outer_gate[
+            "projected_J_plus_Delta_plus_W_bytes"
+        ],
+        "selected_memory_phase": phase_name,
+        "selected_memory_phase_payload_bytes": outer_delta,
+        "additional_bytes_by_rank": additional,
+        "additional_temporary_bytes_by_rank": temporary,
+        "additional_replicated_bytes_by_rank": replicated,
+        "sample_row_sha256": sample_row_sha,
+        "sample_age_seconds": 0.25,
+        "root_pid": 12000,
+        "rank_pids": rank_pids,
+        "invocation_id": payload["invocation_id"],
+        "source_sha": payload["source_sha"],
+        "unit": payload["unit"],
+        "cost_assessment": {
+            "scope": "outer_ksp_workspace_admission",
+            "status": "workspace_model_valid",
+            "decision": "allow_initial_restart32_if_resource_gates_pass",
+            "target_restart": 32,
+            "W_policy_reserve_bytes": workspace,
+            "target_is_elapsed_stop": False,
+            "reasons": [],
+        },
+    }
+
+    assert task041_v16_outer_resource_contract_errors(
+        phase, report, response, rank_count=2
+    ) == []
+    assert _v13_outer_authority_pass_matches_report(
+        phase, report, response, rank_count=2
+    ) is True
+    assert _task041_v13_outer_workspace_pass_resource_contract_valid(
+        phase, report, response, rank_count=2
+    ) is True
+
+    import copy
+
+    outer_response_error_vectors = (
+        tmp_path / "v16_outer_response_error_vectors.jsonl"
+    )
+
+    def assert_outer_response_rejection(case_name, candidate_response, expected_error):
+        errors = task041_v16_outer_resource_contract_errors(
+            phase, report, candidate_response, rank_count=2
+        )
+        with outer_response_error_vectors.open("a", encoding="utf-8") as stream:
+            stream.write(
+                json.dumps(
+                    {
+                        "case": case_name,
+                        "expected_error": expected_error,
+                        "errors": errors,
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+        assert expected_error in errors, (
+            f"{case_name}: expected exact error {expected_error!r} in complete "
+            f"error vector {errors!r}"
+        )
+
+    stale_age = copy.deepcopy(response)
+    stale_age["sample_age_seconds"] = 2.01
+    assert_outer_response_rejection(
+        "stale_sample_age",
+        stale_age,
+        "fresh_supervisor_sample_age_is_missing_stale_or_invalid",
+    )
+    nonfinite_age = copy.deepcopy(response)
+    nonfinite_age["sample_age_seconds"] = float("nan")
+    assert_outer_response_rejection(
+        "nonfinite_sample_age",
+        nonfinite_age,
+        "fresh_supervisor_sample_age_is_missing_stale_or_invalid",
+    )
+    missing_cost = copy.deepcopy(response)
+    missing_cost.pop("cost_assessment")
+    assert_outer_response_rejection(
+        "missing_cost_assessment",
+        missing_cost,
+        "outer_workspace_cost_assessment_is_missing_or_mismatched",
+    )
+    wrong_cost = copy.deepcopy(response)
+    wrong_cost["cost_assessment"]["target_restart"] = 64
+    wrong_cost["cost_assessment"]["W_policy_reserve_bytes"] += 1
+    assert_outer_response_rejection(
+        "wrong_cost_assessment_restart_and_reserve",
+        wrong_cost,
+        "outer_workspace_cost_assessment_is_missing_or_mismatched",
+    )
+    wrong_request_hash = copy.deepcopy(response)
+    wrong_request_hash["request_sha256"] = "0" * 64
+    assert_outer_response_rejection(
+        "wrong_request_hash",
+        wrong_request_hash,
+        "outer_request_hash_does_not_match_report",
+    )
+    wrong_receipt_hash = copy.deepcopy(response)
+    wrong_receipt_hash["authority_receipt_sha256"] = "0" * 64
+    assert_outer_response_rejection(
+        "wrong_receipt_hash",
+        wrong_receipt_hash,
+        "outer_receipt_hash_does_not_match_payload",
+    )
+
+    wrong_identity = copy.deepcopy(response)
+    wrong_identity["invocation_id"] = "other-invocation"
+    assert_outer_response_rejection(
+        "response_invocation_id_mismatch",
+        wrong_identity,
+        "V16_phase_resource_receipt_does_not_recompute",
+    )
+    for identity_field, wrong_value in (
+        ("invocation_id", "other-invocation"),
+        ("source_sha", "0" * 40),
+        ("rank_pids", [12001, 12003]),
+    ):
+        mismatched_payload_identity = copy.deepcopy(response)
+        mismatched_payload_identity["authority_receipt_payload"][
+            identity_field
+        ] = wrong_value
+        payload_bytes = json.dumps(
+            mismatched_payload_identity["authority_receipt_payload"],
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
+        mismatched_payload_identity["authority_receipt_sha256"] = hashlib.sha256(
+            payload_bytes
+        ).hexdigest()
+        assert_outer_response_rejection(
+            f"receipt_payload_{identity_field}_mismatch",
+            mismatched_payload_identity,
+            "V16_phase_resource_receipt_does_not_recompute",
+        )
+    wrong_rank_memory = copy.deepcopy(response)
+    wrong_rank_payload = wrong_rank_memory["authority_receipt_payload"]
+    wrong_rank_payload["rank_memory_scope_evidence"]["ranks"][1]["evidence"][
+        "task_policy"
+    ] = {"status": "measured", "policy": "bind", "mode": 2}
+    wrong_rank_memory["authority_receipt_sha256"] = hashlib.sha256(
+        json.dumps(
+            wrong_rank_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
+    ).hexdigest()
+    assert_outer_response_rejection(
+        "wrong_rank_memory_policy",
+        wrong_rank_memory,
+        "rank_scope_rank_1_measured_task_policy_is_not_default_mode_zero",
+    )
+    wrong_rank_pid = copy.deepcopy(response)
+    wrong_rank_pid["authority_receipt_payload"]["rank_memory_scope_evidence"][
+        "ranks"
+    ][1]["evidence"]["rank_identity"]["pid"] += 100
+    wrong_rank_pid["authority_receipt_sha256"] = hashlib.sha256(
+        json.dumps(
+            wrong_rank_pid["authority_receipt_payload"],
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
+    ).hexdigest()
+    assert_outer_response_rejection(
+        "wrong_rank_pid",
+        wrong_rank_pid,
+        "rank_scope_rank_1_rank_snapshot_identity_does_not_match_PID",
+    )
+
+    insufficient_available = reserve + outer_delta + workspace - 1
+    rejected_host_gate = task041_v16_phase_memory_gate(
+        tree_rss_bytes=tree_rss,
+        cgroup_current_bytes=cgroup_current,
+        phase_additional_bytes=outer_delta,
+        memavailable_bytes=insufficient_available,
+        ancestor_limit_state="finite",
+        ancestor_memory=outer_ancestors,
+    )
+    assert rejected_host_gate["pass"] is False
+    assert "MemAvailable_below_reserve_plus_Delta_plus_W_or_unknown" in (
+        rejected_host_gate["errors"]
+    )
+    assert task041_v16_phase_memory_gate(
+        tree_rss_bytes=cap - workspace - outer_delta + 1,
+        cgroup_current_bytes=0,
+        phase_additional_bytes=outer_delta,
+        memavailable_bytes=outer_available,
+        ancestor_limit_state="finite",
+        ancestor_memory=outer_ancestors,
+    )["pass"] is False
+    assert task041_v16_phase_memory_gate(
+        tree_rss_bytes=tree_rss,
+        cgroup_current_bytes=cgroup_current,
+        phase_additional_bytes=outer_delta,
+        memavailable_bytes=outer_available,
+        ancestor_limit_state="finite",
+        ancestor_memory=[
+            {"memory_limit_state": "finite", "memory_headroom_bytes": outer_delta + workspace - 1}
+        ],
+    )["pass"] is False
+    assert task041_v16_phase_memory_gate(
+        tree_rss_bytes=None,
+        cgroup_current_bytes=cgroup_current,
+        phase_additional_bytes=outer_delta,
+        memavailable_bytes=outer_available,
+        ancestor_limit_state="finite",
+        ancestor_memory=outer_ancestors,
+    )["pass"] is False
+    assert task041_v16_initial_memory_gate(
+        memavailable_bytes=reserve + cap - 1
+    )["pass"] is False
+    assert task041_v16_initial_memory_gate(memavailable_bytes=None)["pass"] is False
+    assert task041_v16_memory_scope_errors(
+        requested_memory_policy=sample["requested_memory_policy"],
+        task_policy=sample["task_policy"],
+        allowed_nodes=[0],
+        effective_nodes=[0],
+        normal_ram_nodes=[0, 1],
+    )
+    assert task041_v16_memory_scope_errors(
+        requested_memory_policy=sample["requested_memory_policy"],
+        task_policy=sample["task_policy"],
+        allowed_nodes=None,
+        effective_nodes=[0, 1],
+        normal_ram_nodes=[0, 1],
+    )
+    assert any(
+        "requested_memory_policy" in error
+        for error in task041_v16_memory_scope_errors(
+            requested_memory_policy="default",
+            task_policy=sample["task_policy"],
+            allowed_nodes=[0, 1],
+            effective_nodes=[0, 1],
+            normal_ram_nodes=[0, 1],
+        )
+    )
+    assert any(
+        "measured_task_policy" in error
+        for error in task041_v16_memory_scope_errors(
+            requested_memory_policy=sample["requested_memory_policy"],
+            task_policy={"status": "measured", "policy": "bind", "mode": 2},
+            allowed_nodes=[0, 1],
+            effective_nodes=[0, 1],
+            normal_ram_nodes=[0, 1],
+        )
+    )
+
+    proc_meminfo = tmp_path / "meminfo"
+    proc_meminfo.write_text("MemAvailable: 100 kB\n", encoding="ascii")
+    valid_kernel = _read_kernel_memavailable(proc_meminfo)
+    assert valid_kernel["bytes"] == 100 * 1024
+    legacy_authority = {
+        "memory_authority_bytes": 1,
+        "process_tree": {
+            "all_status_readable": True,
+            "rss_bytes": 1,
+            "swap_bytes": 0,
+        },
+        "host_memory": {
+            "mem_available_bytes": 9 * gib,
+            "kernel_memavailable": valid_kernel,
+        },
+    }
+    strict_valid = supervisor._sample_record(
+        legacy_authority,
+        "public_command",
+        0.0,
+        require_kernel_memavailable=True,
+    )
+    assert strict_valid["host_memavailable_bytes"] == 100 * 1024
+    assert strict_valid["legacy_host_memavailable_observation_bytes"] == 9 * gib
+    legacy_record = supervisor._sample_record(
+        legacy_authority, "public_command", 0.0
+    )
+    assert legacy_record["host_memavailable_bytes"] == 9 * gib
+
+    proc_meminfo.write_text("MemAvailable: 100 MB\n", encoding="ascii")
+    wrong_unit = _read_kernel_memavailable(proc_meminfo)
+    assert wrong_unit["status"] == "unknown"
+    legacy_authority["host_memory"]["kernel_memavailable"] = wrong_unit
+    strict_wrong_unit = supervisor._sample_record(
+        legacy_authority,
+        "public_command",
+        0.0,
+        require_kernel_memavailable=True,
+    )
+    assert strict_wrong_unit["host_memavailable_bytes"] is None
+    assert strict_wrong_unit["legacy_host_memavailable_observation_bytes"] == 9 * gib
+    assert supervisor._sample_record(
+        legacy_authority, "public_command", 0.0
+    )["host_memavailable_bytes"] == 9 * gib
+
+    legacy_authority["host_memory"].pop("kernel_memavailable")
+    assert supervisor._sample_record(
+        legacy_authority,
+        "public_command",
+        0.0,
+        require_kernel_memavailable=True,
+    )["host_memavailable_bytes"] is None
+    assert supervisor._sample_record(
+        legacy_authority, "public_command", 0.0
+    )["host_memavailable_bytes"] == 9 * gib
+
+    proc_meminfo.write_text("MemTotal: 200 kB\n", encoding="ascii")
+    assert _read_kernel_memavailable(proc_meminfo)["status"] == "unknown"
+
+
+@pytest.mark.parametrize(
+    "kernel_sample",
+    (
+        None,
+        {
+            "schema": "task041.kernel_memavailable.v1",
+            "status": "unknown",
+            "bytes": None,
+            "error": "MemAvailable unit is not kB",
+        },
+    ),
+    ids=("kernel-field-missing", "kernel-unit-invalid"),
+)
+@pytest.mark.parametrize(
+    ("require_kernel_memavailable", "expected_termination"),
+    ((True, "memavailable_unmeasured"), (False, None)),
+    ids=("v16-strict-kernel-field", "v8-legacy-host-field"),
+)
+def test_outer_phase_uses_selected_memavailable_source_at_resource_boundary(
+    tmp_path: Path,
+    kernel_sample,
+    require_kernel_memavailable: bool,
+    expected_termination: str | None,
+):
+    """The real phase sampler must not substitute legacy host bytes in V16."""
+
+    gib = 2**30
+    host_memory = {"mem_available_bytes": 9 * gib}
+    if kernel_sample is not None:
+        host_memory["kernel_memavailable"] = kernel_sample
+    authority = {
+        "memory_authority_bytes": 1,
+        "process_tree": {"all_status_readable": True, "rss_bytes": 1},
+        "host_memory": host_memory,
+    }
+
+    class FakeProcess:
+        pid = 431_001
+
+        def __init__(self):
+            self.poll_calls = 0
+            self.returncode = 0
+
+        def poll(self):
+            if self.returncode != 0:
+                return self.returncode
+            self.poll_calls += 1
+            return None if self.poll_calls == 1 else self.returncode
+
+        def wait(self):
+            return self.returncode
+
+    process = FakeProcess()
+
+    def terminate_factory(_process):
+        process.returncode = -15
+        return {"status": "terminated_for_resource_gate"}
+
+    log_root = tmp_path / "logs"
+    log_root.mkdir()
+    phase_result = supervisor._run_phase(
+        "public_command",
+        [sys.executable, "scripts/run_case.py", "registered-input.dat"],
+        tmp_path / "phase-output",
+        log_root=log_root,
+        environment={},
+        repository_root=tmp_path,
+        workflow_started=supervisor.time.monotonic(),
+        popen_factory=lambda *_args, **_kwargs: process,
+        sample_factory=lambda _pid: authority,
+        terminate_factory=terminate_factory,
+        monotonic=supervisor.time.monotonic,
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
+        memory_stages_path=tmp_path / "memory_stages.jsonl",
+        marker_path=tmp_path / "markers.jsonl",
+        process_group_gone=lambda _pid: True,
+        warning_memory_bytes=10,
+        hard_memory_bytes=20,
+        timeout_seconds=None,
+        phase_elapsed_timeout=True,
+        min_memavailable_bytes=1,
+        enforce_time_stops=False,
+        swap_observe_only=True,
+        require_kernel_memavailable=require_kernel_memavailable,
+    )
+    assert phase_result["termination_reason"] == expected_termination
+    memory_rows = [
+        json.loads(line)
+        for line in (tmp_path / "memory_stages.jsonl").read_text().splitlines()
+    ]
+    assert memory_rows[0]["legacy_host_memavailable_observation_bytes"] == 9 * gib
+    assert memory_rows[0]["host_memavailable_bytes"] == (
+        None if require_kernel_memavailable else 9 * gib
+    )
+
+
+def _v16_outer_restart32_report_for_callback() -> dict[str, object]:
+    """Make one source-formula-valid row for the real authority callback test."""
+
+    local_rows = 1
+    local_columns = 1
+    scalar_bytes = 16
+    pointer_bytes = 8
+    integer_bytes = 4
+    bottom_rows = 1
+    top_rows = 1
+    modal_count = 2
+    modal_owner = 0
+
+    def workspace(restart: int) -> tuple[int, dict[str, int]]:
+        gmres_slots = restart + 4
+        fgmres_slots = restart + 2
+        vector_entries = gmres_slots * local_rows + fgmres_slots * local_columns
+        scalar_slots = (
+            (restart + 2) * (restart + 1)
+            + (restart + 1) * (restart + 1)
+            + (restart + 2)
+            + (restart + 1)
+            + (restart + 1)
+            + restart
+            + 2 * (restart + 2)
+        )
+        pointer_slots = gmres_slots + fgmres_slots
+        integer_slots = restart + 4
+        details = {
+            "gmres_vector_slots": gmres_slots,
+            "fgmres_preconditioned_vector_slots": fgmres_slots,
+            "vector_payload_bytes": vector_entries * scalar_bytes,
+            "scalar_array_slots": scalar_slots,
+            "scalar_payload_bytes": scalar_slots * scalar_bytes,
+            "pointer_table_slots": pointer_slots,
+            "pointer_table_bytes": pointer_slots * pointer_bytes,
+            "PETSc_integer_workspace_slots": integer_slots,
+            "PETSc_integer_workspace_bytes": integer_slots * integer_bytes,
+        }
+        details["workspace_bytes"] = sum(
+            details[key]
+            for key in (
+                "vector_payload_bytes",
+                "scalar_payload_bytes",
+                "pointer_table_bytes",
+                "PETSc_integer_workspace_bytes",
+            )
+        )
+        return details["workspace_bytes"], details
+
+    restart32, details32 = workspace(32)
+    restart64, details64 = workspace(64)
+    binding_entries = local_rows + 2 * local_columns
+    residual_entries = local_rows + 4 * (bottom_rows + top_rows)
+    residual_slots = 4 + 3
+    modal_row_slots = 5 + 3
+    row = {
+        "rank": 0,
+        "operator_local_rows": local_rows,
+        "operator_local_columns": local_columns,
+        "complex_scalar_bytes": scalar_bytes,
+        "pointer_bytes": pointer_bytes,
+        "PETSc_integer_bytes": integer_bytes,
+        "true_residual_bottom_local_rows": bottom_rows,
+        "true_residual_top_local_rows": top_rows,
+        "modal_count": modal_count,
+        "modal_owner": modal_owner,
+        "restart32_KSP_workspace_components": details32,
+        "restart64_KSP_workspace_components": details64,
+        "restart32_workspace_bytes": restart32,
+        "restart64_workspace_bytes": restart64,
+        "original_A_binding_vec_entries": binding_entries,
+        "original_A_binding_vec_bytes": binding_entries * scalar_bytes,
+        "true_residual_PETSc_vec_entries": residual_entries,
+        "true_residual_PETSc_vec_bytes": residual_entries * scalar_bytes,
+        "true_residual_modal_array_slots": residual_slots,
+        "true_residual_modal_array_bytes": residual_slots * modal_count * scalar_bytes,
+        "original_A_modal_row_callback_array_slots": modal_row_slots,
+        "original_A_modal_row_callback_array_bytes": (
+            modal_row_slots * modal_count * scalar_bytes
+        ),
+        "builder_outer_PC_phase_temporary_bytes": 2,
+        "builder_outer_PC_phase_replicated_bytes": 3,
+    }
+    row["target_restart"] = 32
+    known = restart32 + binding_entries * scalar_bytes
+    pc_temporary = row["builder_outer_PC_phase_temporary_bytes"]
+    pc_replicated = (
+        row["builder_outer_PC_phase_replicated_bytes"]
+        + row["original_A_modal_row_callback_array_bytes"]
+    )
+    residual_temporary = residual_entries * scalar_bytes
+    residual_replicated = residual_slots * modal_count * scalar_bytes
+    phase_rows = {
+        "outer_PC_with_retained_workspaces": {
+            "known_additional_bytes_by_rank": [known],
+            "additional_temporary_bytes_by_rank": [pc_temporary],
+            "additional_replicated_bytes_by_rank": [pc_replicated],
+            "additional_bytes_by_rank": [known + pc_temporary + pc_replicated],
+        },
+        "outer_original_A_true_residual": {
+            "known_additional_bytes_by_rank": [known],
+            "additional_temporary_bytes_by_rank": [residual_temporary],
+            "additional_replicated_bytes_by_rank": [residual_replicated],
+            "additional_bytes_by_rank": [
+                known + residual_temporary + residual_replicated
+            ],
+        },
+    }
+    totals = {
+        name: sum(value["additional_bytes_by_rank"])
+        for name, value in phase_rows.items()
+    }
+    selected_phase = max(totals, key=totals.get)
+    selected = phase_rows[selected_phase]
+    return {
+        "phase": "outer_restart32_workspace",
+        "target_restart": 32,
+        "workspace_model": (
+            "petsc-3.19.6-fgmres-v-z-scalar-pointer-plus-live-phase-inventory-v1"
+        ),
+        "restart32_workspace_is_already_in_fresh_B": False,
+        "restart32_workspace_is_charged_as_new": True,
+        "original_A_binding_vecs_are_already_in_fresh_B": False,
+        "outer_restart_workspace_by_rank": [row],
+        "phase_memory_projection": {
+            "scope": "max_simultaneous_KSP_plus_PC_or_original_A_residual_phase",
+            "phase_reports": phase_rows,
+            "phase_total_bytes": totals,
+            "selected_phase": selected_phase,
+            "selected_phase_payload_bytes": totals[selected_phase],
+        },
+        "known_additional_bytes_by_rank": selected[
+            "known_additional_bytes_by_rank"
+        ],
+        "additional_temporary_bytes_by_rank": selected[
+            "additional_temporary_bytes_by_rank"
+        ],
+        "additional_replicated_bytes_by_rank": selected[
+            "additional_replicated_bytes_by_rank"
+        ],
+        "additional_bytes_by_rank": selected["additional_bytes_by_rank"],
+        "target_restart_workspace_bytes_by_rank": [restart32],
+        "builder_outer_PC_known_additions_reused_as_delta": False,
+        "unitemized_allocator_and_MPI_scratch": (
+            "unknown; W_policy_reserve_is_applied_separately"
+        ),
+    }
+
+
+def test_v16_real_authority_callback_binds_measured_rank_scope_to_outer_consumers(
+    tmp_path: Path, monkeypatch
+):
+    from mpi4py import MPI
+
+    from benchmarks import task041_exact_side_workflow as exact_side
+    from benchmarks import task041_rank_numa
+    from src.io.input_validation import (
+        TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
+        TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+        TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        task041_v16_outer_resource_contract_errors,
+    )
+    from src.runners.task041_supervisor import _v13_outer_authority_pass_matches_report
+    from src.solvers.hybrid_fem_modal_block_ldu import (
+        _task041_v13_outer_workspace_pass_resource_contract_valid,
+    )
+
+    model_id = task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    resource_binding = task041_balh_workflow.task041_resource_policy_binding(
+        model_id, TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+    )
+    report = _v16_outer_restart32_report_for_callback()
+    delta = sum(report["additional_bytes_by_rank"])
+    cap = TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+    reserve = TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+    workspace = TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES
+    rank_pid = os.getpid()
+    invocation_id = "v16-real-callback-fixture"
+    source_sha = "a" * 40
+    unit = "task041-v16-real-callback-fixture.service"
+    manifest_sha = "b" * 64
+    supervisor_binding = {
+        "schema": "task041.w0p7.supervisor_memory_binding.v1",
+        "supervision_root": "/ignored/v16-fixture/supervision",
+        "memory_stages_path": "/ignored/v16-fixture/supervision/memory_stages.jsonl",
+        "launch_manifest_path": "/ignored/v16-fixture/supervision/launch_manifest.json",
+        "consumer_root": "/ignored/v16-fixture/consumer",
+        "results_root": "/ignored/v16-fixture",
+        "supervisor_root_pid": rank_pid,
+        "invocation_id": invocation_id,
+        "source_sha": source_sha,
+        "unit": unit,
+        "launch_manifest_sha256": manifest_sha,
+    }
+    monitor = {
+        "sample_root_pid": rank_pid,
+        "file_age_seconds": 0.25,
+        "invocation_id": invocation_id,
+        "source_sha": source_sha,
+        "unit": unit,
+        "launch_manifest_sha256": manifest_sha,
+        "phase": "public_command",
+        "sample_role": "phase_running",
+        "sample_row_sha256": "c" * 64,
+    }
+    tree_rss = 12 * 2**30
+    cgroup_current = 13 * 2**30
+    ancestor_headroom = delta + workspace + 1024
+    memavailable = reserve + delta + workspace + 1024
+    resource_snapshot = {
+        "memory_authority_bytes": cgroup_current,
+        "process_tree": {
+            "all_status_readable": True,
+            "rss_bytes": tree_rss,
+            "pids": [rank_pid],
+        },
+        "job_cgroup": {
+            "dedicated_job_cgroup": True,
+            "memory_current_bytes": cgroup_current,
+            "ancestor_hard_limit_state": "finite",
+            "ancestor_memory_headroom_bytes": ancestor_headroom,
+            "ancestor_memory": [
+                {
+                    "memory_limit_state": "finite",
+                    "memory_headroom_bytes": ancestor_headroom,
+                }
+            ],
+        },
+        "host_memory": {
+            # V16 must use the parsed kernel authority, not this legacy field.
+            "mem_available_bytes": 1,
+            "kernel_memavailable": {
+                "schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+                "status": "measured",
+                "bytes": memavailable,
+                "error": None,
+            },
+        },
+    }
+    resource_snapshot_reads: list[dict[str, object]] = []
+
+    def read_resource_snapshot(pid):
+        resource_snapshot_reads.append({"pid": pid})
+        return resource_snapshot
+
+    monkeypatch.setattr(
+        exact_side, "_task041_latest_supervisor_memory_sample", lambda _binding: monitor
+    )
+    monkeypatch.setattr(
+        exact_side, "_resource_snapshot", read_resource_snapshot
+    )
+    monkeypatch.setattr(exact_side, "normal_memory_nodes", lambda: [0, 1])
+    monkeypatch.setattr(
+        exact_side,
+        "_task041_memfree_observation",
+        lambda _nodes: {
+            "schema": "task041.memfree_observation.v1",
+            "nodes_bytes": {"0": 1, "1": 1},
+            "aggregate_bytes": 2,
+            "status": "measured",
+            "errors": None,
+            "admission_semantics": "observation_only",
+        },
+    )
+    measured_rank_snapshot = {
+        "schema": "task041.rank_numa_snapshot.v1",
+        "stage": "v16_outer_authority_outer_restart32_workspace",
+        "rank_identity": {"pid": rank_pid},
+        # This is get_mempolicy evidence, not the request's policy spelling.
+        "task_policy": {
+            "status": "measured",
+            "policy": "default",
+            "mode": 0,
+        },
+        "math_thread_environment": {
+            "status": "measured",
+            "all_one": True,
+            "variables": {
+                name: "1" for name in exact_side.TASK041_V13_THREAD_ENV_NAMES
+            },
+        },
+        "memory_scope": {
+            "status": "measured",
+            "pass": True,
+            "allowed_nodes_match": True,
+            "cgroup_identity_stable": True,
+            "proc_allowed_nodes": [0, 1],
+            "effective_nodes": [0, 1],
+            "cgroup_identity_before": {"path": "/user.slice/v16-fixture.scope"},
+            "cgroup_identity_after": {"path": "/user.slice/v16-fixture.scope"},
+        },
+    }
+    rank_snapshot_reads: list[dict[str, object]] = []
+
+    def read_rank_snapshot(*args, **kwargs):
+        rank_snapshot_reads.append(
+            {"args": args, "kwargs": kwargs, "snapshot": measured_rank_snapshot}
+        )
+        return measured_rank_snapshot
+
+    monkeypatch.setattr(task041_rank_numa, "snapshot", read_rank_snapshot)
+
+    limits = {
+        "task041_resource_policy": resource_binding,
+        "hard_memory_bytes": cap,
+        "process_tree_rss_warning_bytes": cap - workspace,
+        "min_memavailable_bytes": reserve,
+    }
+    requested_memory_policy = "system_default_unbound"
+    response = exact_side._task041_v13_fresh_authority_callback(
+        "outer_restart32_workspace",
+        report,
+        comm=MPI.COMM_SELF,
+        supervisor_memory_binding=supervisor_binding,
+        limits=limits,
+        requested_memory_policy=requested_memory_policy,
+    )
+
+    source_map_raw = os.environ.get("TASK041_DIAGNOSTIC_SOURCE_SHA256_JSON")
+    source_map = json.loads(source_map_raw) if source_map_raw else None
+    diagnostic = {
+        "schema": "task041.v16.real_authority_callback_diagnostic.v1",
+        "case_id": (
+            "src/test/test_352_task041_service_boundary.py::"
+            "test_v16_real_authority_callback_binds_measured_rank_scope_to_outer_consumers"
+        ),
+        "attempt_id": os.environ.get("TASK041_DIAGNOSTIC_ATTEMPT_ID"),
+        "source24_sha256": source_map,
+        "callback_input": {
+            "phase": "outer_restart32_workspace",
+            "report": report,
+            "limits": limits,
+            "requested_memory_policy": requested_memory_policy,
+            "supervisor_memory_binding": supervisor_binding,
+        },
+        "injected_observations": {
+            "monitor": monitor,
+            "resource_snapshot": resource_snapshot,
+            "resource_snapshot_reads": resource_snapshot_reads,
+            "rank_snapshot": measured_rank_snapshot,
+            "rank_snapshot_reads": rank_snapshot_reads,
+        },
+        "response": response,
+    }
+    diagnostic_path = tmp_path / "v16_real_authority_callback_diagnostic.json"
+    diagnostic_path.write_text(
+        json.dumps(diagnostic, indent=2, sort_keys=True, default=repr) + "\n",
+        encoding="utf-8",
+    )
+    response_for_assertion = json.dumps(response, sort_keys=True, default=repr)
+    assert response["status"] == "pass", (
+        f"complete_callback_response={response_for_assertion}; "
+        f"diagnostic_path={diagnostic_path}"
+    )
+    assert response["host_available_bytes"] == memavailable
+    assert response["external_resource_gates"][
+        "all_ranks_default_unbound_memory_scope"
+    ] is True
+    rank_evidence = response["authority_receipt_payload"][
+        "rank_memory_scope_evidence"
+    ]["ranks"][0]["evidence"]
+    assert rank_evidence["task_policy"] == {
+        "status": "measured",
+        "policy": "default",
+        "mode": 0,
+    }
+    assert task041_v16_outer_resource_contract_errors(
+        "outer_restart32_workspace", report, response, rank_count=1
+    ) == []
+    assert _task041_v13_outer_workspace_pass_resource_contract_valid(
+        "outer_restart32_workspace", report, response, rank_count=1
+    )
+    assert _v13_outer_authority_pass_matches_report(
+        "outer_restart32_workspace", report, response, rank_count=1
+    )
+
+    bad_scope = json.loads(json.dumps(response))
+    bad_scope["authority_receipt_payload"]["rank_memory_scope_evidence"][
+        "ranks"
+    ][0]["evidence"]["task_policy"] = {
+        "status": "measured",
+        "policy": "bind",
+        "mode": 2,
+    }
+    bad_scope["authority_receipt_sha256"] = hashlib.sha256(
+        json.dumps(
+            bad_scope["authority_receipt_payload"],
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
+    ).hexdigest()
+    assert task041_v16_outer_resource_contract_errors(
+        "outer_restart32_workspace", report, bad_scope, rank_count=1
+    )
+    assert not _task041_v13_outer_workspace_pass_resource_contract_valid(
+        "outer_restart32_workspace", report, bad_scope, rank_count=1
+    )
+
+
+@pytest.mark.parametrize(
+    ("resource_policy", "requires_kernel_memavailable", "reserve_field"),
+    (
+        (
+            task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY,
+            True,
+            "reserve_bytes",
+        ),
+        (
+            task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+            False,
+            "aggregate_memfree_reserve_bytes",
+        ),
+    ),
+    ids=("v16-kernel-memavailable", "v8-legacy-aggregate-memfree"),
+)
+def test_public_supervisor_threads_selected_resource_policy_to_real_phase_boundary(
+    tmp_path: Path,
+    monkeypatch,
+    resource_policy,
+    requires_kernel_memavailable,
+    reserve_field,
+):
+    model_id = task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    policy_id = "task041_v13_consistent_fixed_balh_modal_surrogate"
+    resource_binding = task041_balh_workflow.task041_resource_policy_binding(
+        model_id, resource_policy
+    )
+    fixed_binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
+        model_id,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=400,
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=5.0e-13,
+        task041_resource_policy=resource_policy,
+        expected_rank_cpus=tuple(range(8)),
+        modal_solver_policy=policy_id,
+    )
+    assert isinstance(fixed_binding, dict)
+    profile = dict(task041_balh_service_contract(model_id))
+    profile.update(
+        {
+            "task041_resource_policy": resource_binding,
+            "modal_solver_policy": policy_id,
+            "fixed_h6_modal_gmres_research": fixed_binding,
+        }
+    )
+    thread_environment = dict(
+        task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+    )
+    launch_manifest = {
+        "task041_resource_policy": resource_binding,
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "memory_policy": task041_balh_workflow.TASK041_V13_MEMORY_POLICY,
+        "membind_node": None,
+        "resource_headroom_policy": fixed_binding["resource_headroom_policy"],
+        "required_thread_environment": thread_environment,
+        "parent_environment_threads": thread_environment,
+    }
+    if resource_policy == task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY:
+        launch_manifest["memory_authority_schema"] = (
+            resource_binding["memory_authority_schema"]
+        )
+
+    observed: dict[str, object] = {}
+
+    def phase_boundary(*_args, **kwargs):
+        observed.update(kwargs)
+        return {
+            "returncode": 0,
+            "termination_reason": None,
+            "process_group_gone": True,
+        }
+
+    monkeypatch.setattr(supervisor, "_run_phase", phase_boundary)
+    root = tmp_path / f"supervision-{resource_policy}"
+    result = supervisor.run_task041_supervised_public_command(
+        [sys.executable, "scripts/run_case.py", "registered-input.dat"],
+        root,
+        profile_contract=profile,
+        ledger_snapshot={"used_compute_wall_seconds": 0.0},
+        resource_limits={
+            "warning_memory_bytes": profile["warning_memory_bytes"],
+            "hard_memory_bytes": profile["memory_cap_bytes"],
+            "swap_limit_bytes": 0,
+            "min_memavailable_bytes": 384 * 2**30,
+            "min_cgroup_ancestor_headroom_bytes": 0,
+        },
+        environment=thread_environment,
+        sample_factory=lambda _pid: {},
+        repository_root=tmp_path,
+        launch_manifest=launch_manifest,
+    )
+    assert result["status"] == "completed"
+    assert observed["require_kernel_memavailable"] is requires_kernel_memavailable
+    headroom = fixed_binding["resource_headroom_policy"]
+    assert reserve_field in headroom
+    assert headroom[reserve_field] == supervisor.TASK041_V13_AGGREGATE_RESERVE_BYTES
+    assert (
+        "reserve_bytes" in headroom
+    ) is (resource_policy == task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY)
+
+
+def test_service_finalizer_request_match_rejects_incomplete_or_contradictory_binding():
+    from src.io.input_validation import (
+        TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    )
+
+    model_id = task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    policy_id = "task041_v13_consistent_fixed_balh_modal_surrogate"
+    v16_binding = task041_balh_workflow.task041_resource_policy_binding(
+        model_id, TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+    )
+    v8_binding = task041_balh_workflow.task041_resource_policy_binding(
+        model_id, task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+    )
+    # A policy object alone is not a finalizer pass: the production V13
+    # consumer route also requires the sealed supervision/consumer chain.
+    incomplete_public_result = {"modal_solver_policy": policy_id}
+    assert not service._modal_solver_policy_matches_request(
+        {
+            "model_id": model_id,
+            "modal_solver_policy": policy_id,
+            "task041_resource_policy": v16_binding,
+        },
+        incomplete_public_result,
+    )
+    assert not service._modal_solver_policy_matches_request(
+        {"model_id": model_id, "modal_solver_policy": policy_id},
+        incomplete_public_result,
+    )
+    contradictory_v16_binding = dict(v16_binding)
+    contradictory_v16_binding["resource_headroom_policy"] = {
+        **dict(v16_binding["resource_headroom_policy"]),
+        "reserve_bytes": 1,
+    }
+    assert not service._modal_solver_policy_matches_request(
+        {
+            "model_id": model_id,
+            "modal_solver_policy": policy_id,
+            "task041_resource_policy": contradictory_v16_binding,
+        },
+        incomplete_public_result,
+    )
+    assert not service._modal_solver_policy_matches_request(
+        {
+            "model_id": model_id,
+            "modal_solver_policy": None,
+            "task041_resource_policy": v16_binding,
+        },
+        {"modal_solver_policy": None},
+    )
+    assert not service._modal_solver_policy_matches_request(
+        {
+            "model_id": model_id,
+            "modal_solver_policy": "task041_v12_bounded_inexact_modal",
+            "task041_resource_policy": v16_binding,
+        },
+        {"modal_solver_policy": "task041_v12_bounded_inexact_modal"},
+    )
+    # V8 keeps its own resource-binding vocabulary, but the same V13 request
+    # still cannot pass this finalizer boundary without the actual chain.
+    assert not service._modal_solver_policy_matches_request(
+        {
+            "model_id": model_id,
+            "modal_solver_policy": policy_id,
+            "task041_resource_policy": v8_binding,
+        },
+        incomplete_public_result,
+    )
+    assert service._modal_solver_policy_matches_request(
+        {
+            "model_id": model_id,
+            "modal_solver_policy": None,
+            "task041_resource_policy": None,
+        },
+        {"modal_solver_policy": None},
+    )
+
+
 def test_v13_initial_resource_gate_requires_aggregate_and_node1_availability():
     gib = 2**30
     valid = supervisor._task041_v13_initial_resource_gate_record(
@@ -3160,6 +4602,56 @@ def test_v13_rank_runtime_recomputes_default_scope_threads_and_session():
     assert supervisor._task041_v13_rank_runtime_evidence(
         summary,
         expected_binding=missing_expected_map,
+        owned_session_cleanup=cleanup,
+    )["pass"] is False
+
+
+def test_v16_startup_rank_scope_uses_same_stage_normal_memory_nodes():
+    binding, summary, cleanup = _v13_rank_runtime_fixture(
+        resource_policy=task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY
+    )
+    stage = summary["rank_numa_evidence"][0]
+    assert stage["stage"] == "startup"
+    assert stage["qualification"]["normal_memory_nodes"] == [0, 1]
+    assert stage["qualification"]["memory_authority_schema"] == binding[
+        "memory_authority_schema"
+    ]
+    assert stage["ranks"][0]["evidence"]["task_policy"] == {
+        "status": "measured",
+        "mode": 0,
+        "policy": "default",
+    }
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        summary, expected_binding=binding, owned_session_cleanup=cleanup
+    )["pass"] is True
+
+    restricted_rank_scope = json.loads(json.dumps(summary))
+    restricted_rank_scope["rank_numa_evidence"][0]["ranks"][0]["evidence"][
+        "memory_scope"
+    ]["effective_nodes"] = [0]
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        restricted_rank_scope,
+        expected_binding=binding,
+        owned_session_cleanup=cleanup,
+    )["pass"] is False
+
+    mismatched_stage_scope = json.loads(json.dumps(summary))
+    mismatched_stage_scope["rank_numa_evidence"][0]["qualification"][
+        "normal_memory_nodes"
+    ] = [0]
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        mismatched_stage_scope,
+        expected_binding=binding,
+        owned_session_cleanup=cleanup,
+    )["pass"] is False
+
+    missing_stage_scope = json.loads(json.dumps(summary))
+    del missing_stage_scope["rank_numa_evidence"][0]["qualification"][
+        "normal_memory_nodes"
+    ]
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        missing_stage_scope,
+        expected_binding=binding,
         owned_session_cleanup=cleanup,
     )["pass"] is False
 
@@ -3387,6 +4879,12 @@ def test_v13_outer_policy_without_actual_solve_record_stays_not_persisted():
     "tamper",
     (
         None,
+        "complete-v16-chain",
+        "v16-legacy-outer-receipt",
+        "v16-missing-initial-memavailable",
+        "v16-missing-outer-memavailable",
+        "v16-missing-outer-source",
+        "v16-missing-ancestor-layer",
         "policy",
         "method",
         "source",
@@ -3406,6 +4904,12 @@ def test_v13_outer_policy_without_actual_solve_record_stays_not_persisted():
     ),
     ids=(
         "complete-v13-chain",
+        "complete-v16-memavailable-chain",
+        "v16-legacy-outer-receipt",
+        "v16-missing-initial-memavailable",
+        "v16-missing-outer-memavailable",
+        "v16-missing-outer-source",
+        "v16-missing-ancestor-layer",
         "policy-mismatch",
         "actual-method-mismatch",
         "consumer-source-mismatch",
@@ -3427,6 +4931,13 @@ def test_v13_outer_policy_without_actual_solve_record_stays_not_persisted():
 def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_evidence(
     tmp_path: Path, tamper: str | None
 ):
+    from src.io.input_validation import (
+        TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+        TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        TASK041_V16_RESOURCE_HEADROOM_POLICY,
+        task041_v16_phase_memory_gate,
+    )
+
     model_id = task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
     policy_id = "task041_v13_consistent_fixed_balh_modal_surrogate"
     method = "task041_v13_consistent_fixed_balh_modal_surrogate"
@@ -3439,6 +4950,19 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
     (root / "log").mkdir(parents=True)
     consumer_root.mkdir(parents=True)
     expected_cpus = tuple(range(8))
+    v16_complete = tamper in {
+        "complete-v16-chain",
+        "v16-legacy-outer-receipt",
+        "v16-missing-initial-memavailable",
+        "v16-missing-outer-memavailable",
+        "v16-missing-outer-source",
+        "v16-missing-ancestor-layer",
+    }
+    selected_resource_policy = (
+        task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY
+        if v16_complete
+        else task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+    )
     fixed_binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
         model_id,
         enabled=True,
@@ -3447,22 +4971,26 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
         mode_count=400,
         p4_inverse_backend="cell_condensed",
         p4_refinement_target_tolerance=5.0e-13,
-        task041_resource_policy=(
-            task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
-        ),
+        task041_resource_policy=selected_resource_policy,
         expected_rank_cpus=expected_cpus,
         modal_solver_policy=policy_id,
     )
     assert isinstance(fixed_binding, dict)
-    rank_binding, rank_summary, owned_session_cleanup = (
-        _v13_rank_runtime_fixture(expected_rank_cpus=expected_cpus)
+    rank_binding, rank_summary, owned_session_cleanup = _v13_rank_runtime_fixture(
+        expected_rank_cpus=expected_cpus,
+        resource_policy=selected_resource_policy,
     )
     assert rank_binding == fixed_binding
     v13_metadata = {
         "memory_policy": task041_balh_workflow.TASK041_V13_MEMORY_POLICY,
         "membind_node": None,
         "resource_headroom_policy": dict(
-            task041_balh_workflow.TASK041_V13_RESOURCE_HEADROOM_POLICY
+            task041_balh_workflow.task041_resource_headroom_policy(
+                selected_resource_policy
+            )
+        ),
+        "task041_resource_policy": task041_balh_workflow.task041_resource_policy_binding(
+            model_id, selected_resource_policy
         ),
         "required_thread_environment": dict(
             task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
@@ -3471,6 +4999,11 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
             task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
         ),
     }
+    resource_binding = v13_metadata["task041_resource_policy"]
+    if v16_complete:
+        v13_metadata["memory_authority_schema"] = (
+            TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        )
     policy_binding = fixed_binding["modal_solver_policy"]
     from src.solvers.hybrid_fem_modal_block_ldu import (
         _v13_modal_schur_diagnostic_fields,
@@ -3575,10 +5108,29 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
         "process_group_gone": True,
         **v13_metadata,
     }
+    if v16_complete:
+        consumer_summary[
+            "test_fixture_scope"
+        ] = "synthetic_finalizer_schema_only_not_an_800_column_numeric_result"
     consumer_summary["rank_numa_evidence"] = rank_summary["rank_numa_evidence"]
-    v13_initial_gate = supervisor._task041_v13_initial_resource_gate_record(
-        384 * 2**30, 80 * 2**30
-    )
+    if v16_complete:
+        v13_initial_gate = supervisor._task041_v16_initial_resource_gate_record(
+            500 * 2**30,
+            memavailable_schema=TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+            memavailable_status="measured",
+            normal_ram_nodes=[0, 1],
+            memfree_observation={
+                "schema": "task041.memfree_observation.v1",
+                "admission_semantics": "observation_only",
+                "status": "measured",
+            },
+        )
+        if tamper == "v16-missing-initial-memavailable":
+            v13_initial_gate.pop("memavailable_bytes")
+    else:
+        v13_initial_gate = supervisor._task041_v13_initial_resource_gate_record(
+            384 * 2**30, 80 * 2**30
+        )
     assert v13_initial_gate["pass"] is True
     rank_count = 8
     hard_cap = 85_899_345_920
@@ -3723,6 +5275,255 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
             "target_is_elapsed_stop": False,
         },
     }
+    if v16_complete and tamper != "v16-legacy-outer-receipt":
+        rank_pids_v16 = list(range(2001, 2001 + rank_count))
+        additional_by_rank = [100] * rank_count
+        known_by_rank_v16 = list(additional_by_rank)
+        zeros_by_rank_v16 = [0] * rank_count
+        selected_phase_v16 = "outer_PC_with_retained_workspaces"
+        phase_component_v16 = {
+            "known_additional_bytes_by_rank": known_by_rank_v16,
+            "additional_temporary_bytes_by_rank": zeros_by_rank_v16,
+            "additional_replicated_bytes_by_rank": zeros_by_rank_v16,
+            "additional_bytes_by_rank": additional_by_rank,
+        }
+        report_v16 = {
+            "phase": "outer_restart32_workspace",
+            "target_restart": 32,
+            "known_additional_bytes_by_rank": known_by_rank_v16,
+            "additional_temporary_bytes_by_rank": zeros_by_rank_v16,
+            "additional_replicated_bytes_by_rank": zeros_by_rank_v16,
+            "phase_memory_projection": {
+                "phase_reports": {selected_phase_v16: phase_component_v16},
+                "phase_total_bytes": {selected_phase_v16: sum(additional_by_rank)},
+                "selected_phase": selected_phase_v16,
+                "selected_phase_payload_bytes": sum(additional_by_rank),
+            },
+        }
+        request_sha_v16 = hashlib.sha256(
+            json.dumps(
+                report_v16,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode()
+        ).hexdigest()
+        delta_v16 = sum(additional_by_rank)
+        tree_rss_v16 = 1 * 2**30
+        cgroup_current_v16 = 2 * 2**30
+        available_v16 = 500 * 2**30
+        cap_v16 = TASK041_V16_RESOURCE_HEADROOM_POLICY["cap_bytes"]
+        reserve_v16 = TASK041_V16_RESOURCE_HEADROOM_POLICY["reserve_bytes"]
+        workspace_v16 = TASK041_V16_RESOURCE_HEADROOM_POLICY[
+            "workspace_reserve_bytes"
+        ]
+        ancestor_headroom_v16 = delta_v16 + workspace_v16 + 1
+        ancestor_memory_v16 = [
+            {
+                "memory_limit_state": "finite",
+                "memory_headroom_bytes": ancestor_headroom_v16,
+            }
+        ]
+        normal_nodes_v16 = [0, 1]
+        cgroup_identity_v16 = {"path": "/user.slice/v16-complete-fixture.scope"}
+        outer_rank_rows_v16 = [
+            {
+                "rank": rank,
+                "collective_status": "measured",
+                "rank_error": None,
+                "evidence": {
+                    "schema": "task041.rank_numa_snapshot.v1",
+                    "rank_identity": {"pid": pid},
+                    "task_policy": {
+                        "status": "measured",
+                        "policy": "default",
+                        "mode": 0,
+                    },
+                    "memory_scope": {
+                        "status": "measured",
+                        "pass": True,
+                        "allowed_nodes_match": True,
+                        "cgroup_identity_stable": True,
+                        "proc_allowed_nodes": normal_nodes_v16,
+                        "effective_nodes": normal_nodes_v16,
+                        "cgroup_identity_before": cgroup_identity_v16,
+                        "cgroup_identity_after": cgroup_identity_v16,
+                    },
+                },
+            }
+            for rank, pid in enumerate(rank_pids_v16)
+        ]
+        outer_payload_v16 = {
+            "schema": "task041.v16.outer_resource_receipt_payload.v2",
+            "resource_policy_schema": TASK041_V16_RESOURCE_HEADROOM_POLICY[
+                "schema"
+            ],
+            "memory_authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+            "phase": report_v16["phase"],
+            "request_sha256": request_sha_v16,
+            "sample_root_pid": 1999,
+            "root_pid": 1999,
+            "rank_pids": rank_pids_v16,
+            "invocation_id": invocation_id,
+            "source_sha": source_sha,
+            "unit": unit,
+            "sample_row_sha256": "b" * 64,
+            "resource_B_bytes": max(tree_rss_v16, cgroup_current_v16),
+            "phase_additional_Delta_bytes": delta_v16,
+            "tree_rss_bytes": tree_rss_v16,
+            "dedicated_cgroup_current_bytes": cgroup_current_v16,
+            "MemAvailable_bytes": available_v16,
+            "normal_ram_nodes": normal_nodes_v16,
+            "memfree_observation": {
+                "schema": "task041.memfree_observation.v1",
+                "admission_semantics": "observation_only",
+            },
+            "rank_memory_scope_evidence": {
+                "schema": "task041.v16.outer_rank_memory_scope.v1",
+                "requested_memory_policy": "system_default_unbound",
+                "normal_ram_nodes": normal_nodes_v16,
+                "rank_pids": rank_pids_v16,
+                "ranks": outer_rank_rows_v16,
+            },
+            "ancestor_limit_state": "finite",
+            "ancestor_memory": ancestor_memory_v16,
+            "cap_bytes": cap_v16,
+            "reserve_bytes": reserve_v16,
+            "workspace_W_bytes": workspace_v16,
+        }
+        phase_gate_v16 = task041_v16_phase_memory_gate(
+            tree_rss_bytes=tree_rss_v16,
+            cgroup_current_bytes=cgroup_current_v16,
+            phase_additional_bytes=delta_v16,
+            memavailable_bytes=available_v16,
+            ancestor_limit_state="finite",
+            ancestor_memory=ancestor_memory_v16,
+            cap_bytes=cap_v16,
+            reserve_bytes=reserve_v16,
+            workspace_reserve_bytes=workspace_v16,
+        )
+        assert phase_gate_v16["pass"] is True
+        outer_payload_v16["phase_resource_gate"] = phase_gate_v16
+        receipt_sha_v16 = hashlib.sha256(
+            json.dumps(
+                outer_payload_v16,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode()
+        ).hexdigest()
+        outer_authority_v16 = {
+            "schema": "task041.v13.modal_builder_admission.v1",
+            "resource_policy_schema": TASK041_V16_RESOURCE_HEADROOM_POLICY[
+                "schema"
+            ],
+            "memory_authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+            "phase": report_v16["phase"],
+            "status": "pass",
+            "decision": "continue",
+            "request_sha256": request_sha_v16,
+            "authority_receipt_payload": outer_payload_v16,
+            "authority_receipt_sha256": receipt_sha_v16,
+            "external_resource_gates": {
+                key: True
+                for key in (
+                    "bound_fresh_supervisor_sample",
+                    "tree_cgroup_and_all_mpi_ranks",
+                    "all_ranks_default_unbound_memory_scope",
+                    "resident_cap",
+                    "host_memavailable",
+                    "finite_ancestor_headroom",
+                    "case_cap_projection",
+                    "sample_cost_contract",
+                )
+            },
+            "sample_age_seconds": 0.5,
+            "root_pid": 1999,
+            "rank_pids": rank_pids_v16,
+            "source_sha": source_sha,
+            "unit": unit,
+            "invocation_id": invocation_id,
+            "sample_row_sha256": "b" * 64,
+            "fresh_job_authority_bytes": max(tree_rss_v16, cgroup_current_v16),
+            "tree_rss_bytes": tree_rss_v16,
+            "cgroup_memory_current_bytes": cgroup_current_v16,
+            "host_available_bytes": available_v16,
+            "cap_bytes": cap_v16,
+            "floor_bytes": reserve_v16,
+            "W_policy_reserve_bytes": workspace_v16,
+            "projected_B_plus_delta_plus_W_bytes": (
+                max(tree_rss_v16, cgroup_current_v16) + delta_v16 + workspace_v16
+            ),
+            "selected_memory_phase": selected_phase_v16,
+            "selected_memory_phase_payload_bytes": delta_v16,
+            "additional_bytes_by_rank": additional_by_rank,
+            "additional_temporary_bytes_by_rank": zeros_by_rank_v16,
+            "additional_replicated_bytes_by_rank": zeros_by_rank_v16,
+            "cost_assessment": {
+                "scope": "outer_ksp_workspace_admission",
+                "status": "workspace_model_valid",
+                "decision": "allow_initial_restart32_if_resource_gates_pass",
+                "target_restart": 32,
+                "W_policy_reserve_bytes": workspace_v16,
+                "target_is_elapsed_stop": False,
+                "reasons": [],
+            },
+        }
+        if tamper == "v16-missing-outer-memavailable":
+            outer_payload_v16.pop("MemAvailable_bytes")
+            phase_gate_v16 = task041_v16_phase_memory_gate(
+                tree_rss_bytes=tree_rss_v16,
+                cgroup_current_bytes=cgroup_current_v16,
+                phase_additional_bytes=delta_v16,
+                memavailable_bytes=None,
+                ancestor_limit_state="finite",
+                ancestor_memory=ancestor_memory_v16,
+                cap_bytes=cap_v16,
+                reserve_bytes=reserve_v16,
+                workspace_reserve_bytes=workspace_v16,
+            )
+            outer_payload_v16["phase_resource_gate"] = phase_gate_v16
+        elif tamper == "v16-missing-outer-source":
+            outer_payload_v16.pop("source_sha")
+            outer_authority_v16.pop("source_sha")
+        elif tamper == "v16-missing-ancestor-layer":
+            outer_payload_v16.pop("ancestor_memory")
+            phase_gate_v16 = task041_v16_phase_memory_gate(
+                tree_rss_bytes=tree_rss_v16,
+                cgroup_current_bytes=cgroup_current_v16,
+                phase_additional_bytes=delta_v16,
+                memavailable_bytes=available_v16,
+                ancestor_limit_state="finite",
+                ancestor_memory=None,
+                cap_bytes=cap_v16,
+                reserve_bytes=reserve_v16,
+                workspace_reserve_bytes=workspace_v16,
+            )
+            outer_payload_v16["phase_resource_gate"] = phase_gate_v16
+        if tamper != "complete-v16-chain":
+            receipt_sha_v16 = hashlib.sha256(
+                json.dumps(
+                    outer_payload_v16,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            outer_authority_v16["authority_receipt_payload"] = outer_payload_v16
+            outer_authority_v16["authority_receipt_sha256"] = receipt_sha_v16
+            if tamper == "v16-missing-outer-memavailable":
+                outer_authority_v16["host_available_bytes"] = None
+        from src.io.input_validation import task041_v16_outer_resource_contract_errors
+
+        outer_errors_v16 = task041_v16_outer_resource_contract_errors(
+            report_v16["phase"], report_v16, outer_authority_v16, rank_count=8
+        )
+        assert (outer_errors_v16 == []) is (
+            tamper
+            in {"complete-v16-chain", "v16-missing-initial-memavailable"}
+        )
+        outer_report = report_v16
+        outer_authority = outer_authority_v16
     consumer_summary["setup"]["full_formal"]["solve"][
         "task041_v13_outer_control"
     ] = {
@@ -3795,6 +5596,16 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
                 },
             }
         )
+    if tamper is None:
+        legacy_outer_control = consumer_summary["setup"]["full_formal"]["solve"][
+            "task041_v13_outer_control"
+        ]
+        v16_relabel_attempt = supervisor._task041_v13_outer_control_evidence(
+            legacy_outer_control,
+            expected_rank_count=8,
+            expected_resource_policy=TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+        )
+        assert v16_relabel_attempt["pass"] is False
     consumer_bytes = json.dumps(consumer_summary, sort_keys=True).encode()
     consumer_path = consumer_root / "consumer_summary.json"
     consumer_path.write_bytes(consumer_bytes)
@@ -3854,7 +5665,11 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
         "supervision_record": supervision_record,
         "service_contract": registered_contract,
         "consumer": {"summary_artifact": consumer_artifact},
-        "v13_initial_aggregate_resource_gate": v13_initial_gate,
+        (
+            "v16_initial_memavailable_gate"
+            if v16_complete
+            else "v13_initial_aggregate_resource_gate"
+        ): v13_initial_gate,
         "phase_results": {
             "consumer": {
                 "owned_session_id": owned_session_cleanup["session_id"],
@@ -3907,6 +5722,7 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
         "model_id": model_id,
         "modal_solver_policy": policy_id,
         "fixed_h6_modal_gmres_research": fixed_binding,
+        "task041_resource_policy": resource_binding,
     }
     kwargs = {
         "supervision_root": root,
@@ -3916,7 +5732,7 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
         "terminal_invocation_id": invocation_id,
         "expected_unit": unit,
     }
-    if tamper in {None, "boundary_terminal"}:
+    if tamper in {None, "complete-v16-chain", "boundary_terminal"}:
         checked = supervisor._consumer_result(
             consumer_root,
             expected_fixed_h6_modal_gmres_research=True,
@@ -3926,6 +5742,17 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
         )
         assert checked["fixed_h6_method_validation"]["pass"] is True
         assert checked["v13_outer_control_validation"]["pass"] is True
+        if v16_complete:
+            assert checked["v13_rank_runtime_validation"]["pass"] is True
+            assert fixed_binding["task041_resource_policy"] == (
+                TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+            )
+            assert resource_binding["policy"] == (
+                TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+            )
+            assert consumer_summary["test_fixture_scope"] == (
+                "synthetic_finalizer_schema_only_not_an_800_column_numeric_result"
+            )
         if tamper == "boundary_terminal":
             assert checked["v13_outer_control_validation"][
                 "restart64_terminal_boundary_accepted"
@@ -3946,6 +5773,18 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
             error == "outer_crossed_restart_boundary_without_window_evidence"
             for error in checked["v13_outer_control_validation"]["errors"]
         )
+        assert service._modal_solver_policy_matches_request(
+            contract, outer_summary, **kwargs
+        ) is False
+    elif tamper == "v16-legacy-outer-receipt":
+        checked = supervisor._consumer_result(
+            consumer_root,
+            expected_fixed_h6_modal_gmres_research=True,
+            expected_modal_solver_policy=policy_id,
+            expected_fixed_h6_binding=fixed_binding,
+            owned_session_cleanup=owned_session_cleanup,
+        )
+        assert checked["v13_outer_control_validation"]["pass"] is False
         assert service._modal_solver_policy_matches_request(
             contract, outer_summary, **kwargs
         ) is False

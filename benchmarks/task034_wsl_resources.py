@@ -46,6 +46,48 @@ def _read_key_kib(path: Path, key: str) -> int | None:
     return None
 
 
+def _read_kernel_memavailable(path: Path) -> dict[str, Any]:
+    """Read the kernel MemAvailable value with an explicit unit/schema."""
+
+    try:
+        rows = [
+            line.split(":", 1)[1].split()
+            for line in path.read_text(encoding="ascii").splitlines()
+            if line.startswith("MemAvailable:")
+        ]
+    except OSError as exc:
+        return {
+            "schema": "task041.kernel_memavailable.v1",
+            "status": "unknown",
+            "bytes": None,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    if len(rows) != 1 or len(rows[0]) != 2 or rows[0][1] != "kB":
+        return {
+            "schema": "task041.kernel_memavailable.v1",
+            "status": "unknown",
+            "bytes": None,
+            "error": "MemAvailable row is missing, duplicated, or not expressed in kB",
+        }
+    try:
+        kib = int(rows[0][0])
+    except ValueError:
+        kib = -1
+    if kib < 0:
+        return {
+            "schema": "task041.kernel_memavailable.v1",
+            "status": "unknown",
+            "bytes": None,
+            "error": "MemAvailable kB value is malformed or negative",
+        }
+    return {
+        "schema": "task041.kernel_memavailable.v1",
+        "status": "measured",
+        "bytes": kib * 1024,
+        "error": None,
+    }
+
+
 def current_cgroup_path(pid: int | str = "self") -> Path | None:
     """Resolve the unified cgroup v2 path for a process."""
 
@@ -251,7 +293,8 @@ def proc_swaps_snapshot() -> dict[str, Any]:
     }
 
 
-def wsl_memory_snapshot() -> dict[str, int | None]:
+def wsl_memory_snapshot() -> dict[str, Any]:
+    kernel_available = _read_kernel_memavailable(Path("/proc/meminfo"))
     return {
         "mem_total_bytes": (
             None
@@ -263,7 +306,51 @@ def wsl_memory_snapshot() -> dict[str, int | None]:
             if (value := _read_key_kib(Path("/proc/meminfo"), "MemAvailable")) is None
             else value * 1024
         ),
+        "kernel_memavailable": kernel_available,
     }
+
+
+def normal_memory_nodes() -> list[int]:
+    """Return online NUMA nodes with measurable normal RAM (MemTotal > 0)."""
+
+    root = Path("/sys/devices/system/node")
+    online_text = (root / "online").read_text(encoding="ascii").strip()
+    online: set[int] = set()
+    for token in online_text.split(","):
+        if not token:
+            raise OSError("NUMA online-node list is empty or malformed")
+        bounds = token.split("-", 1)
+        if len(bounds) == 1:
+            if not bounds[0].isdigit():
+                raise OSError("NUMA online-node list is malformed")
+            online.add(int(bounds[0]))
+            continue
+        if (
+            not bounds[0].isdigit()
+            or not bounds[1].isdigit()
+            or int(bounds[1]) < int(bounds[0])
+        ):
+            raise OSError("NUMA online-node range is malformed")
+        online.update(range(int(bounds[0]), int(bounds[1]) + 1))
+    if not online:
+        raise OSError("NUMA online-node list is empty")
+    nodes: list[int] = []
+    for node in sorted(online):
+        node_path = root / f"node{node}"
+        if not node_path.is_dir():
+            raise OSError(f"online NUMA node {node} is not present")
+        rows = [
+            line.split(":", 1)[1].split()
+            for line in (node_path / "meminfo").read_text(encoding="ascii").splitlines()
+            if line.startswith(f"Node {node} MemTotal:")
+        ]
+        if len(rows) != 1 or len(rows[0]) != 2 or rows[0][1] != "kB":
+            raise OSError(f"NUMA node {node} MemTotal is unavailable or malformed")
+        if int(rows[0][0]) > 0:
+            nodes.append(node)
+    if not nodes:
+        raise OSError("host has no measurable normal RAM NUMA nodes")
+    return nodes
 
 
 def effective_memory_limit(

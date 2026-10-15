@@ -479,6 +479,30 @@ TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES = 412316860416
 TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES = 72 * 2**30
 TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES = 80 * 2**30
 TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES = 8 * 2**30
+TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY = "task041_v16_memavailable_phase_v1"
+TASK041_V16_MEMORY_AUTHORITY_SCHEMA = "task041.kernel_memavailable.v1"
+TASK041_V16_RESOURCE_HEADROOM_POLICY = MappingProxyType(
+    {
+        "schema": "task041.v16.memavailable_phase_resource.v1",
+        "authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        "host_available_field": "host_memavailable_bytes",
+        "host_available_unit": "bytes_from_kernel_meminfo_kib",
+        "reserve_bytes": TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        "cap_bytes": TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        "warning_bytes": TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
+        "workspace_reserve_bytes": TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
+        "initial_minimum_bytes": (
+            TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+            + TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+        ),
+        "phase_job_formula": "max(tree_rss,cgroup_current)+Delta+W<=cap",
+        "phase_host_formula": "MemAvailable>=reserve+Delta+W",
+        "phase_ancestor_formula": "each_finite_ancestor_headroom>=Delta+W",
+        "normal_ram_scope": "system_default_unbound_all_normal_memory_nodes",
+        "memfree_semantics": "observation_only",
+        "swap_semantics": "observe_only_continue",
+    }
+)
 TASK041_BALH_CELL_CONDENSED_LEDGER_FILENAME = "r1_load_ledger_20260920.json"
 TASK041_BALH_CELL_CONDENSED_CONSTRUCTION_VERSION = "reference_entity_trace_v1"
 TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID = (
@@ -976,6 +1000,630 @@ def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
             else "independent 2 nm case accounting; no V2 batch or phase budget"
         ),
     }
+
+
+def task041_v16_memory_scope_errors(
+    *,
+    requested_memory_policy: Any,
+    task_policy: Any,
+    allowed_nodes: Any,
+    effective_nodes: Any,
+    normal_ram_nodes: Any,
+) -> list[str]:
+    """Check the request separately from get_mempolicy's measured vocabulary."""
+
+    errors: list[str] = []
+
+    def nodes(value: Any) -> list[int] | None:
+        if (
+            not isinstance(value, list)
+            or not value
+            or any(type(node) is not int or node < 0 for node in value)
+            or value != sorted(set(value))
+        ):
+            return None
+        return list(value)
+
+    allowed = nodes(allowed_nodes)
+    effective = nodes(effective_nodes)
+    normal = nodes(normal_ram_nodes)
+    if requested_memory_policy != "system_default_unbound":
+        errors.append("requested_memory_policy_is_not_system_default_unbound")
+    if (
+        not isinstance(task_policy, Mapping)
+        or task_policy.get("status") != "measured"
+        or task_policy.get("policy") != "default"
+        or type(task_policy.get("mode")) is not int
+        or task_policy.get("mode") != 0
+    ):
+        errors.append("measured_task_policy_is_not_default_mode_zero")
+    if normal is None:
+        errors.append("normal_ram_nodes_are_missing_or_invalid")
+    if allowed is None or effective is None:
+        errors.append("allowed_or_effective_memory_nodes_are_missing_or_invalid")
+    elif normal is not None and (allowed != normal or effective != normal):
+        errors.append("rank_memory_scope_does_not_cover_all_normal_ram_nodes")
+    return errors
+
+
+def task041_v16_rank_memory_scope_errors(
+    *,
+    rank_rows: Any,
+    expected_rank_pids: Any,
+    requested_memory_policy: Any,
+    normal_ram_nodes: Any,
+) -> list[str]:
+    """Validate same-sample per-rank policy, scope, cgroup, and PID evidence."""
+
+    errors: list[str] = []
+    if (
+        not isinstance(expected_rank_pids, list)
+        or not expected_rank_pids
+        or any(type(pid) is not int or pid <= 0 for pid in expected_rank_pids)
+        or len(set(expected_rank_pids)) != len(expected_rank_pids)
+    ):
+        return ["expected_rank_PID_set_is_missing_or_invalid"]
+    if (
+        not isinstance(rank_rows, list)
+        or len(rank_rows) != len(expected_rank_pids)
+    ):
+        return ["rank_memory_scope_rows_are_missing_or_incomplete"]
+    for rank, (row, expected_pid) in enumerate(zip(rank_rows, expected_rank_pids)):
+        prefix = f"rank_{rank}_"
+        if (
+            not isinstance(row, Mapping)
+            or type(row.get("rank")) is not int
+            or row.get("rank") != rank
+            or row.get("collective_status") != "measured"
+            or row.get("rank_error") is not None
+        ):
+            errors.append(prefix + "rank_snapshot_is_not_measured")
+            continue
+        evidence = row.get("evidence")
+        identity = (
+            evidence.get("rank_identity") if isinstance(evidence, Mapping) else None
+        )
+        if (
+            not isinstance(evidence, Mapping)
+            or evidence.get("schema") != "task041.rank_numa_snapshot.v1"
+            or not isinstance(identity, Mapping)
+            or type(identity.get("pid")) is not int
+            or identity.get("pid") <= 0
+            or identity.get("pid") != expected_pid
+        ):
+            errors.append(prefix + "rank_snapshot_identity_does_not_match_PID")
+        memory_scope = evidence.get("memory_scope") if isinstance(evidence, Mapping) else None
+        if (
+            not isinstance(memory_scope, Mapping)
+            or memory_scope.get("status") != "measured"
+            or memory_scope.get("pass") is not True
+            or memory_scope.get("allowed_nodes_match") is not True
+            or memory_scope.get("cgroup_identity_stable") is not True
+            or not isinstance(memory_scope.get("cgroup_identity_before"), Mapping)
+            or not memory_scope.get("cgroup_identity_before")
+            or memory_scope.get("cgroup_identity_before")
+            != memory_scope.get("cgroup_identity_after")
+        ):
+            errors.append(prefix + "rank_memory_scope_or_cgroup_identity_is_invalid")
+        errors.extend(
+            prefix + item
+            for item in task041_v16_memory_scope_errors(
+                requested_memory_policy=requested_memory_policy,
+                task_policy=(
+                    evidence.get("task_policy")
+                    if isinstance(evidence, Mapping)
+                    else None
+                ),
+                allowed_nodes=(
+                    memory_scope.get("proc_allowed_nodes")
+                    if isinstance(memory_scope, Mapping)
+                    else None
+                ),
+                effective_nodes=(
+                    memory_scope.get("effective_nodes")
+                    if isinstance(memory_scope, Mapping)
+                    else None
+                ),
+                normal_ram_nodes=normal_ram_nodes,
+            )
+        )
+    return errors
+
+
+def task041_v16_initial_memory_gate(
+    *,
+    memavailable_bytes: Any,
+    cap_bytes: Any = TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+    reserve_bytes: Any = TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+) -> dict[str, Any]:
+    """Recompute the initial kernel-MemAvailable floor; MemFree is not a gate."""
+
+    expected_cap = TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+    expected_reserve = TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+    available_known = type(memavailable_bytes) is int and memavailable_bytes >= 0
+    contract_matches = (
+        type(cap_bytes) is int
+        and cap_bytes == expected_cap
+        and type(reserve_bytes) is int
+        and reserve_bytes == expected_reserve
+    )
+    minimum = expected_cap + expected_reserve
+    available = memavailable_bytes if available_known else None
+    passed = bool(
+        contract_matches
+        and available_known
+        and available is not None
+        and available >= minimum
+    )
+    errors = []
+    if not contract_matches:
+        errors.append("V16_cap_or_reserve_contract_mismatch")
+    if not available_known:
+        errors.append("kernel_MemAvailable_bytes_missing_or_invalid")
+    elif available < minimum:
+        errors.append("kernel_MemAvailable_below_reserve_plus_cap")
+    return {
+        "schema": "task041.v16.initial_memavailable_gate.v1",
+        "status": "measured" if available_known else "unknown",
+        "pass": passed,
+        "authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        "memavailable_bytes": available,
+        "reserve_bytes": expected_reserve,
+        "cap_bytes": expected_cap,
+        "minimum_bytes": minimum,
+        "aggregate_memfree_semantics": "observation_only",
+        "node0_memfree_semantics": "observation_only",
+        "node1_memfree_semantics": "observation_only",
+        "errors": errors,
+    }
+
+
+def task041_v16_phase_memory_gate(
+    *,
+    tree_rss_bytes: Any,
+    cgroup_current_bytes: Any,
+    phase_additional_bytes: Any,
+    memavailable_bytes: Any,
+    ancestor_limit_state: Any,
+    ancestor_memory: Any,
+    cap_bytes: Any = TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+    reserve_bytes: Any = TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+    workspace_reserve_bytes: Any = TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
+) -> dict[str, Any]:
+    """Apply V16 resident, host and per-finite-ancestor phase inequalities."""
+
+    expected = (
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
+    )
+    supplied = (cap_bytes, reserve_bytes, workspace_reserve_bytes)
+    contract_matches = all(
+        type(got) is int and got == want
+        for got, want in zip(supplied, expected)
+    )
+    inputs = (
+        tree_rss_bytes,
+        cgroup_current_bytes,
+        phase_additional_bytes,
+        memavailable_bytes,
+    )
+    inputs_known = all(type(value) is int and value >= 0 for value in inputs)
+    tree_rss = tree_rss_bytes if type(tree_rss_bytes) is int and tree_rss_bytes >= 0 else None
+    cgroup_current = (
+        cgroup_current_bytes
+        if type(cgroup_current_bytes) is int and cgroup_current_bytes >= 0
+        else None
+    )
+    delta = (
+        phase_additional_bytes
+        if type(phase_additional_bytes) is int and phase_additional_bytes >= 0
+        else None
+    )
+    available = (
+        memavailable_bytes
+        if type(memavailable_bytes) is int and memavailable_bytes >= 0
+        else None
+    )
+    resident = (
+        max(tree_rss, cgroup_current)
+        if tree_rss is not None and cgroup_current is not None
+        else None
+    )
+    phase_headroom = delta + expected[2] if delta is not None else None
+    projected_job = (
+        resident + phase_headroom
+        if resident is not None and phase_headroom is not None
+        else None
+    )
+    minimum_host = expected[1] + phase_headroom if phase_headroom is not None else None
+
+    ancestor_rows = ancestor_memory if isinstance(ancestor_memory, list) else None
+    finite_rows = (
+        [row for row in ancestor_rows if isinstance(row, Mapping) and row.get("memory_limit_state") == "finite"]
+        if ancestor_rows is not None
+        else []
+    )
+    invalid_ancestor_rows = not ancestor_rows or any(
+        not isinstance(row, Mapping)
+        or row.get("memory_limit_state") not in {
+            "finite",
+            "max_or_unlimited",
+            "not_applicable_root",
+        }
+        or (
+            row.get("memory_limit_state") == "finite"
+            and (
+                type(row.get("memory_headroom_bytes")) is not int
+                or row["memory_headroom_bytes"] < 0
+            )
+        )
+        for row in (ancestor_rows or [])
+    )
+    non_finite_rows = [
+        row
+        for row in (ancestor_rows or [])
+        if isinstance(row, Mapping)
+        and row.get("memory_limit_state") in {"max_or_unlimited", "not_applicable_root"}
+    ]
+    state_matches_rows = bool(
+        (ancestor_limit_state == "finite" and finite_rows)
+        or (
+            ancestor_limit_state == "max_or_unlimited"
+            and not finite_rows
+            and any(row.get("memory_limit_state") == "max_or_unlimited" for row in non_finite_rows)
+        )
+        or (
+            ancestor_limit_state == "not_applicable_root"
+            and not finite_rows
+            and all(row.get("memory_limit_state") == "not_applicable_root" for row in non_finite_rows)
+        )
+    )
+    ancestor_check = bool(
+        not invalid_ancestor_rows
+        and state_matches_rows
+        and (
+            not finite_rows
+            or phase_headroom is not None
+            and all(
+                row["memory_headroom_bytes"] >= phase_headroom
+                for row in finite_rows
+            )
+        )
+    )
+    job_check = bool(
+        contract_matches
+        and resident is not None
+        and projected_job is not None
+        and projected_job <= expected[0]
+    )
+    host_check = bool(
+        contract_matches
+        and available is not None
+        and minimum_host is not None
+        and available >= minimum_host
+    )
+    errors = []
+    if not contract_matches:
+        errors.append("V16_cap_reserve_or_W_contract_mismatch")
+    if not inputs_known:
+        errors.append("resident_Delta_or_MemAvailable_input_missing_or_invalid")
+    if not job_check:
+        errors.append("resident_J_plus_Delta_plus_W_exceeds_cap_or_is_unknown")
+    if not host_check:
+        errors.append("MemAvailable_below_reserve_plus_Delta_plus_W_or_unknown")
+    if not ancestor_check:
+        errors.append("finite_ancestor_headroom_below_Delta_plus_W_or_unknown")
+    return {
+        "schema": "task041.v16.phase_memavailable_gate.v1",
+        "status": "passed" if not errors else "refused",
+        "pass": not errors,
+        "authority_schema": TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+        "resident_J_bytes": resident,
+        "tree_rss_bytes": tree_rss,
+        "dedicated_cgroup_current_bytes": cgroup_current,
+        "phase_additional_Delta_bytes": delta,
+        "workspace_W_bytes": expected[2],
+        "projected_J_plus_Delta_plus_W_bytes": projected_job,
+        "cap_bytes": expected[0],
+        "MemAvailable_bytes": available,
+        "required_MemAvailable_bytes": minimum_host,
+        "reserve_bytes": expected[1],
+        "ancestor_required_headroom_bytes": phase_headroom,
+        "ancestor_limit_state": ancestor_limit_state,
+        "finite_ancestor_headrooms_bytes": [
+            row.get("memory_headroom_bytes") for row in finite_rows
+        ],
+        "external_resource_gates": {
+            "resident_cap": job_check,
+            "host_memavailable": host_check,
+            "finite_ancestor_headroom": ancestor_check,
+        },
+        "errors": errors,
+    }
+
+
+def task041_v16_outer_resource_contract_errors(
+    phase: Any,
+    report: Any,
+    response: Any,
+    *,
+    rank_count: Any,
+) -> list[str]:
+    """Recompute the V16 outer resource receipt from its sealed phase report."""
+
+    errors: list[str] = []
+    if (
+        not isinstance(report, Mapping)
+        or not isinstance(response, Mapping)
+        or type(rank_count) is not int
+        or rank_count <= 0
+    ):
+        return ["outer_report_response_or_rank_count_is_invalid"]
+    if phase not in {
+        "outer_restart32_workspace",
+        "outer_restart64_workspace",
+    }:
+        return ["outer_phase_is_not_a_registered_restart_workspace"]
+    expected_external = {
+        "bound_fresh_supervisor_sample",
+        "tree_cgroup_and_all_mpi_ranks",
+        "all_ranks_default_unbound_memory_scope",
+        "resident_cap",
+        "host_memavailable",
+        "finite_ancestor_headroom",
+        "case_cap_projection",
+        "sample_cost_contract",
+    }
+    projection = report.get("phase_memory_projection")
+    phase_reports = (
+        projection.get("phase_reports") if isinstance(projection, Mapping) else None
+    )
+    phase_totals = (
+        projection.get("phase_total_bytes") if isinstance(projection, Mapping) else None
+    )
+    if (
+        not isinstance(phase_reports, Mapping)
+        or not phase_reports
+        or not isinstance(phase_totals, Mapping)
+        or any(type(value) is not int or value < 0 for value in phase_totals.values())
+    ):
+        return ["phase_memory_projection_is_missing"]
+    recomputed_by_phase: dict[str, list[int]] = {}
+    recomputed_totals: dict[str, int] = {}
+    component_keys = (
+        "known_additional_bytes_by_rank",
+        "additional_temporary_bytes_by_rank",
+        "additional_replicated_bytes_by_rank",
+    )
+    for name, component in phase_reports.items():
+        if not isinstance(component, Mapping):
+            errors.append("phase_memory_component_is_malformed")
+            continue
+        arrays = [component.get(key) for key in component_keys]
+        if any(
+            not isinstance(values, list)
+            or len(values) != rank_count
+            or any(type(value) is not int or value < 0 for value in values)
+            for values in arrays
+        ):
+            errors.append("phase_memory_rank_vector_is_missing_or_invalid")
+            continue
+        additional = [sum(values[rank] for values in arrays) for rank in range(rank_count)]
+        if component.get("additional_bytes_by_rank") != additional:
+            errors.append("phase_memory_additional_vector_does_not_recompute")
+            continue
+        recomputed_by_phase[str(name)] = additional
+        recomputed_totals[str(name)] = sum(additional)
+    if (
+        errors
+        or not recomputed_totals
+        or dict(phase_totals) != recomputed_totals
+    ):
+        errors.append("phase_memory_totals_do_not_recompute")
+        return errors
+    selected_phase = max(recomputed_totals, key=recomputed_totals.get)
+    selected = phase_reports[selected_phase]
+    selected_additional = recomputed_by_phase[selected_phase]
+    target_restart = 32 if phase == "outer_restart32_workspace" else 64
+    payload = response.get("authority_receipt_payload")
+    external = response.get("external_resource_gates")
+    external_gates = external if isinstance(external, Mapping) else {}
+    if not isinstance(payload, Mapping):
+        return ["authority_receipt_payload_is_missing"]
+    try:
+        report_sha256 = sha256(
+            json.dumps(
+                dict(report), sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode()
+        ).hexdigest()
+    except (TypeError, ValueError, OverflowError):
+        report_sha256 = None
+    try:
+        receipt_sha256 = sha256(
+            json.dumps(
+                dict(payload), sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode()
+        ).hexdigest()
+    except (TypeError, ValueError, OverflowError):
+        receipt_sha256 = None
+    sample_age = response.get("sample_age_seconds")
+    sample_age_valid = bool(
+        type(sample_age) in (int, float)
+        and isfinite(float(sample_age))
+        and 0.0 <= float(sample_age) <= 2.0
+    )
+    if not sample_age_valid:
+        errors.append("fresh_supervisor_sample_age_is_missing_stale_or_invalid")
+    if (
+        report_sha256 is None
+        or response.get("request_sha256") != report_sha256
+        or payload.get("request_sha256") != report_sha256
+    ):
+        errors.append("outer_request_hash_does_not_match_report")
+    if (
+        receipt_sha256 is None
+        or response.get("authority_receipt_sha256") != receipt_sha256
+    ):
+        errors.append("outer_receipt_hash_does_not_match_payload")
+    if (
+        not isinstance(external, Mapping)
+        or set(external) != expected_external
+        or any(value is not True for value in external.values())
+    ):
+        errors.append("V16_external_resource_gates_are_incomplete_or_refused")
+    if (
+        response.get("resource_policy_schema")
+        != TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"]
+        or response.get("memory_authority_schema")
+        != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        or payload.get("resource_policy_schema")
+        != TASK041_V16_RESOURCE_HEADROOM_POLICY["schema"]
+        or payload.get("memory_authority_schema")
+        != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        or report.get("phase") != phase
+        or report.get("target_restart") != target_restart
+        or response.get("phase") != phase
+        or response.get("status") != "pass"
+        or response.get("decision") != "continue"
+        or projection.get("selected_phase") != selected_phase
+        or projection.get("selected_phase_payload_bytes") != sum(selected_additional)
+        or report.get("known_additional_bytes_by_rank")
+        != selected.get("known_additional_bytes_by_rank")
+        or report.get("additional_temporary_bytes_by_rank")
+        != selected.get("additional_temporary_bytes_by_rank")
+        or report.get("additional_replicated_bytes_by_rank")
+        != selected.get("additional_replicated_bytes_by_rank")
+        or response.get("selected_memory_phase") != selected_phase
+        or response.get("additional_bytes_by_rank") != selected_additional
+        or response.get("selected_memory_phase_payload_bytes")
+        != sum(selected_additional)
+        or response.get("additional_temporary_bytes_by_rank")
+        != selected.get("additional_temporary_bytes_by_rank")
+        or response.get("additional_replicated_bytes_by_rank")
+        != selected.get("additional_replicated_bytes_by_rank")
+    ):
+        errors.append("V16_response_does_not_bind_selected_phase_report")
+
+    normal_nodes = payload.get("normal_ram_nodes")
+    if (
+        not isinstance(normal_nodes, list)
+        or not normal_nodes
+        or any(type(node) is not int or node < 0 for node in normal_nodes)
+        or normal_nodes != sorted(set(normal_nodes))
+    ):
+        errors.append("V16_normal_RAM_node_scope_is_unknown_or_invalid")
+    memfree_observation = payload.get("memfree_observation")
+    if (
+        not isinstance(memfree_observation, Mapping)
+        or memfree_observation.get("schema") != "task041.memfree_observation.v1"
+        or memfree_observation.get("admission_semantics") != "observation_only"
+    ):
+        errors.append("MemFree_data_is_not_explicitly_observation_only")
+
+    rank_scope = payload.get("rank_memory_scope_evidence")
+    if (
+        not isinstance(rank_scope, Mapping)
+        or rank_scope.get("schema") != "task041.v16.outer_rank_memory_scope.v1"
+        or rank_scope.get("requested_memory_policy") != "system_default_unbound"
+        or rank_scope.get("normal_ram_nodes") != normal_nodes
+        or rank_scope.get("rank_pids") != payload.get("rank_pids")
+    ):
+        errors.append("same_sample_rank_memory_scope_binding_is_missing_or_mismatched")
+    else:
+        errors.extend(
+            "rank_scope_" + item
+            for item in task041_v16_rank_memory_scope_errors(
+                rank_rows=rank_scope.get("ranks"),
+                expected_rank_pids=payload.get("rank_pids"),
+                requested_memory_policy=rank_scope.get(
+                    "requested_memory_policy"
+                ),
+                normal_ram_nodes=rank_scope.get("normal_ram_nodes"),
+            )
+        )
+
+    cost = response.get("cost_assessment")
+    expected_cost_decision = (
+        "allow_initial_restart32_if_resource_gates_pass"
+        if target_restart == 32
+        else "allow_restart64_if_resource_gates_pass"
+    )
+    if (
+        not isinstance(cost, Mapping)
+        or cost.get("scope") != "outer_ksp_workspace_admission"
+        or cost.get("status") != "workspace_model_valid"
+        or cost.get("decision") != expected_cost_decision
+        or cost.get("target_restart") != target_restart
+        or cost.get("W_policy_reserve_bytes")
+        != TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES
+        or cost.get("target_is_elapsed_stop") is not False
+        or cost.get("reasons") != []
+    ):
+        errors.append("outer_workspace_cost_assessment_is_missing_or_mismatched")
+
+    gate = task041_v16_phase_memory_gate(
+        tree_rss_bytes=payload.get("tree_rss_bytes"),
+        cgroup_current_bytes=payload.get("dedicated_cgroup_current_bytes"),
+        phase_additional_bytes=payload.get("phase_additional_Delta_bytes"),
+        memavailable_bytes=payload.get("MemAvailable_bytes"),
+        ancestor_limit_state=payload.get("ancestor_limit_state"),
+        ancestor_memory=payload.get("ancestor_memory"),
+        cap_bytes=payload.get("cap_bytes"),
+        reserve_bytes=payload.get("reserve_bytes"),
+        workspace_reserve_bytes=payload.get("workspace_W_bytes"),
+    )
+    if (
+        payload.get("schema") != "task041.v16.outer_resource_receipt_payload.v2"
+        or payload.get("phase") != phase
+        or payload.get("request_sha256") != response.get("request_sha256")
+        or type(payload.get("sample_root_pid")) is not int
+        or payload.get("sample_root_pid") <= 0
+        or type(payload.get("root_pid")) is not int
+        or payload.get("root_pid") != payload.get("sample_root_pid")
+        or not isinstance(payload.get("invocation_id"), str)
+        or not payload.get("invocation_id")
+        or not isinstance(payload.get("source_sha"), str)
+        or len(payload.get("source_sha")) != 40
+        or any(
+            character not in "0123456789abcdef"
+            for character in payload.get("source_sha", "")
+        )
+        or not isinstance(payload.get("unit"), str)
+        or not payload.get("unit")
+        or not isinstance(payload.get("sample_row_sha256"), str)
+        or len(payload.get("sample_row_sha256")) != 64
+        or not isinstance(payload.get("rank_pids"), list)
+        or len(payload.get("rank_pids")) != rank_count
+        or any(type(pid) is not int or pid <= 0 for pid in payload.get("rank_pids", []))
+        or len(set(payload.get("rank_pids", []))) != rank_count
+        or response.get("rank_pids") != payload.get("rank_pids")
+        or response.get("root_pid") != payload.get("root_pid")
+        or response.get("sample_row_sha256") != payload.get("sample_row_sha256")
+        or response.get("invocation_id") != payload.get("invocation_id")
+        or response.get("source_sha") != payload.get("source_sha")
+        or response.get("unit") != payload.get("unit")
+        or payload.get("resource_B_bytes") != gate.get("resident_J_bytes")
+        or payload.get("phase_additional_Delta_bytes") != sum(selected_additional)
+        or response.get("fresh_job_authority_bytes") != gate.get("resident_J_bytes")
+        or response.get("tree_rss_bytes") != gate.get("tree_rss_bytes")
+        or response.get("cgroup_memory_current_bytes")
+        != gate.get("dedicated_cgroup_current_bytes")
+        or response.get("host_available_bytes") != gate.get("MemAvailable_bytes")
+        or response.get("cap_bytes") != gate.get("cap_bytes")
+        or response.get("floor_bytes") != gate.get("reserve_bytes")
+        or response.get("W_policy_reserve_bytes") != gate.get("workspace_W_bytes")
+        or response.get("projected_B_plus_delta_plus_W_bytes")
+        != gate.get("projected_J_plus_Delta_plus_W_bytes")
+        or payload.get("phase_resource_gate") != gate
+        or gate.get("pass") is not True
+        or external_gates.get("resident_cap") is not True
+        or external_gates.get("case_cap_projection") is not True
+        or external_gates.get("host_memavailable") is not True
+        or external_gates.get("finite_ancestor_headroom") is not True
+    ):
+        errors.append("V16_phase_resource_receipt_does_not_recompute")
+    return errors
 
 
 def task041_balh_workflow_limits(model_id: str) -> Mapping[str, Any]:
@@ -3986,6 +4634,9 @@ __all__ = [
     "TASK041_SHORTWAVE_WORKFLOW_LIMITS",
     "TASK041_SHORTWAVE_WORKFLOW_LIMITS_BY_MODEL_ID",
     "TASK041_TIMEOUT_SECONDS",
+    "TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY",
+    "TASK041_V16_MEMORY_AUTHORITY_SCHEMA",
+    "TASK041_V16_RESOURCE_HEADROOM_POLICY",
     "TASK041_WARNING_MEMORY_GIB",
     "InputError",
     "load_and_resolve",
@@ -4019,4 +4670,8 @@ __all__ = [
     "task041_shortwave_profile_errors",
     "task041_shortwave_timeout_scope",
     "task041_shortwave_workflow_limits",
+    "task041_v16_initial_memory_gate",
+    "task041_v16_memory_scope_errors",
+    "task041_v16_outer_resource_contract_errors",
+    "task041_v16_phase_memory_gate",
 ]

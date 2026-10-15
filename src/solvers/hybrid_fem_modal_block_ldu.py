@@ -1810,6 +1810,21 @@ def _task041_v13_outer_workspace_pass_resource_contract_valid(
 ) -> bool:
     """Recompute the frozen byte gate before accepting an outer-workspace pass."""
 
+    payload = response.get("authority_receipt_payload")
+    if (
+        response.get("resource_policy_schema")
+        == "task041.v16.memavailable_phase_resource.v1"
+        or isinstance(payload, Mapping)
+        and payload.get("schema") == "task041.v16.outer_resource_receipt_payload.v2"
+    ):
+        from ..io.input_validation import (
+            task041_v16_outer_resource_contract_errors,
+        )
+
+        return not task041_v16_outer_resource_contract_errors(
+            phase, report, response, rank_count=rank_count
+        )
+
     expected_restart = 32 if phase == "outer_restart32_workspace" else 64
     expected_external_keys = {
         "bound_fresh_supervisor_sample",

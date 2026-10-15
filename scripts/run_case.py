@@ -13,6 +13,7 @@ if str(_REPOSITORY_ROOT) not in sys.path:
 
 from src.io import dry_run_payload, load_and_resolve
 from src.io.input_loader import InputError
+from src.io.input_validation import TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -97,9 +98,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--task041-resource-policy",
-        choices=("task041_v8_swap_observe_continue",),
+        choices=(
+            "task041_v8_swap_observe_continue",
+            TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+        ),
         default=None,
-        help="opt into the Task041 V8 swap-observe-only resource policy",
+        help=(
+            "select the registered Task041 V8 swap-observation or V16 "
+            "kernel-MemAvailable policy"
+        ),
     )
     parser.add_argument(
         "--task041-fixed-h6-modal-gmres-research",
@@ -142,11 +149,11 @@ def main(argv: list[str] | None = None) -> int:
         resource_policy_binding = None
         if args.task041_resource_policy is not None:
             from benchmarks.task041_balh_workflow import (
-                task041_v8_resource_policy_binding,
+                task041_resource_policy_binding,
             )
 
             try:
-                resource_policy_binding = task041_v8_resource_policy_binding(
+                resource_policy_binding = task041_resource_policy_binding(
                     str(specification.identity.get("model_id", "")),
                     args.task041_resource_policy,
                 )

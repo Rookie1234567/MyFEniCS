@@ -31,7 +31,6 @@ from benchmarks.task041_balh_workflow import (
     TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
     TASK041_V13_MEMORY_POLICY,
     TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
-    TASK041_V13_RESOURCE_HEADROOM_POLICY,
     load_task041_representative_rhs_manifest,
     task041_is_explicit_p4_backend_pair,
     task041_p4_backend_pair_identity,
@@ -44,6 +43,8 @@ from src.io.input_validation import (
     TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_MPI_SIZE,
     TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+    TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
     task041_balh_case,
     task041_balh_phase_limits_for_model,
     task041_balh_service_contract,
@@ -78,6 +79,44 @@ SYSTEMD_FIELDS = (
 
 class Task041ServiceError(RuntimeError):
     """A missing or contradictory fixed service boundary record."""
+
+
+def _v16_initial_gate_matches(
+    gate: Any, *, expected_headroom_policy: Mapping[str, Any]
+) -> bool:
+    if not isinstance(gate, Mapping):
+        return False
+    available = gate.get("memavailable_bytes")
+    minimum = expected_headroom_policy.get("initial_minimum_bytes")
+    normal_nodes = gate.get("normal_ram_nodes")
+    memfree_observation = gate.get("memfree_observation")
+    return bool(
+        gate.get("schema") == "task041.v16.initial_memavailable_gate.v1"
+        and gate.get("status") == "passed"
+        and gate.get("pass") is True
+        and gate.get("authority_schema") == TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        and gate.get("memavailable_source_schema")
+        == TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+        and gate.get("memavailable_source_status") == "measured"
+        and gate.get("cap_bytes") == expected_headroom_policy.get("cap_bytes")
+        and gate.get("reserve_bytes") == expected_headroom_policy.get("reserve_bytes")
+        and gate.get("minimum_bytes") == minimum
+        and type(minimum) is int
+        and type(available) is int
+        and available >= minimum
+        and isinstance(normal_nodes, list)
+        and bool(normal_nodes)
+        and all(type(node) is int and node >= 0 for node in normal_nodes)
+        and normal_nodes == sorted(set(normal_nodes))
+        and gate.get("normal_ram_node_scope_status") == "measured"
+        and isinstance(memfree_observation, Mapping)
+        and memfree_observation.get("schema") == "task041.memfree_observation.v1"
+        and memfree_observation.get("admission_semantics") == "observation_only"
+        and gate.get("node0_memfree_semantics") == "observation_only"
+        and gate.get("node1_memfree_semantics") == "observation_only"
+        and gate.get("aggregate_memfree_semantics") == "observation_only"
+        and gate.get("errors") == []
+    )
 
 
 def bind_task041_output_roots(
@@ -268,9 +307,9 @@ def _fixed_h6_service_binding(
             TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
             TASK041_V13_MEMORY_POLICY,
             TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
-            TASK041_V13_RESOURCE_HEADROOM_POLICY,
             task041_fixed_h6_modal_gmres_binding,
             task041_parse_expected_rank_cpus,
+            task041_resource_headroom_policy,
         )
 
         command_cpus = task041_parse_expected_rank_cpus(command[cpu_position + 1])
@@ -302,12 +341,21 @@ def _fixed_h6_service_binding(
             requested_cpus = task041_parse_expected_rank_cpus(
                 configured_rank_cpus
             )
+            expected_headroom_policy = task041_resource_headroom_policy(
+                task041_resource_policy
+            )
             if (
                 config.get("memory_policy") != TASK041_V13_MEMORY_POLICY
                 or "membind_node" not in config
                 or config.get("membind_node") is not None
                 or config.get("resource_headroom_policy")
-                != TASK041_V13_RESOURCE_HEADROOM_POLICY
+                != expected_headroom_policy
+                or (
+                    task041_resource_policy
+                    == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+                    and config.get("memory_authority_schema")
+                    != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                )
                 or config.get("required_thread_environment")
                 != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
                 or any(
@@ -322,7 +370,13 @@ def _fixed_h6_service_binding(
                 or binding.get("required_thread_environment")
                 != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
                 or binding.get("resource_headroom_policy")
-                != TASK041_V13_RESOURCE_HEADROOM_POLICY
+                != expected_headroom_policy
+                or (
+                    task041_resource_policy
+                    == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+                    and binding.get("memory_authority_schema")
+                    != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                )
                 or requested_cpus is None
                 or binding.get("expected_rank_cpus") != list(requested_cpus)
             ):
@@ -560,6 +614,10 @@ def _service_contract(
             }
         if resource_policy_binding is not None:
             resolved_contract["task041_resource_policy"] = resource_policy_binding
+            if resource_policy_binding.get("policy") == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY:
+                resolved_contract["memory_authority_schema"] = (
+                    TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                )
         if fixed_h6_binding is not None:
             resolved_contract["fixed_h6_modal_gmres_research"] = fixed_h6_binding
             if configured_modal_feedback_method is not None:
@@ -579,7 +637,7 @@ def _service_contract(
                         "memory_policy": TASK041_V13_MEMORY_POLICY,
                         "membind_node": None,
                         "resource_headroom_policy": dict(
-                            TASK041_V13_RESOURCE_HEADROOM_POLICY
+                            fixed_h6_binding["resource_headroom_policy"]
                         ),
                         "required_thread_environment": dict(
                             TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
@@ -704,12 +762,10 @@ def _resource_policy_binding(
         raise Task041ServiceError(
             "public command resource policy does not match service config"
         )
-    from benchmarks.task041_balh_workflow import (
-        task041_v8_resource_policy_binding,
-    )
+    from benchmarks.task041_balh_workflow import task041_resource_policy_binding
 
     try:
-        binding = task041_v8_resource_policy_binding(model_id, configured)
+        binding = task041_resource_policy_binding(model_id, configured)
     except ValueError as exc:
         raise Task041ServiceError(str(exc)) from exc
     if not isinstance(binding, Mapping):
@@ -790,6 +846,46 @@ def _modal_solver_policy_matches_request(
     """Check policy against the actual consumer bound to this service invocation."""
 
     requested = contract.get("modal_solver_policy")
+    resource_binding = contract.get("task041_resource_policy")
+    v16_resource_policy = (
+        isinstance(resource_binding, Mapping)
+        and resource_binding.get("policy")
+        == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+    )
+    expected_headroom_policy = None
+    if resource_binding is None:
+        # The legacy no-modal-policy finalizer route has no resource-policy
+        # binding to resolve.  A modal-policy request without its sealed
+        # resource binding remains invalid.
+        if requested is not None:
+            return False
+    elif not isinstance(resource_binding, Mapping):
+        return False
+    else:
+        try:
+            from benchmarks.task041_balh_workflow import (
+                task041_resource_headroom_policy,
+                task041_resource_policy_binding,
+            )
+
+            policy_name = resource_binding.get("policy")
+            expected_resource_binding = task041_resource_policy_binding(
+                str(contract.get("model_id", "")), policy_name
+            )
+            expected_headroom_policy = task041_resource_headroom_policy(
+                policy_name
+            )
+        except (TypeError, ValueError):
+            return False
+        if (
+            not isinstance(expected_resource_binding, Mapping)
+            or dict(resource_binding) != dict(expected_resource_binding)
+            or (
+                v16_resource_policy
+                and requested != TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+            )
+        ):
+            return False
     if not isinstance(public_result, Mapping):
         return False
 
@@ -868,7 +964,7 @@ def _modal_solver_policy_matches_request(
                         or "membind_node" not in public_result
                         or public_result.get("membind_node") is not None
                         or public_result.get("resource_headroom_policy")
-                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                        != expected_headroom_policy
                         or public_result.get("required_thread_environment")
                         != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
                         or public_result.get("environment_threads")
@@ -878,11 +974,21 @@ def _modal_solver_policy_matches_request(
                         or "membind_node" not in launch_manifest
                         or launch_manifest.get("membind_node") is not None
                         or launch_manifest.get("resource_headroom_policy")
-                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                        != expected_headroom_policy
+                        or (
+                            v16_resource_policy
+                            and launch_manifest.get("memory_authority_schema")
+                            != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                        )
                         or launch_manifest.get("required_thread_environment")
                         != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
                         or launch_manifest.get("parent_environment_threads")
                         != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                        or (
+                            v16_resource_policy
+                            and public_result.get("memory_authority_schema")
+                            != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                        )
                     )
                 )
                 or Path(str(public_phase.get("stdout", ""))).resolve()
@@ -900,11 +1006,16 @@ def _modal_solver_policy_matches_request(
                 or "membind_node" not in public_stdout
                 or public_stdout.get("membind_node") is not None
                 or public_stdout.get("resource_headroom_policy")
-                != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                != expected_headroom_policy
                 or public_stdout.get("required_thread_environment")
                 != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
                 or public_stdout.get("environment_threads")
                 != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                or (
+                    v16_resource_policy
+                    and public_stdout.get("memory_authority_schema")
+                    != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                )
             ):
                 return False
             inner_root_value = public_stdout.get("run_directory")
@@ -942,36 +1053,101 @@ def _modal_solver_policy_matches_request(
             fixed_binding = contract.get("fixed_h6_modal_gmres_research")
             if not isinstance(fixed_binding, Mapping):
                 return False
-            owned_session_cleanup = None
-            if requested == "task041_v13_consistent_fixed_balh_modal_surrogate":
-                initial_gate = inner_supervisor.get(
-                    "v13_initial_aggregate_resource_gate"
+            resource_binding = contract.get("task041_resource_policy")
+            try:
+                from benchmarks.task041_balh_workflow import (
+                    task041_resource_headroom_policy,
                 )
+
+                expected_headroom_policy = task041_resource_headroom_policy(
+                    resource_binding.get("policy")
+                    if isinstance(resource_binding, Mapping)
+                    else None
+                )
+            except ValueError:
+                return False
+            v16_resource_policy = (
+                isinstance(resource_binding, Mapping)
+                and resource_binding.get("policy")
+                == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+            )
+            if v16_resource_policy:
+                expected_resource_binding = dict(resource_binding)
                 if (
-                    not isinstance(initial_gate, Mapping)
-                    or initial_gate.get("schema")
-                    != "task041.v13.initial_aggregate_resource_gate.v1"
-                    or initial_gate.get("status") != "measured"
-                    or initial_gate.get("pass") is not True
-                    or type(initial_gate.get("node0_memfree_bytes")) is not int
-                    or type(initial_gate.get("node1_memfree_bytes")) is not int
-                    or type(initial_gate.get("aggregate_memfree_bytes")) is not int
-                    or initial_gate.get("aggregate_memfree_bytes")
-                    != initial_gate["node0_memfree_bytes"]
-                    + initial_gate["node1_memfree_bytes"]
-                    or initial_gate.get("aggregate_reserve_bytes") != 384 * 2**30
-                    or initial_gate.get("initial_aggregate_memfree_minimum_bytes")
-                    != 464 * 2**30
-                    or initial_gate.get("initial_node1_memfree_minimum_bytes")
-                    != 80 * 2**30
-                    or initial_gate["aggregate_memfree_bytes"] < 464 * 2**30
-                    or initial_gate["node1_memfree_bytes"] < 80 * 2**30
-                    or initial_gate.get(
-                        "node1_is_availability_only_not_memory_binding"
-                    )
-                    is not True
+                    expected_resource_binding.get("memory_authority_schema")
+                    != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                    or expected_resource_binding.get("resource_headroom_policy")
+                    != expected_headroom_policy
+                    or contract.get("task041_resource_policy")
+                    != expected_resource_binding
+                    or launch_manifest.get("task041_resource_policy")
+                    != expected_resource_binding
+                    or launch_manifest.get("memory_authority_schema")
+                    != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                    or public_result.get("task041_resource_policy")
+                    != expected_resource_binding
+                    or public_result.get("memory_authority_schema")
+                    != TASK041_V16_MEMORY_AUTHORITY_SCHEMA
                 ):
                     return False
+
+                def v16_document_matches(value: Any) -> bool:
+                    return bool(
+                        isinstance(value, Mapping)
+                        and value.get("task041_resource_policy")
+                        == expected_resource_binding
+                        and value.get("memory_authority_schema")
+                        == TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                        and value.get("resource_headroom_policy")
+                        == expected_headroom_policy
+                    )
+
+            else:
+                expected_resource_binding = None
+
+                def v16_document_matches(_value: Any) -> bool:
+                    return True
+
+            owned_session_cleanup = None
+            if requested == "task041_v13_consistent_fixed_balh_modal_surrogate":
+                if v16_resource_policy:
+                    initial_gate = inner_supervisor.get(
+                        "v16_initial_memavailable_gate"
+                    )
+                    if not _v16_initial_gate_matches(
+                        initial_gate,
+                        expected_headroom_policy=expected_headroom_policy,
+                    ):
+                        return False
+                else:
+                    initial_gate = inner_supervisor.get(
+                        "v13_initial_aggregate_resource_gate"
+                    )
+                    if (
+                        not isinstance(initial_gate, Mapping)
+                        or initial_gate.get("schema")
+                        != "task041.v13.initial_aggregate_resource_gate.v1"
+                        or initial_gate.get("status") != "measured"
+                        or initial_gate.get("pass") is not True
+                        or type(initial_gate.get("node0_memfree_bytes")) is not int
+                        or type(initial_gate.get("node1_memfree_bytes")) is not int
+                        or type(initial_gate.get("aggregate_memfree_bytes")) is not int
+                        or initial_gate.get("aggregate_memfree_bytes")
+                        != initial_gate["node0_memfree_bytes"]
+                        + initial_gate["node1_memfree_bytes"]
+                        or initial_gate.get("aggregate_reserve_bytes") != 384 * 2**30
+                        or initial_gate.get("initial_aggregate_memfree_minimum_bytes")
+                        != 464 * 2**30
+                        or initial_gate.get("initial_node1_memfree_minimum_bytes")
+                        != 80 * 2**30
+                        or initial_gate["aggregate_memfree_bytes"] < 464 * 2**30
+                        or initial_gate["node1_memfree_bytes"] < 80 * 2**30
+                        or initial_gate.get(
+                            "node1_is_availability_only_not_memory_binding"
+                        )
+                        is not True
+                    ):
+                        return False
                 phase_results = inner_supervisor.get("phase_results")
                 consumer_phase = (
                     phase_results.get("consumer")
@@ -1043,7 +1219,7 @@ def _modal_solver_policy_matches_request(
                     and "membind_node" in value
                     and value.get("membind_node") is None
                     and value.get("resource_headroom_policy")
-                    == dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                    == expected_headroom_policy
                     and value.get("required_thread_environment")
                     == dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
                 )
@@ -1070,6 +1246,7 @@ def _modal_solver_policy_matches_request(
                     or document.get("modal_solver_policy") != requested
                     or document.get("fixed_h6_modal_gmres_research")
                     != dict(fixed_binding)
+                    or not v16_document_matches(document)
                     or not supervision_record_matches(
                         document.get("supervision_record")
                     )
@@ -1090,6 +1267,8 @@ def _modal_solver_policy_matches_request(
             if (
                 not registered_resource_contract_matches(inner_contract)
                 or not registered_resource_contract_matches(supervisor_contract)
+                or not v16_document_matches(inner_contract)
+                or not v16_document_matches(supervisor_contract)
                 or (
                     requested == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
                     and (
@@ -1111,7 +1290,7 @@ def _modal_solver_policy_matches_request(
                         or "membind_node" not in document
                         or document.get("membind_node") is not None
                         or document.get("resource_headroom_policy")
-                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                        != expected_headroom_policy
                         or document.get("required_thread_environment")
                         != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
                         or document.get("environment_threads")
@@ -1156,6 +1335,7 @@ def _modal_solver_policy_matches_request(
                 or consumer_summary.get("modal_solver_policy") != requested
                 or consumer_summary.get("fixed_h6_modal_gmres_research")
                 != dict(fixed_binding)
+                or not v16_document_matches(consumer_summary)
                 or (
                     requested == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
                     and (
@@ -1168,7 +1348,7 @@ def _modal_solver_policy_matches_request(
                         or consumer_summary.get("required_thread_environment")
                         != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
                         or consumer_summary.get("resource_headroom_policy")
-                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                        != expected_headroom_policy
                     )
                 )
             ):
@@ -1909,12 +2089,20 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
                 "memory_policy": TASK041_V13_MEMORY_POLICY,
                 "membind_node": None,
                 "resource_headroom_policy": dict(
-                    TASK041_V13_RESOURCE_HEADROOM_POLICY
+                    fixed_h6_binding["resource_headroom_policy"]
                 ),
                 "required_thread_environment": required_threads,
                 "parent_environment_threads": observed_parent_threads,
             }
         )
+        if (
+            isinstance(resource_policy_binding, Mapping)
+            and resource_policy_binding.get("policy")
+            == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+        ):
+            launch["memory_authority_schema"] = (
+                TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+            )
     if contract.get("compute_wall_unlimited") is True:
         launch["contract_kind"] = contract["contract_kind"]
         if contract.get("case_id") is not None:
@@ -2331,7 +2519,9 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
                             "memory_policy": TASK041_V13_MEMORY_POLICY,
                             "membind_node": None,
                             "resource_headroom_policy": dict(
-                                TASK041_V13_RESOURCE_HEADROOM_POLICY
+                                contract["fixed_h6_modal_gmres_research"][
+                                    "resource_headroom_policy"
+                                ]
                             ),
                             "required_thread_environment": dict(
                                 TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
@@ -2341,6 +2531,14 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
                             ),
                         }
                     )
+                    if (
+                        isinstance(resource_policy_binding, Mapping)
+                        and resource_policy_binding.get("policy")
+                        == TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+                    ):
+                        expected["memory_authority_schema"] = (
+                            TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                        )
             elif "modal_solver_policy" in launch:
                 raise Task041ServiceError(
                     "service launch declares an unrequested modal solver policy"

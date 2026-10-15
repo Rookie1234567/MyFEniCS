@@ -5400,8 +5400,10 @@ def _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
         exact_solution = layout.create_vector()
         outer_rhs = original_operator.createVecLeft()
         outer_solution = original_operator.createVecRight()
+        outer_build_solution_scratch = original_operator.createVecRight()
         outer_residual = outer_rhs.duplicate()
         outer_ksp = PETSc.KSP().create(comm)
+        build_solution_probe_rows: list[dict[str, Any]] = []
 
         class BorrowedV13BlockLduPc:
             def apply(self, _pc, pc_source, pc_target):
@@ -5411,6 +5413,247 @@ def _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                 return None
 
         outer_pc_context = BorrowedV13BlockLduPc()
+
+        def capture_build_solution_capability(
+            current_ksp, iteration: int, reported_rnorm: float
+        ) -> None:
+            del reported_rnorm
+            if int(iteration) != 1 or build_solution_probe_rows:
+                return
+            try:
+                build_solution = getattr(current_ksp, "buildSolution", None)
+                local_availability = {
+                    "rank": int(comm.rank),
+                    "callable": callable(build_solution),
+                    "lookup_error": None,
+                }
+            except Exception as lookup_error:  # noqa: BLE001 - noncollective method lookup
+                build_solution = None
+                local_availability = {
+                    "rank": int(comm.rank),
+                    "callable": False,
+                    "lookup_error": {
+                        "type": type(lookup_error).__name__,
+                        "message": str(lookup_error)[:320],
+                    },
+                }
+            availability_by_rank = comm.allgather(local_availability)
+            callable_states = [bool(row["callable"]) for row in availability_by_rank]
+            if (
+                any(row["lookup_error"] for row in availability_by_rank)
+                or len(set(callable_states)) != 1
+            ):
+                raise AssertionError(
+                    "synthetic buildSolution availability differs before call: "
+                    + json.dumps(availability_by_rank, sort_keys=True)
+                )
+            if not callable_states[0]:
+                build_solution_probe_rows.append(
+                    {
+                        "rank": int(comm.rank),
+                        "iteration": int(iteration),
+                        "status": "unavailable",
+                        "call_attempted": False,
+                        "reason": "no_callable_buildSolution_before_call",
+                        "reported_norm_semantics": (
+                            "PETSc reported KSP norm; not an independent true residual"
+                        ),
+                    }
+                )
+                return
+
+            original_A_matmult_before = int(
+                original_a_context._matmult_call_count
+            )
+            pc_apply_count_before = int(context._pc_apply_count)
+            pc_apply_attempt_count_before = int(
+                context._pc_apply_attempt_count
+            )
+            capture_request_clear_before = (
+                original_a_context._v13_modal_row_capture_request is None
+            )
+            capture_result_clear_before = (
+                original_a_context._v13_modal_row_capture_result is None
+            )
+            sentinel = PETSc.ScalarType(12345.0 + 6789.0j)
+            outer_build_solution_scratch.set(sentinel)
+            preparation_error = None
+            try:
+                rhs_before_local = np.asarray(
+                    outer_rhs.getArray(readonly=True)
+                ).copy()
+                output_before_local = np.asarray(
+                    outer_solution.getArray(readonly=True)
+                ).copy()
+                scratch_before_local = np.asarray(
+                    outer_build_solution_scratch.getArray(readonly=True)
+                ).copy()
+            except Exception as local_preparation_error:  # noqa: BLE001 - local reads precede buildSolution
+                preparation_error = {
+                    "type": type(local_preparation_error).__name__,
+                    "message": str(local_preparation_error)[:320],
+                }
+                rhs_before_local = np.empty(0, dtype=np.complex128)
+                output_before_local = np.empty(0, dtype=np.complex128)
+                scratch_before_local = np.empty(0, dtype=np.complex128)
+            preparation_by_rank = comm.allgather(
+                {
+                    "rank": int(comm.rank),
+                    "status": (
+                        "ready" if preparation_error is None else "local_error"
+                    ),
+                    "error": preparation_error,
+                }
+            )
+            if any(row.get("status") != "ready" for row in preparation_by_rank):
+                raise AssertionError(
+                    "synthetic buildSolution local preparation failed: "
+                    + json.dumps(preparation_by_rank, sort_keys=True)
+                )
+            try:
+                returned = build_solution(outer_build_solution_scratch)
+            except BaseException as probe_error:  # local receipt only, then preserve original
+                probe_row = {
+                    "rank": int(comm.rank),
+                    "iteration": int(iteration),
+                    "status": "buildSolution_exception",
+                    "error_type": type(probe_error).__name__,
+                    "error_message": str(probe_error)[:320],
+                    "call_attempted": True,
+                    "other_rank_status": "not_claimed",
+                }
+                probe_path = evidence_root / (
+                    "TASK041_V16_BUILD_SOLUTION_CAPABILITY_ERROR_"
+                    f"rank-{comm.rank}.json"
+                )
+                try:
+                    probe_path.parent.mkdir(parents=True, exist_ok=True)
+                    if probe_path.exists():
+                        raise FileExistsError(str(probe_path))
+                    probe_path.write_text(
+                        json.dumps(probe_row, sort_keys=True, indent=2) + "\n",
+                        encoding="utf-8",
+                    )
+                    probe_error.add_note(
+                        "secondary local capability receipt: " + str(probe_path)
+                    )
+                except Exception as receipt_error:  # noqa: BLE001 - secondary only
+                    try:
+                        probe_error.add_note(
+                            "capability error receipt also failed: "
+                            + type(receipt_error).__name__
+                        )
+                    except Exception:  # noqa: BLE001, S110
+                        pass
+                raise
+
+            try:
+                returned_handle = getattr(returned, "handle", None)
+                scratch_handle = int(outer_build_solution_scratch.handle)
+                scratch_after = np.asarray(
+                    outer_build_solution_scratch.getArray(readonly=True)
+                ).copy()
+                probe_row = {
+                    "rank": int(comm.rank),
+                    "iteration": int(iteration),
+                    "status": "supported",
+                    "call_attempted": True,
+                    "reported_norm_semantics": (
+                        "PETSc reported KSP norm; not an independent true residual"
+                    ),
+                    "returned_none": returned is None,
+                    "returned_is_scratch": (
+                        returned is outer_build_solution_scratch
+                    ),
+                    "returned_handle": (
+                        None if returned_handle is None else int(returned_handle)
+                    ),
+                    "scratch_handle": scratch_handle,
+                    "returned_uses_scratch": (
+                        returned is None
+                        or returned is outer_build_solution_scratch
+                        or (
+                            returned_handle is not None
+                            and int(returned_handle) == scratch_handle
+                        )
+                    ),
+                    "scratch_is_ksp_solution": (
+                        scratch_handle == int(outer_solution.handle)
+                    ),
+                    "scratch_is_rhs": scratch_handle == int(outer_rhs.handle),
+                    "scratch_changed_from_sentinel": not np.array_equal(
+                        scratch_after, scratch_before_local
+                    ),
+                    "scratch_finite": bool(np.isfinite(scratch_after).all()),
+                    "rhs_unchanged": np.array_equal(
+                        np.asarray(outer_rhs.getArray(readonly=True)),
+                        rhs_before_local,
+                    ),
+                    "ksp_solution_unchanged": np.array_equal(
+                        np.asarray(outer_solution.getArray(readonly=True)),
+                        output_before_local,
+                    ),
+                    "pc_apply_count_before": pc_apply_count_before,
+                    "pc_apply_count_after": int(context._pc_apply_count),
+                    "pc_apply_attempt_count_before": (
+                        pc_apply_attempt_count_before
+                    ),
+                    "pc_apply_attempt_count_after": int(
+                        context._pc_apply_attempt_count
+                    ),
+                    "original_A_matmult_delta": (
+                        int(original_a_context._matmult_call_count)
+                        - original_A_matmult_before
+                    ),
+                    "capture_request_clear_before": (
+                        capture_request_clear_before
+                    ),
+                    "capture_request_clear_after": (
+                        original_a_context._v13_modal_row_capture_request is None
+                    ),
+                    "capture_result_clear_before": (
+                        capture_result_clear_before
+                    ),
+                    "capture_result_clear_after": (
+                        original_a_context._v13_modal_row_capture_result is None
+                    ),
+                }
+                probe_row["status"] = (
+                    "supported"
+                    if probe_row["returned_uses_scratch"] is True
+                    and probe_row["scratch_is_ksp_solution"] is False
+                    and probe_row["scratch_is_rhs"] is False
+                    and probe_row["scratch_changed_from_sentinel"] is True
+                    and probe_row["scratch_finite"] is True
+                    and probe_row["rhs_unchanged"] is True
+                    and probe_row["ksp_solution_unchanged"] is True
+                    and probe_row["pc_apply_count_after"]
+                    == probe_row["pc_apply_count_before"]
+                    and probe_row["pc_apply_attempt_count_after"]
+                    == probe_row["pc_apply_attempt_count_before"]
+                    and probe_row["original_A_matmult_delta"] == 0
+                    and probe_row["capture_request_clear_before"] is True
+                    and probe_row["capture_request_clear_after"] is True
+                    and probe_row["capture_result_clear_before"] is True
+                    and probe_row["capture_result_clear_after"] is True
+                    else "invariant_failed"
+                )
+            except Exception as local_inspection_error:  # noqa: BLE001 - buildSolution returned before this local check
+                probe_row = {
+                    "rank": int(comm.rank),
+                    "iteration": int(iteration),
+                    "status": "local_inspection_error",
+                    "error_type": type(local_inspection_error).__name__,
+                    "error_message": str(local_inspection_error)[:320],
+                }
+            probe_rows = comm.allgather(probe_row)
+            if any(row.get("status") != "supported" for row in probe_rows):
+                raise AssertionError(
+                    "synthetic buildSolution violated scratch/input/PC/A invariants: "
+                    + json.dumps(probe_rows, sort_keys=True)
+                )
+            build_solution_probe_rows.append(probe_row)
+
         try:
             exact_values = np.asarray(
                 [0.17 + 0.013j * index for index in range(layout.global_size)],
@@ -5434,11 +5677,98 @@ def _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
             outer_pc.setType(PETSc.PC.Type.PYTHON)
             outer_pc.setPythonContext(outer_pc_context)
             outer_ksp.setUp()
+            outer_ksp.setMonitor(capture_build_solution_capability)
             outer_ksp.solve(outer_rhs, outer_solution)
             original_operator.mult(outer_solution, outer_residual)
             outer_residual.axpy(PETSc.ScalarType(-1.0), outer_rhs)
             outer_rhs_norm = float(outer_rhs.norm())
             outer_true_relative = float(outer_residual.norm()) / outer_rhs_norm
+            probe_rows_by_rank = comm.allgather(build_solution_probe_rows)
+            capability_rank_rows = [
+                rows[0]
+                if len(rows) == 1
+                else {
+                    "rank": rank,
+                    "status": "missing_or_duplicate_probe_row",
+                    "observed_row_count": len(rows),
+                }
+                for rank, rows in enumerate(probe_rows_by_rank)
+            ]
+            capability_write_status = None
+            if comm.rank == 0:
+                capability_path = (
+                    evidence_root / "TASK041_V16_BUILD_SOLUTION_CAPABILITY.json"
+                )
+                capability_temporary = capability_path.with_name(
+                    capability_path.name + ".tmp"
+                )
+                try:
+                    if capability_path.exists() or capability_temporary.exists():
+                        raise FileExistsError(str(capability_path))
+                    capability_document = {
+                        "schema": "task041.v16.synthetic_tiny_build_solution_capability.v1",
+                        "classification": "synthetic_tiny_KSP_PC_capability_only_not_registered_FE_qualification",
+                        "selector": "src/test/test_350_task041_balh_block_ldu.py::test_v13_unmocked_builder_owner_lu_and_original_modal_row_math",
+                        "source_sha256": supervisor_binding["source_sha"],
+                        "source_identity_scope": "synthetic test fixture binding; not a registered-configuration source qualification",
+                        "invocation_id": supervisor_binding["invocation_id"],
+                        "invocation_identity_scope": "synthetic test fixture binding",
+                        "mpi_size": int(comm.size),
+                        "rank_rows": capability_rank_rows,
+                    }
+                    with capability_temporary.open("x", encoding="utf-8") as stream:
+                        json.dump(
+                            capability_document,
+                            stream,
+                            sort_keys=True,
+                            indent=2,
+                            allow_nan=False,
+                        )
+                        stream.write("\n")
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(capability_temporary, capability_path)
+                    capability_write_status = {
+                        "status": "written",
+                        "path": str(capability_path),
+                        "sha256": hashlib.sha256(
+                            capability_path.read_bytes()
+                        ).hexdigest(),
+                    }
+                except BaseException as capability_write_error:  # noqa: BLE001 - preserve numerical assertions and report evidence failure
+                    capability_write_status = {
+                        "status": "failed",
+                        "error_type": type(capability_write_error).__name__,
+                        "error_message": str(capability_write_error)[:320],
+                    }
+            capability_write_status = comm.bcast(
+                capability_write_status, root=0
+            )
+            assert capability_write_status.get("status") == "written", (
+                capability_write_status
+            )
+            assert all(len(rows) == 1 for rows in probe_rows_by_rank), probe_rows_by_rank
+            probe_statuses = [rows[0]["status"] for rows in probe_rows_by_rank]
+            assert len(set(probe_statuses)) == 1, probe_statuses
+            for rows in probe_rows_by_rank:
+                probe_row = rows[0]
+                assert probe_row["status"] in {"supported", "unavailable"}, probe_row
+                if probe_row["status"] == "supported":
+                    assert probe_row["returned_uses_scratch"] is True
+                    assert probe_row["scratch_is_ksp_solution"] is False
+                    assert probe_row["scratch_is_rhs"] is False
+                    assert probe_row["scratch_changed_from_sentinel"] is True
+                    assert probe_row["scratch_finite"] is True
+                    assert probe_row["rhs_unchanged"] is True
+                    assert probe_row["ksp_solution_unchanged"] is True
+                    assert (
+                        probe_row["pc_apply_count_after"]
+                        == probe_row["pc_apply_count_before"]
+                    )
+                    assert (
+                        probe_row["pc_apply_attempt_count_after"]
+                        == probe_row["pc_apply_attempt_count_before"]
+                    )
             assert int(outer_ksp.getConvergedReason()) > 0
             assert np.isfinite(outer_true_relative)
             assert outer_true_relative <= 5.0e-9
@@ -5452,6 +5782,7 @@ def _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
             outer_ksp.destroy()
             for vector in (
                 outer_residual,
+                outer_build_solution_scratch,
                 outer_solution,
                 outer_rhs,
                 exact_solution,
