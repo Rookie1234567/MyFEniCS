@@ -1,0 +1,127 @@
+{
+  "schema": "task39extra.v0-source-identity-reconciliation.v1",
+  "created_utc": "2026-10-15T03:13:39Z",
+  "status": "NUMERICAL_PASS_SOURCE_HEAD_CHANGED_DOCS_ONLY",
+  "scope": "Supplemental V0 reconciliation only; original run_manifest.json and run_summary.json are unchanged. No PDE or resource stream was reread.",
+  "full600_run": {
+    "run_id": "v6_interleave_5nm_p6_direct_full600_y2",
+    "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v6_interleave_5nm_p6_direct_full600_y2__full3d_direct__mpi1__Mna/20261015T005512.275688Z",
+    "run_source_sha": "d0dd7f090c674268c3d21903961e9abf46b4c020",
+    "input_sha256": "eca7b64b7146ee706638040012c9559e6843480f5e055e5edd1496b6ab109efb",
+    "resolved_config_sha256": "35b01b9cee3d4771105349ec0d4c94f144cf065ada8cc2a6109b0bc498b5955f",
+    "run_manifest_sha256": "6c00a74aeb9a65e6554aff6eeb684703d70522826597928a4a40c3ce001f378e",
+    "run_summary_sha256": "b0ad34513b91229e4cdc03c84fd44cbc4301a71108c1d2933d4221632449f31e",
+    "direct_summary_sha256": "51785e33b0c123b3636f247c4f4cf76c2df105f2b165a6f52432b119d9118e36",
+    "run_summary_facts": {
+      "status": "finished",
+      "exit_status": 0,
+      "result_classification": "EVIDENCE_INCOMPLETE",
+      "resource_classification": "COMPLETED",
+      "descendants_cleared": true,
+      "job_swap_qualification": "observed_only"
+    },
+    "source_after": {
+      "provenance_passed": false,
+      "error": "physical-intermediate formal launch requires exact clean source SHA"
+    },
+    "direct_solver_summary": {
+      "passed": true,
+      "errors": [],
+      "status": "V6_F5_P6_CONDENSED_DIRECT_FULL600_COMPLETED_AUTHORITY_LIMITED",
+      "complete_solve": true,
+      "operator_scope": "full_600_mode_dtn",
+      "full_dtn_status": "FULL_600_MODE_OPERATOR_BUILT",
+      "original_A6_full_relative": 9.59405650939179e-11,
+      "original_A6_full_gate": 1e-06,
+      "native_condensed_identity_relative": 8.353986392603834e-12,
+      "energy_closure_error_port_volume": -1.552757922240744e-12,
+      "matched_reference_status": "REFERENCE_AUTHORITY_LIMITED",
+      "matched_reference_reason": "historical iterative baseline uses y=7 while both new F5 direct runs use y=2"
+    },
+    "cause_of_outer_incomplete_classification": "The run started from d0dd7f090c674268c3d21903961e9abf46b4c020. While it was active, the authorized docs-only commit 37a76ecc7bfc2ea45e4cd55bebc38f1e98115516 changed HEAD; task038_launcher exact-clean-source-after check then recorded source_after.provenance_passed=false. Numerical gates in the direct summary passed; the wrapper evidence status is retained as incomplete. No general provenance gate was relaxed.",
+    "swap_note": "Global pswpin delta was +1 page and pswpout delta 0; swap policy was observe_only, and no job-level attribution is claimed. This is not the cause of the EVIDENCE_INCOMPLETE classification in this run."
+  },
+  "docs_only_head_change": {
+    "base_source_sha": "d0dd7f090c674268c3d21903961e9abf46b4c020",
+    "docs_commit_sha": "37a76ecc7bfc2ea45e4cd55bebc38f1e98115516",
+    "docs_commit_parent": "d0dd7f090c674268c3d21903961e9abf46b4c020",
+    "changed_path_count": 8,
+    "changed_paths": [
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/README.md",
+        "git_blob_oid": "e829f67098ff910cdeb5bb974274a0106645fb44",
+        "bytes": 30177,
+        "sha256": "8e0a026b8dd3cf0ebc860a188858a0d0d18955559cfc6cbaf633df74421bd425"
+      },
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/fe_channels_572.csv",
+        "git_blob_oid": "c24d738c7a9bb3dbb8586e96b99b415ae3804d03",
+        "bytes": 362573,
+        "sha256": "8a0691b866a924d532e3600286494ab469ca92db1a678053b897f35ac7536826"
+      },
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/fe_direct_summary.json",
+        "git_blob_oid": "52734e0a3ce7fb5430eecf425808bf3a374bcf22",
+        "bytes": 53314,
+        "sha256": "992a2b2c6e9306ac7a540edc707e53ad2a3d7da0a47d7f6a50c28ad0924d1671"
+      },
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/fe_input_original.dat",
+        "git_blob_oid": "9bf6167e2f7e6f73116b14f50e1087f9a668453e",
+        "bytes": 2272,
+        "sha256": "395fa90fdfee1f28539bdd395d6c219323145e5a043e2576809f954488dcc175"
+      },
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/orders_comparison_143.csv",
+        "git_blob_oid": "e7064ee955add012a8234fbdfc38d0ddc5ccfdfe",
+        "bytes": 19374,
+        "sha256": "2f632da0318aa267448a4b0b8834b6aeb8593ceda9c51c119f25fe86028874b5"
+      },
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/provenance.json",
+        "git_blob_oid": "f6a842f51eda29d272c4d478dd35488203c95680",
+        "bytes": 5730,
+        "sha256": "e2c3515b832a30c7b07695fa41e93c38e729ab8b8d832c3934abd17665c873c9"
+      },
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/rcwa_user_report.txt",
+        "git_blob_oid": "fa9d2dac3f3953fd2722f3578e3c07475f75faff",
+        "bytes": 23032,
+        "sha256": "383fce8c471e5c8fc382951b5b241b6f556bd767c26267919a341d6e4277baab"
+      },
+      {
+        "path": "docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/totals_comparison.csv",
+        "git_blob_oid": "bd892bd8cabd99d9dfb3a7d7735751581a0aaa93",
+        "bytes": 734,
+        "sha256": "a4a0f114b5100ef493672a2d70f4804b145c704886ea845c5795d736d4ded493"
+      }
+    ],
+    "tree_oids": {
+      "src_at_d0dd": "674baacfed0fb7cef7eb828c1490c164d0020f5f",
+      "src_at_37a76": "674baacfed0fb7cef7eb828c1490c164d0020f5f",
+      "input_at_d0dd": "d636aeffc62d6959c0ac180932036555324f89d9",
+      "input_at_37a76": "d636aeffc62d6959c0ac180932036555324f89d9"
+    },
+    "conclusion": "All eight paths added by 37a76 are under the RCWA/FE comparison docs folder; src and input tree OIDs are identical at d0dd and 37a76."
+  },
+  "n0_run_crosscheck": {
+    "run_id": "v6_interleave_5nm_p6_direct_n0_y2",
+    "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v6_interleave_5nm_p6_direct_n0_y2__full3d_direct__mpi1__Mna/20261015T015259.149314Z",
+    "run_source_sha": "37a76ecc7bfc2ea45e4cd55bebc38f1e98115516",
+    "run_manifest_sha256": "b295d1830519281e5e4c49ad8afd479809d8ae931185ab085f5e5d651c1a2800",
+    "run_summary_sha256": "37d7315b8b0a2b049f038bdd9f6d84ebe190c82d4ef0069969913b4538d0c533",
+    "direct_summary_sha256": "9e981cb8203e229875e104cad9187ec8ce360f7e6ce5f586f8f6b2f873c73789",
+    "run_summary_classification": "worker_exit0",
+    "direct_summary": {
+      "passed": true,
+      "result_classification": "V6_F5_P6_CONDENSED_DIRECT_N0_COMPLETED_AUTHORITY_LIMITED",
+      "operator_scope": "n0_filtered_dtn_not_full_dtn",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED"
+    }
+  },
+  "limitations": [
+    "This reconciles the wrapper provenance classification; it does not upgrade the full600 model to a general qualification.",
+    "RCWA raw project/calibration source was not independently reproduced; matched-reference authority remains limited.",
+    "No existing manifest or summary was rewritten."
+  ]
+}

@@ -40,8 +40,14 @@ V6_F5_P6_DIRECT_N0_PROFILE = 'task39extra_v6_f5_p6_condensed_direct_n0_v1'
 V6_F5_P6_DIRECT_PROFILES = frozenset(
     {V6_F5_P6_DIRECT_FULL600_PROFILE, V6_F5_P6_DIRECT_N0_PROFILE}
 )
+DISPERSION_FLAT_P6_PROFILE = "task39extra_dispersion_flat_0p7_p6_v1"
+DISPERSION_FLAT_P6_PROFILES = frozenset({DISPERSION_FLAT_P6_PROFILE})
+DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES = 32 * 1024**3
+DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES = 24 * 1024**3
 P6_CONDENSED_DIRECT_PROFILES = (
-    V7_ANISO_N0_P6_DIRECT_PROFILES | V6_F5_P6_DIRECT_PROFILES
+    V7_ANISO_N0_P6_DIRECT_PROFILES
+    | V6_F5_P6_DIRECT_PROFILES
+    | DISPERSION_FLAT_P6_PROFILES
 )
 V7_ANISO_N0_PROFILES = (
     V7_ANISO_N0_P4_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES
@@ -124,6 +130,9 @@ NATIVE_CASES['dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'] = (
 )
 NATIVE_CASES[V7_ANISO_N0_P4_PROFILE] = (0.7, (0.5,), None, None, None)
 NATIVE_CASES[V7_ANISO_N0_P6_DIRECT_PROFILE] = (0.7, (0.5,), None, None, None)
+NATIVE_CASES[DISPERSION_FLAT_P6_PROFILE] = (
+    0.7, (0.5, 0.25, 0.125), None, None, None
+)
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
     NATIVE_CASES[_f5_direct_profile] = (5.0, (4.0,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -186,6 +195,7 @@ NATIVE_TIME_LIMIT_MODES.update(
             *V6_NATIVE_PROFILES,
             *V7_ANISO_N0_P6_DIRECT_PROFILES,
             *V6_F5_P6_DIRECT_PROFILES,
+            *DISPERSION_FLAT_P6_PROFILES,
         )
     }
 )
@@ -391,8 +401,238 @@ def _apply_v7_aniso_n0_p4_facts(facts: dict) -> None:
     )
 
 
+def _dispersion_flat_p6_profile_facts(identity):
+    """Return the isolated small-flat P6 direct study contract."""
+
+    from src.geometry.dispersion_flat_axis_plan import (
+        AXIS_PLAN_ID,
+        Z_AXIS_SHA256_LE_F64,
+    )
+
+    facts = native_profile_facts(V7_ANISO_N0_P6_DIRECT_PROFILE)
+    hard = DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES
+    planning = DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES
+    facts.update(
+        identity=identity,
+        execution_mode="full_solve",
+        wavelength_nm=0.7,
+        allowed_mesh_targets_nm=[0.5, 0.25, 0.125],
+        formal_runner="src.runners.p6_condensed_direct",
+        route="DISPERSION_FLAT_P6_CONDENSED_DIRECT",
+        operator_scope="all_auto_propagating_orders_for_flat_1nm_period",
+        full_dtn_status=(
+            "AUTO_PROPAGATING_PORT_OPERATOR_BUILT; evanescent orders excluded"
+        ),
+    )
+    # The direct flat study must not inherit V7's P4/H6/FGMRES resource and
+    # qualification language.  Keep the common profile schema, but replace
+    # those branches with explicit NOT_BUILT facts for this route.
+    facts["reference_only"] = True
+    facts["fine_physical_operator_modified"] = False
+    facts["official_recovery_requires_full_explicit_true_residual"] = True
+    facts.pop("release_auxiliary_before_recovery", None)
+    facts.pop("additional_fine_vectors_limit", None)
+    facts["fine_auxiliary"] = {
+        "identity": "NOT_BUILT_DIRECT_P6",
+        "constructed": False,
+    }
+    facts["intermediate"] = {
+        "operator": "NOT_BUILT_DIRECT_P6",
+        "reason": "direct P6 condensed solve has no P4/coarse correction",
+    }
+    facts["auxiliary"] = {
+        "role": "appended_modal_unknowns_in_the_augmented_direct_matrix",
+        "independent_auxiliary_operator": False,
+    }
+    facts["balanced"] = {
+        "operator": "NOT_BUILT_DIRECT_P6",
+        "outer_balanced_projection": False,
+    }
+    facts["inner"] = {
+        "route": "NOT_BUILT_DIRECT_P6",
+        "iterations": 0,
+        "ksp_created": False,
+    }
+    facts["structural_calls"] = {
+        "matrix_assembly_contract": 1,
+        "factor_symbolic_contract": 1,
+        "factor_numeric_contract": 1,
+        "factor_solve_contract": 1,
+        "outer_ksp_contract": 0,
+    }
+    facts["p4_p6_curl_implementation"] = "P6_NATIVE_FFCX_ONLY; P4_NOT_BUILT"
+    facts["p4_assembly_implementation"] = "NOT_BUILT_DIRECT_P6"
+    facts["functional_store_policy"] = {
+        "enabled": False,
+        "configuration": "not_used",
+        "cross_mesh_fe_reuse": False,
+    }
+    facts["outer"] = {
+        "route": "P6_CONDENSED_DIRECT",
+        "initial_guess": "not_applicable_direct_solve",
+        "screen": {"enabled": False, "policy": "not_applicable"},
+    }
+    facts["resources"].update(
+        absolute_cap_bytes=hard,
+        planning_cap_bytes=planning,
+        startup_headroom_bytes=hard - planning,
+        rss_hard_limit_bytes=hard,
+        rss_warning_bytes=planning,
+        resource_stop_policy="measured_process_tree_rss_hard_limit",
+        swap_policy="require_zero_swap",
+        global_swap_delta_policy="require_zero_swap",
+        stop_on_global_swap=True,
+        prediction_admission_policy="record_only",
+        memavailable_runtime_policy="record_at_fresh_admission",
+        require_zero_swap=True,
+        pss_sampling_policy="disabled_by_profile",
+        pss_interval_seconds=None,
+        uss_sampling_policy="disabled_by_profile",
+        uss_interval_seconds=None,
+        concurrent_neighbor_authorized=False,
+    )
+    for key in (
+        "reserve_min_bytes",
+        "reserve_fraction",
+        "warning_fraction",
+        "job_swap_max_bytes",
+        "performance_grace_seconds",
+        "p1_max_rows_each",
+        "p1_matrix_factor_max_bytes_each",
+        "independent_p1_factors",
+        "reference_p4_factors",
+        "reference_factor_budget",
+        "batch_limit_seconds",
+        "E1_setup_tests_seconds",
+        "E1_PC_limit",
+        "E1_C_limit",
+        "E1_MatSolve_limit",
+        "p4_budget_policy",
+        "reference_memory_admission",
+    ):
+        facts["resources"].pop(key, None)
+    facts["native_execution"].update(
+        supervisor_cpu=9,
+        worker_cpu=24,
+        worker_cpus=[24],
+        mpi_size=1,
+        math_threads=1,
+        memory_policy="interleave_nodes0_1",
+        native_memory_policy="interleave_nodes0_1",
+    )
+    facts["component_options"] = {
+        "functional_store_policy": "disabled_no_functional_store_config",
+        "cross_mesh_fe_reuse": False,
+        "direct_p6_route": True,
+        "flat_component": True,
+        "axis_plan_id": AXIS_PLAN_ID,
+        "z_axis_sha256_le_f64": Z_AXIS_SHA256_LE_F64,
+        "nx_cases": [2, 4, 8],
+        "axis_cell_counts": [[2, 2, 234], [4, 2, 234], [8, 2, 234]],
+        "mode_policy": "all_auto_propagating_orders_per_flat_period",
+        "no_n0_filter": True,
+        "volume_quadrature": {
+            "degree": 15,
+            "rule": "default",
+            "points_per_hexahedron": 512,
+            "points_weights_sha256": (
+                "e3cf565f440b60b083a065f4655124926e98b047edea40d869cdfa5c66df9175"
+            ),
+        },
+        "surface_quadrature": {
+            "degree": 160,
+            "rule": "default",
+            "mode_inventory": "all_auto_propagating_orders",
+        },
+        "surface_quadrature_witness": {
+            "degree": 192,
+            "case": "nx2_only",
+            "scope": "same_mesh_rhs_and_action_diagnostic_no_gate",
+        },
+        "surface_assembly_backend_by_degree": {"p6": "native_ffcx"},
+        "worker_tree_rss_hard_limit_bytes": hard,
+        "worker_tree_rss_planning_limit_bytes": planning,
+    }
+    facts["backend"] = {
+        "p6": "exact_p6_local_static_condensation_materialized_AIJ",
+        "global_matrix": "one_exact_[S_V,Bhat;-Dhat,Hhat]_matrix",
+        "factor": "one_MUMPS_symbolic_then_numeric_on_the_same_matrix",
+        "rhs": "production_incident_top_traction_plus_DtN_modal_rhs_via_finalized_MPC",
+        "recovery": "P6CellCondensedAction.recover_storage",
+        "independent_residual": "original_full_p6_A6_active_flat_auto_port_operator",
+        "p4_operator": "NOT_BUILT",
+        "p4_factor": "NOT_BUILT",
+        "outer_ksp": "NOT_BUILT",
+        "operator_scope": facts["operator_scope"],
+        "full_dtn_status": facts["full_dtn_status"],
+    }
+    facts.pop("coarse_operator", None)
+    facts.pop("retained_condensed_v20", None)
+    facts["condensed_route"] = {
+        "name": "dispersion_flat_p6_exact_local_condensation_direct_v1",
+        "degree": 6,
+        "matrix_blocks": "[S_V,Bhat;-Dhat,Hhat]",
+        "local_elimination": "exact_existing_per_cell_interior_factorization",
+        "parent_modes": "dynamic_all_auto_propagating_orders",
+        "active_modes": "same_as_parent_no_filter",
+        "parent_quadrature_degree": 160,
+        "matrix_lifecycle": "one_materialized_PETSc_AIJ_through_symbolic_numeric_solve",
+        "cross_mesh_reuse": False,
+        "functional_store": False,
+        "no_p4_factor_or_outer_ksp": True,
+    }
+    facts["campaign_authorization"].update(
+        source="user-authorized 0.7 nm flat P6 direct dispersion calibration",
+        execution_mode="full_solve",
+        resource_policy={
+            "name": "dispersion_flat_32GiB_tree_rss_zero_swap_v1",
+            "rss_hard_limit_bytes": hard,
+            "rss_planning_limit_bytes": planning,
+            "zero_swap": True,
+            "pss_uss_sampling": "disabled",
+            "prediction": "record_only",
+        },
+        memory_override={
+            "source": "user-authorized bounded dispersion flat calibration",
+            "whole_process_tree_rss_cap_bytes": hard,
+            "planning_cap_bytes": planning,
+            "startup_headroom_bytes": hard - planning,
+            "require_zero_swap": True,
+            "pss_uss_sampling": "disabled",
+        },
+        direct_route={
+            "degree": 6,
+            "mode_policy": "all_auto_propagating_orders_per_flat_period",
+            "surface_quadrature_degree": 160,
+            "volume_quadrature_degree": 15,
+            "same_factor_lifecycle": ["symbolic", "numeric", "solve"],
+            "p4_and_outer_ksp": "not_built",
+        },
+    )
+    for key in (
+        "restart",
+        "max_iterations",
+        "initial_guess",
+        "screen",
+        "low_memory_p4_inverse_trials",
+    ):
+        facts["campaign_authorization"].pop(key, None)
+    facts["campaign_authorization"].pop("fresh_n0_inventory_directory", None)
+    facts["comparison_reference"] = {
+        "reference_kind": "three_same_physics_flat_meshes",
+        "comparison_cases": [2, 4, 8],
+        "only_mesh_change": "x cell count; x period and y/z axes remain fixed",
+        "old_grating_reference": "not_a_same_mesh_or_same_geometry_comparison",
+        "physical_plane_wave_reference": "analytic plane-interface reference recomputed in outcome",
+        "qualification_scope": "bounded flat component; not full grating qualification",
+    }
+    return facts
+
+
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
+    if identity in DISPERSION_FLAT_P6_PROFILES:
+        return _dispersion_flat_p6_profile_facts(identity)
     if identity in V6_F5_P6_DIRECT_PROFILES:
         from src.geometry.task39extra_v6_f5_mesh_plan import (
             F5_AXIS_SHA256,
@@ -1364,12 +1604,153 @@ def _validate_v7_aniso_n0_p4_case(config) -> None:
         )
 
 
+def _validate_dispersion_flat_p6_case(config, identity: str) -> None:
+    """Fail closed on the three approved same-material flat dispersion cases."""
+
+    from src.geometry.dispersion_flat_axis_plan import (
+        flat_axis_plan,
+        validate_frozen_dispersion_flat_axes,
+    )
+
+    from .input_loader import InputError
+
+    def require(section: str, key: str, expected: object) -> None:
+        actual = config.get(section, {}).get(key)
+        if actual != expected:
+            raise InputError(
+                f'{identity} fixes {section}.{key}={expected!r}; got {actual!r}'
+            )
+
+    require('method', 'kind', 'full3d_direct')
+    solver = config.get('solver', {})
+    if solver.get('native_capacity_profile') != identity:
+        raise InputError(f'{identity} is not selected as the direct profile')
+    if solver.get('linear_solver') != 'direct' or solver.get(
+        'direct_solver_profile', 'default'
+    ) != 'default':
+        raise InputError(f'{identity} requires the qualified default direct solver')
+    forbidden_solver_fields = {
+        'preconditioner', 'ksp_type', 'restart', 'max_iterations', 'coarse_degree'
+    }.intersection(solver)
+    if forbidden_solver_fields:
+        raise InputError(
+            f'{identity} forbids a P4/iterative route: '
+            + ', '.join(sorted(forbidden_solver_fields))
+        )
+
+    for key, expected in {
+        'geometry_kind': 'flat_layer',
+        'period_x_nm': 1.0,
+        'period_y_nm': 25.0,
+        'z_min_nm': -10.0,
+        'z_max_nm': 130.0,
+        'interface_z_nm': 0.0,
+        'air_height_nm': 130.0,
+        'substrate_thickness_nm': 10.0,
+        'grating_width_x_nm': 0.0,
+        'grating_width_y_nm': 0.0,
+        'grating_height_nm': 0.0,
+    }.items():
+        require('geometry', key, expected)
+    for key, expected in {
+        'n_air': (1.0, 0.0),
+        'mu_r': (1.0, 0.0),
+        'n_substrate': MATERIALS[0.7],
+        'n_grating': MATERIALS[0.7],
+    }.items():
+        actual = tuple(config.get('materials', {}).get(key, ()))
+        if actual != tuple(expected):
+            raise InputError(f'{identity} fixes materials.{key}={expected!r}')
+    for key in ('substrate_name', 'grating_name'):
+        if config.get('materials', {}).get(key) != USER_MATERIAL_METADATA[0.7]['material']:
+            raise InputError(f'{identity} fixes materials.{key} to the recorded Si label')
+
+    for key, expected in {
+        'wavelength_nm': 0.7,
+        'tilt_from_downward_z_deg': 89.0,
+        'azimuth_deg': 0.0,
+        'polarization': 's',
+        'electric_amplitude': 1.0,
+    }.items():
+        require('incidence', key, expected)
+    for key, expected in {
+        'nedelec_degree': 6,
+        'visualization_degree': 6,
+        'mesh_cell_type': 'hexahedron',
+        'mesh_spacing_mode': 'boundary_fitted',
+        'assembly_backend': 'standard_full',
+        'floquet_constraint_mode': 'auto',
+    }.items():
+        require('discretization', key, expected)
+    target = float(config.get('discretization', {}).get('mesh_target_nm', -1.0))
+    if target not in (0.5, 0.25, 0.125):
+        raise InputError(f'{identity} allows mesh_target_nm in (0.5, 0.25, 0.125)')
+    nx = round(1.0 / target)
+    if nx not in (2, 4, 8) or target != 1.0 / nx:
+        raise InputError(f'{identity} requires one of the exact x meshes 2/4/8')
+    try:
+        axes = validate_frozen_dispersion_flat_axes(config['discretization'])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise InputError(f'{identity} has invalid flat mesh axes: {exc}') from exc
+    plan = flat_axis_plan(nx)
+    if tuple(config['discretization']['mesh_axis_cell_counts']) != tuple(
+        plan['axis_cell_counts']
+    ):
+        raise InputError(f'{identity} mesh-axis counts differ from nx={nx}')
+    if (axes['x'][0], axes['x'][-1], axes['y'][0], axes['y'][-1]) != (
+        0.0, 1.0, 0.0, 25.0
+    ) or (axes['z'][0], axes['z'][-1]) != (-10.0, 130.0):
+        raise InputError(f'{identity} flat axes do not span the exact physical bounds')
+
+    for key, expected in {
+        'use_floquet_x': True,
+        'use_floquet_y': True,
+        'vertical_boundary': 'dtn_port',
+        'scattering_background': 'layered',
+        'dtn_order_policy': 'auto_propagating',
+        'dtn_assembly': 'auxiliary',
+        'use_pml': False,
+    }.items():
+        require('boundary', key, expected)
+    execution = config.get('execution', {})
+    if execution.get('mpi_size') != 1 or execution.get('time_limit_mode') != 'none':
+        raise InputError(f'{identity} requires MPI1 and no workflow deadline')
+    if execution.get('timeout_seconds') is not None:
+        raise InputError(f'{identity} requires timeout_seconds=None')
+    if execution.get('native_memory_policy') != 'interleave_nodes0_1':
+        raise InputError(f'{identity} requires interleave_nodes0_1')
+    if execution.get('require_zero_swap') is not True:
+        raise InputError(f'{identity} requires zero swap')
+    for key, expected in {
+        'warning_memory_gib': DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES / 2**30,
+        'terminate_memory_gib': DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES / 2**30,
+        'memory_limit_gb': DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES / 2**30,
+    }.items():
+        require('execution', key, expected)
+    output = config.get('output', {})
+    for key in (
+        'export_fields', 'export_diffraction_orders', 'export_modal_amplitudes',
+        'export_reference_planes',
+    ):
+        if output.get(key) is not True:
+            raise InputError(f'{identity} requires output.{key}=true')
+    if output.get('export_canonical_vectors') is not False:
+        raise InputError(f'{identity} keeps large canonical-vector exports disabled')
+    if tuple(output.get('reference_plane_z_nm') or ()) != (
+        10.0, 30.0, 60.0, 90.0, 110.0
+    ) or int(output.get('sample_count_y', 0)) < 4:
+        raise InputError(f'{identity} requires the five planes and at least four y samples')
+
+
 def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
     identity = native_capacity_profile_identity(
         config.get('method', {}).get('kind'), config['solver']
     )
+    if identity in DISPERSION_FLAT_P6_PROFILES:
+        _validate_dispersion_flat_p6_case(config, identity)
+        return
     if identity in V6_F5_P6_DIRECT_PROFILES:
         _validate_v6_f5_p6_direct_case(config, identity)
         return

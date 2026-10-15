@@ -447,6 +447,22 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
         except ValueError as exc:
             raise ValueError(f"invalid F5 frozen mesh input: {exc}") from exc
         if frozen_axes is None:
+            from src.geometry.dispersion_flat_axis_plan import (
+                AXIS_PLAN_IDS as DISPERSION_FLAT_AXIS_PLAN_IDS,
+            )
+            from src.geometry.dispersion_flat_axis_plan import (
+                validate_frozen_dispersion_flat_axes,
+            )
+
+            if cfg.mesh_plan_id in DISPERSION_FLAT_AXIS_PLAN_IDS:
+                try:
+                    frozen_axes = validate_frozen_dispersion_flat_axes(plan_identity)
+                    frozen_plan_family = "dispersion_flat_p6"
+                except ValueError as exc:
+                    raise ValueError(
+                        f"invalid dispersion flat frozen mesh input: {exc}"
+                    ) from exc
+        if frozen_axes is None:
             from src.geometry.task39extra_v5_r13_mesh_plan import (
                 validate_frozen_r13_axes,
             )
@@ -919,6 +935,10 @@ def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
     task035_fixed_target_high_order = (
         cfg.stage_case == "stage4_block_grating" and degree in {5, 6}
     )
+    if degree == 6 and cfg.stage_case == "stage4_flat_layer_sanity":
+        from src.geometry.dispersion_flat_axis_plan import is_dispersion_flat_p6_plan
+
+        task035_fixed_target_high_order = is_dispersion_flat_p6_plan(cfg)
     if degree not in {1, 2, 3, 4} and not task035_fixed_target_high_order:
         raise NotImplementedError(
             "Stage-4 Floquet supports N1curl degree 1 through 4 generally and "

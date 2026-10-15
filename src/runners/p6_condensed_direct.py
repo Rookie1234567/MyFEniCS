@@ -73,6 +73,8 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
 
 def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
     from src.io.native_capacity_profile import (
+        DISPERSION_FLAT_P6_PROFILES,
+        DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES,
         P6_CONDENSED_DIRECT_PROFILES,
         native_capacity_profile_identity,
         native_profile_facts,
@@ -97,8 +99,13 @@ def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("resolved direct profile facts differ from the frozen profile")
     if resolved_facts.get("identity") != identity:
         raise ValueError("resolved native profile identity differs from solver selection")
-    if resolved_facts.get("resources", {}).get("rss_hard_limit_bytes") != RSS_HARD_LIMIT_BYTES:
-        raise ValueError("resolved direct profile RSS hard limit is not 1.8e12 bytes")
+    expected_rss_cap = (
+        DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES
+        if identity in DISPERSION_FLAT_P6_PROFILES
+        else RSS_HARD_LIMIT_BYTES
+    )
+    if resolved_facts.get("resources", {}).get("rss_hard_limit_bytes") != expected_rss_cap:
+        raise ValueError("resolved direct profile RSS hard limit differs from its profile")
     options = resolved_facts.get("component_options")
     if not isinstance(options, Mapping):
         raise TypeError("resolved p6 direct component options are missing")
@@ -113,6 +120,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
     """Return route-specific immutable identities without conflating V7 N0."""
 
     from src.io.native_capacity_profile import (
+        DISPERSION_FLAT_P6_PROFILE,
         V6_F5_P6_DIRECT_FULL600_PROFILE,
         V6_F5_P6_DIRECT_N0_PROFILE,
         V7_ANISO_N0_P6_DIRECT_PROFILE,
@@ -131,6 +139,23 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "residual_key": "original_A6_n0_relative",
             "residual_scope": "A6_n0",
             "summary_prefix": "p6_condensed_direct_n0",
+        }
+    if profile_identity == DISPERSION_FLAT_P6_PROFILE:
+        return {
+            "family": "dispersion_flat",
+            "truncated": False,
+            "operator_scope": "all_auto_propagating_orders_flat_1nm_period",
+            "full_dtn_status": (
+                "AUTO_PROPAGATING_PORT_OPERATOR_BUILT; evanescent orders excluded"
+            ),
+            "parent_count": None,
+            "parent_sha256": None,
+            "active_count": None,
+            "active_sha256": None,
+            "residual_key": "original_A6_full_relative",
+            "residual_scope": "A6_all_auto_propagating_flat_inventory",
+            "summary_prefix": "dispersion_flat_p6_condensed_direct",
+            "surface_quadrature_degree": 160,
         }
     if profile_identity == V6_F5_P6_DIRECT_FULL600_PROFILE:
         return {
@@ -231,7 +256,41 @@ def _direct_output_policy(route: Mapping[str, Any]) -> dict[str, Any]:
             ),
             "diffraction_source": "field_sample_based_independent_of_dtn_mode_list",
         }
+    if route["family"] == "dispersion_flat":
+        return {
+            "active_port_outputs_only": False,
+            "dtn_output_mode_count": int(route["active_count"]),
+            "omitted_dtn_channels": "EVANESCENT_ORDERS_EXCLUDED_BY_AUTO_PROPAGATING_POLICY",
+            "diffraction_source": "recovered_flat_layer_field_sampling",
+        }
     raise ValueError(f"unsupported output policy family: {route['family']}")
+
+
+def _persist_flat_parent_inventory(directory, inventory):
+    """Persist the actual unfiltered propagating inventory for one flat case."""
+
+    from src.solvers.fullspace_dtn_action import (
+        FULLSPACE_DTN_MANIFEST_SCHEMA,
+        FULLSPACE_DTN_PROFILE,
+        _canonical_json_bytes,
+    )
+
+    modes, rows, expected_sha = inventory
+    encoded = _canonical_json_bytes(
+        {
+            "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+            "profile": FULLSPACE_DTN_PROFILE,
+            "mode_count": len(modes),
+            "modes": rows,
+        }
+    )
+    digest = hashlib.sha256(encoded).hexdigest()
+    if digest != expected_sha:
+        raise ValueError("flat parent manifest serialization hash differs")
+    path = Path(directory) / "auto_propagating_parent_mode_manifest.json"
+    with path.open("xb") as stream:
+        stream.write(encoded)
+    return {"filename": path.name, "sha256": digest, "bytes": len(encoded)}
 
 
 def _build_f5_n0_inventory(parent_inventory, cfg):
@@ -630,6 +689,319 @@ def _f5_mesh_evidence(levels: Mapping[str, Any], cfg: Any) -> dict[str, Any]:
     }
 
 
+def _dispersion_flat_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any
+) -> dict[str, Any]:
+    """Check actual flat axes, cell count, tags, and cell type against the plan."""
+
+    from src.geometry.dispersion_flat_axis_plan import (
+        validate_frozen_dispersion_flat_axes,
+    )
+
+    mesh_data = levels["mesh_data"]
+    msh = mesh_data.mesh
+    plan = validate_frozen_dispersion_flat_axes(
+        {
+            "mesh_plan_id": cfg.mesh_plan_id,
+            "mesh_plan_sha256": cfg.mesh_plan_sha256,
+            "mesh_axis_cell_counts": cfg.mesh_axis_cell_counts_requested,
+            "mesh_axis_x_values": cfg.mesh_axis_x_values_requested,
+            "mesh_axis_y_values": cfg.mesh_axis_y_values_requested,
+            "mesh_axis_z_values": cfg.mesh_axis_z_values_requested,
+        }
+    )
+    actual_axes = {
+        axis: tuple(
+            float(value)
+            for value in np.unique(np.asarray(msh.geometry.x)[:, index])
+        )
+        for index, axis in enumerate(("x", "y", "z"))
+    }
+    if any(actual_axes[axis] != plan[axis] for axis in ("x", "y", "z")):
+        raise ValueError("actual flat mesh axes differ from the frozen input plan")
+    counts = tuple(len(actual_axes[axis]) - 1 for axis in ("x", "y", "z"))
+    nx, ny, nz = counts
+    expected_cells = nx * ny * nz
+    actual_cells = int(msh.topology.index_map(msh.topology.dim).size_global)
+    if actual_cells != expected_cells:
+        raise ValueError("actual flat mesh global cell count differs from its axes")
+    if str(msh.topology.cell_name()) != "hexahedron":
+        raise ValueError("dispersion flat direct route requires hexahedra")
+    interface = float(cfg.interface_z)
+    substrate_intervals = sum(right <= interface for _, right in pairwise(plan["z"]))
+    if substrate_intervals <= 0 or substrate_intervals >= nz:
+        raise ValueError("flat mesh must contain both air and substrate cells")
+    expected = {
+        int(cfg.tags.air): nx * ny * (nz - substrate_intervals),
+        int(cfg.tags.substrate): nx * ny * substrate_intervals,
+        int(cfg.tags.grating): 0,
+    }
+    tag_values = np.asarray(mesh_data.cell_tags.values, dtype=np.int64)
+    if tag_values.size != actual_cells:
+        raise ValueError("MPI1 flat cell-tag array does not cover every owned cell")
+    observed = {tag: int(np.count_nonzero(tag_values == tag)) for tag in expected}
+    if observed != expected:
+        raise ValueError(
+            f"actual flat material tags differ from layered axes: {observed} != {expected}"
+        )
+    msh.topology.create_entity_permutations()
+    cell_info = np.asarray(msh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    if cell_info.ndim != 1 or cell_info.size != actual_cells:
+        raise ValueError("flat actual cell-orientation metadata does not cover every cell")
+    orientation_values, orientation_counts = np.unique(cell_info, return_counts=True)
+    return {
+        "status": "PASS",
+        "geometry": "flat_layer",
+        "cell_type": "hexahedron",
+        "actual_global_cell_count": actual_cells,
+        "axis_cell_counts": list(counts),
+        "axes_match_frozen_plan": True,
+        "mesh_plan_id": str(cfg.mesh_plan_id),
+        "mesh_plan_sha256": str(cfg.mesh_plan_sha256),
+        "axis_sha256_le_f64": {
+            axis: hashlib.sha256(
+                np.asarray(actual_axes[axis], dtype="<f8").tobytes()
+            ).hexdigest()
+            for axis in actual_axes
+        },
+        "actual_material_tag_counts": {str(key): value for key, value in observed.items()},
+        "expected_material_tag_counts": {str(key): value for key, value in expected.items()},
+        "actual_cell_orientation_histogram": {
+            str(int(value)): int(count)
+            for value, count in zip(orientation_values, orientation_counts, strict=True)
+        },
+        "actual_cell_orientation_info_sha256_le_u32": hashlib.sha256(
+            np.asarray(cell_info, dtype="<u4").tobytes()
+        ).hexdigest(),
+        "substrate_z_intervals": int(substrate_intervals),
+        "grating_cells": 0,
+        "mpi_size": 1,
+    }
+
+
+def _dispersion_flat_q192_witness(
+    levels: Mapping[str, Any],
+    cfg: Any,
+    bundle: Mapping[str, Any],
+    parent_inventory: tuple[Any, Any, Any],
+    volume_quadrature_metadata: Any,
+    q160_rhs: Any,
+    q160_rhs_facts: Mapping[str, Any],
+    marker,
+) -> dict[str, Any]:
+    """Compare actual production q160/q192 port RHS and DtN actions on Nx=2."""
+
+    import copy
+
+    from src.solvers.fullspace_physical_intermediate import apply_owned
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        build_physical_rhs,
+        build_same_mesh_physical_action,
+        destroy_same_mesh_physical_action,
+    )
+
+    cfg_q192 = copy.copy(cfg)
+    cfg_q192.stage4_dtn_quadrature_degree = 192
+    bundle_q192 = None
+    rhs_q192 = None
+    action160 = None
+    action192 = None
+    try:
+        marker(
+            "dispersion_flat_q192_witness_started",
+            {"q160_modes": len(parent_inventory[0]), "q160_is_primary": True},
+        )
+        bundle_q192 = build_same_mesh_physical_action(
+            levels,
+            cfg_q192,
+            6,
+            mode_inventory=parent_inventory,
+            volume_quadrature_metadata=volume_quadrature_metadata,
+            reuse_surface_vector=True,
+            functional_store_config=None,
+            stage_callback=lambda stage, facts: marker(
+                f"dispersion_flat_q192_{stage}", facts
+            ),
+            surface_progress_interval=1024,
+        )
+        if int(bundle_q192["dtn_quadrature_degree"]) != 192:
+            raise ValueError("q192 witness did not build at the requested surface degree")
+        if bundle_q192["mode_sha256"] != bundle["mode_sha256"]:
+            raise ValueError("q192 witness changed the actual auto-propagating inventory")
+        rhs_q192, rhs_facts_q192 = build_physical_rhs(bundle_q192)
+        if rhs_q192.getSize() != q160_rhs.getSize():
+            raise ValueError("q160/q192 production RHS vector sizes differ")
+        rhs160_values = np.asarray(q160_rhs.getArray(readonly=True), dtype=np.complex128)
+        rhs192_values = np.asarray(rhs_q192.getArray(readonly=True), dtype=np.complex128)
+        rhs_delta = rhs192_values - rhs160_values
+        rhs_relative = float(np.linalg.norm(rhs_delta)) / max(
+            float(np.linalg.norm(rhs192_values)), np.finfo(float).tiny
+        )
+
+        action160 = apply_owned(bundle["dtn_action"], q160_rhs)
+        action192 = apply_owned(bundle_q192["dtn_action"], q160_rhs)
+        action160_values = np.asarray(
+            action160.getArray(readonly=True), dtype=np.complex128
+        )
+        action192_values = np.asarray(
+            action192.getArray(readonly=True), dtype=np.complex128
+        )
+        action_delta = action192_values - action160_values
+        action_relative = float(np.linalg.norm(action_delta)) / max(
+            float(np.linalg.norm(action192_values)), np.finfo(float).tiny
+        )
+        facts = {
+            "status": "DIAGNOSTIC_ONLY",
+            "same_mesh": True,
+            "same_actual_parent_mode_sha256": str(bundle["mode_sha256"]),
+            "same_source_vector": "production_q160_full_physical_rhs",
+            "q160": int(bundle["dtn_quadrature_degree"]),
+            "q192": int(bundle_q192["dtn_quadrature_degree"]),
+            "production_rhs_q160_facts": dict(q160_rhs_facts),
+            "production_rhs_q192_facts": rhs_facts_q192,
+            "rhs_difference_norm": float(np.linalg.norm(rhs_delta)),
+            "rhs_q192_norm": float(np.linalg.norm(rhs192_values)),
+            "rhs_relative_difference": rhs_relative,
+            "dtn_action_difference_norm": float(np.linalg.norm(action_delta)),
+            "dtn_action_q192_norm": float(np.linalg.norm(action192_values)),
+            "dtn_action_relative_difference": action_relative,
+            "numeric_gate": False,
+            "additional_matrix_or_factor": False,
+        }
+        marker("dispersion_flat_q192_witness_complete", facts)
+        return facts
+    finally:
+        for vector in (action160, action192, rhs_q192):
+            if vector is not None:
+                vector.destroy()
+        if bundle_q192 is not None:
+            destroy_same_mesh_physical_action(bundle_q192)
+
+
+def _dispersion_flat_port_mpc_witness(
+    floquet: Any,
+    bundle: Mapping[str, Any],
+    *,
+    rhs_size: int,
+    rhs_values: np.ndarray,
+    rhs_norm: float,
+    rhs_facts: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate and summarize the actual production port/MPC path."""
+
+    mpc = getattr(floquet, "mpc", None)
+    if mpc is None:
+        raise ValueError("flat production Floquet witness has no finalized MPC")
+    setup = bundle.get("setup")
+    if (
+        not isinstance(setup, Mapping)
+        or setup.get("floquets", {}).get(6) is not floquet
+    ):
+        raise ValueError("flat RHS bundle is not bound to the witnessed degree-6 MPC")
+    if bundle.get("dtn_action") is None:
+        raise ValueError("flat production port witness has no DtN action")
+    modes = bundle.get("modes")
+    carrier = getattr(bundle["dtn_action"], "carrier", None)
+    entries = getattr(carrier, "entries", None)
+    if not modes or entries is None or len(entries) != len(modes):
+        raise ValueError("flat production port inventory/carrier counts differ")
+    mode_sha = bundle.get("mode_sha256")
+    if not isinstance(mode_sha, str) or len(mode_sha) != 64:
+        raise ValueError("flat production port inventory lacks its canonical SHA256")
+    if int(bundle.get("dtn_quadrature_degree", -1)) != 160:
+        raise ValueError("flat production port witness must use surface q160")
+    if (
+        rhs_facts.get("generation") != "dtn_port_modal_physical_rhs"
+        or rhs_facts.get("phase_application") != "finalized_floquet_mpc_once"
+        or int(rhs_facts.get("degree", -1)) != 6
+        or int(rhs_facts.get("mode_count", -1)) != len(modes)
+        or rhs_facts.get("mode_manifest_sha256") != mode_sha
+    ):
+        raise ValueError("flat production RHS facts do not match its finalized port/MPC bundle")
+
+    phases = {
+        name: complex(getattr(floquet, name))
+        for name in ("phase_x", "phase_y", "phase_corner")
+    }
+    if not all(
+        math.isfinite(value.real) and math.isfinite(value.imag)
+        for value in phases.values()
+    ):
+        raise FloatingPointError("flat production Floquet phase is non-finite")
+    phase_moduli = {name: abs(value) for name, value in phases.items()}
+    if any(abs(value - 1.0) > 2.0e-12 for value in phase_moduli.values()):
+        raise ValueError("flat production Floquet phases are not unit-modulus")
+    corner_error = abs(phases["phase_corner"] - phases["phase_x"] * phases["phase_y"])
+    if corner_error > 2.0e-12:
+        raise ValueError("flat production Floquet corner phase is not phase_x*phase_y")
+
+    constraint_mode = str(getattr(floquet, "constraint_mode_resolved", ""))
+    if constraint_mode != "topological_trace_p6":
+        raise ValueError(
+            "flat production degree-6 MPC did not use topological_trace_p6"
+        )
+    counts = {
+        name: int(getattr(floquet, name))
+        for name in (
+            "num_constraints",
+            "num_x_constraints",
+            "num_y_constraints",
+            "num_corner_constraints",
+            "num_slave_edges",
+            "num_slave_faces",
+            "num_edge_constraints",
+            "num_face_constraints",
+            "max_masters_per_slave",
+        )
+    }
+    if min(counts["num_constraints"], counts["num_x_constraints"], counts["num_y_constraints"]) <= 0:
+        raise ValueError("flat production MPC is missing x/y periodic constraints")
+    errors = {
+        name: float(getattr(floquet, name))
+        for name in (
+            "max_face_pairing_coordinate_error",
+            "edge_corner_phase_mismatch",
+            "max_edge_midpoint_pairing_error",
+            "max_face_midpoint_pairing_error",
+            "max_face_transform_fit_residual",
+        )
+    }
+    if not np.isfinite(tuple(errors.values())).all():
+        raise FloatingPointError("flat production MPC geometry/phase errors are non-finite")
+    rhs_values = np.asarray(rhs_values, dtype=np.complex128).reshape(-1)
+    if rhs_values.size != int(rhs_size) or not np.isfinite(rhs_values).all():
+        raise ValueError("flat production RHS size/finite check failed")
+    rhs_norm = float(rhs_norm)
+    if not math.isfinite(rhs_norm) or rhs_norm <= 0.0:
+        raise ValueError("flat production top-traction/modal RHS must be finite and nonzero")
+
+    return {
+        "status": "ACTUAL_PRODUCTION_PORT_MPC_RHS_VERIFIED",
+        "mpc_type": f"{type(mpc).__module__}.{type(mpc).__qualname__}",
+        "mpc_object_id_this_process": id(mpc),
+        "constraint_mode_resolved": constraint_mode,
+        "counts": counts,
+        "phases": {
+            name: [float(value.real), float(value.imag)]
+            for name, value in phases.items()
+        },
+        "phase_moduli": phase_moduli,
+        "corner_phase_product_absolute_error": float(corner_error),
+        "pairing_and_phase_errors": errors,
+        "dtn_mode_count": len(modes),
+        "dtn_mode_manifest_sha256": mode_sha,
+        "dtn_quadrature_degree": int(bundle["dtn_quadrature_degree"]),
+        "carrier_entry_count": len(entries),
+        "rhs_generation": dict(rhs_facts),
+        "rhs_rows": int(rhs_size),
+        "rhs_nonzero_entries": int(np.count_nonzero(rhs_values)),
+        "rhs_norm": rhs_norm,
+        "actual_top_traction_and_modal_rhs": True,
+        "finalized_mpc_used_by_physical_rhs": True,
+        "analytic_or_zero_contrast_shortcut": False,
+    }
+
+
 def _factor_same_matrix(factor: Any, matrix: Any, rhs: Any, solution: Any, marker):
     """Run exactly one symbolic/numeric/solve sequence on one matrix object."""
 
@@ -710,7 +1082,7 @@ def run_p6_condensed_direct(
     numerical_output.mkdir(exist_ok=True)
     phase_path_value = os.environ.get("PHYSICAL_WATCHDOG_PHASE_PATH")
     if not phase_path_value:
-        raise RuntimeError("direct V7 route requires the existing native-capacity watchdog")
+        raise RuntimeError("p6 condensed-direct route requires the native-capacity watchdog")
     phase_path = Path(phase_path_value)
     if not phase_path.is_absolute():
         raise RuntimeError("watchdog phase path must be absolute")
@@ -757,6 +1129,8 @@ def run_p6_condensed_direct(
             active_mode_count_expected=route["active_count"],
             active_mode_sha256_expected=route["active_sha256"],
         )
+        profile_rss_cap = int(profile_facts["resources"]["rss_hard_limit_bytes"])
+        summary["rss_hard_limit_bytes"] = profile_rss_cap
         inherited_store = sorted(
             key for key in os.environ if key.startswith("TASK39EXTRA_FUNCTIONAL_STORE")
         )
@@ -784,11 +1158,20 @@ def run_p6_condensed_direct(
         if np.dtype(PETSc.IntType) != np.dtype(np.int64):
             raise RuntimeError("p6 direct route requires 64-bit PetscInt")
         cap_value = os.environ.get("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES")
-        if cap_value is not None and int(cap_value) != RSS_HARD_LIMIT_BYTES:
-            raise RuntimeError("watchdog launch cap differs from the exact 1.8e12-byte RSS hard limit")
+        if route["family"] == "dispersion_flat" and cap_value is None:
+            raise RuntimeError("flat direct route requires the native watchdog RSS cap")
+        if cap_value is not None and int(cap_value) != profile_rss_cap:
+            raise RuntimeError("watchdog launch cap differs from the resolved profile RSS hard limit")
         cfg = simulation_config_3d_from_normalized(resolved_payload)
         if not isinstance(cfg, SimulationConfig3D):
             raise TypeError("resolved direct input did not create SimulationConfig3D")
+        if route["family"] == "dispersion_flat":
+            if cfg.mesh_plan_id is None or cfg.mesh_plan_sha256 is None:
+                raise ValueError("flat direct config lost its frozen axis-plan identity")
+            # The input schema intentionally has no user-facing surface-q field;
+            # this opt-in profile binds q160 in resolved facts and applies it
+            # only to the exact flat runner route.
+            cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
         ledger.marker("p6_direct_resolved_profile_bound", {
             "profile": profile_facts["identity"],
             "direct_run_contract": route,
@@ -817,6 +1200,8 @@ def run_p6_condensed_direct(
             mesh_evidence = actual_v7_anisotropic_mesh_evidence(
                 levels, cfg, required_space_degrees=(6,)
             )
+        elif route["family"] == "dispersion_flat":
+            mesh_evidence = _dispersion_flat_mesh_evidence(levels, cfg)
         else:
             axes = validate_frozen_f5_axes({
                 "mesh_plan_id": cfg.mesh_plan_id,
@@ -845,7 +1230,21 @@ def run_p6_condensed_direct(
         ledger.marker("p6_direct_actual_mesh_qa_complete", mesh_evidence)
 
         parent_inventory = build_dynamic_mode_inventory(cfg)
-        if (
+        if route["family"] == "dispersion_flat":
+            if (
+                not parent_inventory[0]
+                or len(parent_inventory[0]) != len(parent_inventory[1])
+                or not isinstance(parent_inventory[2], str)
+                or len(parent_inventory[2]) != 64
+            ):
+                raise ValueError("live flat auto-propagating parent inventory is incomplete")
+            route.update(
+                parent_count=len(parent_inventory[0]),
+                parent_sha256=str(parent_inventory[2]),
+                active_count=len(parent_inventory[0]),
+                active_sha256=str(parent_inventory[2]),
+            )
+        elif (
             len(parent_inventory[0]) != route["parent_count"]
             or parent_inventory[2] != route["parent_sha256"]
         ):
@@ -887,6 +1286,10 @@ def run_p6_condensed_direct(
                 operator_selection,
                 selected_parent_indices,
             )
+        elif route["family"] == "dispersion_flat":
+            inventory_artifacts = {
+                "parent": _persist_flat_parent_inventory(directory, parent_inventory)
+            }
         else:
             inventory_artifacts = _persist_f5_inventory(
                 directory,
@@ -911,6 +1314,8 @@ def run_p6_condensed_direct(
             "quadrature_authority": (
                 "full_32060_parent_q160"
                 if route["family"] == "v7_aniso_n0"
+                else "all_auto_propagating_flat_inventory_q160"
+                if route["family"] == "dispersion_flat"
                 else "full_600_parent_q37_degree_even_for_n0_subset"
             ),
             "artifacts": inventory_artifacts,
@@ -920,7 +1325,24 @@ def run_p6_condensed_direct(
         volume_quadrature_metadata, _volume_quadrature_records = (
             fine_volume_quadrature_metadata(levels, cfg)
         )
-        if route["family"] == "v7_aniso_n0":
+        if route["family"] == "dispersion_flat":
+            if tuple(volume_quadrature_metadata) != (
+                {"quadrature_degree": 15, "quadrature_rule": "default"},
+                {"quadrature_degree": 15, "quadrature_rule": "default"},
+            ):
+                raise ValueError("dispersion flat P6 requires the V1-verified volume q15 rule")
+            bundle = build_same_mesh_physical_action(
+                levels,
+                cfg,
+                6,
+                mode_inventory=active_inventory,
+                volume_quadrature_metadata=volume_quadrature_metadata,
+                reuse_surface_vector=True,
+                functional_store_config=None,
+                stage_callback=ledger.marker,
+                surface_progress_interval=1024,
+            )
+        elif route["family"] == "v7_aniso_n0":
             bundle = build_same_mesh_physical_action(
                 levels,
                 cfg,
@@ -971,7 +1393,11 @@ def run_p6_condensed_direct(
                 surface_progress_interval=1024,
                 **parent_surface_kwargs,
             )
-        expected_surface_q = 160 if route["family"] == "v7_aniso_n0" else 37
+        expected_surface_q = (
+            int(route["surface_quadrature_degree"])
+            if route["family"] == "dispersion_flat"
+            else 160 if route["family"] == "v7_aniso_n0" else 37
+        )
         if int(bundle["dtn_quadrature_degree"]) != expected_surface_q:
             raise ValueError(
                 f"live surface quadrature degree {bundle['dtn_quadrature_degree']} "
@@ -983,6 +1409,12 @@ def run_p6_condensed_direct(
             or len(bundle["dtn_action"].carrier.entries) != route["active_count"]
         ):
             raise ValueError("live p6 carrier differs from its selected active mode identity")
+        if route["family"] == "dispersion_flat" and (
+            len(parent_inventory[0]) != len(bundle["modes"])
+            or bundle["mode_sha256"] != parent_inventory[2]
+            or operator_selection is not None
+        ):
+            raise ValueError("flat route must use its complete unfiltered auto-propagating parent")
         summary["operator_identity"] = {
             "degree": 6,
             "parent_quadrature_degree": int(bundle["dtn_quadrature_degree"]),
@@ -999,6 +1431,47 @@ def run_p6_condensed_direct(
             "cross_mesh_fe_reuse": False,
         }
         ledger.marker("p6_direct_surface_carrier_complete", summary["operator_identity"])
+
+        # The source is assembled through the production incident top traction,
+        # finalized MPC scatter, and modal DtN RHS composition path.  Keeping
+        # this actual vector is also the common q160/q192 action witness input.
+        full_rhs, rhs_facts = build_physical_rhs(bundle)
+        if full_rhs.getSize() != int(
+            levels["spaces"][6].dofmap.index_map.size_global
+            * levels["spaces"][6].dofmap.index_map_bs
+        ):
+            raise ValueError("production flat/port RHS differs from full P6 storage")
+        rhs_values_for_witness = np.asarray(
+            full_rhs.getArray(readonly=True), dtype=np.complex128
+        )
+        if not np.isfinite(rhs_values_for_witness).all() or not np.any(rhs_values_for_witness):
+            raise FloatingPointError("production incident/MPC/DtN RHS is zero or non-finite")
+        summary["production_port_mpc_witness"] = _dispersion_flat_port_mpc_witness(
+            levels["floquets"][6],
+            bundle,
+            rhs_size=int(full_rhs.getSize()),
+            rhs_values=rhs_values_for_witness,
+            rhs_norm=float(full_rhs.norm()),
+            rhs_facts=rhs_facts,
+        )
+        if route["family"] == "dispersion_flat":
+            summary["quadrature_comparison"] = (
+                _dispersion_flat_q192_witness(
+                    levels,
+                    cfg,
+                    bundle,
+                    parent_inventory,
+                    volume_quadrature_metadata,
+                    full_rhs,
+                    rhs_facts,
+                    ledger.marker,
+                )
+                if mesh_evidence["axis_cell_counts"][0] == 2
+                else {
+                    "status": "NOT_RUN_BY_PROFILE",
+                    "reason": "q192 witness is bounded to the Nx=2 case",
+                }
+            )
 
         form_started = perf_counter()
         from dolfinx import fem
@@ -1118,7 +1591,6 @@ def run_p6_condensed_direct(
         }
         ledger.marker("p6_direct_action_view_ready", summary["matrix_free_action"])
 
-        full_rhs, rhs_facts = build_physical_rhs(bundle)
         if full_rhs.getSize() != int(condensed.full_rows):
             raise ValueError("physical p6 RHS differs from the condensed full-storage layout")
         full_rhs_array = np.asarray(full_rhs.getArray(readonly=True))
@@ -1313,14 +1785,25 @@ def run_p6_condensed_direct(
             )
 
         output_policy = _direct_output_policy(route)
+        should_export_canonical = bool(
+            resolved_payload.get("output", {}).get("export_canonical_vectors", False)
+        )
         output_facts = recover_p0_outputs(
             bundle,
             saved_field,
             numerical_output,
-            canonical_export=canonical_export,
+            canonical_export=(canonical_export if should_export_canonical else None),
             export_all_port_modes=True,
             active_port_outputs_only=output_policy["active_port_outputs_only"],
         )
+        if route["family"] == "dispersion_flat":
+            from src.postprocessing.flat_layer_reference_3d import (
+                write_flat_layer_reference_outputs,
+            )
+
+            output_facts["flat_layer_reference_outputs"] = (
+                write_flat_layer_reference_outputs(cfg, numerical_output)
+            )
         auxiliary = np.asarray(output_facts.pop("auxiliary"), dtype=np.complex128)
         if auxiliary.shape != (route["active_count"],) or not np.isfinite(auxiliary).all():
             raise ValueError("direct p6 output did not recover every active finite modal amplitude")
@@ -1368,12 +1851,18 @@ def run_p6_condensed_direct(
             summary["v7_output_audit"] = output_audit
         summary["matched_reference"] = {
             "status": "REFERENCE_AUTHORITY_LIMITED",
-            "reference_availability": "REFERENCE_NOT_AVAILABLE",
+            "reference_availability": (
+                "FLAT_LAYER_ANALYTIC_REFERENCE_COMPUTED"
+                if route["family"] == "dispersion_flat"
+                else "REFERENCE_NOT_AVAILABLE"
+            ),
             "reason": (
                 "historical iterative baseline uses y=7 while both new F5 direct runs use y=2; "
                 "comparison with that baseline changes both y discretization and solution strategy"
                 if route["family"] == "v6_f5"
                 else "same-material independent full-DtN reference and mesh convergence were not run"
+                if route["family"] != "dispersion_flat"
+                else "flat-layer analytic reference is reported separately; auto-propagating DtN omits evanescent orders"
             ),
             "new_f5_pair_comparison": (
                 "same y=2 mesh and P6 direct strategy; full600 versus n0 differs in active DtN channels"

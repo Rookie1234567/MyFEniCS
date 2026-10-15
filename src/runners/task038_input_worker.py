@@ -214,25 +214,26 @@ def _load_and_validate_worker_payload(
                     != canonical_json_bytes(profile)
                 ):
                     errors.append(
-                        'resolved direct V7 native-capacity profile facts mismatch'
+                        'resolved condensed-direct native-capacity profile facts mismatch'
                     )
                 if manifest_value.get('native_capacity_profile_identity') != profile_name:
-                    errors.append('manifest direct V7 profile identity mismatch')
+                    errors.append('manifest condensed-direct profile identity mismatch')
                 if manifest_value.get('native_capacity_profile') != resolved_profile:
                     errors.append(
-                        'manifest direct V7 profile facts differ from resolved config'
+                        'manifest condensed-direct profile facts differ from resolved config'
                     )
                 native_contract = manifest_value.get('native_capacity_contract')
                 if not isinstance(native_contract, dict):
-                    errors.append('manifest direct V7 native-capacity contract is missing')
+                    errors.append('manifest condensed-direct native-capacity contract is missing')
                 else:
                     expected_route = profile['campaign_authorization']['direct_route']
+                    expected_rss_cap = profile['resources']['rss_hard_limit_bytes']
                     if native_contract.get('profile') != profile_name:
-                        errors.append('manifest direct V7 resource profile mismatch')
-                    if native_contract.get('rss_hard_limit_bytes') != 1_800_000_000_000:
-                        errors.append('manifest direct V7 RSS hard limit mismatch')
+                        errors.append('manifest condensed-direct resource profile mismatch')
+                    if native_contract.get('rss_hard_limit_bytes') != expected_rss_cap:
+                        errors.append('manifest condensed-direct RSS hard limit mismatch')
                     if native_contract.get('direct_route') != expected_route:
-                        errors.append('manifest direct V7 route contract mismatch')
+                        errors.append('manifest condensed-direct route contract mismatch')
     if manifest_value.get("execution_mode", "full_solve") != expected_execution_mode:
         errors.append("worker CLI and manifest execution mode mismatch")
     if setup_only:

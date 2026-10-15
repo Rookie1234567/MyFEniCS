@@ -1,0 +1,882 @@
+{
+  "bloch_direction": {
+    "global_phase_absolute_difference": 0.0,
+    "global_phase_expected_from_kx": [
+      -0.8692301774091008,
+      0.49440762401215377
+    ],
+    "global_phase_saved_in_resolved": [
+      -0.8692301774091008,
+      0.49440762401215377
+    ],
+    "not_smallest_eigenvalue": true,
+    "one_cell_relation": "E_y(x=1)=exp(+i*kx*hx)E_y(x=0)",
+    "physical_branch_selection": "maximum mass-metric overlap with Basix DOF-interpolated exp(i*kx*x); adjacent-h continuation overlap also recorded",
+    "production_MPC_pairing": "NOT_RUN",
+    "production_cell_orientation_transformations": "NOT_RUN; reference-cell canonical orientation only",
+    "production_constraint_convention_source": "constraints/floquet_3d.py::_target_for_kind; x_max slave maps to x_min with cfg.floquet_phase_x"
+  },
+  "created_utc": "2026-10-15T03:36:04.168538Z",
+  "identity": {
+    "analysis_script_sha256": "2346cff04e50203407836acdd772fae71469a35558a304917c9c72e677507c62",
+    "current_head": "fd61ac45dee8814049efa82c349e1e3f1ebbee42",
+    "direct_summary_sha256": "992a2b2c6e9306ac7a540edc707e53ad2a3d7da0a47d7f6a50c28ad0924d1671",
+    "historical_run_id": "v7_interleave_0p7nm_aniso_p6_direct_q160_n0_full",
+    "historical_run_source_sha": "9a3c4a3fd9a41702fff4069280cb9507cefb163d",
+    "input_sha256": "395fa90fdfee1f28539bdd395d6c219323145e5a043e2576809f954488dcc175",
+    "physical_model_sha256": "d394308fe4dfcc8e0c25cdaa707fb8ff4bf4a394c268a8702b4afa069b78681a",
+    "production_source_files_sha256": {
+      "src/constraints/floquet_3d.py": "b013ce397b6bdc4a7a27ae8088a20718d8c6f195adc03f9f3dd21a0a965aacd4",
+      "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+      "src/solvers/fullspace_n1e_sum_factor.py": "bb6908fed61609907a6cea4ccb891b1acc14c2f2d2277067c318413c14656801",
+      "src/solvers/fullspace_physical_intermediate_runtime.py": "ad89f79700a20a488c7a6de6e9d230a0d7b068a1d86423cbcabe7739a8d19fe2",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "0879e7441d6a9b1a2417c893a84de817524dfd0c46f439565dd51e9c2b693d81"
+    },
+    "resolved_config_sha256": "3d8378dc810a8a5357bec3ede1b188666f336f2b794ff845454951e2c0865573",
+    "run_manifest_sha256": "60fd6638586511fbf6d19f549086dc7bdcfc73c2861779ceb4a5f10c8113e29a",
+    "v0_reconciliation_sha256": "68fcb03bd1ef4361a4a17988c46c02da1136dc89438692314225fc6e82156644"
+  },
+  "limitations": [
+    "This reference-cell Bloch component does not instantiate production DOLFINx MPC, real 100x2x234 mesh, or port boundary integrals.",
+    "The existing direct run had a real 572-mode N0 port solve, but its full 32060-mode DtN operator remains FULL_DTN_NOT_VERIFIED; this component does not close that limitation.",
+    "The one-cell symbol isolates in-plane p6/p7/p8 dispersion; it is not a full grating R/T or RCWA qualification.",
+    "Production mesh orientation and actual traction projection require the bounded V2 flat solve and remain not run here."
+  ],
+  "model": {
+    "active_mode_count_sha": [
+      572,
+      "946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b"
+    ],
+    "azimuth_deg": 0.0,
+    "degree_scope": [
+      6,
+      7,
+      8
+    ],
+    "direction_vector": [
+      0.9998476951563913,
+      0.0,
+      -0.017452406437283376
+    ],
+    "epsilon_Si": [
+      0.9997702651711627,
+      8.64957815063072e-06
+    ],
+    "epsilon_air": [
+      1.0,
+      0.0
+    ],
+    "grazing_angle_deg": 1.0,
+    "hx_nm_p6": [
+      0.5,
+      0.25,
+      0.125
+    ],
+    "hy_nm": 12.5,
+    "hz_nm_p6": [
+      0.6,
+      0.5882352941176471
+    ],
+    "k0_nm_inv": 8.975979010256552,
+    "kx_nm_inv": 8.97461192517716,
+    "kz_nm_inv": -0.1566524338595219,
+    "mode_parent_count_sha_q": [
+      32060,
+      "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb",
+      160
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "production_cell_info_values": "NOT_RECORDED_IN_BOUND_DIRECT_SUMMARY; canonical reference-cell orientation used here",
+    "production_mesh_counts": [
+      100,
+      2,
+      234
+    ],
+    "wavelength_nm": 0.7
+  },
+  "numerical_results": [
+    {
+      "J_diagonal_nm": [
+        0.5,
+        12.5,
+        0.6
+      ],
+      "K_hermitian_relative_defect": 8.252626217254724e-17,
+      "M_hermitian_relative_defect": 1.1186816275653901e-16,
+      "M_min_eigenvalue": 3.749999999999987,
+      "all_eigenvalues_nm_minus2": [
+        12.900730483691289,
+        80.54429875425389,
+        262.064788317313,
+        484.8313193961626,
+        1145.3071592295403,
+        3770.5773742994884
+      ],
+      "all_physical_branch_overlaps": [
+        3.4391210176096795e-07,
+        0.9999999943406094,
+        7.06004285618191e-05,
+        8.526146465457603e-06,
+        7.860921135645577e-05,
+        9.063083460672356e-06
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 6,
+        "dimension": 882,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          504,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 4.48730596258858,
+      "bloch_phase_im": -0.9747755819113639,
+      "bloch_phase_re": -0.22318728662126316,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 3.749999999999997,
+      "coefficient_basis_condition_2": 13.389921267125882,
+      "constrained_polynomial_dimension": 6,
+      "continuation_overlap_with_previous_h": null,
+      "degree": 6,
+      "detJ_nm3": 3.75,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 1,
+      "generalized_eigenpair_relative_residual": 1.0830234640786933e-14,
+      "hx_nm": 0.5,
+      "hy_nm": 12.5,
+      "hz_nm": 0.6,
+      "lambda_nm_minus2": 80.54429875425389,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56280683086312,
+        -0.0006969944176109473
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 7.694174990515244e-15,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 7.93795477897573e-06,
+      "plane_wave_mass_overlap": 0.9999999943406094,
+      "quadrature_point_count": 512,
+      "quadrature_weight_sum_reference": 0.9999999999999992,
+      "reduced_K_condition_2": 292.276269089251,
+      "reduced_M_condition_2": 1.0000000000000029,
+      "reduced_symbol_matrix_shape": [
+        6,
+        6
+      ],
+      "relative_lambda_over_kx2_minus_1": 7.940373309311965e-06,
+      "roundoff_scale_eps_times_max_condition": 6.489836869888488e-14,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 5.40314517419564e-16
+    },
+    {
+      "J_diagonal_nm": [
+        0.25,
+        12.5,
+        0.6
+      ],
+      "K_hermitian_relative_defect": 8.711456363857917e-17,
+      "M_hermitian_relative_defect": 1.0668462817641027e-16,
+      "M_min_eigenvalue": 1.874999999999993,
+      "all_eigenvalues_nm_minus2": [
+        80.54365941507554,
+        261.085774072192,
+        1170.446224446567,
+        1760.511458937617,
+        5053.293687181228,
+        13410.167027725518
+      ],
+      "all_physical_branch_overlaps": [
+        0.9999999999999222,
+        3.550750237173442e-08,
+        6.917989902923887e-08,
+        2.970877357638489e-07,
+        2.2654003296614076e-07,
+        1.0211775551460231e-07
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 6,
+        "dimension": 882,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          504,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 2.24365298129429,
+      "bloch_phase_im": 0.7820445277032706,
+      "bloch_phase_re": -0.6232225579111915,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 1.8749999999999984,
+      "coefficient_basis_condition_2": 13.389921267125882,
+      "constrained_polynomial_dimension": 6,
+      "continuation_overlap_with_previous_h": 0.8030714598489886,
+      "degree": 6,
+      "detJ_nm3": 1.875,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 0,
+      "generalized_eigenpair_relative_residual": 3.1127937340643456e-14,
+      "hx_nm": 0.25,
+      "hy_nm": 12.5,
+      "hz_nm": 0.6,
+      "lambda_nm_minus2": 80.54365941507554,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56216734477259,
+        -0.0006969888850550102
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 5.763169870786995e-15,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 2.5759973185513543e-09,
+      "plane_wave_mass_overlap": 0.9999999999999222,
+      "quadrature_point_count": 512,
+      "quadrature_weight_sum_reference": 0.9999999999999992,
+      "reduced_K_condition_2": 166.49562641072774,
+      "reduced_M_condition_2": 1.0000000000000044,
+      "reduced_symbol_matrix_shape": [
+        6,
+        6
+      ],
+      "relative_lambda_over_kx2_minus_1": 2.5767821210109787e-09,
+      "roundoff_scale_eps_times_max_condition": 3.696945558811565e-14,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 2.70157258709782e-16
+    },
+    {
+      "J_diagonal_nm": [
+        0.125,
+        12.5,
+        0.6
+      ],
+      "K_hermitian_relative_defect": 1.1916787073186192e-16,
+      "M_hermitian_relative_defect": 1.1616742323416148e-16,
+      "M_min_eigenvalue": 0.9374999999999966,
+      "all_eigenvalues_nm_minus2": [
+        80.54365920758478,
+        1705.0000360812983,
+        3515.121168030469,
+        8957.216555163275,
+        15629.460596792514,
+        72046.0375190038
+      ],
+      "all_physical_branch_overlaps": [
+        1.0,
+        1.8928304141712253e-10,
+        2.739820563015983e-10,
+        1.2135568560175557e-09,
+        7.760225206242144e-10,
+        4.0721889994087507e-10
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 6,
+        "dimension": 882,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          504,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 1.121826490647145,
+      "bloch_phase_im": 0.9008947102495362,
+      "bloch_phase_re": 0.4340376954187323,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 0.9374999999999992,
+      "coefficient_basis_condition_2": 13.389921267125882,
+      "constrained_polynomial_dimension": 6,
+      "continuation_overlap_with_previous_h": 0.948381475837984,
+      "degree": 6,
+      "detJ_nm3": 0.9375,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 0,
+      "generalized_eigenpair_relative_residual": 1.4117617423863018e-13,
+      "hx_nm": 0.125,
+      "hy_nm": 12.5,
+      "hz_nm": 0.6,
+      "lambda_nm_minus2": 80.54365920758478,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56216713723416,
+        -0.0006969888832594779
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 5.585912605112241e-15,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 6.542042724910185e-13,
+      "plane_wave_mass_overlap": 1.0,
+      "quadrature_point_count": 512,
+      "quadrature_weight_sum_reference": 0.9999999999999992,
+      "reduced_K_condition_2": 894.4967018858663,
+      "reduced_M_condition_2": 1.000000000000002,
+      "reduced_symbol_matrix_shape": [
+        6,
+        6
+      ],
+      "relative_lambda_over_kx2_minus_1": 6.543654507140673e-13,
+      "roundoff_scale_eps_times_max_condition": 1.9861816677699069e-13,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 1.35078629354891e-16
+    },
+    {
+      "J_diagonal_nm": [
+        0.5,
+        12.5,
+        0.5882352941176471
+      ],
+      "K_hermitian_relative_defect": 1.0994161562929488e-16,
+      "M_hermitian_relative_defect": 1.2494177593789334e-16,
+      "M_min_eigenvalue": 3.67647058823528,
+      "all_eigenvalues_nm_minus2": [
+        12.900730483691786,
+        80.54429875425373,
+        262.06478831731334,
+        484.8313193961627,
+        1145.3071592295414,
+        3770.577374299488
+      ],
+      "all_physical_branch_overlaps": [
+        3.4391210355490946e-07,
+        0.9999999943406094,
+        7.060042856364956e-05,
+        8.52614646591077e-06,
+        7.86092113560566e-05,
+        9.06308346065495e-06
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 6,
+        "dimension": 882,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          504,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 4.48730596258858,
+      "bloch_phase_im": -0.9747755819113639,
+      "bloch_phase_re": -0.22318728662126316,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 3.6764705882352917,
+      "coefficient_basis_condition_2": 13.389921267125882,
+      "constrained_polynomial_dimension": 6,
+      "continuation_overlap_with_previous_h": null,
+      "degree": 6,
+      "detJ_nm3": 3.6764705882352944,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 1,
+      "generalized_eigenpair_relative_residual": 1.4842255644188306e-14,
+      "hx_nm": 0.5,
+      "hy_nm": 12.5,
+      "hz_nm": 0.5882352941176471,
+      "lambda_nm_minus2": 80.54429875425373,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56280683086297,
+        -0.0006969944176109459
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 7.694174990515244e-15,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 7.937954777035518e-06,
+      "plane_wave_mass_overlap": 0.9999999943406094,
+      "quadrature_point_count": 512,
+      "quadrature_weight_sum_reference": 0.9999999999999992,
+      "reduced_K_condition_2": 292.27626908925066,
+      "reduced_M_condition_2": 1.0000000000000018,
+      "reduced_symbol_matrix_shape": [
+        6,
+        6
+      ],
+      "relative_lambda_over_kx2_minus_1": 7.940373307535609e-06,
+      "roundoff_scale_eps_times_max_condition": 6.48983686988848e-14,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 5.511142319062647e-16
+    },
+    {
+      "J_diagonal_nm": [
+        0.25,
+        12.5,
+        0.5882352941176471
+      ],
+      "K_hermitian_relative_defect": 9.860188631865544e-17,
+      "M_hermitian_relative_defect": 9.084575526540354e-17,
+      "M_min_eigenvalue": 1.83823529411764,
+      "all_eigenvalues_nm_minus2": [
+        80.5436594150775,
+        261.08577407219406,
+        1170.4462244465665,
+        1760.5114589376155,
+        5053.293687181224,
+        13410.167027725507
+      ],
+      "all_physical_branch_overlaps": [
+        0.9999999999999222,
+        3.5507490252345156e-08,
+        6.917989895152788e-08,
+        2.9708773537129653e-07,
+        2.265400331467396e-07,
+        1.0211775560099169e-07
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 6,
+        "dimension": 882,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          504,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 2.24365298129429,
+      "bloch_phase_im": 0.7820445277032706,
+      "bloch_phase_re": -0.6232225579111915,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 1.8382352941176459,
+      "coefficient_basis_condition_2": 13.389921267125882,
+      "constrained_polynomial_dimension": 6,
+      "continuation_overlap_with_previous_h": 0.8030714598489913,
+      "degree": 6,
+      "detJ_nm3": 1.8382352941176472,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 0,
+      "generalized_eigenpair_relative_residual": 2.7779557365016572e-14,
+      "hx_nm": 0.25,
+      "hy_nm": 12.5,
+      "hz_nm": 0.5882352941176471,
+      "lambda_nm_minus2": 80.5436594150775,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56216734477455,
+        -0.0006969888850550272
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 5.763169870786995e-15,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 2.5760216593951406e-09,
+      "plane_wave_mass_overlap": 0.9999999999999222,
+      "quadrature_point_count": 512,
+      "quadrature_weight_sum_reference": 0.9999999999999992,
+      "reduced_K_condition_2": 166.4956264107269,
+      "reduced_M_condition_2": 1.0000000000000029,
+      "reduced_symbol_matrix_shape": [
+        6,
+        6
+      ],
+      "relative_lambda_over_kx2_minus_1": 2.5768065459175205e-09,
+      "roundoff_scale_eps_times_max_condition": 3.6969455588115466e-14,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 2.7555711595313237e-16
+    },
+    {
+      "J_diagonal_nm": [
+        0.125,
+        12.5,
+        0.5882352941176471
+      ],
+      "K_hermitian_relative_defect": 7.007135838549819e-17,
+      "M_hermitian_relative_defect": 1.0205818678640083e-16,
+      "M_min_eigenvalue": 0.9191176470588202,
+      "all_eigenvalues_nm_minus2": [
+        80.54365920760075,
+        1705.0000360813026,
+        3515.121168030472,
+        8957.216555163266,
+        15629.460596792518,
+        72046.03751900379
+      ],
+      "all_physical_branch_overlaps": [
+        1.0,
+        1.8928377575999104e-10,
+        2.7398507827879323e-10,
+        1.2135564340947315e-09,
+        7.760219297432962e-10,
+        4.072185611405641e-10
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 6,
+        "dimension": 882,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          504,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 1.121826490647145,
+      "bloch_phase_im": 0.9008947102495362,
+      "bloch_phase_re": 0.4340376954187323,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 0.9191176470588229,
+      "coefficient_basis_condition_2": 13.389921267125882,
+      "constrained_polynomial_dimension": 6,
+      "continuation_overlap_with_previous_h": 0.9483814758379818,
+      "degree": 6,
+      "detJ_nm3": 0.9191176470588236,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 0,
+      "generalized_eigenpair_relative_residual": 3.2738090799328166e-13,
+      "hx_nm": 0.125,
+      "hy_nm": 12.5,
+      "hz_nm": 0.5882352941176471,
+      "lambda_nm_minus2": 80.54365920760075,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56216713725013,
+        -0.000696988883259616
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 5.585912605112241e-15,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 8.524586813019933e-13,
+      "plane_wave_mass_overlap": 1.0,
+      "quadrature_point_count": 512,
+      "quadrature_weight_sum_reference": 0.9999999999999992,
+      "reduced_K_condition_2": 894.4967018858376,
+      "reduced_M_condition_2": 1.000000000000002,
+      "reduced_symbol_matrix_shape": [
+        6,
+        6
+      ],
+      "relative_lambda_over_kx2_minus_1": 8.526512829121202e-13,
+      "roundoff_scale_eps_times_max_condition": 1.9861816677698433e-13,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 1.3777855797656616e-16
+    },
+    {
+      "J_diagonal_nm": [
+        0.5,
+        12.5,
+        0.6
+      ],
+      "K_hermitian_relative_defect": 1.3799383547469611e-16,
+      "M_hermitian_relative_defect": 1.2796347643815395e-16,
+      "M_min_eigenvalue": 3.749999999999984,
+      "all_eigenvalues_nm_minus2": [
+        12.900730481324311,
+        80.54367659243242,
+        261.18365340938084,
+        467.98926333296237,
+        915.091596418783,
+        1734.687604350031,
+        7170.586589830022
+      ],
+      "all_physical_branch_overlaps": [
+        5.60464182191831e-09,
+        0.9999999999232687,
+        4.059559091108744e-06,
+        5.85985854771098e-07,
+        1.090145246181595e-05,
+        3.244370671907837e-06,
+        2.6965602737327855e-06
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 7,
+        "dimension": 1344,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          721,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 4.48730596258858,
+      "bloch_phase_im": -0.9747755819113639,
+      "bloch_phase_re": -0.22318728662126316,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 3.7500000000000018,
+      "coefficient_basis_condition_2": 8.31256065111835,
+      "constrained_polynomial_dimension": 7,
+      "continuation_overlap_with_previous_h": null,
+      "degree": 7,
+      "detJ_nm3": 3.75,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 1,
+      "generalized_eigenpair_relative_residual": 1.1344903872421235e-14,
+      "hx_nm": 0.5,
+      "hy_nm": 12.5,
+      "hz_nm": 0.6,
+      "lambda_nm_minus2": 80.54367659243242,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56218452607662,
+        -0.000696989033700191
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 6.170485218239923e-15,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 2.157786883683715e-07,
+      "plane_wave_mass_overlap": 0.9999999999232687,
+      "quadrature_point_count": 729,
+      "quadrature_weight_sum_reference": 1.0000000000000004,
+      "reduced_K_condition_2": 555.8279509993946,
+      "reduced_M_condition_2": 1.0000000000000022,
+      "reduced_symbol_matrix_shape": [
+        7,
+        7
+      ],
+      "relative_lambda_over_kx2_minus_1": 2.1584443166133838e-07,
+      "roundoff_scale_eps_times_max_condition": 1.2341859778595024e-13,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 5.785992551910608e-16
+    },
+    {
+      "J_diagonal_nm": [
+        0.5,
+        12.5,
+        0.6
+      ],
+      "K_hermitian_relative_defect": 2.2225566122332678e-15,
+      "M_hermitian_relative_defect": 2.4650951625709326e-16,
+      "M_min_eigenvalue": 3.7499999999999827,
+      "all_eigenvalues_nm_minus2": [
+        12.900730481314165,
+        80.54365956426201,
+        261.0923806289625,
+        464.5943031655496,
+        849.3099905421147,
+        1334.2339445322573,
+        2997.5313254613616,
+        10325.729099569295
+      ],
+      "all_physical_branch_overlaps": [
+        6.527626927290581e-11,
+        0.9999999999990754,
+        1.691277241237713e-07,
+        2.907431217857575e-08,
+        9.855106801877441e-07,
+        4.7611365256851957e-07,
+        7.809013315906485e-07,
+        1.1248469014286401e-07
+      ],
+      "basix_element": {
+        "cell": "hexahedron",
+        "degree": 8,
+        "dimension": 1944,
+        "dof_transformations_are_identity": false,
+        "family": "N1E",
+        "lagrange_variant": "LagrangeVariant.legendre",
+        "map_type": "MapType.covariantPiola",
+        "points_shape": [
+          992,
+          3
+        ]
+      },
+      "bloch_phase_argument_rad": 4.48730596258858,
+      "bloch_phase_im": -0.9747755819113639,
+      "bloch_phase_re": -0.22318728662126316,
+      "bloch_trace_relation": "E_y(x=1)=exp(+i*kx*hx)*E_y(x=0)",
+      "cell_volume_nm3": 3.7500000000000018,
+      "coefficient_basis_condition_2": 18.4843801881842,
+      "constrained_polynomial_dimension": 8,
+      "continuation_overlap_with_previous_h": null,
+      "degree": 8,
+      "detJ_nm3": 3.75,
+      "eigenvalue_index_selected_by_plane_wave_overlap": 1,
+      "generalized_eigenpair_relative_residual": 2.4160404923602498e-14,
+      "hx_nm": 0.5,
+      "hy_nm": 12.5,
+      "hz_nm": 0.6,
+      "lambda_nm_minus2": 80.54365956426201,
+      "longdouble_nmant": 63,
+      "material_weighted_diagnostic_lambda_over_eps_nm_minus2": [
+        80.56216749399334,
+        -0.0006969888863460035
+      ],
+      "non_ey_value_leakage_relative": 0.0,
+      "orientation_scope": "canonical Basix reference-cell orientation only; production mesh cell_info transformations NOT_RUN",
+      "phase_trace_relative_residual": 1.0146000721602024e-14,
+      "plan_delta_lambda_minus_kx2_over_k0_2": 4.427676740467889e-09,
+      "plane_wave_mass_overlap": 0.9999999999990754,
+      "quadrature_point_count": 1000,
+      "quadrature_weight_sum_reference": 1.0000000000000004,
+      "reduced_K_condition_2": 800.3987924966877,
+      "reduced_M_condition_2": 1.0000000000000027,
+      "reduced_symbol_matrix_shape": [
+        8,
+        8
+      ],
+      "relative_lambda_over_kx2_minus_1": 4.4290258127688276e-09,
+      "roundoff_scale_eps_times_max_condition": 1.7772423366239914e-13,
+      "target_kx2_nm_minus2": 80.54365920753207,
+      "yz_derivative_leakage_relative_to_x": 6.003425515909243e-16
+    }
+  ],
+  "port_and_rhs": {
+    "existing_production_run": {
+      "active_modes": 572,
+      "fact": "the bound full 0.7-nm direct run used the production p6 action with the n=0 active DtN inventory and real build_physical_rhs route",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_and_mode_identity_bound": true,
+      "operator_scope": "n0_filtered_dtn_not_full_dtn",
+      "parent_modes": 32060,
+      "parent_q": 160
+    },
+    "next_v2_route": "fullspace_same_mesh_hcurl_pmg_physical.build_physical_rhs = _incident_top_traction_form -> _assemble_mpc_vector -> physical_action.compose_physical_rhs; flat case must use this nonzero boundary-driven RHS and an actual solve, not common_3d_forms.layered_scattered zero-contrast path",
+    "this_v1_component_actual_DtN_surface_action": "NOT_RUN",
+    "this_v1_component_actual_incident_top_traction_projection_action": "NOT_RUN"
+  },
+  "quadrature": {
+    "basix_default_points_per_axis": 8,
+    "basix_reference_quadrature_points": 512,
+    "integral_records": [
+      {
+        "component": "curl_curl",
+        "estimated_polynomial_degree": 15,
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "component": "material_mass",
+        "estimated_polynomial_degree": 15,
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1
+        ]
+      },
+      {
+        "component": "material_mass",
+        "estimated_polynomial_degree": 15,
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          2,
+          3
+        ]
+      },
+      {
+        "component": "curl_curl",
+        "estimated_polynomial_degree": 17,
+        "integral_type": "cell",
+        "quadrature_degree": 17,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "component": "material_mass",
+        "estimated_polynomial_degree": 17,
+        "integral_type": "cell",
+        "quadrature_degree": 17,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1
+        ]
+      },
+      {
+        "component": "material_mass",
+        "estimated_polynomial_degree": 17,
+        "integral_type": "cell",
+        "quadrature_degree": 17,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          2,
+          3
+        ]
+      },
+      {
+        "component": "curl_curl",
+        "estimated_polynomial_degree": 19,
+        "integral_type": "cell",
+        "quadrature_degree": 19,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "component": "material_mass",
+        "estimated_polynomial_degree": 19,
+        "integral_type": "cell",
+        "quadrature_degree": 19,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1
+        ]
+      },
+      {
+        "component": "material_mass",
+        "estimated_polynomial_degree": 19,
+        "integral_type": "cell",
+        "quadrature_degree": 19,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          2,
+          3
+        ]
+      }
+    ],
+    "quadrature_degree_by_polynomial_degree": {
+      "6": 15,
+      "7": 17,
+      "8": 19
+    },
+    "reference_weight_sum": 0.9999999999999992,
+    "source": "FFCx analyze_ufl_objects on common_3d_forms._build_physical_volume_terms, actual production curl-curl and material-mass UFL forms; no code generation or compilation",
+    "surface_and_volume_rules_are_distinct": true,
+    "surface_dtn_quadrature_degree_from_run": 160,
+    "unique_degree_rule_pairs_by_polynomial_degree": {
+      "6": [
+        [
+          15,
+          "default"
+        ]
+      ],
+      "7": [
+        [
+          17,
+          "default"
+        ]
+      ],
+      "8": [
+        [
+          19,
+          "default"
+        ]
+      ]
+    }
+  },
+  "schema": "task39extra.dispersion-v1-actual-basix-n1e-ey-symbol.v1",
+  "scope": {
+    "description": "one-cell Basix N1E polynomial subspace and Bloch-symbol component; no DOLFINx mesh, global matrix, production MPC, DtN carrier, factor, or PDE solve",
+    "no_npz_or_resources_read": true,
+    "no_production_claim": true,
+    "not_a_full_model_accuracy_gate": true
+  },
+  "status": "BOUNDED_REFERENCE_CELL_SYMBOL_COMPLETE_ACTUAL_PRODUCTION_MPC_PORT_NOT_RUN"
+}

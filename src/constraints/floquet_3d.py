@@ -68,6 +68,19 @@ def _mesh_is_tetrahedron(msh) -> bool:
     return "tetrahedron" in str(msh.basix_cell()).lower()
 
 
+def _fixed_target_high_order_floquet(cfg: SimulationConfig3D) -> bool:
+    if (
+        cfg.stage_case == "stage4_block_grating"
+        and cfg.geometry_kind == "rectangular_block_grating"
+    ):
+        return True
+    if cfg.stage_case == "stage4_flat_layer_sanity":
+        from src.geometry.dispersion_flat_axis_plan import is_dispersion_flat_p6_plan
+
+        return is_dispersion_flat_p6_plan(cfg)
+    return False
+
+
 def _qualified_constraint_mode(
     degree: int,
     *,
@@ -95,10 +108,7 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     requested = cfg.floquet_constraint_mode_requested
     degree = cfg.nedelec_trace_degree_resolved
     tetrahedral = V is not None and _mesh_is_tetrahedron(V.mesh)
-    fixed_target_high_order = (
-        cfg.stage_case == "stage4_block_grating"
-        and cfg.geometry_kind == "rectangular_block_grating"
-    )
+    fixed_target_high_order = _fixed_target_high_order_floquet(cfg)
     if requested in {"topological_edges", "sparse_facet"}:
         requested = "topological_edges_p1"
     if requested == "auto":
@@ -1848,10 +1858,7 @@ def _build_double_floquet_mpc_high_order(
 
     degree = cfg.nedelec_trace_degree_resolved
     tetrahedral = _mesh_is_tetrahedron(V.mesh)
-    fixed_target_high_order = (
-        cfg.stage_case == "stage4_block_grating"
-        and cfg.geometry_kind == "rectangular_block_grating"
-    )
+    fixed_target_high_order = _fixed_target_high_order_floquet(cfg)
     if degree not in {1, 2, 3, 4} and not (
         degree in {5, 6}
         and (tetrahedral or fixed_target_high_order)
