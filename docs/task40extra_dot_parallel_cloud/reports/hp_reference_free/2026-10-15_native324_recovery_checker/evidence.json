@@ -1,7 +1,7 @@
 {
  "schema": "native324.recovery-checker-investigation.compact.v4",
  "date_utc": "2026-10-15",
- "status": "GLOBAL_ONE_H_CANDIDATE_SAME_RAW_TRANSFER_PASS_BOTH_NATIVE_IDENTITIES_FAIL_REVIEWED",
+ "status": "ISOLATED_LIVE_CONTRACT56_TIME_LIMIT_REVIEWED_NEW_GATES_PASS_OLD_CROSS_FAIL_UNCONVERGED",
  "model": {
   "cells": 324,
   "nx": 18,
@@ -27,7 +27,8 @@
   "internal_residual_relative_limit": 1e-10,
   "schur_port_identity_relative_limit": 1e-10,
   "saved_cross_source_relative_limit": 1e-09,
-  "saved_cross_source_check_performed": false
+  "saved_cross_source_check_performed": false,
+  "scope": "historical legacy contract; explicit new live contract threshold roles are separately recorded"
  },
  "first_solver": {
   "status": "VERIFIED_CLEAN_RESOURCE_PASS_SCIENTIFIC_RECOVERY_IDENTITY_FAIL_UNQUALIFIED_FIELD_SAVED",
@@ -264,8 +265,8 @@
   "full_CI_claimed": false,
   "GitHub_rendered_view_verified": false,
   "science_imports_or_runs_by_report_builder": false,
-  "base_remote_HEAD": "2c310bf39e6dd36470de5124d59662a0f8002372",
-  "previous_report_commit": "2c310bf39e6dd36470de5124d59662a0f8002372"
+  "base_remote_HEAD": "2e1e818da53b3e97c2c567fed36b8db2fe8d333b",
+  "previous_report_commit": "2e1e818da53b3e97c2c567fed36b8db2fe8d333b"
  },
  "source_evidence": {
   "native_solver_attempt01_terminal_review.json": {
@@ -415,6 +416,42 @@
   "phase4_execution_ledger_v119.json": {
    "bytes": 155764,
    "sha256": "03c92c6938d1688c93edba8d604bf133caf1a2eb9096b02ebd788ef90d71e209"
+  },
+  "phase4_layer252_recovery_contract_source_review.json": {
+   "bytes": 17807,
+   "sha256": "9aec7a89354f350ce33266608a820bce8cb72a226bc55fbde210133b39bccd17"
+  },
+  "phase4_layer252_recovery_contract_attempt01_negative_candidate02_delta_review.json": {
+   "bytes": 10283,
+   "sha256": "ba64c002326e2a62ae6a29e9b8899158e887adac770980141dadd435f73009c2"
+  },
+  "phase4_layer252_recovery_contract_candidate01/attempt01/summary.json": {
+   "bytes": 1182,
+   "sha256": "af51a5f330e252c7c6ae32a962926e8f58f9ec9f1e5ae583ae0c3864b9220538"
+  },
+  "phase4_layer252_recovery_contract_candidate01/attempt01/failure.json": {
+   "bytes": 151,
+   "sha256": "0c430e31fcd9b7e0b6e2055a830692e83aeddb01a008307bcae0055de79a07ad"
+  },
+  "phase4_layer252_recovery_contract_candidate02/attempt01/summary.json": {
+   "bytes": 1195,
+   "sha256": "c95b3fc0e4ac2e477157cc1a04f08d2d0e1d71e3b4d73ff46910d14ecf2b52ad"
+  },
+  "phase4_execution_ledger_v120.json": {
+   "bytes": 157298,
+   "sha256": "583e4b8b875e33cf376de4f537a43046a5051db32b436781ebc6b51f6a6e5f9b"
+  },
+  "phase4_execution_ledger_v121.json": {
+   "bytes": 159539,
+   "sha256": "7451b7bf0e55cdc470f3b37948ba1a9cd59a2438a0b9fa64c93ea31f54cd6ef5"
+  },
+  "phase4_layer252_recovery_contract_attempt02_terminal_review.json": {
+   "bytes": 118951,
+   "sha256": "7f799c6582194189c1b343833c25664e1a685b62c89ba135b210419dbc25d0c9"
+  },
+  "phase4_execution_ledger_v122.json": {
+   "bytes": 160402,
+   "sha256": "cc2c16d840f9d36a1c9876d0271a06da9bbe7569a8b2010479e99cfc11be1e1c"
   }
  },
  "two_cell_split_kernel": {
@@ -644,13 +681,13 @@
   }
  },
  "cost_ledger_update": {
-  "status": "BOUND_V119",
-  "file": "phase4_execution_ledger_v119.json",
-  "bytes": 155764,
-  "sha256": "03c92c6938d1688c93edba8d604bf133caf1a2eb9096b02ebd788ef90d71e209",
-  "stage_count": 131,
-  "sum_known_terminal_seconds": 28418.439919136945,
-  "sum_seconds_lower_bound": 36553.87313250995,
+  "status": "BOUND_V122",
+  "file": "phase4_execution_ledger_v122.json",
+  "bytes": 160402,
+  "sha256": "cc2c16d840f9d36a1c9876d0271a06da9bbe7569a8b2010479e99cfc11be1e1c",
+  "stage_count": 133,
+  "sum_known_terminal_seconds": 29084.61487003493,
+  "sum_seconds_lower_bound": 37220.048083407935,
   "sum_is_not_exact": true,
   "preparation_elapsed_is_separate_and_not_zero": true,
   "aggregate_fields_are_not_additive": true,
@@ -658,7 +695,7 @@
   "full_ledger_uploaded": false
  },
  "production_proposal": {
-  "status": "NEW_CANDIDATE_CONTRACT_MINIMAL_INTEGRATION_AND_FAULT_TEST_CODE_PREPARATION_ONLY",
+  "status": "ISOLATED_EXPLICIT_CONTRACT_IMPLEMENTED_AND_BOUNDED_LIVE_RUN_TERMINATED",
   "same_family_assembly_consistency_can_hold_for_arbitrary_field": true,
   "native_residual_alone_guarantees_Schur_F_correctness": false,
   "candidate": "same-rank2 raw e_FE versus saved Schur/F transfer check",
@@ -667,12 +704,16 @@
   "existing_thresholds_changed": false,
   "approval_scope": "bounded saved-field replay only; no production change or PASS",
   "candidate_passed": false,
-  "production_changes_implemented": false,
+  "production_changes_implemented": true,
   "original_saved_replay_status": "BOUNDED_SAVED_REPLAY_COMPLETED_TRACE_FAIL_NO_PRODUCTION_INTEGRATION",
   "historical_candidate_fields_scope": "candidate/candidate_passed above describe the original saved-field same-raw replay, not the new H-corrected candidate",
-  "new_contract_and_fault_regression_implemented": false,
-  "bounded_new_production_run_started": false,
-  "awaiting_permission": false
+  "new_contract_and_fault_regression_implemented": true,
+  "bounded_new_production_run_started": true,
+  "awaiting_permission": false,
+  "bounded_new_production_run_terminal": true,
+  "original_default_legacy_contract_unchanged": true,
+  "original_sources_modified": false,
+  "final_physical_qualification": false
  },
  "same_raw_to_saved_schur": {
   "status": "RESOURCES_AND_FOUR_PAYLOAD_IDENTITIES_VERIFIED_SAVED_SCHUR_TRACE_TRANSFER_FAIL_PRESERVED",
@@ -1454,5 +1495,306 @@
   "post_correction_full_H_matrix_residual_count": 0,
   "individual_allocator_or_dlclose_release_credit": false,
   "new_H_S_Dhat_must_not_inherit_original_hashes": true
+ },
+ "isolated_live_recovery_contract": {
+  "selected_contract": "raw-one-H-step-independent-transfer-v1",
+  "scope": "isolated opt-in production overlay, original default and original sources unchanged; zero-start new series, not x8 continuation",
+  "final_review_status": "TIME_LIMIT_UNQUALIFIED_COMPLETED_NEW_RAW_CHECKS_PASS_OLD_CROSS_FAILS_PRESERVED",
+  "hard_recovery_thresholds": {
+   "raw_internal_aggregate": 1e-10,
+   "raw_internal_max_cell": 1e-10,
+   "same_raw_trace": 1e-10,
+   "same_raw_port": 1e-10
+  },
+  "final_physical_thresholds": {
+   "native": 1e-06,
+   "port": 1e-08
+  },
+  "legacy_threshold_roles": "old internal/native-identity/schur-port thresholds diagnostic under explicit new contract; finite/nonnegative validity remains hard",
+  "old_failure_values_preserved": true,
+  "live_port_rhs_policy": "q=0 only; live nonzero q rejected before callback",
+  "candidate01": {
+   "supervisor_seconds": 64.92973687499762,
+   "sampled_process_tree_peak_RSS_bytes": 1317945344,
+   "resource_sample_count": 255,
+   "status": "CHILD_FAILED",
+   "exit_code": 1,
+   "cleanup_verified": true,
+   "failure": "NameError: V is not defined at builder hook",
+   "fresh_local_LU_completed": 1,
+   "H_corrections_completed": 0,
+   "outer_iterations": 0,
+   "raw_checker_calls": 0,
+   "admission_count": 54,
+   "static_review_and_mock_smoke_missed_real_builder_hook": true
+  },
+  "candidate02": {
+   "supervisor_seconds": 601.245214022987,
+   "sampled_process_tree_peak_RSS_bytes": 3101646848,
+   "resource_sample_count": 2385,
+   "status": "CONTROLLED_STOP",
+   "exit_code": -15,
+   "stop_reason": "TIME_LIMIT",
+   "cleanup_verified": true,
+   "scope_fix": "V replaced by actual function_space parameter; 13 pure tests including actual AST call-scope regression",
+   "completed_outer_iterations": 56,
+   "charged_completed_outer_iterations": 56,
+   "outer57_start_evidence": false,
+   "raw_pc_sequences": 58,
+   "setup_pc_sequences": 2,
+   "outer_pc_sequences": 56,
+   "incomplete_work_at_stop": "synchronous native check after completed monitor56; no completed true native56",
+   "zero_start": true,
+   "restart": 32,
+   "orthogonalization": "refine_always",
+   "max_outer": 200,
+   "hard_supervisor_seconds": 600,
+   "H_steps_per_fine_class": 1,
+   "F_steps": 0,
+   "fresh_fine_local_LU_count": 65,
+   "H_refinement_seconds_included": 51.93795668997336,
+   "complete_raw_checker_count": 11,
+   "complete_raw_checker_seconds_included": 51.59424453397514,
+   "checkpoint_refactorizations": 0,
+   "new_hard_recovery_gates_all_complete_passed": true,
+   "latest_complete_native_check_iteration": 48,
+   "latest_complete_native_relative": 0.02164289779701526,
+   "latest_reported_schur_iteration": 56,
+   "latest_reported_schur_relative": 0.02097352549367663,
+   "latest_reported_schur_is_not_true_native": true,
+   "durable_retained_iterations": [
+    0,
+    8,
+    32
+   ],
+   "durable_retained_not_full_field": true,
+   "latest_durable_retained_native_relative": 0.021891010857410048,
+   "full_recovered_field_packet_absent": true,
+   "final_packet_absent": true,
+   "accepted_solution": false,
+   "RTA_qualified": false,
+   "spatial_convergence": false,
+   "same_new_series_replay_lost_work_if_resuming32": 24,
+   "latest_complete_checker": {
+    "actual_port_rhs_norm": 0.0,
+    "live_port_rhs_policy": "explicit-q0-only",
+    "original_native_identity_fail": true,
+    "raw_checker_contract": "raw-one-H-step-independent-transfer-v1",
+    "raw_checker_finite_pass": true,
+    "raw_checker_identity_pass": true,
+    "raw_checker_mpc_pass": true,
+    "raw_checkpoint_refactorizations": 0,
+    "raw_checkpoint_seconds": 4.737051904987311,
+    "raw_checkpoint_sequence": 11,
+    "raw_internal_max_cell_relative": 7.921918716790136e-16,
+    "raw_internal_norm": 6.023964823167091e-11,
+    "raw_internal_operation_scale": 1741594.3078337784,
+    "raw_internal_relative": 3.4588794853491397e-17,
+    "raw_native_cross_identity_absolute": 2.604714659990982e-10,
+    "raw_native_cross_identity_operation_scale": 1.3930147670791022,
+    "raw_native_cross_identity_relative": 1.8698399482530925e-10,
+    "same_raw_port_absolute": 9.892546865414341e-29,
+    "same_raw_port_operation_scale": 11.539251187801852,
+    "same_raw_port_relative": 8.572953915650745e-30,
+    "same_raw_trace_absolute": 5.0310209793299595e-11,
+    "same_raw_trace_operation_scale": 1.5551419244229525,
+    "same_raw_trace_relative": 3.235088000856744e-11
+   },
+   "complete_native_checks": [
+    {
+     "iteration": 0,
+     "native_identity_relative": 2.0347293200642666e-26,
+     "native_residual_relative": 0.9999999999999999,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 4,
+     "raw_internal_max_cell_relative": 1.1922330708042702e-13,
+     "raw_internal_relative": 1.0610553182505616e-14,
+     "raw_native_cross_identity_relative": 1.9424153813769983e-26,
+     "same_raw_port_relative": 5.36510494183788e-14,
+     "same_raw_trace_relative": 4.146937738482502e-27
+    },
+    {
+     "iteration": 8,
+     "native_identity_relative": 1.8055769442341284e-10,
+     "native_residual_relative": 0.04163671107033619,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 5,
+     "raw_internal_max_cell_relative": 9.037595881955724e-16,
+     "raw_internal_relative": 3.478148895752328e-17,
+     "raw_native_cross_identity_relative": 1.852292256356999e-10,
+     "same_raw_port_relative": 1.3048980236772827e-29,
+     "same_raw_trace_relative": 3.5064762121355146e-11
+    },
+    {
+     "iteration": 16,
+     "native_identity_relative": 1.820766280216511e-10,
+     "native_residual_relative": 0.02826298045734554,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 6,
+     "raw_internal_max_cell_relative": 7.663414868589017e-16,
+     "raw_internal_relative": 3.479804764010422e-17,
+     "raw_native_cross_identity_relative": 1.8577718221050973e-10,
+     "same_raw_port_relative": 7.488318213071397e-30,
+     "same_raw_trace_relative": 3.700387948203162e-11
+    },
+    {
+     "iteration": 24,
+     "native_identity_relative": 1.8283559266810122e-10,
+     "native_residual_relative": 0.02426023571676047,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 7,
+     "raw_internal_max_cell_relative": 9.164124848309386e-16,
+     "raw_internal_relative": 3.5490243532616476e-17,
+     "raw_native_cross_identity_relative": 1.8825286371375332e-10,
+     "same_raw_port_relative": 8.88975113787233e-30,
+     "same_raw_trace_relative": 3.594204154693592e-11
+    },
+    {
+     "iteration": 32,
+     "native_identity_relative": 1.8265536066985363e-10,
+     "native_residual_relative": 0.021891010857410048,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 8,
+     "raw_internal_max_cell_relative": 1.0219344823226836e-15,
+     "raw_internal_relative": 3.587861470428504e-17,
+     "raw_native_cross_identity_relative": 1.8658698098186273e-10,
+     "same_raw_port_relative": 1.1782071334600297e-29,
+     "same_raw_trace_relative": 3.5499527884668345e-11
+    },
+    {
+     "iteration": 32,
+     "native_identity_relative": 1.8265536066985363e-10,
+     "native_residual_relative": 0.021891010857410048,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 9,
+     "raw_internal_max_cell_relative": 1.0219344823226836e-15,
+     "raw_internal_relative": 3.587861470428504e-17,
+     "raw_native_cross_identity_relative": 1.8658698098186273e-10,
+     "same_raw_port_relative": 1.1782071334600297e-29,
+     "same_raw_trace_relative": 3.5499527884668345e-11
+    },
+    {
+     "iteration": 40,
+     "native_identity_relative": 1.8241970146065216e-10,
+     "native_residual_relative": 0.021864562599955423,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 10,
+     "raw_internal_max_cell_relative": 8.612880684036436e-16,
+     "raw_internal_relative": 3.400204605222406e-17,
+     "raw_native_cross_identity_relative": 1.8670901924391605e-10,
+     "same_raw_port_relative": 9.22944498695285e-30,
+     "same_raw_trace_relative": 3.402461489486279e-11
+    },
+    {
+     "iteration": 48,
+     "native_identity_relative": 1.8292878902269473e-10,
+     "native_residual_relative": 0.02164289779701526,
+     "physical_residual_pass": false,
+     "raw_checkpoint_sequence": 11,
+     "raw_internal_max_cell_relative": 7.921918716790136e-16,
+     "raw_internal_relative": 3.4588794853491397e-17,
+     "raw_native_cross_identity_relative": 1.8698399482530925e-10,
+     "same_raw_port_relative": 8.572953915650745e-30,
+     "same_raw_trace_relative": 3.235088000856744e-11
+    }
+   ],
+   "actual_JOB1_AS": {
+    "AS_limit": 7516192768,
+    "prospective_AS_bytes": 7466058232,
+    "vm_size_bytes": 2990739456,
+    "new_stage_bytes": 3552960952,
+    "AS_future_binary": 905580608,
+    "observer_workspace_bytes": 16777216,
+    "credit_bytes": 0,
+    "release_or_GC_credit_bytes": 0
+   },
+   "AS_margin_bytes": 50134536,
+   "explicit_owner_release_not_completed_on_hard_stop": true,
+   "admission_count": 178,
+   "raw_checker12_not_entered": true,
+   "pre_evaluation_fresh128MiB_admissions": 12,
+   "raw_checker_fresh128MiB_admissions": 11,
+   "all2385_resources_and178_admission_arithmetic_verified": true,
+   "native48_reviewer_recomputed_Ax": false,
+   "no_Krylov_basis_exported": true,
+   "candidate_fine_bank_sha256": "528adade496c7896bb63656bdb165f2c856bd733b05140c80b4536702fec78ac",
+   "future_recovery_must_use_corrected_H_S_recipe": true
+  },
+  "provenance": {
+   "candidate01_command_sha256": "514dd68d8782954db51858f75990897080843cee1c4dc070d08b261d14ef976c",
+   "candidate02_command_sha256": "c1ef0ce2fa9c8e58b63a8045d3cc98765640a6ccfe8c891aa7ac19cd511bffa6",
+   "candidate02_condensation_overlay_sha256": "9ab7a24be18c00b8b2ae536f44c52b7b0c944c052581c6a1804bd6aa69b3a4a3",
+   "dependencies": 350,
+   "historical_baseline_not_new_candidate_source_identity": true
+  },
+  "next_continuation_scope": "separate authorized preparation from durable retained32 with fresh Krylov, at most144 further outer/1800s; no continuation result included here and 24 discarded completed steps remain charged",
+  "raw_gate_maxima_including_setup": {
+   "raw_internal_max_cell_relative": 1.3824196868512216e-13,
+   "raw_internal_relative": 1.2718704595969414e-14,
+   "same_raw_port_relative": 5.36510494183788e-14,
+   "same_raw_trace_relative": 3.700387948203162e-11
+  },
+  "fine_and_cache_review": {
+   "F_steps_each": 0,
+   "H_steps_each": 1,
+   "Hp_Hhat_unchanged": true,
+   "all65_candidate_payloads_match_live_owner_recipe": true,
+   "all_F_LU_hashes_unchanged": true,
+   "all_baseline_four_payload_hashes_match": true,
+   "all_new_H_S_hashes_match_prior65class_experiment": true,
+   "cache_calls": 17,
+   "compiler_calls": 0,
+   "fine_bank_sha256": "528adade496c7896bb63656bdb165f2c856bd733b05140c80b4536702fec78ac",
+   "native_maps_source_modes_unchanged": true,
+   "raw_consumption_events": 53,
+   "raw_fine_classes": 44,
+   "raw_p4_classes": 9,
+   "refine_seconds": 51.93795668997336,
+   "refined_classes": 65
+  },
+  "terminal_review_limitations": [
+   "Supervisor hard600 termination gives process-tree cleanup, not proof that Python finally, release_owner, adapter.destroy or native-handle releases completed. No cleanup event was emitted.",
+   "All eleven completed raw checks pass the explicitly selected new contract; seven positive-iteration monitor rows preserve both old native cross and raw-native cross FAILs.",
+   "48-step native true residual is original live callback evidence, not a reviewer-recomputed A*x. No56-step true residual is available.",
+   "Only retained vectors0/8/32 are durable; no full physical field, final evaluation or final post-release independent native action was saved.",
+   "Saved retained vectors bind the corrected H/S fine bank. Any later field recovery must use this candidate recipe, not the old uncorrected H mapping.",
+   "No scientific import, FE/kernel action, factorization or PDE solve was executed by this reviewer. Saved NPZ payloads were decoded with bounded stdlib only.",
+   "This run is unqualified and unconverged; no automatic continuation or physical/RTA acceptance follows from passing the new raw gates."
+  ],
+  "saved_retained_scalar_receipts": {
+   "0": {
+    "shape": [
+     66824
+    ],
+    "dtype": "complex128",
+    "all_finite": true,
+    "norm": 0.0,
+    "typed_payload_sha256": "aef59956b0ba54575160e0a0c81c5e9205e5645a46c2f8c4244b8f5c01927871",
+    "candidate_fine_bank_sha256": "528adade496c7896bb63656bdb165f2c856bd733b05140c80b4536702fec78ac",
+    "physical_field_exported": false
+   },
+   "8": {
+    "shape": [
+     66824
+    ],
+    "dtype": "complex128",
+    "all_finite": true,
+    "norm": 47.46993588357797,
+    "typed_payload_sha256": "641f7d831f887e72c762a9e9db7680122d84b5de41fff9ae60d68f09038ffbfd",
+    "candidate_fine_bank_sha256": "528adade496c7896bb63656bdb165f2c856bd733b05140c80b4536702fec78ac",
+    "physical_field_exported": false
+   },
+   "32": {
+    "shape": [
+     66824
+    ],
+    "dtype": "complex128",
+    "all_finite": true,
+    "norm": 47.51431808047688,
+    "typed_payload_sha256": "8d287b5c22334ecb785cfff1bdd850f3f9a6e4a7161acb0a751411994ff20962",
+    "candidate_fine_bank_sha256": "528adade496c7896bb63656bdb165f2c856bd733b05140c80b4536702fec78ac",
+    "physical_field_exported": false
+   }
+  }
  }
 }
