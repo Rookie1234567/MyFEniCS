@@ -1,0 +1,75 @@
+{
+  "schema": "task42extra.v47.delivery.v1",
+  "declared_file_hash_checks": 71,
+  "frozen_source_blob_checks": 77,
+  "all_declared_hashes_pass": true,
+  "tested_file_hashes_match_implementation_commit": 22,
+  "actual_and_producer_records": 2,
+  "strict_gates": {
+    "FTT_JOINT_STEP_PROBE": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "FTT_JOINT_STEP_PROBE_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    }
+  },
+  "record_rows": {
+    "joint_trials_v47.csv": 3,
+    "full_40_complex_channels_v47.csv": 320,
+    "six_point_complex_fields_v47.csv": 144,
+    "power_and_energy_v47.csv": 2
+  },
+  "full_complex_vectors_independently_recalculated": true,
+  "probe_gate_recomputed": true,
+  "long_routes_not_started_per_review": true,
+  "model_proof_reopened": true,
+  "policy_false_occurrences": 48,
+  "policy_files": [
+    {
+      "path": "benchmarks/artifacts/task42extra/v47/v47_joint_tangent_checks/result.json",
+      "sha256": "d7b4c440b8d8546ccef6b0034fdbd97989dbdf5685e22be95cb5f3d63cdff91e",
+      "bytes": 9670
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v47/v47_joint_step_probe/result.json",
+      "sha256": "574059baf0b86155c1bf419616163b9447aca8df96c924999a8736fc09c208b4",
+      "bytes": 17275
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v47/v47_joint_compare/result.json",
+      "sha256": "26817b80749d1a9cf579e6177a2c20f7abf1850096ad907b513f2aa329de2576",
+      "bytes": 23079
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v47/v47_joint_compare/saved_checker.json",
+      "sha256": "13dd4087e23c59b6b8acd75ad02bcd9fb1f022fcde0dd705e02b4c075264e6e2",
+      "bytes": 18973
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v47/v47_joint_compare/verifier_result.json",
+      "sha256": "e9b4ed5849a2553842bb7c0e92613128711130b3f429df78d3e19b3d11b883cf",
+      "bytes": 287455
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v47/v47_joint_compare/reconstruction.json",
+      "sha256": "f4b8b28919f8cc3bc45df1ad0c3bf7f4070cfb7dbe53614ce6eb63581912f055",
+      "bytes": 3699
+    }
+  ],
+  "reference_used_for_training": false,
+  "new_reference_solves": 0,
+  "numerical_recomputation_for_writer_or_web": 0,
+  "complete_cold_N1": "UNKNOWN",
+  "full_repository_pytest": false,
+  "CI_claimed": false
+}

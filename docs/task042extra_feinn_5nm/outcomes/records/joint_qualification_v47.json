@@ -1,0 +1,186 @@
+{
+  "schema": "task42extra.v47.derivatives.v1",
+  "qualified": true,
+  "raw_result": {
+    "path": "benchmarks/artifacts/task42extra/v47/v47_joint_tangent_checks/result.json",
+    "sha256": "d7b4c440b8d8546ccef6b0034fdbd97989dbdf5685e22be95cb5f3d63cdff91e",
+    "bytes": 9670
+  },
+  "three_nonzero_directions": [
+    {
+      "kind": "hidden",
+      "moment_direction_norm": 162.6850440178466,
+      "J_direction_norm": 987.021433891749,
+      "FD": [
+        {
+          "epsilon": 0.0001,
+          "numerator": 1.1890336953535102e-07,
+          "denominator": 162.6850440178466,
+          "relative": 7.308807656732557e-10
+        },
+        {
+          "epsilon": 1e-05,
+          "numerator": 6.425461295419319e-08,
+          "denominator": 162.6850440596039,
+          "relative": 3.9496324524245654e-10
+        }
+      ],
+      "real_adjoint_relative": 2.834265086835243e-14,
+      "lhs_real_pairing": -1347.7489332910623,
+      "rhs_real_pairing": -1347.748933291024
+    },
+    {
+      "kind": "output",
+      "moment_direction_norm": 35.29542929118988,
+      "J_direction_norm": 1305.2366810199594,
+      "FD": [
+        {
+          "epsilon": 0.0001,
+          "numerator": 1.959418355857201e-09,
+          "denominator": 35.29542929118988,
+          "relative": 5.55147903059021e-11
+        },
+        {
+          "epsilon": 1e-05,
+          "numerator": 1.963456654929285e-08,
+          "denominator": 35.29542929226616,
+          "relative": 5.562920452591046e-10
+        }
+      ],
+      "real_adjoint_relative": 8.792857576707892e-16,
+      "lhs_real_pairing": -2068.71246085496,
+      "rhs_real_pairing": -2068.7124608549584
+    },
+    {
+      "kind": "mixed",
+      "moment_direction_norm": 488.42891806025534,
+      "J_direction_norm": 2807.812820769801,
+      "FD": [
+        {
+          "epsilon": 0.0001,
+          "numerator": 2.343725907259549e-08,
+          "denominator": 488.42891806025534,
+          "relative": 4.7984994757628455e-11
+        },
+        {
+          "epsilon": 1e-05,
+          "numerator": 4.6256165345798505e-08,
+          "denominator": 488.42891806025534,
+          "relative": 9.470398585223016e-11
+        }
+      ],
+      "real_adjoint_relative": 1.9761778686296954e-15,
+      "lhs_real_pairing": -1495.7448050016078,
+      "rhs_real_pairing": -1495.7448050016048
+    }
+  ],
+  "single_axis_old_K": [
+    {
+      "axis": 0,
+      "numerator": 1.017636414944533e-15,
+      "denominator": 0.15472910666031953,
+      "relative": 6.57689065043576e-15
+    },
+    {
+      "axis": 1,
+      "numerator": 8.004965685655761e-16,
+      "denominator": 2.844802171426077,
+      "relative": 2.8138918642778363e-16
+    },
+    {
+      "axis": 2,
+      "numerator": 1.2750461666581508e-13,
+      "denominator": 141.06069428808547,
+      "relative": 9.03898972774194e-16
+    }
+  ],
+  "original_complete_point_gradient": {
+    "numerator": 4.833691966993515e-10,
+    "denominator": 3.2198117582778094,
+    "relative": 1.5012343360032098e-10
+  },
+  "restore_negative_controls": [
+    {
+      "kind": "parameter_scales",
+      "rejected": true
+    },
+    {
+      "kind": "parameter_mask",
+      "rejected": true
+    },
+    {
+      "kind": "joint_h",
+      "rejected": true
+    },
+    {
+      "kind": "joint_parent_sha256",
+      "rejected": true
+    },
+    {
+      "kind": "g",
+      "rejected": true
+    },
+    {
+      "kind": "base_model",
+      "rejected": true
+    },
+    {
+      "kind": "model",
+      "rejected": true
+    }
+  ],
+  "h": 15384236452.336441,
+  "power_estimate": {
+    "seed": 4214701,
+    "iterations": 4,
+    "rayleigh": [
+      7750545.9756976515,
+      14855028647.137352,
+      15282442563.000309,
+      15384236452.336441
+    ],
+    "exact_spectral_bound": false
+  },
+  "scales_sha256": "7850c136e78de88eeb06ea6e80d8cdf4611d76e9515ee2e4ac1e7570ec9e29b4",
+  "timings": {
+    "JVP": 0.4417169988155365,
+    "VJP": 0.2579288159031421,
+    "actual_trial": 10.353822943056002,
+    "save": 0.07500496413558722
+  },
+  "representative_JVP_VJP_trial_save_sum_s": 11.128473721910268,
+  "complete_qualification_elapsed_s": 179.72112421295606,
+  "actual_trial_independent_mapping": {
+    "numerator": 6.099403133371652e-13,
+    "denominator": 0.2984526292443815,
+    "relative": 2.0436754565754847e-12
+  },
+  "base_frozen": true,
+  "parent_restored_bitwise": true,
+  "actual_label_open_negatives": [
+    {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+      "actual_open_rejected": true,
+      "bytes_read": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+      "actual_open_rejected": true,
+      "bytes_read": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v40/v40_interior_moment_tensor/interior_tensor.npz",
+      "actual_open_rejected": true,
+      "bytes_read": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/checkpoints/committed_000001.pt",
+      "actual_open_rejected": true,
+      "bytes_read": 0
+    }
+  ],
+  "whole_grid_AD_graph": false,
+  "explicit_J_or_normal_matrix": false,
+  "reference_read": false,
+  "new_global_factors": 0
+}

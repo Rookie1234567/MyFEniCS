@@ -1,0 +1,210 @@
+{
+  "schema": "task42extra.v47.tests-repairs.v1",
+  "tests": [
+    {
+      "name": "targeted_01",
+      "binding": {
+        "path": "tmp/task42extra/v47/targeted_01/junit.xml",
+        "sha256": "80d9269eb07d79db01add54c64df8f28aaacfc1a28ed9f9c8b0c77ffd9379152",
+        "bytes": 7531
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "51",
+          "time": "1.722",
+          "timestamp": "2026-10-15T14:06:11.845057",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "targeted_final_01",
+      "binding": {
+        "path": "tmp/task42extra/v47/targeted_final_01/junit.xml",
+        "sha256": "b7309b410d6b1dcf982f994f1e1e63696f0f4d1217d325d374a72a5d2d9e0e99",
+        "bytes": 7805
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "53",
+          "time": "2.288",
+          "timestamp": "2026-10-15T14:11:10.942418",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    }
+  ],
+  "unique_passed_cases": 53,
+  "implementation_checks": {
+    "source_parent_sha": "4439c45d666f0527eb659e01b8deeb74944c47b0",
+    "source_file_sha256": {
+      "input/task042extra_feinn_5nm/design_v47.json": "9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f",
+      "input/task042extra_feinn_5nm/v47_joint_all.dat": "fe8e1c11e692d2431cf0d281bb34e58eb054d54992e290b840f5a101dce592a3",
+      "input/task042extra_feinn_5nm/v47_joint_compare.dat": "100c884a0ad543feda4aec80523498e52b11b7b548f6066ec80e9522978bd5dc",
+      "input/task042extra_feinn_5nm/v47_joint_output_only.dat": "6c204290310aaa65b2d1139ab03d0cc9755908b2ccb1e887334ce239b2b5e396",
+      "input/task042extra_feinn_5nm/v47_joint_step_probe.dat": "40f27563bb93534a1ca739f57c581685438abdcf57d0dba11e880b5756091900",
+      "input/task042extra_feinn_5nm/v47_joint_tangent_checks.dat": "aace84968eb791615b646915e615d1de6308436cb54fdaea7cc155c676064a17",
+      "src/io/ftt_joint_campaign.py": "edc8c28e6708786cb610d3845a2df7967a46e8921d6be29056b8d22165b267d1",
+      "src/io/neural_wave_campaign.py": "cf3b374456ab874f20fcae9abd225797ae327e1101380e49cfd805b18b7751fe",
+      "src/runners/block_wave_admission.py": "88c731312251f0ad5bd40aea98563f0f94a32a6540259da96fec3c9958235009",
+      "src/runners/ftt_continuation_joint.py": "0f94202ef5351f11aec69001e73c1af4c0d89f41bba82b01a471144a771c221e",
+      "src/runners/ftt_core_worker.py": "b65c37cf342966c8d95ed43f31dc737d9e7b124593173fa5bb190e3d2a393abb",
+      "src/runners/ftt_joint_worker.py": "6e32f7347b3bb1ea6f54752b66fe72cbca3041e9c9b8a346a79b6c4c9ba75784",
+      "src/runners/ftt_worker.py": "f24f5a68cf05535ca0bdb64f03bfdf0a8d907131fd0a9afc1ee86e26c220026c",
+      "src/runners/neural_wave_campaign.py": "611c7c83b135ccd29e9ad767844d0ba847fb2d1db8a730b1d296f1299c833fc3",
+      "src/runners/neural_wave_dependencies.py": "23f76bcb326807a31d26390532ddcadc5e729307d277be09226e1f0a345b2911",
+      "src/solvers/ftt_joint_io.py": "fa9919991bd71697d25f42b902950e2c58a667ce2eabe3eceab9c3ad4504499e",
+      "src/solvers/ftt_joint_qualification.py": "2a4f58e48a40cdc256ccb38e26a191f3963b09b48262aec4190459bfa6b01013",
+      "src/solvers/ftt_joint_tangent.py": "527c730be7b5579909c6d861eb6fde80e305d625e9c3e74fbd01068cce3bfb75",
+      "src/solvers/ftt_joint_training.py": "af8272883b4e78d91d6a100b2f614b05cb689fc3cc943736a1654edaf1caf0f5",
+      "src/solvers/joint_least_squares.py": "ac464cd21a311627381a65ee7e529ae353ac2209f930cfccd691e17e2dd4a42b",
+      "src/test/test_ftt_joint_tangent.py": "71a9b356859ff9b8b06fc80c1638dfc9adfa14bd00053a9791b4f46f3ca518a2",
+      "src/test/test_joint_least_squares.py": "250f820ec19b596dafef645927da6a61fa9b23498ccff8185080700389a445a1"
+    },
+    "pytest_passed": 53,
+    "junit_sha256": "b7309b410d6b1dcf982f994f1e1e63696f0f4d1217d325d374a72a5d2d9e0e99",
+    "static_checks": [
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+          "-m",
+          "ruff",
+          "check",
+          "src/io/ftt_joint_campaign.py",
+          "src/io/neural_wave_campaign.py",
+          "src/runners/block_wave_admission.py",
+          "src/runners/ftt_continuation_joint.py",
+          "src/runners/ftt_core_worker.py",
+          "src/runners/ftt_joint_worker.py",
+          "src/runners/ftt_worker.py",
+          "src/runners/neural_wave_campaign.py",
+          "src/runners/neural_wave_dependencies.py",
+          "src/solvers/ftt_joint_io.py",
+          "src/solvers/ftt_joint_qualification.py",
+          "src/solvers/ftt_joint_tangent.py",
+          "src/solvers/ftt_joint_training.py",
+          "src/solvers/joint_least_squares.py",
+          "src/test/test_ftt_joint_tangent.py",
+          "src/test/test_joint_least_squares.py"
+        ],
+        "returncode": 0,
+        "stdout": "All checks passed!\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+          "-m",
+          "compileall",
+          "-q",
+          "src/io/ftt_joint_campaign.py",
+          "src/io/neural_wave_campaign.py",
+          "src/runners/block_wave_admission.py",
+          "src/runners/ftt_continuation_joint.py",
+          "src/runners/ftt_core_worker.py",
+          "src/runners/ftt_joint_worker.py",
+          "src/runners/ftt_worker.py",
+          "src/runners/neural_wave_campaign.py",
+          "src/runners/neural_wave_dependencies.py",
+          "src/solvers/ftt_joint_io.py",
+          "src/solvers/ftt_joint_qualification.py",
+          "src/solvers/ftt_joint_tangent.py",
+          "src/solvers/ftt_joint_training.py",
+          "src/solvers/joint_least_squares.py",
+          "src/test/test_ftt_joint_tangent.py",
+          "src/test/test_joint_least_squares.py"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    ],
+    "validation": [
+      {
+        "input": "input/task042extra_feinn_5nm/v47_joint_tangent_checks.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 47, \"case\": \"M5\", \"design_sha256\": \"9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v47_joint_tangent_checks.dat\", \"input_sha256\": \"aace84968eb791615b646915e615d1de6308436cb54fdaea7cc155c676064a17\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 3600, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": null, \"role\": \"joint_tangent_checks\", \"schema\": \"ftt.joint-tangent-one-run.v1\", \"stage\": \"v47_joint_tangent_checks\"}\n",
+        "stderr": ""
+      },
+      {
+        "input": "input/task042extra_feinn_5nm/v47_joint_step_probe.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 47, \"case\": \"M5\", \"design_sha256\": \"9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v47_joint_step_probe.dat\", \"input_sha256\": \"40f27563bb93534a1ca739f57c581685438abdcf57d0dba11e880b5756091900\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 900, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": \"fttnn\", \"role\": \"FTT_JOINT_STEP_PROBE\", \"schema\": \"ftt.joint-tangent-one-run.v1\", \"stage\": \"v47_joint_step_probe\"}\n",
+        "stderr": ""
+      },
+      {
+        "input": "input/task042extra_feinn_5nm/v47_joint_all.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 47, \"case\": \"M5\", \"design_sha256\": \"9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v47_joint_all.dat\", \"input_sha256\": \"fe8e1c11e692d2431cf0d281bb34e58eb054d54992e290b840f5a101dce592a3\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 5400, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": \"fttnn\", \"role\": \"FTT_JOINT_LM_ALL\", \"schema\": \"ftt.joint-tangent-one-run.v1\", \"stage\": \"v47_joint_all\"}\n",
+        "stderr": ""
+      },
+      {
+        "input": "input/task042extra_feinn_5nm/v47_joint_output_only.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 47, \"case\": \"M5\", \"design_sha256\": \"9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v47_joint_output_only.dat\", \"input_sha256\": \"6c204290310aaa65b2d1139ab03d0cc9755908b2ccb1e887334ce239b2b5e396\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 5400, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": \"fttnn\", \"role\": \"FTT_JOINT_LM_OUTPUT_ONLY\", \"schema\": \"ftt.joint-tangent-one-run.v1\", \"stage\": \"v47_joint_output_only\"}\n",
+        "stderr": ""
+      },
+      {
+        "input": "input/task042extra_feinn_5nm/v47_joint_compare.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 47, \"case\": \"M5\", \"design_sha256\": \"9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v47_joint_compare.dat\", \"input_sha256\": \"100c884a0ad543feda4aec80523498e52b11b7b548f6066ec80e9522978bd5dc\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 3600, \"metric_kind\": \"native_euc\", \"mode\": \"pure\", \"model_kind\": null, \"role\": \"joint_tangent_compare\", \"schema\": \"ftt.joint-tangent-one-run.v1\", \"stage\": \"v47_joint_compare\"}\n",
+        "stderr": ""
+      }
+    ],
+    "full_repository_pytest": false,
+    "CI_claimed": false
+  },
+  "journal": [
+    {
+      "kind": "RESOURCE_ADMISSION_BEFORE_ML_ABI",
+      "error": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "ABI_reached": false,
+      "tests_or_PDE_started": false,
+      "first_exact_elapsed_s": "NOT_RETAINED",
+      "included_in_unique_window": true,
+      "action": "retain rejection; retry only original fresh bounded admission",
+      "monotonic": 1968630.852780385
+    },
+    {
+      "kind": "resource_admission_retry",
+      "stage": "v47_joint_step_probe",
+      "attempt": 1,
+      "failure": "No audited unoccupied physical core; outer admission rejected before terminal/worker",
+      "preserved": "tmp/task42extra/v47/durable/v47_joint_step_probe_attempt1/run_summary.json",
+      "change": "none; retry original admission with --attempt 2, same allocation/deadline and unchanged source",
+      "targeted_test": "prior descendants_cleared=true; numerical lock FREE; no worker was created",
+      "monotonic": 1970330.111989119
+    },
+    {
+      "kind": "duplicate_guard_observed",
+      "stage": "v47_joint_step_probe",
+      "failure": "Default attempt 1 re-entry returned EXISTING_STAGE after cleared admission rejection",
+      "change": "Used existing --attempt 2; original allocation, source and all limits unchanged",
+      "numerical_worker_created": false,
+      "extra_run": false,
+      "cost": "subsecond guard/import not separately retained; included in unique monotonic window"
+    }
+  ],
+  "healthy_numeric_rerun_for_metadata": false,
+  "full_repository_pytest": false,
+  "reinstall": false,
+  "CI_claimed": false
+}

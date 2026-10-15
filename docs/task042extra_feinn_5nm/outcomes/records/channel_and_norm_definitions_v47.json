@@ -1,0 +1,59 @@
+{
+  "schema": "task42extra.v47.definitions.v1",
+  "unchanged_definitions": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/channel_and_norm_definitions_v46.json",
+    "sha256": "53a8a6b40650705efc2929aec3adc7e0d2cee6d3e8d87eee7eeae3e3a101506f",
+    "bytes": 89172
+  },
+  "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+  "full_vectors_each": 40,
+  "phase_fit": false,
+  "independent_denominators_preserved": true,
+  "original_G_energy_identity": {
+    "length_nm": 5.0,
+    "definition": "integral |E|^2 + length_nm^2 |curl E|^2",
+    "G_matvec_count": 3,
+    "Gsolve_count": 0,
+    "global_Gram_factor_count": 0,
+    "records": {
+      "FTT_JOINT_STEP_PROBE": {
+        "G_error_energy": 4.115740784455657,
+        "independently_integrated_error_energy": 4.115740784455905,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 6.042410602127523e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.0646534510976376,
+        "identity_pass": true
+      },
+      "FTT_JOINT_STEP_PROBE_PRODUCER": {
+        "G_error_energy": 4.115740784456206,
+        "independently_integrated_error_energy": 4.115740784456453,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 5.999250526397239e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.06465345109764191,
+        "identity_pass": true
+      }
+    },
+    "load_and_pairing_seconds": 1.0700858598574996,
+    "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+  },
+  "normalization": {
+    "c_base_sha256": "cda595e3bc687219e6a2b0d8b8a1bf95418f97d47fe2b4f001c1f4be560a3214",
+    "training_rhs_sha256": "9ee7039a391203426452e4bd45ca92aae2d48a55257d4acfa1febb609ccba528",
+    "original_rhs_sha256": "ea17da9735541104f770ec58390a71c99bd26c53fb09ff85e2b7ffe4b68e575f",
+    "bnorm_train": 0.1043574223800681,
+    "bnorm_original": 0.29104200262261154
+  },
+  "realify": "[Re;Im], no sqrt(2)",
+  "G_training_use": false,
+  "unchanged_ordered_mode_manifest_location": "docs/task042extra_feinn_5nm/outcomes/records/channel_and_norm_definitions_v46.json#/original_mode_manifest",
+  "metadata_compaction": {
+    "reason": "Reuse hash-bound unchanged V46 manifest; do not copy the same 40-mode basis payload again",
+    "prior_receipt_sha256": "8991026d476cf25e70f84353f9bdc5f26f5927cc96f744a95f120f5dc5a13b96",
+    "numeric_values_changed": false,
+    "numerical_rerun": false
+  }
+}

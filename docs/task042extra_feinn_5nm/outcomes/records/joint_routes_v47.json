@@ -1,0 +1,135 @@
+{
+  "schema": "task42extra.v47.routes.v1",
+  "routes": {
+    "FTT_JOINT_STEP_PROBE": {
+      "route": "FTT_JOINT_STEP_PROBE",
+      "status": "TRIAL_LIMIT",
+      "source_sha": "ce8f1f5e89cbdb848488b671305188a39c824046",
+      "initial_native": 0.34634593953927606,
+      "native": 0.3463459095350402,
+      "training_native": 0.9659227375711862,
+      "cumulative_original_native_relative_decrease": 8.66308290304752e-08,
+      "counts": {
+        "trials": 3,
+        "accepted": 3,
+        "rejected": 0,
+        "LSMR_iterations": 34,
+        "lost_iterations_upper_bound": 0,
+        "lost_trial_upper_bound": 0,
+        "JVP": 40,
+        "VJP": 43
+      },
+      "costs": {
+        "inner": 30.485747830942273,
+        "trial": 30.124522081110626,
+        "persistence": 1.2468233038671315,
+        "scalar_validation": 0.0
+      },
+      "h": 15384236452.336441,
+      "damping": 569786.53527172,
+      "hidden_total_update_norm": 1.2784025248608243e-07,
+      "output_total_update_norm": 2.6000430715177063e-07,
+      "model_parameter_hash": "0217062988f759d2ef64d69ed99fab9a9b15f44f08a3b62c6e5b3cc10e1953ea",
+      "maximum_independent_actual_mapping_relative": 1.8502562530219982e-12,
+      "checkpoint": {
+        "name": "committed_000010.pt",
+        "sha256": "1461272d90ab367cf88571c2fcb7a44e79f05e3c13e4ecf0b8213c4b207ba5b6",
+        "bytes": 5996161
+      },
+      "raw_result": {
+        "path": "benchmarks/artifacts/task42extra/v47/v47_joint_step_probe/result.json",
+        "sha256": "574059baf0b86155c1bf419616163b9447aca8df96c924999a8736fc09c208b4",
+        "bytes": 17275
+      }
+    }
+  },
+  "formal_not_run_reason": "NOT_RUN_PROBE_NATIVE_DECREASE_BELOW_1e-3",
+  "no_probe_warm_start": true,
+  "scalar_audits": [],
+  "model_proof": {
+    "schema": "task42extra.v47.joint-model-proof.v1",
+    "records": {
+      "FTT_JOINT_STEP_PROBE": {
+        "initial_checkpoint": {
+          "name": "committed_000000.pt",
+          "sha256": "c82b26ae02795006ba63133dfdb5964ee2850691d7c665be5319f16a43a6fcc3",
+          "bytes": 5995713
+        },
+        "final_checkpoint": {
+          "name": "committed_000010.pt",
+          "sha256": "1461272d90ab367cf88571c2fcb7a44e79f05e3c13e4ecf0b8213c4b207ba5b6",
+          "bytes": 5996161
+        },
+        "initial_correction_hash": "68960e7a840f84ef901edf1492946eff0f4a3918b638d5ba7025dac4b29d0a36",
+        "final_correction_hash": "0217062988f759d2ef64d69ed99fab9a9b15f44f08a3b62c6e5b3cc10e1953ea",
+        "initial_model_and_RNG_bitwise_same_as_parent": true,
+        "base_parameters_buffers_and_RNG_bitwise_unchanged": true,
+        "correction_buffers_bitwise_unchanged": true,
+        "fixed_c_base_and_g_bitwise_unchanged": true,
+        "parameter_scales_equal_parent": true,
+        "parameter_mask_verified": true,
+        "h": 15384236452.336441,
+        "hidden_real_parameters": 3360,
+        "held_real_parameters": 38400,
+        "active_real_parameters": 19200,
+        "hidden_total_update_norm": 1.2784025248608243e-07,
+        "output_total_update_norm": 2.6000430715177063e-07,
+        "fields": {
+          "c_base": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "array_sha256": "cda595e3bc687219e6a2b0d8b8a1bf95418f97d47fe2b4f001c1f4be560a3214",
+            "norm": 16.16295146387074
+          },
+          "c_delta": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "array_sha256": "331b0cd27a56b961a8d9a8fb24371ea6d6e86c1ace088c20d5b13d2a71c1ca80",
+            "norm": 0.2973688380061139
+          },
+          "c_combined": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "array_sha256": "676714af4921cc4fb6f2cc6260fe62ce5b3dacde62e340f5476f0d5b650faae2",
+            "norm": 15.871105761267726
+          },
+          "r_original": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "array_sha256": "571f3be6b71fbf89fcb71669316651ba1d1dbbbab407bbea9395b335f552ed8e",
+            "norm": 0.10080120711123125
+          },
+          "g": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "array_sha256": "9ee7039a391203426452e4bd45ca92aae2d48a55257d4acfa1febb609ccba528",
+            "norm": 0.1043574223800681
+          }
+        },
+        "original_native": 0.34634590953505157,
+        "training_native": 0.9659227375711862,
+        "reference_read": false
+      }
+    }
+  },
+  "model_proof_tool": {
+    "path": "tmp/task42extra/v47/model_proof.py",
+    "sha256": "e389821381e420cd98f8ee3d165be6d3d3d8ffaad6f4924c16714d25408f558f",
+    "bytes": 4987
+  },
+  "model_proof_binding": {
+    "path": "tmp/task42extra/v47/actual_model_proof.json",
+    "sha256": "ea4fe46419c917ca4e563ec25c0c1d5bf3eefb2e6ebe83103cf1bdbabe2c7f85",
+    "bytes": 2647
+  }
+}

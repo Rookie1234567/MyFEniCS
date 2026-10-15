@@ -1,0 +1,189 @@
+{
+  "schema": "task42extra.v47.parent.v1",
+  "parent": {
+    "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/checkpoints/committed_000033.pt",
+    "sha256": "3bfe977c9235ea4305a1eb4049401b098c30dce87bfce76f635e5c88e3bf8c58",
+    "bytes": 6513249,
+    "model_hash": "68960e7a840f84ef901edf1492946eff0f4a3918b638d5ba7025dac4b29d0a36",
+    "input_kind": "unlabelled_complete_residual_round6_boundary",
+    "binding": {
+      "source_sha": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+      "input_sha256": "848bc516bdc45624d47ef3109bf4a21116c9f6889f5b2f1fe1919a97afc1a4ad",
+      "design_sha256": "e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "model_kind": "fttnn",
+      "metric_kind": "native_euc",
+      "route": "RESIDUAL_FTT_R8_LEARNED",
+      "phase_definition": {
+        "wavevector_nm_inverse": [
+          1.2564456695248023,
+          0.0,
+          0.0
+        ],
+        "origin_nm": [
+          0.0,
+          0.0,
+          3.75
+        ],
+        "coordinate_unit": "physical_nm",
+        "sign": 1,
+        "unfolded_incident_wavevector": true,
+        "phase_applied": "before_complete_moments_and_Piola",
+        "MPC_expansion_count": 1,
+        "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+        "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+      },
+      "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc",
+      "reference_used_for_training": false
+    }
+  },
+  "resolved_from_prior_run_index": {
+    "parent": {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/checkpoints/committed_000033.pt",
+      "sha256": "3bfe977c9235ea4305a1eb4049401b098c30dce87bfce76f635e5c88e3bf8c58",
+      "bytes": 6513249,
+      "model_hash": "68960e7a840f84ef901edf1492946eff0f4a3918b638d5ba7025dac4b29d0a36",
+      "input_kind": "unlabelled_complete_residual_round6_boundary",
+      "binding": {
+        "source_sha": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+        "input_sha256": "848bc516bdc45624d47ef3109bf4a21116c9f6889f5b2f1fe1919a97afc1a4ad",
+        "design_sha256": "e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "model_kind": "fttnn",
+        "metric_kind": "native_euc",
+        "route": "RESIDUAL_FTT_R8_LEARNED",
+        "phase_definition": {
+          "wavevector_nm_inverse": [
+            1.2564456695248023,
+            0.0,
+            0.0
+          ],
+          "origin_nm": [
+            0.0,
+            0.0,
+            3.75
+          ],
+          "coordinate_unit": "physical_nm",
+          "sign": 1,
+          "unfolded_incident_wavevector": true,
+          "phase_applied": "before_complete_moments_and_Piola",
+          "MPC_expansion_count": 1,
+          "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+          "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+        },
+        "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc",
+        "reference_used_for_training": false
+      }
+    },
+    "resolved_from_run_manifest": {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_learned_attempt1/run_manifest.json",
+      "sha256": "9fc02c413f7c82476f23043606b60fd14e003c9bd20ff53af64b3bef36c5714b",
+      "bytes": 15428
+    },
+    "resolved_from_payload": {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/checkpoints/committed_000033.pt",
+      "sha256": "3bfe977c9235ea4305a1eb4049401b098c30dce87bfce76f635e5c88e3bf8c58",
+      "bytes": 6513249
+    },
+    "design_sha256": "9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f"
+  },
+  "base": {
+    "path": "benchmarks/artifacts/task42extra/v45/v45_identity_frozen/checkpoints/committed_000010.pt",
+    "sha256": "0121d04be3ae7c8fdaed1fefe23462c378dc81fa841ee0751040c7800d2b4978",
+    "bytes": 2029380,
+    "input_kind": "unlabelled_complete_round14_boundary",
+    "inherited_rounds": 14,
+    "binding": {
+      "source_sha": "bda2ef6c5164a59390479662955e8cef358841db",
+      "input_sha256": "fc1876b9948d8b742012391467f11eb02317aa4273b83edc22b859080c08914d",
+      "design_sha256": "43e68269855137f6d8f3b424198789f41bec4c5f8bbca50f28f525ef643748f7",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "model_kind": "fttnn",
+      "route": "W32_R12_IDENTITY_FROZEN",
+      "metric_kind": "native_euc",
+      "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "inherited_counts": {
+      "core_visits": 42,
+      "LSMR_iterations": 25758,
+      "LSMR_unretained_iterations_upper_bound": 0,
+      "accepted_core_updates": 42,
+      "effective_core_updates": 42,
+      "accepted_hidden_updates": 12,
+      "effective_hidden_updates": 12,
+      "hidden_actual_calls": 137,
+      "K": 25932,
+      "KH": 25953,
+      "B": 25890,
+      "BH": 25953,
+      "round_audits": 14,
+      "uncommitted_K": 0,
+      "uncommitted_KH": 0
+    },
+    "parent_result_status": "V45_JOINT_FAIL_ACCEPTED_BASE_ONLY"
+  },
+  "base_model_hash": "4d46260fe9668557393133dc9c93f737955ef4fda0a8f2562dcbf437f49c70f9",
+  "residual_identity": {
+    "c_base_sha256": "cda595e3bc687219e6a2b0d8b8a1bf95418f97d47fe2b4f001c1f4be560a3214",
+    "training_rhs_sha256": "9ee7039a391203426452e4bd45ca92aae2d48a55257d4acfa1febb609ccba528",
+    "original_rhs_sha256": "ea17da9735541104f770ec58390a71c99bd26c53fb09ff85e2b7ffe4b68e575f",
+    "bnorm_train": 0.1043574223800681,
+    "bnorm_original": 0.29104200262261154
+  },
+  "native": {
+    "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+  },
+  "moments": {
+    "native": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+      "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+    },
+    "moments_q30": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+      "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+    },
+    "moments_q60": {
+      "path": "benchmarks/artifacts/task42extra/v30/v30_wave_checks/moments_q60.npz",
+      "sha256": "849f5bdebb5767dfdbedb005360196b1fddb1aa45db3bd3a3f121c2d1a6f9a56"
+    }
+  },
+  "phase": {
+    "wavevector_nm_inverse": [
+      1.2564456695248023,
+      0.0,
+      0.0
+    ],
+    "origin_nm": [
+      0.0,
+      0.0,
+      3.75
+    ],
+    "coordinate_unit": "physical_nm",
+    "sign": 1,
+    "unfolded_incident_wavevector": true,
+    "phase_applied": "before_complete_moments_and_Piola",
+    "MPC_expansion_count": 1,
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+    "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+  },
+  "inherited_correction_counts": {
+    "complete_rounds": 6,
+    "core_visits": 18,
+    "LSMR_iterations": 21354,
+    "hidden_actual_calls": 35
+  },
+  "inherited_base_rounds": 14,
+  "reference": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+    "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+  },
+  "reference_used_for_training": false,
+  "held_real_parameters": 38400,
+  "correction_real_parameters": 19200,
+  "hidden_real_parameters": 3360
+}

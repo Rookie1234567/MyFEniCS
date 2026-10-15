@@ -1,0 +1,32 @@
+{
+  "schema": "task42extra.v47.probe.v1",
+  "raw_result": {
+    "path": "benchmarks/artifacts/task42extra/v47/v47_joint_step_probe/result.json",
+    "sha256": "574059baf0b86155c1bf419616163b9447aca8df96c924999a8736fc09c208b4",
+    "bytes": 17275
+  },
+  "qualified": false,
+  "status": "TRIAL_LIMIT",
+  "initial_native": 0.34634593953927606,
+  "native": 0.3463459095350402,
+  "cumulative_original_native_relative_decrease": 8.66308290304752e-08,
+  "independent_repeated_native": [
+    0.34634593953577486,
+    0.34634593953577486
+  ],
+  "independent_repeat_drift": 3.5011993304578937e-12,
+  "counts": {
+    "trials": 3,
+    "accepted": 3,
+    "rejected": 0,
+    "LSMR_iterations": 34,
+    "lost_iterations_upper_bound": 0,
+    "lost_trial_upper_bound": 0,
+    "JVP": 40,
+    "VJP": 43
+  },
+  "h": 15384236452.336441,
+  "damping": 569786.53527172,
+  "parent_restored_bitwise_after_probe": true,
+  "recomputed_gate": false
+}
