@@ -1,0 +1,253 @@
+{
+  "schema": "balh108-fixed-lowrank8-native-qualification-report.v1",
+  "report_state": "FINAL_REVIEWED_REPORT_ONLY",
+  "date_utc": "2026-10-15",
+  "scope": "Fixed eight historical increments; native-A lowrank mathematical qualification; no PC/outer solve or physical field acceptance.",
+  "baseline_report_commit": "c5ae7586a7d9d961e33a9659c62ffa4e9a56bfe0",
+  "training": {
+    "original_checkpoint": 6656,
+    "increment_count": 8,
+    "consecutive_step_width": 64,
+    "last_paid_offset": 512,
+    "charged_before_current_qualification": true,
+    "included_in_prior_independent_diagnostic_steps": 1736,
+    "new_method_gain_claimed": false,
+    "common_initial_iterate_may_reconstruct_paid_endpoint": true
+  },
+  "attempt01": {
+    "status": "TERMINAL_RESOURCES_AND_CLEANUP_PASS_NEW_CROSS_OPERATOR_AU_GATE_FAILED_NATIVE_QUALIFICATION_INCOMPLETE",
+    "original_failed_status_preserved": true,
+    "cost": {
+      "seconds": 50.586469895992195,
+      "peak_tree_rss_bytes": 2051506176,
+      "regular_output_bytes": 1697519,
+      "native_A_completed": 13,
+      "saved_A_completed": 6,
+      "inflight_actions": 0,
+      "outer_iterations": 0,
+      "PC_calls": 0,
+      "H3_calls": 0,
+      "global_factor_calls": 0,
+      "exact16_cache_calls": 16,
+      "compiler_attempts": 0,
+      "local_p6_LU_classes": 44,
+      "fresh_local_elimination_outside_retained_A_counter": true
+    },
+    "terminal": {
+      "child_exit_code": 1,
+      "cleanup_verified": true,
+      "remaining_processes": 0,
+      "zero_swap_verified": true,
+      "AS_limit_bytes": 6442450944,
+      "peak_post_install_VmSize_not_independently_logged": true
+    },
+    "measured": {
+      "rank": 8,
+      "condition_R11": 35.74738823528642,
+      "condition_limit": 10000000000.0,
+      "Gram_error": 4.605001716660298e-15,
+      "Gram_limit": 1e-10,
+      "native_AU_columns_passed": 1,
+      "native_AU_columns_not_run": 7,
+      "first_native_AU_relative": 2.0947580340814294e-13,
+      "first_cross_source_AU_relative": 2.6203552765550875e-10,
+      "cross_source_limit": 1e-10,
+      "cross_source_passed": false
+    },
+    "not_reached": {
+      "full_native_qualification": true,
+      "all_column_reconstruction": true,
+      "UR_projector_checks": true,
+      "common_xinit_construction_and_Ax": true,
+      "paid_x512_comparison": true
+    },
+    "durable_U_Y_or_common_xinit_available": false,
+    "evidence": {
+      "name": "phase4_lowrank8_aimage_attempt01_terminal_review.json",
+      "bytes": 42798,
+      "sha256": "78efa0359dd6daeb1f0e275849180622bdb47a83afef5e5fd8f214134cbe8aa5"
+    }
+  },
+  "attempt02": {
+    "status": "NATIVE_ONLY_LOWRANK8_AIMAGE_QUALIFIED_ZERO_OUTER",
+    "independent_review_status": "PASS_NATIVE_ONLY_QUALIFICATION_RESOURCES_TYPED_GRAM_SAVED_AX_CROSS_SOURCE_AND_FINAL_ACCURACY_STILL_FAIL",
+    "terminal_evidence_available": true,
+    "cost": {
+      "seconds": 51.86061196599621,
+      "peak_tree_rss_bytes": 2333450240,
+      "native_A_completed": 22,
+      "saved_A_completed": 15,
+      "outer_iterations": 0,
+      "PC_calls": 0,
+      "H3_calls": 0,
+      "global_factor_calls": 0,
+      "compiler_attempts": 0,
+      "regular_output_bytes": 8940000,
+      "inflight_actions": 0,
+      "exact16_cache_calls": 16,
+      "local_p6_LU_classes": 44,
+      "fresh_local_elimination_outside_retained_A_counter": true
+    },
+    "terminal": {
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "remaining_processes": 0,
+      "zero_swap_verified": true,
+      "AS_limit_bytes": 6442450944,
+      "final_VmSize_bytes": 2760454144,
+      "peak_post_install_VmSize_not_independently_logged": true
+    },
+    "measured": {
+      "rank": 8,
+      "condition_R11": 35.74738823528642,
+      "condition_limit": 10000000000.0,
+      "Gram_error": 4.605001716660298e-15,
+      "native_AU_columns_checked": 8,
+      "native_AU_max_relative": 6.223795214340097e-13,
+      "native_AU_relative_limit": 1e-10,
+      "raw_image_reconstruction_max_relative": 2.738272231592252e-15,
+      "UR_selected_identity_max_relative": 1.7967396118598346e-16,
+      "left_projector_idempotence_relative": 1.8647382941039336e-15,
+      "right_projector_on_U_max_relative": 3.183466243105098e-14,
+      "common_residual_image_orthogonality": 1.0765128526582739e-11,
+      "independent_Y_Gram_error": 3.97088854010218e-15
+    },
+    "cross_source": {
+      "status": "FAIL_CROSS_SOURCE_EQUIVALENCE",
+      "checked_columns": 8,
+      "failed_columns_count": 8,
+      "relative_limit": 1e-10,
+      "min_relative": 1.722007288615553e-10,
+      "max_relative": 7.488143033006725e-10,
+      "all_diagnostics_passed": false
+    },
+    "common_xinit": {
+      "native_initial_relative": 0.020168106449264825,
+      "saved_initial_relative": 0.020168106798117626,
+      "native_relative": 0.0006937698325630297,
+      "saved_relative": 0.0006937697999426054,
+      "paid_x512_native_relative": 0.0006937698325460957,
+      "paid_x512_saved_relative": 0.0006937697999576396,
+      "gain_is_paid_training_reuse_not_PC_repair": true,
+      "independent_residual_operation_relative": 2.786653179688007e-12,
+      "relative_vector_difference_from_paid_x512_native": 3.390347457215723e-15,
+      "relative_vector_difference_from_paid_x512_saved": 3.390347457215721e-15,
+      "residual_identity_relative_to_final_residual": 8.195344335329879e-09,
+      "native_saved_residual_comparison_relative": 1.0379187135195462e-05,
+      "common_saved_relative_independent_CSR": 0.0006937697999508712,
+      "paid_x512_saved_relative_independent_CSR": 0.0006937697999606329,
+      "residual_identity_gate_scale": "Full operation scale; not final residual norm.",
+      "residual_identity_gate_limit": 1e-10
+    },
+    "solution_acceptance_limits_unchanged": {
+      "native_true_relative_limit": 1e-11,
+      "saved_true_relative_limit": 1e-09
+    },
+    "field_accepted": false,
+    "solution_accepted": false,
+    "evidence": {
+      "result": {
+        "name": "phase4_balh108_lowrank8_aimage_attempt02/result.json",
+        "bytes": 231344,
+        "sha256": "6ab57b30e67fbb06270fd0e44aff187d5dd15ce72ae7bdf805d49f2fb1b0deda"
+      },
+      "summary": {
+        "name": "phase4_balh108_lowrank8_aimage_attempt02/summary.json",
+        "bytes": 1161,
+        "sha256": "923aebbd83aba932b59357c59c8ea670ecc83aa9a96b466cbad8dfc54528daef"
+      },
+      "terminal_review": {
+        "name": "phase4_lowrank8_aimage_attempt02_terminal_review.json",
+        "bytes": 39729,
+        "sha256": "0d06243fc8a16983638e6c60f00afc440053a30f0475d92e3bd740aeebe338aa"
+      },
+      "array_review": {
+        "name": "phase4_lowrank8_aimage_attempt02_array_review.json",
+        "bytes": 20516,
+        "sha256": "09d6efb742f73fd58484fd8f242dc46016c37f07a785572dccefd2a088c2c537"
+      }
+    },
+    "independent_payload_review": {
+      "status": "FOUR_TYPED_FINITE_NPY_AND_GRAM_TWO_SAVED_AX_REPLAYS_PASS",
+      "all_four_typed_finite_verified": true,
+      "local_vector_file_count": 4,
+      "local_vector_total_bytes": 6928640,
+      "saved_CSR_passes": 1,
+      "native_Ax_replayed": false,
+      "coordinate_map_replayed": false,
+      "right_projector_independently_replayed": false,
+      "scientific_imports": false,
+      "FE_PC_or_solve": false,
+      "arrays_uploaded": false
+    }
+  },
+  "operator_interpretation": {
+    "native_assembly_history": "exact33 raw tensor classes; 44 oriented local LU classes",
+    "saved_assembly_history": "rounded9 historical assembly",
+    "exact_cause_of_directional_delta_isolated": false,
+    "native_AU_Y_mathematical_qualification_distinct_from_cross_operator_equivalence": true,
+    "cross_source_threshold_relaxed": false,
+    "cross_source_equivalence_accepted": false,
+    "attempt01_fail_overridden": false
+  },
+  "historical_accounting": {
+    "historical10000_remaining": 0,
+    "historical10000_unchanged": true,
+    "lost20_not_refunded": true,
+    "prior_independent_diagnostics_charged": 1736,
+    "prior_step_breakdown": "512+512+148+364+200; 148 includes one inflight step",
+    "training512_already_in_prior1736": true,
+    "training512_free_or_doublecharged": false,
+    "new_outer_iterations": 0,
+    "ledger_version": 86,
+    "known_terminal_seconds": 23164.539556379066,
+    "seconds_lower_bound_with_older_interruptions": 31299.972769752072,
+    "totals_are_project_end_to_end_wall": false,
+    "preparation_and_waiting_assumed_zero": false,
+    "ledger_evidence": {
+      "name": "phase4_execution_ledger_v86.json",
+      "bytes": 83086,
+      "sha256": "3435b9431f3e4ef4185fed3cc759d0f83e650ed4d3f15f59af8ed42ced3c2398"
+    }
+  },
+  "future_AB": {
+    "preparation_scope": "SOURCE_ONLY_IN_PROGRESS",
+    "source_preparation_authorized": true,
+    "implemented_at_reporting_cutoff": false,
+    "executed": false,
+    "numerical_launch_authorized": false,
+    "each_arm_proposed_outer_cap": 200,
+    "each_arm_proposed_hard_seconds": 600,
+    "shared_restart": 32,
+    "shared_refinement": "always",
+    "arm_A": "original M",
+    "arm_B": "C+(I-CA)M(I-AC)",
+    "identical_measured_common_x_init_required": true,
+    "initial_training_reuse_not_attributed_to_arm_B": true,
+    "fixed_linear_PC_or_spectral_claim": false,
+    "exact_launch_admission_required": true
+  },
+  "acceptance": {
+    "original_native_saved_physical_thresholds_unchanged": true,
+    "original_pressure_and_checkpoint_raw_failures_preserved": true,
+    "qualified108_physical_field": false,
+    "field_recovery_performed": false,
+    "new_solver_improvement_demonstrated": false
+  },
+  "publication_scope": "Exactly this small JSON and Chinese report; no code, vector, sparse matrix, archive or numeric artifact.",
+  "combined_current_attempts": {
+    "seconds": 102.44708186198841,
+    "native_A_completed": 35,
+    "saved_A_completed": 21,
+    "outer_iterations": 0,
+    "PC_calls": 0,
+    "attempt01_refunded": false
+  },
+  "separately_recorded_read_only_reviews": {
+    "attempt01_scalar_seconds": 0.32399611300206743,
+    "attempt02_scalar_seconds": 0.3321318789967336,
+    "attempt02_payload_and_CSR_seconds": 14.380859716009581,
+    "attempt02_payload_peak_RSS_bytes": 88240128,
+    "review_times_are_not_project_end_to_end_wall": true
+  }
+}
