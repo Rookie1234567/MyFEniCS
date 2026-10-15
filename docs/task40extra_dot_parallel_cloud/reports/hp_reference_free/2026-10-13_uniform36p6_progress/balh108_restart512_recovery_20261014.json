@@ -1,0 +1,318 @@
+{
+  "schema": "balh108-restart512-interrupted-recovery-publication.v1",
+  "status": "TERMINAL_INDEPENDENT_REVIEW_BOUND_ORIGINAL_ACCURACY_GATES_FAILED",
+  "date_utc": "2026-10-14",
+  "qualified_field": false,
+  "configuration": {
+    "cells": 108,
+    "fine_degree": 6,
+    "retained_dimension": 24056,
+    "coarse": "p4",
+    "H": "H3",
+    "method": "right FGMRES BAL_H",
+    "restart": 512,
+    "CGS_refinement": "always",
+    "recovery_max_outer": 364,
+    "hard_wall_seconds": 600,
+    "Krylov_reused": false,
+    "factors_reused": false
+  },
+  "interrupted_segment": {
+    "recorded_completed_outer": 147,
+    "recorded_inflight_outer": 1,
+    "charged_outer": 148,
+    "latest_durable_local_iteration": 128,
+    "latest_durable_path_label": 7296,
+    "lost_after_durable_charged": 20,
+    "checkpoint_independent_saved_relative": {
+      "64": 0.0006918131163599204,
+      "128": 0.0006789835175850782
+    },
+    "elapsed_seconds": null,
+    "elapsed_lower_bound_seconds": 221.44093053002143,
+    "exit_code": null,
+    "cleanup_verified": null,
+    "known_writer_observation_scope": "Only the two known stdout/stderr regular inodes; not system-wide cleanup"
+  },
+  "startup_failure": {
+    "attempt": 1,
+    "outer": 0,
+    "elapsed_seconds": 1.760522142983973,
+    "exit_code": 1,
+    "cleanup_verified": true,
+    "cause": "Earlier launcher passed live364 into legacy exact512 metadata gate; previous review missed this complete entry path"
+  },
+  "repaired_source_review": {
+    "tests": 81,
+    "actual_complete_pre_science_launcher_path_tested": true,
+    "scientific_runtime_exercised_by_source_review": false,
+    "command_sha256": "361bd2589a5d27aba2ce2cf7f066fbbce2e7d8c2b8b46f0467aa3b78a8f96b5f"
+  },
+  "recovery_terminal": {
+    "independent_review_pending": false,
+    "attempt": 2,
+    "iterations": 364,
+    "path_label": 7660,
+    "reason": -3,
+    "reason_meaning": "Iteration budget exhausted; not proof of numerical divergence",
+    "saved_true_relative": 0.0004253285659505867,
+    "native_true_relative": 0.00042532834087187054,
+    "saved_original_gate": 1e-09,
+    "native_original_gate": 1e-11,
+    "original_gates_passed": false,
+    "reported_native_absolute": 0.0002931114339564588,
+    "native_true_reported_absolute_norm_difference": 3.504824468841816e-14,
+    "residual_mapping_relative_error": 1.6930677393715145e-05,
+    "recovery_saved_fractional_reduction": 0.373580425857179,
+    "from_pre_interruption_saved_fractional_reduction": 0.3869312760879453,
+    "elapsed_seconds": 428.34152204799466,
+    "sampled_tree_peak_RSS_bytes": 2632814592,
+    "child_exit_code": 1,
+    "cleanup_verified": true,
+    "remaining_processes": [],
+    "resource_samples": 1696,
+    "stagnation_flag_iteration": 128,
+    "hard_stability_stop": false,
+    "conditional_recheck_pairs": 0,
+    "checkpoint_curve": [
+      {
+        "iteration": 64,
+        "path_label": 7360,
+        "native_true_relative": 0.0006787296857273942,
+        "saved_true_relative": 0.0006787296106412062,
+        "reported_native_absolute": 0.00046774083066358275,
+        "reported_native_relative": 0.0006787296858488066,
+        "absolute_native_true_reported_norm_difference": 8.367026689548585e-14,
+        "independent_saved_replay_relative": 0.0006787296106370328,
+        "independent_saved_replay_matches": true,
+        "independent_saved_gate_passed": false
+      },
+      {
+        "iteration": 128,
+        "path_label": 7424,
+        "native_true_relative": 0.0006779457952664405,
+        "saved_true_relative": 0.000677945710905428,
+        "reported_native_absolute": 0.00046720061909132673,
+        "reported_native_relative": 0.0006779457952694679,
+        "absolute_native_true_reported_norm_difference": 2.086330240513856e-15,
+        "independent_saved_replay_relative": 0.00067794571093159,
+        "independent_saved_replay_matches": true,
+        "independent_saved_gate_passed": false
+      },
+      {
+        "iteration": 192,
+        "path_label": 7488,
+        "native_true_relative": 0.0006471976853379441,
+        "saved_true_relative": 0.0006471977384745613,
+        "reported_native_absolute": 0.00044601081882263236,
+        "reported_native_relative": 0.0006471976853403733,
+        "absolute_native_true_reported_norm_difference": 1.6740081543176188e-15,
+        "independent_saved_replay_relative": 0.000647197738465733,
+        "independent_saved_replay_matches": true,
+        "independent_saved_gate_passed": false
+      },
+      {
+        "iteration": 256,
+        "path_label": 7552,
+        "native_true_relative": 0.0005941719945776605,
+        "saved_true_relative": 0.0005941721683099299,
+        "reported_native_absolute": 0.00040946861189422915,
+        "reported_native_relative": 0.0005941719946099954,
+        "absolute_native_true_reported_norm_difference": 2.2283281990442827e-14,
+        "independent_saved_replay_relative": 0.0005941721683342626,
+        "independent_saved_replay_matches": true,
+        "independent_saved_gate_passed": false
+      },
+      {
+        "iteration": 320,
+        "path_label": 7616,
+        "native_true_relative": 0.0004954946284825073,
+        "saved_true_relative": 0.0004954948995543727,
+        "reported_native_absolute": 0.0003414659384386066,
+        "reported_native_relative": 0.0004954946285012187,
+        "absolute_native_true_reported_norm_difference": 1.289474169802185e-14,
+        "independent_saved_replay_relative": 0.0004954948995102677,
+        "independent_saved_replay_matches": true,
+        "independent_saved_gate_passed": false
+      },
+      {
+        "iteration": 364,
+        "path_label": 7660,
+        "native_true_relative": 0.00042532834087187054,
+        "saved_true_relative": 0.0004253285659505867,
+        "reported_native_absolute": 0.0002931114339564588,
+        "reported_native_relative": 0.00042532834092272835,
+        "absolute_native_true_reported_norm_difference": 3.504824468841816e-14,
+        "independent_saved_replay_relative": 0.00042532856596657254,
+        "independent_saved_replay_matches": true,
+        "independent_saved_gate_passed": false
+      }
+    ],
+    "V_Gram": {
+      "columns": 364,
+      "complete512_observation": false,
+      "complete364_observation": true,
+      "final": {
+        "Gram_columns": 364,
+        "defect_Frobenius_norm": 8.067549167085234e-14,
+        "iteration": 364,
+        "max_abs_diagonal_defect": 1.4210854715202004e-14,
+        "max_abs_offdiagonal": 2.5221584383996997e-16
+      },
+      "full_V_or_Gram_persisted": false,
+      "posthoc_full_V_Gram_replay": false,
+      "copy_seconds_inside_science_wall": 0.12520990983466618,
+      "Gram_seconds_inside_science_wall": 0.5242645760299638,
+      "extra_PC_or_Mat_calls": 0
+    },
+    "independent_saved_true_relative": 0.00042532856596657254,
+    "initial_mapping": {
+      "saved_typed_sha256": "e5943f4661598e428b8867bc02d771928e462a064e9bbff4c2c5fd2e53557b07",
+      "mapped_native_typed_sha256": "883555eb629ce8e1b6d120f25dcb21ae876cd1316238602d6ea3054fc0060ca8",
+      "producer_native_typed_sha256": "b563d4346cfbb4455b3ff93ca03d27d5b5423703c6c7c346e2f021f68288f5f6",
+      "mapped_native_matches_producer_bytes": false,
+      "native_residual_absolute_relative_rhs_norm_difference_from_producer": 0.0,
+      "native_match_is_acceptance_gate": false,
+      "no_new_scaling_or_normalization": true
+    },
+    "coarse_work": {
+      "extra_solves": 328,
+      "factor_solves": 1058,
+      "logical_calls": 730,
+      "maximum_native_relative": 9.99837720558437e-11
+    },
+    "total_PC_calls": 365,
+    "setup_PC_calls": 1,
+    "resource_gates": {
+      "AS_cap": 6442450944,
+      "admissions": 422,
+      "artifact_bytes": 24435146,
+      "artifact_cap": 536870912,
+      "disk_floor": 4294967296,
+      "events": 2376,
+      "full512_Krylov_reserved": 410318496,
+      "hard600": true,
+      "host_floor": 1073741824,
+      "max_VmSize": 3380318208,
+      "max_projected_AS": 6305903528,
+      "max_projected_tree": 6436676552,
+      "min_disk_free": 12923994112,
+      "min_host_available": 6767292416,
+      "passive_reserved": 279619328,
+      "peak_tree_RSS": 2632814592,
+      "samples": 1696,
+      "tree_cap": 8589934592,
+      "wall_seconds": 428.34152204799466,
+      "zero_swap": true
+    },
+    "checkpoint_replay_scope": {
+      "six_independent_saved_Ax_match": true,
+      "latest364_payload_matches_terminal": true,
+      "native_Ax_posthoc_replayed": false,
+      "full_V_or_Gram_posthoc_replayed": false
+    }
+  },
+  "accounting": {
+    "historical_outer_charge": 10000,
+    "prior_no_refine_charge": 512,
+    "prior_refine_always_charge": 512,
+    "original_continuation_cap": 512,
+    "interrupted_charge": 148,
+    "recovery_remaining_cap": 364,
+    "replay_credit": 0,
+    "final_ledger": {
+      "path": "phase4_execution_ledger_v83.json",
+      "bytes": 69179,
+      "sha256": "e0589f91f2f3ced8ad2dbe3ada6a5937faaae1db527af5c1f2e7cec08f159e57"
+    },
+    "recovery_outer_charge": 364,
+    "continuation_total_charge": 512,
+    "continuation_remaining": 0,
+    "total_independent_diagnostic_charge": 1536,
+    "historical_plus_independent_charge": 11536,
+    "sum_known_terminal_science_seconds": 22786.32009754608,
+    "sum_science_seconds_lower_bound": 30921.753310919084,
+    "sum_is_not_exact": true,
+    "preparation_elapsed_is_separate_and_not_zero": true,
+    "review_costs": {
+      "interrupted_checkpoint_Ax_seconds": 12.495145977998618,
+      "recovery_checkpoint_Ax_seconds": 27.933186139009194,
+      "recovery_checkpoint_Ax_peak_RSS_bytes": 53080064,
+      "recovery_scalar_review_seconds": 0.13222959599806927,
+      "recovery_scalar_review_peak_RSS_bytes": 42336256,
+      "already_inside_science_wall": false,
+      "not_in_science_stage_sum": true
+    }
+  },
+  "scope": {
+    "one_uninterrupted_Krylov_cycle": false,
+    "original_restart32_root_cause_fully_proved": false,
+    "automatic_extra_outer_authorized": false,
+    "automatic_restart32_authorized": false,
+    "report_and_small_json_only": true,
+    "no_scientific_jobs_or_large_payload_reads_by_publication_worker": true,
+    "next_comparison_status": "Only source preparation for same checkpoint6656, restart32, CGS always, max200, hard600; no new numerical execution approved."
+  },
+  "evidence": [
+    {
+      "path": "phase4_restart512_continuation01_incomplete_review.json",
+      "bytes": 35968,
+      "sha256": "bd50d0763d62f6b4cf5d17f72808ac81634797c05518a0dbc91ea5773aad93ea"
+    },
+    {
+      "path": "phase4_restart512_continuation01_checkpoint_ax_review.json",
+      "bytes": 11027,
+      "sha256": "599850b9a4089b35d215a52c6d1010f2b693ea76381c75e2b81c4f393b574923"
+    },
+    {
+      "path": "phase4_restart512_recovery01_startup_failure_review.json",
+      "bytes": 7696,
+      "sha256": "241ba39d0987c5568c378847256d43589937ee8d4ca207fcf5bb2e53c12e80f3"
+    },
+    {
+      "path": "restart512_recovery02_independent_review/independent_source_review.json",
+      "bytes": 23886,
+      "sha256": "3086193ea5699c313f422e67af866eb5b39113b894ff74ed9125c140867bf9a5"
+    },
+    {
+      "path": "phase4_restart512_recovery02_terminal_review.json",
+      "bytes": 113768,
+      "sha256": "207d748f5859d8efcecd95af611304547486f9071e591e7b01e624c14284dc63"
+    },
+    {
+      "path": "phase4_restart512_recovery02_checkpoint_ax_review.json",
+      "bytes": 19266,
+      "sha256": "aedeec8b75fd42f949f8026f82a4f36f6a4f88d22c7acc53b6f4d5bbea9e8b5d"
+    },
+    {
+      "path": "phase4_execution_ledger_v83.json",
+      "bytes": 69179,
+      "sha256": "e0589f91f2f3ced8ad2dbe3ada6a5937faaae1db527af5c1f2e7cec08f159e57"
+    },
+    {
+      "path": "phase4_balh108_restart512_recovery_attempt02/summary.json",
+      "bytes": 2216,
+      "sha256": "9e1695f7ecfee75c7128aa6b7652d5dd317f86d34ffc16e00f6bcbaff95dcf7e"
+    },
+    {
+      "path": "phase4_balh108_restart512_recovery_attempt02/linear_terminal_before_gate.json",
+      "bytes": 237512,
+      "sha256": "ab17d6de5c43f33d966ee5e11c3a6b69ad6d1733cfd4ff6a2b53bf980968e6c6"
+    },
+    {
+      "path": "phase4_balh108_restart512_recovery_attempt02/linear_cleanup.json",
+      "bytes": 432,
+      "sha256": "3246fbdac593b756cee700f4fb271ab287469878fc63dd07bda497e90e4de733"
+    },
+    {
+      "path": "phase4_balh108_restart512_recovery_attempt02/actual_V512_observation.json",
+      "bytes": 4257,
+      "sha256": "f72062cf5e761248ff1b61d770024dd1bcf36b1e42f80e574a7aef675ef81a0e"
+    }
+  ],
+  "prior_report": {
+    "commit": "96a3aa18202ed2c482ed0f1919867d1c6402f8e2",
+    "path": "docs/task40extra_dot_parallel_cloud/reports/hp_reference_free/2026-10-13_uniform36p6_progress/balh108_restart512_cgsrefine_20261014_zh.md"
+  },
+  "publication_date_utc": "2026-10-15"
+}
