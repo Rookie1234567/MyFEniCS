@@ -481,7 +481,7 @@ def _dispersion_flat_p6_profile_facts(identity):
         reserve_min_bytes=4 * 1024**3,
         rss_hard_limit_bytes=hard,
         rss_warning_bytes=planning,
-        resource_stop_policy="measured_process_tree_rss_hard_limit",
+        resource_stop_policy="measured_tree_rss_only_v3",
         swap_policy="require_zero_swap",
         global_swap_delta_policy="require_zero_swap",
         stop_on_global_swap=True,

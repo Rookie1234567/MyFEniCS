@@ -109,6 +109,7 @@ def test_flat_profile_is_isolated_from_v7_iterative_and_n0_contracts():
     assert facts["functional_store_policy"]["cross_mesh_fe_reuse"] is False
     assert facts["resources"]["rss_hard_limit_bytes"] == DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES
     assert facts["resources"]["planning_cap_bytes"] == DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES
+    assert facts["resources"]["resource_stop_policy"] == "measured_tree_rss_only_v3"
     assert facts["campaign_authorization"]["resource_policy"]["zero_swap"] is True
     assert facts["campaign_authorization"]["direct_route"]["p4_and_outer_ksp"] == "not_built"
 
