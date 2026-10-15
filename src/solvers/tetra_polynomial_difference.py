@@ -76,12 +76,16 @@ def same_native_difference(f,g):
     return delta
 
 
-def numerator(f,g,cfg,kappa,journal,folder,q,*,parent_hashes,spot=False,coefficient_first=False):
+def numerator(f,g,cfg,kappa,journal,folder,q,*,parent_hashes,spot=False,coefficient_first=False,additional_pairs=()):
     folder.mkdir(parents=True,exist_ok=True)
     a=CachedTetraEvaluator(f.function_space,q,kappa);b=CachedTetraEvaluator(g.function_space,q,kappa)
     delta=same_native_difference(f,g) if coefficient_first else None
+    if additional_pairs and (not coefficient_first or spot):
+        raise ValueError('batched numerator requires identical native differences without extra spot traversals')
+    deltas=[delta]+[same_native_difference(x,y) for x,y in additional_pairs] if additional_pairs else None
     parents=parent_map(a,b);identity=dict(parents=parent_hashes,q=q,carrier=list(kappa),cells=len(b.geometry),
         strategy='SAME_NATIVE_BASIS_COEFFICIENT_FIRST' if coefficient_first else 'SEPARATE_FIELDS')
+    if additional_pairs: identity['coefficient_difference_columns']=len(deltas)
     ix=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest();chunks=[]
     with journal.measured('same_real_carrier_polynomial_numerator_q'+str(q)):
         for begin in range(0,len(b.geometry),128):
@@ -93,6 +97,13 @@ def numerator(f,g,cfg,kappa,journal,folder,q,*,parent_hashes,spot=False,coeffici
             per=[]
             for c in range(begin,end):
                 J,o,det=b.geometry[c];points=b.points@J.T+o;w=abs(det)*b.weights
+                if deltas is not None:
+                    # One cell traversal and one immutable reference table;
+                    # no new denominator or physical output is evaluated.
+                    values=[b.cell(d,c,cfg.k0)[2] for d in deltas]
+                    per.append([float(np.sum(w[:,None]*np.abs(v[k])**2))
+                        for v in values for k in ('E','H','curl')])
+                    continue
                 if delta is not None:
                     difference=b.at(delta,c,points,cfg.k0)
                 else:

@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v79]
+stage = "KNOWN_ERROR"
+run_id = "task042_v79_known_error_budget"

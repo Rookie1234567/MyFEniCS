@@ -25,7 +25,7 @@ class ReferenceVectorIntegral:
         self.phi_H = np.ascontiguousarray(self.phi.conj().T)
         self.psi_H = np.ascontiguousarray(self.psi.conj().T)
 
-    def apply(self, coefficients, J, T, kappa, k0, epsilon, mu):
+    def apply(self, coefficients, J, T, kappa, k0, epsilon, mu, *, diagnostic=None):
         c = np.asarray(coefficients)
         single = c.ndim == 1
         if single: c = c[:,None]
@@ -55,6 +55,18 @@ class ReferenceVectorIntegral:
         rhat = abs(det)*(self.psi_H @ curl_test.reshape(-1,c.shape[1])
                         + self.phi_H @ value_test.reshape(-1,c.shape[1]))
         result = T.conj() @ rhat
+        if diagnostic is not None:
+            # Uncondensed full-field terms. This opt-in callback does not
+            # alter the production contraction or condense either term.
+            curl_value = 1j*np.cross(kappa,h.transpose(0,2,1)).transpose(0,2,1)
+            mass_value = -k0**2*epsilon*U
+            curl_hat = abs(det)*(self.psi_H @ curl_test.reshape(-1,c.shape[1])
+                + self.phi_H @ (np.einsum('qcb,cd->qdb',curl_value,F.T)
+                    * self.weights[:,None,None]).reshape(-1,c.shape[1]))
+            mass_hat = abs(det)*(self.phi_H @ (np.einsum('qcb,cd->qdb',mass_value,F.T)
+                * self.weights[:,None,None]).reshape(-1,c.shape[1]))
+            terms = dict(curl=T.conj()@curl_hat, mass=T.conj()@mass_hat)
+            diagnostic({k:v[:,0] if single else v for k,v in terms.items()})
         return result[:,0] if single else result
 
 
@@ -71,12 +83,13 @@ class CoefficientBodyAction:
         self.materials = {cfg.tags.air:cfg.eps_air,cfg.tags.substrate:cfg.eps_substrate,cfg.tags.grating:cfg.eps_grating}
         self.last = None
 
-    def cell(self, c, coefficients):
+    def cell(self, c, coefficients, *, diagnostic=None):
         cfg = self.s['cfg']
         return self.reference.apply(coefficients,self.ev.geometry[c][0],self.ev.transform(c),
-            self.s['kappa'],cfg.k0,self.materials[int(self.s['data'].cell_tags.values[c])],cfg.mu_r)
+            self.s['kappa'],cfg.k0,self.materials[int(self.s['data'].cell_tags.values[c])],cfg.mu_r,
+            diagnostic=diagnostic)
 
-    def __call__(self, coefficients):
+    def __call__(self, coefficients, *, diagnostic=None):
         import time
         x = np.asarray(coefficients)
         single = x.ndim == 1
@@ -86,14 +99,21 @@ class CoefficientBodyAction:
         began = time.perf_counter()
         native = self.s['P'] @ x
         out = np.zeros_like(native,dtype=np.complex128)
+        terms = {k:np.zeros_like(out) for k in ('curl','mass')} if diagnostic is not None else None
         for c in range(len(self.ev.geometry)):
             rows = self.s['V'].dofmap.cell_dofs(c)
-            np.add.at(out,rows,self.cell(c,native[rows]))
+            def collect(parts):
+                for k,v in parts.items(): np.add.at(terms[k],rows,v)
+            np.add.at(out,rows,self.cell(c,native[rows],diagnostic=collect if terms is not None else None))
         result = self.s['P'].conj().T @ out
         self.last = dict(seconds=time.perf_counter()-began,q=self.q,cells=len(self.ev.geometry),columns=x.shape[1],
             reference_table_bytes=sum(a.nbytes for a in (self.reference.values,self.reference.curls,self.reference.phi,self.reference.psi,self.reference.phi_H,self.reference.psi_H,self.reference.weights)),
             full_vector_workspace_bytes=native.nbytes+out.nbytes+result.nbytes,
             algorithm='COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR',production_matrix_reads=0)
+        if terms is not None:
+            pulled={k:self.s['P'].conj().T@v for k,v in terms.items()}
+            self.last['diagnostic_workspace_bytes']=sum(v.nbytes for v in terms.values())+sum(v.nbytes for v in pulled.values())
+            diagnostic({k:v[:,0] if single else v for k,v in pulled.items()})
         return result[:,0] if single else result
 
 
