@@ -15495,13 +15495,14 @@ def run_task041_public_supervisor(
             )
 
             result["workflow_status"] = "producer_reused"
+            # Validate inherited packets under their producer contract; V16
+            # admission uses this consumer's fresh samples below.
             packet = validate_balh_producer_packet(
                 producer_root,
                 specification,
                 source_sha,
                 require_public_supervisor_summary=True,
                 swap_observe_only=resource_policy_binding is not None,
-                require_kernel_memavailable=v16_memavailable_policy,
             )
             if (
                 isinstance(packet_source_binding, Mapping)

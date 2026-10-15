@@ -11031,14 +11031,16 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         "correction_steps",
         "formal_target_model_id",
         "w0p7_validated_root",
+        "v16_resource_policy",
     ),
     [
-        (False, 0, None, False),
-        (True, 0, None, False),
-        (True, 1, None, False),
-        (False, 0, TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID, False),
-        (False, 0, TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID, False),
-        (False, 0, TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID, True),
+        (False, 0, None, False, False),
+        (True, 0, None, False, False),
+        (True, 1, None, False, False),
+        (False, 0, TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID, False, False),
+        (False, 0, TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID, False, False),
+        (False, 0, TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID, True, False),
+        (False, 0, TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID, True, True),
     ],
     ids=[
         "public",
@@ -11047,6 +11049,7 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         "registered-5nm-cell-condensed-target",
         "registered-2nm-cell-condensed-target",
         "registered-w0p7-validated-root-fixed-h6",
+        "registered-w0p7-validated-root-fixed-h6-v16-memavailable",
     ],
 )
 def test_task041_balh_reused_public_producer_starts_only_one_consumer(
@@ -11056,9 +11059,11 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     correction_steps: int,
     formal_target_model_id: str | None,
     w0p7_validated_root: bool,
+    v16_resource_policy: bool,
 ):
     registered_formal_target = formal_target_model_id is not None
     w0p7_producer_reuse = bool(w0p7_validated_root)
+    assert not v16_resource_policy or w0p7_producer_reuse
     input_prefix = (
         "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot"
         if w0p7_validated_root
@@ -11101,7 +11106,7 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         task041_fixed_h6_modal_gmres_binding,
         task041_fixed_h6_packet_source_binding,
         task041_fixed_h6_producer_execution_binding,
-        task041_v8_resource_policy_binding,
+        task041_resource_policy_binding,
     )
     from src.io.input_validation import (
         task041_balh_case,
@@ -11122,8 +11127,15 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         5.0e-13 if registered_formal_target or w0p7_producer_reuse else None
     )
     task041_resource_policy = (
-        task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+        task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY
+        if v16_resource_policy
+        else task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
         if w0p7_producer_reuse
+        else None
+    )
+    modal_solver_policy = (
+        task041_balh_workflow.TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+        if v16_resource_policy
         else None
     )
     expected_rank_cpus = (
@@ -11241,6 +11253,7 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
             p4_refinement_target_tolerance=p4_target,
             task041_resource_policy=task041_resource_policy,
             expected_rank_cpus=expected_rank_cpus,
+            modal_solver_policy=modal_solver_policy,
         )
         assert fixed_h6_binding is not None
         packet_source_binding = task041_fixed_h6_packet_source_binding(
@@ -11274,6 +11287,8 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
 
     popen_calls: list[list[str]] = []
     phase_calls: list[str] = []
+    phase_resource_options: list[dict[str, object]] = []
+    synthetic_process_group_checks = []
 
     class FakeProcess:
         pid = 531351
@@ -11288,6 +11303,109 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         def wait(self):
             return 0
 
+    fake_session_pid = 531351
+    fake_session_start_ticks = 987654321
+    synthetic_session_observations = []
+    refused_fake_cleanup_pids = []
+    synthetic_leader_identity = {
+        "schema": "task041.owned_session_leader.v1",
+        "status": "measured",
+        "pid": fake_session_pid,
+        "ppid": os.getpid(),
+        "pgid": fake_session_pid,
+        "sid": fake_session_pid,
+        "start_ticks": fake_session_start_ticks,
+        "fixture_source": "test351_synthetic_os_observation",
+    }
+    synthetic_empty_session = {
+        "schema": "task041.owned_session_cleanup.v1",
+        "session_id": fake_session_pid,
+        "status": "empty",
+        "empty": True,
+        "members": [],
+        "unreadable": [],
+        "inspection": "test351_synthetic_os_observation",
+    }
+
+    def fake_owned_session_leader_identity(pid):
+        requested_pid = int(pid)
+        synthetic_session_observations.append(("leader", requested_pid))
+        if requested_pid != fake_session_pid:
+            return {
+                "schema": "task041.owned_session_leader.v1",
+                "status": "unknown",
+                "pid": requested_pid,
+                "error": {
+                    "type": "UnknownSyntheticPID",
+                    "message": "no synthetic identity is registered for this PID",
+                },
+            }
+        return dict(synthetic_leader_identity)
+
+    def fake_owned_session_snapshot(session_id):
+        requested_session_id = int(session_id)
+        synthetic_session_observations.append(("snapshot", requested_session_id))
+        if requested_session_id != fake_session_pid:
+            return {
+                "schema": "task041.owned_session_cleanup.v1",
+                "session_id": requested_session_id,
+                "status": "unknown",
+                "empty": False,
+                "members": [],
+                "unreadable": [{"error": "UnknownSyntheticSessionID"}],
+                "inspection": "test351_synthetic_os_observation",
+            }
+        return dict(synthetic_empty_session)
+
+    assert synthetic_leader_identity["pid"] == (
+        synthetic_leader_identity["pgid"]
+    ) == synthetic_leader_identity["sid"] == fake_session_pid
+    assert synthetic_leader_identity["start_ticks"] > 0
+    unknown_leader = fake_owned_session_leader_identity(fake_session_pid + 1)
+    unknown_snapshot = fake_owned_session_snapshot(fake_session_pid + 1)
+    assert unknown_leader["status"] == "unknown"
+    assert unknown_leader["pid"] == fake_session_pid + 1
+    assert unknown_snapshot["status"] == "unknown"
+    assert unknown_snapshot["session_id"] == fake_session_pid + 1
+    assert unknown_snapshot["empty"] is False
+    synthetic_session_observations.clear()
+    monkeypatch.setattr(
+        supervisor,
+        "_owned_session_leader_identity",
+        fake_owned_session_leader_identity,
+    )
+    monkeypatch.setattr(
+        supervisor,
+        "_owned_session_snapshot",
+        fake_owned_session_snapshot,
+    )
+
+    def refuse_fake_session_cleanup(session_id, *_args, **_kwargs):
+        requested_session_id = int(session_id)
+        refused_fake_cleanup_pids.append(requested_session_id)
+        raise AssertionError(
+            f"synthetic session {requested_session_id} must never be signalled"
+        )
+
+    monkeypatch.setattr(
+        supervisor,
+        "_terminate_owned_session_members",
+        refuse_fake_session_cleanup,
+    )
+
+    def refuse_fake_process_termination(process):
+        requested_pid = int(process.pid)
+        refused_fake_cleanup_pids.append(requested_pid)
+        raise AssertionError(
+            f"synthetic process {requested_pid} must never be signalled"
+        )
+
+    def fake_process_group_gone(pid):
+        requested_pid = int(pid)
+        synthetic_process_group_checks.append(requested_pid)
+        assert requested_pid == fake_session_pid
+        return True
+
     def fake_popen(argv, **kwargs):
         del kwargs
         popen_calls.append(list(argv))
@@ -11297,15 +11415,37 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
 
     def record_run_phase(phase_name, *args, **kwargs):
         phase_calls.append(str(phase_name))
+        phase_resource_options.append(
+            {
+                "phase": str(phase_name),
+                "require_kernel_memavailable": kwargs.get(
+                    "require_kernel_memavailable", False
+                ),
+                "swap_observe_only": kwargs.get("swap_observe_only", False),
+                "require_owned_session_empty": kwargs.get(
+                    "require_owned_session_empty", False
+                ),
+            }
+        )
         return real_run_phase(phase_name, *args, **kwargs)
 
     monkeypatch.setattr(supervisor, "_run_phase", record_run_phase)
 
     def fake_sample(_pid):
+        host_memory = {
+            "mem_available_bytes": 1 if v16_resource_policy else 2**40,
+        }
+        if v16_resource_policy:
+            host_memory["kernel_memavailable"] = {
+                "schema": supervisor.TASK041_V16_MEMORY_AUTHORITY_SCHEMA,
+                "status": "measured",
+                "bytes": 600 * 2**30,
+                "source": "test_fixture",
+            }
         return {
             "memory_authority_bytes": 200,
             "job_no_swap": True,
-            "host_memory": {"mem_available_bytes": 2**40},
+            "host_memory": host_memory,
             "process_tree": {
                 "all_status_readable": True,
                 "rss_bytes": 190,
@@ -11328,6 +11468,14 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
                 ],
             },
         }
+
+    if v16_resource_policy:
+        monkeypatch.setattr(supervisor, "normal_memory_nodes", lambda: [0, 1])
+        monkeypatch.setattr(
+            supervisor, "_task041_node_memfree_bytes", lambda _node: 0
+        )
+        for thread_name in supervisor.TASK041_V13_REQUIRED_THREADS:
+            monkeypatch.setenv(thread_name, "1")
 
     def fake_outer_mpi_launch_identity(*args, **kwargs):
         del args, kwargs
@@ -11359,12 +11507,23 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     monkeypatch.setattr(
         supervisor,
         "_environment_snapshot",
-        lambda repository_root: {"native_marker": "1", "platform": "test"},
+        lambda repository_root, include_blis=False: {
+            "native_marker": "1",
+            "platform": "test",
+            "include_blis": include_blis,
+        },
     )
     monkeypatch.setattr(
         supervisor,
         "_child_environment",
-        lambda: {name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
+        lambda include_blis=False: {
+            name: "1"
+            for name in (
+                supervisor.TASK041_V13_REQUIRED_THREADS
+                if include_blis
+                else supervisor.TASK041_REQUIRED_THREADS
+            )
+        },
     )
     observed_schedules = []
     expected_pair_mode = task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE
@@ -11387,9 +11546,19 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         expected_diagnostic_output=False,
         expected_diagnostic_model_id=None,
         expected_fixed_h6_modal_gmres_research=False,
+        expected_modal_feedback_method=None,
+        expected_modal_solver_policy=None,
+        expected_fixed_h6_binding=None,
+        owned_session_cleanup=None,
     ):
         observed_schedules.append(expected_side_setup_schedule)
         assert expected_fixed_h6_modal_gmres_research is w0p7_producer_reuse
+        assert expected_modal_feedback_method is None
+        assert expected_modal_solver_policy == modal_solver_policy
+        assert expected_fixed_h6_binding == fixed_h6_binding
+        assert owned_session_cleanup == (
+            synthetic_empty_session if v16_resource_policy else None
+        )
         assert expected_side_setup_schedule == expected_schedule
         assert expected_comparison_mode == expected_comparison
         assert expected_top_causal_replay is (correction_steps == 1)
@@ -11501,11 +11670,14 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
                 "producer_resource_qualified": False,
             }
 
-        monkeypatch.setattr(
-            task041_balh_workflow,
-            "validate_balh_producer_packet",
-            fake_validate_reused_root,
-        )
+        if not v16_resource_policy:
+            # Preserve the older V8 control-flow fixture. The V16 case below
+            # deliberately leaves the production packet validator installed.
+            monkeypatch.setattr(
+                task041_balh_workflow,
+                "validate_balh_producer_packet",
+                fake_validate_reused_root,
+            )
 
     candidate_run = tmp_path / "candidate_public_run"
     candidate_run.mkdir()
@@ -11629,24 +11801,53 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
                     ),
                 }
             )
+            if v16_resource_policy:
+                record_payload["modal_solver_policy"] = modal_solver_policy
         supervision_record_path.write_text(
             json.dumps(record_payload, sort_keys=True) + "\n", encoding="utf-8"
         )
 
         if w0p7_producer_reuse:
-            resource_binding = task041_v8_resource_policy_binding(
+            resource_binding = task041_resource_policy_binding(
                 candidate_model, task041_resource_policy
             )
+            if not v16_resource_policy:
+                assert resource_binding == (
+                    task041_balh_workflow.task041_v8_resource_policy_binding(
+                        candidate_model, task041_resource_policy
+                    )
+                )
+            run_manifest_payload = {
+                "fixed_h6_modal_gmres_research": fixed_h6_binding,
+                "packet_source_binding": packet_source_binding,
+                "task041_resource_policy": resource_binding,
+                "post_start_document_allowlist": sorted(
+                    supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+                ),
+            }
+            if v16_resource_policy:
+                required_threads = {
+                    name: "1"
+                    for name in supervisor.TASK041_V13_REQUIRED_THREADS
+                }
+                run_manifest_payload.update(
+                    {
+                        "modal_solver_policy": modal_solver_policy,
+                        "memory_policy": supervisor.TASK041_V13_MEMORY_POLICY,
+                        "membind_node": None,
+                        "resource_headroom_policy": fixed_h6_binding[
+                            "resource_headroom_policy"
+                        ],
+                        "required_thread_environment": required_threads,
+                        "environment_threads": required_threads,
+                        "memory_authority_schema": (
+                            supervisor.TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+                        ),
+                    }
+                )
             supervisor._write_json(
                 candidate_run / "run_manifest.json",
-                {
-                    "fixed_h6_modal_gmres_research": fixed_h6_binding,
-                    "packet_source_binding": packet_source_binding,
-                    "task041_resource_policy": resource_binding,
-                    "post_start_document_allowlist": sorted(
-                        supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
-                    ),
-                },
+                run_manifest_payload,
             )
 
         def reject_duplicate_ledger_write(*args, **kwargs):
@@ -11680,38 +11881,162 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
             + "\n",
             encoding="utf-8",
         )
-    result = supervisor.run_task041_public_supervisor(
-        candidate,
-        source_sha=consumer_source_sha,
-        run_directory=candidate_run,
-        compute_wall_ledger_path=(
-            None if p4_pair or w0p7_producer_reuse else ledger_path
-        ),
-        python_executable="python",
-        producer_packet_root=producer_root,
-        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE if p4_pair else None,
-        task041_rhs_probe_manifest=probe_manifest,
-        task041_side_setup_schedule=(
-            TASK041_SEQUENTIAL_COMPONENT_SCHEDULE if p4_pair else None
-        ),
-        task041_comparison_mode=expected_pair_mode if p4_pair else None,
-        task041_top_causal_replay=correction_steps == 1,
-        task041_p4_response_correction_steps=correction_steps,
-        task041_p4_refinement_target_tolerance=(
-            p4_target
-        ),
-        task041_supervision_record=supervision_record_path,
-        task041_resource_policy=task041_resource_policy,
-        fixed_h6_modal_gmres_research=w0p7_producer_reuse,
-        expected_rank_cpus=expected_rank_cpus,
-        popen_factory=fake_popen,
-        sample_factory=fake_sample,
-        process_group_gone=lambda _pid: True,
-        sleep=lambda _: None,
-    )
+    def run_public_supervisor(run_directory: Path):
+        return supervisor.run_task041_public_supervisor(
+            candidate,
+            source_sha=consumer_source_sha,
+            run_directory=run_directory,
+            compute_wall_ledger_path=(
+                None if p4_pair or w0p7_producer_reuse else ledger_path
+            ),
+            python_executable="python",
+            producer_packet_root=producer_root,
+            performance_profile=(
+                TASK041_SCHUR_SPEED_V2_PROFILE if p4_pair else None
+            ),
+            task041_rhs_probe_manifest=probe_manifest,
+            task041_side_setup_schedule=(
+                TASK041_SEQUENTIAL_COMPONENT_SCHEDULE if p4_pair else None
+            ),
+            task041_comparison_mode=expected_pair_mode if p4_pair else None,
+            task041_top_causal_replay=correction_steps == 1,
+            task041_p4_response_correction_steps=correction_steps,
+            task041_p4_refinement_target_tolerance=p4_target,
+            task041_supervision_record=supervision_record_path,
+            task041_resource_policy=task041_resource_policy,
+            fixed_h6_modal_gmres_research=w0p7_producer_reuse,
+            modal_solver_policy=modal_solver_policy,
+            expected_rank_cpus=expected_rank_cpus,
+            popen_factory=fake_popen,
+            sample_factory=fake_sample,
+            terminate_factory=refuse_fake_process_termination,
+            process_group_gone=fake_process_group_gone,
+            sleep=lambda _: None,
+        )
+
+    if v16_resource_policy:
+        assert run_manifest_payload is not None
+        mode_prep_path = producer_root / "mode_prep_summary.json"
+        identity_original = packet_identity_path.read_bytes()
+        mode_prep_original = mode_prep_path.read_bytes()
+        supervision_record_original = supervision_record_path.read_bytes()
+
+        def corrupt_packet_hash():
+            mode_prep = json.loads(mode_prep_original)
+            mode_prep["packet"]["manifest_sha256"] = "0" * 64
+            mode_prep_path.write_text(
+                json.dumps(mode_prep, sort_keys=True) + "\n", encoding="utf-8"
+            )
+
+        def corrupt_packet_identity():
+            packet_identity = json.loads(identity_original)
+            packet_identity["source_sha"] = "c" * 40
+            packet_identity_path.write_text(
+                json.dumps(packet_identity, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+        for case_name, mutate, expected_error in (
+            (
+                "damaged_packet_hash",
+                corrupt_packet_hash,
+                "Task041 side BAL_H producer manifest hash mismatch",
+            ),
+            (
+                "damaged_packet_identity",
+                corrupt_packet_identity,
+                "Task041 side BAL_H producer source identity mismatch",
+            ),
+        ):
+            rejected_root = tmp_path / f"candidate_public_run_{case_name}"
+            rejected_root.mkdir()
+            supervisor._write_json(
+                rejected_root / "run_manifest.json", run_manifest_payload
+            )
+            try:
+                mutate()
+                damaged_binding = task041_fixed_h6_packet_source_binding(
+                    fixed_h6_binding,
+                    producer_packet_root=producer_root,
+                    legacy_native_packet_descriptor=None,
+                )
+                rejected_manifest = {
+                    **run_manifest_payload,
+                    "packet_source_binding": damaged_binding,
+                }
+                supervisor._write_json(
+                    rejected_root / "run_manifest.json", rejected_manifest
+                )
+                damaged_supervision_record = json.loads(
+                    supervision_record_original
+                )
+                damaged_supervision_record[
+                    "packet_source_binding"
+                ] = damaged_binding
+                supervision_record_path.write_text(
+                    json.dumps(damaged_supervision_record, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+                rejected = run_public_supervisor(rejected_root)
+            finally:
+                if case_name == "damaged_packet_hash":
+                    mode_prep_path.write_bytes(mode_prep_original)
+                else:
+                    packet_identity_path.write_bytes(identity_original)
+                supervision_record_path.write_bytes(supervision_record_original)
+            assert rejected["status"] == "failed"
+            assert rejected["error"]["message"] == expected_error
+            assert rejected["phase_results"].get("consumer") is None
+            assert popen_calls == []
+            assert phase_calls == []
+
+    result = run_public_supervisor(candidate_run)
     assert result["result_classification"] == "worker_exit0"
     assert len(popen_calls) == 1
     assert phase_calls == ["consumer"]
+    if w0p7_producer_reuse:
+        assert phase_resource_options == [
+            {
+                "phase": "consumer",
+                "require_kernel_memavailable": v16_resource_policy,
+                "swap_observe_only": True,
+                "require_owned_session_empty": v16_resource_policy,
+            }
+        ]
+        consumer_phase_record = result["phase_results"]["consumer"]
+        if v16_resource_policy:
+            assert consumer_phase_record["owned_session_id"] == fake_session_pid
+            assert consumer_phase_record["owned_session_leader_identity"] == (
+                synthetic_leader_identity
+            )
+            assert consumer_phase_record["owned_session_cleanup_initial"] == (
+                synthetic_empty_session
+            )
+            assert consumer_phase_record["owned_session_cleanup"] == (
+                synthetic_empty_session
+            )
+            assert synthetic_session_observations == [
+                ("leader", fake_session_pid),
+                ("snapshot", fake_session_pid),
+            ]
+        else:
+            assert consumer_phase_record.get("owned_session_id") is None
+            assert consumer_phase_record.get(
+                "owned_session_leader_identity"
+            ) is None
+            assert consumer_phase_record.get("owned_session_cleanup_initial") is None
+            assert consumer_phase_record.get("owned_session_cleanup") is None
+            assert synthetic_session_observations == []
+        assert synthetic_process_group_checks == [fake_session_pid]
+        assert refused_fake_cleanup_pids == []
+    if v16_resource_policy:
+        assert result["v16_initial_memavailable_gate"]["pass"] is True
+        assert result["resource_preflight"]["host_memavailable_bytes"] == (
+            600 * 2**30
+        )
+        assert result["resource_preflight"][
+            "legacy_host_memavailable_observation_bytes"
+        ] == 1
     assert observed_schedules == [expected_schedule]
     assert popen_calls[0][popen_calls[0].index("--phase") + 1] == "candidate-consumer"
     if w0p7_producer_reuse:
@@ -11719,9 +12044,22 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
             (candidate_run / "run_manifest.json").read_text(encoding="utf-8")
         )
         assert run_manifest["packet_source_binding"] == packet_source_binding
+        assert run_manifest["task041_resource_policy"] == resource_binding
         assert run_manifest["fixed_h6_modal_gmres_research"][
             "expected_rank_cpus"
         ] == list(expected_rank_cpus)
+        if v16_resource_policy:
+            assert modal_solver_policy == (
+                task041_balh_workflow.TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+            )
+            assert run_manifest["modal_solver_policy"] == modal_solver_policy
+            assert run_manifest["memory_authority_schema"] == (
+                supervisor.TASK041_V16_MEMORY_AUTHORITY_SCHEMA
+            )
+            assert run_manifest["task041_resource_policy"]["policy"] == (
+                task041_balh_workflow.TASK041_V16_MEMAVAILABLE_POLICY
+            )
+            assert result["task041_resource_policy"] == resource_binding
         record = json.loads(
             supervision_record_path.read_text(encoding="utf-8")
         )
@@ -11758,11 +12096,35 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         assert command[command.index("--cpu-list") + 1] == expected_cpu_list
         resolved_python = str((REPOSITORY_ROOT / "python").resolve())
         python_index = command.index(resolved_python)
-        assert command[python_index - 2 : python_index + 1] == [
-            "numactl",
-            "--membind=0",
-            resolved_python,
-        ]
+        if v16_resource_policy:
+            assert fixed_h6_binding["memory_policy"] == (
+                supervisor.TASK041_V13_MEMORY_POLICY
+            )
+            assert fixed_h6_binding["membind_node"] is None
+            assert run_manifest["memory_policy"] == (
+                supervisor.TASK041_V13_MEMORY_POLICY
+            )
+            assert run_manifest["membind_node"] is None
+            assert not any(Path(value).name == "numactl" for value in command)
+            assert not any(
+                value == flag or value.startswith(f"{flag}=")
+                for value in command
+                for flag in (
+                    "--membind",
+                    "--interleave",
+                    "--preferred",
+                    "--preferred-many",
+                    "--localalloc",
+                )
+            )
+            report_bindings_index = command.index("--report-bindings")
+            assert python_index == report_bindings_index + 1
+        else:
+            assert command[python_index - 2 : python_index + 1] == [
+                "numactl",
+                "--membind=0",
+                resolved_python,
+            ]
         if p4_pair:
             assert command[command.index("--task041-comparison-mode") + 1] == (
                 expected_pair_mode
@@ -11812,18 +12174,28 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
                     result["phase_results"]["consumer"]["phase_wall_seconds"]
                     + producer_phase["phase_wall_seconds"]
                 )
-                assert validator_calls == [
-                    {
-                        "root": producer_root.resolve(),
-                        "model_id": candidate_model,
-                        "consumer_source_sha": consumer_source_sha,
-                        "require_public_supervisor_summary": True,
-                        "swap_observe_only": True,
-                    }
-                ]
-                assert result["resource_authority"][
-                    "derived_common_producer_envelope"
-                ]["producer"]["qualified"] is False
+                if v16_resource_policy:
+                    # This V16 case leaves the production validator installed.
+                    assert validator_calls == []
+                    assert result["phase_results"]["producer"][
+                        "producer_resource_qualified"
+                    ] is True
+                    assert result["resource_authority"][
+                        "derived_common_producer_envelope"
+                    ]["producer"]["qualified"] is True
+                else:
+                    assert validator_calls == [
+                        {
+                            "root": producer_root.resolve(),
+                            "model_id": candidate_model,
+                            "consumer_source_sha": consumer_source_sha,
+                            "require_public_supervisor_summary": True,
+                            "swap_observe_only": True,
+                        }
+                    ]
+                    assert result["resource_authority"][
+                        "derived_common_producer_envelope"
+                    ]["producer"]["qualified"] is False
             else:
                 assert result["service_contract"]["producer"]["qep"] == "not_run"
             assert result["service_contract"]["ledger"]["schema"] == (
@@ -11880,10 +12252,20 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     assert result["resource_authority"]["status"] == "measured_with_inherited_producer"
     envelope = result["resource_authority"]["derived_common_producer_envelope"]
     if w0p7_producer_reuse:
-        assert envelope["status"] == "unqualified"
-        assert envelope["producer"]["qualified"] is False
-        assert envelope["semantics"] == "complete producer/consumer envelope not proven"
-        assert envelope["peak"] is None
+        if v16_resource_policy:
+            assert envelope["status"] == "derived"
+            assert envelope["producer"]["qualified"] is True
+            assert envelope["semantics"] == (
+                "max(producer, consumer) per measured resource quantity"
+            )
+            assert envelope["peak"]["memory_authority_bytes"] == 300
+        else:
+            assert envelope["status"] == "unqualified"
+            assert envelope["producer"]["qualified"] is False
+            assert envelope["semantics"] == (
+                "complete producer/consumer envelope not proven"
+            )
+            assert envelope["peak"] is None
     else:
         assert envelope["status"] == "derived"
         assert envelope["peak"]["memory_authority_bytes"] == 300
