@@ -44,18 +44,21 @@ def training_allowed(path, design, active, labelled):
     if parent is not None and parent.get("input_kind") in (
         "unlabelled_complete_round4_boundary", "unlabelled_complete_round8_boundary",
         "unlabelled_complete_round12_boundary",
+        "unlabelled_complete_residual_round6_boundary",
     ):
         allowed.add((ROOT / parent["path"]).resolve())
     if labelled:
         allowed.update(
             (ROOT / design[k]["path"]).resolve() for k in ("reference", "gram")
         )
-    if design.get("campaign_version") == 46:
+    if design.get("campaign_version") in (46, 47):
         base = design["base_checkpoint"]
         if base["input_kind"] != "unlabelled_complete_round14_boundary":
             return False
         allowed.add((ROOT/base["path"]).resolve())
         allowed.update((ROOT/name).resolve() for name in design["prepared_branch"]["files"].values())
+    if design.get("campaign_version") == 47:
+        allowed.add((ROOT / design["probe_result"]).resolve())
     if path.is_relative_to(ROOT / "benchmarks/artifacts/task42extra"):
         return path in allowed or path.is_relative_to(active)
     if path.suffix in (".npz", ".pt", ".pth"):

@@ -26,6 +26,8 @@ def run(request_path, isolated, phase):
         from src.io.ftt_width_campaign import DESIGN
     elif request.get("design_path") == "input/task042extra_feinn_5nm/design_v45.json":
         from src.io.ftt_coordinate_campaign import DESIGN
+    elif request.get("design_path") == "input/task042extra_feinn_5nm/design_v47.json":
+        from src.io.ftt_joint_campaign import DESIGN
     elif request.get("design_path") == "input/task042extra_feinn_5nm/design_v46.json":
         from src.io.ftt_residual_campaign import DESIGN
     elif request.get("design_path") is not None:
@@ -64,8 +66,8 @@ def run(request_path, isolated, phase):
             source_root=ROOT / request["snapshot_root"],
             model_factory=field_factory,
             independent_field=point_field,
-            candidate_model_factory=(__import__("src.runners.ftt_residual_worker", fromlist=["model_factory"]).model_factory if design["campaign_version"]==46 else __import__("src.runners.ftt_width_worker", fromlist=["model_factory"]).model_factory if design["campaign_version"] in (44,45) else None),
-            checkpoint_field_factory=(__import__("src.runners.ftt_residual_worker",fromlist=["checkpoint_points"]).checkpoint_points if design["campaign_version"]==46 else None),
+            candidate_model_factory=(__import__("src.runners.ftt_residual_worker", fromlist=["model_factory"]).model_factory if design["campaign_version"] in (46,47) else __import__("src.runners.ftt_width_worker", fromlist=["model_factory"]).model_factory if design["campaign_version"] in (44,45) else None),
+            checkpoint_field_factory=(__import__("src.runners.ftt_residual_worker",fromlist=["checkpoint_points"]).checkpoint_points if design["campaign_version"] in (46,47) else None),
         )
     elif phase == "compare":
         compare(

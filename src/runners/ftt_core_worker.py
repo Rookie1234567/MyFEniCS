@@ -60,6 +60,7 @@ class CoreWorkerProfile:
     preparation: object = None
     training_adapter: object = None
     checkpoint_field_factory: object = None
+    trainer: object = None
 
 
 DEFAULT_PROFILE = CoreWorkerProfile()
@@ -319,7 +320,8 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
         action, model, extra_binding, options = profile.training_adapter(
             action, packet, model, binding, options, design, qualification)
         binding.update(extra_binding)
-    result = run_core_training(
+    trainer = profile.trainer or run_core_training
+    result = trainer(
         action,
         packet,
         model,

@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400, 36: 21600, 38:28800,39:43200,40:14400,41:43200,42:28800,43:28800,44:57600,45:43200,46:43200}.get((spec or {}).get("campaign_version"), 172800)
+    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400, 36: 21600, 38:28800,39:43200,40:14400,41:43200,42:28800,43:28800,44:57600,45:43200,46:43200,47:28800}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -42,7 +42,7 @@ def stage_deadline(spec, allocation, campaign):
     """Preserve the original window and leave time for full frozen-field gates."""
     if spec.get("campaign_version") in (44, 45, 46):
         return min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-3600), 3600
-    if spec.get("campaign_version") in (36, 38, 39, 40, 41, 42, 43):
+    if spec.get("campaign_version") in (36, 38, 39, 40, 41, 42, 43, 47):
         return min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800), 1800
     if spec.get("campaign_version") == 35:
         deadline = min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800)
@@ -123,7 +123,7 @@ def worker_stop_time(spec, deadline):
 
 def launch_stable_window(spec, directory, hard):
     """Successful current PSI checks use wall time, not the old failure pool."""
-    if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44, 45, 46):
+    if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47):
         from src.runners.block_wave_admission import stable_window as qualified_stability
         return qualified_stability(directory, hard, seconds=60)
     from src.runners.feinn_resources import stable_window
@@ -273,7 +273,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") in (32,33,34,35,36,38,39,40,41,42,43,44,45,46)
+        if spec.get("campaign_version") in (32,33,34,35,36,38,39,40,41,42,43,44,45,46,47)
         else None,
     )
 
@@ -568,8 +568,10 @@ def launch(spec):
                     production_initialization_allowed=False, pde_only_solver_qualified=False,
                     official_candidate_results=False, new_training_count=0,
                     global_Gram_factor_count=0, Gsolve_count=0, global_Maxwell_factor_count=0)
-            if spec.get("campaign_version") in (41, 42, 43, 44, 45, 46):
-                if spec["campaign_version"] == 46:
+            if spec.get("campaign_version") in (41, 42, 43, 44, 45, 46, 47):
+                if spec["campaign_version"] == 47:
+                    from src.runners.ftt_joint_worker import CHAIN
+                elif spec["campaign_version"] == 46:
                     from src.runners.ftt_residual_worker import CHAIN
                 elif spec["campaign_version"] == 45:
                     from src.runners.ftt_coordinate_worker import CHAIN
@@ -584,13 +586,13 @@ def launch(spec):
                 manifest["binding_source_files"].update({p:digest(ROOT/p) for p in CHAIN})
                 manifest.update(reference_used_for_training=False, features_reference_exposed=False,
                     benchmark_previously_seen=True, design_informed_by_reference_diagnostics=True,
-                    pde_only_solve=spec["role"] not in ("ftt_core_checks", "ftt_core_compare", "bloch_ftt_checks", "bloch_ftt_compare", "bloch_resume_checks", "bloch_continuation_compare", "width_inner_checks", "width_independent_compare", "feature_coordinates_checks", "feature_coordinates_compare", "residual_branch_checks", "residual_branch_prepare", "residual_branch_compare"),
-                    validation_used_for_stopping=spec["campaign_version"] in (42, 43, 44, 45, 46),
+                    pde_only_solve=spec["role"] not in ("ftt_core_checks", "ftt_core_compare", "bloch_ftt_checks", "bloch_ftt_compare", "bloch_resume_checks", "bloch_continuation_compare", "width_inner_checks", "width_independent_compare", "feature_coordinates_checks", "feature_coordinates_compare", "residual_branch_checks", "residual_branch_prepare", "residual_branch_compare", "joint_tangent_checks", "joint_tangent_compare"),
+                    validation_used_for_stopping=spec["campaign_version"] in (42, 43, 44, 45, 46, 47),
                     phase_definition=json.loads(profile["design"].read_text()).get("phase_definition"),
                     production_initialization_allowed=False, pde_only_solver_qualified=False,
                     official_candidate_results=False, global_Gram_factor_count=0,
                     Gsolve_count=0, global_Maxwell_factor_count=0)
-            if spec.get("campaign_version") in (43, 44, 45, 46):
+            if spec.get("campaign_version") in (43, 44, 45, 46, 47):
                 d = json.loads(profile["design"].read_text())
                 manifest.update(parent_checkpoint=d["base_checkpoint"] if spec["campaign_version"]==46 else d["parent_checkpoint"], execution_policies=d["execution_policies"])
                 if spec["campaign_version"] == 46:
@@ -620,7 +622,7 @@ def launch(spec):
                 str(ticks(os.getpid())),
                 sys.executable,
                 "-m",
-                "src.runners.ftt_residual_worker" if spec.get("campaign_version")==46 else "src.runners.ftt_coordinate_worker" if spec.get("campaign_version")==45 else "src.runners.ftt_width_worker" if spec.get("campaign_version")==44 else "src.runners.ftt_continuation_worker" if spec.get("campaign_version")==43 else "src.runners.ftt_bloch_worker" if spec.get("campaign_version")==42 else "src.runners.ftt_core_worker" if spec.get("campaign_version")==41 else "src.runners.ftt_capacity_worker" if spec.get("campaign_version")==40 else "src.runners.ftt_structure_worker" if spec.get("campaign_version")==39 else "src.runners.ftt_worker" if spec.get("campaign_version")==38 else "src.runners.neural_wave_worker",
+                "src.runners.ftt_joint_worker" if spec.get("campaign_version")==47 else "src.runners.ftt_residual_worker" if spec.get("campaign_version")==46 else "src.runners.ftt_coordinate_worker" if spec.get("campaign_version")==45 else "src.runners.ftt_width_worker" if spec.get("campaign_version")==44 else "src.runners.ftt_continuation_worker" if spec.get("campaign_version")==43 else "src.runners.ftt_bloch_worker" if spec.get("campaign_version")==42 else "src.runners.ftt_core_worker" if spec.get("campaign_version")==41 else "src.runners.ftt_capacity_worker" if spec.get("campaign_version")==40 else "src.runners.ftt_structure_worker" if spec.get("campaign_version")==39 else "src.runners.ftt_worker" if spec.get("campaign_version")==38 else "src.runners.neural_wave_worker",
                 str(directory.relative_to(ROOT)),
             ]
             result = supervise(

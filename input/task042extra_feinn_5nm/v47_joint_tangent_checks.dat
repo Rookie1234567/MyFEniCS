@@ -1,0 +1,5 @@
+schema_version = 17
+
+[neural_wave]
+stage = "v47_joint_tangent_checks"
+design_sha256 = "9c201fb3a2b6ade8a55946802d85eb0e52d279d3051ecfe4c2369817107c647f"
