@@ -476,6 +476,9 @@ def _dispersion_flat_p6_profile_facts(identity):
         absolute_cap_bytes=hard,
         planning_cap_bytes=planning,
         startup_headroom_bytes=hard - planning,
+        # memory_envelope() requires this floor for native profiles; the
+        # effective reserve remains max(4 GiB, 15% of effective total RAM).
+        reserve_min_bytes=4 * 1024**3,
         rss_hard_limit_bytes=hard,
         rss_warning_bytes=planning,
         resource_stop_policy="measured_process_tree_rss_hard_limit",
@@ -492,7 +495,6 @@ def _dispersion_flat_p6_profile_facts(identity):
         concurrent_neighbor_authorized=False,
     )
     for key in (
-        "reserve_min_bytes",
         "reserve_fraction",
         "warning_fraction",
         "job_swap_max_bytes",

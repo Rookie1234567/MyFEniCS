@@ -113,6 +113,51 @@ def test_flat_profile_is_isolated_from_v7_iterative_and_n0_contracts():
     assert facts["campaign_authorization"]["direct_route"]["p4_and_outer_ksp"] == "not_built"
 
 
+def test_flat_profile_satisfies_native_memory_envelope_reserve_schema(monkeypatch):
+    from benchmarks import subreaper_watchdog
+
+    monkeypatch.setenv("PHYSICAL_NATIVE_CAPACITY", DISPERSION_FLAT_P6_PROFILE)
+    monkeypatch.setattr(subreaper_watchdog, "current_cgroup_path", lambda: None)
+    monkeypatch.setattr(
+        subreaper_watchdog,
+        "wsl_memory_snapshot",
+        lambda: {
+            "mem_total_bytes": 1_000_000_000_000,
+            "mem_available_bytes": 900_000_000_000,
+        },
+    )
+
+    envelope = subreaper_watchdog.memory_envelope()
+
+    assert envelope["reserve_bytes"] == 150_000_000_000
+    assert envelope["launch_cap_bytes"] == 32 * 1024**3
+    assert envelope["planning_cap_bytes"] == 24 * 1024**3
+
+
+def test_flat_profile_uses_standard_run_case_native_capacity_dispatch(
+    monkeypatch, capsys
+):
+    import json
+
+    from scripts import run_case
+    from src.runners import native_capacity
+
+    calls = []
+
+    def fake_launch(specification, *, setup_only=False):
+        calls.append((specification.solver["native_capacity_profile"], setup_only))
+        return {"exit_status": 0, "result_classification": "worker_exit0"}
+
+    monkeypatch.setattr(native_capacity, "launch_native_capacity", fake_launch)
+    result = run_case.main(
+        [str(INPUTS / "dispersion_0p7nm_flat_p6_q160_nx2_direct_v1.dat")]
+    )
+
+    assert result == 0
+    assert calls == [(DISPERSION_FLAT_P6_PROFILE, False)]
+    assert json.loads(capsys.readouterr().out)["result_classification"] == "worker_exit0"
+
+
 def test_flat_execution_plan_binds_interleave_and_worker_cpu_inside_mpiexec(tmp_path):
     specification = load_and_resolve(
         INPUTS / "dispersion_0p7nm_flat_p6_q160_nx2_direct_v1.dat"
