@@ -128,7 +128,6 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "parent_sha256": PARENT_MODE_SHA256,
             "active_count": APPENDED_PORTS,
             "active_sha256": ACTIVE_MODE_SHA256,
-            "modes_per_side": 286,
             "residual_key": "original_A6_n0_relative",
             "residual_scope": "A6_n0",
             "summary_prefix": "p6_condensed_direct_n0",
@@ -143,7 +142,6 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "parent_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
             "active_count": 600,
             "active_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
-            "modes_per_side": 300,
             "residual_key": "original_A6_full_relative",
             "residual_scope": "A6_full_600",
             "summary_prefix": "v6_f5_p6_condensed_direct_full600",
@@ -158,7 +156,6 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "parent_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
             "active_count": 80,
             "active_sha256": "36337e70f52f959b4f8b7e1727ee8babccd3e84d2e25d70bd32e87c79040e012",
-            "modes_per_side": 40,
             "residual_key": "original_A6_n0_relative",
             "residual_scope": "A6_n0_from_600_parent",
             "summary_prefix": "v6_f5_p6_condensed_direct_n0",
@@ -369,6 +366,26 @@ def _persist_f5_inventory(directory, parent_inventory, active_inventory, selecti
     return artifacts
 
 
+def _inventory_mode_counts_by_side(
+    mode_rows: Any, *, expected_total: int
+) -> dict[str, int]:
+    """Bind carrier side counts to the exact selected mode inventory."""
+
+    counts = {"bottom": 0, "top": 0}
+    rows = tuple(mode_rows)
+    if len(rows) != int(expected_total):
+        raise ValueError("active mode rows differ from the selected direct inventory")
+    for row in rows:
+        if not isinstance(row, Mapping) or row.get("side") not in counts:
+            raise ValueError("active mode inventory contains an unknown port side")
+        counts[str(row["side"])] += 1
+    if sum(counts.values()) != int(expected_total) or any(
+        value <= 0 for value in counts.values()
+    ):
+        raise ValueError("active direct inventory has an incomplete top/bottom side partition")
+    return counts
+
+
 def _persist_n0_inventory(
     directory: Path,
     parent_inventory: tuple[Any, Any, str],
@@ -479,7 +496,7 @@ def _port_support_groups(
         entries_by_side[side].append(entry)
         group_rows.append(side_group[side])
     if expected_modes_by_side is None:
-        expected_modes_by_side = {"bottom": 286, "top": 286}
+        raise ValueError("p6 direct support requires counts derived from the active inventory")
     if any(
         len(entries_by_side[side]) != int(expected_modes_by_side.get(side, -1))
         for side in order
@@ -854,6 +871,14 @@ def run_p6_condensed_direct(
             )
         ):
             raise ValueError("live active inventory differs from its direct profile identity")
+        active_modes_by_side = _inventory_mode_counts_by_side(
+            active_inventory[1], expected_total=route["active_count"]
+        )
+        if route["family"] == "v7_aniso_n0" and active_modes_by_side != {
+            "bottom": 286,
+            "top": 286,
+        }:
+            raise ValueError("live V7 N0 side counts differ from the frozen 572-mode identity")
         if route["family"] == "v7_aniso_n0":
             inventory_artifacts = _persist_n0_inventory(
                 directory,
@@ -875,6 +900,7 @@ def run_p6_condensed_direct(
             "parent_mode_sha256": parent_inventory[2],
             "active_mode_count": len(active_inventory[0]),
             "active_mode_sha256": active_inventory[2],
+            "active_mode_counts_by_side": active_modes_by_side,
             "selected_parent_indices_sha256": (
                 None if operator_selection is None
                 else operator_selection["selected_parent_indices_sha256"]
@@ -985,17 +1011,12 @@ def run_p6_condensed_direct(
             "degree": 6,
         })
         mesh_cells = tuple(int(value) for value in mesh_evidence["axis_cell_counts"])
-        support_modes_per_side = route.get("modes_per_side")
         support_groups, support_group_by_row, support_facts = _port_support_groups(
             levels,
             bundle["dtn_action"].carrier,
             cfg,
             expected_boundary_cells=mesh_cells[0] * mesh_cells[1],
-            expected_modes_by_side=(
-                {"bottom": support_modes_per_side, "top": support_modes_per_side}
-                if support_modes_per_side is not None
-                else None
-            ),
+            expected_modes_by_side=active_modes_by_side,
         )
         summary["port_support"] = support_facts
         condensed_started = perf_counter()

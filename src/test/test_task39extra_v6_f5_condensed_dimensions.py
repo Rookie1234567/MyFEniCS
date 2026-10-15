@@ -21,6 +21,7 @@ from src.runners.p6_condensed_direct import (
     _direct_output_policy,
     _direct_run_contract,
     _f5_mesh_evidence,
+    _inventory_mode_counts_by_side,
     _validate_direct_condensed_dimensions,
 )
 from src.runners.task038_input_worker import _dispatch_resolved_payload
@@ -213,8 +214,14 @@ def test_f5_n0_selection_uses_actual_full_parent_and_keeps_q37_authority():
 
     assert len(parent[0]) == 600
     assert parent[2] == "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645"
+    assert _inventory_mode_counts_by_side(
+        parent[1], expected_total=600
+    ) == {"bottom": 296, "top": 304}
     assert len(active[0]) == 80
     assert active[2] == "36337e70f52f959b4f8b7e1727ee8babccd3e84d2e25d70bd32e87c79040e012"
+    assert _inventory_mode_counts_by_side(
+        active[1], expected_total=80
+    ) == {"bottom": 40, "top": 40}
     assert all(int(mode.n) == 0 for mode in active[0])
     assert indices != tuple(range(80))
     assert selection["side_polarization_counts"] == {
