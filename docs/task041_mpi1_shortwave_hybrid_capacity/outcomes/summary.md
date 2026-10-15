@@ -1,6 +1,25 @@
 # Task041 outcomes summary
 
-## 当前阶段：V15 tiny真实FE的240步诊断终态（2026-10-14）
+## 当前阶段：V16 唯一 M400/MPI8 Invocation 终态（2026-10-16）
+
+通俗地说，本场已经构造并保存了连接两侧模态的小型耦合系统 `S_B`，也建立了owner LU；但第一次预条件器作用就被既有 modal-row 误差门拒绝，因此没有进入一次完整 outer iteration。这里的误差衡量 PC 输出行是否符合其逐行组成项合同，不是最终解的全局残差。consumer 的 `IMPLEMENTATION_FAILURE` 是宽泛运行分类，当前证据没有证明代码缺陷；旧 V14 M400 根因仍为 `UNCONFIRMED`。
+
+| 项目 | 本场实测 | 解释与证据边界 |
+|---|---|---|
+| 运行身份 | Invocation `6344a904b8df435a88a7466dd739da76`；unit `task041-v16-m400-20261015t141300z.service`；runtime HEAD `c662a70b4af4d742f7a8305d0efd63342423c775`；W0.7、10×5 nm、p6/h0.70、M400/MPI8；rank CPU `[1,2,3,5,6,7,8,15]` | V16 `MemAvailable` 资源合同通过并进入worker；不代表数值通过 |
+| 构造与owner解 | 本Invocation构造 `S_B` 800/800列；`S_B` 与 `C` 均为有限 `complex128 (800,800)`；owner rank 7 的LU factor count=1 | 数组被保存；factor随cleanup销毁，不存在可继续使用的live factor |
+| 首次PC modal-row门 | attempt 1 / attempted apply 1；`eta_terms_inf=0.017996403128522177`，限值`1e-10`；owner LU backward error `1.9821704747745833e-16`并通过 | 首次PC输出行真实拒绝。没有完成outer iteration，不能将owner LU通过替代全局行门或原方程门 |
+| 800行存档复算 | 从同次冻结binary64数组以90位Decimal独立重算；732/800行高于`1e-10`，最大零基行259（第260行、全局模态索引302659）；所有行`d=w_modal-r_modal`与存档binary64精确一致 | 只复算已存分量，没有重新执行原A、B/P4、求解器或谱计算；完整超门行区间见[离线receipt](../../../results/task041_v16_m400_offline_closeout_20261016/terminal_recompute.json) |
+| 首行分量与分母 | row259：`t_bottom=-3.2887837938824806e-18-3.185324603020592e-17j`，`t_top=0`，`t_constraint=2.1553346202144075e-18+3.1673468771682553e-17j`，`r_modal=0`，`w_modal=d=-1.1334491736680731e-18-1.797772585233666e-19j`；分子`1.1476179207258029e-18`，绝对分母`6.376929392668288e-17` | 分母由`row_scale 3.2022576122225604e-17 × scaled_sum 1.991385505128775`构成；Decimal复算比值`0.017996403128522126…`，与存档稳定值只差`5.01e-17`，拒绝结论不受末位舍入影响 |
+| 身份及快照 | 原A Mat handle `2134638864`，布局SHA `db70fd5ee69f64337780912877872fc61ce3809f87e66fe3ccd4de8d9a39c5f8`；输入未变、无alias、capture errors为空；16个rank-local source/target数组的SHA、shape、dtype、finite核验通过 | row record中的Invocation字面字段是占位文本；实际Invocation由launch manifest绑定。唯一`-inf`数组为精确零分解误差对应的log字段 |
+| 服务分类与终检 | consumer `IMPLEMENTATION_FAILURE`，首因`FloatingPointError`拒绝V13原始modal-row门；public exit 3；finalizer `service_boundary_failure` | finalizer `modal_solver_policy_matches_request=false`是后续完整V13 candidate/solve/outer-control回执缺失造成的次级终检失败，不证明请求策略或资源绑定错误；旧V14根因仍未确认 |
+| 资源与清场 | process-tree/memory authority peak `49,616,527,360 B`；dedicated cgroup peak `47,208,488,960 B`；process/job swap peak均为0；host确认MainPID 0、NRestarts 0、cgroup空、登记进程组与ranks退出 | RSS、专属cgroup及swap分开记录，不相加；本场不是资源拒绝 |
+| V5与大型额度 | 旧306项逐entry保持；唯一新增service wall `13,489.261149145 s`；现307项、top `651,274.1059664167 s`、SHA `4fe39d105e32e2601172116a300bedac61f6e4458fa0b780cbbcd8ff11b0edc8`。V14两场大型构造额度2/2已用尽 | parent summary wall `13,488.424919819 s`是不同字段定义，不与ledger entry相加；不重置大型额度 |
+| 未完成物理范围 | 没有outer收敛、五项最终原方程残差、恢复场、E/H、official R/T/A、`A_volume`、衍射或physics；M600、h细化、50×25 nm、2 TB及48 h未资格化 | 不能把800列ready、一次owner solve或PC行门拒绝解释成完整求解或物理结果 |
+
+既有资格分层见[Response V18](../response_v18.md)：registered tiny FE serial R30 reason 2/389、原A相对残差`4.97654121633487e-9 <= 5e-9`；冻结行记录有可读数组且`ldu_destroyed=true`，旧snapshot validator对精确零log `-inf` 的拒绝已由后续窄schema离线核查解释，serial pytest仍rc1且没有重跑。registered FE MPI2两rank reason 2/441、原A相对残差`4.83780279602371e-9 <= 5e-9`、销毁后断言通过。最终相关helper版的owner-writer MPI2协议回归见[034737Z attempt](../../../results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/pytest.attempt.json)及[source map](../../../results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/source_hashes_before_after.json)，`rc=0`、父wall`3.2586057849694043 s`；rank OS exit codes`not_persisted`。test351两个producer-reuse节点是consumer边界合同，不是数值解算。P1 21个资源合同节点的有效覆盖分布在四批`4+1+8+8`，不是一次21项全绿attempt；历史失败和not-run部分仍留在原收据。完整机器记录见[terminal record](records/task041_v16_m400_terminal_20261016.json)，800行复算与数组hash见[离线receipt](../../../results/task041_v16_m400_offline_closeout_20261016/terminal_recompute.json)。当前只完成离线证据和文档收口，没有新增测试、ABI、FE或计算。
+
+## 历史阶段：V15 tiny真实FE的240步诊断终态（2026-10-14）
 
 通俗地说，V15把预条件器内部模态行误差改为按组成项尺度逐行核对；这能判断PC这一步是否按其定义工作，但不能代替原方程最终验收。本次注册tiny FE沿同一A、B、S_B和RIGHT FGMRES路径运行，240次PC apply的V15行门全部通过，原A完整残差门却未通过。因此当前结论是“在获批240步预算内未收敛”，不是资源失败、fixture问题、行门失败，也没有证据称为停滞或PC实现缺陷。
 
@@ -18,7 +37,7 @@
 
 先前公式oracle、固定B接线、test350合成tiny及MPI2 writer/真实builder路径有通过证据，但分别来自不同source map和attempt；MPI2三个目标selector的覆盖跨两个attempt完成，第一attempt的fixture失败仍保留。它们不能替代本次test347真实FE外层收敛。分段结果与source-map身份见[test summary](test_summary.md)和[Response V17](../response_v17.md)；详细terminal JSON见[轻量V15记录](records/task041_v15_tiny_fe_fgmres240_terminal_20261014.json)。
 
-当前待ChatGPT裁决的不是现有run的分类，而是未来是否另批同tiny、同PC/restart/容差的更大有限预算，以及是否先分析restart30与固定B/S_B的外层收敛效率。本轮不再求解、不扩展预算、不启动M400。
+在2026-10-14的V15收口时，待裁决项是未来是否另批同tiny、同PC/restart/容差的更大有限预算，以及是否先分析restart30与固定B/S_B的外层收敛效率。该历史提案没有在此处改写；其后V16实际进入M400，并在本summary顶部记录的首次PC行门停止。
 
 ## 历史阶段：V14本批首场 W0.7 main warm终态与modal-row门诊断（2026-10-14）
 

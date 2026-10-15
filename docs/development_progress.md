@@ -1,5 +1,20 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-16：Task041 V16 唯一 M400/MPI8 Invocation 离线收口
+
+本次已完成V16批准的唯一W0.7 10×5 nm、p6/h0.70、M400/MPI8运行。worker复用合格QEP，在本Invocation内构造`S_B` 800/800列并建立owner LU；第一次PC apply的原始modal-row逐行后向误差为`0.017996403128522177`，超过原`1e-10`门，未完成outer iteration。owner LU同次backward error为`1.9821704747745833e-16`并通过，但不能替代modal-row门或完整原方程验收。consumer标签`IMPLEMENTATION_FAILURE`未证明实现缺陷，V14旧M400根因仍`UNCONFIRMED`。
+
+| 项目 | 记录 | 结论边界 |
+|---|---|---|
+| 运行身份 | Invocation `6344a904b8df435a88a7466dd739da76`；unit `task041-v16-m400-20261015t141300z.service`；HEAD `c662a70b4af4d742f7a8305d0efd63342423c775`；CPU map `[1,2,3,5,6,7,8,15]` | V16 MemAvailable资源门通过；运行分类exit3，native host终态为MainPID0、NRestarts0、cgroup空、已登记worker/ranks退出 |
+| 离线行复算 | 仅从冻结800行binary64数组以90位Decimal复算；732行超`1e-10`，最大行零基259/全局模态302659，`d=w-r`与存档值逐行相符 | row259分子`1.1476179207258029e-18`、绝对分母`6.376929392668288e-17`；Decimal eta `0.017996403128522126…`。没有重放原A、B/P4、求解器或谱计算 |
+| 次级finalizer字段 | `modal_solver_policy_matches_request`、`public_result_completed`、`service_terminal_normal`为false；首PC门后V13实际candidate/solve route与outer-control收据未持久化 | finalizer结果是首因后的证据完整性失败，不证明请求policy或资源绑定错误 |
+| 资源与账目 | process-tree/memory-authority peak `49,616,527,360 B`；dedicated cgroup peak `47,208,488,960 B`；swap peak 0。V5从旧306项增至307项，唯一service entry `13,489.261149145 s`，top `651,274.1059664167 s`，SHA `4fe39d105e32e2601172116a300bedac61f6e4458fa0b780cbbcd8ff11b0edc8` | 各内存scope分列、不相加；parent summary wall `13,488.424919819 s`按不同定义保留，不再叠加到账目 |
+| 既有资格 | tiny FE serial R30 reason2/389且原A相对残差`4.97654121633487e-9`达`5e-9`门；registered FE MPI2两rank reason2/441且相对残差`4.83780279602371e-9`达门；最终相关helper版owner-writer MPI2通过；P1 21资源节点以4+1+8+8分批覆盖 | serial旧pytest仍rc1；其summary字段与exact-zero log schema问题只做离线解释，未重跑。MPI2数值为tiny FE代数资格，owner-writer仅为协议回归；P1不是一次21项全绿attempt；均不替代M400最终物理验收。owner-writer最终attempt为[034737Z](../results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/pytest.attempt.json)，父wall`3.2586057849694043 s`，rank OS exit codes`not_persisted` |
+| 后续范围 | 无outer收敛、五项最终真残差、recovery、E/H、official R/T/A、A_volume、衍射或physics；M600、h细化、50×25 nm、2 TB和48 h未资格化；大型额度2/2已用尽 | 不再构造或重跑；等待内部技术审阅，不改门或将其报告为物理结果 |
+
+证据入口：[Response V18](task041_mpi1_shortwave_hybrid_capacity/response_v18.md)、[Task041 outcomes](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[test/evidence summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)、[compact record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v16_m400_terminal_20261016.json)、[800行离线复算receipt](../results/task041_v16_m400_offline_closeout_20261016/terminal_recompute.json)。生产代码、数值门和旧raw/账本均未改；本收口没有运行测试或数值计算。材料交ChatGPT技术审阅；不授权新运行。监督timer由主控在推送核验后停用。
+
 ## 2026-10-14：Task041 V14 本批首场 W0.7/M400/MPI8 warm 与回归收口
 
 当前唯一Invocation `686efe6ec9324b5bbe75a796a758d545`在clean HEAD `f969d413bde02339b673a9636f42582a1879f657`运行。真实aggregate/node1 authority通过、S_B 800/800列完成并完成owner LU；outer仅到iteration 1，iteration 1之后某次PC apply的原modal-row relative为`1.039223e+00 > 1e-10`，准确apply序号及失败行绝对项未持久化。IMPLEMENTATION_FAILURE是运行分类，根因未证实；没有最终五残差、恢复、EH、official RTA或physics。

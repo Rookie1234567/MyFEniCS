@@ -1,0 +1,205 @@
+{
+  "schema": "task041.v16.m400.terminal.record.v1",
+  "status": "failed_numeric_gate",
+  "scope": "V16 final M400 invocation closeout; offline evidence recomputation only",
+  "source_identity": {
+    "runtime_head": "c662a70b4af4d742f7a8305d0efd63342423c775",
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "protected_stash": "90e50393831cf8a9da6fe223ef8cae4d3cfa3976",
+    "model_id": "task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot",
+    "unit": "task041-v16-m400-20261015t141300z.service",
+    "invocation_id": "6344a904b8df435a88a7466dd739da76",
+    "runroot": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261015T143400.129213Z/consumer",
+    "mpi_size": 8,
+    "rank_cpu_map": [1, 2, 3, 5, 6, 7, 8, 15],
+    "resource_policy": "task041_v16_memavailable_phase_v1",
+    "solver_policy": "task041_v13_consistent_fixed_balh_modal_surrogate"
+  },
+  "primary_numeric_result": {
+    "failure": "first PC apply raised FloatingPointError at the V13 original modal-row gate",
+    "failure_stage": "v13_original_modal_row_gate",
+    "outer_iteration": "none completed",
+    "attempt_index": 1,
+    "attempted_pc_apply_count": 1,
+    "eta_terms_inf": 0.017996403128522177,
+    "eta_terms_2": 3.257659348665526e-14,
+    "eta_terms_2_scope_and_formula": "whole 800-entry modal vector; ||d||2/(||t_bottom||2+||t_top||2+||t_constraint||2+||r_modal||2), not a single-row metric",
+    "rhs_exact_zero": true,
+    "decomposition_eta_inf": 0.0,
+    "decomposition_gate": "passed; archived linear decomposition errors are exactly zero",
+    "tolerance": 1e-10,
+    "identity_or_capture_errors": [],
+    "owner_lu_relative_backward_error": 1.9821704747745833e-16,
+    "owner_lu_gate": "passed",
+    "gate_interpretation": "actual modal-row rejection; the cause of the error is not proven to be an implementation defect"
+  },
+  "archived_row_recompute": {
+    "receipt": "results/task041_v16_m400_offline_closeout_20261016/terminal_recompute.json",
+    "receipt_sha256": "027b60f4dad3251f0caa25b3e5f141983379bdddabb92fd9d0f9244636cd1161",
+    "receipt_sha256sums_sha256": "4f331dd28ddb6585b69d7548f062f4e745e48abbe147811a4584d3dcd2e061f3",
+    "contract_id": "task041.v15.original_modal_row.terms_backward.v1",
+    "rows_recomputed": 800,
+    "eta_inf_threshold": 1e-10,
+    "rows_above_threshold": 732,
+    "max_row_zero_based": 259,
+    "max_row_one_based": 260,
+    "max_row_global_modal_index": 302659,
+    "max_eta_decimal_from_archived_binary64": "0.0179964031285221265572196694898458783818526110890330917142803924124390369746215449179077034",
+    "max_eta_stored": 0.017996403128522177,
+    "zero_based_inclusive_ranges_above_threshold": [
+      [1, 41], [44, 54], [56, 97], [99, 104], [106, 169], [172, 191],
+      [194, 249], [251, 263], [265, 314], [316, 331], [333, 333], [336, 336],
+      [340, 342], [344, 344], [349, 355], [357, 357], [360, 375], [377, 377],
+      [380, 397], [401, 410], [412, 425], [427, 442], [444, 454], [456, 483],
+      [485, 497], [499, 504], [506, 569], [572, 592], [594, 649], [651, 663],
+      [666, 714], [716, 731], [733, 733], [736, 736], [740, 744], [750, 755],
+      [757, 757], [760, 763], [765, 775], [777, 777], [780, 796]
+    ],
+    "row_259_archived_binary64_terms": {
+      "t_bottom": "-3.2887837938824806e-18-3.185324603020592e-17j",
+      "t_top": "0+0j",
+      "t_constraint": "2.1553346202144075e-18+3.1673468771682553e-17j",
+      "r_modal": "0+0j",
+      "w_modal": "-1.1334491736680731e-18-1.797772585233666e-19j",
+      "d": "-1.1334491736680731e-18-1.797772585233666e-19j",
+      "d_equals_stored_binary64_w_minus_r": true,
+      "stored_numerator_norm": 1.1476179207258029e-18,
+      "stored_row_scale": 3.2022576122225604e-17,
+      "stored_scaled_denominator_sum": 1.991385505128775,
+      "stored_absolute_denominator_product": 6.376929392668288e-17,
+      "recomputed_absolute_denominator_from_archived_components": "6.37692939266828792213826882576713574846783363320632050398503468363052078343042957963198948E-17"
+    },
+    "recompute_method": "90-digit Decimal from exact Decimal.from_float conversion of archived binary64 real/imaginary components; no new original-A action, solve, B/P4 action, or spectral analysis"
+  },
+  "identity_and_frozen_arrays": {
+    "original_A_handle": 2134638864,
+    "original_A_layout_sha256": "db70fd5ee69f64337780912877872fc61ce3809f87e66fe3ccd4de8d9a39c5f8",
+    "operator_context_and_MatMult_action_identity": "per-rank context/handle/range/call-id details are in terminal_recompute.json; the row record itself contains a placeholder Invocation string and is externally bound by launch_manifest.json",
+    "operator_input_unchanged_all_ranks": true,
+    "input_output_alias": false,
+    "PC_source_target_alias": false,
+    "capture_errors": [],
+    "S_B": {
+      "shape": [800, 800],
+      "dtype": "complex128",
+      "array_sha256": "d4b25b721327c5b0f8261a15f96a61022507a5ae84ebe66c087cafd4832d3bfc",
+      "archive_sha256": "4a5f2e6d264b28e0d9b44af4306d6efafa897b5d154cb9f9fac6d02d7161def5",
+      "owner_rank": 7,
+      "owner_lu_factor_count": 1,
+      "construction": "built in this invocation; no historical cache reuse",
+      "lifecycle": "matrix identity was archived; factor destroyed during cleanup, so no live-factor reuse is claimed"
+    },
+    "C": {
+      "shape": [800, 800],
+      "dtype": "complex128",
+      "array_sha256": "b720ee6eab372f56e389241973e2573e0913f804fb90726f29c4543cc1fc1286",
+      "archive_sha256": "4a5f2e6d264b28e0d9b44af4306d6efafa897b5d154cb9f9fac6d02d7161def5"
+    },
+    "terminal_rank_vectors": {
+      "ranks": 8,
+      "source_target_arrays": 16,
+      "index_archive_sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+      "all_archived_file_sha_shape_dtype_and_finite_checks_passed": true,
+      "details_receipt": "results/task041_v16_m400_offline_closeout_20261016/terminal_recompute.json"
+    },
+    "decomposition_log_negative_infinity": "all paired decomposition and linear errors are exactly zero; only the defined exact-zero log field is -inf; other physical arrays are finite"
+  },
+  "failure_classification": {
+    "consumer_status_and_classification": "IMPLEMENTATION_FAILURE",
+    "consumer_error": "V13 original global modal-row residual gate rejected: eta_terms_inf=1.799640e-02, limit=1.000000e-10",
+    "observed_cleanup_stage": "top_construction_cleanup; secondary observation after the first failure stage",
+    "supervisor_public_result": "task041_public_command_nonzero, exit 3",
+    "finalizer": {
+      "status": "failed",
+      "classification": "service_boundary_failure",
+      "summary_sha256": "3b3df4b37f3dd2a02ef7d99a71b36dd31bf3fac8bcdd2d2bc4488a879ce6fcba",
+      "false_checks": ["service_terminal_normal", "public_result_completed", "modal_solver_policy_matches_request"],
+      "reasons": ["service_terminal_normal", "public_result_completed", "modal_solver_policy_matches_request"],
+      "policy_match_explanation": "the actual-V13 candidate/solve route and outer-control receipt were not persisted after the first PC gate rejected; this secondary validation failure does not prove the requested policy or resource binding was wrong"
+    },
+    "V14_m400_root_cause": "UNCONFIRMED"
+  },
+  "cleanup_resource_and_accounting": {
+    "native_host_pid1": "systemd",
+    "unit_state": "failed; MainPID=0; NRestarts=0; ControlGroup empty",
+    "registered_service_and_worker_groups": "gone in service receipt and absent in native-host PID recheck",
+    "hourly_watch_timer": "active",
+    "peak_process_tree_rss_bytes": 49616527360,
+    "peak_memory_authority_bytes": 49616527360,
+    "peak_dedicated_cgroup_bytes": 47208488960,
+    "peak_process_tree_swap_bytes": 0,
+    "peak_dedicated_cgroup_swap_bytes": 0,
+    "V5": {
+      "old_entry_count": 306,
+      "old_prefix_unchanged": true,
+      "new_entry_count": 307,
+      "top_seconds": 651274.1059664167,
+      "live_sha256": "4fe39d105e32e2601172116a300bedac61f6e4458fa0b780cbbcd8ff11b0edc8",
+      "single_new_service_entry_seconds": 13489.261149145,
+      "entry_status": "measured",
+      "parent_summary_wall_seconds": 13488.424919819,
+      "note": "ledger and parent-summary wall fields are retained with their own receipt definitions; not added together"
+    }
+  },
+  "qualification_matrix": {
+    "registered_tiny_FE_serial_R30": "reason 2 / 389; original-A relative residual 4.97654121633487e-9 <= 5e-9; old pytest attempt remains rc1 because the final fixture assertions read stale summary fields and the snapshot validator rejected the exact-zero -inf log encoding; frozen row data show readable arrays and destroyed=true, later narrow schema-aware offline review accepted that encoding; no serial FE rerun; R60 not_run because R30 passed",
+    "registered_tiny_FE_MPI2": "both ranks reason 2 / 441; original-A relative residual 4.83780279602371e-9 <= 5e-9; lifecycle/destroyed-snapshot assertions passed; MPI2 R60 not authorized and not_run",
+    "owner_writer_MPI2": "final relevant helper version passed the real tiny builder/PC owner-writer failure propagation regression (pytest rc=0); parent pytest wall 3.2586057849694043 seconds; rank OS exit codes not_persisted; protocol evidence, not a numerical solve",
+    "producer_reuse_serial": "two V16/V8 selectors passed; V16 traversed real producer validation and _run_phase; fake consumer is only a boundary contract fixture",
+    "MemAvailable_P1": "21 unique resource-contract nodes covered across four approved batches (effective 4+1+8+8); cross-attempt evidence, not one all-green invocation or one source SHA; first three raw batch attempts had failures/not_run portions that remain in original receipts; final tail attempt rc0",
+    "M400": "S_B 800/800 ready and owner LU built; first PC modal-row gate rejected; no completed outer iteration/five final residuals/recovery/EH/RTA/A_volume/diffraction/physics",
+    "large_construct_quota": "2/2 consumed; this record authorizes no further large construction"
+  },
+  "qualification_evidence_index": {
+    "registered_tiny_FE_serial_R30": {
+      "attempt": "results/task041_v16_registered_fe_serial_attempt_20261014T162356Z/serial/pytest.attempt.json",
+      "attempt_sha256": "cf2187d04095ac69d338f376a4a55df1d9811ef6db978221e70c61e6b2b67599",
+      "source_map": "results/task041_v16_registered_fe_serial_attempt_20261014T162356Z/serial/source_hashes_before_after.json",
+      "source_map_sha256": "585bd81c436862910dcd1d8153a9f644d9182aea73774c787d9d4443a0283a2a",
+      "completion": "results/task041_v16_registered_fe_serial_attempt_20261014T162356Z/serial/pytest_basetemp/test_task041_v13_real_fe_conde0/v15-modal-evidence/tiny_fgmres_R30_completion.json",
+      "completion_sha256": "71d0de7d1404f8941415bf47e8a9773bda7a559a467f15fb1e3403195c487831",
+      "post_destroy_record": "results/task041_v16_registered_fe_serial_attempt_20261014T162356Z/serial/pytest_basetemp/test_task041_v13_real_fe_conde0/v15-modal-evidence/tiny_fgmres_post_destroy_lifecycle.json",
+      "post_destroy_record_sha256": "83a33dbe0214a5d03de1f620039cbe3dcf882cac5c9f6d44e5380bf2daa6721e"
+    },
+    "registered_tiny_FE_MPI2": {
+      "attempt": "results/task041_v16_registered_fe_mpi2_rank_private_basetemp_attempt_20261015T000139Z/mpi2/pytest.attempt.json",
+      "attempt_sha256": "7899a05a48d4f117656d2f4fb0983244a9dea0be86bf141c94daefdd7d8593a7",
+      "source_map": "results/task041_v16_registered_fe_mpi2_rank_private_basetemp_attempt_20261015T000139Z/mpi2/source_hashes_before_after.json",
+      "source_map_sha256": "928a7ca3a44ed7914ab7ad3117d536163805ecc2928ebc0984110f01073d6cb9"
+    },
+    "owner_writer_MPI2": {
+      "attempt": "results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/pytest.attempt.json",
+      "attempt_sha256": "5c4c1880f7015bfe3363f3c7590d51cf8105ee07702fa943d2994febbc2331f2",
+      "source_map": "results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/source_hashes_before_after.json",
+      "source_map_sha256": "dcdde83cf8fe6c40eac2f527115f5af3c13767218b64bfc58431f942896aa780",
+      "pytest_returncode": 0,
+      "parent_CLOCK_MONOTONIC_wall_seconds": 3.2586057849694043,
+      "rank_os_exit_codes": "not_persisted"
+    },
+    "historical_owner_writer_MPI2_112820Z": {
+      "attempt": "results/task041_v15_real_tiny_builder_owner_writer_failure_mpi2_attempt_20261014T112820Z/mpi2/pytest.attempt.json",
+      "attempt_sha256": "01d1715adc1af74ed10d3ee475380bceac90a583e5a76b6bfca2f20c739714c7",
+      "source_map": "results/task041_v15_real_tiny_builder_owner_writer_failure_mpi2_attempt_20261014T112820Z/mpi2/source_hashes_before_after.json",
+      "source_map_sha256": "a1fdbb7164e89753e75767495cffdd2c640a903f38c9ca25d98a9255162f2231",
+      "qualification_role": "historical attempt; not the final relevant helper-version evidence"
+    },
+    "producer_reuse_serial": {
+      "attempt": "results/task041_v16_producer_reuse_serial_session_v8_owned_policy_dynamic_cpu_attempt_20261015T091551Z/serial/pytest.attempt.json",
+      "attempt_sha256": "96ba6ce6034e755648b1ecdc8ba9aa3917a6abbc3c3990c08161f637db99890e",
+      "source_map": "results/task041_v16_producer_reuse_serial_session_v8_owned_policy_dynamic_cpu_attempt_20261015T091551Z/serial/source_hashes_before_after.json",
+      "source_map_sha256": "e706acb18ea69cd853e3ccdebd86d4627e9e86f353ebe0ce9f46470fbf5488c2"
+    },
+    "P1_MemAvailable_batches": [
+      {"name": "211337Z first 4 effective nodes", "attempt": "results/task041_v16_memavailable_outer_error_vectors_cpu23_attempt_20261014T211337Z/serial/pytest.attempt.json", "attempt_sha256": "15fd26123dc22a9e3e08d352bbd306bfaa3ecb510a832b191b2e146df6eddb36", "source_map_sha256": "64720426b923ba58786e7e4d0f7504308c96c71d1aba9bb58c89ce374515a7d4"},
+      {"name": "214500Z callback node", "attempt": "results/task041_v16_memavailable_resource_contract_resume_cpu23_attempt_20261014T214500Z/serial/pytest.attempt.json", "attempt_sha256": "dff8a9b135af95a142376f2c2ed03f54b336f3d57981d7fecafbdc5be2f9371b", "source_map_sha256": "4d83c308b5b1ae8d319c370459f96cd86e5fcd4ebdfe9a3c042357b780b608ab"},
+      {"name": "215817Z next 8 nodes", "attempt": "results/task041_v16_memavailable_resource_contract_tail16_cpu23_attempt_20261014T215817Z/serial/pytest.attempt.json", "attempt_sha256": "92786e9829b5949161794052358f19b1bb162877b30a70bc2b63b0af32bbef62", "source_map_sha256": "47439c1c0bd1b07eeec058d2d500006b3ea0ba32df081b5a59dc542a0b746ca5"},
+      {"name": "220529Z final 8 nodes", "attempt": "results/task041_v16_memavailable_resource_contract_finalizer_tail8_cpu23_attempt_20261014T220529Z/serial/pytest.attempt.json", "attempt_sha256": "9fa5994b47ff57f31c054b54335517cb77ba0b3747111a8372732b8cf26c16dc", "source_map_sha256": "d2fe0a511d8a5992077557db9b2be7463ca17f24bf51ce87fd010e5393d84e32"}
+    ]
+  },
+  "not_run": [
+    "completed M400 outer solve and five final true residuals",
+    "recovery and E/H fields",
+    "official R/T/A, A_volume and diffraction",
+    "M600, h refinement, 50x25 nm scale-up and 2 TB/48 h qualification"
+  ]
+}
