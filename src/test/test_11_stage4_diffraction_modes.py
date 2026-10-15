@@ -4,26 +4,31 @@ import unittest
 
 import numpy as np
 
+from src.common.analytic_fields_3d import (
+    electric_field_code_values,
+    fresnel_reference,
+    magnetic_field_code_values,
+)
+from src.common.modes_3d import enumerate_diffraction_orders_3d
 from src.postprocessing.diffraction_3d import (
     E_FOURIER_DIAGNOSTIC_NOTE,
     OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE,
     OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE,
     SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE,
-    _eh_fourier_order_powers,
     _e_fourier_order_powers,
+    _eh_fourier_order_powers,
+    _fit_directional_eh_amplitudes_for_order,
     _incident_power,
-    enumerate_diffraction_orders_3d,
+    _probe_z_locations,
+    _sampled_flux_code_units,
     fit_diffraction_amplitudes_from_samples,
     mode_eh_vectors,
     polarization_basis_3d,
-    _sampled_flux_code_units,
-    _probe_z_locations,
 )
 from src.postprocessing.flat_layer_reference_3d import (
     analytic_volume_absorption_between_z,
     compute_flat_layer_reference_3d,
 )
-from src.common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values, fresnel_reference
 from src.test.stage2_test_utils import stage4_block_config
 
 
@@ -352,7 +357,80 @@ class Stage4DiffractionModeTests(unittest.TestCase):
             _incident_power(cfg),
         )
         recovered = rows[(0, 0, "y")]["transmitted_amplitude_eh_fourier"]
-        self.assertLess(abs(recovered - down_amp), 1.0e-12)
+        expected_at_probe = down_amp * np.exp(1j * k_down[2] * points[0, 2])
+        self.assertLess(abs(recovered - expected_at_probe), 1.0e-12)
+
+    def test_high_evanescent_eh_fit_uses_finite_probe_plane_basis(self):
+        cfg = stage4_block_config(
+            lambda0=0.7,
+            period_x=1.0,
+            period_y=25.0,
+            z_min=-10.0,
+            z_max=130.0,
+            interface_z=0.0,
+            diffraction_zero_order_only=False,
+            diffraction_order_max_m=10,
+            diffraction_order_max_n=10,
+            diffraction_sample_count_x=24,
+            diffraction_sample_count_y=24,
+        )
+        orders = enumerate_diffraction_orders_3d(cfg, max_m_override=10, max_n_override=10)
+        order = next(item for item in orders if item.m == -10 and item.n == -10)
+        self.assertFalse(order.top_propagating)
+        top_z = 127.5
+        top_points = _sample_plane(cfg, z=top_z, nx=24, ny=24)
+        bottom_points = _sample_plane(cfg, z=-7.5, nx=24, ny=24)
+
+        _, e_vec, h_vec = mode_eh_vectors(
+            order.alpha,
+            order.gamma,
+            order.beta_top,
+            polarization_basis_3d(
+                order.alpha, order.gamma, order.beta_top, cfg.n_air, -1, cfg
+            )[0][1],
+            -1,
+            cfg,
+        )
+        down_k = np.asarray((order.alpha, order.gamma, -order.beta_top), dtype=np.complex128)
+        with np.errstate(over="ignore", invalid="ignore"):
+            old_growing_phase = np.exp(1j * down_k[2] * top_z)
+        self.assertFalse(np.isfinite(old_growing_phase))
+        self.assertTrue(np.all(np.isfinite(e_vec)))
+        self.assertTrue(np.all(np.isfinite(h_vec)))
+
+        top_e = np.zeros((len(top_points), 3), dtype=np.complex128)
+        top_h = np.zeros_like(top_e)
+        bottom_e = np.zeros((len(bottom_points), 3), dtype=np.complex128)
+        bottom_h = np.zeros_like(bottom_e)
+        rows, metrics = _eh_fourier_order_powers(
+            cfg,
+            orders,
+            top_points,
+            top_e,
+            top_h,
+            bottom_points,
+            bottom_e,
+            bottom_h,
+            _incident_power(cfg),
+        )
+        self.assertEqual(len(orders), 441)
+        self.assertEqual(len(rows), 882)
+        self.assertTrue(all(np.isfinite(value) for value in metrics.values()))
+        self.assertEqual(metrics["R_total_from_eh_fourier"], 0.0)
+        self.assertEqual(metrics["T_total_from_eh_fourier"], 0.0)
+
+        amplitudes, fit_residual = _fit_directional_eh_amplitudes_for_order(
+            cfg,
+            top_points,
+            top_e,
+            top_h,
+            order,
+            side="top",
+        )
+        self.assertTrue(
+            all(np.isfinite(value.real) and np.isfinite(value.imag) for value in amplitudes.values())
+        )
+        self.assertTrue(np.isfinite(fit_residual))
 
 
 if __name__ == "__main__":

@@ -7,11 +7,13 @@ from typing import Any
 
 import numpy as np
 import ufl
-
 from dolfinx import fem, geometry
 
+from ..common.analytic_fields_3d import (
+    electric_field_code_values,
+    magnetic_field_code_values,
+)
 from ..common.config_3d import SimulationConfig3D
-from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
 from ..common.modes_3d import (
     DiffractionOrder3D,
     enumerate_diffraction_orders_3d,
@@ -20,7 +22,6 @@ from ..common.modes_3d import (
     mode_power,
     polarization_basis_3d,
 )
-
 
 DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE = "diagnostic_eh_fourier_probe"
 DIAGNOSTIC_E_ONLY_FOURIER_PROBE_POWER_SOURCE = "diagnostic_e_only_fourier_probe"
@@ -32,8 +33,8 @@ DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE = "diagnostic_sampled_net_flux"
 OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE = DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE
 OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE = (
     "Diagnostic only: E/H Fourier probe-plane fitting separates up/down waves "
-    "on uniform probe planes. Stage-4 dtn_port official R/T uses DtN port "
-    "modal amplitudes instead."
+    "on uniform probe planes; fitted amplitudes are referenced to their sampled "
+    "probe plane. Stage-4 dtn_port official R/T uses DtN port modal amplitudes instead."
 )
 E_FOURIER_DIAGNOSTIC_NOTE = (
     "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount "
@@ -232,7 +233,7 @@ def _fit_directional_eh_amplitudes_for_order(
     *,
     side: str,
 ) -> tuple[dict[tuple[str, str], complex], float]:
-    """Separate up/down amplitudes for one order from tangential E/H Fourier data.
+    """Separate probe-plane up/down amplitudes from tangential E/H Fourier data.
 
     A single transverse Fourier coefficient of E alone cannot distinguish a
     downward wave from an upward wave with the same (m, n).  That matters when a
@@ -250,7 +251,6 @@ def _fit_directional_eh_amplitudes_for_order(
     else:
         raise ValueError("side must be 'top' or 'bottom'.")
 
-    z = float(points[0, 2])
     e_coeff = _fourier_e_coefficient(points, e_values, order.alpha, order.gamma)
     h_coeff = _fourier_e_coefficient(points, h_values, order.alpha, order.gamma)
     rhs = np.asarray((e_coeff[0], e_coeff[1], h_coeff[0], h_coeff[1]), dtype=np.complex128)
@@ -266,15 +266,17 @@ def _fit_directional_eh_amplitudes_for_order(
             vertical_sign,
             cfg,
         ):
-            kvec, e_vec, h_vec = mode_eh_vectors(order.alpha, order.gamma, beta, pol_vec, vertical_sign, cfg)
-            phase_z = np.exp(1j * kvec[2] * z)
+            _, e_vec, h_vec = mode_eh_vectors(order.alpha, order.gamma, beta, pol_vec, vertical_sign, cfg)
+            # Fit the field at its sampled plane.  Extrapolating both directions
+            # back to z=0 makes the growing evanescent basis overflow on distant
+            # probe planes even though the local modal vectors are finite.
             columns.append(
                 np.asarray(
                     (
-                        phase_z * e_vec[0],
-                        phase_z * e_vec[1],
-                        phase_z * h_vec[0],
-                        phase_z * h_vec[1],
+                        e_vec[0],
+                        e_vec[1],
+                        h_vec[0],
+                        h_vec[1],
                     ),
                     dtype=np.complex128,
                 )
@@ -306,8 +308,6 @@ def _eh_fourier_order_powers(
 
     top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
     bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
-    top_z = float(top_points[0, 2])
-    bottom_z = float(bottom_points[0, 2])
     rows: dict[tuple[int, int, str], dict[str, float | complex]] = {}
     R_total = 0.0
     T_total = 0.0
@@ -344,9 +344,10 @@ def _eh_fourier_order_powers(
             R = 0.0
             T = 0.0
             if order.top_propagating and pol_name in top_basis:
-                top_k, top_e_vec, _ = mode_eh_vectors(order.alpha, order.gamma, order.beta_top, top_basis[pol_name], 1, cfg)
-                top_e_at_plane = top_e_vec * np.exp(1j * top_k[2] * top_z)
-                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_at_plane, cfg, top_normal) / incident_power
+                top_k, top_e_vec, _ = mode_eh_vectors(
+                    order.alpha, order.gamma, order.beta_top, top_basis[pol_name], 1, cfg
+                )
+                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_vec, cfg, top_normal) / incident_power
                 R_total += float(R)
             if order.bottom_propagating and pol_name in bottom_basis:
                 bottom_k, bottom_e_vec, _ = mode_eh_vectors(
@@ -357,8 +358,7 @@ def _eh_fourier_order_powers(
                     -1,
                     cfg,
                 )
-                bottom_e_at_plane = bottom_e_vec * np.exp(1j * bottom_k[2] * bottom_z)
-                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_at_plane, cfg, bottom_normal) / incident_power
+                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_vec, cfg, bottom_normal) / incident_power
                 T_total += float(T)
             rows[(order.m, order.n, pol_name)] = {
                 "reflected_amplitude_eh_fourier": ref_amp,
@@ -829,6 +829,7 @@ def compute_diffraction_orders_3d(
         "power_source": DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE,
         "diagnostic_power_legacy_aliases": ["R_total", "T_total", "R_plus_T", "A_balance"],
         "diffraction_eh_fourier_note": OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE,
+        "diffraction_eh_fourier_amplitude_reference": "corresponding_sampled_probe_plane",
         "diffraction_e_fourier_note": E_FOURIER_DIAGNOSTIC_NOTE,
         "R_total_diagnostic_eh_fourier": official_R_total,
         "T_total_diagnostic_eh_fourier": official_T_total,
