@@ -563,7 +563,11 @@ def _f5_mesh_evidence(levels: Mapping[str, Any], cfg: Any) -> dict[str, Any]:
         for index, axis in enumerate(("x", "y", "z"))
     }
     axis_match = all(actual_axes[axis] == axes[axis] for axis in axes)
+    actual_axis_counts = {
+        axis: len(actual_axes[axis]) - 1 for axis in actual_axes
+    }
     actual_cells = int(msh.topology.index_map(msh.topology.dim).size_global)
+    actual_cell_type = str(msh.topology.cell_name())
     expected_tags = _f5_expected_material_tag_counts(
         axes["x"], axes["y"], axes["z"], cfg
     )
@@ -583,18 +587,18 @@ def _f5_mesh_evidence(levels: Mapping[str, Any], cfg: Any) -> dict[str, Any]:
     }
     if actual_cells != expected_tags["total"]:
         raise ValueError("actual F5 global mesh cell count differs from its frozen axes")
-    if not axis_match or tuple(mesh_data.mesh_cells_resolved) != tuple(
-        expected_counts[axis] for axis in ("x", "y", "z")
-    ):
+    if not axis_match or tuple(
+        actual_axis_counts[axis] for axis in ("x", "y", "z")
+    ) != tuple(expected_counts[axis] for axis in ("x", "y", "z")):
         raise ValueError("actual F5 mesh coordinate axes differ from the frozen plan")
     if actual_tag_counts != expected_tag_counts or int(values.size) != actual_cells:
         raise ValueError("actual F5 material tags differ from frozen axis geometry")
-    if mesh_data.mesh_cell_type_resolved != "hexahedron":
+    if actual_cell_type != "hexahedron":
         raise ValueError("actual F5 mesh is not hexahedral")
     return {
         "status": "PASS",
         "actual_global_cell_count": actual_cells,
-        "axis_cell_counts": [expected_counts[axis] for axis in ("x", "y", "z")],
+        "axis_cell_counts": [actual_axis_counts[axis] for axis in ("x", "y", "z")],
         "actual_axes_match_frozen_input": True,
         "axis_sha256_le_f64": {
             axis: hashlib.sha256(
@@ -604,7 +608,7 @@ def _f5_mesh_evidence(levels: Mapping[str, Any], cfg: Any) -> dict[str, Any]:
         },
         "material_tag_counts": actual_tag_counts,
         "material_tag_counts_expected_from_axes": expected_tag_counts,
-        "cell_type": mesh_data.mesh_cell_type_resolved,
+        "cell_type": actual_cell_type,
         "mpi_size": 1,
     }
 

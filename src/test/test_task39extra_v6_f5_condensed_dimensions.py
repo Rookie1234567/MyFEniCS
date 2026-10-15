@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import sys
 from dataclasses import replace
+from itertools import product
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
+import numpy as np
 import pytest
 
 from src.io.input_validation import load_and_resolve
@@ -18,6 +20,7 @@ from src.runners.p6_condensed_direct import (
     _build_f5_n0_inventory,
     _direct_output_policy,
     _direct_run_contract,
+    _f5_mesh_evidence,
     _validate_direct_condensed_dimensions,
 )
 from src.runners.task038_input_worker import _dispatch_resolved_payload
@@ -40,6 +43,53 @@ F5_INPUTS = (
         80,
     ),
 )
+
+
+def test_f5_mesh_evidence_uses_actual_mesh_not_absent_wrapper_metadata():
+    x, y, z = (0.0, 1.0, 2.0), (0.0, 1.0), (0.0, 1.0, 2.0)
+    geometry_x = np.asarray(list(product(x, y, z)), dtype=np.float64)
+
+    class FakeTopology:
+        dim = 3
+
+        @staticmethod
+        def index_map(_dimension):
+            return SimpleNamespace(size_global=4)
+
+        @staticmethod
+        def cell_name():
+            return "hexahedron"
+
+    # _build_same_mesh_levels currently returns this deliberately small wrapper:
+    # it owns the DOLFINx mesh and tags, not resolved-count convenience fields.
+    mesh_data = SimpleNamespace(
+        mesh=SimpleNamespace(
+            geometry=SimpleNamespace(x=geometry_x), topology=FakeTopology()
+        ),
+        cell_tags=SimpleNamespace(values=np.asarray([1, 2, 1, 0], dtype=np.int32)),
+    )
+    cfg = SimpleNamespace(
+        mesh_axis_x_values_requested=x,
+        mesh_axis_y_values_requested=y,
+        mesh_axis_z_values_requested=z,
+        x_min=0.0,
+        x_max=2.0,
+        grating_x_min=0.0,
+        grating_x_max=1.0,
+        domain_z_min=0.0,
+        interface_z=1.0,
+        grating_z_min=1.0,
+        grating_z_max=2.0,
+        tags=SimpleNamespace(air=0, substrate=1, grating=2),
+    )
+
+    evidence = _f5_mesh_evidence({"mesh_data": mesh_data}, cfg)
+
+    assert evidence["status"] == "PASS"
+    assert evidence["actual_global_cell_count"] == 4
+    assert evidence["axis_cell_counts"] == [2, 1, 2]
+    assert evidence["cell_type"] == "hexahedron"
+    assert evidence["material_tag_counts"] == {"0": 1, "1": 2, "2": 1}
 
 
 def _periodic_slave_condensed():
