@@ -270,9 +270,7 @@ def _base_manifest(
                     else []
                 ),
             )
-        if profile.get('condensed_route', {}).get('name') == (
-            'v7_p6_exact_local_condensation_direct_n0'
-        ):
+        if native_identity in P6_CONDENSED_DIRECT_PROFILES:
             manifest['native_capacity_contract']['direct_route'] = dict(
                 profile['campaign_authorization']['direct_route']
             )
