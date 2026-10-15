@@ -41,9 +41,16 @@ V6_F5_P6_DIRECT_PROFILES = frozenset(
     {V6_F5_P6_DIRECT_FULL600_PROFILE, V6_F5_P6_DIRECT_N0_PROFILE}
 )
 DISPERSION_FLAT_P6_PROFILE = "task39extra_dispersion_flat_0p7_p6_v1"
-DISPERSION_FLAT_P6_PROFILES = frozenset({DISPERSION_FLAT_P6_PROFILE})
+DISPERSION_FLAT_P6_RAISED_RSS_PROFILE = (
+    "task39extra_dispersion_flat_0p7_p6_raised_rss_v2"
+)
+DISPERSION_FLAT_P6_PROFILES = frozenset(
+    {DISPERSION_FLAT_P6_PROFILE, DISPERSION_FLAT_P6_RAISED_RSS_PROFILE}
+)
 DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES = 32 * 1024**3
 DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES = 24 * 1024**3
+DISPERSION_FLAT_RAISED_RSS_HARD_LIMIT_BYTES = 512 * 1024**3
+DISPERSION_FLAT_RAISED_RSS_PLANNING_LIMIT_BYTES = 448 * 1024**3
 P6_CONDENSED_DIRECT_PROFILES = (
     V7_ANISO_N0_P6_DIRECT_PROFILES
     | V6_F5_P6_DIRECT_PROFILES
@@ -131,6 +138,9 @@ NATIVE_CASES['dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'] = (
 NATIVE_CASES[V7_ANISO_N0_P4_PROFILE] = (0.7, (0.5,), None, None, None)
 NATIVE_CASES[V7_ANISO_N0_P6_DIRECT_PROFILE] = (0.7, (0.5,), None, None, None)
 NATIVE_CASES[DISPERSION_FLAT_P6_PROFILE] = (
+    0.7, (0.5, 0.25, 0.125), None, None, None
+)
+NATIVE_CASES[DISPERSION_FLAT_P6_RAISED_RSS_PROFILE] = (
     0.7, (0.5, 0.25, 0.125), None, None, None
 )
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
@@ -410,8 +420,16 @@ def _dispersion_flat_p6_profile_facts(identity):
     )
 
     facts = native_profile_facts(V7_ANISO_N0_P6_DIRECT_PROFILE)
-    hard = DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES
-    planning = DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES
+    if identity == DISPERSION_FLAT_P6_PROFILE:
+        hard = DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES
+        planning = DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES
+        resource_version = "v1"
+    elif identity == DISPERSION_FLAT_P6_RAISED_RSS_PROFILE:
+        hard = DISPERSION_FLAT_RAISED_RSS_HARD_LIMIT_BYTES
+        planning = DISPERSION_FLAT_RAISED_RSS_PLANNING_LIMIT_BYTES
+        resource_version = "raised_v2"
+    else:
+        raise ValueError(f"unsupported dispersion-flat P6 profile: {identity}")
     facts.update(
         identity=identity,
         execution_mode="full_solve",
@@ -587,7 +605,9 @@ def _dispersion_flat_p6_profile_facts(identity):
         source="user-authorized 0.7 nm flat P6 direct dispersion calibration",
         execution_mode="full_solve",
         resource_policy={
-            "name": "dispersion_flat_32GiB_tree_rss_zero_swap_v1",
+            "name": (
+                f"dispersion_flat_{hard // 2**30}GiB_tree_rss_zero_swap_{resource_version}"
+            ),
             "rss_hard_limit_bytes": hard,
             "rss_planning_limit_bytes": planning,
             "zero_swap": True,
@@ -1607,7 +1627,7 @@ def _validate_v7_aniso_n0_p4_case(config) -> None:
 
 
 def _validate_dispersion_flat_p6_case(config, identity: str) -> None:
-    """Fail closed on the three approved same-material flat dispersion cases."""
+    """Fail closed on approved same-material flat P6 direct cases."""
 
     from src.geometry.dispersion_flat_axis_plan import (
         flat_axis_plan,
@@ -1615,6 +1635,15 @@ def _validate_dispersion_flat_p6_case(config, identity: str) -> None:
     )
 
     from .input_loader import InputError
+
+    if identity == DISPERSION_FLAT_P6_PROFILE:
+        hard = DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES
+        planning = DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES
+    elif identity == DISPERSION_FLAT_P6_RAISED_RSS_PROFILE:
+        hard = DISPERSION_FLAT_RAISED_RSS_HARD_LIMIT_BYTES
+        planning = DISPERSION_FLAT_RAISED_RSS_PLANNING_LIMIT_BYTES
+    else:
+        raise InputError(f'{identity} is not an approved dispersion-flat P6 profile')
 
     def require(section: str, key: str, expected: object) -> None:
         actual = config.get(section, {}).get(key)
@@ -1724,9 +1753,9 @@ def _validate_dispersion_flat_p6_case(config, identity: str) -> None:
     if execution.get('require_zero_swap') is not True:
         raise InputError(f'{identity} requires zero swap')
     for key, expected in {
-        'warning_memory_gib': DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES / 2**30,
-        'terminate_memory_gib': DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES / 2**30,
-        'memory_limit_gb': DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES / 2**30,
+        'warning_memory_gib': planning / 2**30,
+        'terminate_memory_gib': hard / 2**30,
+        'memory_limit_gb': hard / 2**30,
     }.items():
         require('execution', key, expected)
     output = config.get('output', {})

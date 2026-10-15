@@ -95,8 +95,6 @@ def _write_direct_flat_reference_outputs(
 
 def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
     from src.io.native_capacity_profile import (
-        DISPERSION_FLAT_P6_PROFILES,
-        DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES,
         P6_CONDENSED_DIRECT_PROFILES,
         native_capacity_profile_identity,
         native_profile_facts,
@@ -121,10 +119,8 @@ def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("resolved direct profile facts differ from the frozen profile")
     if resolved_facts.get("identity") != identity:
         raise ValueError("resolved native profile identity differs from solver selection")
-    expected_rss_cap = (
-        DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES
-        if identity in DISPERSION_FLAT_P6_PROFILES
-        else RSS_HARD_LIMIT_BYTES
+    expected_rss_cap = expected_facts.get("resources", {}).get(
+        "rss_hard_limit_bytes", RSS_HARD_LIMIT_BYTES
     )
     if resolved_facts.get("resources", {}).get("rss_hard_limit_bytes") != expected_rss_cap:
         raise ValueError("resolved direct profile RSS hard limit differs from its profile")
@@ -142,7 +138,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
     """Return route-specific immutable identities without conflating V7 N0."""
 
     from src.io.native_capacity_profile import (
-        DISPERSION_FLAT_P6_PROFILE,
+        DISPERSION_FLAT_P6_PROFILES,
         V6_F5_P6_DIRECT_FULL600_PROFILE,
         V6_F5_P6_DIRECT_N0_PROFILE,
         V7_ANISO_N0_P6_DIRECT_PROFILE,
@@ -162,7 +158,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "residual_scope": "A6_n0",
             "summary_prefix": "p6_condensed_direct_n0",
         }
-    if profile_identity == DISPERSION_FLAT_P6_PROFILE:
+    if profile_identity in DISPERSION_FLAT_P6_PROFILES:
         return {
             "family": "dispersion_flat",
             "truncated": False,

@@ -23,6 +23,9 @@ from src.io.input_validation import (
 )
 from src.io.native_capacity_profile import (
     DISPERSION_FLAT_P6_PROFILE,
+    DISPERSION_FLAT_P6_RAISED_RSS_PROFILE,
+    DISPERSION_FLAT_RAISED_RSS_HARD_LIMIT_BYTES,
+    DISPERSION_FLAT_RAISED_RSS_PLANNING_LIMIT_BYTES,
     DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES,
     DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES,
     native_profile_facts,
@@ -47,6 +50,10 @@ def _resolved(nx: int) -> dict:
     return load_and_resolve(
         INPUTS / f"dispersion_0p7nm_flat_p6_q160_nx{nx}_direct_v1.dat"
     ).as_jsonable()
+
+
+def _resolved_input(path: Path) -> dict:
+    return load_and_resolve(path).as_jsonable()
 
 
 def test_direct_flat_reference_dispatch_passes_writer_contract(monkeypatch, tmp_path):
@@ -144,6 +151,50 @@ def test_flat_cases_resolve_to_frozen_p6_q15_q160_direct_contract(nx):
     assert not is_dispersion_flat_p6_plan(cfg)
 
 
+def test_nx8_rss_retry_has_raised_resource_profile_without_numerical_changes():
+    previous = _resolved(8)
+    retry = _resolved_input(
+        INPUTS / "dispersion_0p7nm_flat_p6_q160_nx8_direct_v2.dat"
+    )
+    facts = retry["derived"]["native_capacity_profile"]
+
+    assert retry["run_id"] == "dispersion_0p7nm_flat_p6_q160_nx8_direct_v2"
+    assert facts["identity"] == DISPERSION_FLAT_P6_RAISED_RSS_PROFILE
+    assert facts["resources"]["rss_hard_limit_bytes"] == 512 * 1024**3
+    assert facts["resources"]["rss_hard_limit_bytes"] == (
+        DISPERSION_FLAT_RAISED_RSS_HARD_LIMIT_BYTES
+    )
+    assert facts["resources"]["planning_cap_bytes"] == 448 * 1024**3
+    assert facts["resources"]["planning_cap_bytes"] == (
+        DISPERSION_FLAT_RAISED_RSS_PLANNING_LIMIT_BYTES
+    )
+    assert facts["campaign_authorization"]["memory_override"][
+        "whole_process_tree_rss_cap_bytes"
+    ] == 512 * 1024**3
+    assert facts["campaign_authorization"]["memory_override"][
+        "startup_headroom_bytes"
+    ] == 64 * 1024**3
+
+    for section in (
+        "geometry",
+        "materials",
+        "incidence",
+        "discretization",
+        "boundary",
+        "method",
+    ):
+        assert retry[section] == previous[section]
+    assert retry["solver"]["linear_solver"] == previous["solver"]["linear_solver"]
+    assert retry["execution"]["mpi_size"] == previous["execution"]["mpi_size"] == 1
+    assert retry["execution"]["require_zero_swap"] is True
+
+    route = _direct_run_contract(DISPERSION_FLAT_P6_RAISED_RSS_PROFILE)
+    assert route["family"] == "dispersion_flat"
+    assert route["surface_quadrature_degree"] == 160
+    assert route["truncated"] is False
+    _validate_resolved_profile(retry)
+
+
 def test_flat_profile_is_isolated_from_v7_iterative_and_n0_contracts():
     facts = native_profile_facts(DISPERSION_FLAT_P6_PROFILE)
     assert "coarse_operator" not in facts
@@ -159,10 +210,27 @@ def test_flat_profile_is_isolated_from_v7_iterative_and_n0_contracts():
     assert facts["campaign_authorization"]["direct_route"]["p4_and_outer_ksp"] == "not_built"
 
 
-def test_flat_profile_satisfies_native_memory_envelope_reserve_schema(monkeypatch):
+@pytest.mark.parametrize(
+    ("identity", "hard_bytes", "planning_bytes"),
+    (
+        (
+            DISPERSION_FLAT_P6_PROFILE,
+            32 * 1024**3,
+            24 * 1024**3,
+        ),
+        (
+            DISPERSION_FLAT_P6_RAISED_RSS_PROFILE,
+            512 * 1024**3,
+            448 * 1024**3,
+        ),
+    ),
+)
+def test_flat_profile_satisfies_native_memory_envelope_reserve_schema(
+    monkeypatch, identity, hard_bytes, planning_bytes
+):
     from benchmarks import subreaper_watchdog
 
-    monkeypatch.setenv("PHYSICAL_NATIVE_CAPACITY", DISPERSION_FLAT_P6_PROFILE)
+    monkeypatch.setenv("PHYSICAL_NATIVE_CAPACITY", identity)
     monkeypatch.setattr(subreaper_watchdog, "current_cgroup_path", lambda: None)
     monkeypatch.setattr(
         subreaper_watchdog,
@@ -176,8 +244,8 @@ def test_flat_profile_satisfies_native_memory_envelope_reserve_schema(monkeypatc
     envelope = subreaper_watchdog.memory_envelope()
 
     assert envelope["reserve_bytes"] == 150_000_000_000
-    assert envelope["launch_cap_bytes"] == 32 * 1024**3
-    assert envelope["planning_cap_bytes"] == 24 * 1024**3
+    assert envelope["launch_cap_bytes"] == hard_bytes
+    assert envelope["planning_cap_bytes"] == planning_bytes
 
 
 def test_flat_profile_uses_standard_run_case_native_capacity_dispatch(
