@@ -19,12 +19,37 @@ def _indices(text):
     return values
 
 
-def interleaved_admission(resources, worker_cpus):
+def _window_authorization(value, *, parallel_allowed):
+    """Interpret the caller's explicit heavy-window authorization honestly."""
+    if value == 'coordinated':
+        return {
+            'window_mode': 'user_coordinated_exclusive',
+            'user_exclusive_window_confirmation': True,
+            'user_parallel_window_authorization': False,
+        }
+    if value == 'parallel_authorized' and parallel_allowed:
+        return {
+            'window_mode': 'user_authorized_cross_project_parallel',
+            'user_exclusive_window_confirmation': False,
+            'user_parallel_window_authorization': True,
+        }
+    raise InputError('V6 heavy-window authorization is missing or invalid for this profile')
+
+
+def _parallel_authorized_profile(profile):
+    from src.io.native_capacity_profile import V6_F5_P6_DIRECT_PROFILES
+
+    return profile in V6_F5_P6_DIRECT_PROFILES
+
+
+def interleaved_admission(resources, worker_cpus, *, parallel_allowed=False):
     from benchmarks.subreaper_watchdog import memory_envelope
     from benchmarks.task034_wsl_resources import current_cgroup_path
 
-    if os.environ.get('TASK39EXTRA_V6_HEAVY_WINDOW') != 'coordinated':
-        raise InputError('V6 requires the user-coordinated exclusive heavy window')
+    window = _window_authorization(
+        os.environ.get('TASK39EXTRA_V6_HEAVY_WINDOW'),
+        parallel_allowed=parallel_allowed,
+    )
     status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines())
     allowed_mems = _indices(status['Mems_allowed_list'])
     if not {0, 1}.issubset(allowed_mems):
@@ -101,5 +126,4 @@ def interleaved_admission(resources, worker_cpus):
         'effective_available_required_bytes': needed,
         'large_visible_processes': large, 'large_process_scan_threshold_bytes': 10_000_000_000,
         'conflicting_resident_process_threshold_bytes': 100_000_000_000,
-        'user_exclusive_window_confirmation': True, 'interleave_probe_maps': maps,
-        'neighbors_modified': False}
+        **window, 'interleave_probe_maps': maps, 'neighbors_modified': False}

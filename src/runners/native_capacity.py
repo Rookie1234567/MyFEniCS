@@ -209,9 +209,15 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         )
         node_admission = None
         if memory_policy == 'interleave_nodes0_1':
-            from .reviewed_workstation_admission import interleaved_admission
+            from .reviewed_workstation_admission import (
+                _parallel_authorized_profile,
+                interleaved_admission,
+            )
             os.environ.pop('PHYSICAL_NATIVE_NODE_CAP_BYTES', None)
-            node_admission = interleaved_admission(profile_facts['resources'], worker_cpus)
+            node_admission = interleaved_admission(
+                profile_facts['resources'], worker_cpus,
+                parallel_allowed=_parallel_authorized_profile(profile),
+            )
         if memory_policy in {'membind_node1', 'preferred_node1'}:
             cgroup = current_cgroup_path()
             allowed_mems = None
@@ -295,7 +301,13 @@ def native_capacity_guard(profile, *, memory_policy='none'):
                      'swap_launch': swap_launch,
                      'native_capacity_profile': profile,
                      'cpu_launch_snapshot': _cpu_launch_snapshot({9, *worker_cpus}),
-                     'neighbor_concurrent_heavy_authorized': profile_facts['resources']['concurrent_neighbor_authorized'],
+                     'profile_concurrent_neighbor_authorized': profile_facts['resources']['concurrent_neighbor_authorized'],
+                     'neighbor_concurrent_heavy_authorized': (
+                         profile_facts['resources']['concurrent_neighbor_authorized']
+                         or bool(node_admission and node_admission.get(
+                             'user_parallel_window_authorization'
+                         ))
+                     ),
                      'neighbor_files_and_processes_modified': False,
                      'disk_free_bytes': shutil.disk_usage(root).free,
                      'inodes_available': filesystem.f_favail}
@@ -331,8 +343,9 @@ def native_capacity_guard(profile, *, memory_policy='none'):
 
 
 def launch_native_capacity(specification, *, setup_only: bool = False):
-    from .task038_launcher import launch_specification
     from src.io.native_capacity_profile import native_capacity_profile_identity
+
+    from .task038_launcher import launch_specification
 
     memory_policy = specification.execution.get('native_memory_policy', 'none')
     profile = native_capacity_profile_identity(
