@@ -59,6 +59,7 @@ kind = "full3d_direct"
 [solver]
 direct_solver_profile = "default"
 linear_solver = "direct"
+direct_factor_lifecycle = "task42_staged_mumps_pre_recovery"
 
 [execution]
 mpi_size = 8

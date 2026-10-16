@@ -12,7 +12,7 @@
 | 外通道库存 | 13.5 nm空气侧42个空间键、每个s/p两种偏振；0.7 nm空气侧16031个空间键 | independent lattice enumeration + actual key inventory；0.7仅枚举，无mesh/QEP/PDE | `test_task42_air_order_inventory_matches_independent_lattice_and_actual_keys` |
 | 衍射报告范围 | m=3、n=7覆盖当前13.5 nm所有合法外部键 | measured from actual enumerated keys and reporting-order generator；仅报告范围，不改变DtN keys | `test_task42_public_validate_and_dry_run_bind_the_13p5_si_case` |
 | 小型网格 | boundary-fitted；空气/基底/光栅体积分别284200/25000/40800 nm³ | measured on the small test mesh; not the production p6 model mesh | MPI2 `test_task42_builds_the_boundary_fitted_material_mesh_with_expected_volumes` |
-| 完整Full3D求解与官方输出 | 未运行 | `not_run`：无assembly、QEP、MUMPS symbolic/numeric、恢复、R/T/A或完整场 | A1尚未接线；见[response_v1](../response_v1.md) |
+| 完整Full3D求解与官方输出 | 未运行 | `not_run`：无正式assembly、QEP、p6 MUMPS factor、恢复、R/T/A或完整场 | A1小矩阵/资源合同已接线；正式入口待fresh MPI8审核，见[response_v1](../response_v1.md) |
 
 ## 实施和测试矩阵
 
@@ -25,7 +25,7 @@
 
 耗时来自GNU `/usr/bin/time`记录，按GNU time输出精度保留到0.01秒，不是高精度单调时钟测量。peak RSS是对应计时命令收据中的GNU time值，不是Task42作业进程树/cgroup总峰。3个实际pytest parent attempt的记录值合计15.62秒；被preflight拦截的082736Z未启动pytest，计0秒。分项收据及精确argv见[测试摘要](test_summary.md)与ignored `results/task42hybrid_az90_50x50_17x20_0p7nm/`。
 
-## A1决策与剩余工作
+## A1最小接线方案（A0阶段规划，实际状态见下节）
 
 | 后续项 | 最小路径 | 当前状态 |
 |---|---|---|
@@ -35,3 +35,18 @@
 | 残差与完整输出 | 以Task42 opt-in packet保存原A、RHS、解、原残差和身份；恢复后重算full true residual，通过后才产official R/T/A、A_volume、E/H和全报告衍射级 | 未实现、未运行 |
 
 Task42 §7的初始与分阶段预算使用R=384 GiB、Cmax=min(1.5 TiB, MemTotal−R)、13.5 nm的C=min(256 GiB,Cmax)、warning=0.9C、W=max(8 GiB,0.05C)。大分配前要求`J+Delta+W<=C`、`MemAvailable>=R+Delta+W`及每个有限祖先cgroup的headroom至少`Delta+W`，其中J=max(process-tree RSS,dedicated cgroup current)，Delta只记当阶段新分配。48小时是成功目标，不是强杀线；不能仅通过改dat文本声称此策略已经接入。A0未申请或消耗任何大型计算额度，也没有启动正式Full3D作业。
+
+## A1实现与小型合同验证状态
+
+Task42 opt-in现在将输入`timeout_seconds=172800`作为48小时软目标：达到时记录软目标状态并继续，不因elapsed本身终止worker；ordinary Task038保留既有超时。硬资源保护继续按整作业J=max(process-tree RSS、已证明适用的dedicated cgroup current)、kernel MemAvailable和有限祖先状态执行。大分配前使用`J+Delta+W<=C`、`MemAvailable>=R+Delta+W`和祖先headroom≥`Delta+W`；运行期硬门检查`J<=C`、`MemAvailable>=R`，不重复预留W。当前参数为R=384 GiB、Cmax=min(1.5 TiB,MemTotal−R)、C=min(256 GiB,Cmax)、W=max(8 GiB,ceil(0.05C))、warning=0.9C。
+
+| 已接线路径 | 证据与边界 |
+|---|---|
+| `run_case`→Task038 launcher→Task42 Full3D direct | 软时间目标和启动/运行资源合同有定向测试；ordinary Task038控制保持原语义 |
+| Task42阶段authority→mesh/function-space/assembly→MUMPS symbolic/numeric→recovery | whole-job root与阶段Delta沿现有callback贯通；小型resource contract批次最终12 passed，但其parent wall未测 |
+| 同一MUMPS factor的symbolic→numeric→MatSolve→pre-recovery packet→destroy | 8×8 native serial/MPI2合同通过；同C bridge、同artifact覆盖`ICNTL(14)=None`默认分支和显式40控制 |
+| full residual、writer与active-trace Delta | 小型原方程packet/恢复残差边界、writer成功与本地写失败同步拒绝、rank-local gather驻留公式均有定向回归；无正式p6场 |
+
+可计费的17个pytest parent monotonic wall合计32.796723016秒，不按MPI rank数倍增。资源fixture三次pytest parent wall为`not_measured`，其pytest-reported 0.56/0.36/0.41秒不充当parent费用；MPI2 wrapper在pytest启动前失败的attempt不计pytest费用。完整attempt状态、失败保留路径和当前15项source manifest见[A1机器记录](a1_contract_validation.json)及[测试摘要](test_summary.md)。
+
+本轮不证明正式8-rank资源资格：轻量MPI2记录未采集每rank真实`sched_getaffinity`；Task42正式路径还需fresh核验rank实际affinity、default/unbound与全正常RAM节点scope，并提供OOM/disk保护的实际宿主证据。13.5 nm正式assembly/QEP/MUMPS全规模分解、场恢复、R/T/A、衍射输出均为`not_run`，需主控另行审核正式fresh MPI8入口。

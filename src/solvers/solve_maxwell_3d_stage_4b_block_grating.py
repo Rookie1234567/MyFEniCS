@@ -23,6 +23,8 @@ def run_stage4b_block_grating_3d_case(
     canonical_vector_export: bool = False,
     pre_recovery_packet_directory=None,
     pre_recovery_packet_identity=None,
+    task42_stage_gate=None,
+    task42_bridge_path=None,
     mesh_data_override=None,
 ) -> dict[str, object]:
     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
@@ -64,6 +66,8 @@ def run_stage4b_block_grating_3d_case(
         canonical_vector_export=canonical_vector_export,
         pre_recovery_packet_directory=pre_recovery_packet_directory,
         pre_recovery_packet_identity=pre_recovery_packet_identity,
+        task42_stage_gate=task42_stage_gate,
+        task42_bridge_path=task42_bridge_path,
         mesh_data_override=mesh_data_override,
     )
 

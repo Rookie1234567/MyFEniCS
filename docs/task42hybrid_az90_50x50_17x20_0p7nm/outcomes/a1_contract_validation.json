@@ -1,0 +1,482 @@
+{
+  "branch": "task42hybrid_az90_50x50_17x20_0p7nm",
+  "direct_factor_contract": {
+    "bridge_source_sha256": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+    "fresh_compiled_bridge": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_infog17_native_20261016T102000Z/bridge_build/lib/petsc_lu_stage_bridge.cpython-312-x86_64-linux-gnu.so",
+    "fresh_compiled_bridge_sha256": "0364aafeb469c9d377815f4282a0f7f1fb32c5dd94312d1c223dea8fa46a0ac9",
+    "icntl14_control": {
+      "default_path": "Task42 None request uses native installed default through the same bridge artifact; symbolic/INFOG producer-consumer path passed",
+      "error_code": 0,
+      "explicit_integer_control": 40,
+      "observed_actual_and_readback": 40,
+      "same_artifact_mpi2_receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_icntl14_control_mpi2_20261016T104000Z/parent.json",
+      "same_artifact_serial_receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_icntl14_control_serial_20261016T103920Z/parent.json"
+    },
+    "infog17": {
+      "interpretation": "measured symbolic estimate, not peak-RSS bound",
+      "scope": "global replicated; count once, never sum across ranks",
+      "unit": "million_bytes_10^6_bytes; raw integer retained"
+    },
+    "lifecycle": "same MUMPS factor: symbolic -> numeric -> MatSolve -> pre-recovery packet -> destroy",
+    "not_run": [
+      "formal 13.5 nm p6/h10 assembly and factorization",
+      "official fields and R/T/A",
+      "formal MPI8 entry"
+    ]
+  },
+  "formal_execution": {
+    "next_review": "fresh host/resource/scope/affinity/ABI gate for the 13.5 nm MPI8 public entry; no PDE may start until separately admitted",
+    "status": "not_authorized_in_this_stage"
+  },
+  "phase_status": "small_A1_contracts_passed_formal_13p5nm_full3d_not_run",
+  "precommit_head": "6712c19bc1016eb7d0cb269acae795225f5f18c1",
+  "pytest_parent_attempts": [
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "failed; raw retained",
+      "parent_wall_monotonic_ns": 1894561165,
+      "phase": "pure_contract",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_infog17_native_20261016T102000Z/pure_contract_parent.json",
+      "receipt_sha256": "38b98d2e7938b4718192c6b0e279c9fc3814d4d68b302fc2e4ede9a8ab131031",
+      "returncode": 1,
+      "source_sha256_at_attempt": {
+        "src/solvers/dtn_port_3d.py": "c5f317597d3856107ae42c7c5d23fea413d7d23f0b39018c800bf3973ab034de",
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "99c91bf9fedef1dbc6ae81afa17a0858927fa2361715a4875182ec314287ef56",
+        "src/test/test_task42_resource_contract.py": "3a09d8b0e422f48eaec9e53473aa4510baba4295dd1a7f23c64984acaee81735"
+      },
+      "stdout_sha256": "3b6817e9f642c65ece3e6520d74d861aec53d9ef592a81a049da91440ef2a076"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "17 passed, 1 deselected",
+      "parent_wall_monotonic_ns": 1780148414,
+      "phase": "pure_contract_retry",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_infog17_native_20261016T102000Z/pure_contract_retry1_parent.json",
+      "receipt_sha256": "14748f0cebf61d7edba9e1043ec0b4486c8ee60e6256eb6358964dea7357bb40",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/solvers/dtn_port_3d.py": "c5f317597d3856107ae42c7c5d23fea413d7d23f0b39018c800bf3973ab034de",
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "70ebdf2fdb37a2e54c3d851991f2a85a27ad746fc576437ee245d73dec221973",
+        "src/test/test_task42_resource_contract.py": "3a09d8b0e422f48eaec9e53473aa4510baba4295dd1a7f23c64984acaee81735"
+      },
+      "stdout_sha256": "2d76e1f783b4a5189a90d17968ad7ace31bc746ddf1dd0da69c75c8dbf031cea"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "native INFOG producer-consumer passed",
+      "parent_wall_monotonic_ns": 1626507842,
+      "phase": "native_serial",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_infog17_native_20261016T102000Z/native_serial_parent.json",
+      "receipt_sha256": "de62f061f0aeb00335ce12bc3ca0912019ce1902271bcb7bd191dd806ae6639d",
+      "returncode": 0,
+      "stdout_sha256": "52a515accace9e817de3c55cd36790a05593323ffda7d78b4930f41675cd0a03"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "rank 0 and rank 1 each passed",
+      "parent_wall_monotonic_ns": 1812685153,
+      "phase": "native_mpi2",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_infog17_native_20261016T102000Z/native_mpi2_parent.json",
+      "receipt_sha256": "d648b3de9d0dab808da95227225087c0fd75309f3eb8a0ef0153bf9e8f995908",
+      "returncode": 0,
+      "stdout_sha256": "01221db792e215d88d8b4dc6c8bccfcb00c2cbbfcb17a9bec448575d8d1ca2c7"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "failed; raw retained",
+      "parent_wall_monotonic_ns": 2004267829,
+      "phase": "direct_lifecycle_serial_first",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_final_direct_lifecycle_20261016T102640Z/serial_pytest_parent.json",
+      "receipt_sha256": "62e0d0e3b1bb4c182ab92a73154acc67159968594306144d75e9da0fd4d46dff",
+      "returncode": 1,
+      "source_sha256_at_attempt": {
+        "src/io/input_validation.py": "3f9d8ee34f351fc5368dac35a1525a30c1f2c57e02d5af8773e1128c1be24753",
+        "src/runners/task038_input_worker.py": "1ce4e8854346b060b578ec03c4beaa4a76d40ed594c679910ea736e4050ffbde",
+        "src/solvers/dtn_port_3d.py": "c5f317597d3856107ae42c7c5d23fea413d7d23f0b39018c800bf3973ab034de",
+        "src/solvers/full3d_lifecycle_packet.py": "6becb693a22f196de77c94e37ec54d0f744a4c9ade7649ccd25843ccd6e9c060",
+        "src/solvers/petsc_lu_stage.py": "39aea0715dd81cf5e8f2bd5973933b29c5edfe3146dffd8871038307a7603c6b",
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "58d6a41e04a4dea6e9d6efeb08a7d8e56a1885b3c331d723b8099fdd08641a95",
+        "src/test/test_task42_resource_contract.py": "2c27b7318d2eb410d5b722ffde316ce033c050f72d50b47d6f7ecf37a7b5ef21"
+      },
+      "stdout_sha256": "24745b4a51bea852ef50688b731ac2689dbe83ef4bac5386ce20ce4da33146c9"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "passed",
+      "parent_wall_monotonic_ns": 1807239021,
+      "phase": "direct_lifecycle_serial_retry",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_final_direct_lifecycle_retry1_20261016T102835Z/serial_pytest_parent.json",
+      "receipt_sha256": "5927073c74f4afbf562cabdf96e5626b59ee014da715d139cdb0ef93f0bb7c11",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/io/input_schema.py": "39fc9d08639d800e9ea4d158357741b8bb7a014fceb1790a0b76cdced8b22584",
+        "src/io/input_validation.py": "3f9d8ee34f351fc5368dac35a1525a30c1f2c57e02d5af8773e1128c1be24753",
+        "src/runners/task038_full3d_direct.py": "692d23d10a0924d44736eceb7fd949155a11b9b11f93845013c2c62f482d8e43",
+        "src/runners/task038_input_worker.py": "1ce4e8854346b060b578ec03c4beaa4a76d40ed594c679910ea736e4050ffbde",
+        "src/runners/task038_launcher.py": "4df56ce1fffc09b19419b9f3c3068175ac4e395cbe9ac5c27dd774be9adb16bc",
+        "src/solvers/common_3d_case_flow.py": "e93211798849f43c8fa78c765b82cda4c79d053b6debe26050a490b30a419880",
+        "src/solvers/dtn_port_3d.py": "c5f317597d3856107ae42c7c5d23fea413d7d23f0b39018c800bf3973ab034de",
+        "src/solvers/full3d_lifecycle_packet.py": "6becb693a22f196de77c94e37ec54d0f744a4c9ade7649ccd25843ccd6e9c060",
+        "src/solvers/hcurl_assembly_time_condensation.py": "d078d8d2867168848082e965b545e2f1587b26fbb1deea3c22273100503d60f6",
+        "src/solvers/petsc_lu_stage.py": "39aea0715dd81cf5e8f2bd5973933b29c5edfe3146dffd8871038307a7603c6b",
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "361f5208010f4816ec6437e5a3172166ecd81946a9998ab7335f649f1d3b1d3a",
+        "src/test/test_task42_resource_contract.py": "2c27b7318d2eb410d5b722ffde316ce033c050f72d50b47d6f7ecf37a7b5ef21"
+      },
+      "stdout_sha256": "10614a4873e55bede2b72aa637a4e12331644d8bb3ef6e21d5205117c55edb1b"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "failed; raw retained",
+      "parent_wall_monotonic_ns": 4022138082,
+      "phase": "direct_lifecycle_mpi2_first",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_final_direct_lifecycle_retry1_20261016T102835Z/mpi2_pytest_parent.json",
+      "receipt_sha256": "1775391d7bf2288e54b796c88ff9ed481539ee0ff6836a7e176002185c9dd5cb",
+      "returncode": 1,
+      "source_sha256_at_attempt": {
+        "src/io/input_schema.py": "39fc9d08639d800e9ea4d158357741b8bb7a014fceb1790a0b76cdced8b22584",
+        "src/io/input_validation.py": "3f9d8ee34f351fc5368dac35a1525a30c1f2c57e02d5af8773e1128c1be24753",
+        "src/runners/task038_full3d_direct.py": "692d23d10a0924d44736eceb7fd949155a11b9b11f93845013c2c62f482d8e43",
+        "src/runners/task038_input_worker.py": "1ce4e8854346b060b578ec03c4beaa4a76d40ed594c679910ea736e4050ffbde",
+        "src/runners/task038_launcher.py": "4df56ce1fffc09b19419b9f3c3068175ac4e395cbe9ac5c27dd774be9adb16bc",
+        "src/solvers/common_3d_case_flow.py": "e93211798849f43c8fa78c765b82cda4c79d053b6debe26050a490b30a419880",
+        "src/solvers/dtn_port_3d.py": "c5f317597d3856107ae42c7c5d23fea413d7d23f0b39018c800bf3973ab034de",
+        "src/solvers/full3d_lifecycle_packet.py": "6becb693a22f196de77c94e37ec54d0f744a4c9ade7649ccd25843ccd6e9c060",
+        "src/solvers/hcurl_assembly_time_condensation.py": "d078d8d2867168848082e965b545e2f1587b26fbb1deea3c22273100503d60f6",
+        "src/solvers/petsc_lu_stage.py": "39aea0715dd81cf5e8f2bd5973933b29c5edfe3146dffd8871038307a7603c6b",
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "361f5208010f4816ec6437e5a3172166ecd81946a9998ab7335f649f1d3b1d3a",
+        "src/test/test_task42_resource_contract.py": "2c27b7318d2eb410d5b722ffde316ce033c050f72d50b47d6f7ecf37a7b5ef21"
+      },
+      "stdout_sha256": "dd4fd67114a3403150320c7f4942a5105052910d713d1414d844e517f14c6b6d"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "21 passed",
+      "parent_wall_monotonic_ns": 1832894028,
+      "phase": "direct_lifecycle_final_serial",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_final_validation_20261016T102948Z/serial_pytest_parent.json",
+      "receipt_sha256": "e6bfbf811b8e87dead7a788feb37b4f84c40f13cd1cf382bdf583e13d25eaff5",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/io/input_schema.py": "39fc9d08639d800e9ea4d158357741b8bb7a014fceb1790a0b76cdced8b22584",
+        "src/io/input_validation.py": "3f9d8ee34f351fc5368dac35a1525a30c1f2c57e02d5af8773e1128c1be24753",
+        "src/runners/task038_full3d_direct.py": "692d23d10a0924d44736eceb7fd949155a11b9b11f93845013c2c62f482d8e43",
+        "src/runners/task038_input_worker.py": "1ce4e8854346b060b578ec03c4beaa4a76d40ed594c679910ea736e4050ffbde",
+        "src/runners/task038_launcher.py": "4df56ce1fffc09b19419b9f3c3068175ac4e395cbe9ac5c27dd774be9adb16bc",
+        "src/solvers/common_3d_case_flow.py": "e93211798849f43c8fa78c765b82cda4c79d053b6debe26050a490b30a419880",
+        "src/solvers/dtn_port_3d.py": "c5f317597d3856107ae42c7c5d23fea413d7d23f0b39018c800bf3973ab034de",
+        "src/solvers/full3d_lifecycle_packet.py": "6becb693a22f196de77c94e37ec54d0f744a4c9ade7649ccd25843ccd6e9c060",
+        "src/solvers/hcurl_assembly_time_condensation.py": "d078d8d2867168848082e965b545e2f1587b26fbb1deea3c22273100503d60f6",
+        "src/solvers/petsc_lu_stage.py": "39aea0715dd81cf5e8f2bd5973933b29c5edfe3146dffd8871038307a7603c6b",
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "95c5c5eaff76ed702a5449ce920a428355ad4f6505088a2368c458a6abca2ae3",
+        "src/test/test_task42_resource_contract.py": "2c27b7318d2eb410d5b722ffde316ce033c050f72d50b47d6f7ecf37a7b5ef21"
+      },
+      "stdout_sha256": "4d11afab4ec22de5322110711f2454a95558f78da0340f60378f16c50979a2ea"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "two selectors; each rank 4 passed",
+      "parent_wall_monotonic_ns": 1986119170,
+      "phase": "direct_lifecycle_final_mpi2",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_final_validation_20261016T102948Z/mpi2_pytest_parent.json",
+      "receipt_sha256": "786fb6e768aa8aa71ba76326e5e17439a5041dbd77973674b8237a153a5a2e62",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/io/input_schema.py": "39fc9d08639d800e9ea4d158357741b8bb7a014fceb1790a0b76cdced8b22584",
+        "src/io/input_validation.py": "3f9d8ee34f351fc5368dac35a1525a30c1f2c57e02d5af8773e1128c1be24753",
+        "src/runners/task038_full3d_direct.py": "692d23d10a0924d44736eceb7fd949155a11b9b11f93845013c2c62f482d8e43",
+        "src/runners/task038_input_worker.py": "1ce4e8854346b060b578ec03c4beaa4a76d40ed594c679910ea736e4050ffbde",
+        "src/runners/task038_launcher.py": "4df56ce1fffc09b19419b9f3c3068175ac4e395cbe9ac5c27dd774be9adb16bc",
+        "src/solvers/common_3d_case_flow.py": "e93211798849f43c8fa78c765b82cda4c79d053b6debe26050a490b30a419880",
+        "src/solvers/dtn_port_3d.py": "c5f317597d3856107ae42c7c5d23fea413d7d23f0b39018c800bf3973ab034de",
+        "src/solvers/full3d_lifecycle_packet.py": "6becb693a22f196de77c94e37ec54d0f744a4c9ade7649ccd25843ccd6e9c060",
+        "src/solvers/hcurl_assembly_time_condensation.py": "d078d8d2867168848082e965b545e2f1587b26fbb1deea3c22273100503d60f6",
+        "src/solvers/petsc_lu_stage.py": "39aea0715dd81cf5e8f2bd5973933b29c5edfe3146dffd8871038307a7603c6b",
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "95c5c5eaff76ed702a5449ce920a428355ad4f6505088a2368c458a6abca2ae3",
+        "src/test/test_task42_resource_contract.py": "2c27b7318d2eb410d5b722ffde316ce033c050f72d50b47d6f7ecf37a7b5ef21"
+      },
+      "stdout_sha256": "b7053a8c7c082d03bbe1394e233d0ed542de62c195bc21092e800e1a6c9caf61"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "failed; raw retained",
+      "parent_wall_monotonic_ns": 1737313955,
+      "phase": "writer_serial_first",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_writer_recheck_20261016T103126Z/serial_pytest_parent.json",
+      "receipt_sha256": "c6bc95893ac41edd2f2291ddb7c6da0794783f79720e1d136a67792d28ce8a14",
+      "returncode": 1,
+      "source_sha256_at_attempt": {
+        "src/test/test_task42_direct_contract.py": "f270dccf150a607220807983f39f65048d8297ec65956c1980f8354d1c23bd71"
+      },
+      "stdout_sha256": "f08796550832b103dc24ad062e154be271cda317a77a7333639d9d3e6c64a4e1"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "passed",
+      "parent_wall_monotonic_ns": 1613241628,
+      "phase": "writer_serial_retry",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_writer_recheck_20261016T103200Z/serial_pytest_parent.json",
+      "receipt_sha256": "e513760646033dec8f76eb50e1c71a3d77b3ca7ccbe8917a9d941b35cd3f4979",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/test/test_task42_direct_contract.py": "f270dccf150a607220807983f39f65048d8297ec65956c1980f8354d1c23bd71"
+      },
+      "stdout_sha256": "48b925e95f45d74db1159734565fd30ce09f3d05f2b2b069a45a2b0e9a858696"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "passed; two-rank writer success/refusal chain",
+      "parent_wall_monotonic_ns": 2007214812,
+      "phase": "writer_mpi2",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_writer_mpi2_recheck_20261016T103300Z/mpi2_pytest_parent.json",
+      "receipt_sha256": "b07859cd8015acbaebdb2fdc4d4fc7e2a9ef303e32055c4a660b02886e9cd386",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/test/test_task42_direct_contract.py": "f270dccf150a607220807983f39f65048d8297ec65956c1980f8354d1c23bd71"
+      },
+      "stdout_sha256": "1e3fa4203b9afcb71e320b625a66098dee7ce04e6a9c54fffe2a4cc4631305c4"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "passed; earlier source version",
+      "parent_wall_monotonic_ns": 1718021053,
+      "phase": "recovery_delta_scope_prior",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_recovery_delta_scope_20261016T103600Z/parent.json",
+      "receipt_sha256": "9aa616b70b43d5aa56836f42659b522ebbae6edb0889cda8263d4d934c7fa9ed",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/runners/task038_input_worker.py": "1ce4e8854346b060b578ec03c4beaa4a76d40ed594c679910ea736e4050ffbde",
+        "src/solvers/dtn_port_3d.py": "ae989f5b0682a8a79d594103bd912f3190e407f5f4204b37523842e33ea787df",
+        "src/test/test_task42_resource_contract.py": "8e83fae05e149b9907c56ce219c7184d8bf9dfafa82c5772d2c0fd6685c84496"
+      },
+      "stdout_sha256": "f3b7b1e71996acd83f6fe71ef7ef998a16029a9141bed63aad320bad627e6953"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "1 passed; current source before/after identical",
+      "parent_wall_monotonic_ns": 1570869846,
+      "phase": "recovery_delta_scope_current",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_recovery_delta_scope_recheck_20261016T105000Z/parent.json",
+      "receipt_sha256": "f4ee4cf0336bd32c77304b5519aad2874cdd44aab262d1eeccad53149e9db31c",
+      "returncode": 0,
+      "stdout_sha256": "3bcf8ee35bfe1433a5f2a1a2c4286e5c55beaed50203d7d36d9cfd8b9838ffab"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "failed; duplicate cleanup path fixture; raw retained",
+      "parent_wall_monotonic_ns": 1755496679,
+      "phase": "icntl14_serial_first",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_icntl14_control_serial_20261016T103900Z/parent.json",
+      "receipt_sha256": "8b6b5025efece1cae1412f8fadb218275dcd3543b5ff9faf29701996bf200441",
+      "returncode": 1,
+      "source_sha256_at_attempt": {
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "ab5591541555b90936f1e8176d69d24f1e517ea2f6103e019b853f169f35336a"
+      },
+      "stdout_sha256": "a5a909602fe1bdf8ec1a51db04c25e6e17c86f781fcf4c8a1ea214a7235a614e"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "passed; same fresh bridge artifact",
+      "parent_wall_monotonic_ns": 1733057743,
+      "phase": "icntl14_serial",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_icntl14_control_serial_20261016T103920Z/parent.json",
+      "receipt_sha256": "5dad1dce2bd1b30def653bdf98980c318d04eee7f56458890ebc97dfdcd29813",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "fab4f09d3321539f858fa74e2a423d995fbfc54c88ba1835c04e65193c34b249"
+      },
+      "stdout_sha256": "4503d6bd2e97244ce44bfa154d247a6d2c5111c79da316652b3e4b34a15d901a"
+    },
+    {
+      "counted_as_pytest_parent_fee": true,
+      "outcome": "passed; rank 0/1 actual and readback 40",
+      "parent_wall_monotonic_ns": 1894946596,
+      "phase": "icntl14_mpi2",
+      "pytest_started": true,
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_icntl14_control_mpi2_20261016T104000Z/parent.json",
+      "receipt_sha256": "7fae9cc753714242c01cdc643d345800da93fb0f8c78e400965a415a2b4328fb",
+      "returncode": 0,
+      "source_sha256_at_attempt": {
+        "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+        "src/test/test_task42_direct_contract.py": "fab4f09d3321539f858fa74e2a423d995fbfc54c88ba1835c04e65193c34b249"
+      },
+      "stdout_sha256": "4defed28f46fcd2e3fca6169a0684d411aedc46408615bbbb2dd2b1ca18a2e66"
+    }
+  ],
+  "pytest_parent_fee": {
+    "counted_attempts": 17,
+    "not_counted": [
+      {
+        "parent_wall_monotonic_ns": 1303494641,
+        "reason": "rank-private basetemp parent missing; pytest did not start",
+        "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_writer_recheck_20261016T103200Z/mpi2_pytest_parent.json",
+        "receipt_sha256": "fa7391282a8add89ada9e6551cf86e58639a25beaf95c07733cc6f67656f36bd"
+      },
+      {
+        "reason": "A1 resource fixture batch parent wall was not measured; pytest-reported durations are preserved separately, not treated as parent fees"
+      },
+      {
+        "reason": "ABI and native preflight are not pytest parent fees"
+      }
+    ],
+    "rule": "count each actual pytest parent once; do not multiply by MPI ranks",
+    "sum_parent_wall_monotonic_ns": 32796723016,
+    "sum_parent_wall_seconds": 32.796723016
+  },
+  "resource_contract": {
+    "J": "max(whole-job process-tree RSS, dedicated cgroup current only when sampler proves applicability)",
+    "active_trace_gather": {
+      "aggregation": "sum the actual per-rank local allocations",
+      "bytes_per_rank": "2*assembly_time_system.active_rows*PETSc.ScalarType.itemsize",
+      "current_source_fixture_receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_recovery_delta_scope_recheck_20261016T105000Z/parent.json",
+      "inventory_scope": "rank_local",
+      "producer_behavior": "allgather owned shards then concatenate the complete active-trace vector on every rank; both buffers coexist"
+    },
+    "cap_definition": "C=min(256 GiB,Cmax); Cmax=min(1.5 TiB,MemTotal-R)",
+    "delta_scope": "only newly allocated objects at the upcoming phase; does not re-charge already resident J",
+    "limitations": [
+      "small contract qualification is not a fresh formal MPI8 resource admission",
+      "lightweight MPI2 tests did not persist each rank sched_getaffinity",
+      "Task42 receipts do not independently establish OOM counter or disk-free sampling; formal host gate must provide actual evidence"
+    ],
+    "margin_W": "max(8 GiB,ceil(0.05*C))",
+    "phase_gate": [
+      "J+Delta+W<=C",
+      "MemAvailable>=R+Delta+W",
+      "each finite applicable ancestor headroom>=Delta+W"
+    ],
+    "reserve_R": "384 GiB",
+    "runtime_hard_gate": [
+      "J<=C",
+      "MemAvailable>=R",
+      "applicable cgroup/ancestor authority remains known"
+    ],
+    "soft_time_target": "Task42 timeout_seconds=172800 is a status/target only; elapsed time does not terminate this Task42 worker. Ordinary Task038 timeout behavior is unchanged.",
+    "warning": "0.9*C"
+  },
+  "resource_fixture_batch": {
+    "attempts": [
+      {
+        "ordinal": 1,
+        "parent_wall": "not_measured",
+        "pytest_reported_seconds": 0.56,
+        "result": "4 passed, 1 failed"
+      },
+      {
+        "ordinal": 2,
+        "parent_wall": "not_measured",
+        "pytest_reported_seconds": 0.36,
+        "result": "5 passed, 1 failed"
+      },
+      {
+        "ordinal": 3,
+        "parent_wall": "not_measured",
+        "pytest_reported_seconds": 0.41,
+        "result": "12 passed"
+      }
+    ],
+    "parent_wall": "not_measured",
+    "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_resource_contract_serial_20261016T093750Z/batch_receipt.json",
+    "receipt_sha256": "45f6baa77eefa31a553f74a8e5ca2bac38b425f71cfd551e7e73ebf869c539fc"
+  },
+  "retained_failed_attempts": [
+    {
+      "batch_receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_resource_contract_serial_20261016T093750Z/batch_receipt.json",
+      "batch_receipt_sha256": "45f6baa77eefa31a553f74a8e5ca2bac38b425f71cfd551e7e73ebf869c539fc",
+      "ordinal": 1,
+      "parent_wall": "not_measured",
+      "pytest_reported_seconds": 0.56,
+      "result": "4 passed, 1 failed"
+    },
+    {
+      "batch_receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_resource_contract_serial_20261016T093750Z/batch_receipt.json",
+      "batch_receipt_sha256": "45f6baa77eefa31a553f74a8e5ca2bac38b425f71cfd551e7e73ebf869c539fc",
+      "ordinal": 2,
+      "parent_wall": "not_measured",
+      "pytest_reported_seconds": 0.36,
+      "result": "5 passed, 1 failed"
+    },
+    {
+      "outcome": "failed; raw retained",
+      "phase": "pure_contract",
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_infog17_native_20261016T102000Z/pure_contract_parent.json",
+      "receipt_sha256": "38b98d2e7938b4718192c6b0e279c9fc3814d4d68b302fc2e4ede9a8ab131031",
+      "returncode": 1
+    },
+    {
+      "outcome": "failed; raw retained",
+      "phase": "direct_lifecycle_serial_first",
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_final_direct_lifecycle_20261016T102640Z/serial_pytest_parent.json",
+      "receipt_sha256": "62e0d0e3b1bb4c182ab92a73154acc67159968594306144d75e9da0fd4d46dff",
+      "returncode": 1
+    },
+    {
+      "outcome": "failed; raw retained",
+      "phase": "direct_lifecycle_mpi2_first",
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_final_direct_lifecycle_retry1_20261016T102835Z/mpi2_pytest_parent.json",
+      "receipt_sha256": "1775391d7bf2288e54b796c88ff9ed481539ee0ff6836a7e176002185c9dd5cb",
+      "returncode": 1
+    },
+    {
+      "outcome": "failed; raw retained",
+      "phase": "writer_serial_first",
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_writer_recheck_20261016T103126Z/serial_pytest_parent.json",
+      "receipt_sha256": "c6bc95893ac41edd2f2291ddb7c6da0794783f79720e1d136a67792d28ce8a14",
+      "returncode": 1
+    },
+    {
+      "outcome": "failed; duplicate cleanup path fixture; raw retained",
+      "phase": "icntl14_serial_first",
+      "receipt": "results/task42hybrid_az90_50x50_17x20_0p7nm/a1_icntl14_control_serial_20261016T103900Z/parent.json",
+      "receipt_sha256": "8b6b5025efece1cae1412f8fadb218275dcd3543b5ff9faf29701996bf200441",
+      "returncode": 1
+    }
+  ],
+  "schema": "task42.a1_contract_validation.v1",
+  "source_manifest": {
+    "count": 15,
+    "scope": "all modified Task42 input, runtime, direct bridge, and contract-test paths in this A1 change; generated from current bytes, not inherited from a prior 37-path manifest",
+    "sha256": {
+      "input/official/task42hybrid_az90_50x50_17x20_0p7nm/13p5nm_p6h10_full3d_direct_mpi8.dat": "931d7b6c24b1bafb095422abd7752b94b2d315c146c14cf1e559f5d209c32251",
+      "src/io/input_schema.py": "39fc9d08639d800e9ea4d158357741b8bb7a014fceb1790a0b76cdced8b22584",
+      "src/io/input_validation.py": "3f9d8ee34f351fc5368dac35a1525a30c1f2c57e02d5af8773e1128c1be24753",
+      "src/runners/task038_full3d_direct.py": "ae81c8121c099ffdafec0420ab69128657c71b22a50ebd50ba0fc443711d4e58",
+      "src/runners/task038_input_worker.py": "9ff9a89be72616e735c5ef01b7e7b3e1f18a3023f4f4e2811af893a9bda3ce88",
+      "src/runners/task038_launcher.py": "4df56ce1fffc09b19419b9f3c3068175ac4e395cbe9ac5c27dd774be9adb16bc",
+      "src/solvers/common_3d_case_flow.py": "e93211798849f43c8fa78c765b82cda4c79d053b6debe26050a490b30a419880",
+      "src/solvers/dtn_port_3d.py": "72730416324f3af6b7ad53c47d5be23e644e43155045a2ae11bc7c57bbabc313",
+      "src/solvers/full3d_lifecycle_packet.py": "995586bae5899b4647aafb98755828124699aec26f84bb9545044dccb2acf86c",
+      "src/solvers/hcurl_assembly_time_condensation.py": "d078d8d2867168848082e965b545e2f1587b26fbb1deea3c22273100503d60f6",
+      "src/solvers/petsc_lu_stage.py": "ea65adaa3eff918a13a988e8b16fdfd3009e025405b6e308dc868dffcf1be24d",
+      "src/solvers/petsc_lu_stage_bridge.c": "c6d1cf56b1fa99176474048214d2fd5b8fdf12a3cc050e39e75443477f24229d",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "b9f5d0aa1b91770645f54d10ca75e95a57564d7e99131574070ba8c20d842767",
+      "src/test/test_task42_direct_contract.py": "fab4f09d3321539f858fa74e2a423d995fbfc54c88ba1835c04e65193c34b249",
+      "src/test/test_task42_resource_contract.py": "8e83fae05e149b9907c56ce219c7184d8bf9dfafa82c5772d2c0fd6685c84496"
+    }
+  },
+  "task": "task42hybrid_az90_50x50_17x20_0p7nm"
+}

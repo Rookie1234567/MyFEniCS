@@ -26,6 +26,7 @@ typedef struct {
   MatFactorInfo factor_info;     /* public PETSc factor-info value */
   PyObject *source_keepalive;
   PetscInt icntl14_requested;
+  PetscBool icntl14_requested_set;
   PetscInt icntl14_actual;
   PetscErrorCode icntl14_error_code;
   int source_keepalive_released;
@@ -124,8 +125,10 @@ static PyObject *lifecycle_dict(const LUStageFactor *self)
                       "borrowed; Python wrapper retained as keepalive") < 0 ||
       dict_set_string(result, "factor_ownership",
                       "owned from MatGetFactor until destroy") < 0 ||
-      dict_set_petsc_int(result, "icntl14_requested",
-                         self->icntl14_requested) < 0 ||
+      (self->icntl14_requested_set
+           ? dict_set_petsc_int(result, "icntl14_requested",
+                                self->icntl14_requested)
+           : dict_set_none(result, "icntl14_requested")) < 0 ||
       (self->icntl14_error_code
            ? dict_set_none(result, "icntl14_actual")
            : dict_set_petsc_int(result, "icntl14_actual",
@@ -944,8 +947,10 @@ static PyObject *LUStageFactor_analysis_info_raw(LUStageFactor *self,
                       "after_MatLUFactorSymbolic_before_numeric") < 0 ||
       dict_set_string(result, "solver", "MATSOLVERMUMPS") < 0 ||
       dict_set_string(result, "factor_type", "MAT_FACTOR_LU") < 0 ||
-      dict_set_petsc_int(result, "icntl14_requested",
-                         self->icntl14_requested) < 0 ||
+      (self->icntl14_requested_set
+           ? dict_set_petsc_int(result, "icntl14_requested",
+                                self->icntl14_requested)
+           : dict_set_none(result, "icntl14_requested")) < 0 ||
       dict_set_long(result, "icntl14_query_error_code",
                     (long)icntl_error) < 0 ||
       dict_set_string(result, "ordering_input",
@@ -1110,7 +1115,7 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
   static char *keywords[] = {"source", "icntl14", NULL};
   PyObject *source_object = NULL;
   PyObject *icntl_object = NULL;
-  long long icntl14;
+  long long icntl14 = 0;
   PetscInt actual_icntl14 = 0;
   PetscBool available = PETSC_FALSE;
   PetscErrorCode ierr;
@@ -1122,15 +1127,19 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
     PyErr_SetString(PyExc_TypeError, "source must be a petsc4py Mat object");
     return NULL;
   }
-  if (PyBool_Check(icntl_object) || !PyLong_Check(icntl_object)) {
-    PyErr_SetString(PyExc_TypeError, "icntl14 must be an explicit non-bool integer");
-    return NULL;
-  }
-  icntl14 = PyLong_AsLongLong(icntl_object);
-  if (PyErr_Occurred()) return NULL;
-  if (icntl14 < 0 || icntl14 > (long long)PETSC_MAX_INT) {
-    PyErr_SetString(PyExc_ValueError, "icntl14 is outside the installed PetscInt range");
-    return NULL;
+  if (icntl_object != Py_None) {
+    if (PyBool_Check(icntl_object) || !PyLong_Check(icntl_object)) {
+      PyErr_SetString(PyExc_TypeError,
+                      "icntl14 must be None or an explicit non-bool integer");
+      return NULL;
+    }
+    icntl14 = PyLong_AsLongLong(icntl_object);
+    if (PyErr_Occurred()) return NULL;
+    if (icntl14 < 0 || icntl14 > (long long)PETSC_MAX_INT) {
+      PyErr_SetString(PyExc_ValueError,
+                      "icntl14 is outside the installed PetscInt range");
+      return NULL;
+    }
   }
 
   factor = PyObject_New(LUStageFactor, &LUStageFactorType);
@@ -1141,6 +1150,7 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
   Py_INCREF(source_object);
   factor->source = PyPetscMat_Get(source_object);
   factor->icntl14_requested = (PetscInt)icntl14;
+  factor->icntl14_requested_set = (icntl_object != Py_None);
   if (!factor->source) {
     PyErr_SetString(PyExc_ValueError, "source PETSc Mat has been destroyed");
     Py_DECREF((PyObject *)factor);
@@ -1157,7 +1167,7 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
     ierr = MatGetFactor(factor->source, MATSOLVERMUMPS, MAT_FACTOR_LU,
                         &factor->factor);
   }
-  if (!ierr) {
+  if (!ierr && factor->icntl14_requested_set) {
     ierr = MatMumpsSetIcntl(factor->factor, 14,
                             factor->icntl14_requested);
   }
@@ -1166,7 +1176,8 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
     factor->icntl14_error_code = ierr;
     if (!ierr) {
       factor->icntl14_actual = actual_icntl14;
-      if (actual_icntl14 != factor->icntl14_requested) {
+      if (factor->icntl14_requested_set &&
+          actual_icntl14 != factor->icntl14_requested) {
         factor->icntl14_error_code = PETSC_ERR_ARG_INCOMP;
         ierr = PETSC_ERR_ARG_INCOMP;
       }
@@ -1179,7 +1190,7 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
     if (!factor->factor) release_source_keepalive_if_factor_gone(factor);
     Py_DECREF((PyObject *)factor);
     PyErr_Format(PyExc_RuntimeError,
-                 "MUMPS LU factor creation/ICNTL(14) setup or read-back failed: PETSc error %d",
+                 "MUMPS LU factor creation/ICNTL(14) read-back failed: PETSc error %d",
                  (int)ierr);
     return NULL;
   }

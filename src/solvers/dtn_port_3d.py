@@ -971,14 +971,24 @@ def _assembly_time_full_operator_residual(
     condensed: AssemblyTimeCondensedSystem,
     full_rhs: PETSc.Vec,
     reduced_residual_norm: float | None = None,
+    strict_reduced_residual: bool = False,
 ) -> dict[str, Any]:
     """Audit all eliminated FE equations without allocating the full matrix."""
 
-    reduced = (
-        {"linear_system_residual_norm": float(reduced_residual_norm)}
-        if reduced_residual_norm is not None
-        else _linear_residual(reduced_matrix, reduced_rhs, reduced_solution)
-    )
+    if strict_reduced_residual:
+        if reduced_residual_norm is not None or reduced_matrix is None:
+            raise ValueError(
+                "strict Task42 residual requires the actual reduced matrix action"
+            )
+        reduced = _task42_strict_linear_residual(
+            reduced_matrix, reduced_rhs, reduced_solution
+        )
+    else:
+        reduced = (
+            {"linear_system_residual_norm": float(reduced_residual_norm)}
+            if reduced_residual_norm is not None
+            else _linear_residual(reduced_matrix, reduced_rhs, reduced_solution)
+        )
     context = MpcFormActionContext(
         bilinear_form,
         floquet_data.mpc,
@@ -2422,6 +2432,41 @@ def _gather_auxiliary_values(
     return np.asarray(values, dtype=np.complex128)
 
 
+def _task42_gather_auxiliary_values(
+    x_aug: PETSc.Vec, n_fe: int, n_aux: int, comm: MPI.Intracomm
+) -> tuple[np.ndarray | None, str | None]:
+    """Synchronize local owner reads before broadcasting pre-recovery metadata.
+
+    ``Vec.getValues`` is local here.  A normal local read error is collected at
+    the following safe point so no rank enters the broadcast alone.  Errors
+    raised by the allgather or broadcast themselves are intentionally allowed
+    to propagate without a recovery collective.
+    """
+
+    owner_rank = comm.size - 1
+    values = np.zeros(n_aux, dtype=np.complex128)
+    local_error = None
+    if comm.rank == owner_rank and n_aux:
+        try:
+            values[:] = x_aug.getValues(
+                _idx(np.arange(n_fe, n_fe + n_aux, dtype=np.int64))
+            )
+        except Exception as exc:  # noqa: BLE001 - local owner read is collected at the next safe point
+            local_error = f"{type(exc).__name__}: {exc}"
+    read_rows = comm.allgather(
+        {"rank": int(comm.rank), "error": local_error}
+    )
+    errors = [
+        f"rank_{row.get('rank')}_getValues_failed:{row.get('error')}"
+        for row in read_rows
+        if isinstance(row, Mapping) and row.get("error") is not None
+    ]
+    if errors:
+        return None, "; ".join(errors)
+    values = comm.bcast(values, root=owner_rank)
+    return np.asarray(values, dtype=np.complex128), None
+
+
 def _linear_residual(
     A: PETSc.Mat, b: PETSc.Vec, x: PETSc.Vec
 ) -> dict[str, float | None]:
@@ -2449,6 +2494,452 @@ def _linear_residual(
         if residual is not None:
             residual.destroy()
     return result
+
+
+def _task42_strict_linear_residual(
+    A: PETSc.Mat, b: PETSc.Vec, x: PETSc.Vec
+) -> dict[str, Any]:
+    """Evaluate one Task42 residual without hiding PETSc collective errors."""
+
+    residual = b.duplicate()
+    try:
+        A.mult(x, residual)
+        residual.axpy(PETSc.ScalarType(-1.0), b)
+        rhs_norm = float(b.norm())
+        residual_norm = float(residual.norm())
+        relative = residual_norm / max(rhs_norm, 1.0e-30)
+        return {
+            "linear_system_rhs_norm": rhs_norm,
+            "linear_system_solution_norm": float(x.norm()),
+            "linear_system_residual_norm": residual_norm,
+            "linear_system_relative_residual": relative,
+            "finite": bool(
+                np.isfinite(rhs_norm)
+                and np.isfinite(residual_norm)
+                and np.isfinite(relative)
+            ),
+        }
+    finally:
+        residual.destroy()
+
+
+def _task42_full_residual_finite_status(
+    residual: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the measured full-space residual fields at the Task42 boundary."""
+
+    required_values = (
+        "linear_system_rhs_norm",
+        "linear_system_solution_norm",
+        "linear_system_residual_norm",
+        "linear_system_relative_residual",
+        "reduced_trace_dtn_residual_norm",
+        "eliminated_cell_interior_residual_norm",
+        "eliminated_cell_interior_max_abs_residual",
+    )
+    errors: list[str] = []
+    for key in required_values:
+        value = residual.get(key)
+        if isinstance(value, bool) or not isinstance(
+            value, (int, float, np.integer, np.floating)
+        ):
+            errors.append(f"{key}_is_missing_or_not_real")
+        elif not np.isfinite(float(value)):
+            errors.append(f"{key}_is_nonfinite")
+        elif float(value) < 0.0:
+            errors.append(f"{key}_is_negative")
+    method = residual.get("full_operator_residual_method")
+    if (
+        not isinstance(method, str)
+        or "every active eliminated cell-interior" not in method
+        or "condensed full-space RHS" not in method
+    ):
+        errors.append("residual_method_does_not_confirm_eliminated_equations")
+    if residual.get("full_global_matrix_allocated_for_residual") is not False:
+        errors.append("unexpected_full_global_matrix_for_residual")
+    if residual.get("full_trace_matrix_allocated_for_residual") is not False:
+        errors.append("unexpected_full_trace_matrix_for_residual")
+    result = dict(residual)
+    result["finite"] = not errors
+    result["finite_validation_errors"] = errors
+    result["finite_validation_source"] = (
+        "Task42 consumer computed from required full/reduced/eliminated residual fields"
+    )
+    return result
+
+
+def _task42_full_residual_gate_pass(residual: Mapping[str, Any]) -> bool:
+    relative = residual.get("linear_system_relative_residual")
+    return bool(
+        residual.get("finite") is True
+        and isinstance(relative, (int, float, np.integer, np.floating))
+        and not isinstance(relative, bool)
+        and np.isfinite(float(relative))
+        and 0.0 <= float(relative) <= 5.0e-9
+    )
+
+
+def _task42_gate_from_inventory(
+    stage_gate: Callable[[str, int, dict[str, Any]], Mapping[str, Any]],
+    *,
+    stage: str,
+    components: list[dict[str, Any]] | None,
+    uncertainty: str,
+    evidence: Mapping[str, Any] | None = None,
+) -> bool:
+    """Submit one explicit phase inventory through the launcher-owned gate."""
+
+    stage_inventory: dict[str, Any] = {
+        "schema": "task42.direct_phase_delta_inventory.v1",
+        "estimate_uncertainty": uncertainty,
+    }
+    if evidence is not None:
+        stage_inventory["evidence"] = dict(evidence)
+
+    if not isinstance(components, list) or not components:
+        stage_inventory.update({"classification": "refused_unknown_estimate", "components": []})
+        result = stage_gate(
+            stage,
+            -1,
+            stage_inventory,
+        )
+        return isinstance(result, Mapping) and result.get("pass") is True
+    local_delta = 0
+    for component in components:
+        if (
+            not isinstance(component, dict)
+            or component.get("scope") not in ("rank_local", "global_replicated")
+            or component.get("unit") != "bytes"
+            or type(component.get("delta_bytes")) is not int
+            or component["delta_bytes"] < 0
+        ):
+            stage_inventory.update({"classification": "refused_invalid_estimate", "components": []})
+            result = stage_gate(
+                stage,
+                -1,
+                stage_inventory,
+            )
+            return isinstance(result, Mapping) and result.get("pass") is True
+        if component["scope"] == "rank_local":
+            local_delta += component["delta_bytes"]
+    stage_inventory.update(
+        {"classification": "predicted", "components": components}
+    )
+    result = stage_gate(
+        stage,
+        local_delta,
+        stage_inventory,
+    )
+    return isinstance(result, Mapping) and result.get("pass") is True
+
+
+def _task42_active_trace_gather_memory_component(
+    *, active_trace_rows: int, scalar_bytes: int
+) -> dict[str, Any]:
+    """Estimate the two global-length NumPy buffers live during recovery gather.
+
+    ``_active_trace_values_from_augmented`` holds the allgather packet arrays
+    while ``np.concatenate`` creates the returned full active-trace vector.
+    Both buffers exist on every rank at that point, so this is rank-local
+    memory and the phase callback must sum the per-rank amount.
+    """
+
+    if type(active_trace_rows) is not int or active_trace_rows < 0:
+        raise ValueError("active_trace_rows must be a nonnegative exact integer")
+    if type(scalar_bytes) is not int or scalar_bytes <= 0:
+        raise ValueError("scalar_bytes must be a positive exact integer")
+    copies_per_rank = 2
+    return {
+        "name": "task42_global_active_trace_gather_buffers",
+        "scope": "rank_local",
+        "delta_bytes": int(copies_per_rank * active_trace_rows * scalar_bytes),
+        "unit": "bytes",
+        "classification": "predicted_from_actual_active_trace_rows_and_scalar_width",
+        "basis": {
+            "active_trace_rows": active_trace_rows,
+            "scalar_bytes": scalar_bytes,
+            "copies_per_rank": copies_per_rank,
+            "formula": "2*global_active_trace_rows*scalar_bytes per rank",
+            "objects": [
+                "allgather packet arrays retained during concatenation",
+                "concatenated global active-trace vector",
+            ],
+            "aggregation": "sum_rank_local_values",
+            "allocator_overhead_upper_bound_proven": False,
+        },
+        "upper_bound_proven": False,
+    }
+
+
+def _task42_pre_symbolic_inventory(context: Mapping[str, Any]) -> list[dict[str, Any]] | None:
+    source = context.get("source_matrix_inventory")
+    if not isinstance(source, Mapping):
+        return None
+    local_size = source.get("local_size")
+    nnz = source.get("local_nnz_used")
+    if (
+        not isinstance(local_size, list)
+        or len(local_size) != 2
+        or any(type(value) is not int or value < 0 for value in local_size)
+        or type(nnz) is not int
+        or nnz <= 0
+    ):
+        return None
+    local_rows = local_size[0]
+    index_bytes = np.dtype(PETSc.IntType).itemsize
+    scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+    row_pointer_bytes = (local_rows + 1) * index_bytes
+    csr_copy_bytes = nnz * (scalar_bytes + index_bytes) + row_pointer_bytes
+    # The undirected ordering graph is predicted from the assembled local
+    # sparsity, not measured allocator growth.  MUMPS private symbolic work is
+    # unresolved here and receives its own INFOG(17) gate before numeric.
+    ordering_graph_bytes = (2 * nnz + local_rows + 1) * index_bytes
+    return [
+        {
+            "name": "mumps_sparse_input_csr_copy",
+            "scope": "rank_local",
+            "delta_bytes": int(csr_copy_bytes),
+            "unit": "bytes",
+            "classification": "predicted_from_measured_local_nnz_and_ABI_widths",
+            "basis": {
+                "local_nnz_used": nnz,
+                "local_rows": local_rows,
+                "scalar_bytes": scalar_bytes,
+                "petsc_int_bytes": index_bytes,
+                "formula": "nnz*(scalar_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
+            },
+            "upper_bound_proven": False,
+        },
+        {
+            "name": "mumps_ordering_graph_index_estimate",
+            "scope": "rank_local",
+            "delta_bytes": int(ordering_graph_bytes),
+            "unit": "bytes",
+            "classification": "predicted_from_measured_local_sparsity",
+            "basis": {
+                "local_nnz_used": nnz,
+                "local_rows": local_rows,
+                "petsc_int_bytes": index_bytes,
+                "formula": "(2*local_nnz+local_rows+1)*PetscInt_bytes",
+            },
+            "upper_bound_proven": False,
+        },
+    ]
+
+
+def _task42_symbolic_memory_inventory(
+    analysis: Mapping[str, Any],
+) -> list[dict[str, Any]] | None:
+    rows = analysis.get("INFOG_api_raw_by_rank")
+    if not isinstance(rows, list):
+        return None
+    matches = [
+        row
+        for row in rows
+        if isinstance(row, Mapping)
+        and row.get("index") == 17
+        and row.get("api") == "MatMumpsGetInfog"
+        and row.get("label") == "global_sum_symbolic_in_core_work_estimate"
+    ]
+    if len(matches) != 1:
+        return None
+    row = matches[0]
+    raw = row.get("raw_value")
+    if (
+        row.get("query_error_code") != 0
+        or type(raw) is not int
+        or raw < 0
+        or row.get("unit")
+        != "million_bytes_10^6_bytes; raw integer retained"
+        or row.get("meaning_status") != "verified_against_MUMPS_5.6.2_user_guide"
+        or row.get("scope")
+        != "MUMPS global field returned on this rank; do not sum replicated INFOG values across ranks"
+    ):
+        return None
+    return [
+        {
+            "name": "mumps_infog17_global_symbolic_work_estimate",
+            "scope": "global_replicated",
+            "delta_bytes": raw * 1_000_000,
+            "unit": "bytes",
+            "classification": "measured_MUMPS_analysis_estimate_not_RSS_bound",
+            "source": "MUMPS INFOG(17)",
+            "source_api": "MatMumpsGetInfog",
+            "source_label": "global_sum_symbolic_in_core_work_estimate",
+            "source_unit": "million_bytes_10^6_bytes; raw integer retained",
+            "raw_value": raw,
+            "conversion": "raw_integer_times_1000000",
+            "source_scope": "global_replicated_count_once_not_summed_across_ranks",
+            "upper_bound_proven": False,
+        }
+    ]
+
+
+def _task42_pre_recovery_lifecycle(
+    *,
+    solve_A: PETSc.Mat,
+    solve_b: PETSc.Vec,
+    solve_x: PETSc.Vec,
+    factor: Any,
+    numeric_stage: Mapping[str, Any],
+    n_fe: int,
+    n_aux: int,
+    modes: list[PortMode3D],
+    comm: MPI.Intracomm,
+    out_dir: Path,
+    started: float | None,
+    petsc_options: Mapping[str, Any],
+    packet_directory: Path,
+    packet_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Freeze the original-system solve before destroying the staged factor."""
+
+    residual_started = time.perf_counter()
+    residual = _task42_strict_linear_residual(solve_A, solve_b, solve_x)
+    residual_seconds = float(
+        comm.allreduce(time.perf_counter() - residual_started, op=MPI.MAX)
+    )
+    relative = residual["linear_system_relative_residual"]
+    residual_pass = bool(
+        residual["finite"]
+        and isinstance(relative, (int, float))
+        and np.isfinite(float(relative))
+        and 0.0 <= float(relative) <= 5.0e-9
+    )
+    residual_pass = bool(comm.allreduce(residual_pass, op=MPI.LAND))
+    frozen_solver = {
+        "solve_semantics": "direct_MatSolve_no_KSP_reason",
+        "ksp_converged_reason": None,
+        "ksp_iterations": None,
+        "factor_stage_identity": getattr(factor, "stage_identity", None),
+        "factor_numeric_ready": bool(getattr(factor, "numeric_ready", False)),
+        "factor_lifecycle_before_destroy": dict(factor.lifecycle),
+        "symbolic_analysis_info": dict(factor.analysis_info_raw),
+        "numeric_info": dict(factor.numeric_info_raw or {}),
+        "numeric_stage": dict(numeric_stage),
+        "original_augmented_A_residual_pass": residual_pass,
+    }
+    external_q, auxiliary_error = _task42_gather_auxiliary_values(
+        solve_x, n_fe, n_aux, comm
+    )
+    metadata = {
+        "external_q": (
+            None
+            if external_q is None
+            else [[float(value.real), float(value.imag)] for value in external_q]
+        ),
+        "external_q_read_error": auxiliary_error,
+        "external_keys": _pre_recovery_mode_keys(modes),
+        "residual": residual,
+        "solver_telemetry": frozen_solver,
+        "task42_direct_factor_identity": getattr(factor, "stage_identity", None),
+        "task42_direct_original_residual_limit": 5.0e-9,
+        "task42_direct_original_residual_pass": residual_pass,
+    }
+    packet = None
+    primary: BaseException | None = (
+        RuntimeError(
+            "Task42 original augmented-system residual exceeded 5e-9; "
+            "the packet will be attempted before factor cleanup"
+        )
+        if not residual_pass
+        else None
+    )
+    if auxiliary_error is not None:
+        auxiliary_exception = RuntimeError(
+            "Task42 auxiliary solution values could not be read consistently: "
+            + auxiliary_error
+        )
+        if primary is None:
+            primary = auxiliary_exception
+        else:
+            primary.add_note(str(auxiliary_exception))
+    packet_started = time.perf_counter()
+    packet = write_packet(
+        packet_directory,
+        np.asarray(solve_x.getArray(readonly=True), dtype=np.complex128).copy(),
+        np.asarray(solve_b.getArray(readonly=True), dtype=np.complex128).copy(),
+        identity=packet_identity,
+        metadata=metadata,
+        ownership_range=solve_x.getOwnershipRange(),
+        comm=comm,
+        allow_nonfinite_diagnostic=True,
+        collective_writer_errors=True,
+    )
+    if packet.get("pass") is not True:
+        packet_error = RuntimeError(
+            "Task42 pre-recovery packet writer refused: "
+            f"{packet.get('errors', [])!r}"
+        )
+        if primary is None:
+            primary = packet_error
+        else:
+            primary.add_note(f"Secondary packet writer failure: {packet_error}")
+    packet_write_seconds = float(time.perf_counter() - packet_started)
+    factor_destroy_started = time.perf_counter()
+    cleanup = dict(factor.destroy())
+    destroy_seconds = float(time.perf_counter() - factor_destroy_started)
+    cleanup_rows = comm.allgather(
+        {
+            "status": cleanup,
+            "error": None,
+            "packet_pass": None if packet is None else packet.get("pass"),
+        }
+    )
+    cleanup_pass = all(
+        isinstance(item, Mapping)
+        and item.get("error") is None
+        and isinstance(item.get("status"), Mapping)
+        and item["status"].get("factor_released") is True
+        and item["status"].get("destroy_error_code") == 0
+        for item in cleanup_rows
+    ) and len(cleanup_rows) == comm.size
+    cleanup_pass = bool(comm.allreduce(cleanup_pass, op=MPI.LAND))
+    destroy_seconds_max = float(
+        comm.allreduce(destroy_seconds, op=MPI.MAX)
+    )
+    if primary is not None:
+        primary.add_note(
+            "Task42 pre-recovery capture outcome: "
+            f"packet={packet!r}, cleanup_by_rank={cleanup_rows!r}"
+        )
+        raise primary
+    if not cleanup_pass:
+        raise RuntimeError(
+            "Task42 staged MUMPS factor was not confirmed destroyed on every rank"
+        )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="task42_pre_recovery_packet",
+        status="end",
+        started=started,
+        petsc_options=petsc_options,
+        extra={"packet": packet, "residual": residual},
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="task42_factor_destroy_before_recovery",
+        status="end",
+        started=started,
+        petsc_options=petsc_options,
+        extra={
+            "destroy_status_by_rank": cleanup_rows,
+            "destroy_seconds_max_rank": destroy_seconds_max,
+            "destroyed_before_recovery": True,
+        },
+    )
+    return {
+        "packet": packet,
+        "residual": residual,
+        "solver_telemetry": frozen_solver,
+        "cleanup": cleanup_rows,
+        "residual_seconds_max_rank": residual_seconds,
+        "packet_write_seconds_local": packet_write_seconds,
+        "factor_destroy_seconds_max_rank": destroy_seconds_max,
+        "factor_destroyed_before_recovery": True,
+    }
 
 
 def _pre_recovery_solver_telemetry(
@@ -2907,6 +3398,8 @@ def _solve_stage4_dtn_port_total_field_impl(
     canonical_vector_export: bool = False,
     pre_recovery_packet_directory: Path | None = None,
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
+    task42_stage_gate=None,
+    task42_bridge_path: str | Path | None = None,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -2951,6 +3444,25 @@ def _solve_stage4_dtn_port_total_field_impl(
         linear_solver_port,
         Stage4NeverMaterializedLinearSolverPort,
     )
+    task42_staged_direct = (
+        task42_stage_gate is not None or task42_bridge_path is not None
+    )
+    if task42_staged_direct and not (
+        callable(task42_stage_gate)
+        and isinstance(task42_bridge_path, (str, Path))
+        and str(task42_bridge_path).strip()
+        and linear_solver_port is None
+        and pre_recovery_packet_directory is not None
+        and isinstance(pre_recovery_packet_identity, Mapping)
+        and not cfg.matrix_diagnostics_assemble_only
+        and not cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError("Task42 direct stage gate, bridge, and packet binding are incomplete")
+    task42_factor = None
+    task42_analysis: dict[str, Any] | None = None
+    task42_numeric: dict[str, Any] | None = None
+    task42_stage_timing: dict[str, float] = {}
+    task42_direct_solve_pass = False
     if matrix_free_dtn and not never_materialized_port:
         raise ValueError("matrix-free DtN requires the action-only solver port")
     if matrix_free_dtn_probe and (not matrix_free_dtn or not never_materialized_port):
@@ -3134,6 +3646,9 @@ def _solve_stage4_dtn_port_total_field_impl(
                     static_retain_local_schur_for_matrix_free or never_materialized_port
                 ),
                 materialize_global_matrix=not never_materialized_port,
+                task42_stage_gate=(
+                    task42_stage_gate if task42_staged_direct else None
+                ),
             )
             reduction_system = assembly_time_system
         A_base = None
@@ -4329,7 +4844,166 @@ def _solve_stage4_dtn_port_total_field_impl(
     t0 = time.perf_counter()
     external_snapshot: Stage4ExternalLinearSolverSnapshot | None = None
     try:
-        if linear_solver_port is None:
+        if task42_staged_direct:
+            from .petsc_lu_stage import (
+                TASK42_STAGED_DIRECT_STAGE_IDENTITY,
+                StagedMumpsLUFactory,
+                load_lu_stage_bridge,
+            )
+
+            bridge = load_lu_stage_bridge(task42_bridge_path)
+
+            def pre_symbolic_gate(context: Mapping[str, Any]) -> bool:
+                inventory = _task42_pre_symbolic_inventory(context)
+                return _task42_gate_from_inventory(
+                    task42_stage_gate,
+                    stage="before_mumps_symbolic_analysis",
+                    components=inventory,
+                    uncertainty=(
+                        "source-derived CSR and ordering-index estimates are predicted; "
+                        "MUMPS private symbolic workspace is not bounded here and "
+                        "will be checked from INFOG(17) before numeric"
+                    ),
+                )
+
+            def pre_numeric_gate(context: Mapping[str, Any]) -> bool:
+                analysis = context.get("analysis_info_raw")
+                icntl14_actual = context.get("icntl14_actual")
+                readback_error = context.get("icntl14_readback_error")
+                inventory = (
+                    _task42_symbolic_memory_inventory(analysis)
+                    if isinstance(analysis, Mapping)
+                    else None
+                )
+                if (
+                    readback_error is not None
+                    or type(icntl14_actual) is not int
+                    or icntl14_actual < 0
+                ):
+                    inventory = None
+                if inventory is not None:
+                    local_size = int(solve_b.getLocalSize())
+                    inventory.append(
+                        {
+                            "name": "task42_direct_solution_vector_after_numeric",
+                            "scope": "rank_local",
+                            "delta_bytes": local_size
+                            * np.dtype(PETSc.ScalarType).itemsize,
+                            "unit": "bytes",
+                            "classification": "predicted_from_measured_PETSc_local_vector_size",
+                            "basis": {
+                                "local_size": local_size,
+                                "scalar_bytes": np.dtype(PETSc.ScalarType).itemsize,
+                                "formula": "local_size*scalar_bytes",
+                            },
+                            "upper_bound_proven": False,
+                        }
+                    )
+                return _task42_gate_from_inventory(
+                    task42_stage_gate,
+                    stage="before_mumps_numeric_factorization",
+                    components=inventory,
+                    uncertainty=(
+                        "INFOG(17) is a replicated MUMPS symbolic-work estimate in "
+                        "million bytes, not a measured RSS or a hard allocation bound"
+                    ),
+                    evidence={
+                        "icntl14_requested": context.get("icntl14_requested"),
+                        "icntl14_actual_before_numeric": icntl14_actual,
+                        "icntl14_readback_error": readback_error,
+                        "analysis_infog17_entries": (
+                            None
+                            if not isinstance(analysis, Mapping)
+                            else analysis.get("INFOG_api_raw_by_rank")
+                        ),
+                    },
+                )
+
+            factory = StagedMumpsLUFactory(
+                bridge,
+                pre_symbolic_gate=pre_symbolic_gate,
+                pre_numeric_gate=pre_numeric_gate,
+                deferred_numeric_stage_identities=(
+                    TASK42_STAGED_DIRECT_STAGE_IDENTITY,
+                ),
+            )
+            symbolic_started = time.perf_counter()
+            task42_factor = factory(
+                solve_A,
+                icntl14=None,
+                stage_identity=TASK42_STAGED_DIRECT_STAGE_IDENTITY,
+                defer_numeric=True,
+            )
+            task42_stage_timing["symbolic_seconds_max_rank"] = float(
+                comm.allreduce(
+                    time.perf_counter() - symbolic_started,
+                    op=MPI.MAX,
+                )
+            )
+            numeric_started = time.perf_counter()
+            task42_numeric = dict(task42_factor.complete_numeric())
+            task42_analysis = dict(task42_factor.analysis_info_raw)
+            task42_stage_timing["numeric_seconds_max_rank"] = float(
+                comm.allreduce(
+                    time.perf_counter() - numeric_started,
+                    op=MPI.MAX,
+                )
+            )
+            solve_vector_bytes = int(
+                solve_b.getLocalSize()
+                * np.dtype(PETSc.ScalarType).itemsize
+            )
+            if not _task42_gate_from_inventory(
+                task42_stage_gate,
+                stage="before_mumps_mat_solve_output_vector",
+                components=[
+                    {
+                        "name": "task42_direct_solve_output_vector",
+                        "scope": "rank_local",
+                        "delta_bytes": solve_vector_bytes,
+                        "unit": "bytes",
+                        "classification": "predicted_from_actual_PETSc_vector_layout",
+                        "basis": {
+                            "local_size": int(solve_b.getLocalSize()),
+                            "scalar_bytes": np.dtype(PETSc.ScalarType).itemsize,
+                            "formula": "local_size*scalar_bytes",
+                        },
+                        "upper_bound_proven": False,
+                    }
+                ],
+                uncertainty=(
+                    "known solve-vector allocation is gated; MUMPS solve workspace is not "
+                    "predicted from INFOG(17) and remains covered by runtime hard guards"
+                ),
+                evidence={
+                    "numeric_complete": True,
+                    "factor_remains_live_for_solve": True,
+                },
+            ):
+                raise MemoryError("Task42 resource stage refused before MUMPS MatSolve")
+            solve_x = solve_b.duplicate()
+            solve_x.set(PETSc.ScalarType(0.0))
+            solve_started = time.perf_counter()
+            try:
+                task42_factor.solve(solve_b, solve_x)
+            except BaseException as primary:
+                try:
+                    cleanup = task42_factor.destroy()
+                    primary.add_note(
+                        f"Task42 direct solve cleanup status: {cleanup!r}"
+                    )
+                except BaseException as cleanup_error:  # noqa: BLE001 - preserve the numeric failure as primary
+                    primary.add_note(
+                        "Task42 direct solve cleanup raised: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+                raise
+            task42_stage_timing["matsolve_seconds_max_rank"] = float(
+                comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX)
+            )
+            ksp = None
+            ksp_telemetry = {}
+        elif linear_solver_port is None:
             solve_x, ksp, ksp_telemetry = _solve_augmented_system(
                 solve_A,
                 solve_b,
@@ -4522,31 +5196,137 @@ def _solve_stage4_dtn_port_total_field_impl(
     pre_recovery_linear_residual = None
     pre_recovery_solver_telemetry = None
     if pre_recovery_packet_directory is not None:
-        if external_snapshot is not None or ksp is None:
+        if task42_staged_direct:
+            if task42_factor is None:
+                raise RuntimeError("Task42 staged factor is missing before pre-recovery")
+            task42_pre_recovery = _task42_pre_recovery_lifecycle(
+                solve_A=solve_A,
+                solve_b=solve_b,
+                solve_x=solve_x,
+                factor=task42_factor,
+                numeric_stage=task42_numeric or {},
+                n_fe=n_fe,
+                n_aux=n_aux,
+                modes=modes,
+                comm=comm,
+                out_dir=out_dir,
+                started=started,
+                petsc_options=petsc_options,
+                packet_directory=pre_recovery_packet_directory,
+                packet_identity=pre_recovery_packet_identity,
+            )
+            task42_stage_timing.update(
+                {
+                    "pre_recovery_residual_seconds_max_rank": task42_pre_recovery[
+                        "residual_seconds_max_rank"
+                    ],
+                    "pre_recovery_packet_write_seconds_local": task42_pre_recovery[
+                        "packet_write_seconds_local"
+                    ],
+                    "factor_destroy_seconds_max_rank": task42_pre_recovery[
+                        "factor_destroy_seconds_max_rank"
+                    ],
+                }
+            )
+            task42_direct_solve_pass = True
+            pre_recovery_lifecycle = task42_pre_recovery
+            pre_recovery_solver_telemetry = task42_pre_recovery[
+                "solver_telemetry"
+            ]
+            pre_recovery_linear_residual = task42_pre_recovery["residual"]
+            task42_factor = None
+        elif external_snapshot is not None or ksp is None:
             raise ValueError(
                 "pre-recovery lifecycle requires the direct PETSc KSP path"
             )
-        (
+        else:
+            (
             pre_recovery_lifecycle,
             pre_recovery_solver_telemetry,
-        ) = _run_pre_recovery_lifecycle(
-            solve_A=solve_A,
-            solve_b=solve_b,
-            solve_x=solve_x,
-            ksp=ksp,
-            ksp_telemetry=ksp_telemetry,
-            n_fe=n_fe,
-            n_aux=n_aux,
-            modes=modes,
-            comm=comm,
-            out_dir=out_dir,
-            started=started,
-            petsc_options=petsc_options,
-            packet_directory=pre_recovery_packet_directory,
-            packet_identity=pre_recovery_packet_identity,
-        )
-        pre_recovery_linear_residual = pre_recovery_lifecycle["residual"]
-        ksp = None
+            ) = _run_pre_recovery_lifecycle(
+                solve_A=solve_A,
+                solve_b=solve_b,
+                solve_x=solve_x,
+                ksp=ksp,
+                ksp_telemetry=ksp_telemetry,
+                n_fe=n_fe,
+                n_aux=n_aux,
+                modes=modes,
+                comm=comm,
+                out_dir=out_dir,
+                started=started,
+                petsc_options=petsc_options,
+                packet_directory=pre_recovery_packet_directory,
+                packet_identity=pre_recovery_packet_identity,
+            )
+            pre_recovery_linear_residual = pre_recovery_lifecycle["residual"]
+            ksp = None
+
+        if task42_staged_direct:
+            scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+            block_size = int(V.dofmap.index_map_bs)
+            index_map = V.dofmap.index_map
+            local_dofs_with_ghosts = int(
+                (index_map.size_local + index_map.num_ghosts) * block_size
+            )
+            local_cells = int(
+                mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_local
+            )
+            element_dimension = int(V.element.space_dimension)
+            local_recovery_bytes = (
+                2 * local_dofs_with_ghosts * scalar_bytes
+                + local_cells * element_dimension * scalar_bytes
+                + int(solve_x.getLocalSize()) * scalar_bytes
+            )
+            if assembly_time_system is None:
+                raise RuntimeError(
+                    "Task42 recovery gate requires the assembly-time active-trace layout"
+                )
+            recovery_components = [
+                {
+                    "name": "task42_recovered_field_vectors_and_cell_work",
+                    "scope": "rank_local",
+                    "delta_bytes": int(local_recovery_bytes),
+                    "unit": "bytes",
+                    "classification": "predicted_from_actual_local_dofs_cells_and_element_dimension",
+                    "basis": {
+                        "local_dofs_with_ghosts": local_dofs_with_ghosts,
+                        "local_cells": local_cells,
+                        "element_dimension": element_dimension,
+                        "solve_vector_local_size": int(solve_x.getLocalSize()),
+                        "scalar_bytes": scalar_bytes,
+                        "formula": "2*local_dofs*scalar_bytes + local_cells*element_dimension*scalar_bytes + local_solve_vector_size*scalar_bytes",
+                        "objects": [
+                            "recovered DOLFINx field and PETSc vector",
+                            "cell-interior recovery values",
+                            "recovery-stage active local copy",
+                        ],
+                    },
+                    "upper_bound_proven": False,
+                },
+                _task42_active_trace_gather_memory_component(
+                    active_trace_rows=int(assembly_time_system.active_rows),
+                    scalar_bytes=scalar_bytes,
+                ),
+            ]
+            if not _task42_gate_from_inventory(
+                task42_stage_gate,
+                stage="before_full_field_recovery_after_factor_destroy",
+                components=recovery_components,
+                uncertainty=(
+                    "predicted from actual FE/vector dimensions and recovery source; "
+                    "DOLFINx vector and MPI gather allocator overhead is not a proven upper bound"
+                ),
+                evidence={
+                    "factor_destroyed_before_recovery": True,
+                    "full_operator_rhs_local_size": (
+                        None
+                        if assembly_time_full_rhs is None
+                        else int(assembly_time_full_rhs.getLocalSize())
+                    ),
+                },
+            ):
+                raise MemoryError("Task42 resource stage refused before full-field recovery")
 
         _write_progress_event(
             out_dir,
@@ -4683,7 +5463,10 @@ def _solve_stage4_dtn_port_total_field_impl(
             reduced_residual_norm=(
                 external_snapshot.reduced_residual_norm if released_external else None
             ),
+            strict_reduced_residual=task42_staged_direct,
         )
+        if task42_staged_direct:
+            linear_residual = _task42_full_residual_finite_status(linear_residual)
         embedded_fe_solution.destroy()
         embedded_fe_solution = None
         assembly_time_full_rhs.destroy()
@@ -4695,7 +5478,22 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
         )
     else:
-        linear_residual = _linear_residual(A_aug, b_aug, x_aug)
+        linear_residual = (
+            _task42_strict_linear_residual(A_aug, b_aug, x_aug)
+            if task42_staged_direct
+            else _linear_residual(A_aug, b_aug, x_aug)
+        )
+    if task42_staged_direct:
+        task42_full_true_residual = dict(linear_residual)
+        local_final_gate = bool(
+            task42_direct_solve_pass
+            and _task42_full_residual_gate_pass(linear_residual)
+        )
+        task42_direct_solve_pass = bool(
+            comm.allreduce(local_final_gate, op=MPI.LAND)
+        )
+    else:
+        task42_full_true_residual = None
     external_rta_gate_pass = (
         None
         if external_snapshot is None
@@ -4761,14 +5559,18 @@ def _solve_stage4_dtn_port_total_field_impl(
         petsc_options=petsc_options,
     )
     aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
+    task42_output_gate_pass = (
+        not task42_staged_direct or task42_direct_solve_pass
+    )
     port_metrics = (
         {}
-        if external_rta_gate_pass is False
+        if external_rta_gate_pass is False or not task42_output_gate_pass
         else _port_power_metrics(cfg, modes, aux_values, incident_projections)
     )
     if (
         cfg.dtn_auxiliary_direct_projection_audit
         and external_rta_gate_pass is not False
+        and task42_output_gate_pass
     ):
         _write_progress_event(
             out_dir,
@@ -4821,7 +5623,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             "ordinary_default_changed": False,
         }
     port_metrics.update(timing_details)
-    if external_rta_gate_pass is not False:
+    if external_rta_gate_pass is not False and task42_output_gate_pass:
         _write_port_outputs(
             out_dir,
             cfg,
@@ -4836,7 +5638,9 @@ def _solve_stage4_dtn_port_total_field_impl(
         comm,
         stage=(
             "after_official_rta"
-            if external_rta_gate_pass is not False
+            if external_rta_gate_pass is not False and task42_output_gate_pass
+            else "task42_direct_residual_gate_failed"
+            if task42_staged_direct and not task42_output_gate_pass
             else "external_rta_not_run"
         ),
         status="end",
@@ -4908,7 +5712,13 @@ def _solve_stage4_dtn_port_total_field_impl(
             "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
             "ordinary_default_changed": False,
         }
-    if external_snapshot is None:
+    if task42_staged_direct:
+        solver_converged_reason = None
+        solver_iterations = None
+        solver_residual_norm = None
+        solver_ksp_type = None
+        solver_pc_type = "MUMPS_STAGED_DIRECT"
+    elif external_snapshot is None:
         if pre_recovery_solver_telemetry is None:
             solver_converged_reason = int(ksp.getConvergedReason())
             solver_iterations = int(ksp.getIterationNumber())
@@ -4931,6 +5741,9 @@ def _solve_stage4_dtn_port_total_field_impl(
         solver_pc_type = external_snapshot.pc_type
     solver_info = {
         "solver_backend": (
+            "Task42 staged MUMPS direct MatSolve"
+            if task42_staged_direct
+            else
             "external static-condensed linear-solver port"
             if external_snapshot is not None
             else "PETSc exact-sequence inactive-row-free variable-p assembly-time "
@@ -5031,6 +5844,34 @@ def _solve_stage4_dtn_port_total_field_impl(
         "pre_recovery_lifecycle": pre_recovery_lifecycle,
         "pre_recovery_linear_residual": pre_recovery_linear_residual,
         "factor_destroyed_before_recovery": bool(pre_recovery_lifecycle is not None),
+        "task42_staged_direct": task42_staged_direct,
+        "task42_direct_solve_semantics": (
+            "direct_MatSolve_no_KSP_reason" if task42_staged_direct else None
+        ),
+        "task42_direct_residual_limit": 5.0e-9 if task42_staged_direct else None,
+        "task42_direct_residual_gate_pass": (
+            task42_direct_solve_pass if task42_staged_direct else None
+        ),
+        "task42_pre_recovery_true_residual": (
+            None
+            if not task42_staged_direct or pre_recovery_linear_residual is None
+            else dict(pre_recovery_linear_residual)
+        ),
+        "task42_full_true_residual": task42_full_true_residual,
+        "task42_icntl14_requested": (
+            None if task42_analysis is None else task42_analysis.get("icntl14_requested")
+        ),
+        "task42_icntl14_actual": (
+            None
+            if task42_analysis is None
+            else task42_analysis.get("icntl14_actual_before_numeric")
+        ),
+        "task42_icntl14_symbolic_readback_actual": (
+            None if task42_analysis is None else task42_analysis.get("icntl14_actual")
+        ),
+        "task42_symbolic_analysis_info": task42_analysis,
+        "task42_numeric_info": task42_numeric,
+        "task42_stage_timing": dict(task42_stage_timing),
         **ksp_telemetry,
         **timing_details,
         **linear_residual,
@@ -5264,6 +6105,8 @@ def solve_stage4_dtn_port_total_field(
     canonical_vector_export: bool = False,
     pre_recovery_packet_directory: Path | None = None,
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
+    task42_stage_gate=None,
+    task42_bridge_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -5284,6 +6127,10 @@ def solve_stage4_dtn_port_total_field(
             bool(canonical_vector_export),
             pre_recovery_packet_directory is not None,
             pre_recovery_packet_identity is not None,
+            task42_stage_gate is not None,
+            None
+            if task42_bridge_path is None
+            else str(Path(task42_bridge_path).resolve()),
         )
     )
     if len(set(observer_flags)) != 1:
@@ -5318,6 +6165,8 @@ def solve_stage4_dtn_port_total_field(
             canonical_vector_export=canonical_vector_export,
             pre_recovery_packet_directory=pre_recovery_packet_directory,
             pre_recovery_packet_identity=pre_recovery_packet_identity,
+            task42_stage_gate=task42_stage_gate,
+            task42_bridge_path=task42_bridge_path,
             _recovery_cleanup_sink=recovered_cleanup,
         )
     except BaseException:

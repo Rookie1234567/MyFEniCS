@@ -884,12 +884,16 @@ FIELD_SPECS: Final = (
         "enum",
         "none",
         ("full3d_direct",),
-        "Full3D direct factor lifecycle policy; release_before_recovery is a narrow Task39 Stage4 opt-in",
+        "Full3D direct factor lifecycle policy; Task39 and Task42 opt-ins remain bound to their exact models",
         "direct_release_solver_before_postprocess",
         '"release_before_recovery"',
-        allowed=("retain_until_postprocess", "release_before_recovery"),
+        allowed=(
+            "retain_until_postprocess",
+            "release_before_recovery",
+            "task42_staged_mumps_pre_recovery",
+        ),
         constraints=(
-            "only full3d_direct; release_before_recovery requires the qualified Task39 Stage4 assembly-time profile",
+            "only full3d_direct; lifecycle extensions require their exact registered Task39 or Task42 profile",
         ),
     ),
     _f(

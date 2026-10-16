@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +14,266 @@ from src.io.execution_plan import (
     method_adapter_identity,
 )
 from src.io.input_loader import InputError
-from src.io.input_validation import task039_07nm_launch_error, task039_model_id_matches
+from src.io.input_validation import (
+    TASK42_13P5_FULL3D_MODEL_ID,
+    TASK42_DIRECT_FACTOR_LIFECYCLE,
+    task039_07nm_launch_error,
+    task039_model_id_matches,
+)
+
+TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV = "TASK42_STAGED_DIRECT_BRIDGE_PATH"
+
+
+def _task42_inventory_json_bytes(value: Any) -> bytes:
+    """Encode the small scalar inventory accepted by Task42 stage receipts."""
+
+    try:
+        return json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"Task42 stage inventory is not finite JSON data: {exc}"
+        ) from exc
+
+
+def _task42_stage_gate_callback(
+    *, output_directory: Path, comm: Any, root_pid: int
+):
+    """Create a rank-consistent phase gate using the launcher's whole-job root."""
+
+    from benchmarks.task034_wsl_resources import resource_authority_sample
+    from src.io.input_validation import task42_memory_gate_from_authority
+
+    if type(root_pid) is not int or root_pid <= 0:
+        raise ValueError("Task42 stage gate requires a positive launcher root PID")
+    samples_path = (
+        Path(output_directory).resolve()
+        / "numerical_output"
+        / "task42_stage_resource_gates.jsonl"
+    )
+    path_state = None
+    if comm.rank == 0:
+        path_state = {
+            "exists": samples_path.exists(),
+            "path": str(samples_path),
+        }
+    path_state = comm.bcast(path_state, root=0)
+    if not isinstance(path_state, dict) or path_state.get("exists") is not False:
+        raise RuntimeError(
+            "Task42 stage gate refuses an existing or unverified phase receipt"
+        )
+    writer_started = False
+
+    def gate(stage: str, local_delta_bytes: int, inventory: dict[str, Any]):
+        nonlocal writer_started
+        local_errors: list[str] = []
+        if not isinstance(stage, str) or not stage.strip():
+            local_errors.append("stage_identity_is_missing")
+        if type(local_delta_bytes) is not int or local_delta_bytes < 0:
+            local_errors.append("local_Delta_must_be_a_nonnegative_exact_integer")
+        if not isinstance(inventory, dict):
+            local_errors.append("inventory_must_be_a_mapping")
+            components = None
+        else:
+            components = inventory.get("components")
+            if not isinstance(components, list) or not components:
+                local_errors.append("inventory_components_are_missing")
+                components = None
+        local_component_bytes = 0
+        component_names: list[str] = []
+        if components is not None:
+            for index, component in enumerate(components):
+                if not isinstance(component, dict):
+                    local_errors.append(f"inventory_component_{index}_is_not_a_mapping")
+                    continue
+                name = component.get("name")
+                scope = component.get("scope")
+                amount = component.get("delta_bytes")
+                if not isinstance(name, str) or not name.strip():
+                    local_errors.append(f"inventory_component_{index}_name_is_invalid")
+                else:
+                    component_names.append(name)
+                if scope not in ("rank_local", "global_replicated"):
+                    local_errors.append(f"inventory_component_{index}_scope_is_invalid")
+                if component.get("unit") != "bytes":
+                    local_errors.append(f"inventory_component_{index}_unit_is_not_bytes")
+                if type(amount) is not int or amount < 0:
+                    local_errors.append(
+                        f"inventory_component_{index}_delta_bytes_is_invalid"
+                    )
+                elif scope == "rank_local":
+                    local_component_bytes += amount
+            if len(component_names) != len(set(component_names)):
+                local_errors.append("inventory_component_names_are_not_unique")
+        if (
+            type(local_delta_bytes) is int
+            and local_delta_bytes >= 0
+            and local_component_bytes != local_delta_bytes
+        ):
+            local_errors.append("rank_local_inventory_differs_from_gate_argument")
+        if isinstance(inventory, dict):
+            try:
+                _task42_inventory_json_bytes(inventory)
+            except ValueError as exc:
+                local_errors.append(str(exc))
+        local_row = {
+            "rank": int(comm.rank),
+            "stage": stage if isinstance(stage, str) else None,
+            "local_delta_bytes": (
+                local_delta_bytes if type(local_delta_bytes) is int else None
+            ),
+            "inventory": inventory if isinstance(inventory, dict) else None,
+            "errors": local_errors,
+        }
+        rank_rows = comm.allgather(local_row)
+        stage_names = {row.get("stage") for row in rank_rows}
+        errors = [
+            f"rank_{row.get('rank')}_{error}"
+            for row in rank_rows
+            for error in row.get("errors", [])
+        ]
+        if len(stage_names) != 1:
+            errors.append("MPI_ranks_requested_different_stage_names")
+        local_deltas = [row.get("local_delta_bytes") for row in rank_rows]
+        if any(type(value) is not int or value < 0 for value in local_deltas):
+            errors.append("MPI_rank_Delta_inventory_is_incomplete")
+        rank_component_rows: list[dict[str, dict[str, Any]]] = []
+        expected_component_names: tuple[str, ...] | None = None
+        for row in rank_rows:
+            row_inventory = row.get("inventory")
+            row_components = (
+                row_inventory.get("components")
+                if isinstance(row_inventory, dict)
+                else None
+            )
+            by_name: dict[str, dict[str, Any]] = {}
+            if not isinstance(row_components, list):
+                errors.append(f"rank_{row.get('rank')}_inventory_components_are_missing")
+            else:
+                for component in row_components:
+                    if isinstance(component, dict) and isinstance(
+                        component.get("name"), str
+                    ):
+                        by_name[component["name"]] = component
+            names = tuple(sorted(by_name))
+            if expected_component_names is None:
+                expected_component_names = names
+            elif names != expected_component_names:
+                errors.append("MPI_ranks_reported_different_Delta_components")
+            rank_component_rows.append(by_name)
+        component_aggregation: dict[str, dict[str, Any]] = {}
+        phase_delta: int | None = None
+        if expected_component_names is not None:
+            phase_delta = 0
+            for name in expected_component_names:
+                entries = [row.get(name) for row in rank_component_rows]
+                if any(not isinstance(entry, dict) for entry in entries):
+                    errors.append(f"MPI_component_{name}_is_missing_on_a_rank")
+                    continue
+                scopes = {entry.get("scope") for entry in entries if entry is not None}
+                units = {entry.get("unit") for entry in entries if entry is not None}
+                values = [entry.get("delta_bytes") for entry in entries if entry is not None]
+                if len(scopes) != 1 or len(units) != 1:
+                    errors.append(f"MPI_component_{name}_scope_or_unit_differs")
+                    continue
+                scope = next(iter(scopes))
+                if units != {"bytes"} or any(
+                    type(value) is not int or value < 0 for value in values
+                ):
+                    errors.append(f"MPI_component_{name}_value_or_unit_is_invalid")
+                    continue
+                if scope == "rank_local":
+                    amount = sum(values)
+                    aggregation = "sum_rank_local_values"
+                elif scope == "global_replicated":
+                    if len(set(values)) != 1:
+                        errors.append(f"replicated_global_component_{name}_differs")
+                        continue
+                    amount = values[0]
+                    aggregation = "count_one_replicated_global_value"
+                else:
+                    errors.append(f"MPI_component_{name}_scope_is_invalid")
+                    continue
+                phase_delta += amount
+                component_aggregation[name] = {
+                    "scope": scope,
+                    "unit": "bytes",
+                    "rank_values_bytes": values,
+                    "counted_bytes": amount,
+                    "aggregation": aggregation,
+                }
+        result = None
+        if comm.rank == 0:
+            authority = None
+            gate_record = None
+            if not errors and type(phase_delta) is int:
+                try:
+                    authority = resource_authority_sample(root_pid)
+                    gate_record = task42_memory_gate_from_authority(
+                        authority,
+                        expected_root_pid=root_pid,
+                        phase_additional_bytes=phase_delta,
+                    )
+                except BaseException as exc:  # noqa: BLE001 - rank-0 local refusal must reach the following broadcast
+                    errors.append(
+                        f"phase_authority_sample_failed:{type(exc).__name__}:{exc}"
+                    )
+            passed = bool(
+                not errors
+                and isinstance(gate_record, dict)
+                and gate_record.get("pass") is True
+            )
+            record = {
+                "schema": "task42.direct_phase_gate_receipt.v1",
+                "phase": next(iter(stage_names)) if len(stage_names) == 1 else None,
+                "decision": "allow" if passed else "refuse",
+                "rank_inventory": rank_rows,
+                "phase_additional_bytes": phase_delta,
+                "phase_delta_unit": "bytes",
+                "phase_delta_aggregation": component_aggregation,
+                "authority": authority,
+                "gate": gate_record,
+                "errors": errors,
+            }
+            try:
+                samples_path.parent.mkdir(parents=True, exist_ok=True)
+                mode = "a" if writer_started else "x"
+                with samples_path.open(mode, encoding="utf-8") as stream:
+                    stream.write(
+                        json.dumps(
+                            record,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                            allow_nan=False,
+                        )
+                        + "\n"
+                    )
+                    stream.flush()
+                writer_started = True
+            except BaseException as exc:  # noqa: BLE001 - local writer refusal is synchronized below
+                errors.append(
+                    f"phase_receipt_write_failed:{type(exc).__name__}:{exc}"
+                )
+                passed = False
+            result = {
+                "pass": passed,
+                "decision": "allow" if passed else "refuse",
+                "phase": record["phase"],
+                "phase_additional_bytes": phase_delta,
+                "gate": gate_record,
+                "errors": errors,
+                "receipt_path": str(samples_path),
+            }
+        result = comm.bcast(result, root=0)
+        if not isinstance(result, dict) or type(result.get("pass")) is not bool:
+            raise RuntimeError("Task42 phase gate returned no unanimous receipt")
+        return result
+
+    return gate
 
 
 def _read_json_bytes(
@@ -194,6 +454,7 @@ def _dispatch_resolved_payload(
     expected_source_sha: str | None = None,
     expected_resolved_config_sha256: str | None = None,
     task039_trace_audit: bool = False,
+    comm: Any | None = None,
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
 
@@ -210,9 +471,53 @@ def _dispatch_resolved_payload(
         from src.runners.task038_full3d_direct import run_full3d_direct
 
         def adapter(payload, directory):
-            if payload.get("solver", {}).get("direct_factor_lifecycle") == (
-                "release_before_recovery"
-            ):
+            solver_payload = payload.get("solver", {})
+            task42_direct = (
+                payload.get("model_id") == TASK42_13P5_FULL3D_MODEL_ID
+                and solver_payload.get("direct_factor_lifecycle")
+                == TASK42_DIRECT_FACTOR_LIFECYCLE
+            )
+            if task42_direct:
+                if comm is None:
+                    raise RuntimeError("Task42 direct worker is missing MPI communicator")
+                root_pid_text = os.environ.get("TASK038_JOB_ROOT_PID")
+                bridge_path = os.environ.get(
+                    TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV
+                )
+                local_binding = {
+                    "root_pid": root_pid_text,
+                    "bridge_path": bridge_path,
+                    "output_directory": str(Path(directory).resolve()),
+                }
+                bindings = comm.allgather(local_binding)
+                if len({_task42_inventory_json_bytes(row) for row in bindings}) != 1:
+                    raise RuntimeError(
+                        "Task42 direct worker root/bridge/output binding differs across MPI ranks"
+                    )
+                try:
+                    root_pid = int(root_pid_text) if root_pid_text is not None else 0
+                except ValueError as exc:
+                    raise RuntimeError(
+                        "Task42 direct worker root PID is not an integer"
+                    ) from exc
+                if root_pid <= 0 or not bridge_path:
+                    raise RuntimeError(
+                        "Task42 direct worker requires launcher root PID and explicit staged bridge path"
+                    )
+                stage_gate = _task42_stage_gate_callback(
+                    output_directory=Path(directory),
+                    comm=comm,
+                    root_pid=root_pid,
+                )
+                return run_full3d_direct(
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                    resolved_config_sha256=expected_resolved_config_sha256,
+                    task42_stage_gate=stage_gate,
+                    task42_bridge_path=bridge_path,
+                )
+            if solver_payload.get("direct_factor_lifecycle") == "release_before_recovery":
                 return run_full3d_direct(
                     payload,
                     directory,
@@ -380,6 +685,7 @@ def main(argv: list[str] | None = None) -> int:
         expected_source_sha=args.expected_source_sha,
         expected_resolved_config_sha256=args.resolved_config_sha256,
         task039_trace_audit=args.task039_trace_audit,
+        comm=comm,
     )
     if exit_status != 0:
         if comm.rank == 0:

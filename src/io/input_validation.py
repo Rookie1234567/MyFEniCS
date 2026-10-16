@@ -318,6 +318,48 @@ TASK42_SI_MATERIALS = MappingProxyType(
         ),
     }
 )
+TASK42_MEMORY_RESERVE_BYTES = 384 * 2**30
+TASK42_MEMORY_MAX_CAP_BYTES = 256 * 2**30
+TASK42_MEMORY_ABSOLUTE_CAP_BYTES = 1536 * 2**30
+TASK42_WORKSPACE_MIN_BYTES = 8 * 2**30
+TASK42_SOFT_TARGET_SECONDS = 48 * 60 * 60
+TASK42_DIRECT_FACTOR_LIFECYCLE = "task42_staged_mumps_pre_recovery"
+# Predicted launcher-to-worker/MPI startup allowance for the registered MPI8
+# Full3D profile.  The related Task39 Full3D-direct MPI8 run below grew by
+# 8,742,191,104 bytes during its first 59.75 seconds; this is rounded upward
+# to 10 GiB.  It is a prediction, not a Task42 measurement or an upper-bound
+# proof.  Later Task42 phase gates and runtime hard stops remain authoritative.
+TASK42_STARTUP_PREDICTED_DELTA_BYTES = 10 * 2**30
+TASK42_STARTUP_EVIDENCE = MappingProxyType(
+    {
+        "role": "predicted_startup_delta_not_measurement",
+        "source_run_id": "task039_v4_1deg_p6h4_full3d_direct_mpi8",
+        "source_run_path": (
+            "results/task039_5nm_v4_1deg_s5_full3d/"
+            "task039_v4_1deg_p6h4_full3d_direct_mpi8__full3d_direct__mpi8__Mna/"
+            "20260817T042337.993251Z"
+        ),
+        "source_mpi_size": 8,
+        "source_manifest_sha256": (
+            "4f662e7c7d4345400d88d8c038f68b046b72fdd196f6894de1d8fdacab0a811d"
+        ),
+        "source_process_samples_sha256": (
+            "8a7d6bff0b7142b83e818e619a61718f83b87be0339afa3a54f63d813cde8b71"
+        ),
+        "observed_window_seconds": 59.74616714697913,
+        "observed_initial_tree_rss_bytes": 4_833_280,
+        "observed_window_peak_tree_rss_bytes": 8_747_024_384,
+        "observed_window_growth_bytes": 8_742_191_104,
+        "predicted_task42_startup_delta_bytes": TASK42_STARTUP_PREDICTED_DELTA_BYTES,
+        "prediction_rounding_margin_bytes": (
+            TASK42_STARTUP_PREDICTED_DELTA_BYTES - 8_742_191_104
+        ),
+        "calibration_limit": (
+            "related Task39 p6h4 Full3D run; not a Task42 p6h10 measurement; "
+            "does not prove an upper bound"
+        ),
+    }
+)
 
 TASK041_SHORTWAVE_COMPARISON_GROUP = (
     "task041_3nm_exact_side_hybrid_iterative_p6h3"
@@ -1218,6 +1260,556 @@ def task041_v16_initial_memory_gate(
     }
 
 
+def phase_memavailable_formula(
+    *,
+    tree_rss_bytes: Any,
+    cgroup_current_bytes: Any,
+    cgroup_current_state: Any,
+    phase_additional_bytes: Any,
+    memavailable_bytes: Any,
+    ancestor_limit_state: Any,
+    ancestor_memory: Any,
+    cap_bytes: Any,
+    reserve_bytes: Any,
+    workspace_reserve_bytes: Any,
+    tree_rss_scope: Any,
+) -> dict[str, Any]:
+    """Evaluate the parameterized resident and host phase inequalities.
+
+    ``tree_rss_scope`` must identify a whole-job process-tree sample.  A
+    dedicated cgroup may be omitted only when the sampler measured it as
+    ``not_applicable``; an unknown applicable cgroup never falls back to a
+    rank-local RSS value.
+    """
+
+    def nonnegative_int(value: Any) -> bool:
+        return type(value) is int and value >= 0
+
+    tree_rss = tree_rss_bytes if nonnegative_int(tree_rss_bytes) else None
+    cgroup_current = (
+        cgroup_current_bytes if nonnegative_int(cgroup_current_bytes) else None
+    )
+    delta = phase_additional_bytes if nonnegative_int(phase_additional_bytes) else None
+    available = memavailable_bytes if nonnegative_int(memavailable_bytes) else None
+    parameters_known = (
+        type(cap_bytes) is int
+        and cap_bytes > 0
+        and type(reserve_bytes) is int
+        and reserve_bytes >= 0
+        and type(workspace_reserve_bytes) is int
+        and workspace_reserve_bytes >= 0
+    )
+    cgroup_state_matches_value = bool(
+        (cgroup_current_state == "measured" and cgroup_current is not None)
+        or (
+            cgroup_current_state == "not_applicable"
+            and cgroup_current_bytes is None
+        )
+    )
+    resident_inputs_known = bool(
+        tree_rss is not None
+        and delta is not None
+        and cgroup_state_matches_value
+        and cgroup_current_state in {"measured", "not_applicable"}
+    )
+    host_inputs_known = delta is not None and available is not None
+    resident = None
+    if tree_rss is not None and cgroup_current_state == "measured":
+        if cgroup_current is not None:
+            resident = max(tree_rss, cgroup_current)
+    elif tree_rss is not None and cgroup_current_state == "not_applicable":
+        resident = tree_rss
+
+    phase_headroom = (
+        delta + workspace_reserve_bytes
+        if delta is not None and parameters_known
+        else None
+    )
+    projected_job = (
+        resident + phase_headroom
+        if resident is not None and phase_headroom is not None
+        else None
+    )
+    minimum_host = (
+        reserve_bytes + phase_headroom
+        if phase_headroom is not None
+        else None
+    )
+
+    ancestor_rows = ancestor_memory if isinstance(ancestor_memory, list) else None
+    finite_rows = (
+        [
+            row
+            for row in ancestor_rows
+            if isinstance(row, Mapping)
+            and row.get("memory_limit_state") == "finite"
+        ]
+        if ancestor_rows is not None
+        else []
+    )
+    invalid_ancestor_rows = not ancestor_rows or any(
+        not isinstance(row, Mapping)
+        or row.get("memory_limit_state")
+        not in {"finite", "max_or_unlimited", "not_applicable_root"}
+        or (
+            row.get("memory_limit_state") == "finite"
+            and (
+                type(row.get("memory_headroom_bytes")) is not int
+                or row["memory_headroom_bytes"] < 0
+            )
+        )
+        for row in (ancestor_rows or [])
+    )
+    non_finite_rows = [
+        row
+        for row in (ancestor_rows or [])
+        if isinstance(row, Mapping)
+        and row.get("memory_limit_state") in {"max_or_unlimited", "not_applicable_root"}
+    ]
+    state_matches_rows = bool(
+        (ancestor_limit_state == "finite" and finite_rows)
+        or (
+            ancestor_limit_state == "max_or_unlimited"
+            and not finite_rows
+            and any(
+                row.get("memory_limit_state") == "max_or_unlimited"
+                for row in non_finite_rows
+            )
+        )
+        or (
+            ancestor_limit_state == "not_applicable_root"
+            and not finite_rows
+            and all(
+                row.get("memory_limit_state") == "not_applicable_root"
+                for row in non_finite_rows
+            )
+        )
+    )
+    ancestor_check = bool(
+        parameters_known
+        and not invalid_ancestor_rows
+        and state_matches_rows
+        and (
+            not finite_rows
+            or phase_headroom is not None
+            and all(
+                row["memory_headroom_bytes"] >= phase_headroom
+                for row in finite_rows
+            )
+        )
+    )
+    finite_headrooms = [
+        row.get("memory_headroom_bytes") for row in finite_rows
+    ]
+
+    job_check = bool(
+        parameters_known
+        and resident_inputs_known
+        and tree_rss_scope == "whole_job"
+        and resident is not None
+        and projected_job is not None
+        and projected_job <= cap_bytes
+    )
+    host_check = bool(
+        parameters_known
+        and host_inputs_known
+        and minimum_host is not None
+        and available is not None
+        and available >= minimum_host
+    )
+    return {
+        "resident_inputs_known": resident_inputs_known,
+        "host_inputs_known": host_inputs_known,
+        "parameters_known": parameters_known,
+        "tree_rss_bytes": tree_rss,
+        "tree_rss_scope": tree_rss_scope,
+        "cgroup_current_bytes": cgroup_current,
+        "cgroup_current_state": cgroup_current_state,
+        "phase_additional_Delta_bytes": delta,
+        "MemAvailable_bytes": available,
+        "resident_J_bytes": resident,
+        "delta_plus_workspace_bytes": phase_headroom,
+        "workspace_W_bytes": workspace_reserve_bytes if parameters_known else None,
+        "projected_J_plus_Delta_plus_W_bytes": projected_job,
+        "cap_bytes": cap_bytes if parameters_known else None,
+        "required_MemAvailable_bytes": minimum_host,
+        "reserve_bytes": reserve_bytes if parameters_known else None,
+        "ancestor_required_headroom_bytes": phase_headroom,
+        "ancestor_limit_state": ancestor_limit_state,
+        "finite_ancestor_headrooms_bytes": finite_headrooms,
+        "resident_cap_pass": job_check,
+        "host_memavailable_pass": host_check,
+        "finite_ancestor_headroom_pass": ancestor_check,
+    }
+
+
+def task42_memory_parameters(mem_total_bytes: Any) -> dict[str, Any]:
+    """Derive the Task42 host cap and workspace buffer from kernel MemTotal."""
+
+    if type(mem_total_bytes) is not int or mem_total_bytes <= 0:
+        return {
+            "status": "refused",
+            "errors": ["MemTotal_is_missing_or_invalid"],
+            "mem_total_bytes": None,
+            "reserve_R_bytes": TASK42_MEMORY_RESERVE_BYTES,
+            "Cmax_bytes": None,
+            "cap_C_bytes": None,
+            "workspace_W_bytes": None,
+            "warning_bytes": None,
+        }
+    host_cap = min(
+        TASK42_MEMORY_ABSOLUTE_CAP_BYTES,
+        mem_total_bytes - TASK42_MEMORY_RESERVE_BYTES,
+    )
+    if host_cap <= 0:
+        return {
+            "status": "refused",
+            "errors": ["MemTotal_does_not_cover_the_reserved_host_memory"],
+            "mem_total_bytes": mem_total_bytes,
+            "reserve_R_bytes": TASK42_MEMORY_RESERVE_BYTES,
+            "Cmax_bytes": host_cap,
+            "cap_C_bytes": None,
+            "workspace_W_bytes": None,
+            "warning_bytes": None,
+        }
+    cap = min(TASK42_MEMORY_MAX_CAP_BYTES, host_cap)
+    # Ceil the percentage buffer so byte rounding never weakens the contract.
+    percentage_buffer = (cap + 19) // 20
+    workspace = max(TASK42_WORKSPACE_MIN_BYTES, percentage_buffer)
+    return {
+        "status": "measured",
+        "errors": [],
+        "mem_total_bytes": mem_total_bytes,
+        "reserve_R_bytes": TASK42_MEMORY_RESERVE_BYTES,
+        "Cmax_bytes": host_cap,
+        "cap_C_bytes": cap,
+        "workspace_W_bytes": workspace,
+        "warning_bytes": (9 * cap) // 10,
+    }
+
+
+def task42_startup_memory_budget(mpi_size: Any) -> dict[str, Any]:
+    """Return the evidence-bound predicted startup Delta for Task42 MPI8."""
+
+    if type(mpi_size) is not int or mpi_size != 8:
+        return {
+            "status": "refused",
+            "pass": False,
+            "errors": ["Task42_startup_prediction_is_qualified_only_for_MPI8"],
+            "mpi_size": mpi_size if type(mpi_size) is int else None,
+            "delta_bytes": None,
+            "evidence": dict(TASK42_STARTUP_EVIDENCE),
+        }
+    return {
+        "status": "predicted",
+        "pass": True,
+        "errors": [],
+        "mpi_size": mpi_size,
+        "delta_bytes": TASK42_STARTUP_PREDICTED_DELTA_BYTES,
+        "evidence": dict(TASK42_STARTUP_EVIDENCE),
+    }
+
+
+def task42_phase_memory_gate(
+    *,
+    tree_rss_bytes: Any,
+    tree_rss_scope: Any,
+    cgroup_current_bytes: Any,
+    cgroup_current_state: Any,
+    phase_additional_bytes: Any,
+    memavailable_bytes: Any,
+    mem_total_bytes: Any,
+    ancestor_limit_state: Any,
+    ancestor_memory: Any,
+) -> dict[str, Any]:
+    """Apply Task42's Cmax/256-GiB cap and J+Delta+W host/ancestor gates."""
+
+    parameters = task42_memory_parameters(mem_total_bytes)
+    if parameters["status"] != "measured":
+        return {
+            "schema": "task42.phase_memavailable_gate.v1",
+            "status": "refused",
+            "pass": False,
+            "parameters": parameters,
+            "external_resource_gates": {
+                "resident_cap": False,
+                "host_memavailable": False,
+                "finite_ancestor_headroom": False,
+            },
+            "errors": list(parameters["errors"]),
+        }
+    formula = phase_memavailable_formula(
+        tree_rss_bytes=tree_rss_bytes,
+        tree_rss_scope=tree_rss_scope,
+        cgroup_current_bytes=cgroup_current_bytes,
+        cgroup_current_state=cgroup_current_state,
+        phase_additional_bytes=phase_additional_bytes,
+        memavailable_bytes=memavailable_bytes,
+        ancestor_limit_state=ancestor_limit_state,
+        ancestor_memory=ancestor_memory,
+        cap_bytes=parameters["cap_C_bytes"],
+        reserve_bytes=parameters["reserve_R_bytes"],
+        workspace_reserve_bytes=parameters["workspace_W_bytes"],
+    )
+    gates = {
+        "resident_cap": formula["resident_cap_pass"],
+        "host_memavailable": formula["host_memavailable_pass"],
+        "finite_ancestor_headroom": formula["finite_ancestor_headroom_pass"],
+    }
+    errors: list[str] = []
+    if not formula["resident_inputs_known"]:
+        errors.append("whole_job_RSS_or_applicable_cgroup_current_unknown")
+    if not gates["resident_cap"]:
+        errors.append("J_plus_Delta_plus_W_exceeds_Task42_cap_or_is_unknown")
+    if not gates["host_memavailable"]:
+        errors.append("MemAvailable_below_R_plus_Delta_plus_W_or_unknown")
+    if not gates["finite_ancestor_headroom"]:
+        errors.append("finite_ancestor_headroom_below_Delta_plus_W_or_unknown")
+    return {
+        "schema": "task42.phase_memavailable_gate.v1",
+        "status": "passed" if not errors else "refused",
+        "pass": not errors,
+        "parameters": parameters,
+        **formula,
+        "external_resource_gates": gates,
+        "errors": errors,
+    }
+
+
+def task42_memory_authority_inputs(
+    authority: Any, *, expected_root_pid: Any
+) -> dict[str, Any]:
+    """Extract one measured whole-job Task42 sample without guessing fields.
+
+    The root PID must be the Task38 launcher, whose process tree contains the
+    worker and MPI ranks. A cgroup is used only when the sampler identifies a
+    readable dedicated job cgroup; a readable shared cgroup is explicitly
+    marked not applicable and does not replace whole-job RSS.
+    """
+
+    errors: list[str] = []
+    process_tree = authority.get("process_tree") if isinstance(authority, Mapping) else None
+    job_cgroup = authority.get("job_cgroup") if isinstance(authority, Mapping) else None
+    host_memory = authority.get("host_memory") if isinstance(authority, Mapping) else None
+    if not isinstance(process_tree, Mapping):
+        process_tree = {}
+        errors.append("process_tree_sample_missing")
+    root_pid = process_tree.get("root_pid")
+    if (
+        type(expected_root_pid) is not int
+        or expected_root_pid <= 0
+        or type(root_pid) is not int
+        or root_pid != expected_root_pid
+    ):
+        errors.append("process_tree_root_pid_does_not_match_launcher")
+    pids = process_tree.get("pids")
+    if (
+        process_tree.get("all_status_readable") is not True
+        or not isinstance(pids, list)
+        or type(root_pid) is not int
+        or root_pid not in pids
+    ):
+        errors.append("whole_job_process_tree_is_incomplete_or_unreadable")
+    tree_rss = process_tree.get("rss_bytes")
+    if type(tree_rss) is not int or tree_rss < 0:
+        errors.append("whole_job_process_tree_rss_is_unknown")
+
+    cgroup_current = None
+    cgroup_state = "unknown"
+    if not isinstance(job_cgroup, Mapping):
+        job_cgroup = {}
+        errors.append("job_cgroup_sample_missing")
+    elif job_cgroup.get("readable") is not True:
+        errors.append("job_cgroup_applicability_is_unreadable")
+    elif job_cgroup.get("dedicated_job_cgroup") is True:
+        cgroup_current = job_cgroup.get("memory_current_bytes")
+        cgroup_state = "measured"
+        if type(cgroup_current) is not int or cgroup_current < 0:
+            errors.append("dedicated_job_cgroup_memory_current_is_unknown")
+    elif (
+        job_cgroup.get("dedicated_job_cgroup") is False
+        and job_cgroup.get("scope_semantics") == "shared_cgroup_diagnostic_only"
+    ):
+        cgroup_state = "not_applicable"
+    else:
+        errors.append("job_cgroup_scope_semantics_are_unknown")
+    ancestor_memory = job_cgroup.get("ancestor_memory")
+    ancestor_limit_state = job_cgroup.get("ancestor_hard_limit_state")
+    if not isinstance(ancestor_memory, list) or not ancestor_memory:
+        errors.append("ancestor_cgroup_memory_chain_is_missing")
+    else:
+        for index, row in enumerate(ancestor_memory):
+            if not isinstance(row, Mapping):
+                errors.append(f"ancestor_cgroup_row_{index}_is_not_a_mapping")
+                continue
+            if row.get("memory_limit_state") != "finite":
+                continue
+            current = row.get("memory_current_bytes")
+            limit = row.get("memory_limit_bytes")
+            reported_headroom = row.get("memory_headroom_bytes")
+            if (
+                type(current) is not int
+                or current < 0
+                or type(limit) is not int
+                or limit < 0
+                or type(reported_headroom) is not int
+            ):
+                errors.append(f"finite_ancestor_cgroup_row_{index}_is_incomplete")
+            elif current > limit or reported_headroom != limit - current:
+                errors.append(
+                    f"finite_ancestor_cgroup_row_{index}_headroom_is_inconsistent"
+                )
+    if ancestor_limit_state not in {
+        "finite",
+        "max_or_unlimited",
+        "not_applicable_root",
+    }:
+        errors.append("ancestor_cgroup_limit_state_is_unknown")
+
+    if not isinstance(host_memory, Mapping):
+        host_memory = {}
+        errors.append("host_memory_sample_missing")
+    total = host_memory.get("mem_total_bytes")
+    available_row = host_memory.get("kernel_memavailable")
+    if type(total) is not int or total <= 0:
+        errors.append("kernel_MemTotal_is_unknown")
+    if not isinstance(available_row, Mapping):
+        available_row = {}
+        errors.append("kernel_MemAvailable_row_is_missing")
+    available = available_row.get("bytes")
+    if (
+        available_row.get("status") != "measured"
+        or type(available) is not int
+        or available < 0
+    ):
+        errors.append("kernel_MemAvailable_is_unknown_or_has_wrong_unit")
+    return {
+        "status": "measured" if not errors else "refused",
+        "errors": errors,
+        "tree_rss_bytes": tree_rss if type(tree_rss) is int and tree_rss >= 0 else None,
+        "tree_rss_scope": "whole_job" if not errors else "unknown",
+        "root_pid": root_pid if type(root_pid) is int else None,
+        "expected_root_pid": expected_root_pid if type(expected_root_pid) is int else None,
+        "process_tree_pids": list(pids) if isinstance(pids, list) else None,
+        "cgroup_current_bytes": cgroup_current,
+        "cgroup_current_state": cgroup_state,
+        "ancestor_limit_state": ancestor_limit_state,
+        "ancestor_memory": ancestor_memory,
+        "memavailable_bytes": available,
+        "mem_total_bytes": total,
+        "cgroup_path": job_cgroup.get("path"),
+        "cgroup_dedicated_job": job_cgroup.get("dedicated_job_cgroup"),
+    }
+
+
+def task42_memory_gate_from_authority(
+    authority: Any,
+    *,
+    expected_root_pid: Any,
+    phase_additional_bytes: Any,
+) -> dict[str, Any]:
+    """Validate and gate one Task42 whole-job resource sample."""
+
+    extracted = task42_memory_authority_inputs(
+        authority, expected_root_pid=expected_root_pid
+    )
+    gate = task42_phase_memory_gate(
+        tree_rss_bytes=extracted.get("tree_rss_bytes"),
+        tree_rss_scope=extracted.get("tree_rss_scope"),
+        cgroup_current_bytes=extracted.get("cgroup_current_bytes"),
+        cgroup_current_state=extracted.get("cgroup_current_state"),
+        phase_additional_bytes=phase_additional_bytes,
+        memavailable_bytes=extracted.get("memavailable_bytes"),
+        mem_total_bytes=extracted.get("mem_total_bytes"),
+        ancestor_limit_state=extracted.get("ancestor_limit_state"),
+        ancestor_memory=extracted.get("ancestor_memory"),
+    )
+    errors = [*extracted.get("errors", []), *gate.get("errors", [])]
+    passed = extracted.get("status") == "measured" and gate.get("pass") is True
+    return {
+        **gate,
+        "status": "passed" if passed else "refused",
+        "pass": passed,
+        "errors": list(dict.fromkeys(errors)),
+        "authority_inputs": extracted,
+    }
+
+
+def task42_runtime_memory_gate_from_authority(
+    authority: Any, *, expected_root_pid: Any
+) -> dict[str, Any]:
+    """Apply Task42's runtime hard stops without reserving phase workspace.
+
+    The phase gate reserves ``Delta + W`` before a known allocation. During
+    ordinary polling, ``W`` is not permanently charged: the hard checks are
+    current ``J <= C``, kernel ``MemAvailable >= R``, and nonnegative
+    headroom for every finite ancestor. A missing or unreadable authority
+    field still refuses the sample.
+    """
+
+    extracted = task42_memory_authority_inputs(
+        authority, expected_root_pid=expected_root_pid
+    )
+    parameters = task42_memory_parameters(extracted.get("mem_total_bytes"))
+    formula = phase_memavailable_formula(
+        tree_rss_bytes=extracted.get("tree_rss_bytes"),
+        tree_rss_scope=extracted.get("tree_rss_scope"),
+        cgroup_current_bytes=extracted.get("cgroup_current_bytes"),
+        cgroup_current_state=extracted.get("cgroup_current_state"),
+        phase_additional_bytes=0,
+        memavailable_bytes=extracted.get("memavailable_bytes"),
+        ancestor_limit_state=extracted.get("ancestor_limit_state"),
+        ancestor_memory=extracted.get("ancestor_memory"),
+        cap_bytes=parameters.get("cap_C_bytes"),
+        reserve_bytes=parameters.get("reserve_R_bytes"),
+        workspace_reserve_bytes=0,
+    )
+    gates = {
+        "whole_job_J_at_or_below_C": formula["resident_cap_pass"],
+        "kernel_MemAvailable_at_or_above_R": formula["host_memavailable_pass"],
+        "finite_ancestor_headroom_nonnegative": formula[
+            "finite_ancestor_headroom_pass"
+        ],
+    }
+    errors = list(extracted.get("errors", []))
+    if parameters.get("status") != "measured":
+        errors.extend(parameters.get("errors", []))
+    if not formula["resident_inputs_known"]:
+        errors.append("runtime_whole_job_J_is_unknown")
+    if not gates["whole_job_J_at_or_below_C"]:
+        errors.append("runtime_whole_job_J_exceeds_Task42_C")
+    if not gates["kernel_MemAvailable_at_or_above_R"]:
+        errors.append("runtime_kernel_MemAvailable_is_below_Task42_R_or_unknown")
+    if not gates["finite_ancestor_headroom_nonnegative"]:
+        errors.append("runtime_finite_ancestor_headroom_is_negative_or_unknown")
+    passed = (
+        extracted.get("status") == "measured"
+        and parameters.get("status") == "measured"
+        and all(gates.values())
+        and not errors
+    )
+    return {
+        "schema": "task42.runtime_hard_memory_gate.v1",
+        "gate_role": "runtime_hard_stop",
+        "status": "passed" if passed else "refused",
+        "pass": passed,
+        "parameters": parameters,
+        "resident_J_bytes": formula["resident_J_bytes"],
+        "cap_C_bytes": parameters.get("cap_C_bytes"),
+        "MemAvailable_bytes": extracted.get("memavailable_bytes"),
+        "required_MemAvailable_bytes": parameters.get("reserve_R_bytes"),
+        "finite_ancestor_headrooms_bytes": formula[
+            "finite_ancestor_headrooms_bytes"
+        ],
+        "required_finite_ancestor_headroom_bytes": 0,
+        "workspace_W_applied": False,
+        "phase_Delta_applied": False,
+        "external_resource_gates": gates,
+        "errors": list(dict.fromkeys(errors)),
+        "authority_inputs": extracted,
+    }
+
+
 def task041_v16_phase_memory_gate(
     *,
     tree_rss_bytes: Any,
@@ -1242,107 +1834,35 @@ def task041_v16_phase_memory_gate(
         type(got) is int and got == want
         for got, want in zip(supplied, expected)
     )
-    inputs = (
-        tree_rss_bytes,
-        cgroup_current_bytes,
-        phase_additional_bytes,
-        memavailable_bytes,
+    formula = phase_memavailable_formula(
+        tree_rss_bytes=tree_rss_bytes,
+        cgroup_current_bytes=cgroup_current_bytes,
+        cgroup_current_state="measured",
+        phase_additional_bytes=phase_additional_bytes,
+        memavailable_bytes=memavailable_bytes,
+        ancestor_limit_state=ancestor_limit_state,
+        ancestor_memory=ancestor_memory,
+        cap_bytes=expected[0],
+        reserve_bytes=expected[1],
+        workspace_reserve_bytes=expected[2],
+        tree_rss_scope="whole_job",
     )
-    inputs_known = all(type(value) is int and value >= 0 for value in inputs)
-    tree_rss = tree_rss_bytes if type(tree_rss_bytes) is int and tree_rss_bytes >= 0 else None
-    cgroup_current = (
-        cgroup_current_bytes
-        if type(cgroup_current_bytes) is int and cgroup_current_bytes >= 0
-        else None
+    inputs_known = bool(
+        formula["resident_inputs_known"] and formula["host_inputs_known"]
     )
-    delta = (
-        phase_additional_bytes
-        if type(phase_additional_bytes) is int and phase_additional_bytes >= 0
-        else None
-    )
-    available = (
-        memavailable_bytes
-        if type(memavailable_bytes) is int and memavailable_bytes >= 0
-        else None
-    )
-    resident = (
-        max(tree_rss, cgroup_current)
-        if tree_rss is not None and cgroup_current is not None
-        else None
-    )
-    phase_headroom = delta + expected[2] if delta is not None else None
-    projected_job = (
-        resident + phase_headroom
-        if resident is not None and phase_headroom is not None
-        else None
-    )
-    minimum_host = expected[1] + phase_headroom if phase_headroom is not None else None
+    tree_rss = formula["tree_rss_bytes"]
+    cgroup_current = formula["cgroup_current_bytes"]
+    delta = formula["phase_additional_Delta_bytes"]
+    available = formula["MemAvailable_bytes"]
+    resident = formula["resident_J_bytes"]
+    phase_headroom = formula["delta_plus_workspace_bytes"]
+    projected_job = formula["projected_J_plus_Delta_plus_W_bytes"]
+    minimum_host = formula["required_MemAvailable_bytes"]
+    job_check = bool(contract_matches and formula["resident_cap_pass"])
+    host_check = bool(contract_matches and formula["host_memavailable_pass"])
 
-    ancestor_rows = ancestor_memory if isinstance(ancestor_memory, list) else None
-    finite_rows = (
-        [row for row in ancestor_rows if isinstance(row, Mapping) and row.get("memory_limit_state") == "finite"]
-        if ancestor_rows is not None
-        else []
-    )
-    invalid_ancestor_rows = not ancestor_rows or any(
-        not isinstance(row, Mapping)
-        or row.get("memory_limit_state") not in {
-            "finite",
-            "max_or_unlimited",
-            "not_applicable_root",
-        }
-        or (
-            row.get("memory_limit_state") == "finite"
-            and (
-                type(row.get("memory_headroom_bytes")) is not int
-                or row["memory_headroom_bytes"] < 0
-            )
-        )
-        for row in (ancestor_rows or [])
-    )
-    non_finite_rows = [
-        row
-        for row in (ancestor_rows or [])
-        if isinstance(row, Mapping)
-        and row.get("memory_limit_state") in {"max_or_unlimited", "not_applicable_root"}
-    ]
-    state_matches_rows = bool(
-        (ancestor_limit_state == "finite" and finite_rows)
-        or (
-            ancestor_limit_state == "max_or_unlimited"
-            and not finite_rows
-            and any(row.get("memory_limit_state") == "max_or_unlimited" for row in non_finite_rows)
-        )
-        or (
-            ancestor_limit_state == "not_applicable_root"
-            and not finite_rows
-            and all(row.get("memory_limit_state") == "not_applicable_root" for row in non_finite_rows)
-        )
-    )
-    ancestor_check = bool(
-        not invalid_ancestor_rows
-        and state_matches_rows
-        and (
-            not finite_rows
-            or phase_headroom is not None
-            and all(
-                row["memory_headroom_bytes"] >= phase_headroom
-                for row in finite_rows
-            )
-        )
-    )
-    job_check = bool(
-        contract_matches
-        and resident is not None
-        and projected_job is not None
-        and projected_job <= expected[0]
-    )
-    host_check = bool(
-        contract_matches
-        and available is not None
-        and minimum_host is not None
-        and available >= minimum_host
-    )
+    ancestor_check = formula["finite_ancestor_headroom_pass"]
+    finite_headrooms = formula["finite_ancestor_headrooms_bytes"]
     errors = []
     if not contract_matches:
         errors.append("V16_cap_reserve_or_W_contract_mismatch")
@@ -1371,9 +1891,7 @@ def task041_v16_phase_memory_gate(
         "reserve_bytes": expected[1],
         "ancestor_required_headroom_bytes": phase_headroom,
         "ancestor_limit_state": ancestor_limit_state,
-        "finite_ancestor_headrooms_bytes": [
-            row.get("memory_headroom_bytes") for row in finite_rows
-        ],
+        "finite_ancestor_headrooms_bytes": finite_headrooms,
         "external_resource_gates": {
             "resident_cap": job_check,
             "host_memavailable": host_check,
@@ -2141,6 +2659,7 @@ def task42_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         ("method", "kind", "full3d_direct"),
         ("solver", "linear_solver", "direct"),
         ("solver", "direct_solver_profile", "default"),
+        ("solver", "direct_factor_lifecycle", TASK42_DIRECT_FACTOR_LIFECYCLE),
         ("execution", "mpi_size", 8),
         ("execution", "warning_memory_gib", 230.4),
         ("execution", "terminate_memory_gib", 256.0),
@@ -3544,6 +4063,23 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             "solver.direct_factor_lifecycle",
             "release_before_recovery is limited to the exact Task39 V4 p6/h4 Stage4 direct/MPI8 profile",
         )
+    task42_lifecycle_allowed = (
+        lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE
+        and model_id == TASK42_13P5_FULL3D_MODEL_ID
+        and dimension == 3
+        and kind == "full3d_direct"
+        and geometry_kind == "rectangular_block_grating"
+        and discretization.get("nedelec_degree") == 6
+        and discretization.get("mesh_target_nm") == 10.0
+        and discretization.get("assembly_backend") == "assembly_time_static_condensed"
+        and solver.get("linear_solver") == "direct"
+        and execution.get("mpi_size") == 8
+    )
+    if lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE and not task42_lifecycle_allowed:
+        raise _error(
+            "solver.direct_factor_lifecycle",
+            "Task42 staged MUMPS lifecycle is limited to the exact registered 13.5 nm p6/h10 Full3D direct/MPI8 profile",
+        )
     if (
         method.get("canonical_trace_gate_policy") is not None
         or method.get("canonical_trace_family_sha256") is not None
@@ -4883,6 +5419,7 @@ __all__ = [
     "TASK42_SI_MATERIAL_RECORD_SHA256",
     "InputError",
     "load_and_resolve",
+    "phase_memavailable_formula",
     "resolve_loaded_input",
     "simulation_config_2d_from_normalized",
     "simulation_config_3d_from_normalized",
@@ -4920,5 +5457,11 @@ __all__ = [
     "task42_external_mode_inventory_at_wavelength",
     "task42_material_identity",
     "task42_material_provenance",
+    "task42_memory_authority_inputs",
+    "task42_memory_gate_from_authority",
+    "task42_memory_parameters",
+    "task42_phase_memory_gate",
     "task42_profile_errors",
+    "task42_runtime_memory_gate_from_authority",
+    "task42_startup_memory_budget",
 ]

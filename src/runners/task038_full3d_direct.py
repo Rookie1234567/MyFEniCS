@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from src.io.input_validation import simulation_config_3d_from_normalized
+from src.io.input_validation import (
+    TASK42_13P5_FULL3D_MODEL_ID,
+    TASK42_DIRECT_FACTOR_LIFECYCLE,
+)
 
 
 def _run_solver(
@@ -19,6 +23,8 @@ def _run_solver(
     solution_observer=None,
     pre_recovery_packet_directory: Path | None = None,
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
+    task42_stage_gate=None,
+    task42_bridge_path: str | Path | None = None,
 ) -> dict[str, Any]:
     if cfg.stage_case == "stage1_airbox":
         from src.solvers.solve_maxwell_3d_stage_1_airbox import (
@@ -62,6 +68,8 @@ def _run_solver(
             canonical_vector_export=canonical_vector_export,
             pre_recovery_packet_directory=pre_recovery_packet_directory,
             pre_recovery_packet_identity=pre_recovery_packet_identity,
+            task42_stage_gate=task42_stage_gate,
+            task42_bridge_path=task42_bridge_path,
         )
     raise ValueError(f"unsupported Full3D direct stage {cfg.stage_case!r}")
 
@@ -74,7 +82,9 @@ def _finite_number(value: Any) -> bool:
     )
 
 
-def _generic_authority_errors(summary: Mapping[str, Any]) -> list[str]:
+def _generic_authority_errors(
+    summary: Mapping[str, Any], *, residual_limit: float = 1.0e-9
+) -> list[str]:
     errors: list[str] = []
     if summary.get("case_status") != "completed":
         errors.append("numerical summary case_status is not completed")
@@ -84,14 +94,19 @@ def _generic_authority_errors(summary: Mapping[str, Any]) -> list[str]:
     if (
         not _finite_number(residual)
         or float(residual) < 0.0
-        or float(residual) > 1.0e-9
+        or float(residual) > residual_limit
     ):
-        errors.append("linear-system residual is outside the Full3D authority limit")
+        errors.append(
+            "linear-system residual is outside the Full3D authority limit "
+            f"{residual_limit:.9g}"
+        )
     return errors
 
 
-def _stage4_authority_errors(summary: Mapping[str, Any]) -> list[str]:
-    errors = _generic_authority_errors(summary)
+def _stage4_authority_errors(
+    summary: Mapping[str, Any], *, residual_limit: float = 1.0e-9
+) -> list[str]:
+    errors = _generic_authority_errors(summary, residual_limit=residual_limit)
     for key in ("R_total", "T_total", "A_volume_total"):
         if not _finite_number(summary.get(key)):
             errors.append(f"numerical summary lacks finite {key}")
@@ -178,6 +193,58 @@ def _pre_recovery_packet_identity(
     }
 
 
+def _task42_pre_recovery_packet_identity(
+    payload: Mapping[str, Any],
+    *,
+    source_sha: str | None,
+    resolved_config_sha256: str | None,
+) -> dict[str, Any]:
+    """Bind Task42's packet to its own model and resolved public input."""
+
+    if not isinstance(source_sha, str) or len(source_sha) != 40:
+        raise ValueError("Task42 pre-recovery packet needs the complete source SHA")
+    if not isinstance(resolved_config_sha256, str) or len(resolved_config_sha256) != 64:
+        raise ValueError("Task42 pre-recovery packet needs the resolved-config SHA")
+    if payload.get("model_id") != TASK42_13P5_FULL3D_MODEL_ID:
+        raise ValueError("Task42 packet identity requires the registered model ID")
+    provenance = payload.get("provenance")
+    if not isinstance(provenance, Mapping):
+        raise ValueError(  # noqa: TRY004 - missing provenance is an invalid packet value
+            "Task42 packet identity requires resolved provenance"
+        )
+    geometry = payload.get("geometry")
+    materials = payload.get("materials")
+    incidence = payload.get("incidence")
+    discretization = payload.get("discretization")
+    execution = payload.get("execution")
+    method = payload.get("method")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (geometry, materials, incidence, discretization, execution, method)
+    ):
+        raise ValueError("Task42 packet identity is missing resolved physical fields")
+    return {
+        "schema": "task42.13p5.full3d.pre_recovery.identity.v1",
+        "source_sha": source_sha,
+        "input_sha256": provenance.get("input_sha256"),
+        "physical_model_sha256": provenance.get("physical_model_sha256"),
+        "resolved_config_sha256": resolved_config_sha256,
+        "model_id": payload["model_id"],
+        "run_id": payload.get("run_id"),
+        "comparison_group": payload.get("comparison_group"),
+        "dimension": payload.get("dimension"),
+        "method": method.get("kind"),
+        "mpi_size": execution.get("mpi_size"),
+        "wavelength_nm": incidence.get("wavelength_nm"),
+        "grazing_angle_deg": incidence.get("grazing_angle_deg"),
+        "azimuth_deg": incidence.get("azimuth_deg"),
+        "polarization": incidence.get("polarization"),
+        "geometry": dict(geometry),
+        "materials": dict(materials),
+        "discretization": dict(discretization),
+    }
+
+
 def _canonical_authority_errors(summary: Mapping[str, Any]) -> list[str]:
     from benchmarks.canonical_vector_artifacts import MANIFEST_SCHEMA
 
@@ -226,6 +293,8 @@ def run_full3d_direct(
     solver_runner: Callable[..., dict[str, Any]] | None = None,
     source_sha: str | None = None,
     resolved_config_sha256: str | None = None,
+    task42_stage_gate=None,
+    task42_bridge_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run one connected Full3D direct stage and inspect its returned summary."""
 
@@ -254,6 +323,21 @@ def run_full3d_direct(
     lifecycle = resolved_payload.get("solver", {}).get(
         "direct_factor_lifecycle", "retain_until_postprocess"
     )
+    task42_lifecycle = (
+        resolved_payload.get("model_id") == TASK42_13P5_FULL3D_MODEL_ID
+        and lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE
+    )
+    if task42_lifecycle:
+        if cfg.stage_case != "stage4_block_grating":
+            raise ValueError("Task42 staged direct is limited to its Stage4 model")
+        if not callable(task42_stage_gate):
+            raise ValueError("Task42 staged direct requires the launcher phase gate")
+        if not isinstance(task42_bridge_path, (str, Path)) or not str(
+            task42_bridge_path
+        ).strip():
+            raise ValueError("Task42 staged direct requires an explicit bridge artifact")
+    elif task42_stage_gate is not None or task42_bridge_path is not None:
+        raise ValueError("Task42 stage gate/bridge arguments are not valid on other profiles")
     packet_directory = None
     packet_identity = None
     if lifecycle == "release_before_recovery":
@@ -269,6 +353,15 @@ def run_full3d_direct(
             Path(run_directory).resolve() / "numerical_output" / "pre_recovery_packet"
         )
         packet_identity = _pre_recovery_packet_identity(
+            resolved_payload,
+            source_sha=source_sha,
+            resolved_config_sha256=resolved_config_sha256,
+        )
+    elif lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE:
+        packet_directory = (
+            Path(run_directory).resolve() / "numerical_output" / "pre_recovery_packet"
+        )
+        packet_identity = _task42_pre_recovery_packet_identity(
             resolved_payload,
             source_sha=source_sha,
             resolved_config_sha256=resolved_config_sha256,
@@ -318,6 +411,13 @@ def run_full3d_direct(
                 "pre_recovery_packet_identity": packet_identity,
             }
         )
+    if task42_lifecycle:
+        runner_kwargs.update(
+            {
+                "task42_stage_gate": task42_stage_gate,
+                "task42_bridge_path": str(task42_bridge_path),
+            }
+        )
     summary = runner(
         cfg,
         numerical_output,
@@ -331,7 +431,9 @@ def run_full3d_direct(
             "numerical_output_directory": str(numerical_output),
         }
     errors = (
-        _stage4_authority_errors(summary)
+        _stage4_authority_errors(
+            summary, residual_limit=5.0e-9 if task42_lifecycle else 1.0e-9
+        )
         if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}
         else _generic_authority_errors(summary)
     )

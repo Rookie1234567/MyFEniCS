@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gc
 import json
+import sys
 import time
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -10,7 +11,7 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from dolfinx import default_scalar_type, fem
+from dolfinx import default_real_type, default_scalar_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
 from ..common.config_3d import (
@@ -20,7 +21,11 @@ from ..common.config_3d import (
     resolve_stage4_full3d_assembly_backend,
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
-from ..geometry.mesh_builder_3d import AirBox3DMesh, build_airbox_mesh_3d
+from ..geometry.mesh_builder_3d import (
+    AirBox3DMesh,
+    build_airbox_mesh_3d,
+    stage4_axis_plan,
+)
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.flat_layer_reference_3d import write_flat_layer_reference_outputs
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
@@ -83,9 +88,223 @@ from .common_3d_utils import (
 )
 from .dtn_port_3d import (
     Stage4VariablePLiveView,
+    _task42_gate_from_inventory,
     solve_stage4_dtn_port_total_field,
 )
 from .solve_vector_maxwell import _json_default
+
+
+def _task42_require_stage_gate(
+    stage_gate,
+    *,
+    stage: str,
+    components: list[dict[str, Any]],
+    evidence: Mapping[str, Any],
+    uncertainty: str,
+) -> None:
+    if stage_gate is None:
+        return
+    if not _task42_gate_from_inventory(
+        stage_gate,
+        stage=stage,
+        components=components,
+        uncertainty=uncertainty,
+        evidence=evidence,
+    ):
+        raise MemoryError(f"Task42 resource stage refused before {stage}")
+
+
+def _task42_rank_local_component(name: str, amount: int, basis: Mapping[str, Any]):
+    return {
+        "name": name,
+        "scope": "rank_local",
+        "delta_bytes": int(amount),
+        "unit": "bytes",
+        "classification": "predicted_from_source_dimensions_and_object_layout",
+        "basis": dict(basis),
+        "upper_bound_proven": False,
+    }
+
+
+def _task42_mesh_components(cfg, comm) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if cfg.mesh_cell_type_resolved != "hexahedron" or cfg.geometry_kind != "rectangular_block_grating":
+        raise ValueError(
+            "Task42 mesh phase estimate is only defined for the registered fitted hexahedron"
+        )
+    plan = stage4_axis_plan(cfg, comm.size)
+    nx, ny, nz = (len(axis) - 1 for axis in (plan.x_values, plan.y_values, plan.z_values))
+    vertices = (nx + 1) * (ny + 1) * (nz + 1)
+    total_cells = nx * ny * nz
+    local_start = (total_cells * comm.rank) // comm.size
+    local_end = (total_cells * (comm.rank + 1)) // comm.size
+    local_cells = local_end - local_start
+    real_bytes = np.dtype(default_real_type).itemsize
+    int_bytes = np.dtype(PETSc.IntType).itemsize
+    pointer_bytes = np.dtype(np.uintp).itemsize
+    point_value_bytes = sys.getsizeof(np.float64(0.0))
+    point_tuple_bytes = sys.getsizeof(
+        (np.float64(0.0), np.float64(0.0), np.float64(0.0))
+    )
+    cell_row_bytes = sys.getsizeof([0] * 8) + 8 * sys.getsizeof(0)
+    components = [
+        _task42_rank_local_component(
+            "mesh_tensor_point_python_staging",
+            vertices * (pointer_bytes + point_tuple_bytes + 3 * point_value_bytes),
+            {
+                "vertices": vertices,
+                "formula": "vertices*(list_pointer+3-value-tuple+3-numpy-scalar-objects)",
+                "python_layout_measured_with_sys_getsizeof": True,
+            },
+        ),
+        _task42_rank_local_component(
+            "mesh_tensor_coordinate_arrays",
+            2 * vertices * 3 * real_bytes,
+            {
+                "vertices": vertices,
+                "real_bytes": real_bytes,
+                "formula": "2*vertices*3*real_bytes (input coordinates plus retained mesh coordinates)",
+            },
+        ),
+        _task42_rank_local_component(
+            "mesh_local_cell_connectivity_python_staging",
+            local_cells * (pointer_bytes + cell_row_bytes),
+            {
+                "local_cells": local_cells,
+                "cell_row_bytes": cell_row_bytes,
+                "formula": "local_cells*(outer-list-pointer+8-python-int-row)",
+            },
+        ),
+        _task42_rank_local_component(
+            "mesh_local_cell_connectivity_arrays",
+            2 * local_cells * 8 * int_bytes,
+            {
+                "local_cells": local_cells,
+                "vertices_per_hexahedron": 8,
+                "petsc_int_bytes": int_bytes,
+                "formula": "2*local_cells*8*PetscInt (input connectivity plus mesh topology estimate)",
+            },
+        ),
+    ]
+    return components, {
+        "mesh_spacing_mode": plan.mesh_spacing_mode_resolved,
+        "axis_cell_counts": [nx, ny, nz],
+        "global_vertices": vertices,
+        "global_cells": total_cells,
+        "local_cells_by_rank_formula": "floor(total*(rank+1)/size)-floor(total*rank/size)",
+        "rank": int(comm.rank),
+        "size": int(comm.size),
+    }
+
+
+def _task42_function_space_components(mesh, cfg) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if cfg.nedelec_fixed_trace_enabled:
+        raise ValueError("Task42 function-space estimate does not cover the fixed-trace element")
+    degree = int(cfg.nedelec_degree)
+    if degree <= 0:
+        raise ValueError("Task42 function-space estimate requires positive Nedelec degree")
+    element_dimension = 3 * degree * (degree + 1) ** 2
+    cell_map = mesh.topology.index_map(mesh.topology.dim)
+    local_cells_with_ghosts = int(cell_map.size_local + cell_map.num_ghosts)
+    cell_dof_entries = local_cells_with_ghosts * element_dimension
+    pet_int_bytes = np.dtype(PETSc.IntType).itemsize
+    components = [
+        _task42_rank_local_component(
+            "nedelec_cell_dof_index_tables",
+            cell_dof_entries * (np.dtype(np.int32).itemsize + pet_int_bytes),
+            {
+                "local_cells_including_ghosts": local_cells_with_ghosts,
+                "nedelec_degree": degree,
+                "hexahedron_element_dimension": element_dimension,
+                "formula_element_dimension": "3*p*(p+1)^2 for first-kind N1curl on a hexahedron",
+                "formula": "cell_count*element_dimension*(int32_bytes+PetscInt_bytes)",
+            },
+        ),
+        _task42_rank_local_component(
+            "nedelec_index_and_scatter_metadata",
+            cell_dof_entries * (pet_int_bytes + 8),
+            {
+                "cell_dof_entries": cell_dof_entries,
+                "petsc_int_bytes": pet_int_bytes,
+                "formula": "cell_dof_entries*(PetscInt_bytes+8-byte-map-reference-estimate)",
+            },
+        ),
+    ]
+    return components, {
+        "local_cells_including_ghosts": local_cells_with_ghosts,
+        "nedelec_degree": degree,
+        "element_dimension": element_dimension,
+    }
+
+
+def _task42_field_output_components(
+    mesh, cfg, *, include_scattered: bool, include_background: bool, include_incident_port: bool
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if "hexahedron" not in str(mesh.basix_cell()).lower():
+        raise ValueError("Task42 field-output estimate currently requires hexahedra")
+    cell_map = mesh.topology.index_map(mesh.topology.dim)
+    local_cells = int(cell_map.size_local + cell_map.num_ghosts)
+    degree = int(cfg.visualization_degree)
+    if degree < 0:
+        raise ValueError("visualization_degree must be nonnegative")
+    dg_points = local_cells * (degree + 1) ** 3
+    complex_channels = 3  # E_code, E_tot, H_from_curl
+    if include_scattered:
+        complex_channels += 2
+    if include_background:
+        complex_channels += 2
+    if include_incident_port:
+        complex_channels += 2
+    scalar_bytes = np.dtype(default_scalar_type).itemsize
+    real_bytes = np.dtype(default_real_type).itemsize
+    point_arrays = dg_points * complex_channels * 3 * scalar_bytes
+    vtk_real_arrays = dg_points * complex_channels * (7 * real_bytes)
+    vtk_topology = local_cells * (degree**3) * 9 * np.dtype(np.int64).itemsize
+    return [
+        _task42_rank_local_component(
+            "full_field_dg_complex_channels",
+            point_arrays,
+            {
+                "local_cells_including_ghosts": local_cells,
+                "visualization_degree": degree,
+                "dg_points_per_hexahedron": (degree + 1) ** 3,
+                "complex_vector_channels": complex_channels,
+                "formula": "cells*(degree+1)^3*channels*3*complex_scalar_bytes",
+            },
+        ),
+        _task42_rank_local_component(
+            "full_field_vtk_real_imag_magnitude_arrays",
+            vtk_real_arrays,
+            {
+                "dg_points": dg_points,
+                "channels": complex_channels,
+                "real_bytes": real_bytes,
+                "formula": "points*channels*(3 real+3 imag+1 magnitude)*real_bytes",
+            },
+        ),
+        _task42_rank_local_component(
+            "full_field_vtk_hexa_subcell_connectivity",
+            vtk_topology,
+            {
+                "local_cells_including_ghosts": local_cells,
+                "visualization_degree": degree,
+                "int64_bytes": np.dtype(np.int64).itemsize,
+                "formula": "cells*degree^3*(VTK cell type+8 point ids)*int64_bytes",
+            },
+        ),
+    ], {
+        "local_cells_including_ghosts": local_cells,
+        "visualization_degree": degree,
+        "dg_points": dg_points,
+        "complex_vector_channels": complex_channels,
+        "channels": {
+            "E_code": True,
+            "E_tot_V_per_m": True,
+            "H_A_per_m_from_curl": True,
+            "scattered": include_scattered,
+            "background": include_background,
+            "incident_port": include_incident_port,
+        },
+    }
 
 
 def _log_case_header(
@@ -777,6 +996,8 @@ def run_prepared_3d_case_flow(
     canonical_vector_export: bool = False,
     pre_recovery_packet_directory: Path | None = None,
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
+    task42_stage_gate=None,
+    task42_bridge_path: str | Path | None = None,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -809,12 +1030,33 @@ def run_prepared_3d_case_flow(
             bool(matrix_free_dtn_probe),
             pre_recovery_packet_directory is not None,
             pre_recovery_packet_identity is not None,
+            task42_stage_gate is not None,
+            None
+            if task42_bridge_path is None
+            else str(Path(task42_bridge_path).resolve()),
         )
     )
     if len(set(live_observer_flags)) != 1:
         raise ValueError(
             "variable-p observer, Schur retention, external solver port, "
-            "and matrix-free flags must match on every MPI rank"
+            "matrix-free and Task42 staged-direct bindings must match on every MPI rank"
+        )
+    task42_binding_present = task42_stage_gate is not None or task42_bridge_path is not None
+    if task42_binding_present and not (
+        callable(task42_stage_gate)
+        and isinstance(task42_bridge_path, (str, Path))
+        and str(task42_bridge_path).strip()
+        and solve_stage4_dtn_port
+        and field_formulation == "total_field_dtn_port"
+        and linear_solver_port is None
+        and pre_recovery_packet_directory is not None
+        and pre_recovery_packet_identity is not None
+        and not cfg.matrix_diagnostics_assemble_only
+        and not cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "Task42 staged direct requires the assembled Stage4 DtN solve, "
+            "its phase gate and bridge, and a bound pre-recovery packet"
         )
     if cfg.stage_case != expected_stage_case:
         raise ValueError(
@@ -1014,6 +1256,28 @@ def run_prepared_3d_case_flow(
         started=started,
         petsc_options=petsc_options,
     )
+    if task42_binding_present:
+        if mesh_data_override is None:
+            mesh_components, mesh_evidence = _task42_mesh_components(cfg, comm)
+        else:
+            mesh_components = [
+                _task42_rank_local_component(
+                    "audited_mesh_override_new_mesh_allocation",
+                    0,
+                    {"formula": "0; the audited mesh is resident before this stage"},
+                )
+            ]
+            mesh_evidence = {"mesh_data_override": True}
+        _task42_require_stage_gate(
+            task42_stage_gate,
+            stage="before_mesh_allocation",
+            components=mesh_components,
+            evidence=mesh_evidence,
+            uncertainty=(
+                "predicted from registered tensor axes and actual Python/NumPy object layout; "
+                "DOLFINx partition and allocator workspaces are not a proven upper bound"
+            ),
+        )
     if mesh_data_override is None:
         if cfg.stage4_local_h_refinement_plan is None:
             mesh_data = build_airbox_mesh_3d(cfg, out_dir)
@@ -1104,6 +1368,20 @@ def run_prepared_3d_case_flow(
     _write_progress_event(
         out_dir, comm, stage="function_space_setup", status="begin", started=started
     )
+    if task42_binding_present:
+        function_space_components, function_space_evidence = (
+            _task42_function_space_components(msh, cfg)
+        )
+        _task42_require_stage_gate(
+            task42_stage_gate,
+            stage="before_nedelec_function_space_allocation",
+            components=function_space_components,
+            evidence=function_space_evidence,
+            uncertainty=(
+                "predicted from local owned/ghost cells, exact first-kind N1curl "
+                "hexahedron dimension, and index widths; DOLFINx internal maps are not a proven upper bound"
+            ),
+        )
     V = _create_nedelec_space(msh, cfg)
     num_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     _finish_timed_stage(comm, timings, "function_space_setup", stage_start, log)
@@ -1306,6 +1584,8 @@ def run_prepared_3d_case_flow(
                 canonical_vector_export=canonical_vector_export,
                 pre_recovery_packet_directory=pre_recovery_packet_directory,
                 pre_recovery_packet_identity=pre_recovery_packet_identity,
+                task42_stage_gate=task42_stage_gate,
+                task42_bridge_path=task42_bridge_path,
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
@@ -1464,6 +1744,9 @@ def run_prepared_3d_case_flow(
     external_solver_snapshot = bool(
         dtn_solver_info and dtn_solver_info.get("external_linear_solver_port")
     )
+    task42_staged_direct_snapshot = bool(
+        dtn_solver_info and dtn_solver_info.get("task42_staged_direct")
+    )
     pre_recovery_solver_snapshot = bool(
         dtn_solver_info and dtn_solver_info.get("factor_destroyed_before_recovery")
     )
@@ -1566,6 +1849,11 @@ def run_prepared_3d_case_flow(
         reason_name = "MATRIX_FREE_DTN_COMPONENT_ONLY"
         iterations = 0
         residual_norm = None
+    elif task42_staged_direct_snapshot:
+        reason = None
+        reason_name = "DIRECT_MUMPS_MATSOLVE_NO_KSP_REASON"
+        iterations = None
+        residual_norm = None
     elif (
         external_solver_snapshot
         or live_observer_primal_snapshot
@@ -1584,7 +1872,11 @@ def run_prepared_3d_case_flow(
         reason_name = _ksp_reason_name(reason)
         iterations = int(system_ksp.getIterationNumber())
         residual_norm = float(system_ksp.getResidualNorm())
-    if (
+    if task42_staged_direct_snapshot:
+        ksp_type = None
+        pc_type = "MUMPS_STAGED_DIRECT"
+        pc_factor_solver_type = "MATSOLVERMUMPS"
+    elif (
         external_solver_snapshot
         or live_observer_primal_snapshot
         or pre_recovery_solver_snapshot
@@ -1600,6 +1892,8 @@ def run_prepared_3d_case_flow(
     condensed_full_residual = (
         None
         if dtn_solver_info is None
+        else dtn_solver_info.get("task42_full_true_residual")
+        if task42_staged_direct_snapshot
         else (dtn_solver_info.get("cell_static_condensation") or {}).get(
             "full_explicit_true_residual"
         )
@@ -1621,13 +1915,21 @@ def run_prepared_3d_case_flow(
         if not external_solver_snapshot
         else bool(dtn_solver_info["external_rta_gate_pass"])
     )
-    solver_converged = (reason > 0) and not diagnostic_only_result
+    solver_converged = (
+        bool(dtn_solver_info.get("task42_direct_residual_gate_pass"))
+        if task42_staged_direct_snapshot
+        else (reason > 0)
+    ) and not diagnostic_only_result
     official_result = solver_converged and (
         not external_solver_snapshot or external_rta_gate_pass is True
     )
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
-    log(f"solver iterations = {iterations}")
+    log(
+        f"solver iterations = {iterations}"
+        if iterations is not None
+        else "solver iterations = not_applicable_direct_MatSolve"
+    )
     log(
         "solver residual norm = None"
         if residual_norm is None
@@ -1800,6 +2102,11 @@ def run_prepared_3d_case_flow(
             petsc_options=petsc_options,
             extra={
                 "lifecycle_note": (
+                    "Task42 staged direct MUMPS factor was destroyed before field "
+                    "recovery; the original assembled Mat, RHS, and solution remain "
+                    "available for recovery and residual checks"
+                    if task42_staged_direct_snapshot
+                    else
                     "Telemetry-only baseline preserves the Task28 lifecycle: "
                     "KSP/factor, system Mat, RHS Vec, and solution Vec remain "
                     "referenced during postprocess."
@@ -1843,6 +2150,8 @@ def run_prepared_3d_case_flow(
         if external_solver_snapshot and not solver_converged
         else "External solver residual/RTA gate failed; official RTA was not run."
         if external_solver_snapshot and external_rta_gate_pass is False
+        else "Task42 staged-direct original-system residual gate failed."
+        if task42_staged_direct_snapshot and not solver_converged
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "variable_p_mesh_identity": variable_p_mesh_identity,
@@ -2282,6 +2591,24 @@ def run_prepared_3d_case_flow(
         _write_case_outputs(out_dir, summary, log_lines, comm)
         return summary
 
+    if task42_binding_present:
+        output_components, output_evidence = _task42_field_output_components(
+            msh,
+            cfg,
+            include_scattered=solve_layered_scattered,
+            include_background=solve_layered_scattered,
+            include_incident_port=solve_stage4_dtn_port,
+        )
+        _task42_require_stage_gate(
+            task42_stage_gate,
+            stage="before_full_field_visualization_and_output",
+            components=output_components,
+            evidence=output_evidence,
+            uncertainty=(
+                "predicted from local hexahedron count, DG degree, actual field channels, "
+                "and current VTK arrays; writer/library scratch is not a proven upper bound"
+            ),
+        )
     stage_start = _start_timed_stage(comm)
     field_metrics = save_airbox_3d_fields(
         mesh_data,

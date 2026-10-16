@@ -47,7 +47,7 @@
 
 本阶段实际启动的pytest父命令共3次，按上述GNU time显示值相加为15.62秒（由0.01秒精度记录相加）。preflight未启动pytest的082736Z不收费。serial与MPI2 ABI检查不作为pytest wall重复计费。完整独立Task42条目见[账目](outcomes/a0_test_ledger.json)；被保留的失败和未运行范围见[测试摘要](outcomes/test_summary.md)。
 
-## A1最小接线方案
+## A1最小接线方案（A0阶段规划，实际状态见下节）
 
 当前dat中的`timeout_seconds=172800`会沿`task038_launcher._run_worker`的普通Full3D分支触发terminate，因此不能直接把A0输入交给正式PDE。A1应在现有`run_case`→`task038_launcher`→Full3D direct adapter路径增加显式Task42 opt-in策略；普通Task038输入和默认行为不变。
 
@@ -59,4 +59,17 @@
 | Full3D direct与快照 | 优先在现有direct `_solve_augmented_system` 接入可选stage gate/LU bridge，保持MUMPS direct身份；只有证实现有等价接口与官方快照合同兼容时才复用它 | `linear_solver_port`面向迭代/action，不能伪装direct；`dtn_port_3d._external_snapshot_allows_official_rta`当前要求`no_global_factor`成立，真正使用全局MUMPS factor时不能伪标。若direct路径进入该检查，须设计诚实保留direct身份的Task42快照核验。为Task42显式扩展pre-recovery packet identity，保留原A、RHS、解和原残差，恢复后重算原方程true residual |
 | 正式输出 | 仅在原A残差及任务Gate通过后保留official场与R/T/A、A_volume、完整衍射级、参考面E/H、清理与identity | setup或单次LU成功不构成数值pass；所有阶段和清理费用按唯一Task42运行记录 |
 
-本方案是待实现的A1最小接线，不是已完成的资源资格或运行授权收据。正式Full3D direct PDE、QEP、assembly、symbolic/numeric factor、recovery、物理输出和48小时目标均为`not_run`。下一步由主控审核此接线并派发A1静态实现/回归；完成资源和软时间策略前不启动PDE。
+## A1实际接线与合同边界
+
+Task42显式opt-in现将输入`timeout_seconds=172800`解释为48小时软目标；到点写入状态但继续运行。ordinary Task038仍保留原超时行为。该接线不移除硬资源门。
+
+| 项目 | 本轮结果 | 尚未证明 |
+|---|---|---|
+| 资源公式与whole-job authority | 启动/阶段门核对整作业J、实际新增Delta、W、kernel MemAvailable和有限适用祖先；运行期硬门检查J≤C、MemAvailable≥R，避免轮询重复扣W | 正式MPI8 fresh host与rank资格尚未运行 |
+| direct factor路径 | 同一MUMPS factor完成symbolic→numeric→MatSolve→packet→destroy；同一新C bridge实际覆盖`ICNTL(14)=None`与显式40控制 | 仅8×8合同矩阵，不代表p6/H10因子表现 |
+| 恢复与writer | full residual消费、pre-recovery packet、实际packet writer成功/本地写失败传播、active-trace gather驻留公式均有小型定向覆盖 | 13.5 nm场恢复、R/T/A和完整衍射输出未运行 |
+| 时间口径 | Task42 48小时为soft target，不因时间单独terminate；普通Task038不变 | 长时运行效果未实测 |
+
+Task42容量参数为R=384 GiB，Cmax=min(1.5 TiB,MemTotal−R)，C=min(256 GiB,Cmax)，W=max(8 GiB,ceil(0.05C))，warning=0.9C。阶段准入为`J+Delta+W<=C`、`MemAvailable>=R+Delta+W`、有限祖先headroom≥`Delta+W`；运行期使用硬界而不重复预留W。J=max(launcher进程树RSS、经authority证明适用的专属cgroup current)。
+
+A1合同回归、费用、失败保留项和15项完整source manifest见[测试摘要](outcomes/test_summary.md)及[机器记录](outcomes/a1_contract_validation.json)。本轮未记录MPI2测试rank的实际affinity；正式MPI8必须实测每rank `sched_getaffinity`、default/unbound与正常RAM节点scope。Task42阶段authority也未单独记录OOM计数或disk余量，正式fresh入口必须给出这些主机保护的真实证据。正式13.5 nm Full3D PDE、QEP、物理输出都仍为`not_run`，须经主控独立fresh MPI8门审核。

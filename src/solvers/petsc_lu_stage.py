@@ -35,6 +35,7 @@ W0P7_PORD_SOURCE_MODEL_AUDIT_PATH = (
     "results/task041_w0p7_mumps_amd_descriptor_probe_20261008/"
     "pord_gbisect_scratch_correction_20261009.md"
 )
+TASK42_STAGED_DIRECT_STAGE_IDENTITY = "task42.13p5.full3d.direct"
 
 
 def _source_matrix_inventory(matrix: Any) -> dict[str, Any]:
@@ -352,6 +353,7 @@ class StagedMumpsLUFactory:
         allowed_deferred = {
             "task041.w0p7.p4.bottom",
             "task041.w0p7.p4.top",
+            TASK42_STAGED_DIRECT_STAGE_IDENTITY,
         }
         if not isinstance(deferred_numeric_stage_identities, tuple) or any(
             not isinstance(identity, str) or identity not in allowed_deferred
@@ -360,7 +362,8 @@ class StagedMumpsLUFactory:
             deferred_numeric_stage_identities
         ):
             raise ValueError(
-                "deferred numeric stages are limited to the registered W0.7 P4 sides"
+                "deferred numeric stages are limited to registered W0.7 P4 sides "
+                "and the exact Task42 13.5 nm direct stage"
             )
         if not isinstance(sequential_amd_stage_identities, tuple) or any(
             not isinstance(identity, str)
@@ -478,14 +481,27 @@ class StagedMumpsLUFactory:
         self,
         matrix: Any,
         *,
-        icntl14: int,
+        icntl14: int | None,
         stage_identity: str | None = None,
         defer_numeric: bool = False,
     ) -> StagedMumpsFactor:
         if type(defer_numeric) is not bool:
             raise TypeError("defer_numeric must be an exact bool")
-        if isinstance(icntl14, bool) or not isinstance(icntl14, int) or icntl14 < 0:
-            raise TypeError("icntl14 must be a non-negative non-bool integer")
+        if icntl14 is None:
+            if (
+                stage_identity != TASK42_STAGED_DIRECT_STAGE_IDENTITY
+                or not defer_numeric
+            ):
+                raise ValueError(
+                    "leaving ICNTL14 at the installed MUMPS default is limited "
+                    "to the staged Task42 direct lifecycle"
+                )
+        elif (
+            isinstance(icntl14, bool)
+            or not isinstance(icntl14, int)
+            or icntl14 < 0
+        ):
+            raise TypeError("icntl14 must be a non-negative non-bool integer or None")
         if stage_identity is not None and (
             not isinstance(stage_identity, str) or not stage_identity.strip()
         ):
@@ -661,18 +677,22 @@ class StagedMumpsLUFactory:
                     )
 
             pre_symbolic_layout = raw_factor.layout_raw()
+            raw_lifecycle_before_symbolic = raw_factor.lifecycle()
             self._require_gate(
                 self._pre_symbolic_gate,
                 {
                     "stage": "before_symbolic",
                     "stage_identity": stage_identity,
                     "icntl14_requested": icntl14,
+                    "icntl14_actual": raw_lifecycle_before_symbolic.get(
+                        "icntl14_actual"
+                    ),
                     "source_matrix_inventory": source_inventory,
                     "live_factor_inventory": self.live_factor_inventory,
                     "factor_release_history": self.factor_release_history,
                     "layout_raw": pre_symbolic_layout,
                     "public_mumps_control_readback": public_control_readback,
-                    "lifecycle": raw_factor.lifecycle(),
+                    "lifecycle": raw_lifecycle_before_symbolic,
                 },
                 "pre-symbolic",
             )
@@ -807,15 +827,91 @@ class StagedMumpsLUFactory:
         context = {
             "stage": "after_symbolic_before_numeric",
             "stage_identity": factor.stage_identity,
-            "icntl14_requested": factor.get_mumps_icntl(14),
+            "icntl14_requested": factor.analysis_info_raw.get(
+                "icntl14_requested"
+            ),
+            "icntl14_actual": None,
+            "icntl14_readback_error": None,
             "source_matrix_inventory": factor.source_matrix_inventory,
             "live_factor_inventory": self.live_factor_inventory,
             "factor_release_history": self.factor_release_history,
             "layout_raw": factor.layout_raw,
             "analysis_info_raw": factor.analysis_info_raw,
-            "lifecycle": raw_factor.lifecycle(),
+            "lifecycle": {},
         }
         try:
+            # Keep the historical readback contract: a failed ICNTL query is a
+            # failure, never an unknown value that may proceed to numeric.  For
+            # Task42 this scalar PETSc query is local, so capture its status and
+            # reach a rank-consistent safe point before any rank can start the
+            # collective numeric factorization.
+            if factor.stage_identity == TASK42_STAGED_DIRECT_STAGE_IDENTITY:
+                local_readback_error: Exception | None = None
+                try:
+                    icntl14_actual = factor.get_mumps_icntl(14)
+                    if type(icntl14_actual) is not int or icntl14_actual < 0:
+                        raise RuntimeError(
+                            "Task42 ICNTL(14) readback is not a known non-negative integer"
+                        )
+                except Exception as exc:  # noqa: BLE001 - rank-local readback is gathered before numeric
+                    local_readback_error = exc
+                    icntl14_actual = None
+                rank_readbacks = factor.getComm().tompi4py().allgather(
+                    {
+                        "actual": icntl14_actual,
+                        "error": (
+                            None
+                            if local_readback_error is None
+                            else f"{type(local_readback_error).__name__}: "
+                            f"{local_readback_error}"
+                        ),
+                    }
+                )
+                readback_errors = [
+                    (
+                        rank,
+                        item.get("error")
+                        if isinstance(item, Mapping)
+                        else "readback result is not a mapping",
+                    )
+                    for rank, item in enumerate(rank_readbacks)
+                    if not isinstance(item, Mapping) or item.get("error") is not None
+                ]
+                readback_values = [
+                    item.get("actual") if isinstance(item, Mapping) else None
+                    for item in rank_readbacks
+                ]
+                if readback_errors or any(
+                    type(value) is not int or value < 0
+                    for value in readback_values
+                ):
+                    context["icntl14_readback_error"] = {
+                        "rank_errors": readback_errors,
+                        "rank_actual_values": readback_values,
+                    }
+                    if local_readback_error is not None:
+                        raise local_readback_error
+                    raise RuntimeError(
+                        "Task42 ICNTL(14) readback is unknown on at least one rank: "
+                        f"{context['icntl14_readback_error']!r}"
+                    )
+                if len(set(readback_values)) != 1:
+                    context["icntl14_readback_error"] = {
+                        "reason": "MPI_ranks_reported_different_ICNTL14_values",
+                        "rank_actual_values": readback_values,
+                    }
+                    raise RuntimeError(
+                        "Task42 ICNTL(14) actual value differs across MPI ranks: "
+                        f"{readback_values!r}"
+                    )
+            else:
+                # Do not weaken the old direct exception/rejection behavior.
+                icntl14_actual = factor.get_mumps_icntl(14)
+            context["icntl14_actual"] = icntl14_actual
+            factor.analysis_info_raw["icntl14_actual_before_numeric"] = (
+                icntl14_actual
+            )
+            context["lifecycle"] = raw_factor.lifecycle()
             self._require_gate(
                 self._pre_numeric_gate,
                 context,
@@ -855,6 +951,7 @@ class StagedMumpsLUFactory:
                     {
                         "stage_identity": factor.stage_identity,
                         "icntl14_requested": context["icntl14_requested"],
+                        "icntl14_actual": context["icntl14_actual"],
                         "source_matrix_inventory": factor.source_matrix_inventory,
                         "factor_layout_raw": dict(factor.layout_raw),
                         "analysis_info_raw": dict(factor.analysis_info_raw),

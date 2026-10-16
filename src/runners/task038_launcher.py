@@ -43,9 +43,14 @@ from src.io.input_validation import (
     TASK041_BALH_2NM_MODEL_ID,
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MODEL_IDS,
+    TASK42_DIRECT_FACTOR_LIFECYCLE,
+    TASK42_SOFT_TARGET_SECONDS,
     task039_model_id_matches,
     task041_balh_case,
     task041_balh_service_contract,
+    task42_memory_gate_from_authority,
+    task42_runtime_memory_gate_from_authority,
+    task42_startup_memory_budget,
 )
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
@@ -721,6 +726,15 @@ def _swap_bytes(authority: dict[str, Any]) -> int:
     )
 
 
+def _append_task42_phase_record(
+    path: Path, record: Mapping[str, Any], *, create_new: bool = False
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x" if create_new else "a", encoding="utf-8") as stream:
+        stream.write(json.dumps(dict(record), ensure_ascii=False, default=str) + "\n")
+        stream.flush()
+
+
 def _run_worker(
     plan: ExecutionPlan,
     specification: RunSpecification,
@@ -742,6 +756,13 @@ def _run_worker(
     requested_modes = specification.method.get("requested_modes_per_direction")
     specification_payload = specification.as_jsonable()
     solver_payload = specification_payload.get("solver", {})
+    task42_enabled = (
+        model_id.startswith("task42_")
+        and solver_payload.get("direct_factor_lifecycle")
+        == TASK42_DIRECT_FACTOR_LIFECYCLE
+    )
+    if model_id.startswith("task42_") and not task42_enabled:
+        raise InputError("Task42 worker requires its registered staged-direct lifecycle")
     formal_direct_v2_h5 = task039_h5_hybrid_direct_formal_profile(specification_payload)
     formal_iterative_v2_h5 = task039_h5_hybrid_iterative_formal_profile(
         specification_payload
@@ -926,6 +947,23 @@ def _run_worker(
         absolute_terminate_memory_bytes = V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
+    task42_root_pid = os.getpid() if task42_enabled else None
+    task42_resource_path = (
+        run_directory / "numerical_output" / "task42_resource_phases.jsonl"
+        if task42_enabled
+        else None
+    )
+    task42_sample_count = 0
+    task42_gate_failed = False
+    task42_soft_target_reached = False
+    task42_last_gate: dict[str, Any] | None = None
+    task42_warning_threshold_bytes: int | None = None
+    task42_startup_budget: dict[str, Any] | None = None
+    if task42_enabled:
+        # The input's 48-hour value is a soft reporting target. Hard resource
+        # stops are J<=C and MemAvailable>=R at runtime; stage callbacks use
+        # the separate preallocation J+Delta+W gate.
+        timeout = math.inf
     if formal_v7_h4_full:
         timeout = float(V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS)
     full_outer_entered = False
@@ -1117,6 +1155,96 @@ def _run_worker(
 
     started = monotonic()
     stdout_path = run_directory / "worker_stdout.txt"
+    if task42_enabled:
+        assert task42_root_pid is not None and task42_resource_path is not None
+        existing_evidence_paths = [
+            path
+            for path in (task42_resource_path, stdout_path)
+            if path.exists()
+        ]
+        if existing_evidence_paths:
+            return {
+                "exit_status": None,
+                "result_classification": "task42_evidence_path_already_exists",
+                "termination": None,
+                "resource_authority": {
+                    "schema": "task42.launcher_resource_authority.v1",
+                    "status": "refused_existing_evidence",
+                    "root_pid": task42_root_pid,
+                    "samples_path": str(task42_resource_path),
+                    "existing_evidence_paths": [
+                        str(path) for path in existing_evidence_paths
+                    ],
+                    "sample_count": 0,
+                    "soft_target_seconds": TASK42_SOFT_TARGET_SECONDS,
+                    "hard_wall_timeout": False,
+                },
+            }
+        task42_startup_budget = task42_startup_memory_budget(
+            specification.execution.get("mpi_size")
+        )
+        if task42_startup_budget.get("pass") is not True:
+            return {
+                "exit_status": None,
+                "result_classification": "task42_startup_budget_unavailable",
+                "termination": None,
+                "resource_authority": {
+                    "schema": "task42.launcher_resource_authority.v1",
+                    "status": "refused_startup_budget",
+                    "root_pid": task42_root_pid,
+                    "samples_path": str(task42_resource_path),
+                    "sample_count": 0,
+                    "startup_budget": task42_startup_budget,
+                    "soft_target_seconds": TASK42_SOFT_TARGET_SECONDS,
+                    "hard_wall_timeout": False,
+                },
+            }
+        initial_authority = sample_factory(task42_root_pid)
+        initial_gate = task42_memory_gate_from_authority(
+            initial_authority,
+            expected_root_pid=task42_root_pid,
+            phase_additional_bytes=int(task42_startup_budget["delta_bytes"]),
+        )
+        task42_last_gate = initial_gate
+        initial_parameters = initial_gate.get("parameters", {})
+        initial_warning = (
+            initial_parameters.get("warning_bytes")
+            if isinstance(initial_parameters, Mapping)
+            else None
+        )
+        if type(initial_warning) is int:
+            task42_warning_threshold_bytes = initial_warning
+        task42_sample_count += 1
+        _append_task42_phase_record(
+            task42_resource_path,
+            {
+                "schema": "task42.launcher_resource_sample.v1",
+                "phase": "before_worker_spawn",
+                "elapsed_seconds": 0.0,
+                "delta_role": "predicted_startup_objects",
+                "startup_budget": task42_startup_budget,
+                "authority": initial_authority,
+                "gate": initial_gate,
+            },
+            create_new=True,
+        )
+        if initial_gate.get("pass") is not True:
+            return {
+                "exit_status": None,
+                "result_classification": "task42_initial_resource_refused",
+                "termination": None,
+                "resource_authority": {
+                    "schema": "task42.launcher_resource_authority.v1",
+                    "status": "refused_before_worker_spawn",
+                    "root_pid": task42_root_pid,
+                    "samples_path": str(task42_resource_path),
+                    "sample_count": task42_sample_count,
+                    "latest_gate": initial_gate,
+                    "startup_budget": task42_startup_budget,
+                    "soft_target_seconds": TASK42_SOFT_TARGET_SECONDS,
+                    "hard_wall_timeout": False,
+                },
+            }
     if formal_telemetry:
         formal_samples_path.parent.mkdir(parents=True, exist_ok=True)
         formal_samples_path.unlink(missing_ok=True)
@@ -1150,7 +1278,12 @@ def _run_worker(
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
     try:
-        with stdout_path.open("w", encoding="utf-8") as stdout:
+        with stdout_path.open("x" if task42_enabled else "w", encoding="utf-8") as stdout:
+            process_group_kwargs = worker_process_group_popen_kwargs()
+            if task42_enabled:
+                worker_environment = os.environ.copy()
+                worker_environment["TASK038_JOB_ROOT_PID"] = str(task42_root_pid)
+                process_group_kwargs["env"] = worker_environment
             process = popen_factory(
                 list(plan.argv),
                 shell=False,
@@ -1158,10 +1291,47 @@ def _run_worker(
                 stdout=stdout,
                 stderr=subprocess.STDOUT,
                 text=True,
-                **worker_process_group_popen_kwargs(),
+                **process_group_kwargs,
             )
             while True:
-                authority = sample_factory(process.pid)
+                sample_root_pid = task42_root_pid if task42_enabled else process.pid
+                authority = sample_factory(int(sample_root_pid))
+                if task42_enabled:
+                    assert task42_root_pid is not None and task42_resource_path is not None
+                    gate = task42_runtime_memory_gate_from_authority(
+                        authority,
+                        expected_root_pid=task42_root_pid,
+                    )
+                    task42_last_gate = gate
+                    gate_parameters = gate.get("parameters", {})
+                    warning_threshold = (
+                        gate_parameters.get("warning_bytes")
+                        if isinstance(gate_parameters, Mapping)
+                        else None
+                    )
+                    if type(warning_threshold) is int:
+                        task42_warning_threshold_bytes = warning_threshold
+                    task42_sample_count += 1
+                    elapsed = max(0.0, monotonic() - started)
+                    task42_soft_target_reached = (
+                        task42_soft_target_reached
+                        or elapsed >= TASK42_SOFT_TARGET_SECONDS
+                    )
+                    _append_task42_phase_record(
+                        task42_resource_path,
+                        {
+                            "schema": "task42.launcher_resource_sample.v1",
+                            "phase": "runtime_poll",
+                            "elapsed_seconds": elapsed,
+                            "gate_role": "runtime_hard_stop_without_workspace_reserve",
+                            "authority": authority,
+                            "gate": gate,
+                        },
+                    )
+                    if gate.get("pass") is not True:
+                        task42_gate_failed = True
+                        termination = terminate_factory(process)
+                        classification = "task42_runtime_resource_gate_refused"
                 if formal_telemetry:
                     formal_written_sample_count += 1
                     formal_last_sample = _formal_sample(
@@ -1192,7 +1362,19 @@ def _run_worker(
                     peak_process_tree = max(peak_process_tree, process_tree_rss)
                     peak_swap = max(peak_swap, swap_bytes)
                     zero_swap_observed = zero_swap_observed and swap_bytes == 0
-                    warning_triggered = warning_triggered or memory >= warning_limit
+                    if task42_enabled:
+                        runtime_resident = (
+                            task42_last_gate.get("resident_J_bytes")
+                            if isinstance(task42_last_gate, Mapping)
+                            else None
+                        )
+                        warning_triggered = warning_triggered or (
+                            type(runtime_resident) is int
+                            and task42_warning_threshold_bytes is not None
+                            and runtime_resident >= task42_warning_threshold_bytes
+                        )
+                    else:
+                        warning_triggered = warning_triggered or memory >= warning_limit
                     if (
                         critical_limit is not None
                         and memory >= critical_limit
@@ -1200,17 +1382,23 @@ def _run_worker(
                     ):
                         critical_checkpoint_crossed = True
                         critical_checkpoint_first_bytes = memory
-                    if execution["require_zero_swap"] and swap_bytes > 0:
+                    if classification is None and execution["require_zero_swap"] and swap_bytes > 0:
                         termination = terminate_factory(process)
                         classification = "swap_policy_violation"
-                    elif memory >= terminate_limit:
+                    elif (
+                        classification is None
+                        and not task42_enabled
+                        and memory >= terminate_limit
+                    ):
                         termination = terminate_factory(process)
                         classification = "memory_terminate"
                 if classification is not None:
                     break
                 if process.poll() is not None:
                     break
-                if monotonic() - started >= timeout:
+                if task42_enabled and monotonic() - started >= TASK42_SOFT_TARGET_SECONDS:
+                    task42_soft_target_reached = True
+                if not task42_enabled and monotonic() - started >= timeout:
                     if formal_v7_h4_full and not full_extension_used:
                         residual_decreased = bool(
                             full_initial_residual is not None
@@ -1460,6 +1648,31 @@ def _run_worker(
         "require_zero_swap": execution["require_zero_swap"],
         "zero_swap_observed": zero_swap_observed if sample_count else None,
     }
+    if task42_enabled:
+        resource_authority["task42_staged_direct"] = {
+            "schema": "task42.launcher_resource_authority.v1",
+            "status": (
+                "runtime_resource_gate_refused"
+                if task42_gate_failed
+                else "measured"
+                if task42_last_gate is not None
+                else "not_available"
+            ),
+            "root_pid": task42_root_pid,
+            "samples_path": str(task42_resource_path),
+            "sample_count": task42_sample_count,
+            "latest_gate": task42_last_gate,
+            "startup_budget": task42_startup_budget,
+            "warning_threshold_bytes": task42_warning_threshold_bytes,
+            "warning_threshold_role": "0.9_times_current_Task42_cap_C",
+            "soft_target_seconds": TASK42_SOFT_TARGET_SECONDS,
+            "soft_target_reached": task42_soft_target_reached,
+            "hard_wall_timeout": False,
+            "configured_timeout_seconds_is_soft_target_only": True,
+            "whole_job_process_tree_peak_bytes": peak_process_tree,
+            "dedicated_cgroup_included_when_applicable": True,
+            "phase_delta_is_checked_by_worker_stage_callbacks": True,
+        }
     if task039_budget is not None:
         resource_authority["task039_memory_budget"] = task039_budget
         if absolute_terminate_memory_bytes is not None:

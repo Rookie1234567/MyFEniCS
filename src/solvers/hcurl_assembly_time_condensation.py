@@ -39,6 +39,38 @@ def _idx(values) -> np.ndarray:
     return np.fromiter(values, dtype=PETSc.IntType)
 
 
+def _task42_emit_assembly_phase_gate(
+    stage_gate,
+    *,
+    stage: str,
+    components: list[dict[str, Any]],
+    evidence: Mapping[str, Any],
+) -> None:
+    """Pass one source-derived local assembly estimate to the Task42 gate."""
+
+    local_delta = sum(
+        int(component["delta_bytes"])
+        for component in components
+        if component.get("scope") == "rank_local"
+    )
+    result = stage_gate(
+        stage,
+        local_delta,
+        {
+            "schema": "task42.direct_phase_delta_inventory.v1",
+            "classification": "predicted",
+            "estimate_uncertainty": (
+                "derived from the actual local mesh, element dimensions, class count and PETSc widths; "
+                "allocator and backend workspace are not a proven upper bound"
+            ),
+            "components": components,
+            "evidence": dict(evidence),
+        },
+    )
+    if not isinstance(result, Mapping) or result.get("pass") is not True:
+        raise MemoryError(f"Task42 resource stage refused before {stage}")
+
+
 @dataclass(frozen=True)
 class CellRecoveryMap:
     """Numbering and cached class identity needed for one owned cell."""
@@ -1117,6 +1149,7 @@ def build_unconstrained_assembly_time_condensation(
     retain_local_schur_for_matrix_free: bool = False,
     materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
+    task42_stage_gate=None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1179,6 +1212,59 @@ def build_unconstrained_assembly_time_condensation(
         assume_unique=True,
     )
 
+    if task42_stage_gate is not None:
+        local_cell_dof_entries = owned_cells * dimension
+        pet_int_bytes = np.dtype(PETSc.IntType).itemsize
+        int32_bytes = np.dtype(np.int32).itemsize
+        trace_dimension = len(trace_positions)
+        components = [
+            {
+                "name": "assembly_local_cell_dof_maps",
+                "scope": "rank_local",
+                "delta_bytes": int(
+                    local_cell_dof_entries * (int32_bytes + pet_int_bytes)
+                ),
+                "unit": "bytes",
+                "classification": "predicted_from_actual_owned_cells_and_element_dimension",
+                "basis": {
+                    "owned_cells": owned_cells,
+                    "element_dimension": dimension,
+                    "int32_bytes": int32_bytes,
+                    "petsc_int_bytes": pet_int_bytes,
+                },
+                "upper_bound_proven": False,
+            },
+            {
+                "name": "assembly_cell_trace_expansion_rows",
+                "scope": "rank_local",
+                "delta_bytes": int(
+                    owned_cells * trace_dimension * (2 * pet_int_bytes + 24)
+                ),
+                "unit": "bytes",
+                "classification": "predicted_from_actual_owned_cells_and_trace_dimension",
+                "basis": {
+                    "owned_cells": owned_cells,
+                    "trace_dimension": trace_dimension,
+                    "petsc_int_bytes": pet_int_bytes,
+                    "per_entry_bytes": 2 * pet_int_bytes + 24,
+                },
+                "upper_bound_proven": False,
+            },
+        ]
+        _task42_emit_assembly_phase_gate(
+            task42_stage_gate,
+            stage="before_assembly_cell_maps_and_trace_expansion",
+            components=components,
+            evidence={
+                "owned_cells": owned_cells,
+                "element_dimension": dimension,
+                "interior_dimension": len(interior_positions),
+                "trace_dimension": trace_dimension,
+                "mpi_rank": int(comm.rank),
+                "mpi_size": int(comm.size),
+            },
+        )
+
     local_cell_dofs: list[np.ndarray] = []
     local_interiors: list[np.ndarray] = []
     for cell in range(owned_cells):
@@ -1235,6 +1321,49 @@ def build_unconstrained_assembly_time_condensation(
                 op=MPI.MAX,
             )
         )
+        if task42_stage_gate is not None:
+            diagonal_nnz_sum = int(np.asarray(diagonal_nnz, dtype=np.int64).sum())
+            off_diagonal_nnz_sum = (
+                0
+                if comm.size == 1
+                else int(np.asarray(off_diagonal_nnz, dtype=np.int64).sum())
+            )
+            allocated_nnz = diagonal_nnz_sum + off_diagonal_nnz_sum
+            local_matrix_rows = len(owned_active) + local_appended
+            scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+            pet_int_bytes = np.dtype(PETSc.IntType).itemsize
+            matrix_bytes = (
+                allocated_nnz * (scalar_bytes + pet_int_bytes)
+                + (local_matrix_rows + 1) * pet_int_bytes
+            )
+            _task42_emit_assembly_phase_gate(
+                task42_stage_gate,
+                stage="before_task42_trace_matrix_allocation",
+                components=[
+                    {
+                        "name": "task42_active_trace_petsc_aij_storage",
+                        "scope": "rank_local",
+                        "delta_bytes": int(matrix_bytes),
+                        "unit": "bytes",
+                        "classification": "predicted_from_actual_PETSc_preallocation_counts",
+                        "basis": {
+                            "diagonal_nnz": diagonal_nnz_sum,
+                            "off_diagonal_nnz": off_diagonal_nnz_sum,
+                            "allocated_nnz": allocated_nnz,
+                            "local_rows": local_matrix_rows,
+                            "scalar_bytes": scalar_bytes,
+                            "petsc_int_bytes": pet_int_bytes,
+                            "formula": "nnz*(scalar_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
+                        },
+                        "upper_bound_proven": False,
+                    }
+                ],
+                evidence={
+                    "preallocation_source": "actual _distributed_trace_preallocation return arrays",
+                    "mpi_rank": int(comm.rank),
+                    "mpi_size": int(comm.size),
+                },
+            )
         condensed = PETSc.Mat().createAIJ(
             size=(
                 (len(owned_active) + local_appended, matrix_rows),
@@ -1312,6 +1441,38 @@ def build_unconstrained_assembly_time_condensation(
                 if error is not None
             )
         )
+    if task42_stage_gate is not None:
+        scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+        class_count = len(local_class_coordinates)
+        raw_tensor_bytes = class_count * dimension * dimension * scalar_bytes
+        _task42_emit_assembly_phase_gate(
+            task42_stage_gate,
+            stage="before_assembly_raw_cell_tensor_cache",
+            components=[
+                {
+                    "name": "assembly_unique_raw_cell_tensor_cache_and_broadcast_buffer",
+                    "scope": "rank_local",
+                    "delta_bytes": int(2 * raw_tensor_bytes),
+                    "unit": "bytes",
+                    "classification": "predicted_from_measured_local_geometry_class_count",
+                    "basis": {
+                        "local_geometry_classes": class_count,
+                        "element_dimension": dimension,
+                        "scalar_bytes": scalar_bytes,
+                        "formula": "2*classes*dimension^2*scalar_bytes",
+                        "included_objects": [
+                            "retained local raw tensor cache",
+                            "one owner/broadcast working tensor",
+                        ],
+                    },
+                    "upper_bound_proven": False,
+                }
+            ],
+            evidence={
+                "local_geometry_class_count": class_count,
+                "raw_class_keys_source": "actual canonical cell coordinates and material tags",
+            },
+        )
     policy_forms: dict[str, tuple[Any, dict[int, Any], int]] = {
         "actual_space": (compiled_form, kernels, dimension),
     }
@@ -1325,6 +1486,64 @@ def build_unconstrained_assembly_time_condensation(
         if condensed is not None:
             condensed.destroy()
         raise
+    if task42_stage_gate is not None:
+        local_schur_class_keys = {
+            (*metadata[0], int(cell_permutations[cell]))
+            for cell, metadata in enumerate(cell_raw_metadata)
+        }
+        scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+        int_bytes = np.dtype(PETSc.IntType).itemsize
+        interior_dimension = len(interior_positions)
+        trace_dimension = len(trace_positions)
+        block_copy_entries = (
+            interior_dimension * interior_dimension
+            + 2 * interior_dimension * trace_dimension
+            + trace_dimension * trace_dimension
+        )
+        per_class_complex_entries = (
+            dimension * dimension
+            + block_copy_entries
+            + interior_dimension * interior_dimension
+            + 3 * interior_dimension * trace_dimension
+            + trace_dimension * trace_dimension
+        )
+        pivot_bytes = len(local_schur_class_keys) * interior_dimension * int_bytes
+        identity_bytes = interior_dimension * interior_dimension * np.dtype(np.float64).itemsize
+        _task42_emit_assembly_phase_gate(
+            task42_stage_gate,
+            stage="before_assembly_schur_recovery_and_lu_caches",
+            components=[
+                {
+                    "name": "assembly_schur_recovery_lu_and_orientation_caches",
+                    "scope": "rank_local",
+                    "delta_bytes": int(
+                        len(local_schur_class_keys)
+                        * per_class_complex_entries
+                        * scalar_bytes
+                        + pivot_bytes
+                        + identity_bytes
+                    ),
+                    "unit": "bytes",
+                    "classification": "predicted_from_actual_cell_class_and_element_dimensions",
+                    "basis": {
+                        "unique_schur_classes": len(local_schur_class_keys),
+                        "element_dimension": dimension,
+                        "interior_dimension": interior_dimension,
+                        "trace_dimension": trace_dimension,
+                        "complex_scalar_bytes": scalar_bytes,
+                        "petsc_int_bytes": int_bytes,
+                        "per_class_complex_entries": per_class_complex_entries,
+                        "per_class_pivot_bytes": interior_dimension * int_bytes,
+                        "shared_identity_projection_bytes": identity_bytes,
+                    },
+                    "upper_bound_proven": False,
+                }
+            ],
+            evidence={
+                "unique_schur_class_keys": len(local_schur_class_keys),
+                "keys_include_actual_cell_permutation": True,
+            },
+        )
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
