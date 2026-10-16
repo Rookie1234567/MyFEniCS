@@ -1,8 +1,11 @@
-"""Frozen Task40 D13 axes derived by bisecting actual D13-B intervals.
+"""Frozen Task40 D13 axes derived by bisecting actual parent intervals.
 
 The X/Y/Z cases are genuine one-axis refinements: every interval in the
 selected D13-B axis gets one midpoint, while the other two coordinate arrays
 remain byte-for-byte identical to the recorded D13-B axes.
+
+Y2 is the next y-only refinement: it bisects each actual D13-Y interval and
+retains the D13-Y x/z arrays exactly.
 """
 
 from __future__ import annotations
@@ -84,7 +87,48 @@ def d13_axis_plan(case: str) -> dict[str, object]:
     }
 
 
+def d13_y2_axis_plan() -> dict[str, object]:
+    """Bisect every realized D13-Y y interval; preserve its x/z axes exactly."""
+    parent = d13_axis_plan("Y")
+    parent_axes = parent["axes_nm"]
+    axes = {
+        "x": tuple(float(value) for value in parent_axes["x"]),
+        "y": _bisect_every_interval(
+            tuple(float(value) for value in parent_axes["y"])
+        ),
+        "z": tuple(float(value) for value in parent_axes["z"]),
+    }
+    counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
+    if counts != (6, 24, 14):
+        raise AssertionError(f"Task40 D13 Y2 axis-plan counts are inconsistent: {counts}")
+    plan_id = "task40_phi90_d13_y2_axes_bisect_from_y_v1"
+    digest_payload = {
+        "schema": "task40.phi90.d13.y2_axis_plan.v1",
+        "case": "Y2",
+        "parent_case": "Y",
+        "parent_plan_id": parent["plan_id"],
+        "parent_plan_sha256": parent["mesh_plan_sha256"],
+        "changed_axis": "y",
+        "axes_nm": {axis: list(values) for axis, values in axes.items()},
+        "axis_cell_counts": list(counts),
+        "parent_axis_sha256_le_f64": parent["actual_axis_sha256_le_f64"],
+    }
+    plan_sha256 = hashlib.sha256(
+        json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {
+        **digest_payload,
+        "plan_id": plan_id,
+        "mesh_plan_sha256": plan_sha256,
+        "actual_axis_sha256_le_f64": {
+            axis: _axis_digest(values) for axis, values in axes.items()
+        },
+        "expected_global_cell_count": math.prod(counts),
+    }
+
+
 D13_AXIS_PLANS = {case: d13_axis_plan(case) for case in D13_CASES}
+D13_AXIS_PLANS["Y2"] = d13_y2_axis_plan()
 D13_AXIS_PLAN_IDS = {
     str(plan["plan_id"]): case for case, plan in D13_AXIS_PLANS.items()
     if case != "B"

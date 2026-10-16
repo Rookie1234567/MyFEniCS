@@ -1,0 +1,700 @@
+{
+  "comparisons_to_B": {
+    "X": {
+      "x16p5|minus|1": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 4.128105514259829e-05,
+          "max_abs_delta": 6.534293252389221e-06,
+          "reference_l2": 0.08526925921672729,
+          "relative_l2_no_phase_fit": 0.0004841258798516708
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 1.5950882673226632e-07,
+          "max_abs_delta": 1.9649523196652034e-08,
+          "reference_l2": 0.04749361620644232,
+          "relative_l2_no_phase_fit": 3.3585319348799047e-06
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 3.552713678800501e-15,
+        "tag_name": "air"
+      },
+      "x16p5|plus|3": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 4.128105514256562e-05,
+          "max_abs_delta": 6.534293252633008e-06,
+          "reference_l2": 0.08526925921670855,
+          "relative_l2_no_phase_fit": 0.000484125879851394
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 1.6899297398863697e-07,
+          "max_abs_delta": 2.1307576858038154e-08,
+          "reference_l2": 0.04749356496010904,
+          "relative_l2_no_phase_fit": 3.5582288701759516e-06
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 3.552713678800501e-15,
+        "tag_name": "grating"
+      },
+      "x33p5|minus|3": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 4.128107574707501e-05,
+          "max_abs_delta": 6.5343032892652465e-06,
+          "reference_l2": 0.08526925921768563,
+          "relative_l2_no_phase_fit": 0.0004841261214863812
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 1.6899297672772484e-07,
+          "max_abs_delta": 2.1307576985236777e-08,
+          "reference_l2": 0.04749356496010061,
+          "relative_l2_no_phase_fit": 3.5582289278494043e-06
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 7.105427357601002e-15,
+        "tag_name": "grating"
+      },
+      "x33p5|plus|1": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 4.128107574717427e-05,
+          "max_abs_delta": 6.5343032892987695e-06,
+          "reference_l2": 0.08526925921772298,
+          "relative_l2_no_phase_fit": 0.00048412612148733336
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 1.5950882280249285e-07,
+          "max_abs_delta": 1.9649524076523882e-08,
+          "reference_l2": 0.04749361620643475,
+          "relative_l2_no_phase_fit": 3.358531852137247e-06
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 7.105427357601002e-15,
+        "tag_name": "air"
+      },
+      "y15|minus|1": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.00014063206352088746,
+          "max_abs_delta": 2.5747123259690712e-05,
+          "reference_l2": 9.373193797063886,
+          "relative_l2_no_phase_fit": 1.5003644068998111e-05
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 2.5988927194186605e-07,
+          "max_abs_delta": 4.1762661009694626e-08,
+          "reference_l2": 0.024865882524571826,
+          "relative_l2_no_phase_fit": 1.0451640784719792e-05
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "air"
+      },
+      "y15|plus|3": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.00014063206352493406,
+          "max_abs_delta": 2.5747123259290344e-05,
+          "reference_l2": 9.37319379706391,
+          "relative_l2_no_phase_fit": 1.5003644069429792e-05
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 2.2543542015531834e-07,
+          "max_abs_delta": 3.8315450153950455e-08,
+          "reference_l2": 0.024707162887171376,
+          "relative_l2_no_phase_fit": 9.124294083655007e-06
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "grating"
+      },
+      "y35|minus|3": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0001345179593358832,
+          "max_abs_delta": 2.5049753226735714e-05,
+          "reference_l2": 9.269531155053675,
+          "relative_l2_no_phase_fit": 1.451184068382413e-05
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 2.2555687902092094e-07,
+          "max_abs_delta": 3.817524802987004e-08,
+          "reference_l2": 0.024440909417255536,
+          "relative_l2_no_phase_fit": 9.228661469596359e-06
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "grating"
+      },
+      "y35|plus|1": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0001345179593336661,
+          "max_abs_delta": 2.5049753229058377e-05,
+          "reference_l2": 9.269531155053702,
+          "relative_l2_no_phase_fit": 1.4511840683584906e-05
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 2.574474082447954e-07,
+          "max_abs_delta": 4.1404233413956585e-08,
+          "reference_l2": 0.024595889367524108,
+          "relative_l2_no_phase_fit": 1.0467090837736631e-05
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "air"
+      }
+    },
+    "Y": {
+      "x16p5|minus|1": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0011217672302982486,
+          "max_abs_delta": 0.00014474591118317817,
+          "reference_l2": 0.044283500549744205,
+          "relative_l2_no_phase_fit": 0.025331494041175757
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.00028487485164654757,
+          "max_abs_delta": 4.169642165061469e-05,
+          "reference_l2": 0.024678827068619957,
+          "relative_l2_no_phase_fit": 0.011543289754186758
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "air"
+      },
+      "x16p5|plus|3": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0011217672302905454,
+          "max_abs_delta": 0.0001447459111827595,
+          "reference_l2": 0.04428350054973424,
+          "relative_l2_no_phase_fit": 0.025331494041007502
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.000285045859886766,
+          "max_abs_delta": 4.1718458318641525e-05,
+          "reference_l2": 0.024678896054066143,
+          "relative_l2_no_phase_fit": 0.011550186818012117
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 4.263256414560601e-14,
+        "tag_name": "grating"
+      },
+      "x33p5|minus|3": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0011217672329275532,
+          "max_abs_delta": 0.00014474591105751087,
+          "reference_l2": 0.04428350055053711,
+          "relative_l2_no_phase_fit": 0.02533149410009655
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.0002850458598914825,
+          "max_abs_delta": 4.1718458319581135e-05,
+          "reference_l2": 0.024678896054062583,
+          "relative_l2_no_phase_fit": 0.011550186818204897
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "grating"
+      },
+      "x33p5|plus|1": {
+        "B_only_coordinate_count": 568,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0011217672329429478,
+          "max_abs_delta": 0.00014474591105836088,
+          "reference_l2": 0.044283500550556895,
+          "relative_l2_no_phase_fit": 0.02533149410043287
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.000284874851653242,
+          "max_abs_delta": 4.169642165167968e-05,
+          "reference_l2": 0.024678827068615874,
+          "relative_l2_no_phase_fit": 0.01154328975445993
+        },
+        "candidate_only_coordinate_count": 1420,
+        "candidate_unique_nodes": 1633,
+        "common_coordinate_count": 213,
+        "max_coordinate_delta_nm": 4.263256414560601e-14,
+        "tag_name": "air"
+      },
+      "y15|minus|1": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.08628310422434389,
+          "max_abs_delta": 0.003845365027412606,
+          "reference_l2": 17.94869295628013,
+          "relative_l2_no_phase_fit": 0.004807208214799507
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.0003339244323808662,
+          "max_abs_delta": 1.6556938601441424e-05,
+          "reference_l2": 0.04761247972795578,
+          "relative_l2_no_phase_fit": 0.007013380405490657
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 3.552713678800501e-15,
+        "tag_name": "air"
+      },
+      "y15|plus|3": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.086283104224346,
+          "max_abs_delta": 0.0038453650274114046,
+          "reference_l2": 17.948692956280176,
+          "relative_l2_no_phase_fit": 0.0048072082147996124
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.0004935991510264197,
+          "max_abs_delta": 2.573337331374595e-05,
+          "reference_l2": 0.047308365237404316,
+          "relative_l2_no_phase_fit": 0.010433654778587783
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 3.552713678800501e-15,
+        "tag_name": "grating"
+      },
+      "y35|minus|3": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.08596098868615926,
+          "max_abs_delta": 0.0038648925609702295,
+          "reference_l2": 17.76836464651347,
+          "relative_l2_no_phase_fit": 0.00483786720929473
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.0007852786453299857,
+          "max_abs_delta": 4.152200269889843e-05,
+          "reference_l2": 0.046852749269579747,
+          "relative_l2_no_phase_fit": 0.016760567044031425
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 7.105427357601002e-15,
+        "tag_name": "grating"
+      },
+      "y35|plus|1": {
+        "B_only_coordinate_count": 0,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.08596098868616445,
+          "max_abs_delta": 0.003864892560969831,
+          "reference_l2": 17.76836464651351,
+          "relative_l2_no_phase_fit": 0.00483786720929501
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 0.00014325193518999275,
+          "max_abs_delta": 5.978592210371323e-06,
+          "reference_l2": 0.04715007589394841,
+          "relative_l2_no_phase_fit": 0.0030382121868096244
+        },
+        "candidate_only_coordinate_count": 0,
+        "candidate_unique_nodes": 781,
+        "common_coordinate_count": 781,
+        "max_coordinate_delta_nm": 7.105427357601002e-15,
+        "tag_name": "air"
+      }
+    },
+    "Z": {
+      "x16p5|minus|1": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0001426820939770804,
+          "max_abs_delta": 2.739734282144436e-05,
+          "reference_l2": 0.048833429230681395,
+          "relative_l2_no_phase_fit": 0.002921811886342709
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 6.08148599228568e-08,
+          "max_abs_delta": 1.0020252113170377e-08,
+          "reference_l2": 0.026904225726930645,
+          "relative_l2_no_phase_fit": 2.260420371881664e-06
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "air"
+      },
+      "x16p5|plus|3": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.00014268209397649235,
+          "max_abs_delta": 2.739734282123345e-05,
+          "reference_l2": 0.04883342923066997,
+          "relative_l2_no_phase_fit": 0.002921811886331351
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 6.773135659403733e-08,
+          "max_abs_delta": 1.2032955919293693e-08,
+          "reference_l2": 0.026904201385236862,
+          "relative_l2_no_phase_fit": 2.517501100449075e-06
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "grating"
+      },
+      "x33p5|minus|3": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.0001426821190477225,
+          "max_abs_delta": 2.7397346537111597e-05,
+          "reference_l2": 0.04883342923100466,
+          "relative_l2_no_phase_fit": 0.002921812399714348
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 6.773135758881638e-08,
+          "max_abs_delta": 1.2032957706700978e-08,
+          "reference_l2": 0.026904201385230607,
+          "relative_l2_no_phase_fit": 2.517501137424519e-06
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "grating"
+      },
+      "x33p5|plus|1": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 0.00014268211904885575,
+          "max_abs_delta": 2.7397346537471867e-05,
+          "reference_l2": 0.04883342923102771,
+          "relative_l2_no_phase_fit": 0.002921812399736175
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 6.081486058171256e-08,
+          "max_abs_delta": 1.0020253293327345e-08,
+          "reference_l2": 0.026904225726925052,
+          "relative_l2_no_phase_fit": 2.260420396371066e-06
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "air"
+      },
+      "y15|minus|1": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 1.1143667828342089e-05,
+          "max_abs_delta": 3.4305400461182558e-06,
+          "reference_l2": 10.16815951752161,
+          "relative_l2_no_phase_fit": 1.0959375498721768e-06
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 4.1435967662914806e-08,
+          "max_abs_delta": 1.0438892459384825e-08,
+          "reference_l2": 0.02697261783933192,
+          "relative_l2_no_phase_fit": 1.5362234362914595e-06
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "air"
+      },
+      "y15|plus|3": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 1.1143667829107055e-05,
+          "max_abs_delta": 3.4305400482099803e-06,
+          "reference_l2": 10.168159517521637,
+          "relative_l2_no_phase_fit": 1.0959375499474054e-06
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 2.1098734358012832e-08,
+          "max_abs_delta": 6.276383155253858e-09,
+          "reference_l2": 0.026800337450497633,
+          "relative_l2_no_phase_fit": 7.872562947009112e-07
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "grating"
+      },
+      "y35|minus|3": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 1.0430759965377163e-05,
+          "max_abs_delta": 3.486197247731412e-06,
+          "reference_l2": 10.06408873197809,
+          "relative_l2_no_phase_fit": 1.0364336248580555e-06
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 2.1087816066972295e-08,
+          "max_abs_delta": 6.258878884798237e-09,
+          "reference_l2": 0.02653817579060353,
+          "relative_l2_no_phase_fit": 7.946219149862944e-07
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "grating"
+      },
+      "y35|plus|1": {
+        "B_only_coordinate_count": 528,
+        "B_unique_nodes": 781,
+        "E_t_no_phase_fit": {
+          "delta_l2": 1.0430759966632007e-05,
+          "max_abs_delta": 3.48619725018635e-06,
+          "reference_l2": 10.064088731978114,
+          "relative_l2_no_phase_fit": 1.0364336249827384e-06
+        },
+        "H_t_no_phase_fit": {
+          "delta_l2": 4.13684080206465e-08,
+          "max_abs_delta": 1.0432099578349587e-08,
+          "reference_l2": 0.0267065573641549,
+          "relative_l2_no_phase_fit": 1.5489981526473532e-06
+        },
+        "candidate_only_coordinate_count": 1320,
+        "candidate_unique_nodes": 1573,
+        "common_coordinate_count": 253,
+        "max_coordinate_delta_nm": 2.842170943040401e-14,
+        "tag_name": "air"
+      }
+    }
+  },
+  "face_geometry_nm": {
+    "x16p5": {
+      "inside_grating_y": [
+        15.0,
+        35.0
+      ],
+      "inside_grating_z": [
+        0.0,
+        120.0
+      ],
+      "x": 16.5
+    },
+    "x33p5": {
+      "inside_grating_y": [
+        15.0,
+        35.0
+      ],
+      "inside_grating_z": [
+        0.0,
+        120.0
+      ],
+      "x": 33.5
+    },
+    "y15": {
+      "inside_grating_x": [
+        16.5,
+        33.5
+      ],
+      "inside_grating_z": [
+        0.0,
+        120.0
+      ],
+      "y": 15.0
+    },
+    "y35": {
+      "inside_grating_x": [
+        16.5,
+        33.5
+      ],
+      "inside_grating_z": [
+        0.0,
+        120.0
+      ],
+      "y": 35.0
+    }
+  },
+  "runs": {
+    "B": {
+      "bytes": 26224404,
+      "cell_count": 504,
+      "cell_type": "VTK_LAGRANGE_HEXAHEDRON",
+      "dg6_nodes_per_cell": 343,
+      "duplicate_trace_spread_summary": {
+        "duplicate_coordinate_groups": 1448,
+        "max_abs_E_t_spread": 0.0001491085283622689,
+        "max_abs_H_t_spread": 5.450305105171407e-05
+      },
+      "extracted_unique_point_counts_by_face_side_tag": {
+        "x16p5|minus|1": 781,
+        "x16p5|plus|3": 781,
+        "x33p5|minus|3": 781,
+        "x33p5|plus|1": 781,
+        "y15|minus|1": 781,
+        "y15|plus|3": 781,
+        "y35|minus|3": 781,
+        "y35|plus|1": 781
+      },
+      "finite_EH": true,
+      "path": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_B_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T091948.653032Z/numerical_output/fields_3d_for_paraview.vtu",
+      "point_count": 172872,
+      "sha256": "cc520afe06f075360e04b6a495bf5114a63606bfdbb933cb394c22503b61b283",
+      "tag_counts": {
+        "1": 420,
+        "2": 36,
+        "3": 48
+      }
+    },
+    "X": {
+      "bytes": 52222452,
+      "cell_count": 1008,
+      "cell_type": "VTK_LAGRANGE_HEXAHEDRON",
+      "dg6_nodes_per_cell": 343,
+      "duplicate_trace_spread_summary": {
+        "duplicate_coordinate_groups": 2456,
+        "max_abs_E_t_spread": 0.0001657202044352279,
+        "max_abs_H_t_spread": 5.4503211381152074e-05
+      },
+      "extracted_unique_point_counts_by_face_side_tag": {
+        "x16p5|minus|1": 781,
+        "x16p5|plus|3": 781,
+        "x33p5|minus|3": 781,
+        "x33p5|plus|1": 781,
+        "y15|minus|1": 1633,
+        "y15|plus|3": 1633,
+        "y35|minus|3": 1633,
+        "y35|plus|1": 1633
+      },
+      "finite_EH": true,
+      "path": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_X_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T094950.200837Z/numerical_output/fields_3d_for_paraview.vtu",
+      "point_count": 345744,
+      "sha256": "d931540fda0ed5d22b5da2e99f6ee2dc0d69f32813a2689dc56d110cb49bda66",
+      "tag_counts": {
+        "1": 840,
+        "2": 72,
+        "3": 96
+      }
+    },
+    "Y": {
+      "bytes": 52298820,
+      "cell_count": 1008,
+      "cell_type": "VTK_LAGRANGE_HEXAHEDRON",
+      "dg6_nodes_per_cell": 343,
+      "duplicate_trace_spread_summary": {
+        "duplicate_coordinate_groups": 2456,
+        "max_abs_E_t_spread": 0.00014493894765368686,
+        "max_abs_H_t_spread": 1.0847293360858329e-06
+      },
+      "extracted_unique_point_counts_by_face_side_tag": {
+        "x16p5|minus|1": 1633,
+        "x16p5|plus|3": 1633,
+        "x33p5|minus|3": 1633,
+        "x33p5|plus|1": 1633,
+        "y15|minus|1": 781,
+        "y15|plus|3": 781,
+        "y35|minus|3": 781,
+        "y35|plus|1": 781
+      },
+      "finite_EH": true,
+      "path": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T102453.831934Z/numerical_output/fields_3d_for_paraview.vtu",
+      "point_count": 345744,
+      "sha256": "71fd4635105450972209cf0a469234f1cf54c44f4cf94049993972e0fadecd7f",
+      "tag_counts": {
+        "1": 840,
+        "2": 72,
+        "3": 96
+      }
+    },
+    "Z": {
+      "bytes": 52360933,
+      "cell_count": 1008,
+      "cell_type": "VTK_LAGRANGE_HEXAHEDRON",
+      "dg6_nodes_per_cell": 343,
+      "duplicate_trace_spread_summary": {
+        "duplicate_coordinate_groups": 2984,
+        "max_abs_E_t_spread": 8.730438352246468e-05,
+        "max_abs_H_t_spread": 5.4688613246562616e-05
+      },
+      "extracted_unique_point_counts_by_face_side_tag": {
+        "x16p5|minus|1": 1573,
+        "x16p5|plus|3": 1573,
+        "x33p5|minus|3": 1573,
+        "x33p5|plus|1": 1573,
+        "y15|minus|1": 1573,
+        "y15|plus|3": 1573,
+        "y35|minus|3": 1573,
+        "y35|plus|1": 1573
+      },
+      "finite_EH": true,
+      "path": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Z_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T104423.676151Z/numerical_output/fields_3d_for_paraview.vtu",
+      "point_count": 345744,
+      "sha256": "525543adfed9e2b2683d1ea7bfc6d049e5d1461009860b5588f9938266685708",
+      "tag_counts": {
+        "1": 840,
+        "2": 72,
+        "3": 96
+      }
+    }
+  },
+  "schema": "task40_d13_bxyz_sidewall_dg6_node_comparison_v1",
+  "source_representation": {
+    "excluded_edges": "strictly excludes z=0/120 and sidewall corners",
+    "field_construction": "postprocess_3d.py creates DG6 vector fields by DOLFINx interpolation and exports the per-cell Lagrange-hex nodal values",
+    "sampling_method": "select only saved DG6 nodes exactly on material sidewall faces; no geometric/visualization interpolation and no phase fit",
+    "scope_limit": "stored DG6 representation at exact nodes only; not a full-domain norm; not new solve or reconstruction from canonical H(curl) coefficients",
+    "tangential_components": {
+      "x_normal": [
+        "y",
+        "z"
+      ],
+      "y_normal": [
+        "x",
+        "z"
+      ]
+    },
+    "vtk_fallback": "existing fields_3d_for_paraview.vtu"
+  }
+}

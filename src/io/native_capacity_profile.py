@@ -65,6 +65,9 @@ TASK40_PHI90_D13_X_P6_DIRECT_PROFILE = (
 TASK40_PHI90_D13_Y_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Y_p6_direct_v1"
 )
+TASK40_PHI90_D13_Y2_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_Y2_p6_direct_v1"
+)
 TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Z_p6_direct_v1"
 )
@@ -105,6 +108,18 @@ TASK40_PHI90_D13_CASES = {
         },
         "expected_global_cell_count": 1008,
         "expected_material_tag_counts": {"1": 840, "2": 72, "3": 96},
+        "explicit_axis_counts_in_input": True,
+    },
+    TASK40_PHI90_D13_Y2_P6_DIRECT_PROFILE: {
+        "case": "Y2",
+        "parent_case": "Y",
+        "changed_axis": "y",
+        "axis_cell_counts": (6, 24, 14),
+        "segment_cell_counts": {
+            "x": (2, 2, 2), "y": (8, 8, 8), "z": (1, 12, 1),
+        },
+        "expected_global_cell_count": 2016,
+        "expected_material_tag_counts": {"1": 1680, "2": 144, "3": 192},
         "explicit_axis_counts_in_input": True,
     },
     TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE: {
@@ -734,11 +749,11 @@ def _task40_phi90_d13_profile_facts(identity):
     case_name = case["case"]
     operator_scope = f"task40_phi90_D13_{case_name}_R13_finite_rectangle"
     from src.geometry.task40_phi90_d13_axis_plan import (
+        D13_AXIS_PLANS,
         D13_B_AXIS_SHA256_LE_F64,
-        d13_axis_plan,
     )
 
-    axis_plan = d13_axis_plan(case_name)
+    axis_plan = D13_AXIS_PLANS[case_name]
     if tuple(axis_plan["axis_cell_counts"]) != tuple(case["axis_cell_counts"]):
         raise ValueError(f"Task40 D13 {case_name} profile and frozen axis plan differ")
     if D13_B_AXIS_SHA256_LE_F64 != TASK40_PHI90_D13_BASE_AXIS_SHA256:
@@ -824,7 +839,7 @@ def _task40_phi90_d13_profile_facts(identity):
         "expected_global_cell_count": case["expected_global_cell_count"],
         "directional_mesh_comparison": {
             "case": case_name,
-            "parent_case": "B",
+            "parent_case": case.get("parent_case", "B"),
             "changed_axis": case["changed_axis"],
             "axis_cell_counts": list(case["axis_cell_counts"]),
             "segment_cell_counts": {
