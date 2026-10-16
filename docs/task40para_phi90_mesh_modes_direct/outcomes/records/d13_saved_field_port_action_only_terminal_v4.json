@@ -1,0 +1,234 @@
+{
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "artifact_hashes": {
+    "contract": "5346880f6b1e4e9c24c2277323f2284f24c3cc841808a166ae1ddb49a669b109",
+    "fresh": "e045605838834faa241a914141b9ee0743f2e475d10dff93a368ea532532dfef",
+    "report": "43cf5b37f3e852e3a6eee99e0c78cdccce905826ab589e49b3d2e522b1b3a825",
+    "sidecar": "13ffe9133f3c40037f1235b625949df10aa2ee8553d05d1df368d8fd6b07377c",
+    "supervision": "7d13c6022652ac778b9ef0534b65cb8b46ec0c090cdf75488b4bf02c936fee62",
+    "watchdog_summary": "13f44cc9ec989fb596929dd94a1a5977d9c7366fa6e960eadcc70968262b6621"
+  },
+  "cases": [
+    {
+      "DG6_Basix_element_dtype": "float64",
+      "DG6_function_scalar_dtype": "complex128",
+      "MPC_zero_slave_backsubstitution_relative": 2.211804335609733e-15,
+      "assembled_carrier_mode_count": 0,
+      "axis_cell_counts": [
+        6,
+        24,
+        14
+      ],
+      "axis_sha256": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "7e10438f6b6a84ec4313bd841bcd99d7c4430724fad08cebefafcb156e2e9e16",
+        "z": "1b914feb6c2eba6bf20142a3a24e9918947b90be497ded96778e1e1ee3457ce6"
+      },
+      "by_material_pair_max_facet_relative": {
+        "1-1": 0.0003134531344792558,
+        "1-2": 1.2763617166256043e-14,
+        "1-3": 3.0356714311744648e-12,
+        "2-2": 0.0001931131534233848,
+        "2-3": 5.79791351451658e-15,
+        "3-3": 0.00022247163918910151
+      },
+      "case": "Y2-primary",
+      "failed_checks": [
+        "maximum_facet_unaveraged_tangential_trace_relative"
+      ],
+      "global_DG6_roundtrip_relative": 1.9825615444638537e-14,
+      "global_matrix_factor_or_solve": false,
+      "global_unaveraged_shared_tangential_trace_relative": 6.15064347583416e-15,
+      "maximum_cell_DG6_roundtrip_relative": 2.1856572997757246e-14,
+      "maximum_facet_gate_threshold": 1e-10,
+      "maximum_facet_unaveraged_shared_tangential_trace_relative": 0.0003134531344792558,
+      "mesh_cells": 2016,
+      "mode_count": 612,
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "run_directory_id": "20261016T112452.011352Z",
+      "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+      "status": "NO_CARRIER_COMPARISON",
+      "surface_quadrature_degree": 28,
+      "worst_facet": {
+        "axis_normal": "x",
+        "cells": [
+          1802,
+          1842
+        ],
+        "facet": 5920,
+        "material_tags": [
+          1,
+          1
+        ],
+        "maximum_absolute_tangential_component_error": 1.5880420039920967e-14,
+        "plane_nm": 25.0,
+        "relative_denominator": 2.563616787669193e-10,
+        "relative_tangential_jump_l2": 0.0003134531344792558,
+        "tangential_jump_l2": 8.035737176985493e-14,
+        "tangential_trace_scale_l2": 2.563616787669193e-10
+      }
+    },
+    {
+      "DG6_Basix_element_dtype": "float64",
+      "DG6_function_scalar_dtype": "complex128",
+      "MPC_zero_slave_backsubstitution_relative": 1.6635438469062833e-15,
+      "assembled_carrier_mode_count": 0,
+      "axis_cell_counts": [
+        6,
+        48,
+        14
+      ],
+      "axis_sha256": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "04cfab284df8c8827c76bc5954ea391f15644136922d958f3844f3f2bb89a152",
+        "z": "1b914feb6c2eba6bf20142a3a24e9918947b90be497ded96778e1e1ee3457ce6"
+      },
+      "by_material_pair_max_facet_relative": {
+        "1-1": 0.0001348820533203681,
+        "1-2": 2.4831748433996245e-14,
+        "1-3": 6.06448842695672e-12,
+        "2-2": 8.266370131288724e-05,
+        "2-3": 1.1001482122947476e-14,
+        "3-3": 9.419314406063733e-05
+      },
+      "case": "Y3-control",
+      "failed_checks": [
+        "maximum_facet_unaveraged_tangential_trace_relative"
+      ],
+      "global_DG6_roundtrip_relative": 2.0637926900275387e-14,
+      "global_matrix_factor_or_solve": false,
+      "global_unaveraged_shared_tangential_trace_relative": 1.1679136618193322e-14,
+      "maximum_cell_DG6_roundtrip_relative": 2.3357099073110448e-14,
+      "maximum_facet_gate_threshold": 1e-10,
+      "maximum_facet_unaveraged_shared_tangential_trace_relative": 0.0001348820533203681,
+      "mesh_cells": 4032,
+      "mode_count": 612,
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "run_directory_id": "20261016T122621.622353Z",
+      "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+      "status": "NO_CARRIER_COMPARISON",
+      "surface_quadrature_degree": 28,
+      "worst_facet": {
+        "axis_normal": "x",
+        "cells": [
+          3570,
+          3630
+        ],
+        "facet": 11649,
+        "material_tags": [
+          1,
+          1
+        ],
+        "maximum_absolute_tangential_component_error": 3.1814094021127185e-14,
+        "plane_nm": 25.0,
+        "relative_denominator": 1.1875914254506946e-09,
+        "relative_tangential_jump_l2": 0.0001348820533203681,
+        "tangential_jump_l2": 1.6018476997045254e-13,
+        "tangential_trace_scale_l2": 1.1875914254506946e-09
+      }
+    }
+  ],
+  "completed_utc": "2026-10-16T15:48:30.369858+00:00",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+  "contract_sha256": "5346880f6b1e4e9c24c2277323f2284f24c3cc841808a166ae1ddb49a669b109",
+  "diagnostic_interpretation": "Both saved-field reconstructions passed global DG6 roundtrip, MPC back-substitution, and global unaveraged shared-tangential checks. Each failed the required maximum-per-facet relative trace threshold at low-amplitude same-material x-normal interior facets. Absolute jumps are about 1e-14 while local trace scales are about 1e-10 to 1e-9, so the relative checks are 1.35e-4 to 3.13e-4. The frozen fail-closed contract therefore returns NO_CARRIER_COMPARISON for both cases; no carrier was assembled. This identifies the stopping witness, not a production operator or solver failure, and does not establish whether the low-scale local mismatch is a mapping, field, or roundoff issue.",
+  "execution": {
+    "PDE_solve": false,
+    "carrier_modes_built": false,
+    "elapsed_seconds": 85.94107058318332,
+    "factor_or_solve": false,
+    "final_stage": "periodic_mpc_compatibility_check_complete",
+    "matrix_built": false,
+    "mpi_size": 1,
+    "petsc_int_dtype": "int64",
+    "petsc_scalar_type": "<class 'numpy.complex128'>",
+    "status": "COMPLETE_ACTION_ONLY_DIAGNOSTIC",
+    "volume_form_built": false
+  },
+  "fresh_admission_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_fresh_admission_v4.json",
+  "fresh_admission_sha256": "e045605838834faa241a914141b9ee0743f2e475d10dff93a368ea532532dfef",
+  "process_identity": {
+    "exec_session_id": 19371,
+    "mapped_libraries": [
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so"
+    ],
+    "mpi": {
+      "affinity": [
+        9
+      ],
+      "pid": 1503090,
+      "ppid": 1503054,
+      "sid": 1503090,
+      "start_ticks": 209049195
+    },
+    "root": {
+      "affinity": [
+        9
+      ],
+      "pid": 1503054,
+      "ppid": 533451,
+      "sid": 1503054,
+      "start_ticks": 209049000
+    },
+    "terminal_pid_check": "root, MPI, and worker PIDs absent after watchdog completed; watchdog confirms descendants_cleared=true and remaining_child_pids=[]",
+    "worker": {
+      "affinity": [
+        24
+      ],
+      "pid": 1503093,
+      "ppid": 1503090,
+      "sid": 1503090,
+      "start_ticks": 209049212
+    },
+    "worker_numa_maps_readback": {
+      "default_lines": 5,
+      "interleave_0_1_lines": 1350,
+      "local_lines": 3,
+      "total_lines": 1351
+    },
+    "worker_thread_affinities": [
+      [
+        24
+      ],
+      [
+        24
+      ],
+      [
+        24
+      ]
+    ],
+    "worker_thread_count": 3
+  },
+  "qualification_boundary": "This bounded action-only diagnostic did not run a PDE solve, assemble a DtN carrier, build a global matrix, factor, or solve. No solver or port equivalence conclusion is made.",
+  "resource_summary": {
+    "all_status_readable_terminal_sample": true,
+    "descendants_cleared": true,
+    "elapsed_seconds": 91.96290501812473,
+    "global_swap_launch_baseline_bytes": 611540992,
+    "global_swap_policy": "observe-only; no global page-in/out delta observed during the job",
+    "job_swap_activity": "HOST_FLOOR_OBSERVE_ONLY_no_task_or_global_swap_observed",
+    "launch_effective_available_bytes": 2136533872640,
+    "minimum_available_bytes": 68719476736,
+    "policy": "host_available_floor_v1",
+    "pss_sampling_policy": "disabled_by_profile",
+    "remaining_child_pids": [],
+    "resource_sample_count": 45,
+    "rss_hard_limit_bytes": null,
+    "rss_peak_bytes": 1011597312,
+    "warning": null
+  },
+  "schema": "task40.d13.saved-field-port-action-only-terminal.v4",
+  "scope": "Y2_primary_Y3_same_key_control_no_solve",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v4.json",
+  "sidecar_sha256": "13ffe9133f3c40037f1235b625949df10aa2ee8553d05d1df368d8fd6b07377c",
+  "status": "ACTION_ONLY_DIAGNOSTIC_COMPLETED_NO_CARRIER_COMPARISON",
+  "test_sha256": "93a650a92d2b2a0c967ac8cd6d2b69b9e0a6b98bb5c99c44ff095ccd95abe80b",
+  "v3_failure_preserved": {
+    "correction_note_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_correction_v3.json",
+    "correction_note_sha256": "abf8cf93d358436964106c30ccf0bb8797464edcb4e644fee992ed97ec62ef26",
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_v3.json",
+    "sha256": "e6eba69a865801257a74734e1a5d9fb17bf970c0341a2121532faf2b8750df6d"
+  },
+  "worker_sha256": "d743f768ac3fd4ea130805c9bb19be333b4c88e7e8f075c7d453433df776b17f"
+}

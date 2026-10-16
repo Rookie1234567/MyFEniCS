@@ -1,0 +1,69 @@
+{
+  "schema": "task40.d13.signed-key-surface-capture-fresh-admission.v1",
+  "status": "PASS",
+  "captured_utc": "2026-10-16T16:16:17.387241+00:00",
+  "host": "fenics-ws01",
+  "worktree": "/home/fenics/Projects/Maxwell3D-Phi90",
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v5.json",
+  "contract_sha256": "46167686ff9333c02171a8dfa5782e991e18af7522677a2bfeedcd4d941c757d",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v5.json",
+  "sidecar_sha256": "ae02325595ae1ab4d15fbda9b2f228e45303f0636619e97550541e1772b8b4ea",
+  "worker_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+  "worker_sha256": "7844d0666ee538650c35baa0800f1790e799616f73a929d5f01a67e0fdf7cceb",
+  "focused_test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_port_action_only.py",
+  "focused_test_sha256": "ec33615a4dd996ec7c350fb72836d8c2538906422f4b18c8bd32592f757e4a1a",
+  "host_floor": {
+    "minimum_available_bytes": 68719476736,
+    "meminfo": {
+      "MemTotal": 2163100385280,
+      "MemAvailable": 2137119035392,
+      "SwapTotal": 8589930496,
+      "SwapFree": 7978389504
+    },
+    "passed": true
+  },
+  "disk": {
+    "resolved_probe_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp",
+    "target_output_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_signed_key_projection_20261017_v5",
+    "st_dev": 66305,
+    "available_bytes": 2437758947328,
+    "total_bytes": 4030220222464
+  },
+  "shared_heavy_lock": {
+    "path": "/home/fenics/Projects/Maxwell3D-Lab/native-capacity-heavy.lock",
+    "inode": 143269865,
+    "device": 66305,
+    "nonblocking_exclusive_probe_busy": false,
+    "probe_released_immediately": true
+  },
+  "matching_process_candidates": [],
+  "duplicate_or_task41_heavy_gate": "no matching process candidate and canonical shared heavy lock free; no neighbor was signaled or modified",
+  "output_directory_absent": true,
+  "abi_cpu_numa_probe": {
+    "command_contract": "taskset parent CPU9 -> mpiexec -n1 -> numactl --interleave=0,1 -> taskset CPU24 -> shared qualified Python",
+    "worker_pid": 1511835,
+    "mpi_size": 1,
+    "petsc_scalar": "complex128",
+    "petsc_int": "int64",
+    "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+    "libpetsc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so",
+    "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+    "basix": "0.10.0",
+    "task40_src": "/home/fenics/Projects/Maxwell3D-Phi90/src/__init__.py",
+    "worker_cpus_allowed": "24",
+    "worker_mems_allowed": "0-1",
+    "numactl_policy": "interleave",
+    "numactl_mask": "0 1",
+    "worker_numa_maps_interleave_lines": 809,
+    "math_threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "functional_store_environment_absent": true
+  },
+  "scope": "Y2 and Y3 saved VTU fields; exact signed indices [17,152,289,323,458,595]; six q28 scalar projection keys only; no carrier/matrix/factor/solve."
+}

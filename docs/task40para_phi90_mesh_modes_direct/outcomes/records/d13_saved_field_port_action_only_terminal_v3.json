@@ -1,0 +1,85 @@
+{
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "captured_utc": "2026-10-16T15:18:14.808944Z",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v3.json",
+  "contract_sha256": "91ee9febc7e086ca34857f65d6570fd98e06d0ee643f4f9c7c41125e299e6468",
+  "current_case": "Y2-primary",
+  "exception": "RuntimeError: Unsupported finite element dtype.",
+  "execution_flags": {
+    "PDE_solve": false,
+    "factor_or_solve": false,
+    "full_612_carrier_built": false,
+    "materialized_global_matrix_built": false,
+    "matrix_built": false,
+    "matrix_free_action_handle_created": false,
+    "volume_form_built": false
+  },
+  "fresh_admission_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_fresh_admission_v3.json",
+  "fresh_admission_sha256": "fcc358d09a1d5053e2e7aea766552e999283c1c27906f3a7e5c429068eb254c1",
+  "neighbors_modified": false,
+  "numerical_result": "NONE; this is an implementation/API startup failure, not a scientific pass or a failed carrier gate",
+  "output_directory": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v3",
+  "phase": "before_saved_vtu_load",
+  "process_identity": {
+    "actual_worker_numa_maps": "NOT_READ_WHILE_LIVE; admission probe confirmed interleave:0-1 and child argv used numactl --interleave=0,1",
+    "all_known_pids_absent_after_exit": true,
+    "launcher_parent_at_initial_readback": {
+      "pid": 1495890,
+      "short_lived": true
+    },
+    "mpi": {
+      "affinity": [
+        9
+      ],
+      "pid": 1495907,
+      "ppid": 1495891,
+      "start_ticks": 208877675
+    },
+    "supervisor_root": {
+      "affinity": [
+        9
+      ],
+      "pid": 1495891,
+      "session_id": 1495891,
+      "start_ticks": 208877486,
+      "watchdog_observed_ppid": 1
+    },
+    "worker": {
+      "affinity": [
+        24
+      ],
+      "pid": 1495910,
+      "ppid": 1495907,
+      "start_ticks": 208877691
+    }
+  },
+  "resource_stream_note": "Not rehashed or rescanned; terminal RSS/swap/cleanup facts are from the compact watchdog summary and worker report.",
+  "resource_stream_sha256": null,
+  "retry": "NOT_AUTOMATIC; preserve this terminal attempt and await main review before any new execution",
+  "schema": "task40.d13.saved-field-port-action-only-terminal.v3",
+  "scientific_evidence": "NOT_REACHED; no saved VTU was loaded, no carrier comparison was formed, and no numerical gate was evaluated",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v3.json",
+  "sidecar_sha256": "c09c8e3bd7df4d9d6f87ad22800339a17de1ae0ecf89d91ecd623766cb39979f",
+  "status": "DIAGNOSTIC_ATTEMPT_FAILED_BEFORE_SAVED_VTU_LOAD",
+  "supervision": {
+    "classification": "WORKER_FAILED",
+    "descendants_cleared": true,
+    "elapsed_seconds": 16.834535614121705,
+    "job_swap_activity": "HOST_FLOOR_OBSERVE_ONLY_no_task_or_global_swap_observed",
+    "launch_effective_available_bytes": 2134912593920,
+    "leader_exit_code": 1,
+    "minimum_available_bytes": 68719476736,
+    "pss_sampling_policy": "disabled_by_profile",
+    "remaining_child_pids": [],
+    "resource_stop_policy": "host_available_floor_v1",
+    "rss_hard_limit_bytes": null,
+    "rss_peak_bytes": 470585344,
+    "swap_policy": "observe_only"
+  },
+  "supervision_receipt_sha256": "496abc584af3851e0cf16ecc3dc90d7f22a2bc75c74ef95a145269f3c0834961",
+  "traceback_location": "worker d13_saved_field_port_action_only.py:649, Basix UFL element(\"DG\", ..., 6, shape=(3,), dtype=complex128)",
+  "watchdog_summary_sha256": "ef217690aedd7c25966606230ca8795eba27ed53b87be7884aa5607763f9d36c",
+  "worker_log_sha256": "e3cebe838c6ad45bbdec8652b6bef18d8edd10042f4f01c4ad09de7092c2b730",
+  "worker_report_sha256": "a9a3eb67d89a524c98772cd32fd84e5fe309b49126ecc5fd27a94e5d32537c1f",
+  "worker_status": "ACTION_ONLY_DIAGNOSTIC_FAILED"
+}

@@ -1,0 +1,32 @@
+{
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "authorization_state": "awaiting main review; no fresh or FE started",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v3.json",
+  "contract_sha256": "91ee9febc7e086ca34857f65d6570fd98e06d0ee643f4f9c7c41125e299e6468",
+  "reviewed_fix": {
+    "disk_contract_integration": "PASS: test loads contract_v3.json from disk and calls the real run_supervised() function with only native_capacity_guard and watchdog.supervise mocked",
+    "output_schema": "task40.d13.saved-field-port-action-only-supervision.v2; classification, exit, descendants, RSS, host-floor, swap, PSS and timing fields checked; serialized output equals returned result",
+    "resource_arguments": "host_available_floor_v1; minimum_available_bytes=68719476736; rss_hard_limit_bytes=null; rss_warning_bytes=null; wall_seconds=null; solve_seconds=null; stop_on_global_swap=false; pss_sampling_policy=disabled_by_profile; sample_interval_seconds=2.0; cleanup_grace_seconds=60.0",
+    "serialized_contract_schema": "task40.d13.saved-field-port-action-only-contract.v2 (kept worker-compatible; artifact revision is v3)",
+    "stop_on_global_swap": false,
+    "supervision_contract_path": "$.fresh_and_supervision.supervision",
+    "v1_v2_preserved": "yes; v2 explicitly marked non-executable/superseded in v3 history"
+  },
+  "schema": "task40.d13.saved-field-port-action-only-validation.v3",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v3.json",
+  "sidecar_sha256": "c09c8e3bd7df4d9d6f87ad22800339a17de1ae0ecf89d91ecd623766cb39979f",
+  "status": "PURE_INTERFACE_PASS_NOT_LAUNCHED",
+  "supervisor_sha256": "edb2b94e4a61a23d3cf31f64306abbfc6b6748b924233a826db21bf79f6a26e5",
+  "tests": {
+    "command": "Task40 PORD64 activation; private /tmp caches; taskset -c 9; pytest worker/supervisor + existing host-floor short-child regression",
+    "compileall": "passed for worker, supervisor, focused tests, and existing host-floor regression test",
+    "manual_whitespace_json_check": "passed for v3 worker/supervisor test and contract/sidecar/validation JSON files",
+    "mesh_fe_factor_solve": "NOT_RUN",
+    "result": "21 passed in 1.91s",
+    "ruff": "passed for action-only worker, supervisor adapter, and focused worker/supervisor tests",
+    "shell_syntax": "bash -n passed on the exact sidecar shell_command",
+    "sidecar_argv_binding": "PASS: shlex-parsed exec line matches exec_argv; embedded worker command matches contract worker_argv"
+  },
+  "validated_utc": "2026-10-16T15:10:56.467293Z",
+  "worker_sha256": "90c4be32fbcd86851a1bb4bdbbc5ea8ab0f1670fdb1670e4235a66a20f74b560"
+}

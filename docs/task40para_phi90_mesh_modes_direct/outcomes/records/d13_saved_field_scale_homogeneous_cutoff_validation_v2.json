@@ -1,0 +1,46 @@
+{
+  "base_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "bound_historical_evidence": {
+    "correction": {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_postprocess_correction_v1.json",
+      "sha256": "b59ca4840e1d457272ec02fc1a965e9b7b78cd7824b4efe535edab2ec1e9e90a"
+    },
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v8/report.json",
+    "sha256": "e0804545a40584afdbcbb5fd15c770425be8721651129df38bdf60fd474c5070"
+  },
+  "candidate_note_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/response_scale_homogeneous_cutoff_candidate_v2.md",
+  "candidate_note_sha256": "189f90506812776cc118d675745777c2937c7a4029bc54d43c26a971064d07a0",
+  "candidate_package": {
+    "accounting_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_scale_homogeneous_cutoff_accounting.py",
+    "accounting_sha256": "91be72929986b4c84b556e63bc8a312a05068ce89743414239598f3956f01244",
+    "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_scale_homogeneous_cutoff_contract_v2.json",
+    "contract_sha256": "2ed5525cdb1632ccb320c6c50de5409d355b33ef1725b2b1c9b2e29d64ac5752",
+    "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_scale_homogeneous_cutoff_launch_v2.json",
+    "sidecar_sha256": "1afdbe3ce2800830bdb7200fb9ff6f50346f19e4b6341b5b6341d3fee274ac79",
+    "supervisor_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_scale_homogeneous_supervisor_v2.py",
+    "supervisor_sha256": "09db619463a85d90d56097cfaa32259e8717405a1bb84801d92b3e6a00172285",
+    "worker_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_scale_homogeneous_worker_v2.py",
+    "worker_sha256": "d63e2daaf7c4c20a88c14814704c97d0a6413beab618d8b91186645d2e273f49"
+  },
+  "candidate_test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_scale_homogeneous_cutoff_v2.py",
+  "candidate_test_sha256": "8a0e42f50f52cee7d7e08d9d2b8b5f392c4351264777cfa31fdac8c465711b51",
+  "candidate_tracked_source": {
+    "git_diff_sha256": "25ee7308eadeef3b5e324b0f105a2495345f89ea95c39b3abcbe7be9af390992",
+    "path": "src/solvers/dtn_port_3d.py",
+    "sha256": "93b3c99569770420ea089f44aaac7738860cbe09e6ddaed9d15c30041076f5de"
+  },
+  "carrier_or_matrix": false,
+  "compile": "py_compile passed for V2 worker, supervisor, accounting, and end-to-end test",
+  "execution_authorized": false,
+  "factor_or_solve": false,
+  "fresh_run": false,
+  "mesh_or_fe": false,
+  "original_qualification": "NO_CARRIER_COMPARISON; V4/V5 failure remains FAIL/OPEN",
+  "output_directory_exists": false,
+  "pure_test_command": "source scripts/activate_task40_phi90_pord64.sh; export five math thread variables=1; taskset -c 24 \"$TASK40_SHARED_VENV_ROOT/bin/python\" -B -m pytest -q src/test/test_task40para_scale_homogeneous_cutoff.py src/test/test_task40para_scale_homogeneous_cutoff_v2.py",
+  "pure_test_result": "21 passed in 2.54s",
+  "ruff_new_files": "passed for V2 worker, supervisor, accounting, and end-to-end test",
+  "ruff_solver_severe": "E9,F63,F7,F82 passed for dtn_port_3d.py",
+  "schema": "task40.d13.scale-homogeneous-cutoff-candidate-validation.v2",
+  "status": "V2_PURE_INTERFACE_TESTS_PASS_REVIEW_ONLY_NOT_EXECUTED"
+}

@@ -1,0 +1,426 @@
+{
+  "schema": "task40.d13.saved-field-port-action-only-contract.v2",
+  "status": "PREPARED_NOT_RUN_MAIN_REVIEW_REQUIRED",
+  "scope": "Y2_primary_Y3_same_key_control_no_solve",
+  "diagnostic_question": "Test whether the saved DG6 field reconstructs a production p6 N1E6/MPC-compatible field and whether six selected q28 port projections agree across direct, unconstrained primal, MPC-dual, and saved auxiliary routes.",
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "analysis_source_files_identical_to_y2_source": [
+    "src/geometry/mesh_builder_3d.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py",
+    "src/solvers/dtn_port_3d.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+    "src/io/input_validation.py",
+    "scripts/activate_task40_phi90_pord64.sh",
+    "src/common/modes_3d.py"
+  ],
+  "analysis_source_file_sha256": {
+    "src/geometry/mesh_builder_3d.py": "4f8a7d6606dc75ebb8b0095942779600c5bf5509bf6b70a19bdb0bcfa716ec3d",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+    "src/solvers/dtn_port_3d.py": "578cb791bd8b0781309c67a68b8e6cd01696accb25514beabf6c2ad5bcf1d12b",
+    "src/solvers/fullspace_dtn_action.py": "e1037b9624c28e461d877ff2e66a1343205796a847c51507cb0d993e4754682b",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "90e7cedfb2ad5439322c8bed65e973639d404e916bf566cead357fda4c4f1c53",
+    "src/io/input_validation.py": "6fa4e9cb2b25eb8c3424b01f2fa4770ca0ecd32b2c350e75bbcb2ddf8a0e11bd",
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "src/common/modes_3d.py": "8e7f7ffba076533fdc45703b4a525a3c21efbbba6f9adc13cb6d826d4bba2cb2"
+  },
+  "worker_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+  "worker_script_sha256": "90c4be32fbcd86851a1bb4bdbbc5ea8ab0f1670fdb1670e4235a66a20f74b560",
+  "pure_test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_port_action_only.py",
+  "pure_test_sha256": "c68bf13e83680f1067eb5b08e4b8db8ba07b8692eb153a8336fdc5a69fbd5fc9",
+  "prior_audit_v2_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_vtu_port_projection_audit_v2.json",
+  "prior_audit_v2_sha256": "9e396976a22b970d76c985f07d37b07c967a9fb48bccbc65252365886bb1ea2c",
+  "expected_parent_mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+  "target_keys": [
+    [
+      "top",
+      -4,
+      0,
+      "p"
+    ],
+    [
+      "top",
+      0,
+      0,
+      "s"
+    ],
+    [
+      "top",
+      4,
+      0,
+      "p"
+    ],
+    [
+      "bottom",
+      -4,
+      0,
+      "p"
+    ],
+    [
+      "bottom",
+      0,
+      0,
+      "s"
+    ],
+    [
+      "bottom",
+      4,
+      0,
+      "p"
+    ]
+  ],
+  "cases": [
+    {
+      "case": "Y2-primary",
+      "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+      "run_directory_id": "20261016T112452.011352Z",
+      "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146",
+      "input_sha256": "7908141fe455ee73a1c8f213970a5c5655095a31f6afd10ce18904367b63a994",
+      "physical_model_sha256": "ac65772c3fda31f22599824023f43e05e62b8292de31652dff226909fc83fa7b",
+      "resolved_config_sha256": "68bead46f89322ec6f6e0d0d985ed5c0551c21570ede8c89ef970aa5da20659f",
+      "expected_cells": 2016,
+      "axis_cell_counts": [
+        6,
+        24,
+        14
+      ],
+      "axis_hashes": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "7e10438f6b6a84ec4313bd841bcd99d7c4430724fad08cebefafcb156e2e9e16",
+        "z": "1b914feb6c2eba6bf20142a3a24e9918947b90be497ded96778e1e1ee3457ce6"
+      },
+      "vtu_sha256": "f3982888edc9ffebb78c746f740584e705c0c1240ec055c790dd892d6f01ce39",
+      "summary_sha256": "ab503dd34be3b8dc2685e6febcfd50f277bec20f69e4e666caa289bd9a8025ba",
+      "auxiliary_sha256": "3d230e5922e9c59d86ca9658379603da17da98bc3ab50b7c2656e847e625003e",
+      "run_dir": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z",
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "parent_mode_count": 612,
+      "surface_quadrature_degree": 28,
+      "volume_quadrature": {
+        "degree": 15,
+        "rule": "default"
+      },
+      "selected_keys": [
+        [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          0,
+          "p"
+        ]
+      ],
+      "files": {
+        "run_manifest": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/run_manifest.json",
+        "resolved": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/resolved_config.json",
+        "summary": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/p6_condensed_direct_summary.json",
+        "parent_modes": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/task40_r13_parent_mode_manifest.json",
+        "auxiliary": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/numerical_output/dtn_auxiliary_amplitudes_3d.json",
+        "vtu": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/numerical_output/fields_3d_for_paraview.vtu",
+        "input": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/input_original.dat",
+        "source_identity": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/source_sha.txt",
+        "input_identity": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/input_sha256.txt",
+        "physical_identity": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z/physical_model_sha256.txt"
+      },
+      "sha256": {
+        "run_manifest": "5637e46cf94add1dc55aad0378f4230a09737c3e041dd184b7d908be962ad2d8",
+        "resolved": "68bead46f89322ec6f6e0d0d985ed5c0551c21570ede8c89ef970aa5da20659f",
+        "summary": "ab503dd34be3b8dc2685e6febcfd50f277bec20f69e4e666caa289bd9a8025ba",
+        "parent_modes": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "auxiliary": "3d230e5922e9c59d86ca9658379603da17da98bc3ab50b7c2656e847e625003e",
+        "vtu": "f3982888edc9ffebb78c746f740584e705c0c1240ec055c790dd892d6f01ce39",
+        "input": "7908141fe455ee73a1c8f213970a5c5655095a31f6afd10ce18904367b63a994",
+        "source_identity": "bf95c68ddb01f4a807ffb755cf990ab7dcd5c29e27305be65064eb33118c6afd",
+        "input_identity": "034b72976f5a36955e367bc1d6a6c4b359dfbd2c85495869a872e16efb46cff7",
+        "physical_identity": "50b18f3dd0957bf8359be47463277e1afccbb8f8a7d0811bba1585ad9bb9aab3"
+      }
+    },
+    {
+      "case": "Y3-control",
+      "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+      "run_directory_id": "20261016T122621.622353Z",
+      "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+      "input_sha256": "0bcf87e01f6e17cc89808e0296cc24aafe8df3deb4f7265fe4c60b93e4ac6e22",
+      "physical_model_sha256": "96894bba4dcf50858ccc83b35ef227ef5b6facd363b0b0505bcc9a140ad3fee1",
+      "resolved_config_sha256": "18c9b41d6830275ead7f93239048ccd72e9564044abfcfb5ed745b855c1ef464",
+      "expected_cells": 4032,
+      "axis_cell_counts": [
+        6,
+        48,
+        14
+      ],
+      "axis_hashes": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "04cfab284df8c8827c76bc5954ea391f15644136922d958f3844f3f2bb89a152",
+        "z": "1b914feb6c2eba6bf20142a3a24e9918947b90be497ded96778e1e1ee3457ce6"
+      },
+      "vtu_sha256": "b9306247a42c8f589a5a63addd28003692c25c1fa8ae5fe4269aafc624f797df",
+      "summary_sha256": "27accf8d541f790dfb39ee0247560529c047206a9c30f921bcc3b70b056e7860",
+      "auxiliary_sha256": "c75d5a2ee8820368253783d8bf6b69d9570bd0870cf3ae55ae5b347ee2b28b19",
+      "run_dir": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z",
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "parent_mode_count": 612,
+      "surface_quadrature_degree": 28,
+      "volume_quadrature": {
+        "degree": 15,
+        "rule": "default"
+      },
+      "selected_keys": [
+        [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          0,
+          "p"
+        ]
+      ],
+      "files": {
+        "run_manifest": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/run_manifest.json",
+        "resolved": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/resolved_config.json",
+        "summary": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/p6_condensed_direct_summary.json",
+        "parent_modes": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/task40_r13_parent_mode_manifest.json",
+        "auxiliary": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/numerical_output/dtn_auxiliary_amplitudes_3d.json",
+        "vtu": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/numerical_output/fields_3d_for_paraview.vtu",
+        "input": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/input_original.dat",
+        "source_identity": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/source_sha.txt",
+        "input_identity": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/input_sha256.txt",
+        "physical_identity": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z/physical_model_sha256.txt"
+      },
+      "sha256": {
+        "run_manifest": "097f5d08759f7539cd023ede080debc6c9bb9f112c4010ce146b87d48b93d072",
+        "resolved": "18c9b41d6830275ead7f93239048ccd72e9564044abfcfb5ed745b855c1ef464",
+        "summary": "27accf8d541f790dfb39ee0247560529c047206a9c30f921bcc3b70b056e7860",
+        "parent_modes": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "auxiliary": "c75d5a2ee8820368253783d8bf6b69d9570bd0870cf3ae55ae5b347ee2b28b19",
+        "vtu": "b9306247a42c8f589a5a63addd28003692c25c1fa8ae5fe4269aafc624f797df",
+        "input": "0bcf87e01f6e17cc89808e0296cc24aafe8df3deb4f7265fe4c60b93e4ac6e22",
+        "source_identity": "1d64f6a6ae25e9e8cd98d7489f50d6d201fd1ea2f42773749fa09abb154591c2",
+        "input_identity": "830469563da417b589ed8f3779b4ce3d16e724f3a0de89275980c7c6e755f2d6",
+        "physical_identity": "804fe5544c6183113f76d4b05314c1c45e0a8d36ac0f4a6375a1da843b9afc78"
+      }
+    }
+  ],
+  "scope_limits": {
+    "mesh_and_space": "Rebuild each bound historical structured mesh, p6 N1E function space, and production MPC only; no FE solve.",
+    "field_reconstruction": "Read the bound VTU E field, map each DG6 cell point through actual cell geometry coordinates, then use DOLFINx/Basix production N1E6 interpolation functional, orientation, and Piola mapping; roundtrip N1E6 back to DG6.",
+    "compatibility": "Carrier assembly requires finite saved/reconstructed arrays and all five relative diagnostics <=1e-10: global DG6->N1E6->DG6, maximum per-cell roundtrip, aggregate unaveraged internal tangential trace, maximum-facet unaveraged tangential trace, and zero-slave MPC backsubstitution. Any failure records NO_CARRIER_COMPARISON and skips surface assemblers/carrier. Absolute error and denominator are recorded separately, including the worst facet; no averaging or repair. This threshold is diagnostic only.",
+    "carrier": "Only six q28 top/bottom modes: m=-4,+4,n=0,p and m=n=0,s controls. Compare full-primal N1E6, direct DG6 integral, production MPC-dual D u/H from zero-slave storage, and saved auxiliary/boundary amplitudes.",
+    "excluded": [
+      "No volume forms",
+      "No materialized global matrix",
+      "No factor or solve",
+      "No complete 612-mode carrier",
+      "No new solution",
+      "No output mutation"
+    ],
+    "mode_selection_and_sparse_rows": {
+      "parent_modes": 612,
+      "selected_functionals": 6,
+      "other_modes_not_evaluated": 606,
+      "sparse_row_cutoff_before_after_evidence": "NOT_MEASURED"
+    }
+  },
+  "static_identity_correction": {
+    "native_residual_definition": "native_effective_rhs - native_apply(field), where native_apply applies bundle physical_action (volume plus DtN); this is the full active physical A6 residual.",
+    "distinct_but_not_persisted": [
+      "augmented_fe_residual",
+      "augmented_port_residual",
+      "retained MUMPS alpha vector"
+    ],
+    "saved_auxiliary": "H^-1 D u recomputed from recovered storage; not the retained MUMPS alpha vector."
+  },
+  "fresh_and_supervision": {
+    "minimum_available_bytes_at_start": 68719476736,
+    "rss_hard_cap_bytes": null,
+    "pss_uss_collection": false,
+    "swap": "observe-only; do not infer task swap from global swap alone",
+    "parent_cpu": 9,
+    "worker_cpu": 24,
+    "mpi_ranks": 1,
+    "math_threads": 1,
+    "thread_variables": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "worker_rank_prefix": [
+      "numactl",
+      "--interleave=0,1",
+      "taskset",
+      "-c",
+      "24"
+    ],
+    "gates": [
+      "qualified read-only PORD64 ABI",
+      "host available memory >=64 GiB",
+      "actual output filesystem path/capacity",
+      "no duplicate Task40 diagnostic or conflicting heavy neighbor",
+      "verify every worker thread affinity 24",
+      "verify worker numa_maps interleave 0-1",
+      "all TASK39EXTRA_FUNCTIONAL_STORE* variables absent"
+    ],
+    "supervision": {
+      "parent_entry": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py",
+      "parent_argv": [
+        "taskset",
+        "-c",
+        "9",
+        "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+        "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py",
+        "--contract",
+        "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v2.json",
+        "--output",
+        "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/report.json",
+        "--supervision-output",
+        "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/supervision.json",
+        "--watchdog-directory",
+        "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/watchdog",
+        "--worker-command-json",
+        "[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v2.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/report.json\"]"
+      ],
+      "worker_argv": [
+        "mpiexec",
+        "-n",
+        "1",
+        "numactl",
+        "--interleave=0,1",
+        "taskset",
+        "-c",
+        "24",
+        "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+        "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+        "--contract",
+        "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v2.json",
+        "--output",
+        "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/report.json"
+      ],
+      "existing_guard": "src.runners.native_capacity.native_capacity_guard(Task40 Y2 profile, interleave_nodes0_1)",
+      "shared_host_lock": "/home/fenics/Projects/Maxwell3D-Lab/native-capacity-heavy.lock",
+      "monitor": "benchmarks.subreaper_watchdog.supervise",
+      "resource_stop_policy": "host_available_floor_v1",
+      "minimum_available_bytes": 68719476736,
+      "rss_hard_cap_bytes": null,
+      "rss_warning_bytes": null,
+      "wall_seconds": null,
+      "solve_seconds": null,
+      "sample_interval_seconds": 2.0,
+      "cleanup_grace_seconds": 60.0,
+      "pss_sampling_policy": "disabled_by_profile",
+      "swap": "observe-only; stop_on_global_swap=false",
+      "monitor_failure": "existing watchdog classifies monitoring failure/loss, signals the child tree under its established policy, and records terminal status",
+      "descendant_cleanup": "required; watchdog summary must report descendants_cleared=true and remaining_child_pids=[]",
+      "outputs": {
+        "worker_report": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/report.json",
+        "supervision_receipt": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/supervision.json",
+        "watchdog_summary": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/watchdog/summary.json",
+        "watchdog_resources": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/watchdog/resources.jsonl",
+        "launcher_log": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v2/launcher.log"
+      }
+    }
+  },
+  "expected_abi": {
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "shared_environment_read_only": true,
+    "PORD64_root": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay",
+    "PETSc": "3.19.6, complex128, PetscInt int64, MPI1",
+    "dolfinx_import": "shared qualified prefix/dolfinx-python/dolfinx/mesh.py; Task40 src package must resolve from this worktree",
+    "PyVista": "0.48.4"
+  },
+  "corrected_residual_semantics_record": {
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_vtu_port_projection_audit_v2.json",
+    "sha256": "9e396976a22b970d76c985f07d37b07c967a9fb48bccbc65252365886bb1ea2c"
+  },
+  "current_response_record": {
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/response_d13_y_y2_y3_comparison.md",
+    "sha256": "5402dff6a0136c5a9927778da23cb3a36a1c67be6fb65de0f91c8ee983c79d17"
+  },
+  "prepared_utc": "2026-10-16T14:59:54.017521Z",
+  "supervisor_script_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py",
+  "supervisor_script_sha256": "0d859206b2a92a61a93e931f3331d982450d8f8ad86f42a46ff849b69168c4ff",
+  "pure_tests": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_port_action_only.py",
+      "sha256": "7cb1c7fa6eaaf43ee31e12d89a3819dd8f107ad1a06e17790aaa3fdffac10c35",
+      "scope": "R1 all-witness gate, nonfinite, near-zero facet scale, complex scalar, R3 mode-selection label"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_action_supervisor.py",
+      "sha256": "2e3120c2687be099e0a309c8cc2ad866a29731747c12616708735e84d855bf3d",
+      "scope": "exact child argv and existing Task40 host-floor guard/watchdog wiring"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_direct_residual_and_supervisor.py",
+      "sha256": "80dafee4dc340cf0354934230293ad74d9371a08528ad44872b739936851e4e4",
+      "test": "test_host_floor_supervise_runs_short_child_without_legacy_cap"
+    }
+  ],
+  "status_history": [
+    {
+      "artifact": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v1.json",
+      "sha256": "6bb2877bd55692c714a85f46d3fae8a266621e0da81f66671d6a06979db1f722",
+      "status": "superseded; not executable"
+    }
+  ],
+  "sparse_row_cutoff_note": "The six selected mode functionals do not constitute a before/after sparse row truncation measurement."
+}

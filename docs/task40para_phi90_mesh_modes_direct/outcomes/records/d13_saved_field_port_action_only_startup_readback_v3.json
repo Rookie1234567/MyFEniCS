@@ -1,0 +1,62 @@
+{
+  "captured_utc": "2026-10-16T15:19:52.678191Z",
+  "contract_sha256": "91ee9febc7e086ca34857f65d6570fd98e06d0ee643f4f9c7c41125e299e6468",
+  "failure": "RuntimeError: Unsupported finite element dtype at the Basix UFL DG6 vector element request; no carrier/numerical gate reached",
+  "failure_stage": "before_saved_vtu_load",
+  "first_complete_watchdog_sample": {
+    "all_status_readable": true,
+    "effective_available_bytes": 2135149445120,
+    "elapsed_seconds": 8.469845646992326,
+    "global_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "members": [
+      1495891,
+      1495907,
+      1495910
+    ],
+    "pss_sampling_policy": "disabled_by_profile",
+    "tree_rss_bytes": 470585344,
+    "tree_swap_bytes": 0
+  },
+  "fresh_admission_sha256": "fcc358d09a1d5053e2e7aea766552e999283c1c27906f3a7e5c429068eb254c1",
+  "neighbors_modified": false,
+  "no_factor_or_solve": true,
+  "no_retry_started": true,
+  "processes": {
+    "all_known_pids_absent_after_exit": true,
+    "mpi": {
+      "affinity": [
+        9
+      ],
+      "pid": 1495907,
+      "ppid": 1495891,
+      "start_ticks": 208877675
+    },
+    "supervisor_root": {
+      "affinity": [
+        9
+      ],
+      "initial_parent_pid": 1495890,
+      "pid": 1495891,
+      "sid": 1495891,
+      "start_ticks": 208877486,
+      "watchdog_sample_parent_pid": 1
+    },
+    "worker": {
+      "affinity": [
+        24
+      ],
+      "pid": 1495910,
+      "ppid": 1495907,
+      "start_ticks": 208877691
+    }
+  },
+  "schema": "task40.d13.saved-field-port-action-only-startup-readback.v3",
+  "sidecar_sha256": "c09c8e3bd7df4d9d6f87ad22800339a17de1ae0ecf89d91ecd623766cb39979f",
+  "status": "ATTEMPT_TERMINATED_WORKER_FAILED",
+  "terminal_receipt_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_v3.json",
+  "terminal_receipt_sha256": "e6eba69a865801257a74734e1a5d9fb17bf970c0341a2121532faf2b8750df6d",
+  "worker_numa_maps": "not independently read while worker was live; exact worker argv used numactl --interleave=0,1 and admission probe read back interleave:0-1"
+}

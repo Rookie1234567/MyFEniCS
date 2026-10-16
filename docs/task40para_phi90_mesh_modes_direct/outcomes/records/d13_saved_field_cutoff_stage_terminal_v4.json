@@ -1,0 +1,76 @@
+{
+  "case_summary": [
+    {
+      "active_keys_captured": 6,
+      "actual_global_cells": 2016,
+      "case": "Y2-primary",
+      "mesh_cells_xyz": [
+        6,
+        24,
+        14
+      ],
+      "parent_modes": 612,
+      "production_carrier_or_action_or_global_matrix_or_factor_or_solve": false,
+      "run_directory_id": "20261016T112452.011352Z",
+      "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+      "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146",
+      "status": "NO_CARRIER_COMPARISON",
+      "surface_quadrature_degree": 28
+    },
+    {
+      "active_keys_captured": 6,
+      "actual_global_cells": 4032,
+      "case": "Y3-control",
+      "mesh_cells_xyz": [
+        6,
+        48,
+        14
+      ],
+      "parent_modes": 612,
+      "production_carrier_or_action_or_global_matrix_or_factor_or_solve": false,
+      "run_directory_id": "20261016T122621.622353Z",
+      "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+      "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+      "status": "NO_CARRIER_COMPARISON",
+      "surface_quadrature_degree": 28
+    }
+  ],
+  "contract_sha256": "0e48866e3e3f0dc8ad78e4a67e49ec28da1699abae30c447f36d415933242863",
+  "postprocess_correction_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_postprocess_correction_v1.json",
+  "postprocess_correction_sha256": "b59ca4840e1d457272ec02fc1a965e9b7b78cd7824b4efe535edab2ec1e9e90a",
+  "report_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v8/report.json",
+  "report_sha256": "e0804545a40584afdbcbb5fd15c770425be8721651129df38bdf60fd474c5070",
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v8",
+  "schema": "task40_d13_saved_field_cutoff_stage_terminal_v4",
+  "single_pass_resource_stream_audit": {
+    "audit_note": "The complete stream was traversed once for aggregation. The compact watchdog summary supplies sample count, peak RSS/swap, PSS policy and swap classification. It does not report per-sample readability, warning count, or runtime minimum available memory; these remain unknown rather than inferred, and no second resources.jsonl read was performed.",
+    "global_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "job_swap_activity": "HOST_FLOOR_OBSERVE_ONLY_no_task_or_global_swap_observed",
+    "launch_effective_available_bytes": 2117998817280,
+    "minimum_runtime_available_bytes": "UNKNOWN_NOT_REPORTED_BY_COMPACT_SUMMARY; launch effective_available_bytes is not a runtime minimum",
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v8/watchdog/resources.jsonl",
+    "peak_sampled_process_tree_rss_bytes": 1622806528,
+    "peak_sampled_process_tree_swap_bytes": 0,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "read_once": true,
+    "readability_all_samples": "UNKNOWN_NOT_REPORTED_BY_COMPACT_SUMMARY; no second resources.jsonl read performed",
+    "sample_count_from_watchdog_summary": 176,
+    "warning_observed_during_single_pass": "UNKNOWN_NOT_REPORTED_BY_COMPACT_SUMMARY; no second resources.jsonl read performed"
+  },
+  "source_head": null,
+  "status": "COMPLETED_DIAGNOSTIC_ONLY_NO_CARRIER_OR_FIELD_QUALIFICATION",
+  "supervision": {
+    "classification": "COMPLETED",
+    "descendants_cleared": true,
+    "elapsed_seconds": 372.05867082090117,
+    "leader_exit_code": 0,
+    "minimum_available_bytes": 68719476736,
+    "remaining_child_pids": [],
+    "rss_hard_limit_bytes": null
+  },
+  "supervisor_sha256": "17c5083cca54445c32db31ccc33ea8ddb0fb0c5b97c2fd56352c0173844b8825",
+  "worker_sha256": "f18d9d72282789db1c6f55758a85c6f34b22d1915701b862589d1eb1e80d30e5"
+}

@@ -1,0 +1,79 @@
+{
+  "schema": "task40.d13.saved-field-port-action-only-launch.v1",
+  "status": "PREPARED_NOT_RUN_MAIN_REVIEW_REQUIRED",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v1.json",
+  "contract_sha256": "6bb2877bd55692c714a85f46d3fae8a266621e0da81f66671d6a06979db1f722",
+  "worker_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+  "worker_sha256": "11a20580b7c35dba0278d5b286580bd6af2ab96bb47f480b5a96c58247fdafe4",
+  "pure_test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_port_action_only.py",
+  "pure_test_sha256": "c68bf13e83680f1067eb5b08e4b8db8ba07b8692eb153a8336fdc5a69fbd5fc9",
+  "activation_path": "/home/fenics/Projects/Maxwell3D-Phi90/scripts/activate_task40_phi90_pord64.sh",
+  "qualified_interpreter": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+  "output_directory": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1",
+  "report_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1/report.json",
+  "log_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1/worker.log",
+  "exec_argv": [
+    "taskset",
+    "-c",
+    "9",
+    "mpiexec",
+    "-n",
+    "1",
+    "numactl",
+    "--interleave=0,1",
+    "taskset",
+    "-c",
+    "24",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+    "--contract",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v1.json",
+    "--output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1/report.json"
+  ],
+  "exec_argv_matches_shell": true,
+  "shell_command": "cd /home/fenics/Projects/Maxwell3D-Phi90 || exit 1\nsource /home/fenics/Projects/Maxwell3D-Phi90/scripts/activate_task40_phi90_pord64.sh || exit 1\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1\nif env | cut -d= -f1 | grep -q \"^TASK39EXTRA_FUNCTIONAL_STORE\"; then exit 20; fi\nif [ \"${TASK40_SHARED_VENV_ROOT}/bin/python\" != /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python ]; then exit 21; fi\nset -o noclobber\nmkdir /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1 || exit 22\n: > /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1/worker.log || exit 23\nexec taskset -c 9 mpiexec -n 1 numactl --interleave=0,1 taskset -c 24 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python /home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py --contract /home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v1.json --output /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1/report.json >> /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v1/worker.log 2>&1",
+  "authorization_state": "prepared for main review; not started",
+  "resource_contract": {
+    "minimum_available_bytes_at_start": 68719476736,
+    "rss_hard_cap_bytes": null,
+    "pss_uss_collection": false,
+    "swap": "observe-only; do not infer task swap from global swap alone",
+    "parent_cpu": 9,
+    "worker_cpu": 24,
+    "mpi_ranks": 1,
+    "math_threads": 1,
+    "thread_variables": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "worker_rank_prefix": [
+      "numactl",
+      "--interleave=0,1",
+      "taskset",
+      "-c",
+      "24"
+    ],
+    "gates": [
+      "qualified read-only PORD64 ABI",
+      "host available memory >=64 GiB",
+      "actual output filesystem path/capacity",
+      "no duplicate Task40 diagnostic or conflicting heavy neighbor",
+      "verify every worker thread affinity 24",
+      "verify worker numa_maps interleave 0-1",
+      "all TASK39EXTRA_FUNCTIONAL_STORE* variables absent"
+    ],
+    "supervision": "One bounded low-frequency external supervision. RSS hard cap is null; do not start if startup host-floor or neighbor gate fails."
+  },
+  "expected_abi": {
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "shared_environment_read_only": true,
+    "PORD64_root": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay",
+    "PETSc": "3.19.6, complex128, PetscInt int64, MPI1",
+    "dolfinx_import": "shared qualified prefix/dolfinx-python/dolfinx/mesh.py; Task40 src package must resolve from this worktree",
+    "PyVista": "0.48.4"
+  }
+}

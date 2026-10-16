@@ -1,0 +1,22 @@
+{
+  "correction": "The validation v3 prose saying only native_capacity_guard and watchdog.supervise were mocked was incomplete because native_profile_facts was also replaced by the deterministic fixture. No test rerun is required for this wording correction.",
+  "created_utc": "2026-10-16T15:19:18.764973Z",
+  "disk_contract_integration_test_facts": {
+    "mocked_dependencies": [
+      "native_profile_facts (deterministic Task40 resource facts fixture)",
+      "native_capacity_guard",
+      "benchmarks.subreaper_watchdog.supervise"
+    ],
+    "real_disk_contract_loaded": "d13_saved_field_port_action_only_contract_v3.json",
+    "real_function_called": "run_supervised()",
+    "result": "actual contract path and resource/output schema were exercised; this is not an actual child run"
+  },
+  "schema": "task40.d13.saved-field-port-action-only-validation-wording-note.v1",
+  "scope": "metadata wording clarification only; no source/test execution change",
+  "separate_real_checks": {
+    "existing_host_floor_short_child_regression": "PASS in the 21-test focused batch",
+    "qualified_profile_and_guard_fresh_admission": "PASS during v3 prelaunch fresh; canonical shared lock, 64-GiB floor, CPU/NUMA and process scan read from host"
+  },
+  "validation_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_validation_v3.json",
+  "validation_sha256": "fa75f83ee1e980b6cfa81af42c0ce898e35c09a05231a1f62f7e061798d5e288"
+}

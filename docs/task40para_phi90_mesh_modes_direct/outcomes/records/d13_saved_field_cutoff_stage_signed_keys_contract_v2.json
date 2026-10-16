@@ -1,0 +1,260 @@
+{
+  "dependencies_and_execution_gate": {
+    "execution_state": "NOT_AUTHORIZED_BY_THIS_CONTRACT; report this contract and dependencies before any worker run.",
+    "existing_data_path": "V5 bound manifest/resolved/612-mode manifest/auxiliary/VTU -> DG6 -> N1E6 -> zero_slave_storage; no new input or production route.",
+    "existing_worker_entry_to_extend": "docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py::_run_one",
+    "future_fresh_contract_if_executed": "Reuse the existing Task40 action-only supervisor/host-floor/shared-lock/CPU9+24/MPI1/math1/NUMA interleave0-1/PSS-off/swap-observe contract; no new RSS cap or retry policy.",
+    "interfaces_to_instrument": [
+      "src/solvers/dtn_port_3d.py::_vec_nonzero_owned_entries",
+      "src/solvers/dtn_port_3d.py::_combine_owned_entries",
+      "src/solvers/dtn_port_3d.py::_SurfaceMpcVectorWorkspace",
+      "src/solvers/fullspace_dtn_action.py::build_fullspace_dtn_carrier_from_surface component_cache/phase key behavior"
+    ]
+  },
+  "historical_route_audit": {
+    "Y2": {
+      "functional_store_enabled": false,
+      "ordered_mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "resolved_sha256": "68bead46f89322ec6f6e0d0d985ed5c0551c21570ede8c89ef970aa5da20659f",
+      "run_directory": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z",
+      "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+      "runner_call": {
+        "functional_store_config": null,
+        "reuse_surface_vector": true
+      },
+      "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146",
+      "surface_carrier_stages": [
+        "surface_carrier_assembly_started",
+        "surface_carrier_assembly_complete",
+        "physical_surface_carrier_build_complete"
+      ],
+      "surface_modes_completed": 612,
+      "surface_quadrature_degree": 28,
+      "volume_quadrature": {
+        "degree": 15,
+        "rule": "default"
+      }
+    },
+    "Y3": {
+      "functional_store_enabled": false,
+      "ordered_mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "resolved_sha256": "18c9b41d6830275ead7f93239048ccd72e9564044abfcfb5ed745b855c1ef464",
+      "run_directory": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T122621.622353Z",
+      "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+      "runner_call": {
+        "functional_store_config": null,
+        "reuse_surface_vector": true
+      },
+      "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+      "surface_carrier_stages": [
+        "surface_carrier_assembly_started",
+        "surface_carrier_assembly_complete",
+        "physical_surface_carrier_build_complete"
+      ],
+      "surface_modes_completed": 612,
+      "surface_quadrature_degree": 28,
+      "volume_quadrature": {
+        "degree": 15,
+        "rule": "default"
+      }
+    },
+    "route_verified": true,
+    "same_routing_blob_oids_Y2_Y3": {
+      "src/runners/p6_condensed_direct.py": "3889eacf5be35d80976d022a976d5dea45a0c0fc",
+      "src/solvers/dtn_port_3d.py": "1e4249371663489078d41dd4c5e62289ae45997e",
+      "src/solvers/fullspace_dtn_action.py": "d03b658ef2d2c7344bc7b45290f8a17d80a0a0d3"
+    },
+    "truncation_path": {
+      "historical_per_row_cutoff_statistics": "NOT_RECORDED; deleted counts, deleted-row dot contributions, and cutoff maxima must be measured in the new diagnostic; do not infer them from prior summaries.",
+      "in_memory_cache": "The builder uses a phase-keyed component_cache and the reused-vector workspace. This is in-memory reuse, not a disk functional store.",
+      "projection_conjugation": "Combined projection values are conjugated when stored in FullspaceDtnModeFunctional; FullspaceDtnAction then computes np.dot(projection_values, source_values). Preserve this order exactly.",
+      "stage_1": "Each x/y component PETSc vector is MPC-assembled, then _vec_nonzero_owned_entries retains entries with abs(value) > max(1e-30, 1e-13 * global_max_on_owned_support).",
+      "stage_2": "_combine_owned_entries applies the coefficients, stable-sorts and sums duplicate rows, then independently retains abs(summed_value) > max(1e-30, 1e-13 * global_max_after_merge). Projection and coupling each use this merge cutoff."
+    }
+  },
+  "interpretation_limits": {
+    "MPC_conjugation_recovery_alternatives": "Remain open; separate component cutoff, merged cutoff, MPC-dual vs direct full-primal, projection conjugation, mode normalization, saved-field reconstruction, and auxiliary recovery without presupposing any is causal.",
+    "does_not_change_any_cutoff_or_normalization": true,
+    "does_not_confer_carrier_or_field_qualification": true,
+    "does_not_establish_cutoff_as_root_cause": true,
+    "does_not_pass_or_bypass_V4_gate": true,
+    "does_not_reconstruct_original_FE_coefficients": true,
+    "v4_v5_status_remains": "NO_CARRIER_COMPARISON; prior failures remain immutable and this capture grants no qualification."
+  },
+  "measurements_per_key_and_case": {
+    "cancellation_and_cutoff_deltas": [
+      "complex raw-to-component delta",
+      "complex component-to-merged delta",
+      "deleted-dot complex contribution at both stages",
+      "absolute and relative values with denominator/source explicitly recorded"
+    ],
+    "coupling_stages": [
+      "Record the same raw/component-cut/merged-cut accounting separately for coefficients (-traction_x,-traction_y): row/max/cutoff/deletion statistics and complex dot of each stage against the same zero-slave field. Do not call this projection N or saved auxiliary amplitude."
+    ],
+    "cutoff_integrity": {
+      "closure": "Both component-removal and merged-removal numerator deltas close against deleted-dot sums.",
+      "cutoff_terms": "Each stage records floor, relative term, actual cutoff and dominant term.",
+      "stage_1": "Actual production _vec_nonzero_owned_entries per x/y component; exact rows/values comparison; bounded raw samples and hash before workspace reuse.",
+      "stage_2": "Actual production _combine_owned_entries for projection/coupling; exact rows/values comparison."
+    },
+    "projection_stages": [
+      {
+        "facts": [
+          "x/y raw component maxima and exact nonzero row counts before stage-1 cutoff",
+          "raw projection numerator N after the exact mode.e_vector coefficients and production conjugation order",
+          "raw N/H and (N/H)*P"
+        ],
+        "stage": "raw_untruncated_components"
+      },
+      {
+        "facts": [
+          "per-component global max, support size, cutoff, removed-row count, maximum removed magnitude",
+          "per-component deleted-dot contribution against the same zero-slave field",
+          "merged-without-stage-2-cutoff projection numerator N, N/H, (N/H)*P"
+        ],
+        "stage": "after_component_cutoff_before_merge_cutoff"
+      },
+      {
+        "facts": [
+          "merged global max, cutoff, unique rows before/after, removed-row count and maximum removed magnitude",
+          "stage-2 deleted-dot contribution against the same field",
+          "production-order projection N, N/H, (N/H)*P"
+        ],
+        "stage": "after_production_merge_cutoff"
+      }
+    ],
+    "reconstruction_and_field_binding": [
+      "Hash/finite-check DG6, reconstructed N1E6, zero-slave storage and same-storage MPC-expanded primal.",
+      "Record DG6 -> N1E6 -> DG6 reconstruction and zero-slave -> MPC-backsubstitution expansion errors.",
+      "Independent q28 integrals for saved DG6, reconstructed N1E6, zero-slave-only diagnostic and MPC-backsubstituted full-primal field from the exact same storage."
+    ],
+    "saved_auxiliary_comparison": [
+      "bind exact auxiliary row by parent index and signed key",
+      "record H, boundary phase P, total saved auxiliary, saved outgoing boundary amplitude, and incident term separately",
+      "compare top 00 to saved total auxiliary projection; retain outgoing-only as a separate diagnostic field"
+    ]
+  },
+  "prior_evidence": {
+    "V4_and_V5_gate_state": "Both Y2 and Y3 remain NO_CARRIER_COMPARISON due the unaveraged facet trace relative gate; this contract does not alter that state.",
+    "V5_terminal_record": {
+      "path": "docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_v5.json",
+      "sha256": "7285e6d58f4c6b4e815dd043c3c5a5b8197f48b772ec9d455218c17eb0f1fe27"
+    },
+    "V5_worker_report": {
+      "path": "tmp/d13_saved_field_signed_key_projection_20261017_v5/report.json",
+      "sha256": "69197c623a2f263155854c8d3a8b806acd1c154269bc7cd2969f3fdae78a518e"
+    },
+    "observed_total_auxiliary_boundary_difference": {
+      "note": "For top (0,0,s), compare against saved total auxiliary projection, not the outgoing-only boundary amplitude.",
+      "top_00_s_control": {
+        "Y2_absolute": 6.775999547977531e-15,
+        "Y2_relative": 6.167133424623517e-15,
+        "Y3_absolute": 1.7798229048217483e-15,
+        "Y3_relative": 1.619894496345718e-15
+      },
+      "top_minus4_n0_p": {
+        "Y2_absolute": 0.002946403488668333,
+        "Y2_relative_to_saved_total_aux_boundary": 1.9818419285836317,
+        "Y3_absolute": 1.1043529995636269e-07,
+        "Y3_relative_to_saved_total_aux_boundary": 0.2519402801400118
+      }
+    }
+  },
+  "qualification": "DIAGNOSTIC_ONLY; V4_FAIL_AND_V5_NO_CARRIER_COMPARISON_REMAIN_UNCHANGED",
+  "question": "Can the two existing 1e-13 component/merged sparse-entry cutoffs explain the saved auxiliary projection discrepancy for the six exact signed Y2/Y3 keys when applied to the same reconstructed zero-slave field?",
+  "record_kind": "narrow_saved_field_cutoff_stage_diagnostic_contract",
+  "schema": "task40.d13.cutoff-stage-signed-key-static-contract.v2",
+  "scope": {
+    "cases": [
+      "Y2",
+      "Y3"
+    ],
+    "exact_keys": [
+      {
+        "m": -4,
+        "n": 0,
+        "parent_index": 17,
+        "polarization": "p",
+        "side": "top"
+      },
+      {
+        "m": 0,
+        "n": 0,
+        "parent_index": 152,
+        "polarization": "s",
+        "side": "top"
+      },
+      {
+        "m": 4,
+        "n": 0,
+        "parent_index": 289,
+        "polarization": "p",
+        "side": "top"
+      },
+      {
+        "m": -4,
+        "n": 0,
+        "parent_index": 323,
+        "polarization": "p",
+        "side": "bottom"
+      },
+      {
+        "m": 0,
+        "n": 0,
+        "parent_index": 458,
+        "polarization": "s",
+        "side": "bottom"
+      },
+      {
+        "m": 4,
+        "n": 0,
+        "parent_index": 595,
+        "polarization": "p",
+        "side": "bottom"
+      }
+    ],
+    "field": "Use the same V5 VTU-derived DG6 -> N1E6 reconstruction copied to zero-slave storage for all cutoff dots. Independent full-primal integration uses the MPC-backsubstitution-expanded field restored from that same storage; original DG6 and reconstructed N1E6 remain separate references. Zero-slave-only integration is not called full primal.",
+    "independent_full_primal_semantics": {
+      "DG6_reference_retained": true,
+      "expansion": "restore_p0_full_field scatter/homogenize/backsubstitution/scatter",
+      "reconstructed_N1E6_reference_retained": true,
+      "record_expansion_and_reconstruction_error": true,
+      "same_zero_slave_storage": true,
+      "zero_slave_only_field_label": "diagnostic_only_not_full_primal"
+    },
+    "mesh_reuse": "Rebuild each historical mesh/space/MPC from its bound resolved input; no cross-grid FE object reuse.",
+    "mode_manifest_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+    "production_paths": {
+      "FullspaceDtnAction": false,
+      "FullspaceDtnCarrier": false,
+      "_combine_owned_entries": true,
+      "_vec_nonzero_owned_entries": true,
+      "build_fullspace_dtn_carrier_from_surface": false,
+      "factor": false,
+      "full_PDE": false,
+      "global_matrix": false,
+      "solve": false
+    },
+    "quadrature": {
+      "surface": 28,
+      "volume_forms": false
+    },
+    "runtime_integrity_contract": {
+      "MPC_and_vector_lifecycle": "Preserve reverse-add then forward-insert ghost updates; record owned ranges/ghosts; do not clear/write input or production field vectors.",
+      "closure": "Pre/post numerator delta must close against deleted-dot within bounded floating reduction error; otherwise DIAGNOSTIC_IMPLEMENTATION_FAILURE, not cutoff evidence.",
+      "coupling_dot": "Preserve production non-conjugated dot; algebraic coupling, not physical power.",
+      "production_cutoff_calls": "Call actual production component and merged helpers and compare returned rows/values elementwise.",
+      "projection_conjugation": "Conjugate merged production projection values before np.dot with same zero-slave storage.",
+      "raw_component_snapshot": "Copy only owned structural support before workspace reuse.",
+      "stage_accounting": "Each component and merged stage reports maximum, absolute floor, relative term, actual cutoff, dominant term, deleted rows/max and complex deleted-dot.",
+      "top00": "Compare saved total auxiliary projection; incident and outgoing remain separate."
+    }
+  },
+  "status": "IMPLEMENTED_FOCUSED_TESTS_PASS_FRESH_REQUIRED",
+  "supersedes": {
+    "note": "V1 remains immutable; V2 corrects full-primal MPC expansion semantics.",
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_signed_keys_contract_v1.json",
+    "sha256": "469add62bba5768417c2c7a8783b4ce9c3ad5024a6c167b75a9b46683591f4e7"
+  }
+}

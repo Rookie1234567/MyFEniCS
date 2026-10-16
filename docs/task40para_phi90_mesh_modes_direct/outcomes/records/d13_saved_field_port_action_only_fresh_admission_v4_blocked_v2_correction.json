@@ -1,0 +1,9 @@
+{
+  "correction": "This v4 fresh receipt-helper attempt did not indicate a host admission rejection. The existing native_capacity_guard had already entered and returned its successful admission facts; local receipt serialization then raised KeyError because the code looked for sidecar.canonical_heavy_lock instead of the actual resource_supervision.shared_host_lock field. No action worker or FE started, and the v4 output directory remained absent. The prior Task41 guard rejection is separately preserved in fresh_admission_v4_blocked_v1.json.",
+  "created_utc": "2026-10-16T15:39:17.173915+00:00",
+  "original_record": {
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_fresh_admission_v4_blocked_v2.json",
+    "sha256": "27e3738bb3918c2505f128aafd16b06cd8e546b9e2c098d4e18afeba7e8da9d1"
+  },
+  "schema": "task40.d13.saved-field-port-action-only-fresh-attempt-correction.v1"
+}

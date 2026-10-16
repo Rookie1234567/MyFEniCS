@@ -1,0 +1,179 @@
+{
+  "analysis_source_file_sha256": {
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "src/common/modes_3d.py": "8e7f7ffba076533fdc45703b4a525a3c21efbbba6f9adc13cb6d826d4bba2cb2",
+    "src/geometry/mesh_builder_3d.py": "4f8a7d6606dc75ebb8b0095942779600c5bf5509bf6b70a19bdb0bcfa716ec3d",
+    "src/io/input_validation.py": "6fa4e9cb2b25eb8c3424b01f2fa4770ca0ecd32b2c350e75bbcb2ddf8a0e11bd",
+    "src/solvers/dtn_port_3d.py": "578cb791bd8b0781309c67a68b8e6cd01696accb25514beabf6c2ad5bcf1d12b",
+    "src/solvers/fullspace_dtn_action.py": "e1037b9624c28e461d877ff2e66a1343205796a847c51507cb0d993e4754682b",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "90e7cedfb2ad5439322c8bed65e973639d404e916bf566cead357fda4c4f1c53",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019"
+  },
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json",
+  "contract_sha256": "58a31b4fef1dbfec2432e3bd82645e013834213bf0e33e27dbabc1275c648cfd",
+  "exec_argv": [
+    "taskset",
+    "-c",
+    "9",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_supervisor.py",
+    "--contract",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json",
+    "--output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json",
+    "--supervision-output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/supervision.json",
+    "--watchdog-directory",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog",
+    "--worker-command-json",
+    "[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json\"]"
+  ],
+  "exec_argv_matches_shell": true,
+  "interface_fix": {
+    "change": "Import _dtn_component_phase_key from src.solvers.fullspace_dtn_action, where production defines it.",
+    "focused_tests": "pending final focused validation",
+    "numerical_or_source_changes": false
+  },
+  "launcher_log_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/launcher.log",
+  "output_directory": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7",
+  "parent_argv": [
+    "taskset",
+    "-c",
+    "9",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_supervisor.py",
+    "--contract",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json",
+    "--output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json",
+    "--supervision-output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/supervision.json",
+    "--watchdog-directory",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog",
+    "--worker-command-json",
+    "[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json\"]"
+  ],
+  "prepared_utc": "2026-10-16T16:54:07.770821Z",
+  "pure_test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_cutoff_stage_accounting.py",
+  "pure_test_sha256": "86fedb4ae504e1cad3cddc82e752376738435f889508e0f24198498eb8ffef95",
+  "pure_tests": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_cutoff_stage_accounting.py",
+      "result": "pending final focused validation",
+      "scope": "pure accounting, package/load/argv binding, and worker interface wiring; no FE",
+      "sha256": "86fedb4ae504e1cad3cddc82e752376738435f889508e0f24198498eb8ffef95"
+    }
+  ],
+  "report_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json",
+  "resource_supervision": {
+    "cleanup_grace_seconds": 60.0,
+    "descendant_cleanup": "required; watchdog summary must report descendants_cleared=true and remaining_child_pids=[]",
+    "existing_guard": "src.runners.native_capacity.native_capacity_guard(Task40 Y2 profile, interleave_nodes0_1)",
+    "minimum_available_bytes": 68719476736,
+    "monitor": "benchmarks.subreaper_watchdog.supervise",
+    "monitor_failure": "existing watchdog classifies monitoring failure/loss, signals the child tree under its established policy, and records terminal status",
+    "outputs": {
+      "launcher_log": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/launcher.log",
+      "supervision_receipt": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/supervision.json",
+      "watchdog_resources": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog/resources.jsonl",
+      "watchdog_summary": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog/summary.json",
+      "worker_report": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json"
+    },
+    "parent_argv": [
+      "taskset",
+      "-c",
+      "9",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_supervisor.py",
+      "--contract",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json",
+      "--output",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json",
+      "--supervision-output",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/supervision.json",
+      "--watchdog-directory",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog",
+      "--worker-command-json",
+      "[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json\"]"
+    ],
+    "parent_entry": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_supervisor.py",
+    "pss_sampling_policy": "disabled_by_profile",
+    "resource_stop_policy": "host_available_floor_v1",
+    "rss_hard_cap_bytes": null,
+    "rss_warning_bytes": null,
+    "sample_interval_seconds": 2.0,
+    "shared_host_lock": "/home/fenics/Projects/Maxwell3D-Lab/native-capacity-heavy.lock",
+    "solve_seconds": null,
+    "swap": "observe-only; stop_on_global_swap=false",
+    "wall_seconds": null,
+    "worker_argv": [
+      "mpiexec",
+      "-n",
+      "1",
+      "numactl",
+      "--interleave=0,1",
+      "taskset",
+      "-c",
+      "24",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py",
+      "--contract",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json",
+      "--output",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json"
+    ]
+  },
+  "schema": "task40.d13.cutoff-stage-signed-key-launch.v2",
+  "shell_command": "cd /home/fenics/Projects/Maxwell3D-Phi90 || exit 1\nsource /home/fenics/Projects/Maxwell3D-Phi90/scripts/activate_task40_phi90_pord64.sh || exit 1\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1\nunset PHYSICAL_NATIVE_CAPACITY PHYSICAL_WATCHDOG_PSS_POLICY\nif env | cut -d= -f1 | grep -q \"^TASK39EXTRA_FUNCTIONAL_STORE\"; then exit 20; fi\nif [ \"${TASK40_SHARED_VENV_ROOT}/bin/python\" != /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python ]; then exit 21; fi\nset -o noclobber\nmkdir /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7 || exit 22\nmkdir -p /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/tmp /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/xdg /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/pycache /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/matplotlib || exit 23\nexport TMPDIR=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/tmp TMP=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/tmp TEMP=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/tmp\nexport XDG_CACHE_HOME=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/xdg PYTHONPYCACHEPREFIX=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/pycache MPLCONFIGDIR=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/matplotlib\n: > /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/launcher.log || exit 24\nexec taskset -c 9 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python /home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_supervisor.py --contract /home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json --output /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json --supervision-output /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/supervision.json --watchdog-directory /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog --worker-command-json '[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json\"]' >> /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/launcher.log 2>&1\n",
+  "shell_exec_redirection": [
+    ">>",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/launcher.log",
+    "2>&1"
+  ],
+  "status": "FROZEN_AFTER_NARROW_IMPORT_FIX_FRESH_REQUIRED",
+  "supersedes": {
+    "note": "V2 is preserved; V3 sidecar binds the corrected import package and distinct output directory.",
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_launch_v2.json",
+    "sha256": "5de6c60ea684c575efe23466321513a3ade4039f4b76a83c69e75f35008f159a"
+  },
+  "supervision_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/supervision.json",
+  "supervisor_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_supervisor.py",
+  "supervisor_sha256": "17c5083cca54445c32db31ccc33ea8ddb0fb0c5b97c2fd56352c0173844b8825",
+  "v1_artifacts_preserved": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v1.json",
+      "sha256": "6bb2877bd55692c714a85f46d3fae8a266621e0da81f66671d6a06979db1f722"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v1.json",
+      "sha256": "570e000132cf8f139504d4aebb2ab227ded8b8d33605d77c7b3e718b7f66ddc1"
+    }
+  ],
+  "v3_terminal_correction": {
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_correction_v3.json",
+    "sha256": "abf8cf93d358436964106c30ccf0bb8797464edcb4e644fee992ed97ec62ef26"
+  },
+  "watchdog_resources_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog/resources.jsonl",
+  "watchdog_summary_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/watchdog/summary.json",
+  "worker_command_argv": [
+    "mpiexec",
+    "-n",
+    "1",
+    "numactl",
+    "--interleave=0,1",
+    "taskset",
+    "-c",
+    "24",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py",
+    "--contract",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v3.json",
+    "--output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v7/report.json"
+  ],
+  "worker_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py",
+  "worker_scope": "Y2/Y3 six exact signed keys; actual production component/merge cutoff accounting and same-storage MPC-expanded full-primal reference; no carrier/action/matrix/factor/solve.",
+  "worker_sha256": "3c05ba85129aecc84db27d380670ffd30ed7bb714c7ff33378875b09d385ff37"
+}

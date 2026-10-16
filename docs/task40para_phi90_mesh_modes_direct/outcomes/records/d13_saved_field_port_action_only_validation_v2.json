@@ -1,0 +1,39 @@
+{
+  "schema": "task40.d13.saved-field-port-action-only-validation.v2",
+  "status": "PURE_INTERFACE_PASS_NOT_LAUNCHED",
+  "validated_utc": "2026-10-16T14:59:54.017521Z",
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "worker_sha256": "90c4be32fbcd86851a1bb4bdbbc5ea8ab0f1670fdb1670e4235a66a20f74b560",
+  "supervisor_sha256": "0d859206b2a92a61a93e931f3331d982450d8f8ad86f42a46ff849b69168c4ff",
+  "tests": {
+    "command": "Task40 activation, taskset -c 9: pytest -q worker tests + existing host-floor supervisor test",
+    "result": "21 passed in 1.65s",
+    "ruff": "passed for worker, supervisor, and both focused test files",
+    "compileall": "passed for worker, supervisor, and both focused test files",
+    "git_diff_check": "passed",
+    "FE_mesh_factor_solve": "NOT_RUN"
+  },
+  "review_items": {
+    "R1": "finite + global/max-cell DG roundtrip + global/max-facet unaveraged tangential trace + actual MPC backsubstitution are jointly required before carrier; focused fake verifies each failure skips builder",
+    "R2": "supervisor uses existing Task40 native_capacity_guard/shared lock and benchmarks.subreaper_watchdog.supervise with host floor only, no RSS cap/time limit/global swap stop, PSS disabled and descendant cleanup required",
+    "R3": "mode selection reports 612 parent/6 selected/606 unevaluated; sparse row truncation before-after evidence explicitly NOT_MEASURED",
+    "complex_scalar": "VTU reconstruction requires complex scalar storage; real dtype negative test rejects"
+  },
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v2.json",
+  "contract_sha256": "3f5906cef54068b80123642a1cf958dc99ce8d247d687810e39926277934af41",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v2.json",
+  "sidecar_sha256": "d0ba734c7bf08e8ce1f25a2e2b371a47958376e1a657033095ba8fff7d36a7fe",
+  "worker_test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_port_action_only.py",
+  "worker_test_sha256": "7cb1c7fa6eaaf43ee31e12d89a3819dd8f107ad1a06e17790aaa3fdffac10c35",
+  "supervisor_test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_action_supervisor.py",
+  "supervisor_test_sha256": "2e3120c2687be099e0a309c8cc2ad866a29731747c12616708735e84d855bf3d",
+  "contract_source_identity_readback": {
+    "status": "PASS",
+    "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+    "worker_sha256": "90c4be32fbcd86851a1bb4bdbbc5ea8ab0f1670fdb1670e4235a66a20f74b560",
+    "supervisor_sha256": "0d859206b2a92a61a93e931f3331d982450d8f8ad86f42a46ff849b69168c4ff",
+    "bound_source_file_count": 9,
+    "src_package_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/__init__.py",
+    "mesh_fe_factor_solve": "NOT_RUN"
+  }
+}

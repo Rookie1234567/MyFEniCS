@@ -1,0 +1,45 @@
+{
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+  "contract_sha256": "5346880f6b1e4e9c24c2277323f2284f24c3cc841808a166ae1ddb49a669b109",
+  "fresh_admission": "KeyError: 'canonical_heavy_lock'",
+  "fresh_blocked_attempt_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_fresh_admission_v4_blocked_v2.json",
+  "fresh_blocked_attempt_sha256": "27e3738bb3918c2505f128aafd16b06cd8e546b9e2c098d4e18afeba7e8da9d1",
+  "implementation": {
+    "basis_dtype": "Use mesh.geometry.x.dtype (verified as float64 for both bound cases) for the Basix DG6 element metadata.",
+    "field_dtype": "Keep DOLFINx Function coefficient arrays explicitly complex128 for DG6, reconstructed N1E6, DG6 roundtrip, and zero-slave storage; preserve imaginary parts.",
+    "numerical_scope_changed": false,
+    "stage_recording": "Record saved_vtu_loaded_and_e_field_decoded immediately after pv.read and _read_vtu_e return, before DG6 element construction."
+  },
+  "previous_v3_attempt": {
+    "status": "WORKER_FAILED_AFTER_VTU_READ_BEFORE_DG6_SPACE_CREATION",
+    "terminal_correction_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_correction_v3.json",
+    "terminal_correction_sha256": "abf8cf93d358436964106c30ccf0bb8797464edcb4e644fee992ed97ec62ef26",
+    "terminal_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_v3.json",
+    "terminal_sha256": "e6eba69a865801257a74734e1a5d9fb17bf970c0341a2121532faf2b8750df6d"
+  },
+  "schema": "task40.d13.saved-field-port-action-only-validation.v4",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v4.json",
+  "sidecar_sha256": "13ffe9133f3c40037f1235b625949df10aa2ee8553d05d1df368d8fd6b07377c",
+  "status": "PURE_INTERFACE_PASS_FRESH_BLOCKED",
+  "supervision": "Reuse the frozen existing Task40 host-floor supervisor; only output/contract paths are v4.",
+  "test_path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_port_action_only.py",
+  "test_sha256": "93a650a92d2b2a0c967ac8cd6d2b69b9e0a6b98bb5c99c44ff095ccd95abe80b",
+  "tests": {
+    "command": "Task40 PORD64 activation; taskset -c 24; targeted pytest selecting only real Basix DG6 metadata, dtype wiring/imaginary preservation, and complex storage gate",
+    "compileall": "PASS for worker and focused worker test",
+    "git_diff_check": "PASS",
+    "numerical_scope": "No solver, mesh, carrier, factor, matrix, or solve executed by tests.",
+    "qualified_api_probe": {
+      "Basix": "0.10.0",
+      "DG6 vector element dtype": "float64",
+      "DOLFINx default_scalar_type": "complex128",
+      "fem.Function signature": "(V, x=None, name=None, dtype=None)",
+      "mesh_or_PDE_constructed": false
+    },
+    "result": "3 passed, 18 deselected in 0.70s",
+    "ruff": "PASS for worker and focused worker test"
+  },
+  "validated_utc": "2026-10-16T15:27:13.403563Z",
+  "worker_sha256": "d743f768ac3fd4ea130805c9bb19be333b4c88e7e8f075c7d453433df776b17f"
+}

@@ -1,0 +1,14 @@
+{
+  "admission": "BLOCKED; no v4 worker launched",
+  "captured_utc": "2026-10-16T15:38:47.804538+00:00",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+  "contract_sha256": "5346880f6b1e4e9c24c2277323f2284f24c3cc841808a166ae1ddb49a669b109",
+  "exception": "KeyError: 'canonical_heavy_lock'",
+  "neighbors_modified": false,
+  "output_directory": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4",
+  "output_directory_absent": true,
+  "schema": "task40.d13.saved-field-port-action-only-fresh-admission.v4-blocked.v2",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v4.json",
+  "sidecar_sha256": "13ffe9133f3c40037f1235b625949df10aa2ee8553d05d1df368d8fd6b07377c",
+  "worker_sha256": "d743f768ac3fd4ea130805c9bb19be333b4c88e7e8f075c7d453433df776b17f"
+}

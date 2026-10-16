@@ -1,0 +1,3122 @@
+{
+  "bounded_interpretation": [
+    "On both saved fields, the merged cutoff projection boundary for top m=\u00b14,n=0,p agrees with P*saved_total_aux at about 3.3e-16 (Y2) and 5.0\u20136.1e-16 (Y3) absolute. The untruncated projection boundary differs by about 2.9464e-3 (Y2) and 1.10435e-7 (Y3). This is an offline same-field cutoff-stage comparison, not proof of the original PDE cause or solver qualification.",
+    "The original merged_cut_boundary_vs_saved_total_aux_abs/relative values are dimensionally mismatched: they compare P*(N/H) with the unscaled saved projection coefficient. They are retained in the original report and explicitly superseded only for interpretation by the corrected rows here.",
+    "Top (0,0,s) is compared against saved total auxiliary projection; incident projection and outgoing boundary amplitude remain separate fields. The non-conjugated coupling dot is not physical power.",
+    "For cutoff closure, the stored residual is tiny relative to the aggregate before/after/deleted dot magnitudes, but can be materially larger relative to the small delta being closed. Without sum-absolute dot products, no rigorous reduction-roundoff allowance can be asserted. The old closed boolean remains historical only."
+  ],
+  "closure_scale_reanalysis": {
+    "aggregate_summary": {
+      "coupling_component": {
+        "count": 12,
+        "max_legacy_bound_over_aggregate_operation_scale": 232.54697115803938,
+        "max_residual_abs": 1.2338973234227543e-14,
+        "max_residual_relative_to_aggregate_operation_scale": 8.911763070711543e-10,
+        "max_residual_relative_to_delta_identity_scale": 1.3631239649781999
+      },
+      "coupling_merged": {
+        "count": 12,
+        "max_legacy_bound_over_aggregate_operation_scale": 232.54697115803938,
+        "max_residual_abs": 1.1949218545369506e-14,
+        "max_residual_relative_to_aggregate_operation_scale": 7.73393614630801e-10,
+        "max_residual_relative_to_delta_identity_scale": 1.0000000000000244
+      },
+      "projection_component": {
+        "count": 12,
+        "max_legacy_bound_over_aggregate_operation_scale": 44.70420646513471,
+        "max_residual_abs": 8.198025783896143e-13,
+        "max_residual_relative_to_aggregate_operation_scale": 7.303660233882918e-10,
+        "max_residual_relative_to_delta_identity_scale": 0.9999972118736797
+      },
+      "projection_merged": {
+        "count": 12,
+        "max_legacy_bound_over_aggregate_operation_scale": 44.70420646513471,
+        "max_residual_abs": 1.6396148910021223e-12,
+        "max_residual_relative_to_aggregate_operation_scale": 1.4878315902769734e-10,
+        "max_residual_relative_to_delta_identity_scale": 1.0000000000000533
+      }
+    },
+    "formula": "closure=(before_dot-after_dot)-deleted_dot; scalar operation scale=max(abs(before_dot),abs(after_dot),abs(deleted_dot)); delta identity scale=max(abs(before_dot-after_dot),abs(deleted_dot)).",
+    "legacy_booleans_and_bounds_changed": false,
+    "per_identity_rows": [
+      {
+        "after_dot_complex": {
+          "imag": -2.2491503047808846e-30,
+          "real": -5.376157523084152e-29
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 5.381291188076822e-29,
+        "before_dot_complex": {
+          "imag": -2.25166953928235e-30,
+          "real": -5.376578344424263e-29
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -2.5192345061993245e-33,
+          "real": -4.208213402583295e-33
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 4.9046511128628744e-33,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.018582900739801487,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 4.960667556857865e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": 4.7340935673775606e-42,
+          "real": 1.4820866050864185e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 9.218359281224325e-14,
+        "residual_relative_to_delta_identity_scale": 1.0114210863741323e-09,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 2.3244271794092988e-30,
+          "real": 5.475880522517129e-29
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.0861671411584082e-28,
+        "before_dot_complex": {
+          "imag": -2.2491503047808846e-30,
+          "real": -5.376157523084152e-29
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -4.573577484189496e-30,
+          "real": -1.0852038045601576e-28
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.0861671411584082e-28,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.009206686172935503,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 3.038309228907573e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -6.873368967513228e-43,
+          "real": 2.9595423566540137e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.797275956688568e-14,
+        "residual_relative_to_delta_identity_scale": 2.797275956688568e-14,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.221661923073543e-31,
+          "real": -2.8453551866859094e-32
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.256696152876079e-31,
+        "before_dot_complex": {
+          "imag": -1.2238544219690848e-31,
+          "real": -2.8542174843598465e-32
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -2.192498905791528e-34,
+          "real": -8.862297767165306e-35
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 2.364837133723183e-34,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 7.957372971273897,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 1.385534632599366e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": 1.024965752166883e-42,
+          "real": 9.322829103964287e-43
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.1025215836210103e-11,
+        "residual_relative_to_delta_identity_scale": 5.85890086400153e-09,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.6376174089792873e-31,
+          "real": -4.5989745796721235e-32
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.700969267810779e-31,
+        "before_dot_complex": {
+          "imag": -1.221661923073543e-31,
+          "real": -2.8453551866859094e-32
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 4.159554859132553e-32,
+          "real": 1.7536193927970388e-32
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 4.514097650800847e-32,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 5.879000984462484,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 2.0354051937352702e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -7.51095976878102e-43,
+          "real": 1.891752926838503e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.1966149137749706e-11,
+        "residual_relative_to_delta_identity_scale": 4.508996816615539e-11,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1450.6349994686996,
+          "real": -2332.524890331142
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2746.8189357323613,
+        "before_dot_complex": {
+          "imag": -1450.6349994686989,
+          "real": -2332.5248903311426
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 7.475200286284474e-18,
+          "real": 2.438448160746137e-18
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 8.198074455012805e-13,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 8.009718428837169e-08,
+        "legacy_roundoff_bound_abs": 0.00022001246250214393,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 8.198025783896143e-13,
+        "recomputed_closure_residual_complex": {
+          "imag": 6.821135511294098e-13,
+          "real": -4.547497893346248e-13
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.9845526682705687e-16,
+        "residual_relative_to_delta_identity_scale": 0.9999940631038509,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1450.6349994686989,
+          "real": -2332.524890331142
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2746.818935732361,
+        "before_dot_complex": {
+          "imag": -1450.6349994686996,
+          "real": -2332.524890331142
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 3.6312196535928346e-26,
+          "real": 9.236411246627554e-26
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 6.821210263296962e-13,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 9.724575238203747e-10,
+        "legacy_roundoff_bound_abs": 2.6711647406252085e-06,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 6.821210263297325e-13,
+        "recomputed_closure_residual_complex": {
+          "imag": -6.821210263297325e-13,
+          "real": -9.236411246627554e-26
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.4833126692708795e-16,
+        "residual_relative_to_delta_identity_scale": 1.0000000000000533,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -0.6375567759447449,
+          "real": 0.6587633042052516
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.9167593651119571,
+        "before_dot_complex": {
+          "imag": -0.6375567759447414,
+          "real": 0.6587633042052516
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 1.6750071340989326e-20,
+          "real": -3.5234149794738487e-20
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 3.552713678800501e-15,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 1.9493658115827435e-06,
+        "legacy_roundoff_bound_abs": 1.7870993637975511e-06,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 3.5526969289038786e-15,
+        "recomputed_closure_residual_complex": {
+          "imag": 3.5526969287291598e-15,
+          "real": 3.5234149794738487e-20
+        },
+        "residual_relative_to_aggregate_operation_scale": 3.8752774873153476e-15,
+        "residual_relative_to_delta_identity_scale": 0.9999952853232383,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -0.6375567759447467,
+          "real": 0.6587633042052543
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.9167593651119602,
+        "before_dot_complex": {
+          "imag": -0.6375567759447449,
+          "real": 0.6587633042052516
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 2.5576877035248045e-29,
+          "real": -2.833000498741627e-29
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 3.2023728339893768e-15,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 2.3667192136578674e-08,
+        "legacy_roundoff_bound_abs": 2.1697120037112644e-08,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 3.202372833989339e-15,
+        "recomputed_closure_residual_complex": {
+          "imag": 1.7763568394002248e-15,
+          "real": -2.6645352591003473e-15
+        },
+        "residual_relative_to_aggregate_operation_scale": 3.493144390838315e-15,
+        "residual_relative_to_delta_identity_scale": 0.9999999999999881,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 2.2491503070565933e-30,
+          "real": 5.376157523114465e-29
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 5.381291188119477e-29,
+        "before_dot_complex": {
+          "imag": 2.251669541564718e-30,
+          "real": 5.376578344457396e-29
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 2.5192345077729885e-33,
+          "real": 4.208213427782889e-33
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 4.904651136780423e-33,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.01858290073965419,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 1.5636881313131427e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": 3.515630683372726e-43,
+          "real": 1.523654810313304e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.905786133196748e-14,
+        "residual_relative_to_delta_identity_scale": 3.1881740162657115e-10,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -2.324427177199014e-30,
+          "real": -5.475880522491678e-29
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.086167141158906e-28,
+        "before_dot_complex": {
+          "imag": 2.2491503070565933e-30,
+          "real": 5.376157523114465e-29
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 4.573577484256273e-30,
+          "real": 1.0852038045606278e-28
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.086167141158906e-28,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.009206686172931284,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 1.5009110234422537e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -6.656167705542881e-43,
+          "real": -1.3452465257518244e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.3818416766325938e-14,
+        "residual_relative_to_delta_identity_scale": 1.3818416766325938e-14,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.2216619232792535e-31,
+          "real": 2.845355179959677e-32
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.256696152926393e-31,
+        "before_dot_complex": {
+          "imag": 1.2238544221724386e-31,
+          "real": 2.8542174778555795e-32
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 2.1924989147649143e-34,
+          "real": 8.862297785693168e-35
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 2.364837142736968e-34,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 7.95737297095531,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 2.423120783387884e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -2.1579852662771368e-42,
+          "real": 1.1020952415363688e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.9281675827090803e-11,
+        "residual_relative_to_delta_identity_scale": 1.0246459426730167e-08,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.6376174091815226e-31,
+          "real": 4.5989745732311953e-32
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.7009692678313365e-31,
+        "before_dot_complex": {
+          "imag": 1.2216619232792535e-31,
+          "real": 2.845355179959677e-32
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -4.1595548590589847e-32,
+          "real": -1.7536193932732e-32
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 4.514097650913754e-32,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 5.879000984391432,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 3.633256435786716e-43,
+        "recomputed_closure_residual_complex": {
+          "imag": 3.629363022601276e-43,
+          "real": 1.6815581571897805e-44
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.1359918162536607e-12,
+        "residual_relative_to_delta_identity_scale": 8.04868816927623e-12,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.280091752250967e-07,
+          "real": 6.276362534427329e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.405572695531915e-07,
+        "before_dot_complex": {
+          "imag": -1.2800917558635286e-07,
+          "real": 6.276362529726229e-07
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -2.5394570375338485e-16,
+          "real": -5.777095637028741e-16
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 6.310600291957707e-16,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.18842296105458903,
+        "legacy_roundoff_bound_abs": 1.2069569745425487e-07,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 1.519644287977472e-16,
+        "recomputed_closure_residual_complex": {
+          "imag": -1.0731046011878522e-16,
+          "real": 1.0759950171315937e-16
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.372378490119191e-10,
+        "residual_relative_to_delta_identity_scale": 0.24080819853447574,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.280091752250967e-07,
+          "real": 6.276362534427329e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.405572695531915e-07,
+        "before_dot_complex": {
+          "imag": -1.280091752250967e-07,
+          "real": 6.276362534427329e-07
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.006043300048301301,
+        "legacy_roundoff_bound_abs": 3.871079778030551e-09,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.2075915555281175e-07,
+          "real": -6.956447894720247e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.393628012814896e-07,
+        "before_dot_complex": {
+          "imag": -1.2075915543116426e-07,
+          "real": -6.956447893744465e-08
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -2.5162990508855196e-18,
+          "real": 1.2622566429691394e-17
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.2203821264596696e-16,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.37220795951566615,
+        "legacy_roundoff_bound_abs": 5.187194389737051e-08,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 1.2419682658912904e-16,
+        "recomputed_closure_residual_complex": {
+          "imag": 1.2416378280375911e-16,
+          "real": -2.864746877321854e-18
+        },
+        "residual_relative_to_aggregate_operation_scale": 8.911763070711543e-10,
+        "residual_relative_to_delta_identity_scale": 1.017688016698706,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.2075915555281175e-07,
+          "real": -6.956447894720247e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.393628012814896e-07,
+        "before_dot_complex": {
+          "imag": -1.2075915555281175e-07,
+          "real": -6.956447894720247e-08
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.011937846465895833,
+        "legacy_roundoff_bound_abs": 1.663691724755574e-09,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -208.41729591822337,
+          "real": 259.77792124657583
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 333.0500527023775,
+        "before_dot_complex": {
+          "imag": -208.41729591822335,
+          "real": 259.77792124657583
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 6.1716679652896305e-19,
+          "real": -2.3927631210188276e-18
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 2.842170943040401e-14,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 8.008236055717009e-08,
+        "legacy_roundoff_bound_abs": 2.6671434404096295e-05,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 2.842109236433048e-14,
+        "recomputed_closure_residual_complex": {
+          "imag": 2.842109226360748e-14,
+          "real": 2.3927631210188276e-18
+        },
+        "residual_relative_to_aggregate_operation_scale": 8.533579902996843e-17,
+        "residual_relative_to_delta_identity_scale": 0.9999782889176656,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -208.41729591822337,
+          "real": 259.77792124657583
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 333.0500527023775,
+        "before_dot_complex": {
+          "imag": -208.41729591822337,
+          "real": 259.77792124657583
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -4.207280080267674e-26,
+          "real": 6.217796837719742e-26
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 7.507476486075384e-26,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 9.36477820649428e-10,
+        "legacy_roundoff_bound_abs": 3.1189398752189965e-07,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 7.507476486075384e-26,
+        "recomputed_closure_residual_complex": {
+          "imag": 4.207280080267674e-26,
+          "real": -6.217796837719742e-26
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.254158624254675e-28,
+        "residual_relative_to_delta_identity_scale": 1.0,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 0.14053427514852268,
+          "real": 0.38206684177609773
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.40709329898228924,
+        "before_dot_complex": {
+          "imag": 0.14053427514852201,
+          "real": 0.3820668417760995
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 1.474355418675383e-20,
+          "real": -2.026442095878182e-20
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.897149936107019e-15,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 1.934073356937541e-06,
+        "legacy_roundoff_bound_abs": 7.873483033494542e-07,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 1.89717408709491e-15,
+        "recomputed_closure_residual_complex": {
+          "imag": -6.661485583292807e-16,
+          "real": 1.776377103821209e-15
+        },
+        "residual_relative_to_aggregate_operation_scale": 4.6602930872056615e-15,
+        "residual_relative_to_delta_identity_scale": 1.0000127301418995,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 0.14053427514852224,
+          "real": 0.3820668417761004
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.4070932989822902,
+        "before_dot_complex": {
+          "imag": 0.14053427514852268,
+          "real": 0.38206684177609773
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 4.296432040334557e-29,
+          "real": 7.383722605243805e-29
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 2.7012892057857038e-15,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 2.261692574593848e-08,
+        "legacy_roundoff_bound_abs": 9.20719891475159e-09,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 2.7012892057857697e-15,
+        "recomputed_closure_residual_complex": {
+          "imag": 4.4408920985001967e-16,
+          "real": -2.6645352591004495e-15
+        },
+        "residual_relative_to_aggregate_operation_scale": 6.635553109173836e-15,
+        "residual_relative_to_delta_identity_scale": 1.0000000000000244,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.2800909054110077e-07,
+          "real": -6.276361849497786e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.405571855185706e-07,
+        "before_dot_complex": {
+          "imag": 1.2800908994695798e-07,
+          "real": -6.276361850512599e-07
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -6.272118767971452e-16,
+          "real": 6.862504501035859e-17
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 6.309549391185325e-16,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.18842298577377442,
+        "legacy_roundoff_bound_abs": 1.206956974542546e-07,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 1.7329091442426178e-16,
+        "recomputed_closure_residual_complex": {
+          "imag": 3.3069086275088764e-17,
+          "real": -1.701063683550018e-16
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.7053152839737813e-10,
+        "residual_relative_to_delta_identity_scale": 0.2746486376132591,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.2800909054110077e-07,
+          "real": -6.276361849497786e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.405571855185706e-07,
+        "before_dot_complex": {
+          "imag": 1.2800909054110077e-07,
+          "real": -6.276361849497786e-07
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.006043300841121112,
+        "legacy_roundoff_bound_abs": 3.87107977803055e-09,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.2075915709931773e-07,
+          "real": 6.956448242749144e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.393628044063905e-07,
+        "before_dot_complex": {
+          "imag": 1.2075915714702262e-07,
+          "real": 6.956448244006819e-08
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": -1.2728426006162936e-17,
+          "real": 1.4362467682725843e-18
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 4.933489214580889e-17,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.3722079511697298,
+        "legacy_roundoff_bound_abs": 5.18719438973704e-08,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 6.145158309103207e-17,
+        "recomputed_closure_residual_complex": {
+          "imag": 6.043332159552513e-17,
+          "real": 1.1140498432559268e-17
+        },
+        "residual_relative_to_aggregate_operation_scale": 4.40946803221866e-10,
+        "residual_relative_to_delta_identity_scale": 1.2456008398561487,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.2075915709931773e-07,
+          "real": 6.956448242749144e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.3936280435877595e-07,
+        "before_dot_complex": {
+          "imag": 1.2075915709931773e-07,
+          "real": 6.956448242749144e-08
+        },
+        "case": "Y2-primary",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.011937846202294851,
+        "legacy_roundoff_bound_abs": 1.6636917247555737e-09,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 8.881397316402239e-33,
+          "real": -2.053057958682776e-32
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2.236926276082575e-32,
+        "before_dot_complex": {
+          "imag": 1.6541140688935995e-32,
+          "real": -1.1646860381698571e-32
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 7.659743374591234e-33,
+          "real": 8.883719203274557e-33
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.1729967410383372e-32,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 44.70420016484645,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 2.7699959981314666e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -2.0574783655334177e-42,
+          "real": 1.854632202089211e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.238304555562927e-10,
+        "residual_relative_to_delta_identity_scale": 2.361469474910446e-10,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.3253658139436283e-32,
+          "real": -9.245262161456146e-33
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2.236926276082575e-32,
+        "before_dot_complex": {
+          "imag": 8.881397316402239e-33,
+          "real": -2.053057958682776e-32
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -4.372260821571088e-33,
+          "real": -1.128531742498906e-32
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.2102687887243665e-32,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 44.70420016484645,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 1.5121464905316437e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -1.462955596755109e-42,
+          "real": -3.825544807606751e-43
+        },
+        "residual_relative_to_aggregate_operation_scale": 6.759929939129668e-11,
+        "residual_relative_to_delta_identity_scale": 1.2494302956663528e-10,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.537605076903857e-33,
+          "real": 4.015911687735928e-33
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 4.3002065132054465e-33,
+        "before_dot_complex": {
+          "imag": 9.999723288942797e-34,
+          "real": 3.489444989904951e-33
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -5.376327481942871e-34,
+          "real": -5.264666978650327e-34
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 7.524733589249877e-34,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 232.54697115803938,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 1.878231060802889e-43,
+        "recomputed_closure_residual_complex": {
+          "imag": 1.8470976569893435e-43,
+          "real": 3.405615411481795e-44
+        },
+        "residual_relative_to_aggregate_operation_scale": 4.367769443246631e-11,
+        "residual_relative_to_delta_identity_scale": 2.4960764903174803e-10,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.758047918510061e-34,
+          "real": 3.879416105014299e-33
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 4.3002065132054465e-33,
+        "before_dot_complex": {
+          "imag": 1.537605076903857e-33,
+          "real": 4.015911687735928e-33
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 1.3618002852013886e-33,
+          "real": 1.3649558244837547e-34
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.3686237835148505e-33,
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 232.54697115803938,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 17,
+        "recomputed_closure_residual_absolute": 3.1101566082371564e-43,
+        "recomputed_closure_residual_complex": {
+          "imag": -1.485376372184306e-43,
+          "real": 2.7325320054333933e-43
+        },
+        "residual_relative_to_aggregate_operation_scale": 7.232574990727115e-11,
+        "residual_relative_to_delta_identity_scale": 2.2724700868852094e-10,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1450.635002392105,
+          "real": -2332.5251688354097
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2746.819173774604,
+        "before_dot_complex": {
+          "imag": -1450.6350023921045,
+          "real": -2332.525168835409
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 2.3740672480547705e-18,
+          "real": 1.0796267044447657e-18
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 6.431098710768743e-13,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 1.5486819516022314e-07,
+        "legacy_roundoff_bound_abs": 0.00042539492787396825,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 6.431074289471117e-13,
+        "recomputed_closure_residual_complex": {
+          "imag": 4.5474497681921607e-13,
+          "real": 4.5474627125975966e-13
+        },
+        "residual_relative_to_aggregate_operation_scale": 2.3412805440096405e-16,
+        "residual_relative_to_delta_identity_scale": 0.9999962026243533,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1450.635002392104,
+          "real": -2332.525168835411
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2746.8191737746047,
+        "before_dot_complex": {
+          "imag": -1450.635002392105,
+          "real": -2332.5251688354097
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -3.4333644608087702e-25,
+          "real": 2.9851525874136486e-25
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.639614891002561e-12,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 1.8844340002032605e-09,
+        "legacy_roundoff_bound_abs": 5.176199443471094e-06,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 1.6396148910021223e-12,
+        "recomputed_closure_residual_complex": {
+          "imag": -9.094947017725849e-13,
+          "real": 1.3642420526590939e-12
+        },
+        "residual_relative_to_aggregate_operation_scale": 5.969140257416391e-16,
+        "residual_relative_to_delta_identity_scale": 0.9999999999997324,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -0.6375557733356665,
+          "real": 0.6587628691232981
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.9167583552110234,
+        "before_dot_complex": {
+          "imag": -0.6375557733356771,
+          "real": 0.6587628691233043
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 6.041534277003706e-21,
+          "real": 1.8509601686307525e-21
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.233896894832203e-14,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 3.7691103171586854e-06,
+        "legacy_roundoff_bound_abs": 3.4553633749672954e-06,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 1.2338973234227543e-14,
+        "recomputed_closure_residual_complex": {
+          "imag": -1.065814707793578e-14,
+          "real": 6.217247086940708e-15
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.3459351817292469e-14,
+        "residual_relative_to_delta_identity_scale": 1.000000347347135,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -0.6375557733356754,
+          "real": 0.6587628691233061
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.9167583552110234,
+        "before_dot_complex": {
+          "imag": -0.6375557733356665,
+          "real": 0.6587628691232981
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 1.2193910319673042e-28,
+          "real": 9.650495463853944e-29
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.1949218545369531e-14,
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 4.5862480832959255e-08,
+        "legacy_roundoff_bound_abs": 4.2044812494320815e-08,
+        "parent_mode_index": 152,
+        "recomputed_closure_residual_absolute": 1.1949218545369506e-14,
+        "recomputed_closure_residual_complex": {
+          "imag": 8.881784197001131e-15,
+          "real": -7.993605777301223e-15
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.3034207408580403e-14,
+        "residual_relative_to_delta_identity_scale": 0.9999999999999979,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -8.881389916828883e-33,
+          "real": 2.053057935293423e-32
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2.236925960826328e-32,
+        "before_dot_complex": {
+          "imag": -1.654113325857907e-32,
+          "real": 1.1646860197444915e-32
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -7.659743340495774e-33,
+          "real": -8.883719158859156e-33
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.1729967354419644e-32,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 44.70420646513471,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 3.595743226939582e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -1.254412552932988e-42,
+          "real": 3.3698395364061506e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.607448476127168e-10,
+        "residual_relative_to_delta_identity_scale": 3.06543327725867e-10,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.3253651189758206e-32,
+          "real": 9.245262043735865e-33
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 2.236925960826328e-32,
+        "before_dot_complex": {
+          "imag": -8.881389916828883e-33,
+          "real": 2.053057935293423e-32
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 4.372261273552901e-33,
+          "real": 1.1285317312467596e-32
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.2102687944720846e-32,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 44.70420646513471,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 3.3281691096280824e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -6.235778166245436e-43,
+          "real": -3.269229317269798e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.4878315902769734e-10,
+        "residual_relative_to_delta_identity_scale": 2.7499420994985e-10,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.5376050134979042e-33,
+          "real": -4.015911779930156e-33
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 4.300206576632765e-33,
+        "before_dot_complex": {
+          "imag": -9.999722660487463e-34,
+          "real": -3.489445088350466e-33
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 5.376327488993102e-34,
+          "real": 5.264666947185336e-34
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 7.524733572272751e-34,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 232.54696772801094,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 3.4576405983946394e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": -1.4501523268017663e-42,
+          "real": -3.138843216335958e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 8.040638366499386e-10,
+        "residual_relative_to_delta_identity_scale": 4.595033917393971e-09,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.758047266065496e-34,
+          "real": -3.879416224424546e-33
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 4.300206576632765e-33,
+        "before_dot_complex": {
+          "imag": -1.5376050134979042e-33,
+          "real": -4.015911779930156e-33
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -1.3618002876921966e-33,
+          "real": -1.364955587335009e-34
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.3686237836281087e-33,
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 232.54696772801094,
+        "legacy_roundoff_bound_abs": 1e-30,
+        "parent_mode_index": 289,
+        "recomputed_closure_residual_absolute": 3.325752307961157e-42,
+        "recomputed_closure_residual_complex": {
+          "imag": 8.00842072361633e-43,
+          "real": 3.227891012572216e-42
+        },
+        "residual_relative_to_aggregate_operation_scale": 7.73393614630801e-10,
+        "residual_relative_to_delta_identity_scale": 2.4299974527293847e-09,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.2801312663113934e-07,
+          "real": 6.276447420553236e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.40566376591508e-07,
+        "before_dot_complex": {
+          "imag": -1.2801312760518657e-07,
+          "real": 6.276447408600991e-07
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -5.078962051321065e-16,
+          "real": -1.1554137478832475e-15
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.5418591230122138e-15,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.3848616223845879,
+        "legacy_roundoff_bound_abs": 2.465294149400247e-07,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 4.678479171873867e-16,
+        "recomputed_closure_residual_complex": {
+          "imag": -4.661510266288707e-16,
+          "real": -3.9810727064772637e-17
+        },
+        "residual_relative_to_aggregate_operation_scale": 7.303660233882918e-10,
+        "residual_relative_to_delta_identity_scale": 0.3034310399729565,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.2801312663113934e-07,
+          "real": 6.276447420553236e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.40566376591508e-07,
+        "before_dot_complex": {
+          "imag": -1.2801312663113934e-07,
+          "real": 6.276447420553236e-07
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.012370897318202054,
+        "legacy_roundoff_bound_abs": 7.924380870306293e-09,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.2075656588279686e-07,
+          "real": -6.95640119444639e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.3936032420174608e-07,
+        "before_dot_complex": {
+          "imag": -1.2075656584398242e-07,
+          "real": -6.956401194966808e-08
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -5.0314168312341165e-18,
+          "real": 2.5246043746830204e-17
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 3.9161766681686135e-17,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.7602743381552888,
+        "legacy_roundoff_bound_abs": 1.0595207824758897e-07,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 5.3382342674691166e-17,
+        "recomputed_closure_residual_complex": {
+          "imag": 4.3845854606215175e-17,
+          "real": -3.0450214174760625e-17
+        },
+        "residual_relative_to_aggregate_operation_scale": 3.8305265849849627e-10,
+        "residual_relative_to_delta_identity_scale": 1.3631239649781999,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -1.2075656588279686e-07,
+          "real": -6.95640119444639e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.3936032420174608e-07,
+        "before_dot_complex": {
+          "imag": -1.2075656588279686e-07,
+          "real": -6.95640119444639e-08
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.024438071306534474,
+        "legacy_roundoff_bound_abs": 3.4056975401440326e-09,
+        "parent_mode_index": 323,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -208.41739105092097,
+          "real": 259.777915557858
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 333.0501077976978,
+        "before_dot_complex": {
+          "imag": -208.41739105092086,
+          "real": 259.7779155578579
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -6.307975963030691e-20,
+          "real": -6.970275591534415e-19
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.6077746776921858e-13,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 1.5486367681426478e-07,
+        "legacy_roundoff_bound_abs": 5.1577364256938724e-05,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 1.60777019501329e-13,
+        "recomputed_closure_residual_complex": {
+          "imag": 1.1368690080137567e-13,
+          "real": -1.1368614069405687e-13
+        },
+        "residual_relative_to_aggregate_operation_scale": 4.827412324363774e-16,
+        "residual_relative_to_delta_identity_scale": 0.9999972118736797,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": -208.41739105092094,
+          "real": 259.77791555785797
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 333.0501077976978,
+        "before_dot_complex": {
+          "imag": -208.41739105092097,
+          "real": 259.777915557858
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -3.441116354052574e-25,
+          "real": -5.875639190843342e-26
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 6.355287432313019e-14,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 1.8149961841029488e-09,
+        "legacy_roundoff_bound_abs": 6.044846747678973e-07,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 6.355287432302885e-14,
+        "recomputed_closure_residual_complex": {
+          "imag": -2.8421709430059897e-14,
+          "real": 5.684341886086677e-14
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.9082075890403946e-16,
+        "residual_relative_to_delta_identity_scale": 0.9999999999984054,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 0.14053469687140746,
+          "real": 0.3820663506376478
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.4070929836220571,
+        "before_dot_complex": {
+          "imag": 0.14053469687140696,
+          "real": 0.3820663506376478
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -4.658016172467436e-21,
+          "real": -1.378511269287743e-20
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 4.996003610813204e-16,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 3.740124426574632e-06,
+        "legacy_roundoff_bound_abs": 1.5225784119320024e-06,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 4.995957032553311e-16,
+        "recomputed_closure_residual_complex": {
+          "imag": -4.99595703065148e-16,
+          "real": 1.378511269287743e-20
+        },
+        "residual_relative_to_aggregate_operation_scale": 1.227227496799977e-15,
+        "residual_relative_to_delta_identity_scale": 0.9999906768962712,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 0.14053469687140718,
+          "real": 0.38206635063764516
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 0.4070929836220571,
+        "before_dot_complex": {
+          "imag": 0.14053469687140746,
+          "real": 0.3820663506376478
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -2.8667362819497743e-28,
+          "real": 2.458702760447146e-28
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 2.6789522848988178e-15,
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 4.38341107608127e-08,
+        "legacy_roundoff_bound_abs": 1.784455893403896e-08,
+        "parent_mode_index": 458,
+        "recomputed_closure_residual_absolute": 2.678952284898603e-15,
+        "recomputed_closure_residual_complex": {
+          "imag": 2.775557561565758e-16,
+          "real": 2.66453525910013e-15
+        },
+        "residual_relative_to_aggregate_operation_scale": 6.580688915497811e-15,
+        "residual_relative_to_delta_identity_scale": 0.9999999999999197,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.2801359136312487e-07,
+          "real": -6.276451097039434e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.405668296976985e-07,
+        "before_dot_complex": {
+          "imag": 1.2801358993284537e-07,
+          "real": -6.276451098973651e-07
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -1.2544156735363427e-15,
+          "real": 1.372461291916948e-16
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 1.443298793253257e-15,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.3848613501519705,
+        "legacy_roundoff_bound_abs": 2.465294149400236e-07,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 3.7452540549992377e-16,
+        "recomputed_closure_residual_complex": {
+          "imag": -1.7586383240653474e-16,
+          "real": -3.3066779676310877e-16
+        },
+        "residual_relative_to_aggregate_operation_scale": 5.846781134088271e-10,
+        "residual_relative_to_delta_identity_scale": 0.2594926339928044,
+        "route": "projection",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.2801359136312487e-07,
+          "real": -6.276451097039434e-07
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 6.405668296976985e-07,
+        "before_dot_complex": {
+          "imag": 1.2801359136312487e-07,
+          "real": -6.276451097039434e-07
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.012370888567623821,
+        "legacy_roundoff_bound_abs": 7.924380870306293e-09,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "projection",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.207565697494955e-07,
+          "real": 6.95640165805124e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.3936032986642423e-07,
+        "before_dot_complex": {
+          "imag": 1.20756569683576e-07,
+          "real": 6.956401654972105e-08
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": -2.545805641320144e-17,
+          "real": 2.872474907288774e-18
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 7.275634790602759e-17,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.7602743072518754,
+        "legacy_roundoff_bound_abs": 1.0595207824758852e-07,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 5.2634402487998936e-17,
+        "recomputed_closure_residual_complex": {
+          "imag": -4.046143567391723e-17,
+          "real": -3.36638166058771e-17
+        },
+        "residual_relative_to_aggregate_operation_scale": 3.7768569103164864e-10,
+        "residual_relative_to_delta_identity_scale": 0.7234338171561574,
+        "route": "coupling",
+        "stage": "component",
+        "sum_abs_dot_products_saved": false
+      },
+      {
+        "after_dot_complex": {
+          "imag": 1.207565697494955e-07,
+          "real": 6.95640165805124e-08
+        },
+        "aggregate_operation_scale_max_abs_before_after_deleted": 1.3936032986642423e-07,
+        "before_dot_complex": {
+          "imag": 1.207565697494955e-07,
+          "real": 6.95640165805124e-08
+        },
+        "case": "Y3-control",
+        "deleted_dot_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "delta_identity_scale_max_abs_before_minus_after_or_deleted": 0.0,
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "interpretation": "Scale-relative arithmetic closure only. A rigorous dot-reduction error bound is unavailable because per-entry sum(abs(left_i*right_i)) and the reduction tree were not saved. The legacy absolute bound/boolean is preserved but is too loose to certify tiny-dot closure by itself.",
+        "legacy_boolean_preserved": true,
+        "legacy_bound_over_aggregate_operation_scale": 0.024438070313182857,
+        "legacy_roundoff_bound_abs": 3.405697540144032e-09,
+        "parent_mode_index": 595,
+        "recomputed_closure_residual_absolute": 0.0,
+        "recomputed_closure_residual_complex": {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        "residual_relative_to_aggregate_operation_scale": 0.0,
+        "residual_relative_to_delta_identity_scale": null,
+        "route": "coupling",
+        "stage": "merged",
+        "sum_abs_dot_products_saved": false
+      }
+    ],
+    "rigorous_dot_reduction_bound": "NOT_COMPUTABLE: per-entry sum(abs(left_i*right_i)) and reduction tree were not saved. Do not interpret the legacy 1e-30 absolute bound as proof for tiny dots.",
+    "sum_abs_dot_product_terms_available": false
+  },
+  "corrected_projection_vs_boundary_amplitude": {
+    "count": 12,
+    "formula": "For each route: boundary=P*(N/H). The saved reference boundary is P*saved_total_auxiliary_projection_complex. Compare those quantities in identical boundary-amplitude units; use abs(saved boundary) as the reported relative denominator.",
+    "rows": [
+      {
+        "H": 1.5534565818176476e-54,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -6.100940699834038e-05,
+            "real": -0.001458311530873809
+          },
+          "merged_cut": {
+            "imag": 6.305133255218432e-05,
+            "real": 0.0014853619287354782
+          },
+          "raw_untruncated": {
+            "imag": -6.107774258387126e-05,
+            "real": -0.0014584256809168621
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 0.0029462865617427398,
+            "complex": {
+              "imag": -0.0001240607395508519,
+              "real": -0.0029436734596092603
+            },
+            "relative_to_saved_boundary_magnitude": 1.981763279924474
+          },
+          "merged_cut": {
+            "absolute": 3.2828391266513237e-16,
+            "complex": {
+              "imag": -3.2719866312896917e-16,
+              "real": 2.667137344314341e-17
+            },
+            "relative_to_saved_boundary_magnitude": 2.2081389229324358e-13
+          },
+          "raw_untruncated": {
+            "absolute": 0.0029464034886682944,
+            "complex": {
+              "imag": -0.0001241290751363828,
+              "real": -0.0029437876096523137
+            },
+            "relative_to_saved_boundary_magnitude": 1.9818419285836057
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.0,
+          "real": 4.2138342045395975e-29
+        },
+        "case": "Y2-primary",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": 6.305133255251152e-05,
+            "real": 0.0014853619287354515
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 3.52813962392458e+25,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 1.0
+        },
+        "parent_mode_index": 17,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -1.447835962141426e+24,
+            "real": -3.460771022511418e+25
+          },
+          "merged_cut": {
+            "imag": 1.4962936245630788e+24,
+            "real": 3.5249652849067623e+25
+          },
+          "raw_untruncated": {
+            "imag": -1.4494576582550808e+24,
+            "real": -3.461041916043323e+25
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 0.0029464034886683074,
+        "run_directory_id": "20261016T112452.011352Z",
+        "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": 6.305133255251152e-05,
+          "real": 0.0014853619287354515
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": 1.4962936245708436e+24,
+          "real": 3.5249652849066987e+25
+        },
+        "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146"
+      },
+      {
+        "H": 2500.0,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -1.0977799362142275,
+            "real": 0.045623394844577614
+          },
+          "merged_cut": {
+            "imag": -1.0977799362142275,
+            "real": 0.0456233948445775
+          },
+          "raw_untruncated": {
+            "imag": -1.0977799362142275,
+            "real": 0.04562339484457739
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 1.6476622377199301e-15,
+            "complex": {
+              "imag": -8.881784197001252e-16,
+              "real": -1.3877787807814457e-15
+            },
+            "relative_to_saved_boundary_magnitude": 1.4996094357422844e-15
+          },
+          "merged_cut": {
+            "absolute": 1.7422013638940487e-15,
+            "complex": {
+              "imag": -8.881784197001252e-16,
+              "real": -1.4988010832439613e-15
+            },
+            "relative_to_saved_boundary_magnitude": 1.5856536275747836e-15
+          },
+          "raw_untruncated": {
+            "absolute": 1.8385843027689748e-15,
+            "complex": {
+              "imag": -8.881784197001252e-16,
+              "real": -1.609823385706477e-15
+            },
+            "relative_to_saved_boundary_magnitude": 1.6733759539548699e-15
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.8703700967883408,
+          "real": 0.4923981058215541
+        },
+        "case": "Y2-primary",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": -0.8571371740445038,
+            "real": -0.5150882107668568
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -0.22740983942579074,
+            "real": -0.446774710976807
+          },
+          "top00_total_comparison_uses_saved_total_aux": true
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.1070484770410542,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 1.0075732173677945
+        },
+        "parent_mode_index": 152,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -0.5802539997874798,
+            "real": -0.9330099561324569
+          },
+          "merged_cut": {
+            "imag": -0.5802539997874796,
+            "real": -0.9330099561324569
+          },
+          "raw_untruncated": {
+            "imag": -0.5802539997874796,
+            "real": -0.9330099561324571
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 1.1102230246251565e-16,
+        "run_directory_id": "20261016T112452.011352Z",
+        "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -1.0977799362142266,
+          "real": 0.045623394844579
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -0.5802539997874805,
+          "real": -0.9330099561324554
+        },
+        "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146"
+      },
+      {
+        "H": 1.5534565818176476e-54,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": 6.10094070600702e-05,
+            "real": 0.0014583115308820316
+          },
+          "merged_cut": {
+            "imag": -6.305133249222916e-05,
+            "real": -0.0014853619287285744
+          },
+          "raw_untruncated": {
+            "imag": 6.107774264578171e-05,
+            "real": 0.0014584256809258497
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 0.002946286561744231,
+            "complex": {
+              "imag": 0.00012406073955274576,
+              "real": 0.0029436734596106733
+            },
+            "relative_to_saved_boundary_magnitude": 1.9817632799379292
+          },
+          "merged_cut": {
+            "absolute": 4.514717424391458e-16,
+            "complex": {
+              "imag": 4.464066919937504e-16,
+              "real": 6.743737512859838e-17
+            },
+            "relative_to_saved_boundary_magnitude": 3.0367382885044835e-13
+          },
+          "raw_untruncated": {
+            "absolute": 0.002946403488670558,
+            "complex": {
+              "imag": 0.00012412907513845728,
+              "real": 0.0029437876096544916
+            },
+            "relative_to_saved_boundary_magnitude": 1.9818419285975806
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.0,
+          "real": 4.2138342045395975e-29
+        },
+        "case": "Y2-primary",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -6.305133249267557e-05,
+            "real": -0.0014853619287286419
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 3.5281396239024124e+25,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 1.0
+        },
+        "parent_mode_index": 289,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": 1.4478359636063582e+24,
+            "real": 3.460771022530931e+25
+          },
+          "merged_cut": {
+            "imag": -1.4962936231402614e+24,
+            "real": -3.5249652848903787e+25
+          },
+          "raw_untruncated": {
+            "imag": 1.4494576597242997e+24,
+            "real": 3.4610419160646522e+25
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 0.0029464034886704715,
+        "run_directory_id": "20261016T112452.011352Z",
+        "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -6.305133249267557e-05,
+          "real": -0.0014853619287286419
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -1.4962936231508552e+24,
+          "real": -3.524965284890539e+25
+        },
+        "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146"
+      },
+      {
+        "H": 0.037432716699452785,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -2.149436764752673e-08,
+            "real": 1.0978677933236147e-07
+          },
+          "merged_cut": {
+            "imag": -2.149436764752673e-08,
+            "real": 1.0978677933236147e-07
+          },
+          "raw_untruncated": {
+            "imag": -2.1494367711262048e-08,
+            "real": 1.0978677925075666e-07
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 6.89992335266083e-17,
+            "complex": {
+              "imag": 3.982919317195906e-17,
+              "real": 5.634296405524115e-17
+            },
+            "relative_to_saved_boundary_magnitude": 6.167743836901544e-10
+          },
+          "merged_cut": {
+            "absolute": 6.89992335266083e-17,
+            "complex": {
+              "imag": 3.982919317195906e-17,
+              "real": 5.634296405524115e-17
+            },
+            "relative_to_saved_boundary_magnitude": 6.167743836901544e-10
+          },
+          "raw_untruncated": {
+            "absolute": 3.478021861297145e-17,
+            "complex": {
+              "imag": -2.390612519899089e-17,
+              "real": -2.526184444446325e-17
+            },
+            "relative_to_saved_boundary_magnitude": 3.108954520683466e-10
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 5.136867243848716e-05,
+          "real": 0.006537292459121369
+        },
+        "case": "Y2-primary",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -2.1494367687355922e-08,
+            "real": 1.097867792760185e-07
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.7000362678259312e-05,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 0.99346270886617
+        },
+        "parent_mode_index": 323,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -3.419713729379626e-06,
+            "real": 1.6767050558526736e-05
+          },
+          "merged_cut": {
+            "imag": -3.419713729379626e-06,
+            "real": 1.6767050558526736e-05
+          },
+          "raw_untruncated": {
+            "imag": -3.4197137390304394e-06,
+            "real": 1.6767050545967935e-05
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 1.0354484814861518e-16,
+        "run_directory_id": "20261016T112452.011352Z",
+        "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -2.1494367687355922e-08,
+          "real": 1.097867792760185e-07
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -3.419713735404143e-06,
+          "real": 1.6767050549860698e-05
+        },
+        "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146"
+      },
+      {
+        "H": 1519.9146355324667,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -0.08449174892560807,
+            "real": 0.1485020964119057
+          },
+          "merged_cut": {
+            "imag": -0.08449174892560807,
+            "real": 0.1485020964119057
+          },
+          "raw_untruncated": {
+            "imag": -0.08449174892560804,
+            "real": 0.1485020964119057
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 2.237726045655905e-16,
+            "complex": {
+              "imag": -2.220446049250313e-16,
+              "real": 2.7755575615628914e-17
+            },
+            "relative_to_saved_boundary_magnitude": 1.3097156375843147e-15
+          },
+          "merged_cut": {
+            "absolute": 2.237726045655905e-16,
+            "complex": {
+              "imag": -2.220446049250313e-16,
+              "real": 2.7755575615628914e-17
+            },
+            "relative_to_saved_boundary_magnitude": 1.3097156375843147e-15
+          },
+          "raw_untruncated": {
+            "absolute": 1.962615573354719e-16,
+            "complex": {
+              "imag": -1.942890293094024e-16,
+              "real": 2.7755575615628914e-17
+            },
+            "relative_to_saved_boundary_magnitude": 1.1486966029551421e-15
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.12334061743935497,
+          "real": 0.7699045046644846
+        },
+        "case": "Y2-primary",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -0.08449174892560785,
+            "real": 0.14850209641190568
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 0.057206456675847395,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 0.26106865932933626
+        },
+        "parent_mode_index": 458,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -0.13712434306891796,
+            "real": 0.17091612592806482
+          },
+          "merged_cut": {
+            "imag": -0.13712434306891796,
+            "real": 0.17091612592806482
+          },
+          "raw_untruncated": {
+            "imag": -0.13712434306891794,
+            "real": 0.17091612592806482
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 2.7755575615628914e-17,
+        "run_directory_id": "20261016T112452.011352Z",
+        "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -0.08449174892560785,
+          "real": 0.14850209641190568
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -0.1371243430689177,
+          "real": 0.17091612592806488
+        },
+        "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146"
+      },
+      {
+        "H": 0.037432716699452785,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": 2.1494352952209253e-08,
+            "real": -1.097867672544623e-07
+          },
+          "merged_cut": {
+            "imag": 2.1494352952209253e-08,
+            "real": -1.097867672544623e-07
+          },
+          "raw_untruncated": {
+            "imag": 2.1494352848308215e-08,
+            "real": -1.0978676727136976e-07
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 5.3170949584952087e-17,
+            "complex": {
+              "imag": 5.316606441616794e-17,
+              "real": -7.207456287746045e-19
+            },
+            "relative_to_saved_boundary_magnitude": 4.752876557588513e-10
+          },
+          "merged_cut": {
+            "absolute": 5.3170949584952087e-17,
+            "complex": {
+              "imag": 5.316606441616794e-17,
+              "real": -7.207456287746045e-19
+            },
+            "relative_to_saved_boundary_magnitude": 4.752876557588513e-10
+          },
+          "raw_untruncated": {
+            "absolute": 5.371025436759206e-17,
+            "complex": {
+              "imag": -5.073497397842969e-17,
+              "real": -1.7628211470240083e-17
+            },
+            "relative_to_saved_boundary_magnitude": 4.801084255190557e-10
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 5.136867243848716e-05,
+          "real": 0.006537292459121369
+        },
+        "case": "Y2-primary",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": 2.149435289904319e-08,
+            "real": -1.0978676725374155e-07
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.7000360453599802e-05,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 0.9934627088682684
+        },
+        "parent_mode_index": 595,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": 3.4197114670806696e-06,
+            "real": -1.6767048728764957e-05
+          },
+          "merged_cut": {
+            "imag": 3.4197114670806696e-06,
+            "real": -1.6767048728764957e-05
+          },
+          "raw_untruncated": {
+            "imag": 3.4197114512083834e-06,
+            "real": -1.6767048731475988e-05
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 1.0526769770758727e-16,
+        "run_directory_id": "20261016T112452.011352Z",
+        "run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": 2.149435289904319e-08,
+          "real": -1.0978676725374155e-07
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": 3.419711458947571e-06,
+          "real": -1.6767048728718615e-05
+        },
+        "source_sha": "74d5aae3dea064e128e53a253fc5aac0f2b1f146"
+      },
+      {
+        "H": 1.5534565818176476e-54,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": 2.409126604116126e-07,
+            "real": -5.569029705405215e-07
+          },
+          "merged_cut": {
+            "imag": 3.595125776729758e-07,
+            "real": -2.507826892741099e-07
+          },
+          "raw_untruncated": {
+            "imag": 4.486873030952988e-07,
+            "real": -3.159273276532396e-07
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 3.282918929630403e-07,
+            "complex": {
+              "imag": -1.185999177308747e-07,
+              "real": -3.06120281097947e-07
+            },
+            "relative_to_saved_boundary_magnitude": 0.7489448710103118
+          },
+          "merged_cut": {
+            "absolute": 4.988199975964929e-16,
+            "complex": {
+              "imag": -4.695115273333612e-16,
+              "real": 1.6846458293439488e-16
+            },
+            "relative_to_saved_boundary_magnitude": 1.1379771683832859e-09
+          },
+          "raw_untruncated": {
+            "absolute": 1.1043529987285783e-07,
+            "complex": {
+              "imag": 8.917472495281151e-08,
+              "real": -6.514463821066509e-08
+            },
+            "relative_to_saved_boundary_magnitude": 0.25194027994950896
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.0,
+          "real": 4.2138342045395975e-29
+        },
+        "case": "Y3-control",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": 3.595125781424873e-07,
+            "real": -2.507826894425745e-07
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.0402383558498446e+22,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 1.0
+        },
+        "parent_mode_index": 17,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": 5.717184130122525e+21,
+            "real": -1.3216062699869999e+22
+          },
+          "merged_cut": {
+            "imag": 8.531720998554475e+21,
+            "real": -5.951413299648564e+21
+          },
+          "raw_untruncated": {
+            "imag": 1.0647958161522453e+22,
+            "real": -7.497383910190119e+21
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 1.1043530035135632e-07,
+        "run_directory_id": "20261016T122621.622353Z",
+        "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": 3.595125781424873e-07,
+          "real": -2.507826894425745e-07
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": 8.531721009696621e+21,
+          "real": -5.951413303646458e+21
+        },
+        "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0"
+      },
+      {
+        "H": 2500.0,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -1.0977800337507337,
+            "real": 0.045623341008366014
+          },
+          "merged_cut": {
+            "imag": -1.097780033750734,
+            "real": 0.045623341008365514
+          },
+          "raw_untruncated": {
+            "imag": -1.0977800337507335,
+            "real": 0.04562334100836596
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 6.866350197783356e-16,
+            "complex": {
+              "imag": -6.661338147750939e-16,
+              "real": -1.6653345369377348e-16
+            },
+            "relative_to_saved_boundary_magnitude": 6.249364959423056e-16
+          },
+          "merged_cut": {
+            "absolute": 1.1102230246251565e-15,
+            "complex": {
+              "imag": -8.881784197001252e-16,
+              "real": -6.661338147750939e-16
+            },
+            "relative_to_saved_boundary_magnitude": 1.0104624243425525e-15
+          },
+          "raw_untruncated": {
+            "absolute": 4.965068306494546e-16,
+            "complex": {
+              "imag": -4.440892098500626e-16,
+              "real": -2.220446049250313e-16
+            },
+            "relative_to_saved_boundary_magnitude": 4.518925339078371e-16
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.8703700967883408,
+          "real": 0.4923981058215541
+        },
+        "case": "Y3-control",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": -0.8571371740445038,
+            "real": -0.5150882107668568
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -0.22740993696229725,
+            "real": -0.4467747648130197
+          },
+          "top00_total_comparison_uses_saved_total_aux": true
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.1070485729790507,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 1.007573217367795
+        },
+        "parent_mode_index": 152,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -0.580254000956842,
+            "real": -0.9330100675341638
+          },
+          "merged_cut": {
+            "imag": -0.5802540009568417,
+            "real": -0.9330100675341644
+          },
+          "raw_untruncated": {
+            "imag": -0.5802540009568418,
+            "real": -0.9330100675341637
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 6.280369834735101e-16,
+        "run_directory_id": "20261016T122621.622353Z",
+        "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -1.097780033750733,
+          "real": 0.04562334100836618
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -0.5802540009568419,
+          "real": -0.9330100675341632
+        },
+        "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0"
+      },
+      {
+        "H": 1.5534565818176476e-54,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -2.4091245969422103e-07,
+            "real": 5.569029641960341e-07
+          },
+          "merged_cut": {
+            "imag": -3.595123891592347e-07,
+            "real": 2.507826860808842e-07
+          },
+          "raw_untruncated": {
+            "imag": -4.4868710154288644e-07,
+            "real": 3.159273226552604e-07
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 3.2829189468859567e-07,
+            "complex": {
+              "imag": 1.1859993007440552e-07,
+              "real": 3.0612027816623667e-07
+            },
+            "relative_to_saved_boundary_magnitude": 0.7489451422587382
+          },
+          "merged_cut": {
+            "absolute": 6.115294861867623e-16,
+            "complex": {
+              "imag": 6.093918717319164e-16,
+              "real": 5.1086780510393396e-17
+            },
+            "relative_to_saved_boundary_magnitude": 1.3951061401074184e-09
+          },
+          "raw_untruncated": {
+            "absolute": 1.1043528829629567e-07,
+            "complex": {
+              "imag": -8.917471177425989e-08,
+              "real": 6.5144636625463e-08
+            },
+            "relative_to_saved_boundary_magnitude": 0.25194034346144684
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.0,
+          "real": 4.2138342045395975e-29
+        },
+        "case": "Y3-control",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -3.5951238976862655e-07,
+            "real": 2.5078268602979743e-07
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.0402379845702613e+22,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 1.0
+        },
+        "parent_mode_index": 289,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -5.717179366826633e+21,
+            "real": 1.3216062549306712e+22
+          },
+          "merged_cut": {
+            "imag": -8.531716524867758e+21,
+            "real": 5.951413223868988e+21
+          },
+          "raw_untruncated": {
+            "imag": -1.0647953378410385e+22,
+            "real": 7.497383791581296e+21
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 1.104352887582342e-07,
+        "run_directory_id": "20261016T122621.622353Z",
+        "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -3.5951238976862655e-07,
+          "real": 2.5078268602979743e-07
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -8.531716539329454e+21,
+          "real": 5.95141322265663e+21
+        },
+        "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0"
+      },
+      {
+        "H": 0.037432716699452785,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -2.1495046076729978e-08,
+            "real": 1.0978826721586206e-07
+          },
+          "merged_cut": {
+            "imag": -2.1495046076729978e-08,
+            "real": 1.0978826721586206e-07
+          },
+          "raw_untruncated": {
+            "imag": -2.14950462484789e-08,
+            "real": 1.0978826700846337e-07
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 1.4631739646550246e-16,
+            "complex": {
+              "imag": 1.0427178405386635e-16,
+              "real": 1.0264587453310967e-16
+            },
+            "relative_to_saved_boundary_magnitude": 1.307891905704076e-09
+          },
+          "merged_cut": {
+            "absolute": 1.4631739646550246e-16,
+            "complex": {
+              "imag": 1.0427178405386635e-16,
+              "real": 1.0264587453310967e-16
+            },
+            "relative_to_saved_boundary_magnitude": 1.307891905704076e-09
+          },
+          "raw_untruncated": {
+            "absolute": 1.2460464199181163e-16,
+            "complex": {
+              "imag": -6.747713935500502e-17,
+              "real": -1.0475281604984554e-16
+            },
+            "relative_to_saved_boundary_magnitude": 1.1138074255761397e-09
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 5.136867243848716e-05,
+          "real": 0.006537292459121369
+        },
+        "case": "Y3-control",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -2.1495046181001762e-08,
+            "real": 1.0978826711321619e-07
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.7000604373612706e-05,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 0.9934627088642713
+        },
+        "parent_mode_index": 323,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -3.4198192896058414e-06,
+            "real": 1.6767277328404508e-05
+          },
+          "merged_cut": {
+            "imag": -3.4198192896058414e-06,
+            "real": 1.6767277328404508e-05
+          },
+          "raw_untruncated": {
+            "imag": -3.419819315627122e-06,
+            "real": 1.6767277296474567e-05
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 2.692803549233229e-16,
+        "run_directory_id": "20261016T122621.622353Z",
+        "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -2.1495046181001762e-08,
+          "real": 1.0978826711321619e-07
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -3.419819305431785e-06,
+          "real": 1.6767277312578564e-05
+        },
+        "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0"
+      },
+      {
+        "H": 1519.9146355324667,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": -0.08449179757619717,
+            "real": 0.1485021012503065
+          },
+          "merged_cut": {
+            "imag": -0.08449179757619714,
+            "real": 0.14850210125030644
+          },
+          "raw_untruncated": {
+            "imag": -0.0844917975761971,
+            "real": 0.14850210125030644
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 1.986996825864056e-16,
+            "complex": {
+              "imag": -1.8041124150158794e-16,
+              "real": 8.326672684688674e-17
+            },
+            "relative_to_saved_boundary_magnitude": 1.162966480731848e-15
+          },
+          "merged_cut": {
+            "absolute": 1.5515838457795457e-16,
+            "complex": {
+              "imag": -1.5265566588595902e-16,
+              "real": 2.7755575615628914e-17
+            },
+            "relative_to_saved_boundary_magnitude": 9.081242512312291e-16
+          },
+          "raw_untruncated": {
+            "absolute": 1.1443916996305594e-16,
+            "complex": {
+              "imag": -1.1102230246251565e-16,
+              "real": 2.7755575615628914e-17
+            },
+            "relative_to_saved_boundary_magnitude": 6.697993525577705e-16
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 0.12334061743935497,
+          "real": 0.7699045046644846
+        },
+        "case": "Y3-control",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": -0.08449179757619699,
+            "real": 0.1485021012503064
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 0.057206466139314044,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 0.26106865932933654
+        },
+        "parent_mode_index": 458,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": -0.13712440565973416,
+            "real": 0.17091612218527713
+          },
+          "merged_cut": {
+            "imag": -0.13712440565973413,
+            "real": 0.17091612218527708
+          },
+          "raw_untruncated": {
+            "imag": -0.13712440565973408,
+            "real": 0.17091612218527705
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 4.163336342344337e-17,
+        "run_directory_id": "20261016T122621.622353Z",
+        "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": -0.08449179757619699,
+          "real": 0.1485021012503064
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": -0.13712440565973394,
+          "real": 0.17091612218527705
+        },
+        "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0"
+      },
+      {
+        "H": 0.037432716699452785,
+        "boundary_amplitudes": {
+          "component_cut": {
+            "imag": 2.1495126733533684e-08,
+            "real": -1.0978833206018623e-07
+          },
+          "merged_cut": {
+            "imag": 2.1495126733533684e-08,
+            "real": -1.0978833206018623e-07
+          },
+          "raw_untruncated": {
+            "imag": 2.1495126483482603e-08,
+            "real": -1.0978833209200283e-07
+          }
+        },
+        "boundary_difference_from_saved_total": {
+          "component_cut": {
+            "absolute": 1.2642057059159885e-16,
+            "complex": {
+              "imag": 1.2639568906610764e-16,
+              "real": -2.508077791709784e-18
+            },
+            "relative_to_saved_boundary_magnitude": 1.1300387236850264e-09
+          },
+          "merged_cut": {
+            "absolute": 1.2642057059159885e-16,
+            "complex": {
+              "imag": 1.2639568906610764e-16,
+              "real": -2.508077791709784e-18
+            },
+            "relative_to_saved_boundary_magnitude": 1.1300387236850264e-09
+          },
+          "raw_untruncated": {
+            "absolute": 1.2833097503650328e-16,
+            "complex": {
+              "imag": -1.2365539189795217e-16,
+              "real": -3.4324673463610636e-17
+            },
+            "relative_to_saved_boundary_magnitude": 1.1471153037901432e-09
+          }
+        },
+        "boundary_phase_P": {
+          "imag": 5.136867243848716e-05,
+          "real": 0.006537292459121369
+        },
+        "case": "Y3-control",
+        "comparison_denominator": "abs(P * saved_total_auxiliary_projection_complex)",
+        "exact_signed_mode_key": [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        "incident_and_outgoing_separate": {
+          "coupling_dot_is_physical_power": false,
+          "saved_incident_projection_complex": {
+            "imag": 0.0,
+            "real": 0.0
+          },
+          "saved_outgoing_boundary_amplitude_complex": {
+            "imag": 2.1495126607137995e-08,
+            "real": -1.0978833205767816e-07
+          },
+          "top00_total_comparison_uses_saved_total_aux": false
+        },
+        "original_report_mismatched_units_fields": {
+          "correction": "These original fields compare P*(N/H) (boundary amplitude) directly with saved_total_auxiliary_projection (projection coefficient). Preserve as historical fields; do not use as valid boundary error.",
+          "merged_cut_boundary_vs_saved_total_aux_abs": 1.700061640728247e-05,
+          "merged_cut_boundary_vs_saved_total_aux_relative": 0.9934627088673108
+        },
+        "parent_mode_index": 595,
+        "parent_mode_manifest_sha256": "25f2c8abede7ce55892a5a9d71467c0afbedfb9443f2685bbf21f6ca5ec63f5b",
+        "projection_space_N_over_H": {
+          "component_cut": {
+            "imag": 3.4198317047342773e-06,
+            "real": -1.6767287149989805e-05
+          },
+          "merged_cut": {
+            "imag": 3.4198317047342773e-06,
+            "real": -1.6767287149989805e-05
+          },
+          "raw_untruncated": {
+            "imag": 3.4198316665249344e-06,
+            "real": -1.6767287155156987e-05
+          }
+        },
+        "raw_to_merged_cut_boundary_change_absolute": 2.520671316364829e-16,
+        "run_directory_id": "20261016T122621.622353Z",
+        "run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+        "saved_total_auxiliary_boundary_amplitude_P_times_aux": {
+          "imag": 2.1495126607137995e-08,
+          "real": -1.0978833205767816e-07
+        },
+        "saved_total_auxiliary_projection_complex": {
+          "imag": 3.4198316853978936e-06,
+          "real": -1.676728714975809e-05
+        },
+        "source_sha": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0"
+      }
+    ],
+    "summary_by_case": {
+      "Y2-primary": {
+        "max_merged_boundary_abs_difference": 1.7422013638940487e-15,
+        "max_merged_boundary_relative_difference": 6.167743836901544e-10,
+        "max_untruncated_boundary_abs_difference": 0.002946403488670558,
+        "max_untruncated_boundary_relative_difference": 1.9818419285975806,
+        "mode_count": 6
+      },
+      "Y3-control": {
+        "max_merged_boundary_abs_difference": 1.1102230246251565e-15,
+        "max_merged_boundary_relative_difference": 1.3951061401074184e-09,
+        "max_untruncated_boundary_abs_difference": 1.1043529987285783e-07,
+        "max_untruncated_boundary_relative_difference": 0.25194034346144684,
+        "mode_count": 6
+      }
+    }
+  },
+  "created_utc_note": "Generated from already-saved report.json only; no FE, resource stream, NPZ, or production cutoff was rerun or modified.",
+  "narrow_static_recommendation": {
+    "current_causal_claim": "No root cause for the original Y2 PDE anomaly is established by this offline accounting.",
+    "cutoff_policy": "Do not alter the production absolute/relative cutoff from this diagnostic. Any future numerical policy review must use a scale-aware error budget based on saved per-entry absolute dot products (or an equivalent reproducible bound), while retaining original gates and reporting both boundary and projection quantities.",
+    "diagnostic_representation": "Persist projection-space N, H, N/H and boundary-space P*(N/H) separately at each cutoff stage. Compare saved total auxiliary only after converting it to boundary space with the same P; keep top00 total/incident/outgoing channels distinct."
+  },
+  "original_evidence": {
+    "analysis_source_head": null,
+    "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_cutoff_stage_contract_v4.json",
+    "contract_sha256": "0e48866e3e3f0dc8ad78e4a67e49ec28da1699abae30c447f36d415933242863",
+    "report_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_cutoff_stage_20261017_v8/report.json",
+    "report_sha256": "e0804545a40584afdbcbb5fd15c770425be8721651129df38bdf60fd474c5070",
+    "supervisor_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_supervisor.py",
+    "supervisor_sha256": "17c5083cca54445c32db31ccc33ea8ddb0fb0c5b97c2fd56352c0173844b8825",
+    "worker_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_cutoff_stage_worker.py",
+    "worker_sha256": "f18d9d72282789db1c6f55758a85c6f34b22d1915701b862589d1eb1e80d30e5"
+  },
+  "qualification_boundary": {
+    "both_cases_status": {
+      "Y2-primary": "NO_CARRIER_COMPARISON",
+      "Y3-control": "NO_CARRIER_COMPARISON"
+    },
+    "carrier_comparison_gate_remains": "NO_CARRIER_COMPARISON",
+    "full_field_or_solver_qualification": false,
+    "original_report_modified": false,
+    "production_cutoff_modified": false,
+    "report_status": "COMPLETE_CUTOFF_STAGE_DIAGNOSTIC_NO_QUALIFICATION"
+  },
+  "schema": "task40_d13_saved_field_cutoff_stage_postprocess_correction_v1",
+  "status": "OFFLINE_CORRECTION_COMPLETE_DIAGNOSTIC_ONLY_NO_QUALIFICATION"
+}

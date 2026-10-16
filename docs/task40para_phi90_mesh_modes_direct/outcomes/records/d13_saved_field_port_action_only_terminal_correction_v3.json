@@ -1,0 +1,16 @@
+{
+  "correction": "The v3 terminal wording \u201cno saved VTU was loaded\u201d and phase \u201cbefore_saved_vtu_load\u201d were inaccurate. pv.read() and _read_vtu_e() completed and decoded the saved E field before Basix rejected the DG6 element because dtype=complex128 is unsupported. The failure was after VTU read but before DG6 space/function creation, N1E reconstruction, carrier assembly, or any numerical gate. Preserve the original v3 receipt unchanged; v4 adds an explicit saved_vtu_loaded_and_e_field_decoded stage marker.",
+  "created_utc": "2026-10-16T15:27:13.403563Z",
+  "original_terminal_receipt": {
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_v3.json",
+    "sha256": "e6eba69a865801257a74734e1a5d9fb17bf970c0341a2121532faf2b8750df6d"
+  },
+  "schema": "task40.d13.saved-field-port-action-only-terminal-correction.v1",
+  "v3_actual_failure": {
+    "classification": "API dtype construction failure; not a DG reconstruction, carrier compatibility, or numerical-gate result",
+    "exception": "RuntimeError: Unsupported finite element dtype.",
+    "failed_call": "basix.ufl.element(\"DG\", ..., degree=6, shape=(3,), dtype=complex128)",
+    "vtu_read": "pv.read and _read_vtu_e completed before the failing Basix call",
+    "worker_sha256": "90c4be32fbcd86851a1bb4bdbbc5ea8ab0f1670fdb1670e4235a66a20f74b560"
+  }
+}

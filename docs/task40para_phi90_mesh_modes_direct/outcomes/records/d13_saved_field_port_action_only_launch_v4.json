@@ -1,0 +1,165 @@
+{
+  "analysis_source_file_sha256": {
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "src/common/modes_3d.py": "8e7f7ffba076533fdc45703b4a525a3c21efbbba6f9adc13cb6d826d4bba2cb2",
+    "src/geometry/mesh_builder_3d.py": "4f8a7d6606dc75ebb8b0095942779600c5bf5509bf6b70a19bdb0bcfa716ec3d",
+    "src/io/input_validation.py": "6fa4e9cb2b25eb8c3424b01f2fa4770ca0ecd32b2c350e75bbcb2ddf8a0e11bd",
+    "src/solvers/dtn_port_3d.py": "578cb791bd8b0781309c67a68b8e6cd01696accb25514beabf6c2ad5bcf1d12b",
+    "src/solvers/fullspace_dtn_action.py": "e1037b9624c28e461d877ff2e66a1343205796a847c51507cb0d993e4754682b",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "90e7cedfb2ad5439322c8bed65e973639d404e916bf566cead357fda4c4f1c53",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019"
+  },
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+  "contract_sha256": "5346880f6b1e4e9c24c2277323f2284f24c3cc841808a166ae1ddb49a669b109",
+  "exec_argv": [
+    "taskset",
+    "-c",
+    "9",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py",
+    "--contract",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+    "--output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json",
+    "--supervision-output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/supervision.json",
+    "--watchdog-directory",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/watchdog",
+    "--worker-command-json",
+    "[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json\"]"
+  ],
+  "exec_argv_matches_shell": true,
+  "launcher_log_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/launcher.log",
+  "output_directory": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4",
+  "prepared_utc": "2026-10-16T15:27:13.403563Z",
+  "pure_tests": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_port_action_only.py",
+      "scope": "R1 all-witness fail-closed gates, nonfinite and near-zero facets, actual Basix DG6 metadata with float64 basis dtype versus complex128 Function dtype, and production DG6 wiring fake preserving imaginary coefficients",
+      "sha256": "93a650a92d2b2a0c967ac8cd6d2b69b9e0a6b98bb5c99c44ff095ccd95abe80b"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_d13_action_supervisor.py",
+      "scope": "exact child argv and existing Task40 host-floor guard/watchdog wiring",
+      "sha256": "92c8ba02a8795bebf8fcf84cb93e0f574e18dca953b62f5a230478caf8c96d89"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/src/test/test_task40para_direct_residual_and_supervisor.py",
+      "sha256": "80dafee4dc340cf0354934230293ad74d9371a08528ad44872b739936851e4e4",
+      "test": "test_host_floor_supervise_runs_short_child_without_legacy_cap"
+    }
+  ],
+  "report_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json",
+  "resource_supervision": {
+    "cleanup_grace_seconds": 60.0,
+    "descendant_cleanup": "required; watchdog summary must report descendants_cleared=true and remaining_child_pids=[]",
+    "existing_guard": "src.runners.native_capacity.native_capacity_guard(Task40 Y2 profile, interleave_nodes0_1)",
+    "minimum_available_bytes": 68719476736,
+    "monitor": "benchmarks.subreaper_watchdog.supervise",
+    "monitor_failure": "existing watchdog classifies monitoring failure/loss, signals the child tree under its established policy, and records terminal status",
+    "outputs": {
+      "launcher_log": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/launcher.log",
+      "supervision_receipt": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/supervision.json",
+      "watchdog_resources": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/watchdog/resources.jsonl",
+      "watchdog_summary": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/watchdog/summary.json",
+      "worker_report": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json"
+    },
+    "parent_argv": [
+      "taskset",
+      "-c",
+      "9",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py",
+      "--contract",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+      "--output",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json",
+      "--supervision-output",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/supervision.json",
+      "--watchdog-directory",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/watchdog",
+      "--worker-command-json",
+      "[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json\"]"
+    ],
+    "parent_entry": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py",
+    "pss_sampling_policy": "disabled_by_profile",
+    "resource_stop_policy": "host_available_floor_v1",
+    "rss_hard_cap_bytes": null,
+    "rss_warning_bytes": null,
+    "sample_interval_seconds": 2.0,
+    "shared_host_lock": "/home/fenics/Projects/Maxwell3D-Lab/native-capacity-heavy.lock",
+    "solve_seconds": null,
+    "swap": "observe-only; stop_on_global_swap=false",
+    "wall_seconds": null,
+    "worker_argv": [
+      "mpiexec",
+      "-n",
+      "1",
+      "numactl",
+      "--interleave=0,1",
+      "taskset",
+      "-c",
+      "24",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+      "--contract",
+      "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+      "--output",
+      "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json"
+    ]
+  },
+  "schema": "task40.d13.saved-field-port-action-only-launch.v4",
+  "shell_command": "cd /home/fenics/Projects/Maxwell3D-Phi90 || exit 1\nsource /home/fenics/Projects/Maxwell3D-Phi90/scripts/activate_task40_phi90_pord64.sh || exit 1\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1\nunset PHYSICAL_NATIVE_CAPACITY PHYSICAL_WATCHDOG_PSS_POLICY\nif env | cut -d= -f1 | grep -q \"^TASK39EXTRA_FUNCTIONAL_STORE\"; then exit 20; fi\nif [ \"${TASK40_SHARED_VENV_ROOT}/bin/python\" != /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python ]; then exit 21; fi\nset -o noclobber\nmkdir /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4 || exit 22\nmkdir -p /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/tmp /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/xdg /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/pycache /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/matplotlib || exit 23\nexport TMPDIR=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/tmp TMP=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/tmp TEMP=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/tmp\nexport XDG_CACHE_HOME=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/xdg PYTHONPYCACHEPREFIX=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/pycache MPLCONFIGDIR=/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/matplotlib\n: > /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/launcher.log || exit 24\nexec taskset -c 9 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python /home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py --contract /home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json --output /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json --supervision-output /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/supervision.json --watchdog-directory /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/watchdog --worker-command-json '[\"mpiexec\",\"-n\",\"1\",\"numactl\",\"--interleave=0,1\",\"taskset\",\"-c\",\"24\",\"/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py\",\"--contract\",\"/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json\",\"--output\",\"/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json\"]' >> /home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/launcher.log 2>&1\n",
+  "status": "PREPARED_ONE_AUTHORIZED_V4_ATTEMPT_AFTER_FRESH_PASS",
+  "supersedes": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v2.json",
+      "sha256": "d0ba734c7bf08e8ce1f25a2e2b371a47958376e1a657033095ba8fff7d36a7fe",
+      "status": "not executable; nested supervision schema missing explicit stop_on_global_swap"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v3.json",
+      "sha256": "c09c8e3bd7df4d9d6f87ad22800339a17de1ae0ecf89d91ecd623766cb39979f",
+      "status": "preserved prior v3 attempt; failed after VTU read at DG6 Basix dtype construction before reconstruction or carrier comparison"
+    }
+  ],
+  "supervision_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/supervision.json",
+  "supervisor_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only_supervisor.py",
+  "supervisor_sha256": "edb2b94e4a61a23d3cf31f64306abbfc6b6748b924233a826db21bf79f6a26e5",
+  "v1_artifacts_preserved": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v1.json",
+      "sha256": "6bb2877bd55692c714a85f46d3fae8a266621e0da81f66671d6a06979db1f722"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v1.json",
+      "sha256": "570e000132cf8f139504d4aebb2ab227ded8b8d33605d77c7b3e718b7f66ddc1"
+    }
+  ],
+  "v3_terminal_correction": {
+    "path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_terminal_correction_v3.json",
+    "sha256": "abf8cf93d358436964106c30ccf0bb8797464edcb4e644fee992ed97ec62ef26"
+  },
+  "watchdog_resources_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/watchdog/resources.jsonl",
+  "watchdog_summary_path": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/watchdog/summary.json",
+  "worker_command_argv": [
+    "mpiexec",
+    "-n",
+    "1",
+    "numactl",
+    "--interleave=0,1",
+    "taskset",
+    "-c",
+    "24",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+    "--contract",
+    "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+    "--output",
+    "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4/report.json"
+  ],
+  "worker_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/scripts/d13_saved_field_port_action_only.py",
+  "worker_sha256": "d743f768ac3fd4ea130805c9bb19be333b4c88e7e8f075c7d453433df776b17f"
+}

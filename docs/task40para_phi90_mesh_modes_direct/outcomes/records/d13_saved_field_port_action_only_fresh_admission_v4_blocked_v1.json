@@ -1,0 +1,47 @@
+{
+  "admission": "BLOCKED; no v4 worker launched. Retry fresh only after the unrelated active Task41 run tree clears naturally.",
+  "analysis_source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "captured_utc": "2026-10-16T15:30:18.722052Z",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v4.json",
+  "contract_sha256": "5346880f6b1e4e9c24c2277323f2284f24c3cc841808a166ae1ddb49a669b109",
+  "fresh_check": {
+    "exception": "InputError: Task40 admission found another active run_case/native solver process: [{'pid': 1496358, 'start_ticks': 208882723, 'state': 'R', 'role': 'standard_run_case', 'entrypoint': 'scripts/run_case.py', 'task': 'task41extra_phi90_p50x50_g17x20'}, {'pid': 1496441, 'start_ticks': 208882885, 'state': 'S', 'role': 'MPI launcher for task038_input_worker', 'task': 'task41extra_phi90_p50x50_g17x20'}, {'pid': 1496443, 'start_ticks': 208882886, 'state': 'R', 'role': 'task038_input_worker', 'task': 'Task41para phi90 p50x50 g17x20'}]",
+    "existing_host_guard": "native_capacity_guard with TASK40 host_available_floor_v1 and interleave_nodes0_1",
+    "host_floor_and_cpuset_checks": "passed before solver-candidate scan; remaining checks were not evaluated after the blocking active run_case tree",
+    "interleave_probe": "NOT_REACHED",
+    "known_active_neighbor_identities": [
+      {
+        "pid": 1496358,
+        "role": "standard_run_case",
+        "start_ticks": 208882723,
+        "state_at_scan": "R",
+        "task": "Task41para phi90 p50x50 g17x20"
+      },
+      {
+        "pid": 1496441,
+        "role": "MPI launcher for task038_input_worker",
+        "start_ticks": 208882885,
+        "state_at_scan": "S",
+        "task": "Task41para phi90 p50x50 g17x20"
+      },
+      {
+        "pid": 1496443,
+        "role": "task038_input_worker",
+        "start_ticks": 208882886,
+        "state_at_scan": "R",
+        "task": "Task41para phi90 p50x50 g17x20"
+      }
+    ],
+    "neighbors_modified": false,
+    "result": "REJECTED before yielding admission; acquired lock was released during exception unwind",
+    "v4_FE_or_action_worker_started": false,
+    "worker_CPU24_live_check": "NOT_REACHED"
+  },
+  "next_action": "Do not signal, retask, or interfere with Task41. Repeat fresh after this process tree is absent; if all gates pass, launch the already frozen v4 sidecar once.",
+  "output_directory": "/home/fenics/Projects/Maxwell3D-Phi90/tmp/d13_saved_field_port_action_only_20261016_v4",
+  "output_directory_absent": true,
+  "schema": "task40.d13.saved-field-port-action-only-fresh-admission.v4-blocked.v1",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v4.json",
+  "sidecar_sha256": "13ffe9133f3c40037f1235b625949df10aa2ee8553d05d1df368d8fd6b07377c",
+  "worker_sha256": "d743f768ac3fd4ea130805c9bb19be333b4c88e7e8f075c7d453433df776b17f"
+}

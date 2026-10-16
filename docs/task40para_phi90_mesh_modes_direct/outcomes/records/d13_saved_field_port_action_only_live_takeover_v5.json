@@ -1,0 +1,89 @@
+{
+  "schema": "task40.d13.signed-key-surface-capture-live-takeover.v1",
+  "captured_utc": "2026-10-16T16:17:09.690974+00:00",
+  "run_scope": "single diagnostic-only V5 saved-field capture; no carrier/matrix/factor/solve",
+  "source_head": "d742562e706b896cdb78da7fe8ba9c3dfd83f4b0",
+  "contract_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_contract_v5.json",
+  "contract_sha256": "46167686ff9333c02171a8dfa5782e991e18af7522677a2bfeedcd4d941c757d",
+  "sidecar_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_launch_v5.json",
+  "sidecar_sha256": "ae02325595ae1ab4d15fbda9b2f228e45303f0636619e97550541e1772b8b4ea",
+  "fresh_admission_path": "/home/fenics/Projects/Maxwell3D-Phi90/docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_saved_field_port_action_only_fresh_admission_v5.json",
+  "fresh_admission_sha256": "32a1a0c8c82f57ac31a6156981a34a129a20606690ef75311016b516ca6186bd",
+  "supervisor": {
+    "pid": 1511868,
+    "start_ticks": 209238629,
+    "ppid": 1,
+    "sid": 1511868,
+    "state": "S",
+    "affinity": [
+      9
+    ],
+    "rss_bytes": 50794496,
+    "swap_kb": 0,
+    "cpus_allowed": "9",
+    "mems_allowed": "0-1"
+  },
+  "mpi": {
+    "pid": 1511886,
+    "start_ticks": 209238821,
+    "ppid": 1511868,
+    "sid": 1511886,
+    "state": "S",
+    "affinity": [
+      9
+    ],
+    "rss_bytes": 25501696,
+    "swap_kb": 0,
+    "cpus_allowed": "9",
+    "mems_allowed": "0-1"
+  },
+  "worker": {
+    "pid": 1511889,
+    "start_ticks": 209238838,
+    "ppid": 1511886,
+    "sid": 1511886,
+    "state": "R",
+    "affinity": [
+      24
+    ],
+    "rss_bytes": 675422208,
+    "swap_kb": 0,
+    "cpus_allowed": "24",
+    "mems_allowed": "0-1"
+  },
+  "worker_threads": [
+    {
+      "tid": 1511889,
+      "affinity": [
+        24
+      ]
+    },
+    {
+      "tid": 1511891,
+      "affinity": [
+        24
+      ]
+    },
+    {
+      "tid": 1511892,
+      "affinity": [
+        24
+      ]
+    }
+  ],
+  "worker_numa_maps_interleave_0_1_lines": 1354,
+  "worker_numa_maps_default_lines": 5,
+  "worker_mapped_petsc_libraries": [
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so"
+  ],
+  "worker_phase": "before_diagnostic_only_six_signed_key_q28_projection_capture",
+  "current_case": "Y2-primary",
+  "mpi_size": 1,
+  "petsc_scalar": "<class 'numpy.complex128'>",
+  "petsc_int": "int64",
+  "supervision": null,
+  "watchdog_summary_small": null,
+  "no_matrix_factor_or_solve": true,
+  "live_status": "RUNNING"
+}
