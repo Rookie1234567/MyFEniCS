@@ -5920,6 +5920,37 @@ class _P6ReferencePreconditioner:
         return facts
 
 
+def _task41_a2_runtime_configuration(
+    profile_contract: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Bind the A2 runtime copy and watchdog resource arguments to Task41's service envelope."""
+    if os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1":
+        raise RuntimeError("Task41 A2 runtime requires the strict P0 service envelope")
+    from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
+
+    runtime_contract = copy.deepcopy(dict(profile_contract))
+    resources = runtime_contract["resources"]
+    task_cap = int(os.environ["TASK41_P0_TASK_MEMORY_MAX_BYTES"])
+    host_reserve = int(os.environ["TASK41_P0_HOST_RESERVE_BYTES"])
+    swap_cap = int(os.environ["TASK41_P0_MEMORY_SWAP_MAX_BYTES"])
+    if swap_cap != 0:
+        raise RuntimeError("Task41 A2 service envelope must require zero swap")
+    resources.update(
+        {
+            "watchdog_memory_policy": PHYSICAL_MEMORY_PRESSURE_POLICY,
+            "process_tree_rss_cap_bytes": task_cap,
+            "host_reserve_bytes": host_reserve,
+            "memory_swap_max_bytes": swap_cap,
+        }
+    )
+    return runtime_contract, {
+        "fixed_process_tree_cap_bytes": task_cap,
+        "host_reserve_bytes": host_reserve,
+        "task_cgroup_reserve_bytes": 0,
+        "require_cgroup_memory_details": True,
+    }
+
+
 def _task41_a2_candidate_contract(
     resolved: Mapping[str, Any],
     profile_contract: Mapping[str, Any],
@@ -5927,6 +5958,7 @@ def _task41_a2_candidate_contract(
     *,
     profile_identity: str,
     source_sha: str,
+    current_root: str | Path | None = None,
 ) -> dict[str, Any]:
     from src.geometry.task41_phi90_profile import (
         TASK41_G13_A2_PRECONDITIONER,
@@ -5945,7 +5977,9 @@ def _task41_a2_candidate_contract(
         require_task41_p0_contract,
     )
 
-    root = Path(__file__).resolve().parents[2]
+    from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
+
+    root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
     contract_path = os.environ.get("TASK41_P0_CONTRACT_PATH", "")
     contract, contract_sha256 = require_task41_p0_contract(
         contract_path,
@@ -6030,6 +6064,30 @@ def _task41_a2_candidate_contract(
             == TASK41_TASK_MEMORY_MAX_BYTES
             and contract["resources"]["memory_swap_max_bytes"] == 0
         ),
+        "service_runtime_memory_policy": (
+            runtime.memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY
+            and runtime.pss_sampling_policy == "disabled_by_profile"
+            and runtime.fixed_process_tree_cap_bytes == TASK41_TASK_MEMORY_MAX_BYTES
+            and runtime.host_reserve_bytes_override
+            == contract["resources"]["host_reserve_bytes"]
+        ),
+        "strict_cgroup_and_swap_runtime": (
+            runtime.task_cgroup_reserve_bytes_override == 0
+            and runtime.require_cgroup_memory_details is True
+            and runtime.require_zero_swap is True
+            and os.environ.get("TASK41_P0_MEMORY_SWAP_MAX_BYTES") == "0"
+        ),
+        "task41_service_window_envelope": (
+            os.environ.get("TASK41_P0_STRICT_EXECUTION") == "1"
+            and Path(os.environ.get("TASK41_P0_EXECUTION_WINDOW_PATH", "")).resolve()
+            == window.path.resolve()
+            and os.environ.get("TASK41_P0_EXECUTION_WINDOW_SHA256") == window.sha256
+            and os.environ.get("TASK41_P0_TASK_MEMORY_MAX_BYTES")
+            == str(TASK41_TASK_MEMORY_MAX_BYTES)
+            and os.environ.get("TASK41_P0_HOST_RESERVE_BYTES")
+            == str(contract["resources"]["host_reserve_bytes"])
+            and os.environ.get("TASK40_V10_CAMPAIGN_WINDOW") is None
+        ),
         "fixed_window_path_and_hash": (
             isinstance(campaign, Mapping)
             and Path(str(campaign.get("window_path", ""))).resolve()
@@ -6052,6 +6110,13 @@ def _task41_a2_candidate_contract(
         ),
         "time_policy": getattr(runtime, "time_policy", None) == "enforce",
         "no_v14_ledger": getattr(runtime, "_ledger_path", None) is None,
+        "task41_read_only_window_view": (
+            isinstance(shared, Mapping)
+            and shared.get("schema") == "task41.p0.a2_campaign_worker_view.v1"
+            and shared.get("worker_access") == "read_only_projection"
+            and getattr(runtime, "workflow_clock_source", None)
+            == "task41_p0_fixed_window_read_only_projection"
+        ),
         "profile_contract": (
             profile_contract.get("identity") == profile_identity
             and resolved.get("derived", {}).get("physical_intermediate_profile")
@@ -6376,6 +6441,7 @@ def _candidate_contract(
     v30_effective_factor_lifecycle_strategy: str | None = None,
     v31_effective_factor_lifecycle_strategy: str | None = None,
     task41_source_sha: str | None = None,
+    current_root: str | Path | None = None,
 ) -> dict[str, Any]:
     from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
 
@@ -6388,6 +6454,7 @@ def _candidate_contract(
             runtime,
             profile_identity=profile_identity,
             source_sha=task41_source_sha,
+            current_root=current_root,
         )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_P6_CANDIDATE_RUN_ID,
@@ -7428,7 +7495,13 @@ def run_task40_v10_p6_reference_worker(
     qualified_q_csr_identity: dict[str, Any] | None = None
     try:
         runtime_resource_overrides = {}
-        if route_contract is not None:
+        if is_task41_a2:
+            if route_contract is not None:
+                raise RuntimeError("Task41 A2 runtime cannot use a Task40 route contract")
+            runtime_contract, runtime_resource_overrides = (
+                _task41_a2_runtime_configuration(contract)
+            )
+        elif route_contract is not None:
             route_resources = route_contract["execution"]["resources"]
             runtime_resource_overrides = {
                 "fixed_process_tree_cap_bytes": int(route_resources["task_memory_max_bytes"]),

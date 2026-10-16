@@ -438,7 +438,111 @@ class _V14Runtime:
 
         campaign_path = os.environ.get("TASK40_V10_CAMPAIGN_WINDOW")
         self.campaign_context = None
-        if campaign_path is not None:
+        if os.environ.get("TASK41_P0_STRICT_EXECUTION") == "1":
+            if campaign_path is not None:
+                raise RuntimeError("Task41 P0 worker cannot use a Task40 campaign window")
+            if (
+                self.stage != "TASK41_A2"
+                or self.batch_identity != "task41_p0_a2_g13_a2_p6_reference"
+            ):
+                raise RuntimeError("Task41 P0 fixed-window runtime is restricted to the A2 worker")
+            from src.runners.task41_p0_contract import (
+                TASK41_A2_RUN_ID,
+                load_task41_p0_fixed_window,
+                require_task41_p0_contract,
+            )
+            from src.runners.task40_v10_campaign import (
+                read_campaign_state,
+                time_namespace_identity,
+            )
+
+            task41_contract, task41_contract_sha = require_task41_p0_contract(
+                os.environ.get("TASK41_P0_CONTRACT_PATH", ""),
+                expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
+                current_root=root,
+                check_current_source=True,
+                require_clean_source=True,
+                case_id="A2",
+            )
+            if (
+                task41_contract_sha != os.environ.get("TASK41_P0_CONTRACT_SHA256")
+                or task41_contract["case"].get("run_id") != TASK41_A2_RUN_ID
+            ):
+                raise RuntimeError("Task41 A2 worker contract identity is incomplete")
+            window = load_task41_p0_fixed_window(task41_contract, current_root=root)
+            if (
+                Path(os.environ.get("TASK41_P0_EXECUTION_WINDOW_PATH", "")).resolve()
+                != window.path.resolve()
+                or os.environ.get("TASK41_P0_EXECUTION_WINDOW_SHA256") != window.sha256
+            ):
+                raise RuntimeError("Task41 worker fixed window differs from the service envelope")
+            task_resources = task41_contract["resources"]
+            resource_environment = {
+                "TASK41_P0_TASK_MEMORY_MAX_BYTES": task_resources["task_memory_max_bytes"],
+                "TASK41_P0_HOST_RESERVE_BYTES": task_resources["host_reserve_bytes"],
+                "TASK41_P0_MEMORY_SWAP_MAX_BYTES": task_resources["memory_swap_max_bytes"],
+            }
+            if any(os.environ.get(key) != str(value) for key, value in resource_environment.items()):
+                raise RuntimeError("Task41 worker resource limits differ from the service envelope")
+            if (
+                self.memory_policy != PHYSICAL_MEMORY_PRESSURE_POLICY
+                or resources.get("process_tree_rss_cap_bytes")
+                != task_resources["task_memory_max_bytes"]
+                or resources.get("host_reserve_bytes") != task_resources["host_reserve_bytes"]
+                or resources.get("memory_swap_max_bytes") != 0
+                or self.fixed_process_tree_cap_bytes
+                != task_resources["task_memory_max_bytes"]
+                or self.host_reserve_bytes_override != task_resources["host_reserve_bytes"]
+                or self.task_cgroup_reserve_bytes_override != 0
+                or self.require_cgroup_memory_details is not True
+                or self.require_zero_swap is not True
+            ):
+                raise RuntimeError("Task41 worker runtime resource package differs from its contract")
+            state = read_campaign_state(
+                window,
+                window.accounting_path,
+                namespace_identity=time_namespace_identity(),
+            )
+            remaining = float(state["remaining_numerical_seconds"])
+            if remaining <= 0.0:
+                raise V14ResourceStop("Task41 P0 numerical deadline or closeout reserve was reached")
+            self._ledger_path = None
+            self._stage_attempt_index = 0
+            self.time_policy = V14_TIME_POLICY_ENFORCE
+            self.time_policy_facts = v14_time_policy_facts(self.time_policy)
+            self.infrastructure_recovery = False
+            self.workflow_clock_start = dict(state["sample"])
+            self.workflow_reserved_seconds = remaining
+            self.workflow_clock_source = "task41_p0_fixed_window_read_only_projection"
+            self.shared_attempt = {
+                "status": "RUNNING",
+                "source_sha": self.source_sha,
+                "time_policy": self.time_policy,
+                "reserved_seconds": remaining,
+                "workflow_clock_start": self.workflow_clock_start,
+                "recovery_id": None,
+            }
+            self.shared_budget = {
+                "schema": "task41.p0.a2_campaign_worker_view.v1",
+                "batch_identity": self.batch_identity,
+                "total_budget_seconds": window.total_seconds,
+                "remaining_numerical_seconds_at_worker_entry": remaining,
+                "campaign_window_sha256": window.sha256,
+                "accounting_path": str(state["path"]),
+                "writer_while_worker_active": "subreaper_watchdog_only",
+                "worker_access": "read_only_projection",
+            }
+            self.campaign_context = {
+                "window_path": str(window.path),
+                "window_sha256": window.sha256,
+                "accounting_path": str(state["path"]),
+                "campaign_seconds": window.total_seconds,
+                "closeout_reserve_seconds": window.closeout_seconds,
+                "remaining_numerical_seconds": remaining,
+                "read_only": True,
+            }
+            clock_start = self.workflow_clock_start
+        elif campaign_path is not None:
             allowed_campaign_worker = {
                 (
                     "B0_CONTROL",

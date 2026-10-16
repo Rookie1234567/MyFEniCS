@@ -37,3 +37,11 @@ A2 接通同物理 G13、168 模式、10 q / 5 sector、全部准确因子驻留
 - 负记录保留：旧 `.venv` 路径断言及整个 PATH 字串检查曾误拒绝正常环境；均发生在数值测试之前。修正为读取本轮指定运行库与实际模块来源，没有改变科学门限。A2 summary 路径错配在正式运行前修复；A1 raw 不修改、不重跑。
 
 测试基于 `38acbfec3868a744df85c6c8a73e478c937fc948` 上的最终未提交实现，主控随后冻结同一源码；正式 A2 结果另由实际 run/source/checker 记录，不能由本页测试数宣称通过。用户已明确允许资源合格时与邻项目并行，仍保留独立 cgroup、动态准入、至少64 GiB宿主余量、任务swap0；不停止或修改邻项目。
+
+## A2 dispatcher 定向修复
+
+真实 A2 DAT 经 resolver 与 dispatcher，只有数值 worker 使用替身：两个明确的旧授权键仅在值为 `False` 时允许，`True` 及其他 Task40 路由均拒绝。主控复核 1 passed in 0.41 s，工具 `bdb0ea`；源码提交 `432672a0b13a6863176e550267cdb67aa3c1010a`。随后真实启动发现独立的 runtime 资源/窗口接线问题，保留该负结果，不用此单测宣称正式计算已通过。
+
+## A2 runtime 与固定窗口接线修复
+
+新增 Task41 专用只读窗口分支：worker 读取同一合同/窗口/服务资源字段，保持固定 cap、64 GiB 宿主余量、strict cgroup 与任务零 swap，不落入旧 Task40/V14 账本。真实 A2 DAT、实际 `_V14Runtime` 和候选合同在一条轻量 fixture 中联通；Git/旧 A1 artifact 仅用局部替身，不启动 FE。定向测试 **1 passed in 0.24 s**，工具 `exec-847d577e-8805-4e72-9a29-3263d4041ce8`；相关编译与 diff check 通过。旧 PATH 字串预检误报保留为工程记录，实际 Linux runtime/ABI 正确，未修改环境。新正式 attempt 的实际结果另行记录。

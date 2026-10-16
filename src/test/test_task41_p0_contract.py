@@ -934,3 +934,148 @@ def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
             authorization=wrong_case_authorization,
             worker_environment=environment,
         )
+
+
+def test_task41_a2_worker_runtime_uses_service_window_and_strict_resource_view(
+    tmp_path, monkeypatch
+):
+    import src.runners.task41_p0_contract as contract_module
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.io.execution_plan import resolved_config_bytes
+    from src.io.input_validation import load_and_resolve
+    from src.io.physical_intermediate_profile import profile_facts
+    from src.runners.physical_p4_schur_v14 import _V14Runtime
+    from src.runners.task40_v10_worker import (
+        _candidate_contract,
+        _task41_a2_runtime_configuration,
+    )
+
+    repo_root = Path(__file__).resolve().parents[2]
+    source_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo_root, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    contract_path, task_contract = _write_contract(tmp_path, case_id="A2")
+    actual_input = repo_root / TASK41_A2_INPUT_RELATIVE
+    fixture_input = tmp_path / TASK41_A2_INPUT_RELATIVE
+    fixture_input.parent.mkdir(parents=True, exist_ok=True)
+    fixture_input.write_bytes(actual_input.read_bytes())
+    specification = load_and_resolve(fixture_input)
+    task_contract["source"]["sha"] = source_sha
+    task_contract["case"].update(
+        {
+            "input_sha256": specification.input_sha256,
+            "model_id": specification.identity["model_id"],
+            "physical_model_sha256": specification.physical_model_sha256,
+            "resolved_config_sha256": hashlib.sha256(
+                resolved_config_bytes(specification)
+            ).hexdigest(),
+            "method": specification.method["kind"],
+            "mpi_size": specification.execution["mpi_size"],
+        }
+    )
+    from src.runners.task41_p0_contract import TASK41_A2_SERVICE_RELATIVE
+
+    task_contract["evidence"]["service_directory"] = str(
+        TASK41_A2_SERVICE_RELATIVE / f"service_source_{source_sha}"
+    )
+    binding_path = tmp_path / TASK41_A1_COMPARISON_BINDING_RELATIVE
+    binding_path.parent.mkdir(parents=True, exist_ok=True)
+    binding_path.write_text("{}\n", encoding="utf-8")
+    binding_sha = hashlib.sha256(binding_path.read_bytes()).hexdigest()
+    task_contract["comparison"] = {
+        "a1_binding_path": str(TASK41_A1_COMPARISON_BINDING_RELATIVE),
+        "a1_binding_sha256": binding_sha,
+        "same_discrete_comparison_ready": False,
+    }
+
+    def fake_git(_root, *args):
+        return {
+            ("rev-parse", "HEAD"): source_sha,
+            ("branch", "--show-current"): TASK41_BRANCH,
+            ("status", "--porcelain", "--untracked-files=normal"): "",
+        }[tuple(args)]
+
+    monkeypatch.setattr(contract_module, "_git", fake_git)
+    monkeypatch.setattr(
+        contract_module,
+        "require_task41_a1_comparison_binding",
+        lambda *_args, **_kwargs: (
+            {
+                "a1": {
+                    "physical_model_sha256": specification.physical_model_sha256,
+                    "discrete_identity": {"same_discrete_comparison_ready": False},
+                }
+            },
+            binding_sha,
+        ),
+    )
+    contract_path = tmp_path / contract_relative_path(source_sha, "A2")
+    contract_path.parent.mkdir(parents=True, exist_ok=True)
+    contract_path.write_text(
+        json.dumps(task_contract, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    contract_sha = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    window_path = tmp_path / task_contract["window"]["path"]
+    window_sha = task_contract["window"]["sha256"]
+    for key, value in {
+        "TASK41_P0_STRICT_EXECUTION": "1",
+        "TASK41_P0_CONTRACT_PATH": str(contract_path.resolve()),
+        "TASK41_P0_CONTRACT_SHA256": contract_sha,
+        "TASK41_P0_EXECUTION_WINDOW_PATH": str(window_path.resolve()),
+        "TASK41_P0_EXECUTION_WINDOW_SHA256": window_sha,
+        "TASK41_P0_TASK_MEMORY_MAX_BYTES": str(TASK41_TASK_MEMORY_MAX_BYTES),
+        "TASK41_P0_HOST_RESERVE_BYTES": str(TASK41_HOST_RESERVE_BYTES),
+        "TASK41_P0_MEMORY_SWAP_MAX_BYTES": "0",
+        "PHYSICAL_WATCHDOG_MEMORY_POLICY": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "PHYSICAL_WATCHDOG_PSS_POLICY": "disabled_by_profile",
+        "PHYSICAL_WATCHDOG_SHARED_LEDGER_PATH": str(tmp_path / "unused_task40_ledger.json"),
+        "PHYSICAL_WATCHDOG_SHARED_ATTEMPT_INDEX": "0",
+    }.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.delenv("TASK40_V10_CAMPAIGN_WINDOW", raising=False)
+
+    from src.runners.task41_p0_contract import load_task41_p0_fixed_window
+
+    loaded_contract, _ = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=contract_sha,
+        current_root=tmp_path,
+        case_id="A2",
+    )
+    window = load_task41_p0_fixed_window(loaded_contract, current_root=tmp_path)
+    window.observe(label="test_service_worker_entry")
+
+    profile_contract = profile_facts(TASK41_G13_A2_PRECONDITIONER)
+    runtime_contract, resource_overrides = _task41_a2_runtime_configuration(
+        profile_contract
+    )
+    runtime = _V14Runtime(
+        tmp_path / "runtime",
+        "TASK41_A2",
+        runtime_contract,
+        root=tmp_path,
+        source_sha=source_sha,
+        batch_identity="task41_p0_a2_g13_a2_p6_reference",
+        evidence_prefix="task41_runtime_fixture",
+        require_zero_swap=True,
+        **resource_overrides,
+    )
+    candidate = _candidate_contract(
+        specification.as_jsonable(),
+        profile_contract,
+        runtime,
+        profile_identity=TASK41_G13_A2_PRECONDITIONER,
+        task41_source_sha=source_sha,
+        current_root=tmp_path,
+    )
+
+    assert all(candidate["checks"].values())
+    assert candidate["worker_reserved_seconds"] > 0.0
+    assert runtime._ledger_path is None
+    assert runtime.fixed_process_tree_cap_bytes == TASK41_TASK_MEMORY_MAX_BYTES
+    assert runtime.host_reserve_bytes_override == TASK41_HOST_RESERVE_BYTES
+    assert runtime.task_cgroup_reserve_bytes_override == 0
+    assert runtime.require_cgroup_memory_details is True
+    assert runtime.require_zero_swap is True

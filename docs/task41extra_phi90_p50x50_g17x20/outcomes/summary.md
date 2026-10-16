@@ -8,7 +8,7 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 |---|---|---|
 | A1 首次启动 | FE 前工程失败，保留 | 旧 V29 环境标记误入 Task41；服务 1.563210294 s |
 | A1 修复续作 | 完整场及独立 checker PASS | 原窗口续作；1400 单元、p6、168 模式 |
-| A2 | 实现/定向验证中，正式计算 NOT_RUN | 十 q、五个 sector；必须重新验证新相位与算子 |
+| A2 | 两次正式入口在 FE 前工程失败；修复接续中 | 十 q、五个 sector；尚无正式迭代场结果 |
 | 0.7 nm | NOT_RUN | A1/A2 通过后按资源门推进 |
 
 | A1 指标 | measured 值 | 解释 |
@@ -34,3 +34,9 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 详细路径、字节与哈希见 [a1_result_compact.json](a1_result_compact.json)，运行索引见 [run_index.json](run_index.json)，定向测试见 [test_summary.md](test_summary.md)。A1 的 probe/flux 诊断吸收与 official 值存在差异，原记录保留，不用于改判端口/体吸收资格。
 
 尚未通过 A1/A2 同离散比较、0.7 nm 工程场、网格/倏逝模式精度及最终 2 TB/48 h 冷流程资格。当前没有 merge approval。
+
+## A2 前置接线失败（原始记录保留）
+
+两次启动均未进入 FE：首次错误拒绝输入解析器补入的两个 `false` 授权默认值；第二次 worker 使用的旧资源策略名称与 watchdog 不同。分别耗时 2.523650455987081 s、2.993759864009917 s，watchdog 同时树 RSS 峰值分别 233574400 B、248225792 B，任务 swap 均为 0、后代已清场。时间为 watchdog 父段，不冒充完整准备费用。
+
+原 A2 T0=`2026-10-16T14:35:47.716727746Z`、window SHA=`d745147dbfc8640220701fa055ee101efbdd25a64c97ccfb5573ed864b2a124f` 保持；不重算 A1。详见 [a2_startup_failures.json](a2_startup_failures.json)。
