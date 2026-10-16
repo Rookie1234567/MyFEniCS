@@ -1,0 +1,63 @@
+{
+  "record_schema": "task42_material_record.v1",
+  "record_status": "frozen_user_supplied_inputs",
+  "recorded_on": "2026-10-16",
+  "task": "task42hybrid_az90_50x50_17x20_0p7nm",
+  "authority_note": "This record applies the user's explicit Task42 material override. It supersedes the tungsten material paragraph in task.md for this Task42 execution; task.md itself is unchanged. These values are user-supplied inputs, not CXRO measurements or experimentally qualified constants.",
+  "user_overrides": [
+    {
+      "recorded_on": "2026-10-16",
+      "scope": "Both 13.5 nm and 0.7 nm use Si for substrate and grating. The 13.5 nm values were supplied first; 0.7 nm was to be supplied or independently verified, and was then explicitly supplied below. Do not substitute the old Task041 approximation, tungsten, or an independently queried value.",
+      "verbatim_user_messages": [
+        "Wavelength (nm), Delta, Beta\n13.5 0.000998703763 0.00182646094 这个是材料，Si",
+        "两个波长都用Si，0.7 nm常数另行提供或核实",
+        "Wavelength (nm), Delta, Beta\n0.7 0.000196346038 8.98053258E-06这个是0.7的，记录下来，之前不都给过你们吗"
+      ],
+      "controller_application_note": "2026-10-16: Apply these user messages as the Task42 two-wavelength Si material authority, superseding task.md's earlier tungsten paragraph without editing task.md or Task041 history. Use the supplied 0.7 nm values for pure order/identity checks; do not start a 0.7 nm PDE in A0.",
+      "quoted_values": {
+        "lambda_13p5_nm_Delta": "0.000998703763",
+        "lambda_13p5_nm_Beta": "0.00182646094",
+        "lambda_0p7_nm_Delta": "0.000196346038",
+        "lambda_0p7_nm_Beta": "8.98053258E-06"
+      }
+    }
+  ],
+  "convention": {
+    "refractive_index": "n = 1 - Delta + i*Beta",
+    "relative_permeability": "mu_r = 1 + 0i",
+    "relative_permittivity": "epsilon_r = n*n",
+    "decimal_arithmetic": "Derived n and epsilon values below were computed from the quoted decimal strings using decimal arithmetic; the input strings remain authoritative."
+  },
+  "materials": {
+    "substrate": "Si / silicon",
+    "grating": "Si / silicon",
+    "wavelengths": {
+      "13.5nm": {
+        "Delta_decimal": "0.000998703763",
+        "Beta_decimal": "0.00182646094",
+        "n_real": "0.999001296237",
+        "n_imag": "0.00182646094",
+        "epsilon_real": "0.998000253923640884676569",
+        "epsilon_imag": "0.00364927369317249896556",
+        "provenance": "user_supplied_delta_beta",
+        "use_status": "frozen_for_Task42_13p5_A0_and_later_same-model_stages"
+      },
+      "0.7nm": {
+        "Delta_decimal": "0.000196346038",
+        "Beta_decimal": "8.98053258E-06",
+        "n_real": "0.999803653962",
+        "n_imag": "0.00000898053258",
+        "epsilon_real": "0.9996073463951166728770025436",
+        "epsilon_imag": "0.00001795753857601757416392",
+        "provenance": "user_supplied_delta_beta",
+        "use_status": "frozen_material_input; no_0p7nm_PDE_authorized_or_run_in_A0"
+      }
+    }
+  },
+  "superseded_material_candidate": {
+    "historical_path": "results/task42hybrid_az90_50x50_17x20_0p7nm/a0_material/w_13p5nm_candidate.json",
+    "historical_sha256": "0b75fdd7247be581b2b0ee366bf53e23763928c2f650b6bbd28b6ee4505f7564",
+    "status": "superseded_for_task42",
+    "note": "The ignored W candidate is retained unchanged as historical evidence and is not used by the Task42 physical input."
+  }
+}

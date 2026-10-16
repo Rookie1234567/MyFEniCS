@@ -279,6 +279,46 @@ TASK041_HARD_MEMORY_GIB = 256.0
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
 
+TASK42_13P5_FULL3D_MODEL_ID = (
+    "task42_az90_50x50_17x20_13p5_full3d_direct_p6h10_mpi8"
+)
+TASK42_13P5_FULL3D_RUN_ID = "task42_13p5_p6h10_full3d_direct_mpi8"
+TASK42_13P5_COMPARISON_GROUP = "task42_az90_50x50_17x20_13p5_full3d"
+TASK42_SI_LABEL = "Si / silicon"
+TASK42_SI_MATERIAL_RECORD_PATH = (
+    "docs/task42hybrid_az90_50x50_17x20_0p7nm/materials/"
+    "user_supplied_si_optical_constants.json"
+)
+TASK42_SI_MATERIAL_RECORD_SHA256 = (
+    "19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65"
+)
+TASK42_SI_MATERIALS = MappingProxyType(
+    {
+        13.5: MappingProxyType(
+            {
+                "delta": "0.000998703763",
+                "beta": "0.00182646094",
+                "n": (0.999001296237, 0.00182646094),
+                "epsilon_r_decimal": (
+                    "0.998000253923640884676569",
+                    "0.00364927369317249896556",
+                ),
+            }
+        ),
+        0.7: MappingProxyType(
+            {
+                "delta": "0.000196346038",
+                "beta": "8.98053258E-06",
+                "n": (0.999803653962, 0.00000898053258),
+                "epsilon_r_decimal": (
+                    "0.9996073463951166728770025436",
+                    "0.00001795753857601757416392",
+                ),
+            }
+        ),
+    }
+)
+
 TASK041_SHORTWAVE_COMPARISON_GROUP = (
     "task041_3nm_exact_side_hybrid_iterative_p6h3"
 )
@@ -1991,6 +2031,150 @@ def task041_balh_material_provenance(
     return provenance
 
 
+def task42_material_identity(wavelength_nm: float) -> dict[str, Any]:
+    """Return the frozen user-supplied Task42 Si material identity.
+
+    The 0.7 nm identity is available for key/packet-binding checks only; this
+    helper does not authorize or start a 0.7 nm solve.
+    """
+
+    wavelength = float(wavelength_nm)
+    try:
+        material = TASK42_SI_MATERIALS[wavelength]
+    except KeyError as exc:
+        raise ValueError(f"Task42 Si material is not frozen at {wavelength_nm!r} nm") from exc
+    identity: dict[str, Any] = {
+        "source": "user_supplied_delta_beta",
+        "authority": "Task42 user material override dated 2026-10-16",
+        "material_record_path": TASK42_SI_MATERIAL_RECORD_PATH,
+        "material_record_sha256": TASK42_SI_MATERIAL_RECORD_SHA256,
+        "material_label": TASK42_SI_LABEL,
+        "material_roles": ["substrate", "grating"],
+        "wavelength_nm": wavelength,
+        "delta_decimal": material["delta"],
+        "beta_decimal": material["beta"],
+        "n": [float(material["n"][0]), float(material["n"][1])],
+        "epsilon_r_decimal": list(material["epsilon_r_decimal"]),
+        "n_convention": "n = 1 - Delta + i*Beta",
+        "epsilon_convention": "epsilon_r = n*n",
+        "experimental_qualification": "not_claimed",
+    }
+    identity["material_identity_sha256"] = sha256(
+        canonical_json_bytes(identity)
+    ).hexdigest()
+    return identity
+
+
+def task42_material_provenance(
+    config: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Bind the registered 13.5 nm Task42 input to its user-supplied Si record."""
+
+    if str(config.get("model_id", "")) != TASK42_13P5_FULL3D_MODEL_ID:
+        return None
+    materials = config.get("materials")
+    incidence = config.get("incidence")
+    if not isinstance(materials, Mapping) or not isinstance(incidence, Mapping):
+        return None
+    identity = task42_material_identity(float(incidence.get("wavelength_nm", -1.0)))
+    expected_n = tuple(identity["n"])
+    if (
+        not _same_profile_value(materials.get("n_substrate"), expected_n)
+        or not _same_profile_value(materials.get("n_grating"), expected_n)
+        or materials.get("substrate_name") != TASK42_SI_LABEL
+        or materials.get("grating_name") != TASK42_SI_LABEL
+    ):
+        return None
+    return {
+        **identity,
+        "material_role": "physical parsed material identity for substrate and grating",
+        "substrate_label": materials.get("substrate_name"),
+        "grating_label": materials.get("grating_name"),
+        "imaginary_sign_preserved": True,
+    }
+
+
+def task42_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Return errors for the single A0 13.5 nm Task42 Full3D direct profile."""
+
+    expected: tuple[tuple[str | None, str, Any], ...] = (
+        (None, "model_id", TASK42_13P5_FULL3D_MODEL_ID),
+        (None, "run_id", TASK42_13P5_FULL3D_RUN_ID),
+        (None, "comparison_group", TASK42_13P5_COMPARISON_GROUP),
+        (None, "dimension", 3),
+        ("geometry", "geometry_kind", "rectangular_block_grating"),
+        ("geometry", "period_x_nm", 50.0),
+        ("geometry", "period_y_nm", 50.0),
+        ("geometry", "z_min_nm", -10.0),
+        ("geometry", "z_max_nm", 130.0),
+        ("geometry", "interface_z_nm", 0.0),
+        ("geometry", "air_height_nm", 130.0),
+        ("geometry", "substrate_thickness_nm", 10.0),
+        ("geometry", "grating_width_x_nm", 17.0),
+        ("geometry", "grating_width_y_nm", 20.0),
+        ("geometry", "grating_height_nm", 120.0),
+        ("materials", "n_air", (1.0, 0.0)),
+        ("materials", "mu_r", (1.0, 0.0)),
+        ("materials", "n_substrate", TASK42_SI_MATERIALS[13.5]["n"]),
+        ("materials", "n_grating", TASK42_SI_MATERIALS[13.5]["n"]),
+        ("materials", "substrate_name", TASK42_SI_LABEL),
+        ("materials", "grating_name", TASK42_SI_LABEL),
+        ("incidence", "wavelength_nm", 13.5),
+        ("incidence", "grazing_angle_deg", 1.0),
+        ("incidence", "azimuth_deg", 90.0),
+        ("incidence", "polarization", "s"),
+        ("incidence", "electric_amplitude", 1.0),
+        ("discretization", "nedelec_degree", 6),
+        ("discretization", "visualization_degree", 6),
+        ("discretization", "mesh_target_nm", 10.0),
+        ("discretization", "mesh_cell_type", "hexahedron"),
+        ("discretization", "mesh_spacing_mode", "boundary_fitted"),
+        ("discretization", "assembly_backend", "assembly_time_static_condensed"),
+        ("discretization", "floquet_constraint_mode", "auto"),
+        ("boundary", "use_floquet_x", True),
+        ("boundary", "use_floquet_y", True),
+        ("boundary", "vertical_boundary", "dtn_port"),
+        ("boundary", "scattering_background", "layered"),
+        ("boundary", "dtn_order_policy", "auto_propagating"),
+        ("boundary", "dtn_assembly", "auxiliary"),
+        ("boundary", "use_pml", False),
+        ("method", "kind", "full3d_direct"),
+        ("solver", "linear_solver", "direct"),
+        ("solver", "direct_solver_profile", "default"),
+        ("execution", "mpi_size", 8),
+        ("execution", "warning_memory_gib", 230.4),
+        ("execution", "terminate_memory_gib", 256.0),
+        ("execution", "absolute_terminate_memory_bytes", 256 * 2**30),
+        ("execution", "timeout_seconds", 172800),
+        ("execution", "require_zero_swap", False),
+        ("output", "results_root", "results/task42hybrid_az90_50x50_17x20_0p7nm"),
+        ("output", "unique_output", True),
+        ("output", "export_fields", True),
+        ("output", "export_diffraction_orders", True),
+        ("output", "export_canonical_vectors", True),
+        ("output", "export_modal_amplitudes", True),
+        ("output", "export_reference_planes", True),
+        ("output", "reference_plane_z_nm", (10.0, 30.0, 60.0, 90.0, 110.0)),
+        ("output", "top_probe_z_nm", 110.0),
+        ("output", "bottom_probe_z_nm", 10.0),
+        ("output", "diffraction_order_max_m", 3),
+        ("output", "diffraction_order_max_n", 7),
+    )
+    errors: list[tuple[str, str]] = []
+    for section, key, value in expected:
+        actual = config.get(key) if section is None else config.get(section, {}).get(key)
+        if not _same_profile_value(actual, value):
+            path = key if section is None else f"{section}.{key}"
+            errors.append((path, f"must match the frozen Task42 A0 value {value!r}"))
+    if str(config.get("model_id", "")).startswith("task42_") and not errors:
+        return []
+    if str(config.get("model_id", "")) == TASK42_13P5_FULL3D_MODEL_ID:
+        return errors
+    if str(config.get("model_id", "")).startswith("task42_"):
+        return [("model_id", "unknown Task42 profile; A0 registers one exact 13.5 nm Full3D direct case")]
+    return []
+
+
 def task041_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
     """Return errors for the finite Task41 5 nm p6/h4/M480/MPI1 profile."""
 
@@ -2519,6 +2703,51 @@ def task039_dynamic_external_mode_inventory(
     return _task039_dynamic_external_mode_inventory_from_cfg(
         simulation_config_3d_from_normalized(config)
     )
+
+
+def task42_external_mode_inventory_at_wavelength(
+    config: Mapping[str, Any], wavelength_nm: float
+) -> dict[str, Any]:
+    """Plan Task42 material-bound port keys without creating a numerical packet.
+
+    The input mapping must be the validated 13.5 nm A0 profile.  This helper
+    substitutes only the frozen user-supplied Si wavelength/material values in
+    a detached configuration and calls the same outgoing-port key generator
+    used by the public resolver.  It performs no mesh, QEP, or PDE work.
+    """
+
+    if str(config.get("model_id", "")) != TASK42_13P5_FULL3D_MODEL_ID:
+        raise ValueError("Task42 wavelength key planning requires the registered A0 profile")
+    errors = task42_profile_errors(config)
+    if errors:
+        path, message = errors[0]
+        raise ValueError(f"{path}: {message}")
+    material_identity = task42_material_identity(wavelength_nm)
+    variant = deepcopy(_plain(config))
+    variant["incidence"]["wavelength_nm"] = float(wavelength_nm)
+    variant["materials"]["n_substrate"] = material_identity["n"]
+    variant["materials"]["n_grating"] = material_identity["n"]
+    cfg = simulation_config_3d_from_normalized(variant)
+    inventory = _task039_dynamic_external_mode_inventory_from_cfg(cfg)
+    air_keys = [key for key in inventory["keys"] if key["side"] == "top"]
+    return {
+        "wavelength_nm": float(wavelength_nm),
+        "material_identity": material_identity,
+        "external_mode_inventory": inventory,
+        "air_side_spatial_order_count": len(
+            {(key["m"], key["n"]) for key in air_keys}
+        ),
+        "air_side_external_key_count": len(air_keys),
+        "packet_material_binding": {
+            "status": "material_component_bound_full_numerical_packet_not_generated",
+            "material_identity_sha256": material_identity[
+                "material_identity_sha256"
+            ],
+            "packet_generated": False,
+            "mesh_or_qep_generated": False,
+        },
+        "pde_status": "not_run",
+    }
 
 
 def task039_air_side_external_mode_inventory(
@@ -3260,6 +3489,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     execution = config["execution"]
     output = config["output"]
     model_id = str(config.get("model_id", ""))
+    if model_id.startswith("task42_"):
+        task42_errors = task42_profile_errors(config)
+        if task42_errors:
+            path, message = task42_errors[0]
+            raise _error(path, message)
     if model_id.startswith("task041_") and model_id not in {
         TASK041_MODEL_ID,
         *TASK041_SHORTWAVE_MODEL_IDS,
@@ -4493,7 +4727,9 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
                 "gates_unchanged": True,
             }
         derived["task041_solver_contract"] = task041_solver_contract
-    material_provenance = task041_material_provenance(config)
+    material_provenance = task42_material_provenance(config)
+    if material_provenance is None:
+        material_provenance = task041_material_provenance(config)
     if material_provenance is None:
         material_provenance = task041_shortwave_material_provenance(config)
     if material_provenance is None:
@@ -4638,6 +4874,13 @@ __all__ = [
     "TASK041_V16_MEMORY_AUTHORITY_SCHEMA",
     "TASK041_V16_RESOURCE_HEADROOM_POLICY",
     "TASK041_WARNING_MEMORY_GIB",
+    "TASK42_13P5_COMPARISON_GROUP",
+    "TASK42_13P5_FULL3D_MODEL_ID",
+    "TASK42_13P5_FULL3D_RUN_ID",
+    "TASK42_SI_LABEL",
+    "TASK42_SI_MATERIALS",
+    "TASK42_SI_MATERIAL_RECORD_PATH",
+    "TASK42_SI_MATERIAL_RECORD_SHA256",
     "InputError",
     "load_and_resolve",
     "resolve_loaded_input",
@@ -4674,4 +4917,8 @@ __all__ = [
     "task041_v16_memory_scope_errors",
     "task041_v16_outer_resource_contract_errors",
     "task041_v16_phase_memory_gate",
+    "task42_external_mode_inventory_at_wavelength",
+    "task42_material_identity",
+    "task42_material_provenance",
+    "task42_profile_errors",
 ]

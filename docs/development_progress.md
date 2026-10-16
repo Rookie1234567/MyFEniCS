@@ -3127,3 +3127,19 @@ consumer原始分类为`IMPLEMENTATION_FAILURE`，public结果为`task041_public
 | 下阶段 | V14两场大型构造中已运行1场；第二场未用 | 先等待ChatGPT对门判据和失败行证据保存的技术裁决；M600/h细化、50×25 nm、2 TB和48 h not_run/未资格化 |
 
 证据索引见[Task041 Response V16](task041_mpi1_shortwave_hybrid_capacity/response_v16.md)、[Task041 summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[Task041 test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)、[V14 lightweight record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v14_modal_row_terminal_20261014.json)。
+
+## 2026-10-16：Task42 A0 新入射与Si材料入口
+
+身份：Task42执行分支`task42hybrid_az90_50x50_17x20_0p7nm`，基线`f870a9a1ac609f584c2ebde7b5f870fdf191b480`（起点94700f95）；本阶段`passed_with_qualifications`，review待审，未进入master，ordinary default未变。
+
+Task041留下的是不同几何和材料身份的历史结果，不能直接代表用户新指定的90°方位、50×50 nm周期和17×20 nm居中矩形光栅。本Task42从新的13.5 nm Full3D direct物理参考入口开始；用户于2026-10-16明确两波长的基底和光栅都为Si，并给出各自Delta/Beta。两组输入和由`n=1-Delta+i*Beta`推导的复折射率记录在[Task42材料记录](task42hybrid_az90_50x50_17x20_0p7nm/materials/user_supplied_si_optical_constants.json)，覆盖Task42旧W材料段落但不改任务书或Task041历史。
+
+| A0事项 | 结果 | 解释和证据 |
+|---|---|---|
+| 输入与公共dry-run | Task42显式profile注册、材料记录SHA绑定、validate-only/dry-run通过 | 入射k/E/H、y向Floquet相位和端口材料身份由独立轻量检查；不是PDE解 |
+| 外通道与报告 | 13.5 nm空气侧42个合法空间键；报告m=3/n=7覆盖外部键；0.7 nm纯库存16031个键 | 不以报告截断替代物理外通道枚举；0.7只枚举，未建mesh/QEP |
+| 网格/体积 | MPI2小型boundary-fitted网格中，材料平面对齐；空气/基底/光栅体积284200/25000/40800 nm³ | 轻量构网格合同，不是正式p6 Full3D mesh或资源样本 |
+| 最小回归 | serial 12 passed；MPI2唯一边界拟合网格selector两rank均通过 | GNU time记录parent wall共15.62 s，按0.01 s显示精度相加；保留一次Poynting交叉核对失败和一次未启动pytest的本地preflight误判 |
+| Full3D、QEP和物理结果 | `not_run` | 当前输入仍含172800秒普通入口硬超时，Task42的分级资源/软48小时策略尚未接线，不启动正式PDE |
+
+本阶段分类为`passed_with_qualifications`，不改变ordinary default。完整测试/费用口径见[Task42 test summary](task42hybrid_az90_50x50_17x20_0p7nm/outcomes/test_summary.md)，阶段边界及A1计划见[Task42 response v1](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。下一步是在现有Task038 worker与Full3D direct adapter上增加Task42显式资源和软时间策略，保留MUMPS direct身份、原A残差/恢复快照及完整输出；只有这些门接入并审核后才进入13.5 nm直接场。

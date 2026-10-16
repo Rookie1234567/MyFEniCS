@@ -1,0 +1,83 @@
+{
+  "schema": "task42_a0_test_ledger.v1",
+  "task": "task42hybrid_az90_50x50_17x20_0p7nm",
+  "phase": "A0_input_material_geometry_and_port_contracts",
+  "classification": "passed_with_qualifications",
+  "baseline_head": "f870a9a1ac609f584c2ebde7b5f870fdf191b480",
+  "ordinary_default_changed": false,
+  "formal_pde_qep_or_factorization": "not_run",
+  "timer_restored": false,
+  "wall_measurement": {
+    "source": "GNU /usr/bin/time output captured per attempt",
+    "reported_precision": "0.01 seconds",
+    "not_claimed": "high-precision CLOCK_MONOTONIC or process-tree/cgroup aggregate",
+    "pytest_parent_attempt_count": 3,
+    "reported_parent_wall_seconds_sum": 15.62,
+    "sum_note": "2.43 + 11.72 + 1.47 from displayed GNU time records; no per-rank multiplication",
+    "preflight_without_pytest_wall_seconds": 0.0
+  },
+  "attempts": [
+    {
+      "attempt_id": "20261016T082736Z",
+      "classification": "local_path_assertion_mistook_venv_python_symlink_for_wrong_interpreter",
+      "status": "preflight_stopped_before_pytest",
+      "pytest_started": false,
+      "pytest_wall_seconds": 0.0,
+      "evidence_root": "results/task42hybrid_az90_50x50_17x20_0p7nm/a0_serial_regression_20261016T082736Z"
+    },
+    {
+      "attempt_id": "20261016T082837Z",
+      "classification": "A0_serial_formula_crosscheck_tolerance_too_strict",
+      "status": "failed_test_preserved",
+      "pytest_exit_code": 1,
+      "first_failure": "Poynting cross-check differed by maximum absolute 1.68309811e-13 under an over-tight binary64 comparison; -x left remaining selectors not_run.",
+      "gnu_time_wall_seconds": 2.43,
+      "gnu_time_peak_rss_kib": 208284,
+      "source_unchanged": true,
+      "evidence_root": "results/task42hybrid_az90_50x50_17x20_0p7nm/a0_serial_regression_20261016T082837Z"
+    },
+    {
+      "attempt_id": "20261016T082953Z",
+      "classification": "task42_a0_lightweight_serial_entry_regression",
+      "status": "passed",
+      "pytest_exit_code": 0,
+      "pytest_summary": "12 passed in 11.27s",
+      "gnu_time_wall_seconds": 11.72,
+      "gnu_time_peak_rss_kib": 320268,
+      "selected_cpu": 11,
+      "native_abi": "pass; PETSc complex128/Int32; six math thread variables all 1",
+      "source_unchanged": true,
+      "pde_qep_or_factorization": "not_run",
+      "evidence_root": "results/task42hybrid_az90_50x50_17x20_0p7nm/a0_serial_regression_20261016T082953Z"
+    },
+    {
+      "attempt_id": "20261016T083132Z",
+      "classification": "task42_a0_lightweight_mpi2_boundary_fitted_mesh_volume_regression",
+      "status": "passed",
+      "pytest_exit_code": 0,
+      "rank_pytest_exit_codes": {
+        "rank_0": 0,
+        "rank_1": 0
+      },
+      "pytest_summary_per_rank": "1 passed on each rank for the same single MPI2 selector",
+      "gnu_time_parent_wall_seconds": 1.47,
+      "gnu_time_parent_peak_rss_kib": 113944,
+      "selected_rank_cpus": [4, 12],
+      "rank_private_basetemp": true,
+      "native_abi": "both ranks pass; PETSc complex128/Int32; six math thread variables all 1",
+      "source_unchanged": true,
+      "pde_qep_or_factorization": "not_run",
+      "evidence_root": "results/task42hybrid_az90_50x50_17x20_0p7nm/a0_mpi2_mesh_regression_20261016T083132Z"
+    }
+  ],
+  "current_material_sha256": "19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65",
+  "source_sha256_at_final_test": {
+    "docs/task42hybrid_az90_50x50_17x20_0p7nm/README.md": "ff969671608bbd6fcb41a372b6280354633071a4cee63af20b1d44df684b644a",
+    "docs/task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md": "d4d935d798881f57ba5cb2ecb49e9a9d3a696379fb77941f1eb49d2eb1002dff",
+    "docs/task42hybrid_az90_50x50_17x20_0p7nm/materials/user_supplied_si_optical_constants.json": "19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65",
+    "input/official/task42hybrid_az90_50x50_17x20_0p7nm/13p5nm_p6h10_full3d_direct_mpi8.dat": "aca4550d192ed8b9f8403d70ea9c1990170bd23c11df19119c4a9963120557c5",
+    "src/io/input_validation.py": "7a1197aaeed821a89a434f4541b1c3c8df180463e04ad12ad45fe610ca6bc52e",
+    "src/test/test_task42_physical_entry.py": "5ca5c73060cdf488a9245b95e68785ffdbc2e47570f0bf8357081e50c5865b38"
+  },
+  "independent_task041_ledger_modified": false
+}
