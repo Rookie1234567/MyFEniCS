@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+from benchmarks import task034_wsl_resources as resource_sampler
 from benchmarks.task034_wsl_resources import ProcessTreeSample
 from src.io import load_and_resolve
 from src.io.input_validation import (
@@ -133,6 +136,388 @@ def test_task42_authority_accepts_real_process_tree_tuple_and_json_list():
     assert "whole_job_process_tree_is_incomplete_or_unreadable" in unreadable[
         "errors"
     ]
+
+
+def _proc_stat_fixture(pid: int, ppid: int, state: str, start_ticks: int) -> str:
+    tail = [state, str(ppid), *(["0"] * 17), str(start_ticks)]
+    return f"{pid} (short-lived ) helper) {' '.join(tail)}\n"
+
+
+def _proc_status_fixture(
+    pid: int,
+    ppid: int,
+    *,
+    state: str = "R",
+    rss_kib: int | None = 128,
+    swap_kib: int | None = 0,
+) -> str:
+    rows = [
+        "Name:\tfixture",
+        f"State:\t{state} (running)",
+        f"Pid:\t{pid}",
+        f"PPid:\t{ppid}",
+    ]
+    if rss_kib is not None:
+        rows.append(f"VmRSS:\t{rss_kib} kB")
+    if swap_kib is not None:
+        rows.append(f"VmSwap:\t{swap_kib} kB")
+    return "\n".join(rows) + "\n"
+
+
+def _write_proc_fixture(proc_root: Path, *, terminal_root: bool = False) -> tuple[int, int]:
+    root_pid, child_pid = 71001, 71002
+    root_dir = proc_root / str(root_pid)
+    child_dir = proc_root / str(child_pid)
+    root_dir.mkdir(parents=True)
+    child_dir.mkdir()
+    root_state = "Z" if terminal_root else "S"
+    (root_dir / "stat").write_text(
+        _proc_stat_fixture(root_pid, 1, root_state, 1001), encoding="utf-8"
+    )
+    (root_dir / "status").write_text(
+        _proc_status_fixture(
+            root_pid,
+            1,
+            state=root_state,
+            rss_kib=None if terminal_root else 1024,
+            swap_kib=None if terminal_root else 0,
+        ),
+        encoding="utf-8",
+    )
+    (child_dir / "stat").write_text(
+        _proc_stat_fixture(child_pid, root_pid, "R", 1002), encoding="utf-8"
+    )
+    (child_dir / "status").write_text(
+        _proc_status_fixture(child_pid, root_pid, rss_kib=None), encoding="utf-8"
+    )
+    return root_pid, child_pid
+
+
+def test_process_tree_sample_bounded_reread_requires_same_pid_start_ticks(
+    tmp_path, monkeypatch
+):
+    root_pid, child_pid = _write_proc_fixture(tmp_path)
+    read_status = resource_sampler._read_proc_status_fields
+    read_stat = resource_sampler._read_proc_stat_identity
+    status_calls = 0
+
+    def status_reader(path):
+        nonlocal status_calls
+        if path.parent.name == str(child_pid):
+            status_calls += 1
+            if status_calls == 1:
+                return {
+                    "Pid": str(child_pid),
+                    "PPid": str(root_pid),
+                    "State": "R (running)",
+                    "VmSwap": "0 kB",
+                }, None
+            return {
+                "Pid": str(child_pid),
+                "PPid": str(root_pid),
+                "State": "R (running)",
+                "VmRSS": "64 kB",
+                "VmSwap": "0 kB",
+            }, None
+        return read_status(path)
+
+    monkeypatch.setattr(resource_sampler, "_read_proc_status_fields", status_reader)
+    sample = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+    payload = sample.to_dict()
+
+    assert sample.all_status_readable is True
+    assert sample.rss_by_pid_bytes[child_pid] == 64 * 1024
+    detail = payload["read_diagnostics_by_pid"][child_pid]
+    assert detail["first_read"]["state_raw"] == "R (running)"
+    assert detail["first_identity"]["start_ticks"] == 1002
+    assert detail["reread"]["status"]["vmrss_raw"] == "64 kB"
+    assert detail["resolution"] == "measured_after_same_pid_start_ticks_reread"
+    assert detail["sample_usable"] is True
+    assert status_calls == 2
+
+    status_calls = 0
+
+    def missing_then_complete_status(path):
+        nonlocal status_calls
+        if path.parent.name == str(child_pid):
+            status_calls += 1
+            return (
+                {
+                    "Pid": str(child_pid),
+                    "PPid": str(root_pid),
+                    "State": "R (running)",
+                    "VmSwap": "0 kB",
+                },
+                None,
+            )
+        return read_status(path)
+
+    def process_exits_on_reread(path, *, expected_pid):
+        if expected_pid == child_pid:
+            nonlocal_stat_calls = process_exits_on_reread.calls
+            process_exits_on_reread.calls += 1
+            if nonlocal_stat_calls == 1:
+                return None, "not_present"
+        return read_stat(path, expected_pid=expected_pid)
+
+    process_exits_on_reread.calls = 0
+    monkeypatch.setattr(
+        resource_sampler, "_read_proc_status_fields", missing_then_complete_status
+    )
+    monkeypatch.setattr(
+        resource_sampler, "_read_proc_stat_identity", process_exits_on_reread
+    )
+    terminated = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+    terminal_detail = terminated.to_dict()["read_diagnostics_by_pid"][child_pid]
+    assert terminated.all_status_readable is True
+    assert terminated.rss_by_pid_bytes[child_pid] == 0
+    assert terminal_detail["first_identity"]["start_ticks"] == 1002
+    assert terminal_detail["resolution"] == (
+        "confirmed_initial_pid_start_ticks_no_longer_present"
+    )
+
+
+def test_process_tree_sample_keeps_unresolved_and_reused_pid_unknown(
+    tmp_path, monkeypatch
+):
+    root_pid, child_pid = _write_proc_fixture(tmp_path)
+    read_status = resource_sampler._read_proc_status_fields
+    read_stat = resource_sampler._read_proc_stat_identity
+
+    def incomplete_status(path):
+        if path.parent.name == str(child_pid):
+            return {
+                "Pid": str(child_pid),
+                "PPid": str(root_pid),
+                "State": "R (running)",
+                "VmSwap": "0 kB",
+            }, None
+        return read_status(path)
+
+    monkeypatch.setattr(resource_sampler, "_read_proc_status_fields", incomplete_status)
+    unresolved = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+    detail = unresolved.to_dict()["read_diagnostics_by_pid"][child_pid]
+    assert unresolved.all_status_readable is False
+    assert unresolved.rss_by_pid_bytes[child_pid] is None
+    assert detail["resolution"] == "refused_same_identity_status_still_incomplete"
+    assert detail["first_identity"]["start_ticks"] == 1002
+    assert detail["first_read"]["state_raw"] == "R (running)"
+
+    authority = _task42_authority(
+        root_pid=root_pid,
+        tree_rss_bytes=unresolved.rss_bytes,
+        memavailable_bytes=512 * 2**30,
+    )
+    authority["process_tree"] = unresolved.to_dict()
+    extracted = task42_memory_authority_inputs(
+        authority, expected_root_pid=root_pid
+    )
+    assert extracted["status"] == "refused"
+    assert extracted["tree_rss_scope"] == "unknown"
+
+    def reused_pid_identity(path, *, expected_pid):
+        identity, error = read_stat(path, expected_pid=expected_pid)
+        if expected_pid == child_pid and reused_pid_identity.calls == 1:
+            reused_pid_identity.calls += 1
+            return {**identity, "start_ticks": 9999}, None
+        if expected_pid == child_pid:
+            reused_pid_identity.calls += 1
+        return identity, error
+
+    reused_pid_identity.calls = 0
+    monkeypatch.setattr(
+        resource_sampler, "_read_proc_stat_identity", reused_pid_identity
+    )
+    reused = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+    reused_detail = reused.to_dict()["read_diagnostics_by_pid"][child_pid]
+    assert reused.all_status_readable is False
+    assert reused.rss_by_pid_bytes[child_pid] is None
+    assert reused_detail["resolution"] == "refused_pid_start_ticks_changed"
+
+
+def test_process_tree_sample_rejects_refused_postread_identity_with_full_values(
+    tmp_path, monkeypatch
+):
+    root_pid, child_pid = _write_proc_fixture(tmp_path)
+    read_status = resource_sampler._read_proc_status_fields
+    read_stat = resource_sampler._read_proc_stat_identity
+    child_status_calls = 0
+    child_stat_calls = 0
+
+    def status_reader(path):
+        nonlocal child_status_calls
+        if path.parent.name != str(child_pid):
+            return read_status(path)
+        child_status_calls += 1
+        if child_status_calls == 1:
+            return {
+                "Pid": str(child_pid),
+                "PPid": str(root_pid),
+                "State": "R (running)",
+                "VmSwap": "0 kB",
+            }, None
+        return {
+            "Pid": str(child_pid),
+            "PPid": str(root_pid),
+            "State": "R (running)",
+            "VmRSS": "64 kB",
+            "VmSwap": "2 kB",
+        }, None
+
+    def stat_reader(path, *, expected_pid):
+        nonlocal child_stat_calls
+        if expected_pid == child_pid:
+            child_stat_calls += 1
+            if child_stat_calls == 3:
+                return None, "unreadable:PermissionError"
+        return read_stat(path, expected_pid=expected_pid)
+
+    monkeypatch.setattr(resource_sampler, "_read_proc_status_fields", status_reader)
+    monkeypatch.setattr(resource_sampler, "_read_proc_stat_identity", stat_reader)
+    sample = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+    payload = sample.to_dict()
+    detail = payload["read_diagnostics_by_pid"][child_pid]
+
+    assert child_status_calls == 2
+    assert child_stat_calls == 3
+    assert detail["resolution"] == "refused_postread_identity_unavailable"
+    assert detail["sample_usable"] is False
+    assert detail["bounded_reread_count"] == 1
+    assert detail["reread"]["status"]["vmrss_raw"] == "64 kB"
+    assert detail["reread"]["status"]["vmswap_raw"] == "2 kB"
+    # The row keeps only its first, incomplete observation. The complete later
+    # values are retained for diagnosis and are not presented as a coherent row.
+    assert sample.rss_by_pid_bytes[child_pid] is None
+    assert sample.swap_by_pid_bytes[child_pid] == 0
+    assert sample.all_status_readable is False
+
+    authority = _task42_authority(
+        root_pid=root_pid,
+        tree_rss_bytes=sample.rss_bytes,
+        memavailable_bytes=512 * 2**30,
+    )
+    authority["process_tree"] = payload
+    extracted = task42_memory_authority_inputs(
+        authority, expected_root_pid=root_pid
+    )
+    assert extracted["status"] == "refused"
+    assert "whole_job_process_tree_is_incomplete_or_unreadable" in extracted[
+        "errors"
+    ]
+
+
+def test_process_tree_sample_rejects_root_without_verified_identity(
+    tmp_path, monkeypatch
+):
+    root_pid, _child_pid = _write_proc_fixture(tmp_path)
+    read_stat = resource_sampler._read_proc_stat_identity
+
+    def root_identity_unavailable(path, *, expected_pid):
+        if expected_pid == root_pid:
+            return None, "unreadable:PermissionError"
+        return read_stat(path, expected_pid=expected_pid)
+
+    monkeypatch.setattr(
+        resource_sampler, "_read_proc_stat_identity", root_identity_unavailable
+    )
+    sample = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+    payload = sample.to_dict()
+    root_detail = payload["read_diagnostics_by_pid"][root_pid]
+
+    assert sample.pids[0] == root_pid
+    assert sample.rss_by_pid_bytes[root_pid] == 1024 * 1024
+    assert root_detail["resolution"] == "refused_initial_start_ticks_unavailable"
+    assert root_detail["first_identity_error"] == "unreadable:PermissionError"
+    assert root_detail["bounded_reread_count"] == 0
+    assert sample.all_status_readable is False
+
+
+def test_process_tree_sample_does_not_accept_terminal_root(tmp_path):
+    root_pid, _child_pid = _write_proc_fixture(tmp_path, terminal_root=True)
+    sample = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+
+    assert sample.rss_by_pid_bytes[root_pid] == 0
+    assert sample.all_status_readable is False
+
+    missing_root = resource_sampler.process_tree_sample(root_pid + 100, proc_root=tmp_path)
+    assert missing_root.pids == ()
+    assert missing_root.rss_by_pid_bytes == {}
+    assert missing_root.all_status_readable is False
+
+
+def test_process_tree_sample_does_not_accept_root_exit_as_zero(tmp_path, monkeypatch):
+    root_pid, child_pid = _write_proc_fixture(tmp_path)
+    read_stat = resource_sampler._read_proc_stat_identity
+    root_stat_calls = 0
+
+    def status_reader(path):
+        if path.parent.name == str(root_pid):
+            return {
+                "Pid": str(root_pid),
+                "PPid": "1",
+                "State": "S (sleeping)",
+                "VmSwap": "0 kB",
+            }, None
+        return {
+            "Pid": str(child_pid),
+            "PPid": str(root_pid),
+            "State": "R (running)",
+            "VmRSS": "64 kB",
+            "VmSwap": "0 kB",
+        }, None
+
+    def stat_reader(path, *, expected_pid):
+        nonlocal root_stat_calls
+        if expected_pid == root_pid:
+            root_stat_calls += 1
+            if root_stat_calls == 2:
+                return None, "not_present"
+        return read_stat(path, expected_pid=expected_pid)
+
+    monkeypatch.setattr(resource_sampler, "_read_proc_status_fields", status_reader)
+    monkeypatch.setattr(resource_sampler, "_read_proc_stat_identity", stat_reader)
+    sample = resource_sampler.process_tree_sample(root_pid, proc_root=tmp_path)
+    root_detail = sample.to_dict()["read_diagnostics_by_pid"][root_pid]
+
+    assert root_detail["resolution"] == (
+        "confirmed_initial_pid_start_ticks_no_longer_present"
+    )
+    assert sample.rss_by_pid_bytes[root_pid] == 0
+    assert sample.all_status_readable is False
+
+
+def test_process_tree_sample_reads_a_real_short_lived_process():
+    child = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            "import sys; sys.stdin.readline()",
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        text=True,
+    )
+    try:
+        assert child.stdin is not None
+        sample = resource_sampler.process_tree_sample(child.pid)
+        assert sample.pids == (child.pid,)
+        assert sample.all_status_readable is True
+        assert sample.rss_by_pid_bytes[child.pid] is not None
+        assert sample.rss_by_pid_bytes[child.pid] > 0
+        assert set(sample.to_dict()) == {
+            "root_pid",
+            "pids",
+            "rss_bytes",
+            "swap_bytes",
+            "all_status_readable",
+            "rss_by_pid_bytes",
+            "swap_by_pid_bytes",
+        }
+    finally:
+        if child.stdin is not None:
+            child.stdin.write("exit\n")
+            child.stdin.close()
+        child.wait()
 
 
 def _authority(
