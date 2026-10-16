@@ -152,6 +152,29 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         options = profile["component_options"]
         mesh_case = options["directional_mesh_comparison"]
         mode = options["mode_selection"]
+        evidence = options["direct_factor_evidence"]
+        evidence_keys = tuple(
+            (str(key[0]), int(key[1]), int(key[2]), str(key[3]))
+            for key in evidence.get("mode_keys", ())
+        )
+        required_evidence_keys = (
+            ("top", -4, 0, "p"),
+            ("top", 0, 0, "s"),
+            ("top", 4, 0, "p"),
+            ("bottom", -4, 0, "p"),
+            ("bottom", 0, 0, "s"),
+            ("bottom", 4, 0, "p"),
+        )
+        if (
+            evidence.get("schema") != "task40.p6-direct-factor-evidence.v1"
+            or evidence_keys != required_evidence_keys
+            or evidence.get("pre_release") is not True
+            or evidence.get("saves_full_p6_storage_and_augmented_solution") is not True
+            or evidence.get("saves_independent_port_residuals") is not True
+            or int(evidence.get("full_primal_projection_quadrature_degree", -1))
+            != int(options["surface_quadrature"]["degree"])
+        ):
+            raise ValueError("Task40 direct-factor evidence contract is incomplete")
         case_name = mesh_case["case"]
         route_scope = profile["operator_scope"]
         expected_counts = list(mesh_case["axis_cell_counts"])
@@ -187,6 +210,12 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_m"],
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_n"],
             ],
+            "sparse_cutoff_policy": options["dtn_sparse_cutoff_policy"],
+            "sparse_cutoff_relative_tolerance": float(
+                options["dtn_sparse_cutoff_relative_tolerance"]
+            ),
+            "direct_factor_evidence": dict(evidence),
+            "direct_factor_evidence_mode_keys": required_evidence_keys,
             "condensed_residual_gate": 1.0e-9,
             "max_same_factor_corrections": 2,
             "expected_axis_cell_counts": expected_counts,
@@ -340,7 +369,7 @@ def _direct_output_policy(route: Mapping[str, Any]) -> dict[str, Any]:
 
     if route["family"] == "task40_phi90":
         contract = {
-            "schema": "task40.active_fe_port_outputs.v1",
+            "schema": "task40.active_fe_port_outputs.v2",
             "operator_scope": route["operator_scope"],
             "full_dtn_status": route["full_dtn_status"],
             "parent_inventory_scope": route["parent_inventory_scope"],
@@ -351,6 +380,13 @@ def _direct_output_policy(route: Mapping[str, Any]) -> dict[str, Any]:
             "selection_policy": route["selection_policy"],
             "selected_parent_indices_sha256": route.get(
                 "selected_parent_indices_sha256"
+            ),
+            "dtn_sparse_cutoff_policy": route["sparse_cutoff_policy"],
+            "dtn_sparse_cutoff_relative_tolerance": route[
+                "sparse_cutoff_relative_tolerance"
+            ],
+            "dtn_sparse_cutoff_identity_sha256": route.get(
+                "sparse_cutoff_identity_sha256"
             ),
         }
         return {
@@ -1431,6 +1467,197 @@ def _release_task40_direct_algebra(
     return facts
 
 
+def _sha256_file_streaming(path: Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for block in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _task40_exact_evidence_mode_indices(
+    modes: Any, expected_keys: Any
+) -> tuple[int, ...]:
+    expected = tuple(
+        (str(row[0]), int(row[1]), int(row[2]), str(row[3]))
+        for row in expected_keys
+    )
+    if len(expected) != 6 or len(set(expected)) != 6:
+        raise ValueError("Task40 factor evidence requires six unique frozen mode keys")
+    by_key: dict[tuple[str, int, int, str], int] = {}
+    for index, mode in enumerate(modes):
+        key = (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+        if key in by_key:
+            raise ValueError(f"Task40 live mode list has duplicate evidence key {key}")
+        by_key[key] = index
+    try:
+        indices = tuple(by_key[key] for key in expected)
+    except KeyError as exc:
+        raise ValueError(f"Task40 live mode inventory misses evidence key {exc.args[0]}") from exc
+    return indices
+
+
+def _task40_six_key_full_primal_witness(
+    bundle: Mapping[str, Any],
+    saved_field: Any,
+    route: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Capture six independent q28 projections before Task40 factor release."""
+    from src.solvers.dtn_port_3d import _auxiliary_direct_tangential_projection_audit
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+
+    modes = tuple(bundle["modes"])
+    keys = tuple(route["direct_factor_evidence_mode_keys"])
+    indices = _task40_exact_evidence_mode_indices(modes, keys)
+    carrier = bundle["dtn_action"].carrier
+    if len(carrier.entries) != len(modes):
+        raise ValueError("Task40 six-key witness carrier differs from the active mode list")
+    field = restore_p0_full_field(
+        bundle["setup"]["floquets"][6], saved_field, name="Task40_direct_evidence_E_total"
+    )
+    try:
+        auxiliary = np.asarray(
+            bundle["dtn_action"].recover_auxiliary(saved_field), dtype=np.complex128
+        )
+        if auxiliary.shape != (len(modes),) or not np.isfinite(auxiliary).all():
+            raise ValueError("Task40 witness carrier amplitudes are incomplete or non-finite")
+        selected_modes = [modes[index] for index in indices]
+        selected_auxiliary = auxiliary[np.asarray(indices, dtype=np.int64)]
+        incident = np.asarray(bundle["incident_projections"], dtype=np.complex128)
+        if incident.shape != (len(modes),) or not np.isfinite(incident).all():
+            raise ValueError("Task40 witness incident projections are incomplete or non-finite")
+        selected_incident = incident[np.asarray(indices, dtype=np.int64)]
+        started = perf_counter()
+        audit = _auxiliary_direct_tangential_projection_audit(
+            field,
+            selected_modes,
+            selected_auxiliary,
+            selected_incident,
+            bundle["setup"]["mesh_data"],
+            bundle["cfg"],
+            quadrature_degree=int(route["surface_quadrature_degree"]),
+        )
+        rows = []
+        for index, key, row in zip(indices, keys, audit["orders"], strict=True):
+            entry = carrier.entries[index]
+            if tuple(row[name] for name in ("side", "m", "n", "polarization")) != key:
+                raise ValueError("Task40 six-key witness row order differs from frozen keys")
+            rows.append({
+                **row,
+                "parent_mode_index": int(index),
+                "parent_mode_identity": entry.mode_identity,
+                "normalization_h": float(entry.normalization_h),
+            })
+        return {
+            "schema": "task40.direct-six-key-full-primal-witness.v1",
+            "status": "OBSERVED_NOT_QUALIFICATION",
+            "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+            "mode_manifest_sha256": str(bundle["mode_sha256"]),
+            "sparse_cutoff_policy": str(bundle["dtn_sparse_cutoff_policy"]),
+            "sparse_cutoff_relative_tolerance": float(
+                bundle["dtn_sparse_cutoff_relative_tolerance"]
+            ),
+            "sparse_cutoff_identity_sha256": str(
+                bundle["dtn_sparse_cutoff_identity_sha256"]
+            ),
+            "quadrature_degree": int(route["surface_quadrature_degree"]),
+            "projection_comparison": {
+                "max_absolute_outgoing_projection_difference": float(
+                    audit["max_absolute_outgoing_projection_difference"]
+                ),
+                "legacy_projection_tolerance": float(audit["tolerance"]),
+                "legacy_projection_audit_pass": bool(audit["pass"]),
+                "used_as_solver_gate": False,
+            },
+            "wall_seconds": perf_counter() - started,
+            "orders": rows,
+        }
+    finally:
+        del field
+
+
+def _write_task40_direct_factor_evidence(
+    directory: Path,
+    *,
+    recovered_p6_storage: np.ndarray,
+    retained_alpha: np.ndarray,
+    modal_alpha: np.ndarray,
+    schur_port_residual: np.ndarray,
+    independent_port_residual: np.ndarray,
+    active_rows: int,
+    appended_rows: int,
+    operator_identity: Mapping[str, Any],
+    factor_facts: Mapping[str, Any],
+    six_key_witness: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Write only the requested direct-factor arrays before releasing it."""
+    evidence_dir = Path(directory) / "task40_direct_factor_evidence"
+    evidence_dir.mkdir(parents=True, exist_ok=False)
+    arrays = {
+        "recovered_p6_storage_coefficients": np.asarray(
+            recovered_p6_storage, dtype=np.complex128
+        ),
+        "retained_alpha": np.asarray(retained_alpha, dtype=np.complex128),
+        "modal_alpha": np.asarray(modal_alpha, dtype=np.complex128),
+        "schur_port_block_residual": np.asarray(
+            schur_port_residual, dtype=np.complex128
+        ),
+        "independent_augmented_port_residual": np.asarray(
+            independent_port_residual, dtype=np.complex128
+        ),
+    }
+    if (
+        arrays["recovered_p6_storage_coefficients"].ndim != 1
+        or arrays["retained_alpha"].shape != (int(active_rows),)
+        or arrays["modal_alpha"].shape != (int(appended_rows),)
+        or arrays["schur_port_block_residual"].shape != (int(appended_rows),)
+        or arrays["independent_augmented_port_residual"].shape != (int(appended_rows),)
+    ):
+        raise ValueError("Task40 pre-release factor evidence vector layout is inconsistent")
+    if any(not np.isfinite(array).all() for array in arrays.values()):
+        raise FloatingPointError("Task40 pre-release factor evidence contains non-finite data")
+    artifacts: dict[str, Any] = {}
+    for name, array in arrays.items():
+        path = evidence_dir / f"{name}.npy"
+        with path.open("xb") as stream:
+            np.save(stream, array, allow_pickle=False)
+        artifacts[name] = {
+            "path": str(path),
+            "dtype": str(array.dtype),
+            "shape": [int(value) for value in array.shape],
+            "bytes": int(path.stat().st_size),
+            "sha256": _sha256_file_streaming(path),
+        }
+    report = {
+        "schema": "task40.p6-direct-factor-evidence.v1",
+        "status": "SAVED_PRE_RELEASE_NOT_QUALIFICATION",
+        "operator_identity": operator_identity,
+        "factor_facts_before_release": factor_facts,
+        "augmented_layout": {
+            "active_trace_rows": int(active_rows),
+            "appended_modal_rows": int(appended_rows),
+            "retained_alpha_rows": [0, int(active_rows)],
+            "modal_alpha_rows": [int(active_rows), int(active_rows + appended_rows)],
+            "schur_port_residual_source": "direct condensed residual tail",
+            "independent_port_residual_source": (
+                "P6CellCondensedAction.evaluate_native_residual.augmented_port_residual"
+            ),
+        },
+        "artifacts": artifacts,
+        "six_key_full_primal_witness": six_key_witness,
+        "added_numerical_gate": False,
+        "solver_qualification_claimed": False,
+    }
+    report_path = evidence_dir / "evidence.json"
+    _atomic_json(report_path, report)
+    report["report_artifact"] = {
+        "path": str(report_path),
+        "sha256": _sha256_file_streaming(report_path),
+        "bytes": int(report_path.stat().st_size),
+    }
+    return report
+
+
 def run_p6_condensed_direct(
     resolved_payload: Mapping[str, Any],
     run_directory: str | Path,
@@ -1520,6 +1747,14 @@ def run_p6_condensed_direct(
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
         route = _direct_run_contract(str(profile_facts["identity"]))
+        route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")
+        route.setdefault("sparse_cutoff_relative_tolerance", 1.0e-13)
+        if route["family"] == "task40_phi90" and route["sparse_cutoff_policy"] != (
+            "scale_homogeneous_relative_only_v1"
+        ):
+            raise ValueError(
+                "Task40 D13 requires its explicitly resolved sparse cutoff policy"
+            )
         summary.update(
             profile=profile_facts["identity"],
             operator_scope=route["operator_scope"],
@@ -1823,6 +2058,15 @@ def run_p6_condensed_direct(
                 }
                 if route["truncated"] else {}
             )
+            cutoff_policy_kwargs = (
+                {
+                    "sparse_cutoff_policy": route["sparse_cutoff_policy"],
+                    "sparse_cutoff_relative_tolerance": route[
+                        "sparse_cutoff_relative_tolerance"
+                    ],
+                }
+                if route["family"] == "task40_phi90" else {}
+            )
             bundle = build_same_mesh_physical_action(
                 levels,
                 cfg,
@@ -1834,6 +2078,7 @@ def run_p6_condensed_direct(
                 stage_callback=ledger.marker,
                 surface_progress_interval=1024,
                 **parent_surface_kwargs,
+                **cutoff_policy_kwargs,
             )
         expected_surface_q = (
             int(route["surface_quadrature_degree"])
@@ -1851,6 +2096,26 @@ def run_p6_condensed_direct(
             or len(bundle["dtn_action"].carrier.entries) != route["active_count"]
         ):
             raise ValueError("live p6 carrier differs from its selected active mode identity")
+        carrier_sparse_audit = dict(bundle["dtn_action"].carrier.audit)
+        cutoff_identity = carrier_sparse_audit.get(
+            "sparse_cutoff_identity_sha256"
+        )
+        carrier_policy_identity_pass = bool(
+            bundle.get("dtn_sparse_cutoff_policy") == route["sparse_cutoff_policy"]
+            and float(bundle.get("dtn_sparse_cutoff_relative_tolerance", -1.0))
+            == route["sparse_cutoff_relative_tolerance"]
+            and carrier_sparse_audit.get("sparse_cutoff_policy")
+            == route["sparse_cutoff_policy"]
+            and float(carrier_sparse_audit.get(
+                "sparse_cutoff_relative_tolerance", -1.0
+            )) == route["sparse_cutoff_relative_tolerance"]
+            and isinstance(cutoff_identity, str)
+            and len(cutoff_identity) == 64
+            and all(character in "0123456789abcdef" for character in cutoff_identity)
+        )
+        if not carrier_policy_identity_pass:
+            raise ValueError("live carrier sparse-cutoff identity differs from its profile")
+        route["sparse_cutoff_identity_sha256"] = cutoff_identity
         if route["family"] == "dispersion_flat" and (
             len(parent_inventory[0]) != len(bundle["modes"])
             or bundle["mode_sha256"] != parent_inventory[2]
@@ -1867,11 +2132,23 @@ def run_p6_condensed_direct(
             "operator_selection": operator_selection,
             "operator_scope": route["operator_scope"],
             "full_dtn_status": route["full_dtn_status"],
+            "dtn_sparse_cutoff_policy": route["sparse_cutoff_policy"],
+            "dtn_sparse_cutoff_relative_tolerance": route[
+                "sparse_cutoff_relative_tolerance"
+            ],
+            "dtn_sparse_cutoff_identity_sha256": route[
+                "sparse_cutoff_identity_sha256"
+            ],
+            "carrier_audit": carrier_sparse_audit,
             "volume_quadrature_metadata": volume_quadrature_metadata,
             "volume_quadrature_records": _volume_quadrature_records,
             "functional_store": False,
             "cross_mesh_fe_reuse": False,
         }
+        if route["family"] == "task40_phi90":
+            summary["checks"]["carrier_sparse_cutoff_identity"] = (
+                carrier_policy_identity_pass
+            )
         ledger.marker("p6_direct_surface_carrier_complete", summary["operator_identity"])
 
         # The source is assembled through the production incident top traction,
@@ -2227,6 +2504,16 @@ def run_p6_condensed_direct(
             "rhs_norm": native_facts["native_rhs_norm"],
             "finite": True,
         }
+        if route["family"] == "task40_phi90":
+            summary["residuals"].update(
+                dtn_sparse_cutoff_policy=route["sparse_cutoff_policy"],
+                dtn_sparse_cutoff_relative_tolerance=(
+                    route["sparse_cutoff_relative_tolerance"]
+                ),
+                dtn_sparse_cutoff_identity_sha256=(
+                    route["sparse_cutoff_identity_sha256"]
+                ),
+            )
         if condensed_gate is not None:
             summary["residuals"].update(
                 condensed_direct_residual_gate=float(condensed_gate),
@@ -2267,6 +2554,55 @@ def run_p6_condensed_direct(
             raise ValueError("recovered p6 field vector has the wrong global size")
         saved_field.getArray()[:] = recovered
         saved_field.assemble()
+        if route["family"] == "task40_phi90":
+            evidence_contract = route["direct_factor_evidence"]
+            witness = _task40_six_key_full_primal_witness(
+                bundle, saved_field, route
+            )
+            factor_evidence = _write_task40_direct_factor_evidence(
+                numerical_output,
+                recovered_p6_storage=recovered,
+                retained_alpha=np.asarray(
+                    native_facts["retained_alpha"], dtype=np.complex128
+                ),
+                modal_alpha=np.asarray(
+                    solution_array[int(condensed.active_rows) :],
+                    dtype=np.complex128,
+                ),
+                schur_port_residual=np.asarray(
+                    native_facts["schur_port_residual"], dtype=np.complex128
+                ),
+                independent_port_residual=np.asarray(
+                    native_facts["augmented_port_residual"], dtype=np.complex128
+                ),
+                active_rows=int(condensed.active_rows),
+                appended_rows=int(condensed.appended_rows),
+                operator_identity=summary["operator_identity"],
+                factor_facts={
+                    "matrix": summary.get("matrix"),
+                    "factor": summary.get("factor"),
+                    "same_matrix_lifecycle_verified": same_matrix_lifecycle_verified,
+                    "evidence_schema": evidence_contract["schema"],
+                },
+                six_key_witness=witness,
+            )
+            summary["direct_factor_evidence"] = factor_evidence
+            summary["checks"]["direct_factor_evidence_saved_before_release"] = bool(
+                factor_evidence.get("status")
+                == "SAVED_PRE_RELEASE_NOT_QUALIFICATION"
+                and len(factor_evidence.get("artifacts", {})) == 5
+                and len(witness.get("orders", [])) == 6
+            )
+            ledger.marker(
+                "task40_direct_factor_evidence_saved_before_release",
+                {
+                    "status": factor_evidence["status"],
+                    "report_artifact": factor_evidence["report_artifact"],
+                    "artifact_count": len(factor_evidence["artifacts"]),
+                    "six_key_count": len(witness["orders"]),
+                    "operator_identity": summary["operator_identity"],
+                },
+            )
         del recovered
 
         if route["family"] == "task40_phi90":
@@ -2484,7 +2820,15 @@ def run_p6_condensed_direct(
             "field_export_finite",
             "auxiliary_export_finite",
             "same_materialized_matrix_symbolic_numeric_solve",
-        ) + (("condensed_direct_residual_pass",) if condensed_gate is not None else ())
+        ) + (("condensed_direct_residual_pass",) if condensed_gate is not None else ()) + (
+            ("carrier_sparse_cutoff_identity",)
+            if route["family"] == "task40_phi90"
+            else ()
+        ) + (
+            ("direct_factor_evidence_saved_before_release",)
+            if route["family"] == "task40_phi90"
+            else ()
+        )
         passed = all(bool(summary["checks"].get(key)) for key in required_checks)
         route_label = route["summary_prefix"].upper().replace("_", "_")
         summary["status"] = (

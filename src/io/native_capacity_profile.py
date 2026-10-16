@@ -762,6 +762,7 @@ def _task40_phi90_d13_profile_facts(identity):
         raise ValueError(f"unsupported Task40 P6-direct profile: {identity}")
     case = TASK40_PHI90_D13_CASES[identity]
     case_name = case["case"]
+    surface_quadrature_degree = 28
     operator_scope = f"task40_phi90_D13_{case_name}_R13_finite_rectangle"
     from src.geometry.task40_phi90_d13_axis_plan import (
         D13_AXIS_PLANS,
@@ -848,6 +849,25 @@ def _task40_phi90_d13_profile_facts(identity):
         "functional_store_policy": "disabled_no_functional_store_config",
         "cross_mesh_fe_reuse": False,
         "direct_p6_route": True,
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1.0e-13,
+        "direct_factor_evidence": {
+            "schema": "task40.p6-direct-factor-evidence.v1",
+            "mode_keys": [
+                ["top", -4, 0, "p"],
+                ["top", 0, 0, "s"],
+                ["top", 4, 0, "p"],
+                ["bottom", -4, 0, "p"],
+                ["bottom", 0, 0, "s"],
+                ["bottom", 4, 0, "p"],
+            ],
+            "pre_release": True,
+            "saves_full_p6_storage_and_augmented_solution": True,
+            "saves_independent_port_residuals": True,
+            "full_primal_projection_quadrature_degree": int(
+                surface_quadrature_degree
+            ),
+        },
         "task_family": "task40_phi90_mesh_modes_direct",
         "mesh_target_nm": 10.0,
         "expected_axis_cell_counts": list(case["axis_cell_counts"]),
@@ -884,7 +904,7 @@ def _task40_phi90_d13_profile_facts(identity):
             "authority": "live_fine_volume_quadrature_metadata",
         },
         "surface_quadrature": {
-            "degree": 28,
+            "degree": surface_quadrature_degree,
             "rule": "default",
             "fixed_comparison_envelope": {"max_abs_m": 6, "max_abs_n": 10},
             "authority": "R_plus_two_envelope_fixed_before_D13_B",

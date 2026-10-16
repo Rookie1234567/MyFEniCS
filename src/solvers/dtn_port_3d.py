@@ -47,6 +47,11 @@ from .condensed_dtn import (
     create_matrix_free_augmented_operator,
 )
 from .condensed_reference_preflight import CondensedPreflightExit
+from .dtn_sparse_policy import (
+    LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+    SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY,
+    normalize_dtn_sparse_cutoff_policy,
+)
 from .fullspace_surface_legendre import (
     Q160SixLaneWeightedMomentWorkspace,
     SURFACE_COMPONENT_PAIR_BACKEND,
@@ -838,10 +843,34 @@ def _vec_nonzero_owned_entries(
     vec: PETSc.Vec,
     *,
     relative_tol: float = 1.0e-13,
+    sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+    scale_homogeneous: bool | None = None,
     support: np.ndarray | None = None,
     timing_totals: dict[str, float] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return owned significant entries using one collective cutoff."""
+    """Return owned significant entries using one collective cutoff.
+
+    The named Task40 policy uses only ``relative_tol * global_max``.  The
+    default path retains the historical absolute floor.  The optional boolean
+    is a compatibility bridge for ignored saved-field diagnostic scripts.
+    """
+
+    policy = normalize_dtn_sparse_cutoff_policy(sparse_cutoff_policy)
+    if scale_homogeneous is not None:
+        if not isinstance(scale_homogeneous, bool):
+            raise TypeError("scale_homogeneous compatibility flag must be boolean")
+        legacy_policy = normalize_dtn_sparse_cutoff_policy(sparse_cutoff_policy)
+        if scale_homogeneous and legacy_policy != LEGACY_DTN_SPARSE_CUTOFF_POLICY:
+            raise ValueError("conflicting sparse cutoff policy and compatibility flag")
+        if scale_homogeneous:
+            policy = SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY
+    if policy == SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY:
+        return _vec_nonzero_owned_entries_scale_homogeneous(
+            vec,
+            relative_tol=relative_tol,
+            support=support,
+            timing_totals=timing_totals,
+        )
 
     start, end = vec.getOwnershipRange()
     values = np.asarray(vec.getArray(readonly=True), dtype=np.complex128)
@@ -960,7 +989,24 @@ def _combine_owned_entries(
     *,
     comm: MPI.Intracomm,
     relative_tol: float = 1.0e-13,
+    sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+    scale_homogeneous: bool | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
+    policy = normalize_dtn_sparse_cutoff_policy(sparse_cutoff_policy)
+    if scale_homogeneous is not None:
+        if not isinstance(scale_homogeneous, bool):
+            raise TypeError("scale_homogeneous compatibility flag must be boolean")
+        if scale_homogeneous and policy != LEGACY_DTN_SPARSE_CUTOFF_POLICY:
+            raise ValueError("conflicting sparse cutoff policy and compatibility flag")
+        if scale_homogeneous:
+            policy = SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY
+    if policy == SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY:
+        return _combine_owned_entries_scale_homogeneous(
+            component_entries,
+            coefficients,
+            comm=comm,
+            relative_tol=relative_tol,
+        )
     row_blocks: list[np.ndarray] = []
     value_blocks: list[np.ndarray] = []
     for (rows, values), coefficient in zip(component_entries, coefficients):
@@ -990,6 +1036,164 @@ def _combine_owned_entries(
     global_maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
     cutoff = max(1.0e-30, relative_tol * global_maximum)
     keep = np.abs(summed_values) > cutoff
+    return _idx(unique_rows[keep]), summed_values[keep].copy()
+
+
+def _scale_homogeneous_keep_mask(
+    magnitudes: np.ndarray, *, global_maximum: float, relative_tol: float
+) -> np.ndarray:
+    """Apply a positive relative threshold without forming a tiny cutoff.
+
+    Ratios that underflow to zero are necessarily far below the required
+    positive tolerance and are safely discarded.  Stored values are never
+    rescaled.  Non-finite magnitudes and overflowed global maxima fail closed.
+    """
+
+    tolerance = float(relative_tol)
+    if not np.isfinite(tolerance) or not 0.0 < tolerance < 1.0:
+        raise ValueError("scale-homogeneous cutoff requires 0 < relative_tol < 1")
+    magnitudes = np.asarray(magnitudes, dtype=np.float64)
+    maximum = float(global_maximum)
+    if not np.isfinite(magnitudes).all() or not np.isfinite(maximum):
+        raise FloatingPointError("scale-homogeneous cutoff magnitude is non-finite")
+    if maximum < 0.0:
+        raise ValueError("scale-homogeneous global maximum cannot be negative")
+    if maximum == 0.0:
+        return np.zeros(magnitudes.shape, dtype=bool)
+    with np.errstate(under="ignore", divide="ignore", invalid="ignore", over="ignore"):
+        relative_magnitude = magnitudes / maximum
+    if not np.isfinite(relative_magnitude).all():
+        raise FloatingPointError("scale-homogeneous relative magnitude is non-finite")
+    return relative_magnitude > tolerance
+
+
+def _collective_invalid(comm: Any, local_invalid: bool) -> bool:
+    """Make candidate validation failures collective before returning/raising."""
+
+    return bool(comm.allreduce(int(bool(local_invalid)), op=MPI.MAX))
+
+
+def _vec_nonzero_owned_entries_scale_homogeneous(
+    vec: PETSc.Vec,
+    *,
+    relative_tol: float,
+    support: np.ndarray | None,
+    timing_totals: dict[str, float] | None,
+) -> tuple[np.ndarray, np.ndarray]:
+    tolerance = float(relative_tol)
+    if not np.isfinite(tolerance) or not 0.0 < tolerance < 1.0:
+        raise ValueError("scale-homogeneous cutoff requires 0 < relative_tol < 1")
+    started = time.perf_counter() if timing_totals is not None else None
+    start, end = vec.getOwnershipRange()
+    values = np.asarray(vec.getArray(readonly=True), dtype=np.complex128)
+    comm = vec.getComm().tompi4py()
+    if support is None:
+        local_values = values
+        local_rows = np.arange(start, end, dtype=np.int64)
+    else:
+        local_support = np.asarray(support, dtype=np.int64).reshape(-1)
+        invalid_support = bool(local_support.size) and (
+            int(local_support.min()) < 0 or int(local_support.max()) >= values.size
+        )
+        if invalid_support:
+            local_values = np.asarray([], dtype=np.complex128)
+            local_rows = np.asarray([], dtype=np.int64)
+        else:
+            local_values = values[local_support]
+            local_rows = start + local_support
+        if _collective_invalid(comm, invalid_support):
+            raise ValueError("surface support contains a non-owned vector entry")
+    local_invalid = not bool(np.isfinite(local_values).all())
+    if _collective_invalid(comm, local_invalid):
+        raise FloatingPointError("scale-homogeneous surface vector contains non-finite entries")
+    with np.errstate(over="ignore", invalid="ignore"):
+        magnitudes = np.abs(local_values)
+    if _collective_invalid(comm, not bool(np.isfinite(magnitudes).all())):
+        raise FloatingPointError("scale-homogeneous surface magnitude overflowed")
+    local_maximum = float(np.max(magnitudes, initial=0.0))
+    global_maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
+    if not np.isfinite(global_maximum):
+        raise FloatingPointError("scale-homogeneous global maximum is non-finite")
+    keep = _scale_homogeneous_keep_mask(
+        magnitudes, global_maximum=global_maximum, relative_tol=tolerance
+    )
+    result = _idx(np.asarray(local_rows[keep], dtype=np.int64)), local_values[keep].copy()
+    if started is not None:
+        timing_totals["owned_support_extract_seconds"] = (
+            timing_totals.get("owned_support_extract_seconds", 0.0)
+            + time.perf_counter() - started
+        )
+    return result
+
+
+def _combine_owned_entries_scale_homogeneous(
+    component_entries: tuple[
+        tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]
+    ],
+    coefficients: tuple[complex, complex],
+    *,
+    comm: MPI.Intracomm,
+    relative_tol: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    tolerance = float(relative_tol)
+    if not np.isfinite(tolerance) or not 0.0 < tolerance < 1.0:
+        raise ValueError("scale-homogeneous cutoff requires 0 < relative_tol < 1")
+    local_invalid = False
+    row_blocks: list[np.ndarray] = []
+    value_blocks: list[np.ndarray] = []
+    for (rows, values), raw_coefficient in zip(component_entries, coefficients, strict=True):
+        row_array = np.asarray(rows, dtype=PETSc.IntType).reshape(-1)
+        value_array = np.asarray(values, dtype=np.complex128).reshape(-1)
+        coefficient = complex(raw_coefficient)
+        if row_array.shape != value_array.shape:
+            local_invalid = True
+            continue
+        if not np.isfinite(coefficient.real) or not np.isfinite(coefficient.imag):
+            local_invalid = True
+            continue
+        if not np.isfinite(value_array).all():
+            local_invalid = True
+            continue
+        if coefficient == 0.0 or row_array.size == 0:
+            continue
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            scaled_values = PETSc.ScalarType(coefficient) * value_array
+        if not np.isfinite(scaled_values).all():
+            local_invalid = True
+            continue
+        underflowed_to_zero = (value_array != 0.0) & (scaled_values == 0.0)
+        if bool(np.any(underflowed_to_zero)):
+            local_invalid = True
+            continue
+        row_blocks.append(row_array)
+        value_blocks.append(scaled_values.astype(np.complex128, copy=False))
+    if _collective_invalid(comm, local_invalid):
+        raise FloatingPointError(
+            "scale-homogeneous merge rejected non-finite data, overflow, or product underflow"
+        )
+    if row_blocks:
+        rows_all = np.concatenate(row_blocks).astype(PETSc.IntType, copy=False)
+        values_all = np.concatenate(value_blocks).astype(np.complex128, copy=False)
+        order = np.argsort(rows_all, kind="mergesort")
+        rows_sorted = rows_all[order]
+        values_sorted = values_all[order]
+        unique_rows, first = np.unique(rows_sorted, return_index=True)
+        with np.errstate(over="ignore", invalid="ignore"):
+            summed_values = np.add.reduceat(values_sorted, first)
+    else:
+        unique_rows = _idx([])
+        summed_values = np.asarray([], dtype=np.complex128)
+    if _collective_invalid(comm, not bool(np.isfinite(summed_values).all())):
+        raise FloatingPointError("scale-homogeneous merged sparse sum is non-finite")
+    with np.errstate(over="ignore", invalid="ignore"):
+        magnitudes = np.abs(summed_values)
+    if _collective_invalid(comm, not bool(np.isfinite(magnitudes).all())):
+        raise FloatingPointError("scale-homogeneous merged magnitude overflowed")
+    local_maximum = float(np.max(magnitudes, initial=0.0))
+    global_maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
+    keep = _scale_homogeneous_keep_mask(
+        magnitudes, global_maximum=global_maximum, relative_tol=tolerance
+    )
     return _idx(unique_rows[keep]), summed_values[keep].copy()
 
 
@@ -1260,7 +1464,19 @@ class _ReusableSurfaceComponentAssembler:
         mpc,
         *,
         workspace: Any | None = None,
+        sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+        sparse_cutoff_relative_tolerance: float = 1.0e-13,
     ) -> tuple[np.ndarray, np.ndarray]:
+        policy = normalize_dtn_sparse_cutoff_policy(sparse_cutoff_policy)
+        if workspace is not None and getattr(workspace, "sparse_cutoff_policy", policy) != policy:
+            raise ValueError("surface workspace sparse cutoff policy differs from its assembler")
+        cutoff_tolerance = float(sparse_cutoff_relative_tolerance)
+        if not np.isfinite(cutoff_tolerance) or not 0.0 < cutoff_tolerance < 1.0:
+            raise ValueError("surface relative cutoff tolerance is invalid")
+        if workspace is not None and float(
+            getattr(workspace, "sparse_cutoff_relative_tolerance", cutoff_tolerance)
+        ) != cutoff_tolerance:
+            raise ValueError("surface workspace relative cutoff tolerance differs from its assembler")
         _set_scalar_constant(self.alpha, mode.alpha)
         _set_scalar_constant(self.gamma, mode.gamma)
         _set_scalar_constant(self.kz, mode.k_vector[2])
@@ -1270,12 +1486,12 @@ class _ReusableSurfaceComponentAssembler:
             else workspace.assemble(self.form, mpc)
         )
         try:
-            if workspace is None:
-                return _vec_nonzero_owned_entries(vec)
             return _vec_nonzero_owned_entries(
                 vec,
-                support=workspace.owned_support,
-                timing_totals=workspace.timing_totals,
+                sparse_cutoff_policy=policy,
+                relative_tol=cutoff_tolerance,
+                support=(None if workspace is None else workspace.owned_support),
+                timing_totals=(None if workspace is None else workspace.timing_totals),
             )
         finally:
             if workspace is None:
@@ -1303,6 +1519,8 @@ class _SurfaceMpcVectorWorkspace:
         surface_assemblers: Mapping[tuple[str, int], Any],
         *,
         collect_timings: bool = False,
+        sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+        sparse_cutoff_relative_tolerance: float = 1.0e-13,
     ) -> None:
         if int(mesh_data.mesh.comm.size) != 1:
             raise ValueError("reused surface-vector assembly is restricted to MPI1")
@@ -1334,6 +1552,17 @@ class _SurfaceMpcVectorWorkspace:
         self._mpc = mpc
         self._function_space = function_space
         self._mesh_data = mesh_data
+        self.sparse_cutoff_policy = normalize_dtn_sparse_cutoff_policy(
+            sparse_cutoff_policy
+        )
+        self.sparse_cutoff_relative_tolerance = float(
+            sparse_cutoff_relative_tolerance
+        )
+        if (
+            not np.isfinite(self.sparse_cutoff_relative_tolerance)
+            or not 0.0 < self.sparse_cutoff_relative_tolerance < 1.0
+        ):
+            raise ValueError("surface workspace relative cutoff tolerance is invalid")
         self._allowed_assembler_ids = {id(assembler) for assembler in surface_assemblers.values()}
         self._allowed_form_ids = {
             id(assembler.form)
@@ -1435,6 +1664,10 @@ class _SurfaceMpcVectorWorkspace:
             if int(end - start) != self._owned_size:
                 raise ValueError("MPC Vec ownership differs from its local index map")
             self.facts = {
+                "sparse_cutoff_policy": self.sparse_cutoff_policy,
+                "sparse_cutoff_relative_tolerance": (
+                    self.sparse_cutoff_relative_tolerance
+                ),
                 "support_local_rows": int(self.local_support.size),
                 "support_owned_rows": int(self.owned_support.size),
                 "support_ghost_rows": int(
@@ -3655,7 +3888,19 @@ class _SurfaceLegendreMomentAssembler:
         mpc: Any,
         *,
         workspace: Any | None = None,
+        sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+        sparse_cutoff_relative_tolerance: float = 1.0e-13,
     ) -> tuple[np.ndarray, np.ndarray]:
+        policy = normalize_dtn_sparse_cutoff_policy(sparse_cutoff_policy)
+        if workspace is not None and getattr(workspace, "sparse_cutoff_policy", policy) != policy:
+            raise ValueError("surface workspace sparse cutoff policy differs from its assembler")
+        cutoff_tolerance = float(sparse_cutoff_relative_tolerance)
+        if not np.isfinite(cutoff_tolerance) or not 0.0 < cutoff_tolerance < 1.0:
+            raise ValueError("surface relative cutoff tolerance is invalid")
+        if workspace is not None and float(
+            getattr(workspace, "sparse_cutoff_relative_tolerance", cutoff_tolerance)
+        ) != cutoff_tolerance:
+            raise ValueError("surface workspace relative cutoff tolerance differs from its assembler")
         if self.surface_backend == SURFACE_COMPONENT_PAIR_BACKEND:
             raise RuntimeError(
                 "paired pointwise backend cannot silently use the unpaired assembler"
@@ -3670,6 +3915,8 @@ class _SurfaceLegendreMomentAssembler:
             )
             return _vec_nonzero_owned_entries(
                 vector,
+                relative_tol=cutoff_tolerance,
+                sparse_cutoff_policy=policy,
                 support=workspace.owned_support,
                 timing_totals=workspace.timing_totals,
             )
@@ -3689,7 +3936,11 @@ class _SurfaceLegendreMomentAssembler:
                 addv=PETSc.InsertMode.INSERT_VALUES,
                 mode=PETSc.ScatterMode.FORWARD,
             )
-            return _vec_nonzero_owned_entries(vector)
+            return _vec_nonzero_owned_entries(
+                vector,
+                relative_tol=cutoff_tolerance,
+                sparse_cutoff_policy=policy,
+            )
         finally:
             vector.destroy()
 
@@ -3873,6 +4124,8 @@ class _SurfaceLegendreMomentAssembler:
             staging.assert_complete()
             primary_entries = _vec_nonzero_owned_entries(
                 primary_vector,
+                relative_tol=workspace.sparse_cutoff_relative_tolerance,
+                sparse_cutoff_policy=workspace.sparse_cutoff_policy,
                 support=workspace.owned_support,
                 timing_totals=workspace.timing_totals,
             )
@@ -3887,6 +4140,8 @@ class _SurfaceLegendreMomentAssembler:
             )
             companion_entries = _vec_nonzero_owned_entries(
                 companion_vector,
+                relative_tol=workspace.sparse_cutoff_relative_tolerance,
+                sparse_cutoff_policy=workspace.sparse_cutoff_policy,
                 support=workspace.owned_support,
                 timing_totals=workspace.timing_totals,
             )

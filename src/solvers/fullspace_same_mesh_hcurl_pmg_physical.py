@@ -15,6 +15,11 @@ from typing import Any
 
 import numpy as np
 
+from .dtn_sparse_policy import (
+    LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+    normalize_dtn_sparse_cutoff_policy,
+)
+
 
 PHYSICAL_BUNDLE_SCHEMA = "task038.same_mesh_hcurl_pmg.physical.v2"
 PHYSICAL_PROFILE = "same_mesh_hcurl_pmg_v1_requalified"
@@ -162,6 +167,8 @@ def build_same_mesh_physical_action(
     prepare_surface_trace_contraction: bool = False,
     functional_store_config: Mapping[str, Any] | None = None,
     surface_assembly_backend: str | None = None,
+    sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+    sparse_cutoff_relative_tolerance: float = 1.0e-13,
     collect_surface_timings: bool = False,
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     surface_progress_interval: int = 1024,
@@ -189,6 +196,15 @@ def build_same_mesh_physical_action(
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
     degree = int(degree)
+    sparse_cutoff_policy = normalize_dtn_sparse_cutoff_policy(
+        sparse_cutoff_policy
+    )
+    sparse_cutoff_relative_tolerance = float(sparse_cutoff_relative_tolerance)
+    if (
+        not np.isfinite(sparse_cutoff_relative_tolerance)
+        or not 0.0 < sparse_cutoff_relative_tolerance < 1.0
+    ):
+        raise ValueError("same-mesh sparse cutoff relative tolerance is invalid")
     if collect_surface_timings and not reuse_surface_vector:
         raise ValueError("surface timing requires the reused-vector opt-in")
     if surface_assembly_backend is not None and not reuse_surface_vector:
@@ -459,6 +475,8 @@ def build_same_mesh_physical_action(
             selected_parent_indices=(
                 selected_parent_indices if operator_selection is not None else None
             ),
+            sparse_cutoff_policy=sparse_cutoff_policy,
+            sparse_cutoff_relative_tolerance=sparse_cutoff_relative_tolerance,
         )
         if reuse_surface_vector and stage_callback is not None:
             completion_facts = {
@@ -512,6 +530,13 @@ def build_same_mesh_physical_action(
             "mode_rows": mode_rows,
             "mode_sha256": mode_sha,
             "dtn_quadrature_degree": int(qdegree),
+            "dtn_sparse_cutoff_policy": sparse_cutoff_policy,
+            "dtn_sparse_cutoff_relative_tolerance": (
+                sparse_cutoff_relative_tolerance
+            ),
+            "dtn_sparse_cutoff_identity_sha256": str(
+                carrier.audit["sparse_cutoff_identity_sha256"]
+            ),
             "volume_quadrature_metadata": volume_quadrature_metadata,
             "incident_projections": incident_projections,
         }
@@ -784,6 +809,9 @@ def _active_fe_port_output_identity(
     *,
     active_mode_count: int,
     active_mode_sha256: str,
+    sparse_cutoff_policy: str,
+    sparse_cutoff_relative_tolerance: float,
+    sparse_cutoff_identity_sha256: str,
 ) -> dict[str, Any]:
     """Validate an explicit finite-element port-output scope and its identities.
 
@@ -794,7 +822,7 @@ def _active_fe_port_output_identity(
 
     import re
 
-    if contract.get("schema") != "task40.active_fe_port_outputs.v1":
+    if contract.get("schema") != "task40.active_fe_port_outputs.v2":
         raise ValueError("active FE port outputs require the Task40 scoped schema")
     operator_scope = contract.get("operator_scope")
     parent_scope = contract.get("parent_inventory_scope")
@@ -808,6 +836,24 @@ def _active_fe_port_output_identity(
         raise ValueError("Task40 active FE outputs cannot use the legacy N0 scope")
     if full_dtn_status != "FULL_DTN_NOT_VERIFIED":
         raise ValueError("finite active-port output cannot certify the full DtN operator")
+    contract_cutoff_policy = contract.get("dtn_sparse_cutoff_policy")
+    contract_cutoff_tolerance = contract.get(
+        "dtn_sparse_cutoff_relative_tolerance"
+    )
+    contract_cutoff_identity = contract.get(
+        "dtn_sparse_cutoff_identity_sha256"
+    )
+    expected_cutoff_tolerance = float(sparse_cutoff_relative_tolerance)
+    if (
+        contract_cutoff_policy != sparse_cutoff_policy
+        or contract_cutoff_tolerance != expected_cutoff_tolerance
+        or contract_cutoff_identity != sparse_cutoff_identity_sha256
+        or not isinstance(contract_cutoff_identity, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", contract_cutoff_identity)
+        or not np.isfinite(expected_cutoff_tolerance)
+        or not 0.0 < expected_cutoff_tolerance < 1.0
+    ):
+        raise ValueError("active FE output cutoff identity differs from the live carrier")
 
     parent_count = contract.get("parent_mode_count")
     active_count = contract.get("active_mode_count")
@@ -855,6 +901,9 @@ def _active_fe_port_output_identity(
         "active_mode_sha256": active_sha,
         "selection_policy": selection_policy,
         "selected_parent_indices_sha256": selected_sha,
+        "dtn_sparse_cutoff_policy": contract_cutoff_policy,
+        "dtn_sparse_cutoff_relative_tolerance": contract_cutoff_tolerance,
+        "dtn_sparse_cutoff_identity_sha256": contract_cutoff_identity,
         "omitted_channel_values": omitted,
     }
 
@@ -900,6 +949,13 @@ def recover_p0_outputs(
                 active_fe_port_output_contract,
                 active_mode_count=len(bundle["modes"]),
                 active_mode_sha256=str(bundle.get("mode_sha256", "")),
+                sparse_cutoff_policy=str(bundle["dtn_sparse_cutoff_policy"]),
+                sparse_cutoff_relative_tolerance=float(
+                    bundle["dtn_sparse_cutoff_relative_tolerance"]
+                ),
+                sparse_cutoff_identity_sha256=str(
+                    bundle["dtn_sparse_cutoff_identity_sha256"]
+                ),
             )
         port_metrics = _port_power_metrics(
             bundle["cfg"],

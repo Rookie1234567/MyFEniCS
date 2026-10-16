@@ -23,6 +23,12 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from .dtn_sparse_policy import (
+    LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+    SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY,
+    normalize_dtn_sparse_cutoff_policy,
+)
+
 FULLSPACE_DTN_PROFILE = "full3d_scalable_v1"
 FULLSPACE_DTN_BATCH_SIZE = 8
 FULLSPACE_DTN_MANIFEST_SCHEMA = "fullspace-dtn.mode-manifest.v1"
@@ -323,7 +329,18 @@ class FullspaceDtnCarrier:
         batch_size: int = FULLSPACE_DTN_BATCH_SIZE,
         comm: MPI.Intracomm | None = None,
         n0_parent_store: Any | None = None,
+        sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+        sparse_cutoff_relative_tolerance: float = 1.0e-13,
     ) -> None:
+        sparse_cutoff_policy = normalize_dtn_sparse_cutoff_policy(
+            sparse_cutoff_policy
+        )
+        sparse_cutoff_relative_tolerance = float(sparse_cutoff_relative_tolerance)
+        if (
+            not np.isfinite(sparse_cutoff_relative_tolerance)
+            or not 0.0 < sparse_cutoff_relative_tolerance < 1.0
+        ):
+            raise ValueError("DtN sparse cutoff relative tolerance is invalid")
         self._comm = MPI.COMM_SELF if comm is None else comm
         self._global_rows = int(global_rows)
         self._owned_start, self._owned_end = map(int, ownership_range)
@@ -393,6 +410,21 @@ class FullspaceDtnCarrier:
         self._n0_parent_store = n0_parent_store
         self._mode_manifest = _canonical_json_bytes(manifest)
         self._mode_manifest_sha256 = hashlib.sha256(self._mode_manifest).hexdigest()
+        self._sparse_cutoff_policy = sparse_cutoff_policy
+        self._sparse_cutoff_relative_tolerance = sparse_cutoff_relative_tolerance
+        self._sparse_cutoff_identity_manifest = _canonical_json_bytes(
+            {
+                "schema": "fullspace-dtn.sparse-functional-identity.v2",
+                "mode_manifest_sha256": self._mode_manifest_sha256,
+                "sparse_cutoff_policy": self._sparse_cutoff_policy,
+                "sparse_cutoff_relative_tolerance": (
+                    self._sparse_cutoff_relative_tolerance
+                ),
+            }
+        )
+        self._sparse_cutoff_identity_sha256 = hashlib.sha256(
+            self._sparse_cutoff_identity_manifest
+        ).hexdigest()
         slave_array = np.unique(np.asarray(slave_rows, dtype=PETSc.IntType).reshape(-1))
         if slave_array.size and (
             int(slave_array.min()) < self._owned_start
@@ -478,6 +510,11 @@ class FullspaceDtnCarrier:
                 "batch_size": self._batch_size,
                 "batch_count": (mode_count + self._batch_size - 1) // self._batch_size,
                 "mode_manifest_sha256": self._mode_manifest_sha256,
+                "sparse_cutoff_policy": self._sparse_cutoff_policy,
+                "sparse_cutoff_relative_tolerance": (
+                    self._sparse_cutoff_relative_tolerance
+                ),
+                "sparse_cutoff_identity_sha256": self._sparse_cutoff_identity_sha256,
                 "normalization": "explicit_diagonal_projection_denominator_H",
                 "normalization_nonidentity": bool(
                     np.any(np.abs(h_values - 1.0) > 1.0e-14)
@@ -736,6 +773,8 @@ def build_fullspace_dtn_carrier_from_surface(
     operator_selection: Mapping[str, Any] | None = None,
     parent_mode_rows: Sequence[Mapping[str, Any]] | None = None,
     selected_parent_indices: Sequence[int] | None = None,
+    sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+    sparse_cutoff_relative_tolerance: float = 1.0e-13,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
@@ -751,6 +790,24 @@ def build_fullspace_dtn_carrier_from_surface(
         not reuse_surface_vector or degree != 6
     ):
         raise ValueError("surface geometry caching requires the p6 reused-vector route")
+    sparse_cutoff_policy = normalize_dtn_sparse_cutoff_policy(sparse_cutoff_policy)
+    sparse_cutoff_relative_tolerance = float(sparse_cutoff_relative_tolerance)
+    if (
+        not np.isfinite(sparse_cutoff_relative_tolerance)
+        or not 0.0 < sparse_cutoff_relative_tolerance < 1.0
+    ):
+        raise ValueError("DtN sparse cutoff relative tolerance is invalid")
+    if (
+        (
+            sparse_cutoff_policy != LEGACY_DTN_SPARSE_CUTOFF_POLICY
+            or sparse_cutoff_relative_tolerance != 1.0e-13
+        )
+        and functional_store_config is not None
+    ):
+        raise ValueError(
+            "scale-homogeneous DtN functionals cannot use a persistent store "
+            "whose identity schema omits the cutoff policy/tolerance"
+        )
     from .dtn_port_3d import _combine_owned_entries
 
     modes = tuple(modes)
@@ -768,7 +825,7 @@ def build_fullspace_dtn_carrier_from_surface(
     resume_prefix_count = 0
     remaining_uses = None
     component_cache: dict[
-        tuple[str, int, int, complex, complex, complex],
+        tuple[Any, ...],
         tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
     ] = {}
     surface_contexts = {
@@ -937,8 +994,13 @@ def build_fullspace_dtn_carrier_from_surface(
             stage_callback(name, payload)
 
     def components_for(mode: Any):
-        key = _dtn_component_phase_key(mode)
-        components = component_cache.get(key)
+        phase_key = _dtn_component_phase_key(mode)
+        cache_key = (
+            sparse_cutoff_policy,
+            sparse_cutoff_relative_tolerance,
+            *phase_key,
+        )
+        components = component_cache.get(cache_key)
         if components is None:
             left_assembler = surface_assemblers[(mode.side, 0)]
             right_assembler = surface_assemblers[(mode.side, 1)]
@@ -970,20 +1032,46 @@ def build_fullspace_dtn_carrier_from_surface(
                     right_assembler, mode, mpc, workspace=workspace
                 )
             elif workspace is None:
-                left = left_assembler.assemble_entries(mode, mpc)
-                right = right_assembler.assemble_entries(mode, mpc)
-            else:
+                extract_policy = (
+                    {}
+                    if sparse_cutoff_policy == LEGACY_DTN_SPARSE_CUTOFF_POLICY
+                    and sparse_cutoff_relative_tolerance == 1.0e-13
+                    else {
+                        "sparse_cutoff_policy": sparse_cutoff_policy,
+                        "sparse_cutoff_relative_tolerance": (
+                            sparse_cutoff_relative_tolerance
+                        ),
+                    }
+                )
                 left = left_assembler.assemble_entries(
-                    mode, mpc, workspace=workspace
+                    mode, mpc, **extract_policy
                 )
                 right = right_assembler.assemble_entries(
-                    mode, mpc, workspace=workspace
+                    mode, mpc, **extract_policy
+                )
+            else:
+                extract_policy = (
+                    {}
+                    if sparse_cutoff_policy == LEGACY_DTN_SPARSE_CUTOFF_POLICY
+                    and sparse_cutoff_relative_tolerance == 1.0e-13
+                    else {
+                        "sparse_cutoff_policy": sparse_cutoff_policy,
+                        "sparse_cutoff_relative_tolerance": (
+                            sparse_cutoff_relative_tolerance
+                        ),
+                    }
+                )
+                left = left_assembler.assemble_entries(
+                    mode, mpc, workspace=workspace, **extract_policy
+                )
+                right = right_assembler.assemble_entries(
+                    mode, mpc, workspace=workspace, **extract_policy
                 )
             components = (
                 left,
                 right,
             )
-            component_cache[key] = components
+            component_cache[cache_key] = components
         return components
 
     try:
@@ -994,12 +1082,24 @@ def build_fullspace_dtn_carrier_from_surface(
             from .dtn_port_3d import _SurfaceMpcVectorWorkspace
 
             first_assembler = next(iter(surface_assemblers.values()))
+            workspace_policy_kwargs = (
+                {}
+                if sparse_cutoff_policy == LEGACY_DTN_SPARSE_CUTOFF_POLICY
+                and sparse_cutoff_relative_tolerance == 1.0e-13
+                else {
+                    "sparse_cutoff_policy": sparse_cutoff_policy,
+                    "sparse_cutoff_relative_tolerance": (
+                        sparse_cutoff_relative_tolerance
+                    ),
+                }
+            )
             workspace = _SurfaceMpcVectorWorkspace(
                 first_assembler.function_space,
                 first_assembler.mesh_data,
                 mpc,
                 surface_assemblers,
                 collect_timings=collect_surface_timings,
+                **workspace_policy_kwargs,
             )
         if workspace is not None:
             notify("surface_carrier_workspace_ready", workspace.facts)
@@ -1018,7 +1118,12 @@ def build_fullspace_dtn_carrier_from_surface(
         )
         for index in range(resume_prefix_count, len(modes)):
             mode = modes[index]
-            key = _dtn_component_phase_key(mode)
+            phase_key = _dtn_component_phase_key(mode)
+            cache_key = (
+                sparse_cutoff_policy,
+                sparse_cutoff_relative_tolerance,
+                *phase_key,
+            )
             stored_functional = (
                 functional_store.try_import_compatible_parent_functional(index)
                 if functional_store is not None and operator_selection is not None
@@ -1053,10 +1158,20 @@ def build_fullspace_dtn_carrier_from_surface(
                     if workspace is not None and workspace.timing_totals is not None
                     else None
                 )
+                merge_policy_kwargs = (
+                    {}
+                    if sparse_cutoff_policy == LEGACY_DTN_SPARSE_CUTOFF_POLICY
+                    and sparse_cutoff_relative_tolerance == 1.0e-13
+                    else {
+                        "sparse_cutoff_policy": sparse_cutoff_policy,
+                        "relative_tol": sparse_cutoff_relative_tolerance,
+                    }
+                )
                 projection_rows, projection_values = _combine_owned_entries(
                     components,
                     (mode.e_vector[0], mode.e_vector[1]),
                     comm=comm,
+                    **merge_policy_kwargs,
                 )
                 from .dtn_port_3d import _mode_projection_denominator, _traction_vector
 
@@ -1066,6 +1181,7 @@ def build_fullspace_dtn_carrier_from_surface(
                     components,
                     (-traction[0], -traction[1]),
                     comm=comm,
+                    **merge_policy_kwargs,
                 )
                 if combine_started is not None:
                     workspace.timing_totals["carrier_combine_seconds"] += (
@@ -1092,10 +1208,10 @@ def build_fullspace_dtn_carrier_from_surface(
                         )
             entries.append(entry)
             if remaining_uses is not None:
-                remaining_uses[key] -= 1
-                if remaining_uses[key] == 0:
-                    del remaining_uses[key]
-                    component_cache.pop(key, None)
+                remaining_uses[phase_key] -= 1
+                if remaining_uses[phase_key] == 0:
+                    del remaining_uses[phase_key]
+                    component_cache.pop(cache_key, None)
                     for context in surface_contexts.values():
                         context.release_mode(mode)
                 # The carrier arrays are copies from concatenate; no cached
@@ -1169,6 +1285,8 @@ def build_fullspace_dtn_carrier_from_surface(
                 if functional_store is not None and operator_selection is not None
                 else None
             ),
+            sparse_cutoff_policy=sparse_cutoff_policy,
+            sparse_cutoff_relative_tolerance=sparse_cutoff_relative_tolerance,
         )
         if normalization_started is not None:
             workspace.timing_totals["carrier_normalize_validate_seconds"] += (

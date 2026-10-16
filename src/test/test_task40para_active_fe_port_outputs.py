@@ -11,7 +11,7 @@ def _contract(*, parent_count=4, active_count=4, parent_sha=None, active_sha=Non
     parent_sha = parent_sha or "a" * 64
     active_sha = active_sha or (parent_sha if parent_count == active_count else "b" * 64)
     return {
-        "schema": "task40.active_fe_port_outputs.v1",
+        "schema": "task40.active_fe_port_outputs.v2",
         "operator_scope": "task40.phi90.rectangle_R_reference",
         "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
         "parent_inventory_scope": "task40.rectangle_R13",
@@ -21,6 +21,17 @@ def _contract(*, parent_count=4, active_count=4, parent_sha=None, active_sha=Non
         "active_mode_sha256": active_sha,
         "selection_policy": "explicit_symmetric_rectangle_v1",
         "selected_parent_indices_sha256": None if parent_count == active_count else "c" * 64,
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1.0e-13,
+        "dtn_sparse_cutoff_identity_sha256": "d" * 64,
+    }
+
+
+def _identity_kwargs():
+    return {
+        "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "sparse_cutoff_relative_tolerance": 1.0e-13,
+        "sparse_cutoff_identity_sha256": "d" * 64,
     }
 
 
@@ -33,6 +44,7 @@ def test_active_fe_output_identity_carries_distinct_parent_and_active_scope():
         _contract(parent_count=10, active_count=4),
         active_mode_count=4,
         active_mode_sha256="b" * 64,
+        **_identity_kwargs(),
     )
     assert identity["output_scope"] == "ACTIVE_FE_DTN_PORTS"
     assert identity["parent_mode_count"] == 10
@@ -42,6 +54,7 @@ def test_active_fe_output_identity_carries_distinct_parent_and_active_scope():
     assert identity["selected_parent_indices_sha256"] == "c" * 64
     assert identity["omitted_channel_values"] == "NOT_COMPUTED"
     assert identity["full_dtn_status"] == "FULL_DTN_NOT_VERIFIED"
+    assert identity["dtn_sparse_cutoff_policy"] == "scale_homogeneous_relative_only_v1"
 
 
 def test_active_fe_unfiltered_contract_requires_parent_active_identity_match():
@@ -53,12 +66,14 @@ def test_active_fe_unfiltered_contract_requires_parent_active_identity_match():
         _contract(parent_count=4, active_count=4),
         active_mode_count=4,
         active_mode_sha256="a" * 64,
+        **_identity_kwargs(),
     )
     assert identity["omitted_channel_values"] == "NONE_WITHIN_DECLARED_PARENT"
     bad = _contract(parent_count=4, active_count=4, active_sha="b" * 64)
     with pytest.raises(ValueError, match="unfiltered"):
         _active_fe_port_output_identity(
-            bad, active_mode_count=4, active_mode_sha256="b" * 64
+            bad, active_mode_count=4, active_mode_sha256="b" * 64,
+            **_identity_kwargs(),
         )
 
 
@@ -70,6 +85,8 @@ def test_active_fe_unfiltered_contract_requires_parent_active_identity_match():
         ("missing_selection", "parent-index identity"),
         ("legacy_n0", "legacy N0"),
         ("false_full", "cannot certify"),
+        ("cutoff_policy", "cutoff identity"),
+        ("cutoff_identity", "cutoff identity"),
     ],
 )
 def test_active_fe_output_contract_rejects_scope_or_identity_aliases(mutation, message):
@@ -89,10 +106,15 @@ def test_active_fe_output_contract_rejects_scope_or_identity_aliases(mutation, m
         contract["operator_scope"] = "A6_n0"
     elif mutation == "false_full":
         contract["full_dtn_status"] = "FULL_DTN_VERIFIED"
+    elif mutation == "cutoff_policy":
+        contract["dtn_sparse_cutoff_policy"] = "absolute_floor_relative_v1"
+    elif mutation == "cutoff_identity":
+        contract["dtn_sparse_cutoff_identity_sha256"] = "e" * 64
 
     with pytest.raises(ValueError, match=message):
         _active_fe_port_output_identity(
-            contract, active_mode_count=4, active_mode_sha256=live_sha
+            contract, active_mode_count=4, active_mode_sha256=live_sha,
+            **_identity_kwargs(),
         )
 
 
@@ -115,6 +137,9 @@ def test_task40_active_fe_outputs_use_port_files_and_never_sampled_dft(monkeypat
         "active_sha256": active_sha,
         "selection_policy": "explicit_box2_rectangle_v1",
         "selected_parent_indices_sha256": "c" * 64,
+        "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "sparse_cutoff_relative_tolerance": 1.0e-13,
+        "sparse_cutoff_identity_sha256": "d" * 64,
     }
     policy = _direct_output_policy(route)
     assert policy["active_port_outputs_only"] is False
@@ -153,6 +178,13 @@ def test_task40_active_fe_outputs_use_port_files_and_never_sampled_dft(monkeypat
         "modes": [SimpleNamespace(m=i, n=0) for i in range(4)],
         "incident_projections": [0j] * 4,
         "mode_sha256": active_sha,
+        "dtn_sparse_cutoff_policy": route["sparse_cutoff_policy"],
+        "dtn_sparse_cutoff_relative_tolerance": route[
+            "sparse_cutoff_relative_tolerance"
+        ],
+        "dtn_sparse_cutoff_identity_sha256": route[
+            "sparse_cutoff_identity_sha256"
+        ],
         "dtn_action": SimpleNamespace(recover_auxiliary=lambda u: np.zeros(4, complex)),
     }
     output = physical.recover_p0_outputs(
