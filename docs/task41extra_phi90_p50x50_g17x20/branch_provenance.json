@@ -1,0 +1,23 @@
+{
+  "schema": "task_branch_provenance.v1",
+  "repository": "Rookie1234567/MyFEniCS",
+  "task_id": "task41extra_phi90_p50x50_g17x20",
+  "execution_branch": "task41extra_phi90_p50x50_g17x20",
+  "task_directory": "docs/task41extra_phi90_p50x50_g17x20",
+  "parent_branch": "task40extra_0p7nm_engineering",
+  "base_sha": "939ffe1f7b8d5a7406a01e25a716c08d36090078",
+  "parent_scientific_source_sha": "37b92ca7897b38f8552dd76b54af3973817fbcde",
+  "parent_state": "USER_CONTROLLED_STOP_REPORTED_DESCENDANTS_CLEARED",
+  "creation_date": "2026-10-16",
+  "timezone": "Asia/Singapore",
+  "branch_creator_role": "ChatGPT",
+  "authorization_basis": "Explicit current user request to create a task41extra-prefixed execution branch and task from task40extra; overrides normal Codex-creates-branch rule for this action only.",
+  "codex_project_name_policy": "KEEP_EXISTING_NAME_AND_CONVERSATIONS",
+  "worktree_policy": "Reuse existing canonical task40 worktrees after clean-tree and no-live-process verification; no directory or project rename required.",
+  "initial_change_scope": "New task documentation only; no numerical implementation, run, environment change or master merge.",
+  "task_book_sha256": "874bcff89be450d1695c163590aa3f2f00b67ff47cd9111647287bb1a2d59825",
+  "scientific_inheritance": "Source mechanisms and qualified software contracts only. New physical/operator/mesh/mode/q identities required; old matrix/field qualifications are not transplanted.",
+  "geometry_interpretation": "Main case is the centered 17x20x120 nm rectangular Si body; no automatically inherited diagnostic notch/air-void. This explicit assumption is stated in task section 2.1.",
+  "implementation_status": "NOT_RUN",
+  "merge_approved": false
+}
