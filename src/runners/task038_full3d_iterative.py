@@ -62,6 +62,18 @@ def run_full3d_iterative(
         errors = task41_payload_errors(resolved_payload)
         if errors:
             raise ValueError("Task41 A2 dispatcher rejected input: " + "; ".join(errors))
+        resolver_default_authorizations = {
+            "task40_target_heavy_authorized",
+            "task40_v22_operator_probe_authorized",
+        }
+        unexpected_task40_execution_keys = [
+            str(key)
+            for key, value in (
+                execution.items() if isinstance(execution, Mapping) else ()
+            )
+            if str(key).startswith("task40_")
+            and not (key in resolver_default_authorizations and value is False)
+        ]
         if (
             resolved_payload.get("run_id") != TASK41_G13_A2_RUN_ID
             or resolved_payload.get("comparison_group") != TASK41_COMPARISON_GROUP
@@ -73,7 +85,7 @@ def run_full3d_iterative(
             or stage != "TASK41_A2"
             or identity.get("identity") != TASK41_G13_A2_PRECONDITIONER
             or not isinstance(execution, Mapping)
-            or any(str(key).startswith("task40_") for key in execution)
+            or unexpected_task40_execution_keys
         ):
             raise ValueError("Task41 A2 dispatcher requires its exact run, profile, and all-q route")
         source_sha = _kwargs.get("source_sha")

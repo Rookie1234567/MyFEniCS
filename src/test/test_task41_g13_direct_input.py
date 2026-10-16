@@ -119,6 +119,56 @@ def test_task41_g13_resolves_new_physics_mesh_and_mode_inventory():
     assert all(np.all(np.isfinite(mode.h_vector)) for mode in modes)
 
 
+def test_task41_a2_dispatcher_accepts_only_resolver_false_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.runners import task038_full3d_iterative as dispatcher
+    from src.runners import task40_v10_worker
+
+    payload = load_and_resolve(A2_INPUT).as_jsonable()
+    allowed_defaults = (
+        "task40_target_heavy_authorized",
+        "task40_v22_operator_probe_authorized",
+    )
+    assert all(payload["execution"][name] is False for name in allowed_defaults)
+    worker_calls = []
+
+    def mock_worker(resolved_payload, run_directory, **kwargs):
+        worker_calls.append((resolved_payload, Path(run_directory), kwargs))
+        return {"mock_worker": True}
+
+    monkeypatch.setattr(
+        task40_v10_worker, "run_task40_v10_p6_reference_worker", mock_worker
+    )
+    run_directory = tmp_path / "run"
+    result = dispatcher.run_full3d_iterative(
+        payload, run_directory, source_sha="f" * 40
+    )
+    assert result == {"mock_worker": True}
+    assert len(worker_calls) == 1
+    forwarded_payload, forwarded_directory, kwargs = worker_calls[0]
+    assert forwarded_payload is payload
+    assert forwarded_directory == run_directory
+    assert kwargs["source_sha"] == "f" * 40
+    assert kwargs["share_transform_bank"] is True
+
+    for name in allowed_defaults:
+        invalid_payload = copy.deepcopy(payload)
+        invalid_payload["execution"][name] = True
+        with pytest.raises(ValueError, match="Task41 A2 dispatcher"):
+            dispatcher.run_full3d_iterative(
+                invalid_payload, run_directory, source_sha="f" * 40
+            )
+
+    invalid_route = copy.deepcopy(payload)
+    invalid_route["execution"]["task40_unregistered_route"] = False
+    with pytest.raises(ValueError, match="Task41 A2 dispatcher"):
+        dispatcher.run_full3d_iterative(
+            invalid_route, run_directory, source_sha="f" * 40
+        )
+    assert len(worker_calls) == 1
+
+
 def test_task41_regular_p6_reference_fills_period_y_without_changing_target():
     cfg = simulation_config_3d_from_normalized(_payload())
 
