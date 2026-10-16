@@ -9467,6 +9467,7 @@ def _run_task41_p0_service(
     )
     if activation_code != 0:
         raise RuntimeError(f"Task41 qualified runtime activation failed: {activation_stderr}")
+    environment.pop("TASK40_V29_STRICT_FACTOR_ONLY", None)
     environment.update({
         "TASK41_P0_STRICT_EXECUTION": "1",
         "TASK41_P0_CONTRACT_PATH": str(contract_path.resolve()),

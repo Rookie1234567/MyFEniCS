@@ -482,6 +482,7 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
                 "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": "1",
                 "_MYFENICS_CLOUD_RUNTIME_PROFILE": "native_linux",
                 "_MYFENICS_CLOUD_ABI_MANIFEST_SHA256": contract["runtime"]["abi_receipt_sha256"],
+                "TASK40_V29_STRICT_FACTOR_ONLY": "1",
             },
             "fixture native activation",
             0,
@@ -519,6 +520,8 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
             return ""
         raise AssertionError(f"unexpected check_output command: {command}")
 
+    run_case_environment: dict[str, str] = {}
+
     def fake_subprocess_run(command, *args, **kwargs):
         if command[:2] == ["git", "rev-parse"]:
             return SimpleNamespace(stdout=f"{source_sha}\n", stderr="", returncode=0)
@@ -527,6 +530,7 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         if command[:2] == ["git", "status"]:
             return SimpleNamespace(stdout="", stderr="", returncode=0)
         if len(command) >= 2 and command[1] == "scripts/run_case.py":
+            run_case_environment.update(kwargs.get("env", {}))
             run_root = service_output_root / "synthetic_launcher_result"
             numerical_output = run_root / "numerical_output"
             numerical_output.mkdir(parents=True)
@@ -568,6 +572,12 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         repo_root=repo_root,
     )
     assert return_code == 0
+    assert "TASK40_V29_STRICT_FACTOR_ONLY" not in run_case_environment
+    assert run_case_environment["TASK41_P0_STRICT_EXECUTION"] == "1"
+    assert run_case_environment["TASK41_P0_CONTRACT_PATH"] == str(contract_path.resolve())
+    assert run_case_environment["TASK41_P0_CONTRACT_SHA256"] == contract_sha
+    assert run_case_environment["TASK41_P0_EXECUTION_WINDOW_PATH"] == str(window.path)
+    assert run_case_environment["TASK41_P0_EXECUTION_WINDOW_SHA256"] == window_sha
     closeout_call = next(call for call in captured_calls if call.get("campaign_phase") == "closeout")
     assert closeout_call["wall_seconds"] == TASK41_CLOSEOUT_SECONDS
     assert closeout_call["campaign_window_path"] == window.path
