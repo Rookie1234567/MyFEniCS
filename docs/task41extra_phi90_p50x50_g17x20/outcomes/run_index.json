@@ -35,6 +35,16 @@
       "watchdog_seconds": 2.993759864009917,
       "compact": "a2_startup_failures.json",
       "raw_local_directory": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/attempt2_remote/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T144637.492256Z"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 3,
+      "source_sha": "05aa9739a6d27ddee91278dc827a7d7c70cbeef4",
+      "classification": "ENGINEERING_STARTUP_FAILURE_BEFORE_FE",
+      "error": "Task38 full3d_iterative authority error: Task38 Full3D iterative adapter failed: Task40 V10/V11 ABI gate accepts only an exact reviewed p4/p6 profile",
+      "watchdog_seconds": 3.5461957671213895,
+      "compact": "a2_startup_failures.json",
+      "raw_local_directory": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/attempt3_remote/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T150415.481480Z"
     }
   ],
   "not_run": [

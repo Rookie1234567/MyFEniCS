@@ -82,6 +82,47 @@
         "passed": true
       },
       "classification": "ENGINEERING_STARTUP_FAILURE_BEFORE_FE"
+    },
+    {
+      "attempt": 3,
+      "source": {
+        "source_sha": "05aa9739a6d27ddee91278dc827a7d7c70cbeef4",
+        "tracked_and_nonignored_untracked_clean": true,
+        "actual_git_directory": "/home/fenics/Projects/laptop_share/.git"
+      },
+      "raw_summary": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/attempt3_remote/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T150415.481480Z/watchdog/summary.json",
+      "raw_summary_sha256": "6b8c616766986486e88974b81c05e0f170e8c4e34e1357fec86f0fd0654a109e",
+      "worker_log": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/attempt3_remote/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T150415.481480Z/watchdog/worker.log",
+      "worker_log_sha256": "7441d388d64c4a858d67a67553f3327e714d1d62925f8ceec048d0c4eabfada3",
+      "error": "Task38 full3d_iterative authority error: Task38 Full3D iterative adapter failed: Task40 V10/V11 ABI gate accepts only an exact reviewed p4/p6 profile",
+      "elapsed_seconds": 3.5461957671213895,
+      "facts": {
+        "pss_status": "DISABLED_BY_PROFILE",
+        "sampled_process_tree_pss_peak_bytes": null,
+        "leader_exit_code": 4,
+        "descendants_cleared": true,
+        "sampled_process_tree_rss_peak_bytes": 287637504,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "process_tree_all_status_readable": true
+      },
+      "task_cgroup_swap": {
+        "gate_enforced": true,
+        "start_swap_current_bytes": 0,
+        "peak_swap_current_bytes": 0,
+        "sample_count": 11,
+        "end": {
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261016T150410-1492041.service",
+          "readable": true,
+          "dedicated_job_cgroup": true,
+          "member_count": 2,
+          "memory_current_bytes": 65445888,
+          "memory_peak_bytes": 258703360,
+          "memory_limit_bytes": 1649267441664,
+          "swap_current_bytes": 0
+        },
+        "passed": true
+      },
+      "classification": "ENGINEERING_STARTUP_FAILURE_BEFORE_FE"
     }
   ],
   "window_t0_utc": "2026-10-16T14:35:47.716727746Z",

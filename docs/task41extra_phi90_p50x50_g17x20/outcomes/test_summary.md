@@ -45,3 +45,7 @@ A2 接通同物理 G13、168 模式、10 q / 5 sector、全部准确因子驻留
 ## A2 runtime 与固定窗口接线修复
 
 新增 Task41 专用只读窗口分支：worker 读取同一合同/窗口/服务资源字段，保持固定 cap、64 GiB 宿主余量、strict cgroup 与任务零 swap，不落入旧 Task40/V14 账本。真实 A2 DAT、实际 `_V14Runtime` 和候选合同在一条轻量 fixture 中联通；Git/旧 A1 artifact 仅用局部替身，不启动 FE。定向测试 **1 passed in 0.24 s**，工具 `exec-847d577e-8805-4e72-9a29-3263d4041ce8`；相关编译与 diff check 通过。旧 PATH 字串预检误报保留为工程记录，实际 Linux runtime/ABI 正确，未修改环境。新正式 attempt 的实际结果另行记录。
+
+## A2 ABI 分派修复
+
+Task41 strict A2 通过本场合同绑定 native_linux receipt；拒绝 WSL receipt 或 V30/V31 混用，共用原实际模块、版本、complex128/int32、MPI1/math1 检查。局部 fixture `test_task41_a2_abi_uses_native_contract_route_and_rejects_local_receipt`：1 passed in 0.27 s；含真实本机 WSL ABI 回归，但不是工作站 native 正向通过声明。相关 compileall/diff check 通过；主控冻结后另做工作站 imports-only 正向核验。

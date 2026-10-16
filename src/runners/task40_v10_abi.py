@@ -1,4 +1,4 @@
-"""Strict ABI qualification for frozen Task40 V10/V11 p6 candidate profiles."""
+"""Strict ABI qualification for frozen Task40 and Task41 candidate profiles."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def _rooted_contract_path(root: Path, value: object, label: str) -> Path:
     supplied = Path(str(value))
     candidate = (supplied if supplied.is_absolute() else root / supplied).resolve()
     if not candidate.is_relative_to(root):
-        raise RuntimeError(f"Task40 approved {label} escapes the execution root")
+        raise RuntimeError(f"approved {label} escapes the execution root")
     return candidate
 
 
@@ -42,7 +42,7 @@ def qualified_task40_v10_abi(
     v31_contract_path: str | Path | None = None,
     v31_contract_sha256: str | None = None,
 ) -> dict[str, object]:
-    """Validate the legacy WSL, strict V30, or strict V31 ABI receipt."""
+    """Validate the qualified Task40 or Task41 runtime ABI receipt."""
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
@@ -54,8 +54,19 @@ def qualified_task40_v10_abi(
         TASK40_V20_P6_PROFILES,
         TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
     )
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
 
-    if profile_identity not in (
+    strict_v30 = os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1"
+    strict_v31 = os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1"
+    strict_task41 = os.environ.get("TASK41_P0_STRICT_EXECUTION") == "1"
+    if strict_v30 and strict_v31:
+        raise RuntimeError("Task40 V30 and V31 strict ABI contracts cannot be combined")
+    if strict_task41 and (strict_v30 or strict_v31):
+        raise RuntimeError(
+            "Task41 P0 and Task40 V30/V31 strict ABI contracts cannot be combined"
+        )
+
+    task40_profiles = (
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
         *TASK40_V11_P6_PROFILES,
@@ -64,17 +75,67 @@ def qualified_task40_v10_abi(
         *TASK40_V17_P6_PROFILES,
         *TASK40_V18_P6_PROFILES,
         *TASK40_V20_P6_PROFILES,
-    ):
+    )
+    if strict_task41:
+        if profile_identity != TASK41_G13_A2_PRECONDITIONER:
+            raise RuntimeError("Task41 P0 ABI gate accepts only its exact A2 profile")
+    elif profile_identity == TASK41_G13_A2_PRECONDITIONER:
+        raise RuntimeError("Task41 A2 ABI gate requires the strict P0 execution contract")
+    elif profile_identity not in task40_profiles:
         raise RuntimeError(
             "Task40 V10/V11 ABI gate accepts only an exact reviewed p4/p6 profile"
         )
 
     root = Path(__file__).resolve().parents[2]
-    strict_v30 = os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1"
-    strict_v31 = os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1"
-    if strict_v30 and strict_v31:
-        raise RuntimeError("Task40 V30 and V31 strict ABI contracts cannot be combined")
-    if strict_v30:
+    if strict_task41:
+        if any(
+            value is not None
+            for value in (
+                v30_contract_path,
+                v30_contract_sha256,
+                v31_contract_path,
+                v31_contract_sha256,
+            )
+        ):
+            raise RuntimeError("Task41 P0 ABI gate cannot use a Task40 V30/V31 contract")
+        contract_path_value = os.environ.get("TASK41_P0_CONTRACT_PATH")
+        contract_sha256 = os.environ.get("TASK41_P0_CONTRACT_SHA256")
+        if not contract_path_value or not contract_sha256:
+            raise RuntimeError("Task41 P0 ABI gate requires its bound execution contract")
+        from src.runners.task41_p0_contract import (
+            TASK41_A2_RUN_ID,
+            require_task41_p0_contract,
+        )
+
+        contract, checked_contract_sha256 = require_task41_p0_contract(
+            contract_path_value,
+            expected_sha256=contract_sha256,
+            current_root=root,
+            check_current_source=True,
+            require_clean_source=True,
+            case_id="A2",
+        )
+        if (
+            checked_contract_sha256 != contract_sha256
+            or contract["case"].get("run_id") != TASK41_A2_RUN_ID
+        ):
+            raise RuntimeError(
+                "Task41 P0 ABI contract differs from the exact A2 service binding"
+            )
+        execution = contract["runtime"]
+        runtime_profile = str(execution["profile"])
+        if runtime_profile != "native_linux":
+            raise RuntimeError(
+                "Task41 P0 ABI gate requires the contract-bound native_linux runtime"
+            )
+        prefix = _rooted_contract_path(
+            root, execution["runtime_prefix"], "Task41 runtime prefix"
+        )
+        receipt_path = _rooted_contract_path(
+            root, execution["abi_receipt_path"], "Task41 ABI receipt"
+        )
+        expected_receipt_sha256 = str(execution["abi_receipt_sha256"])
+    elif strict_v30:
         if profile_identity != TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE:
             raise RuntimeError(
                 "Task40 V30 native ABI receipt is restricted to the approved target Ny8 profile"
@@ -171,26 +232,43 @@ def qualified_task40_v10_abi(
 
         runtime_profile = LOCAL_WSL2_PROFILE
 
+    abi_family = "Task41 P0" if strict_task41 else "Task40 V10"
+    strict_native = (strict_v30 or strict_v31 or strict_task41) and (
+        runtime_profile == "native_linux"
+    )
+
     try:
         receipt_bytes = receipt_path.read_bytes()
     except OSError as exc:
         receipt_label = (
-            "V31 approved" if strict_v31 else "V30 approved" if strict_v30 else "V10 qualified"
+            "Task41 P0"
+            if strict_task41
+            else "Task40 V31 approved"
+            if strict_v31
+            else "Task40 V30 approved"
+            if strict_v30
+            else "Task40 V10 qualified"
         )
-        raise RuntimeError(f"Task40 {receipt_label} ABI receipt is unavailable") from exc
+        raise RuntimeError(f"{receipt_label} ABI receipt is unavailable") from exc
     receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
     if receipt_sha256 != expected_receipt_sha256:
         receipt_label = (
-            "V31 approved" if strict_v31 else "V30 approved" if strict_v30 else "V10 qualified"
+            "Task41 P0"
+            if strict_task41
+            else "Task40 V31 approved"
+            if strict_v31
+            else "Task40 V30 approved"
+            if strict_v30
+            else "Task40 V10 qualified"
         )
-        raise RuntimeError(f"Task40 {receipt_label} ABI receipt hash differs from its binding")
+        raise RuntimeError(f"{receipt_label} ABI receipt hash differs from its binding")
 
     configured_receipt = os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST")
     configured_sha256 = os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256")
     if (
         (
             os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1"
-            if not (strict_v30 or strict_v31)
+            if not strict_native
             else os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") is not None
         )
         or os.environ.get("_MYFENICS_CLOUD_QUALIFIED_ACTIVATION") != "1"
@@ -201,12 +279,12 @@ def qualified_task40_v10_abi(
         or Path(configured_receipt).resolve() != receipt_path
         or configured_sha256 != receipt_sha256
     ):
-        raise RuntimeError("Task40 activation or ABI receipt binding differs from the approved profile")
+        raise RuntimeError(f"{abi_family} activation or ABI receipt binding differs from the approved profile")
 
     try:
         receipt = json.loads(receipt_bytes)
     except json.JSONDecodeError as exc:
-        raise RuntimeError("Task40 V10 qualified ABI receipt is not valid JSON") from exc
+        raise RuntimeError(f"{abi_family} qualified ABI receipt is not valid JSON") from exc
     if (
         receipt.get("status") != "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION"
         or receipt.get("runtime_profile") != runtime_profile
@@ -216,7 +294,7 @@ def qualified_task40_v10_abi(
         or receipt.get("PDE_calls") != 0
         or receipt.get("old_ABI_inherited") is not False
     ):
-        raise RuntimeError("Task40 V10 ABI receipt does not describe the approved imports-only qualification")
+        raise RuntimeError(f"{abi_family} ABI receipt does not describe the approved imports-only qualification")
 
     from benchmarks.task40_runtime_profile import (
         LOCAL_WSL2_PROFILE,
@@ -231,12 +309,12 @@ def qualified_task40_v10_abi(
         LOCAL_WSL2_PROFILE != "local_wsl2_authorized"
         or NATIVE_LINUX_PROFILE != "native_linux"
     ):
-        raise RuntimeError("Task40 runtime profile constants changed unexpectedly")
+        raise RuntimeError("runtime profile constants changed unexpectedly")
     if (
         Path(sys.executable).resolve() != (prefix / "bin/python").resolve()
         or Path(sys.prefix).resolve() != prefix
     ):
-        raise RuntimeError("Task40 V10 Python executable/prefix differs from the qualified runtime")
+        raise RuntimeError(f"{abi_family} Python executable/prefix differs from the qualified runtime")
 
     import numpy as np
     from mpi4py import MPI
@@ -256,7 +334,7 @@ def qualified_task40_v10_abi(
         != receipt["dolfinx_default_scalar_dtype"]
         or os.environ.get("UCX_TLS") != receipt["process_local_UCX_TLS"]
     ):
-        raise RuntimeError("Task40 V10 live PETSc/MPI/scalar identity differs from the qualified receipt")
+        raise RuntimeError(f"{abi_family} live PETSc/MPI/scalar identity differs from the qualified receipt")
 
     module_facts: dict[str, dict[str, object]] = {}
     for name, expected in receipt["modules"].items():
@@ -269,19 +347,23 @@ def qualified_task40_v10_abi(
             or not module_path.is_relative_to(prefix)
             or (expected.get("version") is not None and version != expected["version"])
         ):
-            raise RuntimeError(f"Task40 V10 module path/version differs from qualified receipt: {name}")
+            raise RuntimeError(f"{abi_family} module path/version differs from qualified receipt: {name}")
         module_facts[name] = {"path": str(module_path), "version": version}
 
     mpi_extension = Path(MPI.__file__).resolve()
     expected_mpi_extension = Path(receipt["MPI"]["extension_file"]).resolve()
     if mpi_extension != expected_mpi_extension or not mpi_extension.is_relative_to(prefix):
-        raise RuntimeError("Task40 V10 mpi4py extension path differs from qualified receipt")
+        raise RuntimeError(f"{abi_family} mpi4py extension path differs from qualified receipt")
     threads = {name: os.environ.get(name) for name in _THREAD_VARIABLES}
     if set(threads.values()) != {"1"}:
-        raise RuntimeError("Task40 V10 qualified ABI requires all thread limits to equal one")
+        raise RuntimeError(f"{abi_family} qualified ABI requires all thread limits to equal one")
 
     return {
-        "qualification": "task40_v10_exact_profile_receipt_bound",
+        "qualification": (
+            "task41_p0_contract_receipt_bound"
+            if strict_task41
+            else "task40_v10_exact_profile_receipt_bound"
+        ),
         "profile_identity": profile_identity,
         "runtime_profile": runtime_profile,
         "runtime_host_binding": host_binding,
