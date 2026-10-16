@@ -1,3 +1,18 @@
+## Task40extra V33 最新状态：用户暂停，已收尾（2026-10-16）
+
+| 项目 | 当前实测及边界 |
+|---|---|
+| 最新源码/运行 | 37b92ca7897b38f8552dd76b54af3973817fbcde / 20261016T064157.366418Z |
+| 新增进展 | 旧q4读取完成89.768216187 s；twist1/q1,q5局部FE/MPC阶段开始，未完成新q |
+| 停止 | 用户主动暂停；不是本次时间、资源或数值门失败；服务及完整后代已退出 |
+| 时间/内存 | 流程107.159401232 s；tree RSS 13233586176 B、cgroup 4675731456 B为不同口径；任务swap0 |
+| 资格 | 旧q0/q4保留；新reference/target未完成；required checker暂停后未运行 |
+| 下一步 | 等用户确认方位角/输入；不自动重启或刷新窗口 |
+
+详见 [Response V33](../response_v33.md) 和 [暂停证据](records/v33_extension_user_pause.json)。以下为历史快照。
+
+---
+
 ## Task40extra Review V33 终态（2026-10-16，新加坡）
 
 模型为 0.7 nm、Ny=8 原尺寸非可分目标参考流程。运行复用既有 q4 资格，尝试构建 all-q reference；固定数值截止到达时仍在逐模式生成 DTN carrier。
@@ -6,7 +21,7 @@
 |---|---|---|
 | all-q reference 准备 | V33 frozen source `86574e478148db8a1dd39909ccc6455fc2ea2646`；MPI1；`dtn_carrier_mode` 最后记录 7680/8036 | `PERFORMANCE_CONTROLLED_STOP`；这是 relay 进度，不是 durable checkpoint；没有新增 q 结果、完整 reference 或新 FE 场 |
 | 时间门 | campaign 数值 cutoff 85200 s；watchdog 结束累计 85232.387040 s，launcher 观察 85232.388583 s | watchdog 对整个进程树 TERM、30 s 后 KILL，后代清场；非数值失败、非内存失败 |
-| 资源 | 同时进程树 RSS 峰 26848030720 B；job cgroup 峰 28745129984 B；task swap 0 B | PSS null；host swapin/out +49/+72 页是 WSL 全局诊断 |
+| 资源 | 同时进程树 RSS 峰 26848030720 B；job cgroup 峰 28745129984 B；task swap 0 B | PSS null；host swapin/out +49/+72 页是原生 Linux 宿主全局诊断（旧字段名含 WSL） |
 | Required checker | `NO_PARTIAL_FOOTER`；`full_pass=false`、`official_result=false` | 无 official packet/footer；未产生 official R/T/A |
 | 科学结果 | 完整 reference、full explicit residual、目标 FE 场、official R/T/A 均无新增 | 既有 q4 资格保持其原身份；7680/8036 不能续算 |
 

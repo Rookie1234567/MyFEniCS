@@ -1,3 +1,7 @@
+## V33 延时与用户暂停收尾
+
+科学源码37b92ca7897b38f8552dd76b54af3973817fbcde。延时保存流/调用链等9项定向通过（1.48 s），q4新窗口绑定窄修1项通过（0.17 s主控复验）；重复同项不累计。ABI complex128/int32、compileall与diff检查按当时源码通过。本次暂停收尾只校验JSON、证据hash、运行索引和diff，不重跑PDE或全仓测试。required scientific checker为NOT_RUN_AFTER_USER_PAUSE，不能当作PASS。
+
 ## V32 终态与收口检查（2026-10-15）
 
 本次收口不改数值源码，不重跑全仓测试或PDE。既有定向测试和失败保留在后续历史章节。实际q4四作用最大误差2.6835748652861403e-14；总服务required checker受监督运行，return2/NO_PARTIAL_FOOTER，非科学PASS。主控定向校验：所有本次JSON可解析、索引所列文件hash回读一致、q4误差与原始收据一致、改动仅限docs；git diff --check通过。未重跑数学或全仓测试。

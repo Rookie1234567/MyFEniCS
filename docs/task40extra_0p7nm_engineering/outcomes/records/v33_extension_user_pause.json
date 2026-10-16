@@ -1,0 +1,655 @@
+{
+  "schema": "task40extra.review_v33.user_pause_closeout.v1",
+  "status": "PAUSED_BY_USER",
+  "scientific_source_sha": "37b92ca7897b38f8552dd76b54af3973817fbcde",
+  "branch": "task40extra_0p7nm_engineering",
+  "run_id": "20261016T064157.366418Z",
+  "user_pause_reason": "用户可能变更方位角，要求先暂停，随后仅授权收尾提交远程。",
+  "azimuth_changed": false,
+  "resume_authorized": false,
+  "service_unit": "myfenics-case-task40-v33-all-q-reference-37b92ca7897b.service",
+  "raw_classification": "USER_CONTROLLED_STOP",
+  "exit_status": -9,
+  "service_exit_status_is_scientific_pass": false,
+  "source_clean_at_run": true,
+  "run_manifest": {
+    "comparison_group": "task40extra_0p7nm_nonseparable_n0_n6",
+    "effective_watchdog_authority": {
+      "global_swap_gate_enforced": false,
+      "job_cgroup_swap": {
+        "end": {
+          "dedicated_job_cgroup": true,
+          "member_count": 1,
+          "memory_current_bytes": 3164286976,
+          "memory_limit_bytes": 1649267441664,
+          "memory_peak_bytes": 4675731456,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task40-v33-all-q-reference-37b92ca7897b.service",
+          "readable": true,
+          "swap_current_bytes": 0
+        },
+        "gate_enforced": true,
+        "passed": true,
+        "peak_swap_current_bytes": 0,
+        "sample_count": 324,
+        "start_swap_current_bytes": 0
+      },
+      "job_cgroup_swap_gate_enforced": true,
+      "launch_envelope": {
+        "cap_policy": "min(split_domain_dynamic_process_tree_cap, explicit_tree_cap)",
+        "cgroup_limits": [
+          {
+            "anon_bytes": 107868160,
+            "current_bytes": 114335744,
+            "file_bytes": 647168,
+            "file_dirty_bytes": 135168,
+            "limit_bytes": 1649267441664,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task40-v33-all-q-reference-37b92ca7897b.service"
+          }
+        ],
+        "cgroup_memory_stats": [
+          {
+            "anon_bytes": 107868160,
+            "current_bytes": 114335744,
+            "file_bytes": 647168,
+            "file_dirty_bytes": 135168,
+            "limit_bytes": 1649267441664,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task40-v33-all-q-reference-37b92ca7897b.service"
+          },
+          {
+            "anon_bytes": 752627712,
+            "current_bytes": 40134352896,
+            "file_bytes": 38466174976,
+            "file_dirty_bytes": 327680,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+          },
+          {
+            "anon_bytes": 1062166528,
+            "current_bytes": 49143009280,
+            "file_bytes": 46783414272,
+            "file_dirty_bytes": 335872,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+          },
+          {
+            "anon_bytes": 3352195072,
+            "current_bytes": 730090708992,
+            "file_bytes": 705556791296,
+            "file_dirty_bytes": 9621504,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+          },
+          {
+            "anon_bytes": 3352195072,
+            "current_bytes": 730222338048,
+            "file_bytes": 705679601664,
+            "file_dirty_bytes": 9621504,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice"
+          }
+        ],
+        "dynamic_launch_cap_bytes": 1649235722240,
+        "effective_available_after_reserves_bytes": 1649153105920,
+        "effective_available_bytes": 1649153105920,
+        "effective_total_bytes": 1649267441664,
+        "host_launch_available_bytes": 2068683878400,
+        "host_mem_available_bytes": 2137403355136,
+        "launch_cap_bytes": 1649235722240,
+        "mem_available_bytes": 2137403355136,
+        "mem_total_bytes": 2163100385280,
+        "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "reserve_bytes": 68719476736,
+        "reserve_domains_separated": true,
+        "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+        "static_tree_cap_bytes": null,
+        "task_cgroup_available_bytes": 1649153105920,
+        "task_cgroup_launch_available_bytes": 1649153105920,
+        "task_cgroup_reserve_bytes": 0,
+        "tree_cap_bytes": 1649267441664
+      },
+      "legacy_resource_fields_enforced": false,
+      "process_tree_swap_gate_enforced": true,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "solve_seconds": 77005.45380027969,
+      "swap_gate_enforced": true,
+      "swap_policy": "require_zero_task_and_dedicated_cgroup_swap",
+      "wall_reference_seconds": 77005.45380027969,
+      "warning_fraction": 0.85,
+      "workflow_seconds": 77005.45380027969
+    },
+    "end_time": "2026-10-16T06:43:44.521581+00:00",
+    "environment": {
+      "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+      "python_executable": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "qualified_activation": null,
+      "runtime_profile": null
+    },
+    "exit_status": -9,
+    "input_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_37b92ca7897b38f8552dd76b54af3973817fbcde/stage_inputs/full/target_original_ny8_resource_pilot_v20.dat",
+    "input_sha256": "6be0282e7b9a7943c07f15d0f2a07c960e2efe491ef9d2c3564a8f29423bd93d",
+    "method": "full3d_iterative",
+    "model_id": "task40extra_nonseparable_0p7nm",
+    "mpi_size": 1,
+    "numerical_output_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/numerical_output",
+    "output_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "requested_legacy_resource_fields": {
+      "memory_limit_gb": 16.0,
+      "terminate_memory_gib": 16.0,
+      "warning_memory_gib": 14.0
+    },
+    "requested_modes": null,
+    "resolved_config_sha256": "20f73071d0d712890c3609763a97cfe2f4b825205bc6edcd497eeeb0bd004e5d",
+    "resolved_method_adapter": "task038.full3d_iterative",
+    "result_classification": "USER_CONTROLLED_STOP",
+    "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+    "solver": {
+      "coarse_degree": 4,
+      "h6_backend_rule": "direct_selected_backend_same_apply_and_power10",
+      "ksp_type": "fgmres",
+      "linear_solver": "iterative",
+      "max_iterations": 2048,
+      "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+      "numeric_cache_mode": "build",
+      "outer_restart": 0,
+      "physical_operator_backend": "isotropic_sum_factorized_n1e_v26",
+      "preconditioner": "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+      "restart": 32,
+      "stage": "V20_TARGET_NY8_RESOURCE_PILOT",
+      "task40_factor_lifecycle_strategy": "ONE_Q_REFACTOR_V19",
+      "task40_q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+      "task40_reference_pc_strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+      "thread_contract": "mpi1_omp1_blas1_v26"
+    },
+    "source_after": {
+      "actual_git_directory": "/home/fenics/Projects/laptop_share/.git",
+      "source_sha": "37b92ca7897b38f8552dd76b54af3973817fbcde",
+      "tracked_and_nonignored_untracked_clean": true
+    },
+    "source_sha": "37b92ca7897b38f8552dd76b54af3973817fbcde",
+    "start_time": "2026-10-16T06:41:57.390268+00:00",
+    "status": "finished",
+    "task40_v20_budget_admission": {
+      "campaign_remaining_numerical_seconds": 77005.5721382097,
+      "campaign_window_sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33",
+      "configured_stage_budget": {
+        "solve_seconds": 86400,
+        "workflow_seconds": 86400
+      },
+      "contract_probe": false,
+      "effective_solve_seconds_at_entry": 77005.5721382097,
+      "effective_workflow_seconds_at_entry": 77005.5721382097,
+      "execution_stop_stage": "full",
+      "model_id": "task40extra_nonseparable_0p7nm",
+      "profile": "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+      "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "solver_stage": "V20_TARGET_NY8_RESOURCE_PILOT"
+    },
+    "task40_v20_campaign": {
+      "accounting_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_37b92ca7897b38f8552dd76b54af3973817fbcde/campaign_accounting_v33_extension.jsonl",
+      "accounting_writer_while_worker_active": "subreaper_watchdog_only",
+      "campaign_seconds": 172800.0,
+      "closeout_reserve_seconds": 1200.0,
+      "deadline_utc_ns": 1792211122963327363,
+      "effective_window_scope": "shared_V20_fixed_deadline_and_remaining_budget",
+      "launcher_entry_observation": {
+        "accounting_record": {
+          "adjacent_interval": {
+            "budget_seconds": 3.908957447,
+            "discrepancy_seconds": 8.901862087462575e-07,
+            "elapsed_seconds": {
+              "boottime": 3.90895729791373,
+              "monotonic": 3.9089565568137914,
+              "utc": 3.908957447
+            },
+            "policy": "conservative_realtime",
+            "policy_version": 1,
+            "tolerance_seconds": 5.0,
+            "utc_minus_monotonic_seconds": 8.901862087462575e-07
+          },
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "bootstrap_charged_seconds": 0.0,
+          "campaign_window_sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33",
+          "cumulative_charged_seconds": 94594.4278617903,
+          "cutoff_seconds": 171600.0,
+          "deadline_utc_ns": 1792211122963327363,
+          "label": "launcher_entered_task40_v10",
+          "phase": "numeric",
+          "previous_sample": {
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "boottime": 2057908.312937821,
+            "monotonic": 2057908.312936742,
+            "utc_ns": 1792132913452071513
+          },
+          "sample": {
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "boottime": 2057912.221895119,
+            "monotonic": 2057912.221893299,
+            "utc_ns": 1792132917361028960
+          },
+          "schema": "task40extra.review_v10_campaign_accounting.v1",
+          "sequence": 243079,
+          "t0_utc_ns": 1792038322963327363,
+          "time_namespace_identity": {
+            "time": "time:[4026531834]",
+            "time_for_children": "time:[4026531834]"
+          }
+        },
+        "adjacent_charged_seconds": 3.908957447,
+        "bootstrap_charged_seconds": 0.0,
+        "campaign_seconds": 172800.0,
+        "charged_seconds": 94594.4278617903,
+        "closeout_reserve_seconds": 1200.0,
+        "cumulative_charged_seconds": 94594.4278617903,
+        "deadline_utc_ns": 1792211122963327363,
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_37b92ca7897b38f8552dd76b54af3973817fbcde/campaign_window_v33.json",
+        "phase": "numeric",
+        "remaining_closeout_seconds": 0.0,
+        "remaining_numerical_seconds": 77005.5721382097,
+        "remaining_phase_seconds": 77005.5721382097,
+        "sample": {
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "boottime": 2057912.221895119,
+          "monotonic": 2057912.221893299,
+          "utc_ns": 1792132917361028960
+        },
+        "schema": "task40extra.review_v10_campaign.v1",
+        "sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33",
+        "t0_utc_ns": 1792038322963327363
+      },
+      "t0_utc_ns": 1792038322963327363,
+      "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_37b92ca7897b38f8552dd76b54af3973817fbcde/campaign_window_v33.json",
+      "window_sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33",
+      "worker_accounting_access": "read_only_projection"
+    }
+  },
+  "last_stage_events": [
+    {
+      "event": "task40_v31_q4_saved_numeric_pending_phase_completed",
+      "facts": {
+        "elapsed_seconds": 89.768216187,
+        "finished_utc_ns": 1792133015650834848,
+        "phase": "task40_v31_q4_saved_numeric_pending",
+        "product_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_54cf6d367b07355c0ab08c8c10655ecac73cfc6a/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_numeric_pending.json",
+        "product_sha256": "1938828321a57ee6eaaea0def485f73daddbd13432cc6ef8823d19bcc44640ad",
+        "q_index": 4,
+        "reopened_existing_pending": true,
+        "schema": "task40extra.review_v31_worker_phase_event.v1",
+        "started_utc_ns": 1792132925882618661,
+        "status": "COMPLETE",
+        "twist_index": 0
+      },
+      "stage": "V20_TARGET_NY8_RESOURCE_PILOT",
+      "timestamp_ns": 1792133015650844248
+    },
+    {
+      "event": "task40_v31_global_reference_builder_phase_started",
+      "facts": {
+        "phase": "task40_v31_global_reference_builder",
+        "q4_pending_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_54cf6d367b07355c0ab08c8c10655ecac73cfc6a/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_numeric_pending.json",
+        "q4_pending_sha256": "1938828321a57ee6eaaea0def485f73daddbd13432cc6ef8823d19bcc44640ad",
+        "schema": "task40extra.review_v31_worker_phase_event.v1",
+        "started_utc_ns": 1792133015651291103,
+        "status": "STARTED",
+        "twist0_owner_prebuilt": false
+      },
+      "stage": "V20_TARGET_NY8_RESOURCE_PILOT",
+      "timestamp_ns": 1792133015651298012
+    },
+    {
+      "event": "task40_v33_local_sector_owner_phase",
+      "facts": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "mesh_plan_id": "task40extra.y-orbit-full3d-reference.v1.local_twist1",
+        "owner_id": "twist1:local_sector_owner",
+        "phase": "local_mesh_fe_mpc",
+        "q_indices": [
+          1,
+          5
+        ],
+        "started_boottime_ns": 2058011256012989,
+        "started_monotonic_ns": 2058011256010968,
+        "started_utc_ns": 1792133016395143624,
+        "status": "STARTED",
+        "twist_index": 1
+      },
+      "stage": "V20_TARGET_NY8_RESOURCE_PILOT",
+      "timestamp_ns": 1792133016395167795
+    }
+  ],
+  "science": {
+    "new_complete_q": 0,
+    "new_native_qualification": false,
+    "live_factor_bank": false,
+    "complete_reference": false,
+    "target_field": false,
+    "official_physics": false,
+    "old_q0_q4_qualification": "PRESERVED_UNCHANGED",
+    "durable_carrier_prefix": "NOT_RECORDED_IN_THIS_ATTEMPT"
+  },
+  "time": {
+    "full_workflow_monotonic_seconds": 107.15940123214386,
+    "watchdog_seconds": 106.90133418678306,
+    "scopes_nested_do_not_sum": true,
+    "service_entry_preparation_seconds": null,
+    "initial_prepare_bug_cost_seconds": null,
+    "initial_prepare_failed_source": "d3f25bb0d66ae884cd1b0dce752d1974035b7b97",
+    "initial_prepare_failure": "V31ContractError: V32 q4 complete/pending imports differ from fixed evidence/source/window identity",
+    "fix_source": "37b92ca7897b38f8552dd76b54af3973817fbcde",
+    "last_accounting_snapshot": {
+      "adjacent_interval": {
+        "budget_seconds": 0.001604478,
+        "discrepancy_seconds": 7.929134069680106e-07,
+        "elapsed_seconds": {
+          "boottime": 0.0016043379437178373,
+          "monotonic": 0.0016036850865930319,
+          "utc": 0.001604478
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": 7.929134069680106e-07
+      },
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "bootstrap_charged_seconds": 0.0,
+      "campaign_window_sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33",
+      "cumulative_charged_seconds": 94701.5570384667,
+      "cutoff_seconds": 171600.0,
+      "deadline_utc_ns": 1792211122963327363,
+      "label": "launcher_after_watchdog",
+      "phase": "numeric",
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2058019.349428803,
+        "monotonic": 2058019.349428146,
+        "utc_ns": 1792133024488562405
+      },
+      "sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2058019.351033141,
+        "monotonic": 2058019.351031831,
+        "utc_ns": 1792133024490166883
+      },
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 243407,
+      "t0_utc_ns": 1792038322963327363,
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      }
+    },
+    "clock_not_frozen_or_refreshed_by_pause": true,
+    "administrative_closeout_seconds": null
+  },
+  "resource": {
+    "tree_rss_peak_bytes": 13233586176,
+    "cgroup_peak_bytes": 4675731456,
+    "task_swap_peak_bytes": 0,
+    "tree_swap_peak_bytes": 0,
+    "pss_peak_bytes": null,
+    "host_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "scope_note": "Native Linux fenics-ws. Legacy WSL-global text retained in raw. Summed process RSS and cgroup accounting are distinct; do not subtract to infer owners or physical usage."
+  },
+  "window": {
+    "accounting_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_37b92ca7897b38f8552dd76b54af3973817fbcde/campaign_accounting_v33_extension.jsonl",
+    "campaign_seconds": 172800.0,
+    "closeout_parent_flush_reserve_seconds": 0.0,
+    "closeout_reserve_seconds": 1200.0,
+    "deadline_utc_ns": 1792211122963327363,
+    "first_exact_monotonic_at_t0": "NOT_CAPTURED",
+    "numerical_cutoff_seconds": 171600.0,
+    "phase": "numeric",
+    "phase_authorization": null,
+    "phase_sub_budget_seconds": 77005.41056791069,
+    "phase_termination_reserve_seconds": 0.0,
+    "t0_utc_ns": 1792038322963327363,
+    "watchdog_end_accounting": {
+      "adjacent_interval": {
+        "budget_seconds": 0.039612074848264456,
+        "discrepancy_seconds": 4.148482644558693e-07,
+        "elapsed_seconds": {
+          "boottime": 0.039611928863450885,
+          "monotonic": 0.039612074848264456,
+          "utc": 0.03961166
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -4.148482644558693e-07
+      },
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "bootstrap_charged_seconds": 0.0,
+      "campaign_window_sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33",
+      "cumulative_charged_seconds": 94701.55543398869,
+      "cutoff_seconds": 171600.0,
+      "deadline_utc_ns": 1792211122963327363,
+      "label": "watchdog_end",
+      "phase": "numeric",
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2058019.309816874,
+        "monotonic": 2058019.309816071,
+        "utc_ns": 1792133024448950745
+      },
+      "sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2058019.349428803,
+        "monotonic": 2058019.349428146,
+        "utc_ns": 1792133024488562405
+      },
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 243406,
+      "t0_utc_ns": 1792038322963327363,
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      }
+    },
+    "watchdog_start_accounting": {
+      "adjacent_interval": {
+        "budget_seconds": 0.04323236900381744,
+        "discrepancy_seconds": 1.0050038174377884e-06,
+        "elapsed_seconds": {
+          "boottime": 0.043231848860159516,
+          "monotonic": 0.04323236900381744,
+          "utc": 0.043231364
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -1.0050038174377884e-06
+      },
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "bootstrap_charged_seconds": 0.0,
+      "campaign_window_sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33",
+      "cumulative_charged_seconds": 94594.58943208931,
+      "cutoff_seconds": 171600.0,
+      "deadline_utc_ns": 1792211122963327363,
+      "label": "watchdog_start_numeric",
+      "phase": "numeric",
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2057912.340232646,
+        "monotonic": 2057912.340231123,
+        "utc_ns": 1792132917479366890
+      },
+      "sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2057912.383464495,
+        "monotonic": 2057912.383463492,
+        "utc_ns": 1792132917522598254
+      },
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 243081,
+      "t0_utc_ns": 1792038322963327363,
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      }
+    },
+    "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_37b92ca7897b38f8552dd76b54af3973817fbcde/campaign_window_v33.json",
+    "window_sha256": "0370d27c0e539f1af2d43224a057752bc66570f14ca0fd2461eb429f67b2cd33"
+  },
+  "cleanup": {
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "service_inactive": true,
+    "main_pid": 0,
+    "service_cgroup_absent": true,
+    "verified_utc": "2026-10-16T06:46:07Z"
+  },
+  "checker": {
+    "status": "NOT_RUN_AFTER_USER_PAUSE",
+    "official_result": false,
+    "note": "No new numerical output or partial checker receipt. Raw watchdog and run summary preserved; no synthetic scientific PASS."
+  },
+  "evidence": [
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/accounting_last_at_pause.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/accounting_last_at_pause.json",
+      "bytes": 1172,
+      "sha256": "fc855f100e1020d8ccffa54a74706eb546cc26c1f02e498a906ece49577434e3"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/cgroup_after_user_pause.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/cgroup_after_user_pause.txt",
+      "bytes": 27,
+      "sha256": "06e1704b5aa35cad2603ed3969ed91a23d8a6413753bee8e39ed3639ffac0dd7"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/extension_package.stderr.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/extension_package.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/extension_package.stdout.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/extension_package.stdout.json",
+      "bytes": 8883,
+      "sha256": "785278cebf857bce74e484980e885d21326da3828deca9d138286431d33ee62e"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/pause_verified_utc.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/pause_verified_utc.txt",
+      "bytes": 21,
+      "sha256": "aacbd3369b4e61c540731c6833a7135044f5c1d24041545c7a60092b398e1c15"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/service_after_user_pause.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/service_after_user_pause.txt",
+      "bytes": 140,
+      "sha256": "439fb4edbfd1d1efb42d7429339c5a424d83644456bd4e8cbae8ad9b15b09302"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/service_before_user_pause.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/service_before_user_pause.txt",
+      "bytes": 315,
+      "sha256": "522ecdb9c977dda06f6196cb6df36024369baaabddcf8cb638fe882d07cc801d"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/user_pause_reason.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/user_pause_reason.txt",
+      "bytes": 140,
+      "sha256": "99e8f72e11f3fdb961856022ae8497269376dd0fa94f81ac5459cf7509cc9f6e"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/user_pause_requested_utc.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/user_pause_requested_utc.txt",
+      "bytes": 31,
+      "sha256": "fa810db380e3b76e8610af4c6eab5efa71df9ecda6db3b10dff1e20263c1f478"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/input_original.dat",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/input_original.dat",
+      "bytes": 15849,
+      "sha256": "6be0282e7b9a7943c07f15d0f2a07c960e2efe491ef9d2c3564a8f29423bd93d"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/input_sha256.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/input_sha256.txt",
+      "bytes": 65,
+      "sha256": "7b2ad844d9a1ba71baed61bce2e6bd2faf7b65d85077ac3157284ee4ec8b8a5f"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/physical_model_sha256.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/physical_model_sha256.txt",
+      "bytes": 65,
+      "sha256": "865a74fa4a23e01a9e77842228f6970ee5bc8a598a5cfede8193589961054f7e"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/resolved_config.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/resolved_config.json",
+      "bytes": 21894,
+      "sha256": "20f73071d0d712890c3609763a97cfe2f4b825205bc6edcd497eeeb0bd004e5d"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/run_manifest.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/run_manifest.json",
+      "bytes": 9423,
+      "sha256": "72f6c73d7e575ac1643e17668a92653e2069aed101ab1f01aba6c88e0fde51ca"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/run_summary.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/run_summary.json",
+      "bytes": 13672,
+      "sha256": "1178664bc37ee3fddbcfee09e642008e8f27c1b06bdf3d2d3e28361e3de06667"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/source_sha.txt",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/source_sha.txt",
+      "bytes": 41,
+      "sha256": "920c0027f0cd4e70f91934a68a70c7819b9e09d1b6914a3f9ca9544a656a40a2"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_one_q_row_tile_p6_reference_events.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_one_q_row_tile_p6_reference_events.jsonl",
+      "bytes": 36808,
+      "sha256": "ee2bb5fde48538c09b06dd4c78db829ed7508eac5976fd93c4226bad8442697d"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_one_q_row_tile_p6_reference_inventory.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_one_q_row_tile_p6_reference_inventory.json",
+      "bytes": 363,
+      "sha256": "38964cc70702bc6457f050b29afe90f8abcfdb969615b792500f61701c8186d1"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_one_q_row_tile_p6_reference_worker_resources.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_one_q_row_tile_p6_reference_worker_resources.jsonl",
+      "bytes": 61017,
+      "sha256": "3fb4cfb061a3f9a29d2b8a98c358347ee677e4dbafa7c8b86d83ba65c50da498"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_stage_preflight.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/v20_stage_preflight.json",
+      "bytes": 11553,
+      "sha256": "6c72fb16572dd713f99c0521b1a2281d2afa65f7626624823271cc1adddae000"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/watchdog/resources.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/watchdog/resources.jsonl",
+      "bytes": 3512181,
+      "sha256": "53b68d93c59e1598cc6f598dda7dd90201dea3b1e54ac49fd5cd2f787c35fed0"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/watchdog/summary.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/watchdog/summary.json",
+      "bytes": 12441,
+      "sha256": "747ce25d603fe39ccbef057b73ba5e8dac84f350449f2e76ccc47639361568eb"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/watchdog/worker.log",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/watchdog/worker.log",
+      "bytes": 213,
+      "sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_37b92ca7/terminal_raw/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/workflow_phase.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261016T064157.366418Z/workflow_phase.json",
+      "bytes": 297,
+      "sha256": "365d2114b2ffbcb67270d665c1b8050c8bd4dc42c88e131b0ab177cbc1bfeb14"
+    }
+  ]
+}
