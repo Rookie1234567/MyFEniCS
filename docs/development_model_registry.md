@@ -1720,4 +1720,12 @@ canonical共享实体传递仅由显式V6_P3 profile启用：每个局部p3→p6
 
 V0/V1/V2 的小型证据整理支持 p6 的 x 向数值色散解释，但没有把平层校准或参考单元计算写成原光栅资格。V0 full600 direct 数值检查为 A6 相对残差`9.5941e-11`、能量差`-1.5528e-12`，外层`EVIDENCE_INCOMPLETE`仍原样保留；source/input树未变的 docs-only 身份核对见[V0补充记录](task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/v0_source_identity_reconciliation.json)。V1 实际 Basix N1E/FFCx q15 参考单元中，hx=.5→.25 nm 的无量纲传播偏差 delta 由`7.94e-6`降至`2.58e-9`；V2 flat Nx4→Nx8 的复E/H相对L2差为`6.50e-5/7.31e-5`，并逐项保存540个传播模式的原始复幅值。
 
-用户已仅授权候选D一场：p6凝聚直接MUMPS，200×2×118=47200个六面体，x=.25 nm、z分段9/100/9；同材料、入射和572个N0通道，父清单q160。它同时改变x/z，故只能称`CROSS_CHANGED_GRID_DIAGNOSTIC`，不单独证明x/z收敛。硬RSS仍1.8e12 B；实际trace/port/CSR、MUMPS symbolic信息与整树RSS必须分别记录，symbolic预测不是容量保证。D的run及正式物理/资源结论待唯一现场执行，见[候选D/离线响应](task39extra_para_workstation_capacity/response_dispersion_validation_20261015.md)。
+用户已授权并完成候选D一场：p6凝聚直接MUMPS，200×2×118=47200个六面体，x=.25 nm、z分段9/100/9；同材料、入射和572个N0通道，父清单q160。V0/V1/V2的离线收口与D结果见[色散验证回应](task39extra_para_workstation_capacity/response_dispersion_validation_20261015.md)。
+
+## 3.51 Task39extra_para：候选 D 原光栅直接场（2026-10-16）
+
+| 身份/模型 | 结果 | 状态边界 | 证据 |
+|---|---|---|---|
+| source `b4db2b5436a6fb188cf81773577ab31c4cacb7c5`；run `20261015T104602.092954Z`；p6 condensed direct/MUMPS；47200 cells；572 N0，parent32060/q160 | 原 A6_n0 `1.3202759103785678e-7 <= 1e-6`；R/T/A_volume=`0.07028528534177456/0.6688236885790999/0.260891026570664`；端口—体吸收差`4.915383655657024e-10`；572复模态输出有限 | `COMPLETED_AUTHORITY_LIMITED`；`FULL_DTN_NOT_VERIFIED`；D同时改变x/z且source不同，只是`CROSS_CHANGED_GRID_DIAGNOSTIC`，不证明单轴收敛 | [D terminal compact](task39extra_para_workstation_capacity/outcomes/records/v7_candidate_d_terminal_compact_20261016.json)，[all 143 orders and complex sample comparison](task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/candidate_d_comparison.json) |
+
+凝聚后的系统仍有`9,374,972`行，矩阵`nz_used=7,553,047,842`、`nz_allocated=7,611,634,384`。单次资源流审计峰值整树RSS`1,303,868,440,576 B`，低于`1.8e12 B`硬线；PSS/USS关闭、任务树swap峰0，但全局交换页变化无法归因，故不宣称全机zero-swap资格。候选D与旧A的总R/T更改明显，并与报告RCWA总量相近；逐级与同坐标复场证据、authority限制和网格/source差异见上述响应，不将其写成全DtN或连续解资格。

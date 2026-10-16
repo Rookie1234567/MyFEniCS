@@ -1,0 +1,263 @@
+{
+  "comparison_scope": "CROSS_CHANGED_GRID_DIAGNOSTIC",
+  "field_sample_comparison": {
+    "archives": {
+      "candidate_d_full3d_reference_samples_npz_sha256": "4e9d8c9091e704833e9425182260949a025d410491ad7aeff76edb5d5ebc0fa0",
+      "candidate_d_v7_curl_samples_npz_sha256": "bd509a08fa1ef8e4ef5a70db67b05d296a8a320e66c0769e5a0b99bd35e0e846",
+      "old_full3d_reference_samples_npz_sha256": "f9d99f004ab5ef03b70963938e16c50d6424078ba0cc19bc7d4ae4e870ebb21b",
+      "old_v7_curl_samples_npz_sha256": "ed06b4a49547f96fab3147cc8fb1db4649974133e3c0cec8fc9ec124bbbd1dcc"
+    },
+    "coordinate_match_exact": {
+      "curl_x_nm": true,
+      "curl_y_nm": true,
+      "curl_z_nm": true,
+      "interface_z_nm": true,
+      "x_nm": true,
+      "y_nm": true,
+      "z_nm": true
+    },
+    "curl_E_code_per_nm": {
+      "finite": true,
+      "max_abs_difference": 2.138092941153238,
+      "max_abs_difference_over_reference_peak": 0.21461310774444503,
+      "per_z_relative_l2": [
+        {
+          "relative_l2": 0.22618141413455364,
+          "z_nm": 10.0
+        },
+        {
+          "relative_l2": 0.22609195306618002,
+          "z_nm": 30.0
+        },
+        {
+          "relative_l2": 0.06710285414047173,
+          "z_nm": 60.0
+        },
+        {
+          "relative_l2": 0.17938034483849818,
+          "z_nm": 90.0
+        },
+        {
+          "relative_l2": 0.1526584519117274,
+          "z_nm": 110.0
+        }
+      ],
+      "phase_alignment": "none",
+      "reference_peak_abs": 9.962545921003185,
+      "relative_l2": 0.1851505464831149,
+      "shape": [
+        5,
+        20,
+        40,
+        3
+      ]
+    },
+    "field_sample_count": 4000,
+    "fields": {
+      "E_V_per_m": {
+        "finite": true,
+        "max_abs_difference": 0.2347896124489787,
+        "max_abs_difference_over_reference_peak": 0.21183988478720397,
+        "per_z_relative_l2": [
+          {
+            "relative_l2": 0.2261414519698337,
+            "z_nm": 10.0
+          },
+          {
+            "relative_l2": 0.2257979377428077,
+            "z_nm": 30.0
+          },
+          {
+            "relative_l2": 0.06818341614726679,
+            "z_nm": 60.0
+          },
+          {
+            "relative_l2": 0.1803411651008179,
+            "z_nm": 90.0
+          },
+          {
+            "relative_l2": 0.15462953101596338,
+            "z_nm": 110.0
+          }
+        ],
+        "phase_alignment": "none",
+        "reference_peak_abs": 1.10833525369799,
+        "relative_l2": 0.18568212684963575,
+        "shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      },
+      "E_t_interface_V_per_m": {
+        "finite": true,
+        "max_abs_difference": 0.17483527381209718,
+        "max_abs_difference_over_reference_peak": 0.1957662817236173,
+        "phase_alignment": "none",
+        "reference_peak_abs": 0.8930816495709384,
+        "relative_l2": 0.18860392150652502,
+        "shape": [
+          2,
+          20,
+          40,
+          2
+        ]
+      },
+      "H_A_per_m": {
+        "finite": true,
+        "max_abs_difference": 0.0006322869002572964,
+        "max_abs_difference_over_reference_peak": 0.214613107744445,
+        "per_z_relative_l2": [
+          {
+            "relative_l2": 0.22618141413455362,
+            "z_nm": 10.0
+          },
+          {
+            "relative_l2": 0.22609195306617988,
+            "z_nm": 30.0
+          },
+          {
+            "relative_l2": 0.06710285414047173,
+            "z_nm": 60.0
+          },
+          {
+            "relative_l2": 0.17938034483849824,
+            "z_nm": 90.0
+          },
+          {
+            "relative_l2": 0.1526584519117274,
+            "z_nm": 110.0
+          }
+        ],
+        "phase_alignment": "none",
+        "reference_peak_abs": 0.0029461709347697674,
+        "relative_l2": 0.1851505464831149,
+        "shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      },
+      "H_t_interface_A_per_m": {
+        "finite": true,
+        "max_abs_difference": 1.4777505964496292e-05,
+        "max_abs_difference_over_reference_peak": 0.2919742283349022,
+        "phase_alignment": "none",
+        "reference_peak_abs": 5.0612364141762875e-05,
+        "relative_l2": 0.23255559704550663,
+        "shape": [
+          2,
+          20,
+          40,
+          2
+        ]
+      }
+    },
+    "interpretation": "bounded exported samples only; no full-field norm or exact grating reference",
+    "sample_coordinates": {
+      "interface_z_nm": [
+        10.0,
+        110.0
+      ],
+      "x_count": 40,
+      "y_count": 20,
+      "z_nm": [
+        10.0,
+        30.0,
+        60.0,
+        90.0,
+        110.0
+      ]
+    }
+  },
+  "generated_utc": "2026-10-16T01:34:46.267337Z",
+  "grid_change": "old A hx=0.5 nm and z 17/200/17; candidate D hx=0.25 nm and z 9/100/9; both p6, y=2, same material/incidence/mode set",
+  "input_artifacts": {
+    "candidate_d_orders_json": {
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_direct_d_cross_changed_q160_n0_full__full3d_direct__mpi1__Mna/20261015T104602.092954Z/numerical_output/dtn_port_diffraction_orders_3d.json": "647fab7b38693d77fbd4593f764cc1030d1a52b542afeb18e78a088e2fe2f6d8"
+    },
+    "old_orders_json": {
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_direct_q160_n0_full__full3d_direct__mpi1__Mna/20261014T062635.999684Z/numerical_output/dtn_port_diffraction_orders_3d.json": "31499073606e13dc67bf0ec0956c57de1093cf5de2a1ce358198e57953e833a4"
+    },
+    "rcwa_orders_csv": {
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/docs/task39extra_para_workstation_capacity/outcomes/rcwa_fe_comparison_0p7nm_20261015/orders_comparison_143.csv": "2f632da0318aa267448a4b0b8834b6aeb8593ceda9c51c119f25fe86028874b5"
+    }
+  },
+  "max_per_order_absolute_difference": {
+    "R": {
+      "candidate_D_minus_RCWA": {
+        "abs": 6.545949618713687e-06,
+        "m": 0,
+        "n": 0
+      },
+      "candidate_D_minus_old_A": {
+        "abs": 0.015641014804666106,
+        "m": 0,
+        "n": 0
+      }
+    },
+    "T": {
+      "candidate_D_minus_RCWA": {
+        "abs": 6.524344387193182e-06,
+        "m": 0,
+        "n": 0
+      },
+      "candidate_D_minus_old_A": {
+        "abs": 0.016623847612148634,
+        "m": 0,
+        "n": 0
+      }
+    }
+  },
+  "orders_count": 143,
+  "per_order_csv": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/docs/task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/candidate_d_orders_143.csv",
+  "phase_alignment": "none",
+  "schema": "task39extra.candidate-d-offline-comparison.v1",
+  "significant_threshold": 1e-08,
+  "significant_union_R_T_sums": {
+    "RCWA": {
+      "R": 0.07027870267570999,
+      "T": 0.6688301677792866
+    },
+    "candidate_D": {
+      "R": 0.07028524814564217,
+      "T": 0.6688236458517391
+    },
+    "old_A": {
+      "R": 0.08592249451093383,
+      "T": 0.6522078937430993
+    }
+  },
+  "significant_union_count": 7,
+  "tail_R_T_sums": {
+    "RCWA": {
+      "R": 3.6400634134899e-08,
+      "T": 4.39353660879912e-08
+    },
+    "candidate_D": {
+      "R": 3.719613237782055e-08,
+      "T": 4.2727360772374396e-08
+    },
+    "old_A": {
+      "R": 4.022088602904561e-08,
+      "T": 4.525862950196703e-08
+    }
+  },
+  "tail_count": 136,
+  "total_power_sums": {
+    "RCWA_report": {
+      "R": 0.07027873907634412,
+      "T": 0.6688302117146526
+    },
+    "candidate_D_FE": {
+      "R": 0.07028528534177456,
+      "T": 0.6688236885790999
+    },
+    "old_A_FE": {
+      "R": 0.08592253473181985,
+      "T": 0.6522079390017288
+    }
+  }
+}

@@ -1,15 +1,18 @@
-# Task39extra_para 2026-10-15：色散方向离线收口与原光栅 D 候选
+# Task39extra_para 2026-10-16：色散方向离线收口与原光栅 D 诊断
 
-V0/V1/V2 的离线整理完成后，Hx 色散机制得到参考单元和均匀平层两类证据支持，但原光栅的 x/z 网格仍未验证。V0 的数值摘要通过而外层 provenance 仍为 `EVIDENCE_INCOMPLETE`：运行期间 HEAD 只发生了经核实的 docs-only 变化，原记录和通用 provenance gate 均保持不变。V1 使用真实 Basix N1E 与 FFCx 体积分规则；V2 在相同 flat 几何上完成 Nx2/4/8 的 p6 直接场对照，包含逐模式复振幅及不做相位拟合的同坐标 E/H 样本。
+V0/V1/V2 的离线整理支持 Hx 色散机制；随后只运行用户授权的候选 D 一场。D 的 R/T/A_volume 接近已归档 RCWA 报告总量，但同时改变 x 和 z，且源码身份与旧 A 不同。它是 `CROSS_CHANGED_GRID_DIAGNOSTIC`，不是单轴收敛或连续精度证明。V0 原始 `EVIDENCE_INCOMPLETE` provenance 保留；V1 实际 Basix N1E 与 FFCx 规则、V2 同平层 Nx2/4/8 和 D 的输出比较分别记录。
 
 | 阶段 | 新证据 | 仍有限/未验证 |
 |---|---|---|
 | V0 5 nm full600 | direct worker A6=`9.5941e-11`、能量差=`-1.5528e-12`；8个文档路径变化，src/input树OID不变 | 外层 `EVIDENCE_INCOMPLETE` 保留，不改原manifest/summary |
 | V1 色散符号 | p6、q15、512体积分点；hx=.5→.25 nm 时 delta 从`7.94e-6`降到`2.58e-9` | hx=.125 nm接近舍入底；实际生产MPC/端口方向未测 |
 | V2 平层 | p6、540个传播模式；Nx4→Nx8复E/H相对差`6.50e-5/7.31e-5`；Nx8 R/T/A=`.11349081/.81054145/.07596774` | 这是flat校准，有限端口未含evanescent，不是光栅/full-DtN资格 |
-| 下一单场D | 已冻结独立轴计划/profile/input：200×2×118=47,200 cells；p6 direct MUMPS、572 N0端口、父q160 | D同时改x与z，结论仅为`CROSS_CHANGED_GRID_DIAGNOSTIC`；硬RSS 1.8e12 B，LU内存仍须现场实测 |
+| 候选D数值 | 200×2×118=47,200 cells；p6 condensed direct MUMPS；572 N0、parent q160；R/T/A_volume=`0.0702852853/0.6688236886/0.2608910266`；原 A6_n0=`1.32027591e-7`、能量差=`4.91538366e-10` | 本场数值与物理 Gate 通过；保留`AUTHORITY_LIMITED/FULL_DTN_NOT_VERIFIED` |
+| 候选D网格/矩阵 | hx=.25 nm，x=66/68/66；z=9/100/9；矩阵9,374,972²，nz_used/nz_allocated=`7,553,047,842/7,611,634,384` | x/z同时改变，不隔离任何单方向；不用按cells外推factor内存 |
+| 候选D资源/时间 | tree RSS峰`1,303,868,440,576 B`<硬线`1.8e12 B`；MUMPS symbolic/numeric/solve lifecycle`39,664.86 s`；总workflow`52,726.35 s` | 进程树swap峰0，但global pswpin/out +27/+72页、任务归因unknown；PSS/USS关闭 |
+| 候选D比较 | R/T/A_volume 对 RCWA 显示值差`+6.5463e-6/-6.5231e-6/-2.1952e-8`；全143阶power和同坐标无相位拟合复场/模态比较已归档 | 旧A→D同时换网格及源码；不提升为RCWA独立复现、完整DtN或mesh-convergence结论 |
 
-详细数据、逐级衍射、资源分类与哈希见[色散方向验证回应](task39extra_para_workstation_capacity/response_dispersion_validation_20261015.md)和[离线结果目录](task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/)。D结果将在唯一获批场结束后追加；B/C及p7/p8全场不在范围。
+详细数据、逐级衍射、资源分类与哈希见[色散方向验证回应](task39extra_para_workstation_capacity/response_dispersion_validation_20261015.md)、[离线结果目录](task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/)和[D终态compact](task39extra_para_workstation_capacity/outcomes/records/v7_candidate_d_terminal_compact_20261016.json)。未运行B/C、93600-cell场、p7/p8全场或额外网格。
 
 ---
 

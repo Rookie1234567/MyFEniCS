@@ -4,7 +4,7 @@
 
 V0/V1/V2 offline closeout is complete. The actual p6 Basix/FFCx reference-cell symbol and flat-layer direct calibration support the Hx numerical-dispersion hypothesis. This does not establish full-grating mesh convergence or complete-DtN accuracy.
 
-The user has authorized one next full-grating candidate, D: p6 condensed direct MUMPS on 200×2×118 = 47,200 hexahedra, with hx=0.25 nm and z intervals 9/100/9. D changes both x and z and must be labeled CROSS_CHANGED_GRID_DIAGNOSTIC. No B=93,600-cell case, C case, or full p7/p8 solve is authorized.
+Candidate D has completed once: p6 condensed direct MUMPS on 200×2×118 = 47,200 hexahedra, hx=0.25 nm and z intervals 9/100/9. Its own A6_n0 and energy checks pass, but it changes both x and z and must remain `CROSS_CHANGED_GRID_DIAGNOSTIC`; it is not a one-axis convergence result. No B=93,600-cell case, C case, or full p7/p8 solve was run.
 
 ## V0 provenance reconciliation
 
@@ -67,9 +67,34 @@ All three sampled process-tree VmSwap peaks are zero. Nx2 and Nx8 watchdogs also
 - The reference-cell symbol does not instantiate production Floquet MPC or actual mesh cell orientations.
 - Flat tests do not verify the original rectangular grating, its full 572-mode N0 operator, or evanescent/full-DtN effects.
 - Nx4/Nx8 are not a grating z-resolution study.
-- Nx8 resource use is small-flat evidence only; it does not predict D capacity.
+- Nx8 resource use is small-flat evidence only; it did not predict D capacity. D's own measured process-tree RSS peak is reported below.
 - The original grating's z accuracy remains unknown. D changes x and z together, so it cannot isolate either direction or establish convergence.
 - RCWA comparison authority remains bounded by the previously archived source/provenance limits.
+
+## Candidate D: completed full-grating direct solve
+
+The approved candidate used the same 0.7 nm Si material, 1° S-polarized incidence, p6 elements, two y layers, 572 active N0 channels and the full-parent q160 integration rule. The mesh was 200×2×118=47,200 cells: x had 66/68/66 cells at 0.25 nm, while z used 9/100/9 intervals (10/9, 1.2 and 10/9 nm). It changed x and z together. The old A mesh was 100×2×234=46,800 cells (x=0.5 nm, z=17/200/17); source identities also differ, so the A-to-D contrast is diagnostic rather than a controlled single-variable proof.
+
+The direct route eliminates cell-interior unknowns locally, then factors and solves the resulting sparse global matrix with MUMPS. This avoids the p4/BAL_H iteration path for this case; it costs one large direct factorization. The factorization, numeric phase and solve used the same materialized matrix object.
+
+| Result | Old A, p6 direct | Candidate D, p6 direct | RCWA report |
+|---|---:|---:|---:|
+| R total | 0.08592253473181985 | 0.07028528534177456 | 0.0702787390763 |
+| T total | 0.6522079390017288 | 0.6688236885790999 | 0.668830211715 |
+| A from port balance | 0.2618695262664513 | 0.2608910260791255 | — |
+| A from material-volume integral | 0.26186952633636734 | 0.260891026570664 | 0.260891048523 reported |
+| Port-volume energy closure | 6.991607293116431e-11 | 4.915383655657024e-10 | — |
+| Original A6_n0 relative residual | 7.427046290347574e-8 | 1.3202759103785678e-7 | — |
+
+D differs from old A by R=-0.0156372493900, T=+0.0166157495774 and A_volume=-0.0009784997657. Against the displayed RCWA report totals, D differs by R=+6.54626543e-6, T=-6.52313555e-6 and A_volume=-2.19523360e-8. The per-order comparison covers all 143 `(m,n)=(m,0)`, m=-142…0, with no phase fitting. Seven orders meet the union significance threshold 1e-8 across the compared records; the remaining 136-order tail sums are in the comparison JSON/CSV. The RCWA record contains powers, not corresponding complex RCWA amplitudes.
+
+At identical exported sample coordinates (40 x 20 x 5 = 4,000 points; air-side z=10/30/60/90/110 nm), raw complex sample differences D-versus-A are relative L2 0.18568 for E, 0.18515 for H, and 0.18515 for exported curl(E); interface tangential E/H are 0.18860/0.23256. No global phase was fitted. These are bounded sample comparisons, not full-domain norms or errors against an exact grating solution.
+
+The condensed matrix was 9,374,972×9,374,972, with 7,553,047,842 stored nonzeros used and 7,611,634,384 allocated. Assembly took 4,829.26 s; the recorded MUMPS symbolic/numeric/solve lifecycle took 39,664.86 s; the worker's reported full elapsed was 52,635.82 s and the enclosing workflow elapsed was 52,726.35 s. The raw indexed INFOG/RINFOG values remain in the run summary and are not reinterpreted as RSS.
+
+The one complete resource audit read only explicit top-level fields from `watchdog/resources.jsonl`: 153,151 records, no malformed lines and no unreadable-status records. Peak simultaneous process-tree RSS was 1,303,868,440,576 B, below the 1,800,000,000,000 B hard limit by 496,131,559,424 B; it exceeded the advisory 1.17e12 B warning level. Sampled process-tree swap stayed zero, but global pswpin/pswpout changed by +27/+72 pages and attribution is unresolved, so this is not a system-wide or dedicated zero-swap qualification. PSS/USS were disabled by contract.
+
+D's worker reports `passed=true`, original A6_n0 residual below its 1e-6 limit, and energy closure below 1e-5. Its final authority remains `AUTHORITY_LIMITED` / `FULL_DTN_NOT_VERIFIED`; omitted channels were not computed. The result supports the practical D-grid output comparison but cannot identify whether the change came from x, z, their interaction, or source differences. See [response](../../response_dispersion_validation_20261015.md), [compact terminal record](../records/v7_candidate_d_terminal_compact_20261016.json), [all-order and sampled-field comparison](candidate_d_comparison.json), and [143-order CSV](candidate_d_orders_143.csv).
 
 ## Files
 
@@ -78,3 +103,6 @@ All three sampled process-tree VmSwap peaks are zero. Nx2 and Nx8 watchdogs also
 - flat_modal_orders.csv: all 540 modal complex amplitudes, powers and pairwise differences.
 - resource_and_scope.json: original classifications and swap-attribution boundary.
 - compare_flat_direct_runs.py: deterministic offline extractor; reads only the listed small summaries/configs, outputs and the three hash-bound 33–34 KiB sample archives; it does not read resource streams, full fields, matrices or factors.
+- candidate_d_comparison.json / candidate_d_orders_143.csv: old A versus D and displayed RCWA power comparison for all 143 orders, plus exact-coordinate complex E/H/curl sample differences without phase fitting.
+- candidate_d_terminal_compact_20261016.json: D run identity, direct-factor/matrix facts, numerical scope, one resource-stream audit and output artifact bindings.
+- compare_candidate_d_runs.py: deterministic offline extractor for the preceding D comparison, limited to the small order JSON/CSV files and bounded sample NPZ archives.

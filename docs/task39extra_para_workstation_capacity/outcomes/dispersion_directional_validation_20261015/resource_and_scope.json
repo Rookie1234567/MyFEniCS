@@ -1,4 +1,45 @@
 {
+  "candidate_d_terminal": {
+    "active_modes": 572,
+    "classification": "CROSS_CHANGED_GRID_DIAGNOSTIC",
+    "compact_record": "docs/task39extra_para_workstation_capacity/outcomes/records/v7_candidate_d_terminal_compact_20261016.json",
+    "compact_sha256": "d101b80e29e2abc3125cc7e8bf78a2f950634ec1db2acde928deac67b4e84bc0",
+    "comparison_csv_sha256": "e1d4fc6f80940cb85f3f29c4af2147f0021b29f3c989c314e88d7046a2459fcf",
+    "comparison_json_sha256": "dc80a819424fa0d23125f133a48ff03f2447d334abd0a38a8c209583f1b9cfe2",
+    "energy_closure_abs": 4.915383655657024e-10,
+    "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    "global_swap_delta_pages_unattributed": {
+      "pswpin_pages": 27,
+      "pswpout_pages": 72
+    },
+    "grid_cells": [
+      200,
+      2,
+      118
+    ],
+    "interpretation": "one candidate D run; x and z both changed versus old A; diagnostic only, not mesh convergence or full-DtN qualification",
+    "operator_scope": "A6_n0",
+    "original_A6_n0_relative": 1.3202759103785678e-07,
+    "package_sha256": "39efc4fb2c2b6e148129053dfc0ebadfb1d8280782681fec259a02df73518397",
+    "parent_modes": 32060,
+    "peak_tree_rss_bytes": 1303868440576,
+    "resource_stream_audit": {
+      "all_status_readable_false": 0,
+      "malformed_records": 0,
+      "records": 153151,
+      "sha256": "06618305bb0fea2111a9d020a7d1288de65a49fcc5feb9b0d27699a089dc05da"
+    },
+    "rss_hard_limit_bytes": 1800000000000,
+    "run_exit_status": 0,
+    "run_id": "v7_interleave_0p7nm_aniso_p6_direct_d_cross_changed_q160_n0_full",
+    "run_timestamp": "20261015T104602.092954Z",
+    "sidecar_sha256": "1e1b19926528ae87bf2d5e8a44c5cad34624cbf7b00aae529a79bd109207a25e8",
+    "source_sha": "b4db2b5436a6fb188cf81773577ab31c4cacb7c5",
+    "status": "COMPLETED_AUTHORITY_LIMITED",
+    "surface_quadrature_authority": "full parent q160",
+    "tree_swap_peak_bytes": 0
+  },
+  "candidate_d_terminal_recorded_utc": "2026-10-16T01:32:04.310926Z",
   "flat_runs": {
     "2": {
       "direct_solver_passed": true,
