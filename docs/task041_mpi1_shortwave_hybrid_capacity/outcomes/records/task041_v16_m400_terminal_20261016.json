@@ -141,6 +141,17 @@
       "note": "ledger and parent-summary wall fields are retained with their own receipt definitions; not added together"
     }
   },
+  "post_sampling_readonly_followup": {
+    "original_hourly_watch_timer_status_at_v16_record_sample": "active",
+    "later_controller_readonly_observation": {
+      "timer": "codex-task041-main-hourly-watch.timer",
+      "timer_status": "not-found/inactive/dead",
+      "service_status": "not-found/inactive/dead",
+      "service_main_pid": 0,
+      "matching_list_timers_entries": 0,
+      "action_at_followup": "controller had stopped the timer and transient service; no timer was restarted by this documentation closeout"
+    }
+  },
   "qualification_matrix": {
     "registered_tiny_FE_serial_R30": "reason 2 / 389; original-A relative residual 4.97654121633487e-9 <= 5e-9; old pytest attempt remains rc1 because the final fixture assertions read stale summary fields and the snapshot validator rejected the exact-zero -inf log encoding; frozen row data show readable arrays and destroyed=true, later narrow schema-aware offline review accepted that encoding; no serial FE rerun; R60 not_run because R30 passed",
     "registered_tiny_FE_MPI2": "both ranks reason 2 / 441; original-A relative residual 4.83780279602371e-9 <= 5e-9; lifecycle/destroyed-snapshot assertions passed; MPI2 R60 not authorized and not_run",

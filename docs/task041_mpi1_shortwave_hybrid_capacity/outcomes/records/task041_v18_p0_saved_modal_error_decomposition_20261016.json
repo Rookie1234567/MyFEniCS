@@ -1,0 +1,238 @@
+{
+  "schema": "task041.v18.saved_modal_error_decomposition.record.v1",
+  "classification": "saved_archive_diagnostic_not_solver_pass",
+  "scope": "V16 M400 first PC modal-row rejection; offline decomposition of saved binary64 arrays only",
+  "source_identity": {
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "documentation_review_head": "581b3f3c715eba48db83238817a90259966ef541",
+    "runtime_source_head": "c662a70b4af4d742f7a8305d0efd63342423c775",
+    "protected_stash": "90e50393831cf8a9da6fe223ef8cae4d3cfa3976",
+    "invocation_id": "6344a904b8df435a88a7466dd739da76",
+    "unit": "task041-v16-m400-20261015t141300z.service",
+    "model": "W0.7 10x5 nm, p6/h0.70, M400, MPI8",
+    "modal_count": 800,
+    "owner_rank": 7
+  },
+  "analysis": {
+    "as_run_source": {
+      "ignored_path": "results/task041_v18_modal_error_analysis_prepared_20261016/analyze_v15_modal_archive.py",
+      "reviewable_copy": "benchmarks/research/task041_v18_saved_modal_error_decomposition.py",
+      "sha256_both": "b4534e947bc5bc41d760cbca71b27c0809192bbe581111ead7890c05b118e64c"
+    },
+    "p0_json": {
+      "path": "results/task041_v18_modal_error_analysis_prepared_20261016/p0_archive_analysis_after_schema_fix.json",
+      "sha256": "5fd9ce422c73ebb9ec56aea119349c93e645786a2bbd8a67c931a222cadb53a0",
+      "sha256_preserved_unchanged": true
+    },
+    "corrected_rowwise_summary": {
+      "path": "results/task041_v18_modal_error_analysis_prepared_20261016/p0_rowwise_complex_summary.json",
+      "sha256": "04c863e43c25ca8a8f2220fd20150e4e42e51238735a55b5c67d4ff3d21e1f3a",
+      "correction_receipt": "results/task041_v18_modal_error_analysis_prepared_20261016/p0_rowwise_complex_summary_correction_receipt.json"
+    },
+    "precision": {
+      "all_rows_decimal_digits": 90,
+      "representative_crosschecks_digits": 120,
+      "representative_rows_zero_based": [
+        259,
+        631,
+        707,
+        105
+      ],
+      "normalized_crosscheck_limit": "1e-30",
+      "crosschecks_passed": 4
+    },
+    "row_gate": {
+      "contract": "task041.v15.original_modal_row.terms_backward.v1",
+      "tolerance": 1E-10,
+      "rows": 800,
+      "stored_rejects": 732,
+      "stored_passes": 68,
+      "max_row_zero_based": 259,
+      "max_global_modal_index": 302659,
+      "max_eta_90": "0.0179964031285221265572196694898458783818526110890330917142803924124390369746215449179077034",
+      "max_eta_binary64": 0.017996403128522177
+    },
+    "dominance_and_corrections": {
+      "e_K_unique_largest_rows": 800,
+      "e_K_unique_largest_rejected_rows": 732,
+      "max_rejected_abs_e_S_over_abs_d": "5.36982404099723423244592528340005356297980937586555552135882486383931805140182664174957952e-5",
+      "e_S_is": "residual of the saved S_B LU solution, not a single S_B dot-product error",
+      "generic_S_dot_gamma_reference_exceedances": [
+        {
+          "row_zero_based": 68,
+          "stored_v15_eta_binary64": 4.790578625393529E-7,
+          "stored_v15_eta_90": "4.79057862539352013043217028462780774315690767245714429491040089159233576694818464950922708E-7",
+          "stored_schur_componentwise_berr_90": "8.68453693731032626367980872495558681338893443707303133125508556949152114706018251353596041E-13",
+          "abs_d_90": "2.93553900851188851840470662124132508741170744646411380471774512197115842517352068038454482E-20",
+          "e_S_complex_90": {
+            "imag": "-2.82867126975746018215475151859586763152655337099492706057039884106590035677630474233513998E-25",
+            "real": "2.89505992948013296667894165751235187648682214774430102191773497000342847131471417002751344E-26"
+          },
+          "abs_e_S_90": "2.843447708733905518870407178693708545967487633007513907111502151066154587323645410658233721723546712E-25",
+          "abs_e_S_over_abs_d_90": "0.000009686288277856451306032604322951021496579236408737380037146562743120771170188323159431714261542022848",
+          "abs_e_S_over_reference_gamma": "4.67733130091818857110308688658904995170901036072628304501785867790727635968029318101522635",
+          "e_K_complex_90": {
+            "imag": "-2.77025113798935521302897626737207832513889769362122146165359071490545035631597245232257665E-20",
+            "real": "-9.71054478200211612500070189597225729467865371445046219706691888569000522264235801044170028E-21"
+          }
+        },
+        {
+          "row_zero_based": 140,
+          "stored_v15_eta_binary64": 2.448298381310218E-7,
+          "stored_v15_eta_90": "2.44829838131022294865662084801780803435128853268242101004274943758596538262627602385710175E-7",
+          "stored_schur_componentwise_berr_90": "3.30684981304895798419177489488801887376544222746642850218966596645480020832473106459101461E-13",
+          "abs_d_90": "2.64441203203832584667167086955978797660243536741730985733803970116351750650385213192918669E-20",
+          "e_S_complex_90": {
+            "imag": "-2.88374401591854750808277656748853765855520803249909490302073295925118477449389653746679151E-25",
+            "real": "-3.11515277724358259335213060751537512793703823409564739349808499637432941326371183061944850E-25"
+          },
+          "abs_e_S_90": "4.245015474048880036305601185463553262365037695211132929542023578641886790616569914026628054570373705E-25",
+          "abs_e_S_over_abs_d_90": "0.00001605277627925781730852544447651152419680270716193363015136367278778200355964668828782476343438561545",
+          "abs_e_S_over_reference_gamma": "1.80311536715189570016176321319657090187628322166859903350755889296942384380708939288620036",
+          "e_K_complex_90": {
+            "imag": "9.57072410732001432041731443634622391496501476299149697193230133737477766634842675265374668E-21",
+            "real": "-2.46512251171352565558800917672018078495449035645694353535747572197405713768043328787169381E-20"
+          }
+        }
+      ],
+      "e_C_gamma_reference_max_ratio": "0.00934249167204960838585756126776176633794399950195299101677225064768200331482196635489422019",
+      "cancellation_means_dot_over_uncancelled_product_scale": true
+    },
+    "subtraction_and_sum_zeros": {
+      "e_sub_exact_zero_rows": 799,
+      "e_sum_exact_zero_rows": 799,
+      "remaining_row_zero_based": 91,
+      "e_sub_complex_90": {
+        "real": "2.5e-111",
+        "imag": "0"
+      },
+      "e_sum_complex_90": {
+        "real": "2.5e-111",
+        "imag": "0"
+      },
+      "abs_each_over_abs_d_90": "4.977242431097246476292277800728612794659451612474069405394971253215334957278725817456838037668796133e-91",
+      "row_259_both_exact_zero": true
+    },
+    "C_identity_limit": "Archived C came from system.modal_constraint; original A independently used internal_modal_constraint_matrix. Independent original-A C bytes and input correction are absent, so e_C is action-consistency difference, not proven pure roundoff.",
+    "rank_mapping_limit": "Source owner slice matches r_modal; target owner slice matches a. Target also packs z_b/z_t/a, but per-rank bottom/top split is absent; Lz is not_run and no local_size split is inferred.",
+    "p1": {
+      "lu_correction": "not_run",
+      "C_dot_comparison": "not_run",
+      "Lz": "not_run",
+      "reason": "e_K dominates all failed rows; e_S is small relative to d; actual L/y/q/Ly/Lq and target side mapping are not persisted; C identity is incomplete",
+      "next_review_evidence": [
+        "One PC action on the same frozen RHS, with fixed B/S_B and a identity bound to the saved attempt.",
+        "Capture the two y/q sides and their four actual B actions, same-attempt y/q/z, Ly/Lq/Lz and g, actual L row plus modal mapping and per-rank target bottom/top split.",
+        "Read old 800-column feedback only if a same-identity saved object exists; otherwise record missing/not_persisted and do not recompute the 800 columns.",
+        "Capture original-A internal_modal_constraint_matrix bytes, input correction and action-input hash; do not infer them from system.modal_constraint."
+      ],
+      "large_construction_quota": "2/2 consumed; any real B/factor access or construction requires a new review"
+    },
+    "archive_inputs_verified_by_analysis": {
+      "evidence_index.json": "775c453b8c60699fd3f64ef4e4a3c1a1934c8616784d0777652adc3d9aaedfd9",
+      "launch_manifest.json": "4d36167b092a8c47c9dfecc8a55e865a291eab070135016142f88f699c6d3283",
+      "packet_manifest.json": "63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2",
+      "rank_vector_index.npz": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+      "run_manifest.json": "cad2cfdd14e37c0799a03d5d9172b7f581161d575dd7045566af14951afa12ca",
+      "s_b_ready.npz": "4a5f2e6d264b28e0d9b44af4306d6efafa897b5d154cb9f9fac6d02d7161def5",
+      "supervisor_summary.json": "237e4a6d983d8a2b113d30ec6a39dc453b7a80769594f0d21aab380a826b63e2",
+      "terminal_numeric_reject.npz": "e84fffe96bf19418714099d8f2496069c73c282ff452ec58c0854860deb40c54"
+    },
+    "p0_closeout_index": {
+      "path": "results/task041_v18_modal_error_analysis_prepared_20261016/p0_analysis_closeout_index.json",
+      "sha256": "d747d59cfb1b1fd5ad3031033af347a672ab161bbcdb190b76d3923dae4d522b"
+    },
+    "missing_data_review": {
+      "metadata_paths_checked": [
+        "<run_path>/run_manifest.json",
+        "<run_path>/supervisor_summary.json",
+        "<run_path>/consumer/numerical_output/v13_modal_row_evidence/index.json",
+        "<run_path>/factor_inventory.json",
+        "<run_path>/consumer/factor_inventory.json"
+      ],
+      "index_records_present": [
+        "v15_s_b_ready",
+        "v15_terminal_numeric_reject",
+        "v15_terminal_rank_vectors_index"
+      ],
+      "not_persisted": [
+        "actual L rows and an explicit L-to-modal-target mapping",
+        "same-attempt y, q, Ly, Lq vectors",
+        "column-feedback terms",
+        "per-rank target z_b/z_t boundary",
+        "original-A internal_modal_constraint_matrix bytes and input correction/action hash"
+      ],
+      "interpretation_limits": [
+        "uppercase Q in factor inventory is a counter, not the q vector",
+        "source owner modal slice is the PC RHS r_modal, not y or q",
+        "do not substitute C-S_B, r-g, or a guessed local_size half-split for missing data",
+        "C was archived from system.modal_constraint while original A used internal_modal_constraint_matrix; e_C is not proven pure roundoff"
+      ],
+      "result": "Lz_not_run; no missing array was reconstructed"
+    },
+    "owner_norms_from_saved_arrays": {
+      "g_norm_2": "0.00299607419047962529402978651151752681857958825290773183015191214148628783874668943359182014",
+      "schur_residual_norm_2": "2.93131484696790985461898788904309592579661304492623650969672254971544089253944719908961755E-19",
+      "semantics": "||S_B a-g||2 / ||g||2; this is not componentwise BERR"
+    },
+    "archived_owner_norm_fields": {
+      "archived_owner_relative_backward_error": "1.9821704747745833267288011451214515543634941789619130503297128598205745220184326171875E-16",
+      "archived_owner_residual_norm": "5.938729800602874779672348454957503034004928769396219716270035604566146503202617168426513671875E-19",
+      "archived_owner_rhs_norm": "0.002996074190479625608263258840224807499907910823822021484375",
+      "archived_recorded_residual_norm": 5.938729800602875E-19,
+      "archived_recorded_rhs_norm": 0.0029960741904796256,
+      "denominator_semantics": "||g||2, not ||S_B||*||a||+||g|| and not componentwise BERR",
+      "g_norm_2_from_saved_g": "0.00299607419047962529402978651151752681857958825290773183015191214148628783874668943359182014",
+      "reconstructed_archived_relative": "1.98217047477458328894956916328277351361909304519276474820769480393291587410683500640923302E-16",
+      "reconstructed_archived_relative_state": "finite",
+      "saved_array_relative": "9.78385267054635764287765187986870374030213070878932902591016255100311637737117916270536632E-17",
+      "saved_array_relative_state": "finite",
+      "schur_residual_norm_2_from_saved_S_a_g": "2.93131484696790985461898788904309592579661304492623650969672254971544089253944719908961755E-19"
+    }
+  },
+  "execution_and_accounting": {
+    "analysis_process_count": 1,
+    "thread_environment_all_six_variables": 1,
+    "success_child_wall_seconds": 27.411684530088678,
+    "analysis_internal_phase_seconds": 27.029757865937427,
+    "failed_schema_child_wall_seconds": 0.41583875683136284,
+    "unique_charged_seconds": 27.82752328692004,
+    "peak_rusage_children_bytes": 92078080,
+    "peak_vm_hwm_bytes": 92192768,
+    "planned_process_budget_bytes": 2147483648,
+    "hard_kernel_memory_limit_set": false,
+    "v5_before": {
+      "count": 307,
+      "top_seconds": 651274.1059664167,
+      "sha256": "4fe39d105e32e2601172116a300bedac61f6e4458fa0b780cbbcd8ff11b0edc8"
+    },
+    "v5_after": {
+      "count": 308,
+      "top_seconds": 651301.9334897036,
+      "sha256": "5fdb531b68e8ccd40587eb26ca921b3358a8a917c47129fcc3d89935568277bb"
+    },
+    "attempt_id": "task041_v18_p0_saved_modal_error_decomposition_20261016:analysis",
+    "v5_old_prefix_unchanged": true,
+    "fixture_history": "Two preserved early local fixture attempts failed because a non-integer binary64 small term was demanded after excessive-scale cancellation; exact binary64 integer cancellation replacement passed six analyzer fixtures. One initial P0 schema preflight refusal was preserved and narrowly corrected; none is a solver failure.",
+    "per_row_vm_hwm_budget_check": {
+      "source_lines_as_run": "1061-1062 and helper 1438-1449",
+      "observed_per_row": true,
+      "enforcement": "user-space check of current-process VmHWM after each analyzed row against 2 GiB",
+      "rlimit_as_set": false,
+      "kernel_hard_limit": false,
+      "final_child_vm_hwm_bytes": 92192768,
+      "outer_rusage_children_maxrss_bytes": 92078080
+    }
+  },
+  "supervision_timer": {
+    "status_in_v16_sampled_record": "active",
+    "later_controller_readonly_observation": {
+      "timer_and_service": "not-found/inactive/dead",
+      "service_main_pid": 0,
+      "matching_list_timers_entries": 0,
+      "stopped_by_controller": true,
+      "restored_by_this_closeout": false
+    }
+  },
+  "final_physics": "not_run"
+}

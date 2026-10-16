@@ -1,5 +1,9 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-16：Task041 Review V18 P0存档分解收口
+
+从V16首次PC apply冻结的800行binary64数组完成90位Decimal五项误差分解，并对行259、631、707、105作120位交叉核验。`e_K`是800行及全部732失败行的唯一最大项；C路径的原A独立矩阵字节与输入修正缺失，`e_C`仍是约束作用一致性差。通用S-dot gamma参考比值仅行68、140超过1；`e_S`是存档S_B LU残差，该参考界不约束LU solve误差。没有重放A/B/P4、重建FE/QEP或重算800列。逐行`VmHWM`用户态预算检查与最终RUSAGE口径、输入哈希、缺项和可复制命令见[Response V19](task041_mpi1_shortwave_hybrid_capacity/response_v19.md)、[中心outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/v18_saved_modal_error_decomposition.md)和[closeout index](../results/task041_v18_modal_error_analysis_prepared_20261016/p0_analysis_closeout_index.json)。P0唯一追加V5 wall`27.82752328692004 s`，现308项/top`651301.9334897036 s`/SHA `5fdb531b68e8ccd40587eb26ca921b3358a8a917c47129fcc3d89935568277bb`；旧307项前缀不变。本轮仅运行6类小代数fixture并完成一次存档HP数组分析；无新增pytest、ABI、FE、PDE或求解器运行。大型额度2/2已用尽，材料交ChatGPT技术审阅。
+
 ## 2026-10-16：Task041 V16 唯一 M400/MPI8 Invocation 离线收口
 
 本次已完成V16批准的唯一W0.7 10×5 nm、p6/h0.70、M400/MPI8运行。worker复用合格QEP，在本Invocation内构造`S_B` 800/800列并建立owner LU；第一次PC apply的原始modal-row逐行后向误差为`0.017996403128522177`，超过原`1e-10`门，未完成outer iteration。owner LU同次backward error为`1.9821704747745833e-16`并通过，但不能替代modal-row门或完整原方程验收。consumer标签`IMPLEMENTATION_FAILURE`未证明实现缺陷，V14旧M400根因仍`UNCONFIRMED`。

@@ -1,6 +1,6 @@
 # Task041 outcomes summary
 
-## 当前阶段：V16 唯一 M400/MPI8 Invocation 终态（2026-10-16）
+## 当前阶段：V16 唯一 M400/MPI8 Invocation终态与Review V18存档分解（2026-10-16）
 
 通俗地说，本场已经构造并保存了连接两侧模态的小型耦合系统 `S_B`，也建立了owner LU；但第一次预条件器作用就被既有 modal-row 误差门拒绝，因此没有进入一次完整 outer iteration。这里的误差衡量 PC 输出行是否符合其逐行组成项合同，不是最终解的全局残差。consumer 的 `IMPLEMENTATION_FAILURE` 是宽泛运行分类，当前证据没有证明代码缺陷；旧 V14 M400 根因仍为 `UNCONFIRMED`。
 
@@ -10,6 +10,7 @@
 | 构造与owner解 | 本Invocation构造 `S_B` 800/800列；`S_B` 与 `C` 均为有限 `complex128 (800,800)`；owner rank 7 的LU factor count=1 | 数组被保存；factor随cleanup销毁，不存在可继续使用的live factor |
 | 首次PC modal-row门 | attempt 1 / attempted apply 1；`eta_terms_inf=0.017996403128522177`，限值`1e-10`；owner LU backward error `1.9821704747745833e-16`并通过 | 首次PC输出行真实拒绝。没有完成outer iteration，不能将owner LU通过替代全局行门或原方程门 |
 | 800行存档复算 | 从同次冻结binary64数组以90位Decimal独立重算；732/800行高于`1e-10`，最大零基行259（第260行、全局模态索引302659）；所有行`d=w_modal-r_modal`与存档binary64精确一致 | 只复算已存分量，没有重新执行原A、B/P4、求解器或谱计算；完整超门行区间见[离线receipt](../../../results/task041_v16_m400_offline_closeout_20261016/terminal_recompute.json) |
+| Review V18 P0存档五项分解 | `e_K`为800/800行及全部732个失败行的唯一最大项；四个代表行经120位交叉核验；`e_S`在零基68、140超过通用S-dot gamma参考界，但它是S_B LU残差、该界不保证LU误差 | `e_C`受原A独立C字节/输入修正缺失限制；未重放A/B/P4或重算800列。输入、hash、缺项和逐行VmHWM检查口径见[Response V19](../response_v19.md)、[P0 outcome](v18_saved_modal_error_decomposition.md)及[closeout index](../../../results/task041_v18_modal_error_analysis_prepared_20261016/p0_analysis_closeout_index.json) |
 | 首行分量与分母 | row259：`t_bottom=-3.2887837938824806e-18-3.185324603020592e-17j`，`t_top=0`，`t_constraint=2.1553346202144075e-18+3.1673468771682553e-17j`，`r_modal=0`，`w_modal=d=-1.1334491736680731e-18-1.797772585233666e-19j`；分子`1.1476179207258029e-18`，绝对分母`6.376929392668288e-17` | 分母由`row_scale 3.2022576122225604e-17 × scaled_sum 1.991385505128775`构成；Decimal复算比值`0.017996403128522126…`，与存档稳定值只差`5.01e-17`，拒绝结论不受末位舍入影响 |
 | 身份及快照 | 原A Mat handle `2134638864`，布局SHA `db70fd5ee69f64337780912877872fc61ce3809f87e66fe3ccd4de8d9a39c5f8`；输入未变、无alias、capture errors为空；16个rank-local source/target数组的SHA、shape、dtype、finite核验通过 | row record中的Invocation字面字段是占位文本；实际Invocation由launch manifest绑定。唯一`-inf`数组为精确零分解误差对应的log字段 |
 | 服务分类与终检 | consumer `IMPLEMENTATION_FAILURE`，首因`FloatingPointError`拒绝V13原始modal-row门；public exit 3；finalizer `service_boundary_failure` | finalizer `modal_solver_policy_matches_request=false`是后续完整V13 candidate/solve/outer-control回执缺失造成的次级终检失败，不证明请求策略或资源绑定错误；旧V14根因仍未确认 |
@@ -17,7 +18,9 @@
 | V5与大型额度 | 旧306项逐entry保持；唯一新增service wall `13,489.261149145 s`；现307项、top `651,274.1059664167 s`、SHA `4fe39d105e32e2601172116a300bedac61f6e4458fa0b780cbbcd8ff11b0edc8`。V14两场大型构造额度2/2已用尽 | parent summary wall `13,488.424919819 s`是不同字段定义，不与ledger entry相加；不重置大型额度 |
 | 未完成物理范围 | 没有outer收敛、五项最终原方程残差、恢复场、E/H、official R/T/A、`A_volume`、衍射或physics；M600、h细化、50×25 nm、2 TB及48 h未资格化 | 不能把800列ready、一次owner solve或PC行门拒绝解释成完整求解或物理结果 |
 
-既有资格分层见[Response V18](../response_v18.md)：registered tiny FE serial R30 reason 2/389、原A相对残差`4.97654121633487e-9 <= 5e-9`；冻结行记录有可读数组且`ldu_destroyed=true`，旧snapshot validator对精确零log `-inf` 的拒绝已由后续窄schema离线核查解释，serial pytest仍rc1且没有重跑。registered FE MPI2两rank reason 2/441、原A相对残差`4.83780279602371e-9 <= 5e-9`、销毁后断言通过。最终相关helper版的owner-writer MPI2协议回归见[034737Z attempt](../../../results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/pytest.attempt.json)及[source map](../../../results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/source_hashes_before_after.json)，`rc=0`、父wall`3.2586057849694043 s`；rank OS exit codes`not_persisted`。test351两个producer-reuse节点是consumer边界合同，不是数值解算。P1 21个资源合同节点的有效覆盖分布在四批`4+1+8+8`，不是一次21项全绿attempt；历史失败和not-run部分仍留在原收据。完整机器记录见[terminal record](records/task041_v16_m400_terminal_20261016.json)，800行复算与数组hash见[离线receipt](../../../results/task041_v16_m400_offline_closeout_20261016/terminal_recompute.json)。当前只完成离线证据和文档收口，没有新增测试、ABI、FE或计算。
+既有资格分层见[Response V18](../response_v18.md)，其V16与V15段保留之前已审事实：registered tiny FE serial R30 reason 2/389、原A相对残差`4.97654121633487e-9 <= 5e-9`；冻结行记录有可读数组且`ldu_destroyed=true`，旧snapshot validator对精确零log `-inf` 的拒绝已由后续窄schema离线核查解释，serial pytest仍rc1且没有重跑。registered FE MPI2两rank reason 2/441、原A相对残差`4.83780279602371e-9 <= 5e-9`、销毁后断言通过。最终相关helper版的owner-writer MPI2协议回归见[034737Z attempt](../../../results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/pytest.attempt.json)及[source map](../../../results/task041_v16_owner_writer_failure_mpi2_attempt_20261015T034737Z/mpi2/source_hashes_before_after.json)，`rc=0`、父wall`3.2586057849694043 s`；rank OS exit codes`not_persisted`。test351两个producer-reuse节点是consumer边界合同，不是数值解算。P1 21个资源合同节点的有效覆盖分布在四批`4+1+8+8`，不是一次21项全绿attempt；历史失败和not-run部分仍留在原收据。完整机器记录见[terminal record](records/task041_v16_m400_terminal_20261016.json)，V18离线输入/缺项及复现命令见[P0 closeout index](../../../results/task041_v18_modal_error_analysis_prepared_20261016/p0_analysis_closeout_index.json)。本轮仅运行6类小代数fixture并完成一次存档HP数组分析；无新增pytest、ABI、FE、PDE或求解器运行。
+
+Review V18的P0后续唯一增加V5条目为`27.82752328692004 s`，ledger现308项、top `651301.9334897036 s`、SHA `5fdb531b68e8ccd40587eb26ca921b3358a8a917c47129fcc3d89935568277bb`；旧307项前缀保持。分析器逐行读取并检查进程`VmHWM`的2 GiB用户态预算，不是kernel hard limit；最终child VmHWM及外层`RUSAGE_CHILDREN`数字只作最终测量值。本轮仅运行6类小代数fixture并完成一次存档HP数组分析；没有新增pytest、ABI、FE、PDE或求解器运行，也没有运行P1。
 
 ## 历史阶段：V15 tiny真实FE的240步诊断终态（2026-10-14）
 
