@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -73,9 +74,11 @@ def test_y2_profile_binds_policy_through_direct_route_and_active_output_identity
 
 def test_direct_factor_evidence_saves_only_requested_arrays_and_hashes(tmp_path):
     from src.runners.p6_condensed_direct import (
+        _task40_boundary_projection_evidence,
         _task40_exact_evidence_mode_indices,
         _write_task40_direct_factor_evidence,
     )
+    from src.solvers.p6_cell_condensed_action import P6CellCondensedAction
 
     keys = (
         ("top", -4, 0, "p"),
@@ -93,30 +96,127 @@ def test_direct_factor_evidence_saves_only_requested_arrays_and_hashes(tmp_path)
     with pytest.raises(ValueError, match="misses evidence key"):
         _task40_exact_evidence_mode_indices(modes[:-1], keys)
 
+    # Run the production residual method with distinct trace and port block
+    # sizes. Its retained_alpha fact is the modal tail, not the trace prefix.
+    action = object.__new__(P6CellCondensedAction)
+    action.condensed = SimpleNamespace(
+        active_rows=2,
+        appended_rows=3,
+        full_rows=2,
+        comm=SimpleNamespace(Get_size=lambda: 1),
+    )
+    action._cells = []
+    action._H_p = None
+    action._H_p_diagonal = np.asarray([2.0, 3.0, 4.0], dtype=np.complex128)
+    action._Hhat = np.diag(action._H_p_diagonal)
+    action._hp_solve_count = 0
+    action._apply_count = 0
+    action._direct_B_active = {}
+    action._direct_D_active = {}
+    action.recover_storage = lambda reduced_solution, **_kwargs: np.asarray(
+        reduced_solution, dtype=np.complex128
+    )[:2].copy()
+    action.apply_B_full = lambda _alpha: np.zeros(2, dtype=np.complex128)
+    action.apply_D_full = lambda _field: np.asarray(
+        [0.2 + 0.1j, -0.3j, 0.4 - 0.2j], dtype=np.complex128
+    )
+    action.original_hp_solve = lambda values: np.asarray(
+        values, dtype=np.complex128
+    ) / action._H_p_diagonal
+    action._hp_apply = lambda values: action._H_p_diagonal * np.asarray(
+        values, dtype=np.complex128
+    )
+    action.reduce_rhs = lambda *_args, **_kwargs: np.zeros(5, dtype=np.complex128)
+    action.inject_trace_port = lambda _values: np.zeros(2, dtype=np.complex128)
+    augmented_solution = np.asarray(
+        [10 + 1j, 20 - 2j, 30 + 3j, 40 - 4j, 50 + 5j],
+        dtype=np.complex128,
+    )
+    native_facts = action.evaluate_native_residual(
+        augmented_solution,
+        np.asarray([1 + 0.5j, -2 + 0.25j], dtype=np.complex128),
+        lambda storage: np.asarray(storage, dtype=np.complex128),
+        port_rhs=np.asarray([0.1j, 0.2, -0.3j], dtype=np.complex128),
+        reduced_residual=np.zeros(5, dtype=np.complex128),
+    )
+    assert native_facts["retained_alpha"].shape == (3,)
+    assert np.array_equal(native_facts["retained_alpha"], augmented_solution[2:])
+    assert native_facts["storage_solution"].shape == (2,)
+
     witness = {
         "status": "OBSERVED_NOT_QUALIFICATION",
-        "orders": [{"side": key[0], "m": key[1], "n": key[2], "polarization": key[3]} for key in keys],
+        "orders": [
+            {
+                "side": keys[0][0],
+                "m": keys[0][1],
+                "n": keys[0][2],
+                "polarization": keys[0][3],
+                **_task40_boundary_projection_evidence(
+                    {
+                        "auxiliary_total_projection": 2.5e27 + 1.0e27j,
+                        "direct_tangential_total_projection": 2.0e27 + 0.5e27j,
+                        "auxiliary_outgoing_projection": 0.75e27 - 0.25e27j,
+                        "direct_tangential_outgoing_projection": 0.5e27 - 0.5e27j,
+                    },
+                    4.0e-29 + 0j,
+                    4.0,
+                ),
+            },
+            *[
+                {
+                    "side": key[0],
+                    "m": key[1],
+                    "n": key[2],
+                    "polarization": key[3],
+                }
+                for key in keys[1:]
+            ],
+        ],
     }
     report = _write_task40_direct_factor_evidence(
         tmp_path,
         recovered_p6_storage=np.asarray([1 + 2j, 3 - 4j], dtype=np.complex128),
-        retained_alpha=np.asarray([0.25 + 0.5j], dtype=np.complex128),
-        modal_alpha=np.asarray([0.1j, -0.2j], dtype=np.complex128),
-        schur_port_residual=np.asarray([1.0e-12j, 2.0e-12j], dtype=np.complex128),
-        independent_port_residual=np.asarray([3.0e-13j, 4.0e-13j], dtype=np.complex128),
-        active_rows=1,
-        appended_rows=2,
+        augmented_solution=augmented_solution,
+        native_retained_alpha=native_facts["retained_alpha"],
+        schur_port_residual=native_facts["schur_port_residual"],
+        independent_port_residual=native_facts["augmented_port_residual"],
+        active_rows=2,
+        appended_rows=3,
+        native_port_residual_relative=native_facts["port_residual_relative"],
+        native_port_operation_scale=native_facts["port_operation_scale"],
         operator_identity={"mode_sha256": "a" * 64},
         factor_facts={"symbolic_calls": 1, "numeric_calls": 1, "solve_calls": 1},
         six_key_witness=witness,
     )
     assert report["status"] == "SAVED_PRE_RELEASE_NOT_QUALIFICATION"
     assert report["solver_qualification_claimed"] is False
-    assert report["augmented_layout"]["retained_alpha_rows"] == [0, 1]
-    assert report["augmented_layout"]["modal_alpha_rows"] == [1, 3]
+    layout = report["augmented_layout"]
+    assert layout["augmented_trace_solution_rows"] == [0, 2]
+    assert layout["retained_modal_alpha_rows"] == [2, 5]
+    assert layout["native_facts_retained_alpha_matches_modal_slice"] is True
+    assert report["native_port_residual_facts"]["relative"] == native_facts[
+        "port_residual_relative"
+    ]
+    assert report["native_port_residual_facts"]["operation_scale"] == native_facts[
+        "port_operation_scale"
+    ]
     assert len(report["artifacts"]) == 5
+    artifacts_dir = tmp_path / "task40_direct_factor_evidence"
+    trace = np.load(artifacts_dir / "augmented_trace_solution.npy", allow_pickle=False)
+    modal = np.load(artifacts_dir / "retained_modal_alpha.npy", allow_pickle=False)
+    assert np.array_equal(trace, augmented_solution[:2])
+    assert np.array_equal(modal, augmented_solution[2:])
+    serialized = json.loads((artifacts_dir / "evidence.json").read_text())
+    serialized_first = serialized["six_key_full_primal_witness"]["orders"][0]
+    assert serialized_first["mode_boundary_phase_P"] == [4.0e-29, 0.0]
+    assert np.allclose(
+        serialized_first["auxiliary_total_projection_boundary"], [0.1, 0.04]
+    )
+    assert np.allclose(
+        serialized_first["total_projection_boundary_difference"], [0.02, 0.02]
+    )
     for artifact in report["artifacts"].values():
-        path = tmp_path / "task40_direct_factor_evidence" / Path(artifact["path"]).name
+        path = artifacts_dir / Path(artifact["path"]).name
         assert hashlib.sha256(path.read_bytes()).hexdigest() == artifact["sha256"]
         assert np.load(path, allow_pickle=False).dtype == np.dtype(np.complex128)
 
@@ -124,20 +224,90 @@ def test_direct_factor_evidence_saves_only_requested_arrays_and_hashes(tmp_path)
 def test_direct_factor_evidence_rejects_wrong_block_vector_shapes(tmp_path):
     from src.runners.p6_condensed_direct import _write_task40_direct_factor_evidence
 
-    with pytest.raises(ValueError, match="layout is inconsistent"):
+    with pytest.raises(ValueError, match="wrong trace/modal layout"):
         _write_task40_direct_factor_evidence(
             tmp_path,
             recovered_p6_storage=np.ones(2, dtype=np.complex128),
-            retained_alpha=np.ones(2, dtype=np.complex128),
-            modal_alpha=np.ones(1, dtype=np.complex128),
+        augmented_solution=np.ones(1, dtype=np.complex128),
+            native_retained_alpha=np.ones(1, dtype=np.complex128),
             schur_port_residual=np.ones(1, dtype=np.complex128),
             independent_port_residual=np.ones(1, dtype=np.complex128),
             active_rows=1,
             appended_rows=1,
+            native_port_residual_relative=0.0,
+            native_port_operation_scale=1.0,
             operator_identity={},
             factor_facts={},
             six_key_witness={"orders": [1, 2, 3, 4, 5, 6]},
         )
+
+
+def test_direct_factor_evidence_rejects_native_alpha_not_equal_to_augmented_tail(
+    tmp_path,
+):
+    from src.runners.p6_condensed_direct import _write_task40_direct_factor_evidence
+
+    with pytest.raises(ValueError, match="does not equal the augmented solution modal slice"):
+        _write_task40_direct_factor_evidence(
+            tmp_path,
+            recovered_p6_storage=np.ones(2, dtype=np.complex128),
+            augmented_solution=np.asarray([1 + 1j, 2 + 2j, 3 + 3j]),
+            native_retained_alpha=np.asarray([9 + 9j]),
+            schur_port_residual=np.zeros(1, dtype=np.complex128),
+            independent_port_residual=np.zeros(1, dtype=np.complex128),
+            active_rows=2,
+            appended_rows=1,
+            native_port_residual_relative=0.0,
+            native_port_operation_scale=1.0,
+            operator_identity={},
+            factor_facts={},
+            six_key_witness={},
+        )
+
+
+def test_task40_boundary_projection_evidence_keeps_raw_and_same_boundary_units():
+    from src.runners.p6_condensed_direct import _task40_boundary_projection_evidence
+
+    phase = 4.0e-29 + 0j
+    row = {
+        "auxiliary_total_projection": 2.5e27 + 1.0e27j,
+        "direct_tangential_total_projection": 2.0e27 + 0.5e27j,
+        "auxiliary_outgoing_projection": 0.75e27 - 0.25e27j,
+        "direct_tangential_outgoing_projection": 0.5e27 - 0.5e27j,
+        "incident_projection": 1.75e27 + 1.25e27j,
+    }
+    evidence = _task40_boundary_projection_evidence(row, phase, 4.0)
+    assert evidence["auxiliary_total_projection"] == row["auxiliary_total_projection"]
+    assert evidence["direct_tangential_total_projection"] == row[
+        "direct_tangential_total_projection"
+    ]
+    assert evidence["mode_boundary_phase_P"] == phase
+    assert evidence["auxiliary_total_projection_boundary"] == (
+        row["auxiliary_total_projection"] * phase
+    )
+    assert evidence["direct_tangential_total_projection_boundary"] == (
+        row["direct_tangential_total_projection"] * phase
+    )
+    assert evidence["total_projection_boundary_difference"] == (
+        row["auxiliary_total_projection"]
+        - row["direct_tangential_total_projection"]
+    ) * phase
+    assert evidence["auxiliary_outgoing_projection_boundary"] == (
+        row["auxiliary_outgoing_projection"] * phase
+    )
+    assert evidence["direct_tangential_outgoing_projection_boundary"] == (
+        row["direct_tangential_outgoing_projection"] * phase
+    )
+    assert evidence["outgoing_projection_boundary_difference"] == (
+        row["auxiliary_outgoing_projection"]
+        - row["direct_tangential_outgoing_projection"]
+    ) * phase
+    assert evidence["direct_projection_numerator_derived"] == (
+        row["direct_tangential_total_projection"] * 4.0
+    )
+    assert "not an independently saved surface integral" in evidence[
+        "direct_projection_numerator_provenance"
+    ]
 
 
 def test_profile_policy_reaches_live_carrier_workspace_component_and_two_merge_stages(

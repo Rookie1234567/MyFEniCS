@@ -1497,13 +1497,67 @@ def _task40_exact_evidence_mode_indices(
     return indices
 
 
+def _task40_boundary_projection_evidence(
+    audit_row: Mapping[str, Any], boundary_phase: complex, normalization_h: float
+) -> dict[str, Any]:
+    """Add same-unit boundary values while preserving legacy raw coefficients."""
+
+    phase = complex(boundary_phase)
+    h_value = float(normalization_h)
+    if (
+        not np.isfinite(phase.real)
+        or not np.isfinite(phase.imag)
+        or not np.isfinite(h_value)
+        or h_value <= 0.0
+    ):
+        raise ValueError("Task40 boundary projection phase/normalization is invalid")
+    required = (
+        "auxiliary_total_projection",
+        "direct_tangential_total_projection",
+        "auxiliary_outgoing_projection",
+        "direct_tangential_outgoing_projection",
+    )
+    values = {name: complex(audit_row[name]) for name in required}
+    if any(
+        not np.isfinite(value.real) or not np.isfinite(value.imag)
+        for value in values.values()
+    ):
+        raise ValueError("Task40 boundary projection contains a non-finite raw value")
+    auxiliary_total = values["auxiliary_total_projection"]
+    direct_total = values["direct_tangential_total_projection"]
+    auxiliary_outgoing = values["auxiliary_outgoing_projection"]
+    direct_outgoing = values["direct_tangential_outgoing_projection"]
+    return {
+        # Keep the exact raw coefficient values emitted by the existing audit.
+        **values,
+        "mode_boundary_phase_P": phase,
+        "normalization_h": h_value,
+        "direct_projection_numerator_derived": direct_total * h_value,
+        "direct_projection_numerator_provenance": (
+            "derived as direct_tangential_total_projection * normalization_h; "
+            "not an independently saved surface integral"
+        ),
+        "auxiliary_total_projection_boundary": auxiliary_total * phase,
+        "direct_tangential_total_projection_boundary": direct_total * phase,
+        "total_projection_boundary_difference": (auxiliary_total - direct_total) * phase,
+        "auxiliary_outgoing_projection_boundary": auxiliary_outgoing * phase,
+        "direct_tangential_outgoing_projection_boundary": direct_outgoing * phase,
+        "outgoing_projection_boundary_difference": (
+            auxiliary_outgoing - direct_outgoing
+        ) * phase,
+    }
+
+
 def _task40_six_key_full_primal_witness(
     bundle: Mapping[str, Any],
     saved_field: Any,
     route: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Capture six independent q28 projections before Task40 factor release."""
-    from src.solvers.dtn_port_3d import _auxiliary_direct_tangential_projection_audit
+    from src.solvers.dtn_port_3d import (
+        _auxiliary_direct_tangential_projection_audit,
+        _mode_boundary_phase,
+    )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
 
     modes = tuple(bundle["modes"])
@@ -1538,12 +1592,20 @@ def _task40_six_key_full_primal_witness(
             quadrature_degree=int(route["surface_quadrature_degree"]),
         )
         rows = []
-        for index, key, row in zip(indices, keys, audit["orders"], strict=True):
+        for index, key, row, selected_mode in zip(
+            indices, keys, audit["orders"], selected_modes, strict=True
+        ):
             entry = carrier.entries[index]
             if tuple(row[name] for name in ("side", "m", "n", "polarization")) != key:
                 raise ValueError("Task40 six-key witness row order differs from frozen keys")
+            boundary_facts = _task40_boundary_projection_evidence(
+                row,
+                _mode_boundary_phase(selected_mode, bundle["cfg"]),
+                float(entry.normalization_h),
+            )
             rows.append({
                 **row,
+                **boundary_facts,
                 "parent_mode_index": int(index),
                 "parent_mode_identity": entry.mode_identity,
                 "normalization_h": float(entry.normalization_h),
@@ -1580,25 +1642,42 @@ def _write_task40_direct_factor_evidence(
     directory: Path,
     *,
     recovered_p6_storage: np.ndarray,
-    retained_alpha: np.ndarray,
-    modal_alpha: np.ndarray,
+    augmented_solution: np.ndarray,
+    native_retained_alpha: np.ndarray,
     schur_port_residual: np.ndarray,
     independent_port_residual: np.ndarray,
     active_rows: int,
     appended_rows: int,
+    native_port_residual_relative: float,
+    native_port_operation_scale: float,
     operator_identity: Mapping[str, Any],
     factor_facts: Mapping[str, Any],
     six_key_witness: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Write only the requested direct-factor arrays before releasing it."""
     evidence_dir = Path(directory) / "task40_direct_factor_evidence"
-    evidence_dir.mkdir(parents=True, exist_ok=False)
+    solution = np.asarray(augmented_solution, dtype=np.complex128)
+    if solution.shape != (int(active_rows) + int(appended_rows),):
+        raise ValueError("Task40 augmented solution has the wrong trace/modal layout")
+    trace_solution = solution[: int(active_rows)]
+    modal_alpha = solution[int(active_rows) :]
+    native_alpha = np.asarray(native_retained_alpha, dtype=np.complex128)
+    if native_alpha.shape != (int(appended_rows),) or not np.array_equal(
+        native_alpha, modal_alpha
+    ):
+        raise ValueError(
+            "Task40 native retained_alpha does not equal the augmented solution modal slice"
+        )
+    port_relative = float(native_port_residual_relative)
+    port_scale = float(native_port_operation_scale)
+    if not np.isfinite(port_relative) or not np.isfinite(port_scale) or port_scale < 0.0:
+        raise ValueError("Task40 native port residual facts are non-finite or invalid")
     arrays = {
         "recovered_p6_storage_coefficients": np.asarray(
             recovered_p6_storage, dtype=np.complex128
         ),
-        "retained_alpha": np.asarray(retained_alpha, dtype=np.complex128),
-        "modal_alpha": np.asarray(modal_alpha, dtype=np.complex128),
+        "augmented_trace_solution": trace_solution,
+        "retained_modal_alpha": modal_alpha,
         "schur_port_block_residual": np.asarray(
             schur_port_residual, dtype=np.complex128
         ),
@@ -1608,14 +1687,15 @@ def _write_task40_direct_factor_evidence(
     }
     if (
         arrays["recovered_p6_storage_coefficients"].ndim != 1
-        or arrays["retained_alpha"].shape != (int(active_rows),)
-        or arrays["modal_alpha"].shape != (int(appended_rows),)
+        or arrays["augmented_trace_solution"].shape != (int(active_rows),)
+        or arrays["retained_modal_alpha"].shape != (int(appended_rows),)
         or arrays["schur_port_block_residual"].shape != (int(appended_rows),)
         or arrays["independent_augmented_port_residual"].shape != (int(appended_rows),)
     ):
         raise ValueError("Task40 pre-release factor evidence vector layout is inconsistent")
     if any(not np.isfinite(array).all() for array in arrays.values()):
         raise FloatingPointError("Task40 pre-release factor evidence contains non-finite data")
+    evidence_dir.mkdir(parents=True, exist_ok=False)
     artifacts: dict[str, Any] = {}
     for name, array in arrays.items():
         path = evidence_dir / f"{name}.npy"
@@ -1636,12 +1716,28 @@ def _write_task40_direct_factor_evidence(
         "augmented_layout": {
             "active_trace_rows": int(active_rows),
             "appended_modal_rows": int(appended_rows),
-            "retained_alpha_rows": [0, int(active_rows)],
-            "modal_alpha_rows": [int(active_rows), int(active_rows + appended_rows)],
+            "augmented_trace_solution_rows": [0, int(active_rows)],
+            "retained_modal_alpha_rows": [
+                int(active_rows), int(active_rows + appended_rows)
+            ],
+            "native_facts_retained_alpha_source": (
+                "P6CellCondensedAction.evaluate_native_residual.retained_alpha"
+            ),
+            "native_facts_retained_alpha_semantics": "appended modal/port solution tail",
+            "native_facts_retained_alpha_matches_modal_slice": True,
             "schur_port_residual_source": "direct condensed residual tail",
             "independent_port_residual_source": (
                 "P6CellCondensedAction.evaluate_native_residual.augmented_port_residual"
             ),
+        },
+        "native_port_residual_facts": {
+            "relative": port_relative,
+            "operation_scale": port_scale,
+            "source": (
+                "P6CellCondensedAction.evaluate_native_residual.port_residual_relative "
+                "and port_operation_scale"
+            ),
+            "used_as_additional_gate": False,
         },
         "artifacts": artifacts,
         "six_key_full_primal_witness": six_key_witness,
@@ -2562,12 +2658,9 @@ def run_p6_condensed_direct(
             factor_evidence = _write_task40_direct_factor_evidence(
                 numerical_output,
                 recovered_p6_storage=recovered,
-                retained_alpha=np.asarray(
+                augmented_solution=np.asarray(solution_array, dtype=np.complex128),
+                native_retained_alpha=np.asarray(
                     native_facts["retained_alpha"], dtype=np.complex128
-                ),
-                modal_alpha=np.asarray(
-                    solution_array[int(condensed.active_rows) :],
-                    dtype=np.complex128,
                 ),
                 schur_port_residual=np.asarray(
                     native_facts["schur_port_residual"], dtype=np.complex128
@@ -2577,6 +2670,12 @@ def run_p6_condensed_direct(
                 ),
                 active_rows=int(condensed.active_rows),
                 appended_rows=int(condensed.appended_rows),
+                native_port_residual_relative=float(
+                    native_facts["port_residual_relative"]
+                ),
+                native_port_operation_scale=float(
+                    native_facts["port_operation_scale"]
+                ),
                 operator_identity=summary["operator_identity"],
                 factor_facts={
                     "matrix": summary.get("matrix"),
