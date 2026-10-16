@@ -1028,4 +1028,3 @@ def test_task41_tiny_complex_mumps_staged_call_chain(tmp_path, monkeypatch):
         rhs.destroy()
         exact.destroy()
         matrix.destroy()
-

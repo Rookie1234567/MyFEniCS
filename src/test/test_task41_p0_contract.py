@@ -583,4 +583,3 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
     assert receipt["required_checker_status"] == "passed"
     assert receipt["required_checker_command"] == closeout_call["command"]
     assert receipt["required_checker_authorization"] == closeout_call["validated_authorization"]
-
