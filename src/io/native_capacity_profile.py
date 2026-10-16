@@ -71,6 +71,9 @@ TASK40_PHI90_D13_Y2_P6_DIRECT_PROFILE = (
 TASK40_PHI90_D13_Y3_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Y3_p6_direct_v1"
 )
+TASK40_PHI90_D13_X2_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_X2_from_Y2_p6_direct_v1"
+)
 TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Z_p6_direct_v1"
 )
@@ -132,6 +135,19 @@ TASK40_PHI90_D13_CASES = {
         "axis_cell_counts": (6, 48, 14),
         "segment_cell_counts": {
             "x": (2, 2, 2), "y": (16, 16, 16), "z": (1, 12, 1),
+        },
+        "expected_global_cell_count": 4032,
+        "expected_material_tag_counts": {"1": 3360, "2": 288, "3": 384},
+        "explicit_axis_counts_in_input": True,
+    },
+    TASK40_PHI90_D13_X2_P6_DIRECT_PROFILE: {
+        "case": "X2",
+        "parent_case": "Y2",
+        "axis_comparison_parent": "Y2",
+        "changed_axis": "x",
+        "axis_cell_counts": (12, 24, 14),
+        "segment_cell_counts": {
+            "x": (4, 4, 4), "y": (8, 8, 8), "z": (1, 12, 1),
         },
         "expected_global_cell_count": 4032,
         "expected_material_tag_counts": {"1": 3360, "2": 288, "3": 384},
@@ -881,7 +897,11 @@ def _task40_phi90_d13_profile_facts(identity):
                 axis: list(counts)
                 for axis, counts in case["segment_cell_counts"].items()
             },
-            "base_axis_sha256_le_f64": dict(TASK40_PHI90_D13_BASE_AXIS_SHA256),
+            "base_axis_sha256_le_f64": dict(
+                axis_plan["parent_axis_sha256_le_f64"]
+                if case_name == "X2"
+                else TASK40_PHI90_D13_BASE_AXIS_SHA256
+            ),
             "expected_material_tag_counts": dict(
                 case["expected_material_tag_counts"]
             ),
@@ -895,7 +915,9 @@ def _task40_phi90_d13_profile_facts(identity):
             "explicit_axis_counts_in_input": case[
                 "explicit_axis_counts_in_input"
             ],
-            "only_axis_changes_from_B": case["changed_axis"],
+            "only_axis_changes_from_B": (
+                case["changed_axis"] if case_name != "X2" else None
+            ),
         },
         "mode_selection": mode_selection,
         "volume_quadrature": {
@@ -922,6 +944,11 @@ def _task40_phi90_d13_profile_facts(identity):
             ),
         },
     }
+    if case_name == "X2":
+        facts["component_options"]["directional_mesh_comparison"].update(
+            axis_comparison_parent="Y2",
+            only_axis_changes_from_parent="x",
+        )
     facts["backend"] = {
         "p6": "exact_p6_local_static_condensation_materialized_AIJ",
         "global_matrix": "one_exact_[S_V,Bhat;-Dhat,Hhat]_matrix",

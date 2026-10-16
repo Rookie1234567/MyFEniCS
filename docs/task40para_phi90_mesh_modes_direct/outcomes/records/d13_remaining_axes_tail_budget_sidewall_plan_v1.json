@@ -1,0 +1,411 @@
+{
+  "budget": {
+    "automatic_budget_exhaustion": false,
+    "completed_complete_pdes": 8,
+    "dependency": "X2 and Z2 are independent one-axis R13 comparisons from the same relative-only Y2 center. Select Y2/X2/Z2 based on results; add at most one XZ2 R13 field only if joint sensitivity is material. Then run one R14 tail on the selected exact mesh. Do not launch all branches without the result-based dependency.",
+    "failed_setup_attempts_counted_as_completed_pdes": 0,
+    "maximum_if_joint_is_necessary": 4,
+    "proposed_new_complete_pdes": {
+      "X2": 1,
+      "Z2": 1,
+      "conditional_XZ2_joint_max": 1,
+      "selected_mesh_R14_tail": 1
+    },
+    "remaining_complete_pde_ceiling": 4,
+    "task_d13_max_complete_pdes_including_tail": 12
+  },
+  "canonical_sidewall_action_only_plan": {
+    "method": [
+      "Read only each run\u2019s small manifest/resolved/direct-evidence metadata first; bind source/input/physical/resolved, axis, mode and stored-array hashes before loading coefficients.",
+      "Reconstruct that run\u2019s own p6 Nedelec space and finalized periodic MPC from its input/source; no volume/surface operator, global matrix, factor, KSP or solve.",
+      "Check recovered-storage shape and constrained-DOF semantics; if zero-slave, apply the real MPC back-substitution exactly once, then apply the real DOLFINx DOF orientation/geometry maps. Never average or overwrite saved vectors.",
+      "Choose common physical points on x=16.5/33.5 nm faces with y in (15,35), z in (0,120); and y=15/35 nm faces with x in (16.5,33.5), z in (0,120). Avoid all edges/corners and z=0/120 intersections. Y2/Y3 x/z coordinates are identical and Y2 y intervals are nested in Y3.",
+      "At each point evaluate from explicit adjacent grating-side and air-side cell IDs, separately preserving each one-sided trace and the jump. For x-normal faces compare E_t/H_t=(y,z); for y-normal faces compare E_t/H_t=(x,z). No duplicate-node averaging, DG6 VTU interpolation, global phase fit, or horizontal-Ht substitution.",
+      "Report exact point/face/cell IDs, orientation/MPC identity, complex components, absolute max and common-coordinate relative L2 plus near-zero scale; mark NOT_MEASURED if coefficient/MPC reconstruction cannot be bound."
+    ],
+    "nonqualification": "This saved-field trace audit is not a PDE solve and does not close full-DtN or all-D13 qualification by itself.",
+    "source_runs": [
+      {
+        "case": "Y2-relative-only",
+        "mesh_cells": [
+          6,
+          24,
+          14
+        ],
+        "run": "20261016T190312.893443Z",
+        "saved_augmented_trace": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T190312.893443Z/numerical_output/task40_direct_factor_evidence/augmented_trace_solution.npy",
+        "saved_storage": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T190312.893443Z/numerical_output/task40_direct_factor_evidence/recovered_p6_storage_coefficients.npy",
+        "stat_bytes": 21555968,
+        "stat_bytes_augmented_trace": 6552704
+      },
+      {
+        "case": "Y3-relative-only",
+        "mesh_cells": [
+          6,
+          48,
+          14
+        ],
+        "run": "20261016T202834.284773Z",
+        "saved_augmented_trace": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T202834.284773Z/numerical_output/task40_direct_factor_evidence/augmented_trace_solution.npy",
+        "saved_storage": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T202834.284773Z/numerical_output/task40_direct_factor_evidence/recovered_p6_storage_coefficients.npy",
+        "stat_bytes": 43013120,
+        "stat_bytes_augmented_trace": 13105280
+      }
+    ],
+    "status": "PLAN_ONLY_NOT_RUN"
+  },
+  "completed_full_pde_inventory": [
+    {
+      "case": "B",
+      "cell_count": 504,
+      "mesh_cells": [
+        6,
+        6,
+        14
+      ],
+      "policy": "legacy absolute cutoff",
+      "run": "20261016T091948.653032Z"
+    },
+    {
+      "case": "X",
+      "cell_count": 1008,
+      "mesh_cells": [
+        12,
+        6,
+        14
+      ],
+      "policy": "legacy absolute cutoff",
+      "run": "20261016T094950.200837Z"
+    },
+    {
+      "case": "Y",
+      "cell_count": 1008,
+      "mesh_cells": [
+        6,
+        12,
+        14
+      ],
+      "policy": "legacy absolute cutoff",
+      "run": "20261016T102453.831934Z"
+    },
+    {
+      "case": "Z",
+      "cell_count": 1008,
+      "mesh_cells": [
+        6,
+        6,
+        28
+      ],
+      "policy": "legacy absolute cutoff",
+      "run": "20261016T104423.676151Z"
+    },
+    {
+      "case": "Y2-legacy",
+      "cell_count": 2016,
+      "mesh_cells": [
+        6,
+        24,
+        14
+      ],
+      "policy": "legacy absolute cutoff",
+      "run": "20261016T112452.011352Z"
+    },
+    {
+      "case": "Y3-legacy",
+      "cell_count": 4032,
+      "mesh_cells": [
+        6,
+        48,
+        14
+      ],
+      "policy": "legacy absolute cutoff",
+      "run": "20261016T122621.622353Z"
+    },
+    {
+      "case": "Y2-relative-only",
+      "cell_count": 2016,
+      "mesh_cells": [
+        6,
+        24,
+        14
+      ],
+      "policy": "scale_homogeneous_relative_only_v1",
+      "run": "20261016T190312.893443Z"
+    },
+    {
+      "case": "Y3-relative-only",
+      "cell_count": 4032,
+      "mesh_cells": [
+        6,
+        48,
+        14
+      ],
+      "policy": "scale_homogeneous_relative_only_v1",
+      "run": "20261016T202834.284773Z"
+    }
+  ],
+  "failed_formal_attempts_not_completed_pdes": [
+    {
+      "case": "B-first-attempt",
+      "classification": "WORKER_FAILED",
+      "failed_stage": "p6_direct_surface_carrier_complete",
+      "failure": "q28 Task40 carrier hit the legacy flat q160-only witness; no accepted full field.",
+      "run": "20261016T090929.888325Z"
+    },
+    {
+      "case": "Y2-first-attempt",
+      "classification": "WORKER_FAILED",
+      "failed_stage": "p6_direct_mesh_setup_started",
+      "failure_detail": "setup-stage failure; retained as failed attempt, not counted as a completed field.",
+      "run": "20261016T112212.100842Z"
+    }
+  ],
+  "first_x_only_package": {
+    "axes": {
+      "axis_cell_counts": [
+        12,
+        24,
+        14
+      ],
+      "candidate_axis_sha256_le_f64": {
+        "x": "471f68208000c748761f359419073794ac4ba5693bc3d4bd95b85d6d6ceca33d",
+        "y": "7e10438f6b6a84ec4313bd841bcd99d7c4430724fad08cebefafcb156e2e9e16",
+        "z": "1b914feb6c2eba6bf20142a3a24e9918947b90be497ded96778e1e1ee3457ce6"
+      },
+      "changed_axis": "x only from Y2",
+      "expected_global_cells": 4032,
+      "parent": "relative-only Y2 actual frozen axes",
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "7e10438f6b6a84ec4313bd841bcd99d7c4430724fad08cebefafcb156e2e9e16",
+        "z": "1b914feb6c2eba6bf20142a3a24e9918947b90be497ded96778e1e1ee3457ce6"
+      },
+      "plan_id": "task40_phi90_d13_x2_axes_bisect_from_y2_v1",
+      "plan_sha256": "10253f00c761ae792151275e6486fad8c7f5dffa11db0f2a847a559d4bb0d444",
+      "segment_cell_counts": {
+        "x": [
+          4,
+          4,
+          4
+        ],
+        "y": [
+          8,
+          8,
+          8
+        ],
+        "z": [
+          1,
+          12,
+          1
+        ]
+      },
+      "unchanged_y_z_are_exact_parent_arrays": true
+    },
+    "case": "X2-from-Y2",
+    "input_path": "input/task40para_phi90_mesh_modes_direct/d13_x2_from_y2_r13_p6_direct.dat",
+    "input_sha256": "90f05fe4eb151bd076b62400d072af03c170a9a34e8108af13721fd56f71dd15",
+    "numerical_gates": {
+      "MUMPS_factor_count": 1,
+      "condensed_residual_max": 1e-09,
+      "energy_abs_max": 1e-05,
+      "original_active_A6_max": 1e-06,
+      "same_factor_corrections_max": 2
+    },
+    "operator": {
+      "cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "cutoff_relative_tolerance": 1e-13,
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "modes": 612,
+      "p6_condensed_direct": "required",
+      "surface_q": 28,
+      "volume_q": 15,
+      "volume_rule": "default"
+    },
+    "parent_Y2_input_sha256": "7908141fe455ee73a1c8f213970a5c5655095a31f6afd10ce18904367b63a994",
+    "parent_Y2_physical_model_sha256": "ac65772c3fda31f22599824023f43e05e62b8292de31652dff226909fc83fa7b",
+    "parent_Y2_resolved_config_sha256": "69d1e4fc40ca9e726ec0b7163217d72fc22b61022ee1a6c92235d05aa0982246",
+    "physical_model_sha256": "038767c888c2725cafb4130a53ca2d06695b6eecb41758f03720c92f157cd9ba",
+    "physics_sections_identical_to_Y2": {
+      "boundary": true,
+      "execution": true,
+      "geometry": true,
+      "incidence": true,
+      "materials": true,
+      "method": true,
+      "output": true
+    },
+    "profile": "task40para_phi90_13p5_D13_X2_from_Y2_p6_direct_v1",
+    "resolved_config_sha256": "8f056f59002371fcee25a6c7d9dd72b0172373cb8794ca9c725b3db74dd7e3de",
+    "resources": {
+      "capacity_claim": "No cell-count scaling guarantee; fresh host-floor admission and live RSS monitoring decide.",
+      "fresh_required_before_any_run": true,
+      "math_threads": 1,
+      "minimum_available_bytes": 68719476736,
+      "mpi_size": 1,
+      "numa": "interleave_nodes0_1",
+      "pss_uss": "disabled",
+      "rss_fixed_cap_bytes": null,
+      "shared_heavy_lock": "/home/fenics/Projects/Maxwell3D-Lab/native-capacity-heavy.lock",
+      "supervisor_cpu": 9,
+      "swap": "observe_only",
+      "worker_cpu": 24
+    },
+    "run_id": "task40_phi90_13p5_D13_X2_from_Y2_p6_direct_v1",
+    "standard_entrypoint": {
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "argv": [
+        "python",
+        "scripts/run_case.py",
+        "input/task40para_phi90_mesh_modes_direct/d13_x2_from_y2_r13_p6_direct.dat"
+      ],
+      "entrypoint": "scripts/run_case.py",
+      "status": "prepared_only_not_launched"
+    }
+  },
+  "non_pde_diagnostics_not_in_full_pde_count": [
+    "D13 saved-field V4/V5 six-key diagnostics",
+    "offline modal/output comparisons and axis-planner negative tests"
+  ],
+  "prepared_utc": "2026-10-16T22:55:28.729738+00:00",
+  "remaining_axis_plan": {
+    "R13_plus_1_tail": {
+      "production_metadata_enumeration_on_X2_physics": {
+        "all_keys_unique": true,
+        "count": 836,
+        "includes_evanescent": true,
+        "metadata_only_no_mesh_no_FE": true,
+        "mode_sha256": "deefaa839044a2542560b60b68a457c4f127eee2221d6dd8477c3d49fb1a860e",
+        "polarizations": [
+          "s",
+          "p"
+        ],
+        "sides": [
+          "top",
+          "bottom"
+        ]
+      },
+      "rectangle_m_n": [
+        -5,
+        5,
+        -9,
+        9
+      ],
+      "run_after_selected_grid_R13_result": true,
+      "separate_operator_and_factor_no_cross_mode_factor_reuse": true,
+      "surface_q28_unchanged": true
+    },
+    "Z2_from_Y2": {
+      "axis_cell_counts": [
+        6,
+        24,
+        28
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "7e10438f6b6a84ec4313bd841bcd99d7c4430724fad08cebefafcb156e2e9e16",
+        "z": "4892232f3971cfe24e872c4a20750e66598e67a1a0e4a0c97acdd1cedd01b08c"
+      },
+      "changed_axis": "z only",
+      "cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "expected_cells": 4032,
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "parent": "relative-only Y2 actual axes",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          8,
+          8,
+          8
+        ],
+        "z": [
+          2,
+          24,
+          2
+        ]
+      },
+      "status": "static_plan_only_profile_dat_not_created",
+      "surface_q": 28,
+      "volume_q": 15,
+      "volume_rule": "default",
+      "x_y_arrays_exactly_Y2": true
+    },
+    "conditional_XZ2": {
+      "axis_cell_counts": [
+        12,
+        24,
+        28
+      ],
+      "expected_cells": 8064,
+      "expected_material_tag_counts": {
+        "air": 6720,
+        "grating": 768,
+        "substrate": 576
+      },
+      "maximum_additional_fields": 1,
+      "status": "not_planned_as_input_or_profile; only if X/Z evidence requires one joint R13 field"
+    }
+  },
+  "same_policy_anchor": {
+    "Y2_relative_only_run_id": "task40_phi90_13p5_D13_Y2_p6_direct_v1",
+    "Y2_run": "20261016T190312.893443Z",
+    "Y2_source": "73e2fd2c4a36c9698298235148c59aa1551d74d6",
+    "Y3_relative_only_run_id": "task40_phi90_13p5_D13_Y3_p6_direct_v1",
+    "Y3_run": "20261016T202834.284773Z",
+    "Y3_source": "8faf8094e5309e7e7c0f0a094276cbacb31c1a00",
+    "comparison_record": "docs/task40para_phi90_mesh_modes_direct/outcomes/records/d13_y2_y3_same_relative_only_comparison_v1.json",
+    "comparison_record_sha256": "a701e86e557e19e19d52ea7753f95e90467fdf1bdf6b8c4f5866f3f44ae9329e",
+    "mode_count": 612,
+    "mode_reenumeration_on_X2_input": {
+      "count": 612,
+      "includes_evanescent": true,
+      "mesh_or_FE_built": false,
+      "rectangle_m_n": [
+        -4,
+        4,
+        -8,
+        8
+      ],
+      "sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "source": "production outgoing_port_modes_3d(explicit_rectangle)+build_ordered_mode_manifest"
+    },
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "qualification_limit": "AUTHORITY_LIMITED; FULL_DTN_NOT_VERIFIED; canonical sidewall trace remains open",
+    "sparse_cutoff": {
+      "policy": "scale_homogeneous_relative_only_v1",
+      "relative_tolerance": 1e-13
+    },
+    "surface_quadrature_degree": 28,
+    "volume_quadrature": {
+      "degree": 15,
+      "rule": "default"
+    }
+  },
+  "schema": "task40.phi90.d13.remaining_axes_tail_budget_sidewall_plan.v1",
+  "scope": "D13 only; no D5/M5/D07/Z, no Y4, no PDE started by this preparation",
+  "source_binding": {
+    "candidate_changed_file_sha256": {
+      "input/task40para_phi90_mesh_modes_direct/d13_x2_from_y2_r13_p6_direct.dat": "90f05fe4eb151bd076b62400d072af03c170a9a34e8108af13721fd56f71dd15",
+      "src/geometry/task40_phi90_d13_axis_plan.py": "f71904b14580cb6a446e9f7e59147359b40eab2097d30b6ae4f32a9a335e60b3",
+      "src/io/native_capacity_profile.py": "4e29cb5afc817edafb830a6ccbb6cdd50bf68400352062ae2102286b31d2ee96",
+      "src/runners/p6_condensed_direct.py": "46587abffefe315202c30ebb279ce9f57d07bfcd7284d9e77bfaee6d9c7f165b",
+      "src/test/test_task40para_d13_directional_axes.py": "4c9d719eed6a43261550965d2e82b407a77edb6d0091c0121f5a3f34f828bcfb"
+    },
+    "note": "The clean source SHA is bound in the post-freeze X2 preparation package; this plan record itself is committed before that package is generated.",
+    "parent_clean_head": "91b3df5688669314a2073475ed8d425ab75955b1"
+  },
+  "status": "PREPARED_STATIC_NO_FE",
+  "validation": {
+    "command": "taskset -c 9 python -m pytest -q src/test/test_task40para_d13_directional_axes.py src/test/test_task40para_rectangle_modes.py src/test/test_task40para_manifest_worker_contract.py",
+    "compileall": "PASS for changed source/test modules",
+    "diff_check": "PASS",
+    "result": "25 passed in 1.37s",
+    "scope": "focused pure/interface only; no mesh/FE/factor/PDE",
+    "severe_ruff": "PASS (E4,E7,E9,F on changed modules)",
+    "validate_only": "PASS for X2 dat through scripts/run_case.py"
+  }
+}

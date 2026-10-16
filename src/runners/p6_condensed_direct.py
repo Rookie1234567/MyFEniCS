@@ -230,6 +230,9 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "d13_base_axis_sha256_le_f64": dict(
                 mesh_case["base_axis_sha256_le_f64"]
             ),
+            "d13_axis_comparison_parent": mesh_case.get(
+                "axis_comparison_parent", "B"
+            ),
             "d13_expected_material_tag_counts": dict(
                 mesh_case["expected_material_tag_counts"]
             ),
@@ -855,6 +858,7 @@ def _task40_d13_mesh_evidence(
     if axis_hashes != route["d13_expected_axis_sha256_le_f64"]:
         raise ValueError(f"actual D13-{case_name} axis hashes differ from profile facts")
     changed_axis = route["changed_axis"]
+    comparison_parent = str(route.get("d13_axis_comparison_parent", "B"))
     base_hashes = route["d13_base_axis_sha256_le_f64"]
     if changed_axis is None:
         if axis_hashes != base_hashes:
@@ -895,7 +899,7 @@ def _task40_d13_mesh_evidence(
         "status": "PASS",
         "profile": route["profile_identity"],
         "case": case_name,
-        "parent_case": "B",
+        "parent_case": comparison_parent,
         "changed_axis": changed_axis,
         "geometry": "rectangular_block_grating",
         "cell_type": "hexahedron",
@@ -903,7 +907,8 @@ def _task40_d13_mesh_evidence(
         "axis_cell_counts": list(counts),
         "axis_sha256_le_f64": axis_hashes,
         "actual_axes_match_frozen_d13_coordinates": True,
-        "only_declared_axis_changed_from_B": True,
+        "only_declared_axis_changed_from_B": comparison_parent == "B",
+        "only_declared_axis_changed_from_parent": True,
         "material_tag_counts": {str(tag): count for tag, count in actual.items()},
         "expected_material_tag_counts": {
             str(tag): count for tag, count in expected.items()
