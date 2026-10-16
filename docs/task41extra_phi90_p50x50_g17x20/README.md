@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。本目录当前只有计划，没有新FE、矩阵或求解结果。
+完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A2 接线与同离散比较尚在推进，0.7 nm 未运行。实测结果与失败记录见 [outcomes/summary.md](outcomes/summary.md)。
 
 | 固定物理 | 值 |
 |---|---|

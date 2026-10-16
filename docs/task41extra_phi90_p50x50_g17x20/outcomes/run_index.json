@@ -1,0 +1,24 @@
+{
+  "schema": "task41.run_index.v1",
+  "runs": [
+    {
+      "source_sha": "218fa6e89beca12eea54ffbfaf79ba284f95fe38",
+      "service": "myfenics-case-20261016T122959-1464293",
+      "service_seconds": 1.563210294,
+      "classification": "ENGINEERING_STARTUP_FAILURE_BEFORE_FE",
+      "error": "KeyError TASK40_V29_CONTRACT_PATH; inherited strict-factor-only environment flag",
+      "raw_local_directory": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_controller/a1_attempt1"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_direct_a1",
+      "source_sha": "4e46e524f1a5ebbc83218e615631c2477698347a",
+      "attempt": "20261016T123737.790458Z",
+      "status": "PASS",
+      "compact": "a1_result_compact.json"
+    }
+  ],
+  "not_run": [
+    "A2",
+    "0.7nm"
+  ]
+}

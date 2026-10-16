@@ -1,0 +1,157 @@
+{
+  "schema": "task41.a1_result_compact.v1",
+  "status": "A1_PASS_A2_AND_0P7_NOT_RUN",
+  "source_sha": "4e46e524f1a5ebbc83218e615631c2477698347a",
+  "run_id": "task41extra_g13_p6_phi90_direct_a1",
+  "attempt": "20261016T123737.790458Z",
+  "case": "13.5nm,50x50x140nm,p6,10x10x14,phi90,S,rectangular17x20x120Si,no_notch_or_void",
+  "cells": 1400,
+  "full_fe_rows": 934764,
+  "condensed_augmented_rows": 284568,
+  "nnz": 234517208,
+  "mode_count": 168,
+  "native_A6_relative_residual": 1.7449656226232747e-10,
+  "linear_system_relative_residual": 1.7248479172382482e-10,
+  "R_total": 0.25137919146306575,
+  "T_total": 0.05712971752020276,
+  "A_volume_total": 0.6914910910199371,
+  "energy_closure_abs": 3.205657961302677e-12,
+  "worker_seconds": 2024.3355037230067,
+  "service_including_required_checker_seconds": 2064.867782874964,
+  "required_checker_seconds": 3.302761801984161,
+  "ksp_setup_seconds": 1296.680395565927,
+  "ksp_solve_seconds": 17.48903592606075,
+  "native_A6_seconds": 71.65792042692192,
+  "sampled_process_tree_rss_peak_bytes": 62013505536,
+  "cgroup_peak_bytes": 62582976512,
+  "PSS_bytes": null,
+  "task_tree_swap_peak_bytes": 0,
+  "task_cgroup_swap_peak_bytes": 0,
+  "host_swap_activity": {
+    "baseline": {
+      "pswpin_pages": 3140390,
+      "pswpout_pages": 5285960
+    },
+    "delta": {
+      "pswpin_pages": 2,
+      "pswpout_pages": 0
+    },
+    "end": {
+      "pswpin_pages": 3140392,
+      "pswpout_pages": 5285960
+    },
+    "scope": "WSL-global diagnostic, not dedicated job"
+  },
+  "host_swap_activity_attribution": "UNRESOLVED_global_activity_cannot_be_attributed",
+  "descendants_cleared": true,
+  "checker": {
+    "checked_at_utc": "2026-10-16T13:11:58.682714Z",
+    "checker_passed": true,
+    "contract_sha256": "b19bc5550a6333aa9517ef82a5c853a6ed4d62d0eeb34e44c9c5f55b0d8a6f54",
+    "errors": [],
+    "full_pass": true,
+    "input_sha256": "ed970ce4117d7e149ecf4fe3229b1d967ec7fb8004543e205c08ddfe3b47772b",
+    "launcher_result_classification": "worker_exit0",
+    "launcher_summary_sha256": "bcfb0af97831128212723f1992c3e74f2e4dd01df6b20a7de2f51480c1ef011d",
+    "numerical_summary_sha256": "9de1a01d5db30eb932006647bcdbe9c27cc6d2cc66c71530c4fd30f6ffadb874",
+    "official_result": true,
+    "physical_model_sha256": "516adc5f161c214a572ad38fde5f6772cfc2ee2d085cf4c89594ab5758d794e3",
+    "raw_evidence_retained": true,
+    "resolved_config_sha256": "17eb8dc73cd1a42603765046429d55815c983290e8f01a1f78071d228a44ab78",
+    "run_id": "task41extra_g13_p6_phi90_direct_a1",
+    "run_manifest_sha256": "47bdf81d056f8224acaeaa0a75de336f0d62cd4971453a89e832bef7d73dfd16",
+    "schema": "task41.p0.direct_checker.v1",
+    "source_sha": "4e46e524f1a5ebbc83218e615631c2477698347a",
+    "status": "PASS",
+    "task_id": "task41extra_phi90_p50x50_g17x20",
+    "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_controller/execution_window.json",
+    "window_sha256": "a69f188135f0932204c7857738d9e04a40b41afb627d40dab538db58442e35ee"
+  },
+  "parallel_authorization": "用户明确允许资源合格时与邻项目并行；独立cgroup/动态资源/64GiB reserve/task swap0保留，不干预邻项目",
+  "first_failed_attempt": {
+    "source_sha": "218fa6e89beca12eea54ffbfaf79ba284f95fe38",
+    "service": "myfenics-case-20261016T122959-1464293",
+    "service_seconds": 1.563210294,
+    "classification": "ENGINEERING_STARTUP_FAILURE_BEFORE_FE",
+    "error": "KeyError TASK40_V29_CONTRACT_PATH; inherited strict-factor-only environment flag",
+    "raw_local_directory": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_controller/a1_attempt1"
+  },
+  "window_t0_utc": "2026-10-16T12:29:47.788292204Z",
+  "window_sha256": "a69f188135f0932204c7857738d9e04a40b41afb627d40dab538db58442e35ee",
+  "window_not_reset": true,
+  "timing_notes": [
+    "父子计时不相加；KSP setup包含该路径重复symbolic与numeric，不能当纯numeric。",
+    "首次失败、两次启动之间修复/等待仍在原窗口；2064.8678秒只为成功service父段。",
+    "开发/初始准备未完整计时部分保持UNKNOWN。"
+  ],
+  "limitations": [
+    "A2同离散对照未完成",
+    "0.7nm未运行",
+    "MODE_TRUNCATION_UNQUALIFIED",
+    "ACCURACY_UNQUALIFIED",
+    "宿主有历史swap和本次2页swapin，不能声称整机零swap；任务tree/cgroup为零",
+    "probe/flux吸收为诊断，与official端口/体吸收不同，原负差保留"
+  ],
+  "evidence": [
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a1/service_source_4e46e524f1a5ebbc83218e615631c2477698347a/task41_p0_checker_result.json",
+      "bytes": 1335,
+      "sha256": "5f061518006a44d66b6aa8fdafa8935005393bfcf4c0ffa4477e62f1e23a089f"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a1/service_source_4e46e524f1a5ebbc83218e615631c2477698347a/task41_p0_service_receipt.json",
+      "bytes": 26351,
+      "sha256": "9d62093968ba91534e155f078f1a93ad2252e50c100dafc3e3fa62ed349edc1b"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/numerical_output/dtn_port_power_metrics_3d.json",
+      "bytes": 4592,
+      "sha256": "0c2f79cc60e2c269b451b5c6dbcf8bdd5f84aaf135681402504e6559918cd6c0"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/numerical_output/power_metrics_3d.json",
+      "bytes": 5171,
+      "sha256": "44a8d995ee89560c5971da15c0513f03bd7721658be0a52edc1f71d0c0fbd26f"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/numerical_output/run_summary.json",
+      "bytes": 97857,
+      "sha256": "9de1a01d5db30eb932006647bcdbe9c27cc6d2cc66c71530c4fd30f6ffadb874"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/numerical_output/task41_mumps_numeric_stage.json",
+      "bytes": 14611,
+      "sha256": "fed569737d7e8c9792d040f4fc9b84a7b8d58d6c61918023d375a1d1f91eba44"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/numerical_output/task41_mumps_symbolic_admission.json",
+      "bytes": 9430,
+      "sha256": "735ca83508fc493396418b65854d4a0c0d29eb724257d4a32b586161bdc2ca52"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/numerical_output/task41_native_full_a6_residual.json",
+      "bytes": 1962,
+      "sha256": "5564a275d6b11b643b0363d985bfbebeeb9b80e798f9b18a1888d6cb03cfd480"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/numerical_output/volume_absorption.json",
+      "bytes": 2344,
+      "sha256": "fd28553f92d60aeb395bbfefed64ce512f974d920615b00483d723b09fc9ec98"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/resolved_config.json",
+      "bytes": 5098,
+      "sha256": "17eb8dc73cd1a42603765046429d55815c983290e8f01a1f78071d228a44ab78"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/run_manifest.json",
+      "bytes": 8731,
+      "sha256": "47bdf81d056f8224acaeaa0a75de336f0d62cd4971453a89e832bef7d73dfd16"
+    },
+    {
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_direct_a1__full3d_direct__mpi1__Mna/20261016T123737.790458Z/run_summary.json",
+      "bytes": 15679,
+      "sha256": "bcfb0af97831128212723f1992c3e74f2e4dd01df6b20a7de2f51480c1ef011d"
+    }
+  ]
+}

@@ -19,3 +19,9 @@
 最终测试工具回执：`benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_controller/final_targeted_tool_receipt.json`（ignored原始工件），工具ID `exec-de1bd6eb-a8ff-4b71-8f65-d4e9d8ee2c6b`。测试发生于任务书提交 `a3f431f519eb5a461a6dd85ffab7f2acde934cec` 上的本次实现工作树；主控随后统一冻结相同源码。未运行全仓测试，无CI通过声明。
 
 正式入口由 `python -m src.runners.task41_p0_contract --prepare --runtime-prefix ... --abi-receipt ... --jit-cache ...` 输出。正式prepare只由主控在源码冻结、现场资源及共享工作站排他检查后执行；时间窗172800秒（数值171600、收口1200），本轮测试没有登记正式窗口。
+
+## A1 启动修复与实际结果
+
+service 环境删除继承的 V29 factor-only 标记；回归显式注入旧标记并核对 Task41 contract/window 仍正确传递。修正后的定向测试 `test_task41_launcher_and_service_pass_real_window_resources_and_checker_authority`：1 passed（0.16 s）；原始工具 `exec-d46d0a4a-d3e3-4693-821d-dab6751ab1a9`。此前缺少显式注入的测试回执保留为不充分证据，不用其证明本 bug 已覆盖。
+
+正式 A1 source `4e46e524f1a5ebbc83218e615631c2477698347a` 的实际完整场及 required checker 已通过，详见 [summary.md](summary.md)。A2 本地未提交改动的测试不代表 A2 正式场通过。
