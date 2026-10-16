@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from benchmarks.task034_wsl_resources import ProcessTreeSample
 from src.io import load_and_resolve
 from src.io.input_validation import (
     TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
@@ -18,6 +19,7 @@ from src.io.input_validation import (
     TASK42_STARTUP_PREDICTED_DELTA_BYTES,
     TASK42_WORKSPACE_MIN_BYTES,
     task041_v16_phase_memory_gate,
+    task42_memory_authority_inputs,
     task42_memory_parameters,
     task42_phase_memory_gate,
     task42_runtime_memory_gate_from_authority,
@@ -34,6 +36,103 @@ TASK42_DIRECT_INPUT = ROOT / (
     "input/official/task42hybrid_az90_50x50_17x20_0p7nm/"
     "13p5nm_p6h10_full3d_direct_mpi8.dat"
 )
+
+
+def test_task42_authority_accepts_real_process_tree_tuple_and_json_list():
+    root_pid = 42100
+    authority = _task42_authority(
+        root_pid=root_pid,
+        tree_rss_bytes=1024,
+        memavailable_bytes=512 * 2**30,
+    )
+    process_tree = ProcessTreeSample(
+        root_pid=root_pid,
+        pids=(root_pid, root_pid + 1),
+        rss_bytes=1024,
+        swap_bytes=0,
+        all_status_readable=True,
+        rss_by_pid_bytes={root_pid: 512, root_pid + 1: 512},
+        swap_by_pid_bytes={root_pid: 0, root_pid + 1: 0},
+    )
+    authority["process_tree"] = process_tree.to_dict()
+
+    tuple_result = task42_memory_authority_inputs(
+        authority, expected_root_pid=root_pid
+    )
+    assert tuple_result["status"] == "measured"
+    assert tuple_result["process_tree_pids"] == [root_pid, root_pid + 1]
+    assert tuple_result["tree_rss_scope"] == "whole_job"
+
+    list_authority = {
+        **authority,
+        "process_tree": {
+            **process_tree.to_dict(),
+            "pids": [root_pid, root_pid + 1],
+        },
+    }
+    list_result = task42_memory_authority_inputs(
+        list_authority, expected_root_pid=root_pid
+    )
+    assert list_result["status"] == "measured"
+    assert list_result["process_tree_pids"] == tuple_result["process_tree_pids"]
+    assert list_result["tree_rss_bytes"] == tuple_result["tree_rss_bytes"]
+
+    missing_root_authority = {
+        **authority,
+        "process_tree": {**process_tree.to_dict(), "pids": (root_pid + 1,)},
+    }
+    missing_root = task42_memory_authority_inputs(
+        missing_root_authority, expected_root_pid=root_pid
+    )
+    assert missing_root["status"] == "refused"
+    assert "whole_job_process_tree_is_incomplete_or_unreadable" in missing_root[
+        "errors"
+    ]
+
+    invalid_pid_authority = {
+        **authority,
+        "process_tree": {
+            **process_tree.to_dict(),
+            "pids": (root_pid, "not-a-pid"),
+        },
+    }
+    invalid_pid = task42_memory_authority_inputs(
+        invalid_pid_authority, expected_root_pid=root_pid
+    )
+    assert invalid_pid["status"] == "refused"
+    assert "whole_job_process_tree_is_incomplete_or_unreadable" in invalid_pid[
+        "errors"
+    ]
+
+    invalid_value_authority = {
+        **authority,
+        "process_tree": {
+            **process_tree.to_dict(),
+            "pids": (root_pid, 0),
+        },
+    }
+    invalid_value = task42_memory_authority_inputs(
+        invalid_value_authority, expected_root_pid=root_pid
+    )
+    assert invalid_value["status"] == "refused"
+    assert "whole_job_process_tree_is_incomplete_or_unreadable" in invalid_value[
+        "errors"
+    ]
+
+    unreadable_authority = {
+        **authority,
+        "process_tree": {
+            **process_tree.to_dict(),
+            "all_status_readable": False,
+        },
+    }
+    unreadable = task42_memory_authority_inputs(
+        unreadable_authority, expected_root_pid=root_pid
+    )
+    assert unreadable["status"] == "refused"
+    assert "whole_job_process_tree_is_incomplete_or_unreadable" in unreadable[
+        "errors"
+    ]
 
 
 def _authority(

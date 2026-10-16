@@ -1603,9 +1603,15 @@ def task42_memory_authority_inputs(
     ):
         errors.append("process_tree_root_pid_does_not_match_launcher")
     pids = process_tree.get("pids")
+    pids_valid = (
+        isinstance(pids, (list, tuple))
+        and bool(pids)
+        and all(type(pid) is int and pid > 0 for pid in pids)
+        and len(set(pids)) == len(pids)
+    )
     if (
         process_tree.get("all_status_readable") is not True
-        or not isinstance(pids, list)
+        or not pids_valid
         or type(root_pid) is not int
         or root_pid not in pids
     ):
@@ -1690,7 +1696,7 @@ def task42_memory_authority_inputs(
         "tree_rss_scope": "whole_job" if not errors else "unknown",
         "root_pid": root_pid if type(root_pid) is int else None,
         "expected_root_pid": expected_root_pid if type(expected_root_pid) is int else None,
-        "process_tree_pids": list(pids) if isinstance(pids, list) else None,
+        "process_tree_pids": list(pids) if pids_valid else None,
         "cgroup_current_bytes": cgroup_current,
         "cgroup_current_state": cgroup_state,
         "ancestor_limit_state": ancestor_limit_state,
