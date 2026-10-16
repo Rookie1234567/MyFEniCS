@@ -47,7 +47,9 @@ def _axis_digest(values: tuple[float, ...]) -> str:
 
 
 def d13_axis_plan(case: str) -> dict[str, object]:
-    """Return one deterministic D13 case plan, with arrays derived from B."""
+    """Return a deterministic D13 plan; Y2 derives from the realized Y plan."""
+    if case == "Y2":
+        return D13_AXIS_PLANS["Y2"]
     if case not in D13_CASES:
         raise ValueError(f"unsupported Task40 D13 case {case!r}")
     metadata = D13_CASES[case]

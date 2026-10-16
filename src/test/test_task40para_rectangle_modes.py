@@ -120,6 +120,7 @@ def test_task40_d13_input_resolves_only_direct_identity_with_fixed_q28_and_dense
 def test_task40_d13_y2_bisects_actual_y_axis_and_preserves_xz():
     from src.geometry.task40_phi90_d13_axis_plan import (
         D13_AXIS_PLANS,
+        d13_axis_plan,
         validate_frozen_d13_axes,
     )
     from src.io import load_and_resolve
@@ -130,6 +131,7 @@ def test_task40_d13_y2_bisects_actual_y_axis_and_preserves_xz():
 
     parent = D13_AXIS_PLANS["Y"]
     plan = D13_AXIS_PLANS["Y2"]
+    assert d13_axis_plan("Y2") == plan
     parent_y = tuple(parent["axes_nm"]["y"])
     expected_y = [parent_y[0]]
     for left, right in pairwise(parent_y):
