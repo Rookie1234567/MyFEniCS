@@ -14,6 +14,8 @@
 | 5 nm起点 | p6目标h4，预计7020单元；先固定reference模式研究网格 |
 | 三阶候选 | m,n各-2…2，25对级次；上下端口/两偏振，传播与倏逝分类保留 |
 | 资源 | 0.7 nm实测同期整树RSS<=1.8e12 B；13.5/5 nm无用户固定cap，但保留主机安全 |
-| 状态 | 任务书已建立，Codex尚需工作站预检、适配与执行；无新PDE结果 |
+| 状态 | D13 已完成 B/X/Y/Z、旧 Y2/Y3 及同网格 relative-only 新 Y2。新 Y2 单场 direct 门通过；cutoff 对照显示倏逝级边界幅值有变化。full DtN 与 canonical 方柱侧壁 trace 仍未验证，D13 尚未达到完整资格 |
 
 禁止沿用旧N0/572对称约简：新方柱沿x/y都变化。旧0.7 nm结果、RCWA比较和p4返回故障只作历史，不当本模型验收标准。全部新结果/response只写本分支；不改父任务、Hybrid或master。
+
+当前 D13 比较与限制见[outcomes summary](outcomes/summary.md)及[relative-only Y2 response](outcomes/response_d13_relative_cutoff_followup.md)。此轮只做已保存场离线分析与文档归档；没有新 FE/factor。建议的同策略 Y3 验证尚未执行。

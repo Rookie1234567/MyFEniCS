@@ -1738,3 +1738,14 @@ V0/V1/V2 的小型证据整理支持 p6 的 x 向数值色散解释，但没有�
 | 同场资源与成本 | workflow23169.024s、RSS峰271532994560B、task swap峰0、hard1.8e12B、后代清场；symbolic/numeric/solve=1/1/35 | 来自小summary与原packet，未重扫resources；无本场R/T/A资格，不拿新D直接法结果补填 |
 
 [统一审阅交接](task39extra_para_workstation_capacity/review_handoff_0p7nm_balh_20261016.md)及[hash绑定compact](task39extra_para_workstation_capacity/outcomes/balh_review_20261016/balh_evidence_compact.json)保存首失败、取证、P64修复、端口修复及最后A4失败。物理精度与迭代修复分别待审；最新D结果保留原有总账条目。
+
+## 3.52 Task40para：13.5 nm Y2 relative-only cutoff follow-up（2026-10-17）
+
+| 场 / 身份 | 结果 | 资格与证据 |
+|---|---|---|
+| 新 Y2 relative-only；source `73e2fd2c4a36c9698298235148c59aa1551d74d6`；input `7908141fe455ee73a1c8f213970a5c5655095a31f6afd10ce18904367b63a994`；网格 `[6,24,14]`、2016 cells、612 R13、q28/q15 | 凝聚残差 `3.0670e-12`、active-rectangle A6 `3.0742e-10`、R/T/A_volume `0.2513556633066366/0.05712882413359571/0.69151551258949`、closure `2.9722e-11` | `COMPLETED_AUTHORITY_LIMITED`；非完整 DtN/连续场资格；[terminal receipt](../tmp/task40_d13_y2_scale_homogeneous_launch_v1/terminal_receipt_20261017.json) 与 [summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md) |
+| 新旧 Y2 保存场比较 | 612-mode boundary amplitude 相对 L2 差 `3.9705e-3`，最大单模差 `1.48696e-3` top `(+4,0,p)`；最大逐模 R/T 差 `9.33e-8/1.88e-8` | 同 input/physical/mesh/mode/integration，cutoff/source 不同；old policy 为 `max(1e-30,1e-13×global_max)`，新 policy relative-only。不是旧/新场同策略收敛证明 |
+| retained alpha / recovered projection | 同一 boundary phase P 后 612-mode 差 L2 `1.9337e-15`；top `±4,n=0,p` 独立 full-primal 同单位差 `5.12e-16/6.26e-16` | 局部一致性见证；legacy raw audit `false` 保留，不是 full-DtN gate |
+| D13 累计资源 | 七个成功 direct run workflow 墙钟合计 `15,852.48 s`；最大单场 RSS `166,464,983,040 B`；task swap peak均为0 | RSS不跨 run 相加。资源明细、全部 612 复幅值/逐模 R/T 和同坐标 E/H/Ht 对照见 [summary/CSV/JSON](task40para_phi90_mesh_modes_direct/outcomes/summary.md) 与 [response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_relative_cutoff_followup.md) |
+
+canonical pillar sidewall trace `NOT_MEASURED`、`FULL_DTN_NOT_VERIFIED`、D13 `AUTHORITY_LIMITED`；原 V4/V5 saved-field max-facet `FAIL/OPEN` 不改写。下一项建议仅为既有 Y3 `[6,48,14]` 同策略 relative-only y-only 对照，未运行；Y4/D5与新 FE/factor均 `NOT_RUN`。

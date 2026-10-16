@@ -2912,3 +2912,32 @@ V6/R48收口后，用户追加授权将0.7 nm从metadata-only扩展到有界p3�
 候选D的方向网格直接法使R/T接近RCWA显示值，但同时改变x/z及源码，尚非单轴收敛。本轮补齐迭代负结果的远端证据：首次BAL_H的P64方向映射缺陷有同失败输入修复见证，p4端口联合精化也使闭合残差降至约3e-14；最后仍卡在第17次C的A4=1.12034e-10，超原1e-10门，故迭代资格保持开放。下一修复先定位保存输入上的A4残差地板，不能通过放宽门限或增加精化掩盖；正确性与每步成本、物理精度分别审阅。本轮仅文档归档，无新计算。详见[统一交接](task39extra_para_workstation_capacity/review_handoff_0p7nm_balh_20261016.md)。
 
 V8阶段随后完成失败#17输入审计和一次无全局因子、无求解的action-only P1诊断。保存输入上的fast A4相对残差仍为 `1.1203379196396136e-10`，超过原 `1e-10` 门；native对照残差更大，端口闭合通过不能替代A4。根因和生产修复均未证明，A4/BAL_H资格保持开放。原g4 inverse重放、完整BAL_H和E均未运行。本记录只表示P0/P1阶段收口，不表示V8整体完成；详见[Response V8](task39extra_para_workstation_capacity/response_v8.md)及[阶段索引](task39extra_para_workstation_capacity/outcomes/balh_review_20261016/v8_p0_p1_stage_archive_20261016_v1.json)。
+
+## Task40para：D13 relative-only Y2 与已保存场比较（2026-10-17）
+
+Task40para / branch `task40para_phi90_mesh_modes_direct` / base `922466da9d7faff408cbb47b7882d179320bdc44`。本阶段分类为 `COMPLETED_AUTHORITY_LIMITED`；Y2 terminal 已由主控受理，本文档阶段收口待 review。整体 Task 未完成、未进入 master，ordinary default 未改变。
+
+### 背景与基线
+
+D13 的旧 Y/Y2/Y3 均使用三处 `max(1e-30, 1e-13 × global_maximum)` sparse cutoff。旧 Y2 保存场在倏逝端口级出现较大的 boundary-amplitude 差异；此前的 V4/V5 saved-field max-facet gate 保持 `FAIL/OPEN`。用户授权在**同一 Y2 网格**做显式 relative-only policy 的修复后完整 direct 验证，不能把旧结果覆盖或用新 gate 重新分类。
+
+### 方法
+
+在 Task40 显式 route 中使用 scale-homogeneous relative-only extraction，relative tolerance 仍为 `1e-13`；legacy 默认与旧 run 不变。新 Y2 使用同一 input/physical model、`[6,24,14]` 轴、2016 cells、612 个 R13 mode、q28 surface/q15 volume。离线脚本读取 Y/Y2/Y3 和新 Y2 的既有小 modal JSON 与同坐标 sample 数据，比较全部 612 个复 boundary amplitude、逐模 R/T、R00、R/T/A_volume、无 phase-fit E/H 和水平面 Ht，并单独比较 retained modal alpha 与恢复场 auxiliary projection。没有新 FE、factor、VTU 或资源流扫描。
+
+### 结果与解释
+
+新 Y2 单场凝聚残差 `3.0670e-12`、active-rectangle A6 `3.0742e-10`、R/T/A_volume `0.2513556633066366 / 0.05712882413359571 / 0.69151551258949`，energy closure `2.9722e-11`；本场门通过。新旧 Y2 的 612-mode boundary outgoing 振幅相对 L2 差 `3.9705e-3`，最大单模差 `1.48696e-3` 在 top `(m=+4,n=0,p)`，而最大逐模 R/T 差为 `9.33e-8 / 1.88e-8`。这表明 cutoff policy 会显著改变少数倏逝级的 boundary amplitude；不等于完整 DtN 资格。
+
+将新 Y2 retained alpha 和恢复后重算的 auxiliary projection 逐模乘相同 boundary phase `P` 后，612 项差 L2 为 `1.93e-15`。top `(m=−4/+4,n=0,p)` 的 boundary amplitudes 与主控独立 full-primal 同单位见证差为 `5.12e-16 / 6.26e-16`。legacy raw projection audit `false` 原样保留，不使用 P-scaled 结果改写它。资源总账含七个成功 D13 direct run，wall-clock sum `4.4035 h`，最大单场 RSS 为 `166,464,983,040 B`；各 RSS 不相加。
+
+| Y2 saved field | R total | T total | A_volume | 与另一 cutoff 的边界振幅 / 逐模 R/T |
+|---|---:|---:|---:|---|
+| legacy absolute-floor | `0.2513557152507698` | `0.05712882739311799` | `0.6915156826412944` | boundary L2 `3.9705e-3`；最大 R/T 差 `9.33e-8/1.88e-8` |
+| relative-only | `0.2513556633066366` | `0.05712882413359571` | `0.69151551258949` | 同上；最大边界单模差 `1.48696e-3`，top `(+4,0,p)` |
+
+### 负结果、范围和决策
+
+比较混合了 legacy cutoff 与 relative-only policy，因此不能作为同算子网格收敛证书。canonical pillar sidewall tangential trace `NOT_MEASURED`，full parent DtN `FULL_DTN_NOT_VERIFIED`，authority 为 `AUTHORITY_LIMITED`。原 V4/V5 `FAIL/OPEN`、legacy projection audit false 均保留；D5/M5、Y4 及额外 FE/factor 未运行。
+
+下一项仅建议在已有 Y3 `[6,48,14]`、同一 R13/q28/q15 上采用 relative-only 做一次 y-only 对照；建议尚未执行，不自动启动 Y4、D5 或端口扩展。详细结果、所有 612 模态和资源/耗时账见[Task40 outcomes summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md)、[本轮 response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_relative_cutoff_followup.md)、[比较 JSON](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_relative_cutoff_comparison_v1.json)与[逐模 CSV](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_relative_cutoff_all_612_modes_v1.csv)。

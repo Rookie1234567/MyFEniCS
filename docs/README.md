@@ -202,3 +202,9 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | Task037b | [`task.md`](task037b_hybrid_fem_modal_iterative/task.md)、[`review_report_v7.md`](task037b_hybrid_fem_modal_iterative/review_report_v7.md)、[`outcomes/summary.md`](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)；白名单能力已选择性进入master，frozen M10仍为显式研究入口，ordinary defaults不变、not production-qualified |
 | Task037c | [`response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md)、[`outcomes/summary.md`](task037c_hybrid_iterative_robustness/outcomes/summary.md)；白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120，preferred RSS未过、not production-qualified |
 | Task038 | [`response_v1.md`](task038_input_driven_configuration/response_v1.md)、[`outcomes/summary.md`](task038_input_driven_configuration/outcomes/summary.md)；单一 `.dat` 普通入口、11 migrated/6 retained，ordinary 数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
+
+## Task40para 入口
+
+| 任务 | 阶段与入口 |
+|---|---|
+| Task40para | [`task.md`](task40para_phi90_mesh_modes_direct/task.md)、[`README.md`](task40para_phi90_mesh_modes_direct/README.md)、[`outcomes/summary.md`](task40para_phi90_mesh_modes_direct/outcomes/summary.md)；phi90 方柱阵列新物理模型；D13 已完成 B/X/Y/Z、legacy Y2/Y3 和 relative-only Y2。当前仍 `AUTHORITY_LIMITED`，full DtN 与 canonical sidewall trace 未验证；D5/M5/后续波长阶段尚未由本记录启动。所有执行材料仅在独立 Task40 分支 |
