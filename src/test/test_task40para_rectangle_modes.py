@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
+import numpy as np
 import pytest
 
 from src.common.modes_3d import outgoing_port_modes_3d
+from src.runners.p6_condensed_direct import _production_port_mpc_witness
 from src.test.stage2_test_utils import stage4_block_config
 
 
@@ -110,3 +114,67 @@ def test_task40_d13_input_resolves_only_direct_identity_with_fixed_q28_and_dense
         0.00182649365,
     ]
     assert not ({"intermediate", "fine_auxiliary", "balanced", "inner"} & set(facts))
+
+
+def test_task40_production_port_witness_uses_frozen_q28_not_legacy_flat_q160():
+    floquet = SimpleNamespace(
+        mpc=object(),
+        phase_x=1.0 + 0.0j,
+        phase_y=1.0 + 0.0j,
+        phase_corner=1.0 + 0.0j,
+        constraint_mode_resolved="topological_trace_p6",
+        num_constraints=12,
+        num_x_constraints=4,
+        num_y_constraints=4,
+        num_corner_constraints=4,
+        num_slave_edges=6,
+        num_slave_faces=4,
+        num_edge_constraints=8,
+        num_face_constraints=4,
+        max_masters_per_slave=1,
+        max_face_pairing_coordinate_error=0.0,
+        edge_corner_phase_mismatch=0.0,
+        max_edge_midpoint_pairing_error=0.0,
+        max_face_midpoint_pairing_error=0.0,
+        max_face_transform_fit_residual=0.0,
+    )
+    mode_sha = "a" * 64
+    modes = [object(), object()]
+    bundle = {
+        "setup": {"floquets": {6: floquet}},
+        "modes": modes,
+        "mode_sha256": mode_sha,
+        "dtn_quadrature_degree": 28,
+        "dtn_action": SimpleNamespace(
+            carrier=SimpleNamespace(entries=[object(), object()])
+        ),
+    }
+    rhs_facts = {
+        "generation": "dtn_port_modal_physical_rhs",
+        "phase_application": "finalized_floquet_mpc_once",
+        "degree": 6,
+        "mode_count": len(modes),
+        "mode_manifest_sha256": mode_sha,
+    }
+    rhs_values = np.asarray([1.0 + 0.0j, -0.25j])
+    facts = _production_port_mpc_witness(
+        floquet,
+        bundle,
+        rhs_size=2,
+        rhs_values=rhs_values,
+        rhs_norm=float(np.linalg.norm(rhs_values)),
+        rhs_facts=rhs_facts,
+        expected_surface_quadrature_degree=28,
+    )
+    assert facts["dtn_quadrature_degree"] == 28
+    assert facts["required_surface_quadrature_degree"] == 28
+    with pytest.raises(ValueError, match="route q28 contract"):
+        _production_port_mpc_witness(
+            floquet,
+            {**bundle, "dtn_quadrature_degree": 160},
+            rhs_size=2,
+            rhs_values=rhs_values,
+            rhs_norm=float(np.linalg.norm(rhs_values)),
+            rhs_facts=rhs_facts,
+            expected_surface_quadrature_degree=28,
+        )

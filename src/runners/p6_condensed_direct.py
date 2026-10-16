@@ -1063,7 +1063,7 @@ def _dispersion_flat_q192_witness(
             destroy_same_mesh_physical_action(bundle_q192)
 
 
-def _dispersion_flat_port_mpc_witness(
+def _production_port_mpc_witness(
     floquet: Any,
     bundle: Mapping[str, Any],
     *,
@@ -1071,30 +1071,36 @@ def _dispersion_flat_port_mpc_witness(
     rhs_values: np.ndarray,
     rhs_norm: float,
     rhs_facts: Mapping[str, Any],
+    expected_surface_quadrature_degree: int,
 ) -> dict[str, Any]:
-    """Validate and summarize the actual production port/MPC path."""
+    """Validate the production port/MPC path against its frozen route q."""
 
     mpc = getattr(floquet, "mpc", None)
     if mpc is None:
-        raise ValueError("flat production Floquet witness has no finalized MPC")
+        raise ValueError("production Floquet witness has no finalized MPC")
     setup = bundle.get("setup")
     if (
         not isinstance(setup, Mapping)
         or setup.get("floquets", {}).get(6) is not floquet
     ):
-        raise ValueError("flat RHS bundle is not bound to the witnessed degree-6 MPC")
+        raise ValueError("production RHS bundle is not bound to the witnessed degree-6 MPC")
     if bundle.get("dtn_action") is None:
-        raise ValueError("flat production port witness has no DtN action")
+        raise ValueError("production port witness has no DtN action")
     modes = bundle.get("modes")
     carrier = getattr(bundle["dtn_action"], "carrier", None)
     entries = getattr(carrier, "entries", None)
     if not modes or entries is None or len(entries) != len(modes):
-        raise ValueError("flat production port inventory/carrier counts differ")
+        raise ValueError("production port inventory/carrier counts differ")
     mode_sha = bundle.get("mode_sha256")
     if not isinstance(mode_sha, str) or len(mode_sha) != 64:
-        raise ValueError("flat production port inventory lacks its canonical SHA256")
-    if int(bundle.get("dtn_quadrature_degree", -1)) != 160:
-        raise ValueError("flat production port witness must use surface q160")
+        raise ValueError("production port inventory lacks its canonical SHA256")
+    if int(bundle.get("dtn_quadrature_degree", -1)) != int(
+        expected_surface_quadrature_degree
+    ):
+        raise ValueError(
+            "production port witness surface quadrature differs from its route "
+            f"q{int(expected_surface_quadrature_degree)} contract"
+        )
     if (
         rhs_facts.get("generation") != "dtn_port_modal_physical_rhs"
         or rhs_facts.get("phase_application") != "finalized_floquet_mpc_once"
@@ -1102,7 +1108,7 @@ def _dispersion_flat_port_mpc_witness(
         or int(rhs_facts.get("mode_count", -1)) != len(modes)
         or rhs_facts.get("mode_manifest_sha256") != mode_sha
     ):
-        raise ValueError("flat production RHS facts do not match its finalized port/MPC bundle")
+        raise ValueError("production RHS facts do not match its finalized port/MPC bundle")
 
     phases = {
         name: complex(getattr(floquet, name))
@@ -1115,15 +1121,15 @@ def _dispersion_flat_port_mpc_witness(
         raise FloatingPointError("flat production Floquet phase is non-finite")
     phase_moduli = {name: abs(value) for name, value in phases.items()}
     if any(abs(value - 1.0) > 2.0e-12 for value in phase_moduli.values()):
-        raise ValueError("flat production Floquet phases are not unit-modulus")
+        raise ValueError("production Floquet phases are not unit-modulus")
     corner_error = abs(phases["phase_corner"] - phases["phase_x"] * phases["phase_y"])
     if corner_error > 2.0e-12:
-        raise ValueError("flat production Floquet corner phase is not phase_x*phase_y")
+        raise ValueError("production Floquet corner phase is not phase_x*phase_y")
 
     constraint_mode = str(getattr(floquet, "constraint_mode_resolved", ""))
     if constraint_mode != "topological_trace_p6":
         raise ValueError(
-            "flat production degree-6 MPC did not use topological_trace_p6"
+            "production degree-6 MPC did not use topological_trace_p6"
         )
     counts = {
         name: int(getattr(floquet, name))
@@ -1140,7 +1146,7 @@ def _dispersion_flat_port_mpc_witness(
         )
     }
     if min(counts["num_constraints"], counts["num_x_constraints"], counts["num_y_constraints"]) <= 0:
-        raise ValueError("flat production MPC is missing x/y periodic constraints")
+        raise ValueError("production MPC is missing x/y periodic constraints")
     errors = {
         name: float(getattr(floquet, name))
         for name in (
@@ -1152,13 +1158,13 @@ def _dispersion_flat_port_mpc_witness(
         )
     }
     if not np.isfinite(tuple(errors.values())).all():
-        raise FloatingPointError("flat production MPC geometry/phase errors are non-finite")
+        raise FloatingPointError("production MPC geometry/phase errors are non-finite")
     rhs_values = np.asarray(rhs_values, dtype=np.complex128).reshape(-1)
     if rhs_values.size != int(rhs_size) or not np.isfinite(rhs_values).all():
-        raise ValueError("flat production RHS size/finite check failed")
+        raise ValueError("production RHS size/finite check failed")
     rhs_norm = float(rhs_norm)
     if not math.isfinite(rhs_norm) or rhs_norm <= 0.0:
-        raise ValueError("flat production top-traction/modal RHS must be finite and nonzero")
+        raise ValueError("production top-traction/modal RHS must be finite and nonzero")
 
     return {
         "status": "ACTUAL_PRODUCTION_PORT_MPC_RHS_VERIFIED",
@@ -1176,6 +1182,9 @@ def _dispersion_flat_port_mpc_witness(
         "dtn_mode_count": len(modes),
         "dtn_mode_manifest_sha256": mode_sha,
         "dtn_quadrature_degree": int(bundle["dtn_quadrature_degree"]),
+        "required_surface_quadrature_degree": int(
+            expected_surface_quadrature_degree
+        ),
         "carrier_entry_count": len(entries),
         "rhs_generation": dict(rhs_facts),
         "rhs_rows": int(rhs_size),
@@ -1185,6 +1194,28 @@ def _dispersion_flat_port_mpc_witness(
         "finalized_mpc_used_by_physical_rhs": True,
         "analytic_or_zero_contrast_shortcut": False,
     }
+
+
+def _dispersion_flat_port_mpc_witness(
+    floquet: Any,
+    bundle: Mapping[str, Any],
+    *,
+    rhs_size: int,
+    rhs_values: np.ndarray,
+    rhs_norm: float,
+    rhs_facts: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Keep the legacy flat route explicitly bound to its q160 contract."""
+
+    return _production_port_mpc_witness(
+        floquet,
+        bundle,
+        rhs_size=rhs_size,
+        rhs_values=rhs_values,
+        rhs_norm=rhs_norm,
+        rhs_facts=rhs_facts,
+        expected_surface_quadrature_degree=160,
+    )
 
 
 def _factor_same_matrix(factor: Any, matrix: Any, rhs: Any, solution: Any, marker):
@@ -1512,8 +1543,8 @@ def run_p6_condensed_direct(
         )
         if route["family"] == "v7_aniso_n0":
             from src.runners.v7_anisotropic_mesh_evidence import (
-                actual_v7_candidate_d_mesh_evidence,
                 actual_v7_anisotropic_mesh_evidence,
+                actual_v7_candidate_d_mesh_evidence,
             )
 
             if route.get("mesh_evidence_profile") == "candidate_d_200x2x118":
@@ -1782,13 +1813,14 @@ def run_p6_condensed_direct(
         )
         if not np.isfinite(rhs_values_for_witness).all() or not np.any(rhs_values_for_witness):
             raise FloatingPointError("production incident/MPC/DtN RHS is zero or non-finite")
-        summary["production_port_mpc_witness"] = _dispersion_flat_port_mpc_witness(
+        summary["production_port_mpc_witness"] = _production_port_mpc_witness(
             levels["floquets"][6],
             bundle,
             rhs_size=int(full_rhs.getSize()),
             rhs_values=rhs_values_for_witness,
             rhs_norm=float(full_rhs.norm()),
             rhs_facts=rhs_facts,
+            expected_surface_quadrature_degree=expected_surface_q,
         )
         if route["family"] == "dispersion_flat":
             summary["quadrature_comparison"] = (
