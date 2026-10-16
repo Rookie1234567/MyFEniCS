@@ -8,7 +8,9 @@ original B0 dimensions.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
-from typing import Mapping
+from typing import Any, Mapping
+
+from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
 
 
 @dataclass(frozen=True)
@@ -66,7 +68,9 @@ class Task40V10P6PeriodicProfile:
                 result[key] = list(value)
         result.update(
             schema=(
-                "task40extra.review_v22_p6_periodic_profile.v1"
+                "task41extra.g13_a2_p6_periodic_profile.v1"
+                if self.name == TASK41_G13_A2_PRECONDITIONER
+                else "task40extra.review_v22_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v22_")
                 else "task40extra.review_v20_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v20_")
@@ -241,6 +245,54 @@ TASK40_V17_P6_E1_PROFILE = replace(
     name="task40extra_v17_p6_y_orbit_e1_reference_v1",
 )
 
+TASK41_G13_A2_P6_PROFILE = replace(
+    TASK40_V11_P6_GX560_PROFILE,
+    name=TASK41_G13_A2_PRECONDITIONER,
+    global_cell_axes=(10, 10, 14),
+    global_cell_count=1400,
+    # Derived from p6 hexahedral edge/face/cell counts; runtime Basix/dofmap
+    # readback remains the admission gate and is not implied by these values.
+    global_storage_rows=934764,
+    global_independent_rows=914400,
+    global_interior_rows=630000,
+    global_trace_rows=284400,
+    q_count=10,
+    rows_per_q=91440,
+    trace_rows_per_q=28440,
+    local_y_cells=2,
+    replication_count=5,
+    local_cell_count=280,
+    local_storage_rows=195132,
+    local_independent_rows=182880,
+    local_interior_rows=126000,
+    local_trace_rows=56880,
+    local_width_per_q=91440,
+    q_port_counts=(4, 0, 0, 12, 20, 28, 28, 28, 28, 20),
+    sector_port_counts=(32, 28, 28, 40, 40),
+)
+
+
+def validate_task41_g13_a2_mode_inventory(
+    modes: tuple[Any, ...], cfg: Any, axes: Mapping[str, tuple[float, ...]]
+) -> tuple[Any, ...]:
+    """Recompute the registered ten-q/five-sector map from live Task41 modes."""
+    from .task40_v10_p6_yorbit import build_task40_v10_sector_contexts
+
+    actual_axes = tuple(len(axes[name]) - 1 for name in ("x", "y", "z"))
+    if actual_axes != TASK41_G13_A2_P6_PROFILE.global_cell_axes:
+        raise ValueError(f"Task41 A2 actual axes differ from G13: {actual_axes}")
+    if len(modes) != TASK41_G13_A2_P6_PROFILE.mode_count:
+        raise ValueError(
+            f"Task41 A2 requires 168 live modes; received {len(modes)}"
+        )
+    return build_task40_v10_sector_contexts(
+        modes,
+        cfg,
+        axes,
+        expected_q_counts=TASK41_G13_A2_P6_PROFILE.q_port_counts,
+        expected_sector_counts=TASK41_G13_A2_P6_PROFILE.sector_port_counts,
+    )
+
 
 TASK40_V18_P6_B0_Y8_PROFILE = replace(
     TASK40_V17_P6_B0_PROFILE,
@@ -332,6 +384,7 @@ TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V20_P6_E2_PROFILE.name: TASK40_V20_P6_E2_PROFILE,
     TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE.name: TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
     TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE.name: TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE,
+    TASK41_G13_A2_P6_PROFILE.name: TASK41_G13_A2_P6_PROFILE,
 }
 
 TASK40_V15_SELECTOR_PROFILE_IDENTITIES = frozenset(

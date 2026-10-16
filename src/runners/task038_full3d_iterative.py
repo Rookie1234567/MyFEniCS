@@ -41,6 +41,53 @@ def run_full3d_iterative(
     solver = resolved_payload.get("solver", {})
     stage = str(solver.get("stage", ""))
     profile = str(solver.get("preconditioner", ""))
+    if profile == "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1":
+        from src.geometry.task40_nonseparable_plan import (
+            TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+            TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+            TASK40_V15_REFERENCE_PC_STRATEGY,
+        )
+        from src.geometry.task41_phi90_profile import (
+            TASK41_COMPARISON_GROUP,
+            TASK41_G13_A2_PRECONDITIONER,
+            TASK41_G13_A2_RUN_ID,
+            task41_payload_errors,
+        )
+
+        solver = resolved_payload.get("solver", {})
+        execution = resolved_payload.get("execution", {})
+        identity = resolved_payload.get("derived", {}).get(
+            "physical_intermediate_profile", {}
+        )
+        errors = task41_payload_errors(resolved_payload)
+        if errors:
+            raise ValueError("Task41 A2 dispatcher rejected input: " + "; ".join(errors))
+        if (
+            resolved_payload.get("run_id") != TASK41_G13_A2_RUN_ID
+            or resolved_payload.get("comparison_group") != TASK41_COMPARISON_GROUP
+            or solver.get("preconditioner") != TASK41_G13_A2_PRECONDITIONER
+            or solver.get("task40_reference_pc_strategy") != TASK40_V15_REFERENCE_PC_STRATEGY
+            or solver.get("task40_q_assembly_strategy") != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            or solver.get("task40_factor_lifecycle_strategy")
+            != TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+            or stage != "TASK41_A2"
+            or identity.get("identity") != TASK41_G13_A2_PRECONDITIONER
+            or not isinstance(execution, Mapping)
+            or any(str(key).startswith("task40_") for key in execution)
+        ):
+            raise ValueError("Task41 A2 dispatcher requires its exact run, profile, and all-q route")
+        source_sha = _kwargs.get("source_sha")
+        if not isinstance(source_sha, str) or len(source_sha) != 40:
+            raise ValueError("Task41 A2 dispatcher requires the complete source SHA")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=source_sha,
+            profile_identity=TASK41_G13_A2_PRECONDITIONER,
+            share_transform_bank=True,
+        )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_CONTROL_RUN_ID,
         TASK40_B0_P6_CANDIDATE_RUN_ID,

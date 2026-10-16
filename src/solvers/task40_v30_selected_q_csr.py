@@ -3078,7 +3078,22 @@ def prepare_selected_q_csr_sector(
         "qualification_receipts": qualification_receipts,
         "selector_entries": selector_entries,
         "all_complete_native_pass": len(selector_entries) == len(selected)
-        and all(row.get("qualification_status") == "PASS" for row in selector_entries),
+        and all(row.get("qualification_status") == "PASS" for row in selector_entries)
+        and len(native_facts) == len(selected)
+        and all(
+            row.get("four_complete_csr_actions_passed") is True
+            for row in native_facts.values()
+        ),
+        "four_complete_csr_actions_passed": len(native_facts) == len(selected)
+        and all(
+            row.get("four_complete_csr_actions_passed") is True
+            for row in native_facts.values()
+        ),
+        "paired_sector_leakage_passed": len(native_facts) == len(selected)
+        and all(
+            row.get("paired_sector_leakage_passed") is True
+            for row in native_facts.values()
+        ),
     }
 
 

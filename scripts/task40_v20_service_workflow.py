@@ -9399,7 +9399,7 @@ def _run_task41_p0_service(
     contract_path: Path,
     repo_root: Path,
 ) -> int:
-    """Run one fixed Task41 A1 through the existing worker and watchdog path."""
+    """Run one registered Task41 P0 case through the existing worker/watchdog path."""
     service_start_sample = clock_sample(include_boot_id=True)
     from benchmarks.task034_wsl_resources import cgroup_snapshot
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY, supervise
@@ -9408,6 +9408,7 @@ def _run_task41_p0_service(
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
         sha256_file,
+        task41_case_id_for_run_id,
     )
     from src.runners.task40_v10_campaign import CampaignAccount
 
@@ -9426,6 +9427,7 @@ def _run_task41_p0_service(
         check_current_source=True,
         require_clean_source=True,
     )
+    case_id = task41_case_id_for_run_id(str(contract["case"]["run_id"]))
     if os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1":
         raise ValueError("Task41 service lacks its strict execution marker")
     window = load_task41_p0_fixed_window(contract, current_root=repo_root)
@@ -9519,6 +9521,7 @@ def _run_task41_p0_service(
         "schema": "task41.p0.service_receipt.v1",
         "status": "running",
         "task_id": contract["task_id"],
+        "case_id": case_id,
         "unit": unit,
         "contract_path": str(contract_path.resolve()),
         "contract_sha256": contract_sha,
@@ -9579,7 +9582,11 @@ def _run_task41_p0_service(
             manifest_path = Path(str(launch_payload["manifest"])).resolve()
             manifest = read_json_object(manifest_path, "Task41 run manifest")
             numerical_output = Path(str(manifest["numerical_output_directory"])).resolve()
-            numerical_summary_path = numerical_output / "run_summary.json"
+            numerical_summary_path = (
+                summary_path.parent / "task40_v10_p6_candidate_summary.json"
+                if case_id == "A2"
+                else numerical_output / "run_summary.json"
+            )
             checker_command = [
                 str(runtime_prefix / "bin/python"), "-m", "src.runners.task41_p0_checker",
                 "--input", str(input_path),
@@ -9612,7 +9619,11 @@ def _run_task41_p0_service(
                     "schema": TASK41_P0_AUTH_SCHEMA,
                     "phase": "closeout",
                     "purpose": "registered_read_only_required_checker",
-                    "checker_kind": "task41_p0_independent_full_a6_checker",
+                    "checker_kind": (
+                        "task41_p0_a2_independent_p6_iterative_checker"
+                        if case_id == "A2"
+                        else "task41_p0_independent_full_a6_checker"
+                    ),
                     "command_sha256": hashlib.sha256(
                         json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
                     ).hexdigest(),

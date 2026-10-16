@@ -25,3 +25,15 @@
 service 环境删除继承的 V29 factor-only 标记；回归显式注入旧标记并核对 Task41 contract/window 仍正确传递。修正后的定向测试 `test_task41_launcher_and_service_pass_real_window_resources_and_checker_authority`：1 passed（0.16 s）；原始工具 `exec-d46d0a4a-d3e3-4693-821d-dab6751ab1a9`。此前缺少显式注入的测试回执保留为不充分证据，不用其证明本 bug 已覆盖。
 
 正式 A1 source `4e46e524f1a5ebbc83218e615631c2477698347a` 的实际完整场及 required checker 已通过，详见 [summary.md](summary.md)。A2 本地未提交改动的测试不代表 A2 正式场通过。
+
+## A2 冻结前定向验证
+
+A2 接通同物理 G13、168 模式、10 q / 5 sector、全部准确因子驻留与六类完整参考检查。q1/q2 虽无端口仍保留 FE 分块。与 A1 的比较使用保存总场、完整独立自由度上的 E / scaled-curl 体积范数、物理边界坐标复振幅及全模式功率；不拟合相位，不把 sampled witness 当全体积误差。
+
+- 资格化环境：既有独立 `local_w0_wsl/runtime_prefix`，PETSc 3.25.6 / complex128 / int32、MUMPS 5.8.2；MPI1、数学线程1。测试不是正式工作站 A2 场。
+- 最终命令：`python -m pytest -q --tb=short src/test/test_task41_p0_reference_audit.py src/test/test_task41_p0_contract.py src/test/test_task41_g13_direct_input.py src/test/test_task40_v10_p6_yorbit.py src/test/test_task40_v10_p6_mumps.py -k task41`。
+- 结果：**27 passed, 57 deselected in 1.94 s**；工具回执 `exec-dd618e6d-910c-4f79-b5d6-36d31cf3e6ab`。包含真实小矩阵十 q MUMPS 两 RHS、生产持久化格式独立回读、弱模式入射尺度、完整 independent rows 及 A1/A2 watchdog 路径。
+- 最终相关 `py_compile` 与 `git diff --check` 通过。未运行全仓测试；未安装或更换运行库。
+- 负记录保留：旧 `.venv` 路径断言及整个 PATH 字串检查曾误拒绝正常环境；均发生在数值测试之前。修正为读取本轮指定运行库与实际模块来源，没有改变科学门限。A2 summary 路径错配在正式运行前修复；A1 raw 不修改、不重跑。
+
+测试基于 `38acbfec3868a744df85c6c8a73e478c937fc948` 上的最终未提交实现，主控随后冻结同一源码；正式 A2 结果另由实际 run/source/checker 记录，不能由本页测试数宣称通过。用户已明确允许资源合格时与邻项目并行，仍保留独立 cgroup、动态准入、至少64 GiB宿主余量、任务swap0；不停止或修改邻项目。

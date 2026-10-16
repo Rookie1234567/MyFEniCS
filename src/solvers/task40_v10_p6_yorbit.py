@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
@@ -5625,6 +5626,158 @@ def build_task40_v10_p6_local_sector_owner(
         raise
 
 
+def _validate_prebuilt_sector_indices(profile: Any, indices: Sequence[Any]) -> None:
+    replication_count = getattr(profile, "replication_count", None)
+    if type(replication_count) is not int or replication_count <= 0:
+        raise ValueError("p6 profile must declare a positive replication_count")
+    if any(type(index) is not int or index not in range(replication_count) for index in indices):
+        raise ValueError(
+            "prebuilt sectors are restricted to registered twist indices "
+            f"0..{replication_count - 1}"
+        )
+
+
+def _validate_all_profile_q_matrices(
+    profile: Any, q_matrices: Mapping[int, sparse.csr_matrix]
+) -> dict[str, Any]:
+    required_q = set(range(int(profile.q_count)))
+    actual_q = set(q_matrices)
+    if any(type(q) is not int for q in actual_q):
+        raise ValueError("p6 q matrix inventory keys must be exact integer indices")
+    if actual_q != required_q:
+        raise ValueError(
+            "p6 twist sectors did not produce every profile q matrix: "
+            f"missing={sorted(required_q - actual_q)}, extra={sorted(actual_q - required_q)}"
+        )
+    expected_rows = tuple(map(int, profile.augmented_rows_per_q))
+    actual_shapes = tuple(
+        tuple(map(int, q_matrices[q].shape)) for q in range(int(profile.q_count))
+    )
+    expected_shapes = tuple((rows, rows) for rows in expected_rows)
+    if actual_shapes != expected_shapes:
+        raise ValueError(
+            "runtime p6 q CSR dimensions differ from the selected profile: "
+            f"{actual_shapes} != {expected_shapes}"
+        )
+    return {
+        "q_indices": list(range(int(profile.q_count))),
+        "q_matrix_shapes": [list(shape) for shape in actual_shapes],
+        "empty_port_q_indices": [
+            q for q, count in enumerate(profile.q_port_counts) if int(count) == 0
+        ],
+    }
+
+
+def _validate_task41_a2_q_csr_identity(
+    profile: Any,
+    identity: Mapping[str, Any],
+    *,
+    modes: Sequence[Any],
+    mode_inventory: tuple[Any, Any, Any] | None,
+) -> dict[str, Any]:
+    from .task40_v10_p6_periodic_profile import TASK41_G13_A2_P6_PROFILE
+
+    expected_keys = {
+        "scientific_input_sha256",
+        "ordered_mode_key_sha256",
+        "mode_manifest_sha256",
+        "execution_identity",
+    }
+    execution_identity = identity.get("execution_identity")
+    if (
+        profile.name != TASK41_G13_A2_P6_PROFILE.name
+        or set(identity) != expected_keys
+        or not isinstance(execution_identity, Mapping)
+        or mode_inventory is None
+        or len(mode_inventory) != 3
+    ):
+        raise ValueError("direct sector q CSR qualification requires the exact Task41 A2 identity")
+    if (
+        not re.fullmatch(r"[0-9a-f]{40}", str(execution_identity.get("source_sha", "")))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(execution_identity.get("window_sha256", "")))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(identity.get("scientific_input_sha256", "")))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(identity.get("ordered_mode_key_sha256", "")))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(identity.get("mode_manifest_sha256", "")))
+    ):
+        raise ValueError("Task41 A2 q CSR qualification identity has invalid hashes")
+    actual_mode_key_sha256 = _task40_v30_ordered_mode_key_sha256(tuple(modes))
+    frozen_modes, frozen_rows, frozen_manifest_sha256 = mode_inventory
+    frozen_row_key_sha256 = hashlib.sha256(
+        json.dumps(
+            [
+                [
+                    str(row["side"]),
+                    int(row["m"]),
+                    int(row["n"]),
+                    str(row["polarization"]),
+                ]
+                for row in frozen_rows
+            ],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    if (
+        len(modes) != int(profile.mode_count)
+        or len(tuple(frozen_modes)) != int(profile.mode_count)
+        or len(tuple(frozen_rows)) != int(profile.mode_count)
+        or actual_mode_key_sha256
+        != _task40_v30_ordered_mode_key_sha256(tuple(frozen_modes))
+        or actual_mode_key_sha256 != frozen_row_key_sha256
+        or actual_mode_key_sha256 != identity["ordered_mode_key_sha256"]
+        or str(frozen_manifest_sha256) != identity["mode_manifest_sha256"]
+    ):
+        raise ValueError("Task41 A2 current ordered modes differ from the bound q CSR identity")
+    return {
+        "ordered_mode_key_sha256": actual_mode_key_sha256,
+        "mode_manifest_sha256": str(frozen_manifest_sha256),
+        "mode_count": int(profile.mode_count),
+    }
+
+
+def _instantiate_p6_factor_bank(
+    factor_backend: Callable[..., Any],
+    q_matrices: Mapping[int, sparse.csr_matrix],
+    *,
+    profile: Any,
+    factor_options: Mapping[str, Any],
+) -> Any:
+    """Validate the complete profile inventory at the factor-factory boundary."""
+    _validate_all_profile_q_matrices(profile, q_matrices)
+    expected_rows = tuple(map(int, profile.augmented_rows_per_q))
+    options = dict(factor_options)
+    if "expected_shapes" in options and tuple(options["expected_shapes"]) != expected_rows:
+        raise ValueError("factor options carry row shapes from another p6 profile")
+    if "profile" in options and options["profile"] is not profile:
+        raise ValueError("factor options carry another p6 profile")
+    options["expected_shapes"] = expected_rows
+    options["profile"] = profile
+    return factor_backend(q_matrices, **options)
+
+
+def _task40_v10_regular_reference_cfg(cfg: Any, *, fill_y_period: bool) -> Any:
+    if type(fill_y_period) is not bool:
+        raise TypeError("regular reference y-period fill must be an explicit boolean")
+    updates: dict[str, Any] = {
+        "air_void_box_nm": None,
+        "cell_notch": None,
+        "geometry_identity": f"{SCHEMA}.regular_reference",
+    }
+    if fill_y_period:
+        period_y = float(cfg.period_y)
+        grating_width_y = float(cfg.grating_width_y)
+        if not np.isfinite(period_y) or period_y <= 0.0:
+            raise ValueError("regular reference requires a finite positive y period")
+        if (
+            not np.isfinite(grating_width_y)
+            or grating_width_y <= 0.0
+            or grating_width_y > period_y
+        ):
+            raise ValueError("target grating y width must fit within its period")
+        updates["grating_width_y"] = period_y
+    return __import__("dataclasses").replace(cfg, **updates)
+
+
 def build_task40_v10_p6_reference_inverse(
     cfg: Any,
     axes: Mapping[str, tuple[float, ...]],
@@ -5645,6 +5798,7 @@ def build_task40_v10_p6_reference_inverse(
     operator_qualification_reuse: Callable[..., tuple[Mapping[str, Any], Mapping[str, Any]]] | None = None,
     mode_inventory: tuple[Any, Any, Any] | None = None,
     v30_factor_config: Mapping[str, Any] | None = None,
+    task41_a2_factor_config: Mapping[str, Any] | None = None,
     factor_output_directory: str | None = None,
     surface_functional_checkpoint: Mapping[str, Any] | None = None,
     qualified_q_csr_provider: Any | None = None,
@@ -5657,6 +5811,7 @@ def build_task40_v10_p6_reference_inverse(
     prebuilt_sector_q_csr: Mapping[
         int, tuple[Mapping[int, sparse.csr_matrix], Mapping[str, Any]]
     ] | None = None,
+    regular_reference_fills_y_period: bool = False,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -5681,6 +5836,7 @@ def build_task40_v10_p6_reference_inverse(
         OneQRefactorV19Mumps,
     )
     from .task40_v10_p6_periodic_profile import (
+        TASK41_G13_A2_P6_PROFILE,
         TASK40_V10_P6_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
@@ -5688,6 +5844,12 @@ def build_task40_v10_p6_reference_inverse(
         TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
         Task40V10P6PeriodicProfile,
     )
+    if profile is None:
+        profile = TASK40_V10_P6_PROFILE
+    if not isinstance(profile, Task40V10P6PeriodicProfile):
+        raise TypeError("p6 reference builder requires a Task40 periodic case profile")
+    if type(regular_reference_fills_y_period) is not bool:
+        raise TypeError("regular reference y-period fill must be an explicit boolean")
     if not callable(allocation_gate):
         raise TypeError("p6 reference construction requires a live allocation gate")
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
@@ -5726,7 +5888,7 @@ def build_task40_v10_p6_reference_inverse(
         or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
         or np.dtype(PETSc.IntType) != np.dtype(np.int32)
         or int(cfg.nedelec_degree) != 6
-        or len(axes["y"]) != (int(profile.q_count) + 1 if profile is not None else 5)
+        or len(axes["y"]) != int(profile.q_count) + 1
     ):
         raise ValueError("Task40 V10 reference builder requires the qualified serial p6 profile")
 
@@ -5734,8 +5896,9 @@ def build_task40_v10_p6_reference_inverse(
     prebuilt_q_csr = dict(prebuilt_sector_q_csr or {})
     if type(sector_first) is not bool:
         raise TypeError("sector-first reference scheduling must be an explicit boolean")
-    if any(type(index) is not int or index not in range(4) for index in (*prebuilt_owners, *prebuilt_q_csr)):
-        raise ValueError("prebuilt sectors are restricted to the registered twist indices 0..3")
+    _validate_prebuilt_sector_indices(
+        profile, (*prebuilt_owners.keys(), *prebuilt_q_csr.keys())
+    )
     if any(
         not isinstance(value, dict)
         or not isinstance(value.get("context"), Task40V10SectorContext)
@@ -5789,16 +5952,9 @@ def build_task40_v10_p6_reference_inverse(
         "qualified_q_csr_selector_entries": [],
     }
     try:
-        regular_cfg = __import__("dataclasses").replace(
-            cfg,
-            air_void_box_nm=None,
-            cell_notch=None,
-            geometry_identity=f"{SCHEMA}.regular_reference",
+        regular_cfg = _task40_v10_regular_reference_cfg(
+            cfg, fill_y_period=regular_reference_fills_y_period
         )
-        if profile is None:
-            profile = TASK40_V10_P6_PROFILE
-        if not isinstance(profile, Task40V10P6PeriodicProfile):
-            raise TypeError("p6 reference builder requires a Task40 periodic case profile")
         frozen_mode_rows: tuple[Any, ...] | None = None
         frozen_mode_sha256: str | None = None
 
@@ -5913,6 +6069,17 @@ def build_task40_v10_p6_reference_inverse(
                 != qualified_q_csr_identity["ordered_mode_key_sha256"]
             ):
                 raise ValueError("current ordered mode keys differ from the frozen V20 inventory")
+        elif qualified_q_csr_preparer is not None:
+            if not isinstance(qualified_q_csr_identity, Mapping):
+                raise ValueError("Task41 A2 direct q preparer lacks its identity")
+            _validate_task41_a2_q_csr_identity(
+                profile,
+                qualified_q_csr_identity,
+                modes=modes,
+                mode_inventory=mode_inventory,
+            )
+        elif qualified_q_csr_identity is not None:
+            raise ValueError("q CSR qualification identity cannot be supplied without a provider or preparer")
         if (
             profile.name == TASK40_V18_P6_B0_Y8_PROFILE.name
             and q_assembly_comparison_only
@@ -6368,6 +6535,45 @@ def build_task40_v10_p6_reference_inverse(
                         "sector_preparation": dict(preparation_audit),
                         "q_indices": sorted(sector_matrices),
                     }
+            elif qualified_q_csr_preparer is not None:
+                prepared_matrices, preparation_audit = qualified_q_csr_preparer(
+                    provider=None,
+                    action=action,
+                    volume_action=local_bundle["volume_action"],
+                    coordinates=coordinates,
+                    context=context,
+                    local_h=local_h,
+                    profile=profile,
+                    mode_descriptor=mode_descriptor,
+                    local_bundle=local_bundle,
+                    mode_inventory=mode_inventory,
+                    q_indices=tuple(map(int, context.global_q_indices)),
+                    available_sector_matrices={},
+                    runtime_identity=qualified_q_csr_identity,
+                    allocation_gate=allocation_gate,
+                )
+                sector_matrices = dict(prepared_matrices)
+                if (
+                    set(sector_matrices) != set(map(int, context.global_q_indices))
+                    or not isinstance(preparation_audit, Mapping)
+                    or preparation_audit.get("all_complete_native_pass") is not True
+                    or preparation_audit.get("paired_sector_leakage_passed") is not True
+                ):
+                    raise ValueError(
+                        "Task41 A2 sector preparation lacks both complete-q native and paired-leakage PASS"
+                    )
+                owner["qualified_q_csr_receipts"].extend(
+                    preparation_audit.get("qualification_receipts", ())
+                )
+                owner["qualified_q_csr_selector_entries"].extend(
+                    dict(row) for row in preparation_audit.get("selector_entries", ())
+                )
+                block_audit = {
+                    "q_indices": sorted(sector_matrices),
+                    "all_complete_native_pass": True,
+                    "paired_sector_leakage_passed": True,
+                    "task41_a2_independent_q_csr_preparation": dict(preparation_audit),
+                }
             elif q_assembly_comparison_only:
                 block_audit = compare_task40_v10_sector_assembly(
                     action,
@@ -6611,12 +6817,10 @@ def build_task40_v10_p6_reference_inverse(
                 "comparison_only": True,
                 "q_assembly_comparison": comparison_report,
             }
-        expected_shapes = tuple(matrix.shape[0] for _q, matrix in sorted(all_q_matrices.items()))
-        if expected_shapes != profile.augmented_rows_per_q:
-            raise ValueError(
-                "runtime q augmented dimensions differ from the selected p6 profile: "
-                f"{expected_shapes} != {profile.augmented_rows_per_q}"
-            )
+        owner["q_matrix_inventory"] = _validate_all_profile_q_matrices(
+            profile, all_q_matrices
+        )
+        expected_shapes = tuple(map(int, profile.augmented_rows_per_q))
         q_port_counts = [0] * profile.q_count
         for context in contexts:
             for branch, q in enumerate(context.global_q_indices):
@@ -6727,13 +6931,19 @@ def build_task40_v10_p6_reference_inverse(
                 planned_target_full_storage_rows=planned_target_full_storage_rows,
                 target_admission_phase=target_admission_phase,
                 v30_config=v30_factor_config,
+                task41_a2_config=task41_a2_factor_config,
                 output_directory=factor_output_directory,
             )
         else:
             factor_options["target_reference_rows_match"] = bool(
                 owner["full_storage_dimensions"]["target_reference_rows_match"]
             )
-        factors = factor_backend(all_q_matrices, **factor_options)
+        factors = _instantiate_p6_factor_bank(
+            factor_backend,
+            all_q_matrices,
+            profile=profile,
+            factor_options=factor_options,
+        )
         owner["factors"] = factors
         owner["inverse"] = CompleteTwoCellInverse(
             sectors,

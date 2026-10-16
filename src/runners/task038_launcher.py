@@ -5642,21 +5642,24 @@ def launch_specification(
 
     run_id = str(specification.identity.get("run_id", ""))
     preconditioner = str(specification.solver.get("preconditioner", ""))
+    from .task41_p0_contract import TASK41_A2_RUN_ID, TASK41_RUN_ID
     task41_p0_identity = (
         specification.identity.get("model_id") == "task41extra_phi90_p50x50_g17x20"
-        or run_id == "task41extra_g13_p6_phi90_direct_a1"
+        or run_id in {TASK41_RUN_ID, TASK41_A2_RUN_ID}
     )
     task41_p0_contract = None
     task41_p0_contract_digest = None
     task41_p0_window = None
     if task41_p0_identity:
+        from .task41_p0_contract import task41_case_id_for_run_id
+
         if (
             specification.identity.get("model_id") != "task41extra_phi90_p50x50_g17x20"
-            or run_id != "task41extra_g13_p6_phi90_direct_a1"
+            or run_id not in {TASK41_RUN_ID, TASK41_A2_RUN_ID}
             or task41_p0_execution_contract is None
             or task40_v10_campaign_window is not None
         ):
-            raise InputError("Task41 A1 requires its exact P0 contract and cannot use a Task40 window")
+            raise InputError("registered Task41 P0 cases require their exact P0 contract and cannot use a Task40 window")
         from .task41_p0_contract import (
             load_task41_p0_fixed_window,
             require_task41_p0_contract,
@@ -5664,12 +5667,14 @@ def launch_specification(
         )
 
         try:
+            task41_case_id = task41_case_id_for_run_id(run_id)
             task41_p0_contract, task41_p0_contract_digest = require_task41_p0_contract(
                 task41_p0_execution_contract,
                 expected_sha256=task41_p0_contract_sha256,
                 current_root=Path(__file__).resolve().parents[2],
                 check_current_source=True,
                 require_clean_source=True,
+                case_id=task41_case_id,
             )
             validate_task41_specification(
                 specification,

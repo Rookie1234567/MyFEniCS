@@ -167,24 +167,30 @@ def main(argv: list[str] | None = None) -> int:
         from src.runners.task41_p0_contract import (
             TASK41_MODEL_ID,
             TASK41_RUN_ID,
+            TASK41_A2_RUN_ID,
             require_task41_p0_contract,
             validate_task41_specification,
             load_task41_p0_fixed_window,
+            task41_case_id_for_run_id,
         )
 
         task41_case = (
             specification.identity.get('model_id') == TASK41_MODEL_ID
-            or specification.identity.get('run_id') == TASK41_RUN_ID
+            or specification.identity.get('run_id') in {TASK41_RUN_ID, TASK41_A2_RUN_ID}
         )
         if args.task41_p0_execution_contract is not None:
             if not task41_case or args.task40_v10_campaign_window is not None:
-                raise InputError('Task41 P0 execution contract is restricted to the Task41 A1 input')
+                raise InputError('Task41 P0 execution contract is restricted to a registered Task41 input')
             try:
+                task41_case_id = task41_case_id_for_run_id(
+                    str(specification.identity.get("run_id", ""))
+                )
                 task41_contract, task41_contract_sha = require_task41_p0_contract(
                     args.task41_p0_execution_contract,
                     current_root=_REPOSITORY_ROOT,
                     check_current_source=True,
                     require_clean_source=not (args.dry_run or args.validate_only),
+                    case_id=task41_case_id,
                 )
                 validate_task41_specification(
                     specification, args.input_path, task41_contract,

@@ -570,6 +570,43 @@ def test_v30_all_q_strictly_qualifies_two_rhs_and_persists_packets(
         _verify_v30_all_q_rhs_cost_categories(bad_audit, expected_q_count=q_count)
 
 
+def test_task41_a2_all_q_qualifies_two_strict_rhs_for_all_ten_q(tmp_path):
+    from src.solvers.task40_v10_p6_mumps import task41_a2_all_q_factor_contract
+    from src.solvers.task40_v10_p6_periodic_profile import TASK41_G13_A2_P6_PROFILE
+
+    profile = TASK41_G13_A2_P6_PROFILE
+    base = _one_q_test_matrices()[0]
+    matrices = {
+        q: (base + q * sparse.eye(3, dtype=np.complex128)).tocsr()
+        for q in range(profile.q_count)
+    }
+    gates = []
+    with AllQExactMumps(
+        matrices,
+        allocation_gate=lambda name, facts: gates.append((name, dict(facts))) or {},
+        expected_shapes=(3,) * profile.q_count,
+        profile=profile,
+        full_storage_rows=6,
+        task41_a2_config=task41_a2_all_q_factor_contract(),
+        output_directory=tmp_path,
+    ) as factors:
+        expected_q = list(range(profile.q_count))
+        assert factors.audit["numeric_ready_q"] == expected_q
+        assert factors.audit["all_q_fresh_probe_and_second_rhs_passed"] is True
+        assert factors.audit["all_q_factors_retained_simultaneously"] is True
+        assert factors.audit["all_q_numeric_factors_strict_true_residual_passed"] is True
+        assert len(factors.audit["second_rhs_tests"]) == profile.q_count
+        for q, test in enumerate(factors.audit["factor_tests"]):
+            second_rhs = test["second_rhs"]
+            assert test["q"] == q
+            assert test["strict_passed"] is True
+            assert second_rhs["schema"] == "task41.p0.a2_all_q_second_rhs_result.v1"
+            assert second_rhs["strict_passed"] is True
+            assert second_rhs["native_call"] == "MatFactor.solve_repeated"
+            assert second_rhs["packet"]["readback_verified"] is True
+    assert any(name == "before_task41_a2_second_rhs_qualification" for name, _ in gates)
+
+
 def test_all_q_destroy_failure_retains_failed_q_owners_and_allows_retry():
     matrices = _one_q_test_matrices()
     backend = AllQExactMumps(

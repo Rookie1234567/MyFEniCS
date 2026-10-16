@@ -5920,6 +5920,451 @@ class _P6ReferencePreconditioner:
         return facts
 
 
+def _task41_a2_candidate_contract(
+    resolved: Mapping[str, Any],
+    profile_contract: Mapping[str, Any],
+    runtime: Any,
+    *,
+    profile_identity: str,
+    source_sha: str,
+) -> dict[str, Any]:
+    from src.geometry.task41_phi90_profile import (
+        TASK41_G13_A2_PRECONDITIONER,
+        TASK41_G13_A2_RUN_ID,
+        TASK41_COMPARISON_GROUP,
+    )
+    from src.io.execution_plan import resolved_config_bytes
+    from src.io.input_validation import load_and_resolve
+    from src.runners.task41_p0_contract import (
+        TASK41_CLOSEOUT_SECONDS,
+        TASK41_NUMERICAL_SECONDS,
+        TASK41_TASK_MEMORY_MAX_BYTES,
+        TASK41_TOTAL_SECONDS,
+        TASK41_A2_INPUT_RELATIVE,
+        load_task41_p0_fixed_window,
+        require_task41_p0_contract,
+    )
+
+    root = Path(__file__).resolve().parents[2]
+    contract_path = os.environ.get("TASK41_P0_CONTRACT_PATH", "")
+    contract, contract_sha256 = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
+        current_root=root,
+        check_current_source=True,
+        require_clean_source=True,
+        case_id="A2",
+    )
+    window = load_task41_p0_fixed_window(contract, current_root=root)
+    case = contract["case"]
+    window_contract = contract["window"]
+    solver = resolved.get("solver", {})
+    execution = resolved.get("execution", {})
+    method = resolved.get("method", {})
+    provenance = resolved.get("provenance", {})
+    campaign = getattr(runtime, "campaign_context", None)
+    shared = getattr(runtime, "shared_budget", {})
+    reserved = float(getattr(runtime, "workflow_reserved_seconds", -1.0))
+    campaign_seconds = float(
+        campaign.get("campaign_seconds", -1.0) if isinstance(campaign, Mapping) else -1.0
+    )
+    closeout_seconds = float(
+        campaign.get("closeout_reserve_seconds", -1.0)
+        if isinstance(campaign, Mapping)
+        else -1.0
+    )
+    input_path = (root / TASK41_A2_INPUT_RELATIVE).resolve()
+    specification = load_and_resolve(input_path)
+    resolved_config_sha256 = hashlib.sha256(
+        resolved_config_bytes(specification)
+    ).hexdigest()
+    expected_contract_sha = str(contract["source"]["sha"])
+    execution_identity = getattr(runtime, "source_sha", source_sha)
+    checks = {
+        "task41_case_id": contract["case"]["run_id"] == TASK41_G13_A2_RUN_ID,
+        "source_sha": expected_contract_sha == source_sha == execution_identity,
+        "registered_a2_input": (
+            Path(str(case["input_path"])).as_posix()
+            == TASK41_A2_INPUT_RELATIVE.as_posix()
+            and case["input_sha256"] == specification.input_sha256
+            and provenance.get("input_sha256") == case["input_sha256"]
+        ),
+        "physical_model_identity": (
+            case["physical_model_sha256"] == specification.physical_model_sha256
+            == provenance.get("physical_model_sha256")
+        ),
+        "resolved_config_identity": (
+            case["resolved_config_sha256"] == resolved_config_sha256
+        ),
+        "comparison_group": resolved.get("comparison_group") == TASK41_COMPARISON_GROUP,
+        "profile": (
+            profile_identity == TASK41_G13_A2_PRECONDITIONER
+            and solver.get("preconditioner") == profile_identity
+        ),
+        "stage": solver.get("stage") == "TASK41_A2" and runtime.stage == "TASK41_A2",
+        "method": method.get("kind") == "full3d_iterative" == case["method"],
+        "mpi_size": execution.get("mpi_size") == 1 == case["mpi_size"],
+        "v15_reference_strategy": solver.get("task40_reference_pc_strategy")
+        == "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+        "v17_row_tile_strategy": solver.get("task40_q_assembly_strategy")
+        == "ROW_TILE_BOUNDED_CSR_V17",
+        "all_q_factor_strategy": solver.get("task40_factor_lifecycle_strategy")
+        == "ALL_Q_RESIDENT",
+        "fgmres_contract": (
+            solver.get("ksp_type") == "fgmres"
+            and solver.get("restart") == 32
+            and solver.get("max_iterations") == 2048
+            and solver.get("initial_guess") == "zero"
+        ),
+        "time_limit": (
+            execution.get("timeout_seconds") == TASK41_TOTAL_SECONDS
+            and contract["time"]["total_seconds"] == TASK41_TOTAL_SECONDS
+            and contract["time"]["numerical_seconds"] == TASK41_NUMERICAL_SECONDS
+            and contract["time"]["closeout_seconds"] == TASK41_CLOSEOUT_SECONDS
+        ),
+        "zero_swap_and_memory": (
+            execution.get("require_zero_swap") is True
+            and runtime.require_zero_swap is True
+            and execution.get("memory_limit_gb") == 1536.0
+            and contract["resources"]["task_memory_max_bytes"]
+            == TASK41_TASK_MEMORY_MAX_BYTES
+            and contract["resources"]["memory_swap_max_bytes"] == 0
+        ),
+        "fixed_window_path_and_hash": (
+            isinstance(campaign, Mapping)
+            and Path(str(campaign.get("window_path", ""))).resolve()
+            == window.path.resolve()
+            and campaign.get("window_sha256") == window.sha256
+            == window_contract["sha256"]
+            and isinstance(shared, Mapping)
+            and shared.get("campaign_window_sha256") == window.sha256
+        ),
+        "fixed_window_budget": (
+            campaign_seconds == TASK41_TOTAL_SECONDS
+            and closeout_seconds == TASK41_CLOSEOUT_SECONDS
+            and isinstance(shared, Mapping)
+            and float(shared.get("total_budget_seconds", -1.0))
+            == TASK41_TOTAL_SECONDS
+        ),
+        "reserved_numerical_budget": (
+            np.isfinite(reserved)
+            and 0.0 < reserved <= TASK41_NUMERICAL_SECONDS
+        ),
+        "time_policy": getattr(runtime, "time_policy", None) == "enforce",
+        "no_v14_ledger": getattr(runtime, "_ledger_path", None) is None,
+        "profile_contract": (
+            profile_contract.get("identity") == profile_identity
+            and resolved.get("derived", {}).get("physical_intermediate_profile")
+            == profile_contract
+        ),
+        "not_a_task40_donor_route": (
+            os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1"
+            and os.environ.get("TASK40_V31_STRICT_EXECUTION") != "1"
+        ),
+    }
+    failed = [name for name, passed in checks.items() if not passed]
+    if failed:
+        raise ValueError(f"Task41 A2 candidate contract failed: {failed}")
+    comparison = contract["comparison"]
+    comparison_binding_path = Path(str(comparison["a1_binding_path"]))
+    if not comparison_binding_path.is_absolute():
+        comparison_binding_path = root / comparison_binding_path
+    return {
+        "schema": "task41.p0.a2_candidate_worker_contract.v1",
+        "checks": checks,
+        "case_id": "A2",
+        "run_id": TASK41_G13_A2_RUN_ID,
+        "source_sha": source_sha,
+        "task41_contract_path": str(Path(contract_path).resolve()),
+        "task41_contract_sha256": contract_sha256,
+        "a1_comparison_binding_path": str(comparison_binding_path.resolve()),
+        "a1_comparison_binding_sha256": str(comparison["a1_binding_sha256"]),
+        "a1_same_discrete_comparison_ready_at_prepare": bool(
+            comparison["same_discrete_comparison_ready"]
+        ),
+        "campaign_window_path": str(window.path),
+        "campaign_window_sha256": window.sha256,
+        "campaign_accounting_path": str(window.accounting_path),
+        "worker_reserved_seconds": reserved,
+        "campaign_seconds": campaign_seconds,
+        "closeout_reserve_seconds": closeout_seconds,
+        "effective_wall_clock_authority": "task41_a2_fixed_deadline_and_cumulative_remaining",
+        "campaign_writer": "subreaper_watchdog_only",
+        "worker_accounting_access": "read_only_projection",
+        "factor_lifecycle_strategy": "ALL_Q_RESIDENT",
+    }
+
+
+def _task41_a2_comparison(
+    runtime: Any,
+    cfg: Any,
+    target_levels: Mapping[str, Any],
+    *,
+    a2_full_solution: np.ndarray,
+    a2_output: Mapping[str, Any],
+    output_directory: Path,
+    campaign_authority: Mapping[str, Any],
+    allocation_gate: Any,
+) -> dict[str, Any]:
+    """Compare the live A2 p6 field with bound A1 evidence before FE cleanup."""
+    import json
+    from types import SimpleNamespace
+
+    from src.postprocessing.task40_saved_field_h_comparison import (
+        direct_curl_dg,
+        total_field_sample_witness,
+    )
+    from src.runners.task41_p0_comparison import (
+        TASK41_COMPARISON_SCHEMA,
+        TASK41_MODE_RELATIVE_LIMIT,
+        compare_task41_modal_artifacts,
+        compare_task41_power_totals,
+    )
+    from src.runners.task41_p0_contract import (
+        TASK41_A1_COMPARISON_BINDING_RELATIVE,
+        require_task41_a1_comparison_binding,
+    )
+    from src.solvers.fullspace_physical_intermediate_runtime import (
+        fine_volume_quadrature_metadata,
+    )
+    from src.solvers.physical_error_metric import LosslessFEMetric
+
+    repo_root = Path(__file__).resolve().parents[2]
+    raw_binding_path = str(campaign_authority.get("a1_comparison_binding_path", ""))
+    binding_path = Path(raw_binding_path).resolve()
+    expected_binding_path = (repo_root / TASK41_A1_COMPARISON_BINDING_RELATIVE).resolve()
+    binding_sha = str(campaign_authority.get("a1_comparison_binding_sha256", ""))
+    if binding_path != expected_binding_path or len(binding_sha) != 64:
+        raise ValueError("Task41 A2 worker identity omits the registered A1 binding")
+    binding, actual_binding_sha = require_task41_a1_comparison_binding(
+        binding_path,
+        expected_sha256=binding_sha,
+        current_root=repo_root,
+    )
+    a1 = binding["a1"]
+    artifacts = a1["comparison_artifacts"]
+
+    def artifact_path(name: str) -> Path:
+        raw = Path(str(artifacts[name]["path"]))
+        path = raw if raw.is_absolute() else repo_root / raw
+        return path.resolve(strict=True)
+
+    declared_full_rows = int(a1["discrete_identity"]["full_fe_rows"])
+    allocation_gate(
+        "before_task41_a1_full_solution_load",
+        {
+            "additional_payload_bytes": int(declared_full_rows * np.dtype(np.complex128).itemsize),
+            "workspace_bytes": int(declared_full_rows * np.dtype(np.complex128).itemsize),
+            "declared_future_co_resident_bytes": int(2 * declared_full_rows * np.dtype(np.complex128).itemsize),
+            "full_storage_rows": declared_full_rows,
+            "phase_scope": "one hash-bound A1 recovered_field vector plus its MPC slave-row index",
+        },
+    )
+    full_solution_path = artifact_path("full_solution")
+    full_solution_record = artifacts["full_solution"]
+    if (
+        full_solution_path.stat().st_size != full_solution_record["bytes"]
+        or _v19_sha256_path(full_solution_path) != full_solution_record["sha256"]
+    ):
+        raise ValueError("Task41 bound A1 full-solution NPZ changed before comparison")
+    with np.load(full_solution_path, allow_pickle=False) as a1_full_archive:
+        if not {"recovered_field", "mpc_slave_local_rows"}.issubset(a1_full_archive.files):
+            raise ValueError("Task41 A1 full-solution NPZ omits its recovered field or MPC slave rows")
+        a1_full_solution = np.asarray(
+            a1_full_archive["recovered_field"], dtype=np.complex128
+        ).reshape(-1).copy()
+        a1_slave_rows = np.asarray(
+            a1_full_archive["mpc_slave_local_rows"], dtype=np.int64
+        ).reshape(-1).copy()
+    a2_full_solution = np.asarray(a2_full_solution, dtype=np.complex128).reshape(-1)
+    live_mpc = target_levels["floquets"][6].mpc
+    a2_slave_rows = np.asarray(live_mpc.slaves, dtype=np.int64).reshape(-1)
+    if (
+        a1_full_solution.shape != a2_full_solution.shape
+        or a1_slave_rows.ndim != 1
+        or np.unique(a1_slave_rows).size != a1_slave_rows.size
+        or not np.array_equal(np.sort(a1_slave_rows), np.sort(a2_slave_rows))
+    ):
+        raise ValueError("Task41 A1 saved field layout or slave rows differ from the live A2 p6 map")
+
+    a1_airbox_path = artifact_path("airbox_fields")
+    a2_airbox_path = (output_directory / "airbox_fields_3d_scientific.npz").resolve(strict=True)
+    mesh_array_names = ("coordinates_nm", "vtk_cells", "vtk_cell_types", "cell_domain_tags")
+    mesh_array_checks = []
+    with np.load(a1_airbox_path, allow_pickle=False) as a1_mesh, np.load(
+        a2_airbox_path, allow_pickle=False
+    ) as a2_mesh:
+        for name in mesh_array_names:
+            if name not in a1_mesh.files or name not in a2_mesh.files:
+                raise ValueError(f"Task41 saved scientific fields omit mesh identity array {name}")
+            equal = bool(np.array_equal(a1_mesh[name], a2_mesh[name]))
+            mesh_array_checks.append({"array": name, "equal": equal})
+            if not equal:
+                raise ValueError(f"Task41 A1 and A2 mesh/material array differs: {name}")
+
+    allocation_gate(
+        "before_task41_a2_saved_field_sample_witness",
+        {
+            "additional_payload_bytes": int(a1_full_solution.nbytes),
+            "workspace_bytes": int(a1_full_solution.nbytes),
+            "declared_future_co_resident_bytes": int(
+                a1_full_solution.nbytes + 2 * np.dtype(np.complex128).itemsize * a1_full_solution.size
+            ),
+            "full_storage_rows": int(a1_full_solution.size),
+            "phase_scope": "A1 full field on existing A2 mesh plus sampled direct curl; no FE level rebuild",
+        },
+    )
+    from dolfinx import fem
+
+    electric = fem.Function(target_levels["spaces"][6], name="task41_a1_saved_total_E_in_a2_space")
+    if electric.x.array.size != a1_full_solution.size:
+        raise ValueError("Task41 A1 recovered field length differs from the existing A2 FE space")
+    electric.x.array[:] = a1_full_solution
+    electric.x.scatter_forward()
+    curl = direct_curl_dg(electric, degree=6)
+    field_view = SimpleNamespace(
+        label="Task41 A1 field restored in the live A2 p6 space",
+        cfg=cfg,
+        electric=electric,
+        curl=curl,
+    )
+    sample_archive_path = artifact_path("full3d_samples_archive")
+    sample_metadata_path = artifact_path("full3d_samples_metadata")
+    with np.load(sample_archive_path, allow_pickle=False) as archive:
+        samples = {name: np.array(archive[name], copy=True) for name in archive.files}
+    sample_metadata = json.loads(sample_metadata_path.read_text(encoding="utf-8"))
+    sample_witness = total_field_sample_witness(field_view, samples, sample_metadata)
+    runtime.sample("task41_a1_sample_witness_complete")
+    if sample_witness.get("pass") is not True:
+        raise ValueError("Task41 A1 full field representation failed the saved E/H sample witness")
+
+    allocation_gate(
+        "before_task41_a2_full_volume_metric_comparison",
+        {
+            "additional_payload_bytes": int(6 * a1_full_solution.size * np.dtype(np.complex128).itemsize),
+            "workspace_bytes": int(2 * a1_full_solution.size * np.dtype(np.complex128).itemsize),
+            "declared_future_co_resident_bytes": int(
+                8 * a1_full_solution.size * np.dtype(np.complex128).itemsize
+            ),
+            "full_storage_rows": int(a1_full_solution.size),
+            "phase_scope": "four metric action outputs and independent indices; one live p6 metric on existing A2 FE levels",
+        },
+    )
+    quadrature, quadrature_records = fine_volume_quadrature_metadata(target_levels, cfg)
+    metric = LosslessFEMetric(
+        target_levels, 6, cfg.k0, quadrature, build_cell_basis=False
+    )
+    try:
+        indices = np.asarray(metric.mass.indices, dtype=np.int64)
+        if not np.array_equal(indices, np.asarray(metric.curl.indices, dtype=np.int64)):
+            raise ValueError("Task41 E and scaled-curl metrics use different independent rows")
+        a1_independent = a1_full_solution[indices]
+        difference = a2_full_solution[indices] - a1_independent
+        mass_reference = np.asarray(metric.mass(a1_independent), dtype=np.complex128).copy()
+        mass_difference = np.asarray(metric.mass(difference), dtype=np.complex128).copy()
+        curl_reference = np.asarray(metric.curl(a1_independent), dtype=np.complex128).copy()
+        curl_difference = np.asarray(metric.curl(difference), dtype=np.complex128).copy()
+    finally:
+        metric.destroy()
+    del field_view, curl, electric
+
+    def quadratic(vector: np.ndarray, applied: np.ndarray) -> float:
+        value = np.vdot(vector, applied)
+        scale = max(float(np.linalg.norm(vector) * np.linalg.norm(applied)), np.finfo(float).tiny)
+        if abs(value.imag) > 1.0e-10 * scale or value.real < -1.0e-10 * scale:
+            raise ValueError("Task41 FE comparison metric is not Hermitian positive")
+        return float(max(0.0, value.real))
+
+    mass_reference_sq = quadratic(a1_independent, mass_reference)
+    mass_difference_sq = quadratic(difference, mass_difference)
+    curl_reference_sq = quadratic(a1_independent, curl_reference)
+    curl_difference_sq = quadratic(difference, curl_difference)
+    metric_values = {
+        "electric_relative_l2": float(
+            np.sqrt(mass_difference_sq) / max(np.sqrt(mass_reference_sq), np.finfo(float).tiny)
+        ),
+        "scaled_curl_relative_l2": float(
+            np.sqrt(curl_difference_sq) / max(np.sqrt(curl_reference_sq), np.finfo(float).tiny)
+        ),
+        "electric_reference_norm": float(np.sqrt(mass_reference_sq)),
+        "electric_absolute_error_norm": float(np.sqrt(mass_difference_sq)),
+        "scaled_curl_reference_norm": float(np.sqrt(curl_reference_sq)),
+        "scaled_curl_absolute_error_norm": float(np.sqrt(curl_difference_sq)),
+        "limit": TASK41_MODE_RELATIVE_LIMIT,
+    }
+    metric_packet = _save_packet(
+        runtime,
+        "task41_a1_a2_metric_comparison",
+        {
+            "schema": "task41.p0.a1_a2_metric_packet.v1",
+            "a1_binding_sha256": actual_binding_sha,
+            "a1_full_rows": int(a1_full_solution.size),
+            "independent_rows": int(indices.size),
+            "quadrature": list(quadrature),
+            "quadrature_records": quadrature_records,
+            "metrics": metric_values,
+            "independent_indices": indices,
+            "a1_mpc_slave_local_rows": a1_slave_rows,
+            "a2_mpc_slave_local_rows": a2_slave_rows,
+            "mass_reference_applied": mass_reference,
+            "mass_difference_applied": mass_difference,
+            "scaled_curl_reference_applied": curl_reference,
+            "scaled_curl_difference_applied": curl_difference,
+        },
+    )
+
+    modal_comparison = compare_task41_modal_artifacts(
+        artifact_path("modal_amplitudes"),
+        output_directory / "dtn_port_modal_amplitudes_3d.npz",
+        artifact_path("diffraction_orders"),
+        output_directory / "dtn_port_diffraction_orders_3d.json",
+    )
+    reference_port = json.loads(artifact_path("port_power_metrics").read_text(encoding="utf-8"))
+    reference_volume = json.loads(artifact_path("volume_absorption").read_text(encoding="utf-8"))
+    power_comparison = compare_task41_power_totals(
+        reference_port, reference_volume, a2_output
+    )
+    metrics_pass = bool(
+        metric_values["electric_relative_l2"] <= TASK41_MODE_RELATIVE_LIMIT
+        and metric_values["scaled_curl_relative_l2"] <= TASK41_MODE_RELATIVE_LIMIT
+    )
+    passed = bool(
+        all(row["equal"] for row in mesh_array_checks)
+        and sample_witness.get("pass") is True
+        and metrics_pass
+        and modal_comparison.get("pass") is True
+        and power_comparison.get("pass") is True
+    )
+    return {
+        "schema": TASK41_COMPARISON_SCHEMA,
+        "status": "PASS" if passed else "FAIL",
+        "pass": passed,
+        "a1_binding_path": str(binding_path),
+        "a1_binding_sha256": actual_binding_sha,
+        "a1_run_id": str(a1["run_id"]),
+        "a1_mpc_map_status_at_freeze": a1["discrete_identity"]["mpc_map_status"],
+        "same_discrete_comparison_ready_at_prepare": bool(
+            campaign_authority.get("a1_same_discrete_comparison_ready_at_prepare")
+        ),
+        "current_slave_rows_match": True,
+        "mesh_array_checks": mesh_array_checks,
+        "sample_representation_witness": sample_witness,
+        "full_volume_metric": metric_values,
+        "metric_packet": metric_packet,
+        "modal_comparison": modal_comparison,
+        "power_comparison": power_comparison,
+        "limits": {
+            "field_relative": TASK41_MODE_RELATIVE_LIMIT,
+            "significant_mode_relative": TASK41_MODE_RELATIVE_LIMIT,
+            "mode_power_absolute": 1.0e-6,
+            "total_power_absolute": 1.0e-5,
+            "significant_union_power": 1.0e-8,
+        },
+        "phase_fitting": False,
+        "checker_reapplies_fe_operators": False,
+    }
+
+
 def _candidate_contract(
     resolved: Mapping[str, Any],
     contract: Mapping[str, Any],
@@ -5930,7 +6375,20 @@ def _candidate_contract(
     v31_contract: Mapping[str, Any] | None = None,
     v30_effective_factor_lifecycle_strategy: str | None = None,
     v31_effective_factor_lifecycle_strategy: str | None = None,
+    task41_source_sha: str | None = None,
 ) -> dict[str, Any]:
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+
+    if profile_identity == TASK41_G13_A2_PRECONDITIONER:
+        if v30_contract is not None or v31_contract is not None or task41_source_sha is None:
+            raise ValueError("Task41 A2 candidate cannot mix donor contracts or omit its source SHA")
+        return _task41_a2_candidate_contract(
+            resolved,
+            contract,
+            runtime,
+            profile_identity=profile_identity,
+            source_sha=task41_source_sha,
+        )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_P6_CANDIDATE_RUN_ID,
         TASK40_B0_P6_V13_RUN_ID,
@@ -6473,6 +6931,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V18_P6_B0_Y8_PROFILE,
         TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
         TASK40_V20_V22_P6_PROFILES,
+        TASK41_G13_A2_PRECONDITIONER,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -6522,6 +6981,7 @@ def run_task40_v10_p6_reference_worker(
         destroy_task40_v10_p6_reference_inverse,
         _destroy_task40_v10_levels,
         _task40_v30_load_sector_q_csr_pair,
+        _task40_v10_regular_reference_cfg,
     )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_V13_REFERENCE_PC_STRATEGY,
@@ -6534,6 +6994,7 @@ def run_task40_v10_p6_reference_worker(
     )
     from src.solvers.task40_v10_p6_periodic_profile import (
         TASK40_P6_PERIODIC_PROFILES,
+        validate_task41_g13_a2_mode_inventory,
     )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_Q_ASSEMBLY_ROW_TILE_V17,
@@ -6544,6 +7005,7 @@ def run_task40_v10_p6_reference_worker(
         ONE_Q_REFACTOR_V19,
         _sparse_content_sha256,
         full_p6_pre_release_output_inventory,
+        task41_a2_all_q_factor_contract,
     )
     from src.geometry.mesh_builder_3d import _stage4_axis_plan
 
@@ -6593,8 +7055,10 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_e1_reference_v1",
         TASK40_V18_P6_B0_Y8_PROFILE,
         *TASK40_V20_V22_P6_PROFILES,
+        TASK41_G13_A2_PRECONDITIONER,
     ):
-        raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
+        raise ValueError(f"unsupported p6 reference profile: {profile_identity}")
+    is_task41_a2 = profile_identity == TASK41_G13_A2_PRECONDITIONER
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
     is_v20 = profile_identity in TASK40_V20_V22_P6_PROFILES
     v20_case = None
@@ -6794,7 +7258,10 @@ def run_task40_v10_p6_reference_worker(
         ):
             raise ValueError("ONE_Q_REFACTOR_V19 worker requires an exact V19 E1 or B0-Y8 input")
     if is_v17 and not (
-        profile_identity.startswith("task40extra_v17_p6_y_orbit_") or is_v18 or is_v20
+        profile_identity.startswith("task40extra_v17_p6_y_orbit_")
+        or is_v18
+        or is_v20
+        or is_task41_a2
     ):
         raise ValueError("V17 row-tile CSR requires a registered V17 p6 profile")
     if type(share_transform_bank) is not bool:
@@ -6824,12 +7291,15 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_gx560_reference_v1": "gx560",
         "task40extra_v17_p6_y_orbit_e1_reference_v1": "e1",
         TASK40_V18_P6_B0_Y8_PROFILE: "b0_y8",
+        TASK41_G13_A2_PRECONDITIONER: "g13_a2",
     }
     if is_v20:
         case_labels[profile_identity] = v20_case.mesh_id.lower()
     case_label = case_labels[profile_identity]
     evidence_prefix = (
-        "v20_one_q_row_tile_p6_reference"
+        "task41_g13_a2_p6_y_orbit_reference"
+        if is_task41_a2
+        else "v20_one_q_row_tile_p6_reference"
         if is_v20
         else "v19_one_q_row_tile_p6_reference"
         if is_v19
@@ -6871,7 +7341,9 @@ def run_task40_v10_p6_reference_worker(
         )
     summary: dict[str, Any] = {
         "schema": (
-            "task40extra.review_v20_one_q_row_tile_p6_reference_worker_summary.v1"
+            "task41.p0.a2_p6_y_orbit_reference_worker_summary.v1"
+            if is_task41_a2
+            else "task40extra.review_v20_one_q_row_tile_p6_reference_worker_summary.v1"
             if is_v20
             else "task40extra.review_v19_one_q_row_tile_p6_reference_worker_summary.v1"
             if is_v19
@@ -6907,8 +7379,9 @@ def run_task40_v10_p6_reference_worker(
         "official_result": False,
         "result_classification": "INCOMPLETE",
     }
-    if v31_route_requested:
+    if v31_route_requested or is_task41_a2:
         summary["run_id"] = resolved_payload.get("run_id")
+    if v31_route_requested:
         summary["v31_input_identity"] = dict(v31_input_identity or {})
     if v31_target_admission_policy is not None:
         summary["v31_target_admission_policy"] = {
@@ -6931,6 +7404,7 @@ def run_task40_v10_p6_reference_worker(
     target_condensed = None
     mode_identity: dict[str, Any] = {}
     mode_inventory_preflight: dict[str, Any] = {}
+    task41_mode_inventory: tuple[Any, Any, str] | None = None
     target_backend_facts: dict[str, Any] = {}
     target_identity_cache_audit: dict[str, Any] = {}
     reference = None
@@ -6969,7 +7443,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task40_review_v20_one_q_{case_label}_p6_reference"
+                f"task41_p0_a2_{case_label}_p6_reference"
+                if is_task41_a2
+                else f"task40_review_v20_one_q_{case_label}_p6_reference"
                 if is_v20
                 else f"task40_review_v19_one_q_{case_label}_p6_reference"
                 if is_v19
@@ -7029,6 +7505,7 @@ def run_task40_v10_p6_reference_worker(
                 if v31_contract is not None
                 else None
             ),
+            task41_source_sha=(source_sha if is_task41_a2 else None),
         )
         summary["time_policy"] = runtime.time_policy
         summary["time_policy_facts"] = dict(runtime.time_policy_facts)
@@ -7344,8 +7821,12 @@ def run_task40_v10_p6_reference_worker(
         ) -> None:
             nonlocal target_levels, target_bundle, target_condensed, target_action, target_fast_bundle
             nonlocal target_identity_cache_audit, mode_inventory_preflight, target_backend_facts
-            if mode_inventory is not None and mode_inventory != v20_mode_inventory:
-                raise ValueError("V30 target builder received a different frozen mode inventory")
+            nonlocal task41_mode_inventory
+            expected_mode_inventory = (
+                task41_mode_inventory if is_task41_a2 else v20_mode_inventory
+            )
+            if mode_inventory is not None and mode_inventory != expected_mode_inventory:
+                raise ValueError("target builder received a different frozen mode inventory")
             if v31_target_admission_policy is not None:
                 target_build_admission = _task40_v31_target_build_admission(
                     summary.get("v31_reference_only_admission"),
@@ -7380,7 +7861,7 @@ def run_task40_v10_p6_reference_worker(
                 {
                     "cell_axes": list(cfg.mesh_axis_cell_counts_requested or ()),
                     "axes": {key: list(value) for key, value in axes.items()},
-                    "target_keeps_air_void": True,
+                    "target_keeps_air_void": cfg.air_void_box_nm is not None,
                     "degrees": [6],
                     "positive_hierarchy": False,
                 },
@@ -7405,14 +7886,23 @@ def run_task40_v10_p6_reference_worker(
             if tuple(map(int, cfg.mesh_axis_cell_counts_requested or ())) != periodic_profile.global_cell_axes:
                 raise ValueError(f"{case_label} resolved mesh axes differ from its p6 profile")
 
-            regular_cfg = __import__("dataclasses").replace(
-                cfg,
-                air_void_box_nm=None,
-                cell_notch=None,
-                geometry_identity=f"{cfg.geometry_identity}.regular_reference_identity_probe",
+            regular_cfg = (
+                _task40_v10_regular_reference_cfg(cfg, fill_y_period=True)
+                if is_task41_a2
+                else __import__("dataclasses").replace(
+                    cfg,
+                    air_void_box_nm=None,
+                    cell_notch=None,
+                    geometry_identity=f"{cfg.geometry_identity}.regular_reference_identity_probe",
+                )
             )
             if v20_mode_inventory is None:
                 target_inventory = build_dynamic_mode_inventory(cfg)
+                if is_task41_a2:
+                    validate_task41_g13_a2_mode_inventory(
+                        target_inventory[0], cfg, axes
+                    )
+                    task41_mode_inventory = target_inventory
                 reference_inventory = build_dynamic_mode_inventory(regular_cfg)
             else:
                 target_inventory = v20_mode_inventory
@@ -8090,6 +8580,159 @@ def run_task40_v10_p6_reference_worker(
         qualified_q_csr_preparer = None
         q4_saved_numeric_prebuild: Mapping[str, Any] | None = None
         prebuilt_twist0_q_csr: tuple[Mapping[int, Any], Mapping[str, Any]] | None = None
+        if is_task41_a2:
+            if task41_mode_inventory is None or len(task41_mode_inventory) != 3:
+                raise ValueError("Task41 A2 q qualification requires its live frozen target modes")
+            campaign_identity = summary.get("campaign_authority", {})
+            window_sha256 = str(
+                campaign_identity.get("campaign_window_sha256", "")
+                if isinstance(campaign_identity, Mapping)
+                else ""
+            )
+            from src.solvers.task40_v10_p6_yorbit import (
+                _task40_v30_ordered_mode_key_sha256,
+            )
+
+            qualified_q_csr_identity = {
+                "scientific_input_sha256": scientific_input_sha256,
+                "ordered_mode_key_sha256": _task40_v30_ordered_mode_key_sha256(
+                    tuple(task41_mode_inventory[0])
+                ),
+                "mode_manifest_sha256": str(task41_mode_inventory[2]),
+                "execution_identity": {
+                    "source_sha": source_sha,
+                    "window_sha256": window_sha256,
+                },
+            }
+            qualified_q_csr_coverage_phase = "sector_preparation_subset"
+
+            def prepare_task41_a2_sector_q_csr(
+                *,
+                provider,
+                action,
+                volume_action,
+                coordinates,
+                context,
+                local_h,
+                profile,
+                mode_descriptor,
+                local_bundle,
+                mode_inventory,
+                q_indices,
+                available_sector_matrices,
+                runtime_identity,
+                allocation_gate,
+                **_unused,
+            ):
+                if (
+                    provider is not None
+                    or set(map(int, q_indices)) != set(map(int, context.global_q_indices))
+                    or available_sector_matrices
+                    or not isinstance(runtime_identity, Mapping)
+                ):
+                    raise ValueError(
+                        "Task41 A2 must qualify both current sector q matrices without a donor selector"
+                    )
+                from src.solvers.task40_v30_selected_q_csr import (
+                    LiveP6SelectedQContributionSource,
+                    prepare_selected_q_csr_sector,
+                    selected_q_operator_identity,
+                )
+                sector_qs = tuple(map(int, context.global_q_indices))
+                q_maps_by_q = _task40_v30_resolve_sector_q_maps(
+                    coordinates, sector_qs, allocation_gate=allocation_gate
+                )
+                sector_inputs = _task40_v30_sector_builder_inputs(
+                    mode_descriptor=mode_descriptor,
+                    mode_inventory=mode_inventory,
+                    coordinates=coordinates,
+                    profile=profile,
+                    q_maps_by_q=q_maps_by_q,
+                    sector_q_indices=sector_qs,
+                )
+                execution_identity = dict(runtime_identity["execution_identity"])
+                current_h = np.asarray(local_h, dtype=np.complex128)
+                ordered_modes = tuple(mode_descriptor["modes"])
+                operator_identity_by_q = {
+                    q: selected_q_operator_identity(
+                        scientific_input_sha256=str(
+                            runtime_identity["scientific_input_sha256"]
+                        ),
+                        profile_identity=profile.identity(),
+                        ordered_modes=ordered_modes,
+                        q_map=q_maps_by_q[q],
+                        original_h=current_h,
+                    )
+                    for q in sector_qs
+                }
+                matrix_source_identity_by_q = {
+                    q: dict(execution_identity) for q in sector_qs
+                }
+                producer_identity_by_q = {
+                    q: {
+                        "kind": "task41_a2_live_same_mesh_sector_owner",
+                        "source_sha": execution_identity["source_sha"],
+                        "window_sha256": execution_identity["window_sha256"],
+                        "twist_index": int(context.twist_index),
+                        "sector_q_indices": list(sector_qs),
+                        "profile_identity": profile.identity(),
+                        "ordered_mode_manifest_sha256": str(mode_inventory[2]),
+                    }
+                    for q in sector_qs
+                }
+                live_source = LiveP6SelectedQContributionSource(action, current_h)
+                matrices, audit = prepare_selected_q_csr_sector(
+                    sources_by_q={q: live_source for q in sector_qs},
+                    q_maps_by_q=q_maps_by_q,
+                    sector_q_indices=sector_qs,
+                    twist_index=int(context.twist_index),
+                    trace_rows_by_q=sector_inputs["trace_rows_by_q"],
+                    selected_q_indices=sector_qs,
+                    action=action,
+                    volume_action=volume_action,
+                    comm=action.condensed.comm,
+                    available_sector_matrices={},
+                    allocation_gate=allocation_gate,
+                    profile=str(profile.name),
+                    profile_identity=profile.identity(),
+                    ordered_modes=ordered_modes,
+                    original_h=current_h,
+                    scientific_input_sha256=str(
+                        runtime_identity["scientific_input_sha256"]
+                    ),
+                    operator_identity_by_q=operator_identity_by_q,
+                    matrix_source_identity_by_q=matrix_source_identity_by_q,
+                    execution_identity=execution_identity,
+                    producer_identity_by_q=producer_identity_by_q,
+                    output_directory=(
+                        directory / "task41_a2_q_csr_native_qualification"
+                    ),
+                    progress_callback=lambda facts: reference_event(
+                        "task41_a2_q_csr_native_phase", facts
+                    ),
+                )
+                if (
+                    audit.get("all_complete_native_pass") is not True
+                    or audit.get("paired_sector_leakage_passed") is not True
+                ):
+                    raise RuntimeError(
+                        "Task41 A2 current-sector CSR/native and paired-leakage gates did not all pass"
+                    )
+                audit["qualification_identity"] = {
+                    "execution_identity": execution_identity,
+                    "scientific_input_sha256": runtime_identity[
+                        "scientific_input_sha256"
+                    ],
+                    "ordered_mode_key_sha256": runtime_identity[
+                        "ordered_mode_key_sha256"
+                    ],
+                    "q_indices": list(sector_qs),
+                    "twist_index": int(context.twist_index),
+                    "profile_identity": profile.identity(),
+                }
+                return matrices, audit
+
+            qualified_q_csr_preparer = prepare_task41_a2_sector_q_csr
         if qualified_q_csr_provider is not None:
             preparation = route_contract.get("preparation", {})
             worklist = preparation.get("q_csr_worklist") if isinstance(preparation, Mapping) else None
@@ -8643,11 +9286,15 @@ def run_task40_v10_p6_reference_worker(
             q4_saved_numeric_prebuild = pending
             donor = pending["saved_donor"]
             frozen_modes, frozen_rows, frozen_mode_sha = v20_mode_inventory
-            regular_cfg = __import__("dataclasses").replace(
-                cfg,
-                air_void_box_nm=None,
-                cell_notch=None,
-                geometry_identity="task40_v10_p6_reference.regular_reference",
+            regular_cfg = (
+                _task40_v10_regular_reference_cfg(cfg, fill_y_period=True)
+                if is_task41_a2
+                else __import__("dataclasses").replace(
+                    cfg,
+                    air_void_box_nm=None,
+                    cell_notch=None,
+                    geometry_identity="task40_v10_p6_reference.regular_reference",
+                )
             )
             contexts = build_task40_v10_sector_contexts(
                 tuple(frozen_modes),
@@ -9018,7 +9665,9 @@ def run_task40_v10_p6_reference_worker(
                     q_assembly_strategy=q_assembly_strategy,
                     factor_lifecycle_strategy=factor_lifecycle_strategy,
                     operator_qualification_reuse=operator_qualification_reuse,
-                    mode_inventory=v20_mode_inventory,
+                    mode_inventory=(
+                        task41_mode_inventory if is_task41_a2 else v20_mode_inventory
+                    ),
                     qualified_q_csr_provider=qualified_q_csr_provider,
                     qualified_q_csr_identity=qualified_q_csr_identity,
                     qualified_q_csr_coverage_phase=qualified_q_csr_coverage_phase,
@@ -9034,12 +9683,20 @@ def run_task40_v10_p6_reference_worker(
                         else None
                     ),
                     v30_factor_config=factor_config,
+                    task41_a2_factor_config=(
+                        task41_a2_all_q_factor_contract()
+                        if is_task41_a2
+                        else None
+                    ),
                     surface_functional_checkpoint=surface_functional_checkpoint,
                     factor_output_directory=(
-                        str(factor_config["output_directory"])
+                        str(directory / "task41_a2_all_q_factor_qualification")
+                        if is_task41_a2
+                        else str(factor_config["output_directory"])
                         if factor_config is not None
                         else None
                     ),
+                    regular_reference_fills_y_period=is_task41_a2,
                 )
             except BaseException as error:
                 if isinstance(prepared_owner, dict):
@@ -9258,7 +9915,7 @@ def run_task40_v10_p6_reference_worker(
             ref_rhs_facts,
             allocation_gate=allocation_gate,
             reference_pc_strategy=reference_pc_strategy,
-            include_mixed_fe_port_cases=route_contract is not None,
+            include_mixed_fe_port_cases=(route_contract is not None or is_task41_a2),
         )
         ref_rhs.destroy()
         ref_rhs = None
@@ -10002,6 +10659,19 @@ def run_task40_v10_p6_reference_worker(
             and energy_error <= 1.0e-5
             and absorption_error <= 1.0e-5
         )
+        a1_a2_comparison = None
+        if is_task41_a2:
+            a1_a2_comparison = _task41_a2_comparison(
+                runtime,
+                cfg,
+                target_levels,
+                a2_full_solution=pre_full_solution,
+                a2_output=output,
+                output_directory=output_directory,
+                campaign_authority=summary["campaign_authority"],
+                allocation_gate=allocation_gate,
+            )
+            output_pass = bool(output_pass and a1_a2_comparison["pass"])
         output_files = _file_manifest(output_directory)
         _disk_admit(runtime, additional_bytes=0, label="after_p6_field_mode_and_diffraction_export")
         scientific_identity = {
@@ -10028,6 +10698,11 @@ def run_task40_v10_p6_reference_worker(
             ),
             "field_mode_and_diffraction_files": output_files,
             "field_file_count": len(output_files),
+            **(
+                {"task41_a1_a2_comparison": a1_a2_comparison}
+                if a1_a2_comparison is not None
+                else {}
+            ),
             "independent_reevaluation": {
                 "entrypoint": "src.runners.task40_v10_output_checker.verify_v10_output_bundle",
                 "command": (
@@ -10060,6 +10735,11 @@ def run_task40_v10_p6_reference_worker(
         runtime.sample("v10_candidate_official_output_complete")
         summary.update(
             output_packet=output_packet,
+            **(
+                {"task41_a1_a2_comparison": a1_a2_comparison}
+                if a1_a2_comparison is not None
+                else {}
+            ),
             scientific_identity=scientific_identity,
             independent_reevaluation=scientific_identity["independent_reevaluation"],
             target_backend=target_backend_facts,

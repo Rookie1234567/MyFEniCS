@@ -21,6 +21,9 @@ from src.solvers.task40_v10_p6_yorbit import (
     _v16_checked_csr_layout,
     _task40_v32_bind_saved_q_map,
     _task40_v32_saved_q_map_padding_tile,
+    _validate_all_profile_q_matrices,
+    _instantiate_p6_factor_bank,
+    _validate_prebuilt_sector_indices,
     _assemble_v16_bitset_pattern,
     _project_accumulate_v16,
     TwoCellNativeTransport,
@@ -38,6 +41,70 @@ from src.solvers.task40_v18_ny8_operator_qualification import (
     build_complete_q_primal_lift,
     qualify_complete_ny_reference_operator,
 )
+
+
+def test_prebuilt_sector_index_limit_follows_profile_replication_count():
+    _validate_prebuilt_sector_indices(SimpleNamespace(replication_count=5), (0, 4))
+    with pytest.raises(ValueError, match="0..4"):
+        _validate_prebuilt_sector_indices(SimpleNamespace(replication_count=5), (5,))
+    with pytest.raises(ValueError, match="0..3"):
+        _validate_prebuilt_sector_indices(SimpleNamespace(replication_count=4), (4,))
+
+
+def test_empty_port_qs_still_require_nonzero_p6_fe_matrices():
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK41_G13_A2_P6_PROFILE,
+    )
+
+    profile = TASK41_G13_A2_P6_PROFILE
+    matrices = {
+        q: sparse.csr_matrix(
+            (rows, rows), dtype=np.complex128
+        )
+        for q, rows in enumerate(profile.augmented_rows_per_q)
+    }
+    inventory = _validate_all_profile_q_matrices(profile, matrices)
+
+    assert inventory["q_indices"] == list(range(10))
+    assert inventory["empty_port_q_indices"] == [1, 2]
+    assert inventory["q_matrix_shapes"][1] == [28440, 28440]
+    assert inventory["q_matrix_shapes"][2] == [28440, 28440]
+    del matrices[1]
+    with pytest.raises(ValueError, match="missing=\\[1\\]"):
+        _validate_all_profile_q_matrices(profile, matrices)
+
+
+def test_task41_a2_factor_factory_receives_ten_q_shapes_and_strict_rhs_contract():
+    from src.solvers.task40_v10_p6_mumps import task41_a2_all_q_factor_contract
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK41_G13_A2_P6_PROFILE,
+    )
+
+    profile = TASK41_G13_A2_P6_PROFILE
+    matrices = {
+        q: sparse.csr_matrix((rows, rows), dtype=np.complex128)
+        for q, rows in enumerate(profile.augmented_rows_per_q)
+    }
+    config = task41_a2_all_q_factor_contract()
+    observed = {}
+
+    def factory(q_matrices, **options):
+        observed["q_indices"] = sorted(q_matrices)
+        observed.update(options)
+        return options
+
+    result = _instantiate_p6_factor_bank(
+        factory,
+        matrices,
+        profile=profile,
+        factor_options={"task41_a2_config": config},
+    )
+
+    assert observed["q_indices"] == list(range(10))
+    assert observed["expected_shapes"] == tuple(profile.augmented_rows_per_q)
+    assert observed["profile"] is profile
+    assert observed["task41_a2_config"] == config
+    assert result["expected_shapes"] == tuple(profile.augmented_rows_per_q)
 
 
 class _IdentityEntities:

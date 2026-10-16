@@ -23,15 +23,36 @@ TASK41_P0_AUTH_SCHEMA = "task41.p0.closeout_checker_authorization.v1"
 TASK41_BRANCH = "task41extra_phi90_p50x50_g17x20"
 TASK41_MODEL_ID = "task41extra_phi90_p50x50_g17x20"
 TASK41_RUN_ID = "task41extra_g13_p6_phi90_direct_a1"
+TASK41_A2_RUN_ID = "task41extra_g13_p6_phi90_iterative_a2"
 TASK41_CONTROLLER_RELATIVE = Path(
     "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_controller"
+)
+TASK41_A2_CONTROLLER_RELATIVE = Path(
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller"
 )
 TASK41_WINDOW_RELATIVE = Path(
     "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_controller/execution_window.json"
 )
+TASK41_A2_WINDOW_RELATIVE = Path(
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/execution_window.json"
+)
 TASK41_INPUT_RELATIVE = Path(
     "input/task41extra_phi90_p50x50_g17x20/g13_p6_direct_a1.dat"
 )
+TASK41_A2_INPUT_RELATIVE = Path(
+    "input/task41extra_phi90_p50x50_g17x20/g13_p6_iterative_a2.dat"
+)
+TASK41_A1_COMPARISON_BINDING_SCHEMA = "task41.p0.a1_comparison_binding.v1"
+TASK41_A1_COMPARISON_BINDING_RELATIVE = (
+    TASK41_A2_CONTROLLER_RELATIVE / "a1_comparison_binding.json"
+)
+TASK41_A1_SERVICE_RELATIVE = Path(
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a1"
+)
+TASK41_A2_SERVICE_RELATIVE = Path(
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2"
+)
+TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
 TASK41_NUMERICAL_SECONDS = 171_600.0
 TASK41_CLOSEOUT_SECONDS = 1_200.0
@@ -98,10 +119,244 @@ def _git(root: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def contract_relative_path(source_sha: str) -> Path:
+def _task41_case(case_id: str) -> dict[str, Any]:
+    if case_id == "A1":
+        return {
+            "case_id": "A1",
+            "run_id": TASK41_RUN_ID,
+            "input_relative": TASK41_INPUT_RELATIVE,
+            "controller_relative": TASK41_CONTROLLER_RELATIVE,
+            "window_relative": TASK41_WINDOW_RELATIVE,
+            "method": "full3d_direct",
+            "service_relative": TASK41_A1_SERVICE_RELATIVE,
+        }
+    if case_id == "A2":
+        return {
+            "case_id": "A2",
+            "run_id": TASK41_A2_RUN_ID,
+            "input_relative": TASK41_A2_INPUT_RELATIVE,
+            "controller_relative": TASK41_A2_CONTROLLER_RELATIVE,
+            "window_relative": TASK41_A2_WINDOW_RELATIVE,
+            "method": "full3d_iterative",
+            "service_relative": TASK41_A2_SERVICE_RELATIVE,
+        }
+    raise Task41ContractError("Task41 P0 case id must be A1 or A2")
+
+
+def task41_case_id_for_run_id(run_id: str) -> str:
+    if run_id == TASK41_RUN_ID:
+        return "A1"
+    if run_id == TASK41_A2_RUN_ID:
+        return "A2"
+    raise Task41ContractError("Task41 run id is not registered for P0")
+
+
+def _is_sha256(value: Any) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def _checked_binding_file(
+    root: Path,
+    record: Any,
+    label: str,
+    *,
+    within: Path,
+) -> Path:
+    if not isinstance(record, Mapping):
+        raise Task41ContractError(f"A1 comparison binding {label} record is missing")
+    path = _resolve(root, record.get("path"), f"A1 binding {label}.path")
+    if not path.is_relative_to(within):
+        raise Task41ContractError(f"A1 comparison binding {label} escaped its registered tree")
+    if (
+        type(record.get("bytes")) is not int
+        or record["bytes"] <= 0
+        or not _is_sha256(record.get("sha256"))
+        or not path.is_file()
+        or path.stat().st_size != record["bytes"]
+        or sha256_file(path) != record["sha256"]
+    ):
+        raise Task41ContractError(f"A1 comparison binding {label} file identity changed")
+    return path
+
+
+def require_task41_a1_comparison_binding(
+    path: str | Path | None = None,
+    *,
+    expected_sha256: str | None = None,
+    current_root: str | Path | None = None,
+) -> tuple[dict[str, Any], str]:
+    """Reopen the immutable, checker-PASS A1 evidence used by the A2 case."""
+    root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    binding_path = _resolve(
+        root,
+        str(path or TASK41_A1_COMPARISON_BINDING_RELATIVE),
+        "A1 comparison binding path",
+    )
+    if binding_path != (root / TASK41_A1_COMPARISON_BINDING_RELATIVE).resolve():
+        raise Task41ContractError("A1 comparison binding is outside the registered A2 controller")
+    raw = binding_path.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if expected_sha256 is not None and digest != expected_sha256:
+        raise Task41ContractError("A1 comparison binding SHA-256 differs from the A2 contract")
+    binding = json.loads(raw)
+    if not isinstance(binding, dict) or binding.get("schema") != TASK41_A1_COMPARISON_BINDING_SCHEMA:
+        raise Task41ContractError("A1 comparison binding schema is invalid")
+    if (
+        binding.get("status") != "PASS"
+        or binding.get("task_id") != TASK41_MODEL_ID
+        or binding.get("comparison_group") != TASK41_COMPARISON_GROUP
+    ):
+        raise Task41ContractError("A1 comparison binding does not identify a passed Task41 comparison")
+    a1 = binding.get("a1")
+    if not isinstance(a1, Mapping):
+        raise Task41ContractError("A1 comparison binding has no A1 identity")
+    source_sha = a1.get("source_sha")
+    if (
+        a1.get("run_id") != TASK41_RUN_ID
+        or a1.get("model_id") != TASK41_MODEL_ID
+        or a1.get("method") != "full3d_direct"
+        or a1.get("mpi_size") != 1
+        or not isinstance(source_sha, str)
+        or re.fullmatch(r"[0-9a-f]{40}", source_sha) is None
+        or a1.get("input_path") != str(TASK41_INPUT_RELATIVE)
+        or not _is_sha256(a1.get("input_sha256"))
+        or not _is_sha256(a1.get("physical_model_sha256"))
+        or not _is_sha256(a1.get("resolved_config_sha256"))
+    ):
+        raise Task41ContractError("A1 comparison binding has an invalid run/input/physics identity")
+    input_path = (root / TASK41_INPUT_RELATIVE).resolve()
+    if not input_path.is_file() or sha256_file(input_path) != a1["input_sha256"]:
+        raise Task41ContractError("A1 comparison binding does not match the registered A1 DAT")
+
+    run_root = _resolve(root, a1.get("run_root"), "A1 binding run_root")
+    registered_results = (root / "results" / TASK41_MODEL_ID).resolve()
+    if not run_root.is_relative_to(registered_results) or not run_root.is_dir():
+        raise Task41ContractError("A1 comparison run root is missing or outside Task41 results")
+    manifest_path = _checked_binding_file(
+        root, a1.get("run_manifest"), "run_manifest", within=run_root
+    )
+    summary_path = _checked_binding_file(
+        root, a1.get("numerical_summary"), "numerical_summary", within=run_root
+    )
+    resolved_path = _checked_binding_file(
+        root, a1.get("resolved_config"), "resolved_config", within=run_root
+    )
+    if (
+        manifest_path != run_root / "run_manifest.json"
+        or summary_path != run_root / "numerical_output" / "run_summary.json"
+        or resolved_path != run_root / "resolved_config.json"
+        or sha256_file(resolved_path) != a1["resolved_config_sha256"]
+    ):
+        raise Task41ContractError("A1 comparison run manifest/config paths are inconsistent")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    numerical = json.loads(summary_path.read_text(encoding="utf-8"))
+    for key, expected in {
+        "model_id": TASK41_MODEL_ID,
+        "run_id": TASK41_RUN_ID,
+        "method": "full3d_direct",
+        "mpi_size": 1,
+        "source_sha": source_sha,
+        "input_sha256": a1["input_sha256"],
+        "physical_model_sha256": a1["physical_model_sha256"],
+        "resolved_config_sha256": a1["resolved_config_sha256"],
+    }.items():
+        if manifest.get(key) != expected:
+            raise Task41ContractError(f"A1 run manifest {key} differs from its comparison binding")
+    if numerical.get("official_result") is not True or numerical.get("case_status") != "completed":
+        raise Task41ContractError("A1 numerical summary is not an official completed result")
+
+    checker_dir = (
+        root / _task41_case("A1")["service_relative"] / f"service_source_{source_sha}"
+    ).resolve()
+    checker_path = _checked_binding_file(
+        root, a1.get("required_checker"), "required_checker", within=checker_dir
+    )
+    if checker_path != checker_dir / "task41_p0_checker_result.json":
+        raise Task41ContractError("A1 required checker path is not the registered checker receipt")
+    checker = json.loads(checker_path.read_text(encoding="utf-8"))
+    if (
+        a1["required_checker"].get("schema") != "task41.p0.direct_checker.v1"
+        or checker.get("schema") != "task41.p0.direct_checker.v1"
+        or checker.get("status") != "PASS"
+        or checker.get("checker_passed") is not True
+        or checker.get("full_pass") is not True
+        or checker.get("official_result") is not True
+        or checker.get("run_id") != TASK41_RUN_ID
+        or checker.get("source_sha") != source_sha
+        or checker.get("input_sha256") != a1["input_sha256"]
+        or checker.get("physical_model_sha256") != a1["physical_model_sha256"]
+        or checker.get("resolved_config_sha256") != a1["resolved_config_sha256"]
+    ):
+        raise Task41ContractError("A1 required checker is not a matching PASS receipt")
+
+    discrete = a1.get("discrete_identity")
+    if not isinstance(discrete, Mapping):
+        raise Task41ContractError("A1 comparison binding omits discrete FE/mode identity")
+    if (
+        not _is_sha256(discrete.get("mesh_sha256"))
+        or not _is_sha256(discrete.get("mode_manifest_sha256"))
+        or not _is_sha256(discrete.get("ordered_mode_key_sha256"))
+        or discrete.get("mode_count") != 168
+        or discrete.get("full_fe_rows") != 934764
+    ):
+        raise Task41ContractError("A1 comparison binding has an invalid mesh/mode/FE identity")
+    map_status = discrete.get("mpc_map_status")
+    map_sha = discrete.get("mpc_map_sha256")
+    comparison_ready = discrete.get("same_discrete_comparison_ready")
+    if map_status == "PASS":
+        if not _is_sha256(map_sha) or comparison_ready is not True:
+            raise Task41ContractError("A1 MPC map identity status is internally inconsistent")
+    elif map_status == "NOT_RECORDED":
+        if map_sha is not None or comparison_ready is not False:
+            raise Task41ContractError("A1 missing MPC map identity must remain explicitly unqualified")
+    else:
+        raise Task41ContractError("A1 MPC map identity must be PASS or explicitly NOT_RECORDED")
+    abi = a1.get("abi_identity")
+    if (
+        not isinstance(abi, Mapping)
+        or abi.get("scalar_type") != "complex128"
+        or abi.get("int_type") != "int32"
+        or abi.get("mpi_size") != 1
+    ):
+        raise Task41ContractError("A1 comparison binding does not identify the qualified numerical ABI")
+
+    artifacts = a1.get("comparison_artifacts")
+    required_artifacts = {
+        "full_solution",
+        "native_a6_residual",
+        "airbox_fields",
+        "full3d_samples_archive",
+        "full3d_samples_metadata",
+        "modal_amplitudes",
+        "port_power_metrics",
+        "volume_absorption",
+        "diffraction_orders",
+        "mesh_h5",
+        "mesh_xdmf",
+    }
+    if not isinstance(artifacts, Mapping) or not required_artifacts.issubset(artifacts):
+        raise Task41ContractError("A1 comparison binding omits required field/mode/power artifacts")
+    checked_artifacts = {}
+    for name in sorted(required_artifacts):
+        artifact_path = _checked_binding_file(
+            root, artifacts[name], f"comparison_artifacts.{name}", within=run_root
+        )
+        checked_artifacts[name] = {
+            "path": str(artifact_path.relative_to(root)),
+            "bytes": artifacts[name]["bytes"],
+            "sha256": artifacts[name]["sha256"],
+        }
+    field_record = artifacts["full_solution"]
+    if field_record.get("array_key") != "recovered_field" or field_record.get("rank") != 0:
+        raise Task41ContractError("A1 full FE field binding must select rank-0 recovered_field")
+    return binding, digest
+
+
+def contract_relative_path(source_sha: str, case_id: str = "A1") -> Path:
     if not re.fullmatch(r"[0-9a-f]{40}", source_sha):
         raise Task41ContractError("Task41 source SHA is invalid")
-    return TASK41_CONTROLLER_RELATIVE / f"execution_contract_source_{source_sha}.json"
+    case = _task41_case(case_id)
+    return case["controller_relative"] / f"execution_contract_source_{source_sha}.json"
 
 
 def require_task41_p0_contract(
@@ -111,6 +366,7 @@ def require_task41_p0_contract(
     current_root: str | Path | None = None,
     require_clean_source: bool = False,
     check_current_source: bool = False,
+    case_id: str | None = None,
 ) -> tuple[dict[str, Any], str]:
     root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
     contract_path = _resolve(root, str(path), "contract path")
@@ -118,7 +374,15 @@ def require_task41_p0_contract(
         relative = contract_path.relative_to(root)
     except ValueError as exc:
         raise Task41ContractError("Task41 contract escaped the repository") from exc
-    if relative.parent != TASK41_CONTROLLER_RELATIVE or not re.fullmatch(
+    if case_id is None:
+        if relative.parent == TASK41_A2_CONTROLLER_RELATIVE:
+            case_id = "A2"
+        elif relative.parent == TASK41_CONTROLLER_RELATIVE:
+            case_id = "A1"
+        else:
+            raise Task41ContractError("Task41 contract is outside a registered P0 controller directory")
+    case_spec = _task41_case(case_id)
+    if relative.parent != case_spec["controller_relative"] or not re.fullmatch(
         r"execution_contract_source_[0-9a-f]{40}\.json", relative.name
     ):
         raise Task41ContractError("Task41 contract is not in the registered P0 controller directory")
@@ -145,7 +409,7 @@ def require_task41_p0_contract(
         raise Task41ContractError("Task41 contract sections must be JSON objects")
     if not re.fullmatch(r"[0-9a-f]{40}", str(source.get("sha", ""))):
         raise Task41ContractError("Task41 contract source SHA is invalid")
-    if relative != contract_relative_path(str(source["sha"])):
+    if relative != contract_relative_path(str(source["sha"]), case_id):
         raise Task41ContractError("Task41 contract filename is not bound to its source SHA")
     if check_current_source:
         if _git(root, "rev-parse", "HEAD") != source["sha"]:
@@ -159,14 +423,14 @@ def require_task41_p0_contract(
 
     input_path = _resolve(root, case.get("input_path"), "Task41 DAT path")
     if (
-        input_path != (root / TASK41_INPUT_RELATIVE).resolve()
+        input_path != (root / case_spec["input_relative"]).resolve()
         or not input_path.is_file()
         or sha256_file(input_path) != case.get("input_sha256")
         or case.get("model_id") != TASK41_MODEL_ID
-        or case.get("run_id") != TASK41_RUN_ID
+        or case.get("run_id") != case_spec["run_id"]
         or not re.fullmatch(r"[0-9a-f]{64}", str(case.get("physical_model_sha256", "")))
         or not re.fullmatch(r"[0-9a-f]{64}", str(case.get("resolved_config_sha256", "")))
-        or case.get("method") != "full3d_direct"
+        or case.get("method") != case_spec["method"]
         or case.get("mpi_size") != 1
     ):
         raise Task41ContractError("Task41 contract does not bind the registered G13 direct input")
@@ -187,7 +451,7 @@ def require_task41_p0_contract(
     if runtime.get("profile") != "native_linux":
         raise Task41ContractError("formal Task41 P0 execution requires the registered native_linux runtime")
     window_path = _resolve(root, window.get("path"), "window.path")
-    if window_path != (root / TASK41_WINDOW_RELATIVE).resolve():
+    if window_path != (root / case_spec["window_relative"]).resolve():
         raise Task41ContractError("Task41 fixed window path is not registered")
     if not re.fullmatch(r"[0-9a-f]{64}", str(window.get("sha256", ""))):
         raise Task41ContractError("Task41 fixed window SHA-256 is invalid")
@@ -204,12 +468,33 @@ def require_task41_p0_contract(
     ):
         raise Task41ContractError("Task41 contract time limits differ from the fixed P0 window")
     service_directory = _resolve(root, evidence.get("service_directory"), "evidence.service_directory")
-    try:
-        service_directory.relative_to(
-            root / "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20"
+    expected_service_directory = (
+        root / case_spec["service_relative"] / f"service_source_{source['sha']}"
+    ).resolve()
+    if service_directory != expected_service_directory:
+        raise Task41ContractError("Task41 service evidence directory differs from the registered case")
+    comparison = contract.get("comparison")
+    if case_id == "A2":
+        if not isinstance(comparison, Mapping):
+            raise Task41ContractError("Task41 A2 contract omits its immutable A1 comparison binding")
+        binding_path = _resolve(root, comparison.get("a1_binding_path"), "comparison.a1_binding_path")
+        if binding_path != (root / TASK41_A1_COMPARISON_BINDING_RELATIVE).resolve():
+            raise Task41ContractError("Task41 A2 contract uses an unregistered A1 comparison binding path")
+        binding, binding_digest = require_task41_a1_comparison_binding(
+            binding_path,
+            expected_sha256=comparison.get("a1_binding_sha256"),
+            current_root=root,
         )
-    except ValueError as exc:
-        raise Task41ContractError("Task41 service evidence escaped its artifact directory") from exc
+        if binding["a1"]["physical_model_sha256"] != case["physical_model_sha256"]:
+            raise Task41ContractError("A1 and A2 comparison binding have different physical models")
+        if comparison.get("same_discrete_comparison_ready") is not binding["a1"][
+            "discrete_identity"
+        ].get("same_discrete_comparison_ready"):
+            raise Task41ContractError("Task41 A2 comparison readiness differs from the bound A1 evidence")
+        if comparison.get("a1_binding_sha256") != binding_digest:
+            raise Task41ContractError("Task41 A2 comparison binding hash changed")
+    elif comparison is not None:
+        raise Task41ContractError("A1 contract must not carry an A1/A2 comparison binding")
     return contract, digest
 
 
@@ -218,8 +503,13 @@ def load_task41_p0_fixed_window(
     require_current_boot: bool = True,
 ) -> FixedCampaignWindow:
     root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    case_spec = _task41_case(
+        task41_case_id_for_run_id(str(contract.get("case", {}).get("run_id", "")))
+    )
     window_info = contract["window"]
     path = _resolve(root, window_info["path"], "window.path")
+    if path != (root / case_spec["window_relative"]).resolve():
+        raise Task41ContractError("Task41 fixed window path differs from the registered case")
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     if digest != window_info["sha256"]:
@@ -283,8 +573,11 @@ def load_task41_p0_fixed_window(
     )
 
 
-def _task41_window_for_contract(root: Path) -> tuple[FixedCampaignWindow, str, dict[str, Any]]:
-    path = (root / TASK41_WINDOW_RELATIVE).resolve()
+def _task41_window_for_contract(
+    root: Path, case_id: str = "A1"
+) -> tuple[FixedCampaignWindow, str, dict[str, Any]]:
+    case_spec = _task41_case(case_id)
+    path = (root / case_spec["window_relative"]).resolve()
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     try:
@@ -295,11 +588,12 @@ def _task41_window_for_contract(root: Path) -> tuple[FixedCampaignWindow, str, d
         raise Task41ContractError("Task41 fixed execution window must be a JSON object")
     entry_source = payload.get("source_sha")
     window_contract = {
+        "case": {"run_id": case_spec["run_id"]},
         "window": {
-            "path": str(TASK41_WINDOW_RELATIVE),
+            "path": str(case_spec["window_relative"]),
             "sha256": digest,
             "entry_source_sha": entry_source,
-        }
+        },
     }
     window = load_task41_p0_fixed_window(
         window_contract, current_root=root, require_current_boot=True
@@ -340,6 +634,7 @@ def prepare_task41_p0(
     abi_receipt: str | Path,
     jit_cache: str | Path,
     current_root: str | Path | None = None,
+    case_id: str = "A1",
 ) -> dict[str, Any]:
     """Register or reuse the one fixed P0 window, then write a source-bound contract.
 
@@ -347,6 +642,7 @@ def prepare_task41_p0(
     Later calls reuse its exact bytes, including when the current source has changed.
     """
     root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    case_spec = _task41_case(case_id)
     source_sha = _git(root, "rev-parse", "HEAD")
     if not re.fullmatch(r"[0-9a-f]{40}", source_sha):
         raise Task41ContractError("Task41 current HEAD is not a full Git SHA")
@@ -355,7 +651,7 @@ def prepare_task41_p0(
     if _git(root, "status", "--porcelain", "--untracked-files=normal"):
         raise Task41ContractError("Task41 P0 prepare requires a clean frozen source tree")
 
-    window_path = (root / TASK41_WINDOW_RELATIVE).resolve()
+    window_path = (root / case_spec["window_relative"]).resolve()
     if not window_path.exists():
         anchor = clock_sample(include_boot_id=True)
         t0_ns = int(anchor["utc_ns"])
@@ -375,12 +671,12 @@ def prepare_task41_p0(
             "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
             "anchor": anchor,
             "accounting_path": str(
-                (root / TASK41_CONTROLLER_RELATIVE / "campaign_accounting_v10.jsonl").resolve()
+                (root / case_spec["controller_relative"] / "campaign_accounting_v10.jsonl").resolve()
             ),
         }
         _write_json_no_replace(window_path, window_payload)
 
-    window, window_sha, window_payload = _task41_window_for_contract(root)
+    window, window_sha, window_payload = _task41_window_for_contract(root, case_id)
 
     runtime_path = _resolve(root, str(runtime_prefix), "runtime_prefix")
     abi_path = _resolve(root, str(abi_receipt), "abi_receipt")
@@ -392,7 +688,7 @@ def prepare_task41_p0(
         raise Task41ContractError("Task41 ABI receipt or JIT cache path is missing")
     abi_sha = _check_task41_native_receipt(abi_path, runtime_path)
 
-    input_path = (root / TASK41_INPUT_RELATIVE).resolve()
+    input_path = (root / case_spec["input_relative"]).resolve()
     try:
         from src.geometry.task41_phi90_profile import task41_payload_errors
         from src.io.execution_plan import resolved_config_bytes
@@ -409,7 +705,7 @@ def prepare_task41_p0(
         )
     resolved_sha = hashlib.sha256(resolved_config_bytes(specification)).hexdigest()
     case = {
-        "input_path": str(TASK41_INPUT_RELATIVE),
+        "input_path": str(case_spec["input_relative"]),
         "input_sha256": specification.input_sha256,
         "model_id": specification.identity.get("model_id"),
         "run_id": specification.identity.get("run_id"),
@@ -420,17 +716,31 @@ def prepare_task41_p0(
     }
     validate_task41_specification(specification, input_path, {"case": case}, current_root=root)
 
+    comparison = None
+    if case_id == "A2":
+        binding_path = (root / TASK41_A1_COMPARISON_BINDING_RELATIVE).resolve()
+        binding, binding_sha256 = require_task41_a1_comparison_binding(
+            binding_path, current_root=root
+        )
+        if binding["a1"]["physical_model_sha256"] != case["physical_model_sha256"]:
+            raise Task41ContractError("A1 and A2 comparison binding have different physical models")
+        comparison = {
+            "a1_binding_path": str(TASK41_A1_COMPARISON_BINDING_RELATIVE),
+            "a1_binding_sha256": binding_sha256,
+            "same_discrete_comparison_ready": binding["a1"][
+                "discrete_identity"
+            ]["same_discrete_comparison_ready"],
+        }
+
     if _git(root, "rev-parse", "HEAD") != source_sha or _git(
         root, "branch", "--show-current"
     ) != TASK41_BRANCH or _git(root, "status", "--porcelain", "--untracked-files=normal"):
         raise Task41ContractError("Task41 source changed while the P0 contract was being prepared")
 
-    contract_path = root / contract_relative_path(source_sha)
+    contract_path = root / contract_relative_path(source_sha, case_id)
     if contract_path.exists():
         raise Task41ContractError("a Task41 contract already exists for this source SHA")
-    service_directory = Path(
-        "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a1"
-    ) / f"service_source_{source_sha}"
+    service_directory = case_spec["service_relative"] / f"service_source_{source_sha}"
     contract = {
         "schema": TASK41_P0_CONTRACT_SCHEMA,
         "task_id": TASK41_MODEL_ID,
@@ -447,7 +757,7 @@ def prepare_task41_p0(
             "math_threads": 1,
         },
         "window": {
-            "path": str(TASK41_WINDOW_RELATIVE),
+            "path": str(case_spec["window_relative"]),
             "sha256": window_sha,
             "entry_source_sha": window_payload["source_sha"],
         },
@@ -463,10 +773,13 @@ def prepare_task41_p0(
         },
         "evidence": {"service_directory": str(service_directory)},
     }
+    if comparison is not None:
+        contract["comparison"] = comparison
     if not _write_json_no_replace(contract_path, contract):
         raise Task41ContractError("a Task41 contract was concurrently created for this source SHA")
     contract_sha = sha256_file(contract_path)
     return {
+        "case_id": case_id,
         "contract_path": str(contract_path.relative_to(root)),
         "contract_sha256": contract_sha,
         "window_path": str(window_path.relative_to(root)),
@@ -475,10 +788,16 @@ def prepare_task41_p0(
         "window_entry_source_sha": window_payload["source_sha"],
         "contract_source_sha": source_sha,
         "resolved_config_sha256": resolved_sha,
+        "a1_comparison_binding_sha256": (
+            comparison["a1_binding_sha256"] if comparison is not None else None
+        ),
+        "same_discrete_comparison_ready": (
+            comparison["same_discrete_comparison_ready"] if comparison is not None else None
+        ),
         "service_command": [
             "bash",
             "scripts/run_case_in_user_service.sh",
-            str(TASK41_INPUT_RELATIVE),
+            str(case_spec["input_relative"]),
             "--task41-p0-execution-contract",
             str(contract_path.relative_to(root)),
         ],
@@ -574,6 +893,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runtime-prefix", type=Path)
     parser.add_argument("--abi-receipt", type=Path)
     parser.add_argument("--jit-cache", type=Path)
+    parser.add_argument("--case", choices=("A1", "A2"), default="A1")
     args = parser.parse_args(argv)
     if args.launcher_values:
         if args.contract is None:
@@ -593,6 +913,7 @@ def main(argv: list[str] | None = None) -> int:
             runtime_prefix=args.runtime_prefix,
             abi_receipt=args.abi_receipt,
             jit_cache=args.jit_cache,
+            case_id=args.case,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

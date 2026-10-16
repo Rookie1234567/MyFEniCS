@@ -29,6 +29,22 @@ from .task40_v10_p6_periodic_profile import (
 
 ALL_Q_RESIDENT = "ALL_Q_RESIDENT"
 ONE_Q_REFACTOR_V19 = "ONE_Q_REFACTOR_V19"
+TASK41_A2_ALL_Q_CONTRACT_SCHEMA = "task41.p0.a2_all_q_factor_qualification.v1"
+TASK41_A2_SECOND_RHS_FORMULA = "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
+
+
+def task41_a2_all_q_factor_contract() -> dict[str, Any]:
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+
+    return {
+        "schema": TASK41_A2_ALL_Q_CONTRACT_SCHEMA,
+        "profile_identity": TASK41_G13_A2_PRECONDITIONER,
+        "q_count": 10,
+        "require_two_strict_rhs": True,
+        "second_rhs_formula": TASK41_A2_SECOND_RHS_FORMULA,
+        "strict_relative_residual_limit": 1.0e-10,
+        "same_q_factors_remain_resident": True,
+    }
 _ALL_Q_BUSINESS_RHS_CATEGORIES = (
     "pc_initial_rhs_mat_solve_count",
     "pc_augmentation_rhs_mat_solve_count",
@@ -906,6 +922,7 @@ class AllQExactMumps:
                  target_admission_phase: str | None = None,
                  strict_factor_qualification: bool = False,
                  v30_config: Mapping[str, Any] | None = None,
+                 task41_a2_config: Mapping[str, Any] | None = None,
                  output_directory=None):
         from petsc4py import PETSc
         from pathlib import Path
@@ -939,18 +956,37 @@ class AllQExactMumps:
                     raise ValueError("V30 AllQ packet directory differs from its contract")
             output_directory = output_directory or configured_directory
             strict_factor_qualification = True
+        if task41_a2_config is not None:
+            if v30_config is not None or not isinstance(task41_a2_config, Mapping):
+                raise ValueError("Task41 A2 AllQ contract cannot mix with Task40 V30/V31")
+            expected_task41_config = task41_a2_all_q_factor_contract()
+            if dict(task41_a2_config) != expected_task41_config or (
+                profile.name != expected_task41_config["profile_identity"]
+                or profile.q_count != 10
+            ):
+                raise ValueError("Task41 A2 AllQ contract requires its exact ten-q dual-RHS profile")
+            self.task41_a2_config = dict(task41_a2_config)
+            strict_factor_qualification = True
+        else:
+            self.task41_a2_config = None
+        self.task41_a2_enabled = self.task41_a2_config is not None
         self.v30_config = None if v30_config is None else dict(v30_config)
         self.v30_enabled = self.v30_config is not None
+        self.strict_two_rhs_enabled = self.v30_enabled or self.task41_a2_enabled
+        self.strict_rhs_label = "task41_a2" if self.task41_a2_enabled else "v30"
         if target_admission_phase not in (None, "REFERENCE_ONLY"):
             raise ValueError("AllQ target admission phase must be REFERENCE_ONLY or omitted")
-        if target_admission_phase is not None and (not self.v30_enabled or profile.q_count != 8):
-            raise ValueError("V31 reference-only admission requires the qualified eight-q AllQ route")
+        if target_admission_phase is not None and not (
+            (self.v30_enabled and profile.q_count == 8)
+            or (self.task41_a2_enabled and profile.q_count == 10)
+        ):
+            raise ValueError("reference-only admission requires an exact eight-q Task40 or ten-q Task41 AllQ contract")
         self.target_admission_phase = target_admission_phase
         self.checkpoint_directory = (
             None if output_directory is None else Path(output_directory).resolve()
         )
-        if v30_config is not None and self.checkpoint_directory is None:
-            raise ValueError("V30 AllQ qualification requires a packet output directory")
+        if self.strict_two_rhs_enabled and self.checkpoint_directory is None:
+            raise ValueError("strict AllQ dual-RHS qualification requires a packet output directory")
         if self.checkpoint_directory is not None:
             self.checkpoint_directory.mkdir(parents=True, exist_ok=True)
         self.transform_bank = transform_bank
@@ -1039,8 +1075,16 @@ class AllQExactMumps:
             "all_q_second_rhs_strict_true_residual_passed": False,
             "all_q_fresh_probe_and_second_rhs_passed": False,
             "second_rhs_qualification": {
-                "schema": "task40extra.review_v30_all_q_second_rhs.v1",
-                "formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+                "schema": (
+                    "task41.p0.a2_all_q_second_rhs.v1"
+                    if self.task41_a2_enabled
+                    else "task40extra.review_v30_all_q_second_rhs.v1"
+                ),
+                "formula": (
+                    self.task41_a2_config["second_rhs_formula"]
+                    if self.task41_a2_enabled
+                    else "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
+                ),
                 "all_entries_nonzero": True,
                 "distinct_from_direct_cos_sin_probe": True,
                 "true_residual_operator": "the complete original canonical CSR matrix for the same q",
@@ -1559,9 +1603,9 @@ class AllQExactMumps:
                 )
                 fresh_packet = None
                 fresh_rhs_sha256 = _array_sha256(rhs)
-                if self.v30_enabled:
+                if self.strict_two_rhs_enabled:
                     self.gate(
-                        "before_v30_fresh_rhs_packet",
+                        f"before_{self.strict_rhs_label}_fresh_rhs_packet",
                         {
                             "q": q,
                             "additional_payload_bytes": 0,
@@ -1571,7 +1615,7 @@ class AllQExactMumps:
                         },
                     )
                     self.gate(
-                        "before_v30_fresh_rhs_packet_readback",
+                        f"before_{self.strict_rhs_label}_fresh_rhs_packet_readback",
                         {
                             "q": q,
                             "additional_payload_bytes": int(rhs.nbytes),
@@ -1718,7 +1762,7 @@ class AllQExactMumps:
                 active_q = None
                 active_q_activity_started = None
                 active_q_phase = None
-                if self.v30_enabled:
+                if self.strict_two_rhs_enabled:
                     del rhs, solution, fresh_residual_vector
                     vector_bytes = int(n * np.dtype(np.complex128).itemsize)
                     second_started = perf_counter()
@@ -1726,7 +1770,7 @@ class AllQExactMumps:
                     active_q_activity_started = second_started
                     active_q_phase = "second_rhs"
                     second_admission = self.gate(
-                        "before_v30_second_rhs_qualification",
+                        f"before_{self.strict_rhs_label}_second_rhs_qualification",
                         {
                             "q": q,
                             "additional_payload_bytes": int(5 * vector_bytes),
@@ -1770,7 +1814,7 @@ class AllQExactMumps:
                         and second_residual_relative <= 1.0e-10
                     )
                     packet_readback_gate = self.gate(
-                        "before_v30_second_rhs_packet_readback",
+                        f"before_{self.strict_rhs_label}_second_rhs_packet_readback",
                         {
                             "q": q,
                             "additional_payload_bytes": vector_bytes,
@@ -1787,8 +1831,16 @@ class AllQExactMumps:
                         residual=second_residual,
                     )
                     second_test = {
-                        "schema": "task40extra.review_v30_all_q_second_rhs_result.v1",
-                        "formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+                        "schema": (
+                            "task41.p0.a2_all_q_second_rhs_result.v1"
+                            if self.task41_a2_enabled
+                            else "task40extra.review_v30_all_q_second_rhs_result.v1"
+                        ),
+                        "formula": (
+                            self.task41_a2_config["second_rhs_formula"]
+                            if self.task41_a2_enabled
+                            else "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
+                        ),
                         "rhs_sha256": second_rhs_sha256,
                         "rhs_all_entries_nonzero": True,
                         "rhs_distinct_from_direct_cos_sin_probe": True,
@@ -1825,16 +1877,21 @@ class AllQExactMumps:
                     )
                     test["second_rhs"] = second_test
                     self.audit["second_rhs_tests"].append({"q": q, **second_test})
-                    self.event("task40_v30_all_q_second_rhs_complete", {
+                    self.event(
+                        "task41_a2_all_q_second_rhs_complete"
+                        if self.task41_a2_enabled
+                        else "task40_v30_all_q_second_rhs_complete",
+                        {
                         "q": q,
                         "caller_input_sha256": caller_hash,
                         "factor_csr_sha256": csr_hash,
                         **second_test,
-                    })
+                        },
+                    )
                     del second_rhs, second_solution, second_residual
                     if not second_strict_passed:
                         raise ValueError(
-                            f"q={q} V30 second RHS full CSR residual "
+                            f"q={q} {self.strict_rhs_label} second RHS full CSR residual "
                             f"{second_residual_relative} exceeds 1e-10"
                         )
                     active_q_activity_started = perf_counter()
@@ -1893,7 +1950,13 @@ class AllQExactMumps:
                 self.audit["numeric_ready_q"].append(int(q))
                 self.audit["numeric_ready_q"].sort()
                 self.event(
-                    "task40_v30_all_q_numeric_ready" if self.v30_enabled else "task40_v12_all_q_numeric_ready",
+                    (
+                        "task41_a2_all_q_numeric_ready"
+                        if self.task41_a2_enabled
+                        else "task40_v30_all_q_numeric_ready"
+                        if self.v30_enabled
+                        else "task40_v12_all_q_numeric_ready"
+                    ),
                     {
                         "q": q,
                         "numeric_ready_q": list(self.audit["numeric_ready_q"]),
@@ -1907,7 +1970,7 @@ class AllQExactMumps:
                         "q_ready_span_seconds_from_q_first_start": q_ready_span,
                         "second_rhs_strict_passed": (
                             test.get("second_rhs", {}).get("strict_passed")
-                            if self.v30_enabled
+                            if self.strict_two_rhs_enabled
                             else None
                         ),
                         "first_rhs_strict_passed": strict_passed,
@@ -1946,7 +2009,7 @@ class AllQExactMumps:
                 int(row["q"]) for row in self.audit["second_rhs_tests"]
             }
             second_rhs_strict_passed = bool(
-                self.v30_enabled
+                self.strict_two_rhs_enabled
                 and second_rhs_q_indices == expected_q_indices
                 and all(
                     bool(row["strict_passed"])
@@ -1954,7 +2017,7 @@ class AllQExactMumps:
                 )
             )
             dual_rhs_passed = bool(
-                self.v30_enabled
+                self.strict_two_rhs_enabled
                 and set(self.audit["numeric_ready_q"]) == expected_q_indices
                 and factor_test_q_indices == expected_q_indices
                 and second_rhs_q_indices == expected_q_indices
@@ -1994,7 +2057,7 @@ class AllQExactMumps:
                     and set(self.audit["numeric_ready_q"]) == set(range(self.nq))
                     and factor_test_q_indices == expected_q_indices
                     and (
-                        not self.v30_enabled
+                        not self.strict_two_rhs_enabled
                         or dual_rhs_passed
                     )
                     and all(
@@ -2012,7 +2075,7 @@ class AllQExactMumps:
                     == set(range(self.nq))
                     and all(bool(row["strict_passed"]) for row in self.audit["factor_tests"])
                     and (
-                        not self.v30_enabled or second_rhs_strict_passed
+                        not self.strict_two_rhs_enabled or second_rhs_strict_passed
                     )
                 ),
                 all_q_factor_objects_live_simultaneously=(

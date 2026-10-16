@@ -17,6 +17,12 @@ import pytest
 from src.runners.task40_v10_campaign import _utc_ns
 from src.runners.workflow_timebase import clock_sample
 from src.runners.task41_p0_contract import (
+    TASK41_A1_COMPARISON_BINDING_RELATIVE,
+    TASK41_A1_COMPARISON_BINDING_SCHEMA,
+    TASK41_A2_CONTROLLER_RELATIVE,
+    TASK41_A2_INPUT_RELATIVE,
+    TASK41_A2_RUN_ID,
+    TASK41_A2_WINDOW_RELATIVE,
     TASK41_BRANCH,
     TASK41_CLOSEOUT_SECONDS,
     TASK41_HOST_RESERVE_BYTES,
@@ -42,10 +48,13 @@ def _utc_z(nanoseconds: int) -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(seconds)) + f".{fraction:09d}Z"
 
 
-def _write_contract(root: Path) -> tuple[Path, dict]:
-    input_path = root / TASK41_INPUT_RELATIVE
-    input_path.parent.mkdir(parents=True)
-    input_path.write_bytes(b"fixed Task41 contract test DAT\n")
+def _write_contract(root: Path, case_id: str = "A1") -> tuple[Path, dict]:
+    import src.runners.task41_p0_contract as contract_module
+
+    case_spec = contract_module._task41_case(case_id)
+    input_path = root / case_spec["input_relative"]
+    input_path.parent.mkdir(parents=True, exist_ok=True)
+    input_path.write_bytes(f"fixed Task41 {case_id} contract test DAT\n".encode())
     runtime = root / "qualified-runtime"
     (runtime / "bin").mkdir(parents=True)
     python_path = runtime / "bin/python"
@@ -55,9 +64,8 @@ def _write_contract(root: Path) -> tuple[Path, dict]:
     jit_cache = root / "jit-cache"
     jit_cache.mkdir()
     abi_receipt.write_text('{"abi":"test"}\n', encoding="utf-8")
-    artifact_root = root / "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20"
-    controller_root = artifact_root / "p0_controller"
-    controller_root.mkdir(parents=True)
+    controller_root = root / case_spec["controller_relative"]
+    controller_root.mkdir(parents=True, exist_ok=True)
     current = clock_sample(include_boot_id=True)
     t0_ns = current["utc_ns"]
     entry_source = "b" * 40
@@ -77,7 +85,7 @@ def _write_contract(root: Path) -> tuple[Path, dict]:
         "anchor": current,
         "accounting_path": str(accounting.resolve()),
     }
-    window_path = root / TASK41_WINDOW_RELATIVE
+    window_path = root / case_spec["window_relative"]
     window_path.parent.mkdir(parents=True, exist_ok=True)
     window_path.write_text(
         json.dumps(window_payload, sort_keys=True, separators=(",", ":")) + "\n",
@@ -90,13 +98,13 @@ def _write_contract(root: Path) -> tuple[Path, dict]:
         "branch": TASK41_BRANCH,
         "source": {"sha": "c" * 40},
         "case": {
-            "input_path": str(TASK41_INPUT_RELATIVE),
+            "input_path": str(case_spec["input_relative"]),
             "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
             "model_id": TASK41_MODEL_ID,
-            "run_id": TASK41_RUN_ID,
+            "run_id": case_spec["run_id"],
             "physical_model_sha256": "d" * 64,
             "resolved_config_sha256": "e" * 64,
-            "method": "full3d_direct",
+            "method": case_spec["method"],
             "mpi_size": 1,
         },
         "runtime": {
@@ -109,7 +117,7 @@ def _write_contract(root: Path) -> tuple[Path, dict]:
             "math_threads": 1,
         },
         "window": {
-            "path": str(TASK41_WINDOW_RELATIVE),
+            "path": str(case_spec["window_relative"]),
             "sha256": window_sha,
             "entry_source_sha": entry_source,
         },
@@ -125,11 +133,11 @@ def _write_contract(root: Path) -> tuple[Path, dict]:
         },
         "evidence": {
             "service_directory": str(
-                Path("benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a1/service")
+                case_spec["service_relative"] / f"service_source_{'c' * 40}"
             ),
         },
     }
-    contract_path = root / contract_relative_path("c" * 40)
+    contract_path = root / contract_relative_path("c" * 40, case_id)
     contract_path.write_text(
         json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
         encoding="utf-8",
@@ -276,6 +284,9 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
     monkeypatch.setattr(contract_module, "TASK41_CONTROLLER_RELATIVE", controller_relative)
     monkeypatch.setattr(contract_module, "TASK41_WINDOW_RELATIVE", window_relative)
     monkeypatch.setattr(
+        contract_module, "TASK41_A1_SERVICE_RELATIVE", fixture_relative / "service_base"
+    )
+    monkeypatch.setattr(
         contract_module,
         "_git",
         lambda _root, *args: (
@@ -369,7 +380,8 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         },
         "evidence": {
             "service_directory": str(
-                fixture_relative / "service"
+                fixture_relative / "service_base"
+                / f"service_source_{source_sha}"
             ),
         },
     }
@@ -531,7 +543,8 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
             return SimpleNamespace(stdout="", stderr="", returncode=0)
         if len(command) >= 2 and command[1] == "scripts/run_case.py":
             run_case_environment.update(kwargs.get("env", {}))
-            run_root = service_output_root / "synthetic_launcher_result"
+            run_root = repo_root / "results" / TASK41_MODEL_ID / fixture_id / "synthetic_launcher_result"
+            request.addfinalizer(lambda: shutil.rmtree(run_root, ignore_errors=True))
             numerical_output = run_root / "numerical_output"
             numerical_output.mkdir(parents=True)
             summary_path = run_root / "run_summary.json"
@@ -593,3 +606,331 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
     assert receipt["required_checker_status"] == "passed"
     assert receipt["required_checker_command"] == closeout_call["command"]
     assert receipt["required_checker_authorization"] == closeout_call["validated_authorization"]
+
+
+def _record_file(root: Path, path: Path, content: bytes) -> dict[str, Any]:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    return {
+        "path": str(path.relative_to(root)),
+        "bytes": len(content),
+        "sha256": hashlib.sha256(content).hexdigest(),
+    }
+
+
+def _write_a1_comparison_binding_fixture(root: Path) -> tuple[Path, dict]:
+    source_sha = "a" * 40
+    physical_sha = "d" * 64
+    a1_input = root / TASK41_INPUT_RELATIVE
+    a1_input.parent.mkdir(parents=True)
+    a1_input.write_bytes(b"registered A1 input fixture\n")
+    input_sha = hashlib.sha256(a1_input.read_bytes()).hexdigest()
+    run_root = (
+        root / "results" / TASK41_MODEL_ID
+        / f"{TASK41_RUN_ID}__full3d_direct__mpi1__Mna" / "20261016T123737.790458Z"
+    )
+    resolved_content = b'{"fixture":"resolved A1 configuration"}\n'
+    resolved_sha = hashlib.sha256(resolved_content).hexdigest()
+    manifest = {
+        "model_id": TASK41_MODEL_ID,
+        "run_id": TASK41_RUN_ID,
+        "method": "full3d_direct",
+        "mpi_size": 1,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+    }
+    manifest_path = run_root / "run_manifest.json"
+    manifest_bytes = json.dumps(manifest, sort_keys=True).encode() + b"\n"
+    numerical_path = run_root / "numerical_output" / "run_summary.json"
+    numerical_bytes = json.dumps(
+        {"case_status": "completed", "official_result": True}, sort_keys=True
+    ).encode() + b"\n"
+    resolved_path = run_root / "resolved_config.json"
+    run_manifest = _record_file(root, manifest_path, manifest_bytes)
+    numerical_summary = _record_file(root, numerical_path, numerical_bytes)
+    resolved_config = _record_file(root, resolved_path, resolved_content)
+    checker_dir = (
+        root / "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a1"
+        / f"service_source_{source_sha}"
+    )
+    checker_path = checker_dir / "task41_p0_checker_result.json"
+    checker_payload = {
+        "schema": "task41.p0.direct_checker.v1",
+        "status": "PASS",
+        "checker_passed": True,
+        "full_pass": True,
+        "official_result": True,
+        "run_id": TASK41_RUN_ID,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+    }
+    checker_record = _record_file(
+        root, checker_path, json.dumps(checker_payload, sort_keys=True).encode() + b"\n"
+    )
+    checker_record["schema"] = "task41.p0.direct_checker.v1"
+    artifact_names = (
+        "full_solution", "native_a6_residual", "airbox_fields",
+        "full3d_samples_archive", "full3d_samples_metadata", "modal_amplitudes",
+        "port_power_metrics", "volume_absorption", "diffraction_orders",
+        "mesh_h5", "mesh_xdmf",
+    )
+    artifacts = {}
+    for name in artifact_names:
+        extension = ".npz" if name in {
+            "full_solution", "airbox_fields", "full3d_samples_archive", "modal_amplitudes"
+        } else ".json"
+        artifact_path = run_root / "numerical_output" / f"{name}{extension}"
+        record = _record_file(root, artifact_path, f"{name} fixture bytes".encode())
+        if name == "full_solution":
+            record.update(array_key="recovered_field", rank=0)
+        artifacts[name] = record
+    binding = {
+        "schema": TASK41_A1_COMPARISON_BINDING_SCHEMA,
+        "status": "PASS",
+        "task_id": TASK41_MODEL_ID,
+        "comparison_group": "task41extra_phi90_p50x50_g17x20_g13_a1a2",
+        "a1": {
+            "run_id": TASK41_RUN_ID,
+            "model_id": TASK41_MODEL_ID,
+            "method": "full3d_direct",
+            "mpi_size": 1,
+            "source_sha": source_sha,
+            "input_path": str(TASK41_INPUT_RELATIVE),
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "resolved_config_sha256": resolved_sha,
+            "run_root": str(run_root.relative_to(root)),
+            "run_manifest": run_manifest,
+            "numerical_summary": numerical_summary,
+            "resolved_config": resolved_config,
+            "required_checker": checker_record,
+            "discrete_identity": {
+                "mesh_sha256": "1" * 64,
+                "mode_manifest_sha256": "2" * 64,
+                "ordered_mode_key_sha256": "3" * 64,
+                "mode_count": 168,
+                "full_fe_rows": 934764,
+                "mpc_map_status": "NOT_RECORDED",
+                "mpc_map_sha256": None,
+                "same_discrete_comparison_ready": False,
+            },
+            "abi_identity": {
+                "scalar_type": "complex128", "int_type": "int32", "mpi_size": 1
+            },
+            "comparison_artifacts": artifacts,
+        },
+    }
+    binding_path = root / TASK41_A1_COMPARISON_BINDING_RELATIVE
+    binding_path.parent.mkdir(parents=True, exist_ok=True)
+    binding_path.write_text(
+        json.dumps(binding, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    return binding_path, binding
+
+
+def test_task41_a2_contract_reopens_and_hash_binds_a1_evidence(tmp_path):
+    binding_path, binding = _write_a1_comparison_binding_fixture(tmp_path)
+    contract_path, contract = _write_contract(tmp_path, case_id="A2")
+    contract["comparison"] = {
+        "a1_binding_path": str(TASK41_A1_COMPARISON_BINDING_RELATIVE),
+        "a1_binding_sha256": hashlib.sha256(binding_path.read_bytes()).hexdigest(),
+        "same_discrete_comparison_ready": False,
+    }
+    contract_path.write_text(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+
+    loaded, _ = require_task41_p0_contract(contract_path, current_root=tmp_path)
+    assert loaded["case"]["run_id"] == TASK41_A2_RUN_ID
+    assert loaded["comparison"]["same_discrete_comparison_ready"] is False
+    assert binding["a1"]["discrete_identity"]["mpc_map_status"] == "NOT_RECORDED"
+
+    binding_path.write_bytes(binding_path.read_bytes() + b" ")
+    with pytest.raises(Task41ContractError, match="binding SHA-256 differs"):
+        require_task41_p0_contract(contract_path, current_root=tmp_path)
+
+
+def test_task41_a2_contract_rejects_missing_binding_or_fabricated_mpc_hash(tmp_path):
+    binding_path, binding = _write_a1_comparison_binding_fixture(tmp_path)
+    contract_path, contract = _write_contract(tmp_path, case_id="A2")
+    contract_path.write_text(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(Task41ContractError, match="omits its immutable A1 comparison binding"):
+        require_task41_p0_contract(contract_path, current_root=tmp_path)
+
+    discrete = binding["a1"]["discrete_identity"]
+    discrete["mpc_map_status"] = "NOT_RECORDED"
+    discrete["mpc_map_sha256"] = "4" * 64
+    binding_path.write_text(
+        json.dumps(binding, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    contract["comparison"] = {
+        "a1_binding_path": str(TASK41_A1_COMPARISON_BINDING_RELATIVE),
+        "a1_binding_sha256": hashlib.sha256(binding_path.read_bytes()).hexdigest(),
+        "same_discrete_comparison_ready": False,
+    }
+    contract_path.write_text(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(Task41ContractError, match="missing MPC map identity"):
+        require_task41_p0_contract(contract_path, current_root=tmp_path)
+
+
+@pytest.mark.parametrize("case_id", ["A1", "A2"])
+def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
+    tmp_path, monkeypatch, case_id
+):
+    import benchmarks.subreaper_watchdog as watchdog
+    import src.runners.task41_p0_contract as contract_module
+
+    if case_id == "A2":
+        binding_path, binding = _write_a1_comparison_binding_fixture(tmp_path)
+    contract_path, contract = _write_contract(tmp_path, case_id=case_id)
+    qualified_python = Path(sys.executable).resolve()
+    contract["runtime"]["runtime_prefix"] = str(qualified_python.parent.parent)
+    if case_id == "A2":
+        contract["comparison"] = {
+            "a1_binding_path": str(TASK41_A1_COMPARISON_BINDING_RELATIVE),
+            "a1_binding_sha256": hashlib.sha256(binding_path.read_bytes()).hexdigest(),
+            "same_discrete_comparison_ready": binding["a1"]["discrete_identity"][
+                "same_discrete_comparison_ready"
+            ],
+        }
+    contract_path.write_text(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    contract_sha = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    window_path = tmp_path / contract["window"]["path"]
+    window_sha = hashlib.sha256(window_path.read_bytes()).hexdigest()
+    case = contract["case"]
+    run_root = (
+        tmp_path / "results" / TASK41_MODEL_ID
+        / f"{case['run_id']}__attempt"
+    )
+    numerical_directory = run_root / "numerical_output"
+    numerical_directory.mkdir(parents=True)
+    input_path = tmp_path / case["input_path"]
+    summary_path = run_root / "run_summary.json"
+    manifest_path = run_root / "run_manifest.json"
+    numerical_summary_path = (
+        run_root / "task40_v10_p6_candidate_summary.json"
+        if case_id == "A2"
+        else numerical_directory / "run_summary.json"
+    )
+    for path in (summary_path, manifest_path, numerical_summary_path):
+        path.write_text("{}\n", encoding="utf-8")
+    output_path = (
+        tmp_path / contract["evidence"]["service_directory"]
+        / "task41_p0_checker_result.json"
+    ).resolve()
+    command = [
+        str(qualified_python),
+        "-m",
+        "src.runners.task41_p0_checker",
+        "--input",
+        str(input_path.resolve()),
+        "--summary",
+        str(summary_path.resolve()),
+        "--manifest",
+        str(manifest_path.resolve()),
+        "--numerical-output",
+        str(numerical_directory.resolve()),
+        "--contract",
+        str(contract_path.resolve()),
+        "--contract-sha256",
+        contract_sha,
+        "--output",
+        str(output_path),
+    ]
+    input_paths = [
+        input_path.resolve(),
+        summary_path.resolve(),
+        manifest_path.resolve(),
+        numerical_summary_path.resolve(),
+    ]
+    source_sha = contract["source"]["sha"]
+    checker_kind = (
+        "task41_p0_a2_independent_p6_iterative_checker"
+        if case_id == "A2"
+        else "task41_p0_independent_full_a6_checker"
+    )
+    authorization = {
+        "schema": "task41.p0.closeout_checker_authorization.v1",
+        "phase": "closeout",
+        "purpose": "registered_read_only_required_checker",
+        "checker_kind": checker_kind,
+        "command_sha256": hashlib.sha256(
+            json.dumps(command, separators=(",", ":"), ensure_ascii=False).encode()
+        ).hexdigest(),
+        "input_paths": [str(path) for path in input_paths],
+        "input_sha256s": [hashlib.sha256(path.read_bytes()).hexdigest() for path in input_paths],
+        "expected_channel_count": None,
+        "campaign_window_sha256": window_sha,
+        "task41_contract_sha256": contract_sha,
+        "source_sha": source_sha,
+        "source_branch": TASK41_BRANCH,
+        "source_clean": True,
+    }
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(watchdog.sys, "executable", str(qualified_python))
+    monkeypatch.setattr(
+        contract_module,
+        "_git",
+        lambda _root, *args: (
+            source_sha
+            if args == ("rev-parse", "HEAD")
+            else TASK41_BRANCH
+            if args == ("branch", "--show-current")
+            else ""
+            if args == ("status", "--porcelain", "--untracked-files=normal")
+            else (_ for _ in ()).throw(AssertionError(f"unexpected git query: {args}"))
+        ),
+    )
+
+    def fake_git_run(command, **_kwargs):
+        outputs = {
+            ("git", "rev-parse", "HEAD"): f"{source_sha}\n",
+            ("git", "branch", "--show-current"): f"{TASK41_BRANCH}\n",
+            ("git", "status", "--porcelain", "--untracked-files=normal"): "",
+        }
+        return SimpleNamespace(returncode=0, stdout=outputs[tuple(command)], stderr="")
+
+    monkeypatch.setattr(watchdog.subprocess, "run", fake_git_run)
+    environment = {
+        "TASK41_P0_STRICT_EXECUTION": "1",
+        "TASK41_P0_CONTRACT_PATH": str(contract_path.resolve()),
+        "TASK41_P0_CONTRACT_SHA256": contract_sha,
+    }
+    campaign = SimpleNamespace(path=window_path.resolve(), sha256=window_sha)
+    validated = watchdog._validate_campaign_closeout_authorization(
+        command=command,
+        campaign=campaign,
+        authorization=authorization,
+        worker_environment=environment,
+    )
+    assert validated == authorization
+
+    wrong_case_authorization = dict(authorization)
+    wrong_case_authorization["checker_kind"] = (
+        "task41_p0_independent_full_a6_checker"
+        if case_id == "A2"
+        else "task41_p0_a2_independent_p6_iterative_checker"
+    )
+    with pytest.raises(ValueError, match="registered Task41 checker for its contract case"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=command,
+            campaign=campaign,
+            authorization=wrong_case_authorization,
+            worker_environment=environment,
+        )

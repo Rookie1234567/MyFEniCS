@@ -20,6 +20,13 @@ import numpy as np
 TASK41_MODEL_ID = "task41extra_phi90_p50x50_g17x20"
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_G13_A1_RUN_ID = "task41extra_g13_p6_phi90_direct_a1"
+TASK41_G13_A2_RUN_ID = "task41extra_g13_p6_phi90_iterative_a2"
+TASK41_G13_A2_INPUT_RELATIVE = (
+    "input/task41extra_phi90_p50x50_g17x20/g13_p6_iterative_a2.dat"
+)
+TASK41_G13_A2_PRECONDITIONER = (
+    "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1"
+)
 TASK41_G13_GEOMETRY_IDENTITY = "task41extra_g13_rectangular_no_void"
 TASK41_MUMPS_EXACT_ICNTL = {2: 0, 3: 6, 4: 2, 10: 0, 22: 0, 35: 0}
 
@@ -91,6 +98,10 @@ def task41_payload_errors(payload: Mapping[str, Any]) -> list[str]:
         return []
 
     errors: list[str] = []
+    run_id = payload.get("run_id")
+    is_a1 = run_id == TASK41_G13_A1_RUN_ID
+    is_a2 = run_id == TASK41_G13_A2_RUN_ID
+    case_label = "A1" if is_a1 else "A2"
 
     def section(name: str) -> Mapping[str, Any]:
         value = payload.get(name)
@@ -107,16 +118,20 @@ def task41_payload_errors(payload: Mapping[str, Any]) -> list[str]:
                 if not isinstance(actual, (int, float)) or isinstance(actual, bool) or not math.isclose(
                     float(actual), float(expected), rel_tol=0.0, abs_tol=1.0e-12
                 ):
-                    errors.append(f"{section_name}.{key} does not match Task41 G13 A1")
+                    errors.append(
+                        f"{section_name}.{key} does not match Task41 G13 {case_label}"
+                    )
             elif actual != expected:
-                errors.append(f"{section_name}.{key} does not match Task41 G13 A1")
+                errors.append(
+                    f"{section_name}.{key} does not match Task41 G13 {case_label}"
+                )
 
-    if payload.get("run_id") != TASK41_G13_A1_RUN_ID:
+    if not (is_a1 or is_a2):
         errors.append("run_id is not a registered Task41 case")
     if payload.get("comparison_group") != TASK41_COMPARISON_GROUP:
-        errors.append("comparison_group does not match Task41 G13 A1")
+        errors.append("comparison_group does not match Task41 G13 A1/A2")
     if payload.get("dimension") != 3:
-        errors.append("Task41 G13 A1 requires dimension=3")
+        errors.append("Task41 G13 A1/A2 requires dimension=3")
 
     check(
         "geometry",
@@ -137,7 +152,7 @@ def task41_payload_errors(payload: Mapping[str, Any]) -> list[str]:
     )
     geometry = section("geometry")
     if geometry.get("air_void_box_nm") is not None or geometry.get("cell_notch") is not None:
-        errors.append("Task41 G13 A1 must not contain a void or notch")
+        errors.append(f"Task41 G13 {case_label} must not contain a void or notch")
 
     check(
         "materials",
@@ -182,11 +197,36 @@ def task41_payload_errors(payload: Mapping[str, Any]) -> list[str]:
             "use_pml": False,
         },
     )
-    check("method", {"kind": "full3d_direct"})
-    check(
-        "solver",
-        {"linear_solver": "direct", "direct_solver_profile": "mumps_exact"},
-    )
+    if is_a1:
+        check("method", {"kind": "full3d_direct"})
+        check(
+            "solver",
+            {"linear_solver": "direct", "direct_solver_profile": "mumps_exact"},
+        )
+    elif is_a2:
+        check("method", {"kind": "full3d_iterative"})
+        check(
+            "solver",
+            {
+                "linear_solver": "iterative",
+                "ksp_type": "fgmres",
+                "preconditioner": TASK41_G13_A2_PRECONDITIONER,
+                "stage": "TASK41_A2",
+                "initial_guess": "zero",
+                "restart": 32,
+                "max_iterations": 2048,
+                "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+                "outer_restart": 0,
+                "physical_operator_backend": "isotropic_sum_factorized_n1e_v26",
+                "h6_backend_rule": "direct_selected_backend_same_apply_and_power10",
+                "thread_contract": "mpi1_omp1_blas1_v26",
+                "task40_reference_pc_strategy": (
+                    "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
+                ),
+                "task40_q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+                "task40_factor_lifecycle_strategy": "ALL_Q_RESIDENT",
+            },
+        )
     check(
         "output",
         {
@@ -210,6 +250,8 @@ def task41_payload_errors(payload: Mapping[str, Any]) -> list[str]:
             "require_zero_swap": True,
         },
     )
+    if is_a2:
+        check("execution", {"memory_limit_gb": 1536.0})
     if errors:
         return errors
     return []

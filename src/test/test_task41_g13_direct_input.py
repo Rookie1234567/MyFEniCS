@@ -13,6 +13,9 @@ import pytest
 from src.common.modes_3d import outgoing_port_modes_3d
 from src.geometry.task41_phi90_profile import (
     TASK41_G13_A1_RUN_ID,
+    TASK41_G13_X_AXIS_NM,
+    TASK41_G13_Y_AXIS_NM,
+    TASK41_G13_Z_AXIS_NM,
     TASK41_G13_GEOMETRY_IDENTITY,
     TASK41_MODEL_ID,
     TASK41_SI_INDEX_BY_WAVELENGTH_NM,
@@ -25,10 +28,21 @@ from src.io.input_validation import (
     load_and_resolve,
     simulation_config_3d_from_normalized,
 )
+from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
+from src.solvers.task40_v10_p6_yorbit import (
+    _task40_v10_regular_reference_cfg,
+    _task40_v30_ordered_mode_key_sha256,
+    _validate_task41_a2_q_csr_identity,
+)
+from src.solvers.task40_v10_p6_periodic_profile import (
+    TASK41_G13_A2_P6_PROFILE,
+    validate_task41_g13_a2_mode_inventory,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/task41extra_phi90_p50x50_g17x20/g13_p6_direct_a1.dat"
+A2_INPUT = ROOT / "input/task41extra_phi90_p50x50_g17x20/g13_p6_iterative_a2.dat"
 
 
 def _payload():
@@ -103,6 +117,47 @@ def test_task41_g13_resolves_new_physics_mesh_and_mode_inventory():
     assert all(np.all(np.isfinite(mode.k_vector)) for mode in modes)
     assert all(np.all(np.isfinite(mode.e_vector)) for mode in modes)
     assert all(np.all(np.isfinite(mode.h_vector)) for mode in modes)
+
+
+def test_task41_regular_p6_reference_fills_period_y_without_changing_target():
+    cfg = simulation_config_3d_from_normalized(_payload())
+
+    reference = _task40_v10_regular_reference_cfg(cfg, fill_y_period=True)
+    unchanged = _task40_v10_regular_reference_cfg(cfg, fill_y_period=False)
+
+    assert cfg.grating_width_y == 20.0
+    assert reference.grating_width_y == cfg.period_y == 50.0
+    assert unchanged.grating_width_y == 20.0
+    assert reference.air_void_box_nm is None
+    assert reference.cell_notch is None
+    assert reference.geometry_identity.endswith(".regular_reference")
+
+
+def test_task41_a2_maps_live_168_modes_to_ten_q_and_five_sectors():
+    cfg = simulation_config_3d_from_normalized(_payload())
+    modes = tuple(outgoing_port_modes_3d(cfg))
+    axes = {
+        "x": TASK41_G13_X_AXIS_NM,
+        "y": TASK41_G13_Y_AXIS_NM,
+        "z": TASK41_G13_Z_AXIS_NM,
+    }
+    contexts = validate_task41_g13_a2_mode_inventory(modes, cfg, axes)
+    profile = TASK41_G13_A2_P6_PROFILE
+
+    assert len(modes) == profile.mode_count == 168
+    assert profile.q_count == 10
+    assert profile.replication_count == 5
+    assert profile.q_port_counts == (4, 0, 0, 12, 20, 28, 28, 28, 28, 20)
+    assert profile.sector_port_counts == (32, 28, 28, 40, 40)
+    assert [context.global_q_indices for context in contexts] == [
+        (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)
+    ]
+    covered = np.concatenate(
+        [context.original_mode_indices for context in contexts]
+    )
+    np.testing.assert_array_equal(np.sort(covered), np.arange(168))
+    assert len(np.unique(covered)) == 168
+    assert profile.augmented_rows_per_q[1:3] == (28440, 28440)
 
 
 def test_task41_worker_contract_rejects_physics_and_identity_drift():
@@ -1028,3 +1083,36 @@ def test_task41_tiny_complex_mumps_staged_call_chain(tmp_path, monkeypatch):
         rhs.destroy()
         exact.destroy()
         matrix.destroy()
+
+def test_task41_a2_q_csr_identity_rejects_wrong_ordered_mode_hash():
+    payload = load_and_resolve(A2_INPUT).as_jsonable()
+    cfg = simulation_config_3d_from_normalized(payload)
+    modes, rows, mode_manifest_sha256 = build_dynamic_mode_inventory(cfg)
+    identity = {
+        "scientific_input_sha256": "a" * 64,
+        "ordered_mode_key_sha256": _task40_v30_ordered_mode_key_sha256(modes),
+        "mode_manifest_sha256": mode_manifest_sha256,
+        "execution_identity": {
+            "source_sha": "b" * 40,
+            "window_sha256": "c" * 64,
+        },
+    }
+    inventory = (modes, rows, mode_manifest_sha256)
+
+    checked = _validate_task41_a2_q_csr_identity(
+        TASK41_G13_A2_P6_PROFILE,
+        identity,
+        modes=modes,
+        mode_inventory=inventory,
+    )
+    assert checked["mode_count"] == TASK41_G13_A2_P6_PROFILE.mode_count
+    assert checked["ordered_mode_key_sha256"] == identity["ordered_mode_key_sha256"]
+
+    wrong_mode_hash = dict(identity, ordered_mode_key_sha256="d" * 64)
+    with pytest.raises(ValueError, match="ordered modes differ"):
+        _validate_task41_a2_q_csr_identity(
+            TASK41_G13_A2_P6_PROFILE,
+            wrong_mode_hash,
+            modes=modes,
+            mode_inventory=inventory,
+        )

@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 from typing import Any, Mapping, Sequence
 
 import numpy as np
@@ -2471,6 +2472,7 @@ def verify_v10_output_bundle(
     v18_ny8_row_tile_allocation_ledger = None
     v18_ny8_dispatch_binding = None
     v19_one_q_factor_lifecycle = None
+    task41_a2_dispatch_binding = None
     packet_identity_map = (
         packet_identity if isinstance(packet_identity, Mapping) else {}
     )
@@ -2493,6 +2495,12 @@ def verify_v10_output_bundle(
     has_registered_v20_profile = (
         isinstance(packet_profile, str) and packet_profile in TASK40_V20_V22_P6_PROFILES
     )
+    from src.geometry.task41_phi90_profile import (
+        TASK41_G13_A2_PRECONDITIONER,
+        TASK41_G13_A2_RUN_ID,
+    )
+
+    is_task41_a2_profile = packet_profile == TASK41_G13_A2_PRECONDITIONER
     if has_registered_v20_profile:
         from src.solvers.task40_v20_registry import task40_v20_case
 
@@ -2519,6 +2527,74 @@ def verify_v10_output_bundle(
         v16_allocation_ledger = _verify_v16_allocation_admission_ledger(
             path.parent, worker_summary
         )
+    elif is_task41_a2_profile:
+        if not isinstance(packet_identity, Mapping):
+            raise ValueError("Task41 A2 output is missing its run identity")
+        source_sha = packet_identity.get("source_sha")
+        run_id = packet_identity.get("run_id")
+        stage = packet_identity.get("stage")
+        strategy = "ROW_TILE_BOUNDED_CSR_V17"
+        if (
+            packet_profile != TASK41_G13_A2_PRECONDITIONER
+            or run_id != TASK41_G13_A2_RUN_ID
+            or stage != "TASK41_A2"
+            or expected_channel_count != 168
+            or packet_strategy != strategy
+            or scientific_strategy != strategy
+            or not isinstance(source_sha, str)
+            or re.fullmatch(r"[0-9a-f]{40}", source_sha) is None
+            or any(
+                packet_identity.get(field) != identity.get(field)
+                for field in ("source_sha", "input_sha256", "physical_model_sha256")
+            )
+        ):
+            raise ValueError("Task41 A2 output identity differs from its registered run/profile/strategy")
+        run_manifest_path = path.parent / "run_manifest.json"
+        summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
+        if not run_manifest_path.is_file() or not summary_path.is_file():
+            raise ValueError("Task41 A2 output is missing its adjacent run manifest or worker summary")
+        run_manifest = json.loads(run_manifest_path.read_text(encoding="utf-8"))
+        worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary_identity = worker_summary.get("scientific_identity")
+        authority = worker_summary.get("campaign_authority")
+        comparison = worker_summary.get("task41_a1_a2_comparison")
+        if (
+            run_manifest.get("source_sha") != source_sha
+            or run_manifest.get("run_id") != run_id
+            or worker_summary.get("source_sha") != source_sha
+            or worker_summary.get("run_id") != run_id
+            or worker_summary.get("profile") != packet_profile
+            or worker_summary.get("stage") != stage
+            or worker_summary.get("q_assembly_strategy") != strategy
+            or not isinstance(summary_identity, Mapping)
+            or any(
+                summary_identity.get(field) != identity.get(field)
+                for field in ("source_sha", "input_sha256", "physical_model_sha256")
+            )
+            or not isinstance(authority, Mapping)
+            or authority.get("case_id") != "A2"
+            or not isinstance(authority.get("task41_contract_sha256"), str)
+            or re.fullmatch(r"[0-9a-f]{64}", authority["task41_contract_sha256"]) is None
+            or not isinstance(comparison, Mapping)
+            or comparison.get("schema") != "task41.p0.a1_a2_comparison.v1"
+            or comparison.get("a1_binding_sha256")
+            != authority.get("a1_comparison_binding_sha256")
+            or identity.get("task41_a1_a2_comparison") != comparison
+        ):
+            raise ValueError("Task41 A2 worker summary differs from its contract/comparison output identity")
+        task41_a2_dispatch_binding = {
+            "source_sha": source_sha,
+            "profile_identity": packet_profile,
+            "run_id": run_id,
+            "stage": stage,
+            "q_assembly_strategy": strategy,
+            "task41_contract_sha256": authority["task41_contract_sha256"],
+            "a1_comparison_binding_sha256": authority["a1_comparison_binding_sha256"],
+            "worker_summary_binding_passed": True,
+            "run_manifest_binding_passed": True,
+            "a1_a2_comparison_packet_bound": True,
+            "registered_task40_v17_profile_required": False,
+        }
     elif (
         packet_strategy == "ROW_TILE_BOUNDED_CSR_V17"
         or scientific_strategy == "ROW_TILE_BOUNDED_CSR_V17"
@@ -2687,6 +2763,7 @@ def verify_v10_output_bundle(
         "v18_ny8_row_tile_allocation_admission_ledger": v18_ny8_row_tile_allocation_ledger,
         "v18_ny8_dispatch_binding": v18_ny8_dispatch_binding,
         "v19_one_q_factor_lifecycle": v19_one_q_factor_lifecycle,
+        "task41_a2_dispatch_binding": task41_a2_dispatch_binding,
         "operator_reapplied_by_checker": False,
         "status": "PASS",
     }
