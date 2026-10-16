@@ -2940,4 +2940,16 @@ D13 的旧 Y/Y2/Y3 均使用三处 `max(1e-30, 1e-13 × global_maximum)` sparse 
 
 比较混合了 legacy cutoff 与 relative-only policy，因此不能作为同算子网格收敛证书。canonical pillar sidewall tangential trace `NOT_MEASURED`，full parent DtN `FULL_DTN_NOT_VERIFIED`，authority 为 `AUTHORITY_LIMITED`。原 V4/V5 `FAIL/OPEN`、legacy projection audit false 均保留；D5/M5、Y4 及额外 FE/factor 未运行。
 
-下一项仅建议在已有 Y3 `[6,48,14]`、同一 R13/q28/q15 上采用 relative-only 做一次 y-only 对照；建议尚未执行，不自动启动 Y4、D5 或端口扩展。详细结果、所有 612 模态和资源/耗时账见[Task40 outcomes summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md)、[本轮 response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_relative_cutoff_followup.md)、[比较 JSON](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_relative_cutoff_comparison_v1.json)与[逐模 CSV](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_relative_cutoff_all_612_modes_v1.csv)。
+当时建议在已有 Y3 `[6,48,14]`、同一 R13/q28/q15 上采用 relative-only 做一次 y-only 对照；该建议已由用户后续授权并完成，具体结果见下节。详细结果、所有 612 模态和资源/耗时账见[Task40 outcomes summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md)、[Y2 response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_relative_cutoff_followup.md)、[比较 JSON](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_relative_cutoff_comparison_v1.json)与[逐模 CSV](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y_y2_y3_relative_cutoff_all_612_modes_v1.csv)。
+
+### Task40para 后续：同策略 relative-only Y3（2026-10-17）
+
+按用户授权，在 Y2 relative-only 后完成唯一 Y3 `[6,48,14]` / 4032-cell p6 condensed-direct 场；clean source `8faf8094e5309e7e7c0f0a094276cbacb31c1a00`，612 R13 模式SHA `1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e`，q28表面积分、q15/default体积分与Y2相同。Y3凝聚残差`1.0770e-11`、active-rectangle A6 `1.2994e-9`、energy closure `5.7914e-11`，均过原场门；结果仍为`AUTHORITY_LIMITED`，不是完整DtN资格。
+
+Y2→Y3同策略比较的总R差`8.7031e-10`、总T差`9.6121e-11`、A_volume差`6.8655e-10`；612个boundary outgoing复幅相对L2差`1.8483e-9`，同坐标E/H差`2.8365e-7/5.8524e-7`，未做整体相位拟合。Y3整树RSS峰`179617648640 B`、task swap峰0、PSS关闭。八个成功D13 direct场累计workflow墙钟`23243.808540 s`，不是CPU时间，RSS峰不可跨场相加。
+
+| 状态 | 边界与证据 |
+|---|---|
+| measured | 同策略Y2/Y3有限R13结果接近；逐模R/T、复边界幅值、场样本和资源摘要在[Task40 outcomes summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md)、[response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_y2_y3_same_relative_only.md)及[612-mode CSV](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y2_y3_same_relative_only_all_612_modes_v1.csv) |
+| not established | `FULL_DTN_NOT_VERIFIED`、canonical方柱侧壁`NOT_MEASURED`；原V4/V5 max-facet `FAIL/OPEN`保留。旧场与新场仍有cutoff-policy混合，不把混合比较称同算子收敛 |
+| not run | Y4、D5/M5、reference-tail扩展及额外FE/factor；本次同策略比较后不自动启动下一场 |

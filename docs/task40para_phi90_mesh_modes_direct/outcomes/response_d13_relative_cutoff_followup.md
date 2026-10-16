@@ -1,5 +1,7 @@
 # D13 relative-only Y2 离线收口回应
 
+> 历史快照：本文记录 relative-only Y2 完成时的阶段状态；当时建议的同策略 Y3 已在后续获准并完成，当前对照与累计资源以 [Y2/Y3 同策略 response](response_d13_y2_y3_same_relative_only.md) 和 [outcomes summary](summary.md) 为准。
+
 本回应补充此前 D13 的 Y/Y2/Y3 比较，并记录同一 Y2 网格上将端口稀疏项筛选改为尺度齐次 relative-only 后的完整 direct 场。这里的“尺度齐次”指筛选只按本次投影量相对最大值判断，不再使用固定 `1e-30` 绝对 floor。它修正的是端口稀疏提取的尺度问题，不改变材料、网格、R13 模态、q28 表面积分或 p6 凝聚直接求解。旧 run、旧 raw audit 和原 V4/V5 FAIL 均原样保留。
 
 ## 本轮范围和结果
@@ -39,9 +41,9 @@ Y/Y2/Y3 的 legacy 网格比较显示 Y2 的 612 模态边界幅值 outlier；�
 
 ## 证据读取与资源总账
 
-最终分析使用四个小 sample NPZ、模态 JSON、direct summary 和新 Y2 retained alpha。写出期间两次分析尝试在产物写入阶段失败，最终导出又读取了样本；因此这四个 NPZ 和小 alpha 在本轮各经历三次读取尝试，本回应不宣称严格只读一次。未读 104 MB VTU、未重扫 `resources.jsonl`，且未读取更大的 recovered-storage coefficient 文件。新 Y2 先前已完成的一次 terminal resource-stream 审计见[终态回执](../../../tmp/task40_d13_y2_scale_homogeneous_launch_v1/terminal_receipt_20261017.json)。
+最终分析使用四个小 sample NPZ、模态 JSON、direct summary 和新 Y2 retained alpha。写出期间两次分析尝试在产物写入阶段失败，最终导出又读取了样本；因此这四个 NPZ 和小 alpha 在本轮各经历三次读取尝试，本回应不宣称严格只读一次。未读 104 MB VTU、未重扫 `resources.jsonl`，且未读取更大的 recovered-storage coefficient 文件。新 Y2 先前已完成的一次 terminal resource-stream 审计见[终态回执](../../../../tmp/task40_d13_y2_scale_homogeneous_launch_v1/terminal_receipt_20261017.json)。该回执位于 ignored `tmp/`，远端读者可能无法访问；tracked compact 事实见 [Y2/Y3 同策略比较 JSON](records/d13_y2_y3_same_relative_only_comparison_v1.json)。
 
-七个成功 D13 direct 场的 workflow 墙钟累计 `15,852.480275410926 s`（`4.403466743 h`），这是分场墙钟相加；不是 CPU 时间。最大单场 RSS 是 Y3 的 `166,464,983,040 B`，RSS 不跨 run 相加。分场峰值和 task swap 为零的记录见[outcomes summary](summary.md)。不包含 setup 失败、offline analysis、saved-field diagnostics 的成本。
+截至本文快照，七个成功 D13 direct 场的 workflow 墙钟累计 `15,852.480275410926 s`（`4.403466743 h`），这是分场墙钟相加；不是 CPU 时间。最大单场 RSS 是当时的 legacy Y3 `166,464,983,040 B`，RSS 不跨 run 相加。后续 relative-only Y3 已加入总账，最新累计见 [outcomes summary](summary.md)。不包含 setup 失败、offline analysis、saved-field diagnostics 的成本。
 
 ## 保留项和下一步
 
@@ -49,6 +51,6 @@ Y/Y2/Y3 的 legacy 网格比较显示 Y2 的 612 模态边界幅值 outlier；�
 - `FULL_DTN_NOT_VERIFIED`、`AUTHORITY_LIMITED` 保持；不把有限 R13 端口输出称为完整 DtN 或连续解 qualification。
 - canonical pillar sidewall trace 为 `NOT_MEASURED`；水平采样面的 Ht 不能替代它。
 - D5/M5、Y4、额外 FE/factor 未运行。
-- 唯一建议的下一项是已有 `[6,48,14]` Y3 网格、相同 R13/q28/q15 和 relative-only cutoff 的一次重算，与新 Y2 做同策略 y 比较。该建议未执行，不自动启动 Y4、D5或模式扩展。
+- 当时唯一建议的下一项是已有 `[6,48,14]` Y3 网格上的 relative-only 重算；该项已获后续授权并完成，当前结果见[同策略 Y2/Y3 response](response_d13_y2_y3_same_relative_only.md)。本文件其余数据保留为当时的阶段快照，不自动授权 Y4、D5 或模式扩展。
 
 分析脚本、逐模 CSV 和 provenance-rich JSON 均列于[outcomes summary](summary.md)末尾；本轮无源码改动、无新测试、无新 FE。

@@ -1739,7 +1739,7 @@ V0/V1/V2 的小型证据整理支持 p6 的 x 向数值色散解释，但没有�
 
 [统一审阅交接](task39extra_para_workstation_capacity/review_handoff_0p7nm_balh_20261016.md)及[hash绑定compact](task39extra_para_workstation_capacity/outcomes/balh_review_20261016/balh_evidence_compact.json)保存首失败、取证、P64修复、端口修复及最后A4失败。物理精度与迭代修复分别待审；最新D结果保留原有总账条目。
 
-## 3.52 Task40para：13.5 nm Y2 relative-only cutoff follow-up（2026-10-17）
+## 3.52 Task40para：13.5 nm Y2 relative-only cutoff follow-up（2026-10-17，历史快照）
 
 | 场 / 身份 | 结果 | 资格与证据 |
 |---|---|---|
@@ -1748,4 +1748,12 @@ V0/V1/V2 的小型证据整理支持 p6 的 x 向数值色散解释，但没有�
 | retained alpha / recovered projection | 同一 boundary phase P 后 612-mode 差 L2 `1.9337e-15`；top `±4,n=0,p` 独立 full-primal 同单位差 `5.12e-16/6.26e-16` | 局部一致性见证；legacy raw audit `false` 保留，不是 full-DtN gate |
 | D13 累计资源 | 七个成功 direct run workflow 墙钟合计 `15,852.48 s`；最大单场 RSS `166,464,983,040 B`；task swap peak均为0 | RSS不跨 run 相加。资源明细、全部 612 复幅值/逐模 R/T 和同坐标 E/H/Ht 对照见 [summary/CSV/JSON](task40para_phi90_mesh_modes_direct/outcomes/summary.md) 与 [response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_relative_cutoff_followup.md) |
 
-canonical pillar sidewall trace `NOT_MEASURED`、`FULL_DTN_NOT_VERIFIED`、D13 `AUTHORITY_LIMITED`；原 V4/V5 saved-field max-facet `FAIL/OPEN` 不改写。下一项建议仅为既有 Y3 `[6,48,14]` 同策略 relative-only y-only 对照，未运行；Y4/D5与新 FE/factor均 `NOT_RUN`。
+canonical pillar sidewall trace `NOT_MEASURED`、`FULL_DTN_NOT_VERIFIED`、D13 `AUTHORITY_LIMITED`；原 V4/V5 saved-field max-facet `FAIL/OPEN` 不改写。此处“Y3未运行”是当时状态；后续同策略 Y3 已完成，见3.53。Y4/D5与额外FE/factor仍未运行。
+
+## 3.53 Task40para：13.5 nm Y2/Y3 同 relative-only y 对照（2026-10-17）
+
+用户授权在 relative-only Y2 后运行唯一同策略 Y3 `[6,48,14]` / 4032 cells；x/z轴、612个有序R13模式、surface q28、volume q15/default与稀疏策略身份保持一致，只细化y。clean source为`8faf8094e5309e7e7c0f0a094276cbacb31c1a00`。Y3自然exit 0，凝聚残差`1.0770119658e-11`、恢复场active-rectangle A6 `1.2993912130e-9`、一次同因子校正、energy closure `5.7914e-11`；R/T/A_volume=`0.251355662436/0.057128824230/0.691515513276`。峰值整树RSS `179617648640 B`，task swap峰0，PSS禁用；宿主全局`pswpin +3 pages`未归因到本任务。
+
+Y2→Y3同策略对照中，R、R00,s、T、A_volume差分别为`8.7031e-10`、`8.7024e-10`、`9.6121e-11`、`6.8655e-10`；612模式boundary outgoing复振幅相对L2差`1.8483e-9`，同坐标无相位拟合E/H相对差`2.8365e-7/5.8524e-7`。raw倏逝振幅差另列，受指数尺度影响。physical/resolved identity因包含y网格/profile provenance而不同，比较确认其余物理输入一致，x/z轴SHA相同。
+
+此同策略有限R13比较不验证完整DtN或连续网格收敛。`FULL_DTN_NOT_VERIFIED`、canonical pillar sidewall `NOT_MEASURED`、D13 `AUTHORITY_LIMITED`与原V4/V5 saved-field `FAIL/OPEN`均保持；Y4/D5/reference-tail未运行。八个成功D13 direct场累计workflow墙钟`23243.808540 s`（非CPU时间），最高单场RSS为本Y3的`179617648640 B`，不跨run相加。逐模结果、身份、资源与脚本hash见[Task40 summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md)、[同策略response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_y2_y3_same_relative_only.md)及[tracked JSON](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y2_y3_same_relative_only_comparison_v1.json)。
