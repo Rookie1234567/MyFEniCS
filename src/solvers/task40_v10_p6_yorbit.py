@@ -41,6 +41,56 @@ SOURCE_LINEAGE = {
     "trace_restriction_blob": "ff902477322a1067b376ea015a95f2dfcb162fde",
     "local_adaptation": "p6 inventory, local mainline MUMPS, and carrier interfaces",
 }
+
+
+def _task40_v33_surface_checkpoint_for_scope(
+    base: Mapping[str, Any] | None,
+    *,
+    scope: str,
+    twist_index: int | None = None,
+) -> dict[str, Any] | None:
+    """Bind a resumable carrier stream to one exact local/global FE owner."""
+    if base is None:
+        return None
+    if (
+        not isinstance(base, Mapping)
+        or set(base) != {"root", "identity"}
+        or not isinstance(base.get("identity"), Mapping)
+        or not isinstance(base.get("root"), (str, os.PathLike))
+    ):
+        raise ValueError("V33 surface checkpoint base must bind one root and execution identity")
+    identity = dict(base["identity"])
+    required_identity = {
+        "source_sha",
+        "input_sha256",
+        "staged_input_sha256",
+        "campaign_window_sha256",
+        "execution_contract_sha256",
+    }
+    if required_identity - set(identity) or any(
+        not isinstance(identity.get(key), str) or not identity[key]
+        for key in required_identity
+    ):
+        raise ValueError("V33 surface checkpoint identity is incomplete")
+    if scope == "global":
+        if twist_index is not None:
+            raise ValueError("global V33 surface checkpoint cannot name a twist")
+        scope_identity = {"surface_scope": "global", "twist_index": None}
+        directory = "global"
+    elif scope == "local":
+        if type(twist_index) is not int or twist_index < 0:
+            raise ValueError("local V33 surface checkpoint requires a nonnegative twist index")
+        scope_identity = {"surface_scope": "local", "twist_index": twist_index}
+        directory = f"twist_{twist_index}"
+    else:
+        raise ValueError("V33 surface checkpoint scope must be global or local")
+    root = Path(base["root"]).resolve()
+    return {
+        "path": str(root / directory / "carrier_surface_functionals.bin"),
+        "identity": {**identity, **scope_identity},
+    }
+
+
 @dataclass
 class YOrbitEntities:
     """Complete geometric native moment blocks, with no global R/F/Q matrix.
@@ -4949,6 +4999,7 @@ def build_task40_v10_p6_local_sector_owner(
     transform_bank: Any | None = None,
     share_transform_bank: bool = False,
     saved_port_owner: Mapping[str, Any] | None = None,
+    surface_functional_checkpoint: Mapping[str, Any] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Build one reusable local FE/recovery owner before the global reference.
@@ -5157,6 +5208,7 @@ def build_task40_v10_p6_local_sector_owner(
                 jit_options=jit_options,
                 dtn_phase_gauge=BOUNDARY_PLANE,
                 verify_dtn_quadrature=True,
+                surface_functional_checkpoint=surface_functional_checkpoint,
                 research_phase_override=phase_override,
                 stage_callback=stage_callback,
             )
@@ -5594,6 +5646,7 @@ def build_task40_v10_p6_reference_inverse(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     v30_factor_config: Mapping[str, Any] | None = None,
     factor_output_directory: str | None = None,
+    surface_functional_checkpoint: Mapping[str, Any] | None = None,
     qualified_q_csr_provider: Any | None = None,
     qualified_q_csr_identity: Mapping[str, Any] | None = None,
     qualified_q_csr_coverage_phase: str = "all_q",
@@ -5794,6 +5847,11 @@ def build_task40_v10_p6_reference_inverse(
                 jit_options=jit_options,
                 dtn_phase_gauge=BOUNDARY_PLANE,
                 verify_dtn_quadrature=True,
+                surface_functional_checkpoint=(
+                    _task40_v33_surface_checkpoint_for_scope(
+                        surface_functional_checkpoint, scope="global"
+                    )
+                ),
                 stage_callback=global_physical_stage if event is not None else None,
             )
             owner["global_bundle"] = global_bundle
@@ -6073,8 +6131,14 @@ def build_task40_v10_p6_reference_inverse(
         for context in sector_contexts:
             pending_sector = prebuilt_owners.pop(int(context.twist_index), None)
             if pending_sector is None and sector_first and context.twist_index == 0 and late_twist0_owner_preparer is not None:
+                twist0_surface_checkpoint = _task40_v33_surface_checkpoint_for_scope(
+                    surface_functional_checkpoint,
+                    scope="local",
+                    twist_index=0,
+                )
                 late_owner_result = late_twist0_owner_preparer(
-                    transform_bank=transform_bank
+                    transform_bank=transform_bank,
+                    surface_functional_checkpoint=twist0_surface_checkpoint,
                 )
                 if (
                     not isinstance(late_owner_result, tuple)
@@ -6102,6 +6166,13 @@ def build_task40_v10_p6_reference_inverse(
                     jit_options=jit_options,
                     transform_bank=transform_bank,
                     share_transform_bank=share_transform_bank,
+                    surface_functional_checkpoint=(
+                        _task40_v33_surface_checkpoint_for_scope(
+                            surface_functional_checkpoint,
+                            scope="local",
+                            twist_index=int(context.twist_index),
+                        )
+                    ),
                     stage_callback=(
                         (lambda facts: event("task40_v33_local_sector_owner_phase", facts))
                         if sector_first and event is not None
@@ -6454,6 +6525,11 @@ def build_task40_v10_p6_reference_inverse(
                 jit_options=jit_options,
                 dtn_phase_gauge=BOUNDARY_PLANE,
                 verify_dtn_quadrature=True,
+                surface_functional_checkpoint=(
+                    _task40_v33_surface_checkpoint_for_scope(
+                        surface_functional_checkpoint, scope="global"
+                    )
+                ),
                 stage_callback=global_physical_stage if event is not None else None,
             )
             owner["global_bundle"] = global_bundle

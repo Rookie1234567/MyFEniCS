@@ -638,3 +638,282 @@ def test_checker_is_read_only_and_does_not_import_execution_stack() -> None:
     assert "mpi4py" not in source
     assert "src.solvers" not in source
     assert "run_task038_full3d_t3" not in source
+
+
+def test_resumable_carrier_progress_reports_only_durable_appends(tmp_path, monkeypatch):
+    import json
+    from types import SimpleNamespace
+
+    import src.solvers.fullspace_dtn_action as module
+
+    modes = tuple(
+        SimpleNamespace(side="top", m=index, n=0, polarization="s")
+        for index in range(2)
+    )
+    mode_identities = tuple(_identity(index, 1.0) for index in range(2))
+    mode_rows = tuple({"projection_denominator": 1.0} for _ in modes)
+    physical_sha = "a" * 64
+    assembly_sha = "b" * 64
+    monkeypatch.setattr(
+        module,
+        "build_ordered_mode_manifest",
+        lambda *_args: (mode_rows, b"fixture-manifest", physical_sha),
+    )
+    monkeypatch.setattr(
+        module,
+        "_resumable_carrier_mode_identity",
+        lambda *_args, **_kwargs: (
+            mode_identities,
+            np.ones(2, dtype=np.float64),
+            assembly_sha,
+            {"fixture_execution_identity": "same-window"},
+        ),
+    )
+
+    def functional_iterator(
+        _modes,
+        _assemblers,
+        _mpc,
+        _cfg,
+        *,
+        mode_indices,
+        audit,
+        progress_callback,
+        **_kwargs,
+    ):
+        audit.update(
+            physical_generator_manifest_sha256=physical_sha,
+            assembly_context_sha256=assembly_sha,
+            peak_component_cache_unique_backing_bytes=64,
+            current_component_cache_unique_backing_bytes=0,
+        )
+        for completed, index in enumerate(mode_indices, start=1):
+            entry = FullspaceDtnModeFunctional(
+                mode_key=(index, "top", index, 0, "s"),
+                coupling_rows=np.asarray([0], dtype=np.int32),
+                coupling_values=np.asarray([1.0 + index * 1.0j], dtype=np.complex128),
+                projection_rows=np.asarray([0], dtype=np.int32),
+                projection_values=np.asarray([2.0 + index * 1.0j], dtype=np.complex128),
+                normalization_h=1.0,
+                mode_identity=mode_identities[index],
+            )
+            progress_callback(
+                {
+                    "phase": "dtn_carrier_mode",
+                    "status": "PROGRESS",
+                    "completed": completed,
+                    "total": 2,
+                    "mode_index": index,
+                }
+            )
+            yield entry
+
+    monkeypatch.setattr(
+        module, "iter_fullspace_dtn_functionals_from_surface", functional_iterator
+    )
+
+    class IndexMap:
+        local_range = (0, 2)
+        size_local = 2
+        size_global = 2
+
+        @staticmethod
+        def local_to_global(rows):
+            return rows
+
+    fake_mpc = SimpleNamespace(
+        slaves=np.asarray([], dtype=np.int32),
+        function_space=SimpleNamespace(
+            mesh=SimpleNamespace(comm=MPI.COMM_SELF),
+            dofmap=SimpleNamespace(index_map=IndexMap()),
+        ),
+    )
+    stream_path = tmp_path / "carrier_surface_functionals.bin"
+    progress = []
+
+    def committed_progress(facts):
+        checkpoint = json.loads(Path(str(stream_path) + ".checkpoint.json").read_text())
+        assert facts["progress_semantics"] == "durably_committed"
+        assert facts["completed"] == facts["committed_mode_count"]
+        assert facts["generated_mode_count"] >= facts["committed_mode_count"]
+        assert checkpoint["committed_mode_count"] == facts["committed_mode_count"]
+        assert checkpoint["committed_bytes"] == facts["committed_bytes"]
+        assert stream_path.stat().st_size == facts["committed_bytes"]
+        progress.append(dict(facts))
+
+    carrier = build_fullspace_dtn_carrier_from_surface(
+        modes,
+        {},
+        fake_mpc,
+        SimpleNamespace(),
+        persistence_path=stream_path,
+        persistence_identity={
+            "source_sha": "c" * 40,
+            "input_sha256": "d" * 64,
+            "campaign_window_sha256": "e" * 64,
+        },
+        progress_callback=committed_progress,
+        progress_interval=1,
+    )
+    assert [row["committed_mode_count"] for row in progress] == [1, 2]
+    assert [row["generated_mode_count"] for row in progress] == [1, 2]
+    assert carrier.persistence_facts["committed_mode_count"] == 2
+
+
+def test_resumable_surface_stream_reopens_appends_suffix_and_rejects_bad_prefix(
+    tmp_path,
+):
+    from types import SimpleNamespace
+
+    import src.solvers.fullspace_dtn_action as module
+
+    modes = tuple(
+        SimpleNamespace(side="top", m=index, n=0, polarization="s")
+        for index in range(3)
+    )
+    mode_identities = tuple(_identity(index, h) for index, h in enumerate((1.0, 1.25, 2.5)))
+    normalization_h = (1.0, 1.25, 2.5)
+    identity = {
+        "source_sha": "a" * 40,
+        "input_sha256": "b" * 64,
+        "staged_input_sha256": "c" * 64,
+        "campaign_window_sha256": "d" * 64,
+        "surface_scope": "local",
+        "twist_index": 2,
+    }
+    stream_path = tmp_path / "surface-functionals.bin"
+
+    def stream_for(execution_identity=identity):
+        return module._ResumableSurfaceFunctionalStream(
+            stream_path,
+            identity=execution_identity,
+            modes=modes,
+            mode_identities=mode_identities,
+            normalization_h=normalization_h,
+        )
+
+    entries = (
+        FullspaceDtnModeFunctional(
+            mode_key=(0, "top", 0, 0, "s"),
+            coupling_rows=np.asarray([], dtype=np.int32),
+            coupling_values=np.asarray([], dtype=np.complex128),
+            projection_rows=np.asarray([1, 4], dtype=np.int32),
+            projection_values=np.asarray([1.0 + 2.0j, -3.0 + 0.25j]),
+            normalization_h=1.0,
+            mode_identity=mode_identities[0],
+        ),
+        FullspaceDtnModeFunctional(
+            mode_key=(1, "top", 1, 0, "s"),
+            coupling_rows=np.asarray([0, 3], dtype=np.int32),
+            coupling_values=np.asarray([0.25 - 0.5j, 2.5 + 1.25j]),
+            projection_rows=np.asarray([], dtype=np.int32),
+            projection_values=np.asarray([], dtype=np.complex128),
+            normalization_h=1.25,
+            mode_identity=mode_identities[1],
+        ),
+        FullspaceDtnModeFunctional(
+            mode_key=(2, "top", 2, 0, "s"),
+            coupling_rows=np.asarray([2], dtype=np.int32),
+            coupling_values=np.asarray([-1.5 + 0.75j]),
+            projection_rows=np.asarray([0, 5], dtype=np.int32),
+            projection_values=np.asarray([4.0 - 2.0j, 0.125 + 0.5j]),
+            normalization_h=2.5,
+            mode_identity=mode_identities[2],
+        ),
+    )
+
+    initial = stream_for()
+    assert initial.open() == ([], 0)
+    initial.append(entries[0], peak_component_cache_bytes=64)
+
+    resumed = stream_for()
+    prefix, prefix_peak = resumed.open()
+    assert len(prefix) == 1
+    assert prefix_peak == 64
+    _assert_surface_functional_equal(prefix[0], entries[0])
+    resumed.append(entries[1], peak_component_cache_bytes=32)
+    resumed.append(entries[2], peak_component_cache_bytes=128)
+
+    reopened = stream_for()
+    restored, restored_peak = reopened.open()
+    assert len(restored) == 3
+    assert restored_peak == 128
+    for actual, expected in zip(restored, entries, strict=True):
+        _assert_surface_functional_equal(actual, expected)
+
+    raw_before_rejection = stream_path.read_bytes()
+    with pytest.raises(ValueError, match="manifest identity changed"):
+        stream_for({**identity, "twist_index": 3}).open()
+    assert stream_path.read_bytes() == raw_before_rejection
+
+    stream_path.write_bytes(raw_before_rejection[:-1])
+    with pytest.raises(IOError, match="outside its committed prefix"):
+        stream_for().open()
+
+
+def _assert_surface_functional_equal(actual, expected):
+    assert actual.mode_key == expected.mode_key
+    assert actual.normalization_h == expected.normalization_h
+    assert actual.mode_identity == expected.mode_identity
+    np.testing.assert_array_equal(actual.coupling_rows, expected.coupling_rows)
+    np.testing.assert_array_equal(actual.coupling_values, expected.coupling_values)
+    np.testing.assert_array_equal(actual.projection_rows, expected.projection_rows)
+    np.testing.assert_array_equal(actual.projection_values, expected.projection_values)
+
+
+def test_resumable_carrier_identity_retains_staged_input_and_local_twist(
+    monkeypatch,
+):
+    from types import SimpleNamespace
+
+    import src.solvers.fullspace_dtn_action as module
+    import src.solvers.dtn_boundary_phase_gauge as gauge
+
+    mode = SimpleNamespace(side="top", m=1, n=-1, polarization="p")
+    cfg = SimpleNamespace(floquet_phase_x=0.125, floquet_phase_y=-0.25)
+    assembly_context = {
+        "schema": "fixture-assembly-context",
+        "source_sha256": "f" * 64,
+        "mesh": {"mesh_sha256": "a" * 64},
+        "cell_dofmap_sha256": "b" * 64,
+        "orientation": {"orientation_sha256": "c" * 64},
+        "basix_coefficients": {"basix_sha256": "d" * 64},
+        "MPC": {"mpc_sha256": "e" * 64},
+        "config_sha256": "1" * 64,
+        "gauss": {"quadrature_degree": 4},
+        "ABI": {"petsc_scalar": "complex128", "petsc_int": "int32"},
+    }
+    execution_identity = {
+        "source_sha": "2" * 40,
+        "input_sha256": "3" * 64,
+        "staged_input_sha256": "4" * 64,
+        "campaign_window_sha256": "5" * 64,
+        "surface_scope": "local",
+        "twist_index": 2,
+    }
+    monkeypatch.setattr(gauge, "assembly_projection_denominator", lambda *_args: 1.5)
+    monkeypatch.setattr(
+        gauge, "phase_gauge_descriptor", lambda *_args: {"schema": "fixture-gauge"}
+    )
+    monkeypatch.setattr(
+        module,
+        "_mode_identity",
+        lambda index, _mode, _cfg, h: {"mode_index": index, "projection_denominator": h},
+    )
+
+    _mode_identities, h_values, _assembly_sha, identity = (
+        module._resumable_carrier_mode_identity(
+            (mode,),
+            cfg,
+            phase_gauge=gauge.BOUNDARY_PLANE,
+            assembly_context=assembly_context,
+            execution_identity=execution_identity,
+            mode_rows=({"projection_denominator": 1.5},),
+            physical_manifest_sha256="6" * 64,
+        )
+    )
+
+    assert h_values.tolist() == [1.5]
+    assert identity["staged_input_sha256"] == execution_identity["staged_input_sha256"]
+    assert identity["surface_scope"] == "local"
+    assert identity["twist_index"] == 2

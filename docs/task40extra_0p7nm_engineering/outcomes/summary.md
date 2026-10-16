@@ -1,3 +1,19 @@
+## Task40extra Review V33 终态（2026-10-16，新加坡）
+
+模型为 0.7 nm、Ny=8 原尺寸非可分目标参考流程。运行复用既有 q4 资格，尝试构建 all-q reference；固定数值截止到达时仍在逐模式生成 DTN carrier。
+
+| 对象 | 方法与实际结果 | 状态与边界 |
+|---|---|---|
+| all-q reference 准备 | V33 frozen source `86574e478148db8a1dd39909ccc6455fc2ea2646`；MPI1；`dtn_carrier_mode` 最后记录 7680/8036 | `PERFORMANCE_CONTROLLED_STOP`；这是 relay 进度，不是 durable checkpoint；没有新增 q 结果、完整 reference 或新 FE 场 |
+| 时间门 | campaign 数值 cutoff 85200 s；watchdog 结束累计 85232.387040 s，launcher 观察 85232.388583 s | watchdog 对整个进程树 TERM、30 s 后 KILL，后代清场；非数值失败、非内存失败 |
+| 资源 | 同时进程树 RSS 峰 26848030720 B；job cgroup 峰 28745129984 B；task swap 0 B | PSS null；host swapin/out +49/+72 页是 WSL 全局诊断 |
+| Required checker | `NO_PARTIAL_FOOTER`；`full_pass=false`、`official_result=false` | 无 official packet/footer；未产生 official R/T/A |
+| 科学结果 | 完整 reference、full explicit residual、目标 FE 场、official R/T/A 均无新增 | 既有 q4 资格保持其原身份；7680/8036 不能续算 |
+
+T0 为 `2026-10-15T04:25:22.963327363Z`，数值截止为 `2026-10-16T04:05:22.963327363Z`，窗口 deadline 为 `2026-10-16T04:25:22.963327363Z`。窗口 SHA-256 `65276658776a76c0616fd3e6f1b16d7f8fd763410f35e934d22794daa3c7dedf`。不同范围的 elapsed 与累计扣款分开记录，完整字段和 raw hashes 见 [V33 terminal closeout](records/v33_terminal_closeout.json) 与 [V33 response](../response_v33.md)。用户已确认 V33 延时续作；新合同保留原 T0/旧账本并增加 86400 s，数值截止为 2026-10-17T04:05:22.963327363Z。源码冻结与新服务准备尚不代表新科学成果；不把已经停止的进程或无保存数据的 relay 进度视作可恢复。
+
+---
+
 ## Task40extra V32 终态（2026-10-15，新加坡）
 
 本轮把保存的 q4 矩阵与独立原生有限元作用对照，补齐了可复用的数值资格：777424×777424、581086528 槽，最大误差 **2.6835748652861403e-14 ≤ 1e-11**。这不是全参考逆或目标场通过。

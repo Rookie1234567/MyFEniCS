@@ -144,6 +144,10 @@ V33_P0_Q4_COMPLETE_METADATA_RELATIVE = (
 V33_TOTAL_SECONDS = 86_400
 V33_NUMERIC_SECONDS = 85_200
 V33_CLOSEOUT_SECONDS = 1_200
+V33_EXTENSION_SECONDS = 86_400
+V33_EXTENSION_TOTAL_SECONDS = 172_800
+V33_EXTENSION_NUMERIC_SECONDS = 171_600
+V33_EXTENSION_CLOSEOUT_SECONDS = 1_200
 V33_STAGE_SCOPE = (
     "P0_narrow_sector_first_wiring_and_integration_fixture",
     "P1_twist1_q1_q5_csr_and_native",
@@ -154,6 +158,10 @@ V33_STAGE_SCOPE = (
     "P6_supervised_checker_and_closeout",
 )
 V33_APPROVAL_SCOPE = "V33_WINDOW_86400_NUMERIC_85200_CLOSEOUT_1200"
+V33_EXTENSION_APPROVAL_SCOPE = (
+    "V33_EXTENSION_86400_ORIGINAL_T0_TOTAL_172800_NUMERIC_171600_CLOSEOUT_1200"
+)
+V33_EXTENSION_REGISTRATION_SCHEMA = "task40extra.review_v33_extension_registration.v1"
 V33_USER_APPROVAL_EVIDENCE_SCHEMA = V32_USER_APPROVAL_EVIDENCE_SCHEMA
 
 
@@ -2237,6 +2245,257 @@ def _prepare_review_approved_package(
     }
 
 
+def prepare_v33_extension_package(
+    *,
+    repo_root: str | Path,
+    parent_contract_path: str | Path,
+    extension_authorization_path: str | Path,
+    execution_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Prepare a source-bound V33 continuation with its original T0 and ledger charge."""
+    root = Path(repo_root).resolve()
+    target_root = Path(execution_root or root).resolve()
+    if target_root != root:
+        raise V31ContractError("V33 extension preparation requires the canonical execution checkout as repo_root")
+
+    parent_contract_path = Path(parent_contract_path).resolve(strict=True)
+    parent_contract, parent_contract_sha = require_v31_execution_contract(
+        parent_contract_path
+    )
+    if (
+        parent_contract.get("review")
+        != {"path": V33_REVIEW_PATH, "commit": V33_REVIEW_COMMIT, "sha256": V33_REVIEW_SHA256}
+        or parent_contract.get("registration_schema") != V33_REGISTRATION_SCHEMA
+        or parent_contract.get("status") != "USER_APPROVED"
+    ):
+        raise V31ContractError("V33 extension parent must be the exact approved original V33 contract")
+
+    authorization_path = Path(extension_authorization_path)
+    if not authorization_path.is_absolute():
+        authorization_path = root / authorization_path
+    authorization_path = authorization_path.resolve(strict=True)
+    try:
+        authorization = json.loads(authorization_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise V31ContractError("V33 extension authorization record is unreadable") from error
+    authorization_sha = hashlib.sha256(authorization_path.read_bytes()).hexdigest()
+
+    from src.runners.task40_v10_campaign import (
+        load_fixed_campaign_window,
+        verify_campaign_accounting_chain,
+        write_campaign_extension_seed,
+    )
+
+    parent_window_ref = parent_contract["execution"]["window"]
+    parent_window_path = Path(str(parent_window_ref["window_path"])).resolve(strict=True)
+    parent_window = load_fixed_campaign_window(
+        parent_window_path,
+        require_current_boot=False,
+        v31_contract=parent_contract,
+    )
+    parent_ledger_path = parent_window.accounting_path.resolve(strict=True)
+    parent_state = verify_campaign_accounting_chain(parent_window, parent_ledger_path)
+    if (
+        not isinstance(authorization, Mapping)
+        or authorization.get("schema") != "task40.v33.controller.extension_request.v1"
+        or authorization.get("status") != "AUTHORIZED_EXTENSION_REQUEST_NOT_APPLIED_TO_LIVE_PROCESS"
+        or authorization.get("controller_proposed_extension_seconds") != V33_EXTENSION_SECONDS
+        or authorization.get("original_window_sha256") != parent_window.sha256
+        or authorization.get("original_t0_utc") != parent_window.payload.get("t0_utc")
+        or authorization.get("original_numeric_cutoff_utc") != parent_window.payload.get("numeric_cutoff_utc")
+        or authorization.get("original_deadline_utc") != parent_window.payload.get("deadline_utc")
+        or authorization.get("old_window_unchanged") is not True
+        or authorization.get("numeric_process_untouched") is not True
+        or authorization.get("resource_and_math_gates_unchanged") is not True
+        or not isinstance(authorization.get("user_request"), str)
+        or "延长窗口" not in authorization["user_request"]
+    ):
+        raise V31ContractError("V33 extension authorization does not bind this original fixed window")
+
+    branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=root, text=True).strip()
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+    status = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=normal"], cwd=root, text=True
+    )
+    review_path = root / V33_REVIEW_PATH
+    if (
+        branch != V31_BRANCH
+        or status.strip()
+        or not re.fullmatch(r"[0-9a-f]{40}", head)
+        or subprocess.run(
+            ["git", "merge-base", "--is-ancestor", V33_REVIEW_COMMIT, "HEAD"],
+            cwd=root,
+            check=False,
+        ).returncode != 0
+        or not review_path.is_file()
+        or hashlib.sha256(review_path.read_bytes()).hexdigest() != V33_REVIEW_SHA256
+    ):
+        raise V31ContractError("V33 extension preparation requires the clean reviewed branch and exact review bytes")
+
+    from datetime import datetime, timezone
+    def utc_text(value_ns: int) -> str:
+        seconds, nanos = divmod(int(value_ns), 1_000_000_000)
+        stamp = datetime.fromtimestamp(seconds, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        return f"{stamp}.{nanos:09d}Z"
+
+    t0_ns = int(parent_window.t0_utc_ns)
+    cutoff_utc = utc_text(
+        t0_ns + int(V33_EXTENSION_NUMERIC_SECONDS) * 1_000_000_000
+    )
+    deadline_utc = utc_text(
+        t0_ns + int(V33_EXTENSION_TOTAL_SECONDS) * 1_000_000_000
+    )
+    source_root = root / v31_source_artifact_relative(head)
+    window_path = source_root / "campaign_window_v33.json"
+    accounting_path = source_root / "campaign_accounting_v33_extension.jsonl"
+    parent_binding = {
+        "schema": "task40extra.review_v33_window_extension.v1",
+        "extension_seconds": V33_EXTENSION_SECONDS,
+        "original_t0_utc": parent_window.payload["t0_utc"],
+        "parent_window_path": str(parent_window_path),
+        "parent_window_sha256": parent_window.sha256,
+        "parent_numeric_cutoff_utc": parent_window.payload["numeric_cutoff_utc"],
+        "parent_deadline_utc": parent_window.payload["deadline_utc"],
+        "parent_accounting_path": str(parent_ledger_path),
+        "parent_accounting_sha256": parent_state["sha256"],
+        "parent_last_sequence": int(parent_state["last_sequence"]),
+        "parent_record_count": int(parent_state["record_count"]),
+        "parent_cumulative_charged_seconds": float(parent_state["cumulative_charged_seconds"]),
+        "parent_last_sample": dict(parent_state["last_sample"]),
+        "parent_time_namespace_identity": dict(parent_state["time_namespace_identity"]),
+        "authorization_record_path": str(authorization_path),
+        "authorization_record_sha256": authorization_sha,
+        "authorization_record_status": str(authorization["status"]),
+        "authorization_recorded_utc_ns": authorization.get("recorded_utc_ns"),
+    }
+    extension_window_payload = deepcopy(dict(parent_window.payload))
+    extension_window_payload.update({
+        "campaign": "task40extra_v33_extension_all_q_reference_conditional_target_pilot",
+        "authority": "User-authorized 86400-second extension of the original Review V33 window",
+        "source_at_entry": head,
+        "review_at_registration": V33_REVIEW_COMMIT,
+        "numeric_cutoff_utc": cutoff_utc,
+        "deadline_utc": deadline_utc,
+        "campaign_seconds": V33_EXTENSION_TOTAL_SECONDS,
+        "numeric_cutoff_seconds": float(V33_EXTENSION_NUMERIC_SECONDS),
+        "closeout_reserve_seconds": V33_EXTENSION_CLOSEOUT_SECONDS,
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "extension": parent_binding,
+        "accounting_path": str(accounting_path.resolve()),
+    })
+    if window_path.exists():
+        encoded_window = _canonical_bytes(extension_window_payload)
+        if window_path.read_bytes() != encoded_window:
+            raise FileExistsError("V33 extension window already exists with different bytes; preserving it")
+        window_sha256 = hashlib.sha256(encoded_window).hexdigest()
+    else:
+        window_sha256 = _write_once(window_path, extension_window_payload)
+    if (
+        parent_window.path.read_bytes() != parent_window_path.read_bytes()
+        or hashlib.sha256(parent_window_path.read_bytes()).hexdigest() != parent_window.sha256
+    ):
+        raise V31ContractError("original V33 fixed window changed during extension preparation")
+
+    pending_directory = (
+        root / V33_PREPARATION_RELATIVE / "v33_extension_pending" / f"source_{head}"
+    )
+    pending = prepare_v33_pending_package(
+        repo_root=root,
+        output_directory=pending_directory,
+        execution_root=target_root,
+        consumer_window_sha256=window_sha256,
+    )
+    pending_contract_path = Path(str(pending["contract"]["path"])).resolve(strict=True)
+    contract = json.loads(pending_contract_path.read_text(encoding="utf-8"))
+    execution = contract["execution"]
+    window = {
+        "window_path": str(window_path.resolve()),
+        "window_sha256": window_sha256,
+        "source_at_entry": head,
+        "total_seconds": V33_EXTENSION_TOTAL_SECONDS,
+        "numeric_seconds": V33_EXTENSION_NUMERIC_SECONDS,
+        "closeout_seconds": V33_EXTENSION_CLOSEOUT_SECONDS,
+        "closeout_reserve_seconds": V33_EXTENSION_CLOSEOUT_SECONDS,
+        "t0_utc": parent_window.payload["t0_utc"],
+        "numeric_cutoff_utc": cutoff_utc,
+        "deadline_utc": deadline_utc,
+        "extension_seconds": V33_EXTENSION_SECONDS,
+        "parent_window_path": str(parent_window_path),
+        "parent_window_sha256": parent_window.sha256,
+        "parent_accounting_path": str(parent_ledger_path),
+        "parent_accounting_sha256": parent_state["sha256"],
+        "accounting_path": str(accounting_path.resolve()),
+        "authorization_record_sha256": authorization_sha,
+    }
+    extension_authorization = {
+        "schema": "task40extra.review_v33_extension_authorization.v1",
+        "status": "USER_AUTHORIZED_EXTENSION_PREPARED_NOT_STARTED",
+        "extension_seconds": V33_EXTENSION_SECONDS,
+        "window_sha256": window_sha256,
+        "parent_window_sha256": parent_window.sha256,
+        "parent_accounting_sha256": parent_state["sha256"],
+        "authorization_record_path": str(authorization_path),
+        "authorization_record_sha256": authorization_sha,
+        "accounting_path": str(accounting_path.resolve()),
+        "parent_contract_path": str(parent_contract_path),
+        "parent_contract_sha256": parent_contract_sha,
+    }
+    contract.update({
+        "status": "USER_APPROVED",
+        "registration_schema": V33_EXTENSION_REGISTRATION_SCHEMA,
+        "service_start_allowed": True,
+        "user_approval": {
+            "approved": True,
+            "scope": V33_EXTENSION_APPROVAL_SCOPE,
+            "window_sha256": window_sha256,
+            "authorization_record_path": str(authorization_path),
+            "authorization_record_sha256": authorization_sha,
+            "parent_contract_sha256": parent_contract_sha,
+        },
+        "extension_authorization": extension_authorization,
+    })
+    execution["window"] = window
+    execution["campaign_window_path"] = str(window_path.resolve())
+    execution["campaign_window_sha256"] = window_sha256
+    execution["run_source_sha"] = head
+    contract_path = source_root / "execution_contract_v33.approved.json"
+    contract_sha256 = _write_once(contract_path, contract)
+    loaded_contract, loaded_contract_sha = require_v31_execution_contract(
+        contract_path,
+        expected_sha256=contract_sha256,
+        current_root=root,
+    )
+    loaded_window = load_fixed_campaign_window(
+        window_path,
+        require_current_boot=False,
+        v31_contract=loaded_contract,
+    )
+    seed = write_campaign_extension_seed(loaded_window, parent_state)
+    if loaded_contract_sha != contract_sha256:
+        raise V31ContractError("V33 extension contract changed after its validation")
+    return {
+        "schema": "task40extra.review_v33_extension_package.v1",
+        "status": "USER_AUTHORIZED_EXTENSION_PREPARED_NOT_STARTED",
+        "run_source_sha": head,
+        "original_t0_utc": parent_window.payload["t0_utc"],
+        "original_window_sha256": parent_window.sha256,
+        "extension_seconds": V33_EXTENSION_SECONDS,
+        "total_seconds": V33_EXTENSION_TOTAL_SECONDS,
+        "numeric_seconds": V33_EXTENSION_NUMERIC_SECONDS,
+        "closeout_seconds": V33_EXTENSION_CLOSEOUT_SECONDS,
+        "parent_accounting": parent_state,
+        "extension_ledger_seed": seed,
+        "window": {"path": str(window_path.resolve()), "sha256": window_sha256},
+        "contract": {"path": str(contract_path.resolve()), "sha256": contract_sha256},
+        "commands": dict(pending.get("commands", {})),
+        "staged_input": pending.get("staged_input"),
+        "selector": pending.get("selector"),
+        "t0_refreshed": False,
+        "service_started": False,
+    }
+
+
 def require_v31_execution_contract(
     path: str | Path,
     *,
@@ -2277,11 +2536,18 @@ def require_v31_execution_contract(
     elif review == {"path": V33_REVIEW_PATH, "commit": V33_REVIEW_COMMIT, "sha256": V33_REVIEW_SHA256}:
         review_version = "V33"
         expected_schema = V33_CONTRACT_SCHEMA
-        expected_registration_schema = V33_REGISTRATION_SCHEMA
-        total_seconds = V33_TOTAL_SECONDS
-        numeric_seconds = V33_NUMERIC_SECONDS
-        closeout_seconds = V33_CLOSEOUT_SECONDS
-        approval_scope = V33_APPROVAL_SCOPE
+        if payload.get("registration_schema") == V33_EXTENSION_REGISTRATION_SCHEMA:
+            expected_registration_schema = V33_EXTENSION_REGISTRATION_SCHEMA
+            total_seconds = V33_EXTENSION_TOTAL_SECONDS
+            numeric_seconds = V33_EXTENSION_NUMERIC_SECONDS
+            closeout_seconds = V33_EXTENSION_CLOSEOUT_SECONDS
+            approval_scope = V33_EXTENSION_APPROVAL_SCOPE
+        else:
+            expected_registration_schema = V33_REGISTRATION_SCHEMA
+            total_seconds = V33_TOTAL_SECONDS
+            numeric_seconds = V33_NUMERIC_SECONDS
+            closeout_seconds = V33_CLOSEOUT_SECONDS
+            approval_scope = V33_APPROVAL_SCOPE
         contract_filename = "execution_contract_v33.approved.json"
         window_filename = "campaign_window_v33.json"
     else:
@@ -2359,6 +2625,29 @@ def require_v31_execution_contract(
     window_path = Path(window["window_path"]).resolve(strict=True)
     if hashlib.sha256(window_path.read_bytes()).hexdigest() != window["window_sha256"]:
         raise V31ContractError(f"{review_version} fixed campaign window is missing or changed")
+    if expected_registration_schema == V33_EXTENSION_REGISTRATION_SCHEMA:
+        extension = payload.get("extension_authorization")
+        if (
+            not isinstance(extension, Mapping)
+            or extension.get("schema") != "task40extra.review_v33_extension_authorization.v1"
+            or extension.get("extension_seconds") != V33_EXTENSION_SECONDS
+            or extension.get("window_sha256") != window.get("window_sha256")
+            or extension.get("accounting_path") != window.get("accounting_path")
+            or extension.get("parent_window_sha256") != window.get("parent_window_sha256")
+            or extension.get("parent_accounting_sha256") != window.get("parent_accounting_sha256")
+            or extension.get("authorization_record_sha256") != window.get("authorization_record_sha256")
+            or window.get("extension_seconds") != V33_EXTENSION_SECONDS
+            or not isinstance(window.get("parent_window_path"), str)
+            or not isinstance(window.get("parent_accounting_path"), str)
+            or not isinstance(window.get("accounting_path"), str)
+        ):
+            raise V31ContractError("V33 extension contract does not inherit its original window/accounting identity")
+        authorization_path = Path(str(extension.get("authorization_record_path", ""))).resolve(strict=True)
+        if hashlib.sha256(authorization_path.read_bytes()).hexdigest() != extension.get("authorization_record_sha256"):
+            raise V31ContractError("V33 extension authorization record is missing or changed")
+        parent_window_path = Path(str(window["parent_window_path"])).resolve(strict=True)
+        if hashlib.sha256(parent_window_path.read_bytes()).hexdigest() != window.get("parent_window_sha256"):
+            raise V31ContractError("V33 original fixed window changed after extension authorization")
     if _uses_v32_q4_imports(review_version):
         preparation = payload.get("preparation")
         template = preparation.get("q4_numeric_pending_import") if isinstance(preparation, dict) else None

@@ -145,6 +145,7 @@ def build_same_mesh_physical_action(
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
     dtn_phase_gauge: str = "global_z",
     verify_dtn_quadrature: bool = False,
+    surface_functional_checkpoint: Mapping[str, Any] | None = None,
     research_phase_override: tuple[complex, complex] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
@@ -177,6 +178,12 @@ def build_same_mesh_physical_action(
 
     if stage_callback is not None and not callable(stage_callback):
         raise TypeError("same-mesh physical action stage callback must be callable")
+    if surface_functional_checkpoint is not None and (
+        not isinstance(surface_functional_checkpoint, Mapping)
+        or set(surface_functional_checkpoint) != {"path", "identity"}
+        or not isinstance(surface_functional_checkpoint.get("identity"), Mapping)
+    ):
+        raise ValueError("surface functional checkpoint must bind one path and execution identity")
 
     def stage_progress(facts: Mapping[str, Any]) -> None:
         if stage_callback is not None:
@@ -270,9 +277,21 @@ def build_same_mesh_physical_action(
                 modes, assemblers, floquet.mpc, cfg,
                 phase_gauge=dtn_phase_gauge,
                 assembly_context=assembly_context,
+                persistence_path=(
+                    surface_functional_checkpoint["path"]
+                    if surface_functional_checkpoint is not None else None
+                ),
+                persistence_identity=(
+                    surface_functional_checkpoint["identity"]
+                    if surface_functional_checkpoint is not None else None
+                ),
                 progress_callback=stage_progress if stage_callback is not None else None,
             ),
-            complete_facts=lambda value: {"carrier_mode_count": len(value.entries)},
+            complete_facts=lambda value: {
+                "carrier_mode_count": len(value.entries),
+                **({"surface_functional_checkpoint": dict(value.persistence_facts)}
+                   if getattr(value, "persistence_facts", None) is not None else {}),
+            },
         )
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the

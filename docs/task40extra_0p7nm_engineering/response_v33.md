@@ -1,4 +1,33 @@
-# Review V33 P0 快照：执行链已准备，新窗口待批准
+# V33 已授权延时续作：源码冻结前记录
+
+用户已明确“继续 V33 延时续作；忽略旧 V32 选项回执”。本次增加 86400 s，保留原 T0 `2026-10-15T04:25:22.963327363Z`；延时数值截止为 `2026-10-17T04:05:22.963327363Z`，总截止 `2026-10-17T04:25:22.963327363Z`。原窗口与旧账本不改写，新账本承接原末尾累计 `85235.4722084753 s`，停机、修复和等待继续计费。cap、64 GiB 系统余量、任务零 swap、ABI、线程和数学门不变。此处记录授权与实现，尚不表示新服务已启动。
+
+新增保存流将每个模式的 B/D/H 原样写入并持久提交，使同一源码、输入、窗口和 owner 身份下的已完成前缀可重开。旧运行的 7680/8036 没有保存数组，仍不可恢复；新实现不能追认旧进度。既有 q0/q4 资格继续导入，不重跑旧矩阵或 native。服务、launcher、watchdog 与 checker 改为读取同一延时合同与账本，原尺寸官方 checker 使用 profile 冻结模式数。
+
+本次最终定向回归为 **9 passed, 50 deselected（1.48 s）**，覆盖保存流完整复数读回/续写/损坏拒绝、实际 owner 传递、原/延时窗口、账本继承、CLI 与 service/checker 路由。指定 Task40 runtime 的 complex128/int32 ABI preflight、改动 Python 的 compileall 和 `git diff --check` 通过。主控另做空 B/空 D 保存流精确回读；均为工程资格，不是新 q 数值资格。
+
+下文保留原窗口的真实终态与历史 P0；正式接续的 source、合同、window、service/run_id 和结果在实际发生后追加。
+
+# Review V33 运行终态：固定时间门受控停止
+
+本次 V33 正式 worker 使用冻结源码 `86574e478148db8a1dd39909ccc6455fc2ea2646` 和原窗口 SHA-256 `65276658776a76c0616fd3e6f1b16d7f8fd763410f35e934d22794daa3c7dedf`。这是一个 0.7 nm、Ny=8 原尺寸参考流程尝试；它没有产出新的 q 资格、完整参考逆、FE 场、完整残差或 official R/T/A。
+
+| 项目 | 实测与状态 | 解释 |
+|---|---|---|
+| 运行分类 | `PERFORMANCE_CONTROLLED_STOP`；worker exit `-9` | 原数值截止触发 watchdog：04:05:23.241 UTC 对整个子进程树发送 SIGTERM，30 秒宽限后于 04:05:53.282 UTC 发送 SIGKILL；后代已清空。此为固定时间门停止，不代表数值方法失败或超内存。 |
+| 流程时间 | `full_workflow_monotonic_seconds=84418.945441`；watchdog `elapsed_seconds=84418.655942` | 两者是不同测量范围，不相加。campaign 账本在 watchdog 开始时已累计 813.619551 s；watchdog 结束累计 85232.387040 s，略过 85200 s 数值截止；launcher 随后记录 85232.388583 s。 |
+| 窗口 | T0 `2026-10-15T04:25:22.963327363Z`；数值截止 `2026-10-16T04:05:22.963327363Z`；deadline `2026-10-16T04:25:22.963327363Z` | 原窗口 86400 s，其中 85200 s 数值期、1200 s 收口期；本次没有改写原窗口身份。 |
+| 最后进度 | `dtn_carrier_mode`，7680/8036 | 这是 relay 的进度下界，不是已保存 checkpoint；不能从该计数续算。q4 为已有资格导入；没有新的 q 结果持久化。 |
+| 资源 | 进程树同时 RSS 峰 `26848030720 B`；专用 job cgroup 峰 `28745129984 B`（上限 `1649267441664 B`）；任务 swap 峰 `0 B` | PSS 未采样。fenics-ws 原生 Linux 宿主 swapin/swapout 分别增加 49/72 页；旧 raw 的 `wsl_global_*` 是历史字段名，属于宿主全局诊断，不能归到此任务。 |
+| Required checker | `NO_PARTIAL_FOOTER`；`checker_passed=false`、`full_pass=false`、`official_result=false` | 原始输出无 official packet 或 V20 partial footer；保留真实失败状态，不合成结果。 |
+
+运行原始摘要、watchdog、checker 和最后 relay 的逐文件哈希见 [V33 terminal closeout record](outcomes/records/v33_terminal_closeout.json)。本轮没有 FE/RTA 结果。窗口延期授权没有作用于已经结束的进程；任何后续续作都必须使用独立、可审查的保存数据和新合同，不能把旧的 7680/8036 进度当作可恢复结果。后续方向按主控与用户最新确认执行。
+
+---
+
+## Review V33 P0 快照：执行链已准备（运行前历史）
+
+> 历史快照：以下内容记录在本次 V33 窗口创建前；其中“V33 尚未获批、未创建 T0”只描述当时状态，实际运行终态见本文件上方。
 
 本文件只记录本轮 P0 接线，不是数值阶段收口。既有 q0/q4 完整 CSR/native 为 2/8；本次未新增 q 矩阵、native qualification 或 factor。V32 窗口已结束；V33 尚未获批，未创建 T0。
 
@@ -38,6 +67,8 @@ python scripts/task40_v20_service_workflow.py prepare-v33-p0 \
 原流程先准备全局参考算子，其他六份矩阵要等这一步结束才能开始。本次改为先用各自真实 sector 数据生成并保存 `(q1,q5) → (q2,q6) → (q3,q7)`，再按需建立 twist0 恢复 owner 和全局算子；这改变等待顺序，不减少必须完成的全局数值检查。q0/q4 仍严格读取已有资格，不重新生产或验证旧 native。
 
 - 冻结模式和 H 的轻量描述供局部构建使用；全局 carrier 实际建立后再核对其模式/H 身份。各 sector 共用同一 transform bank，不跨 twist 复用不同物理矩阵。
+- 后续实现补入的 carrier checkpoint 按 global 与 twist 0–3 分开存放，并把源码、科学输入、staged input、campaign window、execution contract 和作用域写入身份。只有身份完全相同的重启可恢复已提交前缀；旧 worker 的 `7680/8036` relay 没有对应的 durable checkpoint，本改动不会追认或恢复它。更换源码、window、contract 或 owner 都会拒绝复用；数据和 manifest 保留，跨身份接续需另行审查的显式 donor 流程。
+- carrier 进度现在区分已生成与已持久提交；每个进度事件只在 frame 写入、`fsync` 且提交清单原子更新后报告，计数以 durable prefix 为准。此接线尚未用于 FE/factor/PDE 正式运行。
 - 修复循环中 `trace`、真实库存与已移出作用域的 `compiled`；合并新 q 的 selector/qualification 收据，矩阵资格及时持久保存。全局对象在创建后立即登记拥有者，异常清理仍有效。
 - 在真实局部/全局构建、端口生成、pattern、fill、native 和保存处增加阶段事件；端口进度按每 64 个模式节流，不改变积分、筛选、PC 或数值门。
 - 沿现有合同/service 显式登记 V33；旧 V32 审批不能创建 V33 T0。worker、campaign loader、required checker 识别同一 review/window，旧默认合同保留。

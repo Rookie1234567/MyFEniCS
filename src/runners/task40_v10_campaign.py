@@ -466,6 +466,9 @@ TASK40_V32_CAMPAIGN_SECONDS = 86_400.0
 TASK40_V32_CLOSEOUT_RESERVE_SECONDS = 1_200.0
 TASK40_V33_CAMPAIGN_SECONDS = 86_400.0
 TASK40_V33_CLOSEOUT_RESERVE_SECONDS = 1_200.0
+TASK40_V33_EXTENSION_TOTAL_SECONDS = 172_800.0
+TASK40_V33_EXTENSION_NUMERIC_SECONDS = 171_600.0
+TASK40_V33_EXTENSION_CLOSEOUT_SECONDS = 1_200.0
 TASK40_V30_CAMPAIGN_SHA256 = "0730454198abcee55401331d74f24a667d0d52036f67e1be817a3426a8d381a7"
 TASK40_V30_TARGET_CAMPAIGN_WINDOW = (
     Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl")
@@ -1013,6 +1016,11 @@ class FixedCampaignWindow:
     closeout_seconds: float
 
     @property
+    def accounting_path(self) -> Path:
+        configured = self.payload.get("accounting_path")
+        return Path(str(configured)).resolve() if configured else self.path.parent / CAMPAIGN_ACCOUNTING_NAME
+
+    @property
     def cutoff_seconds(self) -> float:
         return self.total_seconds - self.closeout_seconds
 
@@ -1152,12 +1160,224 @@ def _last_jsonl_record(stream) -> dict[str, Any] | None:
     return value
 
 
+def _close_float(left: Any, right: Any) -> bool:
+    try:
+        a = float(left)
+        b = float(right)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(a) and math.isfinite(b) and math.isclose(
+        a, b, rel_tol=1.0e-12, abs_tol=1.0e-9
+    )
+
+
+def verify_campaign_accounting_chain(
+    window: FixedCampaignWindow,
+    path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Validate and hash one complete append-only ledger before extension."""
+    ledger_path = Path(path or window.accounting_path).resolve(strict=True)
+    digest = hashlib.sha256()
+    previous_sample = dict(window.anchor)
+    cumulative = float(window.bootstrap_seconds)
+    namespace: dict[str, str] | None = None
+    last_record: dict[str, Any] | None = None
+    record_count = 0
+    with ledger_path.open("rb") as stream:
+        for raw_line in stream:
+            digest.update(raw_line)
+            if not raw_line.endswith(b"\n"):
+                raise TimebaseInconsistency("campaign accounting ledger has an incomplete final line")
+            try:
+                record = json.loads(raw_line)
+            except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                raise TimebaseInconsistency("campaign accounting ledger contains invalid JSON") from error
+            if not isinstance(record, dict) or record.get("record_kind") is not None:
+                raise TimebaseInconsistency("parent campaign ledger contains a nonstandard record")
+            sample = record.get("sample")
+            current_namespace = record.get("time_namespace_identity")
+            if (
+                record.get("schema") != "task40extra.review_v10_campaign_accounting.v1"
+                or record.get("sequence") != record_count
+                or record.get("campaign_window_sha256") != window.sha256
+                or record.get("t0_utc_ns") != window.t0_utc_ns
+                or record.get("deadline_utc_ns") != window.deadline_utc_ns
+                or record.get("boot_id") != window.anchor.get("boot_id")
+                or record.get("bootstrap_charged_seconds") != window.bootstrap_seconds
+                or record.get("cutoff_seconds") != window.cutoff_seconds
+                or record.get("previous_sample") != previous_sample
+                or not isinstance(sample, dict)
+                or sample.get("boot_id") != window.anchor.get("boot_id")
+                or not isinstance(current_namespace, dict)
+                or set(current_namespace) != {"time", "time_for_children"}
+                or any(not isinstance(value, str) or not value for value in current_namespace.values())
+                or record.get("phase") not in {"numeric", "closeout"}
+            ):
+                raise TimebaseInconsistency("campaign accounting ledger identity or adjacent-sample chain is broken")
+            if namespace is None:
+                namespace = dict(current_namespace)
+            elif current_namespace != namespace:
+                raise TimebaseInconsistency("campaign accounting ledger time namespace changed")
+            interval = checked_interval(
+                previous_sample, sample, policy=CONSERVATIVE_REALTIME
+            )
+            recorded_interval = record.get("adjacent_interval")
+            if (
+                not isinstance(recorded_interval, dict)
+                or recorded_interval.get("policy") != interval["policy"]
+                or recorded_interval.get("policy_version") != interval["policy_version"]
+                or any(
+                    not _close_float(recorded_interval.get(key), interval.get(key))
+                    for key in (
+                        "budget_seconds", "discrepancy_seconds", "tolerance_seconds",
+                        "utc_minus_monotonic_seconds",
+                    )
+                )
+                or not isinstance(recorded_interval.get("elapsed_seconds"), dict)
+                or any(
+                    not _close_float(
+                        recorded_interval["elapsed_seconds"].get(key),
+                        interval["elapsed_seconds"].get(key),
+                    )
+                    for key in ("monotonic", "boottime", "utc")
+                )
+            ):
+                raise TimebaseInconsistency("campaign accounting ledger interval was edited or miscomputed")
+            cumulative += float(interval["budget_seconds"])
+            if not _close_float(record.get("cumulative_charged_seconds"), cumulative):
+                raise TimebaseInconsistency("campaign accounting ledger cumulative charge is broken")
+            previous_sample = sample
+            last_record = record
+            record_count += 1
+    if record_count == 0 or last_record is None or namespace is None:
+        raise TimebaseInconsistency("parent campaign accounting ledger is empty")
+    return {
+        "path": str(ledger_path),
+        "sha256": digest.hexdigest(),
+        "bytes": ledger_path.stat().st_size,
+        "record_count": record_count,
+        "last_sequence": int(last_record["sequence"]),
+        "cumulative_charged_seconds": float(cumulative),
+        "last_sample": dict(previous_sample),
+        "time_namespace_identity": namespace,
+        "read_only_verified": True,
+    }
+
+
+def _validate_extension_accounting_seed(
+    window: FixedCampaignWindow,
+    path: Path,
+) -> dict[str, Any] | None:
+    extension = window.payload.get("extension")
+    if extension is None:
+        return None
+    if not isinstance(extension, Mapping):
+        raise TimebaseInconsistency("campaign extension parent binding is malformed")
+    try:
+        with path.open("rb") as stream:
+            first_line = stream.readline()
+        seed = json.loads(first_line)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise TimebaseInconsistency("campaign extension ledger is missing its inherited seed") from error
+    if not isinstance(seed, dict):
+        raise TimebaseInconsistency("campaign extension ledger seed is not an object")
+    if (
+        seed.get("record_kind") != "extension_seed"
+        or seed.get("schema") != "task40extra.review_v10_campaign_accounting.v1"
+        or seed.get("campaign_window_sha256") != window.sha256
+        or seed.get("t0_utc_ns") != window.t0_utc_ns
+        or seed.get("deadline_utc_ns") != window.deadline_utc_ns
+        or seed.get("sequence") != extension.get("parent_last_sequence")
+        or seed.get("sample") != extension.get("parent_last_sample")
+        or seed.get("previous_sample") != extension.get("parent_last_sample")
+        or seed.get("time_namespace_identity") != extension.get("parent_time_namespace_identity")
+        or not _close_float(
+            seed.get("cumulative_charged_seconds"),
+            extension.get("parent_cumulative_charged_seconds"),
+        )
+        or seed.get("extension_parent") != dict(extension)
+        or seed.get("boot_id") != window.anchor.get("boot_id")
+        or seed.get("bootstrap_charged_seconds") != window.bootstrap_seconds
+        or seed.get("cutoff_seconds") != window.cutoff_seconds
+    ):
+        raise TimebaseInconsistency("campaign extension ledger seed does not inherit its verified parent charge")
+    return seed
+
+
+def write_campaign_extension_seed(
+    window: FixedCampaignWindow,
+    parent_state: Mapping[str, Any],
+    path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Create the child ledger's noncharging seed from a verified parent tail."""
+    extension = window.payload.get("extension")
+    if not isinstance(extension, Mapping):
+        raise ValueError("fixed campaign window is not an extension")
+    expected = {
+        "parent_last_sequence": parent_state.get("last_sequence"),
+        "parent_cumulative_charged_seconds": parent_state.get("cumulative_charged_seconds"),
+        "parent_last_sample": parent_state.get("last_sample"),
+        "parent_time_namespace_identity": parent_state.get("time_namespace_identity"),
+        "parent_accounting_sha256": parent_state.get("sha256"),
+    }
+    if any(extension.get(key) != value for key, value in expected.items()):
+        raise ValueError("campaign extension window differs from the verified parent ledger tail")
+    accounting_path = Path(path or window.accounting_path).resolve()
+    accounting_path.parent.mkdir(parents=True, exist_ok=True)
+    seed = {
+        "schema": "task40extra.review_v10_campaign_accounting.v1",
+        "record_kind": "extension_seed",
+        "sequence": int(parent_state["last_sequence"]),
+        "label": "extension_parent_ledger_inheritance",
+        "phase": "numeric",
+        "campaign_window_sha256": window.sha256,
+        "t0_utc_ns": window.t0_utc_ns,
+        "deadline_utc_ns": window.deadline_utc_ns,
+        "boot_id": window.anchor["boot_id"],
+        "time_namespace_identity": dict(parent_state["time_namespace_identity"]),
+        "previous_sample": dict(parent_state["last_sample"]),
+        "sample": dict(parent_state["last_sample"]),
+        "adjacent_interval": {
+            "policy": "parent_ledger_inheritance",
+            "budget_seconds": 0.0,
+            "scope": "seed carries prior cumulative charge and adds no interval",
+        },
+        "bootstrap_charged_seconds": window.bootstrap_seconds,
+        "cumulative_charged_seconds": float(parent_state["cumulative_charged_seconds"]),
+        "cutoff_seconds": window.cutoff_seconds,
+        "extension_parent": dict(extension),
+    }
+    if accounting_path.exists():
+        existing = _validate_extension_accounting_seed(window, accounting_path)
+        if existing != seed:
+            raise FileExistsError("existing campaign extension ledger seed differs; preserving it")
+    else:
+        with accounting_path.open("xb") as stream:
+            stream.write(
+                (json.dumps(seed, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        descriptor = os.open(accounting_path.parent, os.O_RDONLY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    _validate_extension_accounting_seed(window, accounting_path)
+    return {
+        "path": str(accounting_path),
+        "seed": seed,
+        "sha256": hashlib.sha256(accounting_path.read_bytes()).hexdigest(),
+        "bytes": accounting_path.stat().st_size,
+    }
+
+
 class CampaignAccount:
     """Append-only adjacent clock accounting shared across service attempts."""
 
     def __init__(self, window: FixedCampaignWindow, path: str | Path | None = None):
         self.window = window
-        self.path = Path(path or (window.path.parent / CAMPAIGN_ACCOUNTING_NAME)).resolve()
+        self.path = Path(path or window.accounting_path).resolve()
 
     def record_sample(
         self,
@@ -1170,6 +1390,7 @@ class CampaignAccount:
         if phase not in {"numeric", "closeout"}:
             raise ValueError("campaign accounting phase must be numeric or closeout")
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        _validate_extension_accounting_seed(self.window, self.path)
         with self.path.open("a+b") as stream:
             fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
             # Capture clocks and namespace only after the exclusive lock. This
@@ -1260,7 +1481,8 @@ def read_campaign_state(
     namespace_identity: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Read worker-visible remaining time without appending to the shared ledger."""
-    account_path = Path(path or (window.path.parent / CAMPAIGN_ACCOUNTING_NAME)).resolve()
+    account_path = Path(path or window.accounting_path).resolve()
+    _validate_extension_accounting_seed(window, account_path)
     with account_path.open("rb") as stream:
         fcntl.flock(stream.fileno(), fcntl.LOCK_SH)
         previous = _last_jsonl_record(stream)
@@ -1325,8 +1547,11 @@ def _validate_v31_campaign_registration(
         V32_REVIEW_COMMIT, V32_REVIEW_PATH, V32_REVIEW_SHA256, V32_STAGE_SCOPE,
         V33_APPROVAL_SCOPE, V33_NUMERIC_SECONDS, V33_REVIEW_COMMIT, V33_REVIEW_PATH,
         V33_REVIEW_SHA256, V33_STAGE_SCOPE, V33_TOTAL_SECONDS, V33_CLOSEOUT_SECONDS,
+        V33_EXTENSION_APPROVAL_SCOPE, V33_EXTENSION_NUMERIC_SECONDS,
+        V33_EXTENSION_TOTAL_SECONDS, V33_EXTENSION_CLOSEOUT_SECONDS,
     )
 
+    authority = f"User-approved Review {review_version} execution window"
     if review_version == "V31":
         review_commit, review_path, review_sha = V31_REVIEW_COMMIT, V31_REVIEW_PATH, V31_REVIEW_SHA256
         campaign = "task40extra_v31_all_q_reference_conditional_target_pilot"
@@ -1348,6 +1573,14 @@ def _validate_v31_campaign_registration(
         numeric_seconds = V33_NUMERIC_SECONDS
         closeout_seconds = V33_CLOSEOUT_SECONDS
         stage_scope, approval_scope = V33_STAGE_SCOPE, V33_APPROVAL_SCOPE
+    elif review_version == "V33_EXTENSION":
+        review_commit, review_path, review_sha = V33_REVIEW_COMMIT, V33_REVIEW_PATH, V33_REVIEW_SHA256
+        campaign = "task40extra_v33_extension_all_q_reference_conditional_target_pilot"
+        total_seconds = V33_EXTENSION_TOTAL_SECONDS
+        numeric_seconds = V33_EXTENSION_NUMERIC_SECONDS
+        closeout_seconds = V33_EXTENSION_CLOSEOUT_SECONDS
+        stage_scope, approval_scope = V33_STAGE_SCOPE, V33_EXTENSION_APPROVAL_SCOPE
+        authority = "User-authorized 86400-second extension of the original Review V33 window"
     else:
         raise ValueError("review version must be V31, V32, or V33")
 
@@ -1370,7 +1603,7 @@ def _validate_v31_campaign_registration(
     expected_fields = {
         "schema": CAMPAIGN_SCHEMA,
         "campaign": campaign,
-        "authority": f"User-approved Review {review_version} execution window",
+        "authority": authority,
         "active_review_sha": review_commit,
         "active_review_path": review_path,
         "active_review_sha256": review_sha,
@@ -1394,6 +1627,29 @@ def _validate_v31_campaign_registration(
         "bootstrap_boottime_elapsed_seconds": None,
     }
     changed = [key for key, value in expected_fields.items() if payload.get(key) != value]
+    if review_version == "V33_EXTENSION":
+        extension = payload.get("extension")
+        contract_extension = contract.get("extension_authorization")
+        if (
+            not isinstance(extension, Mapping)
+            or not isinstance(contract_extension, Mapping)
+            or extension.get("schema") != "task40extra.review_v33_window_extension.v1"
+            or extension.get("extension_seconds") != 86_400
+            or extension.get("original_t0_utc") != payload.get("t0_utc")
+            or extension.get("parent_window_sha256") != contract_extension.get("parent_window_sha256")
+            or extension.get("parent_accounting_sha256") != contract_extension.get("parent_accounting_sha256")
+            or extension.get("authorization_record_sha256") != contract_extension.get("authorization_record_sha256")
+            or extension.get("parent_cumulative_charged_seconds") is None
+            or extension.get("parent_last_sequence") is None
+            or contract_extension.get("extension_seconds") != 86_400
+            or contract_extension.get("window_sha256") != digest
+            or not isinstance(payload.get("accounting_path"), str)
+            or Path(str(payload.get("accounting_path"))).resolve()
+            != Path(str(contract_extension.get("accounting_path", ""))).resolve()
+            or Path(str(payload.get("accounting_path"))).resolve()
+            != (resolved.parent / "campaign_accounting_v33_extension.jsonl").resolve()
+        ):
+            changed.append("extension_parent_or_accounting_binding")
     if resolved != expected_path or digest != expected_sha:
         changed.extend(("campaign_window_path", "campaign_window_sha256"))
     approval = contract.get("user_approval")
@@ -1480,10 +1736,19 @@ def load_fixed_campaign_window(
         and resolved.parent.parent == v31_artifact_root
         and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
     )
+    is_v33_extension = (
+        resolved.name == "campaign_window_v33.json"
+        and resolved.parent.parent == v31_artifact_root
+        and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
+        and payload.get("campaign")
+        == "task40extra_v33_extension_all_q_reference_conditional_target_pilot"
+    )
     is_v33 = (
         resolved.name == "campaign_window_v33.json"
         and resolved.parent.parent == v31_artifact_root
         and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
+        and payload.get("campaign")
+        == "task40extra_v33_all_q_reference_conditional_target_pilot"
     )
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
@@ -1521,8 +1786,8 @@ def load_fixed_campaign_window(
         _validate_v30_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V30_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V30_CLOSEOUT_RESERVE_SECONDS
-    elif is_v31 or is_v32 or is_v33:
-        review_version = "V33" if is_v33 else "V32" if is_v32 else "V31"
+    elif is_v31 or is_v32 or is_v33 or is_v33_extension:
+        review_version = "V33_EXTENSION" if is_v33_extension else "V33" if is_v33 else "V32" if is_v32 else "V31"
         if v31_contract is None:
             contract_path = os.environ.get("TASK40_V31_CONTRACT_PATH")
             contract_sha = os.environ.get("TASK40_V31_CONTRACT_SHA256")
@@ -1540,7 +1805,10 @@ def load_fixed_campaign_window(
             v31_contract,
             review_version=review_version,
         )
-        if is_v33:
+        if is_v33_extension:
+            expected_total = TASK40_V33_EXTENSION_TOTAL_SECONDS
+            expected_closeout = TASK40_V33_EXTENSION_CLOSEOUT_SECONDS
+        elif is_v33:
             expected_total = TASK40_V33_CAMPAIGN_SECONDS
             expected_closeout = TASK40_V33_CLOSEOUT_RESERVE_SECONDS
         elif is_v32:
@@ -1575,7 +1843,7 @@ def load_fixed_campaign_window(
         raise ValueError("the initial boot identity is malformed or inconsistent")
     bootstrap_utc = float(payload.get("bootstrap_utc_elapsed_seconds", -1.0))
     bootstrap_boot_raw = payload.get("bootstrap_boottime_elapsed_seconds", -1.0)
-    if (is_v30 or is_v31 or is_v32 or is_v33) and bootstrap_boot_raw is None:
+    if (is_v30 or is_v31 or is_v32 or is_v33 or is_v33_extension) and bootstrap_boot_raw is None:
         bootstrap_boot = None
     else:
         bootstrap_boot = float(bootstrap_boot_raw)

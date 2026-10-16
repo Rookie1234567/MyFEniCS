@@ -5837,16 +5837,11 @@ def launch_specification(
     campaign_accounting_path = None
     campaign_start_state = None
     if task40_campaign_profile:
-        from .task40_v10_campaign import (
-            CAMPAIGN_ACCOUNTING_NAME,
-            load_fixed_campaign_window,
-        )
+        from .task40_v10_campaign import load_fixed_campaign_window
 
         try:
             campaign_window = load_fixed_campaign_window(task40_v10_campaign_window)
-            campaign_accounting_path = (
-                campaign_window.path.parent / CAMPAIGN_ACCOUNTING_NAME
-            )
+            campaign_accounting_path = campaign_window.accounting_path
             campaign_start_state = campaign_window.observe(
                 label="launcher_entered_task40_v10"
             )

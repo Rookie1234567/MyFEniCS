@@ -318,8 +318,19 @@ def _task40_v33_late_twist0_owner_preparer(
     if not callable(prepare_twist0_owner) or not callable(prebuilt_q_csr):
         raise TypeError("V33 late twist-0 preparation needs owner and q-CSR callbacks")
 
-    def prepare(*, transform_bank: Any) -> tuple[Mapping[str, Any], Any | None]:
-        owner = prepare_twist0_owner(pending, transform_bank=transform_bank)
+    def prepare(
+        *,
+        transform_bank: Any,
+        surface_functional_checkpoint: Mapping[str, Any] | None = None,
+    ) -> tuple[Mapping[str, Any], Any | None]:
+        if surface_functional_checkpoint is None:
+            owner = prepare_twist0_owner(pending, transform_bank=transform_bank)
+        else:
+            owner = prepare_twist0_owner(
+                pending,
+                transform_bank=transform_bank,
+                surface_functional_checkpoint=surface_functional_checkpoint,
+            )
         return owner, prebuilt_q_csr()
 
     return prepare
@@ -6386,6 +6397,7 @@ def run_task40_v10_p6_reference_worker(
         from src.runners.task40_v31_contract import (
             require_v31_execution_contract,
             validate_v31_worker_execution_binding,
+            v31_source_artifact_relative,
         )
 
         repo_root = Path(__file__).resolve().parents[2]
@@ -8513,10 +8525,45 @@ def run_task40_v10_p6_reference_worker(
             )
             return result
 
+        def v33_surface_checkpoint_base() -> Mapping[str, Any] | None:
+            if (
+                not isinstance(v31_contract, Mapping)
+                or not isinstance(v31_contract.get("execution"), Mapping)
+                or not isinstance(v31_contract["execution"].get("window"), Mapping)
+                or v31_contract["execution"]["window"].get("extension_seconds") != 86_400
+            ):
+                return None
+            execution = v31_contract["execution"]
+            window = execution["window"]
+            if (
+                execution.get("run_source_sha") != source_sha
+                or str(window.get("window_sha256", ""))
+                != str(execution.get("campaign_window_sha256", ""))
+                or not scientific_input_sha256
+            ):
+                raise ValueError("V33 extension carrier checkpoint lacks exact source/input/window identity")
+            stream_root = (
+                Path(str(execution["root"])).resolve()
+                / v31_source_artifact_relative(source_sha)
+                / "surface_continuation"
+                / str(window["window_sha256"])
+            )
+            return {
+                "root": str(stream_root),
+                "identity": {
+                    "source_sha": source_sha,
+                    "input_sha256": scientific_input_sha256,
+                    "staged_input_sha256": str(execution["input_sha256"]),
+                    "campaign_window_sha256": str(window["window_sha256"]),
+                    "execution_contract_sha256": str(v31_contract_sha),
+                },
+            }
+
         def prepare_twist0_owner_with_phase(
             pending: Mapping[str, Any],
             *,
             transform_bank: Any | None = None,
+            surface_functional_checkpoint: Mapping[str, Any] | None = None,
         ) -> Mapping[str, Any]:
             numeric_pending = pending.get("numeric_pending", {})
             v33_deferred = (
@@ -8536,7 +8583,9 @@ def run_task40_v10_p6_reference_worker(
             )
             try:
                 owner = prepare_twist0_owner_before_global(
-                    pending, transform_bank=transform_bank
+                    pending,
+                    transform_bank=transform_bank,
+                    surface_functional_checkpoint=surface_functional_checkpoint,
                 )
             except BaseException as error:
                 v31_phase_end(
@@ -8577,6 +8626,7 @@ def run_task40_v10_p6_reference_worker(
             pending: Mapping[str, Any],
             *,
             transform_bank: Any | None = None,
+            surface_functional_checkpoint: Mapping[str, Any] | None = None,
         ) -> Mapping[str, Any]:
             nonlocal q4_saved_numeric_prebuild, prebuilt_twist0_owner, prebuilt_twist0_q_csr
             if (
@@ -8692,6 +8742,14 @@ def run_task40_v10_p6_reference_worker(
                     ),
                 }
                 saved_stage_callback = v32_owner_stage_event
+            if surface_functional_checkpoint is None:
+                from src.solvers.task40_v10_p6_yorbit import (
+                    _task40_v33_surface_checkpoint_for_scope,
+                )
+
+                surface_functional_checkpoint = _task40_v33_surface_checkpoint_for_scope(
+                    v33_surface_checkpoint_base(), scope="local", twist_index=0
+                )
             local_owner = build_task40_v10_p6_local_sector_owner(
                 cfg,
                 axes,
@@ -8706,6 +8764,7 @@ def run_task40_v10_p6_reference_worker(
                 transform_bank=transform_bank,
                 share_transform_bank=share_transform_bank,
                 saved_port_owner=saved_port_owner,
+                surface_functional_checkpoint=surface_functional_checkpoint,
                 stage_callback=saved_stage_callback,
             )
             prebuilt_twist0_owner = local_owner
@@ -8929,6 +8988,7 @@ def run_task40_v10_p6_reference_worker(
                 ),
                 twist0_owner_prebuilt=prepared_owner is not None,
             )
+            surface_functional_checkpoint = v33_surface_checkpoint_base()
             try:
                 built_reference = build_task40_v10_p6_reference_inverse(
                     cfg,
@@ -8974,6 +9034,7 @@ def run_task40_v10_p6_reference_worker(
                         else None
                     ),
                     v30_factor_config=factor_config,
+                    surface_functional_checkpoint=surface_functional_checkpoint,
                     factor_output_directory=(
                         str(factor_config["output_directory"])
                         if factor_config is not None

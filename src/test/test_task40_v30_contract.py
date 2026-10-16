@@ -2074,6 +2074,46 @@ def test_v33_campaign_loader_recognizes_its_own_86400_second_window(
     assert loaded.sha256 == window_sha
 
 
+def test_v33_extension_prepare_cli_forwards_parent_authorization_and_root(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+):
+    from scripts import task40_v20_service_workflow as workflow
+    from src.runners import task40_v31_contract
+
+    parent_contract = tmp_path / "parent_contract.json"
+    authorization = tmp_path / "extension_authorization.json"
+    execution_root = tmp_path / "execution_root"
+    captured = []
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "prepare_v33_extension_package",
+        lambda **kwargs: captured.append(kwargs) or {"status": "prepared_fixture"},
+    )
+
+    result = workflow.main(
+        [
+            "prepare-v33-extension",
+            "--parent-contract",
+            str(parent_contract),
+            "--extension-authorization",
+            str(authorization),
+            "--execution-root",
+            str(execution_root),
+        ]
+    )
+
+    assert result == 0
+    assert captured == [
+        {
+            "repo_root": workflow.ROOT,
+            "parent_contract_path": parent_contract,
+            "extension_authorization_path": authorization,
+            "execution_root": execution_root,
+        }
+    ]
+    assert json.loads(capsys.readouterr().out) == {"status": "prepared_fixture"}
+
+
 def test_v33_approved_package_rejects_v32_approval_scope_before_t0(
     tmp_path: Path,
 ):
@@ -2120,3 +2160,209 @@ def test_v33_approved_package_rejects_v32_approval_scope_before_t0(
         / task40_v31_contract.v31_source_artifact_relative(source_sha)
         / "campaign_window_v33.json"
     ).exists()
+
+
+def test_v33_extension_window_routes_to_service_and_checker_child_ledger(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.runners import task40_v10_campaign as campaign
+    from src.runners import task40_v31_contract as v31_contract
+    from scripts import task40_v20_service_workflow as workflow
+    from src.io import physical_intermediate_profile
+
+    root = tmp_path.resolve()
+    monkeypatch.setattr(
+        campaign,
+        "__file__",
+        str(root / "src/runners/task40_v10_campaign.py"),
+    )
+    source_sha = "a" * 40
+    boot_id = "12345678-1234-1234-1234-123456789abc"
+    artifact_root = root / v31_contract.v31_source_artifact_relative(source_sha)
+    artifact_root.mkdir(parents=True)
+    window_path = artifact_root / "campaign_window_v33.json"
+    accounting_path = artifact_root / "campaign_accounting_v33_extension.jsonl"
+    accounting_path.write_text("fixture child ledger\n", encoding="ascii")
+    parent_window_path = artifact_root / "campaign_window_v33_parent.json"
+    parent_accounting_path = artifact_root / "campaign_accounting_v33_parent.jsonl"
+    parent_window_sha = "b" * 64
+    parent_accounting_sha = "c" * 64
+    authorization_sha = "d" * 64
+    t0_utc = "2026-01-01T00:00:00Z"
+    numeric_cutoff_utc = "2026-01-02T23:40:00Z"
+    deadline_utc = "2026-01-03T00:00:00Z"
+    window_extension = {
+        "schema": "task40extra.review_v33_window_extension.v1",
+        "extension_seconds": v31_contract.V33_EXTENSION_SECONDS,
+        "original_t0_utc": t0_utc,
+        "parent_window_path": str(parent_window_path),
+        "parent_window_sha256": parent_window_sha,
+        "parent_numeric_cutoff_utc": "2026-01-01T23:40:00Z",
+        "parent_deadline_utc": "2026-01-02T00:00:00Z",
+        "parent_accounting_path": str(parent_accounting_path),
+        "parent_accounting_sha256": parent_accounting_sha,
+        "parent_last_sequence": 8,
+        "parent_record_count": 9,
+        "parent_cumulative_charged_seconds": 81_000.0,
+        "parent_last_sample": {
+            "monotonic": 100.0,
+            "boottime": 100.0,
+            "utc_ns": campaign._utc_ns(t0_utc) + 81_000_000_000_000,
+            "boot_id": boot_id,
+        },
+        "parent_time_namespace_identity": {
+            "time": "time:[4026531834]",
+            "time_for_children": "time:[4026531834]",
+        },
+        "authorization_record_path": str(root / "extension_authorization.json"),
+        "authorization_record_sha256": authorization_sha,
+        "authorization_record_status": "AUTHORIZED_EXTENSION_REQUEST_NOT_APPLIED_TO_LIVE_PROCESS",
+        "authorization_recorded_utc_ns": 1_767_225_600_000_000_000,
+    }
+    payload = {
+        "schema": campaign.CAMPAIGN_SCHEMA,
+        "campaign": "task40extra_v33_extension_all_q_reference_conditional_target_pilot",
+        "authority": "User-authorized 86400-second extension of the original Review V33 window",
+        "active_review_sha": v31_contract.V33_REVIEW_COMMIT,
+        "active_review_path": v31_contract.V33_REVIEW_PATH,
+        "active_review_sha256": v31_contract.V33_REVIEW_SHA256,
+        "source_at_entry": source_sha,
+        "review_at_registration": v31_contract.V33_REVIEW_COMMIT,
+        "t0_utc": t0_utc,
+        "numeric_cutoff_utc": numeric_cutoff_utc,
+        "deadline_utc": deadline_utc,
+        "campaign_seconds": v31_contract.V33_EXTENSION_TOTAL_SECONDS,
+        "numeric_cutoff_seconds": float(v31_contract.V33_EXTENSION_NUMERIC_SECONDS),
+        "closeout_reserve_seconds": v31_contract.V33_EXTENSION_CLOSEOUT_SECONDS,
+        "time_policy": campaign.CONSERVATIVE_REALTIME,
+        "stage_scope": list(v31_contract.V33_STAGE_SCOPE),
+        "forbidden_scope": [
+            "automatic_cap_increase", "window_refresh", "parameter_or_accuracy_scan",
+            "MUMPS_or_ABI_change", "OOC_or_BLR", "unrelated_project_mutation", "master_merge",
+        ],
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "artifact_execution_identity_separate": True,
+        "bootstrap_boottime_elapsed_seconds": None,
+        "bootstrap_utc_elapsed_seconds": 0.0,
+        "bootstrap_time_treatment": "fixture debit recorded",
+        "first_full_three_clock_sample": {
+            "monotonic": 12.0,
+            "boottime": 13.0,
+            "utc_ns": campaign._utc_ns(t0_utc),
+            "boot_id": boot_id,
+        },
+        "initial_boot_id": boot_id,
+        "extension": window_extension,
+        "accounting_path": str(accounting_path.resolve()),
+    }
+    window_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    window_sha = _sha(window_path)
+    contract_extension = {
+        "schema": "task40extra.review_v33_extension_authorization.v1",
+        "extension_seconds": v31_contract.V33_EXTENSION_SECONDS,
+        "window_sha256": window_sha,
+        "accounting_path": str(accounting_path.resolve()),
+        "parent_window_sha256": parent_window_sha,
+        "parent_accounting_sha256": parent_accounting_sha,
+        "authorization_record_sha256": authorization_sha,
+    }
+    window = {
+        "window_path": str(window_path.resolve()),
+        "window_sha256": window_sha,
+        "source_at_entry": source_sha,
+        "total_seconds": v31_contract.V33_EXTENSION_TOTAL_SECONDS,
+        "numeric_seconds": v31_contract.V33_EXTENSION_NUMERIC_SECONDS,
+        "closeout_seconds": v31_contract.V33_EXTENSION_CLOSEOUT_SECONDS,
+        "closeout_reserve_seconds": v31_contract.V33_EXTENSION_CLOSEOUT_SECONDS,
+        "t0_utc": t0_utc,
+        "numeric_cutoff_utc": numeric_cutoff_utc,
+        "deadline_utc": deadline_utc,
+        "extension_seconds": v31_contract.V33_EXTENSION_SECONDS,
+        "parent_window_path": str(parent_window_path),
+        "parent_window_sha256": parent_window_sha,
+        "parent_accounting_path": str(parent_accounting_path),
+        "parent_accounting_sha256": parent_accounting_sha,
+        "accounting_path": str(accounting_path.resolve()),
+        "authorization_record_sha256": authorization_sha,
+    }
+    contract = {
+        "schema": v31_contract.V33_CONTRACT_SCHEMA,
+        "status": "USER_APPROVED",
+        "registration_schema": v31_contract.V33_EXTENSION_REGISTRATION_SCHEMA,
+        "review": {
+            "path": v31_contract.V33_REVIEW_PATH,
+            "commit": v31_contract.V33_REVIEW_COMMIT,
+            "sha256": v31_contract.V33_REVIEW_SHA256,
+        },
+        "source_freeze": {"source_sha": source_sha},
+        "user_approval": {
+            "approved": True,
+            "scope": v31_contract.V33_EXTENSION_APPROVAL_SCOPE,
+            "window_sha256": window_sha,
+        },
+        "execution": {
+            "run_source_sha": source_sha,
+            "window": window,
+        },
+        "extension_authorization": contract_extension,
+        "service_start_allowed": True,
+    }
+
+    loaded = campaign.load_fixed_campaign_window(
+        window_path,
+        require_current_boot=False,
+        v31_contract=contract,
+    )
+    assert loaded.t0_utc_ns == campaign._utc_ns(t0_utc)
+    assert loaded.total_seconds == 172_800.0
+    assert loaded.closeout_seconds == 1_200.0
+    assert campaign._utc_ns(payload["numeric_cutoff_utc"]) - loaded.t0_utc_ns == (
+        171_600_000_000_000
+    )
+    assert campaign._utc_ns(payload["deadline_utc"]) - loaded.t0_utc_ns == (
+        172_800_000_000_000
+    )
+
+    monkeypatch.setattr(
+        campaign,
+        "clock_sample",
+        lambda *, include_boot_id=False: {"boot_id": boot_id},
+    )
+    registration = workflow._resolve_service_campaign(
+        root,
+        window_path,
+        profile=v31_contract.V31_PROFILE,
+        stop_stage="full",
+        v31_contract=contract,
+    )
+    assert registration["version"] == "V31"
+    assert registration["review_version"] == "V33"
+    assert registration["path"] == window_path.resolve()
+    assert registration["accounting_path"] == accounting_path.resolve()
+
+    manifest = {
+        "run_id": "v33-extension-fixture",
+        "solver": {"preconditioner": v31_contract.V31_PROFILE},
+        "task40_v20_campaign": {
+            "window_sha256": window_sha,
+            "accounting_path": str(accounting_path),
+        },
+    }
+    checked_accounting = workflow._campaign_accounting_path_from_manifest(
+        manifest,
+        expected_window_sha256=window_sha,
+        expected_accounting_path=registration["accounting_path"],
+        expected_run_id="v33-extension-fixture",
+        expected_profile=v31_contract.V31_PROFILE,
+    )
+    assert checked_accounting == accounting_path.resolve()
+
+    monkeypatch.setattr(
+        physical_intermediate_profile,
+        "profile_facts",
+        lambda _profile: {"gates": {"all_original_modes_retained": 32_060}},
+    )
+    assert workflow._expected_official_channel_count(
+        {"version": registration["version"]}, v31_contract.V31_PROFILE
+    ) == 32_060

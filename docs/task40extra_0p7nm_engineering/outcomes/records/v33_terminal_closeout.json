@@ -1,0 +1,100 @@
+{
+  "schema": "task40extra.review_v33.terminal_closeout.v1",
+  "review": "V33",
+  "source_sha": "86574e478148db8a1dd39909ccc6455fc2ea2646",
+  "source_state_at_run": {
+    "tracked_and_nonignored_untracked_clean": true
+  },
+  "run": {
+    "service_unit": "myfenics-case-task40-v33-all-q-reference-86574e478148.service",
+    "run_id": "20261015T043856.417203Z",
+    "run_name": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+    "output_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261015T043856.417203Z",
+    "classification": "PERFORMANCE_CONTROLLED_STOP",
+    "exit_status": -9,
+    "full_workflow_monotonic_seconds": 84418.94544127514,
+    "watchdog_elapsed_seconds": 84418.6559419292
+  },
+  "campaign_window": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_68adca7742e098b8527562bcd2aaad710ac69e97/campaign_window_v33.json",
+    "sha256": "65276658776a76c0616fd3e6f1b16d7f8fd763410f35e934d22794daa3c7dedf",
+    "t0_utc": "2026-10-15T04:25:22.963327363Z",
+    "numeric_cutoff_utc": "2026-10-16T04:05:22.963327363Z",
+    "deadline_utc": "2026-10-16T04:25:22.963327363Z",
+    "total_seconds": 86400.0,
+    "numeric_cutoff_seconds": 85200.0,
+    "closeout_reserve_seconds": 1200.0
+  },
+  "time_accounting": {
+    "watchdog_start_cumulative_charged_seconds": 813.6195509070543,
+    "watchdog_end_cumulative_charged_seconds": 85232.38704028806,
+    "launcher_after_watchdog_cumulative_charged_seconds": 85232.38858340305,
+    "numeric_cutoff_seconds": 85200.0,
+    "note": "These are campaign-accounting snapshots; workflow and watchdog elapsed values are separate scopes and must not be added to each other."
+  },
+  "stop": {
+    "reason": "Fixed numeric cutoff enforced by watchdog; SIGTERM to the full child tree, then SIGKILL after the 30-second grace period.",
+    "sigterm_utc": "2026-10-16T04:05:23.241282789Z",
+    "sigkill_utc": "2026-10-16T04:05:53.281865026Z",
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "time_gate_evaluated": true,
+    "time_gate_action": "enforce"
+  },
+  "last_progress_only": {
+    "stage": "dtn_carrier_mode",
+    "completed": 7680,
+    "total": 8036,
+    "elapsed_seconds": 83557.950544992,
+    "durable_checkpoint": false,
+    "interpretation": "Progress relay only; this prefix is not resumable data."
+  },
+  "resources": {
+    "process_tree_simultaneous_rss_peak_bytes": 26848030720,
+    "process_tree_pss_peak_bytes": null,
+    "dedicated_job_cgroup_memory_peak_bytes": 28745129984,
+    "dedicated_job_cgroup_memory_limit_bytes": 1649267441664,
+    "task_cgroup_swap_peak_bytes": 0,
+    "wsl_global_swapin_delta_pages": 49,
+    "wsl_global_swapout_delta_pages": 72,
+    "global_swap_scope_note": "Native Linux fenics-ws host-wide diagnostic, not attributable to this job; wsl_global_* are retained legacy raw field names."
+  },
+  "checker": {
+    "status": "NO_PARTIAL_FOOTER",
+    "checker_passed": false,
+    "full_pass": false,
+    "official_result": false,
+    "error": "no official packet or V20 partial footer exists; preserve run/watchdog raw evidence"
+  },
+  "science": {
+    "q4": "Existing q4 qualification was imported; no new q result was persisted in this attempt.",
+    "new_q_results": false,
+    "complete_reference": false,
+    "new_fe_field": false,
+    "full_explicit_residual": false,
+    "official_rta": false,
+    "interpretation": "The time-controlled stop is not a numerical failure or a memory-limit failure."
+  },
+  "evidence": {
+    "run_summary": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_86574e47/terminal_raw/run_summary.json",
+      "sha256": "3115620eab550685f099a7b7b39773485e5534a9c25d95fae95d0ff142207dcc",
+      "bytes": 13659
+    },
+    "watchdog_summary": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_86574e47/terminal_raw/watchdog_summary.json",
+      "sha256": "80fb87b8fdae83ecf57a8e2bccfab6e822deb71408db3d9caffb01ac40e24df4",
+      "bytes": 12456
+    },
+    "partial_checker_result": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_86574e47/terminal_raw/partial_checker_result.json",
+      "sha256": "d9ab3c0a1ad75af339247a43d73adc0490991a4d8263769f546ede0671a22fc6",
+      "bytes": 800
+    },
+    "live_readonly_relay": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v33_controller/attempt_86574e47/live_readonly_relay.jsonl",
+      "sha256": "383f8be25689dd0b9e62804c32a0c7647816a8bb1930853c90eebaa023163300",
+      "bytes": 2805174
+    }
+  }
+}

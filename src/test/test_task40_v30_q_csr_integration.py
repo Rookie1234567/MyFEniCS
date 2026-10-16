@@ -226,6 +226,71 @@ def test_v32_twist0_handoff_accepts_provider_q4_and_requires_real_q0_q4_receipts
         )
 
 
+def test_v33_local_sector_owner_forwards_its_checkpoint_to_physical_action(
+    monkeypatch,
+):
+    from types import SimpleNamespace
+
+    from src.common.config_3d import SimulationConfig3D
+    from src.solvers import fullspace_same_mesh_hcurl_pmg_global
+    from src.solvers import fullspace_same_mesh_hcurl_pmg_physical
+    from src.solvers import task40_v10_p6_yorbit
+
+    class StopAfterPhysicalAction(Exception):
+        pass
+
+    cfg = SimulationConfig3D(
+        nedelec_degree=6,
+        mesh_axis_cell_counts=(1, 4, 1),
+        geometry_identity="task40_v33_local_owner_checkpoint_fixture",
+    )
+    context = task40_v10_p6_yorbit.Task40V10SectorContext(
+        twist_index=2,
+        eta=1.0 + 0.0j,
+        tau=1.0 + 0.0j,
+        global_q_indices=(2, 6),
+        local_axes={"x": (0.0, 1.0), "y": (0.0, 1.0, 2.0), "z": (0.0, 1.0)},
+        original_mode_indices=np.asarray([0], dtype=np.int64),
+        local_branch_indices=np.asarray([0], dtype=np.int64),
+    )
+    checkpoint = {
+        "path": "/tmp/task40-v33/twist_2/carrier_surface_functionals.bin",
+        "identity": {"source_sha": "a" * 40, "surface_scope": "local", "twist_index": 2},
+    }
+    monkeypatch.setattr(
+        fullspace_same_mesh_hcurl_pmg_global,
+        "_build_same_mesh_levels",
+        lambda *_args, **_kwargs: {"levels": "fixture"},
+    )
+    received = []
+
+    def physical_action_fixture(*_args, **kwargs):
+        received.append(kwargs.get("surface_functional_checkpoint"))
+        raise StopAfterPhysicalAction
+
+    monkeypatch.setattr(
+        fullspace_same_mesh_hcurl_pmg_physical,
+        "build_same_mesh_physical_action",
+        physical_action_fixture,
+    )
+    with pytest.raises(StopAfterPhysicalAction):
+        task40_v10_p6_yorbit.build_task40_v10_p6_local_sector_owner(
+            cfg,
+            {"x": (0.0, 1.0), "y": (0.0, 4.0), "z": (0.0, 1.0)},
+            context=context,
+            global_modes=(SimpleNamespace(side="top", m=0, n=0, polarization="s"),),
+            global_mode_rows=({"mode": 0},),
+            global_mode_sha256="b" * 64,
+            global_h=np.asarray([1.0], dtype=np.float64),
+            profile=SimpleNamespace(
+                mode_count=1, global_cell_axes=(1, 4, 1), local_y_cells=2
+            ),
+            allocation_gate=lambda *_args: None,
+            surface_functional_checkpoint=checkpoint,
+        )
+    assert received == [checkpoint]
+
+
 def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
     tmp_path, monkeypatch
 ):
@@ -591,6 +656,7 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
         action = ReducedAction()
         owner = {
             "context": context,
+            "surface_functional_checkpoint": kwargs.get("surface_functional_checkpoint"),
             "levels": {
                 "floquets": {6: SimpleNamespace(mpc=Mpc())},
                 "mesh_data": SimpleNamespace(mesh=Mesh(2)),
@@ -637,7 +703,9 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
     q4_pending = {"status": "NUMERIC_COMPLETE_NATIVE_PENDING"}
     late_owner_bank_calls = []
 
-    def prepare_twist0_owner(pending, *, transform_bank):
+    def prepare_twist0_owner(
+        pending, *, transform_bank, surface_functional_checkpoint=None
+    ):
         assert pending is q4_pending
         assert banks and transform_bank is banks[0]
         late_owner_bank_calls.append(transform_bank)
@@ -650,6 +718,7 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
             global_mode_sha256=mode_sha,
             global_h=global_h,
             transform_bank=transform_bank,
+            surface_functional_checkpoint=surface_functional_checkpoint,
         )
 
     late_twist0_owner_preparer = _task40_v33_late_twist0_owner_preparer(
@@ -673,8 +742,11 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
             "floquets": {6: SimpleNamespace(mpc=Mpc())},
         }
 
+    global_checkpoints = []
+
     def global_physical_fixture(_levels, _cfg, _degree, **kwargs):
         schedule.append("global_physical")
+        global_checkpoints.append(kwargs.get("surface_functional_checkpoint"))
         assert any(name == "task40_v33_sector_products_durable" for name, _ in events)
         callback = kwargs.get("stage_callback")
         if callback is not None:
@@ -785,6 +857,16 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
             sector_first=True,
             late_twist0_owner_preparer=late_twist0_owner_preparer,
             factor_output_directory=str(tmp_path / "factor_bank"),
+            surface_functional_checkpoint={
+                "root": str(tmp_path / "carrier_streams"),
+                "identity": {
+                    "source_sha": "c" * 40,
+                    "input_sha256": "1" * 64,
+                    "staged_input_sha256": "2" * 64,
+                    "campaign_window_sha256": "d" * 64,
+                    "execution_contract_sha256": "3" * 64,
+                },
+            },
         )
     except FailBeforeFactor:
         pass
@@ -807,6 +889,47 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
     assert late_owner_bank_calls == [banks[0]]
     assert all(owner["local_owner_cleanup_complete"] is True for owner in owner_rows)
     assert [int(entry[0]) for entry in callback_order] == [1, 2, 3]
+    local_checkpoints = {
+        int(owner["context"].twist_index): owner["surface_functional_checkpoint"]
+        for owner in owner_rows
+    }
+    assert set(local_checkpoints) == {0, 1, 2, 3}
+    for twist_index, checkpoint in local_checkpoints.items():
+        assert checkpoint["path"] == str(
+            tmp_path
+            / "carrier_streams"
+            / f"twist_{twist_index}"
+            / "carrier_surface_functionals.bin"
+        )
+        assert checkpoint["identity"] == {
+            "source_sha": "c" * 40,
+            "input_sha256": "1" * 64,
+            "staged_input_sha256": "2" * 64,
+            "campaign_window_sha256": "d" * 64,
+            "execution_contract_sha256": "3" * 64,
+            "surface_scope": "local",
+            "twist_index": twist_index,
+        }
+    assert len({checkpoint["path"] for checkpoint in local_checkpoints.values()}) == 4
+    assert global_checkpoints == [
+        {
+            "path": str(
+                tmp_path
+                / "carrier_streams"
+                / "global"
+                / "carrier_surface_functionals.bin"
+            ),
+            "identity": {
+                "source_sha": "c" * 40,
+                "input_sha256": "1" * 64,
+                "staged_input_sha256": "2" * 64,
+                "campaign_window_sha256": "d" * 64,
+                "execution_contract_sha256": "3" * 64,
+                "surface_scope": "global",
+                "twist_index": None,
+            },
+        }
+    ]
 
 
 def _v30_service_payload(tmp_path):

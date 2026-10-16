@@ -101,6 +101,101 @@ def test_campaign_observation_keeps_forward_utc_charge_across_service_attempts(
     assert ledger.stat().st_size == before
 
 
+def test_v33_extension_seed_inherits_parent_charge_and_child_ledger_resumes(tmp_path):
+    boot_id = "0bb7278d-a4d8-4b78-b625-895e739880e6"
+    namespace = {"time": "time:[4026531834]", "time_for_children": "time:[4026531834]"}
+    t0_utc_ns = 1_700_000_000_000_000_000
+    anchor = {
+        "monotonic": 100.0,
+        "boottime": 100.0,
+        "utc_ns": t0_utc_ns,
+        "boot_id": boot_id,
+    }
+    parent_path = tmp_path / "campaign_accounting_parent.jsonl"
+    parent_window = campaign.FixedCampaignWindow(
+        path=tmp_path / "campaign_window_parent.json",
+        sha256="a" * 64,
+        payload={"accounting_path": str(parent_path)},
+        anchor=anchor,
+        t0_utc_ns=t0_utc_ns,
+        deadline_utc_ns=t0_utc_ns + 86_400_000_000_000,
+        total_seconds=86_400.0,
+        bootstrap_seconds=0.0,
+        closeout_seconds=1_200.0,
+    )
+    parent_sample = {
+        **anchor,
+        "monotonic": 110.0,
+        "boottime": 110.0,
+        "utc_ns": t0_utc_ns + 10_000_000_000,
+    }
+    campaign.CampaignAccount(parent_window).record_sample(
+        parent_sample, label="parent_last_sample", namespace_identity=namespace
+    )
+    parent_state = campaign.verify_campaign_accounting_chain(parent_window)
+    parent_bytes = parent_path.read_bytes()
+    parent_sha = hashlib.sha256(parent_bytes).hexdigest()
+
+    child_path = tmp_path / "campaign_accounting_v33_extension.jsonl"
+    extension = {
+        "parent_last_sequence": parent_state["last_sequence"],
+        "parent_cumulative_charged_seconds": parent_state[
+            "cumulative_charged_seconds"
+        ],
+        "parent_last_sample": parent_state["last_sample"],
+        "parent_time_namespace_identity": parent_state[
+            "time_namespace_identity"
+        ],
+        "parent_accounting_sha256": parent_state["sha256"],
+    }
+    child_window = campaign.FixedCampaignWindow(
+        path=tmp_path / "campaign_window_v33_extension.json",
+        sha256="b" * 64,
+        payload={"accounting_path": str(child_path), "extension": extension},
+        anchor=anchor,
+        t0_utc_ns=t0_utc_ns,
+        deadline_utc_ns=t0_utc_ns + 172_800_000_000_000,
+        total_seconds=172_800.0,
+        bootstrap_seconds=0.0,
+        closeout_seconds=1_200.0,
+    )
+    first_seed = campaign.write_campaign_extension_seed(child_window, parent_state)
+    seed = json.loads(child_path.read_bytes().splitlines()[0])
+    assert seed["adjacent_interval"]["budget_seconds"] == 0.0
+    assert seed["cumulative_charged_seconds"] == parent_state[
+        "cumulative_charged_seconds"
+    ]
+    assert campaign.CampaignAccount(child_window).path == child_path.resolve()
+    assert child_window.accounting_path == child_path.resolve()
+
+    child_sample = {
+        **anchor,
+        "monotonic": 125.0,
+        "boottime": 125.0,
+        "utc_ns": t0_utc_ns + 25_000_000_000,
+    }
+    child_record = campaign.CampaignAccount(child_window).record_sample(
+        child_sample,
+        label="child_after_extension_downtime",
+        namespace_identity=namespace,
+    )
+    assert child_record["sequence"] == parent_state["last_sequence"] + 1
+    assert child_record["previous_sample"] == parent_state["last_sample"]
+    assert child_record["adjacent_interval"]["budget_seconds"] == 15.0
+    assert child_record["cumulative_charged_seconds"] == 25.0
+    child_bytes = child_path.read_bytes()
+    reopened_seed = campaign.write_campaign_extension_seed(child_window, parent_state)
+    assert child_path.read_bytes() == child_bytes
+    assert reopened_seed["seed"] == first_seed["seed"] == seed
+    assert parent_path.read_bytes() == parent_bytes
+    assert hashlib.sha256(parent_path.read_bytes()).hexdigest() == parent_sha
+
+    launcher = Path(__file__).resolve().parents[1] / "runners/task038_launcher.py"
+    assert "campaign_accounting_path = campaign_window.accounting_path" in launcher.read_text(
+        encoding="utf-8"
+    )
+
+
 def test_v23_campaign_window_is_bound_to_its_exact_six_hour_registration():
     path = campaign.TASK40_V23_CAMPAIGN_WINDOW.resolve()
     window = campaign.load_fixed_campaign_window(path, require_current_boot=False)

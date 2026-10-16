@@ -14,6 +14,9 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
 import json
+import os
+from pathlib import Path
+import struct
 import time
 from types import MappingProxyType
 from typing import Any
@@ -27,6 +30,8 @@ FULLSPACE_DTN_PROFILE = "full3d_scalable_v1"
 FULLSPACE_DTN_BATCH_SIZE = 8
 FULLSPACE_DTN_PROGRESS_INTERVAL = 64
 FULLSPACE_DTN_MANIFEST_SCHEMA = "fullspace-dtn.mode-manifest.v1"
+_SURFACE_FUNCTIONAL_FRAME = struct.Struct("<qQQd")
+_RESUMABLE_SURFACE_STREAM_SCHEMA = "task40extra.v33_resumable_surface_functionals.v1"
 
 _MODE_IDENTITY_FIELDS = frozenset(
     {
@@ -93,6 +98,295 @@ def _canonical_json_bytes(value: Any) -> bytes:
         separators=(",", ":"),
         sort_keys=True,
     ).encode("ascii")
+
+
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _atomic_json(path: Path, value: Mapping[str, Any]) -> bytes:
+    encoded = _canonical_json_bytes(value) + b"\n"
+    temporary = path.with_name(f"{path.name}.tmp.{os.getpid()}.{time.time_ns()}")
+    with temporary.open("xb") as stream:
+        stream.write(encoded)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+    _fsync_directory(path.parent)
+    return encoded
+
+
+def _file_identity_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _surface_frame_arrays(stream, *, expected_index: int, expected_h: float, digest=None):
+    start = stream.tell()
+    header = stream.read(_SURFACE_FUNCTIONAL_FRAME.size)
+    if len(header) != _SURFACE_FUNCTIONAL_FRAME.size:
+        raise IOError("resumable surface stream has an incomplete frame header")
+    mode_index, coupling_count, projection_count, normalization_h = (
+        _SURFACE_FUNCTIONAL_FRAME.unpack(header)
+    )
+    if (
+        int(mode_index) != int(expected_index)
+        or not np.isfinite(normalization_h)
+        or float(normalization_h) != float(expected_h)
+    ):
+        raise ValueError("resumable surface frame mode/H identity changed")
+    body_bytes = 20 * (int(coupling_count) + int(projection_count))
+    body_start = stream.tell()
+    stream.seek(0, os.SEEK_END)
+    remaining_bytes = stream.tell() - body_start
+    stream.seek(body_start)
+    if body_bytes > remaining_bytes:
+        raise IOError("resumable surface stream has a truncated frame payload")
+    body = stream.read(body_bytes)
+    if len(body) != body_bytes:
+        raise IOError("resumable surface stream has a truncated frame payload")
+    offset = 0
+
+    def take(count: int, dtype: str, itemsize: int):
+        nonlocal offset
+        stop = offset + int(count) * itemsize
+        result = np.frombuffer(body[offset:stop], dtype=np.dtype(dtype), count=int(count))
+        offset = stop
+        return result
+
+    coupling_rows = take(coupling_count, "<i4", 4)
+    coupling_values = take(coupling_count, "<c16", 16)
+    projection_rows = take(projection_count, "<i4", 4)
+    projection_values = take(projection_count, "<c16", 16)
+    if offset != body_bytes:
+        raise IOError("resumable surface frame length is inconsistent")
+    for rows, values in (
+        (coupling_rows, coupling_values),
+        (projection_rows, projection_values),
+    ):
+        if (
+            rows.size != values.size
+            or (rows.size > 1 and np.any(rows[1:] <= rows[:-1]))
+            or (rows.size and int(rows[0]) < 0)
+            or not np.isfinite(values).all()
+        ):
+            raise ValueError("resumable surface frame contains invalid sparse rows/values")
+    end = stream.tell()
+    if digest is not None:
+        digest.update(header)
+        digest.update(body)
+    return (
+        int(mode_index),
+        float(normalization_h),
+        coupling_rows,
+        coupling_values,
+        projection_rows,
+        projection_values,
+        int(end - start),
+    )
+
+
+class _ResumableSurfaceFunctionalStream:
+    """Append committed production frames and validate a saved prefix once."""
+
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        identity: Mapping[str, Any],
+        modes: Sequence[Any],
+        mode_identities: Sequence[Mapping[str, Any]],
+        normalization_h: Sequence[float],
+    ) -> None:
+        self.path = Path(path).resolve()
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.checkpoint_path = Path(str(self.path) + ".checkpoint.json")
+        self.manifest_path = Path(str(self.path) + ".manifest.json")
+        self.identity = dict(identity)
+        self.identity_sha256 = hashlib.sha256(_canonical_json_bytes(self.identity)).hexdigest()
+        self.modes = tuple(modes)
+        self.mode_identities = tuple(dict(row) for row in mode_identities)
+        self.normalization_h = tuple(float(value) for value in normalization_h)
+        if not self.modes or len(self.modes) != len(self.mode_identities) or len(self.modes) != len(self.normalization_h):
+            raise ValueError("resumable surface stream mode inventory is incomplete")
+        self.mode_keys = tuple(
+            (int(index), str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+            for index, mode in enumerate(self.modes)
+        )
+        self.manifest_payload = {
+            "schema": _RESUMABLE_SURFACE_STREAM_SCHEMA,
+            "identity": self.identity,
+            "identity_sha256": self.identity_sha256,
+            "mode_keys": self.mode_keys,
+            "mode_identities": self.mode_identities,
+            "normalization_h": self.normalization_h,
+        }
+        self.manifest_bytes = _canonical_json_bytes(self.manifest_payload) + b"\n"
+        self.manifest_sha256 = hashlib.sha256(self.manifest_bytes).hexdigest()
+        self._digest = hashlib.sha256()
+        self._committed_mode_count = 0
+        self._committed_bytes = 0
+        self._peak_component_cache_bytes = 0
+
+    def _write_manifest_once(self) -> None:
+        if self.manifest_path.exists():
+            if self.manifest_path.read_bytes() != self.manifest_bytes:
+                raise ValueError("resumable surface stream manifest identity changed")
+            return
+        temporary = self.manifest_path.with_name(
+            f"{self.manifest_path.name}.tmp.{os.getpid()}.{time.time_ns()}"
+        )
+        with temporary.open("xb") as stream:
+            stream.write(self.manifest_bytes)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, self.manifest_path)
+        _fsync_directory(self.path.parent)
+
+    def _checkpoint_payload(self) -> dict[str, Any]:
+        return {
+            "schema": _RESUMABLE_SURFACE_STREAM_SCHEMA,
+            "identity_sha256": self.identity_sha256,
+            "manifest_sha256": self.manifest_sha256,
+            "expected_mode_count": len(self.modes),
+            "committed_mode_count": self._committed_mode_count,
+            "committed_bytes": self._committed_bytes,
+            "committed_prefix_sha256": self._digest.copy().hexdigest(),
+            "peak_component_cache_unique_backing_bytes": self._peak_component_cache_bytes,
+        }
+
+    def _publish_checkpoint(self) -> None:
+        _atomic_json(self.checkpoint_path, self._checkpoint_payload())
+
+    def open(self) -> tuple[list[FullspaceDtnModeFunctional], int]:
+        self._write_manifest_once()
+        raw_exists = self.path.exists()
+        checkpoint_exists = self.checkpoint_path.exists()
+        if raw_exists != checkpoint_exists:
+            raise ValueError("resumable surface stream data/checkpoint pair is incomplete")
+        if not raw_exists:
+            with self.path.open("xb") as stream:
+                stream.flush()
+                os.fsync(stream.fileno())
+            _fsync_directory(self.path.parent)
+            self._publish_checkpoint()
+            return [], 0
+        try:
+            checkpoint = json.loads(self.checkpoint_path.read_text(encoding="ascii"))
+        except (OSError, json.JSONDecodeError) as error:
+            raise ValueError("resumable surface stream checkpoint is unreadable") from error
+        if (
+            not isinstance(checkpoint, dict)
+            or checkpoint.get("schema") != _RESUMABLE_SURFACE_STREAM_SCHEMA
+            or checkpoint.get("identity_sha256") != self.identity_sha256
+            or checkpoint.get("manifest_sha256") != self.manifest_sha256
+            or checkpoint.get("expected_mode_count") != len(self.modes)
+        ):
+            raise ValueError("resumable surface stream checkpoint identity changed")
+        count = checkpoint.get("committed_mode_count")
+        committed_bytes = checkpoint.get("committed_bytes")
+        if (
+            type(count) is not int
+            or not 0 <= count <= len(self.modes)
+            or type(committed_bytes) is not int
+            or committed_bytes < 0
+            or type(checkpoint.get("peak_component_cache_unique_backing_bytes")) is not int
+            or checkpoint["peak_component_cache_unique_backing_bytes"] < 0
+        ):
+            raise ValueError("resumable surface stream checkpoint counters are invalid")
+        size = self.path.stat().st_size
+        if size != committed_bytes:
+            raise IOError(
+                "resumable surface stream has bytes outside its committed prefix; evidence retained"
+            )
+        entries: list[FullspaceDtnModeFunctional] = []
+        with self.path.open("rb") as stream:
+            for index in range(count):
+                frame = _surface_frame_arrays(
+                    stream,
+                    expected_index=index,
+                    expected_h=self.normalization_h[index],
+                    digest=self._digest,
+                )
+                mode_index, h_value, coupling_rows, coupling_values, projection_rows, projection_values, _length = frame
+                entries.append(
+                    FullspaceDtnModeFunctional(
+                        mode_key=self.mode_keys[mode_index],
+                        coupling_rows=coupling_rows,
+                        coupling_values=coupling_values,
+                        projection_rows=projection_rows,
+                        projection_values=projection_values,
+                        normalization_h=h_value,
+                        mode_identity=self.mode_identities[mode_index],
+                    )
+                )
+            if stream.tell() != committed_bytes:
+                raise IOError("resumable surface stream committed byte count differs from its frames")
+        if self._digest.hexdigest() != checkpoint.get("committed_prefix_sha256"):
+            raise IOError("resumable surface stream committed prefix SHA-256 changed")
+        self._committed_mode_count = count
+        self._committed_bytes = committed_bytes
+        self._peak_component_cache_bytes = checkpoint[
+            "peak_component_cache_unique_backing_bytes"
+        ]
+        return entries, self._peak_component_cache_bytes
+
+    def append(
+        self,
+        entry: FullspaceDtnModeFunctional,
+        *,
+        peak_component_cache_bytes: int,
+    ) -> None:
+        index = self._committed_mode_count
+        if index >= len(self.modes) or tuple(entry.mode_key) != self.mode_keys[index]:
+            raise ValueError("resumable surface append differs from the next frozen mode")
+        h_value = float(entry.normalization_h)
+        if not np.isfinite(h_value) or h_value != self.normalization_h[index]:
+            raise ValueError("resumable surface append H differs from the frozen mode inventory")
+        if type(peak_component_cache_bytes) is not int or peak_component_cache_bytes < 0:
+            raise ValueError("resumable surface component-cache peak is invalid")
+        arrays = []
+        for rows, values in (
+            (entry.coupling_rows, entry.coupling_values),
+            (entry.projection_rows, entry.projection_values),
+        ):
+            row_array = np.asarray(rows).reshape(-1)
+            value_array = np.asarray(values, dtype=np.complex128).reshape(-1)
+            if (
+                row_array.dtype.kind not in "iu"
+                or row_array.size != value_array.size
+                or not np.isfinite(value_array).all()
+                or (row_array.size and (int(row_array.min()) < 0 or int(row_array.max()) > np.iinfo(np.int32).max))
+                or (row_array.size > 1 and np.any(row_array[1:] <= row_array[:-1]))
+            ):
+                raise ValueError("resumable surface append has invalid sorted sparse arrays")
+            arrays.extend((np.ascontiguousarray(row_array, dtype="<i4"), np.ascontiguousarray(value_array, dtype="<c16")))
+        header = _SURFACE_FUNCTIONAL_FRAME.pack(index, len(arrays[0]), len(arrays[2]), h_value)
+        next_digest = self._digest.copy()
+        next_digest.update(header)
+        for array in arrays:
+            next_digest.update(memoryview(array).cast("B"))
+        frame_bytes = _SURFACE_FUNCTIONAL_FRAME.size + sum(array.nbytes for array in arrays)
+        with self.path.open("ab") as stream:
+            stream.write(header)
+            for array in arrays:
+                stream.write(memoryview(array).cast("B"))
+            stream.flush()
+            os.fsync(stream.fileno())
+        self._digest = next_digest
+        self._committed_mode_count += 1
+        self._committed_bytes += frame_bytes
+        self._peak_component_cache_bytes = max(
+            self._peak_component_cache_bytes, peak_component_cache_bytes
+        )
+        self._publish_checkpoint()
 
 
 def classify_port_mode(mode: Any) -> str:
@@ -635,6 +929,7 @@ def iter_fullspace_dtn_functionals_from_surface(
     audit: dict[str, Any] | None = None,
     progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
     progress_interval: int = FULLSPACE_DTN_PROGRESS_INTERVAL,
+    initial_peak_component_cache_bytes: int = 0,
 ):
     """Yield production B/D/H functionals one ordered mode at a time.
 
@@ -659,6 +954,8 @@ def iter_fullspace_dtn_functionals_from_surface(
     validate_phase_gauge(phase_gauge)
     if type(progress_interval) is not int or progress_interval < 1:
         raise ValueError("DtN carrier progress interval must be a positive integer")
+    if type(initial_peak_component_cache_bytes) is not int or initial_peak_component_cache_bytes < 0:
+        raise ValueError("initial DtN component-cache peak must be a nonnegative integer")
     if progress_callback is not None and not callable(progress_callback):
         raise TypeError("DtN carrier progress callback must be callable")
     modes = tuple(modes)
@@ -743,7 +1040,7 @@ def iter_fullspace_dtn_functionals_from_surface(
                 complex(mode.gamma), complex(mode.k_vector[2]))
 
     stats = audit if audit is not None else {}
-    peak_component_bytes = 0
+    peak_component_bytes = int(initial_peak_component_cache_bytes)
     emitted = 0
     combination_filter_totals = {
         name: {
@@ -882,6 +1179,7 @@ def iter_fullspace_dtn_functionals_from_surface(
                 mode_identity=mode_identity,
             )
             emitted += 1
+            stats["peak_component_cache_unique_backing_bytes"] = int(peak_component_bytes)
             if progress_callback is not None and (
                 emitted % progress_interval == 0 or emitted == len(selected_indices)
             ):
@@ -953,6 +1251,109 @@ def iter_fullspace_dtn_functionals_from_surface(
         })
 
 
+def _resumable_carrier_mode_identity(
+    modes: Sequence[Any],
+    cfg: Any,
+    *,
+    phase_gauge: str,
+    assembly_context: Mapping[str, Any] | None,
+    execution_identity: Mapping[str, Any],
+    mode_rows: Sequence[Mapping[str, Any]],
+    physical_manifest_sha256: str,
+) -> tuple[tuple[Mapping[str, Any], ...], np.ndarray, str | None, dict[str, Any]]:
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        assembly_projection_denominator,
+        deep_frozen_identity,
+        phase_gauge_descriptor,
+        validate_phase_gauge,
+    )
+
+    validate_phase_gauge(phase_gauge)
+    external = dict(execution_identity)
+    source_sha = str(external.get("source_sha", ""))
+    input_sha = str(external.get("input_sha256", ""))
+    staged_input_sha = str(external.get("staged_input_sha256", ""))
+    window_sha = str(external.get("campaign_window_sha256", ""))
+    surface_scope = external.get("surface_scope")
+    twist_index = external.get("twist_index")
+    if (
+        len(source_sha) != 40
+        or any(value not in "0123456789abcdef" for value in source_sha)
+        or len(input_sha) != 64
+        or any(value not in "0123456789abcdef" for value in input_sha)
+        or len(staged_input_sha) != 64
+        or any(value not in "0123456789abcdef" for value in staged_input_sha)
+        or len(window_sha) != 64
+        or any(value not in "0123456789abcdef" for value in window_sha)
+        or surface_scope not in {"global", "local"}
+        or (surface_scope == "global" and twist_index is not None)
+        or (
+            surface_scope == "local"
+            and (type(twist_index) is not int or twist_index < 0)
+        )
+    ):
+        raise ValueError("resumable carrier requires source/input/window and owner-scope identities")
+    if phase_gauge != BOUNDARY_PLANE or not isinstance(assembly_context, Mapping):
+        raise ValueError("resumable Task40 carrier requires the complete boundary-plane assembly context")
+    required_context = {
+        "schema", "source_sha256", "mesh", "cell_dofmap_sha256", "orientation",
+        "basix_coefficients", "MPC", "config_sha256", "gauss", "ABI",
+    }
+    if required_context.difference(assembly_context):
+        raise ValueError("resumable carrier assembly context omits mesh/MPC/orientation identity")
+    frozen_context = deep_frozen_identity(assembly_context)
+    context_sha = hashlib.sha256(_canonical_json_bytes(frozen_context)).hexdigest()
+    mode_identities: list[Mapping[str, Any]] = []
+    h_values = np.empty(len(modes), dtype=np.float64)
+    for index, (mode, base_row) in enumerate(zip(modes, mode_rows, strict=True)):
+        denominator = assembly_projection_denominator(mode, cfg, phase_gauge)
+        h_values[index] = float(denominator)
+        identity = _mode_identity(index, mode, cfg, denominator)
+        identity.update({
+            "assembly_identity_schema": "task40extra.fullspace-dtn-plane-assembly.v1",
+            "physical_generator_manifest_sha256": physical_manifest_sha256,
+            "assembly_context_sha256": context_sha,
+            "global_projection_denominator_diagnostic": base_row["projection_denominator"],
+            "phase_gauge": phase_gauge_descriptor(mode, cfg, phase_gauge),
+        })
+        mode_identities.append(deep_frozen_identity(identity))
+    if not np.isfinite(h_values).all() or np.any(h_values <= 0.0):
+        raise ValueError("resumable carrier H inventory is invalid")
+    h_sha256 = hashlib.sha256(np.ascontiguousarray(h_values, dtype="<f8").tobytes()).hexdigest()
+    physical_context = {
+        "assembly_context_sha256": context_sha,
+        "mesh": frozen_context["mesh"],
+        "cell_dofmap_sha256": frozen_context["cell_dofmap_sha256"],
+        "orientation": frozen_context["orientation"],
+        "basix_coefficients": frozen_context["basix_coefficients"],
+        "MPC": frozen_context["MPC"],
+        "config_sha256": frozen_context["config_sha256"],
+        "ABI": frozen_context["ABI"],
+    }
+    identity = {
+        "schema": _RESUMABLE_SURFACE_STREAM_SCHEMA,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "staged_input_sha256": staged_input_sha,
+        "campaign_window_sha256": window_sha,
+        "execution_contract_sha256": external.get("execution_contract_sha256"),
+        "surface_scope": surface_scope,
+        "twist_index": twist_index,
+        "twist": {
+            "floquet_phase_x": getattr(cfg, "floquet_phase_x", None),
+            "floquet_phase_y": getattr(cfg, "floquet_phase_y", None),
+        },
+        "phase_gauge": phase_gauge,
+        "ordered_mode_manifest_sha256": physical_manifest_sha256,
+        "normalization_h_sha256": h_sha256,
+        "mode_count": len(modes),
+        "mesh_mpc_orientation": physical_context,
+    }
+    _canonical_json_bytes(identity)
+    return tuple(mode_identities), h_values, context_sha, identity
+
+
 def build_fullspace_dtn_carrier_from_surface(
     modes: Sequence[Any],
     surface_assemblers: Mapping[tuple[str, int], Any],
@@ -961,6 +1362,8 @@ def build_fullspace_dtn_carrier_from_surface(
     *,
     phase_gauge: str = "global_z",
     assembly_context: Mapping[str, Any] | None = None,
+    persistence_path: str | Path | None = None,
+    persistence_identity: Mapping[str, Any] | None = None,
     progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
     progress_interval: int = FULLSPACE_DTN_PROGRESS_INTERVAL,
 ) -> FullspaceDtnCarrier:
@@ -969,13 +1372,129 @@ def build_fullspace_dtn_carrier_from_surface(
     if mpc is None:
         raise ValueError("dynamic DtN surface carrier requires the finalized MPC")
     modes = tuple(modes)
+    if (persistence_path is None) != (persistence_identity is None):
+        raise ValueError("resumable surface carrier requires both a path and execution identity")
     iterator_audit: dict[str, Any] = {}
-    entries = tuple(iter_fullspace_dtn_functionals_from_surface(
-        modes, surface_assemblers, mpc, cfg, phase_gauge=phase_gauge,
-        assembly_context=assembly_context, audit=iterator_audit,
-        progress_callback=progress_callback,
-        progress_interval=progress_interval,
-    ))
+    if persistence_path is None:
+        entries = tuple(iter_fullspace_dtn_functionals_from_surface(
+            modes, surface_assemblers, mpc, cfg, phase_gauge=phase_gauge,
+            assembly_context=assembly_context, audit=iterator_audit,
+            progress_callback=progress_callback,
+            progress_interval=progress_interval,
+        ))
+        physical_manifest_sha = iterator_audit["physical_generator_manifest_sha256"]
+        context_sha = iterator_audit["assembly_context_sha256"]
+        persistence_facts = None
+    else:
+        comm = mpc.function_space.mesh.comm
+        if int(comm.Get_size()) != 1:
+            raise ValueError("resumable Task40 surface stream is qualified only for MPI1")
+        mode_rows, _mode_manifest_bytes, physical_manifest_sha = build_ordered_mode_manifest(modes, cfg)
+        mode_identities, h_values, context_sha, stream_identity = _resumable_carrier_mode_identity(
+            modes,
+            cfg,
+            phase_gauge=phase_gauge,
+            assembly_context=assembly_context,
+            execution_identity=persistence_identity,
+            mode_rows=mode_rows,
+            physical_manifest_sha256=physical_manifest_sha,
+        )
+        stream = _ResumableSurfaceFunctionalStream(
+            persistence_path,
+            identity=stream_identity,
+            modes=modes,
+            mode_identities=mode_identities,
+            normalization_h=h_values,
+        )
+        entries, prefix_peak = stream.open()
+        prefix_count = len(entries)
+        if progress_callback is not None and prefix_count:
+            progress_callback({
+                "phase": "dtn_carrier_mode",
+                "status": "PROGRESS",
+                "completed": prefix_count,
+                "total": len(modes),
+                "generated_mode_count": prefix_count,
+                "committed_mode_count": prefix_count,
+                "committed_bytes": stream._committed_bytes,
+                "resumed_committed_prefix": prefix_count,
+                "progress_semantics": "durably_committed",
+            })
+        if prefix_count < len(modes):
+            pending_generated_progress: dict[str, Any] | None = None
+
+            def record_generated_progress(facts: Mapping[str, Any]) -> None:
+                nonlocal pending_generated_progress
+                pending_generated_progress = dict(facts)
+
+            suffix = iter_fullspace_dtn_functionals_from_surface(
+                modes,
+                surface_assemblers,
+                mpc,
+                cfg,
+                phase_gauge=phase_gauge,
+                assembly_context=assembly_context,
+                mode_indices=tuple(range(prefix_count, len(modes))),
+                precomputed_mode_rows=mode_rows,
+                precomputed_physical_manifest_sha256=physical_manifest_sha,
+                audit=iterator_audit,
+                progress_callback=(
+                    record_generated_progress if progress_callback is not None else None
+                ),
+                progress_interval=progress_interval,
+                initial_peak_component_cache_bytes=prefix_peak,
+            )
+            for entry in suffix:
+                stream.append(
+                    entry,
+                    peak_component_cache_bytes=int(
+                        iterator_audit.get("peak_component_cache_unique_backing_bytes", prefix_peak)
+                    ),
+                )
+                entries.append(entry)
+                if pending_generated_progress is not None and progress_callback is not None:
+                    generated = prefix_count + int(
+                        pending_generated_progress["completed"]
+                    )
+                    committed = int(stream._committed_mode_count)
+                    progress_callback({
+                        **pending_generated_progress,
+                        "completed": committed,
+                        "total": len(modes),
+                        "generated_mode_count": generated,
+                        "committed_mode_count": committed,
+                        "committed_bytes": stream._committed_bytes,
+                        "resumed_committed_prefix": prefix_count,
+                        "progress_semantics": "durably_committed",
+                    })
+                    pending_generated_progress = None
+        else:
+            iterator_audit.update({
+                "mode_index_range": [0, len(modes)],
+                "selected_mode_indices": list(range(len(modes))),
+                "yielded_mode_count": len(modes),
+                "peak_component_cache_unique_backing_bytes": int(prefix_peak),
+                "current_component_cache_unique_backing_bytes": 0,
+                "physical_generator_manifest_sha256": physical_manifest_sha,
+                "assembly_context_sha256": context_sha,
+            })
+        if len(entries) != len(modes):
+            raise IOError("resumable surface stream did not produce the complete frozen mode inventory")
+        entries = tuple(entries)
+        physical_manifest_sha = iterator_audit.get(
+            "physical_generator_manifest_sha256", physical_manifest_sha
+        )
+        context_sha = iterator_audit.get("assembly_context_sha256", context_sha)
+        persistence_facts = {
+            "path": str(stream.path),
+            "checkpoint_path": str(stream.checkpoint_path),
+            "manifest_sha256": stream.manifest_sha256,
+            "identity_sha256": stream.identity_sha256,
+            "resumed_prefix_mode_count": prefix_count,
+            "committed_mode_count": stream._committed_mode_count,
+            "committed_bytes": stream._committed_bytes,
+            "committed_prefix_sha256": stream._digest.hexdigest(),
+        }
     index_map = mpc.function_space.dofmap.index_map
     owned_start = int(index_map.local_range[0])
     owned_end = owned_start + int(index_map.size_local)
@@ -991,6 +1510,8 @@ def build_fullspace_dtn_carrier_from_surface(
         batch_size=FULLSPACE_DTN_BATCH_SIZE,
         comm=mpc.function_space.mesh.comm,
     )
+    if persistence_facts is not None:
+        result.persistence_facts = MappingProxyType(dict(persistence_facts))
     if phase_gauge == "boundary_plane":
         from .dtn_boundary_phase_gauge import deep_frozen_identity
 

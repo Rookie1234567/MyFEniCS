@@ -369,6 +369,7 @@ def _resolve_service_campaign(
     v29_path = (repo_root / TASK40_V29_CAMPAIGN_WINDOW).resolve()
     v30_path = (repo_root / TASK40_V30_TARGET_CAMPAIGN_WINDOW).resolve()
     v31_review_version = "V31"
+    v31_registration_version = "V31"
     if v31_contract is None:
         v31_path = (repo_root / TASK40_V31_CAMPAIGN_WINDOW).resolve()
     else:
@@ -384,6 +385,7 @@ def _resolve_service_campaign(
             V33_REVIEW_COMMIT,
             V33_REVIEW_PATH,
             V33_REVIEW_SHA256,
+            V33_EXTENSION_REGISTRATION_SCHEMA,
             v31_source_artifact_relative,
         )
 
@@ -394,18 +396,26 @@ def _resolve_service_campaign(
             == {"path": V32_REVIEW_PATH, "commit": V32_REVIEW_COMMIT, "sha256": V32_REVIEW_SHA256}
         ):
             v31_review_version = "V32"
+            v31_registration_version = "V32"
         elif (
             v31_contract.get("schema") == V32_CONTRACT_SCHEMA
             and review
             == {"path": V33_REVIEW_PATH, "commit": V33_REVIEW_COMMIT, "sha256": V33_REVIEW_SHA256}
         ):
             v31_review_version = "V33"
+            v31_registration_version = (
+                "V33_EXTENSION"
+                if v31_contract.get("registration_schema")
+                == V33_EXTENSION_REGISTRATION_SCHEMA
+                else "V33"
+            )
         elif (
             v31_contract.get("schema") == V31_CONTRACT_SCHEMA
             and review
             == {"path": V31_REVIEW_PATH, "commit": V31_REVIEW_COMMIT, "sha256": V31_REVIEW_SHA256}
         ):
             v31_review_version = "V31"
+            v31_registration_version = "V31"
         else:
             raise ValueError("service campaign route requires the exact approved V31, V32, or V33 contract")
         execution = v31_contract.get("execution")
@@ -624,7 +634,7 @@ def _resolve_service_campaign(
             window.sha256,
             window.payload,
             v31_contract,
-            review_version=v31_review_version,
+            review_version=v31_registration_version,
         )
         from src.runners.task40_v31_contract import V31_STAGE_SCOPE, V32_STAGE_SCOPE, V33_STAGE_SCOPE
 
@@ -644,6 +654,9 @@ def _resolve_service_campaign(
         "stage_scope": stage_scope,
         "version": campaign_version,
         "review_version": v31_review_version if campaign_version == "V31" else campaign_version,
+        "accounting_path": (
+            window.accounting_path if campaign_version == "V31" else None
+        ),
     }
 
 
@@ -4384,6 +4397,22 @@ def _campaign_accounting_path_from_manifest(
             "run manifest Task40 V20 campaign window/accounting identity is invalid"
         )
     return accounting_path
+
+
+def _expected_official_channel_count(
+    campaign_registration: Mapping[str, Any], profile: str
+) -> int:
+    """Use the registered original-mode inventory for reviewed V30/V31 routes."""
+    if campaign_registration.get("version") in {"V30", "V31"}:
+        from src.io.physical_intermediate_profile import profile_facts
+
+        registered_count = profile_facts(str(profile)).get("gates", {}).get(
+            "all_original_modes_retained"
+        )
+        if type(registered_count) is not int or registered_count < 1:
+            raise ValueError("registered profile has no frozen original channel count")
+        return registered_count
+    return 700
 
 
 def _checker_numerical_output_directory(
@@ -10364,16 +10393,9 @@ def run_service(
         packet_path = numerical_output / "v10_candidate_official_output.json"
         if packet_path.is_file():
             checker_kind = "task40_v10_independent_output_checker"
-            expected_channel_count = 700
-            if campaign_registration.get("version") == "V30":
-                from src.io.physical_intermediate_profile import profile_facts
-
-                registered_count = profile_facts(
-                    str(data["solver"]["preconditioner"])
-                ).get("gates", {}).get("all_original_modes_retained")
-                if type(registered_count) is not int or registered_count < 1:
-                    raise ValueError("V30 registered profile has no frozen channel count")
-                expected_channel_count = registered_count
+            expected_channel_count = _expected_official_channel_count(
+                campaign_registration, str(data["solver"]["preconditioner"])
+            )
             checker_command = _run_case_output_checker(
                 packet_path,
                 runtime_prefix,
@@ -10403,8 +10425,10 @@ def run_service(
         campaign_accounting = _campaign_accounting_path_from_manifest(
             run_manifest,
             expected_window_sha256=campaign_sha256,
-            expected_accounting_path=fixed_campaign.with_name(
-                "campaign_accounting_v10.jsonl"
+            expected_accounting_path=(
+                Path(str(campaign_registration["accounting_path"]))
+                if campaign_registration.get("version") == "V31"
+                else fixed_campaign.with_name("campaign_accounting_v10.jsonl")
             ),
             expected_run_id=str(data["run_id"]),
             expected_profile=str(data["solver"]["preconditioner"]),
@@ -10602,6 +10626,12 @@ def main(argv: list[str] | None = None) -> int:
     v33_approval = v33_approved_parser.add_mutually_exclusive_group(required=True)
     v33_approval.add_argument("--approval-receipt", type=Path)
     v33_approval.add_argument("--reuse-approved-contract", type=Path)
+    v33_extension_parser = subparsers.add_parser("prepare-v33-extension")
+    v33_extension_parser.add_argument("--parent-contract", type=Path, required=True)
+    v33_extension_parser.add_argument(
+        "--extension-authorization", type=Path, required=True
+    )
+    v33_extension_parser.add_argument("--execution-root", type=Path)
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -10762,6 +10792,23 @@ def main(argv: list[str] | None = None) -> int:
                     pending_directory=args.pending_dir,
                     approval_receipt=args.approval_receipt,
                     reuse_approved_contract=args.reuse_approved_contract,
+                ),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v33-extension":
+        from src.runners.task40_v31_contract import prepare_v33_extension_package
+
+        print(
+            json.dumps(
+                prepare_v33_extension_package(
+                    repo_root=ROOT,
+                    parent_contract_path=args.parent_contract,
+                    extension_authorization_path=args.extension_authorization,
+                    execution_root=args.execution_root,
                 ),
                 ensure_ascii=False,
                 sort_keys=True,
