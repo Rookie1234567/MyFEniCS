@@ -3,12 +3,38 @@ import fcntl
 import json
 import os
 import shutil
+import subprocess
 import time
 from contextlib import contextmanager
 from pathlib import Path
 
 from benchmarks.task034_wsl_resources import current_cgroup_path, vmstat_swap_pages
 from src.io.input_loader import InputError
+
+
+def _native_capacity_host_lock(root: Path, profile: str) -> tuple[Path, Path]:
+    """Choose the shared host lock for Task40, preserving every older path."""
+    from src.io.native_capacity_profile import TASK40_PHI90_P6_DIRECT_PROFILES
+
+    if profile not in TASK40_PHI90_P6_DIRECT_PROFILES:
+        return root.parent/'native-capacity-heavy.lock', root.parent/'task-repository.git'
+    try:
+        completed = subprocess.run(
+            ['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'],
+            cwd=root, capture_output=True, text=True, check=True,
+        )
+        common = Path(completed.stdout.strip())
+        if not common.is_absolute():
+            common = (root/common).resolve()
+        common = common.resolve(strict=True)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise InputError(f'Task40 cannot identify canonical shared git directory: {exc}') from exc
+    if common.name != 'task-repository.git' or not common.is_dir():
+        raise InputError(
+            f'Task40 canonical shared git directory is unexpected: {common}'
+        )
+    # Older Maxwell3D-Lab worktrees place the lock beside this common bare repo.
+    return common.parent/'native-capacity-heavy.lock', common
 
 
 def _cpu_launch_snapshot(cpus):
@@ -184,13 +210,16 @@ def _validate_preexisting_swap(snapshot, *, observe_only=False):
 def native_capacity_guard(profile, *, memory_policy='none'):
     """Reuse the reviewed native lock, parent CPU, and launch evidence."""
     from src.io.execution_plan import native_memory_policy_prefix
-    from src.io.native_capacity_profile import native_profile_facts
+    from src.io.native_capacity_profile import (
+        TASK40_PHI90_P6_DIRECT_PROFILES, native_profile_facts,
+    )
 
     memory_prefix = native_memory_policy_prefix(memory_policy)
     if os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION') != '1':
         raise InputError('source scripts/activate_myfenics_linux.sh first')
     root = Path(__file__).resolve().parents[2]
-    with (root.parent/'native-capacity-heavy.lock').open('a') as lock:
+    lock_path, common_repository = _native_capacity_host_lock(root, profile)
+    with lock_path.open('a') as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
@@ -209,15 +238,21 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         )
         node_admission = None
         if memory_policy == 'interleave_nodes0_1':
-            from .reviewed_workstation_admission import (
-                _parallel_authorized_profile,
-                interleaved_admission,
-            )
             os.environ.pop('PHYSICAL_NATIVE_NODE_CAP_BYTES', None)
-            node_admission = interleaved_admission(
-                profile_facts['resources'], worker_cpus,
-                parallel_allowed=_parallel_authorized_profile(profile),
-            )
+            if profile_facts['resources'].get('resource_stop_policy') == 'host_available_floor_v1':
+                from .reviewed_workstation_admission import task40_host_floor_interleaved_admission
+                node_admission = task40_host_floor_interleaved_admission(
+                    profile_facts['resources'], worker_cpus
+                )
+            else:
+                from .reviewed_workstation_admission import (
+                    _parallel_authorized_profile,
+                    interleaved_admission,
+                )
+                node_admission = interleaved_admission(
+                    profile_facts['resources'], worker_cpus,
+                    parallel_allowed=_parallel_authorized_profile(profile),
+                )
         if memory_policy in {'membind_node1', 'preferred_node1'}:
             cgroup = current_cgroup_path()
             allowed_mems = None
@@ -284,7 +319,13 @@ def native_capacity_guard(profile, *, memory_policy='none'):
                 'global_reserve_minimum_bytes': int(resources['reserve_min_bytes']),
             }
         filesystem = os.statvfs(root)
-        isolation = {'canonical_repository': str(root.parent/'task-repository.git'),
+        isolation = {'canonical_repository': str(common_repository),
+                     'native_capacity_heavy_lock': str(lock_path.resolve()),
+                     'native_capacity_lock_scope': (
+                         'canonical_host_shared_with_task39_worktrees'
+                         if profile in TASK40_PHI90_P6_DIRECT_PROFILES else
+                         'legacy_worktree_parent_unchanged'
+                     ),
                      'worktree': str(root), 'supervisor_affinity': sorted(os.sched_getaffinity(0)),
                      'worker_affinity': worker_cpus,
                      'worker_memory_policy': ({'mode': 'strict_membind', 'node': 1}

@@ -1,0 +1,112 @@
+"""Task40 direct manifests must survive the real worker payload gate."""
+
+import json
+import sys
+from dataclasses import replace
+from pathlib import Path
+
+import pytest
+
+from src.io.execution_plan import build_execution_plan
+from src.io.input_validation import load_and_resolve
+from src.io.run_specification import thaw
+from src.runners.task038_input_worker import _load_and_validate_worker_payload
+from src.runners.task038_launcher import _write_bootstrap
+
+REPO = Path(__file__).resolve().parents[2]
+INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_b_r13_p6_direct.dat"
+SOURCE_SHA = "b" * 40
+
+
+def _task40_manifest(tmp_path):
+    specification = load_and_resolve(INPUT)
+    run_directory = (tmp_path / "run").resolve()
+    run_directory.mkdir()
+    specification = replace(
+        specification,
+        expected_output_parent=run_directory.parent,
+    )
+    plan = build_execution_plan(
+        specification,
+        run_directory,
+        source_sha=SOURCE_SHA,
+        python_executable=sys.executable,
+        mpiexec_command="/usr/bin/mpiexec",
+    )
+    manifest, resolved_sha = _write_bootstrap(
+        specification,
+        run_directory,
+        source_sha=SOURCE_SHA,
+        adapter_identity=plan.adapter_identity,
+        start_time="2026-10-16T00:00:00Z",
+    )
+    return specification, run_directory, manifest, resolved_sha, plan
+
+
+def _worker_validate(specification, run_directory, resolved_sha, plan):
+    return _load_and_validate_worker_payload(
+        resolved_config=run_directory / "resolved_config.json",
+        manifest=run_directory / "run_manifest.json",
+        expected_input_sha256=specification.input_sha256,
+        expected_physical_model_sha256=specification.physical_model_sha256,
+        expected_source_sha=SOURCE_SHA,
+        expected_mpi_size=1,
+        expected_method="full3d_direct",
+        expected_adapter=plan.adapter_identity,
+        expected_output_directory=run_directory,
+        expected_resolved_config_sha256=resolved_sha,
+        actual_mpi_size=1,
+    )
+
+
+def test_task40_manifest_roundtrips_through_worker_payload_gate(tmp_path):
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path
+    )
+    profile = specification.derived["native_capacity_profile"]
+    contract = manifest["native_capacity_contract"]
+
+    assert manifest["native_capacity_profile_identity"] == profile["identity"]
+    assert manifest["native_capacity_profile"] == thaw(profile)
+    assert manifest["component_options"] == thaw(profile["component_options"])
+    assert contract["resource_stop_policy"] == "host_available_floor_v1"
+    assert contract["rss_hard_limit_bytes"] is None
+    assert contract["minimum_available_bytes"] == 64 * 1024**3
+    assert contract["direct_route"] == thaw(
+        profile["campaign_authorization"]["direct_route"]
+    )
+
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert errors == []
+    assert resolved is not None
+    assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+@pytest.mark.parametrize(
+    ("contract_path", "replacement", "error_fragment"),
+    [
+        (("resource_stop_policy",), "legacy", "resource stop policy mismatch"),
+        (("minimum_available_bytes",), 1, "minimum available-memory floor mismatch"),
+        (("direct_route", "surface_quadrature"), {}, "route contract mismatch"),
+    ],
+)
+def test_task40_worker_rejects_manifest_contract_drift(
+    tmp_path, contract_path, replacement, error_fragment
+):
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path
+    )
+    target = manifest["native_capacity_contract"]
+    for key in contract_path[:-1]:
+        target = target[key]
+    target[contract_path[-1]] = replacement
+    (run_directory / "run_manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+
+    _resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert any(error_fragment in error for error in errors)

@@ -212,6 +212,10 @@ def test_flat_profile_is_isolated_from_v7_iterative_and_n0_contracts():
     assert facts["resources"]["resource_stop_policy"] == "measured_tree_rss_only_v3"
     assert facts["campaign_authorization"]["resource_policy"]["zero_swap"] is True
     assert facts["campaign_authorization"]["direct_route"]["p4_and_outer_ksp"] == "not_built"
+    assert facts["campaign_authorization"]["direct_route"]["same_factor_lifecycle"] == [
+        "symbolic", "numeric", "solve"
+    ]
+    assert "task40_material_identity" not in facts
 
 
 def test_zero_swap_classifier_accepts_both_watchdog_contracts_fail_closed():

@@ -204,6 +204,26 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
     policy = cfg.stage4_dtn_order_policy.lower()
     if policy == "zero_order":
         orders = enumerate_diffraction_orders_3d(cfg, max_m_override=0, max_n_override=0)
+    elif policy == "explicit_rectangle":
+        # Private profile-bound fields are assigned by the direct Task40 route;
+        # this is a hard rectangle and deliberately does not apply the legacy
+        # manual policy's max(user, auto) widening.
+        max_m = getattr(cfg, "task40_dtn_rectangle_max_m", None)
+        max_n = getattr(cfg, "task40_dtn_rectangle_max_n", None)
+        if (
+            isinstance(max_m, (bool, np.bool_))
+            or not isinstance(max_m, (int, np.integer))
+            or isinstance(max_n, (bool, np.bool_))
+            or not isinstance(max_n, (int, np.integer))
+            or int(max_m) < 0
+            or int(max_n) < 0
+        ):
+            raise ValueError(
+                "explicit_rectangle requires non-negative Task40 m/n bounds"
+            )
+        orders = enumerate_diffraction_orders_3d(
+            cfg, max_m_override=int(max_m), max_n_override=int(max_n)
+        )
     elif policy in {"auto_propagating", "manual"}:
         n_max = max(abs(complex(cfg.n_air)), abs(complex(cfg.substrate_index)))
         auto_max_m = int(
@@ -216,7 +236,10 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
         max_n = auto_max_n if cfg.diffraction_order_max_n is None else max(int(cfg.diffraction_order_max_n), auto_max_n)
         orders = enumerate_diffraction_orders_3d(cfg, max_m_override=max_m, max_n_override=max_n)
     else:
-        raise ValueError("stage4_dtn_order_policy must be 'auto_propagating', 'zero_order', or 'manual'.")
+        raise ValueError(
+            "stage4_dtn_order_policy must be 'auto_propagating', 'zero_order', 'manual', "
+            "or the profile-bound 'explicit_rectangle'."
+        )
 
     modes: list[PortMode3D] = []
     side_specs = (
@@ -229,7 +252,7 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
             propagating = order.top_propagating if side == "top" else order.bottom_propagating
             rayleigh_warning = order.rayleigh_warning_top if side == "top" else order.rayleigh_warning_bottom
             selected = (order.m == 0 and order.n == 0) or bool(propagating)
-            if policy == "manual":
+            if policy in {"manual", "explicit_rectangle"}:
                 selected = True
             if not selected:
                 continue

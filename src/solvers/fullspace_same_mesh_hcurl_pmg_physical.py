@@ -779,19 +779,111 @@ def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
     }
 
 
+def _active_fe_port_output_identity(
+    contract: Mapping[str, Any],
+    *,
+    active_mode_count: int,
+    active_mode_sha256: str,
+) -> dict[str, Any]:
+    """Validate an explicit finite-element port-output scope and its identities.
+
+    This is intentionally separate from the legacy V7 N0-only output switch.
+    It records values produced by the active FE DtN carrier and never claims
+    omitted parent channels were computed.
+    """
+
+    import re
+
+    if contract.get("schema") != "task40.active_fe_port_outputs.v1":
+        raise ValueError("active FE port outputs require the Task40 scoped schema")
+    operator_scope = contract.get("operator_scope")
+    parent_scope = contract.get("parent_inventory_scope")
+    selection_policy = contract.get("selection_policy")
+    full_dtn_status = contract.get("full_dtn_status")
+    if not all(isinstance(value, str) and value.strip() for value in (
+        operator_scope, parent_scope, selection_policy, full_dtn_status
+    )):
+        raise ValueError("active FE port output scope and inventory labels are required")
+    if operator_scope == "A6_n0" or "n0" in operator_scope.lower():
+        raise ValueError("Task40 active FE outputs cannot use the legacy N0 scope")
+    if full_dtn_status != "FULL_DTN_NOT_VERIFIED":
+        raise ValueError("finite active-port output cannot certify the full DtN operator")
+
+    parent_count = contract.get("parent_mode_count")
+    active_count = contract.get("active_mode_count")
+    parent_sha = contract.get("parent_mode_sha256")
+    active_sha = contract.get("active_mode_sha256")
+    selected_sha = contract.get("selected_parent_indices_sha256")
+    if (
+        isinstance(parent_count, bool)
+        or not isinstance(parent_count, int)
+        or parent_count <= 0
+        or isinstance(active_count, bool)
+        or not isinstance(active_count, int)
+        or active_count != int(active_mode_count)
+        or active_count <= 0
+        or active_count > parent_count
+    ):
+        raise ValueError("active FE port mode counts are inconsistent")
+    if not isinstance(active_mode_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", active_mode_sha256):
+        raise ValueError("live active FE port manifest SHA256 is invalid")
+    for label, digest in (("parent", parent_sha), ("active", active_sha)):
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError(f"{label} FE port manifest SHA256 is invalid")
+    if active_sha != active_mode_sha256:
+        raise ValueError("active FE output identity differs from the live DtN carrier")
+
+    if active_count == parent_count:
+        if parent_sha != active_sha or selected_sha is not None:
+            raise ValueError("unfiltered active FE outputs must match the parent inventory")
+        omitted = "NONE_WITHIN_DECLARED_PARENT"
+    else:
+        if parent_sha == active_sha:
+            raise ValueError("truncated active FE output cannot alias the parent identity")
+        if not isinstance(selected_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", selected_sha):
+            raise ValueError("truncated active FE output requires its parent-index identity")
+        omitted = "NOT_COMPUTED"
+
+    return {
+        "output_scope": "ACTIVE_FE_DTN_PORTS",
+        "operator_scope": operator_scope,
+        "full_dtn_status": full_dtn_status,
+        "parent_inventory_scope": parent_scope,
+        "parent_mode_count": parent_count,
+        "parent_mode_sha256": parent_sha,
+        "active_mode_count": active_count,
+        "active_mode_sha256": active_sha,
+        "selection_policy": selection_policy,
+        "selected_parent_indices_sha256": selected_sha,
+        "omitted_channel_values": omitted,
+    }
+
+
 def recover_p0_outputs(
     bundle: Mapping[str, Any], solution: Any, output_dir: Path, *,
     canonical_export: Any | None = None,
     export_all_port_modes: bool = False,
     active_port_outputs_only: bool = False,
+    active_fe_port_output_contract: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Recover E/H and compute the existing modal and diagnostic outputs."""
+    """Recover E/H and compute the existing modal and diagnostic outputs.
 
+    ``active_fe_port_output_contract`` is a separately named explicit policy
+    for finite-element DtN carrier outputs. It does not reuse the historical
+    ``active_port_outputs_only`` N0 contract and does not invoke sampled-field
+    diffraction postprocessing.
+    """
+
+    from ..common.modes_3d import incident_power_3d
     from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
     from ..postprocessing.postprocess_3d import save_airbox_3d_fields
     from ..postprocessing.rta_3d import compute_volume_absorption_3d
     from .dtn_port_3d import _port_power_metrics
-    from ..common.modes_3d import incident_power_3d
+
+    if active_port_outputs_only and active_fe_port_output_contract is not None:
+        raise ValueError("legacy N0 and active FE port output contracts are mutually exclusive")
+    if active_fe_port_output_contract is not None and not export_all_port_modes:
+        raise ValueError("active FE port outputs require exporting every active carrier mode")
 
     setup = bundle["setup"]
     floquet = setup["floquets"][6]
@@ -800,6 +892,15 @@ def recover_p0_outputs(
         recovered_auxiliary = bundle["dtn_action"].recover_auxiliary(solution)
         aux = np.asarray(recovered_auxiliary, dtype=np.complex128)
         del recovered_auxiliary
+        if not (len(bundle["modes"]) == len(bundle["incident_projections"]) == aux.size):
+            raise ValueError("active FE port amplitudes do not match the live carrier mode list")
+        active_output_identity = None
+        if active_fe_port_output_contract is not None:
+            active_output_identity = _active_fe_port_output_identity(
+                active_fe_port_output_contract,
+                active_mode_count=len(bundle["modes"]),
+                active_mode_sha256=str(bundle.get("mode_sha256", "")),
+            )
         port_metrics = _port_power_metrics(
             bundle["cfg"],
             list(bundle["modes"]),
@@ -807,11 +908,14 @@ def recover_p0_outputs(
             list(bundle["incident_projections"]),
         )
         if active_port_outputs_only:
+            # Preserve the original V7 N0 output contract verbatim.
             port_metrics.update(
                 operator_scope="A6_n0", full_dtn_status="FULL_DTN_NOT_VERIFIED",
                 parent_mode_count=32060, active_mode_count=572,
                 omitted_channel_values="NOT_COMPUTED",
             )
+        elif active_output_identity is not None:
+            port_metrics.update(active_output_identity)
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         canonical_facts = None if canonical_export is None else canonical_export(field, output_dir)
@@ -843,6 +947,14 @@ def recover_p0_outputs(
                 "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
                 "omitted_channel_values": "NOT_COMPUTED",
                 "source": "dtn_port_diffraction_orders_3d.json",
+            }
+        elif active_output_identity is not None:
+            diffraction_metrics = {
+                "status": "ACTIVE_FE_PORT_OUTPUT",
+                "diffraction_channel_count": len(bundle["modes"]),
+                **active_output_identity,
+                "source": "dtn_port_diffraction_orders_3d.json",
+                "sampling_dft_used": False,
             }
         else:
             diffraction_metrics = compute_diffraction_orders_3d(

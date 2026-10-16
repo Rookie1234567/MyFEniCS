@@ -56,10 +56,17 @@ DISPERSION_FLAT_RSS_HARD_LIMIT_BYTES = 32 * 1024**3
 DISPERSION_FLAT_RSS_PLANNING_LIMIT_BYTES = 24 * 1024**3
 DISPERSION_FLAT_RAISED_RSS_HARD_LIMIT_BYTES = 512 * 1024**3
 DISPERSION_FLAT_RAISED_RSS_PLANNING_LIMIT_BYTES = 448 * 1024**3
+TASK40_PHI90_D13_B_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_B_p6_direct_v1"
+)
+TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(
+    {TASK40_PHI90_D13_B_P6_DIRECT_PROFILE}
+)
 P6_CONDENSED_DIRECT_PROFILES = (
     V7_ANISO_N0_P6_DIRECT_PROFILES
     | V6_F5_P6_DIRECT_PROFILES
     | DISPERSION_FLAT_P6_PROFILES
+    | TASK40_PHI90_P6_DIRECT_PROFILES
 )
 V7_ANISO_N0_PROFILES = (
     V7_ANISO_N0_P4_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES
@@ -149,6 +156,9 @@ NATIVE_CASES[DISPERSION_FLAT_P6_PROFILE] = (
 NATIVE_CASES[DISPERSION_FLAT_P6_RAISED_RSS_PROFILE] = (
     0.7, (0.5, 0.25, 0.125), None, None, None
 )
+NATIVE_CASES[TASK40_PHI90_D13_B_P6_DIRECT_PROFILE] = (
+    13.5, (10.0,), None, None, None
+)
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
     NATIVE_CASES[_f5_direct_profile] = (5.0, (4.0,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -212,6 +222,7 @@ NATIVE_TIME_LIMIT_MODES.update(
             *V7_ANISO_N0_P6_DIRECT_PROFILES,
             *V6_F5_P6_DIRECT_PROFILES,
             *DISPERSION_FLAT_P6_PROFILES,
+            *TASK40_PHI90_P6_DIRECT_PROFILES,
         )
     }
 )
@@ -657,8 +668,204 @@ def _dispersion_flat_p6_profile_facts(identity):
     return facts
 
 
+def _task40_phi90_d13_b_profile_facts(identity):
+    """Return the isolated first Task40 P6-direct D13 reference contract."""
+
+    if identity != TASK40_PHI90_D13_B_P6_DIRECT_PROFILE:
+        raise ValueError(f"unsupported Task40 P6-direct profile: {identity}")
+    facts = native_profile_facts("dual_condensed_balh_native_13p5_q4_v5")
+    for legacy_key in (
+        "fine_auxiliary", "intermediate", "auxiliary", "balanced",
+        "additional_fine_vectors_limit", "inner", "structural_calls",
+        "fine_physical_operator_modified",
+        "official_recovery_requires_full_explicit_true_residual",
+        "release_auxiliary_before_recovery", "reference_only",
+    ):
+        facts.pop(legacy_key, None)
+    mode_selection = {
+        "schema": "task40.dtn-mode-selection.v1",
+        "policy": "explicit_symmetric_rectangle_v1",
+        "parent_rectangle_max_abs_m_n": [4, 8],
+        "active_rectangle_max_abs_m_n": [4, 8],
+        "parent_inventory_scope": "R13_finite_rectangle_including_evanescent",
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    }
+    facts.update(
+        identity=identity,
+        model_id="si_block_phi90_50x50_17x20_h120",
+        execution_mode="full_solve",
+        wavelength_nm=13.5,
+        allowed_mesh_targets_nm=[10.0],
+        formal_runner="src.runners.p6_condensed_direct",
+        route="TASK40_PHI90_D13_B_P6_CONDENSED_DIRECT_R13",
+        operator_scope="task40_phi90_D13_B_R13_finite_rectangle",
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+    )
+    facts["task40_material_identity"] = {
+        "model_id": "si_block_phi90_50x50_17x20_h120",
+        "material_label": "Si / silicon",
+        "index_values": list(MATERIALS[13.5]),
+        "value_authority": "inherited_13p5_nm_input_values_exact",
+        "shared_material_tables_modified": False,
+    }
+    facts["outer"] = {
+        "route": "P6_CONDENSED_DIRECT",
+        "initial_guess": "not_applicable_direct_solve",
+        "screen": {"enabled": False, "policy": "not_applicable"},
+    }
+    # No user-fixed RSS ceiling applies to D13.  The watchdog uses a separate
+    # explicit available-memory floor and never falls back to legacy caps.
+    facts["resources"] = {
+        "resource_stop_policy": "host_available_floor_v1",
+        "rss_hard_limit_bytes": None,
+        "rss_warning_bytes": None,
+        "startup_headroom_bytes": None,
+        "minimum_available_bytes": 64 * 1024**3,
+        "swap_policy": "observe_only",
+        "global_swap_delta_policy": "observe_only",
+        "stop_on_global_swap": False,
+        "prediction_admission_policy": "record_only",
+        "memavailable_runtime_policy": "stop_below_explicit_64_gib_floor",
+        "pss_sampling_policy": "disabled_by_profile",
+        "pss_interval_seconds": None,
+        "uss_sampling_policy": "disabled_by_profile",
+        "uss_interval_seconds": None,
+        "concurrent_neighbor_authorized": False,
+        "workflow_seconds": None,
+        "solve_seconds": None,
+        "time_limit_mode": "none",
+    }
+    facts["native_execution"] = {
+        "supervisor_cpu": 9,
+        "worker_cpu": 24,
+        "worker_cpus": [24],
+        "mpi_size": 1,
+        "math_threads": 1,
+        "memory_policy": "interleave_nodes0_1",
+        "native_memory_policy": "interleave_nodes0_1",
+    }
+    facts["component_options"] = {
+        "functional_store_policy": "disabled_no_functional_store_config",
+        "cross_mesh_fe_reuse": False,
+        "direct_p6_route": True,
+        "task_family": "task40_phi90_mesh_modes_direct",
+        "mesh_target_nm": 10.0,
+        "expected_axis_cell_counts": [6, 6, 14],
+        "expected_global_cell_count": 504,
+        "mode_selection": mode_selection,
+        "volume_quadrature": {
+            "degree": 15,
+            "rule": "default",
+            "authority": "live_fine_volume_quadrature_metadata",
+        },
+        "surface_quadrature": {
+            "degree": 28,
+            "rule": "default",
+            "fixed_comparison_envelope": {"max_abs_m": 6, "max_abs_n": 10},
+            "authority": "R_plus_two_envelope_fixed_before_D13_B",
+            "formula": "max(10, 2*p + max_abs_order + 6)",
+        },
+        "surface_assembly_backend_by_degree": {"p6": "native_ffcx"},
+        "field_output_evidence": {
+            "complete_field": "cellwise_DG6_E_and_H_with_domain_tags",
+            "periodic_reference_sample_counts_min_x_y": [40, 64],
+            "pillar_interior_and_exterior": "both_required_in_periodic_center_grid",
+            "x_normal_interface_tangential_components": ["y", "z"],
+            "y_normal_interface_tangential_components": ["x", "z"],
+            "interface_observation_source": (
+                "unaveraged_cellwise_DG6_traces_in_complete_field_export"
+            ),
+        },
+    }
+    facts["backend"] = {
+        "p6": "exact_p6_local_static_condensation_materialized_AIJ",
+        "global_matrix": "one_exact_[S_V,Bhat;-Dhat,Hhat]_matrix",
+        "factor": "one_MUMPS_symbolic_then_numeric_on_the_same_matrix_with_at_most_two_correction_solves",
+        "rhs": "P6CellCondensedAction.reduce_rhs",
+        "recovery": "P6CellCondensedAction.recover_storage",
+        "independent_residual": "original_full_p6_A6_active_R13_rectangle_action",
+        "p4_operator": "NOT_BUILT",
+        "p4_factor": "NOT_BUILT",
+        "outer_ksp": "NOT_BUILT",
+        "operator_scope": facts["operator_scope"],
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    }
+    facts.pop("coarse_operator", None)
+    facts.pop("retained_condensed_v20", None)
+    facts.pop("p4_assembly_implementation", None)
+    facts.pop("p4_p6_curl_implementation", None)
+    facts["condensed_route"] = {
+        "name": "task40_phi90_p6_exact_local_condensation_direct_v1",
+        "degree": 6,
+        "matrix_blocks": "[S_V,Bhat;-Dhat,Hhat]",
+        "local_elimination": "exact_existing_per_cell_interior_factorization",
+        "parent_mode_inventory": "explicit_R13_rectangle_including_evanescent",
+        "active_mode_inventory": "same_as_parent",
+        "parent_quadrature_degree": 28,
+        "surface_quadrature_envelope_max_abs_m_n": [6, 10],
+        "same_matrix_lifecycle": (
+            "one_materialized_PETSc_AIJ_one_symbolic_one_numeric_initial_solve_"
+            "and_at_most_two_same_factor_correction_solves"
+        ),
+        "condensed_residual_relative_gate": 1.0e-9,
+        "max_same_factor_correction_solves": 2,
+        "total_factor_solve_calls_max": 3,
+        "release_after": (
+            "independent_native_A6_and_complete_p6_storage_recovery"
+        ),
+        "release_before": "field_and_absorption_output_postprocessing",
+        "materialized_matrix_owner": "AssemblyTimeCondensedSystem",
+        "borrowed_action_owns_matrix": False,
+        "cross_mesh_reuse": False,
+        "functional_store": False,
+        "no_p4_factor_or_outer_ksp": True,
+    }
+    facts["campaign_authorization"] = {
+        "source": "Task40 user-authorized N1 then D13 sequence",
+        "execution_mode": "full_solve",
+        "time_limit_mode": "none",
+        "formal_mpi": 1,
+        "math_threads": 1,
+        "supervisor_cpu": 9,
+        "worker_cpu": 24,
+        "numa_policy": "interleave_nodes0_1",
+        "resource_policy": {
+            "name": "host_available_floor_v1",
+            "rss_user_cap": None,
+            "minimum_available_bytes": 64 * 1024**3,
+            "swap": "observe_only",
+            "pss_uss_sampling": "disabled",
+            "prediction": "record_only",
+        },
+        "direct_route": {
+            "degree": 6,
+            "parent_mode_rectangle_max_abs_m_n": [4, 8],
+            "active_mode_rectangle_max_abs_m_n": [4, 8],
+            "parent_mode_count": "live_inventory_expected_612",
+            "parent_mode_sha256": "live_inventory_authority",
+            "volume_quadrature": "live_degree15_default_rule",
+            "surface_quadrature": "fixed_R_plus_two_envelope_degree28",
+            "same_factor_lifecycle": {
+                "symbolic_calls": 1,
+                "numeric_calls": 1,
+                "initial_solve_calls": 1,
+                "same_factor_correction_solve_calls_max": 2,
+                "total_solve_calls_max": 3,
+            },
+            "condensed_residual_relative_gate": 1.0e-9,
+            "max_same_factor_correction_solves": 2,
+            "p4_and_outer_ksp": "not_built",
+        },
+    }
+    facts["operator_scope"] = "task40_phi90_D13_B_R13_finite_rectangle"
+    facts["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
+    return facts
+
+
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
+    if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
+        return _task40_phi90_d13_b_profile_facts(identity)
     if identity in DISPERSION_FLAT_P6_PROFILES:
         return _dispersion_flat_p6_profile_facts(identity)
     if identity in V6_F5_P6_DIRECT_PROFILES:
@@ -1933,12 +2140,112 @@ def _validate_dispersion_flat_p6_case(config, identity: str) -> None:
         raise InputError(f'{identity} requires the five planes and at least four y samples')
 
 
+def _validate_task40_phi90_d13_b_case(config: dict) -> None:
+    """Validate the first finite-R13 Task40 P6-direct input without legacy caps."""
+    from .input_loader import InputError
+
+    identity = TASK40_PHI90_D13_B_P6_DIRECT_PROFILE
+
+    def require(section: str, key: str, expected: object) -> None:
+        actual = config.get(section, {}).get(key)
+        if actual != expected:
+            raise InputError(
+                f'{identity} fixes {section}.{key}={expected!r}; got {actual!r}'
+            )
+
+    require('method', 'kind', 'full3d_direct')
+    solver = config.get('solver', {})
+    require('solver', 'native_capacity_profile', identity)
+    require('solver', 'linear_solver', 'direct')
+    require('solver', 'direct_solver_profile', 'default')
+    forbidden = {'preconditioner', 'ksp_type', 'restart', 'max_iterations', 'coarse_degree'} & set(solver)
+    if forbidden:
+        raise InputError(f'{identity} forbids iterative/P4 fields: {sorted(forbidden)}')
+    for key, expected in {
+        'model_id': 'si_block_phi90_50x50_17x20_h120',
+    }.items():
+        actual = config.get(key)
+        if actual != expected:
+            raise InputError(f'{identity} fixes {key}={expected!r}; got {actual!r}')
+    for key, expected in {
+        'geometry_kind': 'rectangular_block_grating',
+        'period_x_nm': 50.0, 'period_y_nm': 50.0,
+        'z_min_nm': -10.0, 'z_max_nm': 130.0,
+        'interface_z_nm': 0.0, 'air_height_nm': 130.0,
+        'substrate_thickness_nm': 10.0,
+        'grating_width_x_nm': 17.0, 'grating_width_y_nm': 20.0,
+        'grating_height_nm': 120.0,
+    }.items():
+        require('geometry', key, expected)
+    materials = config.get('materials', {})
+    expected_n = tuple(MATERIALS[13.5])
+    for key, expected in {
+        'n_air': (1.0, 0.0), 'mu_r': (1.0, 0.0),
+        'n_substrate': expected_n, 'n_grating': expected_n,
+    }.items():
+        actual = tuple(materials.get(key, ()))
+        if actual != expected:
+            raise InputError(f'{identity} fixes materials.{key}={expected!r}')
+    for key in ('substrate_name', 'grating_name'):
+        if materials.get(key) != 'Si / silicon':
+            raise InputError(f'{identity} fixes materials.{key} to the inherited Si label')
+    for key, expected in {
+        'wavelength_nm': 13.5, 'grazing_angle_deg': 1.0,
+        'azimuth_deg': 90.0, 'polarization': 's', 'electric_amplitude': 1.0,
+    }.items():
+        require('incidence', key, expected)
+    discretization = config.get('discretization', {})
+    for key, expected in {
+        'nedelec_degree': 6, 'visualization_degree': 6,
+        'mesh_target_nm': 10.0, 'mesh_cell_type': 'hexahedron',
+        'mesh_spacing_mode': 'boundary_fitted',
+        'assembly_backend': 'standard_full', 'floquet_constraint_mode': 'auto',
+    }.items():
+        require('discretization', key, expected)
+    for key in (
+        'mesh_axis_cell_counts', 'mesh_axis_x_values', 'mesh_axis_y_values',
+        'mesh_axis_z_values', 'mesh_axis_z_profile', 'mesh_plan_id', 'mesh_plan_sha256',
+    ):
+        if discretization.get(key) is not None:
+            raise InputError(f'{identity} derives its h10 mesh; {key} must be omitted')
+    for key, expected in {
+        'use_floquet_x': True, 'use_floquet_y': True,
+        'vertical_boundary': 'dtn_port', 'scattering_background': 'layered',
+        'dtn_order_policy': 'auto_propagating', 'dtn_assembly': 'auxiliary',
+        'use_pml': False,
+    }.items():
+        require('boundary', key, expected)
+    execution = config.get('execution', {})
+    for key, expected in {
+        'mpi_size': 1, 'time_limit_mode': 'none', 'timeout_seconds': None,
+        'require_zero_swap': False, 'native_memory_policy': 'interleave_nodes0_1',
+    }.items():
+        require('execution', key, expected)
+    if not (0 < float(execution.get('warning_memory_gib', 0))
+            < float(execution.get('terminate_memory_gib', 0))):
+        raise InputError(f'{identity} requires positive ordered legacy diagnostic fields')
+    output = config.get('output', {})
+    for key in ('export_fields', 'export_diffraction_orders', 'export_modal_amplitudes',
+                'export_reference_planes'):
+        if output.get(key) is not True:
+            raise InputError(f'{identity} requires output.{key}=true')
+    if output.get('export_canonical_vectors') is not False:
+        raise InputError(f'{identity} keeps large canonical-vector export disabled')
+    if tuple(output.get('reference_plane_z_nm') or ()) != (10.0, 30.0, 60.0, 90.0, 110.0):
+        raise InputError(f'{identity} fixes the five reference planes')
+    if int(output.get('sample_count_y', 0)) < 64:
+        raise InputError(f'{identity} requires at least 64 full-3D y samples for phase resolution')
+
+
 def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
     identity = native_capacity_profile_identity(
         config.get('method', {}).get('kind'), config['solver']
     )
+    if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
+        _validate_task40_phi90_d13_b_case(config)
+        return
     if identity in DISPERSION_FLAT_P6_PROFILES:
         _validate_dispersion_flat_p6_case(config, identity)
         return

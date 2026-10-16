@@ -139,11 +139,41 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
 
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
+        TASK40_PHI90_P6_DIRECT_PROFILES,
         V6_F5_P6_DIRECT_FULL600_PROFILE,
         V6_F5_P6_DIRECT_N0_PROFILE,
-        V7_D_ANISO_N0_P6_DIRECT_PROFILE,
         V7_ANISO_N0_P6_DIRECT_PROFILE,
+        V7_D_ANISO_N0_P6_DIRECT_PROFILE,
     )
+
+    if profile_identity in TASK40_PHI90_P6_DIRECT_PROFILES:
+        return {
+            "family": "task40_phi90",
+            "truncated": False,
+            "operator_scope": "task40_D13_B_R13_finite_rectangle",
+            "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+            "parent_inventory_scope": "R13_finite_rectangle_including_evanescent",
+            "selection_policy": "explicit_symmetric_rectangle_v1",
+            "parent_rectangle_max_abs_m_n": [4, 8],
+            "active_rectangle_max_abs_m_n": [4, 8],
+            "parent_count": 612,
+            "parent_sha256": None,
+            "active_count": 612,
+            "active_sha256": None,
+            "selected_parent_indices_sha256": None,
+            "residual_key": "original_A6_active_rectangle_relative",
+            "residual_scope": "A6_D13_B_R13_active_rectangle",
+            "residual_gate_key": "original_A6_active_rectangle_residual_pass",
+            "residual_finite_key": "original_A6_active_rectangle_finite",
+            "summary_prefix": "task40_phi90_d13_b_p6_direct_R13",
+            "surface_quadrature_degree": 28,
+            "surface_quadrature_envelope_max_abs_m_n": [6, 10],
+            "condensed_residual_gate": 1.0e-9,
+            "max_same_factor_corrections": 2,
+            "expected_axis_cell_counts": [6, 6, 14],
+            "expected_global_cell_count": 504,
+            "diagnostic_scope": "TASK40_D13_B_13P5NM_504CELL_PHI90",
+        }
 
     if profile_identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE:
         route = _direct_run_contract(V7_ANISO_N0_P6_DIRECT_PROFILE)
@@ -272,8 +302,35 @@ def _validate_direct_condensed_dimensions(
 
 
 def _direct_output_policy(route: Mapping[str, Any]) -> dict[str, Any]:
-    """Keep V7's active-only audit separate from F5 active-mode exports."""
+    """Keep each direct family’s FE-port output scope explicit."""
 
+    if route["family"] == "task40_phi90":
+        contract = {
+            "schema": "task40.active_fe_port_outputs.v1",
+            "operator_scope": route["operator_scope"],
+            "full_dtn_status": route["full_dtn_status"],
+            "parent_inventory_scope": route["parent_inventory_scope"],
+            "parent_mode_count": route["parent_count"],
+            "parent_mode_sha256": route["parent_sha256"],
+            "active_mode_count": route["active_count"],
+            "active_mode_sha256": route["active_sha256"],
+            "selection_policy": route["selection_policy"],
+            "selected_parent_indices_sha256": route.get(
+                "selected_parent_indices_sha256"
+            ),
+        }
+        return {
+            "active_port_outputs_only": False,
+            "active_fe_port_output_contract": contract,
+            "dtn_output_mode_count": int(route["active_count"]),
+            "omitted_dtn_channels": (
+                "NONE_WITHIN_DECLARED_PARENT"
+                if route["active_count"] == route["parent_count"]
+                else "NOT_COMPUTED"
+            ),
+            "outside_parent_channel_values": "NOT_COMPUTED",
+            "diffraction_source": "active_finite_element_dtn_port_outputs",
+        }
     if route["family"] == "v7_aniso_n0":
         if int(route["active_count"]) != APPENDED_PORTS:
             raise ValueError("V7 active-only outputs require its frozen 572-mode route")
@@ -481,6 +538,44 @@ def _inventory_mode_counts_by_side(
     return counts
 
 
+def _persist_task40_inventory(directory: Path, inventory) -> dict[str, Any]:
+    """Persist a Task40 finite-rectangle inventory without legacy family labels."""
+    from src.solvers.fullspace_dtn_action import (
+        FULLSPACE_DTN_MANIFEST_SCHEMA,
+        FULLSPACE_DTN_PROFILE,
+        _canonical_json_bytes,
+    )
+
+    modes, rows, expected_sha = inventory
+    encoded = _canonical_json_bytes({
+        "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+        "profile": FULLSPACE_DTN_PROFILE,
+        "mode_count": len(modes),
+        "modes": rows,
+        "operator_scope": "task40_phi90_finite_reference_rectangle",
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    })
+    # The canonical mode digest intentionally hashes the established modes
+    # payload only; the enclosing Task40 artifact has its own file hash.
+    mode_payload = _canonical_json_bytes({
+        "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+        "profile": FULLSPACE_DTN_PROFILE,
+        "mode_count": len(modes),
+        "modes": rows,
+    })
+    if hashlib.sha256(mode_payload).hexdigest() != expected_sha:
+        raise ValueError("Task40 live finite-rectangle mode manifest hash differs")
+    path = Path(directory) / "task40_r13_parent_mode_manifest.json"
+    with path.open("xb") as stream:
+        stream.write(encoded)
+    return {
+        "filename": path.name,
+        "mode_sha256": expected_sha,
+        "artifact_sha256": hashlib.sha256(encoded).hexdigest(),
+        "bytes": len(encoded),
+    }
+
+
 def _persist_n0_inventory(
     directory: Path,
     parent_inventory: tuple[Any, Any, str],
@@ -656,6 +751,60 @@ def _f5_expected_material_tag_counts(
         "grating": grating,
         "substrate": substrate,
         "air": total - grating - substrate,
+    }
+
+
+def _task40_d13_b_mesh_evidence(levels: Mapping[str, Any], cfg: Any) -> dict[str, Any]:
+    """Check live D13-B axes, 504 cells and material tags, without F5 identity."""
+    msh = levels["mesh_data"].mesh
+    axes = {
+        axis: tuple(float(value) for value in np.unique(np.asarray(msh.geometry.x)[:, i]))
+        for i, axis in enumerate(("x", "y", "z"))
+    }
+    expected_axes = {
+        "x": (0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0),
+        "y": (0.0, 7.5, 15.0, 25.0, 35.0, 42.5, 50.0),
+        "z": tuple(float(value) for value in (-10, *range(0, 121, 10), 130)),
+    }
+    if axes != expected_axes:
+        raise ValueError("actual D13-B coordinate axes differ from the h10 three-axis plan")
+    counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
+    actual_cells = int(msh.topology.index_map(msh.topology.dim).size_global)
+    if counts != (6, 6, 14) or actual_cells != 504:
+        raise ValueError("actual D13-B cell counts differ from 6x6x14=504")
+    if str(msh.topology.cell_name()) != "hexahedron":
+        raise ValueError("Task40 D13-B requires hexahedral cells")
+    tags = np.asarray(levels["mesh_data"].cell_tags.values, dtype=np.int64)
+    expected = {
+        int(cfg.tags.substrate): 36,
+        int(cfg.tags.grating): 48,
+        int(cfg.tags.air): 420,
+    }
+    actual = {tag: int(np.count_nonzero(tags == tag)) for tag in expected}
+    if tags.size != actual_cells or actual != expected:
+        raise ValueError(f"actual D13-B material tag counts differ: {actual} != {expected}")
+    return {
+        "status": "PASS",
+        "profile": "task40para_phi90_13p5_D13_B_p6_direct_v1",
+        "geometry": "rectangular_block_grating",
+        "cell_type": "hexahedron",
+        "actual_global_cell_count": actual_cells,
+        "axis_cell_counts": list(counts),
+        "actual_axes_match_frozen_d13_b_coordinates": True,
+        "axis_sha256_le_f64": {
+            axis: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+            for axis, values in axes.items()
+        },
+        "material_tag_counts": {str(tag): count for tag, count in actual.items()},
+        "expected_material_tag_counts": {str(tag): count for tag, count in expected.items()},
+        "expected_analytic_material_volumes_nm3": {
+            "substrate": 25000.0,
+            "grating": 40800.0,
+            "air": 284200.0,
+            "total": 350000.0,
+            "measurement": "geometry_arithmetic_only; live cell-volume integration NOT_RUN",
+        },
+        "mpi_size": 1,
     }
 
 
@@ -1070,6 +1219,112 @@ def _factor_same_matrix(factor: Any, matrix: Any, rhs: Any, solution: Any, marke
     return matrix_object_id
 
 
+def _bounded_same_factor_condensed_refinement(
+    factor: Any,
+    matrix: Any,
+    rhs: Any,
+    solution: Any,
+    action: Any,
+    residual: Any,
+    *,
+    initial_relative: float,
+    relative_gate: float,
+    max_corrections: int,
+    marker,
+) -> tuple[float, int, list[dict[str, Any]]]:
+    """Correct the materialized condensed residual through the same MUMPS factor."""
+    if int(max_corrections) < 0 or float(relative_gate) <= 0.0:
+        raise ValueError("invalid same-factor condensed refinement contract")
+    matrix_object_id = id(matrix)
+    relative = float(initial_relative)
+    corrections = 0
+    history = [{"correction": 0, "relative_residual": relative}]
+    while np.isfinite(relative) and relative > float(relative_gate) and corrections < int(max_corrections):
+        correction = rhs.duplicate()
+        try:
+            correction.set(0.0 + 0.0j)
+            factor.solve_repeated(residual, correction)
+            solution.axpy(1.0 + 0.0j, correction)
+        finally:
+            correction.destroy()
+        if id(matrix) != matrix_object_id:
+            raise RuntimeError("materialized matrix object changed during same-factor correction")
+        matrix.mult(solution, action)
+        rhs.copy(residual)
+        residual.axpy(-1.0 + 0.0j, action)
+        relative = float(residual.norm()) / max(float(rhs.norm()), np.finfo(float).tiny)
+        corrections += 1
+        row = {
+            "correction": corrections,
+            "relative_residual": relative,
+            "same_matrix_object_id": matrix_object_id,
+            "symbolic_calls": int(factor.symbolic_calls),
+            "numeric_calls": int(factor.numeric_calls),
+            "solve_calls": int(factor.solve_calls),
+        }
+        history.append(row)
+        marker("p6_direct_same_factor_condensed_refinement", row)
+    return relative, corrections, history
+
+
+def _release_task40_direct_algebra(
+    factor: Any,
+    action: Any,
+    action_view: Any,
+    condensed: Any,
+    matrix: Any,
+) -> dict[str, Any]:
+    """Release Task40's solved global algebra before expensive field output.
+
+    The matrix is owned only by ``condensed``.  ``action`` borrows a shallow
+    metadata view whose matrix is deliberately ``None`` and does not own the
+    condensed system.  Keep those ownership assertions here so an early
+    release cannot destroy a borrowed PETSc object twice or leave the action
+    pointing at the materialized matrix.
+    """
+    if factor is None or action is None or action_view is None or condensed is None or matrix is None:
+        raise ValueError("Task40 early release requires the live direct algebra objects")
+    if action.owns_condensed:
+        raise RuntimeError("Task40 borrowed action unexpectedly owns the condensed system")
+    if action.condensed is not action_view or action_view.matrix is not None:
+        raise RuntimeError("Task40 action is not attached to its matrix-free metadata view")
+    if condensed.matrix is not matrix:
+        raise RuntimeError("Task40 materialized matrix ownership changed before release")
+    if getattr(condensed, "_destroyed", False):
+        raise RuntimeError("Task40 condensed system was already destroyed")
+
+    facts = {
+        "matrix_object_id": id(matrix),
+        "factor_destroyed_once": False,
+        "borrowed_action_destroyed_once": False,
+        "condensed_owner_destroyed_once": False,
+        "materialized_matrix_destroyed_by": "condensed.destroy",
+        "action_owned_condensed": False,
+        "action_view_matrix_is_none": True,
+    }
+    factor.destroy()
+    facts["factor_destroyed_once"] = bool(getattr(factor, "destroyed", True))
+    action.destroy()
+    facts["borrowed_action_destroyed_once"] = bool(getattr(action, "_destroyed", True))
+    condensed.destroy()
+    facts["condensed_owner_destroyed_once"] = bool(
+        getattr(condensed, "_destroyed", True)
+    )
+    # AssemblyTimeCondensedSystem.destroy destroys, but retains, its PETSc
+    # wrapper. Drop that stale Python reference after the single owner release.
+    condensed.matrix = None
+    if not all(
+        facts[key]
+        for key in (
+            "factor_destroyed_once",
+            "borrowed_action_destroyed_once",
+            "condensed_owner_destroyed_once",
+        )
+    ):
+        raise RuntimeError("Task40 early algebra release did not complete")
+    return facts
+
+
 def run_p6_condensed_direct(
     resolved_payload: Mapping[str, Any],
     run_directory: str | Path,
@@ -1144,6 +1399,7 @@ def run_p6_condensed_direct(
     bundle = None
     condensed = None
     action = None
+    action_view = None
     factor = None
     full_rhs = None
     rhs_vector = None
@@ -1154,6 +1410,7 @@ def run_p6_condensed_direct(
     native_facts = None
     output_facts = None
     route = None
+    same_matrix_lifecycle_verified = None
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
         route = _direct_run_contract(str(profile_facts["identity"]))
@@ -1167,8 +1424,15 @@ def run_p6_condensed_direct(
         )
         if route.get("diagnostic_scope") == "CROSS_CHANGED_GRID_DIAGNOSTIC":
             summary["grid_comparison_scope"] = route["diagnostic_scope"]
-        profile_rss_cap = int(profile_facts["resources"]["rss_hard_limit_bytes"])
+        profile_rss_cap_value = profile_facts["resources"]["rss_hard_limit_bytes"]
+        profile_rss_cap = (
+            None if profile_rss_cap_value is None else int(profile_rss_cap_value)
+        )
+        profile_minimum_available = profile_facts["resources"].get(
+            "minimum_available_bytes"
+        )
         summary["rss_hard_limit_bytes"] = profile_rss_cap
+        summary["minimum_available_bytes"] = profile_minimum_available
         inherited_store = sorted(
             key for key in os.environ if key.startswith("TASK39EXTRA_FUNCTIONAL_STORE")
         )
@@ -1196,13 +1460,29 @@ def run_p6_condensed_direct(
         if np.dtype(PETSc.IntType) != np.dtype(np.int64):
             raise RuntimeError("p6 direct route requires 64-bit PetscInt")
         cap_value = os.environ.get("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES")
+        policy_value = os.environ.get("PHYSICAL_WATCHDOG_RESOURCE_STOP_POLICY")
+        minimum_available_value = os.environ.get("PHYSICAL_WATCHDOG_MIN_AVAILABLE_BYTES")
         if route["family"] == "dispersion_flat" and cap_value is None:
             raise RuntimeError("flat direct route requires the native watchdog RSS cap")
-        if cap_value is not None and int(cap_value) != profile_rss_cap:
+        if profile_rss_cap is None:
+            if cap_value is not None or policy_value != "host_available_floor_v1":
+                raise RuntimeError("Task40 requires host_available_floor_v1 without an RSS cap")
+            if minimum_available_value is None or int(minimum_available_value) != int(
+                profile_minimum_available
+            ):
+                raise RuntimeError("watchdog available-memory floor differs from Task40 profile")
+        elif cap_value is not None and int(cap_value) != profile_rss_cap:
             raise RuntimeError("watchdog launch cap differs from the resolved profile RSS hard limit")
         cfg = simulation_config_3d_from_normalized(resolved_payload)
         if not isinstance(cfg, SimulationConfig3D):
             raise TypeError("resolved direct input did not create SimulationConfig3D")
+        if route["family"] == "task40_phi90":
+            # Input keeps the public auto policy unchanged.  This profile
+            # explicitly overrides it to the frozen finite R13 rectangle.
+            cfg.stage4_dtn_order_policy = "explicit_rectangle"
+            cfg.task40_dtn_rectangle_max_m = 4
+            cfg.task40_dtn_rectangle_max_n = 8
+            cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
         if route["family"] == "dispersion_flat":
             if cfg.mesh_plan_id is None or cfg.mesh_plan_sha256 is None:
                 raise ValueError("flat direct config lost its frozen axis-plan identity")
@@ -1244,6 +1524,8 @@ def run_p6_condensed_direct(
                 )
         elif route["family"] == "dispersion_flat":
             mesh_evidence = _dispersion_flat_mesh_evidence(levels, cfg)
+        elif route["family"] == "task40_phi90":
+            mesh_evidence = _task40_d13_b_mesh_evidence(levels, cfg)
         else:
             axes = validate_frozen_f5_axes({
                 "mesh_plan_id": cfg.mesh_plan_id,
@@ -1272,6 +1554,12 @@ def run_p6_condensed_direct(
         ledger.marker("p6_direct_actual_mesh_qa_complete", mesh_evidence)
 
         parent_inventory = build_dynamic_mode_inventory(cfg)
+        if route["family"] == "task40_phi90":
+            if len(parent_inventory[0]) != route["parent_count"] or len(parent_inventory[1]) != route["parent_count"]:
+                raise ValueError("live Task40 R13 inventory differs from the explicit 612-mode rectangle")
+            route["parent_sha256"] = str(parent_inventory[2])
+            route["active_count"] = len(parent_inventory[0])
+            route["active_sha256"] = str(parent_inventory[2])
         if route["family"] == "dispersion_flat":
             if (
                 not parent_inventory[0]
@@ -1332,6 +1620,10 @@ def run_p6_condensed_direct(
             inventory_artifacts = {
                 "parent": _persist_flat_parent_inventory(directory, parent_inventory)
             }
+        elif route["family"] == "task40_phi90":
+            inventory_artifacts = {
+                "parent": _persist_task40_inventory(directory, parent_inventory)
+            }
         else:
             inventory_artifacts = _persist_f5_inventory(
                 directory,
@@ -1358,6 +1650,8 @@ def run_p6_condensed_direct(
                 if route["family"] == "v7_aniso_n0"
                 else "all_auto_propagating_flat_inventory_q160"
                 if route["family"] == "dispersion_flat"
+                else "R13_parent_q28_fixed_Rplus2_envelope_m6_n10"
+                if route["family"] == "task40_phi90"
                 else "full_600_parent_q37_degree_even_for_n0_subset"
             ),
             "artifacts": inventory_artifacts,
@@ -1437,7 +1731,7 @@ def run_p6_condensed_direct(
             )
         expected_surface_q = (
             int(route["surface_quadrature_degree"])
-            if route["family"] == "dispersion_flat"
+            if route["family"] in ("dispersion_flat", "task40_phi90")
             else 160 if route["family"] == "v7_aniso_n0" else 37
         )
         if int(bundle["dtn_quadrature_degree"]) != expected_surface_q:
@@ -1708,11 +2002,62 @@ def run_p6_condensed_direct(
         schur_relative = float(schur_residual_vector.norm()) / max(
             float(rhs_vector.norm()), np.finfo(float).tiny
         )
+        schur_correction_count = 0
+        schur_refinement_history = [{
+            "correction": 0,
+            "relative_residual": schur_relative,
+        }]
+        condensed_gate = route.get("condensed_residual_gate")
+        max_same_factor_corrections = int(route.get("max_same_factor_corrections", 0))
+        if condensed_gate is not None:
+            schur_relative, schur_correction_count, schur_refinement_history = (
+                _bounded_same_factor_condensed_refinement(
+                    factor,
+                    matrix,
+                    rhs_vector,
+                    solution_vector,
+                    schur_action_vector,
+                    schur_residual_vector,
+                    initial_relative=schur_relative,
+                    relative_gate=float(condensed_gate),
+                    max_corrections=max_same_factor_corrections,
+                    marker=ledger.marker,
+                )
+            )
+            summary["factor"].update(
+                same_factor_correction_count=schur_correction_count,
+                max_same_factor_corrections=max_same_factor_corrections,
+                total_solve_calls=int(factor.solve_calls),
+                condensed_residual_refinement_history=schur_refinement_history,
+            )
         schur_residual_array = np.asarray(
             schur_residual_vector.getArray(readonly=True), dtype=np.complex128
         ).copy()
         solution_array = np.asarray(
             solution_vector.getArray(readonly=True), dtype=np.complex128
+        )
+        allowed_solve_calls = (
+            (1, 1 + max_same_factor_corrections)
+            if condensed_gate is not None else (1, 1)
+        )
+        same_matrix_lifecycle_verified = bool(
+            factor.symbolic_calls == 1
+            and factor.numeric_calls == 1
+            and allowed_solve_calls[0] <= factor.solve_calls <= allowed_solve_calls[1]
+            and factor.solve_calls == 1 + schur_correction_count
+            and matrix_object_after_factor == matrix_object_id == id(matrix)
+        )
+        summary["factor"].update(
+            symbolic_calls=int(factor.symbolic_calls),
+            numeric_calls=int(factor.numeric_calls),
+            solve_calls=int(factor.solve_calls),
+            same_factor_correction_count=schur_correction_count,
+            max_same_factor_corrections=max_same_factor_corrections,
+            mumps_info_after_last_solve=factor.info(),
+            same_matrix_lifecycle_verified=same_matrix_lifecycle_verified,
+        )
+        summary["checks"]["same_materialized_matrix_symbolic_numeric_solve"] = (
+            same_matrix_lifecycle_verified
         )
         ledger.set_phase("solve")
         ledger.marker("p6_direct_materialized_solve_complete", {
@@ -1759,7 +2104,7 @@ def run_p6_condensed_direct(
         if not np.isfinite([native_relative, native_identity_relative, schur_relative]).all():
             raise FloatingPointError("direct p6 or native A6 residual facts are non-finite")
         residual_key = route["residual_key"]
-        residual_gate_key = (
+        residual_gate_key = route.get("residual_gate_key") or (
             "original_A6_n0_residual_pass"
             if residual_key == "original_A6_n0_relative"
             else "original_A6_full_residual_pass"
@@ -1775,7 +2120,13 @@ def run_p6_condensed_direct(
             "rhs_norm": native_facts["native_rhs_norm"],
             "finite": True,
         }
-        residual_finite_key = (
+        if condensed_gate is not None:
+            summary["residuals"].update(
+                condensed_direct_residual_gate=float(condensed_gate),
+                same_factor_correction_count=schur_correction_count,
+                max_same_factor_corrections=max_same_factor_corrections,
+            )
+        residual_finite_key = route.get("residual_finite_key") or (
             "original_A6_n0_finite"
             if residual_key == "original_A6_n0_relative"
             else "original_A6_full_finite"
@@ -1787,6 +2138,10 @@ def run_p6_condensed_direct(
             native_condensed_identity_finite=True,
             native_condensed_identity_relative=native_identity_relative,
         )
+        if condensed_gate is not None:
+            summary["checks"]["condensed_direct_residual_pass"] = bool(
+                schur_relative <= float(condensed_gate)
+            )
         ledger.marker(
             f"p6_direct_{route['residual_scope']}_residual_complete",
             summary["residuals"],
@@ -1806,6 +2161,71 @@ def run_p6_condensed_direct(
         saved_field.getArray()[:] = recovered
         saved_field.assemble()
         del recovered
+
+        if route["family"] == "task40_phi90":
+            # The independent native A6 check and complete p6 storage recovery
+            # are now finished.  Output processing consumes the recovered FE
+            # field and physical bundle only, so release the large direct
+            # factor and materialized global condensed matrix first.
+            release_started = perf_counter()
+            summary["factor"]["mumps_info_before_output_release"] = factor.info()
+            summary["factor"]["solve_calls_before_output_release"] = int(
+                factor.solve_calls
+            )
+            summary["factor"]["symbolic_calls_before_output_release"] = int(
+                factor.symbolic_calls
+            )
+            summary["factor"]["numeric_calls_before_output_release"] = int(
+                factor.numeric_calls
+            )
+            release_facts = _release_task40_direct_algebra(
+                factor, action, action_view, condensed, matrix
+            )
+            release_facts.update(
+                boundary=(
+                    "after_independent_native_A6_and_full_p6_storage_recovery; "
+                    "before_recover_p0_outputs_field_and_absorption_postprocessing"
+                ),
+                release_wall_seconds=perf_counter() - release_started,
+                matrix_owner="AssemblyTimeCondensedSystem",
+                factor_info_and_counters_saved_before_release=True,
+                output_uses_recovered_field_and_physical_bundle=True,
+            )
+            summary["direct_algebra_lifecycle"] = release_facts
+            ledger.marker("task40_direct_algebra_released_before_output", release_facts)
+            factor = None
+            action = None
+            action_view = None
+            condensed = None
+            matrix = None
+            native_facts = None
+            solution_array = None
+            schur_residual_array = None
+            full_rhs_array = None
+            released_vector_names = []
+            for name, vector in (
+                ("schur_residual_vector", schur_residual_vector),
+                ("schur_action_vector", schur_action_vector),
+                ("solution_vector", solution_vector),
+                ("rhs_vector", rhs_vector),
+                ("full_rhs", full_rhs),
+            ):
+                if vector is not None:
+                    vector.destroy()
+                    released_vector_names.append(name)
+                    if name == "schur_residual_vector":
+                        schur_residual_vector = None
+                    elif name == "schur_action_vector":
+                        schur_action_vector = None
+                    elif name == "solution_vector":
+                        solution_vector = None
+                    elif name == "rhs_vector":
+                        rhs_vector = None
+                    elif name == "full_rhs":
+                        full_rhs = None
+            summary["direct_algebra_lifecycle"]["solve_vectors_released_before_output"] = (
+                released_vector_names
+            )
 
         truncation = None
         if route["family"] == "v7_aniso_n0":
@@ -1847,6 +2267,9 @@ def run_p6_condensed_direct(
             canonical_export=(canonical_export if should_export_canonical else None),
             export_all_port_modes=True,
             active_port_outputs_only=output_policy["active_port_outputs_only"],
+            active_fe_port_output_contract=output_policy.get(
+                "active_fe_port_output_contract"
+            ),
         )
         if route["family"] == "dispersion_flat":
             output_facts["flat_layer_reference_outputs"] = (
@@ -1924,9 +2347,20 @@ def run_p6_condensed_direct(
             ),
         }
         summary["complete_solve"] = True
+        if same_matrix_lifecycle_verified is None:
+            allowed_solve_calls = (
+                (1, 1 + max_same_factor_corrections)
+                if condensed_gate is not None else (1, 1)
+            )
+            same_matrix_lifecycle_verified = bool(
+                factor.symbolic_calls == 1
+                and factor.numeric_calls == 1
+                and allowed_solve_calls[0] <= factor.solve_calls <= allowed_solve_calls[1]
+                and factor.solve_calls == 1 + schur_correction_count
+                and matrix_object_after_factor == matrix_object_id == id(matrix)
+            )
         summary["factor"]["same_matrix_lifecycle_verified"] = (
-            factor.symbolic_calls == factor.numeric_calls == factor.solve_calls == 1
-            and matrix_object_after_factor == matrix_object_id
+            same_matrix_lifecycle_verified
         )
         summary["checks"]["same_materialized_matrix_symbolic_numeric_solve"] = bool(
             summary["factor"]["same_matrix_lifecycle_verified"]
@@ -1943,7 +2377,7 @@ def run_p6_condensed_direct(
             "field_export_finite",
             "auxiliary_export_finite",
             "same_materialized_matrix_symbolic_numeric_solve",
-        )
+        ) + (("condensed_direct_residual_pass",) if condensed_gate is not None else ())
         passed = all(bool(summary["checks"].get(key)) for key in required_checks)
         route_label = route["summary_prefix"].upper().replace("_", "_")
         summary["status"] = (

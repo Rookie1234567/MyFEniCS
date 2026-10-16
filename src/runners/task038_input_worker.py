@@ -228,10 +228,17 @@ def _load_and_validate_worker_payload(
                 else:
                     expected_route = profile['campaign_authorization']['direct_route']
                     expected_rss_cap = profile['resources']['rss_hard_limit_bytes']
+                    expected_minimum_available = profile['resources'].get('minimum_available_bytes')
                     if native_contract.get('profile') != profile_name:
                         errors.append('manifest condensed-direct resource profile mismatch')
                     if native_contract.get('rss_hard_limit_bytes') != expected_rss_cap:
                         errors.append('manifest condensed-direct RSS hard limit mismatch')
+                    if native_contract.get('resource_stop_policy') != profile['resources'].get(
+                        'resource_stop_policy', 'legacy'
+                    ):
+                        errors.append('manifest condensed-direct resource stop policy mismatch')
+                    if native_contract.get('minimum_available_bytes') != expected_minimum_available:
+                        errors.append('manifest condensed-direct minimum available-memory floor mismatch')
                     if native_contract.get('direct_route') != expected_route:
                         errors.append('manifest condensed-direct route contract mismatch')
     if manifest_value.get("execution_mode", "full_solve") != expected_execution_mode:

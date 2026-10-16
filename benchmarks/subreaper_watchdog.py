@@ -42,10 +42,22 @@ def memory_envelope() -> dict:
         if path == Path('/sys/fs/cgroup'):
             break
         path = path.parent
+    native = os.environ.get('PHYSICAL_NATIVE_CAPACITY')
+    if native:
+        from src.io.native_capacity_profile import native_profile_facts
+        policy = native_profile_facts(native)['resources']
+        if policy.get('resource_stop_policy') == 'host_available_floor_v1':
+            floor = int(policy['minimum_available_bytes'])
+            return {**memory, 'effective_total_bytes': total,
+                    'effective_available_bytes': available,
+                    'reserve_bytes': None, 'launch_cap_bytes': None,
+                    'planning_cap_bytes': None,
+                    'minimum_available_bytes': floor,
+                    'resource_stop_policy': 'host_available_floor_v1',
+                    'cgroup_limits': ancestors}
     reserve = max(4 * 1024**3, int(.15 * total))
     cap = min(12_000_000_000, available - reserve)
     planning = cap
-    native = os.environ.get('PHYSICAL_NATIVE_CAPACITY')
     if native:
         from src.io.native_capacity_profile import native_profile_facts
         policy = native_profile_facts(native)['resources']
@@ -179,6 +191,28 @@ def _swap_observation(task_swap_bytes, baseline, current):
     }
 
 
+def _unreadable_sample_outcome(resource_stop_policy, attempts, elapsed_seconds):
+    """Share the bounded V3 monitor retry for explicit host-floor runs."""
+    if resource_stop_policy not in (
+        'measured_tree_rss_only_v3', 'host_available_floor_v1'
+    ):
+        return 'MONITORING_FAILED'
+    return (None if int(attempts) <= 3 and float(elapsed_seconds) < 5.0
+            else 'MONITORING_LOST')
+
+
+def _host_floor_swap_activity(task_swap_bytes, baseline, current):
+    """Terminal swap wording for host-floor runs; always observation-only."""
+    classification = _swap_observation(task_swap_bytes, baseline, current)['classification']
+    return {
+        'task_and_global_activity': 'HOST_FLOOR_OBSERVE_ONLY_task_and_global_swap_observed',
+        'task_swap_only': 'HOST_FLOOR_OBSERVE_ONLY_task_swap_observed_global_unchanged',
+        'global_swap_only': 'HOST_FLOOR_OBSERVE_ONLY_global_swap_observed_task_zero',
+        'no_observed_swap_activity': 'HOST_FLOOR_OBSERVE_ONLY_no_task_or_global_swap_observed',
+        'unknown': 'HOST_FLOOR_OBSERVE_ONLY_swap_attribution_unknown',
+    }[classification]
+
+
 def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
     hard = hard_stop_immediate and reason in (
         'RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'MONITORING_LOST',
@@ -198,12 +232,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
               rss_hard_limit_bytes: int | None = None,
               rss_warning_bytes: int | None = None,
               startup_headroom_bytes: int | None = None,
+              minimum_available_bytes: int | None = None,
               pss_sampling_policy: str | None = None) -> dict:
     """Supervise one command; wall_seconds=None disables only the time gate."""
     if (not command or interval <= 0 or grace_seconds <= 0 or
             (wall_seconds is not None and wall_seconds <= 0)):
         raise ValueError('command and positive monitoring budgets are required')
-    if resource_stop_policy not in ('legacy', 'measured_tree_rss_only_v3'):
+    if resource_stop_policy not in (
+        'legacy', 'measured_tree_rss_only_v3', 'host_available_floor_v1'
+    ):
         raise ValueError(f'unsupported resource_stop_policy: {resource_stop_policy!r}')
     pss_sampling_policy = pss_sampling_policy or os.environ.get('PHYSICAL_WATCHDOG_PSS_POLICY', 'legacy')
     if pss_sampling_policy not in ('legacy', 'sampled', 'disabled_by_profile'):
@@ -214,6 +251,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         raise ValueError('rss_warning_bytes must be positive')
     if startup_headroom_bytes is not None and int(startup_headroom_bytes) < 0:
         raise ValueError('startup_headroom_bytes must be nonnegative')
+    if minimum_available_bytes is not None and int(minimum_available_bytes) <= 0:
+        raise ValueError('minimum_available_bytes must be positive')
+    if resource_stop_policy == 'host_available_floor_v1':
+        if rss_hard_limit_bytes is not None or rss_warning_bytes is not None:
+            raise ValueError('host_available_floor_v1 does not accept an RSS cap or warning')
+        if startup_headroom_bytes is not None:
+            raise ValueError('host_available_floor_v1 uses only its explicit available-memory floor')
+        if minimum_available_bytes is None:
+            raise ValueError('host_available_floor_v1 requires minimum_available_bytes')
+        if stop_on_global_swap:
+            raise ValueError('host_available_floor_v1 observes swap and does not stop on global swap')
     if cooperative_performance_stop and (phase_path is None or not hard_stop_immediate or grace_seconds > 60):
         raise ValueError('cooperative stop requires phase registration, immediate hard gates and grace <=60s')
     libc = ctypes.CDLL(None, use_errno=True)
@@ -225,7 +273,16 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
     directory.mkdir(parents=True, exist_ok=False)
     envelope = memory_envelope()
     cap = envelope['launch_cap_bytes']
-    if resource_stop_policy == 'measured_tree_rss_only_v3':
+    if resource_stop_policy == 'host_available_floor_v1':
+        if int(envelope['effective_available_bytes']) < int(minimum_available_bytes):
+            raise RuntimeError(
+                'host_available_floor_v1 startup available memory is below its explicit floor: '
+                f"{envelope['effective_available_bytes']} < {minimum_available_bytes}"
+            )
+        # The legacy launch_cap remains diagnostic only.  It is not exported as
+        # a hard limit and is not consulted for admission or runtime stopping.
+        cap = None
+    elif resource_stop_policy == 'measured_tree_rss_only_v3':
         if rss_hard_limit_bytes is None:
             raise ValueError('measured_tree_rss_only_v3 requires rss_hard_limit_bytes')
         if startup_headroom_bytes is None:
@@ -244,10 +301,14 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         cap = int(rss_hard_limit_bytes)
     elif rss_hard_limit_bytes is not None:
         cap = min(int(cap), int(rss_hard_limit_bytes))
-    warning_cap = int(rss_warning_bytes) if rss_warning_bytes is not None else int(.85 * cap)
-    if warning_cap >= cap:
+    warning_cap = (
+        None if cap is None
+        else int(rss_warning_bytes) if rss_warning_bytes is not None
+        else int(.85 * cap)
+    )
+    if warning_cap is not None and cap is not None and warning_cap >= cap:
         raise ValueError('rss warning must be below the RSS hard Gate')
-    if cap <= 0:
+    if cap is not None and cap <= 0:
         raise RuntimeError('no safe launch memory budget')
     requested_signal = []
     for signum in (signal.SIGTERM, signal.SIGINT):
@@ -267,12 +328,20 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         'solve_deadline_seconds': solve_seconds,
         'time_limit_mode': 'none' if wall_seconds is None and solve_seconds is None else 'bounded',
         'resource_stop_policy': resource_stop_policy,
-        'rss_hard_limit_bytes': int(cap),
+        'rss_hard_limit_bytes': None if cap is None else int(cap),
         'rss_warning_bytes': warning_cap,
+        'minimum_available_bytes': (
+            int(minimum_available_bytes)
+            if resource_stop_policy == 'host_available_floor_v1' else None
+        ),
         'startup_headroom_bytes': (int(startup_headroom_bytes)
                                    if startup_headroom_bytes is not None else None),
-        'swap_policy': 'observe_only' if resource_stop_policy == 'measured_tree_rss_only_v3' else 'legacy_stop',
-        'global_swap_delta_policy': 'observe_only' if resource_stop_policy == 'measured_tree_rss_only_v3' else ('stop' if stop_on_global_swap else 'observe_only'),
+        'swap_policy': 'observe_only' if resource_stop_policy in (
+            'measured_tree_rss_only_v3', 'host_available_floor_v1'
+        ) else 'legacy_stop',
+        'global_swap_delta_policy': 'observe_only' if resource_stop_policy in (
+            'measured_tree_rss_only_v3', 'host_available_floor_v1'
+        ) else ('stop' if stop_on_global_swap else 'observe_only'),
     }
     clock_start = clock_sample() if timebase_guard else None
     clock_budget = ClockBudget(clock_start, policy=timebase_policy) if timebase_guard else None
@@ -306,10 +375,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 clock_budget.update(clock_start)
                 environment['PHYSICAL_TIMEBASE_GUARD'] = '1'
                 environment['PHYSICAL_TIMEBASE_POLICY'] = timebase_policy
+            if resource_stop_policy == 'host_available_floor_v1':
+                environment.pop('PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES', None)
+                environment['PHYSICAL_WATCHDOG_RESOURCE_STOP_POLICY'] = resource_stop_policy
+                environment['PHYSICAL_WATCHDOG_MIN_AVAILABLE_BYTES'] = str(
+                    int(minimum_available_bytes)
+                )
             if phase_path is not None:
                 environment.update(PHYSICAL_WATCHDOG_PARENT_PID=str(os.getpid()),
-                                   PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES=str(cap),
                                    PHYSICAL_WATCHDOG_PHASE_PATH=str(phase_path.resolve()))
+                if cap is not None:
+                    environment['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'] = str(cap)
             leader = subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT,
                                       start_new_session=True, env=environment)
             while True:
@@ -407,30 +483,37 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                         sample['clock_error'] = clock_issue
                         summary.setdefault('clock_error', clock_issue)
                 if not sample['all_status_readable']:
-                    if resource_stop_policy != 'measured_tree_rss_only_v3':
-                        reason = 'MONITORING_FAILED'
-                    else:
-                        if unreadable_since is None:
-                            unreadable_since = time.monotonic()
-                            unreadable_attempts = 0
-                        unreadable_attempts += 1
-                        sample['monitoring_retry'] = {
-                            'attempt': unreadable_attempts,
-                            'max_retries': 3,
-                            'grace_seconds': 5.0,
-                        }
-                        reason = (
-                            None if unreadable_attempts <= 3 and
-                            time.monotonic() - unreadable_since < 5.0
-                            else 'MONITORING_LOST'
-                        )
+                    if unreadable_since is None:
+                        unreadable_since = time.monotonic()
+                        unreadable_attempts = 0
+                    unreadable_attempts += 1
+                    sample['monitoring_retry'] = {
+                        'attempt': unreadable_attempts,
+                        'max_retries': 3,
+                        'grace_seconds': 5.0,
+                    }
+                    reason = _unreadable_sample_outcome(
+                        resource_stop_policy, unreadable_attempts,
+                        time.monotonic() - unreadable_since,
+                    )
                 else:
                     unreadable_since = None
                     unreadable_attempts = 0
                     peak_rss = max(peak_rss, sample['rss_bytes'])
                     peak_swap = max(peak_swap, sample['swap_bytes'])
                     task_swap_nonzero_observed |= sample['swap_bytes'] > 0
-                    if resource_stop_policy == 'measured_tree_rss_only_v3':
+                    if resource_stop_policy == 'host_available_floor_v1':
+                        reason = (
+                            'RESOURCE_CONTROLLED_STOP'
+                            if int(current['effective_available_bytes']) < int(minimum_available_bytes)
+                            else 'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
+                            'TIMEBASE_INCONSISTENCY' if clock_issue else
+                            'PERFORMANCE_CONTROLLED_STOP' if (
+                                wall_seconds is not None and
+                                deadline_elapsed >= wall_seconds) or solve_expired else
+                            'USER_CONTROLLED_STOP' if requested_signal else None
+                        )
+                    elif resource_stop_policy == 'measured_tree_rss_only_v3':
                         reason = (
                             'RESOURCE_CONTROLLED_STOP' if sample['rss_bytes'] >= cap else
                             'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
@@ -454,15 +537,26 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                     sample['resource_policy_observations'] = {
                         'process_tree_swap_bytes': int(sample['swap_bytes']),
                         'effective_available_bytes': int(current['effective_available_bytes']),
-                        'reserve_bytes': int(current['reserve_bytes']),
+                        'reserve_bytes': (
+                            None if resource_stop_policy == 'host_available_floor_v1'
+                            else int(current['reserve_bytes'])
+                        ),
+                        'minimum_available_bytes': (
+                            int(minimum_available_bytes)
+                            if resource_stop_policy == 'host_available_floor_v1' else None
+                        ),
                         'rss_gate_only': resource_stop_policy == 'measured_tree_rss_only_v3',
                     }
-                if stop_on_global_swap or resource_stop_policy == 'measured_tree_rss_only_v3':
+                if stop_on_global_swap or resource_stop_policy in (
+                    'measured_tree_rss_only_v3', 'host_available_floor_v1'
+                ):
                     current_swap = vmstat_swap_pages()
                     sample['global_swap_pages'] = current_swap
                     swap_reason = global_swap_stop(swap_baseline, current_swap, enabled=True)
                     sample['global_swap_stop_reason'] = swap_reason
-                    if resource_stop_policy == 'measured_tree_rss_only_v3':
+                    if resource_stop_policy in (
+                        'measured_tree_rss_only_v3', 'host_available_floor_v1'
+                    ):
                         sample['swap_observation'] = _swap_observation(
                             sample.get('swap_bytes'), swap_baseline, current_swap)
                     if (stop_on_global_swap and
@@ -473,7 +567,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 sample.update({'elapsed_seconds': elapsed, 'memory_envelope': current,
                                'worker_phase': phase,
                                'launch_cap_bytes': cap, 'rss_warning_bytes': warning_cap,
-                               'warning': peak_rss >= warning_cap,
+                               'warning': bool(
+                                   warning_cap is not None and peak_rss >= warning_cap
+                               ),
                                'live_or_unreaped_children': sorted(children)})
                 stage = 'timeline_write'
                 timeline.write(json.dumps(sample, allow_nan=False) + '\n')
@@ -518,12 +614,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         summary['cache_metadata_stable'] = True
     except BaseException as exc:
         if stage == 'cooperative_stop_identity_and_signal':
-            classification = ('MONITORING_LOST' if resource_stop_policy ==
-                              'measured_tree_rss_only_v3' else 'MONITORING_FAILED')
+            classification = ('MONITORING_LOST' if resource_stop_policy in (
+                'measured_tree_rss_only_v3', 'host_available_floor_v1'
+            ) else 'MONITORING_FAILED')
         elif classification is None:
             classification = (
                 'TIMEBASE_INCONSISTENCY' if isinstance(exc, TimebaseInconsistency) else
-                'MONITORING_LOST' if resource_stop_policy == 'measured_tree_rss_only_v3' else
+                'MONITORING_LOST' if resource_stop_policy in (
+                    'measured_tree_rss_only_v3', 'host_available_floor_v1'
+                ) else
                 'MONITORING_FAILED'
             )
         summary.update({'exception_stage': stage, 'exception_type': type(exc).__name__,
@@ -555,6 +654,10 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 job_swap_activity = 'UNRESOLVED_global_activity_cannot_be_attributed'
             else:
                 job_swap_activity = 'no_task_or_global_swap_observed'
+        elif resource_stop_policy == 'host_available_floor_v1':
+            job_swap_activity = _host_floor_swap_activity(
+                peak_swap if samples else None, swap_baseline, swap_end
+            )
         else:
             job_swap_activity = ('zero_supported_by_zero_global_activity' if
                                  all(value == 0 for value in swap_delta.values()) else
@@ -576,8 +679,12 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
             'cache_metadata_stamp': cache_stamp,
             'source_state': source_state if source_state is not None else 'development_worktree; not formal PDE provenance',
             'resource_stop_policy': resource_stop_policy,
-            'rss_hard_limit_bytes': int(cap),
+            'rss_hard_limit_bytes': None if cap is None else int(cap),
             'rss_warning_bytes': warning_cap,
+            'minimum_available_bytes': (
+                int(minimum_available_bytes)
+                if resource_stop_policy == 'host_available_floor_v1' else None
+            ),
             'startup_headroom_bytes': (int(startup_headroom_bytes)
                                        if startup_headroom_bytes is not None else None),
         })

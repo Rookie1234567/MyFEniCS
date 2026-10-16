@@ -272,6 +272,7 @@ def _base_manifest(
             'resource_stop_policy': profile['resources'].get('resource_stop_policy', 'legacy'),
             'rss_hard_limit_bytes': profile['resources'].get('rss_hard_limit_bytes'),
             'rss_warning_bytes': profile['resources'].get('rss_warning_bytes'),
+            'minimum_available_bytes': profile['resources'].get('minimum_available_bytes'),
             'swap_policy': profile['resources'].get('swap_policy', 'legacy_stop'),
             'global_swap_delta_policy': profile['resources'].get(
                 'global_swap_delta_policy',
@@ -709,6 +710,7 @@ def launch_specification(
                     'rss_hard_limit_bytes': watchdog_resources.get('rss_hard_limit_bytes'),
                     'rss_warning_bytes': watchdog_resources.get('rss_warning_bytes'),
                     'startup_headroom_bytes': watchdog_resources.get('startup_headroom_bytes'),
+                    'minimum_available_bytes': watchdog_resources.get('minimum_available_bytes'),
                     'pss_sampling_policy': watchdog_resources.get('pss_sampling_policy'),
                 }
                 authority = supervise(list(plan.argv), run_directory / 'watchdog',
@@ -747,7 +749,9 @@ def launch_specification(
                     'warning_fraction': (
                         authority['rss_warning_bytes'] / authority['rss_hard_limit_bytes']
                         if authority.get('resource_stop_policy') == 'measured_tree_rss_only_v3'
-                        and authority.get('rss_hard_limit_bytes') else 0.85
+                        and authority.get('rss_hard_limit_bytes') else
+                        None if authority.get('resource_stop_policy') == 'host_available_floor_v1'
+                        else 0.85
                     ),
                     'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else solve_limit,
                     'time_limit_mode': 'none' if workflow_limit is None and solve_limit is None else 'bounded',
@@ -755,6 +759,7 @@ def launch_specification(
                     'legacy_resource_fields_enforced': False,
                     'resource_stop_policy': authority.get('resource_stop_policy', 'legacy'),
                     'rss_hard_limit_bytes': authority.get('rss_hard_limit_bytes'),
+                    'minimum_available_bytes': authority.get('minimum_available_bytes'),
                     'startup_headroom_bytes': authority.get('startup_headroom_bytes'),
                     'swap_policy': authority.get('swap_policy', 'legacy_stop'),
                     'prediction_admission_policy': physical_resources.get(
