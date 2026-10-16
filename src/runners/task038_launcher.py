@@ -5587,6 +5587,8 @@ def launch_specification(
     v24_p4_prefix_target: int | None = None,
     task40_v10_campaign_window: str | Path | None = None,
     task40_v10_postprocess_from: str | Path | None = None,
+    task41_p0_execution_contract: str | Path | None = None,
+    task41_p0_contract_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -5640,6 +5642,69 @@ def launch_specification(
 
     run_id = str(specification.identity.get("run_id", ""))
     preconditioner = str(specification.solver.get("preconditioner", ""))
+    task41_p0_identity = (
+        specification.identity.get("model_id") == "task41extra_phi90_p50x50_g17x20"
+        or run_id == "task41extra_g13_p6_phi90_direct_a1"
+    )
+    task41_p0_contract = None
+    task41_p0_contract_digest = None
+    task41_p0_window = None
+    if task41_p0_identity:
+        if (
+            specification.identity.get("model_id") != "task41extra_phi90_p50x50_g17x20"
+            or run_id != "task41extra_g13_p6_phi90_direct_a1"
+            or task41_p0_execution_contract is None
+            or task40_v10_campaign_window is not None
+        ):
+            raise InputError("Task41 A1 requires its exact P0 contract and cannot use a Task40 window")
+        from .task41_p0_contract import (
+            load_task41_p0_fixed_window,
+            require_task41_p0_contract,
+            validate_task41_specification,
+        )
+
+        try:
+            task41_p0_contract, task41_p0_contract_digest = require_task41_p0_contract(
+                task41_p0_execution_contract,
+                expected_sha256=task41_p0_contract_sha256,
+                current_root=Path(__file__).resolve().parents[2],
+                check_current_source=True,
+                require_clean_source=True,
+            )
+            validate_task41_specification(
+                specification,
+                task41_p0_contract["case"]["input_path"],
+                task41_p0_contract,
+                current_root=Path(__file__).resolve().parents[2],
+            )
+            task41_p0_window = load_task41_p0_fixed_window(
+                task41_p0_contract,
+                current_root=Path(__file__).resolve().parents[2],
+            )
+            task41_env = os.environ
+            task41_resource_contract = task41_p0_contract["resources"]
+            if (
+                task41_env.get("TASK41_P0_STRICT_EXECUTION") != "1"
+                or Path(task41_env.get("TASK41_P0_CONTRACT_PATH", "")).resolve()
+                != Path(task41_p0_execution_contract).resolve()
+                or task41_env.get("TASK41_P0_CONTRACT_SHA256")
+                != task41_p0_contract_digest
+                or Path(task41_env.get("TASK41_P0_EXECUTION_WINDOW_PATH", "")).resolve()
+                != task41_p0_window.path.resolve()
+                or task41_env.get("TASK41_P0_EXECUTION_WINDOW_SHA256")
+                != task41_p0_window.sha256
+                or task41_env.get("TASK41_P0_TASK_MEMORY_MAX_BYTES")
+                != str(task41_resource_contract["task_memory_max_bytes"])
+                or task41_env.get("TASK41_P0_HOST_RESERVE_BYTES")
+                != str(task41_resource_contract["host_reserve_bytes"])
+                or task41_env.get("TASK41_P0_MEMORY_SWAP_MAX_BYTES")
+                != str(task41_resource_contract["memory_swap_max_bytes"])
+            ):
+                raise InputError("Task41 P0 service environment differs from the fixed execution contract")
+        except (OSError, ValueError, RuntimeError) as exc:
+            raise InputError(f"Task41 P0 launcher contract admission failed: {exc}") from exc
+    elif task41_p0_execution_contract is not None:
+        raise InputError("Task41 P0 execution contract was supplied for a different model")
     task40_v13_profile = run_id in {
         TASK40_B0_P6_V13_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
@@ -5797,6 +5862,8 @@ def launch_specification(
         or task40_v19_profile
         or task40_v20_profile
     )
+    task41_p0_profile = task41_p0_contract is not None and not contract_probe
+    fixed_window_profile = task40_campaign_profile or task41_p0_profile
     campaign_evidence_key = (
         "task40_v20_campaign"
         if task40_v20_profile
@@ -5817,6 +5884,8 @@ def launch_specification(
         if task40_v10_profile
         else "task40_v11_campaign"
     )
+    if task41_p0_profile:
+        campaign_evidence_key = "task41_p0_campaign"
     if task40_v10_campaign_window is not None and not task40_campaign_profile:
         raise InputError("Task40 fixed campaign window is restricted to exact reviewed V10/V11/V13-V20 p6 cases")
     if task40_campaign_profile and task40_v10_campaign_window is None:
@@ -5836,7 +5905,18 @@ def launch_specification(
     campaign_window = None
     campaign_accounting_path = None
     campaign_start_state = None
-    if task40_campaign_profile:
+    if task41_p0_profile:
+        campaign_window = task41_p0_window
+        campaign_accounting_path = campaign_window.accounting_path
+        try:
+            campaign_start_state = campaign_window.observe(
+                label="launcher_entered_task41_p0"
+            )
+        except (OSError, ValueError, RuntimeError) as exc:
+            raise InputError(f"Task41 P0 fixed-window admission failed: {exc}") from exc
+        if campaign_start_state["remaining_numerical_seconds"] <= 0.0:
+            raise InputError("Task41 P0 window has no numerical time before checker closeout")
+    elif task40_campaign_profile:
         from .task40_v10_campaign import load_fixed_campaign_window
 
         try:
@@ -6051,10 +6131,34 @@ def launch_specification(
     if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
 
-    physical_candidate = specification.solver.get('preconditioner') in PROFILES and not contract_probe
+    physical_candidate = (
+        specification.solver.get('preconditioner') in PROFILES
+        or task41_p0_contract is not None
+    ) and not contract_probe
     joint = physical_candidate and specification.solver.get('preconditioner') == JOINT_PROFILE
     light = physical_candidate and specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE)
-    physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
+    if task41_p0_profile:
+        from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
+
+        task41_runtime = task41_p0_contract["runtime"]
+        task41_limits = task41_p0_contract["resources"]
+        physical_resources = {
+            "workflow_seconds": float(campaign_window.cutoff_seconds),
+            "solve_seconds": float(campaign_window.cutoff_seconds),
+            "watchdog_memory_policy": PHYSICAL_MEMORY_PRESSURE_POLICY,
+            "pss_sampling_policy": "disabled_by_profile",
+            "process_tree_rss_cap_bytes": int(
+                task41_limits["task_memory_max_bytes"]
+            ),
+            "qualified_jit_cache_source": task41_runtime["jit_cache"],
+            "qualified_jit_cache_origin": "Task41 P0 fixed execution contract",
+            "qualified_jit_expected_compiler_event_count": None,
+        }
+    else:
+        physical_resources = (
+            profile_facts(specification.solver['preconditioner'])['resources']
+            if physical_candidate else {}
+        )
     task40_v20_stage_budget = None
     if task40_v20_profile:
         v20_resources = profile_facts(preconditioner).get("resources", {})
@@ -6157,7 +6261,7 @@ def launch_specification(
         solve_limit = min(
             float(solve_limit), float(task40_v20_stage_budget["solve_seconds"])
         )
-    if task40_campaign_profile:
+    if fixed_window_profile:
         admitted_campaign_seconds = float(
             campaign_start_state["remaining_numerical_seconds"]
         )
@@ -6358,6 +6462,12 @@ def launch_specification(
                 "myfenics-case-*.service cgroup"
             )
         run_directory = _timestamp_directory(specification, timestamp)
+    elif task41_p0_profile and physical_candidate:
+        if not _is_v28_user_service_cgroup(current_cgroup_path()):
+            raise InputError(
+                "Task41 P0 formal launch requires the supervised user-service cgroup"
+            )
+        run_directory = _timestamp_directory(specification, timestamp)
     try:
         physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                            if physical_candidate else None)
@@ -6376,7 +6486,7 @@ def launch_specification(
             adapter_identity=adapter,
             start_time=start_time,
         )
-        if task40_campaign_profile:
+        if fixed_window_profile:
             manifest[campaign_evidence_key] = {
                 "window_path": str(campaign_window.path),
                 "window_sha256": campaign_window.sha256,
@@ -6389,11 +6499,28 @@ def launch_specification(
                 "worker_accounting_access": "read_only_projection",
                 "launcher_entry_observation": campaign_start_state,
                 "effective_window_scope": (
-                    "shared_V20_fixed_deadline_and_remaining_budget"
+                    "task41_p0_fixed_deadline_and_remaining_budget"
+                    if task41_p0_profile
+                    else "shared_V20_fixed_deadline_and_remaining_budget"
                     if task40_v20_profile
                     else "shared_V11_fixed_deadline_and_remaining_budget"
                 ),
             }
+            if task41_p0_profile:
+                manifest["task41_p0_execution_contract"] = {
+                    "contract_path": str(Path(task41_p0_execution_contract).resolve()),
+                    "contract_sha256": task41_p0_contract_digest,
+                    "source_sha": task41_p0_contract["source"]["sha"],
+                    "input_path": task41_p0_contract["case"]["input_path"],
+                    "input_sha256": task41_p0_contract["case"]["input_sha256"],
+                    "physical_model_sha256": task41_p0_contract["case"]["physical_model_sha256"],
+                    "resolved_config_sha256": task41_p0_contract["case"]["resolved_config_sha256"],
+                    "abi_receipt_sha256": task41_p0_contract["runtime"]["abi_receipt_sha256"],
+                    "window_entry_source_sha": task41_p0_contract["window"]["entry_source_sha"],
+                    "task_memory_max_bytes": task41_p0_contract["resources"]["task_memory_max_bytes"],
+                    "host_reserve_bytes": task41_p0_contract["resources"]["host_reserve_bytes"],
+                    "memory_swap_max_bytes": task41_p0_contract["resources"]["memory_swap_max_bytes"],
+                }
             if task40_v20_profile:
                 manifest["task40_v20_budget_admission"] = {
                     "model_id": task40_v20_case.model_id,
@@ -6607,7 +6734,7 @@ def launch_specification(
                             watchdog_kwargs['active_pc_seconds'] = float(
                                 physical_resources['pc_hard_seconds']
                             )
-                    if task40_campaign_profile:
+                    if fixed_window_profile:
                         v29_watchdog_resources = None
                         v29_contract = None
                         v30_watchdog_resources = None
@@ -6798,6 +6925,8 @@ def launch_specification(
                                 if v30_watchdog_resources is not None
                                 else int(v29_watchdog_resources["host_reserve_bytes"])
                                 if v29_watchdog_resources is not None
+                                else int(task41_p0_contract["resources"]["host_reserve_bytes"])
+                                if task41_p0_profile
                                 else None
                             ),
                             task_cgroup_reserve_bytes=(
@@ -6805,6 +6934,7 @@ def launch_specification(
                                 if v31_watchdog_resources is not None
                                 or v30_watchdog_resources is not None
                                 or v29_watchdog_resources is not None
+                                or task41_p0_profile
                                 else None
                             ),
                             allow_physical_pressure_tree_cap=True,
@@ -6813,6 +6943,7 @@ def launch_specification(
                                 {"require_cgroup_memory_details": True}
                                 if v31_watchdog_resources is not None
                                 or v30_watchdog_resources is not None
+                                or task41_p0_profile
                                 else {}
                             ),
                         )
@@ -6821,11 +6952,6 @@ def launch_specification(
                         )
                         watchdog_environment.update(
                             {
-                                "TASK40_V10_CAMPAIGN_WINDOW": str(campaign_window.path),
-                                "TASK40_V10_CAMPAIGN_WINDOW_SHA256": campaign_window.sha256,
-                                "TASK40_V10_CAMPAIGN_ACCOUNTING": str(
-                                    campaign_accounting_path
-                                ),
                                 "PHYSICAL_WATCHDOG_MEMORY_POLICY": str(
                                     physical_resources["watchdog_memory_policy"]
                                 ),
@@ -6834,12 +6960,55 @@ def launch_specification(
                                 ),
                                 "PHYSICAL_QUALIFIED_JIT_CACHE_SOURCE": str(jit_source),
                                 "PHYSICAL_QUALIFIED_JIT_CACHE_ORIGIN": str(jit_cache_origin),
-                                "PHYSICAL_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS": str(
-                                    jit_expected_compiler_events
-                                ),
                                 "XDG_CACHE_HOME": str(jit_source),
                             }
                         )
+                        if jit_expected_compiler_events is not None:
+                            watchdog_environment[
+                                "PHYSICAL_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS"
+                            ] = str(jit_expected_compiler_events)
+                        if task41_p0_profile:
+                            task41_limits = task41_p0_contract["resources"]
+                            watchdog_environment.update(
+                                {
+                                    "OMP_NUM_THREADS": "1",
+                                    "OPENBLAS_NUM_THREADS": "1",
+                                    "MKL_NUM_THREADS": "1",
+                                    "NUMEXPR_NUM_THREADS": "1",
+                                    "TASK41_P0_STRICT_EXECUTION": "1",
+                                    "TASK41_P0_CONTRACT_PATH": str(
+                                        Path(task41_p0_execution_contract).resolve()
+                                    ),
+                                    "TASK41_P0_CONTRACT_SHA256": str(
+                                        task41_p0_contract_digest
+                                    ),
+                                    "TASK41_P0_EXECUTION_WINDOW_PATH": str(
+                                        campaign_window.path.resolve()
+                                    ),
+                                    "TASK41_P0_EXECUTION_WINDOW_SHA256": str(
+                                        campaign_window.sha256
+                                    ),
+                                    "TASK41_P0_TASK_MEMORY_MAX_BYTES": str(
+                                        task41_limits["task_memory_max_bytes"]
+                                    ),
+                                    "TASK41_P0_HOST_RESERVE_BYTES": str(
+                                        task41_limits["host_reserve_bytes"]
+                                    ),
+                                    "TASK41_P0_MEMORY_SWAP_MAX_BYTES": str(
+                                        task41_limits["memory_swap_max_bytes"]
+                                    ),
+                                }
+                            )
+                        else:
+                            watchdog_environment.update(
+                                {
+                                    "TASK40_V10_CAMPAIGN_WINDOW": str(campaign_window.path),
+                                    "TASK40_V10_CAMPAIGN_WINDOW_SHA256": campaign_window.sha256,
+                                    "TASK40_V10_CAMPAIGN_ACCOUNTING": str(
+                                        campaign_accounting_path
+                                    ),
+                                }
+                            )
                         if v31_watchdog_resources is not None:
                             watchdog_environment.update(
                                 {
@@ -6919,9 +7088,13 @@ def launch_specification(
                             'TASK39EXTRA_V24_P4_PREFIX_TARGET'
                         ] = str(v24_p4_prefix_target)
                         watchdog_kwargs['worker_environment'] = watchdog_environment
-                    if task40_campaign_profile:
+                    if fixed_window_profile:
                         campaign_start_state = campaign_window.observe(
-                            label="launcher_pre_worker"
+                            label=(
+                                "launcher_pre_worker_task41_p0"
+                                if task41_p0_profile
+                                else "launcher_pre_worker"
+                            )
                         )
                         admitted_campaign_seconds = float(
                             campaign_start_state["remaining_numerical_seconds"]
@@ -6934,7 +7107,7 @@ def launch_specification(
                         solve_limit = min(float(solve_limit), admitted_campaign_seconds)
                     wall_budget = (
                         float(campaign_start_state["remaining_numerical_seconds"])
-                        if task40_campaign_profile
+                        if fixed_window_profile
                         else min(
                             workflow_limit - (monotonic() - workflow_started),
                             pc_profile['deadline_monotonic'] - monotonic(),
@@ -6981,7 +7154,7 @@ def launch_specification(
                             else min(
                                 solve_limit,
                                 wall_budget
-                                if task40_campaign_profile
+                                if fixed_window_profile
                                 or (
                                     v14_lease is not None
                                     and v14_time_policy == V14_TIME_POLICY_ENFORCE
@@ -6998,10 +7171,14 @@ def launch_specification(
                     result = {'exit_status': authority['leader_exit_code'],
                         'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                         'resource_authority': authority}
-                    if task40_campaign_profile:
+                    if fixed_window_profile:
                         try:
                             campaign_post_state = campaign_window.observe(
-                                label="launcher_after_watchdog"
+                                label=(
+                                    "launcher_after_watchdog_task41_p0"
+                                    if task41_p0_profile
+                                    else "launcher_after_watchdog"
+                                )
                             )
                             result[campaign_evidence_key] = {
                                 "window_path": str(campaign_window.path),
@@ -7036,6 +7213,34 @@ def launch_specification(
                             and result['result_classification'] == 'worker_exit0'
                         ):
                             result['result_classification'] = 'EVIDENCE_INCOMPLETE'
+                    elif task41_p0_profile:
+                        cgroup_swap = authority.get("job_cgroup_swap", {})
+                        swap_pass = bool(
+                            authority.get("process_tree_swap_gate_enforced") is True
+                            and authority.get("sampled_process_tree_swap_peak_bytes") == 0
+                            and authority.get("job_cgroup_swap_gate_enforced") is True
+                            and cgroup_swap.get("passed") is True
+                        )
+                        result["swap_policy"] = "require_zero_task_and_dedicated_cgroup_swap_task41_p0"
+                        result["swap_gate_enforced"] = bool(
+                            authority.get("process_tree_swap_gate_enforced") is True
+                            and authority.get("job_cgroup_swap_gate_enforced") is True
+                        )
+                        result["job_swap_qualification"] = (
+                            "qualified_zero" if swap_pass else "UNRESOLVED"
+                        )
+                        result["task41_p0_swap_qualification"] = {
+                            "status": result["job_swap_qualification"],
+                            "task_tree_swap_peak_bytes": authority.get(
+                                "sampled_process_tree_swap_peak_bytes"
+                            ),
+                            "job_cgroup_swap": cgroup_swap,
+                        }
+                        if (
+                            not swap_pass
+                            and result["result_classification"] == "worker_exit0"
+                        ):
+                            result["result_classification"] = "EVIDENCE_INCOMPLETE"
                     elif task40_campaign_profile:
                         cgroup_swap = authority.get("job_cgroup_swap", {})
                         v10_swap_pass = bool(
@@ -7081,7 +7286,7 @@ def launch_specification(
                         ):
                             result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                     manifest['requested_legacy_resource_fields'] = {
-                        key: specification.execution[key] for key in
+                            key: specification.execution.get(key) for key in
                         ('warning_memory_gib', 'terminate_memory_gib', 'memory_limit_gb')}
                     manifest['source_after'] = source_after
                     manifest['effective_watchdog_authority'] = {
@@ -7168,7 +7373,7 @@ def launch_specification(
             result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
             result['full_workflow_time_exceeded'] = (
                 _task40_campaign_time_exceeded(result, campaign_evidence_key)
-                if task40_campaign_profile
+                if fixed_window_profile
                 else bool(result['full_workflow_monotonic_seconds'] > workflow_limit)
             )
             if schur_v14 or blr_profile or cell_condensed_profile:

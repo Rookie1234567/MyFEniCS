@@ -223,6 +223,34 @@ def _merge_volume_closure_into_dtn_port_outputs(
     return fields
 
 
+def _official_result_after_stage4_gates(
+    solver_converged: bool,
+    *,
+    external_solver_snapshot: bool,
+    external_rta_gate_pass: bool | None,
+    task41_native_a6_gate_pass: bool | None,
+) -> bool:
+    """Require every applicable Stage-4 scientific gate before official status."""
+
+    if not solver_converged:
+        return False
+    if external_solver_snapshot and external_rta_gate_pass is not True:
+        return False
+    if task41_native_a6_gate_pass is not None and task41_native_a6_gate_pass is not True:
+        return False
+    return True
+
+
+def _task41_native_a6_gate_failed(dtn_solver_info: dict[str, Any] | None) -> bool:
+    """Identify Task41's solved-but-unqualified field for diagnostic preservation."""
+
+    return bool(
+        isinstance(dtn_solver_info, dict)
+        and dtn_solver_info.get("task41_native_full_a6") is not None
+        and dtn_solver_info.get("task41_native_a6_gate_pass") is False
+    )
+
+
 def _assemble_unconstrained_matrix_stats(
     a, bcs, comm: MPI.Intracomm, log
 ) -> dict[str, Any] | None:
@@ -1543,6 +1571,10 @@ def run_prepared_3d_case_flow(
         dtn_solver_info is not None
         and dtn_solver_info.get("variable_p_live_observer_invoked")
     )
+    task41_mumps_factor_released_before_native_a6 = bool(
+        dtn_solver_info is not None
+        and dtn_solver_info.get("task41_mumps_factor_released_before_native_a6")
+    )
     if assemble_only_result:
         reason = 0
         reason_name = "ASSEMBLE_ONLY_SKIPPED_SOLVE"
@@ -1558,7 +1590,11 @@ def run_prepared_3d_case_flow(
         reason_name = "MATRIX_FREE_DTN_COMPONENT_ONLY"
         iterations = 0
         residual_norm = None
-    elif external_solver_snapshot or live_observer_primal_snapshot:
+    elif (
+        external_solver_snapshot
+        or live_observer_primal_snapshot
+        or task41_mumps_factor_released_before_native_a6
+    ):
         reason = int(dtn_solver_info["ksp_converged_reason"])
         reason_name = _ksp_reason_name(reason)
         iterations = int(dtn_solver_info["ksp_iterations"])
@@ -1572,7 +1608,11 @@ def run_prepared_3d_case_flow(
         reason_name = _ksp_reason_name(reason)
         iterations = int(system_ksp.getIterationNumber())
         residual_norm = float(system_ksp.getResidualNorm())
-    if external_solver_snapshot or live_observer_primal_snapshot:
+    if (
+        external_solver_snapshot
+        or live_observer_primal_snapshot
+        or task41_mumps_factor_released_before_native_a6
+    ):
         ksp_type = dtn_solver_info["actual_ksp_type"]
         pc_type = dtn_solver_info["actual_pc_type"]
         pc_factor_solver_type = dtn_solver_info["actual_pc_factor_solver_type"]
@@ -1606,8 +1646,16 @@ def run_prepared_3d_case_flow(
         else bool(dtn_solver_info["external_rta_gate_pass"])
     )
     solver_converged = (reason > 0) and not diagnostic_only_result
-    official_result = solver_converged and (
-        not external_solver_snapshot or external_rta_gate_pass is True
+    task41_native_a6_gate_pass = (
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("task41_native_a6_gate_pass")
+    )
+    official_result = _official_result_after_stage4_gates(
+        solver_converged,
+        external_solver_snapshot=bool(external_solver_snapshot),
+        external_rta_gate_pass=external_rta_gate_pass,
+        task41_native_a6_gate_pass=task41_native_a6_gate_pass,
     )
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
@@ -1794,8 +1842,16 @@ def run_prepared_3d_case_flow(
         if external_solver_snapshot and not solver_converged
         else "external_residual_gate_failed"
         if external_solver_snapshot and external_rta_gate_pass is False
+        else "failed_task41_native_a6_gate"
+        if task41_native_a6_gate_pass is False
         else "failed_not_converged",
         "official_result": official_result,
+        "official_rta_gate_pass": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("official_rta_gate_pass")
+        ),
+        "task41_native_a6_gate_pass": task41_native_a6_gate_pass,
         "diagnostic_only": not official_result,
         "postprocess_skipped": not official_result,
         "postprocess_skip_reason": None
@@ -1808,6 +1864,8 @@ def run_prepared_3d_case_flow(
         if external_solver_snapshot and not solver_converged
         else "External solver residual/RTA gate failed; official RTA was not run."
         if external_solver_snapshot and external_rta_gate_pass is False
+        else "Task41 independent full-space A6 residual exceeded 1e-6; official R/T/A was not run."
+        if task41_native_a6_gate_pass is False
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "variable_p_mesh_identity": variable_p_mesh_identity,
@@ -1978,6 +2036,9 @@ def run_prepared_3d_case_flow(
         "cell_static_condensation": None
         if dtn_solver_info is None
         else dtn_solver_info.get("cell_static_condensation"),
+        "task41_native_full_a6": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("task41_native_full_a6"),
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
         "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
@@ -2039,6 +2100,21 @@ def run_prepared_3d_case_flow(
             None
             if external_solver_snapshot
             else cfg.petsc_direct_solver_profile_requested
+        ),
+        "mumps_control_readback": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("mumps_control_readback")
+        ),
+        "task41_mumps_symbolic_admission": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("task41_mumps_symbolic_admission")
+        ),
+        "task41_mumps_numeric_stage": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("task41_mumps_numeric_stage")
         ),
         "matrix_diagnostics_assemble_only": bool(assemble_only_result),
         "matrix_diagnostics_factorization_only": bool(factorization_only_result),
@@ -2233,6 +2309,12 @@ def run_prepared_3d_case_flow(
             log(
                 "Matrix diagnostics factorization-only mode: KSPSetUp/LU completed; "
                 "KSPSolve and field postprocess were skipped."
+            )
+        elif _task41_native_a6_gate_failed(dtn_solver_info):
+            log(
+                "Task41 independent full-space A6 residual exceeded 1e-6; "
+                "official R/T/A and field postprocessing were skipped. "
+                "Native RHS, residual, and recovered-field arrays were retained."
             )
         else:
             log("WARNING: PETSc KSP did not converge.")

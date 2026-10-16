@@ -99,6 +99,10 @@ def _parser() -> argparse.ArgumentParser:
         help='required existing fixed 24-hour campaign window for reviewed Task40 V10/V11/V13 p6 cases',
     )
     parser.add_argument(
+        '--task41-p0-execution-contract', type=Path, metavar='CONTRACT_JSON',
+        help='fixed Task41 P0 source/input/runtime/resource/deadline contract',
+    )
+    parser.add_argument(
         '--task40-v10-postprocess-from', type=Path, metavar='FAILED_RUN_DIRECTORY',
         help='recover the frozen V10/V15 B0 outputs from its saved full field without rerunning the solve',
     )
@@ -160,6 +164,42 @@ def main(argv: list[str] | None = None) -> int:
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
+        from src.runners.task41_p0_contract import (
+            TASK41_MODEL_ID,
+            TASK41_RUN_ID,
+            require_task41_p0_contract,
+            validate_task41_specification,
+            load_task41_p0_fixed_window,
+        )
+
+        task41_case = (
+            specification.identity.get('model_id') == TASK41_MODEL_ID
+            or specification.identity.get('run_id') == TASK41_RUN_ID
+        )
+        if args.task41_p0_execution_contract is not None:
+            if not task41_case or args.task40_v10_campaign_window is not None:
+                raise InputError('Task41 P0 execution contract is restricted to the Task41 A1 input')
+            try:
+                task41_contract, task41_contract_sha = require_task41_p0_contract(
+                    args.task41_p0_execution_contract,
+                    current_root=_REPOSITORY_ROOT,
+                    check_current_source=True,
+                    require_clean_source=not (args.dry_run or args.validate_only),
+                )
+                validate_task41_specification(
+                    specification, args.input_path, task41_contract,
+                    current_root=_REPOSITORY_ROOT,
+                )
+                load_task41_p0_fixed_window(
+                    task41_contract, current_root=_REPOSITORY_ROOT,
+                )
+            except (OSError, ValueError, RuntimeError) as exc:
+                raise InputError(f'Task41 P0 contract admission failed: {exc}') from exc
+        else:
+            task41_contract = None
+            task41_contract_sha = None
+            if task41_case and not (args.dry_run or args.validate_only):
+                raise InputError('formal Task41 P0 launches require --task41-p0-execution-contract')
         from src.geometry.task40_nonseparable_plan import (
             TASK40_B0_CONTROL_RUN_ID,
             TASK40_B0_P6_CANDIDATE_RUN_ID,
@@ -674,6 +714,8 @@ def main(argv: list[str] | None = None) -> int:
                 v24_p4_prefix_target=args.v24_p4_prefix_target,
                 task40_v10_campaign_window=args.task40_v10_campaign_window,
                 task40_v10_postprocess_from=args.task40_v10_postprocess_from,
+                task41_p0_execution_contract=args.task41_p0_execution_contract,
+                task41_p0_contract_sha256=task41_contract_sha,
             )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

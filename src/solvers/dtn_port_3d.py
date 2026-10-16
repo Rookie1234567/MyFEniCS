@@ -5,8 +5,11 @@ from .condensed_reference_preflight import CondensedPreflightExit
 import copy
 import csv
 from dataclasses import dataclass
+import gc
 import hashlib
 import json
+import os
+import tempfile
 import time
 from pathlib import Path
 from types import MappingProxyType
@@ -36,8 +39,11 @@ from ..common.modes_3d import (
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData
 from ..geometry.task40_nonseparable_plan import is_task40_geometry_identity
+from ..geometry.task41_phi90_profile import is_task41_geometry_identity
+from ..geometry.task41_phi90_profile import TASK41_MUMPS_EXACT_ICNTL
 from .common_3d_solve import (
     DirectSolveFailure,
+    _mumps_control_readback,
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
@@ -79,9 +85,42 @@ DTN_PORT_MODAL_REFERENCE = "top=physical_z_max; bottom=physical_z_min; bottom lo
 
 
 def _stage4_preserve_exact_geometry(cfg: SimulationConfig3D) -> bool:
-    """Keep Task40's local cache geometry identical to its native mesh."""
+    """Keep registered exact-geometry profiles identical to their native mesh."""
 
-    return is_task40_geometry_identity(cfg.geometry_identity)
+    return is_task40_geometry_identity(cfg.geometry_identity) or is_task41_geometry_identity(
+        cfg.geometry_identity
+    )
+
+
+def _stage4_sum_duplicate_cell_integrals(cfg: SimulationConfig3D) -> bool:
+    """Preserve every default/tag cell term for the new Task41 material map."""
+
+    return is_task41_geometry_identity(cfg.geometry_identity)
+
+
+def _stage4_strict_condensation_checks(cfg: SimulationConfig3D) -> bool:
+    return is_task41_geometry_identity(cfg.geometry_identity)
+
+
+def _stage4_share_identity_cache(cfg: SimulationConfig3D) -> bool:
+    return is_task41_geometry_identity(cfg.geometry_identity)
+
+
+def _build_stage4_assembly_time_condensation(
+    compiled_form, function_space, cell_tags, *, cfg: SimulationConfig3D, **kwargs
+):
+    """Forward the Task41-only local-kernel and exact-coordinate contracts."""
+
+    return build_unconstrained_assembly_time_condensation(
+        compiled_form,
+        function_space,
+        cell_tags,
+        sum_duplicate_cell_integrals=_stage4_sum_duplicate_cell_integrals(cfg),
+        strict_local_checks=_stage4_strict_condensation_checks(cfg),
+        share_identity_cache=_stage4_share_identity_cache(cfg),
+        preserve_exact_geometry=_stage4_preserve_exact_geometry(cfg),
+        **kwargs,
+    )
 
 
 class Stage4VariablePLiveObserverError(RuntimeError):
@@ -1152,6 +1191,337 @@ def _assembly_time_full_operator_residual(
     finally:
         action.destroy()
         context.destroy()
+
+
+def _task41_native_full_a6_residual(
+    bilinear_form,
+    linear_form,
+    function_space,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    floquet_data: DoubleFloquet3DData,
+    modes: list[PortMode3D],
+    surface_assemblers: Mapping[
+        tuple[str, int], _ReusableSurfaceComponentAssembler
+    ],
+    incident_projections: list[complex],
+    recovered_solution: PETSc.Vec,
+    out_dir: Path,
+    *,
+    mumps_release_audit: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Apply the original full FE+DtN operator to the recovered Task41 field.
+
+    This action path independently reassembles the unconstrained H(curl)
+    action and the full mode carrier. It does not consume the candidate Schur
+    matrix or its residual. The RHS is independently MPC-assembled from the
+    volume load, incident surface load, and incident modal projections.
+    """
+
+    if (
+        mumps_release_audit.get("factor_released_before_native_a6") is not True
+        or mumps_release_audit.get("ksp_destroy_called") is not True
+        or mumps_release_audit.get("pc_python_reference_deleted_before_ksp_destroy")
+        is not True
+        or not isinstance(mumps_release_audit.get("record_sha256"), str)
+    ):
+        raise RuntimeError(
+            "Task41 native full A6 requires a hash-bound MUMPS factor release audit"
+        )
+
+    from .fullspace_dtn_action import (
+        build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_surface,
+    )
+    from .fullspace_mpc_action import build_fullspace_mpc_form_action
+    from .fullspace_physical_action import FullspacePhysicalAction
+
+    comm = mesh_data.mesh.comm
+    started = time.perf_counter()
+    native_rhs = None
+    native_solution = None
+    native_residual = None
+    dtn_action = None
+    volume_action = None
+    physical_action = None
+    try:
+        native_rhs = _assemble_mpc_vector(linear_form, floquet_data.mpc)
+        incident_rhs = _assemble_mpc_vector(
+            _incident_top_traction_form(function_space, mesh_data, cfg),
+            floquet_data.mpc,
+        )
+        try:
+            native_rhs.axpy(PETSc.ScalarType(1.0), incident_rhs)
+        finally:
+            incident_rhs.destroy()
+        for mode, projection in zip(modes, incident_projections, strict=True):
+            if complex(projection) == 0.0:
+                continue
+            components = (
+                surface_assemblers[(mode.side, 0)].assemble_entries(
+                    mode, floquet_data.mpc
+                ),
+                surface_assemblers[(mode.side, 1)].assemble_entries(
+                    mode, floquet_data.mpc
+                ),
+            )
+            traction = _traction_vector(mode, cfg)
+            rows, values = _combine_owned_entries(
+                components,
+                (complex(traction[0]), complex(traction[1])),
+                comm=comm,
+            )
+            if rows.size:
+                native_rhs.setValues(
+                    rows,
+                    -values * complex(projection),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+        native_rhs.assemble()
+
+        carrier = build_fullspace_dtn_carrier_from_surface(
+            modes,
+            surface_assemblers,
+            floquet_data.mpc,
+            cfg,
+        )
+        dtn_action = build_fullspace_dtn_action(carrier, comm=comm)
+        volume_action = build_fullspace_mpc_form_action(
+            bilinear_form,
+            function_space,
+            mpc=floquet_data.mpc,
+        )
+        physical_action = FullspacePhysicalAction(volume_action, dtn_action)
+        volume_action = None
+        dtn_action = None
+
+        native_solution = recovered_solution.copy()
+        owned_rows = int(function_space.dofmap.index_map.size_local)
+        slave_rows = np.asarray(floquet_data.mpc.slaves, dtype=np.int32)
+        owned_slaves = slave_rows[slave_rows < owned_rows]
+        native_solution.getArray()[owned_slaves] = PETSc.ScalarType(0.0)
+        native_residual = native_rhs.duplicate()
+        native_residual.set(PETSc.ScalarType(0.0))
+        physical_action.apply(native_solution, native_residual)
+        native_residual.axpy(PETSc.ScalarType(-1.0), native_rhs)
+        action_audit = physical_action.audit
+        volume_action_audit = action_audit["volume_action"]
+        dtn_action_audit = action_audit["dtn_action"]
+
+        rhs_values = np.asarray(native_rhs.getArray(readonly=True), dtype="<c16")
+        residual_values = np.asarray(
+            native_residual.getArray(readonly=True), dtype="<c16"
+        )
+        recovered_values = np.asarray(
+            recovered_solution.getArray(readonly=True), dtype="<c16"
+        )
+        if not np.isfinite(rhs_values).all() or not np.isfinite(
+            residual_values
+        ).all() or not np.isfinite(recovered_values).all():
+            raise RuntimeError("Task41 native full A6 action produced non-finite values")
+        slave_rows = np.ascontiguousarray(owned_slaves, dtype=np.int32)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        rank_artifact = out_dir / f"task41_native_full_a6_rank_{comm.rank:05d}.npz"
+        _task41_atomic_save_npz(
+            rank_artifact,
+            rhs=rhs_values,
+            residual=residual_values,
+            recovered_field=recovered_values,
+            mpc_slave_local_rows=slave_rows,
+        )
+        artifact_digest = hashlib.sha256()
+        with rank_artifact.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+                artifact_digest.update(chunk)
+        recovered_digest = hashlib.sha256(
+            np.ascontiguousarray(recovered_values).view(np.uint8)
+        ).hexdigest()
+        vector_bytes = {
+            "rhs": int(rhs_values.nbytes),
+            "zeroed_solution": int(native_solution.getArray(readonly=True).nbytes),
+            "residual": int(residual_values.nbytes),
+            "recovered_field": int(recovered_values.nbytes),
+        }
+        action_bytes = {
+            "volume_retained": int(
+                volume_action_audit.get("retained_numeric_payload_local_bytes", 0)
+            ),
+            "volume_last_apply_temporary": int(
+                volume_action_audit.get("per_apply_bounded_temporary_bytes", 0)
+            ),
+            "dtn_retained": int(dtn_action_audit.get("retained_numeric_bytes_local", 0)),
+            "dtn_apply_workspace": int(dtn_action_audit.get("bounded_work_bytes_local", 0)),
+        }
+        local_record = {
+            "rank": int(comm.rank),
+            "owned_dof_count": int(residual_values.size),
+            "rhs_norm_squared": float(np.vdot(rhs_values, rhs_values).real),
+            "residual_norm_squared": float(
+                np.vdot(residual_values, residual_values).real
+            ),
+            "residual_max_abs": float(
+                np.max(np.abs(residual_values), initial=0.0)
+            ),
+            "rank_artifact_file": rank_artifact.name,
+            "rank_artifact_sha256": artifact_digest.hexdigest(),
+            "rank_artifact_bytes": int(rank_artifact.stat().st_size),
+            "recovered_field_sha256": recovered_digest,
+            "vector_bytes_local": vector_bytes,
+            "action_bytes_local": action_bytes,
+            "tracked_workspace_bytes_local": int(
+                sum(vector_bytes.values()) + sum(action_bytes.values())
+            ),
+        }
+        rank_records = comm.allgather(local_record)
+        rhs_norm_squared = float(
+            sum(float(record["rhs_norm_squared"]) for record in rank_records)
+        )
+        residual_norm_squared = float(
+            sum(float(record["residual_norm_squared"]) for record in rank_records)
+        )
+        rhs_norm = float(np.sqrt(rhs_norm_squared))
+        residual_norm = float(np.sqrt(residual_norm_squared))
+        relative_residual = residual_norm / max(rhs_norm, 1.0e-30)
+        elapsed_seconds = float(
+            comm.allreduce(time.perf_counter() - started, op=MPI.MAX)
+        )
+        record = {
+            "schema": "task41.native_full_a6_residual.v1",
+            "operator": "A_volume_plus_dynamic_DtN",
+            "fullspace_mpc_volume_action": True,
+            "fullspace_dtn_action": True,
+            "field_representation": "recovered_physical_fe_field_after_mpc_backsubstitution",
+            "action_input_representation": (
+                "recovered_field_copy_with_owned_mpc_slave_entries_zeroed"
+            ),
+            "action_input_mpc_slave_entries_zeroed": True,
+            "mumps_factor_released_before_native_a6": True,
+            "mumps_factor_release_record_sha256": mumps_release_audit[
+                "record_sha256"
+            ],
+            "mpi_size": int(comm.size),
+            "global_dof_count": int(native_rhs.getSize()),
+            "mode_count": int(len(modes)),
+            "mode_manifest_sha256": carrier.mode_manifest_sha256,
+            "rank_local_records": rank_records,
+            "rhs_norm": rhs_norm,
+            "residual_norm": residual_norm,
+            "relative_residual": relative_residual,
+            "elapsed_seconds": elapsed_seconds,
+            "residual_max_abs": max(
+                float(record["residual_max_abs"]) for record in rank_records
+            ),
+        }
+        canonical = json.dumps(
+            record, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+        record_sha256 = hashlib.sha256(canonical).hexdigest()
+        if comm.rank == 0:
+            _task41_atomic_write_json(
+                out_dir / "task41_native_full_a6_residual.json",
+                {**record, "record_sha256": record_sha256},
+            )
+        comm.barrier()
+        return {
+            **record,
+            "record_sha256": record_sha256,
+            "artifact_file": "task41_native_full_a6_residual.json",
+        }
+    finally:
+        if physical_action is not None:
+            physical_action.destroy()
+        else:
+            if volume_action is not None:
+                volume_action.destroy()
+            if dtn_action is not None:
+                dtn_action.destroy()
+        for vector in (native_residual, native_solution, native_rhs):
+            if vector is not None:
+                vector.destroy()
+
+
+def _task41_atomic_save_npz(path: Path, **arrays: np.ndarray) -> None:
+    """Write a Task41 raw-vector archive atomically beside its final path."""
+
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb", prefix=f".{path.name}.", suffix=".tmp", dir=path.parent,
+            delete=False,
+        ) as stream:
+            temporary_path = Path(stream.name)
+            np.savez(stream, **arrays)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, path)
+        _task41_fsync_directory(path.parent)
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
+
+
+def _task41_atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
+    """Write Task41 evidence JSON atomically and durably beside its final path."""
+
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", prefix=f".{path.name}.", suffix=".tmp",
+            dir=path.parent, delete=False,
+        ) as stream:
+            temporary_path = Path(stream.name)
+            json.dump(value, stream, ensure_ascii=False, indent=2, allow_nan=False)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, path)
+        _task41_fsync_directory(path.parent)
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
+
+
+def _task41_fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+TASK41_NATIVE_A6_RELATIVE_RESIDUAL_LIMIT = 1.0e-6
+
+
+def _task41_native_a6_passes(record: Mapping[str, Any] | None) -> bool:
+    """Allow official Task41 power only after a finite independent full A6 pass."""
+
+    if not isinstance(record, Mapping):
+        return False
+    residual = record.get("relative_residual")
+    return bool(
+        record.get("schema") == "task41.native_full_a6_residual.v1"
+        and record.get("operator") == "A_volume_plus_dynamic_DtN"
+        and record.get("fullspace_mpc_volume_action") is True
+        and record.get("fullspace_dtn_action") is True
+        and record.get("action_input_mpc_slave_entries_zeroed") is True
+        and record.get("mumps_factor_released_before_native_a6") is True
+        and isinstance(record.get("mumps_factor_release_record_sha256"), str)
+        and len(record["mumps_factor_release_record_sha256"]) == 64
+        and isinstance(residual, (int, float))
+        and not isinstance(residual, bool)
+        and np.isfinite(float(residual))
+        and 0.0 <= float(residual) <= TASK41_NATIVE_A6_RELATIVE_RESIDUAL_LIMIT
+    )
+
+
+def _task41_official_rta_gate_passes(
+    record: Mapping[str, Any] | None, external_solver_gate_pass: bool
+) -> bool:
+    """Combine Task41's independent A6 requirement with any solver-port gate."""
+
+    return bool(
+        _task41_native_a6_passes(record) and external_solver_gate_pass is True
+    )
 
 
 def _set_scalar_constant(constant: fem.Constant, value: complex) -> None:
@@ -2253,6 +2623,296 @@ def _solve_zero_order_local_robin_dtn(
     }
 
 
+TASK41_MUMPS_TASK_CAP_BYTES = 1536 * 1024**3
+TASK41_MUMPS_HOST_RESERVE_BYTES = 64 * 1024**3
+TASK41_MUMPS_SYMBOLIC_MEMORY_MULTIPLIER = 2
+TASK41_MUMPS_FUTURE_WORKSPACE_MIN_BYTES = 256 * 1024**2
+
+
+def _task41_mumps_admission_decision(
+    symbolic_info: Mapping[str, Any],
+    resource: Mapping[str, Any],
+    memory_envelope: Mapping[str, Any],
+    matrix_rows: int,
+    *,
+    task_cap_bytes: int = TASK41_MUMPS_TASK_CAP_BYTES,
+    host_reserve_bytes: int = TASK41_MUMPS_HOST_RESERVE_BYTES,
+    factor_multiplier: int = TASK41_MUMPS_SYMBOLIC_MEMORY_MULTIPLIER,
+    scalar_bytes: int = np.dtype(np.complex128).itemsize,
+) -> dict[str, Any]:
+    """Admit numeric MUMPS only from live co-resident headroom and INFOG."""
+
+    errors: list[str] = []
+    infog = symbolic_info.get("infog")
+    if not isinstance(infog, Mapping):
+        infog = {}
+        errors.append("symbolic INFOG map is missing")
+    estimates: list[int] = []
+    for index in (16, 17):
+        value = infog.get(str(index))
+        if type(value) is not int or value <= 0:
+            errors.append(f"symbolic INFOG({index}) is missing or nonpositive")
+        else:
+            estimates.append(int(value))
+    estimate_mb = max(estimates, default=0)
+    estimate_bytes = estimate_mb * 1_000_000
+
+    process_tree = resource.get("process_tree")
+    if not isinstance(process_tree, Mapping):
+        process_tree = {}
+        errors.append("process-tree resource sample is missing")
+    rss_bytes = process_tree.get("rss_bytes")
+    swap_bytes = process_tree.get("swap_bytes")
+    if type(rss_bytes) is not int or rss_bytes < 0:
+        errors.append("process-tree RSS is unavailable")
+        rss_bytes = 0
+    if process_tree.get("all_status_readable") is not True:
+        errors.append("not every process-tree status was readable")
+    if type(swap_bytes) is not int or swap_bytes != 0:
+        errors.append("process-tree swap is nonzero or unavailable")
+    if resource.get("job_no_swap") is not True:
+        errors.append("resource authority did not confirm zero task swap")
+    memory_authority = resource.get("memory_authority_bytes")
+    if type(memory_authority) is not int or memory_authority < 0:
+        errors.append("task memory authority is unavailable")
+        memory_authority = 0
+    task_baseline_bytes = max(int(rss_bytes), int(memory_authority))
+    task_headroom_bytes = int(task_cap_bytes) - task_baseline_bytes
+
+    available = memory_envelope.get("host_mem_available_bytes")
+    total = memory_envelope.get("mem_total_bytes")
+    if type(available) is not int or available <= 0:
+        errors.append("host MemAvailable is unavailable")
+        available = 0
+    if type(total) is not int or total <= 0:
+        errors.append("host MemTotal is unavailable")
+        total = 0
+    reserve = memory_envelope.get("reserve_bytes")
+    if type(reserve) is not int or reserve < int(host_reserve_bytes):
+        errors.append("memory envelope does not preserve the required 64 GiB host reserve")
+        reserve = 0
+    host_headroom_bytes = memory_envelope.get("launch_cap_bytes")
+    if type(host_headroom_bytes) is not int or host_headroom_bytes < 0:
+        errors.append("ancestor-aware memory-envelope headroom is unavailable")
+        host_headroom_bytes = 0
+    ancestor_limits = memory_envelope.get("cgroup_limits")
+    if not isinstance(ancestor_limits, list):
+        errors.append("ancestor cgroup limit inventory is unavailable")
+        ancestor_limits = []
+
+    rows = int(matrix_rows)
+    future_workspace_bytes = max(
+        int(TASK41_MUMPS_FUTURE_WORKSPACE_MIN_BYTES),
+        rows * 16 * int(scalar_bytes),
+    )
+    projected_numeric_growth_bytes = (
+        int(factor_multiplier) * estimate_bytes + future_workspace_bytes
+    )
+    headrooms = [int(task_headroom_bytes), int(host_headroom_bytes)]
+    limiting_scopes = ["task_cap", "host_and_ancestor_cgroups_after_reserve"]
+    available_growth_bytes = min(headrooms)
+    if estimate_bytes <= 0:
+        errors.append("symbolic MUMPS memory estimate is unavailable")
+    if task_headroom_bytes < 0:
+        errors.append("current task memory already exceeds the Task41 cap")
+    if host_headroom_bytes <= 0:
+        errors.append("host MemAvailable does not preserve the 64 GiB reserve")
+    if host_headroom_bytes <= 0:
+        errors.append("host or ancestor cgroup headroom is exhausted")
+    if projected_numeric_growth_bytes > available_growth_bytes:
+        errors.append("symbolic estimate plus future workspace exceeds live headroom")
+
+    return {
+        "status": "ADMISSIBLE" if not errors else "CAPACITY_NOT_ADMITTED",
+        "decision_errors": errors,
+        "symbolic_factor_estimate_mb": estimate_mb,
+        "symbolic_factor_estimate_bytes": estimate_bytes,
+        "factor_estimate_multiplier": int(factor_multiplier),
+        "projected_numeric_growth_bytes": projected_numeric_growth_bytes,
+        "future_workspace_bytes": future_workspace_bytes,
+        "future_workspace_formula": (
+            "max(256 MiB, 16 * augmented_rows * scalar_bytes)"
+        ),
+        "task_cap_bytes": int(task_cap_bytes),
+        "task_memory_baseline_bytes": task_baseline_bytes,
+        "task_headroom_bytes": int(task_headroom_bytes),
+        "host_mem_total_bytes": int(total),
+        "host_mem_available_bytes": int(available),
+        "host_reserve_bytes": int(reserve),
+        "host_and_ancestor_headroom_after_reserves_bytes": int(host_headroom_bytes),
+        "memory_envelope": dict(memory_envelope),
+        "ancestor_cgroup_limits": ancestor_limits,
+        "available_growth_bytes": int(available_growth_bytes),
+        "limiting_scopes": limiting_scopes,
+        "units": "bytes; MUMPS INFOG memory is decimal MB",
+        "classification": "live_admission_policy_not_peak_prediction_or_upper_bound",
+        "co_resident_semantics": (
+            "watchdog memory_envelope uses host MemAvailable and the minimum "
+            "headroom across finite cgroup ancestors, including co-resident work"
+        ),
+    }
+
+
+def _task41_mumps_symbolic_admission(
+    matrix: PETSc.Mat,
+    comm: MPI.Intracomm,
+    out_dir: Path,
+    *,
+    matrix_rows: int,
+    resource_sample_factory: Callable[[int], dict[str, Any]] | None = None,
+    memory_envelope_factory: Callable[..., dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run an exact-control MUMPS symbolic probe and save its live admission."""
+
+    from benchmarks.task034_wsl_resources import (
+        resource_authority_sample,
+    )
+    from benchmarks.subreaper_watchdog import (
+        PHYSICAL_MEMORY_PRESSURE_POLICY,
+        memory_envelope as watchdog_memory_envelope,
+    )
+    from .fullspace_v17_p3_oracle import _MumpsFactor
+
+    artifact_name = "task41_mumps_symbolic_admission.json"
+    sample_resource = resource_sample_factory or resource_authority_sample
+    sample_envelope = memory_envelope_factory or watchdog_memory_envelope
+    started = time.perf_counter()
+    record: dict[str, Any] = {
+        "schema": "task41.mumps_symbolic_admission.v1",
+        "status": "SYMBOLIC_PROBE_FAILED",
+        "mpi_size": int(comm.size),
+        "matrix_global_shape": [int(value) for value in matrix.getSize()],
+        "matrix_local_shape": [int(value) for value in matrix.getLocalSize()],
+        "matrix_rows": int(matrix_rows),
+        "exact_icntl_expected": {
+            str(index): int(value)
+            for index, value in TASK41_MUMPS_EXACT_ICNTL.items()
+        },
+        "numeric_called": False,
+        "ksp_setup_repeats_symbolic_before_numeric": True,
+        "probe_factor_released_before_ksp_setup": False,
+    }
+    factor = None
+    symbolic_info = None
+    try:
+        if comm.size != 1:
+            raise RuntimeError("Task41 A1 symbolic admission is qualified for MPI1 only")
+        factor = _MumpsFactor(matrix)
+        for index, value in TASK41_MUMPS_EXACT_ICNTL.items():
+            factor.set_icntl(index, value)
+        control_readback = {
+            str(index): int(factor.get_icntl(index))
+            for index in TASK41_MUMPS_EXACT_ICNTL
+        }
+        record["symbolic_probe_solver_type"] = "mumps"
+        record["symbolic_probe_control_readback"] = control_readback
+        if control_readback != record["exact_icntl_expected"]:
+            raise RuntimeError("symbolic probe MUMPS ICNTL readback mismatch")
+        symbolic_started = time.perf_counter()
+        factor.symbolic(matrix)
+        record["symbolic_calls"] = int(factor.symbolic_calls)
+        record["symbolic_seconds"] = float(time.perf_counter() - symbolic_started)
+        symbolic_info = factor.info((22, 29), include_local=True)
+        record["post_symbolic_pre_release_resource"] = sample_resource(os.getpid())
+        record["post_symbolic_pre_release_memory_envelope"] = (
+            sample_envelope(
+                PHYSICAL_MEMORY_PRESSURE_POLICY,
+                host_reserve_bytes=TASK41_MUMPS_HOST_RESERVE_BYTES,
+                task_cgroup_reserve_bytes=0,
+            )
+        )
+        record["symbolic_info"] = symbolic_info
+        record["status"] = "SYMBOLIC_COMPLETE_PENDING_POST_RELEASE_ADMISSION"
+    except Exception as exc:
+        record.update(
+            {
+                "status": "SYMBOLIC_PROBE_FAILED",
+                "failure_type": type(exc).__name__,
+                "failure_message": str(exc),
+            }
+        )
+    finally:
+        if factor is not None:
+            try:
+                factor.destroy()
+                record["probe_factor_released_before_ksp_setup"] = True
+            except Exception as exc:
+                record["probe_factor_destroy_error"] = (
+                    f"{type(exc).__name__}: {exc}"
+                )
+                record["probe_factor_released_before_ksp_setup"] = False
+                record["status"] = "SYMBOLIC_PROBE_FAILED"
+        record["elapsed_seconds"] = float(time.perf_counter() - started)
+    if (
+        record.get("status") == "SYMBOLIC_COMPLETE_PENDING_POST_RELEASE_ADMISSION"
+        and symbolic_info is not None
+        and record.get("probe_factor_released_before_ksp_setup") is True
+    ):
+        try:
+            resource_after_release = sample_resource(os.getpid())
+            envelope_after_release = sample_envelope(
+                PHYSICAL_MEMORY_PRESSURE_POLICY,
+                host_reserve_bytes=TASK41_MUMPS_HOST_RESERVE_BYTES,
+                task_cgroup_reserve_bytes=0,
+            )
+            decision = _task41_mumps_admission_decision(
+                symbolic_info,
+                resource_after_release,
+                envelope_after_release,
+                matrix_rows,
+                scalar_bytes=np.dtype(PETSc.ScalarType).itemsize,
+            )
+            record["post_release_resource"] = resource_after_release
+            record["post_release_memory_envelope"] = envelope_after_release
+            record.update(decision)
+            record["final_admission_sample_after_probe_release"] = True
+        except Exception as exc:
+            record.update(
+                {
+                    "status": "SYMBOLIC_PROBE_FAILED",
+                    "decision_errors": [
+                        f"post-release resource sample failed: {type(exc).__name__}: {exc}"
+                    ],
+                }
+            )
+    canonical = json.dumps(
+        record, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    record_sha256 = hashlib.sha256(canonical).hexdigest()
+    if comm.rank == 0:
+        _task41_atomic_write_json(
+            out_dir / artifact_name,
+            {**record, "record_sha256": record_sha256},
+        )
+    comm.barrier()
+    return {
+        **record,
+        "record_sha256": record_sha256,
+        "artifact_file": artifact_name,
+    }
+
+
+def _task41_save_mumps_stage_record(
+    record: Mapping[str, Any], comm: MPI.Intracomm, out_dir: Path, artifact_name: str
+) -> dict[str, Any]:
+    value = {
+        key: item
+        for key, item in record.items()
+        if key not in {"record_sha256", "artifact_file"}
+    }
+    canonical = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    digest = hashlib.sha256(canonical).hexdigest()
+    if comm.rank == 0:
+        _task41_atomic_write_json(
+            out_dir / artifact_name,
+            {**value, "record_sha256": digest},
+        )
+    comm.barrier()
+    return {**value, "record_sha256": digest, "artifact_file": artifact_name}
+
+
 def _solve_augmented_system(
     A_aug: PETSc.Mat,
     b_aug: PETSc.Vec,
@@ -2266,7 +2926,8 @@ def _solve_augmented_system(
     constraints: int | None = None,
     matrix_stats: dict[str, Any] | None = None,
     factorization_only: bool = False,
-) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
+    task41_mumps_staged_admission: bool = False,
+) -> tuple[PETSc.Vec, PETSc.KSP | None, dict[str, Any]]:
     progress_comm = comm if comm is not None else A_aug.getComm()
     if out_dir is not None:
         _write_progress_event(
@@ -2304,6 +2965,77 @@ def _solve_augmented_system(
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
         )
+    task41_mumps_admission = None
+    task41_mumps_numeric_stage = None
+    if task41_mumps_staged_admission:
+        if out_dir is None:
+            raise RuntimeError("Task41 MUMPS admission requires a case output directory")
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="task41_mumps_symbolic_admission",
+            status="begin",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
+        task41_mumps_admission = _task41_mumps_symbolic_admission(
+            A_aug,
+            progress_comm,
+            out_dir,
+            matrix_rows=int(A_aug.getSize()[0]),
+        )
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="task41_mumps_symbolic_admission",
+            status=(
+                "end"
+                if task41_mumps_admission.get("status") == "ADMISSIBLE"
+                else "failed"
+            ),
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "admission_status": task41_mumps_admission.get("status"),
+                "admission_record_sha256": task41_mumps_admission.get(
+                    "record_sha256"
+                ),
+                "numeric_called": False,
+            },
+        )
+        if task41_mumps_admission.get("status") != "ADMISSIBLE":
+            raise DirectSolveFailure(
+                "Task41 MUMPS numeric stage was not admitted by live INFOG/co-resident resource gate: "
+                + json.dumps(
+                    {
+                        "status": task41_mumps_admission.get("status"),
+                        "decision_errors": task41_mumps_admission.get(
+                            "decision_errors"
+                        ),
+                    },
+                    sort_keys=True,
+                ),
+                failure_stage="task41_mumps_symbolic_admission",
+                petsc_error=RuntimeError("Task41 MUMPS capacity gate rejected numeric factorization"),
+                A=A_aug,
+                b=b_aug,
+                x=x_aug,
+                ksp=ksp,
+                solver_backend="Task41 direct MUMPS exact with symbolic admission gate",
+                extra_summary={
+                    "solver_info": {
+                        "task41_mumps_symbolic_admission": task41_mumps_admission,
+                        "task41_mumps_numeric_stage": None,
+                    }
+                },
+            )
+    if out_dir is not None:
         _write_progress_event(
             out_dir,
             progress_comm,
@@ -2314,6 +3046,14 @@ def _solve_augmented_system(
             constraints=constraints,
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
+            extra={
+                "numeric_setup_begins_after_task41_symbolic_admission": (
+                    task41_mumps_admission is not None
+                ),
+                "task41_mumps_admission_status": None
+                if task41_mumps_admission is None
+                else task41_mumps_admission.get("status"),
+            },
         )
         _write_progress_event(
             out_dir,
@@ -2326,13 +3066,39 @@ def _solve_augmented_system(
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
             extra={
-                "stage_semantics": "external sampler labels samples while KSPSetUp is running"
+                "stage_semantics": (
+                    "external sampler labels samples while PETSc KSPSetUp "
+                    "repeats MUMPS symbolic and executes numeric factorization"
+                    if task41_mumps_staged_admission
+                    else "external sampler labels samples while KSPSetUp is running"
+                )
             },
         )
     setup_started = time.perf_counter()
     try:
         ksp.setUp()
     except PETSc.Error as exc:
+        if task41_mumps_staged_admission and out_dir is not None:
+            task41_mumps_numeric_stage = _task41_save_mumps_stage_record(
+                {
+                    "schema": "task41.mumps_numeric_stage.v1",
+                    "status": "KSP_SETUP_FAILED",
+                    "numeric_stage_requested": True,
+                    "numeric_completed": False,
+                    "numeric_stage": "PETSc KSPSetUp exact LU factorization",
+                    "ksp_setup_repeats_symbolic_before_numeric": True,
+                    "symbolic_admission_record_sha256": task41_mumps_admission[
+                        "record_sha256"
+                    ],
+                    "petsc_error_type": type(exc).__name__,
+                    "petsc_error_message": str(exc),
+                    "matrix_global_shape": [int(value) for value in A_aug.getSize()],
+                    "matrix_stats": matrix_stats,
+                },
+                progress_comm,
+                out_dir,
+                "task41_mumps_numeric_stage.json",
+            )
         raise DirectSolveFailure(
             "PETSc direct LU failed during Stage-4 augmented DtN KSPSetUp/LU factorization.",
             failure_stage="stage4_dtn_augmented_ksp_setup",
@@ -2342,11 +3108,63 @@ def _solve_augmented_system(
             x=x_aug,
             ksp=ksp,
             solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+            extra_summary={
+                "solver_info": {
+                    "task41_mumps_symbolic_admission": task41_mumps_admission,
+                    "task41_mumps_numeric_stage": task41_mumps_numeric_stage,
+                }
+            }
+            if task41_mumps_staged_admission
+            else None,
         ) from exc
     setup_seconds = float(
         progress_comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
     )
     factor_inventory = _petsc_factor_inventory(ksp)
+    if task41_mumps_staged_admission:
+        mumps_readback = _mumps_control_readback(ksp, TASK41_MUMPS_EXACT_ICNTL)
+        task41_mumps_numeric_stage = {
+            "schema": "task41.mumps_numeric_stage.v1",
+            "status": "COMPLETED"
+            if mumps_readback.get("pass") is True
+            else "MUMPS_CONTROL_READBACK_FAILED",
+            "numeric_called": True,
+            "numeric_completed": True,
+            "numeric_stage": "PETSc KSPSetUp exact LU factorization",
+            "ksp_setup_repeats_symbolic_before_numeric": True,
+            "symbolic_admission_record_sha256": task41_mumps_admission[
+                "record_sha256"
+            ],
+            "ksp_setup_seconds": setup_seconds,
+            "actual_pc_factor_solver_type": mumps_readback.get("solver_type"),
+            "mumps_control_readback": mumps_readback,
+            "factor_inventory_after_setup": factor_inventory,
+            "matrix_global_shape": [int(value) for value in A_aug.getSize()],
+            "matrix_stats": matrix_stats,
+        }
+        task41_mumps_numeric_stage = _task41_save_mumps_stage_record(
+            task41_mumps_numeric_stage,
+            progress_comm,
+            out_dir,
+            "task41_mumps_numeric_stage.json",
+        )
+        if mumps_readback.get("pass") is not True:
+            raise DirectSolveFailure(
+                "Task41 MUMPS exact ICNTL readback failed after numeric factorization.",
+                failure_stage="task41_mumps_numeric_readback",
+                petsc_error=RuntimeError(str(mumps_readback.get("errors"))),
+                A=A_aug,
+                b=b_aug,
+                x=x_aug,
+                ksp=ksp,
+                solver_backend="Task41 direct MUMPS exact with symbolic admission gate",
+                extra_summary={
+                    "solver_info": {
+                        "task41_mumps_symbolic_admission": task41_mumps_admission,
+                        "task41_mumps_numeric_stage": task41_mumps_numeric_stage,
+                    }
+                },
+            )
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -2384,6 +3202,8 @@ def _solve_augmented_system(
                 "ksp_solve_seconds": None,
                 "factor_inventory": factor_inventory,
                 "factorization_only": True,
+                "task41_mumps_symbolic_admission": task41_mumps_admission,
+                "task41_mumps_numeric_stage": task41_mumps_numeric_stage,
             },
         )
     if out_dir is not None:
@@ -2436,6 +3256,14 @@ def _solve_augmented_system(
             x=x_aug,
             ksp=ksp,
             solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+            extra_summary={
+                "solver_info": {
+                    "task41_mumps_symbolic_admission": task41_mumps_admission,
+                    "task41_mumps_numeric_stage": task41_mumps_numeric_stage,
+                }
+            }
+            if task41_mumps_staged_admission
+            else None,
         ) from exc
     solve_seconds = float(
         progress_comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX)
@@ -2464,6 +3292,91 @@ def _solve_augmented_system(
             petsc_options=petsc_options,
             extra={"ksp_solve_seconds": solve_seconds},
         )
+    task41_ksp_state_after_solve = None
+    task41_factor_released_before_native_a6 = False
+    if task41_mumps_staged_admission:
+        pc = ksp.getPC()
+        task41_ksp_state_after_solve = {
+            "converged_reason": int(ksp.getConvergedReason()),
+            "iterations": int(ksp.getIterationNumber()),
+            "residual_norm": float(ksp.getResidualNorm()),
+            "ksp_type": ksp.getType(),
+            "pc_type": pc.getType(),
+            "factor_solver_type": pc.getFactorSolverType(),
+            "mumps_control_readback": task41_mumps_numeric_stage[
+                "mumps_control_readback"
+            ],
+            "factor_inventory_after_setup": factor_inventory,
+        }
+        from benchmarks.task034_wsl_resources import resource_authority_sample
+        from benchmarks.subreaper_watchdog import (
+            PHYSICAL_MEMORY_PRESSURE_POLICY,
+            memory_envelope as watchdog_memory_envelope,
+        )
+
+        resource_before_release = resource_authority_sample(os.getpid())
+        envelope_before_release = watchdog_memory_envelope(
+            PHYSICAL_MEMORY_PRESSURE_POLICY,
+            host_reserve_bytes=TASK41_MUMPS_HOST_RESERVE_BYTES,
+            task_cgroup_reserve_bytes=0,
+        )
+        del pc
+        gc.collect()
+        ksp.destroy()
+        ksp = None
+        gc.collect()
+        PETSc.garbage_cleanup(progress_comm)
+        gc.collect()
+        resource_after_release = resource_authority_sample(os.getpid())
+        envelope_after_release = watchdog_memory_envelope(
+            PHYSICAL_MEMORY_PRESSURE_POLICY,
+            host_reserve_bytes=TASK41_MUMPS_HOST_RESERVE_BYTES,
+            task_cgroup_reserve_bytes=0,
+        )
+        task41_factor_released_before_native_a6 = True
+        task41_mumps_numeric_stage = _task41_save_mumps_stage_record(
+            {
+                **task41_mumps_numeric_stage,
+                "solver_state_after_solve_before_release": task41_ksp_state_after_solve,
+                "factor_released_before_native_a6": True,
+                "ksp_destroy_called": True,
+                "pc_python_reference_deleted_before_ksp_destroy": True,
+                "petsc_garbage_cleanup_called": True,
+                "resource_before_factor_release": resource_before_release,
+                "memory_envelope_before_factor_release": envelope_before_release,
+                "resource_after_factor_release": resource_after_release,
+                "memory_envelope_after_factor_release": envelope_after_release,
+                "factor_release_memory_authority_delta_bytes": (
+                    int(resource_after_release["memory_authority_bytes"])
+                    - int(resource_before_release["memory_authority_bytes"])
+                ),
+                "factor_release_point": (
+                    "immediately_after_KSPSolve_before_full_field_recovery_and_native_A6"
+                ),
+            },
+            progress_comm,
+            out_dir,
+            "task41_mumps_numeric_stage.json",
+        )
+        if out_dir is not None:
+            _write_progress_event(
+                out_dir,
+                progress_comm,
+                stage="task41_mumps_factor_release_before_native_a6",
+                status="end",
+                started=started,
+                dofs=dofs,
+                constraints=constraints,
+                matrix_stats=matrix_stats,
+                petsc_options=petsc_options,
+                extra={
+                    "factor_released": True,
+                    "native_a6_follows_release": True,
+                    "numeric_stage_record_sha256": task41_mumps_numeric_stage[
+                        "record_sha256"
+                    ],
+                },
+            )
     return (
         x_aug,
         ksp,
@@ -2471,6 +3384,12 @@ def _solve_augmented_system(
             "ksp_setup_seconds": setup_seconds,
             "ksp_solve_seconds": solve_seconds,
             "factor_inventory": factor_inventory,
+            "task41_mumps_symbolic_admission": task41_mumps_admission,
+            "task41_mumps_numeric_stage": task41_mumps_numeric_stage,
+            "task41_ksp_state_after_solve": task41_ksp_state_after_solve,
+            "task41_mumps_factor_released_before_native_a6": (
+                task41_factor_released_before_native_a6
+            ),
         },
     )
 
@@ -3251,10 +4170,11 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
             reduction_system = variable_p_reduction.system
         else:
-            assembly_time_system = build_unconstrained_assembly_time_condensation(
+            assembly_time_system = _build_stage4_assembly_time_condensation(
                 fem.form(a),
                 V,
                 mesh_data.cell_tags,
+                cfg=cfg,
                 mpc=floquet_data.mpc,
                 appended_global_rows=n_aux,
                 appended_support_owned_cell_groups=(support_cell_groups),
@@ -3264,7 +4184,6 @@ def _solve_stage4_dtn_port_total_field_impl(
                     static_retain_local_schur_for_matrix_free or never_materialized_port
                 ),
                 materialize_global_matrix=not never_materialized_port,
-                preserve_exact_geometry=_stage4_preserve_exact_geometry(cfg),
             )
             reduction_system = assembly_time_system
         A_base = None
@@ -4317,6 +5236,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     independent_trace_system = None
     independent_trace_matrix_stats = None
     condensation_recovery = None
+    task41_native_full_a6 = None
     solve_A = A_aug
     solve_b = b_aug
     solve_dofs = (
@@ -4470,6 +5390,10 @@ def _solve_stage4_dtn_port_total_field_impl(
                     else augmented_matrix_stats_after_finalize
                 ),
                 factorization_only=cfg.matrix_diagnostics_factorization_only,
+                task41_mumps_staged_admission=(
+                    is_task41_geometry_identity(cfg.geometry_identity)
+                    and cfg.petsc_direct_solver_profile_requested == "mumps_exact"
+                ),
             )
         else:
             if never_materialized_port:
@@ -4719,6 +5643,32 @@ def _solve_stage4_dtn_port_total_field_impl(
     else:
         x_aug = solve_x
 
+    if is_task41_geometry_identity(cfg.geometry_identity):
+        if assembly_time_system is None or embedded_fe_solution is None:
+            raise RuntimeError(
+                "Task41 native full A6 audit requires the recovered assembly-time field"
+            )
+        task41_native_full_a6 = _task41_native_full_a6_residual(
+            a,
+            L,
+            V,
+            mesh_data,
+            cfg,
+            floquet_data,
+            modes,
+            surface_assemblers,
+            incident_projections,
+            embedded_fe_solution,
+            out_dir,
+            mumps_release_audit=ksp_telemetry.get(
+                "task41_mumps_numeric_stage"
+            )
+            or {},
+        )
+        timing_details["stage4_dtn_task41_native_full_a6_seconds"] = float(
+            task41_native_full_a6["elapsed_seconds"]
+        )
+
     if variable_p_reduction is not None and variable_p_recovered is not None:
         residual_started = time.perf_counter()
         linear_residual = variable_p_reduction.full_active_residual(
@@ -4771,14 +5721,31 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
     else:
         linear_residual = _linear_residual(A_aug, b_aug, x_aug)
-    external_rta_gate_pass = (
-        None
-        if external_snapshot is None
-        else _external_snapshot_allows_official_rta(
-            external_snapshot,
-            linear_residual.get("linear_system_relative_residual"),
+    task41_native_a6_gate_pass = None
+    if task41_native_full_a6 is not None:
+        task41_native_a6_gate_pass = _task41_native_a6_passes(
+            task41_native_full_a6
         )
-    )
+        external_solver_gate_pass = (
+            True
+            if external_snapshot is None
+            else _external_snapshot_allows_official_rta(
+                external_snapshot,
+                linear_residual.get("linear_system_relative_residual"),
+            )
+        )
+        external_rta_gate_pass = _task41_official_rta_gate_passes(
+            task41_native_full_a6, external_solver_gate_pass
+        )
+    else:
+        external_rta_gate_pass = (
+            None
+            if external_snapshot is None
+            else _external_snapshot_allows_official_rta(
+                external_snapshot,
+                linear_residual.get("linear_system_relative_residual"),
+            )
+        )
     _write_progress_event(
         out_dir,
         comm,
@@ -4792,7 +5759,13 @@ def _solve_stage4_dtn_port_total_field_impl(
         extra={
             "linear_system_relative_residual": linear_residual.get(
                 "linear_system_relative_residual"
-            )
+            ),
+            "task41_native_full_a6_relative_residual": (
+                None
+                if task41_native_full_a6 is None
+                else task41_native_full_a6.get("relative_residual")
+            ),
+            "task41_native_a6_gate_pass": task41_native_a6_gate_pass,
         },
     )
 
@@ -4907,6 +5880,8 @@ def _solve_stage4_dtn_port_total_field_impl(
         stage=(
             "after_official_rta"
             if external_rta_gate_pass is not False
+            else "task41_native_a6_rta_gate_failed"
+            if task41_native_full_a6 is not None
             else "external_rta_not_run"
         ),
         status="end",
@@ -4978,7 +5953,18 @@ def _solve_stage4_dtn_port_total_field_impl(
             "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
             "ordinary_default_changed": False,
         }
-    if external_snapshot is None:
+    task41_ksp_state_after_solve = ksp_telemetry.get(
+        "task41_ksp_state_after_solve"
+    )
+    if external_snapshot is None and isinstance(task41_ksp_state_after_solve, Mapping):
+        solver_converged_reason = int(
+            task41_ksp_state_after_solve["converged_reason"]
+        )
+        solver_iterations = int(task41_ksp_state_after_solve["iterations"])
+        solver_residual_norm = float(task41_ksp_state_after_solve["residual_norm"])
+        solver_ksp_type = str(task41_ksp_state_after_solve["ksp_type"])
+        solver_pc_type = str(task41_ksp_state_after_solve["pc_type"])
+    elif external_snapshot is None:
         solver_converged_reason = int(ksp.getConvergedReason())
         solver_iterations = int(ksp.getIterationNumber())
         solver_residual_norm = float(ksp.getResidualNorm())
@@ -5052,6 +6038,18 @@ def _solve_stage4_dtn_port_total_field_impl(
             independent_trace_system is not None or assembly_time_active
         ),
         "cell_static_condensation": cell_static_condensation_audit,
+        "task41_native_full_a6": task41_native_full_a6,
+        "task41_mumps_factor_released_before_native_a6": bool(
+            ksp_telemetry.get("task41_mumps_factor_released_before_native_a6")
+        ),
+        "task41_ksp_state_after_solve": task41_ksp_state_after_solve,
+        "task41_native_a6_gate_pass": task41_native_a6_gate_pass,
+        "task41_native_a6_gate_limit": (
+            TASK41_NATIVE_A6_RELATIVE_RESIDUAL_LIMIT
+            if task41_native_full_a6 is not None
+            else None
+        ),
+        "official_rta_gate_pass": external_rta_gate_pass,
         "stage4_dtn_assembly_seconds": float(
             comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)
         ),
@@ -5112,12 +6110,24 @@ def _solve_stage4_dtn_port_total_field_impl(
             }
         )
     if external_snapshot is None:
-        try:
-            solver_info["actual_pc_factor_solver_type"] = (
-                ksp.getPC().getFactorSolverType()
+        if isinstance(task41_ksp_state_after_solve, Mapping):
+            solver_info["actual_pc_factor_solver_type"] = task41_ksp_state_after_solve.get(
+                "factor_solver_type"
             )
-        except Exception:
-            solver_info["actual_pc_factor_solver_type"] = None
+        else:
+            try:
+                solver_info["actual_pc_factor_solver_type"] = (
+                    ksp.getPC().getFactorSolverType()
+                )
+            except Exception:
+                solver_info["actual_pc_factor_solver_type"] = None
+        solver_info["direct_solver_profile"] = cfg.petsc_direct_solver_profile_requested
+        if cfg.petsc_direct_solver_profile_requested == "mumps_exact":
+            solver_info["mumps_control_readback"] = (
+                task41_ksp_state_after_solve.get("mumps_control_readback")
+                if isinstance(task41_ksp_state_after_solve, Mapping)
+                else _mumps_control_readback(ksp, TASK41_MUMPS_EXACT_ICNTL)
+            )
 
     if condensed_system is not None:
         if independent_trace_system is not None:

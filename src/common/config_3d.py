@@ -497,9 +497,10 @@ class SimulationConfig3D:
     @property
     def petsc_direct_solver_profile_requested(self) -> str:
         profile = self.petsc_direct_solver_profile.lower()
-        if profile not in {"default", "mumps_ooc", "mumps_blr"}:
+        if profile not in {"default", "mumps_exact", "mumps_ooc", "mumps_blr"}:
             raise ValueError(
-                "petsc_direct_solver_profile must be 'default', 'mumps_ooc', or 'mumps_blr'. "
+                "petsc_direct_solver_profile must be 'default', 'mumps_exact', "
+                "'mumps_ooc', or 'mumps_blr'. "
                 "Old diagnostic profiles were removed from the public code path; "
                 "see notes/test/3d_direct_solver_profile_h2p5_report.md."
             )

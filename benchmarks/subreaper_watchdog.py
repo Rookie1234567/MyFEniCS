@@ -60,6 +60,9 @@ def _validate_campaign_closeout_authorization(
     elif schema == 'task40extra.review_v31_closeout_checker_authorization.v2':
         contract_version = 31
         contract_key = 'v31_contract_sha256'
+    elif schema == 'task41.p0.closeout_checker_authorization.v1':
+        contract_version = 41
+        contract_key = 'task41_contract_sha256'
     else:
         raise ValueError('closeout checker authorization schema is not registered')
     required = {
@@ -88,7 +91,27 @@ def _validate_campaign_closeout_authorization(
     ):
         raise ValueError('closeout checker authorization differs from its command/window/source')
     environment = dict(worker_environment or os.environ)
-    if contract_version == 30:
+    if contract_version == 41:
+        if (
+            environment.get('TASK41_P0_STRICT_EXECUTION') != '1'
+            or environment.get('TASK41_P0_CONTRACT_SHA256') != contract_sha
+        ):
+            raise ValueError('closeout checker is not bound to the Task41 P0 execution contract')
+        contract_path = environment.get('TASK41_P0_CONTRACT_PATH')
+        if not contract_path:
+            raise ValueError('Task41 closeout authorization omits the contract path')
+        from src.runners.task41_p0_contract import require_task41_p0_contract
+
+        contract, actual_contract_sha = require_task41_p0_contract(
+            contract_path,
+            expected_sha256=str(contract_sha),
+            current_root=Path.cwd(),
+            check_current_source=True,
+            require_clean_source=True,
+        )
+        window_path = contract['window']['path']
+        window_sha = contract['window']['sha256']
+    elif contract_version == 30:
         if (
             environment.get('TASK40_V30_STRICT_EXECUTION') != '1'
             or environment.get('TASK40_V30_CONTRACT_SHA256') != contract_sha
@@ -167,6 +190,38 @@ def _validate_campaign_closeout_authorization(
         output_path = Path(argv[14]).resolve()
         if not output_path.is_relative_to(Path.cwd().resolve()):
             raise ValueError('partial checker output path escaped the registered repository')
+    elif checker_kind == 'task41_p0_independent_full_a6_checker':
+        if (
+            len(argv) != 17
+            or argv[1:3] != ['-m', 'src.runners.task41_p0_checker']
+            or argv[3::2]
+            != [
+                '--input', '--summary', '--manifest', '--numerical-output',
+                '--contract', '--contract-sha256', '--output',
+            ]
+            or argv[14] != contract_sha
+            or authorization.get('expected_channel_count') is not None
+        ):
+            raise ValueError('closeout command is not the registered Task41 full-A6 checker')
+        input_path, summary_path, manifest_path = (
+            Path(argv[index]).resolve() for index in (4, 6, 8)
+        )
+        numerical_directory = Path(argv[10]).resolve()
+        numerical_summary = numerical_directory / 'run_summary.json'
+        input_paths = [
+            str(input_path), str(summary_path), str(manifest_path),
+            str(numerical_summary),
+        ]
+        if any(not Path(path).is_relative_to(Path.cwd().resolve()) for path in input_paths):
+            raise ValueError('Task41 checker inputs escaped the registered repository')
+        if not numerical_directory.is_dir():
+            raise ValueError('Task41 full numerical-output directory is missing')
+        checker_contract = Path(argv[12]).resolve()
+        if checker_contract != Path(str(contract_path)).resolve():
+            raise ValueError('Task41 checker contract path differs from the closeout authorization')
+        output_path = Path(argv[16]).resolve()
+        if not output_path.is_relative_to(Path.cwd().resolve()):
+            raise ValueError('Task41 checker output escaped the registered repository')
     else:
         raise ValueError('numeric or arbitrary commands cannot use the closeout reserve')
     if authorization.get('input_paths') != input_paths:
@@ -634,14 +689,52 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     campaign_account = None
     campaign_start_record = None
     if campaign_window_path is not None:
-        from src.runners.task40_v10_campaign import (
-            CampaignAccount,
-            load_fixed_campaign_window,
-        )
+        from src.runners.task40_v10_campaign import CampaignAccount, load_fixed_campaign_window
 
-        campaign = load_fixed_campaign_window(campaign_window_path)
+        task41_environment = dict(worker_environment or {})
+        if task41_environment.get('TASK41_P0_STRICT_EXECUTION') == '1':
+            from src.runners.task41_p0_contract import (
+                load_task41_p0_fixed_window,
+                require_task41_p0_contract,
+            )
+
+            contract_path = task41_environment.get('TASK41_P0_CONTRACT_PATH')
+            contract_sha = task41_environment.get('TASK41_P0_CONTRACT_SHA256')
+            if not contract_path or not contract_sha:
+                raise ValueError('Task41 watchdog environment omits its fixed contract')
+            task41_contract, actual_contract_sha = require_task41_p0_contract(
+                contract_path,
+                expected_sha256=contract_sha,
+                current_root=Path.cwd(),
+                check_current_source=True,
+                require_clean_source=True,
+            )
+            campaign = load_task41_p0_fixed_window(
+                task41_contract, current_root=Path.cwd(), require_current_boot=True
+            )
+            task41_resources = task41_contract['resources']
+            if (
+                actual_contract_sha != contract_sha
+                or campaign_window_path.resolve() != campaign.path.resolve()
+                or campaign_window_sha256 != campaign.sha256
+                or Path(task41_environment.get('TASK41_P0_EXECUTION_WINDOW_PATH', '')).resolve()
+                != campaign.path.resolve()
+                or task41_environment.get('TASK41_P0_EXECUTION_WINDOW_SHA256')
+                != campaign.sha256
+                or task41_environment.get('TASK41_P0_TASK_MEMORY_MAX_BYTES')
+                != str(task41_resources['task_memory_max_bytes'])
+                or task41_environment.get('TASK41_P0_HOST_RESERVE_BYTES')
+                != str(task41_resources['host_reserve_bytes'])
+                or task41_environment.get('TASK41_P0_MEMORY_SWAP_MAX_BYTES')
+                != str(task41_resources['memory_swap_max_bytes'])
+            ):
+                raise ValueError('Task41 watchdog window or resource bindings differ from contract')
+        else:
+            campaign = load_fixed_campaign_window(campaign_window_path)
         if campaign_window_sha256 != campaign.sha256:
             raise ValueError('campaign window hash differs from the run_case launch contract')
+        if campaign_accounting_path is not None and campaign_accounting_path.resolve() != campaign.accounting_path:
+            raise ValueError('campaign accounting path differs from the fixed window')
         if campaign_phase == 'closeout':
             campaign_phase_authorization = _validate_campaign_closeout_authorization(
                 command=command,

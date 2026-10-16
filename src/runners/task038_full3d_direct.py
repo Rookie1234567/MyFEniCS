@@ -7,6 +7,10 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from src.io.input_validation import simulation_config_3d_from_normalized
+from src.geometry.task41_phi90_profile import (
+    TASK41_MODEL_ID,
+    task41_direct_summary_errors,
+)
 
 
 def _run_solver(
@@ -163,6 +167,13 @@ def run_full3d_direct(
         if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}
         else _generic_authority_errors(summary)
     )
+    if resolved_payload.get("model_id") == TASK41_MODEL_ID:
+        errors.extend(
+            task41_direct_summary_errors(
+                summary,
+                numerical_output_directory=numerical_output,
+            )
+        )
     return {
         "passed": not errors,
         "errors": errors,

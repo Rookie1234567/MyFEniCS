@@ -1874,6 +1874,10 @@ def _activation_environment(
 
 
 def _qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
+    if environment.get("TASK41_P0_STRICT_EXECUTION") == "1":
+        from src.runners.task41_p0_contract import qualified_activation_identity
+
+        return qualified_activation_identity(environment)
     if environment.get("TASK40_V31_STRICT_EXECUTION") == "1":
         digest = environment.get("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256", "")
         if (
@@ -9385,6 +9389,308 @@ def _check_partial_cli(argv: list[str]) -> int:
     return 0 if result["checker_passed"] else 2
 
 
+def _run_task41_p0_service(
+    *,
+    unit: str,
+    runtime_prefix: Path,
+    abi_receipt: Path,
+    jit_cache: Path,
+    case_args: list[str],
+    contract_path: Path,
+    repo_root: Path,
+) -> int:
+    """Run one fixed Task41 A1 through the existing worker and watchdog path."""
+    service_start_sample = clock_sample(include_boot_id=True)
+    from benchmarks.task034_wsl_resources import cgroup_snapshot
+    from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY, supervise
+    from src.runners.task41_p0_contract import (
+        TASK41_P0_AUTH_SCHEMA,
+        load_task41_p0_fixed_window,
+        require_task41_p0_contract,
+        sha256_file,
+    )
+    from src.runners.task40_v10_campaign import CampaignAccount
+
+    def read_json_object(path: Path, label: str) -> dict[str, Any]:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError(f"{label} must contain a JSON object")
+        return value
+
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
+        raise ValueError("invalid Task41 systemd service unit name")
+    contract, contract_sha = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
+        current_root=repo_root,
+        check_current_source=True,
+        require_clean_source=True,
+    )
+    if os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1":
+        raise ValueError("Task41 service lacks its strict execution marker")
+    window = load_task41_p0_fixed_window(contract, current_root=repo_root)
+    service_entry_record = CampaignAccount(window).record_sample(
+        label="task41_p0_service_entered", phase="numeric"
+    )
+    runtime = contract["runtime"]
+    for actual, key in (
+        (runtime_prefix, "runtime_prefix"),
+        (abi_receipt, "abi_receipt_path"),
+        (jit_cache, "jit_cache"),
+    ):
+        expected = Path(str(runtime[key]))
+        expected = (expected if expected.is_absolute() else repo_root / expected).resolve()
+        if actual.resolve() != expected:
+            raise ValueError(f"Task41 service {key} differs from its fixed contract")
+    if (
+        Path(os.environ.get("TASK41_P0_CONTRACT_PATH", "")).resolve()
+        != contract_path.resolve()
+        or os.environ.get("TASK41_P0_EXECUTION_WINDOW_PATH") != str(window.path)
+        or os.environ.get("TASK41_P0_EXECUTION_WINDOW_SHA256") != window.sha256
+        or os.environ.get("TASK41_P0_EXPECTED_SOURCE_SHA") != contract["source"]["sha"]
+    ):
+        raise ValueError("Task41 service environment differs from the fixed contract")
+    if len(case_args) != 1 or case_args[0].startswith("-"):
+        raise ValueError("Task41 P0 service accepts exactly its contracted DAT path")
+    input_path = Path(case_args[0])
+    input_path = (input_path if input_path.is_absolute() else repo_root / input_path).resolve()
+    expected_input = Path(str(contract["case"]["input_path"]))
+    expected_input = (expected_input if expected_input.is_absolute() else repo_root / expected_input).resolve()
+    if input_path != expected_input or sha256_file(input_path) != contract["case"]["input_sha256"]:
+        raise ValueError("Task41 service DAT path/hash differs from the fixed contract")
+    numeric_settings = {
+        "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"
+    }
+    environment, activation_command, activation_code, activation_stderr = _activation_environment(
+        repo_root, runtime_prefix, abi_receipt, jit_cache,
+        runtime_profile="native_linux",
+    )
+    if activation_code != 0:
+        raise RuntimeError(f"Task41 qualified runtime activation failed: {activation_stderr}")
+    environment.update({
+        "TASK41_P0_STRICT_EXECUTION": "1",
+        "TASK41_P0_CONTRACT_PATH": str(contract_path.resolve()),
+        "TASK41_P0_CONTRACT_SHA256": contract_sha,
+        "TASK41_P0_EXECUTION_WINDOW_PATH": str(window.path),
+        "TASK41_P0_EXECUTION_WINDOW_SHA256": window.sha256,
+        "TASK41_P0_TASK_MEMORY_MAX_BYTES": str(contract["resources"]["task_memory_max_bytes"]),
+        "TASK41_P0_HOST_RESERVE_BYTES": str(contract["resources"]["host_reserve_bytes"]),
+        "TASK41_P0_MEMORY_SWAP_MAX_BYTES": str(contract["resources"]["memory_swap_max_bytes"]),
+        "TASK41_P0_EXPECTED_SOURCE_SHA": contract["source"]["sha"],
+    })
+    activation_marker = _qualified_activation_identity(environment)
+    if activation_marker is None:
+        raise RuntimeError("Task41 service did not receive its contracted qualified activation")
+    if any(environment.get(key) != "1" for key in numeric_settings):
+        raise RuntimeError("Task41 service requires OMP/BLAS/NumExpr thread counts of one")
+    preflight_argv, preflight_code, preflight_stdout, preflight_stderr = _abi_preflight(
+        runtime_prefix, environment, repo_root
+    )
+    if preflight_code != 0:
+        raise RuntimeError(f"Task41 ABI preflight failed: {preflight_stderr}")
+    preflight = json.loads(preflight_stdout)
+    if (
+        preflight.get("scalar_type") != "complex128"
+        or preflight.get("int_type") != "int32"
+        or preflight.get("mpi_size") != 1
+    ):
+        raise RuntimeError("Task41 service ABI does not match the qualified complex128/int32 MPI1 stack")
+    resource = contract["resources"]
+    cgroup = cgroup_snapshot(os.getpid())
+    if (
+        cgroup.get("dedicated_job_cgroup") is not True
+        or cgroup.get("readable") is not True
+        or cgroup.get("memory_limit_bytes") != resource["task_memory_max_bytes"]
+        or cgroup.get("swap_current_bytes") != 0
+        or cgroup.get("memory_current_bytes") is None
+        or cgroup["memory_current_bytes"] > resource["task_memory_max_bytes"]
+    ):
+        raise RuntimeError("Task41 service cgroup does not enforce the contracted memory cap and zero swap")
+
+    service_directory = Path(str(contract["evidence"]["service_directory"]))
+    service_directory = (service_directory if service_directory.is_absolute() else repo_root / service_directory).resolve()
+    service_directory.mkdir(parents=True, exist_ok=False)
+    receipt_path = service_directory / "task41_p0_service_receipt.json"
+    run_case_stdout = service_directory / "run_case.stdout.txt"
+    run_case_stderr = service_directory / "run_case.stderr.txt"
+    checker_result_path = service_directory / "task41_p0_checker_result.json"
+    record: dict[str, Any] = {
+        "schema": "task41.p0.service_receipt.v1",
+        "status": "running",
+        "task_id": contract["task_id"],
+        "unit": unit,
+        "contract_path": str(contract_path.resolve()),
+        "contract_sha256": contract_sha,
+        "source_sha": contract["source"]["sha"],
+        "window_entry_source_sha": contract["window"]["entry_source_sha"],
+        "window_path": str(window.path),
+        "window_sha256": window.sha256,
+        "input_path": str(input_path),
+        "input_sha256": contract["case"]["input_sha256"],
+        "abi_receipt_sha256": runtime["abi_receipt_sha256"],
+        "preflight": preflight,
+        "preflight_command": preflight_argv,
+        "activation_command": activation_command,
+        "activation_identity": activation_marker,
+        "cgroup_start": cgroup,
+        "service_entry_accounting": service_entry_record,
+        "task_memory_max_bytes": resource["task_memory_max_bytes"],
+        "host_reserve_bytes": resource["host_reserve_bytes"],
+        "memory_swap_max_bytes": resource["memory_swap_max_bytes"],
+        "run_case_stdout_path": str(run_case_stdout),
+        "run_case_stderr_path": str(run_case_stderr),
+        "service_started_sample": service_start_sample,
+    }
+    _write_json_fsync(receipt_path, record)
+    run_case_command = [
+        str(runtime_prefix / "bin/python"), "scripts/run_case.py", str(input_path),
+        "--task41-p0-execution-contract", str(contract_path.resolve()),
+    ]
+    run_case_code = None
+    checker_authority = None
+    checker_payload: dict[str, Any] | None = None
+    try:
+        with run_case_stdout.open("w", encoding="utf-8") as stdout, run_case_stderr.open(
+            "w", encoding="utf-8"
+        ) as stderr:
+            completed = subprocess.run(
+                run_case_command,
+                cwd=repo_root,
+                env=environment,
+                stdout=stdout,
+                stderr=stderr,
+                check=False,
+            )
+        run_case_code = int(completed.returncode)
+        record["run_case_command"] = run_case_command
+        record["run_case_returncode"] = run_case_code
+        record["run_case_stdout_sha256"] = sha256_file(run_case_stdout)
+        record["run_case_stderr_sha256"] = sha256_file(run_case_stderr)
+        stdout_text = run_case_stdout.read_text(encoding="utf-8")
+        try:
+            launch_payload = _parse_run_case_result(stdout_text)
+        except ValueError as exc:
+            record["required_checker_status"] = "not_run_no_launcher_summary"
+            record["workflow_error"] = str(exc)
+            return_code = 3
+        else:
+            summary_path = Path(str(launch_payload["summary"])).resolve()
+            manifest_path = Path(str(launch_payload["manifest"])).resolve()
+            manifest = read_json_object(manifest_path, "Task41 run manifest")
+            numerical_output = Path(str(manifest["numerical_output_directory"])).resolve()
+            numerical_summary_path = numerical_output / "run_summary.json"
+            checker_command = [
+                str(runtime_prefix / "bin/python"), "-m", "src.runners.task41_p0_checker",
+                "--input", str(input_path),
+                "--summary", str(summary_path),
+                "--manifest", str(manifest_path),
+                "--numerical-output", str(numerical_output),
+                "--contract", str(contract_path.resolve()),
+                "--contract-sha256", contract_sha,
+                "--output", str(checker_result_path),
+            ]
+            required_inputs = [input_path, summary_path, manifest_path, numerical_summary_path]
+            if not all(path.is_file() for path in required_inputs):
+                record["required_checker_status"] = "not_run_missing_hash_bound_inputs"
+                record["required_checker_missing_inputs"] = [
+                    str(path) for path in required_inputs if not path.is_file()
+                ]
+                return_code = 3
+            else:
+                source_branch = subprocess.check_output(
+                    ["git", "branch", "--show-current"], cwd=repo_root, text=True
+                ).strip()
+                source_clean = not subprocess.check_output(
+                    ["git", "status", "--porcelain", "--untracked-files=normal"],
+                    cwd=repo_root,
+                    text=True,
+                ).strip()
+                if source_branch != contract["branch"] or not source_clean:
+                    raise RuntimeError("Task41 source changed before required checker closeout")
+                checker_authorization = {
+                    "schema": TASK41_P0_AUTH_SCHEMA,
+                    "phase": "closeout",
+                    "purpose": "registered_read_only_required_checker",
+                    "checker_kind": "task41_p0_independent_full_a6_checker",
+                    "command_sha256": hashlib.sha256(
+                        json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+                    ).hexdigest(),
+                    "input_paths": [str(path.resolve()) for path in required_inputs],
+                    "input_sha256s": [sha256_file(path) for path in required_inputs],
+                    "expected_channel_count": None,
+                    "campaign_window_sha256": window.sha256,
+                    "task41_contract_sha256": contract_sha,
+                    "source_sha": contract["source"]["sha"],
+                    "source_branch": source_branch,
+                    "source_clean": source_clean,
+                }
+                checker_watchdog_directory = service_directory / "checker_watchdog"
+                checker_authority = supervise(
+                    checker_command,
+                    checker_watchdog_directory,
+                    wall_seconds=window.closeout_seconds,
+                    interval=1.0,
+                    grace_seconds=30.0,
+                    hard_stop_immediate=True,
+                    timebase_guard=True,
+                    timebase_policy=CONSERVATIVE_REALTIME,
+                    time_policy="enforce",
+                    memory_policy=PHYSICAL_MEMORY_PRESSURE_POLICY,
+                    pss_sampling_policy="disabled_by_profile",
+                    allow_physical_pressure_tree_cap=True,
+                    tree_cap_bytes=int(resource["task_memory_max_bytes"]),
+                    host_reserve_bytes=int(resource["host_reserve_bytes"]),
+                    task_cgroup_reserve_bytes=0,
+                    require_job_cgroup_zero_swap=True,
+                    require_cgroup_memory_details=True,
+                    campaign_window_path=window.path,
+                    campaign_window_sha256=window.sha256,
+                    campaign_accounting_path=window.accounting_path,
+                    campaign_phase="closeout",
+                    campaign_phase_authorization=checker_authorization,
+                    worker_environment=environment,
+                )
+                if checker_result_path.is_file():
+                    checker_payload = read_json_object(checker_result_path, "Task41 checker result")
+                checker_passed = bool(
+                    checker_authority.get("classification") == "COMPLETED"
+                    and checker_authority.get("leader_exit_code") == 0
+                    and checker_payload is not None
+                    and checker_payload.get("checker_passed") is True
+                    and checker_payload.get("full_pass") is True
+                    and checker_payload.get("official_result") is True
+                )
+                record.update(
+                    required_checker_status="passed" if checker_passed else "failed",
+                    required_checker_command=checker_command,
+                    required_checker_authorization=checker_authorization,
+                    required_checker_authority=checker_authority,
+                    required_checker_result=checker_payload,
+                    required_checker_result_path=str(checker_result_path),
+                )
+                return_code = 0 if checker_passed and run_case_code == 0 else 3
+        service_end_sample = clock_sample(include_boot_id=True)
+        record["service_elapsed_seconds"] = checked_interval(
+            service_start_sample,
+            service_end_sample,
+            policy=CONSERVATIVE_REALTIME,
+        )["budget_seconds"]
+        record["status"] = "completed" if return_code == 0 else "failed_raw_evidence_retained"
+    except Exception as exc:
+        record["status"] = "failed_raw_evidence_retained"
+        record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+        return_code = 3
+    finally:
+        record["receipt_path"] = str(receipt_path)
+        temporary = receipt_path.with_name(receipt_path.name + ".tmp")
+        temporary.write_text(
+            json.dumps(record, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary, receipt_path)
+    return int(return_code)
+
+
 def run_service(
     *,
     unit: str,
@@ -9396,6 +9702,19 @@ def run_service(
 ) -> int:
     if case_args and case_args[0] == "--":
         case_args = case_args[1:]
+    case_args, task41_contract_path = _extract_v29_path_arg(
+        case_args, "--task41-p0-execution-contract"
+    )
+    if task41_contract_path is not None:
+        return _run_task41_p0_service(
+            unit=unit,
+            runtime_prefix=runtime_prefix,
+            abi_receipt=abi_receipt,
+            jit_cache=jit_cache,
+            case_args=case_args,
+            contract_path=task41_contract_path,
+            repo_root=repo_root,
+        )
     case_args, v29_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v29-execution-contract"
     )

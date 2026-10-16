@@ -82,6 +82,62 @@ def _mumps_ooc_minimal_options() -> dict[str, Any]:
     }
 
 
+def _mumps_exact_options() -> dict[str, Any]:
+    """Pin exact in-core MUMPS and disable OOC, BLR, and refinement."""
+
+    return {
+        "pc_factor_mat_solver_type": "mumps",
+        "mat_mumps_icntl_2": 0,
+        "mat_mumps_icntl_3": 6,
+        "mat_mumps_icntl_4": 2,
+        "mat_mumps_icntl_10": 0,
+        "mat_mumps_icntl_22": 0,
+        "mat_mumps_icntl_35": 0,
+    }
+
+
+def _mumps_control_readback(ksp: PETSc.KSP, expected: dict[int, int]) -> dict[str, Any]:
+    """Read the live MUMPS factor controls; requested PETSc options are not proof."""
+
+    record: dict[str, Any] = {
+        "expected_icntl": {str(key): int(value) for key, value in expected.items()},
+        "observed_icntl": {},
+        "solver_type": None,
+        "pass": False,
+        "errors": [],
+    }
+    try:
+        pc = ksp.getPC()
+        record["solver_type"] = pc.getFactorSolverType()
+        if record["solver_type"] != "mumps":
+            record["errors"].append("factor solver is not mumps")
+            return record
+        factor = pc.getFactorMatrix()
+    except Exception as exc:
+        record["errors"].append(f"factor matrix unavailable: {type(exc).__name__}")
+        return record
+
+    getter = getattr(factor, "getMumpsIcntl", None)
+    if not callable(getter):
+        record["errors"].append("PETSc MUMPS ICNTL getter is unavailable")
+        return record
+    for index, value in expected.items():
+        try:
+            observed = int(getter(int(index)))
+        except Exception as exc:
+            record["errors"].append(
+                f"ICNTL({index}) readback failed: {type(exc).__name__}"
+            )
+            continue
+        record["observed_icntl"][str(index)] = observed
+        if observed != int(value):
+            record["errors"].append(
+                f"ICNTL({index}) expected {int(value)}, observed {observed}"
+            )
+    record["pass"] = not record["errors"]
+    return record
+
+
 def _mumps_blr_minimal_options() -> dict[str, Any]:
     """Return the reviewed MUMPS BLR direct-factorization fallback."""
 
@@ -149,7 +205,16 @@ def _prepare_direct_lu_options_for_comm(
     profile = "default" if cfg is None else cfg.petsc_direct_solver_profile_requested
 
     selected_solver: str | None = None
-    if profile == "mumps_ooc":
+    if profile == "mumps_exact":
+        if not _has_petsc_package("mumps"):
+            return (
+                petsc_options,
+                None,
+                "PETSc was asked to use exact MUMPS, but this build does not report MUMPS.",
+            )
+        selected_solver = "mumps"
+        petsc_options.update(_mumps_exact_options())
+    elif profile == "mumps_ooc":
         if not _has_petsc_package("mumps"):
             return (
                 petsc_options,

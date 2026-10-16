@@ -169,7 +169,7 @@ def dry_run_payload(specification: RunSpecification) -> dict[str, Any]:
         if "floquet_phase_x" in derived
         else {"x": derived.get("floquet_phase"), "y": None}
     )
-    return {
+    payload = {
         "method": specification.method["kind"],
         "mpi_size": specification.execution["mpi_size"],
         "requested_modes_per_direction": specification.method.get(
@@ -195,6 +195,14 @@ def dry_run_payload(specification: RunSpecification) -> dict[str, Any]:
             ),
         },
     }
+    for field in (
+        "incident_wavevector_nm_inverse",
+        "incident_electric_field_V_per_m",
+        "incident_magnetic_field_A_per_m",
+    ):
+        if field in derived:
+            payload[field] = derived[field]
+    return payload
 
 
 __all__ = [

@@ -3350,6 +3350,10 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
+    if config.get("model_id") == "task41extra_phi90_p50x50_g17x20":
+        from src.geometry.task41_phi90_profile import task41_incident_eh_fields
+
+        result.update(task41_incident_eh_fields(cfg))
     if config["solver"].get("preconditioner") in {
         "physical_p6_trace_p4_condensed_robustness_v21",
         "physical_p6_trace_p4_condensed_capacity_v22",

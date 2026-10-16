@@ -47,6 +47,8 @@ v30_contract=""
 v30_contract_count=0
 v31_contract=""
 v31_contract_count=0
+task41_contract=""
+task41_contract_count=0
 for ((index = 0; index < ${#args[@]}; index++)); do
     arg="${args[index]}"
     case "$arg" in
@@ -109,6 +111,16 @@ for ((index = 0; index < ${#args[@]}; index++)); do
         --task40-v33-execution-contract=*)
             v31_contract="${arg#*=}"
             ((v31_contract_count += 1))
+            ;;
+        --task41-p0-execution-contract)
+            ((index + 1 < ${#args[@]})) || { echo "Task41 contract flag needs a path" >&2; exit 2; }
+            task41_contract="${args[index + 1]}"
+            ((task41_contract_count += 1))
+            ((index += 1))
+            ;;
+        --task41-p0-execution-contract=*)
+            task41_contract="${arg#*=}"
+            ((task41_contract_count += 1))
             ;;
     esac
 done
@@ -179,6 +191,29 @@ if (( v31_contract_count != 0 )); then
     }
     v31_campaign=1
 fi
+task41_campaign=0
+task41_values=()
+if (( task41_contract_count != 0 )); then
+    if (( task41_contract_count != 1 || v29_contract_count || v29_selector_count || v30_contract_count || v31_contract_count )); then
+        echo "Task41 P0 requires exactly one contract and cannot be combined with Task40 contracts" >&2
+        exit 2
+    fi
+    [[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
+    if ! task41_values_text="$(cd -- "$repo_root" && python3 -m src.runners.task41_p0_contract \
+        --launcher-values --contract "$task41_contract")"; then
+        exit 2
+    fi
+    mapfile -t task41_values <<< "$task41_values_text"
+    if (( ${#task41_values[@]} != 12 )) || [[ "${task41_values[0]}" != "$repo_root" ]]; then
+        echo "Task41 contract validator returned an incomplete or foreign-root binding" >&2
+        exit 2
+    fi
+    [[ "${task41_values[7]}" =~ ^[1-9][0-9]*$ && "${task41_values[8]}" =~ ^[1-9][0-9]*$ && "${task41_values[9]}" == 0 ]] || {
+        echo "Task41 approved resource limits are invalid" >&2
+        exit 2
+    }
+    task41_campaign=1
+fi
 task40_campaign=0
 for arg in "${args[@]}"; do
     case "$arg" in
@@ -221,6 +256,45 @@ elif (( task40_campaign )); then
         "--property=MemoryMax=16G"
         "--property=MemorySwapMax=0"
     )
+fi
+if (( task41_campaign )); then
+    service_properties+=(
+        "--property=MemoryMax=${task41_values[7]}"
+        "--property=MemorySwapMax=${task41_values[9]}"
+    )
+fi
+if (( task41_campaign )); then
+    systemd-run --user --expand-environment=no --unit="$unit" --service-type=exec \
+        "${service_properties[@]}" \
+        /usr/bin/bash -lc '
+set -euo pipefail
+cd -- "$1"
+repo_root=$1
+unit=$2
+task41_contract=$3
+shift 3
+args=("$@")
+[[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
+mapfile -t values < <(python3 -m src.runners.task41_p0_contract --launcher-values --contract "$task41_contract")
+(( ${#values[@]} == 12 )) && [[ "${values[0]}" == "$repo_root" ]]
+unset _MYFENICS_WSL_QUALIFIED_ACTIVATION
+source scripts/task40_fresh_c1/activate_native_complex.sh \
+    "${values[1]}" "${values[2]}" "${values[3]}" native_linux
+export TASK41_P0_STRICT_EXECUTION=1
+export TASK41_P0_CONTRACT_PATH="$task41_contract"
+export TASK41_P0_CONTRACT_SHA256="${values[4]}"
+export TASK41_P0_EXECUTION_WINDOW_PATH="${values[5]}"
+export TASK41_P0_EXECUTION_WINDOW_SHA256="${values[6]}"
+export TASK41_P0_TASK_MEMORY_MAX_BYTES="${values[7]}"
+export TASK41_P0_HOST_RESERVE_BYTES="${values[8]}"
+export TASK41_P0_MEMORY_SWAP_MAX_BYTES="${values[9]}"
+export TASK41_P0_EXPECTED_SOURCE_SHA="${values[11]}"
+exec "${values[1]}/bin/python" scripts/task40_v20_service_workflow.py run-service \
+    --unit "$unit" --runtime-prefix "${values[1]}" \
+    --abi-receipt "${values[2]}" --jit-cache "${values[3]}" -- "${args[@]}"' \
+        task41-p0 "$repo_root" "$unit" "$task41_contract" "${args[@]}"
+    printf 'Unit: %s.service\nLog: %s/%s.log\n' "$unit" "$log_dir" "$unit"
+    exit 0
 fi
 if (( v31_campaign )); then
     systemd-run --user --expand-environment=no --unit="$unit" --service-type=exec \

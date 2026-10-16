@@ -1105,7 +1105,7 @@ class FixedCampaignWindow:
         return {
             "path": str(self.path),
             "sha256": self.sha256,
-            "schema": CAMPAIGN_SCHEMA,
+            "schema": str(self.payload.get("schema", CAMPAIGN_SCHEMA)),
             "t0_utc_ns": self.t0_utc_ns,
             "deadline_utc_ns": self.deadline_utc_ns,
             "campaign_seconds": self.total_seconds,

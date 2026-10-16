@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -146,6 +147,44 @@ def _load_and_validate_worker_payload(
         errors.append("manifest solver payload mismatch")
     if manifest_value.get("requested_modes") != requested_modes:
         errors.append("manifest requested-mode identity mismatch")
+    from src.geometry.task41_phi90_profile import task41_payload_errors
+
+    errors.extend(task41_payload_errors(resolved))
+    if resolved.get("model_id") == "task41extra_phi90_p50x50_g17x20":
+        if os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1":
+            errors.append("Task41 formal worker lacks its fixed P0 execution contract")
+        else:
+            try:
+                from src.runners.task41_p0_contract import (
+                    load_task41_p0_fixed_window,
+                    require_task41_p0_contract,
+                )
+
+                contract, digest = require_task41_p0_contract(
+                    os.environ.get("TASK41_P0_CONTRACT_PATH", ""),
+                    expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
+                    current_root=Path(__file__).resolve().parents[2],
+                    check_current_source=True,
+                    require_clean_source=True,
+                )
+                load_task41_p0_fixed_window(
+                    contract, current_root=Path(__file__).resolve().parents[2]
+                )
+                case = contract["case"]
+                if (
+                    digest != os.environ.get("TASK41_P0_CONTRACT_SHA256")
+                    or contract["source"]["sha"] != expected_source_sha
+                    or case["input_sha256"] != expected_input_sha256
+                    or case["physical_model_sha256"] != expected_physical_model_sha256
+                    or case["resolved_config_sha256"] != resolved_sha
+                    or case["model_id"] != resolved.get("model_id")
+                    or case["run_id"] != resolved.get("run_id")
+                    or case["method"] != expected_method
+                    or case["mpi_size"] != expected_mpi_size
+                ):
+                    errors.append("Task41 worker identity differs from its fixed P0 contract")
+            except (OSError, ValueError, RuntimeError) as exc:
+                errors.append(f"Task41 worker contract admission failed: {exc}")
     return resolved, errors
 
 

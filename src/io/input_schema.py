@@ -974,7 +974,7 @@ FIELD_SPECS: Final = (
         "petsc_direct_solver_profile",
         '"default"',
         required=True,
-        allowed=("default", "mumps_ooc", "mumps_blr"),
+        allowed=("default", "mumps_exact", "mumps_ooc", "mumps_blr"),
     ),
     _f(
         "solver.linear_solver",
