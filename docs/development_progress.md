@@ -3741,3 +3741,17 @@ Selective merge 必须区分 shared numerical helper、Task40 opt-in runner/chec
 ## Task40extra Review V31 P0（2026-10-13）：重型窗口前准备完成，数值仍未启动
 
 本轮只收口 saved-first q4、COMPLETE/pending 与跨窗身份恢复、twist0 owner/q1-q5 callback、reference-only/target 分阶段准入、closeout/checker 和 strict/V15/RHS 计费接线。准备失败后重试沿用同一固定 T0 的小 fixture 与真实合同/launcher/campaign 验收通过；最终五个相关测试文件 67 passed。此处没有新增 q 矩阵、正式 q factor 或目标场，完整 reference、PDE、R/T/A 与 2 TB/48 h 仍未资格化。新 V31 窗口和 T0 仍 PENDING；V30 已到期且所有旧失败证据保留。源码哈希、raw logs、ABI 与双口径成本见 `docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_p0_audit.json` 及 `review_v31_p0_evidence_index.json`。
+
+
+## Task41extra A1：新方位与新几何的完整直接场
+
+本轮从已暂停Task40分支建立新物理身份，保持现有项目和目录。50×50 nm单胞、居中17×20×120 nm Si主体和10 nm基底、掠角1°/方位90°/S，显式关闭旧诊断缺口。先建立13.5 nm同离散直接基准，再验证原p6参考预条件迭代；不以旧phi0结果替代。
+
+| 已完成里程碑 | measured结果 | 限制与下一步 |
+|---|---|---|
+| A1完整三维直接场及独立checker | 1400 cells、p6、168模式；独立原A6=1.7449656226232747e-10；R/T/A_volume=0.25137919146306575/0.05712971752020276/0.6914910910199371；闭合3.205657961302677e-12 | 当前网格/模式的方程和物理检查通过，最终离散精度未资格 |
+| 成功service全程及同时内存 | 2064.867782874964 s；tree RSS峰62013505536 B；cgroup峰62582976512 B；task swap0 | 不将worker/checker子计时重复加总；宿主历史swap及2页swapin另记UNKNOWN归因 |
+| 工程负结果与修复 | 初次旧环境标记使入口FE前失败1.563210294 s；最小修复后沿原T0续算 | 未重跑已接受科学成果；缺失准备费用UNKNOWN |
+| A2与0.7 nm | A2正式NOT_RUN，比较/检查器接线中；0.7 nm NOT_RUN | 完成同离散场/模式/功率对照后按新资源准入进入0.7 nm；无merge approval |
+
+源码、原始路径/hash和测试见[Task41 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)与[A1 compact](task41extra_phi90_p50x50_g17x20/outcomes/a1_result_compact.json)。A1科学source为`4e46e524f1a5ebbc83218e615631c2477698347a`。直接法此处提供比较基准，不承诺0.7 nm直接分解可行；当前尚不声称2TB/48h完整冷流程通过。

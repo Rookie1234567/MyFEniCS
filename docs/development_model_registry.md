@@ -2202,6 +2202,20 @@ S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及�
 
 下一步由主控安排已授权资源，取得完整单q factor父成本和业务RHS成本；当前16GiB不重试，不提升default或合master。[Response](task40extra_0p7nm_engineering/response_v28.md)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v28.json)、[资源账](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v28.json)、[命令/manifest/PASS](task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v28.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
 
+## 3.42 Task41extra：方位90°、50×50 nm周期、居中17×20 nm Si主体
+
+本任务保留三维场，重新设置入射方向与有限 y 宽材料。A1 直接法先消去单元内部未知量，解边界/端口系统后恢复完整场，为同网格迭代解提供比较基准；它不是网格收敛证明。主体 z=0…120 nm，完整 Si 基底 z=-10…0 nm，主案例无额外 notch/air void。
+
+| 模型与方法 | 实测结果 | 成本与边界 |
+|---|---|---|
+| A1；13.5 nm、p6、10×10×14=1400 cells、168模式；凝聚直接法 | 934764 FE rows；增广系统284568 rows / 234517208 NNZ；释放因子后独立原A6相对残差1.7449656226232747e-10（限1e-6） | 成功service含required checker 2064.867782874964 s；worker2024.3355037230067 s，checker3.302761801984161 s，均为父段内子项 |
+| A1 official功率与独立体吸收 | R=0.25137919146306575，T=0.05712971752020276，A_volume=0.6914910910199371；能量闭合3.205657961302677e-12（限1e-5） | 主体吸收0.6546758299465113、基底0.0368152610734258；完整衍射级与复场保存在原run，不能由功率反推复振幅 |
+| A1 同时内存与清场 | watchdog tree RSS峰62013505536 B；dedicated cgroup峰62582976512 B；task tree/cgroup swap均0；PSS未采样null | 宿主原有swap及本场2页swapin保留、归因UNKNOWN，不能称整机无swap；服务及后代已退出 |
+| A1 初次启动负结果 | FE前旧Task40环境标记导致KeyError；service1.563210294 s，原证据保留 | 修复后同窗口续作；历史未记录准备分项UNKNOWN，不清零费用 |
+| A2 / 0.7 nm | A2实现与定向验证中，正式计算NOT_RUN；0.7 nm NOT_RUN | 不继承旧Task40的模式/q资格；同离散比较、最终离散精度和2TB/48h冷流程尚未闭合 |
+
+A1科学source：`4e46e524f1a5ebbc83218e615631c2477698347a`；run时间目录`20261016T123737.790458Z`。完整路径、hash、测试和负结果见[Task41 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)、[A1 compact](task41extra_phi90_p50x50_g17x20/outcomes/a1_result_compact.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。用户批准资源合格时与邻项目并行；不停止或修改邻项目，动态余量、独立cgroup和任务零swap继续执行。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。
