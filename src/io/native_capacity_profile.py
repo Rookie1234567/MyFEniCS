@@ -59,9 +59,67 @@ DISPERSION_FLAT_RAISED_RSS_PLANNING_LIMIT_BYTES = 448 * 1024**3
 TASK40_PHI90_D13_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_B_p6_direct_v1"
 )
-TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(
-    {TASK40_PHI90_D13_B_P6_DIRECT_PROFILE}
+TASK40_PHI90_D13_X_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_X_p6_direct_v1"
 )
+TASK40_PHI90_D13_Y_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_Y_p6_direct_v1"
+)
+TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_Z_p6_direct_v1"
+)
+TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
+    "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+    "z": "1b914feb6c2eba6bf20142a3a24e9918947b90be497ded96778e1e1ee3457ce6",
+}
+TASK40_PHI90_D13_CASES = {
+    TASK40_PHI90_D13_B_P6_DIRECT_PROFILE: {
+        "case": "B",
+        "changed_axis": None,
+        "axis_cell_counts": (6, 6, 14),
+        "segment_cell_counts": {
+            "x": (2, 2, 2), "y": (2, 2, 2), "z": (1, 12, 1),
+        },
+        "expected_global_cell_count": 504,
+        "expected_material_tag_counts": {"1": 420, "2": 36, "3": 48},
+        "explicit_axis_counts_in_input": False,
+    },
+    TASK40_PHI90_D13_X_P6_DIRECT_PROFILE: {
+        "case": "X",
+        "changed_axis": "x",
+        "axis_cell_counts": (12, 6, 14),
+        "segment_cell_counts": {
+            "x": (4, 4, 4), "y": (2, 2, 2), "z": (1, 12, 1),
+        },
+        "expected_global_cell_count": 1008,
+        "expected_material_tag_counts": {"1": 840, "2": 72, "3": 96},
+        "explicit_axis_counts_in_input": True,
+    },
+    TASK40_PHI90_D13_Y_P6_DIRECT_PROFILE: {
+        "case": "Y",
+        "changed_axis": "y",
+        "axis_cell_counts": (6, 12, 14),
+        "segment_cell_counts": {
+            "x": (2, 2, 2), "y": (4, 4, 4), "z": (1, 12, 1),
+        },
+        "expected_global_cell_count": 1008,
+        "expected_material_tag_counts": {"1": 840, "2": 72, "3": 96},
+        "explicit_axis_counts_in_input": True,
+    },
+    TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE: {
+        "case": "Z",
+        "changed_axis": "z",
+        "axis_cell_counts": (6, 6, 28),
+        "segment_cell_counts": {
+            "x": (2, 2, 2), "y": (2, 2, 2), "z": (2, 24, 2),
+        },
+        "expected_global_cell_count": 1008,
+        "expected_material_tag_counts": {"1": 840, "2": 72, "3": 96},
+        "explicit_axis_counts_in_input": True,
+    },
+}
+TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(TASK40_PHI90_D13_CASES)
 P6_CONDENSED_DIRECT_PROFILES = (
     V7_ANISO_N0_P6_DIRECT_PROFILES
     | V6_F5_P6_DIRECT_PROFILES
@@ -156,9 +214,8 @@ NATIVE_CASES[DISPERSION_FLAT_P6_PROFILE] = (
 NATIVE_CASES[DISPERSION_FLAT_P6_RAISED_RSS_PROFILE] = (
     0.7, (0.5, 0.25, 0.125), None, None, None
 )
-NATIVE_CASES[TASK40_PHI90_D13_B_P6_DIRECT_PROFILE] = (
-    13.5, (10.0,), None, None, None
-)
+for _task40_profile in TASK40_PHI90_D13_CASES:
+    NATIVE_CASES[_task40_profile] = (13.5, (10.0,), None, None, None)
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
     NATIVE_CASES[_f5_direct_profile] = (5.0, (4.0,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -668,11 +725,24 @@ def _dispersion_flat_p6_profile_facts(identity):
     return facts
 
 
-def _task40_phi90_d13_b_profile_facts(identity):
-    """Return the isolated first Task40 P6-direct D13 reference contract."""
+def _task40_phi90_d13_profile_facts(identity):
+    """Return one frozen Task40 P6-direct D13 directional mesh contract."""
 
-    if identity != TASK40_PHI90_D13_B_P6_DIRECT_PROFILE:
+    if identity not in TASK40_PHI90_D13_CASES:
         raise ValueError(f"unsupported Task40 P6-direct profile: {identity}")
+    case = TASK40_PHI90_D13_CASES[identity]
+    case_name = case["case"]
+    operator_scope = f"task40_phi90_D13_{case_name}_R13_finite_rectangle"
+    from src.geometry.task40_phi90_d13_axis_plan import (
+        D13_B_AXIS_SHA256_LE_F64,
+        d13_axis_plan,
+    )
+
+    axis_plan = d13_axis_plan(case_name)
+    if tuple(axis_plan["axis_cell_counts"]) != tuple(case["axis_cell_counts"]):
+        raise ValueError(f"Task40 D13 {case_name} profile and frozen axis plan differ")
+    if D13_B_AXIS_SHA256_LE_F64 != TASK40_PHI90_D13_BASE_AXIS_SHA256:
+        raise ValueError("Task40 D13 B axis hashes differ between profile and axis plan")
     facts = native_profile_facts("dual_condensed_balh_native_13p5_q4_v5")
     for legacy_key in (
         "fine_auxiliary", "intermediate", "auxiliary", "balanced",
@@ -697,8 +767,8 @@ def _task40_phi90_d13_b_profile_facts(identity):
         wavelength_nm=13.5,
         allowed_mesh_targets_nm=[10.0],
         formal_runner="src.runners.p6_condensed_direct",
-        route="TASK40_PHI90_D13_B_P6_CONDENSED_DIRECT_R13",
-        operator_scope="task40_phi90_D13_B_R13_finite_rectangle",
+        route=f"TASK40_PHI90_D13_{case_name}_P6_CONDENSED_DIRECT_R13",
+        operator_scope=operator_scope,
         full_dtn_status="FULL_DTN_NOT_VERIFIED",
     )
     facts["task40_material_identity"] = {
@@ -750,8 +820,33 @@ def _task40_phi90_d13_b_profile_facts(identity):
         "direct_p6_route": True,
         "task_family": "task40_phi90_mesh_modes_direct",
         "mesh_target_nm": 10.0,
-        "expected_axis_cell_counts": [6, 6, 14],
-        "expected_global_cell_count": 504,
+        "expected_axis_cell_counts": list(case["axis_cell_counts"]),
+        "expected_global_cell_count": case["expected_global_cell_count"],
+        "directional_mesh_comparison": {
+            "case": case_name,
+            "parent_case": "B",
+            "changed_axis": case["changed_axis"],
+            "axis_cell_counts": list(case["axis_cell_counts"]),
+            "segment_cell_counts": {
+                axis: list(counts)
+                for axis, counts in case["segment_cell_counts"].items()
+            },
+            "base_axis_sha256_le_f64": dict(TASK40_PHI90_D13_BASE_AXIS_SHA256),
+            "expected_material_tag_counts": dict(
+                case["expected_material_tag_counts"]
+            ),
+            "mesh_plan_id": axis_plan["plan_id"] if case_name != "B" else None,
+            "mesh_plan_sha256": (
+                axis_plan["mesh_plan_sha256"] if case_name != "B" else None
+            ),
+            "expected_axis_sha256_le_f64": dict(
+                axis_plan["actual_axis_sha256_le_f64"]
+            ),
+            "explicit_axis_counts_in_input": case[
+                "explicit_axis_counts_in_input"
+            ],
+            "only_axis_changes_from_B": case["changed_axis"],
+        },
         "mode_selection": mode_selection,
         "volume_quadrature": {
             "degree": 15,
@@ -857,7 +952,7 @@ def _task40_phi90_d13_b_profile_facts(identity):
             "p4_and_outer_ksp": "not_built",
         },
     }
-    facts["operator_scope"] = "task40_phi90_D13_B_R13_finite_rectangle"
+    facts["operator_scope"] = operator_scope
     facts["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
     return facts
 
@@ -865,7 +960,7 @@ def _task40_phi90_d13_b_profile_facts(identity):
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
-        return _task40_phi90_d13_b_profile_facts(identity)
+        return _task40_phi90_d13_profile_facts(identity)
     if identity in DISPERSION_FLAT_P6_PROFILES:
         return _dispersion_flat_p6_profile_facts(identity)
     if identity in V6_F5_P6_DIRECT_PROFILES:
@@ -2140,11 +2235,11 @@ def _validate_dispersion_flat_p6_case(config, identity: str) -> None:
         raise InputError(f'{identity} requires the five planes and at least four y samples')
 
 
-def _validate_task40_phi90_d13_b_case(config: dict) -> None:
-    """Validate the first finite-R13 Task40 P6-direct input without legacy caps."""
+def _validate_task40_phi90_d13_case(config: dict, identity: str) -> None:
+    """Validate one finite-R13 Task40 P6-direct directional mesh input."""
     from .input_loader import InputError
 
-    identity = TASK40_PHI90_D13_B_P6_DIRECT_PROFILE
+    case = TASK40_PHI90_D13_CASES[identity]
 
     def require(section: str, key: str, expected: object) -> None:
         actual = config.get(section, {}).get(key)
@@ -2202,12 +2297,41 @@ def _validate_task40_phi90_d13_b_case(config: dict) -> None:
         'assembly_backend': 'standard_full', 'floquet_constraint_mode': 'auto',
     }.items():
         require('discretization', key, expected)
-    for key in (
-        'mesh_axis_cell_counts', 'mesh_axis_x_values', 'mesh_axis_y_values',
-        'mesh_axis_z_values', 'mesh_axis_z_profile', 'mesh_plan_id', 'mesh_plan_sha256',
-    ):
-        if discretization.get(key) is not None:
-            raise InputError(f'{identity} derives its h10 mesh; {key} must be omitted')
+    actual_axis_counts = discretization.get('mesh_axis_cell_counts')
+    if case["case"] == "B":
+        for key in (
+            'mesh_axis_cell_counts', 'mesh_axis_x_values', 'mesh_axis_y_values',
+            'mesh_axis_z_values', 'mesh_axis_z_profile', 'mesh_plan_id',
+            'mesh_plan_sha256',
+        ):
+            if discretization.get(key) is not None:
+                raise InputError(
+                    f'{identity} derives its h10 baseline mesh; {key} must be omitted'
+                )
+    else:
+        from src.geometry.task40_phi90_d13_axis_plan import (
+            validate_frozen_d13_axes,
+        )
+
+        frozen_payload = {
+            'mesh_plan_id': discretization.get('mesh_plan_id'),
+            'mesh_plan_sha256': discretization.get('mesh_plan_sha256'),
+            'mesh_axis_cell_counts': actual_axis_counts,
+            'mesh_axis_x_values': discretization.get('mesh_axis_x_values'),
+            'mesh_axis_y_values': discretization.get('mesh_axis_y_values'),
+            'mesh_axis_z_values': discretization.get('mesh_axis_z_values'),
+        }
+        try:
+            validate_frozen_d13_axes(frozen_payload)
+        except ValueError as exc:
+            raise InputError(f'{identity} has an invalid frozen D13 mesh: {exc}') from exc
+        if tuple(actual_axis_counts or ()) != tuple(case["axis_cell_counts"]):
+            raise InputError(
+                f'{identity} fixes mesh_axis_cell_counts='
+                f'{case["axis_cell_counts"]}; got {actual_axis_counts!r}'
+            )
+        if discretization.get('mesh_axis_z_profile') is not None:
+            raise InputError(f'{identity} does not use a z-profile alias')
     for key, expected in {
         'use_floquet_x': True, 'use_floquet_y': True,
         'vertical_boundary': 'dtn_port', 'scattering_background': 'layered',
@@ -2244,7 +2368,7 @@ def validate_native_case(config):
         config.get('method', {}).get('kind'), config['solver']
     )
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
-        _validate_task40_phi90_d13_b_case(config)
+        _validate_task40_phi90_d13_case(config, identity)
         return
     if identity in DISPERSION_FLAT_P6_PROFILES:
         _validate_dispersion_flat_p6_case(config, identity)

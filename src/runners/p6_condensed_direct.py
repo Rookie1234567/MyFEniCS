@@ -144,35 +144,69 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         V6_F5_P6_DIRECT_N0_PROFILE,
         V7_ANISO_N0_P6_DIRECT_PROFILE,
         V7_D_ANISO_N0_P6_DIRECT_PROFILE,
+        native_profile_facts,
     )
 
     if profile_identity in TASK40_PHI90_P6_DIRECT_PROFILES:
+        profile = native_profile_facts(profile_identity)
+        options = profile["component_options"]
+        mesh_case = options["directional_mesh_comparison"]
+        mode = options["mode_selection"]
+        case_name = mesh_case["case"]
+        route_scope = profile["operator_scope"]
+        expected_counts = list(mesh_case["axis_cell_counts"])
+        expected_cells = int(options["expected_global_cell_count"])
         return {
             "family": "task40_phi90",
+            "profile_identity": profile_identity,
             "truncated": False,
-            "operator_scope": "task40_D13_B_R13_finite_rectangle",
+            "operator_scope": route_scope,
             "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
-            "parent_inventory_scope": "R13_finite_rectangle_including_evanescent",
-            "selection_policy": "explicit_symmetric_rectangle_v1",
-            "parent_rectangle_max_abs_m_n": [4, 8],
-            "active_rectangle_max_abs_m_n": [4, 8],
+            "parent_inventory_scope": mode["parent_inventory_scope"],
+            "selection_policy": mode["policy"],
+            "parent_rectangle_max_abs_m_n": list(
+                mode["parent_rectangle_max_abs_m_n"]
+            ),
+            "active_rectangle_max_abs_m_n": list(
+                mode["active_rectangle_max_abs_m_n"]
+            ),
             "parent_count": 612,
             "parent_sha256": None,
             "active_count": 612,
             "active_sha256": None,
             "selected_parent_indices_sha256": None,
             "residual_key": "original_A6_active_rectangle_relative",
-            "residual_scope": "A6_D13_B_R13_active_rectangle",
+            "residual_scope": f"A6_D13_{case_name}_R13_active_rectangle",
             "residual_gate_key": "original_A6_active_rectangle_residual_pass",
             "residual_finite_key": "original_A6_active_rectangle_finite",
-            "summary_prefix": "task40_phi90_d13_b_p6_direct_R13",
-            "surface_quadrature_degree": 28,
-            "surface_quadrature_envelope_max_abs_m_n": [6, 10],
+            "summary_prefix": f"task40_phi90_d13_{case_name.lower()}_p6_direct_R13",
+            "surface_quadrature_degree": int(
+                options["surface_quadrature"]["degree"]
+            ),
+            "surface_quadrature_envelope_max_abs_m_n": [
+                options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_m"],
+                options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_n"],
+            ],
             "condensed_residual_gate": 1.0e-9,
             "max_same_factor_corrections": 2,
-            "expected_axis_cell_counts": [6, 6, 14],
-            "expected_global_cell_count": 504,
-            "diagnostic_scope": "TASK40_D13_B_13P5NM_504CELL_PHI90",
+            "expected_axis_cell_counts": expected_counts,
+            "expected_global_cell_count": expected_cells,
+            "d13_case": case_name,
+            "changed_axis": mesh_case["changed_axis"],
+            "d13_mesh_plan_id": mesh_case["mesh_plan_id"],
+            "d13_mesh_plan_sha256": mesh_case["mesh_plan_sha256"],
+            "d13_expected_axis_sha256_le_f64": dict(
+                mesh_case["expected_axis_sha256_le_f64"]
+            ),
+            "d13_base_axis_sha256_le_f64": dict(
+                mesh_case["base_axis_sha256_le_f64"]
+            ),
+            "d13_expected_material_tag_counts": dict(
+                mesh_case["expected_material_tag_counts"]
+            ),
+            "diagnostic_scope": (
+                f"TASK40_D13_{case_name}_13P5NM_{expected_cells}CELL_PHI90"
+            ),
         }
 
     if profile_identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE:
@@ -754,49 +788,90 @@ def _f5_expected_material_tag_counts(
     }
 
 
-def _task40_d13_b_mesh_evidence(levels: Mapping[str, Any], cfg: Any) -> dict[str, Any]:
-    """Check live D13-B axes, 504 cells and material tags, without F5 identity."""
+def _task40_d13_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Check live Task40 D13 coordinates against the frozen one-axis plan."""
+    from src.geometry.task40_phi90_d13_axis_plan import d13_axis_plan
+
+    case_name = str(route["d13_case"])
+    plan = d13_axis_plan(case_name)
     msh = levels["mesh_data"].mesh
     axes = {
-        axis: tuple(float(value) for value in np.unique(np.asarray(msh.geometry.x)[:, i]))
-        for i, axis in enumerate(("x", "y", "z"))
+        axis: tuple(
+            float(value)
+            for value in np.unique(np.asarray(msh.geometry.x)[:, index])
+        )
+        for index, axis in enumerate(("x", "y", "z"))
     }
     expected_axes = {
-        "x": (0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0),
-        "y": (0.0, 7.5, 15.0, 25.0, 35.0, 42.5, 50.0),
-        "z": tuple(float(value) for value in (-10, *range(0, 121, 10), 130)),
+        axis: tuple(float(value) for value in plan["axes_nm"][axis])
+        for axis in ("x", "y", "z")
     }
     if axes != expected_axes:
-        raise ValueError("actual D13-B coordinate axes differ from the h10 three-axis plan")
+        raise ValueError(
+            f"actual D13-{case_name} coordinate axes differ from frozen B-midpoint plan"
+        )
+    axis_hashes = {
+        axis: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+        for axis, values in axes.items()
+    }
+    if axis_hashes != route["d13_expected_axis_sha256_le_f64"]:
+        raise ValueError(f"actual D13-{case_name} axis hashes differ from profile facts")
+    changed_axis = route["changed_axis"]
+    base_hashes = route["d13_base_axis_sha256_le_f64"]
+    if changed_axis is None:
+        if axis_hashes != base_hashes:
+            raise ValueError("D13-B axes differ from the accepted baseline axis hashes")
+    else:
+        for axis in ("x", "y", "z"):
+            if axis == changed_axis:
+                if axis_hashes[axis] == base_hashes[axis]:
+                    raise ValueError(f"D13-{case_name} did not refine {axis}")
+            elif axis_hashes[axis] != base_hashes[axis]:
+                raise ValueError(
+                    f"D13-{case_name} changed non-target {axis} axis coordinates"
+                )
     counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
     actual_cells = int(msh.topology.index_map(msh.topology.dim).size_global)
-    if counts != (6, 6, 14) or actual_cells != 504:
-        raise ValueError("actual D13-B cell counts differ from 6x6x14=504")
+    expected_counts = tuple(int(value) for value in route["expected_axis_cell_counts"])
+    expected_cells = int(route["expected_global_cell_count"])
+    if counts != expected_counts or actual_cells != expected_cells:
+        raise ValueError(
+            f"actual D13-{case_name} cell counts differ from plan: "
+            f"counts={counts}, cells={actual_cells}"
+        )
     if str(msh.topology.cell_name()) != "hexahedron":
-        raise ValueError("Task40 D13-B requires hexahedral cells")
+        raise ValueError(f"Task40 D13-{case_name} requires hexahedral cells")
     tags = np.asarray(levels["mesh_data"].cell_tags.values, dtype=np.int64)
+    tag_counts = route["d13_expected_material_tag_counts"]
     expected = {
-        int(cfg.tags.substrate): 36,
-        int(cfg.tags.grating): 48,
-        int(cfg.tags.air): 420,
+        int(cfg.tags.air): int(tag_counts["1"]),
+        int(cfg.tags.substrate): int(tag_counts["2"]),
+        int(cfg.tags.grating): int(tag_counts["3"]),
     }
     actual = {tag: int(np.count_nonzero(tags == tag)) for tag in expected}
     if tags.size != actual_cells or actual != expected:
-        raise ValueError(f"actual D13-B material tag counts differ: {actual} != {expected}")
+        raise ValueError(
+            f"actual D13-{case_name} material tag counts differ: {actual} != {expected}"
+        )
     return {
         "status": "PASS",
-        "profile": "task40para_phi90_13p5_D13_B_p6_direct_v1",
+        "profile": route["profile_identity"],
+        "case": case_name,
+        "parent_case": "B",
+        "changed_axis": changed_axis,
         "geometry": "rectangular_block_grating",
         "cell_type": "hexahedron",
         "actual_global_cell_count": actual_cells,
         "axis_cell_counts": list(counts),
-        "actual_axes_match_frozen_d13_b_coordinates": True,
-        "axis_sha256_le_f64": {
-            axis: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
-            for axis, values in axes.items()
-        },
+        "axis_sha256_le_f64": axis_hashes,
+        "actual_axes_match_frozen_d13_coordinates": True,
+        "only_declared_axis_changed_from_B": True,
         "material_tag_counts": {str(tag): count for tag, count in actual.items()},
-        "expected_material_tag_counts": {str(tag): count for tag, count in expected.items()},
+        "expected_material_tag_counts": {
+            str(tag): count for tag, count in expected.items()
+        },
         "expected_analytic_material_volumes_nm3": {
             "substrate": 25000.0,
             "grating": 40800.0,
@@ -1556,7 +1631,7 @@ def run_p6_condensed_direct(
         elif route["family"] == "dispersion_flat":
             mesh_evidence = _dispersion_flat_mesh_evidence(levels, cfg)
         elif route["family"] == "task40_phi90":
-            mesh_evidence = _task40_d13_b_mesh_evidence(levels, cfg)
+            mesh_evidence = _task40_d13_mesh_evidence(levels, cfg, route)
         else:
             axes = validate_frozen_f5_axes({
                 "mesh_plan_id": cfg.mesh_plan_id,

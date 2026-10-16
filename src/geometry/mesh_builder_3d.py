@@ -478,6 +478,20 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                         f"invalid V7 candidate-D frozen mesh input: {exc}"
                     ) from exc
         if frozen_axes is None:
+            from src.geometry.task40_phi90_d13_axis_plan import (
+                D13_AXIS_PLAN_IDS,
+                validate_frozen_d13_axes,
+            )
+
+            if cfg.mesh_plan_id in D13_AXIS_PLAN_IDS:
+                try:
+                    frozen_axes = validate_frozen_d13_axes(plan_identity)
+                    frozen_plan_family = "task40_phi90_d13"
+                except ValueError as exc:
+                    raise ValueError(
+                        f"invalid Task40 D13 frozen mesh input: {exc}"
+                    ) from exc
+        if frozen_axes is None:
             from src.geometry.task39extra_v5_r13_mesh_plan import (
                 validate_frozen_r13_axes,
             )
