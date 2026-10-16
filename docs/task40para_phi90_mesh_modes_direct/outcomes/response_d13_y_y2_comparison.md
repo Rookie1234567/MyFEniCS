@@ -55,3 +55,28 @@ Y2 finished with exit 0 and no descendants. Its direct summary reports:
 The run remains `AUTHORITY_LIMITED` and `FULL_DTN_NOT_VERIFIED`. The field metrics above are sampled-point comparisons, not a full-domain norm. This comparison quantifies the effect of bisecting the Y grid's actual y intervals while holding x, z, modes, and quadrature fixed; it is not a full-DtN or canonical sidewall qualification.
 
 Machine-readable values and artifact bindings are in [d13_y_y2_comparison.json](records/d13_y_y2_comparison.json). The comparison is reproducible with [compare_d13_y_y2.py](analysis/compare_d13_y_y2.py).
+
+## Offline modal-amplitude diagnosis after review
+
+The additional audit reads only the five small `dtn_port_diffraction_orders_3d.json` and `dtn_auxiliary_amplitudes_3d.json` files. For all B/X/Y/Z/Y2 cases, the 612 mode keys/order, branch/material metadata, and the two modal output files match exactly. Across all 612 rows, the saved raw outgoing coefficient equals `auxiliary - incident` on top and `auxiliary` on bottom; `raw * boundary_phase` equals the saved boundary amplitude; the phase equals `exp(i*kz*z_reference)`; and `power_ratio` reconstructs from `modal_power_code_units / incident_power_code_units`. Each check has zero max discrepancy in the serialized values. The incident-power normalization is identical in all five cases (`21.815508046604222`). The source denominator is `area * electric_tangential_norm_sq * |boundary_phase|^2`; the modal `electric_tangential_norm_sq` itself is not serialized, so it is not independently recomputed here.
+
+For top `(m=±4,n=0,p)`, `beta=+i*0.502589190201403 nm^-1`, `z_reference=130 nm`, and `|boundary_phase|=4.2138342045395975e-29` in every case. The raw coefficients therefore have a very large reference-plane scale. The same phase is applied exactly in every run, so it explains the raw magnitude but not the Y/Y2 change in boundary amplitude. The pair's boundary-amplitude L2 norm is about `4.28253e-7` for Y and `1.48670e-3` for Y2; B/X/Z are `4.30191e-7`, `4.97713e-7`, and `4.31983e-7`. Both modes are marked non-propagating and not power-carrying; their reported R/T are zero. They remain in the requested all-612 amplitude comparison.
+
+The Y-to-Y2 difference decomposition below uses Y as the L2 reference and reports each subset's squared contribution to the full 612-mode delta. `Propagating` and `power-carrying` overlap; the latter includes lossy non-propagating modes.
+
+| Amplitude | Group | Count | Reference L2 | Y2 L2 | Delta L2 | Share of all-612 delta squared |
+|---|---|---:|---:|---:|---:|---:|
+| Boundary | All 612 | 612 | 0.5296409472 | 0.5296440257 | 2.1029015e-3 | 1 |
+| Boundary | Propagating | 166 | 0.5013245850 | 0.5013233580 | 9.1457092e-6 | 1.89146e-5 |
+| Boundary | Power-carrying | 390 | 0.5296395937 | 0.5296384998 | 9.1536160e-6 | 1.89473e-5 |
+| Boundary | Not propagating (stored flag) | 446 | 0.1708601576 | 0.1708733000 | 2.1028816e-3 | 0.99998109 |
+| Boundary | Not power-carrying | 222 | 0.0011974034 | 0.0024193913 | 2.1028815e-3 | 0.99998105 |
+| Raw outgoing coefficient | All 612 | 612 | 1.8635951e22 | 4.9911021e25 | 4.9918099e25 | 1 |
+| Raw outgoing coefficient | Propagating | 166 | 0.5013246257 | 0.5013233988 | 9.2323918e-6 | 3.42068e-62 |
+| Raw outgoing coefficient | Power-carrying | 390 | 0.5472130988 | 0.5471318712 | 9.1606351e-3 | 3.36771e-56 |
+| Raw outgoing coefficient | Not propagating (stored flag) | 446 | 1.8635951e22 | 4.9911021e25 | 4.9918099e25 | 1.00000000 |
+| Raw outgoing coefficient | Not power-carrying | 222 | 1.8635951e22 | 4.9911021e25 | 4.9918099e25 | 1.00000000 |
+
+The top ±4 pair accounts for `99.9918%` of the boundary-amplitude delta squared and `99.9381%` of the raw-coefficient delta squared. This rules out an artifact-level key/order or raw-to-boundary phase-conversion mismatch in the saved outputs. The anomaly is present in the Y2 finite-rectangle evanescent port solution; its numerical cause is still unresolved. The existing fields are sampled away from the top plane and do not validate this evanescent amplitude independently. No physical accuracy or convergence claim follows from this audit.
+
+The bounded diagnostic is reproducible with [diagnose_d13_y_y2_modal_amplitudes.py](analysis/diagnose_d13_y_y2_modal_amplitudes.py); its bound inputs, SHA-256 values, and full subset norms are in [d13_y_y2_modal_amplitude_diagnostic.json](records/d13_y_y2_modal_amplitude_diagnostic.json). It does not close the canonical sidewall trace gate.

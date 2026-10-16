@@ -1,0 +1,888 @@
+{
+  "schema": "task40_d13_y_y2_modal_amplitude_diagnostic_v1",
+  "scope": "offline small modal JSON audit only; no field archive, resource stream, FE, or factor read",
+  "comparison": {
+    "reference": "Y",
+    "candidate": "Y2",
+    "mode_count": 612,
+    "mode_keys_and_order_equal_B_X_Y_Z_Y2": true,
+    "mode_beta_material_flags_equal_B_X_Y_Z_Y2": true,
+    "boundary_phase_exact_equal_Y_Y2_all_612": true,
+    "reference_planes_nm": {
+      "top": 130.0,
+      "bottom": -10.0
+    },
+    "amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+    "incident_power_code_units_by_case": {
+      "B": 21.815508046604222,
+      "X": 21.815508046604222,
+      "Y": 21.815508046604222,
+      "Z": 21.815508046604222,
+      "Y2": 21.815508046604222
+    },
+    "transform_and_export_checks": {
+      "B": {
+        "auxiliary_json_matches_diffraction_json_exactly": true,
+        "max_abs_raw_outgoing_convention_error": 0.0,
+        "max_abs_raw_times_boundary_phase_error": 0.0,
+        "max_abs_boundary_phase_formula_error": 0.0,
+        "max_abs_power_ratio_reconstruction_error": 0.0
+      },
+      "X": {
+        "auxiliary_json_matches_diffraction_json_exactly": true,
+        "max_abs_raw_outgoing_convention_error": 0.0,
+        "max_abs_raw_times_boundary_phase_error": 0.0,
+        "max_abs_boundary_phase_formula_error": 0.0,
+        "max_abs_power_ratio_reconstruction_error": 0.0
+      },
+      "Y": {
+        "auxiliary_json_matches_diffraction_json_exactly": true,
+        "max_abs_raw_outgoing_convention_error": 0.0,
+        "max_abs_raw_times_boundary_phase_error": 0.0,
+        "max_abs_boundary_phase_formula_error": 0.0,
+        "max_abs_power_ratio_reconstruction_error": 0.0
+      },
+      "Z": {
+        "auxiliary_json_matches_diffraction_json_exactly": true,
+        "max_abs_raw_outgoing_convention_error": 0.0,
+        "max_abs_raw_times_boundary_phase_error": 0.0,
+        "max_abs_boundary_phase_formula_error": 0.0,
+        "max_abs_power_ratio_reconstruction_error": 0.0
+      },
+      "Y2": {
+        "auxiliary_json_matches_diffraction_json_exactly": true,
+        "max_abs_raw_outgoing_convention_error": 0.0,
+        "max_abs_raw_times_boundary_phase_error": 0.0,
+        "max_abs_boundary_phase_formula_error": 0.0,
+        "max_abs_power_ratio_reconstruction_error": 0.0
+      }
+    },
+    "projection_denominator_source_formula": "area * electric_tangential_norm_sq * abs(boundary_phase)^2; the eigenvector norm itself is not serialized in these small modal artifacts",
+    "amplitude_norm_reference": "Y vector L2; delta is Y2 minus Y; subset delta shares use squared L2 contribution / all-612 squared delta norm",
+    "group_masks_overlap": "propagating and power_carrying overlap; evanescent_flag_not_propagating is the stored not-propagating flag; not_power_carrying is also reported"
+  },
+  "source_artifacts": {
+    "B": {
+      "run_dir": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_B_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T091948.653032Z",
+      "source_sha.txt": "d33415feee30d4cf67eb11ea13674188b76ee5ef",
+      "input_sha256.txt": "9b6c6fcb299a51fe0f5921d1b2f1b7a7c74b219389eef8dd2a00b1715c291c9d",
+      "physical_model_sha256.txt": "002804ce79e9bcf84d99525731c425db5737399e37cb24d18ff132e7e6295ae2",
+      "diffraction_orders_json_sha256": "a8ce15167c2256f191a0ad17e0284205785a804744fe9793924d6240cf5a4588",
+      "auxiliary_amplitudes_json_sha256": "ffc0e60d833a5ef66c925b66d37161737708f35fd1800a2dd8e3bf301be7363e",
+      "active_mode_count": 612
+    },
+    "X": {
+      "run_dir": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_X_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T094950.200837Z",
+      "source_sha.txt": "9c0fe6a30554aab33a04ff0245b19c03e4f01f28",
+      "input_sha256.txt": "972958b1e95ecba1d22b9e840f1e871af8da564f3990b425b1e0debe16891491",
+      "physical_model_sha256.txt": "bdd4fe5430fd6275b4f92a31988708fc03186b3cd7179d33906032d2e75ed45b",
+      "diffraction_orders_json_sha256": "2baffa9edcb58a36b555042dc0c944ef369a4984ec7b9eeb0db392ec1673ec60",
+      "auxiliary_amplitudes_json_sha256": "7d23101b600af47f88141bba19a5a7a01b9a8eeaafb5bd1c78b9b3a6002515ef",
+      "active_mode_count": 612
+    },
+    "Y": {
+      "run_dir": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T102453.831934Z",
+      "source_sha.txt": "9c0fe6a30554aab33a04ff0245b19c03e4f01f28",
+      "input_sha256.txt": "78b595e4b514e4471184f281e2aa3072dd321206acfee5295b0c0151a7f74f10",
+      "physical_model_sha256.txt": "b9f2aac65e9ce3274c2a3322b8094f88f07b3a6eb7b7db98791478f0ffdd5e56",
+      "diffraction_orders_json_sha256": "5148aa2726512635aa7d92908737629280ba182035dbb9bd101338661bff6fdd",
+      "auxiliary_amplitudes_json_sha256": "8eb585bde38092e75227e765a0c4390844bb56f8c5a08e74e66e91fabbc8ad5a",
+      "active_mode_count": 612
+    },
+    "Z": {
+      "run_dir": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Z_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T104423.676151Z",
+      "source_sha.txt": "9c0fe6a30554aab33a04ff0245b19c03e4f01f28",
+      "input_sha256.txt": "f45ff3602b280ff861c23ef87f0f0606ef3d6390b1816aba7f5c9cdbae73bfa7",
+      "physical_model_sha256.txt": "fa9b2a292e8113c68228ac18ce3a9da4f4505ff29847a793432d2acfbb57db3a",
+      "diffraction_orders_json_sha256": "8357dfcb9ec1b91ae3b119d38c90e7f21a1ead80f33c792a80f0f6c547bc3ba1",
+      "auxiliary_amplitudes_json_sha256": "18ebd64a21125e8821a3fc51eaca2cb7ba98c665fad625c326ce9292b8630ccd",
+      "active_mode_count": 612
+    },
+    "Y2": {
+      "run_dir": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D13_Y2_p6_direct_v1__full3d_direct__mpi1__Mna/20261016T112452.011352Z",
+      "source_sha.txt": "74d5aae3dea064e128e53a253fc5aac0f2b1f146",
+      "input_sha256.txt": "7908141fe455ee73a1c8f213970a5c5655095a31f6afd10ce18904367b63a994",
+      "physical_model_sha256.txt": "ac65772c3fda31f22599824023f43e05e62b8292de31652dff226909fc83fa7b",
+      "diffraction_orders_json_sha256": "24f9322698ee784bd91d7e353e84dd2e5f3968e5040706718546ec7b3f14bce3",
+      "auxiliary_amplitudes_json_sha256": "3d230e5922e9c59d86ca9658379603da17da98bc3ab50b7c2656e847e625003e",
+      "active_mode_count": 612
+    }
+  },
+  "group_counts": {
+    "all_612": 612,
+    "propagating": 166,
+    "power_carrying": 390,
+    "evanescent_flag_not_propagating": 446,
+    "not_power_carrying": 222
+  },
+  "y_to_y2_amplitude_norms": {
+    "auxiliary_amplitude_total_projection": {
+      "reference_case": "Y",
+      "candidate_case": "Y2",
+      "full_612": {
+        "count": 612,
+        "reference_l2": 1.8635950582208435e+22,
+        "candidate_l2": 4.9911020983376966e+25,
+        "delta_l2": 4.991809916329427e+25,
+        "relative_to_reference_l2": 2678.591518210539
+      },
+      "groups": {
+        "all_612": {
+          "count": 612,
+          "reference_l2": 1.8635950582208435e+22,
+          "candidate_l2": 4.9911020983376966e+25,
+          "delta_l2": 4.991809916329427e+25,
+          "relative_to_reference_l2": 2678.591518210539,
+          "fraction_of_all_612_delta_l2_squared": 1.0
+        },
+        "propagating": {
+          "count": 166,
+          "reference_l2": 1.0987286509976202,
+          "candidate_l2": 1.0987286085747285,
+          "delta_l2": 9.232391786556421e-06,
+          "relative_to_reference_l2": 8.402795156177663e-06,
+          "fraction_of_all_612_delta_l2_squared": 3.4206794062169457e-62
+        },
+        "power_carrying": {
+          "count": 390,
+          "reference_l2": 1.1204108370122394,
+          "candidate_l2": 1.1203716747223265,
+          "delta_l2": 0.009160635103966152,
+          "relative_to_reference_l2": 0.008176139324387917,
+          "fraction_of_all_612_delta_l2_squared": 3.3677131253235166e-56
+        },
+        "evanescent_flag_not_propagating": {
+          "count": 446,
+          "reference_l2": 1.8635950582208435e+22,
+          "candidate_l2": 4.9911020983376966e+25,
+          "delta_l2": 4.991809916329427e+25,
+          "relative_to_reference_l2": 2678.591518210539,
+          "fraction_of_all_612_delta_l2_squared": 1.0000000000000002
+        },
+        "not_power_carrying": {
+          "count": 222,
+          "reference_l2": 1.8635950582208435e+22,
+          "candidate_l2": 4.9911020983376966e+25,
+          "delta_l2": 4.991809916329427e+25,
+          "relative_to_reference_l2": 2678.591518210539,
+          "fraction_of_all_612_delta_l2_squared": 1.0000000000000002
+        }
+      },
+      "top_m_pm4_n0_p_pair": {
+        "count": 2,
+        "delta_l2": 4.990265139136374e+25,
+        "fraction_of_all_612_delta_l2_squared": 0.9993811710807274
+      }
+    },
+    "outgoing_amplitude": {
+      "reference_case": "Y",
+      "candidate_case": "Y2",
+      "full_612": {
+        "count": 612,
+        "reference_l2": 1.8635950582208435e+22,
+        "candidate_l2": 4.9911020983376966e+25,
+        "delta_l2": 4.991809916329427e+25,
+        "relative_to_reference_l2": 2678.591518210539
+      },
+      "groups": {
+        "all_612": {
+          "count": 612,
+          "reference_l2": 1.8635950582208435e+22,
+          "candidate_l2": 4.9911020983376966e+25,
+          "delta_l2": 4.991809916329427e+25,
+          "relative_to_reference_l2": 2678.591518210539,
+          "fraction_of_all_612_delta_l2_squared": 1.0
+        },
+        "propagating": {
+          "count": 166,
+          "reference_l2": 0.5013246257306397,
+          "candidate_l2": 0.5013233988404862,
+          "delta_l2": 9.232391786556421e-06,
+          "relative_to_reference_l2": 1.8415994971523617e-05,
+          "fraction_of_all_612_delta_l2_squared": 3.4206794062169457e-62
+        },
+        "power_carrying": {
+          "count": 390,
+          "reference_l2": 0.5472130988338837,
+          "candidate_l2": 0.5471318711650123,
+          "delta_l2": 0.009160635103966152,
+          "relative_to_reference_l2": 0.0167405259915882,
+          "fraction_of_all_612_delta_l2_squared": 3.3677131253235166e-56
+        },
+        "evanescent_flag_not_propagating": {
+          "count": 446,
+          "reference_l2": 1.8635950582208435e+22,
+          "candidate_l2": 4.9911020983376966e+25,
+          "delta_l2": 4.991809916329427e+25,
+          "relative_to_reference_l2": 2678.591518210539,
+          "fraction_of_all_612_delta_l2_squared": 1.0000000000000002
+        },
+        "not_power_carrying": {
+          "count": 222,
+          "reference_l2": 1.8635950582208435e+22,
+          "candidate_l2": 4.9911020983376966e+25,
+          "delta_l2": 4.991809916329427e+25,
+          "relative_to_reference_l2": 2678.591518210539,
+          "fraction_of_all_612_delta_l2_squared": 1.0000000000000002
+        }
+      },
+      "top_m_pm4_n0_p_pair": {
+        "count": 2,
+        "delta_l2": 4.990265139136374e+25,
+        "fraction_of_all_612_delta_l2_squared": 0.9993811710807274
+      }
+    },
+    "outgoing_amplitude_at_boundary": {
+      "reference_case": "Y",
+      "candidate_case": "Y2",
+      "full_612": {
+        "count": 612,
+        "reference_l2": 0.5296409471917748,
+        "candidate_l2": 0.5296440256997016,
+        "delta_l2": 0.002102901468795388,
+        "relative_to_reference_l2": 0.003970428419375891
+      },
+      "groups": {
+        "all_612": {
+          "count": 612,
+          "reference_l2": 0.5296409471917748,
+          "candidate_l2": 0.5296440256997016,
+          "delta_l2": 0.002102901468795388,
+          "relative_to_reference_l2": 0.003970428419375891,
+          "fraction_of_all_612_delta_l2_squared": 1.0
+        },
+        "propagating": {
+          "count": 166,
+          "reference_l2": 0.5013245849760062,
+          "candidate_l2": 0.5013233580442489,
+          "delta_l2": 9.145709197173926e-06,
+          "relative_to_reference_l2": 1.8243089350209402e-05,
+          "fraction_of_all_612_delta_l2_squared": 1.8914589818464024e-05
+        },
+        "power_carrying": {
+          "count": 390,
+          "reference_l2": 0.5296395936552578,
+          "candidate_l2": 0.5296384998330051,
+          "delta_l2": 9.153615984427445e-06,
+          "relative_to_reference_l2": 1.728272601610961e-05,
+          "fraction_of_all_612_delta_l2_squared": 1.8947308611866758e-05
+        },
+        "evanescent_flag_not_propagating": {
+          "count": 446,
+          "reference_l2": 0.1708601575582665,
+          "candidate_l2": 0.17087329995825612,
+          "delta_l2": 0.0021028815809419894,
+          "relative_to_reference_l2": 0.012307618177308934,
+          "fraction_of_all_612_delta_l2_squared": 0.9999810854101809
+        },
+        "not_power_carrying": {
+          "count": 222,
+          "reference_l2": 0.001197403396447287,
+          "candidate_l2": 0.0024193912519874018,
+          "delta_l2": 0.0021028815465394647,
+          "relative_to_reference_l2": 1.7562014211574348,
+          "fraction_of_all_612_delta_l2_squared": 0.9999810526913879
+        }
+      },
+      "top_m_pm4_n0_p_pair": {
+        "count": 2,
+        "delta_l2": 0.0021028149933014404,
+        "fraction_of_all_612_delta_l2_squared": 0.9999177577102789
+      }
+    }
+  },
+  "selected_top_evanescent_modes": [
+    {
+      "side": "top",
+      "m": -4,
+      "n": 0,
+      "polarization": "p",
+      "cases": {
+        "B": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": -4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            -0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            -6.174612478142335e+21,
+            8.130075390125941e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            -6.174612478142335e+21,
+            8.130075390125941e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            -2.601879326017318e-07,
+            3.4258789764398305e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 0.0,
+          "power_ratio": 0.0,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "X": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": -4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            -0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            -6.729782732832938e+21,
+            9.7066762024979e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            -6.729782732832938e+21,
+            9.7066762024979e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            -2.83581886687314e-07,
+            4.090232419447618e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 3.450013745903471e-28,
+          "power_ratio": 1.581450103537926e-29,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "Y": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": -4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            -0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            -5.473944050500214e+21,
+            8.562885760870199e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            -5.473944050500214e+21,
+            8.562885760870199e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            -2.3066292673733832e-07,
+            3.608258090871992e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 0.0,
+          "power_ratio": 0.0,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "Z": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": -4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            -0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            -6.19847053295683e+21,
+            8.165359226940415e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            -6.19847053295683e+21,
+            8.165359226940415e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            -2.6119327147604277e-07,
+            3.4407470002834526e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 0.0,
+          "power_ratio": 0.0,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "Y2": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": -4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            -0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            3.5249652849066987e+25,
+            1.4962936245708436e+24
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            3.5249652849066987e+25,
+            1.4962936245708436e+24
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            0.0014853619287354515,
+            6.305133255251152e-05
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 2.1211201631755255e-21,
+          "power_ratio": 9.722992279823146e-23,
+          "R": 0.0,
+          "T": 0.0
+        }
+      }
+    },
+    {
+      "side": "top",
+      "m": 4,
+      "n": 0,
+      "polarization": "p",
+      "cases": {
+        "B": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": 4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            6.174612208089645e+21,
+            -8.130075502788615e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            6.174612208089645e+21,
+            -8.130075502788615e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            2.6018792122215914e-07,
+            -3.4258790239140134e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 5.720734574057366e-28,
+          "power_ratio": 2.6223247067344137e-29,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "X": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": 4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            6.729783812726176e+21,
+            -9.706676332530487e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            6.729783812726176e+21,
+            -9.706676332530487e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            2.835819321922247e-07,
+            -4.090232474241194e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 0.0,
+          "power_ratio": 0.0,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "Y": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": 4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            5.473944089642049e+21,
+            -8.562885473368216e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            5.473944089642049e+21,
+            -8.562885473368216e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            2.3066292838671036e-07,
+            -3.6082579697234235e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 3.789430625904024e-27,
+          "power_ratio": 1.7370352401643394e-28,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "Z": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": 4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            6.198470196520336e+21,
+            -8.16535915339071e+21
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            6.198470196520336e+21,
+            -8.16535915339071e+21
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            2.611932572991667e-07,
+            -3.4407469692908267e-07
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 0.0,
+          "power_ratio": 0.0,
+          "R": 0.0,
+          "T": 0.0
+        },
+        "Y2": {
+          "side": "top",
+          "direction": "outgoing_up",
+          "medium": "air",
+          "m": 4,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.5026548245743669,
+            0.0
+          ],
+          "gamma": [
+            0.465350247972149,
+            0.0
+          ],
+          "beta": [
+            0.0,
+            0.502589190201403
+          ],
+          "kz": [
+            0.0,
+            0.502589190201403
+          ],
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "propagating": false,
+          "power_carrying": false,
+          "auxiliary_amplitude_total_projection": [
+            -3.524965284890539e+25,
+            -1.4962936231508552e+24
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude": [
+            -3.524965284890539e+25,
+            -1.4962936231508552e+24
+          ],
+          "boundary_phase": [
+            4.2138342045395975e-29,
+            0.0
+          ],
+          "boundary_phase_abs": 4.2138342045395975e-29,
+          "outgoing_amplitude_at_boundary": [
+            -0.0014853619287286419,
+            -6.305133249267557e-05
+          ],
+          "raw_to_boundary_abs_error": 0.0,
+          "raw_convention_abs_error": 0.0,
+          "modal_power_code_units": 1.5610763360889795e-20,
+          "power_ratio": 7.155810136321693e-22,
+          "R": 0.0,
+          "T": 0.0
+        }
+      }
+    }
+  ],
+  "interpretation_limits": [
+    "The raw-to-boundary conversion is reproduced from the saved outgoing coefficient and exact saved boundary_phase; it does not remove the Y/Y2 difference because the same phase is used in both cases.",
+    "The top (m=±4,n=0,p) modes are non-propagating and not power-carrying; their amplitude anomaly does not contribute to reported R/T, but remains part of the all-612 amplitude comparison.",
+    "This audit rules out a mode-key/order mismatch or a Y/Y2 boundary-phase mismatch in the saved modal outputs. It does not prove the underlying FE modal solution is accurate or identify the numerical cause of its mesh sensitivity.",
+    "No canonical pillar-sidewall trace comparison is present in these modal outputs."
+  ]
+}

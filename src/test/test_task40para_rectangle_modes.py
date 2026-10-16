@@ -185,6 +185,77 @@ def test_task40_d13_y2_bisects_actual_y_axis_and_preserves_xz():
         validate_frozen_d13_axes(quota_confusion)
 
 
+def test_task40_d13_y3_dispatcher_bisects_actual_y2_axis_and_preserves_xz():
+    from src.geometry.task40_phi90_d13_axis_plan import (
+        D13_AXIS_PLANS,
+        d13_axis_plan,
+        validate_frozen_d13_axes,
+    )
+    from src.io import load_and_resolve
+    from src.io.native_capacity_profile import (
+        TASK40_PHI90_D13_Y3_P6_DIRECT_PROFILE,
+        native_profile_facts,
+    )
+
+    parent = d13_axis_plan("Y2")
+    plan = d13_axis_plan("Y3")
+    assert D13_AXIS_PLANS["Y3"] == plan
+    assert plan["parent_case"] == "Y2"
+    parent_y = tuple(parent["axes_nm"]["y"])
+    expected_y = [parent_y[0]]
+    for left, right in pairwise(parent_y):
+        expected_y.extend((left + (right - left) / 2.0, right))
+    axes = plan["axes_nm"]
+    assert tuple(axes["x"]) == tuple(parent["axes_nm"]["x"])
+    assert tuple(axes["z"]) == tuple(parent["axes_nm"]["z"])
+    assert tuple(axes["y"]) == tuple(expected_y)
+    assert tuple(plan["axis_cell_counts"]) == (6, 48, 14)
+    assert plan["expected_global_cell_count"] == 4032
+    assert tuple(plan["segment_cell_counts"]["y"]) == (16, 16, 16)
+    assert plan["actual_axis_sha256_le_f64"]["x"] == parent[
+        "actual_axis_sha256_le_f64"
+    ]["x"]
+    assert plan["actual_axis_sha256_le_f64"]["z"] == parent[
+        "actual_axis_sha256_le_f64"
+    ]["z"]
+    assert plan["actual_axis_sha256_le_f64"]["y"] != parent[
+        "actual_axis_sha256_le_f64"
+    ]["y"]
+
+    resolved = load_and_resolve(
+        "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
+    ).as_jsonable()
+    discretization = resolved["discretization"]
+    payload = {
+        "mesh_plan_id": discretization["mesh_plan_id"],
+        "mesh_plan_sha256": discretization["mesh_plan_sha256"],
+        "mesh_axis_cell_counts": discretization["mesh_axis_cell_counts"],
+        "mesh_axis_x_values": discretization["mesh_axis_x_values"],
+        "mesh_axis_y_values": discretization["mesh_axis_y_values"],
+        "mesh_axis_z_values": discretization["mesh_axis_z_values"],
+    }
+    assert validate_frozen_d13_axes(payload) == {
+        axis: tuple(axes[axis]) for axis in ("x", "y", "z")
+    }
+    assert resolved["run_id"] == "task40_phi90_13p5_D13_Y3_p6_direct_v1"
+    assert discretization["mesh_axis_cell_counts"] == [6, 48, 14]
+    assert resolved["output"]["sample_count_y"] == 64
+    facts = native_profile_facts(TASK40_PHI90_D13_Y3_P6_DIRECT_PROFILE)
+    directional = facts["component_options"]["directional_mesh_comparison"]
+    assert directional["parent_case"] == "Y2"
+    assert directional["changed_axis"] == "y"
+    assert directional["expected_axis_sha256_le_f64"] == plan[
+        "actual_axis_sha256_le_f64"
+    ]
+    assert facts["component_options"]["surface_quadrature"]["degree"] == 28
+    assert facts["component_options"]["volume_quadrature"]["degree"] == 15
+
+    wrong_parent_y = dict(payload)
+    wrong_parent_y["mesh_axis_y_values"] = list(parent["axes_nm"]["y"])
+    with pytest.raises(ValueError, match="frozen y coordinates differ"):
+        validate_frozen_d13_axes(wrong_parent_y)
+
+
 def test_task40_production_port_witness_uses_frozen_q28_not_legacy_flat_q160():
     floquet = SimpleNamespace(
         mpc=object(),

@@ -15,11 +15,12 @@ from src.runners.task038_launcher import _write_bootstrap
 
 REPO = Path(__file__).resolve().parents[2]
 INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_b_r13_p6_direct.dat"
+Y3_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
 SOURCE_SHA = "b" * 40
 
 
-def _task40_manifest(tmp_path):
-    specification = load_and_resolve(INPUT)
+def _task40_manifest(tmp_path, input_path=INPUT):
+    specification = load_and_resolve(input_path)
     run_directory = (tmp_path / "run").resolve()
     run_directory.mkdir()
     specification = replace(
@@ -73,6 +74,30 @@ def test_task40_manifest_roundtrips_through_worker_payload_gate(tmp_path):
     assert contract["rss_hard_limit_bytes"] is None
     assert contract["minimum_available_bytes"] == 64 * 1024**3
     assert contract["direct_route"] == thaw(
+        profile["campaign_authorization"]["direct_route"]
+    )
+
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert errors == []
+    assert resolved is not None
+    assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+def test_task40_y3_manifest_roundtrips_through_worker_payload_gate(tmp_path):
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path, Y3_INPUT
+    )
+    profile = specification.derived["native_capacity_profile"]
+    directional = profile["component_options"]["directional_mesh_comparison"]
+    assert profile["identity"] == "task40para_phi90_13p5_D13_Y3_p6_direct_v1"
+    assert directional["case"] == "Y3"
+    assert directional["parent_case"] == "Y2"
+    assert directional["changed_axis"] == "y"
+    assert tuple(directional["axis_cell_counts"]) == (6, 48, 14)
+    assert manifest["native_capacity_profile_identity"] == profile["identity"]
+    assert manifest["native_capacity_contract"]["direct_route"] == thaw(
         profile["campaign_authorization"]["direct_route"]
     )
 

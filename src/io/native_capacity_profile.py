@@ -68,6 +68,9 @@ TASK40_PHI90_D13_Y_P6_DIRECT_PROFILE = (
 TASK40_PHI90_D13_Y2_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Y2_p6_direct_v1"
 )
+TASK40_PHI90_D13_Y3_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_Y3_p6_direct_v1"
+)
 TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Z_p6_direct_v1"
 )
@@ -120,6 +123,18 @@ TASK40_PHI90_D13_CASES = {
         },
         "expected_global_cell_count": 2016,
         "expected_material_tag_counts": {"1": 1680, "2": 144, "3": 192},
+        "explicit_axis_counts_in_input": True,
+    },
+    TASK40_PHI90_D13_Y3_P6_DIRECT_PROFILE: {
+        "case": "Y3",
+        "parent_case": "Y2",
+        "changed_axis": "y",
+        "axis_cell_counts": (6, 48, 14),
+        "segment_cell_counts": {
+            "x": (2, 2, 2), "y": (16, 16, 16), "z": (1, 12, 1),
+        },
+        "expected_global_cell_count": 4032,
+        "expected_material_tag_counts": {"1": 3360, "2": 288, "3": 384},
         "explicit_axis_counts_in_input": True,
     },
     TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE: {

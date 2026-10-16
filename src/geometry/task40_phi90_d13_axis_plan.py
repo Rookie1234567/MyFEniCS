@@ -4,8 +4,9 @@ The X/Y/Z cases are genuine one-axis refinements: every interval in the
 selected D13-B axis gets one midpoint, while the other two coordinate arrays
 remain byte-for-byte identical to the recorded D13-B axes.
 
-Y2 is the next y-only refinement: it bisects each actual D13-Y interval and
-retains the D13-Y x/z arrays exactly.
+Y2 is the first y-only refinement: it bisects each actual D13-Y interval and
+retains the D13-Y x/z arrays exactly. Y3 bisects every actual Y2 y interval
+and retains the Y2 x/z arrays exactly.
 """
 
 from __future__ import annotations
@@ -47,9 +48,11 @@ def _axis_digest(values: tuple[float, ...]) -> str:
 
 
 def d13_axis_plan(case: str) -> dict[str, object]:
-    """Return a deterministic D13 plan; Y2 derives from the realized Y plan."""
+    """Return a deterministic D13 plan, deriving refinements from their parents."""
     if case == "Y2":
         return D13_AXIS_PLANS["Y2"]
+    if case == "Y3":
+        return D13_AXIS_PLANS["Y3"]
     if case not in D13_CASES:
         raise ValueError(f"unsupported Task40 D13 case {case!r}")
     metadata = D13_CASES[case]
@@ -129,8 +132,64 @@ def d13_y2_axis_plan() -> dict[str, object]:
     }
 
 
+def d13_y3_axis_plan() -> dict[str, object]:
+    """Bisect every realized D13-Y2 y interval; preserve its x/z axes exactly."""
+    parent = d13_axis_plan("Y2")
+    parent_axes = parent["axes_nm"]
+    axes = {
+        "x": tuple(float(value) for value in parent_axes["x"]),
+        "y": _bisect_every_interval(
+            tuple(float(value) for value in parent_axes["y"])
+        ),
+        "z": tuple(float(value) for value in parent_axes["z"]),
+    }
+    counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
+    if counts != (6, 48, 14):
+        raise AssertionError(f"Task40 D13 Y3 axis-plan counts are inconsistent: {counts}")
+    segment_counts = tuple(
+        sum(
+            1
+            for left, right in pairwise(axes["y"])
+            if left >= lower and right <= upper
+        )
+        for lower, upper in ((0.0, 15.0), (15.0, 35.0), (35.0, 50.0))
+    )
+    if segment_counts != (16, 16, 16):
+        raise AssertionError(f"Task40 D13 Y3 segment counts are inconsistent: {segment_counts}")
+    plan_id = "task40_phi90_d13_y3_axes_bisect_from_y2_v1"
+    digest_payload = {
+        "schema": "task40.phi90.d13.y3_axis_plan.v1",
+        "case": "Y3",
+        "parent_case": "Y2",
+        "parent_plan_id": parent["plan_id"],
+        "parent_plan_sha256": parent["mesh_plan_sha256"],
+        "changed_axis": "y",
+        "axes_nm": {axis: list(values) for axis, values in axes.items()},
+        "axis_cell_counts": list(counts),
+        "segment_cell_counts": {
+            "x": [2, 2, 2],
+            "y": list(segment_counts),
+            "z": [1, 12, 1],
+        },
+        "parent_axis_sha256_le_f64": parent["actual_axis_sha256_le_f64"],
+    }
+    plan_sha256 = hashlib.sha256(
+        json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {
+        **digest_payload,
+        "plan_id": plan_id,
+        "mesh_plan_sha256": plan_sha256,
+        "actual_axis_sha256_le_f64": {
+            axis: _axis_digest(values) for axis, values in axes.items()
+        },
+        "expected_global_cell_count": math.prod(counts),
+    }
+
+
 D13_AXIS_PLANS = {case: d13_axis_plan(case) for case in D13_CASES}
 D13_AXIS_PLANS["Y2"] = d13_y2_axis_plan()
+D13_AXIS_PLANS["Y3"] = d13_y3_axis_plan()
 D13_AXIS_PLAN_IDS = {
     str(plan["plan_id"]): case for case, plan in D13_AXIS_PLANS.items()
     if case != "B"
