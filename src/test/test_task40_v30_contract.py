@@ -2366,3 +2366,174 @@ def test_v33_extension_window_routes_to_service_and_checker_child_ledger(
     assert workflow._expected_official_channel_count(
         {"version": registration["version"]}, v31_contract.V31_PROFILE
     ) == 32_060
+
+
+def test_v33_extension_rebinds_q4_imports_before_contract_validation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.runners import task40_v31_contract as v31_contract
+    from src.solvers import task40_v30_selected_q_csr
+
+    root = tmp_path.resolve()
+    source_sha = "a" * 40
+    source_root = root / v31_contract.v31_source_artifact_relative(source_sha)
+    input_path = source_root / "stage_inputs/full/extension-input.toml"
+    selector_path = source_root / "q_csr_selector_v31.json"
+    window_path = source_root / "campaign_window_v33.json"
+    accounting_path = source_root / "campaign_accounting_v33_extension.jsonl"
+    parent_window_path = root / "parent/campaign_window_v33.json"
+    parent_accounting_path = root / "parent/campaign_accounting_v10.jsonl"
+    authorization_path = root / "extension_authorization.json"
+    for path, data in (
+        (input_path, b"fixture input\n"),
+        (selector_path, b"fixture selector\n"),
+        (window_path, b"fixture extension window\n"),
+        (accounting_path, b"fixture extension accounting\n"),
+        (parent_window_path, b"fixture original window\n"),
+        (parent_accounting_path, b"fixture original accounting\n"),
+        (authorization_path, b"fixture authorization\n"),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+
+    window_sha = _sha(window_path)
+    parent_window_sha = _sha(parent_window_path)
+    parent_accounting_sha = _sha(parent_accounting_path)
+    authorization_sha = _sha(authorization_path)
+    staged_input_sha = _sha(input_path)
+    selector_sha = _sha(selector_path)
+    q4_pending_template = {
+        "schema": "fixture-q4-pending-template",
+        "template_id": "pending",
+        "consumer_output_root": str(root / "consumer"),
+    }
+    q4_complete_template = {"schema": "fixture-q4-complete-template", "template_id": "complete"}
+
+    monkeypatch.setattr(
+        v31_contract,
+        "v32_q4_pending_import_template",
+        lambda **_kwargs: dict(q4_pending_template),
+    )
+    monkeypatch.setattr(
+        v31_contract,
+        "v32_q4_complete_import_template",
+        lambda **_kwargs: dict(q4_complete_template),
+    )
+
+    def bind_fixture(template, *, consumer_execution_identity):
+        return {
+            "template": dict(template),
+            "consumer_execution_identity": dict(consumer_execution_identity),
+        }
+
+    monkeypatch.setattr(v31_contract, "bind_v32_q4_pending_import", bind_fixture)
+    monkeypatch.setattr(v31_contract, "bind_v32_q4_complete_import", bind_fixture)
+    monkeypatch.setattr(
+        task40_v30_selected_q_csr,
+        "preflight_v32_q4_numeric_pending_import",
+        lambda *_args, **_kwargs: None,
+    )
+
+    consumer_identity = {"source_sha": source_sha, "window_sha256": window_sha}
+    stale_identity = {"source_sha": source_sha, "window_sha256": "f" * 64}
+    contract = {
+        "schema": v31_contract.V33_CONTRACT_SCHEMA,
+        "status": "USER_APPROVED",
+        "registration_schema": v31_contract.V33_EXTENSION_REGISTRATION_SCHEMA,
+        "review": {
+            "path": v31_contract.V33_REVIEW_PATH,
+            "commit": v31_contract.V33_REVIEW_COMMIT,
+            "sha256": v31_contract.V33_REVIEW_SHA256,
+        },
+        "source_freeze": {
+            "required": True,
+            "source_sha": source_sha,
+            "branch": v31_contract.V31_BRANCH,
+            "clean": True,
+        },
+        "preparation": {
+            "q4_numeric_pending_import": dict(q4_pending_template),
+            "q4_complete_import": dict(q4_complete_template),
+        },
+        "user_approval": {
+            "approved": True,
+            "scope": v31_contract.V33_EXTENSION_APPROVAL_SCOPE,
+            "window_sha256": window_sha,
+        },
+        "extension_authorization": {
+            "schema": "task40extra.review_v33_extension_authorization.v1",
+            "extension_seconds": v31_contract.V33_EXTENSION_SECONDS,
+            "window_sha256": window_sha,
+            "accounting_path": str(accounting_path.resolve()),
+            "parent_window_sha256": parent_window_sha,
+            "parent_accounting_sha256": parent_accounting_sha,
+            "authorization_record_sha256": authorization_sha,
+            "authorization_record_path": str(authorization_path.resolve()),
+        },
+        "service_start_allowed": True,
+        "execution": {
+            "root": str(root),
+            "profile": v31_contract.V31_PROFILE,
+            "resources": dict(v31_contract.V31_RESOURCES),
+            "window": {
+                "window_path": str(window_path.resolve()),
+                "window_sha256": window_sha,
+                "source_at_entry": source_sha,
+                "total_seconds": v31_contract.V33_EXTENSION_TOTAL_SECONDS,
+                "numeric_seconds": v31_contract.V33_EXTENSION_NUMERIC_SECONDS,
+                "closeout_seconds": v31_contract.V33_EXTENSION_CLOSEOUT_SECONDS,
+                "t0_utc": "2026-01-01T00:00:00Z",
+                "numeric_cutoff_utc": "2026-01-02T23:40:00Z",
+                "deadline_utc": "2026-01-03T00:00:00Z",
+                "extension_seconds": v31_contract.V33_EXTENSION_SECONDS,
+                "parent_window_path": str(parent_window_path.resolve()),
+                "parent_window_sha256": parent_window_sha,
+                "parent_accounting_path": str(parent_accounting_path.resolve()),
+                "parent_accounting_sha256": parent_accounting_sha,
+                "accounting_path": str(accounting_path.resolve()),
+                "authorization_record_sha256": authorization_sha,
+            },
+            "campaign_window_path": str(window_path.resolve()),
+            "campaign_window_sha256": window_sha,
+            "run_source_sha": source_sha,
+            "runtime_prefix": "fixture-runtime",
+            "abi_receipt_path": "fixture-abi.json",
+            "jit_cache": "fixture-jit-cache",
+            "input_path": str(input_path.resolve()),
+            "input_sha256": staged_input_sha,
+            "selector_path": str(selector_path.resolve()),
+            "selector_sha256": selector_sha,
+            "q_csr_import_authorizations": {
+                "complete": {"4": bind_fixture(
+                    q4_complete_template, consumer_execution_identity=stale_identity
+                )},
+                "numeric_pending": {"4": bind_fixture(
+                    q4_pending_template, consumer_execution_identity=stale_identity
+                )},
+            },
+        },
+    }
+    contract_path = source_root / "execution_contract_v33.approved.json"
+
+    def save_contract():
+        contract_path.write_text(json.dumps(contract, sort_keys=True), encoding="utf-8")
+
+    save_contract()
+    with pytest.raises(
+        v31_contract.V31ContractError,
+        match="V32 q4 complete/pending imports differ from fixed evidence/source/window identity",
+    ):
+        v31_contract.require_v31_execution_contract(contract_path)
+
+    v31_contract._bind_v32_q4_import_authorizations(
+        contract,
+        execution_root=root,
+        source_sha=source_sha,
+        window_sha256=window_sha,
+    )
+    save_contract()
+    loaded, _digest = v31_contract.require_v31_execution_contract(contract_path)
+
+    imports = loaded["execution"]["q_csr_import_authorizations"]
+    assert imports["complete"]["4"]["consumer_execution_identity"] == consumer_identity
+    assert imports["numeric_pending"]["4"]["consumer_execution_identity"] == consumer_identity

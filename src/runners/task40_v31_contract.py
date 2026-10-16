@@ -2162,34 +2162,12 @@ def _prepare_review_approved_package(
     contract["execution"]["campaign_window_sha256"] = window_sha256
     contract["execution"]["run_source_sha"] = run_source_sha
     if _uses_v32_q4_imports(review_version):
-        q4_template = v32_q4_pending_import_template(
+        _bind_v32_q4_import_authorizations(
+            contract,
             execution_root=root,
-            consumer_source_sha=run_source_sha,
+            source_sha=run_source_sha,
+            window_sha256=window_sha256,
         )
-        q4_complete_template = v32_q4_complete_import_template(
-            execution_root=root
-        )
-        complete_authorization = bind_v32_q4_complete_import(
-            q4_complete_template,
-            consumer_execution_identity={
-                "source_sha": run_source_sha,
-                "window_sha256": window_sha256,
-            },
-        )
-        contract["preparation"]["q4_numeric_pending_import"] = dict(q4_template)
-        contract["preparation"]["q4_complete_import"] = dict(q4_complete_template)
-        contract["execution"]["q_csr_import_authorizations"] = {
-            "complete": {"4": complete_authorization},
-            "numeric_pending": {
-                "4": bind_v32_q4_pending_import(
-                    q4_template,
-                    consumer_execution_identity={
-                        "source_sha": run_source_sha,
-                        "window_sha256": window_sha256,
-                    },
-                )
-            }
-        }
     contract_path = root / v31_source_artifact_relative(run_source_sha) / contract_name
     contract_sha256 = _write_once(contract_path, contract)
 
@@ -2242,6 +2220,47 @@ def _prepare_review_approved_package(
         "commands": dict(pending["commands"]),
         "new_window_created": window_created,
         "t0_refreshed": False,
+    }
+
+
+def _bind_v32_q4_import_authorizations(
+    contract: dict[str, Any],
+    *,
+    execution_root: Path,
+    source_sha: str,
+    window_sha256: str,
+) -> None:
+    """Bind inherited q4 imports to the approved consumer source/window."""
+    preparation = contract.get("preparation")
+    execution = contract.get("execution")
+    if not isinstance(preparation, dict) or not isinstance(execution, dict):
+        raise V31ContractError("V33 extension pending contract omits q4 preparation bindings")
+    q4_template = v32_q4_pending_import_template(
+        execution_root=execution_root,
+        consumer_source_sha=source_sha,
+    )
+    q4_complete_template = v32_q4_complete_import_template(
+        execution_root=execution_root
+    )
+    consumer_identity = {
+        "source_sha": source_sha,
+        "window_sha256": window_sha256,
+    }
+    preparation["q4_numeric_pending_import"] = dict(q4_template)
+    preparation["q4_complete_import"] = dict(q4_complete_template)
+    execution["q_csr_import_authorizations"] = {
+        "complete": {
+            "4": bind_v32_q4_complete_import(
+                q4_complete_template,
+                consumer_execution_identity=consumer_identity,
+            )
+        },
+        "numeric_pending": {
+            "4": bind_v32_q4_pending_import(
+                q4_template,
+                consumer_execution_identity=consumer_identity,
+            )
+        },
     }
 
 
@@ -2459,6 +2478,12 @@ def prepare_v33_extension_package(
     execution["campaign_window_path"] = str(window_path.resolve())
     execution["campaign_window_sha256"] = window_sha256
     execution["run_source_sha"] = head
+    _bind_v32_q4_import_authorizations(
+        contract,
+        execution_root=root,
+        source_sha=head,
+        window_sha256=window_sha256,
+    )
     contract_path = source_root / "execution_contract_v33.approved.json"
     contract_sha256 = _write_once(contract_path, contract)
     loaded_contract, loaded_contract_sha = require_v31_execution_contract(
