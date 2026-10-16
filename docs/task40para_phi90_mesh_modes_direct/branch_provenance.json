@@ -1,0 +1,14 @@
+{
+  "schema": "task40para.branch-provenance.v1",
+  "repository": "Rookie1234567/MyFEniCS",
+  "execution_branch": "task40para_phi90_mesh_modes_direct",
+  "task_directory": "docs/task40para_phi90_mesh_modes_direct",
+  "base_branch": "task39extra_para_workstation_capacity",
+  "base_sha": "922466da9d7faff408cbb47b7882d179320bdc44",
+  "base_tree_sha": "c507d54d6775dcc74f415de8cb123b7a7f797fe4",
+  "created_date": "2026-10-16",
+  "timezone": "Asia/Singapore",
+  "authorization": "User explicitly requested a new task40para branch based on task39para, phi90 centered 17x20 block, direct p6 studies.",
+  "initial_change_scope": "Task documents only; no solver edits, merge, environment changes, or PDE.",
+  "source_qualification": "Inherited implementation, not inherited physical/mesh/mode qualification."
+}
