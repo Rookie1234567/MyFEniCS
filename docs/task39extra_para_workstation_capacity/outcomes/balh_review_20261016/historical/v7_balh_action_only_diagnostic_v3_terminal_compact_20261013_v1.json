@@ -1,0 +1,163 @@
+{
+  "candidate_route": {
+    "A4_n0": {
+      "absolute_norm": 1.4334656223758893e-12,
+      "limit": 1e-10,
+      "native_A4_action_witness_residual_norm": 8.030505347061693e-11,
+      "relative": 3.226688429259846e-11,
+      "side": "PASS"
+    },
+    "A6_candidate_pc_calls": 1,
+    "BAL_H": {
+      "absolute_norm": 1.0611479476468672e-11,
+      "limit": 1e-08,
+      "numerical_qualification": false,
+      "operation_scale": 0.08885057567858307,
+      "relative": 1.1943062152861785e-10,
+      "side": "PASS"
+    },
+    "added_A4_factor_or_solve_calls": 0,
+    "coefficient_map_policy": "v7_p64_T_transpose_reference_v1",
+    "same_mesh_spaces_mpcs_q160_actions_and_c": true
+  },
+  "captured_input_identity": {
+    "c": {
+      "dtype": "<c16",
+      "finite": true,
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T011151.475066Z/v7_balanced_failure_diagnostic/v7_balanced_failure_diagnostic/failed_full_p4_coarse_c.npy",
+      "raw_payload_sha256": "19acc9ded1d48491c935473a37d1c5f0c4efc47277b1cdbd5903f3f7ef36e323",
+      "rows": 9757120
+    },
+    "g": {
+      "dtype": "<c16",
+      "finite": true,
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T011151.475066Z/v7_balanced_failure_diagnostic/v7_balanced_failure_diagnostic/failed_full_p6_source_g.npy",
+      "raw_payload_sha256": "5862461d3b5b74c9164831f138448c94a5144d9129f53bc4fa17c7753c062799",
+      "rows": 32061312
+    }
+  },
+  "classification": "ACTION_ONLY_DIAGNOSTIC_NOT_SOLVER_QUALIFICATION",
+  "closure_norm2": 5.055140443890547e-15,
+  "component_action_norms": {
+    "additional_actions_or_vectors": 0,
+    "derived_from_vectors_already_computed": true,
+    "fast": {
+      "A4_DtN": 0.003222427829553165,
+      "A4_curl": 1455.324033885701,
+      "A4_material_mass": 1455.324120454859,
+      "A6_DtN": 0.004088964031514052,
+      "A6_curl": 1895.7915356483713,
+      "A6_material_mass": 1853.4680515931636,
+      "PH_A6_DtN": 0.0032224278295535595,
+      "PH_A6_curl": 1455.3240338858318,
+      "PH_A6_material_mass": 1455.3241204548606
+    },
+    "native": {
+      "A4_DtN": 0.003222427829553165,
+      "A4_curl": 1455.3240338856997,
+      "A4_material_mass": 1455.324120454861,
+      "A6_DtN": 0.004088964031514052,
+      "A6_curl": 1895.79153564837,
+      "A6_material_mass": 1853.4680515931666,
+      "PH_A6_DtN": 0.0032224278295535595,
+      "PH_A6_curl": 1455.3240338858307,
+      "PH_A6_material_mass": 1455.3241204548626
+    }
+  },
+  "created_utc": "2026-10-13T11:26:36.117597+00:00",
+  "cross_components": {
+    "fast": {
+      "DtN": 8.259813011189144e-13,
+      "curl": 9.609555439948261e-10,
+      "curl_plus_material_mass": 9.608319248313555e-10,
+      "fast_cross_minus_native_cross": 6.1295437263008416e-12,
+      "fast_full_cross": 9.608323639085554e-10,
+      "material_mass": 1.4190666978290396e-11
+    },
+    "native": {
+      "DtN": 8.259813011189144e-13,
+      "curl": 9.601085640824762e-10,
+      "curl_plus_material_mass": 9.598727693720122e-10,
+      "material_mass": 1.4196263242106377e-11,
+      "native_full_cross": 9.598732127529536e-10
+    }
+  },
+  "execution": {
+    "descendants_cleared": true,
+    "elapsed_seconds_summary": 3639.6500763869844,
+    "leader_exit_code": 0,
+    "remaining_child_pids": [],
+    "terminal_identity_file_present": false,
+    "workflow_terminal_stage": "diagnostic_complete"
+  },
+  "legacy_decomposition_norms": {
+    "cross_A4native_c_minus_PH_A6nativePc": 9.598732127529536e-10,
+    "delta4_A4fast_minus_A4native_c": 8.030156265776901e-11,
+    "delta6_PH_A6nativePc_minus_PH_A6fastPc": 8.061614171694841e-11,
+    "r4_PHg_minus_A4fastc": 1.4334527624342667e-12
+  },
+  "legacy_route": {
+    "A4_n0": {
+      "absolute_norm": 1.4334527624342667e-12,
+      "limit": 1e-10,
+      "relative": 3.2266594819142027e-11,
+      "side": "PASS"
+    },
+    "BAL_H": {
+      "absolute_norm": 9.608395623437402e-10,
+      "historical_values_within_fixed_tolerance": true,
+      "limit": 1e-08,
+      "operation_scale": 0.08885057559044918,
+      "relative": 1.0814106222256414e-08,
+      "side": "REJECT"
+    },
+    "classification": "FAILURE_NUMERICALLY_REPRODUCED",
+    "coefficient_map_policy": "basix_T_reference_inverse_T_v1",
+    "historical_failure_reproduced": true
+  },
+  "numerical_policy_changed": false,
+  "owner_local_vs_global_pc": {
+    "candidate_l2_over_duplicate_cell_entries": 5.524927458087673e-13,
+    "interpretation": "duplicate cell-DOF entries, not a global-vector norm",
+    "legacy_l2_over_duplicate_cell_entries": 5.523330818763036e-13,
+    "max_abs_difference": 1.8862052874134726e-15
+  },
+  "resource_audit": {
+    "global_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/p3_main_review/v7_balh_action_only_diagnostic_v3_terminal_resource_audit_20261013_v2.json",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "readability": "3378/3378 top-level statuses readable; parse errors 0",
+    "rss_hard_limit_bytes": 1950000000000,
+    "samples": 3378,
+    "sha256": "abf19f9c529dfd48fb0b9ca4ef90ef3feb4c3c8d103f197e2967f9619ed9991b",
+    "stream_rss_peak_matches_summary": true,
+    "stream_sha256": "ee7891e871968880c6df7e0a00bc7828e8ae97140b05a98d3eb6efbd8b29ca77",
+    "stream_swap_peak_matches_summary": true,
+    "stream_tree_rss_peak_bytes": 45701996544,
+    "summary_tree_rss_peak_bytes": 45701996544,
+    "summary_tree_swap_peak_bytes": 0,
+    "warning_boolean_status": "UNKNOWN_NOT_AGGREGATED_IN_ONE_PASS"
+  },
+  "root_cause_proven": false,
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_balh_action_only_diagnostic__action_only__mpi1/attempt_20261013_v3",
+  "run_id": "v7_balh_action_only_diagnostic_v3",
+  "schema": "task39extra.v7_balh_action_only_terminal_compact.v1",
+  "source_identity": {
+    "active_mode_count": 572,
+    "active_mode_sha256": "946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b",
+    "diagnostic_instrumentation_source_sha": "3db89627357ac4a7a2ba9ff6c0f26cb8808d93da",
+    "input_sha256": "b914ec77ed991aa1bf0c0ae95ef89426a3798045bb33742a2443f993ed73502d",
+    "numerical_baseline_source_sha": "00789bd1ae41fc7bddbe47d049624eb520de888b",
+    "p4_rows": 9757120,
+    "p6_rows": 32061312,
+    "parent_mode_count": 32060,
+    "parent_mode_sha256": "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb",
+    "physical_model_sha256": "d394308fe4dfcc8e0c25cdaa707fb8ff4bf4a394c268a8702b4afa069b78681a",
+    "quadrature_degree": 160,
+    "resolved_config_sha256": "4f9bd532ac2e7034ef28784cfd085f75b5419a190870a0c78d231a849128b24f",
+    "selected_parent_indices_sha256": "f423721c90fe6259f9d9ea9f514aa9c5f1abdd7723ffd49fac64c79af03c56b2"
+  }
+}

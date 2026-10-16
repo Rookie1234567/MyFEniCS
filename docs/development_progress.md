@@ -2906,3 +2906,7 @@ V25 donor BAL_H含默认`InexactBalanceLedger`，首次及每32次PC调用额外
 ## Task39extra_para：0.7 nm p3 S1限域组件归档（2026-10-05）
 
 V6/R48收口后，用户追加授权将0.7 nm从metadata-only扩展到有界p3验证。S1在72 cells/16 modes上完成固定PC见证：A3增广/全行分别3472/6954，p6 action行为51060；端口初次MatSolve API为真实超限，单次同因子外部残差校正后通过，三次PC的C1/C2均通过。资源峰值2763333632 B、PSS/USS关闭、tree swap0。此项不是全0.7场资格；S2全网格setup+16步包待主审，尚未启动。记录见[p3 S1 compact](task39extra_para_workstation_capacity/outcomes/records/p3_0p7_s1_component_v1.json)及[post-V6 response](task39extra_para_workstation_capacity/response_post_v6_p3.md)。
+
+## 2026-10-16：0.7 nm 统一交接与 BAL_H 故障分层
+
+候选D的方向网格直接法使R/T接近RCWA显示值，但同时改变x/z及源码，尚非单轴收敛。本轮补齐迭代负结果的远端证据：首次BAL_H的P64方向映射缺陷有同失败输入修复见证，p4端口联合精化也使闭合残差降至约3e-14；最后仍卡在第17次C的A4=1.12034e-10，超原1e-10门，故迭代资格保持开放。下一修复先定位保存输入上的A4残差地板，不能通过放宽门限或增加精化掩盖；正确性与每步成本、物理精度分别审阅。本轮仅文档归档，无新计算。详见[统一交接](task39extra_para_workstation_capacity/review_handoff_0p7nm_balh_20261016.md)。

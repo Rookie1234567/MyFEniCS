@@ -1,0 +1,63 @@
+{
+  "schema": "v7.main.balh-direction-localization-review.v1",
+  "created_utc": "2026-10-13T09:10:22.552898+00:00",
+  "classification": "LOCAL_ORIENTATION_PRECISION_MECHANISM_IDENTIFIED_GLOBAL_FIX_NOT_YET_VERIFIED",
+  "inputs": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/p3_main_review/v7_balh_action_only_diagnostic_terminal_compact_20261013_v1.json",
+      "sha256": "2bfa130c22a9a2f95484a6df3b1204a91092aae0deb7a7f74faec6323ef3f088"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/p3_main_review/v7_balh_p64_p4_qdegree15_reference_algebra_20261013_v2.json",
+      "sha256": "1561ab96a298a79210a55f7ed61519010d8633841dc7b5beabe2e2a43b773058"
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/p3_main_review/v7_balh_p64_p4_qdegree15_reference_algebra_20261013_v2.py",
+      "sha256": "ef15448c76dd09e384606065e76d0ed079e1304f77c4097a0a68ef8b711f30e1"
+    }
+  ],
+  "original_full_model_gate": {
+    "relative": 1.0814106222256414e-08,
+    "unchanged_limit": 1e-08,
+    "reproduced_exactly": true
+  },
+  "findings": {
+    "global_native_curl_cross_norm": 9.601085640824762e-10,
+    "global_native_mass_cross_norm": 1.4196263242106377e-11,
+    "global_DtN_cross_norm": 8.259813011189144e-13,
+    "reference_actual_qdegree": 15,
+    "reference_points": 512,
+    "actual_orientation_classes": [
+      0,
+      576,
+      32769,
+      36873,
+      37449
+    ],
+    "reference_hz_nominal": [
+      0.6,
+      0.5882352941176471
+    ],
+    "reference_hz_not_all_raw_coordinates": true,
+    "local_nonzero_orientation_curl_error_primary_term": "B6curl*(Tf.T@Tf-I)*P_ref*inv(Tc)",
+    "global_causality": "NOT_PROVEN_UNTIL_FAILED_VECTOR_VALIDATION"
+  },
+  "approved_next_scope": {
+    "existing_execution_thread": "01a0d2c6-d92a-71f2-8d43-766826b8d37f",
+    "pure_reference_single_counterfactual": "P_global=solve(Tf.T, P_ref@Tc.T); P_ref unchanged; PH=P_global.conj().T",
+    "gates": "all original thresholds unchanged",
+    "no_entry_thresholding": true,
+    "before_production": "independent functional, gradient, curl, adjoint checks; then same saved c/g and exact original BAL_H denominator; record coarse A4 return under candidate PH",
+    "formal_full_model": "latest user authorizes after demonstrated fix and normal clean-source/fresh admission",
+    "pending": "candidate reference results and exact failed-vector validation package"
+  },
+  "excluded": [
+    "unproved native-A4 WIP as default repair",
+    "gate or denominator relaxation",
+    "cache or warm-start work",
+    "new PC",
+    "new small PDE",
+    "duplicate heavy run"
+  ],
+  "resource_audit": "accepted existing single-pass compact, no main resources scan"
+}

@@ -1,0 +1,3 @@
+{"iteration": 0, "outer_matvec_count": 0, "outer_pc_count": 0, "reported_schur_relative": 1.0, "solve_seconds": 1.2209333369974047, "step_wall_seconds": null, "timebase": "monotonic_from_solve_start"}
+{"iteration": 1, "outer_matvec_count": 1, "outer_pc_count": 1, "reported_schur_relative": 0.9954537568887326, "solve_seconds": 2156.0478281381074, "step_wall_seconds": 2154.82689480111, "timebase": "monotonic_from_solve_start"}
+{"iteration": 2, "outer_matvec_count": 2, "outer_pc_count": 2, "reported_schur_relative": 0.9928996140427859, "solve_seconds": 3090.588348038029, "step_wall_seconds": 934.5405198999215, "timebase": "monotonic_from_solve_start"}

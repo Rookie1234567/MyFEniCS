@@ -1729,3 +1729,12 @@ V0/V1/V2 的小型证据整理支持 p6 的 x 向数值色散解释，但没有�
 | source `b4db2b5436a6fb188cf81773577ab31c4cacb7c5`；run `20261015T104602.092954Z`；p6 condensed direct/MUMPS；47200 cells；572 N0，parent32060/q160 | 原 A6_n0 `1.3202759103785678e-7 <= 1e-6`；R/T/A_volume=`0.07028528534177456/0.6688236885790999/0.260891026570664`；端口—体吸收差`4.915383655657024e-10`；572复模态输出有限 | `COMPLETED_AUTHORITY_LIMITED`；`FULL_DTN_NOT_VERIFIED`；D同时改变x/z且source不同，只是`CROSS_CHANGED_GRID_DIAGNOSTIC`，不证明单轴收敛 | [D terminal compact](task39extra_para_workstation_capacity/outcomes/records/v7_candidate_d_terminal_compact_20261016.json)，[all 143 orders and complex sample comparison](task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/candidate_d_comparison.json) |
 
 凝聚后的系统仍有`9,374,972`行，矩阵`nz_used=7,553,047,842`、`nz_allocated=7,611,634,384`。单次资源流审计峰值整树RSS`1,303,868,440,576 B`，低于`1.8e12 B`硬线；PSS/USS关闭、任务树swap峰0，但全局交换页变化无法归因，故不宣称全机zero-swap资格。候选D与旧A的总R/T更改明显，并与报告RCWA总量相近；逐级与同坐标复场证据、authority限制和网格/source差异见上述响应，不将其写成全DtN或连续解资格。
+
+### 2026-10-16：V7 迭代历史补账（本日未新跑）
+
+| 模型 / 来源 | 真实结果 | 作用域与未关闭项 |
+|---|---|---|
+| 0.7nm Si p6/p4，100×2×234=46800，572 N0；source d62c20fd2e6f77006edc80f6449447b39efcfdfe，run20261013T225710.255482Z | WORKER_FAILED/exit4；完成7步，末reported Schur=0.9878594749；独立A6仅iteration0=1.0000000000000002 | 第17次C，A4两次精化后1.12033791964e-10>1e-10；端口2.99683374813e-14。8条成功BAL_H初始平衡含1条QA均<=1e-8；不能笼统判BAL_H理论失败 |
+| 同场资源与成本 | workflow23169.024s、RSS峰271532994560B、task swap峰0、hard1.8e12B、后代清场；symbolic/numeric/solve=1/1/35 | 来自小summary与原packet，未重扫resources；无本场R/T/A资格，不拿新D直接法结果补填 |
+
+[统一审阅交接](task39extra_para_workstation_capacity/review_handoff_0p7nm_balh_20261016.md)及[hash绑定compact](task39extra_para_workstation_capacity/outcomes/balh_review_20261016/balh_evidence_compact.json)保存首失败、取证、P64修复、端口修复及最后A4失败。物理精度与迭代修复分别待审；最新D结果保留原有总账条目。

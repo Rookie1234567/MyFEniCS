@@ -1,0 +1,37 @@
+{
+  "schema": "task39extra.main.p64-fix-terminal-review.v1",
+  "created_utc": "2026-10-13T11:39:48.286689+00:00",
+  "decision": "ACCEPT_SAVED_FAILURE_ACTION_REPAIR_WITNESS_PREPARE_ONE_V7_FULL_RERUN",
+  "evidence": {
+    "worker_report.json": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_balh_action_only_diagnostic__action_only__mpi1/attempt_20261013_v3/worker_report.json",
+      "sha256": "2afba65730952fafde424a78907f7a39ef56ab282d52c0570aa03f2b9e59111c"
+    },
+    "summary.json": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_balh_action_only_diagnostic__action_only__mpi1/attempt_20261013_v3/summary.json",
+      "sha256": "12d313b2704714e6a488af020e27a4a392df173f7c74efcac7e680ba0b5e961e"
+    }
+  },
+  "legacy_BAL_H": 1.0814106222256414e-08,
+  "candidate_BAL_H": 1.1943062152861785e-10,
+  "candidate_A4_n0": 3.226688429259846e-11,
+  "BAL_H_limit": 1e-08,
+  "A4_limit": 1e-10,
+  "reduction_factor_derived": 90.54718198602984,
+  "scope": "same saved failed c/g; same physical actions and geometry; changed P64 coefficient map only; not full solve qualification",
+  "g_norm_metadata_caveat": {
+    "legacy_g_norm": 1.0000000000000662,
+    "candidate_reported_norm": 304.5739374623016,
+    "exactly_matches_pre_restore_residual_norm": true,
+    "interpretation": "consistent with stale PETSc norm cache after direct DOLFINx array overwrite; source equality was checked before candidate restriction; candidate_g_norm used only as report metadata, not gate normalization",
+    "required_followup": "adjacent static note tracing source.copy/array reads and gate fresh output vectors; preserve original report; no new FE solely for report correction"
+  },
+  "next_authorized_scope": [
+    "V7-only formal execution_plan rank-inside-MPI NUMA/CPU correction and targeted argv/interface tests",
+    "freeze clean source on current execution branch; bind all implementation/source and historical negative records",
+    "prepare unique full46800cell/572channel/p6-p4 V7 launch with fresh admission and post-p6-ports24h guard",
+    "all original residual/physical/resource limits unchanged; QA and fullsolve onefactor",
+    "no caching/warm-start work, new PC, full diagnostic rerun, or old p3 campaign"
+  ],
+  "not_yet_authorized_by_this_receipt": "launch command still needs final source/command/guard review; user full rerun authorization remains valid"
+}

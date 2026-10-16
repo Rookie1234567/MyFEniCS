@@ -1,0 +1,7 @@
+# V7 P4 joint-port refinement fix note
+
+- Baseline failure: the 2026-10-13 V7 run was rejected at P4 refinement index 0. It had not exhausted the allowed two refinements. Earlier call 7 reduced the independent A4 relative residual from about 1.6404e-7 to 3.2249e-11 after one same-factor correction, while the port-closure residual stayed about 1.88678e-10. The later call failed the unchanged port-closure gate before attempting a correction.
+- Cause addressed: the old correction solved only the FE right-hand side with zero port right-hand side. That correction can reduce the eliminated A4 residual but does not correct the independent port closure.
+- Coupled residual: for the existing block signs `[V B; -D H]`, let `e = H a - D c` and let `r_FE = g - (V + B H^-1 D)c`. The uneliminated residual is `[r_FE - B H^-1 e; -e]`. The V7-only opt-in now sends both components through the existing P4 inverse. Its local reduction adds the supplied port right-hand side to the existing `D_i V_ii^-1 g_i` contribution.
+- Scope: V7 explicitly enables joint refinement; legacy/default paths remain disabled and retain their prior closure gate and FE-only correction. The A4, A6, BAL_H, energy, and port-closure limits and the two-refinement bound are unchanged.
+- Verification: 13 focused pure/interface tests passed, including a complex one-trace/one-interior/one-port block oracle exercising the real inverse reduction/recovery and comparison with the original 3x3 solve. No FE rerun or solver qualification is claimed here. The prior failed run and its audits remain unchanged.

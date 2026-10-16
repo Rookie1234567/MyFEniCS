@@ -1,0 +1,459 @@
+{
+  "schema": "task39extra.balh-review-handoff.v1",
+  "created_utc": "2026-10-16T02:23:24.082743+00:00",
+  "reviewed_head": "619972239fc0c6281fd579f5ec0ed99e26596256",
+  "status": "P64_SAVED_FAILURE_FIXED_PORT_REFINEMENT_IMPROVED_A4_RETURN_STILL_FAILED",
+  "runs": [
+    {
+      "run_directory": "results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261012T110145.583366Z",
+      "source_sha": "00789bd1ae41fc7bddbe47d049624eb520de888b",
+      "status": "finished",
+      "exit_status": 4,
+      "classification": "WORKER_FAILED",
+      "workflow_seconds": 16533.234926751116,
+      "rss_peak_bytes": 271267450880,
+      "task_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 1950000000000,
+      "descendants_cleared": true,
+      "resource_source": "run_summary.resource_authority; resources.jsonl NOT_READ"
+    },
+    {
+      "run_directory": "results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T011151.475066Z",
+      "source_sha": "3db89627357ac4a7a2ba9ff6c0f26cb8808d93da",
+      "status": "finished",
+      "exit_status": 4,
+      "classification": "WORKER_FAILED",
+      "workflow_seconds": 18511.69489038107,
+      "rss_peak_bytes": 271316426752,
+      "task_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 1950000000000,
+      "descendants_cleared": true,
+      "resource_source": "run_summary.resource_authority; resources.jsonl NOT_READ"
+    },
+    {
+      "run_directory": "results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T141610.617188Z",
+      "source_sha": "9cad7d12d3d0af3fe2c18930839579c7983ce3d7",
+      "status": "finished",
+      "exit_status": 4,
+      "classification": "WORKER_FAILED",
+      "workflow_seconds": 17627.41921697301,
+      "rss_peak_bytes": 271268569088,
+      "task_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 1800000000000,
+      "descendants_cleared": true,
+      "resource_source": "run_summary.resource_authority; resources.jsonl NOT_READ"
+    },
+    {
+      "run_directory": "results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T225710.255482Z",
+      "source_sha": "d62c20fd2e6f77006edc80f6449447b39efcfdfe",
+      "status": "finished",
+      "exit_status": 4,
+      "classification": "WORKER_FAILED",
+      "workflow_seconds": 23169.02404170716,
+      "rss_peak_bytes": 271532994560,
+      "task_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 1800000000000,
+      "descendants_cleared": true,
+      "resource_source": "run_summary.resource_authority; resources.jsonl NOT_READ"
+    }
+  ],
+  "latest_failure": {
+    "run_directory": "results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T225710.255482Z",
+    "coarse_logical_call": 17,
+    "completed_outer_iterations": 7,
+    "last_reported_schur_relative": 0.9878594749232164,
+    "last_independent_A6_n0": {
+      "A6_n0_relative": 1.0000000000000002,
+      "explicit_true_residual": 1.0000000000000002,
+      "internal_operation_scale": 2.1764527739357427e-10,
+      "internal_residual_relative": 2.022209945980457e-16,
+      "iteration": 0,
+      "logical_p4_count": 2,
+      "native_evaluation_sequence": 1,
+      "native_identity_relative": 8.602992785960241e-26,
+      "native_rhs_norm": 5.078903320876274,
+      "operator_scope": "n0_filtered_dtn_not_full_dtn",
+      "p4_factor_counts": {
+        "logical_apply_calls": 2,
+        "numeric_calls": 1,
+        "solve_calls": 4,
+        "symbolic_calls": 1
+      },
+      "physical_residual_key": "A6_n0_relative",
+      "physical_residual_pass": false,
+      "port_closure_relative": 1.0,
+      "port_operation_scale": 2.7549934788274696e-26,
+      "reported_schur_relative": 1.0,
+      "schur_port_identity_relative": 4.3359574351275154e-15,
+      "schur_true_relative_residual": 1.0,
+      "solution_source": "live_buildSolution",
+      "solve_seconds": 1534.9910368528217
+    },
+    "rows": [
+      {
+        "a4_timing": {
+          "dtn_seconds": 0.06197405210696161,
+          "measured_parent_wall_seconds": 50.057032032869756,
+          "vector_sum_seconds": 0.04922096896916628,
+          "volume_seconds": 49.845827573910356,
+          "wall_seconds": 49.957022878108546
+        },
+        "attempt": 1,
+        "factor_counts": {
+          "logical_apply_calls": 17,
+          "numeric_calls": 1,
+          "solve_calls": 33,
+          "symbolic_calls": 1
+        },
+        "physical_correction_factor_delta": {
+          "numeric_calls": 0,
+          "solve_calls": 1,
+          "symbolic_calls": 0
+        },
+        "physical_factor_delta": {
+          "numeric_calls": 0,
+          "solve_calls": 1,
+          "symbolic_calls": 0
+        },
+        "port_closure": {
+          "closure_vector_available": true,
+          "d_term_norm": 0.7704190376049249,
+          "finite": true,
+          "formula": "H*a-D*c",
+          "h_term_norm": 0.7704190372156445,
+          "norm": 2.9175037193098137e-09,
+          "relative_residual": 1.8934525093751702e-09,
+          "rhs_policy": "joint_augmented_correction",
+          "scale": 1.5408380748205694,
+          "sha256": "07e38d312c89076e91e5672233d60d0f8d0e7893ea1d0cf44559a5f6f8845d4b",
+          "size": 572,
+          "status": "P4_NUMERICAL_UNQUALIFIED",
+          "tolerance": 1e-10
+        },
+        "port_closure_wall_seconds": 0.011949912877753377,
+        "refinement": 0,
+        "refinement_index": 0,
+        "refinement_rhs_policy": "uneliminated_augmented_residual",
+        "relative_residual": 6.264898095326352e-08,
+        "rhs_norm": 0.7348417462869713
+      },
+      {
+        "a4_timing": {
+          "dtn_seconds": 0.06465593702159822,
+          "measured_parent_wall_seconds": 51.27193106501363,
+          "vector_sum_seconds": 0.04791899584233761,
+          "volume_seconds": 51.05969006102532,
+          "wall_seconds": 51.17226528492756
+        },
+        "attempt": 2,
+        "factor_counts": {
+          "logical_apply_calls": 17,
+          "numeric_calls": 1,
+          "solve_calls": 34,
+          "symbolic_calls": 1
+        },
+        "physical_correction_factor_delta": {
+          "numeric_calls": 0,
+          "solve_calls": 1,
+          "symbolic_calls": 0
+        },
+        "physical_factor_delta": {
+          "numeric_calls": 0,
+          "solve_calls": 0,
+          "symbolic_calls": 0
+        },
+        "port_closure": {
+          "closure_vector_available": true,
+          "d_term_norm": 0.7704190370409302,
+          "finite": true,
+          "formula": "H*a-D*c",
+          "h_term_norm": 0.7704190370409296,
+          "norm": 4.2068912406236126e-14,
+          "relative_residual": 2.7302617396252854e-14,
+          "rhs_policy": "joint_augmented_correction",
+          "scale": 1.5408380740818597,
+          "sha256": "a5e292c4406238743e7272a27fce59d19e1735039cbfde18003fee93432a2482",
+          "size": 572,
+          "status": "PASS",
+          "tolerance": 1e-10
+        },
+        "port_closure_wall_seconds": 0.011455964995548129,
+        "refinement": 1,
+        "refinement_index": 1,
+        "refinement_rhs_policy": "uneliminated_augmented_residual",
+        "relative_residual": 1.1205184700057332e-10,
+        "rhs_norm": 0.7348417462869713
+      },
+      {
+        "a4_timing": {
+          "dtn_seconds": 0.09223473211750388,
+          "measured_parent_wall_seconds": 51.57430166308768,
+          "vector_sum_seconds": 0.07776700216345489,
+          "volume_seconds": 51.29181247879751,
+          "wall_seconds": 51.46181465103291
+        },
+        "attempt": 3,
+        "factor_counts": {
+          "logical_apply_calls": 17,
+          "numeric_calls": 1,
+          "solve_calls": 35,
+          "symbolic_calls": 1
+        },
+        "physical_factor_delta": {
+          "numeric_calls": 0,
+          "solve_calls": 0,
+          "symbolic_calls": 0
+        },
+        "port_closure": {
+          "closure_vector_available": true,
+          "d_term_norm": 0.7704190370409453,
+          "finite": true,
+          "formula": "H*a-D*c",
+          "h_term_norm": 0.7704190370409453,
+          "norm": 4.61763554081302e-14,
+          "relative_residual": 2.996833748130505e-14,
+          "rhs_policy": "joint_augmented_correction",
+          "scale": 1.5408380740818906,
+          "sha256": "b317b3600fb52b733ff2d44840b3ada99a63876985e4f752477020128937af9d",
+          "size": 572,
+          "status": "PASS",
+          "tolerance": 1e-10
+        },
+        "port_closure_wall_seconds": 0.01328024105168879,
+        "refinement": 2,
+        "refinement_index": 2,
+        "refinement_rhs_policy": "uneliminated_augmented_residual",
+        "relative_residual": 1.1203379196396286e-10,
+        "rhs_norm": 0.7348417462869713
+      }
+    ],
+    "factor_counts": {
+      "logical_apply_calls": 17,
+      "numeric_calls": 1,
+      "solve_calls": 35,
+      "symbolic_calls": 1
+    },
+    "matrix_identity": {
+      "csr_sha256": "793776ae394a045e07757bd0634fd2828e029fb4a901bc19566957e0e6e87485",
+      "dense_gather": false,
+      "dtype": "complex128",
+      "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+      "index_dtype": "int64-little-endian-canonical",
+      "mapping_sha256": "f716ae525d58b5569c8bc4e913aa0352e33beb0f12808bcb3c6515a832a76da5",
+      "nnz": 1444001282,
+      "nnz_semantics": "owned-row-getRow-stored-entries",
+      "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+      "shape": [
+        3938172,
+        3938172
+      ],
+      "value_endianness": "little",
+      "values_sha256": "72fd08e9a41eeef89a6a350be7961a670b735172895e109600458973b0037757"
+    },
+    "saved_packet": {
+      "path": "results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T225710.255482Z/p4_failure_packets/p4_failure_0017.npz",
+      "bytes_stat": 468361314,
+      "recorded_sha256": "79f7865f8d425a9ffa416d1d55fcd8b1a1dcdb427cdcb2531979061c8c86155a",
+      "hash_status": "copied from stable failure manifest; NPZ NOT_READ and NOT_REHASHED",
+      "arrays": {
+        "c": {
+          "dtype": "complex128",
+          "finite": true,
+          "shape": [
+            9757120
+          ]
+        },
+        "g": {
+          "dtype": "complex128",
+          "finite": true,
+          "shape": [
+            9757120
+          ]
+        },
+        "port_closure_residual": {
+          "dtype": "complex128",
+          "finite": true,
+          "shape": [
+            572
+          ]
+        },
+        "port_state": {
+          "dtype": "complex128",
+          "finite": true,
+          "shape": [
+            572
+          ]
+        },
+        "r": {
+          "dtype": "complex128",
+          "finite": true,
+          "shape": [
+            9757120
+          ]
+        }
+      }
+    },
+    "last_failed_PC": {
+      "status": "ACTION_FAILED",
+      "exception": "p4 coupled A4/port residual exceeded the qualified limit",
+      "operation_seconds": {
+        "A_inner_true": 0.0,
+        "A_structure": 0.0,
+        "C": 486.10731503600255,
+        "smoother": 0.0
+      }
+    }
+  },
+  "balanced_checks": {
+    "successful_records": 8,
+    "includes_setup_QA_records": 1,
+    "completed_outer_PC_records": 7,
+    "max_initial_relative": 2.2977613607159716e-10,
+    "limit": 1e-08,
+    "record_labels_warning": "outer_pc_apply includes QA and failed row reuses label 8; use iterations.jsonl for actual outer iterations",
+    "records": [
+      {
+        "apply_count": 1,
+        "setup_check": "one_actual_BAL_H_apply_two_logical_p4_calls",
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 5.0768678270189e-12,
+          "operation_scale": 8.015830069208043,
+          "relative": 6.333552212541464e-13
+        }
+      },
+      {
+        "apply_count": 2,
+        "setup_check": null,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 9.935645453735116e-13,
+          "operation_scale": 1.5782600224461358,
+          "relative": 6.29531592540494e-13
+        }
+      },
+      {
+        "apply_count": 3,
+        "setup_check": null,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 6.228725135502144e-14,
+          "operation_scale": 0.08621084281165663,
+          "relative": 7.224990421576012e-13
+        }
+      },
+      {
+        "apply_count": 4,
+        "setup_check": null,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 1.0611357784255166e-11,
+          "operation_scale": 0.0888501258152693,
+          "relative": 1.1942985659150925e-10
+        }
+      },
+      {
+        "apply_count": 5,
+        "setup_check": null,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 4.871946982330093e-11,
+          "operation_scale": 0.3269062605376875,
+          "relative": 1.4903192659317177e-10
+        }
+      },
+      {
+        "apply_count": 6,
+        "setup_check": null,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 4.1344971244338693e-11,
+          "operation_scale": 0.2663988593549823,
+          "relative": 1.551995055250804e-10
+        }
+      },
+      {
+        "apply_count": 7,
+        "setup_check": null,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 1.776346075051426e-10,
+          "operation_scale": 0.79898956711668,
+          "relative": 2.2232406381246506e-10
+        }
+      },
+      {
+        "apply_count": 8,
+        "setup_check": null,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 3.384070189436799e-10,
+          "operation_scale": 1.4727683419579911,
+          "relative": 2.2977613607159716e-10
+        }
+      }
+    ]
+  },
+  "performance": {
+    "step_rule": "iterations 2..7 step_wall_seconds; includes interval monitoring/output if any; not isolated PC kernel",
+    "steps_2_7_mean_seconds": 1014.0377499780152,
+    "latest_completed_PC_operation_seconds": {
+      "A_inner_true": 0.0,
+      "A_structure": 159.650756200077,
+      "C": 674.865904647857,
+      "smoother": 151.48553884099238
+    },
+    "latest_C": [
+      {
+        "logical_apply": 15,
+        "coarse_wall_seconds": 337.85490639298223,
+        "logical_wall_seconds": 313.4377591619268,
+        "ph_restriction_seconds": 4.991481785895303,
+        "p_prolongation_seconds": 19.38477770681493,
+        "refinement_count": 1,
+        "timing": {
+          "a4_children_status": "MEASURED",
+          "a4_dtn_seconds": 0.1270422989036888,
+          "a4_volume_seconds": 98.37782844598405,
+          "a4_wall_seconds": 98.7995081548579,
+          "actual_factor_solve_seconds": 78.17681586300023,
+          "internal_recovery_seconds": 47.40483663114719,
+          "port_closure_seconds": 0.024232235038653016,
+          "port_coupling_correction_seconds": 0.172441289993003,
+          "rhs_reduce_seconds": 87.6611187600065,
+          "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+        }
+      },
+      {
+        "logical_apply": 16,
+        "coarse_wall_seconds": 336.93318604514934,
+        "logical_wall_seconds": 312.66847737599164,
+        "ph_restriction_seconds": 5.028546001994982,
+        "p_prolongation_seconds": 19.201423219870776,
+        "refinement_count": 1,
+        "timing": {
+          "a4_children_status": "MEASURED",
+          "a4_dtn_seconds": 0.1241952187847346,
+          "a4_volume_seconds": 97.55394163029268,
+          "a4_wall_seconds": 97.97294864291325,
+          "actual_factor_solve_seconds": 78.06060475297272,
+          "internal_recovery_seconds": 47.5621925808955,
+          "port_closure_seconds": 0.02395186689682305,
+          "port_coupling_correction_seconds": 0.16969209304079413,
+          "rhs_reduce_seconds": 87.70794470305555,
+          "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+        }
+      }
+    ],
+    "parent_child_warning": "C includes ledger; ledger includes A4 action; timing buckets must not be summed with parents"
+  },
+  "reading_scope": {
+    "no_new_FE": true,
+    "no_factorization": true,
+    "no_tests": true,
+    "no_resource_stream_read": true,
+    "no_NPZ_read": true
+  },
+  "root_cause_of_final_A4_floor": "UNKNOWN; not proven to be rounding, factor error, fast/native mismatch, recovery, or stale Vec state",
+  "next_priority": "saved failure #17 independent A4 residual decomposition before any full rerun; unchanged tolerances and <=2 same-factor refinements"
+}

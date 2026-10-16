@@ -1,0 +1,35 @@
+{
+  "schema": "task39extra.v7.p64_candidate_g_norm_static_correction.v1",
+  "created_utc": "2026-10-13T11:42:37Z",
+  "authority": {
+    "terminal_review_path": "tmp/p3_main_review/v7_main_p64_orientation_fix_terminal_review_20261013_v1.json",
+    "terminal_review_sha256": "fab17c177b54a109a19e7b97a487a88b82cc84ec4d84b7c22c297e7495c8fcd9"
+  },
+  "preserved_worker_report": {
+    "path": "results/euv_grazing1_phi0/v7_balh_action_only_diagnostic__action_only__mpi1/attempt_20261013_v3/worker_report.json",
+    "sha256": "2afba65730952fafde424a78907f7a39ef56ab282d52c0570aa03f2b9e59111c"
+  },
+  "fields": {
+    "legacy_g_norm": 1.0000000000000662,
+    "candidate_reported_g_norm": 304.5739374623016,
+    "pre_restore_residual_norm": 304.5739374623016,
+    "candidate_g_restored_exact": true,
+    "candidate_ph_g_norm": 0.04442528783929425
+  },
+  "static_trace": [
+    {
+      "path": "tmp/p3_main_review/v7_balh_action_only_diagnostic_worker_20261013_v2.py",
+      "locations": "_norm around lines 182-186; candidate restore/scatter/equality/norm around lines 1031-1038; candidate PH(g) around line 1070",
+      "finding": "The candidate restores the owned entries from the read-only g payload and verifies array equality before forming candidate PH(g). The reported candidate_g_norm is evaluated after a direct DOLFINx array overwrite and equals the earlier residual norm."
+    },
+    {
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py",
+      "finding": "The owner adjoint path copies its source Vec into fresh owned work storage before homogenization/scatter and computes a fresh projected target. The BAL_H gate uses the fresh PH(g) and projected residual; candidate_g_norm is report metadata and is not used in gate scaling."
+    }
+  ],
+  "interpretation": "The stale PETSc norm-cache explanation is consistent with the exact norm match and the reviewed data flow. It is a reporting-only discrepancy; the saved original report remains unchanged, the BAL_H expression is unchanged, and no FE was rerun for this note.",
+  "limitations": [
+    "This note is a static correction, not a new numeric qualification.",
+    "The original report and resource audit were not reread or rewritten."
+  ]
+}

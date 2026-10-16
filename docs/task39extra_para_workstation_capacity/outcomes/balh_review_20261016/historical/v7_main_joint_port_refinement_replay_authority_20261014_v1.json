@@ -1,0 +1,51 @@
+{
+  "authority": "User: \u53c8\u62a5\u9519\uff0c\u518d\u7ee7\u7eed\u4fee\u590d; earlier explicit repair then full 0.7 run without further confirmation",
+  "base_sha": "9cad7d12d3d0af3fe2c18930839579c7983ce3d7",
+  "created_utc": "2026-10-13T22:50:04.131534+00:00",
+  "decision": "APPROVED_MINIMAL_JOINT_PORT_REFINEMENT_AND_ONE_V7_FULL_REPLAY_AFTER_CLEAN_FREEZE_AND_FRESH_PASS",
+  "file_sha256": {
+    "src/runners/physical_retained_condensed_v20.py": "f7137bef989297cf20f409328caf6accc84c66afd0b879f1dafddec5f14c24c5",
+    "src/solvers/p4_cell_condensed_inverse.py": "76e35bdae9e149bec36049f444462c49caa2e29d1d87f5a3bb031dbaa931f9cc",
+    "src/test/test_task039extra_v20_joint_port_refinement.py": "bdd35abafc3e52630d02a5ab791fbcfa96752e82a5858afcc0c6389420cf0d50"
+  },
+  "launch_conditions": [
+    "Check no matching active target; do not touch neighbors",
+    "Freeze source and new package/sidecar; preserve old failed evidence and packages",
+    "Bind updated source hash to rank command, fresh helper and guard; unchanged input/physical/resolved must be verified",
+    "Fresh PASS then directly launch exactly one standard full run; no further user or main approval required",
+    "Report live PID/start_ticks/source/actual cap and guard binding to main"
+  ],
+  "main_static_evidence": {
+    "path": "tmp/p3_main_review/v7_main_p4_joint_refinement_static_review_20261014_v1.json",
+    "sha256": "14ebc94a90b20c1cc8f59e2ec0aec47910670e1c87c658ccadede648bc062b4d"
+  },
+  "requirements": {
+    "A4_n0_limit": 1e-10,
+    "A6_n0_limit": 1e-06,
+    "BAL_H_limit": 1e-08,
+    "MPI": 1,
+    "NUMA": "interleave0-1 within MPI rank argv",
+    "PSS_USS": "disabled",
+    "automatic_retry": false,
+    "caching_warm_start": "out of scope",
+    "clean_commit_files": [
+      "src/solvers/p4_cell_condensed_inverse.py",
+      "src/runners/physical_retained_condensed_v20.py",
+      "src/test/test_task039extra_v20_joint_port_refinement.py"
+    ],
+    "energy_absorption_limit": 1e-05,
+    "factor": "QA and full solve same one accurate p4 MUMPS factor",
+    "guard": "bind fresh run; p6 completion+24h until solve; permanently cancel upon solve",
+    "math_threads": 1,
+    "max_extra_same_factor_refinements": 2,
+    "model": "same V7 0.7nm Si anisotropic 46800-cell p6/p4 N0 572 full_solve",
+    "parent_cpu": 9,
+    "port_closure_limit": 1e-10,
+    "rss_hard_limit_bytes": 1800000000000,
+    "startup_available_minimum_bytes": 1937438953472,
+    "worker_cpu": 24
+  },
+  "reviewed_formula": "augmented correction [r_FE-B H^-1 e; -e], e=Ha-Dc",
+  "scope": "V7 explicit runtime only; legacy/p3 default refinement behavior retained; no changed matrix/operator/PC/tolerances",
+  "validation": "13 focused real-interface/pure algebra tests passed; final import sorting only; selected Ruff and diff-check passed; no FE qualification claimed"
+}
