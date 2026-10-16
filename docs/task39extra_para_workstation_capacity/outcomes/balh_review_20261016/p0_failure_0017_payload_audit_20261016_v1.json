@@ -1,0 +1,237 @@
+{
+  "arrays": {
+    "c": {
+      "descriptor_finite_matches": true,
+      "dtype": "complex128",
+      "finite": true,
+      "l2_norm_chunked_hypot": 1085.6279867370547,
+      "max_abs": 2.5564571275407735,
+      "raw_payload_sha256": "b0efc4deac3c22ef418713018d2657038476fa430e680e50edd762632d6b9c27",
+      "shape": [
+        9757120
+      ],
+      "size_bytes": 156113920
+    },
+    "g": {
+      "descriptor_finite_matches": true,
+      "dtype": "complex128",
+      "finite": true,
+      "l2_norm_chunked_hypot": 0.7348417462869885,
+      "max_abs": 0.0028099159046244882,
+      "raw_payload_sha256": "f519b094eabc39998a7bb2c4b522dc4dd9c9db1852e76a40527b1875132ed533",
+      "shape": [
+        9757120
+      ],
+      "size_bytes": 156113920
+    },
+    "port_closure_residual": {
+      "descriptor_finite_matches": true,
+      "dtype": "complex128",
+      "finite": true,
+      "l2_norm_chunked_hypot": 4.617635540813019e-14,
+      "max_abs": 2.08899198956643e-14,
+      "raw_payload_sha256": "b317b3600fb52b733ff2d44840b3ada99a63876985e4f752477020128937af9d",
+      "shape": [
+        572
+      ],
+      "size_bytes": 9152
+    },
+    "port_state": {
+      "descriptor_finite_matches": true,
+      "dtype": "complex128",
+      "finite": true,
+      "l2_norm_chunked_hypot": 0.0006164937291061074,
+      "max_abs": 0.0006152546286038194,
+      "raw_payload_sha256": "9a19e5e0b5a3021d8c1d16510d8d8cad95f16e19886858ca82d41a02ef952262",
+      "shape": [
+        572
+      ],
+      "size_bytes": 9152
+    },
+    "r": {
+      "descriptor_finite_matches": true,
+      "dtype": "complex128",
+      "finite": true,
+      "l2_norm_chunked_hypot": 8.232710732993795e-11,
+      "max_abs": 5.480533829858543e-13,
+      "raw_payload_sha256": "f9c6d52e47520270247feda4c9e5365aa3a122d540065e01458ff9b0c385b4bc",
+      "shape": [
+        9757120
+      ],
+      "size_bytes": 156113920
+    }
+  },
+  "artifact": {
+    "bytes": 468361314,
+    "hash_wall_seconds": 1.4855737800244242,
+    "inode": 166210595,
+    "mtime_ns": 1791955359394808962,
+    "npz_zip_members": [
+      {
+        "compressed_bytes": 156114048,
+        "name": "g.npy",
+        "uncompressed_bytes": 156114048
+      },
+      {
+        "compressed_bytes": 156114048,
+        "name": "c.npy",
+        "uncompressed_bytes": 156114048
+      },
+      {
+        "compressed_bytes": 156114048,
+        "name": "r.npy",
+        "uncompressed_bytes": 156114048
+      },
+      {
+        "compressed_bytes": 9280,
+        "name": "port_state.npy",
+        "uncompressed_bytes": 9280
+      },
+      {
+        "compressed_bytes": 9280,
+        "name": "port_closure_residual.npy",
+        "uncompressed_bytes": 9280
+      }
+    ],
+    "path": "results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_q4_n0_full__full3d_iterative__mpi1__Mna/20261013T225710.255482Z/p4_failure_packets/p4_failure_0017.npz",
+    "sha256_actual": "79f7865f8d425a9ffa416d1d55fcd8b1a1dcdb427cdcb2531979061c8c86155a",
+    "sha256_packet": "79f7865f8d425a9ffa416d1d55fcd8b1a1dcdb427cdcb2531979061c8c86155a",
+    "sha_match": true
+  },
+  "checks": {
+    "all_arrays_finite": true,
+    "all_descriptors_match": true,
+    "all_shapes_and_dtypes_match": true,
+    "archive_sha_matches_index": true,
+    "array_payloads_distinct_by_hash": true,
+    "g_norm_matches_recorded_rhs_norm_1e-12_rel": true,
+    "saved_r_relative_matches_final_packet_1e-8_rel": true
+  },
+  "created_utc": "2026-10-16T03:17:43.160536+00:00",
+  "derived_comparisons": {
+    "c_l2_norm": 1085.6279867370547,
+    "g_is_p4_rhs": true,
+    "g_l2_norm": 0.7348417462869885,
+    "g_norm_abs_delta": 1.7208456881689926e-14,
+    "packet_final_a4_relative_residual": 1.1203379196396286e-10,
+    "packet_rhs_norm": 0.7348417462869713,
+    "port_closure_residual_l2_norm": 4.617635540813019e-14,
+    "port_state_l2_norm": 0.0006164937291061074,
+    "r_l2_norm": 8.232710732993795e-11,
+    "r_over_g": 1.1203379196394422e-10,
+    "relative_residual_abs_delta": 1.8637413176585405e-23,
+    "snapshot_alias_limit": "NPZ member arrays are distinct allocations on load; this cannot prove whether a PETSc/NumPy buffer was aliased before serialization. Source capture code must be checked separately."
+  },
+  "measurement": {
+    "array_read_and_scan_wall_seconds": 1.625267593888566,
+    "cpu_affinity_at_audit": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "method": "Archive SHA streamed in 8 MiB blocks. Each ndarray scanned in 262144-value chunks; L2 accumulated with math.hypot(chunk L2) to avoid a full-size temporary.",
+    "numpy": "1.26.4",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+    "process_cpu_seconds": 3.008304901,
+    "process_peak_rss_bytes_proc_vmhwm": 521756672,
+    "process_peak_rss_bytes_ru_maxrss": 521142272,
+    "python": "3.12.3",
+    "wall_seconds_total": 3.1450859259348363
+  },
+  "pairwise_numpy_shares_memory_in_this_loaded_archive": {
+    "c:port_closure_residual": false,
+    "c:port_state": false,
+    "c:r": false,
+    "g:c": false,
+    "g:port_closure_residual": false,
+    "g:port_state": false,
+    "g:r": false,
+    "port_state:port_closure_residual": false,
+    "r:port_closure_residual": false,
+    "r:port_state": false
+  },
+  "resource_scope": "Process-local peak RSS only; no host resource stream, PSS/USS, or NPZ reread beyond this P0 audit.",
+  "schema": "task39extra.p4_failure_0017_payload_audit.v1",
+  "scope": "P0 read-only audit of the saved p4 RHS failure packet; no FE, matrix, or factor was built",
+  "source_attempt": {
+    "factor_counts": {
+      "logical_apply_calls": 17,
+      "numeric_calls": 1,
+      "solve_calls": 35,
+      "symbolic_calls": 1
+    },
+    "input_sha256": "488d50b4028b5a2fb84ee000af807cdb2d1a5255a17a0482113338f3bb8d2865",
+    "logical_apply_calls": 17,
+    "matrix_identity": {
+      "csr_sha256": "793776ae394a045e07757bd0634fd2828e029fb4a901bc19566957e0e6e87485",
+      "dense_gather": false,
+      "dtype": "complex128",
+      "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+      "index_dtype": "int64-little-endian-canonical",
+      "mapping_sha256": "f716ae525d58b5569c8bc4e913aa0352e33beb0f12808bcb3c6515a832a76da5",
+      "nnz": 1444001282,
+      "nnz_semantics": "owned-row-getRow-stored-entries",
+      "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+      "shape": [
+        3938172,
+        3938172
+      ],
+      "value_endianness": "little",
+      "values_sha256": "72fd08e9a41eeef89a6a350be7961a670b735172895e109600458973b0037757"
+    },
+    "physical_model_sha256": "d394308fe4dfcc8e0c25cdaa707fb8ff4bf4a394c268a8702b4afa069b78681a",
+    "source_sha": "d62c20fd2e6f77006edc80f6449447b39efcfdfe",
+    "status": "P4_NUMERICAL_UNQUALIFIED"
+  },
+  "worktree": {
+    "branch": "task39extra_para_workstation_capacity",
+    "git_status": "",
+    "head": "75d51aefed875cb99720f5d7c66fe1fc7a9eb3ee",
+    "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity"
+  }
+}

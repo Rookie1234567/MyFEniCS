@@ -350,3 +350,7 @@ base为`450255f4575792d052c1bac29837d39955ee1039`；R1 retry1运行SHA为`b2e132
 | do-not-merge | results、benchmarks/artifacts、tmp、venv、JIT/C/SO/矩阵/场 | ignored；只提交必要hash索引 |
 
 未获merge approval，不合并master。证据入口：[response](../response_v1.md)、[运行索引](records/run_index.json)、[测试](test_summary.md)。
+
+## V8 P0/P1 阶段收口（2026-10-16；V8仍开放）
+
+P0已审计并保留失败#17的真实NPZ SHA及g/c/r数据身份；P1在保存输入上完成action-only fast/native分项、端口闭合和内部恢复检查。fast A4相对残差 `1.1203379196396136e-10`，仍高于原 `1e-10` 门；native对照残差更大，分项相加对照也未通过。端口闭合约 `3.0e-14` 不能代替A4门。没有证明根因或生产修复，solver qualification未取得。原g4重放、完整BAL_H和E均 `NOT_RUN`；此阶段按用户要求停止后续计算。证据详见[Response V8](../response_v8.md)及[阶段索引](balh_review_20261016/v8_p0_p1_stage_archive_20261016_v1.json)。

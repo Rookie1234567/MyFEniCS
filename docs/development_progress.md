@@ -2910,3 +2910,5 @@ V6/R48收口后，用户追加授权将0.7 nm从metadata-only扩展到有界p3�
 ## 2026-10-16：0.7 nm 统一交接与 BAL_H 故障分层
 
 候选D的方向网格直接法使R/T接近RCWA显示值，但同时改变x/z及源码，尚非单轴收敛。本轮补齐迭代负结果的远端证据：首次BAL_H的P64方向映射缺陷有同失败输入修复见证，p4端口联合精化也使闭合残差降至约3e-14；最后仍卡在第17次C的A4=1.12034e-10，超原1e-10门，故迭代资格保持开放。下一修复先定位保存输入上的A4残差地板，不能通过放宽门限或增加精化掩盖；正确性与每步成本、物理精度分别审阅。本轮仅文档归档，无新计算。详见[统一交接](task39extra_para_workstation_capacity/review_handoff_0p7nm_balh_20261016.md)。
+
+V8阶段随后完成失败#17输入审计和一次无全局因子、无求解的action-only P1诊断。保存输入上的fast A4相对残差仍为 `1.1203379196396136e-10`，超过原 `1e-10` 门；native对照残差更大，端口闭合通过不能替代A4。根因和生产修复均未证明，A4/BAL_H资格保持开放。原g4 inverse重放、完整BAL_H和E均未运行。本记录只表示P0/P1阶段收口，不表示V8整体完成；详见[Response V8](task39extra_para_workstation_capacity/response_v8.md)及[阶段索引](task39extra_para_workstation_capacity/outcomes/balh_review_20261016/v8_p0_p1_stage_archive_20261016_v1.json)。
