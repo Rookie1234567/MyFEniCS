@@ -1254,10 +1254,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
     if args.saved_output_continuation_input is not None:
+        checker_only = os.environ.get("TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY") == "1"
         expected_output = (
-            args.saved_output_continuation_input.resolve().parent
-            / "task41_p0_saved_output_checker_result.json"
-        ).resolve()
+            Path(os.environ.get("TASK41_P0_CHECKER_RESULT_PATH", "")).resolve()
+            if checker_only
+            else (
+                args.saved_output_continuation_input.resolve().parent
+                / "task41_p0_saved_output_checker_result.json"
+            ).resolve()
+        )
         if (
             args.summary is not None
             or args.manifest is not None
@@ -1275,6 +1280,7 @@ def main(argv: list[str] | None = None) -> int:
                 contract_path=args.contract,
                 contract_sha256=args.contract_sha256,
                 repo_root=root,
+                result_path=args.output.resolve(),
             )
         except (OSError, ValueError, RuntimeError, KeyError) as exc:
             result = {

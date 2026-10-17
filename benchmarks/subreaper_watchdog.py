@@ -60,6 +60,23 @@ def _validate_task41_consumer_source(contract: dict[str, Any], environment: dict
         ['git', 'status', '--porcelain', '--untracked-files=normal'],
         cwd=Path.cwd(), check=True, capture_output=True, text=True
     ).stdout
+    checker_only = environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') == '1'
+    if checker_only:
+        if not re.fullmatch(r'[0-9a-f]{40}', str(consumer_sha or '')):
+            raise ValueError('Task41 saved consumer source SHA is invalid')
+        ancestry = subprocess.run(
+            ['git', 'merge-base', '--is-ancestor', str(consumer_sha), head],
+            cwd=Path.cwd(), check=False, capture_output=True, text=True
+        )
+        if (
+            environment.get('TASK41_P0_CHECKER_SOURCE_SHA') != head
+            or consumer_sha == contract.get('source', {}).get('sha')
+            or ancestry.returncode != 0
+            or branch != contract.get('branch')
+            or status.strip()
+        ):
+            raise ValueError('Task41 checker source must be clean and descend from the saved consumer source')
+        return True
     if (
         not re.fullmatch(r'[0-9a-f]{40}', str(consumer_sha or ''))
         or head != consumer_sha
@@ -238,6 +255,10 @@ def _validate_campaign_closeout_authorization(
             / 'bin/python'
         ).resolve()
         if checker_kind == 'task41_p0_saved_output_continuation_checker':
+            checker_only = (
+                environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') == '1'
+            )
+            authorized_input_hashes = authorization.get('input_sha256s')
             if (
                 environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
                 or len(argv) != 11
@@ -255,13 +276,33 @@ def _validate_campaign_closeout_authorization(
             results_root = (root / 'results' / str(contract['case']['model_id'])).resolve()
             output_path = Path(argv[10]).resolve()
             expected_output = (
-                snapshot_path.parent / 'task41_p0_saved_output_checker_result.json'
-            ).resolve()
+                Path(environment.get('TASK41_P0_CHECKER_RESULT_PATH', '')).resolve()
+                if checker_only
+                else (
+                    snapshot_path.parent / 'task41_p0_saved_output_checker_result.json'
+                ).resolve()
+            )
             if (
                 snapshot_path.name != 'task41_p0_saved_output_checker_input.json'
                 or not snapshot_path.is_relative_to(results_root)
                 or output_path != expected_output
                 or Path(argv[6]).resolve() != Path(str(contract_path)).resolve()
+                or (
+                    checker_only
+                    and (
+                        output_path.name != 'task41_p0_saved_output_checker_result.json'
+                        or not output_path.is_relative_to(results_root)
+                        or output_path.parent == snapshot_path.parent
+                        or Path(environment.get('TASK41_P0_CHECKER_INPUT_PATH', '')).resolve()
+                        != snapshot_path
+                        or not isinstance(authorized_input_hashes, list)
+                        or len(authorized_input_hashes) != 1
+                        or environment.get('TASK41_P0_CHECKER_INPUT_SHA256')
+                        != authorized_input_hashes[0]
+                        or environment.get('TASK41_P0_CHECKER_SOURCE_SHA')
+                        != authorization.get('source_sha')
+                    )
+                )
             ):
                 raise ValueError('saved-output checker paths do not match the Task41 result directory')
             input_paths = [str(snapshot_path)]

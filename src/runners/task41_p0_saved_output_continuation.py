@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import time
 from typing import Any, Mapping
@@ -489,6 +490,21 @@ def _source_identity(repo_root: Path) -> tuple[str, str]:
     return git("rev-parse", "HEAD"), git("branch", "--show-current")
 
 
+def _is_git_ancestor(ancestor: str, descendant: str, repo_root: Path) -> bool:
+    if not re.fullmatch(r"[0-9a-f]{40}", ancestor) or not re.fullmatch(
+        r"[0-9a-f]{40}", descendant
+    ):
+        return False
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
 def _require_service_envelope(
     contract: Mapping[str, Any], contract_path: Path, digest: str, repo_root: Path
 ) -> None:
@@ -506,15 +522,33 @@ def _require_service_envelope(
     if any(os.environ.get(key) != value for key, value in expected_environment.items()):
         raise RuntimeError("saved-output continuation lacks the frozen Task41 service envelope")
     source_sha, branch = _source_identity(repo_root)
-    if (
+    checker_only = os.environ.get("TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY") == "1"
+    common_identity_invalid = (
         os.environ.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") != "1"
-        or os.environ.get("TASK41_P0_CONSUMER_SOURCE_SHA") != source_sha
         or os.environ.get("TASK41_P0_EXPECTED_SOURCE_SHA") != contract["source"]["sha"]
         or os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256")
         != contract["runtime"]["abi_receipt_sha256"]
         or branch != contract["branch"]
         or source_sha == contract["source"]["sha"]
-    ):
+    )
+    if checker_only:
+        snapshot_path = Path(os.environ.get("TASK41_P0_CHECKER_INPUT_PATH", ""))
+        snapshot_sha256 = os.environ.get("TASK41_P0_CHECKER_INPUT_SHA256", "")
+        result_path = Path(os.environ.get("TASK41_P0_CHECKER_RESULT_PATH", ""))
+        consumer_source_sha = os.environ.get("TASK41_P0_CONSUMER_SOURCE_SHA", "")
+        if (
+            common_identity_invalid
+            or os.environ.get("TASK41_P0_CHECKER_SOURCE_SHA") != source_sha
+            or not re.fullmatch(r"[0-9a-f]{40}", consumer_source_sha)
+            or not _is_git_ancestor(consumer_source_sha, source_sha, repo_root)
+            or not snapshot_path.is_absolute()
+            or not re.fullmatch(r"[0-9a-f]{64}", snapshot_sha256)
+            or not snapshot_path.is_file()
+            or _sha256(snapshot_path) != snapshot_sha256
+            or not result_path.is_absolute()
+        ):
+            raise RuntimeError("saved-output checker-only source or authorized snapshot identity is invalid")
+    elif common_identity_invalid or os.environ.get("TASK41_P0_CONSUMER_SOURCE_SHA") != source_sha:
         raise RuntimeError("saved-output continuation producer and consumer source identities are not distinct and bound")
     for key, expected in (
         ("TASK41_P0_TASK_MEMORY_MAX_BYTES", contract["resources"]["task_memory_max_bytes"]),
@@ -786,6 +820,7 @@ def _check_comparison_outputs(
     contract_path: Path,
     contract_sha256: str,
     repo_root: Path,
+    result_path: Path | None = None,
 ) -> dict[str, Any]:
     from src.runners.task41_p0_checker import _task41_a2_numerical_checks
     from src.runners.task41_p0_contract import require_task41_p0_contract
@@ -810,16 +845,30 @@ def _check_comparison_outputs(
         or contract_digest != contract_sha256
     ):
         raise ValueError("saved-output continuation receipt or contract identity is invalid")
-    source_sha, branch = _source_identity(repo_root)
+    checker_source_sha, branch = _source_identity(repo_root)
+    consumer_source_sha = str(consumer.get("source_sha", ""))
+    checker_only = os.environ.get("TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY") == "1"
     if (
-        source_sha != consumer.get("source_sha")
+        (not checker_only and checker_source_sha != consumer_source_sha)
+        or (checker_only and os.environ.get("TASK41_P0_CHECKER_SOURCE_SHA") != checker_source_sha)
+        or (checker_only and os.environ.get("TASK41_P0_CONSUMER_SOURCE_SHA") != consumer_source_sha)
+        or len(consumer_source_sha) != 40
         or branch != "task41extra_phi90_p50x50_g17x20"
         or producer.get("source_sha") != contract["source"]["sha"]
         or Path(str(consumer.get("run_directory", ""))).resolve() != receipt_path.parent.resolve()
         or Path(str(producer.get("run_directory", ""))).resolve().is_relative_to(receipt_path.parent.resolve())
     ):
-        raise ValueError("saved-output continuation producer/consumer source or directory identity changed")
+        raise ValueError("saved-output producer/consumer/checker source or directory identity changed")
+    if checker_only and not _is_git_ancestor(consumer_source_sha, checker_source_sha, repo_root):
+        raise ValueError("saved-output consumer source is not an ancestor of the independent checker source")
     _require_service_envelope(contract, contract_path, contract_digest, repo_root)
+    if checker_only and (
+        Path(os.environ["TASK41_P0_CHECKER_INPUT_PATH"]).resolve() != receipt_path.resolve()
+        or os.environ["TASK41_P0_CHECKER_INPUT_SHA256"] != _sha256(receipt_path)
+        or Path(os.environ["TASK41_P0_CHECKER_RESULT_PATH"]).resolve()
+        != (result_path or receipt_path.parent / CONTINUATION_CHECKER_RECEIPT).resolve()
+    ):
+        raise ValueError("saved-output checker-only input or output differs from the service-authorized path/hash")
     original_root = Path(str(producer["run_directory"])).resolve(strict=True)
     original_worker, _, _, _ = _validate_original_attempt(
         original_root, contract, contract_digest
@@ -844,14 +893,14 @@ def _check_comparison_outputs(
         ("physical_model_sha256", case["physical_model_sha256"]),
         ("resolved_config_sha256", case["resolved_config_sha256"]),
         ("source_sha", contract["source"]["sha"]),
-        ("consumer_source_sha", source_sha),
+        ("consumer_source_sha", consumer_source_sha),
     ):
         if continuation_manifest.get(key) != expected:
             raise ValueError(f"continuation manifest {key} differs from its producer/consumer contract")
     if (
         continuation_summary.get("status") != "PASS"
         or continuation_summary.get("original_result_classification") != "WORKER_FAILED"
-        or continuation_summary.get("consumer_source_sha") != source_sha
+        or continuation_summary.get("consumer_source_sha") != consumer_source_sha
         or continuation_summary.get("source_sha") != contract["source"]["sha"]
     ):
         raise ValueError("continuation summary does not distinguish producer failure from consumer result")
@@ -872,7 +921,8 @@ def _check_comparison_outputs(
         "status": "PASS" if not errors else "FAIL",
         "checker_passed": not errors,
         "producer_source_sha": contract["source"]["sha"],
-        "consumer_source_sha": source_sha,
+        "consumer_source_sha": consumer_source_sha,
+        "checker_source_sha": checker_source_sha,
         "contract_sha256": contract_digest,
         "checker_input_snapshot_path": str(receipt_path),
         "checker_input_snapshot_sha256": _sha256(receipt_path),
@@ -882,10 +932,10 @@ def _check_comparison_outputs(
         "errors": errors,
         "raw_evidence_retained": True,
     }
-    result_path = receipt_path.parent / CONTINUATION_CHECKER_RECEIPT
-    _write_json(result_path, checker_payload)
-    checker_payload["checker_result_path"] = str(result_path)
-    checker_payload["checker_result_sha256"] = _sha256(result_path)
+    final_result_path = result_path or receipt_path.parent / CONTINUATION_CHECKER_RECEIPT
+    _write_json(final_result_path, checker_payload)
+    checker_payload["checker_result_path"] = str(final_result_path)
+    checker_payload["checker_result_sha256"] = _sha256(final_result_path)
     return checker_payload
 
 
@@ -895,14 +945,16 @@ def check_task41_p0_saved_output_continuation(
     contract_path: Path,
     contract_sha256: str,
     repo_root: Path | None = None,
+    result_path: Path | None = None,
 ) -> dict[str, Any]:
     """Independently recheck producer evidence and consumer outputs."""
     root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve()
     return _check_comparison_outputs(
-        receipt_path.resolve(strict=True),
+        receipt_path=receipt_path.resolve(strict=True),
         contract_path=contract_path,
         contract_sha256=contract_sha256,
         repo_root=root,
+        result_path=result_path,
     )
 
 
