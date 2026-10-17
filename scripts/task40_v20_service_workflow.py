@@ -9498,7 +9498,7 @@ def _run_task41_p0_saved_output_service(
         worker_watchdog = supervise(
             continuation_command,
             service_directory / "continuation_watchdog",
-            wall_seconds=window.numeric_seconds,
+            wall_seconds=window.cutoff_seconds,
             campaign_phase="numeric",
             **common_watchdog,
         )

@@ -100,3 +100,5 @@ python -m pytest -q --tb=short src/test/test_task41_a2_q_csr_reuse.py src/test/t
 最终 C1 定向测试：`python -m pytest -q src/test/test_task41_p0_contract.py src/test/test_task41_p0_saved_output_continuation.py src/test/test_task41_p0_reference_audit.py`，20 passed in 1.34s。修改文件 py_compile、启动脚本 bash -n、git diff --check 通过。初次临时 ABI 检查误断言 .venv 前缀而失败；实际 C1 runtime_prefix/bin/python、complex128/int32、MPI1 及原包版本读回正常，未修改环境。Ruff 在当前环境不可用。
 
 该测试结果不是 A2 最终验收；完整同离散比较和 required checker 待保存场续作完成。
+
+保存场续作首次 service 在启动 worker 前因错误属性 `FixedCampaignWindow.numeric_seconds` 退出；正确 API 为 `cutoff_seconds`。旧 unit `task41-p0-a2-saved-output-attempt7.service`、失败收据及 2.372285548131913 s 保留，未运行 FE/因子/KSP。一行修复后，fixture 改用真实 FixedCampaignWindow，验证 numeric cutoff、closeout reserve 与原 window/hash；仅该回归 1 passed in 0.25s，相关 py_compile 与 diff 检查通过。重试使用独立输出目录和 unit，T0 不刷新。

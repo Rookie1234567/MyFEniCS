@@ -18,6 +18,7 @@ from src.runners.task41_p0_saved_output_continuation import (
 )
 from src.runners.task41_p0_checker import _task41_a2_diagnostic_inventory_from_data
 from src.runners import task41_p0_contract
+from src.runners.task40_v10_campaign import FixedCampaignWindow
 from src.runners.workflow_timebase import clock_sample
 from scripts.task40_v20_service_workflow import _run_task41_p0_saved_output_service
 
@@ -192,17 +193,17 @@ def test_service_call_chain_uses_string_activation_and_one_frozen_window(
     run_root.mkdir(parents=True)
     output_root = results_root / "continuation"
     contract_sha = "f" * 64
-    window = type(
-        "Window",
-        (),
-        {
-            "path": repo_root / "execution_window.json",
-            "sha256": "e" * 64,
-            "accounting_path": repo_root / "window_accounting.jsonl",
-            "numeric_seconds": 1800.0,
-            "closeout_seconds": 600.0,
-        },
-    )()
+    window = FixedCampaignWindow(
+        path=repo_root / "execution_window.json",
+        sha256="e" * 64,
+        payload={"accounting_path": str(repo_root / "window_accounting.jsonl")},
+        anchor={},
+        t0_utc_ns=100,
+        deadline_utc_ns=1_800_000_000_100,
+        total_seconds=1800.0,
+        bootstrap_seconds=0.0,
+        closeout_seconds=600.0,
+    )
     contract = {
         "task_id": "task41-p0",
         "case": {"model_id": "model", "input_sha256": "a" * 64},
@@ -225,6 +226,7 @@ def test_service_call_chain_uses_string_activation_and_one_frozen_window(
         assert kwargs["tree_cap_bytes"] == contract["resources"]["task_memory_max_bytes"]
         assert kwargs["host_reserve_bytes"] == contract["resources"]["host_reserve_bytes"]
         if len(calls) == 1:
+            assert kwargs["wall_seconds"] == window.cutoff_seconds
             output_root.mkdir()
             snapshot = output_root / "task41_p0_saved_output_checker_input.json"
             snapshot.write_text(json.dumps({"status": "OUTPUTS_READY"}))
@@ -234,6 +236,7 @@ def test_service_call_chain_uses_string_activation_and_one_frozen_window(
             assert command[command.index("--consumer-source-sha") + 1] == "d" * 40
             assert command[command.index("--contract-sha256") + 1] == contract_sha
         else:
+            assert kwargs["wall_seconds"] == window.closeout_seconds
             output_path = Path(command[command.index("--output") + 1])
             snapshot = output_root / "task41_p0_saved_output_checker_input.json"
             output_path.write_text(
