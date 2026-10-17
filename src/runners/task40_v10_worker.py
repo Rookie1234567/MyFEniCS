@@ -8511,6 +8511,23 @@ def run_task40_v10_p6_reference_worker(
                 def target_stage_callback(facts: Mapping[str, Any]) -> None:
                     phase = str(facts.get("phase", ""))
                     status = str(facts.get("status", ""))
+                    if phase == "task41_b0_native_surface_preflight" and status == "STARTED":
+                        admission = allocation_gate(
+                            "task41_b0_native_surface_mapping_and_pairing",
+                            {
+                                "additional_payload_bytes": int(facts["additional_payload_bytes"]),
+                                "workspace_bytes": int(facts["workspace_bytes"]),
+                                "native_surface_memory_upper_bound": dict(facts),
+                                "resource_classification": facts["resource_classification"],
+                            },
+                        )
+                        summary["b0_native_surface_resource_admission"] = {
+                            "upper_bound": dict(facts), "admission": admission,
+                        }
+                        runtime.marker(
+                            "task41_b0_native_surface_resource_admission",
+                            summary["b0_native_surface_resource_admission"],
+                        )
                     if phase == "dtn_carrier_build" and status == "STARTED":
                         bound = _task41_b0_carrier_memory_upper_bound(
                             target_levels, cfg, tuple(task41_mode_inventory[0])
@@ -8543,10 +8560,14 @@ def run_task40_v10_p6_reference_worker(
                         )
                     if (
                         status in {"STARTED", "COMPLETE", "FAILED"}
+                        or phase == "task41_b0_native_surface_pair_mode"
                         or (
                             phase == "dtn_carrier_mode"
                             and status == "PROGRESS"
-                            and int(facts.get("completed", 0)) % 512 == 0
+                            and (
+                                int(facts.get("completed", 0)) <= 64
+                                or int(facts.get("completed", 0)) % 512 == 0
+                            )
                         )
                     ):
                         runtime.marker("task41_b0_target_physical_action_stage", dict(facts))
@@ -8563,6 +8584,11 @@ def run_task40_v10_p6_reference_worker(
                 jit_options=SAME_MESH_JIT_OPTIONS,
                 dtn_phase_gauge=BOUNDARY_PLANE,
                 verify_dtn_quadrature=True,
+                surface_assembly_backend=(
+                    "native_boundary_plane" if is_task41_b0 else "ffcx"
+                ),
+                pair_native_surface=bool(is_task41_b0),
+                native_surface_pair_tolerance=_REGULAR_ACTION_LIMIT if is_task41_b0 else None,
                 surface_functional_checkpoint=(
                     _task40_v33_surface_checkpoint_for_scope(
                         task41_b0_checkpoint, scope="global"

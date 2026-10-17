@@ -38,6 +38,7 @@ def _surface_assemblers(
     jit_options: Mapping[str, Any] | None = None,
     dtn_phase_gauge: str = "global_z",
     verify_dtn_quadrature: bool = False,
+    collect_timing: bool = False,
     progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
@@ -75,6 +76,7 @@ def _surface_assemblers(
                     if dtn_phase_gauge == BOUNDARY_PLANE else None
                 ),
                 verify_compiled_gauss=verify_dtn_quadrature,
+                collect_timing=collect_timing,
             )
         except BaseException as error:
             if progress_callback is not None:
@@ -97,6 +99,593 @@ def _surface_assemblers(
                 "process_cpu_seconds": max(0.0, time.process_time() - cpu_started),
             })
     return result
+
+
+def _native_array_sha256(value: Any) -> str:
+    import hashlib
+
+    return hashlib.sha256(np.ascontiguousarray(value).tobytes()).hexdigest()
+
+
+def _task41_verify_compiled_native_quadrature(
+    production_assemblers: Mapping[tuple[str, int], Any], quadrature_degree: int
+) -> dict[str, Any]:
+    """Require actual compiled FFCx facet rules to equal the native tensor rule."""
+
+    import basix
+
+    degree = int(quadrature_degree)
+    interval_points, interval_weights = basix.make_quadrature(
+        basix.CellType.interval, degree
+    )
+    facet_points, facet_weights = basix.make_quadrature(
+        basix.CellType.quadrilateral, degree
+    )
+    if not len(interval_points) or facet_points.ndim != 2 or facet_points.shape[1] != 2:
+        raise ValueError("Task41 native/compiled quadrature has an unsupported rule shape")
+    expected_pairs = {
+        (float(x[0]), float(y[0])): float(wx * wy)
+        for x, wx in zip(interval_points, interval_weights, strict=True)
+        for y, wy in zip(interval_points, interval_weights, strict=True)
+    }
+    if len(expected_pairs) != len(interval_points) ** 2:
+        raise ValueError("Task41 native tensor quadrature contains duplicate nodes")
+    for point, weight in zip(facet_points, facet_weights, strict=True):
+        expected_weight = expected_pairs.get((float(point[0]), float(point[1])))
+        if expected_weight is None or not np.isclose(
+            float(weight), expected_weight, rtol=32 * np.finfo(float).eps, atol=0.0
+        ):
+            raise ValueError("Basix quadrilateral rule is not the native interval tensor product")
+
+    def signature(array: Any) -> dict[str, Any]:
+        contiguous = np.ascontiguousarray(array)
+        return {
+            "shape": tuple(contiguous.shape),
+            "dtype": str(contiguous.dtype),
+            "sha256": _native_array_sha256(contiguous),
+        }
+
+    expected_points = signature(facet_points)
+    expected_weights = signature(facet_weights)
+    checked_rules = 0
+    for key, assembler in production_assemblers.items():
+        identity = getattr(assembler, "compiled_gauss_identity", None)
+        if not isinstance(identity, Mapping) or not identity.get("rules"):
+            raise ValueError(f"compiled Gauss identity is missing for surface {key}")
+        for record in identity["rules"]:
+            facet_cell = record.get("facet_cell")
+            facet_cell_name = str(getattr(facet_cell, "name", facet_cell)).lower().split(".")[-1]
+            if (
+                int(record.get("degree", -1)) != degree
+                or facet_cell_name != "quadrilateral"
+                or record.get("points") != expected_points
+                or record.get("weights") != expected_weights
+            ):
+                raise ValueError(
+                    f"compiled FFCx nodes/weights differ from the native tensor Gauss rule for {key}"
+                )
+            checked_rules += 1
+    if checked_rules != 4:
+        raise ValueError("Task41 requires compiled quadrature verification for all four port components")
+    return {
+        "degree": degree,
+        "facet_cell": "quadrilateral",
+        "native_rule": "Basix interval Gauss-Legendre tensor product used by FacetPolynomial.integral_native",
+        "compiled_rule_count": checked_rules,
+        "compiled_nodes_and_weights_equal_native_tensor_product": True,
+        "compiled_forms_include_actual_C_weight_and_node_id_checks": True,
+    }
+
+
+def _task41_native_probe_indices(modes: Any) -> tuple[int, ...]:
+    """Select a tiny, finite two-port s/p pair plus a distinct wavevector per port."""
+
+    groups: dict[str, dict[tuple[Any, ...], list[int]]] = {"bottom": {}, "top": {}}
+    score_by_key: dict[tuple[str, tuple[Any, ...]], float] = {}
+    k_by_key: dict[tuple[str, tuple[Any, ...]], tuple[complex, ...]] = {}
+    for index, mode in enumerate(modes):
+        side = str(mode.side)
+        if side not in groups:
+            continue
+        key = (
+            int(mode.m), int(mode.n), complex(mode.alpha), complex(mode.gamma),
+            tuple(complex(value) for value in np.asarray(mode.k_vector).reshape(-1)),
+        )
+        groups[side].setdefault(key, []).append(index)
+        wave_key = (side, key)
+        score_by_key[wave_key] = float(np.hypot(abs(complex(mode.alpha)), abs(complex(mode.gamma))))
+        k_by_key[wave_key] = key[-1]
+    selected: set[int] = set()
+    for side in ("bottom", "top"):
+        side_groups = groups[side]
+        if len(side_groups) < 2:
+            raise ValueError(f"Task41 native pairing needs two distinct {side} wavevectors")
+        paired = [
+            key for key, indices in side_groups.items()
+            if {str(getattr(modes[index], "polarization", "")).lower() for index in indices}
+            >= {"s", "p"}
+        ]
+        if not paired:
+            raise ValueError(f"Task41 native pairing needs an adjacent s/p {side} wavevector")
+        near_key = min(paired, key=lambda key: (score_by_key[(side, key)], key[0], key[1]))
+        near_k = k_by_key[(side, near_key)]
+        other_keys = [
+            key for key in side_groups
+            if k_by_key[(side, key)] != near_k
+        ]
+        if not other_keys:
+            raise ValueError(f"Task41 native pairing needs a distinct {side} wavevector")
+        far_key = max(other_keys, key=lambda key: (score_by_key[(side, key)], key[0], key[1]))
+        selected.update(side_groups[near_key])
+        # One far mode tests a different wavevector without duplicating a full polarization pair.
+        selected.add(side_groups[far_key][0])
+    result = tuple(sorted(selected))
+    coverage = {
+        side: {
+            str(getattr(modes[index], "polarization", "")).lower()
+            for index in result if str(modes[index].side) == side
+        }
+        for side in ("bottom", "top")
+    }
+    if any(coverage[side] != {"s", "p"} for side in ("bottom", "top")):
+        raise ValueError("Task41 native representative set does not cover s and p on both ports")
+    return result
+
+
+def _task41_compare_sparse_functional(
+    reference: Any,
+    candidate: Any,
+    *,
+    relative_tolerance: float,
+) -> dict[str, Any]:
+    """Compare full sparse functionals with the reference L2 norm as denominator."""
+
+    ref_rows, ref_values = reference
+    got_rows, got_values = candidate
+    ref_rows = np.asarray(ref_rows)
+    got_rows = np.asarray(got_rows)
+    ref_values = np.asarray(ref_values, dtype=np.complex128)
+    got_values = np.asarray(got_values, dtype=np.complex128)
+    if (
+        ref_rows.shape != ref_values.shape
+        or got_rows.shape != got_values.shape
+        or (len(ref_rows) > 1 and not np.all(ref_rows[:-1] < ref_rows[1:]))
+        or (len(got_rows) > 1 and not np.all(got_rows[:-1] < got_rows[1:]))
+    ):
+        raise ValueError("Task41 pairing requires sorted unique rows and matching values")
+    common, ref_positions, got_positions = np.intersect1d(
+        ref_rows, got_rows, assume_unique=True, return_indices=True
+    )
+    ref_only = np.setdiff1d(ref_rows, got_rows, assume_unique=True)
+    got_only = np.setdiff1d(got_rows, ref_rows, assume_unique=True)
+    delta_common = ref_values[ref_positions] - got_values[got_positions]
+    difference_squared = float(np.vdot(delta_common, delta_common).real)
+    if len(ref_only):
+        values = ref_values[np.searchsorted(ref_rows, ref_only)]
+        difference_squared += float(np.vdot(values, values).real)
+    if len(got_only):
+        values = got_values[np.searchsorted(got_rows, got_only)]
+        difference_squared += float(np.vdot(values, values).real)
+    reference_norm = float(np.linalg.norm(ref_values))
+    difference_norm = float(np.sqrt(max(0.0, difference_squared)))
+    relative_error = (
+        difference_norm / reference_norm
+        if reference_norm > 0.0
+        else (0.0 if difference_norm == 0.0 else float("inf"))
+    )
+    max_abs = float(np.max(np.abs(delta_common), initial=0.0))
+    if len(ref_only):
+        max_abs = max(max_abs, float(np.max(np.abs(ref_values[np.searchsorted(ref_rows, ref_only)]), initial=0.0)))
+    if len(got_only):
+        max_abs = max(max_abs, float(np.max(np.abs(got_values[np.searchsorted(got_rows, got_only)]), initial=0.0)))
+    support_difference = int(len(ref_only) + len(got_only))
+    return {
+        "support_symmetric_difference_count": support_difference,
+        "support_rows_equal": support_difference == 0,
+        "reference_row_count": int(len(ref_rows)),
+        "candidate_row_count": int(len(got_rows)),
+        "reference_l2_norm": reference_norm,
+        "difference_l2_norm": difference_norm,
+        "relative_l2_error_over_reference_norm": relative_error,
+        "maximum_absolute_difference_diagnostic_only": max_abs,
+        "relative_tolerance": float(relative_tolerance),
+        "pass": bool(support_difference == 0 and relative_error <= relative_tolerance),
+    }
+
+
+def _task41_pair_native_surface_assemblers(
+    modes: Any,
+    production_assemblers: Mapping[tuple[str, int], Any],
+    native_assemblers: Mapping[tuple[str, int], Any],
+    mpc: Any,
+    cfg: Any,
+    *,
+    relative_tolerance: float,
+    h_relative_tolerance: float = 1.0e-14,
+    progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    """Pair finite live B/D/H functionals, actions, cutoffs, and phase timings."""
+
+    from .dtn_port_3d import (
+        _combine_owned_entries,
+        _mode_projection_denominator,
+        _traction_vector,
+    )
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        assembly_projection_denominator,
+        phase_gauge_descriptor,
+        port_plane_z,
+    )
+
+    selected = _task41_native_probe_indices(modes)
+    comm = mpc.function_space.mesh.comm
+    native_rule = next(iter(native_assemblers.values())).rule
+    comparisons = []
+    timing = {
+        key: 0.0 for key in (
+            "D_projection_production_wall_seconds", "D_projection_production_process_cpu_seconds",
+            "D_projection_native_wall_seconds", "D_projection_native_process_cpu_seconds",
+            "B_coupling_production_wall_seconds", "B_coupling_production_process_cpu_seconds",
+            "B_coupling_native_wall_seconds", "B_coupling_native_process_cpu_seconds",
+        )
+    }
+    alpha_test = 0.7 - 0.4j
+    for index in selected:
+        mode = modes[index]
+        reference_components = []
+        native_components = []
+        component_checks = []
+        component_cutoffs = []
+        for component in (0, 1):
+            old_assembler = production_assemblers[(str(mode.side), component)]
+            new_assembler = native_assemblers[(str(mode.side), component)]
+            started, cpu_started = time.perf_counter(), time.process_time()
+            old_entries = old_assembler.assemble_entries(mode, mpc)
+            old_elapsed, old_cpu = time.perf_counter() - started, time.process_time() - cpu_started
+            started, cpu_started = time.perf_counter(), time.process_time()
+            new_entries = new_assembler.assemble_entries(mode, mpc)
+            new_elapsed, new_cpu = time.perf_counter() - started, time.process_time() - cpu_started
+            component_check = _task41_compare_sparse_functional(
+                old_entries, new_entries, relative_tolerance=relative_tolerance
+            )
+            component_check.update({
+                "component": component,
+                "production_wall_seconds": old_elapsed,
+                "production_process_cpu_seconds": old_cpu,
+                "native_wall_seconds": new_elapsed,
+                "native_process_cpu_seconds": new_cpu,
+            })
+            component_checks.append(component_check)
+            component_cutoffs.append({
+                "component": component,
+                "production": dict(old_assembler.assembly_stats.get("last_filter_audit", {})),
+                "native": dict(new_assembler.rule.assembly_stats.get("last_component_filter", {})),
+            })
+            reference_components.append(old_entries)
+            native_components.append(new_entries)
+
+        traction = _traction_vector(mode, cfg)
+        projection_coefficients = (mode.e_vector[0], mode.e_vector[1])
+        coupling_coefficients = (-traction[0], -traction[1])
+        combination_cutoffs = {}
+
+        started, cpu_started = time.perf_counter(), time.process_time()
+        reference_projection_audit: dict[str, Any] = {}
+        reference_projection = _combine_owned_entries(
+            tuple(reference_components), projection_coefficients,
+            comm=comm, audit=reference_projection_audit,
+        )
+        reference_projection = (reference_projection[0], np.conjugate(reference_projection[1]))
+        projection_reference_wall = time.perf_counter() - started
+        projection_reference_cpu = time.process_time() - cpu_started
+        started, cpu_started = time.perf_counter(), time.process_time()
+        native_projection_audit: dict[str, Any] = {}
+        native_projection = _combine_owned_entries(
+            tuple(native_components), projection_coefficients,
+            comm=comm, audit=native_projection_audit,
+        )
+        native_projection = (native_projection[0], np.conjugate(native_projection[1]))
+        projection_native_wall = time.perf_counter() - started
+        projection_native_cpu = time.process_time() - cpu_started
+        projection_check = _task41_compare_sparse_functional(
+            reference_projection, native_projection,
+            relative_tolerance=relative_tolerance,
+        )
+        combination_cutoffs["D_projection"] = {
+            "production": reference_projection_audit,
+            "native": native_projection_audit,
+        }
+        timing["D_projection_production_wall_seconds"] += projection_reference_wall
+        timing["D_projection_production_process_cpu_seconds"] += projection_reference_cpu
+        timing["D_projection_native_wall_seconds"] += projection_native_wall
+        timing["D_projection_native_process_cpu_seconds"] += projection_native_cpu
+
+        started, cpu_started = time.perf_counter(), time.process_time()
+        reference_coupling_audit: dict[str, Any] = {}
+        reference_coupling = _combine_owned_entries(
+            tuple(reference_components), coupling_coefficients,
+            comm=comm, audit=reference_coupling_audit,
+        )
+        coupling_reference_wall = time.perf_counter() - started
+        coupling_reference_cpu = time.process_time() - cpu_started
+        started, cpu_started = time.perf_counter(), time.process_time()
+        native_coupling_audit: dict[str, Any] = {}
+        native_coupling = _combine_owned_entries(
+            tuple(native_components), coupling_coefficients,
+            comm=comm, audit=native_coupling_audit,
+        )
+        coupling_native_wall = time.perf_counter() - started
+        coupling_native_cpu = time.process_time() - cpu_started
+        coupling_check = _task41_compare_sparse_functional(
+            reference_coupling, native_coupling,
+            relative_tolerance=relative_tolerance,
+        )
+        combination_cutoffs["B_coupling"] = {
+            "production": reference_coupling_audit,
+            "native": native_coupling_audit,
+        }
+        timing["B_coupling_production_wall_seconds"] += coupling_reference_wall
+        timing["B_coupling_production_process_cpu_seconds"] += coupling_reference_cpu
+        timing["B_coupling_native_wall_seconds"] += coupling_native_wall
+        timing["B_coupling_native_process_cpu_seconds"] += coupling_native_cpu
+
+        area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+        h_reference = float(area * mode.electric_tangential_norm_sq)
+        h_candidate = float(assembly_projection_denominator(mode, cfg, BOUNDARY_PLANE))
+        h_error = (
+            abs(h_candidate - h_reference) / abs(h_reference)
+            if h_reference > 0.0 else float("inf")
+        )
+        phase_plane_z = float(port_plane_z(mode, cfg))
+        gauge_descriptor = phase_gauge_descriptor(mode, cfg, BOUNDARY_PLANE)
+        exponent = 1j * complex(mode.k_vector[2]) * phase_plane_z
+        global_h_status = "NOT_EVALUATED_UNREPRESENTABLE_GLOBAL_PHASE"
+        global_h_error = None
+        global_h_reference = None
+        if np.isfinite(exponent.real) and -350.0 < exponent.real < 350.0:
+            boundary_phase = complex(np.exp(exponent))
+            if np.isfinite((boundary_phase.real, boundary_phase.imag)).all() and abs(boundary_phase) > 0.0:
+                global_h_reference = float(_mode_projection_denominator(mode, cfg))
+                h_from_global = global_h_reference / abs(boundary_phase) ** 2
+                global_h_error = abs(h_from_global - h_candidate) / abs(h_candidate)
+                global_h_status = "CHECKED"
+        global_h_pass = (
+            global_h_status != "CHECKED"
+            or (global_h_error is not None and global_h_error <= h_relative_tolerance)
+        )
+        h_pass = bool(
+            np.isfinite(h_candidate) and h_candidate > 0.0
+            and np.isfinite(h_error) and h_error <= h_relative_tolerance
+            and global_h_pass
+            and gauge_descriptor["gauge"] == BOUNDARY_PLANE
+            and gauge_descriptor["port_plane_z"] == phase_plane_z
+            and native_assemblers[(str(mode.side), 0)].boundary_reference_z == phase_plane_z
+            and native_assemblers[(str(mode.side), 1)].boundary_reference_z == phase_plane_z
+        )
+        h_check = {
+            "pass": h_pass,
+            "phase_gauge_descriptor": gauge_descriptor,
+            "boundary_plane_z": phase_plane_z,
+            "H_reference_from_area_and_tangential_norm": h_reference,
+            "H_candidate_from_boundary_plane_gauge": h_candidate,
+            "relative_error_over_reference_H": h_error,
+            "global_z_H_equivalence_status": global_h_status,
+            "global_z_H_reference": global_h_reference,
+            "global_z_H_relative_error_over_boundary_plane_H": global_h_error,
+            "relative_tolerance": float(h_relative_tolerance),
+            "normalization_scope": "area times tangential electric norm squared; no global-z exponential in native assembly",
+        }
+
+        # Match FullspaceDtnAction.apply exactly: D_raw(x)=projection_values dot x,
+        # then output_values=coupling_values * D_raw(x)/H. The carrier stores
+        # projection_values in its production (already-conjugated) convention.
+        candidate_rows = native_rule.candidate_rows
+        input_field = np.zeros(len(candidate_rows), dtype=np.complex128)
+        reference_d_positions = native_rule.compact_positions(reference_projection[0])
+        reference_d_values = np.asarray(reference_projection[1], dtype=np.complex128)
+        d_norm = float(np.linalg.norm(reference_d_values))
+        if d_norm > 0.0 and h_candidate > 0.0:
+            input_field[reference_d_positions] = np.conjugate(reference_d_values) / d_norm
+            d_reference_raw = complex(np.dot(
+                reference_d_values, input_field[reference_d_positions]
+            ))
+            candidate_d_positions = native_rule.compact_positions(native_projection[0])
+            d_candidate_raw = complex(np.dot(
+                native_projection[1], input_field[candidate_d_positions]
+            ))
+            d_reference_norm = abs(d_reference_raw)
+            d_error = (
+                abs(d_candidate_raw - d_reference_raw) / d_reference_norm
+                if d_reference_norm > 0.0
+                else (0.0 if d_candidate_raw == d_reference_raw else float("inf"))
+            )
+            input_norm = float(np.linalg.norm(input_field))
+        else:
+            d_reference_raw = d_candidate_raw = 0.0j
+            d_reference_norm = input_norm = 0.0
+            d_error = float("inf")
+        d_raw_check = {
+            "pass": bool(input_norm > 0.0 and d_error <= relative_tolerance),
+            "input_norm": input_norm,
+            "input_sha256": _native_array_sha256(input_field),
+            "input_kind": "unit-norm conjugate of the production projection functional on candidate rows",
+            "D_raw_x_reference": [d_reference_raw.real, d_reference_raw.imag],
+            "D_raw_x_candidate": [d_candidate_raw.real, d_candidate_raw.imag],
+            "reference_D_raw_x_magnitude_denominator": d_reference_norm,
+            "relative_error_over_reference_D_raw_x": d_error,
+            "relative_tolerance": float(relative_tolerance),
+            "H_is_applied_after_raw_D": True,
+        }
+        reference_action = (
+            reference_coupling[0],
+            np.asarray(reference_coupling[1], dtype=np.complex128) * (d_reference_raw / h_reference),
+        )
+        candidate_action = (
+            native_coupling[0],
+            np.asarray(native_coupling[1], dtype=np.complex128) * (d_candidate_raw / h_candidate),
+        )
+        action_check = _task41_compare_sparse_functional(
+            reference_action, candidate_action, relative_tolerance=relative_tolerance
+        )
+        action_check.update({
+            "D_raw_x_reference": [d_reference_raw.real, d_reference_raw.imag],
+            "D_raw_x_candidate": [d_candidate_raw.real, d_candidate_raw.imag],
+            "H_reference": h_reference,
+            "H_candidate": h_candidate,
+            "action": "coupling_values * (projection_values dot x / H)",
+        })
+        b_reference = (
+            reference_coupling[0], alpha_test * np.asarray(reference_coupling[1], dtype=np.complex128)
+        )
+        b_candidate = (
+            native_coupling[0], alpha_test * np.asarray(native_coupling[1], dtype=np.complex128)
+        )
+        b_alpha_check = _task41_compare_sparse_functional(
+            b_reference, b_candidate, relative_tolerance=relative_tolerance
+        )
+        b_alpha_check.update({
+            "alpha": [alpha_test.real, alpha_test.imag],
+            "H_applied": False,
+            "action": "alpha * coupling_values",
+        })
+        mode_pass = bool(
+            all(item["pass"] for item in component_checks)
+            and projection_check["pass"] and coupling_check["pass"]
+            and h_check["pass"] and d_raw_check["pass"]
+            and action_check["pass"] and b_alpha_check["pass"]
+        )
+        mode_result = {
+            "mode_index": int(index),
+            "mode_key": [str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)],
+            "alpha": [complex(mode.alpha).real, complex(mode.alpha).imag],
+            "gamma": [complex(mode.gamma).real, complex(mode.gamma).imag],
+            "k_vector": [
+                [complex(value).real, complex(value).imag]
+                for value in np.asarray(mode.k_vector).reshape(-1)
+            ],
+            "component_comparisons": component_checks,
+            "component_filter_cutoffs": component_cutoffs,
+            "combination_filter_cutoffs": combination_cutoffs,
+            "D_projection_comparison": projection_check,
+            "B_coupling_comparison": coupling_check,
+            "B_alpha_action_comparison": b_alpha_check,
+            "D_raw_x_action_comparison": d_raw_check,
+            "reconstructed_dtn_action_comparison": action_check,
+            "H_gauge_comparison": h_check,
+            "D_projection_timing": {
+                "production_wall_seconds": projection_reference_wall,
+                "production_process_cpu_seconds": projection_reference_cpu,
+                "native_wall_seconds": projection_native_wall,
+                "native_process_cpu_seconds": projection_native_cpu,
+            },
+            "B_coupling_timing": {
+                "production_wall_seconds": coupling_reference_wall,
+                "production_process_cpu_seconds": coupling_reference_cpu,
+                "native_wall_seconds": coupling_native_wall,
+                "native_process_cpu_seconds": coupling_native_cpu,
+            },
+            "pass": mode_pass,
+        }
+        comparisons.append(mode_result)
+        if progress_callback is not None:
+            progress_callback({
+                "phase": "task41_b0_native_surface_pair_mode",
+                "status": "COMPLETE" if mode_pass else "FAILED",
+                "completed": len(comparisons),
+                "total": len(selected),
+                "mode_result": mode_result,
+            })
+        if not mode_pass:
+            raise ValueError(
+                f"Task41 native surface pairing failed an existing reference-norm or H gate: {mode_result['mode_key']}"
+            )
+
+    native_rule = next(iter(native_assemblers.values())).rule
+    production_stats = {
+        f"{side}/{component}": dict(assembler.assembly_stats)
+        for (side, component), assembler in production_assemblers.items()
+    }
+    native_stats = {
+        key: value
+        for key, value in native_rule.assembly_stats.items()
+        if isinstance(value, (int, float, str, bool)) or value is None
+    }
+    return {
+        "status": "PASS_WITH_TASK41_B0_ACTION_GATES",
+        "pass": True,
+        "mode_count": len(selected),
+        "selected_mode_indices": list(selected),
+        "scope": "finite representative modes only; same live p6 space, finalized MPC, and actual port geometry",
+        "component_reference": "compiled FFCx + dolfinx_mpc vector assembly + full owned-row filter",
+        "component_candidate": "FacetPolynomial.integral_native + actual MPC E^H closure + unchanged two-stage cutoff",
+        "relative_tolerance_source": "existing Task41 _REGULAR_ACTION_LIMIT (1e-11)",
+        "reference_norm_is_the_error_denominator": True,
+        "support_symmetric_difference_must_equal_zero": True,
+        "H_relative_tolerance_source": "existing boundary-plane normalization gate (1e-14)",
+        "B_D_combination_timing_seconds": timing,
+        "production_component_assembly_stats": production_stats,
+        "native_component_assembly_stats": native_stats,
+        "mode_comparisons": comparisons,
+    }
+
+
+
+def _task41_native_surface_memory_upper_bound(space: Any, mpc: Any, cfg: Any) -> dict[str, Any]:
+    """Bound mapping/closure/cache and old/new pairing work from actual axis counts."""
+
+    from petsc4py import PETSc
+
+    axes = tuple(int(value) for value in cfg.mesh_axis_cell_counts)
+    if len(axes) != 3 or min(axes) <= 0:
+        raise ValueError("Task41 native surface preflight needs valid actual mesh axis counts")
+    facets = 2 * axes[0] * axes[1]
+    global_rows = int(space.dofmap.index_map.size_global) * int(space.dofmap.index_map_bs)
+    index_bytes = np.dtype(PETSc.IntType).itemsize
+    scalar_bytes = np.dtype(np.complex128).itemsize
+    boundary_rows = facets * 882
+    master_count = int(len(mpc.masters.array))
+    slave_count = int(len(mpc.slaves))
+    candidate_rows = min(global_rows, boundary_rows + master_count)
+    mapping_bytes = facets * 2048
+    cell_maps_bytes = boundary_rows * 2 * index_bytes
+    mpc_closure_bytes = master_count * (index_bytes + scalar_bytes) + slave_count * index_bytes
+    candidate_indices_bytes = candidate_rows * 2 * index_bytes
+    basis_cache_bytes = boundary_rows * 2 * scalar_bytes
+    additional = (
+        mapping_bytes + cell_maps_bytes + mpc_closure_bytes
+        + candidate_indices_bytes + basis_cache_bytes
+    )
+    # Include the old full vector plus abs/mask/index extraction temporaries.
+    # _vec_nonzero_owned_entries forms float64 magnitudes, int64 nonzero indices,
+    # an int64 owned-row range, PETSc indices, and a copied complex value array.
+    old_full_vector_bytes = global_rows * scalar_bytes
+    old_full_filter_workspace_bytes = global_rows * (
+        np.dtype(np.float64).itemsize
+        + 2 * np.dtype(np.int64).itemsize
+        + index_bytes
+        + scalar_bytes
+    )
+    # The compact vector and component/combined sparse B/D arrays coexist at peak.
+    workspace = (
+        old_full_vector_bytes + old_full_filter_workspace_bytes
+        + candidate_rows * scalar_bytes
+        + 6 * candidate_rows * (index_bytes + scalar_bytes)
+    )
+    return {
+        "additional_payload_bytes": int(additional),
+        "workspace_bytes": int(workspace),
+        "old_full_vector_bytes": int(old_full_vector_bytes),
+        "old_full_filter_workspace_bytes": int(old_full_filter_workspace_bytes),
+        "boundary_facet_upper_bound": int(facets),
+        "boundary_cell_upper_bound": int(facets),
+        "boundary_global_row_upper_bound": int(boundary_rows),
+        "finalized_mpc_master_count": master_count,
+        "finalized_mpc_slave_count": slave_count,
+        "candidate_global_row_upper_bound": int(candidate_rows),
+        "actual_global_storage_rows": global_rows,
+        "resource_classification": "conservative projected upper bound before native inventory/rule/finite-pair allocation",
+    }
 
 
 def _build_split_volume_action(
@@ -145,6 +734,9 @@ def build_same_mesh_physical_action(
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
     dtn_phase_gauge: str = "global_z",
     verify_dtn_quadrature: bool = False,
+    surface_assembly_backend: str = "ffcx",
+    pair_native_surface: bool = False,
+    native_surface_pair_tolerance: float | None = None,
     surface_functional_checkpoint: Mapping[str, Any] | None = None,
     research_phase_override: tuple[complex, complex] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
@@ -218,6 +810,18 @@ def build_same_mesh_physical_action(
         return result
 
     degree = int(degree)
+    if surface_assembly_backend not in {"ffcx", "native_boundary_plane"}:
+        raise ValueError("unsupported same-mesh surface assembly backend")
+    if pair_native_surface and surface_assembly_backend != "native_boundary_plane":
+        raise ValueError("native surface pairing requires the native boundary-plane backend")
+    if pair_native_surface and (
+        native_surface_pair_tolerance is None
+        or not np.isfinite(float(native_surface_pair_tolerance))
+        or float(native_surface_pair_tolerance) <= 0.0
+    ):
+        raise ValueError("native pairing requires the existing positive Task41 action tolerance")
+    if surface_assembly_backend == "native_boundary_plane" and dtn_phase_gauge != BOUNDARY_PLANE:
+        raise ValueError("native facet adapter only supports horizontal BOUNDARY_PLANE ports")
     validate_phase_gauge(dtn_phase_gauge)
     _validate_physical_split_profile(cfg)
     try:
@@ -242,7 +846,7 @@ def build_same_mesh_physical_action(
         raise ValueError("same-mesh physical mode inventory is incomplete")
     options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
     qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
-    assemblers = run_stage(
+    production_assemblers = run_stage(
         "surface_form_jit_all_sides",
         lambda: _surface_assemblers(
             function_space,
@@ -252,10 +856,131 @@ def build_same_mesh_physical_action(
             jit_options=options,
             dtn_phase_gauge=dtn_phase_gauge,
             verify_dtn_quadrature=verify_dtn_quadrature,
+            collect_timing=(surface_assembly_backend == "native_boundary_plane"),
             progress_callback=stage_progress if stage_callback is not None else None,
         ),
         complete_facts=lambda value: {"surface_assembler_count": len(value)},
     )
+    native_rule = None
+    native_rule_stats = None
+    surface_pairing = None
+    if surface_assembly_backend == "native_boundary_plane":
+        if stage_callback is None:
+            raise ValueError("Task41 native surface backend requires the supervised allocation-gate callback")
+        native_memory_bound = _task41_native_surface_memory_upper_bound(
+            function_space, floquet.mpc, cfg
+        )
+        stage_progress({
+            "phase": "task41_b0_native_surface_preflight",
+            "status": "STARTED",
+            **native_memory_bound,
+        })
+        stage_progress({
+            "phase": "task41_b0_native_surface_preflight",
+            "status": "COMPLETE",
+            **native_memory_bound,
+        })
+        compiled_native_identity = _task41_verify_compiled_native_quadrature(
+            production_assemblers, qdegree
+        )
+        from .task40_v22_operator_probe import (
+            _V22NativeFacetRule,
+            _global_mpc_expansions,
+        )
+        from .task40_v25_selected_q0 import _q0_reference_surface_inventory
+        from .directional_boundary import FacetPolynomial
+
+        (
+            mapping_rows,
+            _support_groups,
+            allowed_local_rows,
+            permutation_info,
+            surface_inventory,
+        ) = _q0_reference_surface_inventory(setup["mesh_data"], function_space, cfg)
+        boundary_local_rows = np.unique(np.concatenate(allowed_local_rows)).astype(
+            np.int32, copy=False
+        )
+        boundary_rows = np.asarray(
+            function_space.dofmap.index_map.local_to_global(boundary_local_rows),
+            dtype=np.int64,
+        )
+        mapping_facts = {
+            **dict(surface_inventory),
+            "boundary_global_cell_rows": int(len(boundary_rows)),
+            "permutation_sha256": _native_array_sha256(permutation_info),
+            "inventory_source": "task40_v25_selected_q0._q0_reference_surface_inventory",
+        }
+        mpc_expansions = _global_mpc_expansions(
+            floquet.mpc, function_space.dofmap.index_map, boundary_rows
+        )
+        native_rule = _V22NativeFacetRule(
+            space=function_space,
+            dof_index_map=function_space.dofmap.index_map,
+            mapping_rows=mapping_rows,
+            permutation_info=permutation_info,
+            polynomial=FacetPolynomial(function_space.element.basix_element),
+            quadrature_degree=qdegree,
+            cfg=cfg,
+            mpc_expansions=mpc_expansions,
+        )
+        assemblers = native_rule.assemblers()
+        for key, assembler in assemblers.items():
+            assembler.compiled_gauss_identity = production_assemblers[key].compiled_gauss_identity
+        del assembler
+        if pair_native_surface:
+            if stage_callback is not None:
+                stage_progress({
+                    "phase": "task41_b0_native_surface_pairing",
+                    "status": "STARTED",
+                    "selected_mode_policy": "per port: smallest transverse phase with an s/p pair plus a distinct largest transverse wavevector",
+                    "quadrature_identity": compiled_native_identity,
+                    "boundary_mapping": mapping_facts,
+                    "candidate_global_row_count": int(len(native_rule.candidate_rows)),
+                    "mpc_expansion_slave_count": int(len(mpc_expansions)),
+                    "mpc_master_row_count": int(len(native_rule._master_rows)),
+                })
+            try:
+                surface_pairing = _task41_pair_native_surface_assemblers(
+                    modes,
+                    production_assemblers,
+                    assemblers,
+                    floquet.mpc,
+                    cfg,
+                    relative_tolerance=float(native_surface_pair_tolerance),
+                    progress_callback=stage_progress if stage_callback is not None else None,
+                )
+            except BaseException as error:
+                if stage_callback is not None:
+                    stage_progress({
+                        "phase": "task41_b0_native_surface_pairing",
+                        "status": "FAILED",
+                        "error_type": type(error).__name__,
+                        "error_message": str(error),
+                    })
+                raise
+            surface_pairing["compiled_native_quadrature"] = compiled_native_identity
+            surface_pairing["boundary_mapping"] = mapping_facts
+            surface_pairing["compact_candidate_row_count"] = int(len(native_rule.candidate_rows))
+            surface_pairing["compact_candidate_rows_sha256"] = _native_array_sha256(
+                native_rule.candidate_rows
+            )
+            surface_pairing["mpc_expansion_slave_count"] = int(len(mpc_expansions))
+            surface_pairing["mpc_master_row_count"] = int(len(native_rule._master_rows))
+            if stage_callback is not None:
+                stage_progress({
+                    **surface_pairing,
+                    "phase": "task41_b0_native_surface_pairing",
+                    "qualification_status": surface_pairing["status"],
+                    "status": "COMPLETE" if surface_pairing["pass"] else "FAILED",
+                })
+            if not surface_pairing["pass"]:
+                raise ValueError("Task41 native boundary pairing differs from compiled production functionals")
+        # The native adapters keep the verified compiled identity for context binding;
+        # the production PETSc forms are no longer needed after the finite pairing.
+        del production_assemblers
+    else:
+        assemblers = production_assemblers
+        del production_assemblers
     carrier = None
     dtn_action = None
     volume_action = None
@@ -271,6 +996,29 @@ def build_same_mesh_physical_action(
                     phase_override=research_phase_override,
                 ),
             )
+            if surface_assembly_backend == "native_boundary_plane":
+                source_identity = dict(assembly_context["source_sha256"])
+                native_source = Path(__file__).with_name("task40_v22_operator_probe.py")
+                import hashlib
+                source_identity["task40_v22_operator_probe.py"] = hashlib.sha256(
+                    native_source.read_bytes()
+                ).hexdigest()
+                inventory_source = Path(__file__).with_name("task40_v25_selected_q0.py")
+                source_identity["task40_v25_selected_q0.py"] = hashlib.sha256(
+                    inventory_source.read_bytes()
+                ).hexdigest()
+                kernel_source = Path(__file__).with_name("directional_boundary.py")
+                source_identity["directional_boundary.py"] = hashlib.sha256(
+                    kernel_source.read_bytes()
+                ).hexdigest()
+                updated_context = dict(assembly_context)
+                updated_context["source_sha256"] = source_identity
+                gauss = dict(updated_context["gauss"])
+                gauss["assembly_backend"] = "FacetPolynomial.integral_native on horizontal BOUNDARY_PLANE facets"
+                gauss["native_quadrature_identity"] = dict(compiled_native_identity)
+                updated_context["gauss"] = gauss
+                from .dtn_boundary_phase_gauge import deep_frozen_identity
+                assembly_context = deep_frozen_identity(updated_context)
         carrier = run_stage(
             "dtn_carrier_build",
             lambda: build_fullspace_dtn_carrier_from_surface(
@@ -291,6 +1039,10 @@ def build_same_mesh_physical_action(
                 "carrier_mode_count": len(value.entries),
                 **({"surface_functional_checkpoint": dict(value.persistence_facts)}
                    if getattr(value, "persistence_facts", None) is not None else {}),
+                **({"native_surface_assembly_stats": dict(native_rule.assembly_stats)}
+                   if native_rule is not None else {}),
+                **({"representative_surface_pairing": surface_pairing}
+                   if surface_pairing is not None else {}),
             },
         )
     finally:
@@ -302,6 +1054,12 @@ def build_same_mesh_physical_action(
                 for (side, component), assembler in assemblers.items()
             }
         del assemblers
+    if native_rule is not None:
+        native_rule_stats = dict(native_rule.assembly_stats)
+        del native_rule
+        del mapping_rows, _support_groups, allowed_local_rows, permutation_info
+        del surface_inventory, boundary_local_rows, boundary_rows, mapping_facts
+        del mpc_expansions, compiled_native_identity
     try:
         dtn_action = run_stage(
             "dtn_action_wrap",
@@ -337,6 +1095,9 @@ def build_same_mesh_physical_action(
         )
         return {
             "dtn_phase_gauge": dtn_phase_gauge,
+            "surface_assembly_backend": surface_assembly_backend,
+            **({"representative_surface_pairing": surface_pairing}
+               if surface_pairing is not None else {}),
             **({
                 "physical_generator_manifest_sha256": mode_sha,
                 "assembly_mode_manifest_sha256": carrier.mode_manifest_sha256,

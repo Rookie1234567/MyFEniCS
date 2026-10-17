@@ -11,7 +11,7 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 | A2 attempt7 / saved-output retry3 | A出口 PASS：A2原求解器6步且独立A6真残差通过；保存场续作完成A1/A2对照，checker-only retry3 PASS。原worker的`WORKER_FAILED`、`official_result=false`作为原始历史保留 | A6=`7.381572880480822e-08`（限`1e-6`）；checker通过不改写原worker分类，且没有重新组装FE算子；失败和资源口径见[a2_saved_output_checker_retry3.json](a2_saved_output_checker_retry3.json) |
 | A2 P0 attempt6 | 十 q 数值与 CSR/native 资格通过后，V15 拒绝精确 Task41 profile；worker exit 4、official_result=false | 外层迭代未开始；无完整场、独立 A6 残差或 official R/T/A；工程准入故障，不是数值或资源门失败；见 [test_summary.md](test_summary.md) 与 [run_index.json](run_index.json) |
 | A2 P0 attempt4 | q0/q5 的完整 CSR 与原生算子资格检查通过；随后 worker 因递归深度异常退出，official_result=false | 全流程未完成；没有完整迭代场、独立 A6 残差或 official R/T/A；0.7 nm 仍 NOT_RUN |
-| B0 0.7 nm inventory / P0 接线 | 生产模式/q-sector与Stage-4轴规划已完成轻量清点；checker/profile capability 接线有定向测试；FE网格、Basix自由度、局部算子和求解均`NOT_RUN` | 64,120个`auto_propagating`端口模式；200个q、100个两胞sector；资源状态`NOT_YET_ADMITTED`，不是资源失败；原始清点的manifest未保存限制及本轮接线记录见[b0_07nm_computability_inventory.json](b0_07nm_computability_inventory.json)与[test_summary.md](test_summary.md) |
+| B0 旧 inventory / P0 接线（历史状态） | 生产模式/q-sector与Stage-4轴规划已完成轻量清点；checker/profile capability 接线有定向测试；FE网格、Basix自由度、局部算子和求解均`NOT_RUN` | 64,120个`auto_propagating`端口模式；200个q、100个两胞sector；资源状态`NOT_YET_ADMITTED`，不是资源失败；原始清点的manifest未保存限制及本轮接线记录见[b0_07nm_computability_inventory.json](b0_07nm_computability_inventory.json)与[test_summary.md](test_summary.md) |
 | 0.7 nm 完整场与离散精度 | NOT_RUN | 主控冻结源码及新单场合同/窗口后继续FE/dofmap、局部算子、端口投影与对象级资源测量 |
 
 | A1 指标 | measured 值 | 解释 |
@@ -38,7 +38,7 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 
 A出口已通过：A1/A2 保存场同离散对照与 checker-only retry3 在定义范围内通过字段、模式、功率和 q-reference 检查；checker没有重新组装或施加有限元算子。原 A2 worker 的 `WORKER_FAILED` / `official_result=false` 是保留的原始 attempt 分类，不代表保存场验收仍失败。0.7 nm 完整场及网格/倏逝模式精度检查尚未运行，最终 2 TB/48 h 冷流程也未资格化；当前没有 merge approval。
 
-## B0：0.7 nm 可计算性清点（尚未准入正式有限元运行）
+## B0：早期可计算性清点（以下为历史状态）
 
 轻量清点调用生产的端口模式生成器、有序模式manifest构造器、Task40 p6 q-sector映射器和Stage-4轴规划器；它没有建立DOLFINx有限元网格或自由度空间。实际轴计划为10×200×14、28,000个六面体单元，y步长0.25 nm，x/y/z材料界面均落在网格面上。`auto_propagating`生成64,120个传播端口模式，其中top/bottom为32,062/32,058，s/p各32,060；这只是传播模式清单，不是倏逝尾部精度资格。
 
@@ -105,3 +105,18 @@ checker-only retry3 service 用时 `33.095924948807806 s`，watchdog `29.8155080
 | 最小定向回归 | 8 passed；py_compile 与 `git diff --check` 通过 | 未重跑V19宽批次、全仓、FE/PDE；本机仍没有满足正式入口的 native Linux receipt |
 
 下一步由主控冻结这组源文件并在符合合同的 native Linux 环境执行正式 prepare/service。详细命令、身份、fixture 结果和内存口径见 [test_summary.md](test_summary.md)。
+
+## B0 受控停止与端口生成修复（当前）
+
+B0 已真实建立原尺寸 FE/MPC 并开始端口构建。旧方法对每个端口分量创建并扫描全场向量，实测早期约35秒/模式；这不是求解迭代卡住。用户批准受控停止后，保留94/64,120模式、540,115,008 B的完整提交前缀，服务及全部后代已退出。尚未开始因子或KSP，没有0.7 nm完整场。
+
+| 实测口径 | 值 |
+|---|---:|
+| watchdog父时间 | 3501.76164272381 s |
+| 同时进程树RSS峰值 | 4,020,916,224 B |
+| 任务cgroup swap峰值 | 0 B |
+| 分类 | USER_CONTROLLED_STOP；不是数值失败或时间门触发 |
+
+本次修复复用已有边界面积分内核，仅在真实边界cell及MPC master闭包内累加，避免每个分量扫描整个场。保留实际几何/方向、编译积分规则、相位和原两级筛选。正式B0路径先用六个代表模式与旧FFCx全向量比较完整B/D/H及作用；通过才进入全模式构建。此时只有定向测试通过，真实网格速度和数值资格仍待运行，不能宣称已提速。
+
+旧94模式绑定旧内核/source/context，不能直接混入新checkpoint；保留旧文件原字节，新attempt从新内核mode0开始，旧成本不清零。固定B0窗口仍为2026-10-17T05:43:44Z至2026-10-19T05:43:44Z，数值截止05:23:44Z，未刷新。细节见[b0_controlled_stop_native_surface_preparation.json](b0_controlled_stop_native_surface_preparation.json)。

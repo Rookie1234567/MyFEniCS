@@ -881,6 +881,7 @@ def _vec_nonzero_owned_entries(
     *,
     relative_tol: float = 1.0e-13,
     absolute_floor: float = 0.0,
+    audit: dict[str, Any] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return owned significant entries using a scale-homogeneous cutoff.
 
@@ -902,7 +903,22 @@ def _vec_nonzero_owned_entries(
         )
     )
     cutoff = max(float(absolute_floor), relative_tol * global_maximum)
-    nz = np.flatnonzero(np.abs(values) > cutoff)
+    magnitudes = np.abs(values)
+    nz = np.flatnonzero(magnitudes > cutoff)
+    if audit is not None:
+        nonzero_count = int(np.count_nonzero(magnitudes))
+        audit.update({
+            "stage": "component after finalized MPC vector assembly",
+            "relative_tol": float(relative_tol),
+            "absolute_floor": float(absolute_floor),
+            "global_maximum_abs": global_maximum,
+            "global_cutoff": cutoff,
+            "owned_rows_scanned": int(end - start),
+            "nonzero_rows_before_filter": nonzero_count,
+            "rows_dropped_by_filter": nonzero_count - int(len(nz)),
+            "retained_rows": int(len(nz)),
+        })
+    del magnitudes
     return (_idx(np.arange(start, end, dtype=np.int64)[nz]), values[nz].copy())
 
 
@@ -1546,12 +1562,26 @@ class _ReusableSurfaceComponentAssembler:
         jit_options: Mapping[str, Any] | None = None,
         boundary_reference_z: float | None = None,
         verify_compiled_gauss: bool = False,
+        collect_timing: bool = False,
     ):
         if component not in {0, 1}:
             raise ValueError(
                 "Stage-4 DtN port component assembly only supports x/y tangential components."
             )
         self.comm = mesh_data.mesh.comm
+        self.collect_timing = bool(collect_timing)
+        self.assembly_stats = {
+            "calls": 0,
+            "constant_update_wall_seconds": 0.0,
+            "constant_update_process_cpu_seconds": 0.0,
+            "mpc_vector_assembly_wall_seconds": 0.0,
+            "mpc_vector_assembly_process_cpu_seconds": 0.0,
+            "full_domain_filter_wall_seconds": 0.0,
+            "full_domain_filter_process_cpu_seconds": 0.0,
+            "total_wall_seconds": 0.0,
+            "total_process_cpu_seconds": 0.0,
+            "owned_rows_scanned": 0,
+        }
         self.quadrature_degree = quadrature_degree
         self.boundary_tag = int(tag)
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
@@ -1591,13 +1621,58 @@ class _ReusableSurfaceComponentAssembler:
                 semantic_constants={"alpha": self.alpha, "gamma": self.gamma, "kz": self.kz})
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
+        total_wall = time.perf_counter() if self.collect_timing else 0.0
+        total_cpu = time.process_time() if self.collect_timing else 0.0
+        constants_wall = time.perf_counter() if self.collect_timing else 0.0
+        constants_cpu = time.process_time() if self.collect_timing else 0.0
         _set_scalar_constant(self.alpha, mode.alpha)
         _set_scalar_constant(self.gamma, mode.gamma)
         _set_scalar_constant(self.kz, mode.k_vector[2])
+        if self.collect_timing:
+            self.assembly_stats["constant_update_wall_seconds"] += (
+                time.perf_counter() - constants_wall
+            )
+            self.assembly_stats["constant_update_process_cpu_seconds"] += (
+                time.process_time() - constants_cpu
+            )
+        mpc_wall = time.perf_counter() if self.collect_timing else 0.0
+        mpc_cpu = time.process_time() if self.collect_timing else 0.0
         vec = _assemble_mpc_form_vector(self.form, mpc)
+        if self.collect_timing:
+            self.assembly_stats["mpc_vector_assembly_wall_seconds"] += (
+                time.perf_counter() - mpc_wall
+            )
+            self.assembly_stats["mpc_vector_assembly_process_cpu_seconds"] += (
+                time.process_time() - mpc_cpu
+            )
+        filter_wall = time.perf_counter() if self.collect_timing else 0.0
+        filter_cpu = time.process_time() if self.collect_timing else 0.0
+        filter_audit: dict[str, Any] | None = {} if self.collect_timing else None
         try:
-            return _vec_nonzero_owned_entries(vec, absolute_floor=0.0)
+            result = _vec_nonzero_owned_entries(
+                vec, absolute_floor=0.0, audit=filter_audit
+            )
+            if self.collect_timing:
+                self.assembly_stats["last_filter_audit"] = dict(filter_audit or {})
+            return result
         finally:
+            if self.collect_timing:
+                self.assembly_stats["full_domain_filter_wall_seconds"] += (
+                    time.perf_counter() - filter_wall
+                )
+                self.assembly_stats["full_domain_filter_process_cpu_seconds"] += (
+                    time.process_time() - filter_cpu
+                )
+                self.assembly_stats["calls"] += 1
+                self.assembly_stats["owned_rows_scanned"] += int(
+                    vec.getOwnershipRange()[1] - vec.getOwnershipRange()[0]
+                )
+                self.assembly_stats["total_wall_seconds"] += (
+                    time.perf_counter() - total_wall
+                )
+                self.assembly_stats["total_process_cpu_seconds"] += (
+                    time.process_time() - total_cpu
+                )
             vec.destroy()
 
     def assemble_unconstrained_vector(self, mode: PortMode3D) -> PETSc.Vec:

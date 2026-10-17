@@ -141,3 +141,9 @@ python -m pytest -q --tb=short src/test/test_task40_v10_abi.py::test_task41_case
 ```
 
 没有重跑先前含V19失败的宽批次、全仓测试或PDE；也没有提交或推送。源码仍待主控在 native Linux 上冻结后再做正式 prepare/service。
+
+## B0 边界紧凑积分接线
+
+工作站原资格化native ABI下：`python -m pytest -q src/test/test_task41_b0_native_surface.py src/test/test_task40_v22_operator_probe.py::test_compact_component_matches_full_vector_bitwise_with_mpc_and_cutoff_rows` 得到7 passed in 1.00s。覆盖真实方向库存拒绝非规范几何、代表模式、MPC筛选、完整functional比较、PETSc DtN作用与模态RHS公式。最终仅纠正D_projection/B_coupling两个计时键后，pairing fixture再测1 passed in 1.09s。相关py_compile和git diff --check通过；ruff模块缺失，未安装或声明通过。没有全仓测试，也没有将fixture作为真实B0 FE资格。
+
+对照维持Bα=coupling×α、D_raw x=projection dot x、DtN=coupling×D_raw/H；不得把H乘入B或D。正式路径仍需真实六模式比较后才能使用新内核；没有降低原数值门。停止与测试原始轻量记录见b0_controlled_stop_native_surface_preparation.json。

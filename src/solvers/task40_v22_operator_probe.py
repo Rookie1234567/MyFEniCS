@@ -1465,6 +1465,18 @@ class _V22NativeFacetRule:
         self.assembly_stats["global_filter_phase_process_cpu_seconds_total"] += filter_cpu_seconds
         self.assembly_stats["last_component_wall_seconds"] = component_wall_seconds
         self.assembly_stats["last_component_process_cpu_seconds"] = component_cpu_seconds
+        self.assembly_stats["last_component_filter"] = {
+            "stage": "component after actual finalized-MPC E^H pullback",
+            "relative_tol": 1.0e-13,
+            "absolute_floor": 0.0,
+            "raw_pre_mpc_maximum_abs": raw_maximum,
+            "raw_pre_mpc_cutoff": raw_cutoff,
+            "post_mpc_global_maximum_abs": maximum,
+            "post_mpc_global_cutoff": cutoff,
+            "post_mpc_nonzero_rows_before_filter": nonzero_before,
+            "rows_dropped_by_filter": nonzero_before - len(rows),
+            "retained_rows": int(len(rows)),
+        }
         # Preserve the historical field as an alias for existing V22 consumers.
         self.assembly_stats["last_component_seconds"] = component_wall_seconds
         return rows, values

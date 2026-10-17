@@ -1,0 +1,67 @@
+{
+  "schema": "task41_p0_stop_test_lite_evidence.v1",
+  "recorded_at_utc": "2026-10-17T09:51:58Z",
+  "source_commit_at_run": "ea39ed46aa538e32c86045fc99fb3ac5728b5481",
+  "service": "myfenics-case-20261017T081706-1716737.service",
+  "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+  "run_summary": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T081709.294460Z/run_summary.json",
+  "watchdog_summary": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T081709.294460Z/watchdog/summary.json",
+  "stop": {
+    "classification": "USER_CONTROLLED_STOP",
+    "reason": "USER_CONTROLLED_STOP",
+    "start_utc": "2026-10-17T08:17:09.319644Z",
+    "requested_utc": "2026-10-17T09:14:58.644588517Z",
+    "requested_asia_singapore": "2026-10-17T17:14:58.644588517+08:00",
+    "first_sigterm_utc": "2026-10-17T09:14:58.644610790Z",
+    "first_sigkill_utc": "2026-10-17T09:15:28.948994111Z",
+    "watchdog_end_utc": "2026-10-17T09:15:31.022111683Z",
+    "receipt_end_utc": "2026-10-17T09:15:31.051316Z",
+    "grace_seconds": 30,
+    "workflow_elapsed_seconds": 3501.76164272381,
+    "exit_status": -9,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "process_tree_simultaneous_rss_peak_bytes": 4020916224,
+    "dedicated_cgroup_swap_peak_bytes": 0,
+    "swap_sample_count": 10269,
+    "time_gate_exceeded": false
+  },
+  "checkpoint": {
+    "schema": "task40extra.v33_resumable_surface_functionals.v1",
+    "path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T081709.294460Z/task41_b0_target_surface_checkpoint/global/carrier_surface_functionals.bin",
+    "committed_mode_count": 94,
+    "expected_mode_count": 64120,
+    "committed_bytes": 540115008,
+    "committed_prefix_sha256": "23aa17a239801cd662f5e235c90c04c5ff89c9c74a5d50d6da1f832c0a1b1b03",
+    "identity_sha256": "688cc6d7d9691aa0309b01c7cfacefd4d95227b5a79af956afa0dbfb2722140b",
+    "manifest_sha256": "599dc8c6eb0abb4ae6c8589db8d4f3b90deb3d7ebe6e437275d615b3e24b2ed2",
+    "source_sha": "ea39ed46aa538e32c86045fc99fb3ac5728b5481",
+    "execution_contract_sha256": "049f5e2d76b9057b1a9b5ffe2cb9227035e0cd4431261a5eea7a0941fe49e296",
+    "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+    "campaign_window_sha256": "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6",
+    "assembly_context_sha256": "1c9929d1e41b2734d1d413135b049b31f04bc9488b344271db4347d08ec6fcc2",
+    "ordered_mode_manifest_sha256": "80527cc4770abe0bc47db20c8d1f0ae8e13b75b5e090498f78cbfa75c120d0e0",
+    "normalization_h_sha256": "3f9d7a7ff21f8451215313df2ed152bcf57593a1f6d6801c2e4854bc64c4ef02"
+  },
+  "targeted_test": {
+    "command": "python -m pytest -q src/test/test_task41_b0_native_surface.py src/test/test_task40_v22_operator_probe.py::test_compact_component_matches_full_vector_bitwise_with_mpc_and_cutoff_rows",
+    "result": "7 passed in 1.00s",
+    "test_output_timestamp": "not emitted by pytest summary",
+    "supporting_pytest_nodeids_cache_mtime_asia_singapore": "2026-10-17T17:45:55.514437137+08:00",
+    "timestamp_note": "pytest cache mtime is supporting collection evidence, not an authoritative command start/end timestamp",
+    "py_compile": "passed for the five frozen source/test files after the last source change",
+    "git_diff_check": "passed after the last source change",
+    "abi": {
+      "activation": "native_linux; _MYFENICS_CLOUD_QUALIFIED_ACTIVATION=1",
+      "petsc_scalar": "complex128",
+      "petsc_integer": "int32",
+      "petsc_slepc_dolfinx_mpi4py": "same qualified Linux runtime prefix"
+    },
+    "ruff": "not run: ruff module is absent from the qualified runtime"
+  },
+  "checkpoint_compatibility_read_only_conclusion": {
+    "direct_resume_under_native_boundary_plane_identity": false,
+    "reason": "v33 reopen requires exact identity_sha256, manifest_sha256, expected_mode_count and committed prefix hash. The new backend changes the assembly_context: the hashed physical builder and dtn_port sources changed; native adapter adds task40_v22_operator_probe.py, task40_v25_selected_q0.py and directional_boundary.py source hashes and records a different gauss assembly_backend. The frozen source/execution-contract identity will also change. Reusing the old path would fail manifest identity validation.",
+    "disposition": "Keep the old 94/64120 prefix and its identity immutable as historical evidence. The next native-backend attempt uses a new checkpoint path and rebuilds from mode 0. The existing six representative pair checks do not qualify the old 94 entries for mixing. Preserve the old run cost/stop evidence; no migration or donor framework was created."
+  }
+}

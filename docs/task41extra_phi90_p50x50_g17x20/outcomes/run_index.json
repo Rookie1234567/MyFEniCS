@@ -233,6 +233,17 @@
       "dedicated_cgroup_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "compact": "a2_saved_output_checker_retry3.json"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "20261017T081709.294460Z",
+      "source_sha": "ea39ed46aa538e32c86045fc99fb3ac5728b5481",
+      "classification": "USER_CONTROLLED_STOP",
+      "compact": "b0_controlled_stop_native_surface_preparation.json",
+      "completed_checkpoint_modes": 94,
+      "total_modes": 64120,
+      "factor_started": false,
+      "ksp_started": false
     }
   ],
   "not_run": [
