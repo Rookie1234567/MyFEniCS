@@ -33,6 +33,15 @@ TASK41_B0_MODE_IDENTITY_EVIDENCE_PATH = (
 TASK41_B0_MODE_IDENTITY_EVIDENCE_SHA256 = (
     "12c1ecb4decadfd88f5439a2df209dd29e67a8dc5978ba1155d86f393fb5be06"
 )
+TASK41_B0_MODE_Q_MAP_EVIDENCE_PATH = (
+    "docs/task41extra_phi90_p50x50_g17x20/outcomes/b0_mode_q_map_v1.json"
+)
+TASK41_B0_MODE_Q_MAP_EVIDENCE_SHA256 = (
+    "3c47c1d4ea32ca77986432a6a3609ce228b4b06971829064bd661b45a69f85c1"
+)
+TASK41_B0_MODE_ASSIGNMENT_SHA256_INT16LE = (
+    "8cb7ed8e203ff9eb4c135a61d144a85b6cff681d55ef0e3c0f256eb90c1af5c4"
+)
 TASK41_B0_MODE_MANIFEST_IDENTITIES = (
     MappingProxyType(
         {
@@ -51,8 +60,11 @@ TASK41_B0_MODE_MANIFEST_IDENTITIES = (
                 "201e5d1675511dff30340596d60f78718f9cef812ddf939a56d81e12410dbcd7"
             ),
             "manifest_bytes": 72_648_642,
+            "mode_assignment_sha256_int16le": TASK41_B0_MODE_ASSIGNMENT_SHA256_INT16LE,
             "comparison_evidence_path": TASK41_B0_MODE_IDENTITY_EVIDENCE_PATH,
             "comparison_evidence_sha256": TASK41_B0_MODE_IDENTITY_EVIDENCE_SHA256,
+            "q_map_evidence_path": TASK41_B0_MODE_Q_MAP_EVIDENCE_PATH,
+            "q_map_evidence_sha256": TASK41_B0_MODE_Q_MAP_EVIDENCE_SHA256,
         }
     ),
     MappingProxyType(
@@ -72,8 +84,11 @@ TASK41_B0_MODE_MANIFEST_IDENTITIES = (
                 "80527cc4770abe0bc47db20c8d1f0ae8e13b75b5e090498f78cbfa75c120d0e0"
             ),
             "manifest_bytes": 72_687_587,
+            "mode_assignment_sha256_int16le": TASK41_B0_MODE_ASSIGNMENT_SHA256_INT16LE,
             "comparison_evidence_path": TASK41_B0_MODE_IDENTITY_EVIDENCE_PATH,
             "comparison_evidence_sha256": TASK41_B0_MODE_IDENTITY_EVIDENCE_SHA256,
+            "q_map_evidence_path": TASK41_B0_MODE_Q_MAP_EVIDENCE_PATH,
+            "q_map_evidence_sha256": TASK41_B0_MODE_Q_MAP_EVIDENCE_SHA256,
         }
     ),
 )
@@ -125,18 +140,39 @@ def validate_registered_task41_b0_mode_manifest_identity(
         if dict(identity) == dict(candidate):
             return dict(candidate)
     raise ValueError("Task41 B0 mode manifest identity is not registered")
+
+
+def _mode_assignment_sha256_int16le(assignments: Any) -> str:
+    """Hash q labels in manifest order with a platform-independent int16 format."""
+
+    q_vector = np.asarray(assignments)
+    if q_vector.ndim != 1 or not np.issubdtype(q_vector.dtype, np.integer):
+        raise ValueError("Task41 B0 mode assignment must be a one-dimensional integer vector")
+    canonical = np.ascontiguousarray(q_vector, dtype="<i2")
+    return hashlib.sha256(canonical.tobytes(order="C")).hexdigest()
+
+
 TASK41_B0_EXPECTED_Q_PORT_COUNTS = (
-    8,
-    *((0,) * 57),
-    430,
-    *((380,) * 41),
-    516,
-    572,
-    *((549,) * 22),
-    *((550,) * 34),
-    386,
-    *((387,) * 24),
-    *((386,) * 17),
+    8, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 84, 132,
+    156, 188, 204, 228, 244, 260, 276, 292, 300, 316,
+    324, 340, 348, 356, 372, 380, 388, 396, 404, 412,
+    420, 428, 436, 436, 444, 452, 460, 468, 468, 476,
+    484, 484, 492, 492, 500, 508, 508, 516, 516, 524,
+    524, 524, 532, 532, 540, 540, 540, 548, 548, 548,
+    548, 556, 556, 556, 556, 564, 564, 564, 564, 564,
+    564, 572, 572, 572, 572, 572, 572, 572, 572, 572,
+    572, 572, 572, 572, 572, 572, 572, 564, 564, 564,
+    564, 564, 564, 556, 556, 556, 556, 556, 548, 548,
+    548, 540, 540, 540, 532, 532, 524, 524, 524, 516,
+    516, 508, 508, 500, 500, 492, 484, 484, 476, 468,
+    468, 460, 452, 444, 444, 436, 428, 420, 412, 404,
+    396, 388, 380, 372, 364, 348, 340, 332, 316, 308,
+    292, 276, 260, 244, 228, 212, 188, 164, 132, 92,
 )
 TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS = tuple(
     TASK41_B0_EXPECTED_Q_PORT_COUNTS[sector]
@@ -187,10 +223,27 @@ def build_task41_b0_mode_inventory(
         int(value) for value in np.bincount(assignments.astype(np.int64), minlength=q_count)
     )
     sector_counts = tuple(int(len(context.original_mode_indices)) for context in contexts)
+    assignment_sha256_int16le = _mode_assignment_sha256_int16le(assignments)
+    q_mismatches = [
+        {"q": q, "expected": TASK41_B0_EXPECTED_Q_PORT_COUNTS[q], "actual": q_counts[q]}
+        for q in range(min(len(q_counts), len(TASK41_B0_EXPECTED_Q_PORT_COUNTS)))
+        if q_counts[q] != TASK41_B0_EXPECTED_Q_PORT_COUNTS[q]
+    ]
+    sector_mismatches = [
+        {
+            "sector": sector,
+            "expected": TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS[sector],
+            "actual": sector_counts[sector],
+        }
+        for sector in range(min(len(sector_counts), len(TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS)))
+        if sector_counts[sector] != TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS[sector]
+    ]
     if (
         len(contexts) != 100
         or q_counts != TASK41_B0_EXPECTED_Q_PORT_COUNTS
         or sector_counts != TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS
+        or assignment_sha256_int16le
+        != mode_identity["mode_assignment_sha256_int16le"]
         or q_counts[0] != 8
         or any(q_counts[q] != 0 for q in range(1, 58))
         or any(q_counts[q] <= 0 for q in range(58, q_count))
@@ -201,7 +254,24 @@ def build_task41_b0_mode_inventory(
         or sum(q_counts) != TASK41_B0_MODE_COUNT
         or sum(sector_counts) != TASK41_B0_MODE_COUNT
     ):
-        raise ValueError("Task41 B0 live q/sector map differs from its prior canonical inventory")
+        diagnostic = {
+            "context_count": len(contexts),
+            "mode_count": len(modes),
+            "actual_q_port_counts": list(q_counts),
+            "actual_sector_port_counts": list(sector_counts),
+            "first_q_mismatch": q_mismatches[0] if q_mismatches else None,
+            "first_sector_mismatch": sector_mismatches[0] if sector_mismatches else None,
+            "q_mismatch_count": len(q_mismatches),
+            "sector_mismatch_count": len(sector_mismatches),
+            "assignment_sha256_int16le": assignment_sha256_int16le,
+            "expected_assignment_sha256_int16le": mode_identity[
+                "mode_assignment_sha256_int16le"
+            ],
+        }
+        raise ValueError(
+            "Task41 B0 live q/sector map differs from its frozen alias inventory: "
+            + json.dumps(diagnostic, sort_keys=True, separators=(",", ":"))
+        )
     profile = task41_b0_periodic_profile(q_counts, sector_counts)
     inventory = (modes, mode_rows, manifest_sha256)
     facts = {
@@ -211,6 +281,7 @@ def build_task41_b0_mode_inventory(
         "mode_manifest_sha256": manifest_sha256,
         "mode_manifest_bytes": len(manifest_bytes),
         "mode_manifest_identity": mode_identity,
+        "mode_assignment_sha256_int16le": assignment_sha256_int16le,
         "q_count": q_count,
         "q_port_counts": list(q_counts),
         "empty_q_indices": [q for q, count in enumerate(q_counts) if count == 0],
@@ -263,12 +334,20 @@ def persist_task41_b0_mode_inventory(
     q_vector = np.asarray(assignments)
     if (
         q_vector.ndim != 1
-        or q_vector.size != TASK41_B0_MODE_COUNT
+        or q_vector.size != mode_identity["mode_count"]
         or not np.issubdtype(q_vector.dtype, np.integer)
         or np.any(q_vector < 0)
         or np.any(q_vector >= TASK41_B0_CELL_COUNTS[1])
     ):
         raise ValueError("Task41 B0 persisted q assignment vector is incomplete")
+    assignment_sha256_int16le = _mode_assignment_sha256_int16le(q_vector)
+    if (
+        assignment_sha256_int16le != mode_identity["mode_assignment_sha256_int16le"]
+        or facts.get("mode_assignment_sha256_int16le") != assignment_sha256_int16le
+    ):
+        raise ValueError(
+            "Task41 B0 q assignment digest differs from its registered mode/alias identity"
+        )
     root = Path(run_directory).resolve()
     manifest_path = root / "task41_b0_mode_manifest.json"
     assignment_path = root / "task41_b0_q_assignment.json"
@@ -279,6 +358,7 @@ def persist_task41_b0_mode_inventory(
         "mode_manifest_sha256": mode_identity["manifest_sha256"],
         "mode_manifest_bytes": mode_identity["manifest_bytes"],
         "mode_manifest_identity": mode_identity,
+        "mode_assignment_sha256_int16le": assignment_sha256_int16le,
         "mode_count": mode_identity["mode_count"],
         "q_count": TASK41_B0_CELL_COUNTS[1],
         "assignments": [int(value) for value in q_vector],
@@ -294,6 +374,7 @@ def persist_task41_b0_mode_inventory(
         "source_sha": source_sha,
         "input_sha256": input_sha256,
         "mode_manifest_identity": mode_identity,
+        "mode_assignment_sha256_int16le": assignment_sha256_int16le,
         "registered_abi_bound_identity_match": True,
         "mode_manifest_path": str(manifest_path),
         "mode_manifest_file_sha256": manifest_file_sha256,
@@ -337,6 +418,8 @@ def recheck_task41_b0_mode_inventory(
         or inventory.get("mode_manifest_sha256") != mode_identity["manifest_sha256"]
         or inventory.get("mode_manifest_bytes") != mode_identity["manifest_bytes"]
         or inventory.get("mode_manifest_identity") != mode_identity
+        or inventory.get("mode_assignment_sha256_int16le")
+        != mode_identity["mode_assignment_sha256_int16le"]
         or inventory.get("mode_manifest_file_sha256") != mode_identity["manifest_sha256"]
         or inventory.get("registered_abi_bound_identity_match") is not True
         or inventory.get("persistence") != "exclusive_create_no_replacement"
@@ -372,7 +455,7 @@ def recheck_task41_b0_mode_inventory(
         or payload.get("mode_count") != mode_identity["mode_count"]
         or payload.get("q_count") != TASK41_B0_CELL_COUNTS[1]
         or not isinstance(assignments, list)
-        or len(assignments) != TASK41_B0_MODE_COUNT
+        or len(assignments) != mode_identity["mode_count"]
         or any(
             type(value) is not int
             or value < 0
@@ -381,6 +464,13 @@ def recheck_task41_b0_mode_inventory(
         )
     ):
         raise ValueError("Task41 B0 q-assignment artifact has an invalid mode/q identity")
+    assignment_sha256_int16le = _mode_assignment_sha256_int16le(assignments)
+    if (
+        assignment_sha256_int16le != mode_identity["mode_assignment_sha256_int16le"]
+        or payload.get("mode_assignment_sha256_int16le") != assignment_sha256_int16le
+        or inventory.get("mode_assignment_sha256_int16le") != assignment_sha256_int16le
+    ):
+        raise ValueError("Task41 B0 q-assignment vector digest changed")
     q_count = TASK41_B0_CELL_COUNTS[1]
     q_port_counts = tuple(
         int(value)
@@ -404,14 +494,14 @@ def recheck_task41_b0_mode_inventory(
         or max(q_port_counts) != 572
         or min(sector_port_counts) != 524
         or max(sector_port_counts) != 816
-        or sum(sector_port_counts) != TASK41_B0_MODE_COUNT
+        or sum(sector_port_counts) != mode_identity["mode_count"]
         or list(q_port_counts) != inventory.get("q_port_counts")
         or list(sector_port_counts) != inventory.get("sector_port_counts")
         or inventory.get("q_count") != q_count
         or inventory.get("sector_count") != q_count // 2
         or inventory.get("mode_count") != mode_identity["mode_count"]
     ):
-        raise ValueError("Task41 B0 q/sector allocation differs from its fixed envelope")
+        raise ValueError("Task41 B0 q/sector allocation differs from its registered alias inventory")
 
     profile = task41_b0_periodic_profile(q_port_counts, sector_port_counts)
     if (
@@ -426,6 +516,7 @@ def recheck_task41_b0_mode_inventory(
         "mode_manifest_sha256": mode_identity["manifest_sha256"],
         "mode_manifest_bytes": mode_identity["manifest_bytes"],
         "mode_manifest_identity": mode_identity,
+        "mode_assignment_sha256_int16le": assignment_sha256_int16le,
         "mode_count": mode_identity["mode_count"],
         "q_assignment_sha256": hashlib.sha256(assignment_bytes).hexdigest(),
         "q_assignment_bytes": len(assignment_bytes),

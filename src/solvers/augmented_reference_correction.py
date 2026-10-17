@@ -147,6 +147,8 @@ def _registered_v15_profile_inventory(
             or capability.get("mode_manifest_sha256") != mode_identity["manifest_sha256"]
             or capability.get("mode_manifest_bytes") != mode_identity["manifest_bytes"]
             or capability.get("mode_count") != mode_identity["mode_count"]
+            or capability.get("mode_assignment_sha256_int16le")
+            != mode_identity["mode_assignment_sha256_int16le"]
             or capability.get("q_count") != 200
             or capability.get("twist_count") != 100
             or not isinstance(capability.get("q_assignment_sha256"), str)

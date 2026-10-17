@@ -400,22 +400,9 @@ def _b0_inventory_fixture(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     from src.solvers import task41_b0_mode_inventory as inventory_module
 
-    q_counts = [0] * 200
-    q_counts[0] = 8
-    for q in range(58, 100):
-        q_counts[q] = 380
-    q_counts[58] = 430
-    q_counts[100] = 516
-    q_counts[101] = 572
-    for q in range(102, 124):
-        q_counts[q] = 549
-    for q in range(124, 158):
-        q_counts[q] = 550
-    q_counts[158] = 386
-    for q in range(159, 183):
-        q_counts[q] = 387
-    for q in range(183, 200):
-        q_counts[q] = 386
+    # Synthetic persistence/checker fixture: these labels exercise the frozen
+    # inventory shape and are not mode-generation evidence.
+    q_counts = list(inventory_module.TASK41_B0_EXPECTED_Q_PORT_COUNTS)
     assert sum(q_counts) == inventory_module.TASK41_B0_MODE_COUNT
     sector_counts = [q_counts[t] + q_counts[t + 100] for t in range(100)]
     assert min(sector_counts) == 524 and max(sector_counts) == 816
@@ -428,6 +415,9 @@ def _b0_inventory_fixture(
         identity="task41_b0_fixture_mode_manifest_v1",
         manifest_sha256=mode_sha256,
         manifest_bytes=len(mode_manifest_bytes),
+        mode_assignment_sha256_int16le=hashlib.sha256(
+            np.asarray(assignments, dtype="<i2").tobytes(order="C")
+        ).hexdigest(),
     )
     monkeypatch.setattr(
         inventory_module, "TASK41_B0_MODE_MANIFEST_IDENTITIES", (mode_identity,)
@@ -452,6 +442,9 @@ def _b0_inventory_fixture(
         "mode_manifest_sha256": mode_sha256,
         "mode_manifest_bytes": len(mode_manifest_bytes),
         "mode_manifest_identity": mode_identity,
+        "mode_assignment_sha256_int16le": mode_identity[
+            "mode_assignment_sha256_int16le"
+        ],
         "mode_count": len(assignments),
         "q_count": 200,
         "assignments": assignments,
@@ -467,6 +460,9 @@ def _b0_inventory_fixture(
         "mode_manifest_sha256": mode_sha256,
         "mode_manifest_bytes": len(mode_manifest_bytes),
         "mode_manifest_identity": mode_identity,
+        "mode_assignment_sha256_int16le": mode_identity[
+            "mode_assignment_sha256_int16le"
+        ],
         "q_count": 200,
         "q_port_counts": q_counts,
         "empty_q_indices": list(range(1, 58)),
