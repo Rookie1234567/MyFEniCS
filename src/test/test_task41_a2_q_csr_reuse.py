@@ -155,6 +155,183 @@ def test_task41_a2_saved_q_binding_rejects_changed_authorization(tmp_path):
         )
 
 
+def test_task41_a2_zero_port_q1_build_and_native_pair_with_q6(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from src.solvers import task40_v25_selected_q0
+    from src.solvers.task40_v30_selected_q_csr import (
+        build_saved_selected_q_pattern,
+        fill_saved_selected_q_values,
+        qualify_selected_q_native,
+        run_selected_q_native_actions,
+    )
+
+    trace_rows = 28_440
+    active_rows = 126_000
+    local_port_rows = 56_880
+    reduced_rows = active_rows + local_port_rows
+
+    def embedded_map(column_rows):
+        rows = np.asarray(column_rows, dtype=np.int32)
+        columns = np.arange(len(rows), dtype=np.int32)
+        result = sparse.csr_matrix(
+            (
+                np.ones(len(rows), dtype=np.complex128),
+                (rows, columns),
+            ),
+            shape=(reduced_rows, len(rows)),
+        )
+        result.indices = result.indices.astype(np.int32, copy=False)
+        result.indptr = result.indptr.astype(np.int32, copy=False)
+        return result
+
+    q1_map = embedded_map(np.arange(trace_rows, dtype=np.int32))
+    q6_map = embedded_map(
+        np.concatenate(
+            (
+                np.arange(trace_rows, 2 * trace_rows, dtype=np.int32),
+                np.arange(active_rows, active_rows + 28, dtype=np.int32),
+            )
+        )
+    )
+    assert q1_map.shape == (reduced_rows, trace_rows)
+    assert q6_map.shape == (reduced_rows, trace_rows + 28)
+
+    class SavedSource:
+        def __init__(self):
+            self.active_rows = active_rows
+            self.port_count = local_port_rows
+            self.reduced_rows = reduced_rows
+            self.local_h = np.ones(local_port_rows, dtype=np.complex128)
+
+        def iter_reduced_contribution_layouts(self, *, hhat_block_columns=None):
+            yield np.asarray([0], dtype=np.int32), np.asarray([0], dtype=np.int32), "trace/zero-port"
+
+        def iter_reduced_contributions(
+            self, *, allocation_gate, hhat_block_columns=None, include_hhat=True
+        ):
+            allocation_gate("fixture/base", {"additional_payload_bytes": 0, "workspace_bytes": 0})
+            yield (
+                np.asarray([0], dtype=np.int32),
+                np.asarray([0], dtype=np.int32),
+                np.asarray([[2.0 + 0.0j]], dtype=np.complex128),
+                "trace/zero-port",
+            )
+
+    source = SavedSource()
+    pattern, view, _pattern_facts = build_saved_selected_q_pattern(
+        source,
+        q1_map,
+        q_index=1,
+        twist_index=1,
+        trace_rows=trace_rows,
+        output_directory=tmp_path / "q1_pattern",
+        allocation_gate=lambda *_args: None,
+    )
+    assert view.selected_port_rows == 0
+    hhat = view.selected_hhat_sparse_term(allocation_gate=lambda *_args: None)
+    assert hhat.shape == (0, 0)
+    assert hhat.nnz == 0
+    pattern, numeric_facts = fill_saved_selected_q_values(
+        source,
+        pattern,
+        q1_map,
+        q_index=1,
+        twist_index=1,
+        trace_rows=trace_rows,
+        allocation_gate=lambda *_args: None,
+        direct_hhat=True,
+        direct_hhat_evidence={
+            "numeric_internal_support_empty": True,
+            "internal_B_nnz": 0,
+            "internal_D_nnz": 0,
+        },
+    )
+    assert pattern.shape == (trace_rows, trace_rows)
+    assert numeric_facts["numeric_fill_complete"] is True
+    assert numeric_facts["direct_hhat_sparse_selected_q"]["term_shape"] == [0, 0]
+
+    class NativeAction:
+        def __init__(self):
+            self.reduced_size = reduced_rows
+            self.condensed = SimpleNamespace(
+                full_rows=195_132,
+                active_rows=active_rows,
+                appended_rows=local_port_rows,
+            )
+
+        def recover_storage(self, reduced, *, expand_trace):
+            assert expand_trace is False
+            full = np.zeros(self.condensed.full_rows, dtype=np.complex128)
+            full[:reduced_rows] = reduced
+            return full
+
+        def reduce_rhs(self, rhs, *, port_rhs=None, rhs_is_mpc_dual):
+            assert rhs_is_mpc_dual is True
+            reduced = np.asarray(rhs[:reduced_rows], dtype=np.complex128).copy()
+            if port_rhs is not None:
+                reduced[active_rows:] += np.asarray(port_rhs, dtype=np.complex128)
+            return reduced
+
+        def apply_B_full(self, ports):
+            assert np.asarray(ports).shape == (local_port_rows,)
+            return np.zeros(self.condensed.full_rows, dtype=np.complex128)
+
+        def apply_D_full(self, field):
+            return np.zeros(local_port_rows, dtype=np.complex128)
+
+        def _apply_original_h(self, ports):
+            return np.zeros_like(ports, dtype=np.complex128)
+
+    monkeypatch.setattr(
+        task40_v25_selected_q0,
+        "_native_volume_apply",
+        lambda _volume_action, field, _comm, counters=None: np.asarray(field).copy(),
+    )
+    action = NativeAction()
+    for selected_q, selected_map, peer_map in (
+        (1, q1_map, q6_map),
+        (6, q6_map, q1_map),
+    ):
+        selected_rows = selected_map.shape[1]
+        peer_rows = peer_map.shape[1]
+        receipt = run_selected_q_native_actions(
+            action=action,
+            volume_action=object(),
+            comm=object(),
+            q_maps=(q1_map, q6_map),
+            q_indices=(1, 6),
+            trace_rows_by_q={1: trace_rows, 6: trace_rows},
+            selected_q_index=selected_q,
+            twist_index=1,
+            matrix=sparse.eye(selected_rows, dtype=np.complex128, format="csr"),
+            peer_matrix=sparse.eye(peer_rows, dtype=np.complex128, format="csr"),
+            allocation_gate=lambda *_args: None,
+        )
+        assert receipt["status"] == "PASS"
+        assert receipt["csr_action_count"] == 4
+        assert receipt["paired_sector_leakage_passed"] is True
+        assert max(receipt["paired_sector_leakage"][key]["relative"] for key in ("q_to_peer", "peer_to_q")) == 0.0
+        assert max(receipt["relative_errors"].values()) == 0.0
+        if selected_q == 1:
+            assert receipt["inputs"]["case1_port_only"].shape == (trace_rows,)
+            assert not np.any(receipt["inputs"]["case1_port_only"])
+            assert receipt["native_outputs"]["case1_port_only"].shape == (trace_rows,)
+            assert not np.any(receipt["native_outputs"]["case1_port_only"])
+            changed_native = dict(receipt["native_outputs"])
+            changed_native["case1_port_only"] = np.ones(trace_rows, dtype=np.complex128)
+            with pytest.raises(ValueError, match="CSR/native error exceeded"):
+                qualify_selected_q_native(
+                    matrix=sparse.eye(trace_rows, dtype=np.complex128, format="csr"),
+                    inputs=receipt["inputs"],
+                    csr_outputs=receipt["csr_outputs"],
+                    native_outputs=changed_native,
+                    native_components_case1=receipt["native_components_case1"],
+                    paired_leakage=receipt["paired_sector_leakage"],
+                    trace_rows=trace_rows,
+                )
+
+
 def _write_provider_q(
     root: Path,
     q: int,

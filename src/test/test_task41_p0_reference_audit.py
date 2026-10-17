@@ -170,21 +170,23 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
         selected_q_operator_identity,
     )
 
+    q_port_counts = (1, 0, 1, 1, 1, 1, 1, 1, 1, 1)
     profile = replace(
         TASK41_G13_A2_P6_PROFILE,
         global_cell_axes=(1, 10, 1),
         rows_per_q=3,
         trace_rows_per_q=2,
         local_width_per_q=3,
-        q_port_counts=(1,) * 10,
-        sector_port_counts=(2,) * 5,
+        q_port_counts=q_port_counts,
+        sector_port_counts=(2, 1, 2, 2, 2),
     )
     monkeypatch.setattr(periodic_profiles, "TASK41_G13_A2_P6_PROFILE", profile)
     artifact_root = tmp_path
     numerical_output = artifact_root / "numerical_output"
     numerical_output.mkdir()
+    q_rows = {q: profile.trace_rows_per_q + q_port_counts[q] for q in range(10)}
     q_maps = {
-        q: sparse.eye(3, dtype=np.complex128, format="csr") for q in range(10)
+        q: sparse.eye(q_rows[q], dtype=np.complex128, format="csr") for q in range(10)
     }
     matrices: dict[int, sparse.csr_matrix] = {}
     csr_artifacts_by_q: dict[int, dict[str, dict[str, object]]] = {}
@@ -194,17 +196,19 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
     window_sha = "2" * 64
     execution_identity = {"source_sha": source_sha, "window_sha256": window_sha}
     modes = (SimpleNamespace(side="top", m=0, n=0, polarization="s"),)
-    original_h = np.asarray([1.0 + 0.1j, 1.2 + 0.2j, 0.8 + 0.3j])
+    original_h = np.asarray(
+        [1.0 + 0.1j * (index + 1) for index in range(sum(q_port_counts))],
+        dtype=np.complex128,
+    )
 
     for q in range(10):
-        dense = np.asarray(
-            [
-                [3.0 + q, 0.2j, 0.0],
-                [0.2j, 4.0 + q, 0.1],
-                [0.0, 0.1, 5.0 + q],
-            ],
-            dtype=np.complex128,
+        n = q_rows[q]
+        dense = np.diag(
+            np.asarray([3.0 + q + index for index in range(n)], dtype=np.complex128)
         )
+        if n > 1:
+            dense[0, 1] = 0.2j
+            dense[1, 0] = 0.2j
         source_matrix = sparse.csr_matrix(dense)
         csr_artifacts = {}
         for name in ("data", "indices", "indptr"):
@@ -222,6 +226,7 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
 
     for q in range(10):
         matrix = matrices[q]
+        n = q_rows[q]
         source_matrix = sparse.csr_matrix(matrix.toarray())
         csr_artifacts = {
             name: _save_npy(tmp_path / f"q{q}_{name}.npy", getattr(source_matrix, name))
@@ -239,11 +244,19 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
         )
         matrices[q] = matrix
         pattern_record = {"csr_artifacts": csr_artifacts}
+        index = np.arange(n, dtype=np.float64)
+        case1_full = np.asarray(1.0 + index + 1j * (0.1 + 0.2 * index), dtype=np.complex128)
+        case2_full = np.asarray(0.5 + 0.3 * index + 1j * (0.4 + 0.1 * index), dtype=np.complex128)
+        trace_rows = profile.trace_rows_per_q
+        trace_only = np.zeros(n, dtype=np.complex128)
+        trace_only[:trace_rows] = case1_full[:trace_rows]
+        port_only = np.zeros(n, dtype=np.complex128)
+        port_only[trace_rows:] = case1_full[trace_rows:]
         inputs = {
-            "case1_full": np.asarray([1.0 + 0.1j, 2.0 - 0.2j, 3.0 + 0.3j]),
-            "case1_trace_only": np.asarray([1.0 + 0.1j, 2.0 - 0.2j, 0.0j]),
-            "case1_port_only": np.asarray([0.0j, 0.0j, 3.0 + 0.3j]),
-            "case2_full": np.asarray([0.5 + 0.4j, 1.1 - 0.3j, 2.0 + 0.7j]),
+            "case1_full": case1_full,
+            "case1_trace_only": trace_only,
+            "case1_port_only": port_only,
+            "case2_full": case2_full,
         }
         csr_outputs = selected_q_csr_actions(
             matrix,
@@ -254,14 +267,20 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
         native_outputs = {name: value.copy() for name, value in csr_outputs.items()}
         native_components = {
             "volume": native_outputs["case1_full"].copy(),
-            "minus_D": np.zeros(3, dtype=np.complex128),
-            "C": np.zeros(3, dtype=np.complex128),
-            "Hhat": np.zeros(3, dtype=np.complex128),
+            "minus_D": np.zeros(n, dtype=np.complex128),
+            "C": np.zeros(n, dtype=np.complex128),
+            "Hhat": np.zeros(n, dtype=np.complex128),
         }
         peer_q = q + 5 if q < 5 else q - 5
-        peer_input = np.asarray([1.0 + 0.2j, 0.8 + 0.1j, 1.2 + 0.3j])
+        peer_n = q_rows[peer_q]
+        peer_index = np.arange(peer_n, dtype=np.float64)
+        peer_input = np.asarray(
+            1.0 + 0.2 * peer_index + 1j * (0.2 + 0.1 * peer_index),
+            dtype=np.complex128,
+        )
         peer_diagonal = np.asarray(matrices[peer_q] @ peer_input, dtype=np.complex128)
-        zero_cross = np.zeros(3, dtype=np.complex128)
+        zero_selected_to_peer = np.zeros(peer_n, dtype=np.complex128)
+        zero_peer_to_selected = np.zeros(n, dtype=np.complex128)
         leakage = {
             "q_to_peer": {"input_q": q, "output_q": peer_q, "relative": 0.0},
             "peer_to_q": {
@@ -279,7 +298,7 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
                 native_outputs=native_outputs,
                 native_components_case1=native_components,
                 paired_leakage=leakage,
-                trace_rows=2,
+                trace_rows=trace_rows,
             ),
             "inputs": inputs,
             "csr_outputs": csr_outputs,
@@ -287,9 +306,9 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
             "native_components_case1": native_components,
             "paired_peer_input": peer_input,
             "paired_peer_native_diagonal": peer_diagonal,
-            "paired_peer_native_cross": zero_cross,
-            "paired_selected_native_cross": zero_cross,
-            "paired_peer_case2_cross": zero_cross,
+            "paired_peer_native_cross": zero_peer_to_selected,
+            "paired_selected_native_cross": zero_selected_to_peer,
+            "paired_peer_case2_cross": zero_selected_to_peer.copy(),
             "native_input_seeds": {"case1_full": 1, "case2_full": 2},
         }
         operator_identity = selected_q_operator_identity(
@@ -326,7 +345,7 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
     with AllQExactMumps(
         matrices,
         allocation_gate=lambda _name, _facts: {},
-        expected_shapes=(3,) * 10,
+        expected_shapes=tuple(q_rows[q] for q in range(10)),
         profile=profile,
         full_storage_rows=6,
         task41_a2_config=task41_a2_all_q_factor_contract(),

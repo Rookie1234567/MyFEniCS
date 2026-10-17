@@ -45,6 +45,61 @@
       "watchdog_seconds": 3.5461957671213895,
       "compact": "a2_startup_failures.json",
       "raw_local_directory": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/attempt3_remote/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T150415.481480Z"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 4,
+      "attempt": "20261016T151713.466294Z",
+      "source_sha": "48049161acb84f57b2d8248f67ea616fb837ccea",
+      "service": "myfenics-case-20261016T151708-1496265.service",
+      "classification": "ENGINEERING_FAILURE_AFTER_Q0_Q5_NATIVE_PASS_BEFORE_OUTER_ITERATION",
+      "status": "FAILED",
+      "error": "RecursionError: sector-ready event audit serialization exceeded maximum recursion depth",
+      "compact": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/a2_attempts_compact.json",
+      "raw_metadata_directory": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/attempt4_remote/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T151713.466294Z"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 5,
+      "attempt": "20261017T004748.611644Z",
+      "started_at_utc": "2026-10-17T00:47:43.496002Z",
+      "finished_at_utc": "2026-10-17T01:02:57Z",
+      "last_observed_utc": "2026-10-17T01:02:57Z",
+      "source_sha": "952bb2a9fa414d85de0b223bdbd569744fd252c5",
+      "service": "myfenics-case-20261017T004743-1655297.service",
+      "status": "FAILED",
+      "classification": "ENGINEERING_FAILURE_DURING_Q1_SELECTED_Q_PATTERN_FILL",
+      "error": "ValueError: selected q map needs nonempty trace and port columns",
+      "leader_exit_code": 4,
+      "elapsed_seconds": 885.3937983037904,
+      "contract_sha256": "ca533f27eed28aeb90bd9484fb60a7df8b6f3c47047f8650d5b8ff9614245fdc",
+      "window_sha256": "d745147dbfc8640220701fa055ee101efbdd25a64c97ccfb5573ed864b2a124f",
+      "compact": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/a2_attempts_compact.json",
+      "failure_boundary": {
+        "event": "selected_q_pattern_numeric_fill",
+        "q_index": 1,
+        "twist_index": 1,
+        "paired_q_indices": [
+          1,
+          6
+        ],
+        "trace_rows": 28440,
+        "selected_map_columns": 28440,
+        "selected_port_columns": 0,
+        "selected_map_row_check": "validated against live action.reduced_size; profile-derived expected rows=182880",
+        "outer_iteration_started": false,
+        "classification_note": "zero-port precondition guard rejected a valid trace-only q map before operator identity comparison; not a numerical or resource-gate failure"
+      },
+      "resource_facts": {
+        "elapsed_seconds": 885.3937983037904,
+        "leader_exit_code": 4,
+        "sampled_process_tree_rss_peak_bytes": 3481264128,
+        "task_cgroup_memory_peak_bytes": 2955980800,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "task_cgroup_swap_peak_bytes": 0,
+        "memory_metrics_are_separate_scopes": true,
+        "descendants_cleared": true
+      }
     }
   ],
   "not_run": [

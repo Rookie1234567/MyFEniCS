@@ -49,3 +49,31 @@ A2 接通同物理 G13、168 模式、10 q / 5 sector、全部准确因子驻留
 ## A2 ABI 分派修复
 
 Task41 strict A2 通过本场合同绑定 native_linux receipt；拒绝 WSL receipt 或 V30/V31 混用，共用原实际模块、版本、complex128/int32、MPI1/math1 检查。局部 fixture `test_task41_a2_abi_uses_native_contract_route_and_rejects_local_receipt`：1 passed in 0.27 s；含真实本机 WSL ABI 回归，但不是工作站 native 正向通过声明。相关 compileall/diff check 通过；主控冻结后另做工作站 imports-only 正向核验。
+
+
+## A2 attempt4 递归故障修复与 q0/q5 复用回归
+
+attempt4 在 q0、q5 的完整 CSR/native 检查通过后、外层迭代开始前停止。旧 stage 记录把可变记录表直接嵌入 sector-ready 审计，再由持久化回调写回当前记录，形成 JSON 序列化递归；这是工程日志故障，不是数值或资源门失败。提交 a1470688c2d0eb297abebce17d8ed4af0d661aa6 改为保存浅快照，不改变数值动作、阈值或算子。q0/q5 的旧生产者资格原样保留，由 952bb2a9fa414d85de0b223bdbd569744fd252c5 增加窄范围 hash-bound 导入，其他 q 仍按当前合同计算。
+
+正确 Task41 C1 activation 下运行四文件完整定向回归，未筛选、未排除：
+
+    source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit
+    python -m pytest -q src/test/test_task41_a2_q_csr_reuse.py src/test/test_task41_p0_reference_audit.py src/test/test_task40_v30_qualified_q_csr.py src/test/test_task41_p0_contract.py
+
+结果：**22 passed in 1.22 s**；git diff --check 通过。此前 generic activation 下三个 Task41 fixture 因没有使用本任务 C1 runtime/fixture 前提而失败；以上 C1 命令无筛选地复核全部 22 项，三个 fixture 均通过，按环境选择不匹配关闭，不触发环境重装或源码扩修。
+
+attempt5 已用 source `952bb2a9fa414d85de0b223bdbd569744fd252c5` 在原 A2 固定窗口启动，并于 **2026-10-17 01:02:57 UTC** 失败退出（service `myfenics-case-20261017T004743-1655297.service`，worker exit 4）。q0/q5 已导入并保留原资格；q1/q6 sector `[1,6]` 在 q1 数值填充阶段失败，触发 `ValueError: selected q map needs nonempty trace and port columns`。live trace 列为28,440，q1映射共28,440列、端口列为0；行数检查绑定 live `action.reduced_size`，profile派生期望为182,880，但失败运行没有单独保存该映射的完整shape。异常发生在 operator identity 比较之前，属于构造守卫错误；外层迭代没有开始，不是FE收敛或资源门结果。进程树已清理；峰值进程树RSS为3,481,264,128 B，专用任务cgroup内存峰值2,955,980,800 B；两种内存口径分别记录，进程树和cgroup swap峰值均为0。完整compact记录见 ignored `benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2_controller/a2_attempts_compact.json`，run_index保留原固定窗口和失败状态。
+
+
+### q1/q2 零端口映射修复与回归
+
+修复将保存映射、native qualification 和成对 native route 的条件改为“trace列必须为正，端口列允许为零”。q1的空端口split仍保留完整向量长度和trace分量；CSR/native动作、组件重组、双向配对泄漏与checker的 `1e-11` 门限未变。q1零参考输出仍必须与零native输出一致，测试也确认非零误差继续被拒绝。checker fixture现在包含q1零端口、q6非零端口，且保持q0/q5 saved import路径。
+
+Task41 C1 activation 下最终定向测试：**3 passed in 1.07s**，覆盖实际G13本地维数（182,880 reduced rows、126,000 active rows、56,880 appended rows、28,440 trace列）上的 q1 pattern/numeric build、0×0 direct-H项、q1与q6两个方向的native分量/配对/qualification，以及checker独立重算。命令为：
+
+```bash
+source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit
+python -m pytest -q src/test/test_task41_a2_q_csr_reuse.py::test_task41_a2_zero_port_q1_build_and_native_pair_with_q6 src/test/test_task41_a2_q_csr_reuse.py::test_task41_a2_saved_q_binding_rejects_changed_authorization src/test/test_task41_p0_reference_audit.py::test_task41_a2_reference_checker_reapplies_real_ten_q_packets
+```
+
+三个修改过的Python文件通过 `py_compile`，`git diff --check` 通过。本次定向验证未运行PDE、全仓测试或Ruff。主控复验同三项：3 passed in 1.02s；此次源码冻结后沿原A2窗口续作。attempt5负结果及资源事实保持原样，不用单测替代正式A2运行。

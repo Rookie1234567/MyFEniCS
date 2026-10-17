@@ -93,10 +93,10 @@ class SavedSelectedQContributionView:
         self.active_rows = int(source.active_rows)
         self.reduced_rows = int(source.reduced_rows)
         self.port_count = int(source.port_count)
-        if not 0 < self.selected_hhat_trace_rows < q_map.shape[1]:
-            raise ValueError("selected q map needs nonempty trace and port columns")
+        if not 0 < self.selected_hhat_trace_rows <= q_map.shape[1]:
+            raise ValueError("selected q map needs nonempty trace columns")
         self.selected_port_rows = int(q_map.shape[1] - self.selected_hhat_trace_rows)
-        if self.selected_port_rows <= 0 or self.active_rows + self.port_count != self.reduced_rows:
+        if self.selected_port_rows < 0 or self.active_rows + self.port_count != self.reduced_rows:
             raise ValueError("selected q map and saved local contribution dimensions differ")
 
     def iter_reduced_contribution_layouts(self, *, hhat_block_columns: int | None = None):
@@ -626,7 +626,7 @@ def qualify_selected_q_native(
         raise ValueError("the two full selected-q inputs must be distinct, nonzero complex128 vectors")
     if np.array_equal(input_rows[0], input_rows[1]):
         raise ValueError("the two selected-q full native inputs must be distinct")
-    if type(trace_rows) is not int or not 0 < trace_rows < matrix.shape[1]:
+    if type(trace_rows) is not int or not 0 < trace_rows <= matrix.shape[1]:
         raise ValueError("selected q native check requires the actual trace/port split")
     full1 = np.asarray(inputs["case1_full"])
     trace_only = np.asarray(inputs["case1_trace_only"])
@@ -922,7 +922,10 @@ def run_selected_q_native_actions(
         raise ValueError("selected q CSR and native map dimensions differ")
     selected_trace_rows = int(trace_rows_by_q[selected_q_index])
     peer_trace_rows = int(trace_rows_by_q[peer_q_index])
-    if not 0 < selected_trace_rows < selected_map.shape[1] or not 0 < peer_trace_rows < peer_map.shape[1]:
+    if (
+        not 0 < selected_trace_rows <= selected_map.shape[1]
+        or not 0 < peer_trace_rows <= peer_map.shape[1]
+    ):
         raise ValueError("selected sector trace/port split is outside its q map")
     reuse_saved_native = saved_native_witness is not None
     if reuse_saved_native:
