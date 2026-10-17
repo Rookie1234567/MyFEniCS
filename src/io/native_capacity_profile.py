@@ -77,6 +77,24 @@ TASK40_PHI90_D13_X2_P6_DIRECT_PROFILE = (
 TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Z_p6_direct_v1"
 )
+TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_H15_B_p6_direct_v1"
+)
+TASK40_PHI90_H15_X_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_H15_X_p6_direct_v1"
+)
+TASK40_PHI90_H15_Y_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_H15_Y_p6_direct_v1"
+)
+TASK40_PHI90_H15_Z_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_H15_Z_p6_direct_v1"
+)
+TASK40_PHI90_H15_PROFILES = {
+    TASK40_PHI90_H15_B_P6_DIRECT_PROFILE: "B",
+    TASK40_PHI90_H15_X_P6_DIRECT_PROFILE: "X",
+    TASK40_PHI90_H15_Y_P6_DIRECT_PROFILE: "Y",
+    TASK40_PHI90_H15_Z_P6_DIRECT_PROFILE: "Z",
+}
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
     "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
     "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
@@ -165,7 +183,9 @@ TASK40_PHI90_D13_CASES = {
         "explicit_axis_counts_in_input": True,
     },
 }
-TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(TASK40_PHI90_D13_CASES)
+TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(
+    {*TASK40_PHI90_D13_CASES, *TASK40_PHI90_H15_PROFILES}
+)
 P6_CONDENSED_DIRECT_PROFILES = (
     V7_ANISO_N0_P6_DIRECT_PROFILES
     | V6_F5_P6_DIRECT_PROFILES
@@ -262,6 +282,8 @@ NATIVE_CASES[DISPERSION_FLAT_P6_RAISED_RSS_PROFILE] = (
 )
 for _task40_profile in TASK40_PHI90_D13_CASES:
     NATIVE_CASES[_task40_profile] = (13.5, (10.0,), None, None, None)
+for _task40_profile in TASK40_PHI90_H15_PROFILES:
+    NATIVE_CASES[_task40_profile] = (13.5, (15.0,), None, None, None)
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
     NATIVE_CASES[_f5_direct_profile] = (5.0, (4.0,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -1034,9 +1056,90 @@ def _task40_phi90_d13_profile_facts(identity):
     return facts
 
 
+def _task40_phi90_h15_profile_facts(identity):
+    """Return one frozen Task40 h15 baseline or single-axis refinement profile."""
+    from copy import deepcopy
+
+    from src.geometry.task40_phi90_h15_axis_plan import (
+        H15_AXIS_PLANS,
+        H15_BASE_AXIS_SHA256_LE_F64,
+    )
+
+    try:
+        case_name = TASK40_PHI90_H15_PROFILES[identity]
+    except KeyError as exc:
+        raise ValueError(f"unsupported Task40 h15 profile: {identity}") from exc
+    plan = H15_AXIS_PLANS[case_name]
+    counts = tuple(int(value) for value in plan["axis_cell_counts"])
+    nx, ny, nz = counts
+    segment_counts = plan["segment_cell_counts"]
+    expected_cells = nx * ny * nz
+    x_center_cells = int(segment_counts["x"][1])
+    y_center_cells = int(segment_counts["y"][1])
+    z_substrate_cells = int(segment_counts["z"][0])
+    z_grating_cells = int(segment_counts["z"][1])
+    substrate_cells = nx * ny * z_substrate_cells
+    grating_cells = x_center_cells * y_center_cells * z_grating_cells
+    expected_tags = {
+        "1": expected_cells - substrate_cells - grating_cells,
+        "2": substrate_cells,
+        "3": grating_cells,
+    }
+    base = deepcopy(
+        _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_B_P6_DIRECT_PROFILE)
+    )
+    operator_scope = f"task40_phi90_H15_{case_name}_R13_finite_rectangle"
+    base.update(
+        identity=identity,
+        allowed_mesh_targets_nm=[15.0],
+        route=f"TASK40_PHI90_H15_{case_name}_P6_CONDENSED_DIRECT_R13",
+        operator_scope=operator_scope,
+    )
+    base["component_options"].update(
+        task_family="task40_phi90_h15_mesh_modes_direct",
+        mesh_target_nm=15.0,
+        expected_axis_cell_counts=list(counts),
+        expected_global_cell_count=expected_cells,
+    )
+    base["component_options"]["surface_quadrature"].update(
+        authority="fixed_R_plus_two_envelope_before_H15_B"
+    )
+    base["component_options"]["directional_mesh_comparison"] = {
+        "mesh_plan_family": "task40_phi90_h15",
+        "case": case_name,
+        "parent_case": None if case_name == "B" else "B",
+        "changed_axis": plan["changed_axis"],
+        "axis_cell_counts": list(counts),
+        "segment_cell_counts": {
+            axis: list(values) for axis, values in segment_counts.items()
+        },
+        "base_axis_sha256_le_f64": dict(H15_BASE_AXIS_SHA256_LE_F64),
+        "expected_material_tag_counts": expected_tags,
+        "mesh_plan_id": plan["plan_id"],
+        "mesh_plan_sha256": plan["mesh_plan_sha256"],
+        "expected_axis_sha256_le_f64": dict(plan["actual_axis_sha256_le_f64"]),
+        "explicit_axis_counts_in_input": True,
+        "only_axis_changes_from_B": plan["changed_axis"],
+    }
+    base["backend"]["operator_scope"] = operator_scope
+    base["campaign_authorization"]["source"] = (
+        "Task40 user-authorized H15 baseline and one-axis refinements"
+    )
+    base["campaign_authorization"]["direct_route"]["mesh_target_nm"] = 15.0
+    base["condensed_route"]["name"] = (
+        "task40_phi90_h15_p6_exact_local_condensation_direct_v1"
+    )
+    base["condensed_route"]["operator_family"] = "H15_R13_finite_rectangle"
+    base["condensed_route"]["expected_global_cell_count"] = expected_cells
+    base["resources"]["rss_hard_limit_bytes"] = None
+    return base
+
+
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
+        if identity in TASK40_PHI90_H15_PROFILES:
+            return _task40_phi90_h15_profile_facts(identity)
         return _task40_phi90_d13_profile_facts(identity)
     if identity in DISPERSION_FLAT_P6_PROFILES:
         return _dispersion_flat_p6_profile_facts(identity)
@@ -2438,6 +2541,114 @@ def _validate_task40_phi90_d13_case(config: dict, identity: str) -> None:
         raise InputError(f'{identity} requires at least 64 full-3D y samples for phase resolution')
 
 
+def _validate_task40_phi90_h15_case(config: dict, identity: str) -> None:
+    """Validate one explicit H15 base/refinement input without D13 aliases."""
+    from src.geometry.task40_phi90_h15_axis_plan import validate_frozen_h15_axes
+    from .input_loader import InputError
+
+    facts = _task40_phi90_h15_profile_facts(identity)
+    comparison = facts["component_options"]["directional_mesh_comparison"]
+
+    def require(section: str, key: str, expected: object) -> None:
+        actual = config.get(section, {}).get(key)
+        if actual != expected:
+            raise InputError(
+                f'{identity} fixes {section}.{key}={expected!r}; got {actual!r}'
+            )
+
+    require('method', 'kind', 'full3d_direct')
+    solver = config.get('solver', {})
+    require('solver', 'native_capacity_profile', identity)
+    require('solver', 'linear_solver', 'direct')
+    require('solver', 'direct_solver_profile', 'default')
+    forbidden = {'preconditioner', 'ksp_type', 'restart', 'max_iterations', 'coarse_degree'} & set(solver)
+    if forbidden:
+        raise InputError(f'{identity} forbids iterative/P4 fields: {sorted(forbidden)}')
+    if config.get('model_id') != 'si_block_phi90_50x50_17x20_h120':
+        raise InputError(f'{identity} fixes model_id=si_block_phi90_50x50_17x20_h120')
+    for key, expected in {
+        'geometry_kind': 'rectangular_block_grating',
+        'period_x_nm': 50.0, 'period_y_nm': 50.0,
+        'z_min_nm': -10.0, 'z_max_nm': 130.0,
+        'interface_z_nm': 0.0, 'air_height_nm': 130.0,
+        'substrate_thickness_nm': 10.0,
+        'grating_width_x_nm': 17.0, 'grating_width_y_nm': 20.0,
+        'grating_height_nm': 120.0,
+    }.items():
+        require('geometry', key, expected)
+    materials = config.get('materials', {})
+    expected_n = tuple(MATERIALS[13.5])
+    for key, expected in {
+        'n_air': (1.0, 0.0), 'mu_r': (1.0, 0.0),
+        'n_substrate': expected_n, 'n_grating': expected_n,
+    }.items():
+        if tuple(materials.get(key, ())) != expected:
+            raise InputError(f'{identity} fixes materials.{key}={expected!r}')
+    for key in ('substrate_name', 'grating_name'):
+        if materials.get(key) != 'Si / silicon':
+            raise InputError(f'{identity} fixes materials.{key} to the inherited Si label')
+    for key, expected in {
+        'wavelength_nm': 13.5, 'grazing_angle_deg': 1.0,
+        'azimuth_deg': 90.0, 'polarization': 's', 'electric_amplitude': 1.0,
+    }.items():
+        require('incidence', key, expected)
+    discretization = config.get('discretization', {})
+    for key, expected in {
+        'nedelec_degree': 6, 'visualization_degree': 6,
+        'mesh_target_nm': 15.0, 'mesh_cell_type': 'hexahedron',
+        'mesh_spacing_mode': 'boundary_fitted',
+        'assembly_backend': 'standard_full', 'floquet_constraint_mode': 'auto',
+    }.items():
+        require('discretization', key, expected)
+    payload = {
+        'mesh_plan_id': discretization.get('mesh_plan_id'),
+        'mesh_plan_sha256': discretization.get('mesh_plan_sha256'),
+        'mesh_axis_cell_counts': discretization.get('mesh_axis_cell_counts'),
+        'mesh_axis_x_values': discretization.get('mesh_axis_x_values'),
+        'mesh_axis_y_values': discretization.get('mesh_axis_y_values'),
+        'mesh_axis_z_values': discretization.get('mesh_axis_z_values'),
+    }
+    try:
+        validate_frozen_h15_axes(payload)
+    except ValueError as exc:
+        raise InputError(f'{identity} has an invalid frozen H15 mesh: {exc}') from exc
+    if tuple(payload['mesh_axis_cell_counts'] or ()) != tuple(
+        comparison['axis_cell_counts']
+    ):
+        raise InputError(f'{identity} H15 axis cell counts differ from profile facts')
+    if discretization.get('mesh_axis_z_profile') is not None:
+        raise InputError(f'{identity} does not use a z-profile alias')
+    for key, expected in {
+        'use_floquet_x': True, 'use_floquet_y': True,
+        'vertical_boundary': 'dtn_port', 'scattering_background': 'layered',
+        'dtn_order_policy': 'auto_propagating', 'dtn_assembly': 'auxiliary',
+        'use_pml': False,
+    }.items():
+        require('boundary', key, expected)
+    execution = config.get('execution', {})
+    for key, expected in {
+        'mpi_size': 1, 'time_limit_mode': 'none', 'timeout_seconds': None,
+        'require_zero_swap': False, 'native_memory_policy': 'interleave_nodes0_1',
+    }.items():
+        require('execution', key, expected)
+    if not (0 < float(execution.get('warning_memory_gib', 0))
+            < float(execution.get('terminate_memory_gib', 0))):
+        raise InputError(f'{identity} requires positive ordered diagnostic memory fields')
+    output = config.get('output', {})
+    for key in ('export_fields', 'export_diffraction_orders', 'export_modal_amplitudes',
+                'export_reference_planes'):
+        if output.get(key) is not True:
+            raise InputError(f'{identity} requires output.{key}=true')
+    if output.get('export_canonical_vectors') is not False:
+        raise InputError(f'{identity} keeps large canonical-vector exports disabled')
+    if tuple(output.get('reference_plane_z_nm') or ()) != (
+        10.0, 30.0, 60.0, 90.0, 110.0
+    ):
+        raise InputError(f'{identity} fixes the five reference planes')
+    if int(output.get('sample_count_y', 0)) < 64:
+        raise InputError(f'{identity} requires at least 64 full-3D y samples')
+
+
 def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
@@ -2445,7 +2656,10 @@ def validate_native_case(config):
         config.get('method', {}).get('kind'), config['solver']
     )
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
-        _validate_task40_phi90_d13_case(config, identity)
+        if identity in TASK40_PHI90_H15_PROFILES:
+            _validate_task40_phi90_h15_case(config, identity)
+        else:
+            _validate_task40_phi90_d13_case(config, identity)
         return
     if identity in DISPERSION_FLAT_P6_PROFILES:
         _validate_dispersion_flat_p6_case(config, identity)

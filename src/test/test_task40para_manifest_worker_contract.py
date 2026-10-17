@@ -16,6 +16,10 @@ from src.runners.task038_launcher import _write_bootstrap
 REPO = Path(__file__).resolve().parents[2]
 INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_b_r13_p6_direct.dat"
 Y3_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
+H15_INPUTS = {
+    case: REPO / f"input/task40para_phi90_mesh_modes_direct/h15_{case.lower()}_r13_p6_direct.dat"
+    for case in ("B", "X", "Y", "Z")
+}
 SOURCE_SHA = "b" * 40
 
 
@@ -97,6 +101,35 @@ def test_task40_y3_manifest_roundtrips_through_worker_payload_gate(tmp_path):
     assert directional["changed_axis"] == "y"
     assert tuple(directional["axis_cell_counts"]) == (6, 48, 14)
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
+    assert manifest["native_capacity_contract"]["direct_route"] == thaw(
+        profile["campaign_authorization"]["direct_route"]
+    )
+
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert errors == []
+    assert resolved is not None
+    assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+@pytest.mark.parametrize("case", ("B", "X", "Y", "Z"))
+def test_task40_h15_manifests_roundtrip_through_worker_payload_gate(tmp_path, case):
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path, H15_INPUTS[case]
+    )
+    profile = specification.derived["native_capacity_profile"]
+    directional = profile["component_options"]["directional_mesh_comparison"]
+    assert profile["identity"] == f"task40para_phi90_13p5_H15_{case}_p6_direct_v1"
+    assert directional["case"] == case
+    assert directional["mesh_plan_family"] == "task40_phi90_h15"
+    assert tuple(directional["axis_cell_counts"]) == tuple(
+        profile["component_options"]["expected_axis_cell_counts"]
+    )
+    assert profile["component_options"]["mesh_target_nm"] == 15.0
+    assert profile["component_options"]["surface_quadrature"]["degree"] == 28
+    assert manifest["native_capacity_profile_identity"] == profile["identity"]
+    assert manifest["component_options"] == thaw(profile["component_options"])
     assert manifest["native_capacity_contract"]["direct_route"] == thaw(
         profile["campaign_authorization"]["direct_route"]
     )
