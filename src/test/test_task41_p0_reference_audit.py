@@ -457,7 +457,9 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
             }
         sector_audits.append(
             {
-                "global_q_indices": pair,
+                "q_indices": pair,
+                "all_complete_native_pass": True,
+                "paired_sector_leakage_passed": True,
                 "task41_a2_independent_q_csr_preparation": {
                     "selected_q_indices": pair,
                     "all_complete_native_pass": True,
@@ -524,6 +526,7 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
         imported_preparation.pop("native_facts_by_q")
 
     snapshot = {
+        "schema": "task40extra.review_v10_reference_audit_snapshot.v1",
         "factor_audit_before_destroy": factor_audit,
         "q_matrix_audits_before_destroy": {
             str(q): {"shape": list(matrix.shape), "nnz": matrix.nnz}
@@ -532,6 +535,9 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
         "sector_audits_before_destroy": sector_audits,
     }
 
+    assert sorted(
+        q for sector in sector_audits for q in sector["q_indices"]
+    ) == list(range(10))
     result = _task41_a2_reference_audit_checks(
         {
             "reference_audit_snapshot": snapshot,

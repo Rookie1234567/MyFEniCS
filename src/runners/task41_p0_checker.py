@@ -438,7 +438,7 @@ def _task41_a2_reference_audit_checks(
     for sector_index, sector in enumerate(sectors):
         if not isinstance(sector, Mapping):
             raise ValueError(f"Task41 A2 sector audit {sector_index} is malformed")
-        raw_pair = sector.get("global_q_indices")
+        raw_pair = sector.get("q_indices")
         if not isinstance(raw_pair, list) or len(raw_pair) != 2:
             raise ValueError(f"Task41 A2 sector audit {sector_index} lacks its q pair")
         pair = tuple(sorted(int(q) for q in raw_pair))
