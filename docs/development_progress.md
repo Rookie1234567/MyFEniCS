@@ -3755,3 +3755,7 @@ Selective merge 必须区分 shared numerical helper、Task40 opt-in runner/chec
 | A2与0.7 nm | A2正式NOT_RUN，比较/检查器接线中；0.7 nm NOT_RUN | 完成同离散场/模式/功率对照后按新资源准入进入0.7 nm；无merge approval |
 
 源码、原始路径/hash和测试见[Task41 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)与[A1 compact](task41extra_phi90_p50x50_g17x20/outcomes/a1_result_compact.json)。A1科学source为`4e46e524f1a5ebbc83218e615631c2477698347a`。直接法此处提供比较基准，不承诺0.7 nm直接分解可行；当前尚不声称2TB/48h完整冷流程通过。
+
+## Task41extra A2 attempt7 保存场对照与 checker-only retry3
+
+A出口已通过。A2原迭代器完成6步，独立A6真残差`7.381572880480822e-08`（限`1e-6`）；其原worker因A1保存场MPC表示恢复检查失败，原始`WORKER_FAILED`/`official_result=false`记录保留。保存场续作随后通过27/27输出身份门及A1/A2同离散比较；冻结source `4c0af8c1e73a47337b497f3a5ccda64933d04591` 的checker-only retry3对同一快照返回`PASS`。E/scaled-curl相对差为`6.83819901978217e-09`/`6.845781370112187e-09`。该checker重算保存动作代数、映射和输出身份，没有重新组装FE算子。0.7 nm完整场与网格/倏逝模式精度仍`NOT_RUN`。完整数值、哈希、历史失败和双口径资源见[Task41 A2 compact](task41extra_phi90_p50x50_g17x20/outcomes/a2_saved_output_checker_retry3.json)、[summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)与[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。

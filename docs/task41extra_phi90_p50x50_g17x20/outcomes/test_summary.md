@@ -102,3 +102,8 @@ python -m pytest -q --tb=short src/test/test_task41_a2_q_csr_reuse.py src/test/t
 该测试结果不是 A2 最终验收；完整同离散比较和 required checker 待保存场续作完成。
 
 保存场续作首次 service 在启动 worker 前因错误属性 `FixedCampaignWindow.numeric_seconds` 退出；正确 API 为 `cutoff_seconds`。旧 unit `task41-p0-a2-saved-output-attempt7.service`、失败收据及 2.372285548131913 s 保留，未运行 FE/因子/KSP。一行修复后，fixture 改用真实 FixedCampaignWindow，验证 numeric cutoff、closeout reserve 与原 window/hash；仅该回归 1 passed in 0.25s，相关 py_compile 与 diff 检查通过。重试使用独立输出目录和 unit，T0 不刷新。
+
+
+## A2 保存场 checker schema 修复定向验证
+
+冻结 source `4c0af8c1e73a47337b497f3a5ccda64933d04591` 的 checker 将审计实际字段 `q_indices` 与生产者输出结构对齐；fixture也改为真实 producer-shaped 审计对象。Task41 C1 资格化 activation 下运行 `test_task41_a2_reference_checker_reapplies_real_ten_q_packets`：**1 passed in 1.49 s**；相关 `compileall` 与 `git diff --check` 通过。没有重跑测试集或 FE/PDE；随后工作站 checker-only retry3 对 hash-bound 保存输入得到 `PASS`。该 checker 重算保存动作代数，但没有重新组装 FE 算子。A出口现已通过；完整服务与证据身份见 [a2_saved_output_checker_retry3.json](a2_saved_output_checker_retry3.json)。

@@ -124,10 +124,126 @@
         "independent_A6_residual",
         "official_R_T_A"
       ]
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "attempt": "20261017T024732.881396Z",
+      "source_sha": "cf1ca1236d69d54fa621575c39aa0760c64bd4e3",
+      "status": "WORKER_FAILED",
+      "classification": "SOLVER_TRUE_RESIDUAL_PASS_BUT_WORKER_FAILED_DURING_SAVED_FIELD_MPC_REPRESENTATION_CHECK",
+      "official_result": false,
+      "solver_iterations": 6,
+      "independent_a6_true_residual": 7.381572880480822e-08,
+      "true_residual_limit": 1e-06,
+      "error_boundary": "A1 saved-field E/H sample representation and MPC recovery check; preserved raw solve",
+      "solver_elapsed_seconds": 590.446198619,
+      "watchdog_elapsed_seconds": 3380.788399145007,
+      "watchdog_process_tree_rss_peak_bytes": 20927184896,
+      "watchdog_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T024732.881396Z",
+      "compact": "a2_saved_output_checker_retry3.json"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "stage": "saved_output_continuation_initial",
+      "source_sha": "7b5219b1f31d0cbec1f97a82180a39260f58e1f7",
+      "status": "FAILED_BEFORE_CONTINUATION",
+      "error": "AttributeError: FixedCampaignWindow.numeric_seconds",
+      "service_receipt_sha256": "9749b6f9830e71998864d30fc335e60fed3b44e63524927de5a28776fb5b6d11",
+      "elapsed_seconds": 2.372285548
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "stage": "saved_output_continuation_retry1",
+      "source_sha": "5d90f0d13bc73aa4351f209b7087184f1e92f52b",
+      "status": "FAILED_WATCHDOG_SETUP",
+      "error": "RuntimeError: watchdog requires dedicated subreaper",
+      "watchdog_seconds": 4.520971564,
+      "service_receipt_sha256": "d51fe7c24c9238f524674118b6b7d7ac148387784d480c074e3ab3be8028ca57"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "stage": "saved_output_continuation_retry2",
+      "source_sha": "583c4d3457a879d08d048d52096187d1ddf1dab9",
+      "status": "FAILED_IDENTITY_CHECK",
+      "error": "ValueError: original A2 solver identity differs from contract at resolved_config_sha256",
+      "service_receipt_sha256": "32d8cbe818953eaddfb08830fd9bed042de2c6fea6199eb346f7b0913d943331"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "stage": "saved_output_continuation_retry3",
+      "source_sha": "ac7b938973fd942f755b5a1836052978ba28eb76",
+      "status": "OUTPUTS_READY",
+      "comparison_status": "PASS",
+      "required_checker_status": "FAILED_KEYWORD_ARGUMENT_TYPEERROR",
+      "error": "TypeError: keyword-only argument passed positionally",
+      "service_receipt_sha256": "df44c7ac7ae60136efc0247c77ee9d9f4f29a63bf0a717348c4e20d2803f3e20",
+      "continuation_receipt_sha256": "6874fc72da77b99b73b624c0cd852175965fc5debd565c824185e9ce5803f2c6",
+      "candidate_summary_sha256": "418c21d7584c9061ca4640e77bdc00aeec5c8e66f95a20d66ed7d5f9b8fa2b22",
+      "service_seconds": 105.55407895287499,
+      "watchdog_seconds": 97.97657592687756,
+      "process_tree_rss_peak_bytes": 1809657856,
+      "dedicated_cgroup_memory_peak_bytes": 1840758784,
+      "process_tree_swap_peak_bytes": 0,
+      "dedicated_cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "checker_elapsed_seconds_approx": 3.42
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "stage": "checker_only_retry1",
+      "service": "task41-p0-a2-saved-output-checker-only-retry1.service",
+      "status": "FAILED_BEFORE_WORKER",
+      "error": "RuntimeError: Task41 service did not receive its contracted qualified activation",
+      "invocation_id": "4ea613115e7b47a1b8da5ecf5c41a33a",
+      "receipt": "absent"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "stage": "checker_only_retry2",
+      "source_sha": "f49de75964582928a67c897a5a3ca20d36832974",
+      "service": "task41-p0-a2-saved-output-checker-only-retry2.service",
+      "status": "FAILED_SCHEMA_VALIDATION",
+      "error": "ValueError: Task41 A2 sector audit 0 lacks its q pair (checker expected global_q_indices; producer records q_indices)",
+      "service_receipt_sha256": "4320041cd28e22f3257195e2387d47c59013db42664068357170d5fb4fe37e0a"
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 7,
+      "stage": "checker_only_retry3",
+      "source_sha": "4c0af8c1e73a47337b497f3a5ccda64933d04591",
+      "service": "task41-p0-a2-saved-output-checker-only-retry3.service",
+      "status": "PASS",
+      "checker_result_sha256": "345c0473cc61015bce47e6223764787afec4e43b57f2d32e954931da1e8081ef",
+      "service_receipt_sha256": "93084c34020a2c636636b72e942d92679b7707af6d6ccd538d6587b247462ab0",
+      "invocation_id": "d3f7f6bf6d154d8b8f7807d71ab1ffa7",
+      "service_seconds": 33.095924948807806,
+      "watchdog_seconds": 29.815508095081896,
+      "process_tree_rss_peak_bytes": 1632485376,
+      "dedicated_cgroup_memory_peak_bytes": 682569728,
+      "process_tree_swap_peak_bytes": 0,
+      "dedicated_cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "compact": "a2_saved_output_checker_retry3.json"
     }
   ],
   "not_run": [
-    "A2_FE_solve",
     "0.7nm"
-  ]
+  ],
+  "current_state": {
+    "a2_attempt7_original_worker": "WORKER_FAILED",
+    "a2_attempt7_official_result": false,
+    "a2_saved_output_comparison": "PASS",
+    "a2_required_checker_only_retry3": "PASS",
+    "0.7nm": "NOT_RUN",
+    "a_exit": "PASS"
+  }
 }

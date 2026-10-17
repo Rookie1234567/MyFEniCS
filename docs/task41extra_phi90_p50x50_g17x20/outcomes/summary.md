@@ -8,7 +8,7 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 |---|---|---|
 | A1 首次启动 | FE 前工程失败，保留 | 旧 V29 环境标记误入 Task41；服务 1.563210294 s |
 | A1 修复续作 | 完整场及独立 checker PASS | 原窗口续作；1400 单元、p6、168 模式 |
-| A2 attempt7（最新） | 求解真残差通过，保存场比较因 MPC 表示恢复遗漏而工程失败 | 6 步，原 A6 7.381572880480822e-08；保存场续作修复已通过定向测试，完整比较/checker 尚未闭合；旧退出码 4 保留 |
+| A2 attempt7 / saved-output retry3 | A出口 PASS：A2原求解器6步且独立A6真残差通过；保存场续作完成A1/A2对照，checker-only retry3 PASS。原worker的`WORKER_FAILED`、`official_result=false`作为原始历史保留 | A6=`7.381572880480822e-08`（限`1e-6`）；checker通过不改写原worker分类，且没有重新组装FE算子；失败和资源口径见[a2_saved_output_checker_retry3.json](a2_saved_output_checker_retry3.json) |
 | A2 P0 attempt6 | 十 q 数值与 CSR/native 资格通过后，V15 拒绝精确 Task41 profile；worker exit 4、official_result=false | 外层迭代未开始；无完整场、独立 A6 残差或 official R/T/A；工程准入故障，不是数值或资源门失败；见 [test_summary.md](test_summary.md) 与 [run_index.json](run_index.json) |
 | A2 P0 attempt4 | q0/q5 的完整 CSR 与原生算子资格检查通过；随后 worker 因递归深度异常退出，official_result=false | 全流程未完成；没有完整迭代场、独立 A6 残差或 official R/T/A；0.7 nm 仍 NOT_RUN |
 | 0.7 nm | NOT_RUN | A1/A2 通过后按资源门推进 |
@@ -35,7 +35,7 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 
 详细路径、字节与哈希见 [a1_result_compact.json](a1_result_compact.json)，运行索引见 [run_index.json](run_index.json)，定向测试见 [test_summary.md](test_summary.md)。A1 的 probe/flux 诊断吸收与 official 值存在差异，原记录保留，不用于改判端口/体吸收资格。
 
-尚未通过 A1/A2 同离散比较、0.7 nm 工程场、网格/倏逝模式精度及最终 2 TB/48 h 冷流程资格。当前没有 merge approval。
+A出口已通过：A1/A2 保存场同离散对照与 checker-only retry3 在定义范围内通过字段、模式、功率和 q-reference 检查；checker没有重新组装或施加有限元算子。原 A2 worker 的 `WORKER_FAILED` / `official_result=false` 是保留的原始 attempt 分类，不代表保存场验收仍失败。0.7 nm 完整场及网格/倏逝模式精度检查尚未运行，最终 2 TB/48 h 冷流程也未资格化；当前没有 merge approval。
 
 ## A2 前置接线失败（原始记录保留）
 
@@ -64,3 +64,21 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 
 **q0/q5 后续复用边界：**已保存的 q0/q5 `COMPLETE_CSR` 和 native `PASS` 保留 source `48049161acb84f57b2d8248f67ea616fb837ccea` 的生产身份。本次日志快照修复不改变相关数学或数组；按任务要求优先复用。当前 Task41 入口尚未接通这些保存结果，需最窄的 hash-bound 导入与当前物理、模式、映射和 CSR 身份核对，并分别记录旧生产者和新消费者；不得把旧 PASS 重署为新 source，也不能仅因接口缺失默认重算。必要的 live owner 仍需建立，完整参考逆、因子真残差和 target 检查仍按原门执行。
 原始证据： [run summary](../../../results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T151713.466294Z/run_summary.json)、[worker log](../../../results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T151713.466294Z/watchdog/worker.log)、[事件记录](../../../results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T151713.466294Z/task41_g13_a2_p6_y_orbit_reference_events.jsonl)、[service receipt](../../../benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2/service_source_48049161acb84f57b2d8248f67ea616fb837ccea/task41_p0_service_receipt.json)。q0/q5 manifest 和 native qualification 位于 `.../task41_a2_q_csr_native_qualification/q5_twist0/`；q0 的三个 CSR 数组在其同级 `q0_twist0/`，q5 数组在 `q5_twist0/`。完整工作流报错后这些部分结果仍保留。
+
+
+## A2 attempt7 保存场对照与 checker-only retry3
+
+A2 原求解器完成 6 次迭代，释放因子后独立 A6 真残差为 `7.381572880480822e-08`，低于 `1e-6`。原 worker 随后在 A1 保存场的 E/H 采样表示与 MPC 约束恢复检查处以 `WORKER_FAILED` 结束，`official_result=false`。保存场续作只重建必要的场表示与比较输出，没有重跑 q 装配、因子或 KSP。续作的 27 个输出身份检查及 A1/A2 字段、模式、功率比较通过；续作中 required checker 首次因 keyword-only 参数被按 positional 方式传入而触发 `TypeError`（约 3.42 s）。之后 checker-only retry2 才发现 schema 字段不一致：producer 使用 `q_indices`，checker 错读为 `global_q_indices`；两项工程失败均保留。
+
+冻结 checker source `4c0af8c1e73a47337b497f3a5ccda64933d04591` 后，在同一不可变输入快照上以独立 checker-only retry3 完成：service exit 0、`required_checker_status=passed`、checker `PASS`、错误列表为空。它按记录中的原生 q 分组独立重算 saved-action 代数并校验映射数值、输出身份与物理比较；**没有重新组装或重新施加 FE 算子**，所以不声称这是新的一次 FE 解或重新组装复核。
+
+| 同离散比较量 | A1参考 | A2保存场 | 实测绝对差/相对差 | 门限 |
+|---|---:|---:|---:|---:|
+| 全体积 E 相对 L2 | — | — | `6.83819901978217e-09`（绝对误差范数`2.6813167841674313e-06`） | `1e-4` |
+| 全体积 scaled-curl 相对 L2 | — | — | `6.845781370112187e-09`（绝对误差范数`2.684726651356638e-06`） | `1e-4` |
+| 端口总功率 R / T / A(balance) / A_volume | `0.25137919146306575 / 0.05712971752020276 / 0.6914910910167315 / 0.6914910910199371` | `0.2513791884968878 / 0.057129717215935225 / 0.691491094287177 / 0.6914910977829845` | `2.9661779699097224e-09 / 3.04267534778635e-10 / 3.2704455810161903e-09 / 6.763047344371387e-09` | 各项绝对差`1e-5` |
+| 86 个显著正式模式的振幅/逐模式功率 | — | — | 最大相对振幅差`6.77415279387487e-06`；最大功率差`2.9583918648157237e-09` | `1e-4` / `1e-6` |
+
+q-reference 审计覆盖 5 对 sector、q0…q9、40 个 CSR 动作、10 个配对 peer CSR 动作，以及 10 个 fresh-factor probe 和 10 个同因子第二 RHS probe；严格与 V15 reference 各 6 项通过。另有 `5×40×40×3` 场表示见证：由 `curl(E_FE)` 重构的 H 与 A1 原始 H 采样相对差 `9.444546333396517e-16`，这是场表示一致性见证，不是 A1/A2 的 H 场差。289 个空间衍射级/578 个偏振行是诊断库存，与 168 个正式 DtN 端口分开。
+
+checker-only retry3 service 用时 `33.095924948807806 s`，watchdog `29.815508095081896 s`；进程树 RSS 峰 `1632485376 B`、专用 cgroup 峰 `682569728 B`，两者是不同口径；task/cgroup swap均为0，PSS未采样，后代已清场。固定 A2 窗口 T0 与SHA不变。原求解、续作、checker retry 的时间和资源不相互混加；完整身份、所有旧失败、输入/输出hash和分段计费见 [a2_saved_output_checker_retry3.json](a2_saved_output_checker_retry3.json) 与 [run_index.json](run_index.json)。0.7 nm 仍为 `NOT_RUN`。

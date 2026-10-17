@@ -1,0 +1,240 @@
+{
+  "schema": "task41.a2_saved_output_checker_retry.v1",
+  "current_state": {
+    "original_attempt7_worker": "WORKER_FAILED",
+    "original_attempt7_official_result": false,
+    "saved_output_continuation": "OUTPUTS_READY",
+    "checker_only_retry3": "PASS",
+    "a1_a2_same_discrete_saved_output_audit": "PASS_WITH_SCOPE_LIMITS",
+    "0.7nm": "NOT_RUN",
+    "a_exit": "PASS"
+  },
+  "source_identity": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "frozen_checker_head": "4c0af8c1e73a47337b497f3a5ccda64933d04591",
+    "original_a2_source": "cf1ca1236d69d54fa621575c39aa0760c64bd4e3",
+    "saved_output_consumer_source": "ac7b938973fd942f755b5a1836052978ba28eb76",
+    "checker_retry2_source": "f49de75964582928a67c897a5a3ca20d36832974",
+    "checker_retry3_source": "4c0af8c1e73a47337b497f3a5ccda64933d04591",
+    "original_a2_run_id": "task41extra_g13_p6_phi90_iterative_a2",
+    "original_a2_run_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T024732.881396Z"
+  },
+  "fixed_window": {
+    "t0_utc": "2026-10-16T14:35:47.716727746Z",
+    "window_sha256": "d745147dbfc8640220701fa055ee101efbdd25a64c97ccfb5573ed864b2a124f",
+    "contract_sha256": "223a5d47c58b52808d882e83914883ca4611b4616385df662c7cde9808744882",
+    "duration_seconds": 172800,
+    "numerical_cutoff_seconds": 171600,
+    "closeout_seconds": 1200,
+    "deadline_utc": "2026-10-18T14:35:47.716727746Z",
+    "window_reset": false
+  },
+  "original_attempt7": {
+    "solver_status": "TRUE_RESIDUAL_PASS",
+    "iterations": 6,
+    "native_residual": 7.381566812022734e-08,
+    "independent_a6_true_residual": 7.381572880480822e-08,
+    "true_residual_limit": 1e-06,
+    "worker_status": "WORKER_FAILED",
+    "official_result": false,
+    "failure_stage": "A1 saved-field E/H sample representation and MPC recovery check",
+    "failure_interpretation": "engineering representation/constraint-recovery issue; not solver residual failure",
+    "solver_elapsed_seconds": 590.446198619,
+    "watchdog_elapsed_seconds": 3380.788399145007,
+    "watchdog_process_tree_rss_peak_bytes": 20927184896,
+    "watchdog_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "pss": null,
+    "raw_artifact_sha256": {
+      "candidate_summary.json": "71d8af83892208043cd90f512c3ca72ee4a53c7ca57d7ab070192aabeabdefa3",
+      "run_summary.json": "aad5b9c552e6aec54b53ae8ae5adc194697de4b2122f309ffeb06674209dd4a2",
+      "run_manifest.json": "a7444cd647180089ec3a603fac0969a567ac57c390c62e10c9e85691e3c65a39",
+      "watchdog_summary.json": "723230827448f1b5e537e60a4e8e30dca54a98d85667cd1fa21d187eacbde6ca"
+    }
+  },
+  "saved_output_continuation_retry3": {
+    "service": "saved_output_attempt7_consumer_retry3",
+    "service_receipt_sha256": "df44c7ac7ae60136efc0247c77ee9d9f4f29a63bf0a717348c4e20d2803f3e20",
+    "service_seconds": 105.55407895287499,
+    "watchdog_seconds": 97.97657592687756,
+    "process_tree_rss_peak_bytes": 1809657856,
+    "dedicated_cgroup_memory_peak_bytes": 1840758784,
+    "process_tree_swap_peak_bytes": 0,
+    "dedicated_cgroup_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "continuation_state": "OUTPUTS_READY",
+    "output_gates": "PASS",
+    "a1_a2_comparison": "PASS",
+    "required_checker_in_this_service": "FAILED_SCHEMA_VALIDATION",
+    "input_snapshot": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/saved_output_attempt7_consumer_retry3/task41_p0_saved_output_checker_input.json",
+    "input_snapshot_sha256": "df154033f5202386856bf2089352a342f5dcb7f12bbdd17dafc8a0dbea9b2135",
+    "continuation_receipt_sha256": "6874fc72da77b99b73b624c0cd852175965fc5debd565c824185e9ce5803f2c6",
+    "candidate_summary_sha256": "418c21d7584c9061ca4640e77bdc00aeec5c8e66f95a20d66ed7d5f9b8fa2b22",
+    "checker_error": "TypeError: keyword-only argument passed positionally",
+    "required_checker_status": "FAILED_KEYWORD_ARGUMENT_TYPEERROR",
+    "checker_elapsed_seconds_approx": 3.42
+  },
+  "checker_only_retry3": {
+    "service": "task41-p0-a2-saved-output-checker-only-retry3.service",
+    "invocation_id": "d3f7f6bf6d154d8b8f7807d71ab1ffa7",
+    "mode": "checker_only",
+    "input_snapshot_sha256": "df154033f5202386856bf2089352a342f5dcb7f12bbdd17dafc8a0dbea9b2135",
+    "required_checker_status": "passed",
+    "checker_status": "PASS",
+    "checker_passed": true,
+    "checker_errors": [],
+    "continuation_status": "outputs_ready_reused",
+    "leader_exit_code": 0,
+    "service_seconds": 33.095924948807806,
+    "watchdog_elapsed_seconds": 29.815508095081896,
+    "watchdog_process_tree_rss_peak_bytes": 1632485376,
+    "dedicated_cgroup_memory_peak_bytes": 682569728,
+    "process_tree_swap_peak_bytes": 0,
+    "dedicated_cgroup_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "pss": null,
+    "output_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/saved_output_attempt7_checker_retry3",
+    "checker_result_sha256": "345c0473cc61015bce47e6223764787afec4e43b57f2d32e954931da1e8081ef",
+    "service_receipt_sha256": "93084c34020a2c636636b72e942d92679b7707af6d6ccd538d6587b247462ab0",
+    "resource_scope_note": "process-tree RSS and dedicated-cgroup memory are separate scopes and are not interchangeable"
+  },
+  "audit_results": {
+    "volume_comparison": {
+      "operator_reapplied_by_checker": false,
+      "electric_relative_l2": 6.83819901978217e-09,
+      "electric_absolute_error_norm": 2.6813167841674313e-06,
+      "electric_reference_norm": 392.1086204731204,
+      "scaled_curl_relative_l2": 6.845781370112187e-09,
+      "scaled_curl_absolute_error_norm": 2.684726651356638e-06,
+      "scaled_curl_reference_norm": 392.1724206790789,
+      "relative_l2_limit": 0.0001
+    },
+    "sample_representation_witness": {
+      "sample_shape": [
+        5,
+        40,
+        40,
+        3
+      ],
+      "electric_relative_difference": 0.0,
+      "limit": 0.0001,
+      "h_from_curl_e_vs_a1_original_sample_relative_difference": 9.444546333396517e-16,
+      "interpretation": "representation-consistency witness: H reconstructed from curl(E_FE) matches A1 original H sample; not an A1/A2 H-field difference"
+    },
+    "power": {
+      "a1_reference": {
+        "R": 0.25137919146306575,
+        "T": 0.05712971752020276,
+        "A_balance": 0.6914910910167315,
+        "A_volume": 0.6914910910199371
+      },
+      "a2_candidate": {
+        "R": 0.2513791884968878,
+        "T": 0.057129717215935225,
+        "A_balance": 0.691491094287177,
+        "A_volume": 0.6914910977829845
+      },
+      "absolute_delta": {
+        "R": 2.9661779699097224e-09,
+        "T": 3.04267534778635e-10,
+        "A_balance": 3.2704455810161903e-09,
+        "A_volume": 6.763047344371387e-09
+      },
+      "absolute_delta_limit": 1e-05
+    },
+    "formal_modes": {
+      "port_channels": 168,
+      "significant_channels": 86,
+      "significance_power_threshold": 1e-08,
+      "max_significant_amplitude_relative_difference": 6.77415279387487e-06,
+      "amplitude_relative_limit": 0.0001,
+      "max_per_mode_power_absolute_difference": 2.9583918648157237e-09,
+      "per_mode_power_absolute_limit": 1e-06,
+      "all_mode_gate": "PASS"
+    },
+    "diffraction_diagnostic_inventory": {
+      "spatial_orders": 289,
+      "polarization_rows": 578,
+      "m_bounds": [
+        -8,
+        8
+      ],
+      "n_bounds": [
+        -8,
+        8
+      ],
+      "separate_from_formal_dtn_modes": true
+    },
+    "reference_q_audit": {
+      "sector_pairs": 5,
+      "covered_q_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "q_csr_actions": 40,
+      "paired_peer_csr_actions": 10,
+      "strict_reference_cases_passed": 6,
+      "v15_reference_cases_passed": 6,
+      "fresh_factor_probes": 10,
+      "second_rhs_probes": 10
+    },
+    "output_identity": {
+      "required_outputs_checked": 27,
+      "required_outputs_passed": 27
+    }
+  },
+  "campaign_accounting": {
+    "campaign_charge_at_watchdog_start_seconds": 53808.577527784626,
+    "campaign_charge_at_watchdog_end_seconds": 53838.44750559027,
+    "watchdog_charge_segment_seconds": 29.869977806,
+    "prior_interval_since_checkpoint_seconds": 370.77599773,
+    "service_start_to_watchdog_start_seconds": 2.502693955,
+    "watchdog_tail_seconds": 0.0391,
+    "note": "Prior interval and checker runtime are separate; service, watchdog, and campaign charge are not added as if they were disjoint totals."
+  },
+  "preserved_failures": [
+    {
+      "stage": "saved_output_consumer_initial",
+      "source_sha": "7b5219b1f31d0cbec1f97a82180a39260f58e1f7",
+      "receipt_sha256": "9749b6f9830e71998864d30fc335e60fed3b44e63524927de5a28776fb5b6d11",
+      "elapsed_seconds": 2.372285548,
+      "error": "AttributeError: FixedCampaignWindow.numeric_seconds"
+    },
+    {
+      "stage": "saved_output_consumer_retry1",
+      "source_sha": "5d90f0d13bc73aa4351f209b7087184f1e92f52b",
+      "receipt_sha256": "d51fe7c24c9238f524674118b6b7d7ac148387784d480c074e3ab3be8028ca57",
+      "watchdog_seconds": 4.520971564,
+      "error": "RuntimeError: watchdog requires dedicated subreaper"
+    },
+    {
+      "stage": "saved_output_consumer_retry2",
+      "source_sha": "583c4d3457a879d08d048d52096187d1ddf1dab9",
+      "receipt_sha256": "32d8cbe818953eaddfb08830fd9bed042de2c6fea6199eb346f7b0913d943331",
+      "error": "ValueError: original A2 solver identity differs from contract at resolved_config_sha256",
+      "classification": "FAILED_IDENTITY_CHECK"
+    },
+    {
+      "stage": "checker_only_retry1",
+      "service": "task41-p0-a2-saved-output-checker-only-retry1.service",
+      "invocation_id": "4ea613115e7b47a1b8da5ecf5c41a33a",
+      "error": "RuntimeError: Task41 service did not receive its contracted qualified activation",
+      "receipt": "absent; failed before worker launch",
+      "unit_log": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/user_services/task41-p0-a2-saved-output-checker-only-retry1.log"
+    },
+    {
+      "stage": "checker_only_retry2",
+      "source_sha": "f49de75964582928a67c897a5a3ca20d36832974",
+      "service_receipt_sha256": "4320041cd28e22f3257195e2387d47c59013db42664068357170d5fb4fe37e0a",
+      "error": "ValueError: Task41 A2 sector audit 0 lacks its q pair (checker expected global_q_indices; producer records q_indices)"
+    }
+  ]
+}
