@@ -9499,6 +9499,7 @@ def _run_task41_p0_saved_output_service(
             continuation_command,
             service_directory / "continuation_watchdog",
             wall_seconds=window.cutoff_seconds,
+            phase_path=service_directory / "continuation_phase.json",
             campaign_phase="numeric",
             **common_watchdog,
         )
@@ -9548,6 +9549,7 @@ def _run_task41_p0_saved_output_service(
                 checker_command,
                 service_directory / "required_checker_watchdog",
                 wall_seconds=window.closeout_seconds,
+                phase_path=service_directory / "required_checker_phase.json",
                 campaign_phase="closeout",
                 campaign_phase_authorization=checker_authorization,
                 **common_watchdog,

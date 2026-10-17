@@ -112,6 +112,37 @@ def test_cli_forwards_physical_memory_and_profile_sampling_policies(
     assert json.loads(capsys.readouterr().out)['classification'] == 'COMPLETED'
 
 
+def test_supervise_injects_worker_envelope_when_phase_path_is_set(tmp_path):
+    from benchmarks.subreaper_watchdog import supervise
+
+    phase_path = tmp_path / "continuation_phase.json"
+    envelope_path = tmp_path / "worker_envelope.json"
+    worker = (
+        "import json,os; from pathlib import Path; "
+        "parent=int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID']); "
+        "phase=os.environ['PHYSICAL_WATCHDOG_PHASE_PATH']; "
+        "cap=int(os.environ['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES']); "
+        f"Path({str(envelope_path)!r}).write_text(json.dumps(dict(parent_pid=parent,"
+        "phase_path=phase,launch_cap_bytes=cap)))"
+    )
+    result = supervise(
+        [sys.executable, "-c", worker],
+        tmp_path / "watchdog",
+        wall_seconds=10,
+        interval=0.05,
+        grace_seconds=0.2,
+        phase_path=phase_path,
+        pss_sampling_policy="disabled_by_profile",
+    )
+
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    assert result["classification"] == "COMPLETED"
+    assert result["leader_exit_code"] == 0
+    assert envelope["parent_pid"] == os.getpid()
+    assert envelope["phase_path"] == str(phase_path.resolve())
+    assert envelope["launch_cap_bytes"] > 0
+
+
 
 def test_explicit_accounting_root_includes_service_wrapper_rss_and_clears_children(
     tmp_path,

@@ -293,6 +293,10 @@ def test_service_call_chain_uses_string_activation_and_one_frozen_window(
     assert len(calls) == 2
     assert calls[0][1]["campaign_phase"] == "numeric"
     assert calls[1][1]["campaign_phase"] == "closeout"
+    service_directory = output_root.with_name("continuation.service")
+    assert calls[0][1]["phase_path"] == service_directory / "continuation_phase.json"
+    assert calls[1][1]["phase_path"] == service_directory / "required_checker_phase.json"
+    assert calls[0][1]["phase_path"] != calls[1][1]["phase_path"]
     assert calls[0][0][calls[0][0].index("--run-root") + 1] == str(run_root)
     assert calls[0][0][calls[0][0].index("--output-dir") + 1] == str(output_root)
     assert calls[1][0][calls[1][0].index("--output") + 1] == str(
