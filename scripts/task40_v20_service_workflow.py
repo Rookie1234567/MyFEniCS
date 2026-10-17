@@ -9389,6 +9389,222 @@ def _check_partial_cli(argv: list[str]) -> int:
     return 0 if result["checker_passed"] else 2
 
 
+def _run_task41_p0_saved_output_service(
+    *,
+    unit: str,
+    runtime_prefix: Path,
+    environment: dict[str, str],
+    window: Any,
+    contract: Mapping[str, Any],
+    contract_path: Path,
+    contract_sha: str,
+    case_id: str,
+    run_root: Path,
+    output_root: Path,
+    consumer_source_sha: str,
+    input_path: Path,
+    activation_command: Any,
+    activation_identity: str,
+    preflight: Mapping[str, Any],
+    preflight_command: Any,
+    cgroup_start: Mapping[str, Any],
+    service_entry_accounting: Mapping[str, Any],
+    service_start_sample: Mapping[str, Any],
+    repo_root: Path,
+    supervise: Callable[..., dict[str, Any]],
+    sha256_file: Callable[[Path], str],
+) -> int:
+    """Use the registered Task41 service/watchdog for a saved-output continuation."""
+    from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
+
+    results_root = (repo_root / "results" / str(contract["case"]["model_id"])).resolve()
+    output_root = output_root.resolve()
+    if not output_root.is_relative_to(results_root) or not run_root.is_relative_to(results_root):
+        raise ValueError("saved-output source and destination must remain under the registered model results")
+    service_directory = output_root.with_name(output_root.name + ".service")
+    service_directory.mkdir(parents=True, exist_ok=False)
+    receipt_path = service_directory / "task41_p0_service_receipt.json"
+    resource = contract["resources"]
+    case = contract["case"]
+    python = str(runtime_prefix / "bin/python")
+    continuation_command = [
+        python,
+        "-m",
+        "src.runners.task41_p0_saved_output_continuation",
+        "--run-root",
+        str(run_root),
+        "--output-dir",
+        str(output_root),
+        "--contract",
+        str(contract_path.resolve()),
+        "--contract-sha256",
+        contract_sha,
+        "--consumer-source-sha",
+        consumer_source_sha,
+    ]
+    record: dict[str, Any] = {
+        "schema": "task41.p0.saved_output_service_receipt.v1",
+        "status": "running",
+        "unit": unit,
+        "task_id": contract["task_id"],
+        "case_id": case_id,
+        "contract_path": str(contract_path.resolve()),
+        "contract_sha256": contract_sha,
+        "producer_source_sha": contract["source"]["sha"],
+        "consumer_source_sha": consumer_source_sha,
+        "consumer_branch": contract["branch"],
+        "window_path": str(window.path),
+        "window_sha256": window.sha256,
+        "task_memory_max_bytes": resource["task_memory_max_bytes"],
+        "host_reserve_bytes": resource["host_reserve_bytes"],
+        "memory_swap_max_bytes": resource["memory_swap_max_bytes"],
+        "abi_receipt_sha256": contract["runtime"]["abi_receipt_sha256"],
+        "activation_command": activation_command,
+        "activation_identity": activation_identity,
+        "preflight": dict(preflight),
+        "preflight_command": preflight_command,
+        "cgroup_start": dict(cgroup_start),
+        "service_entry_accounting": dict(service_entry_accounting),
+        "input_path": str(input_path),
+        "input_sha256": case["input_sha256"],
+        "producer_run_root": str(run_root),
+        "consumer_output_root": str(output_root),
+        "continuation_command": continuation_command,
+        "service_started_sample": service_start_sample,
+    }
+    _write_json_fsync(receipt_path, record)
+    common_watchdog = {
+        "interval": 1.0,
+        "grace_seconds": 30.0,
+        "hard_stop_immediate": True,
+        "timebase_guard": True,
+        "timebase_policy": CONSERVATIVE_REALTIME,
+        "time_policy": "enforce",
+        "memory_policy": PHYSICAL_MEMORY_PRESSURE_POLICY,
+        "pss_sampling_policy": "disabled_by_profile",
+        "allow_physical_pressure_tree_cap": True,
+        "tree_cap_bytes": int(resource["task_memory_max_bytes"]),
+        "host_reserve_bytes": int(resource["host_reserve_bytes"]),
+        "task_cgroup_reserve_bytes": 0,
+        "require_job_cgroup_zero_swap": True,
+        "require_cgroup_memory_details": True,
+        "campaign_window_path": window.path,
+        "campaign_window_sha256": window.sha256,
+        "campaign_accounting_path": window.accounting_path,
+        "worker_environment": environment,
+    }
+    result_code = 3
+    try:
+        worker_watchdog = supervise(
+            continuation_command,
+            service_directory / "continuation_watchdog",
+            wall_seconds=window.numeric_seconds,
+            campaign_phase="numeric",
+            **common_watchdog,
+        )
+        record["continuation_watchdog"] = worker_watchdog
+        worker_ok = bool(
+            worker_watchdog.get("classification") == "COMPLETED"
+            and worker_watchdog.get("leader_exit_code") == 0
+        )
+        record["continuation_status"] = "outputs_ready" if worker_ok else "failed"
+        checker_snapshot = output_root / "task41_p0_saved_output_checker_input.json"
+        if worker_ok and checker_snapshot.is_file():
+            checker_result_path = output_root / "task41_p0_saved_output_checker_result.json"
+            checker_command = [
+                python,
+                "-m",
+                "src.runners.task41_p0_checker",
+                "--saved-output-continuation-input",
+                str(checker_snapshot),
+                "--contract",
+                str(contract_path.resolve()),
+                "--contract-sha256",
+                contract_sha,
+                "--output",
+                str(checker_result_path),
+            ]
+            source_branch = subprocess.check_output(
+                ["git", "branch", "--show-current"], cwd=repo_root, text=True
+            ).strip()
+            checker_authorization = {
+                "schema": "task41.p0.closeout_checker_authorization.v1",
+                "phase": "closeout",
+                "purpose": "registered_read_only_required_checker",
+                "checker_kind": "task41_p0_saved_output_continuation_checker",
+                "command_sha256": hashlib.sha256(
+                    json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+                ).hexdigest(),
+                "input_paths": [str(checker_snapshot.resolve())],
+                "input_sha256s": [sha256_file(checker_snapshot)],
+                "expected_channel_count": None,
+                "campaign_window_sha256": window.sha256,
+                "task41_contract_sha256": contract_sha,
+                "source_sha": consumer_source_sha,
+                "source_branch": source_branch,
+                "source_clean": True,
+            }
+            checker_watchdog = supervise(
+                checker_command,
+                service_directory / "required_checker_watchdog",
+                wall_seconds=window.closeout_seconds,
+                campaign_phase="closeout",
+                campaign_phase_authorization=checker_authorization,
+                **common_watchdog,
+            )
+            checker_payload = (
+                json.loads(checker_result_path.read_text(encoding="utf-8"))
+                if checker_result_path.is_file()
+                else None
+            )
+            checker_ok = bool(
+                checker_watchdog.get("classification") == "COMPLETED"
+                and checker_watchdog.get("leader_exit_code") == 0
+                and isinstance(checker_payload, Mapping)
+                and checker_payload.get("checker_passed") is True
+            )
+            record.update(
+                required_checker_status="passed" if checker_ok else "failed",
+                required_checker_command=checker_command,
+                required_checker_authorization=checker_authorization,
+                required_checker_watchdog=checker_watchdog,
+                required_checker_result=checker_payload,
+                required_checker_result_path=str(checker_result_path),
+            )
+            continuation_receipt_path = output_root / "task41_p0_saved_output_continuation_receipt.json"
+            if continuation_receipt_path.is_file():
+                continuation_receipt = json.loads(
+                    continuation_receipt_path.read_text(encoding="utf-8")
+                )
+                continuation_receipt.update(
+                    {
+                        "status": "PASS" if checker_ok else "FAILED",
+                        "checker_input_snapshot_path": str(checker_snapshot),
+                        "checker_input_snapshot_sha256": sha256_file(checker_snapshot),
+                        "checker_result_path": str(checker_result_path),
+                        "checker_result_sha256": sha256_file(checker_result_path)
+                        if checker_result_path.is_file()
+                        else None,
+                    }
+                )
+                _write_json_fsync(continuation_receipt_path, continuation_receipt)
+            result_code = 0 if checker_ok else 3
+        else:
+            record["required_checker_status"] = "not_run_continuation_failed_or_snapshot_missing"
+    except Exception as exc:
+        record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+        result_code = 3
+    finally:
+        end_sample = clock_sample(include_boot_id=True)
+        record["service_elapsed_seconds"] = checked_interval(
+            service_start_sample, end_sample, policy=CONSERVATIVE_REALTIME
+        )["budget_seconds"]
+        record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
+        record["receipt_path"] = str(receipt_path)
+        _write_json_fsync(receipt_path, record)
+    return result_code
+
+
 def _run_task41_p0_service(
     *,
     unit: str,
@@ -9420,14 +9636,50 @@ def _run_task41_p0_service(
 
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
         raise ValueError("invalid Task41 systemd service unit name")
+    continuation_mode = bool(
+        case_args and case_args[0] == "--task41-p0-saved-output-continuation"
+    )
+    continuation_run_root: Path | None = None
+    continuation_output_root: Path | None = None
+    if continuation_mode:
+        if (
+            len(case_args) != 5
+            or case_args[1] != "--run-root"
+            or case_args[3] != "--output-dir"
+        ):
+            raise ValueError(
+                "saved-output service requires --run-root and --output-dir exactly once"
+            )
+        continuation_run_root = Path(case_args[2]).resolve(strict=True)
+        continuation_output_root = Path(case_args[4]).resolve()
     contract, contract_sha = require_task41_p0_contract(
         contract_path,
         expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
         current_root=repo_root,
-        check_current_source=True,
+        check_current_source=not continuation_mode,
         require_clean_source=True,
     )
     case_id = task41_case_id_for_run_id(str(contract["case"]["run_id"]))
+    continuation_source_sha: str | None = None
+    if continuation_mode:
+        continuation_source_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
+        ).strip()
+        continuation_branch = subprocess.check_output(
+            ["git", "branch", "--show-current"], cwd=repo_root, text=True
+        ).strip()
+        if (
+            continuation_branch != contract["branch"]
+            or continuation_source_sha == contract["source"]["sha"]
+            or not continuation_output_root.is_relative_to(repo_root)
+            or continuation_output_root.exists()
+            or continuation_output_root == continuation_run_root
+            or continuation_run_root.is_relative_to(continuation_output_root)
+            or continuation_output_root.is_relative_to(continuation_run_root)
+        ):
+            raise ValueError(
+                "saved-output consumer source or new result directory differs from the frozen producer contract"
+            )
     if os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1":
         raise ValueError("Task41 service lacks its strict execution marker")
     window = load_task41_p0_fixed_window(contract, current_root=repo_root)
@@ -9452,12 +9704,15 @@ def _run_task41_p0_service(
         or os.environ.get("TASK41_P0_EXPECTED_SOURCE_SHA") != contract["source"]["sha"]
     ):
         raise ValueError("Task41 service environment differs from the fixed contract")
-    if len(case_args) != 1 or case_args[0].startswith("-"):
-        raise ValueError("Task41 P0 service accepts exactly its contracted DAT path")
-    input_path = Path(case_args[0])
-    input_path = (input_path if input_path.is_absolute() else repo_root / input_path).resolve()
     expected_input = Path(str(contract["case"]["input_path"]))
     expected_input = (expected_input if expected_input.is_absolute() else repo_root / expected_input).resolve()
+    if continuation_mode:
+        input_path = expected_input
+    else:
+        if len(case_args) != 1 or case_args[0].startswith("-"):
+            raise ValueError("Task41 P0 service accepts exactly its contracted DAT path")
+        input_path = Path(case_args[0])
+        input_path = (input_path if input_path.is_absolute() else repo_root / input_path).resolve()
     if input_path != expected_input or sha256_file(input_path) != contract["case"]["input_sha256"]:
         raise ValueError("Task41 service DAT path/hash differs from the fixed contract")
     numeric_settings = {
@@ -9481,6 +9736,11 @@ def _run_task41_p0_service(
         "TASK41_P0_MEMORY_SWAP_MAX_BYTES": str(contract["resources"]["memory_swap_max_bytes"]),
         "TASK41_P0_EXPECTED_SOURCE_SHA": contract["source"]["sha"],
     })
+    if continuation_mode:
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+        })
     activation_marker = _qualified_activation_identity(environment)
     if activation_marker is None:
         raise RuntimeError("Task41 service did not receive its contracted qualified activation")
@@ -9509,6 +9769,35 @@ def _run_task41_p0_service(
         or cgroup["memory_current_bytes"] > resource["task_memory_max_bytes"]
     ):
         raise RuntimeError("Task41 service cgroup does not enforce the contracted memory cap and zero swap")
+
+    if continuation_mode:
+        assert continuation_run_root is not None
+        assert continuation_output_root is not None
+        assert continuation_source_sha is not None
+        return _run_task41_p0_saved_output_service(
+            unit=unit,
+            runtime_prefix=runtime_prefix,
+            environment=environment,
+            window=window,
+            contract=contract,
+            contract_path=contract_path,
+            contract_sha=contract_sha,
+            case_id=case_id,
+            run_root=continuation_run_root,
+            output_root=continuation_output_root,
+            consumer_source_sha=continuation_source_sha,
+            input_path=input_path,
+            activation_command=activation_command,
+            activation_identity=activation_marker,
+            preflight=preflight,
+            preflight_command=preflight_argv,
+            cgroup_start=cgroup,
+            service_entry_accounting=service_entry_record,
+            service_start_sample=service_start_sample,
+            repo_root=repo_root,
+            supervise=supervise,
+            sha256_file=sha256_file,
+        )
 
     service_directory = Path(str(contract["evidence"]["service_directory"]))
     service_directory = (service_directory if service_directory.is_absolute() else repo_root / service_directory).resolve()

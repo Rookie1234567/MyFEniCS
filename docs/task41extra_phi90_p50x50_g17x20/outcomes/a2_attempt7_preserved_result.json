@@ -1,0 +1,89 @@
+{
+  "observed_utc": "2026-10-17T04:36:59.868427+00:00",
+  "run_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T024732.881396Z",
+  "worker": {
+    "source_sha": "cf1ca1236d69d54fa621575c39aa0760c64bd4e3",
+    "status": "FAILED",
+    "result_classification": "WORKER_FAILED",
+    "error": {
+      "message": "Task41 A1 full field representation failed the saved E/H sample witness",
+      "type": "ValueError"
+    },
+    "numeric_gates_passed": true,
+    "official_result": false,
+    "independent_final_A6_relative_residual": 7.381572880480822e-08,
+    "post_release_final_A6_relative_residual": 7.381572880480822e-08,
+    "independent_final_native_witness_relative_residual": 7.381566812022734e-08,
+    "post_release_native_witness_relative_residual": 7.381566812022734e-08
+  },
+  "solver": {
+    "status": "TRUE_RESIDUAL_PASS",
+    "iterations": 6,
+    "elapsed_seconds": 590.446198619
+  },
+  "final_evaluation": {
+    "iteration": 6,
+    "explicit_true_residual": 7.381572880480822e-08
+  },
+  "watchdog": {
+    "timebase_policy": "conservative_realtime",
+    "timebase_policy_version": 1,
+    "time_policy": "enforce",
+    "time_gate_evaluated": true,
+    "time_gate_action": "enforce",
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "swap_policy": "worker_defined",
+    "process_tree_swap_gate_enforced": true,
+    "global_swap_gate_enforced": false,
+    "job_cgroup_swap_gate_enforced": true,
+    "job_cgroup_swap_start_bytes": 0,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 4,
+    "descendants_cleared": true,
+    "sampled_process_tree_rss_peak_bytes": 20927184896,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "process_tree_samples": 10403,
+    "process_tree_all_status_readable": true,
+    "process_tree_all_identity_complete": true,
+    "process_tree_identity_coverage": "complete",
+    "process_tree_identity_sample_count": 41652,
+    "observed_child_identity_coverage": "complete",
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "samples": 10403,
+    "elapsed_seconds": 3380.788399145007,
+    "cache_metadata_stamp": "0c04006f479d12bde97d0e3ee1c7c34eb9cf23513562a94181574d9a057921e2"
+  },
+  "run_summary": {
+    "status": "finished",
+    "exit_status": 4,
+    "result_classification": "WORKER_FAILED"
+  },
+  "files": {
+    "task40_v10_p6_candidate_summary.json": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T024732.881396Z/task40_v10_p6_candidate_summary.json",
+      "bytes": 35128379,
+      "sha256": "71d8af83892208043cd90f512c3ca72ee4a53c7ca57d7ab070192aabeabdefa3"
+    },
+    "run_summary.json": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T024732.881396Z/run_summary.json",
+      "bytes": 13389,
+      "sha256": "aad5b9c552e6aec54b53ae8ae5adc194697de4b2122f309ffeb06674209dd4a2"
+    },
+    "run_manifest.json": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T024732.881396Z/run_manifest.json",
+      "bytes": 9360,
+      "sha256": "a7444cd647180089ec3a603fac0969a567ac57c390c62e10c9e85691e3c65a39"
+    },
+    "watchdog/summary.json": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T024732.881396Z/watchdog/summary.json",
+      "bytes": 12085,
+      "sha256": "723230827448f1b5e537e60a4e8e30dca54a98d85667cd1fa21d187eacbde6ca"
+    }
+  }
+}

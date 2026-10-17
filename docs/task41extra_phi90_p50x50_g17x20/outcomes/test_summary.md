@@ -90,3 +90,13 @@ source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifact
 python -m pytest -q --tb=short src/test/test_task41_a2_q_csr_reuse.py src/test/test_task41_p0_reference_audit.py src/test/test_task41_p0_contract.py src/test/test_task41_g13_direct_input.py src/test/test_task41_v15_reference_capability.py src/test/test_task40_augmented_reference_correction.py
 
 相关文件 compileall 与 git diff --check 通过；Ruff 未安装。主控在 C1 下独立复核 profile capability 两项、真实 V15 candidate 链一项、q_csr_reuse 全文件及 reference_audit 全文件，共 11 passed in 2.49 s。另一次额外 Task40 route 批次命令为 python -m pytest -q --tb=short src/test/test_task40_v16_routes.py src/test/test_task40_v17_row_tile_routes.py src/test/test_task40_v20_routes.py src/test/test_task40_v18_ny8_operator_reuse.py，结果 73 failed、76 passed、1 skipped。该批未诊断；代表栈为 src/test/test_task40_v16_routes.py:39 经 src/io/input_validation.py:532 报 solver.initial_guess: missing required field，失败发生在 profile inventory 前。原始输出未另存文件，位置为本次 Codex 任务 exec session 82727 的工具输出；未将全部失败归因于该代表栈，也不与 Task41 定向结果混并。
+
+## A2 attempt7 保存场续作修复（尚未正式续作）
+
+原 attempt7 已完成 6 次外层迭代，原 A6 为 7.381572880480822e-08；随后在 A1 保存场自检阶段以 WORKER_FAILED 退出。A1 保存向量是 slave-zero 存储，正式输出使用 MPC 恢复后的物理场；修复在比较时恢复约束值，旧向量、source 和失败记录不改写。当前新增受既有 service/watchdog 监督的保存场续作，仅重建必要 FE/MPC/指标及检查，不重新装配 q、分解或 KSP。
+
+诊断衍射表的 289 个空间级、578 个偏振条目与 168 个正式 DtN 端口分开验证。续作沿原 A2 窗口和资源合同，旧生产者与新 consumer 源码分别绑定。checker 输入保存为不可变快照，原输出硬链接在处理后按完整文件名、字节、hash、设备/inode 再核验。
+
+最终 C1 定向测试：`python -m pytest -q src/test/test_task41_p0_contract.py src/test/test_task41_p0_saved_output_continuation.py src/test/test_task41_p0_reference_audit.py`，20 passed in 1.34s。修改文件 py_compile、启动脚本 bash -n、git diff --check 通过。初次临时 ABI 检查误断言 .venv 前缀而失败；实际 C1 runtime_prefix/bin/python、complex128/int32、MPI1 及原包版本读回正常，未修改环境。Ruff 在当前环境不可用。
+
+该测试结果不是 A2 最终验收；完整同离散比较和 required checker 待保存场续作完成。

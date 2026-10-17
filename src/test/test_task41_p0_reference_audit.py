@@ -74,7 +74,10 @@ def test_task41_weak_mode_delta_uses_global_incident_scale(tmp_path: Path) -> No
 
 
 def test_task41_metric_packet_rejects_incomplete_independent_rows(tmp_path: Path) -> None:
-    from src.runners.task41_p0_comparison import evaluate_task41_metric_packet
+    from src.runners.task41_p0_comparison import (
+        compare_task41_numeric_mpc_maps,
+        evaluate_task41_metric_packet,
+    )
 
     packet_path = tmp_path / "metric_packet.json"
     arrays_path = tmp_path / "metric_packet.npz"
@@ -84,6 +87,42 @@ def test_task41_metric_packet_rejects_incomplete_independent_rows(tmp_path: Path
     candidate[2] += 1.0e-6
     independent = np.asarray([0, 2, 3], dtype=np.int64)
     difference = candidate[independent] - reference[independent]
+
+    def fake_mpc(coefficients: np.ndarray) -> SimpleNamespace:
+        return SimpleNamespace(
+            slaves=np.asarray([1], dtype=object),
+            masters=SimpleNamespace(array=np.asarray([0], dtype=object)),
+            coefficients=lambda: (
+                np.asarray(coefficients, dtype=object),
+                np.asarray([0, 0, 1, 1, 1], dtype=object),
+            ),
+        )
+
+    mpc_arrays, mpc_identity = compare_task41_numeric_mpc_maps(
+        fake_mpc(np.asarray([1.0 + 0.0j])),
+        fake_mpc(np.asarray([1.0 + 0.0j])),
+    )
+    mpc_arrays_path = tmp_path / "numeric_mpc_map.npz"
+    mpc_json_path = tmp_path / "numeric_mpc_map.json"
+    np.savez(mpc_arrays_path, **mpc_arrays)
+    mpc_record = {
+        "schema": "task41.p0.numeric_mpc_map_packet.v1",
+        "mpc_map_identity": mpc_identity,
+        **{
+            name: {
+                "array_key": name,
+                "shape": list(value.shape),
+                "dtype": str(value.dtype),
+            }
+            for name, value in mpc_arrays.items()
+        },
+        "arrays": {
+            "path": str(mpc_arrays_path.resolve()),
+            "sha256": hashlib.sha256(mpc_arrays_path.read_bytes()).hexdigest(),
+        },
+    }
+    mpc_json_path.write_text(json.dumps(mpc_record, sort_keys=True) + "\n", encoding="utf-8")
+    mpc_packet = mpc_record
     archive = {
         "independent_indices": independent,
         "a1_mpc_slave_local_rows": np.asarray([1], dtype=np.int64),
@@ -110,6 +149,7 @@ def test_task41_metric_packet_rejects_incomplete_independent_rows(tmp_path: Path
             "path": str(arrays_path.resolve()),
             "sha256": hashlib.sha256(arrays_path.read_bytes()).hexdigest(),
         }
+        records["mpc_map_packet"] = mpc_packet
         records["metrics"] = metrics
         packet_path.write_text(
             json.dumps(records, sort_keys=True) + "\n", encoding="utf-8"
@@ -132,6 +172,7 @@ def test_task41_metric_packet_rejects_incomplete_independent_rows(tmp_path: Path
     )
     assert result["raw_action_algebra_recomputed"] is True
     assert result["electric_relative_l2"] == pytest.approx(relative)
+    assert result["numeric_mpc_map_recheck"]["passed"] is True
 
     incomplete = {
         **archive,
@@ -149,6 +190,34 @@ def test_task41_metric_packet_rejects_incomplete_independent_rows(tmp_path: Path
             candidate_full_field=candidate,
             expected_binding_sha256=binding_sha,
         )
+
+
+def test_task41_numeric_mpc_map_uses_values_for_object_adjacency() -> None:
+    from src.runners.task41_p0_comparison import compare_task41_numeric_mpc_maps
+
+    def fake_mpc(coefficient: complex) -> SimpleNamespace:
+        return SimpleNamespace(
+            slaves=np.asarray([3], dtype=object),
+            masters=SimpleNamespace(array=np.asarray([0, 1], dtype=object)),
+            coefficients=lambda: (
+                np.asarray([coefficient, 1.0 + 0.0j], dtype=object),
+                np.asarray([0, 0, 0, 2, 2], dtype=object),
+            ),
+        )
+
+    equal_arrays, equal_record = compare_task41_numeric_mpc_maps(
+        fake_mpc(1.0 + 0.0j), fake_mpc(1.0 + 0.0j)
+    )
+    assert equal_record["status"] == "PASS"
+    assert equal_arrays["a1_mpc_map_masters"].dtype == np.dtype(np.int64)
+    assert equal_arrays["a1_mpc_map_coefficients"].dtype == np.dtype(np.complex128)
+    assert equal_record["arrays"]["masters"]["a1"]["source_dtype"] == "object"
+
+    _different_arrays, different_record = compare_task41_numeric_mpc_maps(
+        fake_mpc(1.0 + 0.0j), fake_mpc(0.5 + 0.0j)
+    )
+    assert different_record["status"] == "FAIL"
+    assert different_record["checks"]["coefficients"] is False
 
 
 def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(

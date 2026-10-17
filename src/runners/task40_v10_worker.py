@@ -6240,6 +6240,7 @@ def _task41_a2_comparison(
     cfg: Any,
     target_levels: Mapping[str, Any],
     *,
+    resolved_payload: Mapping[str, Any],
     a2_full_solution: np.ndarray,
     a2_output: Mapping[str, Any],
     output_directory: Path,
@@ -6257,6 +6258,7 @@ def _task41_a2_comparison(
     from src.runners.task41_p0_comparison import (
         TASK41_COMPARISON_SCHEMA,
         TASK41_MODE_RELATIVE_LIMIT,
+        compare_task41_numeric_mpc_maps,
         compare_task41_modal_artifacts,
         compare_task41_power_totals,
     )
@@ -6267,6 +6269,8 @@ def _task41_a2_comparison(
     from src.solvers.fullspace_physical_intermediate_runtime import (
         fine_volume_quadrature_metadata,
     )
+    from src.io.input_validation import simulation_config_3d_from_normalized
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from src.solvers.physical_error_metric import LosslessFEMetric
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -6342,6 +6346,87 @@ def _task41_a2_comparison(
             if not equal:
                 raise ValueError(f"Task41 A1 and A2 mesh/material array differs: {name}")
 
+    resolved_record = a1.get("resolved_config")
+    if not isinstance(resolved_record, Mapping):
+        raise ValueError("Task41 A1 binding omits its source resolved configuration")
+    raw_resolved_path = Path(str(resolved_record.get("path", "")))
+    a1_resolved_path = (
+        raw_resolved_path if raw_resolved_path.is_absolute() else repo_root / raw_resolved_path
+    ).resolve(strict=True)
+    raw_a1_run_root = Path(str(a1.get("run_root", "")))
+    a1_run_root = (
+        raw_a1_run_root if raw_a1_run_root.is_absolute() else repo_root / raw_a1_run_root
+    ).resolve(strict=True)
+    if (
+        not a1_resolved_path.is_relative_to(a1_run_root)
+        or a1_resolved_path.stat().st_size != resolved_record.get("bytes")
+        or _v19_sha256_path(a1_resolved_path) != resolved_record.get("sha256")
+        or resolved_record.get("sha256") != a1.get("resolved_config_sha256")
+    ):
+        raise ValueError("Task41 A1 resolved configuration identity changed")
+    a1_resolved_payload = json.loads(a1_resolved_path.read_text(encoding="utf-8"))
+    a1_physical_sha = str(
+        a1_resolved_payload.get("provenance", {}).get("physical_model_sha256", "")
+    )
+    a2_physical_sha = str(
+        resolved_payload.get("provenance", {}).get("physical_model_sha256", "")
+    )
+    if (
+        a1_physical_sha != a1.get("physical_model_sha256")
+        or a2_physical_sha != a1_physical_sha
+    ):
+        raise ValueError("Task41 A1/A2 resolved physical models do not match the bound A1 identity")
+
+    from mpi4py import MPI
+
+    a1_cfg = simulation_config_3d_from_normalized(a1_resolved_payload)
+    map_workspace_bytes = int(
+        4
+        * (
+            np.asarray(target_levels["spaces"][6].dofmap.list).nbytes
+            + np.asarray(target_levels["mesh"].geometry.x).nbytes
+            + a1_full_solution.nbytes
+        )
+    )
+    allocation_gate(
+        "before_task41_a1_numeric_mpc_map_reconstruction",
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": map_workspace_bytes,
+            "declared_future_co_resident_bytes": int(2 * map_workspace_bytes),
+            "full_storage_rows": int(a1_full_solution.size),
+            "phase_scope": "rebuild bound A1 p6 FE/MPC space for numeric adjacency comparison; no q, factor, or KSP",
+        },
+    )
+    a1_levels = _build_same_mesh_levels(
+        a1_cfg,
+        MPI.COMM_SELF,
+        (6,),
+        include_positive_coefficients=False,
+    )
+    mpc_map_arrays, mpc_map_identity = compare_task41_numeric_mpc_maps(
+        a1_levels["floquets"][6].mpc,
+        target_levels["floquets"][6].mpc,
+    )
+    mpc_map_packet = _save_packet(
+        runtime,
+        "task41_a1_a2_numeric_mpc_map",
+        {
+            **mpc_map_arrays,
+            "mpc_map_identity": mpc_map_identity,
+            "a1_source_sha": str(a1["source_sha"]),
+            "a1_resolved_config_sha256": str(a1["resolved_config_sha256"]),
+            "a2_source_sha": str(campaign_authority.get("source_sha", "")),
+            "a2_physical_model_sha256": a2_physical_sha,
+        },
+    )
+    if mpc_map_identity.get("status") != "PASS":
+        runtime.marker(
+            "task41_a1_a2_numeric_mpc_map_rejected",
+            {"mpc_map_identity": mpc_map_identity, "mpc_map_packet": mpc_map_packet},
+        )
+        raise ValueError("Task41 A1/A2 numeric MPC adjacency, offsets, or coefficients differ")
+
     allocation_gate(
         "before_task41_a2_saved_field_sample_witness",
         {
@@ -6356,27 +6441,68 @@ def _task41_a2_comparison(
     )
     from dolfinx import fem
 
-    electric = fem.Function(target_levels["spaces"][6], name="task41_a1_saved_total_E_in_a2_space")
+    electric = fem.Function(a1_levels["spaces"][6], name="task41_a1_saved_x_fe_in_a1_space")
     if electric.x.array.size != a1_full_solution.size:
-        raise ValueError("Task41 A1 recovered field length differs from the existing A2 FE space")
+        raise ValueError("Task41 A1 recovered field length differs from its rebuilt p6 FE space")
     electric.x.array[:] = a1_full_solution
     electric.x.scatter_forward()
-    curl = direct_curl_dg(electric, degree=6)
-    field_view = SimpleNamespace(
-        label="Task41 A1 field restored in the live A2 p6 space",
-        cfg=cfg,
-        electric=electric,
-        curl=curl,
-    )
     sample_archive_path = artifact_path("full3d_samples_archive")
     sample_metadata_path = artifact_path("full3d_samples_metadata")
     with np.load(sample_archive_path, allow_pickle=False) as archive:
         samples = {name: np.array(archive[name], copy=True) for name in archive.files}
     sample_metadata = json.loads(sample_metadata_path.read_text(encoding="utf-8"))
+    raw_vector_sha256 = _hash_arrays({"a1_slave_zero_x_fe": a1_full_solution})
+    raw_curl = direct_curl_dg(electric, degree=6)
+    raw_witness = total_field_sample_witness(
+        SimpleNamespace(
+            label="Task41 A1 stored x_fe before MPC homogenization/backsubstitution",
+            cfg=a1_cfg,
+            electric=electric,
+            curl=raw_curl,
+        ),
+        samples,
+        sample_metadata,
+    )
+    del raw_curl
+    a1_mpc = a1_levels["floquets"][6].mpc
+    a1_mpc.homogenize(electric)
+    electric.x.scatter_forward()
+    a1_mpc.backsubstitution(electric)
+    electric.x.scatter_forward()
+    a1_physical_vector = np.asarray(electric.x.array, dtype=np.complex128).copy()
+    independent_rows = np.setdiff1d(
+        np.arange(a1_full_solution.size, dtype=np.int64), a1_slave_rows
+    )
+    independent_values_unchanged = bool(
+        np.array_equal(a1_physical_vector[independent_rows], a1_full_solution[independent_rows])
+    )
+    curl = direct_curl_dg(electric, degree=6)
+    field_view = SimpleNamespace(
+        label="Task41 A1 saved x_fe after its MPC physical-field recovery",
+        cfg=a1_cfg,
+        electric=electric,
+        curl=curl,
+    )
     sample_witness = total_field_sample_witness(field_view, samples, sample_metadata)
+    sample_recovery = {
+        "source_npz_array_key": "recovered_field",
+        "source_vector_semantics": "x_fe before MPC homogenization/backsubstitution; slave rows are zero",
+        "source_vector_sha256": raw_vector_sha256,
+        "expanded_physical_vector_sha256": _hash_arrays(
+            {"a1_mpc_recovered_physical_field": a1_physical_vector}
+        ),
+        "numeric_mpc_map_identity": mpc_map_identity,
+        "numeric_mpc_map_packet": mpc_map_packet,
+        "independent_rows_unchanged_by_recovery": independent_values_unchanged,
+        "before_mpc_recovery_witness": raw_witness,
+        "after_mpc_recovery_witness": sample_witness,
+    }
+    runtime.marker("task41_a1_sample_representation_recovery", sample_recovery)
     runtime.sample("task41_a1_sample_witness_complete")
     if sample_witness.get("pass") is not True:
         raise ValueError("Task41 A1 full field representation failed the saved E/H sample witness")
+    if not independent_values_unchanged:
+        raise ValueError("Task41 MPC backsubstitution changed A1 independent field rows")
 
     allocation_gate(
         "before_task41_a2_full_volume_metric_comparison",
@@ -6398,6 +6524,8 @@ def _task41_a2_comparison(
         indices = np.asarray(metric.mass.indices, dtype=np.int64)
         if not np.array_equal(indices, np.asarray(metric.curl.indices, dtype=np.int64)):
             raise ValueError("Task41 E and scaled-curl metrics use different independent rows")
+        if not np.array_equal(indices, independent_rows):
+            raise ValueError("Task41 A1/A2 numeric MPC maps have different independent FE rows")
         a1_independent = a1_full_solution[indices]
         difference = a2_full_solution[indices] - a1_independent
         mass_reference = np.asarray(metric.mass(a1_independent), dtype=np.complex128).copy()
@@ -6406,7 +6534,7 @@ def _task41_a2_comparison(
         curl_difference = np.asarray(metric.curl(difference), dtype=np.complex128).copy()
     finally:
         metric.destroy()
-    del field_view, curl, electric
+    del field_view, curl, electric, a1_levels, a1_mpc, a1_physical_vector
 
     def quadratic(vector: np.ndarray, applied: np.ndarray) -> float:
         value = np.vdot(vector, applied)
@@ -6446,6 +6574,7 @@ def _task41_a2_comparison(
             "independent_indices": indices,
             "a1_mpc_slave_local_rows": a1_slave_rows,
             "a2_mpc_slave_local_rows": a2_slave_rows,
+            "mpc_map_packet": mpc_map_packet,
             "mass_reference_applied": mass_reference,
             "mass_difference_applied": mass_difference,
             "scaled_curl_reference_applied": curl_reference,
@@ -6489,6 +6618,9 @@ def _task41_a2_comparison(
         "current_slave_rows_match": True,
         "mesh_array_checks": mesh_array_checks,
         "sample_representation_witness": sample_witness,
+        "sample_representation_recovery": sample_recovery,
+        "numeric_mpc_map_identity": mpc_map_identity,
+        "numeric_mpc_map_packet": mpc_map_packet,
         "full_volume_metric": metric_values,
         "metric_packet": metric_packet,
         "modal_comparison": modal_comparison,
@@ -10880,6 +11012,7 @@ def run_task40_v10_p6_reference_worker(
                 runtime,
                 cfg,
                 target_levels,
+                resolved_payload=resolved_payload,
                 a2_full_solution=pre_full_solution,
                 a2_output=output,
                 output_directory=output_directory,

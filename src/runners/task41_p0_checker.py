@@ -46,6 +46,78 @@ def evaluate_task41_numerical_summary(
     return task41_direct_summary_errors(summary, numerical_output_directory)
 
 
+def _task41_a2_diagnostic_inventory_from_data(
+    metrics: Mapping[str, Any],
+    orders: Any,
+    *,
+    expected_m_max: int,
+    expected_n_max: int,
+) -> dict[str, Any]:
+    """Recompute the diagnostic grid from raw rows, independently of worker status."""
+    rows = orders if isinstance(orders, list) else []
+    valid_bounds = (
+        type(expected_m_max) is int
+        and expected_m_max >= 0
+        and type(expected_n_max) is int
+        and expected_n_max >= 0
+    )
+    expected = (
+        {
+            (m, n, pol)
+            for m in range(-expected_m_max, expected_m_max + 1)
+            for n in range(-expected_n_max, expected_n_max + 1)
+            for pol in ("s", "p")
+        }
+        if valid_bounds
+        else set()
+    )
+    actual: list[tuple[int, int, str]] = []
+    malformed = 0
+    for row in rows:
+        if (
+            not isinstance(row, Mapping)
+            or type(row.get("m")) is not int
+            or type(row.get("n")) is not int
+            or row.get("polarization") not in {"s", "p"}
+        ):
+            malformed += 1
+            continue
+        actual.append((row["m"], row["n"], row["polarization"]))
+    spatial_count = len(expected) // 2
+    channel_count = len(expected)
+    checks = {
+        "resolved_reporting_bounds_match_frozen_config": bool(
+            valid_bounds
+            and metrics.get("diffraction_order_max_m_requested") == expected_m_max
+            and metrics.get("diffraction_order_max_n_requested") == expected_n_max
+            and metrics.get("diffraction_order_max_m_resolved") == expected_m_max
+            and metrics.get("diffraction_order_max_n_resolved") == expected_n_max
+        ),
+        "spatial_counts_match_frozen_grid": bool(
+            metrics.get("diffraction_order_count") == spatial_count
+            and metrics.get("diffraction_fit_order_count") == spatial_count
+        ),
+        "polarized_row_count_matches_grid": len(rows) == channel_count,
+        "channel_count_matches_grid": metrics.get("diffraction_channel_count") == channel_count,
+        "raw_polarization_keys_are_unique_and_complete": bool(
+            malformed == 0 and len(actual) == len(set(actual)) and set(actual) == expected
+        ),
+    }
+    return {
+        "schema": "task41.p0.independent_diagnostic_inventory.v1",
+        "frozen_reporting_order_bounds": {
+            "m_max": expected_m_max,
+            "n_max": expected_n_max,
+        },
+        "expected_spatial_order_count": spatial_count,
+        "expected_channel_count": channel_count,
+        "actual_order_rows": len(rows),
+        "malformed_order_rows": malformed,
+        "checks": checks,
+        "passed": all(checks.values()),
+    }
+
+
 def _json_object(path: Path, label: str) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
@@ -838,6 +910,7 @@ def _task41_a2_numerical_checks(
     contract: Mapping[str, Any],
     *,
     repo_root: Path,
+    reference_audit_source: tuple[Mapping[str, Any], Path] | None = None,
 ) -> dict[str, Any]:
     """Independently reopen A2 output, A1 evidence, mode and metric packets."""
     errors: list[str] = []
@@ -870,8 +943,13 @@ def _task41_a2_numerical_checks(
         or authority.get("q_csr_reuse") != contract.get("q_csr_reuse")
     ):
         errors.append("A2 worker authority differs from its source/window-bound q reuse contract")
+    audit_summary, audit_output = (
+        reference_audit_source
+        if reference_audit_source is not None
+        else (summary, numerical_output)
+    )
     reference_audit_recheck = _task41_a2_reference_audit_checks(
-        summary, numerical_output, repo_root=repo_root
+        audit_summary, audit_output, repo_root=repo_root
     )
     expected_binding_path = (repo_root / TASK41_A1_COMPARISON_BINDING_RELATIVE).resolve()
     binding_path = Path(str(comparison.get("a1_binding_path", ""))).resolve()
@@ -908,6 +986,38 @@ def _task41_a2_numerical_checks(
     )
     if output_recheck.get("status") != "PASS":
         errors.append("A2 full-field/output packet checker did not pass")
+    diagnostic_recheck: dict[str, Any]
+    try:
+        from src.io.input_validation import simulation_config_3d_from_normalized
+
+        resolved_config_path = audit_output.parent / "resolved_config.json"
+        if (
+            not resolved_config_path.is_file()
+            or hashlib.sha256(resolved_config_path.read_bytes()).hexdigest()
+            != contract["case"]["resolved_config_sha256"]
+        ):
+            raise ValueError("producer resolved configuration hash differs from the contract")
+        resolved_config = _json_object(resolved_config_path, "Task41 frozen resolved configuration")
+        reporting_cfg = simulation_config_3d_from_normalized(resolved_config)
+        diagnostic_doc = _json_object(
+            numerical_output / "diffraction_orders_3d.json",
+            "A2 diagnostic diffraction output",
+        )
+        diagnostic_metrics = diagnostic_doc.get("metrics")
+        diagnostic_recheck = (
+            _task41_a2_diagnostic_inventory_from_data(
+                diagnostic_metrics,
+                diagnostic_doc.get("orders"),
+                expected_m_max=reporting_cfg.reporting_diffraction_order_max_m,
+                expected_n_max=reporting_cfg.reporting_diffraction_order_max_n,
+            )
+            if isinstance(diagnostic_metrics, Mapping)
+            else {"passed": False, "error": "diagnostic metrics object is missing"}
+        )
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        diagnostic_recheck = {"passed": False, "error": str(exc)}
+    if diagnostic_recheck.get("passed") is not True:
+        errors.append("A2 diagnostic diffraction rows do not match the frozen reporting grid")
     reference_tiers = _verify_v31_reference_tiers(
         summary.get("regular_inverse_checks", {}),
         expected_profile=TASK41_G13_A2_PRECONDITIONER,
@@ -988,6 +1098,7 @@ def _task41_a2_numerical_checks(
     return {
         "errors": errors,
         "output_packet_recheck": output_recheck,
+        "diagnostic_diffraction_inventory_recheck": diagnostic_recheck,
         "reference_tiers": reference_tiers,
         "modal_comparison": modal_comparison,
         "power_comparison": power_comparison,
@@ -1131,15 +1242,57 @@ def check_task41_p0(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, type=Path)
-    parser.add_argument("--summary", required=True, type=Path)
-    parser.add_argument("--manifest", required=True, type=Path)
-    parser.add_argument("--numerical-output", required=True, type=Path)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--input", type=Path)
+    mode.add_argument("--saved-output-continuation-input", type=Path)
+    parser.add_argument("--summary", type=Path)
+    parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--numerical-output", type=Path)
     parser.add_argument("--contract", required=True, type=Path)
     parser.add_argument("--contract-sha256", required=True)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
+    if args.saved_output_continuation_input is not None:
+        expected_output = (
+            args.saved_output_continuation_input.resolve().parent
+            / "task41_p0_saved_output_checker_result.json"
+        ).resolve()
+        if (
+            args.summary is not None
+            or args.manifest is not None
+            or args.numerical_output is not None
+            or args.output.resolve() != expected_output
+        ):
+            parser.error("saved-output continuation checker uses its bound input snapshot and adjacent result path")
+        try:
+            from src.runners.task41_p0_saved_output_continuation import (
+                check_task41_p0_saved_output_continuation,
+            )
+
+            result = check_task41_p0_saved_output_continuation(
+                args.saved_output_continuation_input,
+                contract_path=args.contract,
+                contract_sha256=args.contract_sha256,
+                repo_root=root,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            result = {
+                "schema": "task41.p0.saved_output_checker.v1",
+                "status": "FAIL",
+                "checker_passed": False,
+                "errors": [f"{type(exc).__name__}: {exc}"],
+                "raw_evidence_retained": True,
+            }
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("checker_passed") is True else 2
+    if any(value is None for value in (args.summary, args.manifest, args.numerical_output)):
+        parser.error("ordinary Task41 checker mode requires --summary, --manifest, and --numerical-output")
     try:
         result = check_task41_p0(
             input_path=args.input,

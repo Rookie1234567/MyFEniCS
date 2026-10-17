@@ -43,6 +43,33 @@ PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES = 128 * 1024**2
 CAMPAIGN_CLOSEOUT_PARENT_FLUSH_RESERVE_SECONDS = 30.0
 
 
+def _validate_task41_consumer_source(contract: dict[str, Any], environment: dict[str, str]) -> bool:
+    continuation = environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION')
+    consumer_sha = environment.get('TASK41_P0_CONSUMER_SOURCE_SHA')
+    if continuation != '1':
+        if consumer_sha is not None:
+            raise ValueError('Task41 consumer source identity requires saved-output continuation mode')
+        return False
+    head = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'], cwd=Path.cwd(), check=True, capture_output=True, text=True
+    ).stdout.strip()
+    branch = subprocess.run(
+        ['git', 'branch', '--show-current'], cwd=Path.cwd(), check=True, capture_output=True, text=True
+    ).stdout.strip()
+    status = subprocess.run(
+        ['git', 'status', '--porcelain', '--untracked-files=normal'],
+        cwd=Path.cwd(), check=True, capture_output=True, text=True
+    ).stdout
+    if (
+        not re.fullmatch(r'[0-9a-f]{40}', str(consumer_sha or ''))
+        or head != consumer_sha
+        or branch != contract.get('branch')
+        or status.strip()
+    ):
+        raise ValueError('Task41 continuation consumer source is not the clean contracted branch head')
+    return True
+
+
 def _validate_campaign_closeout_authorization(
     *,
     command: list[str],
@@ -102,13 +129,21 @@ def _validate_campaign_closeout_authorization(
             raise ValueError('Task41 closeout authorization omits the contract path')
         from src.runners.task41_p0_contract import require_task41_p0_contract
 
+        continuation_flag = environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION')
+        continuation = continuation_flag == '1'
+        if continuation_flag not in {None, '1'} or (
+            continuation != (environment.get('TASK41_P0_CONSUMER_SOURCE_SHA') is not None)
+        ):
+            raise ValueError('Task41 continuation source markers are incomplete')
         contract, actual_contract_sha = require_task41_p0_contract(
             contract_path,
             expected_sha256=str(contract_sha),
             current_root=Path.cwd(),
-            check_current_source=True,
+            check_current_source=not continuation,
             require_clean_source=True,
         )
+        if continuation:
+            _validate_task41_consumer_source(contract, environment)
         window_path = contract['window']['path']
         window_sha = contract['window']['sha256']
     elif contract_version == 30:
@@ -193,85 +228,114 @@ def _validate_campaign_closeout_authorization(
     elif checker_kind in {
         'task41_p0_independent_full_a6_checker',
         'task41_p0_a2_independent_p6_iterative_checker',
+        'task41_p0_saved_output_continuation_checker',
     }:
         if contract_version != 41:
             raise ValueError('Task41 checker requires a Task41 P0 execution contract')
-        from src.runners.task41_p0_contract import (
-            task41_case_id_for_run_id,
-        )
-
-        case = contract.get('case')
-        if not isinstance(case, dict):
-            raise ValueError('Task41 checker contract has no registered case identity')
-        try:
-            case_id = task41_case_id_for_run_id(str(case.get('run_id', '')))
-        except ValueError as exc:
-            raise ValueError('Task41 checker contract case is not registered') from exc
-        expected_checker_kind = (
-            'task41_p0_a2_independent_p6_iterative_checker'
-            if case_id == 'A2'
-            else 'task41_p0_independent_full_a6_checker'
-        )
-        if (
-            checker_kind != expected_checker_kind
-            or len(argv) != 17
-            or argv[1:3] != ['-m', 'src.runners.task41_p0_checker']
-            or argv[3::2]
-            != [
-                '--input', '--summary', '--manifest', '--numerical-output',
-                '--contract', '--contract-sha256', '--output',
-            ]
-            or argv[14] != contract_sha
-            or authorization.get('expected_channel_count') is not None
-        ):
-            raise ValueError('closeout command is not the registered Task41 checker for its contract case')
         root = Path.cwd().resolve()
-        input_path, summary_path, manifest_path = (Path(argv[index]).resolve() for index in (4, 6, 8))
-        numerical_directory = Path(argv[10]).resolve()
-        contract_case_input = Path(str(case.get('input_path', '')))
-        expected_input_path = (
-            contract_case_input if contract_case_input.is_absolute()
-            else root / contract_case_input
-        ).resolve()
         expected_python = (
             Path(str(contract.get('runtime', {}).get('runtime_prefix', '')))
             / 'bin/python'
         ).resolve()
-        manifest_root = manifest_path.parent.resolve()
-        results_root = (root / 'results' / str(case.get('model_id', ''))).resolve()
-        expected_output = Path(str(contract.get('evidence', {}).get('service_directory', '')))
-        if not expected_output.is_absolute():
-            expected_output = root / expected_output
-        expected_output = (expected_output / 'task41_p0_checker_result.json').resolve()
-        if (
-            Path(argv[0]).resolve() != expected_python
-            or input_path != expected_input_path
-            or not manifest_path.is_relative_to(results_root)
-            or manifest_path.name != 'run_manifest.json'
-            or not summary_path.is_relative_to(manifest_root)
-            or not numerical_directory.is_relative_to(manifest_root)
-            or numerical_directory.name != 'numerical_output'
-        ):
-            raise ValueError('Task41 checker command paths do not match the registered contract case')
-        numerical_summary = (
-            manifest_root / 'task40_v10_p6_candidate_summary.json'
-            if case_id == 'A2'
-            else numerical_directory / 'run_summary.json'
-        )
-        input_paths = [
-            str(input_path), str(summary_path), str(manifest_path),
-            str(numerical_summary),
-        ]
-        if any(not Path(path).is_relative_to(Path.cwd().resolve()) for path in input_paths):
-            raise ValueError('Task41 checker inputs escaped the registered repository')
-        if not numerical_directory.is_dir():
-            raise ValueError('Task41 numerical-output directory is missing')
-        checker_contract = Path(argv[12]).resolve()
-        if checker_contract != Path(str(contract_path)).resolve():
-            raise ValueError('Task41 checker contract path differs from the closeout authorization')
-        output_path = Path(argv[16]).resolve()
-        if output_path != expected_output:
-            raise ValueError('Task41 checker output path differs from the registered contract case')
+        if checker_kind == 'task41_p0_saved_output_continuation_checker':
+            if (
+                environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
+                or len(argv) != 11
+                or Path(argv[0]).resolve() != expected_python
+                or argv[1:3] != ['-m', 'src.runners.task41_p0_checker']
+                or argv[3::2]
+                != [
+                    '--saved-output-continuation-input', '--contract',
+                    '--contract-sha256', '--output',
+                ]
+                or argv[8] != contract_sha
+            ):
+                raise ValueError('closeout command is not the registered saved-output Task41 checker')
+            snapshot_path = Path(argv[4]).resolve()
+            results_root = (root / 'results' / str(contract['case']['model_id'])).resolve()
+            output_path = Path(argv[10]).resolve()
+            expected_output = (
+                snapshot_path.parent / 'task41_p0_saved_output_checker_result.json'
+            ).resolve()
+            if (
+                snapshot_path.name != 'task41_p0_saved_output_checker_input.json'
+                or not snapshot_path.is_relative_to(results_root)
+                or output_path != expected_output
+                or Path(argv[6]).resolve() != Path(str(contract_path)).resolve()
+            ):
+                raise ValueError('saved-output checker paths do not match the Task41 result directory')
+            input_paths = [str(snapshot_path)]
+        else:
+            from src.runners.task41_p0_contract import (
+                task41_case_id_for_run_id,
+            )
+
+            case = contract.get('case')
+            if not isinstance(case, dict):
+                raise ValueError('Task41 checker contract has no registered case identity')
+            try:
+                case_id = task41_case_id_for_run_id(str(case.get('run_id', '')))
+            except ValueError as exc:
+                raise ValueError('Task41 checker contract case is not registered') from exc
+            expected_checker_kind = (
+                'task41_p0_a2_independent_p6_iterative_checker'
+                if case_id == 'A2'
+                else 'task41_p0_independent_full_a6_checker'
+            )
+            if checker_kind != expected_checker_kind:
+                raise ValueError('closeout command is not the registered Task41 checker for its contract case')
+            if (
+                len(argv) != 17
+                or argv[1:3] != ['-m', 'src.runners.task41_p0_checker']
+                or argv[3::2]
+                != [
+                    '--input', '--summary', '--manifest', '--numerical-output',
+                    '--contract', '--contract-sha256', '--output',
+                ]
+                or argv[14] != contract_sha
+                or authorization.get('expected_channel_count') is not None
+            ):
+                raise ValueError('closeout command is not the registered Task41 checker for its contract case')
+            input_path, summary_path, manifest_path = (Path(argv[index]).resolve() for index in (4, 6, 8))
+            numerical_directory = Path(argv[10]).resolve()
+            contract_case_input = Path(str(case.get('input_path', '')))
+            expected_input_path = (
+                contract_case_input if contract_case_input.is_absolute()
+                else root / contract_case_input
+            ).resolve()
+            manifest_root = manifest_path.parent.resolve()
+            results_root = (root / 'results' / str(case.get('model_id', ''))).resolve()
+            expected_output = Path(str(contract.get('evidence', {}).get('service_directory', '')))
+            if not expected_output.is_absolute():
+                expected_output = root / expected_output
+            expected_output = (expected_output / 'task41_p0_checker_result.json').resolve()
+            if (
+                Path(argv[0]).resolve() != expected_python
+                or input_path != expected_input_path
+                or not manifest_path.is_relative_to(results_root)
+                or manifest_path.name != 'run_manifest.json'
+                or not summary_path.is_relative_to(manifest_root)
+                or not numerical_directory.is_relative_to(manifest_root)
+                or numerical_directory.name != 'numerical_output'
+            ):
+                raise ValueError('Task41 checker command paths do not match the registered contract case')
+            numerical_summary = (
+                manifest_root / 'task40_v10_p6_candidate_summary.json'
+                if case_id == 'A2'
+                else numerical_directory / 'run_summary.json'
+            )
+            input_paths = [
+                str(input_path), str(summary_path), str(manifest_path), str(numerical_summary)
+            ]
+            if any(not Path(path).is_relative_to(root) for path in input_paths):
+                raise ValueError('Task41 checker inputs escaped the registered repository')
+            if not numerical_directory.is_dir():
+                raise ValueError('Task41 numerical-output directory is missing')
+            if (
+                Path(argv[12]).resolve() != Path(str(contract_path)).resolve()
+                or Path(argv[16]).resolve() != expected_output
+            ):
+                raise ValueError('Task41 checker contract or output path differs from the contract')
     else:
         raise ValueError('numeric or arbitrary commands cannot use the closeout reserve')
     if authorization.get('input_paths') != input_paths:
@@ -752,13 +816,22 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             contract_sha = task41_environment.get('TASK41_P0_CONTRACT_SHA256')
             if not contract_path or not contract_sha:
                 raise ValueError('Task41 watchdog environment omits its fixed contract')
+            continuation_flag = task41_environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION')
+            continuation = continuation_flag == '1'
+            if continuation_flag not in {None, '1'} or (
+                continuation
+                != (task41_environment.get('TASK41_P0_CONSUMER_SOURCE_SHA') is not None)
+            ):
+                raise ValueError('Task41 continuation source markers are incomplete')
             task41_contract, actual_contract_sha = require_task41_p0_contract(
                 contract_path,
                 expected_sha256=contract_sha,
                 current_root=Path.cwd(),
-                check_current_source=True,
+                check_current_source=not continuation,
                 require_clean_source=True,
             )
+            if continuation:
+                _validate_task41_consumer_source(task41_contract, task41_environment)
             campaign = load_task41_p0_fixed_window(
                 task41_contract, current_root=Path.cwd(), require_current_boot=True
             )

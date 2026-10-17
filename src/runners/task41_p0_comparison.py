@@ -15,6 +15,79 @@ TASK41_MODE_RELATIVE_LIMIT = 1.0e-4
 TASK41_TOTAL_ABSOLUTE_LIMIT = 1.0e-5
 TASK41_MODE_POWER_ABSOLUTE_LIMIT = 1.0e-6
 TASK41_SIGNIFICANT_MODE_POWER = 1.0e-8
+TASK41_MPC_MAP_SCHEMA = "task41.p0.numeric_mpc_map.v1"
+
+
+def task41_numeric_mpc_map(mpc: Any) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    """Copy a finalized MPC adjacency into pointer-free numeric arrays.
+
+    Some pybind adjacency views expose ``dtype=object`` arrays.  Their raw
+    memory bytes contain Python object pointers, so identity is recorded from
+    normalized numeric values instead.
+    """
+    coefficients, offsets = mpc.coefficients()
+    raw_arrays = {
+        "slaves": np.asarray(mpc.slaves),
+        "masters": np.asarray(mpc.masters.array),
+        "coefficients": np.asarray(coefficients),
+        "offsets": np.asarray(offsets),
+    }
+    integer_names = {"slaves", "masters", "offsets"}
+    numeric: dict[str, np.ndarray] = {}
+    records: dict[str, Any] = {}
+    for name, raw in raw_arrays.items():
+        source_values = raw.tolist() if raw.dtype.kind == "O" else raw
+        target_dtype = np.dtype("int64") if name in integer_names else np.dtype("complex128")
+        try:
+            values = np.asarray(source_values, dtype=target_dtype)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"Task41 MPC {name} adjacency is not numeric") from exc
+        if values.shape != raw.shape or not np.isfinite(values).all():
+            raise ValueError(f"Task41 MPC {name} adjacency is nonfinite or changed shape")
+        if name in integer_names and not np.array_equal(values.astype(np.float64), np.asarray(source_values, dtype=np.float64)):
+            raise ValueError(f"Task41 MPC {name} adjacency contains non-integral values")
+        canonical_dtype = np.dtype("<i8") if name in integer_names else np.dtype("<c16")
+        canonical = np.ascontiguousarray(values, dtype=canonical_dtype)
+        numeric[name] = values.copy()
+        records[name] = {
+            "source_dtype": str(raw.dtype),
+            "numeric_dtype": str(values.dtype),
+            "shape": list(values.shape),
+            "values_sha256": hashlib.sha256(canonical.tobytes()).hexdigest(),
+        }
+    return numeric, records
+
+
+def compare_task41_numeric_mpc_maps(
+    a1_mpc: Any, a2_mpc: Any
+) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    """Compare the actual slave/master adjacency, offsets, and coefficients."""
+    a1_arrays, a1_records = task41_numeric_mpc_map(a1_mpc)
+    a2_arrays, a2_records = task41_numeric_mpc_map(a2_mpc)
+    arrays = {
+        f"a1_mpc_map_{name}": a1_arrays[name] for name in a1_arrays
+    } | {
+        f"a2_mpc_map_{name}": a2_arrays[name] for name in a2_arrays
+    }
+    checks = {
+        name: bool(
+            a1_records[name]["source_dtype"] == a2_records[name]["source_dtype"]
+            and a1_records[name]["shape"] == a2_records[name]["shape"]
+            and a1_records[name]["values_sha256"] == a2_records[name]["values_sha256"]
+            and np.array_equal(a1_arrays[name], a2_arrays[name])
+        )
+        for name in a1_arrays
+    }
+    return arrays, {
+        "schema": TASK41_MPC_MAP_SCHEMA,
+        "status": "PASS" if all(checks.values()) else "FAIL",
+        "checks": checks,
+        "arrays": {
+            name: {"a1": a1_records[name], "a2": a2_records[name]}
+            for name in a1_records
+        },
+        "identity_basis": "numeric MPC slaves, masters, coefficient offsets, and complex coefficients; dtype/shape/value checked",
+    }
 
 
 def _sha256(path: Path) -> str:
@@ -291,6 +364,67 @@ def evaluate_task41_metric_packet(
         mass_difference = get("mass_difference_applied", dtype=np.complex128)
         curl_reference = get("scaled_curl_reference_applied", dtype=np.complex128)
         curl_difference = get("scaled_curl_difference_applied", dtype=np.complex128)
+        mpc_packet = record.get("mpc_map_packet")
+        if (
+            not isinstance(mpc_packet, Mapping)
+            or not isinstance(mpc_packet.get("arrays"), Mapping)
+        ):
+            raise ValueError("Task41 metric packet omits its numeric MPC-map packet")
+        mpc_npz_path = Path(str(mpc_packet["arrays"].get("path", ""))).resolve(strict=True)
+        if (
+            mpc_npz_path.parent != path.parent
+            or _sha256(mpc_npz_path) != mpc_packet["arrays"].get("sha256")
+        ):
+            raise ValueError("Task41 numeric MPC-map packet identity changed or escaped its run")
+        mpc_json_path = mpc_npz_path.with_suffix(".json")
+        mpc_record = json.loads(mpc_json_path.read_text(encoding="utf-8"))
+        mpc_identity = mpc_record.get("mpc_map_identity")
+        if (
+            not isinstance(mpc_identity, Mapping)
+            or mpc_identity.get("schema") != TASK41_MPC_MAP_SCHEMA
+            or mpc_identity.get("status") != "PASS"
+            or not isinstance(mpc_identity.get("arrays"), Mapping)
+        ):
+            raise ValueError("Task41 numeric MPC-map packet is not a passing identity")
+        mpc_map_recheck: dict[str, Any] = {}
+        with np.load(mpc_npz_path, allow_pickle=False) as mpc_arrays:
+            for name in ("slaves", "masters", "coefficients", "offsets"):
+                facts = mpc_identity["arrays"].get(name)
+                if not isinstance(facts, Mapping) or not all(
+                    isinstance(facts.get(side), Mapping) for side in ("a1", "a2")
+                ):
+                    raise ValueError(f"Task41 metric packet omits MPC {name} numeric identity")
+                side_values: dict[str, np.ndarray] = {}
+                side_checks: dict[str, bool] = {}
+                expected_dtype = "complex128" if name == "coefficients" else "int64"
+                canonical_dtype = np.dtype("<c16") if name == "coefficients" else np.dtype("<i8")
+                for side in ("a1", "a2"):
+                    array_name = f"{side}_mpc_map_{name}"
+                    array_descriptor = mpc_record.get(array_name)
+                    if not isinstance(array_descriptor, Mapping):
+                        raise ValueError(f"Task41 MPC packet omits raw array {array_name}")
+                    value = np.asarray(mpc_arrays[str(array_descriptor["array_key"])])
+                    side_values[side] = value
+                    item = facts[side]
+                    canonical = np.ascontiguousarray(value, dtype=canonical_dtype)
+                    side_checks[side] = bool(
+                        str(value.dtype) == expected_dtype
+                        and item.get("numeric_dtype") == expected_dtype
+                        and item.get("shape") == list(value.shape)
+                        and hashlib.sha256(canonical.tobytes()).hexdigest()
+                        == item.get("values_sha256")
+                    )
+                equal = bool(
+                    facts["a1"].get("source_dtype") == facts["a2"].get("source_dtype")
+                    and np.array_equal(side_values["a1"], side_values["a2"])
+                )
+                mpc_map_recheck[name] = {
+                    "a1_values_rechecked": side_checks["a1"],
+                    "a2_values_rechecked": side_checks["a2"],
+                    "equal": equal,
+                }
+                if not all(side_checks.values()) or not equal:
+                    raise ValueError(f"Task41 A1/A2 numeric MPC {name} adjacency differs")
     if (
         indices.ndim != 1
         or indices.size == 0
@@ -355,4 +489,14 @@ def evaluate_task41_metric_packet(
         ),
         "operator_reapplied_by_checker": False,
         "raw_action_algebra_recomputed": True,
+        "numeric_mpc_map_recheck": {
+            "schema": TASK41_MPC_MAP_SCHEMA,
+            "checks": mpc_map_recheck,
+            "passed": all(
+                row["equal"]
+                and row["a1_values_rechecked"]
+                and row["a2_values_rechecked"]
+                for row in mpc_map_recheck.values()
+            ),
+        },
     }

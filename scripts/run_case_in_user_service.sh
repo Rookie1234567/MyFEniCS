@@ -49,6 +49,7 @@ v31_contract=""
 v31_contract_count=0
 task41_contract=""
 task41_contract_count=0
+task41_saved_output_continuation=0
 for ((index = 0; index < ${#args[@]}; index++)); do
     arg="${args[index]}"
     case "$arg" in
@@ -121,6 +122,9 @@ for ((index = 0; index < ${#args[@]}; index++)); do
         --task41-p0-execution-contract=*)
             task41_contract="${arg#*=}"
             ((task41_contract_count += 1))
+            ;;
+        --task41-p0-saved-output-continuation)
+            task41_saved_output_continuation=1
             ;;
     esac
 done
@@ -199,7 +203,12 @@ if (( task41_contract_count != 0 )); then
         exit 2
     fi
     [[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
-    if ! task41_values_text="$(cd -- "$repo_root" && python3 -m src.runners.task41_p0_contract \
+    if (( task41_saved_output_continuation )); then
+        if ! task41_values_text="$(cd -- "$repo_root" && python3 -m src.runners.task41_p0_contract \
+            --launcher-values --contract "$task41_contract" --saved-output-continuation)"; then
+            exit 2
+        fi
+    elif ! task41_values_text="$(cd -- "$repo_root" && python3 -m src.runners.task41_p0_contract \
         --launcher-values --contract "$task41_contract")"; then
         exit 2
     fi
@@ -275,7 +284,20 @@ task41_contract=$3
 shift 3
 args=("$@")
 [[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
-mapfile -t values < <(python3 -m src.runners.task41_p0_contract --launcher-values --contract "$task41_contract")
+task41_saved_output_continuation=0
+for arg in "${args[@]}"; do
+    if [[ "$arg" == --task41-p0-saved-output-continuation ]]; then
+        task41_saved_output_continuation=1
+        break
+    fi
+done
+if (( task41_saved_output_continuation )); then
+    mapfile -t values < <(python3 -m src.runners.task41_p0_contract \
+        --launcher-values --contract "$task41_contract" --saved-output-continuation)
+else
+    mapfile -t values < <(python3 -m src.runners.task41_p0_contract \
+        --launcher-values --contract "$task41_contract")
+fi
 (( ${#values[@]} == 12 )) && [[ "${values[0]}" == "$repo_root" ]]
 unset _MYFENICS_WSL_QUALIFIED_ACTIVATION
 source scripts/task40_fresh_c1/activate_native_complex.sh \

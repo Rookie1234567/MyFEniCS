@@ -430,6 +430,21 @@ def _git(root: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
+def _saved_output_consumer_source_sha(contract: Mapping[str, Any], root: Path) -> str:
+    head = _git(root, "rev-parse", "HEAD")
+    branch = _git(root, "branch", "--show-current")
+    status = _git(root, "status", "--porcelain", "--untracked-files=normal")
+    if (
+        head == contract.get("source", {}).get("sha")
+        or branch != contract.get("branch")
+        or status
+    ):
+        raise Task41ContractError(
+            "saved-output continuation requires a distinct clean consumer head on the producer branch"
+        )
+    return head
+
+
 def _task41_case(case_id: str) -> dict[str, Any]:
     if case_id == "A1":
         return {
@@ -1169,11 +1184,21 @@ def validate_task41_specification(
         raise Task41ContractError("resolved Task41 input differs from the frozen P0 contract")
 
 
-def launcher_values(contract_path: str | Path, *, current_root: str | Path | None = None) -> list[str]:
+def launcher_values(
+    contract_path: str | Path,
+    *,
+    current_root: str | Path | None = None,
+    saved_output_continuation: bool = False,
+) -> list[str]:
     root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
     contract, digest = require_task41_p0_contract(
-        contract_path, current_root=root, check_current_source=True, require_clean_source=True
+        contract_path,
+        current_root=root,
+        check_current_source=not saved_output_continuation,
+        require_clean_source=True,
     )
+    if saved_output_continuation:
+        _saved_output_consumer_source_sha(contract, root)
     window = load_task41_p0_fixed_window(contract, current_root=root, require_current_boot=True)
     runtime = contract["runtime"]
     resources = contract["resources"]
@@ -1201,13 +1226,22 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
     contract_path = environment.get("TASK41_P0_CONTRACT_PATH")
     contract_sha = environment.get("TASK41_P0_CONTRACT_SHA256")
     try:
+        continuation = environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") == "1"
+        if environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") not in {None, "1"}:
+            return None
+        if not continuation and environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") is not None:
+            return None
         contract, digest = require_task41_p0_contract(
             contract_path or "",
             expected_sha256=contract_sha,
             current_root=root,
-            check_current_source=True,
+            check_current_source=not continuation,
             require_clean_source=True,
         )
+        if continuation:
+            consumer_sha = _saved_output_consumer_source_sha(contract, root)
+            if environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") != consumer_sha:
+                return None
         runtime = _resolve(root, contract["runtime"]["runtime_prefix"], "runtime_prefix")
         if (
             digest != contract_sha
@@ -1231,6 +1265,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--launcher-values", action="store_true")
     mode.add_argument("--prepare", action="store_true")
     parser.add_argument("--contract", type=Path)
+    parser.add_argument("--saved-output-continuation", action="store_true")
     parser.add_argument("--runtime-prefix", type=Path)
     parser.add_argument("--abi-receipt", type=Path)
     parser.add_argument("--jit-cache", type=Path)
@@ -1240,7 +1275,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.launcher_values:
         if args.contract is None:
             parser.error("--launcher-values requires --contract")
-        for value in launcher_values(args.contract):
+        for value in launcher_values(
+            args.contract,
+            saved_output_continuation=args.saved_output_continuation,
+        ):
             print(value)
         return 0
     if args.prepare:
