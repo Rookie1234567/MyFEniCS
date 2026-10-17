@@ -1227,7 +1227,11 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
     contract_sha = environment.get("TASK41_P0_CONTRACT_SHA256")
     try:
         continuation = environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") == "1"
+        checker_only_flag = environment.get("TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY")
+        checker_only = checker_only_flag == "1"
         if environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") not in {None, "1"}:
+            return None
+        if checker_only_flag not in {None, "1"} or (checker_only and not continuation):
             return None
         if not continuation and environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") is not None:
             return None
@@ -1239,8 +1243,61 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
             require_clean_source=True,
         )
         if continuation:
-            consumer_sha = _saved_output_consumer_source_sha(contract, root)
-            if environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") != consumer_sha:
+            current_source_sha = _saved_output_consumer_source_sha(contract, root)
+            consumer_sha = environment.get("TASK41_P0_CONSUMER_SOURCE_SHA", "")
+            if checker_only:
+                checker_sha = environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                snapshot_path = Path(environment.get("TASK41_P0_CHECKER_INPUT_PATH", ""))
+                snapshot_sha256 = environment.get("TASK41_P0_CHECKER_INPUT_SHA256", "")
+                result_path = Path(environment.get("TASK41_P0_CHECKER_RESULT_PATH", ""))
+                results_root = (
+                    root / "results" / str(contract["case"]["model_id"])
+                ).resolve()
+                if (
+                    checker_sha != current_source_sha
+                    or not re.fullmatch(r"[0-9a-f]{40}", str(consumer_sha))
+                    or consumer_sha == contract["source"]["sha"]
+                    or not re.fullmatch(r"[0-9a-f]{64}", snapshot_sha256)
+                    or not snapshot_path.is_absolute()
+                    or snapshot_path.name != "task41_p0_saved_output_checker_input.json"
+                    or not snapshot_path.is_relative_to(results_root)
+                    or not snapshot_path.is_file()
+                    or sha256_file(snapshot_path) != snapshot_sha256
+                    or not result_path.is_absolute()
+                    or result_path.name != "task41_p0_saved_output_checker_result.json"
+                    or not result_path.is_relative_to(results_root)
+                    or result_path.parent == snapshot_path.parent
+                ):
+                    return None
+                snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+                if not isinstance(snapshot, Mapping):
+                    return None
+                producer = snapshot.get("producer")
+                consumer = snapshot.get("consumer")
+                if (
+                    snapshot.get("schema") != "task41.p0.saved_output_continuation.v1"
+                    or snapshot.get("status") != "OUTPUTS_READY"
+                    or not isinstance(producer, Mapping)
+                    or not isinstance(consumer, Mapping)
+                    or producer.get("source_sha") != contract["source"]["sha"]
+                    or consumer.get("source_sha") != consumer_sha
+                    or Path(str(consumer.get("run_directory", ""))).resolve()
+                    != snapshot_path.parent
+                    or Path(str(producer.get("run_directory", ""))).resolve().is_relative_to(
+                        snapshot_path.parent
+                    )
+                ):
+                    return None
+                ancestry = subprocess.run(
+                    ["git", "merge-base", "--is-ancestor", consumer_sha, current_source_sha],
+                    cwd=root,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                if ancestry.returncode != 0:
+                    return None
+            elif consumer_sha != current_source_sha:
                 return None
         runtime = _resolve(root, contract["runtime"]["runtime_prefix"], "runtime_prefix")
         if (

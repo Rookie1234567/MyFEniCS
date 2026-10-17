@@ -198,6 +198,10 @@ def test_checker_only_service_reuses_authorized_snapshot_and_skips_worker(
     input_path.write_bytes(b"fixed Task41 fixture input\n")
     contract_path = repo_root / "contract.json"
     contract_path.write_text("{}\n", encoding="utf-8")
+    runtime_prefix = repo_root / "runtime"
+    fake_python = runtime_prefix / "bin" / "python"
+    fake_python.parent.mkdir(parents=True)
+    fake_python.write_text("checker-only service fixture interpreter\n", encoding="utf-8")
     contract_sha = "f" * 64
     window_sha = "e" * 64
     abi_sha = "d" * 64
@@ -253,7 +257,7 @@ def test_checker_only_service_reuses_authorized_snapshot_and_skips_worker(
             "memory_swap_max_bytes": 0,
         },
         "runtime": {
-            "runtime_prefix": sys.prefix,
+            "runtime_prefix": str(runtime_prefix),
             "abi_receipt_path": str(repo_root / "abi.json"),
             "jit_cache": str(repo_root / "jit"),
             "abi_receipt_sha256": abi_sha,
@@ -266,6 +270,7 @@ def test_checker_only_service_reuses_authorized_snapshot_and_skips_worker(
         "NUMEXPR_NUM_THREADS": "1",
         "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": "1",
         "_MYFENICS_CLOUD_RUNTIME_PROFILE": "native_linux",
+        "_MYFENICS_CLOUD_ABI_MANIFEST_SHA256": abi_sha,
     }
     monkeypatch.setenv("TASK41_P0_STRICT_EXECUTION", "1")
     monkeypatch.setenv("TASK41_P0_CONTRACT_PATH", str(contract_path.resolve()))
@@ -326,6 +331,11 @@ def test_checker_only_service_reuses_authorized_snapshot_and_skips_worker(
     )
     monkeypatch.setattr(
         contract_module,
+        "__file__",
+        str(repo_root / "src" / "runners" / "task41_p0_contract.py"),
+    )
+    monkeypatch.setattr(
+        contract_module,
         "sha256_file",
         lambda path: hashlib.sha256(Path(path).read_bytes()).hexdigest(),
     )
@@ -351,7 +361,6 @@ def test_checker_only_service_reuses_authorized_snapshot_and_skips_worker(
     )
     monkeypatch.setattr(watchdog_module, "supervise", fake_supervise)
     monkeypatch.setattr(service_workflow, "_activation_environment", lambda *_a, **_k: (environment.copy(), ["activate"], 0, ""))
-    monkeypatch.setattr(service_workflow, "_qualified_activation_identity", lambda _env: "task41-p0-test-abi")
     monkeypatch.setattr(
         service_workflow,
         "_abi_preflight",
@@ -381,6 +390,7 @@ def test_checker_only_service_reuses_authorized_snapshot_and_skips_worker(
         raise AssertionError(f"unexpected Git command: {command}")
 
     monkeypatch.setattr(service_workflow.subprocess, "run", fake_git_run)
+    monkeypatch.setattr(sys, "executable", str(fake_python.resolve()))
     monkeypatch.chdir(repo_root)
 
     with pytest.raises(ValueError, match="snapshot path/hash"):
@@ -395,7 +405,7 @@ def test_checker_only_service_reuses_authorized_snapshot_and_skips_worker(
 
     result = _run_task41_p0_service(
         unit="task41-checker-only-test",
-        runtime_prefix=Path(sys.prefix),
+        runtime_prefix=runtime_prefix,
         abi_receipt=repo_root / "abi.json",
         jit_cache=repo_root / "jit",
         case_args=[
