@@ -28,6 +28,29 @@ H15_CASES = {
     "X": {"changed_axis": "x", "axis_cell_counts": (12, 4, 10)},
     "Y": {"changed_axis": "y", "axis_cell_counts": (6, 8, 10)},
     "Z": {"changed_axis": "z", "axis_cell_counts": (6, 4, 20)},
+    "YZ480": {
+        "changed_axis": None,
+        "changed_axes": ("y", "z"),
+        "parent_case": "Y",
+        "axis_cell_counts": (6, 10, 8),
+        "axes_nm": {
+            "x": (0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0),
+            "y": (
+                0.0,
+                7.5,
+                15.0,
+                18.333333333333332,
+                21.666666666666668,
+                25.0,
+                28.333333333333336,
+                31.666666666666668,
+                35.0,
+                42.5,
+                50.0,
+            ),
+            "z": (-10.0, 0.0, 15.0, 37.5, 60.0, 82.5, 105.0, 120.0, 130.0),
+        },
+    },
 }
 _MATERIAL_INTERVALS = {
     "x": (0.0, 16.5, 33.5, 50.0),
@@ -55,18 +78,25 @@ def _segment_counts(axis: tuple[float, ...], breakpoints: tuple[float, ...]) -> 
 
 
 def h15_axis_plan(case: str) -> dict[str, object]:
-    """Return a deterministic h15 plan, with X/Y/Z derived only by bisection."""
+    """Return a deterministic frozen H15 or approved 480-cell axis plan."""
     if case not in H15_CASES:
         raise ValueError(f"unsupported Task40 h15 case {case!r}")
-    changed_axis = H15_CASES[case]["changed_axis"]
-    axes = {
-        axis: (
-            _bisect_every_interval(values)
-            if axis == changed_axis
-            else values
-        )
-        for axis, values in H15_BASE_AXES_NM.items()
-    }
+    facts = H15_CASES[case]
+    changed_axis = facts["changed_axis"]
+    if "axes_nm" in facts:
+        axes = {
+            axis: tuple(values)
+            for axis, values in facts["axes_nm"].items()
+        }
+    else:
+        axes = {
+            axis: (
+                _bisect_every_interval(values)
+                if axis == changed_axis
+                else values
+            )
+            for axis, values in H15_BASE_AXES_NM.items()
+        }
     counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
     if counts != tuple(H15_CASES[case]["axis_cell_counts"]):
         raise AssertionError(f"Task40 h15 {case} axis counts are inconsistent: {counts}")
@@ -83,22 +113,37 @@ def h15_axis_plan(case: str) -> dict[str, object]:
         "x": [2, 2, 2], "y": [1, 2, 1], "z": [1, 8, 1]
     }:
         raise AssertionError(f"Task40 h15 base material segmentation changed: {segment_counts}")
+    parent_case = facts.get("parent_case", None if case == "B" else "B")
+    if case == "YZ480":
+        parent_axes = h15_axis_plan(str(parent_case))["axes_nm"]
+        parent_hashes = {
+            axis: _axis_sha256(tuple(parent_axes[axis]))
+            for axis in ("x", "y", "z")
+        }
+    else:
+        parent_hashes = H15_BASE_AXIS_SHA256_LE_F64
     payload = {
         "schema": "task40.phi90.h15.axis_plan.v1",
         "case": case,
-        "parent_case": None if case == "B" else "B",
+        "parent_case": parent_case,
         "changed_axis": changed_axis,
         "axes_nm": {axis: list(values) for axis, values in axes.items()},
         "axis_cell_counts": list(counts),
         "segment_cell_counts": segment_counts,
-        "parent_axis_sha256_le_f64": dict(H15_BASE_AXIS_SHA256_LE_F64),
+        "parent_axis_sha256_le_f64": dict(parent_hashes),
     }
+    if "changed_axes" in facts:
+        payload["changed_axes"] = list(facts["changed_axes"])
     plan_sha256 = hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
     return {
         **payload,
-        "plan_id": f"task40_phi90_h15_{case.lower()}_axes_v1",
+        "plan_id": (
+            "task40_phi90_h15_yz480_480_axes_v1"
+            if case == "YZ480"
+            else f"task40_phi90_h15_{case.lower()}_axes_v1"
+        ),
         "mesh_plan_sha256": plan_sha256,
         "actual_axis_sha256_le_f64": {
             axis: _axis_sha256(values) for axis, values in axes.items()

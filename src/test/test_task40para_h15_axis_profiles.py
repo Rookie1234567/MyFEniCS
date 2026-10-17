@@ -38,6 +38,7 @@ DAT_FILES = {
     "X": "h15_x_r13_p6_direct.dat",
     "Y": "h15_y_r13_p6_direct.dat",
     "Z": "h15_z_r13_p6_direct.dat",
+    "YZ480": "h15_yz480_r13_p6_direct.dat",
 }
 
 
@@ -220,6 +221,7 @@ def test_h15_profile_dispatch_is_separate_from_d13_identities():
         "task40para_phi90_13p5_H15_X_p6_direct_v1": "X",
         "task40para_phi90_13p5_H15_Y_p6_direct_v1": "Y",
         "task40para_phi90_13p5_H15_Z_p6_direct_v1": "Z",
+        "task40para_phi90_13p5_H15_YZ480_p6_direct_v1": "YZ480",
     }
     for case in ("B", "X", "Y", "Z"):
         loaded = load_dat_input(INPUTS / DAT_FILES[case])
@@ -229,6 +231,147 @@ def test_h15_profile_dispatch_is_separate_from_d13_identities():
         assert resolved["derived"]["native_capacity_profile"]["identity"] == (
             f"task40para_phi90_13p5_H15_{case}_p6_direct_v1"
         )
+
+
+def test_h15_yz480_uses_approved_axes_lineage_and_midpoint_material_tags():
+    case = "YZ480"
+    plan = H15_AXIS_PLANS[case]
+    specification = load_and_resolve(INPUTS / DAT_FILES[case])
+    resolved = specification.as_jsonable()
+    config = _validate_sections(_plain(load_dat_input(INPUTS / DAT_FILES[case]).document))
+    validate_native_case(config)
+    cfg = simulation_config_3d_from_normalized(resolved)
+    profile_id = resolved["derived"]["native_capacity_profile"]["identity"]
+    profile = native_profile_facts(profile_id)
+    route = _direct_run_contract(profile_id)
+    comparison = profile["component_options"]["directional_mesh_comparison"]
+
+    assert profile_id == "task40para_phi90_13p5_H15_YZ480_p6_direct_v1"
+    assert plan["parent_case"] == "Y"
+    assert plan["changed_axes"] == ["y", "z"]
+    assert plan["axis_cell_counts"] == [6, 10, 8]
+    assert plan["segment_cell_counts"] == {
+        "x": [2, 2, 2], "y": [2, 6, 2], "z": [1, 6, 1]
+    }
+    assert plan["expected_global_cell_count"] == 480
+    assert plan["actual_axis_sha256_le_f64"]["x"] == (
+        H15_AXIS_PLANS["Y"]["actual_axis_sha256_le_f64"]["x"]
+    )
+    assert plan["actual_axis_sha256_le_f64"]["x"] == (
+        H15_BASE_AXIS_SHA256_LE_F64["x"]
+    )
+    assert plan["actual_axis_sha256_le_f64"]["y"] == (
+        "9adb867e3e11b08db1999e8e9710aec3027c64cb2f4c3c580afc469af04b21a6"
+    )
+    assert plan["actual_axis_sha256_le_f64"]["z"] == (
+        "3461ff84ed60dee6ebd60cf525f62599c4c87b09bda6717a3aced8cf0c4dedd0"
+    )
+    assert comparison["parent_case"] == "Y"
+    assert comparison["changed_axes"] == ["y", "z"]
+    assert comparison["expected_material_tag_counts"] == {
+        "1": 348, "2": 60, "3": 72
+    }
+    assert route["task40_mesh_case"] == case
+    assert route["task40_parent_case"] == "Y"
+    assert route["task40_changed_axes"] == ["y", "z"]
+    assert route["expected_axis_cell_counts"] == [6, 10, 8]
+    assert route["expected_global_cell_count"] == 480
+    assert route["surface_quadrature_degree"] == 28
+    assert route["sparse_cutoff_policy"] == "scale_homogeneous_relative_only_v1"
+    assert resolved["derived"]["native_capacity_profile"]["identity"] == profile_id
+
+    planned = stage4_axis_plan(cfg, comm_size=1)
+    actual_axes = {
+        axis: tuple(float(v) for v in getattr(planned, f"{axis}_values"))
+        for axis in ("x", "y", "z")
+    }
+    assert planned.mesh_cells_resolved == (6, 10, 8)
+    assert actual_axes == {
+        axis: tuple(plan["axes_nm"][axis]) for axis in ("x", "y", "z")
+    }
+    assert actual_axes["x"] == tuple(H15_AXIS_PLANS["Y"]["axes_nm"]["x"])
+
+    # Build expected tags independently from each cell-interval midpoint.
+    axes = {axis: tuple(plan["axes_nm"][axis]) for axis in ("x", "y", "z")}
+    coordinates = np.asarray(
+        [
+            (x, y, z)
+            for z in axes["z"]
+            for y in axes["y"]
+            for x in axes["x"]
+        ],
+        dtype=np.float64,
+    )
+    tags = []
+    for z0, z1 in zip(axes["z"], axes["z"][1:]):
+        zm = (z0 + z1) / 2.0
+        for y0, y1 in zip(axes["y"], axes["y"][1:]):
+            ym = (y0 + y1) / 2.0
+            for x0, x1 in zip(axes["x"], axes["x"][1:]):
+                xm = (x0 + x1) / 2.0
+                if zm < 0.0:
+                    tag = 2
+                elif 0.0 <= zm < 120.0 and 16.5 < xm < 33.5 and 15.0 < ym < 35.0:
+                    tag = 3
+                else:
+                    tag = 1
+                tags.append(tag)
+    cell_tags = np.asarray(tags, dtype=np.int32)
+    expected_counts = {"1": 348, "2": 60, "3": 72}
+    assert {str(tag): int(np.count_nonzero(cell_tags == tag)) for tag in (1, 2, 3)} == expected_counts
+    fake_mesh = SimpleNamespace(
+        geometry=SimpleNamespace(x=coordinates),
+        topology=SimpleNamespace(
+            dim=3,
+            index_map=lambda _dim: SimpleNamespace(size_global=480),
+            cell_name=lambda: "hexahedron",
+        ),
+    )
+    levels = {
+        "mesh_data": SimpleNamespace(
+            mesh=fake_mesh, cell_tags=SimpleNamespace(values=cell_tags)
+        )
+    }
+    mesh_cfg = SimpleNamespace(tags=SimpleNamespace(air=1, substrate=2, grating=3))
+    evidence = _task40_h15_mesh_evidence(levels, mesh_cfg, route)
+    assert evidence["status"] == "PASS"
+    assert evidence["actual_global_cell_count"] == 480
+    assert evidence["axis_sha256_le_f64"] == plan["actual_axis_sha256_le_f64"]
+    assert evidence["parent_case"] == "H15_Y"
+    assert evidence["changed_axes"] == ["y", "z"]
+    assert evidence["material_tag_counts"] == {"1": 348, "2": 60, "3": 72}
+
+    wrong_whole_middle_layer = cell_tags.copy()
+    for index in range(wrong_whole_middle_layer.size):
+        iz = index // (6 * 10)
+        zm = (axes["z"][iz] + axes["z"][iz + 1]) / 2.0
+        if 0.0 <= zm < 120.0:
+            wrong_whole_middle_layer[index] = 3
+    with pytest.raises(ValueError, match="material tag counts differ"):
+        _task40_h15_mesh_evidence(
+            {
+                "mesh_data": SimpleNamespace(
+                    mesh=fake_mesh,
+                    cell_tags=SimpleNamespace(values=wrong_whole_middle_layer),
+                )
+            },
+            mesh_cfg,
+            route,
+        )
+
+    # The new run differs from H15-Y only by this approved explicit mesh plan.
+    h15_y = tomllib.loads((INPUTS / DAT_FILES["Y"]).read_text(encoding="utf-8"))
+    yz480 = tomllib.loads((INPUTS / DAT_FILES[case]).read_text(encoding="utf-8"))
+    for section in (
+        "geometry", "materials", "incidence", "boundary", "method", "execution", "output"
+    ):
+        assert yz480[section] == h15_y[section]
+    assert yz480["run_id"] != h15_y["run_id"]
+    for key in (
+        "nedelec_degree", "visualization_degree", "mesh_target_nm", "mesh_cell_type",
+        "mesh_spacing_mode", "assembly_backend", "floquet_constraint_mode",
+    ):
+        assert yz480["discretization"][key] == h15_y["discretization"][key]
 
 
 def test_h15_inputs_preserve_the_d13_b_physics_and_only_change_mesh_identity():

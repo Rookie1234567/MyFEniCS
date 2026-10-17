@@ -1,5 +1,7 @@
 # Task40para outcomes summary — D13 same-policy Y2/Y3 follow-up
 
+> **2026-10-17 后续授权补充：** 用户已将完整场总上限仅为一场地从13增至14，授权唯一 H15-YZ480 `[6,10,8]` / 480-cell p6 direct 场。早先本 summary 中“第14场未授权”“无新候选已提升”等句子反映当时状态，现由[授权补充记录](response_h15_yz480_authorized_field14.md)和[机器合同](records/h15_yz480_authorized_field14_contract_v1.json)限定 supersede；其余额外场仍未授权。该场同时改变 y/z，不能作单轴收敛结论。当前接线/测试已完成，正式运行结果待后续追加。
+
 本阶段先完成 Y2 relative-only 场审计，再按授权运行唯一的同策略 Y3 `[6,48,14]` 完整 direct 场，并离线比较 Y2/Y3。对照只读取小型保存场样本、612-mode JSON/CSV 与 compact；没有再运行 FE/factor、读取 VTU 或重扫资源流。`FULL_DTN_NOT_VERIFIED`、canonical 方柱侧壁切向检查 `NOT_MEASURED` 及旧 V4/V5 保存场失败记录继续保持。
 
 ## 当前范围与状态

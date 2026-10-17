@@ -89,11 +89,15 @@ TASK40_PHI90_H15_Y_P6_DIRECT_PROFILE = (
 TASK40_PHI90_H15_Z_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_Z_p6_direct_v1"
 )
+TASK40_PHI90_H15_YZ480_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_H15_YZ480_p6_direct_v1"
+)
 TASK40_PHI90_H15_PROFILES = {
     TASK40_PHI90_H15_B_P6_DIRECT_PROFILE: "B",
     TASK40_PHI90_H15_X_P6_DIRECT_PROFILE: "X",
     TASK40_PHI90_H15_Y_P6_DIRECT_PROFILE: "Y",
     TASK40_PHI90_H15_Z_P6_DIRECT_PROFILE: "Z",
+    TASK40_PHI90_H15_YZ480_P6_DIRECT_PROFILE: "YZ480",
 }
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
     "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
@@ -1057,7 +1061,7 @@ def _task40_phi90_d13_profile_facts(identity):
 
 
 def _task40_phi90_h15_profile_facts(identity):
-    """Return one frozen Task40 h15 baseline or single-axis refinement profile."""
+    """Return one frozen Task40 H15 or approved fixed-budget mesh profile."""
     from copy import deepcopy
 
     from src.geometry.task40_phi90_h15_axis_plan import (
@@ -1104,10 +1108,10 @@ def _task40_phi90_h15_profile_facts(identity):
     base["component_options"]["surface_quadrature"].update(
         authority="fixed_R_plus_two_envelope_before_H15_B"
     )
-    base["component_options"]["directional_mesh_comparison"] = {
+    directional_comparison = {
         "mesh_plan_family": "task40_phi90_h15",
         "case": case_name,
-        "parent_case": None if case_name == "B" else "B",
+        "parent_case": plan["parent_case"],
         "changed_axis": plan["changed_axis"],
         "axis_cell_counts": list(counts),
         "segment_cell_counts": {
@@ -1121,10 +1125,24 @@ def _task40_phi90_h15_profile_facts(identity):
         "explicit_axis_counts_in_input": True,
         "only_axis_changes_from_B": plan["changed_axis"],
     }
+    if case_name == "YZ480":
+        directional_comparison.pop("only_axis_changes_from_B")
+        directional_comparison.update(
+            changed_axes=list(plan["changed_axes"]),
+            parent_axis_sha256_le_f64=dict(plan["parent_axis_sha256_le_f64"]),
+            only_axis_changes_from_parent=list(plan["changed_axes"]),
+        )
+    base["component_options"]["directional_mesh_comparison"] = directional_comparison
     base["backend"]["operator_scope"] = operator_scope
-    base["campaign_authorization"]["source"] = (
-        "Task40 user-authorized H15 baseline and one-axis refinements"
-    )
+    if case_name == "YZ480":
+        base["campaign_authorization"]["source"] = (
+            "Task40 user-authorized H15 baseline, one-axis refinements, and one "
+            "480-cell y-refined/z-coarsened candidate"
+        )
+    else:
+        base["campaign_authorization"]["source"] = (
+            "Task40 user-authorized H15 baseline and one-axis refinements"
+        )
     base["campaign_authorization"]["direct_route"]["mesh_target_nm"] = 15.0
     base["condensed_route"]["name"] = (
         "task40_phi90_h15_p6_exact_local_condensation_direct_v1"

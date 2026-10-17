@@ -1,0 +1,83 @@
+{
+  "schema": "task40.phi90.h15.yz480_authorized_field14.v1",
+  "status_at_contract_freeze": "AUTHORIZED_NOT_RUN",
+  "authorization": {
+    "date_local": "2026-10-17",
+    "scope": "one unique 480-cell nonuniform full p6 condensed-direct solve",
+    "field_number": 14,
+    "previous_total_limit": 13,
+    "new_total_limit": 14,
+    "only_this_field_added": true,
+    "automatic_retry_authorized": false
+  },
+  "approved_static_candidate": {
+    "path": "tmp/h15_y_refine_z_coarsen_480_candidate_v1.json",
+    "sha256": "688b99797aa25b67bf48fd1f7ca799d18ee6f814af4aba07864ec09bac996ae6",
+    "plan_id": "task40_phi90_h15_yz480_480_axes_v1",
+    "plan_sha256": "a220599082b354b7b6c5531389d9e4104465ea2572d6ba3bfb81922b2430c30c"
+  },
+  "run_identity": {
+    "model_id": "si_block_phi90_50x50_17x20_h120",
+    "run_id": "task40_phi90_13p5_H15_YZ480_p6_direct_v1",
+    "profile": "task40para_phi90_13p5_H15_YZ480_p6_direct_v1",
+    "input": "input/task40para_phi90_mesh_modes_direct/h15_yz480_r13_p6_direct.dat",
+    "input_sha256": "1c6e25c48e8f86e722ee4992f6df42ee4723b97624d59937c42e2ef03291c75c",
+    "physical_model_sha256": "8b3d63f735e0fa5346ca6a03a54265a766065d4d9abdafdf884f75bb7df500a3",
+    "resolved_config_sha256": "66258ee70b58b0e1073307a58f8c7c7e084cece11e0229d7e256d82c27099b25"
+  },
+  "mesh": {
+    "parent": "H15-Y",
+    "changed_axes_from_parent": ["y", "z"],
+    "axis_cell_counts": [6, 10, 8],
+    "global_cells": 480,
+    "x_nm": [0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0],
+    "y_nm": [0.0, 7.5, 15.0, 18.333333333333332, 21.666666666666668, 25.0, 28.333333333333336, 31.666666666666668, 35.0, 42.5, 50.0],
+    "z_nm": [-10.0, 0.0, 15.0, 37.5, 60.0, 82.5, 105.0, 120.0, 130.0],
+    "segment_cell_counts": {
+      "x": [2, 2, 2],
+      "y": [2, 6, 2],
+      "z": [1, 6, 1]
+    },
+    "axis_sha256_le_f64": {
+      "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+      "y": "9adb867e3e11b08db1999e8e9710aec3027c64cb2f4c3c580afc469af04b21a6",
+      "z": "3461ff84ed60dee6ebd60cf525f62599c4c87b09bda6717a3aced8cf0c4dedd0"
+    },
+    "expected_material_tag_counts_air_substrate_grating": [348, 60, 72],
+    "material_tag_counts_are_static_expectations_until_live_mesh_qa": true
+  },
+  "numerical_contract": {
+    "wavelength_nm": 13.5,
+    "incidence": {"grazing_angle_deg": 1.0, "azimuth_deg": 90.0, "polarization": "s"},
+    "element": "Nedelec p6 H(curl)",
+    "solver": "p6 condensed direct MUMPS",
+    "active_mode_count": 612,
+    "active_mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "surface_quadrature_degree": 28,
+    "volume_quadrature": {"degree": 15, "rule": "default"},
+    "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "sparse_cutoff_relative_tolerance": 1e-13,
+    "same_factor_correction_max": 2,
+    "gates": {
+      "condensed_residual_max": 1e-9,
+      "independent_A6_residual_max": 1e-6,
+      "energy_error_max": 1e-5
+    },
+    "cross_mesh_fe_or_factor_reuse": false,
+    "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    "authority_status": "AUTHORITY_LIMITED"
+  },
+  "resource_contract": {
+    "host_available_floor_bytes": 68719476736,
+    "fixed_rss_cap_bytes": null,
+    "parent_cpu": 9,
+    "worker_cpu": 24,
+    "mpi_size": 1,
+    "math_threads": 1,
+    "numa_policy": "interleave_nodes_0_1",
+    "pss_uss": "disabled",
+    "swap": "observe_only",
+    "one_heavy_run_at_a_time": true
+  },
+  "interpretation_limit": "Both y and z differ from H15-Y. This one field tests the approved fixed-budget redistribution, not a single-axis convergence claim; no full-DtN qualification follows from finite R13 results."
+}

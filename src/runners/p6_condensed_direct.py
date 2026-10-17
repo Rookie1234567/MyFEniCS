@@ -193,6 +193,15 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "task40_mesh_plan_family": family_label,
             "task40_mesh_case": case_name,
             "task40_changed_axis": mesh_case["changed_axis"],
+            "task40_changed_axes": list(mesh_case.get("changed_axes") or ())
+            or ([mesh_case["changed_axis"]] if mesh_case["changed_axis"] else []),
+            "task40_parent_case": mesh_case["parent_case"],
+            "task40_parent_axis_sha256_le_f64": dict(
+                mesh_case.get(
+                    "parent_axis_sha256_le_f64",
+                    mesh_case["base_axis_sha256_le_f64"],
+                )
+            ),
             "task40_mesh_plan_id": plan_id,
             "task40_mesh_plan_sha256": plan_sha,
             "task40_expected_axis_sha256_le_f64": expected_axis_hashes,
@@ -944,7 +953,7 @@ def _task40_d13_mesh_evidence(
 def _task40_h15_mesh_evidence(
     levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
 ) -> dict[str, Any]:
-    """Check live Task40 H15 coordinates, single-axis lineage, and cell tags."""
+    """Check live H15-family coordinates, declared lineage, and cell tags."""
     from src.geometry.task40_phi90_h15_axis_plan import h15_axis_plan
 
     case_name = str(route["task40_mesh_case"])
@@ -972,18 +981,36 @@ def _task40_h15_mesh_evidence(
     if hashes != plan["actual_axis_sha256_le_f64"]:
         raise ValueError(f"actual H15-{case_name} axis hashes differ from frozen plan")
     changed_axis = route["task40_changed_axis"]
-    base_hashes = route["task40_base_axis_sha256_le_f64"]
+    changed_axes = tuple(route.get("task40_changed_axes") or ())
+    parent_case = plan["parent_case"]
+    if route.get("task40_parent_case") != parent_case:
+        raise ValueError(f"H15-{case_name} parent case differs from frozen plan")
+    if route.get("task40_parent_axis_sha256_le_f64") != plan[
+        "parent_axis_sha256_le_f64"
+    ]:
+        raise ValueError(f"H15-{case_name} parent-axis hash differs from frozen plan")
     if case_name == "B":
-        if changed_axis is not None or hashes != base_hashes:
+        base_hashes = route["task40_base_axis_sha256_le_f64"]
+        if changed_axis is not None or changed_axes or hashes != base_hashes:
             raise ValueError("H15-B axes differ from the reviewed h15 base hashes")
     else:
-        if changed_axis not in ("x", "y", "z"):
-            raise ValueError(f"H15-{case_name} has no single changed axis")
+        from src.geometry.task40_phi90_h15_axis_plan import h15_axis_plan
+
+        parent_plan = h15_axis_plan(str(parent_case))
+        parent_hashes = parent_plan["actual_axis_sha256_le_f64"]
+        declared_axes = tuple(
+            plan.get("changed_axes")
+            or ([plan["changed_axis"]] if plan["changed_axis"] else [])
+        )
+        if changed_axes != declared_axes:
+            raise ValueError(f"H15-{case_name} changed-axis route differs from plan")
+        if not declared_axes:
+            raise ValueError(f"H15-{case_name} has no declared changed axes")
         for axis in ("x", "y", "z"):
-            if axis == changed_axis:
-                if hashes[axis] == base_hashes[axis]:
-                    raise ValueError(f"H15-{case_name} did not refine {axis}")
-            elif hashes[axis] != base_hashes[axis]:
+            if axis in declared_axes:
+                if hashes[axis] == parent_hashes[axis]:
+                    raise ValueError(f"H15-{case_name} did not change {axis}")
+            elif hashes[axis] != parent_hashes[axis]:
                 raise ValueError(f"H15-{case_name} changed non-target {axis}")
     counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
     actual_cells = int(msh.topology.index_map(msh.topology.dim).size_global)
@@ -1012,15 +1039,17 @@ def _task40_h15_mesh_evidence(
         "status": "PASS",
         "profile": route["profile_identity"],
         "case": case_name,
-        "parent_case": "H15_B",
+        "parent_case": None if parent_case is None else f"H15_{parent_case}",
         "changed_axis": changed_axis,
+        "changed_axes": list(changed_axes),
         "geometry": "rectangular_block_grating",
         "cell_type": "hexahedron",
         "actual_global_cell_count": actual_cells,
         "axis_cell_counts": list(counts),
         "axis_sha256_le_f64": hashes,
         "actual_axes_match_frozen_h15_coordinates": True,
-        "only_declared_axis_changed_from_H15_B": True,
+        "axis_lineage_matches_frozen_parent": True,
+        "only_declared_axes_changed_from_parent": True,
         "material_tag_counts": {str(tag): count for tag, count in actual.items()},
         "expected_material_tag_counts": {
             str(tag): count for tag, count in expected.items()
