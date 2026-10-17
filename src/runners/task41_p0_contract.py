@@ -987,8 +987,10 @@ def load_task41_p0_fixed_window(
         expected_t0_ns = _utc_ns(TASK41_B0_T0_UTC)
         bootstrap_utc = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
         if (
-            payload.get("t0_utc") != TASK41_B0_T0_UTC
-            or t0_ns != expected_t0_ns
+            # The writer formats nanoseconds as ``...44.000000000Z`` while
+            # the fixed basis constant is ``...44Z``. Compare parsed instants,
+            # not their equivalent text spellings.
+            t0_ns != expected_t0_ns
             or payload.get("t0_basis") != TASK41_B0_T0_BASIS
             or payload.get("bootstrap_boottime_elapsed_seconds") is not None
             or not isinstance(payload.get("bootstrap_utc_elapsed_seconds"), (int, float))

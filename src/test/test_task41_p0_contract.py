@@ -207,15 +207,18 @@ def test_task41_window_hash_change_fails_closed(tmp_path):
         )
 
 
+@pytest.mark.parametrize("case_id", ["A1", "B0"])
 def test_task41_prepare_keeps_first_t0_after_validation_failure_and_source_change(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, case_id
 ):
     import src.runners.task41_p0_contract as contract_module
 
     repo_root = Path(__file__).resolve().parents[2]
-    input_path = tmp_path / TASK41_INPUT_RELATIVE
+    case_spec = contract_module._task41_case(case_id)
+    input_relative = case_spec["input_relative"]
+    input_path = tmp_path / input_relative
     input_path.parent.mkdir(parents=True)
-    original_input = repo_root.joinpath(TASK41_INPUT_RELATIVE).read_bytes()
+    original_input = repo_root.joinpath(input_relative).read_bytes()
     input_path.write_bytes(b"invalid DAT\n")
     runtime = tmp_path / "native-runtime"
     python_path = runtime / "bin/python"
@@ -254,15 +257,23 @@ def test_task41_prepare_keeps_first_t0_after_validation_failure_and_source_chang
         "abi_receipt": abi_receipt,
         "jit_cache": jit_cache,
         "current_root": tmp_path,
+        "case_id": case_id,
     }
     with pytest.raises(Task41ContractError, match="could not be resolved"):
         prepare_task41_p0(**prepare_args)
 
-    window_path = tmp_path / TASK41_WINDOW_RELATIVE
+    window_path = tmp_path / case_spec["window_relative"]
     first_window_bytes = window_path.read_bytes()
     first_window_sha = hashlib.sha256(first_window_bytes).hexdigest()
     first_window_payload = json.loads(first_window_bytes)
     assert first_window_payload["source_sha"] == git_state["sha"]
+    if case_id == "B0":
+        expected_t0_ns = _utc_ns(TASK41_B0_T0_UTC)
+        assert first_window_payload["t0_utc"] == _utc_z(expected_t0_ns)
+        assert first_window_payload["t0_basis"] == TASK41_B0_T0_BASIS
+        assert first_window_payload["bootstrap_utc_elapsed_seconds"] == (
+            first_window_payload["anchor"]["utc_ns"] - expected_t0_ns
+        ) / 1e9
 
     input_path.write_bytes(original_input)
     git_state["sha"] = "b" * 40
