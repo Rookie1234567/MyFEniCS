@@ -54,7 +54,10 @@ def qualified_task40_v10_abi(
         TASK40_V20_P6_PROFILES,
         TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
     )
-    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.geometry.task41_phi90_profile import (
+        TASK41_B0_PRECONDITIONER,
+        TASK41_G13_A2_PRECONDITIONER,
+    )
 
     strict_v30 = os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1"
     strict_v31 = os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1"
@@ -76,11 +79,17 @@ def qualified_task40_v10_abi(
         *TASK40_V18_P6_PROFILES,
         *TASK40_V20_P6_PROFILES,
     )
+    task41_case_by_profile = {
+        TASK41_G13_A2_PRECONDITIONER: "A2",
+        TASK41_B0_PRECONDITIONER: "B0",
+    }
     if strict_task41:
-        if profile_identity != TASK41_G13_A2_PRECONDITIONER:
-            raise RuntimeError("Task41 P0 ABI gate accepts only its exact A2 profile")
-    elif profile_identity == TASK41_G13_A2_PRECONDITIONER:
-        raise RuntimeError("Task41 A2 ABI gate requires the strict P0 execution contract")
+        if profile_identity not in task41_case_by_profile:
+            raise RuntimeError(
+                "Task41 P0 ABI gate accepts only its exact A2 or B0 profile"
+            )
+    elif profile_identity in task41_case_by_profile:
+        raise RuntimeError("Task41 P0 ABI gate requires the strict P0 execution contract")
     elif profile_identity not in task40_profiles:
         raise RuntimeError(
             "Task40 V10/V11 ABI gate accepts only an exact reviewed p4/p6 profile"
@@ -104,23 +113,28 @@ def qualified_task40_v10_abi(
             raise RuntimeError("Task41 P0 ABI gate requires its bound execution contract")
         from src.runners.task41_p0_contract import (
             TASK41_A2_RUN_ID,
+            TASK41_B0_RUN_ID,
             require_task41_p0_contract,
         )
 
+        task41_case_id = task41_case_by_profile[profile_identity]
+        expected_run_id = (
+            TASK41_A2_RUN_ID if task41_case_id == "A2" else TASK41_B0_RUN_ID
+        )
         contract, checked_contract_sha256 = require_task41_p0_contract(
             contract_path_value,
             expected_sha256=contract_sha256,
             current_root=root,
             check_current_source=True,
             require_clean_source=True,
-            case_id="A2",
+            case_id=task41_case_id,
         )
         if (
             checked_contract_sha256 != contract_sha256
-            or contract["case"].get("run_id") != TASK41_A2_RUN_ID
+            or contract["case"].get("run_id") != expected_run_id
         ):
             raise RuntimeError(
-                "Task41 P0 ABI contract differs from the exact A2 service binding"
+                f"Task41 P0 ABI contract differs from the exact {task41_case_id} service binding"
             )
         execution = contract["runtime"]
         runtime_profile = str(execution["profile"])

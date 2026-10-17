@@ -31,6 +31,7 @@ ALL_Q_RESIDENT = "ALL_Q_RESIDENT"
 ONE_Q_REFACTOR_V19 = "ONE_Q_REFACTOR_V19"
 TASK41_A2_ALL_Q_CONTRACT_SCHEMA = "task41.p0.a2_all_q_factor_qualification.v1"
 TASK41_A2_SECOND_RHS_FORMULA = "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
+TASK41_B0_ALL_Q_CONTRACT_SCHEMA = "task41.p0.b0_all_q_factor_qualification.v1"
 
 
 def task41_a2_all_q_factor_contract() -> dict[str, Any]:
@@ -40,6 +41,27 @@ def task41_a2_all_q_factor_contract() -> dict[str, Any]:
         "schema": TASK41_A2_ALL_Q_CONTRACT_SCHEMA,
         "profile_identity": TASK41_G13_A2_PRECONDITIONER,
         "q_count": 10,
+        "require_two_strict_rhs": True,
+        "second_rhs_formula": TASK41_A2_SECOND_RHS_FORMULA,
+        "strict_relative_residual_limit": 1.0e-10,
+        "same_q_factors_remain_resident": True,
+    }
+
+
+def task41_b0_all_q_factor_contract(profile: Task40V10P6PeriodicProfile) -> dict[str, Any]:
+    """Require strict dual-RHS checks for all 200 live B0 q matrices."""
+    from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
+
+    if (
+        not isinstance(profile, Task40V10P6PeriodicProfile)
+        or profile.name != TASK41_B0_PRECONDITIONER
+        or profile.q_count != 200
+    ):
+        raise ValueError("Task41 B0 factor contract requires its exact live 200-q profile")
+    return {
+        "schema": TASK41_B0_ALL_Q_CONTRACT_SCHEMA,
+        "profile_identity": TASK41_B0_PRECONDITIONER,
+        "q_count": 200,
         "require_two_strict_rhs": True,
         "second_rhs_formula": TASK41_A2_SECOND_RHS_FORMULA,
         "strict_relative_residual_limit": 1.0e-10,
@@ -923,6 +945,7 @@ class AllQExactMumps:
                  strict_factor_qualification: bool = False,
                  v30_config: Mapping[str, Any] | None = None,
                  task41_a2_config: Mapping[str, Any] | None = None,
+                 task41_b0_config: Mapping[str, Any] | None = None,
                  output_directory=None):
         from petsc4py import PETSc
         from pathlib import Path
@@ -957,7 +980,11 @@ class AllQExactMumps:
             output_directory = output_directory or configured_directory
             strict_factor_qualification = True
         if task41_a2_config is not None:
-            if v30_config is not None or not isinstance(task41_a2_config, Mapping):
+            if (
+                v30_config is not None
+                or task41_b0_config is not None
+                or not isinstance(task41_a2_config, Mapping)
+            ):
                 raise ValueError("Task41 A2 AllQ contract cannot mix with Task40 V30/V31")
             expected_task41_config = task41_a2_all_q_factor_contract()
             if dict(task41_a2_config) != expected_task41_config or (
@@ -969,11 +996,28 @@ class AllQExactMumps:
             strict_factor_qualification = True
         else:
             self.task41_a2_config = None
+        if task41_b0_config is not None:
+            if v30_config is not None or self.task41_a2_config is not None or not isinstance(
+                task41_b0_config, Mapping
+            ):
+                raise ValueError("Task41 B0 AllQ contract cannot mix with another route")
+            expected_task41_b0_config = task41_b0_all_q_factor_contract(profile)
+            if dict(task41_b0_config) != expected_task41_b0_config:
+                raise ValueError("Task41 B0 AllQ contract requires its exact 200-q dual-RHS profile")
+            self.task41_b0_config = dict(task41_b0_config)
+            strict_factor_qualification = True
+        else:
+            self.task41_b0_config = None
         self.task41_a2_enabled = self.task41_a2_config is not None
+        self.task41_b0_enabled = self.task41_b0_config is not None
+        self.task41_p0_enabled = self.task41_a2_enabled or self.task41_b0_enabled
+        self.task41_p0_case_id = "a2" if self.task41_a2_enabled else "b0"
         self.v30_config = None if v30_config is None else dict(v30_config)
         self.v30_enabled = self.v30_config is not None
-        self.strict_two_rhs_enabled = self.v30_enabled or self.task41_a2_enabled
-        self.strict_rhs_label = "task41_a2" if self.task41_a2_enabled else "v30"
+        self.strict_two_rhs_enabled = self.v30_enabled or self.task41_p0_enabled
+        self.strict_rhs_label = (
+            f"task41_{self.task41_p0_case_id}" if self.task41_p0_enabled else "v30"
+        )
         if target_admission_phase not in (None, "REFERENCE_ONLY"):
             raise ValueError("AllQ target admission phase must be REFERENCE_ONLY or omitted")
         if target_admission_phase is not None and not (
@@ -1076,13 +1120,17 @@ class AllQExactMumps:
             "all_q_fresh_probe_and_second_rhs_passed": False,
             "second_rhs_qualification": {
                 "schema": (
-                    "task41.p0.a2_all_q_second_rhs.v1"
-                    if self.task41_a2_enabled
+                    f"task41.p0.{self.task41_p0_case_id}_all_q_second_rhs.v1"
+                    if self.task41_p0_enabled
                     else "task40extra.review_v30_all_q_second_rhs.v1"
                 ),
                 "formula": (
-                    self.task41_a2_config["second_rhs_formula"]
-                    if self.task41_a2_enabled
+                    (
+                        self.task41_a2_config
+                        if self.task41_a2_enabled
+                        else self.task41_b0_config
+                    )["second_rhs_formula"]
+                    if self.task41_p0_enabled
                     else "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
                 ),
                 "all_entries_nonzero": True,
@@ -1832,13 +1880,17 @@ class AllQExactMumps:
                     )
                     second_test = {
                         "schema": (
-                            "task41.p0.a2_all_q_second_rhs_result.v1"
-                            if self.task41_a2_enabled
+                            f"task41.p0.{self.task41_p0_case_id}_all_q_second_rhs_result.v1"
+                            if self.task41_p0_enabled
                             else "task40extra.review_v30_all_q_second_rhs_result.v1"
                         ),
                         "formula": (
-                            self.task41_a2_config["second_rhs_formula"]
-                            if self.task41_a2_enabled
+                            (
+                                self.task41_a2_config
+                                if self.task41_a2_enabled
+                                else self.task41_b0_config
+                            )["second_rhs_formula"]
+                            if self.task41_p0_enabled
                             else "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
                         ),
                         "rhs_sha256": second_rhs_sha256,
@@ -1878,8 +1930,8 @@ class AllQExactMumps:
                     test["second_rhs"] = second_test
                     self.audit["second_rhs_tests"].append({"q": q, **second_test})
                     self.event(
-                        "task41_a2_all_q_second_rhs_complete"
-                        if self.task41_a2_enabled
+                        f"task41_{self.task41_p0_case_id}_all_q_second_rhs_complete"
+                        if self.task41_p0_enabled
                         else "task40_v30_all_q_second_rhs_complete",
                         {
                         "q": q,
@@ -1951,8 +2003,8 @@ class AllQExactMumps:
                 self.audit["numeric_ready_q"].sort()
                 self.event(
                     (
-                        "task41_a2_all_q_numeric_ready"
-                        if self.task41_a2_enabled
+                        f"task41_{self.task41_p0_case_id}_all_q_numeric_ready"
+                        if self.task41_p0_enabled
                         else "task40_v30_all_q_numeric_ready"
                         if self.v30_enabled
                         else "task40_v12_all_q_numeric_ready"

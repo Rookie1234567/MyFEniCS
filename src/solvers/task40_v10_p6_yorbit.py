@@ -5799,6 +5799,7 @@ def build_task40_v10_p6_reference_inverse(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     v30_factor_config: Mapping[str, Any] | None = None,
     task41_a2_factor_config: Mapping[str, Any] | None = None,
+    task41_b0_factor_config: Mapping[str, Any] | None = None,
     factor_output_directory: str | None = None,
     surface_functional_checkpoint: Mapping[str, Any] | None = None,
     qualified_q_csr_provider: Any | None = None,
@@ -6932,6 +6933,7 @@ def build_task40_v10_p6_reference_inverse(
                 target_admission_phase=target_admission_phase,
                 v30_config=v30_factor_config,
                 task41_a2_config=task41_a2_factor_config,
+                task41_b0_config=task41_b0_factor_config,
                 output_directory=factor_output_directory,
             )
         else:

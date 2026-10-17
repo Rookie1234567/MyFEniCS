@@ -11,7 +11,8 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 | A2 attempt7 / saved-output retry3 | A出口 PASS：A2原求解器6步且独立A6真残差通过；保存场续作完成A1/A2对照，checker-only retry3 PASS。原worker的`WORKER_FAILED`、`official_result=false`作为原始历史保留 | A6=`7.381572880480822e-08`（限`1e-6`）；checker通过不改写原worker分类，且没有重新组装FE算子；失败和资源口径见[a2_saved_output_checker_retry3.json](a2_saved_output_checker_retry3.json) |
 | A2 P0 attempt6 | 十 q 数值与 CSR/native 资格通过后，V15 拒绝精确 Task41 profile；worker exit 4、official_result=false | 外层迭代未开始；无完整场、独立 A6 残差或 official R/T/A；工程准入故障，不是数值或资源门失败；见 [test_summary.md](test_summary.md) 与 [run_index.json](run_index.json) |
 | A2 P0 attempt4 | q0/q5 的完整 CSR 与原生算子资格检查通过；随后 worker 因递归深度异常退出，official_result=false | 全流程未完成；没有完整迭代场、独立 A6 残差或 official R/T/A；0.7 nm 仍 NOT_RUN |
-| 0.7 nm | NOT_RUN | A1/A2 通过后按资源门推进 |
+| B0 0.7 nm inventory / P0 接线 | 生产模式/q-sector与Stage-4轴规划已完成轻量清点；checker/profile capability 接线有定向测试；FE网格、Basix自由度、局部算子和求解均`NOT_RUN` | 64,120个`auto_propagating`端口模式；200个q、100个两胞sector；资源状态`NOT_YET_ADMITTED`，不是资源失败；原始清点的manifest未保存限制及本轮接线记录见[b0_07nm_computability_inventory.json](b0_07nm_computability_inventory.json)与[test_summary.md](test_summary.md) |
+| 0.7 nm 完整场与离散精度 | NOT_RUN | 主控冻结源码及新单场合同/窗口后继续FE/dofmap、局部算子、端口投影与对象级资源测量 |
 
 | A1 指标 | measured 值 | 解释 |
 |---|---:|---|
@@ -36,6 +37,16 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 详细路径、字节与哈希见 [a1_result_compact.json](a1_result_compact.json)，运行索引见 [run_index.json](run_index.json)，定向测试见 [test_summary.md](test_summary.md)。A1 的 probe/flux 诊断吸收与 official 值存在差异，原记录保留，不用于改判端口/体吸收资格。
 
 A出口已通过：A1/A2 保存场同离散对照与 checker-only retry3 在定义范围内通过字段、模式、功率和 q-reference 检查；checker没有重新组装或施加有限元算子。原 A2 worker 的 `WORKER_FAILED` / `official_result=false` 是保留的原始 attempt 分类，不代表保存场验收仍失败。0.7 nm 完整场及网格/倏逝模式精度检查尚未运行，最终 2 TB/48 h 冷流程也未资格化；当前没有 merge approval。
+
+## B0：0.7 nm 可计算性清点（尚未准入正式有限元运行）
+
+轻量清点调用生产的端口模式生成器、有序模式manifest构造器、Task40 p6 q-sector映射器和Stage-4轴规划器；它没有建立DOLFINx有限元网格或自由度空间。实际轴计划为10×200×14、28,000个六面体单元，y步长0.25 nm，x/y/z材料界面均落在网格面上。`auto_propagating`生成64,120个传播端口模式，其中top/bottom为32,062/32,058，s/p各32,060；这只是传播模式清单，不是倏逝尾部精度资格。
+
+实际映射覆盖200个q分支和100个两胞sector（每个sector配对q=t与q=t+100）。q1…q57没有传播端口，q0有8个，q58…q199均非空；100个sector仍全部非空，端口数范围524…816。空端口q不允许删掉其有限元参考sector，全部200个参考q仍属于后续完整算子资格范围。
+
+生产manifest的规范字节SHA-256为`201e5d1675511dff30340596d60f78718f9cef812ddf939a56d81e12410dbcd7`，长度72,648,642字节。但首次命令没有将这些字节保存到ignored artifacts，q assignment向量也未落盘；UTC/monotonic起止没有采样。命令工具实测wall时间11.9秒已记为必要准备成本，不能重置或冒称有正式B0窗口。为遵守不重算已生成模式的要求，不会补跑同一清点；该原始manifest限制在compact证据中明确标记。源码HEAD当时为`0bf0dc38eab2cf61ca9feb5115323f78c68e6576`且工作树含未提交B0改动；相关源码/input文件bundle哈希`f7ed9b137ba30744f5a695e4d039aa86a3450d283b57b3fdd8d28dec35278d85`是在清点后由未变化的文件内容回算。
+
+内存行数表仍是派生候选，不能当作B0 Basix/dofmap读回：全域独立行18,288,000、trace行5,688,000、每q局部行91,440、trace行28,440。p6全存储行直接按10×200×14网格的边/面/体拓扑计数为18,501,024；旧的按Ny比例缩放估值18,695,280保留作审计记录，但不再作为当前候选。以complex128计，一个独立全域向量候选约292,608,000字节，一个trace向量候选约91,008,000字节。200个q矩阵的结构非零数、数值数组、准确因子与工作区、所有驻留对象峰值、FGMRES工作向量和进程树峰值尚未测量，所以状态为`NOT_YET_ADMITTED_UNMEASURED_OBJECTS`。这表示尚无容量准入结论，不是已经测得超限；主控冻结源码及新的单场窗口后，安全的局部FE/dofmap、action和projection测量可继续，不应因全q因子峰值未知而一概停掉。
 
 ## A2 前置接线失败（原始记录保留）
 
@@ -82,3 +93,15 @@ A2 原求解器完成 6 次迭代，释放因子后独立 A6 真残差为 `7.381
 q-reference 审计覆盖 5 对 sector、q0…q9、40 个 CSR 动作、10 个配对 peer CSR 动作，以及 10 个 fresh-factor probe 和 10 个同因子第二 RHS probe；严格与 V15 reference 各 6 项通过。另有 `5×40×40×3` 场表示见证：由 `curl(E_FE)` 重构的 H 与 A1 原始 H 采样相对差 `9.444546333396517e-16`，这是场表示一致性见证，不是 A1/A2 的 H 场差。289 个空间衍射级/578 个偏振行是诊断库存，与 168 个正式 DtN 端口分开。
 
 checker-only retry3 service 用时 `33.095924948807806 s`，watchdog `29.815508095081896 s`；进程树 RSS 峰 `1632485376 B`、专用 cgroup 峰 `682569728 B`，两者是不同口径；task/cgroup swap均为0，PSS未采样，后代已清场。固定 A2 窗口 T0 与SHA不变。原求解、续作、checker retry 的时间和资源不相互混加；完整身份、所有旧失败、输入/输出hash和分段计费见 [a2_saved_output_checker_retry3.json](a2_saved_output_checker_retry3.json) 与 [run_index.json](run_index.json)。0.7 nm 仍为 `NOT_RUN`。
+
+## P0 冻结前 B0 入口阻塞收口
+
+| Gate | 当前结果 | 判定边界 |
+|---|---|---|
+| A2/B0 ABI 身份 | 精确 profile→case/run 绑定；既有 native receipt、源码 clean 与 Task40 strict 隔离保留 | 本机 C1 测试通过，不等于工作站 native ABI 正向资格 |
+| B0 runtime 入口 | 真实 DAT→`_V14Runtime`→候选合同 fixture 覆盖固定 T0/bootstrap、资源包和 dispatcher binding | 无 FE 网格、service 或 PDE |
+| 两类模式核验 | 诊断表按 DAT 的578个 `(m,n,polarization)` 键；正式 DtN 表逐项匹配64,120个冻结键，top/bottom分别32,062/32,058 | 诊断库存不代替 official DtN 清单；缺项 fixture 被拒绝 |
+| carrier 内存预检 | 两对 sparse arrays、MPC slave rows及全空间向量扫描/索引临时量已分列预算 | 从实际 dofmap 推导的**上界**，非实测峰值，不构成内域为零证据，也不改变任何 cap/停止门 |
+| 最小定向回归 | 8 passed；py_compile 与 `git diff --check` 通过 | 未重跑V19宽批次、全仓、FE/PDE；本机仍没有满足正式入口的 native Linux receipt |
+
+下一步由主控冻结这组源文件并在符合合同的 native Linux 环境执行正式 prepare/service。详细命令、身份、fixture 结果和内存口径见 [test_summary.md](test_summary.md)。

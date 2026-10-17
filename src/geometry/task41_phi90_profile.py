@@ -27,6 +27,13 @@ TASK41_G13_A2_INPUT_RELATIVE = (
 TASK41_G13_A2_PRECONDITIONER = (
     "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1"
 )
+TASK41_B0_RUN_ID = "task41extra_b0_p6_phi90_07nm_iterative"
+TASK41_B0_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_b0_07nm"
+TASK41_B0_INPUT_RELATIVE = (
+    "input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat"
+)
+TASK41_B0_PRECONDITIONER = "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1"
+TASK41_B0_GEOMETRY_IDENTITY = "task41_b0_07nm_rectangular_no_void"
 TASK41_G13_GEOMETRY_IDENTITY = "task41extra_g13_rectangular_no_void"
 TASK41_MUMPS_EXACT_ICNTL = {2: 0, 3: 6, 4: 2, 10: 0, 22: 0, 35: 0}
 
@@ -51,10 +58,14 @@ TASK41_G13_X_AXIS_NM = (
 TASK41_G13_Y_AXIS_NM = tuple(float(value) for value in range(0, 51, 5))
 TASK41_G13_Z_AXIS_NM = (-10.0, *tuple(float(value) for value in range(0, 121, 10)), 130.0)
 TASK41_G13_CELL_COUNTS = (10, 10, 14)
+TASK41_B0_CELL_COUNTS = (10, 200, 14)
+TASK41_B0_X_AXIS_NM = TASK41_G13_X_AXIS_NM
+TASK41_B0_Y_AXIS_NM = tuple(index * 0.25 for index in range(201))
+TASK41_B0_Z_AXIS_NM = TASK41_G13_Z_AXIS_NM
 
 
 def is_task41_geometry_identity(identity: Any) -> bool:
-    return identity == TASK41_G13_GEOMETRY_IDENTITY
+    return identity in {TASK41_G13_GEOMETRY_IDENTITY, TASK41_B0_GEOMETRY_IDENTITY}
 
 
 def task41_incident_eh_fields(cfg: Any) -> dict[str, Any]:
@@ -96,6 +107,9 @@ def task41_payload_errors(payload: Mapping[str, Any]) -> list[str]:
 
     if payload.get("model_id") != TASK41_MODEL_ID:
         return []
+
+    if payload.get("run_id") == TASK41_B0_RUN_ID:
+        return task41_b0_payload_errors(payload)
 
     errors: list[str] = []
     run_id = payload.get("run_id")
@@ -255,6 +269,154 @@ def task41_payload_errors(payload: Mapping[str, Any]) -> list[str]:
     if errors:
         return errors
     return []
+
+
+def task41_b0_payload_errors(payload: Mapping[str, Any]) -> list[str]:
+    """Fail closed for the 0.7 nm, 28,000-cell B0 inventory candidate."""
+
+    if payload.get("model_id") != TASK41_MODEL_ID:
+        return []
+    errors: list[str] = []
+
+    def check(section: str, values: Mapping[str, Any]) -> None:
+        actual_section = payload.get(section)
+        if not isinstance(actual_section, Mapping):
+            errors.append(f"{section} payload is missing")
+            return
+        for key, expected in values.items():
+            actual = actual_section.get(key)
+            if isinstance(expected, (int, float)) and not isinstance(expected, bool):
+                matches = (
+                    isinstance(actual, (int, float))
+                    and not isinstance(actual, bool)
+                    and math.isclose(
+                        float(actual), float(expected), rel_tol=0.0, abs_tol=1.0e-12
+                    )
+                )
+            else:
+                matches = actual == expected
+            if not matches:
+                errors.append(f"{section}.{key} does not match Task41 B0")
+
+    if payload.get("run_id") != TASK41_B0_RUN_ID:
+        errors.append("run_id is not the registered Task41 B0 case")
+    if payload.get("comparison_group") != TASK41_B0_COMPARISON_GROUP:
+        errors.append("comparison_group does not match Task41 B0")
+    if payload.get("dimension") != 3:
+        errors.append("Task41 B0 requires dimension=3")
+    check(
+        "geometry",
+        {
+            "geometry_kind": "rectangular_block_grating",
+            "geometry_identity": TASK41_B0_GEOMETRY_IDENTITY,
+            "period_x_nm": 50.0,
+            "period_y_nm": 50.0,
+            "z_min_nm": -10.0,
+            "z_max_nm": 130.0,
+            "interface_z_nm": 0.0,
+            "air_height_nm": 130.0,
+            "substrate_thickness_nm": 10.0,
+            "grating_width_x_nm": 17.0,
+            "grating_width_y_nm": 20.0,
+            "grating_height_nm": 120.0,
+        },
+    )
+    geometry = payload.get("geometry", {})
+    if isinstance(geometry, Mapping) and (
+        geometry.get("air_void_box_nm") is not None
+        or geometry.get("cell_notch") is not None
+    ):
+        errors.append("Task41 B0 must not contain a void or notch")
+    check(
+        "materials",
+        {
+            "n_air": [1.0, 0.0],
+            "n_substrate": list(TASK41_SI_INDEX_BY_WAVELENGTH_NM[0.7]),
+            "n_grating": list(TASK41_SI_INDEX_BY_WAVELENGTH_NM[0.7]),
+        },
+    )
+    check(
+        "incidence",
+        {
+            "wavelength_nm": 0.7,
+            "grazing_angle_deg": 1.0,
+            "azimuth_deg": 90.0,
+            "polarization": "s",
+            "electric_amplitude": 1.0,
+        },
+    )
+    check(
+        "discretization",
+        {
+            "nedelec_degree": 6,
+            "mesh_cell_type": "hexahedron",
+            "mesh_spacing_mode": "boundary_fitted",
+            "assembly_backend": "assembly_time_static_condensed",
+            "mesh_axis_cell_counts": list(TASK41_B0_CELL_COUNTS),
+            "mesh_axis_x_values": list(TASK41_B0_X_AXIS_NM),
+            "mesh_axis_y_values": list(TASK41_B0_Y_AXIS_NM),
+            "mesh_axis_z_values": list(TASK41_B0_Z_AXIS_NM),
+            "mesh_axis_z_profile": "task41_g13_z_minus10_0_120_130",
+        },
+    )
+    check(
+        "boundary",
+        {
+            "use_floquet_x": True,
+            "use_floquet_y": True,
+            "vertical_boundary": "dtn_port",
+            "dtn_order_policy": "auto_propagating",
+            "dtn_assembly": "auxiliary",
+            "use_pml": False,
+        },
+    )
+    check("method", {"kind": "full3d_iterative"})
+    check(
+        "solver",
+        {
+            "linear_solver": "iterative",
+            "ksp_type": "fgmres",
+            "preconditioner": TASK41_B0_PRECONDITIONER,
+            "stage": "TASK41_B0",
+            "initial_guess": "zero",
+            "restart": 32,
+            "max_iterations": 2048,
+            "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+            "outer_restart": 0,
+            "physical_operator_backend": "isotropic_sum_factorized_n1e_v26",
+            "h6_backend_rule": "direct_selected_backend_same_apply_and_power10",
+            "thread_contract": "mpi1_omp1_blas1_v26",
+            "task40_reference_pc_strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+            "task40_q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+            "task40_factor_lifecycle_strategy": "ALL_Q_RESIDENT",
+        },
+    )
+    check(
+        "execution",
+        {
+            "mpi_size": 1,
+            "memory_limit_gb": 1536.0,
+            "warning_memory_gib": 1228.8,
+            "terminate_memory_gib": 1536.0,
+            "timeout_seconds": 172800,
+            "require_zero_swap": True,
+        },
+    )
+    check(
+        "output",
+        {
+            "export_fields": True,
+            "export_diffraction_orders": True,
+            "export_canonical_vectors": True,
+            "export_modal_amplitudes": True,
+            "export_reference_planes": True,
+            "diffraction_order_max_m": 8,
+            "diffraction_order_max_n": 8,
+            "top_probe_z_nm": 125.0,
+            "bottom_probe_z_nm": -5.0,
+        },
+    )
+    return errors
 
 
 def task41_direct_summary_errors(
@@ -823,6 +985,15 @@ def task41_direct_summary_errors(
 
 __all__ = [
     "TASK41_COMPARISON_GROUP",
+    "TASK41_B0_CELL_COUNTS",
+    "TASK41_B0_COMPARISON_GROUP",
+    "TASK41_B0_GEOMETRY_IDENTITY",
+    "TASK41_B0_INPUT_RELATIVE",
+    "TASK41_B0_PRECONDITIONER",
+    "TASK41_B0_RUN_ID",
+    "TASK41_B0_X_AXIS_NM",
+    "TASK41_B0_Y_AXIS_NM",
+    "TASK41_B0_Z_AXIS_NM",
     "TASK41_G13_A1_RUN_ID",
     "TASK41_G13_CELL_COUNTS",
     "TASK41_G13_GEOMETRY_IDENTITY",
@@ -835,5 +1006,6 @@ __all__ = [
     "is_task41_geometry_identity",
     "task41_incident_eh_fields",
     "task41_direct_summary_errors",
+    "task41_b0_payload_errors",
     "task41_payload_errors",
 ]

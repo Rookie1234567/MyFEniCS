@@ -10,7 +10,11 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, replace
 from typing import Any, Mapping
 
-from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+from src.geometry.task41_phi90_profile import (
+    TASK41_B0_CELL_COUNTS,
+    TASK41_B0_PRECONDITIONER,
+    TASK41_G13_A2_PRECONDITIONER,
+)
 
 
 @dataclass(frozen=True)
@@ -68,6 +72,9 @@ class Task40V10P6PeriodicProfile:
                 result[key] = list(value)
         result.update(
             schema=(
+                "task41extra.b0_p6_periodic_profile.v1"
+                if self.name == TASK41_B0_PRECONDITIONER
+                else
                 "task41extra.g13_a2_p6_periodic_profile.v1"
                 if self.name == TASK41_G13_A2_PRECONDITIONER
                 else "task40extra.review_v22_p6_periodic_profile.v1"
@@ -272,6 +279,51 @@ TASK41_G13_A2_P6_PROFILE = replace(
 )
 
 
+def task41_b0_periodic_profile(
+    q_port_counts: tuple[int, ...],
+    sector_port_counts: tuple[int, ...],
+) -> Task40V10P6PeriodicProfile:
+    """Build B0 expectations from the live 200-q mapper and fixed mesh topology.
+
+    The row counts remain derived structural expectations. Runtime Basix and
+    DOLFINx inventories are still required before any q matrix can be factored.
+    """
+
+    nx, ny, nz = TASK41_B0_CELL_COUNTS
+    if ny % 2:
+        raise ValueError("Task41 B0 y-cell count must split into two-cell sectors")
+    q_counts = tuple(int(value) for value in q_port_counts)
+    sector_counts = tuple(int(value) for value in sector_port_counts)
+    if len(q_counts) != ny or len(sector_counts) != ny // 2:
+        raise ValueError("Task41 B0 live mode inventory must cover all 200 q and 100 sectors")
+    edges = nx * (ny + 1) * (nz + 1) + (nx + 1) * ny * (nz + 1) + (nx + 1) * (ny + 1) * nz
+    faces = nx * ny * (nz + 1) + nx * (ny + 1) * nz + (nx + 1) * ny * nz
+    cells = nx * ny * nz
+    global_storage_rows = 6 * edges + 60 * faces + 450 * cells
+    interior_rows_per_q = (
+        TASK41_G13_A2_P6_PROFILE.global_interior_rows
+        // TASK41_G13_A2_P6_PROFILE.q_count
+    )
+    return replace(
+        TASK41_G13_A2_P6_PROFILE,
+        name=TASK41_B0_PRECONDITIONER,
+        global_cell_axes=TASK41_B0_CELL_COUNTS,
+        global_cell_count=cells,
+        global_storage_rows=global_storage_rows,
+        global_independent_rows=TASK41_G13_A2_P6_PROFILE.rows_per_q * ny,
+        global_interior_rows=interior_rows_per_q * ny,
+        global_trace_rows=(
+            TASK41_G13_A2_P6_PROFILE.rows_per_q - interior_rows_per_q
+        ) * ny,
+        q_count=ny,
+        local_y_cells=2,
+        replication_count=ny // 2,
+        local_cell_count=nx * 2 * nz,
+        q_port_counts=q_counts,
+        sector_port_counts=sector_counts,
+    )
+
+
 def validate_task41_g13_a2_mode_inventory(
     modes: tuple[Any, ...], cfg: Any, axes: Mapping[str, tuple[float, ...]]
 ) -> tuple[Any, ...]:
@@ -438,5 +490,6 @@ TASK40_V15_SELECTOR_PROFILE_IDENTITIES = frozenset(
         TASK40_V20_P6_E2_PROFILE.name,
         TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE.name,
         TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE.name,
+        TASK41_B0_PRECONDITIONER,
     }
 )

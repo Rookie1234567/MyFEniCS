@@ -9718,6 +9718,7 @@ def _run_task41_p0_service(
         require_task41_p0_contract,
         sha256_file,
         task41_case_id_for_run_id,
+        task41_p0_checker_kind_for_case,
     )
     from src.runners.task40_v10_campaign import CampaignAccount
 
@@ -10040,7 +10041,7 @@ def _run_task41_p0_service(
             numerical_output = Path(str(manifest["numerical_output_directory"])).resolve()
             numerical_summary_path = (
                 summary_path.parent / "task40_v10_p6_candidate_summary.json"
-                if case_id == "A2"
+                if case_id in {"A2", "B0"}
                 else numerical_output / "run_summary.json"
             )
             checker_command = [
@@ -10075,11 +10076,7 @@ def _run_task41_p0_service(
                     "schema": TASK41_P0_AUTH_SCHEMA,
                     "phase": "closeout",
                     "purpose": "registered_read_only_required_checker",
-                    "checker_kind": (
-                        "task41_p0_a2_independent_p6_iterative_checker"
-                        if case_id == "A2"
-                        else "task41_p0_independent_full_a6_checker"
-                    ),
+                    "checker_kind": task41_p0_checker_kind_for_case(case_id),
                     "command_sha256": hashlib.sha256(
                         json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
                     ).hexdigest(),

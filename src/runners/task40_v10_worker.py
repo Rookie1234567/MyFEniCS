@@ -32,6 +32,136 @@ _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 
 
+def _task41_b0_carrier_memory_upper_bound(
+    setup: Mapping[str, Any],
+    cfg: Any,
+    modes: tuple[Any, ...],
+) -> dict[str, Any]:
+    """Bound canonical carrier backing from the actual z-face dofmap."""
+    mesh = setup["mesh_data"].mesh
+    space = setup["spaces"][6]
+    topology = mesh.topology
+    topology.create_connectivity(2, 3)
+    topology.create_connectivity(3, 2)
+    facet_to_cell = topology.connectivity(2, 3)
+    cell_to_facet = topology.connectivity(3, 2)
+    closure_dofs = space.element.basix_element.entity_closure_dofs[2]
+    row_sets = {"bottom": set(), "top": set()}
+    side_tags = {"bottom": int(cfg.tags.z_min), "top": int(cfg.tags.z_max)}
+    owned_cells = int(topology.index_map(3).size_local)
+    for side, tag in side_tags.items():
+        facets = np.asarray(setup["mesh_data"].facet_tags.find(tag), dtype=np.int32)
+        for facet in facets:
+            cells = np.asarray(facet_to_cell.links(int(facet)), dtype=np.int32)
+            for cell in cells:
+                if int(cell) >= owned_cells:
+                    continue
+                local_facets = np.asarray(cell_to_facet.links(int(cell)), dtype=np.int32)
+                local = np.flatnonzero(local_facets == int(facet))
+                if len(local) != 1:
+                    raise ValueError("Task41 B0 z-face dofmap does not identify one local facet")
+                local_indices = np.asarray(closure_dofs[int(local[0])], dtype=np.int32)
+                cell_dofs = np.asarray(space.dofmap.cell_dofs(int(cell)), dtype=np.int32)
+                row_sets[side].update(map(int, cell_dofs[local_indices]))
+        if not row_sets[side]:
+            raise ValueError(f"Task41 B0 {side} boundary has no actual p6 trace dofs")
+
+    mode_counts = {
+        side: sum(1 for mode in modes if str(mode.side) == side)
+        for side in ("bottom", "top")
+    }
+    if sum(mode_counts.values()) != len(modes):
+        raise ValueError("Task41 B0 carrier contains an unknown port side")
+    # A mode functional retains two (index, value) pairs: coupling and
+    # projection. Each pair is one int64 upper-bound row array and one
+    # complex128 value array; the four arrays are not four pairs.
+    sparse_bytes_per_row_per_mode = 2 * (
+        np.dtype(np.int64).itemsize + np.dtype(np.complex128).itemsize
+    )
+    canonical_payload_upper = sum(
+        mode_counts[side] * len(row_sets[side]) * sparse_bytes_per_row_per_mode
+        for side in mode_counts
+    )
+    index_map = space.dofmap.index_map
+    owned_rows = int(index_map.size_local) * int(space.dofmap.index_map_bs)
+    ghost_rows = int(index_map.num_ghosts) * int(space.dofmap.index_map_bs)
+    local_vector_rows_upper = owned_rows + ghost_rows
+    mpc = setup["floquets"][6].mpc
+    raw_slave_indices = np.asarray(mpc.slaves).reshape(-1)
+    owned_slave_count_upper = int(
+        np.count_nonzero(raw_slave_indices < int(index_map.size_local))
+    )
+    slave_rows_retained_upper = owned_slave_count_upper * np.dtype(np.int64).itemsize
+    # The iterator's source arrays and the carrier's canonical arrays can be
+    # simultaneously live. Reserve both payloads, the retained MPC slave-row
+    # array, and its source/unique/copy constructor temporaries explicitly.
+    slave_rows_constructor_peak_upper = 3 * slave_rows_retained_upper
+    carrier_peak_payload_upper = (
+        2 * canonical_payload_upper
+        + len(modes) * 8192
+        + slave_rows_constructor_peak_upper
+    )
+    max_side_rows = max(map(len, row_sets.values()))
+    component_sort_workspace_upper = (
+        8
+        * max_side_rows
+        * (np.dtype(np.int64).itemsize + np.dtype(np.complex128).itemsize)
+    )
+    # _vec_nonzero_owned_entries scans the assembled full-space vector, makes
+    # absolute-value/mask/index temporaries, then gathers global rows and two
+    # value copies. 64 bytes per local row conservatively covers those live
+    # arrays; retain the existing 512 MiB floor for library/form overhead.
+    vector_scan_gather_bytes_per_row_upper = 64
+    vector_scan_gather_workspace_upper = (
+        vector_scan_gather_bytes_per_row_upper * local_vector_rows_upper
+    )
+    component_workspace_upper = (
+        max(512 * 1024**2, vector_scan_gather_workspace_upper)
+        + component_sort_workspace_upper
+    )
+    return {
+        "schema": "task41.p0.b0_carrier_memory_upper_bound.v1",
+        "status": "PROJECTED_UPPER_BOUND_FROM_ACTUAL_P6_FACE_DOFMAP",
+        "boundary_trace_dof_count_by_side": {
+            key: len(value) for key, value in row_sets.items()
+        },
+        "mode_count_by_side": mode_counts,
+        "owned_full_vector_row_count": owned_rows,
+        "ghost_full_vector_row_count_upper": ghost_rows,
+        "full_vector_scan_gather_bytes_per_row_upper": (
+            vector_scan_gather_bytes_per_row_upper
+        ),
+        "full_vector_scan_gather_workspace_upper_bytes": int(
+            vector_scan_gather_workspace_upper
+        ),
+        "fullspace_mpc_owned_slave_row_count_upper": owned_slave_count_upper,
+        "fullspace_mpc_slave_rows_retained_upper_bytes": int(
+            slave_rows_retained_upper
+        ),
+        "fullspace_mpc_slave_constructor_peak_upper_bytes": int(
+            slave_rows_constructor_peak_upper
+        ),
+        "support_basis": (
+            "derived from actual top/bottom Basix z-face entity-closure dofs; B0 Floquet "
+            "maps x/y and preserves z, so port-plane periodic masters remain in the same "
+            "face support; this is not a measured payload or an interior-zero certificate"
+        ),
+        "sparse_payload_bytes_per_row_per_mode": sparse_bytes_per_row_per_mode,
+        "canonical_carrier_payload_upper_bytes": int(canonical_payload_upper),
+        "constructor_peak_carrier_payload_upper_bytes": int(carrier_peak_payload_upper),
+        "component_workspace_upper_bytes": int(component_workspace_upper),
+        "component_sort_workspace_upper_bytes": int(component_sort_workspace_upper),
+        "constructor_copies_reserved": 2,
+        "accounting_basis": (
+            "actual z-face Basix entity-closure dofmap support; two row/value pairs per mode; "
+            "source plus canonical carrier payload; explicit retained MPC slave rows; full "
+            "owned+ghost vector scan/gather upper bound and sorting workspace; 8-byte indices "
+            "are used even when PETSc IntType is 32-bit"
+        ),
+        "measurement_status": "not_a_measured_process_memory_peak",
+    }
+
+
 def _task40_v30_q_csr_provider(
     binding: Mapping[str, Any] | None,
     *,
@@ -1433,18 +1563,74 @@ def _task40_reference_replication_count(reference: Mapping[str, Any]) -> int:
 
 
 def _single_side_diffraction_order_count_passed(
-    output: Mapping[str, Any], total_port_mode_count: int
+    output: Mapping[str, Any],
+    total_port_mode_count: int,
+    *,
+    diagnostic_mode_keys: set[tuple[int, int, str]] | frozenset[tuple[int, int, str]] | None = None,
 ) -> bool:
-    """Compare the one-face diffraction count with the two-face port inventory.
+    """Check diagnostic rows against the configured grid or legacy paired count.
 
-    Field postprocessing counts each spatial/polarization order once, while the
-    DtN profile counts those orders on both the top and bottom ports.
+    The legacy route assumes identical top/bottom DtN inventories. Task41 B0
+    passes its actual DAT-derived diagnostic keys because those probe rows and
+    the side-specific frozen DtN inventory are separate objects.
     """
     total_count = int(total_port_mode_count)
+    if diagnostic_mode_keys is not None:
+        if total_count <= 0 or not diagnostic_mode_keys:
+            return False
+        metrics = output.get("diffraction_metrics")
+        if not isinstance(metrics, Mapping):
+            return False
+        rows_path = metrics.get("diffraction_orders_json")
+        if not isinstance(rows_path, str) or not rows_path:
+            return False
+        try:
+            payload = json.loads(Path(rows_path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return False
+        rows = payload.get("orders") if isinstance(payload, Mapping) else None
+        if not isinstance(rows, list):
+            return False
+        actual_keys = []
+        for row in rows:
+            if (
+                not isinstance(row, Mapping)
+                or type(row.get("m")) is not int
+                or type(row.get("n")) is not int
+                or row.get("polarization") not in {"s", "p"}
+            ):
+                return False
+            actual_keys.append((row["m"], row["n"], row["polarization"]))
+        expected = set(diagnostic_mode_keys)
+        actual = set(actual_keys)
+        return bool(
+            output.get("diffraction_channel_count") == len(expected)
+            and metrics.get("diffraction_channel_count") == len(expected)
+            and len(rows) == len(expected)
+            and len(actual_keys) == len(actual)
+            and actual == expected
+        )
     return bool(
         total_count > 0
         and total_count % 2 == 0
         and output.get("diffraction_channel_count") == total_count // 2
+    )
+
+
+def _task41_b0_diagnostic_mode_keys(cfg: Any) -> frozenset[tuple[int, int, str]]:
+    """Derive the diagnostic key set from the current B0 resolved DAT config."""
+
+    from src.postprocessing.diffraction_3d import (
+        _orders_for_modal_fit,
+        _power_orders_for_reporting,
+    )
+
+    power_orders = _power_orders_for_reporting(cfg)
+    fit_orders, _ = _orders_for_modal_fit(cfg, power_orders)
+    return frozenset(
+        (int(order.m), int(order.n), polarization)
+        for order in fit_orders
+        for polarization in ("s", "p")
     )
 
 
@@ -3191,6 +3377,13 @@ def _regular_inverse_checks_schema(
     return "task40extra.review_v11_p6_regular_inverse_checks.v1"
 
 
+def _include_mixed_fe_port_reference_cases(
+    *, route_contract: Mapping[str, Any] | None, task41_p0_iterative: bool
+) -> bool:
+    """Keep complete mixed FE/port startup checks on every Task41 P0 route."""
+    return route_contract is not None or task41_p0_iterative
+
+
 def _task40_v31_reference_tier_receipt(
     row: Mapping[str, Any], *, reference_pc_strategy: str
 ) -> dict[str, Any]:
@@ -3266,6 +3459,7 @@ def _verify_regular_inverse(
 ) -> dict[str, Any]:
     """Check complete regular FE/port recovery with the profile's live all-q factors."""
 
+    from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
     from src.solvers.augmented_reference_correction import (
         BOUNDED_INEXACT_REFERENCE_PC,
         FACTOR_CALL_COUNTER_SOURCE,
@@ -3789,6 +3983,19 @@ def _verify_regular_inverse(
 
                 v15_raw_facts = {
                     "profile_identity": profile.name,
+                    **(
+                        {
+                            "b0_profile_capability": copy.deepcopy(
+                                getattr(
+                                    profile,
+                                    "_task41_b0_profile_capability",
+                                    None,
+                                )
+                            )
+                        }
+                        if profile.name == TASK41_B0_PRECONDITIONER
+                        else {}
+                    ),
                     "effective_rhs_scale": float(v15_budget["effective_rhs_scale"]),
                     "eliminated_fe_residual_norm": float(
                         v15_budget["eliminated_fe_residual_norm"]
@@ -4788,6 +4995,7 @@ class _P6ReferencePreconditioner:
         frozen_alpha_scale: float | None = None,
         retained_candidate_state_count: int = 0,
     ) -> dict[str, Any]:
+        from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
         from src.solvers.augmented_reference_correction import (
             NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
             augmented_state_sha256,
@@ -4877,6 +5085,19 @@ class _P6ReferencePreconditioner:
         state_hash = augmented_state_sha256(finite_element, port_amplitudes)
         raw_facts = {
             "profile_identity": self.profile.name,
+            **(
+                {
+                    "b0_profile_capability": copy.deepcopy(
+                        getattr(
+                            self.profile,
+                            "_task41_b0_profile_capability",
+                            None,
+                        )
+                    )
+                }
+                if self.profile.name == TASK41_B0_PRECONDITIONER
+                else {}
+            ),
             "effective_rhs_scale": float(budget["effective_rhs_scale"]),
             "eliminated_fe_residual_norm": float(
                 budget["eliminated_fe_residual_norm"]
@@ -5920,12 +6141,14 @@ class _P6ReferencePreconditioner:
         return facts
 
 
-def _task41_a2_runtime_configuration(
+def _task41_p0_runtime_configuration(
     profile_contract: Mapping[str, Any],
+    *,
+    case_id: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Bind the A2 runtime copy and watchdog resource arguments to Task41's service envelope."""
+    """Bind Task41 A2/B0 runtime resources to the shared P0 service envelope."""
     if os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1":
-        raise RuntimeError("Task41 A2 runtime requires the strict P0 service envelope")
+        raise RuntimeError(f"Task41 {case_id} runtime requires the strict P0 service envelope")
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
 
     runtime_contract = copy.deepcopy(dict(profile_contract))
@@ -5934,7 +6157,7 @@ def _task41_a2_runtime_configuration(
     host_reserve = int(os.environ["TASK41_P0_HOST_RESERVE_BYTES"])
     swap_cap = int(os.environ["TASK41_P0_MEMORY_SWAP_MAX_BYTES"])
     if swap_cap != 0:
-        raise RuntimeError("Task41 A2 service envelope must require zero swap")
+        raise RuntimeError(f"Task41 {case_id} service envelope must require zero swap")
     resources.update(
         {
             "watchdog_memory_policy": PHYSICAL_MEMORY_PRESSURE_POLICY,
@@ -5949,6 +6172,13 @@ def _task41_a2_runtime_configuration(
         "task_cgroup_reserve_bytes": 0,
         "require_cgroup_memory_details": True,
     }
+
+
+def _task41_a2_runtime_configuration(
+    profile_contract: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Compatibility wrapper for existing A2 fixtures and callers."""
+    return _task41_p0_runtime_configuration(profile_contract, case_id="A2")
 
 
 def _task41_a2_load_saved_q_csr_pair(
@@ -6025,19 +6255,24 @@ def _task41_a2_load_saved_q_csr_pair(
     }
     return matrices, audit
 
-def _task41_a2_candidate_contract(
+def _task41_iterative_candidate_contract(
     resolved: Mapping[str, Any],
     profile_contract: Mapping[str, Any],
     runtime: Any,
     *,
+    case_id: str,
     profile_identity: str,
     source_sha: str,
+    task41_contract_binding: Mapping[str, Any] | None = None,
     current_root: str | Path | None = None,
 ) -> dict[str, Any]:
     from src.geometry.task41_phi90_profile import (
         TASK41_G13_A2_PRECONDITIONER,
         TASK41_G13_A2_RUN_ID,
         TASK41_COMPARISON_GROUP,
+        TASK41_B0_PRECONDITIONER,
+        TASK41_B0_RUN_ID,
+        TASK41_B0_COMPARISON_GROUP,
     )
     from src.io.execution_plan import resolved_config_bytes
     from src.io.input_validation import load_and_resolve
@@ -6047,6 +6282,8 @@ def _task41_a2_candidate_contract(
         TASK41_TASK_MEMORY_MAX_BYTES,
         TASK41_TOTAL_SECONDS,
         TASK41_A2_INPUT_RELATIVE,
+        TASK41_B0_INPUT_RELATIVE,
+        _task41_case,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
     )
@@ -6054,6 +6291,26 @@ def _task41_a2_candidate_contract(
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
 
     root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    if case_id not in {"A2", "B0"}:
+        raise ValueError("Task41 iterative candidate contract requires case A2 or B0")
+    case_spec = _task41_case(case_id)
+    expected_run_id = TASK41_G13_A2_RUN_ID if case_id == "A2" else TASK41_B0_RUN_ID
+    expected_profile = (
+        TASK41_G13_A2_PRECONDITIONER
+        if case_id == "A2"
+        else TASK41_B0_PRECONDITIONER
+    )
+    expected_group = (
+        TASK41_COMPARISON_GROUP
+        if case_id == "A2"
+        else TASK41_B0_COMPARISON_GROUP
+    )
+    expected_input_relative = (
+        TASK41_A2_INPUT_RELATIVE
+        if case_id == "A2"
+        else TASK41_B0_INPUT_RELATIVE
+    )
+    expected_shared_schema = f"task41.p0.{case_id.lower()}_campaign_worker_view.v1"
     contract_path = os.environ.get("TASK41_P0_CONTRACT_PATH", "")
     contract, contract_sha256 = require_task41_p0_contract(
         contract_path,
@@ -6061,7 +6318,7 @@ def _task41_a2_candidate_contract(
         current_root=root,
         check_current_source=True,
         require_clean_source=True,
-        case_id="A2",
+        case_id=case_id,
     )
     window = load_task41_p0_fixed_window(contract, current_root=root)
     case = contract["case"]
@@ -6081,7 +6338,7 @@ def _task41_a2_candidate_contract(
         if isinstance(campaign, Mapping)
         else -1.0
     )
-    input_path = (root / TASK41_A2_INPUT_RELATIVE).resolve()
+    input_path = (root / expected_input_relative).resolve()
     specification = load_and_resolve(input_path)
     resolved_config_sha256 = hashlib.sha256(
         resolved_config_bytes(specification)
@@ -6089,11 +6346,11 @@ def _task41_a2_candidate_contract(
     expected_contract_sha = str(contract["source"]["sha"])
     execution_identity = getattr(runtime, "source_sha", source_sha)
     checks = {
-        "task41_case_id": contract["case"]["run_id"] == TASK41_G13_A2_RUN_ID,
+        "task41_case_id": contract["case"]["run_id"] == expected_run_id,
         "source_sha": expected_contract_sha == source_sha == execution_identity,
-        "registered_a2_input": (
+        "registered_case_input": (
             Path(str(case["input_path"])).as_posix()
-            == TASK41_A2_INPUT_RELATIVE.as_posix()
+            == expected_input_relative.as_posix()
             and case["input_sha256"] == specification.input_sha256
             and provenance.get("input_sha256") == case["input_sha256"]
         ),
@@ -6104,12 +6361,13 @@ def _task41_a2_candidate_contract(
         "resolved_config_identity": (
             case["resolved_config_sha256"] == resolved_config_sha256
         ),
-        "comparison_group": resolved.get("comparison_group") == TASK41_COMPARISON_GROUP,
+        "comparison_group": resolved.get("comparison_group") == expected_group,
         "profile": (
-            profile_identity == TASK41_G13_A2_PRECONDITIONER
+            profile_identity == expected_profile
             and solver.get("preconditioner") == profile_identity
         ),
-        "stage": solver.get("stage") == "TASK41_A2" and runtime.stage == "TASK41_A2",
+        "stage": solver.get("stage") == case_spec["solver_stage"]
+        and runtime.stage == case_spec["solver_stage"],
         "method": method.get("kind") == "full3d_iterative" == case["method"],
         "mpi_size": execution.get("mpi_size") == 1 == case["mpi_size"],
         "v15_reference_strategy": solver.get("task40_reference_pc_strategy")
@@ -6186,7 +6444,7 @@ def _task41_a2_candidate_contract(
         "no_v14_ledger": getattr(runtime, "_ledger_path", None) is None,
         "task41_read_only_window_view": (
             isinstance(shared, Mapping)
-            and shared.get("schema") == "task41.p0.a2_campaign_worker_view.v1"
+            and shared.get("schema") == expected_shared_schema
             and shared.get("worker_access") == "read_only_projection"
             and getattr(runtime, "workflow_clock_source", None)
             == "task41_p0_fixed_window_read_only_projection"
@@ -6201,38 +6459,81 @@ def _task41_a2_candidate_contract(
             and os.environ.get("TASK40_V31_STRICT_EXECUTION") != "1"
         ),
     }
+    if case_id == "B0":
+        contract_binding = task41_contract_binding
+        checks["explicit_dispatch_contract_binding"] = bool(
+            isinstance(contract_binding, Mapping)
+            and contract_binding.get("schema") == "task41.p0.dispatch_binding.v1"
+            and contract_binding.get("case_id") == "B0"
+            and contract_binding.get("contract_path") == str(Path(contract_path).resolve())
+            and contract_binding.get("contract_sha256") == contract_sha256
+            and contract_binding.get("source_sha") == source_sha
+            and contract_binding.get("window_path") == str(window.path)
+            and contract_binding.get("window_sha256") == window.sha256
+        )
+        checks["no_a1_or_a2_comparison_binding"] = (
+            isinstance(contract_binding, Mapping)
+            and
+            contract.get("comparison") is None
+            and contract.get("q_csr_reuse") is None
+            and contract_binding.get("comparison_binding") is None
+        )
     failed = [name for name, passed in checks.items() if not passed]
     if failed:
-        raise ValueError(f"Task41 A2 candidate contract failed: {failed}")
-    comparison = contract["comparison"]
-    comparison_binding_path = Path(str(comparison["a1_binding_path"]))
-    if not comparison_binding_path.is_absolute():
-        comparison_binding_path = root / comparison_binding_path
-    return {
-        "schema": "task41.p0.a2_candidate_worker_contract.v1",
+        raise ValueError(f"Task41 {case_id} candidate contract failed: {failed}")
+    comparison = contract.get("comparison") if case_id == "A2" else None
+    comparison_binding_path = None
+    if isinstance(comparison, Mapping):
+        comparison_binding_path = Path(str(comparison["a1_binding_path"]))
+        if not comparison_binding_path.is_absolute():
+            comparison_binding_path = root / comparison_binding_path
+    result = {
+        "schema": (
+            "task41.p0.a2_candidate_worker_contract.v1"
+            if case_id == "A2"
+            else "task41.p0.b0_candidate_worker_contract.v1"
+        ),
         "checks": checks,
-        "case_id": "A2",
-        "run_id": TASK41_G13_A2_RUN_ID,
+        "case_id": case_id,
+        "run_id": expected_run_id,
         "source_sha": source_sha,
         "task41_contract_path": str(Path(contract_path).resolve()),
         "task41_contract_sha256": contract_sha256,
-        "a1_comparison_binding_path": str(comparison_binding_path.resolve()),
-        "a1_comparison_binding_sha256": str(comparison["a1_binding_sha256"]),
-        "a1_same_discrete_comparison_ready_at_prepare": bool(
-            comparison["same_discrete_comparison_ready"]
-        ),
         "campaign_window_path": str(window.path),
         "campaign_window_sha256": window.sha256,
         "campaign_accounting_path": str(window.accounting_path),
         "worker_reserved_seconds": reserved,
         "campaign_seconds": campaign_seconds,
         "closeout_reserve_seconds": closeout_seconds,
-        "effective_wall_clock_authority": "task41_a2_fixed_deadline_and_cumulative_remaining",
+        "effective_wall_clock_authority": (
+            "task41_a2_fixed_deadline_and_cumulative_remaining"
+            if case_id == "A2"
+            else "task41_b0_fixed_utc_t0_and_campaign_cumulative_remaining"
+        ),
         "campaign_writer": "subreaper_watchdog_only",
         "worker_accounting_access": "read_only_projection",
         "factor_lifecycle_strategy": "ALL_Q_RESIDENT",
         "q_csr_reuse": contract.get("q_csr_reuse"),
     }
+    if comparison is not None:
+        result.update(
+            {
+                "a1_comparison_binding_path": str(comparison_binding_path.resolve()),
+                "a1_comparison_binding_sha256": str(comparison["a1_binding_sha256"]),
+                "a1_same_discrete_comparison_ready_at_prepare": bool(
+                    comparison["same_discrete_comparison_ready"]
+                ),
+            }
+        )
+    if case_id == "B0":
+        result.update(
+            {
+                "precision_status": "NOT_QUALIFIED",
+                "mode_truncation_status": "MODE_TRUNCATION_UNQUALIFIED",
+                "comparison_authority": None,
+            }
+        )
+    return result
 
 
 def _task41_a2_comparison(
@@ -6648,19 +6949,26 @@ def _candidate_contract(
     v30_effective_factor_lifecycle_strategy: str | None = None,
     v31_effective_factor_lifecycle_strategy: str | None = None,
     task41_source_sha: str | None = None,
+    task41_contract_binding: Mapping[str, Any] | None = None,
     current_root: str | Path | None = None,
 ) -> dict[str, Any]:
-    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.geometry.task41_phi90_profile import (
+        TASK41_G13_A2_PRECONDITIONER,
+        TASK41_B0_PRECONDITIONER,
+    )
 
-    if profile_identity == TASK41_G13_A2_PRECONDITIONER:
+    if profile_identity in {TASK41_G13_A2_PRECONDITIONER, TASK41_B0_PRECONDITIONER}:
         if v30_contract is not None or v31_contract is not None or task41_source_sha is None:
-            raise ValueError("Task41 A2 candidate cannot mix donor contracts or omit its source SHA")
-        return _task41_a2_candidate_contract(
+            raise ValueError("Task41 iterative candidate cannot mix donor contracts or omit its source SHA")
+        task41_case_id = "A2" if profile_identity == TASK41_G13_A2_PRECONDITIONER else "B0"
+        return _task41_iterative_candidate_contract(
             resolved,
             contract,
             runtime,
+            case_id=task41_case_id,
             profile_identity=profile_identity,
             source_sha=task41_source_sha,
+            task41_contract_binding=task41_contract_binding,
             current_root=current_root,
         )
     from src.geometry.task40_nonseparable_plan import (
@@ -7107,6 +7415,7 @@ def run_task40_v10_p6_reference_worker(
     v31_q_csr_import_authorizations: Mapping[str, Any] | None = None,
     v31_target_admission_policy: Mapping[str, Any] | None = None,
     v31_execution_binding: Mapping[str, Any] | None = None,
+    task41_contract_binding: Mapping[str, Any] | None = None,
     _v31_entry_validation_only: bool = False,
 ) -> dict[str, Any]:
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
@@ -7206,6 +7515,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
         TASK40_V20_V22_P6_PROFILES,
         TASK41_G13_A2_PRECONDITIONER,
+        TASK41_B0_PRECONDITIONER,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -7256,6 +7566,7 @@ def run_task40_v10_p6_reference_worker(
         _destroy_task40_v10_levels,
         _task40_v30_load_sector_q_csr_pair,
         _task40_v10_regular_reference_cfg,
+        _task40_v33_surface_checkpoint_for_scope,
     )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_V13_REFERENCE_PC_STRATEGY,
@@ -7268,6 +7579,8 @@ def run_task40_v10_p6_reference_worker(
     )
     from src.solvers.task40_v10_p6_periodic_profile import (
         TASK40_P6_PERIODIC_PROFILES,
+        TASK41_G13_A2_P6_PROFILE,
+        task41_b0_periodic_profile,
         validate_task41_g13_a2_mode_inventory,
     )
     from src.geometry.task40_nonseparable_plan import (
@@ -7279,6 +7592,7 @@ def run_task40_v10_p6_reference_worker(
         ONE_Q_REFACTOR_V19,
         _sparse_content_sha256,
         full_p6_pre_release_output_inventory,
+        task41_b0_all_q_factor_contract,
         task41_a2_all_q_factor_contract,
     )
     from src.geometry.mesh_builder_3d import _stage4_axis_plan
@@ -7330,9 +7644,12 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V18_P6_B0_Y8_PROFILE,
         *TASK40_V20_V22_P6_PROFILES,
         TASK41_G13_A2_PRECONDITIONER,
+        TASK41_B0_PRECONDITIONER,
     ):
         raise ValueError(f"unsupported p6 reference profile: {profile_identity}")
     is_task41_a2 = profile_identity == TASK41_G13_A2_PRECONDITIONER
+    is_task41_b0 = profile_identity == TASK41_B0_PRECONDITIONER
+    is_task41_p0_iterative = is_task41_a2 or is_task41_b0
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
     is_v20 = profile_identity in TASK40_V20_V22_P6_PROFILES
     v20_case = None
@@ -7535,12 +7852,19 @@ def run_task40_v10_p6_reference_worker(
         profile_identity.startswith("task40extra_v17_p6_y_orbit_")
         or is_v18
         or is_v20
-        or is_task41_a2
+        or is_task41_p0_iterative
     ):
         raise ValueError("V17 row-tile CSR requires a registered V17 p6 profile")
     if type(share_transform_bank) is not bool:
         raise TypeError("V12 transform-bank selection must be an explicit boolean")
-    periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
+    if is_task41_b0:
+        # Live q and sector port counts replace this zero-count shell before
+        # any target FE or q-matrix construction begins.
+        periodic_profile = task41_b0_periodic_profile(
+            (0,) * 200, (0,) * 100
+        )
+    else:
+        periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
     if v31_target_admission_policy is not None and not (
         allq_route_enabled
         and share_transform_bank
@@ -7566,6 +7890,7 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_e1_reference_v1": "e1",
         TASK40_V18_P6_B0_Y8_PROFILE: "b0_y8",
         TASK41_G13_A2_PRECONDITIONER: "g13_a2",
+        TASK41_B0_PRECONDITIONER: "b0_07nm",
     }
     if is_v20:
         case_labels[profile_identity] = v20_case.mesh_id.lower()
@@ -7573,6 +7898,8 @@ def run_task40_v10_p6_reference_worker(
     evidence_prefix = (
         "task41_g13_a2_p6_y_orbit_reference"
         if is_task41_a2
+        else "task41_b0_07nm_p6_y_orbit_reference"
+        if is_task41_b0
         else "v20_one_q_row_tile_p6_reference"
         if is_v20
         else "v19_one_q_row_tile_p6_reference"
@@ -7617,6 +7944,8 @@ def run_task40_v10_p6_reference_worker(
         "schema": (
             "task41.p0.a2_p6_y_orbit_reference_worker_summary.v1"
             if is_task41_a2
+            else "task41.p0.b0_p6_y_orbit_reference_worker_summary.v1"
+            if is_task41_b0
             else "task40extra.review_v20_one_q_row_tile_p6_reference_worker_summary.v1"
             if is_v20
             else "task40extra.review_v19_one_q_row_tile_p6_reference_worker_summary.v1"
@@ -7653,8 +7982,15 @@ def run_task40_v10_p6_reference_worker(
         "official_result": False,
         "result_classification": "INCOMPLETE",
     }
-    if v31_route_requested or is_task41_a2:
+    if v31_route_requested or is_task41_p0_iterative:
         summary["run_id"] = resolved_payload.get("run_id")
+    if is_task41_b0:
+        summary.update(
+            precision_status="NOT_QUALIFIED",
+            mode_truncation_status="MODE_TRUNCATION_UNQUALIFIED",
+            comparison_authority=None,
+            live_mode_inventory_status="NOT_CAPTURED",
+        )
     if v31_route_requested:
         summary["v31_input_identity"] = dict(v31_input_identity or {})
     if v31_target_admission_policy is not None:
@@ -7679,6 +8015,7 @@ def run_task40_v10_p6_reference_worker(
     mode_identity: dict[str, Any] = {}
     mode_inventory_preflight: dict[str, Any] = {}
     task41_mode_inventory: tuple[Any, Any, str] | None = None
+    task41_b0_sector_contexts: tuple[Any, ...] | None = None
     target_backend_facts: dict[str, Any] = {}
     target_identity_cache_audit: dict[str, Any] = {}
     reference = None
@@ -7702,11 +8039,13 @@ def run_task40_v10_p6_reference_worker(
     qualified_q_csr_identity: dict[str, Any] | None = None
     try:
         runtime_resource_overrides = {}
-        if is_task41_a2:
+        if is_task41_p0_iterative:
             if route_contract is not None:
-                raise RuntimeError("Task41 A2 runtime cannot use a Task40 route contract")
+                raise RuntimeError("Task41 P0 runtime cannot use a Task40 route contract")
             runtime_contract, runtime_resource_overrides = (
-                _task41_a2_runtime_configuration(contract)
+                _task41_p0_runtime_configuration(
+                    contract, case_id="A2" if is_task41_a2 else "B0"
+                )
             )
         elif route_contract is not None:
             route_resources = route_contract["execution"]["resources"]
@@ -7723,8 +8062,8 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task41_p0_a2_{case_label}_p6_reference"
-                if is_task41_a2
+                f"task41_p0_{'a2' if is_task41_a2 else 'b0_07nm'}_p6_reference"
+                if is_task41_p0_iterative
                 else f"task40_review_v20_one_q_{case_label}_p6_reference"
                 if is_v20
                 else f"task40_review_v19_one_q_{case_label}_p6_reference"
@@ -7785,7 +8124,8 @@ def run_task40_v10_p6_reference_worker(
                 if v31_contract is not None
                 else None
             ),
-            task41_source_sha=(source_sha if is_task41_a2 else None),
+            task41_source_sha=(source_sha if is_task41_p0_iterative else None),
+            task41_contract_binding=task41_contract_binding,
         )
         summary["time_policy"] = runtime.time_policy
         summary["time_policy_facts"] = dict(runtime.time_policy_facts)
@@ -8103,7 +8443,7 @@ def run_task40_v10_p6_reference_worker(
             nonlocal target_identity_cache_audit, mode_inventory_preflight, target_backend_facts
             nonlocal task41_mode_inventory
             expected_mode_inventory = (
-                task41_mode_inventory if is_task41_a2 else v20_mode_inventory
+                task41_mode_inventory if is_task41_p0_iterative else v20_mode_inventory
             )
             if mode_inventory is not None and mode_inventory != expected_mode_inventory:
                 raise ValueError("target builder received a different frozen mode inventory")
@@ -8149,14 +8489,88 @@ def run_task40_v10_p6_reference_worker(
             target_levels = _build_same_mesh_levels(
                 cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
             )
+            task41_b0_checkpoint = None
+            target_stage_callback = None
+            if is_task41_b0:
+                if not isinstance(task41_contract_binding, Mapping):
+                    raise ValueError("Task41 B0 target construction lacks its dispatcher binding")
+                checkpoint_identity = {
+                    "source_sha": source_sha,
+                    "input_sha256": str(task41_contract_binding["input_sha256"]),
+                    "staged_input_sha256": str(task41_contract_binding["input_sha256"]),
+                    "campaign_window_sha256": str(task41_contract_binding["window_sha256"]),
+                    "execution_contract_sha256": str(
+                        task41_contract_binding["contract_sha256"]
+                    ),
+                }
+                task41_b0_checkpoint = {
+                    "root": str(directory / "task41_b0_target_surface_checkpoint"),
+                    "identity": checkpoint_identity,
+                }
+
+                def target_stage_callback(facts: Mapping[str, Any]) -> None:
+                    phase = str(facts.get("phase", ""))
+                    status = str(facts.get("status", ""))
+                    if phase == "dtn_carrier_build" and status == "STARTED":
+                        bound = _task41_b0_carrier_memory_upper_bound(
+                            target_levels, cfg, tuple(task41_mode_inventory[0])
+                        )
+                        admission = allocation_gate(
+                            "task41_b0_actual_dofmap_carrier_preflight",
+                            {
+                                "additional_payload_bytes": bound[
+                                    "constructor_peak_carrier_payload_upper_bytes"
+                                ],
+                                "workspace_bytes": bound[
+                                    "component_workspace_upper_bytes"
+                                ],
+                                "mode_count": len(task41_mode_inventory[0]),
+                                "actual_target_storage_rows": int(
+                                    target_levels["spaces"][6].dofmap.index_map.size_global
+                                    * target_levels["spaces"][6].dofmap.index_map_bs
+                                ),
+                                "carrier_memory_upper_bound": bound,
+                                "resource_classification": "projected_admission_not_measured_peak",
+                            },
+                        )
+                        summary["b0_carrier_resource_admission"] = {
+                            "upper_bound": bound,
+                            "admission": admission,
+                        }
+                        runtime.marker(
+                            "task41_b0_actual_dofmap_carrier_preflight_admitted",
+                            summary["b0_carrier_resource_admission"],
+                        )
+                    if (
+                        status in {"STARTED", "COMPLETE", "FAILED"}
+                        or (
+                            phase == "dtn_carrier_mode"
+                            and status == "PROGRESS"
+                            and int(facts.get("completed", 0)) % 512 == 0
+                        )
+                    ):
+                        runtime.marker("task41_b0_target_physical_action_stage", dict(facts))
+
             target_bundle = build_same_mesh_physical_action(
                 target_levels,
                 cfg,
                 6,
-                mode_inventory=v20_mode_inventory,
+                mode_inventory=(
+                    task41_mode_inventory
+                    if is_task41_p0_iterative
+                    else v20_mode_inventory
+                ),
                 jit_options=SAME_MESH_JIT_OPTIONS,
                 dtn_phase_gauge=BOUNDARY_PLANE,
                 verify_dtn_quadrature=True,
+                surface_functional_checkpoint=(
+                    _task40_v33_surface_checkpoint_for_scope(
+                        task41_b0_checkpoint, scope="global"
+                    )
+                    if task41_b0_checkpoint is not None
+                    else None
+                ),
+                stage_callback=target_stage_callback,
             )
             if len(target_bundle["modes"]) != periodic_profile.mode_count:
                 raise ValueError(
@@ -8168,7 +8582,7 @@ def run_task40_v10_p6_reference_worker(
 
             regular_cfg = (
                 _task40_v10_regular_reference_cfg(cfg, fill_y_period=True)
-                if is_task41_a2
+                if is_task41_p0_iterative
                 else __import__("dataclasses").replace(
                     cfg,
                     air_void_box_nm=None,
@@ -8176,7 +8590,12 @@ def run_task40_v10_p6_reference_worker(
                     geometry_identity=f"{cfg.geometry_identity}.regular_reference_identity_probe",
                 )
             )
-            if v20_mode_inventory is None:
+            if is_task41_b0:
+                if task41_mode_inventory is None:
+                    raise ValueError("Task41 B0 target bundle has no frozen live mode inventory")
+                target_inventory = task41_mode_inventory
+                reference_inventory = target_inventory
+            elif v20_mode_inventory is None:
                 target_inventory = build_dynamic_mode_inventory(cfg)
                 if is_task41_a2:
                     validate_task41_g13_a2_mode_inventory(
@@ -8480,6 +8899,71 @@ def run_task40_v10_p6_reference_worker(
                 "initial_physical_action_audit": dict(target_fast_bundle["physical_action"].audit),
             }
 
+
+        if is_task41_b0:
+            from src.solvers.task41_b0_mode_inventory import (
+                TASK41_B0_MODE_COUNT,
+                TASK41_B0_MODE_MANIFEST_BYTES,
+                persist_task41_b0_mode_inventory,
+                build_task41_b0_mode_inventory,
+                recheck_task41_b0_mode_inventory,
+            )
+
+            manifest_bytes = int(TASK41_B0_MODE_MANIFEST_BYTES)
+            mode_object_reserve = int(TASK41_B0_MODE_COUNT) * 4096
+            assignment_workspace_reserve = 512 * 1024**2
+            mode_inventory_admission = allocation_gate(
+                "task41_b0_production_mode_inventory_preflight",
+                {
+                    "additional_payload_bytes": manifest_bytes + mode_object_reserve,
+                    "workspace_bytes": assignment_workspace_reserve,
+                    "mode_count": TASK41_B0_MODE_COUNT,
+                    "expected_canonical_manifest_bytes": manifest_bytes,
+                    "mode_object_reserve_bytes": mode_object_reserve,
+                    "assignment_workspace_reserve_bytes": assignment_workspace_reserve,
+                    "accounting_basis": (
+                        "known prior canonical JSON byte count plus a conservative 4096-byte "
+                        "per-mode Python/object reserve; this is a projected admission, not a measurement"
+                    ),
+                },
+            )
+            runtime.marker(
+                "task41_b0_production_mode_inventory_preflight_admitted",
+                mode_inventory_admission,
+            )
+            (
+                task41_mode_inventory,
+                task41_b0_sector_contexts,
+                q_assignments,
+                periodic_profile,
+                mode_manifest_bytes,
+                live_inventory_facts,
+            ) = build_task41_b0_mode_inventory(cfg, axes)
+            if not isinstance(task41_contract_binding, Mapping):
+                raise ValueError("Task41 B0 live mode inventory lacks its dispatcher contract binding")
+            persisted_inventory = persist_task41_b0_mode_inventory(
+                directory,
+                source_sha=source_sha,
+                input_sha256=str(task41_contract_binding["input_sha256"]),
+                mode_manifest_bytes=mode_manifest_bytes,
+                assignments=q_assignments,
+                facts=live_inventory_facts,
+            )
+            b0_profile_capability = recheck_task41_b0_mode_inventory(
+                directory,
+                persisted_inventory,
+                source_sha=source_sha,
+                input_sha256=str(task41_contract_binding["input_sha256"]),
+            )
+            object.__setattr__(
+                periodic_profile,
+                "_task41_b0_profile_capability",
+                b0_profile_capability,
+            )
+            summary["periodic_inventory_expectations"] = periodic_profile.identity()
+            summary["live_mode_inventory_status"] = "LIVE_CAPTURED_AND_HASH_VERIFIED"
+            summary["b0_mode_inventory"] = persisted_inventory
+            summary["b0_profile_capability"] = b0_profile_capability
 
         if route_contract is None:
             build_target_context()
@@ -8860,9 +9344,9 @@ def run_task40_v10_p6_reference_worker(
         qualified_q_csr_preparer = None
         q4_saved_numeric_prebuild: Mapping[str, Any] | None = None
         prebuilt_twist0_q_csr: tuple[Mapping[int, Any], Mapping[str, Any]] | None = None
-        if is_task41_a2:
+        if is_task41_p0_iterative:
             if task41_mode_inventory is None or len(task41_mode_inventory) != 3:
-                raise ValueError("Task41 A2 q qualification requires its live frozen target modes")
+                raise ValueError("Task41 P0 q qualification requires its live frozen target modes")
             campaign_identity = summary.get("campaign_authority", {})
             window_sha256 = str(
                 campaign_identity.get("campaign_window_sha256", "")
@@ -8891,6 +9375,10 @@ def run_task40_v10_p6_reference_worker(
                 if isinstance(campaign_identity, Mapping)
                 else None
             )
+            if is_task41_b0 and (
+                saved_q_reuse_binding is not None or qualified_q_csr_provider is not None
+            ):
+                raise ValueError("Task41 B0 cannot import an A1/A2 or Task40 q-CSR donor")
             if saved_q_reuse_binding is not None:
                 from src.solvers.task40_v30_qualified_q_csr import QualifiedQCSRProvider
 
@@ -8912,20 +9400,20 @@ def run_task40_v10_p6_reference_worker(
                         "consumer_import_authorizations"
                     ),
                 )
-                expected_task41_q_indices = set(range(10))
+                expected_task41_q_indices = set(range(periodic_profile.q_count))
                 if (
                     set(task41_a2_saved_q_csr_provider.entries)
                     != expected_task41_q_indices
                     or task41_a2_saved_q_csr_provider.profile
-                    != TASK41_G13_A2_PRECONDITIONER
+                    != periodic_profile.name
                     or any(
                         task41_a2_saved_q_csr_provider.entries[q].get("twist_index")
-                        != q % 5
+                        != q % periodic_profile.replication_count
                         for q in expected_task41_q_indices
                     )
                 ):
                     raise ValueError(
-                        "Task41 A2 saved q selector is not the bound ten-q twist profile"
+                        f"Task41 {case_label} saved q selector differs from its profile"
                     )
 
             def prepare_task41_a2_sector_q_csr(
@@ -8953,7 +9441,7 @@ def run_task40_v10_p6_reference_worker(
                     or not isinstance(runtime_identity, Mapping)
                 ):
                     raise ValueError(
-                        "Task41 A2 must qualify both current sector q matrices without a donor selector"
+                        f"Task41 {case_label} must qualify both current sector q matrices without a donor selector"
                     )
                 from src.solvers.task40_v30_selected_q_csr import (
                     LiveP6SelectedQContributionSource,
@@ -8992,7 +9480,7 @@ def run_task40_v10_p6_reference_worker(
                 }
                 producer_identity_by_q = {
                     q: {
-                        "kind": "task41_a2_live_same_mesh_sector_owner",
+                        "kind": f"task41_{'a2' if is_task41_a2 else 'b0'}_live_same_mesh_sector_owner",
                         "source_sha": execution_identity["source_sha"],
                         "window_sha256": execution_identity["window_sha256"],
                         "twist_index": int(context.twist_index),
@@ -9052,10 +9540,11 @@ def run_task40_v10_p6_reference_worker(
                     execution_identity=execution_identity,
                     producer_identity_by_q=producer_identity_by_q,
                     output_directory=(
-                        directory / "task41_a2_q_csr_native_qualification"
+                        directory
+                        / f"task41_{'a2' if is_task41_a2 else 'b0'}_q_csr_native_qualification"
                     ),
                     progress_callback=lambda facts: reference_event(
-                        "task41_a2_q_csr_native_phase", facts
+                        f"task41_{'a2' if is_task41_a2 else 'b0'}_q_csr_native_phase", facts
                     ),
                 )
                 if (
@@ -9063,7 +9552,7 @@ def run_task40_v10_p6_reference_worker(
                     or audit.get("paired_sector_leakage_passed") is not True
                 ):
                     raise RuntimeError(
-                        "Task41 A2 current-sector CSR/native and paired-leakage gates did not all pass"
+                        f"Task41 {case_label} current-sector CSR/native and paired-leakage gates did not all pass"
                     )
                 audit["qualification_identity"] = {
                     "execution_identity": execution_identity,
@@ -9516,6 +10005,24 @@ def run_task40_v10_p6_reference_worker(
             return result
 
         def v33_surface_checkpoint_base() -> Mapping[str, Any] | None:
+            if is_task41_b0:
+                if not isinstance(task41_contract_binding, Mapping):
+                    raise ValueError("Task41 B0 reference carrier checkpoint lacks its contract binding")
+                input_sha = str(task41_contract_binding["input_sha256"])
+                window_sha = str(task41_contract_binding["window_sha256"])
+                contract_sha = str(task41_contract_binding["contract_sha256"])
+                if any(len(value) != 64 for value in (input_sha, window_sha, contract_sha)):
+                    raise ValueError("Task41 B0 reference carrier checkpoint identity is incomplete")
+                return {
+                    "root": str(directory / "task41_b0_reference_surface_checkpoint"),
+                    "identity": {
+                        "source_sha": source_sha,
+                        "input_sha256": input_sha,
+                        "staged_input_sha256": input_sha,
+                        "campaign_window_sha256": window_sha,
+                        "execution_contract_sha256": contract_sha,
+                    },
+                }
             if (
                 not isinstance(v31_contract, Mapping)
                 or not isinstance(v31_contract.get("execution"), Mapping)
@@ -10013,7 +10520,9 @@ def run_task40_v10_p6_reference_worker(
                     factor_lifecycle_strategy=factor_lifecycle_strategy,
                     operator_qualification_reuse=operator_qualification_reuse,
                     mode_inventory=(
-                        task41_mode_inventory if is_task41_a2 else v20_mode_inventory
+                        task41_mode_inventory
+                        if is_task41_p0_iterative
+                        else v20_mode_inventory
                     ),
                     qualified_q_csr_provider=qualified_q_csr_provider,
                     qualified_q_csr_identity=qualified_q_csr_identity,
@@ -10035,15 +10544,23 @@ def run_task40_v10_p6_reference_worker(
                         if is_task41_a2
                         else None
                     ),
+                    task41_b0_factor_config=(
+                        task41_b0_all_q_factor_contract(periodic_profile)
+                        if is_task41_b0
+                        else None
+                    ),
                     surface_functional_checkpoint=surface_functional_checkpoint,
                     factor_output_directory=(
-                        str(directory / "task41_a2_all_q_factor_qualification")
-                        if is_task41_a2
+                        str(
+                            directory
+                            / f"task41_{'a2' if is_task41_a2 else 'b0'}_all_q_factor_qualification"
+                        )
+                        if is_task41_p0_iterative
                         else str(factor_config["output_directory"])
                         if factor_config is not None
                         else None
                     ),
-                    regular_reference_fills_y_period=is_task41_a2,
+                    regular_reference_fills_y_period=is_task41_p0_iterative,
                 )
             except BaseException as error:
                 if isinstance(prepared_owner, dict):
@@ -10262,7 +10779,10 @@ def run_task40_v10_p6_reference_worker(
             ref_rhs_facts,
             allocation_gate=allocation_gate,
             reference_pc_strategy=reference_pc_strategy,
-            include_mixed_fe_port_cases=(route_contract is not None or is_task41_a2),
+            include_mixed_fe_port_cases=_include_mixed_fe_port_reference_cases(
+                route_contract=route_contract,
+                task41_p0_iterative=is_task41_p0_iterative,
+            ),
         )
         ref_rhs.destroy()
         ref_rhs = None
@@ -10759,7 +11279,16 @@ def run_task40_v10_p6_reference_worker(
         summary["allocation_admission_gates"] = allocation_gate_records
         if is_v16:
             summary["allocation_admission_gate_summary"] = allocation_gate_summary
+        b0_factors_before_release = (
+            reference.get("factors") if is_task41_b0 else None
+        )
         destroy_task40_v10_p6_reference_inverse(reference)
+        if is_task41_b0:
+            if b0_factors_before_release is None:
+                raise RuntimeError("Task41 B0 reference factor owner disappeared before release")
+            summary["b0_factor_release_audit"] = copy.deepcopy(
+                b0_factors_before_release.audit
+            )
         reference = None
         runtime.sample("v10_candidate_reference_factor_release_complete")
 
@@ -10996,11 +11525,16 @@ def run_task40_v10_p6_reference_worker(
         }
         energy_error = abs(power["R"] + power["T"] + power["A_volume"] - 1.0)
         absorption_error = abs(power["A"] - power["A_volume"])
+        diagnostic_mode_keys = (
+            _task41_b0_diagnostic_mode_keys(cfg) if is_task41_b0 else None
+        )
         output_pass = bool(
             output.get("electric_finite") is True
             and output.get("auxiliary_finite") is True
             and _single_side_diffraction_order_count_passed(
-                output, periodic_profile.mode_count
+                output,
+                periodic_profile.mode_count,
+                diagnostic_mode_keys=diagnostic_mode_keys,
             )
             and np.isfinite(list(power.values())).all()
             and energy_error <= 1.0e-5

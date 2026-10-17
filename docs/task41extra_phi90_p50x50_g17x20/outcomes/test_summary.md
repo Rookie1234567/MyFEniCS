@@ -107,3 +107,37 @@ python -m pytest -q --tb=short src/test/test_task41_a2_q_csr_reuse.py src/test/t
 ## A2 保存场 checker schema 修复定向验证
 
 冻结 source `4c0af8c1e73a47337b497f3a5ccda64933d04591` 的 checker 将审计实际字段 `q_indices` 与生产者输出结构对齐；fixture也改为真实 producer-shaped 审计对象。Task41 C1 资格化 activation 下运行 `test_task41_a2_reference_checker_reapplies_real_ten_q_packets`：**1 passed in 1.49 s**；相关 `compileall` 与 `git diff --check` 通过。没有重跑测试集或 FE/PDE；随后工作站 checker-only retry3 对 hash-bound 保存输入得到 `PASS`。该 checker 重算保存动作代数，但没有重新组装 FE 算子。A出口现已通过；完整服务与证据身份见 [a2_saved_output_checker_retry3.json](a2_saved_output_checker_retry3.json)。
+
+## B0 profile capability 与 checker 接线
+
+B0 的 V15 参考预条件器需要完整 200 个 q 分支、100 个两胞 sector 的维数；若 checker 只信 worker 摘要里的计数，就无法确认运行文件是否仍与源摘要一致。本轮把72.6 MB模式manifest与q分配文件的身份、字节数、SHA-256、q/sector计数复核集中在 `recheck_task41_b0_mode_inventory`，worker、B0数值checker和独立输出checker复用该入口，再从核验后的 capability 重建动态 profile。模式/分支文件在本轮测试中用 fixture 复核；没有重新生成先前清点的模式，也没有启动FE网格、service、factor或PDE。
+
+另修正 required-checker 授权记录：B0 迭代checker不再被标为A1的full-A6 checker；service与watchdog现在按同一个case映射使用 `task41_p0_b0_independent_iterative_checker`。定向合同测试覆盖B0从执行合同到watchdog closeout授权的完整只读路径。
+
+资格化环境为本机C1 runtime，Python位于 `local_w0_wsl/runtime_prefix`，PETSc为complex128/int32、MPI1；ABI preflight及相关模块 `compileall` 通过。最终命令：
+
+```bash
+source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit
+python -m pytest -q --tb=line src/test/test_task41_b0_dispatch.py src/test/test_task41_p0_contract.py src/test/test_task40_augmented_reference_correction.py src/test/test_task40_v10_output_checker.py
+```
+
+结果为 **85 passed, 5 failed in 8.98 s**；失败的5项全部是Task40 V19生命周期fixture，不是B0测试：两种注册profile的V19 dispatch fixture、`test_v19_output_checker_accepts_repeated_one_slot_refactors_and_disjoint_counts`、`test_v19_output_checker_rejects_missing_q_coverage_live_slot_or_counter_overlap[<lambda>-disjoint MatSolve counters]`、`test_v19_output_checker_binds_exact_input_and_requires_lifecycle_audit`。它们都在未改动的 `_verify_v19_one_q_factor_lifecycle` 因 MatSolve counter categories 错误/不完整而失败；`_v19_one_q_lifecycle_audit` fixture遗漏 `reference_correction_rhs_mat_solve_count`，其中“disjoint MatSolve counters”用例因此先收到更早的类别校验错误。该失败不触及B0 200-q V15路径，也未修改这些历史V19测试。修改相关文件的 `git diff --check` 通过；没有运行全仓测试或CI。
+
+源码仍由主控冻结与部署；本轮没有生成正式合同/窗口、没有执行 `prepare`、service、FE或PDE。当前本机唯一已找到的C1 ABI receipt标记为 `local_wsl2_authorized`，而正式Task41 `prepare`和service入口要求 `native_linux`；正式prepare须在主控部署的冻结源码及相符native receipt上执行，不能拿本机WSL receipt替代。
+
+## Task41 P0 冻结前 B0 入口与输出核验
+
+本轮关闭四项启动前工程阻塞，没有改数值门限、固定窗口或资源 cap：严格 ABI 路由现按精确 profile 将 A2/B0 绑定到各自的 case/run id，仍要求合同绑定的 `native_linux` receipt、当前源码身份和干净源码；共用入口 fixture 以真实 DAT 经解析器、`_V14Runtime` 到 `_candidate_contract`，覆盖 B0 固定 T0/bootstrap、172800 s 窗口、零 swap、资源包和 dispatcher binding，全程不建FE网格。
+
+B0 的诊断衍射表按实际 DAT 配置生成的完整 `(m,n,polarization)` 键集合核验，当前是17×17×2=578项；正式 DtN 表单独从哈希固定的模式 manifest 逐侧核验所有 `(side,m,n,polarization)`，允许冻结库存的 top=32062、bottom=32058，不再把两种表的条数混为一谈。轻量 fixture 覆盖上下端口条数不等并拒绝缺失模式；旧 Task40 等侧默认检查仍通过。
+
+carrier 资源审计是**依据实际 FE face dofmap 的派生上界，不是实测峰值**：单个模态功能保留 coupling 与 projection 两对 `(index,value)` 数组，因此按2×(8+16)=48 B/row/mode估计；全局 MPC slave rows 单独计入。组件装配还保留基于 owned+ghost 全空间向量、扫描/索引/采集临时数组的64 B/row上界、sorting workspace与原512 MiB下限。端口支持由 z 面 Basix entity-closure 和保z的x/y Floquet映射推导；这不表示内域场为零，也不按全局rows×64120预留稠密对象。实际生成行和在线watchdog仍负责最终资源裁决，现有cap和停止门不变。
+
+Task41 C1 activation ABI preflight：complex128/int32、MPI1、DOLFINx 0.10.0。最终窄回归命令如下，结果 **8 passed in 0.54 s**：
+
+```bash
+source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit
+python -m pytest -q --tb=short src/test/test_task40_v10_abi.py::test_task41_case_abi_uses_native_contract_route_and_rejects_local_receipt src/test/test_task41_p0_contract.py::test_task41_worker_runtime_uses_service_window_and_strict_resource_view src/test/test_task41_b0_dispatch.py::test_task41_b0_diagnostic_grid_keys_are_separate_from_official_port_count src/test/test_task41_b0_dispatch.py::test_task41_b0_carrier_upper_bound_counts_two_pairs_slave_rows_and_full_vector src/test/test_task40_v10_output_checker.py::test_task41_b0_port_table_matches_unequal_frozen_side_keys_and_rejects_omission src/test/test_task40_v10_output_checker.py::test_v10_dtn_port_mode_table_requires_paired_top_and_bottom_rows
+```
+
+没有重跑先前含V19失败的宽批次、全仓测试或PDE；也没有提交或推送。源码仍待主控在 native Linux 上冻结后再做正式 prepare/service。

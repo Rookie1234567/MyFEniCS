@@ -110,7 +110,11 @@ def _zero_safe_relative(numerator: float, denominator: float) -> float:
     return numerator / denominator
 
 
-def _registered_v15_profile_inventory(profile_identity: Any) -> dict[str, Any]:
+def _registered_v15_profile_inventory(
+    profile_identity: Any,
+    *,
+    b0_profile_capability: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Resolve q, twist, and mode counts from the registered periodic profile."""
 
     from src.solvers.task40_v10_p6_periodic_profile import (
@@ -118,8 +122,77 @@ def _registered_v15_profile_inventory(profile_identity: Any) -> dict[str, Any]:
         TASK40_V15_SELECTOR_PROFILE_IDENTITIES,
         task41_a2_v15_reference_profile,
     )
+    from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
+    from src.solvers.task41_b0_mode_inventory import (
+        TASK41_B0_EXPECTED_Q_PORT_COUNTS,
+        TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS,
+        TASK41_B0_MODE_COUNT,
+        TASK41_B0_MODE_MANIFEST_BYTES,
+        TASK41_B0_MODE_MANIFEST_SHA256,
+    )
 
     task41_profile = task41_a2_v15_reference_profile(profile_identity)
+    if profile_identity == TASK41_B0_PRECONDITIONER:
+        capability = b0_profile_capability
+        if not isinstance(capability, Mapping) or (
+            capability.get("schema") != "task41.b0.verified_profile_capability.v1"
+            or capability.get("verified") is not True
+            or capability.get("identity") != TASK41_B0_PRECONDITIONER
+            or capability.get("mode_manifest_sha256") != TASK41_B0_MODE_MANIFEST_SHA256
+            or capability.get("mode_manifest_bytes") != TASK41_B0_MODE_MANIFEST_BYTES
+            or capability.get("mode_count") != TASK41_B0_MODE_COUNT
+            or capability.get("q_count") != 200
+            or capability.get("twist_count") != 100
+            or not isinstance(capability.get("q_assignment_sha256"), str)
+            or len(capability["q_assignment_sha256"]) != 64
+        ):
+            raise ValueError(
+                "Task41 B0 V15 selection requires a rechecked mode/q inventory capability"
+            )
+        from src.solvers.task40_v10_p6_periodic_profile import task41_b0_periodic_profile
+
+        q_counts = tuple(int(value) for value in capability.get("q_port_counts", ()))
+        sector_counts = tuple(
+            int(value) for value in capability.get("sector_port_counts", ())
+        )
+        profile = task41_b0_periodic_profile(q_counts, sector_counts)
+        if (
+            sum(q_counts) != TASK41_B0_MODE_COUNT
+            or q_counts != TASK41_B0_EXPECTED_Q_PORT_COUNTS
+            or sector_counts != TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS
+            or q_counts[0] != 8
+            or tuple(q for q, count in enumerate(q_counts) if count == 0)
+            != tuple(range(1, 58))
+            or any(q_counts[q] < 8 for q in range(58, 200))
+            or min(q_counts) != 0
+            or max(q_counts) != 572
+            or min(sector_counts) != 524
+            or max(sector_counts) != 816
+            or profile.mode_count != TASK41_B0_MODE_COUNT
+            or profile.global_cell_axes != (10, 200, 14)
+            or profile.global_cell_count != 28_000
+            or capability.get("global_cell_axes") != [10, 200, 14]
+            or capability.get("global_cell_count") != 28_000
+            or capability.get("global_interior_rows") != profile.global_interior_rows
+            or capability.get("global_independent_rows") != profile.global_independent_rows
+            or capability.get("global_storage_rows") != profile.global_storage_rows
+            or capability.get("local_interior_rows") != profile.local_interior_rows
+        ):
+            raise ValueError("Task41 B0 V15 profile differs from its verified 200-q allocation")
+        return {
+            "identity": profile_identity,
+            "q_count": int(profile.q_count),
+            "twist_count": int(profile.replication_count),
+            "mode_count": int(profile.mode_count),
+            "q_port_counts": tuple(int(value) for value in profile.q_port_counts),
+            "sector_port_counts": tuple(
+                int(value) for value in profile.sector_port_counts
+            ),
+            "global_interior_rows": int(profile.global_interior_rows),
+            "global_independent_rows": int(profile.global_independent_rows),
+            "global_storage_rows": int(profile.global_storage_rows),
+            "b0_inventory_capability": dict(capability),
+        }
     if (
         not isinstance(profile_identity, str)
         or (
@@ -332,6 +405,7 @@ def select_v15_reference_pc_candidate(
     candidates: Sequence[Mapping[str, Any]],
     *,
     profile_identity: str | None = None,
+    b0_profile_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Admit one whole V15 state only when every original/frozen gate passes."""
 
@@ -347,7 +421,9 @@ def select_v15_reference_pc_candidate(
         if not isinstance(structural, Mapping):
             raise TypeError("V15 candidate structural gates must be a mapping")
         raw_recheck = recompute_v15_candidate_facts(
-            candidate, profile_identity=profile_identity
+            candidate,
+            profile_identity=profile_identity,
+            b0_profile_capability=b0_profile_capability,
         )
         original_exceedance = normalized_max_exceedance(
             raw_recheck["metrics"], V15_REFERENCE_PC_LIMITS
@@ -877,7 +953,10 @@ def normalized_max_exceedance(
 
 
 def recompute_v15_candidate_facts(
-    candidate: Mapping[str, Any], *, profile_identity: str | None = None
+    candidate: Mapping[str, Any],
+    *,
+    profile_identity: str | None = None,
+    b0_profile_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Rebuild V15 admission metrics from saved raw norms and actual q rows."""
 
@@ -894,7 +973,14 @@ def recompute_v15_candidate_facts(
     if raw_profile_identity is not None and profile_identity is not None and raw_profile_identity != profile_identity:
         raise ValueError("V15 candidate raw profile identity differs from its registered outer profile")
     trusted_profile_identity = raw_profile_identity or profile_identity
-    inventory = _registered_v15_profile_inventory(trusted_profile_identity)
+    if b0_profile_capability is None:
+        candidate_capability = raw.get("b0_profile_capability")
+        if isinstance(candidate_capability, Mapping):
+            b0_profile_capability = candidate_capability
+    inventory = _registered_v15_profile_inventory(
+        trusted_profile_identity,
+        b0_profile_capability=b0_profile_capability,
+    )
     if inventory["q_count"] == 8 and raw_profile_identity != inventory["identity"]:
         raise ValueError("V18 Ny8 candidate raw facts must explicitly record their profile identity")
     sector_terms = budget_terms.get("lifted_sector_errors")
@@ -1211,7 +1297,8 @@ def recheck_reference_pc_final_admission(
                 if isinstance(first_raw, Mapping):
                     profile_identity = first_raw.get("profile_identity")
             recomputed = select_v15_reference_pc_candidate(
-                candidates, profile_identity=profile_identity
+                candidates,
+                profile_identity=profile_identity,
             )
             selected_index = int(recomputed["selected_candidate_index"])
             selected = candidates[selected_index]

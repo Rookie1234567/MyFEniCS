@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 import numpy as np
 
@@ -130,8 +130,24 @@ def _array_ref(record: Mapping[str, Any], key: str, arrays: Any) -> np.ndarray:
     return np.asarray(_raw_array_ref(record, key, arrays), dtype=np.complex128)
 
 
-def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
+def _registered_v15_profile_inventory(
+    identity: Any,
+    *,
+    b0_profile_capability: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Resolve registered V15/V16/V17 identities; never trust packet row counts."""
+    from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
+
+    if identity == TASK41_B0_PRECONDITIONER:
+        from src.solvers.augmented_reference_correction import (
+            _registered_v15_profile_inventory as registered_inventory,
+        )
+
+        # Task41 B0 is an explicit capability, reconstructed from the adjacent
+        # hash-bound mode manifest and q-assignment artifact in this process.
+        return registered_inventory(
+            identity, b0_profile_capability=b0_profile_capability
+        )
 
     from src.io.physical_intermediate_profile import (
         TASK40_V15_P6_PROFILES,
@@ -174,8 +190,45 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
     }
 
 
+def _task41_b0_profile_capability_from_run(
+    run_directory: str | Path,
+    worker_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Reconstruct B0's profile capability from immutable adjacent run files."""
+
+    from src.geometry.task41_phi90_profile import (
+        TASK41_B0_PRECONDITIONER,
+        TASK41_B0_RUN_ID,
+    )
+    from src.solvers.task41_b0_mode_inventory import recheck_task41_b0_mode_inventory
+
+    identity = worker_summary.get("scientific_identity")
+    inventory = worker_summary.get("b0_mode_inventory")
+    source_sha = worker_summary.get("source_sha")
+    input_sha256 = identity.get("input_sha256") if isinstance(identity, Mapping) else None
+    if (
+        worker_summary.get("run_id") != TASK41_B0_RUN_ID
+        or worker_summary.get("profile") != TASK41_B0_PRECONDITIONER
+        or worker_summary.get("stage") != "TASK41_B0"
+        or not isinstance(source_sha, str)
+        or re.fullmatch(r"[0-9a-f]{40}", source_sha) is None
+        or not isinstance(input_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", input_sha256) is None
+    ):
+        raise ValueError("Task41 B0 worker summary has no exact run/profile/input identity")
+    return recheck_task41_b0_mode_inventory(
+        run_directory,
+        inventory,
+        source_sha=source_sha,
+        input_sha256=input_sha256,
+    )
+
+
 def _verify_v17_row_tile_assembly_summary(
-    run_directory: str | Path, summary: Mapping[str, Any]
+    run_directory: str | Path,
+    summary: Mapping[str, Any],
+    *,
+    b0_profile_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Recompute the structural acceptance gates from the saved worker summary."""
     strategy = "ROW_TILE_BOUNDED_CSR_V17"
@@ -188,15 +241,23 @@ def _verify_v17_row_tile_assembly_summary(
         TASK40_V20_V22_P6_PROFILES,
     )
 
-    if not isinstance(profile_identity, str) or profile_identity not in (
+    from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
+
+    is_task41_b0 = profile_identity == TASK41_B0_PRECONDITIONER
+    if not isinstance(profile_identity, str) or (
+        not is_task41_b0
+        and profile_identity not in (
         *TASK40_V17_P6_PROFILES,
         *TASK40_V18_P6_PROFILES,
         *TASK40_V20_V22_P6_PROFILES,
+        )
     ):
         raise ValueError(
-            "V17 row-tile summary is not bound to an exact registered V17 profile or V18 profile"
+            "V17 row-tile summary is not bound to an exact registered V17 profile or explicit Task41 B0 capability"
         )
-    profile_inventory = _registered_v15_profile_inventory(profile_identity)
+    profile_inventory = _registered_v15_profile_inventory(
+        profile_identity, b0_profile_capability=b0_profile_capability
+    )
     q_count = int(profile_inventory["q_count"])
     sector_count = len(profile_inventory["sector_port_counts"])
     is_v18 = profile_identity in TASK40_V18_P6_PROFILES
@@ -205,7 +266,10 @@ def _verify_v17_row_tile_assembly_summary(
         from src.solvers.task40_v20_registry import task40_v20_case
 
         is_ny8 = task40_v20_case(profile=profile_identity).mesh_id == "TARGET_ORIGINAL_NY8"
-    if q_count != (8 if is_ny8 else 4) or sector_count != q_count // 2:
+    if (
+        (q_count != 200 if is_task41_b0 else q_count != (8 if is_ny8 else 4))
+        or sector_count != q_count // 2
+    ):
         raise ValueError("row-tile profile does not match its registered q/twist inventory")
     if not isinstance(summary.get("source_sha"), str) or len(summary["source_sha"]) != 40:
         raise ValueError("V17 row-tile worker summary omits its frozen source SHA")
@@ -322,7 +386,9 @@ def _verify_v17_row_tile_assembly_summary(
         raise ValueError("row-tile summary does not cover every registered global q branch")
     return {
         "schema": (
-            "task40extra.review_v18_ny8_row_tile_assembly_checker.v1"
+            "task41.p0.b0_row_tile_assembly_checker.v1"
+            if is_task41_b0
+            else "task40extra.review_v18_ny8_row_tile_assembly_checker.v1"
             if is_v18
             else "task40extra.review_v17_row_tile_assembly_checker.v1"
         ),
@@ -906,7 +972,10 @@ def _verify_v30_all_q_rhs_cost_categories(
 
 
 def _verify_v31_reference_tiers(
-    regular_inverse_checks: Mapping[str, Any], *, expected_profile: str
+    regular_inverse_checks: Mapping[str, Any],
+    *,
+    expected_profile: str,
+    b0_profile_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Recompute strict and V15 admission for each selected complete state."""
     from src.solvers.augmented_reference_correction import (
@@ -956,7 +1025,9 @@ def _verify_v31_reference_tiers(
         if len(candidates) != len(candidate_rows) or not candidates:
             raise ValueError(f"V31 reference-tier case {name} has malformed candidate rows")
         v15 = select_v15_reference_pc_candidate(
-            candidates, profile_identity=expected_profile
+            candidates,
+            profile_identity=expected_profile,
+            b0_profile_capability=b0_profile_capability,
         )
         selected_index = int(v15["selected_candidate_index"])
         if selected_index < 0 or selected_index >= len(candidates):
@@ -1035,6 +1106,7 @@ def _verify_v31_reference_inverse_product(
     expected_source_sha: str,
     expected_run_id: str,
     expected_input_sha256: str,
+    b0_profile_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Bind and independently recheck the persisted V31 reference product."""
     root = Path(run_directory).resolve()
@@ -1090,7 +1162,9 @@ def _verify_v31_reference_inverse_product(
         factor_audit, expected_q_count=expected_q_count, schema_version=31
     )
     tiers = _verify_v31_reference_tiers(
-        regular_checks, expected_profile=str(worker_summary.get("profile", ""))
+        regular_checks,
+        expected_profile=str(worker_summary.get("profile", "")),
+        b0_profile_capability=b0_profile_capability,
     )
     return {
         "schema": "task40extra.review_v31_reference_inverse_product_checker.v1",
@@ -1459,7 +1533,12 @@ def _vector_defect_relative(
 
 
 def verify_v10_dtn_port_mode_table(
-    csv_path: str | Path, *, expected_channel_count: int = 532
+    csv_path: str | Path,
+    *,
+    expected_channel_count: int = 532,
+    expected_mode_keys_by_side: Mapping[
+        str, Iterable[tuple[int, int, str]]
+    ] | None = None,
 ) -> dict[str, Any]:
     """Verify complete top and bottom modal rows in the emitted DtN port table.
 
@@ -1472,6 +1551,30 @@ def verify_v10_dtn_port_mode_table(
     path = Path(csv_path).resolve()
     expected = int(expected_channel_count)
     expected_per_side = expected // 2
+    expected_sets = None
+    if expected_mode_keys_by_side is not None:
+        expected_sets = {"top": set(), "bottom": set()}
+        if set(expected_mode_keys_by_side) != set(expected_sets):
+            raise ValueError("expected DtN mode manifest must define top and bottom sides")
+        for side, keys in expected_mode_keys_by_side.items():
+            for item in keys:
+                if (
+                    not isinstance(item, tuple)
+                    or len(item) != 3
+                    or type(item[0]) is not int
+                    or type(item[1]) is not int
+                    or not isinstance(item[2], str)
+                    or not item[2]
+                ):
+                    raise ValueError("expected DtN mode key must be an (m, n, polarization) tuple")
+                expected_sets[side].add((item[0], item[1], item[2].strip().lower()))
+        expected_count_by_side = {
+            side: len(expected_sets[side]) for side in ("top", "bottom")
+        }
+        expected_total = sum(expected_count_by_side.values())
+    else:
+        expected_count_by_side = {"top": expected_per_side, "bottom": expected_per_side}
+        expected_total = expected
     with path.open("r", encoding="utf-8", newline="") as stream:
         reader = csv.DictReader(stream)
         required = {"side", "m", "n", "polarization"}
@@ -1505,17 +1608,28 @@ def verify_v10_dtn_port_mode_table(
         mode_sets[side].add(key)
 
     paired_modes = len(mode_sets["top"] & mode_sets["bottom"])
+    if expected_sets is None:
+        identity_match = bool(
+            expected > 0
+            and expected % 2 == 0
+            and side_counts == expected_count_by_side
+            and len(mode_sets["top"]) == expected_per_side
+            and len(mode_sets["bottom"]) == expected_per_side
+            and mode_sets["top"] == mode_sets["bottom"]
+        )
+    else:
+        identity_match = bool(
+            expected_total == expected
+            and side_counts == expected_count_by_side
+            and mode_sets == expected_sets
+        )
     table_passed = bool(
-        expected > 0
-        and expected % 2 == 0
+        expected_total > 0
         and not missing_columns
         and malformed_rows == 0
-        and len(rows) == expected
-        and side_counts == {"top": expected_per_side, "bottom": expected_per_side}
+        and len(rows) == expected_total
         and duplicate_modes == {"top": 0, "bottom": 0}
-        and len(mode_sets["top"]) == expected_per_side
-        and len(mode_sets["bottom"]) == expected_per_side
-        and mode_sets["top"] == mode_sets["bottom"]
+        and identity_match
     )
     npz_path = path.parent / "dtn_port_modal_amplitudes_3d.npz"
     npz_report = None
@@ -1536,18 +1650,96 @@ def verify_v10_dtn_port_mode_table(
         "csv_path": str(path),
         "expected_channel_count": expected,
         "actual_channel_count": len(rows),
-        "expected_modes_per_side": expected_per_side,
+        "expected_modes_per_side": (
+            expected_per_side if expected_sets is None else None
+        ),
+        "expected_mode_count_by_side": expected_count_by_side,
         "channel_count_by_side": side_counts,
         "unique_mode_count_by_side": {
             side: len(mode_sets[side]) for side in ("top", "bottom")
         },
         "paired_top_bottom_mode_count": paired_modes,
         "duplicate_mode_count_by_side": duplicate_modes,
+        "missing_mode_count_by_side": {
+            side: (
+                len(expected_sets[side] - mode_sets[side])
+                if expected_sets is not None
+                else max(0, expected_count_by_side[side] - len(mode_sets[side]))
+            )
+            for side in ("top", "bottom")
+        },
+        "unexpected_mode_count_by_side": {
+            side: (
+                len(mode_sets[side] - expected_sets[side])
+                if expected_sets is not None
+                else max(0, len(mode_sets[side]) - expected_count_by_side[side])
+            )
+            for side in ("top", "bottom")
+        },
+        "identity_check": (
+            "exact_frozen_mode_keys_by_side"
+            if expected_sets is not None
+            else "legacy_equal_top_bottom_sets"
+        ),
         "malformed_row_count": malformed_rows,
         "missing_columns": missing_columns,
         "modal_amplitudes_npz": npz_report,
         "passed": passed,
     }
+
+
+def _task41_b0_expected_mode_keys_by_side(
+    run_directory: str | Path,
+) -> dict[str, set[tuple[int, int, str]]]:
+    """Read only side/m/n/polarization keys from B0's hash-frozen manifest."""
+
+    from src.solvers.task41_b0_mode_inventory import (
+        TASK41_B0_MODE_MANIFEST_BYTES,
+        TASK41_B0_MODE_MANIFEST_SHA256,
+        TASK41_B0_MODE_COUNT,
+    )
+
+    manifest_path = Path(run_directory).resolve() / "task41_b0_mode_manifest.json"
+    raw = manifest_path.read_bytes()
+    if (
+        len(raw) != TASK41_B0_MODE_MANIFEST_BYTES
+        or hashlib.sha256(raw).hexdigest() != TASK41_B0_MODE_MANIFEST_SHA256
+    ):
+        raise ValueError("Task41 B0 frozen mode manifest hash or size changed")
+    text = raw.decode("utf-8")
+    del raw
+    marker = '"modes":['
+    marker_start = text.find(marker)
+    if marker_start < 0:
+        raise ValueError("Task41 B0 frozen mode manifest has no modes list")
+    decoder = json.JSONDecoder()
+    cursor = marker_start + len(marker)
+    expected = {"top": set(), "bottom": set()}
+    seen_rows = 0
+    while cursor < len(text):
+        while cursor < len(text) and text[cursor] in " \t\r\n,":
+            cursor += 1
+        if cursor >= len(text) or text[cursor] == "]":
+            break
+        mode, cursor = decoder.raw_decode(text, cursor)
+        if not isinstance(mode, Mapping):
+            raise ValueError("Task41 B0 frozen mode manifest contains a non-object row")
+        side = str(mode.get("side", "")).strip().lower()
+        try:
+            key = (
+                int(mode["m"]),
+                int(mode["n"]),
+                str(mode["polarization"]).strip().lower(),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("Task41 B0 frozen mode manifest has a malformed mode key") from exc
+        if side not in expected or not key[2] or key in expected[side]:
+            raise ValueError("Task41 B0 frozen mode manifest has an invalid or duplicate key")
+        expected[side].add(key)
+        seen_rows += 1
+    if seen_rows != TASK41_B0_MODE_COUNT or sum(map(len, expected.values())) != seen_rows:
+        raise ValueError("Task41 B0 frozen mode manifest has incomplete side/mode keys")
+    return expected
 
 
 def _verify_dtn_port_modal_amplitudes_npz(
@@ -1991,7 +2183,22 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
     if record.get("reference_pc_strategy") != NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
         raise ValueError("V15 PC packet strategy identity is invalid")
     profile_identity = record.get("profile_identity", record.get("profile"))
-    inventory = _registered_v15_profile_inventory(profile_identity)
+    b0_profile_capability = None
+    from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
+
+    if profile_identity == TASK41_B0_PRECONDITIONER:
+        summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
+        if not summary_path.is_file():
+            raise ValueError("Task41 B0 V15 packet has no adjacent worker summary")
+        worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        b0_profile_capability = _task41_b0_profile_capability_from_run(
+            path.parent, worker_summary
+        )
+        if record.get("profile_identity") != worker_summary.get("profile"):
+            raise ValueError("Task41 B0 V15 packet differs from its worker profile identity")
+    inventory = _registered_v15_profile_inventory(
+        profile_identity, b0_profile_capability=b0_profile_capability
+    )
     array_manifest = record.get("arrays")
     if not isinstance(array_manifest, Mapping):
         raise ValueError("V15 PC packet has no NPZ array manifest")
@@ -2319,7 +2526,9 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
                 "raw_facts": raw_facts,
             }
             rebuilt = recompute_v15_candidate_facts(
-                candidate, profile_identity=inventory["identity"]
+                candidate,
+                profile_identity=inventory["identity"],
+                b0_profile_capability=b0_profile_capability,
             )
             if not rebuilt["raw_facts_consistent"]:
                 raise ValueError("V15 candidate raw metrics do not match independent recomputation")
@@ -2344,7 +2553,9 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
             "passed": True,
         }
     recomputed_selection = select_v15_reference_pc_candidate(
-        candidates, profile_identity=inventory["identity"]
+        candidates,
+        profile_identity=inventory["identity"],
+        b0_profile_capability=b0_profile_capability,
     )
     recorded_selection = record.get("candidate_selection")
     if not isinstance(recorded_selection, Mapping) or (
@@ -2370,6 +2581,110 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
         "packet_integrity_passed": True,
         "passed": True,
         "operator_reapplied_by_checker": False,
+    }
+
+
+def verify_saved_full_a6_residual_packet(
+    packet_json: str | Path,
+    *,
+    expected_identity: Mapping[str, Any],
+    expected_reference_factors_released: bool,
+) -> dict[str, Any]:
+    """Recompute both saved full-state A6 residual vectors from NPZ arrays."""
+
+    path = Path(packet_json).resolve()
+    record = json.loads(path.read_text(encoding="utf-8"))
+    identity = record.get("identity")
+    arrays_manifest = record.get("arrays")
+    if not isinstance(identity, Mapping) or not isinstance(arrays_manifest, Mapping):
+        raise ValueError("saved full A6 residual packet omits identity or NPZ manifest")
+    for field in ("source_sha", "input_sha256", "physical_model_sha256"):
+        if identity.get(field) != expected_identity.get(field):
+            raise ValueError(f"saved full A6 residual {field} differs from the output packet")
+    if (
+        record.get("reference_factors_released")
+        is not expected_reference_factors_released
+        or record.get("independent_action_count") != 2
+        or float(record.get("limit", float("nan"))) != 1.0e-6
+    ):
+        raise ValueError("saved full A6 residual packet has the wrong release or residual contract")
+    npz_path = Path(str(arrays_manifest.get("path", ""))).resolve()
+    if npz_path.parent != path.parent or _file_sha256(npz_path) != arrays_manifest.get("sha256"):
+        raise ValueError("saved full A6 residual NPZ escaped its directory or changed hash")
+    checks = []
+    with np.load(npz_path, allow_pickle=False) as arrays:
+        rhs = _raw_array_ref(record, "full_physical_rhs_storage", arrays)
+        solution = _raw_array_ref(record, "full_solution_storage", arrays)
+        if (
+            rhs.dtype != np.dtype(np.complex128)
+            or solution.dtype != np.dtype(np.complex128)
+            or rhs.ndim != 1
+            or solution.shape != rhs.shape
+            or not np.isfinite(rhs).all()
+            or not np.isfinite(solution).all()
+        ):
+            raise ValueError("saved full A6 residual RHS or solution has an invalid layout")
+        rhs_norm = float(np.linalg.norm(rhs))
+        if not np.isclose(rhs_norm, float(record.get("rhs_norm", np.nan)), rtol=1.0e-12, atol=0.0):
+            raise ValueError("saved full A6 residual RHS norm differs from its packet metadata")
+        scale = max(rhs_norm, np.finfo(float).tiny)
+        for label, applied_key, residual_key, rel_key in (
+            (
+                "target_backend",
+                "target_backend_applied_storage",
+                "target_backend_residual_storage",
+                "relative_residual",
+            ),
+            (
+                "native_full_A6_witness",
+                "native_witness_applied_storage",
+                "native_witness_residual_storage",
+                "native_witness_relative_residual",
+            ),
+        ):
+            applied = _raw_array_ref(record, applied_key, arrays)
+            saved_residual = _raw_array_ref(record, residual_key, arrays)
+            if (
+                applied.dtype != np.dtype(np.complex128)
+                or saved_residual.dtype != np.dtype(np.complex128)
+                or applied.shape != rhs.shape
+                or saved_residual.shape != rhs.shape
+                or not np.isfinite(applied).all()
+                or not np.isfinite(saved_residual).all()
+            ):
+                raise ValueError(f"saved {label} A6 arrays have an invalid layout")
+            recomputed = rhs - applied
+            relative = float(np.linalg.norm(recomputed) / scale)
+            algebra_defect = float(
+                np.linalg.norm(recomputed - saved_residual)
+                / max(scale + float(np.linalg.norm(saved_residual)), np.finfo(float).tiny)
+            )
+            recorded = float(record.get(rel_key, float("nan")))
+            checks.append(
+                {
+                    "backend": label,
+                    "relative_residual_recomputed": relative,
+                    "relative_residual_recorded": recorded,
+                    "residual_algebra_defect_relative": algebra_defect,
+                    "limit": 1.0e-6,
+                    "passed": bool(
+                        np.isfinite(relative)
+                        and relative <= 1.0e-6
+                        and abs(relative - recorded) <= 1.0e-12
+                        and algebra_defect <= 1.0e-12
+                    ),
+                }
+            )
+    if not all(row["passed"] for row in checks):
+        raise ValueError("saved full A6 residual packet fails independent residual recomputation")
+    return {
+        "schema": "task40extra.review_full_a6_residual_packet_recheck.v1",
+        "packet_json": str(path),
+        "packet_npz": str(npz_path),
+        "packet_npz_sha256": arrays_manifest["sha256"],
+        "reference_factors_released": expected_reference_factors_released,
+        "residual_checks": checks,
+        "passed": True,
     }
 
 
@@ -2410,11 +2725,7 @@ def verify_v10_output_bundle(
     ]
     if len(port_table_paths) != 1:
         raise ValueError("V10 output identity must contain exactly one full DtN port table")
-    port_mode_table_check = verify_v10_dtn_port_mode_table(
-        port_table_paths[0], expected_channel_count=expected_channel_count
-    )
-    if not port_mode_table_check["passed"]:
-        raise ValueError("V10 full top/bottom DtN port mode table is incomplete")
+    port_mode_table_check = None
 
     residual_path = Path(str(identity["full_solution_packet_json"])).resolve()
     residual_record = json.loads(residual_path.read_text(encoding="utf-8"))
@@ -2480,6 +2791,10 @@ def verify_v10_output_bundle(
     v18_ny8_dispatch_binding = None
     v19_one_q_factor_lifecycle = None
     task41_a2_dispatch_binding = None
+    task41_b0_dispatch_binding = None
+    task41_b0_row_tile_assembly = None
+    task41_b0_reference_tiers = None
+    task41_b0_factor_rhs_cost_recheck = None
     packet_identity_map = (
         packet_identity if isinstance(packet_identity, Mapping) else {}
     )
@@ -2505,9 +2820,12 @@ def verify_v10_output_bundle(
     from src.geometry.task41_phi90_profile import (
         TASK41_G13_A2_PRECONDITIONER,
         TASK41_G13_A2_RUN_ID,
+        TASK41_B0_PRECONDITIONER,
+        TASK41_B0_RUN_ID,
     )
 
     is_task41_a2_profile = packet_profile == TASK41_G13_A2_PRECONDITIONER
+    is_task41_b0_profile = packet_profile == TASK41_B0_PRECONDITIONER
     if has_registered_v20_profile:
         from src.solvers.task40_v20_registry import task40_v20_case
 
@@ -2534,6 +2852,126 @@ def verify_v10_output_bundle(
         v16_allocation_ledger = _verify_v16_allocation_admission_ledger(
             path.parent, worker_summary
         )
+    elif is_task41_b0_profile:
+        if not isinstance(packet_identity, Mapping):
+            raise ValueError("Task41 B0 output is missing its run identity")
+        source_sha = packet_identity.get("source_sha")
+        run_id = packet_identity.get("run_id")
+        stage = packet_identity.get("stage")
+        strategy = "ROW_TILE_BOUNDED_CSR_V17"
+        if (
+            run_id != TASK41_B0_RUN_ID
+            or stage != "TASK41_B0"
+            or expected_channel_count != 64_120
+            or packet_strategy != strategy
+            or scientific_strategy != strategy
+            or not isinstance(source_sha, str)
+            or re.fullmatch(r"[0-9a-f]{40}", source_sha) is None
+            or any(
+                packet_identity.get(field) != identity.get(field)
+                for field in ("source_sha", "input_sha256", "physical_model_sha256")
+            )
+        ):
+            raise ValueError(
+                "Task41 B0 output identity differs from its fixed run/profile/mode/strategy contract"
+            )
+        run_manifest_path = path.parent / "run_manifest.json"
+        summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
+        if not run_manifest_path.is_file() or not summary_path.is_file():
+            raise ValueError("Task41 B0 output is missing its adjacent run manifest or worker summary")
+        run_manifest = json.loads(run_manifest_path.read_text(encoding="utf-8"))
+        worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary_identity = worker_summary.get("scientific_identity")
+        authority = worker_summary.get("campaign_authority")
+        if (
+            run_manifest.get("source_sha") != source_sha
+            or run_manifest.get("run_id") != run_id
+            or run_manifest.get("input_sha256") != identity.get("input_sha256")
+            or worker_summary.get("source_sha") != source_sha
+            or worker_summary.get("run_id") != run_id
+            or worker_summary.get("profile") != packet_profile
+            or worker_summary.get("stage") != stage
+            or worker_summary.get("q_assembly_strategy") != strategy
+            or not isinstance(summary_identity, Mapping)
+            or any(
+                summary_identity.get(field) != identity.get(field)
+                for field in ("source_sha", "input_sha256", "physical_model_sha256")
+            )
+            or not isinstance(authority, Mapping)
+            or authority.get("case_id") != "B0"
+            or authority.get("comparison_binding") is not None
+            or authority.get("q_csr_reuse") is not None
+            or not isinstance(authority.get("task41_contract_sha256"), str)
+            or re.fullmatch(r"[0-9a-f]{64}", authority["task41_contract_sha256"]) is None
+            or worker_summary.get("comparison_authority") is not None
+            or "task41_a1_a2_comparison" in worker_summary
+        ):
+            raise ValueError("Task41 B0 worker summary differs from its contract/output identity")
+        b0_profile_capability = _task41_b0_profile_capability_from_run(
+            path.parent, worker_summary
+        )
+        b0_expected_mode_keys = _task41_b0_expected_mode_keys_by_side(path.parent)
+        port_mode_table_check = verify_v10_dtn_port_mode_table(
+            port_table_paths[0],
+            expected_channel_count=expected_channel_count,
+            expected_mode_keys_by_side=b0_expected_mode_keys,
+        )
+        if not port_mode_table_check["passed"]:
+            raise ValueError(
+                "Task41 B0 official DtN mode table differs from its frozen per-side mode manifest"
+            )
+        profile_inventory = _registered_v15_profile_inventory(
+            packet_profile, b0_profile_capability=b0_profile_capability
+        )
+        if (
+            int(profile_inventory["mode_count"]) != expected_channel_count
+            or tuple(profile_inventory["q_port_counts"])
+            != tuple(b0_profile_capability["q_port_counts"])
+            or tuple(profile_inventory["sector_port_counts"])
+            != tuple(b0_profile_capability["sector_port_counts"])
+        ):
+            raise ValueError("Task41 B0 output channel count differs from its verified live q allocation")
+        task41_b0_row_tile_assembly = _verify_v17_row_tile_assembly_summary(
+            path.parent,
+            worker_summary,
+            b0_profile_capability=b0_profile_capability,
+        )
+        task41_b0_reference_tiers = _verify_v31_reference_tiers(
+            worker_summary.get("regular_inverse_checks", {}),
+            expected_profile=TASK41_B0_PRECONDITIONER,
+            b0_profile_capability=b0_profile_capability,
+        )
+        if task41_b0_reference_tiers.get("case_count") != 6:
+            raise ValueError("Task41 B0 startup reference checks do not cover all six FE/port cases")
+        snapshot = worker_summary.get("reference_audit_snapshot")
+        factor_audit = (
+            snapshot.get("factor_audit_before_destroy")
+            if isinstance(snapshot, Mapping)
+            else None
+        )
+        if not isinstance(factor_audit, Mapping):
+            raise ValueError("Task41 B0 worker summary omits its pre-release All-Q factor audit")
+        task41_b0_factor_rhs_cost_recheck = _verify_v30_all_q_rhs_cost_categories(
+            factor_audit,
+            expected_q_count=200,
+            schema_version=31,
+        )
+        task41_b0_dispatch_binding = {
+            "source_sha": source_sha,
+            "profile_identity": packet_profile,
+            "run_id": run_id,
+            "stage": stage,
+            "q_assembly_strategy": strategy,
+            "mode_manifest_sha256": b0_profile_capability["mode_manifest_sha256"],
+            "q_assignment_sha256": b0_profile_capability["q_assignment_sha256"],
+            "mode_count": b0_profile_capability["mode_count"],
+            "q_count": b0_profile_capability["q_count"],
+            "sector_count": b0_profile_capability["twist_count"],
+            "worker_summary_binding_passed": True,
+            "run_manifest_binding_passed": True,
+            "profile_reconstructed_from_run_artifacts": True,
+            "a1_a2_comparison_authority_present": False,
+        }
     elif is_task41_a2_profile:
         if not isinstance(packet_identity, Mapping):
             raise ValueError("Task41 A2 output is missing its run identity")
@@ -2747,6 +3185,12 @@ def verify_v10_output_bundle(
             "worker_summary_binding_passed": True,
             "run_manifest_binding_passed": True,
             }
+    if port_mode_table_check is None:
+        port_mode_table_check = verify_v10_dtn_port_mode_table(
+            port_table_paths[0], expected_channel_count=expected_channel_count
+        )
+        if not port_mode_table_check["passed"]:
+            raise ValueError("V10 full top/bottom DtN port mode table is incomplete")
     return {
         "schema": "task40extra.review_v10_output_packet_recheck.v1",
         "packet_json": str(path),
@@ -2771,6 +3215,10 @@ def verify_v10_output_bundle(
         "v18_ny8_dispatch_binding": v18_ny8_dispatch_binding,
         "v19_one_q_factor_lifecycle": v19_one_q_factor_lifecycle,
         "task41_a2_dispatch_binding": task41_a2_dispatch_binding,
+        "task41_b0_dispatch_binding": task41_b0_dispatch_binding,
+        "task41_b0_row_tile_assembly": task41_b0_row_tile_assembly,
+        "task41_b0_reference_tiers": task41_b0_reference_tiers,
+        "task41_b0_factor_rhs_cost_recheck": task41_b0_factor_rhs_cost_recheck,
         "operator_reapplied_by_checker": False,
         "status": "PASS",
     }

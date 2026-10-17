@@ -73,16 +73,17 @@ def test_v15_abi_gate_still_binds_the_existing_receipt(monkeypatch):
         )
 
 
-def test_task41_a2_abi_uses_native_contract_route_and_rejects_local_receipt(
-    monkeypatch, tmp_path
+@pytest.mark.parametrize("case_id", ("A2", "B0"))
+def test_task41_case_abi_uses_native_contract_route_and_rejects_local_receipt(
+    case_id, monkeypatch, tmp_path
 ):
     if os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
         pytest.skip("requires the existing qualified local Task40 ABI activation")
 
     import src.runners.task41_p0_contract as task41_contract_module
     from src.geometry.task41_phi90_profile import (
+        TASK41_B0_PRECONDITIONER,
         TASK41_G13_A2_PRECONDITIONER,
-        TASK41_G13_A2_RUN_ID,
     )
     from src.io.physical_intermediate_profile import TASK40_V15_P6_PROFILES
     from src.runners.physical_p4_schur_v14 import _abi_facts
@@ -96,11 +97,21 @@ def test_task41_a2_abi_uses_native_contract_route_and_rejects_local_receipt(
         "abi_receipt_path": str(receipt_path),
         "abi_receipt_sha256": hashlib.sha256(receipt_bytes).hexdigest(),
     }
+    profile_identity = (
+        TASK41_G13_A2_PRECONDITIONER
+        if case_id == "A2"
+        else TASK41_B0_PRECONDITIONER
+    )
+    run_id = (
+        task41_contract_module.TASK41_A2_RUN_ID
+        if case_id == "A2"
+        else task41_contract_module.TASK41_B0_RUN_ID
+    )
     task_contract = {
-        "case": {"run_id": TASK41_G13_A2_RUN_ID},
+        "case": {"run_id": run_id},
         "runtime": runtime,
     }
-    contract_path = tmp_path / "task41_a2_contract_fixture.json"
+    contract_path = tmp_path / f"task41_{case_id.lower()}_contract_fixture.json"
     contract_path.write_text(
         json.dumps(task_contract, sort_keys=True) + "\n", encoding="utf-8"
     )
@@ -120,14 +131,14 @@ def test_task41_a2_abi_uses_native_contract_route_and_rejects_local_receipt(
         task41_contract_module, "require_task41_p0_contract", fixture_contract
     )
     with pytest.raises(RuntimeError, match="contract-bound native_linux runtime"):
-        _abi_facts(profile_identity=TASK41_G13_A2_PRECONDITIONER)
+        _abi_facts(profile_identity=profile_identity)
     assert contract_calls[0][0] == contract_path.resolve()
-    assert contract_calls[0][1]["case_id"] == "A2"
+    assert contract_calls[0][1]["case_id"] == case_id
     assert contract_calls[0][1]["expected_sha256"] == contract_sha256
 
     monkeypatch.setenv("TASK40_V30_STRICT_EXECUTION", "1")
     with pytest.raises(RuntimeError, match="cannot be combined"):
-        _abi_facts(profile_identity=TASK41_G13_A2_PRECONDITIONER)
+        _abi_facts(profile_identity=profile_identity)
     monkeypatch.delenv("TASK40_V30_STRICT_EXECUTION")
     monkeypatch.delenv("TASK41_P0_STRICT_EXECUTION")
 

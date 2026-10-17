@@ -12,6 +12,10 @@ import pytest
 
 from src.common.modes_3d import outgoing_port_modes_3d
 from src.geometry.task41_phi90_profile import (
+    TASK41_B0_CELL_COUNTS,
+    TASK41_B0_GEOMETRY_IDENTITY,
+    TASK41_B0_PRECONDITIONER,
+    TASK41_B0_RUN_ID,
     TASK41_G13_A1_RUN_ID,
     TASK41_G13_X_AXIS_NM,
     TASK41_G13_Y_AXIS_NM,
@@ -43,10 +47,50 @@ from src.solvers.task40_v10_p6_periodic_profile import (
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/task41extra_phi90_p50x50_g17x20/g13_p6_direct_a1.dat"
 A2_INPUT = ROOT / "input/task41extra_phi90_p50x50_g17x20/g13_p6_iterative_a2.dat"
+B0_INPUT = ROOT / "input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat"
 
 
 def _payload():
     return load_and_resolve(INPUT).as_jsonable()
+
+
+def test_task41_b0_resolves_exact_07nm_candidate_without_building_fe_mesh():
+    specification = load_and_resolve(B0_INPUT)
+    payload = specification.as_jsonable()
+    assert task41_payload_errors(payload) == []
+    assert payload["run_id"] == TASK41_B0_RUN_ID
+    assert payload["geometry"]["geometry_identity"] == TASK41_B0_GEOMETRY_IDENTITY
+    assert payload["incidence"]["wavelength_nm"] == 0.7
+    assert payload["materials"]["n_substrate"] == list(
+        TASK41_SI_INDEX_BY_WAVELENGTH_NM[0.7]
+    )
+    assert payload["materials"]["n_grating"] == list(
+        TASK41_SI_INDEX_BY_WAVELENGTH_NM[0.7]
+    )
+    assert payload["discretization"]["mesh_axis_cell_counts"] == list(
+        TASK41_B0_CELL_COUNTS
+    )
+    assert (
+        payload["derived"]["physical_intermediate_profile"]["identity"]
+        == TASK41_B0_PRECONDITIONER
+    )
+
+    cfg = simulation_config_3d_from_normalized(payload)
+    from src.geometry.mesh_builder_3d import stage4_axis_plan
+
+    axis_plan = stage4_axis_plan(cfg, comm_size=1)
+    assert tuple(axis_plan.mesh_cells_resolved) == TASK41_B0_CELL_COUNTS
+    assert axis_plan.material_plane_alignment["all_aligned"] is True
+    np.testing.assert_allclose(np.diff(axis_plan.y_values), 0.25, rtol=0.0, atol=1.0e-12)
+    assert payload["geometry"].get("cell_notch") is None
+    assert payload["geometry"].get("air_void_box_nm") is None
+
+    wrong_wavelength = dict(payload)
+    wrong_wavelength["incidence"] = dict(payload["incidence"], wavelength_nm=13.5)
+    assert any(
+        "incidence.wavelength_nm" in error
+        for error in task41_payload_errors(wrong_wavelength)
+    )
 
 
 def test_task41_g13_resolves_new_physics_mesh_and_mode_inventory():

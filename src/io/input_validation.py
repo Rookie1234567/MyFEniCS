@@ -893,6 +893,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
                 "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
                 "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1",
+                "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1",
             }
             v15_profiles = {
                 "task40extra_v15_p6_y_orbit_b0_reference_v1",
@@ -906,6 +907,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
                 "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
                 "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1",
+                "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1",
             }
             v17_profiles = {
                 "task40extra_v17_p6_y_orbit_b0_reference_v1",
@@ -916,6 +918,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
                 "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
                 "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1",
+                "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1",
             }
             v16_profiles = {
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
@@ -1205,6 +1208,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
                 "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
                 "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1",
+                "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1766,6 +1770,20 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 errors = task41_payload_errors(_jsonable(config))
                 if errors:
                     raise _error("Task41 G13 A2 physical identity", "; ".join(errors))
+            elif preconditioner == "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1":
+                from src.geometry.task41_phi90_profile import (
+                    TASK41_B0_PRECONDITIONER,
+                    TASK41_MODEL_ID,
+                    task41_payload_errors,
+                )
+
+                if config.get("model_id") != TASK41_MODEL_ID:
+                    raise _error("model_id", "Task41 B0 profile requires the registered Task41 model")
+                if preconditioner != TASK41_B0_PRECONDITIONER:
+                    raise _error("solver.preconditioner", "Task41 B0 profile identity is inconsistent")
+                errors = task41_payload_errors(_jsonable(config))
+                if errors:
+                    raise _error("Task41 B0 physical identity", "; ".join(errors))
             elif preconditioner in {
                 "task40extra_v15_p6_y_orbit_b0_reference_v1",
                 "task40extra_v15_p6_y_orbit_gx560_reference_v1",
@@ -2397,6 +2415,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
                 "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
+                "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1",
             }
             if task40_0p7nm:
                 if not isclose(

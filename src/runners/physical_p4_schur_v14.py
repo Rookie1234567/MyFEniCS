@@ -441,13 +441,17 @@ class _V14Runtime:
         if os.environ.get("TASK41_P0_STRICT_EXECUTION") == "1":
             if campaign_path is not None:
                 raise RuntimeError("Task41 P0 worker cannot use a Task40 campaign window")
-            if (
-                self.stage != "TASK41_A2"
-                or self.batch_identity != "task41_p0_a2_g13_a2_p6_reference"
-            ):
-                raise RuntimeError("Task41 P0 fixed-window runtime is restricted to the A2 worker")
+            case_by_stage = {
+                "TASK41_A2": ("A2", "task41_p0_a2_g13_a2_p6_reference"),
+                "TASK41_B0": ("B0", "task41_p0_b0_07nm_p6_reference"),
+            }
+            selected_case = case_by_stage.get(self.stage)
+            if selected_case is None or self.batch_identity != selected_case[1]:
+                raise RuntimeError("Task41 P0 fixed-window runtime requires a registered iterative case")
+            case_id = selected_case[0]
             from src.runners.task41_p0_contract import (
                 TASK41_A2_RUN_ID,
+                TASK41_B0_RUN_ID,
                 load_task41_p0_fixed_window,
                 require_task41_p0_contract,
             )
@@ -462,13 +466,14 @@ class _V14Runtime:
                 current_root=root,
                 check_current_source=True,
                 require_clean_source=True,
-                case_id="A2",
+                case_id=case_id,
             )
+            expected_run_id = TASK41_A2_RUN_ID if case_id == "A2" else TASK41_B0_RUN_ID
             if (
                 task41_contract_sha != os.environ.get("TASK41_P0_CONTRACT_SHA256")
-                or task41_contract["case"].get("run_id") != TASK41_A2_RUN_ID
+                or task41_contract["case"].get("run_id") != expected_run_id
             ):
-                raise RuntimeError("Task41 A2 worker contract identity is incomplete")
+                raise RuntimeError(f"Task41 {case_id} worker contract identity is incomplete")
             window = load_task41_p0_fixed_window(task41_contract, current_root=root)
             if (
                 Path(os.environ.get("TASK41_P0_EXECUTION_WINDOW_PATH", "")).resolve()
@@ -523,7 +528,7 @@ class _V14Runtime:
                 "recovery_id": None,
             }
             self.shared_budget = {
-                "schema": "task41.p0.a2_campaign_worker_view.v1",
+                "schema": f"task41.p0.{case_id.lower()}_campaign_worker_view.v1",
                 "batch_identity": self.batch_identity,
                 "total_budget_seconds": window.total_seconds,
                 "remaining_numerical_seconds_at_worker_entry": remaining,

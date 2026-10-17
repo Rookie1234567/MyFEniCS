@@ -317,6 +317,70 @@ def test_v10_dtn_port_mode_table_requires_paired_top_and_bottom_rows(tmp_path):
     assert incomplete["channel_count_by_side"] == {"top": 2, "bottom": 0}
 
 
+def test_task41_b0_port_table_matches_unequal_frozen_side_keys_and_rejects_omission(
+    tmp_path, monkeypatch
+):
+    import src.solvers.task41_b0_mode_inventory as b0_inventory
+
+    manifest = {
+        "schema": "fullspace-dtn.mode-manifest.v1",
+        "mode_count": 3,
+        "modes": [
+            {"mode_index": 0, "side": "top", "m": 0, "n": 0, "polarization": "s"},
+            {"mode_index": 1, "side": "top", "m": 1, "n": 0, "polarization": "p"},
+            {"mode_index": 2, "side": "bottom", "m": 0, "n": 0, "polarization": "s"},
+        ],
+    }
+    manifest_bytes = json.dumps(
+        manifest, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    monkeypatch.setattr(b0_inventory, "TASK41_B0_MODE_COUNT", 3)
+    monkeypatch.setattr(b0_inventory, "TASK41_B0_MODE_MANIFEST_BYTES", len(manifest_bytes))
+    monkeypatch.setattr(b0_inventory, "TASK41_B0_MODE_MANIFEST_SHA256", manifest_sha256)
+    manifest_path = tmp_path / "task41_b0_mode_manifest.json"
+    manifest_path.write_bytes(manifest_bytes)
+    expected = output_checker._task41_b0_expected_mode_keys_by_side(tmp_path)
+    assert {side: len(keys) for side, keys in expected.items()} == {
+        "top": 2,
+        "bottom": 1,
+    }
+
+    table = tmp_path / "dtn_port_diffraction_orders_3d.csv"
+
+    def write_rows(rows):
+        with table.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(
+                stream, fieldnames=("side", "m", "n", "polarization")
+            )
+            writer.writeheader()
+            writer.writerows(rows)
+
+    rows = [
+        {"side": "top", "m": 0, "n": 0, "polarization": "s"},
+        {"side": "top", "m": 1, "n": 0, "polarization": "p"},
+        {"side": "bottom", "m": 0, "n": 0, "polarization": "s"},
+    ]
+    write_rows(rows)
+    result = verify_v10_dtn_port_mode_table(
+        table,
+        expected_channel_count=3,
+        expected_mode_keys_by_side=expected,
+    )
+    assert result["passed"]
+    assert result["identity_check"] == "exact_frozen_mode_keys_by_side"
+    assert result["expected_mode_count_by_side"] == {"top": 2, "bottom": 1}
+
+    write_rows(rows[:-1])
+    missing = verify_v10_dtn_port_mode_table(
+        table,
+        expected_channel_count=3,
+        expected_mode_keys_by_side=expected,
+    )
+    assert not missing["passed"]
+    assert missing["missing_mode_count_by_side"] == {"top": 0, "bottom": 1}
+
+
 def test_nested_checkpoint_packet_creates_parent_and_roundtrips(tmp_path):
     runtime = SimpleNamespace(directory=tmp_path, markers=[])
     runtime.marker = lambda name, facts: runtime.markers.append((name, facts))

@@ -14,6 +14,7 @@ from uuid import uuid4
 
 import pytest
 
+from src.geometry.task41_phi90_profile import TASK41_B0_GEOMETRY_IDENTITY
 from src.runners.task40_v10_campaign import _utc_ns
 from src.runners.workflow_timebase import clock_sample
 from src.runners.task41_p0_contract import (
@@ -23,6 +24,12 @@ from src.runners.task41_p0_contract import (
     TASK41_A2_INPUT_RELATIVE,
     TASK41_A2_RUN_ID,
     TASK41_A2_WINDOW_RELATIVE,
+    TASK41_B0_BOOTSTRAP_TREATMENT,
+    TASK41_B0_COMPARISON_GROUP,
+    TASK41_B0_PRECONDITIONER,
+    TASK41_B0_T0_BASIS,
+    TASK41_B0_T0_SOURCE_SHA,
+    TASK41_B0_T0_UTC,
     TASK41_BRANCH,
     TASK41_CLOSEOUT_SECONDS,
     TASK41_HOST_RESERVE_BYTES,
@@ -54,7 +61,11 @@ def _write_contract(root: Path, case_id: str = "A1") -> tuple[Path, dict]:
     case_spec = contract_module._task41_case(case_id)
     input_path = root / case_spec["input_relative"]
     input_path.parent.mkdir(parents=True, exist_ok=True)
-    input_path.write_bytes(f"fixed Task41 {case_id} contract test DAT\n".encode())
+    if case_id == "B0":
+        repository_input = Path(__file__).resolve().parents[2] / case_spec["input_relative"]
+        shutil.copyfile(repository_input, input_path)
+    else:
+        input_path.write_bytes(f"fixed Task41 {case_id} contract test DAT\n".encode())
     runtime = root / "qualified-runtime"
     (runtime / "bin").mkdir(parents=True)
     python_path = runtime / "bin/python"
@@ -67,14 +78,14 @@ def _write_contract(root: Path, case_id: str = "A1") -> tuple[Path, dict]:
     controller_root = root / case_spec["controller_relative"]
     controller_root.mkdir(parents=True, exist_ok=True)
     current = clock_sample(include_boot_id=True)
-    t0_ns = current["utc_ns"]
-    entry_source = "b" * 40
+    t0_ns = _utc_ns(TASK41_B0_T0_UTC) if case_id == "B0" else current["utc_ns"]
+    entry_source = TASK41_B0_T0_SOURCE_SHA if case_id == "B0" else "b" * 40
     accounting = controller_root / "campaign_accounting_v10.jsonl"
     window_payload = {
         "schema": TASK41_P0_WINDOW_SCHEMA,
         "task_id": TASK41_MODEL_ID,
         "source_sha": entry_source,
-        "t0_utc": _utc_z(t0_ns),
+        "t0_utc": TASK41_B0_T0_UTC if case_id == "B0" else _utc_z(t0_ns),
         "numerical_deadline_utc": _utc_z(
             t0_ns + int(TASK41_NUMERICAL_SECONDS * 1_000_000_000)
         ),
@@ -85,6 +96,18 @@ def _write_contract(root: Path, case_id: str = "A1") -> tuple[Path, dict]:
         "anchor": current,
         "accounting_path": str(accounting.resolve()),
     }
+    if case_id == "B0":
+        window_payload.update(
+            {
+                "t0_basis": TASK41_B0_T0_BASIS,
+                "bootstrap_utc_elapsed_seconds": (
+                    int(current["utc_ns"]) - t0_ns
+                )
+                / 1e9,
+                "bootstrap_boottime_elapsed_seconds": None,
+                "bootstrap_time_treatment": TASK41_B0_BOOTSTRAP_TREATMENT,
+            }
+        )
     window_path = root / case_spec["window_relative"]
     window_path.parent.mkdir(parents=True, exist_ok=True)
     window_path.write_text(
@@ -137,6 +160,15 @@ def _write_contract(root: Path, case_id: str = "A1") -> tuple[Path, dict]:
             ),
         },
     }
+    if case_id == "B0":
+        contract["case"].update(
+            {
+                "profile_identity": TASK41_B0_PRECONDITIONER,
+                "solver_stage": "TASK41_B0",
+                "comparison_group": TASK41_B0_COMPARISON_GROUP,
+                "geometry_identity": TASK41_B0_GEOMETRY_IDENTITY,
+            }
+        )
     contract_path = root / contract_relative_path("c" * 40, case_id)
     contract_path.write_text(
         json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
@@ -786,7 +818,7 @@ def test_task41_a2_contract_rejects_missing_binding_or_fabricated_mpc_hash(tmp_p
         require_task41_p0_contract(contract_path, current_root=tmp_path)
 
 
-@pytest.mark.parametrize("case_id", ["A1", "A2"])
+@pytest.mark.parametrize("case_id", ["A1", "A2", "B0"])
 def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
     tmp_path, monkeypatch, case_id
 ):
@@ -825,7 +857,7 @@ def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
     manifest_path = run_root / "run_manifest.json"
     numerical_summary_path = (
         run_root / "task40_v10_p6_candidate_summary.json"
-        if case_id == "A2"
+        if case_id in {"A2", "B0"}
         else numerical_directory / "run_summary.json"
     )
     for path in (summary_path, manifest_path, numerical_summary_path):
@@ -860,11 +892,7 @@ def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
         numerical_summary_path.resolve(),
     ]
     source_sha = contract["source"]["sha"]
-    checker_kind = (
-        "task41_p0_a2_independent_p6_iterative_checker"
-        if case_id == "A2"
-        else "task41_p0_independent_full_a6_checker"
-    )
+    checker_kind = contract_module.task41_p0_checker_kind_for_case(case_id)
     authorization = {
         "schema": "task41.p0.closeout_checker_authorization.v1",
         "phase": "closeout",
@@ -936,28 +964,39 @@ def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
         )
 
 
-def test_task41_a2_worker_runtime_uses_service_window_and_strict_resource_view(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize("case_id", ("A2", "B0"))
+def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
+    case_id, tmp_path, monkeypatch
 ):
     import src.runners.task41_p0_contract as contract_module
-    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.geometry.task41_phi90_profile import (
+        TASK41_B0_PRECONDITIONER,
+        TASK41_G13_A2_PRECONDITIONER,
+    )
     from src.io.execution_plan import resolved_config_bytes
     from src.io.input_validation import load_and_resolve
     from src.io.physical_intermediate_profile import profile_facts
     from src.runners.physical_p4_schur_v14 import _V14Runtime
     from src.runners.task40_v10_worker import (
         _candidate_contract,
-        _task41_a2_runtime_configuration,
+        _task41_p0_runtime_configuration,
     )
 
     repo_root = Path(__file__).resolve().parents[2]
+    case_spec = contract_module._task41_case(case_id)
+    profile_identity = (
+        TASK41_G13_A2_PRECONDITIONER
+        if case_id == "A2"
+        else TASK41_B0_PRECONDITIONER
+    )
     source_sha = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=repo_root, check=True,
         capture_output=True, text=True,
     ).stdout.strip()
-    contract_path, task_contract = _write_contract(tmp_path, case_id="A2")
-    actual_input = repo_root / TASK41_A2_INPUT_RELATIVE
-    fixture_input = tmp_path / TASK41_A2_INPUT_RELATIVE
+    contract_path, task_contract = _write_contract(tmp_path, case_id=case_id)
+    input_relative = Path(case_spec["input_relative"])
+    actual_input = repo_root / input_relative
+    fixture_input = tmp_path / input_relative
     fixture_input.parent.mkdir(parents=True, exist_ok=True)
     fixture_input.write_bytes(actual_input.read_bytes())
     specification = load_and_resolve(fixture_input)
@@ -974,20 +1013,20 @@ def test_task41_a2_worker_runtime_uses_service_window_and_strict_resource_view(
             "mpi_size": specification.execution["mpi_size"],
         }
     )
-    from src.runners.task41_p0_contract import TASK41_A2_SERVICE_RELATIVE
-
     task_contract["evidence"]["service_directory"] = str(
-        TASK41_A2_SERVICE_RELATIVE / f"service_source_{source_sha}"
+        case_spec["service_relative"] / f"service_source_{source_sha}"
     )
-    binding_path = tmp_path / TASK41_A1_COMPARISON_BINDING_RELATIVE
-    binding_path.parent.mkdir(parents=True, exist_ok=True)
-    binding_path.write_text("{}\n", encoding="utf-8")
-    binding_sha = hashlib.sha256(binding_path.read_bytes()).hexdigest()
-    task_contract["comparison"] = {
-        "a1_binding_path": str(TASK41_A1_COMPARISON_BINDING_RELATIVE),
-        "a1_binding_sha256": binding_sha,
-        "same_discrete_comparison_ready": False,
-    }
+    binding_sha = None
+    if case_id == "A2":
+        binding_path = tmp_path / TASK41_A1_COMPARISON_BINDING_RELATIVE
+        binding_path.parent.mkdir(parents=True, exist_ok=True)
+        binding_path.write_text("{}\n", encoding="utf-8")
+        binding_sha = hashlib.sha256(binding_path.read_bytes()).hexdigest()
+        task_contract["comparison"] = {
+            "a1_binding_path": str(TASK41_A1_COMPARISON_BINDING_RELATIVE),
+            "a1_binding_sha256": binding_sha,
+            "same_discrete_comparison_ready": False,
+        }
 
     def fake_git(_root, *args):
         return {
@@ -997,20 +1036,21 @@ def test_task41_a2_worker_runtime_uses_service_window_and_strict_resource_view(
         }[tuple(args)]
 
     monkeypatch.setattr(contract_module, "_git", fake_git)
-    monkeypatch.setattr(
-        contract_module,
-        "require_task41_a1_comparison_binding",
-        lambda *_args, **_kwargs: (
-            {
-                "a1": {
-                    "physical_model_sha256": specification.physical_model_sha256,
-                    "discrete_identity": {"same_discrete_comparison_ready": False},
-                }
-            },
-            binding_sha,
-        ),
-    )
-    contract_path = tmp_path / contract_relative_path(source_sha, "A2")
+    if case_id == "A2":
+        monkeypatch.setattr(
+            contract_module,
+            "require_task41_a1_comparison_binding",
+            lambda *_args, **_kwargs: (
+                {
+                    "a1": {
+                        "physical_model_sha256": specification.physical_model_sha256,
+                        "discrete_identity": {"same_discrete_comparison_ready": False},
+                    }
+                },
+                binding_sha,
+            ),
+        )
+    contract_path = tmp_path / contract_relative_path(source_sha, case_id)
     contract_path.parent.mkdir(parents=True, exist_ok=True)
     contract_path.write_text(
         json.dumps(task_contract, sort_keys=True, separators=(",", ":")) + "\n",
@@ -1042,36 +1082,55 @@ def test_task41_a2_worker_runtime_uses_service_window_and_strict_resource_view(
         contract_path,
         expected_sha256=contract_sha,
         current_root=tmp_path,
-        case_id="A2",
+        case_id=case_id,
     )
     window = load_task41_p0_fixed_window(loaded_contract, current_root=tmp_path)
     window.observe(label="test_service_worker_entry")
 
-    profile_contract = profile_facts(TASK41_G13_A2_PRECONDITIONER)
-    runtime_contract, resource_overrides = _task41_a2_runtime_configuration(
-        profile_contract
+    profile_contract = profile_facts(profile_identity)
+    runtime_contract, resource_overrides = _task41_p0_runtime_configuration(
+        profile_contract, case_id=case_id
+    )
+    batch_identity = (
+        "task41_p0_a2_g13_a2_p6_reference"
+        if case_id == "A2"
+        else "task41_p0_b0_07nm_p6_reference"
     )
     runtime = _V14Runtime(
         tmp_path / "runtime",
-        "TASK41_A2",
+        case_spec["solver_stage"],
         runtime_contract,
         root=tmp_path,
         source_sha=source_sha,
-        batch_identity="task41_p0_a2_g13_a2_p6_reference",
+        batch_identity=batch_identity,
         evidence_prefix="task41_runtime_fixture",
         require_zero_swap=True,
         **resource_overrides,
     )
+    task41_contract_binding = None
+    if case_id == "B0":
+        from src.runners.task038_full3d_iterative import _task41_b0_dispatch_binding
+
+        task41_contract_binding = _task41_b0_dispatch_binding(
+            specification.as_jsonable(),
+            source_sha=source_sha,
+            current_root=tmp_path,
+        )
     candidate = _candidate_contract(
         specification.as_jsonable(),
         profile_contract,
         runtime,
-        profile_identity=TASK41_G13_A2_PRECONDITIONER,
+        profile_identity=profile_identity,
         task41_source_sha=source_sha,
+        task41_contract_binding=task41_contract_binding,
         current_root=tmp_path,
     )
 
     assert all(candidate["checks"].values())
+    assert candidate["case_id"] == case_id
+    assert candidate["run_id"] == case_spec["run_id"]
+    assert runtime.stage == case_spec["solver_stage"]
+    assert runtime.batch_identity == batch_identity
     assert candidate["worker_reserved_seconds"] > 0.0
     assert runtime._ledger_path is None
     assert runtime.fixed_process_tree_cap_bytes == TASK41_TASK_MEMORY_MAX_BYTES
@@ -1079,3 +1138,16 @@ def test_task41_a2_worker_runtime_uses_service_window_and_strict_resource_view(
     assert runtime.task_cgroup_reserve_bytes_override == 0
     assert runtime.require_cgroup_memory_details is True
     assert runtime.require_zero_swap is True
+    assert runtime_contract["resources"]["process_tree_rss_cap_bytes"] == TASK41_TASK_MEMORY_MAX_BYTES
+    assert runtime_contract["resources"]["host_reserve_bytes"] == TASK41_HOST_RESERVE_BYTES
+    assert runtime_contract["resources"]["memory_swap_max_bytes"] == 0
+    assert candidate["campaign_window_path"] == str(window.path)
+    assert candidate["campaign_window_sha256"] == window.sha256
+    if case_id == "B0":
+        window_payload = json.loads(window.path.read_text(encoding="utf-8"))
+        assert window_payload["t0_basis"] == TASK41_B0_T0_BASIS
+        assert window_payload["t0_utc"] == TASK41_B0_T0_UTC
+        assert window_payload["bootstrap_time_treatment"] == TASK41_B0_BOOTSTRAP_TREATMENT
+        assert window_payload["bootstrap_utc_elapsed_seconds"] >= 0.0
+        assert candidate["checks"]["explicit_dispatch_contract_binding"]
+        assert candidate["checks"]["no_a1_or_a2_comparison_binding"]

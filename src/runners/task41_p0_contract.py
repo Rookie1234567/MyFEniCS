@@ -24,6 +24,12 @@ TASK41_BRANCH = "task41extra_phi90_p50x50_g17x20"
 TASK41_MODEL_ID = "task41extra_phi90_p50x50_g17x20"
 TASK41_RUN_ID = "task41extra_g13_p6_phi90_direct_a1"
 TASK41_A2_RUN_ID = "task41extra_g13_p6_phi90_iterative_a2"
+TASK41_B0_RUN_ID = "task41extra_b0_p6_phi90_07nm_iterative"
+TASK41_P0_CHECKER_KIND_BY_CASE = {
+    "A1": "task41_p0_independent_full_a6_checker",
+    "A2": "task41_p0_a2_independent_p6_iterative_checker",
+    "B0": "task41_p0_b0_independent_iterative_checker",
+}
 TASK41_CONTROLLER_RELATIVE = Path(
     "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_controller"
 )
@@ -53,6 +59,41 @@ TASK41_A1_SERVICE_RELATIVE = Path(
 )
 TASK41_A2_SERVICE_RELATIVE = Path(
     "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_a2"
+)
+TASK41_B0_CONTROLLER_RELATIVE = Path(
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller"
+)
+TASK41_B0_WINDOW_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "execution_window.json"
+)
+TASK41_B0_INPUT_RELATIVE = Path(
+    "input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat"
+)
+TASK41_B0_PRECONDITIONER = "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1"
+TASK41_B0_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_b0_07nm"
+TASK41_B0_SERVICE_RELATIVE = Path(
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0"
+)
+# The exact B0 preparation start is unknown. This earlier A2 documentation
+# commit is used as a conservative lower-bound T0, so its UTC interval is
+# charged without claiming that B0 was frozen at that commit. The live
+# monotonic/boottime clocks were not sampled then.
+TASK41_B0_T0_UTC = "2026-10-17T05:43:44Z"
+TASK41_B0_T0_SOURCE_SHA = "0bf0dc38eab2cf61ca9feb5115323f78c68e6576"
+TASK41_B0_T0_BASIS = {
+    "kind": "conservative_earlier_source_commit_utc_lower_bound",
+    "source_sha": TASK41_B0_T0_SOURCE_SHA,
+    "source_commit_utc": TASK41_B0_T0_UTC,
+    "pre_anchor_monotonic_elapsed": "UNKNOWN",
+    "pre_anchor_boottime_elapsed": "UNKNOWN",
+}
+TASK41_B0_BOOTSTRAP_TREATMENT = (
+    "Exact B0 preparation start is unknown; charge anchor.utc_ns minus the earlier "
+    "A2 documentation commit used as conservative lower-bound T0 once as UTC bootstrap; "
+    "this does not claim B0 was frozen at that commit; "
+    "pre-anchor monotonic and boottime elapsed are unknown; subsequent intervals "
+    "use CampaignAccount checked UTC/monotonic accounting. Do not add the 11.9 s "
+    "inventory wall duration a second time."
 )
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
@@ -457,6 +498,11 @@ def _task41_case(case_id: str) -> dict[str, Any]:
             "service_relative": TASK41_A1_SERVICE_RELATIVE,
         }
     if case_id == "A2":
+        from src.geometry.task41_phi90_profile import (
+            TASK41_G13_A2_PRECONDITIONER,
+            TASK41_COMPARISON_GROUP,
+        )
+
         return {
             "case_id": "A2",
             "run_id": TASK41_A2_RUN_ID,
@@ -465,8 +511,24 @@ def _task41_case(case_id: str) -> dict[str, Any]:
             "window_relative": TASK41_A2_WINDOW_RELATIVE,
             "method": "full3d_iterative",
             "service_relative": TASK41_A2_SERVICE_RELATIVE,
+            "profile_identity": TASK41_G13_A2_PRECONDITIONER,
+            "comparison_group": TASK41_COMPARISON_GROUP,
+            "solver_stage": "TASK41_A2",
         }
-    raise Task41ContractError("Task41 P0 case id must be A1 or A2")
+    if case_id == "B0":
+        return {
+            "case_id": "B0",
+            "run_id": TASK41_B0_RUN_ID,
+            "input_relative": TASK41_B0_INPUT_RELATIVE,
+            "controller_relative": TASK41_B0_CONTROLLER_RELATIVE,
+            "window_relative": TASK41_B0_WINDOW_RELATIVE,
+            "method": "full3d_iterative",
+            "service_relative": TASK41_B0_SERVICE_RELATIVE,
+            "profile_identity": TASK41_B0_PRECONDITIONER,
+            "comparison_group": TASK41_B0_COMPARISON_GROUP,
+            "solver_stage": "TASK41_B0",
+        }
+    raise Task41ContractError("Task41 P0 case id must be A1, A2, or B0")
 
 
 def task41_case_id_for_run_id(run_id: str) -> str:
@@ -474,7 +536,17 @@ def task41_case_id_for_run_id(run_id: str) -> str:
         return "A1"
     if run_id == TASK41_A2_RUN_ID:
         return "A2"
+    if run_id == TASK41_B0_RUN_ID:
+        return "B0"
     raise Task41ContractError("Task41 run id is not registered for P0")
+
+
+def task41_p0_checker_kind_for_case(case_id: str) -> str:
+    """Return the independently audited checker identity for a P0 case."""
+    try:
+        return TASK41_P0_CHECKER_KIND_BY_CASE[case_id]
+    except KeyError as exc:
+        raise Task41ContractError("Task41 checker case id is not registered for P0") from exc
 
 
 def _is_sha256(value: Any) -> bool:
@@ -703,6 +775,8 @@ def require_task41_p0_contract(
     if case_id is None:
         if relative.parent == TASK41_A2_CONTROLLER_RELATIVE:
             case_id = "A2"
+        elif relative.parent == TASK41_B0_CONTROLLER_RELATIVE:
+            case_id = "B0"
         elif relative.parent == TASK41_CONTROLLER_RELATIVE:
             case_id = "A1"
         else:
@@ -759,7 +833,19 @@ def require_task41_p0_contract(
         or case.get("method") != case_spec["method"]
         or case.get("mpi_size") != 1
     ):
-        raise Task41ContractError("Task41 contract does not bind the registered G13 direct input")
+        raise Task41ContractError("Task41 contract does not bind its registered P0 input")
+    if case_id == "B0":
+        from src.geometry.task41_phi90_profile import (
+            TASK41_B0_GEOMETRY_IDENTITY,
+        )
+
+        if (
+            case.get("profile_identity") != case_spec["profile_identity"]
+            or case.get("solver_stage") != case_spec["solver_stage"]
+            or case.get("comparison_group") != case_spec["comparison_group"]
+            or case.get("geometry_identity") != TASK41_B0_GEOMETRY_IDENTITY
+        ):
+            raise Task41ContractError("Task41 B0 contract profile or physical identity differs")
 
     for key in ("runtime_prefix", "abi_receipt_path", "jit_cache"):
         if not _resolve(root, runtime.get(key), f"runtime.{key}").exists():
@@ -857,6 +943,14 @@ def load_task41_p0_fixed_window(
         "deadline_utc", "total_seconds", "numerical_seconds", "closeout_seconds",
         "anchor", "accounting_path",
     }
+    is_b0 = case_spec["case_id"] == "B0"
+    if is_b0:
+        expected_fields |= {
+            "t0_basis",
+            "bootstrap_utc_elapsed_seconds",
+            "bootstrap_boottime_elapsed_seconds",
+            "bootstrap_time_treatment",
+        }
     if not isinstance(payload, dict) or set(payload) != expected_fields:
         raise Task41ContractError("Task41 fixed execution window has an open or incomplete schema")
     if (
@@ -881,13 +975,29 @@ def load_task41_p0_fixed_window(
     except ValueError as exc:
         raise Task41ContractError(f"Task41 execution window UTC value is invalid: {exc}") from exc
     if (
-        anchor["utc_ns"] != t0_ns
+        (anchor["utc_ns"] < t0_ns if is_b0 else anchor["utc_ns"] != t0_ns)
         or numerical_deadline_ns != t0_ns + int(TASK41_NUMERICAL_SECONDS * 1e9)
         or deadline_ns != t0_ns + int(TASK41_TOTAL_SECONDS * 1e9)
         or not isinstance(anchor["boot_id"], str)
         or not anchor["boot_id"]
     ):
         raise Task41ContractError("Task41 execution window timestamps are inconsistent")
+    bootstrap_seconds = 0.0
+    if is_b0:
+        expected_t0_ns = _utc_ns(TASK41_B0_T0_UTC)
+        bootstrap_utc = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
+        if (
+            payload.get("t0_utc") != TASK41_B0_T0_UTC
+            or t0_ns != expected_t0_ns
+            or payload.get("t0_basis") != TASK41_B0_T0_BASIS
+            or payload.get("bootstrap_boottime_elapsed_seconds") is not None
+            or not isinstance(payload.get("bootstrap_utc_elapsed_seconds"), (int, float))
+            or isinstance(payload.get("bootstrap_utc_elapsed_seconds"), bool)
+            or abs(float(payload["bootstrap_utc_elapsed_seconds"]) - bootstrap_utc) > 1e-6
+            or payload.get("bootstrap_time_treatment") != TASK41_B0_BOOTSTRAP_TREATMENT
+        ):
+            raise Task41ContractError("Task41 B0 fixed T0 basis or UTC bootstrap debit changed")
+        bootstrap_seconds = bootstrap_utc
     if require_current_boot:
         current = clock_sample(include_boot_id=True)
         if current["boot_id"] != anchor["boot_id"]:
@@ -905,7 +1015,7 @@ def load_task41_p0_fixed_window(
         t0_utc_ns=t0_ns,
         deadline_utc_ns=deadline_ns,
         total_seconds=TASK41_TOTAL_SECONDS,
-        bootstrap_seconds=0.0,
+        bootstrap_seconds=bootstrap_seconds,
         closeout_seconds=TASK41_CLOSEOUT_SECONDS,
     )
 
@@ -992,7 +1102,13 @@ def prepare_task41_p0(
     window_path = (root / case_spec["window_relative"]).resolve()
     if not window_path.exists():
         anchor = clock_sample(include_boot_id=True)
-        t0_ns = int(anchor["utc_ns"])
+        t0_ns = (
+            _utc_ns(TASK41_B0_T0_UTC)
+            if case_id == "B0"
+            else int(anchor["utc_ns"])
+        )
+        if int(anchor["utc_ns"]) < t0_ns:
+            raise Task41ContractError("Task41 B0 first clock anchor precedes its fixed T0 basis")
         window_payload = {
             "schema": TASK41_P0_WINDOW_SCHEMA,
             "task_id": TASK41_MODEL_ID,
@@ -1012,6 +1128,18 @@ def prepare_task41_p0(
                 (root / case_spec["controller_relative"] / "campaign_accounting_v10.jsonl").resolve()
             ),
         }
+        if case_id == "B0":
+            window_payload.update(
+                {
+                    "t0_basis": TASK41_B0_T0_BASIS,
+                    "bootstrap_utc_elapsed_seconds": (
+                        int(anchor["utc_ns"]) - t0_ns
+                    )
+                    / 1e9,
+                    "bootstrap_boottime_elapsed_seconds": None,
+                    "bootstrap_time_treatment": TASK41_B0_BOOTSTRAP_TREATMENT,
+                }
+            )
         _write_json_no_replace(window_path, window_payload)
 
     window, window_sha, window_payload = _task41_window_for_contract(root, case_id)
@@ -1052,6 +1180,17 @@ def prepare_task41_p0(
         "method": specification.method.get("kind"),
         "mpi_size": specification.execution.get("mpi_size"),
     }
+    if case_id == "B0":
+        from src.geometry.task41_phi90_profile import TASK41_B0_GEOMETRY_IDENTITY
+
+        case.update(
+            {
+                "profile_identity": case_spec["profile_identity"],
+                "solver_stage": case_spec["solver_stage"],
+                "comparison_group": case_spec["comparison_group"],
+                "geometry_identity": TASK41_B0_GEOMETRY_IDENTITY,
+            }
+        )
     validate_task41_specification(specification, input_path, {"case": case}, current_root=root)
 
     comparison = None
@@ -1182,6 +1321,22 @@ def validate_task41_specification(
         or resolved_sha != case["resolved_config_sha256"]
     ):
         raise Task41ContractError("resolved Task41 input differs from the frozen P0 contract")
+    if case.get("run_id") == TASK41_B0_RUN_ID:
+        from src.geometry.task41_phi90_profile import TASK41_B0_GEOMETRY_IDENTITY
+
+        payload = specification.as_jsonable()
+        profile = payload.get("derived", {}).get("physical_intermediate_profile", {})
+        if (
+            case.get("profile_identity") != TASK41_B0_PRECONDITIONER
+            or case.get("solver_stage") != "TASK41_B0"
+            or case.get("comparison_group") != TASK41_B0_COMPARISON_GROUP
+            or case.get("geometry_identity") != TASK41_B0_GEOMETRY_IDENTITY
+            or profile.get("identity") != TASK41_B0_PRECONDITIONER
+            or case.get("comparison") is not None
+        ):
+            raise Task41ContractError(
+                "resolved Task41 B0 input differs from its registered profile or has a comparison binding"
+            )
 
 
 def launcher_values(
@@ -1326,7 +1481,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runtime-prefix", type=Path)
     parser.add_argument("--abi-receipt", type=Path)
     parser.add_argument("--jit-cache", type=Path)
-    parser.add_argument("--case", choices=("A1", "A2"), default="A1")
+    parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")
     parser.add_argument("--a2-q-csr-manifest", action="append", type=Path)
     args = parser.parse_args(argv)
     if args.launcher_values:

@@ -28,6 +28,94 @@ def _task40_worker_batch_identity(resolved_payload: Mapping[str, Any]) -> str:
     return run_id
 
 
+def _task41_b0_dispatch_binding(
+    resolved_payload: Mapping[str, Any],
+    *,
+    source_sha: str,
+    current_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Bind the B0 dispatcher handoff to its current-source contract and window."""
+    from src.geometry.task41_phi90_profile import task41_payload_errors
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_COMPARISON_GROUP,
+        TASK41_B0_PRECONDITIONER,
+        TASK41_B0_RUN_ID,
+        load_task41_p0_fixed_window,
+        require_task41_p0_contract,
+    )
+
+    root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    if not isinstance(source_sha, str) or len(source_sha) != 40:
+        raise ValueError("Task41 B0 dispatcher requires the complete frozen source SHA")
+    errors = task41_payload_errors(resolved_payload)
+    if errors:
+        raise ValueError("Task41 B0 dispatcher rejected input: " + "; ".join(errors))
+    solver = resolved_payload.get("solver", {})
+    derived = resolved_payload.get("derived", {})
+    profile = derived.get("physical_intermediate_profile", {}) if isinstance(derived, Mapping) else {}
+    if (
+        resolved_payload.get("run_id") != TASK41_B0_RUN_ID
+        or resolved_payload.get("comparison_group") != TASK41_B0_COMPARISON_GROUP
+        or not isinstance(solver, Mapping)
+        or solver.get("stage") != "TASK41_B0"
+        or solver.get("preconditioner") != TASK41_B0_PRECONDITIONER
+        or not isinstance(profile, Mapping)
+        or profile.get("identity") != TASK41_B0_PRECONDITIONER
+    ):
+        raise ValueError("Task41 B0 dispatcher requires its exact run, stage, profile, and group")
+    contract_path_value = os.environ.get("TASK41_P0_CONTRACT_PATH", "")
+    if not contract_path_value:
+        raise RuntimeError("Task41 B0 dispatcher requires the frozen P0 contract path")
+    contract_path = Path(contract_path_value)
+    if not contract_path.is_absolute():
+        contract_path = root / contract_path
+    contract, contract_sha256 = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
+        current_root=root,
+        check_current_source=True,
+        require_clean_source=True,
+        case_id="B0",
+    )
+    if contract["source"]["sha"] != source_sha:
+        raise ValueError("Task41 B0 dispatcher source SHA differs from the fixed contract")
+    case = contract["case"]
+    if (
+        case.get("profile_identity") != TASK41_B0_PRECONDITIONER
+        or case.get("solver_stage") != "TASK41_B0"
+        or case.get("comparison_group") != TASK41_B0_COMPARISON_GROUP
+        or contract.get("comparison") is not None
+        or contract.get("q_csr_reuse") is not None
+    ):
+        raise ValueError("Task41 B0 dispatcher contract has an invalid profile or donor binding")
+    window = load_task41_p0_fixed_window(contract, current_root=root)
+    if (
+        os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1"
+        or Path(os.environ.get("TASK41_P0_EXECUTION_WINDOW_PATH", "")).resolve()
+        != window.path.resolve()
+        or os.environ.get("TASK41_P0_EXECUTION_WINDOW_SHA256") != window.sha256
+    ):
+        raise RuntimeError("Task41 B0 dispatcher fixed window differs from its service environment")
+    return {
+        "schema": "task41.p0.dispatch_binding.v1",
+        "case_id": "B0",
+        "run_id": TASK41_B0_RUN_ID,
+        "contract_path": str(contract_path.resolve()),
+        "contract_sha256": contract_sha256,
+        "source_sha": source_sha,
+        "input_sha256": case["input_sha256"],
+        "physical_model_sha256": case["physical_model_sha256"],
+        "resolved_config_sha256": case["resolved_config_sha256"],
+        "profile_identity": TASK41_B0_PRECONDITIONER,
+        "solver_stage": "TASK41_B0",
+        "comparison_group": TASK41_B0_COMPARISON_GROUP,
+        "geometry_identity": case["geometry_identity"],
+        "window_path": str(window.path.resolve()),
+        "window_sha256": window.sha256,
+        "comparison_binding": None,
+    }
+
+
 def run_full3d_iterative(
     resolved_payload: Mapping[str, Any],
     run_directory: str | Path,
@@ -41,6 +129,57 @@ def run_full3d_iterative(
     solver = resolved_payload.get("solver", {})
     stage = str(solver.get("stage", ""))
     profile = str(solver.get("preconditioner", ""))
+    if profile == "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1":
+        from src.geometry.task40_nonseparable_plan import (
+            TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+            TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+            TASK40_V15_REFERENCE_PC_STRATEGY,
+        )
+        from src.geometry.task41_phi90_profile import (
+            TASK41_B0_COMPARISON_GROUP,
+            TASK41_B0_PRECONDITIONER,
+            TASK41_B0_RUN_ID,
+        )
+
+        execution = resolved_payload.get("execution", {})
+        derived = resolved_payload.get("derived", {})
+        identity = (
+            derived.get("physical_intermediate_profile", {})
+            if isinstance(derived, Mapping)
+            else {}
+        )
+        if (
+            resolved_payload.get("run_id") != TASK41_B0_RUN_ID
+            or resolved_payload.get("comparison_group") != TASK41_B0_COMPARISON_GROUP
+            or not isinstance(solver, Mapping)
+            or solver.get("preconditioner") != TASK41_B0_PRECONDITIONER
+            or solver.get("task40_reference_pc_strategy") != TASK40_V15_REFERENCE_PC_STRATEGY
+            or solver.get("task40_q_assembly_strategy") != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            or solver.get("task40_factor_lifecycle_strategy")
+            != TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+            or stage != "TASK41_B0"
+            or not isinstance(identity, Mapping)
+            or identity.get("identity") != TASK41_B0_PRECONDITIONER
+            or not isinstance(execution, Mapping)
+        ):
+            raise ValueError("Task41 B0 dispatcher requires its exact run, profile, and all-q route")
+        source_sha = _kwargs.get("source_sha")
+        if not isinstance(source_sha, str) or len(source_sha) != 40:
+            raise ValueError("Task41 B0 dispatcher requires the complete source SHA")
+        contract_binding = _task41_b0_dispatch_binding(
+            resolved_payload,
+            source_sha=source_sha,
+        )
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=source_sha,
+            profile_identity=TASK41_B0_PRECONDITIONER,
+            share_transform_bank=True,
+            task41_contract_binding=contract_binding,
+        )
     if profile == "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1":
         from src.geometry.task40_nonseparable_plan import (
             TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,

@@ -245,6 +245,7 @@ def _validate_campaign_closeout_authorization(
     elif checker_kind in {
         'task41_p0_independent_full_a6_checker',
         'task41_p0_a2_independent_p6_iterative_checker',
+        'task41_p0_b0_independent_iterative_checker',
         'task41_p0_saved_output_continuation_checker',
     }:
         if contract_version != 41:
@@ -309,6 +310,7 @@ def _validate_campaign_closeout_authorization(
         else:
             from src.runners.task41_p0_contract import (
                 task41_case_id_for_run_id,
+                task41_p0_checker_kind_for_case,
             )
 
             case = contract.get('case')
@@ -318,11 +320,7 @@ def _validate_campaign_closeout_authorization(
                 case_id = task41_case_id_for_run_id(str(case.get('run_id', '')))
             except ValueError as exc:
                 raise ValueError('Task41 checker contract case is not registered') from exc
-            expected_checker_kind = (
-                'task41_p0_a2_independent_p6_iterative_checker'
-                if case_id == 'A2'
-                else 'task41_p0_independent_full_a6_checker'
-            )
+            expected_checker_kind = task41_p0_checker_kind_for_case(case_id)
             if checker_kind != expected_checker_kind:
                 raise ValueError('closeout command is not the registered Task41 checker for its contract case')
             if (
@@ -362,7 +360,7 @@ def _validate_campaign_closeout_authorization(
                 raise ValueError('Task41 checker command paths do not match the registered contract case')
             numerical_summary = (
                 manifest_root / 'task40_v10_p6_candidate_summary.json'
-                if case_id == 'A2'
+                if case_id in {'A2', 'B0'}
                 else numerical_directory / 'run_summary.json'
             )
             input_paths = [

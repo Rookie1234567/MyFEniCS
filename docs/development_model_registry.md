@@ -2220,6 +2220,8 @@ A1科学source：`4e46e524f1a5ebbc83218e615631c2477698347a`；run时间目录`20
 
 A2 P0 attempt4 使用同一冻结source `48049161acb84f57b2d8248f67ea616fb837ccea` 和原始窗口；q0/q5稀疏矩阵准备及原生算子检查通过，但随后出现 `maximum recursion depth exceeded`，分类为 `WORKER_FAILED`，无完整迭代场、A6或official R/T/A。全流程1214.049863 s，进程树RSS峰3058593792 B、专用cgroup峰3777265664 B、任务swap0；未触发时间、资源或数值门。详细失败边界、q矩阵身份和证据入口见[Task41 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)及[原始run](../results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T151713.466294Z/run_summary.json)。
 
+P0 冻结前B0工程门：A2/B0 ABI 精确身份分派、真实DAT到固定窗口/资源包/runtime/dispatch的入口fixture、578项诊断键与64,120项official逐侧模式键分离核验均通过定向测试。carrier资源数为基于实际face dofmap与MPC/full-vector生命周期的派生上界，非实测内存；全程没有新建FE网格或运行PDE。native Linux正式prepare仍等待主控冻结与对应receipt，完整P0回归及细项见[Task41 test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

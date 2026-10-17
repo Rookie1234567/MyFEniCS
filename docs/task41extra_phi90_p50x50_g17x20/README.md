@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A出口已通过：A2保存场同离散比较与 checker-only retry3 PASS。attempt7 原 worker 的 `WORKER_FAILED` / `official_result=false` 作为历史保留；checker未重新组装FE算子。0.7 nm 完整场尚未运行。实测、限制和全部失败记录见 [outcomes/summary.md](outcomes/summary.md)。
+完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A出口已通过：A2保存场同离散比较与 checker-only retry3 PASS。attempt7 原 worker 的 `WORKER_FAILED` / `official_result=false` 作为历史保留；checker未重新组装FE算子。0.7 nm 完整场尚未运行；B0 已完成一次轻量模式/q-sector与轴规划清点，但原始72.6 MB manifest未保存、正式B窗口未冻结，资源状态仍为尚未准入。详细限制见 [outcomes/b0_07nm_computability_inventory.json](outcomes/b0_07nm_computability_inventory.json) 和 [outcomes/summary.md](outcomes/summary.md)。
 
 | 固定物理 | 值 |
 |---|---|

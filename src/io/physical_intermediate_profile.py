@@ -1,5 +1,7 @@
 """Frozen, explicit input identity for the development physical middle solver."""
 
+import math
+
 PROFILE = "physical_intermediate_p4_shifted_aux_v1"
 REFERENCE_PROFILE = "physical_intermediate_p4_reference_v1"
 FAST_PROFILE = "a2r_equivalent_fast_v1"
@@ -34,6 +36,11 @@ from src.geometry.task40_nonseparable_plan import (
     TASK40_E1_V17_RUN_ID,
 )
 from src.geometry.task41_phi90_profile import (
+    TASK41_B0_CELL_COUNTS,
+    TASK41_B0_COMPARISON_GROUP,
+    TASK41_B0_INPUT_RELATIVE,
+    TASK41_B0_PRECONDITIONER,
+    TASK41_B0_RUN_ID,
     TASK41_COMPARISON_GROUP,
     TASK41_G13_A2_INPUT_RELATIVE,
     TASK41_G13_A2_PRECONDITIONER,
@@ -151,7 +158,7 @@ TASK40_PROFILES = (
 )
 A4_TENSOR_H6_PROFILES = (*A4_TENSOR_H6_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
 FUSED_KERNEL_PROFILES = (*FUSED_KERNEL_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES, *TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES, *TASK40_V17_P6_PROFILES, *TASK40_V18_P6_PROFILES, *TASK40_V20_V22_P6_PROFILES, TASK41_G13_A2_PRECONDITIONER) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES, *TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES, *TASK40_V17_P6_PROFILES, *TASK40_V18_P6_PROFILES, *TASK40_V20_V22_P6_PROFILES, TASK41_G13_A2_PRECONDITIONER, TASK41_B0_PRECONDITIONER) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -166,6 +173,91 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == TASK41_B0_PRECONDITIONER:
+        from src.geometry.task40_nonseparable_plan import (
+            TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+            TASK40_V15_REFERENCE_PC_STRATEGY,
+        )
+        from src.runners.task41_p0_contract import (
+            TASK41_CLOSEOUT_SECONDS,
+            TASK41_HOST_RESERVE_BYTES,
+            TASK41_NUMERICAL_SECONDS,
+            TASK41_TASK_MEMORY_MAX_BYTES,
+            TASK41_TOTAL_SECONDS,
+        )
+
+        q_count = TASK41_B0_CELL_COUNTS[1]
+        replication_count = q_count // 2
+        return {
+            "identity": identity,
+            "scope": "task41_b0_07nm_p6_y_orbit_computability_inventory",
+            "run_id": TASK41_B0_RUN_ID,
+            "comparison_group": TASK41_B0_COMPARISON_GROUP,
+            "stage": "TASK41_B0",
+            "input_path": TASK41_B0_INPUT_RELATIVE,
+            "reference_pc_strategy": TASK40_V15_REFERENCE_PC_STRATEGY,
+            "q_assembly_strategy": TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+            "periodic_inventory": {
+                "schema": "task41.b0.p6_periodic_candidate.v1",
+                "status": "LIVE_200_Q_MODE_INVENTORY_REQUIRED",
+                "global_cell_axes": list(TASK41_B0_CELL_COUNTS),
+                "global_cell_count": math.prod(TASK41_B0_CELL_COUNTS),
+                "q_count": q_count,
+                "local_y_cells": 2,
+                "replication_count": replication_count,
+                "sector_count": replication_count,
+                "q_port_counts": None,
+                "sector_port_counts": None,
+                "all_q_required": True,
+                "ordinary_default_changed": False,
+            },
+            "backend": {
+                "reference_operator": "regular full-period-y p6 FE reference",
+                "outer_operator": "Task41 B0 full3d A6 with auxiliary DtN",
+                "outer_preconditioner": "same V15 p6 y-orbit reference algorithm; no new PC",
+                "q_factorization": "exact MUMPS policy retained; factor admission pending measured 200-q ledger",
+                "factor_lifecycle": "ALL_Q_RESIDENT_CANDIDATE",
+            },
+            "outer": {
+                "ksp_type": "fgmres",
+                "restart": 32,
+                "max_iterations": 2048,
+                "zero_start": True,
+                "final_judgment": "independent full explicit original-A6 true residual",
+            },
+            "resources": {
+                "workflow_seconds": TASK41_TOTAL_SECONDS,
+                "solve_seconds": TASK41_NUMERICAL_SECONDS,
+                "campaign_closeout_reserve_seconds": TASK41_CLOSEOUT_SECONDS,
+                "campaign_window_required": True,
+                "pc_limit_policy": "task41_b0_new_single_case_window_required",
+                "process_tree_rss_cap_bytes": TASK41_TASK_MEMORY_MAX_BYTES,
+                "host_reserve_bytes": TASK41_HOST_RESERVE_BYTES,
+                "memory_swap_max_bytes": 0,
+                "pss_sampling_policy": "disabled_by_profile",
+                "watchdog_memory_policy": "task41_p0_execution_contract",
+                "require_zero_swap": True,
+                "runtime_profile": "native_linux",
+            },
+            "gates": {
+                "global_cell_axes": list(TASK41_B0_CELL_COUNTS),
+                "global_cells": math.prod(TASK41_B0_CELL_COUNTS),
+                "global_floquet_q_branches": q_count,
+                "sector_count": replication_count,
+                "nedelec_degree": 6,
+                "runtime_mode_inventory_required": True,
+                "basix_dofmap_readback_required": True,
+                "local_action_and_restoration_required": True,
+                "port_projection_required": True,
+                "complete_object_resource_ledger_required": True,
+                "factor_admission": "BLOCKED_UNTIL_MEASURED",
+            },
+            "qualification": (
+                "B0 candidate input/profile only; live modes and all 200 q assignments "
+                "must be inventoried, followed by local FE/action and resource gates "
+                "before any formal field solve"
+            ),
+        }
     if identity == TASK41_G13_A2_PRECONDITIONER:
         from src.geometry.task40_nonseparable_plan import (
             TASK40_Q_ASSEMBLY_ROW_TILE_V17,

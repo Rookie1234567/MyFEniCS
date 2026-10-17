@@ -14,6 +14,10 @@ from typing import Any, Mapping
 import numpy as np
 
 from src.geometry.task41_phi90_profile import (
+    TASK41_B0_COMPARISON_GROUP,
+    TASK41_B0_GEOMETRY_IDENTITY,
+    TASK41_B0_PRECONDITIONER,
+    TASK41_B0_RUN_ID,
     TASK41_G13_A2_PRECONDITIONER,
     TASK41_G13_A2_RUN_ID,
     task41_direct_summary_errors,
@@ -37,6 +41,7 @@ from src.runners.task41_p0_comparison import (
 
 CHECKER_SCHEMA = "task41.p0.direct_checker.v1"
 A2_CHECKER_SCHEMA = "task41.p0.a2_iterative_checker.v1"
+B0_CHECKER_SCHEMA = "task41.p0.b0_iterative_checker.v1"
 
 
 def evaluate_task41_numerical_summary(
@@ -343,16 +348,37 @@ def _task41_a2_verify_saved_q_consumer_receipt(
         raise ValueError(f"Task41 A2 imported q={q} consumer receipt does not preserve its producer PASS")
 
 
-def _task41_a2_reference_audit_checks(
+def _task41_iterative_reference_audit_checks(
     summary: Mapping[str, Any],
     numerical_output: Path,
     *,
     repo_root: Path | None = None,
+    case_id: str = "A2",
+    b0_profile_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reapply saved q CSR actions and both factor probe residuals from raw vectors."""
     from scipy import sparse
 
-    from src.solvers.task40_v10_p6_periodic_profile import TASK41_G13_A2_P6_PROFILE
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK41_G13_A2_P6_PROFILE,
+        task41_b0_periodic_profile,
+    )
+
+    if case_id not in {"A2", "B0"}:
+        raise ValueError("Task41 iterative audit supports only A2 or B0")
+    if case_id == "B0":
+        if (
+            not isinstance(b0_profile_capability, Mapping)
+            or b0_profile_capability.get("verified") is not True
+            or b0_profile_capability.get("identity") != TASK41_B0_PRECONDITIONER
+        ):
+            raise ValueError("Task41 B0 iterative audit requires its reopened profile capability")
+        profile = task41_b0_periodic_profile(
+            tuple(map(int, b0_profile_capability.get("q_port_counts", ()))),
+            tuple(map(int, b0_profile_capability.get("sector_port_counts", ()))),
+        )
+    else:
+        profile = TASK41_G13_A2_P6_PROFILE
 
     artifact_root = numerical_output.parent.resolve()
     repo_root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve()
@@ -377,13 +403,13 @@ def _task41_a2_reference_audit_checks(
     q_matrix_audits = snapshot.get("q_matrix_audits_before_destroy")
     if (
         not isinstance(sectors, list)
-        or len(sectors) != 5
+        or len(sectors) != profile.replication_count
         or not isinstance(factor, Mapping)
         or not isinstance(q_matrix_audits, Mapping)
     ):
         raise ValueError("Task41 A2 reference audit omits five sectors or its All-Q factor audit")
 
-    q_count = 10
+    q_count = profile.q_count
     q_indices = list(range(q_count))
     if (
         factor.get("all_q_required") != q_indices
@@ -401,7 +427,7 @@ def _task41_a2_reference_audit_checks(
     second_contract = factor.get("second_rhs_qualification")
     if (
         not isinstance(second_contract, Mapping)
-        or second_contract.get("schema") != "task41.p0.a2_all_q_second_rhs.v1"
+        or second_contract.get("schema") != f"task41.p0.{case_id.lower()}_all_q_second_rhs.v1"
         or second_contract.get("formula")
         != "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
         or second_contract.get("strict_limit") != 1.0e-10
@@ -431,8 +457,8 @@ def _task41_a2_reference_audit_checks(
 
     sector_by_q: dict[int, tuple[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]]] = {}
     expected_sector_pairs = {
-        (twist, twist + TASK41_G13_A2_P6_PROFILE.replication_count)
-        for twist in range(TASK41_G13_A2_P6_PROFILE.replication_count)
+        (twist, twist + profile.replication_count)
+        for twist in range(profile.replication_count)
     }
     actual_sector_pairs: set[tuple[int, int]] = set()
     for sector_index, sector in enumerate(sectors):
@@ -445,7 +471,7 @@ def _task41_a2_reference_audit_checks(
         if pair not in expected_sector_pairs or pair in actual_sector_pairs:
             raise ValueError("Task41 A2 sector audit has an unexpected or duplicate q pair")
         actual_sector_pairs.add(pair)
-        preparation = sector.get("task41_a2_independent_q_csr_preparation")
+        preparation = sector.get(f"task41_{case_id.lower()}_independent_q_csr_preparation")
         if not isinstance(preparation, Mapping):
             raise ValueError(f"Task41 A2 sector {pair} omits its independent CSR preparation")
         saved_import = (
@@ -454,6 +480,8 @@ def _task41_a2_reference_audit_checks(
         )
         identity = preparation.get("qualification_identity")
         if saved_import:
+            if case_id != "A2":
+                raise ValueError("Task41 B0 cannot use saved A1/A2 q-CSR evidence")
             from src.runners.task41_p0_contract import (
                 TASK41_A2_Q_CSR_REUSE_SCHEMA,
                 TASK41_A2_Q_CSR_REUSE_SCHEMA_V1,
@@ -477,9 +505,9 @@ def _task41_a2_reference_audit_checks(
                     and set(authorization_rows) == {"0", "5"}
                 )
             elif binding_schema == TASK41_A2_Q_CSR_REUSE_SCHEMA:
-                expected_q_indices = list(range(TASK41_G13_A2_P6_PROFILE.q_count))
+                expected_q_indices = list(range(profile.q_count))
                 expected_twists = {
-                    str(q): q % TASK41_G13_A2_P6_PROFILE.replication_count
+                    str(q): q % profile.replication_count
                     for q in expected_q_indices
                 }
                 authorized_binding = (
@@ -503,7 +531,7 @@ def _task41_a2_reference_audit_checks(
                 or not isinstance(identity, Mapping)
                 or identity.get("q_indices") != list(pair)
                 or identity.get("twist_index") != pair_twist
-                or identity.get("profile_identity") != TASK41_G13_A2_P6_PROFILE.identity()
+                or identity.get("profile_identity") != profile.identity()
                 or not isinstance(consumer_execution.get("source_sha"), str)
                 or not isinstance(consumer_execution.get("window_sha256"), str)
             ):
@@ -516,7 +544,7 @@ def _task41_a2_reference_audit_checks(
             or not isinstance(identity, Mapping)
             or identity.get("q_indices") != list(pair)
             or identity.get("twist_index") != pair[0]
-            or identity.get("profile_identity") != TASK41_G13_A2_P6_PROFILE.identity()
+            or identity.get("profile_identity") != profile.identity()
         ):
             raise ValueError(f"Task41 A2 sector {pair} failed its saved CSR qualification gates")
         entries = preparation.get("selector_entries")
@@ -605,7 +633,7 @@ def _task41_a2_reference_audit_checks(
                 or manifest.get("status") != "COMPLETE_CSR"
                 or manifest.get("q_index") != q
                 or manifest.get("twist_index") != pair[0]
-                or manifest.get("profile") != TASK41_G13_A2_P6_PROFILE.name
+                or manifest.get("profile") != profile.name
                 or manifest.get("shape") != entry.get("shape")
                 or qualification.get("schema")
                 != "task40extra.review_v30_q_csr_native_qualification.v1"
@@ -734,15 +762,15 @@ def _task41_a2_reference_audit_checks(
     factor_results = []
     csr_results = []
     required_actions = ("case1_full", "case1_trace_only", "case1_port_only", "case2_full")
-    for twist in range(TASK41_G13_A2_P6_PROFILE.replication_count):
-        pair = (twist, twist + TASK41_G13_A2_P6_PROFILE.replication_count)
+    for twist in range(profile.replication_count):
+        pair = (twist, twist + profile.replication_count)
         matrices = {q: load_csr(q) for q in pair}
         for q in pair:
             matrix = matrices[q]
             manifest, qualification, array_records = sector_by_q[q]
             expected_columns = (
-                TASK41_G13_A2_P6_PROFILE.trace_rows_per_q
-                + TASK41_G13_A2_P6_PROFILE.q_port_counts[q]
+                profile.trace_rows_per_q
+                + profile.q_port_counts[q]
             )
             if matrix.shape != (expected_columns, expected_columns):
                 raise ValueError(f"Task41 A2 q={q} CSR dimensions differ from the frozen profile")
@@ -780,7 +808,7 @@ def _task41_a2_reference_audit_checks(
                 or not isinstance(fresh, Mapping)
                 or fresh.get("formula") != "cos(0.23*i) + 1j*sin(0.37*i)"
                 or fresh.get("constructed_directly_not_from_csr_times_x") is not True
-                or second.get("schema") != "task41.p0.a2_all_q_second_rhs_result.v1"
+                or second.get("schema") != f"task41.p0.{case_id.lower()}_all_q_second_rhs_result.v1"
                 or second.get("formula") != second_contract.get("formula")
                 or second.get("strict_passed") is not True
                 or second.get("strict_limit") != 1.0e-10
@@ -818,7 +846,7 @@ def _task41_a2_reference_audit_checks(
             inputs = {name: native_records[f"input_{name}"] for name in required_actions}
             outputs = {name: native_records[f"csr_{name}"] for name in required_actions}
             native_outputs = {name: native_records[f"native_{name}"] for name in required_actions}
-            trace_rows = TASK41_G13_A2_P6_PROFILE.trace_rows_per_q
+            trace_rows = profile.trace_rows_per_q
             first_input = inputs["case1_full"]
             if (
                 any(value.dtype != np.dtype(np.complex128) or not np.isfinite(value).all() for value in inputs.values())
@@ -902,6 +930,19 @@ def _task41_a2_reference_audit_checks(
         "csr_results": csr_results,
         "relative_error_limit": 1.0e-11,
     }
+
+
+
+def _task41_a2_reference_audit_checks(
+    summary: Mapping[str, Any],
+    numerical_output: Path,
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, Any]:
+    """Backward-compatible A2 entry point for the shared iterative audit."""
+    return _task41_iterative_reference_audit_checks(
+        summary, numerical_output, repo_root=repo_root, case_id="A2"
+    )
 
 
 def _task41_a2_numerical_checks(
@@ -1110,6 +1151,281 @@ def _task41_a2_numerical_checks(
     }
 
 
+def _task41_b0_numerical_checks(
+    summary: Mapping[str, Any],
+    numerical_output: Path,
+    contract: Mapping[str, Any],
+    *,
+    contract_path: Path,
+    contract_sha256: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Reopen B0's identity-bound all-mode and q-map records independently."""
+    from src.solvers import task41_b0_mode_inventory as inventory_module
+    from src.solvers.task41_b0_mode_inventory import TASK41_B0_MODE_COUNT
+
+    errors: list[str] = []
+    case = contract.get("case", {})
+    window = contract.get("window", {})
+    authority = summary.get("campaign_authority", {})
+    if not isinstance(case, Mapping) or not isinstance(window, Mapping):
+        return {"errors": ["Task41 B0 contract case/window is malformed"]}
+    if not isinstance(authority, Mapping):
+        authority = {}
+    expected_identity = {
+        "run_id": TASK41_B0_RUN_ID,
+        "profile": TASK41_B0_PRECONDITIONER,
+        "stage": "TASK41_B0",
+        "source_sha": contract.get("source", {}).get("sha")
+        if isinstance(contract.get("source"), Mapping)
+        else None,
+    }
+    for key, expected in expected_identity.items():
+        if summary.get(key) != expected:
+            errors.append(f"Task41 B0 candidate summary {key} differs from the fixed contract")
+    if (
+        case.get("run_id") != TASK41_B0_RUN_ID
+        or case.get("profile_identity") != TASK41_B0_PRECONDITIONER
+        or case.get("solver_stage") != "TASK41_B0"
+        or case.get("comparison_group") != TASK41_B0_COMPARISON_GROUP
+        or case.get("geometry_identity") != TASK41_B0_GEOMETRY_IDENTITY
+        or case.get("method") != "full3d_iterative"
+        or contract.get("comparison") is not None
+        or contract.get("q_csr_reuse") is not None
+    ):
+        errors.append("Task41 B0 fixed contract has a changed identity or donor binding")
+    expected_window_path = (repo_root / str(window.get("path", ""))).resolve()
+    if (
+        authority.get("case_id") != "B0"
+        or Path(str(authority.get("task41_contract_path", ""))).resolve()
+        != contract_path.resolve()
+        or authority.get("task41_contract_sha256") != contract_sha256
+        or authority.get("source_sha") != expected_identity["source_sha"]
+        or authority.get("campaign_window_sha256") != window.get("sha256")
+        or Path(str(authority.get("campaign_window_path", ""))).resolve()
+        != expected_window_path
+    ):
+        errors.append("Task41 B0 campaign authority differs from the fixed contract/window")
+    if (
+        summary.get("precision_status") != "NOT_QUALIFIED"
+        or summary.get("mode_truncation_status") != "MODE_TRUNCATION_UNQUALIFIED"
+        or summary.get("comparison_authority") is not None
+        or "task41_a1_a2_comparison" in summary
+        or summary.get("live_mode_inventory_status") != "LIVE_CAPTURED_AND_HASH_VERIFIED"
+    ):
+        errors.append("Task41 B0 qualification labels or no-comparison status changed")
+
+    inventory = summary.get("b0_mode_inventory")
+    periodic = summary.get("periodic_inventory_expectations")
+    if not isinstance(inventory, Mapping) or not isinstance(periodic, Mapping):
+        return {"errors": errors + ["Task41 B0 summary omits its live inventory/profile"]}
+    run_directory = numerical_output.parent.resolve()
+    b0_profile_capability = None
+    try:
+        b0_profile_capability = inventory_module.recheck_task41_b0_mode_inventory(
+            run_directory,
+            inventory,
+            source_sha=str(expected_identity["source_sha"]),
+            input_sha256=str(case.get("input_sha256", "")),
+        )
+        if (
+            periodic.get("name") != TASK41_B0_PRECONDITIONER
+            or periodic.get("name") != b0_profile_capability["identity"]
+            or periodic.get("q_count") != b0_profile_capability["q_count"]
+            or periodic.get("mode_count") != b0_profile_capability["mode_count"]
+            or periodic.get("q_port_counts") != b0_profile_capability["q_port_counts"]
+            or periodic.get("sector_port_counts")
+            != b0_profile_capability["sector_port_counts"]
+            or summary.get("b0_profile_capability") != b0_profile_capability
+        ):
+            errors.append("Task41 B0 periodic profile differs from the reopened mode/q capability")
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        errors.append(f"Task41 B0 verified profile capability failed: {exc}")
+    q_counts = (
+        b0_profile_capability.get("q_port_counts")
+        if isinstance(b0_profile_capability, Mapping)
+        else None
+    )
+    sector_counts = (
+        b0_profile_capability.get("sector_port_counts")
+        if isinstance(b0_profile_capability, Mapping)
+        else None
+    )
+
+    iterative_reference_recheck = None
+    reference_tier_recheck = None
+    output_packet_recheck = None
+    post_release_recheck = None
+    factor_release_recheck = None
+    power_recheck = None
+    if (
+        summary.get("status") != "PASS"
+        or summary.get("official_result") is not True
+        or summary.get("numeric_gates_passed") is not True
+        or summary.get("output_gates_passed") is not True
+        or summary.get("solver_status") != "TRUE_RESIDUAL_PASS"
+        or summary.get("comparison_authority") is not None
+        or "task41_a1_a2_comparison" in summary
+    ):
+        errors.append("Task41 B0 worker result or no-comparison outcome did not pass")
+    try:
+        iterative_reference_recheck = _task41_iterative_reference_audit_checks(
+            summary,
+            numerical_output,
+            repo_root=repo_root,
+            case_id="B0",
+            b0_profile_capability=b0_profile_capability,
+        )
+    except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+        errors.append(f"Task41 B0 iterative CSR/factor audit failed: {exc}")
+
+    output_meta = summary.get("output_packet")
+    output_packet_path = None
+    if (
+        isinstance(output_meta, Mapping)
+        and isinstance(output_meta.get("arrays"), Mapping)
+        and isinstance(output_meta["arrays"].get("path"), str)
+    ):
+        output_npz = Path(str(output_meta["arrays"]["path"])).resolve()
+        output_packet_path = output_npz.with_suffix(".json")
+        if (
+            output_npz.parent != run_directory
+            or output_packet_path.parent != run_directory
+            or not output_packet_path.is_file()
+        ):
+            errors.append("Task41 B0 official output packet escaped its run directory or is missing")
+    else:
+        errors.append("Task41 B0 worker summary omits its official output packet")
+    if output_packet_path is not None and b0_profile_capability is not None:
+        try:
+            from src.runners.task40_v10_output_checker import (
+                _verify_v31_reference_tiers,
+                verify_v10_output_bundle,
+            )
+
+            output_packet = _json_object(output_packet_path, "B0 official output packet")
+            output_packet_recheck = verify_v10_output_bundle(
+                output_packet_path, expected_channel_count=TASK41_B0_MODE_COUNT
+            )
+            if output_packet_recheck.get("status") != "PASS":
+                errors.append("Task41 B0 official output packet checker did not pass")
+            reference_tier_recheck = _verify_v31_reference_tiers(
+                summary.get("regular_inverse_checks", {}),
+                expected_profile=TASK41_B0_PRECONDITIONER,
+                b0_profile_capability=b0_profile_capability,
+            )
+            if (
+                reference_tier_recheck.get("case_count") != 6
+                or reference_tier_recheck.get("passed") is not True
+            ):
+                errors.append("Task41 B0 six full FE/port startup reference cases did not pass")
+            power = summary.get("power")
+            if not isinstance(power, Mapping):
+                raise ValueError("Task41 B0 worker summary omits R/T/A/A_volume")
+            power_values = {
+                name: float(power.get(name, np.nan))
+                for name in ("R", "T", "A", "A_volume")
+            }
+            closure = abs(power_values["R"] + power_values["T"] + power_values["A_volume"] - 1.0)
+            absorption = abs(power_values["A"] - power_values["A_volume"])
+            power_recheck = {
+                "R_T_A_A_volume": power_values,
+                "R_plus_T_plus_A_volume_minus_one": closure,
+                "A_minus_A_volume": absorption,
+                "limit": 1.0e-5,
+                "passed": bool(
+                    np.isfinite(list(power_values.values())).all()
+                    and closure <= 1.0e-5
+                    and absorption <= 1.0e-5
+                    and abs(closure - float(summary.get("energy_closure_absolute", np.nan)))
+                    <= 1.0e-12
+                    and abs(
+                        absorption - float(summary.get("absorption_consistency_absolute", np.nan))
+                    )
+                    <= 1.0e-12
+                    and output_packet.get("passed") is True
+                ),
+            }
+            if not power_recheck["passed"]:
+                errors.append("Task41 B0 R/T/A/A_volume physical energy gate did not pass")
+        except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+            errors.append(f"Task41 B0 output/reference-tier recheck failed: {exc}")
+
+    post_meta = summary.get("post_release_final_residual_packet")
+    if isinstance(post_meta, Mapping) and isinstance(post_meta.get("arrays"), Mapping):
+        post_npz = Path(str(post_meta["arrays"].get("path", ""))).resolve()
+        post_json = post_npz.with_suffix(".json")
+        if post_npz.parent != run_directory or post_json.parent != run_directory:
+            errors.append("Task41 B0 post-release A6 packet escaped its run directory")
+        else:
+            try:
+                from src.runners.task40_v10_output_checker import (
+                    verify_saved_full_a6_residual_packet,
+                )
+
+                post_release_recheck = verify_saved_full_a6_residual_packet(
+                    post_json,
+                    expected_identity={
+                        key: (
+                            summary.get("scientific_identity", {}).get(key)
+                            if isinstance(summary.get("scientific_identity"), Mapping)
+                            else None
+                        )
+                        for key in ("source_sha", "input_sha256", "physical_model_sha256")
+                    },
+                    expected_reference_factors_released=True,
+                )
+            except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+                errors.append(f"Task41 B0 post-release full A6 residual recheck failed: {exc}")
+    else:
+        errors.append("Task41 B0 worker summary omits its post-release full A6 packet")
+
+    release = summary.get("b0_factor_release_audit")
+    if not isinstance(release, Mapping) or (
+        release.get("cleanup_status") != "DESTROYED"
+        or release.get("destroyed") is not True
+        or release.get("cleanup_failed") is not False
+        or release.get("factors_live_count_current") != 0
+        or release.get("matrices_live_count_current") != 0
+        or release.get("cleanup_last_attempt_failures") != []
+        or release.get("unconfirmed_owner_tags") != []
+        or release.get("max_simultaneous_factors") != 200
+        or release.get("all_q_factor_objects_live_simultaneously") is not True
+    ):
+        errors.append("Task41 B0 All-Q factors were not independently recorded as released")
+    else:
+        factor_release_recheck = {
+            "cleanup_status": release["cleanup_status"],
+            "factors_live_count_current": release["factors_live_count_current"],
+            "matrices_live_count_current": release["matrices_live_count_current"],
+            "max_simultaneous_factors": release["max_simultaneous_factors"],
+            "all_q_factor_objects_live_simultaneously": True,
+            "passed": True,
+        }
+    return {
+        "schema": "task41.p0.b0_inventory_recheck.v1",
+        "errors": errors,
+        "mode_manifest_sha256": (
+            b0_profile_capability.get("mode_manifest_sha256")
+            if isinstance(b0_profile_capability, Mapping)
+            else inventory_module.TASK41_B0_MODE_MANIFEST_SHA256
+        ),
+        "mode_count": TASK41_B0_MODE_COUNT,
+        "q_count": 200,
+        "sector_count": 100,
+        "q_port_counts_recomputed": q_counts,
+        "sector_port_counts_recomputed": sector_counts,
+        "verified_profile_capability": b0_profile_capability,
+        "iterative_reference_recheck": iterative_reference_recheck,
+        "reference_tier_recheck": reference_tier_recheck,
+        "output_packet_recheck": output_packet_recheck,
+        "post_release_a6_recheck": post_release_recheck,
+        "factor_release_recheck": factor_release_recheck,
+        "power_recheck": power_recheck,
+        "passed": not errors,
+    }
+
+
 def check_task41_p0(
     *,
     input_path: Path,
@@ -1148,7 +1464,7 @@ def check_task41_p0(
     launcher_summary = _json_object(summary_path, "launcher summary")
     output_summary_path = (
         summary_path.parent / "task40_v10_p6_candidate_summary.json"
-        if case_id == "A2"
+        if case_id in {"A2", "B0"}
         else numerical_output / "run_summary.json"
     )
     output_summary = _json_object(output_summary_path, "full numerical summary")
@@ -1194,6 +1510,7 @@ def check_task41_p0(
     ):
         identity_errors.append("saved resolved configuration is missing or has a different hash")
     a2_rechecks = None
+    b0_rechecks = None
     if case_id == "A2":
         a2_rechecks = _task41_a2_numerical_checks(
             output_summary,
@@ -1202,12 +1519,28 @@ def check_task41_p0(
             repo_root=repo_root,
         )
         numerical_errors = list(a2_rechecks["errors"])
+    elif case_id == "B0":
+        b0_rechecks = _task41_b0_numerical_checks(
+            output_summary,
+            numerical_output,
+            contract,
+            contract_path=contract_path,
+            contract_sha256=contract_digest,
+            repo_root=repo_root,
+        )
+        numerical_errors = list(b0_rechecks["errors"])
     else:
         numerical_errors = evaluate_task41_numerical_summary(output_summary, numerical_output)
     errors = identity_errors + numerical_errors
     passed = not errors
     payload = {
-        "schema": A2_CHECKER_SCHEMA if case_id == "A2" else CHECKER_SCHEMA,
+        "schema": (
+            A2_CHECKER_SCHEMA
+            if case_id == "A2"
+            else B0_CHECKER_SCHEMA
+            if case_id == "B0"
+            else CHECKER_SCHEMA
+        ),
         "checked_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "status": "PASS" if passed else "FAIL",
         "checker_passed": passed,
@@ -1227,6 +1560,7 @@ def check_task41_p0(
         "numerical_summary_sha256": sha256_file(output_summary_path),
         "launcher_result_classification": launcher_summary.get("result_classification"),
         **({"a2_independent_rechecks": a2_rechecks} if a2_rechecks is not None else {}),
+        **({"b0_independent_rechecks": b0_rechecks} if b0_rechecks is not None else {}),
         "errors": errors,
         "raw_evidence_retained": True,
     }

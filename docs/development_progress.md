@@ -3759,3 +3759,7 @@ Selective merge 必须区分 shared numerical helper、Task40 opt-in runner/chec
 ## Task41extra A2 attempt7 保存场对照与 checker-only retry3
 
 A出口已通过。A2原迭代器完成6步，独立A6真残差`7.381572880480822e-08`（限`1e-6`）；其原worker因A1保存场MPC表示恢复检查失败，原始`WORKER_FAILED`/`official_result=false`记录保留。保存场续作随后通过27/27输出身份门及A1/A2同离散比较；冻结source `4c0af8c1e73a47337b497f3a5ccda64933d04591` 的checker-only retry3对同一快照返回`PASS`。E/scaled-curl相对差为`6.83819901978217e-09`/`6.845781370112187e-09`。该checker重算保存动作代数、映射和输出身份，没有重新组装FE算子。0.7 nm完整场与网格/倏逝模式精度仍`NOT_RUN`。完整数值、哈希、历史失败和双口径资源见[Task41 A2 compact](task41extra_phi90_p50x50_g17x20/outcomes/a2_saved_output_checker_retry3.json)、[summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)与[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。
+
+### Task41 P0：B0 冻结前接线与核验
+
+严格ABI按A2/B0精确绑定profile、case和run；B0入口fixture贯通真实DAT解析、固定T0/bootstrap、资源合同、`_V14Runtime`及dispatcher binding。诊断衍射578键与official DtN 64,120个逐侧模式键分别核验，top/bottom允许32,062/32,058不等；carrier内存只记为实际face dofmap推导上界，包含slave rows及整域向量扫描workspace，不是实测峰值或内域为零证明。C1下最小回归8 passed，未运行FE/PDE；正式prepare仍需主控冻结源码和匹配的native Linux receipt。证据与完整命令见[Task41定向测试记录](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
