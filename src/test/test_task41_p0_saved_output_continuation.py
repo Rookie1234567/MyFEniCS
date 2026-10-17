@@ -13,6 +13,8 @@ from src.runners.task41_p0_saved_output_continuation import (
     _link_saved_output,
     _require_service_envelope,
     _validate_original_attempt,
+    _validate_original_solver_identity,
+    _verify_linked_output_manifest,
     task41_diagnostic_diffraction_inventory,
     validate_saved_a6_packet,
 )
@@ -101,13 +103,45 @@ def test_continuation_hardlinks_preserve_saved_output_bytes(tmp_path: Path) -> N
     source.mkdir(parents=True)
     (source / "field.bin").write_bytes(b"saved field")
     (source / "orders.json").write_text('{"orders": []}\n', encoding="utf-8")
+    nested_source = source / "E_3d_numerical.bp" / "part.0"
+    nested_source.mkdir(parents=True)
+    (nested_source / "mesh.bin").write_bytes(b"saved mesh")
+    (source / "empty.bp").mkdir()
     destination = tmp_path / "continuation" / "numerical_output"
 
     manifest = _link_saved_output(source, destination)
 
-    assert [row["name"] for row in manifest] == ["field.bin", "orders.json"]
+    assert [row["name"] for row in manifest] == [
+        "E_3d_numerical.bp/part.0/mesh.bin",
+        "field.bin",
+        "orders.json",
+    ]
     assert all(row["same_inode"] for row in manifest)
     assert (destination / "field.bin").read_bytes() == (source / "field.bin").read_bytes()
+    assert (destination / "E_3d_numerical.bp" / "part.0" / "mesh.bin").stat().st_ino == (
+        nested_source / "mesh.bin"
+    ).stat().st_ino
+    assert (destination / "empty.bp").is_dir()
+    verification = _verify_linked_output_manifest(
+        {"numerical_output_path": str(source)},
+        {
+            "numerical_output_directory": str(destination),
+            "numerical_output_manifest": manifest,
+        },
+    )
+    assert verification["passed"] is True
+
+
+def test_saved_output_hardlink_rejects_nested_symlinks(tmp_path: Path) -> None:
+    source = tmp_path / "original" / "numerical_output"
+    nested = source / "E_3d_numerical.bp"
+    nested.mkdir(parents=True)
+    outside = tmp_path / "outside.bin"
+    outside.write_bytes(b"outside the producer output")
+    (nested / "linked.bin").symlink_to(outside)
+
+    with pytest.raises(ValueError, match="contains a symlink"):
+        _link_saved_output(source, tmp_path / "continuation" / "numerical_output")
 
 
 def test_service_binding_keeps_producer_contract_and_consumer_activation_distinct(
@@ -368,9 +402,20 @@ def test_task41_diffraction_inventory_checks_real_attempt7_snapshot() -> None:
 def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) -> None:
     run_root = tmp_path / "run"
     (run_root / "numerical_output").mkdir(parents=True)
+    resolved_config = b'{"fixture":"Task41 frozen producer config"}\n'
+    resolved_config_sha256 = hashlib.sha256(resolved_config).hexdigest()
+    case = {
+        "model_id": "task41extra_phi90_p50x50_g17x20",
+        "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+        "method": "full3d_iterative",
+        "mpi_size": 1,
+        "input_sha256": "b" * 64,
+        "physical_model_sha256": "c" * 64,
+        "resolved_config_sha256": resolved_config_sha256,
+    }
     contract = {
         "source": {"sha": "a" * 40},
-        "case": {"run_id": "task41extra_g13_p6_phi90_iterative_a2"},
+        "case": case,
         "window": {"sha256": "d" * 64},
         "comparison": {"a1_binding_sha256": "e" * 64},
     }
@@ -385,6 +430,12 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
         "numeric_gates_passed": True,
         "source_sha": "a" * 40,
         "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+        "identity_packet": {
+            "input_sha256": case["input_sha256"],
+            "physical_model_sha256": case["physical_model_sha256"],
+            "source_sha": "a" * 40,
+            "run_id": case["run_id"],
+        },
         "profile": "task41extra_g13_p6_phi90_a2_y_orbit_reference_v1",
         "stage": "TASK41_A2",
         "q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
@@ -404,15 +455,31 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
         "status": "finished",
         "result_classification": "WORKER_FAILED",
         "source_sha": "a" * 40,
-        "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+        **case,
     }
     (run_root / "task40_v10_p6_candidate_summary.json").write_text(json.dumps(worker), encoding="utf-8")
     (run_root / "run_summary.json").write_text(json.dumps(run_summary), encoding="utf-8")
     (run_root / "run_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (run_root / "resolved_config.json").write_bytes(resolved_config)
 
     original, _, _, evidence = _validate_original_attempt(run_root, contract, "f" * 64)
     assert original["result_classification"] == "WORKER_FAILED"
     assert evidence["worker_summary"]["sha256"]
+    identity = _validate_original_solver_identity(original, case)
+    assert "resolved_config_sha256" not in identity
+
+    manifest["resolved_config_sha256"] = "0" * 64
+    (run_root / "run_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="run manifest identity differs.*resolved_config_sha256"):
+        _validate_original_attempt(run_root, contract, "f" * 64)
+
+    manifest["resolved_config_sha256"] = resolved_config_sha256
+    (run_root / "run_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (run_root / "resolved_config.json").write_bytes(b'{"fixture":"changed"}\n')
+    with pytest.raises(ValueError, match="resolved configuration differs"):
+        _validate_original_attempt(run_root, contract, "f" * 64)
+
+    (run_root / "resolved_config.json").write_bytes(resolved_config)
 
     worker["result_classification"] = "PASS"
     (run_root / "task40_v10_p6_candidate_summary.json").write_text(json.dumps(worker), encoding="utf-8")

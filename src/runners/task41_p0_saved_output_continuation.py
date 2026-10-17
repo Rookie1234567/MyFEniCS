@@ -220,6 +220,26 @@ def _validate_original_attempt(
         != contract["comparison"]["a1_binding_sha256"]
     ):
         raise ValueError("original A2 campaign authority differs from the frozen Task41 contract")
+    for key in (
+        "model_id",
+        "run_id",
+        "method",
+        "mpi_size",
+        "input_sha256",
+        "physical_model_sha256",
+        "resolved_config_sha256",
+    ):
+        if manifest.get(key) != case[key]:
+            raise ValueError(
+                f"original A2 run manifest identity differs from the frozen Task41 contract: {key}"
+            )
+    resolved_config_path = run_root / "resolved_config.json"
+    if (
+        resolved_config_path.is_symlink()
+        or not resolved_config_path.is_file()
+        or _sha256(resolved_config_path) != case["resolved_config_sha256"]
+    ):
+        raise ValueError("original A2 resolved configuration differs from the frozen Task41 contract")
     numerical_output = (run_root / "numerical_output").resolve(strict=True)
     if not numerical_output.is_dir():
         raise ValueError("original A2 numerical output directory is missing")
@@ -231,19 +251,39 @@ def _validate_original_attempt(
     }
 
 
+def _validate_original_solver_identity(
+    producer: Mapping[str, Any], case: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    """Validate fields carried by the producer's solver identity packet."""
+    identity = producer.get("identity_packet")
+    if not isinstance(identity, Mapping):
+        raise ValueError("original A2 summary omits its solver identity packet")
+    for key in ("input_sha256", "physical_model_sha256"):
+        if identity.get(key) != case[key]:
+            raise ValueError(f"original A2 solver identity differs from the contract: {key}")
+    return identity
+
+
 def _link_saved_output(source: Path, destination: Path) -> list[dict[str, Any]]:
     if not source.is_dir() or source.is_symlink():
         raise ValueError("original A2 numerical output is not a regular directory")
     destination.mkdir(parents=True, exist_ok=False)
     manifest = []
-    for original in sorted(source.iterdir()):
-        if original.is_symlink() or not original.is_file():
+    for original in sorted(source.rglob("*")):
+        relative_path = original.relative_to(source)
+        target = destination / relative_path
+        if original.is_symlink():
+            raise ValueError("original A2 numerical output contains a symlink")
+        if original.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
+            continue
+        if not original.is_file():
             raise ValueError("original A2 numerical output contains a non-regular entry")
-        target = destination / original.name
+        target.parent.mkdir(parents=True, exist_ok=True)
         os.link(original, target)
         manifest.append(
             {
-                "name": original.name,
+                "name": relative_path.as_posix(),
                 "source_path": str(original.resolve()),
                 "path": str(target.resolve()),
                 "size_bytes": int(target.stat().st_size),
@@ -269,28 +309,62 @@ def _verify_linked_output_manifest(
         return {"passed": False, "errors": ["saved output copy manifest is missing"]}
     if source == destination or source.is_relative_to(destination) or destination.is_relative_to(source):
         errors.append("producer and consumer numerical-output directories overlap")
-    source_names = sorted(path.name for path in source.iterdir())
-    destination_names = sorted(path.name for path in destination.iterdir())
+    source_entries = sorted(source.rglob("*"))
+    destination_entries = sorted(destination.rglob("*"))
+    source_directories = sorted(
+        path.relative_to(source).as_posix()
+        for path in source_entries
+        if path.is_dir() and not path.is_symlink()
+    )
+    destination_directories = sorted(
+        path.relative_to(destination).as_posix()
+        for path in destination_entries
+        if path.is_dir() and not path.is_symlink()
+    )
+    source_names = sorted(
+        path.relative_to(source).as_posix()
+        for path in source_entries
+        if path.is_file() and not path.is_symlink()
+    )
+    destination_names = sorted(
+        path.relative_to(destination).as_posix()
+        for path in destination_entries
+        if path.is_file() and not path.is_symlink()
+    )
+    if any(path.is_symlink() for path in (*source_entries, *destination_entries)):
+        errors.append("saved producer or continuation output contains a symlink")
+    if any(
+        not path.is_symlink() and not path.is_file() and not path.is_dir()
+        for path in (*source_entries, *destination_entries)
+    ):
+        errors.append("saved producer or continuation output contains a non-regular entry")
     record_names = sorted(str(row.get("name", "")) for row in records if isinstance(row, Mapping))
-    if source_names != destination_names or record_names != source_names:
+    if (
+        source_names != destination_names
+        or source_directories != destination_directories
+        or record_names != source_names
+    ):
         errors.append("consumer output directory differs from the complete saved producer inventory")
     for row in records:
         if not isinstance(row, Mapping):
             errors.append("saved output manifest contains a non-object entry")
             continue
         name = str(row.get("name", ""))
+        relative_path = Path(name)
         source_path = Path(str(row.get("source_path", "")))
         destination_path = Path(str(row.get("path", "")))
         if (
             not name
-            or Path(name).name != name
-            or source_path.resolve() != source / name
-            or destination_path.resolve() != destination / name
+            or relative_path.is_absolute()
+            or relative_path.as_posix() != name
+            or any(part in {"", ".", ".."} for part in relative_path.parts)
+            or source_path.resolve() != source / relative_path
+            or destination_path.resolve() != destination / relative_path
         ):
             errors.append(f"saved output manifest path escapes its expected directory: {name!r}")
             continue
-        source_file = source / name
-        destination_file = destination / name
+        source_file = source / relative_path
+        destination_file = destination / relative_path
         if (
             source_file.is_symlink()
             or destination_file.is_symlink()
@@ -881,16 +955,7 @@ def continue_task41_p0_saved_output(
     producer, _, _, old_evidence = _validate_original_attempt(
         run_root, contract, digest
     )
-    identity = producer.get("identity_packet")
-    if not isinstance(identity, Mapping):
-        raise ValueError("original A2 summary omits its solver identity packet")
-    for key, expected in (
-        ("input_sha256", contract["case"]["input_sha256"]),
-        ("physical_model_sha256", contract["case"]["physical_model_sha256"]),
-        ("resolved_config_sha256", contract["case"]["resolved_config_sha256"]),
-    ):
-        if identity.get(key) != expected:
-            raise ValueError(f"original A2 solver identity differs from the contract: {key}")
+    identity = _validate_original_solver_identity(producer, contract["case"])
     post_reference = producer.get("post_release_final_residual_packet")
     pre_reference = producer.get("pre_release_final_residual_packet")
     if not isinstance(pre_reference, Mapping) or not isinstance(post_reference, Mapping):
