@@ -1,0 +1,143 @@
+{
+  "artifacts_sha256": {
+    "numerical_output/dtn_port_diffraction_orders_3d.json": "f724f002b6b2010556183d21aaa2b1f229fe8bfa46ccac6f501e394f56dfcfc0",
+    "numerical_output/dtn_port_power_metrics_3d.json": "48c7cade9706118a13fa9733c0305889519c56dedd572db5185177d557a9e43c",
+    "numerical_output/full3d_reference_samples.npz": "a42ad7f5ba1470fe9da518145da7c9e6e92a80101600a7e2e549114ba4a37410",
+    "numerical_output/task40_direct_factor_evidence/evidence.json": "632c6ef765e358fc1692176b46899c67802cac23dfe90522b0330f8dca7820ea",
+    "numerical_output/volume_absorption.json": "1e03a5130a256a0e9ebd9b6475ede0b09b2255a9d1c4a2fd844f60cdd8296379",
+    "p6_condensed_direct_summary.json": "459b3f29ca5fa642436b931843fd80c8faaea135569b1088514106fe41b490c9",
+    "run_manifest.json": "4b1f9686ce127218780b041bfc89b60bf10849fbc256f03d18ce8cd94c4aa1bd",
+    "run_summary.json": "8ba0d803de6624fd10eeed0968f985d6d27dfa2d9b507ca0fb116751e03ee833",
+    "workflow_phase.json": "ed99fcb67894a1575ff23b1942de6d86c1cdbe5aab92f7b7901b5094bd59c020"
+  },
+  "descendants_cleared": true,
+  "exit_status": 0,
+  "mesh": {
+    "actual_axes_match_frozen_h15_coordinates": true,
+    "actual_global_cell_count": 480,
+    "axis_cell_counts": [
+      6,
+      10,
+      8
+    ],
+    "axis_lineage_matches_frozen_parent": true,
+    "axis_sha256_le_f64": {
+      "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+      "y": "9adb867e3e11b08db1999e8e9710aec3027c64cb2f4c3c580afc469af04b21a6",
+      "z": "3461ff84ed60dee6ebd60cf525f62599c4c87b09bda6717a3aced8cf0c4dedd0"
+    },
+    "changed_axes": [
+      "y",
+      "z"
+    ],
+    "material_tag_counts": {
+      "1": 348,
+      "2": 60,
+      "3": 72
+    },
+    "parent_case": "H15_Y",
+    "status": "PASS"
+  },
+  "numerical": {
+    "A_balance": 0.6913551584455011,
+    "A_volume_total": 0.6913551584464651,
+    "R00_s": 0.25150958360466596,
+    "R_total": 0.25154225679008296,
+    "T_total": 0.05710258476441602,
+    "checks": {
+      "all_active_modal_amplitudes_finite": true,
+      "auxiliary_export_finite": true,
+      "carrier_sparse_cutoff_identity": true,
+      "condensed_direct_residual_finite": true,
+      "condensed_direct_residual_pass": true,
+      "direct_factor_evidence_saved_before_release": true,
+      "field_export_finite": true,
+      "native_condensed_identity_finite": true,
+      "native_condensed_identity_relative": 4.5566471257783415e-11,
+      "original_A6_active_rectangle_finite": true,
+      "original_A6_active_rectangle_residual_pass": true,
+      "physical_energy_gate": 1e-05,
+      "rta_port_volume_energy_closure_pass": true,
+      "same_materialized_matrix_symbolic_numeric_solve": true
+    },
+    "condensed_final_relative": 3.5256551413415336e-12,
+    "condensed_initial_relative": 2.1029326532426236e-09,
+    "matrix_object_unchanged": true,
+    "numeric_calls": 1,
+    "original_A6_active_rectangle_relative": 9.093226418106037e-11,
+    "passed": true,
+    "rta_energy_closure": 9.64117674584486e-13,
+    "same_factor_correction_count": 1,
+    "solve_calls": 2,
+    "symbolic_calls": 1
+  },
+  "operator": {
+    "authority": "AUTHORITY_LIMITED",
+    "cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "cutoff_relative_tolerance": 1e-13,
+    "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    "mode_count": 612,
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "surface_quadrature_degree": 28,
+    "volume_quadrature_records": [
+      {
+        "component": "curl",
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "component": "material_mass",
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1
+        ]
+      },
+      {
+        "component": "material_mass",
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          2,
+          3
+        ]
+      }
+    ]
+  },
+  "qualification_boundary": "Per-run finite-R13 checks passed; AUTHORITY_LIMITED only. FULL_DTN_NOT_VERIFIED; cross-mesh comparison is not solver or full-DtN qualification.",
+  "resource_audit": {
+    "all_status_readable_samples": 6918,
+    "bad_resource_lines": 0,
+    "elapsed_seconds": 2246.6123056109063,
+    "global_swap_delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "global_swap_scope": "WSL-global diagnostic, not dedicated job",
+    "host_floor_bytes": 68719476736,
+    "launch_mem_available_bytes": 2125532762112,
+    "peak_tree_rss_bytes": 19708227584,
+    "peak_tree_swap_bytes": 0,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "rss_hard_limit_bytes": null,
+    "runtime_minimum_available_bytes": null,
+    "runtime_minimum_available_interpretation": "not persisted; launch envelope is not runtime minimum",
+    "samples": 6918,
+    "swap_policy": "observe_only"
+  },
+  "result_classification": "worker_exit0",
+  "run_directory": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_H15_YZ480_p6_direct_v1__full3d_direct__mpi1__Mna/20261017T095134.921987Z",
+  "run_id": "task40_phi90_13p5_H15_YZ480_p6_direct_v1",
+  "schema": "task40.h15-yz480.field14-terminal.v1",
+  "source_clean_at_terminal": true,
+  "source_sha": "60be8967be874d471313608f4bd649b690eb3637",
+  "status": "finished"
+}

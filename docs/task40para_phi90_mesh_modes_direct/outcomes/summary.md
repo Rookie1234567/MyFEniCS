@@ -100,3 +100,11 @@ Y3 的有限 R13 端口—体吸收闭合 `5.7914e-11`，但 official scope 是 
 - [同策略比较脚本](analysis/compare_d13_same_policy_y2_y3.py)，SHA256 `e9bf78b4b2c4b3ae2caa83dd68c26c6694f75623aa4d806f94a9d828368d1b44`。
 - [同策略比较 JSON](records/d13_y2_y3_same_relative_only_comparison_v1.json)，SHA256 `a701e86e557e19e19d52ea7753f95e90467fdf1bdf6b8c4f5866f3f44ae9329`。
 - [同策略全部 612 模态 CSV](records/d13_y2_y3_same_relative_only_all_612_modes_v1.csv)，SHA256 `be2b34407c6c4b98de1c65bf7b276676154a92ef9e4363b52147d5b33bd894bb`。
+
+## 用户追加授权的第14场：H15-YZ480
+
+用户另行明确将完整场上限从13仅增加到14，批准唯一 `H15-YZ480 [6,10,8]`；此前D13的Y2/Y3比较与13场预算历史不覆盖。该场自然完成，exit0，实际480-cell mesh/tag QA PASS，612 mode/q28/q15及relative-only cutoff身份不变。单场凝聚、原A6和能量门通过；输出与 H15-Y、同策略 D13-Y2/Y3 的保存场离线比较见[专页](response_h15_yz480_field14_comparison.md)：与H15-Y的总R/T/A_volume差较小，但R00,s、全612边界振幅和水平Ht比较仍有门失败；D13-Y2/Y3对照差异更大。该比较同时改变y/z轴，不能拆解单轴原因。`FULL_DTN_NOT_VERIFIED`与canonical sidewall `NOT_MEASURED`保持；不据此启动第15场。
+
+终态详情与完整artifact hash见[终态JSON](records/h15_yz480_field14_terminal_v1.json)，保存输出比较见[JSON](records/h15_yz480_vs_h15_y_d13_y2_y3_same_relative_only_v1.json)及[612模式CSV](records/h15_yz480_vs_h15_y_d13_y2_y3_all_612_modes_v1.csv)。
+
+逐模功率的 `1e-6` 比较现已按全612模式、390个 `power_carrying` 模式和166个 `propagating` 模式分组记录signed key与最大 `|ΔR|/|ΔT|`。相对H15-Y，全612及power-carrying组最大 `|ΔR|=1.11273135e-6`（top `(0,0,s)`，FAIL），`|ΔT|=1.48981821e-7`（bottom `(0,0,s)`，PASS）；propagating组的最大 `|ΔT|=4.69292761e-8`（bottom `(0,-2,s)`，PASS）。相对同策略D13-Y2/Y3，全612和power-carrying组的 `ΔR` 分别为 `+1.86612841e-4` / `+1.86613711e-4`，`ΔT` 分别为 `−2.62362701e-5` / `−2.62363662e-5`，均FAIL；仅propagating组最大 `|ΔT|≈4.72902e-8`通过。`(bottom,0,0,s)` 是 `propagating=false` 但 `power_carrying=true` 的底部有损模式；propagating子集通过不代表全612或power-carrying的T通过。完整分组数据与signed key见field14比较专页和JSON。第14场比较失败结论不变；完整场预算已用尽，不启动第15场。
