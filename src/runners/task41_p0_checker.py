@@ -156,8 +156,121 @@ def _task41_relative_vector_error(actual: np.ndarray, expected: np.ndarray) -> f
     )
 
 
+def _task41_a2_verify_saved_q_consumer_receipt(
+    *,
+    repo_root: Path,
+    artifact_root: Path,
+    reuse_binding: Mapping[str, Any],
+    consumer_execution: Mapping[str, Any],
+    q: int,
+    entry: Mapping[str, Any],
+    receipt: Mapping[str, Any],
+    manifest_path: Path,
+    qualification_path: Path,
+    manifest: Mapping[str, Any],
+    qualification: Mapping[str, Any],
+) -> None:
+    """Recheck the immutable prior native PASS and the new consumer receipt."""
+    from src.solvers.task40_v30_qualified_q_csr import make_v31_q_csr_import_authorization
+
+    authorization_map = reuse_binding.get("consumer_import_authorizations")
+    expected_authorization = (
+        authorization_map.get(str(q)) if isinstance(authorization_map, Mapping) else None
+    )
+    consumer_ref = receipt.get("consumer_receipt")
+    if not isinstance(expected_authorization, Mapping) or not isinstance(consumer_ref, Mapping):
+        raise ValueError(f"Task41 A2 imported q={q} omits its contract authorization or consumer receipt")
+    consumer_path = _task41_run_artifact(
+        artifact_root, consumer_ref, f"q{q} V31 consumer receipt"
+    )
+    consumer = _json_object(consumer_path, f"q={q} V31 consumer receipt")
+    manifest_ref = entry.get("csr_manifest")
+    qualification_ref = entry.get("native_qualification")
+    matrix_source = manifest.get("matrix_source_identity")
+    producer_execution = manifest.get("execution_identity")
+    native_execution = qualification.get("execution_identity")
+    artifacts = manifest.get("csr_artifacts")
+    if (
+        not isinstance(manifest_ref, Mapping)
+        or not isinstance(qualification_ref, Mapping)
+        or not isinstance(matrix_source, Mapping)
+        or not isinstance(producer_execution, Mapping)
+        or not isinstance(native_execution, Mapping)
+        or not isinstance(artifacts, Mapping)
+    ):
+        raise ValueError(f"Task41 A2 imported q={q} saved producer records are incomplete")
+    normalized_artifacts = {}
+    for name in ("data", "indices", "indptr"):
+        record = artifacts.get(name)
+        if not isinstance(record, Mapping):
+            raise ValueError(f"Task41 A2 imported q={q} CSR manifest omits {name}")
+        raw_path = Path(str(record.get("path", "")))
+        artifact_path = (raw_path if raw_path.is_absolute() else manifest_path.parent / raw_path).resolve()
+        if not artifact_path.is_relative_to(repo_root):
+            raise ValueError(f"Task41 A2 imported q={q} CSR {name} escaped the repository")
+        normalized_artifacts[name] = {
+            "path": str(artifact_path),
+            "bytes": record.get("bytes"),
+            "sha256": record.get("sha256"),
+        }
+    expected = make_v31_q_csr_import_authorization(
+        q_index=q,
+        twist_index=0,
+        profile=str(manifest.get("profile", "")),
+        operator_identity=manifest.get("operator_identity", {}),
+        matrix_source_identity=matrix_source,
+        producer_identity=manifest.get("producer_identity", {}),
+        producer_execution_identity=producer_execution,
+        native_execution_identity=native_execution,
+        csr_manifest_sha256=str(manifest_ref.get("sha256", "")),
+        native_qualification_sha256=str(qualification_ref.get("sha256", "")),
+        csr_artifacts=normalized_artifacts,
+        consumer_execution_identity=consumer_execution,
+    )
+    expected_consumer_sha = hashlib.sha256(
+        json.dumps(expected, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    if (
+        expected != expected_authorization
+        or receipt.get("qualification_kind") != "V30_NATIVE_PASS"
+        or receipt.get("qualification_status") != "PASS"
+        or receipt.get("csr_manifest_path") != str(manifest_path)
+        or receipt.get("csr_manifest_sha256") != manifest_ref.get("sha256")
+        or receipt.get("native_qualification_path") != str(qualification_path)
+        or receipt.get("native_qualification_sha256") != qualification_ref.get("sha256")
+        or receipt.get("selector_sha256") != reuse_binding.get("selector_sha256")
+        or consumer.get("schema") != "task40extra.review_v31_q_csr_consumer_receipt.v1"
+        or consumer.get("status") != "CONSUMED_COMPLETE_CSR_NATIVE_PASS"
+        or consumer.get("q_index") != q
+        or consumer.get("twist_index") != 0
+        or consumer.get("profile") != manifest.get("profile")
+        or consumer.get("operator_identity") != manifest.get("operator_identity")
+        or consumer.get("matrix_source_identity") != matrix_source
+        or consumer.get("producer_identity") != manifest.get("producer_identity")
+        or consumer.get("producer_execution_identity") != producer_execution
+        or consumer.get("native_execution_identity") != native_execution
+        or consumer.get("consumer_execution_identity") != consumer_execution
+        or consumer.get("csr_manifest")
+        != {"path": str(manifest_path), "sha256": manifest_ref.get("sha256")}
+        or consumer.get("native_qualification")
+        != {
+            "path": str(qualification_path),
+            "sha256": qualification_ref.get("sha256"),
+            "status": "PASS",
+        }
+        or consumer.get("authorization") != expected
+        or consumer.get("authorization_sha256") != expected_consumer_sha
+        or consumer.get("csr_artifacts") != normalized_artifacts
+        or consumer.get("original_manifest_and_native_pass_rewritten") is not False
+    ):
+        raise ValueError(f"Task41 A2 imported q={q} consumer receipt does not preserve its producer PASS")
+
+
 def _task41_a2_reference_audit_checks(
-    summary: Mapping[str, Any], numerical_output: Path
+    summary: Mapping[str, Any],
+    numerical_output: Path,
+    *,
+    repo_root: Path | None = None,
 ) -> dict[str, Any]:
     """Reapply saved q CSR actions and both factor probe residuals from raw vectors."""
     from scipy import sparse
@@ -165,6 +278,20 @@ def _task41_a2_reference_audit_checks(
     from src.solvers.task40_v10_p6_periodic_profile import TASK41_G13_A2_P6_PROFILE
 
     artifact_root = numerical_output.parent.resolve()
+    repo_root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve()
+    authority = summary.get("campaign_authority", {})
+    reuse_binding = (
+        authority.get("q_csr_reuse") if isinstance(authority, Mapping) else None
+    )
+    consumer_execution = {
+        "source_sha": authority.get("source_sha") if isinstance(authority, Mapping) else None,
+        "window_sha256": (
+            authority.get("campaign_window_sha256")
+            if isinstance(authority, Mapping)
+            else None
+        ),
+    }
+    imported_saved_q_indices: set[int] = set()
     snapshot = summary.get("reference_audit_snapshot")
     if not isinstance(snapshot, Mapping):
         raise ValueError("Task41 A2 worker summary omits its pre-destroy reference audit")
@@ -244,8 +371,33 @@ def _task41_a2_reference_audit_checks(
         preparation = sector.get("task41_a2_independent_q_csr_preparation")
         if not isinstance(preparation, Mapping):
             raise ValueError(f"Task41 A2 sector {pair} omits its independent CSR preparation")
+        saved_import = (
+            preparation.get("schema")
+            == "task41.p0.a2_saved_q_csr_import_audit.v1"
+        )
         identity = preparation.get("qualification_identity")
-        if (
+        if saved_import:
+            if (
+                pair != (0, 5)
+                or preparation.get("qualification_origin")
+                != "saved_v30_native_pass_cross_window_import"
+                or preparation.get("selected_q_indices") != [0, 5]
+                or preparation.get("imported_saved_q_indices") != [0, 5]
+                or preparation.get("all_complete_native_pass") is not True
+                or preparation.get("four_complete_csr_actions_passed") is not True
+                or preparation.get("paired_sector_leakage_passed") is not True
+                or not isinstance(identity, Mapping)
+                or identity.get("q_indices") != [0, 5]
+                or identity.get("twist_index") != 0
+                or identity.get("profile_identity") != TASK41_G13_A2_P6_PROFILE.identity()
+                or not isinstance(reuse_binding, Mapping)
+                or reuse_binding.get("q_indices") != [0, 5]
+                or reuse_binding.get("twist_index") != 0
+                or not isinstance(consumer_execution.get("source_sha"), str)
+                or not isinstance(consumer_execution.get("window_sha256"), str)
+            ):
+                raise ValueError("Task41 A2 saved q import is not the authorized q0/q5 twist-zero reuse")
+        elif (
             preparation.get("selected_q_indices") != list(pair)
             or preparation.get("all_complete_native_pass") is not True
             or preparation.get("four_complete_csr_actions_passed") is not True
@@ -264,8 +416,13 @@ def _task41_a2_reference_audit_checks(
             or not isinstance(receipts, list)
             or len(entries) != 2
             or len(receipts) != 2
-            or not isinstance(native_facts, Mapping)
-            or set(native_facts) != {str(q) for q in pair}
+            or (
+                not saved_import
+                and (
+                    not isinstance(native_facts, Mapping)
+                    or set(native_facts) != {str(q) for q in pair}
+                )
+            )
         ):
             raise ValueError(f"Task41 A2 sector {pair} does not preserve both q receipts")
         entries_by_q = {int(row["q_index"]): row for row in entries if isinstance(row, Mapping)}
@@ -275,14 +432,26 @@ def _task41_a2_reference_audit_checks(
         for q in pair:
             entry = entries_by_q[q]
             receipt = receipts_by_q[q]
-            facts = native_facts[str(q)]
-            if (
+            facts = native_facts[str(q)] if isinstance(native_facts, Mapping) else None
+            if saved_import:
+                if (
+                    entry.get("twist_index") != 0
+                    or receipt.get("q_index") != q
+                    or receipt.get("twist_index") != 0
+                    or receipt.get("qualification_kind") != "V30_NATIVE_PASS"
+                    or receipt.get("qualification_status") != "PASS"
+                    or not isinstance(receipt.get("maximum_relative_error"), (int, float))
+                    or receipt.get("maximum_relative_error") > 1.0e-11
+                ):
+                    raise ValueError(f"Task41 A2 q={q} saved native PASS receipt is incomplete")
+            elif (
                 entry.get("twist_index") != pair[0]
                 or receipt.get("twist_index") != pair[0]
                 or entry.get("manifest_status") != "COMPLETE_CSR"
                 or entry.get("qualification_status") != "PASS"
                 or receipt.get("manifest_status") != "COMPLETE_CSR"
                 or receipt.get("qualification_status") != "PASS"
+                or not isinstance(facts, Mapping)
                 or facts.get("status") != "PASS"
                 or facts.get("four_complete_csr_actions_passed") is not True
                 or facts.get("paired_sector_leakage_passed") is not True
@@ -292,7 +461,17 @@ def _task41_a2_reference_audit_checks(
             qualification_ref = entry.get("native_qualification")
             if not isinstance(manifest_ref, Mapping) or not isinstance(qualification_ref, Mapping):
                 raise ValueError(f"Task41 A2 q={q} selector entry omits hash-bound receipts")
-            if (
+            if saved_import:
+                if (
+                    Path(str(receipt.get("csr_manifest_path", ""))).resolve()
+                    != Path(str(manifest_ref.get("path", ""))).resolve()
+                    or receipt.get("csr_manifest_sha256") != manifest_ref.get("sha256")
+                    or Path(str(receipt.get("native_qualification_path", ""))).resolve()
+                    != Path(str(qualification_ref.get("path", ""))).resolve()
+                    or receipt.get("native_qualification_sha256") != qualification_ref.get("sha256")
+                ):
+                    raise ValueError(f"Task41 A2 q={q} imported selector and provider receipt hashes disagree")
+            elif (
                 receipt.get("csr_manifest_path") != manifest_ref.get("path")
                 or receipt.get("csr_manifest_sha256") != manifest_ref.get("sha256")
                 or receipt.get("native_qualification_path") != qualification_ref.get("path")
@@ -301,11 +480,12 @@ def _task41_a2_reference_audit_checks(
                 or facts.get("native_qualification_sha256") != qualification_ref.get("sha256")
             ):
                 raise ValueError(f"Task41 A2 q={q} sector receipt hashes disagree")
+            evidence_root = repo_root if saved_import else artifact_root
             manifest_path = _task41_run_artifact(
-                artifact_root, manifest_ref, f"q{q} CSR manifest"
+                evidence_root, manifest_ref, f"q{q} CSR manifest"
             )
             qualification_path = _task41_run_artifact(
-                artifact_root, qualification_ref, f"q{q} native qualification"
+                evidence_root, qualification_ref, f"q{q} native qualification"
             )
             manifest = _json_object(manifest_path, f"q={q} CSR manifest")
             qualification = _json_object(qualification_path, f"q={q} native qualification")
@@ -326,6 +506,8 @@ def _task41_a2_reference_audit_checks(
                 or qualification.get("csr_action_count") != 4
                 or qualification.get("paired_sector_leakage_passed") is not True
                 or qualification.get("relative_error_limit") != 1.0e-11
+                or qualification.get("maximum_relative_error")
+                != receipt.get("maximum_relative_error")
             ):
                 raise ValueError(f"Task41 A2 q={q} CSR manifest or qualification is invalid")
             arrays = qualification.get("native_array_artifacts")
@@ -344,6 +526,21 @@ def _task41_a2_reference_audit_checks(
                 raise ValueError(f"Task41 A2 q={q} CSR qualification omits required raw vectors")
             if not isinstance(csr_artifacts, Mapping) or set(csr_artifacts) != {"data", "indices", "indptr"}:
                 raise ValueError(f"Task41 A2 q={q} CSR manifest omits its three arrays")
+            if saved_import:
+                _task41_a2_verify_saved_q_consumer_receipt(
+                    repo_root=repo_root,
+                    artifact_root=artifact_root,
+                    reuse_binding=reuse_binding,
+                    consumer_execution=consumer_execution,
+                    q=q,
+                    entry=entry,
+                    receipt=receipt,
+                    manifest_path=manifest_path,
+                    qualification_path=qualification_path,
+                    manifest=manifest,
+                    qualification=qualification,
+                )
+                imported_saved_q_indices.add(q)
             sector_by_q[q] = (manifest, qualification, arrays)
         if actual_sector_pairs != expected_sector_pairs:
             continue
@@ -353,9 +550,10 @@ def _task41_a2_reference_audit_checks(
     def load_csr(q: int):
         manifest, _qualification, _arrays = sector_by_q[q]
         records = manifest["csr_artifacts"]
-        data = _task41_npy_artifact(artifact_root, records["data"], f"q{q} CSR data")
-        indices = _task41_npy_artifact(artifact_root, records["indices"], f"q{q} CSR indices")
-        indptr = _task41_npy_artifact(artifact_root, records["indptr"], f"q{q} CSR indptr")
+        evidence_root = repo_root if q in imported_saved_q_indices else artifact_root
+        data = _task41_npy_artifact(evidence_root, records["data"], f"q{q} CSR data")
+        indices = _task41_npy_artifact(evidence_root, records["indices"], f"q{q} CSR indices")
+        indptr = _task41_npy_artifact(evidence_root, records["indptr"], f"q{q} CSR indptr")
         if (
             data.dtype != np.dtype(np.complex128)
             or indices.dtype != np.dtype(np.int32)
@@ -499,9 +697,10 @@ def _task41_a2_reference_audit_checks(
                  "factor_csr_identity": matrix_identity}
             )
 
+            evidence_root = repo_root if q in imported_saved_q_indices else artifact_root
             native_records = {
                 name: _task41_npy_artifact(
-                    artifact_root, array_records[name], f"q{q} {name}"
+                    evidence_root, array_records[name], f"q{q} {name}"
                 )
                 for name in array_records
             }
@@ -584,6 +783,8 @@ def _task41_a2_reference_audit_checks(
         "factor_probe_count": len(factor_results),
         "factor_results": factor_results,
         "all_q_four_action_csr_reapplied": True,
+        "saved_native_qualification_q_indices": sorted(imported_saved_q_indices),
+        "fresh_native_qualification_q_indices": sorted(set(q_indices) - imported_saved_q_indices),
         "sector_count": len(actual_sector_pairs),
         "q_csr_action_count": sum(len(row["four_action_relative_errors"]) for row in csr_results),
         "paired_peer_csr_action_count": len(csr_results),
@@ -624,8 +825,14 @@ def _task41_a2_numerical_checks(
         errors.append("A2 worker result or frozen Task41 contract identity did not pass")
     if comparison.get("schema") != TASK41_COMPARISON_SCHEMA or comparison.get("pass") is not True:
         errors.append("A1/A2 comparison gate did not pass")
+    if (
+        authority.get("source_sha") != contract.get("source", {}).get("sha")
+        or authority.get("campaign_window_sha256") != contract.get("window", {}).get("sha256")
+        or authority.get("q_csr_reuse") != contract.get("q_csr_reuse")
+    ):
+        errors.append("A2 worker authority differs from its source/window-bound q reuse contract")
     reference_audit_recheck = _task41_a2_reference_audit_checks(
-        summary, numerical_output
+        summary, numerical_output, repo_root=repo_root
     )
     expected_binding_path = (repo_root / TASK41_A1_COMPARISON_BINDING_RELATIVE).resolve()
     binding_path = Path(str(comparison.get("a1_binding_path", ""))).resolve()

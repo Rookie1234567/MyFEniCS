@@ -155,6 +155,8 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from src.runners.task41_p0_checker import _task41_a2_reference_audit_checks
+    from src.runners.task41_p0_contract import _prepare_task41_a2_q_csr_reuse
+    from src.solvers.task40_v30_qualified_q_csr import QualifiedQCSRProvider
     from src.solvers import task40_v10_p6_periodic_profile as periodic_profiles
     from src.solvers.task40_v10_p6_mumps import (
         AllQExactMumps,
@@ -384,6 +386,51 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
                 },
             }
         )
+    consumer_execution = {"source_sha": "7" * 40, "window_sha256": "8" * 64}
+    reuse_binding = _prepare_task41_a2_q_csr_reuse(
+        tmp_path,
+        [
+            Path(selector_entries[q]["csr_manifest"]["path"])
+            for q in (0, 5)
+        ],
+        source_sha=consumer_execution["source_sha"],
+        window_sha256=consumer_execution["window_sha256"],
+        expected_input_sha256="a" * 64,
+    )
+    provider = QualifiedQCSRProvider(
+        tmp_path / reuse_binding["selector_path"],
+        selector_sha256=reuse_binding["selector_sha256"],
+        repo_root=tmp_path,
+        path_resolver=lambda path: Path(path).resolve(),
+        allocation_gate=lambda *_args, **_kwargs: None,
+        consumer_receipt_directory=tmp_path / "consumer_receipts",
+        consumer_import_authorizations=reuse_binding["consumer_import_authorizations"],
+    )
+    imported_receipts = [
+        provider.load(
+            q,
+            0,
+            expected_operator_identity=selector_entries[q]["operator_identity"],
+            expected_execution_identity=consumer_execution,
+            expected_q_map=q_maps[q],
+            expected_original_h=original_h,
+        )[1]
+        for q in (0, 5)
+    ]
+    imported_preparation = sector_audits[0]["task41_a2_independent_q_csr_preparation"]
+    imported_preparation.update(
+        {
+            "schema": "task41.p0.a2_saved_q_csr_import_audit.v1",
+            "qualification_origin": "saved_v30_native_pass_cross_window_import",
+            "imported_saved_q_indices": [0, 5],
+            "selector_entries": [
+                dict(provider.entries[q]) for q in (0, 5)
+            ],
+            "qualification_receipts": imported_receipts,
+        }
+    )
+    imported_preparation.pop("native_facts_by_q")
+
     snapshot = {
         "factor_audit_before_destroy": factor_audit,
         "q_matrix_audits_before_destroy": {
@@ -394,10 +441,21 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
     }
 
     result = _task41_a2_reference_audit_checks(
-        {"reference_audit_snapshot": snapshot}, numerical_output
+        {
+            "reference_audit_snapshot": snapshot,
+            "campaign_authority": {
+                "source_sha": consumer_execution["source_sha"],
+                "campaign_window_sha256": consumer_execution["window_sha256"],
+                "q_csr_reuse": reuse_binding,
+            },
+        },
+        numerical_output,
+        repo_root=tmp_path,
     )
     assert result["all_q_factor_probes_reapplied"] is True
     assert result["factor_probe_count"] == 10
     assert result["all_q_four_action_csr_reapplied"] is True
     assert result["q_csr_action_count"] == 40
     assert result["sector_count"] == 5
+    assert result["saved_native_qualification_q_indices"] == [0, 5]
+    assert result["fresh_native_qualification_q_indices"] == [1, 2, 3, 4, 6, 7, 8, 9]

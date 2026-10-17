@@ -5951,6 +5951,59 @@ def _task41_a2_runtime_configuration(
     }
 
 
+def _task41_a2_load_saved_q_csr_pair(
+    provider: Any,
+    *,
+    q_indices: tuple[int, ...],
+    twist_index: int,
+    q_maps_by_q: Mapping[int, Any],
+    original_h: np.ndarray,
+    operator_identity_by_q: Mapping[int, Mapping[str, Any]],
+    execution_identity: Mapping[str, Any],
+    profile_name: str,
+    qualification_identity: Mapping[str, Any],
+):
+    """Import only the bound q0/q5 twist-zero pair through the strict V30/V31 provider."""
+    if provider is None or twist_index != 0 or set(q_indices) != {0, 5}:
+        return None
+    if set(provider.entries) != {0, 5} or provider.profile != profile_name:
+        raise ValueError("Task41 A2 saved q provider differs from the exact q0/q5 profile binding")
+    matrices: dict[int, Any] = {}
+    receipts: list[dict[str, Any]] = []
+    for q_index in (0, 5):
+        q_map = q_maps_by_q[q_index]
+        matrix, receipt = provider.load(
+            q_index,
+            twist_index,
+            expected_operator_identity=operator_identity_by_q[q_index],
+            expected_execution_identity=execution_identity,
+            expected_q_map=q_map,
+            expected_original_h=original_h,
+        )
+        expected_q_shape = (int(q_map.shape[1]), int(q_map.shape[1]))
+        if tuple(matrix.shape) != expected_q_shape:
+            raise ValueError(
+                f"Task41 A2 saved q={q_index} CSR shape differs from the fresh runtime q-map columns"
+            )
+        matrices[q_index] = matrix
+        receipts.append(dict(receipt))
+    audit = {
+        "schema": "task41.p0.a2_saved_q_csr_import_audit.v1",
+        "status": "PASS",
+        "selected_q_indices": [0, 5],
+        "imported_saved_q_indices": [0, 5],
+        "twist_index": 0,
+        "all_complete_native_pass": True,
+        "four_complete_csr_actions_passed": True,
+        "paired_sector_leakage_passed": True,
+        "qualification_origin": "saved_v30_native_pass_cross_window_import",
+        "selector_entries": [dict(provider.entries[q]) for q in (0, 5)],
+        "qualification_receipts": receipts,
+        "qualification_identity": dict(qualification_identity),
+    }
+    return matrices, audit
+
+
 def _task41_a2_candidate_contract(
     resolved: Mapping[str, Any],
     profile_contract: Mapping[str, Any],
@@ -6157,6 +6210,7 @@ def _task41_a2_candidate_contract(
         "campaign_writer": "subreaper_watchdog_only",
         "worker_accounting_access": "read_only_projection",
         "factor_lifecycle_strategy": "ALL_Q_RESIDENT",
+        "q_csr_reuse": contract.get("q_csr_reuse"),
     }
 
 
@@ -8678,6 +8732,41 @@ def run_task40_v10_p6_reference_worker(
                 },
             }
             qualified_q_csr_coverage_phase = "sector_preparation_subset"
+            task41_a2_saved_q_csr_provider = None
+            saved_q_reuse_binding = (
+                campaign_identity.get("q_csr_reuse")
+                if isinstance(campaign_identity, Mapping)
+                else None
+            )
+            if saved_q_reuse_binding is not None:
+                from src.solvers.task40_v30_qualified_q_csr import QualifiedQCSRProvider
+
+                if not isinstance(saved_q_reuse_binding, Mapping):
+                    raise ValueError("Task41 A2 q reuse binding is not an object")
+                q_selector_path = Path(str(saved_q_reuse_binding["selector_path"]))
+                if not q_selector_path.is_absolute():
+                    q_selector_path = Path(_repo_root()) / q_selector_path
+                task41_a2_saved_q_csr_provider = QualifiedQCSRProvider(
+                    q_selector_path,
+                    selector_sha256=str(saved_q_reuse_binding["selector_sha256"]),
+                    repo_root=_repo_root(),
+                    path_resolver=_task40_v30_artifact_path_resolver(_repo_root()),
+                    allocation_gate=allocation_gate,
+                    consumer_receipt_directory=(
+                        directory / "task41_a2_q_csr_consumer_receipts"
+                    ),
+                    consumer_import_authorizations=saved_q_reuse_binding.get(
+                        "consumer_import_authorizations"
+                    ),
+                )
+                if (
+                    set(task41_a2_saved_q_csr_provider.entries) != {0, 5}
+                    or task41_a2_saved_q_csr_provider.profile
+                    != TASK41_G13_A2_PRECONDITIONER
+                ):
+                    raise ValueError(
+                        "Task41 A2 saved q selector is not the bound q0/q5 twist-zero profile"
+                    )
 
             def prepare_task41_a2_sector_q_csr(
                 *,
@@ -8753,6 +8842,31 @@ def run_task40_v10_p6_reference_worker(
                     }
                     for q in sector_qs
                 }
+                saved_import = _task41_a2_load_saved_q_csr_pair(
+                    task41_a2_saved_q_csr_provider,
+                    q_indices=sector_qs,
+                    twist_index=int(context.twist_index),
+                    q_maps_by_q=q_maps_by_q,
+                    original_h=current_h,
+                    operator_identity_by_q=operator_identity_by_q,
+                    execution_identity=execution_identity,
+                    profile_name=str(profile.name),
+                    qualification_identity={
+                        "execution_identity": execution_identity,
+                        "scientific_input_sha256": runtime_identity[
+                            "scientific_input_sha256"
+                        ],
+                        "ordered_mode_key_sha256": runtime_identity[
+                            "ordered_mode_key_sha256"
+                        ],
+                        "q_indices": list(sector_qs),
+                        "twist_index": int(context.twist_index),
+                        "profile_identity": profile.identity(),
+                    },
+                )
+                if saved_import is not None:
+                    return saved_import
+
                 live_source = LiveP6SelectedQContributionSource(action, current_h)
                 matrices, audit = prepare_selected_q_csr_sector(
                     sources_by_q={q: live_source for q in sector_qs},

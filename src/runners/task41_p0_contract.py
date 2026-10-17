@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from src.runners.task40_v10_campaign import FixedCampaignWindow, _utc_ns
 from src.runners.workflow_timebase import clock_sample
@@ -43,6 +43,7 @@ TASK41_A2_INPUT_RELATIVE = Path(
     "input/task41extra_phi90_p50x50_g17x20/g13_p6_iterative_a2.dat"
 )
 TASK41_A1_COMPARISON_BINDING_SCHEMA = "task41.p0.a1_comparison_binding.v1"
+TASK41_A2_Q_CSR_REUSE_SCHEMA = "task41.p0.a2_q_csr_reuse.v1"
 TASK41_A1_COMPARISON_BINDING_RELATIVE = (
     TASK41_A2_CONTROLLER_RELATIVE / "a1_comparison_binding.json"
 )
@@ -66,6 +67,263 @@ class Task41ContractError(ValueError):
 
 def sha256_file(path: str | Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+
+
+
+def _task41_a2_q_csr_selector_entry(
+    root: Path,
+    manifest_raw_path: str | Path,
+    *,
+    expected_input_sha256: str,
+    consumer_execution_identity: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build the existing V30 selector row and V31 cross-execution authorization."""
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.solvers.task40_v30_qualified_q_csr import (
+        V30_Q_CSR_MANIFEST_SCHEMA,
+        V30_Q_CSR_NATIVE_SCHEMA,
+        make_v31_q_csr_import_authorization,
+    )
+
+    manifest_path = _resolve(root, str(manifest_raw_path), "A2 q CSR manifest path")
+    if not manifest_path.is_file() or not manifest_path.is_relative_to(root):
+        raise Task41ContractError("Task41 A2 q manifest must be a repository artifact")
+    manifest_sha = sha256_file(manifest_path)
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise Task41ContractError("Task41 A2 q manifest is invalid JSON") from exc
+    operator = manifest.get("operator_identity") if isinstance(manifest, dict) else None
+    q = manifest.get("q_index") if isinstance(manifest, dict) else None
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != V30_Q_CSR_MANIFEST_SCHEMA
+        or manifest.get("status") != "COMPLETE_CSR"
+        or type(q) is not int
+        or q not in {0, 5}
+        or manifest.get("twist_index") != 0
+        or manifest.get("profile") != TASK41_G13_A2_PRECONDITIONER
+        or not isinstance(operator, Mapping)
+        or operator.get("scientific_input_sha256") != expected_input_sha256
+        or manifest_path.name != f"task40_v30_q{q}_twist0_csr_manifest.json"
+    ):
+        raise Task41ContractError("Task41 A2 saved receipt must be this DAT/profile's q0 or q5 twist-zero CSR")
+    qualification_path = manifest_path.with_name(
+        f"task40_v30_q{q}_twist0_native_qualification.json"
+    )
+    if not qualification_path.is_file() or not qualification_path.resolve().is_relative_to(root):
+        raise Task41ContractError(f"Task41 A2 q{q} native qualification is missing")
+    qualification_sha = sha256_file(qualification_path)
+    try:
+        qualification = json.loads(qualification_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise Task41ContractError("Task41 A2 native qualification is invalid JSON") from exc
+    if (
+        not isinstance(qualification, dict)
+        or qualification.get("schema") != V30_Q_CSR_NATIVE_SCHEMA
+        or qualification.get("status") != "PASS"
+        or qualification.get("q_index") != q
+        or qualification.get("twist_index") != 0
+        or qualification.get("csr_manifest_sha256") != manifest_sha
+    ):
+        raise Task41ContractError(f"Task41 A2 q{q} native qualification does not bind its manifest")
+    artifacts = manifest.get("csr_artifacts")
+    if not isinstance(artifacts, Mapping):
+        raise Task41ContractError(f"Task41 A2 q{q} manifest omits its CSR arrays")
+    authorization_artifacts = {}
+    for name in ("data", "indices", "indptr"):
+        record = artifacts.get(name)
+        if not isinstance(record, Mapping):
+            raise Task41ContractError(f"Task41 A2 q{q} manifest omits CSR {name}")
+        raw = Path(str(record.get("path", "")))
+        path = (raw if raw.is_absolute() else manifest_path.parent / raw).resolve(strict=False)
+        if not path.is_relative_to(root):
+            raise Task41ContractError(f"Task41 A2 q{q} CSR {name} escaped the repository")
+        authorization_artifacts[name] = {
+            "path": str(path),
+            "bytes": record.get("bytes"),
+            "sha256": record.get("sha256"),
+        }
+    entry = {
+        "q_index": q,
+        "twist_index": 0,
+        "shape": manifest.get("shape"),
+        "operator_identity": operator,
+        "matrix_source_identity": manifest.get("matrix_source_identity"),
+        "execution_identity": manifest.get("execution_identity"),
+        "csr_manifest": {"path": str(manifest_path), "sha256": manifest_sha},
+        "native_qualification": {
+            "path": str(qualification_path.resolve()),
+            "sha256": qualification_sha,
+            "status": "PASS",
+        },
+        "manifest_status": "COMPLETE_CSR",
+        "qualification_status": "PASS",
+        "manifest_sha256": manifest_sha,
+        "native_qualification_sha256": qualification_sha,
+    }
+    authorization = make_v31_q_csr_import_authorization(
+        q_index=q,
+        twist_index=0,
+        profile=TASK41_G13_A2_PRECONDITIONER,
+        operator_identity=operator,
+        matrix_source_identity=manifest.get("matrix_source_identity", {}),
+        producer_identity=manifest.get("producer_identity", {}),
+        producer_execution_identity=manifest.get("execution_identity", {}),
+        native_execution_identity=qualification.get("execution_identity", {}),
+        csr_manifest_sha256=manifest_sha,
+        native_qualification_sha256=qualification_sha,
+        csr_artifacts=authorization_artifacts,
+        consumer_execution_identity=consumer_execution_identity,
+    )
+    return entry, authorization
+
+
+def _prepare_task41_a2_q_csr_reuse(
+    root: Path,
+    manifest_paths: Sequence[str | Path],
+    *,
+    source_sha: str,
+    window_sha256: str,
+    expected_input_sha256: str,
+) -> dict[str, Any]:
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.solvers.task40_v30_qualified_q_csr import V30_Q_CSR_SELECTOR_SCHEMA
+
+    if isinstance(manifest_paths, (str, bytes)) or len(manifest_paths) != 2:
+        raise Task41ContractError("Task41 A2 q reuse requires exactly q0 and q5 manifests")
+    consumer = {"source_sha": source_sha, "window_sha256": window_sha256}
+    entries, authorizations = [], {}
+    for raw_path in manifest_paths:
+        entry, authorization = _task41_a2_q_csr_selector_entry(
+            root, raw_path, expected_input_sha256=expected_input_sha256,
+            consumer_execution_identity=consumer,
+        )
+        q = int(entry["q_index"])
+        if str(q) in authorizations:
+            raise Task41ContractError("Task41 A2 q reuse repeats a manifest")
+        entries.append(entry)
+        authorizations[str(q)] = authorization
+    entries.sort(key=lambda row: row["q_index"])
+    if [row["q_index"] for row in entries] != [0, 5]:
+        raise Task41ContractError("Task41 A2 q reuse must bind exactly q0 and q5")
+    selector = {
+        "schema": V30_Q_CSR_SELECTOR_SCHEMA,
+        "profile": TASK41_G13_A2_PRECONDITIONER,
+        "q_csr_entries": entries,
+    }
+    selector_path = (
+        root / TASK41_A2_CONTROLLER_RELATIVE
+        / f"q_csr_reuse_selector_source_{source_sha}.json"
+    )
+    if not _write_json_no_replace(selector_path, selector):
+        try:
+            saved = json.loads(selector_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise Task41ContractError("existing Task41 A2 q selector cannot be reopened") from exc
+        if saved != selector:
+            raise Task41ContractError("existing Task41 A2 q selector differs from this binding")
+    bindings = [
+        {"q_index": row["q_index"], **row["csr_manifest"]} for row in entries
+    ]
+    return {
+        "schema": TASK41_A2_Q_CSR_REUSE_SCHEMA,
+        "q_indices": [0, 5],
+        "twist_index": 0,
+        "profile": TASK41_G13_A2_PRECONDITIONER,
+        "manifest_bindings": bindings,
+        "selector_path": selector_path.relative_to(root).as_posix(),
+        "selector_sha256": sha256_file(selector_path),
+        "consumer_import_authorizations": authorizations,
+    }
+
+
+def _validate_task41_a2_q_csr_reuse(
+    root: Path,
+    reuse: Any,
+    *,
+    source_sha: str,
+    window_sha256: str,
+    expected_input_sha256: str,
+) -> None:
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.solvers.task40_v30_qualified_q_csr import V30_Q_CSR_SELECTOR_SCHEMA
+
+    if (
+        not isinstance(reuse, Mapping)
+        or set(reuse) != {
+            "schema", "q_indices", "twist_index", "profile", "manifest_bindings",
+            "selector_path", "selector_sha256", "consumer_import_authorizations",
+        }
+        or reuse.get("schema") != TASK41_A2_Q_CSR_REUSE_SCHEMA
+        or reuse.get("q_indices") != [0, 5]
+        or reuse.get("twist_index") != 0
+        or reuse.get("profile") != TASK41_G13_A2_PRECONDITIONER
+        or not _is_sha256(reuse.get("selector_sha256"))
+    ):
+        raise Task41ContractError("Task41 A2 q reuse contract is malformed")
+    selector_path = _resolve(root, reuse["selector_path"], "A2 q reuse selector path")
+    expected_path = (
+        root / TASK41_A2_CONTROLLER_RELATIVE
+        / f"q_csr_reuse_selector_source_{source_sha}.json"
+    ).resolve()
+    if selector_path != expected_path or not selector_path.is_file() or sha256_file(selector_path) != reuse["selector_sha256"]:
+        raise Task41ContractError("Task41 A2 q reuse selector path or hash changed")
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    entries = selector.get("q_csr_entries") if isinstance(selector, Mapping) else None
+    bindings = reuse.get("manifest_bindings")
+    authorizations = reuse.get("consumer_import_authorizations")
+    if (
+        not isinstance(selector, Mapping)
+        or selector.get("schema") != V30_Q_CSR_SELECTOR_SCHEMA
+        or selector.get("profile") != TASK41_G13_A2_PRECONDITIONER
+        or not isinstance(entries, list)
+        or len(entries) != 2
+        or any(not isinstance(row, Mapping) for row in entries)
+        or [row.get("q_index") for row in entries] != [0, 5]
+        or not isinstance(bindings, list)
+        or len(bindings) != 2
+        or any(not isinstance(row, Mapping) for row in bindings)
+        or not isinstance(authorizations, Mapping)
+        or set(authorizations) != {"0", "5"}
+    ):
+        raise Task41ContractError("Task41 A2 q reuse selector or manifest bindings are incomplete")
+    expected_consumer = {"source_sha": source_sha, "window_sha256": window_sha256}
+    for q, entry, binding in zip((0, 5), entries, sorted(bindings, key=lambda row: row.get("q_index"))):
+        auth = authorizations[str(q)]
+        manifest_ref = entry.get("csr_manifest")
+        if (
+            not isinstance(manifest_ref, Mapping)
+            or binding.get("q_index") != q
+            or binding.get("path") != manifest_ref.get("path")
+            or binding.get("sha256") != manifest_ref.get("sha256")
+            or not _is_sha256(binding.get("sha256"))
+            or entry.get("twist_index") != 0
+            or entry.get("profile") not in (None, TASK41_G13_A2_PRECONDITIONER)
+            or not isinstance(auth, Mapping)
+            or auth.get("q_index") != q
+            or auth.get("twist_index") != 0
+            or auth.get("profile") != TASK41_G13_A2_PRECONDITIONER
+            or auth.get("consumer_execution_identity") != expected_consumer
+            or auth.get("csr_manifest_sha256") != binding.get("sha256")
+        ):
+            raise Task41ContractError(f"Task41 A2 q{q} reuse binding is not source-bound")
+        manifest_path = _resolve(root, str(binding["path"]), f"A2 q{q} manifest path")
+        if not manifest_path.is_file() or not manifest_path.is_relative_to(root) or sha256_file(manifest_path) != binding["sha256"]:
+            raise Task41ContractError(f"Task41 A2 q{q} manifest hash changed")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        operator = manifest.get("operator_identity") if isinstance(manifest, Mapping) else None
+        if (
+            not isinstance(manifest, Mapping)
+            or manifest.get("q_index") != q
+            or manifest.get("twist_index") != 0
+            or manifest.get("profile") != TASK41_G13_A2_PRECONDITIONER
+            or not isinstance(operator, Mapping)
+            or operator.get("scientific_input_sha256") != expected_input_sha256
+        ):
+            raise Task41ContractError(f"Task41 A2 q{q} manifest no longer matches this DAT/profile")
 
 
 def _utc_text_from_ns(value: int) -> str:
@@ -495,6 +753,17 @@ def require_task41_p0_contract(
             raise Task41ContractError("Task41 A2 comparison binding hash changed")
     elif comparison is not None:
         raise Task41ContractError("A1 contract must not carry an A1/A2 comparison binding")
+    q_csr_reuse = contract.get("q_csr_reuse")
+    if q_csr_reuse is not None:
+        if case_id != "A2":
+            raise Task41ContractError("only Task41 A2 may bind saved q CSR reuse")
+        _validate_task41_a2_q_csr_reuse(
+            root,
+            q_csr_reuse,
+            source_sha=str(source["sha"]),
+            window_sha256=str(window.get("sha256", "")),
+            expected_input_sha256=str(case.get("input_sha256", "")),
+        )
     return contract, digest
 
 
@@ -635,6 +904,7 @@ def prepare_task41_p0(
     jit_cache: str | Path,
     current_root: str | Path | None = None,
     case_id: str = "A1",
+    a2_q_csr_manifests: Sequence[str | Path] | None = None,
 ) -> dict[str, Any]:
     """Register or reuse the one fixed P0 window, then write a source-bound contract.
 
@@ -732,6 +1002,18 @@ def prepare_task41_p0(
             ]["same_discrete_comparison_ready"],
         }
 
+    q_csr_reuse = None
+    if a2_q_csr_manifests is not None:
+        if case_id != "A2":
+            raise Task41ContractError("saved q CSR reuse is available only for Task41 A2")
+        q_csr_reuse = _prepare_task41_a2_q_csr_reuse(
+            root,
+            a2_q_csr_manifests,
+            source_sha=source_sha,
+            window_sha256=window_sha,
+            expected_input_sha256=case["input_sha256"],
+        )
+
     if _git(root, "rev-parse", "HEAD") != source_sha or _git(
         root, "branch", "--show-current"
     ) != TASK41_BRANCH or _git(root, "status", "--porcelain", "--untracked-files=normal"):
@@ -775,6 +1057,8 @@ def prepare_task41_p0(
     }
     if comparison is not None:
         contract["comparison"] = comparison
+    if q_csr_reuse is not None:
+        contract["q_csr_reuse"] = q_csr_reuse
     if not _write_json_no_replace(contract_path, contract):
         raise Task41ContractError("a Task41 contract was concurrently created for this source SHA")
     contract_sha = sha256_file(contract_path)
@@ -894,6 +1178,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--abi-receipt", type=Path)
     parser.add_argument("--jit-cache", type=Path)
     parser.add_argument("--case", choices=("A1", "A2"), default="A1")
+    parser.add_argument("--a2-q-csr-manifest", action="append", type=Path)
     args = parser.parse_args(argv)
     if args.launcher_values:
         if args.contract is None:
@@ -914,6 +1199,7 @@ def main(argv: list[str] | None = None) -> int:
             abi_receipt=args.abi_receipt,
             jit_cache=args.jit_cache,
             case_id=args.case,
+            a2_q_csr_manifests=args.a2_q_csr_manifest,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
