@@ -1,6 +1,6 @@
 # H15 四场网格序列与 X2/Y2 同策略对照
 
-状态：H15 输入/profile/轴计划及定向接口检查已完成；尚未启动 H15 FE。首次执行包待主控技术快审和运行前 fresh 准入。
+状态：H15-B/X/Y/Z 四场均已完成，四场各自通过直接求解的凝聚残差、独立 A6 与能量门并自然清场。保存场的有限 R13 对比已完成。该结果不代表 full-DtN、canonical 方柱侧壁或更粗网格已获验证。
 
 ## X2 与 Y2
 
@@ -28,3 +28,36 @@ H15 是候选较粗基准，不预先宣称精度充分。四场顺序运行、�
 本轮完整场总上限按用户补充为 13：之前已完成 8 场、D13-X2 1 场、H15 B/X/Y/Z 4 场。此补充只解释新方向的总数上限，不覆盖早期文档中的历史预算或更改其历史记录。完成 H15 后，评估 z 粗化仅使用 B 与 Z 的全模式、复 E/H、逐级功率、R/T/A/A_volume 和原数值门；两级接近只说明当前两个离散接近，不证明更粗网格充分。第 14 场未获授权，不自动启动。5 nm 与 0.7 nm 目前只做固定 cell 预算的非均匀网格静态设计，不启动额外 FE，也不把相位缩放的大网格当启动方案。
 
 H15 每场启动前独立执行真实 fresh/host-floor/共享 heavy-lock/邻任务/重复进程/ABI/磁盘准入。保持 parent CPU9、worker CPU24、MPI1、math threads1、NUMA interleave 0-1、PSS/USS off、无固定 RSS cap、swap observe-only；数值预测不能替代实测。不得跨网格复用 FE 向量或 factor。
+
+## H15 实际场与门值
+
+四场的实际 mesh QA 均为 `PASS`；实际 cell 数、材料标签计数、单轴变化和轴 SHA 已写入 B/X/Y/Z JSON。实际标签计数按 air/substrate/grating 顺序分别为 B `184/24/32`、X/Y/Z `368/48/64`。四场均为 612 个相同 R13 模态，mode SHA `1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e`，surface quadrature degree 28，volume q15/default。
+
+| 场 | 实际 cells | R | T | A_balance | A_volume | 凝聚相对残差 | 独立 A6 相对残差 | 校正数 | elapsed | tree peak RSS |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| B | 240 | 0.5852627902940796 | 0.020494519842751743 | 0.3942426898631687 | 0.3942426898600285 | 1.5918324e-10 | 9.1661571e-11 | 0 | 1046.877 s | 8,331,128,832 B |
+| X | 480 | 0.5852627848047772 | 0.02049451984382492 | 0.39424269535139783 | 0.3942426953513483 | 1.1982759e-10 | 2.0686148e-11 | 0 | 1094.716 s | 16,253,333,504 B |
+| Y | 480 | 0.25154338910740764 | 0.057102436170780035 | 0.6913541747218123 | 0.6913541747191441 | 5.0608100e-12 | 4.2857750e-11 | 1 | 1206.266 s | 19,863,633,920 B |
+| Z | 480 | 0.5852599783496771 | 0.020494706485963212 | 0.3942453151643597 | 0.3942453151624836 | 2.0845281e-10 | 1.2888734e-10 | 0 | 1060.228 s | 14,838,960,128 B |
+
+All four workflow gates passed with condensed residual `<=1e-9`, independent A6 `<=1e-6`, energy closure `<=1e-5`, and no more than two same-factor corrections. The reported `FULL_DTN_NOT_VERIFIED` status remains. These solver gates establish each run's solve consistency; they do not establish mesh convergence.
+
+## Saved-field and all-mode comparison
+
+The reproducible comparison is [compare_h15_bxyz_final.py](analysis/compare_h15_bxyz_final.py). It reads each run's small manifest/stage/summary records, 612-mode JSON, and saved sample NPZ only. It does not read the VTU files, build a mesh, or rerun FE. The JSON and all-612-mode CSV are [h15_bxyz_saved_output_comparison_v1.json](records/h15_bxyz_saved_output_comparison_v1.json) and [h15_bxyz_all_612_modes_v1.csv](records/h15_bxyz_all_612_modes_v1.csv). The CSV aligns exact `(side,m,n,polarization)` keys and records every mode's boundary-scaled complex outgoing amplitude and per-mode R/T. No phase fitting was used.
+
+Relative complex-amplitude L2 differences below are measured against B and are grouped over the indicated exact modal sets. Raw outgoing coefficients are also retained separately; for Z their all-mode relative difference is 0.931 because evanescent coefficients carry reference-plane exponential scaling, so that number is not a physical boundary-amplitude comparison.
+
+| Comparison | all 612 boundary amplitudes | propagating | power-carrying | evanescent | ΔR | ΔR00,s | ΔT | ΔA_balance | ΔA_volume |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| B→X | 4.8221e-9 | 4.7214e-9 | 4.8139e-9 | 8.7636e-9 | -5.4893e-9 | -5.4883e-9 | +1.0732e-12 | +5.4882e-9 | +5.4913e-9 |
+| B→Y | 0.45446 | 0.44347 | 0.45440 | 0.86980 | -0.333719 | -0.333719 | +0.0366079 | +0.297111 | +0.297111 |
+| B→Z | 1.9860e-5 | 6.7229e-6 | 6.9567e-6 | 1.4089e-4 | -2.8119e-6 | -2.8106e-6 | +1.8664e-7 | +2.6253e-6 | +2.6253e-6 |
+
+The sampled E/H arrays have common stored coordinates (40 x, 64 y, and 5 z locations); values were compared directly without interpolation. E/H relative L2 differences were B→X `2.3385e-6 / 5.0801e-7`, B→Y `0.52298 / 0.52218`, and B→Z `6.7870e-6 / 1.7937e-5`. Saved Et/Ht arrays are horizontal traces at z=10 and 110 nm, not pillar sidewalls: their relative L2 differences were B→X `2.3370e-6 / 2.5044e-6`, B→Y `0.45033 / 0.30138`, and B→Z `6.0331e-6 / 1.5046e-4`. Component-wise relative errors for some small-field components are denominator-sensitive; the JSON also records absolute L2 and maximum absolute differences and their sample locations. Canonical sidewall traces remain `NOT_MEASURED`.
+
+These data show strong sensitivity to the H15 y resolution in the sampled quantities. X refinement barely changes B's results. Z refinement is much closer to B than Y is, but the all-mode evanescent boundary difference and horizontal Ht difference remain measurable. Similar R/T/A or energy closure alone is not a sufficiency proof for a coarser z grid.
+
+## Static z-coarsening candidate — not run
+
+For a bounded follow-up candidate only, keep B's x and y axes unchanged and retain all z material/port planes `[-10, 0, 120, 130]` nm. A possible coarser z axis is `[-10, 0, 20, 40, 60, 80, 100, 120, 130]` nm: one 10-nm cell in each exterior interval and six 20-nm cells through the grating region. This would be 8 z cells and 192 total cells instead of B's 10 z cells/240 cells, while preserving the material interfaces and port planes. Its largest step is 20 nm (`k0*dz ≈ 9.31 rad` at 13.5 nm); the aspect ratio and high phase advance make it an unverified, deliberately cautious experiment candidate, not a recommendation that accuracy is adequate. It must pass the same mesh/tag, mode, quadrature, solver, and field-comparison checks if ever authorized. No additional field is authorized by the existing 13-field cap, which is already consumed by the prior eight fields, X2, and H15 B/X/Y/Z. This candidate remains `PLAN_ONLY` pending budget coordination.
