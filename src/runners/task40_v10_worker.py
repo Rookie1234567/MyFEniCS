@@ -5963,14 +5963,36 @@ def _task41_a2_load_saved_q_csr_pair(
     profile_name: str,
     qualification_identity: Mapping[str, Any],
 ):
-    """Import only the bound q0/q5 twist-zero pair through the strict V30/V31 provider."""
-    if provider is None or twist_index != 0 or set(q_indices) != {0, 5}:
+    """Import one exact paired sector from the ten-q Task41 V30/V31 selector."""
+    from src.solvers.task40_v10_p6_periodic_profile import TASK41_G13_A2_P6_PROFILE
+
+    expected_pair = (
+        int(twist_index),
+        int(twist_index) + TASK41_G13_A2_P6_PROFILE.replication_count,
+    )
+    expected_q_indices = set(range(TASK41_G13_A2_P6_PROFILE.q_count))
+    if provider is None:
         return None
-    if set(provider.entries) != {0, 5} or provider.profile != profile_name:
-        raise ValueError("Task41 A2 saved q provider differs from the exact q0/q5 profile binding")
+    if (
+        type(twist_index) is not int
+        or not 0 <= twist_index < TASK41_G13_A2_P6_PROFILE.replication_count
+        or set(q_indices) != set(expected_pair)
+    ):
+        raise ValueError("Task41 A2 saved q request does not match its registered paired sector")
+    if (
+        set(provider.entries) != expected_q_indices
+        or provider.profile != profile_name
+        or profile_name != TASK41_G13_A2_P6_PROFILE.name
+        or any(
+            provider.entries[q].get("twist_index")
+            != q % TASK41_G13_A2_P6_PROFILE.replication_count
+            for q in expected_q_indices
+        )
+    ):
+        raise ValueError("Task41 A2 saved q provider differs from the exact ten-q twist binding")
     matrices: dict[int, Any] = {}
     receipts: list[dict[str, Any]] = []
-    for q_index in (0, 5):
+    for q_index in expected_pair:
         q_map = q_maps_by_q[q_index]
         matrix, receipt = provider.load(
             q_index,
@@ -5990,19 +6012,18 @@ def _task41_a2_load_saved_q_csr_pair(
     audit = {
         "schema": "task41.p0.a2_saved_q_csr_import_audit.v1",
         "status": "PASS",
-        "selected_q_indices": [0, 5],
-        "imported_saved_q_indices": [0, 5],
-        "twist_index": 0,
+        "selected_q_indices": list(expected_pair),
+        "imported_saved_q_indices": list(expected_pair),
+        "twist_index": twist_index,
         "all_complete_native_pass": True,
         "four_complete_csr_actions_passed": True,
         "paired_sector_leakage_passed": True,
         "qualification_origin": "saved_v30_native_pass_cross_window_import",
-        "selector_entries": [dict(provider.entries[q]) for q in (0, 5)],
+        "selector_entries": [dict(provider.entries[q]) for q in expected_pair],
         "qualification_receipts": receipts,
         "qualification_identity": dict(qualification_identity),
     }
     return matrices, audit
-
 
 def _task41_a2_candidate_contract(
     resolved: Mapping[str, Any],
@@ -8759,13 +8780,20 @@ def run_task40_v10_p6_reference_worker(
                         "consumer_import_authorizations"
                     ),
                 )
+                expected_task41_q_indices = set(range(10))
                 if (
-                    set(task41_a2_saved_q_csr_provider.entries) != {0, 5}
+                    set(task41_a2_saved_q_csr_provider.entries)
+                    != expected_task41_q_indices
                     or task41_a2_saved_q_csr_provider.profile
                     != TASK41_G13_A2_PRECONDITIONER
+                    or any(
+                        task41_a2_saved_q_csr_provider.entries[q].get("twist_index")
+                        != q % 5
+                        for q in expected_task41_q_indices
+                    )
                 ):
                     raise ValueError(
-                        "Task41 A2 saved q selector is not the bound q0/q5 twist-zero profile"
+                        "Task41 A2 saved q selector is not the bound ten-q twist profile"
                     )
 
             def prepare_task41_a2_sector_q_csr(

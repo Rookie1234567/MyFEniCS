@@ -410,7 +410,7 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
         tmp_path,
         [
             Path(selector_entries[q]["csr_manifest"]["path"])
-            for q in (0, 5)
+            for q in range(10)
         ],
         source_sha=consumer_execution["source_sha"],
         window_sha256=consumer_execution["window_sha256"],
@@ -425,30 +425,34 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
         consumer_receipt_directory=tmp_path / "consumer_receipts",
         consumer_import_authorizations=reuse_binding["consumer_import_authorizations"],
     )
-    imported_receipts = [
-        provider.load(
+    imported_receipts_by_q = {}
+    for q in range(10):
+        imported_receipts_by_q[q] = provider.load(
             q,
-            0,
+            q % 5,
             expected_operator_identity=selector_entries[q]["operator_identity"],
             expected_execution_identity=consumer_execution,
             expected_q_map=q_maps[q],
             expected_original_h=original_h,
         )[1]
-        for q in (0, 5)
-    ]
-    imported_preparation = sector_audits[0]["task41_a2_independent_q_csr_preparation"]
-    imported_preparation.update(
-        {
-            "schema": "task41.p0.a2_saved_q_csr_import_audit.v1",
-            "qualification_origin": "saved_v30_native_pass_cross_window_import",
-            "imported_saved_q_indices": [0, 5],
-            "selector_entries": [
-                dict(provider.entries[q]) for q in (0, 5)
-            ],
-            "qualification_receipts": imported_receipts,
-        }
-    )
-    imported_preparation.pop("native_facts_by_q")
+    for twist in range(5):
+        pair = [twist, twist + 5]
+        imported_preparation = sector_audits[twist][
+            "task41_a2_independent_q_csr_preparation"
+        ]
+        imported_preparation.update(
+            {
+                "schema": "task41.p0.a2_saved_q_csr_import_audit.v1",
+                "qualification_origin": "saved_v30_native_pass_cross_window_import",
+                "imported_saved_q_indices": pair,
+                "twist_index": twist,
+                "selector_entries": [dict(provider.entries[q]) for q in pair],
+                "qualification_receipts": [
+                    imported_receipts_by_q[q] for q in pair
+                ],
+            }
+        )
+        imported_preparation.pop("native_facts_by_q")
 
     snapshot = {
         "factor_audit_before_destroy": factor_audit,
@@ -476,5 +480,5 @@ def test_task41_a2_reference_checker_reapplies_real_ten_q_packets(
     assert result["all_q_four_action_csr_reapplied"] is True
     assert result["q_csr_action_count"] == 40
     assert result["sector_count"] == 5
-    assert result["saved_native_qualification_q_indices"] == [0, 5]
-    assert result["fresh_native_qualification_q_indices"] == [1, 2, 3, 4, 6, 7, 8, 9]
+    assert result["saved_native_qualification_q_indices"] == list(range(10))
+    assert result["fresh_native_qualification_q_indices"] == []

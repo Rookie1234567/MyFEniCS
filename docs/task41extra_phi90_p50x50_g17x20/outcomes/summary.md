@@ -8,6 +8,7 @@ A1 用直接分解建立当前网格的比较基准：先在各单元内消去�
 |---|---|---|
 | A1 首次启动 | FE 前工程失败，保留 | 旧 V29 环境标记误入 Task41；服务 1.563210294 s |
 | A1 修复续作 | 完整场及独立 checker PASS | 原窗口续作；1400 单元、p6、168 模式 |
+| A2 P0 attempt6（最新） | 十 q 数值与 CSR/native 资格通过后，V15 拒绝精确 Task41 profile；worker exit 4、official_result=false | 外层迭代未开始；无完整场、独立 A6 残差或 official R/T/A；工程准入故障，不是数值或资源门失败；见 [test_summary.md](test_summary.md) 与 [run_index.json](run_index.json) |
 | A2 P0 attempt4 | q0/q5 的完整 CSR 与原生算子资格检查通过；随后 worker 因递归深度异常退出，official_result=false | 全流程未完成；没有完整迭代场、独立 A6 残差或 official R/T/A；0.7 nm 仍 NOT_RUN |
 | 0.7 nm | NOT_RUN | A1/A2 通过后按资源门推进 |
 

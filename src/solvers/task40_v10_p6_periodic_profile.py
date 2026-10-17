@@ -387,6 +387,43 @@ TASK40_P6_PERIODIC_PROFILES = {
     TASK41_G13_A2_P6_PROFILE.name: TASK41_G13_A2_P6_PROFILE,
 }
 
+def task41_a2_v15_reference_profile(profile_identity: Any):
+    # Exact Task41-only capability; keep the shared Task40 selector set unchanged.
+    if profile_identity != TASK41_G13_A2_PRECONDITIONER:
+        return None
+    profile = TASK41_G13_A2_P6_PROFILE
+    expected = (
+        TASK41_G13_A2_PRECONDITIONER,
+        (10, 10, 14),
+        1400,
+        10,
+        (4, 0, 0, 12, 20, 28, 28, 28, 28, 20),
+        5,
+        (32, 28, 28, 40, 40),
+        168,
+    )
+    actual = (
+        profile.name,
+        tuple(profile.global_cell_axes),
+        int(profile.global_cell_count),
+        int(profile.q_count),
+        tuple(int(value) for value in profile.q_port_counts),
+        int(profile.replication_count),
+        tuple(int(value) for value in profile.sector_port_counts),
+        int(profile.mode_count),
+    )
+    if actual != expected:
+        raise ValueError("Task41 A2 V15 capability inventory differs from its qualified G13 profile")
+    paired_port_counts = tuple(
+        profile.q_port_counts[twist]
+        + profile.q_port_counts[twist + profile.replication_count]
+        for twist in range(profile.replication_count)
+    )
+    if paired_port_counts != profile.sector_port_counts:
+        raise ValueError("Task41 A2 q/twist/mode inventory does not close")
+    return profile
+
+
 TASK40_V15_SELECTOR_PROFILE_IDENTITIES = frozenset(
     {
         "task40extra_v15_p6_y_orbit_b0_reference_v1",

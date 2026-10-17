@@ -77,3 +77,16 @@ python -m pytest -q src/test/test_task41_a2_q_csr_reuse.py::test_task41_a2_zero_
 ```
 
 三个修改过的Python文件通过 `py_compile`，`git diff --check` 通过。本次定向验证未运行PDE、全仓测试或Ruff。主控复验同三项：3 passed in 1.02s；此次源码冻结后沿原A2窗口续作。attempt5负结果及资源事实保持原样，不用单测替代正式A2运行。
+
+
+## A2 attempt6：V15 profile 准入失败与修复验证
+
+attempt6（2026-10-17 01:21:51 UTC，source ec22d658e03df3648d5628fa82c9dba4026a803b）在十个 q 的 MUMPS numeric、第二 RHS 严格残差和 CSR/native 资格通过后，于 V15 candidate profile admission 失败；worker exit 4、official_result=false，外层迭代未开始。错误为 V15 只接受 Task40 登记 profile。该工程负结果保留在 run_index；未形成完整场、独立 A6 残差或 official R/T/A。
+
+随后源码增加 Task41 精确 profile capability、全十 q 保存 CSR/native 导入及逐 q 新 consumer 授权；旧 v1 q0/q5 twist-zero 只读核验保留，v2 要求 q0..9 全部齐备，缺失即拒绝。Task40 shared selector 与 V13 四-q逻辑未改，未重跑 producer/native，也未启动 FE/PDE。
+
+C1 qualified runtime preflight 为 PETSc complex128/int32、MPI1、SLEPc 3.25.2、DOLFINx 0.10.0。定向命令（2.25 s，67 passed）：
+source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit
+python -m pytest -q --tb=short src/test/test_task41_a2_q_csr_reuse.py src/test/test_task41_p0_reference_audit.py src/test/test_task41_p0_contract.py src/test/test_task41_g13_direct_input.py src/test/test_task41_v15_reference_capability.py src/test/test_task40_augmented_reference_correction.py
+
+相关文件 compileall 与 git diff --check 通过；Ruff 未安装。主控在 C1 下独立复核 profile capability 两项、真实 V15 candidate 链一项、q_csr_reuse 全文件及 reference_audit 全文件，共 11 passed in 2.49 s。另一次额外 Task40 route 批次命令为 python -m pytest -q --tb=short src/test/test_task40_v16_routes.py src/test/test_task40_v17_row_tile_routes.py src/test/test_task40_v20_routes.py src/test/test_task40_v18_ny8_operator_reuse.py，结果 73 failed、76 passed、1 skipped。该批未诊断；代表栈为 src/test/test_task40_v16_routes.py:39 经 src/io/input_validation.py:532 报 solver.initial_guess: missing required field，失败发生在 profile inventory 前。原始输出未另存文件，位置为本次 Codex 任务 exec session 82727 的工具输出；未将全部失败归因于该代表栈，也不与 Task41 定向结果混并。

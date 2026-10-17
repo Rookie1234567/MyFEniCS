@@ -9,6 +9,9 @@ from scipy import sparse
 
 from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
 from src.runners.task41_p0_contract import (
+    TASK41_A2_CONTROLLER_RELATIVE,
+    TASK41_A2_Q_CSR_REUSE_SCHEMA_V1,
+    TASK41_A2_Q_CSR_REUSE_SCHEMA,
     Task41ContractError,
     _prepare_task41_a2_q_csr_reuse,
     _validate_task41_a2_q_csr_reuse,
@@ -18,6 +21,7 @@ from src.solvers.task40_v30_qualified_q_csr import (
     QualifiedQCSRProvider,
     V30_Q_CSR_MANIFEST_SCHEMA,
     V30_Q_CSR_NATIVE_SCHEMA,
+    V30_Q_CSR_SELECTOR_SCHEMA,
     _array_sha256,
     _csr_sha256,
 )
@@ -28,7 +32,8 @@ def _sha(data: bytes) -> str:
 
 
 def _write_saved_q(root: Path, q: int, input_sha256: str) -> Path:
-    directory = root / "results" / f"q{q}_twist0"
+    twist = q % 5
+    directory = root / "results" / f"q{q}_twist{twist}"
     directory.mkdir(parents=True, exist_ok=True)
     artifact_rows = {}
     for name in ("data", "indices", "indptr"):
@@ -56,7 +61,7 @@ def _write_saved_q(root: Path, q: int, input_sha256: str) -> Path:
         "status": "COMPLETE_CSR",
         "profile": TASK41_G13_A2_PRECONDITIONER,
         "q_index": q,
-        "twist_index": 0,
+        "twist_index": twist,
         "shape": [2, 2],
         "stored_structural_slots": 2,
         "operator_identity": operator_identity,
@@ -65,14 +70,14 @@ def _write_saved_q(root: Path, q: int, input_sha256: str) -> Path:
         "producer_identity": {"kind": "fixture"},
         "csr_artifacts": artifact_rows,
     }
-    manifest_path = directory / f"task40_v30_q{q}_twist0_csr_manifest.json"
+    manifest_path = directory / f"task40_v30_q{q}_twist{twist}_csr_manifest.json"
     manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
     manifest_sha = _sha(manifest_path.read_bytes())
     qualification = {
         "schema": V30_Q_CSR_NATIVE_SCHEMA,
         "status": "PASS",
         "q_index": q,
-        "twist_index": 0,
+        "twist_index": twist,
         "csr_manifest_sha256": manifest_sha,
         "operator_identity": operator_identity,
         "matrix_source_identity": producer_execution,
@@ -81,7 +86,7 @@ def _write_saved_q(root: Path, q: int, input_sha256: str) -> Path:
         "paired_sector_leakage_passed": True,
         "maximum_relative_error": 1e-14,
     }
-    (directory / f"task40_v30_q{q}_twist0_native_qualification.json").write_text(
+    (directory / f"task40_v30_q{q}_twist{twist}_native_qualification.json").write_text(
         json.dumps(qualification, sort_keys=True), encoding="utf-8"
     )
     return manifest_path
@@ -93,8 +98,16 @@ def test_task41_a2_saved_q_selector_prepare_load_and_same_source_reopen(tmp_path
     window_sha256 = "8" * 64
     manifests = [
         _write_saved_q(tmp_path, q, input_sha256)
-        for q in (0, 5)
+        for q in range(10)
     ]
+    with pytest.raises(Task41ContractError, match="one manifest for each of q=0..9"):
+        _prepare_task41_a2_q_csr_reuse(
+            tmp_path,
+            manifests[:-1],
+            source_sha=source_sha,
+            window_sha256=window_sha256,
+            expected_input_sha256=input_sha256,
+        )
     binding = _prepare_task41_a2_q_csr_reuse(
         tmp_path,
         manifests,
@@ -117,8 +130,9 @@ def test_task41_a2_saved_q_selector_prepare_load_and_same_source_reopen(tmp_path
         expected_input_sha256=input_sha256,
     )
     assert reopened == binding
-    assert binding["q_indices"] == [0, 5]
-    assert set(binding["consumer_import_authorizations"]) == {"0", "5"}
+    assert binding["q_indices"] == list(range(10))
+    assert binding["twist_indices_by_q"] == {str(q): q % 5 for q in range(10)}
+    assert set(binding["consumer_import_authorizations"]) == {str(q) for q in range(10)}
     for authorization in binding["consumer_import_authorizations"].values():
         assert authorization["consumer_execution_identity"] == {
             "source_sha": source_sha,
@@ -130,7 +144,7 @@ def test_task41_a2_saved_q_binding_rejects_changed_authorization(tmp_path):
     input_sha256 = "a" * 64
     binding = _prepare_task41_a2_q_csr_reuse(
         tmp_path,
-        [_write_saved_q(tmp_path, q, input_sha256) for q in (0, 5)],
+        [_write_saved_q(tmp_path, q, input_sha256) for q in range(10)],
         source_sha="7" * 40,
         window_sha256="8" * 64,
         expected_input_sha256=input_sha256,
@@ -153,6 +167,64 @@ def test_task41_a2_saved_q_binding_rejects_changed_authorization(tmp_path):
             window_sha256="8" * 64,
             expected_input_sha256=input_sha256,
         )
+
+
+
+def test_task41_a2_v1_q0_q5_contract_remains_readable(tmp_path):
+    input_sha256 = "a" * 64
+    source_sha = "7" * 40
+    window_sha256 = "8" * 64
+    manifests = [_write_saved_q(tmp_path, q, input_sha256) for q in range(10)]
+    current = _prepare_task41_a2_q_csr_reuse(
+        tmp_path,
+        manifests,
+        source_sha=source_sha,
+        window_sha256=window_sha256,
+        expected_input_sha256=input_sha256,
+    )
+    selector_path = tmp_path / current["selector_path"]
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    legacy_entries = [
+        dict(row)
+        for row in selector["q_csr_entries"]
+        if row["q_index"] in {0, 5}
+    ]
+    for row in legacy_entries:
+        row.pop("profile", None)
+    legacy_selector = {
+        "schema": V30_Q_CSR_SELECTOR_SCHEMA,
+        "profile": TASK41_G13_A2_PRECONDITIONER,
+        "q_csr_entries": legacy_entries,
+    }
+    selector_path.write_text(json.dumps(legacy_selector, sort_keys=True), encoding="utf-8")
+    legacy_bindings = [
+        {
+            "q_index": row["q_index"],
+            "path": row["csr_manifest"]["path"],
+            "sha256": row["csr_manifest"]["sha256"],
+        }
+        for row in legacy_entries
+    ]
+    legacy = {
+        "schema": TASK41_A2_Q_CSR_REUSE_SCHEMA_V1,
+        "q_indices": [0, 5],
+        "twist_index": 0,
+        "profile": TASK41_G13_A2_PRECONDITIONER,
+        "manifest_bindings": legacy_bindings,
+        "selector_path": current["selector_path"],
+        "selector_sha256": _sha(selector_path.read_bytes()),
+        "consumer_import_authorizations": {
+            q: current["consumer_import_authorizations"][q] for q in ("0", "5")
+        },
+    }
+    assert TASK41_A2_Q_CSR_REUSE_SCHEMA != TASK41_A2_Q_CSR_REUSE_SCHEMA_V1
+    _validate_task41_a2_q_csr_reuse(
+        tmp_path,
+        legacy,
+        source_sha=source_sha,
+        window_sha256=window_sha256,
+        expected_input_sha256=input_sha256,
+    )
 
 
 def test_task41_a2_zero_port_q1_build_and_native_pair_with_q6(tmp_path, monkeypatch):
@@ -340,7 +412,8 @@ def _write_provider_q(
     input_sha256: str,
     producer_execution: dict[str, str],
 ) -> tuple[Path, dict[str, str]]:
-    directory = root / f"provider_q{q}"
+    twist = q % 5
+    directory = root / f"provider_q{q}_twist{twist}"
     directory.mkdir()
     q_matrix = sparse.csr_matrix(
         np.asarray([[2.0 + q, 0.25j], [-0.5j, 3.0 + q]], dtype=np.complex128)
@@ -372,7 +445,7 @@ def _write_provider_q(
         "status": "COMPLETE_CSR",
         "profile": TASK41_G13_A2_PRECONDITIONER,
         "q_index": q,
-        "twist_index": 0,
+        "twist_index": twist,
         "shape": list(q_matrix.shape),
         "stored_structural_slots": int(q_matrix.nnz),
         "csr_index_dtype": np.dtype(np.int32).str,
@@ -383,14 +456,14 @@ def _write_provider_q(
         "producer_identity": {"kind": "Task41 A2 provider fixture"},
         "csr_artifacts": artifact_rows,
     }
-    manifest_path = directory / f"task40_v30_q{q}_twist0_csr_manifest.json"
+    manifest_path = directory / f"task40_v30_q{q}_twist{twist}_csr_manifest.json"
     manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
     manifest_sha = _sha(manifest_path.read_bytes())
     qualification = {
         "schema": V30_Q_CSR_NATIVE_SCHEMA,
         "status": "PASS",
         "q_index": q,
-        "twist_index": 0,
+        "twist_index": twist,
         "csr_manifest_sha256": manifest_sha,
         "operator_identity": operator_identity,
         "matrix_source_identity": producer_execution,
@@ -399,29 +472,36 @@ def _write_provider_q(
         "paired_sector_leakage_passed": True,
         "maximum_relative_error": 1e-14,
     }
-    (directory / f"task40_v30_q{q}_twist0_native_qualification.json").write_text(
+    (directory / f"task40_v30_q{q}_twist{twist}_native_qualification.json").write_text(
         json.dumps(qualification, sort_keys=True), encoding="utf-8"
     )
     return manifest_path, operator_identity
 
 
-def test_task41_a2_import_helper_uses_real_provider_for_non_square_maps_only_at_twist_zero(
-    tmp_path,
-):
+def test_task41_a2_import_helper_loads_exact_paired_sector_for_each_twist(tmp_path):
     input_sha256 = "a" * 64
     producer_execution = {"source_sha": "1" * 40, "window_sha256": "2" * 64}
     consumer_execution = {"source_sha": "7" * 40, "window_sha256": "8" * 64}
     original_h = np.asarray([1.0 + 0.1j, -0.25 + 0.5j], dtype=np.complex128)
     q_maps = {
-        0: sparse.csr_matrix(
-            np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, -1.0]], dtype=np.complex128)
-        ),
-        5: sparse.csr_matrix(
-            np.asarray([[1.0, 0.5], [0.0, 1.0], [-1.0, 0.0], [0.25, 0.75]], dtype=np.complex128)
-        ),
+        q: sparse.csr_matrix(
+            np.asarray(
+                [
+                    [1.0 + 0.01 * q, 0.0],
+                    [0.0, 1.0],
+                    [0.5, -1.0],
+                ],
+                dtype=np.complex128,
+            )
+        )
+        for q in range(10)
     }
-    assert q_maps[0].shape == (3, 2)
-    assert q_maps[5].shape == (4, 2)
+    q_maps[5] = sparse.csr_matrix(
+        np.asarray(
+            [[1.0, 0.5], [0.0, 1.0], [-1.0, 0.0], [0.25, 0.75]],
+            dtype=np.complex128,
+        )
+    )
     manifests_and_identities = {
         q: _write_provider_q(
             tmp_path,
@@ -431,11 +511,11 @@ def test_task41_a2_import_helper_uses_real_provider_for_non_square_maps_only_at_
             input_sha256,
             producer_execution,
         )
-        for q in (0, 5)
+        for q in range(10)
     }
     binding = _prepare_task41_a2_q_csr_reuse(
         tmp_path,
-        [manifests_and_identities[q][0] for q in (0, 5)],
+        [manifests_and_identities[q][0] for q in range(10)],
         source_sha=consumer_execution["source_sha"],
         window_sha256=consumer_execution["window_sha256"],
         expected_input_sha256=input_sha256,
@@ -449,37 +529,42 @@ def test_task41_a2_import_helper_uses_real_provider_for_non_square_maps_only_at_
         consumer_receipt_directory=tmp_path / "consumer_receipts",
         consumer_import_authorizations=binding["consumer_import_authorizations"],
     )
-    result = _task41_a2_load_saved_q_csr_pair(
-        provider,
-        q_indices=(0, 5),
-        twist_index=0,
-        q_maps_by_q=q_maps,
-        original_h=original_h,
-        operator_identity_by_q={
-            q: manifests_and_identities[q][1] for q in (0, 5)
-        },
-        execution_identity=consumer_execution,
-        profile_name=TASK41_G13_A2_PRECONDITIONER,
-        qualification_identity={"profile_identity": TASK41_G13_A2_PRECONDITIONER},
-    )
-    assert result is not None
-    matrices, audit = result
-    assert {q: matrix.shape for q, matrix in matrices.items()} == {0: (2, 2), 5: (2, 2)}
-    assert audit["all_complete_native_pass"] is True
-    assert audit["paired_sector_leakage_passed"] is True
-    assert all(row["consumer_receipt"]["sha256"] for row in audit["qualification_receipts"])
+    for twist, pair in enumerate(((0, 5), (1, 6))):
+        result = _task41_a2_load_saved_q_csr_pair(
+            provider,
+            q_indices=pair,
+            twist_index=twist,
+            q_maps_by_q=q_maps,
+            original_h=original_h,
+            operator_identity_by_q={q: manifests_and_identities[q][1] for q in pair},
+            execution_identity=consumer_execution,
+            profile_name=TASK41_G13_A2_PRECONDITIONER,
+            qualification_identity={
+                "profile_identity": TASK41_G13_A2_PRECONDITIONER,
+                "q_indices": list(pair),
+                "twist_index": twist,
+            },
+        )
+        assert result is not None
+        matrices, audit = result
+        assert set(matrices) == set(pair)
+        assert all(matrix.shape == (2, 2) for matrix in matrices.values())
+        assert audit["selected_q_indices"] == list(pair)
+        assert audit["imported_saved_q_indices"] == list(pair)
+        assert audit["twist_index"] == twist
+        assert audit["all_complete_native_pass"] is True
+        assert audit["paired_sector_leakage_passed"] is True
+        assert all(row["consumer_receipt"]["sha256"] for row in audit["qualification_receipts"])
 
-    assert _task41_a2_load_saved_q_csr_pair(
-        provider,
-        q_indices=(0, 5),
-        twist_index=1,
-        q_maps_by_q=q_maps,
-        original_h=original_h,
-        operator_identity_by_q={
-            q: manifests_and_identities[q][1] for q in (0, 5)
-        },
-        execution_identity=consumer_execution,
-        profile_name=TASK41_G13_A2_PRECONDITIONER,
-        qualification_identity={"profile_identity": TASK41_G13_A2_PRECONDITIONER},
-    ) is None
-
+    with pytest.raises(ValueError, match="registered paired sector"):
+        _task41_a2_load_saved_q_csr_pair(
+            provider,
+            q_indices=(0, 5),
+            twist_index=1,
+            q_maps_by_q=q_maps,
+            original_h=original_h,
+            operator_identity_by_q={q: manifests_and_identities[q][1] for q in (0, 5)},
+            execution_identity=consumer_execution,
+            profile_name=TASK41_G13_A2_PRECONDITIONER,
+            qualification_identity={"profile_identity": TASK41_G13_A2_PRECONDITIONER},
+        )

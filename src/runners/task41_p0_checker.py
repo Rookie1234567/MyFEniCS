@@ -171,8 +171,10 @@ def _task41_a2_verify_saved_q_consumer_receipt(
     qualification: Mapping[str, Any],
 ) -> None:
     """Recheck the immutable prior native PASS and the new consumer receipt."""
+    from src.solvers.task40_v10_p6_periodic_profile import TASK41_G13_A2_P6_PROFILE
     from src.solvers.task40_v30_qualified_q_csr import make_v31_q_csr_import_authorization
 
+    expected_twist = q % TASK41_G13_A2_P6_PROFILE.replication_count
     authorization_map = reuse_binding.get("consumer_import_authorizations")
     expected_authorization = (
         authorization_map.get(str(q)) if isinstance(authorization_map, Mapping) else None
@@ -215,7 +217,7 @@ def _task41_a2_verify_saved_q_consumer_receipt(
         }
     expected = make_v31_q_csr_import_authorization(
         q_index=q,
-        twist_index=0,
+        twist_index=expected_twist,
         profile=str(manifest.get("profile", "")),
         operator_identity=manifest.get("operator_identity", {}),
         matrix_source_identity=matrix_source,
@@ -242,7 +244,10 @@ def _task41_a2_verify_saved_q_consumer_receipt(
         or consumer.get("schema") != "task40extra.review_v31_q_csr_consumer_receipt.v1"
         or consumer.get("status") != "CONSUMED_COMPLETE_CSR_NATIVE_PASS"
         or consumer.get("q_index") != q
-        or consumer.get("twist_index") != 0
+        or consumer.get("twist_index") != expected_twist
+        or manifest.get("twist_index") != expected_twist
+        or qualification.get("twist_index") != expected_twist
+        or entry.get("twist_index") != expected_twist
         or consumer.get("profile") != manifest.get("profile")
         or consumer.get("operator_identity") != manifest.get("operator_identity")
         or consumer.get("matrix_source_identity") != matrix_source
@@ -377,26 +382,60 @@ def _task41_a2_reference_audit_checks(
         )
         identity = preparation.get("qualification_identity")
         if saved_import:
+            from src.runners.task41_p0_contract import (
+                TASK41_A2_Q_CSR_REUSE_SCHEMA,
+                TASK41_A2_Q_CSR_REUSE_SCHEMA_V1,
+            )
+
+            pair_twist = pair[0]
+            binding_schema = (
+                reuse_binding.get("schema") if isinstance(reuse_binding, Mapping) else None
+            )
+            authorization_rows = (
+                reuse_binding.get("consumer_import_authorizations")
+                if isinstance(reuse_binding, Mapping)
+                else None
+            )
+            if binding_schema == TASK41_A2_Q_CSR_REUSE_SCHEMA_V1:
+                authorized_binding = (
+                    isinstance(authorization_rows, Mapping)
+                    and pair == (0, 5)
+                    and reuse_binding.get("q_indices") == [0, 5]
+                    and reuse_binding.get("twist_index") == 0
+                    and set(authorization_rows) == {"0", "5"}
+                )
+            elif binding_schema == TASK41_A2_Q_CSR_REUSE_SCHEMA:
+                expected_q_indices = list(range(TASK41_G13_A2_P6_PROFILE.q_count))
+                expected_twists = {
+                    str(q): q % TASK41_G13_A2_P6_PROFILE.replication_count
+                    for q in expected_q_indices
+                }
+                authorized_binding = (
+                    isinstance(authorization_rows, Mapping)
+                    and reuse_binding.get("q_indices") == expected_q_indices
+                    and reuse_binding.get("twist_indices_by_q") == expected_twists
+                    and set(authorization_rows) == {str(q) for q in expected_q_indices}
+                )
+            else:
+                authorized_binding = False
             if (
-                pair != (0, 5)
+                not authorized_binding
                 or preparation.get("qualification_origin")
                 != "saved_v30_native_pass_cross_window_import"
-                or preparation.get("selected_q_indices") != [0, 5]
-                or preparation.get("imported_saved_q_indices") != [0, 5]
+                or preparation.get("selected_q_indices") != list(pair)
+                or preparation.get("imported_saved_q_indices") != list(pair)
+                or preparation.get("twist_index") != pair_twist
                 or preparation.get("all_complete_native_pass") is not True
                 or preparation.get("four_complete_csr_actions_passed") is not True
                 or preparation.get("paired_sector_leakage_passed") is not True
                 or not isinstance(identity, Mapping)
-                or identity.get("q_indices") != [0, 5]
-                or identity.get("twist_index") != 0
+                or identity.get("q_indices") != list(pair)
+                or identity.get("twist_index") != pair_twist
                 or identity.get("profile_identity") != TASK41_G13_A2_P6_PROFILE.identity()
-                or not isinstance(reuse_binding, Mapping)
-                or reuse_binding.get("q_indices") != [0, 5]
-                or reuse_binding.get("twist_index") != 0
                 or not isinstance(consumer_execution.get("source_sha"), str)
                 or not isinstance(consumer_execution.get("window_sha256"), str)
             ):
-                raise ValueError("Task41 A2 saved q import is not the authorized q0/q5 twist-zero reuse")
+                raise ValueError("Task41 A2 saved q import is not authorized for its exact paired sector")
         elif (
             preparation.get("selected_q_indices") != list(pair)
             or preparation.get("all_complete_native_pass") is not True
@@ -435,9 +474,9 @@ def _task41_a2_reference_audit_checks(
             facts = native_facts[str(q)] if isinstance(native_facts, Mapping) else None
             if saved_import:
                 if (
-                    entry.get("twist_index") != 0
+                    entry.get("twist_index") != pair[0]
                     or receipt.get("q_index") != q
-                    or receipt.get("twist_index") != 0
+                    or receipt.get("twist_index") != pair[0]
                     or receipt.get("qualification_kind") != "V30_NATIVE_PASS"
                     or receipt.get("qualification_status") != "PASS"
                     or not isinstance(receipt.get("maximum_relative_error"), (int, float))

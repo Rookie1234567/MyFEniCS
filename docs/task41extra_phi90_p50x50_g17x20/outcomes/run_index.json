@@ -100,6 +100,30 @@
         "memory_metrics_are_separate_scopes": true,
         "descendants_cleared": true
       }
+    },
+    {
+      "run_id": "task41extra_g13_p6_phi90_iterative_a2",
+      "attempt_number": 6,
+      "attempt": "20261017T012151.240904Z",
+      "source_sha": "ec22d658e03df3648d5628fa82c9dba4026a803b",
+      "service": "myfenics-case-20261017T012146-1658173.service",
+      "status": "FAILED",
+      "classification": "ENGINEERING_FAILURE_AT_V15_TASK41_PROFILE_ADMISSION_AFTER_ALL_Q_NUMERIC_AND_CSR_NATIVE_PASS",
+      "error": "V15 candidate must name an explicitly admitted V15/V16/V17/V18/V20 profile",
+      "worker_exit_code": 4,
+      "official_result": false,
+      "outer_iteration_started": false,
+      "sampled_process_tree_rss_peak_bytes": 20351184896,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "oom_kill_count": 0,
+      "descendants_cleared": true,
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261017T012151.240904Z",
+      "not_run": [
+        "complete_reference_iteration",
+        "full_field",
+        "independent_A6_residual",
+        "official_R_T_A"
+      ]
     }
   ],
   "not_run": [

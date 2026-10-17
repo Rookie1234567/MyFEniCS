@@ -140,17 +140,24 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         TASK40_V18_P6_PROFILES,
         TASK40_V20_V22_P6_PROFILES,
     )
-    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_P6_PERIODIC_PROFILES,
+        task41_a2_v15_reference_profile,
+    )
 
-    if not isinstance(identity, str) or identity not in (
-        *TASK40_V15_P6_PROFILES,
-        *TASK40_V16_P6_PROFILES,
-        *TASK40_V17_P6_PROFILES,
-        *TASK40_V18_P6_PROFILES,
-        *TASK40_V20_V22_P6_PROFILES,
+    task41_profile = task41_a2_v15_reference_profile(identity)
+    if not isinstance(identity, str) or (
+        identity not in (
+            *TASK40_V15_P6_PROFILES,
+            *TASK40_V16_P6_PROFILES,
+            *TASK40_V17_P6_PROFILES,
+            *TASK40_V18_P6_PROFILES,
+            *TASK40_V20_V22_P6_PROFILES,
+        )
+        and task41_profile is None
     ):
-        raise ValueError(f"unknown registered Task40 V15/V16/V17 profile identity: {identity!r}")
-    profile = TASK40_P6_PERIODIC_PROFILES.get(identity)
+        raise ValueError(f"unknown registered Task40 V15/V16/V17 or exact Task41 A2 profile identity: {identity!r}")
+    profile = task41_profile or TASK40_P6_PERIODIC_PROFILES.get(identity)
     if profile is None:
         raise ValueError(f"registered Task40 V15/V16 profile has no periodic inventory: {identity}")
     return {

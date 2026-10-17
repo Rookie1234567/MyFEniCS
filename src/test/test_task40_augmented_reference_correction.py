@@ -1073,6 +1073,92 @@ def test_v15_candidate_rejects_missing_q_missing_mode_and_nonfinite_budget():
     assert nonfinite_result["candidate_facts"][0]["raw_facts_consistent"] is False
 
 
+
+def test_task41_v15_candidate_select_recompute_and_adapter_audit_use_ten_q_five_twists():
+    from src.geometry.task41_phi90_profile import TASK41_G13_A2_PRECONDITIONER
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK41_G13_A2_P6_PROFILE,
+    )
+
+    profile = TASK41_G13_A2_P6_PROFILE
+    candidate = _v15_candidate(
+        {
+            "eliminated_fe": 2e-9,
+            "complete_augmented_fe": 3e-9,
+            "noncancelling_budget": 5e-9,
+            "alpha_closure": 5e-10,
+            "q_solve": 9e-9,
+        },
+        state="task41-g13-adapter",
+        profile_identity=TASK41_G13_A2_PRECONDITIONER,
+    )
+    selection = select_v15_reference_pc_candidate(
+        [candidate], profile_identity=TASK41_G13_A2_PRECONDITIONER
+    )
+    recomputed = recompute_v15_candidate_facts(
+        candidate, profile_identity=TASK41_G13_A2_PRECONDITIONER
+    )
+    assert selection["admitted"] is True
+    assert recomputed["expected_q_count"] == 10
+    assert recomputed["expected_twist_count"] == 5
+    assert recomputed["q_phase_coverage"] is True
+    assert recomputed["sector_mode_mapping_valid"] is True
+
+    def adapter_facts(selected_candidate, selected_facts):
+        q_rows = selected_candidate["raw_facts"]["q_true_residuals"]
+        return {
+            "profile_identity": TASK41_G13_A2_PRECONDITIONER,
+            "reference_pc_strategy": NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+            "maximum_q_true_residual_relative": max(
+                row["true_residual_relative"] for row in q_rows
+            ),
+            "port_identity_relative": selected_candidate["metrics"]["alpha_closure"],
+            "all_q_used": True,
+            "q_true_residuals_selected": q_rows,
+            "candidate_metrics": [selected_candidate],
+            "candidate_selection": select_v15_reference_pc_candidate(
+                [selected_candidate],
+                profile_identity=TASK41_G13_A2_PRECONDITIONER,
+            ),
+            "selected_decomposition_closure_relative": selected_facts[
+                "decomposition_closure_relative"
+            ],
+            "selected_v15_metrics": dict(selected_candidate["metrics"]),
+            "selected_v15_raw_facts": dict(selected_candidate["raw_facts"]),
+            "selected_state_sha256": selected_facts["state_sha256"],
+        }
+
+    audited = recheck_reference_pc_final_admission(
+        adapter_facts(candidate, recomputed),
+        NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+    )
+    assert audited["passed"] is True
+    assert audited["all_q_phase_rows_covered"] is True
+    assert audited["all_four_q_phase_rows_covered"] is False
+
+    missing_q = {
+        **candidate,
+        "raw_facts": {
+            **candidate["raw_facts"],
+            "q_true_residuals": candidate["raw_facts"]["q_true_residuals"][:-1],
+        },
+    }
+    missing_selection = select_v15_reference_pc_candidate(
+        [missing_q], profile_identity=TASK41_G13_A2_PRECONDITIONER
+    )
+    missing_recomputed = recompute_v15_candidate_facts(
+        missing_q, profile_identity=TASK41_G13_A2_PRECONDITIONER
+    )
+    assert missing_selection["admitted"] is False
+    assert missing_recomputed["q_phase_coverage"] is False
+    rejected = recheck_reference_pc_final_admission(
+        adapter_facts(missing_q, missing_recomputed),
+        NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+    )
+    assert rejected["passed"] is False
+
+
+
 def test_v18_v15_candidate_recomputes_registered_eight_q_four_twist_inventory():
     candidate = _v15_candidate(
         {

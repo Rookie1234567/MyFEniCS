@@ -116,14 +116,19 @@ def _registered_v15_profile_inventory(profile_identity: Any) -> dict[str, Any]:
     from src.solvers.task40_v10_p6_periodic_profile import (
         TASK40_P6_PERIODIC_PROFILES,
         TASK40_V15_SELECTOR_PROFILE_IDENTITIES,
+        task41_a2_v15_reference_profile,
     )
 
+    task41_profile = task41_a2_v15_reference_profile(profile_identity)
     if (
         not isinstance(profile_identity, str)
-        or profile_identity not in TASK40_V15_SELECTOR_PROFILE_IDENTITIES
+        or (
+            profile_identity not in TASK40_V15_SELECTOR_PROFILE_IDENTITIES
+            and task41_profile is None
+        )
     ):
-        raise ValueError("V15 candidate must name an explicitly admitted V15/V16/V17/V18/V20 profile")
-    profile = TASK40_P6_PERIODIC_PROFILES.get(profile_identity)
+        raise ValueError("V15 candidate must name an explicitly admitted Task40 profile or exact Task41 A2 capability")
+    profile = task41_profile or TASK40_P6_PERIODIC_PROFILES.get(profile_identity)
     if profile is None:
         raise ValueError(f"V15 candidate profile is not registered: {profile_identity!r}")
     sector_counts = tuple(int(value) for value in profile.sector_port_counts)
