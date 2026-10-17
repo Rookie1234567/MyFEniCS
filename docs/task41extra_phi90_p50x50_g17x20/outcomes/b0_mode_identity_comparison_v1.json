@@ -1,0 +1,286 @@
+{
+  "configuration_diffs": {
+    "resolved_config.canonical.json": {
+      "first_differences": [
+        {
+          "local": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+          "native": "/home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+          "path": ".provenance.source_path",
+          "types": [
+            "str",
+            "str"
+          ]
+        }
+      ],
+      "local_sha256": "9c0fbb77cf1ea36390d2b4a49925add14145743750bfd7a50995f2548002868a",
+      "native_sha256": "9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08"
+    },
+    "simulation_config.json": {
+      "first_differences": [],
+      "local_sha256": "fb50c33e6214fb49a9b0090ed0dda16fec4bb6e0b62c1da83066d33d2f48c59f",
+      "native_sha256": "fb50c33e6214fb49a9b0090ed0dda16fec4bb6e0b62c1da83066d33d2f48c59f"
+    }
+  },
+  "field_stats": {
+    "alpha": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 128240,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "beta": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 128240,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "classification": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 0,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "e_vector": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 384720,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "electric_tangential_norm_sq": {
+      "first_diffs": [
+        {
+          "abs": 1.1102230246251565e-16,
+          "local": 0.9999999999999998,
+          "native": 0.9999999999999999,
+          "path": "modes[4].electric_tangential_norm_sq",
+          "rel": 1.1102230246251568e-16
+        },
+        {
+          "abs": 1.1102230246251565e-16,
+          "local": 0.9999999999999999,
+          "native": 0.9999999999999998,
+          "path": "modes[28].electric_tangential_norm_sq",
+          "rel": 1.1102230246251568e-16
+        },
+        {
+          "abs": 1.1102230246251565e-16,
+          "local": 0.9999999999999998,
+          "native": 0.9999999999999999,
+          "path": "modes[32].electric_tangential_norm_sq",
+          "rel": 1.1102230246251568e-16
+        }
+      ],
+      "max_abs": 2.220446049250313e-16,
+      "max_rel": 2.2204460492503126e-16,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 9590,
+      "type_mismatch": 0
+    },
+    "gamma": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 128240,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "h_vector": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 384720,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "k_vector": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 384720,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "m": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "mode_index": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "n": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "polarization": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 0,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "power_per_unit_amplitude": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "projection_denominator": {
+      "first_diffs": [
+        {
+          "abs": 4.547473508864641e-13,
+          "local": 2500.0,
+          "native": 2500.0000000000005,
+          "path": "modes[40].projection_denominator",
+          "rel": 1.818989403545856e-16
+        },
+        {
+          "abs": 4.547473508864641e-13,
+          "local": 2499.9999999999995,
+          "native": 2500.0,
+          "path": "modes[52].projection_denominator",
+          "rel": 1.8189894035458566e-16
+        },
+        {
+          "abs": 4.547473508864641e-13,
+          "local": 2500.0,
+          "native": 2500.0000000000005,
+          "path": "modes[68].projection_denominator",
+          "rel": 1.818989403545856e-16
+        }
+      ],
+      "max_abs": 4.547473508864641e-13,
+      "max_rel": 3.6350211048693603e-16,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 7681,
+      "type_mismatch": 0
+    },
+    "propagating": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 0,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "rayleigh_tolerance": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "rayleigh_warning": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 0,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "refractive_index": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 128240,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "schema": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 0,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "side": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 0,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "traction_vector": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 384720,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    },
+    "vertical_sign": {
+      "first_diffs": [],
+      "max_abs": 0.0,
+      "max_rel": 0.0,
+      "non_numeric_unequal": 0,
+      "numeric_leaves": 64120,
+      "numeric_unequal": 0,
+      "type_mismatch": 0
+    }
+  },
+  "identity_mismatch_count_capped_at20": 0,
+  "identity_mismatches_first20": [],
+  "local": {
+    "bytes": 72648642,
+    "mode_count": 64120,
+    "sha256": "201e5d1675511dff30340596d60f78718f9cef812ddf939a56d81e12410dbcd7"
+  },
+  "native": {
+    "bytes": 72687587,
+    "mode_count": 64120,
+    "sha256": "80527cc4770abe0bc47db20c8d1f0ae8e13b75b5e090498f78cbfa75c120d0e0"
+  },
+  "raw_bytes": {
+    "first_differing_offset": 4494,
+    "local_len_minus_native_len": -38945
+  },
+  "schema": "task41.b0.mode_manifest_comparison.v1",
+  "scope": "exact all-row offline field comparison; no regeneration"
+}

@@ -8902,23 +8902,29 @@ def run_task40_v10_p6_reference_worker(
 
         if is_task41_b0:
             from src.solvers.task41_b0_mode_inventory import (
-                TASK41_B0_MODE_COUNT,
-                TASK41_B0_MODE_MANIFEST_BYTES,
                 persist_task41_b0_mode_inventory,
                 build_task41_b0_mode_inventory,
                 recheck_task41_b0_mode_inventory,
+                resolve_task41_b0_mode_manifest_identity,
             )
 
-            manifest_bytes = int(TASK41_B0_MODE_MANIFEST_BYTES)
-            mode_object_reserve = int(TASK41_B0_MODE_COUNT) * 4096
+            mode_manifest_identity = resolve_task41_b0_mode_manifest_identity(
+                summary["abi"]
+            )
+            manifest_bytes = int(mode_manifest_identity["manifest_bytes"])
+            mode_object_reserve = int(mode_manifest_identity["mode_count"]) * 4096
             assignment_workspace_reserve = 512 * 1024**2
             mode_inventory_admission = allocation_gate(
                 "task41_b0_production_mode_inventory_preflight",
                 {
                     "additional_payload_bytes": manifest_bytes + mode_object_reserve,
                     "workspace_bytes": assignment_workspace_reserve,
-                    "mode_count": TASK41_B0_MODE_COUNT,
+                    "mode_count": int(mode_manifest_identity["mode_count"]),
                     "expected_canonical_manifest_bytes": manifest_bytes,
+                    "expected_canonical_manifest_sha256": str(
+                        mode_manifest_identity["manifest_sha256"]
+                    ),
+                    "mode_manifest_identity": mode_manifest_identity,
                     "mode_object_reserve_bytes": mode_object_reserve,
                     "assignment_workspace_reserve_bytes": assignment_workspace_reserve,
                     "accounting_basis": (
@@ -8938,7 +8944,9 @@ def run_task40_v10_p6_reference_worker(
                 periodic_profile,
                 mode_manifest_bytes,
                 live_inventory_facts,
-            ) = build_task41_b0_mode_inventory(cfg, axes)
+            ) = build_task41_b0_mode_inventory(
+                cfg, axes, abi_facts=summary["abi"]
+            )
             if not isinstance(task41_contract_binding, Mapping):
                 raise ValueError("Task41 B0 live mode inventory lacks its dispatcher contract binding")
             persisted_inventory = persist_task41_b0_mode_inventory(
@@ -8954,6 +8962,7 @@ def run_task40_v10_p6_reference_worker(
                 persisted_inventory,
                 source_sha=source_sha,
                 input_sha256=str(task41_contract_binding["input_sha256"]),
+                abi_facts=summary["abi"],
             )
             object.__setattr__(
                 periodic_profile,

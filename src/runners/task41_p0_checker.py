@@ -1206,6 +1206,25 @@ def _task41_b0_numerical_checks(
         != expected_window_path
     ):
         errors.append("Task41 B0 campaign authority differs from the fixed contract/window")
+    abi_facts = summary.get("abi")
+    runtime_contract = contract.get("runtime")
+    if (
+        not isinstance(abi_facts, Mapping)
+        or not isinstance(runtime_contract, Mapping)
+        or runtime_contract.get("profile") != "native_linux"
+        or abi_facts.get("profile_identity") != TASK41_B0_PRECONDITIONER
+        or abi_facts.get("runtime_profile") != runtime_contract.get("profile")
+        or abi_facts.get("receipt_sha256")
+        != runtime_contract.get("abi_receipt_sha256")
+        or abi_facts.get("qualification")
+        != "task41_p0_contract_receipt_bound"
+        or abi_facts.get("scalar") != "complex128"
+        or abi_facts.get("integer") != "int32"
+        or abi_facts.get("mpi_size") != 1
+    ):
+        errors.append(
+            "Task41 B0 mode-manifest ABI identity differs from the frozen native contract receipt"
+        )
     if (
         summary.get("precision_status") != "NOT_QUALIFIED"
         or summary.get("mode_truncation_status") != "MODE_TRUNCATION_UNQUALIFIED"
@@ -1227,6 +1246,7 @@ def _task41_b0_numerical_checks(
             inventory,
             source_sha=str(expected_identity["source_sha"]),
             input_sha256=str(case.get("input_sha256", "")),
+            abi_facts=abi_facts,
         )
         if (
             periodic.get("name") != TASK41_B0_PRECONDITIONER
@@ -1408,9 +1428,17 @@ def _task41_b0_numerical_checks(
         "mode_manifest_sha256": (
             b0_profile_capability.get("mode_manifest_sha256")
             if isinstance(b0_profile_capability, Mapping)
-            else inventory_module.TASK41_B0_MODE_MANIFEST_SHA256
+            else inventory.get("mode_manifest_sha256")
+            if isinstance(inventory, Mapping)
+            else None
         ),
-        "mode_count": TASK41_B0_MODE_COUNT,
+        "mode_count": (
+            b0_profile_capability.get("mode_count")
+            if isinstance(b0_profile_capability, Mapping)
+            else inventory.get("mode_count")
+            if isinstance(inventory, Mapping)
+            else TASK41_B0_MODE_COUNT
+        ),
         "q_count": 200,
         "sector_count": 100,
         "q_port_counts_recomputed": q_counts,

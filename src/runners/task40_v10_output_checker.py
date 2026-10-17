@@ -204,6 +204,7 @@ def _task41_b0_profile_capability_from_run(
 
     identity = worker_summary.get("scientific_identity")
     inventory = worker_summary.get("b0_mode_inventory")
+    abi_facts = worker_summary.get("abi")
     source_sha = worker_summary.get("source_sha")
     input_sha256 = identity.get("input_sha256") if isinstance(identity, Mapping) else None
     if (
@@ -214,6 +215,7 @@ def _task41_b0_profile_capability_from_run(
         or re.fullmatch(r"[0-9a-f]{40}", source_sha) is None
         or not isinstance(input_sha256, str)
         or re.fullmatch(r"[0-9a-f]{64}", input_sha256) is None
+        or not isinstance(abi_facts, Mapping)
     ):
         raise ValueError("Task41 B0 worker summary has no exact run/profile/input identity")
     return recheck_task41_b0_mode_inventory(
@@ -221,6 +223,7 @@ def _task41_b0_profile_capability_from_run(
         inventory,
         source_sha=source_sha,
         input_sha256=input_sha256,
+        abi_facts=abi_facts,
     )
 
 
@@ -1690,20 +1693,23 @@ def verify_v10_dtn_port_mode_table(
 
 def _task41_b0_expected_mode_keys_by_side(
     run_directory: str | Path,
+    *,
+    mode_manifest_identity: Mapping[str, Any],
 ) -> dict[str, set[tuple[int, int, str]]]:
-    """Read only side/m/n/polarization keys from B0's hash-frozen manifest."""
+    """Read mode keys using the exact ABI-bound identity rechecked for this run."""
 
     from src.solvers.task41_b0_mode_inventory import (
-        TASK41_B0_MODE_MANIFEST_BYTES,
-        TASK41_B0_MODE_MANIFEST_SHA256,
-        TASK41_B0_MODE_COUNT,
+        validate_registered_task41_b0_mode_manifest_identity,
     )
 
+    registered_identity = validate_registered_task41_b0_mode_manifest_identity(
+        mode_manifest_identity
+    )
     manifest_path = Path(run_directory).resolve() / "task41_b0_mode_manifest.json"
     raw = manifest_path.read_bytes()
     if (
-        len(raw) != TASK41_B0_MODE_MANIFEST_BYTES
-        or hashlib.sha256(raw).hexdigest() != TASK41_B0_MODE_MANIFEST_SHA256
+        len(raw) != registered_identity["manifest_bytes"]
+        or hashlib.sha256(raw).hexdigest() != registered_identity["manifest_sha256"]
     ):
         raise ValueError("Task41 B0 frozen mode manifest hash or size changed")
     text = raw.decode("utf-8")
@@ -1737,7 +1743,10 @@ def _task41_b0_expected_mode_keys_by_side(
             raise ValueError("Task41 B0 frozen mode manifest has an invalid or duplicate key")
         expected[side].add(key)
         seen_rows += 1
-    if seen_rows != TASK41_B0_MODE_COUNT or sum(map(len, expected.values())) != seen_rows:
+    if (
+        seen_rows != registered_identity["mode_count"]
+        or sum(map(len, expected.values())) != seen_rows
+    ):
         raise ValueError("Task41 B0 frozen mode manifest has incomplete side/mode keys")
     return expected
 
@@ -2910,7 +2919,10 @@ def verify_v10_output_bundle(
         b0_profile_capability = _task41_b0_profile_capability_from_run(
             path.parent, worker_summary
         )
-        b0_expected_mode_keys = _task41_b0_expected_mode_keys_by_side(path.parent)
+        b0_expected_mode_keys = _task41_b0_expected_mode_keys_by_side(
+            path.parent,
+            mode_manifest_identity=b0_profile_capability["mode_manifest_identity"],
+        )
         port_mode_table_check = verify_v10_dtn_port_mode_table(
             port_table_paths[0],
             expected_channel_count=expected_channel_count,

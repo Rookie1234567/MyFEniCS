@@ -423,10 +423,24 @@ def _b0_inventory_fixture(
     assignments = [q for q, count in enumerate(q_counts) for _ in range(count)]
     mode_manifest_bytes = ("[" + ",".join("0" for _ in assignments) + "]\n").encode()
     mode_sha256 = hashlib.sha256(mode_manifest_bytes).hexdigest()
-    monkeypatch.setattr(inventory_module, "TASK41_B0_MODE_MANIFEST_SHA256", mode_sha256)
-    monkeypatch.setattr(
-        inventory_module, "TASK41_B0_MODE_MANIFEST_BYTES", len(mode_manifest_bytes)
+    mode_identity = dict(inventory_module.TASK41_B0_MODE_MANIFEST_IDENTITIES[1])
+    mode_identity.update(
+        identity="task41_b0_fixture_mode_manifest_v1",
+        manifest_sha256=mode_sha256,
+        manifest_bytes=len(mode_manifest_bytes),
     )
+    monkeypatch.setattr(
+        inventory_module, "TASK41_B0_MODE_MANIFEST_IDENTITIES", (mode_identity,)
+    )
+    abi_facts = {
+        "profile_identity": mode_identity["profile_identity"],
+        "runtime_profile": mode_identity["runtime_profile"],
+        "qualification": mode_identity["abi_qualification"],
+        "receipt_sha256": mode_identity["abi_receipt_sha256"],
+        "scalar": mode_identity["scalar"],
+        "integer": mode_identity["integer"],
+        "mpi_size": mode_identity["mpi_size"],
+    }
     run_directory.mkdir(parents=True, exist_ok=True)
     manifest_path = run_directory / "task41_b0_mode_manifest.json"
     manifest_path.write_bytes(mode_manifest_bytes)
@@ -436,6 +450,8 @@ def _b0_inventory_fixture(
         "source_sha": source_sha,
         "input_sha256": input_sha256,
         "mode_manifest_sha256": mode_sha256,
+        "mode_manifest_bytes": len(mode_manifest_bytes),
+        "mode_manifest_identity": mode_identity,
         "mode_count": len(assignments),
         "q_count": 200,
         "assignments": assignments,
@@ -450,6 +466,7 @@ def _b0_inventory_fixture(
         "mode_count": len(assignments),
         "mode_manifest_sha256": mode_sha256,
         "mode_manifest_bytes": len(mode_manifest_bytes),
+        "mode_manifest_identity": mode_identity,
         "q_count": 200,
         "q_port_counts": q_counts,
         "empty_q_indices": list(range(1, 58)),
@@ -462,7 +479,7 @@ def _b0_inventory_fixture(
         "fe_mesh_or_dofmap_built": False,
         "source_sha": source_sha,
         "input_sha256": input_sha256,
-        "prior_capture_canonical_sha256_match": True,
+        "registered_abi_bound_identity_match": True,
         "mode_manifest_path": str(manifest_path),
         "mode_manifest_file_sha256": mode_sha256,
         "q_assignment_path": str(assignment_path),
@@ -483,6 +500,7 @@ def _b0_inventory_fixture(
         "profile": TASK41_B0_PRECONDITIONER,
         "stage": "TASK41_B0",
         "source_sha": source_sha,
+        "abi": abi_facts,
         "reference_pc_strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
         "q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
         "factor_lifecycle_strategy": "ALL_Q_RESIDENT",
@@ -513,6 +531,10 @@ def _b0_inventory_fixture(
             "input_sha256": input_sha256,
         },
         "window": {"path": str(window_path), "sha256": window_sha256},
+        "runtime": {
+            "profile": mode_identity["runtime_profile"],
+            "abi_receipt_sha256": mode_identity["abi_receipt_sha256"],
+        },
         "comparison": None,
         "q_csr_reuse": None,
     }

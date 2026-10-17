@@ -336,11 +336,21 @@ def test_task41_b0_port_table_matches_unequal_frozen_side_keys_and_rejects_omiss
     ).encode("utf-8")
     manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
     monkeypatch.setattr(b0_inventory, "TASK41_B0_MODE_COUNT", 3)
-    monkeypatch.setattr(b0_inventory, "TASK41_B0_MODE_MANIFEST_BYTES", len(manifest_bytes))
-    monkeypatch.setattr(b0_inventory, "TASK41_B0_MODE_MANIFEST_SHA256", manifest_sha256)
+    mode_identity = dict(b0_inventory.TASK41_B0_MODE_MANIFEST_IDENTITIES[1])
+    mode_identity.update(
+        identity="task41_b0_output_checker_fixture_v1",
+        mode_count=3,
+        manifest_bytes=len(manifest_bytes),
+        manifest_sha256=manifest_sha256,
+    )
+    monkeypatch.setattr(
+        b0_inventory, "TASK41_B0_MODE_MANIFEST_IDENTITIES", (mode_identity,)
+    )
     manifest_path = tmp_path / "task41_b0_mode_manifest.json"
     manifest_path.write_bytes(manifest_bytes)
-    expected = output_checker._task41_b0_expected_mode_keys_by_side(tmp_path)
+    expected = output_checker._task41_b0_expected_mode_keys_by_side(
+        tmp_path, mode_manifest_identity=mode_identity
+    )
     assert {side: len(keys) for side, keys in expected.items()} == {
         "top": 2,
         "bottom": 1,

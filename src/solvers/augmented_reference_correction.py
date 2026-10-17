@@ -127,20 +127,26 @@ def _registered_v15_profile_inventory(
         TASK41_B0_EXPECTED_Q_PORT_COUNTS,
         TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS,
         TASK41_B0_MODE_COUNT,
-        TASK41_B0_MODE_MANIFEST_BYTES,
-        TASK41_B0_MODE_MANIFEST_SHA256,
+        validate_registered_task41_b0_mode_manifest_identity,
     )
 
     task41_profile = task41_a2_v15_reference_profile(profile_identity)
     if profile_identity == TASK41_B0_PRECONDITIONER:
         capability = b0_profile_capability
-        if not isinstance(capability, Mapping) or (
+        if not isinstance(capability, Mapping):
+            raise ValueError(
+                "Task41 B0 V15 selection requires a rechecked mode/q inventory capability"
+            )
+        mode_identity = validate_registered_task41_b0_mode_manifest_identity(
+            capability.get("mode_manifest_identity")
+        )
+        if (
             capability.get("schema") != "task41.b0.verified_profile_capability.v1"
             or capability.get("verified") is not True
             or capability.get("identity") != TASK41_B0_PRECONDITIONER
-            or capability.get("mode_manifest_sha256") != TASK41_B0_MODE_MANIFEST_SHA256
-            or capability.get("mode_manifest_bytes") != TASK41_B0_MODE_MANIFEST_BYTES
-            or capability.get("mode_count") != TASK41_B0_MODE_COUNT
+            or capability.get("mode_manifest_sha256") != mode_identity["manifest_sha256"]
+            or capability.get("mode_manifest_bytes") != mode_identity["manifest_bytes"]
+            or capability.get("mode_count") != mode_identity["mode_count"]
             or capability.get("q_count") != 200
             or capability.get("twist_count") != 100
             or not isinstance(capability.get("q_assignment_sha256"), str)
@@ -157,7 +163,7 @@ def _registered_v15_profile_inventory(
         )
         profile = task41_b0_periodic_profile(q_counts, sector_counts)
         if (
-            sum(q_counts) != TASK41_B0_MODE_COUNT
+            sum(q_counts) != mode_identity["mode_count"]
             or q_counts != TASK41_B0_EXPECTED_Q_PORT_COUNTS
             or sector_counts != TASK41_B0_EXPECTED_SECTOR_PORT_COUNTS
             or q_counts[0] != 8
@@ -168,7 +174,7 @@ def _registered_v15_profile_inventory(
             or max(q_counts) != 572
             or min(sector_counts) != 524
             or max(sector_counts) != 816
-            or profile.mode_count != TASK41_B0_MODE_COUNT
+            or profile.mode_count != mode_identity["mode_count"]
             or profile.global_cell_axes != (10, 200, 14)
             or profile.global_cell_count != 28_000
             or capability.get("global_cell_axes") != [10, 200, 14]
