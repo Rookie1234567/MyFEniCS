@@ -1,0 +1,1145 @@
+{
+  "schema": "task41.b0.surface_roundoff_diagnosis.v1",
+  "source_sha": "611be2d2debedb60c53b3d2454b0374f5c82b3dd",
+  "host_root": "fenics-ws:/home/fenics/Projects/laptop_share",
+  "records": [
+    {
+      "schema": "task41_b0_local_basix_vs_facet_polynomial_v1",
+      "source_sha": "611be2d2debedb60c53b3d2454b0374f5c82b3dd",
+      "script_sha256": "30ca6df8ba8e1b4dfb0011bbb494747a116c7ab8829364fea4c27609b4349ab6",
+      "status": "LOCAL_BASIX_GAUSS_VS_FACET_POLYNOMIAL_COMPLETE",
+      "qualification_scope": "single-cell local raw functional comparison only; no global support, MPC, carrier or PDE qualification",
+      "elapsed_monotonic_seconds": 1.2388480049557984,
+      "elapsed_wall_seconds": 1.2388463020324707,
+      "raw_npz_path": "results/task41extra_phi90_p50x50_g17x20/codex_notes/task41_b0_local_basix_vs_poly_raw.npz",
+      "raw_npz_sha256": "bde8a5741d7b7ebb1c7cab9431ac6dab64879546c9947d2553b35664b4170766",
+      "metrics": [
+        {
+          "dx_nm": 4.25,
+          "dy_nm": 0.25,
+          "component": 0,
+          "production_global_cutoff_used_for_local_diagnostic_only": 2.4999892380137408e-14,
+          "native_global_cutoff_from_failed_run": 2.4999892380134805e-14,
+          "direct_nonzero_exact": 294,
+          "polynomial_nonzero_exact": 294,
+          "direct_rows_above_global_cutoff_local_only": 23,
+          "polynomial_rows_above_global_cutoff_local_only": 23,
+          "local_cutoff_crossing_count_not_global_support": 0,
+          "local_cutoff_crossing_rows": [],
+          "direct_l2_norm": 0.6123716790303038,
+          "polynomial_l2_norm": 0.6123716790303038,
+          "relative_l2_difference_over_direct": 1.0930472934286703e-15,
+          "maximum_absolute_difference": 2.387624894196368e-16,
+          "maximum_difference_local_dof": 414,
+          "maximum_difference_entity_dimension_entity_slot": [
+            2,
+            5,
+            42
+          ],
+          "difference_l2_norm": 6.69351206336444e-16,
+          "difference_rows_by_entity_dimension": {
+            "0": 0,
+            "1": 24,
+            "2": 119,
+            "3": 150
+          },
+          "direct_rows_within_10x_cutoff": 860,
+          "polynomial_rows_within_10x_cutoff": 860
+        },
+        {
+          "dx_nm": 4.25,
+          "dy_nm": 0.25,
+          "component": 1,
+          "production_global_cutoff_used_for_local_diagnostic_only": 5.500078920003779e-13,
+          "native_global_cutoff_from_failed_run": 5.500078920003725e-13,
+          "direct_nonzero_exact": 294,
+          "polynomial_nonzero_exact": 294,
+          "direct_rows_above_global_cutoff_local_only": 7,
+          "polynomial_rows_above_global_cutoff_local_only": 7,
+          "local_cutoff_crossing_count_not_global_support": 0,
+          "local_cutoff_crossing_rows": [],
+          "direct_l2_norm": 10.410381199927174,
+          "polynomial_l2_norm": 10.410381199927174,
+          "relative_l2_difference_over_direct": 1.139613888210988e-15,
+          "maximum_absolute_difference": 4.850673033726225e-15,
+          "maximum_difference_local_dof": 535,
+          "maximum_difference_entity_dimension_entity_slot": [
+            3,
+            0,
+            103
+          ],
+          "difference_l2_norm": 1.1863814997007578e-14,
+          "difference_rows_by_entity_dimension": {
+            "0": 0,
+            "1": 24,
+            "2": 119,
+            "3": 150
+          },
+          "direct_rows_within_10x_cutoff": 876,
+          "polynomial_rows_within_10x_cutoff": 876
+        },
+        {
+          "dx_nm": 5.5,
+          "dy_nm": 0.25,
+          "component": 0,
+          "production_global_cutoff_used_for_local_diagnostic_only": 2.4999892380137408e-14,
+          "native_global_cutoff_from_failed_run": 2.4999892380134805e-14,
+          "direct_nonzero_exact": 294,
+          "polynomial_nonzero_exact": 294,
+          "direct_rows_above_global_cutoff_local_only": 23,
+          "polynomial_rows_above_global_cutoff_local_only": 23,
+          "local_cutoff_crossing_count_not_global_support": 0,
+          "local_cutoff_crossing_rows": [],
+          "direct_l2_norm": 0.6123716790303038,
+          "polynomial_l2_norm": 0.6123716790303038,
+          "relative_l2_difference_over_direct": 1.127024758217917e-15,
+          "maximum_absolute_difference": 3.002224531865041e-16,
+          "maximum_difference_local_dof": 414,
+          "maximum_difference_entity_dimension_entity_slot": [
+            2,
+            5,
+            42
+          ],
+          "difference_l2_norm": 6.901580434986279e-16,
+          "difference_rows_by_entity_dimension": {
+            "0": 0,
+            "1": 24,
+            "2": 120,
+            "3": 150
+          },
+          "direct_rows_within_10x_cutoff": 860,
+          "polynomial_rows_within_10x_cutoff": 860
+        },
+        {
+          "dx_nm": 5.5,
+          "dy_nm": 0.25,
+          "component": 1,
+          "production_global_cutoff_used_for_local_diagnostic_only": 5.500078920003779e-13,
+          "native_global_cutoff_from_failed_run": 5.500078920003725e-13,
+          "direct_nonzero_exact": 294,
+          "polynomial_nonzero_exact": 294,
+          "direct_rows_above_global_cutoff_local_only": 7,
+          "polynomial_rows_above_global_cutoff_local_only": 7,
+          "local_cutoff_crossing_count_not_global_support": 0,
+          "local_cutoff_crossing_rows": [],
+          "direct_l2_norm": 13.472258023435169,
+          "polynomial_l2_norm": 13.472258023435169,
+          "relative_l2_difference_over_direct": 1.12631316958362e-15,
+          "maximum_absolute_difference": 6.277341573057467e-15,
+          "maximum_difference_local_dof": 535,
+          "maximum_difference_entity_dimension_entity_slot": [
+            3,
+            0,
+            103
+          ],
+          "difference_l2_norm": 1.517398163582362e-14,
+          "difference_rows_by_entity_dimension": {
+            "0": 0,
+            "1": 24,
+            "2": 120,
+            "3": 150
+          },
+          "direct_rows_within_10x_cutoff": 876,
+          "polynomial_rows_within_10x_cutoff": 876
+        }
+      ],
+      "metadata_path": "results/task41extra_phi90_p50x50_g17x20/codex_notes/task41_b0_local_basix_vs_poly_raw.json",
+      "metadata_sha256": "9ee7b35ce8b62923c766cde6ec97729de92717d369926863fc6da7e08147ad16"
+    },
+    {
+      "schema": "task41_b0_local_ffcx_basix_facet_polynomial_v1",
+      "source_sha": "611be2d2debedb60c53b3d2454b0374f5c82b3dd",
+      "script_sha256": "8f8dce57412c0803b6ddaf31547ac86a7152abbbc471f79413fbf4aee5ebb256",
+      "status": "LOCAL_FFCX_VS_BASIX_VS_FACET_POLYNOMIAL_COMPLETE",
+      "qualification_scope": "two one-cell top-facet geometry representatives only; no global support, MPC, carrier or PDE qualification",
+      "elapsed_monotonic_seconds": 53.09393761912361,
+      "raw_npz_path": "results/task41extra_phi90_p50x50_g17x20/codex_notes/task41_b0_local_ffcx_vs_basix_poly_raw.npz",
+      "raw_npz_sha256": "4f0e8ad6f5a8ef0c70d1d42247686cb3cbcdea870a48dd3004eff46369e64634",
+      "metrics": [
+        {
+          "dx_nm": 4.25,
+          "component": 0,
+          "production_global_cutoff_used_for_local_diagnostic_only": 2.4999892380137408e-14,
+          "ffcx_nonzero_exact": 378,
+          "direct_basix_nonzero_exact": 294,
+          "facet_polynomial_nonzero_exact": 294,
+          "ffcx_vs_direct_local_cutoff_crossings_not_global_support": 1,
+          "ffcx_vs_direct_crossing_local_rows": [
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -3.3778611215071244e-14,
+                -3.4402172534489624e-14
+              ],
+              "direct": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_polynomial_local_cutoff_crossings_not_global_support": 1,
+          "ffcx_vs_polynomial_crossing_local_rows": [
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -3.3778611215071244e-14,
+                -3.4402172534489624e-14
+              ],
+              "polynomial": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_direct_relative_l2_over_direct": 2.202428219493853e-13,
+          "ffcx_vs_direct_max_abs": 5.4551647443693445e-14,
+          "ffcx_vs_direct_max_row": 411,
+          "ffcx_vs_direct_max_row_entity": [
+            2,
+            5,
+            39
+          ],
+          "ffcx_vs_polynomial_relative_l2_over_direct": 2.2015216800359717e-13,
+          "ffcx_vs_polynomial_max_abs": 5.447590863484033e-14,
+          "ffcx_vs_polynomial_max_row": 411,
+          "ffcx_vs_polynomial_max_row_entity": [
+            2,
+            5,
+            39
+          ]
+        },
+        {
+          "dx_nm": 4.25,
+          "component": 1,
+          "production_global_cutoff_used_for_local_diagnostic_only": 5.500078920003779e-13,
+          "ffcx_nonzero_exact": 378,
+          "direct_basix_nonzero_exact": 294,
+          "facet_polynomial_nonzero_exact": 294,
+          "ffcx_vs_direct_local_cutoff_crossings_not_global_support": 3,
+          "ffcx_vs_direct_crossing_local_rows": [
+            {
+              "local_dof": 388,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                16
+              ],
+              "ffcx": [
+                -4.3093248493780107e-13,
+                4.75711727880314e-13
+              ],
+              "direct": [
+                2.3780294140102187e-14,
+                2.7665495355754313e-14
+              ]
+            },
+            {
+              "local_dof": 418,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                46
+              ],
+              "ffcx": [
+                -5.372784260650926e-13,
+                5.527549163909955e-13
+              ],
+              "direct": [
+                1.253939951818741e-14,
+                1.75007789632157e-14
+              ]
+            },
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -5.395928478984864e-13,
+                -5.488390488825223e-13
+              ],
+              "direct": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_polynomial_local_cutoff_crossings_not_global_support": 3,
+          "ffcx_vs_polynomial_crossing_local_rows": [
+            {
+              "local_dof": 388,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                16
+              ],
+              "ffcx": [
+                -4.3093248493780107e-13,
+                4.75711727880314e-13
+              ],
+              "polynomial": [
+                2.3383120049699395e-14,
+                2.820769987010961e-14
+              ]
+            },
+            {
+              "local_dof": 418,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                46
+              ],
+              "ffcx": [
+                -5.372784260650926e-13,
+                5.527549163909955e-13
+              ],
+              "polynomial": [
+                1.3552901348868252e-14,
+                1.8066905164040458e-14
+              ]
+            },
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -5.395928478984864e-13,
+                -5.488390488825223e-13
+              ],
+              "polynomial": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_direct_relative_l2_over_direct": 2.2366225787169942e-13,
+          "ffcx_vs_direct_max_abs": 1.064237623775798e-12,
+          "ffcx_vs_direct_max_row": 387,
+          "ffcx_vs_direct_max_row_entity": [
+            2,
+            5,
+            15
+          ],
+          "ffcx_vs_polynomial_relative_l2_over_direct": 2.2364847832640575e-13,
+          "ffcx_vs_polynomial_max_abs": 1.064237623775798e-12,
+          "ffcx_vs_polynomial_max_row": 387,
+          "ffcx_vs_polynomial_max_row_entity": [
+            2,
+            5,
+            15
+          ]
+        },
+        {
+          "dx_nm": 5.5,
+          "component": 0,
+          "production_global_cutoff_used_for_local_diagnostic_only": 2.4999892380137408e-14,
+          "ffcx_nonzero_exact": 378,
+          "direct_basix_nonzero_exact": 294,
+          "facet_polynomial_nonzero_exact": 294,
+          "ffcx_vs_direct_local_cutoff_crossings_not_global_support": 1,
+          "ffcx_vs_direct_crossing_local_rows": [
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -3.377861121507152e-14,
+                -3.4402172534489334e-14
+              ],
+              "direct": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_polynomial_local_cutoff_crossings_not_global_support": 1,
+          "ffcx_vs_polynomial_crossing_local_rows": [
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -3.377861121507152e-14,
+                -3.4402172534489334e-14
+              ],
+              "polynomial": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_direct_relative_l2_over_direct": 2.2045065946341958e-13,
+          "ffcx_vs_direct_max_abs": 5.433101995581065e-14,
+          "ffcx_vs_direct_max_row": 411,
+          "ffcx_vs_direct_max_row_entity": [
+            2,
+            5,
+            39
+          ],
+          "ffcx_vs_polynomial_relative_l2_over_direct": 2.2046955812157776e-13,
+          "ffcx_vs_polynomial_max_abs": 5.4351235775456406e-14,
+          "ffcx_vs_polynomial_max_row": 411,
+          "ffcx_vs_polynomial_max_row_entity": [
+            2,
+            5,
+            39
+          ]
+        },
+        {
+          "dx_nm": 5.5,
+          "component": 1,
+          "production_global_cutoff_used_for_local_diagnostic_only": 5.500078920003779e-13,
+          "ffcx_nonzero_exact": 378,
+          "direct_basix_nonzero_exact": 294,
+          "facet_polynomial_nonzero_exact": 294,
+          "ffcx_vs_direct_local_cutoff_crossings_not_global_support": 3,
+          "ffcx_vs_direct_crossing_local_rows": [
+            {
+              "local_dof": 388,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                16
+              ],
+              "ffcx": [
+                -5.688892970812993e-13,
+                6.120057201688762e-13
+              ],
+              "direct": [
+                2.9591980314725916e-14,
+                3.7624942630888267e-14
+              ]
+            },
+            {
+              "local_dof": 418,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                46
+              ],
+              "ffcx": [
+                -6.988917007838682e-13,
+                7.128831602940901e-13
+              ],
+              "direct": [
+                1.631590438385018e-14,
+                2.3009832971279676e-14
+              ]
+            },
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -6.982966266921612e-13,
+                -7.102622985538425e-13
+              ],
+              "direct": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_polynomial_local_cutoff_crossings_not_global_support": 3,
+          "ffcx_vs_polynomial_crossing_local_rows": [
+            {
+              "local_dof": 388,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                16
+              ],
+              "ffcx": [
+                -5.688892970812993e-13,
+                6.120057201688762e-13
+              ],
+              "polynomial": [
+                2.947779119509252e-14,
+                3.726357817705181e-14
+              ]
+            },
+            {
+              "local_dof": 418,
+              "entity_dimension_entity_slot": [
+                2,
+                5,
+                46
+              ],
+              "ffcx": [
+                -6.988917007838682e-13,
+                7.128831602940901e-13
+              ],
+              "polynomial": [
+                1.6756331699913118e-14,
+                2.414019679271344e-14
+              ]
+            },
+            {
+              "local_dof": 557,
+              "entity_dimension_entity_slot": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -6.982966266921612e-13,
+                -7.102622985538425e-13
+              ],
+              "polynomial": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "ffcx_vs_direct_relative_l2_over_direct": 2.2324766341818073e-13,
+          "ffcx_vs_direct_max_abs": 1.3804944348720678e-12,
+          "ffcx_vs_direct_max_row": 387,
+          "ffcx_vs_direct_max_row_entity": [
+            2,
+            5,
+            15
+          ],
+          "ffcx_vs_polynomial_relative_l2_over_direct": 2.2324401836026966e-13,
+          "ffcx_vs_polynomial_max_abs": 1.3801901843818178e-12,
+          "ffcx_vs_polynomial_max_row": 387,
+          "ffcx_vs_polynomial_max_row_entity": [
+            2,
+            5,
+            15
+          ]
+        }
+      ],
+      "metadata_path": "results/task41extra_phi90_p50x50_g17x20/codex_notes/task41_b0_local_ffcx_vs_basix_poly_raw.json",
+      "metadata_sha256": "1e8f9d8f04c1bf013bb7282ac824329f945b52c41efdd0b4a748983c7070859b"
+    },
+    {
+      "schema": "task41_b0_local_trace_phase_audit_v1",
+      "source_sha": "611be2d2debedb60c53b3d2454b0374f5c82b3dd",
+      "script_sha256": "7090ab1bfdb7883dafe801e7f1aad932aaeff9e8a643383d7e0d2c9477c8ba60",
+      "status": "LOCAL_TRACE_AND_PHASE_AUDIT_COMPLETE",
+      "raw_npz_path": "results/task41extra_phi90_p50x50_g17x20/codex_notes/task41_b0_local_trace_phase_audit_raw.npz",
+      "raw_npz_sha256": "664cf38213be6b733f0ddc856847876e64ada5e5f202c787a86cb61e9c0ad9d8",
+      "metrics": [
+        {
+          "dx_nm": 4.25,
+          "jacobian_diagonal_nm": [
+            4.25,
+            0.25,
+            10.0
+          ],
+          "component": 0,
+          "physical_vs_origin_factorized_phase_max_abs": 3.1401849173675503e-16,
+          "physical_vs_factorized_integral_relative_l2": 1.3835411027343422e-16,
+          "physical_vs_factorized_integral_max_abs": 5.551115123125783e-17,
+          "physical_vs_factorized_max_row": 377,
+          "physical_direct_vs_saved_basix_rel_l2": 0.0,
+          "physical_direct_vs_facet_polynomial_rel_l2": 1.0930472934286703e-15,
+          "ffcx_global_cutoff_used_locally_only": 2.4999892380137408e-14,
+          "ffcx_vs_physical_local_threshold_crossing_rows": [
+            {
+              "local_dof": 557,
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -3.3778611215071244e-14,
+                -3.4402172534489624e-14,
+                4.821311077613359e-14
+              ],
+              "direct": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "factorized": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "selected_row_trace_and_integrals": {
+            "557": {
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                0.0
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                -3.3778611215071244e-14,
+                -3.4402172534489624e-14,
+                4.821311077613359e-14
+              ]
+            },
+            "388": {
+              "entity": [
+                2,
+                5,
+                16
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                74.52462759804042
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                1.0425994282167125e-27,
+                -1.1229535985236121e-27,
+                1.5323310191192194e-27
+              ]
+            },
+            "418": {
+              "entity": [
+                2,
+                5,
+                46
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                26.62302894962538
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                1.0574576040950257e-27,
+                -1.0561101649428038e-27,
+                1.4945184056925857e-27
+              ]
+            }
+          },
+          "cell_permutation": 0
+        },
+        {
+          "dx_nm": 4.25,
+          "jacobian_diagonal_nm": [
+            4.25,
+            0.25,
+            10.0
+          ],
+          "component": 1,
+          "physical_vs_origin_factorized_phase_max_abs": 3.1401849173675503e-16,
+          "physical_vs_factorized_integral_relative_l2": 1.2217414013582214e-16,
+          "physical_vs_factorized_integral_max_abs": 6.280369834735101e-16,
+          "physical_vs_factorized_max_row": 387,
+          "physical_direct_vs_saved_basix_rel_l2": 0.0,
+          "physical_direct_vs_facet_polynomial_rel_l2": 1.139613888210988e-15,
+          "ffcx_global_cutoff_used_locally_only": 5.500078920003779e-13,
+          "ffcx_vs_physical_local_threshold_crossing_rows": [
+            {
+              "local_dof": 388,
+              "entity": [
+                2,
+                5,
+                16
+              ],
+              "ffcx": [
+                -4.3093248493780107e-13,
+                4.75711727880314e-13,
+                6.418757314446014e-13
+              ],
+              "direct": [
+                2.3780294140102187e-14,
+                2.7665495355754313e-14,
+                3.6481255771547145e-14
+              ],
+              "factorized": [
+                2.3780294140102187e-14,
+                2.7611715539867243e-14,
+                3.644048880633086e-14
+              ]
+            },
+            {
+              "local_dof": 418,
+              "entity": [
+                2,
+                5,
+                46
+              ],
+              "ffcx": [
+                -5.372784260650926e-13,
+                5.527549163909955e-13,
+                7.70847653372182e-13
+              ],
+              "direct": [
+                1.253939951818741e-14,
+                1.75007789632157e-14,
+                2.152937074315113e-14
+              ],
+              "factorized": [
+                1.2512511304309769e-14,
+                1.7535473432735236e-14,
+                2.1541953663738185e-14
+              ]
+            },
+            {
+              "local_dof": 557,
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -5.395928478984864e-13,
+                -5.488390488825223e-13,
+                7.696653448619541e-13
+              ],
+              "direct": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "factorized": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "selected_row_trace_and_integrals": {
+            "557": {
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                0.0
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                -5.395928478984864e-13,
+                -5.488390488825223e-13,
+                7.696653448619541e-13
+              ]
+            },
+            "388": {
+              "entity": [
+                2,
+                5,
+                16
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                74.52462759804042
+              ],
+              "physical_direct_integral": [
+                2.3780294140102187e-14,
+                2.7665495355754313e-14,
+                3.6481255771547145e-14
+              ],
+              "origin_factorized_integral": [
+                2.3780294140102187e-14,
+                2.7611715539867243e-14,
+                3.644048880633086e-14
+              ],
+              "ffcx_integral": [
+                -4.3093248493780107e-13,
+                4.75711727880314e-13,
+                6.418757314446014e-13
+              ]
+            },
+            "418": {
+              "entity": [
+                2,
+                5,
+                46
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                26.62302894962538
+              ],
+              "physical_direct_integral": [
+                1.253939951818741e-14,
+                1.75007789632157e-14,
+                2.152937074315113e-14
+              ],
+              "origin_factorized_integral": [
+                1.2512511304309769e-14,
+                1.7535473432735236e-14,
+                2.1541953663738185e-14
+              ],
+              "ffcx_integral": [
+                -5.372784260650926e-13,
+                5.527549163909955e-13,
+                7.70847653372182e-13
+              ]
+            }
+          },
+          "cell_permutation": 0
+        },
+        {
+          "dx_nm": 5.5,
+          "jacobian_diagonal_nm": [
+            5.5,
+            0.25,
+            10.0
+          ],
+          "component": 0,
+          "physical_vs_origin_factorized_phase_max_abs": 2.482534153247273e-16,
+          "physical_vs_factorized_integral_relative_l2": 1.6450726724532603e-16,
+          "physical_vs_factorized_integral_max_abs": 6.206335383118183e-17,
+          "physical_vs_factorized_max_row": 382,
+          "physical_direct_vs_saved_basix_rel_l2": 0.0,
+          "physical_direct_vs_facet_polynomial_rel_l2": 1.127024758217917e-15,
+          "ffcx_global_cutoff_used_locally_only": 2.4999892380137408e-14,
+          "ffcx_vs_physical_local_threshold_crossing_rows": [
+            {
+              "local_dof": 557,
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -3.377861121507152e-14,
+                -3.4402172534489334e-14,
+                4.821311077613358e-14
+              ],
+              "direct": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "factorized": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "selected_row_trace_and_integrals": {
+            "557": {
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                0.0
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                -3.377861121507152e-14,
+                -3.4402172534489334e-14,
+                4.821311077613358e-14
+              ]
+            },
+            "388": {
+              "entity": [
+                2,
+                5,
+                16
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                74.52462759804042
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                1.0467770066815122e-27,
+                -1.1306668113114197e-27,
+                1.5408275503502136e-27
+              ]
+            },
+            "418": {
+              "entity": [
+                2,
+                5,
+                46
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                26.62302894962538
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                1.0557257658768646e-27,
+                -1.057764025097511e-27,
+                1.4944636581485613e-27
+              ]
+            }
+          },
+          "cell_permutation": 0
+        },
+        {
+          "dx_nm": 5.5,
+          "jacobian_diagonal_nm": [
+            5.5,
+            0.25,
+            10.0
+          ],
+          "component": 1,
+          "physical_vs_origin_factorized_phase_max_abs": 2.482534153247273e-16,
+          "physical_vs_factorized_integral_relative_l2": 1.0367780060051811e-16,
+          "physical_vs_factorized_integral_max_abs": 8.881784197001252e-16,
+          "physical_vs_factorized_max_row": 387,
+          "physical_direct_vs_saved_basix_rel_l2": 0.0,
+          "physical_direct_vs_facet_polynomial_rel_l2": 1.12631316958362e-15,
+          "ffcx_global_cutoff_used_locally_only": 5.500078920003779e-13,
+          "ffcx_vs_physical_local_threshold_crossing_rows": [
+            {
+              "local_dof": 388,
+              "entity": [
+                2,
+                5,
+                16
+              ],
+              "ffcx": [
+                -5.688892970812993e-13,
+                6.120057201688762e-13,
+                8.355752712072561e-13
+              ],
+              "direct": [
+                2.9591980314725916e-14,
+                3.7624942630888267e-14,
+                4.786775122067841e-14
+              ],
+              "factorized": [
+                2.93387106872333e-14,
+                3.7555550303717405e-14,
+                4.765689145762894e-14
+              ]
+            },
+            {
+              "local_dof": 418,
+              "entity": [
+                2,
+                5,
+                46
+              ],
+              "ffcx": [
+                -6.988917007838682e-13,
+                7.128831602940901e-13,
+                9.98324601347406e-13
+              ],
+              "direct": [
+                1.631590438385018e-14,
+                2.3009832971279676e-14,
+                2.820746619654326e-14
+              ],
+              "factorized": [
+                1.6170187611868128e-14,
+                2.289881066881716e-14,
+                2.8032668396878456e-14
+              ]
+            },
+            {
+              "local_dof": 557,
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "ffcx": [
+                -6.982966266921612e-13,
+                -7.102622985538425e-13,
+                9.960375051154647e-13
+              ],
+              "direct": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "factorized": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "selected_row_trace_and_integrals": {
+            "557": {
+              "entity": [
+                3,
+                0,
+                125
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                0.0
+              ],
+              "physical_direct_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "origin_factorized_integral": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "ffcx_integral": [
+                -6.982966266921612e-13,
+                -7.102622985538425e-13,
+                9.960375051154647e-13
+              ]
+            },
+            "388": {
+              "entity": [
+                2,
+                5,
+                16
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                74.52462759804042
+              ],
+              "physical_direct_integral": [
+                2.9591980314725916e-14,
+                3.7624942630888267e-14,
+                4.786775122067841e-14
+              ],
+              "origin_factorized_integral": [
+                2.93387106872333e-14,
+                3.7555550303717405e-14,
+                4.765689145762894e-14
+              ],
+              "ffcx_integral": [
+                -5.688892970812993e-13,
+                6.120057201688762e-13,
+                8.355752712072561e-13
+              ]
+            },
+            "418": {
+              "entity": [
+                2,
+                5,
+                46
+              ],
+              "max_abs_reference_tangential_basis_components": [
+                0.0,
+                26.62302894962538
+              ],
+              "physical_direct_integral": [
+                1.631590438385018e-14,
+                2.3009832971279676e-14,
+                2.820746619654326e-14
+              ],
+              "origin_factorized_integral": [
+                1.6170187611868128e-14,
+                2.289881066881716e-14,
+                2.8032668396878456e-14
+              ],
+              "ffcx_integral": [
+                -6.988917007838682e-13,
+                7.128831602940901e-13,
+                9.98324601347406e-13
+              ]
+            }
+          },
+          "cell_permutation": 0
+        }
+      ],
+      "metadata_path": "results/task41extra_phi90_p50x50_g17x20/codex_notes/task41_b0_local_trace_phase_audit_raw.json",
+      "metadata_sha256": "b7eb0af2b50b7a12c6e0cfc02795ebcab880bb9a3a792d5accd1927f282f8bca"
+    }
+  ],
+  "limits": [
+    "Only two canonical top-facet geometries, width 4.25/5.5 nm, dy=0.25 nm,dz=10 nm, local permutation=0.",
+    "Not a reconstruction of full global rows or MPC; the former global attempt did not save row/value arrays.",
+    "Old failure classification and source remain unchanged.",
+    "Identical .so set sampled after form construction does not prove JIT cache hit."
+  ],
+  "decision": {
+    "scope": "Only the newly added Task41 finite native/FFCx pairing classifier",
+    "authority": "task.md sections 4,6,7; original numerical residual, recovery and physical gates retained",
+    "change": "Report exact screened-support differences separately; judge full sparse union values with the original reference-L2 1e-11 gate, H 1e-14. No change to the two production 1e-13 filters or numerical kernel.",
+    "reason": "Local row 557 is an interior basis function with exactly zero tabulated top tangential trace; production FFCx leaves a 4.821311e-14 residue crossing the 2.499989e-14 global cutoff. Direct Basix and polynomial integrals agree near 1e-15. Exact mask equality across independent floating-point integrations is not in Task41 scientific gates.",
+    "required_before_use": "Directed negative fixtures, persisted raw rows/values, six real global representative modes; all downstream original q/native/factor/reference/target gates still required."
+  }
+}

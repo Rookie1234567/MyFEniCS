@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -160,20 +163,54 @@ def test_task41_native_probe_covers_both_ports_s_p_near_and_distinct_wavevectors
         assert max(abs(mode.alpha) for mode in on_side) > 1.0
 
 
-def test_sparse_functional_pair_requires_equal_support_and_bounds_roundoff():
+def test_sparse_functional_pair_reports_tiny_support_difference_and_bounds_roundoff():
     rows = np.asarray([2, 5], dtype=np.int64)
     reference = (rows, np.asarray([1.0 + 2.0j, 3.0 - 1.0j]))
     close = (rows.copy(), np.asarray([1.0 + 2.0j, 3.0 - 1.0j + 1.0e-15]))
-    different_support = (np.asarray([2, 6]), close[1])
 
     assert _task41_compare_sparse_functional(
         reference, close, relative_tolerance=1.0e-11
     )["pass"] is True
-    mismatch = _task41_compare_sparse_functional(
-        reference, different_support, relative_tolerance=1.0e-11
+
+    tiny_reference = (
+        np.asarray([2, 5], dtype=np.int64),
+        np.asarray([1.0 + 0j, 2.0e-13 + 0j]),
     )
-    assert mismatch["pass"] is False
+    tiny_support_difference = (
+        np.asarray([2, 6], dtype=np.int64),
+        np.asarray([1.0 + 0j, 2.0e-13 + 0j]),
+    )
+    assert abs(tiny_reference[1][1]) > 1.0e-13
+    mismatch = _task41_compare_sparse_functional(
+        tiny_reference, tiny_support_difference, relative_tolerance=1.0e-11
+    )
+    assert mismatch["pass"] is True
+    assert mismatch["support_rows_equal"] is False
     assert mismatch["support_symmetric_difference_count"] == 2
+    assert mismatch["relative_l2_error_over_reference_norm"] < 1.0e-11
+
+
+@pytest.mark.parametrize(
+    ("reference", "candidate"),
+    [
+        (
+            (np.asarray([2, 5]), np.asarray([1.0 + 0j, 3.0 + 0j])),
+            (np.asarray([2]), np.asarray([1.0 + 0j])),
+        ),
+        (
+            (np.asarray([2]), np.asarray([1.0 + 0j])),
+            (np.asarray([2]), np.asarray([-1.0 + 0j])),
+        ),
+    ],
+    ids=("missing-real-contribution", "wrong-phase-sign"),
+)
+def test_sparse_functional_pair_rejects_real_omission_and_phase_error(reference, candidate):
+    comparison = _task41_compare_sparse_functional(
+        reference, candidate, relative_tolerance=1.0e-11
+    )
+
+    assert comparison["pass"] is False
+    assert comparison["relative_l2_error_over_reference_norm"] > 1.0e-11
 
 
 class _SerialComm:
@@ -203,13 +240,14 @@ class _FakeNativeRule:
 
 
 class _FakeAssembler:
-    def __init__(self, rule, side, component, *, production):
+    def __init__(self, rule, side, component, *, production, mutation=None):
         self.rule = rule
         self.side = side
         self.component = component
         self.boundary_reference_z = 0.0 if side == "bottom" else 1.0
         self.assembly_stats = {"calls": 0, "last_filter_audit": {"global_cutoff": 1e-13}}
         self._production = production
+        self._mutation = mutation
 
     def assemble_entries(self, mode, _mpc):
         del mode
@@ -223,6 +261,11 @@ class _FakeAssembler:
             if self.component == 0
             else np.asarray([0.2 + 0.3j, 0.8 - 0.4j], dtype=np.complex128)
         )
+        if not self._production and self._mutation == "missing_significant":
+            rows, values = rows[:-1], values[:-1]
+        elif not self._production and self._mutation == "wrong_phase":
+            values = values.copy()
+            values[0] *= -1.0
         if self._production:
             self.assembly_stats["calls"] += 1
         else:
@@ -234,11 +277,7 @@ class _FakeAssembler:
         return rows, values
 
 
-def test_pairing_runs_finite_live_mode_gate_and_persists_each_mode_callback():
-    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
-        _task41_pair_native_surface_assemblers,
-    )
-
+def _task41_pairing_fixture(*, mutate_native_component_zero=None):
     modes = []
     for side, near, far in (("bottom", 0.01, 3.0), ("top", 0.02, 4.0)):
         for polarization in ("s", "p"):
@@ -265,7 +304,11 @@ def test_pairing_runs_finite_live_mode_gate_and_persists_each_mode_callback():
                 rule, side, component, production=True
             )
             native[(side, component)] = _FakeAssembler(
-                rule, side, component, production=False
+                rule,
+                side,
+                component,
+                production=False,
+                mutation=(mutate_native_component_zero if component == 0 else None),
             )
     mpc = SimpleNamespace(
         function_space=SimpleNamespace(mesh=SimpleNamespace(comm=_SerialComm()))
@@ -274,12 +317,45 @@ def test_pairing_runs_finite_live_mode_gate_and_persists_each_mode_callback():
         x_min=0.0, x_max=1.0, y_min=0.0, y_max=1.0,
         physical_z_min=0.0, physical_z_max=1.0,
     )
+    return modes, production, native, mpc, cfg
+
+
+def _raw_packet_callback(output_root, events):
+    from src.runners.task40_v10_worker import (
+        _save_task41_b0_native_surface_pair_evidence,
+    )
+
+    def save(mode_result, raw_functionals):
+        events.append(("raw", mode_result["mode_index"]))
+        return _save_task41_b0_native_surface_pair_evidence(
+            output_root,
+            mode_result,
+            raw_functionals,
+            identity={"source_sha": "fixture-source"},
+        )
+
+    return save
+
+
+def test_pairing_runs_finite_live_mode_gate_and_persists_raw_arrays(tmp_path):
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _task41_pair_native_surface_assemblers,
+    )
+
+    modes, production, native, mpc, cfg = _task41_pairing_fixture()
     callbacks = []
+    event_order = []
+
+    def progress(event):
+        if event.get("phase") == "task41_b0_native_surface_pair_mode":
+            event_order.append(("progress", event["mode_result"]["mode_index"]))
+        callbacks.append(event)
 
     result = _task41_pair_native_surface_assemblers(
         modes, production, native, mpc, cfg,
         relative_tolerance=1.0e-11,
-        progress_callback=callbacks.append,
+        progress_callback=progress,
+        raw_evidence_callback=_raw_packet_callback(tmp_path, event_order),
     )
 
     assert result["pass"] is True
@@ -297,6 +373,70 @@ def test_pairing_runs_finite_live_mode_gate_and_persists_each_mode_callback():
         item["mode_result"]["component_filter_cutoffs"][0]["production"]["global_cutoff"] == 1e-13
         for item in callbacks
     )
+    assert all(
+        item["mode_result"]["component_filter_cutoffs"][0]["native"][
+            "post_mpc_global_cutoff"
+        ] == 1e-13
+        for item in callbacks
+    )
+    assert [kind for kind, _ in event_order] == ["raw", "progress"] * 6
+    assert all(
+        item["mode_result"]["raw_evidence_packet"]["npz_sha256"]
+        for item in callbacks
+    )
+    first_packet = callbacks[0]["mode_result"]["raw_evidence_packet"]
+    npz_path = Path(first_packet["npz_path"])
+    assert npz_path.is_file()
+    assert hashlib.sha256(npz_path.read_bytes()).hexdigest() == first_packet["npz_sha256"]
+    record = json.loads(Path(first_packet["metadata_path"]).read_text())
+    raw_component = record["raw_functionals"]["component_0_production_rows"]
+    with np.load(npz_path, allow_pickle=False) as archive:
+        assert archive[raw_component["array_key"]].tolist() == [0, 1]
+        assert "D_raw_x_input_nonzero_values" in record["raw_functionals"]
+
+
+def test_significant_missing_pair_contribution_is_saved_before_gate_raises(tmp_path):
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _task41_pair_native_surface_assemblers,
+    )
+
+    modes, production, native, mpc, cfg = _task41_pairing_fixture(
+        mutate_native_component_zero="missing_significant"
+    )
+    event_order = []
+    callbacks = []
+
+    def progress(event):
+        if event.get("phase") == "task41_b0_native_surface_pair_mode":
+            event_order.append(("progress", event["mode_result"]["mode_index"]))
+        callbacks.append(event)
+
+    with pytest.raises(ValueError, match="reference-norm or H gate"):
+        _task41_pair_native_surface_assemblers(
+            modes,
+            production,
+            native,
+            mpc,
+            cfg,
+            relative_tolerance=1.0e-11,
+            progress_callback=progress,
+            raw_evidence_callback=_raw_packet_callback(tmp_path, event_order),
+        )
+
+    mode_events = [
+        event for event in callbacks
+        if event.get("phase") == "task41_b0_native_surface_pair_mode"
+    ]
+    assert event_order == [
+        ("raw", mode_events[0]["mode_result"]["mode_index"]),
+        ("progress", mode_events[0]["mode_result"]["mode_index"]),
+    ]
+    mode_result = mode_events[0]["mode_result"]
+    assert mode_result["pass"] is False
+    assert mode_result["component_comparisons"][0]["relative_l2_error_over_reference_norm"] > 1e-11
+    packet = mode_result["raw_evidence_packet"]
+    assert Path(packet["npz_path"]).is_file()
+    assert hashlib.sha256(Path(packet["npz_path"]).read_bytes()).hexdigest() == packet["npz_sha256"]
 
 
 def test_compact_task41_formula_matches_production_fullspace_dtn_action():

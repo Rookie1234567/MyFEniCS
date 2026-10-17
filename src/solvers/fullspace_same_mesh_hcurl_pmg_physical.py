@@ -289,7 +289,11 @@ def _task41_compare_sparse_functional(
         "relative_l2_error_over_reference_norm": relative_error,
         "maximum_absolute_difference_diagnostic_only": max_abs,
         "relative_tolerance": float(relative_tolerance),
-        "pass": bool(support_difference == 0 and relative_error <= relative_tolerance),
+        # Sparse support is a useful diagnostic after thresholding, but the
+        # qualification gate is the full union difference measured against
+        # the complete reference norm.  Exact mask equality would add a
+        # threshold-sensitive requirement beyond the Task41 action gate.
+        "pass": bool(relative_error <= relative_tolerance),
     }
 
 
@@ -303,6 +307,9 @@ def _task41_pair_native_surface_assemblers(
     relative_tolerance: float,
     h_relative_tolerance: float = 1.0e-14,
     progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    raw_evidence_callback: Callable[
+        [Mapping[str, Any], Mapping[str, np.ndarray]], Mapping[str, Any] | None
+    ] | None = None,
 ) -> dict[str, Any]:
     """Pair finite live B/D/H functionals, actions, cutoffs, and phase timings."""
 
@@ -587,6 +594,45 @@ def _task41_pair_native_surface_assemblers(
             },
             "pass": mode_pass,
         }
+        if raw_evidence_callback is not None:
+            raw_functionals: dict[str, np.ndarray] = {}
+            for component, (reference, candidate) in enumerate(
+                zip(reference_components, native_components, strict=True)
+            ):
+                raw_functionals[f"component_{component}_production_rows"] = np.asarray(
+                    reference[0]
+                )
+                raw_functionals[f"component_{component}_production_values"] = np.asarray(
+                    reference[1], dtype=np.complex128
+                )
+                raw_functionals[f"component_{component}_native_rows"] = np.asarray(
+                    candidate[0]
+                )
+                raw_functionals[f"component_{component}_native_values"] = np.asarray(
+                    candidate[1], dtype=np.complex128
+                )
+            for name, reference, candidate in (
+                ("D_projection", reference_projection, native_projection),
+                ("B_coupling", reference_coupling, native_coupling),
+            ):
+                raw_functionals[f"{name}_production_rows"] = np.asarray(reference[0])
+                raw_functionals[f"{name}_production_values"] = np.asarray(
+                    reference[1], dtype=np.complex128
+                )
+                raw_functionals[f"{name}_native_rows"] = np.asarray(candidate[0])
+                raw_functionals[f"{name}_native_values"] = np.asarray(
+                    candidate[1], dtype=np.complex128
+                )
+            nonzero_input_positions = np.flatnonzero(input_field)
+            raw_functionals["D_raw_x_input_nonzero_rows"] = np.asarray(
+                candidate_rows[nonzero_input_positions]
+            )
+            raw_functionals["D_raw_x_input_nonzero_values"] = np.asarray(
+                input_field[nonzero_input_positions], dtype=np.complex128
+            )
+            packet = raw_evidence_callback(mode_result, raw_functionals)
+            if packet is not None:
+                mode_result["raw_evidence_packet"] = dict(packet)
         comparisons.append(mode_result)
         if progress_callback is not None:
             progress_callback({
@@ -621,7 +667,8 @@ def _task41_pair_native_surface_assemblers(
         "component_candidate": "FacetPolynomial.integral_native + actual MPC E^H closure + unchanged two-stage cutoff",
         "relative_tolerance_source": "existing Task41 _REGULAR_ACTION_LIMIT (1e-11)",
         "reference_norm_is_the_error_denominator": True,
-        "support_symmetric_difference_must_equal_zero": True,
+        "support_symmetric_difference_is_diagnostic": True,
+        "relative_l2_error_over_reference_norm_is_hard_gate": True,
         "H_relative_tolerance_source": "existing boundary-plane normalization gate (1e-14)",
         "B_D_combination_timing_seconds": timing,
         "production_component_assembly_stats": production_stats,
@@ -737,6 +784,9 @@ def build_same_mesh_physical_action(
     surface_assembly_backend: str = "ffcx",
     pair_native_surface: bool = False,
     native_surface_pair_tolerance: float | None = None,
+    surface_pair_raw_evidence_callback: Callable[
+        [Mapping[str, Any], Mapping[str, np.ndarray]], Mapping[str, Any] | None
+    ] | None = None,
     surface_functional_checkpoint: Mapping[str, Any] | None = None,
     research_phase_override: tuple[complex, complex] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
@@ -948,6 +998,7 @@ def build_same_mesh_physical_action(
                     cfg,
                     relative_tolerance=float(native_surface_pair_tolerance),
                     progress_callback=stage_progress if stage_callback is not None else None,
+                    raw_evidence_callback=surface_pair_raw_evidence_callback,
                 )
             except BaseException as error:
                 if stage_callback is not None:

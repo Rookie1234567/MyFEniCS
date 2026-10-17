@@ -32,6 +32,42 @@ _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 
 
+def _save_task41_b0_native_surface_pair_evidence(
+    output_root: Path,
+    mode_result: Mapping[str, Any],
+    raw_functionals: Mapping[str, np.ndarray],
+    *,
+    identity: Mapping[str, Any],
+) -> dict[str, str]:
+    """Atomically save one representative mode's sparse pairing inputs."""
+    from src.runners.physical_diagnosis_worker import save_packet
+    from src.runners.physical_intermediate import _jsonable
+
+    packet_root = Path(output_root) / "task41_b0_native_surface_pair_raw"
+    packet_root.mkdir(parents=True, exist_ok=True)
+    stem = f"mode_{int(mode_result['mode_index']):05d}"
+    save_packet(
+        packet_root,
+        stem,
+        {
+            "schema": "task41.b0.native_surface_pair_raw.v1",
+            "attempt_identity": dict(identity),
+            "mode_result": _jsonable(dict(mode_result)),
+            "raw_functionals": dict(raw_functionals),
+        },
+    )
+    metadata_path = packet_root / f"{stem}.json"
+    metadata = json.loads(metadata_path.read_text())
+    arrays = metadata.get("arrays")
+    if not isinstance(arrays, Mapping) or not arrays.get("sha256"):
+        raise ValueError("Task41 raw surface-pair packet lacks its NPZ hash")
+    return {
+        "npz_path": str(arrays["path"]),
+        "npz_sha256": str(arrays["sha256"]),
+        "metadata_path": str(metadata_path),
+    }
+
+
 def _task41_b0_carrier_memory_upper_bound(
     setup: Mapping[str, Any],
     cfg: Any,
@@ -8490,6 +8526,7 @@ def run_task40_v10_p6_reference_worker(
                 cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
             )
             task41_b0_checkpoint = None
+            task41_b0_pair_raw_evidence_callback = None
             target_stage_callback = None
             if is_task41_b0:
                 if not isinstance(task41_contract_binding, Mapping):
@@ -8507,6 +8544,19 @@ def run_task40_v10_p6_reference_worker(
                     "root": str(directory / "task41_b0_target_surface_checkpoint"),
                     "identity": checkpoint_identity,
                 }
+
+                def save_task41_b0_pair_raw_evidence(
+                    mode_result: Mapping[str, Any],
+                    raw_functionals: Mapping[str, np.ndarray],
+                ) -> Mapping[str, Any]:
+                    return _save_task41_b0_native_surface_pair_evidence(
+                        directory,
+                        mode_result,
+                        raw_functionals,
+                        identity=checkpoint_identity,
+                    )
+
+                task41_b0_pair_raw_evidence_callback = save_task41_b0_pair_raw_evidence
 
                 def target_stage_callback(facts: Mapping[str, Any]) -> None:
                     phase = str(facts.get("phase", ""))
@@ -8589,6 +8639,7 @@ def run_task40_v10_p6_reference_worker(
                 ),
                 pair_native_surface=bool(is_task41_b0),
                 native_surface_pair_tolerance=_REGULAR_ACTION_LIMIT if is_task41_b0 else None,
+                surface_pair_raw_evidence_callback=task41_b0_pair_raw_evidence_callback,
                 surface_functional_checkpoint=(
                     _task40_v33_surface_checkpoint_for_scope(
                         task41_b0_checkpoint, scope="global"

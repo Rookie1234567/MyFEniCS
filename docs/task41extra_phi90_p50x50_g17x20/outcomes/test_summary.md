@@ -147,3 +147,24 @@ python -m pytest -q --tb=short src/test/test_task40_v10_abi.py::test_task41_case
 工作站原资格化native ABI下：`python -m pytest -q src/test/test_task41_b0_native_surface.py src/test/test_task40_v22_operator_probe.py::test_compact_component_matches_full_vector_bitwise_with_mpc_and_cutoff_rows` 得到7 passed in 1.00s。覆盖真实方向库存拒绝非规范几何、代表模式、MPC筛选、完整functional比较、PETSc DtN作用与模态RHS公式。最终仅纠正D_projection/B_coupling两个计时键后，pairing fixture再测1 passed in 1.09s。相关py_compile和git diff --check通过；ruff模块缺失，未安装或声明通过。没有全仓测试，也没有将fixture作为真实B0 FE资格。
 
 对照维持Bα=coupling×α、D_raw x=projection dot x、DtN=coupling×D_raw/H；不得把H乘入B或D。正式路径仍需真实六模式比较后才能使用新内核；没有降低原数值门。停止与测试原始轻量记录见b0_controlled_stop_native_surface_preparation.json。
+
+## B0 support差异判定与原始稀疏证据定向回归
+
+Task41 §4.107/§6.153只要求实际核验B/D支持条件，以及完整CSR/native作用误差≤1e-11；它们没有规定不同积分实现的阈值后支持行必须完全相同。本地修正将行集对称差保留为诊断，仍在行集合并集上计算全值差并以reference-L2≤1e-11裁决；H≤1e-14、实际行域与排序、MPC/相位和两阶段1e-13筛选不变。显著漏项或错误符号/相位仍由完整误差门拒绝。
+
+每个代表模式现在会在失败异常之前原子保存component、D projection、B coupling双方的稀疏rows/values和D_raw稀疏输入，另写包含模式、门限与运行身份的JSON索引；索引记录NPZ SHA-256。没有保存完整稠密场。旧`20261017T095825.478498Z`失败不回溯改判；没有运行FE/PDE、正式service或全场。
+
+Task41 C1 qualification activation ABI preflight通过：Python位于`local_w0_wsl/runtime_prefix`，PETSc 3.25.6 complex128/int32，DOLFINx/Basix 0.10.0，MPI1/MPICH 5.0.1。相关模块`compileall`通过；最终定向命令与结果：
+
+```bash
+source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit
+python -m pytest -q --tb=short src/test/test_task41_b0_native_surface.py src/test/test_task40_v22_operator_probe.py::test_compact_component_matches_full_vector_bitwise_with_mpc_and_cutoff_rows
+```
+
+结果为**10 passed in 1.23 s**；`git diff --check`通过。Ruff在资格化runtime中未安装，未安装或声明通过。测试仅证明比较器与紧凑积分fixture的局部行为；源码仍待主控冻结、native Linux部署与真实代表模式验证。
+
+## 浮点支持差诊断与失败前原始保存
+
+在两个真实top局部几何上得到独立Basix/多项式/FFCx证据后，主控核对Task41任务书并修正本轮额外加入的筛后mask相等hard gate，原完整作用误差门不变。比较仍累计稀疏支持并集上所有值差；支持差字段保留。新fixture用主项1、小项2e-13模拟高于生产cutoff但低于作用误差门的残值；显著漏项和错误相位仍失败，失败前NPZ与hash持久化已核对。
+
+资格化C1环境下，完整B0配对模块及compact cutoff回归为10 passed in 1.23s；最终仅调整上述fixture量级后，相关5项5 passed、4 deselected in 0.48s。相关compileall、ABI preflight及git diff --check通过；Ruff未安装。该测试不等于新的真实六模式资格或完整PDE通过；旧611be2d2配对失败记录不改写。

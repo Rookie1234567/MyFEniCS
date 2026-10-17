@@ -1,0 +1,397 @@
+{
+  "schema": "task41_p0_b0_native_pair_failure_evidence.v1",
+  "recorded_at_utc": "2026-10-17T10:03:33Z",
+  "classification": "WORKER_FAILED",
+  "unit": "myfenics-case-20261017T095822-1740587.service",
+  "unit_invocation_id": "35ce36249985467aa90f15df43311eb9",
+  "source_sha": "611be2d2debedb60c53b3d2454b0374f5c82b3dd",
+  "execution_contract_path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_611be2d2debedb60c53b3d2454b0374f5c82b3dd.json",
+  "execution_contract_sha256": "bad739883004d56cebd5ba9360a94898f923f72969f1c431fa7ce101246fe9f7",
+  "window_sha256": "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6",
+  "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+  "run_start_utc": "2026-10-17T09:58:25.501730+00:00",
+  "run_end_utc": 1792231350380821871,
+  "output_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T095825.478498Z",
+  "events_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T095825.478498Z/task41_b0_07nm_p6_y_orbit_reference_events.jsonl",
+  "raw_mode_pair_event_line_23": {
+    "event": "task41_b0_target_physical_action_stage",
+    "facts": {
+      "completed": 1,
+      "mode_result": {
+        "B_alpha_action_comparison": {
+          "H_applied": false,
+          "action": "alpha * coupling_values",
+          "alpha": [
+            0.7,
+            -0.4
+          ],
+          "candidate_row_count": 58000,
+          "difference_l2_norm": 4.366308001544097e-11,
+          "maximum_absolute_difference_diagnostic_only": 4.16968848551369e-13,
+          "pass": false,
+          "reference_l2_norm": 198.18061698372017,
+          "reference_row_count": 60000,
+          "relative_l2_error_over_reference_norm": 2.2031962903328602e-13,
+          "relative_tolerance": 1e-11,
+          "support_rows_equal": false,
+          "support_symmetric_difference_count": 2000
+        },
+        "B_coupling_comparison": {
+          "candidate_row_count": 58000,
+          "difference_l2_norm": 5.4157261814070154e-11,
+          "maximum_absolute_difference_diagnostic_only": 5.172985984934918e-13,
+          "pass": false,
+          "reference_l2_norm": 245.81280228301304,
+          "reference_row_count": 60000,
+          "relative_l2_error_over_reference_norm": 2.203191262256429e-13,
+          "relative_tolerance": 1e-11,
+          "support_rows_equal": false,
+          "support_symmetric_difference_count": 2000
+        },
+        "B_coupling_timing": {
+          "native_process_cpu_seconds": 0.004864298000001099,
+          "native_wall_seconds": 0.004863134119659662,
+          "production_process_cpu_seconds": 0.005735708000003115,
+          "production_wall_seconds": 0.005735353566706181
+        },
+        "D_projection_comparison": {
+          "candidate_row_count": 58000,
+          "difference_l2_norm": 6.033690571875169e-12,
+          "maximum_absolute_difference_diagnostic_only": 5.762290795005762e-14,
+          "pass": false,
+          "reference_l2_norm": 27.386094036150038,
+          "reference_row_count": 60000,
+          "relative_l2_error_over_reference_norm": 2.2031950098143279e-13,
+          "relative_tolerance": 1e-11,
+          "support_rows_equal": false,
+          "support_symmetric_difference_count": 2000
+        },
+        "D_projection_timing": {
+          "native_process_cpu_seconds": 0.005221172000005936,
+          "native_wall_seconds": 0.00522009888663888,
+          "production_process_cpu_seconds": 0.00800770399999351,
+          "production_wall_seconds": 0.008007002994418144
+        },
+        "D_raw_x_action_comparison": {
+          "D_raw_x_candidate": [
+            27.38609403614892,
+            -8.633094239485217e-13
+          ],
+          "D_raw_x_reference": [
+            27.38609403615009,
+            0.0
+          ],
+          "H_is_applied_after_raw_D": true,
+          "input_kind": "unit-norm conjugate of the production projection functional on candidate rows",
+          "input_norm": 1.0000000000000016,
+          "input_sha256": "283ad3f422a4708185e5ed86f036f41ee69d15ea2f1e79372a7cdf7c64259baa",
+          "pass": true,
+          "reference_D_raw_x_magnitude_denominator": 27.38609403615009,
+          "relative_error_over_reference_D_raw_x": 5.316414382339111e-14,
+          "relative_tolerance": 1e-11
+        },
+        "H_gauge_comparison": {
+          "H_candidate_from_boundary_plane_gauge": 2500.0,
+          "H_reference_from_area_and_tangential_norm": 2500.0,
+          "boundary_plane_z": 130.0,
+          "global_z_H_equivalence_status": "CHECKED",
+          "global_z_H_reference": 2500.0,
+          "global_z_H_relative_error_over_boundary_plane_H": 0.0,
+          "normalization_scope": "area times tangential electric norm squared; no global-z exponential in native assembly",
+          "pass": true,
+          "phase_gauge_descriptor": {
+            "absolute_sparse_floor": 1e-30,
+            "argument_physical_boundary_phase": 1166.8573201643787,
+            "cutoff_scope": "existing collective component and combination stages, unchanged",
+            "future_identity_can_store_log_scale_without_changing_mode_keys": true,
+            "gauge": "boundary_plane",
+            "log_abs_physical_boundary_phase": 0.0,
+            "phase_convention": "exp(i*alpha*x+i*gamma*y+i*kz*(z-z_port))",
+            "port_plane_z": 130.0,
+            "primary_coefficients_from_direct_centered_UFL": true,
+            "primary_does_not_require_global_exponential": true,
+            "relative_sparse_cutoff": 1e-13,
+            "schema": "task40extra.dtn-boundary-phase-gauge.v1",
+            "solver_coordinate": "b=s*a_global"
+          },
+          "relative_error_over_reference_H": 0.0,
+          "relative_tolerance": 1e-14
+        },
+        "alpha": [
+          5.495364883878937e-16,
+          0.0
+        ],
+        "combination_filter_cutoffs": {
+          "B_coupling": {
+            "native": {
+              "absolute_floor": 0.0,
+              "audit_scope": "owned rows; global for the registered MPI1 V22 probe",
+              "global_cutoff": 2.2439467251601518e-13,
+              "global_maximum_abs": 2.2439467251601517,
+              "local_coalesced_row_count_before_mask": 59800,
+              "local_input_component_entry_count": 59800,
+              "local_nonzero_coalesced_rows_before_mask": 59800,
+              "local_norm_after_mask": 245.8128022830022,
+              "local_norm_before_mask": 245.8128022830024,
+              "local_retained_row_count": 58000,
+              "local_retained_stream_sha256": "6f7f273d8fb9080abf1e03a8d12961833bedea521545398565d81b63e5155fdb",
+              "local_rows_dropped_by_global_mask": 1800,
+              "relative_tol": 1e-13
+            },
+            "production": {
+              "absolute_floor": 0.0,
+              "audit_scope": "owned rows; global for the registered MPI1 V22 probe",
+              "global_cutoff": 2.2439467251603853e-13,
+              "global_maximum_abs": 2.2439467251603853,
+              "local_coalesced_row_count_before_mask": 65689,
+              "local_input_component_entry_count": 68199,
+              "local_nonzero_coalesced_rows_before_mask": 65689,
+              "local_norm_after_mask": 245.81280228301304,
+              "local_norm_before_mask": 245.81280228301335,
+              "local_retained_row_count": 60000,
+              "local_retained_stream_sha256": "675ea3b8767bdc30ae73b35e1b42583ae374454133be63a8f8fa30483cdd4081",
+              "local_rows_dropped_by_global_mask": 5689,
+              "relative_tol": 1e-13
+            }
+          },
+          "D_projection": {
+            "native": {
+              "absolute_floor": 0.0,
+              "audit_scope": "owned rows; global for the registered MPI1 V22 probe",
+              "global_cutoff": 2.4999892380134805e-14,
+              "global_maximum_abs": 0.24999892380134806,
+              "local_coalesced_row_count_before_mask": 59800,
+              "local_input_component_entry_count": 59800,
+              "local_nonzero_coalesced_rows_before_mask": 59800,
+              "local_norm_after_mask": 27.38609403614876,
+              "local_norm_before_mask": 27.386094036148748,
+              "local_retained_row_count": 58000,
+              "local_retained_stream_sha256": "c5d8d109fb52bf5ce38bd10f60976b5f7c343b7855caba66339ab80962e3b010",
+              "local_rows_dropped_by_global_mask": 1800,
+              "relative_tol": 1e-13
+            },
+            "production": {
+              "absolute_floor": 0.0,
+              "audit_scope": "owned rows; global for the registered MPI1 V22 probe",
+              "global_cutoff": 2.4999892380137408e-14,
+              "global_maximum_abs": 0.24999892380137406,
+              "local_coalesced_row_count_before_mask": 65689,
+              "local_input_component_entry_count": 68199,
+              "local_nonzero_coalesced_rows_before_mask": 65689,
+              "local_norm_after_mask": 27.386094036150038,
+              "local_norm_before_mask": 27.38609403615006,
+              "local_retained_row_count": 60000,
+              "local_retained_stream_sha256": "b91ddf766b0670118a719fc3776416cb49dc5007732413bf69efcebfaf6720a5",
+              "local_rows_dropped_by_global_mask": 5689,
+              "relative_tol": 1e-13
+            }
+          }
+        },
+        "component_comparisons": [
+          {
+            "candidate_row_count": 46000,
+            "component": 0,
+            "difference_l2_norm": 6.033690571875319e-12,
+            "maximum_absolute_difference_diagnostic_only": 5.762290795005762e-14,
+            "native_process_cpu_seconds": 0.06333556600000634,
+            "native_wall_seconds": 0.06333467597141862,
+            "pass": false,
+            "production_process_cpu_seconds": 35.43153609199999,
+            "production_wall_seconds": 35.43899469124153,
+            "reference_l2_norm": 27.386094036150045,
+            "reference_row_count": 48510,
+            "relative_l2_error_over_reference_norm": 2.2031950098143821e-13,
+            "relative_tolerance": 1e-11,
+            "support_rows_equal": false,
+            "support_symmetric_difference_count": 2510
+          },
+          {
+            "candidate_row_count": 13800,
+            "component": 1,
+            "difference_l2_norm": 1.1792507871262172e-10,
+            "maximum_absolute_difference_diagnostic_only": 1.413267983172315e-12,
+            "native_process_cpu_seconds": 0.052488527999997814,
+            "native_wall_seconds": 0.05248673399910331,
+            "pass": false,
+            "production_process_cpu_seconds": 34.329111873000016,
+            "production_wall_seconds": 34.33610567031428,
+            "reference_l2_norm": 551.8178258105258,
+            "reference_row_count": 19689,
+            "relative_l2_error_over_reference_norm": 2.137029164279171e-13,
+            "relative_tolerance": 1e-11,
+            "support_rows_equal": false,
+            "support_symmetric_difference_count": 6111
+          }
+        ],
+        "component_filter_cutoffs": [
+          {
+            "component": 0,
+            "native": {
+              "absolute_floor": 0.0,
+              "post_mpc_global_cutoff": 2.4999892380134805e-14,
+              "post_mpc_global_maximum_abs": 0.24999892380134806,
+              "post_mpc_nonzero_rows_before_filter": 504000,
+              "raw_pre_mpc_cutoff": 2.4999892380134805e-14,
+              "raw_pre_mpc_maximum_abs": 0.24999892380134806,
+              "relative_tol": 1e-13,
+              "retained_rows": 46000,
+              "rows_dropped_by_filter": 458000,
+              "stage": "component after actual finalized-MPC E^H pullback"
+            },
+            "production": {
+              "absolute_floor": 0.0,
+              "global_cutoff": 2.4999892380137408e-14,
+              "global_maximum_abs": 0.24999892380137406,
+              "nonzero_rows_before_filter": 576000,
+              "owned_rows_scanned": 18501024,
+              "relative_tol": 1e-13,
+              "retained_rows": 48510,
+              "rows_dropped_by_filter": 527490,
+              "stage": "component after finalized MPC vector assembly"
+            }
+          },
+          {
+            "component": 1,
+            "native": {
+              "absolute_floor": 0.0,
+              "post_mpc_global_cutoff": 5.500078920003725e-13,
+              "post_mpc_global_maximum_abs": 5.500078920003725,
+              "post_mpc_nonzero_rows_before_filter": 504000,
+              "raw_pre_mpc_cutoff": 5.500078920003725e-13,
+              "raw_pre_mpc_maximum_abs": 5.500078920003725,
+              "relative_tol": 1e-13,
+              "retained_rows": 13800,
+              "rows_dropped_by_filter": 490200,
+              "stage": "component after actual finalized-MPC E^H pullback"
+            },
+            "production": {
+              "absolute_floor": 0.0,
+              "global_cutoff": 5.500078920003779e-13,
+              "global_maximum_abs": 5.500078920003779,
+              "nonzero_rows_before_filter": 576000,
+              "owned_rows_scanned": 18501024,
+              "relative_tol": 1e-13,
+              "retained_rows": 19689,
+              "rows_dropped_by_filter": 556311,
+              "stage": "component after finalized MPC vector assembly"
+            }
+          }
+        ],
+        "gamma": [
+          0.05248878898214571,
+          0.0
+        ],
+        "k_vector": [
+          [
+            5.495364883878937e-16,
+            0.0
+          ],
+          [
+            0.05248878898214571,
+            0.0
+          ],
+          [
+            8.97582553972599,
+            0.0
+          ]
+        ],
+        "mode_index": 16030,
+        "mode_key": [
+          "top",
+          0,
+          -71,
+          "s"
+        ],
+        "pass": false,
+        "reconstructed_dtn_action_comparison": {
+          "D_raw_x_candidate": [
+            27.38609403614892,
+            -8.633094239485217e-13
+          ],
+          "D_raw_x_reference": [
+            27.38609403615009,
+            0.0
+          ],
+          "H_candidate": 2500.0,
+          "H_reference": 2500.0,
+          "action": "coupling_values * (projection_values dot x / H)",
+          "candidate_row_count": 58000,
+          "difference_l2_norm": 6.206093186006627e-13,
+          "maximum_absolute_difference_diagnostic_only": 6.935453311100143e-15,
+          "pass": false,
+          "reference_l2_norm": 2.6927410074448725,
+          "reference_row_count": 60000,
+          "relative_l2_error_over_reference_norm": 2.304749386906525e-13,
+          "relative_tolerance": 1e-11,
+          "support_rows_equal": false,
+          "support_symmetric_difference_count": 2000
+        }
+      },
+      "phase": "task41_b0_native_surface_pair_mode",
+      "status": "FAILED",
+      "total": 6
+    },
+    "stage": "TASK41_B0",
+    "timestamp_ns": 1792231348315383814
+  },
+  "raw_pairing_failure_event_line_24": {
+    "event": "task41_b0_target_physical_action_stage",
+    "facts": {
+      "error_message": "Task41 native surface pairing failed an existing reference-norm or H gate: ['top', 0, -71, 's']",
+      "error_type": "ValueError",
+      "phase": "task41_b0_native_surface_pairing",
+      "status": "FAILED"
+    },
+    "stage": "TASK41_B0",
+    "timestamp_ns": 1792231348317061426
+  },
+  "run_summary_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T095825.478498Z/run_summary.json",
+  "run_summary": {
+    "exit_status": 4,
+    "result_classification": "WORKER_FAILED",
+    "full_workflow_monotonic_seconds": 244.9460059236735,
+    "time_gate_passed": true,
+    "source_state": {
+      "actual_git_directory": "/home/fenics/Projects/laptop_share/.git",
+      "source_sha": "611be2d2debedb60c53b3d2454b0374f5c82b3dd",
+      "tracked_and_nonignored_untracked_clean": true
+    },
+    "window_sha256": "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6"
+  },
+  "service_closeout": {
+    "active_state": "failed",
+    "sub_state": "failed",
+    "main_pid_after_exit": 0,
+    "systemd_result": "exit-code",
+    "exec_main_status": 3,
+    "worker_leader_exit_code": 4,
+    "watchdog_classification": "WORKER_FAILED",
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      1740853,
+      1740854,
+      1740855
+    ],
+    "process_tree_sampled_rss_peak_bytes": 4019314688,
+    "dedicated_job_memory_peak_bytes": 4014772224,
+    "dedicated_job_swap_peak_bytes": 0,
+    "dedicated_job_swap_gate_passed": true,
+    "dedicated_job_swap_sample_count": 739,
+    "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261017T095822-1740587.service",
+    "watchdog_summary_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T095825.478498Z/watchdog/summary.json",
+    "watchdog_summary_sha256": "9b9b1e31189088aeb81f837050a8eafe411032e360e98c539e2ae8236b787625"
+  },
+  "checkpoint_disposition": {
+    "new_attempt_output_is_separate": true,
+    "old_94_prefix_reused": false,
+    "new_surface_checkpoint_created_before_pair_gate": false,
+    "old_checkpoint_modified": false,
+    "action": "preserve old 94 prefix and source identity; do not mix; do not change thresholds or restart"
+  },
+  "source_evidence": {
+    "run_manifest_sha256": "07f4b2b274355c5488ee1ea85e82ba35a03d10a554dde1b08096d874f6f864c1",
+    "run_summary_sha256": "3b59dcfcb90b85ddfcea6445bf3282619a150f34e88d4ed7a0c30256c6663c7c",
+    "event_file_sha256": "77f00f5d76d03a8b5076e85610b549c3eedc21bfb57f83357df5a52238708aea"
+  }
+}

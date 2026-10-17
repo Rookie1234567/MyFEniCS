@@ -244,6 +244,17 @@
       "total_modes": 64120,
       "factor_started": false,
       "ksp_started": false
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "20261017T095825.478498Z",
+      "source_sha": "611be2d2debedb60c53b3d2454b0374f5c82b3dd",
+      "classification": "WORKER_FAILED_NATIVE_SURFACE_SUPPORT_QUALIFICATION",
+      "compact": "b0_native_surface_pairing_failure.json",
+      "watchdog_seconds": 244.77716858126223,
+      "factor_started": false,
+      "ksp_started": false,
+      "scientific_result": "NOT_RUN"
     }
   ],
   "not_run": [
