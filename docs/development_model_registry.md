@@ -2212,9 +2212,11 @@ S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及�
 | A1 official功率与独立体吸收 | R=0.25137919146306575，T=0.05712971752020276，A_volume=0.6914910910199371；能量闭合3.205657961302677e-12（限1e-5） | 主体吸收0.6546758299465113、基底0.0368152610734258；完整衍射级与复场保存在原run，不能由功率反推复振幅 |
 | A1 同时内存与清场 | watchdog tree RSS峰62013505536 B；dedicated cgroup峰62582976512 B；task tree/cgroup swap均0；PSS未采样null | 宿主原有swap及本场2页swapin保留、归因UNKNOWN，不能称整机无swap；服务及后代已退出 |
 | A1 初次启动负结果 | FE前旧Task40环境标记导致KeyError；service1.563210294 s，原证据保留 | 修复后同窗口续作；历史未记录准备分项UNKNOWN，不清零费用 |
-| A2 / 0.7 nm | A2实现与定向验证中，正式计算NOT_RUN；0.7 nm NOT_RUN | 不继承旧Task40的模式/q资格；同离散比较、最终离散精度和2TB/48h冷流程尚未闭合 |
+| A2 P0 attempt4 / 0.7 nm | q0/q5 完整稀疏矩阵及原生算子检查通过；随后以 `maximum recursion depth exceeded` 工程失败，`official_result=false`；完整迭代场、A6、R/T/A 未运行；0.7 nm NOT_RUN | 全流程1214.049863 s；进程树RSS峰3058593792 B、专用cgroup峰3777265664 B、任务swap0；不是数值门或资源门失败。证据见 [Task41 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md) |
 
 A1科学source：`4e46e524f1a5ebbc83218e615631c2477698347a`；run时间目录`20261016T123737.790458Z`。完整路径、hash、测试和负结果见[Task41 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)、[A1 compact](task41extra_phi90_p50x50_g17x20/outcomes/a1_result_compact.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。用户批准资源合格时与邻项目并行；不停止或修改邻项目，动态余量、独立cgroup和任务零swap继续执行。
+
+A2 P0 attempt4 使用同一冻结source `48049161acb84f57b2d8248f67ea616fb837ccea` 和原始窗口；q0/q5稀疏矩阵准备及原生算子检查通过，但随后出现 `maximum recursion depth exceeded`，分类为 `WORKER_FAILED`，无完整迭代场、A6或official R/T/A。全流程1214.049863 s，进程树RSS峰3058593792 B、专用cgroup峰3777265664 B、任务swap0；未触发时间、资源或数值门。详细失败边界、q矩阵身份和证据入口见[Task41 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)及[原始run](../results/task41extra_phi90_p50x50_g17x20/task41extra_g13_p6_phi90_iterative_a2__full3d_iterative__mpi1__Mna/20261016T151713.466294Z/run_summary.json)。
 
 # 4. 今后新增模型的登记模板
 

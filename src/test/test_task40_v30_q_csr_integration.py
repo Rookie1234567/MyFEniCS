@@ -730,6 +730,21 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
     events = []
     schedule = []
 
+    def record_reference_event(name, facts):
+        if "p6_sector_ready" in name:
+            from src.runners.physical_p4_schur_v14 import _jsonable
+            from src.runners.task40_v10_worker import _v16_csr_owner_inventory
+
+            saved = dict(facts)
+            matrices = saved.pop("_q_matrices", {})
+            saved["q_matrix_owner_inventory"] = _v16_csr_owner_inventory(
+                matrices,
+                version="v17_row_tile" if "v17" in name else "v16",
+            )
+            saved["stage_resource_sample"] = {"sample_id": 1}
+            json.dumps(_jsonable(saved), sort_keys=True, allow_nan=False)
+        events.append((name, dict(facts)))
+
     class FailBeforeFactor(Exception):
         pass
 
@@ -842,7 +857,7 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
             axes,
             allocation_gate=lambda *_args: None,
             profile=profile,
-            event=lambda name, facts: events.append((name, dict(facts))),
+            event=record_reference_event,
             share_transform_bank=True,
             mode_inventory=mode_inventory,
             qualified_q_csr_provider=provider,
@@ -875,6 +890,7 @@ def test_v33_sector_first_builder_keeps_real_selector_and_native_q_preparer(
 
     assert callback_order == [(1, (1, 5)), (2, (2, 6)), (3, (3, 7))]
     assert provider_loads == [(0, 0), (4, 0)]
+    assert any("p6_sector_ready" in name for name, _facts in events)
     assert pattern_qs == fill_qs == native_qs == [1, 5, 2, 6, 3, 7]
     names = [name for name, _facts in events]
     durable_index = names.index("task40_v33_sector_products_durable")

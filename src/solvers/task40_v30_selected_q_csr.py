@@ -1319,7 +1319,10 @@ def run_selected_q_native_actions(
                 name: _raw_vector_sha256(value)
                 for name, value in paired_native_arrays.items()
             },
-            "stage_records": native_stage_records,
+            "stage_records": {
+                stage_name: dict(stage_record)
+                for stage_name, stage_record in native_stage_records.items()
+            },
             "reused_artifacts": reused_array_references,
             "qualification_follows_this_record": True,
         },
