@@ -293,11 +293,13 @@ def test_task41_prepare_keeps_first_t0_after_validation_failure_and_source_chang
     assert prepared_c["contract_source_sha"] == "c" * 40
 
 
+@pytest.mark.parametrize("case_id", ["A1", "B0"])
 def test_task41_launcher_and_service_pass_real_window_resources_and_checker_authority(
-    tmp_path, monkeypatch, request
+    tmp_path, monkeypatch, request, capsys, case_id
 ):
     import benchmarks.subreaper_watchdog as watchdog
     import benchmarks.task034_wsl_resources as resources
+    import scripts.run_case as run_case
     import scripts.task40_v20_service_workflow as service
     import src.runners.task038_launcher as launcher
     import src.runners.task41_p0_contract as contract_module
@@ -324,11 +326,22 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
     request.addfinalizer(lambda: shutil.rmtree(fixture_root, ignore_errors=True))
     controller_relative = fixture_relative / "controller"
     window_relative = controller_relative / "execution_window.json"
-    monkeypatch.setattr(contract_module, "TASK41_CONTROLLER_RELATIVE", controller_relative)
-    monkeypatch.setattr(contract_module, "TASK41_WINDOW_RELATIVE", window_relative)
-    monkeypatch.setattr(
-        contract_module, "TASK41_A1_SERVICE_RELATIVE", fixture_relative / "service_base"
-    )
+    service_relative = fixture_relative / "service_base"
+    if case_id == "B0":
+        monkeypatch.setattr(
+            contract_module, "TASK41_B0_CONTROLLER_RELATIVE", controller_relative
+        )
+        monkeypatch.setattr(
+            contract_module, "TASK41_B0_WINDOW_RELATIVE", window_relative
+        )
+        monkeypatch.setattr(
+            contract_module, "TASK41_B0_SERVICE_RELATIVE", service_relative
+        )
+    else:
+        monkeypatch.setattr(contract_module, "TASK41_CONTROLLER_RELATIVE", controller_relative)
+        monkeypatch.setattr(contract_module, "TASK41_WINDOW_RELATIVE", window_relative)
+        monkeypatch.setattr(contract_module, "TASK41_A1_SERVICE_RELATIVE", service_relative)
+    case_spec = contract_module._task41_case(case_id)
     monkeypatch.setattr(
         contract_module,
         "_git",
@@ -343,7 +356,7 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         ),
     )
 
-    input_path = repo_root / TASK41_INPUT_RELATIVE
+    input_path = repo_root / case_spec["input_relative"]
     specification = load_and_resolve(input_path)
     payload_errors = task41_payload_errors(specification.as_jsonable())
     assert not payload_errors
@@ -356,11 +369,16 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
     jit_cache.mkdir()
     accounting_path = repo_root / controller_relative / "campaign_accounting_v10.jsonl"
     anchor = clock_sample(include_boot_id=True)
-    t0_ns = int(anchor["utc_ns"])
+    t0_ns = (
+        _utc_ns(TASK41_B0_T0_UTC)
+        if case_id == "B0"
+        else int(anchor["utc_ns"])
+    )
+    entry_source_sha = TASK41_B0_T0_SOURCE_SHA if case_id == "B0" else source_sha
     window_payload = {
         "schema": TASK41_P0_WINDOW_SCHEMA,
         "task_id": TASK41_MODEL_ID,
-        "source_sha": source_sha,
+        "source_sha": entry_source_sha,
         "t0_utc": _utc_z(t0_ns),
         "numerical_deadline_utc": _utc_z(
             t0_ns + int(TASK41_NUMERICAL_SECONDS * 1_000_000_000)
@@ -372,6 +390,18 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         "anchor": anchor,
         "accounting_path": str(accounting_path.resolve()),
     }
+    if case_id == "B0":
+        window_payload.update(
+            {
+                "t0_basis": TASK41_B0_T0_BASIS,
+                "bootstrap_utc_elapsed_seconds": (
+                    int(anchor["utc_ns"]) - t0_ns
+                )
+                / 1e9,
+                "bootstrap_boottime_elapsed_seconds": None,
+                "bootstrap_time_treatment": TASK41_B0_BOOTSTRAP_TREATMENT,
+            }
+        )
     window_path = repo_root / window_relative
     contract_root = repo_root / controller_relative
     contract_root.mkdir(parents=True, exist_ok=True)
@@ -386,7 +416,7 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         "branch": TASK41_BRANCH,
         "source": {"sha": source_sha},
         "case": {
-            "input_path": str(TASK41_INPUT_RELATIVE),
+            "input_path": str(case_spec["input_relative"]),
             "input_sha256": specification.input_sha256,
             "model_id": specification.identity["model_id"],
             "run_id": specification.identity["run_id"],
@@ -409,7 +439,7 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         "window": {
             "path": str(window_relative),
             "sha256": window_sha,
-            "entry_source_sha": source_sha,
+            "entry_source_sha": entry_source_sha,
         },
         "resources": {
             "task_memory_max_bytes": TASK41_TASK_MEMORY_MAX_BYTES,
@@ -423,12 +453,23 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
         },
         "evidence": {
             "service_directory": str(
-                fixture_relative / "service_base"
+                case_spec["service_relative"]
                 / f"service_source_{source_sha}"
             ),
         },
     }
-    contract_path = repo_root / contract_module.contract_relative_path(source_sha)
+    if case_id == "B0":
+        contract["case"].update(
+            {
+                "profile_identity": case_spec["profile_identity"],
+                "solver_stage": case_spec["solver_stage"],
+                "comparison_group": case_spec["comparison_group"],
+                "geometry_identity": TASK41_B0_GEOMETRY_IDENTITY,
+            }
+        )
+    contract_path = repo_root / contract_module.contract_relative_path(
+        source_sha, case_id
+    )
     contract_path.write_text(
         json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
         encoding="utf-8",
@@ -486,17 +527,23 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
             "classification": "COMPLETED",
             "memory_scope": "fixture-only synthetic provider",
             "launch_envelope": {"fixture": True},
+            "process_tree_swap_gate_enforced": True,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "job_cgroup_swap_gate_enforced": True,
+            "job_cgroup_swap": {"passed": True},
         }
 
     monkeypatch.setattr(watchdog, "supervise", capture_supervise)
     timestamp = f"task41-fixture-{uuid4().hex}"
-    launch_result = launcher.launch_specification(
-        specification,
-        source_sha=source_sha,
-        timestamp=timestamp,
-        task41_p0_execution_contract=contract_path,
-        task41_p0_contract_sha256=contract_sha,
+    run_case_return_code = run_case.main(
+        [
+            str(input_path),
+            "--task41-p0-execution-contract",
+            str(contract_path),
+        ]
     )
+    launch_result = json.loads(capsys.readouterr().out)
+    assert run_case_return_code == 0
     numeric_call = next(call for call in captured_calls if "campaign_phase" not in call)
     numeric_environment = numeric_call["worker_environment"]
     assert numeric_call["campaign_window_path"] == window.path
@@ -594,6 +641,10 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
             manifest_path = run_root / "run_manifest.json"
             numerical_summary_path = numerical_output / "run_summary.json"
             summary_path.write_text("{}\n", encoding="utf-8")
+            if case_id in {"A2", "B0"}:
+                (run_root / "task40_v10_p6_candidate_summary.json").write_text(
+                    "{}\n", encoding="utf-8"
+                )
             manifest_path.write_text(
                 json.dumps({"numerical_output_directory": str(numerical_output)}) + "\n",
                 encoding="utf-8",

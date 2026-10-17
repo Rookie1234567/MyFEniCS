@@ -5642,10 +5642,14 @@ def launch_specification(
 
     run_id = str(specification.identity.get("run_id", ""))
     preconditioner = str(specification.solver.get("preconditioner", ""))
-    from .task41_p0_contract import TASK41_A2_RUN_ID, TASK41_RUN_ID
+    from .task41_p0_contract import (
+        TASK41_A2_RUN_ID,
+        TASK41_B0_RUN_ID,
+        TASK41_RUN_ID,
+    )
     task41_p0_identity = (
         specification.identity.get("model_id") == "task41extra_phi90_p50x50_g17x20"
-        or run_id in {TASK41_RUN_ID, TASK41_A2_RUN_ID}
+        or run_id in {TASK41_RUN_ID, TASK41_A2_RUN_ID, TASK41_B0_RUN_ID}
     )
     task41_p0_contract = None
     task41_p0_contract_digest = None
@@ -5655,7 +5659,8 @@ def launch_specification(
 
         if (
             specification.identity.get("model_id") != "task41extra_phi90_p50x50_g17x20"
-            or run_id not in {TASK41_RUN_ID, TASK41_A2_RUN_ID}
+            or run_id
+            not in {TASK41_RUN_ID, TASK41_A2_RUN_ID, TASK41_B0_RUN_ID}
             or task41_p0_execution_contract is None
             or task40_v10_campaign_window is not None
         ):

@@ -168,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
             TASK41_MODEL_ID,
             TASK41_RUN_ID,
             TASK41_A2_RUN_ID,
+            TASK41_B0_RUN_ID,
             require_task41_p0_contract,
             validate_task41_specification,
             load_task41_p0_fixed_window,
@@ -176,7 +177,8 @@ def main(argv: list[str] | None = None) -> int:
 
         task41_case = (
             specification.identity.get('model_id') == TASK41_MODEL_ID
-            or specification.identity.get('run_id') in {TASK41_RUN_ID, TASK41_A2_RUN_ID}
+            or specification.identity.get('run_id')
+            in {TASK41_RUN_ID, TASK41_A2_RUN_ID, TASK41_B0_RUN_ID}
         )
         if args.task41_p0_execution_contract is not None:
             if not task41_case or args.task40_v10_campaign_window is not None:
