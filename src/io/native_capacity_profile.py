@@ -80,6 +80,9 @@ TASK40_PHI90_D13_Z_P6_DIRECT_PROFILE = (
 TASK40_PHI90_D13_Z2_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_D13_Z2_from_Y2_p6_direct_v1"
 )
+TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE = (
+    "task40para_phi90_13p5_D13_R14_from_Y2_p6_direct_v1"
+)
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_B_p6_direct_v1"
 )
@@ -204,7 +207,11 @@ TASK40_PHI90_D13_CASES = {
     },
 }
 TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(
-    {*TASK40_PHI90_D13_CASES, *TASK40_PHI90_H15_PROFILES}
+    {
+        *TASK40_PHI90_D13_CASES,
+        TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE,
+        *TASK40_PHI90_H15_PROFILES,
+    }
 )
 P6_CONDENSED_DIRECT_PROFILES = (
     V7_ANISO_N0_P6_DIRECT_PROFILES
@@ -304,6 +311,9 @@ for _task40_profile in TASK40_PHI90_D13_CASES:
     NATIVE_CASES[_task40_profile] = (13.5, (10.0,), None, None, None)
 for _task40_profile in TASK40_PHI90_H15_PROFILES:
     NATIVE_CASES[_task40_profile] = (13.5, (15.0,), None, None, None)
+NATIVE_CASES[TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE] = (
+    13.5, (10.0,), None, None, None
+)
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
     NATIVE_CASES[_f5_direct_profile] = (5.0, (4.0,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -1078,6 +1088,66 @@ def _task40_phi90_d13_profile_facts(identity):
     return facts
 
 
+def _task40_phi90_r14_profile_facts(identity):
+    """Freeze an R14 rectangle on the existing same-policy D13-Y2 mesh."""
+    from copy import deepcopy
+
+    facts = deepcopy(
+        _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_Y2_P6_DIRECT_PROFILE)
+    )
+    mode = facts["component_options"]["mode_selection"]
+    mode.update(
+        reference_mode_label="R14",
+        expected_mode_count=836,
+        expected_mode_sha256=(
+            "deefaa839044a2542560b60b68a457c4f127eee2221d6dd8477c3d49fb1a860e"
+        ),
+        parent_rectangle_max_abs_m_n=[5, 9],
+        active_rectangle_max_abs_m_n=[5, 9],
+        parent_inventory_scope="R14_finite_rectangle_including_evanescent",
+    )
+    operator_scope = "task40_phi90_D13_R14_on_Y2_finite_rectangle"
+    facts.update(
+        identity=identity,
+        route="TASK40_PHI90_D13_R14_ON_Y2_P6_CONDENSED_DIRECT",
+        operator_scope=operator_scope,
+    )
+    options = facts["component_options"]
+    options["mode_selection"] = mode
+    options["reference_mode_expansion"] = {
+        "parent_case": "same_policy_D13_Y2",
+        "only_operator_change": "R13_to_R14_rectangle",
+        "parent_rectangle_max_abs_m_n": [5, 9],
+        "expected_mode_count": 836,
+        "expected_mode_sha256": (
+            "deefaa839044a2542560b60b68a457c4f127eee2221d6dd8477c3d49fb1a860e"
+        ),
+        "contains_evanescent_modes": True,
+        "surface_quadrature_degree": 28,
+        "surface_quadrature_authority": "fixed_R_plus_two_m6_n10_envelope",
+    }
+    facts["condensed_route"].update(
+        parent_mode_inventory="explicit_R14_rectangle_including_evanescent",
+        active_mode_inventory="same_as_R14_parent",
+        operator_scope=operator_scope,
+    )
+    facts["backend"].update(
+        independent_residual="original_full_p6_A6_active_R14_rectangle",
+        operator_scope=operator_scope,
+    )
+    facts["campaign_authorization"]["direct_route"].update(
+        parent_mode_rectangle_max_abs_m_n=[5, 9],
+        active_mode_rectangle_max_abs_m_n=[5, 9],
+        parent_mode_count="live_inventory_expected_836",
+        reference_mode_label="R14",
+        surface_quadrature=(
+            "fixed_Rplus2_m6_n10_envelope_degree28; R14 is contained"
+        ),
+    )
+    facts["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
+    return facts
+
+
 def _task40_phi90_h15_profile_facts(identity):
     """Return one frozen Task40 H15 or approved fixed-budget mesh profile."""
     from copy import deepcopy
@@ -1176,6 +1246,8 @@ def native_profile_facts(identity):
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_H15_PROFILES:
             return _task40_phi90_h15_profile_facts(identity)
+        if identity == TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE:
+            return _task40_phi90_r14_profile_facts(identity)
         return _task40_phi90_d13_profile_facts(identity)
     if identity in DISPERSION_FLAT_P6_PROFILES:
         return _dispersion_flat_p6_profile_facts(identity)
@@ -2685,6 +2757,26 @@ def _validate_task40_phi90_h15_case(config: dict, identity: str) -> None:
         raise InputError(f'{identity} requires at least 64 full-3D y samples')
 
 
+def _validate_task40_phi90_r14_case(config: dict, identity: str) -> None:
+    """Validate the unchanged Y2 physics/mesh plus the distinct R14 output range."""
+    from copy import deepcopy
+
+    from .input_loader import InputError
+
+    comparison_config = deepcopy(config)
+    comparison_config.setdefault('solver', {})[
+        'native_capacity_profile'
+    ] = TASK40_PHI90_D13_Y2_P6_DIRECT_PROFILE
+    _validate_task40_phi90_d13_case(
+        comparison_config, TASK40_PHI90_D13_Y2_P6_DIRECT_PROFILE
+    )
+    output = config.get('output', {})
+    if output.get('diffraction_order_max_m') != 5:
+        raise InputError(f'{identity} requires output.diffraction_order_max_m=5')
+    if output.get('diffraction_order_max_n') != 9:
+        raise InputError(f'{identity} requires output.diffraction_order_max_n=9')
+
+
 def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
@@ -2694,6 +2786,8 @@ def validate_native_case(config):
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_H15_PROFILES:
             _validate_task40_phi90_h15_case(config, identity)
+        elif identity == TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE:
+            _validate_task40_phi90_r14_case(config, identity)
         else:
             _validate_task40_phi90_d13_case(config, identity)
         return

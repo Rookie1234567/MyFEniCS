@@ -110,3 +110,11 @@ Y3 的有限 R13 端口—体吸收闭合 `5.7914e-11`，但 official scope 是 
 终态详情与完整artifact hash见[终态JSON](records/h15_yz480_field14_terminal_v1.json)，保存输出比较见[JSON](records/h15_yz480_vs_h15_y_d13_y2_y3_same_relative_only_v1.json)及[612模式CSV](records/h15_yz480_vs_h15_y_d13_y2_y3_all_612_modes_v1.csv)。
 
 逐模功率的 `1e-6` 比较现已按全612模式、390个 `power_carrying` 模式和166个 `propagating` 模式分组记录signed key与最大 `|ΔR|/|ΔT|`。相对H15-Y，全612及power-carrying组最大 `|ΔR|=1.11273135e-6`（top `(0,0,s)`，FAIL），`|ΔT|=1.48981821e-7`（bottom `(0,0,s)`，PASS）；propagating组的最大 `|ΔT|=4.69292761e-8`（bottom `(0,-2,s)`，PASS）。相对同策略D13-Y2/Y3，全612和power-carrying组的 `ΔR` 分别为 `+1.86612841e-4` / `+1.86613711e-4`，`ΔT` 分别为 `−2.62362701e-5` / `−2.62363662e-5`，均FAIL；仅propagating组最大 `|ΔT|≈4.72902e-8`通过。`(bottom,0,0,s)` 是 `propagating=false` 但 `power_carrying=true` 的底部有损模式；propagating子集通过不代表全612或power-carrying的T通过。完整分组数据与signed key见field14比较专页和JSON。第14场比较失败结论不变；完整场预算已用尽，不启动第15场。
+
+## 2026-10-18 续行：Z2 与 R14
+
+以上“完整场预算已用尽/不启动第15场”是此前阶段收口时点。用户2026-10-18授权按 D13→D5→M5→DESIGN07→D07 继续；该授权是有界续行，不覆盖已保存的历史预算与失败记录。主控据此批准从同策略 D13-Y2 出发补 Z2，并在 Z2 对照后扩展同网格参考矩形 R14。
+
+Z2 `[6,24,28]` / 4032 cells 已自然完成；相对同策略 Y2 `[6,24,14]`，x/y轴、612 mode SHA、q28/q15及relative-only稀疏身份相同，仅z轴改变。R/T/A_balance/A_volume最大总量差 `1.36e-8`，边界复振幅相对 L2 `6.74e-8`，同坐标 E/H/Et/Ht 差为 `1.87e-6 / 2.37e-6 / 2.39e-6 / 9.12e-5`。所有逐传播模式R/T差均小于 `1e-6`。复场总范数通过不代表每个Cartesian分量同样接近；保存点的 `E_z`、`H_x` 分量相对差分别为 `3.1109e-3`、`7.3868e-4`，作为诊断保留而非额外正式门。两级z差异小仅是有限观测的工程敏感性，非连续收敛、全域误差或full-DtN资格；水平面 Ht 不代替canonical侧壁trace。详细值、有限端口边界和资源见[同策略Y2/Z2 response](response_d13_y2_z2_same_relative_only.md)与[机器记录](records/d13_y2_z2_same_relative_only_comparison_v1.json)。
+
+当前继承的下一场为 R14：保持 Y2 网格 `[6,24,14]`、p6 direct、relative-only cutoff、volume q15及q28固定 `m6/n10` surface envelope；仅将有限模式矩形扩为 `m=-5…5,n=-9…9`（metadata实际枚举836个通道、上下各418，含倏逝）。该扩展仍在已冻结q28 envelope内。R14仍是有限reference operator，`FULL_DTN_NOT_VERIFIED`；不继承H15-YZ480网格，不更改数值门，也不重用Y2/Z2因子。

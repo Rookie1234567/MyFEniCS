@@ -188,6 +188,9 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         base_axis_hashes = dict(mesh_case["base_axis_sha256_le_f64"])
         expected_axis_hashes = dict(mesh_case["expected_axis_sha256_le_f64"])
         expected_tag_counts = dict(mesh_case["expected_material_tag_counts"])
+        reference_label = str(mode.get("reference_mode_label", "R13"))
+        expected_mode_count = int(mode.get("expected_mode_count", 612))
+        rectangle = list(mode["parent_rectangle_max_abs_m_n"])
         return {
             "family": "task40_phi90",
             "task40_mesh_plan_family": family_label,
@@ -219,16 +222,25 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "active_rectangle_max_abs_m_n": list(
                 mode["active_rectangle_max_abs_m_n"]
             ),
-            "parent_count": 612,
+            "reference_mode_label": reference_label,
+            "parent_count": expected_mode_count,
+            "expected_mode_sha256": mode.get("expected_mode_sha256"),
             "parent_sha256": None,
-            "active_count": 612,
+            "active_count": expected_mode_count,
             "active_sha256": None,
             "selected_parent_indices_sha256": None,
             "residual_key": "original_A6_active_rectangle_relative",
-            "residual_scope": f"A6_{route_label}_{case_name}_R13_active_rectangle",
+            "residual_scope": (
+                f"A6_{route_label}_{case_name}_{reference_label}_active_rectangle"
+            ),
             "residual_gate_key": "original_A6_active_rectangle_residual_pass",
             "residual_finite_key": "original_A6_active_rectangle_finite",
-            "summary_prefix": f"task40_phi90_{family_label}_{case_name.lower()}_p6_direct_R13",
+            "summary_prefix": (
+                f"task40_phi90_{family_label}_{case_name.lower()}_p6_direct_"
+                f"{reference_label}"
+            ),
+            "expected_mode_count": expected_mode_count,
+            "expected_rectangle_max_abs_m_n": rectangle,
             "surface_quadrature_degree": int(
                 options["surface_quadrature"]["degree"]
             ),
@@ -637,7 +649,13 @@ def _inventory_mode_counts_by_side(
     return counts
 
 
-def _persist_task40_inventory(directory: Path, inventory) -> dict[str, Any]:
+def _persist_task40_inventory(
+    directory: Path,
+    inventory,
+    *,
+    reference_label: str = "R13",
+    operator_scope: str = "task40_phi90_finite_reference_rectangle",
+) -> dict[str, Any]:
     """Persist a Task40 finite-rectangle inventory without legacy family labels."""
     from src.solvers.fullspace_dtn_action import (
         FULLSPACE_DTN_MANIFEST_SCHEMA,
@@ -651,7 +669,8 @@ def _persist_task40_inventory(directory: Path, inventory) -> dict[str, Any]:
         "profile": FULLSPACE_DTN_PROFILE,
         "mode_count": len(modes),
         "modes": rows,
-        "operator_scope": "task40_phi90_finite_reference_rectangle",
+        "operator_scope": operator_scope,
+        "reference_mode_label": reference_label,
         "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
     })
     # The canonical mode digest intentionally hashes the established modes
@@ -664,7 +683,7 @@ def _persist_task40_inventory(directory: Path, inventory) -> dict[str, Any]:
     })
     if hashlib.sha256(mode_payload).hexdigest() != expected_sha:
         raise ValueError("Task40 live finite-rectangle mode manifest hash differs")
-    path = Path(directory) / "task40_r13_parent_mode_manifest.json"
+    path = Path(directory) / f"task40_{reference_label.lower()}_parent_mode_manifest.json"
     with path.open("xb") as stream:
         stream.write(encoded)
     return {
@@ -2061,10 +2080,14 @@ def run_p6_condensed_direct(
             raise TypeError("resolved direct input did not create SimulationConfig3D")
         if route["family"] == "task40_phi90":
             # Input keeps the public auto policy unchanged.  This profile
-            # explicitly overrides it to the frozen finite R13 rectangle.
+            # explicitly overrides it to its frozen finite rectangle.
             cfg.stage4_dtn_order_policy = "explicit_rectangle"
-            cfg.task40_dtn_rectangle_max_m = 4
-            cfg.task40_dtn_rectangle_max_n = 8
+            cfg.task40_dtn_rectangle_max_m = int(
+                route["parent_rectangle_max_abs_m_n"][0]
+            )
+            cfg.task40_dtn_rectangle_max_n = int(
+                route["parent_rectangle_max_abs_m_n"][1]
+            )
             cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
         if route["family"] == "dispersion_flat":
             if cfg.mesh_plan_id is None or cfg.mesh_plan_sha256 is None:
@@ -2142,7 +2165,22 @@ def run_p6_condensed_direct(
         parent_inventory = build_dynamic_mode_inventory(cfg)
         if route["family"] == "task40_phi90":
             if len(parent_inventory[0]) != route["parent_count"] or len(parent_inventory[1]) != route["parent_count"]:
-                raise ValueError("live Task40 R13 inventory differs from the explicit 612-mode rectangle")
+                raise ValueError(
+                    "live Task40 "
+                    f"{route['reference_mode_label']} inventory has "
+                    f"{len(parent_inventory[0])} modes; expected "
+                    f"{route['parent_count']} for rectangle "
+                    f"{route['parent_rectangle_max_abs_m_n']}"
+                )
+            expected_mode_sha = route.get("expected_mode_sha256")
+            if (
+                expected_mode_sha is not None
+                and str(parent_inventory[2]) != str(expected_mode_sha)
+            ):
+                raise ValueError(
+                    f"live Task40 {route['reference_mode_label']} mode SHA differs "
+                    "from the frozen metadata inventory"
+                )
             route["parent_sha256"] = str(parent_inventory[2])
             route["active_count"] = len(parent_inventory[0])
             route["active_sha256"] = str(parent_inventory[2])
@@ -2208,7 +2246,12 @@ def run_p6_condensed_direct(
             }
         elif route["family"] == "task40_phi90":
             inventory_artifacts = {
-                "parent": _persist_task40_inventory(directory, parent_inventory)
+                "parent": _persist_task40_inventory(
+                    directory,
+                    parent_inventory,
+                    reference_label=route["reference_mode_label"],
+                    operator_scope=route["operator_scope"],
+                )
             }
         else:
             inventory_artifacts = _persist_f5_inventory(
@@ -2236,7 +2279,10 @@ def run_p6_condensed_direct(
                 if route["family"] == "v7_aniso_n0"
                 else "all_auto_propagating_flat_inventory_q160"
                 if route["family"] == "dispersion_flat"
-                else "R13_parent_q28_fixed_Rplus2_envelope_m6_n10"
+                else (
+                    f"{route['reference_mode_label']}_parent_q28_fixed_"
+                    "Rplus2_envelope_m6_n10"
+                )
                 if route["family"] == "task40_phi90"
                 else "full_600_parent_q37_degree_even_for_n0_subset"
             ),
