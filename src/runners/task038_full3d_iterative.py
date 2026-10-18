@@ -40,6 +40,7 @@ def _task41_b0_dispatch_binding(
         TASK41_B0_COMPARISON_GROUP,
         TASK41_B0_PRECONDITIONER,
         TASK41_B0_RUN_ID,
+        TASK41_B0_SAVED_SURFACE_DONOR,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
     )
@@ -88,6 +89,9 @@ def _task41_b0_dispatch_binding(
         or contract.get("q_csr_reuse") is not None
     ):
         raise ValueError("Task41 B0 dispatcher contract has an invalid profile or donor binding")
+    saved_surface_donor = contract.get("preparation", {}).get("existing_surface_donor")
+    if saved_surface_donor != TASK41_B0_SAVED_SURFACE_DONOR:
+        raise ValueError("Task41 B0 dispatcher contract omits the exact require-existing surface donor")
     window = load_task41_p0_fixed_window(contract, current_root=root)
     if (
         os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1"
@@ -112,6 +116,7 @@ def _task41_b0_dispatch_binding(
         "geometry_identity": case["geometry_identity"],
         "window_path": str(window.path.resolve()),
         "window_sha256": window.sha256,
+        "saved_surface_donor": saved_surface_donor,
         "comparison_binding": None,
     }
 

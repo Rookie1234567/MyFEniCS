@@ -74,6 +74,55 @@ TASK41_B0_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_b0_07nm"
 TASK41_B0_SERVICE_RELATIVE = Path(
     "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0"
 )
+TASK41_B0_SAVED_SURFACE_DONOR_RELATIVE = Path(
+    "results/task41extra_phi90_p50x50_g17x20/"
+    "task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/"
+    "20261017T103223.933995Z/task41_b0_target_surface_checkpoint/global"
+)
+TASK41_B0_SAVED_SURFACE_DONOR = {
+    "schema": "task41.p0.b0.saved_surface_donor.v1",
+    "require_existing": True,
+    "root_relative_path": str(TASK41_B0_SAVED_SURFACE_DONOR_RELATIVE),
+    "binary_name": "carrier_surface_functionals.bin",
+    "checkpoint_name": "carrier_surface_functionals.bin.checkpoint.json",
+    "manifest_name": "carrier_surface_functionals.bin.manifest.json",
+    "producer": {
+        "source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+        "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+        "physical_model_sha256": "0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d",
+        "execution_contract_sha256": "5657d456d67f2b9e3b94aa19a0666a1b011dece6e7b6c7043eb929b45d711f5d",
+        "campaign_window_sha256": "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6",
+        "producer_identity_sha256": "c89c2c5b06d6b8d727d5ea59e3b4ccad9ecf2ff1627f2a13c60f200eee66cf28",
+        "ordered_mode_manifest_sha256": "80527cc4770abe0bc47db20c8d1f0ae8e13b75b5e090498f78cbfa75c120d0e0",
+    },
+    "committed": {
+        "mode_count": 64120,
+        "bytes": 363791051840,
+        "checkpoint_sha256": "66ec8f305382060c044822459d50aa6d323d85bcdfffd531b46ff5d74e43e57a",
+        "manifest_sha256": "46cd5e3cecf2c0dac694bdbba1fef91eae10642e878a487fc63e216ddcc1f142",
+        "prefix_sha256": "2595b9518e2422bfadbc2f1a6640e619d60501525b07bda48a068a8ec478a10e",
+    },
+    "source_equivalence_bridge": {
+        "schema": "task41.p0.b0.saved_surface_source_equivalence.v1",
+        "producer_source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+        "unchanged_math_source_paths": [
+            "src/solvers/dtn_boundary_phase_gauge.py",
+            "src/solvers/dtn_port_3d.py",
+            "src/solvers/dtn_boundary_plane_qualification.py",
+            "src/solvers/fresh_c1_manifest_identity.py",
+            "src/common/modes_3d.py",
+            "src/common/config_3d.py",
+            "src/solvers/task40_v22_operator_probe.py",
+            "src/solvers/task40_v25_selected_q0.py",
+            "src/solvers/directional_boundary.py",
+        ],
+        "execution_only_source_paths": [
+            "src/solvers/fullspace_dtn_action.py",
+            "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+        ],
+        "math_fields_still_require_exact_current_mesh_mpc_basix_config_abi_mode_h_match": True,
+    },
+}
 # The exact B0 preparation start is unknown. This earlier A2 documentation
 # commit is used as a conservative lower-bound T0, so its UTC interval is
 # charged without claiming that B0 was frozen at that commit. The live
@@ -109,6 +158,155 @@ class Task41ContractError(ValueError):
 
 def sha256_file(path: str | Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _sha256_file_streamed(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for block in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def task41_b0_saved_surface_source_equivalence(
+    *, current_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Check unchanged numerical dependencies and report the narrow consumer bridge."""
+    root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    bridge = TASK41_B0_SAVED_SURFACE_DONOR["source_equivalence_bridge"]
+    producer_sha = str(bridge["producer_source_sha"])
+    unchanged = {}
+    bridged = {}
+    for relative in bridge["unchanged_math_source_paths"]:
+        current_path = (root / relative).resolve()
+        if not current_path.is_file() or not current_path.is_relative_to(root):
+            raise Task41ContractError("Task41 B0 saved-carrier math dependency is missing or escaped")
+        old = subprocess.run(
+            ["git", "show", f"{producer_sha}:{relative}"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+        ).stdout
+        old_sha = hashlib.sha256(old).hexdigest()
+        current_sha = _sha256_file_streamed(current_path)
+        if current_sha != old_sha:
+            raise Task41ContractError(
+                f"Task41 B0 saved-carrier numerical dependency changed: {relative}"
+            )
+        unchanged[relative] = {"producer_sha256": old_sha, "consumer_sha256": current_sha}
+    for relative in bridge["execution_only_source_paths"]:
+        current_path = (root / relative).resolve()
+        if not current_path.is_file() or not current_path.is_relative_to(root):
+            raise Task41ContractError("Task41 B0 consumer bridge source is missing or escaped")
+        old = subprocess.run(
+            ["git", "show", f"{producer_sha}:{relative}"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+        ).stdout
+        bridged[relative] = {
+            "producer_sha256": hashlib.sha256(old).hexdigest(),
+            "consumer_sha256": _sha256_file_streamed(current_path),
+            "change_class": "read_only_donor_and_action_wiring",
+            "numerical_kernel_equivalence": "verified by exact math-source hashes and fresh discrete identity gate",
+        }
+    return {
+        "schema": bridge["schema"],
+        "producer_source_sha": producer_sha,
+        "unchanged_math_source_files": unchanged,
+        "execution_only_source_files": bridged,
+        "numerical_identity_fields_required": [
+            "mesh", "cell_dofmap_sha256", "orientation", "basix_coefficients",
+            "MPC", "config_sha256", "ABI", "ordered modes", "normalization H",
+        ],
+    }
+
+
+def verify_task41_b0_saved_surface_donor(
+    binding: Mapping[str, Any],
+    *,
+    current_root: str | Path | None = None,
+    verify_source_equivalence: bool = True,
+) -> dict[str, Any]:
+    """Fail closed unless the exact accepted producer checkpoint is present."""
+    root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    if dict(binding) != TASK41_B0_SAVED_SURFACE_DONOR:
+        raise Task41ContractError("Task41 B0 saved surface donor differs from the registered producer")
+    donor_root = _resolve(root, str(binding["root_relative_path"]), "saved surface donor root")
+    if not donor_root.is_relative_to(root / "results"):
+        raise Task41ContractError("Task41 B0 saved surface donor escaped ignored results")
+    binary = donor_root / str(binding["binary_name"])
+    checkpoint_path = donor_root / str(binding["checkpoint_name"])
+    manifest_path = donor_root / str(binding["manifest_name"])
+    if not all(path.is_file() for path in (binary, checkpoint_path, manifest_path)):
+        raise Task41ContractError("Task41 B0 require-existing saved surface donor is incomplete")
+    committed = binding["committed"]
+    producer = binding["producer"]
+    if binary.stat().st_size != committed["bytes"]:
+        raise Task41ContractError("Task41 B0 saved surface donor size differs from its committed prefix")
+    checkpoint_sha = _sha256_file_streamed(checkpoint_path)
+    manifest_sha = _sha256_file_streamed(manifest_path)
+    if (
+        checkpoint_sha != committed["checkpoint_sha256"]
+        or manifest_sha != committed["manifest_sha256"]
+    ):
+        raise Task41ContractError("Task41 B0 saved surface donor metadata hash differs")
+    try:
+        checkpoint = json.loads(checkpoint_path.read_text(encoding="ascii"))
+        with manifest_path.open("r", encoding="ascii") as stream:
+            manifest = json.load(stream)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise Task41ContractError("Task41 B0 saved surface donor metadata is unreadable") from exc
+    identity = manifest.get("identity") if isinstance(manifest, dict) else None
+    if not isinstance(identity, dict) or not isinstance(checkpoint, dict):
+        raise Task41ContractError("Task41 B0 saved surface donor metadata is malformed")
+    identity_sha = hashlib.sha256(
+        json.dumps(
+            identity, ensure_ascii=True, allow_nan=False,
+            separators=(",", ":"), sort_keys=True,
+        ).encode("ascii")
+    ).hexdigest()
+    if (
+        manifest.get("identity_sha256") != producer["producer_identity_sha256"]
+        or identity_sha != producer["producer_identity_sha256"]
+        or identity.get("source_sha") != producer["source_sha"]
+        or identity.get("input_sha256") != producer["input_sha256"]
+        or identity.get("staged_input_sha256") != producer["input_sha256"]
+        or identity.get("campaign_window_sha256") != producer["campaign_window_sha256"]
+        or identity.get("execution_contract_sha256") != producer["execution_contract_sha256"]
+        or identity.get("surface_scope") != "global"
+        or identity.get("twist_index") is not None
+        or identity.get("phase_gauge") != "boundary_plane"
+        or identity.get("ordered_mode_manifest_sha256") != producer["ordered_mode_manifest_sha256"]
+        or identity.get("mode_count") != committed["mode_count"]
+        or not isinstance(identity.get("mesh_mpc_orientation"), Mapping)
+        or manifest.get("schema") != "task40extra.v33_resumable_surface_functionals.v1"
+        or len(manifest.get("mode_keys", ())) != committed["mode_count"]
+        or len(manifest.get("mode_identities", ())) != committed["mode_count"]
+        or len(manifest.get("normalization_h", ())) != committed["mode_count"]
+        or checkpoint.get("identity_sha256") != producer["producer_identity_sha256"]
+        or checkpoint.get("manifest_sha256") != committed["manifest_sha256"]
+        or checkpoint.get("expected_mode_count") != committed["mode_count"]
+        or checkpoint.get("committed_mode_count") != committed["mode_count"]
+        or checkpoint.get("committed_bytes") != committed["bytes"]
+        or checkpoint.get("committed_prefix_sha256") != committed["prefix_sha256"]
+    ):
+        raise Task41ContractError("Task41 B0 saved surface donor producer identity/checkpoint differs")
+    source_equivalence = (
+        task41_b0_saved_surface_source_equivalence(current_root=root)
+        if verify_source_equivalence
+        else None
+    )
+    return {
+        "status": "REQUIRE_EXISTING_METADATA_BOUND_PREFIX_PENDING_FULL_VALIDATION",
+        "root": str(donor_root),
+        "binary_size_bytes": int(binary.stat().st_size),
+        "checkpoint_sha256": checkpoint_sha,
+        "manifest_sha256": manifest_sha,
+        "producer_identity_sha256": identity_sha,
+        "ordered_mode_manifest_sha256": identity["ordered_mode_manifest_sha256"],
+        "source_equivalence": source_equivalence,
+    }
 
 
 
@@ -846,6 +1044,17 @@ def require_task41_p0_contract(
             or case.get("geometry_identity") != TASK41_B0_GEOMETRY_IDENTITY
         ):
             raise Task41ContractError("Task41 B0 contract profile or physical identity differs")
+        preparation = contract.get("preparation")
+        if (
+            not isinstance(preparation, Mapping)
+            or preparation.get("existing_surface_donor")
+            != TASK41_B0_SAVED_SURFACE_DONOR
+        ):
+            raise Task41ContractError(
+                "Task41 B0 contract must bind the exact require-existing saved surface donor"
+            )
+    elif contract.get("preparation") is not None:
+        raise Task41ContractError("saved B0 surface donor binding is available only to Task41 B0")
 
     for key in ("runtime_prefix", "abi_receipt_path", "jit_cache"):
         if not _resolve(root, runtime.get(key), f"runtime.{key}").exists():
@@ -918,6 +1127,9 @@ def require_task41_p0_contract(
             window_sha256=str(window.get("sha256", "")),
             expected_input_sha256=str(case.get("input_sha256", "")),
         )
+    if case_id == "B0":
+        if q_csr_reuse is not None:
+            raise Task41ContractError("Task41 B0 cannot mix a saved surface donor with q CSR reuse")
     return contract, digest
 
 
@@ -1227,6 +1439,15 @@ def prepare_task41_p0(
     elif a2_q_csr_manifests is not None:
         raise Task41ContractError("saved q CSR reuse is available only for Task41 A2")
 
+    saved_surface_donor = None
+    if case_id == "B0":
+        saved_surface_donor = TASK41_B0_SAVED_SURFACE_DONOR
+        verify_task41_b0_saved_surface_donor(
+            saved_surface_donor,
+            current_root=root,
+            verify_source_equivalence=True,
+        )
+
     if _git(root, "rev-parse", "HEAD") != source_sha or _git(
         root, "branch", "--show-current"
     ) != TASK41_BRANCH or _git(root, "status", "--porcelain", "--untracked-files=normal"):
@@ -1272,6 +1493,10 @@ def prepare_task41_p0(
         contract["comparison"] = comparison
     if q_csr_reuse is not None:
         contract["q_csr_reuse"] = q_csr_reuse
+    if saved_surface_donor is not None:
+        contract["preparation"] = {
+            "existing_surface_donor": saved_surface_donor,
+        }
     if not _write_json_no_replace(contract_path, contract):
         raise Task41ContractError("a Task41 contract was concurrently created for this source SHA")
     contract_sha = sha256_file(contract_path)
@@ -1298,6 +1523,7 @@ def prepare_task41_p0(
             "--task41-p0-execution-contract",
             str(contract_path.relative_to(root)),
         ],
+        "saved_surface_donor": saved_surface_donor,
     }
 
 

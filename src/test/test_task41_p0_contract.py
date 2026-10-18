@@ -169,6 +169,9 @@ def _write_contract(root: Path, case_id: str = "A1") -> tuple[Path, dict]:
                 "geometry_identity": TASK41_B0_GEOMETRY_IDENTITY,
             }
         )
+        contract["preparation"] = {
+            "existing_surface_donor": contract_module.TASK41_B0_SAVED_SURFACE_DONOR,
+        }
     contract_path = root / contract_relative_path("c" * 40, case_id)
     contract_path.write_text(
         json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n",
@@ -252,6 +255,12 @@ def test_task41_prepare_keeps_first_t0_after_validation_failure_and_source_chang
         raise AssertionError(f"unexpected git query: {args}")
 
     monkeypatch.setattr(contract_module, "_git", fake_git)
+    if case_id == "B0":
+        monkeypatch.setattr(
+            contract_module,
+            "verify_task41_b0_saved_surface_donor",
+            lambda *_args, **_kwargs: {"status": "fixture metadata accepted"},
+        )
     prepare_args = {
         "runtime_prefix": runtime,
         "abi_receipt": abi_receipt,
@@ -467,6 +476,9 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
                 "geometry_identity": TASK41_B0_GEOMETRY_IDENTITY,
             }
         )
+        contract["preparation"] = {
+            "existing_surface_donor": contract_module.TASK41_B0_SAVED_SURFACE_DONOR,
+        }
     contract_path = repo_root / contract_module.contract_relative_path(
         source_sha, case_id
     )

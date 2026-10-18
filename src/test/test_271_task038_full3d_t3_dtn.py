@@ -763,6 +763,8 @@ def test_resumable_carrier_progress_reports_only_durable_appends(tmp_path, monke
 def test_resumable_surface_stream_reopens_appends_suffix_and_rejects_bad_prefix(
     tmp_path,
 ):
+    import hashlib
+    import json
     from types import SimpleNamespace
 
     import src.solvers.fullspace_dtn_action as module
@@ -840,6 +842,35 @@ def test_resumable_surface_stream_reopens_appends_suffix_and_rejects_bad_prefix(
     assert restored_peak == 128
     for actual, expected in zip(restored, entries, strict=True):
         _assert_surface_functional_equal(actual, expected)
+
+    manifest = json.loads(Path(str(stream_path) + ".manifest.json").read_text())
+    checkpoint = json.loads(Path(str(stream_path) + ".checkpoint.json").read_text())
+    offset_path = tmp_path / "validated-offsets.i64"
+    source = module.ReadOnlySurfaceFunctionalSource(
+        stream_path,
+        expected_manifest_sha256=hashlib.sha256(
+            Path(str(stream_path) + ".manifest.json").read_bytes()
+        ).hexdigest(),
+        expected_checkpoint_sha256=hashlib.sha256(
+            Path(str(stream_path) + ".checkpoint.json").read_bytes()
+        ).hexdigest(),
+        expected_identity_sha256=manifest["identity_sha256"],
+        expected_prefix_sha256=checkpoint["committed_prefix_sha256"],
+        expected_mode_count=3,
+        expected_committed_bytes=checkpoint["committed_bytes"],
+        max_batch_modes=2,
+        offset_index_path=offset_path,
+        expected_mode_keys=tuple((index, "top", index, 0, "s") for index in range(3)),
+        expected_normalization_h=normalization_h,
+        global_rows=6,
+        ownership_range=(0, 6),
+    )
+    persisted = source.audit["persisted_offset_index"]
+    assert persisted["complete_stream_validation_preceded_persistence"] is True
+    assert persisted["committed_prefix_sha256"] == checkpoint["committed_prefix_sha256"]
+    assert hashlib.sha256(offset_path.read_bytes()).hexdigest() == persisted["offset_index_sha256"]
+    assert np.fromfile(offset_path, dtype="<i8").tolist() == source._offsets.tolist()
+    assert Path(persisted["offset_index_metadata_path"]).is_file()
 
     raw_before_rejection = stream_path.read_bytes()
     with pytest.raises(ValueError, match="manifest identity changed"):

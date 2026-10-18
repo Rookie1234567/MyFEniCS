@@ -19,7 +19,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any
+from typing import Any, Mapping
 
 from benchmarks.task034_wsl_resources import (
     cgroup_snapshot,
@@ -596,6 +596,26 @@ def memory_envelope(
     if require_cgroup_memory_details:
         result['cgroup_memory_stats'] = cgroup_memory_stats
     return result
+
+
+def reserve_violation(envelope: Mapping[str, Any]) -> bool:
+    """Return whether an available-memory reserve is actually exhausted.
+
+    Split-domain envelopes keep host MemAvailable and task/ancestor cgroup
+    headroom separate.  The host reserve applies only to the host domain;
+    applying it again to ``effective_available_bytes`` would incorrectly
+    compare it with whichever domain happens to be smaller.
+    """
+    if envelope.get("reserve_domains_separated") is True:
+        return (
+            int(envelope["host_mem_available_bytes"])
+            < int(envelope["reserve_bytes"])
+            or int(envelope["task_cgroup_available_bytes"])
+            < int(envelope["task_cgroup_reserve_bytes"] or 0)
+        )
+    return int(envelope["effective_available_bytes"]) < int(
+        envelope["reserve_bytes"]
+    )
 
 
 def _children() -> dict[int, tuple[int, int]]:
@@ -1275,7 +1295,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                     peak_swap = max(peak_swap, sample['swap_bytes'])
                     reason = (
                         'RESOURCE_CONTROLLED_STOP' if sample['rss_bytes'] >= current_cap
-                        or current['effective_available_bytes'] < current['reserve_bytes']
+                        or reserve_violation(current)
                         or (sample['swap_bytes'] != 0 and not allow_swap_observation) else
                         'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
                         'TIMEBASE_INCONSISTENCY' if clock_issue else

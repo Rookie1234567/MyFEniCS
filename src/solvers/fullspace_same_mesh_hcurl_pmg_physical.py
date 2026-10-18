@@ -128,6 +128,7 @@ def _task41_verify_compiled_native_quadrature(
         for x, wx in zip(interval_points, interval_weights, strict=True)
         for y, wy in zip(interval_points, interval_weights, strict=True)
     }
+
     if len(expected_pairs) != len(interval_points) ** 2:
         raise ValueError("Task41 native tensor quadrature contains duplicate nodes")
     for point, weight in zip(facet_points, facet_weights, strict=True):
@@ -174,6 +175,436 @@ def _task41_verify_compiled_native_quadrature(
         "compiled_rule_count": checked_rules,
         "compiled_nodes_and_weights_equal_native_tensor_product": True,
         "compiled_forms_include_actual_C_weight_and_node_id_checks": True,
+    }
+
+class _Task41SavedSurfaceSupport:
+    """Inventory donor rows and retain only genuine cell-interior B/D terms."""
+
+    def __init__(
+        self,
+        space: Any,
+        modes: Any,
+        support_groups: Any,
+        allowed_local_rows: Any,
+        *,
+        allocation_gate: Callable[[Mapping[str, Any]], None] | None,
+    ) -> None:
+        from petsc4py import PETSc
+        from .fullspace_dtn_action import _SURFACE_FUNCTIONAL_FRAME
+
+        index_map = space.dofmap.index_map
+        self.ownership_range = (
+            int(index_map.local_range[0]),
+            int(index_map.local_range[0]) + int(index_map.size_local),
+        )
+        self.global_rows = int(index_map.size_global)
+        self.groups = tuple(
+            np.asarray(cells, dtype=np.int32).reshape(-1) for cells in support_groups
+        )
+        if len(self.groups) != 2 or len(allowed_local_rows) != 2:
+            raise ValueError("Task41 saved donor requires the registered bottom/top support groups")
+        self.row_groups = tuple(
+            0 if str(mode.side) == "bottom" else 1 if str(mode.side) == "top" else -1
+            for mode in modes
+        )
+        if any(group < 0 for group in self.row_groups):
+            raise ValueError("Task41 saved donor has an unsupported physical port side")
+        self._allowed_global_rows = tuple(
+            np.unique(
+                np.asarray(
+                    index_map.local_to_global(np.asarray(rows, dtype=np.int32)),
+                    dtype=PETSc.IntType,
+                )
+            )
+            for rows in allowed_local_rows
+        )
+        if any(rows.size == 0 for rows in self._allowed_global_rows):
+            raise ValueError("Task41 saved donor has an empty side-specific FE support")
+
+        tdim = int(space.mesh.topology.dim)
+        self._interior_positions = np.asarray(
+            space.element.basix_element.entity_dofs[tdim][0], dtype=np.int32
+        )
+        if self._interior_positions.ndim != 1 or self._interior_positions.size == 0:
+            raise ValueError("Task41 saved donor element has no cell-interior DoFs")
+        record_dtype = np.dtype(
+            [
+                ("row", np.dtype(PETSc.IntType)),
+                ("cell", np.dtype(np.int32)),
+                ("local", np.dtype(np.int32)),
+            ]
+        )
+        records = []
+        self._interior_rows_by_cell: dict[int, np.ndarray] = {}
+        for cells in self.groups:
+            for cell_value in cells:
+                cell = int(cell_value)
+                local_dofs = np.asarray(space.dofmap.cell_dofs(cell), dtype=np.int32)
+                global_dofs = np.asarray(
+                    index_map.local_to_global(local_dofs), dtype=PETSc.IntType
+                )
+                interior = global_dofs[self._interior_positions]
+                if interior.size != self._interior_positions.size:
+                    raise ValueError("Task41 saved donor local cell interior layout changed")
+                self._interior_rows_by_cell[cell] = interior
+                row_records = np.empty(len(interior), dtype=record_dtype)
+                row_records["row"] = interior
+                row_records["cell"] = cell
+                row_records["local"] = np.arange(len(interior), dtype=np.int32)
+                records.append(row_records)
+        self._interior_records = (
+            np.concatenate(records)
+            if records
+            else np.empty(0, dtype=record_dtype)
+        )
+        self._interior_records.sort(order="row", kind="stable")
+        interior_rows = self._interior_records["row"]
+        if interior_rows.size > 1 and np.any(interior_rows[1:] == interior_rows[:-1]):
+            raise ValueError("Task41 saved donor boundary cells share an interior global row")
+        self._interior_rows = interior_rows
+        self.max_frame_bytes = int(
+            20 * 2 * max(len(rows) for rows in self._allowed_global_rows)
+            + _SURFACE_FUNCTIONAL_FRAME.size
+        )
+        self._allocation_gate = allocation_gate
+        self._term_values: dict[int, dict[int, dict[str, dict[int, complex]]]] = {}
+        self._interior_value_entries = 0
+        self._internal_cell_entries = np.zeros(
+            int(space.mesh.topology.index_map(tdim).size_local), dtype=np.int64
+        )
+        self._cell_nonzero_ports: dict[int, set[int]] = {}
+        self._boundary_row_entries = {"B": 0, "D": 0}
+        self._internal_row_entries = {"B": 0, "D": 0}
+        self._admitted_term_bytes = 0
+        self._dense_port_terms_bytes = 0
+        self._port_terms: dict[int, Any] | None = None
+
+    @staticmethod
+    def _membership(rows: np.ndarray, support: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        positions = np.searchsorted(support, rows)
+        matched = positions < len(support)
+        if np.any(matched):
+            candidates = np.flatnonzero(matched)
+            matched[candidates] = support[positions[candidates]] == rows[candidates]
+        return positions, matched
+
+    def observe(
+        self,
+        index: int,
+        identity: Mapping[str, Any],
+        coupling_rows: np.ndarray,
+        coupling_values: np.ndarray,
+        projection_rows: np.ndarray,
+        projection_values: np.ndarray,
+    ) -> None:
+        if not 0 <= int(index) < len(self.row_groups):
+            raise ValueError("Task41 saved donor support observer received an invalid mode index")
+        group = self.row_groups[int(index)]
+        expected_side = "bottom" if group == 0 else "top"
+        if str(identity.get("side")) != expected_side:
+            raise ValueError("Task41 saved donor mode side differs from the fresh support group")
+        pending = []
+        pending_count = 0
+        for side, rows, values in (
+            ("B", np.asarray(coupling_rows), np.asarray(coupling_values)),
+            ("D", np.asarray(projection_rows), np.asarray(projection_values)),
+        ):
+            if rows.ndim != 1 or values.shape != rows.shape:
+                raise ValueError("Task41 saved donor row/value inventory is malformed")
+            positions, allowed = self._membership(rows, self._allowed_global_rows[group])
+            if not bool(np.all(allowed)):
+                raise ValueError("Task41 saved donor row is outside its current tagged boundary support")
+            self._boundary_row_entries[side] += int(rows.size)
+            if not rows.size:
+                continue
+            interior_positions, interior = self._membership(rows, self._interior_rows)
+            if not np.any(interior):
+                continue
+            selected_rows = rows[interior]
+            selected_values = values[interior]
+            records = self._interior_records[interior_positions[interior]]
+            if np.any(records["cell"] < 0):
+                raise ValueError("Task41 saved donor interior owner lookup failed")
+            nonzero = selected_values != 0.0
+            pending_count += int(np.count_nonzero(nonzero))
+            pending.append((side, records, selected_values, nonzero))
+            self._internal_row_entries[side] += int(len(selected_rows))
+
+        projected_bytes = (self._interior_value_entries + pending_count) * 512
+        if projected_bytes > self._admitted_term_bytes:
+            if self._allocation_gate is None:
+                raise RuntimeError("Task41 saved donor interior terms require a resource admission callback")
+            self._allocation_gate(
+                {
+                    "phase": "task41_b0_saved_donor_internal_terms_preflight",
+                    "status": "STARTED",
+                    "mode_index": int(index),
+                    "new_nonzero_internal_entries": pending_count,
+                    "retained_internal_entries_upper_bytes": int(projected_bytes),
+                    "retained_payload_growth_upper_bytes": int(
+                        projected_bytes - self._admitted_term_bytes
+                    ),
+                    "bounded_frame_workspace_bytes": self.max_frame_bytes,
+                    "estimate_basis_bytes_per_internal_value": 512,
+                    "resource_classification": "conservative Python sparse-cell-map upper bound",
+                }
+            )
+            self._admitted_term_bytes = projected_bytes
+
+        for side, records, values, nonzero in pending:
+            for record, value, keep in zip(records, values, nonzero, strict=True):
+                if not bool(keep):
+                    continue
+                cell = int(record["cell"])
+                local = int(record["local"])
+                port = int(index)
+                port_values = self._term_values.setdefault(cell, {}).setdefault(
+                    port, {"B": {}, "D": {}}
+                )
+                component = port_values[side]
+                if local in component:
+                    raise ValueError("Task41 saved donor contains duplicate cell-interior values")
+                component[local] = complex(value)
+                self._interior_value_entries += 1
+                self._cell_nonzero_ports.setdefault(cell, set()).add(port)
+                self._internal_cell_entries[cell] += 1
+
+    def materialize_port_terms(self) -> dict[int, Any]:
+        if self._port_terms is not None:
+            return self._port_terms
+        from petsc4py import PETSc
+        from src.solvers.p6_cell_condensed_action import P6CellPortTerms
+
+        total_bytes = 0
+        dimensions = {}
+        for cell, ports in self._term_values.items():
+            ni = len(self._interior_rows_by_cell[cell])
+            count = len(ports)
+            required = (2 * ni * count * np.dtype(np.complex128).itemsize) + (
+                count * np.dtype(PETSc.IntType).itemsize
+            )
+            dimensions[cell] = (ni, count)
+            total_bytes += required
+        if total_bytes and self._allocation_gate is None:
+            raise RuntimeError("Task41 saved donor local term arrays require a resource admission callback")
+        if total_bytes:
+            self._allocation_gate(
+                {
+                    "phase": "task41_b0_saved_donor_cell_terms_preflight",
+                    "status": "STARTED",
+                    "cell_count": len(dimensions),
+                    "resident_dense_Bi_Di_bytes": int(total_bytes),
+                    "sparse_source_entries": int(self._interior_value_entries),
+                    "resource_classification": "exact dense P6CellPortTerms output bytes before allocation",
+                }
+            )
+        terms = {}
+        for cell, ports_by_index in self._term_values.items():
+            ni, count = dimensions[cell]
+            ports = np.asarray(sorted(ports_by_index), dtype=PETSc.IntType)
+            bi = np.zeros((ni, count), dtype=np.complex128)
+            di = np.zeros((count, ni), dtype=np.complex128)
+            for column, port in enumerate(ports):
+                values = ports_by_index[int(port)]
+                for local, value in values["B"].items():
+                    bi[local, column] = value
+                for local, value in values["D"].items():
+                    di[column, local] = value
+            terms[cell] = P6CellPortTerms(bi, di, ports)
+        self._dense_port_terms_bytes = int(total_bytes)
+        self._port_terms = terms
+        self._term_values.clear()
+        return terms
+
+    def validate_condensed(self, condensed: Any) -> None:
+        from petsc4py import PETSc
+
+        if len(condensed.cell_recovery_maps) <= max(self._interior_rows_by_cell, default=-1):
+            raise ValueError("Task41 saved donor cell support exceeds the condensed cell inventory")
+        for cell, rows in self._interior_rows_by_cell.items():
+            actual = np.asarray(
+                condensed.cell_recovery_maps[cell].interior_original_dofs,
+                dtype=PETSc.IntType,
+            )
+            if not np.array_equal(rows, actual):
+                raise ValueError("Task41 saved donor cell-interior map differs from current condensation")
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        return {
+            "schema": "task41.p0.b0.saved_surface_support_inventory.v1",
+            "support_source": "fresh native tagged top/bottom boundary cell inventory",
+            "mode_count": len(self.row_groups),
+            "support_cells_by_side": [group.tolist() for group in self.groups],
+            "allowed_global_rows_by_side": [int(len(rows)) for rows in self._allowed_global_rows],
+            "mode_row_group_counts": {
+                "bottom": int(sum(group == 0 for group in self.row_groups)),
+                "top": int(sum(group == 1 for group in self.row_groups)),
+            },
+            "boundary_B_rows": int(self._boundary_row_entries["B"]),
+            "boundary_D_rows": int(self._boundary_row_entries["D"]),
+            "cell_interior_B_rows": int(self._internal_row_entries["B"]),
+            "cell_interior_D_rows": int(self._internal_row_entries["D"]),
+            "cell_interior_nonzero_values": int(self._interior_value_entries),
+            "cell_interior_sparse_map_bytes_upper": int(self._interior_value_entries * 512),
+            "cell_interior_dense_Bi_Di_bytes": int(self._dense_port_terms_bytes),
+            "interior_cell_count": int(len(self._term_values) if self._port_terms is None else len(self._port_terms)),
+            "maximum_nonzero_ports_per_interior_cell": max(
+                (len(value) for value in self._cell_nonzero_ports.values()), default=0
+            ),
+            "max_frame_bytes_from_current_support": self.max_frame_bytes,
+            "p6_interior_terms_materialized": self._port_terms is not None,
+        }
+
+
+def _task41_b0_saved_surface_identity_gate(
+    *,
+    modes: Any,
+    mode_rows: Any,
+    physical_manifest_sha256: str,
+    cfg: Any,
+    current_assembly_context: Mapping[str, Any],
+    donor_binding: Mapping[str, Any],
+) -> tuple[np.ndarray, Callable[[Mapping[str, Any], Any], None], dict[str, Any]]:
+    """Reconstruct the producer's identity from fresh FE data and reviewed code lineage."""
+    import hashlib
+
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_SAVED_SURFACE_DONOR,
+        task41_b0_saved_surface_source_equivalence,
+    )
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        assembly_projection_denominator,
+        deep_frozen_identity,
+        phase_gauge_descriptor,
+    )
+    from .fullspace_dtn_action import _canonical_json_bytes, _mode_identity
+
+    if dict(donor_binding) != TASK41_B0_SAVED_SURFACE_DONOR:
+        raise ValueError("Task41 B0 consumer requires the registered immutable surface donor")
+    root = Path(__file__).resolve().parents[2]
+    bridge = task41_b0_saved_surface_source_equivalence(current_root=root)
+    consumer_context = deep_frozen_identity(current_assembly_context)
+    consumer_context_sha = hashlib.sha256(
+        _canonical_json_bytes(consumer_context)
+    ).hexdigest()
+    consumer_source_sha = dict(consumer_context["source_sha256"])
+    reconstructed_source_sha = dict(consumer_source_sha)
+    for relative, record in bridge["unchanged_math_source_files"].items():
+        basename = Path(relative).name
+        if basename in consumer_source_sha and consumer_source_sha[basename] != record["consumer_sha256"]:
+            raise ValueError("fresh assembly context has a source hash outside the checked math bridge")
+    substitutions = {}
+    for relative, record in bridge["execution_only_source_files"].items():
+        basename = Path(relative).name
+        if basename not in consumer_source_sha or consumer_source_sha[basename] != record["consumer_sha256"]:
+            raise ValueError("fresh assembly context omits a reviewed execution-only source hash")
+        reconstructed_source_sha[basename] = record["producer_sha256"]
+        substitutions[relative] = {
+            "producer_source_sha256": record["producer_sha256"],
+            "consumer_source_sha256": record["consumer_sha256"],
+            "reason": "reconstruct producer math context while preserving the separately recorded current consumer context",
+        }
+    reconstructed_payload = dict(consumer_context)
+    reconstructed_payload["source_sha256"] = reconstructed_source_sha
+    reconstructed_context = deep_frozen_identity(reconstructed_payload)
+    reconstructed_context_sha = hashlib.sha256(
+        _canonical_json_bytes(reconstructed_context)
+    ).hexdigest()
+
+    modes = tuple(modes)
+    mode_rows = tuple(mode_rows)
+    if not modes or len(mode_rows) != len(modes):
+        raise ValueError("Task41 B0 fresh physical mode inventory is incomplete")
+    physical_sha = str(physical_manifest_sha256)
+    h_values = np.empty(len(modes), dtype=np.float64)
+    for index, mode in enumerate(modes):
+        h_values[index] = float(
+            assembly_projection_denominator(mode, cfg, BOUNDARY_PLANE)
+        )
+    if not np.isfinite(h_values).all() or np.any(h_values <= 0.0):
+        raise ValueError("Task41 B0 fresh normalization H inventory is invalid")
+    h_sha = hashlib.sha256(
+        np.ascontiguousarray(h_values, dtype="<f8").tobytes()
+    ).hexdigest()
+    producer = TASK41_B0_SAVED_SURFACE_DONOR["producer"]
+    expected_identity = deep_frozen_identity(
+        {
+            "schema": "task40extra.v33_resumable_surface_functionals.v1",
+            "source_sha": producer["source_sha"],
+            "input_sha256": producer["input_sha256"],
+            "staged_input_sha256": producer["input_sha256"],
+            "campaign_window_sha256": producer["campaign_window_sha256"],
+            "execution_contract_sha256": producer["execution_contract_sha256"],
+            "surface_scope": "global",
+            "twist_index": None,
+            "twist": {
+                "floquet_phase_x": getattr(cfg, "floquet_phase_x", None),
+                "floquet_phase_y": getattr(cfg, "floquet_phase_y", None),
+            },
+            "phase_gauge": BOUNDARY_PLANE,
+            "ordered_mode_manifest_sha256": physical_sha,
+            "normalization_h_sha256": h_sha,
+            "mode_count": len(modes),
+            "mesh_mpc_orientation": {
+                "assembly_context_sha256": reconstructed_context_sha,
+                "mesh": reconstructed_context["mesh"],
+                "cell_dofmap_sha256": reconstructed_context["cell_dofmap_sha256"],
+                "orientation": reconstructed_context["orientation"],
+                "basix_coefficients": reconstructed_context["basix_coefficients"],
+                "MPC": reconstructed_context["MPC"],
+                "config_sha256": reconstructed_context["config_sha256"],
+                "ABI": reconstructed_context["ABI"],
+            },
+        }
+    )
+
+    def validate(actual_identity: Mapping[str, Any], actual_mode_identities: Any) -> None:
+        if _canonical_json_bytes(actual_identity) != _canonical_json_bytes(expected_identity):
+            raise ValueError(
+                "Task41 B0 donor fresh mesh/MPC/orientation/config/ABI/math identity differs"
+            )
+        if len(actual_mode_identities) != len(modes):
+            raise ValueError("Task41 B0 donor per-mode identity count differs from the current inventory")
+        for index, (mode, base_row, actual) in enumerate(
+            zip(modes, mode_rows, actual_mode_identities, strict=True)
+        ):
+            expected = _mode_identity(
+                index, mode, cfg, float(h_values[index])
+            )
+            expected.update(
+                {
+                    "assembly_identity_schema": "task40extra.fullspace-dtn-plane-assembly.v1",
+                    "physical_generator_manifest_sha256": physical_sha,
+                    "assembly_context_sha256": reconstructed_context_sha,
+                    "global_projection_denominator_diagnostic": base_row[
+                        "projection_denominator"
+                    ],
+                    "phase_gauge": phase_gauge_descriptor(
+                        mode, cfg, BOUNDARY_PLANE
+                    ),
+                }
+            )
+            frozen = deep_frozen_identity(expected)
+            if _canonical_json_bytes(actual) != _canonical_json_bytes(frozen):
+                raise ValueError(
+                    f"Task41 B0 donor current physical mode identity differs at mode {index}"
+                )
+
+    return h_values, validate, {
+        "schema": "task41.p0.b0.saved_surface_identity_bridge.v1",
+        "status": "FRESH_MATH_IDENTITY_RECONSTRUCTED_BEFORE_BINARY_SCAN",
+        "producer_reconstructed_assembly_context_sha256": reconstructed_context_sha,
+        "consumer_current_assembly_context_sha256": consumer_context_sha,
+        "donor_assembly_context_sha256": reconstructed_context_sha,
+        "mode_count": len(modes),
+        "physical_generator_manifest_sha256": physical_sha,
+        "normalization_h_sha256": h_sha,
+        "quadrature_identity": dict(current_assembly_context["gauss"]),
+        "execution_only_source_sha_substitutions_for_producer_context": substitutions,
+        "source_equivalence": bridge,
+        "all_mode_identities_compared_canonically_before_binary_validation": True,
     }
 
 
@@ -788,6 +1219,8 @@ def build_same_mesh_physical_action(
         [Mapping[str, Any], Mapping[str, np.ndarray]], Mapping[str, Any] | None
     ] | None = None,
     surface_functional_checkpoint: Mapping[str, Any] | None = None,
+    saved_surface_donor: Mapping[str, Any] | None = None,
+    saved_surface_offset_index_path: str | Path | None = None,
     research_phase_override: tuple[complex, complex] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
@@ -811,8 +1244,11 @@ def build_same_mesh_physical_action(
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .dtn_port_3d import _incident_projection_onto_top_mode
     from .fullspace_dtn_action import (
+        FULLSPACE_DTN_BATCH_SIZE,
+        ReadOnlySurfaceFunctionalSource,
         build_dynamic_mode_inventory,
         build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_validated_source,
         build_fullspace_dtn_carrier_from_surface,
     )
     from .fullspace_physical_action import FullspacePhysicalAction
@@ -826,6 +1262,19 @@ def build_same_mesh_physical_action(
         or not isinstance(surface_functional_checkpoint.get("identity"), Mapping)
     ):
         raise ValueError("surface functional checkpoint must bind one path and execution identity")
+    if surface_functional_checkpoint is not None and saved_surface_donor is not None:
+        raise ValueError("Task41 B0 saved-donor consumption cannot append a producer checkpoint")
+    if saved_surface_donor is not None and saved_surface_offset_index_path is None:
+        raise ValueError("Task41 B0 saved donor requires a run-local persisted offset index")
+    if saved_surface_donor is None and saved_surface_offset_index_path is not None:
+        raise ValueError("saved surface offset index path requires an existing donor")
+    if saved_surface_donor is not None and (
+        surface_assembly_backend != "native_boundary_plane"
+        or pair_native_surface
+        or dtn_phase_gauge != BOUNDARY_PLANE
+        or stage_callback is None
+    ):
+        raise ValueError("Task41 B0 saved donor requires supervised native boundary-plane identity checks")
 
     def stage_progress(facts: Mapping[str, Any]) -> None:
         if stage_callback is not None:
@@ -914,6 +1363,9 @@ def build_same_mesh_physical_action(
     native_rule = None
     native_rule_stats = None
     surface_pairing = None
+    saved_surface_source = None
+    saved_surface_support = None
+    saved_surface_identity_bridge = None
     if surface_assembly_backend == "native_boundary_plane":
         if stage_callback is None:
             raise ValueError("Task41 native surface backend requires the supervised allocation-gate callback")
@@ -942,7 +1394,7 @@ def build_same_mesh_physical_action(
 
         (
             mapping_rows,
-            _support_groups,
+            support_groups,
             allowed_local_rows,
             permutation_info,
             surface_inventory,
@@ -960,6 +1412,48 @@ def build_same_mesh_physical_action(
             "permutation_sha256": _native_array_sha256(permutation_info),
             "inventory_source": "task40_v25_selected_q0._q0_reference_surface_inventory",
         }
+        if saved_surface_donor is not None:
+            interior_positions = np.asarray(
+                function_space.element.basix_element.entity_dofs[
+                    int(function_space.mesh.topology.dim)
+                ][0],
+                dtype=np.int32,
+            )
+            support_cells = sum(len(cells) for cells in support_groups)
+            support_allowed_rows = sum(len(rows) for rows in allowed_local_rows)
+            support_inventory_bytes = int(
+                support_cells * len(interior_positions) * 16
+                + support_allowed_rows * np.dtype(np.int64).itemsize
+            )
+            stage_progress({
+                "phase": "task41_b0_saved_donor_support_preflight",
+                "status": "STARTED",
+                "support_cells": int(support_cells),
+                "allowed_local_rows": int(support_allowed_rows),
+                "cell_interior_positions": int(len(interior_positions)),
+                "additional_payload_bytes": support_inventory_bytes,
+                "workspace_bytes": int(
+                    2 * support_allowed_rows * np.dtype(np.int64).itemsize
+                    + support_cells * len(interior_positions) * 16
+                ),
+                "resource_classification": "derived fresh tagged-boundary support owner map before allocation",
+            })
+            stage_progress({
+                "phase": "task41_b0_saved_donor_support_preflight",
+                "status": "COMPLETE",
+                "additional_payload_bytes": support_inventory_bytes,
+            })
+            saved_surface_support = _Task41SavedSurfaceSupport(
+                function_space,
+                modes,
+                support_groups,
+                allowed_local_rows,
+                allocation_gate=(
+                    (lambda facts: stage_progress(dict(facts)))
+                    if stage_callback is not None
+                    else None
+                ),
+            )
         mpc_expansions = _global_mpc_expansions(
             floquet.mpc, function_space.dofmap.index_map, boundary_rows
         )
@@ -1026,6 +1520,13 @@ def build_same_mesh_physical_action(
                 })
             if not surface_pairing["pass"]:
                 raise ValueError("Task41 native boundary pairing differs from compiled production functionals")
+        elif saved_surface_donor is not None and stage_callback is not None:
+            stage_progress({
+                "phase": "task41_b0_native_surface_pairing",
+                "status": "NOT_RUN_BY_REQUIRE_EXISTING_DONOR_CONTRACT",
+                "reason": "saved donor is checked against fresh mesh/MPC/quadrature and raw modes; producer reintegration is forbidden",
+                "quadrature_identity": compiled_native_identity,
+            })
         # The native adapters keep the verified compiled identity for context binding;
         # the production PETSc forms are no longer needed after the finite pairing.
         del production_assemblers
@@ -1070,32 +1571,164 @@ def build_same_mesh_physical_action(
                 updated_context["gauss"] = gauss
                 from .dtn_boundary_phase_gauge import deep_frozen_identity
                 assembly_context = deep_frozen_identity(updated_context)
-        carrier = run_stage(
-            "dtn_carrier_build",
-            lambda: build_fullspace_dtn_carrier_from_surface(
-                modes, assemblers, floquet.mpc, cfg,
-                phase_gauge=dtn_phase_gauge,
-                assembly_context=assembly_context,
-                persistence_path=(
-                    surface_functional_checkpoint["path"]
-                    if surface_functional_checkpoint is not None else None
+        if saved_surface_donor is not None:
+            if not isinstance(saved_surface_support, _Task41SavedSurfaceSupport):
+                raise RuntimeError("Task41 B0 saved donor has no fresh FE support inventory")
+            saved_h_values, identity_validator, saved_surface_identity_bridge = (
+                _task41_b0_saved_surface_identity_gate(
+                    modes=modes,
+                    mode_rows=mode_rows,
+                    physical_manifest_sha256=mode_sha,
+                    cfg=cfg,
+                    current_assembly_context=assembly_context,
+                    donor_binding=saved_surface_donor,
+                )
+            )
+            donor_root = (
+                Path(__file__).resolve().parents[2]
+                / str(saved_surface_donor["root_relative_path"])
+            ).resolve()
+            if not donor_root.is_relative_to(Path(__file__).resolve().parents[2] / "results"):
+                raise ValueError("Task41 B0 saved donor path escaped ignored results")
+            binary_path = donor_root / str(saved_surface_donor["binary_name"])
+            checkpoint_path = donor_root / str(saved_surface_donor["checkpoint_name"])
+            manifest_path = donor_root / str(saved_surface_donor["manifest_name"])
+            committed = saved_surface_donor["committed"]
+            metadata_bytes = int(checkpoint_path.stat().st_size + manifest_path.stat().st_size)
+            source_index_bytes = (int(committed["mode_count"]) + 1) * np.dtype(np.int64).itemsize
+            metadata_parse_peak_upper = 16 * int(manifest_path.stat().st_size) + int(
+                checkpoint_path.stat().st_size
+            )
+            stage_progress({
+                "phase": "task41_b0_saved_donor_validation_preflight",
+                "status": "STARTED",
+                "require_existing_path": str(binary_path),
+                "committed_binary_bytes": int(committed["bytes"]),
+                "mode_count": int(committed["mode_count"]),
+                "metadata_bytes": metadata_bytes,
+                "metadata_parse_peak_upper_bytes": metadata_parse_peak_upper,
+                "offset_index_bytes": source_index_bytes,
+                "max_frame_bytes": int(saved_surface_support.max_frame_bytes),
+                "max_batch_modes": int(FULLSPACE_DTN_BATCH_SIZE),
+                "payload_retained_after_validation": False,
+                "resource_classification": "metadata parse upper bound + offset index + one FE-bounded frame; donor bytes remain read-only file backing",
+            })
+            index_map = function_space.dofmap.index_map
+            owned_start = int(index_map.local_range[0])
+            owned_end = owned_start + int(index_map.size_local)
+            global_rows = int(index_map.size_global)
+            slave_local = np.asarray(floquet.mpc.slaves, dtype=np.int32)
+            slave_local = slave_local[slave_local < int(index_map.size_local)]
+            slave_rows = np.asarray(
+                index_map.local_to_global(slave_local), dtype=np.int64
+            )
+
+            def donor_progress(facts: Mapping[str, Any]) -> None:
+                row = dict(facts)
+                row["support_inventory_counts"] = {
+                    "boundary_B_rows": int(saved_surface_support._boundary_row_entries["B"]),
+                    "boundary_D_rows": int(saved_surface_support._boundary_row_entries["D"]),
+                    "cell_interior_nonzero_values": int(
+                        saved_surface_support._interior_value_entries
+                    ),
+                    "cell_interior_sparse_map_bytes_upper": int(
+                        saved_surface_support._interior_value_entries * 512
+                    ),
+                }
+                stage_progress(row)
+
+            saved_surface_source = run_stage(
+                "task41_b0_saved_donor_validation",
+                lambda: ReadOnlySurfaceFunctionalSource(
+                    binary_path,
+                    expected_manifest_sha256=str(committed["manifest_sha256"]),
+                    expected_checkpoint_sha256=str(committed["checkpoint_sha256"]),
+                    expected_identity_sha256=str(
+                        saved_surface_donor["producer"]["producer_identity_sha256"]
+                    ),
+                    expected_prefix_sha256=str(committed["prefix_sha256"]),
+                    expected_mode_count=int(committed["mode_count"]),
+                    expected_committed_bytes=int(committed["bytes"]),
+                    max_frame_bytes=int(saved_surface_support.max_frame_bytes),
+                    max_batch_modes=int(FULLSPACE_DTN_BATCH_SIZE),
+                    offset_index_path=saved_surface_offset_index_path,
+                    expected_mode_keys=tuple(
+                        (
+                            index,
+                            str(mode.side),
+                            int(mode.m),
+                            int(mode.n),
+                            str(mode.polarization),
+                        )
+                        for index, mode in enumerate(modes)
+                    ),
+                    expected_normalization_h=saved_h_values,
+                    global_rows=global_rows,
+                    ownership_range=(owned_start, owned_end),
+                    slave_rows=slave_rows,
+                    identity_validator=identity_validator,
+                    frame_observer=saved_surface_support.observe,
+                    progress_callback=donor_progress,
                 ),
-                persistence_identity=(
-                    surface_functional_checkpoint["identity"]
-                    if surface_functional_checkpoint is not None else None
+                complete_facts=lambda value: {
+                    **dict(value.audit),
+                    "identity_bridge": saved_surface_identity_bridge,
+                    "support_inventory": dict(saved_surface_support.audit),
+                },
+            )
+            support_port_terms = saved_surface_support.materialize_port_terms()
+            saved_surface_identity_bridge["donor_assembly_context_sha256"] = (
+                saved_surface_identity_bridge["producer_reconstructed_assembly_context_sha256"]
+            )
+            saved_surface_identity_bridge["support_inventory"] = dict(
+                saved_surface_support.audit
+            )
+            saved_surface_identity_bridge["local_port_term_cells"] = int(
+                len(support_port_terms)
+            )
+            carrier = run_stage(
+                "dtn_carrier_bind_saved_donor",
+                lambda: build_fullspace_dtn_carrier_from_validated_source(
+                    saved_surface_source,
+                    floquet.mpc,
                 ),
-                progress_callback=stage_progress if stage_callback is not None else None,
-            ),
-            complete_facts=lambda value: {
-                "carrier_mode_count": len(value.entries),
-                **({"surface_functional_checkpoint": dict(value.persistence_facts)}
-                   if getattr(value, "persistence_facts", None) is not None else {}),
-                **({"native_surface_assembly_stats": dict(native_rule.assembly_stats)}
-                   if native_rule is not None else {}),
-                **({"representative_surface_pairing": surface_pairing}
-                   if surface_pairing is not None else {}),
-            },
-        )
+                complete_facts=lambda value: {
+                    "carrier_mode_count": len(value.entries),
+                    "storage_kind": "validated_file_backed_read_only",
+                    "saved_source_audit": dict(value.surface_source.audit),
+                    "support_inventory": dict(saved_surface_support.audit),
+                },
+            )
+            carrier.saved_surface_support = saved_surface_support
+            carrier.saved_surface_support_terms = support_port_terms
+            carrier.saved_surface_identity_bridge = saved_surface_identity_bridge
+        else:
+            carrier = run_stage(
+                "dtn_carrier_build",
+                lambda: build_fullspace_dtn_carrier_from_surface(
+                    modes, assemblers, floquet.mpc, cfg,
+                    phase_gauge=dtn_phase_gauge,
+                    assembly_context=assembly_context,
+                    persistence_path=(
+                        surface_functional_checkpoint["path"]
+                        if surface_functional_checkpoint is not None else None
+                    ),
+                    persistence_identity=(
+                        surface_functional_checkpoint["identity"]
+                        if surface_functional_checkpoint is not None else None
+                    ),
+                    progress_callback=stage_progress if stage_callback is not None else None,
+                ),
+                complete_facts=lambda value: {
+                    "carrier_mode_count": len(value.entries),
+                    **({"surface_functional_checkpoint": dict(value.persistence_facts)}
+                       if getattr(value, "persistence_facts", None) is not None else {}),
+                    **({"native_surface_assembly_stats": dict(native_rule.assembly_stats)}
+                       if native_rule is not None else {}),
+                    **({"representative_surface_pairing": surface_pairing}
+                       if surface_pairing is not None else {}),
+                },
+            )
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the
         # temporary compiled surface forms and their phase constants.
@@ -1108,7 +1741,7 @@ def build_same_mesh_physical_action(
     if native_rule is not None:
         native_rule_stats = dict(native_rule.assembly_stats)
         del native_rule
-        del mapping_rows, _support_groups, allowed_local_rows, permutation_info
+        del mapping_rows, support_groups, allowed_local_rows, permutation_info
         del surface_inventory, boundary_local_rows, boundary_rows, mapping_facts
         del mpc_expansions, compiled_native_identity
     try:
@@ -1171,6 +1804,16 @@ def build_same_mesh_physical_action(
             "dtn_quadrature_degree": int(qdegree),
             "volume_quadrature_metadata": volume_quadrature_metadata,
             "incident_projections": incident_projections,
+            **(
+                {
+                    "saved_surface_source_audit": dict(saved_surface_source.audit),
+                    "saved_surface_support": saved_surface_support,
+                    "saved_surface_support_facts": dict(saved_surface_support.audit),
+                    "saved_surface_identity_bridge": dict(saved_surface_identity_bridge),
+                }
+                if saved_surface_source is not None
+                else {}
+            ),
             "research_phase_override": (
                 None if research_phase_override is None
                 else tuple(map(complex, research_phase_override))

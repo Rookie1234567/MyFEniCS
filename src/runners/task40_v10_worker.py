@@ -68,6 +68,715 @@ def _save_task41_b0_native_surface_pair_evidence(
     }
 
 
+def _task41_b0_full_size_two_input_identity_check(
+    *,
+    probes: list[Mapping[str, Any]],
+    carrier: Any,
+    action: Any,
+    provider: Any,
+    volume_action: Any,
+    original_port_block: Any,
+    output_directory: Path,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Mapping[str, Any]],
+    runtime: Any,
+) -> dict[str, Any]:
+    """Check two full-size FE/port inputs through one saved-carrier sweep."""
+    from src.runners.physical_p4_schur_v14 import _write_json
+    from petsc4py import PETSc
+
+    if len(probes) != 2:
+        raise ValueError("Task41 B0 identity check requires exactly two saved nonzero probes")
+    condensed = action.condensed
+    constraints = condensed.trace_constraints
+    active_rows = int(condensed.active_rows)
+    full_rows = int(condensed.full_rows)
+    mode_count = int(len(carrier.entries))
+    reduced_size = int(action.reduced_size)
+    if reduced_size != active_rows + mode_count:
+        raise ValueError("Task41 B0 reduced FE/port layout differs from its source carrier")
+
+    probe_specs = []
+    for probe in probes:
+        port = int(probe["mode_index"])
+        rows = np.asarray(probe["rows"], dtype=np.int64)
+        values = np.asarray(probe["values"], dtype=np.complex128)
+        alpha = complex(probe["alpha"])
+        if (
+            not 0 <= port < mode_count
+            or rows.ndim != 1
+            or values.shape != rows.shape
+            or not rows.size
+            or (rows.size > 1 and np.any(rows[1:] <= rows[:-1]))
+            or not np.isfinite(values).all()
+            or not np.isfinite([alpha.real, alpha.imag]).all()
+            or alpha == 0.0
+        ):
+            raise ValueError("Task41 B0 full-size FE/port probe is malformed or zero")
+        probe_specs.append((port, rows, values, alpha))
+
+    persistent_bytes = int(
+        3 * 2 * reduced_size * np.dtype(np.complex128).itemsize
+        + 2 * 2 * full_rows * np.dtype(np.complex128).itemsize
+        + 5 * mode_count * 2 * np.dtype(np.complex128).itemsize
+    )
+    workspace_bytes = int(
+        5 * full_rows * np.dtype(np.complex128).itemsize
+        + 3 * reduced_size * np.dtype(np.complex128).itemsize
+        + 2 * int(getattr(carrier.surface_source, "max_frame_bytes", 0))
+    )
+    admission_facts = {
+        "additional_payload_bytes": persistent_bytes,
+        "workspace_bytes": workspace_bytes,
+        "full_fe_storage_rows": full_rows,
+        "active_fe_trace_rows": active_rows,
+        "port_rows": mode_count,
+        "probe_count": 2,
+        "probe_input_bytes": int(2 * reduced_size * np.dtype(np.complex128).itemsize),
+        "two_native_full_fe_input_storage_bytes": int(
+            2 * full_rows * np.dtype(np.complex128).itemsize
+        ),
+        "two_native_full_rhs_vectors_bytes": int(
+            2 * full_rows * np.dtype(np.complex128).itemsize
+        ),
+        "resource_classification": (
+            "two full FE inputs, two native FE RHS vectors, reduced actions, and bounded "
+            "volume/recovery workspace; one file-backed donor sweep"
+        ),
+    }
+    admission = allocation_gate("task41_b0_full_size_two_input_identity_check", admission_facts)
+    runtime.marker(
+        "task41_b0_full_size_two_input_identity_check_admitted",
+        {**admission_facts, "admission": admission},
+    )
+
+    sources = np.zeros((reduced_size, 2), dtype=np.complex128)
+    input_identities = []
+    for column, (port, rows, values, alpha) in enumerate(probe_specs):
+        mapped = np.asarray(constraints.map_original_rows(rows), dtype=np.int64)
+        if (
+            mapped.shape != rows.shape
+            or (mapped.size and (int(mapped.min()) < 0 or int(mapped.max()) >= active_rows))
+            or (mapped.size > 1 and np.any(np.sort(mapped)[1:] == np.sort(mapped)[:-1]))
+        ):
+            raise ValueError("Task41 B0 input probe does not map one-to-one to active FE rows")
+        sources[mapped, column] = values
+        sources[active_rows + port, column] = alpha
+        input_identities.append(
+            {
+                "mode_index": port,
+                "mode_key": list(carrier.mode_keys[port]),
+                "probe_rows": int(rows.size),
+                "probe_values_sha256": _hash_arrays({"values": values}),
+                "mapped_active_rows_sha256": _hash_arrays({"rows": mapped}),
+                "port_alpha": [float(alpha.real), float(alpha.imag)],
+            }
+        )
+    if np.array_equal(sources[:, 0], sources[:, 1]):
+        raise ValueError("Task41 B0 full-size FE/port probes are not distinct")
+    if any(not np.any(sources[:active_rows, column]) for column in range(2)) or any(
+        not np.any(sources[active_rows:, column]) for column in range(2)
+    ):
+        raise ValueError("Task41 B0 two-input check requires nonzero FE and port components")
+
+    reduced_fe_inputs = sources[:active_rows, :]
+    port_inputs = sources[active_rows:, :]
+    full_fields = np.zeros((full_rows, 2), dtype=np.complex128, order="F")
+    active_original_rows = np.asarray(
+        constraints.owned_active_original_dofs, dtype=np.int64
+    ).reshape(-1)
+    if active_original_rows.shape != (active_rows,):
+        raise ValueError("Task41 B0 active original-row inventory has the wrong size")
+    active_ids = np.asarray(
+        constraints.map_original_rows(active_original_rows), dtype=np.int64
+    )
+    if not np.array_equal(active_ids, np.arange(active_rows, dtype=np.int64)):
+        raise ValueError("Task41 B0 active original rows are not in their reduced ordering")
+    trace_original = np.asarray(
+        condensed.owned_trace_original_dofs, dtype=np.int64
+    ).reshape(-1)
+    trace_positions = np.searchsorted(active_original_rows, trace_original)
+    active_trace = trace_positions < active_rows
+    if np.any(active_trace):
+        candidates = np.flatnonzero(active_trace)
+        active_trace[candidates] = (
+            active_original_rows[trace_positions[candidates]] == trace_original[candidates]
+        )
+    slave_rows = trace_original[~active_trace]
+    full_fields[active_original_rows, :] = reduced_fe_inputs
+    for cell in action._cells:
+        interior_rows = np.asarray(cell.original_interiors, dtype=np.int64)
+        if interior_rows.size:
+            seed = (interior_rows % 104729).astype(np.float64) * 1.0e-6
+            full_fields[interior_rows, 0] = (0.25 + seed) + 1j * (0.125 + seed)
+            full_fields[interior_rows, 1] = (-0.375 - seed) + 1j * (0.5 + 2.0 * seed)
+    if slave_rows.size:
+        full_fields[slave_rows, :] = 0.0
+    interior_count = sum(len(cell.original_interiors) for cell in action._cells)
+    interior_nonzero_count = sum(
+        int(np.count_nonzero(full_fields[cell.original_interiors, :]))
+        for cell in action._cells
+    )
+    if interior_nonzero_count != 2 * interior_count:
+        raise ValueError("Task41 B0 test inputs must have nonzero known values on every cell interior")
+    if not np.array_equal(full_fields[active_original_rows, :], reduced_fe_inputs):
+        raise ValueError("Task41 B0 full fields differ from their active FE inputs")
+
+    local_D = np.zeros((mode_count, 2), dtype=np.complex128)
+    for cell in action._cells:
+        if len(cell.ports):
+            local_D[cell.ports, :] += cell.Di @ full_fields[cell.original_interiors, :]
+
+    native_rhs = np.empty((full_rows, 2), dtype=np.complex128, order="F")
+    volume_action_apply_seconds = 0.0
+    for column in range(2):
+        field_vec = PETSc.Vec().createWithArray(
+            np.ascontiguousarray(full_fields[:, column]), comm=PETSc.COMM_SELF
+        )
+        volume_vec = None
+        volume_started = time.perf_counter()
+        try:
+            volume_vec = volume_action.apply(field_vec)
+            volume_values = np.asarray(volume_vec.getArray(readonly=True), dtype=np.complex128)
+            if volume_values.shape != (full_rows,) or not np.isfinite(volume_values).all():
+                raise ValueError("Task41 B0 native volume action returned an invalid full RHS")
+            native_rhs[:, column] = volume_values
+            for cell in action._cells:
+                if len(cell.ports):
+                    native_rhs[cell.original_interiors, column] += (
+                        cell.Bi @ port_inputs[cell.ports, column]
+                    )
+        finally:
+            volume_action_apply_seconds += max(
+                0.0, time.perf_counter() - volume_started
+            )
+            # FullspaceSplitVolumeAction.apply returns its borrowed curl-action
+            # output buffer. Copying above is required before the next apply;
+            # destroying it here would invalidate the owner's reusable Vec.
+            volume_vec = None
+            field_vec.destroy()
+
+    direct_D_original = np.zeros((mode_count, 2), dtype=np.complex128)
+    direct_D_active = np.zeros((mode_count, 2), dtype=np.complex128)
+    direct_B_entries = 0
+    direct_D_entries = 0
+
+    def observe_direct(
+        port: int,
+        b_data: tuple[np.ndarray, np.ndarray, np.ndarray] | None,
+        d_data: tuple[np.ndarray, np.ndarray, np.ndarray] | None,
+    ) -> None:
+        nonlocal direct_B_entries, direct_D_entries
+        if b_data is not None:
+            b_rows, b_values, b_active = b_data
+            mapped = np.asarray(constraints.map_original_rows(b_rows), dtype=np.int64)
+            if not np.array_equal(mapped, np.asarray(b_active, dtype=np.int64)):
+                raise ValueError("Task41 B0 original/active B row mapping differs in the live donor sweep")
+            if b_rows.size:
+                native_rhs[b_rows, :] += b_values[:, None] * port_inputs[port, :]
+                direct_B_entries += int(len(b_rows))
+        if d_data is not None:
+            d_rows, d_values, d_active = d_data
+            mapped = np.asarray(constraints.map_original_rows(d_rows), dtype=np.int64)
+            if not np.array_equal(mapped, np.asarray(d_active, dtype=np.int64)):
+                raise ValueError("Task41 B0 original/active D row mapping differs in the live donor sweep")
+            if d_rows.size:
+                direct_D_original[port, :] = d_values @ full_fields[d_rows, :]
+                direct_D_active[port, :] = d_values @ reduced_fe_inputs[d_active, :]
+                direct_D_entries += int(len(d_rows))
+
+    sweep_key = "reduced_apply_multi"
+    before_sweeps = int(
+        provider.audit.get("iterator_sweeps_by_operation", {}).get(sweep_key, 0)
+    )
+    p6_apply_started = time.perf_counter()
+    p6_result = action.apply_multi_rhs(sources, direct_observer=observe_direct)
+    p6_action_apply_seconds = max(0.0, time.perf_counter() - p6_apply_started)
+    after_sweeps = int(
+        provider.audit.get("iterator_sweeps_by_operation", {}).get(sweep_key, 0)
+    )
+    if after_sweeps - before_sweeps != 1:
+        raise ValueError("Task41 B0 two-input P6 action did not use exactly one donor traversal")
+    if slave_rows.size and np.any(native_rhs[slave_rows, :] != 0.0):
+        raise ValueError("Task41 B0 native MPC-dual RHS has nonzero slave identity rows")
+
+    direct_D_error = float(
+        np.linalg.norm(direct_D_original - direct_D_active)
+        / max(
+            np.linalg.norm(direct_D_original),
+            np.linalg.norm(direct_D_active),
+            np.finfo(float).tiny,
+        )
+    )
+    if direct_D_error > 1.0e-11:
+        raise ValueError(
+            f"Task41 B0 original/active D action differs on the full inputs: {direct_D_error}"
+        )
+    port_rhs = (
+        original_port_block.apply(port_inputs)
+        - local_D
+        - direct_D_original
+    )
+    reduced_rhs = np.empty_like(p6_result)
+    for column in range(2):
+        reduced_rhs[:, column] = action.reduce_rhs(
+            native_rhs[:, column],
+            port_rhs=port_rhs[:, column],
+            rhs_is_mpc_dual=True,
+        )
+    recovery_errors = []
+    for column in range(2):
+        recovered = action.recover_storage(
+            sources[:, column],
+            full_rhs=native_rhs[:, column],
+            expand_trace=False,
+        )
+        error = float(
+            np.linalg.norm(recovered - full_fields[:, column])
+            / max(
+                np.linalg.norm(full_fields[:, column]),
+                np.finfo(float).tiny,
+            )
+        )
+        recovery_errors.append(error)
+        if error > 1.0e-11:
+            raise ValueError(
+                f"Task41 B0 full RHS recovery does not reproduce the known FE input: {error}"
+            )
+        if slave_rows.size and np.any(recovered[slave_rows] != 0.0):
+            raise ValueError("Task41 B0 full RHS recovery produced a nonzero MPC slave")
+    if p6_result.shape != reduced_rhs.shape or not np.isfinite(p6_result).all():
+        raise ValueError("Task41 B0 two-input P6 action returned an invalid reduced result")
+    column_errors = []
+    for column in range(2):
+        numerator = float(np.linalg.norm(p6_result[:, column] - reduced_rhs[:, column]))
+        denominator = max(
+            float(np.linalg.norm(p6_result[:, column])),
+            float(np.linalg.norm(reduced_rhs[:, column])),
+            np.finfo(float).tiny,
+        )
+        relative = numerator / denominator
+        column_errors.append(relative)
+    if max(column_errors, default=0.0) > 1.0e-11:
+        raise ValueError(
+            "Task41 B0 native full FE/port RHS does not match the P6 action: "
+            f"{column_errors}"
+        )
+
+    check = {
+        "schema": "task41.p0.b0.full_size_two_input_identity_check.v1",
+        "status": "PASS",
+        "input_identities": input_identities,
+        "source_matrix_sha256": _hash_arrays({"sources": sources}),
+        "known_full_storage_input_sha256": _hash_arrays({"fields": full_fields}),
+        "expected_recovered_storage_fields_sha256": _hash_arrays({"fields": full_fields}),
+        "native_full_rhs_sha256": _hash_arrays({"rhs": native_rhs}),
+        "p6_reduced_result_sha256": _hash_arrays({"result": p6_result}),
+        "full_storage_rows": full_rows,
+        "active_trace_rows": active_rows,
+        "port_rows": mode_count,
+        "two_inputs_are_distinct_and_nonzero": True,
+        "recovered_mpc_slave_rows_exact_zero": True,
+        "independent_nonzero_cell_interiors_injected_before_native_rhs": interior_count > 0,
+        "local_cell_recovery_checked_from_native_full_rhs": True,
+        "original_and_active_B_rows_mapped_once": True,
+        "original_and_active_D_relative_error": direct_D_error,
+        "direct_B_row_entries_checked": direct_B_entries,
+        "direct_D_row_entries_checked": direct_D_entries,
+        "original_H_action": "explicit diagonal H_p applied to both port input columns",
+        "native_rhs_definition": "b_FE=V*x+B*alpha; b_p=-D*x+H*alpha",
+        "native_volume_input": (
+            "full FE storage with exact zero slave rows; FullspaceMpcFormAction performs "
+            "backsubstitution and C^H restriction, then preserves slave identity rows"
+        ),
+        "native_action_applies_mpc_backsubstitution_and_dual_restriction": True,
+        "native_rhs_is_mpc_dual_with_zero_slave_rows": True,
+        "volume_action_apply_seconds_for_two_inputs": volume_action_apply_seconds,
+        "p6_multi_rhs_apply_seconds": p6_action_apply_seconds,
+        "p6_action_audit": dict(getattr(action, "audit", {})),
+        "existing_reduce_rhs_and_recover_storage_used": True,
+        "same_donor_traversals_for_two_inputs": after_sweeps - before_sweeps,
+        "donor_read_bytes_after_check": int(carrier.surface_source.audit["read_bytes_after_validation"]),
+        "p6_vs_native_reduced_rhs_relative_errors": column_errors,
+        "native_full_rhs_recovery_relative_errors": recovery_errors,
+        "limits": {
+            "original_to_active_row_mapping": 1.0e-12,
+            "B_D_action_and_full_rhs_condensation": 1.0e-11,
+        },
+        "provider_audit": dict(provider.audit),
+        "surface_source_audit": dict(carrier.surface_source.audit),
+    }
+    receipt_path = output_directory / "task41_b0_full_size_two_input_identity_check.json"
+    _write_json(receipt_path, check)
+    runtime.marker("task41_b0_full_size_two_input_identity_check", check)
+    return {**check, "receipt_path": str(receipt_path)}
+
+
+def _task41_b0_saved_surface_consumer_checks(
+    *,
+    carrier: Any,
+    action: Any,
+    provider: Any,
+    volume_action: Any,
+    original_port_block: Any,
+    donor_binding: Mapping[str, Any],
+    output_directory: Path,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Mapping[str, Any]],
+    runtime: Any,
+) -> list[dict[str, Any]]:
+    """Check two saved nonzero B/D ports through the live P6 cell/direct split."""
+    from src.runners.physical_p4_schur_v14 import _write_json
+
+    source = getattr(carrier, "surface_source", None)
+    if source is None:
+        raise ValueError("Task41 B0 saved-pair checks require the validated file-backed carrier")
+    donor_root = Path(source.path).resolve().parents[2]
+    evidence_root = donor_root / "task41_b0_native_surface_pair_raw"
+    selected = (16030, 48090)
+    metadata_rows = []
+    max_uncompressed_bytes = 0
+    for index in selected:
+        metadata_path = evidence_root / f"mode_{index:05d}.json"
+        if not metadata_path.is_file():
+            raise FileNotFoundError(f"Task41 B0 saved-pair metadata is missing: {metadata_path}")
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        array_rows = metadata.get("raw_functionals")
+        if not isinstance(array_rows, Mapping):
+            raise ValueError("Task41 B0 saved-pair metadata has no raw functional inventory")
+        payload_bytes = 0
+        for record in array_rows.values():
+            if not isinstance(record, Mapping):
+                raise ValueError("Task41 B0 saved-pair array metadata is malformed")
+            dtype = np.dtype(str(record["dtype"]))
+            shape = tuple(int(value) for value in record["shape"])
+            if any(value < 0 for value in shape):
+                raise ValueError("Task41 B0 saved-pair array shape is invalid")
+            payload_bytes += int(dtype.itemsize * np.prod(shape, dtype=np.int64))
+        max_uncompressed_bytes = max(max_uncompressed_bytes, payload_bytes)
+        metadata_rows.append((index, metadata_path, metadata))
+    admission_facts = {
+        "additional_payload_bytes": int(2 * max_uncompressed_bytes),
+        "workspace_bytes": int(2 * max_uncompressed_bytes + source.max_frame_bytes),
+        "selected_mode_indices": list(selected),
+        "max_saved_npz_uncompressed_bytes": int(max_uncompressed_bytes),
+        "max_donor_frame_bytes": int(source.max_frame_bytes),
+        "resource_classification": "two selected saved-pair NPZ payloads loaded one at a time plus one donor frame",
+    }
+    admission = allocation_gate("task41_b0_saved_surface_consumer_checks", admission_facts)
+    runtime.marker(
+        "task41_b0_saved_surface_consumer_checks_admitted",
+        {**admission_facts, "admission": admission},
+    )
+
+    def source_component(entry: Any, side: str) -> tuple[np.ndarray, np.ndarray]:
+        rows = np.asarray(
+            entry.coupling_rows if side == "B" else entry.projection_rows,
+            dtype=np.int64,
+        )
+        values = np.asarray(
+            entry.coupling_values if side == "B" else entry.projection_values,
+            dtype=np.complex128,
+        )
+        return rows, values
+
+    def p6_component(entry: Any, index: int, side: str) -> tuple[np.ndarray, np.ndarray]:
+        rows, values, _active = provider._direct_component(
+            entry, index, side, "task41_saved_pair_consumer_check"
+        )
+        row_parts = [np.asarray(rows, dtype=np.int64)]
+        value_parts = [np.asarray(values, dtype=np.complex128)]
+        for cell in action._cells:
+            ports = np.asarray(cell.ports, dtype=np.int64)
+            columns = np.flatnonzero(ports == index)
+            if not columns.size:
+                continue
+            if len(columns) != 1:
+                raise ValueError("Task41 B0 P6 cell repeats a selected saved-pair port")
+            column = int(columns[0])
+            cell_rows = np.asarray(cell.original_interiors, dtype=np.int64)
+            cell_values = np.asarray(
+                cell.Bi[:, column] if side == "B" else cell.Di[column, :],
+                dtype=np.complex128,
+            )
+            if cell_rows.shape != cell_values.shape:
+                raise ValueError("Task41 B0 P6 local interior term has an invalid layout")
+            nonzero = cell_values != 0.0
+            if np.any(nonzero):
+                row_parts.append(cell_rows[nonzero])
+                value_parts.append(cell_values[nonzero])
+        combined_rows = np.concatenate(row_parts)
+        combined_values = np.concatenate(value_parts)
+        nonzero = combined_values != 0.0
+        combined_rows = combined_rows[nonzero]
+        combined_values = combined_values[nonzero]
+        order = np.argsort(combined_rows, kind="stable")
+        combined_rows = combined_rows[order]
+        combined_values = combined_values[order]
+        if combined_rows.size > 1 and np.any(combined_rows[1:] == combined_rows[:-1]):
+            raise ValueError("Task41 B0 P6 direct/local functional rows overlap")
+        return combined_rows, combined_values
+
+    def sparse_lookup(query: np.ndarray, rows: np.ndarray, values: np.ndarray) -> np.ndarray:
+        positions = np.searchsorted(rows, query)
+        found = positions < len(rows)
+        if np.any(found):
+            matched = np.flatnonzero(found)
+            found[matched] = rows[positions[matched]] == query[matched]
+        result = np.zeros(len(query), dtype=np.complex128)
+        result[found] = values[positions[found]]
+        return result
+
+    def sparse_l2_comparison(
+        reference_rows: np.ndarray,
+        reference_values: np.ndarray,
+        candidate_rows: np.ndarray,
+        candidate_values: np.ndarray,
+    ) -> dict[str, Any]:
+        from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+            _task41_compare_sparse_functional,
+        )
+
+        return _task41_compare_sparse_functional(
+            (reference_rows, reference_values),
+            (candidate_rows, candidate_values),
+            relative_tolerance=1.0e-11,
+        )
+
+    def sha(array: np.ndarray) -> str:
+        contiguous = np.ascontiguousarray(array)
+        digest = hashlib.sha256()
+        digest.update(repr((contiguous.shape, str(contiguous.dtype))).encode())
+        digest.update(contiguous.tobytes(order="C"))
+        return digest.hexdigest()
+
+    producer = donor_binding["producer"]
+    output = []
+    full_size_probes: list[dict[str, Any]] = []
+    for index, metadata_path, metadata in metadata_rows:
+        mode_result = metadata.get("mode_result", {})
+        identity = metadata.get("attempt_identity", {})
+        if (
+            metadata.get("schema") != "task41.b0.native_surface_pair_raw.v1"
+            or mode_result.get("pass") is not True
+            or int(mode_result.get("mode_index", -1)) != index
+            or tuple(mode_result.get("mode_key", ())) != tuple(carrier.mode_keys[index][1:])
+        ):
+            raise ValueError(f"Task41 B0 saved-pair mode identity differs at {index}")
+        for key in (
+            "source_sha",
+            "input_sha256",
+            "staged_input_sha256",
+            "campaign_window_sha256",
+            "execution_contract_sha256",
+        ):
+            expected_value = producer.get(key)
+            if key == "staged_input_sha256" and expected_value is None:
+                expected_value = producer.get("input_sha256")
+            if identity.get(key) != expected_value:
+                raise ValueError(f"Task41 B0 saved-pair producer identity differs at {key}")
+        arrays_meta = metadata.get("arrays", {})
+        declared_npz = Path(str(arrays_meta.get("path", "")))
+        candidate_paths = (declared_npz, evidence_root / declared_npz.name)
+        npz_path = next(
+            (
+                path.resolve()
+                for path in candidate_paths
+                if path.is_file()
+                and path.resolve().is_relative_to(Path(__file__).resolve().parents[2] / "results")
+            ),
+            None,
+        )
+        if npz_path is None:
+            raise FileNotFoundError(f"Task41 B0 saved-pair NPZ is unavailable for mode {index}")
+        digest = hashlib.sha256()
+        with npz_path.open("rb") as stream:
+            for block in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+                digest.update(block)
+        npz_sha256 = digest.hexdigest()
+        if npz_sha256 != str(arrays_meta.get("sha256", "")):
+            raise ValueError(f"Task41 B0 saved-pair NPZ hash differs for mode {index}")
+        raw = metadata["raw_functionals"]
+        with np.load(npz_path, allow_pickle=False) as packet:
+            def array_for(name: str) -> np.ndarray:
+                record = raw.get(name)
+                if not isinstance(record, Mapping) or record.get("array_key") not in packet:
+                    raise ValueError(f"Task41 B0 saved-pair packet is missing {name}")
+                value = np.asarray(packet[record["array_key"]])
+                if list(value.shape) != list(record.get("shape", ())) or str(value.dtype) != str(record.get("dtype")):
+                    raise ValueError(f"Task41 B0 saved-pair array metadata differs for {name}")
+                return value
+
+            saved_B_rows = np.asarray(array_for("B_coupling_native_rows"), dtype=np.int64)
+            saved_B_values = np.asarray(array_for("B_coupling_native_values"), dtype=np.complex128)
+            saved_D_rows = np.asarray(array_for("D_projection_native_rows"), dtype=np.int64)
+            saved_D_values = np.asarray(array_for("D_projection_native_values"), dtype=np.complex128)
+            production_B_rows = np.asarray(array_for("B_coupling_production_rows"), dtype=np.int64)
+            production_B_values = np.asarray(array_for("B_coupling_production_values"), dtype=np.complex128)
+            production_D_rows = np.asarray(array_for("D_projection_production_rows"), dtype=np.int64)
+            production_D_values = np.asarray(array_for("D_projection_production_values"), dtype=np.complex128)
+            probe_rows = np.asarray(array_for("D_raw_x_input_nonzero_rows"), dtype=np.int64)
+            probe_values = np.asarray(array_for("D_raw_x_input_nonzero_values"), dtype=np.complex128)
+            entry = source.read_batch(index, index + 1)[0]
+            native_vs_production = {
+                "B": sparse_l2_comparison(
+                    production_B_rows,
+                    production_B_values,
+                    saved_B_rows,
+                    saved_B_values,
+                ),
+                "D": sparse_l2_comparison(
+                    production_D_rows,
+                    production_D_values,
+                    saved_D_rows,
+                    saved_D_values,
+                ),
+            }
+            if not all(row["pass"] for row in native_vs_production.values()):
+                raise ValueError(
+                    f"Task41 B0 saved native/production reference comparison failed at mode {index}"
+                )
+            for side, saved_rows, saved_values in (
+                ("B", saved_B_rows, saved_B_values),
+                ("D", saved_D_rows, saved_D_values),
+            ):
+                actual_rows, actual_values = source_component(entry, side)
+                if not np.array_equal(actual_rows, saved_rows) or not np.array_equal(actual_values, saved_values):
+                    raise ValueError(f"Task41 B0 donor differs from saved production {side} mode {index}")
+                p6_rows, p6_values = p6_component(entry, index, side)
+                if not np.array_equal(p6_rows, saved_rows) or not np.array_equal(p6_values, saved_values):
+                    raise ValueError(f"Task41 B0 actual P6 {side} consumer differs at mode {index}")
+            if (
+                probe_rows.ndim != 1
+                or probe_values.shape != probe_rows.shape
+                or (probe_rows.size > 1 and np.any(probe_rows[1:] <= probe_rows[:-1]))
+                or not np.isfinite(probe_values).all()
+            ):
+                raise ValueError("Task41 B0 saved nonzero D probe is malformed")
+            probe_on_D = sparse_lookup(saved_D_rows, probe_rows, probe_values)
+            saved_D_x = complex(np.dot(saved_D_values, probe_on_D))
+            mapped_probe_rows = np.asarray(
+                action.condensed.trace_constraints.map_original_rows(probe_rows),
+                dtype=np.int64,
+            )
+            probe_order = np.argsort(mapped_probe_rows, kind="stable")
+            active_probe_rows = mapped_probe_rows[probe_order]
+            active_probe_values = probe_values[probe_order]
+            if active_probe_rows.size > 1 and np.any(
+                active_probe_rows[1:] == active_probe_rows[:-1]
+            ):
+                raise ValueError("Task41 B0 saved D probe aliases after the current trace map")
+            direct_D_rows, direct_D_values, direct_D_active = provider._direct_component(
+                entry, index, "D", "task41_saved_pair_D_probe"
+            )
+            direct_D_x = complex(
+                np.dot(
+                    direct_D_values,
+                    sparse_lookup(
+                        np.asarray(direct_D_active, dtype=np.int64),
+                        active_probe_rows,
+                        active_probe_values,
+                    ),
+                )
+            )
+            local_D_x = 0.0j
+            for cell in action._cells:
+                ports = np.asarray(cell.ports, dtype=np.int64)
+                columns = np.flatnonzero(ports == index)
+                if not columns.size:
+                    continue
+                column = int(columns[0])
+                local_rows = np.asarray(cell.original_interiors, dtype=np.int64)
+                local_values = np.asarray(cell.Di[column, :], dtype=np.complex128)
+                local_D_x += complex(
+                    np.dot(local_values, sparse_lookup(local_rows, probe_rows, probe_values))
+                )
+            p6_D_x = direct_D_x + local_D_x
+            production_D_x = complex(
+                np.dot(
+                    production_D_values,
+                    sparse_lookup(production_D_rows, probe_rows, probe_values),
+                )
+            )
+            h_value = float(entry.normalization_h)
+            saved_h = float(
+                mode_result["H_gauge_comparison"]["H_candidate_from_boundary_plane_gauge"]
+            )
+            candidate_D_x = complex(*mode_result["D_raw_x_action_comparison"]["D_raw_x_candidate"])
+            reference_D_x = complex(*mode_result["D_raw_x_action_comparison"]["D_raw_x_reference"])
+            alpha = complex(*mode_result["alpha"])
+            full_size_probes.append(
+                {
+                    "mode_index": index,
+                    "rows": probe_rows,
+                    "values": probe_values,
+                    "alpha": alpha,
+                }
+            )
+            B_alpha_norm = float(np.linalg.norm(saved_B_values * alpha))
+            B_reference_norm = float(mode_result["B_alpha_action_comparison"]["reference_l2_norm"])
+            D_error = abs(p6_D_x - reference_D_x) / max(abs(reference_D_x), np.finfo(float).tiny)
+            if (
+                h_value != saved_h
+                or not np.isclose(saved_D_x, candidate_D_x, rtol=1.0e-11, atol=1.0e-12)
+                or not np.isclose(production_D_x, reference_D_x, rtol=1.0e-11, atol=1.0e-12)
+                or not np.isclose(p6_D_x, candidate_D_x, rtol=1.0e-11, atol=1.0e-12)
+                or D_error > 1.0e-11
+                or not np.isclose(B_alpha_norm, B_reference_norm, rtol=1.0e-11, atol=1.0e-12)
+            ):
+                raise ValueError(f"Task41 B0 saved nonzero P6 B/D action check failed at mode {index}")
+            check = {
+                "schema": "task41.p0.b0.saved_surface_p6_consumer_check.v1",
+                "status": "PASS",
+                "mode_index": index,
+                "mode_key": list(carrier.mode_keys[index]),
+                "metadata_path": str(metadata_path),
+                "metadata_sha256": hashlib.sha256(metadata_path.read_bytes()).hexdigest(),
+                "npz_path": str(npz_path),
+                "npz_sha256": npz_sha256,
+                "source_committed_prefix_sha256": source.committed_prefix_sha256,
+                "source_mode_batch_reads": 1,
+                "donor_rows_values_match_saved_native_candidate_B_D_exactly": True,
+                "saved_native_candidate_vs_production_reference": native_vs_production,
+                "p6_direct_and_local_B_D_rows_values_match_saved_native_candidate_exactly": True,
+                "p6_direct_D_active_map_applied_to_nonzero_reduced_probe": True,
+                "p6_direct_trace_rows_mapped_without_second_MPC": True,
+                "p6_cell_interior_B_D_values_checked_against_saved_native_mode": True,
+                "B_probe_alpha": [float(alpha.real), float(alpha.imag)],
+                "B_probe_norm": B_alpha_norm,
+                "B_saved_reference_norm": B_reference_norm,
+                "D_probe_input_sha256": sha(probe_values),
+                "D_raw_x_saved_native_candidate": [float(saved_D_x.real), float(saved_D_x.imag)],
+                "D_raw_x_p6_direct_plus_cell_interior": [float(p6_D_x.real), float(p6_D_x.imag)],
+                "D_raw_x_saved_production_reference": [float(reference_D_x.real), float(reference_D_x.imag)],
+                "D_raw_x_production_reference_recomputed": [float(production_D_x.real), float(production_D_x.imag)],
+                "D_raw_x_relative_error": float(D_error),
+                "normalization_H": h_value,
+                "D_over_H": [float((p6_D_x / h_value).real), float((p6_D_x / h_value).imag)],
+                "B_rows_sha256": sha(saved_B_rows),
+                "B_values_sha256": sha(saved_B_values),
+                "D_rows_sha256": sha(saved_D_rows),
+                "D_values_sha256": sha(saved_D_values),
+                "p6_provider_audit": dict(provider.audit),
+            }
+        receipt_path = output_directory / f"task41_b0_saved_surface_consumer_mode_{index}.json"
+        _write_json(receipt_path, check)
+        runtime.marker("task41_b0_saved_surface_p6_consumer_check", check)
+        output.append({**check, "receipt_path": str(receipt_path)})
+    output.append(
+        _task41_b0_full_size_two_input_identity_check(
+            probes=full_size_probes,
+            carrier=carrier,
+            action=action,
+            provider=provider,
+            volume_action=volume_action,
+            original_port_block=original_port_block,
+            output_directory=output_directory,
+            allocation_gate=allocation_gate,
+            runtime=runtime,
+        )
+    )
+    return output
+
+
 def _task41_b0_carrier_memory_upper_bound(
     setup: Mapping[str, Any],
     cfg: Any,
@@ -2481,6 +3190,12 @@ def _mpc_payload_identity(floquet: Any) -> dict[str, Any]:
 
 
 def _carrier_payload_identity(carrier: Any) -> str:
+    source = getattr(carrier, "surface_source", None)
+    if source is not None:
+        digest = str(source.carrier_payload_rows_values_sha256)
+        if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+            raise ValueError("validated file-backed carrier has a malformed streamed payload identity")
+        return digest
     digest = hashlib.sha256()
     for entry in carrier.entries:
         digest.update(
@@ -2509,8 +3224,8 @@ def _validate_reference_physical_identity(
 ) -> dict[str, Any]:
     target_carrier = target_bundle["dtn_action"].carrier
     reference_carrier = reference_bundle["dtn_action"].carrier
-    target_modes = tuple(entry.mode_key for entry in target_carrier.entries)
-    reference_modes = tuple(entry.mode_key for entry in reference_carrier.entries)
+    target_modes = tuple(target_carrier.mode_keys)
+    reference_modes = tuple(reference_carrier.mode_keys)
     target_physical = str(target_bundle["mode_sha256"])
     reference_physical = str(reference_bundle["mode_sha256"])
     target_carrier_physical = str(
@@ -2788,10 +3503,7 @@ def _v15_native_budget_facts(
         or complete_fe.shape != (len(independent),)
     ):
         raise ValueError("V15 native residual inputs do not match the frozen p6 layout")
-    h = np.asarray(
-        [entry.normalization_h for entry in bundle["dtn_action"].carrier.entries],
-        dtype=np.float64,
-    )
+    h = np.asarray(bundle["dtn_action"].carrier.normalization_h, dtype=np.float64)
     if h.shape != (profile.mode_count,) or not np.isfinite(h).all() or np.any(h <= 0.0):
         raise ValueError("V15 global original-H vector is incomplete or invalid")
     if sector_action_data is None:
@@ -3535,7 +4247,7 @@ def _verify_regular_inverse(
             f"regular reference must retain {profile.mode_count} modes, got {len(modes)}"
         )
     carrier = bundle["dtn_action"].carrier
-    h = np.asarray([entry.normalization_h for entry in carrier.entries], dtype=np.float64)
+    h = np.asarray(carrier.normalization_h, dtype=np.float64)
     if h.shape != (profile.mode_count,) or not np.isfinite(h).all() or np.any(h <= 0.0):
         raise ValueError("regular reference original-H vector is incomplete or invalid")
 
@@ -4903,12 +5615,10 @@ class _P6ReferencePreconditioner:
         ):
             raise ValueError("target active trace map is not contained in regular independent rows")
         reference_carrier = self.reference["dtn_action"].carrier
-        if tuple(entry.mode_key for entry in target_carrier.entries) != tuple(
-            entry.mode_key for entry in reference_carrier.entries
-        ):
+        if tuple(target_carrier.mode_keys) != tuple(reference_carrier.mode_keys):
             raise ValueError("target and regular retained port order differs")
         self.h = np.asarray(
-            [entry.normalization_h for entry in self.reference["dtn_action"].carrier.entries],
+            self.reference["dtn_action"].carrier.normalization_h,
             dtype=np.float64,
         )
         self.calls = 0
@@ -6506,6 +7216,8 @@ def _task41_iterative_candidate_contract(
             and contract_binding.get("source_sha") == source_sha
             and contract_binding.get("window_path") == str(window.path)
             and contract_binding.get("window_sha256") == window.sha256
+            and contract_binding.get("saved_surface_donor")
+            == contract.get("preparation", {}).get("existing_surface_donor")
         )
         checks["no_a1_or_a2_comparison_binding"] = (
             isinstance(contract_binding, Mapping)
@@ -7580,7 +8292,9 @@ def run_task40_v10_p6_reference_worker(
     )
     from src.solvers.original_port_blocks import DiagonalOriginalPortBlock
     from src.solvers.p6_cell_condensed_action import (
+        P6GlobalDirectCarrierProvider,
         build_p6_cell_condensed_action_from_carrier,
+        build_p6_cell_condensed_action_from_generated,
     )
     from src.solvers.physical_equivalent_fast import build_packed_physical_action
     from src.solvers.retained_port_block_layout import RESEARCH_PORT_LAYOUT
@@ -8527,36 +9241,16 @@ def run_task40_v10_p6_reference_worker(
             )
             task41_b0_checkpoint = None
             task41_b0_pair_raw_evidence_callback = None
+            task41_b0_saved_surface_donor = None
             target_stage_callback = None
             if is_task41_b0:
                 if not isinstance(task41_contract_binding, Mapping):
                     raise ValueError("Task41 B0 target construction lacks its dispatcher binding")
-                checkpoint_identity = {
-                    "source_sha": source_sha,
-                    "input_sha256": str(task41_contract_binding["input_sha256"]),
-                    "staged_input_sha256": str(task41_contract_binding["input_sha256"]),
-                    "campaign_window_sha256": str(task41_contract_binding["window_sha256"]),
-                    "execution_contract_sha256": str(
-                        task41_contract_binding["contract_sha256"]
-                    ),
-                }
-                task41_b0_checkpoint = {
-                    "root": str(directory / "task41_b0_target_surface_checkpoint"),
-                    "identity": checkpoint_identity,
-                }
-
-                def save_task41_b0_pair_raw_evidence(
-                    mode_result: Mapping[str, Any],
-                    raw_functionals: Mapping[str, np.ndarray],
-                ) -> Mapping[str, Any]:
-                    return _save_task41_b0_native_surface_pair_evidence(
-                        directory,
-                        mode_result,
-                        raw_functionals,
-                        identity=checkpoint_identity,
-                    )
-
-                task41_b0_pair_raw_evidence_callback = save_task41_b0_pair_raw_evidence
+                task41_b0_saved_surface_donor = task41_contract_binding.get(
+                    "saved_surface_donor"
+                )
+                if not isinstance(task41_b0_saved_surface_donor, Mapping):
+                    raise ValueError("Task41 B0 dispatcher has no require-existing donor binding")
 
                 def target_stage_callback(facts: Mapping[str, Any]) -> None:
                     phase = str(facts.get("phase", ""))
@@ -8578,6 +9272,166 @@ def run_task40_v10_p6_reference_worker(
                             "task41_b0_native_surface_resource_admission",
                             summary["b0_native_surface_resource_admission"],
                         )
+                    if phase == "task41_b0_saved_donor_support_preflight" and status == "STARTED":
+                        admission = allocation_gate(
+                            "task41_b0_saved_donor_boundary_support_inventory",
+                            {
+                                "additional_payload_bytes": int(facts["additional_payload_bytes"]),
+                                "workspace_bytes": int(facts["workspace_bytes"]),
+                                "fresh_support_inventory_upper_bound": dict(facts),
+                                "resource_classification": facts["resource_classification"],
+                            },
+                        )
+                        summary["b0_saved_donor_support_admission"] = {
+                            "upper_bound": dict(facts), "admission": admission,
+                        }
+                        runtime.marker(
+                            "task41_b0_saved_donor_support_admission",
+                            summary["b0_saved_donor_support_admission"],
+                        )
+                    if phase == "task41_b0_saved_donor_validation_preflight" and status == "STARTED":
+                        mode_count = int(facts["mode_count"])
+                        batch_modes = int(facts["max_batch_modes"])
+                        max_frame_bytes = int(facts["max_frame_bytes"])
+                        resource_sample = runtime.sample(
+                            "task41_b0_saved_donor_validation_preflight"
+                        )
+                        memory_envelope = dict(resource_sample["memory_envelope"])
+                        cgroup_memory_stats = list(
+                            memory_envelope.get("cgroup_memory_stats", [])
+                        )
+                        admission_facts = {
+                            "additional_payload_bytes": int(
+                                facts["metadata_parse_peak_upper_bytes"]
+                                + facts["offset_index_bytes"]
+                                + facts["committed_binary_bytes"]
+                            ),
+                            "workspace_bytes": int(
+                                max_frame_bytes * max(1, batch_modes)
+                            ),
+                            "mode_count": mode_count,
+                            "committed_file_backing_bytes": int(facts["committed_binary_bytes"]),
+                            "conservative_new_file_page_backing_upper_bytes": int(
+                                facts["committed_binary_bytes"]
+                            ),
+                            "metadata_bytes": int(facts["metadata_bytes"]),
+                            "metadata_parse_peak_upper_bytes": int(
+                                facts["metadata_parse_peak_upper_bytes"]
+                            ),
+                            "offset_index_bytes": int(facts["offset_index_bytes"]),
+                            "max_frame_bytes": max_frame_bytes,
+                            "max_batch_modes": batch_modes,
+                            "payload_retained_after_validation": False,
+                            "observed_cgroup_memory_stats": cgroup_memory_stats,
+                            "donor_page_cache_touch_range_bytes": {
+                                "lower_bound": 0,
+                                "upper_bound": int(facts["committed_binary_bytes"]),
+                                "meaning": "possible sequential file-backed page growth; full-file upper bound is included once in additional_payload_bytes, while observed file/dirty pages remain separate",
+                            },
+                            "live_memory_envelope": memory_envelope,
+                            "live_process_tree_rss_bytes": int(resource_sample["rss_bytes"]),
+                            "resource_classification": "metadata and offset index plus a conservative full committed-file page-cache growth upper bound; current cgroup file/dirty pages remain separately measured and are not subtracted",
+                        }
+                        admission = allocation_gate(
+                            "task41_b0_saved_donor_validation_and_bounded_batches",
+                            admission_facts,
+                        )
+                        summary["b0_saved_donor_validation_admission"] = {
+                            "upper_bound": admission_facts, "admission": admission,
+                        }
+                        runtime.marker(
+                            "task41_b0_saved_donor_validation_admission",
+                            summary["b0_saved_donor_validation_admission"],
+                        )
+                    if phase == "task41_b0_saved_donor_validation" and status == "COMPLETE":
+                        receipt = {
+                            "schema": "task41.p0.b0.saved_donor_validation_receipt.v1",
+                            "status": "VALIDATED_READ_ONLY_BEFORE_CONDENSATION",
+                            "worker_run_id": str(run_id),
+                            "consumer_identity": {
+                                "case_id": task41_contract_binding.get("case_id"),
+                                "run_id": task41_contract_binding.get("run_id"),
+                                "source_sha": task41_contract_binding.get("source_sha"),
+                                "input_sha256": task41_contract_binding.get("input_sha256"),
+                                "abi_identity": dict(summary.get("abi", {})),
+                                "window_path": task41_contract_binding.get("window_path"),
+                                "window_sha256": task41_contract_binding.get("window_sha256"),
+                                "execution_contract_path": task41_contract_binding.get("contract_path"),
+                                "execution_contract_sha256": task41_contract_binding.get("contract_sha256"),
+                            },
+                            "validation": dict(facts),
+                            "validation_resource_admission": summary.get(
+                                "b0_saved_donor_validation_admission"
+                            ),
+                        }
+                        receipt_path = directory / "task41_b0_saved_donor_validation_receipt.json"
+                        _write_json(receipt_path, receipt)
+                        summary["b0_saved_donor_validation_receipt"] = {
+                            "path": str(receipt_path),
+                            "status": receipt["status"],
+                            "committed_prefix_sha256": facts.get(
+                                "committed_prefix_sha256"
+                            ),
+                            "manifest_sha256": facts.get("manifest_sha256"),
+                            "checkpoint_sha256": facts.get("checkpoint_sha256"),
+                            "producer_reconstructed_assembly_context_sha256": facts.get(
+                                "identity_bridge", {}
+                            ).get("producer_reconstructed_assembly_context_sha256"),
+                        }
+                        runtime.marker(
+                            "task41_b0_saved_donor_validation_receipt_durable",
+                            summary["b0_saved_donor_validation_receipt"],
+                        )
+                        post_validation_sample = runtime.sample(
+                            "task41_b0_saved_donor_validation_complete"
+                        )
+                        receipt["post_validation_resource_sample"] = post_validation_sample
+                        _write_json(receipt_path, receipt)
+                        summary["b0_saved_donor_validation_receipt"][
+                            "post_validation_cgroup_memory_stats"
+                        ] = list(
+                            post_validation_sample["memory_envelope"].get(
+                                "cgroup_memory_stats", []
+                            )
+                        )
+                    if phase == "task41_b0_saved_donor_internal_terms_preflight" and status == "STARTED":
+                        admission_facts = {
+                            "additional_payload_bytes": int(
+                                facts["retained_payload_growth_upper_bytes"]
+                            ),
+                            "workspace_bytes": int(facts["bounded_frame_workspace_bytes"]),
+                            "new_nonzero_internal_entries": int(
+                                facts["new_nonzero_internal_entries"]
+                            ),
+                            "retained_internal_entries_upper_bytes": int(
+                                facts["retained_internal_entries_upper_bytes"]
+                            ),
+                            "resource_classification": facts["resource_classification"],
+                        }
+                        admission = allocation_gate(
+                            "task41_b0_saved_donor_internal_terms_growth",
+                            admission_facts,
+                        )
+                        summary["b0_saved_donor_internal_term_growth_admission"] = {
+                            **admission_facts, "admission": admission,
+                        }
+                    if phase == "task41_b0_saved_donor_cell_terms_preflight" and status == "STARTED":
+                        admission_facts = {
+                            "additional_payload_bytes": int(
+                                facts["resident_dense_Bi_Di_bytes"]
+                            ),
+                            "workspace_bytes": 0,
+                            "cell_count": int(facts["cell_count"]),
+                            "sparse_source_entries": int(facts["sparse_source_entries"]),
+                            "resource_classification": facts["resource_classification"],
+                        }
+                        admission = allocation_gate(
+                            "task41_b0_saved_donor_local_port_terms",
+                            admission_facts,
+                        )
+                        summary["b0_saved_donor_local_port_terms_admission"] = {
+                            **admission_facts, "admission": admission,
+                        }
                     if phase == "dtn_carrier_build" and status == "STARTED":
                         bound = _task41_b0_carrier_memory_upper_bound(
                             target_levels, cfg, tuple(task41_mode_inventory[0])
@@ -8612,6 +9466,10 @@ def run_task40_v10_p6_reference_worker(
                         status in {"STARTED", "COMPLETE", "FAILED"}
                         or phase == "task41_b0_native_surface_pair_mode"
                         or (
+                            phase == "task41_b0_saved_donor_validation"
+                            and status == "PROGRESS"
+                        )
+                        or (
                             phase == "dtn_carrier_mode"
                             and status == "PROGRESS"
                             and (
@@ -8620,6 +9478,9 @@ def run_task40_v10_p6_reference_worker(
                             )
                         )
                     ):
+                        if phase == "task41_b0_saved_donor_validation" and status == "PROGRESS":
+                            sample = runtime.sample("task41_b0_saved_donor_validation_progress")
+                            facts = {**dict(facts), "supervised_resource_sample": sample}
                         runtime.marker("task41_b0_target_physical_action_stage", dict(facts))
 
             target_bundle = build_same_mesh_physical_action(
@@ -8637,7 +9498,7 @@ def run_task40_v10_p6_reference_worker(
                 surface_assembly_backend=(
                     "native_boundary_plane" if is_task41_b0 else "ffcx"
                 ),
-                pair_native_surface=bool(is_task41_b0),
+                pair_native_surface=False,
                 native_surface_pair_tolerance=_REGULAR_ACTION_LIMIT if is_task41_b0 else None,
                 surface_pair_raw_evidence_callback=task41_b0_pair_raw_evidence_callback,
                 surface_functional_checkpoint=(
@@ -8645,6 +9506,12 @@ def run_task40_v10_p6_reference_worker(
                         task41_b0_checkpoint, scope="global"
                     )
                     if task41_b0_checkpoint is not None
+                    else None
+                ),
+                saved_surface_donor=task41_b0_saved_surface_donor,
+                saved_surface_offset_index_path=(
+                    directory / "task41_b0_saved_donor_offsets.i64"
+                    if is_task41_b0
                     else None
                 ),
                 stage_callback=target_stage_callback,
@@ -8728,7 +9595,22 @@ def run_task40_v10_p6_reference_worker(
                 identity_gate(reference_owner["global_bundle"], reference_owner["global_levels"])
             runtime.sample("v10_candidate_target_mesh_and_operator_complete")
 
-            support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
+            if is_task41_b0:
+                saved_surface_support = target_bundle.get("saved_surface_support")
+                carrier = target_bundle["dtn_action"].carrier
+                if (
+                    saved_surface_support is None
+                    or getattr(carrier, "surface_source", None) is None
+                    or not hasattr(carrier, "saved_surface_support_terms")
+                ):
+                    raise ValueError(
+                        "Task41 B0 target has no validated file-backed support inventory"
+                    )
+                support_groups = saved_surface_support.groups
+                support_rows = saved_surface_support.row_groups
+                _support_facts = dict(saved_surface_support.audit)
+            else:
+                support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
             compiled_target = fem.form(
                 target_bundle["volume_action"].bilinear_form,
                 jit_options=dict(SAME_MESH_JIT_OPTIONS),
@@ -8749,6 +9631,8 @@ def run_task40_v10_p6_reference_worker(
                 preserve_exact_geometry=True,
                 allocation_gate=allocation_gate,
             )
+            if is_task41_b0:
+                saved_surface_support.validate_condensed(target_condensed)
             target_identity_cache_audit = {
                 key: target_condensed.build_audit.get(key)
                 for key in (
@@ -8760,16 +9644,82 @@ def run_task40_v10_p6_reference_worker(
                     "retained_local_schur_class_count_local",
                 )
             }
-            target_action = build_p6_cell_condensed_action_from_carrier(
-                target_condensed,
-                target_bundle["dtn_action"].carrier,
-                owns_condensed=True,
-                port_coupling_mode="cached",
-                port_block_layout=RESEARCH_PORT_LAYOUT,
-                original_port_block=DiagonalOriginalPortBlock.from_carrier(
-                    target_bundle["dtn_action"].carrier.entries
-                ),
-            )
+            if is_task41_b0:
+                carrier = target_bundle["dtn_action"].carrier
+                saved_source = carrier.surface_source
+                original_port_block = DiagonalOriginalPortBlock(
+                    carrier.normalization_h, carrier.mode_keys
+                )
+
+                def saved_surface_apply_progress(progress: Mapping[str, Any]) -> None:
+                    source_audit = dict(saved_source.audit)
+                    runtime.marker(
+                        "task41_b0_saved_surface_apply_progress",
+                        {
+                            **dict(progress),
+                            "read_modes_after_validation": int(
+                                source_audit["read_modes_after_validation"]
+                            ),
+                            "read_bytes_after_validation": int(
+                                source_audit["read_bytes_after_validation"]
+                            ),
+                            "read_frame_parse_seconds_after_validation": float(
+                                source_audit[
+                                    "read_frame_parse_seconds_after_validation"
+                                ]
+                            ),
+                        },
+                    )
+
+                saved_surface_provider = P6GlobalDirectCarrierProvider(
+                    lambda: saved_source.iter_entries(),
+                    condensed=target_condensed,
+                    mode_count=len(carrier.entries),
+                    interior_rows_are_managed=True,
+                    source_label="task41_b0_validated_saved_surface_donor",
+                    progress_callback=saved_surface_apply_progress,
+                    progress_interval_seconds=60.0,
+                )
+                target_action = build_p6_cell_condensed_action_from_generated(
+                    target_condensed,
+                    original_port_block,
+                    {},
+                    port_terms=carrier.saved_surface_support_terms,
+                    global_direct_provider=saved_surface_provider,
+                    owns_condensed=True,
+                )
+                pair_consumer_checks = _task41_b0_saved_surface_consumer_checks(
+                    carrier=carrier,
+                    action=target_action,
+                    provider=saved_surface_provider,
+                    volume_action=target_bundle["volume_action"],
+                    original_port_block=original_port_block,
+                    donor_binding=task41_b0_saved_surface_donor,
+                    output_directory=directory,
+                    allocation_gate=allocation_gate,
+                    runtime=runtime,
+                )
+                summary["b0_saved_surface_p6_consumer_checks"] = pair_consumer_checks
+                _write_json(
+                    directory / "task41_b0_saved_surface_p6_consumer_checks.json",
+                    {
+                        "schema": "task41.p0.b0.saved_surface_p6_consumer_check_set.v1",
+                        "status": "PASS",
+                        "checks": pair_consumer_checks,
+                        "source_audit": dict(saved_source.audit),
+                    },
+                )
+            else:
+                target_action = build_p6_cell_condensed_action_from_carrier(
+                    target_condensed,
+                    target_bundle["dtn_action"].carrier,
+                    owns_condensed=True,
+                    port_coupling_mode="cached",
+                    port_block_layout=RESEARCH_PORT_LAYOUT,
+                    original_port_block=DiagonalOriginalPortBlock.from_carrier(
+                        target_bundle["dtn_action"].carrier.entries
+                    ),
+                )
             if is_v16 or is_v17:
                 owner_version = "v17_row_tile" if is_v17 else "v16"
                 owner_key = "v17_target_owner_inventory" if is_v17 else "v16_target_owner_inventory"

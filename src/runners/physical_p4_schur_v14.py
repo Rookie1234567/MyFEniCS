@@ -1176,7 +1176,7 @@ class _V14Runtime:
             f"/proc/{self.parent_pid}"
         ).is_dir():
             raise RuntimeError("V14 worker requires the dedicated parent watchdog")
-        from benchmarks.subreaper_watchdog import memory_envelope
+        from benchmarks.subreaper_watchdog import memory_envelope, reserve_violation
         from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
 
         value = process_tree_snapshot(
@@ -1229,18 +1229,7 @@ class _V14Runtime:
                 )
                 for item in cgroup_stats
             )
-        if envelope.get("reserve_domains_separated") is True:
-            reserve_violation = (
-                int(envelope["host_mem_available_bytes"])
-                < int(envelope["reserve_bytes"])
-                or int(envelope["task_cgroup_available_bytes"])
-                < int(envelope["task_cgroup_reserve_bytes"] or 0)
-            )
-        else:
-            reserve_violation = (
-                int(envelope["effective_available_bytes"])
-                < int(envelope["reserve_bytes"])
-            )
+        reserve_is_violated = reserve_violation(envelope)
         value.update(
             {
                 "label": label,
@@ -1279,7 +1268,7 @@ class _V14Runtime:
         if enforce and (
             not value["all_status_readable"]
             or (self.require_zero_swap and int(value["swap_bytes"]) != 0)
-            or reserve_violation
+            or reserve_is_violated
             or not cgroup_limit_matches_contract
             or not cgroup_memory_details_complete
             or int(value["rss_bytes"]) >= cap

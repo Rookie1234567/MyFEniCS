@@ -1,0 +1,92 @@
+{
+  "schema": "task41.p0.local_final_evidence.v1",
+  "recorded_date": "2026-10-18",
+  "source": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "head": "5e82225427d91d2ec4650169e558b6da29e75a8e",
+    "base": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+    "tracked_diff_sha256_before_evidence": "9c8707fc9541087d1d7523edfa1eb10f18842845ed8b4ead70a97369561b98e7",
+    "committed": false,
+    "pushed": false
+  },
+  "targeted_local_regressions": {
+    "activation": "source scripts/activate_myfenics_wsl.sh",
+    "command": "python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_global_direct_provider_two_input_check_uses_one_sweep_and_matches_columns src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map src/test/test_task40_v10_worker_arrays.py::test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive src/test/test_task40_v10_worker_arrays.py::test_carrier_payload_identity_reuses_validated_stream_digest_without_iteration src/test/test_task40_v10_worker_arrays.py::test_file_backed_carrier_metadata_checks_do_not_iterate_entries src/test/test_271_task038_full3d_t3_dtn.py::test_resumable_surface_stream_reopens_appends_suffix_and_rejects_bad_prefix src/test/test_354_subreaper_watchdog.py::test_v29_reserves_host_and_task_cgroup_capacity_as_separate_domains src/test/test_354_subreaper_watchdog.py::test_split_reserve_predicate_matches_task41_false_stop_sample src/test/test_354_subreaper_watchdog.py::test_split_reserve_predicate_checks_only_each_domains_own_reserve src/test/test_354_subreaper_watchdog.py::test_legacy_reserve_predicate_keeps_effective_available_boundary 'src/test/test_task41_p0_contract.py::test_task41_prepare_keeps_first_t0_after_validation_failure_and_source_change[B0]' 'src/test/test_task41_p0_contract.py::test_task41_worker_runtime_uses_service_window_and_strict_resource_view[B0]'",
+    "result": "passed",
+    "passed": 16,
+    "duration_seconds": 0.88,
+    "final_static_checks": {
+      "py_compile": "passed",
+      "git_diff_check": "passed"
+    }
+  },
+  "local_test_abi": {
+    "activation_marker": "_MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+    "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+    "PETSc_ScalarType": "numpy.complex128",
+    "PETSc_IntType": "numpy.int32",
+    "stack": "WSL Linux PETSc/SLEPc 3.19 complex; mpi4py Linux package"
+  },
+  "b0_service_fixture": {
+    "test": "src/test/test_task41_p0_contract.py::test_task41_launcher_and_service_pass_real_window_resources_and_checker_authority[B0]",
+    "requested_runtime_prefix": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "abi_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+    "jit_cache": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+    "status": "blocked_before_imports_preflight_and_pytest",
+    "activation_error": "run-local ABI receipt belongs to a different runtime profile, host, or boot",
+    "environment_modified": false,
+    "runtime_gate_modified": false,
+    "next_action": "After controller freezes and deploys the source, run this fixture on the qualified workstation runtime before starting the heavy service."
+  },
+  "split_reserve_watchdog_trigger": {
+    "host_mem_available_bytes": 854915547136,
+    "host_reserve_bytes": 68719476736,
+    "task_cgroup_available_bytes": 68698267648,
+    "task_cgroup_reserve_bytes": 0,
+    "effective_available_bytes": 68698267648,
+    "reserve_violation": false,
+    "interpretation": "Host reserve is satisfied; the cgroup has no separate reserve requirement, so its smaller available memory is not a cgroup reserve violation.",
+    "old_wrong_cross_domain_comparison_shortfall_bytes": 21209088,
+    "actual_host_reserve_shortfall_bytes": 0
+  },
+  "saved_surface_donor_bridge": {
+    "schema": "task41.p0.b0.saved_surface_source_equivalence.v1",
+    "require_existing": true,
+    "root_relative_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z/task41_b0_target_surface_checkpoint/global",
+    "binary_name": "carrier_surface_functionals.bin",
+    "mode_count": 64120,
+    "committed_bytes": 363791051840,
+    "producer_source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+    "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+    "checkpoint_sha256": "66ec8f305382060c044822459d50aa6d323d85bcdfffd531b46ff5d74e43e57a",
+    "manifest_sha256": "46cd5e3cecf2c0dac694bdbba1fef91eae10642e878a487fc63e216ddcc1f142",
+    "committed_prefix_sha256": "2595b9518e2422bfadbc2f1a6640e619d60501525b07bda48a068a8ec478a10e",
+    "unchanged_math_source_paths": [
+      "src/solvers/dtn_boundary_phase_gauge.py",
+      "src/solvers/dtn_port_3d.py",
+      "src/solvers/dtn_boundary_plane_qualification.py",
+      "src/solvers/fresh_c1_manifest_identity.py",
+      "src/common/modes_3d.py",
+      "src/common/config_3d.py",
+      "src/solvers/task40_v22_operator_probe.py",
+      "src/solvers/task40_v25_selected_q0.py",
+      "src/solvers/directional_boundary.py"
+    ],
+    "execution_only_source_paths": [
+      "src/solvers/fullspace_dtn_action.py",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py"
+    ],
+    "required_identity_match": "current mesh, MPC, Basix, configuration, mode inventory, and H values"
+  },
+  "prior_cache_metadata": {
+    "cache_metadata_stable": false,
+    "classification": "JIT stability sampling was incomplete; this flag alone is not evidence that the saved payload is damaged."
+  },
+  "new_heavy_service_started": false,
+  "temporary_interpreter_experiment": {
+    "status": "cleaned_and_restored",
+    "python_task41_identity_test_copy_removed": true,
+    "original_venv_python_symlink_restored": true,
+    "final_16_test_run_used_original_activation": true
+  }
+}

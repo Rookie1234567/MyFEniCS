@@ -604,6 +604,260 @@ def test_global_direct_provider_streams_full_reduced_and_contribution_paths() ->
         action.destroy()
 
 
+def test_global_direct_provider_two_input_check_uses_one_sweep_and_matches_columns() -> None:
+    condensed, block, seed_action = _problem()
+    hp = seed_action._H_p.copy()
+    seed_action.destroy()
+    mode_keys = [(index, "top", index, 0, "s") for index in range(2)]
+    rows = np.asarray([2, 3], dtype=PETSc.IntType)
+
+    def stream_modes():
+        for port in range(2):
+            yield SimpleNamespace(
+                mode_key=mode_keys[port],
+                normalization_h=float(6 + port),
+                coupling_rows=rows,
+                coupling_values=np.asarray(
+                    [0.4 + 0.2j * port, -0.3 + 0.1j], dtype=np.complex128
+                ),
+                projection_rows=rows,
+                projection_values=np.asarray(
+                    [0.1 - 0.2j, 0.5 + 0.3j * port], dtype=np.complex128
+                ),
+            )
+
+    original_h = DiagonalOriginalPortBlock(
+        np.asarray([6.0, 7.0], dtype=np.complex128), mode_keys
+    )
+    provider = P6GlobalDirectCarrierProvider(
+        stream_modes, condensed=condensed, mode_count=2, source_label="two-input-fixture"
+    )
+    action = build_p6_cell_condensed_action_from_generated(
+        condensed, original_h, {}, global_direct_provider=provider
+    )
+    observed = []
+    try:
+        sources = np.asarray(
+            [
+                [0.2 + 0.1j, -0.5j],
+                [0.7 - 0.2j, 0.4 + 0.6j],
+                [0.3 + 0.4j, -0.1 + 0.2j],
+                [-0.2j, 0.8 - 0.3j],
+            ],
+            dtype=np.complex128,
+        )
+
+        def observer(port, b_data, d_data):
+            observed.append((port, b_data is not None, d_data is not None))
+
+        before = dict(provider.audit["iterator_sweeps_by_operation"])
+        batched = action.apply_multi_rhs(sources, direct_observer=observer)
+        after = dict(provider.audit["iterator_sweeps_by_operation"])
+        assert after.get("reduced_apply_multi", 0) - before.get("reduced_apply_multi", 0) == 1
+        assert observed == [(0, True, True), (1, True, True)]
+        for column in range(2):
+            np.testing.assert_allclose(
+                batched[:, column], action.apply(sources[:, column]),
+                rtol=2e-13, atol=2e-13,
+            )
+        assert provider.audit["iterator_sweeps_by_operation"]["reduced_apply_multi"] == 1
+    finally:
+        action.destroy()
+
+
+def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(tmp_path) -> None:
+    from src.runners.task40_v10_worker import _task41_b0_full_size_two_input_identity_check
+
+    condensed, block, seed_action = _problem()
+    seed_action.destroy()
+    condensed.full_rows = 5
+    condensed.owned_trace_original_dofs = np.asarray([2, 3, 4], dtype=PETSc.IntType)
+    cell_trace = np.asarray([2, 4], dtype=PETSc.IntType)
+    condensed.cell_recovery_maps = (
+        CellRecoveryMap(
+            interior_original_dofs=np.asarray([0, 1], dtype=PETSc.IntType),
+            trace_original_dofs=cell_trace,
+            class_key=(0,),
+        ),
+    )
+    active_original = np.asarray([2, 3], dtype=PETSc.IntType)
+
+    def map_original_rows(rows):
+        values = np.asarray(rows)
+        if values.ndim != 1 or np.any((values < 2) | (values > 3)):
+            raise ValueError("MPC slave or unknown row cannot be a direct donor row")
+        return (values.astype(np.int64, copy=False) - 2).astype(PETSc.IntType, copy=False)
+
+    condensed.trace_constraints = SimpleNamespace(
+        owned_active_original_dofs=active_original,
+        original_to_active={2: 0, 3: 1},
+        owned_active_range=(0, 2),
+        expansion_by_original={
+            2: (np.asarray([0], dtype=PETSc.IntType), np.asarray([1.0 + 0.0j])),
+            3: (np.asarray([1], dtype=PETSc.IntType), np.asarray([1.0 + 0.0j])),
+            4: (
+                np.asarray([0, 1], dtype=PETSc.IntType),
+                np.asarray([0.4 + 0.1j, -0.2 + 0.35j], dtype=np.complex128),
+            ),
+        },
+        map_original_rows=map_original_rows,
+    )
+
+    rng = np.random.default_rng(20261018)
+    b_trace = _matrix(rng, 2, 2)
+    d_trace = _matrix(rng, 2, 2)
+    mode_keys = [(index, "top", index, 0, "s") for index in range(2)]
+    normalization_h = np.asarray([2.5 + 0.3j, 3.25 - 0.2j], dtype=np.complex128)
+    original_h = DiagonalOriginalPortBlock(normalization_h, mode_keys)
+    donor_rows = np.asarray([0, 1, 2, 3], dtype=PETSc.IntType)
+
+    def stream_modes():
+        for port in range(2):
+            yield SimpleNamespace(
+                mode_key=mode_keys[port],
+                normalization_h=normalization_h[port],
+                coupling_rows=donor_rows,
+                coupling_values=np.concatenate((block["Bi"][:, port], b_trace[:, port])),
+                projection_rows=donor_rows,
+                projection_values=np.concatenate((block["Di"][port, :], d_trace[port, :])),
+            )
+
+    provider = P6GlobalDirectCarrierProvider(
+        stream_modes,
+        condensed=condensed,
+        mode_count=2,
+        interior_rows_are_managed=True,
+        source_label="task41-two-input-full-p6-fixture",
+    )
+    action = build_p6_cell_condensed_action_from_generated(
+        condensed,
+        original_h,
+        {},
+        port_terms={
+            0: P6CellPortTerms(
+                block["Bi"],
+                block["Di"],
+                np.asarray([0, 1], dtype=PETSc.IntType),
+            )
+        },
+        global_direct_provider=provider,
+    )
+
+    local_volume_matrix = np.block(
+        [[block["Vii"], block["Vit"]], [block["Vti"], block["Vtt"]]]
+    )
+    local_global_rows = np.asarray([0, 1, 2, 4], dtype=np.int64)
+    volume_matrix = np.zeros((5, 5), dtype=np.complex128)
+    volume_matrix[np.ix_(local_global_rows, local_global_rows)] = local_volume_matrix
+    expansion = np.zeros((5, 4), dtype=np.complex128)
+    expansion[:4, :] = np.eye(4, dtype=np.complex128)
+    expansion[4, 2:] = np.asarray([0.4 + 0.1j, -0.2 + 0.35j])
+    independent_volume_oracle = expansion.conjugate().T @ volume_matrix @ expansion
+    independent_volume_schur = independent_volume_oracle[2:, 2:] - (
+        independent_volume_oracle[2:, :2]
+        @ np.linalg.solve(
+            independent_volume_oracle[:2, :2],
+            independent_volume_oracle[:2, 2:],
+        )
+    )
+    local_schur = block["Vtt"] - block["Vti"] @ np.linalg.solve(
+        block["Vii"], block["Vit"]
+    )
+    cell = action._cells[0]
+    assert np.array_equal(cell.original_trace, cell_trace)
+    np.testing.assert_allclose(
+        cell.expansion.toarray(), expansion[[2, 4], 2:], rtol=0.0, atol=0.0
+    )
+    p6_volume_schur = np.asarray(
+        cell.expansion.conjugate().T @ cell.S_V @ cell.expansion,
+        dtype=np.complex128,
+    )
+    np.testing.assert_allclose(
+        p6_volume_schur, independent_volume_schur, rtol=2e-13, atol=2e-13
+    )
+
+    class _ReusableVolume:
+        def __init__(self):
+            self.buffer = PETSc.Vec().createSeq(5, comm=PETSc.COMM_SELF)
+            self.calls = 0
+
+        def apply(self, source):
+            self.calls += 1
+            source_values = np.asarray(source.getArray(readonly=True), dtype=np.complex128)
+            if source_values[4] != 0.0:
+                raise AssertionError("native MPC storage input must retain exact zero slave identity")
+            backsubstituted = expansion @ source_values[:4]
+            raw = volume_matrix @ backsubstituted
+            restricted = expansion.conjugate().T @ raw
+            output = self.buffer.getArray()
+            output[:] = 0.0
+            output[:4] = restricted
+            output[4] = source_values[4]
+            return self.buffer
+
+    class _Runtime:
+        def __init__(self):
+            self.markers = []
+
+        def marker(self, name, facts):
+            self.markers.append((name, dict(facts)))
+
+    volume_action = _ReusableVolume()
+    carrier = SimpleNamespace(
+        entries=(object(), object()),
+        mode_keys=tuple(mode_keys),
+        surface_source=SimpleNamespace(
+            max_frame_bytes=256,
+            audit={"read_bytes_after_validation": 4096},
+        ),
+    )
+    runtime = _Runtime()
+    try:
+        result = _task41_b0_full_size_two_input_identity_check(
+            probes=[
+                {
+                    "mode_index": 0,
+                    "rows": np.asarray([2], dtype=PETSc.IntType),
+                    "values": np.asarray([0.6 + 0.3j], dtype=np.complex128),
+                    "alpha": 0.25 - 0.1j,
+                },
+                {
+                    "mode_index": 1,
+                    "rows": np.asarray([3], dtype=PETSc.IntType),
+                    "values": np.asarray([-0.2 + 0.8j], dtype=np.complex128),
+                    "alpha": -0.4 + 0.55j,
+                },
+            ],
+            carrier=carrier,
+            action=action,
+            provider=provider,
+            volume_action=volume_action,
+            original_port_block=original_h,
+            output_directory=tmp_path,
+            allocation_gate=lambda _label, facts: {
+                "admitted": True,
+                "persistent_bytes": facts["additional_payload_bytes"],
+                "workspace_bytes": facts["workspace_bytes"],
+            },
+            runtime=runtime,
+        )
+        assert result["status"] == "PASS"
+        assert result["independent_nonzero_cell_interiors_injected_before_native_rhs"] is True
+        assert max(result["native_full_rhs_recovery_relative_errors"]) < 1.0e-11
+        assert max(result["p6_vs_native_reduced_rhs_relative_errors"]) < 1.0e-11
+        assert result["direct_B_row_entries_checked"] > 0
+        assert result["direct_D_row_entries_checked"] > 0
+        assert volume_action.calls == 2
+        assert volume_action.buffer.getSize() == 5
+        assert provider.audit["iterator_sweeps_by_operation"]["reduced_apply_multi"] == 1
+        assert result["recovered_mpc_slave_rows_exact_zero"] is True
+        assert np.any(independent_volume_oracle[2:, :])
+        assert (tmp_path / "task41_b0_full_size_two_input_identity_check.json").is_file()
+    finally:
+        volume_action.buffer.destroy()
+        action.destroy()
+
+
 def test_global_direct_provider_inventory_counts_h_copy_and_mode_keys() -> None:
     condensed = SimpleNamespace(
         full_rows=32,

@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import struct
 import time
 from types import MappingProxyType
@@ -128,7 +129,10 @@ def _file_identity_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _surface_frame_arrays(stream, *, expected_index: int, expected_h: float, digest=None):
+def _surface_frame_arrays(
+    stream, *, expected_index: int, expected_h: float, digest=None,
+    stream_end: int | None = None, max_frame_bytes: int | None = None,
+):
     start = stream.tell()
     header = stream.read(_SURFACE_FUNCTIONAL_FRAME.size)
     if len(header) != _SURFACE_FUNCTIONAL_FRAME.size:
@@ -143,11 +147,20 @@ def _surface_frame_arrays(stream, *, expected_index: int, expected_h: float, dig
     ):
         raise ValueError("resumable surface frame mode/H identity changed")
     body_bytes = 20 * (int(coupling_count) + int(projection_count))
+    frame_bytes = _SURFACE_FUNCTIONAL_FRAME.size + body_bytes
+    if max_frame_bytes is not None:
+        if type(max_frame_bytes) is not int or max_frame_bytes < _SURFACE_FUNCTIONAL_FRAME.size:
+            raise ValueError("resumable surface frame byte bound is invalid")
+        if frame_bytes > max_frame_bytes:
+            raise ValueError("resumable surface frame exceeds its current FE support byte bound")
     body_start = stream.tell()
-    stream.seek(0, os.SEEK_END)
-    remaining_bytes = stream.tell() - body_start
-    stream.seek(body_start)
-    if body_bytes > remaining_bytes:
+    if stream_end is None:
+        stream.seek(0, os.SEEK_END)
+        end = stream.tell()
+        stream.seek(body_start)
+    else:
+        end = int(stream_end)
+    if body_bytes > end - body_start:
         raise IOError("resumable surface stream has a truncated frame payload")
     body = stream.read(body_bytes)
     if len(body) != body_bytes:
@@ -156,9 +169,13 @@ def _surface_frame_arrays(stream, *, expected_index: int, expected_h: float, dig
 
     def take(count: int, dtype: str, itemsize: int):
         nonlocal offset
-        stop = offset + int(count) * itemsize
-        result = np.frombuffer(body[offset:stop], dtype=np.dtype(dtype), count=int(count))
-        offset = stop
+        result = np.frombuffer(
+            body,
+            dtype=np.dtype(dtype),
+            count=int(count),
+            offset=offset,
+        )
+        offset += int(count) * itemsize
         return result
 
     coupling_rows = take(coupling_count, "<i4", 4)
@@ -191,6 +208,545 @@ def _surface_frame_arrays(stream, *, expected_index: int, expected_h: float, dig
         projection_values,
         int(end - start),
     )
+
+
+class ReadOnlySurfaceFunctionalSource:
+    """Validated indexed view of an immutable resumable carrier file.
+
+    Validation consumes the committed prefix exactly once.  Later action
+    sweeps stream one frame at a time from the same file and never retain the
+    complete carrier payload in Python memory.
+    """
+
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        expected_manifest_sha256: str,
+        expected_checkpoint_sha256: str,
+        expected_identity_sha256: str,
+        expected_prefix_sha256: str,
+        expected_mode_count: int,
+        expected_committed_bytes: int,
+        max_frame_bytes: int | None = None,
+        max_batch_modes: int = FULLSPACE_DTN_BATCH_SIZE,
+        offset_index_path: str | Path | None = None,
+        expected_mode_keys: Sequence[tuple[Any, ...]],
+        expected_normalization_h: Sequence[float],
+        global_rows: int,
+        ownership_range: tuple[int, int],
+        slave_rows: Any = (),
+        identity_validator: Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]]], None] | None = None,
+        frame_observer: Callable[..., None] | None = None,
+        progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
+        progress_interval: int = 256,
+    ) -> None:
+        self.path = Path(path).resolve()
+        self.checkpoint_path = Path(str(self.path) + ".checkpoint.json")
+        self.manifest_path = Path(str(self.path) + ".manifest.json")
+        if (
+            type(expected_mode_count) is not int
+            or expected_mode_count <= 0
+            or type(expected_committed_bytes) is not int
+            or expected_committed_bytes < 0
+            or type(max_batch_modes) is not int
+            or max_batch_modes <= 0
+            or (
+                max_frame_bytes is not None
+                and (type(max_frame_bytes) is not int or max_frame_bytes < _SURFACE_FUNCTIONAL_FRAME.size)
+            )
+            or type(progress_interval) is not int
+            or progress_interval <= 0
+        ):
+            raise ValueError("saved surface donor expectations are invalid")
+        if identity_validator is not None and not callable(identity_validator):
+            raise TypeError("saved surface donor identity validator must be callable")
+        if frame_observer is not None and not callable(frame_observer):
+            raise TypeError("saved surface donor frame observer must be callable")
+        if progress_callback is not None and not callable(progress_callback):
+            raise TypeError("saved surface donor progress callback must be callable")
+        for digest in (
+            expected_manifest_sha256,
+            expected_checkpoint_sha256,
+            expected_identity_sha256,
+            expected_prefix_sha256,
+        ):
+            if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+                raise ValueError("saved surface donor SHA-256 binding is malformed")
+        self._global_rows = int(global_rows)
+        self._owned_start, self._owned_end = map(int, ownership_range)
+        if (
+            self._global_rows <= 0
+            or not 0 <= self._owned_start <= self._owned_end <= self._global_rows
+        ):
+            raise ValueError("saved surface donor FE row layout is invalid")
+        self._expected_mode_count = expected_mode_count
+        self._expected_committed_bytes = expected_committed_bytes
+        self.max_batch_modes = max_batch_modes
+        self.max_frame_bytes = max_frame_bytes
+        self._offset_index_path = (
+            None if offset_index_path is None else Path(offset_index_path).resolve()
+        )
+        self._expected_prefix_sha256 = expected_prefix_sha256
+        self._offsets = np.empty(expected_mode_count + 1, dtype=np.int64)
+        self._read_sweeps = 0
+        self._read_batches = 0
+        self._read_modes = 0
+        self._read_bytes = 0
+        self._path_identity: tuple[int, int, int, int, int] | None = None
+        self._validation_seconds = 0.0
+        self._validation_frame_read_hash_seconds = 0.0
+        self._validation_classification_seconds = 0.0
+        self._validation_frame_observer_seconds = 0.0
+        self._validation_payload_digest_seconds = 0.0
+        self._read_frame_parse_seconds = 0.0
+        self._max_frame_bytes_observed = 0
+
+        if not self.path.is_file() or not self.checkpoint_path.is_file() or not self.manifest_path.is_file():
+            raise FileNotFoundError("require-existing surface donor data/checkpoint/manifest is incomplete")
+        metadata_paths = (self.checkpoint_path, self.manifest_path)
+        metadata_identities = {
+            item: self._stat_identity(item.stat()) for item in metadata_paths
+        }
+        checkpoint_sha = _file_identity_sha256(self.checkpoint_path)
+        if checkpoint_sha != expected_checkpoint_sha256:
+            raise ValueError("saved surface donor checkpoint SHA-256 differs from the contract")
+        manifest_sha = _file_identity_sha256(self.manifest_path)
+        if manifest_sha != expected_manifest_sha256:
+            raise ValueError("saved surface donor manifest SHA-256 differs from the contract")
+        try:
+            checkpoint = json.loads(self.checkpoint_path.read_text(encoding="ascii"))
+            with self.manifest_path.open("r", encoding="ascii") as stream:
+                manifest = json.load(stream)
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ValueError("saved surface donor metadata is unreadable") from exc
+        if any(
+            self._stat_identity(item.stat()) != metadata_identities[item]
+            for item in metadata_paths
+        ):
+            raise IOError("saved surface donor metadata changed while it was being read")
+        if not isinstance(checkpoint, dict) or not isinstance(manifest, dict):
+            raise ValueError("saved surface donor metadata must be JSON objects")
+        if (
+            manifest.get("schema") != _RESUMABLE_SURFACE_STREAM_SCHEMA
+            or manifest.get("identity_sha256") != expected_identity_sha256
+            or hashlib.sha256(_canonical_json_bytes(manifest.get("identity"))).hexdigest()
+            != expected_identity_sha256
+            or checkpoint.get("schema") != _RESUMABLE_SURFACE_STREAM_SCHEMA
+            or checkpoint.get("identity_sha256") != expected_identity_sha256
+            or checkpoint.get("manifest_sha256") != expected_manifest_sha256
+            or checkpoint.get("expected_mode_count") != expected_mode_count
+            or checkpoint.get("committed_mode_count") != expected_mode_count
+            or checkpoint.get("committed_bytes") != expected_committed_bytes
+            or checkpoint.get("committed_prefix_sha256") != expected_prefix_sha256
+            or type(checkpoint.get("peak_component_cache_unique_backing_bytes")) is not int
+            or checkpoint["peak_component_cache_unique_backing_bytes"] < 0
+        ):
+            raise ValueError("saved surface donor checkpoint/manifest identity differs from the contract")
+        identity = manifest.get("identity")
+        mode_keys_raw = manifest.get("mode_keys")
+        mode_identities_raw = manifest.get("mode_identities")
+        normalization_raw = manifest.get("normalization_h")
+        if (
+            not isinstance(identity, dict)
+            or not isinstance(mode_keys_raw, list)
+            or not isinstance(mode_identities_raw, list)
+            or not isinstance(normalization_raw, list)
+            or len(mode_keys_raw) != expected_mode_count
+            or len(mode_identities_raw) != expected_mode_count
+            or len(normalization_raw) != expected_mode_count
+            or len(expected_mode_keys) != expected_mode_count
+            or len(expected_normalization_h) != expected_mode_count
+        ):
+            raise ValueError("saved surface donor mode metadata is incomplete")
+        self.identity = MappingProxyType(dict(identity))
+        self.mode_keys = tuple(
+            (int(row[0]), str(row[1]), int(row[2]), int(row[3]), str(row[4]))
+            for row in mode_keys_raw
+        )
+        frozen_expected_keys = tuple(tuple(row) for row in expected_mode_keys)
+        if self.mode_keys != frozen_expected_keys or len(set(self.mode_keys)) != expected_mode_count:
+            raise ValueError("saved surface donor mode key/order differs from the current inventory")
+        self.normalization_h = np.asarray(normalization_raw, dtype=np.float64)
+        expected_h = np.asarray(expected_normalization_h, dtype=np.float64)
+        if (
+            self.normalization_h.shape != (expected_mode_count,)
+            or not np.isfinite(self.normalization_h).all()
+            or np.any(self.normalization_h <= 0.0)
+            or not np.array_equal(self.normalization_h, expected_h)
+        ):
+            raise ValueError("saved surface donor H inventory differs from the current modes")
+        self.normalization_h.flags.writeable = False
+        self.mode_identities = tuple(
+            MappingProxyType(row) if isinstance(row, dict) else row
+            for row in mode_identities_raw
+        )
+        if any(not isinstance(row, Mapping) for row in self.mode_identities):
+            raise ValueError("saved surface donor mode identity row is invalid")
+        for index, (key, identity_row, h_value) in enumerate(
+            zip(self.mode_keys, self.mode_identities, self.normalization_h, strict=True)
+        ):
+            missing = _MODE_IDENTITY_FIELDS.difference(identity_row)
+            if missing:
+                raise ValueError(
+                    "saved surface donor mode identity is incomplete: "
+                    + ",".join(sorted(missing))
+                )
+            identity_key = (
+                index,
+                str(identity_row["side"]),
+                int(identity_row["m"]),
+                int(identity_row["n"]),
+                str(identity_row["polarization"]),
+            )
+            denominator = identity_row["projection_denominator"]
+            if isinstance(denominator, Mapping):
+                denominator = complex(denominator["real"], denominator["imag"])
+            else:
+                denominator = complex(denominator)
+            if (
+                key != identity_key
+                or identity_row.get("mode_index") != index
+                or denominator != complex(float(h_value), 0.0)
+            ):
+                raise ValueError("saved surface donor mode identity/key/H differs from its metadata")
+        if identity_validator is not None:
+            identity_validator(identity, self.mode_identities)
+
+        slave_array = np.unique(np.asarray(slave_rows, dtype=np.int64).reshape(-1))
+        if slave_array.size and (
+            int(slave_array[0]) < self._owned_start
+            or int(slave_array[-1]) >= self._owned_end
+        ):
+            raise ValueError("saved surface donor slave rows are outside local ownership")
+        self._slave_rows = slave_array
+        self._slave_rows.flags.writeable = False
+        started = time.perf_counter()
+        file_stat = self.path.stat()
+        if file_stat.st_size != expected_committed_bytes:
+            raise IOError("saved surface donor has bytes outside the exact committed prefix")
+        self._path_identity = self._stat_identity(file_stat)
+        digest = hashlib.sha256()
+        carrier_payload_digest = hashlib.sha256()
+        with self.path.open("rb") as stream:
+            for index, expected_h_value in enumerate(self.normalization_h):
+                self._offsets[index] = stream.tell()
+                frame_started = time.perf_counter()
+                frame = _surface_frame_arrays(
+                    stream,
+                    expected_index=index,
+                    expected_h=float(expected_h_value),
+                    digest=digest,
+                    stream_end=expected_committed_bytes,
+                    max_frame_bytes=max_frame_bytes,
+                )
+                self._validation_frame_read_hash_seconds += max(
+                    0.0, time.perf_counter() - frame_started
+                )
+                (
+                    _mode_index,
+                    _h_value,
+                    coupling_rows,
+                    coupling_values,
+                    projection_rows,
+                    projection_values,
+                    _frame_bytes,
+                ) = frame
+                classification_started = time.perf_counter()
+                for rows, values in (
+                    (coupling_rows, coupling_values),
+                    (projection_rows, projection_values),
+                ):
+                    if rows.size and (
+                        int(rows[0]) < self._owned_start
+                        or int(rows[-1]) >= self._owned_end
+                        or int(rows[-1]) >= self._global_rows
+                    ):
+                        raise ValueError("saved surface donor row exceeds the current FE ownership")
+                    if self._slave_rows.size and rows.size:
+                        positions = np.searchsorted(self._slave_rows, rows)
+                        matched = positions < self._slave_rows.size
+                        if np.any(matched):
+                            valid = np.flatnonzero(matched)
+                            matched[valid] = self._slave_rows[positions[valid]] == rows[valid]
+                        if np.any(matched):
+                            raise ValueError("saved surface donor contains a current MPC slave row")
+                self._validation_classification_seconds += max(
+                    0.0, time.perf_counter() - classification_started
+                )
+                if frame_observer is not None:
+                    observer_started = time.perf_counter()
+                    frame_observer(
+                        index,
+                        self.mode_identities[index],
+                        coupling_rows,
+                        coupling_values,
+                        projection_rows,
+                        projection_values,
+                    )
+                    self._validation_frame_observer_seconds += max(
+                        0.0, time.perf_counter() - observer_started
+                    )
+                    payload_digest_started = time.perf_counter()
+                    carrier_payload_digest.update(
+                        json.dumps(
+                            self.mode_keys[index],
+                            separators=(",", ":"),
+                            ensure_ascii=True,
+                        ).encode()
+                    )
+                    carrier_payload_digest.update(
+                        np.asarray([_h_value], dtype=np.float64).tobytes()
+                    )
+                    for name, array in (
+                        ("coupling_rows", coupling_rows),
+                        ("coupling_values", coupling_values),
+                        ("projection_rows", projection_rows),
+                        ("projection_values", projection_values),
+                    ):
+                        contiguous = np.ascontiguousarray(array)
+                        carrier_payload_digest.update(name.encode("ascii"))
+                        carrier_payload_digest.update(contiguous.dtype.str.encode("ascii"))
+                        carrier_payload_digest.update(
+                            np.asarray(contiguous.shape, dtype=np.int64).tobytes()
+                        )
+                        carrier_payload_digest.update(memoryview(contiguous).cast("B"))
+                    self._validation_payload_digest_seconds += max(
+                        0.0, time.perf_counter() - payload_digest_started
+                    )
+                self._offsets[index + 1] = stream.tell()
+                self._max_frame_bytes_observed = max(
+                    self._max_frame_bytes_observed, int(_frame_bytes)
+                )
+                if progress_callback is not None and (
+                    index + 1 == expected_mode_count
+                    or (index + 1) % progress_interval == 0
+                ):
+                    progress_callback(
+                        {
+                            "phase": "task41_b0_saved_donor_validation",
+                            "status": "PROGRESS",
+                            "completed_modes": index + 1,
+                            "total_modes": expected_mode_count,
+                            "validated_bytes": int(stream.tell()),
+                        }
+                    )
+            if stream.tell() != expected_committed_bytes:
+                raise IOError("saved surface donor end offset differs from committed bytes")
+        if digest.hexdigest() != expected_prefix_sha256:
+            raise IOError("saved surface donor committed prefix SHA-256 differs from the contract")
+        after = self.path.stat()
+        if self._stat_identity(after) != self._path_identity:
+            raise IOError("saved surface donor changed during sequential validation")
+        if any(
+            self._stat_identity(item.stat()) != metadata_identities[item]
+            for item in metadata_paths
+        ):
+            raise IOError("saved surface donor metadata changed during sequential validation")
+        if self._offsets[0] != 0 or self._offsets[-1] != expected_committed_bytes:
+            raise IOError("saved surface donor offset inventory is incomplete")
+        self._validation_seconds = max(0.0, time.perf_counter() - started)
+        self.manifest_sha256 = manifest_sha
+        self.manifest_file_bytes = int(self.manifest_path.stat().st_size)
+        self.checkpoint_sha256 = checkpoint_sha
+        self.identity_sha256 = expected_identity_sha256
+        self.committed_prefix_sha256 = digest.hexdigest()
+        self._carrier_payload_sha256 = carrier_payload_digest.hexdigest()
+        self.committed_bytes = expected_committed_bytes
+        self.offset_index_facts: Mapping[str, Any] | None = None
+        if self._offset_index_path is not None:
+            index_path = self._offset_index_path
+            metadata_path = Path(str(index_path) + ".json")
+            if index_path.exists() or index_path.is_symlink() or metadata_path.exists() or metadata_path.is_symlink():
+                raise FileExistsError("saved surface donor offset index path already exists")
+            index_path.parent.mkdir(parents=True, exist_ok=True)
+            encoded_offsets = np.ascontiguousarray(self._offsets, dtype="<i8")
+            offset_digest = hashlib.sha256(memoryview(encoded_offsets).cast("B")).hexdigest()
+            temporary = index_path.with_name(
+                f"{index_path.name}.tmp.{os.getpid()}.{time.time_ns()}"
+            )
+            with temporary.open("xb") as stream:
+                stream.write(memoryview(encoded_offsets).cast("B"))
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, index_path)
+            _fsync_directory(index_path.parent)
+            offset_facts = {
+                "schema": "task41.p0.b0.saved_surface_offset_index.v1",
+                "offset_index_path": str(index_path),
+                "offset_index_metadata_path": str(metadata_path),
+                "offset_index_sha256": offset_digest,
+                "offset_count": int(encoded_offsets.size),
+                "offset_dtype": "<i8",
+                "offset_index_bytes": int(encoded_offsets.nbytes),
+                "mode_count": expected_mode_count,
+                "committed_bytes": expected_committed_bytes,
+                "committed_prefix_sha256": self.committed_prefix_sha256,
+                "manifest_sha256": manifest_sha,
+                "checkpoint_sha256": checkpoint_sha,
+                "identity_sha256": expected_identity_sha256,
+                "complete_stream_validation_preceded_persistence": True,
+            }
+            _atomic_json(metadata_path, offset_facts)
+            self.offset_index_facts = MappingProxyType(offset_facts)
+        self.validation_facts = MappingProxyType(
+            {
+                "status": "VALIDATED_READ_ONLY",
+                "manifest_sha256": manifest_sha,
+                "checkpoint_sha256": checkpoint_sha,
+                "identity_sha256": expected_identity_sha256,
+                "committed_prefix_sha256": self.committed_prefix_sha256,
+                "carrier_payload_rows_values_sha256": self._carrier_payload_sha256,
+                "committed_bytes": expected_committed_bytes,
+                "mode_count": expected_mode_count,
+                "validation_sweeps": 1,
+                "validation_seconds": self._validation_seconds,
+                "validation_frame_read_parse_prefix_hash_seconds": (
+                    self._validation_frame_read_hash_seconds
+                ),
+                "validation_row_classification_seconds": (
+                    self._validation_classification_seconds
+                ),
+                "validation_frame_observer_seconds": self._validation_frame_observer_seconds,
+                "validation_carrier_payload_digest_seconds": (
+                    self._validation_payload_digest_seconds
+                ),
+                "offset_index_dtype": str(self._offsets.dtype),
+                "offset_index_bytes": int(self._offsets.nbytes),
+                "persisted_offset_index": (
+                    None if self.offset_index_facts is None
+                    else dict(self.offset_index_facts)
+                ),
+                "max_frame_bytes_bound": max_frame_bytes,
+                "max_frame_bytes_observed": self._max_frame_bytes_observed,
+                "payload_retained_in_memory": False,
+            }
+        )
+
+    @staticmethod
+    def _stat_identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
+        return (
+            int(value.st_dev),
+            int(value.st_ino),
+            int(value.st_size),
+            int(value.st_mtime_ns),
+            int(value.st_ctime_ns),
+        )
+
+    @property
+    def mode_count(self) -> int:
+        return self._expected_mode_count
+
+    @property
+    def global_rows(self) -> int:
+        return self._global_rows
+
+    @property
+    def ownership_range(self) -> tuple[int, int]:
+        return self._owned_start, self._owned_end
+
+    @property
+    def slave_rows(self) -> np.ndarray:
+        return self._slave_rows
+
+    def _assert_unchanged(self) -> None:
+        if self._stat_identity(self.path.stat()) != self._path_identity:
+            raise IOError("validated saved surface donor changed after validation")
+
+    @property
+    def carrier_payload_rows_values_sha256(self) -> str:
+        """Return the exact legacy payload digest without replaying the carrier."""
+        self._assert_unchanged()
+        return self._carrier_payload_sha256
+
+    def _read_entry(self, stream, index: int) -> FullspaceDtnModeFunctional:
+        started = time.perf_counter()
+        start = int(self._offsets[index])
+        if stream.tell() != start:
+            stream.seek(start)
+        frame = _surface_frame_arrays(
+            stream,
+            expected_index=index,
+            expected_h=float(self.normalization_h[index]),
+            stream_end=self.committed_bytes,
+            max_frame_bytes=self.max_frame_bytes,
+        )
+        if stream.tell() != int(self._offsets[index + 1]):
+            raise IOError("saved surface donor frame changed after validation")
+        self._read_modes += 1
+        self._read_bytes += int(frame[-1])
+        self._read_frame_parse_seconds += max(0.0, time.perf_counter() - started)
+        return FullspaceDtnModeFunctional(
+            mode_key=self.mode_keys[index],
+            coupling_rows=frame[2],
+            coupling_values=frame[3],
+            projection_rows=frame[4],
+            projection_values=frame[5],
+            normalization_h=frame[1],
+            mode_identity=self.mode_identities[index],
+        )
+
+    def iter_entries(self, start: int = 0, stop: int | None = None):
+        stop = self.mode_count if stop is None else int(stop)
+        start = int(start)
+        if not 0 <= start <= stop <= self.mode_count:
+            raise IndexError("saved surface donor mode range is invalid")
+        self._assert_unchanged()
+        if start == 0 and stop == self.mode_count:
+            self._read_sweeps += 1
+        with self.path.open("rb") as stream:
+            for index in range(start, stop):
+                yield self._read_entry(stream, index)
+
+    def read_batch(self, start: int, stop: int) -> tuple[FullspaceDtnModeFunctional, ...]:
+        if int(stop) - int(start) > self.max_batch_modes:
+            raise ValueError("saved surface donor read batch exceeds its configured memory bound")
+        self._read_batches += 1
+        return tuple(self.iter_entries(start, stop))
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        return MappingProxyType(
+            {
+                **dict(self.validation_facts),
+                "complete_stream_sweeps_after_validation": int(self._read_sweeps),
+                "bounded_read_batches_after_validation": int(self._read_batches),
+                "read_modes_after_validation": int(self._read_modes),
+                "read_bytes_after_validation": int(self._read_bytes),
+                "read_frame_parse_seconds_after_validation": (
+                    self._read_frame_parse_seconds
+                ),
+                "max_frame_bytes_bound": self.max_frame_bytes,
+                "max_frame_bytes_observed": self._max_frame_bytes_observed,
+                "source_path": str(self.path),
+            }
+        )
+
+
+class _FileBackedSurfaceEntries(Sequence[Any]):
+    def __init__(self, source: ReadOnlySurfaceFunctionalSource) -> None:
+        self._source = source
+
+    def __len__(self) -> int:
+        return self._source.mode_count
+
+    def __iter__(self):
+        return self._source.iter_entries()
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self))
+            if len(range(start, stop, step)) > self._source.max_batch_modes:
+                raise ValueError("file-backed carrier slicing exceeds its configured batch bound")
+            if step == 1:
+                return self._source.read_batch(start, stop)
+            return tuple(self._source.read_batch(i, i + 1)[0] for i in range(start, stop, step))
+        resolved = int(index)
+        if resolved < 0:
+            resolved += len(self)
+        if not 0 <= resolved < len(self):
+            raise IndexError(index)
+        return self._source.read_batch(resolved, resolved + 1)[0]
 
 
 class _ResumableSurfaceFunctionalStream:
@@ -524,6 +1080,7 @@ class FullspaceDtnCarrier:
         slave_rows: Any = (),
         batch_size: int = FULLSPACE_DTN_BATCH_SIZE,
         comm: MPI.Intracomm | None = None,
+        surface_source: ReadOnlySurfaceFunctionalSource | None = None,
     ) -> None:
         self._comm = MPI.COMM_SELF if comm is None else comm
         self._global_rows = int(global_rows)
@@ -535,64 +1092,11 @@ class FullspaceDtnCarrier:
         if int(batch_size) <= 0:
             raise ValueError("DtN modal batch size must be positive")
         self._batch_size = int(batch_size)
+        self._surface_source = surface_source
         normalized: list[FullspaceDtnModeFunctional] = []
         seen_keys: set[tuple[Any, ...]] = set()
         seen_identity: set[bytes] = set()
         manifest_rows: list[Mapping[str, Any]] = []
-        for index, item in enumerate(entries):
-            if not isinstance(item, FullspaceDtnModeFunctional):
-                raise TypeError("DtN carrier entries have an invalid type")
-            if item.mode_key in seen_keys:
-                raise ValueError("DtN mode keys are not unique")
-            seen_keys.add(item.mode_key)
-            identity = dict(item.mode_identity)
-            if _MODE_IDENTITY_FIELDS.difference(identity):
-                missing = ",".join(sorted(_MODE_IDENTITY_FIELDS.difference(identity)))
-                raise ValueError(f"DtN mode identity is missing fields: {missing}")
-            if identity.get("mode_index") != index:
-                raise ValueError("DtN mode indices must follow carrier order")
-            identity_bytes = _canonical_json_bytes(identity)
-            if identity_bytes in seen_identity:
-                raise ValueError("DtN mode identities are not unique")
-            seen_identity.add(identity_bytes)
-            coupling_rows, coupling_values = _sparse_entries(
-                item.coupling_rows,
-                item.coupling_values,
-                owned_start=self._owned_start,
-                owned_end=self._owned_end,
-            )
-            projection_rows, projection_values = _sparse_entries(
-                item.projection_rows,
-                item.projection_values,
-                owned_start=self._owned_start,
-                owned_end=self._owned_end,
-            )
-            h = float(item.normalization_h)
-            if not np.isfinite(h) or h <= 0.0:
-                raise ValueError("DtN normalization H must be finite and positive")
-            normalized.append(
-                FullspaceDtnModeFunctional(
-                    tuple(item.mode_key),
-                    coupling_rows,
-                    coupling_values,
-                    projection_rows,
-                    projection_values,
-                    h,
-                    MappingProxyType(identity),
-                )
-            )
-            manifest_rows.append(identity)
-        if not normalized:
-            raise ValueError("DtN carrier requires at least one dynamic mode")
-        manifest = {
-            "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
-            "profile": FULLSPACE_DTN_PROFILE,
-            "mode_count": len(manifest_rows),
-            "modes": manifest_rows,
-        }
-        self._entries = tuple(normalized)
-        self._mode_manifest = _canonical_json_bytes(manifest)
-        self._mode_manifest_sha256 = hashlib.sha256(self._mode_manifest).hexdigest()
         slave_array = np.unique(np.asarray(slave_rows, dtype=PETSc.IntType).reshape(-1))
         if slave_array.size and (
             int(slave_array.min()) < self._owned_start
@@ -600,21 +1104,110 @@ class FullspaceDtnCarrier:
         ):
             raise ValueError("DtN slave rows must be locally owned")
         self._slave_rows = _readonly(slave_array, np.dtype(PETSc.IntType))
-        for item in self._entries:
-            if np.intersect1d(item.coupling_rows, self._slave_rows).size:
-                raise ValueError("DtN coupling functional intersects a local slave row")
-            if np.intersect1d(item.projection_rows, self._slave_rows).size:
-                raise ValueError("DtN projection functional intersects a local slave row")
-        self._retained_numeric_bytes = int(self._slave_rows.nbytes)
-        for item in self._entries:
-            self._retained_numeric_bytes += int(
-                item.coupling_rows.nbytes
-                + item.coupling_values.nbytes
-                + item.projection_rows.nbytes
-                + item.projection_values.nbytes
-                + np.dtype(np.float64).itemsize
+        if surface_source is None:
+            for index, item in enumerate(entries):
+                if not isinstance(item, FullspaceDtnModeFunctional):
+                    raise TypeError("DtN carrier entries have an invalid type")
+                if item.mode_key in seen_keys:
+                    raise ValueError("DtN mode keys are not unique")
+                seen_keys.add(item.mode_key)
+                identity = dict(item.mode_identity)
+                if _MODE_IDENTITY_FIELDS.difference(identity):
+                    missing = ",".join(sorted(_MODE_IDENTITY_FIELDS.difference(identity)))
+                    raise ValueError(f"DtN mode identity is missing fields: {missing}")
+                if identity.get("mode_index") != index:
+                    raise ValueError("DtN mode indices must follow carrier order")
+                identity_bytes = _canonical_json_bytes(identity)
+                if identity_bytes in seen_identity:
+                    raise ValueError("DtN mode identities are not unique")
+                seen_identity.add(identity_bytes)
+                coupling_rows, coupling_values = _sparse_entries(
+                    item.coupling_rows,
+                    item.coupling_values,
+                    owned_start=self._owned_start,
+                    owned_end=self._owned_end,
+                )
+                projection_rows, projection_values = _sparse_entries(
+                    item.projection_rows,
+                    item.projection_values,
+                    owned_start=self._owned_start,
+                    owned_end=self._owned_end,
+                )
+                h = float(item.normalization_h)
+                if not np.isfinite(h) or h <= 0.0:
+                    raise ValueError("DtN normalization H must be finite and positive")
+                normalized.append(
+                    FullspaceDtnModeFunctional(
+                        tuple(item.mode_key),
+                        coupling_rows,
+                        coupling_values,
+                        projection_rows,
+                        projection_values,
+                        h,
+                        MappingProxyType(identity),
+                    )
+                )
+                manifest_rows.append(identity)
+            if not normalized:
+                raise ValueError("DtN carrier requires at least one dynamic mode")
+            manifest = {
+                "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+                "profile": FULLSPACE_DTN_PROFILE,
+                "mode_count": len(manifest_rows),
+                "modes": manifest_rows,
+            }
+            self._entries = tuple(normalized)
+            self._mode_manifest = _canonical_json_bytes(manifest)
+            self._mode_manifest_sha256 = hashlib.sha256(self._mode_manifest).hexdigest()
+            self._mode_keys = tuple(tuple(item.mode_key) for item in normalized)
+            self._mode_identities = tuple(item.mode_identity for item in normalized)
+            self._normalization_h = np.asarray(
+                [item.normalization_h for item in normalized], dtype=np.float64
             )
-        self._retained_identity_bytes = len(self._mode_manifest)
+            self._retained_numeric_bytes = int(self._slave_rows.nbytes)
+            for item in self._entries:
+                if np.intersect1d(item.coupling_rows, self._slave_rows).size:
+                    raise ValueError("DtN coupling functional intersects a local slave row")
+                if np.intersect1d(item.projection_rows, self._slave_rows).size:
+                    raise ValueError("DtN projection functional intersects a local slave row")
+                self._retained_numeric_bytes += int(
+                    item.coupling_rows.nbytes
+                    + item.coupling_values.nbytes
+                    + item.projection_rows.nbytes
+                    + item.projection_values.nbytes
+                    + np.dtype(np.float64).itemsize
+                )
+            self._retained_identity_bytes = len(self._mode_manifest)
+        else:
+            if not isinstance(surface_source, ReadOnlySurfaceFunctionalSource):
+                raise TypeError("file-backed DtN carrier requires a validated surface source")
+            if (
+                surface_source.global_rows != self._global_rows
+                or surface_source.ownership_range != (self._owned_start, self._owned_end)
+                or surface_source.max_batch_modes < self._batch_size
+                or not np.array_equal(surface_source.slave_rows, self._slave_rows)
+            ):
+                raise ValueError("validated surface source FE/MPC row layout differs from the carrier")
+            self._entries = _FileBackedSurfaceEntries(surface_source)
+            self._mode_keys = surface_source.mode_keys
+            self._mode_identities = surface_source.mode_identities
+            self._normalization_h = surface_source.normalization_h
+            manifest_payload = {
+                "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+                "profile": FULLSPACE_DTN_PROFILE,
+                "mode_count": len(self._mode_identities),
+                "modes": self._mode_identities,
+            }
+            self._mode_manifest = _canonical_json_bytes(manifest_payload)
+            self._mode_manifest_sha256 = hashlib.sha256(self._mode_manifest).hexdigest()
+            self._retained_numeric_bytes = int(
+                self._slave_rows.nbytes
+                + surface_source._offsets.nbytes
+                + surface_source.normalization_h.nbytes
+            )
+            self._retained_identity_bytes = sum(
+                len(_canonical_json_bytes(row)) for row in self._mode_identities
+            )
         self._retained_numeric_global_sum = int(
             self._comm.allreduce(self._retained_numeric_bytes, op=MPI.SUM)
         )
@@ -623,11 +1216,36 @@ class FullspaceDtnCarrier:
         )
 
     @property
-    def entries(self) -> tuple[FullspaceDtnModeFunctional, ...]:
+    def entries(self) -> Sequence[FullspaceDtnModeFunctional]:
         return self._entries
 
     @property
+    def mode_keys(self) -> tuple[tuple[Any, ...], ...]:
+        return self._mode_keys
+
+    @property
+    def mode_identities(self) -> tuple[Mapping[str, Any], ...]:
+        return self._mode_identities
+
+    @property
+    def normalization_h(self) -> np.ndarray:
+        view = self._normalization_h.view()
+        view.flags.writeable = False
+        return view
+
+    @property
+    def surface_source(self) -> ReadOnlySurfaceFunctionalSource | None:
+        return self._surface_source
+
+    def entry_batch(self, start: int, stop: int) -> tuple[FullspaceDtnModeFunctional, ...]:
+        if self._surface_source is not None:
+            return self._surface_source.read_batch(start, stop)
+        return self._entries[start:stop]
+
+    @property
     def mode_manifest_bytes(self) -> bytes:
+        if self._mode_manifest is None:
+            raise RuntimeError("DtN mode manifest is unavailable")
         return self._mode_manifest
 
     @property
@@ -661,11 +1279,8 @@ class FullspaceDtnCarrier:
     @property
     def audit(self) -> Mapping[str, Any]:
         mode_count = len(self._entries)
-        h_values = np.asarray(
-            [item.normalization_h for item in self._entries], dtype=np.float64
-        )
-        return MappingProxyType(
-            {
+        h_values = self._normalization_h
+        result = {
                 "schema": "fullspace-dtn.carrier.v1",
                 "profile": FULLSPACE_DTN_PROFILE,
                 "mode_count": mode_count,
@@ -695,7 +1310,13 @@ class FullspaceDtnCarrier:
                 "ksp_created": False,
                 "pde_solved": False,
             }
-        )
+        if self._surface_source is not None:
+            result["storage_kind"] = "validated_file_backed_read_only"
+            result["saved_source"] = dict(self._surface_source.audit)
+            result["saved_source_manifest_sha256"] = self._surface_source.manifest_sha256
+        else:
+            result["storage_kind"] = "resident_arrays"
+        return MappingProxyType(result)
 
 
 class FullspaceDtnAction:
@@ -746,14 +1367,14 @@ class FullspaceDtnAction:
         self,
         source_values: np.ndarray,
         batch_start: int,
-        batch_stop: int,
+        entries: Sequence[FullspaceDtnModeFunctional],
     ) -> np.ndarray:
         start, _end = self.carrier.ownership_range
-        count = batch_stop - batch_start
+        count = len(entries)
         local = self._local_modal[:count]
         global_values = self._global_modal[:count]
         local.fill(0.0)
-        for offset, item in enumerate(self.carrier.entries[batch_start:batch_stop]):
+        for offset, item in enumerate(entries):
             if item.projection_rows.size:
                 local[offset] = np.dot(
                     item.projection_values,
@@ -773,12 +1394,11 @@ class FullspaceDtnAction:
             batch_stop = min(
                 batch_start + self.carrier.batch_size, len(self.carrier.entries)
             )
-            modal = self._modal_batch(source_values, batch_start, batch_stop)
+            entries = self.carrier.entry_batch(batch_start, batch_stop)
+            modal = self._modal_batch(source_values, batch_start, entries)
             self._apply_modal_allreduce_count += 1
             start, _end = self.carrier.ownership_range
-            for offset, item in enumerate(
-                self.carrier.entries[batch_start:batch_stop]
-            ):
+            for offset, item in enumerate(entries):
                 if item.coupling_rows.size:
                     target_values[item.coupling_rows - start] += (
                         modal[offset] / item.normalization_h * item.coupling_values
@@ -804,11 +1424,10 @@ class FullspaceDtnAction:
             batch_stop = min(
                 batch_start + self.carrier.batch_size, len(self.carrier.entries)
             )
-            modal = self._modal_batch(source_values, batch_start, batch_stop)
+            entries = self.carrier.entry_batch(batch_start, batch_stop)
+            modal = self._modal_batch(source_values, batch_start, entries)
             self._recovery_modal_allreduce_count += 1
-            for offset, item in enumerate(
-                self.carrier.entries[batch_start:batch_stop]
-            ):
+            for offset, item in enumerate(entries):
                 recovered[batch_start + offset] = modal[offset] / item.normalization_h
         return recovered
 
@@ -833,9 +1452,8 @@ class FullspaceDtnAction:
             batch_stop = min(
                 batch_start + self.carrier.batch_size, len(self.carrier.entries)
             )
-            for offset, item in enumerate(
-                self.carrier.entries[batch_start:batch_stop]
-            ):
+            entries = self.carrier.entry_batch(batch_start, batch_stop)
+            for offset, item in enumerate(entries):
                 if item.coupling_rows.size:
                     target_values[item.coupling_rows - start] += (
                         amplitudes[batch_start + offset] * item.coupling_values
@@ -856,9 +1474,8 @@ class FullspaceDtnAction:
             batch_stop = min(
                 batch_start + self.carrier.batch_size, len(self.carrier.entries)
             )
-            for offset, item in enumerate(
-                self.carrier.entries[batch_start:batch_stop]
-            ):
+            entries = self.carrier.entry_batch(batch_start, batch_stop)
+            for offset, item in enumerate(entries):
                 if item.coupling_rows.size:
                     target_values[item.coupling_rows - start] += (
                         amplitudes[batch_start + offset] * item.coupling_values
@@ -911,6 +1528,51 @@ def build_fullspace_dtn_action(
     """Build the forward action from one validated dynamic carrier."""
 
     return FullspaceDtnAction(carrier, comm=carrier.comm if comm is None else comm)
+
+
+def build_fullspace_dtn_carrier_from_validated_source(
+    source: ReadOnlySurfaceFunctionalSource,
+    mpc: Any,
+    *,
+    batch_size: int = FULLSPACE_DTN_BATCH_SIZE,
+) -> FullspaceDtnCarrier:
+    """Bind a previously validated immutable donor to the current FE row owner."""
+    if not isinstance(source, ReadOnlySurfaceFunctionalSource):
+        raise TypeError("saved surface carrier requires a validated read-only source")
+    if mpc is None:
+        raise ValueError("saved surface carrier requires the finalized current MPC")
+    comm = mpc.function_space.mesh.comm
+    if int(comm.Get_size()) != 1:
+        raise ValueError("saved surface carrier reuse is qualified only for MPI1")
+    index_map = mpc.function_space.dofmap.index_map
+    owned_start = int(index_map.local_range[0])
+    owned_end = owned_start + int(index_map.size_local)
+    global_rows = int(index_map.size_global)
+    if (source.global_rows, source.ownership_range) != (
+        global_rows,
+        (owned_start, owned_end),
+    ):
+        raise ValueError("saved surface donor global/owned FE row identity differs from current MPC")
+    slaves = np.asarray(mpc.slaves, dtype=np.int32)
+    owned_slaves = slaves[slaves < int(index_map.size_local)]
+    slave_rows = np.asarray(index_map.local_to_global(owned_slaves), dtype=PETSc.IntType)
+    result = FullspaceDtnCarrier(
+        (),
+        global_rows=global_rows,
+        ownership_range=(owned_start, owned_end),
+        slave_rows=slave_rows,
+        batch_size=batch_size,
+        comm=comm,
+        surface_source=source,
+    )
+    result.phase_gauge = str(source.identity.get("phase_gauge", ""))
+    result.physical_generator_manifest_sha256 = str(
+        source.identity.get("ordered_mode_manifest_sha256", "")
+    )
+    first_identity = source.mode_identities[0]
+    result.assembly_context_sha256 = str(first_identity.get("assembly_context_sha256", ""))
+    result.donor_validation_facts = source.validation_facts
+    return result
 
 
 def iter_fullspace_dtn_functionals_from_surface(

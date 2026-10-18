@@ -20,6 +20,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 import hashlib
 import sys
+import time
 from types import GeneratorType, MappingProxyType
 from typing import Any, Callable, Mapping, Sequence
 
@@ -228,6 +229,8 @@ class P6GlobalDirectCarrierProvider:
         interior_rows_are_managed: bool = False,
         interior_rows: Any | None = None,
         source_label: str = "production_mode_iterator",
+        progress_callback: Callable[[Mapping[str, Any]], None] | None = None,
+        progress_interval_seconds: float = 60.0,
     ) -> None:
         if not callable(entry_factory):
             raise TypeError("global direct provider requires a repeatable iterator factory")
@@ -237,10 +240,21 @@ class P6GlobalDirectCarrierProvider:
             raise ValueError("global direct provider mode count differs from the port block")
         if not source_label:
             raise ValueError("global direct provider source label must be nonempty")
+        if progress_callback is not None and not callable(progress_callback):
+            raise TypeError("global direct provider progress callback must be callable")
+        if (
+            isinstance(progress_interval_seconds, bool)
+            or not isinstance(progress_interval_seconds, (int, float))
+            or not np.isfinite(progress_interval_seconds)
+            or progress_interval_seconds <= 0.0
+        ):
+            raise ValueError("global direct provider progress interval must be positive")
         self._entry_factory = entry_factory
         self.mode_count = mode_count
         self.interior_rows_are_managed = bool(interior_rows_are_managed)
         self.source_label = str(source_label)
+        self._progress_callback = progress_callback
+        self._progress_interval_seconds = float(progress_interval_seconds)
         self._condensed = condensed
         self.full_rows = int(condensed.full_rows)
         self._original_to_active = condensed.trace_constraints.original_to_active
@@ -314,6 +328,8 @@ class P6GlobalDirectCarrierProvider:
         self._interior_entry_counts: dict[str, int] = defaultdict(int)
         self._max_current_mode_payload_bytes = 0
         self._max_direct_rows_by_side: dict[str, int] = {"B": 0, "D": 0}
+        self._mapping_seconds = 0.0
+        self._operation_seconds: dict[str, float] = defaultdict(float)
 
     @property
     def condensed(self) -> AssemblyTimeCondensedSystem:
@@ -461,31 +477,35 @@ class P6GlobalDirectCarrierProvider:
         vector_mapper = getattr(
             self._condensed.trace_constraints, "map_original_rows", None
         )
-        if callable(vector_mapper):
-            try:
-                mapped = np.asarray(vector_mapper(direct_rows))
-            except (IndexError, KeyError, ValueError) as exc:
-                raise ValueError(
-                    f"production {side} direct row is an MPC slave or outside the active trace"
-                ) from exc
-            if (
-                mapped.shape != (len(direct_rows),)
-                or mapped.dtype.kind not in "iu"
-                or mapped.dtype.kind == "b"
-                or (mapped.size and int(mapped.min()) < 0)
-                or (mapped.size and int(mapped.max()) >= self._condensed.active_rows)
-            ):
-                raise ValueError("vectorized original-to-active row map returned invalid indices")
-            active_rows = np.asarray(mapped, dtype=PETSc.IntType)
-        else:
-            active_rows = np.empty(len(direct_rows), dtype=PETSc.IntType)
-            try:
-                for index, original in enumerate(direct_rows):
-                    active_rows[index] = self._original_to_active[int(original)]
-            except KeyError as exc:
-                raise ValueError(
-                    f"production {side} direct row is an MPC slave or outside the active trace"
-                ) from exc
+        mapping_started = time.perf_counter()
+        try:
+            if callable(vector_mapper):
+                try:
+                    mapped = np.asarray(vector_mapper(direct_rows))
+                except (IndexError, KeyError, ValueError) as exc:
+                    raise ValueError(
+                        f"production {side} direct row is an MPC slave or outside the active trace"
+                    ) from exc
+                if (
+                    mapped.shape != (len(direct_rows),)
+                    or mapped.dtype.kind not in "iu"
+                    or mapped.dtype.kind == "b"
+                    or (mapped.size and int(mapped.min()) < 0)
+                    or (mapped.size and int(mapped.max()) >= self._condensed.active_rows)
+                ):
+                    raise ValueError("vectorized original-to-active row map returned invalid indices")
+                active_rows = np.asarray(mapped, dtype=PETSc.IntType)
+            else:
+                active_rows = np.empty(len(direct_rows), dtype=PETSc.IntType)
+                try:
+                    for index, original in enumerate(direct_rows):
+                        active_rows[index] = self._original_to_active[int(original)]
+                except KeyError as exc:
+                    raise ValueError(
+                        f"production {side} direct row is an MPC slave or outside the active trace"
+                    ) from exc
+        finally:
+            self._mapping_seconds += max(0.0, time.perf_counter() - mapping_started)
         self._direct_entry_counts[f"{operation}/{side}"] += len(direct_rows)
         self._interior_entry_counts[f"{operation}/{side}"] += interior_count
         self._max_direct_rows_by_side[side] = max(
@@ -500,6 +520,8 @@ class P6GlobalDirectCarrierProvider:
         if self._expected_mode_keys is None:
             raise RuntimeError("global direct provider is not bound to the original ordered H_p block")
         self._sweep_counts[operation] += 1
+        operation_started = time.perf_counter()
+        last_progress = operation_started
         source = self._entry_factory()
         if not isinstance(source, GeneratorType):
             raise TypeError("global direct provider factory must return a streaming generator")
@@ -543,11 +565,30 @@ class P6GlobalDirectCarrierProvider:
                 yield port, current.get("B"), current.get("D")
                 current = None
                 entry = None
+                now = time.perf_counter()
+                if self._progress_callback is not None and (
+                    emitted == self.mode_count
+                    or now - last_progress >= self._progress_interval_seconds
+                ):
+                    self._progress_callback(
+                        {
+                            "phase": "task41_b0_saved_surface_apply_progress",
+                            "status": "PROGRESS" if emitted < self.mode_count else "COMPLETE",
+                            "operation": operation,
+                            "completed_modes": emitted,
+                            "total_modes": self.mode_count,
+                            "elapsed_seconds": max(0.0, now - operation_started),
+                        }
+                    )
+                    last_progress = now
             if emitted != self.mode_count:
                 raise ValueError(
                     f"global direct provider emitted {emitted} modes; expected {self.mode_count}"
                 )
         finally:
+            self._operation_seconds[operation] += max(
+                0.0, time.perf_counter() - operation_started
+            )
             current = None
             entry = None
             source.close()
@@ -581,6 +622,40 @@ class P6GlobalDirectCarrierProvider:
             d_rows, d_values, d_active = d_data
             if d_rows.size:
                 target[len(active) + port] -= np.dot(d_values, active[d_active])
+
+    def add_reduced_multi(
+        self,
+        target: np.ndarray,
+        alpha: np.ndarray,
+        active: np.ndarray,
+        *,
+        direct_observer: Callable[
+            [int, tuple[np.ndarray, np.ndarray, np.ndarray] | None,
+             tuple[np.ndarray, np.ndarray, np.ndarray] | None], None
+        ] | None = None,
+    ) -> None:
+        """Apply two bounded RHS columns in one carrier traversal."""
+        if (
+            target.ndim != 2
+            or alpha.ndim != 2
+            or active.ndim != 2
+            or target.shape[1] != alpha.shape[1]
+            or target.shape[1] != active.shape[1]
+            or target.shape[0] != len(active) + self.mode_count
+            or alpha.shape[0] != self.mode_count
+        ):
+            raise ValueError("multi-RHS direct carrier arrays have incompatible layouts")
+        for port, b_data, d_data in self._iter_mode_data("reduced_apply_multi"):
+            if b_data is not None:
+                _rows, values, active_rows = b_data
+                if active_rows.size:
+                    target[active_rows, :] += values[:, None] * alpha[port, :]
+            if d_data is not None:
+                _rows, values, active_rows = d_data
+                if active_rows.size:
+                    target[len(active) + port, :] -= values @ active[active_rows, :]
+            if direct_observer is not None:
+                direct_observer(port, b_data, d_data)
 
     def iter_reduced_direct_tiles(self):
         """Yield one mode's bounded B/D trace rows in active coordinates.
@@ -642,6 +717,8 @@ class P6GlobalDirectCarrierProvider:
             "direct_rows_use_active_index_mapping_only": True,
             "second_mpc_application": False,
             "iterator_sweeps_by_operation": dict(self._sweep_counts),
+            "operation_elapsed_seconds_by_operation": dict(self._operation_seconds),
+            "original_to_active_mapping_seconds": self._mapping_seconds,
             "mode_entries_processed_by_operation": dict(self._entry_counts),
             "direct_rows_processed_by_operation_and_side": dict(self._direct_entry_counts),
             "interior_rows_deferred_by_operation_and_side": dict(self._interior_entry_counts),
@@ -1287,6 +1364,8 @@ class P6CellCondensedAction:
             self._Hhat = None
         self._hp_solve_count = 0
         self._apply_count = 0
+        self._multi_rhs_count = 0
+        self._multi_rhs_seconds = 0.0
         self._destroyed = False
         self._matrix: PETSc.Mat | None = None
         self._audit = {
@@ -1697,6 +1776,8 @@ class P6CellCondensedAction:
     @property
     def audit(self) -> Mapping[str, Any]:
         self._audit["apply_count"] = int(self._apply_count)
+        self._audit["multi_rhs_apply_count"] = int(self._multi_rhs_count)
+        self._audit["multi_rhs_apply_seconds"] = self._multi_rhs_seconds
         self._audit["hp_solve_count"] = int(self._hp_solve_count)
         self._audit["streamed_action_lu_solve_count"] = int(
             self._streamed_action_lu_solve_count
@@ -2320,6 +2401,78 @@ class P6CellCondensedAction:
         if self.condensed.comm.Get_size() != 1:
             raise NotImplementedError("NumPy p6 action vectors are MPI1-only; use the PETSc MatPython path")
         return self._apply_array(source)
+
+    def apply_multi_rhs(
+        self,
+        sources: Any,
+        *,
+        direct_observer: Callable[
+            [int, tuple[np.ndarray, np.ndarray, np.ndarray] | None,
+             tuple[np.ndarray, np.ndarray, np.ndarray] | None], None
+        ] | None = None,
+    ) -> np.ndarray:
+        """Apply at most two RHS columns with one global direct-carrier sweep.
+
+        This bounded interface is used by the Task41 full-size representation
+        check. It deliberately accepts only the cached cell path and a global
+        direct provider, so no unbounded generated callback or carrier copy is
+        introduced.
+        """
+        if self._destroyed:
+            raise RuntimeError("p6 cell-condensed action has been destroyed")
+        if self.condensed.comm.Get_size() != 1:
+            raise NotImplementedError("multi-RHS NumPy p6 action is MPI1-only")
+        if (
+            self.port_coupling_mode != "cached"
+            or self._global_direct_provider is None
+            or self._generated_port_actions
+            or self._direct_B_active
+            or self._direct_D_active
+            or self._direct_B_original
+            or self._direct_D_original
+        ):
+            raise ValueError("bounded multi-RHS action requires only cached cells and one global provider")
+        value = np.asarray(sources, dtype=np.complex128)
+        if (
+            value.ndim != 2
+            or value.shape[0] != self.reduced_size
+            or value.shape[1] not in (1, 2)
+            or not np.isfinite(value).all()
+        ):
+            raise ValueError("multi-RHS source must be one or two finite reduced columns")
+        if not value.flags.c_contiguous:
+            value = np.ascontiguousarray(value)
+        apply_started = time.perf_counter()
+        active = value[: self.condensed.active_rows, :]
+        alpha = value[self.condensed.active_rows :, :]
+        result = np.zeros_like(value)
+        for cell in self._cells:
+            local_trace = np.asarray(
+                cell.expansion @ active[cell.active_ids, :], dtype=np.complex128
+            )
+            local_action = cell.S_V @ local_trace
+            if len(cell.ports):
+                local_action = local_action + cell.Bhat @ alpha[cell.ports, :]
+            result[cell.active_ids, :] += np.asarray(
+                cell.expansion.conjugate().T @ local_action, dtype=np.complex128
+            )
+            if len(cell.ports):
+                result[self.condensed.active_rows + cell.ports, :] += (
+                    -cell.Dhat @ local_trace
+                )
+        if self._Hhat is not None:
+            result[self.condensed.active_rows :, :] += self._Hhat @ alpha
+        else:
+            result[self.condensed.active_rows :, :] += self._condensed_port_block.apply(
+                alpha
+            )
+        self._global_direct_provider.add_reduced_multi(
+            result, alpha, active, direct_observer=direct_observer
+        )
+        self._apply_count += 1
+        self._multi_rhs_count += 1
+        self._multi_rhs_seconds += max(0.0, time.perf_counter() - apply_started)
+        return np.ascontiguousarray(result)
 
     def create_matrix(self) -> PETSc.Mat:
         """Create a PETSc Python matrix shell; no AIJ payload is allocated."""

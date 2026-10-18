@@ -10,9 +10,11 @@ from src.runners import task40_v10_worker
 from src.runners.physical_p4_schur_v14 import _V14Runtime, _write_json
 from src.runners.task40_v10_worker import (
     _assign_vector_storage,
+    _carrier_payload_identity,
     _packet_array_bytes,
     _regular_inverse_gate_facts,
     _save_packet,
+    _task41_b0_full_size_two_input_identity_check,
     _v18_full_native_matrix_admission_facts,
     _v18_preproject_native_matrix_gate,
 )
@@ -57,6 +59,230 @@ def test_assign_vector_storage_uses_public_writable_petsc_array_api():
         )
     finally:
         vector.destroy()
+
+
+def test_carrier_payload_identity_reuses_validated_stream_digest_without_iteration():
+    expected = "a" * 64
+
+    class _Source:
+        reads = 0
+
+        @property
+        def carrier_payload_rows_values_sha256(self):
+            self.reads += 1
+            return expected
+
+    class _NoResidentEntries:
+        def __iter__(self):
+            raise AssertionError("file-backed identity must not replay all donor entries")
+
+    source = _Source()
+    carrier = SimpleNamespace(surface_source=source, entries=_NoResidentEntries())
+    assert _carrier_payload_identity(carrier) == expected
+    assert source.reads == 1
+
+
+def test_file_backed_carrier_metadata_checks_do_not_iterate_entries(monkeypatch):
+    expected_payload = "c" * 64
+    expected_physical = "a" * 64
+    expected_mpc = "b" * 64
+    mode_keys = ((0, "top", 0, 0, "s"),)
+    normalization_h = np.asarray([2.75], dtype=np.float64)
+
+    class _NoReplayEntries:
+        def __iter__(self):
+            raise AssertionError("metadata checks must not replay file-backed donor entries")
+
+    class _Source:
+        carrier_payload_rows_values_sha256 = expected_payload
+
+    class _Carrier:
+        def __init__(self):
+            self.entries = _NoReplayEntries()
+            self.mode_keys = mode_keys
+            self.normalization_h = normalization_h
+            self.surface_source = _Source()
+            self.physical_generator_manifest_sha256 = expected_physical
+            self.mode_manifest_sha256 = "d" * 64
+
+    target_carrier = _Carrier()
+    reference_carrier = _Carrier()
+    target_bundle = {
+        "dtn_action": SimpleNamespace(carrier=target_carrier),
+        "mode_sha256": expected_physical,
+        "physical_generator_manifest_sha256": expected_physical,
+    }
+    reference_bundle = {
+        "dtn_action": SimpleNamespace(carrier=reference_carrier),
+        "mode_sha256": expected_physical,
+        "physical_generator_manifest_sha256": expected_physical,
+    }
+    monkeypatch.setattr(
+        task40_v10_worker,
+        "_mpc_payload_identity",
+        lambda _floquet: {"sha256": expected_mpc},
+    )
+    identity = task40_v10_worker._validate_reference_physical_identity(
+        target_bundle,
+        {"floquets": {6: object()}},
+        reference_bundle,
+        {"floquets": {6: object()}},
+    )
+    assert all(identity["checks"].values())
+
+    condensed = SimpleNamespace(
+        full_rows=4,
+        appended_rows=1,
+        active_rows=2,
+        trace_constraints=SimpleNamespace(
+            owned_active_original_dofs=np.asarray([2, 3], dtype=np.int64)
+        ),
+    )
+    action = SimpleNamespace(condensed=condensed, reduced_size=3)
+    owner = {
+        "global_bundle": {**reference_bundle, "modes": (object(),)},
+        "profile": SimpleNamespace(mode_count=1),
+        "full_layout": SimpleNamespace(
+            independent=np.asarray([0, 1, 2, 3], dtype=np.int64), full_rows=4
+        ),
+        "inverse": SimpleNamespace(),
+    }
+    pc = task40_v10_worker._P6ReferencePreconditioner(
+        object(), owner, action, target_carrier, allocation_gate=lambda *_args: {}
+    )
+    np.testing.assert_array_equal(pc.h, normalization_h)
+
+
+def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_path):
+    class _Constraints:
+        owned_active_original_dofs = np.asarray([0, 1], dtype=np.int64)
+        original_to_active = {0: 0, 1: 1}
+        owned_active_range = (0, 2)
+
+        @staticmethod
+        def map_original_rows(rows):
+            rows = np.asarray(rows, dtype=np.int64)
+            if np.any((rows < 0) | (rows > 1)):
+                raise ValueError("unknown active row")
+            return rows.copy()
+
+    constraints = _Constraints()
+    condensed = SimpleNamespace(
+        active_rows=2,
+        appended_rows=1,
+        full_rows=2,
+        owned_trace_original_dofs=np.asarray([0, 1], dtype=np.int64),
+        trace_constraints=constraints,
+    )
+    class _Provider:
+        def __init__(self):
+            self.sweeps = 0
+
+        @property
+        def audit(self):
+            return {"iterator_sweeps_by_operation": {"reduced_apply_multi": self.sweeps}}
+
+    provider = _Provider()
+
+    class _Action:
+        reduced_size = 3
+        _cells = ()
+
+        def __init__(self):
+            self.condensed = condensed
+
+        @staticmethod
+        def recover_storage(source, *, full_rhs, expand_trace):
+            assert full_rhs is not None
+            assert expand_trace is False
+            return np.asarray(source[:2], dtype=np.complex128).copy()
+
+        def apply_multi_rhs(self, sources, *, direct_observer):
+            self.provider.sweeps += 1
+            direct_observer(0, None, None)
+            result = np.zeros_like(sources)
+            result[2, :] = sources[2, :]
+            return result
+
+        @staticmethod
+        def reduce_rhs(_full_rhs, *, port_rhs, rhs_is_mpc_dual):
+            assert rhs_is_mpc_dual is True
+            result = np.zeros(3, dtype=np.complex128)
+            result[2] = port_rhs[0]
+            return result
+
+    action = _Action()
+    action.provider = provider
+    carrier = SimpleNamespace(
+        entries=(None,),
+        mode_keys=((0, "top", 0, 0, "s"),),
+        surface_source=SimpleNamespace(
+            max_frame_bytes=0,
+            audit={"read_bytes_after_validation": 128},
+        ),
+    )
+
+    class _VolumeAction:
+        def __init__(self):
+            self.buffer = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+            self.calls = 0
+
+        def apply(self, _source):
+            self.calls += 1
+            self.buffer.set(0.0)
+            return self.buffer
+
+    volume_action = _VolumeAction()
+
+    class _OriginalH:
+        @staticmethod
+        def apply(values):
+            return np.asarray(values, dtype=np.complex128).copy()
+
+    class _Runtime:
+        def __init__(self):
+            self.markers = []
+
+        def marker(self, name, facts):
+            self.markers.append((name, dict(facts)))
+
+    runtime = _Runtime()
+    try:
+        result = _task41_b0_full_size_two_input_identity_check(
+            probes=[
+                {
+                    "mode_index": 0,
+                    "rows": np.asarray([0], dtype=np.int64),
+                    "values": np.asarray([1.0 + 0.5j], dtype=np.complex128),
+                    "alpha": 0.25 + 0.5j,
+                },
+                {
+                    "mode_index": 0,
+                    "rows": np.asarray([1], dtype=np.int64),
+                    "values": np.asarray([-0.5 + 0.75j], dtype=np.complex128),
+                    "alpha": -0.75 + 0.25j,
+                },
+            ],
+            carrier=carrier,
+            action=action,
+            provider=provider,
+            volume_action=volume_action,
+            original_port_block=_OriginalH(),
+            output_directory=tmp_path,
+            allocation_gate=lambda _label, facts: {
+                "admitted": True,
+                "persistent_bytes": facts["additional_payload_bytes"],
+            },
+            runtime=runtime,
+        )
+        assert result["status"] == "PASS"
+        assert result["same_donor_traversals_for_two_inputs"] == 1
+        assert volume_action.calls == 2
+        assert volume_action.buffer.getSize() == 2
+        np.testing.assert_array_equal(np.asarray(volume_action.buffer.array_r), np.zeros(2))
+        assert (tmp_path / "task41_b0_full_size_two_input_identity_check.json").is_file()
+    finally:
+        volume_action.buffer.destroy()
 
 
 def test_v18_full_native_matrix_admission_keeps_header_bound_facts(tmp_path):

@@ -77,6 +77,67 @@ def test_v29_reserves_host_and_task_cgroup_capacity_as_separate_domains(
     assert envelope["reserve_domains_separated"] is True
 
 
+def test_split_reserve_predicate_matches_task41_false_stop_sample():
+    from benchmarks.subreaper_watchdog import reserve_violation
+
+    # Exact 2026-10-18 trigger row: the host reserve is healthy, and the
+    # cgroup has 0 B of its own reserve.  Its 21,209,088 B shortfall against
+    # the host reserve must not be treated as a cgroup reserve violation.
+    trigger = {
+        "reserve_domains_separated": True,
+        "host_mem_available_bytes": 854_915_547_136,
+        "reserve_bytes": 68_719_476_736,
+        "effective_available_bytes": 68_698_267_648,
+        "task_cgroup_available_bytes": 68_698_267_648,
+        "task_cgroup_reserve_bytes": 0,
+    }
+    assert trigger["reserve_bytes"] - trigger["effective_available_bytes"] == 21_209_088
+    assert reserve_violation(trigger) is False
+
+
+@pytest.mark.parametrize(
+    ("host_available", "task_available", "task_reserve", "expected"),
+    [
+        (999, 999, 0, False),
+        (999, 100, 100, False),
+        (999, 99, 100, True),
+        (999, 0, 0, False),
+        (99, 999, 0, True),
+    ],
+)
+def test_split_reserve_predicate_checks_only_each_domains_own_reserve(
+    host_available, task_available, task_reserve, expected
+):
+    from benchmarks.subreaper_watchdog import reserve_violation
+
+    assert reserve_violation(
+        {
+            "reserve_domains_separated": True,
+            "host_mem_available_bytes": host_available,
+            "reserve_bytes": 100,
+            "effective_available_bytes": min(host_available, task_available),
+            "task_cgroup_available_bytes": task_available,
+            "task_cgroup_reserve_bytes": task_reserve,
+        }
+    ) is expected
+
+
+def test_legacy_reserve_predicate_keeps_effective_available_boundary():
+    from benchmarks.subreaper_watchdog import reserve_violation
+
+    envelope = {
+        "reserve_domains_separated": False,
+        "effective_available_bytes": 99,
+        "reserve_bytes": 100,
+        "host_mem_available_bytes": 10_000,
+        "task_cgroup_available_bytes": 99,
+        "task_cgroup_reserve_bytes": None,
+    }
+    assert reserve_violation(envelope) is True
+    envelope["effective_available_bytes"] = 100
+    assert reserve_violation(envelope) is False
+
+
 def test_cli_forwards_physical_memory_and_profile_sampling_policies(
     monkeypatch, tmp_path, capsys
 ):
