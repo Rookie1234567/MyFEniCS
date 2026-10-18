@@ -14,7 +14,10 @@ from petsc4py import PETSc
 from scipy import sparse
 from scipy.linalg import lu_factor, lu_solve
 
-from src.solvers.hcurl_assembly_time_condensation import CellRecoveryMap
+from src.solvers.hcurl_assembly_time_condensation import (
+    CellRecoveryMap,
+    TraceConstraintMap,
+)
 from src.solvers.augmented_reference_correction import (
     augmented_port_state_offset,
     evaluate_complete_augmented_residual,
@@ -682,13 +685,7 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
     )
     active_original = np.asarray([2, 3], dtype=PETSc.IntType)
 
-    def map_original_rows(rows):
-        values = np.asarray(rows)
-        if values.ndim != 1 or np.any((values < 2) | (values > 3)):
-            raise ValueError("MPC slave or unknown row cannot be a direct donor row")
-        return (values.astype(np.int64, copy=False) - 2).astype(PETSc.IntType, copy=False)
-
-    condensed.trace_constraints = SimpleNamespace(
+    condensed.trace_constraints = TraceConstraintMap(
         owned_active_original_dofs=active_original,
         original_to_active={2: 0, 3: 1},
         owned_active_range=(0, 2),
@@ -700,8 +697,15 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
                 np.asarray([0.4 + 0.1j, -0.2 + 0.35j], dtype=np.complex128),
             ),
         },
-        map_original_rows=map_original_rows,
+        full_trace_rows=3,
+        active_rows=2,
+        slave_rows=1,
+        build_audit={},
     )
+    with pytest.raises(ValueError, match="original trace row is not an independent active row"):
+        condensed.trace_constraints.map_original_rows(
+            np.asarray([0, 2, 4], dtype=PETSc.IntType)
+        )
 
     rng = np.random.default_rng(20261018)
     b_trace = _matrix(rng, 2, 2)
@@ -780,10 +784,12 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         def __init__(self):
             self.buffer = PETSc.Vec().createSeq(5, comm=PETSc.COMM_SELF)
             self.calls = 0
+            self.inputs = []
 
         def apply(self, source):
             self.calls += 1
             source_values = np.asarray(source.getArray(readonly=True), dtype=np.complex128)
+            self.inputs.append(source_values.copy())
             if source_values[4] != 0.0:
                 raise AssertionError("native MPC storage input must retain exact zero slave identity")
             backsubstituted = expansion @ source_values[:4]
@@ -817,14 +823,20 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
             probes=[
                 {
                     "mode_index": 0,
-                    "rows": np.asarray([2], dtype=PETSc.IntType),
-                    "values": np.asarray([0.6 + 0.3j], dtype=np.complex128),
+                    "rows": np.asarray([0, 2, 4], dtype=PETSc.IntType),
+                    "values": np.asarray(
+                        [0.04 + 0.03j, 0.6 + 0.3j, 0.07 - 0.02j],
+                        dtype=np.complex128,
+                    ),
                     "alpha": 0.25 - 0.1j,
                 },
                 {
                     "mode_index": 1,
-                    "rows": np.asarray([3], dtype=PETSc.IntType),
-                    "values": np.asarray([-0.2 + 0.8j], dtype=np.complex128),
+                    "rows": np.asarray([1, 3, 4], dtype=PETSc.IntType),
+                    "values": np.asarray(
+                        [-0.02 + 0.05j, -0.2 + 0.8j, -0.09 + 0.03j],
+                        dtype=np.complex128,
+                    ),
                     "alpha": -0.4 + 0.55j,
                 },
             ],
@@ -843,6 +855,20 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         )
         assert result["status"] == "PASS"
         assert result["independent_nonzero_cell_interiors_injected_before_native_rhs"] is True
+        assert result["input_identities"][0]["active_trace_rows"] == 1
+        assert result["input_identities"][0]["cell_interior_rows"] == 1
+        assert result["input_identities"][0]["mpc_slave_rows"] == 1
+        assert result["input_identities"][1]["active_trace_rows"] == 1
+        assert result["input_identities"][1]["cell_interior_rows"] == 1
+        assert result["input_identities"][1]["mpc_slave_rows"] == 1
+        assert result["input_identities"][0]["raw_slave_values_sha256"]
+        np.testing.assert_allclose(volume_action.inputs[0][0], 0.29 + 0.155j)
+        np.testing.assert_allclose(
+            volume_action.inputs[1][1],
+            -0.395 - 1.0e-6 + 1j * (0.55 + 2.0e-6),
+        )
+        assert volume_action.inputs[0][4] == 0.0
+        assert volume_action.inputs[1][4] == 0.0
         assert max(result["native_full_rhs_recovery_relative_errors"]) < 1.0e-11
         assert max(result["p6_vs_native_reduced_rhs_relative_errors"]) < 1.0e-11
         assert result["direct_B_row_entries_checked"] > 0

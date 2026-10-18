@@ -157,6 +157,11 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
     class _Constraints:
         owned_active_original_dofs = np.asarray([0, 1], dtype=np.int64)
         original_to_active = {0: 0, 1: 1}
+        expansion_by_original = {
+            0: (np.asarray([0], dtype=np.int64), np.asarray([1.0 + 0.0j])),
+            1: (np.asarray([1], dtype=np.int64), np.asarray([1.0 + 0.0j])),
+        }
+        active_rows = 2
         owned_active_range = (0, 2)
 
         @staticmethod
@@ -177,6 +182,7 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
     class _Provider:
         def __init__(self):
             self.sweeps = 0
+            self._interior_rows = np.empty(0, dtype=np.int64)
 
         @property
         def audit(self):

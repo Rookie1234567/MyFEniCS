@@ -68,6 +68,148 @@ def _save_task41_b0_native_surface_pair_evidence(
     }
 
 
+def _task41_b0_partition_raw_probe(
+    rows: Any,
+    values: Any,
+    *,
+    constraints: Any,
+    interior_rows: Any,
+    full_rows: int,
+) -> dict[str, np.ndarray]:
+    """Partition a sparse full-storage probe without remapping MPC slaves."""
+    original_rows = np.asarray(rows)
+    raw_values = np.asarray(values, dtype=np.complex128)
+    interior_support = np.asarray(interior_rows)
+    if (
+        original_rows.ndim != 1
+        or original_rows.dtype.kind not in "iu"
+        or original_rows.dtype.kind == "b"
+        or raw_values.shape != original_rows.shape
+        or not np.isfinite(raw_values).all()
+        or (original_rows.size > 1 and np.any(original_rows[1:] <= original_rows[:-1]))
+        or (
+            original_rows.size
+            and (
+                int(original_rows[0]) < 0
+                or int(original_rows[-1]) >= int(full_rows)
+            )
+        )
+        or interior_support.ndim != 1
+        or interior_support.dtype.kind not in "iu"
+        or interior_support.dtype.kind == "b"
+        or (
+            interior_support.size > 1
+            and np.any(interior_support[1:] <= interior_support[:-1])
+        )
+    ):
+        raise ValueError("Task41 B0 raw full-FE probe rows or values are malformed")
+
+    interior_positions = np.searchsorted(interior_support, original_rows)
+    is_interior = interior_positions < len(interior_support)
+    if np.any(is_interior):
+        candidates = np.flatnonzero(is_interior)
+        is_interior[candidates] = (
+            interior_support[interior_positions[candidates]] == original_rows[candidates]
+        )
+
+    trace_rows = original_rows[~is_interior]
+    trace_values = raw_values[~is_interior]
+    owned_active_original = np.asarray(
+        constraints.owned_active_original_dofs
+    )
+    active_rows_count = int(constraints.active_rows)
+    owned_start, owned_stop = (
+        int(value) for value in constraints.owned_active_range
+    )
+    if (
+        owned_active_original.ndim != 1
+        or owned_active_original.dtype.kind not in "iu"
+        or owned_active_original.dtype.kind == "b"
+        or len(owned_active_original) != active_rows_count
+        or (owned_active_original.size > 1 and np.any(
+            owned_active_original[1:] <= owned_active_original[:-1]
+        ))
+        or owned_start != 0
+        or owned_stop != active_rows_count
+    ):
+        raise ValueError(
+            "Task41 B0 raw probe partition requires the complete ordered MPI1 active trace map"
+        )
+    active_positions = np.searchsorted(owned_active_original, trace_rows)
+    is_active = active_positions < len(owned_active_original)
+    if np.any(is_active):
+        candidates = np.flatnonzero(is_active)
+        is_active[candidates] = (
+            owned_active_original[active_positions[candidates]] == trace_rows[candidates]
+        )
+
+    expansion_by_original = constraints.expansion_by_original
+    for position in np.flatnonzero(~is_active):
+        row = int(trace_rows[position])
+        expansion = expansion_by_original.get(row)
+        if expansion is None:
+            raise ValueError(
+                f"Task41 B0 raw probe row {row} is outside cell interiors and the current trace map"
+            )
+        try:
+            active_ids = np.asarray(expansion[0])
+            coefficients = np.asarray(expansion[1], dtype=np.complex128)
+        except (IndexError, TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Task41 B0 raw MPC-slave probe row {row} has a malformed expansion"
+            ) from exc
+        if (
+            active_ids.ndim != 1
+            or active_ids.dtype.kind not in "iu"
+            or active_ids.dtype.kind == "b"
+            or coefficients.shape != active_ids.shape
+            or (
+                active_ids.size
+                and (
+                    int(active_ids.min()) < 0
+                    or int(active_ids.max()) >= active_rows_count
+                )
+            )
+            or not np.isfinite(coefficients).all()
+        ):
+            raise ValueError(
+                f"Task41 B0 raw MPC-slave probe row {row} has an invalid current expansion"
+            )
+
+    active_original_rows = trace_rows[is_active]
+    active_values = trace_values[is_active]
+    mapped_active_rows = np.asarray(
+        constraints.map_original_rows(active_original_rows), dtype=np.int64
+    )
+    if (
+        mapped_active_rows.shape != active_original_rows.shape
+        or (
+            mapped_active_rows.size
+            and (
+                int(mapped_active_rows.min()) < 0
+                or int(mapped_active_rows.max()) >= active_rows_count
+            )
+        )
+    ):
+        raise ValueError("Task41 B0 independent raw probe rows map outside active trace")
+    order = np.argsort(mapped_active_rows, kind="stable")
+    mapped_active_rows = mapped_active_rows[order]
+    if mapped_active_rows.size > 1 and np.any(
+        mapped_active_rows[1:] == mapped_active_rows[:-1]
+    ):
+        raise ValueError("Task41 B0 independent raw probe rows alias after trace mapping")
+
+    return {
+        "active_original_rows": active_original_rows[order],
+        "active_rows": mapped_active_rows,
+        "active_values": active_values[order],
+        "interior_rows": original_rows[is_interior],
+        "interior_values": raw_values[is_interior],
+        "slave_rows": trace_rows[~is_active],
+        "slave_values": trace_values[~is_active],
+    }
+
+
 def _task41_b0_full_size_two_input_identity_check(
     *,
     probes: list[Mapping[str, Any]],
@@ -114,6 +256,9 @@ def _task41_b0_full_size_two_input_identity_check(
             raise ValueError("Task41 B0 full-size FE/port probe is malformed or zero")
         probe_specs.append((port, rows, values, alpha))
 
+    probe_partition_workspace_bytes = int(
+        sum(int(rows.size) * 64 for _port, rows, _values, _alpha in probe_specs)
+    )
     persistent_bytes = int(
         3 * 2 * reduced_size * np.dtype(np.complex128).itemsize
         + 2 * 2 * full_rows * np.dtype(np.complex128).itemsize
@@ -123,6 +268,7 @@ def _task41_b0_full_size_two_input_identity_check(
         5 * full_rows * np.dtype(np.complex128).itemsize
         + 3 * reduced_size * np.dtype(np.complex128).itemsize
         + 2 * int(getattr(carrier.surface_source, "max_frame_bytes", 0))
+        + probe_partition_workspace_bytes
     )
     admission_facts = {
         "additional_payload_bytes": persistent_bytes,
@@ -132,6 +278,7 @@ def _task41_b0_full_size_two_input_identity_check(
         "port_rows": mode_count,
         "probe_count": 2,
         "probe_input_bytes": int(2 * reduced_size * np.dtype(np.complex128).itemsize),
+        "raw_probe_partition_workspace_bytes": probe_partition_workspace_bytes,
         "two_native_full_fe_input_storage_bytes": int(
             2 * full_rows * np.dtype(np.complex128).itemsize
         ),
@@ -139,8 +286,9 @@ def _task41_b0_full_size_two_input_identity_check(
             2 * full_rows * np.dtype(np.complex128).itemsize
         ),
         "resource_classification": (
-            "two full FE inputs, two native FE RHS vectors, reduced actions, and bounded "
-            "volume/recovery workspace; one file-backed donor sweep"
+            "two full FE inputs, two native FE RHS vectors, reduced actions, bounded "
+            "volume/recovery workspace, and sparse raw-probe row classification; "
+            "one file-backed donor sweep"
         ),
     }
     admission = allocation_gate("task41_b0_full_size_two_input_identity_check", admission_facts)
@@ -149,25 +297,55 @@ def _task41_b0_full_size_two_input_identity_check(
         {**admission_facts, "admission": admission},
     )
 
+    classified_specs = []
+    for port, rows, values, alpha in probe_specs:
+        partition = _task41_b0_partition_raw_probe(
+            rows,
+            values,
+            constraints=constraints,
+            interior_rows=provider._interior_rows,
+            full_rows=full_rows,
+        )
+        classified_specs.append((port, rows, values, alpha, partition))
+
     sources = np.zeros((reduced_size, 2), dtype=np.complex128)
     input_identities = []
-    for column, (port, rows, values, alpha) in enumerate(probe_specs):
-        mapped = np.asarray(constraints.map_original_rows(rows), dtype=np.int64)
-        if (
-            mapped.shape != rows.shape
-            or (mapped.size and (int(mapped.min()) < 0 or int(mapped.max()) >= active_rows))
-            or (mapped.size > 1 and np.any(np.sort(mapped)[1:] == np.sort(mapped)[:-1]))
-        ):
-            raise ValueError("Task41 B0 input probe does not map one-to-one to active FE rows")
-        sources[mapped, column] = values
+    for column, (port, rows, values, alpha, partition) in enumerate(classified_specs):
+        mapped = partition["active_rows"]
+        active_values = partition["active_values"]
+        if mapped.shape != active_values.shape:
+            raise ValueError("Task41 B0 input probe active rows and values differ in layout")
+        sources[mapped, column] = active_values
         sources[active_rows + port, column] = alpha
         input_identities.append(
             {
                 "mode_index": port,
                 "mode_key": list(carrier.mode_keys[port]),
                 "probe_rows": int(rows.size),
+                "active_trace_rows": int(len(partition["active_rows"])),
+                "cell_interior_rows": int(len(partition["interior_rows"])),
+                "mpc_slave_rows": int(len(partition["slave_rows"])),
                 "probe_values_sha256": _hash_arrays({"values": values}),
+                "active_original_rows_sha256": _hash_arrays(
+                    {"rows": partition["active_original_rows"]}
+                ),
                 "mapped_active_rows_sha256": _hash_arrays({"rows": mapped}),
+                "interior_rows_sha256": _hash_arrays(
+                    {"rows": partition["interior_rows"]}
+                ),
+                "interior_values_sha256": _hash_arrays(
+                    {"values": partition["interior_values"]}
+                ),
+                "raw_slave_rows_sha256": _hash_arrays(
+                    {"rows": partition["slave_rows"]}
+                ),
+                "raw_slave_values_sha256": _hash_arrays(
+                    {"values": partition["slave_values"]}
+                ),
+                "raw_slave_values_handling": (
+                    "retained as raw full-space probe evidence; never mapped to active "
+                    "rows; native full-storage slave identity rows remain zero"
+                ),
                 "port_alpha": [float(alpha.real), float(alpha.imag)],
             }
         )
@@ -209,6 +387,12 @@ def _task41_b0_full_size_two_input_identity_check(
             seed = (interior_rows % 104729).astype(np.float64) * 1.0e-6
             full_fields[interior_rows, 0] = (0.25 + seed) + 1j * (0.125 + seed)
             full_fields[interior_rows, 1] = (-0.375 - seed) + 1j * (0.5 + 2.0 * seed)
+    for column, (_port, _rows, _values, _alpha, partition) in enumerate(
+        classified_specs
+    ):
+        raw_interior_rows = partition["interior_rows"]
+        if raw_interior_rows.size:
+            full_fields[raw_interior_rows, column] += partition["interior_values"]
     if slave_rows.size:
         full_fields[slave_rows, :] = 0.0
     interior_count = sum(len(cell.original_interiors) for cell in action._cells)
@@ -651,19 +835,17 @@ def _task41_b0_saved_surface_consumer_checks(
                 or not np.isfinite(probe_values).all()
             ):
                 raise ValueError("Task41 B0 saved nonzero D probe is malformed")
+            probe_partition = _task41_b0_partition_raw_probe(
+                probe_rows,
+                probe_values,
+                constraints=action.condensed.trace_constraints,
+                interior_rows=provider._interior_rows,
+                full_rows=int(action.condensed.full_rows),
+            )
             probe_on_D = sparse_lookup(saved_D_rows, probe_rows, probe_values)
             saved_D_x = complex(np.dot(saved_D_values, probe_on_D))
-            mapped_probe_rows = np.asarray(
-                action.condensed.trace_constraints.map_original_rows(probe_rows),
-                dtype=np.int64,
-            )
-            probe_order = np.argsort(mapped_probe_rows, kind="stable")
-            active_probe_rows = mapped_probe_rows[probe_order]
-            active_probe_values = probe_values[probe_order]
-            if active_probe_rows.size > 1 and np.any(
-                active_probe_rows[1:] == active_probe_rows[:-1]
-            ):
-                raise ValueError("Task41 B0 saved D probe aliases after the current trace map")
+            active_probe_rows = probe_partition["active_rows"]
+            active_probe_values = probe_partition["active_values"]
             direct_D_rows, direct_D_values, direct_D_active = provider._direct_component(
                 entry, index, "D", "task41_saved_pair_D_probe"
             )
@@ -687,7 +869,14 @@ def _task41_b0_saved_surface_consumer_checks(
                 local_rows = np.asarray(cell.original_interiors, dtype=np.int64)
                 local_values = np.asarray(cell.Di[column, :], dtype=np.complex128)
                 local_D_x += complex(
-                    np.dot(local_values, sparse_lookup(local_rows, probe_rows, probe_values))
+                    np.dot(
+                        local_values,
+                        sparse_lookup(
+                            local_rows,
+                            probe_partition["interior_rows"],
+                            probe_partition["interior_values"],
+                        ),
+                    )
                 )
             p6_D_x = direct_D_x + local_D_x
             production_D_x = complex(
@@ -739,6 +928,24 @@ def _task41_b0_saved_surface_consumer_checks(
                 "p6_direct_and_local_B_D_rows_values_match_saved_native_candidate_exactly": True,
                 "p6_direct_D_active_map_applied_to_nonzero_reduced_probe": True,
                 "p6_direct_trace_rows_mapped_without_second_MPC": True,
+                "raw_D_probe_row_partition": {
+                    "raw_rows": int(probe_rows.size),
+                    "active_trace_rows": int(len(probe_partition["active_rows"])),
+                    "cell_interior_rows": int(len(probe_partition["interior_rows"])),
+                    "mpc_slave_rows": int(len(probe_partition["slave_rows"])),
+                    "active_original_rows_sha256": sha(
+                        probe_partition["active_original_rows"]
+                    ),
+                    "active_rows_sha256": sha(probe_partition["active_rows"]),
+                    "interior_rows_sha256": sha(probe_partition["interior_rows"]),
+                    "interior_values_sha256": sha(probe_partition["interior_values"]),
+                    "raw_slave_rows_sha256": sha(probe_partition["slave_rows"]),
+                    "raw_slave_values_sha256": sha(probe_partition["slave_values"]),
+                    "raw_slave_values_handling": (
+                        "kept in raw full-space reference pairing; never mapped to active "
+                        "rows or MPC-pulled back again"
+                    ),
+                },
                 "p6_cell_interior_B_D_values_checked_against_saved_native_mode": True,
                 "B_probe_alpha": [float(alpha.real), float(alpha.imag)],
                 "B_probe_norm": B_alpha_norm,

@@ -1,0 +1,114 @@
+{
+  "schema": "task41.p0.v2.raw_probe_rowmap_repair_evidence.v1",
+  "recorded_at_utc": "2026-10-18T10:40:37Z",
+  "source_state": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "base_head_sha": "ab9e14dd00b2f1a94acd7ced5949e940caa724e6",
+    "working_tree": "three source/test files modified; no commit or push",
+    "source_test_diff_sha256_before_this_record": "0e8025eee1b0d95f4c5bc28d64240f62eb120e4dd3e5bd4cd9674b4003bfca2a"
+  },
+  "failed_attempt": {
+    "service": "myfenics-case-20261018T090828-1914197.service",
+    "run_id": "20261018T090832.301793Z",
+    "source_sha": "ab9e14dd00b2f1a94acd7ced5949e940caa724e6",
+    "run_status": "WORKER_FAILED",
+    "run_exit_status": 4,
+    "systemd_state": "failed/failed",
+    "systemd_result": "exit-code",
+    "systemd_exec_main_status": 3,
+    "workflow_last_stage": "cleanup",
+    "workflow_elapsed_seconds": 4266.0541681298055,
+    "error": "ValueError: original trace row is not an independent active row",
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "process_tree_rss_peak_bytes": 9186394112,
+    "job_cgroup_memory_peak_bytes": 79297404928,
+    "job_process_tree_swap_peak_bytes": 0,
+    "time_gate_passed": true,
+    "fixed_window_remaining_seconds": 68645.48685476984,
+    "fixed_window_sha256": "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6",
+    "systemd_query_scope": "systemctl --user",
+    "systemd_main_pid": 0,
+    "prior_non_user_query_discarded": "Earlier system-level inactive/success/0 did not describe this user service."
+  },
+  "completed_donor_validation": {
+    "status": "PASS",
+    "source_validation_seconds": 3610.167483,
+    "mode_count": 64120,
+    "committed_bytes": 363791051840,
+    "committed_prefix_sha256": "2595b9518e2422bfadbc2f1a6640e619d60501525b07bda48a068a8ec478a10e",
+    "checkpoint_sha256": "66ec8f305382060c044822459d50aa6d323d85bcdfffd531b46ff5d74e43e57a",
+    "identity_sha256": "c89c2c5b06d6b8d727d5ea59e3b4ccad9ecf2ff1627f2a13c60f200eee66cf28",
+    "manifest_sha256": "46cd5e3cecf2c0dac694bdbba1fef91eae10642e878a487fc63e216ddcc1f142",
+    "offset_index": {
+      "entries": 64121,
+      "bytes": 512968,
+      "sha256": "2a59fd6a2504ac0b0b8c675325dcaf517ec7bc5dc87b8cb496b96b413b592453"
+    },
+    "support_inventory": {
+      "boundary_B_rows": 9094725000,
+      "boundary_D_rows": 9094725000,
+      "cell_interior_nonzero_values": 0,
+      "classification": "fresh Task41 B0 donor certificate; not borrowed from Task40"
+    },
+    "donor_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z/task41_b0_target_surface_checkpoint/global/carrier_surface_functionals.bin"
+  },
+  "saved_raw_probe_observation": {
+    "mode_index": 16030,
+    "raw_probe_rows": 60000,
+    "production_D_rows": 60000,
+    "native_D_rows": 58000,
+    "additional_raw_rows_vs_native_D": 2000,
+    "additional_rows_l2_norm": 7.873177749249932e-14,
+    "additional_rows_max_abs": 1.7604960646262358e-15,
+    "raw_probe_l2_norm": 0.9999999999999917,
+    "first_additional_rows": [
+      371063,
+      430679,
+      440837,
+      496421,
+      505565,
+      515723
+    ],
+    "handling": "No threshold filtering; production/native comparison and tolerance gates remain unchanged."
+  },
+  "repair": {
+    "files": [
+      "src/runners/task40_v10_worker.py",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+      "src/test/test_task40_v10_worker_arrays.py"
+    ],
+    "behavior": [
+      "A shared sparse-probe partition uses the sorted current cell-interior inventory and sorted complete MPI1 active-original inventory.",
+      "Only independent active rows are passed to map_original_rows; unmatched non-interior rows must exist in the current MPC expansion map or fail closed.",
+      "Raw interior values feed local D pairing and the full FE input; known nonzero interior witnesses remain.",
+      "Raw MPC-slave values remain in raw pairing/evidence and are never remapped or pulled back a second time; full-size native slave identity rows remain zero and rhs_is_mpc_dual=True remains unchanged.",
+      "The original raw production/native D comparisons and tolerance gates are unchanged."
+    ],
+    "production_fresh_map_classified": false,
+    "production_classification_note": "The failed run did not persist its live full-size trace map. Actual production row classes remain to be recorded on a frozen-source continuation."
+  },
+  "regression": {
+    "fixture": "Concrete TraceConstraintMap with two active trace rows, one MPC slave, and two cell-interior rows.",
+    "raw_fixture_per_probe": {
+      "active_trace_rows": 1,
+      "cell_interior_rows": 1,
+      "mpc_slave_rows": 1
+    },
+    "old_behavior_reproduced": "Passing [interior, active, slave] together to map_original_rows raises the same independent-active-row ValueError.",
+    "new_behavior": "Active rows are mapped; interior values are retained; slave rows are recognized and not mapped.",
+    "command": "python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map src/test/test_task40_v10_worker_arrays.py::test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive",
+    "result": "2 passed in 0.55s",
+    "qualified_abi_preflight": {
+      "activation": "_MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+      "python_in_repo_venv": true,
+      "petsc_scalar_type": "complex128",
+      "petsc_integer_type": "int32",
+      "required_linux_modules_present": true
+    },
+    "git_diff_check": "PASS",
+    "ruff": "Unavailable in qualified environment: python -m ruff returned No module named ruff; no dependency was installed."
+  },
+  "formal_run_restarted": false,
+  "commit_or_push": false
+}
