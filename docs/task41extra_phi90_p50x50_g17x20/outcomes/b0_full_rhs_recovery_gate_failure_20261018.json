@@ -1,0 +1,125 @@
+{
+  "schema": "task41.b0_p0_v2_full_rhs_recovery_failure.v1",
+  "task": "Task41extra phi90 p50x50 g17x20",
+  "stage": "B0_0p7nm_full3d_iterative",
+  "model": {
+    "wavelength_nm": 0.7,
+    "polynomial_degree": 6,
+    "mesh_cells_xyz": [
+      10,
+      200,
+      14
+    ],
+    "mpi_ranks": 1
+  },
+  "identity": {
+    "source_sha": "53243cd6766b564fed17668753e9fdbb7cab1129",
+    "service": "myfenics-case-20261018T121207-1949327.service",
+    "attempt": "20261018T121210.548690Z",
+    "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261018T121210.548690Z",
+    "run_summary_sha256": "1c593f2dea9405333bc2ae9f8e38bf5af5bc70d87ccea226d9c199ce0e33fce9",
+    "candidate_summary_sha256": "cde5cdc347941cad4369d3d8a94ab4a682fc0d48a5a176e3c7d2fcbdde0c2054",
+    "donor_offsets_metadata_sha256": "7e25db194e864e8ecbfec9d0c008209da188af4e2a067c4351b28924fa3cbd82"
+  },
+  "classification": {
+    "run_receipt": "WORKER_FAILED",
+    "worker_exit_status": 4,
+    "v2_assessment": "NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED",
+    "official_result": false,
+    "workflow_phase_at_failure": "TASK41_B0/cleanup"
+  },
+  "completed_work": {
+    "saved_surface_application_modes": 64120,
+    "expected_surface_application_modes": 64120,
+    "surface_apply_elapsed_seconds": 4257.863887676038,
+    "read_bytes_after_validation": 363795691904,
+    "read_frame_parse_seconds_after_validation": 93.11829357547686,
+    "selected_mode_surface_consumer_receipts": [
+      {
+        "mode_index": 16030,
+        "side": "top",
+        "B_norm": 198.18061698371133,
+        "B_reference_norm": 198.18061698372017,
+        "D_relative_error": 5.3164e-14,
+        "status": "PASS"
+      },
+      {
+        "mode_index": 48090,
+        "side": "bottom",
+        "B_norm": 198.1578592001543,
+        "B_reference_norm": 198.1578592001577,
+        "D_relative_error": 1.5943e-14,
+        "status": "PASS"
+      }
+    ]
+  },
+  "failed_gate": {
+    "check": "full RHS recovery reproduces the known FE input",
+    "event": "v10_candidate_worker_complete",
+    "error": "Task41 B0 full RHS recovery does not reproduce the known FE input: 2.0454083899234283e-11",
+    "probe_order_mode_indices": [
+      16030,
+      48090
+    ],
+    "first_failed_column": 0,
+    "first_failed_mode_index": 16030,
+    "first_failed_side": "top",
+    "relative_error": 2.0454083899234283e-11,
+    "relative_error_limit": 1e-11,
+    "absolute_error": null,
+    "absolute_error_reason": "full_fields, native_rhs and recovered vectors were not persisted",
+    "second_probe_status": "NOT_REACHED_AFTER_FIRST_COLUMN_FAILURE",
+    "condensed_rhs_comparison": "NOT_REACHED",
+    "failure_receipt_written": false
+  },
+  "resources_and_time": {
+    "workflow_elapsed_seconds": 9364.070864045061,
+    "process_tree_rss_peak_bytes": 11411648512,
+    "task_cgroup_memory_peak_bytes": 11872563200,
+    "task_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "resource_gate_triggered": false,
+    "time_gates_exceeded": false,
+    "fixed_window_remaining_seconds_at_last_sample_approx": 52529,
+    "host_swap_page_counts": {
+      "swapin_pages": 13,
+      "swapout_pages": 0,
+      "attributable_to_task": null,
+      "attribution_status": "UNKNOWN_NOT_ATTRIBUTABLE_FROM_GLOBAL_COUNTER"
+    },
+    "full_rhs_action_and_recovery_substage_seconds": "UNKNOWN_NOT_SEPARATELY_PERSISTED",
+    "pss_peak_bytes": "UNKNOWN",
+    "per_array_or_backing_peak_bytes": "UNKNOWN"
+  },
+  "not_run": [
+    "second full-size RHS recovery probe after the first-column failure",
+    "condensed RHS comparison",
+    "full q CSR and q factorization",
+    "KSP/FGMRES",
+    "full field",
+    "independent A6",
+    "official R/T/A and A_volume"
+  ],
+  "diagnostic_limit": "The failed arrays were not saved, so this attempt cannot distinguish LU, MPC, mapping, or floating-point causes. Do not infer a specific implementation bug from the relative error alone.",
+  "next_checkpoint": "Review the numerical failure and evidence gap. Before any continuation, preserve the first failing column's known input, native RHS, recovered vector, mapping identity, and local residuals so native/local and LU-related discrepancies can be distinguished. No automatic repeat of the heavy run.",
+  "evidence": {
+    "run_summary": "../../../results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261018T121210.548690Z/run_summary.json",
+    "candidate_summary": "../../../results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261018T121210.548690Z/task40_v10_p6_candidate_summary.json",
+    "events": "../../../results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261018T121210.548690Z/task41_b0_07nm_p6_y_orbit_reference_events.jsonl",
+    "workflow_phase": "../../../results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261018T121210.548690Z/workflow_phase.json",
+    "watchdog_resources": "../../../results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261018T121210.548690Z/watchdog/resources.jsonl"
+  },
+  "review_v2_context": {
+    "consumer_source_chain": [
+      "ab9e14dd00b2f1a94acd7ced5949e940caa724e6",
+      "6c31c5be468ebe6b50102a9beaaa701f48107b4d",
+      "53243cd6766b564fed17668753e9fdbb7cab1129"
+    ],
+    "donor_adoption_compact": "p0_v2_adoption_action_performance_20261018.json",
+    "new_modes_generated": 0,
+    "shared_action_path": "existing P6/native volume_action.apply -> reduce_rhs -> recover_storage; candidate stopped at first-column recovery gate",
+    "attempts_index": "run_index.json",
+    "resource_scope_note": "The 11,872,563,200 B task-cgroup peak belongs to the later saved-donor consumer/recovery attempt; the 1,580,571,795,456 B peak belongs to the earlier carrier-build resource stop. These are different phases and do not establish a same-scope memory reduction. PSS and per-array/backing peaks are UNKNOWN.",
+    "test_evidence_compact": "p0_v2_adoption_action_performance_20261018.json"
+  }
+}

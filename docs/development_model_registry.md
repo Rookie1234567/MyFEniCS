@@ -2421,3 +2421,19 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 | 原尺寸全目标 | all-q/targetKSP/A6与释放后残差/official场、mode精度、2TB/48h未资格；无自动新增case | 下一授权需实际各q与完整共驻账，优先准确因子ALL_Q_RESIDENT |
 
 执行仅在获批fenics-ws的/home/fenics/Projects/laptop_share内；cap512GiB/hostreserve64GiB，不变原MUMPS参数、master或ordinary default。保留两次数值前失败、首次checkerFAIL、runtime首次路径导入失败和全部历史费用/unknown。两级账本与command/ABI/window/approval原字节索引随同一Task40分支提交。
+
+## Task41 P0 Review V2：0.7 nm full-size consumer recovery 尚未通过（2026-10-18）
+
+此阶段试图把旧 carrier 作为只读输入接到同一 Task41 P0 的 P6/native action：完整复核 producer identity 与数据后，在线走 surface action、RHS reduction 和存储恢复。恢复门要求已知 FE 输入能被还原；这是模型求解前的数值身份检查，失败时不能把原因猜成 LU、MPC 或舍入。
+
+| 阶段 / 身份 | 方法与实测结果 | 状态与资格边界 | 证据 |
+|---|---|---|---|
+| 资源 watchdog | host reserve 与 task/ancestor cgroup reserve 分别按本域可用量检查 | 原 1.5 TiB cap、64 GiB host reserve、task reserve 0、时间与 swap 门保留；修正旧跨域比较，不以 host reserve 再卡 task 余量 | [V2 adoption compact](task41extra_phi90_p50x50_g17x20/outcomes/p0_v2_adoption_action_performance_20261018.json) |
+| donor adoption | require-existing 读取旧 producer source c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5 的64,120 modes / 363,791,051,840 B；prefix hash与64,121-entry offset index 完整复核；新生成 modes=0 | fresh Task41 support certificate；boundary B/D 各9,094,725,000 rows、interior nonzero=0。donor adoption与后续完整action资格分开 | [raw donor/rowmap compact](task41extra_phi90_p50x50_g17x20/outcomes/p0_v2_raw_probe_rowmap_repair.json)、[final local evidence](task41extra_phi90_p50x50_g17x20/outcomes/p0_local_final_evidence_20261018.json) |
+| source ab9e14dd…，attempt 090832.301793Z | donor validation后 row mapper 报 original trace row is not an independent active row；后续修复 row classification，只映射独立 active row | WORKER_FAILED；父 workflow 4,266.054 s。未得到完整模型解 | [row-map compact](task41extra_phi90_p50x50_g17x20/outcomes/p0_v2_raw_probe_rowmap_repair.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json) |
+| source 6c31c5be…，attempt 104243.408669Z | B gate误用近零 mode wave number作为B witness alpha；raw B重算3.7431e-14，raw D为5.3164e-14/1.5943e-14 | WORKER_FAILED；父 workflow 4,223.689 s；实际 P6 D 未保存，不构成 fresh P6 requalification | [alpha diagnostic](task41extra_phi90_p50x50_g17x20/outcomes/p0_v2_alpha_probe_field_diagnostic.json) |
+| source 53243cd…，attempt 121210.548690Z | 64,120/64,120 saved-surface applications后，mode16030 RHS recovery误差2.0454083899234283e-11 > 1e-11 | NUMERICAL_GATE_FAILED / root cause unresolved；raw receipt WORKER_FAILED；q CSR/factor、KSP、全场、A6、R/T/A与A_volume未运行 | [failure compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_full_rhs_recovery_gate_failure_20261018.json)、[response](task41extra_phi90_p50x50_g17x20/response_v2.md) |
+
+第三次 task-cgroup peak 11,872,563,200 B 属于 donor consumer/recovery；早先 carrier-build resource stop 的 1,580,571,795,456 B 属于不同阶段，不得写成同 scope 的内存下降。父 workflow 9,364.071 s 包含 surface apply 4,257.864 s 与 read/parse 子计时；不重复相加。宿主全局 swapin/out 13/0 页的 task attribution UNKNOWN；PSS与数组/backing常驻峰值 UNKNOWN。本机回归身份为 source-tree HEAD 5e82225427d91d2ec4650169e558b6da29e75a8e 加 tracked-diff SHA 9c8707fc9541087d1d7523edfa1eb10f18842845ed8b4ead70a97369561b98e7，不能与 formal service source 混写。13.5 nm A1/A2 结果保持不变；0.7 nm目标还没有完整场、最终精度或2 TB/48 h资格。
+
+测试结论与限制见 [test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。下一检查点是 ChatGPT 基于数值门失败与缺少首列向量证据审阅后续处置；重点是保留首个失败列输入/native RHS/recovered 向量及 local residual，区分 native/local 与 LU 误差来源。本阶段没有自动重复 heavy。

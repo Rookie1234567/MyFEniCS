@@ -175,3 +175,21 @@ python -m pytest -q --tb=short src/test/test_task41_b0_native_surface.py src/tes
 本轮只新增 hash-bound 停止 compact，并更新 run index、结果汇总及交接文档；没有修改源码、重跑 pytest、重跑 FE/PDE 或碰触大 carrier。现有 B0 定向验证记录保持原样，不能视为本次正式运行通过。关闭检查为 compact JSON 可解析、记录字段与小型 run/checkpoint metadata 对齐、git diff --check；没有 CI 结果。2,030,433,193 B 的 watchdog resources log 仅从末尾读取有界片段并对所用原始 JSONL 行单独算 hash，没有全文件扫描/哈希；363,791,051,840 B carrier 仅读文件元数据与其小型 checkpoint JSON，没有读取或哈希 carrier 本体。
 
 主控复核：三条原始资源行按byte offset回读并独立重算SHA、三个原始summary hash及两份停止谓词源码hash均匹配；carrier父阶段原始事件第163行SHA为`5ca968b60f8bfacd105452da292ed795b5f233d50d0471e6a13992a676860f4e`。无科学源码修改，未重跑FE或完整测试。
+
+## Task41 P0 Review V2：测试、正式尝试与失败边界
+
+V2 有三份 consumer source 身份与三次正式尝试，不能用最后一次错误概括前两次：
+
+| source / attempt | 实际检查 | 结果 |
+|---|---|---|
+| ab9e14dd00b2f1a94acd7ced5949e940caa724e6 / 20261018T090832.301793Z | 真实 P6 cells/MPC map 与两输入 recovery fixture；可复现 original trace row 不属于 independent active row 的错误 | 2 passed in 0.55 s；随后正式 worker 仍以 row classification error 退出。细节见 p0_v2_raw_probe_rowmap_repair.json |
+| 6c31c5be468ebe6b50102a9beaaa701f48107b4d / 20261018T104243.408669Z | 非零 B witness alpha、可重用 volume action buffer | 2 passed, 13 deselected in 0.34 s；附加 whole-file 运行 12 passed、3 failed，失败在未改动的 regular-inverse fixtures；没有重跑 baseline，也没有修这些 fixtures。细节见 p0_v2_alpha_probe_field_diagnostic.json |
+| 本机最终相关套件，记录的 source-tree HEAD 5e82225427d91d2ec4650169e558b6da29e75a8e | 16 项相关回归；资格化 WSL activation 下 PETSc complex128/int32、MPI1 | 16 passed in 0.88 s；py_compile 与 git diff --check passed。该 HEAD 与第三次正式 service source 53243cd6766b564fed17668753e9fdbb7cab1129 分列记录，不把测试结果跨 source 重署名。完整命令见 p0_local_final_evidence_20261018.json |
+| B0 service-contract fixture（1 项尝试） | test_task41_launcher_and_service_pass_real_window_resources_and_checker_authority[B0] | 因 run-local ABI receipt 属于不同 runtime profile/host/boot，在 imports、preflight 与 pytest 前阻塞；不计为 pass。 |
+| alpha gate whole-file 批次 | 相关 worker arrays 测试文件 | 12 passed、3 failed；3 项是 unchanged regular-inverse fixtures，未做 baseline rerun，不宣称它们是本次改动造成或修复。 |
+
+三次正式运行的负结果分别为 row-map 错误、B witness alpha 假失败、以及 RHS recovery 数值门失败。第三次 mode 16030 相对误差 2.0454083899234283e-11 超过 1e-11；失败列输入、native RHS 与 recovered arrays 没有落盘，故无法独立重算绝对误差或原因。selected surface receipts 2/2 PASS 不是 full action/recovery PASS。
+
+Ruff 不可用，未安装；未运行全仓测试。表中通过的 fixture 与运行门各自绑定对应 source/attempt。文档修订仅追加结果索引与总结，没有借用这些测试声称第三次运行的数值门通过。机器可读 adoption/action/performance 与三次服务证据见 [V2 compact](p0_v2_adoption_action_performance_20261018.json) 和 [run index](run_index.json)。
+
+主控补充：在最终冻结源码 `53243cd6766b564fed17668753e9fdbb7cab1129` 部署后，使用工作站既有 native complex activation 执行新 B-action 振幅 fixture 与 two-input borrowed-buffer fixture，结果 `2 passed, 13 deselected in 0.56s`，随后才启动 `121210` 正式 attempt。该记录来自主控部署命令回执，不能抹去此前本机旧 ABI receipt 的阻塞记录。科学 source 与本次文档结果 HEAD 分开；最终结果 HEAD 由集中推送后回读提供。

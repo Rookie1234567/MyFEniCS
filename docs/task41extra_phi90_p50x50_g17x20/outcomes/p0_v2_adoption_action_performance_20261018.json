@@ -1,0 +1,134 @@
+{
+  "schema": "task41.p0.v2.adoption_action_performance.v1",
+  "campaign": "Task41extra Review V2, B0 0.7 nm",
+  "consumer_source_chain": [
+    "ab9e14dd00b2f1a94acd7ced5949e940caa724e6",
+    "6c31c5be468ebe6b50102a9beaaa701f48107b4d",
+    "53243cd6766b564fed17668753e9fdbb7cab1129"
+  ],
+  "donor": {
+    "policy": "require_existing=true; absent or invalid donor fails closed; no silent regeneration",
+    "producer_source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+    "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+    "mode_count": 64120,
+    "committed_bytes": 363791051840,
+    "committed_prefix_sha256": "2595b9518e2422bfadbc2f1a6640e619d60501525b07bda48a068a8ec478a10e",
+    "checkpoint_sha256": "66ec8f305382060c044822459d50aa6d323d85bcdfffd531b46ff5d74e43e57a",
+    "manifest_sha256": "46cd5e3cecf2c0dac694bdbba1fef91eae10642e878a487fc63e216ddcc1f142",
+    "identity_sha256": "c89c2c5b06d6b8d727d5ea59e3b4ccad9ecf2ff1627f2a13c60f200eee66cf28",
+    "offset_index_entries": 64121,
+    "offset_index_bytes": 512968,
+    "offset_index_sha256": "2a59fd6a2504ac0b0b8c675325dcaf517ec7bc5dc87b8cb496b96b413b592453",
+    "new_modes_generated": 0,
+    "fresh_support_certificate": {
+      "boundary_B_rows": 9094725000,
+      "boundary_D_rows": 9094725000,
+      "cell_interior_nonzero_values": 0,
+      "classification": "fresh Task41 B0 donor certificate, not borrowed from Task40"
+    }
+  },
+  "implementation": {
+    "watchdog": "Host reserve and task/ancestor cgroup reserve are evaluated against their own domains. The 1.5 TiB cap, 64 GiB host reserve, zero task reserve, time cutoff, swap and sampling gates were preserved.",
+    "trigger_sample": {
+      "host_mem_available_bytes": 854915547136,
+      "host_reserve_bytes": 68719476736,
+      "task_cgroup_available_bytes": 68698267648,
+      "task_cgroup_reserve_bytes": 0,
+      "old_cross_domain_shortfall_bytes": 21209088
+    },
+    "action_path": "The existing shared P6/native route was used: volume_action.apply builds/copies the native RHS columns, action.reduce_rhs applies the contracted mapping, then action.recover_storage checks the known FE inputs. The final two-input recovery gate failed on its first column; complete target-action qualification was not achieved."
+  },
+  "attempts": [
+    {
+      "attempt": "20261018T090832.301793Z",
+      "source_sha": "ab9e14dd00b2f1a94acd7ced5949e940caa724e6",
+      "parent_workflow_seconds": 4266.0541681298055,
+      "error": "original trace row is not an independent active row",
+      "process_tree_rss_peak_bytes": 9186394112,
+      "job_cgroup_memory_peak_bytes": 79297404928,
+      "task_swap_peak_bytes": 0,
+      "result": "WORKER_FAILED; donor validation passed, then trace/MPC row classification failed",
+      "compact": "p0_v2_raw_probe_rowmap_repair.json"
+    },
+    {
+      "attempt": "20261018T104243.408669Z",
+      "source_sha": "6c31c5be468ebe6b50102a9beaaa701f48107b4d",
+      "parent_workflow_seconds": 4223.6894003856,
+      "error": "saved nonzero P6 B/D action check failed at mode 16030",
+      "process_tree_rss_peak_bytes": 9185849344,
+      "job_cgroup_memory_peak_bytes": 9326239744,
+      "task_swap_peak_bytes": 0,
+      "result": "WORKER_FAILED; offline raw diagnosis isolated B action witness alpha mix-up; actual fresh P6 D value was not persisted",
+      "compact": "p0_v2_alpha_probe_field_diagnostic.json"
+    },
+    {
+      "attempt": "20261018T121210.548690Z",
+      "source_sha": "53243cd6766b564fed17668753e9fdbb7cab1129",
+      "parent_workflow_seconds": 9364.070864045061,
+      "saved_surface_application_seconds": 4257.863887676038,
+      "frame_parse_seconds_nested": 93.11829357547686,
+      "process_tree_rss_peak_bytes": 11411648512,
+      "task_cgroup_memory_peak_bytes": 11872563200,
+      "task_swap_peak_bytes": 0,
+      "result": "WORKER_FAILED at known-input RHS recovery; relative error 2.0454083899234283e-11 exceeds 1e-11",
+      "compact": "b0_full_rhs_recovery_gate_failure_20261018.json",
+      "host_swap_page_counts": {
+        "swapin_pages": 13,
+        "swapout_pages": 0,
+        "attributable_to_task": null,
+        "attribution_status": "UNKNOWN_NOT_ATTRIBUTABLE_FROM_GLOBAL_COUNTER"
+      },
+      "full_rhs_action_and_recovery_substage_seconds": "UNKNOWN_NOT_SEPARATELY_PERSISTED"
+    }
+  ],
+  "resource_comparison_limit": "The 11,872,563,200 B task-cgroup peak belongs to the later saved-donor consumer/recovery attempt; the 1,580,571,795,456 B peak belongs to the earlier carrier-build resource stop. These are different phases and do not establish a same-scope memory reduction. PSS and per-array/backing peaks are UNKNOWN.",
+  "test_evidence": {
+    "rowmap_regression": "2 passed in 0.55 s; see p0_v2_raw_probe_rowmap_repair.json",
+    "alpha_gate_targeted": "2 passed, 13 deselected in 0.34 s",
+    "alpha_gate_whole_file": "12 passed, 3 failed in unchanged regular-inverse fixtures; no baseline rerun and no fixture fixes",
+    "local_final_related_suite": {
+      "source_tree_head": "5e82225427d91d2ec4650169e558b6da29e75a8e",
+      "passed": 16,
+      "duration_seconds": 0.88,
+      "static_checks": [
+        "py_compile",
+        "git diff --check"
+      ],
+      "tracked_diff_sha256_before_evidence": "9c8707fc9541087d1d7523edfa1eb10f18842845ed8b4ead70a97369561b98e7",
+      "identity_note": "The evidence binds both this source-tree HEAD and the tracked-diff SHA; it is separate from the final formal service source.",
+      "working_tree_was_uncommitted": true,
+      "tracked_diff_sha256": "9c8707fc9541087d1d7523edfa1eb10f18842845ed8b4ead70a97369561b98e7"
+    },
+    "service_contract_fixture": "One B0 fixture attempt blocked before imports/preflight/pytest because the run-local ABI receipt belonged to a different runtime profile, host, or boot; it is not a pass.",
+    "ruff": "NOT_RUN, unavailable",
+    "full_repository_suite": "NOT_RUN",
+    "controller_final_workstation_validation": {
+      "source_sha": "53243cd6766b564fed17668753e9fdbb7cab1129",
+      "tests": [
+        "test_task41_b0_saved_surface_gate_uses_nonzero_B_action_witness_alpha",
+        "test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive"
+      ],
+      "result": "2 passed, 13 deselected in 0.56s",
+      "evidence_scope": "controller deployment command stdout before service launch; not a new PDE",
+      "activation": "existing activate_native_complex.sh and v29_attempt2 ABI receipt"
+    }
+  },
+  "references": [
+    "p0_v2_raw_probe_rowmap_repair.json",
+    "p0_v2_alpha_probe_field_diagnostic.json",
+    "p0_local_final_evidence_20261018.json",
+    "b0_full_rhs_recovery_gate_failure_20261018.json"
+  ],
+  "next_checkpoint": "Review the numerical failure and evidence gap; determine how to preserve the first failing column's input/native-RHS/recovered vectors and local residuals so the mismatch can be distinguished before any continuation.",
+  "final_run_git_identity": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "final_formal_run_source_sha": "53243cd6766b564fed17668753e9fdbb7cab1129",
+    "branch_head_at_final_formal_run": "53243cd6766b564fed17668753e9fdbb7cab1129",
+    "documentation_result_head": "to be recorded by main-controller branch closeout"
+  },
+  "action_performance_unknowns": {
+    "full_rhs_action_and_recovery_substage_seconds": "UNKNOWN_NOT_SEPARATELY_PERSISTED",
+    "pss_peak_bytes": "UNKNOWN",
+    "per_array_or_backing_resident_transient_peak_bytes": "UNKNOWN"
+  }
+}
