@@ -46,6 +46,84 @@ def _regular_inverse_gate_inputs():
     }
 
 
+def test_task41_b0_saved_surface_gate_uses_nonzero_B_action_witness_alpha():
+    from src.runners.task40_v10_worker import _task41_b0_saved_surface_p6_gate_facts
+
+    reference_B_norm = 198.18061698372017
+    probe_alpha = 0.7 - 0.4j
+    saved_B_values = np.asarray(
+        [reference_B_norm / abs(probe_alpha)], dtype=np.complex128
+    )
+    mode_alpha = 5.495364883878937e-16 + 0.0j
+    candidate_D_x = 27.38609403614892 - 8.633094239485217e-13j
+    reference_D_x = 27.38609403615009 + 0.0j
+    p6_D_x = candidate_D_x
+    mode_result = {
+        "alpha": [mode_alpha.real, mode_alpha.imag],
+        "B_alpha_action_comparison": {
+            "action": "alpha * coupling_values",
+            "H_applied": False,
+            "alpha": [probe_alpha.real, probe_alpha.imag],
+            "reference_l2_norm": reference_B_norm,
+        },
+    }
+
+    facts = _task41_b0_saved_surface_p6_gate_facts(
+        mode_result=mode_result,
+        saved_B_values=saved_B_values,
+        h_value=2500.0,
+        saved_h=2500.0,
+        saved_D_x=27.3860940361493 - 8.646994911944368e-13j,
+        candidate_D_x=candidate_D_x,
+        production_D_x=27.38609403615187 - 5.532091153370092e-19j,
+        reference_D_x=reference_D_x,
+        p6_D_x=p6_D_x,
+        D_error=abs(p6_D_x - reference_D_x) / abs(reference_D_x),
+    )
+
+    assert facts["passed"]
+    assert facts["mode_alpha"] == pytest.approx([mode_alpha.real, mode_alpha.imag])
+    assert facts["B_probe_alpha"] == pytest.approx([probe_alpha.real, probe_alpha.imag])
+    b_gate = facts["comparisons"]["B_alpha_action_norm_matches_reference"]
+    assert b_gate["action_metadata_passed"] is True
+    assert b_gate["norm_passed"] is True
+    assert b_gate["actual_norm"] == pytest.approx(reference_B_norm, rel=1e-14)
+    assert all(gate["passed"] for gate in facts["comparisons"].values())
+    assert not np.isclose(
+        np.linalg.norm(saved_B_values * mode_alpha),
+        reference_B_norm,
+        rtol=1.0e-11,
+        atol=1.0e-12,
+    )
+
+    mismatched_action = {
+        **mode_result,
+        "B_alpha_action_comparison": {
+            **mode_result["B_alpha_action_comparison"],
+            "H_applied": True,
+        },
+    }
+    rejected = _task41_b0_saved_surface_p6_gate_facts(
+        mode_result=mismatched_action,
+        saved_B_values=saved_B_values,
+        h_value=2500.0,
+        saved_h=2500.0,
+        saved_D_x=27.3860940361493 - 8.646994911944368e-13j,
+        candidate_D_x=candidate_D_x,
+        production_D_x=27.38609403615187 - 5.532091153370092e-19j,
+        reference_D_x=reference_D_x,
+        p6_D_x=p6_D_x,
+        D_error=abs(p6_D_x - reference_D_x) / abs(reference_D_x),
+    )
+    assert rejected["passed"] is False
+    assert rejected["comparisons"]["B_alpha_action_norm_matches_reference"][
+        "norm_passed"
+    ] is True
+    assert rejected["comparisons"]["B_alpha_action_norm_matches_reference"][
+        "action_metadata_passed"
+    ] is False
+
+
 def test_assign_vector_storage_uses_public_writable_petsc_array_api():
     vector = PETSc.Vec().createSeq(3, comm=PETSc.COMM_SELF)
     try:

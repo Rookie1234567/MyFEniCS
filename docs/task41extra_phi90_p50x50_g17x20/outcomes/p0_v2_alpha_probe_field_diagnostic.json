@@ -1,0 +1,183 @@
+{
+  "schema": "task41.p0.v2.b0.alpha_probe_field_diagnostic.v1",
+  "classification": "offline_raw_recompute_only_no_new_P6_or_FE_qualification",
+  "consumer_attempt": {
+    "service": "myfenics-case-20261018T104240-1935630.service",
+    "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+    "run_directory": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261018T104243.408669Z",
+    "source_sha": "6c31c5be468ebe6b50102a9beaaa701f48107b4d",
+    "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+    "status": "WORKER_FAILED",
+    "exit_status": 4,
+    "failure": "ValueError: Task41 B0 saved nonzero P6 B/D action check failed at mode 16030",
+    "full_workflow_seconds": 4223.6894003856,
+    "full_workflow_time_exceeded": false
+  },
+  "resource_closeout": {
+    "sampled_process_tree_rss_peak_bytes": 9185849344,
+    "job_cgroup_memory_peak_bytes": 9326239744,
+    "task_swap_peak_bytes": 0,
+    "task_swap_gate_passed": true,
+    "descendants_cleared": true,
+    "systemctl_memory_peak_bytes_after_exit": 4015546368,
+    "systemctl_vs_run_summary_peak": "unknown metric discrepancy; values kept separate, no attribution or subtraction"
+  },
+  "root_cause": "B_alpha_action_comparison.alpha is the saved nonzero B test amplitude ([0.7,-0.4]); mode_result.alpha is a near-zero mode wave number. The old helper used the latter to compute Bnorm against a reference formed with the former.",
+  "fix_scope": {
+    "reads_B_probe_alpha_from": "mode_result.B_alpha_action_comparison.alpha",
+    "checks_action": "alpha * coupling_values",
+    "checks_H_applied": false,
+    "full_size_FE_port_probe_uses_nonzero_B_test_amplitude": true,
+    "per_gate_values_thresholds_and_booleans_written_atomically_before_aggregate_gate": true,
+    "no_FE_or_PDE_rerun": true
+  },
+  "modes": [
+    {
+      "mode_index": 16030,
+      "raw_metadata": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/review_v2_saved_pair_raw/mode_16030.json",
+      "raw_npz": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/review_v2_saved_pair_raw/mode_16030.npz",
+      "raw_npz_sha256": "333ba3fd9f8d20f970cf79e0520b36420be82014faa003531a5bd514c74fe9aa",
+      "producer_source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+      "consumer_source_sha": "6c31c5be468ebe6b50102a9beaaa701f48107b4d",
+      "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+      "mode_alpha_wave_number": [
+        5.495364883878937e-16,
+        0.0
+      ],
+      "B_action_witness": {
+        "action": "alpha * coupling_values",
+        "H_applied": false,
+        "alpha": [
+          0.7,
+          -0.4
+        ]
+      },
+      "Bnorm": {
+        "if_mode_wave_number_used": 1.3508310416738852e-13,
+        "with_B_action_witness_alpha": 198.18061698371275,
+        "reference": 198.18061698372017,
+        "wrong_relative_error": 0.9999999999999993,
+        "correct_relative_error": 3.7430835942673515e-14,
+        "rtol": 1e-11,
+        "atol": 1e-12,
+        "wrong_gate_passed": false,
+        "correct_gate_passed": true
+      },
+      "H_in_saved_raw_mode": {
+        "candidate": 2500.0,
+        "reference": 2500.0,
+        "equal": true,
+        "scope": "saved producer raw only; failed consumer entry H was not persisted per-mode"
+      },
+      "D_offline_raw_recomputation": {
+        "saved_native_D_x": [
+          27.3860940361493,
+          -8.646994911944368e-13
+        ],
+        "candidate_D_x_from_raw": [
+          27.38609403614892,
+          -8.633094239485217e-13
+        ],
+        "production_D_x_recomputed": [
+          27.38609403615187,
+          -5.532091153370092e-19
+        ],
+        "reference_D_x_from_raw": [
+          27.38609403615009,
+          0.0
+        ],
+        "saved_to_candidate_relative_difference": 1.388087343399227e-14,
+        "production_to_reference_relative_difference": 6.499318781019401e-14,
+        "raw_candidate_to_reference_relative_error": 5.316414382339111e-14,
+        "saved_to_candidate_isclose": true,
+        "production_to_reference_isclose": true,
+        "p6_D_x_actual": null,
+        "p6_D_relative_error_actual": null,
+        "p6_status": "not persisted in failed 104243 attempt; offline raw D is not a fresh P6 requalification"
+      },
+      "row_order": {
+        "raw_D_probe_rows_strictly_increasing": true,
+        "raw_native_D_rows_strictly_increasing": true,
+        "sparse_lookup_semantics": "np.searchsorted over the sorted raw probe/source rows; query order is preserved"
+      }
+    },
+    {
+      "mode_index": 48090,
+      "raw_metadata": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/review_v2_saved_pair_raw/mode_48090.json",
+      "raw_npz": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/review_v2_saved_pair_raw/mode_48090.npz",
+      "raw_npz_sha256": "71aa548d5aa2a891c007c733aa252f4980cf127a0fb4312718a5185b5aa6f716",
+      "producer_source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+      "consumer_source_sha": "6c31c5be468ebe6b50102a9beaaa701f48107b4d",
+      "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+      "mode_alpha_wave_number": [
+        5.495364883878937e-16,
+        0.0
+      ],
+      "B_action_witness": {
+        "action": "alpha * coupling_values",
+        "H_applied": false,
+        "alpha": [
+          0.7,
+          -0.4
+        ]
+      },
+      "Bnorm": {
+        "if_mode_wave_number_used": 1.3506759209515049e-13,
+        "with_B_action_witness_alpha": 198.15785920015367,
+        "reference": 198.1578592001577,
+        "wrong_relative_error": 0.9999999999999993,
+        "correct_relative_error": 2.0367008179275673e-14,
+        "rtol": 1e-11,
+        "atol": 1e-12,
+        "wrong_gate_passed": false,
+        "correct_gate_passed": true
+      },
+      "H_in_saved_raw_mode": {
+        "candidate": 2500.0,
+        "reference": 2500.0,
+        "equal": true,
+        "scope": "saved producer raw only; failed consumer entry H was not persisted per-mode"
+      },
+      "D_offline_raw_recomputation": {
+        "saved_native_D_x": [
+          27.38609403614907,
+          -2.2302223301891319e-13
+        ],
+        "candidate_D_x_from_raw": [
+          27.386094036148933,
+          -2.2093438190040615e-13
+        ],
+        "production_D_x_recomputed": [
+          27.386094036148414,
+          -3.2534897488330148e-18
+        ],
+        "reference_D_x_from_raw": [
+          27.38609403614931,
+          0.0
+        ],
+        "saved_to_candidate_relative_difference": 5.059924316318119e-15,
+        "production_to_reference_relative_difference": 3.269118428797747e-14,
+        "raw_candidate_to_reference_relative_error": 1.594284501170206e-14,
+        "saved_to_candidate_isclose": true,
+        "production_to_reference_isclose": true,
+        "p6_D_x_actual": null,
+        "p6_D_relative_error_actual": null,
+        "p6_status": "not persisted in failed 104243 attempt; offline raw D is not a fresh P6 requalification"
+      },
+      "row_order": {
+        "raw_D_probe_rows_strictly_increasing": true,
+        "raw_native_D_rows_strictly_increasing": true,
+        "sparse_lookup_semantics": "np.searchsorted over the sorted raw probe/source rows; query order is preserved"
+      }
+    }
+  ],
+  "validation": {
+    "abi_preflight": "PASS: qualified local complex128/int32 activation",
+    "targeted_command": "python -m pytest -q src/test/test_task40_v10_worker_arrays.py -k 'task41_b0_saved_surface_gate_uses_nonzero_B_action_witness_alpha or task41_two_input_check_keeps_reusable_volume_action_buffer_alive'",
+    "targeted_result": "2 passed, 13 deselected in 0.34s",
+    "additional_whole_file_result": "12 passed, 3 failed in unchanged regular-inverse fixtures; no baseline rerun and no fixes to those fixtures",
+    "ruff": "NOT_RUN: unavailable",
+    "git_diff_check": "PASS",
+    "formal_fresh_P6_qualification": "NOT_RUN after this repair"
+  }
+}

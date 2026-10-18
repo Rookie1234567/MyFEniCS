@@ -595,6 +595,107 @@ def _task41_b0_full_size_two_input_identity_check(
     return {**check, "receipt_path": str(receipt_path)}
 
 
+def _task41_b0_saved_surface_p6_gate_facts(
+    *,
+    mode_result: Mapping[str, Any],
+    saved_B_values: np.ndarray,
+    h_value: float,
+    saved_h: float,
+    saved_D_x: complex,
+    candidate_D_x: complex,
+    production_D_x: complex,
+    reference_D_x: complex,
+    p6_D_x: complex,
+    D_error: float,
+) -> dict[str, Any]:
+    """Return auditable per-gate facts for a saved B/D consumer comparison."""
+    rtol = 1.0e-11
+    atol = 1.0e-12
+
+    def complex_pair(value: complex) -> list[float]:
+        return [float(value.real), float(value.imag)]
+
+    mode_alpha = complex(*mode_result["alpha"])
+    b_action = mode_result["B_alpha_action_comparison"]
+    b_probe_alpha = complex(*b_action["alpha"])
+    b_action_name = b_action.get("action")
+    b_h_applied = b_action.get("H_applied")
+    b_action_metadata_pass = (
+        b_action_name == "alpha * coupling_values" and b_h_applied is False
+    )
+    b_probe_alpha_nonzero = bool(
+        np.isfinite([b_probe_alpha.real, b_probe_alpha.imag]).all()
+        and b_probe_alpha != 0.0
+    )
+    b_norm = float(
+        np.linalg.norm(np.asarray(saved_B_values, dtype=np.complex128) * b_probe_alpha)
+    )
+    b_reference_norm = float(b_action["reference_l2_norm"])
+    b_norm_pass = bool(np.isclose(b_norm, b_reference_norm, rtol=rtol, atol=atol))
+
+    comparisons = {
+        "normalization_H_matches_saved": {
+            "actual": float(h_value),
+            "reference": float(saved_h),
+            "operator": "exact equality",
+            "passed": bool(h_value == saved_h),
+        },
+        "saved_D_x_matches_candidate": {
+            "actual": complex_pair(saved_D_x),
+            "reference": complex_pair(candidate_D_x),
+            "rtol": rtol,
+            "atol": atol,
+            "passed": bool(np.isclose(saved_D_x, candidate_D_x, rtol=rtol, atol=atol)),
+        },
+        "production_D_x_matches_reference": {
+            "actual": complex_pair(production_D_x),
+            "reference": complex_pair(reference_D_x),
+            "rtol": rtol,
+            "atol": atol,
+            "passed": bool(np.isclose(production_D_x, reference_D_x, rtol=rtol, atol=atol)),
+        },
+        "p6_D_x_matches_candidate": {
+            "actual": complex_pair(p6_D_x),
+            "reference": complex_pair(candidate_D_x),
+            "rtol": rtol,
+            "atol": atol,
+            "passed": bool(np.isclose(p6_D_x, candidate_D_x, rtol=rtol, atol=atol)),
+        },
+        "p6_D_relative_error_within_limit": {
+            "actual": float(D_error),
+            "limit": 1.0e-11,
+            "operator": "<=",
+            "passed": bool(D_error <= 1.0e-11),
+        },
+        "B_alpha_action_norm_matches_reference": {
+            "mode_alpha": complex_pair(mode_alpha),
+            "probe_alpha": complex_pair(b_probe_alpha),
+            "action": b_action_name,
+            "H_applied": b_h_applied,
+            "required_action": "alpha * coupling_values",
+            "required_H_applied": False,
+            "action_metadata_passed": bool(b_action_metadata_pass),
+            "probe_alpha_nonzero": b_probe_alpha_nonzero,
+            "actual_norm": b_norm,
+            "reference_norm": b_reference_norm,
+            "rtol": rtol,
+            "atol": atol,
+            "norm_passed": bool(b_norm_pass),
+            "passed": bool(
+                b_action_metadata_pass and b_probe_alpha_nonzero and b_norm_pass
+            ),
+        },
+    }
+    return {
+        "passed": bool(all(gate["passed"] for gate in comparisons.values())),
+        "comparisons": comparisons,
+        "mode_alpha": complex_pair(mode_alpha),
+        "B_probe_alpha": complex_pair(b_probe_alpha),
+        "B_probe_norm": b_norm,
+        "B_reference_norm": b_reference_norm,
+    }
+
+
 def _task41_b0_saved_surface_consumer_checks(
     *,
     carrier: Any,
@@ -891,30 +992,34 @@ def _task41_b0_saved_surface_consumer_checks(
             )
             candidate_D_x = complex(*mode_result["D_raw_x_action_comparison"]["D_raw_x_candidate"])
             reference_D_x = complex(*mode_result["D_raw_x_action_comparison"]["D_raw_x_reference"])
-            alpha = complex(*mode_result["alpha"])
+            D_error = abs(p6_D_x - reference_D_x) / max(
+                abs(reference_D_x), np.finfo(float).tiny
+            )
+            gate_facts = _task41_b0_saved_surface_p6_gate_facts(
+                mode_result=mode_result,
+                saved_B_values=saved_B_values,
+                h_value=h_value,
+                saved_h=saved_h,
+                saved_D_x=saved_D_x,
+                candidate_D_x=candidate_D_x,
+                production_D_x=production_D_x,
+                reference_D_x=reference_D_x,
+                p6_D_x=p6_D_x,
+                D_error=D_error,
+            )
+            b_probe_alpha = complex(*gate_facts["B_probe_alpha"])
             full_size_probes.append(
                 {
                     "mode_index": index,
                     "rows": probe_rows,
                     "values": probe_values,
-                    "alpha": alpha,
+                    # This is the nonzero port-test amplitude, not mode wave number alpha.
+                    "alpha": b_probe_alpha,
                 }
             )
-            B_alpha_norm = float(np.linalg.norm(saved_B_values * alpha))
-            B_reference_norm = float(mode_result["B_alpha_action_comparison"]["reference_l2_norm"])
-            D_error = abs(p6_D_x - reference_D_x) / max(abs(reference_D_x), np.finfo(float).tiny)
-            if (
-                h_value != saved_h
-                or not np.isclose(saved_D_x, candidate_D_x, rtol=1.0e-11, atol=1.0e-12)
-                or not np.isclose(production_D_x, reference_D_x, rtol=1.0e-11, atol=1.0e-12)
-                or not np.isclose(p6_D_x, candidate_D_x, rtol=1.0e-11, atol=1.0e-12)
-                or D_error > 1.0e-11
-                or not np.isclose(B_alpha_norm, B_reference_norm, rtol=1.0e-11, atol=1.0e-12)
-            ):
-                raise ValueError(f"Task41 B0 saved nonzero P6 B/D action check failed at mode {index}")
             check = {
                 "schema": "task41.p0.b0.saved_surface_p6_consumer_check.v1",
-                "status": "PASS",
+                "status": "PASS" if gate_facts["passed"] else "FAIL",
                 "mode_index": index,
                 "mode_key": list(carrier.mode_keys[index]),
                 "metadata_path": str(metadata_path),
@@ -928,6 +1033,10 @@ def _task41_b0_saved_surface_consumer_checks(
                 "p6_direct_and_local_B_D_rows_values_match_saved_native_candidate_exactly": True,
                 "p6_direct_D_active_map_applied_to_nonzero_reduced_probe": True,
                 "p6_direct_trace_rows_mapped_without_second_MPC": True,
+                "validation_gates": gate_facts["comparisons"],
+                "mode_alpha": gate_facts["mode_alpha"],
+                "B_probe_action": mode_result["B_alpha_action_comparison"].get("action"),
+                "B_probe_H_applied": mode_result["B_alpha_action_comparison"].get("H_applied"),
                 "raw_D_probe_row_partition": {
                     "raw_rows": int(probe_rows.size),
                     "active_trace_rows": int(len(probe_partition["active_rows"])),
@@ -947,9 +1056,9 @@ def _task41_b0_saved_surface_consumer_checks(
                     ),
                 },
                 "p6_cell_interior_B_D_values_checked_against_saved_native_mode": True,
-                "B_probe_alpha": [float(alpha.real), float(alpha.imag)],
-                "B_probe_norm": B_alpha_norm,
-                "B_saved_reference_norm": B_reference_norm,
+                "B_probe_alpha": gate_facts["B_probe_alpha"],
+                "B_probe_norm": gate_facts["B_probe_norm"],
+                "B_saved_reference_norm": gate_facts["B_reference_norm"],
                 "D_probe_input_sha256": sha(probe_values),
                 "D_raw_x_saved_native_candidate": [float(saved_D_x.real), float(saved_D_x.imag)],
                 "D_raw_x_p6_direct_plus_cell_interior": [float(p6_D_x.real), float(p6_D_x.imag)],
@@ -967,6 +1076,14 @@ def _task41_b0_saved_surface_consumer_checks(
         receipt_path = output_directory / f"task41_b0_saved_surface_consumer_mode_{index}.json"
         _write_json(receipt_path, check)
         runtime.marker("task41_b0_saved_surface_p6_consumer_check", check)
+        failed_gates = [
+            name for name, gate in gate_facts["comparisons"].items() if not gate["passed"]
+        ]
+        if failed_gates:
+            raise ValueError(
+                "Task41 B0 saved nonzero P6 B/D action check failed at mode "
+                f"{index}; failed gates: {', '.join(failed_gates)}"
+            )
         output.append({**check, "receipt_path": str(receipt_path)})
     output.append(
         _task41_b0_full_size_two_input_identity_check(
