@@ -3763,3 +3763,10 @@ A出口已通过。A2原迭代器完成6步，独立A6真残差`7.38157288048082
 ### Task41 P0：B0 冻结前接线与核验
 
 严格ABI按A2/B0精确绑定profile、case和run；B0入口fixture贯通真实DAT解析、固定T0/bootstrap、资源合同、`_V14Runtime`及dispatcher binding。诊断衍射578键与official DtN 64,120个逐侧模式键分别核验，top/bottom允许32,062/32,058不等；carrier内存只记为实际face dofmap推导上界，包含slave rows及整域向量扫描workspace，不是实测峰值或内域为零证明。C1下最小回归8 passed，未运行FE/PDE；正式prepare仍需主控冻结源码和匹配的native Linux receipt。证据与完整命令见[Task41定向测试记录](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
+
+
+## Task41extra B0：0.7 nm carrier 完成后的资源门停止（2026-10-18）
+
+在 Task41 P0 同一冻结分支上实际进入 0.7 nm B0：p6、10×200×14、MPI1、64,120 个端口模式，200 个 q 中有 143 个被分配、57 个为空。完整 64,120 模式 carrier 已保存，但没有完成 B0 P6/FE 组装、q factor、KSP、全场、A6 或 R/T/A。运行在 62,890.80 s 因 RESOURCE_CONTROLLED_STOP 终止；task-cgroup peak 1,580,571,795,456 B、limit 1,649,267,441,664 B、swap0，时间门未超限。
+
+原始停止样本绑定 source c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5、输入 SHA a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1、contract 5657d456d67f2b9e3b94aa19a0666a1b011dece6e7b6c7043eb929b45d711f5d、window 87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6。源码复核发现通用 watchdog 的 split-domain 路径仍执行 effective_available_bytes < reserve_bytes，把 64 GiB host reserve 再比较到了更紧的 task-cgroup 余量；当时 host available 854,915,547,136 B（扣一次 host reserve 后 786,196,070,400 B），task-cgroup remaining 68,698,267,648 B、task reserve 0 B。此条件与分域策略冲突。下一步应按分域语义修复并测试，不降低原 reserve/cap，同时处理 carrier 到 direct action 的 Python 逐项映射/重复 backing，并建立数学身份与 producer/consumer 窗口分开的 checkpoint 准入。当前保存的 363,791,051,840 B carrier 尚未获得跨 source 重开资格；A1/A2 的 13.5 nm 通过状态保留。证据见 [Task41 B0 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)、[stop compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_resource_controlled_stop_20261018.json) 和 [response v1](task41extra_phi90_p50x50_g17x20/response_v1.md)。

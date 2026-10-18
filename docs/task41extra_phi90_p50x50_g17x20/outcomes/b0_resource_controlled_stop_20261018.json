@@ -1,0 +1,335 @@
+{
+  "schema": "task41extra.b0.resource_controlled_stop.v1",
+  "recorded_at_utc": "2026-10-18T04:16:04.696333+00:00",
+  "repository": {
+    "path": "/home/fenics/Projects/laptop_share",
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+    "source_clean_at_run": true
+  },
+  "run_identity": {
+    "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+    "service": "myfenics-case-20261017T103221-1748728.service",
+    "attempt": "20261017T103223.933995Z",
+    "output_directory": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z",
+    "run_manifest_sha256": "4b6baffcfc7271930e2707b41dfdad227f9bf0bd400880e436600c072c11c1ec",
+    "run_summary_sha256": "9c21bb78693257e13ebd96b596b44bd2c37b885b676eb9f26e1cae9a11f1d720",
+    "watchdog_summary_sha256": "1ec025ac78d4916a3a9802d3e33855cc0884001a4a137d8722de82e7ee5fc8f9",
+    "source_sha": "c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5",
+    "input_path": "/home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+    "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+    "physical_model_sha256": "0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d",
+    "resolved_config_sha256": "9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+    "execution_contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5.json",
+    "execution_contract_sha256": "5657d456d67f2b9e3b94aa19a0666a1b011dece6e7b6c7043eb929b45d711f5d",
+    "execution_window_path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window.json",
+    "execution_window_sha256": "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6",
+    "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+    "mode_assignment_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z/task41_b0_q_assignment.json",
+    "mode_assignment_file_sha256": "06bf7660d7cd633e6c5ffdff77ff3b6da051408717cf202389f1bf6e4154f8cb",
+    "mode_manifest_sha256": "80527cc4770abe0bc47db20c8d1f0ae8e13b75b5e090498f78cbfa75c120d0e0",
+    "mode_assignment_sha256_int16le": "8cb7ed8e203ff9eb4c135a61d144a85b6cff681d55ef0e3c0f256eb90c1af5c4",
+    "mode_count": 64120,
+    "q_count": 200,
+    "occupied_q_count": 143,
+    "empty_q_count": 57,
+    "mode_count_by_side": {
+      "top": 32062,
+      "bottom": 32058
+    },
+    "method": "full3d_iterative",
+    "mpi_size": 1,
+    "mesh_axis_cell_counts": [
+      10,
+      200,
+      14
+    ],
+    "nedelec_degree": 6,
+    "solver_identity": {
+      "h6_backend_rule": "direct_selected_backend_same_apply_and_power10",
+      "initial_guess": "zero",
+      "ksp_type": "fgmres",
+      "linear_solver": "iterative",
+      "max_iterations": 2048,
+      "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+      "outer_restart": 0,
+      "physical_operator_backend": "isotropic_sum_factorized_n1e_v26",
+      "preconditioner": "task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1",
+      "restart": 32,
+      "stage": "TASK41_B0",
+      "task40_factor_lifecycle_strategy": "ALL_Q_RESIDENT",
+      "task40_q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+      "task40_reference_pc_strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+      "thread_contract": "mpi1_omp1_blas1_v26"
+    }
+  },
+  "execution_result": {
+    "run_status": "finished",
+    "run_exit_status": -9,
+    "result_classification": "EVIDENCE_INCOMPLETE",
+    "watchdog_stop_reason": "RESOURCE_CONTROLLED_STOP",
+    "watchdog_stop_timestamp_ns": 1792295954539004198,
+    "first_sigkill": {
+      "monotonic": 2220949.399908633,
+      "timestamp_ns": 1792295954539042212,
+      "scope": "whole child tree"
+    },
+    "termination_scope": "whole child tree",
+    "grace_seconds": 30,
+    "workflow_elapsed_seconds": 62890.795663617086,
+    "full_workflow_time_exceeded": false,
+    "time_exceeded": {
+      "workflow": false,
+      "solve": false,
+      "active_pc": false
+    },
+    "official_result": false,
+    "completed": {
+      "carrier_mode_count": 64120,
+      "carrier_expected_mode_count": 64120,
+      "carrier_committed_bytes": 363791051840
+    },
+    "not_completed": [
+      "B0 FE/P6 assembly workflow closeout",
+      "q CSR and factor qualification",
+      "KSP/FGMRES solve",
+      "full field",
+      "independent full A6 residual",
+      "official R/T/A and A_volume"
+    ],
+    "exact_interruption_cursor": "not captured; run phase is assembly, so the specific Python call/site is not proven by run evidence"
+  },
+  "resource_gate": {
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "host_reserve_bytes": 68719476736,
+    "task_cgroup_reserve_bytes": 0,
+    "reserve_domains_separated": true,
+    "trigger_sample": {
+      "process_tree_rss_bytes": 1271718285312,
+      "dynamic_launch_cap_bytes": 1340416552960,
+      "effective_available_bytes": 68698267648,
+      "effective_available_after_reserves_bytes": 68698267648,
+      "host_mem_available_bytes": 854915547136,
+      "host_launch_available_bytes": 786196070400,
+      "task_cgroup_available_bytes": 68698267648,
+      "effective_shortfall_vs_host_reserve_bytes": 21209088,
+      "task_cgroup_reserve_shortfall_bytes": 0
+    },
+    "cgroup": {
+      "memory_peak_bytes": 1580571795456,
+      "memory_limit_bytes": 1649267441664,
+      "swap_peak_current_bytes": 0,
+      "swap_end_bytes": 0,
+      "oom_kill_count_before_cleanup": 0
+    },
+    "source_predicate_review": {
+      "watchdog_file": "benchmarks/subreaper_watchdog.py",
+      "current_predicate_line": 1278,
+      "current_check": "current['effective_available_bytes'] < current['reserve_bytes'] (unconditional, even when reserve_domains_separated is true)",
+      "split_domain_reference": "src/runners/physical_p4_schur_v14.py:1232-1237 checks host available against host reserve OR task-cgroup available against task-cgroup reserve",
+      "finding": "confirmed split-domain predicate mismatch: host reserve is compared again against min(host,cgroup) effective availability, which here is task-cgroup availability; proper split-domain predicates are false at the trigger sample",
+      "source_file_sha256": {
+        "benchmarks/subreaper_watchdog.py": "13bf352b2ca68ee783e0426e1a1abf021915187d4b85f92fe458473014bcd74b",
+        "src/runners/physical_p4_schur_v14.py": "bcc1190ad5e4e69b78ce912a91bf9b844e1671d3ccf53aab756f8d9b717d9d36"
+      },
+      "repair_constraint": "correct predicate and add targeted tests while preserving 64 GiB host reserve, 1.5 TiB task cap, and task-cgroup reserve 0; do not relax or restart before source review"
+    }
+  },
+  "raw_resource_excerpt": {
+    "path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z/watchdog/resources.jsonl",
+    "bytes": 2030433193,
+    "whole_file_sha256": "not_computed (2,030,433,193-byte log; bounded tail read only)",
+    "records": {
+      "above_reserve_before_stop": {
+        "timestamp_ns": 1792295954217384805,
+        "offset_bytes": 2029579624,
+        "line_bytes": 10723,
+        "line_sha256": "7dad1dece28f5e8427d3c56dde2c9952a48bfdc0fb3a48450cea9dd810e51139",
+        "root_pid": 1748922,
+        "exit_code": null,
+        "process_tree_rss_bytes": 1271687790592,
+        "process_tree_swap_bytes": 0,
+        "effective_available_bytes": 68728152064,
+        "effective_available_after_reserves_bytes": 68728152064,
+        "host_mem_available_bytes": 854932570112,
+        "host_launch_available_bytes": 786213093376,
+        "task_cgroup_available_bytes": 68728152064,
+        "task_cgroup_reserve_bytes": 0,
+        "reserve_bytes": 68719476736,
+        "reserve_domains_separated": true,
+        "job_cgroup": {
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261017T103221-1748728.service",
+          "readable": true,
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 1580539027456,
+          "memory_peak_bytes": 1580539289600,
+          "memory_limit_bytes": 1649267441664,
+          "swap_current_bytes": 0
+        },
+        "worker_phase": "assembly",
+        "warning": false,
+        "time_exceeded": {
+          "workflow": false,
+          "solve": false,
+          "active_pc": false
+        }
+      },
+      "trigger_sample": {
+        "timestamp_ns": 1792295954536418640,
+        "offset_bytes": 2029590347,
+        "line_bytes": 10738,
+        "line_sha256": "53a09e4236397e70496205bfcfb48beba6307949c86022218532da0ed422bb41",
+        "root_pid": 1748922,
+        "exit_code": null,
+        "process_tree_rss_bytes": 1271718285312,
+        "process_tree_swap_bytes": 0,
+        "effective_available_bytes": 68698267648,
+        "effective_available_after_reserves_bytes": 68698267648,
+        "host_mem_available_bytes": 854915547136,
+        "host_launch_available_bytes": 786196070400,
+        "task_cgroup_available_bytes": 68698267648,
+        "task_cgroup_reserve_bytes": 0,
+        "reserve_bytes": 68719476736,
+        "reserve_domains_separated": true,
+        "job_cgroup": {
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261017T103221-1748728.service",
+          "readable": true,
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 1580569174016,
+          "memory_peak_bytes": 1580569174016,
+          "memory_limit_bytes": 1649267441664,
+          "swap_current_bytes": 0
+        },
+        "worker_phase": "assembly",
+        "warning": false,
+        "time_exceeded": {
+          "workflow": false,
+          "solve": false,
+          "active_pc": false
+        }
+      },
+      "first_post_kill_sample": {
+        "timestamp_ns": 1792295954884702210,
+        "offset_bytes": 2029601085,
+        "line_bytes": 7354,
+        "line_sha256": "23593b1f374ff13c0b40f1c4d7eff156330b23cd96db792326b24a5a48ed8f72",
+        "root_pid": 1748922,
+        "exit_code": -9,
+        "process_tree_rss_bytes": 49532928,
+        "process_tree_swap_bytes": 0,
+        "effective_available_bytes": 90436550656,
+        "effective_available_after_reserves_bytes": 90436550656,
+        "host_mem_available_bytes": 876639608832,
+        "host_launch_available_bytes": 807920132096,
+        "task_cgroup_available_bytes": 90436550656,
+        "task_cgroup_reserve_bytes": 0,
+        "reserve_bytes": 68719476736,
+        "reserve_domains_separated": true,
+        "job_cgroup": {
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261017T103221-1748728.service",
+          "readable": true,
+          "dedicated_job_cgroup": true,
+          "member_count": 2,
+          "memory_current_bytes": 1558831157248,
+          "memory_peak_bytes": 1580571795456,
+          "memory_limit_bytes": 1649267441664,
+          "swap_current_bytes": 0
+        },
+        "worker_phase": "assembly",
+        "warning": false,
+        "time_exceeded": {
+          "workflow": false,
+          "solve": false,
+          "active_pc": false
+        }
+      }
+    },
+    "line_hash_scope": "SHA-256 of each exact JSONL line excluding its newline; offsets are byte offsets in the retained raw log"
+  },
+  "cleanup": {
+    "watchdog_closeout_descendants_cleared": false,
+    "watchdog_exception": {
+      "stage": "timeline_write",
+      "type": "RuntimeError",
+      "message": "descendants did not clear after SIGKILL",
+      "remaining_child_pids": [
+        1748976
+      ]
+    },
+    "later_cleanup_verified_at_utc": "2026-10-18T04:16:04.696333+00:00",
+    "previous_pid_presence": {
+      "1748794": {
+        "present": false
+      },
+      "1748922": {
+        "present": false
+      },
+      "1748974": {
+        "present": false
+      },
+      "1748975": {
+        "present": false
+      },
+      "1748976": {
+        "present": false
+      }
+    },
+    "original_task_cgroup_present": false,
+    "interpretation": "later cleanup is an additional observation; original watchdog summary remains unchanged and still records descendants_cleared=false"
+  },
+  "carrier_checkpoint": {
+    "path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z/task41_b0_target_surface_checkpoint/global/carrier_surface_functionals.bin",
+    "bytes": 363791051840,
+    "whole_carrier_sha256": "not_computed (large artifact deliberately not scanned)",
+    "checkpoint_metadata_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z/task41_b0_target_surface_checkpoint/global/carrier_surface_functionals.bin.checkpoint.json",
+    "checkpoint_metadata_sha256": "66ec8f305382060c044822459d50aa6d323d85bcdfffd531b46ff5d74e43e57a",
+    "checkpoint": {
+      "committed_bytes": 363791051840,
+      "committed_mode_count": 64120,
+      "committed_prefix_sha256": "2595b9518e2422bfadbc2f1a6640e619d60501525b07bda48a068a8ec478a10e",
+      "expected_mode_count": 64120,
+      "identity_sha256": "c89c2c5b06d6b8d727d5ea59e3b4ccad9ecf2ff1627f2a13c60f200eee66cf28",
+      "manifest_sha256": "46cd5e3cecf2c0dac694bdbba1fef91eae10642e878a487fc63e216ddcc1f142",
+      "peak_component_cache_unique_backing_bytes": 2880000,
+      "schema": "task40extra.v33_resumable_surface_functionals.v1"
+    },
+    "cache_metadata_stable_at_closeout": false,
+    "reuse_status": "not_qualified for a new source/window: current checkpoint identity binds exact producer source/input/window/contract, and run closeout reports cache_metadata_stable=false"
+  },
+  "action_path_review": {
+    "caller": "src/runners/task40_v10_worker.py:8763-8772 calls build_p6_cell_condensed_action_from_carrier without bounded_direct_term_build",
+    "builder": "src/solvers/p6_cell_condensed_action.py:3298-3460; default bounded_direct_term_build=false; unbounded path converts arrays and appends Python row/value lists per carrier item",
+    "bounded_mode_limit": "bounded_direct_term_build=true only chunks copies and still loops each row in Python and allocates per-port output row/value arrays sized to the source item count; it is not a duplicate-backing fix",
+    "known_alternative": "P6GlobalDirectCarrierProvider and build_p6_global_direct_provider_from_surface expose a repeatable one-mode iterator, but this existing route has not been qualified against this B0 carrier/checkpoint or complete target action",
+    "candidate_next_interface": "consume a repeatable file-backed carrier entry iterator; classify rows with precomputed sorted numeric maps/chunked vector operations; accumulate only local Bi/Di terms; expose trace B/D through one explicitly owned, read-only backing/provider rather than materializing a second complete backing; record and release each backing by identity",
+    "checkpoint_adoption": "separate immutable producer provenance (producer source/input/window/contract and prefix/manifest hashes) from a math_identity_sha256 covering physical/resolved input, ordered modes/q assignment, mesh+dofmap/MPC, quadrature/gauge/normalization and carrier schema; a new consumer may reopen only after every math-identity field matches and checkpoint bytes/manifest stability are validated; never rewrite producer identity"
+  },
+  "scope_note": "diagnosis is source-level; the exact worker instruction or dominant memory object at stop was not sampled, so no individual Python loop is claimed as the measured cause",
+  "recorded_stage_costs": {
+    "carrier_build": {
+      "event_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261017T103223.933995Z/task41_b0_07nm_p6_y_orbit_reference_events.jsonl",
+      "event_line": 163,
+      "event_line_sha256": "5ca968b60f8bfacd105452da292ed795b5f233d50d0471e6a13992a676860f4e",
+      "elapsed_seconds": 28042.209265219048,
+      "process_cpu_seconds": 27759.194920405,
+      "component_assembly_calls": 64132,
+      "component_wall_seconds_total": 4482.765037598088,
+      "group_integral_wall_seconds_total": 1697.727166862227,
+      "mpc_pullback_wall_seconds_total": 1472.9055356555618,
+      "global_filter_wall_seconds_total": 1305.6228773794137,
+      "normalization_validation_seconds": null,
+      "staging_release_seconds": null,
+      "scope": "recorded child counters may overlap; do not add to parent or infer missing stages by subtraction"
+    },
+    "scope": "partial measured setup costs; exact last assembly cursor was not recorded"
+  },
+  "controller_audit": {
+    "summary_hashes": "PASS",
+    "three_raw_resource_line_hashes": "PASS",
+    "predicate_source_hashes": "PASS",
+    "large_carrier_rehash": "NOT_RUN",
+    "numerical_replay": "NOT_RUN"
+  }
+}

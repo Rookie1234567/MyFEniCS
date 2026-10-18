@@ -153,3 +153,22 @@ B0 已真实建立原尺寸 FE/MPC 并开始端口构建。旧方法对每个端
 实现只作用于Task41 B0的FFCx与native代表模式配对检查。每个模式现在把两个component、D projection、B coupling的生产/候选稀疏rows与values，以及D_raw输入的非零稀疏描述，原子写入本attempt的`task41_b0_native_surface_pair_raw/`；模式事件记录NPZ路径、SHA-256和metadata路径。证据在gate异常抛出前保存，不包含完整稠密场。
 
 本地C1定向回归为10 passed，覆盖tiny support差异仍通过原L2门、显著漏项和符号相位错误仍失败、失败前证据可读回及既有MPC/cutoff回归。旧attempt `20261017T095825.478498Z`仍按当时冻结源码的失败记录保留，不回溯改分类；它没有启动factor、KSP或完整场。当前代码仅完成本地测试，尚待主控冻结并部署到native Linux；未启动FE/PDE或正式B0续算。这一配对结果本身不证明整个B/D算子、全部MPC映射或0.7 nm计算已获资格。
+
+
+## B0 0.7 nm 本次 resource-gate stop（2026-10-18）
+
+本次 Task41 B0 确实进入 0.7 nm 新物理，按 p6、10×200×14（28,000 个六面体单元）、MPI1 启动。新端口清单有 64,120 个有序模式（top 32,062、bottom 32,058）；q_count=200，其中 143 个 q 有分配模式、57 个为空。端口 surface carrier 已完整提交 64,120/64,120 模式，文件 363,791,051,840 B。运行停在 assembly 阶段；没有完成 B0 全部 FE/P6 组装、q CSR/factor、KSP/FGMRES、完整场、独立 A6 或 official R/T/A/A_volume。运行证据没有保存精确 Python 指令游标，故不把候选代码热路径写成已测根因。
+
+| 证据 | 实测 / 判定 |
+|---|---|
+| 运行身份 | source c52d0d3c0ec6b46c52c3bcf464ee53164308f1c5；input SHA a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1；execution contract SHA 5657d456d67f2b9e3b94aa19a0666a1b011dece6e7b6c7043eb929b45d711f5d；固定 window SHA 87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6；完整 hash-bound 记录见 [B0 stop compact](b0_resource_controlled_stop_20261018.json) |
+| 停止 | watchdog RESOURCE_CONTROLLED_STOP；2026-10-18T04:00:34Z；whole child tree 30 s grace 后 SIGKILL；完整工作流 62,890.80 s，time gate 未超限 |
+| 直接资源样本 | process-tree RSS 1,271,718,285,312 B；task cgroup peak 1,580,571,795,456 / limit 1,649,267,441,664 B；task cgroup swap peak 0 B；专用 cgroup OOM kill 计数 0 |
+| 64 GiB reserve 触发读数 | host available 854,915,547,136 B，扣一次 host reserve 后 786,196,070,400 B；task-cgroup remaining 68,698,267,648 B，task-cgroup reserve 0 B。通用 watchdog 将较小的 effective_available 与 host reserve 比较；此时有效余量仅比 64 GiB 少 21,209,088 B |
+| 数值结果 | 没有完成场或 solver residual；分类是受控资源停止，不是 OOM、时间门或已证明的数学失败 |
+| checkpoint / 清场 | 完整 carrier 与小型 checkpoint metadata 保留；原 watchdog summary 仍记 descendants_cleared=false。2026-10-18T04:16:04.696333+00:00 独立读回全部旧 PID 已退出、旧 cgroup 不存在；这条 later cleanup 另记，不覆盖原记录 |
+| A1/A2 | 13.5 nm A1 与 A2 A出口 PASS 保持不变；本次 B0 不改变其证据 |
+
+源码复核确认停止谓词存在分域不一致：benchmarks/subreaper_watchdog.py:1278 无条件检查 effective_available_bytes < reserve_bytes；其 effective_available 是 host 与 task/ancestor cgroup 可用量的最小值。分域策略下应分别检查 host available 是否低于 host reserve，以及 task-cgroup remaining 是否低于 task-cgroup reserve。触发时 host 余量远大于 64 GiB、task-cgroup 自有 reserve 为 0，因此正确的分域 reserve 谓词不会触发；当前通用 watchdog 却把 64 GiB host reserve 再套到 cgroup 剩余量上。这个发现要求修正代码和定向测试，但不构成放宽 reserve/cap 或立即重跑的许可。
+
+carrier 到 P6 action 的源码也有具体内存风险但未被本次日志定位为实际触发点：worker 在 task40_v10_worker.py:8763 未传 bounded_direct_term_build，builder 默认走逐项 Python 展开；即使启用现有 bounded 分支，它仍逐行做 Python 映射并为每个 port 分配与输入规模相同的输出数组，不能单靠打开该布尔值消除重复 backing。下一步应先修正上面的 split-domain predicate；随后审查用可重复、file-backed carrier iterator 接入现有 one-mode provider、把行分类改为有界数值块并仅保留一份显式拥有的 direct B/D backing。checkpoint 的当前身份绑定 producer source/input/window/contract，且本次 cache_metadata_stable=false，所以完整生成只代表证据已保存，不能宣称已可跨新 source/window 安全复用。需要把 producer provenance 与完整数学 identity 分开，并在核实 manifest/字节稳定和数学身份完全一致后才准许新 consumer 重开。

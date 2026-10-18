@@ -168,3 +168,10 @@ python -m pytest -q --tb=short src/test/test_task41_b0_native_surface.py src/tes
 在两个真实top局部几何上得到独立Basix/多项式/FFCx证据后，主控核对Task41任务书并修正本轮额外加入的筛后mask相等hard gate，原完整作用误差门不变。比较仍累计稀疏支持并集上所有值差；支持差字段保留。新fixture用主项1、小项2e-13模拟高于生产cutoff但低于作用误差门的残值；显著漏项和错误相位仍失败，失败前NPZ与hash持久化已核对。
 
 资格化C1环境下，完整B0配对模块及compact cutoff回归为10 passed in 1.23s；最终仅调整上述fixture量级后，相关5项5 passed、4 deselected in 0.48s。相关compileall、ABI preflight及git diff --check通过；Ruff未安装。该测试不等于新的真实六模式资格或完整PDE通过；旧611be2d2配对失败记录不改写。
+
+
+## B0 资源停止证据收口（仅文档与元数据）
+
+本轮只新增 hash-bound 停止 compact，并更新 run index、结果汇总及交接文档；没有修改源码、重跑 pytest、重跑 FE/PDE 或碰触大 carrier。现有 B0 定向验证记录保持原样，不能视为本次正式运行通过。关闭检查为 compact JSON 可解析、记录字段与小型 run/checkpoint metadata 对齐、git diff --check；没有 CI 结果。2,030,433,193 B 的 watchdog resources log 仅从末尾读取有界片段并对所用原始 JSONL 行单独算 hash，没有全文件扫描/哈希；363,791,051,840 B carrier 仅读文件元数据与其小型 checkpoint JSON，没有读取或哈希 carrier 本体。
+
+主控复核：三条原始资源行按byte offset回读并独立重算SHA、三个原始summary hash及两份停止谓词源码hash均匹配；carrier父阶段原始事件第163行SHA为`5ca968b60f8bfacd105452da292ed795b5f233d50d0471e6a13992a676860f4e`。无科学源码修改，未重跑FE或完整测试。
