@@ -15,6 +15,10 @@ from src.runners.task038_launcher import _write_bootstrap
 
 REPO = Path(__file__).resolve().parents[2]
 INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_b_r13_p6_direct.dat"
+D5_INPUTS = {
+    case: REPO / f"input/task40para_phi90_mesh_modes_direct/d5_{case.lower()}_r5_p6_direct.dat"
+    for case in ("B", "X", "Y", "Z")
+}
 Y3_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
 Z2_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_z2_from_y2_r13_p6_direct.dat"
 H15_INPUTS = {
@@ -149,6 +153,48 @@ def test_task40_z2_manifest_roundtrips_through_worker_payload_gate(tmp_path):
     assert errors == []
     assert resolved is not None
     assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+@pytest.mark.parametrize("case", ("B", "X", "Y", "Z"))
+def test_task40_d5_r5_manifest_roundtrips_through_worker_payload_gate(tmp_path, case):
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path, D5_INPUTS[case]
+    )
+    profile = specification.derived["native_capacity_profile"]
+    options = profile["component_options"]
+    route = profile["campaign_authorization"]["direct_route"]
+    assert profile["identity"] == f"task40para_phi90_5_D5_{case}_p6_direct_v1"
+    expected_tags = (
+        {"1": 5188, "2": 920, "3": 792}
+        if case == "B"
+        else {"1": 10376, "2": 1840, "3": 1584}
+    )
+    assert options["directional_mesh_comparison"][
+        "expected_material_tag_counts"
+    ] == expected_tags
+    assert options["mode_selection"]["expected_mode_count"] == 3772
+    assert options["mode_selection"]["expected_mode_sha256"] == (
+        "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc"
+    )
+    assert options["mode_selection"]["boundary_amplitude_scale_policy"] == (
+        "boundary_magnitude_scaled_r5_v1"
+    )
+    assert options["surface_quadrature"]["degree"] == 39
+    assert route["parent_mode_count"] == 3772
+    assert route["parent_mode_sha256"] == options["mode_selection"][
+        "expected_mode_sha256"
+    ]
+    assert route["port_boundary_amplitude_scale_policy"] == (
+        "boundary_magnitude_scaled_r5_v1"
+    )
+
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert errors == []
+    assert resolved is not None
+    assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+    assert manifest["native_capacity_contract"]["direct_route"] == thaw(route)
 
 
 @pytest.mark.parametrize("case", ("B", "X", "Y", "Z", "YZ480"))

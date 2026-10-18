@@ -55,6 +55,10 @@ def _surface_assemblers(
             "weighted-moment contraction requires an explicit Legendre surface backend"
         )
     if surface_assembly_backend is not None:
+        if getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None) is not None:
+            raise ValueError(
+                "scaled Task40 port modes require the native FFCx surface form"
+            )
         from .dtn_port_3d import (
             _SurfaceLegendreMomentAssembler,
             _SurfaceLegendreMomentContext,
@@ -105,6 +109,10 @@ def _surface_assemblers(
             component,
             quadrature_degree=qdegree,
             jit_options=jit_options,
+            scaled_mode_basis=(
+                getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+                is not None
+            ),
         )
         for side in ("top", "bottom")
         for component in (0, 1)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -43,6 +44,10 @@ class PortMode3D:
     power_per_unit_amplitude: float
     propagating: bool
     rayleigh_warning: bool
+    # Real positive rescaling of this port basis function.  The default keeps
+    # every existing profile on its historical normalization.
+    boundary_amplitude_scale: float = 1.0
+    boundary_amplitude_log_scale: float = 0.0
 
 
 def positive_sqrt(value: complex) -> complex:
@@ -268,6 +273,40 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
                 tangential_norm_sq = float(np.real(np.vdot(e_vec[:2], e_vec[:2])))
                 if tangential_norm_sq <= 1.0e-30:
                     continue
+                scale_policy = getattr(
+                    cfg, "task40_port_boundary_amplitude_scale_policy", None
+                )
+                if scale_policy is None:
+                    boundary_amplitude_scale = 1.0
+                    boundary_amplitude_log_scale = 0.0
+                elif scale_policy == "boundary_magnitude_scaled_r5_v1":
+                    boundary_z = (
+                        float(cfg.physical_z_max)
+                        if side == "top"
+                        else float(cfg.physical_z_min)
+                    )
+                    scale_log = float(np.imag(kvec[2]) * boundary_z)
+                    if not math.isfinite(scale_log):
+                        raise ValueError(
+                            "Task40 port boundary scale exponent must be finite"
+                        )
+                    if scale_log > math.log(float.fromhex("0x1.fffffffffffffp+1023")):
+                        raise ValueError(
+                            "Task40 port boundary scale exceeds float64 range"
+                        )
+                    boundary_amplitude_scale = math.exp(scale_log)
+                    boundary_amplitude_log_scale = scale_log
+                    if (
+                        not math.isfinite(boundary_amplitude_scale)
+                        or boundary_amplitude_scale <= 0.0
+                    ):
+                        raise ValueError(
+                            "Task40 port boundary scale is not finite and positive"
+                        )
+                else:
+                    raise ValueError(
+                        "unsupported Task40 port boundary amplitude scale policy"
+                    )
                 modes.append(
                     PortMode3D(
                         side=side,
@@ -286,6 +325,8 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
                         power_per_unit_amplitude=mode_power(kvec, e_vec, cfg, outward_normal),
                         propagating=bool(propagating),
                         rayleigh_warning=bool(rayleigh_warning),
+                        boundary_amplitude_scale=boundary_amplitude_scale,
+                        boundary_amplitude_log_scale=boundary_amplitude_log_scale,
                     )
                 )
     return modes

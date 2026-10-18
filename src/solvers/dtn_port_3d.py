@@ -1424,6 +1424,7 @@ class _ReusableSurfaceComponentAssembler:
         *,
         quadrature_degree: int | None = None,
         jit_options: Mapping[str, Any] | None = None,
+        scaled_mode_basis: bool = False,
     ):
         if component not in {0, 1}:
             raise ValueError(
@@ -1438,11 +1439,18 @@ class _ReusableSurfaceComponentAssembler:
         self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         x = ufl.SpatialCoordinate(mesh_data.mesh)
-        phase = ufl.exp(
+        phase_argument = (
             PETSc.ScalarType(1j) * self.alpha * x[0]
             + PETSc.ScalarType(1j) * self.gamma * x[1]
             + PETSc.ScalarType(1j) * self.kz * x[2]
         )
+        self.log_amplitude_scale = None
+        if scaled_mode_basis:
+            self.log_amplitude_scale = fem.Constant(
+                mesh_data.mesh, PETSc.ScalarType(0.0)
+            )
+            phase_argument += self.log_amplitude_scale
+        phase = ufl.exp(phase_argument)
         vector = [PETSc.ScalarType(0.0), PETSc.ScalarType(0.0), PETSc.ScalarType(0.0)]
         vector[component] = phase
         v = ufl.TestFunction(V)
@@ -1480,6 +1488,7 @@ class _ReusableSurfaceComponentAssembler:
         _set_scalar_constant(self.alpha, mode.alpha)
         _set_scalar_constant(self.gamma, mode.gamma)
         _set_scalar_constant(self.kz, mode.k_vector[2])
+        self._set_mode_log_scale(mode)
         vec = (
             _assemble_mpc_form_vector(self.form, mpc)
             if workspace is None
@@ -1501,7 +1510,18 @@ class _ReusableSurfaceComponentAssembler:
         _set_scalar_constant(self.alpha, mode.alpha)
         _set_scalar_constant(self.gamma, mode.gamma)
         _set_scalar_constant(self.kz, mode.k_vector[2])
+        self._set_mode_log_scale(mode)
         return _assemble_unconstrained_form_vector(self.form)
+
+    def _set_mode_log_scale(self, mode: PortMode3D) -> None:
+        log_scale = float(getattr(mode, "boundary_amplitude_log_scale", 0.0))
+        if not np.isfinite(log_scale):
+            raise ValueError("DtN mode log amplitude scale must be finite")
+        if self.log_amplitude_scale is None:
+            if log_scale != 0.0:
+                raise ValueError("scaled DtN mode was sent to an unscaled surface form")
+            return
+        _set_scalar_constant(self.log_amplitude_scale, log_scale)
 
 
 class _SurfaceMpcVectorWorkspace:
@@ -3633,6 +3653,8 @@ def _surface_pair_phase_key(mode: PortMode3D) -> tuple[Any, ...]:
         complex(mode.alpha),
         complex(mode.gamma),
         complex(mode.k_vector[2]),
+        float(getattr(mode, "boundary_amplitude_scale", 1.0)),
+        float(getattr(mode, "boundary_amplitude_log_scale", 0.0)),
     )
 
 
@@ -4501,7 +4523,16 @@ def _mode_boundary_z(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
 
 
 def _mode_boundary_phase(mode: PortMode3D, cfg: SimulationConfig3D) -> complex:
-    return complex(np.exp(1j * complex(mode.k_vector[2]) * _mode_boundary_z(mode, cfg)))
+    log_scale = float(getattr(mode, "boundary_amplitude_log_scale", 0.0))
+    if not np.isfinite(log_scale):
+        raise ValueError("DtN mode log amplitude scale must be finite")
+    exponent = 1j * complex(mode.k_vector[2]) * _mode_boundary_z(mode, cfg)
+    if log_scale == 0.0:
+        # Keep the historical arithmetic expression for every legacy profile.
+        return complex(np.exp(exponent))
+    # Combine exponents before exp so a large q never multiplies an already
+    # underflowed boundary phase or forms q**2.
+    return complex(np.exp(exponent + log_scale))
 
 
 def _mode_projection_denominator(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
@@ -4541,7 +4572,13 @@ def _incident_projection_onto_top_mode(
     tangential_overlap = np.vdot(mode.e_vector[:2], incident_e[:2])
     phase = np.exp(1j * (cfg.kz - mode.k_vector[2]) * cfg.physical_z_max)
     area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
-    return complex(area * tangential_overlap * phase / denominator)
+    result = complex(area * tangential_overlap * phase / denominator)
+    scale = float(getattr(mode, "boundary_amplitude_scale", 1.0))
+    if scale != 1.0:
+        # The basis functional was multiplied by q while H was multiplied by
+        # q^2, so its incident modal coefficient is divided by q.
+        result *= scale
+    return result
 
 
 def _incident_top_traction_form(V, mesh_data, cfg: SimulationConfig3D):
@@ -4604,11 +4641,20 @@ def _mode_projection_from_solution(
 
     tag = cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min
     x = ufl.SpatialCoordinate(mesh_data.mesh)
-    phase = ufl.exp(
+    phase_argument = (
         PETSc.ScalarType(1j * mode.alpha) * x[0]
         + PETSc.ScalarType(1j * mode.gamma) * x[1]
         + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
     )
+    log_scale = float(getattr(mode, "boundary_amplitude_log_scale", 0.0))
+    if not np.isfinite(log_scale):
+        raise ValueError("DtN mode log amplitude scale must be finite")
+    if log_scale != 0.0:
+        # Match the scaled carrier basis before integration.  Adding log(q)
+        # in the exponent avoids both an underflowed raw phase and q**2 in H.
+        # The legacy q=1 expression above remains unchanged.
+        phase_argument += PETSc.ScalarType(log_scale)
+    phase = ufl.exp(phase_argument)
     tangential_field = ufl.as_vector((E_total[0], E_total[1], PETSc.ScalarType(0.0)))
     tangential_mode = np.asarray(
         (mode.e_vector[0], mode.e_vector[1], 0.0),
@@ -5484,8 +5530,7 @@ def _write_port_outputs(
         power = modal_power / metrics["incident_power_code_units"]
         direction = "outgoing_up" if mode.side == "top" else "outgoing_down"
         medium = "air" if mode.side == "top" else "substrate"
-        rows.append(
-            {
+        row = {
                 "auxiliary_index": idx,
                 "side": mode.side,
                 "direction": direction,
@@ -5516,7 +5561,14 @@ def _write_port_outputs(
                 "R": float(power) if mode.side == "top" and power_carrying else 0.0,
                 "T": float(power) if mode.side == "bottom" and power_carrying else 0.0,
             }
-        )
+        if getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None) is not None:
+            row["boundary_amplitude_scale"] = float(
+                getattr(mode, "boundary_amplitude_scale", 1.0)
+            )
+            row["boundary_amplitude_log_scale"] = float(
+                getattr(mode, "boundary_amplitude_log_scale", 0.0)
+            )
+        rows.append(row)
     if comm.rank != 0:
         return
     payload = {"metrics": metrics, "orders": rows}
@@ -5619,6 +5671,19 @@ def _write_port_outputs(
                 )
             )
             * _mode_boundary_phase(mode, cfg),
+            **(
+                {
+                    "boundary_amplitude_scale": float(
+                        getattr(mode, "boundary_amplitude_scale", 1.0)
+                    ),
+                    "boundary_amplitude_log_scale": float(
+                        getattr(mode, "boundary_amplitude_log_scale", 0.0)
+                    ),
+                }
+                if getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+                is not None
+                else {}
+            ),
         }
         for idx, mode in enumerate(modes)
     ]

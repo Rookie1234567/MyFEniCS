@@ -128,7 +128,7 @@ def classify_port_mode(mode: Any) -> str:
 def _mode_identity(index: int, mode: Any, cfg: Any, denominator: float) -> dict[str, Any]:
     from .dtn_port_3d import _traction_vector
 
-    return {
+    identity = {
         "schema": "fullspace-dtn.mode.v1",
         "mode_index": int(index),
         "side": str(mode.side),
@@ -154,6 +154,18 @@ def _mode_identity(index: int, mode: Any, cfg: Any, denominator: float) -> dict[
             complex(value) for value in _traction_vector(mode, cfg)
         ),
     }
+    scale_policy = getattr(
+        cfg, "task40_port_boundary_amplitude_scale_policy", None
+    )
+    if scale_policy is not None:
+        identity["boundary_amplitude_scale_policy"] = str(scale_policy)
+        identity["boundary_amplitude_scale"] = float(
+            getattr(mode, "boundary_amplitude_scale", 1.0)
+        )
+        identity["boundary_amplitude_log_scale"] = float(
+            getattr(mode, "boundary_amplitude_log_scale", 0.0)
+        )
+    return identity
 
 
 def build_ordered_mode_manifest(
@@ -1332,7 +1344,9 @@ def build_fullspace_dtn_carrier_from_surface(
                         functional_store.close()
 
 
-def _dtn_component_phase_key(mode: Any) -> tuple[str, int, int, complex, complex, complex]:
+def _dtn_component_phase_key(
+    mode: Any,
+) -> tuple[str, int, int, complex, complex, complex, float, float]:
     """Return the existing phase-cache identity for one polarization mode."""
 
     return (
@@ -1342,6 +1356,8 @@ def _dtn_component_phase_key(mode: Any) -> tuple[str, int, int, complex, complex
         complex(mode.alpha),
         complex(mode.gamma),
         complex(mode.k_vector[2]),
+        float(getattr(mode, "boundary_amplitude_scale", 1.0)),
+        float(getattr(mode, "boundary_amplitude_log_scale", 0.0)),
     )
 
 
