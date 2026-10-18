@@ -3017,6 +3017,207 @@ def _pre_recovery_mode_keys(modes: list[PortMode3D]) -> list[dict[str, Any]]:
     ]
 
 
+def _task42_packet_mode_order_summary(
+    modes: Any, archived_external_keys: Any
+) -> dict[str, Any]:
+    """Describe the actual request order separately from packet inventory order."""
+
+    summary: dict[str, Any] = {
+        "source": "same_request.modes",
+        "actual_request_modes": None,
+        "actual_request_modes_count": None,
+        "actual_request_modes_sha256": None,
+        "archived_packet_external_keys": None,
+        "archived_packet_external_keys_count": None,
+        "archived_packet_external_keys_sha256": None,
+        "actual_order_matches_archived_packet": None,
+    }
+    try:
+        actual_modes = _pre_recovery_mode_keys(list(modes))
+        actual_bytes = json.dumps(
+            actual_modes, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+        summary.update(
+            {
+                "actual_request_modes": actual_modes,
+                "actual_request_modes_count": len(actual_modes),
+                "actual_request_modes_sha256": hashlib.sha256(actual_bytes).hexdigest(),
+            }
+        )
+    except Exception as exc:  # noqa: BLE001 - diagnostics must not replace the layout error
+        summary["actual_request_modes_diagnostic_error"] = (
+            f"{type(exc).__name__}: {exc}"
+        )
+
+    try:
+        if isinstance(archived_external_keys, list):
+            archived_bytes = json.dumps(
+                archived_external_keys, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+            summary.update(
+                {
+                    "archived_packet_external_keys": archived_external_keys,
+                    "archived_packet_external_keys_count": len(
+                        archived_external_keys
+                    ),
+                    "archived_packet_external_keys_sha256": hashlib.sha256(
+                        archived_bytes
+                    ).hexdigest(),
+                }
+            )
+            if summary["actual_request_modes"] is not None:
+                summary["actual_order_matches_archived_packet"] = (
+                    summary["actual_request_modes"] == archived_external_keys
+                )
+        else:
+            summary["archived_packet_external_keys_diagnostic_error"] = (
+                "packet external_keys is not a JSON list"
+            )
+    except Exception as exc:  # noqa: BLE001 - diagnostics must not replace the layout error
+        summary["archived_packet_external_keys_diagnostic_error"] = (
+            f"{type(exc).__name__}: {exc}"
+        )
+    return summary
+
+
+def _task42_packet_trace_map_summary(static_condensed_system: Any) -> dict[str, Any]:
+    """Summarize the current original-to-active index map without borrowing arrays."""
+
+    summary: dict[str, Any] = {
+        "source": "request.static_condensed_system.trace_constraints.original_to_active",
+        "available": False,
+        "entry_count": None,
+        "original_index_range": None,
+        "active_index_range": None,
+        "original_to_active_sha256": None,
+        "valid_nonnegative_integer_indices": None,
+    }
+    try:
+        trace_constraints = getattr(
+            static_condensed_system, "trace_constraints", None
+        )
+        original_to_active = getattr(
+            trace_constraints, "original_to_active", None
+        )
+        if not isinstance(original_to_active, Mapping) or not original_to_active:
+            summary["diagnostic_error"] = "trace constraint map is unavailable"
+            return summary
+
+        summary.update(
+            {
+                "available": True,
+                "entry_count": len(original_to_active),
+            }
+        )
+        # Match the existing hash order without materializing item tuples.
+        originals = sorted(original_to_active)
+        trace_hasher = hashlib.sha256()
+        original_min = original_max = None
+        active_min = active_max = None
+        for original in originals:
+            active = original_to_active[original]
+            if (
+                type(original) is not int
+                or type(active) is not int
+                or original < 0
+                or active < 0
+            ):
+                summary["valid_nonnegative_integer_indices"] = False
+                summary["first_invalid_entry"] = {
+                    "original": repr(original),
+                    "active": repr(active),
+                }
+                return summary
+            original_min = original if original_min is None else min(original_min, original)
+            original_max = original if original_max is None else max(original_max, original)
+            active_min = active if active_min is None else min(active_min, active)
+            active_max = active if active_max is None else max(active_max, active)
+            trace_hasher.update(struct.pack("<qq", original, active))
+        summary.update(
+            {
+                "original_index_range": [original_min, original_max],
+                "active_index_range": [active_min, active_max],
+                "original_to_active_sha256": trace_hasher.hexdigest(),
+                "valid_nonnegative_integer_indices": True,
+            }
+        )
+    except Exception as exc:  # noqa: BLE001 - diagnostics must not replace the layout error
+        summary["diagnostic_error"] = f"{type(exc).__name__}: {exc}"
+    return summary
+
+
+def _task42_packet_layout_diagnostics(
+    *,
+    rank: int,
+    matrix_size: tuple[int, ...],
+    matrix_range: tuple[int, ...],
+    rhs_size: int,
+    rhs_range: tuple[int, ...],
+    n_fe: int,
+    n_aux: int,
+    packet_global_size: int,
+    packet_range: tuple[int, ...],
+    packet_solution_shape: tuple[int, ...],
+    packet_rhs_shape: tuple[int, ...],
+    mode_order_summary: Mapping[str, Any],
+    trace_map_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Keep each packet/action layout predicate visible at the MPI safe point."""
+
+    matrix_rows = matrix_size[0] if matrix_size else None
+    matrix_local_rows = (
+        matrix_range[1] - matrix_range[0]
+        if len(matrix_range) == 2
+        else None
+    )
+    range_length = (
+        rhs_range[1] - rhs_range[0]
+        if len(rhs_range) == 2
+        else None
+    )
+    checks = {
+        "matrix_is_square_2d": len(matrix_size) == 2
+        and matrix_size[0] == matrix_size[1],
+        "matrix_global_size_matches_packet": len(matrix_size) == 2
+        and matrix_size[0] == packet_global_size,
+        "matrix_global_size_matches_n_fe_plus_n_aux": len(matrix_size) == 2
+        and matrix_size[0] == n_fe + n_aux,
+        "matrix_and_rhs_ownership_ranges_match": matrix_range == rhs_range,
+        "rhs_global_size_matches_matrix": len(matrix_size) == 2
+        and rhs_size == matrix_size[0],
+        "packet_ownership_range_matches_rhs": packet_range == rhs_range,
+        "packet_solution_rhs_are_matching_vectors": (
+            len(packet_solution_shape) == 1
+            and packet_solution_shape == packet_rhs_shape
+        ),
+        "packet_local_size_matches_rhs_range": range_length is not None
+        and packet_solution_shape == (range_length,),
+    }
+    return {
+        "schema": "task42.packet_recovery.layout_diagnostics.v1",
+        "rank": int(rank),
+        "observed": {
+            "matrix_size": list(matrix_size),
+            "matrix_local_rows": matrix_local_rows,
+            "matrix_ownership_range": list(matrix_range),
+            "rhs_global_size": int(rhs_size),
+            "rhs_local_size": range_length,
+            "rhs_ownership_range": list(rhs_range),
+            "n_fe": int(n_fe),
+            "n_aux": int(n_aux),
+            "packet_global_size": int(packet_global_size),
+            "packet_ownership_range": list(packet_range),
+            "packet_solution_shape": list(packet_solution_shape),
+            "packet_rhs_shape": list(packet_rhs_shape),
+            "matrix_global_rows": matrix_rows,
+            "mode_order": dict(mode_order_summary),
+            "trace_map": dict(trace_map_summary),
+        },
+        "checks": checks,
+        "pass": all(checks.values()),
+    }
+
+
 def task42_packet_recovery_port(
     manifest_path: str | Path,
     *,
@@ -3035,6 +3236,7 @@ def task42_packet_recovery_port(
         restored_x = None
         local_rhs_sha256 = None
         trace_map_sha256 = None
+        layout_diagnostics: dict[str, Any] | None = None
         expected_external_q = None
         try:
             packet = load_packet(
@@ -3049,22 +3251,35 @@ def task42_packet_recovery_port(
             )
             rhs_size = int(request.b.getSize())
             rhs_range = tuple(int(value) for value in request.b.getOwnershipRange())
-            if (
-                len(matrix_size) != 2
-                or matrix_size[0] != matrix_size[1]
-                or matrix_size[0] != int(packet["global_size"])
-                or matrix_size[0] != int(request.n_fe + request.n_aux)
-                or matrix_range != rhs_range
-                or rhs_size != matrix_size[0]
-                or tuple(packet["ownership_range"]) != rhs_range
-                or packet["solution"].shape != packet["rhs"].shape
-                or packet["solution"].size != rhs_range[1] - rhs_range[0]
-            ):
-                raise ValueError("archived vector layout does not match the rebuilt action")
+            archived_mode_keys = packet["metadata"].get("external_keys")
+            mode_order_summary = _task42_packet_mode_order_summary(
+                request.modes, archived_mode_keys
+            )
+            trace_map_summary = _task42_packet_trace_map_summary(
+                request.static_condensed_system
+            )
+            layout_diagnostics = _task42_packet_layout_diagnostics(
+                rank=int(comm.rank),
+                matrix_size=matrix_size,
+                matrix_range=matrix_range,
+                rhs_size=rhs_size,
+                rhs_range=rhs_range,
+                n_fe=int(request.n_fe),
+                n_aux=int(request.n_aux),
+                packet_global_size=int(packet["global_size"]),
+                packet_range=tuple(int(value) for value in packet["ownership_range"]),
+                packet_solution_shape=tuple(int(value) for value in packet["solution"].shape),
+                packet_rhs_shape=tuple(int(value) for value in packet["rhs"].shape),
+                mode_order_summary=mode_order_summary,
+                trace_map_summary=trace_map_summary,
+            )
+            if not layout_diagnostics["pass"]:
+                raise ValueError(
+                    "archived vector layout does not match the rebuilt action"
+                )
             if len(request.modes) != int(request.n_aux):
                 raise ValueError("rebuilt external mode count does not match auxiliary rows")
             actual_mode_keys = _pre_recovery_mode_keys(list(request.modes))
-            archived_mode_keys = packet["metadata"].get("external_keys")
             if archived_mode_keys != actual_mode_keys:
                 raise ValueError(
                     "archived external-key order differs from rebuilt auxiliary DOF order"
@@ -3111,23 +3326,38 @@ def task42_packet_recovery_port(
             )
             if not isinstance(original_to_active, Mapping) or not original_to_active:
                 raise ValueError("rebuilt trace constraint map is unavailable")
-            trace_hasher = hashlib.sha256()
-            for original in sorted(original_to_active):
-                active = original_to_active[original]
-                if (
-                    type(original) is not int
-                    or type(active) is not int
-                    or original < 0
-                    or active < 0
-                ):
-                    raise ValueError("rebuilt trace map contains an invalid index")
-                trace_hasher.update(struct.pack("<qq", original, active))
-            trace_map_sha256 = trace_hasher.hexdigest()
+            if trace_map_summary.get("valid_nonnegative_integer_indices") is False:
+                raise ValueError("rebuilt trace map contains an invalid index")
+            if trace_map_summary.get("original_to_active_sha256") is None:
+                # Re-run only the original validation loop to preserve its exception
+                # semantics if a nonstandard Mapping failed during diagnostics.
+                trace_hasher = hashlib.sha256()
+                for original in sorted(original_to_active):
+                    active = original_to_active[original]
+                    if (
+                        type(original) is not int
+                        or type(active) is not int
+                        or original < 0
+                        or active < 0
+                    ):
+                        raise ValueError("rebuilt trace map contains an invalid index")
+                    trace_hasher.update(struct.pack("<qq", original, active))
+                trace_map_sha256 = trace_hasher.hexdigest()
+                if trace_map_sha256 is None:
+                    raise ValueError("rebuilt trace constraint map is unavailable")
+            else:
+                trace_map_sha256 = str(
+                    trace_map_summary["original_to_active_sha256"]
+                )
         except Exception as exc:  # noqa: BLE001 - local reads are synchronized below
             local_error = f"{type(exc).__name__}: {exc}"
 
         read_errors = comm.allgather(
-            {"rank": int(comm.rank), "error": local_error}
+            {
+                "rank": int(comm.rank),
+                "error": local_error,
+                "layout_diagnostics": layout_diagnostics,
+            }
         )
         failures = [
             f"rank_{row['rank']}:{row['error']}"
@@ -3135,11 +3365,25 @@ def task42_packet_recovery_port(
             if row.get("error") is not None
         ]
         if failures:
+            diagnostics_by_rank = [
+                row["layout_diagnostics"]
+                for row in read_errors
+                if row.get("layout_diagnostics") is not None
+            ]
             # Every rank observes the same gathered failure list and exits
             # before any subsequent Vec collective.
             packet = None
             expected_external_q = None
-            raise ValueError("Task42 packet restore rejected: " + "; ".join(failures))
+            raise ValueError(
+                "Task42 packet restore rejected: "
+                + "; ".join(failures)
+                + "; layout_diagnostics_by_rank="
+                + json.dumps(
+                    diagnostics_by_rank,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            )
 
         trace_hashes = comm.allgather(trace_map_sha256)
         if len(set(trace_hashes)) != 1:
@@ -3221,6 +3465,7 @@ def task42_packet_recovery_port(
                 "external_amplitudes_exact_match": True,
                 "rebuilt_trace_map_sha256": trace_map_sha256,
                 "historical_trace_map_sha256": "not_saved_in_original_packet",
+                "layout_diagnostics": layout_diagnostics,
                 "global_matrix_materialized": False,
                 "global_factor_called": False,
                 "new_physical_solve_called": False,

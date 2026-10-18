@@ -257,6 +257,166 @@ def test_task42_packet_restore_syncs_local_shard_rejection_before_vec_duplicate(
         comm.barrier()
 
 
+def test_task42_packet_restore_reports_rebuilt_action_layout_before_vec_duplicate(
+    tmp_path: Path,
+) -> None:
+    """Report the actual per-rank action/RHS ranges on a safe collective refusal."""
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("the deliberately uneven PETSc ownership fixture requires MPI2")
+    case = _write_small_task42_recovery_packet(tmp_path, comm)
+    operator = case["operator"]
+    solution = case["solution"]
+    packet_rhs = case["rhs"]
+    uneven_rhs = PETSc.Vec().createMPI(
+        (1 if comm.rank == 0 else 3, 4), comm=comm
+    )
+    tracked_rhs = _DuplicateTrackingVector(uneven_rhs)
+    refcount_before = int(uneven_rhs.getRefCount())
+    local_layout = {
+        "rank": int(comm.rank),
+        "matrix_size": [int(value) for value in operator.getSize()],
+        "matrix_global_rows": int(operator.getSize()[0]),
+        "matrix_ownership_range": [
+            int(value) for value in operator.getOwnershipRange()
+        ],
+        "matrix_local_rows": int(
+            operator.getOwnershipRange()[1] - operator.getOwnershipRange()[0]
+        ),
+        "rhs_global_size": int(uneven_rhs.getSize()),
+        "rhs_local_size": int(uneven_rhs.getLocalSize()),
+        "rhs_ownership_range": [
+            int(value) for value in uneven_rhs.getOwnershipRange()
+        ],
+        "n_fe": int(case["n_fe"]),
+        "n_aux": int(case["n_aux"]),
+        "packet_global_size": 4,
+        "packet_ownership_range": [
+            int(value) for value in packet_rhs.getOwnershipRange()
+        ],
+        "packet_solution_shape": [
+            int(solution.getLocalSize())
+        ],
+        "packet_rhs_shape": [int(packet_rhs.getLocalSize())],
+    }
+    layout_rows = comm.allgather(local_layout)
+    try:
+        request_modes = tuple(reversed(case["modes"]))
+        request = Stage4NeverMaterializedLinearSolverRequest(
+            operator=operator,
+            b=tracked_rhs,
+            n_fe=case["n_fe"],
+            n_aux=case["n_aux"],
+            static_condensed_system=SimpleNamespace(
+                trace_constraints=SimpleNamespace(original_to_active={0: 0, 1: 1})
+            ),
+            fine_operator=None,
+            blocks=None,
+            function_space=None,
+            config=None,
+            floquet_data=None,
+            modes=request_modes,
+        )
+        recovery_port = dtn.task42_packet_recovery_port(
+            case["manifest_path"],
+            manifest_sha256=case["manifest_sha256"],
+            identity=case["identity"],
+        )
+        with pytest.raises(ValueError, match="Task42 packet restore rejected") as error:
+            recovery_port(request)
+
+        error_texts = comm.allgather(str(error.value))
+        assert len(set(error_texts)) == 1
+        error_text = error_texts[0]
+        assert "archived vector layout does not match the rebuilt action" in error_text
+        assert "external-key order differs" not in error_text
+        diagnostics_text = error_text.split(
+            "; layout_diagnostics_by_rank=", maxsplit=1
+        )[1]
+        diagnostics_by_rank = json.loads(diagnostics_text)
+        assert len(diagnostics_by_rank) == comm.size
+        expected_actual_modes = dtn._pre_recovery_mode_keys(list(request_modes))
+        expected_archived_modes = dtn._pre_recovery_mode_keys(
+            list(case["modes"])
+        )
+        for diagnostic in diagnostics_by_rank:
+            assert diagnostic["schema"] == "task42.packet_recovery.layout_diagnostics.v1"
+            observed = diagnostic["observed"]
+            mode_order = observed["mode_order"]
+            assert mode_order["source"] == "same_request.modes"
+            assert mode_order["actual_request_modes"] == expected_actual_modes
+            assert mode_order["actual_request_modes_count"] == case["n_aux"]
+            assert mode_order["actual_order_matches_archived_packet"] is False
+            assert len(mode_order["actual_request_modes_sha256"]) == 64
+            assert mode_order["archived_packet_external_keys"] == expected_archived_modes
+            trace_map = observed["trace_map"]
+            assert trace_map["available"] is True
+            assert trace_map["entry_count"] == 2
+            assert trace_map["original_index_range"] == [0, 1]
+            assert trace_map["active_index_range"] == [0, 1]
+            assert len(trace_map["original_to_active_sha256"]) == 64
+        for row in layout_rows:
+            assert f'"rank":{row["rank"]}' in error_text
+            for field in (
+                "matrix_size",
+                "matrix_global_rows",
+                "matrix_local_rows",
+                "matrix_ownership_range",
+                "rhs_global_size",
+                "rhs_local_size",
+                "rhs_ownership_range",
+                "n_fe",
+                "n_aux",
+                "packet_global_size",
+                "packet_ownership_range",
+                "packet_solution_shape",
+                "packet_rhs_shape",
+            ):
+                expected = json.dumps(row[field], separators=(",", ":"))
+                assert f'"{field}":{expected}' in error_text
+        expected_checks = {
+            "matrix_is_square_2d": True,
+            "matrix_global_size_matches_packet": True,
+            "matrix_global_size_matches_n_fe_plus_n_aux": True,
+            "matrix_and_rhs_ownership_ranges_match": False,
+            "rhs_global_size_matches_matrix": True,
+            "packet_ownership_range_matches_rhs": False,
+            "packet_solution_rhs_are_matching_vectors": True,
+            "packet_local_size_matches_rhs_range": False,
+        }
+        for name, passed in expected_checks.items():
+            assert f'"{name}":{str(passed).lower()}' in error_text
+        assert tracked_rhs.duplicate_calls == 0
+        print(
+            json.dumps(
+                {
+                    "case": "uneven_action_layout_collective_refusal",
+                    "collective_failure_vector": error_text,
+                },
+                sort_keys=True,
+            )
+        )
+
+        refcount_after = int(uneven_rhs.getRefCount())
+        refcount_rows = comm.allgather(
+            {"rank": int(comm.rank), "before": refcount_before, "after": refcount_after}
+        )
+        assert all(row["before"] == row["after"] for row in refcount_rows)
+        assert tuple(uneven_rhs.getOwnershipRange()) == (
+            (0, 1) if comm.rank == 0 else (1, 4)
+        )
+        assert tuple(operator.getOwnershipRange()) == (
+            (0, 2) if comm.rank == 0 else (2, 4)
+        )
+    finally:
+        uneven_rhs.destroy()
+        packet_rhs.destroy()
+        solution.destroy()
+        operator.destroy()
+        comm.barrier()
+
+
 def _write_small_task42_recovery_packet(tmp_path: Path, comm):
     packet_directory = Path(
         comm.bcast(str(tmp_path) if comm.rank == 0 else None, root=0)
@@ -362,6 +522,30 @@ def test_task42_packet_recovery_restores_action_solution_without_factor(
         assert snapshot.pc_type == "not_run_packet_recovery"
         assert snapshot.recovery_evidence["global_factor_called"] is False
         assert snapshot.recovery_evidence["new_physical_solve_called"] is False
+        layout_diagnostics = snapshot.recovery_evidence["layout_diagnostics"]
+        assert layout_diagnostics["pass"] is True
+        assert all(layout_diagnostics["checks"].values())
+        mode_order = layout_diagnostics["observed"]["mode_order"]
+        assert mode_order["source"] == "same_request.modes"
+        assert mode_order["actual_request_modes"] == dtn._pre_recovery_mode_keys(
+            list(case["modes"])
+        )
+        assert mode_order["actual_order_matches_archived_packet"] is True
+        assert len(mode_order["actual_request_modes_sha256"]) == 64
+        trace_map = layout_diagnostics["observed"]["trace_map"]
+        assert trace_map["available"] is True
+        assert trace_map["entry_count"] == 2
+        assert trace_map["original_index_range"] == [0, 1]
+        assert trace_map["active_index_range"] == [0, 1]
+        assert trace_map["original_to_active_sha256"] == snapshot.recovery_evidence[
+            "rebuilt_trace_map_sha256"
+        ]
+        assert layout_diagnostics["observed"]["rhs_ownership_range"] == list(
+            rhs.getOwnershipRange()
+        )
+        assert layout_diagnostics["observed"]["packet_ownership_range"] == list(
+            rhs.getOwnershipRange()
+        )
         assert tracked_rhs.duplicate_calls == 1
         assert np.array_equal(
             snapshot.x.getArray(readonly=True), solution.getArray(readonly=True)
