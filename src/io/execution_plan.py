@@ -15,6 +15,8 @@ from .input_validation import (
     TASK041_BALH_MODEL_IDS,
     TASK041_MODEL_ID,
     TASK041_SHORTWAVE_MODEL_IDS,
+    TASK42_13P5_FULL3D_MODEL_ID,
+    TASK42_DIRECT_FACTOR_LIFECYCLE,
     task039_model_id_matches,
 )
 from .resolved_config import resolved_config_bytes
@@ -129,6 +131,8 @@ def build_execution_plan(
     adapter_identity: str | None = None,
     contract_probe: bool = False,
     task039_trace_audit: bool = False,
+    task42_packet_recovery_manifest: str | Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
 ) -> ExecutionPlan:
     """Build the private worker argv without shell interpolation or overrides."""
 
@@ -153,6 +157,39 @@ def build_execution_plan(
 
     mpi_size = int(specification.execution["mpi_size"])
     requested_modes = specification.method.get("requested_modes_per_direction")
+    if (task42_packet_recovery_manifest is None) != (
+        task42_packet_recovery_manifest_sha256 is None
+    ):
+        raise InputError(
+            "Task42 packet recovery manifest and SHA must be supplied together"
+        )
+    if task42_packet_recovery_manifest is not None:
+        recovery_manifest = Path(task42_packet_recovery_manifest)
+        digest = task42_packet_recovery_manifest_sha256
+        if (
+            not recovery_manifest.is_absolute()
+            or not isinstance(digest, str)
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+        ):
+            raise InputError(
+                "Task42 packet recovery needs an absolute manifest and lowercase SHA256"
+            )
+        if (
+            method != "full3d_direct"
+            or model_id != TASK42_13P5_FULL3D_MODEL_ID
+            or mpi_size != 8
+            or contract_probe
+            or specification.solver.get("direct_factor_lifecycle")
+            != TASK42_DIRECT_FACTOR_LIFECYCLE
+        ):
+            raise InputError(
+                "Task42 packet recovery is limited to its registered staged Full3D MPI8 case"
+            )
+        if adapter != METHOD_ADAPTERS["full3d_direct"]:
+            raise InputError(
+                "Task42 packet recovery requires the Full3D direct worker adapter"
+            )
     if task039_trace_audit and not task039_model_id_matches(
         "hybrid_direct", model_id, requested_modes
     ):
@@ -192,6 +229,15 @@ def build_execution_plan(
         argv.append("--contract-probe")
     if task039_trace_audit:
         argv.append("--task039-trace-audit")
+    if task42_packet_recovery_manifest is not None:
+        argv.extend(
+            (
+                "--task42-packet-recovery-manifest",
+                str(Path(task42_packet_recovery_manifest).resolve()),
+                "--task42-packet-recovery-manifest-sha256",
+                str(task42_packet_recovery_manifest_sha256),
+            )
+        )
     return ExecutionPlan(
         argv=tuple(argv),
         shell=False,

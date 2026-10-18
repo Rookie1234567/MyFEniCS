@@ -43,6 +43,7 @@ from src.io.input_validation import (
     TASK041_BALH_2NM_MODEL_ID,
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MODEL_IDS,
+    TASK42_13P5_FULL3D_MODEL_ID,
     TASK42_DIRECT_FACTOR_LIFECYCLE,
     TASK42_SOFT_TARGET_SECONDS,
     task039_model_id_matches,
@@ -3880,6 +3881,8 @@ def launch_specification(
     modal_feedback_method: str | None = None,
     modal_solver_policy: str | None = None,
     expected_rank_cpus: Sequence[int] | None = None,
+    task42_packet_recovery_manifest: str | Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3910,6 +3913,43 @@ def launch_specification(
     task041_public_route = (
         not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
     )
+    if (task42_packet_recovery_manifest is None) != (
+        task42_packet_recovery_manifest_sha256 is None
+    ):
+        raise InputError(
+            "Task42 packet recovery manifest and SHA must be supplied together"
+        )
+    task42_packet_recovery_binding = None
+    if task42_packet_recovery_manifest is not None:
+        recovery_path = Path(task42_packet_recovery_manifest)
+        recovery_digest = task42_packet_recovery_manifest_sha256
+        if (
+            not recovery_path.is_absolute()
+            or not recovery_path.is_file()
+            or not isinstance(recovery_digest, str)
+            or len(recovery_digest) != 64
+            or any(character not in "0123456789abcdef" for character in recovery_digest)
+            or contract_probe
+            or task041_public_route
+            or str(specification.identity.get("model_id", ""))
+            != TASK42_13P5_FULL3D_MODEL_ID
+            or str(specification.method.get("kind", "")) != "full3d_direct"
+            or int(specification.execution.get("mpi_size", -1)) != 8
+            or specification.solver.get("direct_factor_lifecycle")
+            != TASK42_DIRECT_FACTOR_LIFECYCLE
+            or producer_packet_root is not None
+            or legacy_native_packet_descriptor is not None
+        ):
+            raise InputError(
+                "Task42 packet recovery requires one absolute hash-bound packet on its registered Full3D MPI8 profile"
+            )
+        task42_packet_recovery_binding = {
+            "mode": "task42_pre_recovery_packet_rebuild_and_residual_check",
+            "manifest": str(recovery_path.resolve()),
+            "manifest_sha256": recovery_digest,
+            "historical_trace_map_sha256": "not_saved_in_original_packet",
+            "historical_residual_used_as_current_gate": False,
+        }
     if not isinstance(fixed_h6_modal_gmres_research, bool):
         raise InputError("fixed_h6_modal_gmres_research must be a boolean")
     fixed_h6_binding = None
@@ -4315,6 +4355,9 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if task42_packet_recovery_binding is not None:
+        manifest["task42_packet_recovery"] = task42_packet_recovery_binding
+        _write_json(run_directory / "run_manifest.json", manifest)
     if balh_time_stop_override is not None:
         manifest["time_stop_override"] = balh_time_stop_override
         _write_json(run_directory / "run_manifest.json", manifest)
@@ -4514,6 +4557,10 @@ def launch_specification(
             adapter_identity=adapter,
             contract_probe=contract_probe,
             task039_trace_audit=task039_trace_audit,
+            task42_packet_recovery_manifest=task42_packet_recovery_manifest,
+            task42_packet_recovery_manifest_sha256=(
+                task42_packet_recovery_manifest_sha256
+            ),
         )
         if not plan.adapter_available:
             result = {

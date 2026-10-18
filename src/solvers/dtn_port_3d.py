@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import gc
 import hashlib
 import json
+import struct
 import time
 from pathlib import Path
 from types import MappingProxyType
@@ -47,7 +48,7 @@ from .condensed_dtn import (
     create_matrix_free_augmented_operator,
 )
 from .common_3d_utils import _trim_process_heap, _write_progress_event
-from .full3d_lifecycle_packet import write_packet
+from .full3d_lifecycle_packet import load_packet, write_packet
 from .hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
     build_floquet_independent_trace_system,
@@ -130,8 +131,8 @@ class Stage4ExternalLinearSolverSnapshot:
     """Transferred solution and fixed scalar evidence from an external port."""
 
     x: PETSc.Vec
-    converged_reason: int
-    iterations: int
+    converged_reason: int | None
+    iterations: int | None
     reported_relative_residual: float | None
     condensed_true_residual: float | None
     full_augmented_true_residual: float | None
@@ -142,6 +143,8 @@ class Stage4ExternalLinearSolverSnapshot:
     solver_profile: str = "assembled"
     assembled_matrix_released_before_solve: bool = False
     reduced_residual_norm: float | None = None
+    operation_kind: str = "external_solver"
+    recovery_evidence: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -158,6 +161,7 @@ class Stage4NeverMaterializedLinearSolverRequest:
     function_space: Any
     config: SimulationConfig3D
     floquet_data: DoubleFloquet3DData
+    modes: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -180,6 +184,21 @@ def _external_snapshot_allows_official_rta(
     snapshot: Stage4ExternalLinearSolverSnapshot,
     full_fe_relative_residual: float | None,
 ) -> bool:
+    if snapshot.operation_kind == "task42_packet_recovery":
+        evidence = snapshot.recovery_evidence
+        return bool(
+            snapshot.converged_reason is None
+            and snapshot.iterations is None
+            and snapshot.no_global_factor
+            and isinstance(evidence, Mapping)
+            and evidence.get("packet_rhs_exact_match") is True
+            and evidence.get("external_key_order_exact_match") is True
+            and full_fe_relative_residual is not None
+            and np.isfinite(float(full_fe_relative_residual))
+            and 0.0 <= float(full_fe_relative_residual) <= snapshot.residual_limit
+        )
+    if snapshot.converged_reason is None:
+        return False
     residuals = (
         snapshot.reported_relative_residual,
         snapshot.condensed_true_residual,
@@ -2998,6 +3017,219 @@ def _pre_recovery_mode_keys(modes: list[PortMode3D]) -> list[dict[str, Any]]:
     ]
 
 
+def task42_packet_recovery_port(
+    manifest_path: str | Path,
+    *,
+    manifest_sha256: str,
+    identity: Mapping[str, Any],
+) -> Stage4NeverMaterializedLinearSolverPort:
+    """Create the opt-in matrix-free port that restores one archived local x."""
+
+    packet_path = Path(manifest_path).resolve(strict=True)
+    expected_identity = dict(identity)
+
+    def recover(request: Stage4NeverMaterializedLinearSolverRequest):
+        comm = request.b.getComm().tompi4py()
+        local_error = None
+        packet = None
+        restored_x = None
+        local_rhs_sha256 = None
+        trace_map_sha256 = None
+        expected_external_q = None
+        try:
+            packet = load_packet(
+                packet_path,
+                identity=expected_identity,
+                expected_manifest_sha256=manifest_sha256,
+                comm=comm,
+            )
+            matrix_size = tuple(int(value) for value in request.operator.getSize())
+            matrix_range = tuple(
+                int(value) for value in request.operator.getOwnershipRange()
+            )
+            rhs_size = int(request.b.getSize())
+            rhs_range = tuple(int(value) for value in request.b.getOwnershipRange())
+            if (
+                len(matrix_size) != 2
+                or matrix_size[0] != matrix_size[1]
+                or matrix_size[0] != int(packet["global_size"])
+                or matrix_size[0] != int(request.n_fe + request.n_aux)
+                or matrix_range != rhs_range
+                or rhs_size != matrix_size[0]
+                or tuple(packet["ownership_range"]) != rhs_range
+                or packet["solution"].shape != packet["rhs"].shape
+                or packet["solution"].size != rhs_range[1] - rhs_range[0]
+            ):
+                raise ValueError("archived vector layout does not match the rebuilt action")
+            if len(request.modes) != int(request.n_aux):
+                raise ValueError("rebuilt external mode count does not match auxiliary rows")
+            actual_mode_keys = _pre_recovery_mode_keys(list(request.modes))
+            archived_mode_keys = packet["metadata"].get("external_keys")
+            if archived_mode_keys != actual_mode_keys:
+                raise ValueError(
+                    "archived external-key order differs from rebuilt auxiliary DOF order"
+                )
+            archived_q = packet["metadata"].get("external_q")
+            if packet["metadata"].get("external_q_read_error") is not None:
+                raise ValueError("archived external amplitudes have a read error")
+            expected_external_q_array = np.asarray(archived_q, dtype=np.float64)
+            if (
+                expected_external_q_array.shape != (request.n_aux, 2)
+                or not np.isfinite(expected_external_q_array).all()
+            ):
+                raise ValueError("archived external amplitudes have an invalid schema")
+            expected_external_q = (
+                expected_external_q_array[:, 0]
+                + 1j * expected_external_q_array[:, 1]
+            )
+            rhs_view = request.b.getArray(readonly=True)
+            try:
+                # PETSc owns this array view.  Copy it before the value check so
+                # an exception traceback cannot keep a rank-local Vec borrow
+                # alive after the caller destroys the vector.
+                rhs = np.array(rhs_view, dtype=np.complex128, copy=True)
+            finally:
+                del rhs_view
+            try:
+                if rhs.shape != packet["rhs"].shape or not np.array_equal(
+                    rhs, packet["rhs"]
+                ):
+                    raise ValueError(
+                        "archived RHS bytes differ from the rebuilt RHS"
+                    )
+                local_rhs_sha256 = hashlib.sha256(
+                    np.ascontiguousarray(packet["rhs"]).view(np.uint8)
+                ).hexdigest()
+            finally:
+                rhs = None
+
+            trace_constraints = getattr(
+                request.static_condensed_system, "trace_constraints", None
+            )
+            original_to_active = getattr(
+                trace_constraints, "original_to_active", None
+            )
+            if not isinstance(original_to_active, Mapping) or not original_to_active:
+                raise ValueError("rebuilt trace constraint map is unavailable")
+            trace_hasher = hashlib.sha256()
+            for original in sorted(original_to_active):
+                active = original_to_active[original]
+                if (
+                    type(original) is not int
+                    or type(active) is not int
+                    or original < 0
+                    or active < 0
+                ):
+                    raise ValueError("rebuilt trace map contains an invalid index")
+                trace_hasher.update(struct.pack("<qq", original, active))
+            trace_map_sha256 = trace_hasher.hexdigest()
+        except Exception as exc:  # noqa: BLE001 - local reads are synchronized below
+            local_error = f"{type(exc).__name__}: {exc}"
+
+        read_errors = comm.allgather(
+            {"rank": int(comm.rank), "error": local_error}
+        )
+        failures = [
+            f"rank_{row['rank']}:{row['error']}"
+            for row in read_errors
+            if row.get("error") is not None
+        ]
+        if failures:
+            # Every rank observes the same gathered failure list and exits
+            # before any subsequent Vec collective.
+            packet = None
+            expected_external_q = None
+            raise ValueError("Task42 packet restore rejected: " + "; ".join(failures))
+
+        trace_hashes = comm.allgather(trace_map_sha256)
+        if len(set(trace_hashes)) != 1:
+            raise ValueError(
+                "Task42 packet restore rejected: "
+                "rebuilt_trace_map_differs_across_ranks"
+            )
+
+        # VecDuplicate is collective for the MPI Vec used by this action.  It
+        # is reached only after every rank has completed local packet/layout
+        # checks and the preceding allgather has agreed that all are valid.
+        restored_x = request.b.duplicate()
+        local_error = None
+        restored_local = None
+        try:
+            restored_local = restored_x.getArray()
+            if restored_local.shape != packet["solution"].shape:
+                raise ValueError("restored vector local shape differs from packet shard")
+            restored_local[:] = packet["solution"]
+        except Exception as exc:  # noqa: BLE001 - assignment errors are synchronized before gather
+            local_error = f"{type(exc).__name__}: {exc}"
+        finally:
+            # Do not keep a borrowed PETSc Vec array in a traceback retained
+            # by the caller when an assignment error is synchronized.
+            restored_local = None
+        assignment_rows = comm.allgather(
+            {"rank": int(comm.rank), "error": local_error}
+        )
+        failures = [
+            f"rank_{row['rank']}:{row['error']}"
+            for row in assignment_rows
+            if row.get("error") is not None
+        ]
+        if failures:
+            restored_x.destroy()
+            raise ValueError("Task42 packet vector assignment rejected: " + "; ".join(failures))
+
+        external_q, auxiliary_error = _task42_gather_auxiliary_values(
+            restored_x, request.n_fe, request.n_aux, comm
+        )
+        q_error = None
+        if auxiliary_error is not None or external_q is None:
+            q_error = auxiliary_error or "rebuilt auxiliary values are unavailable"
+        elif expected_external_q is None or not np.array_equal(
+            external_q, expected_external_q
+        ):
+            q_error = "archived external amplitudes differ from rebuilt vector ordering"
+        q_errors = comm.allgather({"rank": int(comm.rank), "error": q_error})
+        failures = [
+            f"rank_{row['rank']}:{row['error']}"
+            for row in q_errors
+            if row.get("error") is not None
+        ]
+        if failures:
+            restored_x.destroy()
+            raise ValueError("Task42 packet amplitude restore rejected: " + "; ".join(failures))
+
+        return Stage4ExternalLinearSolverSnapshot(
+            x=restored_x,
+            converged_reason=None,
+            iterations=None,
+            reported_relative_residual=None,
+            condensed_true_residual=None,
+            full_augmented_true_residual=None,
+            ksp_type="not_run_packet_recovery",
+            pc_type="not_run_packet_recovery",
+            residual_limit=5.0e-9,
+            no_global_factor=True,
+            solver_profile="matrix_free_packet_recovery",
+            assembled_matrix_released_before_solve=False,
+            reduced_residual_norm=None,
+            operation_kind="task42_packet_recovery",
+            recovery_evidence={
+                "packet_manifest_sha256": manifest_sha256,
+                "packet_identity_sha256": packet["identity_sha256"],
+                "packet_rhs_exact_match": True,
+                "packet_rhs_sha256": local_rhs_sha256,
+                "external_key_order_exact_match": True,
+                "external_amplitudes_exact_match": True,
+                "rebuilt_trace_map_sha256": trace_map_sha256,
+                "historical_trace_map_sha256": "not_saved_in_original_packet",
+                "global_matrix_materialized": False,
+                "global_factor_called": False,
+                "new_physical_solve_called": False,
+            },
+        )
+
+    return Stage4NeverMaterializedLinearSolverPort(callback=recover)
+
+
 def _run_pre_recovery_lifecycle(
     *,
     solve_A: PETSc.Mat,
@@ -3422,6 +3654,9 @@ def _solve_stage4_dtn_port_total_field_impl(
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
     task42_stage_gate=None,
     task42_bridge_path: str | Path | None = None,
+    task42_packet_recovery_manifest: str | Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
+    task42_packet_recovery_identity: Mapping[str, Any] | None = None,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -3466,9 +3701,12 @@ def _solve_stage4_dtn_port_total_field_impl(
         linear_solver_port,
         Stage4NeverMaterializedLinearSolverPort,
     )
-    task42_staged_direct = (
-        task42_stage_gate is not None or task42_bridge_path is not None
-    )
+    task42_packet_recovery = task42_packet_recovery_manifest is not None
+    task42_staged_direct = task42_bridge_path is not None
+    if (task42_packet_recovery_manifest is None) != (
+        task42_packet_recovery_manifest_sha256 is None
+    ) or (task42_packet_recovery and not isinstance(task42_packet_recovery_identity, Mapping)):
+        raise ValueError("Task42 packet recovery bindings are incomplete")
     if task42_staged_direct and not (
         callable(task42_stage_gate)
         and isinstance(task42_bridge_path, (str, Path))
@@ -3480,11 +3718,32 @@ def _solve_stage4_dtn_port_total_field_impl(
         and not cfg.matrix_diagnostics_factorization_only
     ):
         raise ValueError("Task42 direct stage gate, bridge, and packet binding are incomplete")
+    if task42_packet_recovery and not (
+        callable(task42_stage_gate)
+        and isinstance(task42_packet_recovery_manifest, (str, Path))
+        and isinstance(task42_packet_recovery_manifest_sha256, str)
+        and task42_packet_recovery_identity is not None
+        and linear_solver_port is not None
+        and never_materialized_port
+        and task42_bridge_path is None
+        and pre_recovery_packet_directory is None
+        and pre_recovery_packet_identity is None
+        and not cfg.matrix_diagnostics_assemble_only
+        and not cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "Task42 packet recovery requires the gated action-only Stage4 port and no factor/packet writer"
+        )
+    if task42_stage_gate is not None and not (
+        task42_staged_direct or task42_packet_recovery
+    ):
+        raise ValueError("Task42 stage gate is only valid for direct or packet recovery")
     task42_factor = None
     task42_analysis: dict[str, Any] | None = None
     task42_numeric: dict[str, Any] | None = None
     task42_stage_timing: dict[str, float] = {}
     task42_direct_solve_pass = False
+    task42_packet_recovery_pass = False
     if matrix_free_dtn and not never_materialized_port:
         raise ValueError("matrix-free DtN requires the action-only solver port")
     if matrix_free_dtn_probe and (not matrix_free_dtn or not never_materialized_port):
@@ -3669,7 +3928,9 @@ def _solve_stage4_dtn_port_total_field_impl(
                 ),
                 materialize_global_matrix=not never_materialized_port,
                 task42_stage_gate=(
-                    task42_stage_gate if task42_staged_direct else None
+                    task42_stage_gate
+                    if task42_stage_gate is not None
+                    else None
                 ),
             )
             reduction_system = assembly_time_system
@@ -5067,6 +5328,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                         function_space=V,
                         config=cfg,
                         floquet_data=floquet_data,
+                        modes=tuple(modes),
                     )
                 )
                 if not isinstance(
@@ -5080,6 +5342,13 @@ def _solve_stage4_dtn_port_total_field_impl(
                 if not external_snapshot.no_global_factor:
                     raise ValueError(
                         "never-materialized snapshot must certify no_global_factor"
+                    )
+                if task42_packet_recovery and (
+                    external_snapshot.operation_kind != "task42_packet_recovery"
+                    or not isinstance(external_snapshot.recovery_evidence, Mapping)
+                ):
+                    raise ValueError(
+                        "Task42 packet recovery port returned a non-recovery snapshot"
                     )
                 if external_snapshot.assembled_matrix_released_before_solve:
                     raise ValueError(
@@ -5284,80 +5553,98 @@ def _solve_stage4_dtn_port_total_field_impl(
             pre_recovery_linear_residual = pre_recovery_lifecycle["residual"]
             ksp = None
 
-        if task42_staged_direct:
-            scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
-            block_size = int(V.dofmap.index_map_bs)
-            index_map = V.dofmap.index_map
-            local_dofs_with_ghosts = int(
-                (index_map.size_local + index_map.num_ghosts) * block_size
+    if task42_staged_direct or task42_packet_recovery:
+        scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+        block_size = int(V.dofmap.index_map_bs)
+        index_map = V.dofmap.index_map
+        local_dofs_with_ghosts = int(
+            (index_map.size_local + index_map.num_ghosts) * block_size
+        )
+        local_cells = int(
+            mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_local
+        )
+        element_dimension = int(V.element.space_dimension)
+        local_recovery_bytes = (
+            2 * local_dofs_with_ghosts * scalar_bytes
+            + local_cells * element_dimension * scalar_bytes
+            + int(solve_x.getLocalSize()) * scalar_bytes
+        )
+        if assembly_time_system is None:
+            raise RuntimeError(
+                "Task42 recovery gate requires the assembly-time active-trace layout"
             )
-            local_cells = int(
-                mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_local
-            )
-            element_dimension = int(V.element.space_dimension)
-            local_recovery_bytes = (
-                2 * local_dofs_with_ghosts * scalar_bytes
-                + local_cells * element_dimension * scalar_bytes
-                + int(solve_x.getLocalSize()) * scalar_bytes
-            )
-            if assembly_time_system is None:
-                raise RuntimeError(
-                    "Task42 recovery gate requires the assembly-time active-trace layout"
-                )
-            recovery_components = [
-                {
-                    "name": "task42_recovered_field_vectors_and_cell_work",
-                    "scope": "rank_local",
-                    "delta_bytes": int(local_recovery_bytes),
-                    "unit": "bytes",
-                    "classification": "predicted_from_actual_local_dofs_cells_and_element_dimension",
-                    "basis": {
-                        "local_dofs_with_ghosts": local_dofs_with_ghosts,
-                        "local_cells": local_cells,
-                        "element_dimension": element_dimension,
-                        "solve_vector_local_size": int(solve_x.getLocalSize()),
-                        "scalar_bytes": scalar_bytes,
-                        "formula": "2*local_dofs*scalar_bytes + local_cells*element_dimension*scalar_bytes + local_solve_vector_size*scalar_bytes",
-                        "objects": [
-                            "recovered DOLFINx field and PETSc vector",
-                            "cell-interior recovery values",
-                            "recovery-stage active local copy",
-                        ],
-                    },
-                    "upper_bound_proven": False,
+        recovery_components = [
+            {
+                "name": "task42_recovered_field_vectors_and_cell_work",
+                "scope": "rank_local",
+                "delta_bytes": int(local_recovery_bytes),
+                "unit": "bytes",
+                "classification": "predicted_from_actual_local_dofs_cells_and_element_dimension",
+                "basis": {
+                    "local_dofs_with_ghosts": local_dofs_with_ghosts,
+                    "local_cells": local_cells,
+                    "element_dimension": element_dimension,
+                    "solve_vector_local_size": int(solve_x.getLocalSize()),
+                    "scalar_bytes": scalar_bytes,
+                    "formula": "2*local_dofs*scalar_bytes + local_cells*element_dimension*scalar_bytes + local_solve_vector_size*scalar_bytes",
+                    "objects": [
+                        "recovered DOLFINx field and PETSc vector",
+                        "cell-interior recovery values",
+                        "recovery-stage active local copy",
+                    ],
                 },
-                _task42_active_trace_gather_memory_component(
-                    active_trace_rows=int(assembly_time_system.active_rows),
-                    scalar_bytes=scalar_bytes,
+                "upper_bound_proven": False,
+            },
+            _task42_active_trace_gather_memory_component(
+                active_trace_rows=int(assembly_time_system.active_rows),
+                scalar_bytes=scalar_bytes,
+            ),
+        ]
+        recovery_gate_stage = (
+            "before_full_field_recovery_from_verified_packet"
+            if task42_packet_recovery
+            else "before_full_field_recovery_after_factor_destroy"
+        )
+        if not _task42_gate_from_inventory(
+            task42_stage_gate,
+            stage=recovery_gate_stage,
+            components=recovery_components,
+            uncertainty=(
+                "predicted from actual FE/vector dimensions and recovery source; "
+                "DOLFINx vector and MPI gather allocator overhead is not a proven upper bound"
+            ),
+            evidence={
+                "factor_destroyed_before_recovery": bool(
+                    task42_staged_direct and pre_recovery_lifecycle is not None
                 ),
-            ]
-            if not _task42_gate_from_inventory(
-                task42_stage_gate,
-                stage="before_full_field_recovery_after_factor_destroy",
-                components=recovery_components,
-                uncertainty=(
-                    "predicted from actual FE/vector dimensions and recovery source; "
-                    "DOLFINx vector and MPI gather allocator overhead is not a proven upper bound"
+                "factor_not_created_for_packet_recovery": task42_packet_recovery,
+                "packet_recovery_from_verified_archive": task42_packet_recovery,
+                "full_operator_rhs_local_size": (
+                    None
+                    if assembly_time_full_rhs is None
+                    else int(assembly_time_full_rhs.getLocalSize())
                 ),
-                evidence={
-                    "factor_destroyed_before_recovery": True,
-                    "full_operator_rhs_local_size": (
-                        None
-                        if assembly_time_full_rhs is None
-                        else int(assembly_time_full_rhs.getLocalSize())
-                    ),
-                },
-            ):
-                raise MemoryError("Task42 resource stage refused before full-field recovery")
+            },
+        ):
+            raise MemoryError("Task42 resource stage refused before full-field recovery")
 
         _write_progress_event(
             out_dir,
             comm,
-            stage="full_field_recovery",
+            stage=(
+                "full_field_recovery_from_verified_packet"
+                if task42_packet_recovery
+                else "full_field_recovery"
+            ),
             status="begin",
             started=started,
             petsc_options=petsc_options,
-            extra={"factor_destroyed_before_recovery": True},
+            extra={
+                "factor_destroyed_before_recovery": bool(
+                    task42_staged_direct and pre_recovery_lifecycle is not None
+                ),
+                "factor_not_created_for_packet_recovery": task42_packet_recovery,
+            },
         )
 
     assembly_time_field = None
@@ -5435,15 +5722,24 @@ def _solve_stage4_dtn_port_total_field_impl(
     else:
         x_aug = solve_x
 
-    if pre_recovery_lifecycle is not None:
+    if pre_recovery_lifecycle is not None or task42_packet_recovery:
         _write_progress_event(
             out_dir,
             comm,
-            stage="full_field_recovery",
+            stage=(
+                "full_field_recovery_from_verified_packet"
+                if task42_packet_recovery
+                else "full_field_recovery"
+            ),
             status="end",
             started=started,
             petsc_options=petsc_options,
-            extra={"factor_destroyed_before_recovery": True},
+            extra={
+                "factor_destroyed_before_recovery": bool(
+                    pre_recovery_lifecycle is not None
+                ),
+                "factor_not_created_for_packet_recovery": task42_packet_recovery,
+            },
         )
 
     if variable_p_reduction is not None and variable_p_recovered is not None:
@@ -5485,9 +5781,11 @@ def _solve_stage4_dtn_port_total_field_impl(
             reduced_residual_norm=(
                 external_snapshot.reduced_residual_norm if released_external else None
             ),
-            strict_reduced_residual=task42_staged_direct,
+            strict_reduced_residual=(
+                task42_staged_direct or task42_packet_recovery
+            ),
         )
-        if task42_staged_direct:
+        if task42_staged_direct or task42_packet_recovery:
             linear_residual = _task42_full_residual_finite_status(linear_residual)
         embedded_fe_solution.destroy()
         embedded_fe_solution = None
@@ -5502,7 +5800,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     else:
         linear_residual = (
             _task42_strict_linear_residual(A_aug, b_aug, x_aug)
-            if task42_staged_direct
+            if task42_staged_direct or task42_packet_recovery
             else _linear_residual(A_aug, b_aug, x_aug)
         )
     if task42_staged_direct:
@@ -5514,6 +5812,16 @@ def _solve_stage4_dtn_port_total_field_impl(
         task42_direct_solve_pass = bool(
             comm.allreduce(local_final_gate, op=MPI.LAND)
         )
+    elif task42_packet_recovery:
+        local_final_gate = bool(
+            external_snapshot is not None
+            and external_snapshot.operation_kind == "task42_packet_recovery"
+            and _task42_full_residual_gate_pass(linear_residual)
+        )
+        task42_packet_recovery_pass = bool(
+            comm.allreduce(local_final_gate, op=MPI.LAND)
+        )
+        task42_full_true_residual = dict(linear_residual)
     else:
         task42_full_true_residual = None
     external_rta_gate_pass = (
@@ -5564,8 +5872,13 @@ def _solve_stage4_dtn_port_total_field_impl(
         constraints=floquet_data.num_constraints,
         petsc_options=petsc_options,
         extra=(
-            {"factor_destroyed_before_recovery": True}
-            if pre_recovery_lifecycle is not None
+            {
+                "factor_destroyed_before_recovery": bool(
+                    pre_recovery_lifecycle is not None
+                ),
+                "factor_not_created_for_packet_recovery": task42_packet_recovery,
+            }
+            if pre_recovery_lifecycle is not None or task42_packet_recovery
             else None
         ),
     )
@@ -5582,7 +5895,9 @@ def _solve_stage4_dtn_port_total_field_impl(
     )
     aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
     task42_output_gate_pass = (
-        not task42_staged_direct or task42_direct_solve_pass
+        (not task42_staged_direct and not task42_packet_recovery)
+        or task42_direct_solve_pass
+        or task42_packet_recovery_pass
     )
     port_metrics = (
         {}
@@ -5663,6 +5978,8 @@ def _solve_stage4_dtn_port_total_field_impl(
             if external_rta_gate_pass is not False and task42_output_gate_pass
             else "task42_direct_residual_gate_failed"
             if task42_staged_direct and not task42_output_gate_pass
+            else "task42_packet_recovery_residual_gate_failed"
+            if task42_packet_recovery and not task42_output_gate_pass
             else "external_rta_not_run"
         ),
         status="end",
@@ -5740,6 +6057,12 @@ def _solve_stage4_dtn_port_total_field_impl(
         solver_residual_norm = None
         solver_ksp_type = None
         solver_pc_type = "MUMPS_STAGED_DIRECT"
+    elif task42_packet_recovery:
+        solver_converged_reason = None
+        solver_iterations = None
+        solver_residual_norm = None
+        solver_ksp_type = "not_run_packet_recovery"
+        solver_pc_type = "not_run_packet_recovery"
     elif external_snapshot is None:
         if pre_recovery_solver_telemetry is None:
             solver_converged_reason = int(ksp.getConvergedReason())
@@ -5866,13 +6189,26 @@ def _solve_stage4_dtn_port_total_field_impl(
         "pre_recovery_lifecycle": pre_recovery_lifecycle,
         "pre_recovery_linear_residual": pre_recovery_linear_residual,
         "factor_destroyed_before_recovery": bool(pre_recovery_lifecycle is not None),
+        "factor_not_created_for_packet_recovery": task42_packet_recovery,
         "task42_staged_direct": task42_staged_direct,
+        "task42_packet_recovery": task42_packet_recovery,
+        "task42_packet_recovery_semantics": (
+            "restore_verified_archived_solution_no_solver_call"
+            if task42_packet_recovery
+            else None
+        ),
+        "task42_packet_recovery_residual_limit": (
+            5.0e-9 if task42_packet_recovery else None
+        ),
         "task42_direct_solve_semantics": (
             "direct_MatSolve_no_KSP_reason" if task42_staged_direct else None
         ),
         "task42_direct_residual_limit": 5.0e-9 if task42_staged_direct else None,
         "task42_direct_residual_gate_pass": (
             task42_direct_solve_pass if task42_staged_direct else None
+        ),
+        "task42_packet_recovery_residual_gate_pass": (
+            task42_packet_recovery_pass if task42_packet_recovery else None
         ),
         "task42_pre_recovery_true_residual": (
             None
@@ -5917,6 +6253,11 @@ def _solve_stage4_dtn_port_total_field_impl(
                     external_snapshot.assembled_matrix_released_before_solve
                 ),
                 "reduced_residual_norm": external_snapshot.reduced_residual_norm,
+                "recovery_evidence": (
+                    None
+                    if external_snapshot.recovery_evidence is None
+                    else dict(external_snapshot.recovery_evidence)
+                ),
             }
         )
     solver_info["actual_pc_factor_solver_type"] = _actual_pc_factor_solver_type(

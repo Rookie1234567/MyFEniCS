@@ -443,6 +443,15 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--task039-trace-audit", action="store_true", help=argparse.SUPPRESS
     )
+    parser.add_argument(
+        "--task42-packet-recovery-manifest",
+        type=Path,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--task42-packet-recovery-manifest-sha256",
+        help=argparse.SUPPRESS,
+    )
     return parser
 
 
@@ -454,6 +463,8 @@ def _dispatch_resolved_payload(
     expected_source_sha: str | None = None,
     expected_resolved_config_sha256: str | None = None,
     task039_trace_audit: bool = False,
+    task42_packet_recovery_manifest: Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
     comm: Any | None = None,
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
@@ -488,6 +499,14 @@ def _dispatch_resolved_payload(
                     "root_pid": root_pid_text,
                     "bridge_path": bridge_path,
                     "output_directory": str(Path(directory).resolve()),
+                    "packet_recovery_manifest": (
+                        None
+                        if task42_packet_recovery_manifest is None
+                        else str(task42_packet_recovery_manifest.resolve())
+                    ),
+                    "packet_recovery_manifest_sha256": (
+                        task42_packet_recovery_manifest_sha256
+                    ),
                 }
                 bindings = comm.allgather(local_binding)
                 if len({_task42_inventory_json_bytes(row) for row in bindings}) != 1:
@@ -500,9 +519,14 @@ def _dispatch_resolved_payload(
                     raise RuntimeError(
                         "Task42 direct worker root PID is not an integer"
                     ) from exc
-                if root_pid <= 0 or not bridge_path:
+                packet_recovery = task42_packet_recovery_manifest is not None
+                if root_pid <= 0 or (not bridge_path and not packet_recovery):
                     raise RuntimeError(
-                        "Task42 direct worker requires launcher root PID and explicit staged bridge path"
+                        "Task42 worker requires launcher root PID and either a staged bridge or packet-recovery binding"
+                    )
+                if packet_recovery and bridge_path:
+                    raise RuntimeError(
+                        "Task42 packet recovery cannot load or use the staged direct-factor bridge"
                     )
                 stage_gate = _task42_stage_gate_callback(
                     output_directory=Path(directory),
@@ -516,6 +540,12 @@ def _dispatch_resolved_payload(
                     resolved_config_sha256=expected_resolved_config_sha256,
                     task42_stage_gate=stage_gate,
                     task42_bridge_path=bridge_path,
+                    task42_packet_recovery_manifest=(
+                        task42_packet_recovery_manifest
+                    ),
+                    task42_packet_recovery_manifest_sha256=(
+                        task42_packet_recovery_manifest_sha256
+                    ),
                 )
             if solver_payload.get("direct_factor_lifecycle") == "release_before_recovery":
                 return run_full3d_direct(
@@ -663,6 +693,32 @@ def main(argv: list[str] | None = None) -> int:
                 flush=True,
             )
         return 2
+    recovery_manifest = args.task42_packet_recovery_manifest
+    recovery_sha256 = args.task42_packet_recovery_manifest_sha256
+    if (recovery_manifest is None) != (recovery_sha256 is None):
+        if comm.rank == 0:
+            print("Task42 packet recovery arguments must be supplied together")
+        return 2
+    if recovery_manifest is not None:
+        solver = resolved_payload.get("solver", {})
+        recovery_valid = bool(
+            not args.contract_probe
+            and resolved_payload.get("model_id") == TASK42_13P5_FULL3D_MODEL_ID
+            and args.expected_method == "full3d_direct"
+            and int(resolved_payload.get("execution", {}).get("mpi_size", -1)) == 8
+            and solver.get("direct_factor_lifecycle")
+            == TASK42_DIRECT_FACTOR_LIFECYCLE
+            and recovery_manifest.is_absolute()
+            and recovery_manifest.is_file()
+            and isinstance(recovery_sha256, str)
+            and len(recovery_sha256) == 64
+            and all(character in "0123456789abcdef" for character in recovery_sha256)
+        )
+        recovery_valid = bool(comm.allreduce(recovery_valid, op=MPI.LAND))
+        if not recovery_valid:
+            if comm.rank == 0:
+                print("Task42 packet recovery binding is invalid for this worker route")
+            return 2
     if args.contract_probe:
         comm.Barrier()
         if comm.rank == 0:
@@ -685,6 +741,8 @@ def main(argv: list[str] | None = None) -> int:
         expected_source_sha=args.expected_source_sha,
         expected_resolved_config_sha256=args.resolved_config_sha256,
         task039_trace_audit=args.task039_trace_audit,
+        task42_packet_recovery_manifest=recovery_manifest,
+        task42_packet_recovery_manifest_sha256=recovery_sha256,
         comm=comm,
     )
     if exit_status != 0:

@@ -87,6 +87,7 @@ from .common_3d_utils import (
     _write_progress_event,
 )
 from .dtn_port_3d import (
+    Stage4NeverMaterializedLinearSolverPort,
     Stage4VariablePLiveView,
     _task42_gate_from_inventory,
     solve_stage4_dtn_port_total_field,
@@ -998,6 +999,9 @@ def run_prepared_3d_case_flow(
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
     task42_stage_gate=None,
     task42_bridge_path: str | Path | None = None,
+    task42_packet_recovery_manifest: Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
+    task42_packet_recovery_identity: Mapping[str, Any] | None = None,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -1020,6 +1024,16 @@ def run_prepared_3d_case_flow(
     comm = (
         MPI.COMM_WORLD if mesh_data_override is None else mesh_data_override.mesh.comm
     )
+    recovery_identity_binding = (
+        None
+        if task42_packet_recovery_identity is None
+        else json.dumps(
+            task42_packet_recovery_identity,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=_json_default,
+        )
+    )
     live_observer_flags = comm.allgather(
         (
             variable_p_live_observer is not None,
@@ -1034,15 +1048,52 @@ def run_prepared_3d_case_flow(
             None
             if task42_bridge_path is None
             else str(Path(task42_bridge_path).resolve()),
+            None
+            if task42_packet_recovery_manifest is None
+            else str(Path(task42_packet_recovery_manifest).resolve()),
+            task42_packet_recovery_manifest_sha256,
+            recovery_identity_binding,
         )
     )
     if len(set(live_observer_flags)) != 1:
         raise ValueError(
             "variable-p observer, Schur retention, external solver port, "
-            "matrix-free and Task42 staged-direct bindings must match on every MPI rank"
+            "matrix-free and Task42 direct/recovery bindings must match on every MPI rank"
         )
-    task42_binding_present = task42_stage_gate is not None or task42_bridge_path is not None
-    if task42_binding_present and not (
+    task42_packet_recovery = (
+        task42_packet_recovery_manifest is not None
+        or task42_packet_recovery_manifest_sha256 is not None
+        or task42_packet_recovery_identity is not None
+    )
+    if task42_packet_recovery and not (
+        callable(task42_stage_gate)
+        and isinstance(task42_packet_recovery_manifest, (str, Path))
+        and str(task42_packet_recovery_manifest).strip()
+        and isinstance(task42_packet_recovery_manifest_sha256, str)
+        and task42_packet_recovery_manifest_sha256
+        and isinstance(task42_packet_recovery_identity, Mapping)
+        and isinstance(linear_solver_port, Stage4NeverMaterializedLinearSolverPort)
+        and matrix_free_dtn
+        and variable_p_live_observer is None
+        and not variable_p_retain_local_schur_for_research
+        and task42_bridge_path is None
+        and pre_recovery_packet_directory is None
+        and pre_recovery_packet_identity is None
+        and solve_stage4_dtn_port
+        and field_formulation == "total_field_dtn_port"
+        and not cfg.matrix_diagnostics_assemble_only
+        and not cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "Task42 packet recovery requires a bound matrix-free Stage4 port, "
+            "fresh input identity, and the existing stage gate"
+        )
+    task42_binding_present = (
+        task42_stage_gate is not None
+        or task42_bridge_path is not None
+        or task42_packet_recovery
+    )
+    if task42_binding_present and not task42_packet_recovery and not (
         callable(task42_stage_gate)
         and isinstance(task42_bridge_path, (str, Path))
         and str(task42_bridge_path).strip()
@@ -1586,6 +1637,11 @@ def run_prepared_3d_case_flow(
                 pre_recovery_packet_identity=pre_recovery_packet_identity,
                 task42_stage_gate=task42_stage_gate,
                 task42_bridge_path=task42_bridge_path,
+                task42_packet_recovery_manifest=task42_packet_recovery_manifest,
+                task42_packet_recovery_manifest_sha256=(
+                    task42_packet_recovery_manifest_sha256
+                ),
+                task42_packet_recovery_identity=task42_packet_recovery_identity,
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
@@ -1747,6 +1803,9 @@ def run_prepared_3d_case_flow(
     task42_staged_direct_snapshot = bool(
         dtn_solver_info and dtn_solver_info.get("task42_staged_direct")
     )
+    task42_packet_recovery_snapshot = bool(
+        dtn_solver_info and dtn_solver_info.get("task42_packet_recovery")
+    )
     pre_recovery_solver_snapshot = bool(
         dtn_solver_info and dtn_solver_info.get("factor_destroyed_before_recovery")
     )
@@ -1854,6 +1913,11 @@ def run_prepared_3d_case_flow(
         reason_name = "DIRECT_MUMPS_MATSOLVE_NO_KSP_REASON"
         iterations = None
         residual_norm = None
+    elif task42_packet_recovery_snapshot:
+        reason = None
+        reason_name = "TASK42_ARCHIVED_SOLUTION_RESTORED_NO_KSP_REASON"
+        iterations = None
+        residual_norm = None
     elif (
         external_solver_snapshot
         or live_observer_primal_snapshot
@@ -1893,7 +1957,7 @@ def run_prepared_3d_case_flow(
         None
         if dtn_solver_info is None
         else dtn_solver_info.get("task42_full_true_residual")
-        if task42_staged_direct_snapshot
+        if task42_staged_direct_snapshot or task42_packet_recovery_snapshot
         else (dtn_solver_info.get("cell_static_condensation") or {}).get(
             "full_explicit_true_residual"
         )
@@ -1918,6 +1982,8 @@ def run_prepared_3d_case_flow(
     solver_converged = (
         bool(dtn_solver_info.get("task42_direct_residual_gate_pass"))
         if task42_staged_direct_snapshot
+        else bool(dtn_solver_info.get("task42_packet_recovery_residual_gate_pass"))
+        if task42_packet_recovery_snapshot
         else (reason > 0)
     ) and not diagnostic_only_result
     official_result = solver_converged and (
@@ -1972,6 +2038,7 @@ def run_prepared_3d_case_flow(
         cfg.direct_release_solver_before_postprocess
         and solve_stage4_dtn_port
         and not diagnostic_only_result
+        and reason is not None
         and reason > 0
         and system_A is not None
     )
@@ -2106,6 +2173,9 @@ def run_prepared_3d_case_flow(
                     "recovery; the original assembled Mat, RHS, and solution remain "
                     "available for recovery and residual checks"
                     if task42_staged_direct_snapshot
+                    else "Task42 solution was restored from a verified archived packet; "
+                    "this run did not create a solver factor"
+                    if task42_packet_recovery_snapshot
                     else
                     "Telemetry-only baseline preserves the Task28 lifecycle: "
                     "KSP/factor, system Mat, RHS Vec, and solution Vec remain "
@@ -2132,6 +2202,8 @@ def run_prepared_3d_case_flow(
         if factorization_only_result
         else "completed"
         if converged
+        else "task42_packet_recovery_residual_gate_failed"
+        if task42_packet_recovery_snapshot and not solver_converged
         else "external_solver_not_converged"
         if external_solver_snapshot and not solver_converged
         else "external_residual_gate_failed"
@@ -2146,6 +2218,8 @@ def run_prepared_3d_case_flow(
         if assemble_only_result
         else "Matrix diagnostics factorization-only mode stopped after KSPSetUp/LU; KSPSolve and postprocess were skipped."
         if factorization_only_result
+        else "External solver did not converge; official RTA was not run."
+        if task42_packet_recovery_snapshot and not solver_converged
         else "External solver did not converge; official RTA was not run."
         if external_solver_snapshot and not solver_converged
         else "External solver residual/RTA gate failed; official RTA was not run."
@@ -2208,6 +2282,27 @@ def run_prepared_3d_case_flow(
         if dtn_result is None
         else dtn_result["solver_info"].get("num_auxiliary_dofs"),
         "external_linear_solver_port": external_solver_snapshot,
+        "task42_packet_recovery": task42_packet_recovery_snapshot,
+        "task42_packet_recovery_semantics": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("task42_packet_recovery_semantics")
+        ),
+        "task42_packet_recovery_residual_gate_pass": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("task42_packet_recovery_residual_gate_pass")
+        ),
+        "task42_packet_recovery_evidence": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("recovery_evidence")
+        ),
+        "task42_full_true_residual": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("task42_full_true_residual")
+        ),
         "external_rta_gate_pass": external_rta_gate_pass,
         "external_solver_profile": None
         if dtn_solver_info is None

@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-import math
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from src.io.input_validation import simulation_config_3d_from_normalized
 from src.io.input_validation import (
     TASK42_13P5_FULL3D_MODEL_ID,
     TASK42_DIRECT_FACTOR_LIFECYCLE,
+    simulation_config_3d_from_normalized,
 )
+
+TASK42_RECOVERY_ARCHIVE_SOURCE_SHA = "bafee20f02d2fdb04f34ad2c5f5ba33cb7215c3a"
 
 
 def _run_solver(
@@ -25,6 +27,9 @@ def _run_solver(
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
     task42_stage_gate=None,
     task42_bridge_path: str | Path | None = None,
+    task42_packet_recovery_manifest: Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
+    task42_packet_recovery_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     if cfg.stage_case == "stage1_airbox":
         from src.solvers.solve_maxwell_3d_stage_1_airbox import (
@@ -61,6 +66,21 @@ def _run_solver(
             run_stage4b_block_grating_3d_case,
         )
 
+        recovery_port = None
+        if task42_packet_recovery_manifest is not None:
+            from src.solvers.dtn_port_3d import task42_packet_recovery_port
+
+            if (
+                task42_packet_recovery_manifest_sha256 is None
+                or task42_packet_recovery_identity is None
+            ):
+                raise ValueError("Task42 packet recovery bindings are incomplete")
+            recovery_port = task42_packet_recovery_port(
+                task42_packet_recovery_manifest,
+                manifest_sha256=task42_packet_recovery_manifest_sha256,
+                identity=task42_packet_recovery_identity,
+            )
+
         return run_stage4b_block_grating_3d_case(
             cfg,
             numerical_output,
@@ -70,6 +90,13 @@ def _run_solver(
             pre_recovery_packet_identity=pre_recovery_packet_identity,
             task42_stage_gate=task42_stage_gate,
             task42_bridge_path=task42_bridge_path,
+            task42_packet_recovery_manifest=task42_packet_recovery_manifest,
+            task42_packet_recovery_manifest_sha256=(
+                task42_packet_recovery_manifest_sha256
+            ),
+            task42_packet_recovery_identity=task42_packet_recovery_identity,
+            linear_solver_port=recovery_port,
+            matrix_free_dtn=recovery_port is not None,
         )
     raise ValueError(f"unsupported Full3D direct stage {cfg.stage_case!r}")
 
@@ -245,6 +272,49 @@ def _task42_pre_recovery_packet_identity(
     }
 
 
+def _task42_packet_recovery_expected_identity(
+    payload: Mapping[str, Any], *, resolved_config_sha256: str
+) -> dict[str, Any]:
+    """Bind recovery to current physics/config while preserving archived source identity."""
+
+    provenance = payload.get("provenance")
+    if not isinstance(provenance, Mapping):
+        raise ValueError(  # noqa: TRY004 - invalid resolved identity is an input-value refusal
+            "Task42 packet recovery requires resolved provenance"
+        )
+    method = payload.get("method")
+    geometry = payload.get("geometry")
+    materials = payload.get("materials")
+    incidence = payload.get("incidence")
+    discretization = payload.get("discretization")
+    execution = payload.get("execution")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (method, geometry, materials, incidence, discretization, execution)
+    ):
+        raise ValueError("Task42 packet recovery is missing resolved identity fields")
+    return {
+        "schema": "task42.13p5.full3d.pre_recovery.identity.v1",
+        "source_sha": TASK42_RECOVERY_ARCHIVE_SOURCE_SHA,
+        "input_sha256": provenance.get("input_sha256"),
+        "physical_model_sha256": provenance.get("physical_model_sha256"),
+        "resolved_config_sha256": resolved_config_sha256,
+        "model_id": payload.get("model_id"),
+        "run_id": payload.get("run_id"),
+        "comparison_group": payload.get("comparison_group"),
+        "dimension": payload.get("dimension"),
+        "method": method.get("kind"),
+        "mpi_size": execution.get("mpi_size"),
+        "wavelength_nm": incidence.get("wavelength_nm"),
+        "grazing_angle_deg": incidence.get("grazing_angle_deg"),
+        "azimuth_deg": incidence.get("azimuth_deg"),
+        "polarization": incidence.get("polarization"),
+        "geometry": dict(geometry),
+        "materials": dict(materials),
+        "discretization": dict(discretization),
+    }
+
+
 def _canonical_authority_errors(summary: Mapping[str, Any]) -> list[str]:
     from benchmarks.canonical_vector_artifacts import MANIFEST_SCHEMA
 
@@ -295,6 +365,8 @@ def run_full3d_direct(
     resolved_config_sha256: str | None = None,
     task42_stage_gate=None,
     task42_bridge_path: str | Path | None = None,
+    task42_packet_recovery_manifest: str | Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Run one connected Full3D direct stage and inspect its returned summary."""
 
@@ -327,16 +399,32 @@ def run_full3d_direct(
         resolved_payload.get("model_id") == TASK42_13P5_FULL3D_MODEL_ID
         and lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE
     )
+    task42_packet_recovery = task42_packet_recovery_manifest is not None
+    if (task42_packet_recovery_manifest is None) != (
+        task42_packet_recovery_manifest_sha256 is None
+    ):
+        raise ValueError("Task42 recovery manifest and SHA must be supplied together")
     if task42_lifecycle:
         if cfg.stage_case != "stage4_block_grating":
             raise ValueError("Task42 staged direct is limited to its Stage4 model")
         if not callable(task42_stage_gate):
             raise ValueError("Task42 staged direct requires the launcher phase gate")
-        if not isinstance(task42_bridge_path, (str, Path)) or not str(
+        if task42_packet_recovery:
+            if task42_bridge_path is not None:
+                raise ValueError(
+                    "Task42 packet recovery must not load the staged MUMPS bridge"
+                )
+            if source_sha is None or resolved_config_sha256 is None:
+                raise ValueError("Task42 packet recovery requires RUN source bindings")
+        elif not isinstance(task42_bridge_path, (str, Path)) or not str(
             task42_bridge_path
         ).strip():
             raise ValueError("Task42 staged direct requires an explicit bridge artifact")
-    elif task42_stage_gate is not None or task42_bridge_path is not None:
+    elif (
+        task42_stage_gate is not None
+        or task42_bridge_path is not None
+        or task42_packet_recovery
+    ):
         raise ValueError("Task42 stage gate/bridge arguments are not valid on other profiles")
     packet_directory = None
     packet_identity = None
@@ -357,7 +445,7 @@ def run_full3d_direct(
             source_sha=source_sha,
             resolved_config_sha256=resolved_config_sha256,
         )
-    elif lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE:
+    elif lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE and not task42_packet_recovery:
         packet_directory = (
             Path(run_directory).resolve() / "numerical_output" / "pre_recovery_packet"
         )
@@ -415,7 +503,62 @@ def run_full3d_direct(
         runner_kwargs.update(
             {
                 "task42_stage_gate": task42_stage_gate,
-                "task42_bridge_path": str(task42_bridge_path),
+                "task42_bridge_path": (
+                    None if task42_bridge_path is None else str(task42_bridge_path)
+                ),
+            }
+        )
+    if task42_packet_recovery:
+        from mpi4py import MPI
+
+        from src.solvers.full3d_lifecycle_packet import verify_task42_recovery_archive
+
+        recovery_path = Path(task42_packet_recovery_manifest).resolve(strict=True)
+        expected_identity = _task42_packet_recovery_expected_identity(
+            resolved_payload,
+            resolved_config_sha256=str(resolved_config_sha256),
+        )
+        identity_bytes = json.dumps(
+            expected_identity, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+        identity_digest = hashlib.sha256(identity_bytes).hexdigest()
+        comm = MPI.COMM_WORLD
+        identity_digests = comm.allgather(identity_digest)
+        if len(set(identity_digests)) != 1:
+            raise ValueError("Task42 packet recovery identity differs across MPI ranks")
+        archive_status = None
+        if comm.rank == 0:
+            try:
+                receipt = verify_task42_recovery_archive(
+                    recovery_path,
+                    expected_manifest_sha256=str(
+                        task42_packet_recovery_manifest_sha256
+                    ),
+                    expected_identity=expected_identity,
+                    allowed_source_sha=TASK42_RECOVERY_ARCHIVE_SOURCE_SHA,
+                    expected_mpi_size=int(resolved_payload["execution"]["mpi_size"]),
+                )
+                archive_status = {"receipt": receipt, "error": None}
+            except Exception as exc:  # noqa: BLE001 - root validation is broadcast before setup
+                archive_status = {
+                    "receipt": None,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+        archive_status = comm.bcast(archive_status, root=0)
+        if not isinstance(archive_status, Mapping) or archive_status.get("error"):
+            detail = (
+                "missing root archive validation receipt"
+                if not isinstance(archive_status, Mapping)
+                else archive_status.get("error")
+            )
+            raise ValueError(f"Task42 packet recovery archive rejected: {detail}")
+        runner_kwargs.update(
+            {
+                "task42_packet_recovery_manifest": recovery_path,
+                "task42_packet_recovery_manifest_sha256": (
+                    task42_packet_recovery_manifest_sha256
+                ),
+                "task42_packet_recovery_identity": expected_identity,
             }
         )
     summary = runner(

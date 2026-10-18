@@ -5,14 +5,22 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from mpi4py import MPI
 from petsc4py import PETSc
 
 import src.solvers.dtn_port_3d as dtn
-from src.solvers.full3d_lifecycle_packet import load_packet
+from scripts import run_case
+from src.io.execution_plan import WORKER_MODULE, build_execution_plan
+from src.runners import task038_full3d_direct, task038_input_worker, task038_launcher
+from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverRequest
+from src.solvers.full3d_lifecycle_packet import load_packet, write_packet
 from src.solvers.petsc_lu_stage import (
     TASK42_STAGED_DIRECT_STAGE_IDENTITY,
     StagedMumpsLUFactory,
@@ -93,6 +101,439 @@ def _strict_residual(relative=1.0e-12):
     """Match _task42_strict_linear_residual's smaller pre-recovery schema."""
 
     return {**_residual(relative), "finite": True}
+
+
+class _DuplicateTrackingVector:
+    def __init__(self, vector):
+        self.vector = vector
+        self.duplicate_calls = 0
+
+    def getComm(self):
+        return self.vector.getComm()
+
+    def getSize(self):
+        return self.vector.getSize()
+
+    def getOwnershipRange(self):
+        return self.vector.getOwnershipRange()
+
+    def getArray(self, readonly=False):
+        return self.vector.getArray(readonly=readonly)
+
+    def duplicate(self):
+        self.duplicate_calls += 1
+        return self.vector.duplicate()
+
+
+@pytest.mark.parametrize("defect", ["single_rank_shard_hash", "single_rank_local_layout"])
+def test_task42_packet_restore_syncs_local_shard_rejection_before_vec_duplicate(
+    tmp_path: Path, defect: str
+) -> None:
+    """One bad rank must refuse collectively before the collective VecDuplicate."""
+
+    comm = MPI.COMM_WORLD
+    if comm.size < 2:
+        pytest.skip("single-rank shard rejection requires MPI2")
+    shared_directory = Path(
+        comm.bcast(str(tmp_path) if comm.rank == 0 else None, root=0)
+    )
+    if comm.rank == 0:
+        shutil.rmtree(shared_directory, ignore_errors=True)
+    comm.barrier()
+
+    identity = {"source_sha": "task42-packet-recovery-test", "mpi_size": comm.size}
+    mode = SimpleNamespace(side="top", m=0, n=0, polarization="s")
+    vector = PETSc.Vec().createMPI((2, 2 * comm.size), comm=comm)
+    vector_refcount_before = int(vector.getRefCount())
+    try:
+        vector.getArray()[:] = np.asarray(
+            [1.0 + comm.rank * 1j, 2.0 - comm.rank * 1j],
+            dtype=np.complex128,
+        )
+        ownership = tuple(int(value) for value in vector.getOwnershipRange())
+        packet_write = write_packet(
+            shared_directory,
+            vector.getArray(readonly=True),
+            vector.getArray(readonly=True),
+            identity=identity,
+            metadata={
+                "external_keys": [
+                    {"side": "top", "m": 0, "n": 0, "polarization": "s"}
+                ],
+                "external_q": [[0.0, 0.0]],
+            },
+            ownership_range=ownership,
+            comm=comm,
+            collective_writer_errors=True,
+        )
+        assert packet_write["pass"] is True
+
+        manifest_path = shared_directory / "manifest.json"
+        manifest_sha256 = None
+        bad_rank = comm.size - 1
+        if comm.rank == 0:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            bad_shard = manifest["shards"][bad_rank]
+            shard_path = shared_directory / bad_shard["path"]
+            if defect == "single_rank_shard_hash":
+                bad_shard["sha256"] = "0" * 64
+            else:
+                with np.load(shard_path, allow_pickle=False) as arrays:
+                    bad_solution = arrays["solution"].copy()
+                    bad_rhs = arrays["rhs"].copy()
+                np.savez(
+                    shard_path,
+                    solution=np.concatenate((bad_solution, np.asarray([3.0j]))),
+                    rhs=np.concatenate((bad_rhs, np.asarray([4.0j]))),
+                )
+                bad_shard["sha256"] = hashlib.sha256(
+                    shard_path.read_bytes()
+                ).hexdigest()
+            manifest_bytes = (
+                json.dumps(manifest, sort_keys=True, separators=(",", ":"))
+                + "\n"
+            ).encode("utf-8")
+            manifest_path.write_bytes(manifest_bytes)
+            manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+        manifest_sha256 = comm.bcast(manifest_sha256, root=0)
+        comm.barrier()
+
+        tracked_vector = _DuplicateTrackingVector(vector)
+        request = Stage4NeverMaterializedLinearSolverRequest(
+            operator=SimpleNamespace(
+                getSize=lambda: (2 * comm.size, 2 * comm.size),
+                getOwnershipRange=lambda: ownership,
+            ),
+            b=tracked_vector,
+            n_fe=2 * comm.size - 1,
+            n_aux=1,
+            static_condensed_system=SimpleNamespace(
+                trace_constraints=SimpleNamespace(original_to_active={0: 0, 1: 1})
+            ),
+            fine_operator=None,
+            blocks=None,
+            function_space=None,
+            config=None,
+            floquet_data=None,
+            modes=(mode,),
+        )
+        recovery_port = dtn.task42_packet_recovery_port(
+            manifest_path,
+            manifest_sha256=manifest_sha256,
+            identity=identity,
+        )
+        with pytest.raises(ValueError, match="Task42 packet restore rejected") as error:
+            recovery_port(request)
+        collective_errors = comm.allgather(str(error.value))
+        assert len(set(collective_errors)) == 1
+        vector_refcount_after = int(vector.getRefCount())
+        refcount_rows = comm.allgather(
+            {
+                "rank": int(comm.rank),
+                "before": vector_refcount_before,
+                "after": vector_refcount_after,
+            }
+        )
+        assert len(refcount_rows) == comm.size
+        assert all(
+            row["before"] == row["after"]
+            for row in refcount_rows
+        ), refcount_rows
+        assert tracked_vector.duplicate_calls == 0
+        if defect == "single_rank_shard_hash":
+            assert f"rank_{bad_rank}:ValueError: pre-recovery shard hash mismatch" in str(
+                error.value
+            )
+        else:
+            assert f"rank_{bad_rank}:ValueError: pre-recovery ownership range mismatch" in str(
+                error.value
+            )
+    finally:
+        vector.destroy()
+        comm.barrier()
+
+
+def _write_small_task42_recovery_packet(tmp_path: Path, comm):
+    packet_directory = Path(
+        comm.bcast(str(tmp_path) if comm.rank == 0 else None, root=0)
+    )
+    if comm.rank == 0:
+        shutil.rmtree(packet_directory, ignore_errors=True)
+    comm.barrier()
+
+    global_size = 4
+    n_aux = 2
+    n_fe = global_size - n_aux
+    modes = (
+        SimpleNamespace(side="top", m=0, n=0, polarization="s"),
+        SimpleNamespace(side="bottom", m=1, n=0, polarization="p"),
+    )
+    operator = PETSc.Mat().createAIJ(
+        size=(global_size, global_size), nnz=1, comm=comm
+    )
+    row_start, row_end = map(int, operator.getOwnershipRange())
+    for row in range(row_start, row_end):
+        operator.setValue(row, row, PETSc.ScalarType(2 + row + 1j * (row % 2)))
+    operator.assemble()
+
+    solution = operator.createVecRight()
+    solution_start, solution_end = map(int, solution.getOwnershipRange())
+    global_solution = np.asarray(
+        [1.0 + 0.5j, 2.0 - 0.25j, 3.0 + 1.0j, 4.0 - 0.5j],
+        dtype=np.complex128,
+    )
+    solution.getArray()[:] = global_solution[solution_start:solution_end]
+    rhs = operator.createVecLeft()
+    operator.mult(solution, rhs)
+    ownership = tuple(int(value) for value in rhs.getOwnershipRange())
+    if tuple(solution.getOwnershipRange()) != ownership:
+        raise AssertionError("small square action vector layouts differ")
+
+    identity = {"source_sha": "task42-packet-recovery-positive-test", "mpi_size": comm.size}
+    external_keys = dtn._pre_recovery_mode_keys(list(modes))
+    external_values = global_solution[n_fe:]
+    packet_write = write_packet(
+        packet_directory,
+        solution.getArray(readonly=True),
+        rhs.getArray(readonly=True),
+        identity=identity,
+        metadata={
+            "external_keys": external_keys,
+            "external_q": [[float(value.real), float(value.imag)] for value in external_values],
+        },
+        ownership_range=ownership,
+        comm=comm,
+        collective_writer_errors=True,
+    )
+    assert packet_write["pass"] is True
+    return {
+        "operator": operator,
+        "solution": solution,
+        "rhs": rhs,
+        "modes": modes,
+        "n_fe": n_fe,
+        "n_aux": n_aux,
+        "identity": identity,
+        "manifest_path": packet_directory / "manifest.json",
+        "manifest_sha256": packet_write["manifest_sha256"],
+    }
+
+
+def test_task42_packet_recovery_restores_action_solution_without_factor(
+    tmp_path: Path,
+) -> None:
+    comm = MPI.COMM_WORLD
+    case = _write_small_task42_recovery_packet(tmp_path, comm)
+    operator = case["operator"]
+    solution = case["solution"]
+    rhs = case["rhs"]
+    restored_rhs = rhs.duplicate()
+    snapshot = None
+    try:
+        tracked_rhs = _DuplicateTrackingVector(rhs)
+        request = Stage4NeverMaterializedLinearSolverRequest(
+            operator=operator,
+            b=tracked_rhs,
+            n_fe=case["n_fe"],
+            n_aux=case["n_aux"],
+            static_condensed_system=SimpleNamespace(
+                trace_constraints=SimpleNamespace(original_to_active={0: 0, 1: 1})
+            ),
+            fine_operator=None,
+            blocks=None,
+            function_space=None,
+            config=None,
+            floquet_data=None,
+            modes=case["modes"],
+        )
+        snapshot = dtn.task42_packet_recovery_port(
+            case["manifest_path"],
+            manifest_sha256=case["manifest_sha256"],
+            identity=case["identity"],
+        )(request)
+        assert snapshot.operation_kind == "task42_packet_recovery"
+        assert snapshot.converged_reason is None
+        assert snapshot.iterations is None
+        assert snapshot.ksp_type == "not_run_packet_recovery"
+        assert snapshot.pc_type == "not_run_packet_recovery"
+        assert snapshot.recovery_evidence["global_factor_called"] is False
+        assert snapshot.recovery_evidence["new_physical_solve_called"] is False
+        assert tracked_rhs.duplicate_calls == 1
+        assert np.array_equal(
+            snapshot.x.getArray(readonly=True), solution.getArray(readonly=True)
+        )
+
+        operator.mult(snapshot.x, restored_rhs)
+        restored_rhs.axpy(PETSc.ScalarType(-1), rhs)
+        relative_residual = float(restored_rhs.norm()) / float(rhs.norm())
+        assert relative_residual <= 5.0e-9
+        assert dtn._external_snapshot_allows_official_rta(
+            snapshot, relative_residual
+        )
+    finally:
+        if snapshot is not None:
+            snapshot.x.destroy()
+        restored_rhs.destroy()
+        solution.destroy()
+        rhs.destroy()
+        operator.destroy()
+        comm.barrier()
+
+
+@pytest.mark.parametrize("defect", ["rhs", "auxiliary_order"])
+def test_task42_packet_recovery_rejects_rhs_or_auxiliary_order_mismatch(
+    tmp_path: Path, defect: str
+) -> None:
+    comm = MPI.COMM_WORLD
+    case = _write_small_task42_recovery_packet(tmp_path, comm)
+    operator = case["operator"]
+    solution = case["solution"]
+    rhs = case["rhs"]
+    try:
+        if defect == "rhs" and comm.rank == 0 and rhs.getLocalSize():
+            rhs.getArray()[0] += PETSc.ScalarType(0.125)
+        modes = case["modes"]
+        if defect == "auxiliary_order":
+            modes = tuple(reversed(modes))
+        tracked_rhs = _DuplicateTrackingVector(rhs)
+        request = Stage4NeverMaterializedLinearSolverRequest(
+            operator=operator,
+            b=tracked_rhs,
+            n_fe=case["n_fe"],
+            n_aux=case["n_aux"],
+            static_condensed_system=SimpleNamespace(
+                trace_constraints=SimpleNamespace(original_to_active={0: 0, 1: 1})
+            ),
+            fine_operator=None,
+            blocks=None,
+            function_space=None,
+            config=None,
+            floquet_data=None,
+            modes=modes,
+        )
+        recovery_port = dtn.task42_packet_recovery_port(
+            case["manifest_path"],
+            manifest_sha256=case["manifest_sha256"],
+            identity=case["identity"],
+        )
+        with pytest.raises(ValueError, match="Task42 packet restore rejected"):
+            recovery_port(request)
+        assert tracked_rhs.duplicate_calls == 0
+    finally:
+        solution.destroy()
+        rhs.destroy()
+        operator.destroy()
+        comm.barrier()
+
+
+def test_task42_packet_recovery_public_cli_plan_worker_adapter_binding(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    input_path = (
+        Path(__file__).resolve().parents[2]
+        / "input/official/task42hybrid_az90_50x50_17x20_0p7nm"
+        / "13p5nm_p6h10_full3d_direct_mpi8.dat"
+    )
+    manifest_path = (tmp_path / "packet" / "manifest.json").resolve()
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    manifest_sha256 = "a" * 64
+    run_directory = (tmp_path / "public-worker-run").resolve()
+    captured: dict[str, object] = {}
+
+    def fake_launch(specification, **kwargs):
+        captured["launch_manifest"] = kwargs["task42_packet_recovery_manifest"]
+        captured["launch_sha256"] = kwargs[
+            "task42_packet_recovery_manifest_sha256"
+        ]
+        plan = build_execution_plan(
+            specification,
+            run_directory,
+            source_sha="b" * 40,
+            python_executable=sys.executable,
+            mpiexec_command="mpiexec",
+            task42_packet_recovery_manifest=kwargs[
+                "task42_packet_recovery_manifest"
+            ],
+            task42_packet_recovery_manifest_sha256=kwargs[
+                "task42_packet_recovery_manifest_sha256"
+            ],
+        )
+        worker_start = plan.argv.index(WORKER_MODULE)
+        worker_args = task038_input_worker._parser().parse_args(
+            plan.argv[worker_start + 1 :]
+        )
+        assert worker_args.task42_packet_recovery_manifest == manifest_path
+        assert (
+            worker_args.task42_packet_recovery_manifest_sha256 == manifest_sha256
+        )
+        captured["plan_manifest"] = worker_args.task42_packet_recovery_manifest
+        captured["plan_sha256"] = worker_args.task42_packet_recovery_manifest_sha256
+
+        def stage_gate(*_args, **_kwargs):
+            return True
+
+        monkeypatch.setattr(
+            task038_input_worker,
+            "_task42_stage_gate_callback",
+            lambda **_kwargs: stage_gate,
+        )
+        monkeypatch.setenv("TASK038_JOB_ROOT_PID", "12345")
+        monkeypatch.delenv(
+            task038_input_worker.TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV,
+            raising=False,
+        )
+
+        def fake_direct_adapter(payload, directory, **adapter_kwargs):
+            captured["adapter_model_id"] = payload["model_id"]
+            captured["adapter_directory"] = directory
+            captured["adapter_kwargs"] = adapter_kwargs
+            return {"passed": True, "errors": []}
+
+        monkeypatch.setattr(
+            task038_full3d_direct, "run_full3d_direct", fake_direct_adapter
+        )
+        result = task038_input_worker._dispatch_resolved_payload(
+            specification.as_jsonable(),
+            expected_method=worker_args.expected_method,
+            output_directory=worker_args.expected_output_directory,
+            expected_source_sha=worker_args.expected_source_sha,
+            expected_resolved_config_sha256=worker_args.resolved_config_sha256,
+            task42_packet_recovery_manifest=(
+                worker_args.task42_packet_recovery_manifest
+            ),
+            task42_packet_recovery_manifest_sha256=(
+                worker_args.task42_packet_recovery_manifest_sha256
+            ),
+            comm=_SerialCollective(),
+        )
+        assert result == (0, [])
+        adapter_kwargs = captured["adapter_kwargs"]
+        assert adapter_kwargs["task42_bridge_path"] is None
+        assert adapter_kwargs["task42_packet_recovery_manifest"] == manifest_path
+        assert (
+            adapter_kwargs["task42_packet_recovery_manifest_sha256"]
+            == manifest_sha256
+        )
+        assert adapter_kwargs["task42_stage_gate"] is stage_gate
+        return {"result_classification": "worker_exit0"}
+
+    monkeypatch.setattr(task038_launcher, "launch_specification", fake_launch)
+    exit_code = run_case.main(
+        [
+            str(input_path),
+            "--task42-packet-recovery-manifest",
+            str(manifest_path),
+            "--task42-packet-recovery-manifest-sha256",
+            manifest_sha256,
+        ]
+    )
+    capsys.readouterr()
+    assert exit_code == 0
+    assert captured["launch_manifest"] == manifest_path
+    assert captured["launch_sha256"] == manifest_sha256
+    assert captured["plan_manifest"] == manifest_path
+    assert captured["plan_sha256"] == manifest_sha256
 
 
 def _run_pre_recovery(

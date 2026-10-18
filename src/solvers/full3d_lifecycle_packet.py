@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import zipfile
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -373,4 +374,229 @@ def load_packet(
         "rhs": rhs,
         "ownership_range": ownership_range,
         "manifest_sha256": manifest_sha_after,
+    }
+
+
+def verify_task42_recovery_archive(
+    manifest_path: Path,
+    *,
+    expected_manifest_sha256: str,
+    expected_identity: Mapping[str, Any],
+    allowed_source_sha: str,
+    expected_mpi_size: int,
+) -> dict[str, Any]:
+    """Verify the archived RUN envelope and every shard before recovery setup.
+
+    The Task42 packet did not persist a trace-map hash. This function validates
+    the identities it did persist and records that missing field explicitly;
+    it never treats the archived residual scalar as a current residual check.
+    """
+
+    manifest_path = Path(manifest_path).resolve(strict=True)
+    if (
+        manifest_path.name != "manifest.json"
+        or manifest_path.parent.name != "pre_recovery_packet"
+        or manifest_path.parent.parent.name != "numerical_output"
+    ):
+        raise ValueError(
+            "Task42 recovery packet must be under RUN/numerical_output/pre_recovery_packet"
+        )
+    packet_directory = manifest_path.parent
+    run_root = manifest_path.parents[2]
+    manifest_bytes = manifest_path.read_bytes()
+    manifest_sha = _sha256(manifest_bytes)
+    if manifest_sha != expected_manifest_sha256:
+        raise ValueError("Task42 recovery packet manifest SHA mismatch")
+    manifest = json.loads(manifest_bytes)
+    if not isinstance(manifest, dict) or manifest.get("schema") != PACKET_SCHEMA:
+        raise ValueError("Task42 recovery packet schema mismatch")
+    identity = manifest.get("identity")
+    if not isinstance(identity, Mapping):
+        raise ValueError("Task42 recovery packet identity is missing")  # noqa: TRY004
+    if _sha256(_json_bytes(identity)) != manifest.get("identity_sha256"):
+        raise ValueError("Task42 recovery packet identity hash mismatch")
+    if _safe(expected_identity) != identity:
+        raise ValueError("Task42 recovery packet resolved identity mismatch")
+    if identity.get("source_sha") != allowed_source_sha:
+        raise ValueError("Task42 recovery packet source SHA is not qualified")
+    if type(expected_mpi_size) is not int or expected_mpi_size <= 0:
+        raise ValueError("Task42 recovery MPI size must be a positive integer")
+    if manifest.get("rank_count") != expected_mpi_size:
+        raise ValueError("Task42 recovery packet rank count mismatch")
+    shards = manifest.get("shards")
+    if not isinstance(shards, list) or len(shards) != expected_mpi_size:
+        raise ValueError("Task42 recovery packet shard inventory is incomplete")
+    if not _ownership_is_contiguous(shards, int(manifest.get("global_size", -1))):
+        raise ValueError("Task42 recovery packet ownership is not contiguous")
+    ranks = [row.get("rank") for row in shards if isinstance(row, Mapping)]
+    if ranks != list(range(expected_mpi_size)):
+        raise ValueError("Task42 recovery packet rank shards are not in rank order")
+    shard_hashes: dict[str, str] = {}
+    for shard in shards:
+        relative = shard.get("path")
+        if (
+            not isinstance(relative, str)
+            or not relative
+            or Path(relative).name != relative
+        ):
+            raise ValueError("Task42 recovery shard path is not a packet-local filename")
+        shard_path = packet_directory / relative
+        if shard_path.resolve(strict=True).parent != packet_directory:
+            raise ValueError("Task42 recovery shard escaped its packet directory")
+        digest = _sha256(shard_path.read_bytes())
+        if digest != shard.get("sha256"):
+            raise ValueError(f"Task42 recovery shard SHA mismatch: {relative}")
+        try:
+            with np.load(shard_path, allow_pickle=False) as arrays:
+                if set(arrays.files) != {"solution", "rhs"}:
+                    raise ValueError(
+                        f"Task42 recovery shard fields mismatch: {relative}"
+                    )
+                solution = arrays["solution"]
+                rhs = arrays["rhs"]
+                expected_size = int(shard["ownership_range"][1]) - int(
+                    shard["ownership_range"][0]
+                )
+                if (
+                    solution.ndim != 1
+                    or rhs.ndim != 1
+                    or solution.shape != rhs.shape
+                    or solution.size != expected_size
+                    or type(shard.get("size")) is not int
+                    or shard["size"] != expected_size
+                    or solution.dtype != np.dtype(np.complex128)
+                    or rhs.dtype != np.dtype(np.complex128)
+                    or not np.isfinite(solution).all()
+                    or not np.isfinite(rhs).all()
+                ):
+                    raise ValueError(
+                        f"Task42 recovery shard array schema mismatch: {relative}"
+                    )
+        except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+            if isinstance(exc, ValueError) and str(exc).startswith(
+                "Task42 recovery shard"
+            ):
+                raise
+            raise ValueError(
+                f"Task42 recovery shard cannot be read: {relative}: {exc}"
+            ) from exc
+        shard_hashes[relative] = digest
+
+    def read_run_file(name: str) -> bytes:
+        try:
+            return (run_root / name).read_bytes()
+        except OSError as exc:
+            raise ValueError(f"Task42 recovery RUN file {name} is unreadable: {exc}") from exc
+
+    run_manifest_bytes = read_run_file("run_manifest.json")
+    resolved_bytes = read_run_file("resolved_config.json")
+    input_bytes = read_run_file("input_original.dat")
+    input_sha_text = read_run_file("input_sha256.txt").decode("ascii").strip()
+    physical_sha_text = read_run_file("physical_model_sha256.txt").decode("ascii").strip()
+    source_sha_text = read_run_file("source_sha.txt").decode("ascii").strip()
+    run_manifest = json.loads(run_manifest_bytes)
+    resolved = json.loads(resolved_bytes)
+    if not isinstance(run_manifest, dict) or not isinstance(resolved, dict):
+        raise ValueError("Task42 recovery RUN metadata must be JSON objects")  # noqa: TRY004
+    resolved_method = resolved.get("method")
+    resolved_method_kind = (
+        resolved_method.get("kind") if isinstance(resolved_method, Mapping) else None
+    )
+    input_sha = _sha256(input_bytes)
+    resolved_sha = _sha256(resolved_bytes)
+    if input_sha != identity.get("input_sha256") or input_sha_text != input_sha:
+        raise ValueError("Task42 recovery original input SHA mismatch")
+    if resolved_sha != identity.get("resolved_config_sha256"):
+        raise ValueError("Task42 recovery resolved-config SHA mismatch")
+    if physical_sha_text != identity.get("physical_model_sha256"):
+        raise ValueError("Task42 recovery physical-model SHA mismatch")
+    if source_sha_text != allowed_source_sha:
+        raise ValueError("Task42 recovery source_sha.txt mismatch")
+    if (
+        run_manifest.get("source_sha") != allowed_source_sha
+        or run_manifest.get("resolved_config_sha256") != resolved_sha
+        or run_manifest.get("input_sha256") != input_sha
+        or run_manifest.get("physical_model_sha256") != physical_sha_text
+        or run_manifest.get("model_id") != identity.get("model_id")
+        or run_manifest.get("run_id") != identity.get("run_id")
+        or run_manifest.get("comparison_group") != identity.get("comparison_group")
+        or run_manifest.get("method") != identity.get("method")
+        or run_manifest.get("mpi_size") != expected_mpi_size
+        or run_manifest.get("output_directory") != str(run_root)
+        or run_manifest.get("numerical_output_directory")
+        != str(run_root / "numerical_output")
+    ):
+        raise ValueError("Task42 recovery RUN manifest does not bind the packet identity")
+    provenance = resolved.get("provenance")
+    if not isinstance(provenance, Mapping) or (
+        provenance.get("input_sha256") != input_sha
+        or provenance.get("physical_model_sha256") != physical_sha_text
+    ):
+        raise ValueError("Task42 recovery resolved provenance mismatch")
+    for key in (
+        "model_id",
+        "run_id",
+        "comparison_group",
+        "dimension",
+        "geometry",
+        "materials",
+        "discretization",
+    ):
+        if resolved.get(key) != identity.get(key):
+            raise ValueError(f"Task42 recovery resolved {key} mismatch")
+    if resolved_method_kind != identity.get("method"):
+        raise ValueError("Task42 recovery resolved method kind mismatch")
+    resolved_incidence = resolved.get("incidence")
+    resolved_execution = resolved.get("execution")
+    if (
+        not isinstance(resolved_incidence, Mapping)
+        or not isinstance(resolved_execution, Mapping)
+        or resolved_incidence.get("wavelength_nm") != identity.get("wavelength_nm")
+        or resolved_incidence.get("grazing_angle_deg")
+        != identity.get("grazing_angle_deg")
+        or resolved_incidence.get("azimuth_deg") != identity.get("azimuth_deg")
+        or resolved_incidence.get("polarization") != identity.get("polarization")
+        or resolved_execution.get("mpi_size") != expected_mpi_size
+    ):
+        raise ValueError("Task42 recovery incidence or execution identity mismatch")
+    metadata = manifest.get("metadata")
+    if not isinstance(metadata, Mapping):
+        raise ValueError("Task42 recovery packet metadata is missing")  # noqa: TRY004
+    external_keys = metadata.get("external_keys")
+    if not isinstance(external_keys, list) or not external_keys:
+        raise ValueError("Task42 recovery packet external keys are missing")
+    derived = resolved.get("derived")
+    external_inventory = (
+        derived.get("external_mode_inventory") if isinstance(derived, Mapping) else None
+    )
+    resolved_external_keys = (
+        external_inventory.get("keys")
+        if isinstance(external_inventory, Mapping)
+        else None
+    )
+    if not isinstance(resolved_external_keys, list):
+        raise ValueError(  # noqa: TRY004 - missing persisted inventory is an input-value refusal
+            "Task42 resolved RUN external-key inventory is missing"
+        )
+    packet_key_ids = [_json_bytes(key) for key in external_keys]
+    resolved_key_ids = [_json_bytes(key) for key in resolved_external_keys]
+    if (
+        len(set(packet_key_ids)) != len(packet_key_ids)
+        or len(set(resolved_key_ids)) != len(resolved_key_ids)
+        or set(packet_key_ids) != set(resolved_key_ids)
+    ):
+        raise ValueError(
+            "Task42 packet external keys do not match the resolved RUN inventory"
+        )
+    if metadata.get("task42_direct_original_residual_pass") is not True:
+        raise ValueError("Task42 archived packet did not record a passed original solve")
+    return {
+        "manifest": manifest,
+        "manifest_sha256": manifest_sha,
+        "identity": dict(identity),
+        "run_root": str(run_root),
+        "archive_source_sha": source_sha_text,
+        "shard_sha256_by_path": shard_hashes,
+        "historical_trace_map_sha256": "not_saved_in_original_packet",
+        "historical_residual_used_as_recovery_gate": False,
     }

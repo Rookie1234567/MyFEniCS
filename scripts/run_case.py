@@ -13,7 +13,11 @@ if str(_REPOSITORY_ROOT) not in sys.path:
 
 from src.io import dry_run_payload, load_and_resolve
 from src.io.input_loader import InputError
-from src.io.input_validation import TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY
+from src.io.input_validation import (
+    TASK041_V16_MEMAVAILABLE_RESOURCE_POLICY,
+    TASK42_13P5_FULL3D_MODEL_ID,
+    TASK42_DIRECT_FACTOR_LIFECYCLE,
+)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -129,6 +133,15 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument(
+        "--task42-packet-recovery-manifest",
+        type=Path,
+        help="recover the registered Task42 Full3D fields from a hash-bound packet",
+    )
+    parser.add_argument(
+        "--task42-packet-recovery-manifest-sha256",
+        help="required SHA256 for --task42-packet-recovery-manifest",
+    )
+    parser.add_argument(
         "--task041-expected-rank-cpus",
         help="comma-separated frozen Task041 rank-to-CPU map (fixed-H6 only)",
     )
@@ -139,6 +152,39 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         specification = load_and_resolve(args.input_path)
+        recovery_manifest = args.task42_packet_recovery_manifest
+        recovery_sha256 = args.task42_packet_recovery_manifest_sha256
+        if (recovery_manifest is None) != (recovery_sha256 is None):
+            raise InputError(
+                "Task42 packet recovery manifest and SHA must be supplied together"
+            )
+        if recovery_manifest is not None:
+            if args.validate_only or args.dry_run:
+                raise InputError(
+                    "Task42 packet recovery is an execution-only public route"
+                )
+            if (
+                not recovery_manifest.is_absolute()
+                or len(recovery_sha256 or "") != 64
+                or any(
+                    character not in "0123456789abcdef"
+                    for character in (recovery_sha256 or "")
+                )
+            ):
+                raise InputError(
+                    "Task42 packet recovery requires an absolute manifest and lowercase SHA256"
+                )
+            if (
+                specification.identity.get("model_id")
+                != TASK42_13P5_FULL3D_MODEL_ID
+                or specification.method.get("kind") != "full3d_direct"
+                or specification.execution.get("mpi_size") != 8
+                or specification.solver.get("direct_factor_lifecycle")
+                != TASK42_DIRECT_FACTOR_LIFECYCLE
+            ):
+                raise InputError(
+                    "Task42 packet recovery requires the registered staged Full3D MPI8 input"
+                )
         from src.io.input_validation import task041_balh_case
 
         registered_case = task041_balh_case(
@@ -468,6 +514,8 @@ def main(argv: list[str] | None = None) -> int:
             modal_feedback_method=args.task041_modal_feedback_method,
             modal_solver_policy=args.task041_modal_solver_policy,
             expected_rank_cpus=expected_rank_cpus,
+            task42_packet_recovery_manifest=recovery_manifest,
+            task42_packet_recovery_manifest_sha256=recovery_sha256,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3
