@@ -6465,6 +6465,9 @@ def solve_stage4_dtn_port_total_field(
     pre_recovery_packet_identity: Mapping[str, Any] | None = None,
     task42_stage_gate=None,
     task42_bridge_path: str | Path | None = None,
+    task42_packet_recovery_manifest: str | Path | None = None,
+    task42_packet_recovery_manifest_sha256: str | None = None,
+    task42_packet_recovery_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -6475,26 +6478,82 @@ def solve_stage4_dtn_port_total_field(
         if V is not None
         else MPI.COMM_WORLD
     )
-    observer_flags = comm.allgather(
-        (
-            variable_p_live_observer is not None,
-            bool(variable_p_retain_local_schur_for_research),
-            bool(static_retain_local_schur_for_matrix_free),
-            bool(matrix_free_dtn),
-            bool(matrix_free_dtn_probe),
-            bool(canonical_vector_export),
-            pre_recovery_packet_directory is not None,
-            pre_recovery_packet_identity is not None,
-            task42_stage_gate is not None,
-            None
-            if task42_bridge_path is None
-            else str(Path(task42_bridge_path).resolve()),
+    recovery_binding_error = None
+    recovery_manifest_binding = None
+    recovery_identity_binding = None
+    recovery_requested = any(
+        value is not None
+        for value in (
+            task42_packet_recovery_manifest,
+            task42_packet_recovery_manifest_sha256,
+            task42_packet_recovery_identity,
         )
     )
-    if len(set(observer_flags)) != 1:
+    try:
+        if recovery_requested:
+            if not (
+                isinstance(task42_packet_recovery_manifest, (str, Path))
+                and str(task42_packet_recovery_manifest).strip()
+                and isinstance(task42_packet_recovery_manifest_sha256, str)
+                and task42_packet_recovery_manifest_sha256
+                and isinstance(task42_packet_recovery_identity, Mapping)
+            ):
+                raise ValueError(
+                    "manifest, SHA256, and identity must be bound together"
+                )
+            recovery_manifest_binding = str(
+                Path(task42_packet_recovery_manifest).resolve()
+            )
+            recovery_identity_binding = json.dumps(
+                task42_packet_recovery_identity,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=_json_default,
+            )
+        elif any(
+            value is not None
+            for value in (
+                task42_packet_recovery_manifest,
+                task42_packet_recovery_manifest_sha256,
+                task42_packet_recovery_identity,
+            )
+        ):
+            raise ValueError("partial Task42 packet recovery binding")
+    except (OSError, TypeError, ValueError) as exc:
+        recovery_binding_error = f"{type(exc).__name__}: {exc}"
+
+    observer_flags = (
+        variable_p_live_observer is not None,
+        bool(variable_p_retain_local_schur_for_research),
+        bool(static_retain_local_schur_for_matrix_free),
+        bool(matrix_free_dtn),
+        bool(matrix_free_dtn_probe),
+        bool(canonical_vector_export),
+        pre_recovery_packet_directory is not None,
+        pre_recovery_packet_identity is not None,
+        task42_stage_gate is not None,
+        None
+        if task42_bridge_path is None
+        else str(Path(task42_bridge_path).resolve()),
+        recovery_manifest_binding,
+        task42_packet_recovery_manifest_sha256,
+        recovery_identity_binding,
+    )
+    collective_bindings = comm.allgather((observer_flags, recovery_binding_error))
+    binding_errors = [
+        f"rank {rank}: {error}"
+        for rank, (_flags, error) in enumerate(collective_bindings)
+        if error is not None
+    ]
+    if binding_errors:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank "
-            "and research flags must match"
+            "Task42 packet recovery binding validation failed: "
+            + "; ".join(binding_errors)
+        )
+    if len({flags for flags, _error in collective_bindings}) != 1:
+        raise ValueError(
+            "the variable-p live observer, research flags, and Task42 packet "
+            "recovery bindings must match on every MPI rank"
         )
     recovered_cleanup: list[VariablePRecoveredSolution] = []
     implementation_failed = False
@@ -6525,6 +6584,11 @@ def solve_stage4_dtn_port_total_field(
             pre_recovery_packet_identity=pre_recovery_packet_identity,
             task42_stage_gate=task42_stage_gate,
             task42_bridge_path=task42_bridge_path,
+            task42_packet_recovery_manifest=task42_packet_recovery_manifest,
+            task42_packet_recovery_manifest_sha256=(
+                task42_packet_recovery_manifest_sha256
+            ),
+            task42_packet_recovery_identity=task42_packet_recovery_identity,
             _recovery_cleanup_sink=recovered_cleanup,
         )
     except BaseException:

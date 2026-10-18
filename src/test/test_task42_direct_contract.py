@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
+import inspect
 import json
 import os
 import shutil
@@ -15,7 +17,9 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import src.solvers.common_3d_case_flow as common_flow
 import src.solvers.dtn_port_3d as dtn
+import src.solvers.solve_maxwell_3d_stage_4b_block_grating as stage4b
 from scripts import run_case
 from src.io.execution_plan import WORKER_MODULE, build_execution_plan
 from src.runners import task038_full3d_direct, task038_input_worker, task038_launcher
@@ -534,6 +538,200 @@ def test_task42_packet_recovery_public_cli_plan_worker_adapter_binding(
     assert captured["launch_sha256"] == manifest_sha256
     assert captured["plan_manifest"] == manifest_path
     assert captured["plan_sha256"] == manifest_sha256
+
+
+_TASK42_RECOVERY_BINDING_KEYS = {
+    "task42_packet_recovery_manifest",
+    "task42_packet_recovery_manifest_sha256",
+    "task42_packet_recovery_identity",
+}
+
+
+def _call_named(source: str, function_name: str) -> ast.Call:
+    tree = ast.parse(source)
+    matches = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and (
+            isinstance(node.func, ast.Name)
+            and node.func.id == function_name
+            or isinstance(node.func, ast.Attribute)
+            and node.func.attr == function_name
+        )
+    ]
+    assert len(matches) == 1, (
+        f"expected one call to {function_name}, got {len(matches)}"
+    )
+    return matches[0]
+
+
+def _bind_static_call(call: ast.Call, target) -> set[str]:
+    assert not any(isinstance(argument, ast.Starred) for argument in call.args)
+    assert all(keyword.arg is not None for keyword in call.keywords)
+    keyword_values = {keyword.arg: object() for keyword in call.keywords}
+    inspect.signature(target).bind(
+        *([object()] * len(call.args)),
+        **keyword_values,
+    )
+    return set(keyword_values)
+
+
+def test_task42_packet_recovery_callsite_keywords_bind_all_public_layers() -> None:
+    call_layers = (
+        (
+            inspect.getsource(task038_full3d_direct._run_solver),
+            "run_stage4b_block_grating_3d_case",
+            stage4b.run_stage4b_block_grating_3d_case,
+        ),
+        (
+            inspect.getsource(stage4b.run_stage4b_block_grating_3d_case),
+            "run_prepared_3d_case_flow",
+            common_flow.run_prepared_3d_case_flow,
+        ),
+        (
+            inspect.getsource(common_flow.run_prepared_3d_case_flow),
+            "solve_stage4_dtn_port_total_field",
+            dtn.solve_stage4_dtn_port_total_field,
+        ),
+    )
+    for source, callee_name, callee in call_layers:
+        forwarded = _bind_static_call(_call_named(source, callee_name), callee)
+        assert _TASK42_RECOVERY_BINDING_KEYS <= forwarded
+    assert _TASK42_RECOVERY_BINDING_KEYS <= set(
+        inspect.signature(dtn._solve_stage4_dtn_port_total_field_impl).parameters
+    )
+
+
+class _CleanupProbe:
+    def __init__(self):
+        self.destroy_calls = 0
+
+    def destroy(self):
+        self.destroy_calls += 1
+
+
+def _call_public_dtn_recovery_wrapper(**overrides):
+    bindings = {
+        "task42_packet_recovery_manifest": Path("/archive/manifest.json"),
+        "task42_packet_recovery_manifest_sha256": "a" * 64,
+        "task42_packet_recovery_identity": {"run_id": "task42-test"},
+    }
+    bindings.update(overrides)
+    return dtn.solve_stage4_dtn_port_total_field(
+        a=None,
+        L=None,
+        V=None,
+        mesh_data=None,
+        cfg=None,
+        floquet_data=None,
+        petsc_options={},
+        out_dir=Path("/tmp/task42-dtn-wrapper-test"),
+        log=lambda *_args: None,
+        linear_solver_port=object(),
+        task42_stage_gate=lambda *_args: {"pass": True},
+        matrix_free_dtn=True,
+        **bindings,
+    )
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"task42_packet_recovery_manifest_sha256": None},
+        {"task42_packet_recovery_identity": None},
+        {"task42_packet_recovery_manifest": None},
+    ],
+    ids=("missing-sha", "missing-identity", "missing-manifest"),
+)
+def test_public_dtn_wrapper_rejects_partial_task42_recovery_binding(
+    monkeypatch, overrides
+) -> None:
+    def implementation(**_kwargs):
+        pytest.fail("invalid recovery bindings must be rejected before _impl")
+
+    monkeypatch.setattr(
+        dtn, "_solve_stage4_dtn_port_total_field_impl", implementation
+    )
+    with pytest.raises(ValueError, match="binding validation failed"):
+        _call_public_dtn_recovery_wrapper(**overrides)
+
+
+@pytest.mark.parametrize(
+    "fail_in_impl", [False, True], ids=("return", "primary-error")
+)
+def test_public_dtn_wrapper_forwards_archive_binding_and_preserves_cleanup(
+    monkeypatch, fail_in_impl: bool
+) -> None:
+    cleanup_probe = _CleanupProbe()
+    captured = {}
+    result = {"recovery": "forwarded"}
+
+    def implementation(**kwargs):
+        captured.update(kwargs)
+        kwargs["_recovery_cleanup_sink"].append(cleanup_probe)
+        assert kwargs["task42_packet_recovery_manifest"] == Path(
+            "/archive/manifest.json"
+        )
+        assert kwargs["task42_packet_recovery_manifest_sha256"] == "a" * 64
+        assert kwargs["task42_packet_recovery_identity"] == {
+            "run_id": "task42-test"
+        }
+        if fail_in_impl:
+            raise RuntimeError("primary implementation error")
+        return result
+
+    monkeypatch.setattr(
+        dtn, "_solve_stage4_dtn_port_total_field_impl", implementation
+    )
+    if fail_in_impl:
+        with pytest.raises(RuntimeError, match="primary implementation error"):
+            _call_public_dtn_recovery_wrapper()
+    else:
+        assert _call_public_dtn_recovery_wrapper() is result
+    assert cleanup_probe.destroy_calls == 1
+    assert captured["_recovery_cleanup_sink"] == [cleanup_probe]
+
+
+def test_mpi_public_dtn_wrapper_recovery_binding_mismatch_is_collective(
+    monkeypatch,
+) -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size < 2:
+        pytest.skip("requires the authorized MPI2 invocation")
+    implementation_calls = []
+
+    def implementation(**_kwargs):
+        implementation_calls.append(comm.rank)
+        pytest.fail("mismatched per-rank bindings must be rejected before _impl")
+
+    monkeypatch.setattr(
+        dtn, "_solve_stage4_dtn_port_total_field_impl", implementation
+    )
+    identity = {"run_id": "task42-test", "rank_marker": comm.rank}
+    with pytest.raises(ValueError, match="bindings must match on every MPI rank"):
+        _call_public_dtn_recovery_wrapper(task42_packet_recovery_identity=identity)
+    assert implementation_calls == []
+
+
+def test_mpi_public_dtn_wrapper_accepts_identical_recovery_binding(
+    monkeypatch,
+) -> None:
+    comm = MPI.COMM_WORLD
+    implementation_calls = []
+    result = {"rank": comm.rank}
+
+    def implementation(**kwargs):
+        implementation_calls.append(comm.rank)
+        assert kwargs["task42_packet_recovery_manifest_sha256"] == "a" * 64
+        assert kwargs["task42_packet_recovery_identity"] == {
+            "run_id": "task42-test"
+        }
+        return result
+
+    monkeypatch.setattr(dtn, "_solve_stage4_dtn_port_total_field_impl", implementation)
+    assert _call_public_dtn_recovery_wrapper() is result
+    assert implementation_calls == [comm.rank]
 
 
 def _run_pre_recovery(
