@@ -156,6 +156,44 @@ def test_task42_full_residual_consumer_uses_actual_full_helper_shape():
     assert dtn._task42_full_residual_gate_pass(over_limit) is False
 
 
+def test_task42_direct_summary_preserves_mat_solve_without_ksp_metadata(
+    monkeypatch, tmp_path
+):
+    result, factor, _comm = _run_pre_recovery(
+        monkeypatch,
+        tmp_path,
+        writer=lambda *_args, **_kwargs: {"pass": True},
+        progress=lambda *_args, **_kwargs: None,
+    )
+    telemetry = result["solver_telemetry"]
+
+    assert telemetry["solve_semantics"] == "direct_MatSolve_no_KSP_reason"
+    assert "pc_factor_solver_type" not in telemetry
+    assert (
+        dtn._actual_pc_factor_solver_type(
+            task42_staged_direct=True,
+            external_snapshot=None,
+            pre_recovery_solver_telemetry=telemetry,
+            ksp=None,
+        )
+        is None
+    )
+    assert factor.destroy_calls == 1
+
+    # Preserve the legacy KSP frozen-telemetry consumer contract separately;
+    # this is not part of the Task42 direct MatSolve packet.
+    legacy_ksp_telemetry = {"pc_factor_solver_type": "mumps"}
+    assert (
+        dtn._actual_pc_factor_solver_type(
+            task42_staged_direct=False,
+            external_snapshot=None,
+            pre_recovery_solver_telemetry=legacy_ksp_telemetry,
+            ksp=None,
+        )
+        == "mumps"
+    )
+
+
 def test_task42_infog17_inventory_rejects_unknown_or_malformed_schema():
     entry = {
         "index": 17,

@@ -2964,6 +2964,28 @@ def _pre_recovery_solver_telemetry(
     }
 
 
+def _actual_pc_factor_solver_type(
+    *,
+    task42_staged_direct: bool,
+    external_snapshot: Any,
+    pre_recovery_solver_telemetry: Mapping[str, Any] | None,
+    ksp: PETSc.KSP | None,
+) -> Any:
+    """Return KSP PC metadata only for solver paths that actually have a KSP."""
+
+    if task42_staged_direct:
+        # Task42 uses the staged factor's MatSolve directly; it has no KSP PC.
+        return None
+    if external_snapshot is None and pre_recovery_solver_telemetry is None:
+        try:
+            return ksp.getPC().getFactorSolverType()
+        except Exception:
+            return None
+    if pre_recovery_solver_telemetry is not None:
+        return pre_recovery_solver_telemetry["pc_factor_solver_type"]
+    return None
+
+
 def _pre_recovery_mode_keys(modes: list[PortMode3D]) -> list[dict[str, Any]]:
     return [
         {
@@ -5897,17 +5919,12 @@ def _solve_stage4_dtn_port_total_field_impl(
                 "reduced_residual_norm": external_snapshot.reduced_residual_norm,
             }
         )
-    if external_snapshot is None and pre_recovery_solver_telemetry is None:
-        try:
-            solver_info["actual_pc_factor_solver_type"] = (
-                ksp.getPC().getFactorSolverType()
-            )
-        except Exception:
-            solver_info["actual_pc_factor_solver_type"] = None
-    elif pre_recovery_solver_telemetry is not None:
-        solver_info["actual_pc_factor_solver_type"] = pre_recovery_solver_telemetry[
-            "pc_factor_solver_type"
-        ]
+    solver_info["actual_pc_factor_solver_type"] = _actual_pc_factor_solver_type(
+        task42_staged_direct=task42_staged_direct,
+        external_snapshot=external_snapshot,
+        pre_recovery_solver_telemetry=pre_recovery_solver_telemetry,
+        ksp=ksp,
+    )
 
     if condensed_system is not None:
         if independent_trace_system is not None:
