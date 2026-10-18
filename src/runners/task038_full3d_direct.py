@@ -445,7 +445,10 @@ def run_full3d_direct(
             source_sha=source_sha,
             resolved_config_sha256=resolved_config_sha256,
         )
-    elif lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE and not task42_packet_recovery:
+    elif lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE and task42_packet_recovery:
+        # Recovery consumes the verified archived packet; it creates no new one.
+        pass
+    elif lifecycle == TASK42_DIRECT_FACTOR_LIFECYCLE:
         packet_directory = (
             Path(run_directory).resolve() / "numerical_output" / "pre_recovery_packet"
         )

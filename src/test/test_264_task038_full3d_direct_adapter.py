@@ -2,30 +2,234 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import hashlib
+import json
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
+from mpi4py import MPI
 
+import src.runners.task038_full3d_direct as direct_adapter
 from src.io import load_and_resolve
 from src.io.execution_plan import CONNECTED_METHODS, method_adapter_available
 from src.io.input_loader import InputError
 from src.io.input_validation import simulation_config_3d_from_normalized
 from src.runners.task038_full3d_direct import run_full3d_direct
 from src.runners.task038_input_worker import _dispatch_resolved_payload
-
+from src.solvers.full3d_lifecycle_packet import write_packet
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "input/templates/full3d_direct_example.dat"
 OFFICIAL = ROOT / "input/official/grazing1_phi0_full3d_direct_mpi8.dat"
 SMOKE = ROOT / "input/smoke/full3d_direct_p2_h100_mpi1.dat"
 ORDINARY_2D = ROOT / "input/templates/ordinary_2d_example.dat"
+TASK42_13P5 = ROOT / (
+    "input/official/task42hybrid_az90_50x50_17x20_0p7nm/"
+    "13p5nm_p6h10_full3d_direct_mpi8.dat"
+)
+
+
+class _EightRankPacketFixtureComm:
+    """Write a small rank-complete packet without launching the solver under MPI."""
+
+    rank = 0
+    size = 8
+
+    def __init__(self, packet_directory: Path, solution: np.ndarray, rhs: np.ndarray):
+        self.packet_directory = packet_directory
+        self.solution = solution
+        self.rhs = rhs
+        self.shards_written = False
+
+    def allgather(self, value):
+        if isinstance(value, dict) and "ownership_range" in value:
+            rows = [value]
+            if not self.shards_written:
+                total = self.solution.size
+                quotient, remainder = divmod(total, self.size)
+                for rank in range(1, self.size):
+                    start = rank * quotient + min(rank, remainder)
+                    stop = start + quotient + int(rank < remainder)
+                    shard_name = f"rank{rank:04d}.npz"
+                    shard_path = self.packet_directory / shard_name
+                    np.savez(
+                        shard_path,
+                        solution=self.solution[start:stop],
+                        rhs=self.rhs[start:stop],
+                    )
+                    rows.append(
+                        {
+                            "rank": rank,
+                            "path": shard_name,
+                            "sha256": hashlib.sha256(shard_path.read_bytes()).hexdigest(),
+                            "size": stop - start,
+                            "ownership_range": [start, stop],
+                        }
+                    )
+                self.shards_written = True
+            return rows
+        return [value] * self.size
+
+    @staticmethod
+    def allreduce(value, op=None):
+        return value
+
+    @staticmethod
+    def barrier():
+        return None
 
 
 def _payload(path: Path = TEMPLATE) -> dict:
     return load_and_resolve(path).as_jsonable()
+
+
+def _write_task42_adapter_archive(tmp_path: Path, payload: dict) -> tuple[Path, str, str]:
+    """Build a small, fully bound packet RUN envelope for the real adapter verifier."""
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 1:
+        raise ValueError("the adapter archive fixture is a serial test fixture")
+    payload = deepcopy(payload)
+    # Preserve the registered MPI8 resolved identity while keeping the archived
+    # vectors small; the fixture communicator writes all eight schema-valid shards.
+    resolved_bytes = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
+    identity = direct_adapter._task42_packet_recovery_expected_identity(
+        payload, resolved_config_sha256=resolved_sha
+    )
+
+    run_root = tmp_path / "archived-run"
+    numerical_output = run_root / "numerical_output"
+    packet_directory = numerical_output / "pre_recovery_packet"
+    run_root.mkdir(parents=True)
+    input_bytes = TASK42_13P5.read_bytes()
+    input_sha = hashlib.sha256(input_bytes).hexdigest()
+    assert payload["provenance"]["input_sha256"] == input_sha
+    physical_sha = payload["provenance"]["physical_model_sha256"]
+    external_keys = payload["derived"]["external_mode_inventory"]["keys"]
+    vector_size = max(8, len(external_keys))
+    vector = np.arange(vector_size, dtype=np.float64).astype(np.complex128)
+    rhs = 2.0 * vector
+    quotient, remainder = divmod(vector_size, 8)
+    rank_zero_end = quotient + int(remainder > 0)
+    packet = write_packet(
+        packet_directory,
+        vector[:rank_zero_end],
+        rhs[:rank_zero_end],
+        identity=identity,
+        metadata={
+            "external_keys": external_keys,
+            "external_q": [[0.0, 0.0] for _ in external_keys],
+            "task42_direct_original_residual_pass": True,
+        },
+        ownership_range=(0, rank_zero_end),
+        comm=_EightRankPacketFixtureComm(packet_directory, vector, rhs),
+    )
+    assert packet["pass"] is True
+
+    (run_root / "resolved_config.json").write_bytes(resolved_bytes)
+    (run_root / "input_original.dat").write_bytes(input_bytes)
+    (run_root / "input_sha256.txt").write_text(input_sha + "\n", encoding="ascii")
+    (run_root / "physical_model_sha256.txt").write_text(
+        physical_sha + "\n", encoding="ascii"
+    )
+    (run_root / "source_sha.txt").write_text(
+        direct_adapter.TASK42_RECOVERY_ARCHIVE_SOURCE_SHA + "\n", encoding="ascii"
+    )
+    run_manifest = {
+        "source_sha": direct_adapter.TASK42_RECOVERY_ARCHIVE_SOURCE_SHA,
+        "resolved_config_sha256": resolved_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "model_id": identity["model_id"],
+        "run_id": identity["run_id"],
+        "comparison_group": identity["comparison_group"],
+        "method": identity["method"],
+        "mpi_size": identity["mpi_size"],
+        "output_directory": str(run_root),
+        "numerical_output_directory": str(numerical_output),
+    }
+    (run_root / "run_manifest.json").write_text(
+        json.dumps(run_manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    return packet_directory / "manifest.json", packet["manifest_sha256"], resolved_sha
+
+
+def test_task42_recovery_adapter_validates_archive_without_creating_packet(
+    tmp_path: Path,
+):
+    """Exercise the real adapter/archive verifier while intercepting only the solve."""
+
+    payload = _payload(TASK42_13P5)
+    manifest_path, manifest_sha, resolved_sha = _write_task42_adapter_archive(
+        tmp_path, payload
+    )
+    seen = []
+
+    def stage_gate(*_args, **_kwargs):
+        return {"status": "fixture_authorized"}
+
+    def fake_solver(_cfg, output_directory, **kwargs):
+        seen.append(dict(kwargs))
+        return _summary(canonical_root=output_directory)
+
+    recovery_run = tmp_path / "recovery-run"
+    result = run_full3d_direct(
+        payload,
+        recovery_run,
+        solver_runner=fake_solver,
+        source_sha="a" * 40,
+        resolved_config_sha256=resolved_sha,
+        task42_stage_gate=stage_gate,
+        task42_bridge_path=None,
+        task42_packet_recovery_manifest=manifest_path,
+        task42_packet_recovery_manifest_sha256=manifest_sha,
+    )
+    assert result["passed"] is True, result["errors"]
+    recovery_kwargs = seen[-1]
+    assert recovery_kwargs["task42_packet_recovery_manifest"] == manifest_path.resolve()
+    assert recovery_kwargs["task42_packet_recovery_manifest_sha256"] == manifest_sha
+    assert recovery_kwargs["task42_bridge_path"] is None
+    assert recovery_kwargs.get("pre_recovery_packet_directory") is None
+    assert recovery_kwargs.get("pre_recovery_packet_identity") is None
+    assert not (
+        recovery_run / "numerical_output" / "pre_recovery_packet"
+    ).exists()
+
+    staged_run = tmp_path / "staged-run"
+    staged = run_full3d_direct(
+        payload,
+        staged_run,
+        solver_runner=fake_solver,
+        source_sha="b" * 40,
+        resolved_config_sha256="c" * 64,
+        task42_stage_gate=stage_gate,
+        task42_bridge_path=tmp_path / "staged-bridge.so",
+    )
+    assert staged["passed"] is True, staged["errors"]
+    staged_kwargs = seen[-1]
+    assert staged_kwargs["task42_bridge_path"] == str(tmp_path / "staged-bridge.so")
+    assert staged_kwargs["pre_recovery_packet_directory"] == (
+        staged_run.resolve() / "numerical_output" / "pre_recovery_packet"
+    )
+    assert staged_kwargs["pre_recovery_packet_identity"]["source_sha"] == "b" * 40
+    assert not staged_kwargs["pre_recovery_packet_directory"].exists()
+
+    wrong_profile = deepcopy(payload)
+    wrong_profile["model_id"] = "not_a_registered_task42_profile"
+    with pytest.raises(ValueError, match="not valid on other profiles"):
+        run_full3d_direct(
+            wrong_profile,
+            tmp_path / "wrong-profile-run",
+            solver_runner=fake_solver,
+            task42_stage_gate=stage_gate,
+        )
+    assert len(seen) == 2
 
 
 def _summary(*, canonical_root: Path | None = None, **updates):
