@@ -7,7 +7,8 @@ remain byte-for-byte identical to the recorded D13-B axes.
 Y2 is the first y-only refinement: it bisects each actual D13-Y interval and
 retains the D13-Y x/z arrays exactly. Y3 bisects every actual Y2 y interval
 and retains the Y2 x/z arrays exactly. X2 bisects every actual Y2 x interval
-and retains the Y2 y/z arrays exactly.
+and retains the Y2 y/z arrays exactly. Z2 bisects every actual Y2 z interval
+and retains the Y2 x/y arrays exactly.
 """
 
 from __future__ import annotations
@@ -50,7 +51,7 @@ def _axis_digest(values: tuple[float, ...]) -> str:
 
 def d13_axis_plan(case: str) -> dict[str, object]:
     """Return a deterministic D13 plan, deriving refinements from their parents."""
-    if case in {"Y2", "Y3", "X2"}:
+    if case in {"Y2", "Y3", "X2", "Z2"}:
         return D13_AXIS_PLANS[case]
     if case not in D13_CASES:
         raise ValueError(f"unsupported Task40 D13 case {case!r}")
@@ -249,6 +250,70 @@ def d13_x2_axis_plan() -> dict[str, object]:
     }
 
 
+def d13_z2_axis_plan() -> dict[str, object]:
+    """Bisect every realized Y2 z interval; preserve its x/y axes exactly."""
+    parent = d13_axis_plan("Y2")
+    parent_axes = parent["axes_nm"]
+    axes = {
+        "x": tuple(float(value) for value in parent_axes["x"]),
+        "y": tuple(float(value) for value in parent_axes["y"]),
+        "z": _bisect_every_interval(
+            tuple(float(value) for value in parent_axes["z"])
+        ),
+    }
+    counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
+    if counts != (6, 24, 28):
+        raise AssertionError(
+            f"Task40 D13 Z2 axis-plan counts are inconsistent: {counts}"
+        )
+    segment_counts = {
+        "x": tuple(
+            sum(left >= lower and right <= upper for left, right in pairwise(axes["x"]))
+            for lower, upper in ((0.0, 16.5), (16.5, 33.5), (33.5, 50.0))
+        ),
+        "y": tuple(
+            sum(left >= lower and right <= upper for left, right in pairwise(axes["y"]))
+            for lower, upper in ((0.0, 15.0), (15.0, 35.0), (35.0, 50.0))
+        ),
+        "z": tuple(
+            sum(left >= lower and right <= upper for left, right in pairwise(axes["z"]))
+            for lower, upper in ((-10.0, 0.0), (0.0, 120.0), (120.0, 130.0))
+        ),
+    }
+    expected_segments = {"x": (2, 2, 2), "y": (8, 8, 8), "z": (2, 24, 2)}
+    if segment_counts != expected_segments:
+        raise AssertionError(
+            f"Task40 D13 Z2 segment counts are inconsistent: {segment_counts}"
+        )
+    plan_id = "task40_phi90_d13_z2_axes_bisect_from_y2_v1"
+    digest_payload = {
+        "schema": "task40.phi90.d13.z2_axis_plan.v1",
+        "case": "Z2",
+        "parent_case": "Y2",
+        "parent_plan_id": parent["plan_id"],
+        "parent_plan_sha256": parent["mesh_plan_sha256"],
+        "changed_axis": "z",
+        "axes_nm": {axis: list(values) for axis, values in axes.items()},
+        "axis_cell_counts": list(counts),
+        "segment_cell_counts": {
+            axis: list(values) for axis, values in segment_counts.items()
+        },
+        "parent_axis_sha256_le_f64": parent["actual_axis_sha256_le_f64"],
+    }
+    plan_sha256 = hashlib.sha256(
+        json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {
+        **digest_payload,
+        "plan_id": plan_id,
+        "mesh_plan_sha256": plan_sha256,
+        "actual_axis_sha256_le_f64": {
+            axis: _axis_digest(values) for axis, values in axes.items()
+        },
+        "expected_global_cell_count": math.prod(counts),
+    }
+
+
 D13_AXIS_PLANS = {case: d13_axis_plan(case) for case in D13_CASES}
 D13_AXIS_PLANS["Y2"] = d13_y2_axis_plan()
 D13_AXIS_PLANS["Y3"] = d13_y3_axis_plan()
@@ -258,6 +323,12 @@ D13_CASES["X2"] = {
     "axis_cell_counts": (12, 24, 14),
 }
 D13_AXIS_PLANS["X2"] = d13_x2_axis_plan()
+D13_CASES["Z2"] = {
+    "changed_axis": "z",
+    "parent_case": "Y2",
+    "axis_cell_counts": (6, 24, 28),
+}
+D13_AXIS_PLANS["Z2"] = d13_z2_axis_plan()
 D13_AXIS_PLAN_IDS = {
     str(plan["plan_id"]): case for case, plan in D13_AXIS_PLANS.items()
     if case != "B"

@@ -875,7 +875,7 @@ def _task40_d13_mesh_evidence(
     }
     if axes != expected_axes:
         raise ValueError(
-            f"actual D13-{case_name} coordinate axes differ from frozen B-midpoint plan"
+            f"actual D13-{case_name} coordinate axes differ from frozen parent-midpoint plan"
         )
     axis_hashes = {
         axis: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
