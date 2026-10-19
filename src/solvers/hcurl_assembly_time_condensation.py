@@ -19,7 +19,7 @@ the default elsewhere.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 import hashlib
 from time import perf_counter
@@ -937,6 +937,94 @@ def _cell_trace_expansion(
         shape=(len(trace_original), len(unique_active)),
     )
     return unique_active, expansion, identity
+
+
+def _readonly_array_reference(values: np.ndarray) -> np.ndarray:
+    """Return a non-writable view without copying an owner-cached array."""
+
+    view = np.asarray(values).view()
+    view.flags.writeable = False
+    return view
+
+
+def iter_selected_volume_audit_cells(
+    condensed: AssemblyTimeCondensedSystem,
+    selected_active_rows: Any | None = None,
+) -> Iterator[dict[str, Any]]:
+    """Yield owner-backed volume maps for cells touching selected active rows.
+
+    ``cell_index`` is the index in the owner's locally owned cell-map tuple.
+    Selecting an active row includes every cell whose exact trace expansion
+    references it, including cells that contribute through an MPC slave.
+    The cached ``T=-J K^-1``, ``R=-K^-1 G``, ``S`` and ``LU`` arrays are
+    exposed as read-only views and are never copied or rebuilt here.
+    """
+
+    selected: frozenset[int] | None = None
+    if selected_active_rows is not None:
+        rows = np.asarray(selected_active_rows)
+        if rows.ndim != 1:
+            raise ValueError("selected_active_rows must be a one-dimensional integer sequence")
+        if rows.size and rows.dtype.kind not in "iu":
+            raise ValueError("selected_active_rows must contain only integer active rows")
+        selected_values = tuple(int(row) for row in rows)
+        if any(row < 0 or row >= int(condensed.active_rows) for row in selected_values):
+            raise ValueError(
+                f"selected_active_rows must lie in [0, {int(condensed.active_rows)})"
+            )
+        selected = frozenset(selected_values)
+
+    schur_by_class = condensed.retained_local_schur_by_class
+    if schur_by_class is None:
+        raise RuntimeError(
+            "volume audit requires the owner's retained local Schur cache; "
+            "build with retain_local_schur_for_matrix_free=True"
+        )
+
+    for cell_index, cell in enumerate(condensed.cell_recovery_maps):
+        active_ids, expansion, _identity = _cell_trace_expansion(
+            cell.trace_original_dofs,
+            condensed.trace_constraints,
+        )
+        if selected is not None and not any(
+            np.any(active_ids == active_id) for active_id in selected
+        ):
+            continue
+
+        class_key = cell.class_key
+        try:
+            T = condensed.trace_from_interior_rhs_by_class[class_key]
+            R = condensed.interior_from_trace_by_class[class_key]
+            S = schur_by_class[class_key]
+            lu, pivots = condensed.interior_lu_by_class[class_key]
+        except KeyError as exc:
+            raise RuntimeError(
+                f"volume audit owner cache is missing {exc.args[0]!r} "
+                f"for cell {cell_index} class {class_key!r}"
+            ) from exc
+
+        expansion.data.flags.writeable = False
+        expansion.indices.flags.writeable = False
+        expansion.indptr.flags.writeable = False
+        yield {
+            "cell_index": cell_index,
+            "class_key": class_key,
+            "interior_original_dofs": _readonly_array_reference(
+                cell.interior_original_dofs
+            ),
+            "trace_original_dofs": _readonly_array_reference(
+                cell.trace_original_dofs
+            ),
+            "active_ids": _readonly_array_reference(active_ids),
+            "E": expansion,
+            "T": _readonly_array_reference(T),
+            "R": _readonly_array_reference(R),
+            "S": _readonly_array_reference(S),
+            "LU": (
+                _readonly_array_reference(lu),
+                _readonly_array_reference(pivots),
+            ),
+        }
 
 
 def _collective_preallocation_error(
