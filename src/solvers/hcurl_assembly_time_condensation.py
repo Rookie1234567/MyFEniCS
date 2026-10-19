@@ -1830,6 +1830,143 @@ def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> N
     tensor[:] = transpose.T
 
 
+def tabulate_volume_audit_cell(
+    compiled_form,
+    function_space,
+    cell_tags,
+    condensed: AssemblyTimeCondensedSystem,
+    cell_index: int,
+) -> dict[str, Any]:
+    """Tabulate and identify one cell's original oriented volume blocks.
+
+    The full FFCx tensor is assembled from default/tag kernels, oriented, and
+    sliced directly; no factorization or new FE object is constructed.
+    """
+
+    if isinstance(cell_index, (bool, np.bool_)) or not isinstance(
+        cell_index, (int, np.integer)
+    ):
+        raise TypeError("cell_index must be an integer local cell index")
+    cell_index = int(cell_index)
+    mesh = function_space.mesh
+    tdim = int(mesh.topology.dim)
+    owned_cells = int(mesh.topology.index_map(tdim).size_local)
+    if len(condensed.cell_recovery_maps) != owned_cells:
+        raise ValueError("condensed owner cell maps do not match the FE owned-cell range")
+    if cell_index < 0 or cell_index >= owned_cells:
+        raise IndexError(f"cell_index {cell_index} is outside [0, {owned_cells})")
+    cell_map = condensed.cell_recovery_maps[cell_index]
+    tag = int(_cell_tag_array(cell_tags, owned_cells)[cell_index])
+    coordinates, widths = _canonical_axis_aligned_coordinates(
+        mesh,
+        cell_index,
+        tolerance=1.0e-11,
+        preserve_exact_geometry=True,
+    )
+    mesh.topology.create_entity_permutations()
+    permutations = np.asarray(mesh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    permutation = int(permutations[cell_index])
+    class_key = cell_map.class_key
+    if class_key != (tag, *widths, permutation):
+        raise ValueError(
+            f"volume audit class identity mismatch for cell {cell_index}: "
+            f"owner={class_key!r}, fresh={(tag, *widths, permutation)!r}"
+        )
+
+    element = function_space.element
+    dimension = int(element.space_dimension)
+    interior_positions = np.asarray(
+        element.basix_element.entity_dofs[tdim][0], dtype=np.int32
+    )
+    trace_positions = np.setdiff1d(
+        np.arange(dimension, dtype=np.int32), interior_positions
+    )
+    local_dofs = np.asarray(
+        function_space.dofmap.cell_dofs(cell_index), dtype=np.int32
+    )
+    original_dofs = np.asarray(
+        function_space.dofmap.index_map.local_to_global(local_dofs), dtype=np.int64
+    )
+    interior_original_dofs = original_dofs[interior_positions]
+    trace_original_dofs = original_dofs[trace_positions]
+    if (
+        not np.array_equal(
+            interior_original_dofs,
+            np.asarray(cell_map.interior_original_dofs, dtype=np.int64),
+        )
+        or not np.array_equal(
+            trace_original_dofs,
+            np.asarray(cell_map.trace_original_dofs, dtype=np.int64),
+        )
+    ):
+        raise ValueError(f"volume audit original-row identity mismatch for cell {cell_index}")
+
+    kernels = _cell_integral_kernels(
+        compiled_form,
+        sum_duplicate_cell_integrals=True,
+    )
+    raw_tensor = _tabulate_raw_tensor_class(
+        compiled_form,
+        kernels,
+        coordinates,
+        tag=tag,
+        dimension=dimension,
+    )
+    oriented_tensor = raw_tensor.copy()
+    _orient_cell_tensor(
+        element,
+        oriented_tensor,
+        np.asarray([permutation], dtype=np.uint32),
+    )
+    K = oriented_tensor[np.ix_(interior_positions, interior_positions)]
+    G = oriented_tensor[np.ix_(interior_positions, trace_positions)]
+    J = oriented_tensor[np.ix_(trace_positions, interior_positions)]
+    L = oriented_tensor[np.ix_(trace_positions, trace_positions)]
+
+    arrays = {
+        "canonical_coordinates": coordinates,
+        "original_dofs": original_dofs,
+        "interior_original_dofs": interior_original_dofs,
+        "trace_original_dofs": trace_original_dofs,
+        "raw_tensor": raw_tensor,
+        "oriented_tensor": oriented_tensor,
+        "K": K,
+        "G": G,
+        "J": J,
+        "L": L,
+    }
+    hashes = {
+        name: hashlib.sha256(
+            memoryview(np.ascontiguousarray(values)).cast("B")
+        ).hexdigest()
+        for name, values in arrays.items()
+    }
+
+    return {
+        "cell_index": cell_index,
+        "cell_tag": tag,
+        "class_key": class_key,
+        "cell_widths": widths,
+        "cell_permutation": permutation,
+        "canonical_coordinates": coordinates,
+        "local_dofs": local_dofs,
+        "original_dofs": original_dofs,
+        "interior_positions": interior_positions,
+        "trace_positions": trace_positions,
+        "interior_original_dofs": interior_original_dofs,
+        "trace_original_dofs": trace_original_dofs,
+        "K": K,
+        "G": G,
+        "J": J,
+        "L": L,
+        "hashes": hashes,
+        "integral_kernel_counts": {
+            "default": _kernel_count(kernels, -1),
+            "tagged": _kernel_count(kernels, tag),
+        },
+    }
+
+
 def _strict_local_lu(
     matrix: np.ndarray,
     *,
