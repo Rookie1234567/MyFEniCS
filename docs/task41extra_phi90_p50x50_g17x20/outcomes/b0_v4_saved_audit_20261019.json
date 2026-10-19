@@ -1,0 +1,262 @@
+{
+  "schema": "task41.review_v4.saved_audit_compact.v1",
+  "scope": "已完成的保存数据审核和无FE误差分解；后续volume-only归因单独登记",
+  "review_source_sha": "bcc688ce542085cd00bc7f1531de0720cb2e6e24",
+  "identity": {
+    "attempt_id": "20261019T053402.514018Z",
+    "campaign_window_sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38",
+    "consumer_contract_sha256": "22b9bc836f2fcab3012e90d43edaf85ca2a71701ddd8108339f663ec2586d039",
+    "consumer_output_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/b0_saved_evidence_audit_v4_7213bbb0f9671d3fc574f2ee396a759fec2c1b62",
+    "consumer_source_sha": "7213bbb0f9671d3fc574f2ee396a759fec2c1b62",
+    "donor_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+    "donor_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z",
+    "donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+    "full_action_status": "FAIL",
+    "official_result": false,
+    "run_id": "task41extra_b0_p6_phi90_07nm_iterative"
+  },
+  "audit_completed": true,
+  "recovery_passed": true,
+  "joint_action_passed": false,
+  "data_integrity_at_attempt": false,
+  "qualification_passed": false,
+  "official_result": false,
+  "original_errors": [
+    "Task41 B0 production path is not bound to the shared three-step recovery loop",
+    "Task41 B0 saved P6/native reduced RHS difference reproduces the original gate failure"
+  ],
+  "metadata_fix": {
+    "source_sha": "7a830e533a0ac1ddfaf0c46055bdcfbf60d73e37",
+    "meaning": "旧失败在到达production loop前没有成功路径才生成的summary字段；保存step、raw与manifest仍独立检查。",
+    "old_report_unchanged": true,
+    "new_source_reaudit_at_this_record": "NOT_RUN"
+  },
+  "joint_action_metrics": [
+    {
+      "absolute_l2": 6.770178089430243e-07,
+      "column": 0,
+      "max_abs_row": 4.119230753768993e-09,
+      "max_abs_row_index": 5458716,
+      "original_denominator": 2225.481253487629,
+      "port": {
+        "absolute_l2": 0.0,
+        "max_abs_row": 0.0,
+        "max_abs_row_index": 5688000,
+        "same_overall_denominator_contribution": 0.0,
+        "sum_squares": 0.0
+      },
+      "port_comparisons": {
+        "p6_port_norm": 1992.389163502565,
+        "p6_vs_port_rhs": {
+          "absolute_l2": 0.0,
+          "max_abs_row": 0.0,
+          "max_abs_row_index": 0,
+          "same_overall_denominator_contribution": 0.0,
+          "sum_squares": 0.0
+        },
+        "p6_vs_reduced": {
+          "absolute_l2": 0.0,
+          "max_abs_row": 0.0,
+          "max_abs_row_index": 0,
+          "same_overall_denominator_contribution": 0.0,
+          "sum_squares": 0.0
+        },
+        "port_rhs_norm": 1992.389163502565,
+        "reduced_port_norm": 1992.389163502565,
+        "reduced_vs_port_rhs": {
+          "absolute_l2": 0.0,
+          "max_abs_row": 0.0,
+          "max_abs_row_index": 0,
+          "same_overall_denominator_contribution": 0.0,
+          "sum_squares": 0.0
+        }
+      },
+      "port_rows": 64120,
+      "relative_error": 3.0421186782950706e-10,
+      "sum_squares": 4.583531136260133e-13,
+      "trace": {
+        "absolute_l2": 6.770178089430243e-07,
+        "max_abs_row": 4.119230753768993e-09,
+        "max_abs_row_index": 5458716,
+        "same_overall_denominator_contribution": 3.0421186782950706e-10,
+        "sum_squares": 4.583531136260133e-13
+      },
+      "trace_rows": 5688000
+    },
+    {
+      "absolute_l2": 1.4225036541037616e-06,
+      "column": 1,
+      "max_abs_row": 8.534224524671123e-09,
+      "max_abs_row_index": 5458716,
+      "original_denominator": 2225.4807123031883,
+      "port": {
+        "absolute_l2": 0.0,
+        "max_abs_row": 0.0,
+        "max_abs_row_index": 5688000,
+        "same_overall_denominator_contribution": 0.0,
+        "sum_squares": 0.0
+      },
+      "port_comparisons": {
+        "p6_port_norm": 1992.3891507313804,
+        "p6_vs_port_rhs": {
+          "absolute_l2": 0.0,
+          "max_abs_row": 0.0,
+          "max_abs_row_index": 0,
+          "same_overall_denominator_contribution": 0.0,
+          "sum_squares": 0.0
+        },
+        "p6_vs_reduced": {
+          "absolute_l2": 0.0,
+          "max_abs_row": 0.0,
+          "max_abs_row_index": 0,
+          "same_overall_denominator_contribution": 0.0,
+          "sum_squares": 0.0
+        },
+        "port_rhs_norm": 1992.3891507313804,
+        "reduced_port_norm": 1992.3891507313804,
+        "reduced_vs_port_rhs": {
+          "absolute_l2": 0.0,
+          "max_abs_row": 0.0,
+          "max_abs_row_index": 0,
+          "same_overall_denominator_contribution": 0.0,
+          "sum_squares": 0.0
+        }
+      },
+      "port_rows": 64120,
+      "relative_error": 6.391893878206601e-10,
+      "sum_squares": 2.0235166459385544e-12,
+      "trace": {
+        "absolute_l2": 1.4225036541037616e-06,
+        "max_abs_row": 8.534224524671123e-09,
+        "max_abs_row_index": 5458716,
+        "same_overall_denominator_contribution": 6.391893878206601e-10,
+        "sum_squares": 2.0235166459385544e-12
+      },
+      "trace_rows": 5688000
+    }
+  ],
+  "recovery_columns": [
+    {
+      "column": 0,
+      "final_forward_relative": 8.452404647963959e-14,
+      "final_gate_passed": true,
+      "final_native_volume_residual_relative": 5.198444248305058e-16,
+      "initial_forward_relative": 2.045408389927967e-11,
+      "initial_gate_passed": false,
+      "initial_native_volume_residual_relative": 3.800059971443632e-14,
+      "manifest_claim_matches_recomputed_gate": true,
+      "mode_index": 16030,
+      "passed": true,
+      "same_lu_steps_replayed": 3
+    },
+    {
+      "column": 1,
+      "final_forward_relative": 8.462099738746e-14,
+      "final_gate_passed": true,
+      "final_native_volume_residual_relative": 5.177707803728547e-16,
+      "initial_forward_relative": 2.0406316710485045e-11,
+      "initial_gate_passed": false,
+      "initial_native_volume_residual_relative": 3.7997867066467585e-14,
+      "manifest_claim_matches_recomputed_gate": true,
+      "mode_index": 48090,
+      "passed": true,
+      "same_lu_steps_replayed": 3
+    }
+  ],
+  "attribution": {
+    "status": "COMPLETE_SAVED_DATA_ATTRIBUTION",
+    "identity_assessment": {
+      "d_trace_plus_r_trace_computed_for_steps_0_to_3": true,
+      "interpretation": "The stored d, r_t and r_i are numerically bound, but the identity cannot yet be independently closed or assigned to S/T/R, cancellation, mapping, or accumulation without the missing volume blocks. No root cause is claimed.",
+      "missing_term": "sum_c E_c^H T_c r_i,c; Vti/T and all incident E maps are not saved",
+      "saved_r_equals_native_volume_rhs_minus_action_exact_for_all_saved_states": true,
+      "slave_residual_exact_zero": true
+    },
+    "dimensions": {
+      "active_trace_rows": 5688000,
+      "full_storage_rows": 18501024,
+      "interior_rows": 12600000,
+      "joint_rows": 5752120,
+      "port_rows": 64120,
+      "raw_saved_npy_count": 141,
+      "run_numerical_output_child_exists": false,
+      "slave_rows": 213024
+    },
+    "elapsed_seconds": 9.458032879978418
+  },
+  "costs": {
+    "service_parent_seconds": 70.42697474500164,
+    "watchdog_child_seconds": 69.1938405833207,
+    "offline_attribution_parent_seconds": 9.458032879978418,
+    "parent_child_must_not_be_added": true,
+    "all_engineering_preparation_seconds": null
+  },
+  "resources": {
+    "sampled_process_tree_rss_peak_bytes": 3949617152,
+    "task_cgroup_peak_bytes": 800727040,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "task_cgroup_swap_peak_bytes": 0,
+    "sampled_process_tree_pss_peak_bytes": null,
+    "global_swap_activity": {
+      "baseline": {
+        "pswpin_pages": 4247524,
+        "pswpout_pages": 7182720
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 4247524,
+        "pswpout_pages": 7182720
+      },
+      "scope": "WSL-global diagnostic, not dedicated job"
+    },
+    "descendants_cleared": true,
+    "scope_note": "tree RSS与cgroup是不同口径；已缓存文件页的cgroup归属未独立测定，不能以两者相减解释内存。"
+  },
+  "service": {
+    "unit": "myfenics-case-task41-b0-v4-audit-20261019T141522.service",
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "service_status": "completed",
+    "service_success_is_not_scientific_pass": true
+  },
+  "evidence": [
+    {
+      "role": "saved_checker",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/b0_saved_evidence_audit_v4_7213bbb0f9671d3fc574f2ee396a759fec2c1b62/task41_p0_b0_saved_evidence_audit.json",
+      "sha256": "4343fbbd8ffbdcc066b58ec9e103a99acf2ec35c637d01a62ee1299bbc56da66"
+    },
+    {
+      "role": "saved_array_attribution",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/b0_saved_evidence_audit_v4_7213bbb0f9671d3fc574f2ee396a759fec2c1b62/task41_p0_b0_saved_array_attribution_v4.json",
+      "sha256": "b4c270d83d030f343113b66368696c17f7e04fc44bbff3278a3fcf1fb512b9aa"
+    },
+    {
+      "role": "service_receipt",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/b0_saved_evidence_audit_v4_7213bbb0f9671d3fc574f2ee396a759fec2c1b62.service/task41_p0_service_receipt.json",
+      "sha256": "1e748881a783bfce037b6d9fc0948ec0beca575bdaf87750c98b9eff91089aab"
+    },
+    {
+      "role": "donor_manifest",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z/task41_b0_recovery_manifest.json",
+      "sha256": "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465"
+    }
+  ],
+  "root_cause": "UNRESOLVED_PENDING_VOLUME_IDENTITY",
+  "not_run": [
+    "new full-action qualification",
+    "q CSR/factors",
+    "complete reference",
+    "FGMRES",
+    "official physical output"
+  ],
+  "preservation": {
+    "old_141_npy_unchanged": true,
+    "donor_npy_bytes": 9379882344,
+    "carrier_regeneration": false,
+    "full_port_scan_repeated": false,
+    "recovery_recomputed": false
+  }
+}

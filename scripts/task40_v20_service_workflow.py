@@ -9406,6 +9406,7 @@ def _run_task41_p0_saved_output_service(
     checker_snapshot_path: Path | None,
     checker_snapshot_sha256: str | None,
     b0_evidence_audit_mode: bool = False,
+    b0_v4_volume_only_mode: bool = False,
     donor_contract_path: Path | None = None,
     donor_contract_sha256: str | None = None,
     donor_summary_path: Path | None = None,
@@ -9431,6 +9432,8 @@ def _run_task41_p0_saved_output_service(
         raise ValueError("saved-output source and destination must remain under the registered model results")
     if b0_evidence_audit_mode and not checker_only:
         raise ValueError("saved B0 evidence audit must use the existing checker-only service mode")
+    if b0_v4_volume_only_mode and not b0_evidence_audit_mode:
+        raise ValueError("Task41 V4 volume-only extraction requires the saved B0 audit service")
     if checker_only and not b0_evidence_audit_mode:
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -9491,6 +9494,9 @@ def _run_task41_p0_saved_output_service(
         "schema": "task41.p0.saved_output_service_receipt.v1",
         "status": "running",
         "mode": (
+            "saved_b0_v4_volume_only_attribution"
+            if b0_v4_volume_only_mode
+            else
             "saved_b0_evidence_audit"
             if b0_evidence_audit_mode
             else "checker_only"
@@ -9563,7 +9569,56 @@ def _run_task41_p0_saved_output_service(
     }
     result_code = 3
     try:
-        if checker_only or b0_evidence_audit_mode:
+        if b0_v4_volume_only_mode:
+            volume_report_path = output_root / "task41_p0_v4_volume_only_attribution.json"
+            volume_command = [
+                python,
+                "-m",
+                "src.runners.task41_p0_v4_volume_only_audit",
+                "--summary",
+                str(donor_summary_path),
+                "--numerical-output",
+                str(donor_numerical_output),
+                "--donor-contract",
+                str(donor_contract_path),
+                "--donor-contract-sha256",
+                str(donor_contract_sha256),
+                "--consumer-contract",
+                str(contract_path.resolve()),
+                "--consumer-contract-sha256",
+                contract_sha,
+                "--output-dir",
+                str(output_root),
+            ]
+            volume_watchdog = supervise(
+                volume_command,
+                service_directory / "volume_only_watchdog",
+                wall_seconds=window.cutoff_seconds,
+                phase_path=service_directory / "volume_only_phase.json",
+                campaign_phase="numeric",
+                **common_watchdog,
+            )
+            record["volume_only_command"] = volume_command
+            record["volume_only_watchdog"] = volume_watchdog
+            volume_payload = (
+                json.loads(volume_report_path.read_text(encoding="utf-8"))
+                if volume_report_path.is_file()
+                else None
+            )
+            record["volume_only_result_path"] = str(volume_report_path)
+            record["volume_only_result"] = volume_payload
+            worker_ok = bool(
+                volume_watchdog.get("classification") == "COMPLETED"
+                and volume_watchdog.get("leader_exit_code") == 0
+                and isinstance(volume_payload, Mapping)
+                and volume_payload.get("status") == "COMPLETED"
+                and isinstance(volume_payload.get("identity_audit"), Mapping)
+                and volume_payload["identity_audit"].get("completed") is True
+            )
+            record["continuation_status"] = (
+                "v4_volume_attribution_completed" if worker_ok else "v4_volume_attribution_failed"
+            )
+        elif checker_only or b0_evidence_audit_mode:
             worker_ok = True
             record["continuation_status"] = (
                 "saved_evidence_audit_only"
@@ -9854,8 +9909,16 @@ def _run_task41_p0_service(
     checker_only_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-output-checker-only"
     )
+    b0_v4_volume_only_mode = bool(
+        case_args and case_args[0] == "--task41-p0-saved-b0-volume-only-attribution"
+    )
     b0_evidence_audit_mode = bool(
-        case_args and case_args[0] == "--task41-p0-saved-b0-evidence-audit"
+        case_args
+        and case_args[0]
+        in {
+            "--task41-p0-saved-b0-evidence-audit",
+            "--task41-p0-saved-b0-volume-only-attribution",
+        }
     )
     saved_output_mode = continuation_mode or checker_only_mode or b0_evidence_audit_mode
     continuation_run_root: Path | None = None
@@ -10129,6 +10192,7 @@ def _run_task41_p0_service(
             "TASK41_P0_B0_RESULT_PATH": str(
                 continuation_output_root / "task41_p0_b0_saved_evidence_audit.json"
             ),
+            "TASK41_P0_B0_V4_VOLUME_ONLY": "1" if b0_v4_volume_only_mode else "0",
         })
     activation_marker = _qualified_activation_identity(environment)
     if activation_marker is None:
@@ -10179,6 +10243,7 @@ def _run_task41_p0_service(
             checker_snapshot_path=checker_input_path,
             checker_snapshot_sha256=checker_input_sha256,
             b0_evidence_audit_mode=b0_evidence_audit_mode,
+            b0_v4_volume_only_mode=b0_v4_volume_only_mode,
             donor_contract_path=donor_contract_path,
             donor_contract_sha256=donor_contract_sha256,
             donor_summary_path=donor_summary_path,

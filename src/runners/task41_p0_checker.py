@@ -2250,6 +2250,235 @@ def _task41_b0_recovery_evidence_checks(
     }
 
 
+def load_task41_v4_volume_only_donor(
+    *, summary_path: Path, numerical_output: Path
+) -> dict[str, Any]:
+    """Load only the hash-bound B0 arrays needed by the V4 volume audit.
+
+    This intentionally reuses the saved-audit artifact checker and returns the
+    narrow normalized mapping consumed by the V4 solver helper. The existing
+    full saved-evidence checker still runs in the service's closeout phase.
+    """
+
+    from src.solvers.task41_v4_volume_only_audit import (
+        TASK41_V4_DONOR_MANIFEST_SHA256,
+        TASK41_V4_DONOR_NPY_BYTES,
+    )
+
+    summary_path = Path(summary_path).resolve(strict=True)
+    run_root = summary_path.parent.resolve(strict=True)
+    numerical_output = Path(numerical_output).resolve()
+    if (
+        summary_path.name != "task40_v10_p6_candidate_summary.json"
+        or numerical_output != run_root / "numerical_output"
+    ):
+        raise ValueError("Task41 V4 donor path differs from the registered saved-output run")
+    summary = _json_object(summary_path, "Task41 V4 donor summary")
+    binding = summary.get("b0_recovery_evidence")
+    manifest_ref = binding.get("manifest") if isinstance(binding, Mapping) else None
+    if not isinstance(manifest_ref, Mapping):
+        raise ValueError("Task41 V4 donor summary omits the recovery-manifest reference")
+    manifest_path = _task41_run_artifact(run_root, manifest_ref, "V4 recovery manifest")
+    manifest_sha256 = sha256_file(manifest_path)
+    if manifest_sha256 != TASK41_V4_DONOR_MANIFEST_SHA256:
+        raise ValueError("Task41 V4 donor recovery-manifest hash differs from the frozen identity")
+    manifest = _json_object(manifest_path, "Task41 V4 recovery manifest")
+
+    evidence_records: dict[str, int] = {}
+
+    def collect_array_records(value: Any) -> None:
+        if isinstance(value, Mapping):
+            if (
+                isinstance(value.get("path"), str)
+                and isinstance(value.get("shape"), list)
+                and isinstance(value.get("dtype"), str)
+            ):
+                raw_path = Path(str(value["path"]))
+                path = (raw_path if raw_path.is_absolute() else run_root / raw_path).resolve()
+                if not path.is_relative_to(run_root) or type(value.get("bytes")) is not int:
+                    raise ValueError("Task41 V4 evidence inventory has an invalid array artifact")
+                size = int(value["bytes"])
+                previous = evidence_records.setdefault(str(path), size)
+                if previous != size:
+                    raise ValueError("Task41 V4 repeated artifact path has conflicting byte counts")
+            for nested in value.values():
+                collect_array_records(nested)
+        elif isinstance(value, list):
+            for nested in value:
+                collect_array_records(nested)
+
+    collect_array_records(manifest)
+    if len(evidence_records) != 141 or sum(evidence_records.values()) != TASK41_V4_DONOR_NPY_BYTES:
+        raise ValueError("Task41 V4 donor does not bind the frozen 141-array evidence set")
+
+    def load(record: Any, label: str) -> np.ndarray:
+        if not isinstance(record, Mapping):
+            raise ValueError(f"Task41 V4 {label} artifact record is missing")
+        return _task41_npy_artifact(run_root, record, label)
+
+    columns_meta = manifest.get("columns")
+    raw_groups = manifest.get("raw_cell_diagnostics")
+    if not isinstance(columns_meta, list) or len(columns_meta) != 2 or not isinstance(raw_groups, list) or len(raw_groups) != 2:
+        raise ValueError("Task41 V4 donor manifest omits one of its two volume columns")
+    columns: list[dict[str, Any]] = []
+    raw_by_key: dict[tuple[Any, ...], dict[str, Any]] = {}
+    cell_maps: list[dict[str, Any]] = []
+    for column_index, column_meta in enumerate(columns_meta):
+        artifacts = column_meta.get("artifacts")
+        if not isinstance(artifacts, Mapping):
+            raise ValueError(f"Task41 V4 column {column_index} artifact inventory is missing")
+        column = {
+            name: load(artifacts.get(name), f"column {column_index} {name}")
+            for name in ("active_original_rows", "slave_rows", "known_field", "native_rhs")
+        }
+        for name in ("native_volume_rhs", "b_alpha_rows", "b_alpha_values", "selected_B_frame_rows", "selected_B_frame_values"):
+            column[name] = load(artifacts.get(name), f"column {column_index} {name}")
+        input_identity = manifest["input_identities"][column_index]
+        alpha_pair = input_identity.get("port_alpha")
+        if not isinstance(alpha_pair, list) or len(alpha_pair) != 2:
+            raise ValueError(f"Task41 V4 column {column_index} port alpha is missing")
+        alpha = complex(float(alpha_pair[0]), float(alpha_pair[1]))
+        if not np.isfinite([alpha.real, alpha.imag]).all():
+            raise ValueError(f"Task41 V4 column {column_index} port alpha is non-finite")
+        expected_b_alpha = column["selected_B_frame_values"] * alpha
+        nonzero = expected_b_alpha != 0.0
+        full_rows = int(manifest.get("full_storage_rows", -1))
+        frame_rows = column["selected_B_frame_rows"]
+        frame_values = column["selected_B_frame_values"]
+        b_alpha_rows = column["b_alpha_rows"]
+        b_alpha_values = column["b_alpha_values"]
+        if (
+            frame_rows.ndim != 1
+            or frame_rows.dtype.kind not in "iu"
+            or frame_values.shape != frame_rows.shape
+            or frame_values.dtype != np.dtype(np.complex128)
+            or not np.isfinite(frame_values).all()
+            or (frame_rows.size and (np.any(frame_rows < 0) or np.any(frame_rows >= full_rows)))
+            or (frame_rows.size > 1 and np.any(frame_rows[1:] <= frame_rows[:-1]))
+            or b_alpha_rows.ndim != 1
+            or b_alpha_rows.dtype.kind not in "iu"
+            or b_alpha_values.shape != b_alpha_rows.shape
+            or b_alpha_values.dtype != np.dtype(np.complex128)
+            or not np.isfinite(b_alpha_values).all()
+            or (b_alpha_rows.size and (np.any(b_alpha_rows < 0) or np.any(b_alpha_rows >= full_rows)))
+            or (b_alpha_rows.size > 1 and np.any(b_alpha_rows[1:] <= b_alpha_rows[:-1]))
+            or not np.array_equal(b_alpha_rows, frame_rows[nonzero])
+            or not np.array_equal(b_alpha_values, expected_b_alpha[nonzero])
+        ):
+            raise ValueError(f"Task41 V4 column {column_index} saved B-alpha does not replay")
+        column["port_alpha"] = alpha
+
+        state_artifacts = [
+            (
+                "j0",
+                artifacts.get("recovered_storage"),
+                artifacts.get("native_volume_action_recovered"),
+                artifacts.get("native_volume_residual"),
+            )
+        ]
+        refinement = column_meta.get("same_lu_refinement")
+        if not isinstance(refinement, list) or len(refinement) != 3:
+            raise ValueError(f"Task41 V4 column {column_index} lacks its saved j3 refinement state")
+        last_step = refinement[-1]
+        last_artifacts = last_step.get("artifacts") if isinstance(last_step, Mapping) else None
+        if not isinstance(last_artifacts, Mapping) or last_step.get("step") != 3:
+            raise ValueError(f"Task41 V4 column {column_index} last state is not step 3")
+        state_artifacts.append(
+            (
+                "j3",
+                last_artifacts.get("storage"),
+                last_artifacts.get("native_volume_action"),
+                last_artifacts.get("native_volume_residual"),
+            )
+        )
+        column["states"] = [
+            {
+                "label": label,
+                "storage": load(storage_ref, f"column {column_index} {label} storage"),
+                "native_volume_action": load(action_ref, f"column {column_index} {label} action"),
+                "native_volume_residual": load(residual_ref, f"column {column_index} {label} residual"),
+            }
+            for label, storage_ref, action_ref, residual_ref in state_artifacts
+        ]
+        columns.append(column)
+
+        group = raw_groups[column_index]
+        if (
+            group.get("structure_identity_passed") is not True
+            or group.get("raw_matrices_are_independently_retabulated") is not True
+            or len(group.get("cells", ())) != 3
+        ):
+            raise ValueError(f"Task41 V4 column {column_index} raw-cell inventory is incomplete")
+        for cell in group["cells"]:
+            class_key = tuple(cell["class_key"])
+            class_artifacts = cell["class_artifacts"]
+            if class_key not in raw_by_key:
+                raw_by_key[class_key] = {
+                    "class_key": class_key,
+                    "Vii": load(class_artifacts.get("Vii"), f"raw Vii class {class_key}"),
+                    "Vit": load(class_artifacts.get("Vit"), f"raw Vit class {class_key}"),
+                }
+            cell_artifacts = cell["artifacts"]
+            cell_maps.append(
+                {
+                    "column": column_index,
+                    "cell_index": int(cell["cell_index"]),
+                    "class_key": class_key,
+                    **{
+                        name: load(cell_artifacts.get(name), f"cell {cell['cell_index']} {name}")
+                        for name in (
+                            "interior_original_rows",
+                            "trace_original_rows",
+                            "active_ids",
+                            "cell_permutation_info",
+                            "trace_expansion_data",
+                            "trace_expansion_indices",
+                            "trace_expansion_indptr",
+                        )
+                    },
+                }
+            )
+
+    full_action = manifest.get("full_action")
+    joint_artifacts = full_action.get("artifacts") if isinstance(full_action, Mapping) else None
+    if not isinstance(joint_artifacts, Mapping):
+        raise ValueError("Task41 V4 donor full-action arrays are missing")
+    support = manifest.get("saved_surface_support_certificate")
+    support_digest = hashlib.sha256(
+        json.dumps(
+            support if isinstance(support, Mapping) else {},
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    if (
+        not isinstance(support, Mapping)
+        or support.get("cell_interior_nonzero_values") != 0
+        or summary.get("b0_saved_surface_support_certificate") != support
+        or manifest.get("local_interior_Bi_Di_exact_zero") is not True
+        or manifest.get("local_interior_Bi_Di_nonzero_entry_count") != 0
+        or manifest.get("saved_surface_support_certificate_passed") is not True
+        or manifest.get("saved_surface_support_certificate_sha256") != support_digest
+    ):
+        raise ValueError("Task41 V4 donor lacks the exact-zero Bi/Di support certificate")
+    return {
+        "manifest": manifest,
+        "manifest_sha256": manifest_sha256,
+        "existing_evidence_bytes": sum(evidence_records.values()),
+        "columns": columns,
+        "raw_classes": list(raw_by_key.values()),
+        "cell_maps": cell_maps,
+        "attribution": {
+            "joint": {
+                name: load(joint_artifacts.get(name), f"joint {name}")
+                for name in ("p6_result", "reduced_rhs", "port_rhs")
+            },
+            "local_class_identities": [],
+        },
+    }
+
+
 def check_task41_p0_b0_saved_evidence_audit(
     *,
     summary_path: Path,

@@ -131,7 +131,7 @@ for ((index = 0; index < ${#args[@]}; index++)); do
         --task41-p0-saved-output-checker-only)
             task41_saved_output_checker_only=1
             ;;
-        --task41-p0-saved-b0-evidence-audit)
+        --task41-p0-saved-b0-evidence-audit|--task41-p0-saved-b0-volume-only-attribution)
             task41_saved_b0_evidence_audit=1
             ;;
     esac

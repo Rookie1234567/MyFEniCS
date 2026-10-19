@@ -795,8 +795,9 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
         _validate_original_attempt(run_root, contract, "f" * 64)
 
 
-def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("volume_only", [False, True])
+def test_b0_saved_evidence_audit_uses_supervised_service_route(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, volume_only: bool
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
@@ -920,8 +921,17 @@ def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
         calls.append((command, kwargs))
         assert not numerical_output.exists()
         assert Path(command[command.index("--numerical-output") + 1]) == numerical_output
-        assert kwargs["campaign_phase"] == "closeout"
         assert kwargs["campaign_window_sha256"] == window_sha
+        if kwargs["campaign_phase"] == "numeric":
+            assert volume_only is True
+            assert command[1:4] == ["-m", "src.runners.task41_p0_v4_volume_only_audit", "--summary"]
+            volume_result = output_root / "task41_p0_v4_volume_only_attribution.json"
+            volume_result.write_text(
+                json.dumps({"status": "COMPLETED", "identity_audit": {"completed": True}}),
+                encoding="utf-8",
+            )
+            return {"classification": "COMPLETED", "leader_exit_code": 0}
+        assert kwargs["campaign_phase"] == "closeout"
         assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
         assert "run_case.py" not in command
         result_path = Path(command[command.index("--output") + 1])
@@ -1017,7 +1027,11 @@ def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
         abi_receipt=repo_root / "abi.json",
         jit_cache=repo_root / "jit",
         case_args=[
-            "--task41-p0-saved-b0-evidence-audit",
+            (
+                "--task41-p0-saved-b0-volume-only-attribution"
+                if volume_only
+                else "--task41-p0-saved-b0-evidence-audit"
+            ),
             "--donor-contract", str(donor_contract_path),
             "--donor-contract-sha256", donor_contract_sha,
             "--summary", str(donor_summary),
@@ -1030,10 +1044,17 @@ def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
 
     receipt = json.loads((output_root.with_name(output_root.name + ".service") / "task41_p0_service_receipt.json").read_text())
     assert result == 0, receipt.get("workflow_error")
-    assert len(calls) == 1
-    assert calls[0][1]["campaign_phase"] == "closeout"
+    assert len(calls) == (2 if volume_only else 1)
+    if volume_only:
+        assert calls[0][1]["campaign_phase"] == "numeric"
+        assert calls[0][1]["wall_seconds"] == window.cutoff_seconds
+        assert calls[1][1]["campaign_phase"] == "closeout"
+    else:
+        assert calls[0][1]["campaign_phase"] == "closeout"
     assert receipt["status"] == "completed"
-    assert receipt["mode"] == "saved_b0_evidence_audit"
+    assert receipt["mode"] == (
+        "saved_b0_v4_volume_only_attribution" if volume_only else "saved_b0_evidence_audit"
+    )
     assert receipt["required_checker_status"] == "audit_completed"
     assert receipt["producer_source_sha"] == donor_source_sha
     assert receipt["consumer_source_sha"] == consumer_source_sha
