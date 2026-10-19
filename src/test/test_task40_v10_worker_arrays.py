@@ -14,6 +14,7 @@ from src.runners.task40_v10_worker import (
     _packet_array_bytes,
     _regular_inverse_gate_facts,
     _save_packet,
+    _task41_b0_case_run_and_attempt_ids,
     _task41_b0_full_size_two_input_identity_check,
     _v18_full_native_matrix_admission_facts,
     _v18_preproject_native_matrix_gate,
@@ -386,6 +387,27 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
         assert (tmp_path / "task41_b0_full_size_two_input_identity_check.json").is_file()
     finally:
         volume_action.buffer.destroy()
+
+
+def test_task41_b0_case_run_id_and_attempt_id_bind_both_receipts(tmp_path):
+    resolved_payload = {"run_id": "task41extra_b0_p6_phi90_07nm_iterative"}
+    attempt_directory = tmp_path / "20261019T013135.034155Z"
+
+    case_run_id, attempt_id = _task41_b0_case_run_and_attempt_ids(
+        resolved_payload, attempt_directory
+    )
+
+    assert case_run_id == "task41extra_b0_p6_phi90_07nm_iterative"
+    assert attempt_id == "20261019T013135.034155Z"
+    assert {"worker_run_id": case_run_id, "attempt_id": attempt_id} == {
+        "worker_run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+        "attempt_id": "20261019T013135.034155Z",
+    }
+    assert {"case_id": "B0", "run_id": case_run_id, "attempt_id": attempt_id} == {
+        "case_id": "B0",
+        "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+        "attempt_id": "20261019T013135.034155Z",
+    }
 
 
 def test_task41_b0_failed_recovery_capture_binds_manifest_in_finally(tmp_path):

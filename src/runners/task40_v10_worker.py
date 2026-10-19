@@ -1697,6 +1697,13 @@ def _task41_b0_saved_surface_p6_gate_facts(
     }
 
 
+def _task41_b0_case_run_and_attempt_ids(
+    resolved_payload: Mapping[str, Any], directory: Path
+) -> tuple[str, str]:
+    """Return the stable case run ID and this output attempt's directory name."""
+    return str(resolved_payload["run_id"]), Path(directory).name
+
+
 def _task41_b0_capture_recovery_with_summary_binding(
     *,
     summary: dict[str, Any] | None,
@@ -10181,6 +10188,10 @@ def run_task40_v10_p6_reference_worker(
             comparison_authority=None,
             live_mode_inventory_status="NOT_CAPTURED",
         )
+    if is_task41_b0:
+        task41_b0_case_run_id, task41_b0_attempt_id = (
+            _task41_b0_case_run_and_attempt_ids(resolved_payload, directory)
+        )
     if v31_route_requested:
         summary["v31_input_identity"] = dict(v31_input_identity or {})
     if v31_target_admission_policy is not None:
@@ -10830,7 +10841,8 @@ def run_task40_v10_p6_reference_worker(
                         receipt = {
                             "schema": "task41.p0.b0.saved_donor_validation_receipt.v1",
                             "status": "VALIDATED_READ_ONLY_BEFORE_CONDENSATION",
-                            "worker_run_id": str(run_id),
+                            "worker_run_id": task41_b0_case_run_id,
+                            "attempt_id": task41_b0_attempt_id,
                             "consumer_identity": {
                                 "case_id": task41_contract_binding.get("case_id"),
                                 "run_id": task41_contract_binding.get("run_id"),
@@ -11178,7 +11190,8 @@ def run_task40_v10_p6_reference_worker(
                 provenance = resolved_payload.get("provenance", {})
                 b0_recovery_identity = {
                     "case_id": "B0",
-                    "run_id": str(run_id),
+                    "run_id": task41_b0_case_run_id,
+                    "attempt_id": task41_b0_attempt_id,
                     "source_sha": str(source_sha),
                     "input_sha256": str(provenance.get("input_sha256", "")),
                     "staged_input_sha256": str(
