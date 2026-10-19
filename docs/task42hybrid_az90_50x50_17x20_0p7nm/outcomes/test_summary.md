@@ -88,3 +88,19 @@ A1回归验证资源入口/阶段Delta、C bridge INFOG(17) producer→consumer�
 这批结果只证明公共合同、预算绑定、root writer/错误传播和分配前拒绝；不证明实际A2网格、QEP、局部凝聚、MUMPS填充或物理结果。A2所有阶段Delta仍`pending-sizing`并保持不可运行。详细资格边界与下一步对象清单见[response_v1](../response_v1.md)。
 
 A2费用仅沿Task42各parent receipt记账，未更改Task041 V5、历史raw或既有账目。所有旧失败attempt均保留；ABI parent独立于pytest parent，未启动pytest的脚手架拒绝不收费。
+
+## P1行级衍射功率修正（2026-10-19）
+
+最终修复selector为`test_task42_hybrid_rows_and_dtn_ports_report_power_classification_difference`。production SHA为`652d19a6540660d870ace9a81ef110fd40c82cd9ec0b541477f65cb55ab557e1`，测试SHA为`f68c7c34e44ab684e2ded565872ee8bfe9faf4f0b3e6df32e7f1dd8423dcf444`；当前代码提交`6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`。最终attempt目录中的当前21项SUMS均校验通过；通知前的19项版本与当前加入通知/pycache等后的21项是不同清单，不能混称同一SUMS。
+
+| Attempt | pytest结果 | parent wall | 说明/证据 |
+|---|---:|---:|---|
+| [`a2_p1_port_power_diagnostic_20261019T095509Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_diagnostic_20261019T095509Z/serial/) | 失败 | 2.342012722 s | 保留原差异；断言错误要求top s和p入射投影都非零，而实际s入射的p投影近零 |
+| [`a2_p1_port_power_diagnostic_retry_20261019T095800Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_diagnostic_retry_20261019T095800Z/serial/) | 失败 | 2.294325196 s | 保留浮点倏逝`power_ratio`非精确零的首错 |
+| [`a2_p1_port_power_diagnostic_final_20261019T100144Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_diagnostic_final_20261019T100144Z/serial/) | 通过，复现修复前差异 | 2.213222336 s | 预修复行T总和0；DtN T合计`0.3282679451110778` |
+| `a2_p1_port_power_row_fix_20261019T100954Z` | pytest未启动 | 0 s pytest费用 | activation环境漏`BLIS_NUM_THREADS=1`；原尝试保留 |
+| `a2_p1_port_power_row_fix_retry_20261019T101036Z` | pytest未启动 | 0 s pytest费用 | handoff过早解析到`/usr/bin/taskset`；原尝试保留 |
+| [`a2_p1_port_power_row_fix_handoff_20261019T101143Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_row_fix_handoff_20261019T101143Z/serial/) | 失败 | 2.425924026 s | 保留入射标签/配置假设错误的首错 |
+| [`a2_p1_port_power_row_fix_retry2_20261019T101228Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_row_fix_retry2_20261019T101228Z/serial/) | 通过 | 3.038582487 s | 最终source；rc0，owned进程组空，完整逐行/总量对照见`row_power_fix_comparison.json` |
+
+共5个实际启动的pytest parent，wall总和`12.314066767 s`；不以pytest显示时长代替parent wall，不按MPI rank计倍数。两次pytest未启动attempt费用为0。修复后，lossy Si底部s/p行T分别为`0.25778898368788117`和`0.07047896142319664`，与端口贡献及总T=`0.3282679451110778`一致；lossless evanescent以及n=1.2 synthetic s/p控制也符合相同公式判据。n=1.2控制因输入幅度任意而T>1，不是物理能量通过。修复仅调整行级R/T功率纳入判据；不重写旧A1值、历史诊断或P1预修复失败。

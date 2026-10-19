@@ -160,4 +160,36 @@ A2输入完整原字节SHA为`42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f
 | coupling、增广与解 | 按真实块shape/NNZ、完整双向外键、modal RHS、映射与同时驻留pack/copy算Delta；MUMPS阶段要有实际augmented NNZ、ordering/fill与工作区的可辩护预估 | direct `KSP.setUp()`合并analysis/factorization；其setup前无可用实测INFOG，未有可靠填充上界就不得放行该大分配 |
 | recovery与输出 | 计数两侧局部恢复对象、真实全外通道数组、采样E/H、canonical vectors、collective gather和writer暂存；区分rank-local副本求和与全机总额重复报告 | 当前仅接口合同，没有A2数组尺寸或生命周期峰值 |
 
-先前A1仍有独立资格缺口：数值worker残差/端口能量闭合/场文件存在不能覆盖外层whole-job资源unknown；A1的source与port独立一致性门、trace alias映射，以及canonical `hcurl_norm`/`trace_mass_norm`仍缺合格证据。Task42 A2的`_external_diffraction_order_rows`按`mode.propagating`决定行级R/T，而`dtn_port_3d._port_power_metrics`按正向功率判定；A1已知底部Si `(0,0,s)`存在`propagating=false`但仍`power_carrying=true`的情形。因此应以小型真实公式fixture让一个有损正向功率模态和一个零功率倏逝模态分别通过两套现有公式，核对每行`power_ratio/R/T`与端口总R/T之和；保留`propagating`为独立物理标签，不以它替代功率符号，也不在无审查前改变定义。此检查目前未运行，A2物理资格仍未建立。
+先前A1仍有独立资格缺口：数值worker残差/端口能量闭合/场文件存在不能覆盖外层whole-job资源unknown；A1的source与port独立一致性门、trace alias映射，以及canonical `hcurl_norm`/`trace_mass_norm`仍缺合格证据。以下段落是P1修复前的记录：Task42 A2的`_external_diffraction_order_rows`曾按`mode.propagating`决定行级R/T，而`dtn_port_3d._port_power_metrics`按正向功率判定；A1已知底部Si `(0,0,s)`存在`propagating=false`但仍`power_carrying=true`的情形。该行级待办已由下方P1公式fixture与最小生产修复处理；A2物理资格仍未建立。
+
+## P1：Hybrid逐行衍射功率报告修正（2026-10-19）
+
+生产提交为`6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`，parent为`9d0a42d86ed9a30b4a82b9c1ebca2b80288434c5`；仅改`src/solvers/hybrid_fem_modal_augmented_direct.py`及其单selector合同测试。生产文件SHA256为`652d19a6540660d870ace9a81ef110fd40c82cd9ec0b541477f65cb55ab557e1`，测试文件SHA256为`f68c7c34e44ab684e2ded565872ee8bfe9faf4f0b3e6df32e7f1dd8423dcf444`。该源码提交完成时工作树clean且origin与HEAD相同；后续文档改动单独记录，不回写该源码提交身份。
+
+修复只把`_external_diffraction_order_rows`的R/T纳入条件从`mode.propagating`改为复用`dtn_port_3d._mode_carries_outward_power`。这样一条通道即使被标记为非传播，只要在当前介质和参考面上确有正向功率，行级R/T便与端口总功率采用同一判据。`propagating`标签、`beta`、边界相位、入射场扣除、原始`power_ratio`、key集合/顺序和所有字段均未变；没有新增schema字段、阈值或钳零行为，端口总量公式和物理门也未改。
+
+修复前的同一公式诊断用任意synthetic auxiliary幅度重现了差异：用户Si材料下底部零级s/p均为`propagating=false`但带正向功率，DtN端口分别贡献T=`0.25778898368788117`与`0.07047896142319664`，合计`0.3282679451110778`；旧row T总和为0。这个数仅用于报告公式合同，不是A1/A2物理透射率。修复后同一小fixture逐行和总量相等：row/port T均为`0.3282679451110778`。无损Si倏逝控制的原始浮点`power_ratio`约`3.82e-18`/`8.78e-18`，但正向功率判据贡献和T均为0；不把舍入小量强制清零。无损n=1.2传播s/p控制也逐行及总量相等；因aux幅度是人为指定，测试T约`10.5013458207>1`不代表物理能量通过。顶部入射极化扣除保持不变；正交p投影约`1e-31`只是数值近零控制。
+
+静态消费者审计未发现旧测试依赖错误的`propagating`筛选：Task42共享输出按完整key inventory验证并原样保存行字段/q映射，不自行重算R/T；Task038/Task039消费者校验外通道key完整唯一及`power_ratio`、`beta`、projection、amplitude等字段有限，不以`propagating`推导或断言R/T。现有`test_14_stage4_dtn_modes.py`检查的是已采用同一正向功率口径的DtN端口writer，不是被修改的Hybrid行生成器。Task039旧schema/shape/字段不变。
+
+最终selector为`test_task42_hybrid_rows_and_dtn_ports_report_power_classification_difference`，rc=0，parent monotonic wall=`3.038582487 s`，owned进程组清空；pytest显示时长不另计。最终收据及对照JSON见[`a2_p1_port_power_row_fix_retry2_20261019T101228Z/serial`](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_row_fix_retry2_20261019T101228Z/serial/)；该合同测试不运行FE/QEP/factor/MatSolve，不构成A2数值资格。该attempt目录当前21项SUMS逐项校验通过；通知前19项与追加通知/pycache后的21项是不同清单版本，旧版本摘要不替代当前清单。P1所有历史失败、未启动尝试和parent费用见[测试/费用摘要](outcomes/test_summary.md)。
+
+## A2 首阶段mesh-only候选预算（静态，未执行）
+
+本候选只为之后取得真实二维截面cells/ownership提供一个有限的第一步预算；它不是完整A2 manifest或启动授权。身份绑定为当前HEAD `6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`、A2 dat SHA256 `42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`、用户材料记录SHA256 `19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65`；相关源文件SHA256见本回应的静态预算记录。没有调用mesh/space/QEP构造取数。
+
+根据冻结50×50 nm周期、居中17×20 nm光栅、`mesh_target_nm=10`和边界拟合源码：x轴由`0/16.5/33.5/50`分段，单段cell数按`ceil(length/10)`为`2+2+2=6`；y轴由`0/15/35/50`同样得6。二维截面因此为36个四边形、49个顶点、84条边。MPI8输入cell分配按现有`_rank_cell_ids`公式为`[4,5,4,5,4,5,4,5]`个输入cell/rank；DOLFINx graph partition和shared-facet ghost后的owned/ghost数量仍须实测，不能把输入分片数冒充最终ownership。z轴分段`−10/0/120/130`按10 nm目标得到`1+12+1=14`层；完整3D直角网格是504个hexahedra，但本mesh-only动作只建36个二维quad，不建完整3D网格。旧A1的504个3D cells只作几何轴线交叉核对，不当作2D内存校准。
+
+可复查的源位置和SHA如下，均对应本节source HEAD：
+
+| 文件 | SHA256 | 本预算使用的入口 |
+|---|---|---|
+| `src/geometry/mesh_builder_3d.py` | `a423f197bfe4eedfd2761738bfe518552d5357e80086b056491d052e32ee21d5` | `_subdivide_piecewise_axis`约219行；`_stage4_axis_plan`约414行；公开`stage4_axis_plan`约587行；`_rank_cell_ids`约657行 |
+| `src/modes/cross_section_spaces.py` | `0bf8a74ea72705e06d13bf710cb542eed1b779ce853ee0938004701e81dc47b0` | `_structured_quad_mesh`约177行；`_cross_section_epsilon`约243行；`build_matching_cross_section`约280行；`build_cross_section_spaces`约357行 |
+| `src/common/config_3d.py` | `ab58064f507bc1802d8cda0b2497ec6740eb8c07b4697672ef6263d0fadc460c` | 冻结周期、矩形边界、domain和mesh target字段来源 |
+| `src/common/task42_phase_admission.py` | `a13db5302dcbe4ef05c022ff4a5e24bb97e544d344ec5fd6f728ffe9656ddd7a` | `qep_cross_section_mesh`分配前阶段入口 |
+| `src/io/task42_hybrid_budget.py` | `3f2f7673637e16ced86b5b89eff268ddb39c2d7910560b4b8af3abb9bc8f1b27` | 输入/预算basis与阶段Delta合同，不提供本候选的实际mesh测量 |
+
+预算按单rank同一阶段的保守同时驻留项清点：x/y/z轴规划与短暂数组/元数据暂按4 KiB；49个二维点的Python tuple/list暂存与784 B float64坐标数组约7 KiB；最多5个本地quad的Python cell-list及160 B int64连接数组约2 KiB；cell→vertex、cell→edge、edge→vertex、edge→cell稀疏索引主体按64位索引上算`(181+181+253+229)*8=6,752 B`；索引映射、局部计数与小型receipt暂按8 KiB。已知输入与拓扑payload预算按32 KiB/rank向上取整。另预留16 MiB/rank，覆盖DOLFINx C++ mesh/coordinate/index maps、graph partition、MPI元数据、allocator余量；这是明确的预测性库开销津贴，不是实测值、硬上界或数学保证。预计MPI8全作业新增Delta为`8*(16 MiB+32 KiB)=134,479,872 bytes=128.25 MiB`。构造`points`和`cells`时Python容器与NumPy输入阵列会重叠；`mesh.create_mesh`可能再保留/复制原生对象，之后拓扑连接另分配邻接结构。上述32 KiB源可枚举项与16 MiB未校准库津贴按阶段重叠预算相加；若后续测得实际峰或对象超出预算，必须在门内拒绝并重新审核预算，不能把该预测写作实测。
+
+若C最终为256 GiB，则W=`max(8 GiB,0.05C)=12.8 GiB`，本候选`Delta+W=13,878,375,219 bytes≈12.925244 GiB`，host reserve `R+Delta+W=426,195,235,635 bytes≈396.925244 GiB`；剩余cap空间`C-Delta-W≈243.074756 GiB`。实际准入仍要新鲜核算`C=min(256 GiB,Cmax)`、全作业J、MemAvailable和有限祖先headroom；若Cmax更低则按实际C重新计算，不能复用旧host样本。代码中`build_matching_cross_section`先走`qep_cross_section_mesh` gate，再由`_structured_quad_mesh`分配二维点/局部cell并建mesh、连接facet-to-cell；随后当前实现无条件调用`_cross_section_epsilon`创建DG0 FunctionSpace/Function。因此现有函数不能直接停成mesh-only；下一阶段如获准，需在拓扑连接后、DG0调用前增加一个窄的显式mesh-only停止/返回路径，保存每rank输入cells、owned/ghost entities及几何身份，然后释放mesh。该路径不建DG0/p6 mixed space、MPC、QEP、traction对象，不调用factor/solve。候选MPI规模为8，因目标profile要求真实八rank owned/ghost basis；MPI1只能做形状烟测，不能给目标分布预算。16 MiB/rank库津贴尚未经实际mesh测量，32 KiB/rank源可枚举项也仍是估计；整项Delta属待内部审核的`predicted`，不是实测峰或硬上界，当前A2继续fail-closed、不可启动。

@@ -1,4 +1,4 @@
-# 项目开发进度：Task000–Task041
+# 项目开发进度：Task000–Task042
 
 ## 2026-10-16：Task041 Review V18 P0存档分解收口
 
@@ -3156,8 +3156,10 @@ Task42 worker向共享内核传一个显式阶段准入回调；共享内核在�
 
 **所有A2 Delta仍为`pending-sizing`，不是零。** 必须从实际mesh/DoF/NNZ、owner分布、QEP工作区/保留向量、每侧Schur recovery对象、MUMPS fill/INFOG和重叠生命周期中形成绑定当前source/input/material/MPI的阶段预算；当前新输入没有该budget manifest，因此Task038 launcher在创建worker前拒绝，不可运行。MUMPS direct当前由PETSc `KSP.setUp()`合并analysis与factorization，现有接口只提供一个覆盖两者的`direct_mumps_factor_setup` gate，未声称有symbolic/numeric两个独立回调。Task42资源合同仍为C=min(256 GiB,Cmax)、R=384 GiB、W=max(8 GiB,5%C)，沿用全作业/有限祖先authority；不恢复Task041的80 GiB门。
 
-新增合同测试`src/test/test_task42_hybrid_a2_static_contract.py`已通过最终native serial 32 passed/2 skipped及指定MPI2回归（rank 0/1各4 passed）。serial的两个MPI-only skip已由MPI2实际覆盖。测试证明profile/路由/输出身份、Task039兼容、hash-bound rank/side预算basis、root-only writer/集体拒绝和多处分配前拒绝合同；不运行真实mesh/QEP/FE/factor/solve。A2仍因完整分级Delta及MUMPS fill/workspace依据缺失而`pending-sizing`、不可启动。当前source合同提交为`44f671cefd9a3130897bfc898ba21cde8528fbe4`；费用、失败保留及准确边界见[Task42 test summary](task42hybrid_az90_50x50_17x20_0p7nm/outcomes/test_summary.md)。
+新增合同测试`src/test/test_task42_hybrid_a2_static_contract.py`已通过最终native serial 32 passed/2 skipped及指定MPI2回归（rank 0/1各4 passed）。serial的两个MPI-only skip已由MPI2实际覆盖。测试证明profile/路由/输出身份、Task039兼容、hash-bound rank/side预算basis、root-only writer/集体拒绝和多处分配前拒绝合同；不运行真实mesh/QEP/FE/factor/solve。合同实现提交为`44f671cefd9a3130897bfc898ba21cde8528fbe4`，之后P1行级功率修正提交为`6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`；费用和失败保留见[Task42 test summary](task42hybrid_az90_50x50_17x20_0p7nm/outcomes/test_summary.md)。
 
-下一小阶段建议先为边界拟合mesh-only本身形成保守预分配边界，之后才读取真实cells/vertices/ghosts和每rank p6 DoF/MPC/NNZ；再给QEP全/约化稀疏矩阵、ncv/mpd/正负左右模态工作区、bottom/top各rank Schur/recovery对象、10 nm traction轴向局部网格、增广块和MUMPS合并setup建立来源绑定的Delta。MUMPS当前`KSP.setUp()`合并analysis/factorization；setup后的INFOG不能反向授权setup前的大分配。没有可信填充/workspace上界就继续拒绝。此阶段没有运行实际sizing或小物理fixture。
+P1已用单selector小型公式回归修正Hybrid外通道行级R/T的正向功率判据：有损Si底部s/p两行的T之和与DtN端口相同，为`0.3282679451110778`；保留原`propagating`标签和行schema。n=1.2 synthetic幅度控制T>1，不是物理能量通过。修复没有重跑或改写A1结果，也没有建立A2物理资格。消费者审计未发现旧Task039/Task42消费者依赖旧筛选推导R/T。准确attempt及5个实际parent wall合计`12.314066767 s`见测试摘要。
 
-外通道功率也有待做的纯解析合同核验：Hybrid衍射row的R/T字段由`mode.propagating`门控，而DtN端口总功率按正向功率判定；A1已记录底部有损Si零级`propagating=false`但带正向功率。需用正功率有损模态与零功率倏逝模态小fixture逐项比较现有行字段和端口求和，不改变物理定义或报告门。A1 source-port一致性、trace alias映射与canonical norm资格缺项仍独立保留。A1末端是whole-job authority unknown/fail-closed拒绝，虽有worker数值和文件输出，不应改写为整场通过。
+A2预算仍`pending-sizing`，但已有一份可审核的首阶段mesh-only静态候选：目标截面x/y各6段、36个quad、49个坐标点、84条边；MPI8输入分配4/5交替。源可枚举payload暂按32 KiB/rank，另加16 MiB/rank未校准原生库/partition/allocator津贴，合计预测Delta=`134,479,872 B`（128.25 MiB）。C=256 GiB场景下W=12.8 GiB、R+Delta+W约396.925244 GiB；这不是实测峰或硬上界，候选待内部审核，尚未建mesh。若获阶段授权，mesh-only仅连接拓扑、保存rank owned/ghost和几何信息并释放，停在DG0 epsilon空间、p6 mixed space、MPC、QEP、traction和factor之前。后续再按真实DoF/NNZ建立space、QEP和两侧凝聚/traction预算；MUMPS `KSP.setUp()`仍是analysis/factor合并阶段，可信fill/workspace范围缺失就拒绝。源码出处、生命周期与假设见[Task42 response](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。
+
+A1的source-port独立一致性、trace alias映射和canonical norm资格仍缺证据；正式A1终态仍为worker数值输出存在但whole-job资源authority unknown/fail-closed拒绝，不能改写为整场通过。

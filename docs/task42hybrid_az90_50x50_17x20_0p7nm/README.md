@@ -39,6 +39,6 @@ Task42分阶段准入使用整作业`J=max(launcher进程树RSS,可证明适用�
 
 Task42独立A2输入使用用户指定的13.5 nm Si、p6/h10/M120，传播模型为`full3d_uniform_cg`，traction为`full3d_one_cell_exact_schur`。公共路由和共享输出/分级资源合同已有小型serial与MPI2合同覆盖；这只验证调用、身份、拒绝时序与collective写入行为，不是有限元、QEP或A2数值资格。
 
-A2仍不可启动：每阶段`Delta`都为`pending-sizing`，没有绑定实际网格、每rank/每side DoF与NNZ、QEP工作区、恢复缓存及MUMPS填充的预算清单。dat原字节SHA和不含预算引用字段的规范化预算basis是两个不同身份，不能互相冒充。PETSc `KSP.setUp()`把MUMPS分析和因子分解放在同一阶段门内，目前没有真实分离的symbolic/numeric gate。外通道行的`R/T`字段仍按`propagating`筛选，而端口总功率按正向功率判定；有损Si下非传播标记的零级可能仍传功率，需先用小型解析fixture审清行级与总量口径。详见[Task42当前回应](response_v1.md)、[结果摘要](outcomes/summary.md)和[测试/费用摘要](outcomes/test_summary.md)。
+A2仍不可启动：每阶段`Delta`都为`pending-sizing`，没有绑定实际网格、每rank/每side DoF与NNZ、QEP工作区、恢复缓存及MUMPS填充的完整预算清单。dat原字节SHA和不含预算引用字段的规范化预算basis是两个不同身份，不能互相冒充。PETSc `KSP.setUp()`把MUMPS分析和因子分解放在同一阶段门内，目前没有真实分离的symbolic/numeric gate。2026-10-19的P1小型公式回归已修正Hybrid外通道行级`R/T`门控：它现在与端口总功率一样使用正向功率判据，保留`propagating`标签和原行schema；这只是报告合同修复，不是A2物理资格。首个mesh-only阶段已有静态候选预算，未建mesh；预算是预测值并待内部审核，完整A2预算仍待后续分阶段实测。详见[Task42当前回应](response_v1.md)、[结果摘要](outcomes/summary.md)和[测试/费用摘要](outcomes/test_summary.md)。
 
 通俗地说，Hybrid把中间区域的场用截面模式表示，两侧区域仍由有限元网格求解；这样可减少中间长结构的三维自由度，但会增加模式耦合和恢复数据。阶段预算要求在每次大分配前先估算该步新增内存；目前的小测试只验证接口和拒绝传播，不证明A2物理解正确，也不证明实际容量足够。

@@ -84,7 +84,7 @@ PVD列出8个rank VTU，全部可读；每个文件实际含E和H的real/imag/ab
 
 | 项目 | 已验证内容 | 状态与边界 | 证据 |
 |---|---|---|---|
-| 源实现 | Task42独立profile接入公共run_case→execution plan→Task038 worker→Task42 adapter→共享Task032 direct内核；root-only writer；rank/side各自预算basis | 21路径普通提交`44f671cefd9a3130897bfc898ba21cde8528fbe4`；不借Task039身份、不改ordinary默认 | 当前源码与MPI2 after map相同；分支clean提交见Git |
+| 源实现 | Task42独立profile接入公共run_case→execution plan→Task038 worker→Task42 adapter→共享Task032 direct内核；root-only writer；rank/side各自预算basis | 21路径合同实现提交`44f671cefd9a3130897bfc898ba21cde8528fbe4`；P1行级R/T修正提交`6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`；不借Task039身份、不改ordinary默认 | 合同实现源码匹配当时MPI2 after map；之后两文件P1改动由其最终单selector资格化 |
 | 原输入与预算basis | dat完整字节SHA `42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`；canonical phase budget basis SHA `80c084655f67587c0616de782cf0a3e2e50cb41ea357bf4e09948cb0e7786332` | 两者是不同身份；basis只剔除两个budget引用字段。没有实际source/input/material/MPI绑定的完整阶段manifest | A2 `.dat`与`src/io/task42_hybrid_budget.py`；不含预算引用的独立basis定义 |
 | 输出合同 | 根据实际sample坐标推导数组形状；验证复E/H、完整外通道keys、side-local-q映射和来源身份；成功文件由root单独写入，坏shape在writer前拒绝（零次写调用），root写入失败则一致传播 | 清场状态来自parent/session收据，不声称每个rank输出文件都包含清场状态；仅小型fixture合同，不是实际场/衍射结果 | final serial与MPI2指定selectors；详见[test summary](test_summary.md) |
 | 分配前Gate | sentinel测试覆盖空间/矩阵/QEP/局部side/traction/coupling/增广/direct setup/solve/recovery/output各拒绝边界 | Delta仍`pending-sizing`；profile fail-closed，不可启动A2；没有运行FE、QEP、factor或solve | `src/common/task42_phase_admission.py`、`src/io/task42_hybrid_budget.py`、新合同测试 |
@@ -103,4 +103,14 @@ A2仍使用13.5 nm用户指定Si、p6/h10/M120、50×50 nm周期、17×20 nm光�
 | augmented/MUMPS | coupling/增广块的shape/NNZ/maps/pack生命周期；依据真实ordering/fill证据预算factor | `KSP.setUp()`合并analysis/factor；不能用setup后的INFOG倒授权setup前大分配，可信fill上界缺失就拒绝 |
 | recovery/output | 真实E/H、衍射/端口、canonical及collective gather数组的同时生命周期和副本数 | 当前无A2场尺寸；rank-local副本按rank累加，全机同一总额不重复累加 |
 
-另有待核实的行级功率合同：Hybrid diffraction rows以`propagating`字段门控R/T，但DtN端口总功率按正向功率判据累加。A1已存档的底部Si零级s模态显示`propagating=false`仍可携带功率；A2小fixture应分别核对有损功率模态与零功率倏逝模态的行字段和端口总和。该检查只验证现有公式口径，不改物理定义或放宽门，当前`not_run`。
+## P1：Hybrid衍射逐行功率报告合同修正
+
+Hybrid衍射表逐行报告各通道的反射/透射占比，DtN端口总量则汇总每个模式实际向外传递的功率。两处原先用了不同筛选：行表要求`propagating=true`，端口使用正向功率判据。2026-10-19已将行表的R/T纳入条件改为与端口相同的既有正向功率函数；`propagating`物理标签、每行字段、key和顺序、`power_ratio`、相位和入射扣除均未变。
+
+在用户提供Si常数的有损合成fixture中，两个底部零级s/p模式均标记`propagating=false`但携带正向功率：逐行T及行总和与端口T一致，为`0.25778898368788117`、`0.07047896142319664`及合计`0.3282679451110778`。修复前同一fixture的行T合计为0；历史记录保留。无损倏逝控制的浮点原始`power_ratio`约`3.82008e-18`和`8.77872e-18`，正向功率贡献仍为0。无损n=1.2的传播s/p控制也逐行及总量一致；其T约`10.5013458207`是任意测试幅度的结果，不是物理能量通过。测试使用配置中实际入射极化，正交投影约`1e-31`只作为数值近零控制。该结果仅验证行报告和端口的公式口径，不是A1/A2物理资格。
+
+最终单selector通过，parent monotonic wall为`3.038582487 s`，owned组清空。5个实际pytest parent尝试合计`12.314066767 s`；两次准备阶段未启动pytest，不收费。精确尝试、旧失败、source/test SHA、当前21项清单与通知前19项版本区别见[测试/费用摘要](test_summary.md)。P1生产实现为`6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`；消费者静态审计未发现旧消费者或测试依赖原`propagating`筛选推导R/T。没有重写历史RUN或数值输出。
+
+## A2 首阶段mesh-only静态预算候选
+
+冻结A2 dat SHA为`42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`，用户Si材料记录SHA为`19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65`；源基线为`6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`。几何轴由`src/geometry/mesh_builder_3d.py::_stage4_axis_plan`与`_subdivide_piecewise_axis`生成，二维mesh由`src/modes/cross_section_spaces.py::build_matching_cross_section`和`_structured_quad_mesh`建立：x/y各6段、36个quad、49个坐标点、84条边；MPI8输入cell分配是4/5交替，最终DOLFINx owned/ghost尚未知。可见输入/拓扑数组按32 KiB/rank预估，另加16 MiB/rank未校准原生库/partition/allocator津贴，MPI8预测Delta=`134,479,872 B`（128.25 MiB）。如C=256 GiB，W=12.8 GiB，则`Delta+W≈12.925244 GiB`，`R+Delta+W≈396.925244 GiB`；实际C、J、MemAvailable、有限祖先headroom仍须fresh实测。此候选不是实测峰或硬上界，需审核后才能用于mesh-only准入。建议仅在已通过该阶段门后建2D网格、连接拓扑、记录rank layout并释放；停止于`_cross_section_epsilon`之前，不创建DG0/p6空间、MPC、QEP、traction、增广块或因子。当前没有运行mesh、FE、QEP、factor或solve。详细来源、驻留重叠假设和限制见[response_v1](../response_v1.md)。
