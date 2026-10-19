@@ -6,12 +6,12 @@ import hashlib
 import json
 import os
 import zipfile
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 import numpy as np
 from mpi4py import MPI
-
 
 PACKET_SCHEMA = "myfenics.full3d.pre_recovery_packet.v1"
 
@@ -381,8 +381,9 @@ def verify_task42_recovery_archive(
     manifest_path: Path,
     *,
     expected_manifest_sha256: str,
-    expected_identity: Mapping[str, Any],
-    allowed_source_sha: str,
+    expected_identity: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+    allowed_source_sha: str | None = None,
+    allowed_source_shas: Sequence[str] | None = None,
     expected_mpi_size: int,
 ) -> dict[str, Any]:
     """Verify the archived RUN envelope and every shard before recovery setup.
@@ -415,9 +416,29 @@ def verify_task42_recovery_archive(
         raise ValueError("Task42 recovery packet identity is missing")  # noqa: TRY004
     if _sha256(_json_bytes(identity)) != manifest.get("identity_sha256"):
         raise ValueError("Task42 recovery packet identity hash mismatch")
-    if _safe(expected_identity) != identity:
+    expected_identities = (
+        [expected_identity]
+        if isinstance(expected_identity, Mapping)
+        else list(expected_identity)
+    )
+    if not expected_identities or any(
+        not isinstance(candidate, Mapping) for candidate in expected_identities
+    ):
+        raise ValueError("Task42 recovery expected identity candidates are invalid")
+    if not any(_safe(candidate) == identity for candidate in expected_identities):
         raise ValueError("Task42 recovery packet resolved identity mismatch")
-    if identity.get("source_sha") != allowed_source_sha:
+    allowed_sources = set(allowed_source_shas or ())
+    if allowed_source_sha is not None:
+        allowed_sources.add(allowed_source_sha)
+    if not allowed_sources or any(
+        not isinstance(value, str)
+        or len(value) != 40
+        or any(character not in "0123456789abcdef" for character in value)
+        for value in allowed_sources
+    ):
+        raise ValueError("Task42 recovery allowed source SHA set is invalid")
+    archive_source_sha = identity.get("source_sha")
+    if archive_source_sha not in allowed_sources:
         raise ValueError("Task42 recovery packet source SHA is not qualified")
     if type(expected_mpi_size) is not int or expected_mpi_size <= 0:
         raise ValueError("Task42 recovery MPI size must be a positive integer")
@@ -510,10 +531,10 @@ def verify_task42_recovery_archive(
         raise ValueError("Task42 recovery resolved-config SHA mismatch")
     if physical_sha_text != identity.get("physical_model_sha256"):
         raise ValueError("Task42 recovery physical-model SHA mismatch")
-    if source_sha_text != allowed_source_sha:
+    if source_sha_text != archive_source_sha:
         raise ValueError("Task42 recovery source_sha.txt mismatch")
     if (
-        run_manifest.get("source_sha") != allowed_source_sha
+        run_manifest.get("source_sha") != archive_source_sha
         or run_manifest.get("resolved_config_sha256") != resolved_sha
         or run_manifest.get("input_sha256") != input_sha
         or run_manifest.get("physical_model_sha256") != physical_sha_text

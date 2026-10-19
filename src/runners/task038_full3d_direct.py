@@ -5,14 +5,17 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from collections.abc import Callable, Mapping
+from dataclasses import replace
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from src.io.input_validation import (
     TASK42_13P5_FULL3D_MODEL_ID,
     TASK42_DIRECT_FACTOR_LIFECYCLE,
     simulation_config_3d_from_normalized,
 )
+from src.io.resolved_config import canonical_json_bytes
 
 TASK42_RECOVERY_ARCHIVE_SOURCE_SHA = "bafee20f02d2fdb04f34ad2c5f5ba33cb7215c3a"
 
@@ -273,9 +276,12 @@ def _task42_pre_recovery_packet_identity(
 
 
 def _task42_packet_recovery_expected_identity(
-    payload: Mapping[str, Any], *, resolved_config_sha256: str
+    payload: Mapping[str, Any],
+    *,
+    resolved_config_sha256: str,
+    source_sha: str = TASK42_RECOVERY_ARCHIVE_SOURCE_SHA,
 ) -> dict[str, Any]:
-    """Bind recovery to current physics/config while preserving archived source identity."""
+    """Bind recovery to current physics/config and one qualified source identity."""
 
     provenance = payload.get("provenance")
     if not isinstance(provenance, Mapping):
@@ -295,7 +301,7 @@ def _task42_packet_recovery_expected_identity(
         raise ValueError("Task42 packet recovery is missing resolved identity fields")
     return {
         "schema": "task42.13p5.full3d.pre_recovery.identity.v1",
-        "source_sha": TASK42_RECOVERY_ARCHIVE_SOURCE_SHA,
+        "source_sha": source_sha,
         "input_sha256": provenance.get("input_sha256"),
         "physical_model_sha256": provenance.get("physical_model_sha256"),
         "resolved_config_sha256": resolved_config_sha256,
@@ -313,6 +319,122 @@ def _task42_packet_recovery_expected_identity(
         "materials": dict(materials),
         "discretization": dict(discretization),
     }
+
+
+def _task42_output_only_delta_errors(
+    archive_payload: Mapping[str, Any],
+    effective_payload: Mapping[str, Any],
+    *,
+    allow_probe_override: bool,
+) -> list[str]:
+    """Allow only the two registered exterior diffraction-probe changes."""
+
+    errors: list[str] = []
+    archive_keys = set(archive_payload)
+    effective_keys = set(effective_payload)
+    if archive_keys != effective_keys:
+        errors.append("resolved top-level fields changed")
+    for key in archive_keys & effective_keys:
+        if key == "output":
+            continue
+        if archive_payload[key] != effective_payload[key]:
+            errors.append(f"resolved field {key!r} changed outside output probes")
+    archive_output = archive_payload.get("output")
+    effective_output = effective_payload.get("output")
+    if not isinstance(archive_output, Mapping) or not isinstance(
+        effective_output, Mapping
+    ):
+        errors.append("archive/effective output sections are not mappings")
+    elif set(archive_output) != set(effective_output):
+        errors.append("output fields changed beyond the registered probe values")
+    else:
+        allowed_output_fields = (
+            {"top_probe_z_nm", "bottom_probe_z_nm"}
+            if allow_probe_override
+            else set()
+        )
+        if any(
+            archive_output[key] != effective_output[key]
+            for key in set(archive_output) - allowed_output_fields
+        ):
+            errors.append("an output field other than the two probes changed")
+    return errors
+
+
+def _task42_write_output_probe_receipts(
+    *,
+    comm: Any,
+    numerical_output: Path,
+    effective_output_bytes: bytes,
+    identity_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Write Task42 output-only receipts on rank 0 and share the result."""
+
+    effective_path = numerical_output / "effective_output_config.json"
+    identity_path = numerical_output / "output_sampling_identity.json"
+    identity_bytes = b""
+    try:
+        if not isinstance(effective_output_bytes, bytes):
+            raise TypeError("effective output config must be serialized bytes")
+        identity_bytes = canonical_json_bytes(dict(identity_payload)) + b"\n"
+        effective_sha256 = hashlib.sha256(effective_output_bytes).hexdigest()
+        identity_sha256 = hashlib.sha256(identity_bytes).hexdigest()
+        if identity_payload.get("effective_output_config_sha256") != effective_sha256:
+            raise ValueError("effective output config digest does not match its bytes")
+        local_prepare = {
+            "error": None,
+            "effective_output_config_sha256": effective_sha256,
+            "output_sampling_identity_sha256": identity_sha256,
+        }
+    except Exception as exc:  # noqa: BLE001 - synchronize local preparation before writing
+        local_prepare = {"error": f"{type(exc).__name__}: {exc}"}
+
+    preparations = comm.allgather(local_prepare)
+    preparation_errors = []
+    for rank, row in enumerate(preparations):
+        if not isinstance(row, Mapping):
+            preparation_errors.append(f"rank {rank}: invalid preparation record")
+        elif row.get("error"):
+            preparation_errors.append(f"rank {rank}: {row.get('error')}")
+    if preparation_errors:
+        raise ValueError(
+            "Task42 output-probe receipt preparation refused: "
+            + "; ".join(preparation_errors)
+        )
+    first_prepare = preparations[0]
+    if any(row != first_prepare for row in preparations[1:]):
+        raise ValueError("Task42 output-probe receipt inputs differ across MPI ranks")
+
+    receipt = dict(identity_payload)
+    receipt["output_sampling_identity_sha256"] = first_prepare[
+        "output_sampling_identity_sha256"
+    ]
+    writer_status = None
+    if comm.rank == 0:
+        try:
+            numerical_output.mkdir(parents=True, exist_ok=True)
+            with effective_path.open("xb") as effective_file:
+                effective_file.write(effective_output_bytes)
+            with identity_path.open("xb") as identity_file:
+                identity_file.write(identity_bytes)
+            writer_status = {"error": None, "receipt": receipt}
+        except Exception as exc:  # noqa: BLE001 - broadcast local O_EXCL/write failure
+            writer_status = {"error": f"{type(exc).__name__}: {exc}", "receipt": None}
+
+    writer_status = comm.bcast(writer_status, root=0)
+    if not isinstance(writer_status, Mapping):
+        raise TypeError("Task42 output-probe receipt writer returned no status")
+    writer_error = writer_status.get("error")
+    if writer_error:
+        raise ValueError(f"Task42 output-probe receipt writer refused: {writer_error}")
+    written_receipt = writer_status.get("receipt")
+    if (
+        not isinstance(written_receipt, Mapping)
+        or written_receipt.get("output_sampling_identity_sha256")
+        != first_prepare["output_sampling_identity_sha256"]
+    ):
+        raise ValueError("Task42 output-probe receipt writer returned an invalid receipt")
+    return dict(written_receipt)
 
 
 def _canonical_authority_errors(summary: Mapping[str, Any]) -> list[str]:
@@ -367,6 +489,9 @@ def run_full3d_direct(
     task42_bridge_path: str | Path | None = None,
     task42_packet_recovery_manifest: str | Path | None = None,
     task42_packet_recovery_manifest_sha256: str | None = None,
+    task42_packet_recovery_archive_source_sha: str | None = None,
+    task42_packet_recovery_archive_resolved_config_sha256: str | None = None,
+    task42_packet_recovery_output_probes: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run one connected Full3D direct stage and inspect its returned summary."""
 
@@ -424,8 +549,52 @@ def run_full3d_direct(
         task42_stage_gate is not None
         or task42_bridge_path is not None
         or task42_packet_recovery
+        or task42_packet_recovery_output_probes is not None
     ):
         raise ValueError("Task42 stage gate/bridge arguments are not valid on other profiles")
+    if task42_packet_recovery_output_probes is not None and not task42_packet_recovery:
+        raise ValueError(
+            "Task42 output-probe override is allowed only with a verified packet recovery"
+        )
+    if (
+        task42_packet_recovery_archive_source_sha is not None
+        and not task42_packet_recovery
+    ):
+        raise ValueError(
+            "Task42 archive-source override is allowed only with a verified packet recovery"
+        )
+    if task42_packet_recovery_archive_source_sha is not None and (
+        len(task42_packet_recovery_archive_source_sha) != 40
+        or any(
+            character not in "0123456789abcdef"
+            for character in task42_packet_recovery_archive_source_sha
+        )
+    ):
+        raise ValueError("Task42 archive source SHA must be 40 lowercase hex characters")
+    if (
+        task42_packet_recovery_archive_resolved_config_sha256 is not None
+        and not task42_packet_recovery
+    ):
+        raise ValueError(
+            "Task42 archive resolved-config SHA is allowed only with packet recovery"
+        )
+    if task42_packet_recovery_archive_resolved_config_sha256 is not None and (
+        len(task42_packet_recovery_archive_resolved_config_sha256) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in task42_packet_recovery_archive_resolved_config_sha256
+        )
+    ):
+        raise ValueError(
+            "Task42 archive resolved-config SHA must be 64 lowercase hex characters"
+        )
+    if (
+        task42_packet_recovery_output_probes is not None
+        and task42_packet_recovery_archive_resolved_config_sha256 is None
+    ):
+        raise ValueError(
+            "Task42 output-probe recovery requires the separately bound archive config SHA"
+        )
     packet_directory = None
     packet_identity = None
     if lifecycle == "release_before_recovery":
@@ -493,6 +662,8 @@ def run_full3d_direct(
     runner_kwargs: dict[str, Any] = {
         "canonical_vector_export": canonical_vector_export,
     }
+    recovery_identity: Mapping[str, Any] | None = None
+    archive_probe_values_nm: Mapping[str, Any] | None = None
     if canonical_vector_export:
         runner_kwargs["solution_observer"] = solution_observer
     if packet_directory is not None:
@@ -517,12 +688,37 @@ def run_full3d_direct(
         from src.solvers.full3d_lifecycle_packet import verify_task42_recovery_archive
 
         recovery_path = Path(task42_packet_recovery_manifest).resolve(strict=True)
-        expected_identity = _task42_packet_recovery_expected_identity(
-            resolved_payload,
-            resolved_config_sha256=str(resolved_config_sha256),
+        if not isinstance(source_sha, str) or len(source_sha) != 40:
+            raise ValueError("Task42 packet recovery requires the complete current source SHA")
+        archive_config_sha = (
+            task42_packet_recovery_archive_resolved_config_sha256
+            or resolved_config_sha256
+        )
+        if not isinstance(archive_config_sha, str) or len(archive_config_sha) != 64:
+            raise ValueError(
+                "Task42 packet recovery requires the archive resolved-config SHA"
+            )
+        allowed_source_shas = tuple(
+            dict.fromkeys(
+                value
+                for value in (
+                    TASK42_RECOVERY_ARCHIVE_SOURCE_SHA,
+                    source_sha,
+                    task42_packet_recovery_archive_source_sha,
+                )
+                if value is not None
+            )
+        )
+        expected_identities = tuple(
+            _task42_packet_recovery_expected_identity(
+                resolved_payload,
+                resolved_config_sha256=archive_config_sha,
+                source_sha=archive_source_sha,
+            )
+            for archive_source_sha in allowed_source_shas
         )
         identity_bytes = json.dumps(
-            expected_identity, sort_keys=True, separators=(",", ":")
+            expected_identities, sort_keys=True, separators=(",", ":")
         ).encode("utf-8")
         identity_digest = hashlib.sha256(identity_bytes).hexdigest()
         comm = MPI.COMM_WORLD
@@ -537,11 +733,43 @@ def run_full3d_direct(
                     expected_manifest_sha256=str(
                         task42_packet_recovery_manifest_sha256
                     ),
-                    expected_identity=expected_identity,
-                    allowed_source_sha=TASK42_RECOVERY_ARCHIVE_SOURCE_SHA,
+                    expected_identity=expected_identities,
+                    allowed_source_shas=allowed_source_shas,
                     expected_mpi_size=int(resolved_payload["execution"]["mpi_size"]),
                 )
-                archive_status = {"receipt": receipt, "error": None}
+                archive_run_root = Path(str(receipt["run_root"]))
+                archive_config_path = archive_run_root / "resolved_config.json"
+                archive_config_bytes = archive_config_path.read_bytes()
+                if hashlib.sha256(archive_config_bytes).hexdigest() != archive_config_sha:
+                    raise ValueError(
+                        "Task42 archive resolved-config file does not match its bound SHA"
+                    )
+                archive_payload = json.loads(archive_config_bytes)
+                if not isinstance(archive_payload, Mapping):
+                    raise TypeError("Task42 archive resolved config is not an object")
+                archive_output = archive_payload.get("output")
+                if not isinstance(archive_output, Mapping):
+                    raise TypeError("Task42 archive output config is not an object")
+                output_delta_errors = _task42_output_only_delta_errors(
+                    archive_payload,
+                    resolved_payload,
+                    allow_probe_override=(
+                        task42_packet_recovery_output_probes is not None
+                    ),
+                )
+                if output_delta_errors:
+                    raise ValueError(
+                        "Task42 effective config differs outside the output-probe whitelist: "
+                        + "; ".join(output_delta_errors)
+                    )
+                archive_status = {
+                    "receipt": receipt,
+                    "archive_probe_values_nm": {
+                        "top_probe_z_nm": archive_output.get("top_probe_z_nm"),
+                        "bottom_probe_z_nm": archive_output.get("bottom_probe_z_nm"),
+                    },
+                    "error": None,
+                }
             except Exception as exc:  # noqa: BLE001 - root validation is broadcast before setup
                 archive_status = {
                     "receipt": None,
@@ -555,14 +783,110 @@ def run_full3d_direct(
                 else archive_status.get("error")
             )
             raise ValueError(f"Task42 packet recovery archive rejected: {detail}")
+        receipt = archive_status.get("receipt")
+        archive_probe_values = archive_status.get("archive_probe_values_nm")
+        if archive_probe_values is not None:
+            if not isinstance(archive_probe_values, Mapping) or set(
+                archive_probe_values
+            ) != {"top_probe_z_nm", "bottom_probe_z_nm"}:
+                raise ValueError("Task42 recovery archive probe identity is invalid")
+            archive_probe_values_nm = dict(archive_probe_values)
+        recovered_identity = (
+            receipt.get("identity") if isinstance(receipt, Mapping) else None
+        )
+        if not isinstance(recovered_identity, Mapping):
+            raise ValueError("Task42 packet recovery verifier returned no identity")
+        recovery_identity = dict(recovered_identity)
+        archive_run_root = Path(str(receipt["run_root"])).resolve(strict=True)
         runner_kwargs.update(
             {
                 "task42_packet_recovery_manifest": recovery_path,
                 "task42_packet_recovery_manifest_sha256": (
                     task42_packet_recovery_manifest_sha256
                 ),
-                "task42_packet_recovery_identity": expected_identity,
+                "task42_packet_recovery_identity": recovery_identity,
             }
+        )
+    output_probe_override_receipt = None
+    if task42_packet_recovery_output_probes is not None:
+        if set(task42_packet_recovery_output_probes) != {
+            "top_probe_z_nm",
+            "bottom_probe_z_nm",
+        }:
+            raise ValueError(
+                "Task42 recovery output override accepts only top/bottom probe coordinates"
+            )
+        top_probe = task42_packet_recovery_output_probes.get("top_probe_z_nm")
+        bottom_probe = task42_packet_recovery_output_probes.get("bottom_probe_z_nm")
+        if (
+            resolved_payload.get("model_id") != TASK42_13P5_FULL3D_MODEL_ID
+            or not _finite_number(top_probe)
+            or not _finite_number(bottom_probe)
+            or float(top_probe) != 125.0
+            or float(bottom_probe) != -5.0
+            or float(output.get("top_probe_z_nm", math.nan)) != float(top_probe)
+            or float(output.get("bottom_probe_z_nm", math.nan)) != float(bottom_probe)
+        ):
+            raise ValueError(
+                "Task42 recovery output override must match the effective resolved config and the registered 13.5 nm exterior probes 125/-5 nm"
+            )
+        # The archive has already passed its original input/resolved/physics/source
+        # identity checks. These coordinates affect only postprocessing samples.
+        cfg = replace(
+            cfg,
+            diffraction_top_probe_z=float(top_probe),
+            diffraction_bottom_probe_z=float(bottom_probe),
+        )
+        from src.postprocessing.diffraction_3d import _probe_z_locations
+
+        effective_top, effective_bottom = _probe_z_locations(cfg)
+        if not isinstance(recovery_identity, Mapping):
+            raise ValueError("Task42 output override has no verified archive identity")
+        if not isinstance(archive_probe_values_nm, Mapping):
+            raise ValueError("Task42 output override has no verified archived probe values")
+        effective_output_payload = dict(resolved_payload)
+        effective_output_payload["output"] = {
+            **dict(output),
+            "top_probe_z_nm": effective_top,
+            "bottom_probe_z_nm": effective_bottom,
+        }
+        effective_output_bytes = canonical_json_bytes(effective_output_payload) + b"\n"
+        effective_output_path = numerical_output / "effective_output_config.json"
+        output_probe_override_receipt = {
+            "schema": "task42.packet_recovery_output_probe_override.v1",
+            "policy": "postprocess_only_after_original_archive_identity_pass",
+            "archive_config_path": str(archive_run_root / "resolved_config.json"),
+            "archive_source_sha": recovery_identity.get("source_sha"),
+            "archive_input_sha256": recovery_identity.get("input_sha256"),
+            "archive_resolved_config_sha256": recovery_identity.get(
+                "resolved_config_sha256"
+            ),
+            "archive_physical_model_sha256": recovery_identity.get(
+                "physical_model_sha256"
+            ),
+            "archive_probe_values_nm": dict(archive_probe_values_nm),
+            "effective_probe_values_nm": {
+                "top_probe_z_nm": effective_top,
+                "bottom_probe_z_nm": effective_bottom,
+            },
+            "effective_output_config_path": str(effective_output_path),
+            "effective_output_config_sha256": hashlib.sha256(
+                effective_output_bytes
+            ).hexdigest(),
+            "effective_run_resolved_config_path": str(
+                Path(run_directory).resolve() / "resolved_config.json"
+            ),
+            "effective_run_resolved_config_sha256": resolved_config_sha256,
+            "output_sampling_identity_path": str(
+                numerical_output / "output_sampling_identity.json"
+            ),
+            "physical_discretization_and_mode_identity_unchanged": True,
+        }
+        output_probe_override_receipt = _task42_write_output_probe_receipts(
+            comm=comm,
+            numerical_output=numerical_output,
+            effective_output_bytes=effective_output_bytes,
+            identity_payload=output_probe_override_receipt,
         )
     summary = runner(
         cfg,
@@ -576,6 +900,11 @@ def run_full3d_direct(
             "summary": None,
             "numerical_output_directory": str(numerical_output),
         }
+    if output_probe_override_receipt is not None:
+        summary = dict(summary)
+        summary["task42_packet_recovery_output_probe_override"] = (
+            output_probe_override_receipt
+        )
     errors = (
         _stage4_authority_errors(
             summary, residual_limit=5.0e-9 if task42_lifecycle else 1.0e-9

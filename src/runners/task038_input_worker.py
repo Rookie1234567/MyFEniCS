@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -465,9 +466,23 @@ def _dispatch_resolved_payload(
     task039_trace_audit: bool = False,
     task42_packet_recovery_manifest: Path | None = None,
     task42_packet_recovery_manifest_sha256: str | None = None,
+    task42_packet_recovery_archive_source_sha: str | None = None,
+    task42_packet_recovery_archive_resolved_config_sha256: str | None = None,
+    task42_packet_recovery_output_probes: Mapping[str, Any] | None = None,
     comm: Any | None = None,
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
+
+    if (task42_packet_recovery_manifest is None) != (
+        task42_packet_recovery_manifest_sha256 is None
+    ):
+        return 4, ["Task42 recovery manifest and SHA must be supplied together"]
+    if task42_packet_recovery_manifest is None and (
+        task42_packet_recovery_archive_source_sha is not None
+        or task42_packet_recovery_archive_resolved_config_sha256 is not None
+        or task42_packet_recovery_output_probes is not None
+    ):
+        return 4, ["Task42 archive identity/output overrides require a packet recovery"]
 
     pending_07nm = task039_07nm_launch_error(resolved_payload)
     if pending_07nm is not None:
@@ -507,6 +522,17 @@ def _dispatch_resolved_payload(
                     "packet_recovery_manifest_sha256": (
                         task42_packet_recovery_manifest_sha256
                     ),
+                    "packet_recovery_archive_source_sha": (
+                        task42_packet_recovery_archive_source_sha
+                    ),
+                    "packet_recovery_archive_resolved_config_sha256": (
+                        task42_packet_recovery_archive_resolved_config_sha256
+                    ),
+                    "packet_recovery_output_probes": (
+                        None
+                        if task42_packet_recovery_output_probes is None
+                        else dict(task42_packet_recovery_output_probes)
+                    ),
                 }
                 bindings = comm.allgather(local_binding)
                 if len({_task42_inventory_json_bytes(row) for row in bindings}) != 1:
@@ -545,6 +571,15 @@ def _dispatch_resolved_payload(
                     ),
                     task42_packet_recovery_manifest_sha256=(
                         task42_packet_recovery_manifest_sha256
+                    ),
+                    task42_packet_recovery_archive_source_sha=(
+                        task42_packet_recovery_archive_source_sha
+                    ),
+                    task42_packet_recovery_archive_resolved_config_sha256=(
+                        task42_packet_recovery_archive_resolved_config_sha256
+                    ),
+                    task42_packet_recovery_output_probes=(
+                        task42_packet_recovery_output_probes
                     ),
                 )
             if solver_payload.get("direct_factor_lifecycle") == "release_before_recovery":

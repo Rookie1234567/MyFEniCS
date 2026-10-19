@@ -1,16 +1,22 @@
-"""Small Task42 direct-path contracts; no mesh, factorization, or PDE is built."""
+"""Task42 contracts, including an explicitly reduced 3D output integration fixture."""
 
 from __future__ import annotations
 
 import ast
+import csv
 import hashlib
 import inspect
 import json
 import os
 import shutil
+import subprocess
 import sys
+from collections.abc import Mapping
+from dataclasses import replace
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -22,6 +28,13 @@ import src.solvers.dtn_port_3d as dtn
 import src.solvers.solve_maxwell_3d_stage_4b_block_grating as stage4b
 from scripts import run_case
 from src.io.execution_plan import WORKER_MODULE, build_execution_plan
+from src.io.input_validation import (
+    _build_3d_config,
+    simulation_config_3d_from_normalized,
+    task42_profile_errors,
+)
+from src.io.resolved_config import canonical_json_bytes
+from src.io.run_specification import RunSpecification
 from src.runners import task038_full3d_direct, task038_input_worker, task038_launcher
 from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverRequest
 from src.solvers.full3d_lifecycle_packet import load_packet, write_packet
@@ -29,6 +42,12 @@ from src.solvers.petsc_lu_stage import (
     TASK42_STAGED_DIRECT_STAGE_IDENTITY,
     StagedMumpsLUFactory,
     load_lu_stage_bridge,
+)
+
+TASK42_13P5 = (
+    Path(__file__).resolve().parents[2]
+    / "input/official/task42hybrid_az90_50x50_17x20_0p7nm"
+    / "13p5nm_p6h10_full3d_direct_mpi8.dat"
 )
 
 
@@ -1604,3 +1623,1388 @@ def test_task42_progress_collective_exception_is_not_caught_for_recovery(
     assert caught.value is sentinel
     assert factor.destroy_calls == 1
     assert collective_count_at_progress == [comm.collective_count]
+
+
+def _task42_small_full_output_specification(
+    artifact_root: Path,
+) -> RunSpecification:
+    """Keep Task42 physics fixed in a p2/h50/MPI1 fixture, not a formal A1 run."""
+
+    from src.io import load_and_resolve
+
+    official = load_and_resolve(TASK42_13P5)
+    fixture_input = TASK42_13P5.read_text(encoding="utf-8")
+    replacements = (
+        (
+            'run_id = "task42_13p5_p6h10_full3d_direct_mpi8"',
+            'run_id = "task42_13p5_test_only_p2h50_direct_recovery"',
+        ),
+        ("nedelec_degree = 6", "nedelec_degree = 2"),
+        ("visualization_degree = 6", "visualization_degree = 2"),
+        ("mesh_target_nm = 10.0", "mesh_target_nm = 50.0"),
+        ("mpi_size = 8", "mpi_size = 1"),
+    )
+    for old, new in replacements:
+        if fixture_input.count(old) != 1:
+            raise AssertionError(f"test-only Task42 input field is not unique: {old}")
+        fixture_input = fixture_input.replace(old, new, 1)
+    fixture_input = (
+        "# TEST-ONLY reduced-discretization fixture; not a formal Task42 A1 run.\n"
+        + fixture_input
+    )
+    fixture_bytes = fixture_input.encode("utf-8")
+    fixture_input_path = artifact_root / "task42_test_only_p2h50_mpi1.dat"
+    fixture_input_path.write_bytes(fixture_bytes)
+
+    normalized = official.as_jsonable()
+    identity = dict(official.identity)
+    identity["run_id"] = "task42_13p5_test_only_p2h50_direct_recovery"
+    normalized["run_id"] = identity["run_id"]
+    discretization = dict(official.discretization)
+    discretization.update(
+        {
+            "nedelec_degree": 2,
+            "visualization_degree": 2,
+            "mesh_target_nm": 50.0,
+        }
+    )
+    execution = dict(official.execution)
+    execution["mpi_size"] = 1
+    normalized["discretization"] = discretization
+    normalized["execution"] = execution
+    normalized["derived"] = _build_3d_config(normalized)
+    physical = {
+        section: normalized[section]
+        for section in (
+            "geometry",
+            "materials",
+            "incidence",
+            "discretization",
+            "boundary",
+        )
+    }
+    physical_sha256 = hashlib.sha256(canonical_json_bytes(physical)).hexdigest()
+    input_sha256 = hashlib.sha256(fixture_bytes).hexdigest()
+    output_parent = (
+        Path(str(official.output["results_root"]))
+        / str(official.identity["model_id"])
+        / f"{identity['run_id']}__full3d_direct__mpi1__Mna"
+    )
+    specification = replace(
+        official,
+        identity=identity,
+        discretization=discretization,
+        execution=execution,
+        derived=normalized["derived"],
+        source_path=fixture_input_path,
+        raw_input_bytes=fixture_bytes,
+        input_sha256=input_sha256,
+        physical_model_sha256=physical_sha256,
+        expected_output_parent=output_parent,
+    )
+    payload = specification.as_jsonable()
+    official_payload = official.as_jsonable()
+    assert official_payload["output"]["top_probe_z_nm"] == pytest.approx(125.0)
+    assert official_payload["output"]["bottom_probe_z_nm"] == pytest.approx(-5.0)
+    assert official_payload["output"]["reference_plane_z_nm"] == [
+        10.0,
+        30.0,
+        60.0,
+        90.0,
+        110.0,
+    ]
+    for section in ("geometry", "materials", "incidence", "boundary", "method", "solver"):
+        assert payload[section] == official_payload[section]
+    return specification
+
+
+def test_task42_diffraction_probes_use_uniform_exterior_layers() -> None:
+    from src.io import load_and_resolve
+    from src.postprocessing.diffraction_3d import _probe_z_locations
+
+    payload = load_and_resolve(TASK42_13P5).as_jsonable()
+    cfg = simulation_config_3d_from_normalized(payload)
+    assert task42_profile_errors(payload) == []
+    assert _probe_z_locations(cfg) == pytest.approx((125.0, -5.0))
+    invalid_top_payload = dict(payload)
+    invalid_top_payload["output"] = dict(payload["output"])
+    invalid_top_payload["output"]["top_probe_z_nm"] = 110.0
+    assert any(
+        path == "output.top_probe_z_nm"
+        for path, _message in task42_profile_errors(invalid_top_payload)
+    )
+    invalid_bottom_payload = dict(payload)
+    invalid_bottom_payload["output"] = dict(payload["output"])
+    invalid_bottom_payload["output"]["bottom_probe_z_nm"] = 10.0
+    assert any(
+        path == "output.bottom_probe_z_nm"
+        for path, _message in task42_profile_errors(invalid_bottom_payload)
+    )
+    with pytest.raises(ValueError, match="above the block top z=120 nm"):
+        _probe_z_locations(replace(cfg, diffraction_top_probe_z=110.0))
+    with pytest.raises(ValueError, match="uniform substrate layer"):
+        _probe_z_locations(replace(cfg, diffraction_bottom_probe_z=10.0))
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
+    reason="reduced Task42 direct-to-packet-recovery output fixture is serial",
+)
+def test_task42_small_direct_packet_recovery_writes_full_physical_outputs(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Run actual Task42 direct and recovery paths on a test-only reduced 3D mesh."""
+
+    assert os.environ.get("MYFENICS_NATIVE_COMPLEX_ENV") == "1"
+    for thread_name in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "BLIS_NUM_THREADS",
+    ):
+        assert os.environ.get(thread_name) == "1", thread_name
+
+    configured_root = os.environ.get("TASK42_TINY_OUTPUT_ROOT")
+    artifact_root = (
+        Path(configured_root).resolve()
+        if configured_root
+        else (tmp_path / "task42_small_direct_recovery").resolve()
+    )
+    artifact_root.mkdir(parents=True, exist_ok=False)
+    specification = _task42_small_full_output_specification(artifact_root)
+    payload = specification.as_jsonable()
+    git_head = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"],
+        cwd=Path(__file__).resolve().parents[2],
+        text=True,
+    ).strip()
+    source_files = (
+        "input/official/task42hybrid_az90_50x50_17x20_0p7nm/13p5nm_p6h10_full3d_direct_mpi8.dat",
+        "src/io/input_validation.py",
+        "src/postprocessing/diffraction_3d.py",
+        "src/runners/task038_full3d_direct.py",
+        "src/runners/task038_input_worker.py",
+        "src/runners/task038_launcher.py",
+        "src/solvers/dtn_port_3d.py",
+        "src/solvers/full3d_lifecycle_packet.py",
+        "src/test/test_task42_direct_contract.py",
+    )
+    source_file_hashes = {
+        name: hashlib.sha256((Path(__file__).resolve().parents[2] / name).read_bytes()).hexdigest()
+        for name in source_files
+    }
+    source_sha = hashlib.sha1(
+        json.dumps(
+            {"git_head": git_head, "source_files_sha256": source_file_hashes},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    assert len(source_sha) == 40
+    bridge_path = Path(
+        os.environ[task038_input_worker.TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV]
+    ).resolve(strict=True)
+    assert bridge_path.is_file()
+    bridge_build_record_path = bridge_path.parents[1] / "build_commands.json"
+    bridge_build_record = json.loads(
+        bridge_build_record_path.read_text(encoding="utf-8")
+    )
+    bridge_source_path = Path(bridge_build_record["source_path"]).resolve(strict=True)
+    bridge_sha256 = hashlib.sha256(bridge_path.read_bytes()).hexdigest()
+    bridge_source_sha256 = hashlib.sha256(bridge_source_path.read_bytes()).hexdigest()
+    assert bridge_build_record["extension_sha256"] == bridge_sha256
+    assert bridge_build_record["source_sha256"] == bridge_source_sha256
+    adapter_identity = task038_launcher.method_adapter_identity(
+        "full3d_direct", str(payload["model_id"])
+    )
+    captured_results: list[dict[str, Any]] = []
+    original_adapter = task038_full3d_direct.run_full3d_direct
+
+    def capture_actual_adapter_result(*args, **kwargs):
+        result = original_adapter(*args, **kwargs)
+        captured_results.append(result)
+        return result
+
+    monkeypatch.setattr(
+        task038_full3d_direct,
+        "run_full3d_direct",
+        capture_actual_adapter_result,
+    )
+    monkeypatch.setenv("TASK038_JOB_ROOT_PID", str(os.getpid()))
+
+    def run_worker_attempt(
+        label: str,
+        *,
+        recovery_manifest: Path | None = None,
+        recovery_manifest_sha256: str | None = None,
+    ) -> tuple[dict[str, Any], Path, str]:
+        run_root = (artifact_root / label).resolve()
+        run_root.mkdir()
+        _manifest, resolved_sha256 = task038_launcher._write_bootstrap(
+            specification,
+            run_root,
+            source_sha=source_sha,
+            adapter_identity=adapter_identity,
+            start_time=datetime.now(timezone.utc).isoformat(),
+        )
+        if recovery_manifest is None:
+            monkeypatch.setenv(
+                task038_input_worker.TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV,
+                str(bridge_path),
+            )
+        else:
+            monkeypatch.delenv(
+                task038_input_worker.TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV,
+                raising=False,
+            )
+        result_count_before = len(captured_results)
+        dispatch_status = task038_input_worker._dispatch_resolved_payload(
+            payload,
+            expected_method="full3d_direct",
+            output_directory=run_root,
+            expected_source_sha=source_sha,
+            expected_resolved_config_sha256=resolved_sha256,
+            task42_packet_recovery_manifest=recovery_manifest,
+            task42_packet_recovery_manifest_sha256=recovery_manifest_sha256,
+            comm=MPI.COMM_WORLD,
+        )
+        dispatch_receipt = run_root / "worker_dispatch_result.json"
+        dispatch_receipt.write_text(
+            json.dumps(
+                {
+                    "schema": "task42.test_worker_dispatch_result.v1",
+                    "run_label": label,
+                    "status_code": int(dispatch_status[0]),
+                    "errors": list(dispatch_status[1]),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        assert dispatch_status == (0, [])
+        assert len(captured_results) == result_count_before + 1
+        adapter_result = captured_results[-1]
+        assert adapter_result["passed"] is True, adapter_result.get("errors")
+        run_manifest = json.loads(
+            (run_root / "run_manifest.json").read_text(encoding="utf-8")
+        )
+        resolved_path = run_root / "resolved_config.json"
+        input_path = run_root / "input_original.dat"
+        assert hashlib.sha256(resolved_path.read_bytes()).hexdigest() == resolved_sha256
+        assert hashlib.sha256(input_path.read_bytes()).hexdigest() == specification.input_sha256
+        assert run_manifest["source_sha"] == source_sha
+        assert run_manifest["resolved_config_sha256"] == resolved_sha256
+        assert run_manifest["output_directory"] == str(run_root)
+        assert run_manifest["numerical_output_directory"] == str(
+            run_root / "numerical_output"
+        )
+        return adapter_result, run_root / "numerical_output", resolved_sha256
+
+    direct_result, direct_output, direct_resolved_sha256 = run_worker_attempt(
+        "direct"
+    )
+    direct_summary = direct_result["summary"]
+    assert isinstance(direct_summary, dict)
+    assert direct_summary["actual_pc_factor_solver_type"] == "MATSOLVERMUMPS"
+    packet_manifest = direct_output / "pre_recovery_packet" / "manifest.json"
+    assert packet_manifest.is_file()
+    packet_manifest_sha256 = hashlib.sha256(packet_manifest.read_bytes()).hexdigest()
+    packet = json.loads(packet_manifest.read_text(encoding="utf-8"))
+    assert packet["identity"]["source_sha"] == source_sha
+    assert packet["identity"]["input_sha256"] == specification.input_sha256
+    assert packet["identity"]["physical_model_sha256"] == specification.physical_model_sha256
+    assert packet["identity"]["resolved_config_sha256"] == direct_resolved_sha256
+    assert packet["metadata"]["task42_direct_original_residual_pass"] is True
+
+    recovery_result, recovery_output, recovery_resolved_sha256 = run_worker_attempt(
+        "recovery",
+        recovery_manifest=packet_manifest,
+        recovery_manifest_sha256=packet_manifest_sha256,
+    )
+    recovery_summary = recovery_result["summary"]
+    assert isinstance(recovery_summary, dict)
+    assert recovery_resolved_sha256 == direct_resolved_sha256
+    assert recovery_summary["task42_packet_recovery"] is not None
+    recovery_evidence = recovery_summary["task42_packet_recovery_evidence"]
+    assert recovery_evidence["global_factor_called"] is False
+    assert recovery_evidence["new_physical_solve_called"] is False
+    assert recovery_summary["actual_pc_factor_solver_type"] is None
+
+    output_receipts: dict[str, dict[str, Any]] = {}
+    loaded_fields: dict[str, dict[str, np.ndarray]] = {}
+    for label, output, summary in (
+        ("direct", direct_output, direct_summary),
+        ("recovery", recovery_output, recovery_summary),
+    ):
+        full_residual = summary["task42_full_true_residual"]
+        assert full_residual["finite"] is True
+        relative_residual = float(summary["linear_system_relative_residual"])
+        assert np.isfinite(relative_residual) and 0.0 <= relative_residual <= 5.0e-9
+        assert full_residual["linear_system_relative_residual"] == relative_residual
+        assert summary["case_status"] == "completed"
+        assert summary["official_result"] is True
+        assert summary["external_rta_gate_pass"] is True
+        for key in (
+            "R_total",
+            "T_total",
+            "A_balance",
+            "A_volume_total",
+            "energy_closure_error_port_volume",
+        ):
+            assert np.isfinite(float(summary[key])), (label, key, summary.get(key))
+
+        field_path = Path(summary["paraview_file"])
+        if not field_path.is_absolute():
+            field_path = output / field_path
+        assert field_path.is_file(), (label, field_path)
+        import pyvista as pv
+
+        grid = pv.read(field_path)
+        arrays: dict[str, np.ndarray] = {}
+        for field_name in ("E_tot_V_per_m", "H_A_per_m"):
+            for suffix in ("real", "imag", "abs"):
+                key = f"{field_name}_{suffix}"
+                values = np.asarray(grid.point_data[key])
+                assert values.size > 0 and np.isfinite(values).all(), (label, key)
+                if suffix == "abs":
+                    assert float(np.max(values)) > 0.0, (label, key)
+                if suffix != "abs":
+                    arrays[key] = values.copy()
+        loaded_fields[label] = arrays
+
+        port_path = output / "port_power.json"
+        diffraction_path = output / "dtn_port_diffraction_orders_3d.json"
+        volume_path = output / "volume_absorption.json"
+        summary_csv = output / "power_summary.csv"
+        for required_path in (port_path, diffraction_path, volume_path, summary_csv):
+            assert required_path.is_file(), (label, required_path)
+        port_data = json.loads(port_path.read_text(encoding="utf-8"))
+        diffraction_data = json.loads(diffraction_path.read_text(encoding="utf-8"))
+        volume_data = json.loads(volume_path.read_text(encoding="utf-8"))
+        orders = diffraction_data["orders"]
+        assert orders and {row["side"] for row in orders} == {"top", "bottom"}
+        assert all(abs(int(row["m"])) <= 3 and abs(int(row["n"])) <= 7 for row in orders)
+        expected_order_keys = {
+            (
+                str(row["side"]),
+                int(row["m"]),
+                int(row["n"]),
+                str(row["polarization"]),
+            )
+            for row in payload["derived"]["external_mode_inventory"]["keys"]
+        }
+        reported_order_keys = {
+            (
+                str(row["side"]),
+                int(row["m"]),
+                int(row["n"]),
+                str(row["polarization"]),
+            )
+            for row in orders
+        }
+        assert reported_order_keys == expected_order_keys
+        assert port_data["R_total"] == pytest.approx(summary["R_total"], abs=1.0e-12)
+        assert port_data["T_total"] == pytest.approx(summary["T_total"], abs=1.0e-12)
+        assert volume_data["A_volume_total"] == pytest.approx(
+            summary["A_volume_total"], abs=1.0e-12
+        )
+        assert float(summary["R_total"]) + float(summary["T_total"]) + float(
+            summary["A_volume_total"]
+        ) - 1.0 == pytest.approx(
+            float(summary["energy_closure_error_port_volume"]), abs=1.0e-10
+        )
+        with summary_csv.open(newline="", encoding="utf-8") as stream:
+            power_rows = list(csv.DictReader(stream))
+        assert power_rows and {"R", "T", "A", "status", "source"}.issubset(
+            power_rows[0]
+        )
+        output_receipts[label] = {
+            "run_root": str(output.parent),
+            "relative_residual": relative_residual,
+            "R_total": float(summary["R_total"]),
+            "T_total": float(summary["T_total"]),
+            "A_balance": float(summary["A_balance"]),
+            "A_volume_total": float(summary["A_volume_total"]),
+            "energy_closure_error_port_volume": float(
+                summary["energy_closure_error_port_volume"]
+            ),
+            "port_power_sha256": hashlib.sha256(port_path.read_bytes()).hexdigest(),
+            "diffraction_sha256": hashlib.sha256(
+                diffraction_path.read_bytes()
+            ).hexdigest(),
+            "volume_absorption_sha256": hashlib.sha256(
+                volume_path.read_bytes()
+            ).hexdigest(),
+            "field_sha256": hashlib.sha256(field_path.read_bytes()).hexdigest(),
+            "field_path": str(field_path),
+            "reported_diffraction_order_count": len(orders),
+        }
+
+    assert direct_summary["linear_system_relative_residual"] == pytest.approx(
+        recovery_summary["linear_system_relative_residual"], abs=1.0e-10
+    )
+    for key in ("R_total", "T_total", "A_balance", "A_volume_total"):
+        assert direct_summary[key] == pytest.approx(recovery_summary[key], abs=1.0e-8)
+    for field_name in loaded_fields["direct"]:
+        np.testing.assert_allclose(
+            loaded_fields["direct"][field_name],
+            loaded_fields["recovery"][field_name],
+            rtol=1.0e-8,
+            atol=1.0e-12,
+        )
+
+    packet_sha256 = hashlib.sha256(packet_manifest.read_bytes()).hexdigest()
+    receipt = {
+        "schema": "task42.small_direct_packet_recovery_output_test.v1",
+        "classification": "test_fixture_only_not_formal_A1",
+        "source_sha": source_sha,
+        "git_head": git_head,
+        "source_identity_type": "test-only fingerprint of HEAD plus listed working source hashes",
+        "source_files_sha256": source_file_hashes,
+        "official_input_sha256": hashlib.sha256(TASK42_13P5.read_bytes()).hexdigest(),
+        "test_input_sha256": specification.input_sha256,
+        "test_physical_model_sha256": specification.physical_model_sha256,
+        "bridge_path": str(bridge_path),
+        "bridge_sha256": bridge_sha256,
+        "bridge_source_path": str(bridge_source_path),
+        "bridge_source_sha256": bridge_source_sha256,
+        "physics_unchanged_from_official": True,
+        "test_discretization": dict(specification.discretization),
+        "test_mpi_size": int(specification.execution["mpi_size"]),
+        "packet_manifest_sha256": packet_sha256,
+        "packet_source_sha256": packet["identity"]["source_sha"],
+        "direct": output_receipts["direct"],
+        "recovery": output_receipts["recovery"],
+        "evidence_boundary": (
+            "actual reduced-mesh Task42 material/geometry/incidence through worker adapter, "
+            "direct factor/solve, packet write, packet restore, full residual and field/RTA output; "
+            "not the registered p6/h10/MPI8 public launch profile or formal A1 qualification"
+        ),
+    }
+    (artifact_root / "test_result.json").write_text(
+        json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+    )
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
+    reason="saved Task42 direct packet in this attempt is serial",
+)
+def test_task42_saved_packet_recovery_writes_outputs_without_new_factor(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Recover the saved tiny solve; do not create another factor or solution."""
+
+    assert os.environ.get("MYFENICS_NATIVE_COMPLEX_ENV") == "1"
+    for thread_name in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "BLIS_NUM_THREADS",
+    ):
+        assert os.environ.get(thread_name) == "1", thread_name
+
+    saved_direct_text = os.environ.get("TASK42_SAVED_DIRECT_OUTPUT")
+    if not saved_direct_text:
+        pytest.skip("no explicitly bound saved Task42 direct output was supplied")
+    saved_direct = Path(saved_direct_text).resolve(strict=True)
+    saved_numerical = saved_direct / "numerical_output"
+    original_manifest_path = saved_direct / "run_manifest.json"
+    original_resolved_path = saved_direct / "resolved_config.json"
+    original_input_path = saved_direct / "input_original.dat"
+    packet_manifest = saved_numerical / "pre_recovery_packet" / "manifest.json"
+    for required in (
+        original_manifest_path,
+        original_resolved_path,
+        original_input_path,
+        packet_manifest,
+    ):
+        assert required.is_file(), required
+
+    original_manifest_bytes = original_manifest_path.read_bytes()
+    original_resolved_bytes = original_resolved_path.read_bytes()
+    original_input_bytes = original_input_path.read_bytes()
+    packet_manifest_bytes = packet_manifest.read_bytes()
+    original_manifest = json.loads(original_manifest_bytes)
+    archive_payload = json.loads(original_resolved_bytes)
+    packet = json.loads(packet_manifest_bytes)
+    archive_manifest_sha256 = hashlib.sha256(packet_manifest_bytes).hexdigest()
+    archive_resolved_sha256 = hashlib.sha256(original_resolved_bytes).hexdigest()
+    archive_input_sha256 = hashlib.sha256(original_input_bytes).hexdigest()
+    archive_source_sha = str(original_manifest["source_sha"])
+    archive_physical_sha256 = str(original_manifest["physical_model_sha256"])
+    assert archive_manifest_sha256 == (
+        "cbc5d4f742e9ba46b91d53e38a56add0573000d9504cfc32a00468724d981a25"
+    )
+    assert hashlib.sha256(original_resolved_bytes).hexdigest() == (
+        original_manifest["resolved_config_sha256"]
+    )
+    assert archive_input_sha256 == original_manifest["input_sha256"]
+    assert archive_input_sha256 == archive_payload["provenance"]["input_sha256"]
+    assert archive_physical_sha256 == archive_payload["provenance"]["physical_model_sha256"]
+    assert archive_source_sha == packet["identity"]["source_sha"]
+    assert archive_resolved_sha256 == packet["identity"]["resolved_config_sha256"]
+    assert archive_payload["output"]["top_probe_z_nm"] == pytest.approx(110.0)
+    assert archive_payload["output"]["bottom_probe_z_nm"] == pytest.approx(10.0)
+    assert archive_payload["geometry"]["grating_height_nm"] == pytest.approx(120.0)
+    assert archive_payload["execution"]["mpi_size"] == 1
+
+    direct_progress = saved_numerical / "progress_3d.jsonl"
+    progress_rows = [
+        json.loads(line)
+        for line in direct_progress.read_text(encoding="utf-8").splitlines()
+    ]
+    direct_residual_rows = [
+        row for row in progress_rows if row.get("stage") == "after_true_residual"
+    ]
+    assert len(direct_residual_rows) == 1
+    direct_relative_residual = float(
+        direct_residual_rows[0]["linear_system_relative_residual"]
+    )
+    assert np.isfinite(direct_relative_residual)
+    assert direct_relative_residual <= 5.0e-9
+    direct_vtu = saved_numerical / "fields_3d_for_paraview.vtu"
+    assert direct_vtu.is_file()
+    direct_bp_paths = (
+        saved_numerical / "E_3d_numerical.bp",
+        saved_numerical / "H_3d_A_per_m_from_curl.bp",
+    )
+    for bp_path in direct_bp_paths:
+        assert (bp_path / "data.0").is_file() and (bp_path / "data.0").stat().st_size > 0
+    import pyvista as pv
+
+    prior_direct_grid = pv.read(direct_vtu)
+    for field_name in ("E_tot_V_per_m", "H_A_per_m"):
+        magnitude = np.asarray(prior_direct_grid.point_data[f"{field_name}_abs"])
+        assert magnitude.size and np.isfinite(magnitude).all()
+        assert float(magnitude.max()) > 0.0
+
+    configured_root = os.environ.get("TASK42_TINY_OUTPUT_ROOT")
+    output_root = (
+        Path(configured_root).resolve()
+        if configured_root
+        else (tmp_path / "task42_saved_packet_recovery").resolve()
+    )
+    output_root.mkdir(parents=True, exist_ok=False)
+    run_root = output_root / "recovery"
+    run_root.mkdir()
+    git_head = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"],
+        cwd=Path(__file__).resolve().parents[2],
+        text=True,
+    ).strip()
+    payload = json.loads(json.dumps(archive_payload))
+    payload["output"]["top_probe_z_nm"] = 125.0
+    payload["output"]["bottom_probe_z_nm"] = -5.0
+    assert task038_full3d_direct._task42_output_only_delta_errors(
+        archive_payload, payload, allow_probe_override=True
+    ) == []
+    bad_geometry_payload = json.loads(json.dumps(payload))
+    bad_geometry_payload["geometry"]["grating_height_nm"] += 1.0
+    assert task038_full3d_direct._task42_output_only_delta_errors(
+        archive_payload, bad_geometry_payload, allow_probe_override=True
+    )
+    bad_output_payload = json.loads(json.dumps(payload))
+    bad_output_payload["output"]["diffraction_order_max_m"] += 1
+    assert task038_full3d_direct._task42_output_only_delta_errors(
+        archive_payload, bad_output_payload, allow_probe_override=True
+    )
+    effective_resolved_bytes = canonical_json_bytes(payload) + b"\n"
+    effective_resolved_sha256 = hashlib.sha256(effective_resolved_bytes).hexdigest()
+    resolved_path = run_root / "resolved_config.json"
+    input_copy_path = run_root / "input_original.dat"
+    manifest_path = run_root / "run_manifest.json"
+    resolved_path.write_bytes(effective_resolved_bytes)
+    input_copy_path.write_bytes(original_input_bytes)
+    recovery_manifest = dict(original_manifest)
+    recovery_manifest.update(
+        {
+            "output_directory": str(run_root),
+            "numerical_output_directory": str(run_root / "numerical_output"),
+            "status": "recovery_only_running",
+            "result_classification": "not_run",
+            "exit_status": None,
+            "source_sha": git_head,
+            "resolved_config_sha256": effective_resolved_sha256,
+            "task42_current_source_sha_kind": "launcher_git_rev_parse_HEAD",
+            "task42_packet_recovery_archive_source_sha": archive_source_sha,
+            "task42_packet_recovery_archive_resolved_config_sha256": (
+                archive_resolved_sha256
+            ),
+            "task42_packet_recovery_source_manifest_sha256": hashlib.sha256(
+                original_manifest_bytes
+            ).hexdigest(),
+        }
+    )
+    manifest_path.write_text(
+        json.dumps(recovery_manifest, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (run_root / "source_sha.txt").write_text(git_head + "\n", encoding="ascii")
+    (run_root / "input_sha256.txt").write_text(
+        archive_input_sha256 + "\n", encoding="ascii"
+    )
+    (run_root / "physical_model_sha256.txt").write_text(
+        archive_physical_sha256 + "\n", encoding="ascii"
+    )
+
+    method_adapter = task038_launcher.method_adapter_identity(
+        "full3d_direct", str(payload["model_id"])
+    )
+    worker_errors = task038_input_worker.validate_worker_contract(
+        resolved_config=resolved_path,
+        manifest=manifest_path,
+        expected_input_sha256=archive_input_sha256,
+        expected_physical_model_sha256=archive_physical_sha256,
+        expected_source_sha=git_head,
+        expected_mpi_size=1,
+        expected_method="full3d_direct",
+        expected_adapter=method_adapter,
+        expected_output_directory=run_root,
+        expected_resolved_config_sha256=effective_resolved_sha256,
+        actual_mpi_size=MPI.COMM_WORLD.size,
+    )
+    assert worker_errors == []
+    assert recovery_manifest["source_sha"] != archive_source_sha
+    assert recovery_manifest["task42_packet_recovery_archive_source_sha"] == (
+        archive_source_sha
+    )
+
+    from src.postprocessing.diffraction_3d import _probe_z_locations
+
+    old_cfg = simulation_config_3d_from_normalized(archive_payload)
+    with pytest.raises(ValueError, match="above the block top z=120 nm"):
+        _probe_z_locations(old_cfg)
+    reduced_test_profile_error_paths = [
+        "run_id",
+        "discretization.nedelec_degree",
+        "discretization.visualization_degree",
+        "discretization.mesh_target_nm",
+        "execution.mpi_size",
+    ]
+    archive_profile_error_paths = [
+        path for path, _message in task42_profile_errors(archive_payload)
+    ]
+    effective_profile_error_paths = [
+        path for path, _message in task42_profile_errors(payload)
+    ]
+    assert archive_profile_error_paths == [
+        *reduced_test_profile_error_paths,
+        "output.top_probe_z_nm",
+        "output.bottom_probe_z_nm",
+    ]
+    assert effective_profile_error_paths == reduced_test_profile_error_paths
+    # This packet is from the explicitly reduced p2/h50/MPI1 integration fixture;
+    # it is not a pass of the official p6/h10/MPI8 Task42 input profile. The actual
+    # recovery worker contract is validated below without changing archived physics.
+    assert _probe_z_locations(simulation_config_3d_from_normalized(payload)) == pytest.approx(
+        (125.0, -5.0)
+    )
+    effective_output_bytes = canonical_json_bytes(payload) + b"\n"
+    effective_output_path = run_root / "numerical_output" / "effective_output_config.json"
+    output_identity_path = (
+        run_root / "numerical_output" / "output_sampling_identity.json"
+    )
+    output_override = {"top_probe_z_nm": 125.0, "bottom_probe_z_nm": -5.0}
+    output_override_receipt = {
+        "schema": "task42.packet_recovery_output_probe_override.v1",
+        "policy": "postprocess_only_after_original_archive_identity_pass",
+        "archive_config_path": str(saved_direct / "resolved_config.json"),
+        "archive_source_sha": archive_source_sha,
+        "archive_input_sha256": archive_input_sha256,
+        "archive_resolved_config_sha256": archive_resolved_sha256,
+        "archive_physical_model_sha256": archive_physical_sha256,
+        "archive_probe_values_nm": {
+            "top_probe_z_nm": 110.0,
+            "bottom_probe_z_nm": 10.0,
+        },
+        "effective_probe_values_nm": output_override,
+        "effective_output_config_path": str(effective_output_path),
+        "effective_output_config_sha256": hashlib.sha256(
+            effective_output_bytes
+        ).hexdigest(),
+        "effective_run_resolved_config_path": str(resolved_path),
+        "effective_run_resolved_config_sha256": effective_resolved_sha256,
+        "output_sampling_identity_path": str(output_identity_path),
+        "physical_discretization_and_mode_identity_unchanged": True,
+    }
+
+    monkeypatch.setenv("TASK038_JOB_ROOT_PID", str(os.getpid()))
+    monkeypatch.delenv(
+        task038_input_worker.TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV,
+        raising=False,
+    )
+    wrong_archive_source_status = task038_input_worker._dispatch_resolved_payload(
+        payload,
+        expected_method="full3d_direct",
+        output_directory=run_root,
+        expected_source_sha=git_head,
+        expected_resolved_config_sha256=effective_resolved_sha256,
+        task42_packet_recovery_manifest=packet_manifest,
+        task42_packet_recovery_manifest_sha256=archive_manifest_sha256,
+        task42_packet_recovery_archive_source_sha="0" * 40,
+        task42_packet_recovery_archive_resolved_config_sha256=archive_resolved_sha256,
+        task42_packet_recovery_output_probes=output_override,
+        comm=MPI.COMM_WORLD,
+    )
+    (run_root / "wrong_archive_source_dispatch_result.json").write_text(
+        json.dumps(
+            {
+                "schema": "task42.saved_packet_recovery_wrong_source.v1",
+                "status_code": int(wrong_archive_source_status[0]),
+                "errors": list(wrong_archive_source_status[1]),
+                "full_error_vector_persisted_before_assertion": True,
+            },
+            sort_keys=True,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert wrong_archive_source_status[0] == 4
+    assert wrong_archive_source_status[1]
+    assert not (run_root / "numerical_output").exists()
+
+    invalid_probe_status = task038_input_worker._dispatch_resolved_payload(
+        payload,
+        expected_method="full3d_direct",
+        output_directory=run_root,
+        expected_source_sha=git_head,
+        expected_resolved_config_sha256=effective_resolved_sha256,
+        task42_packet_recovery_manifest=packet_manifest,
+        task42_packet_recovery_manifest_sha256=archive_manifest_sha256,
+        task42_packet_recovery_archive_source_sha=archive_source_sha,
+        task42_packet_recovery_archive_resolved_config_sha256=archive_resolved_sha256,
+        task42_packet_recovery_output_probes={
+            "top_probe_z_nm": 110.0,
+            "bottom_probe_z_nm": 10.0,
+        },
+        comm=MPI.COMM_WORLD,
+    )
+    invalid_probe_receipt = {
+        "schema": "task42.saved_packet_recovery_invalid_override.v1",
+        "status_code": int(invalid_probe_status[0]),
+        "errors": list(invalid_probe_status[1]),
+        "full_error_vector_persisted_before_assertion": True,
+    }
+    (run_root / "invalid_probe_worker_dispatch_result.json").write_text(
+        json.dumps(invalid_probe_receipt, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    assert invalid_probe_status[0] == 4
+    assert any(
+        "must match the effective resolved config" in error
+        for error in invalid_probe_status[1]
+    ), invalid_probe_status
+    assert not (run_root / "numerical_output").exists()
+
+    captured_adapter_results: list[dict[str, Any]] = []
+    original_adapter = task038_full3d_direct.run_full3d_direct
+
+    def capture_recovery_result(*args, **kwargs):
+        result = original_adapter(*args, **kwargs)
+        captured_adapter_results.append(result)
+        return result
+
+    monkeypatch.setattr(
+        task038_full3d_direct,
+        "run_full3d_direct",
+        capture_recovery_result,
+    )
+    dispatch_status = task038_input_worker._dispatch_resolved_payload(
+        payload,
+        expected_method="full3d_direct",
+        output_directory=run_root,
+        expected_source_sha=git_head,
+        expected_resolved_config_sha256=effective_resolved_sha256,
+        task42_packet_recovery_manifest=packet_manifest,
+        task42_packet_recovery_manifest_sha256=archive_manifest_sha256,
+        task42_packet_recovery_archive_source_sha=archive_source_sha,
+        task42_packet_recovery_archive_resolved_config_sha256=archive_resolved_sha256,
+        task42_packet_recovery_output_probes=output_override,
+        comm=MPI.COMM_WORLD,
+    )
+    dispatch_receipt = {
+        "schema": "task42.saved_packet_recovery_dispatch.v1",
+        "status_code": int(dispatch_status[0]),
+        "errors": list(dispatch_status[1]),
+        "full_error_vector_persisted_before_assertion": True,
+        "archive_manifest_sha256": archive_manifest_sha256,
+        "archive_resolved_config_sha256": archive_resolved_sha256,
+        "effective_run_resolved_config_sha256": effective_resolved_sha256,
+        "effective_output_config_sha256": hashlib.sha256(
+            effective_output_bytes
+        ).hexdigest(),
+    }
+    (run_root / "worker_dispatch_result.json").write_text(
+        json.dumps(dispatch_receipt, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    assert dispatch_status == (0, []), dispatch_status
+    assert len(captured_adapter_results) == 1
+    adapter_result = captured_adapter_results[0]
+    adapter_summary = adapter_result.get("summary")
+    adapter_probe_receipt = (
+        adapter_summary.get("task42_packet_recovery_output_probe_override")
+        if isinstance(adapter_summary, dict)
+        else None
+    )
+    (run_root / "adapter_result.json").write_text(
+        json.dumps(
+            {
+                "passed": bool(adapter_result.get("passed")),
+                "errors": list(adapter_result.get("errors", [])),
+                "numerical_output_directory": adapter_result.get(
+                    "numerical_output_directory"
+                ),
+                "task42_packet_recovery_output_probe_override": adapter_probe_receipt,
+            },
+            sort_keys=True,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert adapter_result["passed"] is True, adapter_result.get("errors")
+    recovered_summary = adapter_result["summary"]
+    assert isinstance(recovered_summary, dict)
+
+    recovered_summary_path = run_root / "numerical_output" / "run_summary.json"
+    recovery_result_path = run_root / "adapter_result.json"
+    assert recovered_summary_path.is_file()
+    persisted_summary = json.loads(recovered_summary_path.read_text(encoding="utf-8"))
+    assert persisted_summary["case_status"] == "completed"
+    assert persisted_summary["linear_system_relative_residual"] == pytest.approx(
+        recovered_summary["linear_system_relative_residual"]
+    )
+    assert recovered_summary["case_status"] == "completed"
+    assert recovered_summary["official_result"] is True
+    assert recovered_summary["external_rta_gate_pass"] is True
+    recovery = recovered_summary["task42_packet_recovery_evidence"]
+    assert recovery["global_factor_called"] is False
+    assert recovery["new_physical_solve_called"] is False
+    assert recovered_summary["actual_pc_factor_solver_type"] is None
+    assert recovered_summary["task42_packet_recovery_output_probe_override"] == {
+        **output_override_receipt,
+        "output_sampling_identity_sha256": hashlib.sha256(
+            canonical_json_bytes(output_override_receipt) + b"\n"
+        ).hexdigest(),
+    }
+    actual_effective_bytes = effective_output_path.read_bytes()
+    assert actual_effective_bytes == effective_output_bytes
+    actual_effective_payload = json.loads(actual_effective_bytes)
+    for key, value in payload.items():
+        if key != "output":
+            assert actual_effective_payload[key] == value, key
+    for key, value in payload["output"].items():
+        if key not in {"top_probe_z_nm", "bottom_probe_z_nm"}:
+            assert actual_effective_payload["output"][key] == value, key
+    assert json.loads(output_identity_path.read_text(encoding="utf-8")) == (
+        output_override_receipt
+    )
+    full_residual = recovered_summary["task42_full_true_residual"]
+    relative_residual = float(recovered_summary["linear_system_relative_residual"])
+    assert full_residual["finite"] is True
+    assert np.isfinite(relative_residual) and relative_residual <= 5.0e-9
+    assert full_residual["linear_system_relative_residual"] == relative_residual
+
+    output_root_numerical = run_root / "numerical_output"
+    field_path = Path(recovered_summary["paraview_file"])
+    if not field_path.is_absolute():
+        field_path = output_root_numerical / field_path
+    recovered_grid = pv.read(field_path)
+    for field_name in ("E_tot_V_per_m", "H_A_per_m"):
+        for suffix in ("real", "imag", "abs"):
+            values = np.asarray(recovered_grid.point_data[f"{field_name}_{suffix}"])
+            assert values.size and np.isfinite(values).all()
+            if suffix == "abs":
+                assert float(values.max()) > 0.0
+
+    port_path = output_root_numerical / "port_power.json"
+    diffraction_path = output_root_numerical / "diffraction_orders_3d.json"
+    dtn_port_diffraction_path = (
+        output_root_numerical / "dtn_port_diffraction_orders_3d.json"
+    )
+    volume_path = output_root_numerical / "volume_absorption.json"
+    reference_json = output_root_numerical / "full3d_reference_samples.json"
+    reference_npz = output_root_numerical / "full3d_reference_samples.npz"
+    for path in (
+        port_path,
+        diffraction_path,
+        dtn_port_diffraction_path,
+        volume_path,
+        reference_json,
+        reference_npz,
+        field_path,
+    ):
+        assert path.is_file() and path.stat().st_size > 0, path
+    port_data = json.loads(port_path.read_text(encoding="utf-8"))
+    diffraction_data = json.loads(diffraction_path.read_text(encoding="utf-8"))
+    dtn_port_diffraction_data = json.loads(
+        dtn_port_diffraction_path.read_text(encoding="utf-8")
+    )
+    volume_data = json.loads(volume_path.read_text(encoding="utf-8"))
+    diffraction_metrics = diffraction_data["metrics"]
+    assert diffraction_metrics["diffraction_top_probe_z"] == pytest.approx(125.0)
+    assert diffraction_metrics["diffraction_bottom_probe_z"] == pytest.approx(-5.0)
+    assert diffraction_metrics["diffraction_order_count"] > 0
+    assert dtn_port_diffraction_data["metrics"][
+        "diffraction_total_power_source"
+    ] == "dtn_port_modal_amplitudes"
+    assert dtn_port_diffraction_data["orders"]
+    assert port_data["R_total"] == pytest.approx(recovered_summary["R_total"])
+    assert port_data["T_total"] == pytest.approx(recovered_summary["T_total"])
+    assert volume_data["A_volume_total"] == pytest.approx(
+        recovered_summary["A_volume_total"]
+    )
+    for key in (
+        "R_total",
+        "T_total",
+        "A_balance",
+        "A_volume_total",
+        "energy_closure_error_port_volume",
+    ):
+        assert np.isfinite(float(recovered_summary[key])), key
+    assert set(json.loads(reference_json.read_text(encoding="utf-8"))) >= {
+        "schema_version",
+        "archive_sha256",
+        "components",
+    }
+    with np.load(reference_npz, allow_pickle=False) as reference_arrays:
+        assert reference_arrays.files
+        assert all(
+            np.isfinite(np.asarray(reference_arrays[name])).all()
+            for name in reference_arrays.files
+        )
+
+    output_hashes = {
+        str(path.relative_to(run_root)): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in (
+            recovered_summary_path,
+            effective_output_path,
+            output_identity_path,
+            port_path,
+            diffraction_path,
+            dtn_port_diffraction_path,
+            volume_path,
+            reference_json,
+            reference_npz,
+            field_path,
+            recovery_result_path,
+        )
+    }
+    final_receipt = {
+        "schema": "task42.saved_packet_recovery_full_output_test.v1",
+        "classification": "test_fixture_only_not_formal_A1",
+        "source_identity": {
+            "git_head": git_head,
+            "current_worker_source_sha": git_head,
+            "current_worker_source_sha_kind": "launcher_git_rev_parse_HEAD;working_tree_file_hashes_listed_separately",
+            "archive_source_sha": archive_source_sha,
+            "archive_source_sha_kind": (
+                "historical test-only SHA-1 fingerprint over git HEAD plus the then-current SHA-256 values of three source files; "
+                "not a Git commit and historical component hashes were not persisted independently"
+            ),
+            "current_source_files_sha256": {
+                path: hashlib.sha256(
+                    (Path(__file__).resolve().parents[2] / path).read_bytes()
+                ).hexdigest()
+                for path in (
+                    "input/official/task42hybrid_az90_50x50_17x20_0p7nm/13p5nm_p6h10_full3d_direct_mpi8.dat",
+                    "src/io/input_validation.py",
+                    "src/postprocessing/diffraction_3d.py",
+                    "src/runners/task038_launcher.py",
+                    "src/runners/task038_full3d_direct.py",
+                    "src/runners/task038_input_worker.py",
+                    "src/solvers/full3d_lifecycle_packet.py",
+                    "src/test/test_task42_direct_contract.py",
+                )
+            },
+        },
+        "archive": {
+            "attempt_output": str(saved_direct),
+            "manifest_sha256": archive_manifest_sha256,
+            "resolved_config_sha256": archive_resolved_sha256,
+            "input_sha256": archive_input_sha256,
+            "physical_model_sha256": archive_physical_sha256,
+            "source_sha": archive_source_sha,
+            "prior_direct_guard_reproduction": (
+                "Top diffraction probe z=110 nm must be above the block top z=120 nm."
+            ),
+            "prior_direct_relative_residual": direct_relative_residual,
+            "prior_direct_dispatch_error_vector": "not_persisted_exactly; pytest stdout retained truncated assertion repr",
+        },
+        "output_identity": output_override_receipt,
+        "recovery": {
+            "relative_residual": relative_residual,
+            "R_total": float(recovered_summary["R_total"]),
+            "T_total": float(recovered_summary["T_total"]),
+            "A_balance": float(recovered_summary["A_balance"]),
+            "A_volume_total": float(recovered_summary["A_volume_total"]),
+            "energy_closure_error_port_volume": float(
+                recovered_summary["energy_closure_error_port_volume"]
+            ),
+            "factors_created": False,
+            "physical_solve_called": False,
+            "output_sha256": output_hashes,
+        },
+    }
+    recovery_result_path.write_text(
+        json.dumps(final_receipt, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def test_task42_output_probe_receipts_are_root_written_and_collectively_bound(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Only rank 0 writes recovery receipts; all ranks get the same outcome."""
+
+    comm = MPI.COMM_WORLD
+    assert os.environ.get("MYFENICS_NATIVE_COMPLEX_ENV") == "1"
+    for thread_name in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "BLIS_NUM_THREADS",
+    ):
+        assert os.environ.get(thread_name) == "1", thread_name
+
+    saved_direct_text = os.environ.get("TASK42_SAVED_DIRECT_OUTPUT")
+    if not saved_direct_text:
+        pytest.skip("no explicitly bound saved Task42 archive was supplied")
+    saved_direct = Path(saved_direct_text).resolve(strict=True)
+    archive_run_manifest = json.loads(
+        (saved_direct / "run_manifest.json").read_text(encoding="utf-8")
+    )
+    archive_config_path = saved_direct / "resolved_config.json"
+    archive_config_bytes = archive_config_path.read_bytes()
+    archive_payload = json.loads(archive_config_bytes)
+    packet_manifest = (
+        saved_direct / "numerical_output" / "pre_recovery_packet" / "manifest.json"
+    )
+    packet_manifest_bytes = packet_manifest.read_bytes()
+    archive_manifest_sha256 = hashlib.sha256(packet_manifest_bytes).hexdigest()
+    archive_resolved_sha256 = hashlib.sha256(archive_config_bytes).hexdigest()
+    archive_source_sha = str(archive_run_manifest["source_sha"])
+    assert archive_source_sha == "8b90d0147d11fe34e604dbf4474820c7d7748a24"
+    assert archive_manifest_sha256 == (
+        "cbc5d4f742e9ba46b91d53e38a56add0573000d9504cfc32a00468724d981a25"
+    )
+    assert archive_resolved_sha256 == (
+        "db1d5a43fc7be4b61ff906ea3f3a5d8a8c20916bc0ec677577cde1dc774cf986"
+    )
+
+    payload = json.loads(json.dumps(archive_payload))
+    payload["output"]["top_probe_z_nm"] = 125.0
+    payload["output"]["bottom_probe_z_nm"] = -5.0
+    effective_resolved_sha256 = hashlib.sha256(
+        canonical_json_bytes(payload) + b"\n"
+    ).hexdigest()
+    repository_root = Path(__file__).resolve().parents[2]
+    current_source_sha = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repository_root,
+        text=True,
+    ).strip()
+    shared_root = Path(comm.bcast(str(tmp_path) if comm.rank == 0 else None, root=0))
+    evidence_root_text = os.environ.get("TASK42_TINY_OUTPUT_ROOT")
+    if not evidence_root_text:
+        pytest.skip("no attempt-bound Task42 evidence directory was supplied")
+    evidence_root = Path(evidence_root_text).resolve()
+    if comm.rank == 0:
+        evidence_root.mkdir(parents=True, exist_ok=False)
+    comm.Barrier()
+    monkeypatch.setenv("TASK038_JOB_ROOT_PID", str(os.getpid()))
+    monkeypatch.delenv(
+        task038_input_worker.TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV,
+        raising=False,
+    )
+
+    observations: dict[str, list[dict[str, Any]]] = {}
+
+    def run_case(
+        case_name: str,
+        *,
+        expected_probe_values: dict[str, float] | None = None,
+        source_override: str | None = None,
+        preexisting_effective: bool = False,
+        fail_identity_write: bool = False,
+    ) -> list[dict[str, Any]]:
+        run_directory = shared_root / case_name
+        numerical_output = run_directory / "numerical_output"
+        effective_path = numerical_output / "effective_output_config.json"
+        identity_path = numerical_output / "output_sampling_identity.json"
+        sentinel = b"preexisting effective config must not be overwritten\n"
+        if comm.rank == 0:
+            run_directory.mkdir(parents=True, exist_ok=False)
+            if preexisting_effective:
+                numerical_output.mkdir()
+                effective_path.write_bytes(sentinel)
+        comm.Barrier()
+
+        open_attempts: list[str] = []
+        solver_calls = 0
+        real_path_open = Path.open
+
+        def tracked_path_open(path, *args, **kwargs):
+            if path in {effective_path, identity_path}:
+                open_attempts.append(path.name)
+                if (
+                    fail_identity_write
+                    and comm.rank == 0
+                    and path == identity_path
+                ):
+                    raise OSError("injected root-only output identity write failure")
+            return real_path_open(path, *args, **kwargs)
+
+        def fake_solver_runner(_cfg, _numerical_output, **_kwargs):
+            nonlocal solver_calls
+            solver_calls += 1
+            from benchmarks.canonical_vector_artifacts import MANIFEST_SCHEMA
+
+            canonical_roles = None
+            if comm.rank == 0:
+                canonical_root = run_directory / "test_canonical_export"
+                canonical_root.mkdir()
+                canonical_roles = {}
+                for role_name in ("active_trace", "full_fe"):
+                    manifest_path = canonical_root / f"{role_name}.json"
+                    manifest_bytes = (
+                        json.dumps(
+                            {
+                                "schema_version": MANIFEST_SCHEMA,
+                                "fixture_only": True,
+                                "role": role_name,
+                            },
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
+                        + "\n"
+                    ).encode("utf-8")
+                    manifest_path.write_bytes(manifest_bytes)
+                    canonical_roles[role_name] = {
+                        "schema_version": MANIFEST_SCHEMA,
+                        "manifest": str(manifest_path),
+                        "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+                        "global_summed_packet_count": 1,
+                    }
+            canonical_roles = comm.bcast(canonical_roles, root=0)
+            return {
+                "case_status": "completed",
+                "official_result": True,
+                "linear_system_relative_residual": 1.0e-13,
+                "R_total": 0.5,
+                "T_total": 0.4,
+                "A_volume_total": 0.1,
+                "full3d_direct_canonical_export": {
+                    "roles": canonical_roles,
+                    "test_fixture_only": True,
+                },
+            }
+
+        caught_error = None
+        result = None
+        with monkeypatch.context() as context:
+            context.setattr(Path, "open", tracked_path_open)
+            try:
+                result = task038_full3d_direct.run_full3d_direct(
+                    payload,
+                    run_directory,
+                    solver_runner=fake_solver_runner,
+                    source_sha=current_source_sha,
+                    resolved_config_sha256=effective_resolved_sha256,
+                    task42_stage_gate=lambda *_args, **_kwargs: None,
+                    task42_bridge_path=None,
+                    task42_packet_recovery_manifest=packet_manifest,
+                    task42_packet_recovery_manifest_sha256=archive_manifest_sha256,
+                    task42_packet_recovery_archive_source_sha=(
+                        source_override or archive_source_sha
+                    ),
+                    task42_packet_recovery_archive_resolved_config_sha256=(
+                        archive_resolved_sha256
+                    ),
+                    task42_packet_recovery_output_probes=(
+                        expected_probe_values
+                        if expected_probe_values is not None
+                        else {"top_probe_z_nm": 125.0, "bottom_probe_z_nm": -5.0}
+                    ),
+                )
+            except ValueError as exc:
+                caught_error = f"{type(exc).__name__}: {exc}"
+
+        receipt = None
+        summary = None
+        adapter_errors = []
+        if result is not None:
+            summary = result.get("summary")
+            if isinstance(summary, Mapping):
+                receipt = summary.get("task42_packet_recovery_output_probe_override")
+            adapter_errors = list(result.get("errors", []))
+        expected_classification = {
+            "success": "accepted",
+            "preexisting_effective": "preexisting_file_refusal",
+            "identity_write_failure": "root_writer_refusal",
+            "wrong_archive_source": "archive_identity_refusal",
+            "invalid_probe": "probe_contract_refusal",
+        }[case_name]
+        actual_classification = (
+            "raised_refusal"
+            if caught_error is not None
+            else "accepted"
+            if result is not None and bool(result.get("passed"))
+            else "adapter_rejected"
+            if result is not None
+            else "no_result"
+        )
+        local_observation = {
+            "rank": int(comm.rank),
+            "error": caught_error,
+            "passed": None if result is None else bool(result.get("passed")),
+            "adapter_errors": adapter_errors,
+            "summary": summary,
+            "expected_classification": expected_classification,
+            "actual_classification": actual_classification,
+            "solver_calls": solver_calls,
+            "writer_open_attempts": open_attempts,
+            "receipt": receipt,
+            "effective_exists": effective_path.is_file(),
+            "effective_sha256": (
+                hashlib.sha256(effective_path.read_bytes()).hexdigest()
+                if effective_path.is_file()
+                else None
+            ),
+            "identity_exists": identity_path.is_file(),
+        }
+        case_observations = comm.allgather(local_observation)
+        observations[case_name] = case_observations
+        if comm.rank == 0:
+            (evidence_root / "output_probe_writer_contract.json").write_text(
+                json.dumps(
+                    {
+                        "schema": "task42.output_probe_writer_mpi_contract.v1",
+                        "archive_source_sha": archive_source_sha,
+                        "archive_manifest_sha256": archive_manifest_sha256,
+                        "archive_resolved_config_sha256": archive_resolved_sha256,
+                        "current_git_head": current_source_sha,
+                        "current_source_files_sha256": {
+                            path: hashlib.sha256(
+                                (repository_root / path).read_bytes()
+                            ).hexdigest()
+                            for path in (
+                                "src/runners/task038_full3d_direct.py",
+                                "src/test/test_task42_direct_contract.py",
+                            )
+                        },
+                        "cases": observations,
+                    },
+                    sort_keys=True,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        comm.Barrier()
+        return case_observations
+
+    success = run_case("success")
+    preexisting = run_case("preexisting_effective", preexisting_effective=True)
+    write_failure = run_case("identity_write_failure", fail_identity_write=True)
+    wrong_source = run_case("wrong_archive_source", source_override="0" * 40)
+    invalid_probe = run_case(
+        "invalid_probe",
+        expected_probe_values={"top_probe_z_nm": 110.0, "bottom_probe_z_nm": 10.0},
+    )
+
+    assert all(row["error"] is None and row["passed"] is True for row in success), success
+    assert all(row["adapter_errors"] == [] for row in success), success
+    assert all(row["actual_classification"] == "accepted" for row in success), success
+    assert all(
+        row["expected_classification"] == "accepted" for row in success
+    ), success
+    assert all(isinstance(row["summary"], Mapping) for row in success), success
+    assert all(row["solver_calls"] == 1 for row in success)
+    assert [row["writer_open_attempts"] for row in success] == [
+        ["effective_output_config.json", "output_sampling_identity.json"],
+        *([[]] * (comm.size - 1)),
+    ]
+    success_receipts = [row["receipt"] for row in success]
+    assert all(receipt == success_receipts[0] for receipt in success_receipts)
+    success_receipt = success_receipts[0]
+    assert isinstance(success_receipt, Mapping)
+    success_effective = shared_root / "success" / "numerical_output" / "effective_output_config.json"
+    success_identity = shared_root / "success" / "numerical_output" / "output_sampling_identity.json"
+    effective_bytes = success_effective.read_bytes()
+    identity_bytes = success_identity.read_bytes()
+    assert hashlib.sha256(effective_bytes).hexdigest() == success_receipt[
+        "effective_output_config_sha256"
+    ]
+    assert hashlib.sha256(identity_bytes).hexdigest() == success_receipt[
+        "output_sampling_identity_sha256"
+    ]
+    identity_payload = json.loads(identity_bytes)
+    assert identity_payload == {
+        key: value
+        for key, value in success_receipt.items()
+        if key != "output_sampling_identity_sha256"
+    }
+
+    for observations_for_case, expected_attempts, expected_identity in (
+        (preexisting, ["effective_output_config.json"], False),
+        (
+            write_failure,
+            ["effective_output_config.json", "output_sampling_identity.json"],
+            False,
+        ),
+    ):
+        errors = [row["error"] for row in observations_for_case]
+        assert all(isinstance(error, str) for error in errors)
+        assert len(set(errors)) == 1
+        assert all(row["actual_classification"] == "raised_refusal" for row in observations_for_case)
+        assert all(row["passed"] is None and row["solver_calls"] == 0 for row in observations_for_case)
+        assert [row["writer_open_attempts"] for row in observations_for_case] == [
+            expected_attempts,
+            *([[]] * (comm.size - 1)),
+        ]
+        assert all(row["identity_exists"] is expected_identity for row in observations_for_case)
+    preexisting_path = (
+        shared_root / "preexisting_effective" / "numerical_output" / "effective_output_config.json"
+    )
+    assert preexisting_path.read_bytes() == b"preexisting effective config must not be overwritten\n"
+    assert all(row["error"] is not None for row in wrong_source)
+    assert len({row["error"] for row in wrong_source}) == 1
+    assert all(
+        row["actual_classification"] == "raised_refusal" for row in wrong_source
+    )
+    assert all(row["solver_calls"] == 0 for row in wrong_source)
+    assert all(row["writer_open_attempts"] == [] for row in wrong_source)
+    assert all(row["error"] is not None for row in invalid_probe)
+    assert len({row["error"] for row in invalid_probe}) == 1
+    assert all(
+        row["actual_classification"] == "raised_refusal" for row in invalid_probe
+    )
+    assert all(row["solver_calls"] == 0 for row in invalid_probe)
+    assert all(row["writer_open_attempts"] == [] for row in invalid_probe)
+    if comm.rank == 0:
+        partial_effective = (
+            shared_root
+            / "identity_write_failure"
+            / "numerical_output"
+            / "effective_output_config.json"
+        )
+        assert partial_effective.is_file()
+        assert not (
+            shared_root
+            / "identity_write_failure"
+            / "numerical_output"
+            / "output_sampling_identity.json"
+        ).exists()
+        assert (evidence_root / "output_probe_writer_contract.json").is_file()

@@ -2680,8 +2680,8 @@ def task42_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         ("output", "export_modal_amplitudes", True),
         ("output", "export_reference_planes", True),
         ("output", "reference_plane_z_nm", (10.0, 30.0, 60.0, 90.0, 110.0)),
-        ("output", "top_probe_z_nm", 110.0),
-        ("output", "bottom_probe_z_nm", 10.0),
+        ("output", "top_probe_z_nm", 125.0),
+        ("output", "bottom_probe_z_nm", -5.0),
         ("output", "diffraction_order_max_m", 3),
         ("output", "diffraction_order_max_n", 7),
     )
