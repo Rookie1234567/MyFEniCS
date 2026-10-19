@@ -3786,3 +3786,28 @@ V2 修复 watchdog 的 host/task/ancestor cgroup 分域 reserve 判断，保留 
 第三次 11.873 GB cgroup 峰值来自 saved-donor consumer/recovery；之前 1,580,571,795,456 B 峰值来自 carrier build 的 resource-stop 阶段。两者不是同一工作量或同一阶段，不得宣称同 scope 内存优化。第三次 surface apply 用时 4,257.864 s，read-frame parse 93.118 s 是内部子计时，均不与 9,364.071 s 父计时相加。宿主全局 swapin/out 为 13/0 页，不能从全局计数确定 task 归因；PSS 与各 backing 峰值 UNKNOWN。
 
 q CSR/factor、KSP/FGMRES、完整场、独立 A6、official R/T/A/A_volume 均 NOT_RUN；原始 run receipt 和每个 source attempt 的失败分类均保留，A1/A2 结果不变。测试与证据见 [V2 response](task41extra_phi90_p50x50_g17x20/response_v2.md)、[adoption/action/performance compact](task41extra_phi90_p50x50_g17x20/outcomes/p0_v2_adoption_action_performance_20261018.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)、[test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
+## Task41 P0 V3：两列 recovery 通过，但完整 action 数值门失败
+
+### 最终状态
+
+执行分支为 task41extra_phi90_p50x50_g17x20，最终 scientific source 为 afbe91e5947ed18fb74d7105097e129c1b8b4cc7。用户批准把 V3 原始证据配额从 8 GiB 提升到 16 GiB；正式 run 的磁盘准入通过，但最终分类为 NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED，official_result=false。由主控集中提交推送本执行分支；不合并 master，普通 solver default 没有改变。
+
+### 为什么继续
+
+前次 8 GiB 原始证据配额挡住了一次需要约 11.88 GB 原始证据的恢复取证，未运行恢复见证。该停止是资源合同边界，不是 PDE 数值失败。用户仅批准证据配额的最小提高，要求 2 GiB 空闲空间底线、内存门、task swap0、原数值门和固定窗口保持不变。新额度实际准入通过，因此后续终止发生在数值门而不是磁盘门。
+
+### 方法与关键结果
+
+运行复用冻结的 p6/native B0 两输入路径，并将 full-action 所需 p6 输出、native reduced RHS 和恢复见证数组写入小型哈希索引。已知 FE 输入 recovery 每列最多使用三次同 LU 修正；三次后两列 forward relative error 分别为 8.452404647964512e-14、8.462099738746788e-14，均低于 1e-11，native volume residual relative 也低于 1e-10。这只证明已保存 recovery witness 通过原门。
+
+随后完整 two-input action gate 将保存的 p6 action 与 native reduced RHS 比较。top/mode 16030 和 bottom/mode 48090 的 relative errors 分别为 3.042118678294192e-10 和 6.391893878204816e-10，都超过原 1e-11 限值。对保存向量做独立 NumPy 读取重算分别得到 3.0421186782950535e-10 和 6.3918938782065652e-10，复现了原门失败，数值差仅约 1e-22。D action error 为 0.0。
+
+### 解释、成本和边界
+
+保存 recovery 在原门内通过，随后 full-action 比较失败；二者不能合并称为 recovery 通过所以 action 正确。现有证据未确定差异来自 LU、MPC、映射、舍入还是其他特定机制，所以根因仍是 unresolved。offline checker 尝试以 PETSc signal 11 和 MPI_Abort 59 退出，没有报告；这既不是 checker pass，也不能证明数值源码缺陷。
+
+最终 parent workflow 为 13,102.745 s；saved surface application 为 3,961.957 s，作为子计时包含于父计时。process-tree RSS peak 为 14,523,883,520 B，task-cgroup peak 为 23,537,336,320 B，task swap peak/current 为 0 B，后代已清场。资源门和时间门均未触发。q CSR/factor、KSP/FGMRES、完整场、独立 A6、R/T/A、A_volume、2 TB 与 48 h qualification 均未运行或未资格化。
+
+### 决策与证据入口
+
+不继续 q/factor/solve，不降低原门限，也不增加同 LU 修正次数。下一步由主控审阅保存的恢复和 full-action 数组，给出可证伪根因诊断并冻结新合同后再判断是否需要运行。详细证据见 [Task41 outcomes](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)、[V3 response](task41extra_phi90_p50x50_g17x20/response_v3.md)、[full-action compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v3_full_action_failure_20261019.json) 和 [141-vector hash index](task41extra_phi90_p50x50_g17x20/outcomes/b0_v3_saved_vector_hash_index_20261019.json)。16 GiB policy 定向验证与测试边界见 [test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。

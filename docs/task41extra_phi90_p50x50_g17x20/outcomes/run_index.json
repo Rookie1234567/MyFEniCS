@@ -399,6 +399,154 @@
       "read_bytes_after_validation": 363795691904,
       "read_frame_parse_seconds_after_validation": 93.11829357547686,
       "fixed_window_remaining_seconds_at_last_sample_approx": 52529
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "20261019T053402.514018Z",
+      "stage": "B0_0p7nm_full3d_iterative",
+      "service": "myfenics-case-20261019T053359-2096871.service",
+      "service_invocation_id": "c91a0917787c45a38645fe35a3e9e1ac",
+      "source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+      "status": "WORKER_FAILED",
+      "run_receipt_classification": "WORKER_FAILED",
+      "classification": "NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED",
+      "official_result": false,
+      "compact": "b0_v3_full_action_failure_20261019.json",
+      "saved_vector_hash_index": "b0_v3_saved_vector_hash_index_20261019.json",
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z",
+      "run_summary_sha256": "b345dabe6ada8d793ae6c4dad6a64b7ece2f0157c807181d58a5a12d1330f590",
+      "candidate_summary_sha256": "651c7a84db27e02c02879b10a28fe5580911678d25b5c7b8018a882d467c98d9",
+      "run_manifest_sha256": "f3372c49c2b3dc274399f288ce4bb92b03106986742fed11473eac41a23f7172",
+      "recovery_manifest_sha256": "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465",
+      "events_jsonl_sha256": "297a9595b902b778a5d38f5257f59ec8ef0ff6cb64397815fca12cda6f193b00",
+      "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+      "physical_sha256": "0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d",
+      "resolved_config_sha256": "9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+      "execution_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+      "fixed_window_sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38",
+      "workflow_phase": "TASK41_B0/cleanup",
+      "worker_exit_status": 4,
+      "service_exec_main_status": 3,
+      "saved_surface_application_modes": 64120,
+      "expected_surface_application_modes": 64120,
+      "saved_surface_application_seconds": 3961.9574313424528,
+      "recovery_gate": "PASS_TWO_COLUMNS; THREE_SAME_LU_CORRECTIONS_EACH",
+      "full_action_relative_errors": [
+        3.042118678294192e-10,
+        6.391893878204816e-10
+      ],
+      "full_action_limit": 1e-11,
+      "D_relative_error": 0.0,
+      "independent_numpy_recompute": [
+        3.0421186782950535e-10,
+        6.391893878206565e-10
+      ],
+      "full_rhs_arrays_saved": true,
+      "verified_npy_files": 141,
+      "verified_npy_bytes": 9379882344,
+      "workflow_elapsed_seconds": 13102.74539181916,
+      "process_tree_rss_peak_bytes": 14523883520,
+      "task_cgroup_memory_peak_bytes": 23537336320,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "resource_gate_triggered": false,
+      "time_gates_exceeded": false,
+      "next_math_stage": "NOT_RUN",
+      "error": "Full-action P6/native relative error exceeded the unchanged 1e-11 gate for both inputs; root cause unresolved.",
+      "fixed_window_remaining_seconds_at_last_sample_approx": 72642,
+      "compact_sha256": "3c3f24db2f9f13f4dde80eb0e58ac2b1655ad98c4790c5e83e111107b919bcc6",
+      "saved_vector_hash_index_sha256": "332b9e5ed553916808cceccd92542b5086cbdbeaaa298d42d95d18916bb7ade3",
+      "offline_checker_invocations": 3
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "20261019T003336.113773Z",
+      "source_sha": "1ad72d76c63fca9e15145fa450ed823270f6cec7",
+      "status": "FAILED",
+      "run_receipt_classification": "WORKER_FAILED",
+      "error": {
+        "message": "Task41 B0 donor fresh mesh/MPC/orientation/config/ABI/math identity differs",
+        "type": "ValueError"
+      },
+      "watchdog_parent_seconds": 1583.5559855126776,
+      "cost_scope": "watchdog parent only; preparation outside parent UNKNOWN",
+      "official_result": false,
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T003336.113773Z",
+      "raw_receipts": {
+        "watchdog/summary.json": {
+          "bytes": 13779,
+          "sha256": "e7317d870da40205df8e281c7986d58550d5511002167f3c8388ab4a6504d01e"
+        },
+        "task40_v10_p6_candidate_summary.json": {
+          "bytes": 63608,
+          "sha256": "7f9f10b082b676b12c95455541dd0bcbec57c8d7822a26d2861707233152b607"
+        },
+        "run_summary.json": {
+          "bytes": 14465,
+          "sha256": "96b3935da3a25cea0b41a63067d9652923769939f7952fbf6481ab1f38af19b6"
+        }
+      },
+      "evidence": "b0_v3_prior_attempt_costs_20261019.json"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "20261019T013135.034155Z",
+      "source_sha": "78ffa55477e65657773934a8ffce4ba47c6f2087",
+      "status": "FAILED",
+      "run_receipt_classification": "WORKER_FAILED",
+      "error": {
+        "message": "name 'run_id' is not defined",
+        "type": "NameError"
+      },
+      "watchdog_parent_seconds": 4313.645527716726,
+      "cost_scope": "watchdog parent only; preparation outside parent UNKNOWN",
+      "official_result": false,
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T013135.034155Z",
+      "raw_receipts": {
+        "watchdog/summary.json": {
+          "bytes": 11878,
+          "sha256": "9a9864fce97f78b30b94a4d3c725b8cf819b0c1274bc81885d6eaf42dbbac4b7"
+        },
+        "task40_v10_p6_candidate_summary.json": {
+          "bytes": 86833,
+          "sha256": "8398482a6ce1469f9277023a1f085dbd4d135bf6d239ed6e015418dc0e9b23fb"
+        },
+        "run_summary.json": {
+          "bytes": 13305,
+          "sha256": "95fbd2bbe2e67ebde5262f9e680306d48494a0e35d55d96cf714538e59a63ba8"
+        }
+      },
+      "evidence": "b0_v3_prior_attempt_costs_20261019.json"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "20261019T025658.545020Z",
+      "source_sha": "1366d64b8479139355e70897392f9bfed18347a9",
+      "status": "CONTROLLED_STOP",
+      "run_receipt_classification": "WORKER_FAILED",
+      "error": {
+        "message": "Task40 V10 raw-disk admission failed: {'label': 'task41_b0_recovery_evidence_payload', 'current_raw_artifact_bytes': 198773775, 'projected_additional_bytes': 11683674525, 'projected_cumulative_raw_artifact_bytes': 11882448300, 'raw_artifact_limit_bytes': 8589934592, 'filesystem_free_bytes': 2029118930944, 'projected_free_bytes': 2017435256419, 'free_space_floor_bytes': 2147483648}",
+        "type": "V14ResourceStop"
+      },
+      "watchdog_parent_seconds": 4320.7519455822185,
+      "cost_scope": "watchdog parent only; preparation outside parent UNKNOWN",
+      "official_result": false,
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T025658.545020Z",
+      "raw_receipts": {
+        "watchdog/summary.json": {
+          "bytes": 11881,
+          "sha256": "ff2bca4759fb10987d0d6eeb7d1c1350aa1505b2025e0e24a0b9613526f4724d"
+        },
+        "task40_v10_p6_candidate_summary.json": {
+          "bytes": 87903,
+          "sha256": "e0effbace1cd8179127994e3c08fd0ff5986aaa75842cf9b1a7724047229ed4a"
+        },
+        "run_summary.json": {
+          "bytes": 13309,
+          "sha256": "7d5ab815e6a53e8332b59d41de78b9daf491d9acf2343310217f2c8affddfa38"
+        }
+      },
+      "evidence": "b0_v3_prior_attempt_costs_20261019.json"
     }
   ],
   "not_run": [
@@ -409,11 +557,15 @@
     "a2_attempt7_official_result": false,
     "a2_saved_output_comparison": "PASS",
     "a2_required_checker_only_retry3": "PASS",
-    "0.7nm": "NOT_RUN_FULL_FIELD_AFTER_V2_FULL_RHS_RECOVERY_GATE_FAILURE",
+    "0.7nm": "NOT_RUN_FULL_ACTION_GATE_FAILED_20261019",
     "a_exit": "PASS",
     "b0_p0_latest": "NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED",
     "b0_p0_official_result": false,
-    "b0_p0_carrier": "REQUIRE_EXISTING_DONOR_ADOPTION_PASS_64120_MODES; FULL_RHS_RECOVERY_GATE_FAILED; FULL_B0_NOT_QUALIFIED",
-    "b0_p0_saved_surface_application": "64120_OF_64120_COMPLETE; SELECTED_MODE_B_D_CONSUMER_RECEIPTS_2_OF_2_PASS; FULL_RHS_RECOVERY_GATE_FAILED"
+    "b0_p0_carrier": "REQUIRE_EXISTING_DONOR_ADOPTION_PASS_64120_MODES; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED; FULL_B0_NOT_QUALIFIED",
+    "b0_p0_saved_surface_application": "64120_OF_64120_COMPLETE; SELECTED_MODE_B_D_CONSUMER_RECEIPTS_2_OF_2_PASS; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED",
+    "b0_p0_recovery": "FULL_RHS_RECOVERY_GATE_PASS_AFTER_3_SAME_LU_CORRECTIONS_PER_COLUMN",
+    "b0_p0_full_action": "FAIL_TWO_INPUT_P6_NATIVE_RELATIVE_ERRORS_3.042118678294192E-10_AND_6.391893878204816E-10_LIMIT_1E-11",
+    "b0_p0_disk_admission": "PASS_16_GIB_CAP_11886541965_B_CUMULATIVE",
+    "b0_p0_offline_checker": "INCONCLUSIVE_SIGSEGV"
   }
 }

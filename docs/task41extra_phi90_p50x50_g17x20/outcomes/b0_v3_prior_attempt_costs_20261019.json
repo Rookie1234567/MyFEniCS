@@ -1,0 +1,245 @@
+{
+  "observed_utc": "2026-10-19T04:35:06.417011+00:00",
+  "runs": [
+    {
+      "attempt": "20261019T003336.113773Z",
+      "source": {
+        "source_sha": "1ad72d76c63fca9e15145fa450ed823270f6cec7",
+        "tracked_and_nonignored_untracked_clean": true,
+        "actual_git_directory": "/home/fenics/Projects/laptop_share/.git"
+      },
+      "error": {
+        "message": "Task41 B0 donor fresh mesh/MPC/orientation/config/ABI/math identity differs",
+        "type": "ValueError"
+      },
+      "worker_status": "FAILED",
+      "recovery_manifest_present": false,
+      "raw_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T003336.113773Z",
+      "cost_scope": "watchdog parent only; preparation outside parent UNKNOWN",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 4,
+      "elapsed_seconds": 1583.5559855126776,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "sampled_process_tree_rss_peak_bytes": 18115096576,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 4247107,
+          "pswpout_pages": 7182720
+        },
+        "end": {
+          "pswpin_pages": 4247320,
+          "pswpout_pages": 7182720
+        },
+        "delta": {
+          "pswpin_pages": 213,
+          "pswpout_pages": 0
+        }
+      },
+      "job_cgroup_swap": {
+        "gate_enforced": true,
+        "start_swap_current_bytes": 0,
+        "peak_swap_current_bytes": 0,
+        "sample_count": 4579,
+        "end": {
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261019T003331-2001979.service",
+          "readable": true,
+          "dedicated_job_cgroup": true,
+          "member_count": 2,
+          "memory_current_bytes": 10336063488,
+          "memory_peak_bytes": 26559942656,
+          "memory_limit_bytes": 1649267441664,
+          "swap_current_bytes": 0
+        },
+        "passed": true
+      },
+      "clock_start": {
+        "monotonic": 2295011.170481124,
+        "boottime": 2295011.170482189,
+        "utc_ns": 1792370016309615884
+      },
+      "clock_end": {
+        "monotonic": 2296594.726795494,
+        "boottime": 2296594.726796727,
+        "utc_ns": 1792371599865930521,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+      },
+      "raw_receipts": {
+        "watchdog/summary.json": {
+          "bytes": 13779,
+          "sha256": "e7317d870da40205df8e281c7986d58550d5511002167f3c8388ab4a6504d01e"
+        },
+        "task40_v10_p6_candidate_summary.json": {
+          "bytes": 63608,
+          "sha256": "7f9f10b082b676b12c95455541dd0bcbec57c8d7822a26d2861707233152b607"
+        },
+        "run_summary.json": {
+          "bytes": 14465,
+          "sha256": "96b3935da3a25cea0b41a63067d9652923769939f7952fbf6481ab1f38af19b6"
+        }
+      }
+    },
+    {
+      "attempt": "20261019T013135.034155Z",
+      "source": {
+        "source_sha": "78ffa55477e65657773934a8ffce4ba47c6f2087",
+        "tracked_and_nonignored_untracked_clean": true,
+        "actual_git_directory": "/home/fenics/Projects/laptop_share/.git"
+      },
+      "error": {
+        "message": "name 'run_id' is not defined",
+        "type": "NameError"
+      },
+      "worker_status": "FAILED",
+      "recovery_manifest_present": false,
+      "raw_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T013135.034155Z",
+      "cost_scope": "watchdog parent only; preparation outside parent UNKNOWN",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 4,
+      "elapsed_seconds": 4313.645527716726,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "sampled_process_tree_rss_peak_bytes": 9186123776,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 4247321,
+          "pswpout_pages": 7182720
+        },
+        "end": {
+          "pswpin_pages": 4247327,
+          "pswpout_pages": 7182720
+        },
+        "delta": {
+          "pswpin_pages": 6,
+          "pswpout_pages": 0
+        }
+      },
+      "job_cgroup_swap": {
+        "gate_enforced": true,
+        "start_swap_current_bytes": 0,
+        "peak_swap_current_bytes": 0,
+        "sample_count": 11801,
+        "end": {
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261019T013132-2025336.service",
+          "readable": true,
+          "dedicated_job_cgroup": true,
+          "member_count": 2,
+          "memory_current_bytes": 293515264,
+          "memory_peak_bytes": 9319522304,
+          "memory_limit_bytes": 1649267441664,
+          "swap_current_bytes": 0
+        },
+        "passed": true
+      },
+      "clock_start": {
+        "monotonic": 2298490.03306461,
+        "boottime": 2298490.033065674,
+        "utc_ns": 1792373495172199379
+      },
+      "clock_end": {
+        "monotonic": 2302803.67885068,
+        "boottime": 2302803.678851791,
+        "utc_ns": 1792377808817987357,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+      },
+      "raw_receipts": {
+        "watchdog/summary.json": {
+          "bytes": 11878,
+          "sha256": "9a9864fce97f78b30b94a4d3c725b8cf819b0c1274bc81885d6eaf42dbbac4b7"
+        },
+        "task40_v10_p6_candidate_summary.json": {
+          "bytes": 86833,
+          "sha256": "8398482a6ce1469f9277023a1f085dbd4d135bf6d239ed6e015418dc0e9b23fb"
+        },
+        "run_summary.json": {
+          "bytes": 13305,
+          "sha256": "95fbd2bbe2e67ebde5262f9e680306d48494a0e35d55d96cf714538e59a63ba8"
+        }
+      }
+    },
+    {
+      "attempt": "20261019T025658.545020Z",
+      "source": {
+        "source_sha": "1366d64b8479139355e70897392f9bfed18347a9",
+        "tracked_and_nonignored_untracked_clean": true,
+        "actual_git_directory": "/home/fenics/Projects/laptop_share/.git"
+      },
+      "error": {
+        "message": "Task40 V10 raw-disk admission failed: {'label': 'task41_b0_recovery_evidence_payload', 'current_raw_artifact_bytes': 198773775, 'projected_additional_bytes': 11683674525, 'projected_cumulative_raw_artifact_bytes': 11882448300, 'raw_artifact_limit_bytes': 8589934592, 'filesystem_free_bytes': 2029118930944, 'projected_free_bytes': 2017435256419, 'free_space_floor_bytes': 2147483648}",
+        "type": "V14ResourceStop"
+      },
+      "worker_status": "CONTROLLED_STOP",
+      "recovery_manifest_present": false,
+      "raw_path": "results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T025658.545020Z",
+      "cost_scope": "watchdog parent only; preparation outside parent UNKNOWN",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 4,
+      "elapsed_seconds": 4320.7519455822185,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "sampled_process_tree_rss_peak_bytes": 9185914880,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 4247327,
+          "pswpout_pages": 7182720
+        },
+        "end": {
+          "pswpin_pages": 4247334,
+          "pswpout_pages": 7182720
+        },
+        "delta": {
+          "pswpin_pages": 7,
+          "pswpout_pages": 0
+        }
+      },
+      "job_cgroup_swap": {
+        "gate_enforced": true,
+        "start_swap_current_bytes": 0,
+        "peak_swap_current_bytes": 0,
+        "sample_count": 11658,
+        "end": {
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261019T025653-2063719.service",
+          "readable": true,
+          "dedicated_job_cgroup": true,
+          "member_count": 2,
+          "memory_current_bytes": 292724736,
+          "memory_peak_bytes": 9317388288,
+          "memory_limit_bytes": 1649267441664,
+          "swap_current_bytes": 0
+        },
+        "passed": true
+      },
+      "clock_start": {
+        "monotonic": 2303613.589282206,
+        "boottime": 2303613.589284708,
+        "utc_ns": 1792378618728418415
+      },
+      "clock_end": {
+        "monotonic": 2307934.341482415,
+        "boottime": 2307934.341483358,
+        "utc_ns": 1792382939480617081,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+      },
+      "raw_receipts": {
+        "watchdog/summary.json": {
+          "bytes": 11881,
+          "sha256": "ff2bca4759fb10987d0d6eeb7d1c1350aa1505b2025e0e24a0b9613526f4724d"
+        },
+        "task40_v10_p6_candidate_summary.json": {
+          "bytes": 87903,
+          "sha256": "e0effbace1cd8179127994e3c08fd0ff5986aaa75842cf9b1a7724047229ed4a"
+        },
+        "run_summary.json": {
+          "bytes": 13309,
+          "sha256": "7d5ab815e6a53e8332b59d41de78b9daf491d9acf2343310217f2c8affddfa38"
+        }
+      }
+    }
+  ]
+}

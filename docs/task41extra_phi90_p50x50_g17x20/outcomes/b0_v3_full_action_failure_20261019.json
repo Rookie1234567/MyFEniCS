@@ -1,0 +1,187 @@
+{
+  "schema": "task41.p0.b0.v3.saved_evidence_closeout.v1",
+  "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+  "attempt": "20261019T053402.514018Z",
+  "service": "myfenics-case-20261019T053359-2096871.service",
+  "service_invocation_id": "c91a0917787c45a38645fe35a3e9e1ac",
+  "service_state": "failed",
+  "service_result": "exit-code",
+  "service_exec_main_status": 3,
+  "worker_exit_status": 4,
+  "run_status": "finished",
+  "run_result_classification": "WORKER_FAILED",
+  "classification": "NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED",
+  "official_result": false,
+  "workflow_phase": "TASK41_B0/cleanup",
+  "error": "Task41 B0 two-input full action failed its original gates: D=0.0, p6/native=[3.042118678294192e-10, 6.391893878204816e-10]",
+  "identity": {
+    "source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+    "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+    "physical_sha256": "0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d",
+    "resolved_config_sha256": "9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+    "execution_contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_afbe91e5947ed18fb74d7105097e129c1b8b4cc7.json",
+    "execution_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+    "fixed_window_sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38",
+    "window_t0_utc": "2026-10-19T05:23:07.094241922Z",
+    "window_deadline_utc": "2026-10-20T05:23:07.094241922Z",
+    "numerical_deadline_utc": "2026-10-20T05:03:07.094241922Z"
+  },
+  "raw_evidence": {
+    "remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z",
+    "run_manifest_sha256": "f3372c49c2b3dc274399f288ce4bb92b03106986742fed11473eac41a23f7172",
+    "run_summary_sha256": "b345dabe6ada8d793ae6c4dad6a64b7ece2f0157c807181d58a5a12d1330f590",
+    "candidate_summary_sha256": "651c7a84db27e02c02879b10a28fe5580911678d25b5c7b8018a882d467c98d9",
+    "recovery_manifest_sha256": "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465",
+    "events_jsonl_sha256": "297a9595b902b778a5d38f5257f59ec8ef0ff6cb64397815fca12cda6f193b00",
+    "recovery_pass_event_sha256": "228710acf9b84bebd3338565939db2a5ec3e4d112f492a8b6f93668a5044b810",
+    "full_action_failure_event_sha256": "cf0503e21dbc7a9323d987f2c990a1525b1485b16e3ea0791d0bb3e83341638b",
+    "worker_completion_event_sha256": "318b689dc29f6814fa8de79be41e3d7729fbb23e0f52c0f3b63caac14771129b",
+    "saved_vector_hash_index_path": "b0_v3_saved_vector_hash_index_20261019.json",
+    "saved_vector_hash_index_sha256": "332b9e5ed553916808cceccd92542b5086cbdbeaaa298d42d95d18916bb7ade3",
+    "saved_vectors_verified": {
+      "file_count": 141,
+      "bytes": 9379882344,
+      "all_sizes_match_manifest": true,
+      "all_sha256_match_manifest": true,
+      "manifest_paths_equal_root_npy_inventory": true
+    },
+    "watchdog_summary_sha256": "d5e91046648450ce9d9094b18a1927dc82536a8f77ab7e882f9a9defeb4247ea"
+  },
+  "authorized_raw_disk_policy": {
+    "cap_bytes": 17179869184,
+    "free_space_floor_bytes": 2147483648,
+    "existing_artifacts_bytes": 202867440,
+    "projected_new_artifacts_bytes": 11683674525,
+    "projected_cumulative_artifacts_bytes": 11886541965,
+    "filesystem_free_bytes_at_admission": 2027809583104,
+    "projected_free_bytes": 2016125908579,
+    "admission_passed": true
+  },
+  "recovery": {
+    "state": "FULL_RHS_RECOVERY_GATE_PASS",
+    "limits": {
+      "forward_relative_error": 1e-11,
+      "native_volume_residual_relative": 1e-10,
+      "max_same_lu_corrections_per_column": 3
+    },
+    "columns": [
+      {
+        "mode": 16030,
+        "initial_absolute_error": 2.56331683759634e-08,
+        "reference_norm": 1253.2053990901545,
+        "initial_forward_relative_error": 2.0454083899234283e-11,
+        "initial_native_volume_residual_relative": 3.8000599714433685e-14,
+        "same_lu_corrections": 3,
+        "final_absolute_error": 1.0592599140123843e-10,
+        "final_forward_relative_error": 8.452404647964512e-14,
+        "final_native_volume_residual_norm": 3.495403814599201e-07,
+        "final_native_volume_residual_scale": 672394210.1992825,
+        "final_native_volume_residual_relative": 5.198444248297799e-16,
+        "trace_identity_passed": true,
+        "slave_zero_passed": true,
+        "side": "top",
+        "polarization": "s"
+      },
+      {
+        "mode": 48090,
+        "initial_absolute_error": 5.385035952322834e-08,
+        "reference_norm": 2638.9063880219155,
+        "initial_forward_relative_error": 2.0406316710458895e-11,
+        "initial_native_volume_residual_relative": 3.799786706646577e-14,
+        "same_lu_corrections": 3,
+        "final_absolute_error": 2.233068905665748e-10,
+        "final_forward_relative_error": 8.462099738746788e-14,
+        "final_native_volume_residual_norm": 7.330799750398218e-07,
+        "final_native_volume_residual_scale": 1415838828.3573015,
+        "final_native_volume_residual_relative": 5.177707803722003e-16,
+        "trace_identity_passed": true,
+        "slave_zero_passed": true,
+        "side": "bottom",
+        "polarization": "s"
+      }
+    ]
+  },
+  "full_action": {
+    "input_shape": [
+      5752120,
+      2
+    ],
+    "p6_result_bytes": 184067968,
+    "native_reduced_rhs_bytes": 184067968,
+    "port_rhs_shape": [
+      64120,
+      2
+    ],
+    "port_rhs_bytes": 2051968,
+    "D_relative_error": 0.0,
+    "p6_native_relative_error_limit": 1e-11,
+    "stored_gate_relative_errors": [
+      3.042118678294192e-10,
+      6.391893878204816e-10
+    ],
+    "independent_numpy_recompute": [
+      {
+        "p6_norm": 2225.4812534807975,
+        "native_rhs_norm": 2225.4812534876287,
+        "difference_norm": 6.770178089430204e-07,
+        "relative_error": 3.0421186782950535e-10
+      },
+      {
+        "p6_norm": 2225.4807123031883,
+        "native_rhs_norm": 2225.4807122963252,
+        "difference_norm": 1.4225036541037535e-06,
+        "relative_error": 6.391893878206565e-10
+      }
+    ],
+    "independent_recompute_matches_stored_gate_to_roundoff": true,
+    "gate_passed": false
+  },
+  "workflow": {
+    "start_utc": "2026-10-19T05:34:02.624273Z",
+    "service_terminal_utc": "2026-10-19T09:12:20.301Z",
+    "watchdog_final_sample_utc": "2026-10-19T09:12:25.213291Z",
+    "parent_elapsed_seconds": 13102.588685457129,
+    "run_summary_workflow_elapsed_seconds": 13102.74539181916,
+    "saved_surface_application_modes": 64120,
+    "expected_surface_application_modes": 64120,
+    "saved_surface_application_seconds": 3961.9574313424528,
+    "full_workflow_time_exceeded": false,
+    "resource_gate_triggered": false,
+    "time_gates_exceeded": false
+  },
+  "resources": {
+    "process_tree_rss_peak_bytes": 14523883520,
+    "task_cgroup_memory_peak_bytes": 23537336320,
+    "task_cgroup_swap_peak_bytes": 0,
+    "task_cgroup_swap_current_bytes": 0,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "host_global_pswpin_pages_delta": 177,
+    "host_global_pswpout_pages_delta": 0,
+    "host_global_swap_attribution": "UNKNOWN"
+  },
+  "fixed_window_at_last_watchdog_sample": {
+    "cumulative_seconds": 13758.124046974932,
+    "total_remaining_seconds": 72641.87595302507,
+    "numerical_remaining_seconds": 71441.87595302507,
+    "note": "Balances are at the final watchdog sample, not current balances."
+  },
+  "offline_checker": {
+    "status": "INCONCLUSIVE_SIGSEGV",
+    "process_result": "PETSc signal 11; MPI_Abort code 59; no report persisted",
+    "interpretation": "Two initial invocations had activation/JIT deviations. One targeted retry using the exact frozen native activation passed ABI preflight but still segfaulted. Root cause unresolved; no complete checker PASS. Independent NumPy saved-vector recheck confirms the numerical failure.",
+    "invocation_count": 3,
+    "invocation_evidence": "b0_v3_offline_checker_invocation_failures.json",
+    "invocation_evidence_sha256": "f362b24773778a36658a86cf1fb356bb18d110dc996e0a00248bda5519213cc3"
+  },
+  "not_run": [
+    "q CSR and q factors",
+    "KSP/FGMRES solve",
+    "complete field",
+    "independent A6",
+    "official R/T/A and A_volume",
+    "precision, 2 TB, and 48 h qualification"
+  ],
+  "interpretation": "The authorized 16 GiB raw-evidence cap passed. Saved recovery passed after three same-LU corrections per column, but the two-input full-action P6/native comparison failed its unchanged 1e-11 gate. The cause of the discrepancy is unresolved."
+}

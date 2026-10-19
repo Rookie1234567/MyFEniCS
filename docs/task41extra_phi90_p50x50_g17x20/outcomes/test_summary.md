@@ -207,3 +207,21 @@ Ruff 不可用，未安装；未运行全仓测试。表中通过的 fixture 与
 用户明确批准独立 86400 秒续作（数值 85200 秒、收口 1200 秒），保留原窗口与费用。新窗口从已保存授权时钟计入准备成本，启动或源码提交不重置时钟；证据磁盘上限为 16 GiB，其他资源和数学门不变。
 
 定向验证：固定新窗口/旧父窗口不可变、正式 worker 预算、独立 watchdog checker 命令授权、旧窗口跨源码复用，共 4 项通过。首次测试的 watchdog 夹具错误地解析虚拟环境解释器符号链接，导致 `/usr/bin/python` 不存在；仅修正夹具路径后复测通过，未修改 ABI 门或生产数值。未运行全仓测试。
+## V3 正式运行与保存证据核验（2026-10-19）
+
+最终正式 attempt 使用 source afbe91e5947ed18fb74d7105097e129c1b8b4cc7，目录 20261019T053402.514018Z，service myfenics-case-20261019T053359-2096871.service。16 GiB disk admission 通过；run 结束于 full-action gate failure，分类 WORKER_FAILED，数值分类 NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED，official result=false。
+
+| 核验 | 结果 | 范围 |
+|---|---|---|
+| 16 GiB policy 定向测试 | 原 8 GiB 预测拒绝；16 GiB 允许 11,882,448,300 B；自身上限、2 GiB floor 和跨 case 保护仍拒绝越界；修正 fixture 后该批次全部 PASS | 资格化 WSL complex128/int32；未重跑 PDE |
+| 原始运行 disk admission | projected cumulative 11,886,541,965 B / cap 17,179,869,184 B；准入 PASS | 当前正式 run；floor 仍 2,147,483,648 B |
+| 保存向量清单 | 141 个 .npy、9,379,882,344 B；路径集合、文件大小和逐文件 SHA-256 全部匹配 manifest | 当前 run 根目录 .npy，不扫描 external donor 或 watchdog JSONL |
+| full-action 比较重算 | NumPy 对保存 p6/native RHS 重算相对误差 3.0421186782950535e-10、6.3918938782065652e-10 | 两列都超过原 1e-11；只复核运行已保存的比较 |
+| offline recovery checker | INCONCLUSIVE_SIGSEGV；PETSc signal 11、MPI_Abort 59，没有报告写出 | 不算 PASS；两次初始调用配置存在偏差；修正为冻结 native activation 后定向复验仍崩溃 |
+| PDE / 项目测试 | 本收口未运行新 PDE 或新项目测试 | 不把此前 cap 定向测试移作数值通过证据 |
+
+本机记录的 cap fixture 定向测试结果见本文件 V3 配额段；测试是对 contract/dispatcher/checker 接线的校验，不证明 FE 数值门。当前 V3 结果、run summary、candidate summary、recovery manifest、event log 和 hash index 的完整身份见 [V3 closeout compact](b0_v3_full_action_failure_20261019.json)。全仓 pytest、Ruff、q/factor、KSP/FGMRES、完整场与 official observables 均未运行。
+
+文档收口后的最终定向验证：资格化 WSL activation preflight 确认 Python 来自当前仓库 .venv、PETSc complex128/int32，petsc4py、slepc4py、dolfinx 和 mpi4py 属于同一 Linux complex ABI 栈；模型登记表与文档合同测试共 20 passed in 0.09 s。另有 run-index/compact/hash-index JSON 解析检查、表格列数与 git diff --check 通过。未运行全仓测试。
+
+主控最终文档修正后仅运行 `src/test/test_26_documentation_contract.py`、`src/test/test_183_development_model_registry_markdown.py`、`src/test/test_development_model_registry_contract.py`：21 passed in 0.08s。checker正确native调用仍崩溃，三次调用证据见 `b0_v3_offline_checker_invocation_failures.json`，不算通过。

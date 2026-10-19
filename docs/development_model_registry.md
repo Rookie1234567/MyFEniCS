@@ -2222,7 +2222,13 @@ A2 P0 attempt4 使用同一冻结source `48049161acb84f57b2d8248f67ea616fb837cce
 
 P0 冻结前B0工程门：A2/B0 ABI 精确身份分派、真实DAT到固定窗口/资源包/runtime/dispatch的入口fixture、578项诊断键与64,120项official逐侧模式键分离核验均通过定向测试。carrier资源数为基于实际face dofmap与MPC/full-vector生命周期的派生上界，非实测内存；全程没有新建FE网格或运行PDE。native Linux正式prepare仍等待主控冻结与对应receipt，完整P0回归及细项见[Task41 test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
 
+### Task41 P0 B0 V3 recovery 与 full-action 结果
+
+V3 将用户授权的原始证据上限提高至 16 GiB，保留 2 GiB free-space floor 与所有数学、内存、时间门；最终 run 的投影累计 evidence 为 11,886,541,965 B，准入通过。两列 saved-input recovery 在每列三次同 LU 修正后低于 forward 1e-11 和 native residual 1e-10 门限；但完整 p6/native action relative errors 为 3.042118678294192e-10 与 6.391893878204816e-10，超过原 1e-11，所以没有完整 action qualification、完整场或 official R/T/A。分类为 NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED，不是资源失败；不改变 ordinary default。数值、资源和证据入口见 [Task41 V3 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md) 与 [hash-bound closeout](task41extra_phi90_p50x50_g17x20/outcomes/b0_v3_full_action_failure_20261019.json)。
+
+
 # 4. 今后新增模型的登记模板
+
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。
 

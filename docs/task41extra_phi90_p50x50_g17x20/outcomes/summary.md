@@ -194,3 +194,46 @@ Review V2 修复 watchdog 的分域资源谓词，并沿现有 Task41 prepare/se
 证据索引：[row-map attempt](p0_v2_raw_probe_rowmap_repair.json)、[B witness attempt](p0_v2_alpha_probe_field_diagnostic.json)、[local final evidence](p0_local_final_evidence_20261018.json)、[adoption/action/performance compact](p0_v2_adoption_action_performance_20261018.json)、[final recovery failure](b0_full_rhs_recovery_gate_failure_20261018.json) 和 [run index](run_index.json)。下一步由 ChatGPT 依据数值门失败与向量未保存的取证缺口审阅后续处置；本阶段没有自动重跑。
 
 主控补充：在最终冻结源码 `53243cd6766b564fed17668753e9fdbb7cab1129` 部署后，使用工作站既有 native complex activation 执行新 B-action 振幅 fixture 与 two-input borrowed-buffer fixture，结果 `2 passed, 13 deselected in 0.56s`，随后才启动 `121210` 正式 attempt。该记录来自主控部署命令回执，不能抹去此前本机旧 ABI receipt 的阻塞记录。科学 source 与本次文档结果 HEAD 分开；最终结果 HEAD 由集中推送后回读提供。
+## Task41 P0 Review V3 与获授权 16 GiB 续作：恢复 PASS、full action FAIL（2026-10-19）
+
+V3 continuation 保留原 fixed-window T0，并按用户明确授权把新 B0 execution contract 的原始证据配额从 8 GiB 提升至 16 GiB。8 GiB 时的旧 attempt 因预测 11,882,448,300 B 超过 8,589,934,592 B 而资源停止；新合同仍保留 2 GiB free-space floor、内存与 host reserve、task swap0 和全部数值门。最终运行的磁盘准入通过，随后运行抵达 full-action 数值门并失败。数值失败不是配额失败。
+
+| 阶段 / 身份 | 实测结果 | 数据身份与证据 |
+|---|---|---|
+| 获授权磁盘合同 | cap 17,179,869,184 B；投影新文件 11,683,674,525 B；累计 11,886,541,965 B；准入时剩余 2,027,809,583,104 B，投影后 2,016,125,908,579 B；free-space floor 2,147,483,648 B | measured admission；[V3 compact](b0_v3_full_action_failure_20261019.json) |
+| 最终运行身份 | attempt 20261019T053402.514018Z；service myfenics-case-20261019T053359-2096871.service；source afbe91e5947ed18fb74d7105097e129c1b8b4cc7；状态 WORKER_FAILED，official_result=false | measured receipt；[run index](run_index.json) |
+| 首次 8 GiB attempt | attempt 20261019T025658.545020Z；source 1366d64b8479139355e70897392f9bfed18347a9；旧 cap 8,589,934,592 B，预测 11,882,448,300 B，恢复见证未运行 | 已有资源停止记录；本次没有重读旧目录或服务 |
+| 固定窗口 | T0 2026-10-19T05:23:07.094241922Z；总计 86,400 s、数值 85,200 s、收口 1,200 s；最后 watchdog 样本后余额分别约 72,641.876 s 与 71,441.876 s | measured cumulative + derived remainder；不是当前余额 |
+
+### 已知输入 RHS recovery
+
+Recovery 的 forward relative error 限值为 1e-11，native volume residual relative 限值为 1e-10，每列最多 3 次同 LU 校正。两列初次 forward 相对误差分别为 2.0454083899234283e-11 和 2.0406316710458895e-11，高于门限；各自 native residual 初值都远低于 1e-10。按合同完成三次同 LU 修正后，最终 forward 相对误差为 8.452404647964512e-14 和 8.462099738746788e-14，最终 native residual 相对值为 5.198444248297799e-16 和 5.177707803722003e-16。两列 trace identity 与 slave-zero 都通过，saved recovery manifest 状态为 PASS。这个 PASS 限定于已保存的 recovery witness。
+
+### two-input full action
+
+| 检查项 | top / mode 16030 | bottom / mode 48090 | 原门限 / 结论 |
+|---|---:|---:|---|
+| p6 action 对 native reduced RHS 相对误差 | 3.042118678294192e-10 | 6.391893878204816e-10 | 每列 1e-11；两列 FAIL |
+| 已保存向量独立 NumPy 重算 | 3.0421186782950535e-10 | 6.3918938782065652e-10 | 与运行门只差浮点求和顺序；确认失败 |
+| D 相对误差 | 0.0 | 0.0 | 限值 1e-11；PASS |
+| 输入数组与 full action 输出 | 形状 (5,752,120, 2)，各 184,067,968 B | 端口 RHS (64,120,2)，2,051,968 B | 数组身份和逐文件 SHA-256 见 [saved-vector index](b0_v3_saved_vector_hash_index_20261019.json) |
+
+因此 recovery 的 PASS 没有关闭 full-action gate。现有数组重算复现了误差，但不能定位其源码或数值根因；不归因于 LU、MPC、行映射或浮点舍入。offline checker 调用遇到 PETSc signal 11 / MPI_Abort 59，没有输出报告，状态为 INCONCLUSIVE_SIGSEGV，不能计作 checker PASS，也没有据此宣称代码缺陷。
+
+### 成本、资源、未运行项与决定
+
+| 指标 / 项目 | 数值或状态 | 数据身份 / 范围 |
+|---|---|---|
+| 父 workflow | 13,102.74539181916 s；watchdog parent 13,102.588685457129 s | measured；不同计时口径分开记录 |
+| saved surface application | 64,120/64,120；3,961.9574313424528 s | measured 子计时；包含在父计时内，不叠加 |
+| process-tree RSS peak / task cgroup peak | 14,523,883,520 B / 23,537,336,320 B | measured，不混作同一峰值口径 |
+| task swap / 清场 | peak/current 0 B；descendants cleared；无剩余 child PID | measured |
+| resource/time gates | 均未触发 | measured；运行因 full-action 数值门结束 |
+| q CSR、q factor、KSP/FGMRES、完整场、独立 A6 | NOT_RUN | 当前 full action 不合格，未进入这些阶段 |
+| official R/T/A、A_volume、2 TB / 48 h | NOT_RUN / 未资格化 | 没有 official field |
+| root cause / ordinary default / master | 根因未闭合；default 未变；不合并 | 结果决策 |
+
+在最后 watchdog 样本 2026-10-19T09:12:25.213291Z 时，总窗口派生剩余约 72,641.876 s，数值窗口约 71,441.876 s；这是当时余量，不是当前余额。宿主全局 swapin/out 差值为 177/0 页，无法归因到任务，归因保持 UNKNOWN。所有 141 个 manifest-listed .npy 共 9,379,882,344 B，逐文件大小和 SHA-256 与 recovery manifest 一致；见 [hash index](b0_v3_saved_vector_hash_index_20261019.json)。主证据和各 event SHA 见 [V3 compact](b0_v3_full_action_failure_20261019.json)。
+
+下一断点是由主控审阅已保存 recovery/full-action 向量并给出可证伪诊断；在失败根因和后续合同重新冻结前，不继续 q/factor/solve，不降低门限、不增加校正次数、不重跑 PDE。16 GiB 配额只解决本次 raw-evidence admission，不构成数值资格。详细逐项回应见 [response_v3.md](../response_v3.md)。
+*** End of File

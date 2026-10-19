@@ -6,6 +6,8 @@
 
 ## 当前任务
 
+V3 最新终态见 [response_v3.md](response_v3.md) 和 [V3 outcomes](outcomes/summary.md)：用户授权的 16 GiB 原始证据配额已准入通过；两列已知输入 recovery 在最多三次同 LU 修正后通过原门，但 two-input full action 的 p6/native 相对误差仍超过 1e-11，根因未闭合，official result=false。q factor、KSP/FGMRES、完整场和 R/T/A 尚未运行。不得把本次数值门失败改写成配额或资源失败。
+
 完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A出口已通过：A2保存场同离散比较与 checker-only retry3 PASS。attempt7 原 worker 的 `WORKER_FAILED` / `official_result=false` 作为历史保留；checker未重新组装FE算子。0.7 nm B0已开始真实FE/MPC和端口构建；旧全域分量装配速度不足，经用户批准受控停止，保存94/64,120模式。紧凑边界积分接线已通过定向测试，待冻结后在真实网格配对及续算；尚无0.7 nm完整场。固定B0窗口和历史费用保留，详见[outcomes/summary.md](outcomes/summary.md)。
 
 | 固定物理 | 值 |
