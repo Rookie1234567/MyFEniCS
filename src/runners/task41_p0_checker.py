@@ -1358,6 +1358,7 @@ def _task41_b0_recovery_evidence_checks(
     recovery_errors: list[str] = []
     joint_action_errors: list[str] = []
     manifest_loaded = False
+    manifest_identity_binding_valid = False
     joint_action_completed = False
     joint_action_passed: bool | None = None
     joint_action_metrics: list[dict[str, Any]] = []
@@ -1490,6 +1491,7 @@ def _task41_b0_recovery_evidence_checks(
             or any(char not in "0123456789abcdef" for char in value)
         ):
             integrity_error(f"Task41 B0 recovery run identity has invalid {key}")
+    manifest_identity_binding_valid = manifest_loaded and not integrity_errors
 
     support = manifest.get("saved_surface_support_certificate")
     summary_support = summary.get("b0_saved_surface_support_certificate")
@@ -1517,17 +1519,33 @@ def _task41_b0_recovery_evidence_checks(
         or manifest.get("saved_surface_support_certificate_sha256") != support_digest
     ):
         integrity_error("Task41 B0 exact-zero local Bi/Di support certificate is absent or mismatched")
-    if summary.get("b0_recovery_refinement_max_steps") != 3:
-        integrity_error("Task41 B0 production path is not bound to the shared three-step recovery loop")
     loop = binding.get("same_lu_refinement_loop")
+    loop_identity_matches = (
+        isinstance(loop, Mapping)
+        and loop.get("production_and_witness_share_loop") is True
+        and loop.get("maximum_steps_per_column") == 3
+        and loop.get("full_carrier_sweeps_per_correction") == 0
+        and loop.get("correction_driver")
+        == "independent_native_cell_interior_volume_residual"
+    )
+    legacy_failed_missing_step_limit = (
+        "b0_recovery_refinement_max_steps" not in summary
+        and manifest_identity_binding_valid
+        and manifest.get("stage") == "FULL_ACTION_GATE_FAILED"
+        and manifest.get("status") == "FAIL"
+        and binding.get("stage") == "FULL_ACTION_GATE_FAILED"
+        and binding.get("status") == "FAIL"
+        and loop_identity_matches
+        and loop.get("production_route_reached") is False
+    )
     if (
-        not isinstance(loop, Mapping)
-        or loop.get("production_and_witness_share_loop") is not True
-        or loop.get("maximum_steps_per_column") != 3
-        or loop.get("full_carrier_sweeps_per_correction") != 0
-        or loop.get("correction_driver")
-        != "independent_native_cell_interior_volume_residual"
+        summary.get("b0_recovery_refinement_max_steps") != 3
+        and not legacy_failed_missing_step_limit
     ):
+        integrity_error(
+            "Task41 B0 production path is not bound to the shared three-step recovery loop"
+        )
+    if not loop_identity_matches:
         integrity_error("Task41 B0 recovery evidence does not bind the shared same-LU correction loop")
 
     checked_columns = []
@@ -2198,6 +2216,12 @@ def _task41_b0_recovery_evidence_checks(
         "manifest_path": manifest_ref.get("path") if isinstance(manifest_ref, Mapping) else None,
         "manifest_stage": manifest.get("stage"),
         "audit_completed": audit_completed,
+        "legacy_failed_missing_step_limit_accepted": legacy_failed_missing_step_limit,
+        "production_route_reached": (
+            loop.get("production_route_reached")
+            if isinstance(loop, Mapping) and type(loop.get("production_route_reached")) is bool
+            else None
+        ),
         "data_integrity": data_integrity,
         "integrity_errors": integrity_errors,
         "recovery_passed": recovery_passed,

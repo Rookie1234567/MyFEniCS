@@ -1023,6 +1023,19 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         assert replay["qualification_passed"] is True
         assert replay["official_result"] is False
 
+        missing_success_step_limit = json.loads(json.dumps(summary))
+        missing_success_step_limit.pop("b0_recovery_refinement_max_steps")
+        missing_success_replay = _task41_b0_recovery_evidence_checks(
+            missing_success_step_limit,
+            tmp_path / "numerical_output",
+            contract,
+            contract_sha256=run_identity["execution_contract_sha256"],
+            expected_mode_indices=(0, 1),
+        )
+        assert missing_success_replay["legacy_failed_missing_step_limit_accepted"] is False
+        assert missing_success_replay["data_integrity"] is False
+        assert missing_success_replay["official_result"] is False
+
         failed_joint_manifest = json.loads(json.dumps(manifest))
         failed_joint_record = failed_joint_manifest["full_action"]
         original_joint = failed_joint_record["artifacts"]
@@ -1085,6 +1098,8 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         }
         failed_joint_binding["stage"] = "FULL_ACTION_GATE_FAILED"
         failed_joint_binding["status"] = "FAIL"
+        failed_joint_binding["same_lu_refinement_loop"]["production_route_reached"] = False
+        failed_joint_summary.pop("b0_recovery_refinement_max_steps")
         failed_joint_replay = _task41_b0_recovery_evidence_checks(
             failed_joint_summary,
             tmp_path / "numerical_output",
@@ -1100,6 +1115,8 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         assert failed_joint_replay["passed"] is False
         assert failed_joint_replay["joint_action_replayed"] is True
         assert failed_joint_replay["joint_action_status"] == "FAIL"
+        assert failed_joint_replay["legacy_failed_missing_step_limit_accepted"] is True
+        assert failed_joint_replay["production_route_reached"] is False
         assert len(failed_joint_replay["joint_action_metrics"]) == 2
         first_metric = failed_joint_replay["joint_action_metrics"][0]
         np.testing.assert_allclose(
@@ -1116,6 +1133,23 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         assert first_metric["max_abs_row_index"] == p6_values.shape[0] - 1
         assert "reproduces the original gate failure" in " ".join(
             failed_joint_replay["joint_action_errors"]
+        )
+
+        bad_step_limit_summary = json.loads(json.dumps(failed_joint_summary))
+        bad_step_limit_summary["b0_recovery_refinement_max_steps"] = 2
+        bad_step_limit_replay = _task41_b0_recovery_evidence_checks(
+            bad_step_limit_summary,
+            tmp_path / "numerical_output",
+            contract,
+            contract_sha256=run_identity["execution_contract_sha256"],
+            expected_mode_indices=(0, 1),
+        )
+        assert bad_step_limit_replay["legacy_failed_missing_step_limit_accepted"] is False
+        assert bad_step_limit_replay["production_route_reached"] is False
+        assert bad_step_limit_replay["data_integrity"] is False
+        assert any(
+            "production path is not bound" in message
+            for message in bad_step_limit_replay["integrity_errors"]
         )
 
         original_recover = action.recover_storage
@@ -1312,6 +1346,7 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         assert failed_replay["passed"] is True
         assert failed_replay["audit_completed"] is True
         assert failed_replay["data_integrity"] is True
+
         checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
         assert checkpoint["status"] == "IN_PROGRESS"
         assert checkpoint["identity"] == {
