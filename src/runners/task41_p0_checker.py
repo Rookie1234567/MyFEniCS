@@ -2273,9 +2273,16 @@ def check_task41_p0_b0_saved_evidence_audit(
             raise ValueError(f"saved B0 donor/consumer contracts differ at {key}")
 
     summary_path = summary_path.resolve(strict=True)
-    numerical_output = numerical_output.resolve(strict=True)
-    output_path = output_path.resolve()
     donor_directory = summary_path.parent
+    numerical_output = numerical_output.resolve()
+    expected_numerical_output = donor_directory / "numerical_output"
+    if numerical_output != expected_numerical_output or (
+        numerical_output.exists() and not numerical_output.is_dir()
+    ):
+        raise ValueError(
+            "saved B0 donor numerical-output path differs from its bound logical child"
+        )
+    output_path = output_path.resolve()
     output_root = (repo_root / "results").resolve()
     if (
         summary_path.name != "task40_v10_p6_candidate_summary.json"

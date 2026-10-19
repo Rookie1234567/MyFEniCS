@@ -9881,7 +9881,7 @@ def _run_task41_p0_service(
         donor_contract_path = Path(case_args[2]).resolve(strict=True)
         donor_contract_sha256 = case_args[4]
         donor_summary_path = Path(case_args[6]).resolve(strict=True)
-        donor_numerical_output = Path(case_args[8]).resolve(strict=True)
+        donor_numerical_output = Path(case_args[8]).resolve()
         continuation_output_root = Path(case_args[10]).resolve()
     if continuation_mode:
         if (
@@ -10006,12 +10006,14 @@ def _run_task41_p0_service(
                     raise ValueError(f"saved B0 donor/consumer contracts differ at {key}")
             donor_run_root = donor_summary_path.parent.resolve(strict=True)
             results_root = (repo_root / "results" / str(consumer_case["model_id"])).resolve()
+            expected_numerical_output = donor_run_root / "numerical_output"
             run_manifest = read_json_object(donor_run_root / "run_manifest.json", "B0 donor run manifest")
             run_summary = read_json_object(donor_run_root / "run_summary.json", "B0 donor run summary")
             if (
                 donor_summary_path.name != "task40_v10_p6_candidate_summary.json"
                 or not donor_run_root.is_relative_to(results_root)
-                or donor_numerical_output != (donor_run_root / "numerical_output").resolve(strict=True)
+                or donor_numerical_output != expected_numerical_output
+                or (donor_numerical_output.exists() and not donor_numerical_output.is_dir())
                 or Path(str(run_manifest.get("output_directory", ""))).resolve() != donor_run_root
                 or Path(str(run_manifest.get("numerical_output_directory", ""))).resolve()
                 != donor_numerical_output

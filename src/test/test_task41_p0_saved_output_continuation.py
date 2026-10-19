@@ -808,8 +808,9 @@ def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
     results_root = repo_root / "results" / contract_module.TASK41_MODEL_ID
     donor_run = results_root / "donor_run"
     numerical_output = donor_run / "numerical_output"
-    numerical_output.mkdir(parents=True)
-    (numerical_output / "raw.npy").write_bytes(b"immutable donor evidence")
+    donor_run.mkdir(parents=True)
+    donor_evidence = donor_run / "raw.npy"
+    donor_evidence.write_bytes(b"immutable donor evidence")
     input_path = repo_root / "task41.dat"
     input_path.write_bytes(b"frozen B0 input\n")
     donor_config = donor_run / "resolved_config.json"
@@ -912,11 +913,13 @@ def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
     monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_PATH", str(window.path))
     monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_SHA256", window_sha)
     monkeypatch.setenv("TASK41_P0_EXPECTED_SOURCE_SHA", consumer_source_sha)
-    source_artifact_hash = hashlib.sha256((numerical_output / "raw.npy").read_bytes()).hexdigest()
+    source_artifact_hash = hashlib.sha256(donor_evidence.read_bytes()).hexdigest()
     calls: list[tuple[list[str], dict[str, object]]] = []
 
     def fake_supervise(command: list[str], _directory: Path, **kwargs: object) -> dict[str, object]:
         calls.append((command, kwargs))
+        assert not numerical_output.exists()
+        assert Path(command[command.index("--numerical-output") + 1]) == numerical_output
         assert kwargs["campaign_phase"] == "closeout"
         assert kwargs["campaign_window_sha256"] == window_sha
         assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
@@ -1037,4 +1040,173 @@ def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
     assert receipt["donor_source_sha"] == donor_source_sha
     assert receipt["required_checker_result"]["official_result"] is False
     assert "continuation_watchdog" not in receipt
-    assert hashlib.sha256((numerical_output / "raw.npy").read_bytes()).hexdigest() == source_artifact_hash
+    assert not numerical_output.exists()
+    assert hashlib.sha256(donor_evidence.read_bytes()).hexdigest() == source_artifact_hash
+
+    bad_output_root = results_root / "saved_b0_audit_bad_numerical_output_parent"
+    with pytest.raises(
+        ValueError,
+        match="saved B0 audit donor paths or new consumer output directory differ",
+    ):
+        _run_task41_p0_service(
+            unit="task41-b0-saved-audit-bad-path-test",
+            runtime_prefix=runtime_prefix,
+            abi_receipt=repo_root / "abi.json",
+            jit_cache=repo_root / "jit",
+            case_args=[
+                "--task41-p0-saved-b0-evidence-audit",
+                "--donor-contract", str(donor_contract_path),
+                "--donor-contract-sha256", donor_contract_sha,
+                "--summary", str(donor_summary),
+                "--numerical-output", str(results_root / "other_donor" / "numerical_output"),
+                "--output-dir", str(bad_output_root),
+            ],
+            contract_path=consumer_contract_path,
+            repo_root=repo_root,
+        )
+    assert not bad_output_root.exists()
+
+
+def test_b0_saved_evidence_checker_accepts_only_missing_bound_output_child(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import src.runners.task41_p0_checker as checker_module
+    from src.runners.task41_p0_contract import TASK41_B0_RUN_ID, TASK41_MODEL_ID
+
+    repo_root = tmp_path
+    results_root = repo_root / "results" / TASK41_MODEL_ID
+    donor_run = results_root / "donor_run"
+    donor_run.mkdir(parents=True)
+    numerical_output = donor_run / "numerical_output"
+    input_bytes = b"frozen B0 input\n"
+    input_path = repo_root / "b0_input.dat"
+    input_path.write_bytes(input_bytes)
+    (donor_run / "input_original.dat").write_bytes(input_bytes)
+    config_path = donor_run / "resolved_config.json"
+    config_path.write_bytes(b'{"resolved": true}\n')
+    donor_evidence = donor_run / "raw.npy"
+    donor_evidence.write_bytes(b"immutable donor evidence")
+    input_sha = hashlib.sha256(input_bytes).hexdigest()
+    config_sha = hashlib.sha256(config_path.read_bytes()).hexdigest()
+    donor_source_sha = "a" * 40
+    consumer_source_sha = "c" * 40
+    donor_digest = "b" * 64
+    consumer_digest = "f" * 64
+    common_case = {
+        "model_id": TASK41_MODEL_ID,
+        "method": "full3d_iterative",
+        "mpi_size": 1,
+        "input_path": str(input_path),
+        "input_sha256": input_sha,
+        "physical_model_sha256": "9" * 64,
+        "resolved_config_sha256": config_sha,
+        "run_id": TASK41_B0_RUN_ID,
+    }
+    donor_contract = {
+        "source": {"sha": donor_source_sha},
+        "window": {"sha256": "1" * 64},
+        "case": common_case,
+    }
+    consumer_contract = {
+        "source": {"sha": consumer_source_sha},
+        "window": {"sha256": "2" * 64},
+        "case": common_case,
+    }
+    donor_contract_path = repo_root / "donor_contract.json"
+    consumer_contract_path = repo_root / "consumer_contract.json"
+    donor_contract_path.write_text("{}\n", encoding="utf-8")
+    consumer_contract_path.write_text("{}\n", encoding="utf-8")
+    donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+    donor_summary_path.write_text(json.dumps({"run_id": TASK41_B0_RUN_ID}), encoding="utf-8")
+    run_manifest = {
+        "run_id": TASK41_B0_RUN_ID,
+        "model_id": TASK41_MODEL_ID,
+        "method": "full3d_iterative",
+        "mpi_size": 1,
+        "input_sha256": input_sha,
+        "physical_model_sha256": common_case["physical_model_sha256"],
+        "resolved_config_sha256": config_sha,
+        "source_sha": donor_source_sha,
+        "output_directory": str(donor_run),
+        "numerical_output_directory": str(numerical_output),
+    }
+    (donor_run / "run_manifest.json").write_text(json.dumps(run_manifest), encoding="utf-8")
+    (donor_run / "run_summary.json").write_text(
+        json.dumps({
+            "run_id": TASK41_B0_RUN_ID,
+            "output_directory": str(donor_run),
+            "numerical_output_directory": str(numerical_output),
+        }),
+        encoding="utf-8",
+    )
+
+    def require_contract(path: Path, **kwargs: object) -> tuple[dict[str, object], str]:
+        if Path(path).resolve() == donor_contract_path.resolve():
+            assert kwargs["expected_sha256"] == donor_digest
+            return donor_contract, donor_digest
+        assert Path(path).resolve() == consumer_contract_path.resolve()
+        assert kwargs["expected_sha256"] == consumer_digest
+        return consumer_contract, consumer_digest
+
+    monkeypatch.setattr(checker_module, "require_task41_p0_contract", require_contract)
+    recovery_calls: list[Path] = []
+
+    def fake_recovery_evidence_checks(
+        _summary: object,
+        output_path: Path,
+        _contract: object,
+        **_kwargs: object,
+    ) -> dict[str, object]:
+        recovery_calls.append(output_path)
+        assert output_path == numerical_output
+        assert not output_path.exists()
+        return {
+            "audit_completed": True,
+            "data_integrity": True,
+            "recovery_passed": True,
+            "joint_action_passed": False,
+            "qualification_passed": False,
+            "official_result": False,
+            "errors": ["preserved full-action failure"],
+            "checkpoints": [],
+        }
+
+    monkeypatch.setattr(
+        checker_module,
+        "_task41_b0_recovery_evidence_checks",
+        fake_recovery_evidence_checks,
+    )
+    evidence_hash = hashlib.sha256(donor_evidence.read_bytes()).hexdigest()
+    output_path = results_root / "saved_b0_audit" / "task41_p0_b0_saved_evidence_audit.json"
+    result = checker_module.check_task41_p0_b0_saved_evidence_audit(
+        summary_path=donor_summary_path,
+        numerical_output=numerical_output,
+        contract_path=donor_contract_path,
+        contract_sha256=donor_digest,
+        consumer_contract_path=consumer_contract_path,
+        consumer_contract_sha256=consumer_digest,
+        output_path=output_path,
+        repo_root=repo_root,
+    )
+    assert result["audit_completed"] is True
+    assert result["official_result"] is False
+    assert result["joint_action_passed"] is False
+    assert output_path.is_file()
+    assert not numerical_output.exists()
+    assert hashlib.sha256(donor_evidence.read_bytes()).hexdigest() == evidence_hash
+    assert recovery_calls == [numerical_output]
+
+    bad_output = results_root / "saved_b0_audit_wrong_parent" / "task41_p0_b0_saved_evidence_audit.json"
+    with pytest.raises(ValueError, match="saved B0 donor numerical-output path differs"):
+        checker_module.check_task41_p0_b0_saved_evidence_audit(
+            summary_path=donor_summary_path,
+            numerical_output=results_root / "other_donor" / "numerical_output",
+            contract_path=donor_contract_path,
+            contract_sha256=donor_digest,
+            consumer_contract_path=consumer_contract_path,
+            consumer_contract_sha256=consumer_digest,
+            output_path=bad_output,
+            repo_root=repo_root,
+        )
+    assert not bad_output.exists()
+    assert recovery_calls == [numerical_output]

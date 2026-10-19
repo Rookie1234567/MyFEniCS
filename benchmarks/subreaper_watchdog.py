@@ -339,7 +339,7 @@ def _validate_campaign_closeout_authorization(
             if (
                 not donor_run_root.is_relative_to(results_root)
                 or donor_numerical_output != (donor_run_root / 'numerical_output').resolve()
-                or not donor_numerical_output.is_dir()
+                or (donor_numerical_output.exists() and not donor_numerical_output.is_dir())
                 or donor_run_root == output_path.parent
                 or donor_run_root.is_relative_to(output_path.parent)
                 or output_path.parent.is_relative_to(donor_run_root)
