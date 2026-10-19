@@ -8580,8 +8580,8 @@ def _task41_iterative_candidate_contract(
         ),
         "time_limit": (
             execution.get("timeout_seconds") == TASK41_TOTAL_SECONDS
-            and contract["time"]["total_seconds"] == TASK41_TOTAL_SECONDS
-            and contract["time"]["numerical_seconds"] == TASK41_NUMERICAL_SECONDS
+            and contract["time"]["total_seconds"] == window.total_seconds
+            and contract["time"]["numerical_seconds"] == window.total_seconds - window.closeout_seconds
             and contract["time"]["closeout_seconds"] == TASK41_CLOSEOUT_SECONDS
         ),
         "zero_swap_and_memory": (
@@ -8626,15 +8626,15 @@ def _task41_iterative_candidate_contract(
             and shared.get("campaign_window_sha256") == window.sha256
         ),
         "fixed_window_budget": (
-            campaign_seconds == TASK41_TOTAL_SECONDS
+            campaign_seconds == window.total_seconds
             and closeout_seconds == TASK41_CLOSEOUT_SECONDS
             and isinstance(shared, Mapping)
             and float(shared.get("total_budget_seconds", -1.0))
-            == TASK41_TOTAL_SECONDS
+            == window.total_seconds
         ),
         "reserved_numerical_budget": (
             np.isfinite(reserved)
-            and 0.0 < reserved <= TASK41_NUMERICAL_SECONDS
+            and 0.0 < reserved <= window.total_seconds - window.closeout_seconds
         ),
         "time_policy": getattr(runtime, "time_policy", None) == "enforce",
         "no_v14_ledger": getattr(runtime, "_ledger_path", None) is None,

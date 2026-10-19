@@ -144,6 +144,12 @@ TASK41_B0_BOOTSTRAP_TREATMENT = (
     "use CampaignAccount checked UTC/monotonic accounting. Do not add the 11.9 s "
     "inventory wall duration a second time."
 )
+TASK41_B0_V3_WINDOW_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v3_24h.json"
+TASK41_B0_V3_AUTH_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "v3_24h_authorization.json"
+TASK41_B0_PARENT_WINDOW_SHA256 = "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6"
+TASK41_B0_V3_TOTAL_SECONDS = 86_400.0
+TASK41_B0_V3_NUMERICAL_SECONDS = 85_200.0
+
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
 TASK41_NUMERICAL_SECONDS = 171_600.0
@@ -1071,9 +1077,7 @@ def require_task41_p0_contract(
         raise Task41ContractError("Task41 runtime must be MPI1 with one math thread")
     if runtime.get("profile") != "native_linux":
         raise Task41ContractError("formal Task41 P0 execution requires the registered native_linux runtime")
-    window_path = _resolve(root, window.get("path"), "window.path")
-    if window_path != (root / case_spec["window_relative"]).resolve():
-        raise Task41ContractError("Task41 fixed window path is not registered")
+    window_path, total_seconds, numerical_seconds, _continuation = task41_window_spec(contract, root)
     if not re.fullmatch(r"[0-9a-f]{64}", str(window.get("sha256", ""))):
         raise Task41ContractError("Task41 fixed window SHA-256 is invalid")
     if (
@@ -1083,8 +1087,8 @@ def require_task41_p0_contract(
     ):
         raise Task41ContractError("Task41 resource limits differ from the task ceiling")
     if (
-        time_limits.get("total_seconds") != TASK41_TOTAL_SECONDS
-        or time_limits.get("numerical_seconds") != TASK41_NUMERICAL_SECONDS
+        time_limits.get("total_seconds") != total_seconds
+        or time_limits.get("numerical_seconds") != numerical_seconds
         or time_limits.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
     ):
         raise Task41ContractError("Task41 contract time limits differ from the fixed P0 window")
@@ -1134,6 +1138,41 @@ def require_task41_p0_contract(
     return contract, digest
 
 
+def task41_window_spec(contract: Mapping[str, Any], root: Path) -> tuple[Path, float, float, bool]:
+    case = _task41_case(task41_case_id_for_run_id(str(contract.get("case", {}).get("run_id", ""))))
+    path = _resolve(root, contract.get("window", {}).get("path"), "window.path")
+    continuation = case["case_id"] == "B0" and path == (root / TASK41_B0_V3_WINDOW_RELATIVE).resolve()
+    if continuation:
+        return path, TASK41_B0_V3_TOTAL_SECONDS, TASK41_B0_V3_NUMERICAL_SECONDS, True
+    if path != (root / case["window_relative"]).resolve():
+        raise Task41ContractError("Task41 fixed window path is not registered")
+    return path, TASK41_TOTAL_SECONDS, TASK41_NUMERICAL_SECONDS, False
+
+
+def _task41_v3_authorization(root: Path) -> tuple[dict[str, Any], str]:
+    path = root / TASK41_B0_V3_AUTH_RELATIVE
+    raw = path.read_bytes()
+    payload = json.loads(raw)
+    parent = root / TASK41_B0_WINDOW_RELATIVE
+    if (
+        payload.get("schema") != "task41.b0.v3.user_continuation_authorization.v1"
+        or payload.get("authorization") != "user_explicit_24h_20261019"
+        or payload.get("total_seconds") != TASK41_B0_V3_TOTAL_SECONDS
+        or payload.get("numerical_seconds") != TASK41_B0_V3_NUMERICAL_SECONDS
+        or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
+        or payload.get("pre_anchor_preparation_charge_seconds") != 180
+        or payload.get("old_service_inactive_and_descendants_absent") is not True
+        or payload.get("parent_window_path") != str(TASK41_B0_WINDOW_RELATIVE)
+        or payload.get("parent_window_sha256") != TASK41_B0_PARENT_WINDOW_SHA256
+        or sha256_file(parent) != TASK41_B0_PARENT_WINDOW_SHA256
+        or not re.fullmatch(r"[0-9a-f]{40}", str(payload.get("source_at_entry", "")))
+        or not isinstance(payload.get("anchor"), dict)
+        or set(payload["anchor"]) != {"monotonic", "boottime", "utc_ns", "boot_id"}
+    ):
+        raise Task41ContractError("Task41 V3 continuation authorization or preserved parent changed")
+    return payload, hashlib.sha256(raw).hexdigest()
+
+
 def load_task41_p0_fixed_window(
     contract: Mapping[str, Any], *, current_root: str | Path | None = None,
     require_current_boot: bool = True,
@@ -1143,9 +1182,7 @@ def load_task41_p0_fixed_window(
         task41_case_id_for_run_id(str(contract.get("case", {}).get("run_id", "")))
     )
     window_info = contract["window"]
-    path = _resolve(root, window_info["path"], "window.path")
-    if path != (root / case_spec["window_relative"]).resolve():
-        raise Task41ContractError("Task41 fixed window path differs from the registered case")
+    path, total_seconds, numerical_seconds, continuation = task41_window_spec(contract, root)
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     if digest != window_info["sha256"]:
@@ -1164,6 +1201,8 @@ def load_task41_p0_fixed_window(
             "bootstrap_boottime_elapsed_seconds",
             "bootstrap_time_treatment",
         }
+    if continuation:
+        expected_fields |= {"continuation_authorization_sha256", "parent_window_sha256"}
     if not isinstance(payload, dict) or set(payload) != expected_fields:
         raise Task41ContractError("Task41 fixed execution window has an open or incomplete schema")
     if (
@@ -1171,8 +1210,8 @@ def load_task41_p0_fixed_window(
         or payload.get("task_id") != TASK41_MODEL_ID
         or payload.get("source_sha") != window_info.get("entry_source_sha")
         or not re.fullmatch(r"[0-9a-f]{40}", str(window_info.get("entry_source_sha", "")))
-        or payload.get("total_seconds") != TASK41_TOTAL_SECONDS
-        or payload.get("numerical_seconds") != TASK41_NUMERICAL_SECONDS
+        or payload.get("total_seconds") != total_seconds
+        or payload.get("numerical_seconds") != numerical_seconds
         or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
     ):
         raise Task41ContractError("Task41 execution window identity or time limits changed")
@@ -1189,14 +1228,30 @@ def load_task41_p0_fixed_window(
         raise Task41ContractError(f"Task41 execution window UTC value is invalid: {exc}") from exc
     if (
         (anchor["utc_ns"] < t0_ns if is_b0 else anchor["utc_ns"] != t0_ns)
-        or numerical_deadline_ns != t0_ns + int(TASK41_NUMERICAL_SECONDS * 1e9)
-        or deadline_ns != t0_ns + int(TASK41_TOTAL_SECONDS * 1e9)
+        or numerical_deadline_ns != t0_ns + int(numerical_seconds * 1e9)
+        or deadline_ns != t0_ns + int(total_seconds * 1e9)
         or not isinstance(anchor["boot_id"], str)
         or not anchor["boot_id"]
     ):
         raise Task41ContractError("Task41 execution window timestamps are inconsistent")
     bootstrap_seconds = 0.0
-    if is_b0:
+    if continuation:
+        authorization, authorization_sha = _task41_v3_authorization(root)
+        expected_t0_ns = int(authorization["anchor"]["utc_ns"]) - 180_000_000_000
+        if (
+            t0_ns != expected_t0_ns
+            or anchor != authorization["anchor"]
+            or payload["source_sha"] != authorization["source_at_entry"]
+            or payload["continuation_authorization_sha256"] != authorization_sha
+            or payload["parent_window_sha256"] != TASK41_B0_PARENT_WINDOW_SHA256
+            or payload.get("t0_basis") != {"kind": "user_approved_v3_24h_continuation"}
+            or payload.get("bootstrap_utc_elapsed_seconds") != 180
+            or payload.get("bootstrap_boottime_elapsed_seconds") is not None
+            or payload.get("bootstrap_time_treatment") != "conservative_pre_anchor_preparation_charge_not_measured"
+        ):
+            raise Task41ContractError("Task41 V3 continuation clock or authorization changed")
+        bootstrap_seconds = 180.0
+    elif is_b0:
         expected_t0_ns = _utc_ns(TASK41_B0_T0_UTC)
         bootstrap_utc = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
         if (
@@ -1229,17 +1284,18 @@ def load_task41_p0_fixed_window(
         anchor=anchor,
         t0_utc_ns=t0_ns,
         deadline_utc_ns=deadline_ns,
-        total_seconds=TASK41_TOTAL_SECONDS,
+        total_seconds=total_seconds,
         bootstrap_seconds=bootstrap_seconds,
         closeout_seconds=TASK41_CLOSEOUT_SECONDS,
     )
 
 
 def _task41_window_for_contract(
-    root: Path, case_id: str = "A1"
+    root: Path, case_id: str = "A1", *, b0_v3_continuation: bool = False
 ) -> tuple[FixedCampaignWindow, str, dict[str, Any]]:
     case_spec = _task41_case(case_id)
-    path = (root / case_spec["window_relative"]).resolve()
+    relative = TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation else case_spec["window_relative"]
+    path = (root / relative).resolve()
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     try:
@@ -1252,7 +1308,7 @@ def _task41_window_for_contract(
     window_contract = {
         "case": {"run_id": case_spec["run_id"]},
         "window": {
-            "path": str(case_spec["window_relative"]),
+            "path": str(relative),
             "sha256": digest,
             "entry_source_sha": entry_source,
         },
@@ -1314,6 +1370,7 @@ def prepare_task41_p0(
     current_root: str | Path | None = None,
     case_id: str = "A1",
     a2_q_csr_manifests: Sequence[str | Path] | None = None,
+    b0_v3_continuation: bool = False,
 ) -> dict[str, Any]:
     """Register or reuse the one fixed P0 window, then write a source-bound contract.
 
@@ -1330,7 +1387,34 @@ def prepare_task41_p0(
     if _git(root, "status", "--porcelain", "--untracked-files=normal"):
         raise Task41ContractError("Task41 P0 prepare requires a clean frozen source tree")
 
-    window_path = (root / case_spec["window_relative"]).resolve()
+    if b0_v3_continuation and case_id != "B0":
+        raise Task41ContractError("V3 continuation applies only to the authorized B0 case")
+    window_relative = TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation else case_spec["window_relative"]
+    window_path = (root / window_relative).resolve()
+    if b0_v3_continuation and not window_path.exists():
+        authorization, authorization_sha = _task41_v3_authorization(root)
+        anchor = authorization["anchor"]
+        t0_ns = int(anchor["utc_ns"]) - 180_000_000_000
+        continuation_payload = {
+            "schema": TASK41_P0_WINDOW_SCHEMA,
+            "task_id": TASK41_MODEL_ID,
+            "source_sha": authorization["source_at_entry"],
+            "t0_utc": _utc_text_from_ns(t0_ns),
+            "numerical_deadline_utc": _utc_text_from_ns(t0_ns + int(TASK41_B0_V3_NUMERICAL_SECONDS * 1e9)),
+            "deadline_utc": _utc_text_from_ns(t0_ns + int(TASK41_B0_V3_TOTAL_SECONDS * 1e9)),
+            "total_seconds": TASK41_B0_V3_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_B0_V3_NUMERICAL_SECONDS,
+            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+            "anchor": anchor,
+            "accounting_path": str((root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v3_24h.jsonl").resolve()),
+            "t0_basis": {"kind": "user_approved_v3_24h_continuation"},
+            "bootstrap_utc_elapsed_seconds": 180,
+            "bootstrap_boottime_elapsed_seconds": None,
+            "bootstrap_time_treatment": "conservative_pre_anchor_preparation_charge_not_measured",
+            "continuation_authorization_sha256": authorization_sha,
+            "parent_window_sha256": TASK41_B0_PARENT_WINDOW_SHA256,
+        }
+        _write_json_no_replace(window_path, continuation_payload)
     if not window_path.exists():
         anchor = clock_sample(include_boot_id=True)
         t0_ns = (
@@ -1373,7 +1457,9 @@ def prepare_task41_p0(
             )
         _write_json_no_replace(window_path, window_payload)
 
-    window, window_sha, window_payload = _task41_window_for_contract(root, case_id)
+    window, window_sha, window_payload = _task41_window_for_contract(
+        root, case_id, b0_v3_continuation=b0_v3_continuation
+    )
 
     runtime_path = _resolve(root, str(runtime_prefix), "runtime_prefix")
     abi_path = _resolve(root, str(abi_receipt), "abi_receipt")
@@ -1490,7 +1576,7 @@ def prepare_task41_p0(
             "math_threads": 1,
         },
         "window": {
-            "path": str(case_spec["window_relative"]),
+            "path": str(window_relative),
             "sha256": window_sha,
             "entry_source_sha": window_payload["source_sha"],
         },
@@ -1500,9 +1586,9 @@ def prepare_task41_p0(
             "memory_swap_max_bytes": 0,
         },
         "time": {
-            "total_seconds": TASK41_TOTAL_SECONDS,
-            "numerical_seconds": TASK41_NUMERICAL_SECONDS,
-            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+            "total_seconds": window.total_seconds,
+            "numerical_seconds": window.total_seconds - window.closeout_seconds,
+            "closeout_seconds": window.closeout_seconds,
         },
         "evidence": {"service_directory": str(service_directory)},
     }
@@ -1733,6 +1819,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runtime-prefix", type=Path)
     parser.add_argument("--abi-receipt", type=Path)
     parser.add_argument("--jit-cache", type=Path)
+    parser.add_argument("--b0-v3-continuation", action="store_true")
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")
     parser.add_argument("--a2-q-csr-manifest", action="append", type=Path)
     args = parser.parse_args(argv)
@@ -1759,6 +1846,7 @@ def main(argv: list[str] | None = None) -> int:
             jit_cache=args.jit_cache,
             case_id=args.case,
             a2_q_csr_manifests=args.a2_q_csr_manifest,
+            b0_v3_continuation=args.b0_v3_continuation,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

@@ -897,17 +897,22 @@ def test_task41_a2_contract_rejects_missing_binding_or_fabricated_mpc_hash(tmp_p
         require_task41_p0_contract(contract_path, current_root=tmp_path)
 
 
-@pytest.mark.parametrize("case_id", ["A1", "A2", "B0"])
+@pytest.mark.parametrize("case_id", ["A1", "A2", "B0", "B0_V3"])
 def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
     tmp_path, monkeypatch, case_id
 ):
     import benchmarks.subreaper_watchdog as watchdog
     import src.runners.task41_p0_contract as contract_module
 
+    is_v3 = case_id == "B0_V3"
+    if is_v3:
+        case_id = "B0"
     if case_id == "A2":
         binding_path, binding = _write_a1_comparison_binding_fixture(tmp_path)
     contract_path, contract = _write_contract(tmp_path, case_id=case_id)
-    qualified_python = Path(sys.executable).resolve()
+    if is_v3:
+        _adopt_v3_window_fixture(tmp_path, contract, monkeypatch)
+    qualified_python = Path(sys.executable).absolute()
     contract["runtime"]["runtime_prefix"] = str(qualified_python.parent.parent)
     if case_id == "A2":
         contract["comparison"] = {
@@ -1043,7 +1048,7 @@ def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
         )
 
 
-@pytest.mark.parametrize("case_id", ("A2", "B0"))
+@pytest.mark.parametrize("case_id", ("A2", "B0", "B0_V3"))
 def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
     case_id, tmp_path, monkeypatch
 ):
@@ -1061,6 +1066,9 @@ def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
         _task41_p0_runtime_configuration,
     )
 
+    is_v3 = case_id == "B0_V3"
+    if is_v3:
+        case_id = "B0"
     repo_root = Path(__file__).resolve().parents[2]
     case_spec = contract_module._task41_case(case_id)
     profile_identity = (
@@ -1073,6 +1081,8 @@ def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
         capture_output=True, text=True,
     ).stdout.strip()
     contract_path, task_contract = _write_contract(tmp_path, case_id=case_id)
+    if is_v3:
+        _adopt_v3_window_fixture(tmp_path, task_contract, monkeypatch)
     input_relative = Path(case_spec["input_relative"])
     actual_input = repo_root / input_relative
     fixture_input = tmp_path / input_relative
@@ -1222,7 +1232,10 @@ def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
     assert runtime_contract["resources"]["memory_swap_max_bytes"] == 0
     assert candidate["campaign_window_path"] == str(window.path)
     assert candidate["campaign_window_sha256"] == window.sha256
-    if case_id == "B0":
+    if is_v3:
+        assert candidate["campaign_seconds"] == 86400
+        assert 0 < candidate["worker_reserved_seconds"] <= 85200
+    elif case_id == "B0":
         window_payload = json.loads(window.path.read_text(encoding="utf-8"))
         assert window_payload["t0_basis"] == TASK41_B0_T0_BASIS
         assert window_payload["t0_utc"] == TASK41_B0_T0_UTC
@@ -1230,3 +1243,69 @@ def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
         assert window_payload["bootstrap_utc_elapsed_seconds"] >= 0.0
         assert candidate["checks"]["explicit_dispatch_contract_binding"]
         assert candidate["checks"]["no_a1_or_a2_comparison_binding"]
+
+
+
+def _adopt_v3_window_fixture(root, contract, monkeypatch):
+    import src.runners.task41_p0_contract as module
+
+    parent = root / module.TASK41_B0_WINDOW_RELATIVE
+    parent_bytes = parent.read_bytes()
+    parent_sha = hashlib.sha256(parent_bytes).hexdigest()
+    monkeypatch.setattr(module, "TASK41_B0_PARENT_WINDOW_SHA256", parent_sha)
+    anchor = clock_sample(include_boot_id=True)
+    auth = {
+        "schema": "task41.b0.v3.user_continuation_authorization.v1",
+        "authorization": "user_explicit_24h_20261019",
+        "source_at_entry": contract["source"]["sha"],
+        "anchor": anchor,
+        "pre_anchor_preparation_charge_seconds": 180,
+        "parent_window_path": str(module.TASK41_B0_WINDOW_RELATIVE),
+        "parent_window_sha256": parent_sha,
+        "total_seconds": 86400, "numerical_seconds": 85200, "closeout_seconds": 1200,
+        "old_service_inactive_and_descendants_absent": True,
+    }
+    (root / module.TASK41_B0_V3_AUTH_RELATIVE).write_text(json.dumps(auth))
+    # Exercise the real prepare path until its unrelated ABI fixture rejection.
+    with monkeypatch.context() as patch:
+        patch.setattr(module, "_git", lambda _root, *args: (
+            contract["source"]["sha"] if args == ("rev-parse", "HEAD")
+            else TASK41_BRANCH if args == ("branch", "--show-current") else ""
+        ))
+        patch.setattr(module, "_check_task41_native_receipt", lambda *_args: (_ for _ in ()).throw(RuntimeError("fixture ABI boundary")))
+        with pytest.raises(RuntimeError, match="fixture ABI boundary"):
+            module.prepare_task41_p0(
+                current_root=root, case_id="B0", b0_v3_continuation=True,
+                runtime_prefix=contract["runtime"]["runtime_prefix"],
+                abi_receipt=contract["runtime"]["abi_receipt_path"],
+                jit_cache=contract["runtime"]["jit_cache"],
+            )
+    path = root / module.TASK41_B0_V3_WINDOW_RELATIVE
+    payload = json.loads(path.read_text())
+    contract["window"] = {
+        "path": str(module.TASK41_B0_V3_WINDOW_RELATIVE),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "entry_source_sha": payload["source_sha"],
+    }
+    contract["time"] = {"total_seconds":86400, "numerical_seconds":85200, "closeout_seconds":1200}
+    assert parent.read_bytes() == parent_bytes
+    return path
+
+
+def test_task41_v3_window_immutable_and_parent_bound(tmp_path, monkeypatch):
+    import src.runners.task41_p0_contract as module
+    path, contract = _write_contract(tmp_path, "B0")
+    new_path = _adopt_v3_window_fixture(tmp_path, contract, monkeypatch)
+    path.write_text(json.dumps(contract))
+    loaded, _ = require_task41_p0_contract(path, current_root=tmp_path)
+    window = load_task41_p0_fixed_window(loaded, current_root=tmp_path)
+    assert window.total_seconds == 86400 and window.cutoff_seconds == 85200
+    assert window.closeout_seconds == 1200 and window.bootstrap_seconds == 180
+    assert window.accounting_path.name == "campaign_accounting_v3_24h.jsonl"
+    frozen = new_path.read_bytes()
+    reopened, _, _ = module._task41_window_for_contract(tmp_path, "B0", b0_v3_continuation=True)
+    assert reopened.t0_utc_ns == window.t0_utc_ns and new_path.read_bytes() == frozen
+    old_path = tmp_path / module.TASK41_B0_WINDOW_RELATIVE
+    old_path.write_bytes(old_path.read_bytes()+b" ")
+    with pytest.raises(module.Task41ContractError, match="preserved parent changed"):
+        load_task41_p0_fixed_window(loaded, current_root=tmp_path)
