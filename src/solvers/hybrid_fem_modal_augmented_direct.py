@@ -21,6 +21,7 @@ from .common_3d_solve import _petsc_matrix_stats
 from .dtn_port_3d import (
     _gather_auxiliary_values,
     _mode_boundary_phase,
+    _mode_carries_outward_power,
     _mode_power_at_boundary,
     _port_power_metrics,
 )
@@ -897,6 +898,7 @@ def _external_diffraction_order_rows(
             boundary_amplitude = outgoing * _mode_boundary_phase(mode, cfg)
             modal_power = _mode_power_at_boundary(mode, cfg, outgoing)
             power_ratio = float(modal_power / incident_power)
+            carries_outward_power = _mode_carries_outward_power(mode)
             rows.append(
                 {
                     "auxiliary_index": auxiliary_index,
@@ -914,11 +916,13 @@ def _external_diffraction_order_rows(
                     "outgoing_amplitude_at_boundary": boundary_amplitude,
                     "power_ratio": power_ratio,
                     "R": (
-                        power_ratio if mode.side == "top" and mode.propagating else 0.0
+                        power_ratio
+                        if mode.side == "top" and carries_outward_power
+                        else 0.0
                     ),
                     "T": (
                         power_ratio
-                        if mode.side == "bottom" and mode.propagating
+                        if mode.side == "bottom" and carries_outward_power
                         else 0.0
                     ),
                 }

@@ -17,6 +17,8 @@ from benchmarks.run_task032_phase6_augmented import (
     _TASK039_DIRECT_PAYLOAD_KEYS,
     _task039_direct_payload,
 )
+from src.common.config_3d import normal_incidence_airbox_config
+from src.common.modes_3d import incident_power_3d, outgoing_port_modes_3d
 from src.common.task42_phase_admission import (
     TASK42_HYBRID_A2_PHASE_OBJECTS,
     require_task42_phase_admission,
@@ -45,6 +47,16 @@ from src.postprocessing.hybrid_direct_output import (
 )
 from src.runners import task038_input_worker
 from src.runners.task42_hybrid_direct import run_task42_hybrid_direct
+from src.solvers.dtn_port_3d import (
+    _incident_projection_onto_top_mode,
+    _mode_boundary_phase,
+    _mode_carries_outward_power,
+    _mode_power_at_boundary,
+    _port_power_metrics,
+)
+from src.solvers.hybrid_fem_modal_augmented_direct import (
+    _external_diffraction_order_rows,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 TASK42_A2_INPUT = (
@@ -1756,3 +1768,302 @@ def test_task39_direct_payload_keeps_its_historical_schema_and_shape(tmp_path: P
         assert archive["y_nm"].shape == (20,)
         assert archive["E_V_per_m"].shape == (5, 20, 40, 3)
         assert archive["H_A_per_m"].shape == (5, 20, 40, 3)
+
+
+def _task42_p1_port_config(
+    *,
+    substrate_index: complex,
+    incident_theta_deg: float = 89.0,
+    polarization_kind: str = "s",
+):
+    return normal_incidence_airbox_config(
+        case_name="task42_p1_port_formula_fixture",
+        stage_case="stage4_block_grating",
+        geometry_kind="rectangular_block_grating",
+        scattering_background="layered",
+        lambda0=13.5,
+        n_air=1.0 + 0.0j,
+        n_substrate=complex(substrate_index),
+        n_grating=complex(substrate_index),
+        period_x=50.0,
+        period_y=50.0,
+        z_min=-10.0,
+        z_max=130.0,
+        interface_z=10.0,
+        grating_width_x=17.0,
+        grating_width_y=20.0,
+        grating_height=120.0,
+        use_floquet_xy=True,
+        use_pml=False,
+        incident_theta_deg=incident_theta_deg,
+        incident_phi_deg=90.0,
+        polarization_kind=polarization_kind,
+        custom_polarization=None,
+        stage4_boundary_model="dtn_port",
+        stage4_dtn_order_policy="zero_order",
+        stage4_dtn_assembly="auxiliary",
+        diffraction_zero_order_only=False,
+    )
+
+
+def test_task42_hybrid_rows_and_dtn_ports_report_power_classification_difference() -> None:
+    lossy_si = complex(0.999001296237, 0.00182646094)
+    lossless_si = complex(lossy_si.real, 0.0)
+    expected_keys = {
+        (side, 0, 0, polarization)
+        for side in ("bottom", "top")
+        for polarization in ("s", "p")
+    }
+
+    def evaluate(
+        substrate_index: complex,
+        *,
+        incident_theta_deg: float = 89.0,
+        polarization_kind: str = "s",
+    ) -> dict[str, object]:
+        cfg = _task42_p1_port_config(
+            substrate_index=substrate_index,
+            incident_theta_deg=incident_theta_deg,
+            polarization_kind=polarization_kind,
+        )
+        modes = outgoing_port_modes_3d(cfg)
+        mode_keys = [
+            (mode.side, mode.m, mode.n, mode.polarization) for mode in modes
+        ]
+        assert len(mode_keys) == len(set(mode_keys))
+        assert set(mode_keys) == expected_keys
+
+        incident = [
+            _incident_projection_onto_top_mode(mode, cfg)
+            if mode.side == "top"
+            else 0.0 + 0.0j
+            for mode in modes
+        ]
+        requested_outgoing = {
+            ("top", "s"): 0.27 + 0.13j,
+            ("top", "p"): -0.11 + 0.07j,
+            ("bottom", "s"): 0.45 + 0.12j,
+            ("bottom", "p"): -0.23 + 0.08j,
+        }
+        auxiliary = np.asarray(
+            [
+                complex(incident[index])
+                + requested_outgoing[(mode.side, mode.polarization)]
+                if mode.side == "top"
+                else requested_outgoing[(mode.side, mode.polarization)]
+                for index, mode in enumerate(modes)
+            ],
+            dtype=np.complex128,
+        )
+        port = _port_power_metrics(
+            cfg,
+            modes,
+            auxiliary,
+            np.asarray(incident, dtype=np.complex128),
+        )
+
+        side_modes: dict[str, list[object]] = {
+            side: [mode for mode in modes if mode.side == side]
+            for side in ("bottom", "top")
+        }
+        side_indices: dict[str, list[int]] = {
+            side: [index for index, mode in enumerate(modes) if mode.side == side]
+            for side in ("bottom", "top")
+        }
+        systems = tuple(
+            SimpleNamespace(
+                external_modes=side_modes[side],
+                incident_projections=[incident[index] for index in side_indices[side]],
+            )
+            for side in ("bottom", "top")
+        )
+        side_auxiliary = tuple(
+            auxiliary[side_indices[side]] for side in ("bottom", "top")
+        )
+        rows = _external_diffraction_order_rows(
+            cfg,
+            systems,
+            side_auxiliary,
+            incident_power=incident_power_3d(cfg),
+        )
+        rows_by_key = {
+            (row["side"], row["m"], row["n"], row["polarization"]): row
+            for row in rows
+        }
+        assert set(rows_by_key) == expected_keys
+
+        raw_power_by_key: dict[tuple[str, int, int, str], float] = {}
+        port_contribution_by_key: dict[tuple[str, int, int, str], float] = {}
+        incident_by_key: dict[tuple[str, int, int, str], complex] = {}
+        for index, mode in enumerate(modes):
+            key = (mode.side, mode.m, mode.n, mode.polarization)
+            incident_by_key[key] = complex(incident[index])
+            outgoing = (
+                complex(auxiliary[index] - incident[index])
+                if mode.side == "top"
+                else complex(auxiliary[index])
+            )
+            boundary_phase = _mode_boundary_phase(mode, cfg)
+            row = rows_by_key[key]
+            if mode.side == "top" and mode.polarization == polarization_kind:
+                assert abs(incident[index]) > 1.0e-14
+                assert outgoing != pytest.approx(complex(auxiliary[index]))
+            elif mode.side == "top":
+                # The orthogonal top channel must not subtract the configured
+                # incident field for either s- or p-polarized input.
+                assert abs(incident[index]) < 1.0e-14
+                assert outgoing == pytest.approx(complex(auxiliary[index]))
+            assert boundary_phase != pytest.approx(1.0 + 0.0j)
+            assert row["outgoing_amplitude"] == pytest.approx(outgoing)
+            assert row["outgoing_amplitude_at_boundary"] == pytest.approx(
+                outgoing * boundary_phase
+            )
+            ratio = (
+                _mode_power_at_boundary(mode, cfg, outgoing)
+                / incident_power_3d(cfg)
+            )
+            assert row["power_ratio"] == pytest.approx(ratio, abs=1.0e-14)
+            raw_power_by_key[key] = float(ratio)
+            port_contribution_by_key[key] = (
+                float(ratio) if _mode_carries_outward_power(mode) else 0.0
+            )
+            expected_row_power = (
+                ratio if _mode_carries_outward_power(mode) else 0.0
+            )
+            assert row["R"] == pytest.approx(
+                expected_row_power if mode.side == "top" else 0.0,
+                abs=1.0e-14,
+            )
+            assert row["T"] == pytest.approx(
+                expected_row_power if mode.side == "bottom" else 0.0,
+                abs=1.0e-14,
+            )
+
+        port_r_sum = sum(
+            value
+            for key, value in port_contribution_by_key.items()
+            if key[0] == "top"
+        )
+        port_t_sum = sum(
+            value
+            for key, value in port_contribution_by_key.items()
+            if key[0] == "bottom"
+        )
+        row_r_sum = sum(float(row["R"]) for row in rows)
+        row_t_sum = sum(float(row["T"]) for row in rows)
+        assert port["R_total"] == pytest.approx(port_r_sum, abs=1.0e-14)
+        assert port["T_total"] == pytest.approx(port_t_sum, abs=1.0e-14)
+        assert port_r_sum == pytest.approx(row_r_sum, abs=1.0e-14)
+        assert port_t_sum == pytest.approx(row_t_sum, abs=1.0e-14)
+        return {
+            "rows": [
+                {
+                    "key": list(key),
+                    "propagating": bool(rows_by_key[key]["propagating"]),
+                    "power_ratio": float(rows_by_key[key]["power_ratio"]),
+                    "R": float(rows_by_key[key]["R"]),
+                    "T": float(rows_by_key[key]["T"]),
+                    "incident_projection": [
+                        incident_by_key[key].real,
+                        incident_by_key[key].imag,
+                    ],
+                    "raw_mode_power_ratio": raw_power_by_key[key],
+                    "port_metric_contribution_ratio": port_contribution_by_key[key],
+                }
+                for key in sorted(expected_keys)
+            ],
+            "port_totals": {
+                "R": float(port["R_total"]),
+                "T": float(port["T_total"]),
+            },
+            "row_totals": {"R": row_r_sum, "T": row_t_sum},
+            "missing_power_from_row_T": float(port_t_sum - row_t_sum),
+            "reference_planes_nm": {
+                "bottom": float(cfg.physical_z_min),
+                "top": float(cfg.physical_z_max),
+            },
+            "incident_polarization": polarization_kind,
+            "incident_theta_deg": incident_theta_deg,
+        }
+
+    lossy = evaluate(lossy_si)
+    bottom_s_lossy = next(
+        row
+        for row in lossy["rows"]
+        if row["key"] == ["bottom", 0, 0, "s"]
+    )
+    assert bottom_s_lossy["propagating"] is False
+    assert bottom_s_lossy["port_metric_contribution_ratio"] > 0.0
+    assert bottom_s_lossy["T"] == pytest.approx(
+        bottom_s_lossy["port_metric_contribution_ratio"], abs=1.0e-14
+    )
+    for polarization in ("s", "p"):
+        bottom = next(
+            row
+            for row in lossy["rows"]
+            if row["key"] == ["bottom", 0, 0, polarization]
+        )
+        assert bottom["propagating"] is False
+        assert bottom["port_metric_contribution_ratio"] > 0.0
+        assert bottom["T"] == pytest.approx(
+            bottom["port_metric_contribution_ratio"], abs=1.0e-14
+        )
+    assert lossy["row_totals"]["T"] == pytest.approx(
+        lossy["port_totals"]["T"], abs=1.0e-14
+    )
+    assert lossy["missing_power_from_row_T"] == pytest.approx(0.0, abs=1.0e-14)
+
+    lossless = evaluate(lossless_si)
+    bottom_s_lossless = next(
+        row
+        for row in lossless["rows"]
+        if row["key"] == ["bottom", 0, 0, "s"]
+    )
+    assert bottom_s_lossless["propagating"] is False
+    assert abs(bottom_s_lossless["raw_mode_power_ratio"]) < 1.0e-14
+    assert bottom_s_lossless["port_metric_contribution_ratio"] == 0.0
+    assert bottom_s_lossless["T"] == 0.0
+    assert lossless["missing_power_from_row_T"] == pytest.approx(0.0, abs=1.0e-14)
+
+    lossless_propagating: dict[str, object] = {}
+    for polarization in ("s", "p"):
+        case = evaluate(
+            complex(1.2, 0.0),
+            incident_theta_deg=89.0,
+            polarization_kind=polarization,
+        )
+        assert all(row["propagating"] for row in case["rows"])
+        assert case["row_totals"]["R"] == pytest.approx(
+            case["port_totals"]["R"], abs=1.0e-14
+        )
+        assert case["row_totals"]["T"] == pytest.approx(
+            case["port_totals"]["T"], abs=1.0e-14
+        )
+        incident_row = next(
+            row
+            for row in case["rows"]
+            if row["key"] == ["top", 0, 0, polarization]
+        )
+        assert abs(complex(*incident_row["incident_projection"])) > 1.0e-14
+        lossless_propagating[polarization] = case
+
+    top_s = next(
+        row for row in lossy["rows"] if row["key"] == ["top", 0, 0, "s"]
+    )
+    assert top_s["propagating"] is True
+    assert top_s["R"] == pytest.approx(
+        top_s["port_metric_contribution_ratio"], abs=1.0e-14
+    )
+    print(
+        "TASK42_P1_PORT_POWER_DIAGNOSTIC "
+        + json.dumps(
+            {
+                "lossy_user_si": lossy,
+                "lossless_evanescent_control": lossless,
+            "lossless_n1p2_propagating_s_p_controls": lossless_propagating,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+    )
