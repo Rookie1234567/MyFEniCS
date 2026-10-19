@@ -252,7 +252,7 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
     constraints = _Constraints()
     condensed = SimpleNamespace(
         active_rows=2,
-        appended_rows=1,
+        appended_rows=2,
         full_rows=2,
         owned_trace_original_dofs=np.asarray([0, 1], dtype=np.int64),
         trace_constraints=constraints,
@@ -268,8 +268,19 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
 
     provider = _Provider()
 
+    selected_frames = tuple(
+        SimpleNamespace(
+            mode_key=(index, "top", index, 0, "s"),
+            coupling_rows=np.empty(0, dtype=np.int64),
+            coupling_values=np.empty(0, dtype=np.complex128),
+            projection_rows=np.empty(0, dtype=np.int64),
+            projection_values=np.empty(0, dtype=np.complex128),
+        )
+        for index in range(2)
+    )
+
     class _Action:
-        reduced_size = 3
+        reduced_size = 4
         _cells = ()
 
         def __init__(self):
@@ -283,23 +294,24 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
 
         def apply_multi_rhs(self, sources, *, direct_observer):
             self.provider.sweeps += 1
-            direct_observer(0, None, None)
+            for port in range(2):
+                direct_observer(port, None, None)
             result = np.zeros_like(sources)
-            result[2, :] = sources[2, :]
+            result[2:, :] = sources[2:, :]
             return result
 
         @staticmethod
         def reduce_rhs(_full_rhs, *, port_rhs, rhs_is_mpc_dual):
             assert rhs_is_mpc_dual is True
-            result = np.zeros(3, dtype=np.complex128)
-            result[2] = port_rhs[0]
+            result = np.zeros(4, dtype=np.complex128)
+            result[2:] = port_rhs
             return result
 
     action = _Action()
     action.provider = provider
     carrier = SimpleNamespace(
-        entries=(None,),
-        mode_keys=((0, "top", 0, 0, "s"),),
+        entries=selected_frames,
+        mode_keys=tuple(entry.mode_key for entry in selected_frames),
         surface_source=SimpleNamespace(
             max_frame_bytes=0,
             audit={"read_bytes_after_validation": 128},
@@ -326,6 +338,7 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
     class _Runtime:
         def __init__(self):
             self.markers = []
+            self.directory = tmp_path
 
         def marker(self, name, facts):
             self.markers.append((name, dict(facts)))
@@ -341,7 +354,7 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
                     "alpha": 0.25 + 0.5j,
                 },
                 {
-                    "mode_index": 0,
+                    "mode_index": 1,
                     "rows": np.asarray([1], dtype=np.int64),
                     "values": np.asarray([-0.5 + 0.75j], dtype=np.complex128),
                     "alpha": -0.75 + 0.25j,
@@ -358,15 +371,57 @@ def test_task41_two_input_check_keeps_reusable_volume_action_buffer_alive(tmp_pa
                 "persistent_bytes": facts["additional_payload_bytes"],
             },
             runtime=runtime,
+            run_identity={
+                "saved_surface_support_certificate": {
+                    "schema": "task41.p0.b0.saved_surface_support_inventory.v1",
+                    "cell_interior_nonzero_values": 0,
+                }
+            },
         )
         assert result["status"] == "PASS"
         assert result["same_donor_traversals_for_two_inputs"] == 1
-        assert volume_action.calls == 2
+        assert volume_action.calls == 4
         assert volume_action.buffer.getSize() == 2
         np.testing.assert_array_equal(np.asarray(volume_action.buffer.array_r), np.zeros(2))
         assert (tmp_path / "task41_b0_full_size_two_input_identity_check.json").is_file()
     finally:
         volume_action.buffer.destroy()
+
+
+def test_task41_b0_failed_recovery_capture_binds_manifest_in_finally(tmp_path):
+    from src.runners.task40_v10_worker import (
+        _task41_b0_capture_recovery_with_summary_binding,
+    )
+
+    manifest_path = tmp_path / "task41_b0_recovery_manifest.json"
+    run_identity = {"case_id": "B0", "run_id": "failed-capture-fixture"}
+    summary = {}
+    payload = {
+        "schema": "task41.p0.b0.recovery_evidence.v1",
+        "stage": "RECOVERY_GATE_FAILED",
+        "status": "FAIL",
+        "limits": {"forward_relative": 1.0e-11},
+    }
+
+    def write_then_fail():
+        manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+        raise ValueError("finite recovery gate failed after evidence was saved")
+
+    with pytest.raises(ValueError, match="after evidence was saved"):
+        _task41_b0_capture_recovery_with_summary_binding(
+            summary=summary,
+            manifest_path=manifest_path,
+            run_identity=run_identity,
+            capture=write_then_fail,
+        )
+
+    manifest_bytes = manifest_path.read_bytes()
+    binding = summary["b0_recovery_evidence"]
+    assert binding["status"] == "FAIL"
+    assert binding["stage"] == "RECOVERY_GATE_FAILED"
+    assert binding["run_identity"] == run_identity
+    assert binding["manifest"]["sha256"] == hashlib.sha256(manifest_bytes).hexdigest()
+    assert binding["manifest"]["bytes"] == len(manifest_bytes)
 
 
 def test_v18_full_native_matrix_admission_keeps_header_bound_facts(tmp_path):

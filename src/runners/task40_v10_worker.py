@@ -32,6 +32,11 @@ _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 
 
+def _task41_json_finite_float(value: Any) -> float | None:
+    resolved = float(value)
+    return resolved if np.isfinite(resolved) else None
+
+
 def _save_task41_b0_native_surface_pair_evidence(
     output_root: Path,
     mode_result: Mapping[str, Any],
@@ -210,6 +215,346 @@ def _task41_b0_partition_raw_probe(
     }
 
 
+def _task41_b0_raw_local_recovery_diagnostic(
+    *,
+    column: int,
+    mode_index: int,
+    residual: np.ndarray,
+    volume_rhs: np.ndarray,
+    volume_on_recovered: np.ndarray,
+    known: np.ndarray,
+    recovered: np.ndarray,
+    action: Any,
+    compiled_form: Any,
+    target_levels: Mapping[str, Any],
+    output_directory: Path,
+    shared_class_cache: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Re-tabulate at most three dominant raw cell classes after a recovery failure."""
+    from src.solvers import hcurl_assembly_time_condensation as hcurl
+    from src.solvers.task40_v25_complete_volume import _atomic_save_array
+
+    maps = tuple(action.condensed.cell_recovery_maps)
+    cells = tuple(action._cells)
+    if len(maps) != len(cells):
+        return {
+            "schema": "task41.p0.b0.raw_local_recovery_diagnostic.v1",
+            "status": "STRUCTURE_UNKNOWN",
+            "error": "cell action and recovery-map inventories differ",
+            "selected_cell_count": 0,
+            "structure_identity_passed": False,
+        }
+    candidates = []
+    seen_classes = set()
+    for cell_index, (cell_map, cell_action) in enumerate(zip(maps, cells, strict=True)):
+        rows = np.asarray(cell_map.interior_original_dofs, dtype=np.int64)
+        if not rows.size:
+            continue
+        key = tuple(cell_map.class_key)
+        oriented_key = tuple(cell_action.class_key)
+        error = np.asarray(known[rows] - recovered[rows], dtype=np.complex128)
+        recovery_error_squared = float(np.vdot(error, error).real)
+        cell_residual = np.asarray(residual[rows], dtype=np.complex128)
+        residual_squared = float(np.vdot(cell_residual, cell_residual).real)
+        candidates.append(
+            (
+                recovery_error_squared,
+                residual_squared,
+                repr(key),
+                cell_index,
+                key,
+                oriented_key,
+                cell_map,
+                cell_action,
+            )
+        )
+    candidates.sort(reverse=True)
+    selected = []
+    class_cache = shared_class_cache if shared_class_cache is not None else {}
+    for (
+        _error_sq,
+        _residual_sq,
+        _key_text,
+        cell_index,
+        key,
+        oriented_key,
+        cell_map,
+        cell_action,
+    ) in candidates:
+        class_identity = repr(oriented_key)
+        if class_identity in seen_classes:
+            continue
+        if class_identity not in class_cache and len(class_cache) >= 3:
+            continue
+        seen_classes.add(class_identity)
+        selected.append((cell_index, key, cell_map, cell_action))
+        class_cache.setdefault(class_identity, {})
+        if len(selected) == 3:
+            break
+    if not selected:
+        return {
+            "schema": "task41.p0.b0.raw_local_recovery_diagnostic.v1",
+            "status": "STRUCTURE_UNKNOWN",
+            "error": "no local interior cell is available for raw tensor re-tabulation",
+            "selected_cell_count": 0,
+            "structure_identity_passed": False,
+        }
+
+    space = target_levels["spaces"][6]
+    mesh = target_levels["mesh_data"].mesh
+    element = space.element
+    interior_positions = np.asarray(
+        element.basix_element.entity_dofs[int(mesh.topology.dim)][0], dtype=np.int32
+    )
+    local_dimension = int(element.space_dimension)
+    trace_positions = np.setdiff1d(
+        np.arange(local_dimension, dtype=np.int32), interior_positions
+    )
+    mesh.topology.create_entity_permutations()
+    permutations = np.asarray(mesh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    kernels = hcurl._cell_integral_kernels(
+        compiled_form, sum_duplicate_cell_integrals=True
+    )
+    diagnostics = []
+
+    def persist(name: str, array: np.ndarray) -> dict[str, Any]:
+        record = _atomic_save_array(output_directory, name, np.asarray(array))
+        return {
+            "path": record["path"],
+            "bytes": int(record["bytes"]),
+            "sha256": record["file_sha256"],
+            "array_sha256": record["array_sha256"],
+            "shape": record["shape"],
+            "dtype": record["dtype"],
+        }
+
+    all_passed = True
+    for cell_index, class_key, cell_map, cell_action in selected:
+        canonical, _widths = hcurl._canonical_axis_aligned_coordinates(
+            mesh,
+            cell_index,
+            tolerance=1.0e-11,
+            preserve_exact_geometry=True,
+        )
+        raw = hcurl._tabulate_raw_tensor_class(
+            compiled_form,
+            kernels,
+            canonical,
+            tag=int(class_key[0]),
+            dimension=local_dimension,
+        )
+        oriented = raw.copy()
+        hcurl._orient_cell_tensor(
+            element, oriented, np.asarray([permutations[cell_index]], dtype=np.uint32)
+        )
+        dofs = np.asarray(space.dofmap.list[cell_index], dtype=np.int64)
+        local_interior_rows = dofs[interior_positions]
+        local_trace_rows = dofs[trace_positions]
+        if (
+            not np.array_equal(
+                local_interior_rows,
+                np.asarray(cell_map.interior_original_dofs, dtype=np.int64),
+            )
+            or not np.array_equal(
+                local_interior_rows,
+                np.asarray(cell_action.original_interiors, dtype=np.int64),
+            )
+            or not np.array_equal(
+                local_trace_rows,
+                np.asarray(cell_map.trace_original_dofs, dtype=np.int64),
+            )
+            or not np.array_equal(
+                local_trace_rows,
+                np.asarray(cell_action.original_trace, dtype=np.int64),
+            )
+        ):
+            all_passed = False
+            diagnostics.append({
+                "cell_index": cell_index,
+                "class_key": [str(item) for item in class_key],
+                "status": "ROW_IDENTITY_FAIL",
+                "structure_identity_passed": False,
+            })
+            continue
+        vii = oriented[np.ix_(interior_positions, interior_positions)]
+        vit = oriented[np.ix_(interior_positions, trace_positions)]
+        known_i = np.asarray(known[local_interior_rows], dtype=np.complex128)
+        recovered_i = np.asarray(recovered[local_interior_rows], dtype=np.complex128)
+        active_original = np.asarray(
+            action.condensed.trace_constraints.owned_active_original_dofs,
+            dtype=np.int64,
+        )
+        known_active = np.asarray(known[active_original], dtype=np.complex128)
+        recovered_active = np.asarray(recovered[active_original], dtype=np.complex128)
+        known_t = np.asarray(
+            cell_action.expansion @ known_active[cell_action.active_ids], dtype=np.complex128
+        ).reshape(-1)
+        recovered_t = np.asarray(
+            cell_action.expansion @ recovered_active[cell_action.active_ids], dtype=np.complex128
+        ).reshape(-1)
+        if known_t.shape != local_trace_rows.shape or recovered_t.shape != local_trace_rows.shape:
+            all_passed = False
+            diagnostics.append({
+                "cell_index": cell_index,
+                "class_key": [str(item) for item in class_key],
+                "status": "TRACE_EXPANSION_LAYOUT_FAIL",
+                "structure_identity_passed": False,
+            })
+            continue
+        known_local_action = vii @ known_i + vit @ known_t
+        recovered_local_action = vii @ recovered_i + vit @ recovered_t
+        rhs_local = np.asarray(volume_rhs[local_interior_rows], dtype=np.complex128)
+        action_local = np.asarray(volume_on_recovered[local_interior_rows], dtype=np.complex128)
+        known_relative = float(
+            np.linalg.norm(known_local_action - rhs_local)
+            / max(float(np.linalg.norm(rhs_local)), float(np.linalg.norm(known_local_action)), np.finfo(float).tiny)
+        )
+        recovered_relative = float(
+            np.linalg.norm(recovered_local_action - action_local)
+            / max(float(np.linalg.norm(action_local)), float(np.linalg.norm(recovered_local_action)), np.finfo(float).tiny)
+        )
+        class_identity = repr(tuple(cell_action.class_key))
+        class_token = hashlib.sha256(class_identity.encode("utf-8")).hexdigest()[:16]
+        cached_class = class_cache[class_identity]
+        if not cached_class:
+            cached_class.update(
+                {
+                    "Vii": persist(f"task41_b0_raw_class_{class_token}_Vii.npy", vii),
+                    "Vit": persist(f"task41_b0_raw_class_{class_token}_Vit.npy", vit),
+                    "lu_factor": persist(
+                        f"task41_b0_raw_class_{class_token}_lu_factor.npy",
+                        np.asarray(cell_action.interior_lu[0]),
+                    ),
+                    "lu_pivots": persist(
+                        f"task41_b0_raw_class_{class_token}_lu_pivots.npy",
+                        np.asarray(cell_action.interior_lu[1]),
+                    ),
+                    "vii_array": np.array(vii, copy=True),
+                    "vit_array": np.array(vit, copy=True),
+                    "class_key": [str(item) for item in cell_action.class_key],
+                }
+            )
+        elif not (
+            np.array_equal(vii, cached_class["vii_array"])
+            and np.array_equal(vit, cached_class["vit_array"])
+            and np.array_equal(
+                np.asarray(cell_action.interior_lu[0]),
+                np.load(
+                    (output_directory / cached_class["lu_factor"]["path"]),
+                    mmap_mode="r",
+                    allow_pickle=False,
+                ),
+            )
+            and np.array_equal(
+                np.asarray(cell_action.interior_lu[1]),
+                np.load(
+                    (output_directory / cached_class["lu_pivots"]["path"]),
+                    mmap_mode="r",
+                    allow_pickle=False,
+                ),
+            )
+        ):
+            all_passed = False
+            diagnostics.append(
+                {
+                    "cell_index": cell_index,
+                    "class_key": [str(item) for item in class_key],
+                    "status": "SHARED_CLASS_IDENTITY_FAIL",
+                    "structure_identity_passed": False,
+                }
+            )
+            continue
+        expansion = cell_action.expansion.tocsr()
+        local_artifacts = {
+            "interior_original_rows": persist(
+                f"task41_b0_raw_column_{column}_cell_{cell_index:06d}_interior_rows.npy",
+                local_interior_rows,
+            ),
+            "trace_original_rows": persist(
+                f"task41_b0_raw_column_{column}_cell_{cell_index:06d}_trace_rows.npy",
+                local_trace_rows,
+            ),
+            "active_ids": persist(
+                f"task41_b0_raw_column_{column}_cell_{cell_index:06d}_active_ids.npy",
+                np.asarray(cell_action.active_ids, dtype=np.int64),
+            ),
+            "trace_expansion_data": persist(
+                f"task41_b0_raw_column_{column}_cell_{cell_index:06d}_trace_expansion_data.npy",
+                np.asarray(expansion.data),
+            ),
+            "trace_expansion_indices": persist(
+                f"task41_b0_raw_column_{column}_cell_{cell_index:06d}_trace_expansion_indices.npy",
+                np.asarray(expansion.indices),
+            ),
+            "trace_expansion_indptr": persist(
+                f"task41_b0_raw_column_{column}_cell_{cell_index:06d}_trace_expansion_indptr.npy",
+                np.asarray(expansion.indptr),
+            ),
+            "cell_permutation_info": persist(
+                f"task41_b0_raw_column_{column}_cell_{cell_index:06d}_permutation.npy",
+                np.asarray([permutations[cell_index]], dtype=np.uint32),
+            ),
+        }
+        structural_passed = bool(
+            np.isfinite([known_relative, recovered_relative]).all()
+            and known_relative <= 1.0e-10
+            and recovered_relative <= 1.0e-10
+        )
+        all_passed = all_passed and structural_passed
+        stem = f"task41_b0_raw_recovery_mode_{mode_index:05d}_column_{column}_cell_{cell_index:06d}"
+        diagnostics.append({
+            "cell_index": cell_index,
+            "class_key": [str(item) for item in class_key],
+            "oriented_class_key": [str(item) for item in cell_action.class_key],
+            "material_tag": int(class_key[0]),
+            "canonical_cell_coordinates": canonical.tolist(),
+            "status": "PASS" if structural_passed else "RAW_LOCAL_ACTION_MISMATCH",
+            "known_raw_action_relative": _task41_json_finite_float(known_relative),
+            "recovered_raw_action_relative": _task41_json_finite_float(recovered_relative),
+            "residual_norm": _task41_json_finite_float(
+                float(np.linalg.norm(residual[local_interior_rows]))
+            ),
+            "recovery_error_squared": _task41_json_finite_float(
+                np.vdot(known_i - recovered_i, known_i - recovered_i).real
+            ),
+            "native_residual_squared": _task41_json_finite_float(
+                np.vdot(residual[local_interior_rows], residual[local_interior_rows]).real
+            ),
+            "trace_rows_expanded_through_mpc_constraints": True,
+            "structure_identity_passed": structural_passed,
+            "class_artifacts": {
+                "class_identity": class_identity,
+                "Vii": cached_class["Vii"],
+                "Vit": cached_class["Vit"],
+                "lu_factor": cached_class["lu_factor"],
+                "lu_pivots": cached_class["lu_pivots"],
+            },
+            "artifacts": {
+                **local_artifacts,
+                "known_interior": persist(f"{stem}_known_interior.npy", known_i),
+                "known_trace": persist(f"{stem}_known_trace.npy", known_t),
+                "recovered_interior": persist(f"{stem}_recovered_interior.npy", recovered_i),
+                "recovered_trace": persist(f"{stem}_recovered_trace.npy", recovered_t),
+                "native_volume_rhs_interior": persist(f"{stem}_native_volume_rhs_interior.npy", rhs_local),
+                "native_volume_action_interior": persist(f"{stem}_native_volume_action_interior.npy", action_local),
+                "native_volume_residual_interior": persist(
+                    f"{stem}_native_volume_residual_interior.npy", residual[local_interior_rows]
+                ),
+            },
+        })
+    return {
+        "schema": "task41.p0.b0.raw_local_recovery_diagnostic.v1",
+        "status": "PASS" if all_passed else "RAW_LOCAL_ACTION_MISMATCH",
+        "selected_cell_count": len(selected),
+        "class_count": len(class_cache),
+        "global_shared_class_count": len(class_cache),
+        "global_shared_class_limit": 3,
+        "structure_identity_passed": all_passed,
+        "raw_matrices_are_independently_retabulated": True,
+        "cells": diagnostics,
+    }
+
+
 def _task41_b0_full_size_two_input_identity_check(
     *,
     probes: list[Mapping[str, Any]],
@@ -221,18 +566,63 @@ def _task41_b0_full_size_two_input_identity_check(
     output_directory: Path,
     allocation_gate: Callable[[str, Mapping[str, Any]], Mapping[str, Any]],
     runtime: Any,
+    run_identity: Mapping[str, Any] | None = None,
+    raw_cell_diagnostic: Callable[
+        [int, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+        Mapping[str, Any],
+    ] | None = None,
 ) -> dict[str, Any]:
-    """Check two full-size FE/port inputs through one saved-carrier sweep."""
+    """Capture two recovery witnesses before the one full saved-carrier sweep."""
     from src.runners.physical_p4_schur_v14 import _write_json
+    from src.solvers.task40_v25_complete_volume import _atomic_save_array, _atomic_write_json
     from petsc4py import PETSc
 
     if len(probes) != 2:
         raise ValueError("Task41 B0 identity check requires exactly two saved nonzero probes")
     condensed = action.condensed
     constraints = condensed.trace_constraints
+    output_directory = Path(output_directory)
+    output_directory.mkdir(parents=True, exist_ok=True)
     active_rows = int(condensed.active_rows)
     full_rows = int(condensed.full_rows)
     mode_count = int(len(carrier.entries))
+    def cell_interior_bi_di_are_zero(cell: Any) -> bool:
+        ports = getattr(cell, "ports", None)
+        if ports is None or len(ports) == 0:
+            return True
+        bi = getattr(cell, "Bi", None)
+        di = getattr(cell, "Di", None)
+        return bool(
+            bi is not None
+            and di is not None
+            and not np.any(np.asarray(bi) != 0.0)
+            and not np.any(np.asarray(di) != 0.0)
+        )
+
+    local_bi_di_nonzero_entries = sum(
+        int(np.count_nonzero(np.asarray(cell.Bi) != 0.0))
+        + int(np.count_nonzero(np.asarray(cell.Di) != 0.0))
+        for cell in action._cells
+    )
+    local_interior_bi_di_zero = all(
+        cell_interior_bi_di_are_zero(cell) for cell in action._cells
+    )
+    support_certificate = dict(
+        (run_identity or {}).get("saved_surface_support_certificate", {})
+    )
+    support_nonzero_entries = support_certificate.get("cell_interior_nonzero_values")
+    support_certificate_passed = bool(
+        support_certificate.get("schema")
+        == "task41.p0.b0.saved_surface_support_inventory.v1"
+        and type(support_nonzero_entries) is int
+        and support_nonzero_entries == local_bi_di_nonzero_entries == 0
+        and local_interior_bi_di_zero
+    )
+    support_certificate_sha256 = hashlib.sha256(
+        json.dumps(
+            support_certificate, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+    ).hexdigest()
     reduced_size = int(action.reduced_size)
     if reduced_size != active_rows + mode_count:
         raise ValueError("Task41 B0 reduced FE/port layout differs from its source carrier")
@@ -259,16 +649,60 @@ def _task41_b0_full_size_two_input_identity_check(
     probe_partition_workspace_bytes = int(
         sum(int(rows.size) * 64 for _port, rows, _values, _alpha in probe_specs)
     )
+    max_local_dimension = max(
+        (
+            len(np.asarray(cell.original_interiors)) + len(np.asarray(cell.original_trace))
+            for cell in action._cells
+        ),
+        default=0,
+    )
+    max_trace_map_bytes = max(
+        (
+            int(
+                cell.expansion.nnz
+                * (np.dtype(np.complex128).itemsize + np.dtype(np.int64).itemsize)
+                + len(cell.expansion.indptr) * np.dtype(np.int64).itemsize
+            )
+            for cell in action._cells
+        ),
+        default=0,
+    )
+    raw_diagnostic_workspace_bytes = int(
+        9 * max_local_dimension * max_local_dimension * np.dtype(np.complex128).itemsize
+        + 3 * max_local_dimension * (np.dtype(np.complex128).itemsize + np.dtype(np.int64).itemsize)
+        + 6
+        * (
+            8 * max_local_dimension * np.dtype(np.complex128).itemsize
+            + 4 * max_local_dimension * np.dtype(np.int64).itemsize
+            + max_trace_map_bytes
+        )
+    )
+    recovery_artifact_bytes_upper = int(
+        36 * full_rows * np.dtype(np.complex128).itemsize
+        + 3 * 2 * int(getattr(carrier.surface_source, "max_frame_bytes", 0))
+        + 6 * mode_count * 2 * np.dtype(np.complex128).itemsize
+        + 3 * reduced_size * 2 * np.dtype(np.complex128).itemsize
+        + raw_diagnostic_workspace_bytes
+        + len(
+            json.dumps(
+                support_certificate,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        )
+    )
     persistent_bytes = int(
         3 * 2 * reduced_size * np.dtype(np.complex128).itemsize
-        + 2 * 2 * full_rows * np.dtype(np.complex128).itemsize
+        + 3 * 2 * full_rows * np.dtype(np.complex128).itemsize
         + 5 * mode_count * 2 * np.dtype(np.complex128).itemsize
     )
     workspace_bytes = int(
-        5 * full_rows * np.dtype(np.complex128).itemsize
+        14 * full_rows * np.dtype(np.complex128).itemsize
         + 3 * reduced_size * np.dtype(np.complex128).itemsize
         + 2 * int(getattr(carrier.surface_source, "max_frame_bytes", 0))
         + probe_partition_workspace_bytes
+        + raw_diagnostic_workspace_bytes
     )
     admission_facts = {
         "additional_payload_bytes": persistent_bytes,
@@ -279,19 +713,31 @@ def _task41_b0_full_size_two_input_identity_check(
         "probe_count": 2,
         "probe_input_bytes": int(2 * reduced_size * np.dtype(np.complex128).itemsize),
         "raw_probe_partition_workspace_bytes": probe_partition_workspace_bytes,
+        "raw_diagnostic_workspace_upper_bytes": raw_diagnostic_workspace_bytes,
+        "evidence_payload_bytes_upper": recovery_artifact_bytes_upper,
         "two_native_full_fe_input_storage_bytes": int(
             2 * full_rows * np.dtype(np.complex128).itemsize
         ),
         "two_native_full_rhs_vectors_bytes": int(
             2 * full_rows * np.dtype(np.complex128).itemsize
         ),
+        "two_copied_native_volume_rhs_vectors_bytes": int(
+            2 * full_rows * np.dtype(np.complex128).itemsize
+        ),
         "resource_classification": (
-            "two full FE inputs, two native FE RHS vectors, reduced actions, bounded "
-            "volume/recovery workspace, and sparse raw-probe row classification; "
+            "two full FE inputs, two native FE RHS vectors, selected B-frame evidence, "
+            "up to three same-LU correction states per column, three shared raw cell classes "
+            "and six column cell maps, reduced actions, bounded volume/recovery workspace, "
+            "and sparse raw-probe row classification; "
             "one file-backed donor sweep"
         ),
     }
     admission = allocation_gate("task41_b0_full_size_two_input_identity_check", admission_facts)
+    _disk_admit(
+        runtime,
+        additional_bytes=recovery_artifact_bytes_upper,
+        label="task41_b0_recovery_evidence_payload",
+    )
     runtime.marker(
         "task41_b0_full_size_two_input_identity_check_admitted",
         {**admission_facts, "admission": admission},
@@ -410,34 +856,520 @@ def _task41_b0_full_size_two_input_identity_check(
         if len(cell.ports):
             local_D[cell.ports, :] += cell.Di @ full_fields[cell.original_interiors, :]
 
-    native_rhs = np.empty((full_rows, 2), dtype=np.complex128, order="F")
+    def save_array(column: int, name: str, value: Any) -> dict[str, Any]:
+        port = probe_specs[column][0]
+        record = _atomic_save_array(
+            output_directory,
+            f"task41_b0_recovery_mode_{port:05d}_{name}.npy",
+            np.asarray(value),
+        )
+        return {
+            "path": record["path"],
+            "bytes": int(record["bytes"]),
+            "sha256": record["file_sha256"],
+            "array_sha256": record["array_sha256"],
+            "shape": record["shape"],
+            "dtype": record["dtype"],
+        }
+
+    recovery_columns: list[dict[str, Any]] = []
+    recovery_artifact_records: list[dict[str, Any]] = []
+    recovery_failures: list[str] = []
     volume_action_apply_seconds = 0.0
+    native_rhs = np.empty((full_rows, 2), dtype=np.complex128, order="F")
+    manifest_path = output_directory / "task41_b0_recovery_manifest.json"
+    manifest: dict[str, Any] = {
+        "schema": "task41.p0.b0.recovery_evidence.v1",
+        "stage": "RAW_RECOVERY_CAPTURED",
+        "status": "IN_PROGRESS",
+        "run_identity": dict(run_identity or {}),
+        "source_matrix_sha256": _hash_arrays({"sources": sources}),
+        "input_identities": input_identities,
+        "columns": recovery_columns,
+        "full_storage_rows": full_rows,
+        "active_trace_rows": active_rows,
+        "port_rows": mode_count,
+        "limits": {"forward_relative": 1.0e-11, "native_volume_residual_relative": 1.0e-10},
+        "raw_cell_diagnostics": [],
+        "local_interior_Bi_Di_exact_zero": bool(local_interior_bi_di_zero),
+        "local_interior_Bi_Di_checked_cell_count": len(action._cells),
+        "local_interior_Bi_Di_nonzero_entry_count": local_bi_di_nonzero_entries,
+        "saved_surface_support_certificate": support_certificate,
+        "saved_surface_support_certificate_passed": support_certificate_passed,
+        "saved_surface_support_certificate_sha256": support_certificate_sha256,
+    }
+
+    def save_and_record(
+        column: int, artifacts: dict[str, Any], key: str, name: str, value: Any
+    ) -> dict[str, Any]:
+        record = save_array(column, name, value)
+        artifacts[key] = record
+        _atomic_write_json(manifest_path, manifest)
+        return record
+
+    # Save both known fields before native actions.  These are deterministic
+    # reconstructions for this attempt and are never presented as old vectors.
     for column in range(2):
+        artifacts: dict[str, Any] = {}
+        recovery_artifact_records.append(artifacts)
+        recovery_columns.append({
+            "column": column,
+            "mode_index": probe_specs[column][0],
+            "status": "RAW_CAPTURED",
+            "artifacts": artifacts,
+        })
+        save_and_record(column, artifacts, "known_field", "known_field", full_fields[:, column])
+        save_and_record(
+            column,
+            artifacts,
+            "active_original_rows",
+            "active_original_rows",
+            active_original_rows,
+        )
+        save_and_record(column, artifacts, "slave_rows", "slave_rows", slave_rows)
+    _atomic_write_json(manifest_path, manifest)
+    runtime.marker("task41_b0_recovery_raw_capture_started", manifest)
+
+    if not support_certificate_passed:
+        recovery_failures.append(
+            "saved-surface support certificate does not match exact-zero P6 cell-interior Bi/Di arrays"
+        )
+        manifest["stage"] = "RECOVERY_SUPPORT_CERTIFICATE_FAILED"
+        manifest["status"] = "FAIL"
+        manifest["recovery_errors"] = recovery_failures
+        _atomic_write_json(manifest_path, manifest)
+        runtime.marker("task41_b0_recovery_gate_failed", manifest)
+        raise ValueError(recovery_failures[-1])
+
+    # Recovery uses only the two selected B frames.  It deliberately does not
+    # traverse the complete carrier; the joint P6/native action below is gated
+    # on both saved recovery witnesses.
+    selected_b_frames: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+    selected_b_frame_errors: dict[int, str] = {}
+    for column, (port, _rows, _values, alpha, _partition) in enumerate(classified_specs):
+        try:
+            source = getattr(carrier, "surface_source", None)
+            entry = (
+                source.read_batch(port, port + 1)[0]
+                if source is not None and hasattr(source, "read_batch")
+                else carrier.entries[port]
+            )
+            if tuple(entry.mode_key) != tuple(carrier.mode_keys[port]):
+                raise ValueError("selected B frame mode identity differs")
+            b_rows = np.asarray(entry.coupling_rows, dtype=np.int64).reshape(-1)
+            b_values = np.asarray(entry.coupling_values, dtype=np.complex128).reshape(-1)
+            if (
+                b_rows.shape != b_values.shape
+                or (b_rows.size > 1 and np.any(b_rows[1:] <= b_rows[:-1]))
+                or (b_rows.size and (int(b_rows[0]) < 0 or int(b_rows[-1]) >= full_rows))
+                or not np.isfinite(b_values).all()
+            ):
+                raise ValueError("selected B frame is malformed")
+            mapped_rows = np.asarray(constraints.map_original_rows(b_rows), dtype=np.int64)
+            if mapped_rows.shape != b_rows.shape or (mapped_rows.size and (
+                int(mapped_rows.min()) < 0 or int(mapped_rows.max()) >= active_rows
+            )):
+                raise ValueError("selected B frame contains a non-active full row")
+            column_artifacts = recovery_artifact_records[column]
+            save_and_record(
+                column, column_artifacts, "selected_B_frame_rows", "selected_B_frame_rows", b_rows
+            )
+            save_and_record(
+                column, column_artifacts, "selected_B_frame_values", "selected_B_frame_values", b_values
+            )
+            selected_b_frames[port] = (b_rows.copy(), b_values.copy())
+        except (OSError, ValueError, TypeError, IndexError) as exc:
+            message = f"{type(exc).__name__}: {exc}"
+            recovery_failures.append(f"column {column}: selected B frame failed: {message}")
+            recovery_columns[column].update(status="B_FRAME_INVALID", error=message)
+            manifest["stage"] = "RECOVERY_B_FRAME_FAILED"
+            manifest["status"] = "FAIL"
+            manifest["recovery_errors"] = recovery_failures
+            _atomic_write_json(manifest_path, manifest)
+            runtime.marker("task41_b0_recovery_gate_failed", manifest)
+            raise
+
+    for column, (port, _rows, _values, alpha, _partition) in enumerate(classified_specs):
+        artifacts = recovery_artifact_records[column]
+        column_record = recovery_columns[column]
+        if port not in selected_b_frames:
+            raise ValueError(f"selected B frame unavailable for recovery column {column}")
+        b_rows, b_values = selected_b_frames[port]
+        b_alpha = np.zeros(full_rows, dtype=np.complex128)
+        b_alpha[b_rows] = b_values * alpha
+        for cell in action._cells:
+            if len(cell.ports):
+                b_alpha[cell.original_interiors] += (
+                    cell.Bi @ port_inputs[cell.ports, column]
+                )
         field_vec = PETSc.Vec().createWithArray(
             np.ascontiguousarray(full_fields[:, column]), comm=PETSc.COMM_SELF
         )
-        volume_vec = None
         volume_started = time.perf_counter()
+        volume_vec = None
         try:
             volume_vec = volume_action.apply(field_vec)
-            volume_values = np.asarray(volume_vec.getArray(readonly=True), dtype=np.complex128)
-            if volume_values.shape != (full_rows,) or not np.isfinite(volume_values).all():
-                raise ValueError("Task41 B0 native volume action returned an invalid full RHS")
-            native_rhs[:, column] = volume_values
-            for cell in action._cells:
-                if len(cell.ports):
-                    native_rhs[cell.original_interiors, column] += (
-                        cell.Bi @ port_inputs[cell.ports, column]
-                    )
-        finally:
-            volume_action_apply_seconds += max(
-                0.0, time.perf_counter() - volume_started
+            # Native volume actions may return an owner-reused PETSc Vec.
+            # Copy its values before any later apply can mutate the buffer.
+            volume_rhs = np.array(volume_vec.getArray(readonly=True), dtype=np.complex128, copy=True)
+        except Exception as exc:
+            recovery_failures.append(
+                f"column {column}: native volume RHS raised {type(exc).__name__}: {exc}"
             )
-            # FullspaceSplitVolumeAction.apply returns its borrowed curl-action
-            # output buffer. Copying above is required before the next apply;
-            # destroying it here would invalidate the owner's reusable Vec.
+            b_nonzero_rows = np.flatnonzero(b_alpha).astype(np.int64, copy=False)
+            save_and_record(column, artifacts, "b_alpha_rows", "b_alpha_rows", b_nonzero_rows)
+            save_and_record(column, artifacts, "b_alpha_values", "b_alpha_values", b_alpha[b_nonzero_rows])
+            column_record.update(
+                status="NATIVE_VOLUME_ACTION_EXCEPTION",
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            _atomic_write_json(manifest_path, manifest)
+            manifest["stage"] = "RECOVERY_NATIVE_VOLUME_ACTION_FAILED"
+            manifest["status"] = "FAIL"
+            manifest["recovery_errors"] = recovery_failures
+            _atomic_write_json(manifest_path, manifest)
+            raise
+        finally:
+            volume_action_apply_seconds += max(0.0, time.perf_counter() - volume_started)
             volume_vec = None
             field_vec.destroy()
+        if volume_rhs.shape != (full_rows,) or not np.isfinite(volume_rhs).all():
+            recovery_failures.append(f"column {column}: invalid native volume RHS")
+            if volume_rhs.shape == (full_rows,):
+                save_and_record(
+                    column,
+                    artifacts,
+                    "invalid_native_volume_rhs",
+                    "invalid_native_volume_rhs",
+                    volume_rhs,
+                )
+            b_nonzero_rows = np.flatnonzero(b_alpha).astype(np.int64, copy=False)
+            save_and_record(column, artifacts, "b_alpha_rows", "b_alpha_rows", b_nonzero_rows)
+            save_and_record(column, artifacts, "b_alpha_values", "b_alpha_values", b_alpha[b_nonzero_rows])
+            column_record.update(status="NATIVE_VOLUME_RHS_INVALID")
+            manifest["stage"] = "RECOVERY_NATIVE_VOLUME_RHS_INVALID"
+            manifest["status"] = "FAIL"
+            manifest["recovery_errors"] = recovery_failures
+            _atomic_write_json(manifest_path, manifest)
+            raise FloatingPointError(f"column {column}: invalid native volume RHS")
+        save_and_record(
+            column, artifacts, "native_volume_rhs", "native_volume_rhs", volume_rhs
+        )
+        native_rhs[:, column] = volume_rhs
+        native_rhs[:, column] += b_alpha
+        save_and_record(column, artifacts, "native_rhs", "native_rhs", native_rhs[:, column])
+        b_nonzero_rows = np.flatnonzero(b_alpha).astype(np.int64, copy=False)
+        save_and_record(column, artifacts, "b_alpha_rows", "b_alpha_rows", b_nonzero_rows)
+        save_and_record(column, artifacts, "b_alpha_values", "b_alpha_values", b_alpha[b_nonzero_rows])
+        try:
+            recovered = np.asarray(
+                action.recover_storage(
+                    sources[:, column], full_rhs=native_rhs[:, column], expand_trace=False
+                ),
+                dtype=np.complex128,
+            ).copy()
+        except Exception as exc:
+            recovery_failures.append(f"column {column}: recovery raised {type(exc).__name__}: {exc}")
+            column_record.update(
+                status="RECOVERY_EXCEPTION",
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            manifest["stage"] = "RECOVERY_ACTION_FAILED"
+            manifest["status"] = "FAIL"
+            manifest["recovery_errors"] = recovery_failures
+            _atomic_write_json(manifest_path, manifest)
+            raise
+        save_and_record(column, artifacts, "recovered_storage", "recovered_storage", recovered)
+        field_vec = PETSc.Vec().createWithArray(
+            np.ascontiguousarray(recovered), comm=PETSc.COMM_SELF
+        )
+        volume_started = time.perf_counter()
+        volume_vec = None
+        try:
+            volume_vec = volume_action.apply(field_vec)
+            volume_on_recovered = np.array(
+                volume_vec.getArray(readonly=True), dtype=np.complex128, copy=True
+            )
+        except Exception as exc:
+            recovery_failures.append(
+                f"column {column}: independent native volume action raised {type(exc).__name__}: {exc}"
+            )
+            column_record.update(
+                status="NATIVE_VOLUME_ACTION_EXCEPTION",
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            manifest["stage"] = "RECOVERY_NATIVE_VOLUME_ACTION_FAILED"
+            manifest["status"] = "FAIL"
+            manifest["recovery_errors"] = recovery_failures
+            _atomic_write_json(manifest_path, manifest)
+            raise
+        finally:
+            volume_action_apply_seconds += max(0.0, time.perf_counter() - volume_started)
+            volume_vec = None
+            field_vec.destroy()
+        if volume_on_recovered.shape != (full_rows,) or not np.isfinite(volume_on_recovered).all():
+            recovery_failures.append(f"column {column}: invalid independent native volume action")
+            if volume_on_recovered.shape == (full_rows,):
+                save_and_record(
+                    column,
+                    artifacts,
+                    "invalid_native_volume_action_recovered",
+                    "invalid_native_volume_action_recovered",
+                    volume_on_recovered,
+                )
+            column_record.update(status="NATIVE_VOLUME_ACTION_INVALID")
+            manifest["stage"] = "RECOVERY_NATIVE_VOLUME_ACTION_INVALID"
+            manifest["status"] = "FAIL"
+            manifest["recovery_errors"] = recovery_failures
+            _atomic_write_json(manifest_path, manifest)
+            raise FloatingPointError(f"column {column}: invalid independent native volume action")
+        # Retain the direct volume RHS copy so the independent residual does
+        # not reintroduce cancellation through (V*x+B*alpha)-B*alpha.
+        volume_reference_rhs = volume_rhs
+        residual = volume_reference_rhs - volume_on_recovered
+        interior_rows = (
+            np.concatenate([
+                np.asarray(cell.original_interiors, dtype=np.int64)
+                for cell in action._cells
+            ])
+            if action._cells
+            else np.empty(0, dtype=np.int64)
+        )
+        b_i_norm = float(np.linalg.norm(b_alpha[interior_rows]))
+        residual_norm = float(np.linalg.norm(residual))
+        residual_scale = float(np.linalg.norm(volume_reference_rhs))
+        residual_relative = residual_norm / max(residual_scale, np.finfo(float).tiny)
+        internal_residual_norm = float(np.linalg.norm(residual[interior_rows]))
+        internal_residual_scale = (
+            float(np.linalg.norm(native_rhs[interior_rows, column]))
+            + float(np.linalg.norm(volume_on_recovered[interior_rows]))
+            + b_i_norm
+        )
+        internal_residual_relative = internal_residual_norm / max(
+            internal_residual_scale, np.finfo(float).tiny
+        )
+        absolute_error = float(np.linalg.norm(recovered - full_fields[:, column]))
+        reference_norm = float(np.linalg.norm(full_fields[:, column]))
+        relative_error = absolute_error / max(reference_norm, np.finfo(float).tiny)
+        save_and_record(
+            column, artifacts, "native_volume_action_recovered",
+            "native_volume_action_recovered", volume_on_recovered
+        )
+        save_and_record(
+            column, artifacts, "native_volume_residual", "native_volume_residual", residual
+        )
+        slave_zero = bool(not slave_rows.size or np.all(recovered[slave_rows] == 0.0))
+        trace_identity = bool(np.array_equal(recovered[active_original_rows], full_fields[active_original_rows, column]))
+        column_record.update(
+            mode_key=list(carrier.mode_keys[port]),
+            status="CAPTURED",
+            absolute_error=_task41_json_finite_float(absolute_error),
+            reference_norm=_task41_json_finite_float(reference_norm),
+            forward_relative_error=_task41_json_finite_float(relative_error),
+            native_volume_residual_norm=_task41_json_finite_float(residual_norm),
+            native_volume_residual_scale=_task41_json_finite_float(residual_scale),
+            native_volume_residual_relative=_task41_json_finite_float(residual_relative),
+            native_internal_residual_norm=_task41_json_finite_float(internal_residual_norm),
+            native_internal_residual_scale=_task41_json_finite_float(internal_residual_scale),
+            native_internal_residual_relative=_task41_json_finite_float(internal_residual_relative),
+            trace_identity_passed=trace_identity,
+            slave_zero_passed=slave_zero,
+            recovery_passed=bool(
+                np.isfinite(relative_error) and relative_error <= 1.0e-11
+                and np.isfinite(residual_relative) and residual_relative <= 1.0e-10
+                and trace_identity and slave_zero
+            ),
+        )
+        _atomic_write_json(manifest_path, manifest)
+        if not np.isfinite(relative_error) or not np.isfinite(residual_relative):
+            recovery_failures.append(
+                f"column {column}: non-finite recovery gate metric; stopping before next column"
+            )
+            manifest["stage"] = "RECOVERY_NONFINITE_METRIC"
+            manifest["status"] = "FAIL"
+            manifest["recovery_errors"] = recovery_failures
+            _atomic_write_json(manifest_path, manifest)
+            runtime.marker("task41_b0_recovery_gate_failed", manifest)
+            raise FloatingPointError(recovery_failures[-1])
+        if not column_record["recovery_passed"] and raw_cell_diagnostic is not None:
+            try:
+                diagnostic = dict(raw_cell_diagnostic(
+                    column, residual, volume_reference_rhs, volume_on_recovered,
+                    full_fields[:, column], recovered,
+                ))
+            except Exception as exc:
+                diagnostic = {
+                    "status": "DIAGNOSTIC_ERROR",
+                    "structure_identity_passed": False,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+                manifest["raw_cell_diagnostics"].append(diagnostic)
+                column_record["raw_cell_diagnostic"] = diagnostic
+                manifest["stage"] = "RECOVERY_RAW_DIAGNOSTIC_FAILED"
+                manifest["status"] = "FAIL"
+                manifest["recovery_errors"] = recovery_failures + [diagnostic["error"]]
+                _atomic_write_json(manifest_path, manifest)
+                runtime.marker("task41_b0_recovery_gate_failed", manifest)
+                raise
+            manifest["raw_cell_diagnostics"].append(diagnostic)
+            column_record["raw_cell_diagnostic"] = diagnostic
+            _atomic_write_json(manifest_path, manifest)
+            # Refinement is allowed only when independent raw local tensors
+            # agree with both native volume actions and the live B0 action
+            # confirms exact-zero local interior B/D terms.  The known error
+            # is never used to form or choose a correction.
+            column_record["local_interior_Bi_Di_exact_zero"] = bool(
+                local_interior_bi_di_zero
+            )
+            _atomic_write_json(manifest_path, manifest)
+            if diagnostic.get("structure_identity_passed") is not True:
+                recovery_failures.append(
+                    f"column {column}: independent raw local structure/action check failed"
+                )
+                manifest["stage"] = "RECOVERY_RAW_DIAGNOSTIC_FAILED"
+                manifest["status"] = "FAIL"
+                manifest["recovery_errors"] = recovery_failures
+                _atomic_write_json(manifest_path, manifest)
+                runtime.marker("task41_b0_recovery_gate_failed", manifest)
+                raise ValueError(recovery_failures[-1])
+            if local_interior_bi_di_zero:
+                refinement_records = []
+                def apply_native_volume(storage: np.ndarray) -> Any:
+                    nonlocal volume_action_apply_seconds
+                    field_vec = PETSc.Vec().createWithArray(
+                        np.ascontiguousarray(storage), comm=PETSc.COMM_SELF
+                    )
+                    volume_started = time.perf_counter()
+                    volume_vec = None
+                    try:
+                        volume_vec = volume_action.apply(field_vec)
+                        return volume_vec
+                    finally:
+                        volume_action_apply_seconds += max(
+                            0.0, time.perf_counter() - volume_started
+                        )
+                        volume_vec = None
+                        field_vec.destroy()
+
+                def persist_refinement_state(
+                    step: int,
+                    storage: np.ndarray,
+                    volume_action_values: np.ndarray,
+                    native_residual: np.ndarray,
+                    metrics: Mapping[str, Any],
+                ) -> None:
+                    if step == 0:
+                        return
+                    row = {
+                        key: (
+                            _task41_json_finite_float(value)
+                            if isinstance(value, (float, np.floating))
+                            else value
+                        )
+                        for key, value in metrics.items()
+                    }
+                    row["artifacts"] = {
+                        "storage": save_and_record(
+                            column, artifacts, f"same_lu_refinement_{step}_storage",
+                            f"same_lu_refinement_{step}_storage", storage,
+                        ),
+                        "native_volume_action": save_and_record(
+                            column, artifacts,
+                            f"same_lu_refinement_{step}_native_volume_action",
+                            f"same_lu_refinement_{step}_native_volume_action",
+                            volume_action_values,
+                        ),
+                        "native_volume_residual": save_and_record(
+                            column, artifacts,
+                            f"same_lu_refinement_{step}_native_volume_residual",
+                            f"same_lu_refinement_{step}_native_volume_residual",
+                            native_residual,
+                        ),
+                    }
+                    refinement_records.append(row)
+                    column_record["same_lu_refinement"] = refinement_records
+                    manifest["same_lu_refinement_max_steps_used"] = max(
+                        int(manifest.get("same_lu_refinement_max_steps_used", 0)),
+                        int(step),
+                    )
+                    _atomic_write_json(manifest_path, manifest)
+
+                try:
+                    refinement = action.refine_internal_storage_with_native_volume_residual(
+                        recovered,
+                        volume_reference_rhs,
+                        apply_native_volume,
+                        max_steps=3,
+                        initial_volume_action=volume_on_recovered,
+                        initial_residual=residual,
+                        forward_reference=full_fields[:, column],
+                        on_state=persist_refinement_state,
+                    )
+                    recovered = refinement["storage_solution"]
+                    volume_on_recovered = refinement["native_volume_action"]
+                    residual = refinement["native_volume_residual"]
+                    residual_norm = float(np.linalg.norm(residual))
+                    residual_scale = float(np.linalg.norm(volume_reference_rhs))
+                    residual_relative = residual_norm / max(
+                        residual_scale, np.finfo(float).tiny
+                    )
+                except Exception as exc:
+                    refinement_records.append({
+                        "step": len(refinement_records) + 1,
+                        "status": "REFINEMENT_ERROR",
+                        "error": f"{type(exc).__name__}: {exc}",
+                    })
+                    column_record["same_lu_refinement"] = refinement_records
+                    manifest["stage"] = "RECOVERY_SAME_LU_REFINEMENT_FAILED"
+                    manifest["status"] = "FAIL"
+                    manifest["recovery_errors"] = recovery_failures + [
+                        f"column {column}: {type(exc).__name__}: {exc}"
+                    ]
+                    _atomic_write_json(manifest_path, manifest)
+                    raise
+                absolute_error = float(np.linalg.norm(recovered - full_fields[:, column]))
+                reference_norm = float(np.linalg.norm(full_fields[:, column]))
+                relative_error = absolute_error / max(reference_norm, np.finfo(float).tiny)
+                slave_zero = bool(not slave_rows.size or np.all(recovered[slave_rows] == 0.0))
+                trace_identity = bool(np.array_equal(
+                    recovered[active_original_rows], full_fields[active_original_rows, column]
+                ))
+                column_record.update(
+                    final_absolute_error=_task41_json_finite_float(absolute_error),
+                    final_reference_norm=_task41_json_finite_float(reference_norm),
+                    final_forward_relative_error=_task41_json_finite_float(relative_error),
+                    final_native_volume_residual_norm=_task41_json_finite_float(residual_norm),
+                    final_native_volume_residual_scale=_task41_json_finite_float(residual_scale),
+                    final_native_volume_residual_relative=_task41_json_finite_float(residual_relative),
+                    final_trace_identity_passed=trace_identity,
+                    final_slave_zero_passed=slave_zero,
+                    recovery_passed=bool(
+                        relative_error <= 1.0e-11
+                        and residual_relative <= 1.0e-10
+                        and trace_identity and slave_zero
+                    ),
+                )
+                _atomic_write_json(manifest_path, manifest)
+        if not column_record.get("recovery_passed"):
+            recovery_failures.append(
+                f"column {column}: forward="
+                f"{column_record.get('final_forward_relative_error', column_record.get('forward_relative_error'))}, "
+                f"native_volume_residual="
+                f"{column_record.get('final_native_volume_residual_relative', column_record.get('native_volume_residual_relative'))}"
+            )
+
+    manifest["volume_action_apply_seconds_for_two_inputs"] = volume_action_apply_seconds
+    if recovery_failures:
+        manifest["stage"] = "RECOVERY_GATE_FAILED"
+        manifest["status"] = "FAIL"
+        manifest["recovery_errors"] = recovery_failures
+        _atomic_write_json(manifest_path, manifest)
+        runtime.marker("task41_b0_recovery_gate_failed", manifest)
+        raise ValueError("Task41 B0 saved recovery evidence failed its original gates: " + "; ".join(recovery_failures))
+    manifest["stage"] = "RECOVERY_QUALIFIED"
+    manifest["status"] = "PASS"
+    _atomic_write_json(manifest_path, manifest)
+    runtime.marker("task41_b0_recovery_qualified", manifest)
 
     direct_D_original = np.zeros((mode_count, 2), dtype=np.complex128)
     direct_D_active = np.zeros((mode_count, 2), dtype=np.complex128)
@@ -456,7 +1388,14 @@ def _task41_b0_full_size_two_input_identity_check(
             if not np.array_equal(mapped, np.asarray(b_active, dtype=np.int64)):
                 raise ValueError("Task41 B0 original/active B row mapping differs in the live donor sweep")
             if b_rows.size:
-                native_rhs[b_rows, :] += b_values[:, None] * port_inputs[port, :]
+                if port in selected_b_frames:
+                    selected_rows, selected_values = selected_b_frames[port]
+                    if not np.array_equal(b_rows, selected_rows) or not np.array_equal(
+                        b_values, selected_values
+                    ):
+                        raise ValueError(
+                            f"Task41 B0 selected B frame changed before the joint action at {port}"
+                        )
                 direct_B_entries += int(len(b_rows))
         if d_data is not None:
             d_rows, d_values, d_active = d_data
@@ -475,14 +1414,47 @@ def _task41_b0_full_size_two_input_identity_check(
     p6_apply_started = time.perf_counter()
     p6_result = action.apply_multi_rhs(sources, direct_observer=observe_direct)
     p6_action_apply_seconds = max(0.0, time.perf_counter() - p6_apply_started)
+    joint_artifacts: dict[str, dict[str, Any]] = {}
+
+    def save_joint_array(name: str, array: np.ndarray) -> dict[str, Any]:
+        record = _atomic_save_array(
+            output_directory,
+            f"task41_b0_joint_{name}.npy",
+            np.asarray(array),
+        )
+        artifact = {
+            "path": record["path"],
+            "bytes": int(record["bytes"]),
+            "sha256": record["file_sha256"],
+            "array_sha256": record["array_sha256"],
+            "shape": record["shape"],
+            "dtype": record["dtype"],
+        }
+        joint_artifacts[name] = artifact
+        manifest["stage"] = "FULL_ACTION_IN_PROGRESS"
+        manifest["full_action"] = {
+            "status": "IN_PROGRESS",
+            "artifacts": dict(joint_artifacts),
+        }
+        _atomic_write_json(manifest_path, manifest)
+        return artifact
+
+    # Preserve the full result immediately after the one donor sweep, before
+    # any sweep-count, layout, finite-value, or numerical gate can raise.
+    save_joint_array("p6_result", p6_result)
     after_sweeps = int(
         provider.audit.get("iterator_sweeps_by_operation", {}).get(sweep_key, 0)
     )
     if after_sweeps - before_sweeps != 1:
+        manifest["stage"] = "FULL_ACTION_GATE_FAILED"
+        manifest["status"] = "FAIL"
+        manifest["full_action"] = {
+            "status": "FAIL",
+            "error": "two-input P6 action did not use exactly one donor traversal",
+            "artifacts": dict(joint_artifacts),
+        }
+        _atomic_write_json(manifest_path, manifest)
         raise ValueError("Task41 B0 two-input P6 action did not use exactly one donor traversal")
-    if slave_rows.size and np.any(native_rhs[slave_rows, :] != 0.0):
-        raise ValueError("Task41 B0 native MPC-dual RHS has nonzero slave identity rows")
-
     direct_D_error = float(
         np.linalg.norm(direct_D_original - direct_D_active)
         / max(
@@ -491,15 +1463,12 @@ def _task41_b0_full_size_two_input_identity_check(
             np.finfo(float).tiny,
         )
     )
-    if direct_D_error > 1.0e-11:
-        raise ValueError(
-            f"Task41 B0 original/active D action differs on the full inputs: {direct_D_error}"
-        )
     port_rhs = (
         original_port_block.apply(port_inputs)
         - local_D
         - direct_D_original
     )
+    save_joint_array("port_rhs", port_rhs)
     reduced_rhs = np.empty_like(p6_result)
     for column in range(2):
         reduced_rhs[:, column] = action.reduce_rhs(
@@ -507,43 +1476,58 @@ def _task41_b0_full_size_two_input_identity_check(
             port_rhs=port_rhs[:, column],
             rhs_is_mpc_dual=True,
         )
-    recovery_errors = []
-    for column in range(2):
-        recovered = action.recover_storage(
-            sources[:, column],
-            full_rhs=native_rhs[:, column],
-            expand_trace=False,
-        )
-        error = float(
-            np.linalg.norm(recovered - full_fields[:, column])
-            / max(
-                np.linalg.norm(full_fields[:, column]),
+    save_joint_array("reduced_rhs", reduced_rhs)
+    if p6_result.shape != reduced_rhs.shape or not np.isfinite(p6_result).all():
+        column_errors = [float("inf"), float("inf")]
+    else:
+        column_errors = []
+        for column in range(2):
+            numerator = float(np.linalg.norm(p6_result[:, column] - reduced_rhs[:, column]))
+            denominator = max(
+                float(np.linalg.norm(p6_result[:, column])),
+                float(np.linalg.norm(reduced_rhs[:, column])),
                 np.finfo(float).tiny,
             )
-        )
-        recovery_errors.append(error)
-        if error > 1.0e-11:
-            raise ValueError(
-                f"Task41 B0 full RHS recovery does not reproduce the known FE input: {error}"
-            )
-        if slave_rows.size and np.any(recovered[slave_rows] != 0.0):
-            raise ValueError("Task41 B0 full RHS recovery produced a nonzero MPC slave")
-    if p6_result.shape != reduced_rhs.shape or not np.isfinite(p6_result).all():
-        raise ValueError("Task41 B0 two-input P6 action returned an invalid reduced result")
-    column_errors = []
-    for column in range(2):
-        numerator = float(np.linalg.norm(p6_result[:, column] - reduced_rhs[:, column]))
-        denominator = max(
-            float(np.linalg.norm(p6_result[:, column])),
-            float(np.linalg.norm(reduced_rhs[:, column])),
-            np.finfo(float).tiny,
-        )
-        relative = numerator / denominator
-        column_errors.append(relative)
-    if max(column_errors, default=0.0) > 1.0e-11:
+            column_errors.append(numerator / denominator)
+    full_action_valid = bool(
+        p6_result.shape == reduced_rhs.shape
+        and np.isfinite(p6_result).all()
+        and np.isfinite(port_rhs).all()
+        and np.isfinite(reduced_rhs).all()
+    )
+    full_action_passed = bool(
+        full_action_valid
+        and np.isfinite(direct_D_error)
+        and direct_D_error <= 1.0e-11
+        and np.isfinite(column_errors).all()
+        and max(column_errors, default=float("inf")) <= 1.0e-11
+        and (not slave_rows.size or np.all(native_rhs[slave_rows, :] == 0.0))
+    )
+    manifest["full_action"] = {
+        "status": "PASS" if full_action_passed else "FAIL",
+        "artifacts": joint_artifacts,
+        "p6_vs_native_reduced_rhs_relative_errors": [
+            _task41_json_finite_float(value) for value in column_errors
+        ],
+        "original_and_active_D_relative_error": _task41_json_finite_float(direct_D_error),
+        "valid_shapes_and_finite_values": full_action_valid,
+    }
+    if full_action_passed:
+        manifest["stage"] = "FULL_ACTION_QUALIFIED"
+        manifest["status"] = "PASS"
+    else:
+        manifest["stage"] = "FULL_ACTION_GATE_FAILED"
+        manifest["status"] = "FAIL"
+        manifest["full_action_gate_passed"] = False
+    _atomic_write_json(manifest_path, manifest)
+    runtime.marker(
+        "task41_b0_full_action_qualified" if full_action_passed else "task41_b0_full_action_gate_failed",
+        manifest,
+    )
+    if not full_action_passed:
         raise ValueError(
-            "Task41 B0 native full FE/port RHS does not match the P6 action: "
-            f"{column_errors}"
+            "Task41 B0 two-input full action failed its original gates: "
+            f"D={direct_D_error}, p6/native={column_errors}"
         )
 
     check = {
@@ -562,6 +1546,14 @@ def _task41_b0_full_size_two_input_identity_check(
         "recovered_mpc_slave_rows_exact_zero": True,
         "independent_nonzero_cell_interiors_injected_before_native_rhs": interior_count > 0,
         "local_cell_recovery_checked_from_native_full_rhs": True,
+        "local_interior_Bi_Di_exact_zero": bool(local_interior_bi_di_zero),
+        "local_interior_Bi_Di_checked_cell_count": len(action._cells),
+        "local_interior_Bi_Di_nonzero_entry_count": local_bi_di_nonzero_entries,
+        "saved_surface_support_certificate_passed": support_certificate_passed,
+        "saved_surface_support_certificate_sha256": support_certificate_sha256,
+        "same_lu_refinement_max_steps_used": int(
+            manifest.get("same_lu_refinement_max_steps_used", 0)
+        ),
         "original_and_active_B_rows_mapped_once": True,
         "original_and_active_D_relative_error": direct_D_error,
         "direct_B_row_entries_checked": direct_B_entries,
@@ -581,7 +1573,16 @@ def _task41_b0_full_size_two_input_identity_check(
         "same_donor_traversals_for_two_inputs": after_sweeps - before_sweeps,
         "donor_read_bytes_after_check": int(carrier.surface_source.audit["read_bytes_after_validation"]),
         "p6_vs_native_reduced_rhs_relative_errors": column_errors,
-        "native_full_rhs_recovery_relative_errors": recovery_errors,
+        "initial_native_full_rhs_recovery_relative_errors": [
+            row.get("forward_relative_error") for row in recovery_columns
+        ],
+        "native_full_rhs_recovery_relative_errors": [
+            row.get("final_forward_relative_error", row.get("forward_relative_error"))
+            for row in recovery_columns
+        ],
+        "recovery_manifest_path": str(manifest_path),
+        "recovery_manifest_stage": manifest["stage"],
+        "joint_action_artifacts": joint_artifacts,
         "limits": {
             "original_to_active_row_mapping": 1.0e-12,
             "B_D_action_and_full_rhs_condensation": 1.0e-11,
@@ -696,6 +1697,54 @@ def _task41_b0_saved_surface_p6_gate_facts(
     }
 
 
+def _task41_b0_capture_recovery_with_summary_binding(
+    *,
+    summary: dict[str, Any] | None,
+    manifest_path: Path,
+    run_identity: Mapping[str, Any],
+    capture: Callable[[], Any],
+) -> Any:
+    """Bind a persisted recovery manifest even when its numerical gate raises."""
+
+    def bind_recovery_manifest() -> None:
+        if summary is None or not manifest_path.is_file():
+            return
+        try:
+            manifest_bytes = manifest_path.read_bytes()
+            saved_manifest = json.loads(manifest_bytes)
+        except (OSError, ValueError, TypeError) as exc:
+            summary["b0_recovery_evidence_binding_error"] = (
+                f"{type(exc).__name__}: {exc}"
+            )
+            return
+        summary["b0_recovery_evidence"] = {
+            "schema": "task41.p0.b0.recovery_evidence_binding.v1",
+            "manifest": {
+                "path": str(manifest_path.resolve()),
+                "bytes": len(manifest_bytes),
+                "sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+                "stage": saved_manifest.get("stage"),
+            },
+            "stage": saved_manifest.get("stage"),
+            "status": saved_manifest.get("status"),
+            "run_identity": dict(run_identity),
+            "limits": saved_manifest.get("limits"),
+            "same_lu_refinement_loop": {
+                "implementation": "P6CellCondensedAction.refine_internal_storage_with_native_volume_residual",
+                "maximum_steps_per_column": 3,
+                "production_and_witness_share_loop": True,
+                "production_route_reached": False,
+                "correction_driver": "independent_native_cell_interior_volume_residual",
+                "full_carrier_sweeps_per_correction": 0,
+            },
+        }
+
+    try:
+        return capture()
+    finally:
+        bind_recovery_manifest()
+
+
 def _task41_b0_saved_surface_consumer_checks(
     *,
     carrier: Any,
@@ -707,6 +1756,10 @@ def _task41_b0_saved_surface_consumer_checks(
     output_directory: Path,
     allocation_gate: Callable[[str, Mapping[str, Any]], Mapping[str, Any]],
     runtime: Any,
+    compiled_form: Any,
+    target_levels: Mapping[str, Any],
+    run_identity: Mapping[str, Any],
+    summary: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Check two saved nonzero B/D ports through the live P6 cell/direct split."""
     from src.runners.physical_p4_schur_v14 import _write_json
@@ -1085,8 +2138,38 @@ def _task41_b0_saved_surface_consumer_checks(
                 f"{index}; failed gates: {', '.join(failed_gates)}"
             )
         output.append({**check, "receipt_path": str(receipt_path)})
-    output.append(
-        _task41_b0_full_size_two_input_identity_check(
+    shared_raw_class_cache: dict[str, dict[str, Any]] = {}
+
+    def raw_cell_diagnostic(
+        column: int,
+        residual: np.ndarray,
+        volume_rhs: np.ndarray,
+        volume_on_recovered: np.ndarray,
+        known: np.ndarray,
+        recovered: np.ndarray,
+    ) -> Mapping[str, Any]:
+        return _task41_b0_raw_local_recovery_diagnostic(
+            column=column,
+            mode_index=int(full_size_probes[column]["mode_index"]),
+            residual=residual,
+            volume_rhs=volume_rhs,
+            volume_on_recovered=volume_on_recovered,
+            known=known,
+            recovered=recovered,
+            action=action,
+            compiled_form=compiled_form,
+            target_levels=target_levels,
+            output_directory=output_directory,
+            shared_class_cache=shared_raw_class_cache,
+        )
+
+    manifest_path = Path(output_directory) / "task41_b0_recovery_manifest.json"
+
+    full_check = _task41_b0_capture_recovery_with_summary_binding(
+        summary=summary,
+        manifest_path=manifest_path,
+        run_identity=run_identity,
+        capture=lambda: _task41_b0_full_size_two_input_identity_check(
             probes=full_size_probes,
             carrier=carrier,
             action=action,
@@ -1096,8 +2179,27 @@ def _task41_b0_saved_surface_consumer_checks(
             output_directory=output_directory,
             allocation_gate=allocation_gate,
             runtime=runtime,
-        )
+            run_identity=run_identity,
+            raw_cell_diagnostic=raw_cell_diagnostic,
+        ),
     )
+    recovery_manifest_path = Path(full_check["recovery_manifest_path"]).resolve(strict=True)
+    manifest_bytes = recovery_manifest_path.read_bytes()
+    full_check["recovery_manifest"] = {
+        "path": str(recovery_manifest_path),
+        "bytes": len(manifest_bytes),
+        "sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+        "stage": full_check["recovery_manifest_stage"],
+    }
+    full_check["same_lu_refinement_loop"] = {
+        "implementation": "P6CellCondensedAction.refine_internal_storage_with_native_volume_residual",
+        "maximum_steps_per_column": 3,
+        "production_and_witness_share_loop": True,
+        "correction_driver": "independent_native_cell_interior_volume_residual",
+        "full_carrier_sweeps_per_correction": 0,
+    }
+    _write_json(Path(full_check["receipt_path"]), full_check)
+    output.append(full_check)
     return output
 
 
@@ -3355,6 +4457,20 @@ def _apply_full_action_array(action: Any, values: Any, petsc: Any) -> np.ndarray
         return np.asarray(target.array_r, dtype=np.complex128).copy()
     finally:
         target.destroy()
+        source.destroy()
+
+
+def _apply_full_volume_action_borrowed(action: Any, values: Any, petsc: Any) -> Any:
+    """Apply a native volume action and return its owner-reused Vec un-copied.
+
+    The caller must copy the returned values before invoking this action
+    again.  ``P6CellCondensedAction`` does so before each same-LU step.
+    """
+    source = petsc.Vec().createSeq(len(values), comm=petsc.COMM_SELF)
+    try:
+        _assign_vector_storage(source, values)
+        return action.apply(source)
+    finally:
         source.destroy()
 
 
@@ -9933,6 +11049,7 @@ def run_task40_v10_p6_reference_worker(
                 support_groups = saved_surface_support.groups
                 support_rows = saved_surface_support.row_groups
                 _support_facts = dict(saved_surface_support.audit)
+                b0_recovery_refinement_max_steps = 0
             else:
                 support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
             compiled_target = fem.form(
@@ -9971,6 +11088,8 @@ def run_task40_v10_p6_reference_worker(
             if is_task41_b0:
                 carrier = target_bundle["dtn_action"].carrier
                 saved_source = carrier.surface_source
+                support_certificate = dict(saved_surface_support.audit)
+                summary["b0_saved_surface_support_certificate"] = support_certificate
                 original_port_block = DiagonalOriginalPortBlock(
                     carrier.normalization_h, carrier.mode_keys
                 )
@@ -10012,6 +11131,35 @@ def run_task40_v10_p6_reference_worker(
                     global_direct_provider=saved_surface_provider,
                     owns_condensed=True,
                 )
+                donor_producer = task41_b0_saved_surface_donor.get("producer", {})
+                provenance = resolved_payload.get("provenance", {})
+                b0_recovery_identity = {
+                    "case_id": "B0",
+                    "run_id": str(run_id),
+                    "source_sha": str(source_sha),
+                    "input_sha256": str(provenance.get("input_sha256", "")),
+                    "staged_input_sha256": str(
+                        donor_producer.get("staged_input_sha256")
+                        or donor_producer.get("input_sha256", "")
+                    ),
+                    "physical_model_sha256": str(
+                        provenance.get("physical_model_sha256", "")
+                    ),
+                    "campaign_window_sha256": str(
+                        task41_contract_binding.get("window_sha256", "")
+                    ),
+                    "execution_contract_sha256": str(
+                        task41_contract_binding.get("contract_sha256", "")
+                    ),
+                    "task41_contract_path": str(
+                        task41_contract_binding.get("contract_path", "")
+                    ),
+                    "mode_manifest_sha256": str(target_bundle["mode_sha256"]),
+                    "carrier_committed_prefix_sha256": str(
+                        saved_source.committed_prefix_sha256
+                    ),
+                    "saved_surface_support_certificate": support_certificate,
+                }
                 pair_consumer_checks = _task41_b0_saved_surface_consumer_checks(
                     carrier=carrier,
                     action=target_action,
@@ -10022,7 +11170,35 @@ def run_task40_v10_p6_reference_worker(
                     output_directory=directory,
                     allocation_gate=allocation_gate,
                     runtime=runtime,
+                    compiled_form=compiled_target,
+                    target_levels=target_levels,
+                    run_identity=b0_recovery_identity,
+                    summary=summary,
                 )
+                recovery_check = pair_consumer_checks[-1]
+                recovery_manifest = recovery_check.get("recovery_manifest", {})
+                if (
+                    recovery_check.get("status") != "PASS"
+                    or recovery_check.get("saved_surface_support_certificate_passed") is not True
+                    or recovery_manifest.get("stage") != "FULL_ACTION_QUALIFIED"
+                ):
+                    raise ValueError("Task41 B0 native recovery evidence did not qualify")
+                b0_recovery_refinement_max_steps = 3
+                summary["b0_recovery_refinement_max_steps"] = (
+                    b0_recovery_refinement_max_steps
+                )
+                summary["b0_recovery_evidence"] = {
+                    "schema": "task41.p0.b0.recovery_evidence_binding.v1",
+                    "manifest": dict(recovery_manifest),
+                    "receipt_path": recovery_check.get("receipt_path"),
+                    "stage": recovery_manifest.get("stage"),
+                    "status": recovery_check.get("status"),
+                    "same_lu_refinement_loop": dict(
+                        recovery_check.get("same_lu_refinement_loop", {})
+                    ),
+                    "run_identity": b0_recovery_identity,
+                    "limits": recovery_check.get("limits"),
+                }
                 summary["b0_saved_surface_p6_consumer_checks"] = pair_consumer_checks
                 _write_json(
                     directory / "task41_b0_saved_surface_p6_consumer_checks.json",
@@ -12332,6 +13508,17 @@ def run_task40_v10_p6_reference_worker(
         def action(source: Any):
             return target_action.apply(source)
 
+        b0_recovery_kwargs: dict[str, Any] = {}
+        if is_task41_b0:
+            if b0_recovery_refinement_max_steps != 3:
+                raise ValueError("Task41 B0 production recovery was not bound to the qualified same-LU loop")
+            b0_recovery_kwargs = {
+                "native_volume_apply": lambda values: _apply_full_volume_action_borrowed(
+                    target_bundle["volume_action"], values, PETSc
+                ),
+                "recovery_refinement_max_steps": b0_recovery_refinement_max_steps,
+            }
+
         def evaluate(source: Any, residual: Any):
             source_values = np.asarray(source.array_r, dtype=np.complex128)
             schur_residual = np.asarray(residual.array_r, dtype=np.complex128).copy()
@@ -12343,6 +13530,7 @@ def run_task40_v10_p6_reference_worker(
                 ),
                 rhs_is_mpc_dual=True,
                 reduced_residual=schur_residual,
+                **b0_recovery_kwargs,
             )
             native_witness = target_action.evaluate_native_residual(
                 source_values,
@@ -12352,6 +13540,7 @@ def run_task40_v10_p6_reference_worker(
                 ),
                 rhs_is_mpc_dual=True,
                 reduced_residual=schur_residual,
+                **b0_recovery_kwargs,
             )
             applied_residual = float(candidate["native_residual_relative"])
             port_relative = float(candidate["port_residual_relative"])
@@ -12371,6 +13560,13 @@ def run_task40_v10_p6_reference_worker(
                     "internal_residual_relative": float(native_witness["internal_residual_relative"]),
                     "native_identity_relative": float(native_witness["native_identity_relative"]),
                     "schur_port_identity_relative": float(native_witness["schur_port_identity_relative"]),
+                },
+                "native_volume_same_lu_refinement": {
+                    "maximum_steps": int(b0_recovery_refinement_max_steps)
+                    if is_task41_b0 else 0,
+                    "fast_action_steps": int(candidate.get("native_volume_refinement_steps", 0)),
+                    "native_witness_steps": int(native_witness.get("native_volume_refinement_steps", 0)),
+                    "shared_loop": bool(is_task41_b0),
                 },
                 "retained_alpha_norm": float(np.linalg.norm(candidate["retained_alpha"])),
                 "reference_pc_apply": pc_facts,
@@ -12459,6 +13655,7 @@ def run_task40_v10_p6_reference_worker(
                     target_fast_bundle["physical_action"], values, PETSc
                 ),
                 rhs_is_mpc_dual=True,
+                **b0_recovery_kwargs,
             )
             native = target_action.evaluate_native_residual(
                 reduced_values,
@@ -12467,6 +13664,7 @@ def run_task40_v10_p6_reference_worker(
                     target_bundle["physical_action"], values, PETSc
                 ),
                 rhs_is_mpc_dual=True,
+                **b0_recovery_kwargs,
             )
             return fast, native
 

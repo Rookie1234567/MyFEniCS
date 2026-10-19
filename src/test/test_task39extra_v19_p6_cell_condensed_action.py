@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import gc
+import hashlib
+import json
+from pathlib import Path
 from types import SimpleNamespace
 import weakref
 
@@ -149,6 +152,58 @@ def test_same_lu_internal_correction_updates_only_cell_interior_rows() -> None:
         assert np.all(np.isfinite(corrected))
         assert block["Vii"].shape == (2, 2)
     finally:
+        action.destroy()
+
+
+def test_same_lu_native_refinement_is_capped_at_three_and_copies_borrowed_vec() -> None:
+    _condensed, block, action = _problem()
+    borrowed = PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
+    target = np.asarray([0.5 + 0.25j, -0.25 + 0.75j])
+    storage = np.zeros(4, dtype=np.complex128)
+    rhs = np.zeros(4, dtype=np.complex128)
+    rhs[:2] = block["Vii"] @ target
+    calls = []
+    captured_states = []
+
+    def native_volume_apply(values):
+        calls.append(borrowed)
+        output = borrowed.getArray()
+        output[:] = 0.0
+        output[:2] = 0.5 * (block["Vii"] @ np.asarray(values[:2]))
+        return borrowed
+
+    try:
+        initial_action = np.array(
+            native_volume_apply(storage).getArray(readonly=True),
+            dtype=np.complex128,
+            copy=True,
+        )
+        result = action.refine_internal_storage_with_native_volume_residual(
+            storage,
+            rhs,
+            native_volume_apply,
+            max_steps=3,
+            initial_volume_action=initial_action,
+            initial_residual=rhs - initial_action,
+            forward_reference=np.concatenate((target, np.zeros(2, dtype=np.complex128))),
+            on_state=lambda step, state, volume, residual, facts: captured_states.append(
+                (step, state.copy(), volume.copy(), residual.copy(), dict(facts))
+            ),
+        )
+
+        assert result["maximum_steps"] == 3
+        assert result["same_lu_refinement_steps"] == 3
+        assert [row[0] for row in captured_states] == [0, 1, 2, 3]
+        assert len(calls) == 4 and all(item is borrowed for item in calls)
+        assert np.linalg.norm(captured_states[3][3][:2]) < np.linalg.norm(
+            captured_states[0][3][:2]
+        )
+        # Captured NumPy copies remain distinct after the owner reuses its PETSc Vec.
+        np.testing.assert_array_equal(captured_states[0][2], initial_action)
+        assert result["storage_solution"][2:].tolist() == [0.0j, 0.0j]
+        assert result["native_volume_residual"].shape == (4,)
+    finally:
+        borrowed.destroy()
         action.destroy()
 
 
@@ -668,7 +723,9 @@ def test_global_direct_provider_two_input_check_uses_one_sweep_and_matches_colum
         action.destroy()
 
 
-def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(tmp_path) -> None:
+def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
+    tmp_path, monkeypatch
+) -> None:
     from src.runners.task40_v10_worker import _task41_b0_full_size_two_input_identity_check
 
     condensed, block, seed_action = _problem()
@@ -710,6 +767,8 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
     rng = np.random.default_rng(20261018)
     b_trace = _matrix(rng, 2, 2)
     d_trace = _matrix(rng, 2, 2)
+    block["Bi"] = np.zeros_like(block["Bi"])
+    block["Di"] = np.zeros_like(block["Di"])
     mode_keys = [(index, "top", index, 0, "s") for index in range(2)]
     normalization_h = np.asarray([2.5 + 0.3j, 3.25 - 0.2j], dtype=np.complex128)
     original_h = DiagonalOriginalPortBlock(normalization_h, mode_keys)
@@ -804,13 +863,24 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
     class _Runtime:
         def __init__(self):
             self.markers = []
+            self.directory = tmp_path
 
         def marker(self, name, facts):
             self.markers.append((name, dict(facts)))
 
     volume_action = _ReusableVolume()
+    selected_frames = tuple(
+        SimpleNamespace(
+            mode_key=tuple(mode_keys[port]),
+            coupling_rows=np.asarray([2, 3], dtype=PETSc.IntType),
+            coupling_values=np.asarray(b_trace[:, port], dtype=np.complex128),
+            projection_rows=np.empty(0, dtype=PETSc.IntType),
+            projection_values=np.empty(0, dtype=np.complex128),
+        )
+        for port in range(2)
+    )
     carrier = SimpleNamespace(
-        entries=(object(), object()),
+        entries=selected_frames,
         mode_keys=tuple(mode_keys),
         surface_source=SimpleNamespace(
             max_frame_bytes=256,
@@ -818,28 +888,46 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         ),
     )
     runtime = _Runtime()
+    support_certificate = {
+        "schema": "task41.p0.b0.saved_surface_support_inventory.v1",
+        "cell_interior_nonzero_values": 0,
+    }
+    run_identity = {
+        "case_id": "B0",
+        "run_id": "task41-b0-recovery-fixture",
+        "source_sha": "c" * 40,
+        "input_sha256": "d" * 64,
+        "staged_input_sha256": "d" * 64,
+        "physical_model_sha256": "e" * 64,
+        "campaign_window_sha256": "f" * 64,
+        "execution_contract_sha256": "a" * 64,
+        "mode_manifest_sha256": "b" * 64,
+        "carrier_committed_prefix_sha256": "1" * 64,
+        "saved_surface_support_certificate": support_certificate,
+    }
+    probes = [
+        {
+            "mode_index": 0,
+            "rows": np.asarray([0, 2, 4], dtype=PETSc.IntType),
+            "values": np.asarray(
+                [0.04 + 0.03j, 0.6 + 0.3j, 0.07 - 0.02j],
+                dtype=np.complex128,
+            ),
+            "alpha": 0.25 - 0.1j,
+        },
+        {
+            "mode_index": 1,
+            "rows": np.asarray([1, 3, 4], dtype=PETSc.IntType),
+            "values": np.asarray(
+                [-0.02 + 0.05j, -0.2 + 0.8j, -0.09 + 0.03j],
+                dtype=np.complex128,
+            ),
+            "alpha": -0.4 + 0.55j,
+        },
+    ]
     try:
         result = _task41_b0_full_size_two_input_identity_check(
-            probes=[
-                {
-                    "mode_index": 0,
-                    "rows": np.asarray([0, 2, 4], dtype=PETSc.IntType),
-                    "values": np.asarray(
-                        [0.04 + 0.03j, 0.6 + 0.3j, 0.07 - 0.02j],
-                        dtype=np.complex128,
-                    ),
-                    "alpha": 0.25 - 0.1j,
-                },
-                {
-                    "mode_index": 1,
-                    "rows": np.asarray([1, 3, 4], dtype=PETSc.IntType),
-                    "values": np.asarray(
-                        [-0.02 + 0.05j, -0.2 + 0.8j, -0.09 + 0.03j],
-                        dtype=np.complex128,
-                    ),
-                    "alpha": -0.4 + 0.55j,
-                },
-            ],
+            probes=probes,
             carrier=carrier,
             action=action,
             provider=provider,
@@ -852,6 +940,7 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
                 "workspace_bytes": facts["workspace_bytes"],
             },
             runtime=runtime,
+            run_identity=run_identity,
         )
         assert result["status"] == "PASS"
         assert result["independent_nonzero_cell_interiors_injected_before_native_rhs"] is True
@@ -864,7 +953,7 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         assert result["input_identities"][0]["raw_slave_values_sha256"]
         np.testing.assert_allclose(volume_action.inputs[0][0], 0.29 + 0.155j)
         np.testing.assert_allclose(
-            volume_action.inputs[1][1],
+            volume_action.inputs[2][1],
             -0.395 - 1.0e-6 + 1j * (0.55 + 2.0e-6),
         )
         assert volume_action.inputs[0][4] == 0.0
@@ -873,12 +962,172 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         assert max(result["p6_vs_native_reduced_rhs_relative_errors"]) < 1.0e-11
         assert result["direct_B_row_entries_checked"] > 0
         assert result["direct_D_row_entries_checked"] > 0
-        assert volume_action.calls == 2
+        assert volume_action.calls == 4
         assert volume_action.buffer.getSize() == 5
         assert provider.audit["iterator_sweeps_by_operation"]["reduced_apply_multi"] == 1
         assert result["recovered_mpc_slave_rows_exact_zero"] is True
         assert np.any(independent_volume_oracle[2:, :])
         assert (tmp_path / "task41_b0_full_size_two_input_identity_check.json").is_file()
+
+        manifest_path = Path(result["recovery_manifest_path"])
+        manifest_bytes = manifest_path.read_bytes()
+        manifest = json.loads(manifest_bytes)
+        manifest_record = {
+            "path": str(manifest_path),
+            "bytes": len(manifest_bytes),
+            "sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+            "stage": manifest["stage"],
+        }
+        summary = {
+            "run_id": run_identity["run_id"],
+            "b0_mode_inventory": {"mode_manifest_sha256": run_identity["mode_manifest_sha256"]},
+            "b0_saved_surface_support_certificate": support_certificate,
+            "b0_recovery_refinement_max_steps": 3,
+            "b0_recovery_evidence": {
+                "manifest": manifest_record,
+                "stage": manifest["stage"],
+                "status": manifest["status"],
+                "run_identity": run_identity,
+                "same_lu_refinement_loop": {
+                    "production_and_witness_share_loop": True,
+                    "maximum_steps_per_column": 3,
+                    "full_carrier_sweeps_per_correction": 0,
+                    "correction_driver": "independent_native_cell_interior_volume_residual",
+                },
+            },
+        }
+        contract = {
+            "source": {"sha": run_identity["source_sha"]},
+            "case": {
+                "input_sha256": run_identity["input_sha256"],
+                "physical_model_sha256": run_identity["physical_model_sha256"],
+            },
+            "window": {"sha256": run_identity["campaign_window_sha256"]},
+        }
+        from src.runners.task41_p0_checker import _task41_b0_recovery_evidence_checks
+
+        replay = _task41_b0_recovery_evidence_checks(
+            summary,
+            tmp_path / "numerical_output",
+            contract,
+            contract_sha256=run_identity["execution_contract_sha256"],
+            expected_mode_indices=(0, 1),
+        )
+        assert replay["passed"] is True, replay["errors"]
+        assert [row["mode_index"] for row in replay["columns"]] == [0, 1]
+        assert all(row["passed"] for row in replay["columns"])
+
+        original_recover = action.recover_storage
+
+        def finite_bad_recovery(source, *, full_rhs, expand_trace):
+            recovered = np.asarray(
+                original_recover(source, full_rhs=full_rhs, expand_trace=expand_trace),
+                dtype=np.complex128,
+            ).copy()
+            recovered[0] += 1.0e-6
+            return recovered
+
+        monkeypatch.setattr(action, "recover_storage", finite_bad_recovery)
+        failure_directory = tmp_path / "finite_gate_failure"
+        with pytest.raises(ValueError, match="failed its original gates"):
+            _task41_b0_full_size_two_input_identity_check(
+                probes=probes,
+                carrier=carrier,
+                action=action,
+                provider=provider,
+                volume_action=volume_action,
+                original_port_block=original_h,
+                output_directory=failure_directory,
+                allocation_gate=lambda _label, facts: {
+                    "admitted": True,
+                    "persistent_bytes": facts["additional_payload_bytes"],
+                    "workspace_bytes": facts["workspace_bytes"],
+                },
+                runtime=runtime,
+                run_identity=run_identity,
+            )
+
+        failed_manifest_path = failure_directory / "task41_b0_recovery_manifest.json"
+        failed_manifest_bytes = failed_manifest_path.read_bytes()
+        failed_manifest = json.loads(failed_manifest_bytes)
+        assert failed_manifest["stage"] == "RECOVERY_GATE_FAILED"
+        assert failed_manifest["status"] == "FAIL"
+        assert len(failed_manifest["columns"]) == 2
+        for column in failed_manifest["columns"]:
+            assert column["status"] == "CAPTURED"
+            assert column["recovery_passed"] is False
+            assert np.isfinite(column["forward_relative_error"])
+            assert column["forward_relative_error"] > 1.0e-11
+            for artifact_name in (
+                "known_field",
+                "native_volume_rhs",
+                "native_rhs",
+                "recovered_storage",
+                "native_volume_action_recovered",
+                "native_volume_residual",
+            ):
+                assert column["artifacts"][artifact_name]["sha256"]
+
+        failed_summary = {
+            "run_id": run_identity["run_id"],
+            "b0_mode_inventory": {
+                "mode_manifest_sha256": run_identity["mode_manifest_sha256"]
+            },
+            "b0_saved_surface_support_certificate": support_certificate,
+            "b0_recovery_refinement_max_steps": 3,
+            "b0_recovery_evidence": {
+                "schema": "task41.p0.b0.recovery_evidence_binding.v1",
+                "manifest": {
+                    "path": str(failed_manifest_path.resolve()),
+                    "bytes": len(failed_manifest_bytes),
+                    "sha256": hashlib.sha256(failed_manifest_bytes).hexdigest(),
+                    "stage": failed_manifest["stage"],
+                },
+                "stage": failed_manifest["stage"],
+                "status": failed_manifest["status"],
+                "run_identity": run_identity,
+                "limits": failed_manifest["limits"],
+                "same_lu_refinement_loop": {
+                    "production_and_witness_share_loop": True,
+                    "maximum_steps_per_column": 3,
+                    "full_carrier_sweeps_per_correction": 0,
+                    "correction_driver": "independent_native_cell_interior_volume_residual",
+                },
+            },
+        }
+        failed_binding = failed_summary["b0_recovery_evidence"]
+        assert failed_binding["status"] == "FAIL"
+        assert failed_binding["stage"] == "RECOVERY_GATE_FAILED"
+        failed_record = failed_binding["manifest"]
+        assert failed_record["sha256"] == hashlib.sha256(failed_manifest_bytes).hexdigest()
+        failed_summary["b0_recovery_evidence"].update(
+            same_lu_refinement_loop={
+                "production_and_witness_share_loop": True,
+                "maximum_steps_per_column": 3,
+                "full_carrier_sweeps_per_correction": 0,
+                "correction_driver": "independent_native_cell_interior_volume_residual",
+            }
+        )
+        failed_contract = {
+            "source": {"sha": run_identity["source_sha"]},
+            "case": {
+                "input_sha256": run_identity["input_sha256"],
+                "physical_model_sha256": run_identity["physical_model_sha256"],
+            },
+            "window": {"sha256": run_identity["campaign_window_sha256"]},
+        }
+        failed_replay = _task41_b0_recovery_evidence_checks(
+            failed_summary,
+            failure_directory / "numerical_output",
+            failed_contract,
+            contract_sha256=run_identity["execution_contract_sha256"],
+            expected_mode_indices=(0, 1),
+        )
+        assert failed_replay["passed"] is False
+        assert failed_replay["joint_action_status"] == "NOT_RUN"
+        assert [row["mode_index"] for row in failed_replay["columns"]] == [0, 1]
+        assert all(np.isfinite(row["final_forward_relative"]) for row in failed_replay["columns"])
+        assert all(row["final_forward_relative"] > 1.0e-11 for row in failed_replay["columns"])
     finally:
         volume_action.buffer.destroy()
         action.destroy()

@@ -202,7 +202,10 @@ def _task41_npy_artifact(
     if (
         not isinstance(value, np.ndarray)
         or (record.get("shape") is not None and list(value.shape) != record.get("shape"))
-        or (record.get("dtype") is not None and value.dtype.str != record.get("dtype"))
+        or (
+            record.get("dtype") is not None
+            and np.dtype(value.dtype) != np.dtype(str(record.get("dtype")))
+        )
     ):
         raise ValueError(f"Task41 A2 {label} array identity changed")
     return value
@@ -1151,6 +1154,700 @@ def _task41_a2_numerical_checks(
     }
 
 
+def _task41_b0_chunked_norm(values: np.ndarray, *, chunk_rows: int = 262_144) -> float:
+    total = 0.0
+    for start in range(0, int(values.shape[0]), chunk_rows):
+        block = np.asarray(values[start : start + chunk_rows], dtype=np.complex128)
+        if not np.isfinite(block).all():
+            raise ValueError("Task41 B0 norm input contains non-finite values")
+        total += float(np.vdot(block, block).real)
+    return float(np.sqrt(max(0.0, total)))
+
+
+def _task41_b0_chunked_relative_error(
+    actual: np.ndarray, expected: np.ndarray, *, chunk_rows: int = 262_144
+) -> float:
+    if actual.shape != expected.shape:
+        raise ValueError("Task41 B0 recovery arrays differ in shape")
+    error_squared = 0.0
+    expected_squared = 0.0
+    for start in range(0, int(actual.shape[0]), chunk_rows):
+        stop = min(int(actual.shape[0]), start + chunk_rows)
+        left = np.asarray(actual[start:stop], dtype=np.complex128)
+        right = np.asarray(expected[start:stop], dtype=np.complex128)
+        if not np.isfinite(left).all() or not np.isfinite(right).all():
+            raise ValueError("Task41 B0 recovery array contains non-finite values")
+        difference = left - right
+        error_squared += float(np.vdot(difference, difference).real)
+        expected_squared += float(np.vdot(right, right).real)
+    return float(
+        np.sqrt(max(0.0, error_squared))
+        / max(float(np.sqrt(max(0.0, expected_squared))), np.finfo(float).tiny)
+    )
+
+
+def _task41_b0_chunked_difference_norm(
+    left: np.ndarray, right: np.ndarray, *, chunk_rows: int = 262_144
+) -> float:
+    if left.shape != right.shape:
+        raise ValueError("Task41 B0 residual arrays differ in shape")
+    total = 0.0
+    for start in range(0, int(left.shape[0]), chunk_rows):
+        stop = min(int(left.shape[0]), start + chunk_rows)
+        lhs = np.asarray(left[start:stop], dtype=np.complex128)
+        rhs = np.asarray(right[start:stop], dtype=np.complex128)
+        if not np.isfinite(lhs).all() or not np.isfinite(rhs).all():
+            raise ValueError("Task41 B0 residual array contains non-finite values")
+        difference = lhs - rhs
+        total += float(np.vdot(difference, difference).real)
+    return float(np.sqrt(max(0.0, total)))
+
+
+def _task41_b0_chunked_residual_discrepancy(
+    residual: np.ndarray,
+    rhs: np.ndarray,
+    action: np.ndarray,
+    *,
+    chunk_rows: int = 262_144,
+) -> float:
+    if residual.shape != rhs.shape or rhs.shape != action.shape:
+        raise ValueError("Task41 B0 native residual vectors differ in shape")
+    total = 0.0
+    for start in range(0, int(rhs.shape[0]), chunk_rows):
+        stop = min(int(rhs.shape[0]), start + chunk_rows)
+        r = np.asarray(residual[start:stop], dtype=np.complex128)
+        b = np.asarray(rhs[start:stop], dtype=np.complex128)
+        a = np.asarray(action[start:stop], dtype=np.complex128)
+        if not np.isfinite(r).all() or not np.isfinite(b).all() or not np.isfinite(a).all():
+            raise ValueError("Task41 B0 native residual witness contains non-finite values")
+        delta = r - (b - a)
+        total += float(np.vdot(delta, delta).real)
+    return float(np.sqrt(max(0.0, total)))
+
+
+def _task41_b0_chunked_symmetric_relative_error(
+    actual: np.ndarray, expected: np.ndarray, *, chunk_rows: int = 262_144
+) -> float:
+    if actual.shape != expected.shape:
+        raise ValueError("Task41 B0 compared arrays differ in shape")
+    error_squared = actual_squared = expected_squared = 0.0
+    for start in range(0, int(actual.shape[0]), chunk_rows):
+        stop = min(int(actual.shape[0]), start + chunk_rows)
+        left = np.asarray(actual[start:stop], dtype=np.complex128)
+        right = np.asarray(expected[start:stop], dtype=np.complex128)
+        if not np.isfinite(left).all() or not np.isfinite(right).all():
+            raise ValueError("Task41 B0 compared arrays contain non-finite values")
+        error = left - right
+        error_squared += float(np.vdot(error, error).real)
+        actual_squared += float(np.vdot(left, left).real)
+        expected_squared += float(np.vdot(right, right).real)
+    return float(
+        np.sqrt(max(0.0, error_squared))
+        / max(
+            float(np.sqrt(max(0.0, actual_squared))),
+            float(np.sqrt(max(0.0, expected_squared))),
+            np.finfo(float).tiny,
+        )
+    )
+
+
+def _task41_b0_indexed_arrays_equal(
+    left: np.ndarray,
+    right: np.ndarray,
+    rows: np.ndarray,
+    *,
+    zero: bool = False,
+    chunk_rows: int = 262_144,
+) -> bool:
+    for start in range(0, int(rows.shape[0]), chunk_rows):
+        selected = np.asarray(rows[start : start + chunk_rows], dtype=np.int64)
+        left_values = np.asarray(left[selected])
+        if zero:
+            if np.any(left_values != 0.0):
+                return False
+        elif not np.array_equal(left_values, np.asarray(right[selected])):
+            return False
+    return True
+
+
+def _task41_b0_recovery_evidence_checks(
+    summary: Mapping[str, Any],
+    numerical_output: Path,
+    contract: Mapping[str, Any],
+    *,
+    contract_sha256: str,
+    expected_mode_indices: tuple[int, int] = (16030, 48090),
+) -> dict[str, Any]:
+    """Recompute B0 recovery and joint-action gates from hash-bound raw arrays."""
+    errors: list[str] = []
+    binding = summary.get("b0_recovery_evidence")
+    if not isinstance(binding, Mapping):
+        return {
+            "schema": "task41.p0.b0.recovery_evidence_checker.v1",
+            "errors": ["Task41 B0 summary omits its recovery evidence binding"],
+            "passed": False,
+        }
+    manifest_ref = binding.get("manifest")
+    manifest: Mapping[str, Any] = {}
+    if not isinstance(manifest_ref, Mapping):
+        errors.append("Task41 B0 recovery evidence omits its manifest artifact record")
+    else:
+        try:
+            manifest_path = _task41_run_artifact(
+                numerical_output.parent, manifest_ref, "B0 recovery manifest"
+            )
+            manifest = _json_object(manifest_path, "B0 recovery manifest")
+            if (
+                manifest_ref.get("stage") != manifest.get("stage")
+                or binding.get("stage") != manifest.get("stage")
+                or binding.get("status") != "PASS"
+                or manifest.get("schema") != "task41.p0.b0.recovery_evidence.v1"
+                or manifest.get("stage") != "FULL_ACTION_QUALIFIED"
+                or manifest.get("status") != "PASS"
+            ):
+                errors.append("Task41 B0 recovery manifest did not finish the full-action gate")
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            errors.append(f"Task41 B0 recovery manifest failed its path/hash check: {exc}")
+
+    case = contract.get("case", {})
+    window = contract.get("window", {})
+    run_identity = manifest.get("run_identity", {})
+    mode_inventory = summary.get("b0_mode_inventory", {})
+    expected_identity = {
+        "case_id": "B0",
+        "run_id": summary.get("run_id"),
+        "source_sha": contract.get("source", {}).get("sha")
+        if isinstance(contract.get("source"), Mapping)
+        else None,
+        "input_sha256": case.get("input_sha256") if isinstance(case, Mapping) else None,
+        "physical_model_sha256": case.get("physical_model_sha256")
+        if isinstance(case, Mapping)
+        else None,
+        "campaign_window_sha256": window.get("sha256")
+        if isinstance(window, Mapping)
+        else None,
+        "execution_contract_sha256": contract_sha256,
+        "mode_manifest_sha256": mode_inventory.get("mode_manifest_sha256")
+        if isinstance(mode_inventory, Mapping)
+        else None,
+    }
+    if not isinstance(run_identity, Mapping):
+        errors.append("Task41 B0 recovery manifest has no run identity")
+        run_identity = {}
+    for key, expected in expected_identity.items():
+        if not expected or run_identity.get(key) != expected:
+            errors.append(f"Task41 B0 recovery run identity differs at {key}")
+    for key in ("staged_input_sha256", "carrier_committed_prefix_sha256"):
+        value = run_identity.get(key)
+        if (
+            not isinstance(value, str)
+            or len(value) != 64
+            or any(char not in "0123456789abcdef" for char in value)
+        ):
+            errors.append(f"Task41 B0 recovery run identity has invalid {key}")
+
+    support = manifest.get("saved_surface_support_certificate")
+    summary_support = summary.get("b0_saved_surface_support_certificate")
+    support_nonzero = (
+        support.get("cell_interior_nonzero_values")
+        if isinstance(support, Mapping)
+        else None
+    )
+    support_digest = hashlib.sha256(
+        json.dumps(
+            support if isinstance(support, Mapping) else {},
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    if (
+        not isinstance(support, Mapping)
+        or support.get("schema") != "task41.p0.b0.saved_surface_support_inventory.v1"
+        or support != summary_support
+        or support_nonzero != 0
+        or manifest.get("local_interior_Bi_Di_exact_zero") is not True
+        or manifest.get("local_interior_Bi_Di_nonzero_entry_count") != 0
+        or manifest.get("saved_surface_support_certificate_passed") is not True
+        or manifest.get("saved_surface_support_certificate_sha256") != support_digest
+    ):
+        errors.append("Task41 B0 exact-zero local Bi/Di support certificate is absent or mismatched")
+    if summary.get("b0_recovery_refinement_max_steps") != 3:
+        errors.append("Task41 B0 production path is not bound to the shared three-step recovery loop")
+    loop = binding.get("same_lu_refinement_loop")
+    if (
+        not isinstance(loop, Mapping)
+        or loop.get("production_and_witness_share_loop") is not True
+        or loop.get("maximum_steps_per_column") != 3
+        or loop.get("full_carrier_sweeps_per_correction") != 0
+        or loop.get("correction_driver")
+        != "independent_native_cell_interior_volume_residual"
+    ):
+        errors.append("Task41 B0 recovery evidence does not bind the shared same-LU correction loop")
+
+    checked_columns = []
+    shared_raw_classes: dict[str, tuple[str, str, str, str]] = {}
+    columns = manifest.get("columns")
+    full_rows = manifest.get("full_storage_rows")
+    if type(full_rows) is not int or full_rows < 1:
+        errors.append("Task41 B0 recovery manifest has an invalid full storage size")
+    if not isinstance(columns, list) or len(columns) != 2:
+        errors.append("Task41 B0 recovery manifest does not contain both input columns")
+        columns = []
+
+    def load_array(record: Any, label: str) -> np.ndarray:
+        if not isinstance(record, Mapping):
+            raise ValueError(f"{label} artifact record is missing")
+        return _task41_npy_artifact(numerical_output.parent, record, label)
+
+    def require_vector(record: Any, label: str, *, size: int | None = None) -> np.ndarray:
+        value = load_array(record, label)
+        if (
+            value.ndim != 1
+            or value.dtype != np.dtype(np.complex128)
+            or (size is not None and value.shape != (size,))
+        ):
+            raise ValueError(f"{label} has an invalid complex-vector layout")
+        return value
+
+    def require_close_recorded(actual: float, recorded: Any, label: str) -> None:
+        try:
+            declared = float(recorded)
+        except (TypeError, ValueError):
+            errors.append(f"Task41 B0 {label} metric is missing")
+            return
+        if not np.isfinite(declared) or abs(actual - declared) > 5.0e-13 * max(1.0, abs(actual)):
+            errors.append(f"Task41 B0 {label} metric differs from its raw arrays")
+
+    for expected_column, column in enumerate(columns):
+        try:
+            if not isinstance(column, Mapping):
+                raise ValueError("column record is malformed")
+            artifacts = column.get("artifacts")
+            if not isinstance(artifacts, Mapping):
+                raise ValueError("column artifact inventory is missing")
+            if column.get("column") != expected_column or column.get("status") != "CAPTURED":
+                raise ValueError("recovery column identity or captured status differs")
+            mode_index = column.get("mode_index")
+            input_rows = manifest.get("input_identities", [])
+            identity_row = input_rows[expected_column]
+            if (
+                mode_index != expected_mode_indices[expected_column]
+                or identity_row.get("mode_index") != mode_index
+            ):
+                raise ValueError("the two frozen selected B modes or column order differ")
+            known = require_vector(artifacts.get("known_field"), "known field", size=full_rows)
+            volume_rhs = require_vector(
+                artifacts.get("native_volume_rhs"), "native volume RHS", size=full_rows
+            )
+            native_rhs = require_vector(
+                artifacts.get("native_rhs"), "aggregate native RHS", size=full_rows
+            )
+            b_rows = load_array(artifacts.get("selected_B_frame_rows"), "selected B rows")
+            b_values = load_array(artifacts.get("selected_B_frame_values"), "selected B values")
+            b_alpha_rows = load_array(artifacts.get("b_alpha_rows"), "B-alpha rows")
+            b_alpha_values = load_array(artifacts.get("b_alpha_values"), "B-alpha values")
+            if (
+                b_rows.ndim != 1
+                or b_rows.dtype.kind not in "iu"
+                or b_values.shape != b_rows.shape
+                or b_values.dtype != np.dtype(np.complex128)
+                or b_alpha_rows.ndim != 1
+                or b_alpha_rows.dtype.kind not in "iu"
+                or b_alpha_values.shape != b_alpha_rows.shape
+                or b_alpha_values.dtype != np.dtype(np.complex128)
+                or (b_rows.size and (int(b_rows[0]) < 0 or int(b_rows[-1]) >= full_rows))
+                or (b_rows.size > 1 and np.any(b_rows[1:] <= b_rows[:-1]))
+                or (b_alpha_rows.size > 1 and np.any(b_alpha_rows[1:] <= b_alpha_rows[:-1]))
+                or not np.isfinite(b_values).all()
+                or not np.isfinite(b_alpha_values).all()
+            ):
+                raise ValueError("selected B-frame artifacts have invalid row/value layouts")
+            alpha_pair = identity_row.get("port_alpha")
+            if not isinstance(alpha_pair, list) or len(alpha_pair) != 2:
+                raise ValueError("selected B input has no saved complex port amplitude")
+            alpha = complex(float(alpha_pair[0]), float(alpha_pair[1]))
+            expected_b_values = b_values * alpha
+            nonzero = expected_b_values != 0.0
+            if not np.array_equal(b_alpha_rows, b_rows[nonzero]) or not np.array_equal(
+                b_alpha_values, expected_b_values[nonzero]
+            ):
+                raise ValueError("saved B-alpha vector does not replay from the selected B frame")
+            for start in range(0, full_rows, 262_144):
+                stop = min(full_rows, start + 262_144)
+                expected_rhs = np.asarray(volume_rhs[start:stop], dtype=np.complex128).copy()
+                selected = (b_alpha_rows >= start) & (b_alpha_rows < stop)
+                if np.any(selected):
+                    expected_rhs[b_alpha_rows[selected] - start] += b_alpha_values[selected]
+                if not np.array_equal(expected_rhs, np.asarray(native_rhs[start:stop])):
+                    raise ValueError("aggregate native RHS does not equal saved volume RHS plus B-alpha")
+
+            active_original_rows = load_array(
+                artifacts.get("active_original_rows"), "active original rows"
+            )
+            slave_rows = load_array(artifacts.get("slave_rows"), "MPC slave rows")
+            if (
+                active_original_rows.ndim != 1
+                or active_original_rows.dtype.kind not in "iu"
+                or slave_rows.ndim != 1
+                or slave_rows.dtype.kind not in "iu"
+                or np.any(active_original_rows < 0)
+                or np.any(active_original_rows >= full_rows)
+                or np.any(slave_rows < 0)
+                or np.any(slave_rows >= full_rows)
+                or np.intersect1d(active_original_rows, slave_rows).size
+            ):
+                raise ValueError("active or slave original-row identity is malformed")
+
+            initial_storage = require_vector(
+                artifacts.get("recovered_storage"), "initial recovered storage", size=full_rows
+            )
+            initial_action = require_vector(
+                artifacts.get("native_volume_action_recovered"),
+                "initial native volume action",
+                size=full_rows,
+            )
+            initial_residual = require_vector(
+                artifacts.get("native_volume_residual"), "initial native volume residual", size=full_rows
+            )
+            if _task41_b0_chunked_residual_discrepancy(
+                initial_residual, volume_rhs, initial_action
+            ) > 5.0e-13 * max(1.0, _task41_b0_chunked_norm(volume_rhs)):
+                raise ValueError("initial native volume residual does not replay from raw vectors")
+            if (
+                not _task41_b0_indexed_arrays_equal(
+                    initial_storage, known, active_original_rows
+                )
+                or not _task41_b0_indexed_arrays_equal(
+                    known, known, slave_rows, zero=True
+                )
+                or not _task41_b0_indexed_arrays_equal(
+                    volume_rhs, volume_rhs, slave_rows, zero=True
+                )
+                or not _task41_b0_indexed_arrays_equal(
+                    native_rhs, native_rhs, slave_rows, zero=True
+                )
+                or not _task41_b0_indexed_arrays_equal(
+                    initial_storage, initial_storage, slave_rows, zero=True
+                )
+                or not _task41_b0_indexed_arrays_equal(
+                    initial_action, initial_action, slave_rows, zero=True
+                )
+                or not _task41_b0_indexed_arrays_equal(
+                    initial_residual, initial_residual, slave_rows, zero=True
+                )
+            ):
+                raise ValueError("initial recovery did not preserve trace/slave storage identities")
+            initial_forward = _task41_b0_chunked_relative_error(initial_storage, known)
+            initial_residual_relative = (
+                _task41_b0_chunked_norm(initial_residual)
+                / max(_task41_b0_chunked_norm(volume_rhs), np.finfo(float).tiny)
+            )
+            require_close_recorded(
+                initial_forward, column.get("forward_relative_error"), "initial forward error"
+            )
+            require_close_recorded(
+                initial_residual_relative,
+                column.get("native_volume_residual_relative"),
+                "initial volume residual",
+            )
+
+            refinement = column.get("same_lu_refinement", [])
+            if not isinstance(refinement, list) or len(refinement) > 3:
+                raise ValueError("same-LU correction inventory exceeds three steps")
+            final_storage = initial_storage
+            final_residual_relative = initial_residual_relative
+            final_forward = initial_forward
+            for step, record in enumerate(refinement, start=1):
+                if not isinstance(record, Mapping) or record.get("step") != step:
+                    raise ValueError("same-LU correction steps are missing or out of order")
+                step_artifacts = record.get("artifacts")
+                if not isinstance(step_artifacts, Mapping):
+                    raise ValueError("same-LU correction step omits raw artifacts")
+                final_storage = require_vector(
+                    step_artifacts.get("storage"), "same-LU storage", size=full_rows
+                )
+                step_action = require_vector(
+                    step_artifacts.get("native_volume_action"),
+                    "same-LU volume action",
+                    size=full_rows,
+                )
+                step_residual = require_vector(
+                    step_artifacts.get("native_volume_residual"),
+                    "same-LU volume residual",
+                    size=full_rows,
+                )
+                discrepancy = _task41_b0_chunked_residual_discrepancy(
+                    step_residual, volume_rhs, step_action
+                )
+                if discrepancy > 5.0e-13 * max(
+                    1.0, _task41_b0_chunked_norm(volume_rhs)
+                ):
+                    raise ValueError("same-LU native volume residual does not replay")
+                final_forward = _task41_b0_chunked_relative_error(final_storage, known)
+                final_residual_relative = _task41_b0_chunked_norm(step_residual) / max(
+                    _task41_b0_chunked_norm(volume_rhs), np.finfo(float).tiny
+                )
+                if (
+                    not _task41_b0_indexed_arrays_equal(
+                        final_storage, known, active_original_rows
+                    )
+                    or not _task41_b0_indexed_arrays_equal(
+                        final_storage, final_storage, slave_rows, zero=True
+                    )
+                    or not _task41_b0_indexed_arrays_equal(
+                        step_action, step_action, slave_rows, zero=True
+                    )
+                    or not _task41_b0_indexed_arrays_equal(
+                        step_residual, step_residual, slave_rows, zero=True
+                    )
+                ):
+                    raise ValueError("same-LU correction changed trace or nonzero MPC slave storage")
+                require_close_recorded(
+                    final_forward, record.get("forward_relative_error"), "same-LU forward error"
+                )
+                require_close_recorded(
+                    final_residual_relative,
+                    record.get("native_volume_residual_relative"),
+                    "same-LU volume residual",
+                )
+
+            if refinement:
+                require_close_recorded(
+                    final_forward, column.get("final_forward_relative_error"), "final forward error"
+                )
+                require_close_recorded(
+                    final_residual_relative,
+                    column.get("final_native_volume_residual_relative"),
+                    "final volume residual",
+                )
+
+            initial_gate_passed = bool(
+                np.isfinite(initial_forward)
+                and initial_forward <= 1.0e-11
+                and np.isfinite(initial_residual_relative)
+                and initial_residual_relative <= 1.0e-10
+            )
+            final_gate_passed = bool(
+                np.isfinite(final_forward)
+                and final_forward <= 1.0e-11
+                and np.isfinite(final_residual_relative)
+                and final_residual_relative <= 1.0e-10
+            )
+            column_passed = bool(
+                final_gate_passed
+                and column.get("recovery_passed") is True
+                and (
+                    bool(refinement)
+                    or column.get("final_forward_relative_error") is None
+                )
+            )
+            column_result = {
+                "column": expected_column,
+                "mode_index": mode_index,
+                "initial_forward_relative": initial_forward,
+                "initial_native_volume_residual_relative": initial_residual_relative,
+                "initial_gate_passed": initial_gate_passed,
+                "same_lu_steps_replayed": len(refinement),
+                "final_forward_relative": final_forward,
+                "final_native_volume_residual_relative": final_residual_relative,
+                "final_gate_passed": final_gate_passed,
+                "manifest_claim_matches_recomputed_gate": (
+                    column.get("recovery_passed") is final_gate_passed
+                ),
+                "passed": column_passed,
+            }
+            checked_columns.append(column_result)
+            if not column_passed:
+                errors.append(
+                    f"Task41 B0 recovery column {expected_column} finite gate failed: "
+                    f"forward={final_forward}, volume_residual={final_residual_relative}"
+                )
+
+            raw_diagnostic = column.get("raw_cell_diagnostic")
+            if refinement or not initial_gate_passed:
+                if (
+                    not isinstance(raw_diagnostic, Mapping)
+                    or raw_diagnostic.get("structure_identity_passed") is not True
+                    or raw_diagnostic.get("raw_matrices_are_independently_retabulated") is not True
+                    or not isinstance(raw_diagnostic.get("cells"), list)
+                    or not 1 <= len(raw_diagnostic["cells"]) <= 3
+                ):
+                    errors.append(
+                        f"Task41 B0 recovery column {expected_column} lacks bounded raw-cell evidence"
+                    )
+                else:
+                    for cell in raw_diagnostic["cells"]:
+                        cell_artifacts = cell.get("artifacts", {})
+                        class_artifacts = cell.get("class_artifacts", {})
+                        class_identity = str(class_artifacts.get("class_identity", ""))
+                        class_refs = tuple(
+                            str(class_artifacts.get(name, {}).get("path", ""))
+                            for name in ("Vii", "Vit", "lu_factor", "lu_pivots")
+                        )
+                        if not class_identity or any(not path for path in class_refs):
+                            errors.append("Task41 B0 raw class lacks matrix/LU artifact identity")
+                            continue
+                        if class_identity in shared_raw_classes and shared_raw_classes[class_identity] != class_refs:
+                            errors.append("Task41 B0 repeated raw class matrices were not shared")
+                            continue
+                        shared_raw_classes[class_identity] = class_refs
+                        vii = np.asarray(load_array(class_artifacts.get("Vii"), "raw Vii"))
+                        vit = np.asarray(load_array(class_artifacts.get("Vit"), "raw Vit"))
+                        lu_factor = np.asarray(load_array(class_artifacts.get("lu_factor"), "raw local LU"))
+                        lu_pivots = np.asarray(load_array(class_artifacts.get("lu_pivots"), "raw local pivots"))
+                        known_i = np.asarray(load_array(cell_artifacts.get("known_interior"), "raw known interior"))
+                        known_t = np.asarray(load_array(cell_artifacts.get("known_trace"), "raw known trace"))
+                        rhs_i = np.asarray(load_array(cell_artifacts.get("native_volume_rhs_interior"), "raw volume RHS interior"))
+                        rec_i = np.asarray(load_array(cell_artifacts.get("recovered_interior"), "raw recovered interior"))
+                        rec_t = np.asarray(load_array(cell_artifacts.get("recovered_trace"), "raw recovered trace"))
+                        action_i = np.asarray(load_array(cell_artifacts.get("native_volume_action_interior"), "raw volume action interior"))
+                        residual_i = np.asarray(load_array(cell_artifacts.get("native_volume_residual_interior"), "raw volume residual interior"))
+                        interior_rows = np.asarray(load_array(cell_artifacts.get("interior_original_rows"), "raw interior row map"))
+                        trace_rows = np.asarray(load_array(cell_artifacts.get("trace_original_rows"), "raw trace row map"))
+                        active_ids = np.asarray(load_array(cell_artifacts.get("active_ids"), "raw active ids"))
+                        expansion_data = np.asarray(load_array(cell_artifacts.get("trace_expansion_data"), "raw trace expansion data"))
+                        expansion_indices = np.asarray(load_array(cell_artifacts.get("trace_expansion_indices"), "raw trace expansion indices"))
+                        expansion_indptr = np.asarray(load_array(cell_artifacts.get("trace_expansion_indptr"), "raw trace expansion indptr"))
+                        permutation = np.asarray(load_array(cell_artifacts.get("cell_permutation_info"), "raw cell permutation"))
+                        if (
+                            vii.ndim != 2 or vit.ndim != 2 or vii.shape[0] != vii.shape[1]
+                            or vit.shape[0] != vii.shape[0]
+                            or lu_factor.shape != vii.shape or lu_pivots.shape != (vii.shape[0],)
+                            or lu_pivots.dtype.kind not in "iu"
+                            or known_i.shape != (vii.shape[0],) or rhs_i.shape != known_i.shape
+                            or rec_i.shape != known_i.shape or known_t.shape != (vit.shape[1],)
+                            or rec_t.shape != known_t.shape
+                            or interior_rows.shape != known_i.shape or interior_rows.dtype.kind not in "iu"
+                            or trace_rows.shape != known_t.shape or trace_rows.dtype.kind not in "iu"
+                            or active_ids.ndim != 1 or active_ids.dtype.kind not in "iu"
+                            or expansion_indptr.shape != (len(trace_rows) + 1,)
+                            or expansion_indices.shape != expansion_data.shape
+                            or expansion_indptr[-1] != len(expansion_data)
+                            or permutation.shape != (1,)
+                            or permutation.dtype.kind not in "iu"
+                        ):
+                            errors.append("Task41 B0 raw-cell Vii/Vit evidence has inconsistent local layouts")
+                            continue
+                        try:
+                            from scipy.sparse import csr_matrix
+                            from scipy.linalg import lu_solve
+
+                            expansion = csr_matrix(
+                                (expansion_data, expansion_indices, expansion_indptr),
+                                shape=(len(trace_rows), len(active_ids)),
+                            )
+                            active_values = np.asarray(known[active_original_rows], dtype=np.complex128)
+                            recovered_active_values = np.asarray(final_storage[active_original_rows], dtype=np.complex128)
+                            expected_known_trace = np.asarray(
+                                expansion @ active_values[active_ids], dtype=np.complex128
+                            ).reshape(-1)
+                            expected_recovered_trace = np.asarray(
+                                expansion @ recovered_active_values[active_ids], dtype=np.complex128
+                            ).reshape(-1)
+                            lu_identity = lu_solve(
+                                (lu_factor, lu_pivots.astype(np.int32, copy=False)), vii
+                            )
+                        except (ValueError, TypeError, IndexError) as exc:
+                            errors.append(f"Task41 B0 raw cell mapping/LU replay failed: {exc}")
+                            continue
+                        if (
+                            not np.array_equal(known_i, known[interior_rows])
+                            or not np.array_equal(rec_i, final_storage[interior_rows])
+                            or not np.array_equal(known_t, expected_known_trace)
+                            or not np.array_equal(rec_t, expected_recovered_trace)
+                            or not np.allclose(lu_identity, np.eye(vii.shape[0]), rtol=1e-10, atol=1e-10)
+                        ):
+                            errors.append("Task41 B0 raw local rows, MPC trace expansion, or LU identity failed")
+                            continue
+                        known_action = vii @ known_i + vit @ known_t
+                        recovered_action = vii @ rec_i + vit @ rec_t
+                        local_scale = max(float(np.linalg.norm(rhs_i)), float(np.linalg.norm(action_i)), np.finfo(float).tiny)
+                        if (
+                            np.linalg.norm(known_action - rhs_i) / local_scale > 1.0e-10
+                            or np.linalg.norm(recovered_action - action_i) / local_scale > 1.0e-10
+                            or not np.allclose(rhs_i - action_i, residual_i, rtol=5e-13, atol=5e-13)
+                        ):
+                            errors.append("Task41 B0 independent raw-cell Vii/Vit replay failed")
+        except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
+            errors.append(f"Task41 B0 recovery column {expected_column} replay failed: {exc}")
+
+    full_action = manifest.get("full_action")
+    try:
+        if not isinstance(full_action, Mapping) or full_action.get("status") != "PASS":
+            raise ValueError("joint P6 full action did not pass")
+        joint = full_action.get("artifacts")
+        if not isinstance(joint, Mapping):
+            raise ValueError("joint-action artifact inventory is missing")
+        p6 = load_array(joint.get("p6_result"), "joint P6 result")
+        port_rhs = load_array(joint.get("port_rhs"), "joint port RHS")
+        reduced_rhs = load_array(joint.get("reduced_rhs"), "joint reduced RHS")
+        if (
+            p6.ndim != 2
+            or reduced_rhs.shape != p6.shape
+            or port_rhs.ndim != 2
+            or p6.shape[1] != 2
+            or port_rhs.shape[1] != 2
+            or not np.isfinite(p6).all()
+            or not np.isfinite(port_rhs).all()
+            or not np.isfinite(reduced_rhs).all()
+        ):
+            raise ValueError("joint-action arrays have invalid shapes or non-finite values")
+        errors_by_column = []
+        for column in range(2):
+            left = np.asarray(p6[:, column], dtype=np.complex128)
+            right = np.asarray(reduced_rhs[:, column], dtype=np.complex128)
+            errors_by_column.append(
+                float(np.linalg.norm(left - right))
+                / max(float(np.linalg.norm(left)), float(np.linalg.norm(right)), np.finfo(float).tiny)
+            )
+        if max(errors_by_column, default=float("inf")) > 1.0e-11:
+            raise ValueError("joint P6 and native reduced RHS differ beyond the original gate")
+        for name, actual in zip(
+            ("p6_result", "port_rhs", "reduced_rhs"),
+            (p6, port_rhs, reduced_rhs),
+            strict=True,
+        ):
+            _ = actual
+            if name not in joint:
+                raise ValueError(f"joint-action evidence omits {name}")
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        errors.append(f"Task41 B0 joint-action replay failed: {exc}")
+
+    actual_steps = max(
+        (
+            len(row.get("same_lu_refinement", []))
+            for row in columns
+            if isinstance(row, Mapping)
+        ),
+        default=0,
+    )
+    recorded_steps = manifest.get("same_lu_refinement_max_steps_used", 0)
+    if type(recorded_steps) is not int or recorded_steps != actual_steps or not 0 <= recorded_steps <= 3:
+        errors.append("Task41 B0 manifest same-LU step count differs from its raw states")
+    if len(shared_raw_classes) > 3:
+        errors.append("Task41 B0 recovery evidence stores more than three raw local classes")
+    return {
+        "schema": "task41.p0.b0.recovery_evidence_checker.v1",
+        "manifest_path": manifest_ref.get("path") if isinstance(manifest_ref, Mapping) else None,
+        "manifest_stage": manifest.get("stage"),
+        "run_identity_rechecked": not any("identity" in error for error in errors),
+        "support_certificate_rechecked": not any("support certificate" in error for error in errors),
+        "columns": checked_columns,
+        "joint_action_status": (
+            "PASS"
+            if isinstance(manifest.get("full_action"), Mapping)
+            and manifest["full_action"].get("status") == "PASS"
+            else "NOT_RUN"
+            if not isinstance(manifest.get("full_action"), Mapping)
+            else "FAIL"
+        ),
+        "joint_action_replayed": not any("joint-action" in error for error in errors),
+        "errors": errors,
+        "passed": not errors,
+    }
+
+
 def _task41_b0_numerical_checks(
     summary: Mapping[str, Any],
     numerical_output: Path,
@@ -1273,6 +1970,7 @@ def _task41_b0_numerical_checks(
     )
 
     iterative_reference_recheck = None
+    recovery_evidence_recheck = None
     reference_tier_recheck = None
     output_packet_recheck = None
     post_release_recheck = None
@@ -1298,6 +1996,13 @@ def _task41_b0_numerical_checks(
         )
     except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
         errors.append(f"Task41 B0 iterative CSR/factor audit failed: {exc}")
+    recovery_evidence_recheck = _task41_b0_recovery_evidence_checks(
+        summary,
+        numerical_output,
+        contract,
+        contract_sha256=contract_sha256,
+    )
+    errors.extend(recovery_evidence_recheck["errors"])
 
     output_meta = summary.get("output_packet")
     output_packet_path = None
@@ -1445,6 +2150,7 @@ def _task41_b0_numerical_checks(
         "sector_port_counts_recomputed": sector_counts,
         "verified_profile_capability": b0_profile_capability,
         "iterative_reference_recheck": iterative_reference_recheck,
+        "recovery_evidence_recheck": recovery_evidence_recheck,
         "reference_tier_recheck": reference_tier_recheck,
         "output_packet_recheck": output_packet_recheck,
         "post_release_a6_recheck": post_release_recheck,

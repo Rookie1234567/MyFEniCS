@@ -47,6 +47,7 @@ from .retained_port_block_layout import (
 
 
 P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES = 32 * 1024
+_P6_NATIVE_VOLUME_RECOVERY_MAX_STEPS = 3
 
 
 def _unique_numpy_backing_inventory(values: Sequence[np.ndarray]) -> tuple[int, int]:
@@ -3172,6 +3173,188 @@ class P6CellCondensedAction:
                 )
         return current
 
+    def refine_internal_storage_with_native_volume_residual(
+        self,
+        storage: Any,
+        native_volume_rhs: Any,
+        native_volume_apply: Callable[[np.ndarray], Any],
+        *,
+        max_steps: int,
+        initial_volume_action: Any | None = None,
+        initial_residual: Any | None = None,
+        forward_reference: Any | None = None,
+        on_state: Callable[
+            [int, np.ndarray, np.ndarray, np.ndarray, Mapping[str, Any]], None
+        ] | None = None,
+    ) -> dict[str, Any]:
+        """Apply up to three same-LU corrections from an independent volume residual.
+
+        The trace and port amplitudes remain fixed because the correction only
+        updates cell-interior storage rows.  The volume callback must be
+        independent of the P6 carrier action; it is called once per captured
+        state, never as a full saved-carrier sweep.  ``forward_reference`` is
+        used only to record the existing forward gate, never to control the
+        correction.  Stagnation is measured on cell-interior residuals, the
+        rows changed by the same-LU correction; the full residual remains a
+        separate recorded witness.
+        """
+        if self._destroyed:
+            raise RuntimeError("p6 cell-condensed action has been destroyed")
+        if self.condensed.comm.Get_size() != 1:
+            raise NotImplementedError("native volume recovery refinement is MPI1-only")
+        if (
+            isinstance(max_steps, bool)
+            or not isinstance(max_steps, (int, np.integer))
+            or int(max_steps) < 0
+            or int(max_steps) > _P6_NATIVE_VOLUME_RECOVERY_MAX_STEPS
+        ):
+            raise ValueError("native volume recovery refinement must be bounded to 0..3 steps")
+        current = np.array(
+            self._full_array(storage, "native volume recovery storage"),
+            dtype=np.complex128,
+            copy=True,
+        )
+        reference_rhs = np.asarray(
+            self._full_array(native_volume_rhs, "native volume recovery RHS"),
+            dtype=np.complex128,
+        )
+        reference = (
+            None
+            if forward_reference is None
+            else np.asarray(
+                self._full_array(forward_reference, "native volume forward reference"),
+                dtype=np.complex128,
+            )
+        )
+        if not np.isfinite(reference_rhs).all() or (
+            reference is not None and not np.isfinite(reference).all()
+        ):
+            raise FloatingPointError("native volume recovery reference contains non-finite values")
+        if (initial_volume_action is None) != (initial_residual is None):
+            raise ValueError("initial native volume action and residual must be supplied together")
+
+        volume_action = (
+            np.array(
+                self._full_array(initial_volume_action, "initial native volume action"),
+                dtype=np.complex128,
+                copy=True,
+            )
+            if initial_volume_action is not None
+            else np.array(
+                self._full_array(native_volume_apply(current), "native volume action"),
+                dtype=np.complex128,
+                copy=True,
+            )
+        )
+        residual = (
+            np.array(
+                self._full_array(initial_residual, "initial native volume residual"),
+                dtype=np.complex128,
+                copy=True,
+            )
+            if initial_residual is not None
+            else reference_rhs - volume_action
+        )
+        rhs_norm = float(np.linalg.norm(reference_rhs))
+        forward_norm = (
+            float(np.linalg.norm(reference)) if reference is not None else None
+        )
+        records: list[dict[str, Any]] = []
+
+        def internal_residual_facts(
+            residual_values: np.ndarray,
+        ) -> tuple[float, float, float]:
+            residual_squared = 0.0
+            rhs_squared = 0.0
+            for cell in self._cells:
+                rows = np.asarray(cell.original_interiors, dtype=np.int64)
+                if rows.size:
+                    residual_part = residual_values[rows]
+                    rhs_part = reference_rhs[rows]
+                    residual_squared += float(np.vdot(residual_part, residual_part).real)
+                    rhs_squared += float(np.vdot(rhs_part, rhs_part).real)
+            internal_norm = float(np.sqrt(max(0.0, residual_squared)))
+            internal_scale = float(np.sqrt(max(0.0, rhs_squared)))
+            return (
+                internal_norm,
+                internal_scale,
+                _operation_relative(internal_norm, internal_scale),
+            )
+
+        def capture(step: int) -> dict[str, Any]:
+            residual_norm = float(np.linalg.norm(residual))
+            residual_relative = _operation_relative(residual_norm, rhs_norm)
+            internal_norm, internal_scale, internal_relative = internal_residual_facts(
+                residual
+            )
+            forward_absolute = (
+                float(np.linalg.norm(current - reference))
+                if reference is not None
+                else None
+            )
+            forward_relative = (
+                _operation_relative(forward_absolute, forward_norm)
+                if forward_absolute is not None and forward_norm is not None
+                else None
+            )
+            record: dict[str, Any] = {
+                "step": int(step),
+                "status": "CAPTURED",
+                "absolute_error": forward_absolute,
+                "reference_norm": forward_norm,
+                "forward_relative_error": forward_relative,
+                "native_volume_residual_norm": residual_norm,
+                "native_volume_residual_scale": rhs_norm,
+                "native_volume_residual_relative": residual_relative,
+                "native_internal_residual_norm": internal_norm,
+                "native_internal_residual_scale": internal_scale,
+                "native_internal_residual_relative": internal_relative,
+            }
+            records.append(record)
+            if on_state is not None:
+                on_state(step, current, volume_action, residual, record)
+            return record
+
+        record = capture(0)
+        corrections = 0
+        for step in range(1, int(max_steps) + 1):
+            current_internal = float(record["native_internal_residual_relative"])
+            if not np.isfinite(current_internal) or current_internal == 0.0:
+                break
+            current = self.correct_internal_storage(current, residual)
+            volume_action = np.array(
+                self._full_array(
+                    native_volume_apply(current),
+                    "native volume action after same-LU correction",
+                ),
+                dtype=np.complex128,
+                copy=True,
+            )
+            residual = reference_rhs - volume_action
+            next_record = capture(step)
+            corrections += 1
+            next_internal = float(next_record["native_internal_residual_relative"])
+            if not np.isfinite(next_internal) or next_internal >= current_internal:
+                break
+            record = next_record
+        return {
+            "storage_solution": current,
+            "native_volume_action": volume_action,
+            "native_volume_residual": residual,
+            "native_volume_residual_relative": _operation_relative(
+                np.linalg.norm(residual), rhs_norm
+            ),
+            "native_internal_residual_relative": records[-1][
+                "native_internal_residual_relative"
+            ],
+            "forward_relative_error": (
+                records[-1]["forward_relative_error"] if records else None
+            ),
+            "records": records,
+            "same_lu_refinement_steps": corrections,
+            "maximum_steps": int(max_steps),
+        }
+
     def evaluate_native_residual(
         self,
         reduced_solution: Any,
@@ -3181,6 +3364,8 @@ class P6CellCondensedAction:
         port_rhs: Any | None = None,
         rhs_is_mpc_dual: bool = True,
         reduced_residual: Any | None = None,
+        native_volume_apply: Callable[[np.ndarray], Any] | None = None,
+        recovery_refinement_max_steps: int = 0,
     ) -> dict[str, Any]:
         """Evaluate native and augmented residuals from one reduced iterate.
 
@@ -3194,6 +3379,15 @@ class P6CellCondensedAction:
 
         if self.condensed.comm.Get_size() != 1:
             raise NotImplementedError("native residual evaluation currently exposes a global NumPy API only for MPI1")
+        if (
+            isinstance(recovery_refinement_max_steps, bool)
+            or not isinstance(recovery_refinement_max_steps, (int, np.integer))
+            or int(recovery_refinement_max_steps) < 0
+            or int(recovery_refinement_max_steps) > 3
+        ):
+            raise ValueError("native recovery refinement must be an integer in [0, 3]")
+        if recovery_refinement_max_steps and native_volume_apply is None:
+            raise ValueError("native volume recovery refinement requires an independent volume action")
         solution = self._check_reduced_array(reduced_solution, "reduced solution")
         rhs = self._full_array(full_rhs, "full p6 RHS")
         ports_rhs = (
@@ -3202,11 +3396,23 @@ class P6CellCondensedAction:
             else _complex_vector(port_rhs, "port RHS", size=self.condensed.appended_rows)
         )
         field = self.recover_storage(solution, full_rhs=rhs, expand_trace=False)
-        native_output = native_apply(field)
-        native_output = self._full_array(native_output, "native A6 output")
+        native_volume_refinement = None
+        if native_volume_apply is not None:
+            native_volume_refinement = self.refine_internal_storage_with_native_volume_residual(
+                field,
+                rhs,
+                native_volume_apply,
+                max_steps=int(recovery_refinement_max_steps),
+            )
+            field = native_volume_refinement["storage_solution"]
         alpha = solution[self.condensed.active_rows :]
         hp_inverse_port_rhs = self.original_hp_solve(ports_rhs)
         native_effective_rhs = rhs - self.apply_B_full(hp_inverse_port_rhs)
+        native_output = np.array(
+            self._full_array(native_apply(field), "native A6 output"),
+            dtype=np.complex128,
+            copy=True,
+        )
         native_residual = native_effective_rhs - native_output
         port_action = self.apply_D_full(field)
         augmented_port_residual = ports_rhs + port_action - self._apply_original_h(alpha)
@@ -3332,6 +3538,28 @@ class P6CellCondensedAction:
             "hp_inverse_Dx": hp_inverse_Dx,
             "retained_alpha": alpha.copy(),
             "native_residual_relative": _operation_relative(np.linalg.norm(native_residual), native_scale),
+            "native_volume_residual_relative": (
+                None
+                if native_volume_refinement is None
+                else native_volume_refinement["native_volume_residual_relative"]
+            ),
+            "native_volume_refinement_records": (
+                []
+                if native_volume_refinement is None
+                else native_volume_refinement["records"]
+            ),
+            "native_volume_refinement_steps": (
+                0
+                if native_volume_refinement is None
+                else native_volume_refinement["same_lu_refinement_steps"]
+            ),
+            "native_internal_volume_residual_relative": (
+                None
+                if native_volume_refinement is None
+                else native_volume_refinement[
+                    "native_internal_residual_relative"
+                ]
+            ),
             "port_residual_relative": _operation_relative(np.linalg.norm(augmented_port_residual), port_scale),
             "internal_residual_relative": _operation_relative(
                 np.linalg.norm(internal_residual), internal_operation_scale

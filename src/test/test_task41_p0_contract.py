@@ -369,10 +369,15 @@ def test_task41_launcher_and_service_pass_real_window_resources_and_checker_auth
     specification = load_and_resolve(input_path)
     payload_errors = task41_payload_errors(specification.as_jsonable())
     assert not payload_errors
-    runtime_prefix = Path(sys.prefix).resolve()
-    assert (runtime_prefix / "bin/python").resolve() == Path(sys.executable).resolve()
+    qualified_interpreter = Path(sys.executable).resolve()
+    runtime_prefix = fixture_root / "runtime_prefix"
+    qualified_python = runtime_prefix / "bin/python"
+    qualified_python.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(qualified_interpreter, qualified_python)
+    monkeypatch.setattr(sys, "executable", str(qualified_python))
+    assert qualified_python.resolve() == Path(sys.executable).resolve()
     abi_receipt = fixture_root / "abi_receipt.json"
-    abi_receipt.parent.mkdir(parents=True)
+    abi_receipt.parent.mkdir(parents=True, exist_ok=True)
     abi_receipt.write_text('{"fixture":"qualified native receipt shape"}\n', encoding="utf-8")
     jit_cache = tmp_path / "jit-cache"
     jit_cache.mkdir()
