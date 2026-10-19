@@ -17,13 +17,13 @@
 | GNU time wall记录值之和 | 15.62 s | 2.43+11.72+1.47秒，基于各receipt已显示的0.01秒精度 |
 | preflight未启动测试 | 0 s pytest费用 | 082736Z仅本地preflight拒绝 |
 | ABI检查 | 不另计pytest wall | 不属于pytest parent |
-| Full3D/QEP/direct-factor/PDE | 未运行 | 不存在Task42数值求解费用或solver资格 |
+| A0阶段Full3D/QEP/direct-factor/PDE | 当时未运行 | 后续正式A1已于2026-10-19运行；见本文件末尾。当前外层资源拒绝，不将worker数值summary等同整场通过 |
 
-没有改写Task041 V5或旧账目。早期失败收据保留，不把A0的“12 passed”扩展为Full3D或正式资源资格通过。A1小型资源/direct合同已接线；正式PDE相关项仍为`not_run`。
+没有改写Task041 V5或旧账目。早期失败收据保留；A0的“12 passed”和A1小型合同回归均不代表正式资源资格或完整PDE通过。正式A1实际运行另列于本文件末尾。
 
 ## A1小型资源与direct lifecycle合同回归
 
-A1回归验证资源入口/阶段Delta、C bridge INFOG(17) producer→consumer、同一MUMPS factor的symbolic/numeric/MatSolve/packet/destroy、真实packet writer成功与本地写失败传播、恢复gather驻留口径，以及显式ICNTL(14)兼容控制。它没有运行13.5 nm assembly、完整QEP、正式MPI8 PDE或official物理输出。
+A1回归验证资源入口/阶段Delta、C bridge INFOG(17) producer→consumer、同一MUMPS factor的symbolic/numeric/MatSolve/packet/destroy、真实packet writer成功与本地写失败传播、恢复gather驻留口径，以及显式ICNTL(14)兼容控制。这批回归本身没有运行13.5 nm assembly、完整QEP、正式MPI8 PDE或official物理输出；后续正式A1结果单列于本文件末尾。
 
 | Attempt | 覆盖与结果 | parent wall | 状态/说明 |
 |---|---|---:|---|
@@ -42,4 +42,18 @@ A1回归验证资源入口/阶段Delta、C bridge INFOG(17) producer→consumer�
 
 17个pytest已启动且有parent monotonic wall的attempt合计`32.796723016 s`，不按rank数倍增。资源fixture三次运行的parent wall未测，单列`not_measured`；其pytest-reported 0.56/0.36/0.41 s不作为费用。native ABI/ABI preflight不计pytest费用。共享basetemp父目录缺失的MPI2 wrapper虽有1.303494641 s parent wall，但pytest未启动，不计pytest费用。所有失败输出与attempt目录保留于ignored `results/task42hybrid_az90_50x50_17x20_0p7nm/`。
 
-当前Task42 source manifest、direct bridge与资源合同字段见[A1机器记录](a1_contract_validation.json)。A1只证明小型真实接口/生命周期合同；正式13.5 nm Full3D PDE、正式8-rank affinity/scope、最终R/T/A和衍射结果仍为`not_run`。
+当前Task42 source manifest、direct bridge与资源合同字段见[A1机器记录](a1_contract_validation.json)。A1小型合同只证明接口/生命周期；后续正式13.5 nm运行的数值与资源终态见本文件末尾及[只读审计](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a1_terminal_offline_audit_20261019T064123Z/offline_terminal_audit.json)。
+
+
+## 2026-10-19正式A1：非pytest运行与终态
+
+本次只读closeout没有启动pytest、ABI或数值内核；所以新增pytest费用为0。正式MPI8公共入口run是此前单独授权的数值运行，不应写成测试pass：worker写出完整残差`9.306460504345312e-11`、DtN端口R/T/A与体吸收闭合差`1.2090530798758437e-9`，并落盘PVD/8个VTU、reference field samples与pre-recovery packet。外层RUN因最后runtime样本无法读取8个仍为R的rank之VmRSS/VmSwap而fail-closed拒绝，whole-job J未知；不是已证实超过256 GiB，也不是数值求解失败。诊断probe功率与端口R/T明显不同，且top E/H fit residual=`0.9980693005722018`，详见[response_v1](../response_v1.md)。
+
+| 项目 | 状态 | 口径/证据 |
+|---|---|---|
+| RUN / public / service | RUN exit1；public rc3；service ExecMainStatus3；Invocation `048a5d671150436f9c05cd1bfb5a9d29` | 三层状态分别记录，进程组TERM后退出，SIGKILL未使用 |
+| 最后完整资源样本 | elapsed `312.8408444840461 s`通过；`313.3017449709587 s`拒绝 | 8个worker相同PID/start_ticks复读仍缺VmRSS/VmSwap、状态R；whole-job J unknown，cgroup current不可替代完整树 |
+| 唯一正式费用 | parent wall `313.734830358 s` | 单次记入Task42 non-pytest parent费用，不按8 ranks乘、不把阶段采样再相加 |
+| 本次closeout检查 | offline JSON/VTK与源码定位；无pytest | 不追加pytest ledger wall |
+
+正式A1历史按范围分列：`20261016T121844.178539Z`原场已发生factor/solve；`20261019T034149.351129Z`必要重建因authority unknown未进入factor/solve，parent wall为`not_measured`；最近一次`20261019T062050.882932Z`已发生factor/solve并写出数值输出，唯一parent wall为`313.734830358 s`。旧packet恢复`20261018T115039.812072Z`另属恢复attempt，没有新增factor/solve；CPU候选、ABI和public prelaunch gate不算PDE，缺失费用不推算。原RUN/raw均保留。额外A1额度已用完，本阶段不授权再跑A1；A2与0.7 nm仍按task前置资格及内部审核推进，目前未启动、未获本阶段放行。下一步是sampler错误分类最小修正与存档探针差异定位，不申请A1重算。逐文件hash、packet和canonical shard检查、168外通道键集合/顺序、R00与诊断定义见[审计收据](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a1_terminal_offline_audit_20261019T064123Z/offline_terminal_audit.json)。
