@@ -13,7 +13,7 @@
 | 后续主线 | 前述必要门通过后直接0.7 nm，不要求5/2 nm中间梯级 |
 | Codex项目 | **原项目显示名、根目录、环境和账户不变**；在原项目内安全切换Git分支 |
 | 输出 | 本目录`response_v1.md`与`outcomes/`，大工件用独立ignored结果根 |
-| 当前状态 | A0完成；A1已产生13.5 nm数值worker输出与场文件，但终态整作业资源authority不完整而拒绝，不能称整场通过；A2共享合同serial/MPI2通过，阶段预算仍待sizing，当前不可启动，也未运行QEP/FE/factor/solve |
+| 当前状态 | A0完成；A1已产生13.5 nm数值worker输出与场文件，但终态整作业资源authority不完整而拒绝，不能称整场通过；A2共享合同serial/MPI2通过，MPI8小型网格和p6截面空间/collapse sizing已完成，但MPC、QEP及后续阶段预算仍待sizing，当前不可启动，未运行QEP/因子/求解 |
 
 Task041历史仍保留在继承目录；其旧模型结果、预算、失败和Review V19四次B诊断不被更名或改写。本任务从新的物理参考开始，不以解决旧物理全部待办作为前置，也不将旧失败视为自动解决。
 
@@ -39,6 +39,6 @@ Task42分阶段准入使用整作业`J=max(launcher进程树RSS,可证明适用�
 
 Task42独立A2输入使用用户指定的13.5 nm Si、p6/h10/M120，传播模型为`full3d_uniform_cg`，traction为`full3d_one_cell_exact_schur`。公共路由和共享输出/分级资源合同已有小型serial与MPI2合同覆盖；这只验证调用、身份、拒绝时序与collective写入行为，不是有限元、QEP或A2数值资格。
 
-A2仍不可启动：每阶段`Delta`都为`pending-sizing`，没有绑定实际网格、每rank/每side DoF与NNZ、QEP工作区、恢复缓存及MUMPS填充的完整预算清单。dat原字节SHA和不含预算引用字段的规范化预算basis是两个不同身份，不能互相冒充。PETSc `KSP.setUp()`把MUMPS分析和因子分解放在同一阶段门内，目前没有真实分离的symbolic/numeric gate。2026-10-19的P1小型公式回归已修正Hybrid外通道行级`R/T`门控：它现在与端口总功率一样使用正向功率判据，保留`propagating`标签和原行schema；这只是报告合同修复，不是A2物理资格。首个mesh-only阶段已有静态候选预算，未建mesh；预算是预测值并待内部审核，完整A2预算仍待后续分阶段实测。详见[Task42当前回应](response_v1.md)、[结果摘要](outcomes/summary.md)和[测试/费用摘要](outcomes/test_summary.md)。
+A2仍不可启动：2026-10-19已实测小型MPI8截面网格和p6 N1curl×Lagrange空间/collapse，但该2 GiB Delta只绑定本次`qep_mixed_space`阶段，既非实测峰也不可挪给MPC、QEP、凝聚、MUMPS或恢复。完整profile仍缺这些后续阶段的每rank/每side DoF、NNZ、QEP工作区、恢复缓存及MUMPS填充预算。dat原字节SHA和不含预算引用字段的规范化预算basis是不同身份。PETSc `KSP.setUp()`把MUMPS分析和因子分解放在同一阶段门内。2026-10-19的P1小型公式回归已修正Hybrid外通道行级`R/T`门控，保留`propagating`标签和原行schema；这只是报告合同修复，不是A2物理资格。mesh/space实测、完整停点和下一阶段边界见[space-only收口](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md)。详见[Task42当前回应](response_v1.md)、[结果摘要](outcomes/summary.md)和[测试/费用摘要](outcomes/test_summary.md)。
 
 通俗地说，Hybrid把中间区域的场用截面模式表示，两侧区域仍由有限元网格求解；这样可减少中间长结构的三维自由度，但会增加模式耦合和恢复数据。阶段预算要求在每次大分配前先估算该步新增内存；目前的小测试只验证接口和拒绝传播，不证明A2物理解正确，也不证明实际容量足够。

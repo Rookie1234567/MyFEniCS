@@ -85,7 +85,7 @@ A1回归验证资源入口/阶段Delta、C bridge INFOG(17) producer→consumer�
 - [post-ABI fresh gate](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_mpi2_20261019T092648Z/post_abi_fresh_gate.json)
 - 最终serial stdout和parent receipt位于`results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_serial_final2_20261019T092443Z/`。
 
-这批结果只证明公共合同、预算绑定、root writer/错误传播和分配前拒绝；不证明实际A2网格、QEP、局部凝聚、MUMPS填充或物理结果。A2所有阶段Delta仍`pending-sizing`并保持不可运行。详细资格边界与下一步对象清单见[response_v1](../response_v1.md)。
+该合同批次当时只证明公共合同、预算绑定、root writer/错误传播和分配前拒绝；没有证明实际A2网格、QEP、局部凝聚、MUMPS填充或物理结果。之后单独的mesh与p6空间 sizing见本摘要末尾；其余A2阶段Delta仍`pending-sizing`，profile保持不可运行。详细资格边界见[response_v1](../response_v1.md)。
 
 A2费用仅沿Task42各parent receipt记账，未更改Task041 V5、历史raw或既有账目。所有旧失败attempt均保留；ABI parent独立于pytest parent，未启动pytest的脚手架拒绝不收费。
 
@@ -104,3 +104,9 @@ A2费用仅沿Task42各parent receipt记账，未更改Task041 V5、历史raw或
 | [`a2_p1_port_power_row_fix_retry2_20261019T101228Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_row_fix_retry2_20261019T101228Z/serial/) | 通过 | 3.038582487 s | 最终source；rc0，owned进程组空，完整逐行/总量对照见`row_power_fix_comparison.json` |
 
 共5个实际启动的pytest parent，wall总和`12.314066767 s`；不以pytest显示时长代替parent wall，不按MPI rank计倍数。两次pytest未启动attempt费用为0。修复后，lossy Si底部s/p行T分别为`0.25778898368788117`和`0.07047896142319664`，与端口贡献及总T=`0.3282679451110778`一致；lossless evanescent以及n=1.2 synthetic s/p控制也符合相同公式判据。n=1.2控制因输入幅度任意而T>1，不是物理能量通过。修复仅调整行级R/T功率纳入判据；不重写旧A1值、历史诊断或P1预修复失败。
+
+## A2 mesh与p6空间 sizing（非pytest，2026-10-19）
+
+Attempt [`a2_space_only_mpi8_attempt_20261019T124500Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md) 通过fresh动态CPU/资源、MPI8 ABI和service gate，调用生产二维mesh路径、p6 mixed-space builder及两次collapse。36 quad截面实测owned/ghost布局、Basix实体DoF、全局DoF和每rank 8份NPZ索引见机器收口；ghost总量是rank重复存储，不是唯一全局实体。阶段停在空间/collapse后，没有MPC、QEP、FE解、矩阵、factor或solve，故不属于A2数值资格。
+
+此处不是pytest尝试：pytest selector数=`not_run`，也未增加测试账目。Task42独立parent费用为`18.534567955 s`，覆盖candidate至service终态和owned cleanup；嵌套service-client包络`2.62739977 s`已包含，不另计、不按8 ranks相乘。费用条目见[独立fee append](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_fee_append.json)。[65项SUMS](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/SHA256SUMS.space_only.txt)和[SELFSEAL](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/SELFSEAL.space_only.json)逐项绑定原始收据及8个rank NPZ。此前mesh-only attempt及其rc6/cleanup_pending原件不改写，本次有独立parent费用和cleanup receipt。

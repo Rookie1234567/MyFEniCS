@@ -3144,7 +3144,7 @@ Task041留下的是不同几何和材料身份的历史结果，不能直接代�
 
 本阶段分类为`passed_with_qualifications`，不改变ordinary default。完整测试/费用口径见[Task42 test summary](task42hybrid_az90_50x50_17x20_0p7nm/outcomes/test_summary.md)，阶段边界及A1计划见[Task42 response v1](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。下一步是在现有Task038 worker与Full3D direct adapter上增加Task42显式资源和软时间策略，保留MUMPS direct身份、原A残差/恢复快照及完整输出；只有这些门接入并审核后才进入13.5 nm直接场。
 
-## 2026-10-19：Task42 A1终态更新与A2 Hybrid-direct静态接线
+## 2026-10-19：Task42 A1终态、A2 Hybrid-direct接线与space sizing
 
 本条更新A0历史段之后的当前状态；A0当时的`not_run`仍是当时事实，不被改写。A1最近一次正式计算为13.5 nm用户指定Si、p6/h10、50×50 nm周期、17×20 nm光栅、MPI8。数值worker保存了full original-equation residual `9.306460504345312e-11`、端口R/T/A与`A_volume`闭合差`1.2090530798758437e-9`、复E/H场和完整168个外通道记录；但最后整作业资源样本中8个仍为R状态的rank缺`VmRSS`/`VmSwap`，同身份复读仍缺字段，导致whole-job J unknown并触发fail-closed拒绝。它不是已证实超256 GiB，也不能把worker `official_result=true`提升为整场通过。详细终态、探针与端口差异、费用和历史attempt顺序见[Task42 Response V1](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。A1额外额度已用完，本轮A2没有启动。
 
@@ -3154,12 +3154,18 @@ Task041留下的是不同几何和材料身份的历史结果，不能直接代�
 
 Task42 worker向共享内核传一个显式阶段准入回调；共享内核在以下对象创建或操作前触发对应gate：QEP网格/空间/MPC及全、约化稀疏算子；正负QEP及左右模态向量/基；bottom/top局部凝聚和DtN扩展；单元traction、投影/传播与coupling块；分布式增广矩阵/RHS；direct factor setup、solve；两侧恢复；场采样/gather、全外通道功率、canonical导出和最终写入。Task42缺回调或身份不一致会在操作前拒绝；resource authority未知也保持拒绝。assembly-time condensation还在实际局部网格、元素维度和PETSc预分配后、trace/raw tensor/Schur recovery缓存分配前报告源推导的对象尺寸。
 
-**所有A2 Delta仍为`pending-sizing`，不是零。** 必须从实际mesh/DoF/NNZ、owner分布、QEP工作区/保留向量、每侧Schur recovery对象、MUMPS fill/INFOG和重叠生命周期中形成绑定当前source/input/material/MPI的阶段预算；当前新输入没有该budget manifest，因此Task038 launcher在创建worker前拒绝，不可运行。MUMPS direct当前由PETSc `KSP.setUp()`合并analysis与factorization，现有接口只提供一个覆盖两者的`direct_mumps_factor_setup` gate，未声称有symbolic/numeric两个独立回调。Task42资源合同仍为C=min(256 GiB,Cmax)、R=384 GiB、W=max(8 GiB,5%C)，沿用全作业/有限祖先authority；不恢复Task041的80 GiB门。
+**A2仍不可运行，但mesh与p6空间/collapse两个取数阶段已实测。** mesh阶段的Delta为`134,479,872 B`预测包络；mixed-space/collapse阶段用独立`2,147,483,648 B`预测Delta通过准入并记录实际DoF/ownership/collapse maps。后者不是实测峰或硬上界，也不能挪给MPC/QEP。仍须从实际约束、矩阵NNZ、QEP保留向量/工作区、每侧Schur/recovery对象、MUMPS fill/INFOG和重叠生命周期形成绑定source/input/material/MPI的后续预算。PETSc `KSP.setUp()`仍合并analysis与factorization，目前只有一个`direct_mumps_factor_setup`组合gate。Task42资源合同继续C=min(256 GiB,Cmax)、R=384 GiB、W=max(8 GiB,5%C)，并使用全作业/有限祖先authority；不恢复Task041的80 GiB门。
 
 新增合同测试`src/test/test_task42_hybrid_a2_static_contract.py`已通过最终native serial 32 passed/2 skipped及指定MPI2回归（rank 0/1各4 passed）。serial的两个MPI-only skip已由MPI2实际覆盖。测试证明profile/路由/输出身份、Task039兼容、hash-bound rank/side预算basis、root-only writer/集体拒绝和多处分配前拒绝合同；不运行真实mesh/QEP/FE/factor/solve。合同实现提交为`44f671cefd9a3130897bfc898ba21cde8528fbe4`，之后P1行级功率修正提交为`6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`；费用和失败保留见[Task42 test summary](task42hybrid_az90_50x50_17x20_0p7nm/outcomes/test_summary.md)。
 
 P1已用单selector小型公式回归修正Hybrid外通道行级R/T的正向功率判据：有损Si底部s/p两行的T之和与DtN端口相同，为`0.3282679451110778`；保留原`propagating`标签和行schema。n=1.2 synthetic幅度控制T>1，不是物理能量通过。修复没有重跑或改写A1结果，也没有建立A2物理资格。消费者审计未发现旧Task039/Task42消费者依赖旧筛选推导R/T。准确attempt及5个实际parent wall合计`12.314066767 s`见测试摘要。
 
-A2预算仍`pending-sizing`，但已有一份可审核的首阶段mesh-only静态候选：目标截面x/y各6段、36个quad、49个坐标点、84条边；MPI8输入分配4/5交替。源可枚举payload暂按32 KiB/rank，另加16 MiB/rank未校准原生库/partition/allocator津贴，合计预测Delta=`134,479,872 B`（128.25 MiB）。C=256 GiB场景下W=12.8 GiB、R+Delta+W约396.925244 GiB；这不是实测峰或硬上界，候选待内部审核，尚未建mesh。若获阶段授权，mesh-only仅连接拓扑、保存rank owned/ghost和几何信息并释放，停在DG0 epsilon空间、p6 mixed space、MPC、QEP、traction和factor之前。后续再按真实DoF/NNZ建立space、QEP和两侧凝聚/traction预算；MUMPS `KSP.setUp()`仍是analysis/factor合并阶段，可信fill/workspace范围缺失就拒绝。源码出处、生命周期与假设见[Task42 response](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。
+A2 mesh-only初始静态预测为x/y各6段、36个quad、49个顶点、84条边，输入cell按4/5分配，Delta=`134,479,872 B`（128.25 MiB，含未校准库津贴）；随后实际mesh阶段已按新rank map测得owned/ghost。下一次space-only使用另一个`2,147,483,648 B`阶段包络，实测全局p6 N1curl/Lagrange/mixed DoF为2664/1369/4033并保存8 rank的index/collapse arrays。两项预算只各自覆盖对应小阶段，不是连续RSS峰或后续阶段容量上界。MPI8真实J、MemAvailable、NPZ布局、费用及停止边界见下方收口与[Task42 response](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。
 
 A1的source-port独立一致性、trace alias映射和canonical norm资格仍缺证据；正式A1终态仍为worker数值输出存在但whole-job资源authority unknown/fail-closed拒绝，不能改写为整场通过。
+
+### A2 MPI8 mesh与p6 space/collapse实测（sizing only）
+
+本次source HEAD为`7e0529424199f63145e69fcc6064f26f571333c4`，input SHA `42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`，用户Si材料SHA `19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65`。正式default graph partitioner/shared-facet下owned全局mesh实体为36 cells/49 vertices/84 edges；跨rank ghost合计50/106/149只是重复存储。Basix 0.10.0 p6 N1curl实际entity DoF 0/6/60、全局2664；Lagrange为1/5/25、全局1369；mixed 4033。每rank owned/ghost ranges、local-to-global/collapse maps及数组内容均在8个NPZ和closeout记录中。离线由本次maps/entity_dofs枚举出Hcurl每侧36、H1每侧37边界DoF，周期slave候选72+73=145；MPC未构造，配对相位/符号仍未知。
+
+沿用Task42 C=`274,877,906,944 B`、R=`412,316,860,416 B`、W=`13,743,895,348 B`。space gate前J=`920,141,824 B`、Delta=`2,147,483,648 B`、MemAvailable=`1,589,799,108,608 B`且gate通过；分配后、释放前J=`928,604,160 B`，相对分配前增加`8,462,336 B`；释放后J=`931,389,440 B`，相对分配前增加`11,247,616 B`。三者是独立端点快照，不是连续峰；最大rank HWM=`116,457,472 B`。mesh前J=`880,795,648 B`、Delta=`134,479,872 B`、MemAvailable=`1,589,807,603,712 B`。space 2 GiB按8×`260,046,848 B` rank envelope加`67,108,864 B`控制余量，rank envelope内有64 MiB/rank未校准原生库/allocator津贴及1 MiB写缓冲；该预测仅覆盖本次space/collapse阶段。candidate→service终态/owned清场唯一parent wall=`18.534567955 s`；嵌套service wall=`2.62739977 s`包含于此，未另计。service Invocation `a176061c21da44dcb19322f47ef0953c` rc0，cleanup verified。完整收据、65项SHA清单与selfseal见[space-only closeout](../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md)。没有pytest、MPC、QEP、traction、矩阵、factor或solve；A2仍未数值资格化。下一步只可在独立逐rank预算获审后进入MPC sizing，不能复用本次2 GiB。

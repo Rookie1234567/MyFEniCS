@@ -134,7 +134,7 @@ public completion记录parent wall `313.734830358 s`，作为Task42本次正式a
 
 A2是独立的Task42 Hybrid-direct profile，不借用Task039身份或Task041 packet。模型仍为用户指定13.5 nm Si、50×50 nm周期、17×20 nm光栅、高120 nm、z域−10..130 nm、接口10/110 nm、方位90°、掠入射1°、s偏振、p6/h10/M120、MPI8；传播使用`full3d_uniform_cg`，traction使用`full3d_one_cell_exact_schur`。实现提交为`44f671cefd9a3130897bfc898ba21cde8528fbe4`，parent为`ab1af4f263fc63ee7e6bc04499dc1ee366a7afb4`，包含21个源代码、测试和输入配置路径，不含本回应及其他文档。该合同阶段没有运行mesh、QEP、FE、MUMPS factor、MatSolve或正式A2。
 
-A2输入完整原字节SHA为`42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`。独立预算basis SHA为`80c084655f67587c0616de782cf0a3e2e50cb41ea357bf4e09948cb0e7786332`；它从解析后的dat规范值计算，且仅移除`execution.phase_budget_manifest`与`execution.phase_budget_manifest_sha256`两个预算引用字段。basis不是dat原字节SHA。当前没有完整、绑定源码/输入/材料/MPI及各rank/side sizing数据的phase budget manifest，所有A2阶段`Delta`仍是`pending-sizing`，所以profile保持fail-closed、不可启动。
+A2输入完整原字节SHA为`42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`。独立预算basis SHA为`80c084655f67587c0616de782cf0a3e2e50cb41ea357bf4e09948cb0e7786332`；它从解析后的dat规范值计算，且仅移除`execution.phase_budget_manifest`与`execution.phase_budget_manifest_sha256`两个预算引用字段。basis不是dat原字节SHA。当前还没有涵盖所有阶段、绑定源码/输入/材料/MPI及rank/side sizing的完整phase budget manifest。mesh与mixed-space/collapse已有各自独立阶段测量和预算；MPC、QEP、两侧凝聚/traction、MUMPS与恢复等其余阶段仍为`pending-sizing`，因此profile继续fail-closed、不可启动。
 
 静态调用链已贯通公共`run_case` → execution plan → Task038 launcher/worker → Task42 adapter → 共享Task032 Hybrid direct数值内核。Task42输出按实际`sample_x/y/z`确定数组形状，核验复E/H数组、完整外通道键和q索引映射、来源身份及canonical前缀。写文件由root执行；本地验证或写入拒绝先以一致结果传播，各rank不进入后续writer/求解操作。预算basis按MPI rank及bottom/top side分别精确绑定，不能用全rank共享字符串描述冒充局部实测basis。Task039原schema、shape检查和profile白名单保持原行为。
 
@@ -174,7 +174,7 @@ A2输入完整原字节SHA为`42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f
 
 最终selector为`test_task42_hybrid_rows_and_dtn_ports_report_power_classification_difference`，rc=0，parent monotonic wall=`3.038582487 s`，owned进程组清空；pytest显示时长不另计。最终收据及对照JSON见[`a2_p1_port_power_row_fix_retry2_20261019T101228Z/serial`](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_p1_port_power_row_fix_retry2_20261019T101228Z/serial/)；该合同测试不运行FE/QEP/factor/MatSolve，不构成A2数值资格。该attempt目录当前21项SUMS逐项校验通过；通知前19项与追加通知/pycache后的21项是不同清单版本，旧版本摘要不替代当前清单。P1所有历史失败、未启动尝试和parent费用见[测试/费用摘要](outcomes/test_summary.md)。
 
-## A2 首阶段mesh-only候选预算（静态，未执行）
+## A2 首阶段mesh-only候选预算（执行前预测，历史记录）
 
 本候选只为之后取得真实二维截面cells/ownership提供一个有限的第一步预算；它不是完整A2 manifest或启动授权。身份绑定为当前HEAD `6d9106b7e956d7c5f0b2ca950e19ba4c8ab3a6ed`、A2 dat SHA256 `42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`、用户材料记录SHA256 `19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65`；相关源文件SHA256见本回应的静态预算记录。没有调用mesh/space/QEP构造取数。
 
@@ -192,4 +192,24 @@ A2输入完整原字节SHA为`42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f
 
 预算按单rank同一阶段的保守同时驻留项清点：x/y/z轴规划与短暂数组/元数据暂按4 KiB；49个二维点的Python tuple/list暂存与784 B float64坐标数组约7 KiB；最多5个本地quad的Python cell-list及160 B int64连接数组约2 KiB；cell→vertex、cell→edge、edge→vertex、edge→cell稀疏索引主体按64位索引上算`(181+181+253+229)*8=6,752 B`；索引映射、局部计数与小型receipt暂按8 KiB。已知输入与拓扑payload预算按32 KiB/rank向上取整。另预留16 MiB/rank，覆盖DOLFINx C++ mesh/coordinate/index maps、graph partition、MPI元数据、allocator余量；这是明确的预测性库开销津贴，不是实测值、硬上界或数学保证。预计MPI8全作业新增Delta为`8*(16 MiB+32 KiB)=134,479,872 bytes=128.25 MiB`。构造`points`和`cells`时Python容器与NumPy输入阵列会重叠；`mesh.create_mesh`可能再保留/复制原生对象，之后拓扑连接另分配邻接结构。上述32 KiB源可枚举项与16 MiB未校准库津贴按阶段重叠预算相加；若后续测得实际峰或对象超出预算，必须在门内拒绝并重新审核预算，不能把该预测写作实测。
 
-若C最终为256 GiB，则W=`max(8 GiB,0.05C)=12.8 GiB`，本候选`Delta+W=13,878,375,219 bytes≈12.925244 GiB`，host reserve `R+Delta+W=426,195,235,635 bytes≈396.925244 GiB`；剩余cap空间`C-Delta-W≈243.074756 GiB`。实际准入仍要新鲜核算`C=min(256 GiB,Cmax)`、全作业J、MemAvailable和有限祖先headroom；若Cmax更低则按实际C重新计算，不能复用旧host样本。代码中`build_matching_cross_section`先走`qep_cross_section_mesh` gate，再由`_structured_quad_mesh`分配二维点/局部cell并建mesh、连接facet-to-cell；随后当前实现无条件调用`_cross_section_epsilon`创建DG0 FunctionSpace/Function。因此现有函数不能直接停成mesh-only；下一阶段如获准，需在拓扑连接后、DG0调用前增加一个窄的显式mesh-only停止/返回路径，保存每rank输入cells、owned/ghost entities及几何身份，然后释放mesh。该路径不建DG0/p6 mixed space、MPC、QEP、traction对象，不调用factor/solve。候选MPI规模为8，因目标profile要求真实八rank owned/ghost basis；MPI1只能做形状烟测，不能给目标分布预算。16 MiB/rank库津贴尚未经实际mesh测量，32 KiB/rank源可枚举项也仍是估计；整项Delta属待内部审核的`predicted`，不是实测峰或硬上界，当前A2继续fail-closed、不可启动。
+若C最终为256 GiB，则本候选W=`max(8 GiB,0.05C)=12.8 GiB`；实际运行前仍须新鲜核算C、整作业J、MemAvailable和有限祖先headroom。以上是2026-10-19 mesh-only执行前的预测记录；当时owned/ghost和测量尚未取得。随后实际mesh与p6空间阶段已完成，其实测与独立预算见下方最新小阶段收口；本历史段中的预测未被改写为实测。代码原路径的DG0 epsilon会继续构建材料函数空间，因此此次仅用获准的窄停止路径采集网格，之后另在mesh已驻留的阶段门下调用生产`build_cross_section_spaces`及collapse。该动作未创建DG0/MPC/QEP/traction/增广矩阵/factor/solve。
+
+## A2 MPI8 p6截面空间与collapse sizing（2026-10-19）
+
+本阶段用同一冻结几何和用户Si输入，重新构造36个二维四边形截面网格，然后调用生产N1curl(p6)×Lagrange(p6) mixed-space builder及两次collapse。通俗地说，mixed space把横向切向场和纵向标量场放在同一自由度表中；collapse为两类分量分别生成局部到全局编号，后续周期约束需要这些编号。本阶段只量得这些对象大小和分布，不创建约束或物理算子，也没有解Maxwell方程。
+
+身份为分支`task42hybrid_az90_50x50_17x20_0p7nm`、HEAD `7e0529424199f63145e69fcc6064f26f571333c4`、input SHA `42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`、用户材料记录SHA `19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65`。本次新rank map为`[1,5,2,13,14,8,4,22]`，MPI8 ABI实际affinity与请求逐rank一致；PETSc为complex128/Int32，六类数学线程均为1，内存策略为default，`Mems_allowed_list=0-1`覆盖节点全部内存。正式候选→ABI→service链和源绑定见[本阶段closeout](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md)。
+
+| 观测 | 实测 | 解释与边界 |
+|---|---:|---|
+| 二维mesh | 36个quad、49个owned全局顶点、84条owned全局边 | 使用生产默认graph partitioner与shared-facet ghosts；rank ghost和是50个cell、106个vertex、149条edge的重复存储，不是新的全局实体。z轴仅保存stage4规划点，未建立3D mesh |
+| N1curl p6 | 全局2664个scalar DoF；每cell 84项；entity DoF为0/6/60（vertex/edge/cell） | Basix实际family `N1E`，本次metadata中的coefficient表84×98；非公式外推 |
+| Lagrange p6 | 全局1369个scalar DoF；每cell 49项；entity DoF为1/5/25 | 每个space使用新rank map的local-to-global、owned/ghost和cell DoF数组 |
+| Mixed / collapse | Mixed全局4033；两个collapse map及rank NPZ均保存 | 8份rank NPZ重开后30个numeric arrays/rank均finite、无object dtype，name/shape/dtype/payload及文件SHA与summary相符 |
+| Boundary inventory（离线） | 每侧Hcurl 36个、H1 37个边界DoF；周期slave候选72+73=145 | 由本次网格/实际cell maps/Basix entity DoF重新枚举；只生成候选inventory，没有构造MPC或constraint transform |
+
+资源门沿Task42原合同执行：C=`274,877,906,944 B`（256 GiB）、R=`412,316,860,416 B`（384 GiB）、W=`13,743,895,348 B`。mesh前J=`880,795,648 B`、Delta=`134,479,872 B`，MemAvailable=`1,589,807,603,712 B`，要求值`426,195,235,636 B`；space/collapse前J=`920,141,824 B`、Delta=`2,147,483,648 B`，MemAvailable=`1,589,799,108,608 B`，要求值`428,208,239,412 B`。两阶段门均通过；释放对象后runtime J=`931,389,440 B`且MemAvailable=`1,589,796,442,112 B`，运行门通过。space阶段2 GiB Delta由八个`260,046,848 B` rank envelope（合计`2,080,374,784 B`）加`67,108,864 B`全局service/controller margin组成；每rank envelope中的可枚举项约1.31–1.35 MB，另含64 MiB未校准Basix/DOLFINx/PETSc/原生库与allocator津贴、1 MiB writer缓冲和剩余余量。它是本次小型mixed/collapse阶段的准入预测，不是实测峰或已证明上界，不可转给MPC/QEP/traction/factor。
+
+space-only全作业J有三个独立快照：分配前`920,141,824 B`；分配后、释放前`928,604,160 B`，相对分配前增加`8,462,336 B`；释放后`931,389,440 B`，相对分配前增加`11,247,616 B`。这些是端点采样，不是连续峰；释放前最大rank VmHWM为`116,457,472 B`。候选开始至service终态/owned cleanup的唯一parent wall为`18.534567955 s`，其中systemd-run client到unit终态子包络`2.62739977 s`已包含，不另收费。Invocation `a176061c21da44dcb19322f47ef0953c`，unit `task42-a2-space-only-20261019T124500Z.service`以rc0结束，NRestarts=0；同Invocation live cgroup终态确认后，登记的8个rank及service-main共9个PID/start_ticks均缺席，清场核验通过。该费用独立记在[fee append](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_fee_append.json)，没有计入pytest账目、没有按rank倍增。
+
+下一步MPC初始payload估计仅按145个候选slave关系、每关系两个int64编号和一个complex128系数、146个int64行偏移计算：`145×(8+8+16)+146×8=5,808 B/rank`；若八rank各保留完整映射则46,464 B。这个数只覆盖公式列出的数组主体，假定每个slave恰有一个master；它未包括PETSc/MPC原生对象、通信/ghost映射、Python容器和临时复制，且边界相位/符号配对尚未由实际MPC验证。它不是下一阶段完整Delta；必须在MPC分配前另行绑定并审核预算。现有space objects和mesh已释放。本阶段停在空间及collapse之后：未构造约束/变换、DG0材料空间、QEP/PEP/KSP、traction、耦合或任何矩阵、factor/solve；不构成A2数值资格，A2仍不可进入QEP。
