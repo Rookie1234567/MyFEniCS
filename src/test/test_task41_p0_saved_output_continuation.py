@@ -793,3 +793,248 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
     (run_root / "task40_v10_p6_candidate_summary.json").write_text(json.dumps(worker), encoding="utf-8")
     with pytest.raises(ValueError, match="not the preserved postprocessing-only failure"):
         _validate_original_attempt(run_root, contract, "f" * 64)
+
+
+def test_b0_saved_evidence_audit_uses_supervised_checker_without_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import scripts.task40_v20_service_workflow as service_workflow
+    import src.runners.task41_p0_contract as contract_module
+    import src.runners.task40_v10_campaign as campaign_module
+    import benchmarks.subreaper_watchdog as watchdog_module
+    import benchmarks.task034_wsl_resources as resource_module
+
+    repo_root = tmp_path
+    results_root = repo_root / "results" / contract_module.TASK41_MODEL_ID
+    donor_run = results_root / "donor_run"
+    numerical_output = donor_run / "numerical_output"
+    numerical_output.mkdir(parents=True)
+    (numerical_output / "raw.npy").write_bytes(b"immutable donor evidence")
+    input_path = repo_root / "task41.dat"
+    input_path.write_bytes(b"frozen B0 input\n")
+    donor_config = donor_run / "resolved_config.json"
+    donor_config.write_text('{"resolved": true}\n', encoding="utf-8")
+    donor_summary = donor_run / "task40_v10_p6_candidate_summary.json"
+    donor_summary.write_text('{"status": "FAIL"}\n', encoding="utf-8")
+    donor_run_summary = donor_run / "run_summary.json"
+    donor_run_summary.write_text(
+        '{"run_id": "task41extra_b0_p6_phi90_07nm_iterative"}\n', encoding="utf-8"
+    )
+    donor_manifest = donor_run / "run_manifest.json"
+    donor_manifest.write_text(
+        json.dumps({
+            "output_directory": str(donor_run),
+            "numerical_output_directory": str(numerical_output),
+        }),
+        encoding="utf-8",
+    )
+    consumer_contract_path = repo_root / "consumer_contract.json"
+    donor_contract_path = repo_root / "donor_contract.json"
+    consumer_contract_path.write_text("{}\n", encoding="utf-8")
+    donor_contract_path.write_text("{}\n", encoding="utf-8")
+    runtime_prefix = repo_root / "runtime"
+    fake_python = runtime_prefix / "bin" / "python"
+    fake_python.parent.mkdir(parents=True)
+    fake_python.write_text("fixture interpreter\n", encoding="utf-8")
+    branch = contract_module.TASK41_BRANCH
+    donor_source_sha = "a" * 40
+    consumer_source_sha = "c" * 40
+    consumer_contract_sha = "f" * 64
+    donor_contract_sha = "b" * 64
+    window_sha = "e" * 64
+    abi_sha = "d" * 64
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    config_sha = hashlib.sha256(donor_config.read_bytes()).hexdigest()
+    physical_sha = "9" * 64
+    model_id = contract_module.TASK41_MODEL_ID
+    donor_run_id = contract_module.TASK41_B0_RUN_ID
+    consumer_run_id = contract_module.TASK41_B0_RUN_ID
+    common_case = {
+        "model_id": model_id,
+        "method": "full3d_iterative",
+        "mpi_size": 1,
+        "input_path": str(input_path),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": config_sha,
+    }
+    donor_contract = {
+        "task_id": contract_module.TASK41_MODEL_ID,
+        "branch": branch,
+        "source": {"sha": donor_source_sha},
+        "window": {"path": str(repo_root / "donor_window.json"), "sha256": "1" * 64},
+        "case": {**common_case, "run_id": donor_run_id},
+    }
+    window = FixedCampaignWindow(
+        path=repo_root / "consumer_window.json",
+        sha256=window_sha,
+        payload={"accounting_path": str(repo_root / "window_accounting.jsonl")},
+        anchor={},
+        t0_utc_ns=100,
+        deadline_utc_ns=1_800_000_000_100,
+        total_seconds=1800.0,
+        bootstrap_seconds=0.0,
+        closeout_seconds=600.0,
+    )
+    consumer_contract = {
+        "task_id": contract_module.TASK41_MODEL_ID,
+        "branch": branch,
+        "source": {"sha": consumer_source_sha},
+        "window": {"path": str(window.path), "sha256": window_sha},
+        "case": {**common_case, "run_id": consumer_run_id},
+        "resources": {
+            "task_memory_max_bytes": 1 << 30,
+            "host_reserve_bytes": 1 << 28,
+            "memory_swap_max_bytes": 0,
+        },
+        "runtime": {
+            "runtime_prefix": str(runtime_prefix),
+            "abi_receipt_path": str(repo_root / "abi.json"),
+            "jit_cache": str(repo_root / "jit"),
+            "abi_receipt_sha256": abi_sha,
+        },
+    }
+    donor_contract_path.write_text(json.dumps(donor_contract), encoding="utf-8")
+    consumer_contract_path.write_text(json.dumps(consumer_contract), encoding="utf-8")
+    output_root = results_root / "saved_b0_audit_attempt1"
+    environment = {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": "1",
+        "_MYFENICS_CLOUD_RUNTIME_PROFILE": "native_linux",
+        "_MYFENICS_CLOUD_ABI_MANIFEST_SHA256": abi_sha,
+    }
+    monkeypatch.setenv("TASK41_P0_STRICT_EXECUTION", "1")
+    monkeypatch.setenv("TASK41_P0_CONTRACT_PATH", str(consumer_contract_path.resolve()))
+    monkeypatch.setenv("TASK41_P0_CONTRACT_SHA256", consumer_contract_sha)
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_PATH", str(window.path))
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_SHA256", window_sha)
+    monkeypatch.setenv("TASK41_P0_EXPECTED_SOURCE_SHA", consumer_source_sha)
+    source_artifact_hash = hashlib.sha256((numerical_output / "raw.npy").read_bytes()).hexdigest()
+    calls: list[tuple[list[str], dict[str, object]]] = []
+
+    def fake_supervise(command: list[str], _directory: Path, **kwargs: object) -> dict[str, object]:
+        calls.append((command, kwargs))
+        assert kwargs["campaign_phase"] == "closeout"
+        assert kwargs["campaign_window_sha256"] == window_sha
+        assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
+        assert "run_case.py" not in command
+        result_path = Path(command[command.index("--output") + 1])
+        assert result_path == output_root / "task41_p0_b0_saved_evidence_audit.json"
+        result_path.write_text(json.dumps({
+            "audit_completed": True,
+            "qualification_passed": False,
+            "joint_action_passed": False,
+            "official_result": False,
+        }), encoding="utf-8")
+        authorization = kwargs["campaign_phase_authorization"]
+        assert authorization["checker_kind"] == "task41_p0_b0_saved_evidence_audit_checker"
+        assert authorization["source_sha"] == consumer_source_sha
+        assert donor_contract_path.resolve().as_posix() in authorization["input_paths"]
+        watchdog_module._validate_campaign_closeout_authorization(
+            command=command,
+            campaign=window,
+            authorization=authorization,
+            worker_environment=kwargs["worker_environment"],
+        )
+        return {"classification": "COMPLETED", "leader_exit_code": 0}
+
+    def require_contract(path: Path, **kwargs: object) -> tuple[dict[str, object], str]:
+        if Path(path).resolve() == consumer_contract_path.resolve():
+            assert kwargs["expected_sha256"] == consumer_contract_sha
+            assert kwargs["check_current_source"] is True
+            assert kwargs["require_clean_source"] is True
+            return consumer_contract, consumer_contract_sha
+        assert Path(path).resolve() == donor_contract_path.resolve()
+        assert kwargs["expected_sha256"] == donor_contract_sha
+        assert kwargs["check_current_source"] is False
+        assert kwargs["require_clean_source"] is False
+        return donor_contract, donor_contract_sha
+
+    monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
+    monkeypatch.setattr(contract_module, "load_task41_p0_fixed_window", lambda *_a, **_k: window)
+    monkeypatch.setattr(contract_module, "__file__", str(repo_root / "src/runners/task41_p0_contract.py"))
+    monkeypatch.setattr(
+        contract_module,
+        "sha256_file",
+        lambda path: hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+    )
+
+    class FakeCampaignAccount:
+        def __init__(self, _window: FixedCampaignWindow) -> None:
+            pass
+
+        def record_sample(self, *, label: str, phase: str) -> dict[str, str]:
+            return {"label": label, "phase": phase, "window_sha256": window_sha256}
+
+    window_sha256 = window_sha
+    monkeypatch.setattr(campaign_module, "CampaignAccount", FakeCampaignAccount)
+    monkeypatch.setattr(
+        resource_module,
+        "cgroup_snapshot",
+        lambda _pid: {
+            "dedicated_job_cgroup": True,
+            "readable": True,
+            "memory_limit_bytes": 1 << 30,
+            "swap_current_bytes": 0,
+            "memory_current_bytes": 1 << 20,
+        },
+    )
+    monkeypatch.setattr(watchdog_module, "supervise", fake_supervise)
+    monkeypatch.setattr(service_workflow, "_activation_environment", lambda *_a, **_k: (environment.copy(), ["activate"], 0, ""))
+    monkeypatch.setattr(
+        service_workflow,
+        "_abi_preflight",
+        lambda *_a, **_k: (["python", "preflight"], 0, json.dumps({"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1}), ""),
+    )
+    monkeypatch.setattr(
+        service_workflow.subprocess,
+        "check_output",
+        lambda command, **_k: (branch if command[-1] == "--show-current" else consumer_source_sha) + "\n",
+    )
+
+    def fake_git_run(command: list[str], **_kwargs: object) -> object:
+        if command[1] in {"rev-parse", "branch"}:
+            value = consumer_source_sha + "\n" if command[1] == "rev-parse" else branch + "\n"
+        elif command[1] == "status":
+            value = ""
+        else:
+            raise AssertionError(f"unexpected Git command: {command}")
+        return type("GitResult", (), {"returncode": 0, "stdout": value})()
+
+    monkeypatch.setattr(service_workflow.subprocess, "run", fake_git_run)
+    monkeypatch.setattr(sys, "executable", str(fake_python.resolve()))
+    monkeypatch.chdir(repo_root)
+
+    result = _run_task41_p0_service(
+        unit="task41-b0-saved-audit-test",
+        runtime_prefix=runtime_prefix,
+        abi_receipt=repo_root / "abi.json",
+        jit_cache=repo_root / "jit",
+        case_args=[
+            "--task41-p0-saved-b0-evidence-audit",
+            "--donor-contract", str(donor_contract_path),
+            "--donor-contract-sha256", donor_contract_sha,
+            "--summary", str(donor_summary),
+            "--numerical-output", str(numerical_output),
+            "--output-dir", str(output_root),
+        ],
+        contract_path=consumer_contract_path,
+        repo_root=repo_root,
+    )
+
+    receipt = json.loads((output_root.with_name(output_root.name + ".service") / "task41_p0_service_receipt.json").read_text())
+    assert result == 0, receipt.get("workflow_error")
+    assert len(calls) == 1
+    assert calls[0][1]["campaign_phase"] == "closeout"
+    assert receipt["status"] == "completed"
+    assert receipt["mode"] == "saved_b0_evidence_audit"
+    assert receipt["required_checker_status"] == "audit_completed"
+    assert receipt["producer_source_sha"] == donor_source_sha
+    assert receipt["consumer_source_sha"] == consumer_source_sha
+    assert receipt["donor_source_sha"] == donor_source_sha
+    assert receipt["required_checker_result"]["official_result"] is False
+    assert "continuation_watchdog" not in receipt
+    assert hashlib.sha256((numerical_output / "raw.npy").read_bytes()).hexdigest() == source_artifact_hash

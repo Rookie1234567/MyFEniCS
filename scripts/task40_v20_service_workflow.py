@@ -9405,6 +9405,11 @@ def _run_task41_p0_saved_output_service(
     checker_only: bool,
     checker_snapshot_path: Path | None,
     checker_snapshot_sha256: str | None,
+    b0_evidence_audit_mode: bool = False,
+    donor_contract_path: Path | None = None,
+    donor_contract_sha256: str | None = None,
+    donor_summary_path: Path | None = None,
+    donor_numerical_output: Path | None = None,
     input_path: Path,
     activation_command: Any,
     activation_identity: str,
@@ -9424,7 +9429,9 @@ def _run_task41_p0_saved_output_service(
     output_root = output_root.resolve()
     if not output_root.is_relative_to(results_root) or not run_root.is_relative_to(results_root):
         raise ValueError("saved-output source and destination must remain under the registered model results")
-    if checker_only:
+    if b0_evidence_audit_mode and not checker_only:
+        raise ValueError("saved B0 evidence audit must use the existing checker-only service mode")
+    if checker_only and not b0_evidence_audit_mode:
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
         checker_snapshot_path = checker_snapshot_path.resolve(strict=True)
@@ -9435,6 +9442,23 @@ def _run_task41_p0_saved_output_service(
         ):
             raise ValueError("checker-only snapshot path or hash differs from the registered service input")
         output_root.mkdir(parents=True, exist_ok=False)
+    elif b0_evidence_audit_mode:
+        if (
+            checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+            or donor_contract_path is None
+            or donor_contract_sha256 is None
+            or donor_summary_path is None
+            or donor_numerical_output is None
+        ):
+            raise ValueError("saved B0 audit requires its separately bound donor evidence inputs")
+        if (
+            donor_summary_path.name != "task40_v10_p6_candidate_summary.json"
+            or donor_summary_path.parent != run_root
+            or donor_numerical_output != run_root / "numerical_output"
+        ):
+            raise ValueError("saved B0 audit donor paths differ from the checked producer run")
+        output_root.mkdir(parents=True, exist_ok=False)
     elif checker_snapshot_path is not None or checker_snapshot_sha256 is not None:
         raise ValueError("continuation service cannot accept a checker-only snapshot override")
     service_directory = output_root.with_name(output_root.name + ".service")
@@ -9443,7 +9467,7 @@ def _run_task41_p0_saved_output_service(
     resource = contract["resources"]
     case = contract["case"]
     python = str(runtime_prefix / "bin/python")
-    continuation_command = None if checker_only else [
+    continuation_command = None if (checker_only or b0_evidence_audit_mode) else [
         python,
         "-m",
         "src.runners.task41_p0_saved_output_continuation",
@@ -9458,16 +9482,27 @@ def _run_task41_p0_saved_output_service(
         "--consumer-source-sha",
         consumer_source_sha,
     ]
+    donor_source_sha = None
+    if b0_evidence_audit_mode:
+        assert donor_contract_path is not None
+        donor_contract_payload = json.loads(donor_contract_path.read_text(encoding="utf-8"))
+        donor_source_sha = donor_contract_payload.get("source", {}).get("sha")
     record: dict[str, Any] = {
         "schema": "task41.p0.saved_output_service_receipt.v1",
         "status": "running",
-        "mode": "checker_only" if checker_only else "continuation_and_checker",
+        "mode": (
+            "saved_b0_evidence_audit"
+            if b0_evidence_audit_mode
+            else "checker_only"
+            if checker_only
+            else "continuation_and_checker"
+        ),
         "unit": unit,
         "task_id": contract["task_id"],
         "case_id": case_id,
         "contract_path": str(contract_path.resolve()),
         "contract_sha256": contract_sha,
-        "producer_source_sha": contract["source"]["sha"],
+        "producer_source_sha": donor_source_sha or contract["source"]["sha"],
         "consumer_source_sha": consumer_source_sha,
         "consumer_branch": contract["branch"],
         "window_path": str(window.path),
@@ -9490,10 +9525,19 @@ def _run_task41_p0_saved_output_service(
     }
     if continuation_command is not None:
         record["continuation_command"] = continuation_command
-    if checker_only:
+    if checker_only and not b0_evidence_audit_mode:
         record.update(
             checker_input_snapshot_path=str(checker_snapshot_path),
             checker_input_snapshot_sha256=checker_snapshot_sha256,
+            checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
+        )
+    elif b0_evidence_audit_mode:
+        record.update(
+            donor_contract_path=str(donor_contract_path),
+            donor_contract_sha256=donor_contract_sha256,
+            donor_source_sha=donor_source_sha,
+            donor_summary_path=str(donor_summary_path),
+            donor_numerical_output=str(donor_numerical_output),
             checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
         )
     _write_json_fsync(receipt_path, record)
@@ -9519,9 +9563,13 @@ def _run_task41_p0_saved_output_service(
     }
     result_code = 3
     try:
-        if checker_only:
+        if checker_only or b0_evidence_audit_mode:
             worker_ok = True
-            record["continuation_status"] = "outputs_ready_reused"
+            record["continuation_status"] = (
+                "saved_evidence_audit_only"
+                if b0_evidence_audit_mode
+                else "outputs_ready_reused"
+            )
         else:
             worker_watchdog = supervise(
                 continuation_command,
@@ -9538,46 +9586,108 @@ def _run_task41_p0_saved_output_service(
             )
             record["continuation_status"] = "outputs_ready" if worker_ok else "failed"
         checker_snapshot = (
-            checker_snapshot_path
+            None
+            if b0_evidence_audit_mode
+            else checker_snapshot_path
             if checker_only
             else output_root / "task41_p0_saved_output_checker_input.json"
         )
-        if worker_ok and checker_snapshot.is_file():
-            checker_result_path = output_root / "task41_p0_saved_output_checker_result.json"
-            checker_command = [
-                python,
-                "-m",
-                "src.runners.task41_p0_checker",
-                "--saved-output-continuation-input",
-                str(checker_snapshot),
-                "--contract",
-                str(contract_path.resolve()),
-                "--contract-sha256",
-                contract_sha,
-                "--output",
-                str(checker_result_path),
-            ]
+        if worker_ok and (
+            b0_evidence_audit_mode
+            or (checker_snapshot is not None and checker_snapshot.is_file())
+        ):
+            if b0_evidence_audit_mode:
+                assert donor_contract_path is not None and donor_contract_sha256 is not None
+                assert donor_summary_path is not None and donor_numerical_output is not None
+                checker_result_path = output_root / "task41_p0_b0_saved_evidence_audit.json"
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_checker",
+                    "--saved-b0-evidence-audit",
+                    "--summary",
+                    str(donor_summary_path),
+                    "--numerical-output",
+                    str(donor_numerical_output),
+                    "--contract",
+                    str(donor_contract_path),
+                    "--contract-sha256",
+                    donor_contract_sha256,
+                    "--consumer-contract",
+                    str(contract_path.resolve()),
+                    "--consumer-contract-sha256",
+                    contract_sha,
+                    "--output",
+                    str(checker_result_path),
+                ]
+            else:
+                assert checker_snapshot is not None
+                checker_result_path = output_root / "task41_p0_saved_output_checker_result.json"
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_checker",
+                    "--saved-output-continuation-input",
+                    str(checker_snapshot),
+                    "--contract",
+                    str(contract_path.resolve()),
+                    "--contract-sha256",
+                    contract_sha,
+                    "--output",
+                    str(checker_result_path),
+                ]
             source_branch = subprocess.check_output(
                 ["git", "branch", "--show-current"], cwd=repo_root, text=True
             ).strip()
             checker_source_sha = subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
             ).strip()
-            if checker_only and (
+            if b0_evidence_audit_mode:
+                if (
+                    checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                    or consumer_source_sha != checker_source_sha
+                    or contract["source"]["sha"] != checker_source_sha
+                ):
+                    raise ValueError("saved B0 audit consumer and checker source identities changed")
+            elif checker_only and (
                 checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
                 or consumer_source_sha == checker_source_sha
             ):
                 raise ValueError("checker-only service source identities changed after preflight")
+            if b0_evidence_audit_mode:
+                assert donor_contract_path is not None and donor_summary_path is not None
+                assert donor_numerical_output is not None
+                donor_run_manifest_path = run_root / "run_manifest.json"
+                donor_run_summary_path = run_root / "run_summary.json"
+                donor_input_path = Path(str(contract["case"]["input_path"]))
+                donor_input_path = (
+                    donor_input_path if donor_input_path.is_absolute() else repo_root / donor_input_path
+                ).resolve()
+                donor_config_path = run_root / "resolved_config.json"
+                authorized_inputs = [
+                    donor_contract_path.resolve(),
+                    contract_path.resolve(),
+                    donor_summary_path.resolve(),
+                    donor_run_manifest_path.resolve(),
+                    donor_run_summary_path.resolve(),
+                    donor_input_path,
+                    donor_config_path.resolve(),
+                ]
+                checker_kind = "task41_p0_b0_saved_evidence_audit_checker"
+            else:
+                assert checker_snapshot is not None
+                authorized_inputs = [checker_snapshot.resolve()]
+                checker_kind = "task41_p0_saved_output_continuation_checker"
             checker_authorization = {
                 "schema": "task41.p0.closeout_checker_authorization.v1",
                 "phase": "closeout",
                 "purpose": "registered_read_only_required_checker",
-                "checker_kind": "task41_p0_saved_output_continuation_checker",
+                "checker_kind": checker_kind,
                 "command_sha256": hashlib.sha256(
                     json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
                 ).hexdigest(),
-                "input_paths": [str(checker_snapshot.resolve())],
-                "input_sha256s": [sha256_file(checker_snapshot)],
+                "input_paths": [str(path) for path in authorized_inputs],
+                "input_sha256s": [sha256_file(path) for path in authorized_inputs],
                 "expected_channel_count": None,
                 "campaign_window_sha256": window.sha256,
                 "task41_contract_sha256": contract_sha,
@@ -9603,10 +9713,18 @@ def _run_task41_p0_saved_output_service(
                 checker_watchdog.get("classification") == "COMPLETED"
                 and checker_watchdog.get("leader_exit_code") == 0
                 and isinstance(checker_payload, Mapping)
-                and checker_payload.get("checker_passed") is True
+                and (
+                    checker_payload.get("audit_completed") is True
+                    if b0_evidence_audit_mode
+                    else checker_payload.get("checker_passed") is True
+                )
             )
             record.update(
-                required_checker_status="passed" if checker_ok else "failed",
+                required_checker_status=(
+                    "audit_completed" if checker_ok and b0_evidence_audit_mode
+                    else "passed" if checker_ok
+                    else "failed"
+                ),
                 required_checker_source_sha=checker_source_sha,
                 required_checker_command=checker_command,
                 required_checker_authorization=checker_authorization,
@@ -9615,7 +9733,7 @@ def _run_task41_p0_saved_output_service(
                 required_checker_result_path=str(checker_result_path),
             )
             continuation_receipt_path = output_root / "task41_p0_saved_output_continuation_receipt.json"
-            if not checker_only and continuation_receipt_path.is_file():
+            if not checker_only and not b0_evidence_audit_mode and continuation_receipt_path.is_file():
                 continuation_receipt = json.loads(
                     continuation_receipt_path.read_text(encoding="utf-8")
                 )
@@ -9736,11 +9854,35 @@ def _run_task41_p0_service(
     checker_only_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-output-checker-only"
     )
-    saved_output_mode = continuation_mode or checker_only_mode
+    b0_evidence_audit_mode = bool(
+        case_args and case_args[0] == "--task41-p0-saved-b0-evidence-audit"
+    )
+    saved_output_mode = continuation_mode or checker_only_mode or b0_evidence_audit_mode
     continuation_run_root: Path | None = None
     continuation_output_root: Path | None = None
     checker_input_path: Path | None = None
     checker_input_sha256: str | None = None
+    donor_contract_path: Path | None = None
+    donor_contract_sha256: str | None = None
+    donor_summary_path: Path | None = None
+    donor_numerical_output: Path | None = None
+    if b0_evidence_audit_mode:
+        if (
+            len(case_args) != 11
+            or case_args[1] != "--donor-contract"
+            or case_args[3] != "--donor-contract-sha256"
+            or case_args[5] != "--summary"
+            or case_args[7] != "--numerical-output"
+            or case_args[9] != "--output-dir"
+        ):
+            raise ValueError(
+                "B0 saved audit requires donor contract/hash, summary, numerical output, and new output directory"
+            )
+        donor_contract_path = Path(case_args[2]).resolve(strict=True)
+        donor_contract_sha256 = case_args[4]
+        donor_summary_path = Path(case_args[6]).resolve(strict=True)
+        donor_numerical_output = Path(case_args[8]).resolve(strict=True)
+        continuation_output_root = Path(case_args[10]).resolve()
     if continuation_mode:
         if (
             len(case_args) != 5
@@ -9769,7 +9911,7 @@ def _run_task41_p0_service(
         contract_path,
         expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
         current_root=repo_root,
-        check_current_source=not saved_output_mode,
+        check_current_source=not (continuation_mode or checker_only_mode),
         require_clean_source=True,
     )
     case_id = task41_case_id_for_run_id(str(contract["case"]["run_id"]))
@@ -9782,7 +9924,14 @@ def _run_task41_p0_service(
         continuation_branch = subprocess.check_output(
             ["git", "branch", "--show-current"], cwd=repo_root, text=True
         ).strip()
-        if (
+        if b0_evidence_audit_mode:
+            if (
+                continuation_branch != contract["branch"]
+                or checker_source_sha != contract["source"]["sha"]
+            ):
+                raise ValueError("saved B0 audit consumer contract differs from the frozen current source")
+            continuation_source_sha = checker_source_sha
+        elif (
             continuation_branch != contract["branch"]
             or checker_source_sha == contract["source"]["sha"]
         ):
@@ -9803,7 +9952,7 @@ def _run_task41_p0_service(
                 raise ValueError(
                     "saved-output consumer source or new result directory differs from the frozen producer contract"
                 )
-        else:
+        elif checker_only_mode:
             assert checker_input_path is not None
             assert checker_input_sha256 is not None
             assert continuation_output_root is not None
@@ -9830,6 +9979,61 @@ def _run_task41_p0_service(
                 raise ValueError(
                     "checker-only retry output must be a new sibling path under the registered model results"
                 )
+        elif b0_evidence_audit_mode:
+            assert donor_contract_path is not None and donor_contract_sha256 is not None
+            assert donor_summary_path is not None and donor_numerical_output is not None
+            assert continuation_output_root is not None
+            donor_contract, donor_digest = require_task41_p0_contract(
+                donor_contract_path,
+                expected_sha256=donor_contract_sha256,
+                current_root=repo_root,
+                check_current_source=False,
+                require_clean_source=False,
+            )
+            donor_case = donor_contract.get("case")
+            consumer_case = contract.get("case")
+            if (
+                not isinstance(donor_case, Mapping)
+                or task41_case_id_for_run_id(str(donor_case.get("run_id", ""))) != "B0"
+                or task41_case_id_for_run_id(str(consumer_case.get("run_id", ""))) != "B0"
+            ):
+                raise ValueError("saved B0 audit requires separate B0 donor and consumer contracts")
+            for key in (
+                "model_id", "method", "mpi_size", "input_sha256",
+                "physical_model_sha256", "resolved_config_sha256",
+            ):
+                if donor_case.get(key) != consumer_case.get(key):
+                    raise ValueError(f"saved B0 donor/consumer contracts differ at {key}")
+            donor_run_root = donor_summary_path.parent.resolve(strict=True)
+            results_root = (repo_root / "results" / str(consumer_case["model_id"])).resolve()
+            run_manifest = read_json_object(donor_run_root / "run_manifest.json", "B0 donor run manifest")
+            run_summary = read_json_object(donor_run_root / "run_summary.json", "B0 donor run summary")
+            if (
+                donor_summary_path.name != "task40_v10_p6_candidate_summary.json"
+                or not donor_run_root.is_relative_to(results_root)
+                or donor_numerical_output != (donor_run_root / "numerical_output").resolve(strict=True)
+                or Path(str(run_manifest.get("output_directory", ""))).resolve() != donor_run_root
+                or Path(str(run_manifest.get("numerical_output_directory", ""))).resolve()
+                != donor_numerical_output
+                or run_summary.get("run_id") != donor_case.get("run_id")
+                or not continuation_output_root.is_relative_to(results_root)
+                or continuation_output_root.exists()
+                or continuation_output_root == donor_run_root
+                or continuation_output_root.is_relative_to(donor_run_root)
+                or donor_run_root.is_relative_to(continuation_output_root)
+            ):
+                raise ValueError("saved B0 audit donor paths or new consumer output directory differ")
+            input_path = Path(str(consumer_case.get("input_path", "")))
+            input_path = (input_path if input_path.is_absolute() else repo_root / input_path).resolve()
+            config_path = donor_run_root / "resolved_config.json"
+            if (
+                not input_path.is_file()
+                or sha256_file(input_path) != donor_case.get("input_sha256")
+                or not config_path.is_file()
+                or sha256_file(config_path) != donor_case.get("resolved_config_sha256")
+            ):
+                raise ValueError("saved B0 donor input/config hashes differ from the frozen contracts")
+            continuation_run_root = donor_run_root
     if os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1":
         raise ValueError("Task41 service lacks its strict execution marker")
     window = load_task41_p0_fixed_window(contract, current_root=repo_root)
@@ -9906,6 +10110,24 @@ def _run_task41_p0_service(
                 continuation_output_root / "task41_p0_saved_output_checker_result.json"
             ),
         })
+    elif b0_evidence_audit_mode:
+        assert donor_contract_path is not None and donor_contract_sha256 is not None
+        assert donor_summary_path is not None and donor_numerical_output is not None
+        assert continuation_output_root is not None
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+            "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
+            "TASK41_P0_DONOR_CONTRACT_PATH": str(donor_contract_path),
+            "TASK41_P0_DONOR_CONTRACT_SHA256": donor_contract_sha256,
+            "TASK41_P0_B0_SUMMARY_PATH": str(donor_summary_path),
+            "TASK41_P0_B0_NUMERICAL_OUTPUT_PATH": str(donor_numerical_output),
+            "TASK41_P0_B0_OUTPUT_DIR": str(continuation_output_root.resolve()),
+            "TASK41_P0_B0_RESULT_PATH": str(
+                continuation_output_root / "task41_p0_b0_saved_evidence_audit.json"
+            ),
+        })
     activation_marker = _qualified_activation_identity(environment)
     if activation_marker is None:
         raise RuntimeError("Task41 service did not receive its contracted qualified activation")
@@ -9951,9 +10173,14 @@ def _run_task41_p0_service(
             run_root=continuation_run_root,
             output_root=continuation_output_root,
             consumer_source_sha=continuation_source_sha,
-            checker_only=checker_only_mode,
+            checker_only=checker_only_mode or b0_evidence_audit_mode,
             checker_snapshot_path=checker_input_path,
             checker_snapshot_sha256=checker_input_sha256,
+            b0_evidence_audit_mode=b0_evidence_audit_mode,
+            donor_contract_path=donor_contract_path,
+            donor_contract_sha256=donor_contract_sha256,
+            donor_summary_path=donor_summary_path,
+            donor_numerical_output=donor_numerical_output,
             input_path=input_path,
             activation_command=activation_command,
             activation_identity=activation_marker,

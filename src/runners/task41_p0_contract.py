@@ -675,17 +675,21 @@ def _git(root: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def _saved_output_consumer_source_sha(contract: Mapping[str, Any], root: Path) -> str:
+def _saved_output_consumer_source_sha(
+    contract: Mapping[str, Any], root: Path, *, allow_current_source: bool = False
+) -> str:
     head = _git(root, "rev-parse", "HEAD")
     branch = _git(root, "branch", "--show-current")
     status = _git(root, "status", "--porcelain", "--untracked-files=normal")
+    source_matches = head == contract.get("source", {}).get("sha")
     if (
-        head == contract.get("source", {}).get("sha")
+        source_matches != allow_current_source
         or branch != contract.get("branch")
         or status
     ):
+        identity_rule = "the current contracted source" if allow_current_source else "a distinct consumer head"
         raise Task41ContractError(
-            "saved-output continuation requires a distinct clean consumer head on the producer branch"
+            f"saved-output audit requires {identity_rule} on the clean contracted branch"
         )
     return head
 
@@ -1722,9 +1726,13 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
         continuation = environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") == "1"
         checker_only_flag = environment.get("TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY")
         checker_only = checker_only_flag == "1"
+        b0_audit_flag = environment.get("TASK41_P0_SAVED_B0_EVIDENCE_AUDIT")
+        b0_audit = b0_audit_flag == "1"
         if environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") not in {None, "1"}:
             return None
         if checker_only_flag not in {None, "1"} or (checker_only and not continuation):
+            return None
+        if b0_audit_flag not in {None, "1"} or (b0_audit and (not continuation or checker_only)):
             return None
         if not continuation and environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") is not None:
             return None
@@ -1732,12 +1740,24 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
             contract_path or "",
             expected_sha256=contract_sha,
             current_root=root,
-            check_current_source=not continuation,
+            check_current_source=(not continuation or b0_audit),
             require_clean_source=True,
         )
         if continuation:
-            current_source_sha = _saved_output_consumer_source_sha(contract, root)
+            current_source_sha = _saved_output_consumer_source_sha(
+                contract, root, allow_current_source=b0_audit
+            )
             consumer_sha = environment.get("TASK41_P0_CONSUMER_SOURCE_SHA", "")
+            if b0_audit:
+                try:
+                    if (
+                        task41_case_id_for_run_id(str(contract["case"].get("run_id", ""))) != "B0"
+                        or consumer_sha != current_source_sha
+                        or environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != current_source_sha
+                    ):
+                        return None
+                except (KeyError, Task41ContractError):
+                    return None
             if checker_only:
                 checker_sha = environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
                 snapshot_path = Path(environment.get("TASK41_P0_CHECKER_INPUT_PATH", ""))

@@ -211,6 +211,29 @@ def _task41_npy_artifact(
     return value
 
 
+def _task41_b0_owned_writable_lu_pivots(
+    raw_pivots: np.ndarray, *, order: int
+) -> np.ndarray:
+    """Copy validated SciPy 0-based pivots into writable owned int32 storage."""
+    pivots = np.asarray(raw_pivots)
+    if (
+        type(order) is not int
+        or order < 1
+        or order > np.iinfo(np.int32).max
+        or pivots.shape != (order,)
+        or pivots.dtype.kind not in "iu"
+        or not np.isfinite(pivots).all()
+    ):
+        raise ValueError("Task41 B0 LU pivots have an invalid zero-based layout")
+    zero_based_steps = np.arange(order, dtype=np.int64)
+    if np.any(pivots < zero_based_steps) or np.any(pivots >= order):
+        raise ValueError("Task41 B0 LU pivots are outside SciPy's zero-based pivot range")
+    writable = np.array(pivots, dtype=np.int32, order="C", copy=True)
+    if not writable.flags.owndata or not writable.flags.writeable:
+        raise ValueError("Task41 B0 LU pivots were not copied to writable owned storage")
+    return writable
+
+
 def _task41_sparse_identity(matrix: Any) -> str:
     digest = hashlib.sha256()
     digest.update(str(matrix.format).encode("ascii"))
@@ -1164,6 +1187,55 @@ def _task41_b0_chunked_norm(values: np.ndarray, *, chunk_rows: int = 262_144) ->
     return float(np.sqrt(max(0.0, total)))
 
 
+def _task41_b0_chunked_difference_summary(
+    left: np.ndarray,
+    right: np.ndarray,
+    *,
+    start: int = 0,
+    stop: int | None = None,
+    chunk_rows: int = 262_144,
+) -> dict[str, float]:
+    """Summarize a saved vector difference without materializing the whole delta."""
+    end = int(left.shape[0]) if stop is None else stop
+    if (
+        left.ndim != 1
+        or right.ndim != 1
+        or left.shape != right.shape
+        or type(start) is not int
+        or type(end) is not int
+        or start < 0
+        or end < start
+        or end > int(left.shape[0])
+        or type(chunk_rows) is not int
+        or chunk_rows < 1
+    ):
+        raise ValueError("Task41 B0 partitioned difference has an invalid vector range")
+    squared_norm = 0.0
+    maximum_row = 0.0
+    maximum_row_index: int | None = None
+    for offset in range(start, end, chunk_rows):
+        block_end = min(end, offset + chunk_rows)
+        lhs = np.asarray(left[offset:block_end], dtype=np.complex128)
+        rhs = np.asarray(right[offset:block_end], dtype=np.complex128)
+        if not np.isfinite(lhs).all() or not np.isfinite(rhs).all():
+            raise ValueError("Task41 B0 partitioned difference contains non-finite values")
+        difference = lhs - rhs
+        squared_norm += float(np.vdot(difference, difference).real)
+        if difference.size:
+            magnitudes = np.abs(difference)
+            local_index = int(np.argmax(magnitudes))
+            local_maximum = float(magnitudes[local_index])
+            if maximum_row_index is None or local_maximum > maximum_row:
+                maximum_row = local_maximum
+                maximum_row_index = offset + local_index
+    return {
+        "absolute_l2": float(np.sqrt(max(0.0, squared_norm))),
+        "sum_squares": max(0.0, squared_norm),
+        "max_abs_row": maximum_row,
+        "max_abs_row_index": maximum_row_index,
+    }
+
+
 def _task41_b0_chunked_relative_error(
     actual: np.ndarray, expected: np.ndarray, *, chunk_rows: int = 262_144
 ) -> float:
@@ -1277,37 +1349,110 @@ def _task41_b0_recovery_evidence_checks(
     *,
     contract_sha256: str,
     expected_mode_indices: tuple[int, int] = (16030, 48090),
+    checkpoint_path: Path | None = None,
+    checkpoint_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Recompute B0 recovery and joint-action gates from hash-bound raw arrays."""
     errors: list[str] = []
+    integrity_errors: list[str] = []
+    recovery_errors: list[str] = []
+    joint_action_errors: list[str] = []
+    manifest_loaded = False
+    joint_action_completed = False
+    joint_action_passed: bool | None = None
+    joint_action_metrics: list[dict[str, Any]] = []
+    raw_audit_completed_columns = 0
+    checkpoint_events: list[dict[str, Any]] = []
+
+    def save_checkpoint(stage: str, **details: Any) -> None:
+        event = {"stage": stage, **details}
+        checkpoint_events.append(event)
+        if checkpoint_path is None:
+            return
+        checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = checkpoint_path.with_name(checkpoint_path.name + ".tmp")
+        temporary.write_text(
+            json.dumps(
+                {
+                    "schema": "task41.p0.b0.saved_evidence_audit_checkpoint.v1",
+                    "status": "IN_PROGRESS",
+                    "identity": dict(checkpoint_identity or {}),
+                    "events": checkpoint_events,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+                allow_nan=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary, checkpoint_path)
+
+    def integrity_error(message: str) -> None:
+        errors.append(message)
+        integrity_errors.append(message)
+
+    def recovery_error(message: str) -> None:
+        errors.append(message)
+        recovery_errors.append(message)
+
+    def joint_action_error(message: str) -> None:
+        errors.append(message)
+        joint_action_errors.append(message)
+
     binding = summary.get("b0_recovery_evidence")
     if not isinstance(binding, Mapping):
+        message = "Task41 B0 summary omits its recovery evidence binding"
         return {
             "schema": "task41.p0.b0.recovery_evidence_checker.v1",
-            "errors": ["Task41 B0 summary omits its recovery evidence binding"],
+            "audit_completed": False,
+            "data_integrity": False,
+            "recovery_passed": False,
+            "joint_action_passed": None,
+            "official_result": False,
+            "integrity_errors": [message],
+            "recovery_errors": [],
+            "joint_action_errors": [],
+            "errors": [message],
             "passed": False,
         }
     manifest_ref = binding.get("manifest")
     manifest: Mapping[str, Any] = {}
     if not isinstance(manifest_ref, Mapping):
-        errors.append("Task41 B0 recovery evidence omits its manifest artifact record")
+        integrity_error("Task41 B0 recovery evidence omits its manifest artifact record")
     else:
         try:
             manifest_path = _task41_run_artifact(
                 numerical_output.parent, manifest_ref, "B0 recovery manifest"
             )
             manifest = _json_object(manifest_path, "B0 recovery manifest")
+            manifest_loaded = True
+            manifest_stage = manifest.get("stage")
+            manifest_status = manifest.get("status")
+            expected_status = (
+                "PASS"
+                if manifest_stage == "FULL_ACTION_QUALIFIED"
+                else "FAIL"
+                if manifest_stage
+                in {"FULL_ACTION_GATE_FAILED", "RECOVERY_GATE_FAILED"}
+                else None
+            )
             if (
-                manifest_ref.get("stage") != manifest.get("stage")
-                or binding.get("stage") != manifest.get("stage")
-                or binding.get("status") != "PASS"
+                manifest_ref.get("stage") != manifest_stage
+                or binding.get("stage") != manifest_stage
                 or manifest.get("schema") != "task41.p0.b0.recovery_evidence.v1"
-                or manifest.get("stage") != "FULL_ACTION_QUALIFIED"
-                or manifest.get("status") != "PASS"
+                or expected_status is None
+                or manifest_status != expected_status
+                or binding.get("status") != expected_status
             ):
-                errors.append("Task41 B0 recovery manifest did not finish the full-action gate")
+                integrity_error(
+                    "Task41 B0 recovery manifest stage/status binding is invalid"
+                )
         except (OSError, ValueError, TypeError, KeyError) as exc:
-            errors.append(f"Task41 B0 recovery manifest failed its path/hash check: {exc}")
+            integrity_error(
+                f"Task41 B0 recovery manifest failed its path/hash check: {exc}"
+            )
 
     case = contract.get("case", {})
     window = contract.get("window", {})
@@ -1332,11 +1477,11 @@ def _task41_b0_recovery_evidence_checks(
         else None,
     }
     if not isinstance(run_identity, Mapping):
-        errors.append("Task41 B0 recovery manifest has no run identity")
+        integrity_error("Task41 B0 recovery manifest has no run identity")
         run_identity = {}
     for key, expected in expected_identity.items():
         if not expected or run_identity.get(key) != expected:
-            errors.append(f"Task41 B0 recovery run identity differs at {key}")
+            integrity_error(f"Task41 B0 recovery run identity differs at {key}")
     for key in ("staged_input_sha256", "carrier_committed_prefix_sha256"):
         value = run_identity.get(key)
         if (
@@ -1344,7 +1489,7 @@ def _task41_b0_recovery_evidence_checks(
             or len(value) != 64
             or any(char not in "0123456789abcdef" for char in value)
         ):
-            errors.append(f"Task41 B0 recovery run identity has invalid {key}")
+            integrity_error(f"Task41 B0 recovery run identity has invalid {key}")
 
     support = manifest.get("saved_surface_support_certificate")
     summary_support = summary.get("b0_saved_surface_support_certificate")
@@ -1371,9 +1516,9 @@ def _task41_b0_recovery_evidence_checks(
         or manifest.get("saved_surface_support_certificate_passed") is not True
         or manifest.get("saved_surface_support_certificate_sha256") != support_digest
     ):
-        errors.append("Task41 B0 exact-zero local Bi/Di support certificate is absent or mismatched")
+        integrity_error("Task41 B0 exact-zero local Bi/Di support certificate is absent or mismatched")
     if summary.get("b0_recovery_refinement_max_steps") != 3:
-        errors.append("Task41 B0 production path is not bound to the shared three-step recovery loop")
+        integrity_error("Task41 B0 production path is not bound to the shared three-step recovery loop")
     loop = binding.get("same_lu_refinement_loop")
     if (
         not isinstance(loop, Mapping)
@@ -1383,16 +1528,16 @@ def _task41_b0_recovery_evidence_checks(
         or loop.get("correction_driver")
         != "independent_native_cell_interior_volume_residual"
     ):
-        errors.append("Task41 B0 recovery evidence does not bind the shared same-LU correction loop")
+        integrity_error("Task41 B0 recovery evidence does not bind the shared same-LU correction loop")
 
     checked_columns = []
     shared_raw_classes: dict[str, tuple[str, str, str, str]] = {}
     columns = manifest.get("columns")
     full_rows = manifest.get("full_storage_rows")
     if type(full_rows) is not int or full_rows < 1:
-        errors.append("Task41 B0 recovery manifest has an invalid full storage size")
+        integrity_error("Task41 B0 recovery manifest has an invalid full storage size")
     if not isinstance(columns, list) or len(columns) != 2:
-        errors.append("Task41 B0 recovery manifest does not contain both input columns")
+        integrity_error("Task41 B0 recovery manifest does not contain both input columns")
         columns = []
 
     def load_array(record: Any, label: str) -> np.ndarray:
@@ -1414,10 +1559,172 @@ def _task41_b0_recovery_evidence_checks(
         try:
             declared = float(recorded)
         except (TypeError, ValueError):
-            errors.append(f"Task41 B0 {label} metric is missing")
+            integrity_error(f"Task41 B0 {label} metric is missing")
             return
         if not np.isfinite(declared) or abs(actual - declared) > 5.0e-13 * max(1.0, abs(actual)):
-            errors.append(f"Task41 B0 {label} metric differs from its raw arrays")
+            integrity_error(f"Task41 B0 {label} metric differs from its raw arrays")
+
+    full_action = manifest.get("full_action")
+    if not isinstance(full_action, Mapping):
+        integrity_error("Task41 B0 joint-action record is missing")
+    else:
+        joint = full_action.get("artifacts")
+        if not isinstance(joint, Mapping):
+            integrity_error("Task41 B0 joint-action artifact inventory is missing")
+        else:
+            try:
+                p6 = load_array(joint.get("p6_result"), "joint P6 result")
+                port_rhs = load_array(joint.get("port_rhs"), "joint port RHS")
+                reduced_rhs = load_array(joint.get("reduced_rhs"), "joint reduced RHS")
+                if (
+                    p6.ndim != 2
+                    or reduced_rhs.shape != p6.shape
+                    or p6.shape[1] != 2
+                    or port_rhs.ndim != 2
+                    or port_rhs.shape[1] != 2
+                    or port_rhs.shape[0] < 1
+                    or port_rhs.shape[0] >= p6.shape[0]
+                    or p6.dtype != np.dtype(np.complex128)
+                    or port_rhs.dtype != np.dtype(np.complex128)
+                    or reduced_rhs.dtype != np.dtype(np.complex128)
+                    or not np.isfinite(p6).all()
+                    or not np.isfinite(port_rhs).all()
+                    or not np.isfinite(reduced_rhs).all()
+                ):
+                    raise ValueError(
+                        "joint-action arrays have invalid shapes, dtypes, or non-finite values"
+                    )
+
+                active_rows = int(p6.shape[0] - port_rhs.shape[0])
+                port_rows = int(port_rhs.shape[0])
+                declared_errors = full_action.get(
+                    "p6_vs_native_reduced_rhs_relative_errors"
+                )
+                if not isinstance(declared_errors, list) or len(declared_errors) != 2:
+                    integrity_error(
+                        "Task41 B0 joint-action record omits both per-column error metrics"
+                    )
+
+                column_metrics: list[dict[str, Any]] = []
+                errors_by_column: list[float] = []
+                for column_index in range(2):
+                    left = p6[:, column_index]
+                    right = reduced_rhs[:, column_index]
+                    denominator = max(
+                        _task41_b0_chunked_norm(left),
+                        _task41_b0_chunked_norm(right),
+                        np.finfo(float).tiny,
+                    )
+                    overall = _task41_b0_chunked_difference_summary(left, right)
+                    trace = _task41_b0_chunked_difference_summary(
+                        left, right, start=0, stop=active_rows
+                    )
+                    port = _task41_b0_chunked_difference_summary(
+                        left, right, start=active_rows, stop=int(p6.shape[0])
+                    )
+                    relative_error = overall["absolute_l2"] / denominator
+                    errors_by_column.append(relative_error)
+                    if isinstance(declared_errors, list) and len(declared_errors) == 2:
+                        require_close_recorded(
+                            relative_error,
+                            declared_errors[column_index],
+                            f"joint P6/native column {column_index} relative error",
+                        )
+
+                    p6_port = p6[active_rows:, column_index]
+                    reduced_port = reduced_rhs[active_rows:, column_index]
+                    saved_port_rhs = port_rhs[:, column_index]
+                    port_comparisons = {
+                        "p6_vs_reduced": _task41_b0_chunked_difference_summary(
+                            p6_port, reduced_port
+                        ),
+                        "p6_vs_port_rhs": _task41_b0_chunked_difference_summary(
+                            p6_port, saved_port_rhs
+                        ),
+                        "reduced_vs_port_rhs": _task41_b0_chunked_difference_summary(
+                            reduced_port, saved_port_rhs
+                        ),
+                        "p6_port_norm": _task41_b0_chunked_norm(p6_port),
+                        "reduced_port_norm": _task41_b0_chunked_norm(reduced_port),
+                        "port_rhs_norm": _task41_b0_chunked_norm(saved_port_rhs),
+                    }
+                    for comparison in (
+                        "p6_vs_reduced",
+                        "p6_vs_port_rhs",
+                        "reduced_vs_port_rhs",
+                    ):
+                        port_comparisons[comparison][
+                            "same_overall_denominator_contribution"
+                        ] = (
+                            port_comparisons[comparison]["absolute_l2"] / denominator
+                        )
+                    column_metrics.append(
+                        {
+                            "column": column_index,
+                            "original_denominator": denominator,
+                            "absolute_l2": overall["absolute_l2"],
+                            "sum_squares": overall["sum_squares"],
+                            "max_abs_row": overall["max_abs_row"],
+                            "max_abs_row_index": overall["max_abs_row_index"],
+                            "relative_error": relative_error,
+                            "trace_rows": active_rows,
+                            "trace": {
+                                **trace,
+                                "same_overall_denominator_contribution": (
+                                    trace["absolute_l2"] / denominator
+                                ),
+                            },
+                            "port_rows": port_rows,
+                            "port": {
+                                **port,
+                                "same_overall_denominator_contribution": (
+                                    port["absolute_l2"] / denominator
+                                ),
+                            },
+                            "port_comparisons": port_comparisons,
+                        }
+                    )
+
+                declared_d_error = full_action.get(
+                    "original_and_active_D_relative_error"
+                )
+                try:
+                    d_error = float(declared_d_error)
+                except (TypeError, ValueError):
+                    d_error = float("nan")
+                d_passed = bool(np.isfinite(d_error) and d_error <= 1.0e-11)
+                joint_action_passed = bool(
+                    all(value <= 1.0e-11 for value in errors_by_column) and d_passed
+                )
+                if not d_passed:
+                    joint_action_error(
+                        "Task41 B0 recorded original/active D error fails the original gate"
+                    )
+                if not all(value <= 1.0e-11 for value in errors_by_column):
+                    joint_action_error(
+                        "Task41 B0 saved P6/native reduced RHS difference reproduces the original gate failure"
+                    )
+                expected_joint_status = "PASS" if joint_action_passed else "FAIL"
+                if full_action.get("status") != expected_joint_status:
+                    integrity_error(
+                        "Task41 B0 joint-action status differs from its recomputed arrays"
+                    )
+                if full_action.get("valid_shapes_and_finite_values") is not True:
+                    integrity_error(
+                        "Task41 B0 joint-action finite/layout claim differs from valid saved arrays"
+                    )
+                joint_action_completed = True
+                joint_action_metrics = column_metrics
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                integrity_error(f"Task41 B0 joint-action replay is incomplete: {exc}")
+
+    save_checkpoint(
+        "JOINT_ACTION_CHUNKS_COMPLETE",
+        replayed=joint_action_completed,
+        passed=joint_action_passed,
+        metrics=joint_action_metrics,
+        integrity_error_count=len(integrity_errors),
+    )
 
     for expected_column, column in enumerate(columns):
         try:
@@ -1459,6 +1766,7 @@ def _task41_b0_recovery_evidence_checks(
                 or (b_rows.size and (int(b_rows[0]) < 0 or int(b_rows[-1]) >= full_rows))
                 or (b_rows.size > 1 and np.any(b_rows[1:] <= b_rows[:-1]))
                 or (b_alpha_rows.size > 1 and np.any(b_alpha_rows[1:] <= b_alpha_rows[:-1]))
+                or (b_alpha_rows.size and (int(b_alpha_rows[0]) < 0 or int(b_alpha_rows[-1]) >= full_rows))
                 or not np.isfinite(b_values).all()
                 or not np.isfinite(b_alpha_values).all()
             ):
@@ -1467,6 +1775,8 @@ def _task41_b0_recovery_evidence_checks(
             if not isinstance(alpha_pair, list) or len(alpha_pair) != 2:
                 raise ValueError("selected B input has no saved complex port amplitude")
             alpha = complex(float(alpha_pair[0]), float(alpha_pair[1]))
+            if not np.isfinite([alpha.real, alpha.imag]).all():
+                raise ValueError("selected B input amplitude is non-finite")
             expected_b_values = b_values * alpha
             nonzero = expected_b_values != 0.0
             if not np.array_equal(b_alpha_rows, b_rows[nonzero]) or not np.array_equal(
@@ -1495,6 +1805,8 @@ def _task41_b0_recovery_evidence_checks(
                 or np.any(active_original_rows >= full_rows)
                 or np.any(slave_rows < 0)
                 or np.any(slave_rows >= full_rows)
+                or np.unique(active_original_rows).size != active_original_rows.size
+                or np.unique(slave_rows).size != slave_rows.size
                 or np.intersect1d(active_original_rows, slave_rows).size
             ):
                 raise ValueError("active or slave original-row identity is malformed")
@@ -1659,11 +1971,12 @@ def _task41_b0_recovery_evidence_checks(
             }
             checked_columns.append(column_result)
             if not column_passed:
-                errors.append(
+                recovery_error(
                     f"Task41 B0 recovery column {expected_column} finite gate failed: "
                     f"forward={final_forward}, volume_residual={final_residual_relative}"
                 )
 
+            raw_integrity_errors_before = len(integrity_errors)
             raw_diagnostic = column.get("raw_cell_diagnostic")
             if refinement or not initial_gate_passed:
                 if (
@@ -1673,7 +1986,7 @@ def _task41_b0_recovery_evidence_checks(
                     or not isinstance(raw_diagnostic.get("cells"), list)
                     or not 1 <= len(raw_diagnostic["cells"]) <= 3
                 ):
-                    errors.append(
+                    integrity_error(
                         f"Task41 B0 recovery column {expected_column} lacks bounded raw-cell evidence"
                     )
                 else:
@@ -1686,10 +1999,10 @@ def _task41_b0_recovery_evidence_checks(
                             for name in ("Vii", "Vit", "lu_factor", "lu_pivots")
                         )
                         if not class_identity or any(not path for path in class_refs):
-                            errors.append("Task41 B0 raw class lacks matrix/LU artifact identity")
+                            integrity_error("Task41 B0 raw class lacks matrix/LU artifact identity")
                             continue
                         if class_identity in shared_raw_classes and shared_raw_classes[class_identity] != class_refs:
-                            errors.append("Task41 B0 repeated raw class matrices were not shared")
+                            integrity_error("Task41 B0 repeated raw class matrices were not shared")
                             continue
                         shared_raw_classes[class_identity] = class_refs
                         vii = np.asarray(load_array(class_artifacts.get("Vii"), "raw Vii"))
@@ -1715,19 +2028,48 @@ def _task41_b0_recovery_evidence_checks(
                             or vit.shape[0] != vii.shape[0]
                             or lu_factor.shape != vii.shape or lu_pivots.shape != (vii.shape[0],)
                             or lu_pivots.dtype.kind not in "iu"
+                            or vii.dtype != np.dtype(np.complex128)
+                            or vit.dtype != np.dtype(np.complex128)
+                            or lu_factor.dtype != np.dtype(np.complex128)
                             or known_i.shape != (vii.shape[0],) or rhs_i.shape != known_i.shape
                             or rec_i.shape != known_i.shape or known_t.shape != (vit.shape[1],)
                             or rec_t.shape != known_t.shape
+                            or action_i.shape != known_i.shape or residual_i.shape != known_i.shape
+                            or any(
+                                value.dtype != np.dtype(np.complex128)
+                                for value in (known_i, rhs_i, rec_i, known_t, rec_t, action_i, residual_i)
+                            )
                             or interior_rows.shape != known_i.shape or interior_rows.dtype.kind not in "iu"
                             or trace_rows.shape != known_t.shape or trace_rows.dtype.kind not in "iu"
+                            or np.any(interior_rows < 0) or np.any(interior_rows >= full_rows)
+                            or np.any(trace_rows < 0) or np.any(trace_rows >= full_rows)
+                            or np.unique(interior_rows).size != interior_rows.size
+                            or np.unique(trace_rows).size != trace_rows.size
                             or active_ids.ndim != 1 or active_ids.dtype.kind not in "iu"
+                            or np.any(active_ids < 0) or np.any(active_ids >= active_original_rows.size)
+                            or np.unique(active_ids).size != active_ids.size
+                            or expansion_data.ndim != 1
+                            or expansion_data.dtype != np.dtype(np.complex128)
+                            or expansion_indices.ndim != 1
+                            or expansion_indices.dtype.kind not in "iu"
+                            or expansion_indptr.ndim != 1
+                            or expansion_indptr.dtype.kind not in "iu"
                             or expansion_indptr.shape != (len(trace_rows) + 1,)
                             or expansion_indices.shape != expansion_data.shape
+                            or expansion_indptr[0] != 0
+                            or np.any(expansion_indptr < 0)
+                            or np.any(expansion_indptr[1:] < expansion_indptr[:-1])
                             or expansion_indptr[-1] != len(expansion_data)
+                            or np.any(expansion_indices < 0)
+                            or np.any(expansion_indices >= len(active_ids))
+                            or not np.isfinite(vii).all()
+                            or not np.isfinite(vit).all()
+                            or not np.isfinite(lu_factor).all()
+                            or not np.isfinite(expansion_data).all()
                             or permutation.shape != (1,)
                             or permutation.dtype.kind not in "iu"
                         ):
-                            errors.append("Task41 B0 raw-cell Vii/Vit evidence has inconsistent local layouts")
+                            integrity_error("Task41 B0 raw-cell Vii/Vit evidence has inconsistent local layouts")
                             continue
                         try:
                             from scipy.sparse import csr_matrix
@@ -1737,28 +2079,54 @@ def _task41_b0_recovery_evidence_checks(
                                 (expansion_data, expansion_indices, expansion_indptr),
                                 shape=(len(trace_rows), len(active_ids)),
                             )
+                            if not expansion.has_canonical_format:
+                                raise ValueError("raw trace-expansion CSR is not canonical")
                             active_values = np.asarray(known[active_original_rows], dtype=np.complex128)
-                            recovered_active_values = np.asarray(final_storage[active_original_rows], dtype=np.complex128)
+                            recovered_active_values = np.asarray(initial_storage[active_original_rows], dtype=np.complex128)
                             expected_known_trace = np.asarray(
                                 expansion @ active_values[active_ids], dtype=np.complex128
                             ).reshape(-1)
                             expected_recovered_trace = np.asarray(
                                 expansion @ recovered_active_values[active_ids], dtype=np.complex128
                             ).reshape(-1)
-                            lu_identity = lu_solve(
-                                (lu_factor, lu_pivots.astype(np.int32, copy=False)), vii
+                            writable_pivots = _task41_b0_owned_writable_lu_pivots(
+                                lu_pivots, order=vii.shape[0]
+                            )
+                            save_checkpoint(
+                                "BEFORE_SMALL_CLASS_GETRS",
+                                column=expected_column,
+                                class_identity=class_identity,
+                                factor_shape=list(lu_factor.shape),
+                                factor_dtype=str(lu_factor.dtype),
+                                pivot_dtype=str(lu_pivots.dtype),
+                                pivot_copy_dtype=str(writable_pivots.dtype),
+                                pivot_copy_owns_data=bool(writable_pivots.flags.owndata),
+                                pivot_copy_writeable=bool(writable_pivots.flags.writeable),
+                            )
+                            lu_identity = lu_solve((lu_factor, writable_pivots), vii)
+                            lu_identity_max_abs_error = float(
+                                np.max(np.abs(lu_identity - np.eye(vii.shape[0])))
+                            )
+                            save_checkpoint(
+                                "AFTER_SMALL_CLASS_GETRS",
+                                column=expected_column,
+                                class_identity=class_identity,
+                                lu_identity_max_abs_error=lu_identity_max_abs_error,
                             )
                         except (ValueError, TypeError, IndexError) as exc:
-                            errors.append(f"Task41 B0 raw cell mapping/LU replay failed: {exc}")
+                            integrity_error(f"Task41 B0 raw cell mapping/LU replay failed: {exc}")
                             continue
                         if (
                             not np.array_equal(known_i, known[interior_rows])
-                            or not np.array_equal(rec_i, final_storage[interior_rows])
+                            or not np.array_equal(volume_rhs[interior_rows], rhs_i)
+                            or not np.array_equal(initial_storage[interior_rows], rec_i)
+                            or not np.array_equal(initial_action[interior_rows], action_i)
+                            or not np.array_equal(initial_residual[interior_rows], residual_i)
                             or not np.array_equal(known_t, expected_known_trace)
                             or not np.array_equal(rec_t, expected_recovered_trace)
                             or not np.allclose(lu_identity, np.eye(vii.shape[0]), rtol=1e-10, atol=1e-10)
                         ):
-                            errors.append("Task41 B0 raw local rows, MPC trace expansion, or LU identity failed")
+                            integrity_error("Task41 B0 raw local rows, MPC trace expansion, or LU identity failed")
                             continue
                         known_action = vii @ known_i + vit @ known_t
                         recovered_action = vii @ rec_i + vit @ rec_t
@@ -1768,51 +2136,27 @@ def _task41_b0_recovery_evidence_checks(
                             or np.linalg.norm(recovered_action - action_i) / local_scale > 1.0e-10
                             or not np.allclose(rhs_i - action_i, residual_i, rtol=5e-13, atol=5e-13)
                         ):
-                            errors.append("Task41 B0 independent raw-cell Vii/Vit replay failed")
-        except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
-            errors.append(f"Task41 B0 recovery column {expected_column} replay failed: {exc}")
-
-    full_action = manifest.get("full_action")
-    try:
-        if not isinstance(full_action, Mapping) or full_action.get("status") != "PASS":
-            raise ValueError("joint P6 full action did not pass")
-        joint = full_action.get("artifacts")
-        if not isinstance(joint, Mapping):
-            raise ValueError("joint-action artifact inventory is missing")
-        p6 = load_array(joint.get("p6_result"), "joint P6 result")
-        port_rhs = load_array(joint.get("port_rhs"), "joint port RHS")
-        reduced_rhs = load_array(joint.get("reduced_rhs"), "joint reduced RHS")
-        if (
-            p6.ndim != 2
-            or reduced_rhs.shape != p6.shape
-            or port_rhs.ndim != 2
-            or p6.shape[1] != 2
-            or port_rhs.shape[1] != 2
-            or not np.isfinite(p6).all()
-            or not np.isfinite(port_rhs).all()
-            or not np.isfinite(reduced_rhs).all()
-        ):
-            raise ValueError("joint-action arrays have invalid shapes or non-finite values")
-        errors_by_column = []
-        for column in range(2):
-            left = np.asarray(p6[:, column], dtype=np.complex128)
-            right = np.asarray(reduced_rhs[:, column], dtype=np.complex128)
-            errors_by_column.append(
-                float(np.linalg.norm(left - right))
-                / max(float(np.linalg.norm(left)), float(np.linalg.norm(right)), np.finfo(float).tiny)
+                            integrity_error("Task41 B0 independent raw-cell Vii/Vit replay failed")
+            raw_audit_passed = len(integrity_errors) == raw_integrity_errors_before
+            if raw_audit_passed:
+                raw_audit_completed_columns += 1
+            save_checkpoint(
+                "COLUMN_AUDIT_RETURNED",
+                column=expected_column,
+                mode_index=column_result["mode_index"],
+                recovery_passed=column_result["passed"],
+                raw_audit_passed=raw_audit_passed,
+                integrity_error_count=len(integrity_errors),
             )
-        if max(errors_by_column, default=float("inf")) > 1.0e-11:
-            raise ValueError("joint P6 and native reduced RHS differ beyond the original gate")
-        for name, actual in zip(
-            ("p6_result", "port_rhs", "reduced_rhs"),
-            (p6, port_rhs, reduced_rhs),
-            strict=True,
-        ):
-            _ = actual
-            if name not in joint:
-                raise ValueError(f"joint-action evidence omits {name}")
-    except (OSError, ValueError, TypeError, KeyError) as exc:
-        errors.append(f"Task41 B0 joint-action replay failed: {exc}")
+        except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
+            integrity_error(f"Task41 B0 recovery column {expected_column} replay failed: {exc}")
+            save_checkpoint(
+                "COLUMN_AUDIT_RETURNED",
+                column=expected_column,
+                status="ERROR",
+                error=str(exc),
+                integrity_error_count=len(integrity_errors),
+            )
 
     actual_steps = max(
         (
@@ -1824,28 +2168,221 @@ def _task41_b0_recovery_evidence_checks(
     )
     recorded_steps = manifest.get("same_lu_refinement_max_steps_used", 0)
     if type(recorded_steps) is not int or recorded_steps != actual_steps or not 0 <= recorded_steps <= 3:
-        errors.append("Task41 B0 manifest same-LU step count differs from its raw states")
+        integrity_error("Task41 B0 manifest same-LU step count differs from its raw states")
     if len(shared_raw_classes) > 3:
-        errors.append("Task41 B0 recovery evidence stores more than three raw local classes")
+        integrity_error("Task41 B0 recovery evidence stores more than three raw local classes")
+    recovery_passed = bool(
+        len(checked_columns) == 2
+        and all(row.get("passed") is True for row in checked_columns)
+    )
+    audit_completed = bool(
+        manifest_loaded
+        and len(checked_columns) == 2
+        and raw_audit_completed_columns == 2
+        and joint_action_completed
+    )
+    data_integrity = not integrity_errors
+    qualification_passed = bool(
+        audit_completed
+        and data_integrity
+        and recovery_passed
+        and joint_action_passed is True
+        and manifest.get("status") == "PASS"
+        and binding.get("status") == "PASS"
+    )
+    # This helper audits recovery/action evidence only; it does not certify an
+    # official target solve, full-field residual, or physical-output result.
+    official_result = False
     return {
         "schema": "task41.p0.b0.recovery_evidence_checker.v1",
         "manifest_path": manifest_ref.get("path") if isinstance(manifest_ref, Mapping) else None,
         "manifest_stage": manifest.get("stage"),
-        "run_identity_rechecked": not any("identity" in error for error in errors),
-        "support_certificate_rechecked": not any("support certificate" in error for error in errors),
-        "columns": checked_columns,
+        "audit_completed": audit_completed,
+        "data_integrity": data_integrity,
+        "integrity_errors": integrity_errors,
+        "recovery_passed": recovery_passed,
+        "recovery_errors": recovery_errors,
         "joint_action_status": (
             "PASS"
-            if isinstance(manifest.get("full_action"), Mapping)
-            and manifest["full_action"].get("status") == "PASS"
-            else "NOT_RUN"
-            if not isinstance(manifest.get("full_action"), Mapping)
+            if joint_action_passed is True
             else "FAIL"
+            if joint_action_passed is False
+            else "NOT_RUN"
         ),
-        "joint_action_replayed": not any("joint-action" in error for error in errors),
+        "joint_action_passed": joint_action_passed,
+        "joint_action_replayed": joint_action_completed,
+        "joint_action_errors": joint_action_errors,
+        "joint_action_metrics": joint_action_metrics,
+        "checkpoints": checkpoint_events,
+        "qualification_passed": qualification_passed,
+        "official_result": official_result,
+        "run_identity_rechecked": not any("identity" in error for error in integrity_errors),
+        "support_certificate_rechecked": not any(
+            "support certificate" in error for error in integrity_errors
+        ),
+        "columns": checked_columns,
         "errors": errors,
-        "passed": not errors,
+        "passed": qualification_passed,
     }
+
+
+def check_task41_p0_b0_saved_evidence_audit(
+    *,
+    summary_path: Path,
+    numerical_output: Path,
+    contract_path: Path,
+    contract_sha256: str,
+    consumer_contract_path: Path,
+    consumer_contract_sha256: str,
+    output_path: Path,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Audit producer arrays read-only under a separately bound consumer window/source."""
+    donor, donor_digest = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=contract_sha256,
+        current_root=repo_root,
+        check_current_source=False,
+        require_clean_source=False,
+    )
+    consumer, consumer_digest = require_task41_p0_contract(
+        consumer_contract_path,
+        expected_sha256=consumer_contract_sha256,
+        current_root=repo_root,
+        check_current_source=True,
+        require_clean_source=True,
+    )
+    donor_case = donor.get("case")
+    consumer_case = consumer.get("case")
+    if (
+        not isinstance(donor_case, Mapping)
+        or not isinstance(consumer_case, Mapping)
+        or task41_case_id_for_run_id(str(donor_case.get("run_id", ""))) != "B0"
+        or task41_case_id_for_run_id(str(consumer_case.get("run_id", ""))) != "B0"
+    ):
+        raise ValueError("saved B0 audit requires frozen B0 donor and consumer contracts")
+    for key in (
+        "model_id",
+        "method",
+        "mpi_size",
+        "input_sha256",
+        "physical_model_sha256",
+        "resolved_config_sha256",
+    ):
+        if donor_case.get(key) != consumer_case.get(key):
+            raise ValueError(f"saved B0 donor/consumer contracts differ at {key}")
+
+    summary_path = summary_path.resolve(strict=True)
+    numerical_output = numerical_output.resolve(strict=True)
+    output_path = output_path.resolve()
+    donor_directory = summary_path.parent
+    output_root = (repo_root / "results").resolve()
+    if (
+        summary_path.name != "task40_v10_p6_candidate_summary.json"
+        or not output_path.is_relative_to(output_root)
+        or output_path.is_relative_to(donor_directory)
+        or output_path.name != "task41_p0_b0_saved_evidence_audit.json"
+        or output_path.exists()
+        or output_path.with_name(output_path.name + ".tmp").exists()
+    ):
+        raise ValueError("saved B0 audit output must be a new file in a separate consumer result directory")
+
+    run_manifest_path = donor_directory / "run_manifest.json"
+    if not run_manifest_path.is_file():
+        raise ValueError("saved B0 donor run manifest is missing")
+    run_manifest = _json_object(run_manifest_path, "saved B0 donor run manifest")
+    launcher_summary_path = donor_directory / "run_summary.json"
+    launcher_summary = _json_object(launcher_summary_path, "saved B0 donor run summary")
+    summary = _json_object(summary_path, "saved B0 donor candidate summary")
+    expected_manifest = {
+        "run_id": donor_case.get("run_id"),
+        "model_id": donor_case.get("model_id"),
+        "method": donor_case.get("method"),
+        "mpi_size": donor_case.get("mpi_size"),
+        "input_sha256": donor_case.get("input_sha256"),
+        "physical_model_sha256": donor_case.get("physical_model_sha256"),
+        "resolved_config_sha256": donor_case.get("resolved_config_sha256"),
+        "source_sha": donor.get("source", {}).get("sha")
+        if isinstance(donor.get("source"), Mapping)
+        else None,
+    }
+    if any(run_manifest.get(key) != value for key, value in expected_manifest.items()):
+        raise ValueError("saved B0 donor manifest differs from its frozen producer contract")
+    if (
+        summary.get("run_id") != donor_case.get("run_id")
+        or launcher_summary.get("run_id") != donor_case.get("run_id")
+        or Path(str(run_manifest.get("output_directory", ""))).resolve() != donor_directory
+        or Path(str(run_manifest.get("numerical_output_directory", ""))).resolve()
+        != numerical_output
+        or Path(str(launcher_summary.get("output_directory", ""))).resolve()
+        != donor_directory
+        or Path(str(launcher_summary.get("numerical_output_directory", ""))).resolve()
+        != numerical_output
+    ):
+        raise ValueError("saved B0 donor summaries and numerical-output path differ")
+    input_path = donor_directory / "input_original.dat"
+    config_path = donor_directory / "resolved_config.json"
+    if (
+        not input_path.is_file()
+        or sha256_file(input_path) != donor_case.get("input_sha256")
+        or not config_path.is_file()
+        or sha256_file(config_path) != donor_case.get("resolved_config_sha256")
+    ):
+        raise ValueError("saved B0 donor input/config identity differs from its frozen contract")
+
+    evidence = _task41_b0_recovery_evidence_checks(
+        summary,
+        numerical_output,
+        donor,
+        contract_sha256=donor_digest,
+        checkpoint_path=output_path,
+        checkpoint_identity={
+            "donor_contract_sha256": donor_digest,
+            "donor_source_sha": donor.get("source", {}).get("sha"),
+            "donor_window_sha256": donor.get("window", {}).get("sha256"),
+            "consumer_contract_sha256": consumer_digest,
+            "consumer_source_sha": consumer.get("source", {}).get("sha"),
+            "consumer_window_sha256": consumer.get("window", {}).get("sha256"),
+        },
+    )
+    payload = {
+        "schema": "task41.p0.b0.saved_evidence_audit.v1",
+        "status": "COMPLETE" if evidence.get("audit_completed") is True else "INCOMPLETE",
+        "audit_completed": evidence.get("audit_completed") is True,
+        "data_integrity": evidence.get("data_integrity") is True,
+        "recovery_passed": evidence.get("recovery_passed") is True,
+        "joint_action_passed": evidence.get("joint_action_passed"),
+        "qualification_passed": evidence.get("qualification_passed") is True,
+        "official_result": False,
+        "donor": {
+            "run_id": donor_case.get("run_id"),
+            "source_sha": donor.get("source", {}).get("sha"),
+            "contract_sha256": donor_digest,
+            "window_sha256": donor.get("window", {}).get("sha256"),
+            "run_directory": str(donor_directory),
+            "run_manifest_sha256": sha256_file(run_manifest_path),
+            "launcher_summary_sha256": sha256_file(launcher_summary_path),
+            "candidate_summary_sha256": sha256_file(summary_path),
+            "launcher_result_classification": launcher_summary.get("result_classification"),
+        },
+        "consumer": {
+            "run_id": consumer_case.get("run_id"),
+            "source_sha": consumer.get("source", {}).get("sha"),
+            "contract_sha256": consumer_digest,
+            "window_sha256": consumer.get("window", {}).get("sha256"),
+        },
+        "recovery_evidence_recheck": evidence,
+        "checkpoints": evidence.get("checkpoints", []),
+        "raw_evidence_retained": True,
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output_path.with_name(output_path.name + ".tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, output_path)
+    return payload
 
 
 def _task41_b0_numerical_checks(
@@ -2321,14 +2858,59 @@ def main(argv: list[str] | None = None) -> int:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--input", type=Path)
     mode.add_argument("--saved-output-continuation-input", type=Path)
+    mode.add_argument("--saved-b0-evidence-audit", action="store_true")
     parser.add_argument("--summary", type=Path)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--numerical-output", type=Path)
     parser.add_argument("--contract", required=True, type=Path)
     parser.add_argument("--contract-sha256", required=True)
+    parser.add_argument("--consumer-contract", type=Path)
+    parser.add_argument("--consumer-contract-sha256")
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
+    if args.saved_b0_evidence_audit:
+        if (
+            args.input is not None
+            or args.saved_output_continuation_input is not None
+            or args.manifest is not None
+            or args.summary is None
+            or args.numerical_output is None
+            or args.consumer_contract is None
+            or args.consumer_contract_sha256 is None
+        ):
+            parser.error(
+                "saved B0 evidence audit requires donor --summary/--numerical-output "
+                "and a strict --consumer-contract binding"
+            )
+        try:
+            result = check_task41_p0_b0_saved_evidence_audit(
+                summary_path=args.summary,
+                numerical_output=args.numerical_output,
+                contract_path=args.contract,
+                contract_sha256=args.contract_sha256,
+                consumer_contract_path=args.consumer_contract,
+                consumer_contract_sha256=args.consumer_contract_sha256,
+                output_path=args.output,
+                repo_root=root,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            result = {
+                "schema": "task41.p0.b0.saved_evidence_audit.v1",
+                "status": "INCOMPLETE",
+                "audit_completed": False,
+                "data_integrity": False,
+                "recovery_passed": False,
+                "joint_action_passed": None,
+                "qualification_passed": False,
+                "official_result": False,
+                "errors": [f"{type(exc).__name__}: {exc}"],
+                "raw_evidence_retained": True,
+            }
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 2
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("audit_completed") is True else 2
     if args.saved_output_continuation_input is not None:
         checker_only = os.environ.get("TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY") == "1"
         expected_output = (

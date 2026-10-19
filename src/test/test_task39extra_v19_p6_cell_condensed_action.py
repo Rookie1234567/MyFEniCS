@@ -1016,6 +1016,107 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
         assert replay["passed"] is True, replay["errors"]
         assert [row["mode_index"] for row in replay["columns"]] == [0, 1]
         assert all(row["passed"] for row in replay["columns"])
+        assert replay["audit_completed"] is True
+        assert replay["data_integrity"] is True
+        assert replay["recovery_passed"] is True
+        assert replay["joint_action_passed"] is True
+        assert replay["qualification_passed"] is True
+        assert replay["official_result"] is False
+
+        failed_joint_manifest = json.loads(json.dumps(manifest))
+        failed_joint_record = failed_joint_manifest["full_action"]
+        original_joint = failed_joint_record["artifacts"]
+        producer_output = tmp_path
+        p6_values = np.load(
+            producer_output / original_joint["p6_result"]["path"], allow_pickle=False
+        ).copy()
+        port_values = np.load(
+            producer_output / original_joint["port_rhs"]["path"], allow_pickle=False
+        ).copy()
+        reduced_values = np.load(
+            producer_output / original_joint["reduced_rhs"]["path"], allow_pickle=False
+        ).copy()
+        p6_values[0, 0] += 3.0e-7
+        p6_values[-1, 0] += 4.0e-7
+
+        def save_test_array(name, values):
+            path = tmp_path / f"task41_b0_joint_fail_{name}.npy"
+            with path.open("wb") as stream:
+                np.save(stream, values, allow_pickle=False)
+            return {
+                "path": str(path),
+                "bytes": path.stat().st_size,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "shape": list(values.shape),
+                "dtype": str(values.dtype),
+            }
+
+        failed_joint_record["artifacts"] = {
+            "p6_result": save_test_array("p6_result", p6_values),
+            "port_rhs": save_test_array("port_rhs", port_values),
+            "reduced_rhs": save_test_array("reduced_rhs", reduced_values),
+        }
+        failed_joint_errors = [
+            float(np.linalg.norm(p6_values[:, index] - reduced_values[:, index]))
+            / max(
+                float(np.linalg.norm(p6_values[:, index])),
+                float(np.linalg.norm(reduced_values[:, index])),
+                np.finfo(float).tiny,
+            )
+            for index in range(2)
+        ]
+        failed_joint_record["p6_vs_native_reduced_rhs_relative_errors"] = failed_joint_errors
+        failed_joint_record["status"] = "FAIL"
+        failed_joint_manifest["stage"] = "FULL_ACTION_GATE_FAILED"
+        failed_joint_manifest["status"] = "FAIL"
+        failed_joint_manifest["full_action_gate_passed"] = False
+        failed_joint_path = tmp_path / "task41_b0_joint_failure_manifest.json"
+        failed_joint_bytes = json.dumps(
+            failed_joint_manifest, ensure_ascii=False, sort_keys=True
+        ).encode("utf-8")
+        failed_joint_path.write_bytes(failed_joint_bytes)
+        failed_joint_summary = json.loads(json.dumps(summary))
+        failed_joint_binding = failed_joint_summary["b0_recovery_evidence"]
+        failed_joint_binding["manifest"] = {
+            "path": str(failed_joint_path),
+            "bytes": len(failed_joint_bytes),
+            "sha256": hashlib.sha256(failed_joint_bytes).hexdigest(),
+            "stage": "FULL_ACTION_GATE_FAILED",
+        }
+        failed_joint_binding["stage"] = "FULL_ACTION_GATE_FAILED"
+        failed_joint_binding["status"] = "FAIL"
+        failed_joint_replay = _task41_b0_recovery_evidence_checks(
+            failed_joint_summary,
+            tmp_path / "numerical_output",
+            contract,
+            contract_sha256=run_identity["execution_contract_sha256"],
+            expected_mode_indices=(0, 1),
+        )
+        assert failed_joint_replay["audit_completed"] is True, failed_joint_replay["errors"]
+        assert failed_joint_replay["data_integrity"] is True, failed_joint_replay["errors"]
+        assert failed_joint_replay["recovery_passed"] is True
+        assert failed_joint_replay["joint_action_passed"] is False
+        assert failed_joint_replay["official_result"] is False
+        assert failed_joint_replay["passed"] is False
+        assert failed_joint_replay["joint_action_replayed"] is True
+        assert failed_joint_replay["joint_action_status"] == "FAIL"
+        assert len(failed_joint_replay["joint_action_metrics"]) == 2
+        first_metric = failed_joint_replay["joint_action_metrics"][0]
+        np.testing.assert_allclose(
+            first_metric["original_denominator"],
+            max(
+                np.linalg.norm(p6_values[:, 0]),
+                np.linalg.norm(reduced_values[:, 0]),
+            ),
+            rtol=2.0e-15,
+            atol=0.0,
+        )
+        assert first_metric["trace"]["absolute_l2"] == pytest.approx(3.0e-7)
+        assert first_metric["port"]["absolute_l2"] == pytest.approx(4.0e-7)
+        assert first_metric["max_abs_row_index"] == p6_values.shape[0] - 1
+        assert "reproduces the original gate failure" in " ".join(
+            failed_joint_replay["joint_action_errors"]
+        )
 
         original_recover = action.recover_storage
 
@@ -1027,37 +1128,119 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
             recovered[0] += 1.0e-6
             return recovered
 
+        raw_class_artifacts = None
+
+        def save_raw_array(path, values):
+            values = np.asarray(values)
+            with path.open("wb") as stream:
+                np.save(stream, values, allow_pickle=False)
+            return {
+                "path": path.name,
+                "bytes": path.stat().st_size,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "shape": list(values.shape),
+                "dtype": str(values.dtype),
+            }
+
+        def raw_cell_diagnostic(
+            column, residual, volume_rhs, volume_on_recovered, known, recovered
+        ):
+            nonlocal raw_class_artifacts
+            cell = action._cells[0]
+            expansion = cell.expansion.tocsr()
+            if raw_class_artifacts is None:
+                factor, pivots = cell.interior_lu
+                token = hashlib.sha256(repr(tuple(cell.class_key)).encode()).hexdigest()[:12]
+                raw_class_artifacts = {
+                    "class_identity": repr(tuple(cell.class_key)),
+                    "Vii": save_raw_array(failure_directory / f"raw_class_{token}_Vii.npy", block["Vii"]),
+                    "Vit": save_raw_array(failure_directory / f"raw_class_{token}_Vit.npy", block["Vit"]),
+                    "lu_factor": save_raw_array(
+                        failure_directory / f"raw_class_{token}_lu.npy", factor
+                    ),
+                    "lu_pivots": save_raw_array(
+                        failure_directory / f"raw_class_{token}_pivots.npy", pivots
+                    ),
+                }
+            interior_rows = np.asarray(cell.original_interiors, dtype=np.int64)
+            trace_rows = np.asarray(cell.original_trace, dtype=np.int64)
+            active_rows = np.asarray(
+                action.condensed.trace_constraints.owned_active_original_dofs,
+                dtype=np.int64,
+            )
+            known_trace = expansion @ known[active_rows][cell.active_ids]
+            recovered_trace = expansion @ recovered[active_rows][cell.active_ids]
+            stem = f"raw_column_{column}"
+            arrays = {
+                "interior_original_rows": interior_rows,
+                "trace_original_rows": trace_rows,
+                "active_ids": np.asarray(cell.active_ids, dtype=np.int64),
+                "trace_expansion_data": expansion.data,
+                "trace_expansion_indices": expansion.indices,
+                "trace_expansion_indptr": expansion.indptr,
+                "cell_permutation_info": np.asarray([0], dtype=np.uint32),
+                "known_interior": known[interior_rows],
+                "known_trace": known_trace,
+                "recovered_interior": recovered[interior_rows],
+                "recovered_trace": recovered_trace,
+                "native_volume_rhs_interior": volume_rhs[interior_rows],
+                "native_volume_action_interior": volume_on_recovered[interior_rows],
+                "native_volume_residual_interior": residual[interior_rows],
+            }
+            cell_artifacts = {
+                name: save_raw_array(failure_directory / f"{stem}_{name}.npy", value)
+                for name, value in arrays.items()
+            }
+            return {
+                "schema": "task41.p0.b0.raw_local_recovery_diagnostic.v1",
+                "status": "PASS",
+                "selected_cell_count": 1,
+                "class_count": 1,
+                "global_shared_class_count": 1,
+                "global_shared_class_limit": 3,
+                "structure_identity_passed": True,
+                "raw_matrices_are_independently_retabulated": True,
+                "cells": [
+                    {
+                        "structure_identity_passed": True,
+                        "class_artifacts": raw_class_artifacts,
+                        "artifacts": cell_artifacts,
+                    }
+                ],
+            }
+
         monkeypatch.setattr(action, "recover_storage", finite_bad_recovery)
         failure_directory = tmp_path / "finite_gate_failure"
-        with pytest.raises(ValueError, match="failed its original gates"):
-            _task41_b0_full_size_two_input_identity_check(
-                probes=probes,
-                carrier=carrier,
-                action=action,
-                provider=provider,
-                volume_action=volume_action,
-                original_port_block=original_h,
-                output_directory=failure_directory,
-                allocation_gate=lambda _label, facts: {
-                    "admitted": True,
-                    "persistent_bytes": facts["additional_payload_bytes"],
-                    "workspace_bytes": facts["workspace_bytes"],
-                },
-                runtime=runtime,
-                run_identity=run_identity,
-            )
+        refined_result = _task41_b0_full_size_two_input_identity_check(
+            probes=probes,
+            carrier=carrier,
+            action=action,
+            provider=provider,
+            volume_action=volume_action,
+            original_port_block=original_h,
+            output_directory=failure_directory,
+            allocation_gate=lambda _label, facts: {
+                "admitted": True,
+                "persistent_bytes": facts["additional_payload_bytes"],
+                "workspace_bytes": facts["workspace_bytes"],
+            },
+            runtime=runtime,
+            run_identity=run_identity,
+            raw_cell_diagnostic=raw_cell_diagnostic,
+        )
+        assert refined_result["status"] == "PASS"
 
         failed_manifest_path = failure_directory / "task41_b0_recovery_manifest.json"
         failed_manifest_bytes = failed_manifest_path.read_bytes()
         failed_manifest = json.loads(failed_manifest_bytes)
-        assert failed_manifest["stage"] == "RECOVERY_GATE_FAILED"
-        assert failed_manifest["status"] == "FAIL"
+        assert failed_manifest["stage"] == "FULL_ACTION_QUALIFIED"
+        assert failed_manifest["status"] == "PASS"
         assert len(failed_manifest["columns"]) == 2
         for column in failed_manifest["columns"]:
             assert column["status"] == "CAPTURED"
-            assert column["recovery_passed"] is False
-            assert np.isfinite(column["forward_relative_error"])
+            assert column["recovery_passed"] is True
             assert column["forward_relative_error"] > 1.0e-11
+            assert column["final_forward_relative_error"] <= 1.0e-11
             for artifact_name in (
                 "known_field",
                 "native_volume_rhs",
@@ -1096,8 +1279,8 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
             },
         }
         failed_binding = failed_summary["b0_recovery_evidence"]
-        assert failed_binding["status"] == "FAIL"
-        assert failed_binding["stage"] == "RECOVERY_GATE_FAILED"
+        assert failed_binding["status"] == "PASS"
+        assert failed_binding["stage"] == "FULL_ACTION_QUALIFIED"
         failed_record = failed_binding["manifest"]
         assert failed_record["sha256"] == hashlib.sha256(failed_manifest_bytes).hexdigest()
         failed_summary["b0_recovery_evidence"].update(
@@ -1116,18 +1299,79 @@ def test_task41_two_input_full_size_rhs_recovery_with_real_p6_cells_and_mpc_map(
             },
             "window": {"sha256": run_identity["campaign_window_sha256"]},
         }
+        checkpoint_path = tmp_path / "failed_replay_checkpoint.json"
         failed_replay = _task41_b0_recovery_evidence_checks(
             failed_summary,
             failure_directory / "numerical_output",
             failed_contract,
             contract_sha256=run_identity["execution_contract_sha256"],
             expected_mode_indices=(0, 1),
+            checkpoint_path=checkpoint_path,
+            checkpoint_identity={"consumer_contract_sha256": "test-contract"},
         )
-        assert failed_replay["passed"] is False
-        assert failed_replay["joint_action_status"] == "NOT_RUN"
+        assert failed_replay["passed"] is True
+        assert failed_replay["audit_completed"] is True
+        assert failed_replay["data_integrity"] is True
+        checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        assert checkpoint["status"] == "IN_PROGRESS"
+        assert checkpoint["identity"] == {
+            "consumer_contract_sha256": "test-contract"
+        }
+        checkpoint_stages = [row["stage"] for row in checkpoint["events"]]
+        assert checkpoint_stages[0] == "JOINT_ACTION_CHUNKS_COMPLETE"
+        assert "BEFORE_SMALL_CLASS_GETRS" in checkpoint_stages
+        assert "AFTER_SMALL_CLASS_GETRS" in checkpoint_stages
+        first_getrs = checkpoint_stages.index("BEFORE_SMALL_CLASS_GETRS")
+        assert checkpoint_stages.index("JOINT_ACTION_CHUNKS_COMPLETE") < first_getrs
+        first_class = checkpoint["events"][first_getrs]
+        assert first_class["pivot_copy_owns_data"] is True
+        assert first_class["pivot_copy_writeable"] is True
+        assert first_class["pivot_copy_dtype"] == "int32"
+        assert any(
+            row["stage"] == "COLUMN_AUDIT_RETURNED" and row.get("column") == 0
+            for row in checkpoint["events"]
+        )
+        assert failed_replay["official_result"] is False
+        assert failed_replay["recovery_passed"] is True
+        assert failed_replay["joint_action_passed"] is True
+        assert failed_replay["joint_action_status"] == "PASS"
         assert [row["mode_index"] for row in failed_replay["columns"]] == [0, 1]
         assert all(np.isfinite(row["final_forward_relative"]) for row in failed_replay["columns"])
-        assert all(row["final_forward_relative"] > 1.0e-11 for row in failed_replay["columns"])
+        assert all(row["initial_forward_relative"] > 1.0e-11 for row in failed_replay["columns"])
+        assert all(row["final_forward_relative"] <= 1.0e-11 for row in failed_replay["columns"])
+        raw_state_checked = False
+        for column in failed_manifest["columns"]:
+            raw = column.get("raw_cell_diagnostic")
+            if not isinstance(raw, dict) or not raw.get("cells"):
+                continue
+            initial = np.load(
+                failure_directory / column["artifacts"]["recovered_storage"]["path"],
+                allow_pickle=False,
+            )
+            for cell_record in raw["cells"]:
+                cell_artifacts = cell_record["artifacts"]
+                interior = np.load(
+                    failure_directory / cell_artifacts["interior_original_rows"]["path"],
+                    allow_pickle=False,
+                )
+                recovered_initial = np.load(
+                    failure_directory / cell_artifacts["recovered_interior"]["path"],
+                    allow_pickle=False,
+                )
+                np.testing.assert_array_equal(recovered_initial, initial[interior])
+                refinement_rows = column.get("same_lu_refinement", [])
+                if refinement_rows:
+                    final = np.load(
+                        failure_directory / refinement_rows[-1]["artifacts"]["storage"]["path"],
+                        allow_pickle=False,
+                    )
+                    assert not np.array_equal(recovered_initial, final[interior])
+                    raw_state_checked = True
+        assert raw_state_checked, "fixture did not distinguish the initial and corrected recovery states"
+        assert not any(
+            "raw local rows, MPC trace expansion" in error
+            for error in failed_replay["integrity_errors"]
+        )
     finally:
         volume_action.buffer.destroy()
         action.destroy()

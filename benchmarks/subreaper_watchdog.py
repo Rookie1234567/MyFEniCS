@@ -60,6 +60,17 @@ def _validate_task41_consumer_source(contract: dict[str, Any], environment: dict
         ['git', 'status', '--porcelain', '--untracked-files=normal'],
         cwd=Path.cwd(), check=True, capture_output=True, text=True
     ).stdout
+    if environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') == '1':
+        if (
+            not re.fullmatch(r'[0-9a-f]{40}', str(consumer_sha or ''))
+            or environment.get('TASK41_P0_CHECKER_SOURCE_SHA') != head
+            or consumer_sha != head
+            or head != contract.get('source', {}).get('sha')
+            or branch != contract.get('branch')
+            or status.strip()
+        ):
+            raise ValueError('Task41 B0 saved audit requires the clean current consumer/checker source')
+        return True
     checker_only = environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') == '1'
     if checker_only:
         if not re.fullmatch(r'[0-9a-f]{40}', str(consumer_sha or '')):
@@ -148,15 +159,16 @@ def _validate_campaign_closeout_authorization(
 
         continuation_flag = environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION')
         continuation = continuation_flag == '1'
+        b0_evidence_audit = environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') == '1'
         if continuation_flag not in {None, '1'} or (
             continuation != (environment.get('TASK41_P0_CONSUMER_SOURCE_SHA') is not None)
-        ):
+        ) or (b0_evidence_audit and not continuation):
             raise ValueError('Task41 continuation source markers are incomplete')
         contract, actual_contract_sha = require_task41_p0_contract(
             contract_path,
             expected_sha256=str(contract_sha),
             current_root=Path.cwd(),
-            check_current_source=not continuation,
+            check_current_source=(not continuation or b0_evidence_audit),
             require_clean_source=True,
         )
         if continuation:
@@ -247,6 +259,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_a2_independent_p6_iterative_checker',
         'task41_p0_b0_independent_iterative_checker',
         'task41_p0_saved_output_continuation_checker',
+        'task41_p0_b0_saved_evidence_audit_checker',
     }:
         if contract_version != 41:
             raise ValueError('Task41 checker requires a Task41 P0 execution contract')
@@ -255,7 +268,102 @@ def _validate_campaign_closeout_authorization(
             Path(str(contract.get('runtime', {}).get('runtime_prefix', '')))
             / 'bin/python'
         ).resolve()
-        if checker_kind == 'task41_p0_saved_output_continuation_checker':
+        if checker_kind == 'task41_p0_b0_saved_evidence_audit_checker':
+            if (
+                environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') != '1'
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
+                or len(argv) != 18
+                or Path(argv[0]).resolve() != expected_python
+                or argv[1:3] != ['-m', 'src.runners.task41_p0_checker']
+                or argv[3] != '--saved-b0-evidence-audit'
+                or argv[4::2] != [
+                    '--summary', '--numerical-output', '--contract', '--contract-sha256',
+                    '--consumer-contract', '--consumer-contract-sha256', '--output',
+                ]
+                or argv[11] != environment.get('TASK41_P0_DONOR_CONTRACT_SHA256')
+                or argv[13] != str(Path(str(contract_path)).resolve())
+                or argv[15] != contract_sha
+                or authorization.get('expected_channel_count') is not None
+                or environment.get('TASK41_P0_CHECKER_SOURCE_SHA') != authorization.get('source_sha')
+            ):
+                raise ValueError('closeout command is not the registered saved B0 evidence auditor')
+            from src.runners.task41_p0_contract import (
+                require_task41_p0_contract, task41_case_id_for_run_id,
+            )
+            consumer_case = contract.get('case')
+            donor_contract_path = Path(argv[9]).resolve()
+            donor_summary_path = Path(argv[5]).resolve()
+            donor_numerical_output = Path(argv[7]).resolve()
+            output_path = Path(argv[17]).resolve()
+            results_root = (root / 'results' / str(contract['case']['model_id'])).resolve()
+            donor_contract_env = Path(environment.get('TASK41_P0_DONOR_CONTRACT_PATH', '')).resolve()
+            donor_contract_sha = environment.get('TASK41_P0_DONOR_CONTRACT_SHA256')
+            if (
+                not isinstance(consumer_case, dict)
+                or task41_case_id_for_run_id(str(consumer_case.get('run_id', ''))) != 'B0'
+                or donor_contract_path != donor_contract_env
+                or not re.fullmatch(r'[0-9a-f]{64}', str(donor_contract_sha or ''))
+                or donor_summary_path != Path(environment.get('TASK41_P0_B0_SUMMARY_PATH', '')).resolve()
+                or donor_summary_path.name != 'task40_v10_p6_candidate_summary.json'
+                or donor_numerical_output != Path(environment.get('TASK41_P0_B0_NUMERICAL_OUTPUT_PATH', '')).resolve()
+                or output_path != Path(environment.get('TASK41_P0_B0_RESULT_PATH', '')).resolve()
+                or output_path.name != 'task41_p0_b0_saved_evidence_audit.json'
+                or output_path.parent != Path(environment.get('TASK41_P0_B0_OUTPUT_DIR', '')).resolve()
+                or not output_path.is_relative_to(results_root)
+            ):
+                raise ValueError('saved B0 evidence audit paths differ from the registered result directory')
+            donor_contract, donor_digest = require_task41_p0_contract(
+                donor_contract_path,
+                expected_sha256=str(donor_contract_sha),
+                current_root=root,
+                check_current_source=False,
+                require_clean_source=False,
+            )
+            donor_case = donor_contract.get('case')
+            if (
+                donor_digest != donor_contract_sha
+                or not isinstance(donor_case, dict)
+                or task41_case_id_for_run_id(str(donor_case.get('run_id', ''))) != 'B0'
+                or any(donor_case.get(key) != consumer_case.get(key) for key in (
+                    'model_id', 'method', 'mpi_size', 'input_sha256',
+                    'physical_model_sha256', 'resolved_config_sha256',
+                ))
+            ):
+                raise ValueError('saved B0 donor and consumer contract identities differ')
+            donor_run_root = donor_summary_path.parent.resolve()
+            donor_manifest = donor_run_root / 'run_manifest.json'
+            donor_run_summary = donor_run_root / 'run_summary.json'
+            resolved_config = donor_run_root / 'resolved_config.json'
+            input_candidate = Path(str(consumer_case.get('input_path', '')))
+            input_path = (input_candidate if input_candidate.is_absolute() else root / input_candidate).resolve()
+            if (
+                not donor_run_root.is_relative_to(results_root)
+                or donor_numerical_output != (donor_run_root / 'numerical_output').resolve()
+                or not donor_numerical_output.is_dir()
+                or donor_run_root == output_path.parent
+                or donor_run_root.is_relative_to(output_path.parent)
+                or output_path.parent.is_relative_to(donor_run_root)
+                or not donor_manifest.is_file()
+                or not donor_run_summary.is_file()
+                or not resolved_config.is_file()
+                or not input_path.is_file()
+                or hashlib.sha256(input_path.read_bytes()).hexdigest() != donor_case.get('input_sha256')
+                or hashlib.sha256(resolved_config.read_bytes()).hexdigest() != donor_case.get('resolved_config_sha256')
+            ):
+                raise ValueError('saved B0 donor evidence paths or identity hashes are invalid')
+            manifest_payload = json.loads(donor_manifest.read_text(encoding='utf-8'))
+            summary_payload = json.loads(donor_run_summary.read_text(encoding='utf-8'))
+            if (
+                Path(str(manifest_payload.get('output_directory', ''))).resolve() != donor_run_root
+                or Path(str(manifest_payload.get('numerical_output_directory', ''))).resolve() != donor_numerical_output
+                or summary_payload.get('run_id') != donor_case.get('run_id')
+            ):
+                raise ValueError('saved B0 run manifest and summary do not identify the donor contract')
+            input_paths = [str(path.resolve()) for path in (
+                donor_contract_path, Path(str(contract_path)).resolve(), donor_summary_path,
+                donor_manifest, donor_run_summary, input_path, resolved_config,
+            )]
+        elif checker_kind == 'task41_p0_saved_output_continuation_checker':
             checker_only = (
                 environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') == '1'
             )
