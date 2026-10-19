@@ -1,4 +1,4 @@
-# Task42 A0 测试与独立费用摘要
+# Task42测试与独立费用摘要
 
 所有测试均在原生activation环境运行，PETSc标量为complex128、整数为Int32；MPI rank环境路径一致，六个数学线程变量均为1。测试前后对应源码SHA保持不变。以下时间和RSS来自GNU `/usr/bin/time`记录：wall按其输出精度显示至0.01秒，不称作高精度`CLOCK_MONOTONIC`；RSS是计时命令收据值，不是整棵进程树或cgroup峰值。
 
@@ -61,3 +61,30 @@ A1回归验证资源入口/阶段Delta、C bridge INFOG(17) producer→consumer�
 ## 后续定向资源回归（2026-10-19）
 
 4个serial selector通过：`test_task42_runtime_labels_only_known_whole_job_cap_exceedance`、`test_process_tree_sample_bounded_reread_requires_same_pid_start_ticks`、`test_process_tree_sample_keeps_unresolved_and_reused_pid_unknown`、`test_task42_runtime_does_not_reserve_phase_workspace_permanently`。原062050Z末样本重放仍为拒绝/incomplete+unknown，错误向量不含`runtime_whole_job_J_exceeds_Task42_C`；已知完整整树J>C仍保留超限标签，J=C与J<C按原合同通过。pytest原stdout为`4 passed in 0.22 s`，parent monotonic wall `0.505579699 s`是唯一费用；pytest PID未持久化（`not_persisted`）。源码SHA：`4c2c86b57b6c0b98c5503d4c2542f0333dbe7f77e97e5e14ef242ea4835ecd2e`；测试SHA：`cdceb62251304c80b3e7bd318ad94d847053757dc6dfeb9032a540bcaf8ab8`。离线重放、错误向量及10项逐项清单见[回归记录](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/runtime_gate_error_classification_20261019T070922Z/classification_error_vectors.json)和[SHA256清单](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/runtime_gate_error_classification_20261019T070922Z/SHA256SUMS.txt)。早期fixture失败raw保留；本轮未运行MPI、FE、PDE、factor、MatSolve或QEP。
+
+## A2共享合同serial/MPI2批次（2026-10-19）
+
+合同代码与测试共21个路径已按本轮审核提交为`44f671cefd9a3130897bfc898ba21cde8528fbe4`；测试均针对该提交对应source after map。测试使用小数组、sentinel、mock或轻量公共输入合同，不创建实际A2网格/QEP/FE/factor/solve，不构成A2数值资格。2个MPI-only case在serial中skip，由MPI2批次实际覆盖。
+
+| Attempt | 选择器/覆盖 | pytest结果 | 唯一pytest parent wall | 收据与说明 |
+|---|---|---:|---:|---|
+| [`a2_contract_regression_20261019T090830Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_regression_20261019T090830Z/serial/pytest_receipt.json) | 首轮串行，`-x` | 5 passed, 1 failed | 4.727081632 s | 保留sentinel首错；receipt绑定本次as-run源码SHA，未声称整组通过 |
+| [`a2_contract_native_serial_retry_20261019T092107Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_serial_retry_20261019T092107Z/pytest_completion.json) | serial全合同范围 | 26 passed, 6 failed, 2 skipped | 3.545411391 s | 夹具shape/协议错误保留；按本attempt的as-run源码SHA绑定 |
+| [`a2_contract_native_serial_final_20261019T092308Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_serial_final_20261019T092308Z/pytest_completion.json) | 修后serial全合同范围 | 31 passed, 1 failed, 2 skipped | 3.368963186 s | 保留唯一cfg重复参数失败；按本attempt的as-run源码SHA绑定 |
+| [`a2_contract_target_serial_20261019T092343Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_target_serial_20261019T092343Z/completion.json) | coupling selector定向重测 | 1 failed | 2.321764543 s | 保留参数绑定失败；按本attempt的as-run源码SHA绑定 |
+| [`a2_contract_target_serial_final_20261019T092417Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_target_serial_final_20261019T092417Z/completion.json) | 同一coupling selector定向重测 | 1 passed | 2.253717981 s | 修复后小选择器通过；按本attempt的as-run源码SHA绑定 |
+| `a2_contract_native_serial_final2_20261019T092443Z` | 最终serial合同收口 | 32 passed, 2 skipped | 3.295652662 s | pytest stdout显示2.93 s，仅parent monotonic wall计费 |
+| `a2_contract_native_mpi2_20261019T092648Z` | root writer成功、rank-local坏shape拒绝、root writer失败、root resource拒绝 | rank 0/1各4 passed；parent rc0 | 2.878076813 s | 四个MPI2 selector同一parent一次记账；rank私有basetemp |
+
+091322Z、091422Z及092019Z均在pytest启动前因本地source清单读取、tuple键序列化或活动进程检查错误而拒绝，pytest费用为0；这些原失败输出保留。ABI parent wall单列，不并入pytest费用。以上7个实际启动的pytest parent累计为`22.390668208 s`，按每个parent receipt一次相加，不按MPI rank数乘。每个早期attempt绑定它自己的receipt与as-run源码SHA；只有最终serial和MPI2的source after map与提交`44f671cefd9a3130897bfc898ba21cde8528fbe4`相同。最终serial 32 passed/2 skipped的两个skip是`test_task42_collective_output_rejects_single_rank_bad_shape_before_writer`和`test_task42_mpi_root_resource_refusal_propagates_before_allocation`；MPI2分别证明单rank输入坏形状能在writer前全rank拒绝，以及root resource refusal一致传播且guarded allocation未调用。
+
+最终MPI2证据确认：成功时两rank收到相同payload/identity descriptor，只有rank0执行两文件writer；坏shape和预存目标文件写失败均在所有rank得到相同错误，rank1不执行writer；root resource refusal在受保护分配前传播，allocation调用数为0。每个rank证据含错误、descriptor、writer调用数和清场状态。rank0/rank1实际affinity分别为CPU2/CPU10且与请求map一致；PETSc为complex128/Int32，policy为default，`Mems_allowed_list`覆盖`0-1`，数学线程变量均为1。具体收据：
+
+- [MPI2 pytest parent](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_mpi2_20261019T092648Z/mpi2_pytest_parent.json)
+- [MPI2 ABI rank records](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_mpi2_20261019T092648Z/mpi2_abi_ranks.json)
+- [post-ABI fresh gate](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_mpi2_20261019T092648Z/post_abi_fresh_gate.json)
+- 最终serial stdout和parent receipt位于`results/task42hybrid_az90_50x50_17x20_0p7nm/a2_contract_native_serial_final2_20261019T092443Z/`。
+
+这批结果只证明公共合同、预算绑定、root writer/错误传播和分配前拒绝；不证明实际A2网格、QEP、局部凝聚、MUMPS填充或物理结果。A2所有阶段Delta仍`pending-sizing`并保持不可运行。详细资格边界与下一步对象清单见[response_v1](../response_v1.md)。
+
+A2费用仅沿Task42各parent receipt记账，未更改Task041 V5、历史raw或既有账目。所有旧失败attempt均保留；ABI parent独立于pytest parent，未启动pytest的脚手架拒绝不收费。

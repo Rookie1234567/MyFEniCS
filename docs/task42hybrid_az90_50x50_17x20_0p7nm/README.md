@@ -13,7 +13,7 @@
 | 后续主线 | 前述必要门通过后直接0.7 nm，不要求5/2 nm中间梯级 |
 | Codex项目 | **原项目显示名、根目录、环境和账户不变**；在原项目内安全切换Git分支 |
 | 输出 | 本目录`response_v1.md`与`outcomes/`，大工件用独立ignored结果根 |
-| 当前状态 | A0完成；A1 Task42资源门、软48小时目标和小型MUMPS direct生命周期合同已接线并通过定向serial/MPI2回归；正式Full3D PDE仍未运行 |
+| 当前状态 | A0完成；A1已产生13.5 nm数值worker输出与场文件，但终态整作业资源authority不完整而拒绝，不能称整场通过；A2共享合同serial/MPI2通过，阶段预算仍待sizing，当前不可启动，也未运行QEP/FE/factor/solve |
 
 Task041历史仍保留在继承目录；其旧模型结果、预算、失败和Review V19四次B诊断不被更名或改写。本任务从新的物理参考开始，不以解决旧物理全部待办作为前置，也不将旧失败视为自动解决。
 
@@ -31,6 +31,14 @@ Task42分阶段准入使用整作业`J=max(launcher进程树RSS,可证明适用�
 
 定向合同回归分开验证Task42公共入口/资源门fixture与原生8×8 MUMPS factor生命周期；后者覆盖symbolic、numeric、MatSolve、pre-recovery packet、销毁及小矩阵残差，并在同一新编译C bridge上覆盖`ICNTL(14)=None`默认路径和显式整数40控制。这些并非一次完整Full3D公共入口PDE运行。纯资源fixture另验证recovery gather临时数组按每rank分配并汇总，不把全局长度误记为只分配一次。具体selector、源码SHA、attempt费用和失败保留记录见[A1测试摘要](outcomes/test_summary.md)与[机器可读合同记录](outcomes/a1_contract_validation.json)。
 
-这些结果是小矩阵和资源合同资格，不是13.5 nm场景的assembly、QEP、MUMPS分解、场恢复或R/T/A结果。正式A1仍需主控审核后独立fresh MPI8 host/resource/ABI门；逐rank实际affinity及policy/scope证据必须由正式入口采集，不能从启动命令推断。OOM/disk等未由Task42阶段authority单独采样的主机保护也必须在正式fresh门中给出实际证据。当前没有绕过正式fresh门的授权。
+以上段落记录的是正式A1启动前的计划状态。正式A1后来已运行并生成数值输出，但整场因末次进程树资源authority不完整而fail-closed拒绝；当前结论与缺项见[正式A1终态](outcomes/summary.md#2026-10-19正式a1非pytest运行与终态)及[response_v1](response_v1.md)。
 
 开始执行前读取根/目录AGENTS、仓库工作原则和本task；检查HEAD、upstream、dirty、stash及实际运行任务。切分支不能覆盖未提交工作或热改运行源码。用户当前Codex项目名不等于Git分支名，不另建空项目、不要求重新安装环境。
+
+## A2 Hybrid-direct当前边界
+
+Task42独立A2输入使用用户指定的13.5 nm Si、p6/h10/M120，传播模型为`full3d_uniform_cg`，traction为`full3d_one_cell_exact_schur`。公共路由和共享输出/分级资源合同已有小型serial与MPI2合同覆盖；这只验证调用、身份、拒绝时序与collective写入行为，不是有限元、QEP或A2数值资格。
+
+A2仍不可启动：每阶段`Delta`都为`pending-sizing`，没有绑定实际网格、每rank/每side DoF与NNZ、QEP工作区、恢复缓存及MUMPS填充的预算清单。dat原字节SHA和不含预算引用字段的规范化预算basis是两个不同身份，不能互相冒充。PETSc `KSP.setUp()`把MUMPS分析和因子分解放在同一阶段门内，目前没有真实分离的symbolic/numeric gate。外通道行的`R/T`字段仍按`propagating`筛选，而端口总功率按正向功率判定；有损Si下非传播标记的零级可能仍传功率，需先用小型解析fixture审清行级与总量口径。详见[Task42当前回应](response_v1.md)、[结果摘要](outcomes/summary.md)和[测试/费用摘要](outcomes/test_summary.md)。
+
+通俗地说，Hybrid把中间区域的场用截面模式表示，两侧区域仍由有限元网格求解；这样可减少中间长结构的三维自由度，但会增加模式耦合和恢复数据。阶段预算要求在每次大分配前先估算该步新增内存；目前的小测试只验证接口和拒绝传播，不证明A2物理解正确，也不证明实际容量足够。

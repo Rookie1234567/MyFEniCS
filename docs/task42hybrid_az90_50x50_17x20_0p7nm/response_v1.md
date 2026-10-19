@@ -1,4 +1,4 @@
-# Task42 执行回应 v1：A0 输入与 A1 正式运行终态
+# Task42 执行回应 v1：A0 输入、A1终态与A2合同阶段
 
 ## 本阶段结论
 
@@ -94,7 +94,7 @@ A1合同回归、历史失败保留和正式run终态见[测试摘要](outcomes/
 |---|---|---|
 | 数值worker summary | `case_status=completed`、`official_result=true`；完整原方程相对残差`9.306460504345312e-11`，finite=true | worker确实写出了数值结果；这个字段不替代外层Task42资源门 |
 | 主DtN端口结果 | R=`0.2550072646379847`，T=`0.056598948040126884`，A_port=`0.6883937873218885` | 以DtN端口模态振幅计算；外参考面z=130/−10 nm，底部有损介质功率包含边界相位修正 |
-| 体吸收 | A_volume=`0.6883937861128354`；A_port−A_volume=`1.2090530798758437e-9`；R+T+A_volume=`0.9999999987909469` | 吸收按`0.5*k0*Im(epsilon_r)*|E_total|^2`对Si物理材料单元积分，空气与PML排除 |
+| 体吸收 | A_volume=`0.6883937861128354`；A_port−A_volume=`1.2090530798758437e-9`；R+T+A_volume=`0.9999999987909469` | 吸收按`0.5*k0*Im(epsilon_r)*abs(E_total)^2`对Si物理材料单元积分，空气与PML排除 |
 | 零级反射 | R00_s=`0.254974601609543`；R00_p=`4.5883121973545914e-24`；R00_total=`0.254974601609543` | s/p分别列出；R00与全168项反射总和是不同量 |
 | 外层RUN / public / service | RUN exit 1、public driver rc 3、service ExecMainStatus 3，Invocation=`048a5d671150436f9c05cd1bfb5a9d29` | RUN最终分类为`task42_runtime_resource_gate_refused`；三层退出状态不能合并成数值失败或通过 |
 
@@ -127,3 +127,37 @@ public completion记录parent wall `313.734830358 s`，作为Task42本次正式a
 顶部反射差异仍未解释。top最大拟合残差`0.9980693005722018`对应倏逝级`(m=2,n=1,s)`，该级反射功率贡献为0，因此此高残差本身不能解释总反射差。原运行没有保存探针面z=125/−5 nm的24×24采样E/H；现存NPZ只含z=10/30/60/90/110 nm数据，不能拿这些内域参考数组替代。未重建网格/算子或重新求解，未修改存档诊断值和生产后处理；以上仅是离线解释，不构成物理资格结论。
 
 证据清单更正：先前报告的`856e8089…`是通知收据加入前7项清单摘要，旧清单字节未留存；加入`main_notification_receipt.json`后，8项清单摘要为`8be9b3083fc11689ba0a59f96cca148c139e6850f4b5528e5d638587b299e162`。之后追加更正记录并重生当前10项清单，最终摘要及逐项校验见[分类证据SHA256SUMS](../../results/task42hybrid_az90_50x50_17x20_0p7nm/runtime_gate_error_classification_20261019T070922Z/SHA256SUMS.txt)；不声称保有旧7项清单副本。
+
+## A2 Hybrid-direct合同阶段（2026-10-19）
+
+### 实现身份与当前资格
+
+A2是独立的Task42 Hybrid-direct profile，不借用Task039身份或Task041 packet。模型仍为用户指定13.5 nm Si、50×50 nm周期、17×20 nm光栅、高120 nm、z域−10..130 nm、接口10/110 nm、方位90°、掠入射1°、s偏振、p6/h10/M120、MPI8；传播使用`full3d_uniform_cg`，traction使用`full3d_one_cell_exact_schur`。实现提交为`44f671cefd9a3130897bfc898ba21cde8528fbe4`，parent为`ab1af4f263fc63ee7e6bc04499dc1ee366a7afb4`，包含21个源代码、测试和输入配置路径，不含本回应及其他文档。该合同阶段没有运行mesh、QEP、FE、MUMPS factor、MatSolve或正式A2。
+
+A2输入完整原字节SHA为`42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`。独立预算basis SHA为`80c084655f67587c0616de782cf0a3e2e50cb41ea357bf4e09948cb0e7786332`；它从解析后的dat规范值计算，且仅移除`execution.phase_budget_manifest`与`execution.phase_budget_manifest_sha256`两个预算引用字段。basis不是dat原字节SHA。当前没有完整、绑定源码/输入/材料/MPI及各rank/side sizing数据的phase budget manifest，所有A2阶段`Delta`仍是`pending-sizing`，所以profile保持fail-closed、不可启动。
+
+静态调用链已贯通公共`run_case` → execution plan → Task038 launcher/worker → Task42 adapter → 共享Task032 Hybrid direct数值内核。Task42输出按实际`sample_x/y/z`确定数组形状，核验复E/H数组、完整外通道键和q索引映射、来源身份及canonical前缀。写文件由root执行；本地验证或写入拒绝先以一致结果传播，各rank不进入后续writer/求解操作。预算basis按MPI rank及bottom/top side分别精确绑定，不能用全rank共享字符串描述冒充局部实测basis。Task039原schema、shape检查和profile白名单保持原行为。
+
+分配前拒绝的小型合同覆盖mesh/空间、QEP operator与求解、局部侧构造、耦合/增广矩阵、MUMPS setup、解算、恢复和导出边界。PETSc `KSP.setUp()`当前把MUMPS analysis与factorization合并；只能报告一个`direct_mumps_factor_setup`阶段，不能宣称symbolic/numeric已独立gate。源绑定对象预算仍待实际mesh/DoF/NNZ/填充证据，不把单个240×240数组或A1内存峰值当完整Delta。
+
+### 合同测试结果与费用
+
+最终serial attempt `a2_contract_native_serial_final2_20261019T092443Z`结果为32 passed、2 skipped；两个MPI2专属拒绝传播case在MPI2批次执行。MPI2 attempt `a2_contract_native_mpi2_20261019T092648Z`只运行4个指定collective selector，每个rank均报告4 passed，parent rc=0。动态rank map为rank0→CPU2、rank1→CPU10，实际affinity精确相等；PETSc complex128/Int32、default memory policy、full-node `Mems_allowed_list`及六线程变量也已核。MPI2确认root独写成功、单rank坏shape拒绝、root预存文件写失败一致传播，以及root资源拒绝发生在受保护分配之前。两次结果均是小数组/桩的合同资格，不是FE/A2数值资格。
+
+上述pytest实际启动父进程的wall只按parent receipt计费：serial各尝试和MPI2最终attempt的累计为22.390668208秒，按attempt各计一次、不按rank数相乘；最终serial parent为3.295652662秒，最终MPI2 parent为2.878076813秒。最终serial的pytest显示时长2.93秒、MPI rank各自stdout时长均不作为费用。ABI parent另有收据，不并入pytest费用。早期失败保留；091322Z、091422Z、092019Z为pytest未启动的本地准备拒绝，不收费。逐次命令、错误与清场证据索引见[测试/费用摘要](outcomes/test_summary.md)与ignored `results/task42hybrid_az90_50x50_17x20_0p7nm/`。
+
+### 下一阶段A2 sizing与外通道功率审查建议
+
+下表是后续预算数据的取得顺序，不是本次已执行工作，也不授权启动实际mesh或QEP。Task42仍使用`C=min(256 GiB,Cmax)`、`R=384 GiB`、`W=max(8 GiB,0.05C)`及`warning=0.9C`；每个真实阶段先绑定input/source/MPI/side/rank对象表，并审核`J+Delta+W<=C`、`MemAvailable>=R+Delta+W`与有限祖先headroom。运行期继续使用`J<=C`和`MemAvailable>=R`，未知authority保持拒绝。
+
+| 阶段 | 需实际取得的数据与计算依据 | 当前边界 |
+|---|---|---|
+| 边界拟合网格 | 先为Gmsh与分布式坐标、连接、标签及临时副本建立独立保守上界；获准后mesh-only读取实际cells/vertices/ghosts与每rank分布，释放临时对象并保存来源 | 只有纯fixture；尚无A2生产网格计数，mesh-only也须先有自身预算 |
+| 2D空间与MPC | 由真实p6截面space取得全/局部DoF、owner范围、collapse map、Floquet slave/master映射和数据类型 | 数量未知；不可凭周期面积换算或A1全3D DoF猜测 |
+| 全/约化QEP算子 | 为K0/K1/K2/M及full-to-reduced transform读取实际本地行、AIJ NNZ、同时存活矩阵和复制数；每个AIJ矩阵至少按`nnz*(ScalarType字节+PetscInt字节)+(本地行数+1)*PetscInt字节`计算稀疏主体，再加组装临时量 | 无真实NNZ；不能用单个稠密240×240数组作总预算 |
+| QEP求解与模态 | 以实际PEP维度、`ncv/mpd`、保留候选数、左右/正负模态与重叠矩阵尺寸清点同时驻留向量和矩阵；对SLEPc后端工作区给出有依据范围或保持拒绝 | 后端工作区及模式保留量未知；尚未运行QEP |
+| bottom/top凝聚与traction | 分rank、分side记录局部mesh、owned cells/rows、geometry classes、MPC、Schur NNZ、cell tensor/LU与recovery cache；核实`full3d_one_cell_exact_schur`所需10 nm轴向局部网格和实际traction轴向网格一致 | 上下侧basis不能共用；实际局部网格与traction计数未取得 |
+| coupling、增广与解 | 按真实块shape/NNZ、完整双向外键、modal RHS、映射与同时驻留pack/copy算Delta；MUMPS阶段要有实际augmented NNZ、ordering/fill与工作区的可辩护预估 | direct `KSP.setUp()`合并analysis/factorization；其setup前无可用实测INFOG，未有可靠填充上界就不得放行该大分配 |
+| recovery与输出 | 计数两侧局部恢复对象、真实全外通道数组、采样E/H、canonical vectors、collective gather和writer暂存；区分rank-local副本求和与全机总额重复报告 | 当前仅接口合同，没有A2数组尺寸或生命周期峰值 |
+
+先前A1仍有独立资格缺口：数值worker残差/端口能量闭合/场文件存在不能覆盖外层whole-job资源unknown；A1的source与port独立一致性门、trace alias映射，以及canonical `hcurl_norm`/`trace_mass_norm`仍缺合格证据。Task42 A2的`_external_diffraction_order_rows`按`mode.propagating`决定行级R/T，而`dtn_port_3d._port_power_metrics`按正向功率判定；A1已知底部Si `(0,0,s)`存在`propagating=false`但仍`power_carrying=true`的情形。因此应以小型真实公式fixture让一个有损正向功率模态和一个零功率倏逝模态分别通过两套现有公式，核对每行`power_ratio/R/T`与端口总R/T之和；保留`propagating`为独立物理标签，不以它替代功率符号，也不在无审查前改变定义。此检查目前未运行，A2物理资格仍未建立。

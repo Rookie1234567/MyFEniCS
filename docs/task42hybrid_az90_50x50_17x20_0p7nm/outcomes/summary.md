@@ -1,4 +1,4 @@
-# Task42 A0 阶段摘要
+# Task42 A0/A1/A2合同阶段摘要
 
 ## 任务范围与结论
 
@@ -79,3 +79,28 @@ PVD列出8个rank VTU，全部可读；每个文件实际含E和H的real/imag/ab
 4个定向serial资源合同测试通过。原062050Z authority重放仍拒绝且`J`为incomplete/unknown；错误向量不再误标`J>C`。分类修复不改变资源公式或门的拒绝行为。pytest报告`4 passed`、`0.22 s`，唯一parent monotonic wall为`0.505579699 s`；pytest PID为`not_persisted`。源码SHA为`4c2c86b57b6c0b98c5503d4c2542f0333dbe7f77e97e5e14ef242ea4835ecd2e`，测试SHA为`cdceb62251304c80b3e7bd318ad94d847053757dc6dfeb9032a540bcaf8ab8`。原样本重放与逐项校验见[分类回归证据](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/runtime_gate_error_classification_20261019T070922Z/classification_error_vectors.json)及[SHA256清单](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/runtime_gate_error_classification_20261019T070922Z/SHA256SUMS.txt)。
 
 底部探针E/H拟合按`bottom_propagating`筛掉了一个`propagating=false`但`power_carrying=true`的Si零级s模态；DtN端口该项透射贡献为`0.056559356398515837`，解释探针E/H拟合T远低于端口T的主要部分。5 nm平面差的预期功率比`1.28258713`、实测净通量/端口比`1.28227995`相近，只支持传播差可能贡献。顶部最大拟合残差`0.9980693005722018`属于反射功率为0的倏逝级`(m=2,n=1,s)`，仍不能解释总反射差。原24×24探针面E/H未存，现存内域NPZ不能替代；未改旧诊断值或生产后处理，也未据此判定物理资格。完整细节见[response_v1](../response_v1.md)与[离线复核记录](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/runtime_gate_error_classification_20261019T070922Z/probe_port_offline_review.json)。
+
+## A2 Hybrid-direct共享合同（2026-10-19）
+
+| 项目 | 已验证内容 | 状态与边界 | 证据 |
+|---|---|---|---|
+| 源实现 | Task42独立profile接入公共run_case→execution plan→Task038 worker→Task42 adapter→共享Task032 direct内核；root-only writer；rank/side各自预算basis | 21路径普通提交`44f671cefd9a3130897bfc898ba21cde8528fbe4`；不借Task039身份、不改ordinary默认 | 当前源码与MPI2 after map相同；分支clean提交见Git |
+| 原输入与预算basis | dat完整字节SHA `42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`；canonical phase budget basis SHA `80c084655f67587c0616de782cf0a3e2e50cb41ea357bf4e09948cb0e7786332` | 两者是不同身份；basis只剔除两个budget引用字段。没有实际source/input/material/MPI绑定的完整阶段manifest | A2 `.dat`与`src/io/task42_hybrid_budget.py`；不含预算引用的独立basis定义 |
+| 输出合同 | 根据实际sample坐标推导数组形状；验证复E/H、完整外通道keys、side-local-q映射和来源身份；成功文件由root单独写入，坏shape在writer前拒绝（零次写调用），root写入失败则一致传播 | 清场状态来自parent/session收据，不声称每个rank输出文件都包含清场状态；仅小型fixture合同，不是实际场/衍射结果 | final serial与MPI2指定selectors；详见[test summary](test_summary.md) |
+| 分配前Gate | sentinel测试覆盖空间/矩阵/QEP/局部side/traction/coupling/增广/direct setup/solve/recovery/output各拒绝边界 | Delta仍`pending-sizing`；profile fail-closed，不可启动A2；没有运行FE、QEP、factor或solve | `src/common/task42_phase_admission.py`、`src/io/task42_hybrid_budget.py`、新合同测试 |
+| MUMPS阶段粒度 | direct仍是PETSc MUMPS；`KSP.setUp()`在当前接口合并analysis与factorization | 只存在一个`direct_mumps_factor_setup`组合Gate，不声称拆开symbolic/numeric | 静态源码调用链与对应拒绝sentinel |
+| 测试结论 | 最终serial 32 passed、2 skipped；MPI2四个selector在两个rank各4 passed、rc0 | 两个serial skip是MPI2专属坏shape传播和root资源拒绝，已由MPI2覆盖。全部是合同测试，不是A2物理资格 | [详细收据索引](test_summary.md) |
+
+A2仍使用13.5 nm用户指定Si、p6/h10/M120、50×50 nm周期、17×20 nm光栅、高120 nm及同一z边界；传播为`full3d_uniform_cg`，traction为`full3d_one_cell_exact_schur`。通俗地说，Hybrid用截面模式表示中间区域，模型两侧仍保留有限元；它改变场求解的分区方式，代价是需要模式耦合和恢复数据。阶段预算是在每笔大分配前计算新增内存。本轮小型合同测试只验证接口、身份与拒绝传播，没有证明物理解或容量。A2输出profile和Task039仍保持独立schema身份。当前数据没有实际二维网格、DoF/ownership、各矩阵NNZ、PEP工作区、side-local Schur/recovery对象、traction局部网格以及MUMPS fill/workspace数据，因此不能形成可信阶段Delta。没有真实mesh/NNZ前不填零；没有预先预算就不能为取数而先建大对象。
+
+| 后续sizing阶段 | 获取的对象/依据 | 先行保护和未决项 |
+|---|---|---|
+| Mesh-only | 从冻结dat生成边界拟合网格，保存cells/vertices/ghost和每rank分布，释放Gmsh临时对象 | 必须先给Gmsh及临时副本独立保守预算；尚未授权或运行 |
+| Space/MPC | p6 DoF、ownership、collapse maps、Floquet映射条目和实际索引/标量宽度 | 数量未知；不从周期面积或A1全3D DoF推算 |
+| QEP operators | K0/K1/K2/M全与约化稀疏矩阵、constraint transform的本地rows/NNZ；AIJ主体按`nnz*(scalar_bytes+index_bytes)+(local_rows+1)*index_bytes`并计同时驻留副本 | 无真实NNZ，不能用单个稠密240×240矩阵作总预算 |
+| QEP workspace | `ncv/mpd`、候选与保留向量、正负及左右模态/重叠矩阵和SLEPc后端工作区 | 后端工作区需可信边界；尚未运行QEP |
+| 两侧凝聚/traction | bottom/top各rank的owned cells/rows、geometry classes、Schur NNZ、cell tensor/LU/recovery；核对实际10 nm轴向局部网格与exact traction构造 | side/rank basis不可混用，尚无实际网格数据 |
+| augmented/MUMPS | coupling/增广块的shape/NNZ/maps/pack生命周期；依据真实ordering/fill证据预算factor | `KSP.setUp()`合并analysis/factor；不能用setup后的INFOG倒授权setup前大分配，可信fill上界缺失就拒绝 |
+| recovery/output | 真实E/H、衍射/端口、canonical及collective gather数组的同时生命周期和副本数 | 当前无A2场尺寸；rank-local副本按rank累加，全机同一总额不重复累加 |
+
+另有待核实的行级功率合同：Hybrid diffraction rows以`propagating`字段门控R/T，但DtN端口总功率按正向功率判据累加。A1已存档的底部Si零级s模态显示`propagating=false`仍可携带功率；A2小fixture应分别核对有损功率模态与零功率倏逝模态的行字段和端口总和。该检查只验证现有公式口径，不改物理定义或放宽门，当前`not_run`。

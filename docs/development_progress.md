@@ -3143,3 +3143,21 @@ Task041留下的是不同几何和材料身份的历史结果，不能直接代�
 | Full3D、QEP和物理结果 | `not_run` | 当前输入仍含172800秒普通入口硬超时，Task42的分级资源/软48小时策略尚未接线，不启动正式PDE |
 
 本阶段分类为`passed_with_qualifications`，不改变ordinary default。完整测试/费用口径见[Task42 test summary](task42hybrid_az90_50x50_17x20_0p7nm/outcomes/test_summary.md)，阶段边界及A1计划见[Task42 response v1](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。下一步是在现有Task038 worker与Full3D direct adapter上增加Task42显式资源和软时间策略，保留MUMPS direct身份、原A残差/恢复快照及完整输出；只有这些门接入并审核后才进入13.5 nm直接场。
+
+## 2026-10-19：Task42 A1终态更新与A2 Hybrid-direct静态接线
+
+本条更新A0历史段之后的当前状态；A0当时的`not_run`仍是当时事实，不被改写。A1最近一次正式计算为13.5 nm用户指定Si、p6/h10、50×50 nm周期、17×20 nm光栅、MPI8。数值worker保存了full original-equation residual `9.306460504345312e-11`、端口R/T/A与`A_volume`闭合差`1.2090530798758437e-9`、复E/H场和完整168个外通道记录；但最后整作业资源样本中8个仍为R状态的rank缺`VmRSS`/`VmSwap`，同身份复读仍缺字段，导致whole-job J unknown并触发fail-closed拒绝。它不是已证实超256 GiB，也不能把worker `official_result=true`提升为整场通过。详细终态、探针与端口差异、费用和历史attempt顺序见[Task42 Response V1](task42hybrid_az90_50x50_17x20_0p7nm/response_v1.md)。A1额外额度已用完，本轮A2没有启动。
+
+本阶段只静态接通一个独立的Task42 A2 Hybrid-direct profile。公共调用链为`execution_plan` → `task038_launcher._run_worker` → `task038_input_worker._load_and_validate_worker_payload` → 新`task42_hybrid_direct.run_task42_hybrid_direct` → 共享`run_task032_phase6_augmented.main`。它保留Task42独立的model/run/comparison identity、13.5 nm Si材料、50×50/17×20/120 nm几何、p6/h10/M120、`full3d_uniform_cg`传播与`full3d_one_cell_exact_schur` traction；普通Task038 p≤4和Task039允许profile未放宽，不读取旧packet/factor。
+
+新共享输出校验按运行时实际`sample_x/y/z`推导E/H形状，并验证有限复数三分量布局、完整external-key集合、canonical prefix及source/input/material/resolved-config identity。Task39继续先执行既有固定shape/坐标/数组检查并保持旧schema/文件名；Task42使用单独身份和输出载荷。
+
+Task42 worker向共享内核传一个显式阶段准入回调；共享内核在以下对象创建或操作前触发对应gate：QEP网格/空间/MPC及全、约化稀疏算子；正负QEP及左右模态向量/基；bottom/top局部凝聚和DtN扩展；单元traction、投影/传播与coupling块；分布式增广矩阵/RHS；direct factor setup、solve；两侧恢复；场采样/gather、全外通道功率、canonical导出和最终写入。Task42缺回调或身份不一致会在操作前拒绝；resource authority未知也保持拒绝。assembly-time condensation还在实际局部网格、元素维度和PETSc预分配后、trace/raw tensor/Schur recovery缓存分配前报告源推导的对象尺寸。
+
+**所有A2 Delta仍为`pending-sizing`，不是零。** 必须从实际mesh/DoF/NNZ、owner分布、QEP工作区/保留向量、每侧Schur recovery对象、MUMPS fill/INFOG和重叠生命周期中形成绑定当前source/input/material/MPI的阶段预算；当前新输入没有该budget manifest，因此Task038 launcher在创建worker前拒绝，不可运行。MUMPS direct当前由PETSc `KSP.setUp()`合并analysis与factorization，现有接口只提供一个覆盖两者的`direct_mumps_factor_setup` gate，未声称有symbolic/numeric两个独立回调。Task42资源合同仍为C=min(256 GiB,Cmax)、R=384 GiB、W=max(8 GiB,5%C)，沿用全作业/有限祖先authority；不恢复Task041的80 GiB门。
+
+新增合同测试`src/test/test_task42_hybrid_a2_static_contract.py`已通过最终native serial 32 passed/2 skipped及指定MPI2回归（rank 0/1各4 passed）。serial的两个MPI-only skip已由MPI2实际覆盖。测试证明profile/路由/输出身份、Task039兼容、hash-bound rank/side预算basis、root-only writer/集体拒绝和多处分配前拒绝合同；不运行真实mesh/QEP/FE/factor/solve。A2仍因完整分级Delta及MUMPS fill/workspace依据缺失而`pending-sizing`、不可启动。当前source合同提交为`44f671cefd9a3130897bfc898ba21cde8528fbe4`；费用、失败保留及准确边界见[Task42 test summary](task42hybrid_az90_50x50_17x20_0p7nm/outcomes/test_summary.md)。
+
+下一小阶段建议先为边界拟合mesh-only本身形成保守预分配边界，之后才读取真实cells/vertices/ghosts和每rank p6 DoF/MPC/NNZ；再给QEP全/约化稀疏矩阵、ncv/mpd/正负左右模态工作区、bottom/top各rank Schur/recovery对象、10 nm traction轴向局部网格、增广块和MUMPS合并setup建立来源绑定的Delta。MUMPS当前`KSP.setUp()`合并analysis/factorization；setup后的INFOG不能反向授权setup前的大分配。没有可信填充/workspace上界就继续拒绝。此阶段没有运行实际sizing或小物理fixture。
+
+外通道功率也有待做的纯解析合同核验：Hybrid衍射row的R/T字段由`mode.propagating`门控，而DtN端口总功率按正向功率判定；A1已记录底部有损Si零级`propagating=false`但带正向功率。需用正功率有损模态与零功率倏逝模态小fixture逐项比较现有行字段和端口求和，不改变物理定义或报告门。A1 source-port一致性、trace alias映射与canonical norm资格缺项仍独立保留。A1末端是whole-job authority unknown/fail-closed拒绝，虽有worker数值和文件输出，不应改写为整场通过。
