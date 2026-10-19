@@ -10695,6 +10695,49 @@ def run_task40_v10_p6_reference_worker(
                 def target_stage_callback(facts: Mapping[str, Any]) -> None:
                     phase = str(facts.get("phase", ""))
                     status = str(facts.get("status", ""))
+                    if (
+                        phase == "task41_b0_saved_donor_identity_mismatch"
+                        and status == "FAILED"
+                    ):
+                        evidence = facts.get("identity_failure_evidence")
+                        if not isinstance(evidence, Mapping):
+                            raise ValueError(
+                                "Task41 B0 identity mismatch callback lacks failure evidence"
+                            )
+                        evidence_path = (
+                            directory / "task41_b0_saved_surface_identity_failure.json"
+                        )
+                        _atomic_write_json(evidence_path, evidence)
+                        evidence_bytes = evidence_path.read_bytes()
+                        evidence_binding = {
+                            "schema": evidence.get("schema"),
+                            "path": evidence_path.relative_to(directory).as_posix(),
+                            "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
+                            "bytes": len(evidence_bytes),
+                            "producer_identity_sha256": evidence.get(
+                                "producer_identity_sha256"
+                            ),
+                            "actual_identity_sha256": evidence.get(
+                                "actual_identity_sha256"
+                            ),
+                            "expected_identity_sha256": evidence.get(
+                                "expected_identity_sha256"
+                            ),
+                            "leaf_difference_count": len(
+                                evidence.get("leaf_differences", ())
+                            ),
+                        }
+                        summary["b0_saved_surface_identity_failure_evidence"] = (
+                            evidence_binding
+                        )
+                        runtime.marker(
+                            "task41_b0_saved_surface_identity_failure_evidence_persisted",
+                            evidence_binding,
+                        )
+                        facts = {
+                            **dict(facts),
+                            "identity_failure_evidence": evidence_binding,
+                        }
                     if phase == "task41_b0_native_surface_preflight" and status == "STARTED":
                         admission = allocation_gate(
                             "task41_b0_native_surface_mapping_and_pairing",

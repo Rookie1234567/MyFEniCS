@@ -457,6 +457,131 @@ class _Task41SavedSurfaceSupport:
         }
 
 
+def _task41_b0_identity_leaf_differences(
+    actual: Any,
+    expected: Any,
+    *,
+    path: str = "$",
+) -> list[dict[str, Any]]:
+    """Return stable, hash-bound leaf differences between two frozen identities."""
+    import hashlib
+
+    from .fullspace_dtn_action import _canonical_json_bytes
+
+    differences = []
+
+    def record(child_path, actual_value, expected_value, actual_present=True, expected_present=True):
+        actual_bytes = _canonical_json_bytes(
+            actual_value if actual_present else {"missing": True}
+        )
+        expected_bytes = _canonical_json_bytes(
+            expected_value if expected_present else {"missing": True}
+        )
+        differences.append(
+            {
+                "path": child_path,
+                "actual_present": actual_present,
+                "expected_present": expected_present,
+                "actual_sha256": hashlib.sha256(actual_bytes).hexdigest(),
+                "expected_sha256": hashlib.sha256(expected_bytes).hexdigest(),
+                "actual": actual_value,
+                "expected": expected_value,
+            }
+        )
+
+    def compare(left, right, current_path):
+        if isinstance(left, Mapping) and isinstance(right, Mapping):
+            for key in sorted(set(left) | set(right), key=str):
+                left_present = key in left
+                right_present = key in right
+                child_path = f"{current_path}.{key}"
+                if left_present and right_present:
+                    compare(left[key], right[key], child_path)
+                else:
+                    record(
+                        child_path,
+                        left[key] if left_present else None,
+                        right[key] if right_present else None,
+                        left_present,
+                        right_present,
+                    )
+        elif isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
+            common = min(len(left), len(right))
+            for index in range(common):
+                compare(left[index], right[index], f"{current_path}[{index}]")
+            if len(left) != len(right):
+                record(
+                    f"{current_path}[{common}:]",
+                    list(left[common:]),
+                    list(right[common:]),
+                )
+        elif _canonical_json_bytes(left) != _canonical_json_bytes(right):
+            record(current_path, left, right)
+
+    compare(actual, expected, path)
+    return differences
+
+
+def _task41_b0_require_saved_identity_match(
+    actual_identity: Mapping[str, Any],
+    expected_identity: Mapping[str, Any],
+    *,
+    current_assembly_context: Mapping[str, Any],
+    reconstructed_assembly_context: Mapping[str, Any],
+    source_equivalence_bridge: Mapping[str, Any],
+    producer_identity_sha256: str,
+    failure_callback: Callable[[Mapping[str, Any]], None] | None,
+) -> None:
+    """Persist a compact identity diff before enforcing the unchanged strict gate."""
+    import hashlib
+    import json
+
+    from .fullspace_dtn_action import _canonical_json_bytes
+
+    actual_bytes = _canonical_json_bytes(actual_identity)
+    expected_bytes = _canonical_json_bytes(expected_identity)
+    if actual_bytes == expected_bytes:
+        return
+
+    actual = json.loads(actual_bytes)
+    expected = json.loads(expected_bytes)
+    current_context_bytes = _canonical_json_bytes(current_assembly_context)
+    reconstructed_context_bytes = _canonical_json_bytes(reconstructed_assembly_context)
+    current_context = json.loads(current_context_bytes)
+    reconstructed_context = json.loads(reconstructed_context_bytes)
+    bridge = json.loads(_canonical_json_bytes(source_equivalence_bridge))
+    evidence = {
+        "schema": "task41.p0.b0.saved_surface_identity_failure.v1",
+        "comparison": "exact canonical JSON equality; strict donor gate remains failed",
+        "producer_identity_sha256": str(producer_identity_sha256),
+        "actual_identity_sha256": hashlib.sha256(actual_bytes).hexdigest(),
+        "expected_identity_sha256": hashlib.sha256(expected_bytes).hexdigest(),
+        "actual_identity": actual,
+        "expected_identity": expected,
+        "current_assembly_context_sha256": hashlib.sha256(
+            current_context_bytes
+        ).hexdigest(),
+        "current_assembly_context": current_context,
+        "reconstructed_assembly_context_sha256": hashlib.sha256(
+            reconstructed_context_bytes
+        ).hexdigest(),
+        "reconstructed_assembly_context": reconstructed_context,
+        "source_equivalence_bridge": bridge,
+        "leaf_differences": _task41_b0_identity_leaf_differences(actual, expected),
+    }
+    if failure_callback is not None:
+        failure_callback(
+            {
+                "phase": "task41_b0_saved_donor_identity_mismatch",
+                "status": "FAILED",
+                "identity_failure_evidence": evidence,
+            }
+        )
+    raise ValueError(
+        "Task41 B0 donor fresh mesh/MPC/orientation/config/ABI/math identity differs"
+    )
+
+
 def _task41_b0_saved_surface_identity_gate(
     *,
     modes: Any,
@@ -465,6 +590,7 @@ def _task41_b0_saved_surface_identity_gate(
     cfg: Any,
     current_assembly_context: Mapping[str, Any],
     donor_binding: Mapping[str, Any],
+    identity_failure_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> tuple[np.ndarray, Callable[[Mapping[str, Any], Any], None], dict[str, Any]]:
     """Reconstruct the producer's identity from fresh FE data and reviewed code lineage."""
     import hashlib
@@ -561,10 +687,15 @@ def _task41_b0_saved_surface_identity_gate(
     )
 
     def validate(actual_identity: Mapping[str, Any], actual_mode_identities: Any) -> None:
-        if _canonical_json_bytes(actual_identity) != _canonical_json_bytes(expected_identity):
-            raise ValueError(
-                "Task41 B0 donor fresh mesh/MPC/orientation/config/ABI/math identity differs"
-            )
+        _task41_b0_require_saved_identity_match(
+            actual_identity,
+            expected_identity,
+            current_assembly_context=consumer_context,
+            reconstructed_assembly_context=reconstructed_context,
+            source_equivalence_bridge=bridge,
+            producer_identity_sha256=str(producer["producer_identity_sha256"]),
+            failure_callback=identity_failure_callback,
+        )
         if len(actual_mode_identities) != len(modes):
             raise ValueError("Task41 B0 donor per-mode identity count differs from the current inventory")
         for index, (mode, base_row, actual) in enumerate(
@@ -1582,6 +1713,7 @@ def build_same_mesh_physical_action(
                     cfg=cfg,
                     current_assembly_context=assembly_context,
                     donor_binding=saved_surface_donor,
+                    identity_failure_callback=stage_progress,
                 )
             )
             donor_root = (
