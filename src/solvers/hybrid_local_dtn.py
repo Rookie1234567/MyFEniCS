@@ -108,6 +108,7 @@ def _assemble_one_sided_external_dtn(
     linear_form,
     assembly_backend_audit: dict[str, Any],
     assembly_backend_qualification: dict[str, Any],
+    task42_phase_gate=None,
 ) -> tuple[
     PETSc.Mat,
     PETSc.Vec,
@@ -138,6 +139,20 @@ def _assemble_one_sided_external_dtn(
     A_base = None
     b_base = None
     if static_requested:
+        if task42_phase_gate is not None:
+            from src.common.task42_phase_admission import (
+                admit_task42_phase,
+                task42_assembly_stage_gate_adapter,
+            )
+
+            admit_task42_phase(
+                task42_phase_gate, f"local_{side}_condensed_system"
+            )
+            assembly_stage_gate = task42_assembly_stage_gate_adapter(
+                task42_phase_gate, side=side
+            )
+        else:
+            assembly_stage_gate = None
         condensed = build_unconstrained_assembly_time_condensation(
             fem.form(bilinear_form),
             V,
@@ -152,6 +167,7 @@ def _assemble_one_sided_external_dtn(
             ),
             appended_support_group_by_row=tuple(0 for _mode in modes),
             defer_final_assembly=True,
+            task42_stage_gate=assembly_stage_gate,
         )
         static_condensation = bind_hybrid_local_static_condensation(
             condensed=condensed,
@@ -169,6 +185,12 @@ def _assemble_one_sided_external_dtn(
             A_aug,
             condensed.build_audit["trace_preallocation"],
         )
+        if task42_phase_gate is not None:
+            from src.common.task42_phase_admission import admit_task42_phase
+
+            admit_task42_phase(
+                task42_phase_gate, f"local_{side}_dtn_augmentation"
+            )
         full_fe_rhs = _assemble_unconstrained_vector(linear_form)
         b_aug = static_condensation.reduce_surface_vector(
             full_fe_rhs,
@@ -176,6 +198,12 @@ def _assemble_one_sided_external_dtn(
         )
         full_fe_rows = int(condensed.full_rows)
     else:
+        if task42_phase_gate is not None:
+            from src.common.task42_phase_admission import admit_task42_phase
+
+            admit_task42_phase(
+                task42_phase_gate, f"local_{side}_condensed_system"
+            )
         A_base = dolfinx_mpc.assemble_matrix(
             fem.form(bilinear_form),
             floquet_data.mpc,
@@ -460,6 +488,7 @@ def assemble_hybrid_local_dtn_system(
     local_mesh_override: HybridLocalMesh | None = None,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     log=None,
+    task42_phase_gate=None,
 ) -> HybridLocalDtnSystem:
     """Build one terminal FEM matrix with one external DtN port.
 
@@ -495,6 +524,10 @@ def assemble_hybrid_local_dtn_system(
             raise ValueError("The local mesh override side does not match the request.")
         local_mesh = local_mesh_override
     else:
+        if task42_phase_gate is not None:
+            from src.common.task42_phase_admission import admit_task42_phase
+
+            admit_task42_phase(task42_phase_gate, f"local_{side}_mesh")
         local_mesh = build_hybrid_local_mesh(
             cfg,
             side,
@@ -502,6 +535,10 @@ def assemble_hybrid_local_dtn_system(
             top_interface_z_nm=top_interface_z_nm,
             comm=comm,
         )
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, f"local_{side}_space")
     V = _create_nedelec_space(local_mesh.mesh, cfg)
     floquet_data = build_double_floquet_mpc(V, local_mesh.mesh_data, cfg, log)
     a, L = _build_variational_forms(
@@ -534,6 +571,7 @@ def assemble_hybrid_local_dtn_system(
         linear_form=L,
         assembly_backend_audit=assembly_backend_audit,
         assembly_backend_qualification=assembly_backend_qualification,
+        task42_phase_gate=task42_phase_gate,
     )
     return HybridLocalDtnSystem(
         side=side,

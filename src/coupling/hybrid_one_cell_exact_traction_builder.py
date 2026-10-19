@@ -857,6 +857,7 @@ def build_exact_one_cell_traction_matrices(
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None = None,
     sampled_column_contract: Mapping[str, Any] | None = None,
+    task42_phase_gate=None,
 ) -> ExactOneCellMatrixBuild:
     """Construct exact one-cell blocks from live modes and local systems."""
 
@@ -869,6 +870,10 @@ def build_exact_one_cell_traction_matrices(
 
     if cell_propagation.propagation_model != "full3d_uniform_cg":
         raise ValueError("Exact one-cell traction requires full3d_uniform_cg.")
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, "traction_local_cell")
     strategy = (
         "historical_local10_global100"
         if one_cell_strategy is None

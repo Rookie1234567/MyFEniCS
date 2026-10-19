@@ -285,9 +285,14 @@ def build_matching_cross_section(
     y_values: np.ndarray | None = None,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     preserve_input_partition: bool = False,
+    task42_phase_gate=None,
 ) -> CrossSectionMesh:
     """Build one x-y slice from the exact Stage-4 hexahedral axis plan."""
 
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, "qep_cross_section_mesh")
     plan = stage4_axis_plan(cfg, comm.size)
     if (x_values is None) != (y_values is None):
         raise ValueError("Explicit matching x/y axes must be supplied together.")
@@ -354,6 +359,7 @@ def build_cross_section_spaces(
     *,
     transverse_degree: int,
     longitudinal_degree: int | None = None,
+    task42_phase_gate=None,
 ) -> CrossSectionSpaces:
     """Create the mixed ``N1curl x Lagrange`` QEP trial/test space."""
 
@@ -366,6 +372,11 @@ def build_cross_section_spaces(
     )
     if scalar_degree < 1:
         raise ValueError("longitudinal_degree must be at least one.")
+
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, "qep_mixed_space")
 
     msh = cross_section.mesh
     transverse_element = element(

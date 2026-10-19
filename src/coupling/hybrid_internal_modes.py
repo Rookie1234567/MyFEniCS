@@ -2166,6 +2166,7 @@ def build_hybrid_internal_mode_coupling(
     stage_callback: Callable[[str, Mapping[str, object]], None] | None = None,
     post_destroy_cleanup: Callable[[], Mapping[str, object]] | None = None,
     sampled_column_contract: Mapping[str, object] | None = None,
+    task42_phase_gate=None,
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -2193,6 +2194,10 @@ def build_hybrid_internal_mode_coupling(
 
     if log is not None:
         log("Task32 internal coupling: building canonical modal projection")
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, "traction_projection_and_blocks")
     projection = ModalTraceProjection(spaces, positive_basis)
     exact_one_cell_audit = None
     exact_traction_overrides = None
@@ -2235,6 +2240,10 @@ def build_hybrid_internal_mode_coupling(
                 )
             )
             axial_h_nm = propagation_axial_h_nm
+        if task42_phase_gate is not None:
+            from src.common.task42_phase_admission import admit_task42_phase
+
+            admit_task42_phase(task42_phase_gate, "hybrid_coupling")
         propagation = build_two_sided_propagation(
             [*positive_basis.modes, *negative_basis.modes],
             length_nm,
@@ -2282,6 +2291,12 @@ def build_hybrid_internal_mode_coupling(
                 raise ValueError(
                     "Exact one-cell traction requires an explicit ignored work directory."
                 )
+            if task42_phase_gate is not None:
+                from src.common.task42_phase_admission import admit_task42_phase
+
+                admit_task42_phase(
+                    task42_phase_gate, "traction_local_propagation"
+                )
             (
                 resolved_one_cell_strategy,
                 local_cell_h_nm,
@@ -2319,6 +2334,7 @@ def build_hybrid_internal_mode_coupling(
                 stage_callback=stage_callback,
                 post_destroy_cleanup=post_destroy_cleanup,
                 sampled_column_contract=sampled_column_contract,
+                task42_phase_gate=task42_phase_gate,
             )
             exact_traction_overrides = exact_build.matrices
             pending_exact_overrides = dict(exact_traction_overrides)
@@ -2360,6 +2376,10 @@ def build_hybrid_internal_mode_coupling(
     bottom = None
     top = None
     try:
+        if task42_phase_gate is not None:
+            from src.common.task42_phase_admission import admit_task42_phase
+
+            admit_task42_phase(task42_phase_gate, "hybrid_interface_blocks")
         if log is not None:
             log("Task32 internal coupling: compiling reusable traction expression")
         traction_evaluator = (

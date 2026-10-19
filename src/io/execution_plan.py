@@ -16,6 +16,7 @@ from .input_validation import (
     TASK041_MODEL_ID,
     TASK041_SHORTWAVE_MODEL_IDS,
     TASK42_13P5_FULL3D_MODEL_ID,
+    TASK42_13P5_HYBRID_MODEL_ID,
     TASK42_DIRECT_FACTOR_LIFECYCLE,
     task039_model_id_matches,
 )
@@ -33,6 +34,7 @@ METHOD_ADAPTERS = {
     "hybrid_iterative": "task038.hybrid_iterative",
 }
 TASK039_HYBRID_DIRECT_ADAPTER = "task039.hybrid_direct"
+TASK42_HYBRID_DIRECT_ADAPTER = "task42.a2_hybrid_direct"
 TASK039_HYBRID_ITERATIVE_ADAPTER = "task039.hybrid_iterative"
 TASK041_PUBLIC_SUPERVISOR_ADAPTER = "task041.public_mpi1_supervisor"
 CONNECTED_METHODS = frozenset(
@@ -72,6 +74,8 @@ class ExecutionPlan:
 
 def method_adapter_identity(method: str, model_id: str | None = None) -> str:
     model_text = str(model_id or "")
+    if method == "hybrid_direct" and model_text == TASK42_13P5_HYBRID_MODEL_ID:
+        return TASK42_HYBRID_DIRECT_ADAPTER
     if method == "hybrid_iterative" and model_text in {
         TASK041_MODEL_ID,
         *TASK041_SHORTWAVE_MODEL_IDS,
@@ -100,6 +104,8 @@ def method_adapter_available(method: str, model_id: str | None = None) -> bool:
     """Report availability of the adapters actually connected in Task38."""
 
     model_text = str(model_id or "")
+    if method == "hybrid_direct" and model_text == TASK42_13P5_HYBRID_MODEL_ID:
+        return True
     if method == "hybrid_iterative" and model_text in {
         TASK041_MODEL_ID,
         *TASK041_SHORTWAVE_MODEL_IDS,
@@ -319,6 +325,7 @@ __all__ = [
     "CONTRACT_PROBE_ADAPTER",
     "METHOD_ADAPTERS",
     "TASK041_PUBLIC_SUPERVISOR_ADAPTER",
+    "TASK42_HYBRID_DIRECT_ADAPTER",
     "WORKER_MODULE",
     "ExecutionPlan",
     "build_execution_plan",

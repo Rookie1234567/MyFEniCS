@@ -851,6 +851,10 @@ def _task039_direct_payload(
 ) -> dict[str, Any]:
     """Persist the opt-in Task39 fields while their arrays are still alive."""
 
+    from src.postprocessing.hybrid_direct_output import (
+        validate_hybrid_sampled_field_arrays,
+    )
+
     descriptor = None
     if comm.rank == 0:
         arrays = {
@@ -893,6 +897,17 @@ def _task039_direct_payload(
             arrays[key].ndim != 1 for key in ("bottom_q", "top_q")
         ):
             raise RuntimeError("Task39 direct modal/q payload must be one-dimensional.")
+        # Keep every historical Task39 check and its failure order intact; the
+        # shared validator is an additional common contract after the legacy
+        # fixed-shape/finiteness checks have already passed.
+        validate_hybrid_sampled_field_arrays(
+            sample_x=arrays["x_nm"],
+            sample_y=arrays["y_nm"],
+            sample_z=arrays["z_nm"],
+            electric=arrays["E_V_per_m"],
+            magnetic=arrays["H_A_per_m"],
+            require_monotonic_coordinates=False,
+        )
 
         run_dir.mkdir(parents=True, exist_ok=True)
         payload_path = run_dir / "task039_direct_payload.npz"
@@ -1063,6 +1078,7 @@ def _parse_args(
     *,
     allow_task039: bool = False,
     allow_task041: bool = False,
+    allow_task42: bool = False,
     task041_expected_mesh_nm: float = 4.0,
 ) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -1106,7 +1122,7 @@ def _parse_args(
         "continuous_qep_beta",
         "scalar_cg_discrete_derivative",
     )
-    if allow_task039 or allow_task041:
+    if allow_task039 or allow_task041 or allow_task42:
         traction_choices += ("full3d_one_cell_exact_schur",)
     parser.add_argument(
         "--internal-traction-model",
@@ -1300,7 +1316,7 @@ def _parse_args(
             )
     if (
         args.internal_traction_model == "full3d_one_cell_exact_schur"
-        and not (allow_task039 or allow_task041)
+        and not (allow_task039 or allow_task041 or allow_task42)
     ):
         parser.error(
             "full3d_one_cell_exact_schur is restricted to the Task39 Python opt-in."
@@ -1308,7 +1324,7 @@ def _parse_args(
     if (
         args.degree == 6
         and not args.task035c_p6_h10_gate
-        and not (allow_task039 or allow_task041)
+        and not (allow_task039 or allow_task041 or allow_task42)
     ):
         parser.error(
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
@@ -1350,6 +1366,42 @@ def _parse_args(
                 "Task41 mode-prep requires the explicit Task41 mesh contract, p6, "
                 "dynamic positive M, static-condensed full3d_uniform_cg, exact "
                 "one-cell traction, and the selected-mode packet producer opt-in."
+            )
+        return args
+    if allow_task42:
+        scoped = bool(
+            not args.task035c_p6_h10_gate
+            and not args.allow_dirty_research
+            and args.degree == 6
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and np.isclose(args.h_nm, 10.0)
+            and np.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "augmented"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and args.graded_reference_h is None
+            and np.isclose(args.bottom_interface_nm, 10.0)
+            and np.isclose(args.top_interface_nm, 110.0)
+            and np.isclose(args.incident_grazing_deg, 1.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "full3d_one_cell_exact_schur"
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.task035c_p6_preflight_authority is None
+            and args.task035c_p6_preflight_sha256 is None
+            and args.full3d_reference is None
+            and args.full3d_reference_sha256 is None
+            and args.selected_mode_packet_producer_dir is None
+            and args.selected_mode_packet_consumer_manifest is None
+        )
+        if not scoped:
+            parser.error(
+                "Task42 Hybrid direct requires the exact 13.5 nm p6/h10/M120/MPI8 profile, "
+                "static-condensed full3d_uniform_cg, exact one-cell traction, and a clean source."
             )
         return args
     if allow_task039:
@@ -1595,16 +1647,35 @@ def main(
     task041_mode_prep: bool = False,
     task041_expected_mesh_nm: float = 4.0,
     task041_expected_mpi_size: int = 1,
+    task42_hybrid_profile: bool = False,
+    task42_phase_gate: Callable[[str, Mapping[str, Any]], Mapping[str, Any]] | None = None,
+    task42_output_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
         config_override is not None
         and str(getattr(config_override, "case_name", "")).startswith("task039_5nm")
     )
+    allow_task42 = bool(task42_hybrid_profile)
+    if allow_task42:
+        from src.io.input_validation import TASK42_13P5_HYBRID_MODEL_ID
+
+        if (
+            config_override is None
+            or getattr(config_override, "case_name", None)
+            != TASK42_13P5_HYBRID_MODEL_ID
+            or not callable(task42_phase_gate)
+            or not isinstance(task42_output_identity, Mapping)
+        ):
+            raise SystemExit(
+                "Task42 Hybrid direct requires its exact config identity, phase gate, "
+                "and output identity."
+            )
     args = _parse_args(
         argv,
         allow_task039=allow_task039,
         allow_task041=bool(task041_mode_prep),
+        allow_task42=allow_task42,
         task041_expected_mesh_nm=task041_expected_mesh_nm,
     )
     if task041_mode_prep and (
@@ -1687,6 +1758,23 @@ def main(
         or args.internal_traction_model != "continuous_qep_beta"
     )
     comm = MPI.COMM_WORLD
+    if allow_task42:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        def task42_admit(phase: str) -> None:
+            if task42_phase_gate is None:
+                raise RuntimeError("Task42 Hybrid direct phase gate is missing")
+            admit_task42_phase(task42_phase_gate, phase)
+
+        output_identity = dict(task42_output_identity or {})
+        if (
+            output_identity.get("canonical_export_prefix") != "task42_hybrid_direct"
+            or output_identity.get("model_id") != config_override.case_name
+            or output_identity.get("source_sha") != args.verified_clean_sha
+        ):
+            raise SystemExit("Task42 output identity does not match the resolved run")
+    else:
+        task42_admit = None
     if task041_mode_prep and comm.size != task041_expected_mpi_size:
         raise SystemExit(
             "Task41 mode-prep requires MPI size "
@@ -2083,15 +2171,19 @@ def main(
                 x_values=graded_plan.x_values,
                 y_values=graded_plan.y_values,
                 preserve_input_partition=packet_preserve_input_partition,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
             )
         else:
             cross_section = build_matching_cross_section(
                 modal_cfg,
                 "stage4_xy",
                 preserve_input_partition=packet_preserve_input_partition,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
             )
         spaces = build_cross_section_spaces(
-            cross_section, transverse_degree=modal_degree
+            cross_section,
+            transverse_degree=modal_degree,
+            task42_phase_gate=task42_phase_gate if allow_task42 else None,
         )
         if packet_preserve_input_partition:
             packet_layout_identity = cross_section_layout_identity(
@@ -2189,7 +2281,10 @@ def main(
             progress("Task32 Phase6: selected-mode packet bases hydrated")
         else:
             operators = assemble_quadratic_beta_operators(
-                modal_cfg, cross_section, spaces
+                modal_cfg,
+                cross_section,
+                spaces,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
             )
             task039_mark_stage("mesh_spaces_ready")
             task039_mark_stage("qep_matrices_ready")
@@ -2215,6 +2310,9 @@ def main(
                 target=target,
                 requested_modes=candidate_modes,
                 tolerance=qep_solver_tolerance,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
+                task42_eigensolve_phase="qep_positive_eigensolve",
+                task42_vectors_phase="qep_positive_mode_vectors",
             )
             timings["positive_right_qep_solve"] = _max_elapsed(
                 comm, positive_right_started
@@ -2260,6 +2358,10 @@ def main(
                 ),
                 poynting_evaluator=poynting_evaluator,
                 log=progress,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
+                task42_adjoint_phase="qep_positive_adjoint_basis",
+                task42_adjoint_solve_phase="qep_positive_adjoint_eigensolve",
+                task42_adjoint_vectors_phase="qep_positive_adjoint_vectors",
             )
             timings["positive_adjoint_basis"] = _max_elapsed(
                 comm, positive_adjoint_started
@@ -2281,6 +2383,9 @@ def main(
                 target=-target,
                 requested_modes=candidate_modes,
                 tolerance=qep_solver_tolerance,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
+                task42_eigensolve_phase="qep_negative_eigensolve",
+                task42_vectors_phase="qep_negative_mode_vectors",
             )
             timings["negative_right_qep_solve"] = _max_elapsed(
                 comm, negative_right_started
@@ -2326,6 +2431,10 @@ def main(
                 ),
                 poynting_evaluator=poynting_evaluator,
                 log=progress,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
+                task42_adjoint_phase="qep_negative_adjoint_basis",
+                task42_adjoint_solve_phase="qep_negative_adjoint_eigensolve",
+                task42_adjoint_vectors_phase="qep_negative_adjoint_vectors",
             )
             timings["negative_adjoint_basis"] = _max_elapsed(
                 comm, negative_adjoint_started
@@ -2446,6 +2555,7 @@ def main(
             bottom_interface_z_nm=args.bottom_interface_nm,
             top_interface_z_nm=args.top_interface_nm,
             local_mesh_override=graded_bottom_mesh,
+            task42_phase_gate=task42_phase_gate if allow_task42 else None,
         )
         top = assemble_hybrid_local_dtn_system(
             cfg,
@@ -2453,6 +2563,7 @@ def main(
             bottom_interface_z_nm=args.bottom_interface_nm,
             top_interface_z_nm=args.top_interface_nm,
             local_mesh_override=graded_top_mesh,
+            task42_phase_gate=task42_phase_gate if allow_task42 else None,
         )
         timings["two_local_fem_dtn_systems"] = _max_elapsed(comm, started)
         progress("Task32 Phase6: bottom/top local FEM-DtN systems complete")
@@ -2571,6 +2682,7 @@ def main(
             post_destroy_cleanup=(
                 task039_post_destroy_cleanup if detail_marker_path is not None else None
             ),
+            task42_phase_gate=task42_phase_gate if allow_task42 else None,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -2642,7 +2754,12 @@ def main(
         started = time.perf_counter()
         if args.solver_path == "augmented":
             mark_stage("augmented_matrix_and_factor")
-            system = build_hybrid_augmented_direct_system(bottom, top, coupling)
+            system = build_hybrid_augmented_direct_system(
+                bottom,
+                top,
+                coupling,
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
+            )
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
             if packet_direct_lifecycle:
@@ -2676,6 +2793,7 @@ def main(
                 mumps_workspace_relaxation_percent=(
                     100 if packet_direct_lifecycle else None
                 ),
+                task42_phase_gate=task42_phase_gate if allow_task42 else None,
             )
             if not packet_direct_lifecycle:
                 task039_mark_stage(
@@ -2707,6 +2825,8 @@ def main(
                 stage_callback=mark_stage,
             )
         mark_stage("official_rta")
+        if task42_admit is not None:
+            task42_admit("diffraction_and_ports")
         validation = evaluate_hybrid_augmented_solution(
             cfg, bottom, top, coupling, solution
         )
@@ -2968,6 +3088,8 @@ def main(
                 sample_y = np.asarray(archive["y_nm"], dtype=np.float64)
                 sample_z = np.asarray(archive["z_nm"], dtype=np.float64)
         else:
+            if task42_admit is not None:
+                task42_admit("output_validation_and_write")
             sample_x, sample_y, sample_z = _reference_sampling_grid(
                 cfg,
                 args.bottom_interface_nm,
@@ -2979,6 +3101,8 @@ def main(
             detail={"marker_semantics": "lifecycle boundary, not an RSS/PSS/USS peak"},
         )
         started = time.perf_counter()
+        if task42_admit is not None:
+            task42_admit("field_reconstruction")
         reconstructor = ModalFieldReconstructor(
             cfg,
             cross_section,
@@ -3148,6 +3272,32 @@ def main(
                 run_dir=args.output.parent,
                 comm=comm,
             )
+        task42_direct_payload = None
+        if allow_task42:
+            from src.postprocessing.hybrid_direct_output import (
+                write_task42_hybrid_direct_payload_collectively,
+            )
+
+            task42_admit("output_validation_and_write")
+            write_result = write_task42_hybrid_direct_payload_collectively(
+                comm,
+                run_directory=args.output.parent,
+                sample_x=sample_x,
+                sample_y=sample_y,
+                sample_z=sample_z,
+                electric=selected_planes.electric_V_per_m,
+                magnetic=selected_planes.magnetic_A_per_m,
+                identity=task42_output_identity or {},
+                external_mode_inventory=external_mode_inventory or {},
+                external_diffraction_orders=validation[
+                    "external_diffraction_orders"
+                ],
+                modal_amplitudes=solution.modal_amplitudes,
+                external_auxiliary_amplitudes=validation[
+                    "external_auxiliary_amplitudes"
+                ],
+            )
+            task42_direct_payload = write_result["descriptor"]
         physical_fields = {
             "sample_payload_bytes": int(
                 selected_planes.electric_V_per_m.nbytes
@@ -3164,6 +3314,8 @@ def main(
         }
         if task039_direct_payload is not None:
             physical_fields["task039_direct_payload"] = task039_direct_payload
+        if task42_direct_payload is not None:
+            physical_fields["task42_hybrid_direct_payload"] = task42_direct_payload
         if task039_h_diagnostic_payload is not None:
             physical_fields["task039_h_diagnostic_payload"] = (
                 task039_h_diagnostic_payload
@@ -3177,6 +3329,8 @@ def main(
                 raise RuntimeError(
                     "canonical export opt-in requires external mode inventory"
                 )
+            if task42_admit is not None:
+                task42_admit("canonical_exports")
             opt_in_canonical_exports = _direct_canonical_exports(
                 solution=solution,
                 systems=(bottom, top),

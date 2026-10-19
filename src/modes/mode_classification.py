@@ -991,6 +991,10 @@ def build_biorthogonal_mode_basis(
     retained_subspace_dual_rotation: bool = False,
     poynting_evaluator: PoyntingFluxEvaluator | None = None,
     log=None,
+    task42_phase_gate=None,
+    task42_adjoint_phase: str = "qep_positive_adjoint_basis",
+    task42_adjoint_solve_phase: str = "qep_positive_adjoint_eigensolve",
+    task42_adjoint_vectors_phase: str = "qep_positive_mode_vectors",
 ) -> BiorthogonalModeBasis:
     """Add Poynting classification and adjoint-QEP biorthogonality.
 
@@ -1015,6 +1019,10 @@ def build_biorthogonal_mode_basis(
         len(right_modes),
         int(requested_left_modes or len(right_modes)),
     )
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, task42_adjoint_phase)
     adjoints = (
         _adjoint_matrix(operators.K0),
         _adjoint_matrix(operators.K1),
@@ -1048,6 +1056,9 @@ def build_biorthogonal_mode_basis(
             requested_modes=requested,
             tolerance=qep_solver_tolerance,
             operator_frobenius_norms=adjoint_frobenius_norms,
+            task42_phase_gate=task42_phase_gate,
+            task42_eigensolve_phase=task42_adjoint_solve_phase,
+            task42_vectors_phase=task42_adjoint_vectors_phase,
         )
         if log is not None:
             log("Task32 mode basis: adjoint QEP solve returned")

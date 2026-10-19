@@ -237,6 +237,7 @@ def recover_hybrid_static_local_field(
     modal_amplitudes: np.ndarray,
     *,
     auxiliary_override: np.ndarray | None = None,
+    task42_phase_gate=None,
 ) -> HybridStaticRecoveredLocalField:
     """Recover one local field without retaining any full ``N_FE x M`` block."""
 
@@ -252,6 +253,10 @@ def recover_hybrid_static_local_field(
 
     comm = system.local_mesh.mesh.comm
     started = perf_counter()
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, f"recovery_{system.side}")
     full_effective_rhs = system.full_fe_rhs.duplicate()
     system.full_fe_rhs.copy(full_effective_rhs)
     reduced_effective_rhs = system.b.duplicate()

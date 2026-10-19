@@ -166,6 +166,7 @@ def assemble_quadratic_beta_operators(
     *,
     quadrature_degree: int | None = None,
     log=None,
+    task42_phase_gate=None,
 ) -> QuadraticBetaOperators:
     """Assemble and explicitly Floquet-reduce the mixed Maxwell QEP.
 
@@ -224,6 +225,10 @@ def assemble_quadratic_beta_operators(
     a2 = mu_inv * ufl.inner(Et, Vt) * dx
     electric_mass = (ufl.inner(Et, Vt) + ufl.inner(Ez, Vz)) * dx
 
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, "qep_constraints")
     constraints = build_cross_section_floquet_constraints(
         cross_section,
         spaces,
@@ -232,6 +237,10 @@ def assemble_quadratic_beta_operators(
     )
     if log is not None:
         log("QEP Floquet constraints built")
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, "qep_constraint_transform")
     transform = build_distributed_constraint_transform(spaces, constraints)
     if log is not None:
         log("QEP distributed constraint transform built")
@@ -243,6 +252,15 @@ def assemble_quadratic_beta_operators(
         ("K2", a2),
         ("electric_mass", electric_mass),
     ):
+        if task42_phase_gate is not None:
+            from src.common.task42_phase_admission import admit_task42_phase
+
+            phase = (
+                "qep_operator_electric_mass_full"
+                if name == "electric_mass"
+                else f"qep_operator_{name}_full"
+            )
+            admit_task42_phase(task42_phase_gate, phase)
         full_matrices.append(
             _assemble_unconstrained_matrix(
                 form, quadrature_degree=selected_quadrature
@@ -258,6 +276,15 @@ def assemble_quadratic_beta_operators(
             for name, matrix in zip(
                 ("K0", "K1", "K2", "electric_mass"), full_matrices
             ):
+                if task42_phase_gate is not None:
+                    from src.common.task42_phase_admission import admit_task42_phase
+
+                    phase = (
+                        "qep_operator_electric_mass_reduced"
+                        if name == "electric_mass"
+                        else f"qep_operator_{name}_reduced"
+                    )
+                    admit_task42_phase(task42_phase_gate, phase)
                 reduced_matrices.append(
                     reduce_matrix_hermitian(
                         matrix, transform.matrix, transform_h=transform_h
@@ -333,11 +360,18 @@ def solve_quadratic_beta_modes(
     tolerance: float = 1.0e-10,
     max_iterations: int = 500,
     operator_frobenius_norms: tuple[float, float, float] | None = None,
+    task42_phase_gate=None,
+    task42_eigensolve_phase: str = "qep_positive_eigensolve",
+    task42_vectors_phase: str = "qep_positive_mode_vectors",
 ) -> tuple[list[QuadraticBetaMode], QuadraticBetaSolveReport]:
     """Solve a target slice with native distributed SLEPc PEP/TOAR."""
 
     if requested_modes < 1:
         raise ValueError("requested_modes must be positive.")
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, task42_eigensolve_phase)
     comm = operators.K0.comm
     pep = SLEPc.PEP().create(comm=comm)
     pep.setOperators([operators.K0, operators.K1, operators.K2])
@@ -364,6 +398,10 @@ def solve_quadratic_beta_modes(
             float(matrix.norm(PETSc.NormType.FROBENIUS))
             for matrix in (operators.K0, operators.K1, operators.K2)
         )
+    if task42_phase_gate is not None and converged:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, task42_vectors_phase)
     modes: list[QuadraticBetaMode] = []
     for index in range(converged):
         reduced = operators.K0.createVecRight()

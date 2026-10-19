@@ -284,6 +284,13 @@ TASK42_13P5_FULL3D_MODEL_ID = (
 )
 TASK42_13P5_FULL3D_RUN_ID = "task42_13p5_p6h10_full3d_direct_mpi8"
 TASK42_13P5_COMPARISON_GROUP = "task42_az90_50x50_17x20_13p5_full3d"
+TASK42_13P5_HYBRID_MODEL_ID = (
+    "task42_az90_50x50_17x20_13p5_hybrid_direct_p6h10_m120_mpi8"
+)
+TASK42_13P5_HYBRID_RUN_ID = "task42_13p5_p6h10_m120_hybrid_direct_mpi8"
+TASK42_13P5_HYBRID_COMPARISON_GROUP = (
+    "task42_az90_50x50_17x20_13p5_hybrid_direct_m120"
+)
 TASK42_SI_LABEL = "Si / silicon"
 TASK42_SI_MATERIAL_RECORD_PATH = (
     "docs/task42hybrid_az90_50x50_17x20_0p7nm/materials/"
@@ -2598,9 +2605,13 @@ def task42_material_identity(wavelength_nm: float) -> dict[str, Any]:
 def task42_material_provenance(
     config: Mapping[str, Any],
 ) -> dict[str, Any] | None:
-    """Bind the registered 13.5 nm Task42 input to its user-supplied Si record."""
+    """Bind registered Task42 13.5 nm inputs to the user-supplied Si record."""
 
-    if str(config.get("model_id", "")) != TASK42_13P5_FULL3D_MODEL_ID:
+    model_id = str(config.get("model_id", ""))
+    if model_id not in {
+        TASK42_13P5_FULL3D_MODEL_ID,
+        TASK42_13P5_HYBRID_MODEL_ID,
+    }:
         return None
     materials = config.get("materials")
     incidence = config.get("incidence")
@@ -2615,17 +2626,32 @@ def task42_material_provenance(
         or materials.get("grating_name") != TASK42_SI_LABEL
     ):
         return None
-    return {
+    result = {
         **identity,
         "material_role": "physical parsed material identity for substrate and grating",
         "substrate_label": materials.get("substrate_name"),
         "grating_label": materials.get("grating_name"),
         "imaginary_sign_preserved": True,
     }
+    if model_id == TASK42_13P5_HYBRID_MODEL_ID:
+        result["task_profile"] = "task42_a2_hybrid_direct_p6h10_m120"
+    return result
 
 
 def task42_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
-    """Return errors for the single A0 13.5 nm Task42 Full3D direct profile."""
+    """Validate the finite Task42 A0 Full3D and A2 Hybrid-direct profiles."""
+
+    if str(config.get("model_id", "")) == TASK42_13P5_HYBRID_MODEL_ID:
+        return task42_hybrid_direct_profile_errors(config)
+    if str(config.get("model_id", "")).startswith("task42_") and str(
+        config.get("model_id", "")
+    ) != TASK42_13P5_FULL3D_MODEL_ID:
+        return [
+            (
+                "model_id",
+                "unknown Task42 profile; only the registered A0 Full3D and A2 Hybrid direct cases are supported",
+            )
+        ]
 
     expected: tuple[tuple[str | None, str, Any], ...] = (
         (None, "model_id", TASK42_13P5_FULL3D_MODEL_ID),
@@ -2704,6 +2730,125 @@ def task42_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
     if str(config.get("model_id", "")).startswith("task42_"):
         return [("model_id", "unknown Task42 profile; A0 registers one exact 13.5 nm Full3D direct case")]
     return []
+
+
+def task42_hybrid_direct_profile_errors(
+    config: Mapping[str, Any],
+) -> list[tuple[str, str]]:
+    """Validate the separate Task42 A2 p6/h10/M120 Hybrid-direct identity."""
+
+    expected: tuple[tuple[str | None, str, Any], ...] = (
+        (None, "model_id", TASK42_13P5_HYBRID_MODEL_ID),
+        (None, "run_id", TASK42_13P5_HYBRID_RUN_ID),
+        (None, "comparison_group", TASK42_13P5_HYBRID_COMPARISON_GROUP),
+        (None, "dimension", 3),
+        ("geometry", "geometry_kind", "rectangular_block_grating"),
+        ("geometry", "period_x_nm", 50.0),
+        ("geometry", "period_y_nm", 50.0),
+        ("geometry", "z_min_nm", -10.0),
+        ("geometry", "z_max_nm", 130.0),
+        ("geometry", "interface_z_nm", 0.0),
+        ("geometry", "air_height_nm", 130.0),
+        ("geometry", "substrate_thickness_nm", 10.0),
+        ("geometry", "grating_width_x_nm", 17.0),
+        ("geometry", "grating_width_y_nm", 20.0),
+        ("geometry", "grating_height_nm", 120.0),
+        ("materials", "n_air", (1.0, 0.0)),
+        ("materials", "mu_r", (1.0, 0.0)),
+        ("materials", "n_substrate", TASK42_SI_MATERIALS[13.5]["n"]),
+        ("materials", "n_grating", TASK42_SI_MATERIALS[13.5]["n"]),
+        ("materials", "substrate_name", TASK42_SI_LABEL),
+        ("materials", "grating_name", TASK42_SI_LABEL),
+        ("incidence", "wavelength_nm", 13.5),
+        ("incidence", "grazing_angle_deg", 1.0),
+        ("incidence", "azimuth_deg", 90.0),
+        ("incidence", "polarization", "s"),
+        ("discretization", "nedelec_degree", 6),
+        ("discretization", "visualization_degree", 6),
+        ("discretization", "mesh_target_nm", 10.0),
+        ("discretization", "mesh_cell_type", "hexahedron"),
+        ("discretization", "mesh_spacing_mode", "boundary_fitted"),
+        ("discretization", "assembly_backend", "assembly_time_static_condensed"),
+        ("discretization", "floquet_constraint_mode", "auto"),
+        ("boundary", "use_floquet_x", True),
+        ("boundary", "use_floquet_y", True),
+        ("boundary", "vertical_boundary", "dtn_port"),
+        ("boundary", "scattering_background", "layered"),
+        ("boundary", "dtn_order_policy", "auto_propagating"),
+        ("boundary", "dtn_assembly", "auxiliary"),
+        ("boundary", "use_pml", False),
+        ("method", "kind", "hybrid_direct"),
+        ("method", "bottom_interface_nm", 10.0),
+        ("method", "top_interface_nm", 110.0),
+        ("method", "requested_modes_per_direction", 120),
+        ("method", "propagation_model", "full3d_uniform_cg"),
+        ("method", "traction_model", "full3d_one_cell_exact_schur"),
+        ("solver", "linear_solver", "direct"),
+        ("solver", "direct_solver_profile", "default"),
+        ("execution", "mpi_size", 8),
+        ("execution", "warning_memory_gib", 230.4),
+        ("execution", "terminate_memory_gib", 256.0),
+        ("execution", "absolute_terminate_memory_bytes", 256 * 2**30),
+        ("execution", "timeout_seconds", 172800),
+        ("execution", "require_zero_swap", False),
+        ("output", "results_root", "results/task42hybrid_az90_50x50_17x20_0p7nm"),
+        ("output", "unique_output", True),
+        ("output", "export_fields", True),
+        ("output", "export_diffraction_orders", True),
+        ("output", "export_canonical_vectors", True),
+        ("output", "export_modal_amplitudes", True),
+        ("output", "export_reference_planes", True),
+        ("output", "reference_plane_z_nm", (10.0, 30.0, 60.0, 90.0, 110.0)),
+        ("output", "sample_count_x", 40),
+        ("output", "sample_count_y", 40),
+        ("output", "diffraction_sample_count_x", 24),
+        ("output", "diffraction_sample_count_y", 24),
+        ("output", "top_probe_z_nm", 125.0),
+        ("output", "bottom_probe_z_nm", -5.0),
+    )
+    errors: list[tuple[str, str]] = []
+    for section, key, value in expected:
+        actual = config.get(key) if section is None else config.get(section, {}).get(key)
+        if not _same_profile_value(actual, value):
+            path = key if section is None else f"{section}.{key}"
+            errors.append((path, f"must match the frozen Task42 A2 value {value!r}"))
+
+    execution = config.get("execution", {})
+    if isinstance(execution, Mapping):
+        manifest = execution.get("phase_budget_manifest")
+        manifest_sha = execution.get("phase_budget_manifest_sha256")
+        if (manifest is None) != (manifest_sha is None):
+            errors.append(
+                (
+                    "execution.phase_budget_manifest",
+                    "phase budget manifest path and SHA must be supplied together",
+                )
+            )
+        if manifest is not None and (
+            not isinstance(manifest, str)
+            or not Path(manifest).is_absolute()
+            or not isinstance(manifest_sha, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", manifest_sha)
+        ):
+            errors.append(
+                (
+                    "execution.phase_budget_manifest",
+                    "phase budget manifest requires an absolute path and lowercase SHA256",
+                )
+            )
+    try:
+        inventory = task039_dynamic_external_mode_inventory(config)
+        keys = inventory.get("keys", [])
+        max_m = max((abs(int(item["m"])) for item in keys), default=0)
+        max_n = max((abs(int(item["n"])) for item in keys), default=0)
+        output = config.get("output", {})
+        if output.get("diffraction_order_max_m", -1) < max_m:
+            errors.append(("output.diffraction_order_max_m", "does not cover the full external key inventory"))
+        if output.get("diffraction_order_max_n", -1) < max_n:
+            errors.append(("output.diffraction_order_max_n", "does not cover the full external key inventory"))
+    except (KeyError, TypeError, ValueError, OverflowError) as exc:
+        errors.append(("output.diffraction_order_max_m", f"external key inventory cannot be resolved: {exc}"))
+    return errors
 
 
 def task041_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
@@ -3247,8 +3392,11 @@ def task42_external_mode_inventory_at_wavelength(
     used by the public resolver.  It performs no mesh, QEP, or PDE work.
     """
 
-    if str(config.get("model_id", "")) != TASK42_13P5_FULL3D_MODEL_ID:
-        raise ValueError("Task42 wavelength key planning requires the registered A0 profile")
+    if str(config.get("model_id", "")) not in {
+        TASK42_13P5_FULL3D_MODEL_ID,
+        TASK42_13P5_HYBRID_MODEL_ID,
+    }:
+        raise ValueError("Task42 wavelength key planning requires a registered 13.5 nm profile")
     errors = task42_profile_errors(config)
     if errors:
         path, message = errors[0]
@@ -4310,8 +4458,15 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         if kind == "hybrid_direct":
             if solver["linear_solver"] != "direct":
                 raise _error("solver.linear_solver", "hybrid_direct requires direct")
+            task42_hybrid_direct = model_id == TASK42_13P5_HYBRID_MODEL_ID
             allowed_degrees = (
-                {1, 2, 3, 4, 6} if _is_task039_candidate(config) else {1, 2, 3, 4}
+                {6}
+                if task42_hybrid_direct
+                else (
+                    {1, 2, 3, 4, 6}
+                    if _is_task039_candidate(config)
+                    else {1, 2, 3, 4}
+                )
             )
             if discretization["nedelec_degree"] not in allowed_degrees:
                 raise _error(
@@ -4325,7 +4480,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             expected_assembly = (
                 "assembly_time_static_condensed"
-                if _is_task039_candidate(config)
+                if _is_task039_candidate(config) or task42_hybrid_direct
                 else "standard_full"
             )
             if discretization["assembly_backend"] != expected_assembly:
@@ -4335,7 +4490,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             expected_pair = (
                 ("full3d_uniform_cg", "full3d_one_cell_exact_schur")
-                if _is_task039_candidate(config)
+                if _is_task039_candidate(config) or task42_hybrid_direct
                 else ("continuous_beta", "continuous_qep_beta")
             )
             if (
@@ -4362,7 +4517,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         f"output.{key}",
                         "hybrid_direct requires the supported Case080 output combination",
                     )
-            expected_canonical = _is_task039_candidate(config)
+            expected_canonical = _is_task039_candidate(config) or task42_hybrid_direct
             if output.get("export_canonical_vectors") is not expected_canonical:
                 raise _error(
                     "output.export_canonical_vectors",
@@ -4377,7 +4532,24 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "output.unique_output",
                     "hybrid_direct requires unique_output=true",
                 )
-            if (
+            if task42_hybrid_direct:
+                inventory = task039_dynamic_external_mode_inventory(config)
+                external_keys = inventory.get("keys", [])
+                required_m = max(
+                    (abs(int(item["m"])) for item in external_keys), default=0
+                )
+                required_n = max(
+                    (abs(int(item["n"])) for item in external_keys), default=0
+                )
+                if (
+                    output.get("diffraction_order_max_m", -1) < required_m
+                    or output.get("diffraction_order_max_n", -1) < required_n
+                ):
+                    raise _error(
+                        "output.diffraction_order_max_m",
+                        "Task42 reporting bounds must include every dynamic external key",
+                    )
+            elif (
                 output.get("diffraction_order_max_m") != 2
                 or output.get("diffraction_order_max_n") != 2
             ):
@@ -4395,6 +4567,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             if _is_task039_candidate(config):
                 profile_errors = task039_profile_errors(config)
+                if profile_errors:
+                    path, message = profile_errors[0]
+                    raise _error(path, message)
+            if task42_hybrid_direct:
+                profile_errors = task42_hybrid_direct_profile_errors(config)
                 if profile_errors:
                     path, message = profile_errors[0]
                     raise _error(path, message)
@@ -5286,9 +5463,22 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         material_provenance = task039_material_provenance(config)
     if material_provenance is not None:
         derived["material_provenance"] = material_provenance
-        derived["external_mode_inventory"] = (
-            _task039_dynamic_external_mode_inventory_from_cfg(cfg)
-        )
+        external_mode_inventory = _task039_dynamic_external_mode_inventory_from_cfg(cfg)
+        if str(config.get("model_id", "")) == TASK42_13P5_HYBRID_MODEL_ID:
+            external_mode_inventory["identity"] = {
+                "schema": "task42.a2.external-mode-inventory-identity.v1",
+                "model_id": TASK42_13P5_HYBRID_MODEL_ID,
+                "wavelength_nm": float(config["incidence"]["wavelength_nm"]),
+                "material_identity_sha256": material_provenance[
+                    "material_identity_sha256"
+                ],
+                "inventory_sha256": sha256(
+                    canonical_json_bytes(external_mode_inventory)
+                ).hexdigest(),
+                "key_count": int(external_mode_inventory["count"]),
+                "selection": external_mode_inventory["selection"],
+            }
+        derived["external_mode_inventory"] = external_mode_inventory
     return derived
 
 
@@ -5322,6 +5512,13 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
             f"{normalized['run_id']}__{method}__mpi{normalized['execution']['mpi_size']}__M{mode_text}"
         )
     )
+    phase_budget_basis_sha256 = None
+    if normalized.get("model_id") == TASK42_13P5_HYBRID_MODEL_ID:
+        from .task42_hybrid_budget import task42_phase_budget_basis_sha256
+
+        phase_budget_basis_sha256 = task42_phase_budget_basis_sha256(
+            loaded.document
+        )
     return RunSpecification(
         identity={key: normalized[key] for key in IDENTITY_KEYS},
         geometry=normalized["geometry"],
@@ -5339,6 +5536,7 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
         input_sha256=loaded.input_sha256,
         physical_model_sha256=physical_sha,
         expected_output_parent=parent,
+        phase_budget_basis_sha256=phase_budget_basis_sha256,
     )
 
 
@@ -5425,6 +5623,9 @@ __all__ = [
     "TASK42_13P5_COMPARISON_GROUP",
     "TASK42_13P5_FULL3D_MODEL_ID",
     "TASK42_13P5_FULL3D_RUN_ID",
+    "TASK42_13P5_HYBRID_COMPARISON_GROUP",
+    "TASK42_13P5_HYBRID_MODEL_ID",
+    "TASK42_13P5_HYBRID_RUN_ID",
     "TASK42_SI_LABEL",
     "TASK42_SI_MATERIALS",
     "TASK42_SI_MATERIAL_RECORD_PATH",
@@ -5467,6 +5668,7 @@ __all__ = [
     "task041_v16_outer_resource_contract_errors",
     "task041_v16_phase_memory_gate",
     "task42_external_mode_inventory_at_wavelength",
+    "task42_hybrid_direct_profile_errors",
     "task42_material_identity",
     "task42_material_provenance",
     "task42_memory_authority_inputs",

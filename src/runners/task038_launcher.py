@@ -31,6 +31,7 @@ from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
 )
+from src.common.task42_phase_admission import task42_phase_inventory
 from src.io.execution_plan import (
     CONTRACT_PROBE_ADAPTER,
     TASK041_PUBLIC_SUPERVISOR_ADAPTER,
@@ -44,6 +45,7 @@ from src.io.input_validation import (
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MODEL_IDS,
     TASK42_13P5_FULL3D_MODEL_ID,
+    TASK42_13P5_HYBRID_MODEL_ID,
     TASK42_DIRECT_FACTOR_LIFECYCLE,
     TASK42_SOFT_TARGET_SECONDS,
     task039_model_id_matches,
@@ -55,6 +57,10 @@ from src.io.input_validation import (
 )
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
+from src.io.task42_hybrid_budget import (
+    load_task42_hybrid_phase_budget,
+    phase_budget_for_job,
+)
 
 PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
@@ -757,13 +763,20 @@ def _run_worker(
     requested_modes = specification.method.get("requested_modes_per_direction")
     specification_payload = specification.as_jsonable()
     solver_payload = specification_payload.get("solver", {})
-    task42_enabled = (
+    task42_a1_full3d = (
         model_id.startswith("task42_")
+        and model_id == TASK42_13P5_FULL3D_MODEL_ID
+        and method == "full3d_direct"
         and solver_payload.get("direct_factor_lifecycle")
         == TASK42_DIRECT_FACTOR_LIFECYCLE
     )
+    task42_a2_hybrid = (
+        model_id == TASK42_13P5_HYBRID_MODEL_ID
+        and method == "hybrid_direct"
+    )
+    task42_enabled = task42_a1_full3d or task42_a2_hybrid
     if model_id.startswith("task42_") and not task42_enabled:
-        raise InputError("Task42 worker requires its registered staged-direct lifecycle")
+        raise InputError("Task42 worker requires one registered Task42 public profile")
     formal_direct_v2_h5 = task039_h5_hybrid_direct_formal_profile(specification_payload)
     formal_iterative_v2_h5 = task039_h5_hybrid_iterative_formal_profile(
         specification_payload
@@ -1181,9 +1194,57 @@ def _run_worker(
                     "hard_wall_timeout": False,
                 },
             }
-        task42_startup_budget = task42_startup_memory_budget(
-            specification.execution.get("mpi_size")
-        )
+        if task42_a2_hybrid:
+            material = specification.derived.get("material_provenance", {})
+            budget_manifest, observed_budget_sha, budget_error = (
+                load_task42_hybrid_phase_budget(
+                    specification.execution,
+                    model_id=TASK42_13P5_HYBRID_MODEL_ID,
+                    run_id=str(specification.identity.get("run_id", "")),
+                    comparison_group=str(
+                        specification.identity.get("comparison_group", "")
+                    ),
+                    budget_basis_sha256=str(
+                        specification_payload.get("provenance", {}).get(
+                            "phase_budget_basis_sha256", ""
+                        )
+                    ),
+                    physical_model_sha256=specification.physical_model_sha256,
+                    material_identity_sha256=str(
+                        material.get("material_identity_sha256", "")
+                    ),
+                    source_sha=plan.source_sha,
+                    mpi_size=int(specification.execution.get("mpi_size", -1)),
+                )
+            )
+            spawn_inventory = task42_phase_inventory("public_worker_spawn")
+            spawn_delta, spawn_inventory_bound, spawn_errors = phase_budget_for_job(
+                budget_manifest,
+                stage="public_worker_spawn",
+                expected_inventory=spawn_inventory,
+                mpi_size=int(specification.execution.get("mpi_size", -1)),
+            )
+            startup_errors = list(spawn_errors)
+            if budget_error is not None:
+                startup_errors.append(budget_error)
+            task42_startup_budget = {
+                "pass": not startup_errors and type(spawn_delta) is int,
+                "status": (
+                    "phase_budget_bound"
+                    if not startup_errors and type(spawn_delta) is int
+                    else "pending-sizing_or_invalid_manifest"
+                ),
+                "delta_bytes": spawn_delta,
+                "phase": "public_worker_spawn",
+                "manifest_sha256": observed_budget_sha,
+                "phase_inventory": spawn_inventory_bound,
+                "errors": startup_errors,
+                "delta_role": "identity-bound Task42 A2 phase estimate",
+            }
+        else:
+            task42_startup_budget = task42_startup_memory_budget(
+                specification.execution.get("mpi_size")
+            )
         if task42_startup_budget.get("pass") is not True:
             return {
                 "exit_status": None,
@@ -1222,7 +1283,9 @@ def _run_worker(
                 "schema": "task42.launcher_resource_sample.v1",
                 "phase": "before_worker_spawn",
                 "elapsed_seconds": 0.0,
-                "delta_role": "predicted_startup_objects",
+                "delta_role": task42_startup_budget.get(
+                    "delta_role", "predicted_startup_objects"
+                ),
                 "startup_budget": task42_startup_budget,
                 "authority": initial_authority,
                 "gate": initial_gate,
@@ -1650,8 +1713,16 @@ def _run_worker(
         "zero_swap_observed": zero_swap_observed if sample_count else None,
     }
     if task42_enabled:
-        resource_authority["task42_staged_direct"] = {
+        task42_resource_key = (
+            "task42_a2_hybrid_direct" if task42_a2_hybrid else "task42_staged_direct"
+        )
+        resource_authority[task42_resource_key] = {
             "schema": "task42.launcher_resource_authority.v1",
+            "profile_identity": (
+                TASK42_13P5_HYBRID_MODEL_ID
+                if task42_a2_hybrid
+                else TASK42_13P5_FULL3D_MODEL_ID
+            ),
             "status": (
                 "runtime_resource_gate_refused"
                 if task42_gate_failed

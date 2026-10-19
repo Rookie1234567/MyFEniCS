@@ -17,9 +17,14 @@ from src.io.execution_plan import (
 from src.io.input_loader import InputError
 from src.io.input_validation import (
     TASK42_13P5_FULL3D_MODEL_ID,
+    TASK42_13P5_HYBRID_MODEL_ID,
     TASK42_DIRECT_FACTOR_LIFECYCLE,
     task039_07nm_launch_error,
     task039_model_id_matches,
+)
+from src.io.task42_hybrid_budget import (
+    load_task42_hybrid_phase_budget,
+    phase_budget_for_rank,
 )
 
 TASK42_STAGED_DIRECT_BRIDGE_PATH_ENV = "TASK42_STAGED_DIRECT_BRIDGE_PATH"
@@ -69,17 +74,30 @@ def _task42_stage_gate_callback(
         )
     writer_started = False
 
-    def gate(stage: str, local_delta_bytes: int, inventory: dict[str, Any]):
+    def gate(
+        stage: str,
+        local_delta_bytes: int | None,
+        inventory: dict[str, Any],
+    ):
         nonlocal writer_started
         local_errors: list[str] = []
         if not isinstance(stage, str) or not stage.strip():
             local_errors.append("stage_identity_is_missing")
-        if type(local_delta_bytes) is not int or local_delta_bytes < 0:
+        if local_delta_bytes is None:
+            local_errors.append("phase_Delta_is_pending_sizing")
+        elif type(local_delta_bytes) is not int or local_delta_bytes < 0:
             local_errors.append("local_Delta_must_be_a_nonnegative_exact_integer")
         if not isinstance(inventory, dict):
             local_errors.append("inventory_must_be_a_mapping")
             components = None
         else:
+            admission_errors = inventory.get("admission_errors", [])
+            if not isinstance(admission_errors, list) or any(
+                not isinstance(item, str) for item in admission_errors
+            ):
+                local_errors.append("inventory_admission_errors_are_invalid")
+            else:
+                local_errors.extend(admission_errors)
             components = inventory.get("components")
             if not isinstance(components, list) or not components:
                 local_errors.append("inventory_components_are_missing")
@@ -168,24 +186,28 @@ def _task42_stage_gate_callback(
             rank_component_rows.append(by_name)
         component_aggregation: dict[str, dict[str, Any]] = {}
         phase_delta: int | None = None
+        aggregation_valid = True
         if expected_component_names is not None:
-            phase_delta = 0
+            phase_delta_candidate = 0
             for name in expected_component_names:
                 entries = [row.get(name) for row in rank_component_rows]
                 if any(not isinstance(entry, dict) for entry in entries):
                     errors.append(f"MPI_component_{name}_is_missing_on_a_rank")
+                    aggregation_valid = False
                     continue
                 scopes = {entry.get("scope") for entry in entries if entry is not None}
                 units = {entry.get("unit") for entry in entries if entry is not None}
                 values = [entry.get("delta_bytes") for entry in entries if entry is not None]
                 if len(scopes) != 1 or len(units) != 1:
                     errors.append(f"MPI_component_{name}_scope_or_unit_differs")
+                    aggregation_valid = False
                     continue
                 scope = next(iter(scopes))
                 if units != {"bytes"} or any(
                     type(value) is not int or value < 0 for value in values
                 ):
                     errors.append(f"MPI_component_{name}_value_or_unit_is_invalid")
+                    aggregation_valid = False
                     continue
                 if scope == "rank_local":
                     amount = sum(values)
@@ -193,13 +215,15 @@ def _task42_stage_gate_callback(
                 elif scope == "global_replicated":
                     if len(set(values)) != 1:
                         errors.append(f"replicated_global_component_{name}_differs")
+                        aggregation_valid = False
                         continue
                     amount = values[0]
                     aggregation = "count_one_replicated_global_value"
                 else:
                     errors.append(f"MPI_component_{name}_scope_is_invalid")
+                    aggregation_valid = False
                     continue
-                phase_delta += amount
+                phase_delta_candidate += amount
                 component_aggregation[name] = {
                     "scope": scope,
                     "unit": "bytes",
@@ -207,6 +231,8 @@ def _task42_stage_gate_callback(
                     "counted_bytes": amount,
                     "aggregation": aggregation,
                 }
+            if aggregation_valid and not errors:
+                phase_delta = phase_delta_candidate
         result = None
         if comm.rank == 0:
             authority = None
@@ -228,6 +254,20 @@ def _task42_stage_gate_callback(
                 and isinstance(gate_record, dict)
                 and gate_record.get("pass") is True
             )
+            if not passed:
+                root_errors = (
+                    gate_record.get("errors")
+                    if isinstance(gate_record, dict)
+                    else None
+                )
+                if isinstance(root_errors, list) and root_errors:
+                    errors.extend(
+                        f"root_resource_gate:{item}"
+                        for item in root_errors
+                        if isinstance(item, str)
+                    )
+                elif not errors:
+                    errors.append("root_resource_gate_refused_without_error_vector")
             record = {
                 "schema": "task42.direct_phase_gate_receipt.v1",
                 "phase": next(iter(stage_names)) if len(stage_names) == 1 else None,
@@ -273,6 +313,42 @@ def _task42_stage_gate_callback(
         if not isinstance(result, dict) or type(result.get("pass")) is not bool:
             raise RuntimeError("Task42 phase gate returned no unanimous receipt")
         return result
+
+    return gate
+
+
+def _task42_hybrid_phase_gate_callback(
+    *,
+    output_directory: Path,
+    comm: Any,
+    root_pid: int,
+    budget_manifest: Mapping[str, Any] | None,
+    budget_manifest_sha256: str | None,
+    budget_manifest_error: str | None,
+):
+    """Bind each shared-kernel allocation gate to the exact sized manifest."""
+
+    base_gate = _task42_stage_gate_callback(
+        output_directory=output_directory,
+        comm=comm,
+        root_pid=root_pid,
+    )
+
+    def gate(stage: str, inventory: Mapping[str, Any]) -> dict[str, Any]:
+        local_delta, selected, errors = phase_budget_for_rank(
+            budget_manifest,
+            stage=stage,
+            inventory=inventory,
+            rank=int(comm.rank),
+            mpi_size=int(comm.size),
+        )
+        selected = dict(selected)
+        admission_errors = list(errors)
+        if budget_manifest_error is not None:
+            admission_errors.append(budget_manifest_error)
+        selected["admission_errors"] = admission_errors
+        selected["budget_manifest_sha256"] = budget_manifest_sha256
+        return base_gate(stage, local_delta, selected)
 
     return gate
 
@@ -604,7 +680,85 @@ def _dispatch_resolved_payload(
 
         label = "Full3D iterative"
     elif expected_method == "hybrid_direct":
-        if task039_model_id_matches(
+        if resolved_payload.get("model_id") == TASK42_13P5_HYBRID_MODEL_ID:
+            if comm is None:
+                raise RuntimeError("Task42 Hybrid worker is missing MPI communicator")
+            execution = resolved_payload.get("execution", {})
+            provenance = resolved_payload.get("provenance", {})
+            derived = resolved_payload.get("derived", {})
+            material = (
+                derived.get("material_provenance")
+                if isinstance(derived, Mapping)
+                else None
+            )
+            if not all(
+                isinstance(value, Mapping)
+                for value in (execution, provenance, material)
+            ):
+                raise RuntimeError("Task42 Hybrid worker identity is incomplete")
+            manifest, manifest_sha, manifest_error = load_task42_hybrid_phase_budget(
+                execution,
+                model_id=TASK42_13P5_HYBRID_MODEL_ID,
+                run_id=str(resolved_payload.get("run_id", "")),
+                comparison_group=str(resolved_payload.get("comparison_group", "")),
+                budget_basis_sha256=provenance.get(
+                    "phase_budget_basis_sha256"
+                ),
+                physical_model_sha256=str(provenance.get("physical_model_sha256", "")),
+                material_identity_sha256=str(
+                    material.get("material_identity_sha256", "")
+                ),
+                source_sha=str(expected_source_sha or ""),
+                mpi_size=int(resolved_payload.get("execution", {}).get("mpi_size", -1)),
+            )
+            root_pid_text = os.environ.get("TASK038_JOB_ROOT_PID")
+            local_binding = {
+                "root_pid": root_pid_text,
+                "budget_manifest_path": execution.get("phase_budget_manifest"),
+                "budget_manifest_expected_sha256": execution.get(
+                    "phase_budget_manifest_sha256"
+                ),
+                "budget_manifest_observed_sha256": manifest_sha,
+                "budget_manifest_error": manifest_error,
+                "source_sha": expected_source_sha,
+                "resolved_config_sha256": expected_resolved_config_sha256,
+                "output_directory": str(Path(output_directory).resolve()),
+                "material_identity_sha256": material.get("material_identity_sha256"),
+            }
+            bindings = comm.allgather(local_binding)
+            if len({_task42_inventory_json_bytes(row) for row in bindings}) != 1:
+                raise RuntimeError(
+                    "Task42 Hybrid source/budget/root/output binding differs across MPI ranks"
+                )
+            try:
+                root_pid = int(root_pid_text) if root_pid_text is not None else 0
+            except ValueError as exc:
+                raise RuntimeError("Task42 Hybrid root PID is not an integer") from exc
+            if root_pid <= 0:
+                raise RuntimeError("Task42 Hybrid worker lacks launcher root PID")
+            stage_gate = _task42_hybrid_phase_gate_callback(
+                output_directory=Path(output_directory),
+                comm=comm,
+                root_pid=root_pid,
+                budget_manifest=manifest,
+                budget_manifest_sha256=manifest_sha,
+                budget_manifest_error=manifest_error,
+            )
+            from src.runners.task42_hybrid_direct import run_task42_hybrid_direct
+
+            def adapter(payload, directory):
+                return run_task42_hybrid_direct(
+                    payload,
+                    directory,
+                    source_sha=str(expected_source_sha or ""),
+                    resolved_config_sha256=str(
+                        expected_resolved_config_sha256 or ""
+                    ),
+                    task42_phase_gate=stage_gate,
+                )
+
+            label = "Task42 A2 Hybrid direct"
+        elif task039_model_id_matches(
             "hybrid_direct", str(resolved_payload.get("model_id", ""))
         ):
             from src.runners.task039_hybrid_direct import run_task039_hybrid_direct

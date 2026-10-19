@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
 
 def freeze(value: Any) -> Any:
@@ -48,6 +49,7 @@ class RunSpecification:
     input_sha256: str
     physical_model_sha256: str
     expected_output_parent: Path
+    phase_budget_basis_sha256: str | None = None
 
     def __post_init__(self) -> None:
         for name in (
@@ -93,4 +95,8 @@ class RunSpecification:
             "physical_model_sha256": self.physical_model_sha256,
             "expected_output_parent": str(self.expected_output_parent),
         }
+        if self.phase_budget_basis_sha256 is not None:
+            result["provenance"]["phase_budget_basis_sha256"] = (
+                self.phase_budget_basis_sha256
+            )
         return result

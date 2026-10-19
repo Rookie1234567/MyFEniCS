@@ -8,8 +8,8 @@ ordinary default without a distributed modal core and iterative local solver.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 import numpy as np
 from mpi4py import MPI
@@ -445,6 +445,8 @@ def build_hybrid_augmented_direct_system(
     bottom_system: HybridLocalDtnSystem,
     top_system: HybridLocalDtnSystem,
     coupling: HybridInternalModeCoupling,
+    *,
+    task42_phase_gate=None,
 ) -> HybridAugmentedDirectSystem:
     """Assemble the Task32 monolithic AIJ matrix without solving it."""
 
@@ -452,6 +454,10 @@ def build_hybrid_augmented_direct_system(
         raise ValueError("Hybrid local systems must be ordered bottom, top.")
     mode_count = coupling.mode_count_per_direction
     internal_count = 2 * mode_count
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        admit_task42_phase(task42_phase_gate, "hybrid_augmented_matrix")
     layout = HybridAugmentedLayout.build(bottom_system, top_system, internal_count)
     matrix = PETSc.Mat().createAIJ(
         size=(
@@ -528,6 +534,19 @@ def build_hybrid_augmented_direct_system(
         )
     inserted["H_modal"] = int(np.count_nonzero(modal_constraint))
     matrix.assemble()
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        try:
+            admit_task42_phase(task42_phase_gate, "hybrid_augmented_rhs")
+        except BaseException as primary_error:
+            try:
+                matrix.destroy()
+            except BaseException as cleanup_error:  # noqa: BLE001
+                primary_error.add_note(
+                    f"Task42 refused-RHS matrix cleanup failed: {cleanup_error!r}"
+                )
+            raise
     rhs = layout.pack(
         bottom_system.b,
         top_system.b,
@@ -582,6 +601,7 @@ def solve_hybrid_augmented_direct(
     *,
     defer_static_recovery: bool = False,
     mumps_workspace_relaxation_percent: int | None = None,
+    task42_phase_gate=None,
 ) -> HybridAugmentedDirectSolution:
     """Factor and solve the assembled hybrid system with direct MUMPS LU.
 
@@ -593,6 +613,11 @@ def solve_hybrid_augmented_direct(
     """
 
     comm = system.layout.comm
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        # Refuse before creating the KSP/PC objects, which belong to this solve.
+        admit_task42_phase(task42_phase_gate, "direct_mumps_factor_setup")
     ksp = PETSc.KSP().create(comm)
     ksp.setType(PETSc.KSP.Type.PREONLY)
     ksp.setErrorIfNotConverged(True)
@@ -615,6 +640,19 @@ def solve_hybrid_augmented_direct(
     setup_seconds = float(
         comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
     )
+    if task42_phase_gate is not None:
+        from src.common.task42_phase_admission import admit_task42_phase
+
+        try:
+            admit_task42_phase(task42_phase_gate, "direct_solve")
+        except BaseException as primary_error:
+            try:
+                ksp.destroy()
+            except BaseException as cleanup_error:  # noqa: BLE001
+                primary_error.add_note(
+                    f"Task42 refused-solve KSP cleanup failed: {cleanup_error!r}"
+                )
+            raise
     x = system.b.duplicate()
     solve_started = time.perf_counter()
     ksp.solve(system.b, x)
@@ -658,12 +696,14 @@ def solve_hybrid_augmented_direct(
             coupling,
             bottom,
             modal,
+            task42_phase_gate=task42_phase_gate,
         )
         top_recovered = recover_hybrid_static_local_field(
             top_system,
             coupling,
             top,
             modal,
+            task42_phase_gate=task42_phase_gate,
         )
     return HybridAugmentedDirectSolution(
         x=x,
@@ -688,6 +728,8 @@ def recover_deferred_hybrid_static_solution(
     bottom_system: HybridLocalDtnSystem,
     top_system: HybridLocalDtnSystem,
     coupling: HybridInternalModeCoupling,
+    *,
+    task42_phase_gate=None,
 ) -> None:
     """Recover both condensed local fields after explicit factor release."""
 
@@ -713,12 +755,14 @@ def recover_deferred_hybrid_static_solution(
         coupling,
         solution.bottom,
         solution.modal_amplitudes,
+        task42_phase_gate=task42_phase_gate,
     )
     solution.top_recovered = recover_hybrid_static_local_field(
         top_system,
         coupling,
         solution.top,
         solution.modal_amplitudes,
+        task42_phase_gate=task42_phase_gate,
     )
 
 
