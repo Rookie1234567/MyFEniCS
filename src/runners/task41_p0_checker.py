@@ -1869,6 +1869,14 @@ def _task41_b0_numerical_checks(
         return {"errors": ["Task41 B0 contract case/window is malformed"]}
     if not isinstance(authority, Mapping):
         authority = {}
+    from src.runners.task41_p0_contract import task41_raw_artifact_limit_bytes
+
+    expected_raw_limit = task41_raw_artifact_limit_bytes(contract)
+    if contract.get("evidence", {}).get("raw_disk_policy") is not None and (
+        summary.get("raw_artifact_limit_bytes") != expected_raw_limit
+        or authority.get("raw_artifact_limit_bytes") != expected_raw_limit
+    ):
+        errors.append("Task41 B0 raw evidence limit differs from its approved contract")
     expected_identity = {
         "run_id": TASK41_B0_RUN_ID,
         "profile": TASK41_B0_PRECONDITIONER,

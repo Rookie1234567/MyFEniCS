@@ -1577,3 +1577,34 @@ def test_v19_output_checker_binds_exact_input_and_requires_lifecycle_audit(tmp_p
             worker_summary=incomplete_summary,
             expected_input_sha256=input_sha,
         )
+
+
+def test_task41_b0_authorized_raw_disk_16gib_preserves_other_gates(tmp_path, monkeypatch):
+    from src.runners import task40_v10_worker as worker
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_RUN_ID, Task41ContractError, task41_raw_artifact_limit_bytes,
+    )
+    policy = {"scope": "task41_b0_v3_recovery_evidence",
+              "raw_artifact_limit_bytes": 16 << 30, "free_space_floor_bytes": 2 << 30,
+              "authorization": "user_20261019_16gib_evidence_only"}
+    contract = {"case": {"run_id": TASK41_B0_RUN_ID},
+                "evidence": {"raw_disk_policy": policy}}
+    assert task41_raw_artifact_limit_bytes({}) == 8 << 30
+    assert task41_raw_artifact_limit_bytes(contract) == 16 << 30
+    with pytest.raises(Task41ContractError):
+        task41_raw_artifact_limit_bytes({**contract, "case": {"run_id": "other"}})
+    runtime = SimpleNamespace(directory=tmp_path, marker=lambda *_args: None)
+    monkeypatch.setattr(worker, "_raw_artifact_bytes", lambda _path: 198773775)
+    monkeypatch.setattr(worker.shutil, "disk_usage", lambda _path: SimpleNamespace(free=2_029_118_930_944))
+    from src.runners.physical_p4_schur_v14 import V14ResourceStop
+    with pytest.raises(V14ResourceStop):
+        worker._disk_admit(runtime, additional_bytes=11683674525, label="original")
+    runtime.raw_artifact_limit_bytes = task41_raw_artifact_limit_bytes(contract)
+    facts = worker._disk_admit(runtime, additional_bytes=11683674525, label="authorized")
+    assert facts["projected_cumulative_raw_artifact_bytes"] == 11882448300
+    assert facts["raw_artifact_limit_bytes"] == 16 << 30
+    with pytest.raises(V14ResourceStop):
+        worker._disk_admit(runtime, additional_bytes=16 << 30, label="over_cap")
+    monkeypatch.setattr(worker.shutil, "disk_usage", lambda _path: SimpleNamespace(free=12 << 30))
+    with pytest.raises(V14ResourceStop):
+        worker._disk_admit(runtime, additional_bytes=11683674525, label="free_floor")

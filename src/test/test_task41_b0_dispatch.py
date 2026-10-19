@@ -289,6 +289,9 @@ def _dispatch_fixture(root: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict
             ),
         },
     }
+    contract["preparation"] = {
+        "existing_surface_donor": contract_module.TASK41_B0_SAVED_SURFACE_DONOR,
+    }
     contract_path = root / contract_relative_path(source_sha, "B0")
     contract_path.parent.mkdir(parents=True, exist_ok=True)
     contract_path.write_text(

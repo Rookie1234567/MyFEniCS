@@ -4385,6 +4385,9 @@ def _disk_admit(runtime: Any, *, additional_bytes: int, label: str) -> dict[str,
     additional = int(additional_bytes)
     if additional < 0:
         raise ValueError("Task40 V10 raw artifact projection cannot be negative")
+    limit = getattr(runtime, "raw_artifact_limit_bytes", 8 << 30)
+    if type(limit) is not int or limit not in (8 << 30, 16 << 30):
+        raise ValueError("unsupported raw evidence disk limit")
     current = _raw_artifact_bytes(runtime.directory)
     usage = shutil.disk_usage(runtime.directory)
     projected = current + additional
@@ -4394,12 +4397,12 @@ def _disk_admit(runtime: Any, *, additional_bytes: int, label: str) -> dict[str,
         "current_raw_artifact_bytes": current,
         "projected_additional_bytes": additional,
         "projected_cumulative_raw_artifact_bytes": projected,
-        "raw_artifact_limit_bytes": 8 << 30,
+        "raw_artifact_limit_bytes": limit,
         "filesystem_free_bytes": int(usage.free),
         "projected_free_bytes": free_after,
         "free_space_floor_bytes": 2 << 30,
     }
-    if projected > (8 << 30) or free_after < (2 << 30):
+    if projected > limit or free_after < (2 << 30):
         from .physical_p4_schur_v14 import V14ResourceStop
 
         raise V14ResourceStop(f"Task40 V10 raw-disk admission failed: {facts}")
@@ -8710,6 +8713,10 @@ def _task41_iterative_candidate_contract(
         "factor_lifecycle_strategy": "ALL_Q_RESIDENT",
         "q_csr_reuse": contract.get("q_csr_reuse"),
     }
+    from src.runners.task41_p0_contract import task41_raw_artifact_limit_bytes
+
+    result["raw_artifact_limit_bytes"] = task41_raw_artifact_limit_bytes(contract)
+
     if comparison is not None:
         result.update(
             {
@@ -10328,6 +10335,9 @@ def run_task40_v10_p6_reference_worker(
             task41_source_sha=(source_sha if is_task41_p0_iterative else None),
             task41_contract_binding=task41_contract_binding,
         )
+        if is_task41_p0_iterative:
+            runtime.raw_artifact_limit_bytes = summary["campaign_authority"]["raw_artifact_limit_bytes"]
+            summary["raw_artifact_limit_bytes"] = runtime.raw_artifact_limit_bytes
         summary["time_policy"] = runtime.time_policy
         summary["time_policy_facts"] = dict(runtime.time_policy_facts)
         summary["shared_budget"] = runtime.shared_budget

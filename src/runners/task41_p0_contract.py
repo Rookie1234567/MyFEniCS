@@ -1088,6 +1088,7 @@ def require_task41_p0_contract(
         or time_limits.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
     ):
         raise Task41ContractError("Task41 contract time limits differ from the fixed P0 window")
+    task41_raw_artifact_limit_bytes(contract)
     service_directory = _resolve(root, evidence.get("service_directory"), "evidence.service_directory")
     expected_service_directory = (
         root / case_spec["service_relative"] / f"service_source_{source['sha']}"
@@ -1287,6 +1288,22 @@ def _check_task41_native_receipt(
             "Task41 ABI receipt must bind native_linux, complex128/int32, and MPI1"
         )
     return hashlib.sha256(abi_receipt_path.read_bytes()).hexdigest()
+
+
+def task41_raw_artifact_limit_bytes(contract: Mapping[str, Any]) -> int:
+    """Keep old contracts at 8 GiB; only the approved B0 evidence override is 16 GiB."""
+    policy = contract.get("evidence", {}).get("raw_disk_policy")
+    if policy is None:
+        return 8 << 30
+    expected = {
+        "scope": "task41_b0_v3_recovery_evidence",
+        "raw_artifact_limit_bytes": 16 << 30,
+        "free_space_floor_bytes": 2 << 30,
+        "authorization": "user_20261019_16gib_evidence_only",
+    }
+    if contract.get("case", {}).get("run_id") != TASK41_B0_RUN_ID or policy != expected:
+        raise Task41ContractError("Task41 raw evidence policy differs from the authorized B0 override")
+    return 16 << 30
 
 
 def prepare_task41_p0(
@@ -1489,6 +1506,13 @@ def prepare_task41_p0(
         },
         "evidence": {"service_directory": str(service_directory)},
     }
+    if case_id == "B0":
+        contract["evidence"]["raw_disk_policy"] = {
+            "scope": "task41_b0_v3_recovery_evidence",
+            "raw_artifact_limit_bytes": 16 << 30,
+            "free_space_floor_bytes": 2 << 30,
+            "authorization": "user_20261019_16gib_evidence_only",
+        }
     if comparison is not None:
         contract["comparison"] = comparison
     if q_csr_reuse is not None:

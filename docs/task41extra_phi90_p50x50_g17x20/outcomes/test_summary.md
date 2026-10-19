@@ -193,3 +193,11 @@ V2 有三份 consumer source 身份与三次正式尝试，不能用最后一次
 Ruff 不可用，未安装；未运行全仓测试。表中通过的 fixture 与运行门各自绑定对应 source/attempt。文档修订仅追加结果索引与总结，没有借用这些测试声称第三次运行的数值门通过。机器可读 adoption/action/performance 与三次服务证据见 [V2 compact](p0_v2_adoption_action_performance_20261018.json) 和 [run index](run_index.json)。
 
 主控补充：在最终冻结源码 `53243cd6766b564fed17668753e9fdbb7cab1129` 部署后，使用工作站既有 native complex activation 执行新 B-action 振幅 fixture 与 two-input borrowed-buffer fixture，结果 `2 passed, 13 deselected in 0.56s`，随后才启动 `121210` 正式 attempt。该记录来自主控部署命令回执，不能抹去此前本机旧 ABI receipt 的阻塞记录。科学 source 与本次文档结果 HEAD 分开；最终结果 HEAD 由集中推送后回读提供。
+
+
+## V3 恢复证据磁盘配额授权修复（2026-10-19）
+
+用户于本轮明确授权仅将 Task41 B0 V3 原始证据磁盘配额从 8 GiB 提升到 16 GiB（17179869184 B）。内存上限、host reserve、task swap0、2 GiB 磁盘剩余空间底线、数值门、原固定窗口均不变。旧合同缺少新 policy 时继续 8 GiB，不修改旧 attempt。
+触发实例：20261019T025658.545020Z，source 1366d64b8479139355e70897392f9bfed18347a9；预计累计 11882448300 B，原 8589934592 B，真实 V14ResourceStop；恢复见证未执行，不能记数值通过或失败。
+
+定向测试：原8 GiB拒绝、16 GiB接受11882448300 B、16 GiB自身上限仍拒绝、磁盘free-space floor仍拒绝、跨case覆盖拒绝。首次相关3项为2 PASS/1 FAIL：旧dispatcher fixture缺少既有require-existing donor字段；仅补齐fixture后同3项全部PASS。包括B0 dispatcher和checker原调用链。本机资格化WSL complex128/int32；未重跑PDE或旧科学数据以验证配额字段。
