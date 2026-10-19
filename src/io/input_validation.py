@@ -1780,9 +1780,15 @@ def task42_runtime_memory_gate_from_authority(
     errors = list(extracted.get("errors", []))
     if parameters.get("status") != "measured":
         errors.extend(parameters.get("errors", []))
-    if not formula["resident_inputs_known"]:
+    whole_job_j_known = bool(
+        formula["resident_inputs_known"]
+        and extracted.get("tree_rss_scope") == "whole_job"
+        and type(formula.get("resident_J_bytes")) is int
+        and type(parameters.get("cap_C_bytes")) is int
+    )
+    if not whole_job_j_known:
         errors.append("runtime_whole_job_J_is_unknown")
-    if not gates["whole_job_J_at_or_below_C"]:
+    elif formula["resident_J_bytes"] > parameters["cap_C_bytes"]:
         errors.append("runtime_whole_job_J_exceeds_Task42_C")
     if not gates["kernel_MemAvailable_at_or_above_R"]:
         errors.append("runtime_kernel_MemAvailable_is_below_Task42_R_or_unknown")

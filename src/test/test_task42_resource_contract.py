@@ -275,6 +275,17 @@ def test_process_tree_sample_bounded_reread_requires_same_pid_start_ticks(
     assert terminal_detail["resolution"] == (
         "confirmed_initial_pid_start_ticks_no_longer_present"
     )
+    terminal_authority = _task42_authority(
+        root_pid=root_pid,
+        tree_rss_bytes=terminated.rss_bytes,
+        memavailable_bytes=512 * 2**30,
+    )
+    terminal_authority["process_tree"] = terminated.to_dict()
+    terminal_gate = task42_runtime_memory_gate_from_authority(
+        terminal_authority, expected_root_pid=root_pid
+    )
+    assert terminal_gate["pass"] is True
+    assert terminal_gate["resident_J_bytes"] == terminated.rss_bytes
 
 
 def test_process_tree_sample_keeps_unresolved_and_reused_pid_unknown(
@@ -314,6 +325,12 @@ def test_process_tree_sample_keeps_unresolved_and_reused_pid_unknown(
     )
     assert extracted["status"] == "refused"
     assert extracted["tree_rss_scope"] == "unknown"
+    unresolved_gate = task42_runtime_memory_gate_from_authority(
+        authority, expected_root_pid=root_pid
+    )
+    assert unresolved_gate["pass"] is False
+    assert "runtime_whole_job_J_is_unknown" in unresolved_gate["errors"]
+    assert "runtime_whole_job_J_exceeds_Task42_C" not in unresolved_gate["errors"]
 
     def reused_pid_identity(path, *, expected_pid):
         identity, error = read_stat(path, expected_pid=expected_pid)
@@ -333,6 +350,18 @@ def test_process_tree_sample_keeps_unresolved_and_reused_pid_unknown(
     assert reused.all_status_readable is False
     assert reused.rss_by_pid_bytes[child_pid] is None
     assert reused_detail["resolution"] == "refused_pid_start_ticks_changed"
+    reused_authority = _task42_authority(
+        root_pid=root_pid,
+        tree_rss_bytes=reused.rss_bytes,
+        memavailable_bytes=512 * 2**30,
+    )
+    reused_authority["process_tree"] = reused.to_dict()
+    reused_gate = task42_runtime_memory_gate_from_authority(
+        reused_authority, expected_root_pid=root_pid
+    )
+    assert reused_gate["pass"] is False
+    assert "runtime_whole_job_J_is_unknown" in reused_gate["errors"]
+    assert "runtime_whole_job_J_exceeds_Task42_C" not in reused_gate["errors"]
 
 
 def test_process_tree_sample_rejects_refused_postread_identity_with_full_values(
@@ -732,6 +761,105 @@ def test_task42_runtime_does_not_reserve_phase_workspace_permanently():
     )
     assert rejected["pass"] is False
     assert "finite_ancestor_cgroup_row_0_headroom_is_inconsistent" in rejected[
+        "errors"
+    ]
+
+
+def test_task42_runtime_labels_only_known_whole_job_cap_exceedance():
+    mem_total = 1024 * 2**30
+    parameters = task42_memory_parameters(mem_total)
+    cap = parameters["cap_C_bytes"]
+    assert type(cap) is int
+
+    # This is the relevant-field projection of the saved 062050 final sample:
+    # whole-job status was incomplete although partial tree RSS and dedicated
+    # cgroup current were numeric.
+    saved_sample_root = 2112622
+    saved_sample = {
+        "process_tree": {
+            "root_pid": saved_sample_root,
+            "pids": [
+                saved_sample_root,
+                2112625,
+                2112631,
+                2112632,
+                2112633,
+                2112634,
+                2112635,
+                2112636,
+                2112637,
+                2112638,
+            ],
+            "all_status_readable": False,
+            "rss_bytes": 71376896,
+        },
+        "job_cgroup": {
+            "readable": True,
+            "dedicated_job_cgroup": True,
+            "scope_semantics": "dedicated_job_cgroup_authority",
+            "memory_current_bytes": 11119267840,
+            "ancestor_hard_limit_state": "max_or_unlimited",
+            "ancestor_memory": [
+                {"memory_limit_state": "max_or_unlimited"},
+                {"memory_limit_state": "not_applicable_root"},
+            ],
+        },
+        "host_memory": {
+            "mem_total_bytes": 2163100385280,
+            "kernel_memavailable": {
+                "status": "measured",
+                "bytes": 1859294306304,
+            },
+        },
+    }
+    actual_refusal = task42_runtime_memory_gate_from_authority(
+        saved_sample, expected_root_pid=saved_sample_root
+    )
+    assert actual_refusal["pass"] is False
+    assert actual_refusal["authority_inputs"]["tree_rss_scope"] == "unknown"
+    assert actual_refusal["resident_J_bytes"] == 11119267840
+    assert actual_refusal["errors"] == [
+        "whole_job_process_tree_is_incomplete_or_unreadable",
+        "runtime_whole_job_J_is_unknown",
+    ]
+
+    for resident, expected_pass, expected_error in (
+        (cap - 1, True, None),
+        (cap, True, None),
+        (cap + 1, False, "runtime_whole_job_J_exceeds_Task42_C"),
+    ):
+        authority = _authority(
+            root_pid=42000,
+            tree_rss_bytes=resident,
+            memavailable_bytes=TASK42_MEMORY_RESERVE_BYTES,
+            mem_total_bytes=mem_total,
+            ancestor_headroom_bytes=0,
+        )
+        runtime = task42_runtime_memory_gate_from_authority(
+            authority, expected_root_pid=42000
+        )
+        assert runtime["pass"] is expected_pass
+        if expected_error is None:
+            assert "runtime_whole_job_J_exceeds_Task42_C" not in runtime["errors"]
+        else:
+            assert expected_error in runtime["errors"]
+
+    missing_ancestor = _authority(
+        root_pid=42000,
+        tree_rss_bytes=1 * 2**30,
+        memavailable_bytes=TASK42_MEMORY_RESERVE_BYTES,
+        mem_total_bytes=mem_total,
+        ancestor_headroom_bytes=0,
+    )
+    missing_ancestor["job_cgroup"]["ancestor_memory"] = []
+    missing_ancestor_gate = task42_runtime_memory_gate_from_authority(
+        missing_ancestor, expected_root_pid=42000
+    )
+    assert missing_ancestor_gate["pass"] is False
+    assert "ancestor_cgroup_memory_chain_is_missing" in missing_ancestor_gate[
+        "errors"
+    ]
+    assert "runtime_whole_job_J_exceeds_Task42_C" not in missing_ancestor_gate[
         "errors"
     ]
 
