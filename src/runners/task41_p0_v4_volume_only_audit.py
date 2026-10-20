@@ -59,6 +59,59 @@ def _v6_screen_metrics(candidate: np.ndarray, reference: np.ndarray) -> dict[str
     }
 
 
+def _v6_saved_local_action_diagnostic(
+    reference_action: np.ndarray,
+    candidate_action: np.ndarray,
+    *,
+    frozen_denominators: tuple[float, ...],
+    column_index: int,
+    trace_positions: np.ndarray,
+    active_ids: np.ndarray,
+    trace_expansion: Any,
+    selected_active_row: int,
+) -> dict[str, Any]:
+    if not 0 <= column_index < len(frozen_denominators):
+        raise ValueError(
+            "V6 saved action column index is outside the frozen denominator table: "
+            f"{column_index}"
+        )
+    frozen_denominator = float(frozen_denominators[column_index])
+    if not np.isfinite(frozen_denominator) or frozen_denominator <= 0.0:
+        raise ValueError("V6 frozen action denominator must be finite and positive")
+    reference = np.asarray(reference_action, dtype=np.complex128)
+    candidate = np.asarray(candidate_action, dtype=np.complex128)
+    difference = _v6_screen_metrics(candidate, reference)
+    trace = np.asarray(trace_positions, dtype=np.int64)
+    active = np.asarray(active_ids, dtype=np.int64)
+    target_locations = np.flatnonzero(active == int(selected_active_row))
+    if target_locations.size > 1:
+        raise ValueError("V6 selected active row is duplicated in a cell trace map")
+    if target_locations.size:
+        weights = np.asarray(
+            trace_expansion.getcol(int(target_locations[0])).toarray(),
+            dtype=np.complex128,
+        ).reshape(-1)
+        reference_row = complex(np.vdot(weights, reference[trace]))
+        candidate_row = complex(np.vdot(weights, candidate[trace]))
+    else:
+        reference_row = candidate_row = 0.0 + 0.0j
+    return {
+        "full_local_action": difference,
+        "full_local_action_difference_over_frozen_denominator": (
+            difference["absolute_frobenius"] / frozen_denominator
+        ),
+        "full_local_action_scale_check": "diagnostic_only",
+        "frozen_denominator": frozen_denominator,
+        "selected_active_row": int(selected_active_row),
+        "selected_row_reference": [reference_row.real, reference_row.imag],
+        "selected_row_candidate": [candidate_row.real, candidate_row.imag],
+        "selected_row_difference_over_frozen_denominator": (
+            abs(candidate_row - reference_row) / frozen_denominator
+        ),
+        "selected_row_scale_check": "diagnostic_only",
+    }
+
+
 def _v6_reconstruct_oriented_tensor(
     blocks: Mapping[str, np.ndarray],
     interior_positions: np.ndarray,
@@ -786,6 +839,7 @@ def main(argv: list[str] | None = None) -> int:
     from src.solvers.task41_v4_volume_only_audit import (
         TASK41_V4_DONOR_MANIFEST_SHA256,
         TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT,
+        TASK41_V5_FROZEN_DENOMINATORS,
         Task41V5VolumeAttributionAccumulator,
         audit_task41_v4_volume_identity,
         build_task41_v4_volume_only_owner,
@@ -1940,7 +1994,6 @@ def main(argv: list[str] | None = None) -> int:
                     active_ids = np.asarray(context["active_ids"], dtype=np.int64)
                     expansion = context["trace_expansion"]
                     for column_index, column in enumerate(donor["columns"]):
-                        frozen_denominator = float(TASK41_V5_FROZEN_DENOMINATORS[column_index])
                         field_inputs = [("known", column["known_field"])] + [
                             (str(state["label"]), state["storage"])
                             for state in column["states"]
@@ -1955,7 +2008,6 @@ def main(argv: list[str] | None = None) -> int:
                             candidate_action_name = (
                                 f"{sample_prefix}_col{column_index}_{state_label}_candidate_local_action"
                             )
-                            action_difference = _v6_screen_metrics(candidate_action, reference_action)
                             action_record: dict[str, Any] = {
                                 "column": int(column_index),
                                 "state": state_label,
@@ -1967,39 +2019,17 @@ def main(argv: list[str] | None = None) -> int:
                                     "name": candidate_action_name,
                                     **persist_volume_array(candidate_action_name, candidate_action),
                                 },
-                                "full_local_action": action_difference,
-                                "full_local_action_difference_over_frozen_denominator": (
-                                    action_difference["absolute_frobenius"]
-                                    / frozen_denominator
+                                **_v6_saved_local_action_diagnostic(
+                                    reference_action,
+                                    candidate_action,
+                                    frozen_denominators=TASK41_V5_FROZEN_DENOMINATORS,
+                                    column_index=column_index,
+                                    trace_positions=trace,
+                                    active_ids=active_ids,
+                                    trace_expansion=expansion,
+                                    selected_active_row=TASK41_P0_V4_SELECTED_ACTIVE_ROW,
                                 ),
-                                "full_local_action_scale_check": "diagnostic_only",
-                                "frozen_denominator": frozen_denominator,
                             }
-                            target_locations = np.flatnonzero(
-                                active_ids == TASK41_P0_V4_SELECTED_ACTIVE_ROW
-                            )
-                            if target_locations.size > 1:
-                                raise ValueError("V6 selected active row is duplicated in a cell trace map")
-                            if target_locations.size:
-                                weights = np.asarray(
-                                    expansion.getcol(int(target_locations[0])).toarray(),
-                                    dtype=np.complex128,
-                                ).reshape(-1)
-                                reference_row = complex(np.vdot(weights, reference_action[trace]))
-                                candidate_row = complex(np.vdot(weights, candidate_action[trace]))
-                            else:
-                                reference_row = candidate_row = 0.0 + 0.0j
-                            action_record.update(
-                                {
-                                    "selected_active_row": TASK41_P0_V4_SELECTED_ACTIVE_ROW,
-                                    "selected_row_reference": [reference_row.real, reference_row.imag],
-                                    "selected_row_candidate": [candidate_row.real, candidate_row.imag],
-                                    "selected_row_difference_over_frozen_denominator": (
-                                        abs(candidate_row - reference_row) / frozen_denominator
-                                    ),
-                                    "selected_row_scale_check": "diagnostic_only",
-                                }
-                            )
                             record["local_action_comparisons"].append(action_record)
 
                 record["status"] = "PASS" if local_comparisons_pass else "FAIL"

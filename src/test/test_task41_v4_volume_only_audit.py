@@ -989,6 +989,64 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
             assert state["rhs_split_roundoff_native_rhs_minus_Balpha_minus_volume_rhs"]["absolute_l2"] < 1.0e-13
 
 
+@pytest.mark.parametrize("column_index", (0, 1))
+def test_v6_saved_prefix_action_diagnostic_uses_main_lazy_import(column_index):
+    import ast
+    import inspect
+
+    from src.runners import task41_p0_v4_volume_only_audit as runner
+
+    main_tree = ast.parse(inspect.getsource(runner.main))
+    denominator_imports = [
+        node
+        for node in ast.walk(main_tree)
+        if isinstance(node, ast.ImportFrom)
+        and node.module == "src.solvers.task41_v4_volume_only_audit"
+        and any(
+            alias.name == "TASK41_V5_FROZEN_DENOMINATORS"
+            for alias in node.names
+        )
+    ]
+    assert len(denominator_imports) == 1
+    import_namespace = {}
+    import_module = ast.Module(body=[denominator_imports[0]], type_ignores=[])
+    exec(compile(import_module, "<task41-v6-main-lazy-import>", "exec"), import_namespace)
+    frozen_denominators = import_namespace["TASK41_V5_FROZEN_DENOMINATORS"]
+
+    reference = np.asarray([1.0 + 2.0j, 3.0 + 4.0j, 5.0 + 6.0j])
+    candidate = reference.copy()
+    candidate[1] += 2.0j
+    candidate[2] -= 1.0 + 1.0j
+    expansion = sparse.csc_matrix(
+        np.asarray([[0.0, 1.0], [1.0, 0.0]], dtype=np.complex128)
+    )
+
+    diagnostic = runner._v6_saved_local_action_diagnostic(
+        reference,
+        candidate,
+        frozen_denominators=frozen_denominators,
+        column_index=column_index,
+        trace_positions=np.asarray([1, 2], dtype=np.int64),
+        active_ids=np.asarray([0, runner.TASK41_P0_V4_SELECTED_ACTIVE_ROW], dtype=np.int64),
+        trace_expansion=expansion,
+        selected_active_row=runner.TASK41_P0_V4_SELECTED_ACTIVE_ROW,
+    )
+
+    denominator = frozen_denominators[column_index]
+    assert diagnostic["frozen_denominator"] == denominator
+    assert diagnostic["full_local_action"]["status"] == "FAIL"
+    assert diagnostic["full_local_action_scale_check"] == "diagnostic_only"
+    assert diagnostic["full_local_action_difference_over_frozen_denominator"] == pytest.approx(
+        np.linalg.norm(candidate - reference) / denominator
+    )
+    assert diagnostic["selected_row_reference"] == [3.0, 4.0]
+    assert diagnostic["selected_row_candidate"] == [3.0, 6.0]
+    assert diagnostic["selected_row_difference_over_frozen_denominator"] == pytest.approx(
+        2.0 / denominator
+    )
+    assert diagnostic["selected_row_scale_check"] == "diagnostic_only"
+
+
 def test_rhs_split_roundoff_uses_native_rhs_minus_balpha_minus_volume_order():
     from src.solvers.task41_v4_volume_only_audit import _rhs_decomposition_metrics
 
