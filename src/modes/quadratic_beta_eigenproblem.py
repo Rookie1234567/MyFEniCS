@@ -1412,6 +1412,1091 @@ def _task42_k0_phase_inventory(
     return inventory
 
 
+def _task42_k1_collective_errors(comm, local_errors: list[str], label: str):
+    rank_rows = comm.allgather(tuple(str(error) for error in local_errors))
+    return [
+        f"rank_{rank}_{label}:{error}"
+        for rank, errors in enumerate(rank_rows)
+        for error in errors
+    ]
+
+
+def _task42_k1_exact_integer(value: Any, label: str) -> int:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value, (int, np.integer)
+    ):
+        raise TypeError(f"{label} is not an exact integer")
+    return int(value)
+
+
+def _task42_k1_matrix_layout(
+    matrix: Any,
+    label: str,
+    comm,
+    *,
+    max_global_nz_used: int | None = None,
+):
+    local_errors: list[str] = []
+    descriptor: dict[str, Any] = {"rank": int(comm.rank), "label": label}
+    try:
+        shape = matrix.getSize()
+        row_range = matrix.getOwnershipRange()
+        column_range = matrix.getOwnershipRangeColumn()
+        if not isinstance(shape, (tuple, list)) or len(shape) != 2:
+            raise ValueError("global matrix shape must contain two integers")
+        if not isinstance(row_range, (tuple, list)) or len(row_range) != 2:
+            raise ValueError("matrix row ownership must contain two integers")
+        if not isinstance(column_range, (tuple, list)) or len(column_range) != 2:
+            raise ValueError("matrix column ownership must contain two integers")
+        rows, columns = (
+            _task42_k1_exact_integer(value, f"{label} shape") for value in shape
+        )
+        row_start, row_end = (
+            _task42_k1_exact_integer(value, f"{label} row range")
+            for value in row_range
+        )
+        column_start, column_end = (
+            _task42_k1_exact_integer(value, f"{label} column range")
+            for value in column_range
+        )
+        if rows < 0 or columns < 0:
+            raise ValueError("global matrix shape cannot be negative")
+        if not (0 <= row_start <= row_end <= rows):
+            raise ValueError("matrix row ownership is outside the global shape")
+        if not (0 <= column_start <= column_end <= columns):
+            raise ValueError("matrix column ownership is outside the global shape")
+        info = matrix.getInfo(PETSc.Mat.InfoType.LOCAL)
+        local_nnz_raw = info.get("nz_used") if isinstance(info, Mapping) else None
+        if (
+            isinstance(local_nnz_raw, (bool, np.bool_))
+            or local_nnz_raw is None
+            or not np.isfinite(float(local_nnz_raw))
+            or int(local_nnz_raw) != float(local_nnz_raw)
+            or int(local_nnz_raw) < 0
+        ):
+            raise ValueError("PETSc local nz_used is missing or invalid")
+        descriptor.update(
+            {
+                "shape": [int(rows), int(columns)],
+                "row_range": [int(row_start), int(row_end)],
+                "column_range": [int(column_start), int(column_end)],
+                "local_nz_used": int(local_nnz_raw),
+            }
+        )
+    except Exception as exc:  # noqa: BLE001 - rank-local failures must reach the same gate
+        local_errors.append(f"{type(exc).__name__}:{exc}")
+    rank_errors = _task42_k1_collective_errors(comm, local_errors, f"{label}_layout")
+    descriptors = comm.allgather(descriptor)
+    if rank_errors:
+        return None, rank_errors
+    shape_set = {tuple(row.get("shape", ())) for row in descriptors}
+    if len(shape_set) != 1 or any(row.get("label") != label for row in descriptors):
+        return None, [f"{label}_MPI_shape_or_label_differs"]
+    shape = next(iter(shape_set))
+    for range_name, axis in (("row_range", 0), ("column_range", 1)):
+        cursor = 0
+        for rank, row in enumerate(descriptors):
+            values = row.get(range_name)
+            if (
+                row.get("rank") != rank
+                or not isinstance(values, list)
+                or len(values) != 2
+                or type(values[0]) is not int
+                or type(values[1]) is not int
+                or values[0] != cursor
+                or values[1] < values[0]
+            ):
+                return None, [f"{label}_{range_name}_is_not_a_contiguous_partition"]
+            cursor = values[1]
+        if cursor != shape[axis]:
+            return None, [f"{label}_{range_name}_does_not_cover_global_extent"]
+    layout = {
+        "shape": list(shape),
+        "rank_layouts": descriptors,
+        "global_nz_used": sum(int(row["local_nz_used"]) for row in descriptors),
+    }
+    if max_global_nz_used is not None:
+        maximum = _task42_k1_exact_integer(
+            max_global_nz_used, f"{label} profile NNZ limit"
+        )
+        if maximum < 0 or layout["global_nz_used"] > maximum:
+            return None, [f"{label}_global_nz_used_exceeds_profile_bound"]
+    return layout, []
+
+
+def _task42_k1_global_row_supports(
+    matrix: Any,
+    *,
+    label: str,
+    global_rows: int,
+    global_columns: int,
+    comm,
+    support_memory_limit_bytes: int,
+    max_global_nz_used: int,
+    layout: Mapping[str, Any] | None = None,
+):
+    if layout is None:
+        layout, errors = _task42_k1_matrix_layout(
+            matrix,
+            label,
+            comm,
+            max_global_nz_used=max_global_nz_used,
+        )
+    else:
+        errors = []
+    if errors:
+        return None, None, errors
+    if layout["shape"] != [global_rows, global_columns]:
+        return None, layout, [f"{label}_shape_is_outside_the_Task42_p6_profile"]
+
+    pet_int_bytes = int(np.dtype(PETSc.IntType).itemsize)
+    support_estimate = int(
+        layout["global_nz_used"] * (pet_int_bytes + 48)
+        + global_rows * 64
+    )
+    # Each rank holds the gathered support rows and a normalized row map while
+    # deriving the product counts. This is an inventory scratch estimate, not
+    # an additional matrix or a measured peak.
+    gathered_support_peak = 3 * support_estimate
+    if gathered_support_peak > support_memory_limit_bytes:
+        return None, layout, [
+            f"{label}_row_support_scratch_exceeds_64MiB_before_capture"
+        ]
+
+    rank_layout = layout["rank_layouts"][int(comm.rank)]
+    local_rows: list[tuple[int, tuple[int, ...]]] = []
+    local_errors: list[str] = []
+    captured_local_nnz = 0
+    row_start, row_end = rank_layout["row_range"]
+    try:
+        for row in range(row_start, row_end):
+            columns, values = matrix.getRow(row)
+            column_array = np.asarray(columns)
+            value_array = np.asarray(values)
+            if (
+                column_array.ndim != 1
+                or value_array.ndim != 1
+                or column_array.size != value_array.size
+                or column_array.dtype.kind not in "iu"
+                or value_array.dtype.kind not in "fc"
+                or not np.all(np.isfinite(value_array))
+            ):
+                raise ValueError(f"row {row} has invalid CSR support/value arrays")
+            selected_columns = tuple(int(value) for value in column_array)
+            if (
+                any(value < 0 or value >= global_columns for value in selected_columns)
+                or len(set(selected_columns)) != len(selected_columns)
+            ):
+                raise ValueError(f"row {row} has duplicate or out-of-range columns")
+            captured_local_nnz += len(selected_columns)
+            if captured_local_nnz > rank_layout["local_nz_used"]:
+                raise ValueError("row support exceeds PETSc local nz_used")
+            local_rows.append((int(row), selected_columns))
+            del column_array, value_array, columns, values
+        if captured_local_nnz != rank_layout["local_nz_used"]:
+            raise ValueError("row support differs from PETSc local nz_used")
+    except Exception as exc:  # noqa: BLE001 - all ranks meet the refusal point
+        local_errors.append(f"{type(exc).__name__}:{exc}")
+    capture_errors = _task42_k1_collective_errors(
+        comm, local_errors, f"{label}_row_capture"
+    )
+    if capture_errors:
+        return None, layout, capture_errors
+
+    gathered_rows = comm.allgather(local_rows)
+    row_supports: dict[int, tuple[int, ...]] = {}
+    for rank_rows in gathered_rows:
+        for row, columns in rank_rows:
+            if row in row_supports:
+                return None, layout, [f"{label}_row_support_is_duplicated"]
+            row_supports[row] = columns
+    if set(row_supports) != set(range(global_rows)):
+        return None, layout, [f"{label}_row_support_does_not_cover_global_rows"]
+    digest = hashlib.sha256()
+    for row in range(global_rows):
+        digest.update(int(row).to_bytes(8, "little", signed=False))
+        for column in row_supports[row]:
+            digest.update(int(column).to_bytes(8, "little", signed=False))
+        digest.update(b"\0")
+    summary = {
+        "global_rows": global_rows,
+        "global_columns": global_columns,
+        "global_nz_used": layout["global_nz_used"],
+        "row_support_sha256": digest.hexdigest(),
+        "row_support_capture_scratch_estimate_bytes": gathered_support_peak,
+        "support_estimate_formula": (
+            "3*(global_nz_used*(PetscInt_bytes+48)+global_rows*64); includes gathered row tuples, normalized row map, and serialized collective buffer on each rank; source estimate, not a proven upper bound"
+        ),
+    }
+    return row_supports, {**layout, **summary}, []
+
+
+def _task42_k1_reduction_basis(
+    matrix: Any,
+    transform: Any,
+    *,
+    comm,
+    full_size: int,
+    reduced_size: int,
+    expected_slave_count: int,
+    basis: Mapping[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    constraint_matrix = transform.matrix
+    k1_layout, errors = _task42_k1_matrix_layout(
+        matrix,
+        "full_K1",
+        comm,
+        max_global_nz_used=36 * 133**2,
+    )
+    if errors:
+        return {}, errors
+
+    local_layout_errors: list[str] = []
+    try:
+        if k1_layout["shape"] != [full_size, full_size]:
+            local_layout_errors.append(
+                "full_K1_shape_does_not_match_actual_mixed_space"
+            )
+        if _task42_k1_exact_integer(
+            transform.full_global_size, "transform full global size"
+        ) != full_size:
+            local_layout_errors.append(
+                "constraint_full_global_size_differs_from_mixed_space"
+            )
+        if _task42_k1_exact_integer(
+            transform.reduced_global_size, "transform reduced global size"
+        ) != reduced_size:
+            local_layout_errors.append(
+                "constraint_reduced_global_size_differs_from_profile"
+            )
+        if _task42_k1_exact_integer(
+            transform.global_slave_count, "transform global slave count"
+        ) != expected_slave_count:
+            local_layout_errors.append(
+                "constraint_slave_count_differs_from_profile"
+            )
+        local_k1_layout = k1_layout["rank_layouts"][int(comm.rank)]
+        if _task42_k1_exact_integer(
+            transform.full_local_size, "transform full local size"
+        ) != local_k1_layout["row_range"][1] - local_k1_layout["row_range"][0]:
+            local_layout_errors.append(
+                "constraint_full_local_size_differs_from_K1_row_layout"
+            )
+        full_owned_range = basis.get("full_k0_row_partition", {}).get(
+            "owned_range"
+        )
+        if (
+            not isinstance(full_owned_range, list)
+            or len(full_owned_range) != 2
+            or any(type(value) is not int for value in full_owned_range)
+            or full_owned_range != local_k1_layout["row_range"]
+        ):
+            local_layout_errors.append(
+                "full_K1_rows_do_not_match_source_mixed_dofmap_ownership"
+            )
+    except Exception as exc:  # noqa: BLE001 - keep every rank at the safe point
+        local_layout_errors.append(
+            f"reduction_layout_metadata:{type(exc).__name__}:{exc}"
+        )
+    synchronized = _task42_k1_collective_errors(
+        comm, local_layout_errors, "reduction_layout"
+    )
+    if synchronized:
+        return {}, synchronized
+
+    max_constraint_nnz = reduced_size + expected_slave_count * 6
+    constraint_layout, errors = _task42_k1_matrix_layout(
+        constraint_matrix,
+        "constraint_transform",
+        comm,
+        max_global_nz_used=max_constraint_nnz,
+    )
+    if errors:
+        return {}, errors
+    local_constraint_layout = constraint_layout["rank_layouts"][int(comm.rank)]
+    local_layout_errors = []
+    try:
+        if constraint_layout["shape"] != [full_size, reduced_size]:
+            local_layout_errors.append(
+                "constraint_transform_shape_does_not_match_profile"
+            )
+        if _task42_k1_exact_integer(
+            transform.reduced_local_size, "transform reduced local size"
+        ) != local_constraint_layout["column_range"][1] - local_constraint_layout[
+            "column_range"
+        ][0]:
+            local_layout_errors.append(
+                "constraint_reduced_local_size_differs_from_column_layout"
+            )
+        k1_ranges = [row["row_range"] for row in k1_layout["rank_layouts"]]
+        k1_column_ranges = [
+            row["column_range"] for row in k1_layout["rank_layouts"]
+        ]
+        constraint_ranges = [
+            row["row_range"] for row in constraint_layout["rank_layouts"]
+        ]
+        if k1_ranges != constraint_ranges:
+            local_layout_errors.append(
+                "full_K1_and_constraint_row_ownership_differ"
+            )
+        if k1_ranges != k1_column_ranges:
+            local_layout_errors.append(
+                "full_K1_row_and_column_ownership_differ"
+            )
+    except Exception as exc:  # noqa: BLE001 - keep every rank at the safe point
+        local_layout_errors.append(
+            f"reduction_layout_metadata:{type(exc).__name__}:{exc}"
+        )
+    synchronized = _task42_k1_collective_errors(
+        comm, local_layout_errors, "reduction_layout"
+    )
+    if synchronized:
+        return {}, synchronized
+
+    constraint_rows, constraint_layout, errors = _task42_k1_global_row_supports(
+        constraint_matrix,
+        label="constraint_transform",
+        global_rows=full_size,
+        global_columns=reduced_size,
+        comm=comm,
+        support_memory_limit_bytes=_TASK42_K0_RANK_BYTES,
+        max_global_nz_used=max_constraint_nnz,
+        layout=constraint_layout,
+    )
+    if errors:
+        return {}, errors
+
+    full_to_reduced_columns = constraint_rows
+    intermediate_rows: list[tuple[int, int]] = []
+    local_scan_errors: list[str] = []
+    k1_support_digest = hashlib.sha256()
+    k1_rank_layout = k1_layout["rank_layouts"][int(comm.rank)]
+    k1_row_start, k1_row_end = k1_rank_layout["row_range"]
+    max_k1_row_nnz = 0
+    captured_k1_local_nnz = 0
+    try:
+        for row in range(k1_row_start, k1_row_end):
+            columns, values = matrix.getRow(row)
+            column_array = np.asarray(columns)
+            value_array = np.asarray(values)
+            if (
+                column_array.ndim != 1
+                or value_array.ndim != 1
+                or column_array.size != value_array.size
+                or column_array.dtype.kind not in "iu"
+                or value_array.dtype.kind not in "fc"
+                or not np.all(np.isfinite(value_array))
+            ):
+                raise ValueError(f"full K1 row {row} has invalid CSR arrays")
+            full_columns = tuple(int(value) for value in column_array)
+            if (
+                any(value < 0 or value >= full_size for value in full_columns)
+                or len(set(full_columns)) != len(full_columns)
+            ):
+                raise ValueError(f"full K1 row {row} has invalid column indices")
+            captured_k1_local_nnz += len(full_columns)
+            if captured_k1_local_nnz > k1_rank_layout["local_nz_used"]:
+                raise ValueError("full K1 rows exceed PETSc local nz_used")
+            missing_rows = [
+                value for value in full_columns if value not in full_to_reduced_columns
+            ]
+            if missing_rows:
+                raise ValueError(
+                    f"full K1 row {row} references missing constraint rows"
+                )
+            k1_support_digest.update(int(row).to_bytes(8, "little", signed=False))
+            for column in full_columns:
+                k1_support_digest.update(
+                    int(column).to_bytes(8, "little", signed=False)
+                )
+            k1_support_digest.update(b"\0")
+            candidate_count = sum(
+                len(full_to_reduced_columns[column]) for column in full_columns
+            )
+            intermediate_rows.append((int(row), int(candidate_count)))
+            max_k1_row_nnz = max(max_k1_row_nnz, len(full_columns))
+            del column_array, value_array, columns, values, full_columns, missing_rows
+        if captured_k1_local_nnz != k1_rank_layout["local_nz_used"]:
+            raise ValueError("full K1 rows differ from PETSc local nz_used")
+    except Exception as exc:  # noqa: BLE001 - rank-local row errors meet one safe point
+        local_scan_errors.append(f"{type(exc).__name__}:{exc}")
+    scan_errors = _task42_k1_collective_errors(
+        comm, local_scan_errors, "full_K1_product_support"
+    )
+    if scan_errors:
+        return {}, scan_errors
+
+    gathered_intermediate = comm.allgather(intermediate_rows)
+    intermediate_candidate_by_full_row = [-1] * full_size
+    k1_support_by_rank = comm.allgather(
+        {
+            "max_row_nnz": int(max_k1_row_nnz),
+            "row_support_sha256": k1_support_digest.hexdigest(),
+            "owned_row_count": len(intermediate_rows),
+        }
+    )
+    for rank_rows in gathered_intermediate:
+        for row, candidate_count in rank_rows:
+            if (
+                row < 0
+                or row >= full_size
+                or intermediate_candidate_by_full_row[row] != -1
+                or candidate_count < 0
+            ):
+                errors.append("full_K1_product_candidate_rows_are_invalid_or_duplicated")
+                continue
+            intermediate_candidate_by_full_row[row] = candidate_count
+    if any(value < 0 for value in intermediate_candidate_by_full_row):
+        errors.append("full_K1_product_candidate_rows_do_not_cover_global_rows")
+    if errors:
+        return {}, errors
+
+    reduced_start, reduced_end = local_constraint_layout["column_range"]
+    local_reduced_candidate_by_row = [0] * (reduced_end - reduced_start)
+    local_hermitian_nnz = 0
+    for full_row, reduced_columns in full_to_reduced_columns.items():
+        candidate_count = intermediate_candidate_by_full_row[full_row]
+        for reduced_row in reduced_columns:
+            if reduced_start <= reduced_row < reduced_end:
+                local_hermitian_nnz += 1
+                local_reduced_candidate_by_row[reduced_row - reduced_start] += (
+                    candidate_count
+                )
+
+    scalar_bytes = int(np.dtype(PETSc.ScalarType).itemsize)
+    int_bytes = int(np.dtype(PETSc.IntType).itemsize)
+    local_k1_nnz = int(k1_rank_layout["local_nz_used"])
+    local_constraint_nnz = int(local_constraint_layout["local_nz_used"])
+    local_k1c_candidates = sum(
+        count for _row, count in intermediate_rows
+    )
+    local_reduced_candidates = sum(local_reduced_candidate_by_row)
+    local_full_rows = k1_row_end - k1_row_start
+    local_reduced_rows = reduced_end - reduced_start
+
+    def conservative_aij_bytes(entries: int, rows: int) -> int:
+        # Treat every candidate as value/column storage, a possible remote
+        # column, and a conservative remote-row stash entry. MatInfo from an
+        # eventual MatMatMult remains the actual calibration source.
+        return int(
+            entries * (scalar_bytes + 2 * int_bytes + scalar_bytes + 2 * int_bytes)
+            + 2 * (rows + 1) * int_bytes
+        )
+
+    local_k1c_bytes = conservative_aij_bytes(
+        local_k1c_candidates, local_full_rows
+    )
+    local_hermitian_bytes = conservative_aij_bytes(
+        local_hermitian_nnz, local_reduced_rows
+    )
+    local_reduced_bytes = conservative_aij_bytes(
+        local_reduced_candidates, local_reduced_rows
+    )
+    max_row_scan_scratch_bytes = int(
+        max(full_size, reduced_size)
+        * (scalar_bytes + int_bytes + 1 + 96)
+    )
+    basis_errors: list[str] = []
+    basis_scratch_bytes = 0
+    try:
+        source_objects = basis.get("source_derived_objects")
+        if not isinstance(source_objects, Mapping):
+            raise TypeError("source-derived object inventory is missing")
+        basis_scratch_bytes = _task42_k1_exact_integer(
+            source_objects.get("source_basis_validation_scratch_peak_bytes"),
+            "source basis validation scratch bytes",
+        )
+        if basis_scratch_bytes < 0:
+            raise ValueError("source basis validation scratch bytes is negative")
+    except Exception as exc:  # noqa: BLE001 - basis failure reaches a collective safe point
+        basis_errors.append(f"{type(exc).__name__}:{exc}")
+    synchronized_basis_errors = _task42_k1_collective_errors(
+        comm, basis_errors, "source_basis_scratch"
+    )
+    if synchronized_basis_errors:
+        return {}, synchronized_basis_errors
+    c_support_scratch = int(
+        constraint_layout["row_support_capture_scratch_estimate_bytes"]
+    )
+    candidate_exchange_scratch = int(
+        full_size * (128 + 8 + 32) + local_full_rows * 64
+    )
+    inventory_scratch_peak = int(
+        c_support_scratch
+        + candidate_exchange_scratch
+        + max_row_scan_scratch_bytes
+        + basis_scratch_bytes
+    )
+    simultaneous_product_payload = int(
+        local_hermitian_bytes + local_k1c_bytes + local_reduced_bytes
+    )
+    rank_known_peak = max(inventory_scratch_peak, simultaneous_product_payload)
+    return {
+        "full_k1_local_nz_used": local_k1_nnz,
+        "constraint_transform_local_nz_used": local_constraint_nnz,
+        "constraint_transform_global_nz_used": constraint_layout["global_nz_used"],
+        "constraint_transform_row_support_sha256": constraint_layout[
+            "row_support_sha256"
+        ],
+        "full_k1_row_support_candidate_entries_local": local_k1c_candidates,
+        "full_k1_row_support_candidate_entries_global": sum(
+            intermediate_candidate_by_full_row
+        ),
+        "reduced_k1_candidate_entries_local_before_duplicate_merge": (
+            local_reduced_candidates
+        ),
+        "reduced_k1_candidate_entries_global_before_duplicate_merge": sum(
+            intermediate_candidate_by_full_row[full_row] * len(reduced_columns)
+            for full_row, reduced_columns in full_to_reduced_columns.items()
+        ),
+        "hermitian_transform_nz_local": local_hermitian_nnz,
+        "full_K1_nz_by_rank": [
+            int(row["local_nz_used"]) for row in k1_layout["rank_layouts"]
+        ],
+        "constraint_nz_by_rank": [
+            int(row["local_nz_used"])
+            for row in constraint_layout["rank_layouts"]
+        ],
+        "K1_row_ranges_by_rank": [
+            list(row["row_range"]) for row in k1_layout["rank_layouts"]
+        ],
+        "reduced_row_ranges_by_rank": [
+            list(row["column_range"])
+            for row in constraint_layout["rank_layouts"]
+        ],
+        "full_K1_row_support_sha256_by_rank": [
+            str(value["row_support_sha256"]) for value in k1_support_by_rank
+        ],
+        "full_K1_row_support_owned_count_by_rank": [
+            int(value["owned_row_count"]) for value in k1_support_by_rank
+        ],
+        "max_full_K1_row_nz_by_rank": [
+            int(value["max_row_nnz"]) for value in k1_support_by_rank
+        ],
+        "local_payload_estimates_bytes": {
+            "C_H_transpose": local_hermitian_bytes,
+            "full_K1_times_C": local_k1c_bytes,
+            "reduced_K1": local_reduced_bytes,
+            "inventory_scratch_peak": inventory_scratch_peak,
+            "bounded_one_row_input_CSR_scan_scratch": max_row_scan_scratch_bytes,
+            "simultaneous_sparse_product_payload": simultaneous_product_payload,
+            "product_payload_lifetime": (
+                "C^H, K1*C, and reduced K1 may overlap during the second MatMult; "
+                "support-capture scratch is released when inventory returns, before any "
+                "product is created; no output-CSR validation copy is made in this gate"
+            ),
+            "predicted_peak": rank_known_peak,
+        },
+        "predicted_rank_peak_bytes": rank_known_peak,
+        "rank_envelope_bytes": _TASK42_K0_RANK_BYTES,
+        "rank_envelope_is_hard_bound": False,
+        "uncertainty": (
+            "source-derived CSR candidate counts use actual K1/C row structure and ownership; duplicate merging, PETSc MatMatMult workspace, remote communication, allocator overhead, and final MatInfo remain unmeasured"
+        ),
+    }, []
+
+
+def _task42_k1_phase_inventory(
+    phase: str,
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    degree_context: Mapping[str, int],
+    task42_sizing_identity: Mapping[str, Any] | None,
+    *,
+    compiled_form: Any | None = None,
+    allocation_boundary: str | None = None,
+    matrix: Any | None = None,
+    transform: Any | None = None,
+    call_context: str = "production_full_qep",
+    local_basis_errors: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    from ..common.task42_phase_admission import task42_phase_inventory
+
+    inventory = task42_phase_inventory(phase)
+    comm = cross_section.mesh.comm
+    rank = int(comm.rank)
+    mpi_size = int(comm.size)
+    admission_errors: list[str] = list(local_basis_errors)
+    source_basis: dict[str, Any] = {}
+    caller_transform_ready = True
+    if call_context not in {"production_full_qep", "k1_only_sizing"}:
+        admission_errors.append("task42_k1_call_context_is_unknown")
+    if call_context == "k1_only_sizing":
+        local_transform_errors: list[str] = []
+        if transform is None:
+            local_transform_errors.append("caller_constraint_transform_is_missing")
+        else:
+            try:
+                caller_matrix = getattr(transform, "matrix", None)
+                if caller_matrix is None:
+                    local_transform_errors.append(
+                        "caller_constraint_transform_matrix_is_missing"
+                    )
+                else:
+                    required_matrix_methods = (
+                        "getSize",
+                        "getOwnershipRange",
+                        "getOwnershipRangeColumn",
+                        "getInfo",
+                    )
+                    if phase == "qep_operator_K1_reduced":
+                        required_matrix_methods += ("getRow",)
+                    missing_methods = [
+                        name
+                        for name in required_matrix_methods
+                        if not callable(getattr(caller_matrix, name, None))
+                    ]
+                    if missing_methods:
+                        local_transform_errors.append(
+                            "caller_constraint_transform_matrix_missing_methods:"
+                            + ",".join(missing_methods)
+                        )
+                for field in (
+                    "full_global_size",
+                    "reduced_global_size",
+                    "full_local_size",
+                    "reduced_local_size",
+                    "global_slave_count",
+                ):
+                    _task42_k1_exact_integer(
+                        getattr(transform, field),
+                        f"caller transform {field}",
+                    )
+            except Exception as exc:  # noqa: BLE001 - synchronize local API errors
+                local_transform_errors.append(
+                    "caller_constraint_transform_metadata_invalid:"
+                    f"{type(exc).__name__}:{exc}"
+                )
+        synchronized_transform_errors = _task42_k1_collective_errors(
+            comm, local_transform_errors, "K1_caller_transform"
+        )
+        admission_errors.extend(synchronized_transform_errors)
+        caller_transform_ready = not synchronized_transform_errors
+    try:
+        shared_basis = _task42_k0_source_basis(
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            task42_sizing_identity,
+            rank=rank,
+            mpi_size=mpi_size,
+            compiled_form=compiled_form,
+        )
+        admission_errors.extend(
+            error.replace("qep_K0", "qep_K1").replace(
+                "Task42 K0", "Task42 K1"
+            )
+            for error in _task42_k0_calibration_scope_errors(
+                shared_basis, mpi_size=mpi_size
+            )
+        )
+        source_basis = {
+            "schema": "task42.qep_k1_rank_basis.v1",
+            "derived_from_shared_source_basis": "task42.qep_k0_rank_basis.v1",
+            "shared_qep_source_basis": shared_basis,
+            "component_phase": phase,
+        }
+    except Exception as exc:  # noqa: BLE001 - preserve local source-basis cause
+        admission_errors.append(
+            f"task42_k1_source_basis_unavailable:{type(exc).__name__}:{exc}"
+        )
+
+    boundaries = {
+        "qep_operator_K1_ffcx_form": {
+            "before_ufl_form_context_and_form",
+            "before_fem_form_jit_after_constraints_transform",
+        },
+        "qep_operator_K1_full": {"after_fem_form_jit_before_petsc_matrix"},
+        "qep_operator_K1_reduced": {"before_hermitian_transform_or_product"},
+    }
+    selected_boundary = allocation_boundary or phase
+    if call_context == "k1_only_sizing":
+        boundaries["qep_operator_K1_ffcx_form"].add(
+            "before_fem_form_jit_with_caller_transform"
+        )
+    if selected_boundary not in boundaries.get(phase, set()):
+        admission_errors.append("task42_k1_allocation_boundary_is_invalid_for_phase")
+        source_basis = {}
+    if (
+        call_context == "k1_only_sizing"
+        and phase != "qep_operator_K1_reduced"
+        and caller_transform_ready
+    ):
+        c_layout, c_errors = _task42_k1_matrix_layout(
+            transform.matrix,
+            "caller_constraint_transform",
+            comm,
+            max_global_nz_used=3888 + 145 * 6,
+        )
+        admission_errors.extend(c_errors)
+        if c_layout is not None:
+            if c_layout["shape"] != [4033, 3888]:
+                admission_errors.append(
+                    "caller_constraint_transform_shape_differs_from_profile"
+                )
+            try:
+                c_local = c_layout["rank_layouts"][rank]
+                if _task42_k1_exact_integer(
+                    transform.full_global_size,
+                    "caller transform full global size",
+                ) != 4033:
+                    admission_errors.append(
+                        "caller_transform_full_global_size_differs_from_profile"
+                    )
+                if _task42_k1_exact_integer(
+                    transform.reduced_global_size,
+                    "caller transform reduced global size",
+                ) != 3888:
+                    admission_errors.append(
+                        "caller_transform_reduced_global_size_differs_from_profile"
+                    )
+                if _task42_k1_exact_integer(
+                    transform.global_slave_count,
+                    "caller transform global slave count",
+                ) != 145:
+                    admission_errors.append(
+                        "caller_transform_slave_count_differs_from_profile"
+                    )
+                if _task42_k1_exact_integer(
+                    transform.full_local_size,
+                    "caller transform full local size",
+                ) != c_local["row_range"][1] - c_local["row_range"][0]:
+                    admission_errors.append(
+                        "caller_transform_full_local_size_differs_from_layout"
+                    )
+                if _task42_k1_exact_integer(
+                    transform.reduced_local_size,
+                    "caller transform reduced local size",
+                ) != (
+                    c_local["column_range"][1]
+                    - c_local["column_range"][0]
+                ):
+                    admission_errors.append(
+                        "caller_transform_reduced_local_size_differs_from_layout"
+                    )
+            except Exception as exc:  # noqa: BLE001 - retain local cause for gate
+                admission_errors.append(
+                    "caller_transform_metadata_invalid:"
+                    f"{type(exc).__name__}:{exc}"
+                )
+            source_basis["caller_constraint_transform_layout"] = c_layout
+    if phase == "qep_operator_K1_reduced":
+        if matrix is None or transform is None:
+            admission_errors.append("task42_k1_reduction_requires_live_K1_and_transform")
+            source_basis = {}
+        # All ranks decide whether the source identity is valid before any
+        # rank enters the matrix-support collectives below.
+        source_errors = _task42_k1_collective_errors(
+            comm, admission_errors, "K1_source_basis"
+        )
+        admission_errors = list(source_errors)
+        if not source_errors and source_basis and matrix is not None and transform is not None:
+            reduction_basis, reduction_errors = _task42_k1_reduction_basis(
+                matrix,
+                transform,
+                comm=comm,
+                full_size=4033,
+                reduced_size=3888,
+                expected_slave_count=145,
+                basis=source_basis["shared_qep_source_basis"],
+            )
+            source_basis["reduction_support"] = reduction_basis
+            admission_errors.extend(reduction_errors)
+        elif source_errors:
+            source_basis["reduction_support"] = {}
+
+    if phase == "qep_operator_K1_ffcx_form":
+        amounts = {
+            "qep_k1_ffcx_rank_payload": _TASK42_K0_RANK_BYTES,
+            "qep_k1_ffcx_rank0_compiler_subtree": (
+                _TASK42_K0_COMPILER_SUBTREE_BYTES if rank == 0 else 0
+            ),
+            "qep_k1_ffcx_controller_allowance": (
+                _TASK42_K0_CONTROLLER_BYTES if rank == 0 else 0
+            ),
+        }
+    elif phase == "qep_operator_K1_full":
+        amounts = {
+            "full_K1_sparse_matrix": _TASK42_K0_RANK_BYTES,
+            "qep_k1_full_controller_allowance": (
+                _TASK42_K0_CONTROLLER_BYTES if rank == 0 else 0
+            ),
+        }
+    elif phase == "qep_operator_K1_reduced":
+        amounts = {
+            "k1_hermitian_reduction_rank_payload": _TASK42_K0_RANK_BYTES,
+            "qep_k1_reduction_controller_allowance": (
+                _TASK42_K0_CONTROLLER_BYTES if rank == 0 else 0
+            ),
+        }
+    else:
+        raise ValueError(f"unsupported Task42 K1 phase {phase!r}")
+
+    if source_basis and phase != "qep_operator_K1_reduced":
+        shared_source = source_basis.get("shared_qep_source_basis")
+        try:
+            if not isinstance(shared_source, Mapping):
+                raise TypeError("shared K0-derived source basis is missing")
+            objects = shared_source["source_derived_objects"]
+            cell_rows = objects["mixed_cell_dof_rows"]
+            scratch = _task42_k1_exact_integer(
+                objects["source_basis_validation_scratch_peak_bytes"],
+                "source basis scratch bytes",
+            )
+            metadata = _task42_k1_exact_integer(
+                objects["cell_dof_rows_python_metadata_bytes_upper"],
+                "cell row metadata bytes",
+            )
+            known = _task42_k1_exact_integer(
+                cell_rows["local_cell_tensor_payload_bytes_sum"],
+                "local cell tensor payload bytes",
+            ) + scratch + metadata
+            if phase == "qep_operator_K1_full":
+                known += _task42_k1_exact_integer(
+                    objects["matrix_candidate_contributions"][
+                        "candidate_sparse_payload_bytes_upper"
+                    ],
+                    "matrix candidate payload bytes",
+                )
+            if min(scratch, metadata, known) < 0:
+                raise ValueError("source-derived K1 byte inventory is negative")
+        except Exception as exc:  # noqa: BLE001 - retain cause, never substitute zero
+            known = None
+            admission_errors.append(
+                f"qep_K1_source_basis_bytes_unavailable:{type(exc).__name__}:{exc}"
+            )
+        source_basis["phase_prediction"] = {
+            "known_source_derived_rank_payload_bytes": known,
+            "rank_envelope_bytes": _TASK42_K0_RANK_BYTES,
+            "rank_allowance_is_hard_bound": False,
+            "formula": (
+                "K1 uses the live p6 mixed cell rows and shared K0 source-basis capture; full-K1 includes the all-cell 36*133^2 candidate sparse payload per rank; all native compiler/PETSc workspace remains predicted inside the accepted envelope"
+            ),
+        }
+        if known is None:
+            admission_errors.append("qep_K1_source_objects_have_unknown_bytes")
+        elif known > _TASK42_K0_RANK_BYTES:
+            admission_errors.append("qep_K1_source_objects_exceed_64MiB_envelope")
+
+    if source_basis and phase == "qep_operator_K1_reduced":
+        support = source_basis.get("reduction_support", {})
+        if not support:
+            admission_errors.append("qep_K1_reduction_support_inventory_is_missing")
+            source_basis["phase_prediction"] = {
+                "known_source_derived_rank_payload_bytes": None,
+                "rank_envelope_bytes": _TASK42_K0_RANK_BYTES,
+                "rank_allowance_is_hard_bound": False,
+                "formula": (
+                    "unavailable: source/layout/CSR support validation failed; no byte value is substituted and every K1 reduction Delta remains null"
+                ),
+                "inventory_scratch_peak_bytes": None,
+            }
+        else:
+            prediction = support["local_payload_estimates_bytes"]
+            source_basis["phase_prediction"] = {
+                "known_source_derived_rank_payload_bytes": int(
+                    support["predicted_rank_peak_bytes"]
+                ),
+                "rank_envelope_bytes": _TASK42_K0_RANK_BYTES,
+                "rank_allowance_is_hard_bound": False,
+                "formula": (
+                    "max(pre-product support-inventory scratch, including one bounded input getRow row-scan temporary, simultaneous C^H + K1*C + reduced-K1 candidate sparse payload); support scratch is released when inventory returns before products are created; no output CSR copy is made here; MatMatMult native workspace is uncalibrated"
+                ),
+                "local_payload_estimates_bytes": prediction,
+            }
+            if int(support["predicted_rank_peak_bytes"]) > _TASK42_K0_RANK_BYTES:
+                admission_errors.append("qep_K1_reduction_objects_exceed_64MiB_envelope")
+
+    if source_basis:
+        if not isinstance(source_basis.get("phase_prediction"), Mapping):
+            source_basis["phase_prediction"] = {
+                "known_source_derived_rank_payload_bytes": None,
+                "rank_envelope_bytes": _TASK42_K0_RANK_BYTES,
+                "rank_allowance_is_hard_bound": False,
+                "formula": (
+                    "unavailable: required source or reduction inventory is missing; "
+                    "no byte value is substituted and the phase Delta remains null"
+                ),
+            }
+            admission_errors.append("qep_K1_phase_prediction_is_unavailable")
+        for _ in range(4):
+            basis_json_bytes = _task42_json_utf8_size(source_basis)
+            component_count = len(inventory["components"])
+            per_component_basis_bytes = basis_json_bytes + 1024
+            rank_metadata_bytes = (
+                component_count * per_component_basis_bytes
+                + _TASK42_K0_METADATA_MARGIN_BYTES
+            )
+            gate_metadata_bytes = int(
+                2 * rank_metadata_bytes
+                + mpi_size * rank_metadata_bytes
+                + _TASK42_K0_METADATA_MARGIN_BYTES
+            )
+            controller_metadata_bytes = int(
+                2 * mpi_size * rank_metadata_bytes
+                + _TASK42_K0_METADATA_MARGIN_BYTES
+            )
+            source_basis["phase_prediction"].update(
+                {
+                    "basis_json_probe_bytes": basis_json_bytes,
+                    "rank_inventory_metadata_bytes_upper": rank_metadata_bytes,
+                    "allgather_and_rank_local_gate_metadata_bytes_upper": (
+                        gate_metadata_bytes
+                    ),
+                    "root_controller_receipt_metadata_bytes_upper": (
+                        controller_metadata_bytes
+                    ),
+                }
+            )
+        known_rank_payload = source_basis["phase_prediction"].get(
+            "known_source_derived_rank_payload_bytes"
+        )
+        controller_known = int(
+            source_basis["phase_prediction"][
+                "root_controller_receipt_metadata_bytes_upper"
+            ]
+        )
+        if type(known_rank_payload) is int:
+            rank_known = int(
+                known_rank_payload
+                + source_basis["phase_prediction"][
+                    "allgather_and_rank_local_gate_metadata_bytes_upper"
+                ]
+            )
+        else:
+            rank_known = None
+            admission_errors.append("qep_K1_rank_inventory_bytes_are_unknown")
+        if rank_known is not None and rank_known > _TASK42_K0_RANK_BYTES:
+            admission_errors.append("qep_K1_rank_inventory_exceeds_64MiB_envelope")
+        if controller_known > _TASK42_K0_CONTROLLER_BYTES:
+            admission_errors.append("qep_K1_controller_inventory_exceeds_8MiB_envelope")
+
+    if not source_basis:
+        source_basis = {}
+    if phase == "qep_operator_K1_ffcx_form":
+        uncertainty = (
+            "predicted only for the source-checked 36-quad p6/g1 DG0/c0 q16 4033-row MPI8 profile; rank payload 64MiB, rank-0 compiler subtree 512MiB, controller 8MiB once; not a hard bound or measured peak"
+        )
+    elif phase == "qep_operator_K1_full":
+        uncertainty = (
+            "predicted only for the same source-checked p6 profile; full-K1 64MiB per rank plus controller 8MiB once; actual K1 MatInfo is not yet measured and PETSc workspace is uncalibrated"
+        )
+    else:
+        uncertainty = (
+            "predicted from live K1/C sparse row support and ownership for the same source-checked p6 profile; 64MiB per rank plus controller 8MiB once; duplicate merging and native MatMatMult workspace are not yet measured"
+        )
+
+    admission_errors = _task42_k1_collective_errors(
+        comm, admission_errors, "K1_phase_inventory"
+    )
+    component_rows = []
+    for component in inventory["components"]:
+        item = dict(component)
+        name = str(item["name"])
+        item["delta_bytes"] = None if admission_errors else int(amounts[name])
+        item["sizing_basis"] = (
+            {**source_basis, "component": name} if source_basis else {}
+        )
+        item["uncertainty"] = uncertainty
+        item["classification"] = "predicted"
+        item["upper_bound_proven"] = False
+        component_rows.append(item)
+
+    if call_context == "k1_only_sizing":
+        resident_by_boundary = {
+            "before_ufl_form_context_and_form": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+                "caller_supplied_distributed_constraint_transform",
+            ],
+            "before_fem_form_jit_with_caller_transform": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+                "caller_supplied_distributed_constraint_transform",
+                "UFL_K1_form",
+            ],
+            "after_fem_form_jit_before_petsc_matrix": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+                "caller_supplied_distributed_constraint_transform",
+                "UFL_K1_form",
+                "compiled_K1_form",
+            ],
+            "before_hermitian_transform_or_product": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+                "caller_supplied_distributed_constraint_transform",
+                "UFL_K1_form",
+                "full_K1_sparse_matrix",
+            ],
+        }
+    else:
+        resident_by_boundary = {
+            "before_ufl_form_context_and_form": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+            ],
+            "before_fem_form_jit_after_constraints_transform": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+                "UFL_QEP_forms",
+                "Floquet_constraints",
+                "distributed_constraint_transform",
+                "full_K0_sparse_matrix",
+            ],
+            "after_fem_form_jit_before_petsc_matrix": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+                "UFL_QEP_forms",
+                "Floquet_constraints",
+                "distributed_constraint_transform",
+                "full_K0_sparse_matrix",
+                "compiled_K1_form",
+            ],
+            "before_hermitian_transform_or_product": [
+                "cross_section_mesh_and_DG0_coefficients",
+                "mixed_and_collapsed_spaces",
+                "UFL_QEP_forms",
+                "Floquet_constraints",
+                "distributed_constraint_transform",
+                "full_K0_sparse_matrix",
+                "full_K1_sparse_matrix",
+                "full_K2_sparse_matrix",
+                "full_electric_mass_sparse_matrix",
+                "reduced_K0_sparse_matrix",
+            ],
+        }
+    inventory.update(
+        {
+            "schema": "task42.direct_phase_delta_inventory.v1",
+            "status": "source-derived-prediction",
+            "estimate_uncertainty": uncertainty,
+            "evidence": {
+                "source": "live QEP config, mixed/collapsed layouts, PETSc K1/C CSR support, and ABI",
+                "rank": rank,
+                "mpi_size": mpi_size,
+                "basis_schema": "task42.qep_k1_rank_basis.v1",
+                "call_context": call_context,
+                "allocation_boundary": selected_boundary,
+                "resident_objects_at_fresh_snapshot": resident_by_boundary.get(
+                    selected_boundary, []
+                ),
+                "same_phase_delta_semantics": (
+                    "FFCx admission is checked before UFL, then rechecked against fresh J immediately before compile; sizing entry also checks with its caller transform already resident. Rechecks use the same phase Delta and are not cumulative charges"
+                ),
+                "source_sha_semantics": (
+                    "source hash format is checked in the helper; public-runner attestation binds the actual Git source"
+                ),
+            },
+            "components": component_rows,
+            "admission_errors": admission_errors,
+        }
+    )
+    return inventory
+
+
 def _qep_form_context(
     cfg: SimulationConfig3D,
     cross_section: CrossSectionMesh,
@@ -1435,6 +2520,14 @@ def _build_full_k0_form(context):
     ) * dx
 
 
+def _build_full_k1_form(context):
+    Et, Ez, Vt, Vz, dx, mu_inv = context[:6]
+    return (
+        1j * mu_inv * ufl.inner(ufl.grad(Ez), Vt)
+        - 1j * mu_inv * ufl.inner(Et, ufl.grad(Vz))
+    ) * dx
+
+
 def _compile_unconstrained_form(form, *, quadrature_degree: int):
     return fem.form(
         form,
@@ -1444,7 +2537,17 @@ def _compile_unconstrained_form(form, *, quadrature_degree: int):
 
 def _assemble_compiled_unconstrained_matrix(compiled_form) -> PETSc.Mat:
     matrix = fem_petsc.assemble_matrix(compiled_form, bcs=[])
-    matrix.assemble()
+    try:
+        matrix.assemble()
+    except BaseException as primary_error:
+        try:
+            matrix.destroy()
+        except BaseException as cleanup_error:  # noqa: BLE001 - preserve assembly failure
+            primary_error.add_note(
+                "Cleanup of the newly assembled-form matrix also failed: "
+                f"{type(cleanup_error).__name__}: {cleanup_error}"
+            )
+        raise
     return matrix
 
 
@@ -1486,6 +2589,37 @@ def _admit_task42_k0_phase(
     return require_task42_phase_admission(task42_phase_gate, phase, inventory)
 
 
+def _admit_task42_k1_phase(
+    task42_phase_gate,
+    phase: str,
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    degree_context: Mapping[str, int],
+    task42_sizing_identity: Mapping[str, Any] | None,
+    **inventory_options,
+) -> Mapping[str, Any]:
+    from ..common.task42_phase_admission import require_task42_phase_admission
+
+    inventory = _task42_k1_phase_inventory(
+        phase,
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        task42_sizing_identity,
+        **inventory_options,
+    )
+    decision = require_task42_phase_admission(task42_phase_gate, phase, inventory)
+    admission_errors = inventory.get("admission_errors", [])
+    if admission_errors:
+        raise RuntimeError(
+            f"Task42 K1 phase {phase} refused before allocation: "
+            f"{admission_errors}"
+        )
+    return decision
+
+
 def _task42_degree_context_with_error(
     cross_section: CrossSectionMesh,
     spaces: CrossSectionSpaces,
@@ -1514,6 +2648,26 @@ def _destroy_task42_transform_on_refusal(transform: Any, primary: RuntimeError) 
     except BaseException as cleanup_error:  # noqa: BLE001 - keep the unanimous refusal primary
         primary.add_note(
             "Task42 K0 refusal transform cleanup also failed: "
+            f"{type(cleanup_error).__name__}: {cleanup_error}"
+        )
+
+
+def _destroy_task42_partial_full_operators(
+    full_matrices: list[PETSc.Mat], transform: Any, primary: BaseException
+) -> None:
+    for index, matrix in enumerate(reversed(full_matrices)):
+        try:
+            matrix.destroy()
+        except BaseException as cleanup_error:  # noqa: BLE001 - preserve first failure
+            primary.add_note(
+                f"Cleanup of partial full QEP matrix {index} also failed: "
+                f"{type(cleanup_error).__name__}: {cleanup_error}"
+            )
+    try:
+        transform.matrix.destroy()
+    except BaseException as cleanup_error:  # noqa: BLE001 - preserve first failure
+        primary.add_note(
+            "Cleanup of the owned Task42 constraint transform also failed: "
             f"{type(cleanup_error).__name__}: {cleanup_error}"
         )
 
@@ -1575,6 +2729,119 @@ def assemble_full_k0_for_sizing(
         compiled_form = None
 
 
+def assemble_reduced_k1_for_sizing(
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    transform: DistributedConstraintTransform | None,
+    *,
+    task42_phase_gate=None,
+    task42_sizing_identity: Mapping[str, Any] | None = None,
+    quadrature_degree: int | None = None,
+) -> PETSc.Mat:
+    """Assemble and reduce only K1 using a caller-owned Floquet transform.
+
+    This narrow sizing route never builds the full QEP operator bundle or
+    constructs a constraint transform. The caller supplies an already
+    admitted transform; this function compiles one K1 form, assembles one full
+    K1 matrix, applies one Hermitian reduction, and returns reduced K1.
+    """
+
+    if not callable(task42_phase_gate):
+        raise TypeError("Task42 reduced-K1 sizing requires the phase-gate callback")
+    degree_context, degree_errors = _task42_degree_context_with_error(
+        cross_section, spaces, quadrature_degree
+    )
+    _admit_task42_k1_phase(
+        task42_phase_gate,
+        "qep_operator_K1_ffcx_form",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        task42_sizing_identity,
+        allocation_boundary="before_ufl_form_context_and_form",
+        transform=transform,
+        call_context="k1_only_sizing",
+        local_basis_errors=degree_errors,
+    )
+
+    form_context = _qep_form_context(cfg, cross_section, spaces)
+    k1_form = _build_full_k1_form(form_context)
+    compiled_form = None
+    full_k1 = None
+    reduced_k1 = None
+    try:
+        _admit_task42_k1_phase(
+            task42_phase_gate,
+            "qep_operator_K1_ffcx_form",
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            task42_sizing_identity,
+            allocation_boundary="before_fem_form_jit_with_caller_transform",
+            transform=transform,
+            call_context="k1_only_sizing",
+        )
+        compiled_form = _compile_unconstrained_form(
+            k1_form, quadrature_degree=degree_context["quadrature_degree"]
+        )
+        _admit_task42_k1_phase(
+            task42_phase_gate,
+            "qep_operator_K1_full",
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            task42_sizing_identity,
+            compiled_form=compiled_form,
+            transform=transform,
+            call_context="k1_only_sizing",
+            allocation_boundary="after_fem_form_jit_before_petsc_matrix",
+        )
+        full_k1 = _assemble_compiled_unconstrained_matrix(compiled_form)
+        _admit_task42_k1_phase(
+            task42_phase_gate,
+            "qep_operator_K1_reduced",
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            task42_sizing_identity,
+            matrix=full_k1,
+            transform=transform,
+            call_context="k1_only_sizing",
+            allocation_boundary="before_hermitian_transform_or_product",
+        )
+        reduced_k1 = reduce_matrix_hermitian(full_k1, transform.matrix)
+
+        owned_full_k1 = full_k1
+        full_k1 = None
+        owned_full_k1.destroy()
+        result = reduced_k1
+        reduced_k1 = None
+        return result
+    except BaseException as primary_error:
+        for label, owned in (
+            ("reduced K1 sizing result", reduced_k1),
+            ("full K1 sizing matrix", full_k1),
+        ):
+            if owned is None:
+                continue
+            try:
+                owned.destroy()
+            except BaseException as cleanup_error:  # noqa: BLE001 - preserve first failure
+                primary_error.add_note(
+                    f"Cleanup of {label} also failed: "
+                    f"{type(cleanup_error).__name__}: {cleanup_error}"
+                )
+        raise
+    finally:
+        # The compiled form wrapper has no explicit destroy API.
+        compiled_form = None
+
+
 def assemble_quadratic_beta_operators(
     cfg: SimulationConfig3D,
     cross_section: CrossSectionMesh,
@@ -1618,15 +2885,23 @@ def assemble_quadratic_beta_operators(
             allocation_boundary="before_ufl_form_context_and_form",
             local_basis_errors=degree_errors,
         )
+        _admit_task42_k1_phase(
+            task42_phase_gate,
+            "qep_operator_K1_ffcx_form",
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            task42_sizing_identity,
+            allocation_boundary="before_ufl_form_context_and_form",
+            local_basis_errors=degree_errors,
+        )
         form_context = _qep_form_context(cfg, cross_section, spaces)
 
     # Task42's first K0 gate above precedes all UFL form construction.
     Et, Ez, Vt, Vz, dx, mu_inv = form_context[:6]
     a0 = _build_full_k0_form(form_context)
-    a1 = (
-        1j * mu_inv * ufl.inner(ufl.grad(Ez), Vt)
-        - 1j * mu_inv * ufl.inner(Et, ufl.grad(Vz))
-    ) * dx
+    a1 = _build_full_k1_form(form_context)
     a2 = mu_inv * ufl.inner(Et, Vt) * dx
     electric_mass = (ufl.inner(Et, Vt) + ufl.inner(Ez, Vz)) * dx
 
@@ -1713,11 +2988,60 @@ def assemble_quadratic_beta_operators(
                     )
                 finally:
                     compiled_form = None
+            elif name == "K1":
+                compiled_form = None
+                try:
+                    _admit_task42_k1_phase(
+                        task42_phase_gate,
+                        "qep_operator_K1_ffcx_form",
+                        cfg,
+                        cross_section,
+                        spaces,
+                        degree_context,
+                        task42_sizing_identity,
+                        allocation_boundary=(
+                            "before_fem_form_jit_after_constraints_transform"
+                        ),
+                    )
+                    compiled_form = _compile_unconstrained_form(
+                        form,
+                        quadrature_degree=degree_context["quadrature_degree"],
+                    )
+                    _admit_task42_k1_phase(
+                        task42_phase_gate,
+                        phase,
+                        cfg,
+                        cross_section,
+                        spaces,
+                        degree_context,
+                        task42_sizing_identity,
+                        compiled_form=compiled_form,
+                        allocation_boundary=(
+                            "after_fem_form_jit_before_petsc_matrix"
+                        ),
+                    )
+                    full_matrix = _assemble_compiled_unconstrained_matrix(
+                        compiled_form
+                    )
+                except BaseException as primary_error:
+                    _destroy_task42_partial_full_operators(
+                        full_matrices, transform, primary_error
+                    )
+                    raise
+                finally:
+                    compiled_form = None
             else:
-                admit_task42_phase(task42_phase_gate, phase)
-                full_matrix = _assemble_unconstrained_matrix(
-                    form, quadrature_degree=degree_context["quadrature_degree"]
-                )
+                try:
+                    admit_task42_phase(task42_phase_gate, phase)
+                    full_matrix = _assemble_unconstrained_matrix(
+                        form,
+                        quadrature_degree=degree_context["quadrature_degree"],
+                    )
+                except BaseException as primary_error:
+                    _destroy_task42_partial_full_operators(
+                        full_matrices, transform, primary_error
+                    )
+                    raise
         else:
             full_matrix = _assemble_unconstrained_matrix(
                 form, quadrature_degree=degree_context["quadrature_degree"]
@@ -1725,35 +3049,116 @@ def assemble_quadratic_beta_operators(
         full_matrices.append(full_matrix)
         if log is not None:
             log(f"QEP full {name} assembled")
-    try:
-        reduced_matrices = []
-        transform_h = PETSc.Mat()
-        transform.matrix.hermitianTranspose(transform_h)
+    if task42_phase_gate is None:
+        try:
+            reduced_matrices = []
+            transform_h = PETSc.Mat()
+            transform.matrix.hermitianTranspose(transform_h)
+            try:
+                for name, matrix in zip(
+                    ("K0", "K1", "K2", "electric_mass"), full_matrices
+                ):
+                    reduced_matrices.append(
+                        reduce_matrix_hermitian(
+                            matrix, transform.matrix, transform_h=transform_h
+                        )
+                    )
+                    if log is not None:
+                        log(f"QEP reduced {name} assembled")
+            finally:
+                transform_h.destroy()
+        finally:
+            for matrix in full_matrices:
+                matrix.destroy()
+    else:
+        reduced_by_name: dict[str, PETSc.Mat] = {}
         try:
             for name, matrix in zip(
                 ("K0", "K1", "K2", "electric_mass"), full_matrices
             ):
-                if task42_phase_gate is not None:
+                phase = (
+                    "qep_operator_electric_mass_reduced"
+                    if name == "electric_mass"
+                    else f"qep_operator_{name}_reduced"
+                )
+                if name == "K1":
+                    _admit_task42_k1_phase(
+                        task42_phase_gate,
+                        phase,
+                        cfg,
+                        cross_section,
+                        spaces,
+                        degree_context,
+                        task42_sizing_identity,
+                        allocation_boundary="before_hermitian_transform_or_product",
+                        matrix=matrix,
+                        transform=transform,
+                    )
+                else:
                     from src.common.task42_phase_admission import admit_task42_phase
 
-                    phase = (
-                        "qep_operator_electric_mass_reduced"
-                        if name == "electric_mass"
-                        else f"qep_operator_{name}_reduced"
-                    )
                     admit_task42_phase(task42_phase_gate, phase)
-                reduced_matrices.append(
-                    reduce_matrix_hermitian(
-                        matrix, transform.matrix, transform_h=transform_h
-                    )
+                # The Task42 gate precedes both the temporary C^H and the
+                # first product. The ordinary path above retains its historic
+                # shared transpose and matrix order.
+                reduced_by_name[name] = reduce_matrix_hermitian(
+                    matrix, transform.matrix
                 )
                 if log is not None:
                     log(f"QEP reduced {name} assembled")
-        finally:
-            transform_h.destroy()
-    finally:
-        for matrix in full_matrices:
-            matrix.destroy()
+        except BaseException as primary_error:
+            for name, matrix in reversed(tuple(reduced_by_name.items())):
+                try:
+                    matrix.destroy()
+                except BaseException as cleanup_error:  # noqa: BLE001 - preserve primary
+                    primary_error.add_note(
+                        f"Cleanup of partial reduced {name} also failed: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+            for index, matrix in enumerate(reversed(full_matrices)):
+                try:
+                    matrix.destroy()
+                except BaseException as cleanup_error:  # noqa: BLE001 - preserve primary
+                    primary_error.add_note(
+                        f"Cleanup of full QEP matrix {index} also failed: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+            try:
+                transform.matrix.destroy()
+            except BaseException as cleanup_error:  # noqa: BLE001 - preserve primary
+                primary_error.add_note(
+                    "Cleanup of the owned Task42 constraint transform also failed: "
+                    f"{type(cleanup_error).__name__}: {cleanup_error}"
+                )
+            raise
+        else:
+            for index, matrix in enumerate(reversed(full_matrices)):
+                try:
+                    matrix.destroy()
+                except BaseException as cleanup_error:
+                    for reduced in reduced_by_name.values():
+                        try:
+                            reduced.destroy()
+                        except BaseException as nested_error:  # noqa: BLE001
+                            cleanup_error.add_note(
+                                "Cleanup of a reduced matrix also failed: "
+                                f"{type(nested_error).__name__}: {nested_error}"
+                            )
+                    try:
+                        transform.matrix.destroy()
+                    except BaseException as nested_error:  # noqa: BLE001
+                        cleanup_error.add_note(
+                            "Cleanup of the owned transform also failed: "
+                            f"{type(nested_error).__name__}: {nested_error}"
+                        )
+                    cleanup_error.add_note(
+                        f"Cleanup of full QEP matrix {index} failed after reductions"
+                    )
+                    raise
+            reduced_matrices = [
+                reduced_by_name[name]
+                for name in ("K0", "K1", "K2", "electric_mass")
+            ]
 
     reduced_shape = tuple(map(int, reduced_matrices[0].getSize()))
     if reduced_shape[0] != reduced_shape[1]:

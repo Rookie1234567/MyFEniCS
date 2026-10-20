@@ -2826,6 +2826,7 @@ def test_task42_k0_basis_refusal_is_collective_before_form_creation(
         }
 
     monkeypatch.setattr(qep, "_task42_k0_phase_inventory", inventory)
+    monkeypatch.setattr(qep, "_task42_k1_phase_inventory", inventory)
     monkeypatch.setattr(
         qep,
         "_qep_form_context",
@@ -2958,6 +2959,7 @@ def test_task42_k0_production_rechecks_ffcx_after_transform_collectively(
         }
 
     monkeypatch.setattr(qep, "_task42_k0_phase_inventory", inventory)
+    monkeypatch.setattr(qep, "_task42_k1_phase_inventory", inventory)
     monkeypatch.setattr(
         qep,
         "_compile_unconstrained_form",
@@ -3023,6 +3025,7 @@ def test_task42_k0_production_rechecks_ffcx_after_transform_collectively(
         first_local_errors.append(f"FFCx boundaries/delta differed: {observed_ffcx!r}")
     expected_events = [
         "gate:qep_operator_K0_ffcx_form:before_ufl_form_context_and_form",
+        "gate:qep_operator_K1_ffcx_form:before_ufl_form_context_and_form",
         "form_context",
         "build_K0_UFL",
         "gate:qep_constraints:qep_constraints",
@@ -3737,4 +3740,1491 @@ def test_task42_hybrid_rows_and_dtn_ports_report_power_classification_difference
             separators=(",", ":"),
             allow_nan=False,
         )
+    )
+
+
+def test_task42_k1_shared_form_keeps_the_existing_coefficient_formula(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    class Expr:
+        def __init__(self, *node):
+            self.node = tuple(node)
+
+        def __mul__(self, other):
+            return Expr("mul", self.node, getattr(other, "node", other))
+
+        def __rmul__(self, other):
+            return Expr("mul", other, self.node)
+
+        def __sub__(self, other):
+            return Expr("sub", self.node, other.node)
+
+    Et, Ez, Vt, Vz, dx = (
+        Expr(name) for name in ("Et", "Ez", "Vt", "Vz", "dx")
+    )
+    monkeypatch.setattr(
+        qep,
+        "ufl",
+        SimpleNamespace(
+            inner=lambda left, right: Expr("inner", left.node, right.node),
+            grad=lambda value: Expr("grad", value.node),
+        ),
+    )
+    context = (Et, Ez, Vt, Vz, dx, 0.75 + 0.25j, 1.0, object())
+
+    actual = qep._build_full_k1_form(context)
+    expected_left = Expr(
+        "mul",
+        (1j * context[5]),
+        Expr("inner", Expr("grad", Ez.node).node, Vt.node).node,
+    )
+    expected_right = Expr(
+        "mul",
+        (1j * context[5]),
+        Expr("inner", Et.node, Expr("grad", Vz.node).node).node,
+    )
+    expected_difference = Expr(
+        "sub", expected_left.node, expected_right.node
+    )
+    assert actual.node == Expr("mul", expected_difference.node, dx.node).node
+
+
+def test_task42_k1_reduction_basis_uses_live_matrix_support_and_partition() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    class SparseMatrix:
+        def __init__(self, rows, columns, row_supports):
+            self.rows = rows
+            self.columns = columns
+            self.row_supports = row_supports
+
+        def getSize(self):
+            return self.rows, self.columns
+
+        def getOwnershipRange(self):
+            return 0, self.rows
+
+        def getOwnershipRangeColumn(self):
+            return 0, self.columns
+
+        def getInfo(self, _info_type):
+            return {"nz_used": float(sum(map(len, self.row_supports.values())))}
+
+        def getRow(self, row):
+            columns = np.asarray(self.row_supports[row], dtype=np.int32)
+            values = np.ones(columns.size, dtype=np.complex128)
+            return columns, values
+
+    k1 = SparseMatrix(
+        4,
+        4,
+        {0: [0, 1], 1: [1, 3], 2: [2], 3: [0, 3]},
+    )
+    transform_matrix = SparseMatrix(4, 3, {0: [0], 1: [1], 2: [2], 3: [0]})
+    transform = SimpleNamespace(
+        matrix=transform_matrix,
+        full_global_size=4,
+        reduced_global_size=3,
+        full_local_size=4,
+        reduced_local_size=3,
+        global_slave_count=1,
+    )
+    basis, errors = qep._task42_k1_reduction_basis(
+        k1,
+        transform,
+        comm=SerialComm(),
+        full_size=4,
+        reduced_size=3,
+        expected_slave_count=1,
+        basis={
+            "full_k0_row_partition": {"owned_range": [0, 4]},
+            "source_derived_objects": {
+                "source_basis_validation_scratch_peak_bytes": 0,
+            },
+        },
+    )
+
+    assert errors == []
+    assert basis["full_k1_local_nz_used"] == 7
+    assert basis["constraint_transform_global_nz_used"] == 4
+    assert basis["full_k1_row_support_candidate_entries_global"] == 7
+    assert basis["reduced_k1_candidate_entries_global_before_duplicate_merge"] == 7
+    assert len(basis["constraint_transform_row_support_sha256"]) == 64
+    assert basis["local_payload_estimates_bytes"]["predicted_peak"] < 64 * 1024**2
+
+
+def test_task42_k1_phase_inventory_binds_source_profile_and_phase_components(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    comm = MPI.COMM_WORLD
+    shared_basis = {
+        "schema": "task42.qep_k0_rank_basis.v1",
+        "source_derived_objects": {
+            "mixed_cell_dof_rows": {
+                "local_cell_tensor_payload_bytes_sum": 1024,
+            },
+            "source_basis_validation_scratch_peak_bytes": 512,
+            "cell_dof_rows_python_metadata_bytes_upper": 256,
+            "matrix_candidate_contributions": {
+                "candidate_sparse_payload_bytes_upper": 4096,
+            },
+        },
+    }
+    monkeypatch.setattr(
+        qep, "_task42_k0_source_basis", lambda *_args, **_kwargs: shared_basis
+    )
+    monkeypatch.setattr(qep, "_task42_k0_calibration_scope_errors", lambda *_args, **_kwargs: [])
+    cross_section = SimpleNamespace(mesh=SimpleNamespace(comm=comm))
+
+    ffcx = qep._task42_k1_phase_inventory(
+        "qep_operator_K1_ffcx_form",
+        SimpleNamespace(),
+        cross_section,
+        SimpleNamespace(),
+        {"quadrature_degree": 16},
+        {"fixture_identity": "explicit-small-inventory"},
+        allocation_boundary="before_ufl_form_context_and_form",
+    )
+    full = qep._task42_k1_phase_inventory(
+        "qep_operator_K1_full",
+        SimpleNamespace(),
+        cross_section,
+        SimpleNamespace(),
+        {"quadrature_degree": 16},
+        {"fixture_identity": "explicit-small-inventory"},
+        compiled_form=SimpleNamespace(),
+        allocation_boundary="after_fem_form_jit_before_petsc_matrix",
+    )
+
+    assert ffcx["admission_errors"] == []
+    assert full["admission_errors"] == []
+    assert [item["delta_bytes"] for item in ffcx["components"]] == [
+        64 * 1024**2,
+        512 * 1024**2 if comm.rank == 0 else 0,
+        8 * 1024**2 if comm.rank == 0 else 0,
+    ]
+    assert full["components"][0]["delta_bytes"] == 64 * 1024**2
+    assert full["components"][0]["sizing_basis"]["shared_qep_source_basis"] is shared_basis
+    assert full["evidence"]["resident_objects_at_fresh_snapshot"][-1] == "compiled_K1_form"
+
+
+def test_task42_k1_reduction_basis_rejects_duplicate_constraint_columns() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    class SparseMatrix:
+        def __init__(self, rows, columns, row_supports):
+            self.rows = rows
+            self.columns = columns
+            self.row_supports = row_supports
+
+        def getSize(self):
+            return self.rows, self.columns
+
+        def getOwnershipRange(self):
+            return 0, self.rows
+
+        def getOwnershipRangeColumn(self):
+            return 0, self.columns
+
+        def getInfo(self, _info_type):
+            return {"nz_used": float(sum(map(len, self.row_supports.values())))}
+
+        def getRow(self, row):
+            columns = np.asarray(self.row_supports[row], dtype=np.int32)
+            values = np.ones(columns.size, dtype=np.complex128)
+            return columns, values
+
+    k1 = SparseMatrix(2, 2, {0: [0], 1: [1]})
+    transform_matrix = SparseMatrix(2, 1, {0: [0, 0], 1: [0]})
+    transform = SimpleNamespace(
+        matrix=transform_matrix,
+        full_global_size=2,
+        reduced_global_size=1,
+        full_local_size=2,
+        reduced_local_size=1,
+        global_slave_count=1,
+    )
+    basis, errors = qep._task42_k1_reduction_basis(
+        k1,
+        transform,
+        comm=SerialComm(),
+        full_size=2,
+        reduced_size=1,
+        expected_slave_count=1,
+        basis={"full_k0_row_partition": {"owned_range": [0, 2]}},
+    )
+    assert basis == {}
+    assert errors == [
+        "rank_0_constraint_transform_row_capture:ValueError:row 0 has duplicate or out-of-range columns"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("failure_point", "caller_transpose"),
+    [
+        ("first_matmult", False),
+        ("transpose", False),
+        ("second_matmult", False),
+        ("second_matmult", True),
+    ],
+)
+def test_task42_hermitian_reduction_cleans_only_owned_matrices_on_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    failure_point: str,
+    caller_transpose: bool,
+) -> None:
+    from src.constraints import cross_section_floquet as floquet
+
+    events: list[str] = []
+    created: list[object] = []
+
+    class FakeMatrix:
+        def __init__(self, label: str):
+            self.label = label
+            self.destroy_count = 0
+
+        def matMult(self, _other):
+            events.append(f"{self.label}.matMult")
+            if (
+                failure_point == "first_matmult"
+                and self.label == "A"
+            ) or (
+                failure_point == "second_matmult"
+                and self.label in {"C_H", "caller_C_H"}
+            ):
+                raise RuntimeError(f"fixture {failure_point} failure")
+            result = FakeMatrix("product" if self.label == "A" else "reduced")
+            created.append(result)
+            return result
+
+        def hermitianTranspose(self, output):
+            events.append("C.hermitianTranspose")
+            if failure_point == "transpose":
+                raise RuntimeError("fixture transpose failure")
+            output.label = "C_H"
+
+        def destroy(self):
+            self.destroy_count += 1
+            events.append(f"{self.label}.destroy")
+
+    matrix = FakeMatrix("A")
+    transform = FakeMatrix("C")
+    external_transpose = FakeMatrix("caller_C_H") if caller_transpose else None
+    owned_transposes: list[FakeMatrix] = []
+
+    def new_matrix():
+        result = FakeMatrix("temporary_C_H")
+        owned_transposes.append(result)
+        return result
+
+    monkeypatch.setattr(floquet.PETSc, "Mat", new_matrix)
+    with pytest.raises(RuntimeError, match=f"fixture {failure_point} failure"):
+        floquet.reduce_matrix_hermitian(
+            matrix,
+            transform,
+            transform_h=external_transpose,
+        )
+
+    assert matrix.destroy_count == 0
+    assert transform.destroy_count == 0
+    assert external_transpose is None or external_transpose.destroy_count == 0
+    products = [obj for obj in created if obj.label == "product"]
+    assert len(products) == (0 if failure_point == "first_matmult" else 1)
+    assert all(obj.destroy_count == 1 for obj in products)
+    if external_transpose is None and failure_point in {"transpose", "second_matmult"}:
+        assert len(owned_transposes) == 1
+        assert owned_transposes[0].destroy_count == 1
+    else:
+        assert not owned_transposes
+    if failure_point == "first_matmult":
+        assert events == ["A.matMult"]
+
+
+@pytest.mark.parametrize("caller_transpose", [False, True])
+def test_task42_hermitian_reduction_success_preserves_caller_objects(
+    monkeypatch: pytest.MonkeyPatch,
+    caller_transpose: bool,
+) -> None:
+    from src.constraints import cross_section_floquet as floquet
+
+    created: list[object] = []
+
+    class FakeMatrix:
+        def __init__(self, label: str):
+            self.label = label
+            self.destroy_count = 0
+
+        def matMult(self, _other):
+            result = FakeMatrix("product" if self.label == "A" else "reduced")
+            created.append(result)
+            return result
+
+        def hermitianTranspose(self, output):
+            output.label = "C_H"
+
+        def destroy(self):
+            self.destroy_count += 1
+
+    matrix = FakeMatrix("A")
+    transform = FakeMatrix("C")
+    external_transpose = FakeMatrix("caller_C_H") if caller_transpose else None
+    owned_transposes: list[FakeMatrix] = []
+
+    def new_matrix():
+        result = FakeMatrix("temporary_C_H")
+        owned_transposes.append(result)
+        return result
+
+    monkeypatch.setattr(floquet.PETSc, "Mat", new_matrix)
+    reduced = floquet.reduce_matrix_hermitian(
+        matrix,
+        transform,
+        transform_h=external_transpose,
+    )
+
+    products = [obj for obj in created if obj.label == "product"]
+    assert len(products) == 1 and products[0].destroy_count == 1
+    assert reduced.label == "reduced" and reduced.destroy_count == 0
+    assert matrix.destroy_count == 0
+    assert transform.destroy_count == 0
+    assert external_transpose is None or external_transpose.destroy_count == 0
+    if external_transpose is None:
+        assert len(owned_transposes) == 1
+        assert owned_transposes[0].destroy_count == 1
+    else:
+        assert not owned_transposes
+
+
+def test_task42_hermitian_reduction_preserves_primary_failure_during_cleanup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.constraints import cross_section_floquet as floquet
+
+    events: list[str] = []
+
+    class FakeMatrix:
+        def __init__(self, label: str):
+            self.label = label
+            self.destroy_count = 0
+
+        def matMult(self, _other):
+            if self.label == "C_H":
+                raise RuntimeError("primary second product failure")
+            return FakeMatrix("product")
+
+        def hermitianTranspose(self, output):
+            output.label = "C_H"
+
+        def destroy(self):
+            self.destroy_count += 1
+            events.append(self.label)
+            if self.label == "product":
+                raise ValueError("secondary product cleanup failure")
+
+    owned_transposes: list[FakeMatrix] = []
+    created_products: list[FakeMatrix] = []
+
+    def first_product(_other):
+        product = FakeMatrix("product")
+        created_products.append(product)
+        return product
+
+    original_matmult = FakeMatrix.matMult
+
+    def tracked_matmult(self, other):
+        if self.label == "A":
+            return first_product(other)
+        return original_matmult(self, other)
+
+    monkeypatch.setattr(FakeMatrix, "matMult", tracked_matmult)
+
+    def new_matrix():
+        result = FakeMatrix("temporary_C_H")
+        owned_transposes.append(result)
+        return result
+
+    monkeypatch.setattr(floquet.PETSc, "Mat", new_matrix)
+    matrix = FakeMatrix("A")
+    transform = FakeMatrix("C")
+    with pytest.raises(RuntimeError, match="primary second product failure") as caught:
+        floquet.reduce_matrix_hermitian(matrix, transform)
+
+    assert events == ["product", "C_H"]
+    assert len(created_products) == 1
+    assert created_products[0].destroy_count == 1
+    assert owned_transposes[0].destroy_count == 1
+    assert matrix.destroy_count == 0
+    assert transform.destroy_count == 0
+    assert any("secondary product cleanup failure" in note for note in caught.value.__notes__)
+    assert all("K1" not in note for note in caught.value.__notes__)
+
+
+def test_task42_k1_only_sizing_constructs_and_reduces_only_k1(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+    inventories: list[tuple[str, str, str]] = []
+
+    class FakeMatrix:
+        def __init__(self, label: str):
+            self.label = label
+            self.destroy_count = 0
+
+        def destroy(self):
+            self.destroy_count += 1
+            events.append(f"destroy:{self.label}")
+
+    caller_transform_matrix = FakeMatrix("caller-C")
+    caller_transform = SimpleNamespace(matrix=caller_transform_matrix)
+    full_k1 = FakeMatrix("full-K1")
+    reduced_k1 = FakeMatrix("reduced-K1")
+
+    monkeypatch.setattr(
+        qep,
+        "_task42_degree_context_with_error",
+        lambda *_args: ({"quadrature_degree": 16}, ()),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_task42_k1_phase_inventory",
+        lambda phase, *_args, **options: (
+            inventories.append(
+                (
+                    phase,
+                    options["allocation_boundary"],
+                    options["call_context"],
+                )
+            )
+            or {
+                "evidence": {
+                    "allocation_boundary": options["allocation_boundary"]
+                },
+                "admission_errors": [],
+                "components": [],
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("form-context") or ("K1-only-context",),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k1_form",
+        lambda _context: events.append("build-K1-form") or "K1-form",
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k0_form",
+        lambda *_args: pytest.fail("K1-only sizing built K0"),
+    )
+    monkeypatch.setattr(
+        qep,
+        "assemble_quadratic_beta_operators",
+        lambda *_args, **_kwargs: pytest.fail("K1-only sizing used full builder"),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda _form, **_kwargs: events.append("compile-K1") or "compiled-K1",
+    )
+    monkeypatch.setattr(
+        qep,
+        "_assemble_compiled_unconstrained_matrix",
+        lambda _form: events.append("assemble-K1") or full_k1,
+    )
+    monkeypatch.setattr(
+        qep,
+        "reduce_matrix_hermitian",
+        lambda matrix, transform: (
+            events.append(f"reduce:{matrix.label}:{transform.label}") or reduced_k1
+        ),
+    )
+
+    gate_phases: list[str] = []
+
+    def gate(phase, _inventory):
+        gate_phases.append(phase)
+        return {"pass": True, "errors": []}
+
+    result = qep.assemble_reduced_k1_for_sizing(
+        None,
+        None,
+        None,
+        caller_transform,
+        task42_phase_gate=gate,
+        task42_sizing_identity={"fixture": "K1-only"},
+    )
+
+    assert result is reduced_k1
+    assert gate_phases == [
+        "qep_operator_K1_ffcx_form",
+        "qep_operator_K1_ffcx_form",
+        "qep_operator_K1_full",
+        "qep_operator_K1_reduced",
+    ]
+    assert inventories == [
+        (
+            "qep_operator_K1_ffcx_form",
+            "before_ufl_form_context_and_form",
+            "k1_only_sizing",
+        ),
+        (
+            "qep_operator_K1_ffcx_form",
+            "before_fem_form_jit_with_caller_transform",
+            "k1_only_sizing",
+        ),
+        (
+            "qep_operator_K1_full",
+            "after_fem_form_jit_before_petsc_matrix",
+            "k1_only_sizing",
+        ),
+        (
+            "qep_operator_K1_reduced",
+            "before_hermitian_transform_or_product",
+            "k1_only_sizing",
+        ),
+    ]
+    assert events == [
+        "form-context",
+        "build-K1-form",
+        "compile-K1",
+        "assemble-K1",
+        "reduce:full-K1:caller-C",
+        "destroy:full-K1",
+    ]
+    assert full_k1.destroy_count == 1
+    assert reduced_k1.destroy_count == 0
+    assert caller_transform_matrix.destroy_count == 0
+
+
+@pytest.mark.parametrize(
+    ("refusal_boundary", "expected_events"),
+    [
+        (
+            "before_ufl_form_context_and_form",
+            [],
+        ),
+        (
+            "before_fem_form_jit_with_caller_transform",
+            ["form-context", "build-K1-form"],
+        ),
+        (
+            "after_fem_form_jit_before_petsc_matrix",
+            ["form-context", "build-K1-form", "compile-K1"],
+        ),
+        (
+            "before_hermitian_transform_or_product",
+            [
+                "form-context",
+                "build-K1-form",
+                "compile-K1",
+                "assemble-K1",
+                "destroy:full-K1",
+            ],
+        ),
+    ],
+)
+def test_task42_k1_only_sizing_refuses_before_the_protected_allocation(
+    monkeypatch: pytest.MonkeyPatch,
+    refusal_boundary: str,
+    expected_events: list[str],
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+
+    class FakeMatrix:
+        def __init__(self, label: str):
+            self.label = label
+            self.destroy_count = 0
+
+        def destroy(self):
+            self.destroy_count += 1
+            events.append(f"destroy:{self.label}")
+
+    caller_c = FakeMatrix("caller-C")
+    full_k1 = FakeMatrix("full-K1")
+    caller_transform = SimpleNamespace(matrix=caller_c)
+    monkeypatch.setattr(
+        qep,
+        "_task42_degree_context_with_error",
+        lambda *_args: ({"quadrature_degree": 16}, ()),
+    )
+
+    def inventory(phase, *_args, **options):
+        return {
+            "evidence": {"allocation_boundary": options["allocation_boundary"]},
+            "admission_errors": [],
+            "components": [],
+        }
+
+    monkeypatch.setattr(qep, "_task42_k1_phase_inventory", inventory)
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("form-context") or ("K1-context",),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k1_form",
+        lambda _context: events.append("build-K1-form") or "K1-form",
+    )
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda _form, **_kwargs: events.append("compile-K1") or "compiled",
+    )
+    monkeypatch.setattr(
+        qep,
+        "_assemble_compiled_unconstrained_matrix",
+        lambda _form: events.append("assemble-K1") or full_k1,
+    )
+    monkeypatch.setattr(
+        qep,
+        "reduce_matrix_hermitian",
+        lambda *_args, **_kwargs: pytest.fail(
+            "C-H or product path ran after reduction admission refusal"
+        ),
+    )
+
+    def gate(phase, inventory_row):
+        boundary = inventory_row["evidence"]["allocation_boundary"]
+        events.append(f"gate:{phase}:{boundary}")
+        if boundary == refusal_boundary:
+            return {"pass": False, "errors": ["fixture refusal"]}
+        return {"pass": True, "errors": []}
+
+    with pytest.raises(RuntimeError, match="fixture refusal"):
+        qep.assemble_reduced_k1_for_sizing(
+            None,
+            None,
+            None,
+            caller_transform,
+            task42_phase_gate=gate,
+            task42_sizing_identity={"fixture": "K1-only-refusal"},
+        )
+
+    protected_events = [event for event in events if not event.startswith("gate:")]
+    assert protected_events == expected_events
+    assert caller_c.destroy_count == 0
+    if refusal_boundary == "before_hermitian_transform_or_product":
+        assert full_k1.destroy_count == 1
+    else:
+        assert full_k1.destroy_count == 0
+
+
+def test_task42_k1_inventory_resident_objects_follow_the_call_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    class CallerTransformMatrix:
+        def getSize(self):
+            return 4033, 3888
+
+        def getOwnershipRange(self):
+            return 0, 4033
+
+        def getOwnershipRangeColumn(self):
+            return 0, 3888
+
+        def getInfo(self, _info_type):
+            return {"nz_used": 4033.0}
+
+        def getRow(self, _row):
+            pytest.fail("K1 pre-form inventory must not scan transform rows")
+
+    source_basis = {
+        "source_derived_objects": {
+            "mixed_cell_dof_rows": {
+                "local_cell_tensor_payload_bytes_sum": 1024,
+            },
+            "source_basis_validation_scratch_peak_bytes": 512,
+            "cell_dof_rows_python_metadata_bytes_upper": 256,
+            "matrix_candidate_contributions": {
+                "candidate_sparse_payload_bytes_upper": 4096,
+            },
+        }
+    }
+    monkeypatch.setattr(
+        qep, "_task42_k0_source_basis", lambda *_args, **_kwargs: source_basis
+    )
+    monkeypatch.setattr(qep, "_task42_k0_calibration_scope_errors", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        qep,
+        "_task42_k1_reduction_basis",
+        lambda *_args, **_kwargs: (
+            {
+                "predicted_rank_peak_bytes": 1024,
+                "local_payload_estimates_bytes": {},
+            },
+            [],
+        ),
+    )
+    cross_section = SimpleNamespace(mesh=SimpleNamespace(comm=SerialComm()))
+    transform = SimpleNamespace(
+        matrix=CallerTransformMatrix(),
+        full_global_size=4033,
+        reduced_global_size=3888,
+        full_local_size=4033,
+        reduced_local_size=3888,
+        global_slave_count=145,
+    )
+    common = (
+        "qep_operator_K1_reduced",
+        SimpleNamespace(),
+        cross_section,
+        SimpleNamespace(),
+        {"quadrature_degree": 16},
+        {"fixture": "resident-context"},
+    )
+    production = qep._task42_k1_phase_inventory(
+        *common,
+        matrix=object(),
+        transform=transform,
+        call_context="production_full_qep",
+        allocation_boundary="before_hermitian_transform_or_product",
+    )
+    sizing = qep._task42_k1_phase_inventory(
+        *common,
+        matrix=object(),
+        transform=transform,
+        call_context="k1_only_sizing",
+        allocation_boundary="before_hermitian_transform_or_product",
+    )
+    sizing_before_uFL = qep._task42_k1_phase_inventory(
+        "qep_operator_K1_ffcx_form",
+        SimpleNamespace(),
+        cross_section,
+        SimpleNamespace(),
+        {"quadrature_degree": 16},
+        {"fixture": "resident-context"},
+        transform=transform,
+        call_context="k1_only_sizing",
+        allocation_boundary="before_ufl_form_context_and_form",
+    )
+    production_resident = production["evidence"]["resident_objects_at_fresh_snapshot"]
+    sizing_resident = sizing["evidence"]["resident_objects_at_fresh_snapshot"]
+    assert "full_K0_sparse_matrix" in production_resident
+    assert "full_K2_sparse_matrix" in production_resident
+    assert "full_electric_mass_sparse_matrix" in production_resident
+    assert "reduced_K0_sparse_matrix" in production_resident
+    assert "full_K0_sparse_matrix" not in sizing_resident
+    assert "full_K2_sparse_matrix" not in sizing_resident
+    assert "full_electric_mass_sparse_matrix" not in sizing_resident
+    assert "reduced_K0_sparse_matrix" not in sizing_resident
+    assert "caller_supplied_distributed_constraint_transform" in sizing_resident
+    assert "full_K1_sparse_matrix" in sizing_resident
+    sizing_initial_resident = sizing_before_uFL["evidence"][
+        "resident_objects_at_fresh_snapshot"
+    ]
+    assert "caller_supplied_distributed_constraint_transform" in sizing_initial_resident
+    assert "full_K0_sparse_matrix" not in sizing_initial_resident
+    assert sizing_before_uFL["admission_errors"] == []
+    assert production["admission_errors"] == []
+    assert sizing["admission_errors"] == []
+
+
+def test_task42_k1_only_sizing_requires_a_gate_before_any_form_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+    monkeypatch.setattr(
+        qep,
+        "_task42_degree_context_with_error",
+        lambda *_args: events.append("degree-context") or ({"quadrature_degree": 16}, ()),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: pytest.fail("form context must not run without a phase gate"),
+    )
+    with pytest.raises(TypeError, match="requires the phase-gate callback"):
+        qep.assemble_reduced_k1_for_sizing(
+            None,
+            None,
+            None,
+            SimpleNamespace(matrix=object()),
+            task42_phase_gate=None,
+        )
+    assert events == []
+
+
+@pytest.mark.parametrize(
+    ("failure_kind", "expected_error", "expected_k1_reads", "expected_c_reads"),
+    [
+        ("missing_source_basis", "task42_k1_source_basis_unavailable", 0, 0),
+        ("boolean_k1_shape", "full_K1_layout", 0, 0),
+        ("fractional_k1_range", "full_K1_layout", 0, 0),
+        ("bad_c_shape", "constraint_transform_shape_does_not_match_profile", 0, 0),
+        ("c_nnz_over_profile", "global_nz_used_exceeds_profile_bound", 0, 0),
+        ("k1_getrow_error", "fixture K1 getRow read error", 1, 4033),
+    ],
+)
+def test_task42_k1_inventory_errors_keep_null_delta_and_collective_refusal(
+    monkeypatch: pytest.MonkeyPatch,
+    failure_kind: str,
+    expected_error: str,
+    expected_k1_reads: int,
+    expected_c_reads: int,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    class LayoutMatrix:
+        def __init__(
+            self,
+            shape,
+            *,
+            label,
+            row_range=None,
+            column_range=None,
+            nz_used=0,
+            fail_getrow=False,
+        ):
+            self.shape = shape
+            self.label = label
+            self.row_range = row_range or (0, 4033)
+            self.column_range = column_range or (0, shape[1])
+            self.nz_used = nz_used
+            self.fail_getrow = fail_getrow
+            self.getrow_calls = 0
+
+        def getSize(self):
+            return self.shape
+
+        def getOwnershipRange(self):
+            return self.row_range
+
+        def getOwnershipRangeColumn(self):
+            return self.column_range
+
+        def getInfo(self, _info_type):
+            return {"nz_used": float(self.nz_used)}
+
+        def getRow(self, row):
+            self.getrow_calls += 1
+            if self.fail_getrow:
+                raise OSError("fixture K1 getRow read error")
+            if self.label == "K1":
+                column = row
+            else:
+                column = row % self.shape[1]
+            return (
+                np.asarray([column], dtype=np.int32),
+                np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            )
+
+    comm = SerialComm()
+    k1_shape = (4033, 4033)
+    k1_range = (0, 4033)
+    c_shape = (4033, 3888)
+    c_nnz = 0
+    k1_nnz = 0
+    if failure_kind == "missing_source_basis":
+        def source_basis(*_args, **_kwargs):
+            raise ValueError("fixture mixed-cell basis unavailable")
+    else:
+        def source_basis(*_args, **_kwargs):
+            return {
+                "full_k0_row_partition": {"owned_range": [0, 4033]},
+                "source_derived_objects": {
+                    "mixed_cell_dof_rows": {
+                        "local_cell_tensor_payload_bytes_sum": 0,
+                    },
+                    "source_basis_validation_scratch_peak_bytes": 0,
+                    "cell_dof_rows_python_metadata_bytes_upper": 0,
+                    "matrix_candidate_contributions": {
+                        "candidate_sparse_payload_bytes_upper": 0,
+                    },
+                },
+            }
+
+    if failure_kind == "boolean_k1_shape":
+        k1_shape = (True, 4033)
+    elif failure_kind == "fractional_k1_range":
+        k1_range = (0.5, 4033)
+    elif failure_kind == "bad_c_shape":
+        c_shape = (4033, 3887)
+    elif failure_kind == "c_nnz_over_profile":
+        c_nnz = 3888 + 145 * 6 + 1
+    elif failure_kind == "k1_getrow_error":
+        k1_nnz = 4033
+        c_nnz = 4033
+
+    k1 = LayoutMatrix(
+        k1_shape,
+        label="K1",
+        row_range=k1_range,
+        nz_used=k1_nnz,
+        fail_getrow=failure_kind == "k1_getrow_error",
+    )
+    c_matrix = LayoutMatrix(c_shape, label="C", nz_used=c_nnz)
+    transform = SimpleNamespace(
+        matrix=c_matrix,
+        full_global_size=4033,
+        reduced_global_size=3888,
+        full_local_size=4033,
+        reduced_local_size=3888,
+        global_slave_count=145,
+    )
+    monkeypatch.setattr(qep, "_task42_k0_source_basis", source_basis)
+    monkeypatch.setattr(qep, "_task42_k0_calibration_scope_errors", lambda *_args, **_kwargs: [])
+
+    gate_rows: list[dict[str, object]] = []
+
+    def refuse(phase, inventory):
+        gate_rows.append(dict(inventory))
+        return {
+            "pass": False,
+            "errors": inventory.get("admission_errors", []),
+        }
+
+    cross_section = SimpleNamespace(mesh=SimpleNamespace(comm=comm))
+    with pytest.raises(RuntimeError, match="refused before allocation"):
+        qep._admit_task42_k1_phase(
+            refuse,
+            "qep_operator_K1_reduced",
+            SimpleNamespace(),
+            cross_section,
+            SimpleNamespace(),
+            {"quadrature_degree": 16},
+            {"fixture": failure_kind},
+            matrix=k1,
+            transform=transform,
+            allocation_boundary="before_hermitian_transform_or_product",
+        )
+
+    assert len(gate_rows) == 1
+    errors = gate_rows[0]["admission_errors"]
+    assert any(expected_error in item for item in errors)
+    assert all(component["delta_bytes"] is None for component in gate_rows[0]["components"])
+    assert k1.getrow_calls == expected_k1_reads
+    assert c_matrix.getrow_calls == expected_c_reads
+
+
+def test_task42_k1_inventory_collectively_refuses_one_rank_missing_source_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("this collective refusal contract requires MPI2")
+
+    def owned_range(global_size: int, rank: int) -> tuple[int, int]:
+        quotient, remainder = divmod(global_size, comm.size)
+        start = rank * quotient + min(rank, remainder)
+        return start, start + quotient + int(rank < remainder)
+
+    def source_basis(*_args, rank: int, **_kwargs):
+        if rank == 1:
+            raise ValueError("fixture rank 1 lacks mixed cell-dof metadata")
+        start, end = owned_range(4033, rank)
+        return {
+            "full_k0_row_partition": {"owned_range": [start, end]},
+            "source_derived_objects": {
+                "mixed_cell_dof_rows": {
+                    "local_cell_tensor_payload_bytes_sum": 0,
+                },
+                "source_basis_validation_scratch_peak_bytes": 0,
+                "cell_dof_rows_python_metadata_bytes_upper": 0,
+                "matrix_candidate_contributions": {
+                    "candidate_sparse_payload_bytes_upper": 0,
+                },
+            },
+        }
+
+    monkeypatch.setattr(qep, "_task42_k0_source_basis", source_basis)
+    monkeypatch.setattr(qep, "_task42_k0_calibration_scope_errors", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        qep,
+        "_task42_k1_reduction_basis",
+        lambda *_args, **_kwargs: pytest.fail(
+            "missing source metadata must refuse before CSR row capture"
+        ),
+    )
+
+    class CallerC:
+        def __init__(self):
+            self.layout_reads = 0
+            self.row_reads = 0
+            self.product_calls = 0
+            self.transpose_calls = 0
+
+        def getSize(self):
+            self.layout_reads += 1
+            return 4033, 3888
+
+        def getOwnershipRange(self):
+            self.layout_reads += 1
+            return 0, 4033
+
+        def getOwnershipRangeColumn(self):
+            self.layout_reads += 1
+            return 0, 3888
+
+        def getInfo(self, _info_type):
+            self.layout_reads += 1
+            return {"nz_used": 4033.0}
+
+        def getRow(self, _row):
+            self.row_reads += 1
+            raise AssertionError("source rejection must precede C row capture")
+
+        def matMult(self, _other):
+            self.product_calls += 1
+            raise AssertionError("source rejection must precede sparse products")
+
+        def hermitianTranspose(self, _output):
+            self.transpose_calls += 1
+            raise AssertionError("source rejection must precede transpose allocation")
+
+    cross_section = SimpleNamespace(mesh=SimpleNamespace(comm=comm))
+    matrix = object()
+    c_matrix = CallerC()
+    row_start, row_end = owned_range(4033, comm.rank)
+    column_start, column_end = owned_range(3888, comm.rank)
+    transform = SimpleNamespace(
+        matrix=c_matrix,
+        full_global_size=4033,
+        reduced_global_size=3888,
+        full_local_size=row_end - row_start,
+        reduced_local_size=column_end - column_start,
+        global_slave_count=145,
+    )
+    callback_rows: list[dict[str, object]] = []
+
+    def collective_gate(phase, inventory):
+        rows = comm.allgather(
+            {
+                "phase": phase,
+                "errors": list(inventory.get("admission_errors", [])),
+                "deltas": [
+                    component.get("delta_bytes")
+                    for component in inventory.get("components", [])
+                ],
+            }
+        )
+        callback_rows.extend(rows)
+        errors = [error for row in rows for error in row["errors"]]
+        return {"pass": not errors, "errors": errors}
+
+    caught = None
+    try:
+        qep._admit_task42_k1_phase(
+            collective_gate,
+            "qep_operator_K1_reduced",
+            SimpleNamespace(),
+            cross_section,
+            SimpleNamespace(),
+            {"quadrature_degree": 16},
+            {"fixture": "rank-local-missing-source-metadata"},
+            matrix=matrix,
+            transform=transform,
+            call_context="k1_only_sizing",
+            allocation_boundary="before_hermitian_transform_or_product",
+        )
+    except BaseException as exc:  # noqa: BLE001 - persist collective decision first
+        caught = {"type": type(exc).__name__, "message": str(exc)}
+    records = comm.allgather(
+        {
+            "rank": comm.rank,
+            "caught": caught,
+            "c_layout_reads": c_matrix.layout_reads,
+            "c_row_reads": c_matrix.row_reads,
+            "c_product_calls": c_matrix.product_calls,
+            "c_transpose_calls": c_matrix.transpose_calls,
+            "callback_rows": callback_rows,
+        }
+    )
+    evidence_root = _shared_task42_test_directory(tmp_path)
+    _persist_rank_evidence(
+        comm,
+        evidence_root,
+        "k1_source_metadata_collective_refusal",
+        records[comm.rank],
+    )
+
+    assert caught is not None and caught["type"] == "RuntimeError"
+    assert "fixture rank 1 lacks mixed cell-dof metadata" in caught["message"]
+    assert len({row["caught"]["message"] for row in records}) == 1
+    assert len({tuple(row["callback_rows"][0]["errors"]) for row in records}) == 1
+    assert all(row["c_layout_reads"] == 0 for row in records)
+    assert all(row["c_row_reads"] == 0 for row in records)
+    assert all(row["c_product_calls"] == 0 for row in records)
+    assert all(row["c_transpose_calls"] == 0 for row in records)
+    assert all(
+        value is None
+        for rank_row in callback_rows
+        for value in rank_row["deltas"]
+    )
+
+
+def test_task42_k1_only_entry_collectively_refuses_rank_local_missing_transform(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("this collective refusal contract requires MPI2")
+
+    def owned_range(global_size: int, rank: int) -> tuple[int, int]:
+        quotient, remainder = divmod(global_size, comm.size)
+        start = rank * quotient + min(rank, remainder)
+        return start, start + quotient + int(rank < remainder)
+
+    class CallerC:
+        def __init__(self):
+            self.layout_reads = 0
+            self.row_reads = 0
+            self.product_calls = 0
+            self.transpose_calls = 0
+
+        def getSize(self):
+            self.layout_reads += 1
+            return 4033, 3888
+
+        def getOwnershipRange(self):
+            self.layout_reads += 1
+            return owned_range(4033, comm.rank)
+
+        def getOwnershipRangeColumn(self):
+            self.layout_reads += 1
+            return owned_range(3888, comm.rank)
+
+        def getInfo(self, _info_type):
+            self.layout_reads += 1
+            return {"nz_used": 4033.0}
+
+        def getRow(self, _row):
+            self.row_reads += 1
+            raise AssertionError("missing transform must refuse before row reads")
+
+        def matMult(self, _other):
+            self.product_calls += 1
+            raise AssertionError("missing transform must refuse before products")
+
+        def hermitianTranspose(self, _output):
+            self.transpose_calls += 1
+            raise AssertionError("missing transform must refuse before C-H")
+
+    def source_basis(*_args, rank: int, **_kwargs):
+        start, end = owned_range(4033, rank)
+        return {
+            "full_k0_row_partition": {"owned_range": [start, end]},
+            "source_derived_objects": {
+                "mixed_cell_dof_rows": {
+                    "local_cell_tensor_payload_bytes_sum": 0,
+                },
+                "source_basis_validation_scratch_peak_bytes": 0,
+                "cell_dof_rows_python_metadata_bytes_upper": 0,
+                "matrix_candidate_contributions": {
+                    "candidate_sparse_payload_bytes_upper": 0,
+                },
+            },
+        }
+
+    monkeypatch.setattr(qep, "_task42_degree_context_with_error", lambda *_args: ({"quadrature_degree": 16}, ()))
+    monkeypatch.setattr(qep, "_task42_k0_source_basis", source_basis)
+    monkeypatch.setattr(qep, "_task42_k0_calibration_scope_errors", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: pytest.fail("collective transform refusal must precede UFL"),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k1_form",
+        lambda *_args: pytest.fail("collective transform refusal must precede K1 form"),
+    )
+
+    c_matrix = CallerC()
+    row_start, row_end = owned_range(4033, comm.rank)
+    column_start, column_end = owned_range(3888, comm.rank)
+    transform = None
+    if comm.rank == 0:
+        transform = SimpleNamespace(
+            matrix=c_matrix,
+            full_global_size=4033,
+            reduced_global_size=3888,
+            full_local_size=row_end - row_start,
+            reduced_local_size=column_end - column_start,
+            global_slave_count=145,
+        )
+
+    callback_rows: list[dict[str, object]] = []
+
+    def collective_gate(phase, inventory):
+        rows = comm.allgather(
+            {
+                "phase": phase,
+                "errors": list(inventory.get("admission_errors", [])),
+                "deltas": [
+                    component.get("delta_bytes")
+                    for component in inventory.get("components", [])
+                ],
+            }
+        )
+        callback_rows.extend(rows)
+        errors = [error for row in rows for error in row["errors"]]
+        return {"pass": not errors, "errors": errors}
+
+    caught = None
+    try:
+        qep.assemble_reduced_k1_for_sizing(
+            None,
+            SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+            SimpleNamespace(),
+            transform,
+            task42_phase_gate=collective_gate,
+            task42_sizing_identity={"fixture": "rank-local-missing-transform"},
+        )
+    except BaseException as exc:  # noqa: BLE001 - persist collective refusal first
+        caught = {"type": type(exc).__name__, "message": str(exc)}
+
+    records = comm.allgather(
+        {
+            "rank": comm.rank,
+            "caught": caught,
+            "c_layout_reads": c_matrix.layout_reads,
+            "c_row_reads": c_matrix.row_reads,
+            "c_product_calls": c_matrix.product_calls,
+            "c_transpose_calls": c_matrix.transpose_calls,
+            "callback_rows": callback_rows,
+        }
+    )
+    evidence_root = _shared_task42_test_directory(tmp_path)
+    _persist_rank_evidence(
+        comm,
+        evidence_root,
+        "k1_missing_transform_collective_refusal",
+        records[comm.rank],
+    )
+
+    assert all(row["caught"] is not None for row in records)
+    assert all(row["caught"]["type"] == "RuntimeError" for row in records)
+    assert len({row["caught"]["message"] for row in records}) == 1
+    assert "rank_1_K1_caller_transform:caller_constraint_transform_is_missing" in records[0]["caught"]["message"]
+    assert all(row["c_layout_reads"] == 0 for row in records)
+    assert all(row["c_row_reads"] == 0 for row in records)
+    assert all(row["c_product_calls"] == 0 for row in records)
+    assert all(row["c_transpose_calls"] == 0 for row in records)
+    assert len({tuple(row["callback_rows"][0]["errors"]) for row in records}) == 1
+    assert all(
+        delta is None
+        for rank_row in callback_rows
+        for delta in rank_row["deltas"]
+    )
+
+
+def test_task42_k1_inventory_collectively_refuses_rank_local_getrow_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("this collective refusal contract requires MPI2")
+
+    def owned_range(global_size: int, rank: int) -> tuple[int, int]:
+        quotient, remainder = divmod(global_size, comm.size)
+        start = rank * quotient + min(rank, remainder)
+        return start, start + quotient + int(rank < remainder)
+
+    class DistributedMatrix:
+        def __init__(self, shape, label: str, *, fail_rank: int | None = None):
+            self.shape = shape
+            self.label = label
+            self.fail_rank = fail_rank
+            self.read_count = 0
+            self.product_count = 0
+            self.transpose_count = 0
+            quotient, remainder = divmod(shape[0], comm.size)
+            start = comm.rank * quotient + min(comm.rank, remainder)
+            end = start + quotient + (comm.rank < remainder)
+            self.row_range = (start, end)
+            column_quotient, column_remainder = divmod(shape[1], comm.size)
+            column_start = (
+                comm.rank * column_quotient + min(comm.rank, column_remainder)
+            )
+            column_end = column_start + column_quotient + (
+                comm.rank < column_remainder
+            )
+            self.column_range = (column_start, column_end)
+
+        def getSize(self):
+            return self.shape
+
+        def getOwnershipRange(self):
+            return self.row_range
+
+        def getOwnershipRangeColumn(self):
+            return self.column_range
+
+        def getInfo(self, _info_type):
+            return {"nz_used": float(self.row_range[1] - self.row_range[0])}
+
+        def getRow(self, row):
+            self.read_count += 1
+            if self.fail_rank == comm.rank and self.label == "K1":
+                raise OSError("fixture rank-local K1 getRow read error")
+            column_count = self.shape[1]
+            column = row % column_count
+            return (
+                np.asarray([column], dtype=np.int32),
+                np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            )
+
+        def matMult(self, _other):
+            self.product_count += 1
+            raise AssertionError("a refused inventory must not create products")
+
+        def hermitianTranspose(self, _output):
+            self.transpose_count += 1
+            raise AssertionError("a refused inventory must not create C-H")
+
+    def source_basis(*_args, rank: int, **_kwargs):
+        start, end = owned_range(4033, rank)
+        return {
+            "full_k0_row_partition": {"owned_range": [start, end]},
+            "source_derived_objects": {
+                "mixed_cell_dof_rows": {
+                    "local_cell_tensor_payload_bytes_sum": 0,
+                },
+                "source_basis_validation_scratch_peak_bytes": 0,
+                "cell_dof_rows_python_metadata_bytes_upper": 0,
+                "matrix_candidate_contributions": {
+                    "candidate_sparse_payload_bytes_upper": 0,
+                },
+            },
+        }
+
+    monkeypatch.setattr(qep, "_task42_k0_source_basis", source_basis)
+    monkeypatch.setattr(qep, "_task42_k0_calibration_scope_errors", lambda *_args, **_kwargs: [])
+    k1 = DistributedMatrix((4033, 4033), "K1", fail_rank=1)
+    c_matrix = DistributedMatrix((4033, 3888), "C")
+    transform = SimpleNamespace(
+        matrix=c_matrix,
+        full_global_size=4033,
+        reduced_global_size=3888,
+        full_local_size=k1.row_range[1] - k1.row_range[0],
+        reduced_local_size=c_matrix.column_range[1] - c_matrix.column_range[0],
+        global_slave_count=145,
+    )
+    cross_section = SimpleNamespace(mesh=SimpleNamespace(comm=comm))
+    callback_rows: list[dict[str, object]] = []
+
+    def collective_gate(phase, inventory):
+        rows = comm.allgather(
+            {
+                "phase": phase,
+                "errors": list(inventory.get("admission_errors", [])),
+                "deltas": [
+                    component.get("delta_bytes")
+                    for component in inventory.get("components", [])
+                ],
+            }
+        )
+        callback_rows.extend(rows)
+        errors = [error for row in rows for error in row["errors"]]
+        return {"pass": not errors, "errors": errors}
+
+    caught = None
+    try:
+        qep._admit_task42_k1_phase(
+            collective_gate,
+            "qep_operator_K1_reduced",
+            SimpleNamespace(),
+            cross_section,
+            SimpleNamespace(),
+            {"quadrature_degree": 16},
+            {"fixture": "rank-local-getrow-failure"},
+            matrix=k1,
+            transform=transform,
+            allocation_boundary="before_hermitian_transform_or_product",
+        )
+    except BaseException as exc:  # noqa: BLE001 - persist refusal before assertions
+        caught = {"type": type(exc).__name__, "message": str(exc)}
+    records = comm.allgather(
+        {
+            "rank": comm.rank,
+            "caught": caught,
+            "k1_row_reads": k1.read_count,
+            "c_row_reads": c_matrix.read_count,
+            "k1_products": k1.product_count,
+            "k1_transposes": k1.transpose_count,
+            "c_products": c_matrix.product_count,
+            "c_transposes": c_matrix.transpose_count,
+            "callback_rows": callback_rows,
+        }
+    )
+    evidence_root = _shared_task42_test_directory(tmp_path)
+    _persist_rank_evidence(
+        comm,
+        evidence_root,
+        "k1_rank_local_getrow_collective_refusal",
+        records[comm.rank],
+    )
+
+    assert caught is not None and caught["type"] == "RuntimeError"
+    assert "fixture rank-local K1 getRow read error" in caught["message"]
+    assert len({row["caught"]["message"] for row in records}) == 1
+    assert records[1]["k1_row_reads"] == 1
+    assert records[0]["k1_row_reads"] > 0
+    assert sum(row["c_row_reads"] for row in records) == 4033
+    assert all(row["k1_products"] == 0 for row in records)
+    assert all(row["k1_transposes"] == 0 for row in records)
+    assert all(row["c_products"] == 0 for row in records)
+    assert all(row["c_transposes"] == 0 for row in records)
+    assert len({tuple(row["callback_rows"][0]["errors"]) for row in records}) == 1
+    assert all(
+        value is None
+        for rank_row in callback_rows
+        for value in rank_row["deltas"]
     )

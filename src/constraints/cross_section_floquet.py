@@ -884,13 +884,59 @@ def reduce_matrix_hermitian(
 ) -> PETSc.Mat:
     """Return ``C^H A C`` using distributed PETSc sparse products."""
 
-    product = matrix.matMult(transform)
-    owns_transpose = transform_h is None
-    if transform_h is None:
-        transform_h = PETSc.Mat()
-        transform.hermitianTranspose(transform_h)
-    reduced = transform_h.matMult(product)
-    product.destroy()
-    if owns_transpose:
-        transform_h.destroy()
+    product = None
+    owned_transpose = None
+    reduced = None
+    try:
+        product = matrix.matMult(transform)
+        if transform_h is None:
+            owned_transpose = PETSc.Mat()
+            transform.hermitianTranspose(owned_transpose)
+            active_transpose = owned_transpose
+        else:
+            active_transpose = transform_h
+        reduced = active_transpose.matMult(product)
+    except BaseException as primary_error:
+        for label, owned in (
+            ("full-to-reduced product", product),
+            ("temporary Hermitian transform", owned_transpose),
+        ):
+            if owned is None:
+                continue
+            try:
+                owned.destroy()
+            except BaseException as cleanup_error:  # noqa: BLE001 - preserve first failure
+                primary_error.add_note(
+                    f"Cleanup of {label} also failed: "
+                    f"{type(cleanup_error).__name__}: {cleanup_error}"
+                )
+        raise
+
+    cleanup_errors: list[tuple[str, BaseException]] = []
+    for label, owned in (
+        ("full-to-reduced product", product),
+        ("temporary Hermitian transform", owned_transpose),
+    ):
+        if owned is None:
+            continue
+        try:
+            owned.destroy()
+        except BaseException as cleanup_error:  # noqa: BLE001 - report owned cleanup failure
+            cleanup_errors.append((label, cleanup_error))
+    if cleanup_errors:
+        first_label, first_error = cleanup_errors[0]
+        try:
+            reduced.destroy()
+        except BaseException as cleanup_error:  # noqa: BLE001 - preserve first cleanup failure
+            first_error.add_note(
+                "Cleanup of the reduced matrix also failed: "
+                f"{type(cleanup_error).__name__}: {cleanup_error}"
+            )
+        for label, cleanup_error in cleanup_errors[1:]:
+            first_error.add_note(
+                f"Cleanup of {label} also failed: "
+                f"{type(cleanup_error).__name__}: {cleanup_error}"
+            )
+        first_error.add_note(f"First owned cleanup failure was {first_label}")
+        raise first_error
     return reduced

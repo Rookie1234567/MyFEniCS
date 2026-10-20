@@ -42,11 +42,22 @@ TASK42_HYBRID_A2_PHASE_OBJECTS = MappingProxyType(
             "full_K0_sparse_matrix",
             "qep_k0_full_controller_allowance",
         ),
-        "qep_operator_K1_full": ("full_K1_sparse_matrix",),
+        "qep_operator_K1_ffcx_form": (
+            "qep_k1_ffcx_rank_payload",
+            "qep_k1_ffcx_rank0_compiler_subtree",
+            "qep_k1_ffcx_controller_allowance",
+        ),
+        "qep_operator_K1_full": (
+            "full_K1_sparse_matrix",
+            "qep_k1_full_controller_allowance",
+        ),
         "qep_operator_K2_full": ("full_K2_sparse_matrix",),
         "qep_operator_electric_mass_full": ("full_electric_mass_sparse_matrix",),
         "qep_operator_K0_reduced": ("reduced_K0_sparse_matrix",),
-        "qep_operator_K1_reduced": ("reduced_K1_sparse_matrix",),
+        "qep_operator_K1_reduced": (
+            "k1_hermitian_reduction_rank_payload",
+            "qep_k1_reduction_controller_allowance",
+        ),
         "qep_operator_K2_reduced": ("reduced_K2_sparse_matrix",),
         "qep_operator_electric_mass_reduced": ("reduced_electric_mass_sparse_matrix",),
         "qep_positive_eigensolve": ("slepc_pep_workspace_and_candidates",),
@@ -190,7 +201,40 @@ _TASK42_COMPONENT_FORMULA_NOTES = {
     "qep_k0_full_controller_allowance": (
         "8MiB controller/receipt allowance charged once on rank 0, not once per rank"
     ),
-    "full_K1_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
+    "qep_k1_ffcx_rank_payload": (
+        "64MiB per actual rank for the source-checked 36-cell p6/g1, DG0/c0, q16, "
+        "4033-row MPI8 profile; includes the live source-basis/form inventory and "
+        "un-calibrated FFCx/PETSc-side rank workspace; predicted, not a hard bound"
+    ),
+    "qep_k1_ffcx_rank0_compiler_subtree": (
+        "512MiB compiler-subtree allowance on rank 0, including compiler descendants; "
+        "predicted, not a measured peak or proven upper bound"
+    ),
+    "qep_k1_ffcx_controller_allowance": (
+        "8MiB controller/receipt allowance charged once on rank 0"
+    ),
+    "full_K1_sparse_matrix": (
+        "64MiB per rank only for the source-checked 36-cell p6/g1, DG0/c0, q16, "
+        "4033-row MPI8 profile; source basis includes local cell tensors and the "
+        "global 36*133^2 sparse contribution bound per rank, row pointers, remote "
+        "columns/stash, and inventory metadata; predicted, not a hard bound or "
+        "measured K1 MatInfo"
+    ),
+    "qep_k1_full_controller_allowance": (
+        "8MiB controller/receipt allowance charged once on rank 0"
+    ),
+    "k1_hermitian_reduction_rank_payload": (
+        "Per-rank source-derived peak: max(pre-product support-inventory scratch, "
+        "including one bounded input getRow row-scan temporary, simultaneous "
+        "C^H/K1*C/reduced-K1 candidate sparse payload with row pointers, remote-column "
+        "arrays and redistribution/stash). Inventory scratch is released before "
+        "products are created; no output-CSR copy is made in the gate. Computed from "
+        "current K1/C CSR and actual ownership, refused above 64MiB. Native MatMatMult "
+        "workspace remains uncalibrated, so this is a predicted envelope, not a hard bound"
+    ),
+    "qep_k1_reduction_controller_allowance": (
+        "8MiB controller/receipt allowance charged once on rank 0"
+    ),
     "full_K2_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
     "full_electric_mass_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
     "reduced_K0_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
