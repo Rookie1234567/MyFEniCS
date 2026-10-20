@@ -130,7 +130,7 @@ Hybrid衍射表逐行报告各通道的反射/透射占比，DtN端口总量则�
 
 此次唯一计费parent envelope为`18.534567955 s`，从candidate开始至service终态及owned cleanup观察；嵌套service-client包络`2.62739977 s`已包括，不另计。独立费用append与65项SUMS及selfseal见[收口索引](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md)、[费用记录](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_fee_append.json)和[SELFSEAL](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/SELFSEAL.space_only.json)。该阶段没有pytest、FE求解、MPC、QEP、factor或solve。
 
-A2仍未获数值资格。网格、空间、周期约束数组、constraint transform和Bloch插值已按分阶段Delta取得小型sizing证据；随后K1/K2/M与约化算子/工作区、side-local凝聚与traction、MUMPS setup和恢复输出仍需按实际rank/side逐阶段 sizing，不能复用前述阶段包络；full K0仅完成一次sizing，A2仍无物理求解资格。
+A2仍未获数值资格。**截至本节所述约束与Bloch阶段收口时**，网格、空间、周期约束数组、constraint transform和Bloch插值已有分阶段sizing证据；当时full K0、K1/K2/M与约化算子/工作区、side-local凝聚与traction、MUMPS setup和恢复输出仍待按实际rank/side逐阶段sizing。其后完成的单次full K0及full K1与一次约化sizing分别见本摘要后续章节；这些结构测量仍未产生A2物理解，剩余算子和恢复阶段不能复用前述Delta。
 
 ## A2 p6约束、变换、Bloch与离线算子支持（2026-10-20）
 
@@ -147,7 +147,7 @@ A2仍未获数值资格。网格、空间、周期约束数组、constraint tran
 
 完整rank计数、远端列、payload公式、输入NPZ哈希、预算分项、成功/失败attempt、脚本与小型数组索引见[A2离线closeout](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/offline_operator_sparsity_closeout.md)、[机器预算](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/operator_support_and_assembly_budget_closeout.json)、[阶段receipt索引](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/sizing_stage_receipt_index.json)和[artifact selfseal](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/SELFSEAL.offline_operator_sparsity.json)。四阶段parent费用和首次reshape/helper/schema失败见[test summary](test_summary.md)。
 
-装配预算草案仍不具备放行资格。当前依据仅包括DG0系数值payload预测`1,376 B`、单个133×133 complex128局部张量的条件尺寸`283,024 B`以及11对象结构payload；FFCx/UFL/JIT编译和原生峰值、物理矩阵`nz_allocated`/stash/MPI暂存、`CᴴAC`填充和临时区、PEP工作区、两侧Schur/traction、MUMPS fill及恢复重叠生命周期尚未界定。该段是K0 sizing前的历史建议；随后已获准并完成一次full K0 sizing，详见下节。当前后续只建议独立审阅K1 full矩阵及一次约化预算，不由本离线草案自动启动。A2维持`pending-sizing`/fail-closed：只实际组装过一个full K0；K1/K2/M、约化算子、QEP/PEP/KSP、factor或solve均未运行。
+装配预算草案仍不具备放行资格。**截至本段对应的K0 sizing前历史审查时点**，依据只有DG0系数值payload预测`1,376 B`、单个133×133 complex128局部张量的条件尺寸`283,024 B`以及11对象结构payload；FFCx/UFL/JIT编译和原生峰值、物理矩阵`nz_allocated`/stash/MPI暂存、`CᴴAC`填充和临时区、PEP工作区、两侧Schur/traction、MUMPS fill及恢复重叠生命周期尚未界定。此后full K0 sizing以及一次full K1与`Cᴴ K1 C` sizing已分别记录在本摘要后续章节；它们不补齐K2/M、PEP/QEP、factor/solve等预算。当前A2仍`pending-sizing`/fail-closed，尚无物理解。
 
 ## A2 full-K0单算子sizing与离线核验（2026-10-20）
 
@@ -166,4 +166,27 @@ J快照依次为pre-UFL `1,022,046,208 B`、compiled form后`1,035,526,144 B`、
 
 candidate parent `10.890860134 s`、MPI8 ABI parent `1.410828952 s`、service parent `4.176308795 s`分列；K0内嵌stage wall `1.445850019 s`已包含，不另加。离线checker parent wall `not_measured`。FFCx缓存冷/热、独立compile/assembly耗时和同步峰未测。原cleanup_pending保留；派生清场依据同Invocation身份与登记进程身份核验，cgroup directory removed但`cgroup_proven_empty=false`。完整逐rank/错误向量/工件哈希见[离线reconciliation](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k0_summary_reconciliation_offline_20261020T121140Z/offline_k0_reconciliation.md)及其机器收据。
 
-A2仍`pending-sizing`/fail-closed，当前只多了一个full K0 sizing，不是A2物理解。K1/K2/M、约化算子、PEP/QEP、两侧凝聚与traction、MUMPS fill/factor和恢复输出仍未测。下一次K1 full matrix及一次`Cᴴ K1 C`的分阶段对象/Delta来源、生命周期与停止线见[预算草案v2](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k0_summary_reconciliation_offline_20261020T121140Z/next_operator_reduction_sizing_proposal_v2.md)；这只是审阅建议，不是数值运行许可。
+A2截至上述K0阶段收口时仍为`pending-sizing`/fail-closed；当时K1及约化只是预算建议。后续实际K1与一次约化 sizing 见本摘要末尾。
+
+## A2 full K1与一次约化 sizing（2026-10-20）
+
+MPI8对full K1执行了一次assembly，并对同一矩阵进行一次 `Cᴴ K1 C` 约化。约化把周期约束后的矩阵表示在独立自由度上；这里只测矩阵结构和阶段准入，不求特征值或物理解。as-run绑定HEAD `93428606e04a32666bd1d7860e2688c19dbadc07`、输入SHA `42f486012a38f67a3d6cbdf84801c1bdf9e16e4733f8b1211f7f01f446b39c94`、用户Si材料记录SHA `19dd3e99663580bf3eb4076e90f55597054c6a7da8c177b02536a274fbf0ab65`。下表的行范围为左闭右开，NNZ为该rank的PETSc MatInfo `nz_used_local=nz_allocated_local`。
+
+| Rank | Full K1行范围 / NNZ | Reduced K1行范围 / NNZ |
+|---:|---|---|
+| 0 | `[0,443)` / 69,323 | `[0,443)` / 72,191 |
+| 1 | `[443,1017)` / 89,278 | `[443,981)` / 85,798 |
+| 2 | `[1017,1463)` / 71,858 | `[981,1414)` / 69,889 |
+| 3 | `[1463,2039)` / 88,692 | `[1414,1930)` / 80,232 |
+| 4 | `[2039,2485)` / 65,774 | `[1930,2376)` / 73,634 |
+| 5 | `[2485,3036)` / 87,767 | `[2376,2927)` / 89,543 |
+| 6 | `[3036,3457)` / 66,625 | `[2927,3348)` / 66,625 |
+| 7 | `[3457,4033)` / 87,372 | `[3348,3888)` / 86,760 |
+
+Full K1全局尺寸4033×4033，rank-sum `nz_used=nz_allocated=626,689`；约化矩阵3888×3888，rank-sum `nz_used=nz_allocated=624,672`。full/reduced CSR准入分别使用31,053,280 B和30,988,000 B预测Delta，均在33,554,432 B阶段限额内通过。原MatInfo每rank `mallocs_local=0`、`memory=0.0`；`memory`是PETSc MatInfo字段，不是进程RSS。离线核验确认两描述符和48个CSR文件的hash、有限值、索引范围、行指针及行覆盖有效。原描述符：[full K1](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_output/full_k1_csr/task42_k1_full_csr_observation_descriptor.json)；[reduced K1](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_output/reduced_k1_csr/task42_k1_reduced_csr_observation_descriptor.json)。这些是阶段矩阵/CSR数据，不表示同步峰或完整运行内存。
+
+原service以failed结束：root汇总读取不存在的`rank_metadata[].metadata.nz_used_local`而触发`KeyError`，真实值位于`rank_metadata[].nz_used_local`，故原生`k1_reduction_summary.json`未生成。实际顺序为：full观测wrapper在`_assemble_compiled_unconstrained_matrix`返回前写full descriptor；reduced观测wrapper在`reduce_matrix_hermitian` wrapper返回前写reduced descriptor；随后`assemble_reduced_k1_for_sizing`在第2821行销毁其持有的full K1，并在第2824行返回reduced矩阵；外层接着在第2946行销毁其持有的reduced K1和C、第2949行allgather销毁错误、第2955行取得after-destroy样本并在第2970行广播；这些步骤之后root才在第3092行访问总NNZ并触发`KeyError`。销毁错误数组和after-destroy资源样本`not_persisted`，因此不能宣称所有对象已销毁成功或补造资源值。原completion failed与`cleanup_pending`保持不变。顺序字段的派生更正见[reconciliation v2](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_reduction_offline_reconciliation_v2.json)及其[新seal](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_reduction_offline_reconciliation_v2.SHA256SUMS)；原派生收据不变。systemd另报cgroup memory peak `585.5M`，不等同Task42 resident J；systemd swap peak为`0 B`。
+
+Invocation `dce25770ca6745a1b9befc2963ef62ab`对应owned unit `task42-a2-k1-only-20261020T154600Z.service`。精确unit stop返回0，同Invocation的9个登记PID/start_ticks均缺席；终态MainPID为0、ControlGroup为空。空ControlGroup未被映射到cgroup根目录，也未向PID/进程组直接发信号。service parent wall `281.077733487 s`包含summary异常等待和收口，只记一次；candidate/ABI parent另有收据，不叠加在该service wall上、不按rank乘。详细边界见[K1离线reconciliation](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_reduction_offline_reconciliation.json)、[cleanup结果](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/owned_cleanup_result.json)和[service parent wall](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_only_parent_wall.json)。
+
+前一`20261020T150100Z`attempt因两个顺序FFCx边界复用receipt key、第二次root独占写撞名而失败，未进入FFCx；service parent wall `3.683858593 s`，不属于数值矩阵失败。当前是唯一实际full K1及约化构造，之后不再重建。K2、M及其约化支持/预分配/通信暂存、PEP/QEP工作区及factor/solve资源依据尚缺。A2仍`not_solved`、`pending-sizing`且fail-closed：没有特征值、场、true residual或official R/T/A、`A_volume`和完整衍射结果。

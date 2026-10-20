@@ -141,4 +141,13 @@ mesh、space、constraints、transform与Bloch各自使用独立Delta；所列me
 | 内嵌K0阶段 | `1.445850019 s` | 已包含在service parent，不再次相加 |
 | 本次离线核验 | `not_measured` | 没有parent费用receipt，不补造耗时 |
 
-cleanup边界：原controller的failed/cleanup_pending保留；派生receipt依据Invocation与登记PID/start_ticks清场核验、cgroup directory removed，但没有观察到`cgroup_proven_empty=true`。unit回收后的`reset-failed` rc1 `Unit not loaded`不作为新的失败。FFCx cold/cache hit、独立compile wall、独立assembly wall、同步peak均`not_measured`。本节只登记已有K0的离线证据，不包含K1/K2/M、约化矩阵、QEP/PEP、factor或solve。
+cleanup边界：原controller的failed/cleanup_pending保留；派生receipt依据Invocation与登记PID/start_ticks清场核验、cgroup directory removed，但没有观察到`cgroup_proven_empty=true`。unit回收后的`reset-failed` rc1 `Unit not loaded`不作为新的失败。FFCx cold/cache hit、独立compile wall、独立assembly wall、同步peak均`not_measured`。以上是K0核验阶段的历史收口；K1随后执行的情况见下节。
+
+## A2 K1与一次约化 sizing attempt（非pytest，2026-10-20）
+
+| Attempt | 结果 | 唯一service parent wall | 证据/费用边界 |
+|---|---|---:|---|
+| [`a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/) | full K1一次assembly和一次`Cᴴ K1 C`约化均已发生；两份CSR描述符及阶段门通过；root汇总随后触发`KeyError` | `281.077733487 s` | [离线reconciliation](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_reduction_offline_reconciliation.json)；service parent只记一次，不按rank乘 |
+| [`a2_k1_full_reduction_mpi8_sizing_20261020T150100Z`](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_20261020T150100Z/) | 顺序FFCx边界共用receipt key，第二次root独占写撞名；未进入FFCx或矩阵构造 | `3.683858593 s` | 原失败收据保留；不是rank间并发写，也不是数值构造失败 |
+
+当前attempt的root汇总读取`rank_metadata[].metadata.nz_used_local`，但实际字段位于`rank_metadata[].nz_used_local`，导致原生summary未生成、service/controller failed；原`cleanup_pending`不改写。实际顺序为：full观测wrapper在`_assemble_compiled_unconstrained_matrix`返回前写full descriptor；reduced观测wrapper在`reduce_matrix_hermitian` wrapper返回前写reduced descriptor；随后`assemble_reduced_k1_for_sizing`在第2821行销毁其持有的full K1，并在第2824行返回reduced矩阵；外层接着在第2946行销毁其持有的reduced K1和C、第2949行allgather销毁错误、第2955行取得after-destroy样本并在第2970行广播；这些步骤之后root才在第3092行访问总NNZ并触发`KeyError`。销毁错误数组及after-destroy资源样本`not_persisted`，因此没有宣称整体销毁成功。顺序字段的派生更正见[reconciliation v2](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_reduction_offline_reconciliation_v2.json)及其[新seal](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k1_full_reduction_mpi8_sizing_retry2_20261020T154600Z/k1_reduction_offline_reconciliation_v2.SHA256SUMS)；原派生收据不变。精确owned unit stop返回0；同Invocation的9个登记PID/start_ticks缺席，终态MainPID为0且ControlGroup为空，空路径未映射到cgroup根目录。service parent wall包括异常等待与收口、只记一次；candidate与ABI parent另有收据，不叠加在该值上。systemd cgroup memory peak `585.5M`不是Task42 resident J；systemd swap peak为`0 B`。没有pytest；这是矩阵sizing service失败后的离线CSR核验，不是A2求解通过。K2、M及约化预分配/通信、PEP/QEP工作区和factor/solve依据仍待预算；A2仍`not_solved`、`pending-sizing`且fail-closed。
