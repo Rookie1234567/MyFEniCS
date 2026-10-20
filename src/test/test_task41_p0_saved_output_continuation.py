@@ -24,6 +24,7 @@ from src.runners.task41_p0_checker import (
     _task41_mesh_actual_exact_candidate_profile,
     _task41_validate_v6_actual_qmetric_audit,
     _task41_validate_v6_prefix_qualification,
+    _task41_v6_candidate_producer_contract,
     _task41_v6_report_requires_prefix_qualification,
 )
 from src.runners import task41_p0_contract
@@ -253,6 +254,102 @@ def test_v6_candidate_checker_rejects_misbound_profile_fields(
         candidate["integral_body_by_tag"]["1"] = "0" * 40
     with pytest.raises(ValueError, match="frozen source profile"):
         _task41_validate_v6_actual_qmetric_audit(audit)
+
+
+@pytest.mark.parametrize("failure", [None, "report_hash", "producer_case"])
+def test_v6_saved_report_binds_producer_contract_separately(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
+) -> None:
+    import src.runners.task41_p0_checker as checker_module
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_RUN_ID,
+        TASK41_MODEL_ID,
+        contract_relative_path,
+    )
+
+    repo_root = tmp_path
+    results_root = repo_root / "results" / TASK41_MODEL_ID
+    report_path = results_root / "attempt10" / "task41_p0_v6_actual_qmetric_candidate.json"
+    report_path.parent.mkdir(parents=True)
+    producer_source_sha = "a" * 40
+    producer_contract_sha = "b" * 64
+    window_sha = "c" * 64
+    common_case = {
+        "model_id": TASK41_MODEL_ID,
+        "method": "full3d_iterative",
+        "mpi_size": 1,
+        "input_sha256": "d" * 64,
+        "physical_model_sha256": "e" * 64,
+        "resolved_config_sha256": "f" * 64,
+        "run_id": TASK41_B0_RUN_ID,
+    }
+    producer_case = dict(common_case)
+    if failure == "producer_case":
+        producer_case["run_id"] = "unregistered-wrong-case"
+    producer_contract = {
+        "source": {"sha": producer_source_sha},
+        "window": {"sha256": window_sha},
+        "case": producer_case,
+    }
+    consumer_contract = {
+        "source": {"sha": "1" * 40},
+        "window": {"sha256": window_sha},
+        "case": common_case,
+    }
+    producer_contract_path = repo_root / contract_relative_path(producer_source_sha, "B0")
+    producer_contract_path.parent.mkdir(parents=True)
+    producer_contract_path.write_text("{}\n", encoding="utf-8")
+    report = {
+        "schema": "task41.p0.v6.actual_qmetric_candidate_receipt.v1",
+        "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+        "identity_audit": {
+            "candidate_evaluator_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+        },
+        "consumer_source_sha": producer_source_sha,
+        "consumer_contract_path": str(producer_contract_path),
+        "consumer_contract_sha256": producer_contract_sha,
+    }
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    expected_report_sha = hashlib.sha256(report_path.read_bytes()).hexdigest()
+
+    def require_contract(path: Path, **kwargs: object) -> tuple[dict[str, object], str]:
+        assert Path(path).resolve() == producer_contract_path.resolve()
+        assert kwargs["expected_sha256"] == producer_contract_sha
+        assert kwargs["check_current_source"] is False
+        assert kwargs["require_clean_source"] is False
+        assert kwargs["case_id"] == "B0"
+        return producer_contract, producer_contract_sha
+
+    monkeypatch.setattr(checker_module, "require_task41_p0_contract", require_contract)
+    if failure == "report_hash":
+        with pytest.raises(ValueError, match="report SHA-256"):
+            _task41_v6_candidate_producer_contract(
+                report_path,
+                expected_report_sha256="0" * 64,
+                consumer_contract=consumer_contract,
+                repo_root=repo_root,
+            )
+        return
+    if failure == "producer_case":
+        with pytest.raises(ValueError):
+            _task41_v6_candidate_producer_contract(
+                report_path,
+                expected_report_sha256=expected_report_sha,
+                consumer_contract=consumer_contract,
+                repo_root=repo_root,
+            )
+        return
+
+    producer, digest = _task41_v6_candidate_producer_contract(
+        report_path,
+        expected_report_sha256=expected_report_sha,
+        consumer_contract=consumer_contract,
+        repo_root=repo_root,
+    )
+    assert producer is producer_contract
+    assert digest == producer_contract_sha
+    assert producer["source"]["sha"] != consumer_contract["source"]["sha"]
+    assert producer["window"]["sha256"] == consumer_contract["window"]["sha256"]
 
 
 def test_v6_no_window_prefix_cannot_admit_a_completed_candidate(tmp_path: Path) -> None:
@@ -1188,14 +1285,22 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
 
 
 @pytest.mark.parametrize(
-    ("volume_only", "geometry_pair", "v5_mode", "v5_complete", "v6_mode"),
+    (
+        "volume_only",
+        "geometry_pair",
+        "v5_mode",
+        "v5_complete",
+        "v6_mode",
+        "v6_saved_replay",
+    ),
     [
-        (False, False, False, False, False),
-        (True, False, False, False, False),
-        (True, True, False, False, False),
-        (True, False, True, False, False),
-        (True, False, True, True, False),
-        (True, False, True, True, True),
+        (False, False, False, False, False, False),
+        (True, False, False, False, False, False),
+        (True, True, False, False, False, False),
+        (True, False, True, False, False, False),
+        (True, False, True, True, False, False),
+        (True, False, True, True, True, False),
+        (False, False, False, False, False, True),
     ],
 )
 def test_b0_saved_evidence_audit_uses_supervised_service_route(
@@ -1206,9 +1311,11 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     v5_mode: bool,
     v5_complete: bool,
     v6_mode: bool,
+    v6_saved_replay: bool,
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
+    import src.runners.task41_p0_checker as checker_module
     import src.runners.task40_v10_campaign as campaign_module
     import benchmarks.subreaper_watchdog as watchdog_module
     import benchmarks.task034_wsl_resources as resource_module
@@ -1318,6 +1425,60 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     source_report_path.write_text("{}\n", encoding="utf-8")
     geometry_reference_path = results_root / "v4_source" / "task41_p0_v4_geometry_pair_probe.json"
     geometry_reference_path.write_text("{}\n", encoding="utf-8")
+    candidate_report_path = results_root / "attempt10" / "task41_p0_v6_actual_qmetric_candidate.json"
+    candidate_report_sha256: str | None = None
+    candidate_producer_contract_path: Path | None = None
+    candidate_array_paths: list[Path] = []
+    candidate_producer_contract_sha256 = "7" * 64
+    candidate_producer_source_sha = "8" * 40
+    candidate_producer_contract: dict[str, object] = {
+        "source": {"sha": candidate_producer_source_sha},
+        "window": {"sha256": window_sha},
+        "case": {**common_case, "run_id": consumer_run_id},
+    }
+    if v6_saved_replay:
+        from src.runners.task41_p0_contract import contract_relative_path
+
+        candidate_producer_contract_path = repo_root / contract_relative_path(
+            candidate_producer_source_sha, "B0"
+        )
+        candidate_producer_contract_path.parent.mkdir(parents=True)
+        candidate_producer_contract_path.write_text(
+            json.dumps(candidate_producer_contract), encoding="utf-8"
+        )
+        candidate_report_path.parent.mkdir(parents=True)
+        evidence_dir = candidate_report_path.parent / "actual_qmetric_blocked_gram"
+        evidence_dir.mkdir()
+        evidence_arrays = []
+        for index in range(2):
+            artifact_path = evidence_dir / f"saved-array-{index}.npy"
+            artifact_path.write_bytes(f"saved-array-{index}".encode())
+            candidate_array_paths.append(artifact_path.resolve())
+            evidence_arrays.append({
+                "name": artifact_path.name,
+                "path": str(artifact_path.resolve()),
+                "bytes": artifact_path.stat().st_size,
+                "sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+            })
+        candidate_report = {
+            "schema": "task41.p0.v6.actual_qmetric_candidate_receipt.v1",
+            "status": "ACTUAL_COORDINATES_INSUFFICIENT",
+            "candidate_numeric_status": "ACTUAL_COORDINATES_INSUFFICIENT",
+            "geometry_policy": "mesh_actual_exact",
+            "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+            "identity_audit": {
+                "candidate_evaluator_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+            },
+            "donor_contract_sha256": donor_contract_sha,
+            "consumer_source_sha": candidate_producer_source_sha,
+            "consumer_contract_path": str(candidate_producer_contract_path.resolve()),
+            "consumer_contract_sha256": candidate_producer_contract_sha256,
+            "geometry_reference_report_path": str(geometry_reference_path.resolve()),
+            "geometry_reference_report_sha256": TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+            "persisted_evidence_arrays": evidence_arrays,
+        }
+        candidate_report_path.write_text(json.dumps(candidate_report), encoding="utf-8")
+        candidate_report_sha256 = hashlib.sha256(candidate_report_path.read_bytes()).hexdigest()
     ffcx_c_source_path = repo_root / "frozen_ffcx_form.c"
     ffcx_c_source_path.write_text("/* frozen fixture */\n", encoding="utf-8")
     environment = {
@@ -1453,7 +1614,10 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert kwargs["campaign_phase"] == "closeout"
         assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
         assert "run_case.py" not in command
-        if v5_complete:
+        if v6_saved_replay:
+            assert command[command.index("--mesh-actual-exact-report") + 1] == str(candidate_report_path)
+            assert command[command.index("--mesh-actual-exact-report-sha256") + 1] == candidate_report_sha256
+        elif v5_complete:
             assert command[command.index("--mesh-actual-exact-report") + 1] == str(
                 output_root
                 / (
@@ -1462,6 +1626,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                     else "task41_p0_v5_mesh_actual_exact_attribution.json"
                 )
             )
+            assert "--mesh-actual-exact-report-sha256" in command
         elif v5_mode:
             assert "--mesh-actual-exact-report" not in command
         result_path = Path(command[command.index("--output") + 1])
@@ -1476,7 +1641,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                     "check_completed": True,
                     "candidate_passed": False,
                 }
-            } if v5_complete else {}),
+            } if v5_complete or v6_saved_replay else {}),
         }), encoding="utf-8")
         authorization = kwargs["campaign_phase_authorization"]
         assert authorization["checker_kind"] == "task41_p0_b0_saved_evidence_audit_checker"
@@ -1513,6 +1678,25 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         ),
     )
     monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
+    if v6_saved_replay:
+        def fake_candidate_producer_contract(
+            report_path: Path,
+            *,
+            expected_report_sha256: str,
+            consumer_contract: dict[str, object],
+            repo_root: Path,
+        ) -> tuple[dict[str, object], str]:
+            assert Path(report_path).resolve() == candidate_report_path.resolve()
+            assert expected_report_sha256 == candidate_report_sha256
+            assert consumer_contract.get("source", {}).get("sha") == consumer_source_sha
+            assert Path(repo_root).resolve() == tmp_path.resolve()
+            return candidate_producer_contract, candidate_producer_contract_sha256
+
+        monkeypatch.setattr(
+            checker_module,
+            "_task41_v6_candidate_producer_contract",
+            fake_candidate_producer_contract,
+        )
     monkeypatch.setattr(contract_module, "load_task41_p0_fixed_window", lambda *_a, **_k: window)
     monkeypatch.setattr(contract_module, "__file__", str(repo_root / "src/runners/task41_p0_contract.py"))
     monkeypatch.setattr(
@@ -1592,6 +1776,12 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             *( ["--geometry-pair-only", "--source-report", str(source_report_path)] if geometry_pair else [] ),
             *( ["--geometry-policy", "mesh_actual_exact", "--geometry-reference-report", str(geometry_reference_path)] if v5_mode else [] ),
             *( ["--raw-tensor-evaluator", "actual_qmetric_blocked_gram", "--ffcx-c-source", str(ffcx_c_source_path)] if v6_mode else [] ),
+            *( [
+                "--mesh-actual-exact-report",
+                str(candidate_report_path),
+                "--mesh-actual-exact-report-sha256",
+                str(candidate_report_sha256),
+            ] if v6_saved_replay else [] ),
         ],
         contract_path=consumer_contract_path,
         repo_root=repo_root,
@@ -1612,7 +1802,9 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         "failed_raw_evidence_retained" if v5_mode else "completed"
     )
     assert receipt["mode"] == (
-        "saved_b0_v6_actual_qmetric_candidate"
+        "saved_b0_v6_candidate_evidence_audit"
+        if v6_saved_replay
+        else "saved_b0_v6_actual_qmetric_candidate"
         if v6_mode
         else "saved_b0_v5_mesh_actual_exact_candidate"
         if v5_mode
@@ -1641,6 +1833,18 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             assert receipt["required_checker_result"]["audit_completed"] is True
             assert receipt["candidate_checker_status"] == "numerical_fail"
             assert receipt["candidate_numerical_passed"] is False
+    if v6_saved_replay:
+        assert calls[0][1]["campaign_phase"] == "closeout"
+        assert "volume_only_command" not in receipt
+        assert "volume_only_watchdog" not in receipt
+        assert receipt["candidate_report_replayed_read_only"] is True
+        assert receipt["candidate_report_sha256"] == candidate_report_sha256
+        assert receipt["candidate_checker_status"] == "numerical_fail"
+        assert receipt["candidate_numerical_passed"] is False
+        assert receipt["continuation_status"] == "v6_saved_candidate_audit_completed"
+        auth_inputs = receipt["required_checker_authorization"]["input_paths"]
+        for bound_path in [candidate_report_path, candidate_producer_contract_path, *candidate_array_paths]:
+            assert bound_path.resolve().as_posix() in auth_inputs
     if v5_mode and not v5_complete:
         assert receipt["required_checker_status"] == "not_run_candidate_not_admitted"
         assert receipt["candidate_checker_status"] == "not_applicable_candidate_not_built"

@@ -27,6 +27,7 @@ from src.io import load_and_resolve
 from src.runners.task41_p0_contract import (
     TASK41_A1_COMPARISON_BINDING_RELATIVE,
     require_task41_a1_comparison_binding,
+    contract_relative_path,
     require_task41_p0_contract,
     sha256_file,
     task41_case_id_for_run_id,
@@ -2521,6 +2522,87 @@ def _task41_mesh_actual_exact_candidate_profile(
     raise ValueError("exact-geometry candidate report filename is not registered")
 
 
+def _task41_v6_candidate_producer_contract(
+    report_path: Path,
+    *,
+    expected_report_sha256: str,
+    consumer_contract: Mapping[str, Any],
+    repo_root: Path,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Reopen a saved V6 report's original producer contract beside the current checker contract."""
+    report_path = Path(report_path).resolve(strict=True)
+    results_root = (Path(repo_root) / "results").resolve()
+    if not report_path.is_relative_to(results_root):
+        raise ValueError("exact-geometry candidate report is outside the registered results tree")
+    if (
+        not re.fullmatch(r"[0-9a-f]{64}", str(expected_report_sha256))
+        or sha256_file(report_path) != expected_report_sha256
+    ):
+        raise ValueError("exact-geometry candidate report SHA-256 differs from the explicit binding")
+    report = _json_object(report_path, "Task41 exact-geometry candidate report")
+    profile = _task41_mesh_actual_exact_candidate_profile(report_path, report)
+    if profile["version"] != "v6":
+        return None, None
+
+    source_sha = report.get("consumer_source_sha")
+    contract_sha256 = report.get("consumer_contract_sha256")
+    raw_contract_path = report.get("consumer_contract_path")
+    if (
+        not isinstance(source_sha, str)
+        or re.fullmatch(r"[0-9a-f]{40}", source_sha) is None
+        or not isinstance(contract_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", contract_sha256) is None
+        or not isinstance(raw_contract_path, str)
+    ):
+        raise ValueError("V6 candidate report omits its original producer contract binding")
+    producer_contract_path = Path(raw_contract_path)
+    producer_contract_path = (
+        producer_contract_path
+        if producer_contract_path.is_absolute()
+        else Path(repo_root) / producer_contract_path
+    ).resolve(strict=True)
+    expected_contract_path = (
+        Path(repo_root) / contract_relative_path(source_sha, "B0")
+    ).resolve()
+    if producer_contract_path != expected_contract_path:
+        raise ValueError("V6 candidate producer contract path differs from its frozen source SHA")
+    producer_contract, producer_digest = require_task41_p0_contract(
+        producer_contract_path,
+        expected_sha256=contract_sha256,
+        current_root=repo_root,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    producer_case = producer_contract.get("case")
+    consumer_case = consumer_contract.get("case")
+    producer_window = producer_contract.get("window")
+    consumer_window = consumer_contract.get("window")
+    if (
+        producer_contract.get("source", {}).get("sha") != source_sha
+        or not isinstance(producer_case, Mapping)
+        or not isinstance(consumer_case, Mapping)
+        or task41_case_id_for_run_id(str(producer_case.get("run_id", ""))) != "B0"
+        or task41_case_id_for_run_id(str(consumer_case.get("run_id", ""))) != "B0"
+        or not isinstance(producer_window, Mapping)
+        or not isinstance(consumer_window, Mapping)
+        or producer_window.get("sha256") != consumer_window.get("sha256")
+    ):
+        raise ValueError("V6 candidate producer contract differs from the current B0 checker window")
+    for key in (
+        "model_id",
+        "method",
+        "mpi_size",
+        "input_sha256",
+        "physical_model_sha256",
+        "resolved_config_sha256",
+        "run_id",
+    ):
+        if producer_case.get(key) != consumer_case.get(key):
+            raise ValueError(f"V6 candidate producer/checker contracts differ at {key}")
+    return producer_contract, producer_digest
+
+
 def _task41_validate_v6_prefix_qualification(
     qualification: Any,
     *,
@@ -3042,6 +3124,8 @@ def _task41_mesh_actual_exact_candidate_recheck(
     consumer_contract_sha256: str,
     donor_contract: Mapping[str, Any],
     repo_root: Path,
+    candidate_producer_contract: Mapping[str, Any] | None = None,
+    candidate_producer_contract_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Independently recheck persisted exact-geometry candidate vectors, without FE work."""
     report_path = Path(report_path).resolve(strict=True)
@@ -3084,12 +3168,22 @@ def _task41_mesh_actual_exact_candidate_recheck(
                 raise ValueError(
                     "V6 candidate report omits the two saved-cell contributions on the frozen failed row"
                 )
+    candidate_contract = consumer
+    candidate_contract_digest = consumer_contract_sha256
+    if profile["version"] == "v6":
+        if (
+            not isinstance(candidate_producer_contract, Mapping)
+            or candidate_producer_contract_sha256 is None
+        ):
+            raise ValueError("V6 candidate report requires its separately bound producer contract")
+        candidate_contract = candidate_producer_contract
+        candidate_contract_digest = candidate_producer_contract_sha256
     if (
         report.get("geometry_policy") != "mesh_actual_exact"
         or report.get("donor_contract_sha256") != donor_contract_sha256
-        or report.get("consumer_contract_sha256") != consumer_contract_sha256
+        or report.get("consumer_contract_sha256") != candidate_contract_digest
         or report.get("donor_source_sha") != donor_contract.get("source", {}).get("sha")
-        or report.get("consumer_source_sha") != consumer.get("source", {}).get("sha")
+        or report.get("consumer_source_sha") != candidate_contract.get("source", {}).get("sha")
         or report.get("donor_manifest_sha256") != donor.get("manifest_sha256")
         or report.get("independent_checker_status") != "NOT_RUN"
     ):
@@ -3572,6 +3666,10 @@ def _task41_mesh_actual_exact_candidate_recheck(
         "global_closure_states": closure_results,
         "candidate_report_path": str(report_path),
         "candidate_report_sha256": sha256_file(report_path),
+        "candidate_producer_source_sha": candidate_contract.get("source", {}).get("sha"),
+        "candidate_producer_contract_sha256": candidate_contract_digest,
+        "checker_consumer_source_sha": consumer.get("source", {}).get("sha"),
+        "checker_consumer_contract_sha256": consumer_contract_sha256,
         "geometry_reference_report_sha256": TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
         "candidate_arrays_rehashed_and_reopened": True,
         "port_outputs_inherited_unchanged": True,
@@ -3589,6 +3687,7 @@ def check_task41_p0_b0_saved_evidence_audit(
     output_path: Path,
     repo_root: Path,
     mesh_actual_exact_report_path: Path | None = None,
+    mesh_actual_exact_report_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Audit producer arrays read-only under a separately bound consumer window/source."""
     donor, donor_digest = require_task41_p0_contract(
@@ -3706,7 +3805,19 @@ def check_task41_p0_b0_saved_evidence_audit(
         },
     )
     mesh_actual_candidate_check = None
+    candidate_producer_contract = None
+    candidate_producer_contract_sha256 = None
+    if (mesh_actual_exact_report_path is None) != (mesh_actual_exact_report_sha256 is None):
+        raise ValueError("saved B0 candidate report requires both explicit path and SHA-256")
     if mesh_actual_exact_report_path is not None:
+        candidate_producer_contract, candidate_producer_contract_sha256 = (
+            _task41_v6_candidate_producer_contract(
+                mesh_actual_exact_report_path,
+                expected_report_sha256=str(mesh_actual_exact_report_sha256),
+                consumer_contract=consumer,
+                repo_root=repo_root,
+            )
+        )
         normalized_donor = load_task41_v4_volume_only_donor(
             summary_path=summary_path, numerical_output=numerical_output
         )
@@ -3718,6 +3829,8 @@ def check_task41_p0_b0_saved_evidence_audit(
             consumer=consumer,
             consumer_contract_sha256=consumer_digest,
             repo_root=repo_root,
+            candidate_producer_contract=candidate_producer_contract,
+            candidate_producer_contract_sha256=candidate_producer_contract_sha256,
         )
     audit_completed = bool(evidence.get("audit_completed") is True) and (
         mesh_actual_candidate_check is None
@@ -4251,6 +4364,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--consumer-contract-sha256")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--mesh-actual-exact-report", type=Path)
+    parser.add_argument("--mesh-actual-exact-report-sha256")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
     if args.saved_b0_evidence_audit:
@@ -4262,6 +4376,8 @@ def main(argv: list[str] | None = None) -> int:
             or args.numerical_output is None
             or args.consumer_contract is None
             or args.consumer_contract_sha256 is None
+            or (args.mesh_actual_exact_report is None)
+            != (args.mesh_actual_exact_report_sha256 is None)
         ):
             parser.error(
                 "saved B0 evidence audit requires donor --summary/--numerical-output "
@@ -4278,6 +4394,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_path=args.output,
                 repo_root=root,
                 mesh_actual_exact_report_path=args.mesh_actual_exact_report,
+                mesh_actual_exact_report_sha256=args.mesh_actual_exact_report_sha256,
             )
         except (OSError, ValueError, RuntimeError, KeyError) as exc:
             result = {
