@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-当前唯一执行范围是 Review V4 的保存数据审核与 volume-only 误差归因；见 [response_v4.md](response_v4.md) 和 [V4 outcomes](outcomes/summary.md)。V3 的两列 recovery PASS 与完整 p6/native action FAIL 原样保留。V4 的 required saved-evidence checker 已完成且数据完整性、恢复门通过，但 joint action 仍 FAIL、`official_result=false`。两格实际/标准几何对照解释了一个选中行上的差异方向，却不足以证明全域修复或原 `1e-11` 门通过。200q、factor、KSP/FGMRES、完整场、A6 和 R/T/A 仍未运行。本轮沿用已批准的16 GiB原始证据配额、固定窗口、资源门和数学阈值，没有调整这些合同值。
+当前最新执行范围是 Review V5；结论见 [response_v5.md](response_v5.md) 和 [V5 outcomes](outcomes/summary.md)。V5 的 mesh_actual_exact 候选完成了 28,000 个 exact key 的清点、8 个真实 cache-miss 前缀测量，以及 cells 26762/26897 的实际坐标与 K/G/J/L 逐位重放核验。完整候选因固定窗口余额不足而 CANDIDATE_NOT_ADMITTED；全域两列、checker、200q、factor、KSP/FGMRES、完整场、A6 和 R/T/A 均未运行。V3 完整 action 数值失败与 V4 saved-evidence/recovery/action 分类仍按原样保留；V5 不是新的数值失败，也没有 official result。原始资源/数值合同未调整，新窗口没有自动续期。
 
 V3 详细结果作为历史阶段保留在 [response_v3.md](response_v3.md) 与 [V3 compact](outcomes/b0_v3_full_action_failure_20261019.json)：恢复门通过，但两个完整作用误差仍超过 `1e-11`，不得改写为资源停止或 official result。
 

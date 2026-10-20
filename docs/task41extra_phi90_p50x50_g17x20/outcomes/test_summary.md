@@ -250,3 +250,14 @@ python -m pytest -q src/test/test_task41_v4_volume_only_audit.py src/test/test_t
 文档合同命令：`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py`，结果 `21 passed in 0.08 s`。另外 compact JSON/ratio/source/window assertions、Markdown table widths 与 `git diff --check` 均通过。
 
 两个独立 service 父段为 `1,638.8259056420065 s` 和 `305.99965768121183 s`，可相加；worker/checker 子阶段不重复相加。volume-only worker tree RSS/cgroup peaks 为 `13,237,129,216 B` / `8,655,577,088 B`；checker tree RSS 为 `3,948,949,504 B`。geometry-pair 与 checker tree RSS 为 `1,513,431,040 B` / `3,949,363,200 B`，共享该服务 cgroup 峰 `1,411,362,816 B`。各自 task tree/cgroup swap peaks 为 0 B，后代已清场；volume-only worker期间工作站宿主全局 swapin +5页不能归因给任务。三份 saved-only diagnostics 用时 `11.880770959891379 s`、`2.6438243738375604 s`、`5.046073629986495 s`，均无 RSS 采样。上述计时只是有回执片段，不是完整V4工程或固定窗口成本。
+
+
+## Task41extra Review V5 定向验证
+
+- source 69ae04a4 冻结前，几何/生产作用/路由定向子集：10 passed in 0.74 s。
+- source 0985d129 的 V4 checker elapsed 字段修复后，定向子集：11 passed in 0.72 s。source 179cf736 的 shutil 导入修复后，仅新增 disk-usage fixture：1 passed in 0.10 s。资格化 WSL ABI preflight 与 git diff --check 通过；Ruff F821 为 NOT_RUN（运行环境没有 Ruff），未安装环境。
+- 正式工作站 attempt3 完成合同/资源 preflight，但 full mesh_actual_exact candidate 因固定窗口时间 deficit 1,489,566.259 s 被拒绝；这是 CANDIDATE_NOT_ADMITTED，不是 pytest 或数值门失败。详细结果见 response_v5.md 与 b0_v5_mesh_actual_exact_not_admitted_20261020.json。
+- 补充 wider validation：volume-only audit 全模块与三份文档合同共 32 passed、3 failed in 1.35 s。失败为 test_volume_only_owner_avoids_surface_and_persists_each_class_once、test_volume_only_owner_rejects_fresh_numbering_mismatch_before_persist（测试替身缺 cfg.tags）及 test_volume_identity_replays_production_volume_and_two_state_residuals（TinyOwner 缺 build_audit）。随后经主控审查，仅修 fixture 并复验原失败项（见下一条）；生产源码未改。原始 pytest 输出保存在 benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_attempt3_179cf736/verification/combined_pytest_output.txt，SHA-256 e2d1a3b4f98159bab57203be4372e1e77a2645b5b8a40793abab3839826deb79。
+- 主控审阅后的 fixture-only followup：将真实 config tags/material/physics、TinyOwner.build_audit 与 geometry_policy 参数补入三个测试替身；仅重跑原三项，3 passed in 0.90 s。仅修改 src/test/test_task41_v4_volume_only_audit.py，production source 未修改。修复前 wider validation 的32/3负结果保留；差异摘要 SHA-256 见 V5 compact。
+
+主控最终文档校正后只重跑三份受影响文档合同：`21 passed in 0.06 s`（工具输出 `7fc294`），命令为 `python -m pytest -q --tb=short src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py`。不构成新增科学资格，也未重新运行 FE。

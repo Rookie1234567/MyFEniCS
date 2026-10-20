@@ -15,6 +15,17 @@ def _array_record(value: np.ndarray, path: str = "fixture.npy") -> dict:
     return {"path": path, "shape": list(value.shape), "dtype": str(value.dtype)}
 
 
+def _volume_only_config():
+    return SimpleNamespace(
+        tags=SimpleNamespace(air=1, substrate=2, grating=3),
+        eps_r=1.0 + 0.0j,
+        substrate_index=1.5 + 0.0j,
+        grating_index=2.0 + 0.0j,
+        mu_r=1.0 + 0.0j,
+        k0=1.0 + 0.0j,
+    )
+
+
 def _fixture(tmp_path: Path, monkeypatch):
     from src.solvers import task41_v4_volume_only_audit as audit
 
@@ -215,7 +226,7 @@ def _fixture(tmp_path: Path, monkeypatch):
         ),
     )
 
-    def tabulate(_form, _space, _tags, _owner, cell_index):
+    def tabulate(_form, _space, _tags, _owner, cell_index, *, geometry_policy=None):
         tabulation_order.append("tabulate")
         key = cell_keys[cell_index]
         raw = saved_raw[key]
@@ -331,7 +342,7 @@ def test_volume_only_owner_avoids_surface_and_persists_each_class_once(tmp_path,
     monkeypatch.setattr(case.audit, "build_same_mesh_physical_action", forbidden_surface, raising=False)
     progress = []
     result = case.audit.build_task41_v4_volume_only_owner(
-        object(),
+        _volume_only_config(),
         case.donor,
         case.tmp_path,
         allocation_gate=case.allocation_gate,
@@ -366,7 +377,7 @@ def test_volume_only_owner_rejects_fresh_numbering_mismatch_before_persist(tmp_p
 
     with pytest.raises(ValueError, match="fresh Task41 V4 numbering or donor vectors differ"):
         case.audit.build_task41_v4_volume_only_owner(
-            object(),
+            _volume_only_config(),
             case.donor,
             case.tmp_path,
             allocation_gate=case.allocation_gate,
@@ -391,6 +402,7 @@ def test_volume_identity_replays_production_volume_and_two_state_residuals(tmp_p
         owned_appended_rows: int
         trace_constraints: object
         cell_recovery_maps: tuple[object, ...]
+        build_audit: dict
 
     constraints = SimpleNamespace(
         owned_active_original_dofs=np.asarray([0], dtype=np.int64),
@@ -409,6 +421,7 @@ def test_volume_identity_replays_production_volume_and_two_state_residuals(tmp_p
                 trace_original_dofs=np.asarray([0], dtype=np.int32),
             ),
         ),
+        build_audit={},
     )
     action_construction = []
 

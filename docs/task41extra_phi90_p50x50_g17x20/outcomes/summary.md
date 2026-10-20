@@ -1,6 +1,6 @@
 # Task41 阶段结果
 
-> **当前最新阶段：Task41extra Review V4，volume-only 几何归因已完成，完整作用门仍失败。** V3 恢复门两列通过；完整 p6/native action errors 为 `3.042118678294192e-10` / `6.391893878204816e-10`，超过原 `1e-11`，`official_result=false`。V4 保存 checker 完成，28,000 cells / 3 canonical classes 的 volume-only blocks/maps 已留存，并对 cells 26762/26897 做了受限 actual/canonical 对照；该局部证据不能代表全域修复或 action PASS。200q、factor、KSP/FGMRES、完整场、A6、R/T/A 为 `NOT_RUN`。当前入口：[V4 response](../response_v4.md)、[V4 测试记录](test_summary.md)、[V4 compact evidence](b0_v4_volume_only_attribution_20261020.json)。
+> **当前最新阶段：Task41extra Review V5；实际坐标候选完成 key/prefix 清点，但未获固定窗口准入。** V3 的两列 p6/native action 误差 3.042118678294192e-10 / 6.391893878204816e-10 仍超过原 1e-11 门，official_result=false；V4 保存审核和局部归因按原分类保留。V5 exact-key 库存为 28,000 raw / 28,000 oriented keys，8 个实际前缀 kernel 合计 419.1692760037258 s；cells 26762/26897 的实际坐标与 K/G/J/L 局部重放逐位一致。全域候选因固定窗口只余 712.863463 s、估计仍需 1,490,279.123 s 而 CANDIDATE_NOT_ADMITTED；这不是新数值失败。两列完整作用、candidate checker、200q、factor、KSP/FGMRES、完整场、A6、R/T/A 均 NOT_RUN。当前入口：[V5 response](../response_v5.md)、[V5 compact](b0_v5_mesh_actual_exact_not_admitted_20261020.json)、[V5 测试记录](test_summary.md)、[run index](run_index.json)。
 
 ## 历史阶段记录：A1/A2 与较早 B0/V2/V3
 
@@ -259,3 +259,19 @@ The first local diagnostic output is preserved but invalid because it subtracted
 
 No safe full-domain production fix is established by two cells. The next bounded step is to freeze one candidate interface that aligns production volume geometry semantics with an independent native volume action, then requalify both complete columns using the saved input/RHS and original denominator and limit. Do not add actual coordinates to every cache key by default, claim a global pass, or resume a solver stage before that gate closes. Full response, exact identities, costs, limitations and resource scope are in [response_v4.md](../response_v4.md).
 *** End of File
+
+## Task41extra Review V5：actual-key 清点完成，完整候选受固定时间门拒绝（2026-10-20）
+
+本轮唯一候选为 mesh_actual_exact：rank-2 局部张量直接使用原 mesh coordinate dofs；同一张量进入局部 LU 和 R/T/S。这样做是让生产凝聚路径使用与 native 作用相同的真实几何坐标；代价是旧 3 个 canonical 类扩展为 28,000 个 exact keys。两个工程字段/导入问题修复后，主控冻结 source 179cf7369e6bc5894fa87af6b74cf5c73938b6d4；volume-only worker 完成 inventory 与构建前缀，但 owner 没有完整建成。
+
+| 项目 | 实测或推导 | 资格边界 |
+|---|---|---|
+| exact-key inventory | raw/oriented 各 28,000 个 key；清单 16,224,652 B，SHA-256 147ab6347e6b0059ea97627a48802a970e8450d20e832a716bcd60d95233c | 实际键数清点，不表示 28,000 份数值块已分配 |
+| 两格 actual 对照 | cells 26762/26897 的坐标及 K/G/J/L 块均 bitwise_equal=true；参考报告 SHA-256 a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031 | 局部重放通过；不等于全域 two-column action 通过 |
+| 8 项 prefix | kernel 总计 419.1692760037258 s，均值 52.39615950046573 s，范围 51.93273649–52.97407951 s | cache-miss 实测；其他 phase 独立记录，不把父服务时间归为 kernel |
+| 时间准入 | 余量 712.8634632226167 s；剩余 class-build 上界 1,488,176.122617107 s；含 1,803 s post-build parent reserve 和 300 s termination reserve 后需 1,490,279.122617107 s；缺口 1,489,566.2591538844 s | CANDIDATE_NOT_ADMITTED；不是数值门失败 |
+| 完整对象内存 | retained numeric 上界 348,561,972,000 B；metadata 上界 53,760,000 B；condensation/key 上界 348,615,732,000 B | derived projection；全域候选没有构建，因此 full-candidate peak NOT_MEASURED |
+| 本次已运行阶段资源 | tree RSS peak 6,674,780,160 B；task-cgroup peak 6,830,514,176 B；tree/cgroup swap 0；host pswpin/out delta 0；PSS null；后代已清场 | 仅 inventory/prefix attempt，不能外推为 full candidate peak |
+| 后续数值阶段 | 全域两列、checker、200q、factor、KSP/FGMRES、完整场、A6、R/T/A | NOT_RUN；V3 full-action FAIL 与 V4 saved-audit 结论原样保留 |
+
+三次正式 service parent 总计 622.824231967 s；准备和入口费用没有同口径的合格计时，记 UNKNOWN。各次 source、失败/准入分类、watchdog 子段与 raw receipt hash 见 [V5 response](../response_v5.md)、[V5 compact](b0_v5_mesh_actual_exact_not_admitted_20261020.json) 和 [run index](run_index.json)。16 GiB 证据上限、2 GiB free-space floor、1.5 TiB task cap、64 GiB host reserve、task swap 0、数值阈值和 T0 均未更改；没有新窗口或重跑 V5。 补充 component/documentation validation 原始结果为32通过、3失败；主控复核后仅修正三个测试替身，三项定向重跑3通过（0.90 s），production source未改；修复前负记录与 fixture差异见 test_summary。主控已核验17个本地原件的路径/bytes/SHA，属于证据完整性核验，不是candidate checker。

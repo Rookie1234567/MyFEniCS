@@ -1,4 +1,8 @@
-## Task41extra Review V4 最新登记入口（2026-10-20）
+## Task41extra Review V5 最新登记入口（2026-10-20）
+
+V5 的 mesh_actual_exact 候选让每个局部单元直接使用原 mesh 坐标，并以同一 rank-2 张量生成局部 LU 与 R/T/S；它旨在缩小 production/native 几何求值差异，代价是 exact key 从 V4 的 3 个 canonical 类增至 28,000。两个代表 cell 的坐标及 K/G/J/L 与保存 actual 记录逐位一致，但 full candidate 未构建，因固定窗口时间不足而 CANDIDATE_NOT_ADMITTED，不是新的数值失败。V3 两列 full-action FAIL 与 V4 saved audit / recovery / action 分类仍有效；V5 两列、checker、200q、factor、KSP、完整场和 R/T/A 均 NOT_RUN。全域峰值内存未实测；本轮 RSS/cgroup 只属于 inventory/prefix 服务。补充 audit-module/documentation 验证32通过、3失败，三个owner/replay fixture未提供 cfg.tags 或 owner.build_audit；随后仅补齐测试接口，三项复验3 passed in 0.90 s，原负记录保留；主控已核验17个证据原件hash/bytes，不能代替candidate checker。见 [V5 response](task41extra_phi90_p50x50_g17x20/response_v5.md)、[V5 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v5_mesh_actual_exact_not_admitted_20261020.json)、[V5 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。
+
+## Task41extra Review V4 历史登记入口（2026-10-20）
 
 当前 Task41 B0 仍由 full-action 数值门阻断：V4 saved checker 完成，实际坐标与 canonical cache 的两格比较只提供局部归因，未证明全域修复。完整误差`3.042118678294192e-10` / `6.391893878204816e-10`仍超过`1e-11`；200q、factor、KSP/FGMRES、完整场和 R/T/A `NOT_RUN`。V3 donor与V4两个consumer的 source/contract、资源边界和窗口快照见[Task41 V4 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)和[Task41 V4结果](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。下方 Task40extra V32及更旧条目是历史模型登记，不是当前执行状态。
 

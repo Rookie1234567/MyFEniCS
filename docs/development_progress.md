@@ -3823,3 +3823,18 @@ V4沿用已批准的16 GiB原始证据配额、固定窗口与数值/资源合�
 V4 volume-only consumer source `d883c1f3381b4f3d6100022097d615846564673c` 提取28,000个owned cells、3个canonical classes及所需映射，保存`1,299,043,104 B`；随后geometry-pair consumer source `02523b3d5a49d30d71caa8e7f8a9b9405a78fa33` 检查cells 26762/26897。两格实际坐标矩阵与canonical缓存矩阵存在约`9.37e-16`至`1.22e-15`相对差，选中主导行的实际坐标残差比canonical结果小但仍非零。该证据支持局部几何/浮点路径影响，不证明全域根因或修复通过。28,000格actual-coordinate key数量没有保存；每格独立缓存约324.6 GiB只是payload最坏上界。
 
 本轮已记录两列误差分块、selected-row局部恒等式、原始失败诊断、准确consumer/contract hashes和服务资源范围。只读窗口API快照（2026-10-20T01:23:41.166876Z）显示投影累计`72,034.077685 s`、数值剩余`13,165.92231481 s`、总剩余`14,365.92231481 s`；当时截止未到，停止下游的原因是full-action gate未闭合。父服务及诊断计时是有限的实测片段，不是完整V4工程/窗口成本。详细事实见[response_v4.md](task41extra_phi90_p50x50_g17x20/response_v4.md)、[V4 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)和[Task41 outcomes](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。下一步需由主控冻结一致的production/native volume-geometry候选，再用原分母和原门重验两列；不重扫surface、不默认添加每格缓存、不改门限。
+
+
+## Task41extra Review V5：actual-key inventory 完成，候选未获时间准入（2026-10-20）
+
+V5 将局部凝聚 rank-2 张量改为直接读取原 mesh coordinates，并让同一张量供局部 LU 与 R/T/S 使用，以对齐 native volume action 的几何求值输入。这解决的是 canonical 平移路径与 actual native 路径可能产生不同浮点块的问题；代价是旧 3 个共享 canonical 类扩展为 28,000 个 exact raw/oriented keys。checker elapsed 字段名及 shutil 导入修复和定向回归完成后，主控冻结 source 179cf7369e6bc5894fa87af6b74cf5c73938b6d4。
+
+| 项 | 结果 | 限制 |
+|---|---|---|
+| 实际 key inventory | raw/oriented 各 28,000；16,224,652 B；SHA-256 147ab6347e6b0059ea97627a48802a970e8450d20e832a716bcd60d95233c952 | exact key 清点，不是全数值 cache 分配 |
+| 两个 actual cell 集成重放 | cells 26762/26897 的坐标、K/G/J/L bitwise equal；8 个 cache miss 的 kernel 合计419.1692760037258 s，均值52.39615950046573 s | 局部核验，不等于全域 two-column action |
+| fixed-window 门 | 余量712.8634632226167 s；剩余构建上界1,488,176.122617107 s；含1803 s post-build reserve与300 s termination reserve总需1,490,279.122617107 s；deficit1,489,566.2591538844 s | CANDIDATE_NOT_ADMITTED；剩余 class build 投影约17.224天，24小时不足以完成当前完整候选估算 |
+| 实际资源 | process-tree RSS 6,674,780,160 B；cgroup 6,830,514,176 B；task tree/cgroup swap及host swap delta均0；PSS null；后代清场 | 仅此次 inventory/prefix attempt；full candidate peak NOT_MEASURED |
+| 后续求解 | 两列、checker、200q/factor/KSP/FGMRES、完整场、A6、R/T/A | NOT_RUN；V3 full-action 数值失败仍保留，V4 保存数据与局部归因不被V5覆盖 |
+
+三次正式 service parent 合计622.824231967 s；准备/入口费用没有合格计时，标 UNKNOWN。补充 volume-only audit/doc 验证32通过、3失败，三个owner/replay fixture未提供 cfg.tags 或 owner.build_audit；随后仅补齐测试接口，三项复验3 passed in 0.90 s，原负记录保留；17个原始证据文件经主控核验路径/bytes/SHA一致，但candidate numerical checker未运行。V5 原始 SHA、阶段与资源证据见 [response](task41extra_phi90_p50x50_g17x20/response_v5.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v5_mesh_actual_exact_not_admitted_20261020.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json) 和 [tests](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。数值阈值、固定 T0、ordinary default 和 master 均未改变；新窗口须另行明确授权。

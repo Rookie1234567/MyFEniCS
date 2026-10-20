@@ -547,6 +547,170 @@
         }
       },
       "evidence": "b0_v3_prior_attempt_costs_20261019.json"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "myfenics-case-20261020T042351-2332485",
+      "source_sha": "69ae04a4610dd80d49e08a650ac5787cf65838a0",
+      "status": "WORKER_FAILED",
+      "run_receipt_classification": "WORKER_FAILED",
+      "error": {
+        "type": "KeyError",
+        "message": "'required_checker_watchdog_seconds'"
+      },
+      "service_parent_seconds": 4.526531178038567,
+      "watchdog_parent_seconds": 3.413762259762734,
+      "cost_scope": "measured service/watchdog parent only; preparation and unmeasured invocation costs UNKNOWN",
+      "candidate_built": false,
+      "candidate_checker": "NOT_RUN_CANDIDATE_NOT_BUILT",
+      "official_result": false,
+      "process_tree_rss_peak_bytes": 105185280,
+      "cgroup_memory_peak_bytes": 144015360,
+      "process_tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "pss_peak_bytes": null,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v5_mesh_actual_exact_69ae04a4_attempt1",
+      "raw_receipts": {
+        "service": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_69ae04a4_attempt1.service/task41_p0_service_receipt.json",
+          "bytes": 22825,
+          "sha256": "ee68cc2f22130b5028ad716130afe2004f9c287541d453cd6c12271ecfc791f4"
+        },
+        "watchdog": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_69ae04a4_attempt1.service/volume_only_watchdog/summary.json",
+          "bytes": 11501,
+          "sha256": "235fdbb6e0fe344bd9955ea7f272c9e8c86b4d5768f74cf9de5f7452f225e1d1"
+        },
+        "worker_log": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_69ae04a4_attempt1.service/volume_only_watchdog/worker.log",
+          "bytes": 789,
+          "sha256": "a116f571359634bcc50727d620947e2635e13d0e91f94ef2e2c221508edd56c3"
+        },
+        "resources": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_69ae04a4_attempt1.service/volume_only_watchdog/resources.jsonl",
+          "bytes": 33748,
+          "sha256": "f793b6780037f6073037d135f1f63eafbda291fc45db3269ead73ea1f628ba0a"
+        }
+      },
+      "evidence": "b0_v5_mesh_actual_exact_not_admitted_20261020.json"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "myfenics-case-20261020T043358-2334668",
+      "source_sha": "0985d12919b77db797f2a5eaa44cbd18e6a50919",
+      "status": "WORKER_FAILED",
+      "run_receipt_classification": "WORKER_FAILED",
+      "error": {
+        "type": "NameError",
+        "message": "name 'shutil' is not defined"
+      },
+      "service_parent_seconds": 99.45530488202348,
+      "watchdog_parent_seconds": 98.33269957220182,
+      "cost_scope": "measured service/watchdog parent only; preparation and unmeasured invocation costs UNKNOWN",
+      "candidate_built": false,
+      "candidate_checker": "NOT_RUN_CANDIDATE_NOT_BUILT",
+      "official_result": false,
+      "process_tree_rss_peak_bytes": 6942826496,
+      "cgroup_memory_peak_bytes": 6830501888,
+      "process_tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "pss_peak_bytes": null,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v5_mesh_actual_exact_0985d129_attempt2",
+      "raw_receipts": {
+        "service": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_0985d129_attempt2.service/task41_p0_service_receipt.json",
+          "bytes": 29018,
+          "sha256": "716a2d44047c9c3264a5a6416560c7471c2ca55c438480e19352084eef589c40"
+        },
+        "watchdog": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_0985d129_attempt2.service/volume_only_watchdog/summary.json",
+          "bytes": 11510,
+          "sha256": "3ded2a4d602a0e01d621b29a8e5556c4889627a031f536d3db1be9ca8c96aee0"
+        },
+        "worker_log": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_0985d129_attempt2.service/volume_only_watchdog/worker.log",
+          "bytes": 1926,
+          "sha256": "30b96a2cc0bcc77fc2cd475b0a159fbc8b6d71b0404ddc39af356cf1c60fc6cc"
+        },
+        "resources": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_prior_attempts/task41_b0_v5_mesh_actual_exact_0985d129_attempt2.service/volume_only_watchdog/resources.jsonl",
+          "bytes": 893503,
+          "sha256": "f6aa69557d74536675943aac5941c05a86df3f5d536f3b06152eaca0dc5f34de"
+        }
+      },
+      "evidence": "b0_v5_mesh_actual_exact_not_admitted_20261020.json"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+      "attempt": "myfenics-case-20261020T044239-2335996",
+      "source_sha": "179cf7369e6bc5894fa87af6b74cf5c73938b6d4",
+      "status": "CANDIDATE_NOT_ADMITTED",
+      "run_receipt_classification": "CANDIDATE_NOT_ADMITTED",
+      "error": {
+        "message": "mesh_actual_exact_full_admission: fixed-window deficit 1489566.259s; N=28000, working_set=348615732000 bytes",
+        "type": "_CandidateNotAdmitted"
+      },
+      "service_parent_seconds": 518.8423959072679,
+      "watchdog_parent_seconds": 517.7216604859568,
+      "cost_scope": "measured service/watchdog parent only; preparation and unmeasured invocation costs UNKNOWN",
+      "candidate_built": false,
+      "candidate_checker": "not_applicable_candidate_not_built",
+      "official_result": false,
+      "process_tree_rss_peak_bytes": 6674780160,
+      "cgroup_memory_peak_bytes": 6830514176,
+      "process_tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "pss_peak_bytes": null,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v5_mesh_actual_exact_179cf736_attempt3",
+      "raw_receipts": {
+        "service": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/controller_v5_review/service.json",
+          "bytes": 66671,
+          "sha256": "bee77143ceb503318c45d03620ddd2c1508866974c9cd4d41f4ef447006b2c0b"
+        },
+        "watchdog": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/controller_v5_review/watchdog.json",
+          "bytes": 11523,
+          "sha256": "e272eadee3d2281fc928e456c9570390c1ec2c12cd8329ef082b691ac51e409a"
+        },
+        "attribution": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/controller_v5_review/report.json",
+          "bytes": 42007,
+          "sha256": "ccc7e47e0d1762f505a3bfe4660ec6611144eecd97a4c6e0d086738bb732dfeb"
+        },
+        "prefix": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/controller_v5_review/prefix.json",
+          "bytes": 16244,
+          "sha256": "5ee6203e44d08f1799a17b6c266781f95bc29f4ecad7a317468c0c43a2cea02e"
+        },
+        "inventory": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_attempt3_179cf736/task41_b0_v5_mesh_actual_exact_179cf736_attempt3/mesh_actual_exact/mesh_actual_exact_key_inventory.json",
+          "bytes": 16224652,
+          "sha256": "147ab6347e6b0059ea97627a48802a970e8450d20e832a716bcd60d95233c952"
+        },
+        "events": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_attempt3_179cf736/task41_b0_v5_mesh_actual_exact_179cf736_attempt3/task41_p0_v4_volume_only_events.jsonl",
+          "bytes": 29422,
+          "sha256": "9d20cc0811e07b86f210feed0e8f2232e916164737614e2c93654b8b262332b8"
+        },
+        "resources": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_attempt3_179cf736/task41_b0_v5_mesh_actual_exact_179cf736_attempt3.service/volume_only_watchdog/resources.jsonl",
+          "bytes": 4668054,
+          "sha256": "b10562b0d7b069620324e8f94aefc54e6a7c5ae081e6fe847b541cb127c297a5"
+        },
+        "worker_log": {
+          "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v5_attempt3_179cf736/task41_b0_v5_mesh_actual_exact_179cf736_attempt3.service/volume_only_watchdog/worker.log",
+          "bytes": 29635,
+          "sha256": "561dfc4435baafbf89c6eec8b2257716fdaf63e4fe0eed233cf16e5f98b974d0"
+        }
+      },
+      "evidence": "b0_v5_mesh_actual_exact_not_admitted_20261020.json"
     }
   ],
   "not_run": [
@@ -557,9 +721,9 @@
     "a2_attempt7_official_result": false,
     "a2_saved_output_comparison": "PASS",
     "a2_required_checker_only_retry3": "PASS",
-    "0.7nm": "NOT_RUN_FULL_ACTION_GATE_FAILED_20261019",
+    "0.7nm": "NOT_RUN_V5_FULL_CANDIDATE_NOT_ADMITTED; PRIOR_V3_FULL_ACTION_GATE_FAILED",
     "a_exit": "PASS",
-    "b0_p0_latest": "NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED",
+    "b0_p0_latest": "V5_CANDIDATE_NOT_ADMITTED_BY_FIXED_WINDOW; V3_FULL_ACTION_GATE_FAILED_ROOT_CAUSE_UNRESOLVED",
     "b0_p0_official_result": false,
     "b0_p0_carrier": "REQUIRE_EXISTING_DONOR_ADOPTION_PASS_64120_MODES; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED; FULL_B0_NOT_QUALIFIED",
     "b0_p0_saved_surface_application": "64120_OF_64120_COMPLETE; SELECTED_MODE_B_D_CONSUMER_RECEIPTS_2_OF_2_PASS; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED",
@@ -699,6 +863,22 @@
       "report_sha256": "427af9ffb5f41a129250a513eaa908c13efe79ac10d2bbf5468d1a69fa0113b8",
       "compact_path": "b0_v4_volume_only_attribution_20261020.json",
       "preserves_historical_b0_p0_offline_checker": true
+    },
+    "b0_p0_v5_mesh_actual_exact": {
+      "classification": "CANDIDATE_NOT_ADMITTED",
+      "source_sha": "179cf7369e6bc5894fa87af6b74cf5c73938b6d4",
+      "raw_key_count": 28000,
+      "oriented_key_count": 28000,
+      "two_cell_actual_replay": "PASS_LOCAL_INTEGRATION_ONLY",
+      "full_two_column_action": "NOT_RUN",
+      "candidate_checker": "NOT_APPLICABLE_CANDIDATE_NOT_BUILT",
+      "time_deficit_seconds": 1489566.2591538844,
+      "official_result": false,
+      "compact": "b0_v5_mesh_actual_exact_not_admitted_20261020.json",
+      "raw_artifact_integrity_review": "17_PATH_BYTES_SHA_MATCHED_BY_MAIN_CONTROLLER; NUMERICAL_CHECKER_NOT_RUN",
+      "wider_component_and_docs_validation": "32_PASSED_3_FAILED_HISTORICAL; THREE_FIXTURE_ONLY_REPAIRS_RETESTED_3_PASSED; SCIENTIFIC_SOURCE_UNCHANGED",
+      "supplemental_pytest_output_sha256": "e2d1a3b4f98159bab57203be4372e1e77a2645b5b8a40793abab3839826deb79",
+      "compact_sha256": "132168d3653f36fe267a99b35497b588c7aa73e3d85dea4c2e4d391427f79e32"
     }
   }
 }
