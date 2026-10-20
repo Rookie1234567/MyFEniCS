@@ -1,5 +1,9 @@
 # Task41 阶段结果
 
+> **当前最新阶段：Task41extra Review V4，volume-only 几何归因已完成，完整作用门仍失败。** V3 恢复门两列通过；完整 p6/native action errors 为 `3.042118678294192e-10` / `6.391893878204816e-10`，超过原 `1e-11`，`official_result=false`。V4 保存 checker 完成，28,000 cells / 3 canonical classes 的 volume-only blocks/maps 已留存，并对 cells 26762/26897 做了受限 actual/canonical 对照；该局部证据不能代表全域修复或 action PASS。200q、factor、KSP/FGMRES、完整场、A6、R/T/A 为 `NOT_RUN`。当前入口：[V4 response](../response_v4.md)、[V4 测试记录](test_summary.md)、[V4 compact evidence](b0_v4_volume_only_attribution_20261020.json)。
+
+## 历史阶段记录：A1/A2 与较早 B0/V2/V3
+
 本任务使用完整三维有限元，计算居中 17×20×120 nm Si 主体及 10 nm Si 基底。单胞横向为 50×50 nm，上入射掠角 1°、方位角 90°、S 偏振。**主案例没有额外 notch 或 air void。**
 
 A1 用直接分解建立当前网格的比较基准：先在各单元内消去内部未知量，求解保留的边界与端口系统，再恢复全部场。它验证当前离散方程，不证明网格或模式截断已收敛。后续 A2 将用同条件参考预条件迭代解与它比较。
@@ -236,4 +240,22 @@ Recovery 的 forward relative error 限值为 1e-11，native volume residual rel
 在最后 watchdog 样本 2026-10-19T09:12:25.213291Z 时，总窗口派生剩余约 72,641.876 s，数值窗口约 71,441.876 s；这是当时余量，不是当前余额。宿主全局 swapin/out 差值为 177/0 页，无法归因到任务，归因保持 UNKNOWN。所有 141 个 manifest-listed .npy 共 9,379,882,344 B，逐文件大小和 SHA-256 与 recovery manifest 一致；见 [hash index](b0_v3_saved_vector_hash_index_20261019.json)。主证据和各 event SHA 见 [V3 compact](b0_v3_full_action_failure_20261019.json)。
 
 下一断点是由主控审阅已保存 recovery/full-action 向量并给出可证伪诊断；在失败根因和后续合同重新冻结前，不继续 q/factor/solve，不降低门限、不增加校正次数、不重跑 PDE。16 GiB 配额只解决本次 raw-evidence admission，不构成数值资格。详细逐项回应见 [response_v3.md](../response_v3.md)。
+
+## Task41 P0 Review V4：volume-only 几何归因仍未关闭 full-action 门（2026-10-20）
+
+V4 继续保留 V3 的真实数值失败：two-input full-action relative errors 仍为 `3.042118678294192e-10` 和 `6.391893878204816e-10`，高于未改变的 `1e-11`；`official_result=false`。这轮完成了保存数组审核、三类 volume-only 数据提取以及一对 cell 的 actual/canonical 几何对照，但没有进行全域 action requalification，也没有启动 200q、factor、KSP/FGMRES 或完整场。
+
+| 阶段 / 身份 | 方法与实测 | 结论 / 边界 | 证据 |
+|---|---|---|---|
+| required saved-evidence checker；geometry consumer source `02523b3d…` | 报告 `audit_completed=true`、`data_integrity=true`、`recovery_passed=true`；重算保留 `joint_action_passed=false`、`official_result=false` | checker 完成；不把恢复通过等同 full-action 通过 | [V4 saved-audit report](b0_v4_volume_only_attribution_20261020.json)；外部 report SHA `427af9ffb5f41a129250a513eaa908c13efe79ac10d2bbf5468d1a69fa0113b8` |
+| volume-only extraction；consumer source `d883c1f…`、contract SHA `9012ffc0…` | 28,000 owned cells、3 canonical local classes，保存体积块和所需 maps `1,299,043,104 B`；service 父 `1,638.8259056420065 s`，worker 子 `1,571.1404369487427 s` | 不重扫 surface modes、不建 global q factor；子时间已含于父时间 | 外部 report SHA `09e96eb8c9d52b4cf0c29570fd8df3c1f820bc208104d91edd102978dfc9c4d5`，见 [V4 compact](b0_v4_volume_only_attribution_20261020.json) |
+| geometry-pair probe；source `02523b3d…` | cells 26762/26897 共用 canonical key `(1, 5.5, 0.25, 10.0, 0)`；42 arrays、`49,929,712 B`；worker `235.811 s`，service 父 `306.000 s` | selected-pair attribution only；不能外推为 full-domain gate | 外部 report SHA `a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031` |
+| saved-only local elimination | canonical fresh K/G/J/L and T/S exactly match saved class; actual blocks differ from canonical by `9.37e-16`–`1.22e-15` relative. On active row 5458716, canonical q reproduces old d within `3.64e-12`; actual q norms are `6.04e-10` and `1.04e-9` | Coordinate-dependent floating path is a supported local contributor; actual q remains nonzero and this is not a full action pass | [V4 attribution compact](b0_v4_volume_only_attribution_20261020.json) |
+| full-action error decomposition | 原分母 `2225.481253487629` / `2225.4807123031883`；trace L2 `6.770178089430243e-7` / `1.4225036541037616e-6`；port差异两列均精确为 `0` | 保存分解把差异定位到 trace rows；原 worker full-action 门仍失败 | [V4 attribution compact](b0_v4_volume_only_attribution_20261020.json) |
+| cache-sharing feasibility | existing actual-coordinate records include only the selected pair; full 28,000-cell exact-coordinate key count was not saved. A hypothetical per-cell T/R/S/LU/pivots cache is at most about `348,560,352,000 B` (`324.6 GiB`) from the stored class payload estimate | derived worst case, not measured; do not assume 28,000 actual keys or adopt per-cell caching without a separate gate | [V4 attribution compact](b0_v4_volume_only_attribution_20261020.json) |
+| next stages | global action requalification, q200/factor/KSP/FGMRES/full field/A6/R/T/A | `NOT_RUN`; original full-action gate remains failed | [run index](run_index.json) |
+
+The first local diagnostic output is preserved but invalid because it subtracted the already global `b_t` once per cell; its SHA-256 is `b9dd5bf9b5dd906fa3dcd7485e11190101067fe2f552caed92f9e96f5046a955`. The corrected saved-only script adds `b_t` once, takes 5.046 s, has no RSS sample, and does not rebuild a mesh/carrier, scan ports, change a threshold, or form a global q factor. Neither report is used to edit the saved V3 d vector.
+
+No safe full-domain production fix is established by two cells. The next bounded step is to freeze one candidate interface that aligns production volume geometry semantics with an independent native volume action, then requalify both complete columns using the saved input/RHS and original denominator and limit. Do not add actual coordinates to every cache key by default, claim a global pass, or resume a solver stage before that gate closes. Full response, exact identities, costs, limitations and resource scope are in [response_v4.md](../response_v4.md).
 *** End of File

@@ -225,3 +225,28 @@ Ruff 不可用，未安装；未运行全仓测试。表中通过的 fixture 与
 文档收口后的最终定向验证：资格化 WSL activation preflight 确认 Python 来自当前仓库 .venv、PETSc complex128/int32，petsc4py、slepc4py、dolfinx 和 mpi4py 属于同一 Linux complex ABI 栈；模型登记表与文档合同测试共 20 passed in 0.09 s。另有 run-index/compact/hash-index JSON 解析检查、表格列数与 git diff --check 通过。未运行全仓测试。
 
 主控最终文档修正后仅运行 `src/test/test_26_documentation_contract.py`、`src/test/test_183_development_model_registry_markdown.py`、`src/test/test_development_model_registry_contract.py`：21 passed in 0.08s。checker正确native调用仍崩溃，三次调用证据见 `b0_v3_offline_checker_invocation_failures.json`，不算通过。
+
+## Review V4 volume-only 归因与保存数据复核（2026-10-20）
+
+| 验证 | source / 输入 | 结果 | 解释 |
+|---|---|---|---|
+| 受监督 geometry-pair service | `02523b3d5a49d30d71caa8e7f8a9b9405a78fa33`；selected cells 26762、26897 | service `Result=success`、`ExecMainStatus=0`；required saved-evidence checker 报 `audit_completed=true`、`data_integrity=true`、`recovery_passed=true`、`joint_action_passed=false` | 证明这个保存审核流程完成并保留原 full-action FAIL；不等于源码单测或 PDE qualification。report SHA `427af9ffb5f41a129250a513eaa908c13efe79ac10d2bbf5468d1a69fa0113b8` |
+| volume-only extraction | `d883c1f3381b4f3d6100022097d615846564673c`；donor source `afbe91e5947ed18fb74d7105097e129c1b8b4cc7` | `COMPLETED`；3 canonical classes、28,000 owned cells、1,299,043,104 B persisted | 只提取 volume blocks/maps；没有 surface scan、global q factor 或 PDE。report SHA `09e96eb8c9d52b4cf0c29570fd8df3c1f820bc208104d91edd102978dfc9c4d5` |
+| selected geometry-pair probe | V4 consumer contract SHA `8e041fc0fae6da0bab5855043e9ebe5678facad6bb319d0e0bc3ac5c08c89453` | 42 arrays、49,929,712 B；worker 235.811 s / service 父 306.000 s；task swap peak 0 B，后代清场 | 只支持这对 cell 和一个 selected row；父子时间不得相加 |
+| corrected saved-only local elimination | script SHA `a57b8f10251d5e921ab2bc41e0a584aca5e6f18c3c797e606690f3cd503e1110` | output SHA `27eb82d1e51fd62b2b80e74fe5129f7be0512c35f95d092c967aeca6f90216ae`；5.046 s | `b_t` 只扣一次；无 RSS 采样，无 mesh/carrier rebuild、端口遍历或 global q factor |
+| 初始错误 diagnostic | 保留的初版 JSON | SHA `b9dd5bf9b5dd906fa3dcd7485e11190101067fe2f552caed92f9e96f5046a955`；排除 | 初版把已全局组装的 `b_t` 在 cell loop 内重复扣除；不纳入任何科学结论，修正版结果单独保存 |
+| V4 production source tests | source `02523b3d5a49d30d71caa8e7f8a9b9405a78fa33`；主控使用资格化本机 WSL `.venv` / complex128-int32 preflight | `26 passed in 1.20 s` | 本机 small fixtures；不代表工作站实际 ABI 或新增数值资格 |
+| V4 documentation contracts | 收口后的 summary/README/two-level ledgers/run_index | `21 passed in 0.08 s` | 文档与索引结构检查，不构成数值资格 |
+| full-action qualification | V3 saved arrays，原分母和原 `1e-11` gate | `FAIL`：`3.042118678294192e-10`、`6.391893878204816e-10` | V4 的 local row 结果不覆盖全部 5,752,120 joint rows；200q 与后续求解仍未运行 |
+
+V4 implementation focused command（主控在本机资格化 WSL `.venv` / complex128-int32 ABI preflight 后执行）：
+
+```text
+python -m pytest -q src/test/test_task41_v4_volume_only_audit.py src/test/test_task41_v4_selected_volume_audit_cells.py src/test/test_task41_p0_saved_output_continuation.py
+```
+
+结果 `26 passed in 1.20 s`，exit 0。该结果只覆盖本机小 fixture，不构成工作站 ABI 或新的数值资格。固定窗口余额快照见 V4 compact；当时数值截止和总截止都未到，依赖未闭合 full-action gate 停止下游。
+
+文档合同命令：`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py`，结果 `21 passed in 0.08 s`。另外 compact JSON/ratio/source/window assertions、Markdown table widths 与 `git diff --check` 均通过。
+
+两个独立 service 父段为 `1,638.8259056420065 s` 和 `305.99965768121183 s`，可相加；worker/checker 子阶段不重复相加。volume-only worker tree RSS/cgroup peaks 为 `13,237,129,216 B` / `8,655,577,088 B`；checker tree RSS 为 `3,948,949,504 B`。geometry-pair 与 checker tree RSS 为 `1,513,431,040 B` / `3,949,363,200 B`，共享该服务 cgroup 峰 `1,411,362,816 B`。各自 task tree/cgroup swap peaks 为 0 B，后代已清场；volume-only worker期间工作站宿主全局 swapin +5页不能归因给任务。三份 saved-only diagnostics 用时 `11.880770959891379 s`、`2.6438243738375604 s`、`5.046073629986495 s`，均无 RSS 采样。上述计时只是有回执片段，不是完整V4工程或固定窗口成本。

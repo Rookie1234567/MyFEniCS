@@ -6,9 +6,13 @@
 
 ## 当前任务
 
-V3 最新终态见 [response_v3.md](response_v3.md) 和 [V3 outcomes](outcomes/summary.md)：用户授权的 16 GiB 原始证据配额已准入通过；两列已知输入 recovery 在最多三次同 LU 修正后通过原门，但 two-input full action 的 p6/native 相对误差仍超过 1e-11，根因未闭合，official result=false。q factor、KSP/FGMRES、完整场和 R/T/A 尚未运行。不得把本次数值门失败改写成配额或资源失败。
+当前唯一执行范围是 Review V4 的保存数据审核与 volume-only 误差归因；见 [response_v4.md](response_v4.md) 和 [V4 outcomes](outcomes/summary.md)。V3 的两列 recovery PASS 与完整 p6/native action FAIL 原样保留。V4 的 required saved-evidence checker 已完成且数据完整性、恢复门通过，但 joint action 仍 FAIL、`official_result=false`。两格实际/标准几何对照解释了一个选中行上的差异方向，却不足以证明全域修复或原 `1e-11` 门通过。200q、factor、KSP/FGMRES、完整场、A6 和 R/T/A 仍未运行。本轮沿用已批准的16 GiB原始证据配额、固定窗口、资源门和数学阈值，没有调整这些合同值。
 
-完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A出口已通过：A2保存场同离散比较与 checker-only retry3 PASS。attempt7 原 worker 的 `WORKER_FAILED` / `official_result=false` 作为历史保留；checker未重新组装FE算子。0.7 nm B0已开始真实FE/MPC和端口构建；旧全域分量装配速度不足，经用户批准受控停止，保存94/64,120模式。紧凑边界积分接线已通过定向测试，待冻结后在真实网格配对及续算；尚无0.7 nm完整场。固定B0窗口和历史费用保留，详见[outcomes/summary.md](outcomes/summary.md)。
+V3 详细结果作为历史阶段保留在 [response_v3.md](response_v3.md) 与 [V3 compact](outcomes/b0_v3_full_action_failure_20261019.json)：恢复门通过，但两个完整作用误差仍超过 `1e-11`，不得改写为资源停止或 official result。
+
+完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A出口已通过：A2保存场同离散比较与 checker-only retry3 PASS。attempt7 原 worker 的 `WORKER_FAILED` / `official_result=false` 作为历史保留；checker未重新组装FE算子。
+
+以下为早期B0阶段记录：当时真实FE/MPC与端口构建曾因全域分量装配速度受控停止，并保留94/64,120模式。后续V3完整carrier已完成并作为V4 donor复用；V4当前阻断点是完整volume action差异尚未闭合，而不是边界积分仍待接线。早期停止、旧窗口和历史费用原样保留，当前阶段见[outcomes/summary.md](outcomes/summary.md)。
 
 | 固定物理 | 值 |
 |---|---|

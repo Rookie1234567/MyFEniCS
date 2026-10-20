@@ -1,3 +1,7 @@
+## Task41extra Review V4 最新登记入口（2026-10-20）
+
+当前 Task41 B0 仍由 full-action 数值门阻断：V4 saved checker 完成，实际坐标与 canonical cache 的两格比较只提供局部归因，未证明全域修复。完整误差`3.042118678294192e-10` / `6.391893878204816e-10`仍超过`1e-11`；200q、factor、KSP/FGMRES、完整场和 R/T/A `NOT_RUN`。V3 donor与V4两个consumer的 source/contract、资源边界和窗口快照见[Task41 V4 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)和[Task41 V4结果](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。下方 Task40extra V32及更旧条目是历史模型登记，不是当前执行状态。
+
 ## Task40extra V32 终态（2026-10-15，新加坡）
 
 本轮把保存的 q4 矩阵与独立原生有限元作用对照，补齐了可复用的数值资格：777424×777424、581086528 槽，最大误差 **2.6835748652861403e-14 ≤ 1e-11**。这不是全参考逆或目标场通过。
@@ -2226,6 +2230,20 @@ P0 冻结前B0工程门：A2/B0 ABI 精确身份分派、真实DAT到固定窗�
 
 V3 将用户授权的原始证据上限提高至 16 GiB，保留 2 GiB free-space floor 与所有数学、内存、时间门；最终 run 的投影累计 evidence 为 11,886,541,965 B，准入通过。两列 saved-input recovery 在每列三次同 LU 修正后低于 forward 1e-11 和 native residual 1e-10 门限；但完整 p6/native action relative errors 为 3.042118678294192e-10 与 6.391893878204816e-10，超过原 1e-11，所以没有完整 action qualification、完整场或 official R/T/A。分类为 NUMERICAL_GATE_FAILED_ROOT_CAUSE_UNRESOLVED，不是资源失败；不改变 ordinary default。数值、资源和证据入口见 [Task41 V3 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md) 与 [hash-bound closeout](task41extra_phi90_p50x50_g17x20/outcomes/b0_v3_full_action_failure_20261019.json)。
 
+
+### Task41 P0 Review V4：volume-only selected-row attribution，未获完整作用资格
+
+| 模型 / 诊断 | 方法与实测 | 当前结论 |
+|---|---|---|
+| 13.5 nm A1/A2 | 继续使用原通过记录；V4 不改变其离散和 checker 身份 | 原状态保留，与 0.7 nm B0 gate 分开 |
+| 0.7 nm B0 saved action | V4 checker 重读原141个向量；`data_integrity=true`、两列 recovery pass；完整 action relative errors `3.042118678294192e-10` / `6.391893878204816e-10`，原门 `1e-11` | `FAIL`；`official_result=false`，不运行200q/factor/KSP/FGMRES/full field/A6/R/T/A |
+| 体积局部块 | 28,000 owned cells，3个canonical class；只提取 volume blocks 和 cell maps | measured volume-only diagnostic；不是完整 q action或 PDE |
+| 实际/标准几何双格 | 同一 canonical key 的 cells 26762/26897；canonical K/G/J/L及T/S重现已存class；actual blocks相对差约`1e-15`，选中行actual q仍约`6.04e-10`/`1.04e-9` | 有局部几何坐标浮点效应证据；根因全域闭合与 production 修复均未证明 |
+| exact-coordinate cache 可行性 | 全28,000 cells 的 actual geometry key cardinality未记录；每 cell缓存的最坏 payload 约`324.6 GiB` | derived upper bound，不是测量或方案；禁止把28,000当作已测 key 数 |
+
+数据与读取者身份分开绑定：V3 donor source `afbe91e5947ed18fb74d7105097e129c1b8b4cc7`；V4 volume-only consumer source `d883c1f3381b4f3d6100022097d615846564673c`、contract `9012ffc0e80fac30f2aa1307d266366e7607ebcd11b9e0e2278bb213514e4bcd`；V4 selected-geometry consumer source `02523b3d5a49d30d71caa8e7f8a9b9405a78fa33`、contract `8e041fc0fae6da0bab5855043e9ebe5678facad6bb319d0e0bc3ac5c08c89453`。窗口 SHA `68e6d8df…` 单独指向固定窗口记录，不是任一 consumer contract。V4 compact 保存了两列误差分块、局部代数闭合、资源/清场回执及只读窗口余额快照。
+
+证据与成本：[V4 response](task41extra_phi90_p50x50_g17x20/response_v4.md)、[V4 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)、[V4 outcomes](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。不改变普通 solver default，也不提升当前 B0 为 production-qualified。
 
 # 4. 今后新增模型的登记模板
 

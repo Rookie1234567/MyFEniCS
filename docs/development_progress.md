@@ -1,4 +1,8 @@
-## Task40extra V33 最新状态：用户暂停，已收尾（2026-10-16）
+## Task41extra Review V4 最新状态：归因已完成，完整作用门未闭合（2026-10-20）
+
+V3 两列 recovery 通过，完整 p6/native action 仍分别为`3.042118678294192e-10`和`6.391893878204816e-10`，高于原`1e-11`门。V4 saved checker 与 volume-only/selected-geometry attribution 已完成；局部两格支持几何计算路径贡献，但不构成全域根因或修复通过。200q、factor、KSP/FGMRES、完整场及官方物理量仍`NOT_RUN`。先看[Task41 V4 response](task41extra_phi90_p50x50_g17x20/response_v4.md)、[结果摘要](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)与[compact evidence](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)。以下 Task40extra V33 及更旧条目均为历史快照。
+
+## Task40extra V33 历史快照：用户暂停，已收尾（2026-10-16）
 
 | 项目 | 当前实测及边界 |
 |---|---|
@@ -3811,3 +3815,11 @@ q CSR/factor、KSP/FGMRES、完整场、独立 A6、official R/T/A/A_volume 均 
 ### 决策与证据入口
 
 不继续 q/factor/solve，不降低原门限，也不增加同 LU 修正次数。下一步由主控审阅保存的恢复和 full-action 数组，给出可证伪根因诊断并冻结新合同后再判断是否需要运行。详细证据见 [Task41 outcomes](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)、[V3 response](task41extra_phi90_p50x50_g17x20/response_v3.md)、[full-action compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v3_full_action_failure_20261019.json) 和 [141-vector hash index](task41extra_phi90_p50x50_g17x20/outcomes/b0_v3_saved_vector_hash_index_20261019.json)。16 GiB policy 定向验证与测试边界见 [test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
+
+## Task41extra Review V4：volume-only归因接线与保存数据复核（2026-10-20）
+
+V4沿用已批准的16 GiB原始证据配额、固定窗口与数值/资源合同。保存checker修复后完整读取141个数组，数据完整性和两列recovery审核通过，但原two-input full-action仍失败：top `3.042118678294192e-10`、bottom `6.391893878204816e-10`，超过原`1e-11`门；分解显示差异在trace rows，port差异为零。`official_result=false`，没有启动200q、factor、KSP/FGMRES、完整场、A6或R/T/A。
+
+V4 volume-only consumer source `d883c1f3381b4f3d6100022097d615846564673c` 提取28,000个owned cells、3个canonical classes及所需映射，保存`1,299,043,104 B`；随后geometry-pair consumer source `02523b3d5a49d30d71caa8e7f8a9b9405a78fa33` 检查cells 26762/26897。两格实际坐标矩阵与canonical缓存矩阵存在约`9.37e-16`至`1.22e-15`相对差，选中主导行的实际坐标残差比canonical结果小但仍非零。该证据支持局部几何/浮点路径影响，不证明全域根因或修复通过。28,000格actual-coordinate key数量没有保存；每格独立缓存约324.6 GiB只是payload最坏上界。
+
+本轮已记录两列误差分块、selected-row局部恒等式、原始失败诊断、准确consumer/contract hashes和服务资源范围。只读窗口API快照（2026-10-20T01:23:41.166876Z）显示投影累计`72,034.077685 s`、数值剩余`13,165.92231481 s`、总剩余`14,365.92231481 s`；当时截止未到，停止下游的原因是full-action gate未闭合。父服务及诊断计时是有限的实测片段，不是完整V4工程/窗口成本。详细事实见[response_v4.md](task41extra_phi90_p50x50_g17x20/response_v4.md)、[V4 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)和[Task41 outcomes](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。下一步需由主控冻结一致的production/native volume-geometry候选，再用原分母和原门重验两列；不重扫surface、不默认添加每格缓存、不改门限。

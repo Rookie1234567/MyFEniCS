@@ -1,0 +1,392 @@
+{
+  "schema": "task41.p0.v4.volume_only_attribution_closeout.v1",
+  "status": "SELECTED_GEOMETRY_EFFECT_OBSERVED_GLOBAL_ACTION_GATE_UNCLOSED",
+  "identity": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "review_source_sha": "bcc688ce542085cd00bc7f1531de0720cb2e6e24",
+    "v3_donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+    "v3_donor_manifest_sha256": "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465",
+    "v3_donor_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+    "v4_volume_consumer_contract_sha256": "9012ffc0e80fac30f2aa1307d266366e7607ebcd11b9e0e2278bb213514e4bcd",
+    "v4_geometry_pair_contract_sha256": "8e041fc0fae6da0bab5855043e9ebe5678facad6bb319d0e0bc3ac5c08c89453",
+    "campaign_window_sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38",
+    "original_denominator_definition": "max(norm(p6_result), norm(reduced_rhs), tiny)",
+    "full_action_limit": 1e-11,
+    "v4_volume_only_consumer_source_sha": "d883c1f3381b4f3d6100022097d615846564673c",
+    "v4_geometry_pair_consumer_source_sha": "02523b3d5a49d30d71caa8e7f8a9b9405a78fa33"
+  },
+  "saved_evidence_audit": {
+    "status": "COMPLETE",
+    "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_b0_saved_evidence_audit.json",
+    "report_sha256": "427af9ffb5f41a129250a513eaa908c13efe79ac10d2bbf5468d1a69fa0113b8",
+    "audit_completed": true,
+    "data_integrity": true,
+    "recovery_passed": true,
+    "joint_action_passed": false,
+    "official_result": false,
+    "qualification_passed": false,
+    "preserves_v3_relative_errors": [
+      3.042118678294192e-10,
+      6.391893878204816e-10
+    ],
+    "earlier_volume_stage_audit": {
+      "status": "COMPLETE",
+      "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_volume_only_d883c1f_20261019T232138Z/task41_p0_b0_saved_evidence_audit.json",
+      "report_sha256": "a2f540fb9778c038a2129a0f2119689fd832dc044e2a933ab2a45518ac37f94d",
+      "service_parent_seconds": 70.426974745,
+      "separate_from_geometry_stage_report": true
+    },
+    "geometry_stage_report_is_current_required_checker": true
+  },
+  "volume_only_extraction": {
+    "status": "COMPLETED",
+    "source_sha": "d883c1f3381b4f3d6100022097d615846564673c",
+    "contract_sha256": "9012ffc0e80fac30f2aa1307d266366e7607ebcd11b9e0e2278bb213514e4bcd",
+    "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_volume_only_d883c1f_20261019T232138Z/task41_p0_v4_volume_only_attribution.json",
+    "report_sha256": "09e96eb8c9d52b4cf0c29570fd8df3c1f820bc208104d91edd102978dfc9c4d5",
+    "canonical_classes": 3,
+    "owned_cells": 28000,
+    "persisted_evidence_bytes": 1299043104,
+    "service_parent_seconds": 1638.8259056420065,
+    "worker_elapsed_seconds": 1571.1404369487427,
+    "preparation_elapsed_seconds": 17.285162824671715,
+    "scope": "volume blocks and selected cell mappings only; no surface-mode scan, global q factor, or PDE solve",
+    "worker_watchdog_elapsed_seconds": 1577.555109324865,
+    "required_checker_watchdog_elapsed_seconds": 59.97374047804624,
+    "resource_scope": {
+      "worker_process_tree_rss_peak_bytes": 13237129216,
+      "service_task_cgroup_memory_peak_bytes": 8655577088,
+      "required_checker_process_tree_rss_peak_bytes": 3948949504,
+      "process_tree_vmswap_peak_bytes_worker_and_checker": 0,
+      "task_cgroup_swap_peak_bytes_worker_and_checker": 0,
+      "host_global_swap_activity": {
+        "pswpin_delta_pages": 5,
+        "pswpout_delta_pages": 0,
+        "scope": "workstation host-global counters; cannot be attributed to this task"
+      },
+      "descendants_cleared_for_both_watchdogs": true,
+      "pss_peak_bytes": null,
+      "rss_cgroup_and_child_metrics_are_not_additive": true
+    }
+  },
+  "geometry_pair_probe": {
+    "status": "COMPLETED_GEOMETRY_PAIR_PROBE",
+    "source_sha": "02523b3d5a49d30d71caa8e7f8a9b9405a78fa33",
+    "contract_sha256": "8e041fc0fae6da0bab5855043e9ebe5678facad6bb319d0e0bc3ac5c08c89453",
+    "attempt_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1",
+    "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_v4_geometry_pair_probe.json",
+    "report_sha256": "a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031",
+    "selected_cells": [
+      26762,
+      26897
+    ],
+    "selected_active_row": 5458716,
+    "selected_original_row": 17692332,
+    "shared_canonical_class_key": [
+      1,
+      5.5,
+      0.25,
+      10.0,
+      0
+    ],
+    "saved_canonical_class_id": "24b409051aa4cc54",
+    "persisted_array_count": 42,
+    "persisted_evidence_bytes": 49929712,
+    "service_unit": "myfenics-case-20261020T004902-2286705.service",
+    "service_invocation_id": "03c854728dee48c49b66080f87545d5f",
+    "service_terminal": {
+      "active_state": "inactive",
+      "sub_state": "dead",
+      "result": "success",
+      "exec_main_status": 0
+    },
+    "service_parent_seconds": 305.99965768121183,
+    "worker_elapsed_seconds": 235.81072491174564,
+    "preparation_elapsed_seconds": 17.87489306507632,
+    "required_checker_elapsed_seconds": 66.03,
+    "required_checker_is_child_of_service": true,
+    "resource_scope": {
+      "geometry_watchdog_process_tree_rss_peak_bytes": 1513431040,
+      "saved_checker_watchdog_process_tree_rss_peak_bytes": 3949363200,
+      "task_swap_peak_bytes_for_both": 0,
+      "descendants_cleared": true,
+      "rss_peaks_are_not_additive": true,
+      "service_task_cgroup_memory_peak_bytes": 1411362816,
+      "process_tree_vmswap_peak_bytes_for_both": 0,
+      "task_cgroup_swap_peak_bytes_for_both": 0,
+      "host_global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "pss_peak_bytes": null
+    },
+    "worker_watchdog_elapsed_seconds": 238.70088267000392,
+    "required_checker_watchdog_elapsed_seconds": 66.03434501821175
+  },
+  "saved_only_local_elimination_diagnostic": {
+    "status": "COMPLETED_SAVED_DATA_ONLY_DIAGNOSTIC",
+    "script_sha256": "a57b8f10251d5e921ab2bc41e0a584aca5e6f18c3c797e606690f3cd503e1110",
+    "output_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_v4_local_elimination_diagnostic.json",
+    "output_sha256": "27eb82d1e51fd62b2b80e74fe5129f7be0512c35f95d092c967aeca6f90216ae",
+    "elapsed_seconds": 5.046073629986495,
+    "rss_peak_bytes": null,
+    "global_b_t_added_once": true,
+    "no_mesh_or_carrier_rebuild": true,
+    "no_port_scan": true,
+    "no_global_q_factor": true,
+    "no_threshold_change": true,
+    "canonical_K_G_J_L_equal_saved_class": true,
+    "canonical_T_S_equal_saved_class": true,
+    "actual_geometry_block_pair_relative_differences": {
+      "K": 9.37018986530826e-16,
+      "G": 1.2158454571576914e-15,
+      "J": 1.1995469277913385e-15,
+      "L": 1.062722764991635e-15
+    },
+    "actual_vs_canonical_elimination_relative_differences": {
+      "cell_26762": {
+        "T": 8.446672489883893e-14,
+        "S": 3.960812653339228e-14
+      },
+      "cell_26897": {
+        "T": 9.239343737329979e-14,
+        "S": 3.9612455154258444e-14
+      }
+    },
+    "local_identity_relative_residuals": {
+      "K_R_plus_G": 6.661808856783237e-16,
+      "T_K_plus_J": 4.350616649363831e-15,
+      "S_minus_L_plus_JR": 0.0
+    },
+    "column_rows": [
+      {
+        "column": 0,
+        "original_full_column_denominator": 2225.4812534876287,
+        "saved_d": [
+          -3.4907687851415403e-09,
+          -2.1869142052821644e-09
+        ],
+        "canonical_q": [
+          -3.4907687851415403e-09,
+          -2.190552184089256e-09
+        ],
+        "actual_q": [
+          5.25527954486904e-10,
+          2.978545188270232e-10
+        ],
+        "actual_q_absolute_norm": 6.040670040093789e-10,
+        "actual_minus_saved_d_absolute_norm": 4.7227867952154345e-09,
+        "global_gate_claim": false,
+        "actual_minus_saved_d_over_original_global_denominator": 2.1221418009314578e-12,
+        "actual_q_norm_over_original_global_denominator": 2.714320792694724e-13
+      },
+      {
+        "column": 1,
+        "original_full_column_denominator": 2225.480712303188,
+        "saved_d": [
+          4.776666173711419e-09,
+          -7.07223080098629e-09
+        ],
+        "canonical_q": [
+          4.773028194904327e-09,
+          -7.07223080098629e-09
+        ],
+        "actual_q": [
+          -5.238689482212067e-10,
+          9.022187441587448e-10
+        ],
+        "actual_q_absolute_norm": 1.043282002730698e-09,
+        "actual_minus_saved_d_absolute_norm": 9.575359947641924e-09,
+        "global_gate_claim": false,
+        "actual_minus_saved_d_over_original_global_denominator": 4.302602981327222e-12,
+        "actual_q_norm_over_original_global_denominator": 4.687895055495618e-13
+      }
+    ]
+  },
+  "invalid_initial_diagnostic": {
+    "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_v4_local_elimination_diagnostic_initial_buggy.json",
+    "sha256": "b9dd5bf9b5dd906fa3dcd7485e11190101067fe2f552caed92f9e96f5046a955",
+    "classification": "INVALID_DIAGNOSTIC_DO_NOT_USE",
+    "defect": "global b_t was subtracted once per cell instead of once for the selected row"
+  },
+  "feasibility": {
+    "existing_canonical_class_count": 3,
+    "owned_cells": 28000,
+    "actual_coordinate_key_count": null,
+    "actual_coordinate_key_count_reason": "the retained geometry metadata covers the selected pair, not all owned cell coordinates",
+    "same_key_pair_is_bitwise_identical_under_actual_geometry": false,
+    "actual_coordinates_added_to_key_would_split_selected_pair": true,
+    "per_class_T_R_S_LU_pivots_payload_bytes": 12448584,
+    "worst_case_28000_cell_cache_payload_bytes": 348560352000,
+    "worst_case_28000_cell_cache_payload_gib": 324.6,
+    "worst_case_cache_count_vs_three_classes": 9333,
+    "worst_case_is_measured": false,
+    "safe_full_domain_repair_proven": false
+  },
+  "costs": {
+    "two_service_parent_seconds_sum": 1944.8255633232184,
+    "saved_only_diagnostic_seconds": 5.046073629986495,
+    "saved_only_diagnostic_rss_peak_bytes": null,
+    "service_parent_and_child_times_double_counted": false,
+    "three_saved_only_diagnostic_seconds": [
+      11.880770959891379,
+      2.6438243738375604,
+      5.046073629986495
+    ],
+    "all_v4_engineering_and_window_cost_seconds": null,
+    "unknown_costs_note": "Known service parents and saved-only diagnostics are partial measured segments, not total V4 engineering or campaign time; other preparation/unmeasured intervals remain UNKNOWN."
+  },
+  "qualification": {
+    "v3_full_action_gate": "FAIL_TWO_COLUMNS_OVER_1E-11",
+    "v4_global_action_requalification": "NOT_RUN",
+    "production_fix": "NOT_SELECTED_OR_QUALIFIED",
+    "q200_factor_ksp_fgmres_full_field_A6_R_T_A": "NOT_RUN",
+    "official_result": false,
+    "next_step": "freeze one narrow production-geometry/native-volume-consistency candidate; requalify both full columns using saved volume evidence and original RHS/denominators; retain the original gate and no surface rescan"
+  },
+  "artifacts": {
+    "v3_closeout_compact": "b0_v3_full_action_failure_20261019.json",
+    "prior_saved_audit_compact_unchanged": "b0_v4_saved_audit_20261019.json",
+    "run_index": "run_index.json",
+    "source_tree_head": "02523b3d5a49d30d71caa8e7f8a9b9405a78fa33"
+  },
+  "full_action_error_decomposition": {
+    "denominator_definition": "max(norm(p6_result), norm(reduced_rhs), tiny)",
+    "limit": 1e-11,
+    "columns": [
+      {
+        "column": "top_mode_16030",
+        "worker_gate_relative_error": 3.042118678294192e-10,
+        "independent_numpy_relative_error": 3.0421186782950535e-10,
+        "trace_absolute_l2": 6.770178089430243e-07,
+        "port_absolute_l2": 0.0,
+        "original_denominator": 2225.481253487629,
+        "trace_over_original_denominator": 3.0421186782950706e-10,
+        "port_over_original_denominator": 0.0
+      },
+      {
+        "column": "bottom_mode_48090",
+        "worker_gate_relative_error": 6.391893878204816e-10,
+        "independent_numpy_relative_error": 6.391893878206565e-10,
+        "trace_absolute_l2": 1.4225036541037616e-06,
+        "port_absolute_l2": 0.0,
+        "original_denominator": 2225.4807123031883,
+        "trace_over_original_denominator": 6.391893878206601e-10,
+        "port_over_original_denominator": 0.0
+      }
+    ],
+    "D_action_absolute_error": 0.0,
+    "classification": "trace-only discrepancy in this saved two-column decomposition; does not identify global root cause"
+  },
+  "saved_state_local_decomposition": {
+    "full_defect_relative_by_column_and_recovery_step": {
+      "top_mode_16030": {
+        "j0": 3.0423570545615725e-10,
+        "j3": 3.042365821169482e-10
+      },
+      "bottom_mode_48090": {
+        "j0": 6.393219277325098e-10,
+        "j3": 6.392552901475154e-10
+      }
+    },
+    "top_j0_selected_two_cell_sum": [
+      -6.221619871265765e-10,
+      -3.9102728007891295e-10
+    ],
+    "top_j0_saved_target": [
+      -3.514726460178574e-09,
+      -2.0492440725008056e-09
+    ],
+    "top_j0_missing_difference": [
+      2.8925644730519975e-09,
+      1.6582167924218927e-09
+    ],
+    "local_saved_minus_prediction_relative_closure": {
+      "top_mode_16030": {
+        "j0": 8.291019546411618e-14,
+        "j3": 5.830870497710934e-14
+      },
+      "bottom_mode_48090": {
+        "j0": 1.4548475297379742e-13,
+        "j3": 1.3284274469497528e-13
+      }
+    },
+    "extended_accumulation_relative_closure": {
+      "top_mode_16030": {
+        "j0": 5.130360974638981e-14,
+        "j3": 5.129360433299294e-14
+      },
+      "bottom_mode_48090": {
+        "j0": 1.3131586714964495e-13,
+        "j3": 1.3128932451292234e-13
+      }
+    },
+    "scope": "selected two cells only; local algebraic closure does not cover all cells or pass the full-action gate"
+  },
+  "saved_checker_fixes_and_smoke": {
+    "fixes": [
+      "copy read-only mmap LU pivots into owned writable int32 before SciPy GETRS",
+      "compare raw cell diagnostic against initial storage/action/residual and verify step 3 separately",
+      "read and report saved arrays even when the joint action status is FAIL"
+    ],
+    "small_pivot_smoke": {
+      "environment": "workstation Linux, SciPy 1.18.1, 2x2 complex128 child-process reproducer",
+      "read_only_pivot_return_code": -11,
+      "owned_writable_int32_pivot": "PASS",
+      "scope_caveat": "explains pivot ownership risk; not the native stack from the original large checker process"
+    },
+    "required_saved_audit_status": "COMPLETE; data_integrity=true; recovery_passed=true; joint_action_passed=false; official_result=false"
+  },
+  "saved_only_diagnostics": [
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_volume_only_d883c1f_20261019T232138Z/task41_p0_v4_saved_data_diagnostic_20261020T000104Z.json",
+      "output_sha256": "72eaf681115929258f0e1a3aaa76073b2d7e4be94679ee68d34cc4b34069a8ae",
+      "script_sha256": "453e8eb1cea6ba60f3f296fe2039082452d5dc3adc5940bc4f50f00713f87f69",
+      "elapsed_seconds": 11.880770959891379,
+      "rss_peak_bytes": null
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_volume_only_d883c1f_20261019T232138Z/task41_p0_v4_native_local_decomposition_20261020T000440Z.json",
+      "output_sha256": "69e7e640c66c7ba5e84fd82b65b3929cf571de08bfcdbd1d39ed4164e947ce45",
+      "script_sha256": "99c3d3a03505eac5a27276e645edfe65fd7cdbfe1914522e877e2fcdd60125e7",
+      "elapsed_seconds": 2.6438243738375604,
+      "rss_peak_bytes": null
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_v4_local_elimination_diagnostic.json",
+      "output_sha256": "27eb82d1e51fd62b2b80e74fe5129f7be0512c35f95d092c967aeca6f90216ae",
+      "script_sha256": "a57b8f10251d5e921ab2bc41e0a584aca5e6f18c3c797e606690f3cd503e1110",
+      "elapsed_seconds": 5.046073629986495,
+      "rss_peak_bytes": null,
+      "invalid_initial_output_preserved_and_excluded": true
+    }
+  ],
+  "campaign_window_snapshot": {
+    "observed_at_utc": "2026-10-20T01:23:41.166876Z",
+    "window_sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38",
+    "read_api": "Task41 load_task41_p0_fixed_window + read_campaign_state (read_only=true)",
+    "accounting_sequence": 37870,
+    "last_accounting_sample_utc_ns": 1792457649480526832,
+    "cumulative_charged_at_tail_seconds": 70262.39144400517,
+    "projected_cumulative_charged_seconds": 72034.07768519018,
+    "numerical_remaining_seconds": 13165.922314809824,
+    "closeout_remaining_seconds": 1200.0,
+    "total_remaining_seconds": 14365.922314809824,
+    "raw_accounting_ledger_appended": false,
+    "window_or_t0_changed": false,
+    "not_a_window_or_resource_stop": true
+  },
+  "source_focused_tests": {
+    "source_sha": "02523b3d5a49d30d71caa8e7f8a9b9405a78fa33",
+    "activation": "source scripts/activate_myfenics_wsl.sh; repository .venv; complex128/int32 Linux ABI preflight passed",
+    "command": "python -m pytest -q src/test/test_task41_v4_volume_only_audit.py src/test/test_task41_v4_selected_volume_audit_cells.py src/test/test_task41_p0_saved_output_continuation.py",
+    "result": "26 passed in 1.20 s; exit 0",
+    "scope": "local small fixtures; not workstation ABI or numerical qualification"
+  },
+  "documentation_contract_tests": {
+    "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py",
+    "result": "21 passed in 0.08 s; exit 0",
+    "abi_preflight": "qualified WSL activation; repository .venv; PETSc complex128/int32; Linux module paths",
+    "scope": "documentation and model registry contracts only; no numerical qualification"
+  }
+}
