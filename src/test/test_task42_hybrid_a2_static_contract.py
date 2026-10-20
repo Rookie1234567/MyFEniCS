@@ -1939,6 +1939,256 @@ def test_task42_k0_profile_refuses_bad_saved_2d_three_column_geometry(
     assert all(item["delta_bytes"] is None for item in inventory["components"])
 
 
+def test_task42_inventory_admission_snapshot_rejects_and_preserves_malformed_value() -> None:
+    snapshot_errors, snapshot = task038_input_worker._task42_inventory_admission_error_snapshot(
+        {"admission_errors": {"cause": "source basis mismatch"}},
+        phase="qep_operator_K0_ffcx_form",
+        rank=3,
+    )
+    assert snapshot_errors == ["inventory_admission_errors_are_invalid"]
+    assert snapshot["phase"] == "qep_operator_K0_ffcx_form"
+    assert snapshot["rank"] == 3
+    assert snapshot["original_python_type"] == "builtins.dict"
+    assert snapshot["original_json_value"] == {"cause": "source basis mismatch"}
+    assert snapshot["original_repr"] == "{'cause': 'source basis mismatch'}"
+
+
+def test_task42_shared_hybrid_gate_preserves_source_basis_error_collectively(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One-rank source refusal remains visible and blocks UFL, FFCx, and K0."""
+
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    comm = MPI.COMM_WORLD
+    output_directory = _shared_task42_test_directory(tmp_path)
+    _prepare_shared_test_directory(comm, output_directory)
+    source_errors = (
+        ["task42_k0_source_basis_unavailable:fixture-layout-mismatch"]
+        if comm.rank == comm.size - 1
+        else []
+    )
+    inventory = {
+        "schema": "task42.direct_phase_delta_inventory.v1",
+        "status": "source-derived-prediction",
+        "phase": "qep_operator_K0_ffcx_form",
+        "components": [
+            {
+                "name": "qep_k0_ffcx_rank_payload",
+                "scope": "rank_local",
+                "unit": "bytes",
+                "delta_bytes": None,
+                "sizing_basis": {},
+            }
+        ],
+        "admission_errors": source_errors,
+    }
+
+    def unavailable_budget(_manifest, *, stage, inventory, rank, mpi_size):
+        assert stage == "qep_operator_K0_ffcx_form"
+        assert rank == comm.rank and mpi_size == comm.size
+        return None, dict(inventory), ["fixture_manifest_delta_unavailable"]
+
+    monkeypatch.setattr(task038_input_worker, "phase_budget_for_rank", unavailable_budget)
+    gate = task038_input_worker._task42_hybrid_phase_gate_callback(
+        output_directory=output_directory,
+        comm=comm,
+        root_pid=os.getpid(),
+        budget_manifest=None,
+        budget_manifest_sha256=None,
+        budget_manifest_error="fixture_manifest_load_failed",
+    )
+    events: list[str] = []
+    monkeypatch.setattr(qep, "_qep_degree_context", lambda *_args: {"quadrature_degree": 16})
+    monkeypatch.setattr(qep, "_task42_k0_phase_inventory", lambda *_args, **_kwargs: inventory)
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("UFL_context") or pytest.fail("UFL context ran after refusal"),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k0_form",
+        lambda *_args: events.append("UFL_form") or pytest.fail("UFL form ran after refusal"),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda *_args, **_kwargs: events.append("FFCx") or pytest.fail("FFCx ran after refusal"),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_assemble_compiled_unconstrained_matrix",
+        lambda *_args: events.append("K0_matrix") or pytest.fail("K0 allocation ran after refusal"),
+    )
+
+    caught = None
+    try:
+        qep.assemble_full_k0_for_sizing(
+            None, None, None, task42_phase_gate=gate, task42_sizing_identity={}
+        )
+    except BaseException as exc:  # noqa: BLE001 - persist the first cause before assertions
+        caught = {"type": type(exc).__name__, "message": str(exc)}
+    local_record = {
+        "rank": comm.rank,
+        "source_inventory_admission_errors": source_errors,
+        "caught": caught,
+        "events": list(events),
+    }
+    gathered = comm.allgather(local_record)
+    error_vectors = comm.allgather(caught["message"] if caught else None)
+    gate_receipt = None
+    if comm.rank == 0:
+        try:
+            receipt_path = output_directory / "numerical_output" / "task42_stage_resource_gates.jsonl"
+            record = json.loads(receipt_path.read_text(encoding="utf-8").splitlines()[-1])
+            gate_receipt = {
+                "decision": record.get("decision"),
+                "errors": record.get("errors"),
+                "source_snapshots": [
+                    row.get("inventory", {}).get("inventory_admission_errors_original")
+                    for row in record.get("rank_inventory", [])
+                ],
+            }
+        except BaseException as exc:  # noqa: BLE001 - preserve receipt readback before assertions
+            gate_receipt = {"error": f"{type(exc).__name__}: {exc}"}
+    gate_receipt = comm.bcast(gate_receipt, root=0)
+    _persist_rank_evidence(
+        comm,
+        output_directory,
+        "shared_gate_source_basis_refusal",
+        {**local_record, "gate_receipt": gate_receipt},
+    )
+
+    assert caught is not None and caught["type"] == "RuntimeError"
+    assert "rank_0_fixture_manifest_delta_unavailable" in caught["message"]
+    assert "fixture_manifest_load_failed" in caught["message"]
+    error_rank = comm.size - 1
+    assert f"rank_{error_rank}_task42_k0_source_basis_unavailable:fixture-layout-mismatch" in caught["message"]
+    assert all(item["caught"] == caught for item in gathered)
+    assert len(set(error_vectors)) == 1
+    assert events == []
+    assert isinstance(gate_receipt, dict) and gate_receipt.get("decision") == "refuse"
+    assert any("task42_k0_source_basis_unavailable" in error for error in gate_receipt.get("errors", []))
+    assert any("fixture_manifest_delta_unavailable" in error for error in gate_receipt.get("errors", []))
+    source_snapshot = gate_receipt["source_snapshots"][error_rank]
+    assert source_snapshot["original_json_value"] == [
+        "task42_k0_source_basis_unavailable:fixture-layout-mismatch"
+    ]
+
+
+def test_task42_premanifest_inventory_snapshot_broadcasts_root_write_failure(
+    tmp_path: Path,
+) -> None:
+    """The root-only snapshot is durable before manifest construction or refusal."""
+
+    comm = MPI.COMM_WORLD
+    rank_rows = comm.allgather(
+        {
+            "rank": comm.rank,
+            "phase": "qep_operator_K0_ffcx_form",
+            "inventory": {
+                "phase": "qep_operator_K0_ffcx_form",
+                "admission_errors": (
+                    ["fixture_source_basis_error"]
+                    if comm.rank == comm.size - 1
+                    else []
+                ),
+                "source_basis": {"rank": comm.rank, "global_rows": 4033},
+            },
+            "inventory_admission_errors_original": {
+                "phase": "qep_operator_K0_ffcx_form",
+                "rank": comm.rank,
+                "original_repr": repr(
+                    ["fixture_source_basis_error"]
+                    if comm.rank == comm.size - 1
+                    else []
+                ),
+            },
+            "errors": (
+                ["inventory_admission_error:fixture_source_basis_error"]
+                if comm.rank == comm.size - 1
+                else []
+            ),
+        }
+    )
+    success_directory = _shared_task42_test_directory(tmp_path)
+    _prepare_shared_test_directory(comm, success_directory)
+    success = task038_input_worker._task42_persist_phase_inventory_before_manifest(
+        output_directory=success_directory,
+        comm=comm,
+        phase="qep_operator_K0_ffcx_form",
+        rank_rows=rank_rows,
+    )
+    saved_status = None
+    if comm.rank == 0 and success.get("ok") is True:
+        try:
+            saved = json.loads(Path(success["path"]).read_text())
+            saved_status = {
+                "ok": saved.get("rank_count") == comm.size
+                and saved.get("rank_inventory") == rank_rows
+            }
+        except BaseException as exc:  # noqa: BLE001 - broadcast root verification before assertions
+            saved_status = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+    saved_status = comm.bcast(saved_status, root=0)
+    _persist_rank_evidence(
+        comm,
+        success_directory,
+        "premanifest_snapshot_success",
+        {"rank": comm.rank, "result": success, "readback_status": saved_status},
+    )
+    assert isinstance(saved_status, dict) and saved_status.get("ok") is True
+
+    failed_directory = _shared_task42_test_directory(tmp_path)
+    _prepare_shared_test_directory(comm, failed_directory)
+    target = (
+        failed_directory
+        / "numerical_output"
+        / "task42_qep_operator_K0_ffcx_form_source_inventory_pre_manifest.json"
+    )
+    preparation = None
+    if comm.rank == 0:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(b"preexisting; must not be overwritten")
+        preparation = {"ok": True}
+    preparation = comm.bcast(preparation, root=0)
+    assert preparation == {"ok": True}
+    failure = task038_input_worker._task42_persist_phase_inventory_before_manifest(
+        output_directory=failed_directory,
+        comm=comm,
+        phase="qep_operator_K0_ffcx_form",
+        rank_rows=rank_rows,
+    )
+    pre_manifest_errors = task038_input_worker._task42_pre_manifest_admission_errors(
+        rank_rows, failure, phase="qep_operator_K0_ffcx_form"
+    )
+    failure_record = {
+        "rank": comm.rank,
+        "result": failure,
+        "pre_manifest_errors": pre_manifest_errors,
+    }
+    _persist_rank_evidence(
+        comm,
+        failed_directory,
+        "premanifest_snapshot_refusal",
+        failure_record,
+    )
+    gathered_results = comm.allgather(failure)
+    gathered_errors = comm.allgather(tuple(pre_manifest_errors))
+    unchanged = None
+    if comm.rank == 0:
+        unchanged = target.read_bytes() == b"preexisting; must not be overwritten"
+    unchanged = comm.bcast(unchanged, root=0)
+
+    assert all(item == failure for item in gathered_results)
+    assert failure["ok"] is False
+    assert "FileExistsError" in failure["error"]
+    assert all(item == gathered_errors[0] for item in gathered_errors)
+    assert any("source_inventory_snapshot_write_failed" in error for error in pre_manifest_errors)
+    assert any("fixture_source_basis_error" in error for error in pre_manifest_errors)
+    assert unchanged is True
+
+
 def test_task42_k0_inventory_refuses_rank_payload_above_calibrated_envelope() -> None:
     from src.modes import quadratic_beta_eigenproblem as qep
 

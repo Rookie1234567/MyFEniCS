@@ -46,6 +46,134 @@ def _task42_inventory_json_bytes(value: Any) -> bytes:
         ) from exc
 
 
+def _task42_inventory_admission_error_snapshot(
+    inventory: Any, *, phase: str, rank: int
+) -> tuple[list[str], dict[str, Any]]:
+    """Preserve the source inventory's errors before later gate errors are added."""
+
+    present = isinstance(inventory, Mapping) and "admission_errors" in inventory
+    raw_errors = (
+        inventory.get("admission_errors", [])
+        if isinstance(inventory, Mapping)
+        else None
+    )
+    valid = type(raw_errors) is list and all(type(item) is str for item in raw_errors)
+    source_errors = (
+        list(raw_errors)
+        if valid
+        else [item for item in raw_errors if type(item) is str]
+        if type(raw_errors) is list
+        else []
+    )
+    if not isinstance(inventory, Mapping):
+        source_errors.append("inventory_must_be_a_mapping")
+    if not valid:
+        source_errors.append("inventory_admission_errors_are_invalid")
+
+    try:
+        raw_json_value = json.loads(_task42_inventory_json_bytes(raw_errors))
+        raw_json_serializable = True
+    except (TypeError, ValueError):
+        raw_json_value = None
+        raw_json_serializable = False
+    try:
+        raw_repr = repr(raw_errors)
+    except BaseException as exc:  # noqa: BLE001 - preserve even hostile malformed values
+        raw_repr = f"<repr failed: {type(exc).__name__}: {exc}>"
+    raw_type = f"{type(raw_errors).__module__}.{type(raw_errors).__qualname__}"
+    if not present:
+        raw_type = "missing-defaulted-to-empty-list"
+
+    diagnostic = {
+        "phase": phase,
+        "rank": rank,
+        "present": present,
+        "valid_list_of_strings": valid,
+        "original_python_type": raw_type,
+        "original_json_value": raw_json_value,
+        "original_repr": raw_repr,
+        "original_value_was_json_serializable": raw_json_serializable,
+    }
+    return source_errors, diagnostic
+
+
+def _task42_persist_phase_inventory_before_manifest(
+    *, output_directory: Path, comm: Any, phase: str, rank_rows: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Write one root-owned source-inventory receipt, then broadcast its outcome."""
+
+    result = None
+    if comm.rank == 0:
+        path = (
+            Path(output_directory).resolve()
+            / "numerical_output"
+            / f"task42_{phase}_source_inventory_pre_manifest.json"
+        )
+        try:
+            payload = {
+                "schema": "task42.phase_source_inventory_pre_manifest.v1",
+                "phase": phase,
+                "rank_count": len(rank_rows),
+                "rank_inventory": rank_rows,
+            }
+            encoded = _task42_inventory_json_bytes(payload)
+            allowance = 8 * 1024**2
+            if len(encoded) > allowance:
+                raise ValueError(
+                    f"source inventory receipt is {len(encoded)} bytes; "
+                    f"the existing 8 MiB controller allowance is {allowance} bytes"
+                )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("xb") as stream:
+                stream.write(encoded)
+                stream.flush()
+                os.fsync(stream.fileno())
+            result = {
+                "ok": True,
+                "path": str(path),
+                "sha256": hashlib.sha256(encoded).hexdigest(),
+                "payload_bytes": len(encoded),
+                "phase": phase,
+            }
+        except BaseException as exc:  # noqa: BLE001 - root writer refusal is synchronized below
+            result = {
+                "ok": False,
+                "path": str(path),
+                "phase": phase,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+    result = comm.bcast(result, root=0)
+    if not isinstance(result, dict) or type(result.get("ok")) is not bool:
+        raise RuntimeError("Task42 pre-manifest inventory writer returned no receipt")
+    return result
+
+
+def _task42_pre_manifest_admission_errors(
+    rank_rows: list[dict[str, Any]],
+    inventory_snapshot_result: Mapping[str, Any],
+    *,
+    phase: str,
+) -> list[str]:
+    """Return the complete unanimous refusal vector before manifest creation."""
+
+    errors: list[str] = []
+    for row in rank_rows:
+        rank = row.get("rank")
+        row_errors = row.get("errors")
+        if type(rank) is not int or rank < 0:
+            errors.append(f"{phase}_rank_identity_is_invalid:{rank!r}")
+        if type(row_errors) is not list or any(type(item) is not str for item in row_errors):
+            errors.append(f"{phase}_rank_{rank}_source_error_vector_is_invalid")
+            continue
+        errors.extend(f"{phase}_rank_{rank}_{item}" for item in row_errors)
+    if inventory_snapshot_result.get("ok") is not True:
+        errors.append(
+            f"{phase}_source_inventory_snapshot_write_failed:"
+            + str(inventory_snapshot_result.get("error", "missing writer detail"))
+        )
+    return errors
+
+
 def _task42_stage_gate_callback(
     *, output_directory: Path, comm: Any, root_pid: int
 ):
@@ -335,18 +463,39 @@ def _task42_hybrid_phase_gate_callback(
     )
 
     def gate(stage: str, inventory: Mapping[str, Any]) -> dict[str, Any]:
-        local_delta, selected, errors = phase_budget_for_rank(
-            budget_manifest,
-            stage=stage,
-            inventory=inventory,
-            rank=int(comm.rank),
-            mpi_size=int(comm.size),
+        source_errors, source_error_snapshot = (
+            _task42_inventory_admission_error_snapshot(
+                inventory, phase=stage, rank=int(comm.rank)
+            )
         )
+        try:
+            local_delta, selected, errors = phase_budget_for_rank(
+                budget_manifest,
+                stage=stage,
+                inventory=inventory,
+                rank=int(comm.rank),
+                mpi_size=int(comm.size),
+            )
+        except Exception as exc:
+            # Convert a rank-local pre-collective validation error into data for
+            # the common gate.  Other ranks then reach the same allgather and
+            # receive the same refusal instead of hanging before it.
+            local_delta = None
+            selected = dict(inventory) if isinstance(inventory, Mapping) else {}
+            errors = [f"phase_budget_validation_failed:{type(exc).__name__}:{exc}"]
         selected = dict(selected)
-        admission_errors = list(errors)
+        if type(errors) is list and all(type(item) is str for item in errors):
+            budget_errors = list(errors)
+        else:
+            budget_errors = ["phase_budget_errors_are_invalid"]
         if budget_manifest_error is not None:
-            admission_errors.append(budget_manifest_error)
-        selected["admission_errors"] = admission_errors
+            budget_errors.append(str(budget_manifest_error))
+        selected["admission_errors"] = [*source_errors, *budget_errors]
+        selected["inventory_admission_errors_original"] = source_error_snapshot
+        selected["phase_error_context"] = {
+            "phase": stage,
+            "rank": int(comm.rank),
+        }
         selected["budget_manifest_sha256"] = budget_manifest_sha256
         return base_gate(stage, local_delta, selected)
 
