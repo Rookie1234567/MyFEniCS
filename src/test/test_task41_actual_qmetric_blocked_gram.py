@@ -23,6 +23,7 @@ from src.solvers.task41_actual_qmetric_blocked_gram import (
     _geometry_trace_fields,
     _geometry_snippet,
     _instrument_original_kernel_geometry_oracle,
+    _original_integral_function,
     _ffcx_static_real_array_identity,
     assemble_blocked_gram,
     compare_geometry_traces,
@@ -176,8 +177,8 @@ def test_cache_identity_changes_with_the_frozen_evaluator_source():
     assert _cache_identity_digest(payload) != original
 
 
-def _original_kernel_geometry_fixture() -> tuple[str, str]:
-    digest = INTEGRAL_BODY_BY_TAG[1]
+def _original_kernel_geometry_fixture(digest: str | None = None) -> tuple[str, str]:
+    digest = INTEGRAL_BODY_BY_TAG[1] if digest is None else digest
     function_name = f"tabulate_tensor_integral_{digest}_hexahedron"
     declarations = [f"  double J0_c{index} = {index}.0;" for index in range(9)]
     declarations.extend(
@@ -188,24 +189,32 @@ def _original_kernel_geometry_fixture() -> tuple[str, str]:
         for index in (17, 18, 22, 23, 39, 44, 49, 75, 80, 85)
     ]
     body = (
-        f"void {function_name}(double _Complex* restrict A, "
-        "const double _Complex* restrict w, const double _Complex* restrict c, "
-        "const double* restrict coordinate_dofs, const int* restrict entity_local_index, "
-        "const uint8_t* restrict quadrature_permutation, void* custom_data)\n{\n"
+        f"// Code for integral integral_{digest}_hexahedron\n"
+        f"void {function_name}(double _Complex* restrict A,\n"
+        "                                    const double _Complex* restrict w,\n"
+        "                                    const double _Complex* restrict c,\n"
+        "                                    const double* restrict coordinate_dofs,\n"
+        "                                    const int* restrict entity_local_index,\n"
+        "                                    const uint8_t* restrict quadrature_permutation,\n"
+        "                                    void* custom_data)\n{\n"
         "for (int iq = 0; iq < 512; ++iq)\n{\n"
         + "\n".join(declarations)
         + "\n  {\n"
         + "\n".join(intermediate_declarations)
         + "\n  }\n  // ------------------------\n  // ------------------------\n"
         "// Section: Tensor Computation\n  A[0] += fw0;\n}\n}\n"
+        f"ufcx_integral integral_{digest}_hexahedron =\n{{\n"
+        f"  .tabulate_tensor_complex128 = {function_name},\n"
+        "};\n"
     )
     return body, digest
 
 
+@pytest.mark.parametrize("tag", (1, 2))
 def test_nested_geometry_helper_and_oracle_sources_compile_independently(
-    tmp_path: Path,
+    tmp_path: Path, tag: int
 ):
-    body, digest = _original_kernel_geometry_fixture()
+    body, digest = _original_kernel_geometry_fixture(INTEGRAL_BODY_BY_TAG[tag])
     helper_snippet = _geometry_snippet(body, digest, include_trace=True)
     helper_source = (
         "#include <complex.h>\n#include <stdint.h>\n"
@@ -230,6 +239,31 @@ def test_nested_geometry_helper_and_oracle_sources_compile_independently(
             check=False,
         )
         assert result.returncode == 0, f"{name} C syntax failed:\n{result.stderr}"
+
+
+@pytest.mark.parametrize("tag", (1, 2))
+def test_oracle_extracts_only_the_frozen_ffcx_function_before_ufcx_descriptor(tag):
+    body, digest = _original_kernel_geometry_fixture(INTEGRAL_BODY_BY_TAG[tag])
+    function_name = f"tabulate_tensor_integral_{digest}_hexahedron"
+
+    function_source = _original_integral_function(body, function_name)
+    normalized_header = " ".join(function_source.split("{", 1)[0].split())
+    assert normalized_header == (
+        f"void {function_name}(double _Complex* restrict A, "
+        "const double _Complex* restrict w, const double _Complex* restrict c, "
+        "const double* restrict coordinate_dofs, const int* restrict entity_local_index, "
+        "const uint8_t* restrict quadrature_permutation, void* custom_data)"
+    )
+    assert body.count(function_name) == 2  # definition and real ufcx registration reference
+    assert function_source.count(function_name) == 1
+    assert "ufcx_integral" not in function_source
+
+    oracle_source, _fields, clone_name = _instrument_original_kernel_geometry_oracle(
+        body, digest
+    )
+    assert f"void {clone_name}(" in oracle_source
+    assert function_name not in oracle_source
+    assert "ufcx_integral" not in oracle_source
 
 
 def test_instrumented_oracle_clone_preserves_the_original_tensor_kernel():

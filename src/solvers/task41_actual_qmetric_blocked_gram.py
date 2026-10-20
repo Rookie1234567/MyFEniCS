@@ -280,6 +280,52 @@ def _integral_body(source: str, digest: str) -> str:
     return source[start:end]
 
 
+_C_LEXICAL_TOKEN = re.compile(
+    r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\])*\"|"
+    r"'(?:\\.|[^'\\])*'|[(){}]",
+    re.DOTALL,
+)
+
+
+def _matching_c_delimiter(
+    source: str, opening_index: int, opening: str, closing: str
+) -> int:
+    if source[opening_index] != opening:
+        raise ValueError(f"expected C delimiter {opening!r}")
+    depth = 0
+    for token_match in _C_LEXICAL_TOKEN.finditer(source, opening_index):
+        token = token_match.group(0)
+        if token == opening:
+            depth += 1
+        elif token == closing:
+            depth -= 1
+            if depth == 0:
+                return token_match.start()
+    raise ValueError(f"unbalanced C delimiter {opening!r}")
+
+
+def _original_integral_function(body: str, function_name: str) -> str:
+    """Return one frozen FFCx function definition without its ufcx descriptor."""
+
+    definition_pattern = re.compile(
+        rf"(?m)^[ \t]*(?:static[ \t]+)?void[ \t]+"
+        rf"{re.escape(function_name)}[ \t]*\("
+    )
+    definitions = list(definition_pattern.finditer(body))
+    if len(definitions) != 1:
+        raise ValueError(
+            "frozen FFCx body does not contain exactly one original integral function definition"
+        )
+    definition = definitions[0]
+    parameter_open = definition.end() - 1
+    parameter_close = _matching_c_delimiter(body, parameter_open, "(", ")")
+    brace_open = body.find("{", parameter_close + 1)
+    if brace_open < 0 or body[parameter_close + 1 : brace_open].strip():
+        raise ValueError("frozen FFCx original integral signature is not followed by a body")
+    brace_close = _matching_c_delimiter(body, brace_open, "{", "}")
+    return body[definition.start() : brace_close + 1]
+
+
 def _geometry_trace_fields(geometry: str, function_name: str) -> tuple[str, ...]:
     """List the frozen scalar J/det/inverse/pullback values available per q point."""
 
@@ -403,14 +449,13 @@ def _instrument_original_kernel_geometry_oracle(
         raise ValueError("original-kernel oracle digest is outside the frozen V6 profile")
     original_name = f"tabulate_tensor_integral_{integral_digest}_hexahedron"
     clone_name = f"task41_v6_original_geometry_oracle_{integral_digest[:12]}"
-    if body.count(original_name) != 1:
-        raise ValueError("frozen FFCx body does not contain one original integral function")
+    function_source = _original_integral_function(body, original_name)
     loop = "for (int iq = 0; iq < 512; ++iq)"
-    loop_start = body.find(loop)
-    tensor_start = body.find("// Section: Tensor Computation", loop_start)
+    loop_start = function_source.find(loop)
+    tensor_start = function_source.find("// Section: Tensor Computation", loop_start)
     if loop_start < 0 or tensor_start < 0:
         raise ValueError("frozen original kernel lacks the pinned Q907 geometry section")
-    geometry = body[loop_start:tensor_start]
+    geometry = function_source[loop_start:tensor_start]
     loop_end = re.search(r"\n  }\n(?:  //[- ]+\s*\n)+\s*$", geometry)
     if loop_end is None:
         raise ValueError("frozen original kernel has an unexpected Q907 loop ending")
@@ -424,8 +469,22 @@ def _instrument_original_kernel_geometry_oracle(
     )
     instrument.append("    }")
     insertion = loop_start + loop_end.start()
-    cloned = body[:insertion] + "\n".join(instrument) + body[insertion:]
-    cloned = cloned.replace(original_name, clone_name, 1)
+    cloned = (
+        function_source[:insertion]
+        + "\n".join(instrument)
+        + function_source[insertion:]
+    )
+    definition_pattern = re.compile(
+        rf"(?m)^([ \t]*(?:static[ \t]+)?void[ \t]+)"
+        rf"{re.escape(original_name)}([ \t]*\()"
+    )
+    definitions = list(definition_pattern.finditer(cloned))
+    if len(definitions) != 1:
+        raise ValueError("instrumented frozen FFCx source lost its original function definition")
+    definition = definitions[0]
+    name_start = definition.start(0) + len(definition.group(1))
+    name_end = name_start + len(original_name)
+    cloned = cloned[:name_start] + clone_name + cloned[name_end:]
     signature = "void* custom_data)"
     if cloned.count(signature) != 1:
         raise ValueError("frozen original-kernel signature differs from the oracle profile")
