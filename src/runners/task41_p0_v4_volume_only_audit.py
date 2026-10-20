@@ -23,6 +23,9 @@ if str(ROOT) not in sys.path:
 TASK41_P0_V4_SOURCE_REPORT_SHA256 = (
     "09e96eb8c9d52b4cf0c29570fd8df3c1f820bc208104d91edd102978dfc9c4d5"
 )
+TASK41_P0_V4_VOLUME_ONLY_RECEIPT_SHA256 = (
+    "90e65f40343f2e933e203af5ffa1292ca533b77e70f5af97e25d34b89b69a05d"
+)
 TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256 = (
     "a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031"
 )
@@ -143,6 +146,83 @@ def _v4_required_checker_watchdog_elapsed_seconds(
     if not math.isfinite(value) or value <= 0.0:
         raise ValueError("V4 required-checker watchdog elapsed time is not finite and positive")
     return value
+
+
+def _v6_postbuild_reserve_evidence(
+    receipt_path: str | Path,
+    *,
+    donor_contract: Mapping[str, Any],
+    donor_contract_sha256: str,
+    donor_manifest_sha256: str,
+    current_execution_window_sha256: str,
+) -> dict[str, Any]:
+    path = Path(receipt_path)
+    raw = path.read_bytes()
+    receipt_sha256 = hashlib.sha256(raw).hexdigest()
+    if receipt_sha256 != TASK41_P0_V4_VOLUME_ONLY_RECEIPT_SHA256:
+        raise ValueError("frozen V4 post-build receipt SHA-256 differs")
+    receipt = json.loads(raw)
+    identity = receipt.get("identity", {})
+    extraction = receipt.get("volume_only_extraction", {})
+    donor_source = donor_contract.get("source", {})
+    donor_window = donor_contract.get("window", {})
+    expected_identity = {
+        "v3_donor_source_sha": donor_source.get("sha"),
+        "v3_donor_contract_sha256": donor_contract_sha256,
+        "v3_donor_manifest_sha256": donor_manifest_sha256,
+        "campaign_window_sha256": donor_window.get("sha256"),
+    }
+    for key, expected in expected_identity.items():
+        if not expected or identity.get(key) != expected:
+            raise ValueError(f"frozen V4 post-build donor identity mismatch at identity.{key}")
+    if extraction.get("status") != "COMPLETED":
+        raise ValueError("frozen V4 post-build extraction is not completed")
+    if (
+        extraction.get("source_sha")
+        != identity.get("v4_volume_only_consumer_source_sha")
+    ):
+        raise ValueError("frozen V4 post-build consumer source identity differs")
+    if (
+        extraction.get("contract_sha256")
+        != identity.get("v4_volume_only_consumer_contract_sha256")
+    ):
+        raise ValueError("frozen V4 post-build consumer contract identity differs")
+    if extraction.get("report_sha256") != TASK41_P0_V4_SOURCE_REPORT_SHA256:
+        raise ValueError("frozen V4 post-build report SHA-256 differs")
+    parent_seconds = float(extraction["service_parent_seconds"])
+    worker_seconds = float(extraction["worker_elapsed_seconds"])
+    if (
+        not math.isfinite(parent_seconds)
+        or parent_seconds <= 0.0
+        or not math.isfinite(worker_seconds)
+        or worker_seconds <= 0.0
+    ):
+        raise ValueError("V4 measured post-build service/worker time is not finite and positive")
+    return {
+        "schema": "task41.p0.v6.postbuild_reserve_evidence.v1",
+        "path": str(path),
+        "sha256": receipt_sha256,
+        "historical_v4_evidence_identity": {
+            "campaign_window_sha256": identity["campaign_window_sha256"],
+            "v3_donor_source_sha": identity["v3_donor_source_sha"],
+            "v3_donor_contract_sha256": identity["v3_donor_contract_sha256"],
+            "v3_donor_manifest_sha256": identity["v3_donor_manifest_sha256"],
+            "v4_volume_only_consumer_source_sha": identity[
+                "v4_volume_only_consumer_source_sha"
+            ],
+            "v4_volume_only_consumer_contract_sha256": identity[
+                "v4_volume_only_consumer_contract_sha256"
+            ],
+            "report_sha256": extraction["report_sha256"],
+        },
+        "current_execution_window_sha256": current_execution_window_sha256,
+        "measured_service_parent_seconds": parent_seconds,
+        "measured_worker_seconds": worker_seconds,
+        "required_checker_watchdog_seconds": (
+            _v4_required_checker_watchdog_elapsed_seconds(extraction)
+        ),
+        "safety_factor": TASK41_P0_V5_POSTBUILD_SAFETY_FACTOR,
+    }
 
 
 def _write_json_atomic(path: Path, payload: Mapping[str, Any]) -> None:
@@ -704,6 +784,7 @@ def main(argv: list[str] | None = None) -> int:
     from src.runners.task41_p0_contract import require_task41_p0_contract, sha256_file
     from src.solvers.task40_v22_operator_probe import _resource_admission
     from src.solvers.task41_v4_volume_only_audit import (
+        TASK41_V4_DONOR_MANIFEST_SHA256,
         TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT,
         Task41V5VolumeAttributionAccumulator,
         audit_task41_v4_volume_identity,
@@ -744,28 +825,16 @@ def main(argv: list[str] | None = None) -> int:
             / "docs/task41extra_phi90_p50x50_g17x20/outcomes/"
             / "b0_v4_volume_only_attribution_20261020.json"
         )
-        v4_receipt = json.loads(v4_receipt_path.read_text(encoding="utf-8"))
-        v4_identity = v4_receipt.get("identity", {})
-        v4_extraction = v4_receipt.get("volume_only_extraction", {})
-        if (
-            v4_identity.get("campaign_window_sha256") != fixed_window.sha256
-            or v4_extraction.get("status") != "COMPLETED"
-        ):
-            raise ValueError("V5 post-build reserve lacks a completed V4 receipt on the same fixed window")
-        postbuild_parent_seconds = float(v4_extraction["service_parent_seconds"])
-        if not math.isfinite(postbuild_parent_seconds) or postbuild_parent_seconds <= 0.0:
-            raise ValueError("V4 measured post-build service time is not finite and positive")
-        postbuild_reserve_evidence = {
-            "path": str(v4_receipt_path),
-            "sha256": sha256_file(v4_receipt_path),
-            "campaign_window_sha256": fixed_window.sha256,
-            "measured_service_parent_seconds": postbuild_parent_seconds,
-            "measured_worker_seconds": float(v4_extraction["worker_elapsed_seconds"]),
-            "required_checker_watchdog_seconds": (
-                _v4_required_checker_watchdog_elapsed_seconds(v4_extraction)
-            ),
-            "safety_factor": TASK41_P0_V5_POSTBUILD_SAFETY_FACTOR,
-        }
+        postbuild_reserve_evidence = _v6_postbuild_reserve_evidence(
+            v4_receipt_path,
+            donor_contract=donor_contract,
+            donor_contract_sha256=donor_digest,
+            donor_manifest_sha256=TASK41_V4_DONOR_MANIFEST_SHA256,
+            current_execution_window_sha256=fixed_window.sha256,
+        )
+        postbuild_parent_seconds = float(
+            postbuild_reserve_evidence["measured_service_parent_seconds"]
+        )
     donor_case = donor_contract.get("case", {})
     consumer_case = consumer_contract.get("case", {})
     for key in (
