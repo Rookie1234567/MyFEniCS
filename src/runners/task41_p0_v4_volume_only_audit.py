@@ -184,7 +184,7 @@ def _v6_postbuild_reserve_evidence(
         raise ValueError("frozen V4 post-build consumer source identity differs")
     if (
         extraction.get("contract_sha256")
-        != identity.get("v4_volume_only_consumer_contract_sha256")
+        != identity.get("v4_volume_consumer_contract_sha256")
     ):
         raise ValueError("frozen V4 post-build consumer contract identity differs")
     if extraction.get("report_sha256") != TASK41_P0_V4_SOURCE_REPORT_SHA256:
@@ -210,8 +210,8 @@ def _v6_postbuild_reserve_evidence(
             "v4_volume_only_consumer_source_sha": identity[
                 "v4_volume_only_consumer_source_sha"
             ],
-            "v4_volume_only_consumer_contract_sha256": identity[
-                "v4_volume_only_consumer_contract_sha256"
+            "v4_volume_consumer_contract_sha256": identity[
+                "v4_volume_consumer_contract_sha256"
             ],
             "report_sha256": extraction["report_sha256"],
         },

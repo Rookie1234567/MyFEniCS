@@ -302,74 +302,61 @@ def _fixture(tmp_path: Path, monkeypatch):
     )
 
 
-def _v6_postbuild_receipt_fixture(tmp_path: Path):
-    import json
+def _v6_actual_v4_postbuild_inputs(repo_root: Path):
+    receipt_path = (
+        repo_root
+        / "docs/task41extra_phi90_p50x50_g17x20/outcomes/"
+        / "b0_v4_volume_only_attribution_20261020.json"
+    )
+    donor_contract = {
+        "source": {"sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7"},
+        "window": {
+            "sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38"
+        },
+    }
+    return receipt_path, donor_contract
 
-    from src.runners.task41_p0_v4_volume_only_audit import (
-        TASK41_P0_V4_SOURCE_REPORT_SHA256,
+
+def _run_v6_postbuild_reserve(worker, receipt_path, donor_contract):
+    return worker._v6_postbuild_reserve_evidence(
+        receipt_path,
+        donor_contract=donor_contract,
+        donor_contract_sha256=(
+            "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c"
+        ),
+        donor_manifest_sha256=(
+            "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465"
+        ),
+        current_execution_window_sha256=(
+            "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d"
+        ),
     )
 
-    donor_contract = {
-        "source": {"sha": "a" * 40},
-        "window": {"sha256": "b" * 64},
-    }
-    receipt = {
-        "identity": {
-            "v3_donor_source_sha": "a" * 40,
-            "v3_donor_contract_sha256": "c" * 64,
-            "v3_donor_manifest_sha256": "d" * 64,
-            "campaign_window_sha256": "b" * 64,
-            "v4_volume_only_consumer_source_sha": "e" * 40,
-            "v4_volume_only_consumer_contract_sha256": "f" * 64,
-        },
-        "volume_only_extraction": {
-            "status": "COMPLETED",
-            "source_sha": "e" * 40,
-            "contract_sha256": "f" * 64,
-            "report_sha256": TASK41_P0_V4_SOURCE_REPORT_SHA256,
-            "service_parent_seconds": 1638.8259056420065,
-            "worker_elapsed_seconds": 1571.1404369487427,
-            "required_checker_watchdog_elapsed_seconds": 59.97374047804624,
-        },
-    }
-    path = tmp_path / "v4_receipt.json"
-    path.write_text(json.dumps(receipt, sort_keys=True) + "\n", encoding="utf-8")
-    return path, donor_contract, receipt
 
-
-def test_v6_postbuild_reserve_accepts_historical_v4_window_and_keeps_current_window_separate(
-    tmp_path, monkeypatch
-):
-    import hashlib
-
+def test_v6_postbuild_reserve_accepts_actual_v4_receipt_across_windows():
     from src.runners import task41_p0_v4_volume_only_audit as worker
 
-    path, donor_contract, _ = _v6_postbuild_receipt_fixture(tmp_path)
-    monkeypatch.setattr(
-        worker,
-        "TASK41_P0_V4_VOLUME_ONLY_RECEIPT_SHA256",
-        hashlib.sha256(path.read_bytes()).hexdigest(),
+    receipt_path, donor_contract = _v6_actual_v4_postbuild_inputs(
+        Path(__file__).resolve().parents[2]
     )
-    evidence = worker._v6_postbuild_reserve_evidence(
-        path,
-        donor_contract=donor_contract,
-        donor_contract_sha256="c" * 64,
-        donor_manifest_sha256="d" * 64,
-        current_execution_window_sha256="9" * 64,
-    )
-
+    evidence = _run_v6_postbuild_reserve(worker, receipt_path, donor_contract)
     historical = evidence["historical_v4_evidence_identity"]
-    assert historical["campaign_window_sha256"] == "b" * 64
-    assert evidence["current_execution_window_sha256"] == "9" * 64
+    assert historical["campaign_window_sha256"] == donor_contract["window"]["sha256"]
+    assert evidence["current_execution_window_sha256"] == (
+        "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d"
+    )
     assert historical["campaign_window_sha256"] != evidence[
         "current_execution_window_sha256"
     ]
+    assert historical["v4_volume_consumer_contract_sha256"] == (
+        "9012ffc0e80fac30f2aa1307d266366e7607ebcd11b9e0e2278bb213514e4bcd"
+    )
     assert evidence["measured_service_parent_seconds"] == pytest.approx(
         1638.8259056420065
     )
 
 
-def test_v6_postbuild_reserve_rejects_tampered_historical_window_identity(
+def test_v6_postbuild_reserve_rejects_tampered_actual_v4_window_identity(
     tmp_path, monkeypatch
 ):
     import hashlib
@@ -377,29 +364,21 @@ def test_v6_postbuild_reserve_rejects_tampered_historical_window_identity(
 
     from src.runners import task41_p0_v4_volume_only_audit as worker
 
-    path, donor_contract, receipt = _v6_postbuild_receipt_fixture(tmp_path)
-    monkeypatch.setattr(
-        worker,
-        "TASK41_P0_V4_VOLUME_ONLY_RECEIPT_SHA256",
-        hashlib.sha256(path.read_bytes()).hexdigest(),
+    receipt_path, donor_contract = _v6_actual_v4_postbuild_inputs(
+        Path(__file__).resolve().parents[2]
     )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     receipt["identity"]["campaign_window_sha256"] = "9" * 64
-    path.write_text(json.dumps(receipt, sort_keys=True) + "\n", encoding="utf-8")
-    # Even a re-hashed receipt cannot move the historical measurement onto V6.
+    tampered_path = tmp_path / "tampered_v4_receipt.json"
+    tampered_path.write_text(json.dumps(receipt, sort_keys=True) + "\n", encoding="utf-8")
     monkeypatch.setattr(
         worker,
         "TASK41_P0_V4_VOLUME_ONLY_RECEIPT_SHA256",
-        hashlib.sha256(path.read_bytes()).hexdigest(),
+        hashlib.sha256(tampered_path.read_bytes()).hexdigest(),
     )
 
     with pytest.raises(ValueError, match="identity.campaign_window_sha256"):
-        worker._v6_postbuild_reserve_evidence(
-            path,
-            donor_contract=donor_contract,
-            donor_contract_sha256="c" * 64,
-            donor_manifest_sha256="d" * 64,
-            current_execution_window_sha256="9" * 64,
-        )
+        _run_v6_postbuild_reserve(worker, tampered_path, donor_contract)
 
 
 def test_v5_postbuild_reserve_reads_frozen_v4_checker_watchdog_elapsed_seconds():
