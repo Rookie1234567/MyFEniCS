@@ -322,6 +322,111 @@ def _task42_index_map_basis(
     return result, global_ids, temporary_bytes
 
 
+def _task42_cell_dof_layout(
+    dofmap: Any,
+    label: str,
+    *,
+    local_cell_count: int,
+) -> tuple[np.ndarray, np.ndarray, list[int], int, dict[str, Any]]:
+    """Read owned and ghost cell rows through DOLFINx's public DofMap API."""
+
+    if type(local_cell_count) is not int or local_cell_count < 0:
+        raise ValueError(
+            f"Task42 K0 basis {label} has invalid owned+ghost cell count"
+        )
+    cell_dofs_reader = getattr(dofmap, "cell_dofs", None)
+    if not callable(cell_dofs_reader):
+        raise TypeError(
+            f"Task42 K0 basis {label} lacks public cell_dofs(cell_index)"
+        )
+
+    pet_int_dtype = np.dtype(PETSc.IntType)
+    row_lengths = np.empty(local_cell_count, dtype=np.int64)
+    maximum_returned_row_bytes = 0
+    returned_types: set[str] = set()
+    for cell_index in range(local_cell_count):
+        try:
+            raw_row = cell_dofs_reader(cell_index)
+            returned_types.add(
+                f"{type(raw_row).__module__}.{type(raw_row).__qualname__}"
+            )
+            row = np.asarray(raw_row)
+        except Exception as exc:
+            raise ValueError(
+                f"Task42 K0 basis {label} public cell_dofs({cell_index}) failed: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+        if row.ndim != 1 or row.dtype.kind not in "iu" or row.dtype != pet_int_dtype:
+            raise ValueError(
+                f"Task42 K0 basis {label} public cell_dofs({cell_index}) must return "
+                f"a 1D {pet_int_dtype} integer row; got shape={row.shape}, "
+                f"dtype={row.dtype}"
+            )
+        row_lengths[cell_index] = int(row.size)
+        maximum_returned_row_bytes = max(
+            maximum_returned_row_bytes, int(row.nbytes)
+        )
+
+    offsets = np.empty(local_cell_count + 1, dtype=np.int64)
+    offsets[0] = 0
+    for cell_index, row_length in enumerate(row_lengths):
+        next_offset = int(offsets[cell_index]) + int(row_length)
+        if next_offset > np.iinfo(offsets.dtype).max:
+            raise ValueError(
+                f"Task42 K0 basis {label} cell-dof offsets overflow int64"
+            )
+        offsets[cell_index + 1] = next_offset
+
+    cell_dofs = np.empty(int(offsets[-1]), dtype=pet_int_dtype)
+    for cell_index in range(local_cell_count):
+        try:
+            raw_row = cell_dofs_reader(cell_index)
+            return_type = f"{type(raw_row).__module__}.{type(raw_row).__qualname__}"
+            if return_type not in returned_types:
+                raise ValueError(
+                    f"Task42 K0 basis {label} public cell_dofs({cell_index}) "
+                    "changed return type during normalization"
+                )
+            row = np.asarray(raw_row)
+        except Exception as exc:
+            raise ValueError(
+                f"Task42 K0 basis {label} public cell_dofs({cell_index}) changed "
+                f"during normalization: {type(exc).__name__}: {exc}"
+            ) from exc
+        expected_length = int(row_lengths[cell_index])
+        if (
+            row.ndim != 1
+            or row.dtype != pet_int_dtype
+            or row.size != expected_length
+        ):
+            raise ValueError(
+                f"Task42 K0 basis {label} public cell_dofs({cell_index}) changed "
+                "shape or integer ABI during normalization"
+            )
+        begin = int(offsets[cell_index])
+        end = int(offsets[cell_index + 1])
+        cell_dofs[begin:end] = row
+
+    cell_rows = [int(value) for value in row_lengths]
+    normalization_peak_bytes = int(
+        row_lengths.nbytes
+        + offsets.nbytes
+        + cell_dofs.nbytes
+        + maximum_returned_row_bytes
+    )
+    source = {
+        "api": "DofMap.cell_dofs(cell_index)",
+        "dofmap_type": f"{type(dofmap).__module__}.{type(dofmap).__qualname__}",
+        "returned_row_types": sorted(returned_types),
+        "row_dimensions": 1,
+        "row_count": local_cell_count,
+        "offsets_derived_from_actual_row_lengths": True,
+        "normalized_value_dtype": pet_int_dtype.str,
+        "offset_dtype": offsets.dtype.str,
+    }
+    return cell_dofs, offsets, cell_rows, normalization_peak_bytes, source
+
+
 def _task42_space_basis(
     space: Any,
     label: str,
@@ -335,32 +440,17 @@ def _task42_space_basis(
     count_matrix_candidates: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any], int]:
     dofmap = space.dofmap
-    adjacency = getattr(dofmap, "list", None)
-    if callable(adjacency):
-        adjacency = adjacency()
-    if adjacency is None:
-        raise ValueError(f"Task42 K0 basis {label} lacks its cell dofmap")
-    cell_dofs = np.asarray(getattr(adjacency, "array", adjacency))
-    offsets = getattr(adjacency, "offsets", None)
-    if offsets is None:
-        raise ValueError(f"Task42 K0 basis {label} lacks cell-dof offsets")
-    offsets = np.asarray(offsets)
-    if (
-        cell_dofs.ndim != 1
-        or cell_dofs.dtype.kind not in "iu"
-        or offsets.ndim != 1
-        or offsets.dtype.kind not in "iu"
-        or offsets.size != local_cell_count + 1
-        or int(offsets[0]) != 0
-        or int(offsets[-1]) != cell_dofs.size
-    ):
-        raise ValueError(f"Task42 K0 basis {label} has malformed cell dof offsets")
-    cell_rows = [
-        int(offsets[index + 1]) - int(offsets[index])
-        for index in range(local_cell_count)
-    ]
-    if any(rows < 0 for rows in cell_rows):
-        raise ValueError(f"Task42 K0 basis {label} cell dof offsets are not monotone")
+    (
+        cell_dofs,
+        offsets,
+        cell_rows,
+        cell_dof_layout_normalization_peak_bytes,
+        cell_dof_layout_source,
+    ) = _task42_cell_dof_layout(
+        dofmap,
+        label,
+        local_cell_count=local_cell_count,
+    )
     index_map = dofmap.index_map
     if owned_cell_count < 0 or owned_cell_count > local_cell_count:
         raise ValueError(f"Task42 K0 basis {label} has invalid owned-cell count")
@@ -499,10 +589,23 @@ def _task42_space_basis(
     summary["cell_dof_rows_python_metadata_bytes_upper"] = int(
         64 * (len(cell_rows) + 1)
     )
+    summary["cell_dof_layout_normalization_peak_bytes"] = int(
+        cell_dof_layout_normalization_peak_bytes
+    )
+    summary["cell_dof_layout_payload_bytes"] = int(
+        cell_dofs.nbytes + offsets.nbytes
+    )
+    summary["cell_dof_layout_source"] = cell_dof_layout_source
+    summary["source_basis_validation_scratch_peak_bytes"] = int(
+        max(
+            cell_dof_layout_normalization_peak_bytes,
+            index_map_temporary_bytes + cell_dofs.nbytes + offsets.nbytes,
+        )
+    )
     basis = {
         "index_map": index_map_basis,
         "index_map_bs": block_size,
-        "cell_dofmap": _task42_array_basis(adjacency, f"{label}.cell_dofmap"),
+        "cell_dofmap": _task42_array_basis(cell_dofs, f"{label}.cell_dofmap"),
         "cell_dof_offsets": _task42_array_basis(offsets, f"{label}.cell_dof_offsets"),
         "cell_dof_rows": summary,
     }
@@ -783,6 +886,26 @@ def _task42_k0_source_basis(
             + transverse_cell_rows["cell_dof_rows_python_metadata_bytes_upper"]
             + longitudinal_cell_rows["cell_dof_rows_python_metadata_bytes_upper"]
         ),
+        "cell_dof_layout_normalization_temporary_peak_bytes": int(
+            max(
+                mixed_cell_rows["cell_dof_layout_normalization_peak_bytes"],
+                transverse_cell_rows["cell_dof_layout_normalization_peak_bytes"],
+                longitudinal_cell_rows["cell_dof_layout_normalization_peak_bytes"],
+            )
+        ),
+        "source_basis_validation_scratch_peak_bytes": int(
+            max(
+                cell_map_temp_bytes,
+                mixed_cell_rows["source_basis_validation_scratch_peak_bytes"],
+                transverse_cell_rows["source_basis_validation_scratch_peak_bytes"],
+                longitudinal_cell_rows["source_basis_validation_scratch_peak_bytes"],
+                int(
+                    geometry_coordinates.shape[0]
+                    if geometry_coordinates.ndim == 2
+                    else 0
+                ),
+            )
+        ),
     }
     basis: dict[str, Any] = {
         "schema": "task42.qep_k0_rank_basis.v1",
@@ -889,16 +1012,6 @@ def _task42_k0_source_basis(
         },
         "source_derived_objects": source_derived_objects,
     }
-    source_derived_objects["source_basis_validation_scratch_peak_bytes"] = int(
-        max(
-            source_derived_objects[
-                "index_map_local_to_global_temporary_peak_bytes"
-            ],
-            source_derived_objects[
-                "geometry_coordinate_validation_mask_bytes_upper"
-            ],
-        )
-    )
     if compiled_form is not None:
         basis["compiled_form_type"] = (
             f"{type(compiled_form).__module__}.{type(compiled_form).__qualname__}"

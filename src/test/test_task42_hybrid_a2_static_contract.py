@@ -1571,15 +1571,12 @@ def _task42_fake_k0_inputs(rank: int, mpi_size: int = 2):
         cell_dofs = (
             np.arange(cell_dof_count, dtype=np.int32) % (local_size + 1)
         ).astype(np.int32, copy=False)
-        adjacency = SimpleNamespace(
-            array=cell_dofs,
-            offsets=np.arange(0, cell_dofs.size + 1, 4, dtype=np.int32),
-        )
+        cell_dof_rows = cell_dofs.reshape(local_cell_count, 4)
         return SimpleNamespace(
             dofmap=SimpleNamespace(
                 index_map=index_map(local_size, start, global_size),
                 index_map_bs=1,
-                list=adjacency,
+                cell_dofs=lambda cell_index: cell_dof_rows[cell_index],
             )
         )
 
@@ -1809,6 +1806,13 @@ def test_task42_k0_phase_basis_binds_rank_layout_dtype_and_input_identity() -> N
                 "ghost_global_ids_sha256"
             ]
             assert mixed_layout["index_map"]["ghost_owners"]["sha256"]
+            mixed_cell_dof_source = mixed_layout["cell_dof_rows"][
+                "cell_dof_layout_source"
+            ]
+            assert mixed_cell_dof_source["api"] == "DofMap.cell_dofs(cell_index)"
+            assert mixed_cell_dof_source["row_dimensions"] == 1
+            assert mixed_cell_dof_source["row_count"] == 10 + 2 * rank
+            assert mixed_cell_dof_source["offsets_derived_from_actual_row_lengths"]
             assert mixed_layout["index_map"][
                 "comparison_mask_temporary_bytes_upper"
             ] == 4 + rank
@@ -1832,6 +1836,9 @@ def test_task42_k0_phase_basis_binds_rank_layout_dtype_and_input_identity() -> N
             ] == max(
                 basis["source_derived_objects"][
                     "index_map_local_to_global_temporary_peak_bytes"
+                ],
+                basis["source_derived_objects"][
+                    "cell_dof_layout_normalization_temporary_peak_bytes"
                 ],
                 basis["source_derived_objects"][
                     "geometry_coordinate_validation_mask_bytes_upper"
@@ -1874,6 +1881,235 @@ def test_task42_k0_phase_basis_binds_rank_layout_dtype_and_input_identity() -> N
         for error in missing_identity["admission_errors"]
     )
     assert all(component["delta_bytes"] is None for component in missing_identity["components"])
+
+
+@pytest.mark.parametrize("rank", [0, 1])
+def test_task42_cell_dof_layout_matches_saved_real_space_rank_arrays(rank: int) -> None:
+    """Normalize the saved DOLFINx p6 rows without assuming AdjacencyList fields."""
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    attempt = (
+        REPOSITORY_ROOT
+        / "results/task42hybrid_az90_50x50_17x20_0p7nm/"
+        / "a2_space_only_mpi8_attempt_20261019T124500Z"
+    )
+    closeout_path = attempt / "space_only_closeout.json"
+    npz_path = attempt / "space_output" / f"rank_{rank:02d}_space_arrays.npz"
+    if not closeout_path.is_file() or not npz_path.is_file():
+        pytest.skip("saved Task42 space-only rank arrays are unavailable")
+
+    closeout = json.loads(closeout_path.read_text(encoding="utf-8"))
+    rank_record = closeout["spaces"]["rank_inventory"][rank]
+    assert rank_record["rank"] == rank
+    assert hashlib.sha256(npz_path.read_bytes()).hexdigest() == rank_record[
+        "npz_sha256"
+    ]
+
+    with np.load(npz_path, allow_pickle=False) as archive:
+        stored_values = np.array(archive["mixed_cell_dof_values"], copy=True)
+        stored_offsets = np.array(archive["mixed_cell_dof_offsets"], copy=True)
+
+    class SavedDofMap:
+        def cell_dofs(self, cell_index: int) -> np.ndarray:
+            start = int(stored_offsets[cell_index])
+            end = int(stored_offsets[cell_index + 1])
+            return stored_values[start:end]
+
+    values, offsets, row_lengths, peak_bytes, source = qep._task42_cell_dof_layout(
+        SavedDofMap(),
+        f"saved_rank_{rank}_mixed",
+        local_cell_count=int(stored_offsets.size - 1),
+    )
+    mixed_record = rank_record["space_maps"]["mixed"]
+    owned_cells = int(rank_record["mesh_owned"]["cells"]["owned_count"])
+    expected_lengths = np.diff(stored_offsets)
+    expected_sha = hashlib.sha256(memoryview(stored_values).cast("B")).hexdigest()
+    assert rank_record["mesh_owned"]["cells"]["ghost_count"] == (
+        len(row_lengths) - owned_cells
+    )
+    assert values.dtype == stored_values.dtype
+    assert values.dtype == np.dtype(qep.PETSc.IntType)
+    assert np.array_equal(values, stored_values)
+    assert np.array_equal(offsets, stored_offsets)
+    assert row_lengths == expected_lengths.astype(np.int64).tolist()
+    assert hashlib.sha256(memoryview(values).cast("B")).hexdigest() == expected_sha
+    assert expected_sha == mixed_record["cell_dof_sha256"]
+    assert len(row_lengths) == mixed_record["cell_count_including_ghosts"]
+    assert int(values.size) == mixed_record["cell_dof_entry_count"]
+    assert sum(length * length for length in row_lengths[:owned_cells]) == sum(
+        length * length for length in expected_lengths[:owned_cells]
+    )
+    assert sum(length * length for length in row_lengths) == sum(
+        length * length for length in expected_lengths
+    )
+    assert source["api"] == "DofMap.cell_dofs(cell_index)"
+    assert source["returned_row_types"] == ["numpy.ndarray"]
+    assert source["row_dimensions"] == 1
+    assert source["row_count"] == len(row_lengths)
+    assert source["offsets_derived_from_actual_row_lengths"] is True
+    assert peak_bytes >= values.nbytes + offsets.nbytes
+
+
+def test_task42_cell_dof_layout_uses_native_dolfinx_p6_space_api() -> None:
+    """Exercise real cell_dofs rows on a tiny mesh and production p6 spaces."""
+    from dolfinx import mesh as dmesh
+
+    from src.modes import cross_section_spaces
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    msh = dmesh.create_rectangle(
+        MPI.COMM_SELF,
+        [np.asarray([0.0, 0.0]), np.asarray([1.0, 1.0])],
+        [2, 1],
+        cell_type=dmesh.CellType.quadrilateral,
+        ghost_mode=dmesh.GhostMode.shared_facet,
+    )
+    msh.topology.create_connectivity(msh.topology.dim, 0)
+    spaces = cross_section_spaces.build_cross_section_spaces(
+        SimpleNamespace(mesh=msh),
+        transverse_degree=6,
+        longitudinal_degree=6,
+    )
+    local_cell_map = msh.topology.index_map(msh.topology.dim)
+    local_cell_count = int(local_cell_map.size_local + local_cell_map.num_ghosts)
+    assert local_cell_count == 2
+    mixed_local_dofs = int(
+        spaces.mixed.dofmap.index_map.size_local
+        + spaces.mixed.dofmap.index_map.num_ghosts
+    )
+
+    for label, space in (
+        ("mixed", spaces.mixed),
+        ("transverse", spaces.transverse),
+        ("longitudinal", spaces.longitudinal),
+    ):
+        dofmap = space.dofmap
+        actual_rows = [
+            np.asarray(dofmap.cell_dofs(cell_index))
+            for cell_index in range(local_cell_count)
+        ]
+        expected_offsets = np.zeros(local_cell_count + 1, dtype=np.int64)
+        for cell_index, row in enumerate(actual_rows):
+            expected_offsets[cell_index + 1] = (
+                expected_offsets[cell_index] + row.size
+            )
+        expected_values = np.concatenate(actual_rows).astype(
+            np.dtype(qep.PETSc.IntType), copy=False
+        )
+
+        values, offsets, row_lengths, peak_bytes, source = (
+            qep._task42_cell_dof_layout(
+                dofmap,
+                f"native_{label}",
+                local_cell_count=local_cell_count,
+            )
+        )
+        assert np.array_equal(values, expected_values)
+        assert np.array_equal(offsets, expected_offsets)
+        assert row_lengths == [int(row.size) for row in actual_rows]
+        assert source["dofmap_type"].endswith("DofMap")
+        assert source["returned_row_types"] == ["numpy.ndarray"]
+        assert source["row_dimensions"] == 1
+        assert source["row_count"] == local_cell_count
+        assert all(row.ndim == 1 for row in actual_rows)
+        assert all(row.dtype == np.dtype(qep.PETSc.IntType) for row in actual_rows)
+        assert peak_bytes >= values.nbytes + offsets.nbytes
+
+    for collapsed_space, collapse_map in (
+        (spaces.transverse, spaces.transverse_to_mixed),
+        (spaces.longitudinal, spaces.longitudinal_to_mixed),
+    ):
+        collapsed_local_dofs = int(
+            collapsed_space.dofmap.index_map.size_local
+            + collapsed_space.dofmap.index_map.num_ghosts
+        )
+        assert collapse_map.shape == (collapsed_local_dofs,)
+        assert collapse_map.size > 0
+        assert int(collapse_map.min()) >= 0
+        assert int(collapse_map.max()) < mixed_local_dofs
+
+
+def test_task42_cell_dof_layout_rejects_bad_public_api_rows() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    with pytest.raises(TypeError, match="lacks public cell_dofs"):
+        qep._task42_cell_dof_layout(
+            SimpleNamespace(list=object()), "missing_api", local_cell_count=1
+        )
+    pet_int_dtype = np.dtype(qep.PETSc.IntType)
+    wrong_integer_dtype = np.dtype(
+        np.int64 if pet_int_dtype.itemsize < np.dtype(np.int64).itemsize else np.int32
+    )
+    with pytest.raises(ValueError, match=f"dtype={wrong_integer_dtype}"):
+        qep._task42_cell_dof_layout(
+            SimpleNamespace(
+                cell_dofs=lambda _index: np.asarray([0], dtype=wrong_integer_dtype)
+            ),
+            "wrong_integer_abi",
+            local_cell_count=1,
+        )
+
+    with pytest.raises(ValueError, match="must return a 1D"):
+        qep._task42_cell_dof_layout(
+            SimpleNamespace(
+                cell_dofs=lambda _index: np.zeros((1, 1), dtype=pet_int_dtype)
+            ),
+            "wrong_row_shape",
+            local_cell_count=1,
+        )
+
+    calls = 0
+
+    def changing_row(_index: int) -> np.ndarray:
+        nonlocal calls
+        calls += 1
+        return np.arange(2 if calls == 1 else 3, dtype=np.dtype(qep.PETSc.IntType))
+
+    with pytest.raises(ValueError, match="changed shape or integer ABI"):
+        qep._task42_cell_dof_layout(
+            SimpleNamespace(cell_dofs=changing_row),
+            "row_changed_during_read",
+            local_cell_count=1,
+        )
+
+
+def test_task42_cell_dof_layout_uses_each_actual_ragged_row_length() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    rows = [
+        np.asarray([4, 8], dtype=np.dtype(qep.PETSc.IntType)),
+        np.asarray([3, 7, 9], dtype=np.dtype(qep.PETSc.IntType)),
+        np.asarray([1], dtype=np.dtype(qep.PETSc.IntType)),
+    ]
+    values, offsets, lengths, _peak_bytes, source = qep._task42_cell_dof_layout(
+        SimpleNamespace(cell_dofs=lambda cell_index: rows[cell_index]),
+        "ragged_rows",
+        local_cell_count=len(rows),
+    )
+    assert offsets.tolist() == [0, 2, 5, 6]
+    assert lengths == [2, 3, 1]
+    assert values.tolist() == [4, 8, 3, 7, 9, 1]
+    assert source["offsets_derived_from_actual_row_lengths"] is True
+
+
+def test_task42_cell_dof_layout_keeps_local_to_global_range_rejection() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    cfg, cross_section, spaces, identity, degree_context = _task42_fake_k0_inputs(0)
+    spaces.mixed.dofmap.cell_dofs = lambda _cell_index: np.asarray(
+        [0, 1, 2, spaces.mixed.dofmap.index_map.size_local + 1],
+        dtype=np.dtype(qep.PETSc.IntType),
+    )
+    with pytest.raises(ValueError, match="outside local-to-global map"):
+        qep._task42_k0_source_basis(
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            identity,
+            rank=0,
+            mpi_size=2,
+        )
 
 
 @pytest.mark.parametrize(
@@ -2211,13 +2447,8 @@ def test_task42_k0_inventory_refuses_rank_payload_above_calibrated_envelope() ->
     )
     first_cell = np.arange(large_local_size, dtype=np.int32)
     remaining_cells = np.tile(np.asarray([0, 1, 2, 3], dtype=np.int32), 9)
-    adjacency = spaces.mixed.dofmap.list
-    adjacency.array = np.concatenate((first_cell, remaining_cells))
-    adjacency.offsets = np.asarray(
-        [0, large_local_size]
-        + [large_local_size + 4 * index for index in range(1, 10)],
-        dtype=np.int32,
-    )
+    large_cell_rows = [first_cell, *remaining_cells.reshape(9, 4)]
+    spaces.mixed.dofmap.cell_dofs = lambda cell_index: large_cell_rows[cell_index]
 
     inventory = qep._task42_k0_phase_inventory(
         "qep_operator_K0_full",
