@@ -96,8 +96,9 @@ A2仍使用13.5 nm用户指定Si、p6/h10/M120、50×50 nm周期、17×20 nm光�
 | 后续sizing阶段 | 获取的对象/依据 | 先行保护和未决项 |
 |---|---|---|
 | Mesh-only | 冻结几何生产路径得到36个quad；MPI8新layout实测owned 36 cells/49 vertices/84 edges，ghost为重复rank存储 | mesh阶段Delta预测134,479,872 B通过fresh gate；实测与NPZ见本摘要末尾。该阶段Delta不转用到后续阶段 |
-| p6 space/collapse | 实测N1curl 2664、Lagrange 1369、mixed 4033 DoF及8 rank maps/collapse arrays；离线boundary inventory列出72+73=145个周期slave候选 | 2 GiB仅为本次mixed/collapse阶段的预测准入包络，不是连续峰或硬上界；MPC尚未构造，phase/sign配对及原生对象/通信工作区仍需独立预算 |
-| QEP operators | K0/K1/K2/M全与约化稀疏矩阵、constraint transform的本地rows/NNZ；AIJ主体按`nnz*(scalar_bytes+index_bytes)+(local_rows+1)*index_bytes`并计同时驻留副本 | 无真实NNZ，不能用单个稠密240×240矩阵作总预算 |
+| p6 space/collapse | 实测N1curl 2664、Lagrange 1369、mixed 4033 DoF及8 rank maps/collapse arrays；离线boundary inventory列出72+73=145个周期slave候选 | 2 GiB仅为本次mixed/collapse阶段的预测准入包络，不是连续峰或硬上界；约束关系与transform后来另阶段测量，不能挪用该Delta |
+| constraints/transform/Bloch | 实际约束关系145条、`C`为4033×3888且saved CSR `nz_used=4033`；三个p6 Bloch插值relative L2均约`1e-15` | 只验证映射/相位代数一致性；没有组装K0/K1/K2/M物理算子，也不是Maxwell残差 |
+| QEP operators | K0/K1/K2/M全与约化稀疏矩阵的rows/NNZ；AIJ主体按每个rank实际owned rows、对角/远端列、complex值与Int32索引估算，并计同时存储副本 | 只有cell-clique结构支持草案，非实际数值NNZ；FFCx/JIT、PETSc预分配和stash/MPI工作区未界定，不能据payload形成Delta |
 | QEP workspace | `ncv/mpd`、候选与保留向量、正负及左右模态/重叠矩阵和SLEPc后端工作区 | 后端工作区需可信边界；尚未运行QEP |
 | 两侧凝聚/traction | bottom/top各rank的owned cells/rows、geometry classes、Schur NNZ、cell tensor/LU/recovery；核对实际10 nm轴向局部网格与exact traction构造 | side/rank basis不可混用，尚无实际网格数据 |
 | augmented/MUMPS | coupling/增广块的shape/NNZ/maps/pack生命周期；依据真实ordering/fill证据预算factor | `KSP.setUp()`合并analysis/factor；不能用setup后的INFOG倒授权setup前大分配，可信fill上界缺失就拒绝 |
@@ -122,11 +123,28 @@ Hybrid衍射表逐行报告各通道的反射/透射占比，DtN端口总量则�
 | 项目 | 实测与定义 | 限制 |
 |---|---|---|
 | 网格 | 生产默认graph partitioner/shared-facet；全局owned实体36 cells、49 vertices、84 edges；跨rank ghost累计50/106/149（cells/vertices/edges）是重复存储 | z只保存stage4轴计划，没有生成3D mesh；不把ghost重复数当全局实体 |
-| p6空间 | Basix 0.10.0；N1curl(N1E) 2664 DoF，cell维数84、entity分布0/6/60；Lagrange 1369 DoF，cell维数49、entity分布1/5/25；mixed 4033 | 使用生产builder及两次collapse；没有DG0材料函数、MPC、transform、矩阵或QEP |
+| p6空间 | Basix 0.10.0；N1curl(N1E) 2664 DoF，cell维数84、entity分布0/6/60；Lagrange 1369 DoF，cell维数49、entity分布1/5/25；mixed 4033 | 使用生产builder及两次collapse；后续另有周期约束关系、PETSc transform 与 Bloch 插值 sizing；未组装物理算子或QEP |
 | 每rank证据 | 8份NPZ均重开成功；每rank30个数值数组，names/shape/dtype/payload/SHA与layout summary一致 | 每rankowned/ghost/index/collapse maps及实际entity_dofs见[机器收口](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.json) |
 | 2 GiB space阶段门 | 8×260,046,848 B rank envelope=`2,080,374,784 B`，加67,108,864 B controller/service margin，Delta=`2,147,483,648 B`。mesh前J=880,795,648 B、Delta=134,479,872 B、MemAvailable=1,589,807,603,712 B；space前J=920,141,824 B、Delta=2,147,483,648 B、MemAvailable=1,589,799,108,608 B；门均通过 | `C=256 GiB`、`R=384 GiB`、`W=13,743,895,348 B`沿用Task42合同。64 MiB/rank原生库津贴未校准，预算不是实测上界；J端点差8,462,336 B不等于连续峰，最大rank HWM为116,457,472 B |
-| 边界候选 | 离线inventory由新网格、cell maps与Basix entity_dofs得出Hcurl四侧各36、H1四侧各37；周期slave候选72+73=145 | MPC未构造；`5,808 B/rank`只是145行int64/int64/complex128及146 offsets的payload公式，八份时46,464 B；不包括原生对象、通信、ghost、容器或临时复制 |
+| 边界与周期关系 | 起初由新网格/cell maps/Basix entity DoF 枚举 Hcurl 每侧36、H1每侧37；后续实际生成72 transverse+73 longitudinal 配对关系并构造 `C` transform | 早期`5,808 B/rank`仅是配对数组payload预测，不是约束阶段完整Delta；原生对象、通信、ghost和临时复制另计 |
 
 此次唯一计费parent envelope为`18.534567955 s`，从candidate开始至service终态及owned cleanup观察；嵌套service-client包络`2.62739977 s`已包括，不另计。独立费用append与65项SUMS及selfseal见[收口索引](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md)、[费用记录](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_fee_append.json)和[SELFSEAL](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/SELFSEAL.space_only.json)。该阶段没有pytest、FE求解、MPC、QEP、factor或solve。
 
-A2仍未获数值资格。后续约束阶段必须先为实际MPC相位/符号配对及原生存储、通信和临时对象独立列Delta，并在其分配前过Task42 gate；随后QEP矩阵/工作区、side-local凝聚与traction、MUMPS setup和恢复输出仍要按实际rank/side逐阶段 sizing，不能复用本次2 GiB。
+A2仍未获数值资格。网格、空间、周期约束数组、constraint transform和Bloch插值已按分阶段Delta取得小型sizing证据；随后物理QEP算子/工作区、side-local凝聚与traction、MUMPS setup和恢复输出仍需按实际rank/side逐阶段 sizing，不能复用前述阶段包络。
+
+## A2 p6约束、变换、Bloch与离线算子支持（2026-10-20）
+
+本节沿用完整50×50 nm横截面、17×20 nm光栅、用户Si常数和MPI8 p6布局。它增加了周期关系数组、PETSc约束变换和Bloch插值检查；没有缩小横截面，也没有产生物理QEP算子。通俗地说，周期约束把两侧边界上应对应的自由度配对，并附上方向/相位变化；变换矩阵把受约束变量改写成独立变量。Bloch插值检查使用同一保存映射重建带相位边界场，检查编号与相位操作是否一致，但不解Maxwell方程。
+
+| 阶段 | 结果/预算 | parent wall与边界 |
+|---|---|---|
+| 周期约束 | 实际145条关系：transverse 72、longitudinal 73；rank 0本地计数为0 | rank 0的summary零值是本地计数；八rank数组和为145，不表示约束消失 |
+| Constraint transform | `C`形状4033×3888；saved CSR精确`nz_used=4033`、`nz_allocated=24198`、`mallocs=0`；预测Delta `536,870,912 B` | transform已构造；MatInfo是本次约束矩阵统计，不是物理矩阵或内存峰值 |
+| Bloch插值 | transverse、longitudinal、combined relative L2=`6.256641475675839e-16`、`6.606863190803519e-16`、`6.268518472563376e-16`；对应最大绝对误差=`2.3803347352315634e-14`、`5.320968983789313e-15`、`2.3803347352315634e-14` | pre-Bloch gate `pass/errors=[]`；预测Delta `142,606,336 B`；与transform同次MPI8 service完成，Invocation `e2818a1a04a740d7b8fb3149f4225dd9`、唯一parent wall `3.16060316 s`、owned清场闭合；纵向误差转录更正见[派生记录](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/derived_correction_20261020T080656Z/metric_correction.md) |
+| 离线稀疏支持 | 每cell 133个mixed DoF，36×133²=`636,804`个候选行列对；full/reduced/`A*C`去重支持为626,689/624,672/626,689；`C`与`Cᴴ`各4033对 | 512 MiB离线pair排序/去重门；预测临时增量`122,444,388 B`；没有创建物理矩阵、无新增A2阶段费用 |
+
+离线pair去重的含义是：相邻有限元单元会重复贡献相同行列位置；脚本把候选行列对排序并去重，以估算稀疏矩阵可能保存的位置，而不计算矩阵数值。11对象同时驻留模型（4 full、4 reduced、`A*C`、`C`、`Cᴴ`）的稀疏数组payload为`113,392,100 B`，由rank-local记录求和的最大单rank payload为`16,042,868 B`（rank 5）。这是结构payload，不是实际K0/K1/K2/M数值NNZ或完整阶段Delta；物理块零可能减少数值非零，PETSc预分配余量、通信、JIT和库工作区则可能增加实际内存。
+
+完整rank计数、远端列、payload公式、输入NPZ哈希、预算分项、成功/失败attempt、脚本与小型数组索引见[A2离线closeout](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/offline_operator_sparsity_closeout.md)、[机器预算](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/operator_support_and_assembly_budget_closeout.json)、[阶段receipt索引](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/sizing_stage_receipt_index.json)和[artifact selfseal](../../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/SELFSEAL.offline_operator_sparsity.json)。四阶段parent费用和首次reshape/helper/schema失败见[test summary](test_summary.md)。
+
+装配预算草案仍不具备放行资格。当前依据仅包括DG0系数值payload预测`1,376 B`、单个133×133 complex128局部张量的条件尺寸`283,024 B`以及11对象结构payload；FFCx/UFL/JIT编译和原生峰值、物理矩阵`nz_allocated`/stash/MPI暂存、`CᴴAC`填充和临时区、PEP工作区、两侧Schur/traction、MUMPS fill及恢复重叠生命周期尚未界定。下一步建议先申请一个受独立Delta门保护的tiny 36-cell p6装配测量，先量DG0/FFCx及一个真实物理算子，满足其预算证据后再审后续矩阵；不由本离线草案自动启动。A2维持`pending-sizing`/fail-closed，未运行K0/K1/K2/M、QEP/PEP/KSP、factor或solve。
