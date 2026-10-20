@@ -3084,6 +3084,9 @@ def build_unconstrained_assembly_time_condensation(
             {
                 "additional_payload_bytes": int(prefix_payload),
                 "workspace_bytes": one_class_workspace + evaluator_prepare_workspace,
+                "tensor_dimension": int(dimension),
+                "interior_dimension": int(len(interior_positions)),
+                "trace_dimension": int(len(trace_positions)),
                 **(
                     {
                         "raw_tensor_candidate_prepare_workspace_bytes_upper": (

@@ -269,6 +269,20 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             preflight = gates["mesh_actual_exact_prefix_preflight"]
             self.assertEqual(preflight["raw_tensor_candidate_workspace_bytes_upper"], 4096)
             self.assertEqual(preflight["raw_tensor_candidate_scratch_bytes_upper"], 2048)
+            self.assertEqual(
+                preflight["tensor_dimension"], owner.build_audit["local_tensor_dimension"]
+            )
+            self.assertEqual(
+                preflight["interior_dimension"],
+                owner.build_audit["local_interior_dimension"],
+            )
+            self.assertEqual(
+                preflight["trace_dimension"], owner.build_audit["local_trace_dimension"]
+            )
+            self.assertEqual(
+                preflight["interior_dimension"] + preflight["trace_dimension"],
+                preflight["tensor_dimension"],
+            )
             full_gate = gates["mesh_actual_exact_full_admission"]
             self.assertEqual(full_gate["raw_tensor_candidate_workspace_bytes_upper"], 4096)
             self.assertIn(
