@@ -13,7 +13,7 @@
 | 后续主线 | 前述必要门通过后直接0.7 nm，不要求5/2 nm中间梯级 |
 | Codex项目 | **原项目显示名、根目录、环境和账户不变**；在原项目内安全切换Git分支 |
 | 输出 | 本目录`response_v1.md`与`outcomes/`，大工件用独立ignored结果根 |
-| 当前状态 | A0完成；A1最近一次13.5 nm计算有worker数值输出，但终态整作业资源authority不完整而拒绝，不能称整场通过；A2已有MPI8网格、p6空间、周期约束数据、PETSc约束变换和Bloch插值 sizing，以及离线稀疏支持草案；物理算子/FFCx、QEP、侧向凝聚、traction、MUMPS和恢复阶段仍未定预算，当前不可启动完整A2 |
+| 当前状态 | A0完成；最近一次A1有worker数值输出，但整作业资源authority不完整而拒绝，不能称整场通过；A2已完成网格、p6空间、约束/变换/Bloch sizing，并实际组装一次4033×4033 full K0（8 rank各一次）；离线hash/finite/CSR核验通过。K0之外的K1/K2/M、约化算子、PEP/QEP、侧向凝聚、traction、MUMPS求解和恢复仍未运行，A2物理资格未建立 |
 
 Task041历史仍保留在继承目录；其旧模型结果、预算、失败和Review V19四次B诊断不被更名或改写。本任务从新的物理参考开始，不以解决旧物理全部待办作为前置，也不将旧失败视为自动解决。
 
@@ -39,6 +39,6 @@ Task42分阶段准入使用整作业`J=max(launcher进程树RSS,可证明适用�
 
 Task42独立A2输入使用用户指定的13.5 nm Si、p6/h10/M120，传播模型为`full3d_uniform_cg`，traction为`full3d_one_cell_exact_schur`。公共路由和共享输出/分级资源合同已有小型serial与MPI2合同覆盖；这只验证调用、身份、拒绝时序与collective写入行为，不是有限元、QEP或A2数值资格。
 
-A2仍不可启动。除mesh/space外，已实测145条周期关系（横向72、纵向73）、4033×3888约束变换以及p6 Bloch插值；离线pair去重给出当前36-cell结构支持。mesh、space、constraints、transform、Bloch各有独立阶段预算，不能互相挪用；其中2 GiB只属于`qep_mixed_space`，也不是实测峰或硬上界。离线装配草案中的矩阵payload不是总Delta：物理矩阵预分配、FFCx/JIT和原生工作区、stash/MPI暂存、产品填充、QEP工作区、side Schur/traction、MUMPS fill与恢复仍没有可审的完整预算，profile继续`pending-sizing`/fail-closed。dat原字节SHA和不含预算引用字段的规范化预算basis仍是不同身份；PETSc `KSP.setUp()`将MUMPS分析和分解留在同一阶段门。P1小型回归只修正行级`R/T`的正向功率筛选，不是A2物理资格。阶段证据见[space-only收口](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md)、[A2离线稀疏支持与装配草案](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/offline_operator_sparsity_closeout.md)、[Task42当前回应](response_v1.md)、[结果摘要](outcomes/summary.md)和[测试/费用摘要](outcomes/test_summary.md)。
+A2仍不可启动。除mesh/space外，已实测145条周期关系（横向72、纵向73）、4033×3888约束变换以及p6 Bloch插值；离线pair去重给出当前36-cell结构支持。mesh、space、constraints、transform、Bloch各有独立阶段预算，不能互相挪用；其中2 GiB只属于`qep_mixed_space`，也不是实测峰或硬上界。离线装配草案中的矩阵payload不是总Delta：K0 full FFCx与单矩阵阶段已各实际通过一次预算门；K1/K2/M、约化矩阵、QEP工作区、side Schur/traction、MUMPS fill与恢复仍没有可审的完整预算，profile继续`pending-sizing`/fail-closed。dat原字节SHA和不含预算引用字段的规范化预算basis仍是不同身份；PETSc `KSP.setUp()`将MUMPS分析和分解留在同一阶段门。P1小型回归只修正行级`R/T`的正向功率筛选，不是A2物理资格。K0工件和离线核验见[full-K0 reconciliation](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k0_summary_reconciliation_offline_20261020T121140Z/offline_k0_reconciliation.md)。阶段证据见[space-only收口](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_space_only_mpi8_attempt_20261019T124500Z/space_only_closeout.md)、[A2离线稀疏支持与装配草案](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/offline_operator_sparsity_closeout.md)、[Task42当前回应](response_v1.md)、[结果摘要](outcomes/summary.md)和[测试/费用摘要](outcomes/test_summary.md)。
 
 通俗地说，Hybrid把中间区域的场用截面模式表示，两侧区域仍由有限元网格求解；这样可减少中间长结构的三维自由度，但会增加模式耦合和恢复数据。阶段预算要求在每次大分配前先估算该步新增内存；目前的小测试只验证接口和拒绝传播，不证明A2物理解正确，也不证明实际容量足够。

@@ -7,6 +7,7 @@
 | Task42 A0 | 公共输入、材料来源、dry-run、Floquet/外通道、边界拟合小网格和体积检查完成 | `passed_with_qualifications`；不代表Full3D方程求解或资源资格 |
 | 13.5 nm直接参考 | 最近一次正式A1于2026-10-19启动；数值worker写出了残差、端口功率和场文件 | worker summary标记`official_result=true`，但整场因最后一次whole-job资源authority不完整而`refused`；不能把整场称为通过 |
 | 0.7 nm | 两波长Si材料输入已冻结，外通道键可独立枚举 | `not_run`；本阶段没有建立0.7 nm网格、QEP或求解 |
+| A2 full-K0 sizing（2026-10-20） | 4033×4033 full K0，MPI8每rank一次assembly；派生离线检查24份数组工件、CSR与identity | 单K0 sizing通过；原controller completion失败保留，未运行K1/K2/M、约化、PEP/QEP或物理求解；[离线核验](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k0_summary_reconciliation_offline_20261020T121140Z/offline_k0_reconciliation.md) |
 | ordinary默认 | 未改变 | Task42仍由显式model/profile身份进入 |
 
 13.5 nm模型冻结为方位角90°、掠入射1°、s偏振、50×50 nm周期、居中17×20 nm光栅；光栅高120 nm，z域为−10到130 nm，接口位于10/110 nm，p6/h10。A0验证实际公共入口能解析该模型并给出一致的场与外通道配置。A0的真实边界拟合网格检查确认材料界面与网格平面对齐，并核对小网格上的材料体积。
@@ -220,6 +221,27 @@ space-only全作业J有三个独立快照：分配前`920,141,824 B`；分配后
 
 保存映射重算的Bloch插值relative L2分别为transverse `6.256641475675839e-16`、longitudinal `6.606863190803519e-16`、combined `6.268518472563376e-16`，对应最大绝对误差为`2.3803347352315634e-14`、`5.320968983789313e-15`、`2.3803347352315634e-14`。旧离线closeout把纵向最大值转录为总体最大值；原17项工件未改，派生更正见[更正记录](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/derived_correction_20261020T080656Z/metric_correction.md)。pre-Bloch资源gate为`pass`、`errors=[]`。这是边界配对/方向/相位检查，不是Maxwell残差。成功MPI8 service Invocation为`e2818a1a04a740d7b8fb3149f4225dd9`，transform与Bloch同一parent wall `3.16060316 s`，owned清场记录闭合。
 
-离线脚本把每cell 133个mixed DoF产生的36×133²=`636,804`候选行列对排序、去重，得到full/reduced/`A*C`结构支持626,689/624,672/626,689，`C`和`Cᴴ`各4033。11对象结构payload模型为`113,392,100 B`，最大单rank`16,042,868 B`；这些只是稀疏数组payload，不是实际物理矩阵NNZ或内存Delta。pair分析的512 MiB阶段门通过，预计暂存增量`122,444,388 B`。装配草案只列出可量化项：DG0系数payload预测`1,376 B`、单个`133×133` complex128局部张量条件尺寸`283,024 B`和11对象结构payload。它没有覆盖FFCx/JIT原生峰、实际物理矩阵预分配/stash/MPI、`CᴴAC`产品工作区、PEP、两侧Schur/traction或MUMPS fill，因此不能给装配阶段完整Delta。
+离线脚本把每cell 133个mixed DoF产生的36×133²=`636,804`候选行列对排序、去重，得到full/reduced/`A*C`结构支持626,689/624,672/626,689，`C`和`Cᴴ`各4033。11对象结构payload模型为`113,392,100 B`，最大单rank`16,042,868 B`；这些只是稀疏数组payload，不是实际物理矩阵NNZ或内存Delta。pair分析的512 MiB阶段门通过，预计暂存增量`122,444,388 B`。当时的装配草案只列出可量化项：DG0系数payload预测`1,376 B`、单个`133×133` complex128局部张量条件尺寸`283,024 B`和11对象结构payload。它没有覆盖FFCx/JIT原生峰、实际物理矩阵预分配/stash/MPI、`CᴴAC`产品工作区、PEP、两侧Schur/traction或MUMPS fill，因此当时不能给完整装配Delta；随后已另行完成一次full-K0 sizing，见下节。
 
 mesh、space、constraints、transform与Bloch的各阶段Delta、唯一parent wall、首次reshape/helper/schema失败均列于[Task42 A2 test/费用摘要](outcomes/test_summary.md)。五个pair数组、脚本、gate、SHA清单和完整预算索引见[A2离线closeout](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_bloch_interpolant_mpi8_attempt_20261020T073757Z/offline_operator_sparsity_20261020T074900Z/offline_operator_sparsity_closeout.md)。离线脚本不增加Task42费用条目；没有建立物理矩阵或运行QEP/PEP/KSP、factor或solve。A2仍`pending-sizing`且fail-closed。下一步建议另审一个有独立Delta门的tiny 36-cell p6装配测量，从DG0/FFCx与一个实际物理算子开始，取得rank-local MatInfo、stash和分配快照后再决定后续边界；本离线草案不自动放行任何物理算子分配。
+
+## A2单个full-K0 sizing与离线reconciliation（2026-10-20）
+
+本阶段复核的是同一36-cell、p6/g1、DG0/q16、MPI8的既有K0工件，不重跑数值。这里full表示未施加C约化前的截面QEP系数矩阵，不是完整3D Maxwell系统。Full K0为4033×4033，8个rank各assembly一次；独立checker核验24个rank数组工件的SHA、identity、finite值、CSR结构和完整连续row ranges。rank-sum `nz_used=nz_allocated=626,689`，CSR payload合计`12,549,944 B`，最大rank payload`1,787,860 B`。这只是一个full K0 sizing结果，不是K1/K2/M或约化NNZ，也不构成QEP/PEP或A2物理资格。
+
+原始`k0_only_summary.json`为`passed`，service/ExecMainStatus为0；原`k0_only_completion.json`仍为`failed`，原controller把四个summary字段误当顶层字段读取。派生只读checker按真实嵌套schema验证，正例的24份工件通过、11类负例全拒绝；它不改写原completion、summary或postmortem v1/v2。v2中的`all_rank_CSR_preallocation_and_finite_checks_passed=true`实际只由`global_nz_used == 626689`生成，不代表它检查了allocated、hash或finite；独立checker另行重算了hash/finite/CSR/preallocation/row coverage及used/allocated一致性。
+
+| 观测 | 字节/状态 | 边界 |
+|---|---:|---|
+| J：pre-UFL form | 1,022,046,208 B | 单独时间点 |
+| J：compiled form后 | 1,035,526,144 B | 单独时间点；FFCx门通过 |
+| J：K0 preallocation | 1,040,465,920 B | 单独时间点；K0门通过 |
+| J：assembly后 | 1,073,405,952 B | 单独时间点 |
+| J：destroy后 | 1,096,871,936 B | 单独时间点；快照不构成同步峰 |
+| MatInfo memory | 0 | PETSc字段值，不是进程RSS为0 |
+
+原completion中`k0_output_summary_present_and_valid=false`及controller failed分类继续保留；派生清场依据同Invocation身份审计、已登记PID/start_ticks缺席和cgroup directory removed。收据明确`cgroup_proven_empty=false`。Stop成功后unit被回收，随后reset-failed rc1 `Unit not loaded`不是另一次清场失败。
+
+候选链、MPI8 ABI和service parent wall分别为`10.890860134 s`、`1.410828952 s`、`4.176308795 s`；K0嵌套stage wall `1.445850019 s`已包含在service中，不重复计费。离线checker parent wall `not_measured`，没有新增费用条目。FFCx cold/cache-hit、独立编译wall、独立assembly wall和同步峰均未测。
+
+独立核验错误向量、每rank CSR、schema路径、原始completion保留和清场边界见[K0 reconciliation](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k0_summary_reconciliation_offline_20261020T121140Z/offline_k0_reconciliation.md)及机器结果`offline_validation_results.json`。下一阶段K1及一次`Cᴴ K1 C`的来源、对象重叠、预测Delta和未知项见[预算草案v2](../../results/task42hybrid_az90_50x50_17x20_0p7nm/a2_k0_summary_reconciliation_offline_20261020T121140Z/next_operator_reduction_sizing_proposal_v2.md)。该草案是离线建议，不是运行授权：K1/K2/M、约化以外对象、PEP/QEP、factor/solve与A2物理结果仍未运行；Task42资源门与fail-closed策略不变。
