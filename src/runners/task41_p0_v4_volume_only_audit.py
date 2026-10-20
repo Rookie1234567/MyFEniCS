@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import shutil
 from pathlib import Path
 import sys
 from time import perf_counter

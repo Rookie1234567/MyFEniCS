@@ -316,6 +316,12 @@ def test_v5_postbuild_reserve_reads_frozen_v4_checker_watchdog_elapsed_seconds()
     )
 
 
+def test_v5_volume_worker_exposes_disk_usage_for_evidence_gates(tmp_path):
+    from src.runners import task41_p0_v4_volume_only_audit as worker
+
+    assert worker.shutil.disk_usage(tmp_path).free > 0
+
+
 def test_volume_only_owner_avoids_surface_and_persists_each_class_once(tmp_path, monkeypatch):
     case = _fixture(tmp_path, monkeypatch)
 
