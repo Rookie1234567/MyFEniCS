@@ -33,7 +33,15 @@ TASK42_HYBRID_A2_PHASE_OBJECTS = MappingProxyType(
         ),
         "qep_constraints": ("dual_floquet_mpc_and_reduced_map",),
         "qep_constraint_transform": ("distributed_full_to_reduced_transform",),
-        "qep_operator_K0_full": ("full_K0_sparse_matrix",),
+        "qep_operator_K0_ffcx_form": (
+            "qep_k0_ffcx_rank_payload",
+            "qep_k0_ffcx_rank0_compiler_subtree",
+            "qep_k0_ffcx_controller_allowance",
+        ),
+        "qep_operator_K0_full": (
+            "full_K0_sparse_matrix",
+            "qep_k0_full_controller_allowance",
+        ),
         "qep_operator_K1_full": ("full_K1_sparse_matrix",),
         "qep_operator_K2_full": ("full_K2_sparse_matrix",),
         "qep_operator_electric_mass_full": ("full_electric_mass_sparse_matrix",),
@@ -155,7 +163,33 @@ _TASK42_COMPONENT_FORMULA_NOTES = {
         "nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes; "
         "nnz and row ownership from actual transform preallocation"
     ),
-    "full_K0_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
+    "qep_k0_ffcx_rank_payload": (
+        "64MiB per actual MPI rank only for the source-checked Task42 sizing profile: "
+        "36 quadrilateral cells, p6/g1, DG0/c0, q16, 4033 mixed rows, 133 mixed "
+        "cell rows, complex128/Int32, MPI8; includes source-derived local cell rows, "
+        "candidate pairs/tensor payload, local-to-global hash scratch, gate metadata, "
+        "and predicted form/JIT/native payload. Per-rank actual counts are used; no "
+        "owned-cell count is assumed. Predicted envelope, not a proven upper bound"
+    ),
+    "qep_k0_ffcx_rank0_compiler_subtree": (
+        "512MiB rank-0 compiler process-subtree allowance, including compiler "
+        "descendants; it is separate from the 64MiB rank payload and is a predicted "
+        "envelope, not a measured peak or proven upper bound"
+    ),
+    "qep_k0_ffcx_controller_allowance": (
+        "8MiB controller/receipt allowance charged once on rank 0, not once per rank"
+    ),
+    "full_K0_sparse_matrix": (
+        "64MiB per actual MPI rank only for the same source-checked 36-cell p6/g1, "
+        "DG0/c0, q16, 4033-row, MPI8 profile; basis records actual owned/ghost cell "
+        "rows, candidate pairs, local tensor bytes, diagonal/off-diagonal candidate "
+        "payload, remote-row stash, PETSc row pointers, remote-column allowance, "
+        "layout-hash scratch, and gate metadata. Includes these listed payloads and "
+        "un-calibrated PETSc/native workspace; predicted envelope, not a hard bound"
+    ),
+    "qep_k0_full_controller_allowance": (
+        "8MiB controller/receipt allowance charged once on rank 0, not once per rank"
+    ),
     "full_K1_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
     "full_K2_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",
     "full_electric_mass_sparse_matrix": "AIJ_nnz*(ScalarType_bytes+PetscInt_bytes)+(local_rows+1)*PetscInt_bytes",

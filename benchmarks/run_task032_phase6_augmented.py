@@ -2285,6 +2285,9 @@ def main(
                 cross_section,
                 spaces,
                 task42_phase_gate=task42_phase_gate if allow_task42 else None,
+                task42_sizing_identity=(
+                    task42_output_identity if allow_task42 else None
+                ),
             )
             task039_mark_stage("mesh_spaces_ready")
             task039_mark_stage("qep_matrices_ready")

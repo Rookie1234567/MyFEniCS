@@ -7,7 +7,12 @@ Requesting all target modes this way is experimental and is not scalable to the
 
 from __future__ import annotations
 
+import hashlib
+import json
+import re
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import ufl
@@ -147,16 +152,1314 @@ def qep_quadrature_degree(
     ).selected_degree
 
 
-def _assemble_unconstrained_matrix(form, *, quadrature_degree: int) -> PETSc.Mat:
-    matrix = fem_petsc.assemble_matrix(
-        fem.form(
-            form,
-            form_compiler_options={"quadrature_degree": int(quadrature_degree)},
-        ),
-        bcs=[],
+def _qep_degree_context(
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    requested_quadrature_degree: int | None,
+) -> dict[str, int]:
+    field_degree = max(
+        int(spaces.transverse_degree), int(spaces.longitudinal_degree)
     )
+    geometry_degree = int(getattr(cross_section.mesh.geometry.cmap, "degree", 1))
+    coefficient_degree = int(
+        getattr(
+            cross_section.epsilon_r.function_space.element.basix_element,
+            "degree",
+            0,
+        )
+    )
+    recommended = qep_quadrature_degree(
+        field_degree=field_degree,
+        geometry_degree=geometry_degree,
+        coefficient_degree=coefficient_degree,
+    )
+    selected = (
+        recommended
+        if requested_quadrature_degree is None
+        else int(requested_quadrature_degree)
+    )
+    if selected < recommended:
+        raise ValueError(
+            "QEP quadrature degree cannot be lower than the Task033 policy: "
+            f"requested={selected}, recommended={recommended}."
+        )
+    return {
+        "field_degree": field_degree,
+        "geometry_degree": geometry_degree,
+        "coefficient_degree": coefficient_degree,
+        "recommended_quadrature_degree": recommended,
+        "quadrature_degree": selected,
+    }
+
+
+def _task42_array_basis(value: Any, label: str) -> dict[str, Any]:
+    """Describe an existing contiguous numeric array without copying its bytes."""
+
+    raw = getattr(value, "array", value)
+    array = np.asarray(raw)
+    if array.dtype.kind == "O" or not array.flags.c_contiguous:
+        raise ValueError(f"Task42 K0 basis array {label} is not contiguous numeric data")
+    return {
+        "shape": [int(size) for size in array.shape],
+        "dtype": array.dtype.str,
+        "itemsize_bytes": int(array.dtype.itemsize),
+        "count": int(array.size),
+        "sha256": hashlib.sha256(memoryview(array).cast("B")).hexdigest(),
+    }
+
+
+def _task42_index_map_basis(
+    index_map: Any,
+    label: str,
+    *,
+    mpi_size: int,
+    max_local_to_global_entries: int,
+) -> tuple[dict[str, Any], np.ndarray, int]:
+    local_range = getattr(index_map, "local_range", None)
+    if callable(local_range):
+        local_range = local_range()
+    if not isinstance(local_range, (tuple, list)) or len(local_range) != 2:
+        raise ValueError(f"Task42 K0 basis {label} lacks its owned range")
+    size_local = int(index_map.size_local)
+    num_ghosts = int(index_map.num_ghosts)
+    size_global = int(index_map.size_global)
+    owned_start, owned_end = int(local_range[0]), int(local_range[1])
+    if (
+        owned_start < 0
+        or owned_end < owned_start
+        or owned_end - owned_start != size_local
+        or owned_end > size_global
+        or num_ghosts < 0
+    ):
+        raise ValueError(f"Task42 K0 basis {label} has an invalid owned range")
+    local_entry_count = size_local + num_ghosts
+    if (
+        max_local_to_global_entries <= 0
+        or size_global > max_local_to_global_entries
+        or local_entry_count > max_local_to_global_entries
+    ):
+        raise ValueError(
+            f"Task42 K0 basis {label} local-to-global map exceeds the "
+            f"calibrated {max_local_to_global_entries}-entry profile"
+        )
+    local_to_global = getattr(index_map, "local_to_global", None)
+    if not callable(local_to_global):
+        raise TypeError(f"Task42 K0 basis {label} lacks local_to_global")
+    local_indices = np.arange(size_local + num_ghosts, dtype=np.int32)
+    global_ids = np.asarray(local_to_global(local_indices))
+    if (
+        global_ids.shape != local_indices.shape
+        or global_ids.dtype.kind not in "iu"
+        or not global_ids.flags.c_contiguous
+        or np.any(global_ids < 0)
+        or np.any(global_ids >= size_global)
+    ):
+        raise ValueError(
+            f"Task42 K0 basis {label} local_to_global has an invalid shape or dtype"
+        )
+    owners = getattr(index_map, "owners", None)
+    if callable(owners):
+        owners = owners()
+    owners_array = np.asarray(owners) if owners is not None else None
+    if (
+        owners_array is None
+        or owners_array.shape != (num_ghosts,)
+        or owners_array.dtype.kind not in "iu"
+        or (owners_array.size and np.any(owners_array < 0))
+        or (owners_array.size and np.any(owners_array >= mpi_size))
+    ):
+        raise ValueError(f"Task42 K0 basis {label} lacks ghost-owner data")
+    if any(
+        int(global_ids[index]) != owned_start + index
+        for index in range(size_local)
+    ):
+        raise ValueError(
+            f"Task42 K0 basis {label} owned local-to-global IDs differ from its range"
+        )
+    local_to_global_basis = _task42_array_basis(
+        global_ids, f"{label}.local_to_global"
+    )
+    local_to_global_basis.update(
+        {
+            "owned_count": size_local,
+            "owned_global_ids_sha256": hashlib.sha256(
+                memoryview(global_ids[:size_local]).cast("B")
+            ).hexdigest(),
+            "ghost_count": num_ghosts,
+            "ghost_global_ids_sha256": hashlib.sha256(
+                memoryview(global_ids[size_local:]).cast("B")
+            ).hexdigest(),
+        }
+    )
+    # NumPy comparisons used by the validation predicates allocate one
+    # temporary boolean mask at a time. Include the largest mask below.
+    comparison_mask_bytes = max(
+        int(global_ids.size), int(owners_array.size)
+    ) * int(np.dtype(np.bool_).itemsize)
+    result = {
+        "size_local": size_local,
+        "num_ghosts": num_ghosts,
+        "size_global": size_global,
+        "max_local_to_global_entries": int(max_local_to_global_entries),
+        "local_range": [owned_start, owned_end],
+        "local_to_global": local_to_global_basis,
+        "local_to_global_index_temporary_bytes": int(
+            local_indices.nbytes + global_ids.nbytes
+        ),
+        "comparison_mask_temporary_bytes_upper": int(comparison_mask_bytes),
+        "ghost_owners": _task42_array_basis(owners_array, f"{label}.owners"),
+    }
+    temporary_bytes = int(
+        local_indices.nbytes
+        + global_ids.nbytes
+        + owners_array.nbytes
+        + comparison_mask_bytes
+    )
+    # The caller uses this live mapping to classify cell candidates and then
+    # releases it. Its input/output allocation is included in the returned
+    # temporary-byte count.
+    del local_indices
+    return result, global_ids, temporary_bytes
+
+
+def _task42_space_basis(
+    space: Any,
+    label: str,
+    *,
+    local_cell_count: int,
+    owned_cell_count: int,
+    global_cell_count: int,
+    mpi_size: int,
+    max_global_dofs: int,
+    scalar_bytes: int,
+    count_matrix_candidates: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any], int]:
+    dofmap = space.dofmap
+    adjacency = getattr(dofmap, "list", None)
+    if callable(adjacency):
+        adjacency = adjacency()
+    if adjacency is None:
+        raise ValueError(f"Task42 K0 basis {label} lacks its cell dofmap")
+    cell_dofs = np.asarray(getattr(adjacency, "array", adjacency))
+    offsets = getattr(adjacency, "offsets", None)
+    if offsets is None:
+        raise ValueError(f"Task42 K0 basis {label} lacks cell-dof offsets")
+    offsets = np.asarray(offsets)
+    if (
+        cell_dofs.ndim != 1
+        or cell_dofs.dtype.kind not in "iu"
+        or offsets.ndim != 1
+        or offsets.dtype.kind not in "iu"
+        or offsets.size != local_cell_count + 1
+        or int(offsets[0]) != 0
+        or int(offsets[-1]) != cell_dofs.size
+    ):
+        raise ValueError(f"Task42 K0 basis {label} has malformed cell dof offsets")
+    cell_rows = [
+        int(offsets[index + 1]) - int(offsets[index])
+        for index in range(local_cell_count)
+    ]
+    if any(rows < 0 for rows in cell_rows):
+        raise ValueError(f"Task42 K0 basis {label} cell dof offsets are not monotone")
+    index_map = dofmap.index_map
+    if owned_cell_count < 0 or owned_cell_count > local_cell_count:
+        raise ValueError(f"Task42 K0 basis {label} has invalid owned-cell count")
+    if global_cell_count < 0:
+        raise ValueError(f"Task42 K0 basis {label} has invalid global-cell count")
+    index_map_basis, local_to_global_ids, index_map_temporary_bytes = (
+        _task42_index_map_basis(
+            index_map,
+            f"{label}.index_map",
+            mpi_size=mpi_size,
+            max_local_to_global_entries=max_global_dofs,
+        )
+    )
+    if cell_dofs.size and (
+        int(cell_dofs.min()) < 0
+        or int(cell_dofs.max()) >= local_to_global_ids.size
+    ):
+        raise ValueError(
+            f"Task42 K0 basis {label} cell dof is outside local-to-global map"
+        )
+    block_size = int(getattr(dofmap, "index_map_bs", 1))
+    summary: dict[str, Any] = {
+        "owned_cell_count": int(owned_cell_count),
+        "ghost_cell_count": int(local_cell_count - owned_cell_count),
+        "owned_cell_dof_rows": cell_rows[:owned_cell_count],
+        "ghost_cell_dof_rows": cell_rows[owned_cell_count:],
+        "owned_cell_candidate_pair_contributions": int(
+            sum(rows * rows for rows in cell_rows[:owned_cell_count])
+        ),
+    }
+    if count_matrix_candidates:
+        if block_size != 1:
+            raise ValueError(
+                "Task42 K0 calibrated mixed layout requires scalar dofmap block size 1"
+            )
+        owned_start, owned_end = index_map_basis["local_range"]
+        diagonal_pairs = 0
+        offdiagonal_pairs = 0
+        remote_row_stash_pairs = 0
+        for cell in range(owned_cell_count):
+            begin, end = int(offsets[cell]), int(offsets[cell + 1])
+            row_count = end - begin
+            owned_dofs = 0
+            for local_index_value in cell_dofs[begin:end]:
+                local_index = int(local_index_value)
+                if local_index < 0 or local_index >= local_to_global_ids.size:
+                    raise ValueError(
+                        f"Task42 K0 basis {label} cell dof is outside local-to-global map"
+                    )
+                global_index = int(local_to_global_ids[local_index])
+                owned_dofs += int(owned_start <= global_index < owned_end)
+            remote_dofs = row_count - owned_dofs
+            diagonal_pairs += owned_dofs * owned_dofs
+            offdiagonal_pairs += owned_dofs * remote_dofs
+            remote_row_stash_pairs += remote_dofs * row_count
+        total_pairs = int(summary["owned_cell_candidate_pair_contributions"])
+        if diagonal_pairs + offdiagonal_pairs + remote_row_stash_pairs != total_pairs:
+            raise ValueError(
+                f"Task42 K0 basis {label} candidate-pair ownership did not close"
+            )
+        pet_int_bytes = int(np.dtype(PETSc.IntType).itemsize)
+        diagonal_bytes = diagonal_pairs * (scalar_bytes + pet_int_bytes)
+        offdiagonal_bytes = offdiagonal_pairs * (scalar_bytes + pet_int_bytes)
+        row_pointer_bytes = 2 * (index_map_basis["size_local"] * block_size + 1) * pet_int_bytes
+        garray_bytes_upper = offdiagonal_pairs * pet_int_bytes
+        stash_bytes_upper = remote_row_stash_pairs * (
+            scalar_bytes + 2 * pet_int_bytes
+        )
+        global_candidate_pairs = int(
+            global_cell_count * max(cell_rows, default=0) ** 2
+        )
+        global_rows = int(index_map_basis["size_global"] * block_size)
+        global_aij_values_and_columns_bytes = global_candidate_pairs * (
+            scalar_bytes + pet_int_bytes
+        )
+        global_two_block_row_pointer_bytes = (
+            2 * (index_map_basis["size_local"] * block_size + 1) * pet_int_bytes
+        )
+        global_garray_bytes = global_rows * pet_int_bytes
+        global_remote_stash_bytes = global_candidate_pairs * (
+            scalar_bytes + 2 * pet_int_bytes
+        )
+        summary["matrix_candidate_contributions"] = {
+            "owned_cell_candidate_pair_contributions_local": total_pairs,
+            "diagonal_entries": int(diagonal_pairs),
+            "offdiagonal_entries": int(offdiagonal_pairs),
+            "remote_row_stash_entries": int(remote_row_stash_pairs),
+            "diagonal_payload_bytes_upper": int(diagonal_bytes),
+            "offdiagonal_payload_bytes_upper": int(offdiagonal_bytes),
+            "two_MPIAIJ_row_pointer_bytes": int(row_pointer_bytes),
+            "remote_column_garray_bytes_upper": int(garray_bytes_upper),
+            "remote_row_stash_triplet_bytes_upper": int(stash_bytes_upper),
+            "local_candidate_sparse_payload_bytes_upper": int(
+                diagonal_bytes
+                + offdiagonal_bytes
+                + row_pointer_bytes
+                + garray_bytes_upper
+                + stash_bytes_upper
+            ),
+            "local_contribution_classification": (
+                "local owned-cell contributions only; excludes contributions received "
+                "from other ranks and is not a final per-rank AIJ capacity bound"
+            ),
+            "global_cell_candidate_pair_contribution_bound": global_candidate_pairs,
+            "global_cell_count_used": int(global_cell_count),
+            "max_cell_dof_rows_used": int(max(cell_rows, default=0)),
+            "per_rank_aij_values_and_column_indices_bytes_upper": int(
+                global_aij_values_and_columns_bytes
+            ),
+            "per_rank_two_mpiaij_row_pointer_bytes_upper": int(
+                global_two_block_row_pointer_bytes
+            ),
+            "per_rank_remote_column_garray_bytes_upper": int(global_garray_bytes),
+            "per_rank_remote_row_stash_triplet_bytes_upper": int(
+                global_remote_stash_bytes
+            ),
+            "candidate_sparse_payload_bytes_upper": int(
+                global_aij_values_and_columns_bytes
+                + global_two_block_row_pointer_bytes
+                + global_garray_bytes
+                + global_remote_stash_bytes
+            ),
+            "classification": (
+                "global all-cell contribution bound applied conservatively to each "
+                "rank's AIJ payload and remote stash; source-derived estimate, not "
+                "MatInfo NNZ or a proven allocated-capacity bound"
+            ),
+        }
+    local_tensor_bytes = int(
+        summary["owned_cell_candidate_pair_contributions"] * scalar_bytes
+    )
+    summary["local_cell_tensor_payload_bytes"] = local_tensor_bytes
+    summary["largest_single_cell_tensor_payload_bytes"] = int(
+        max((rows * rows * scalar_bytes for rows in cell_rows[:owned_cell_count]), default=0)
+    )
+    summary["cell_dof_rows_python_metadata_bytes_upper"] = int(
+        64 * (len(cell_rows) + 1)
+    )
+    basis = {
+        "index_map": index_map_basis,
+        "index_map_bs": block_size,
+        "cell_dofmap": _task42_array_basis(adjacency, f"{label}.cell_dofmap"),
+        "cell_dof_offsets": _task42_array_basis(offsets, f"{label}.cell_dof_offsets"),
+        "cell_dof_rows": summary,
+    }
+    del local_to_global_ids
+    return basis, summary, index_map_temporary_bytes
+
+
+_TASK42_K0_IDENTITY_SHA_FIELDS = (
+    "input_sha256",
+    "physical_model_sha256",
+    "resolved_config_sha256",
+    "material_identity_sha256",
+    "material_record_sha256",
+)
+
+
+def _task42_complex_pair(value: Any, label: str) -> list[float]:
+    number = complex(value)
+    pair = [float(number.real), float(number.imag)]
+    if not all(np.isfinite(item) for item in pair):
+        raise ValueError(f"Task42 K0 basis {label} is nonfinite")
+    return pair
+
+
+def _task42_k0_source_basis(
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    degree_context: Mapping[str, int],
+    task42_sizing_identity: Mapping[str, Any] | None,
+    *,
+    rank: int,
+    mpi_size: int,
+    compiled_form: Any | None = None,
+) -> dict[str, Any]:
+    if not isinstance(task42_sizing_identity, Mapping):
+        raise TypeError("Task42 K0 sizing identity is missing")
+    identity: dict[str, str] = {}
+    for key in (
+        "model_id",
+        "run_id",
+        "comparison_group",
+        "canonical_export_prefix",
+        *_TASK42_K0_IDENTITY_SHA_FIELDS,
+        "source_sha",
+    ):
+        value = task42_sizing_identity.get(key)
+        if not isinstance(value, str) or not value:
+            raise ValueError(f"Task42 K0 sizing identity {key} is missing")
+        identity[key] = value
+    if identity["canonical_export_prefix"] != "task42_hybrid_direct":
+        raise ValueError("Task42 K0 canonical output identity differs")
+    if identity["model_id"] != str(cfg.case_name):
+        raise ValueError("Task42 K0 model identity differs from the numerical config")
+    for key in _TASK42_K0_IDENTITY_SHA_FIELDS:
+        if re.fullmatch(r"[0-9a-f]{64}", identity[key]) is None:
+            raise ValueError(f"Task42 K0 sizing identity {key} is not SHA256")
+    if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", identity["source_sha"]) is None:
+        raise ValueError(
+            "Task42 K0 source_sha does not match the accepted 40/64-hex format; "
+            "Git source attestation is enforced by the public runner"
+        )
+    identity["source_sha_validation"] = (
+        "format-only; this basis does not prove the Git source identity"
+    )
+    requested_modes = task42_sizing_identity.get("requested_modes_per_direction")
+    if type(requested_modes) is not int or requested_modes <= 0:
+        raise ValueError("Task42 K0 requested mode count is missing or invalid")
+
+    mesh = cross_section.mesh
+    topology = mesh.topology
+    tdim = int(topology.dim)
+    cell_map = topology.index_map(tdim)
+    geometry = mesh.geometry
+    geometry_coordinates = np.asarray(geometry.x)
+    geometry_dofmap = geometry.dofmap
+    coefficient_values = np.asarray(cross_section.epsilon_r.x.array)
+    cell_layout, cell_local_to_global, cell_map_temp_bytes = (
+        _task42_index_map_basis(
+            cell_map,
+            "cells",
+            mpi_size=mpi_size,
+            max_local_to_global_entries=36,
+        )
+    )
+    cell_count_local_total = cell_layout["size_local"] + cell_layout["num_ghosts"]
+    geometry_dim = int(geometry.dim)
+    geometry_storage_dim = (
+        int(geometry_coordinates.shape[1]) if geometry_coordinates.ndim == 2 else None
+    )
+    geometry_dofmap_array = np.asarray(geometry_dofmap)
+    del cell_local_to_global
+    x_axis = np.asarray(cross_section.x_values)
+    y_axis = np.asarray(cross_section.y_values)
+    if (
+        geometry_dofmap_array.ndim != 2
+        or geometry_dofmap_array.shape[0] != cell_count_local_total
+    ):
+        raise ValueError(
+            "Task42 K0 geometry cell map does not match actual owned+ghost cells"
+        )
+    geometry_cell_map_integer = geometry_dofmap_array.dtype.kind in "iu"
+    geometry_cell_map_indices_valid = bool(
+        geometry_cell_map_integer
+        and geometry_dofmap_array.shape[1] == 4
+        and (
+            geometry_dofmap_array.size == 0
+            or (
+                int(geometry_dofmap_array.min()) >= 0
+                and int(geometry_dofmap_array.max()) < geometry_coordinates.shape[0]
+            )
+        )
+    )
+    coordinates_finite = bool(
+        geometry_coordinates.ndim == 2
+        and all(np.isfinite(float(value)) for value in geometry_coordinates.flat)
+    )
+    coordinates_z_zero = bool(
+        geometry_storage_dim == 3
+        and all(float(value) == 0.0 for value in geometry_coordinates[:, 2])
+    )
+    def axis_matches_profile(values: np.ndarray, expected: tuple[float, ...]) -> bool:
+        return bool(
+            values.ndim == 1
+            and values.shape == (len(expected),)
+            and all(np.isfinite(float(value)) for value in values)
+            and all(
+                abs(float(value) - expected_value) <= 1.0e-12
+                for value, expected_value in zip(values, expected, strict=True)
+            )
+            and all(float(values[index + 1]) > float(values[index]) for index in range(values.size - 1))
+        )
+
+    axis_profile_matches = axis_matches_profile(
+        x_axis, _TASK42_K0_PROFILE_X_AXIS_NM
+    ) and axis_matches_profile(y_axis, _TASK42_K0_PROFILE_Y_AXIS_NM)
+    coordinates_within_xy_axes = bool(
+        coordinates_finite
+        and x_axis.ndim == 1
+        and y_axis.ndim == 1
+        and x_axis.size > 0
+        and y_axis.size > 0
+        and geometry_storage_dim is not None
+        and geometry_storage_dim >= 2
+        and np.all(geometry_coordinates[:, 0] >= x_axis[0])
+        and np.all(geometry_coordinates[:, 0] <= x_axis[-1])
+        and np.all(geometry_coordinates[:, 1] >= y_axis[0])
+        and np.all(geometry_coordinates[:, 1] <= y_axis[-1])
+    )
+    rank_value = int(mesh.comm.rank)
+    size_value = int(mesh.comm.size)
+    if rank_value != rank or size_value != mpi_size:
+        raise ValueError("Task42 K0 MPI rank identity changed while forming basis")
+    scalar_dtype = np.dtype(PETSc.ScalarType)
+    int_dtype = np.dtype(PETSc.IntType)
+    if scalar_dtype != np.dtype(np.complex128):
+        raise ValueError("Task42 K0 requires the qualified complex128 scalar ABI")
+
+    cell_name = getattr(topology, "cell_name", None)
+    if callable(cell_name):
+        cell_name = cell_name()
+    if not isinstance(cell_name, str) or not cell_name:
+        cell_name = getattr(topology, "cell_type", None)
+        if callable(cell_name):
+            cell_name = cell_name()
+        if cell_name is None:
+            raise ValueError("Task42 K0 basis lacks the actual mesh cell type")
+        cell_name = str(cell_name)
+
+    def optional_complex_pair(value: Any, label: str) -> list[float] | None:
+        return None if value is None else _task42_complex_pair(value, label)
+
+    mixed_basis, mixed_cell_rows, mixed_map_temp_bytes = _task42_space_basis(
+        spaces.mixed,
+        "mixed",
+        local_cell_count=cell_count_local_total,
+        owned_cell_count=cell_layout["size_local"],
+        global_cell_count=cell_layout["size_global"],
+        mpi_size=mpi_size,
+        max_global_dofs=4033,
+        scalar_bytes=int(scalar_dtype.itemsize),
+        count_matrix_candidates=True,
+    )
+    mixed_index_map = mixed_basis["index_map"]
+    mixed_block_size = mixed_basis["index_map_bs"]
+    mixed_owned_range = mixed_index_map["local_range"]
+    transverse_basis, transverse_cell_rows, transverse_map_temp_bytes = (
+        _task42_space_basis(
+            spaces.transverse,
+            "transverse",
+            local_cell_count=cell_count_local_total,
+            owned_cell_count=cell_layout["size_local"],
+            global_cell_count=cell_layout["size_global"],
+            mpi_size=mpi_size,
+            max_global_dofs=2664,
+            scalar_bytes=int(scalar_dtype.itemsize),
+        )
+    )
+    longitudinal_basis, longitudinal_cell_rows, longitudinal_map_temp_bytes = (
+        _task42_space_basis(
+            spaces.longitudinal,
+            "longitudinal",
+            local_cell_count=cell_count_local_total,
+            owned_cell_count=cell_layout["size_local"],
+            global_cell_count=cell_layout["size_global"],
+            mpi_size=mpi_size,
+            max_global_dofs=1369,
+            scalar_bytes=int(scalar_dtype.itemsize),
+        )
+    )
+    geometry_degree = int(degree_context["geometry_degree"])
+    coefficient_degree = int(degree_context["coefficient_degree"])
+    quadrature_degree_value = int(degree_context["quadrature_degree"])
+    coefficient_layout_matches_cells = bool(
+        coefficient_values.ndim == 1
+        and coefficient_values.size == cell_count_local_total
+    )
+    material_n = complex(cfg.n_grating) if cfg.n_grating is not None else None
+    expected_material_values = {complex(cfg.n_air) ** 2}
+    if material_n is not None:
+        expected_material_values.add(material_n**2)
+    epsilon_values_match_profile = bool(
+        coefficient_values.dtype.kind == "c"
+        and all(
+            np.isfinite(complex(value).real)
+            and np.isfinite(complex(value).imag)
+            and any(
+                abs(complex(value) - expected) <= 1.0e-12
+                for expected in expected_material_values
+            )
+            for value in coefficient_values
+        )
+    )
+    source_derived_objects = {
+        "owned_cells": int(cell_layout["size_local"]),
+        "ghost_cells": int(cell_layout["num_ghosts"]),
+        "dg0_local_coefficient_count": int(coefficient_values.size),
+        "dg0_local_coefficient_layout_matches_cells": coefficient_layout_matches_cells,
+        "mixed_cell_dof_rows": {
+            "owned_per_cell": mixed_cell_rows["owned_cell_dof_rows"],
+            "ghost_per_cell": mixed_cell_rows["ghost_cell_dof_rows"],
+            "candidate_pair_contributions": mixed_cell_rows[
+                "owned_cell_candidate_pair_contributions"
+            ],
+            "local_cell_tensor_payload_bytes_sum": mixed_cell_rows[
+                "local_cell_tensor_payload_bytes"
+            ],
+            "largest_single_cell_tensor_payload_bytes": mixed_cell_rows[
+                "largest_single_cell_tensor_payload_bytes"
+            ],
+        },
+        "transverse_cell_dof_rows": {
+            "owned_per_cell": transverse_cell_rows["owned_cell_dof_rows"],
+            "ghost_per_cell": transverse_cell_rows["ghost_cell_dof_rows"],
+        },
+        "longitudinal_cell_dof_rows": {
+            "owned_per_cell": longitudinal_cell_rows["owned_cell_dof_rows"],
+            "ghost_per_cell": longitudinal_cell_rows["ghost_cell_dof_rows"],
+        },
+        "matrix_candidate_contributions": mixed_cell_rows.get(
+            "matrix_candidate_contributions"
+        ),
+        "index_map_local_to_global_temporary_peak_bytes": int(
+            max(
+                cell_map_temp_bytes,
+                mixed_map_temp_bytes,
+                transverse_map_temp_bytes,
+                longitudinal_map_temp_bytes,
+            )
+        ),
+        "geometry_coordinate_validation_mask_bytes_upper": int(
+            geometry_coordinates.shape[0]
+            if geometry_coordinates.ndim == 2
+            else 0
+        ),
+        "cell_dof_rows_python_metadata_bytes_upper": int(
+            mixed_cell_rows["cell_dof_rows_python_metadata_bytes_upper"]
+            + transverse_cell_rows["cell_dof_rows_python_metadata_bytes_upper"]
+            + longitudinal_cell_rows["cell_dof_rows_python_metadata_bytes_upper"]
+        ),
+    }
+    basis: dict[str, Any] = {
+        "schema": "task42.qep_k0_rank_basis.v1",
+        "phase_rank": rank,
+        "mpi_size": mpi_size,
+        "task42_identity": identity,
+        "full_k0_row_partition": {
+            "source": "mixed_dofmap_index_map_before_PETSc_Mat_creation",
+            "block_size": mixed_block_size,
+            "local_rows": mixed_index_map["size_local"] * mixed_block_size,
+            "global_rows": mixed_index_map["size_global"] * mixed_block_size,
+            "owned_range": [
+                mixed_owned_range[0] * mixed_block_size,
+                mixed_owned_range[1] * mixed_block_size,
+            ],
+        },
+        "rank_partition": {
+            "cell_index_map": cell_layout,
+            "topology_dimension": tdim,
+            "geometry_dimension": geometry_dim,
+            "coordinate_storage_dimension": geometry_storage_dim,
+            "coordinates_all_finite": coordinates_finite,
+            "coordinate_z_column_all_zero": coordinates_z_zero,
+            "geometry_cell_map_local_row_count": int(geometry_dofmap_array.shape[0]),
+            "geometry_cell_map_shape": [
+                int(value) for value in geometry_dofmap_array.shape
+            ],
+            "geometry_cell_map_integer_and_indices_valid": (
+                geometry_cell_map_indices_valid
+            ),
+            "axis_profile_matches_calibrated_geometry": axis_profile_matches,
+            "coordinates_within_xy_axes": coordinates_within_xy_axes,
+            "geometry_xy_bounds_nm": (
+                [
+                    float(geometry_coordinates[:, 0].min()),
+                    float(geometry_coordinates[:, 0].max()),
+                    float(geometry_coordinates[:, 1].min()),
+                    float(geometry_coordinates[:, 1].max()),
+                ]
+                if geometry_coordinates.ndim == 2
+                and geometry_coordinates.shape[0] > 0
+                and coordinates_finite
+                and geometry_storage_dim is not None
+                and geometry_storage_dim >= 2
+                else None
+            ),
+            "geometry_coordinates": _task42_array_basis(
+                geometry_coordinates, "geometry.coordinates"
+            ),
+            "geometry_cell_dofmap": _task42_array_basis(
+                geometry_dofmap_array, "geometry.cell_dofmap"
+            ),
+            "x_axis": _task42_array_basis(x_axis, "x_axis"),
+            "y_axis": _task42_array_basis(y_axis, "y_axis"),
+        },
+        "dof_layout": {
+            "mixed": mixed_basis,
+            "transverse": transverse_basis,
+            "longitudinal": longitudinal_basis,
+            "transverse_to_mixed": _task42_array_basis(
+                spaces.transverse_to_mixed, "transverse_to_mixed"
+            ),
+            "longitudinal_to_mixed": _task42_array_basis(
+                spaces.longitudinal_to_mixed, "longitudinal_to_mixed"
+            ),
+        },
+        "abi": {
+            "petsc_scalar_dtype": scalar_dtype.str,
+            "petsc_scalar_bytes": int(scalar_dtype.itemsize),
+            "petsc_int_dtype": int_dtype.str,
+            "petsc_int_bytes": int(int_dtype.itemsize),
+            "geometry_real_dtype": geometry_coordinates.dtype.str,
+        },
+        "discretization": {
+            "transverse_degree_p": int(spaces.transverse_degree),
+            "longitudinal_degree_p": int(spaces.longitudinal_degree),
+            "geometry_degree_g": geometry_degree,
+            "coefficient_degree_c": coefficient_degree,
+            "quadrature_degree_q": quadrature_degree_value,
+            "cell_type": cell_name,
+            "topological_dimension": tdim,
+            "global_cell_count": int(cell_map.size_global),
+            "geometry_dimension": geometry_dim,
+            "coordinate_storage_dimension": geometry_storage_dim,
+        },
+        "physics": {
+            "case_name": str(cfg.case_name),
+            "requested_modes_per_direction": requested_modes,
+            "wavelength_nm": float(cfg.lambda0),
+            "period_x_nm": float(cfg.period_x),
+            "period_y_nm": float(cfg.period_y),
+            "kx_per_nm": _task42_complex_pair(cfg.kx, "kx"),
+            "ky_per_nm": _task42_complex_pair(cfg.ky, "ky"),
+            "mu_r": _task42_complex_pair(cfg.mu_r, "mu_r"),
+            "n_air": _task42_complex_pair(cfg.n_air, "n_air"),
+            "n_grating": optional_complex_pair(cfg.n_grating, "n_grating"),
+            "n_substrate": optional_complex_pair(cfg.n_substrate, "n_substrate"),
+            "material_coefficients_match_air_or_configured_grating": (
+                epsilon_values_match_profile
+            ),
+            "epsilon_r_coefficients": _task42_array_basis(
+                coefficient_values, "epsilon_r.coefficients"
+            ),
+        },
+        "source_derived_objects": source_derived_objects,
+    }
+    source_derived_objects["source_basis_validation_scratch_peak_bytes"] = int(
+        max(
+            source_derived_objects[
+                "index_map_local_to_global_temporary_peak_bytes"
+            ],
+            source_derived_objects[
+                "geometry_coordinate_validation_mask_bytes_upper"
+            ],
+        )
+    )
+    if compiled_form is not None:
+        basis["compiled_form_type"] = (
+            f"{type(compiled_form).__module__}.{type(compiled_form).__qualname__}"
+        )
+    return basis
+
+
+_TASK42_K0_RANK_BYTES = 64 * 1024**2
+_TASK42_K0_COMPILER_SUBTREE_BYTES = 512 * 1024**2
+_TASK42_K0_CONTROLLER_BYTES = 8 * 1024**2
+_TASK42_K0_PROFILE_X_AXIS_NM = (0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0)
+_TASK42_K0_PROFILE_Y_AXIS_NM = (0.0, 7.5, 15.0, 25.0, 35.0, 42.5, 50.0)
+_TASK42_K0_SI_N = complex(0.999001296237, 0.00182646094)
+_TASK42_K0_METADATA_MARGIN_BYTES = 64 * 1024
+
+
+def _task42_json_utf8_size(value: Any) -> int:
+    return len(
+        json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    )
+
+
+def _task42_k0_calibration_scope_errors(
+    basis: Mapping[str, Any], *, mpi_size: int
+) -> list[str]:
+    errors: list[str] = []
+    rank_partition = basis["rank_partition"]
+    discretization = basis["discretization"]
+    dof_layout = basis["dof_layout"]
+    physics = basis["physics"]
+    abi = basis["abi"]
+    objects = basis["source_derived_objects"]
+    if mpi_size != 8:
+        errors.append("qep_K0_profile_requires_MPI8")
+    if discretization["topological_dimension"] != 2:
+        errors.append("qep_K0_profile_requires_2D_quad_topology")
+    if discretization["cell_type"] != "quadrilateral":
+        errors.append("qep_K0_profile_requires_quadrilateral_cells")
+    if discretization["global_cell_count"] != 36:
+        errors.append("qep_K0_profile_requires_36_global_cells")
+    matrix_candidates = objects["matrix_candidate_contributions"]
+    if matrix_candidates["global_cell_candidate_pair_contribution_bound"] != 636804:
+        errors.append("qep_K0_profile_global_cell_pair_bound_must_be_636804")
+    if objects["owned_cells"] <= 0:
+        errors.append("qep_K0_profile_requires_owned_cells_for_local_basis")
+    if discretization["geometry_degree_g"] != 1:
+        errors.append("qep_K0_profile_requires_linear_geometry_g1")
+    if rank_partition["geometry_dimension"] != 2:
+        errors.append("qep_K0_profile_requires_geometry_dim_2")
+    if rank_partition["coordinate_storage_dimension"] != 3:
+        errors.append("qep_K0_profile_requires_three_coordinate_storage_columns")
+    if rank_partition["geometry_cell_map_local_row_count"] != (
+        rank_partition["cell_index_map"]["size_local"]
+        + rank_partition["cell_index_map"]["num_ghosts"]
+    ):
+        errors.append("qep_K0_geometry_cell_map_count_mismatch")
+    if rank_partition["geometry_cell_map_shape"][1:] != [4]:
+        errors.append("qep_K0_geometry_cell_map_width_must_be_4")
+    if not rank_partition["geometry_cell_map_integer_and_indices_valid"]:
+        errors.append("qep_K0_geometry_cell_map_indices_invalid")
+    if not rank_partition["coordinates_all_finite"]:
+        errors.append("qep_K0_geometry_coordinates_nonfinite")
+    if not rank_partition["coordinate_z_column_all_zero"]:
+        errors.append("qep_K0_2D_geometry_z_column_not_zero")
+    if not rank_partition["coordinates_within_xy_axes"]:
+        errors.append("qep_K0_geometry_xy_outside_axes")
+    if not rank_partition["axis_profile_matches_calibrated_geometry"]:
+        errors.append("qep_K0_profile_axes_do_not_match_full_50x50_17x20_geometry")
+    expected_degrees = {
+        "transverse_degree_p": 6,
+        "longitudinal_degree_p": 6,
+        "geometry_degree_g": 1,
+        "coefficient_degree_c": 0,
+        "quadrature_degree_q": 16,
+    }
+    for name, expected in expected_degrees.items():
+        if discretization[name] != expected:
+            errors.append(f"qep_K0_profile_{name}_must_be_{expected}")
+    expected_global_dofs = {
+        "mixed": 4033,
+        "transverse": 2664,
+        "longitudinal": 1369,
+    }
+    for label, expected in expected_global_dofs.items():
+        layout = dof_layout[label]
+        global_rows = layout["index_map"]["size_global"] * layout["index_map_bs"]
+        if global_rows != expected:
+            errors.append(f"qep_K0_profile_{label}_global_dofs_must_be_{expected}")
+    if dof_layout["mixed"]["index_map_bs"] != 1:
+        errors.append("qep_K0_profile_mixed_index_map_block_size_must_be_1")
+    cell_rows = objects["mixed_cell_dof_rows"]
+    if any(value != 133 for value in cell_rows["owned_per_cell"]):
+        errors.append("qep_K0_profile_owned_mixed_cell_dofs_must_be_133")
+    if any(value != 133 for value in cell_rows["ghost_per_cell"]):
+        errors.append("qep_K0_profile_ghost_mixed_cell_dofs_must_be_133")
+    if any(value != 84 for value in objects["transverse_cell_dof_rows"]["owned_per_cell"]):
+        errors.append("qep_K0_profile_owned_transverse_cell_dofs_must_be_84")
+    if any(value != 84 for value in objects["transverse_cell_dof_rows"]["ghost_per_cell"]):
+        errors.append("qep_K0_profile_ghost_transverse_cell_dofs_must_be_84")
+    if any(value != 49 for value in objects["longitudinal_cell_dof_rows"]["owned_per_cell"]):
+        errors.append("qep_K0_profile_owned_longitudinal_cell_dofs_must_be_49")
+    if any(value != 49 for value in objects["longitudinal_cell_dof_rows"]["ghost_per_cell"]):
+        errors.append("qep_K0_profile_ghost_longitudinal_cell_dofs_must_be_49")
+    if abi["petsc_scalar_dtype"] != np.dtype(np.complex128).str:
+        errors.append("qep_K0_profile_requires_PETSc_complex128")
+    if abi["petsc_int_dtype"] != np.dtype(np.int32).str:
+        errors.append("qep_K0_profile_requires_PETSc_Int32")
+    if abi["geometry_real_dtype"] != np.dtype(np.float64).str:
+        errors.append("qep_K0_profile_requires_float64_geometry")
+    if physics["requested_modes_per_direction"] != 120:
+        errors.append("qep_K0_profile_requires_M120")
+    if physics["wavelength_nm"] != 13.5:
+        errors.append("qep_K0_profile_requires_13p5nm")
+    if physics["period_x_nm"] != 50.0 or physics["period_y_nm"] != 50.0:
+        errors.append("qep_K0_profile_requires_50x50nm_period")
+    if physics["mu_r"] != [1.0, 0.0] or physics["n_air"] != [1.0, 0.0]:
+        errors.append("qep_K0_profile_air_or_mu_identity_mismatch")
+    expected_si_pair = [float(_TASK42_K0_SI_N.real), float(_TASK42_K0_SI_N.imag)]
+    if (
+        physics["n_grating"] != expected_si_pair
+        or physics["n_substrate"] != expected_si_pair
+    ):
+        errors.append("qep_K0_profile_user_Si_material_identity_mismatch")
+    if not physics["material_coefficients_match_air_or_configured_grating"]:
+        errors.append("qep_K0_DG0_coefficients_do_not_match_air_or_Si")
+    if not objects["dg0_local_coefficient_layout_matches_cells"]:
+        errors.append("qep_K0_DG0_local_coefficient_count_does_not_match_cells")
+    if len(objects["mixed_cell_dof_rows"]["owned_per_cell"]) != objects["owned_cells"]:
+        errors.append("qep_K0_owned_cell_dof_rows_count_mismatch")
+    if len(objects["mixed_cell_dof_rows"]["ghost_per_cell"]) != objects["ghost_cells"]:
+        errors.append("qep_K0_ghost_cell_dof_rows_count_mismatch")
+    for label, rows in (
+        ("transverse", objects["transverse_cell_dof_rows"]),
+        ("longitudinal", objects["longitudinal_cell_dof_rows"]),
+    ):
+        if len(rows["owned_per_cell"]) != objects["owned_cells"]:
+            errors.append(f"qep_K0_{label}_owned_cell_dof_rows_count_mismatch")
+        if len(rows["ghost_per_cell"]) != objects["ghost_cells"]:
+            errors.append(f"qep_K0_{label}_ghost_cell_dof_rows_count_mismatch")
+    return errors
+
+
+def _task42_k0_phase_inventory(
+    phase: str,
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    degree_context: Mapping[str, int],
+    task42_sizing_identity: Mapping[str, Any] | None,
+    *,
+    compiled_form: Any | None = None,
+    allocation_boundary: str | None = None,
+    constraints_transform_resident: bool = False,
+    local_basis_errors: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    from ..common.task42_phase_admission import task42_phase_inventory
+
+    inventory = task42_phase_inventory(phase)
+    rank = int(cross_section.mesh.comm.rank)
+    mpi_size = int(cross_section.mesh.comm.size)
+    admission_errors: list[str] = list(local_basis_errors)
+    basis: dict[str, Any] = {}
+    if not admission_errors:
+        try:
+            basis = _task42_k0_source_basis(
+                cfg,
+                cross_section,
+                spaces,
+                degree_context,
+                task42_sizing_identity,
+                rank=rank,
+                mpi_size=mpi_size,
+                compiled_form=compiled_form,
+            )
+            admission_errors.extend(
+                _task42_k0_calibration_scope_errors(basis, mpi_size=mpi_size)
+            )
+        except Exception as exc:  # noqa: BLE001 - local basis errors must reach collective refusal
+            admission_errors.append(
+                f"task42_k0_source_basis_unavailable:{type(exc).__name__}:{exc}"
+            )
+    default_boundaries = {
+        "qep_operator_K0_ffcx_form": "before_ufl_form_context_and_form",
+        "qep_operator_K0_full": "after_fem_form_jit_before_petsc_matrix",
+    }
+    selected_boundary = allocation_boundary or default_boundaries.get(phase)
+    allowed_boundaries = {
+        "qep_operator_K0_ffcx_form": {
+            "before_ufl_form_context_and_form",
+            "before_fem_form_jit_after_constraints_transform",
+        },
+        "qep_operator_K0_full": {"after_fem_form_jit_before_petsc_matrix"},
+    }
+    if selected_boundary not in allowed_boundaries.get(phase, set()):
+        admission_errors.append("task42_k0_allocation_boundary_is_invalid_for_phase")
+        basis = {}
+    if (
+        selected_boundary == "before_fem_form_jit_after_constraints_transform"
+        and not constraints_transform_resident
+    ):
+        admission_errors.append(
+            "qep_K0_constraints_transform_context_missing_at_fresh_ffcx_boundary"
+        )
+
+    if phase == "qep_operator_K0_ffcx_form":
+        rank_amounts = {
+            "qep_k0_ffcx_rank_payload": _TASK42_K0_RANK_BYTES,
+            "qep_k0_ffcx_rank0_compiler_subtree": (
+                _TASK42_K0_COMPILER_SUBTREE_BYTES if rank == 0 else 0
+            ),
+            "qep_k0_ffcx_controller_allowance": (
+                _TASK42_K0_CONTROLLER_BYTES if rank == 0 else 0
+            ),
+        }
+    elif phase == "qep_operator_K0_full":
+        rank_amounts = {
+            "full_K0_sparse_matrix": _TASK42_K0_RANK_BYTES,
+            "qep_k0_full_controller_allowance": (
+                _TASK42_K0_CONTROLLER_BYTES if rank == 0 else 0
+            ),
+        }
+    else:
+        raise ValueError(f"unsupported source-derived Task42 K0 phase {phase!r}")
+
+    uncertainty = (
+        "predicted only for the source-derived 36-quad, p6/g1, DG0/c0, q16, "
+        "4033-row, 133-mixed-dofs-per-cell, MPI8 profile; not a hard upper bound "
+        "or measured peak; native compiler/PETSc workspace remains uncalibrated; "
+        "controller allowance is charged once on rank 0"
+    )
+    rank_known_bytes = 0
+    controller_known_bytes = 0
+    if basis:
+        source_objects = basis["source_derived_objects"]
+        cell_rows = source_objects["mixed_cell_dof_rows"]
+        matrix_candidates = source_objects["matrix_candidate_contributions"]
+        basis_scratch = source_objects[
+            "source_basis_validation_scratch_peak_bytes"
+        ]
+        python_cell_metadata = source_objects[
+            "cell_dof_rows_python_metadata_bytes_upper"
+        ]
+        if phase == "qep_operator_K0_ffcx_form":
+            phase_objects_bytes = int(
+                cell_rows["local_cell_tensor_payload_bytes_sum"]
+            )
+        else:
+            phase_objects_bytes = int(
+                cell_rows["local_cell_tensor_payload_bytes_sum"]
+                + matrix_candidates["candidate_sparse_payload_bytes_upper"]
+            )
+        basis["phase_prediction"] = {
+            "phase": phase,
+            "known_source_derived_rank_payload_bytes": int(
+                phase_objects_bytes + basis_scratch + python_cell_metadata
+            ),
+            "source_derived_rank_payload_formula": (
+                "sum over actual owned mixed-cell rows of rows^2*ScalarType_bytes "
+                "as a conservative local-tensor candidate payload, plus actual "
+                "local_to_global/coordinate-validation scratch peak and row metadata; FFCx "
+                "and compiler subtree remain predicted inside their envelopes"
+                if phase == "qep_operator_K0_ffcx_form"
+                else "sum over actual owned mixed-cell rows of rows^2*ScalarType_bytes "
+                "+ source-derived AIJ and remote-stash payload using the global "
+                "36*133^2 all-cell contribution bound for each rank (not only that "
+                "rank's owned-cell subtotal) + local_to_global/coordinate-validation "
+                "scratch peak + row metadata; no matrix is created while inventory is formed"
+            ),
+            "rank_envelope_bytes": _TASK42_K0_RANK_BYTES,
+            "rank_allowance_is_hard_bound": False,
+            "component_count": len(inventory["components"]),
+        }
+        for _ in range(4):
+            basis_json_bytes = _task42_json_utf8_size(basis)
+            component_count = len(inventory["components"])
+            per_component_basis_bytes_upper = basis_json_bytes + 1024
+            rank_inventory_bytes_upper = (
+                component_count * per_component_basis_bytes_upper
+                + _TASK42_K0_METADATA_MARGIN_BYTES
+            )
+            rank_gate_metadata_bytes = int(
+                2 * rank_inventory_bytes_upper
+                + mpi_size * rank_inventory_bytes_upper
+                + _TASK42_K0_METADATA_MARGIN_BYTES
+            )
+            controller_receipt_metadata_bytes = int(
+                2 * mpi_size * rank_inventory_bytes_upper
+                + _TASK42_K0_METADATA_MARGIN_BYTES
+            )
+            new_accounting = {
+                **basis["phase_prediction"],
+                "basis_json_probe_bytes": basis_json_bytes,
+                "rank_inventory_metadata_bytes_upper": rank_inventory_bytes_upper,
+                "allgather_and_rank_local_gate_metadata_bytes_upper": rank_gate_metadata_bytes,
+                "root_controller_receipt_metadata_bytes_upper": controller_receipt_metadata_bytes,
+                "metadata_probe_peak_included_in_rank_payload": True,
+                "allocation_prediction_is_not_a_cumulative_charge": True,
+            }
+            if basis["phase_prediction"] == new_accounting:
+                break
+            basis["phase_prediction"] = new_accounting
+        rank_known_bytes = int(
+            basis["phase_prediction"]["known_source_derived_rank_payload_bytes"]
+            + basis["phase_prediction"][
+                "allgather_and_rank_local_gate_metadata_bytes_upper"
+            ]
+        )
+        controller_known_bytes = int(
+            basis["phase_prediction"][
+                "root_controller_receipt_metadata_bytes_upper"
+            ]
+        )
+        if rank_known_bytes > _TASK42_K0_RANK_BYTES:
+            admission_errors.append(
+                "qep_K0_source_derived_rank_objects_exceed_64MiB_envelope"
+            )
+        if controller_known_bytes > _TASK42_K0_CONTROLLER_BYTES:
+            admission_errors.append(
+                "qep_K0_source_derived_controller_metadata_exceeds_8MiB_envelope"
+            )
+        for component in inventory["components"]:
+            name = str(component["name"])
+            component["sizing_basis"] = {**basis, "component": name}
+
+    if allocation_boundary is None:
+        allocation_boundary = selected_boundary
+    resident_objects = {
+        "before_ufl_form_context_and_form": [
+            "cross_section_mesh_and_DG0_coefficients",
+            "mixed_and_collapsed_spaces",
+        ],
+        "before_fem_form_jit_after_constraints_transform": [
+            "cross_section_mesh_and_DG0_coefficients",
+            "mixed_and_collapsed_spaces",
+            "UFL_QEP_forms",
+        ],
+        "after_fem_form_jit_before_petsc_matrix": [
+            "cross_section_mesh_and_DG0_coefficients",
+            "mixed_and_collapsed_spaces",
+            "UFL_QEP_forms",
+            "compiled_K0_form",
+        ],
+    }.get(str(allocation_boundary), [])
+    if constraints_transform_resident and allocation_boundary in {
+        "before_fem_form_jit_after_constraints_transform",
+        "after_fem_form_jit_before_petsc_matrix",
+    }:
+        resident_objects.extend(
+            ("Floquet_constraints", "distributed_constraint_transform")
+        )
+    if allocation_boundary == "before_fem_form_jit_after_constraints_transform":
+        resident_objects.append("UFL_K0_form")
+    components = []
+    for component in inventory["components"]:
+        item = dict(component)
+        name = str(item["name"])
+        item["delta_bytes"] = (
+            None if admission_errors else int(rank_amounts[name])
+        )
+        item["sizing_basis"] = (
+            {**basis, "component": name} if basis else {}
+        )
+        item["uncertainty"] = uncertainty
+        item["classification"] = "predicted"
+        item["upper_bound_proven"] = False
+        components.append(item)
+    inventory.update(
+        {
+            "schema": "task42.direct_phase_delta_inventory.v1",
+            "status": "source-derived-prediction",
+            "estimate_uncertainty": uncertainty,
+            "evidence": {
+                "source": "live QEP config, cross-section, mixed/collapsed dofmaps, and ABI",
+                "rank": rank,
+                "mpi_size": mpi_size,
+                "basis_schema": "task42.qep_k0_rank_basis.v1",
+                "allocation_boundary": allocation_boundary,
+                "resident_objects_at_fresh_snapshot": resident_objects,
+                "same_phase_delta_semantics": (
+                    "a second FFCx gate rechecks the same manifest-bound Delta "
+                    "against a fresh J after constraints/transform; it is not an "
+                    "additional cumulative phase charge"
+                ),
+                "source_sha_semantics": (
+                    "40/64-hex format is checked in this helper; actual Git source "
+                    "attestation remains the public-runner responsibility"
+                ),
+            },
+            "components": components,
+            "admission_errors": admission_errors,
+        }
+    )
+    return inventory
+
+
+def _qep_form_context(
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+):
+    Et, Ez = ufl.TrialFunctions(spaces.mixed)
+    Vt, Vz = ufl.TestFunctions(spaces.mixed)
+    dx = ufl.Measure("dx", domain=cross_section.mesh)
+    mu_inv = complex(1.0 / cfg.mu_r)
+    k0_squared = float(cfg.k0**2)
+    return Et, Ez, Vt, Vz, dx, mu_inv, k0_squared, cross_section.epsilon_r
+
+
+def _build_full_k0_form(context):
+    Et, Ez, Vt, Vz, dx, mu_inv, k0_squared, epsilon_r = context
+    return (
+        mu_inv * ufl.inner(ufl.curl(Et), ufl.curl(Vt))
+        - k0_squared * ufl.inner(epsilon_r * Et, Vt)
+        + mu_inv * ufl.inner(ufl.grad(Ez), ufl.grad(Vz))
+        - k0_squared * ufl.inner(epsilon_r * Ez, Vz)
+    ) * dx
+
+
+def _compile_unconstrained_form(form, *, quadrature_degree: int):
+    return fem.form(
+        form,
+        form_compiler_options={"quadrature_degree": int(quadrature_degree)},
+    )
+
+
+def _assemble_compiled_unconstrained_matrix(compiled_form) -> PETSc.Mat:
+    matrix = fem_petsc.assemble_matrix(compiled_form, bcs=[])
     matrix.assemble()
     return matrix
+
+
+def _assemble_unconstrained_matrix(form, *, quadrature_degree: int) -> PETSc.Mat:
+    compiled_form = _compile_unconstrained_form(
+        form, quadrature_degree=quadrature_degree
+    )
+    return _assemble_compiled_unconstrained_matrix(compiled_form)
+
+
+def _admit_task42_k0_phase(
+    task42_phase_gate,
+    phase: str,
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    degree_context: Mapping[str, int],
+    task42_sizing_identity: Mapping[str, Any] | None,
+    *,
+    compiled_form: Any | None = None,
+    allocation_boundary: str | None = None,
+    constraints_transform_resident: bool = False,
+    local_basis_errors: tuple[str, ...] = (),
+) -> Mapping[str, Any]:
+    from ..common.task42_phase_admission import require_task42_phase_admission
+
+    inventory = _task42_k0_phase_inventory(
+        phase,
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        task42_sizing_identity,
+        compiled_form=compiled_form,
+        allocation_boundary=allocation_boundary,
+        constraints_transform_resident=constraints_transform_resident,
+        local_basis_errors=local_basis_errors,
+    )
+    return require_task42_phase_admission(task42_phase_gate, phase, inventory)
+
+
+def _task42_degree_context_with_error(
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    requested_quadrature_degree: int | None,
+) -> tuple[dict[str, int], tuple[str, ...]]:
+    try:
+        return (
+            _qep_degree_context(
+                cross_section, spaces, requested_quadrature_degree
+            ),
+            (),
+        )
+    except Exception as exc:  # noqa: BLE001 - preserve the local cause for collective refusal
+        return {}, (
+            f"task42_qep_degree_context_failed:{type(exc).__name__}:{exc}",
+        )
+
+
+def _destroy_task42_transform_on_refusal(transform: Any, primary: RuntimeError) -> None:
+    """Destroy a transform only after a unanimous pre-allocation refusal."""
+
+    if "refused before allocation" not in str(primary):
+        return
+    try:
+        transform.matrix.destroy()
+    except BaseException as cleanup_error:  # noqa: BLE001 - keep the unanimous refusal primary
+        primary.add_note(
+            "Task42 K0 refusal transform cleanup also failed: "
+            f"{type(cleanup_error).__name__}: {cleanup_error}"
+        )
+
+
+def assemble_full_k0_for_sizing(
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    *,
+    task42_phase_gate=None,
+    task42_sizing_identity: Mapping[str, Any] | None = None,
+    quadrature_degree: int | None = None,
+) -> PETSc.Mat:
+    """Compile and assemble only full K0 behind both Task42 preallocation gates.
+
+    This source-derived sizing entrypoint is intentionally unavailable without
+    the public-worker phase callback. It does not build constraints, a reduced
+    transform, K1/K2/mass, or an eigensolver object.
+    """
+
+    if not callable(task42_phase_gate):
+        raise TypeError("Task42 full-K0 sizing requires the phase-gate callback")
+    degree_context, degree_errors = _task42_degree_context_with_error(
+        cross_section, spaces, quadrature_degree
+    )
+    _admit_task42_k0_phase(
+        task42_phase_gate,
+        "qep_operator_K0_ffcx_form",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        task42_sizing_identity,
+        allocation_boundary="before_ufl_form_context_and_form",
+        local_basis_errors=degree_errors,
+    )
+    form_context = _qep_form_context(cfg, cross_section, spaces)
+    k0_form = _build_full_k0_form(form_context)
+    compiled_form = None
+    try:
+        compiled_form = _compile_unconstrained_form(
+            k0_form, quadrature_degree=degree_context["quadrature_degree"]
+        )
+        _admit_task42_k0_phase(
+            task42_phase_gate,
+            "qep_operator_K0_full",
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            task42_sizing_identity,
+            compiled_form=compiled_form,
+            allocation_boundary="after_fem_form_jit_before_petsc_matrix",
+        )
+        return _assemble_compiled_unconstrained_matrix(compiled_form)
+    finally:
+        # fem.form has no explicit destroy method; dropping this sole local
+        # reference releases its compiled wrapper on a rejected K0 gate.
+        compiled_form = None
 
 
 def assemble_quadratic_beta_operators(
@@ -167,6 +1470,7 @@ def assemble_quadratic_beta_operators(
     quadrature_degree: int | None = None,
     log=None,
     task42_phase_gate=None,
+    task42_sizing_identity: Mapping[str, Any] | None = None,
 ) -> QuadraticBetaOperators:
     """Assemble and explicitly Floquet-reduce the mixed Maxwell QEP.
 
@@ -179,45 +1483,33 @@ def assemble_quadratic_beta_operators(
     if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
         raise RuntimeError("Task32 QEP requires PETSc complex128 scalar mode.")
 
-    Et, Ez = ufl.TrialFunctions(spaces.mixed)
-    Vt, Vz = ufl.TestFunctions(spaces.mixed)
-    dx = ufl.Measure("dx", domain=cross_section.mesh)
-    mu_inv = complex(1.0 / cfg.mu_r)
-    k0_squared = float(cfg.k0**2)
-    epsilon_r = cross_section.epsilon_r
-    field_degree = max(
-        int(spaces.transverse_degree), int(spaces.longitudinal_degree)
-    )
-    geometry_degree = int(getattr(cross_section.mesh.geometry.cmap, "degree", 1))
-    coefficient_degree = int(
-        getattr(
-            cross_section.epsilon_r.function_space.element.basix_element,
-            "degree",
-            0,
+    if task42_phase_gate is None:
+        # Preserve the ordinary path's historical order: create the UFL
+        # arguments/measure before selecting the compiler quadrature policy.
+        form_context = _qep_form_context(cfg, cross_section, spaces)
+        degree_context = _qep_degree_context(
+            cross_section, spaces, quadrature_degree
         )
-    )
-    recommended_quadrature = qep_quadrature_degree(
-        field_degree=field_degree,
-        geometry_degree=geometry_degree,
-        coefficient_degree=coefficient_degree,
-    )
-    selected_quadrature = (
-        recommended_quadrature
-        if quadrature_degree is None
-        else int(quadrature_degree)
-    )
-    if selected_quadrature < recommended_quadrature:
-        raise ValueError(
-            "QEP quadrature degree cannot be lower than the Task033 policy: "
-            f"requested={selected_quadrature}, recommended={recommended_quadrature}."
+    else:
+        degree_context, degree_errors = _task42_degree_context_with_error(
+            cross_section, spaces, quadrature_degree
         )
+        _admit_task42_k0_phase(
+            task42_phase_gate,
+            "qep_operator_K0_ffcx_form",
+            cfg,
+            cross_section,
+            spaces,
+            degree_context,
+            task42_sizing_identity,
+            allocation_boundary="before_ufl_form_context_and_form",
+            local_basis_errors=degree_errors,
+        )
+        form_context = _qep_form_context(cfg, cross_section, spaces)
 
-    a0 = (
-        mu_inv * ufl.inner(ufl.curl(Et), ufl.curl(Vt))
-        - k0_squared * ufl.inner(epsilon_r * Et, Vt)
-        + mu_inv * ufl.inner(ufl.grad(Ez), ufl.grad(Vz))
-        - k0_squared * ufl.inner(epsilon_r * Ez, Vz)
-    ) * dx
+    # Task42's first K0 gate above precedes all UFL form construction.
+    Et, Ez, Vt, Vz, dx, mu_inv = form_context[:6]
+    a0 = _build_full_k0_form(form_context)
     a1 = (
         1j * mu_inv * ufl.inner(ufl.grad(Ez), Vt)
         - 1j * mu_inv * ufl.inner(Et, ufl.grad(Vz))
@@ -260,12 +1552,64 @@ def assemble_quadratic_beta_operators(
                 if name == "electric_mass"
                 else f"qep_operator_{name}_full"
             )
-            admit_task42_phase(task42_phase_gate, phase)
-        full_matrices.append(
-            _assemble_unconstrained_matrix(
-                form, quadrature_degree=selected_quadrature
+            if name == "K0":
+                compiled_form = None
+                try:
+                    try:
+                        _admit_task42_k0_phase(
+                            task42_phase_gate,
+                            "qep_operator_K0_ffcx_form",
+                            cfg,
+                            cross_section,
+                            spaces,
+                            degree_context,
+                            task42_sizing_identity,
+                            allocation_boundary=(
+                                "before_fem_form_jit_after_constraints_transform"
+                            ),
+                            constraints_transform_resident=True,
+                            local_basis_errors=degree_errors,
+                        )
+                    except RuntimeError as primary:
+                        _destroy_task42_transform_on_refusal(transform, primary)
+                        raise
+                    compiled_form = _compile_unconstrained_form(
+                        form,
+                        quadrature_degree=degree_context["quadrature_degree"],
+                    )
+                    try:
+                        _admit_task42_k0_phase(
+                            task42_phase_gate,
+                            phase,
+                            cfg,
+                            cross_section,
+                            spaces,
+                            degree_context,
+                            task42_sizing_identity,
+                            compiled_form=compiled_form,
+                            allocation_boundary=(
+                                "after_fem_form_jit_before_petsc_matrix"
+                            ),
+                            constraints_transform_resident=True,
+                        )
+                    except RuntimeError as primary:
+                        _destroy_task42_transform_on_refusal(transform, primary)
+                        raise
+                    full_matrix = _assemble_compiled_unconstrained_matrix(
+                        compiled_form
+                    )
+                finally:
+                    compiled_form = None
+            else:
+                admit_task42_phase(task42_phase_gate, phase)
+                full_matrix = _assemble_unconstrained_matrix(
+                    form, quadrature_degree=degree_context["quadrature_degree"]
+                )
+        else:
+            full_matrix = _assemble_unconstrained_matrix(
+                form, quadrature_degree=degree_context["quadrature_degree"]
             )
-        )
+        full_matrices.append(full_matrix)
         if log is not None:
             log(f"QEP full {name} assembled")
     try:
@@ -314,10 +1658,10 @@ def assemble_quadratic_beta_operators(
         full_shape=(transform.full_global_size, transform.full_global_size),
         reduced_shape=reduced_shape,
         scalar_dtype=str(np.dtype(PETSc.ScalarType)),
-        field_degree=field_degree,
-        geometry_degree=geometry_degree,
-        coefficient_degree=coefficient_degree,
-        quadrature_degree=selected_quadrature,
+        field_degree=degree_context["field_degree"],
+        geometry_degree=degree_context["geometry_degree"],
+        coefficient_degree=degree_context["coefficient_degree"],
+        quadrature_degree=degree_context["quadrature_degree"],
     )
 
 

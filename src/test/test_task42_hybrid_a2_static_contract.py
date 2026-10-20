@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import os
+import weakref
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -1525,6 +1527,1194 @@ def test_task42_qep_solve_refusal_precedes_slepc_pep_creation() -> None:
             task42_phase_gate=_reject_task42_phase,
         )
     assert allocated == []
+
+
+def _task42_fake_k0_inputs(rank: int, mpi_size: int = 2):
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    def index_map(
+        local_size: int,
+        start: int,
+        global_size: int,
+        *,
+        ghosts: int = 1,
+    ):
+        owned_ids = np.arange(start, start + local_size, dtype=np.int64)
+        ghost_ids = np.asarray(
+            [
+                (start + local_size + offset) % global_size
+                for offset in range(ghosts)
+            ],
+            dtype=np.int64,
+        )
+        local_to_global_ids = np.concatenate((owned_ids, ghost_ids))
+
+        def local_to_global(local_indices):
+            assert np.asarray(local_indices).dtype == np.dtype(np.int32)
+            return local_to_global_ids[np.asarray(local_indices, dtype=np.int32)]
+
+        return SimpleNamespace(
+            size_local=local_size,
+            num_ghosts=ghosts,
+            size_global=global_size,
+            local_range=(start, start + local_size),
+            owners=lambda: np.asarray([1 - rank] * ghosts, dtype=np.int32),
+            local_to_global=local_to_global,
+        )
+
+    local_cell_count = 10 + 2 * rank
+    owned_cell_count = 4 + rank
+    ghost_cell_count = 6 + rank
+
+    def function_space(local_size: int, start: int, global_size: int, label: int):
+        cell_dof_count = local_cell_count * 4
+        cell_dofs = (
+            np.arange(cell_dof_count, dtype=np.int32) % (local_size + 1)
+        ).astype(np.int32, copy=False)
+        adjacency = SimpleNamespace(
+            array=cell_dofs,
+            offsets=np.arange(0, cell_dofs.size + 1, 4, dtype=np.int32),
+        )
+        return SimpleNamespace(
+            dofmap=SimpleNamespace(
+                index_map=index_map(local_size, start, global_size),
+                index_map_bs=1,
+                list=adjacency,
+            )
+        )
+
+    # Exact rank-specific geometry arrays from
+    # results/.../a2_constraints_only_mpi8_attempt_20261019T223900Z/
+    # constraints_output/rank_00_space_arrays.npz and rank_01_space_arrays.npz.
+    # The deliberately small fake spaces below are not the 4033-row production
+    # basis and must fail the calibration-scope gate.
+    saved_geometry_coordinates = (
+        [
+            [33.5, 0.0, 0.0],
+            [33.5, 7.5, 0.0],
+            [25.0, 15.0, 0.0],
+            [33.5, 15.0, 0.0],
+            [25.0, 0.0, 0.0],
+            [25.0, 7.5, 0.0],
+            [41.75, 0.0, 0.0],
+            [41.75, 7.5, 0.0],
+            [41.75, 15.0, 0.0],
+            [16.5, 0.0, 0.0],
+            [16.5, 7.5, 0.0],
+            [50.0, 0.0, 0.0],
+            [50.0, 7.5, 0.0],
+            [16.5, 15.0, 0.0],
+            [50.0, 15.0, 0.0],
+            [25.0, 25.0, 0.0],
+            [33.5, 25.0, 0.0],
+            [41.75, 25.0, 0.0],
+        ]
+        if rank == 0
+        else [
+            [41.75, 0.0, 0.0],
+            [50.0, 0.0, 0.0],
+            [41.75, 7.5, 0.0],
+            [50.0, 7.5, 0.0],
+            [41.75, 15.0, 0.0],
+            [50.0, 15.0, 0.0],
+            [41.75, 25.0, 0.0],
+            [50.0, 25.0, 0.0],
+            [33.5, 15.0, 0.0],
+            [33.5, 25.0, 0.0],
+            [25.0, 15.0, 0.0],
+            [25.0, 25.0, 0.0],
+            [33.5, 0.0, 0.0],
+            [33.5, 7.5, 0.0],
+            [25.0, 7.5, 0.0],
+            [16.5, 15.0, 0.0],
+            [16.5, 25.0, 0.0],
+            [25.0, 35.0, 0.0],
+            [33.5, 35.0, 0.0],
+            [41.75, 35.0, 0.0],
+            [50.0, 35.0, 0.0],
+        ]
+    )
+    geometry_coordinates = np.asarray(saved_geometry_coordinates, dtype=np.float64)
+    saved_geometry_cell_dofmap = (
+        [
+            [4, 0, 5, 1],
+            [0, 6, 1, 7],
+            [5, 1, 2, 3],
+            [1, 7, 3, 8],
+            [9, 4, 10, 5],
+            [6, 11, 7, 12],
+            [10, 5, 13, 2],
+            [7, 12, 8, 14],
+            [2, 3, 15, 16],
+            [3, 8, 16, 17],
+        ]
+        if rank == 0
+        else [
+            [0, 1, 2, 3],
+            [2, 3, 4, 5],
+            [4, 5, 6, 7],
+            [8, 4, 9, 6],
+            [10, 8, 11, 9],
+            [12, 0, 13, 2],
+            [14, 13, 10, 8],
+            [13, 2, 8, 4],
+            [15, 10, 16, 11],
+            [11, 9, 17, 18],
+            [9, 6, 18, 19],
+            [6, 7, 19, 20],
+        ]
+    )
+    geometry_cell_dofmap = np.asarray(saved_geometry_cell_dofmap, dtype=np.int32)
+    cell_map = index_map(
+        owned_cell_count,
+        rank * 4,
+        36,
+        ghosts=ghost_cell_count,
+    )
+    topology = SimpleNamespace(
+        dim=2,
+        index_map=lambda _dimension: cell_map,
+        cell_name=lambda: "quadrilateral",
+    )
+    geometry = SimpleNamespace(
+        dim=2,
+        cmap=SimpleNamespace(degree=1),
+        x=geometry_coordinates,
+        dofmap=geometry_cell_dofmap,
+    )
+    mesh = SimpleNamespace(
+        comm=SimpleNamespace(rank=rank, size=mpi_size),
+        topology=topology,
+        geometry=geometry,
+    )
+    coefficient = SimpleNamespace(
+        x=SimpleNamespace(
+            array=np.asarray(
+                ([
+                    1.0 + 0j,
+                    complex(0.999001296237, 0.00182646094) ** 2,
+                ] * ((local_cell_count + 1) // 2))[:local_cell_count],
+                dtype=np.complex128,
+            )
+        ),
+        function_space=SimpleNamespace(
+            element=SimpleNamespace(basix_element=SimpleNamespace(degree=0))
+        ),
+    )
+    cross_section = SimpleNamespace(
+        mesh=mesh,
+        x_values=np.asarray(
+            [0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0], dtype=np.float64
+        ),
+        y_values=np.asarray(
+            [0.0, 7.5, 15.0, 25.0, 35.0, 42.5, 50.0], dtype=np.float64
+        ),
+        epsilon_r=coefficient,
+    )
+    spaces = SimpleNamespace(
+        mixed=function_space(3 + rank, rank * 3, 7, 1),
+        transverse=function_space(2 + rank, rank * 2, 5, 2),
+        longitudinal=function_space(1 + rank, rank, 3, 3),
+        transverse_to_mixed=np.asarray([0, 1, 3 + rank], dtype=np.int32),
+        longitudinal_to_mixed=np.asarray([2, 4 + rank], dtype=np.int32),
+        transverse_degree=6,
+        longitudinal_degree=6,
+    )
+    cfg = SimpleNamespace(
+        case_name=TASK42_13P5_HYBRID_MODEL_ID,
+        lambda0=13.5,
+        period_x=50.0,
+        period_y=50.0,
+        kx=0.1 + 0.0j,
+        ky=0.2 + 0.0j,
+        mu_r=1.0 + 0.0j,
+        n_air=1.0 + 0.0j,
+        n_grating=complex(0.999001296237, 0.00182646094),
+        n_substrate=complex(0.999001296237, 0.00182646094),
+    )
+    identity = {
+        "model_id": TASK42_13P5_HYBRID_MODEL_ID,
+        "run_id": "fixture-run",
+        "comparison_group": "fixture-group",
+        "canonical_export_prefix": "task42_hybrid_direct",
+        "input_sha256": "1" * 64,
+        "physical_model_sha256": "2" * 64,
+        "resolved_config_sha256": "3" * 64,
+        "material_identity_sha256": "4" * 64,
+        "material_record_sha256": "5" * 64,
+        "requested_modes_per_direction": 120,
+        "source_sha": "a" * 40,
+    }
+    degree_context = {
+        "field_degree": 6,
+        "geometry_degree": 1,
+        "coefficient_degree": 0,
+        "recommended_quadrature_degree": 16,
+        "quadrature_degree": 16,
+    }
+    assert np.dtype(qep.PETSc.ScalarType) == np.dtype(np.complex128)
+    return cfg, cross_section, spaces, identity, degree_context
+
+
+def test_task42_k0_phase_basis_binds_rank_layout_dtype_and_input_identity() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    for phase in ("qep_operator_K0_ffcx_form", "qep_operator_K0_full"):
+        for rank in range(2):
+            cfg, cross_section, spaces, identity, degree_context = (
+                _task42_fake_k0_inputs(rank)
+            )
+            basis = qep._task42_k0_source_basis(
+                cfg,
+                cross_section,
+                spaces,
+                degree_context,
+                identity,
+                rank=rank,
+                mpi_size=2,
+                compiled_form=object() if phase == "qep_operator_K0_full" else None,
+            )
+            assert basis["phase_rank"] == rank
+            assert basis["mpi_size"] == 2
+            assert basis["task42_identity"]["input_sha256"] == "1" * 64
+            assert basis["task42_identity"]["source_sha"] == "a" * 40
+            assert "format-only" in basis["task42_identity"]["source_sha_validation"]
+            assert basis["physics"]["requested_modes_per_direction"] == 120
+            rank_partition = basis["rank_partition"]
+            assert rank_partition["cell_index_map"]["size_local"] == 4 + rank
+            assert rank_partition["cell_index_map"]["num_ghosts"] == 6 + rank
+            assert rank_partition["cell_index_map"][
+                "max_local_to_global_entries"
+            ] == 36
+            assert rank_partition["geometry_dimension"] == 2
+            assert rank_partition["coordinate_storage_dimension"] == 3
+            assert rank_partition["coordinate_z_column_all_zero"] is True
+            assert rank_partition["geometry_coordinates"]["shape"] == [18 + 3 * rank, 3]
+            assert rank_partition["geometry_cell_dofmap"]["shape"] == [10 + 2 * rank, 4]
+            assert rank_partition["geometry_cell_map_shape"] == [10 + 2 * rank, 4]
+            assert rank_partition["geometry_cell_map_integer_and_indices_valid"]
+            assert rank_partition["coordinates_within_xy_axes"]
+            assert rank_partition["geometry_xy_bounds_nm"] == [
+                16.5,
+                50.0,
+                0.0,
+                25.0 + 10.0 * rank,
+            ]
+            assert rank_partition["cell_index_map"]["local_to_global"][
+                "ghost_global_ids_sha256"
+            ]
+            mixed_layout = basis["dof_layout"]["mixed"]
+            assert mixed_layout["index_map"]["local_to_global"]["sha256"]
+            assert mixed_layout["index_map"]["local_to_global"][
+                "ghost_global_ids_sha256"
+            ]
+            assert mixed_layout["index_map"]["ghost_owners"]["sha256"]
+            assert mixed_layout["index_map"][
+                "comparison_mask_temporary_bytes_upper"
+            ] == 4 + rank
+            assert basis["full_k0_row_partition"]["local_rows"] == 3 + rank
+            assert basis["full_k0_row_partition"]["global_rows"] == 7
+            assert basis["discretization"]["transverse_degree_p"] == 6
+            assert basis["discretization"]["geometry_degree_g"] == 1
+            assert basis["discretization"]["coefficient_degree_c"] == 0
+            assert basis["discretization"]["quadrature_degree_q"] == 16
+            actual_rows = basis["source_derived_objects"]["mixed_cell_dof_rows"]
+            assert actual_rows["owned_per_cell"] == [4] * (4 + rank)
+            assert actual_rows["ghost_per_cell"] == [4] * (6 + rank)
+            assert actual_rows["candidate_pair_contributions"] == 16 * (4 + rank)
+            assert actual_rows["local_cell_tensor_payload_bytes_sum"] == 16 * (4 + rank) * 16
+            assert basis["source_derived_objects"]["dg0_local_coefficient_count"] == 10 + 2 * rank
+            assert basis["source_derived_objects"][
+                "dg0_local_coefficient_layout_matches_cells"
+            ]
+            assert basis["source_derived_objects"][
+                "source_basis_validation_scratch_peak_bytes"
+            ] == max(
+                basis["source_derived_objects"][
+                    "index_map_local_to_global_temporary_peak_bytes"
+                ],
+                basis["source_derived_objects"][
+                    "geometry_coordinate_validation_mask_bytes_upper"
+                ],
+            )
+            assert basis["source_derived_objects"]["matrix_candidate_contributions"][
+                "remote_row_stash_entries"
+            ] >= 0
+
+            inventory = qep._task42_k0_phase_inventory(
+                phase,
+                cfg,
+                cross_section,
+                spaces,
+                degree_context,
+                identity,
+                compiled_form=object() if phase == "qep_operator_K0_full" else None,
+            )
+            assert inventory["status"] == "source-derived-prediction"
+            assert any("qep_K0_profile_requires_MPI8" in error for error in inventory["admission_errors"])
+            assert any("qep_K0_profile_mixed_global_dofs_must_be_4033" in error for error in inventory["admission_errors"])
+            assert any("qep_K0_profile_owned_mixed_cell_dofs_must_be_133" in error for error in inventory["admission_errors"])
+            assert all(component["delta_bytes"] is None for component in inventory["components"])
+            assert inventory["components"][0]["sizing_basis"]["rank_partition"][
+                "coordinate_storage_dimension"
+            ] == 3
+
+    cfg, cross_section, spaces, identity, degree_context = _task42_fake_k0_inputs(0)
+    missing_identity = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_ffcx_form",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        None,
+    )
+    assert any(
+        "task42_k0_source_basis_unavailable:TypeError:Task42 K0 sizing identity is missing"
+        in error
+        for error in missing_identity["admission_errors"]
+    )
+    assert all(component["delta_bytes"] is None for component in missing_identity["components"])
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_error"),
+    [
+        ("geometry_dim", "qep_K0_profile_requires_geometry_dim_2"),
+        ("z_nonzero", "qep_K0_2D_geometry_z_column_not_zero"),
+        (
+            "coordinate_width",
+            "qep_K0_profile_requires_three_coordinate_storage_columns",
+        ),
+        ("coordinate_nonfinite", "qep_K0_geometry_coordinates_nonfinite"),
+        ("xy_out_of_bounds", "qep_K0_geometry_xy_outside_axes"),
+        ("geometry_cell_map_width", "qep_K0_geometry_cell_map_width_must_be_4"),
+        ("geometry_cell_map_index", "qep_K0_geometry_cell_map_indices_invalid"),
+        (
+            "dg0_coefficient_count",
+            "qep_K0_DG0_local_coefficient_count_does_not_match_cells",
+        ),
+        (
+            "wrong_axis",
+            "qep_K0_profile_axes_do_not_match_full_50x50_17x20_geometry",
+        ),
+    ],
+)
+def test_task42_k0_profile_refuses_bad_saved_2d_three_column_geometry(
+    mutation: str, expected_error: str
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    cfg, cross_section, spaces, identity, degree_context = _task42_fake_k0_inputs(0)
+    geometry = cross_section.mesh.geometry
+    if mutation == "geometry_dim":
+        geometry.dim = 3
+    elif mutation == "z_nonzero":
+        geometry.x[0, 2] = 0.25
+    elif mutation == "coordinate_width":
+        geometry.x = np.ascontiguousarray(geometry.x[:, :2])
+    elif mutation == "coordinate_nonfinite":
+        geometry.x[0, 0] = np.nan
+    elif mutation == "xy_out_of_bounds":
+        geometry.x[0, 0] = 50.25
+    elif mutation == "geometry_cell_map_width":
+        geometry.dofmap = np.ascontiguousarray(geometry.dofmap[:, :3])
+    elif mutation == "geometry_cell_map_index":
+        geometry.dofmap[0, 0] = geometry.x.shape[0]
+    elif mutation == "dg0_coefficient_count":
+        cross_section.epsilon_r.x.array = cross_section.epsilon_r.x.array[:-1]
+    elif mutation == "wrong_axis":
+        cross_section.x_values[0] = 0.25
+    else:  # pragma: no cover - keeps the fixture mutation list explicit
+        raise AssertionError(mutation)
+
+    inventory = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_ffcx_form",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+    )
+    assert expected_error in inventory["admission_errors"]
+    assert all(item["delta_bytes"] is None for item in inventory["components"])
+
+
+def test_task42_k0_inventory_refuses_rank_payload_above_calibrated_envelope() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    cfg, cross_section, spaces, identity, degree_context = _task42_fake_k0_inputs(0)
+    large_local_size = 1600
+    ghost_global = large_local_size
+    owned_ids = np.arange(large_local_size, dtype=np.int64)
+    all_ids = np.concatenate(
+        (owned_ids, np.asarray([ghost_global], dtype=np.int64))
+    )
+    spaces.mixed.dofmap.index_map = SimpleNamespace(
+        size_local=large_local_size,
+        num_ghosts=1,
+        size_global=large_local_size + 1,
+        local_range=(0, large_local_size),
+        owners=lambda: np.asarray([1], dtype=np.int32),
+        local_to_global=lambda local_indices: all_ids[
+            np.asarray(local_indices, dtype=np.int32)
+        ],
+    )
+    first_cell = np.arange(large_local_size, dtype=np.int32)
+    remaining_cells = np.tile(np.asarray([0, 1, 2, 3], dtype=np.int32), 9)
+    adjacency = spaces.mixed.dofmap.list
+    adjacency.array = np.concatenate((first_cell, remaining_cells))
+    adjacency.offsets = np.asarray(
+        [0, large_local_size]
+        + [large_local_size + 4 * index for index in range(1, 10)],
+        dtype=np.int32,
+    )
+
+    inventory = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_full",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+        compiled_form=object(),
+    )
+    assert "qep_K0_source_derived_rank_objects_exceed_64MiB_envelope" in inventory[
+        "admission_errors"
+    ]
+    basis = inventory["components"][0]["sizing_basis"]
+    assert basis["source_derived_objects"]["mixed_cell_dof_rows"][
+        "owned_per_cell"
+    ][0] == large_local_size
+    matrix_candidates = basis["source_derived_objects"][
+        "matrix_candidate_contributions"
+    ]
+    assert matrix_candidates["owned_cell_candidate_pair_contributions_local"] > 0
+    assert matrix_candidates["global_cell_candidate_pair_contribution_bound"] == (
+        36 * large_local_size**2
+    )
+    assert matrix_candidates["candidate_sparse_payload_bytes_upper"] > (
+        matrix_candidates["local_candidate_sparse_payload_bytes_upper"]
+    )
+    assert basis["source_derived_objects"]["matrix_candidate_contributions"][
+        "remote_row_stash_entries"
+    ] == 0
+    assert basis["phase_prediction"]["known_source_derived_rank_payload_bytes"] > 64 * 1024**2
+    assert all(item["delta_bytes"] is None for item in inventory["components"])
+
+
+def test_task42_k0_matrix_envelope_uses_global_incoming_contribution_bound() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    cfg, cross_section, spaces, identity, degree_context = _task42_fake_k0_inputs(0)
+    inventory = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_full",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+        compiled_form=object(),
+    )
+    matrix = inventory["components"][0]["sizing_basis"]["source_derived_objects"][
+        "matrix_candidate_contributions"
+    ]
+    assert matrix["owned_cell_candidate_pair_contributions_local"] == 64
+    assert matrix["global_cell_candidate_pair_contribution_bound"] == 36 * 4**2
+    assert matrix["candidate_sparse_payload_bytes_upper"] > (
+        matrix["local_candidate_sparse_payload_bytes_upper"]
+    )
+    assert "excludes contributions received" in matrix[
+        "local_contribution_classification"
+    ]
+    assert "global all-cell contribution bound" in matrix["classification"]
+    assert inventory["components"][0]["delta_bytes"] is None
+    assert inventory["admission_errors"]
+
+
+def test_task42_k0_resident_inventory_matches_sizing_and_full_qep_paths() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    cfg, cross_section, spaces, identity, degree_context = _task42_fake_k0_inputs(0)
+    k0_only = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_full",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+        compiled_form=object(),
+        allocation_boundary="after_fem_form_jit_before_petsc_matrix",
+    )
+    k0_residents = k0_only["evidence"]["resident_objects_at_fresh_snapshot"]
+    assert k0_residents == [
+        "cross_section_mesh_and_DG0_coefficients",
+        "mixed_and_collapsed_spaces",
+        "UFL_QEP_forms",
+        "compiled_K0_form",
+    ]
+    assert "Floquet_constraints" not in k0_residents
+    assert "distributed_constraint_transform" not in k0_residents
+
+    qep_ffcx = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_ffcx_form",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+        allocation_boundary="before_fem_form_jit_after_constraints_transform",
+        constraints_transform_resident=True,
+    )
+    qep_residents = qep_ffcx["evidence"]["resident_objects_at_fresh_snapshot"]
+    assert "Floquet_constraints" in qep_residents
+    assert "distributed_constraint_transform" in qep_residents
+    assert "UFL_K0_form" in qep_residents
+    assert qep_ffcx["admission_errors"]
+
+    qep_k0_after_jit = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_full",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+        compiled_form=object(),
+        allocation_boundary="after_fem_form_jit_before_petsc_matrix",
+        constraints_transform_resident=True,
+    )
+    qep_k0_residents = qep_k0_after_jit["evidence"][
+        "resident_objects_at_fresh_snapshot"
+    ]
+    assert "Floquet_constraints" in qep_k0_residents
+    assert "distributed_constraint_transform" in qep_k0_residents
+    assert "compiled_K0_form" in qep_k0_residents
+
+    invalid_context = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_ffcx_form",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+        allocation_boundary="before_fem_form_jit_after_constraints_transform",
+        constraints_transform_resident=False,
+    )
+    assert (
+        "qep_K0_constraints_transform_context_missing_at_fresh_ffcx_boundary"
+        in invalid_context["admission_errors"]
+    )
+    assert "Floquet_constraints" not in invalid_context["evidence"][
+        "resident_objects_at_fresh_snapshot"
+    ]
+
+
+def test_task42_k0_profile_rejects_oversized_index_map_before_mapping_call() -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    cfg, cross_section, spaces, identity, degree_context = _task42_fake_k0_inputs(0)
+    spaces.mixed.dofmap.index_map = SimpleNamespace(
+        size_local=5000,
+        num_ghosts=0,
+        size_global=5000,
+        local_range=(0, 5000),
+        owners=lambda: np.empty(0, dtype=np.int32),
+        local_to_global=lambda _indices: pytest.fail(
+            "out-of-profile local-to-global array was materialized"
+        ),
+    )
+    inventory = qep._task42_k0_phase_inventory(
+        "qep_operator_K0_full",
+        cfg,
+        cross_section,
+        spaces,
+        degree_context,
+        identity,
+        compiled_form=object(),
+    )
+    assert any(
+        "mixed.index_map local-to-global map exceeds the calibrated 4033-entry profile"
+        in error
+        for error in inventory["admission_errors"]
+    )
+    assert all(item["delta_bytes"] is None for item in inventory["components"])
+
+
+def test_task42_k0_sizing_requires_callback_before_any_form_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+    monkeypatch.setattr(
+        qep,
+        "_qep_degree_context",
+        lambda *_args: events.append("degree") or {},
+    )
+    with pytest.raises(TypeError, match="requires the phase-gate callback"):
+        qep.assemble_full_k0_for_sizing(None, None, None)
+    assert events == []
+
+
+def test_task42_k0_sizing_ffcx_refusal_precedes_ufl_and_jit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+    monkeypatch.setattr(qep, "_qep_degree_context", lambda *_args: {})
+    monkeypatch.setattr(
+        qep,
+        "_task42_k0_phase_inventory",
+        lambda phase, *_args, **_kwargs: {
+            "phase": phase,
+            "components": [],
+            "admission_errors": [],
+        },
+    )
+    monkeypatch.setattr(
+        qep, "_qep_form_context", lambda *_args: events.append("ufl_context")
+    )
+    monkeypatch.setattr(
+        qep, "_build_full_k0_form", lambda *_args: events.append("ufl_form")
+    )
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda *_args, **_kwargs: events.append("ffcx_jit"),
+    )
+
+    def refuse(phase, _inventory):
+        events.append(f"gate:{phase}")
+        return {"pass": False, "errors": ["fixture unknown FFCx Delta"]}
+
+    with pytest.raises(RuntimeError, match="refused before allocation"):
+        qep.assemble_full_k0_for_sizing(
+            None, None, None, task42_phase_gate=refuse
+        )
+    assert events == ["gate:qep_operator_K0_ffcx_form"]
+
+
+def test_task42_k0_sizing_refusal_after_jit_releases_form_and_skips_matrix(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+    compiled_refs = []
+    inventory_records = []
+    cfg, cross_section, spaces, identity, _degree_context = _task42_fake_k0_inputs(0)
+    original_inventory = qep._task42_k0_phase_inventory
+
+    class CompiledForm:
+        pass
+
+    monkeypatch.setattr(
+        qep, "_qep_degree_context", lambda *_args: {"quadrature_degree": 16}
+    )
+    def capture_inventory(phase, *args, **kwargs):
+        record = original_inventory(phase, *args, **kwargs)
+        inventory_records.append(record)
+        return record
+
+    monkeypatch.setattr(qep, "_task42_k0_phase_inventory", capture_inventory)
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("ufl_context") or object(),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k0_form",
+        lambda *_args: events.append("ufl_form") or object(),
+    )
+
+    def compile_form(*_args, **_kwargs):
+        events.append("ffcx_jit")
+        compiled = CompiledForm()
+        compiled_refs.append(weakref.ref(compiled))
+        return compiled
+
+    monkeypatch.setattr(qep, "_compile_unconstrained_form", compile_form)
+    monkeypatch.setattr(
+        qep,
+        "_assemble_compiled_unconstrained_matrix",
+        lambda _compiled: events.append("matrix_create_and_assemble"),
+    )
+
+    def gate(phase, _inventory):
+        events.append(f"gate:{phase}")
+        allowed = phase == "qep_operator_K0_ffcx_form"
+        return {"pass": allowed, "errors": [] if allowed else ["K0 Delta refused"]}
+
+    with pytest.raises(RuntimeError, match="qep_operator_K0_full refused"):
+        qep.assemble_full_k0_for_sizing(
+            cfg,
+            cross_section,
+            spaces,
+            task42_phase_gate=gate,
+            task42_sizing_identity=identity,
+        )
+    assert events == [
+        "gate:qep_operator_K0_ffcx_form",
+        "ufl_context",
+        "ufl_form",
+        "ffcx_jit",
+        "gate:qep_operator_K0_full",
+    ]
+    assert compiled_refs[0]() is None
+    assert len(inventory_records) == 2
+    k0_residents = inventory_records[1]["evidence"][
+        "resident_objects_at_fresh_snapshot"
+    ]
+    assert "compiled_K0_form" in k0_residents
+    assert "Floquet_constraints" not in k0_residents
+    assert "distributed_constraint_transform" not in k0_residents
+
+
+def test_task42_k0_sizing_success_compiles_and_assembles_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+    result = object()
+    monkeypatch.setattr(
+        qep, "_qep_degree_context", lambda *_args: {"quadrature_degree": 16}
+    )
+    monkeypatch.setattr(
+        qep,
+        "_task42_k0_phase_inventory",
+        lambda phase, *_args, **_kwargs: {"phase": phase, "components": []},
+    )
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("ufl_context") or object(),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k0_form",
+        lambda *_args: events.append("ufl_form") or object(),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda *_args, **_kwargs: events.append("ffcx_jit") or object(),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_assemble_compiled_unconstrained_matrix",
+        lambda _compiled: events.append("matrix_create_and_assemble") or result,
+    )
+
+    def gate(phase, _inventory):
+        events.append(f"gate:{phase}")
+        return {"pass": True, "errors": []}
+
+    returned = qep.assemble_full_k0_for_sizing(
+        None, None, None, task42_phase_gate=gate, task42_sizing_identity={}
+    )
+    assert returned is result
+    assert events == [
+        "gate:qep_operator_K0_ffcx_form",
+        "ufl_context",
+        "ufl_form",
+        "ffcx_jit",
+        "gate:qep_operator_K0_full",
+        "matrix_create_and_assemble",
+    ]
+
+
+def test_task42_k0_basis_refusal_is_collective_before_form_creation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    comm = MPI.COMM_WORLD
+    events: list[str] = []
+    monkeypatch.setattr(qep, "_qep_degree_context", lambda *_args: {})
+
+    def inventory(phase, *_args, **_kwargs):
+        local_errors = (
+            ["rank_basis_missing"] if comm.rank == comm.size - 1 else []
+        )
+        return {
+            "phase": phase,
+            "components": [],
+            "admission_errors": local_errors,
+        }
+
+    monkeypatch.setattr(qep, "_task42_k0_phase_inventory", inventory)
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("ufl_context") or object(),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda *_args, **_kwargs: events.append("ffcx_jit"),
+    )
+    observed = []
+
+    def collective_gate(phase, local_inventory):
+        rows = comm.allgather(
+            (phase, tuple(local_inventory.get("admission_errors", [])))
+        )
+        observed.append(rows)
+        errors = [error for _phase, row_errors in rows for error in row_errors]
+        return {"pass": not errors, "errors": errors}
+
+    with pytest.raises(RuntimeError, match="refused before allocation"):
+        qep.assemble_full_k0_for_sizing(
+            None, None, None, task42_phase_gate=collective_gate
+        )
+    assert events == []
+    assert len(observed) == 1
+    assert all(row[0] == "qep_operator_K0_ffcx_form" for row in observed[0])
+    assert comm.allreduce(len(events), op=MPI.SUM) == 0
+
+
+def test_task42_k0_production_rechecks_ffcx_after_transform_collectively(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exercise the real QEP call order with allocation sentinels only."""
+
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    comm = MPI.COMM_WORLD
+    degree_context_with_error = qep._task42_degree_context_with_error
+    events: list[str] = []
+    observed_ffcx: list[tuple[str | None, int, str, bool, bool]] = []
+    refusal_errors: list[tuple[str, ...]] = []
+    fixture_identity = {"manifest_sha256": "d" * 64, "delta_bytes": 64 * 1024**2}
+
+    class Expr:
+        def __mul__(self, _other):
+            return self
+
+        __rmul__ = __mul__
+
+        def __add__(self, _other):
+            return self
+
+        def __sub__(self, _other):
+            return self
+
+    class TransformMatrix:
+        def destroy(self):
+            events.append("transform_destroy")
+
+    expression = Expr()
+    context = (expression, expression, expression, expression, expression, 1.0 + 0.0j)
+
+    monkeypatch.setattr(
+        qep,
+        "_task42_degree_context_with_error",
+        lambda *_args: ({"quadrature_degree": 16}, ()),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("form_context") or (*context, 1.0, expression),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_build_full_k0_form",
+        lambda _context: events.append("build_K0_UFL") or Expr(),
+    )
+    monkeypatch.setattr(
+        qep,
+        "ufl",
+        SimpleNamespace(
+            inner=lambda *_args: Expr(),
+            grad=lambda value: value,
+        ),
+    )
+    monkeypatch.setattr(
+        qep,
+        "build_cross_section_floquet_constraints",
+        lambda *_args, **_kwargs: events.append("build_constraints") or object(),
+    )
+    monkeypatch.setattr(
+        qep,
+        "build_distributed_constraint_transform",
+        lambda *_args: events.append("build_transform")
+        or SimpleNamespace(matrix=TransformMatrix()),
+    )
+
+    def inventory(
+        phase,
+        *args,
+        allocation_boundary=None,
+        constraints_transform_resident=False,
+        local_basis_errors=(),
+        **_kwargs,
+    ):
+        if phase == "qep_operator_K0_ffcx_form":
+            observed_ffcx.append(
+                (
+                    allocation_boundary,
+                    fixture_identity["delta_bytes"],
+                    fixture_identity["manifest_sha256"],
+                    len(args) >= 5 and args[4] is fixture_identity,
+                    constraints_transform_resident,
+                )
+            )
+        return {
+            "phase": phase,
+            "allocation_boundary": allocation_boundary,
+            "components": [
+                {
+                    "name": "qep_k0_ffcx_rank_payload",
+                    "delta_bytes": fixture_identity["delta_bytes"],
+                    "sizing_basis": {
+                        "manifest_sha256": fixture_identity["manifest_sha256"]
+                    },
+                }
+            ],
+            "admission_errors": list(local_basis_errors),
+        }
+
+    monkeypatch.setattr(qep, "_task42_k0_phase_inventory", inventory)
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda *_args, **_kwargs: pytest.fail("JIT ran after the second FFCx refusal"),
+    )
+    monkeypatch.setattr(
+        qep,
+        "_assemble_compiled_unconstrained_matrix",
+        lambda *_args: pytest.fail("matrix assembly ran after FFCx refusal"),
+    )
+
+    def collective_gate(phase, local_inventory):
+        events.append(f"gate:{phase}:{local_inventory.get('allocation_boundary')}")
+        local_errors = list(local_inventory.get("admission_errors", []))
+        if (
+            phase == "qep_operator_K0_ffcx_form"
+            and local_inventory.get("allocation_boundary")
+            == "before_fem_form_jit_after_constraints_transform"
+            and comm.rank == comm.size - 1
+        ):
+            local_errors.append("fixture fresh whole-job J+Delta refusal")
+        all_errors = comm.allgather(tuple(local_errors))
+        merged = tuple(error for rank_errors in all_errors for error in rank_errors)
+        if phase == "qep_operator_K0_ffcx_form" and merged:
+            refusal_errors.append(merged)
+        return {"pass": not merged, "errors": list(merged)}
+
+    cfg = SimpleNamespace(kx=0.1 + 0.0j, ky=0.2 + 0.0j, mu_r=1.0 + 0.0j)
+    first_exception = None
+    try:
+        qep.assemble_quadratic_beta_operators(
+            cfg,
+            SimpleNamespace(),
+            SimpleNamespace(),
+            task42_phase_gate=collective_gate,
+            task42_sizing_identity=fixture_identity,
+        )
+    except Exception as exc:  # noqa: BLE001 - recorded before collective assertions
+        first_exception = (type(exc).__name__, str(exc))
+
+    first_local_errors = []
+    if first_exception is None or first_exception[0] != "RuntimeError":
+        first_local_errors.append(f"expected collective refusal, got {first_exception!r}")
+    if first_exception is not None and "refused before allocation" not in first_exception[1]:
+        first_local_errors.append(f"unexpected refusal text: {first_exception[1]}")
+    expected_ffcx = [
+        (
+            "before_ufl_form_context_and_form",
+            fixture_identity["delta_bytes"],
+            fixture_identity["manifest_sha256"],
+            True,
+            False,
+        ),
+        (
+            "before_fem_form_jit_after_constraints_transform",
+            fixture_identity["delta_bytes"],
+            fixture_identity["manifest_sha256"],
+            True,
+            True,
+        ),
+    ]
+    if observed_ffcx != expected_ffcx:
+        first_local_errors.append(f"FFCx boundaries/delta differed: {observed_ffcx!r}")
+    expected_events = [
+        "gate:qep_operator_K0_ffcx_form:before_ufl_form_context_and_form",
+        "form_context",
+        "build_K0_UFL",
+        "gate:qep_constraints:qep_constraints",
+        "build_constraints",
+        "gate:qep_constraint_transform:qep_constraint_transform",
+        "build_transform",
+        "gate:qep_operator_K0_ffcx_form:before_fem_form_jit_after_constraints_transform",
+        "transform_destroy",
+    ]
+    if events != expected_events:
+        first_local_errors.append(f"production QEP event order differed: {events!r}")
+    if not refusal_errors or "fixture fresh whole-job J+Delta refusal" not in refusal_errors[-1]:
+        first_local_errors.append(f"collective refusal vector was incomplete: {refusal_errors!r}")
+    first_record = {
+        "rank": comm.rank,
+        "exception": first_exception,
+        "events": events,
+        "ffcx_boundary_delta": observed_ffcx,
+        "refusal_errors": refusal_errors,
+        "local_errors": first_local_errors,
+    }
+    print(json.dumps(first_record, sort_keys=True), flush=True)
+    first_rank_errors = comm.allgather(tuple(first_local_errors))
+    assert not any(first_rank_errors), first_rank_errors
+
+    # A degree-context exception is retained as a local cause, then delivered
+    # through the same collective gate before form construction on every rank.
+    events.clear()
+    refusal_errors.clear()
+    def degree_context(*_args):
+        if comm.rank == comm.size - 1:
+            raise ValueError("fixture degree-context cause")
+        return {"quadrature_degree": 16}
+
+    monkeypatch.setattr(qep, "_qep_degree_context", degree_context)
+    monkeypatch.setattr(
+        qep, "_task42_degree_context_with_error", degree_context_with_error
+    )
+    monkeypatch.setattr(
+        qep,
+        "_task42_k0_phase_inventory",
+        inventory,
+    )
+    degree_exception = None
+    try:
+        qep.assemble_full_k0_for_sizing(
+            cfg,
+            SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+            SimpleNamespace(),
+            task42_phase_gate=collective_gate,
+            task42_sizing_identity=None,
+        )
+    except Exception as exc:  # noqa: BLE001 - record full cause before assertions
+        degree_exception = (type(exc).__name__, str(exc))
+    degree_local_errors = []
+    if degree_exception is None or degree_exception[0] != "RuntimeError":
+        degree_local_errors.append(
+            f"expected collective degree-context refusal, got {degree_exception!r}"
+        )
+    if events != ["gate:qep_operator_K0_ffcx_form:before_ufl_form_context_and_form"]:
+        degree_local_errors.append(f"degree refusal crossed allocation boundary: {events!r}")
+    degree_cause = "task42_qep_degree_context_failed:ValueError:fixture degree-context cause"
+    if not refusal_errors or not any(
+        degree_cause in error for error in refusal_errors[-1]
+    ):
+        degree_local_errors.append(f"degree exception cause was lost: {refusal_errors!r}")
+    degree_record = {
+        "rank": comm.rank,
+        "exception": degree_exception,
+        "events": events,
+        "refusal_errors": refusal_errors,
+        "local_errors": degree_local_errors,
+    }
+    print(json.dumps(degree_record, sort_keys=True), flush=True)
+    degree_rank_errors = comm.allgather(tuple(degree_local_errors))
+    assert not any(degree_rank_errors), degree_rank_errors
+
+
+def test_task42_qep_ordinary_path_keeps_legacy_context_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[str] = []
+
+    class StopAtFirstForm(RuntimeError):
+        pass
+
+    monkeypatch.setattr(
+        qep,
+        "_qep_form_context",
+        lambda *_args: events.append("form_context") or (object(),) * 8,
+    )
+    monkeypatch.setattr(
+        qep,
+        "_qep_degree_context",
+        lambda *_args: events.append("degree_context")
+        or {"quadrature_degree": 16},
+    )
+
+    def stop_at_form(_context):
+        events.append("build_K0_UFL")
+        raise StopAtFirstForm
+
+    monkeypatch.setattr(qep, "_build_full_k0_form", stop_at_form)
+    with pytest.raises(StopAtFirstForm):
+        qep.assemble_quadratic_beta_operators(
+            SimpleNamespace(), SimpleNamespace(), SimpleNamespace()
+        )
+    assert events == ["form_context", "degree_context", "build_K0_UFL"]
+
+
+def test_task42_full_qep_forwards_identity_and_preserves_default_k0_order() -> None:
+    import benchmarks.run_task032_phase6_augmented as phase6
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    main_source = inspect.getsource(phase6.main)
+    assert "task42_sizing_identity=(" in main_source
+    assert "task42_output_identity if allow_task42 else None" in main_source
+    qep_source = inspect.getsource(qep.assemble_quadratic_beta_operators)
+    assert "a0 = _build_full_k0_form(form_context)" in qep_source
+    assert '("K0", a0),\n        ("K1", a1),\n        ("K2", a2),\n        ("electric_mass", electric_mass)' in qep_source
+    assert "qep_operator_K0_ffcx_form" in qep_source
+    assert '_admit_task42_k0_phase(' in qep_source
+    assert 'else f"qep_operator_{name}_full"' in qep_source
+    assert '"after_fem_form_jit_before_petsc_matrix"' in qep_source
+    k0_source = inspect.getsource(qep._build_full_k0_form)
+    for term in (
+        "ufl.inner(ufl.curl(Et), ufl.curl(Vt))",
+        "ufl.inner(epsilon_r * Et, Vt)",
+        "ufl.inner(ufl.grad(Ez), ufl.grad(Vz))",
+        "ufl.inner(epsilon_r * Ez, Vz)",
+    ):
+        assert term in k0_source
+    sizing_source = inspect.getsource(qep.assemble_full_k0_for_sizing)
+    assert "build_cross_section_floquet_constraints" not in sizing_source
+    assert "build_distributed_constraint_transform" not in sizing_source
+    assert "K1" in sizing_source and "K2" in sizing_source
+
+
+def test_task42_unconstrained_matrix_wrapper_keeps_compile_then_assemble_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.modes import quadratic_beta_eigenproblem as qep
+
+    events: list[object] = []
+    compiled = object()
+
+    class Matrix:
+        def assemble(self):
+            events.append("assemble")
+
+    matrix = Matrix()
+    monkeypatch.setattr(
+        qep,
+        "_compile_unconstrained_form",
+        lambda form, **kwargs: events.append(("compile", form, kwargs)) or compiled,
+    )
+    monkeypatch.setattr(
+        qep.fem_petsc,
+        "assemble_matrix",
+        lambda form, **kwargs: events.append(("assemble_matrix", form, kwargs))
+        or matrix,
+    )
+    returned = qep._assemble_unconstrained_matrix(
+        "legacy-form", quadrature_degree=16
+    )
+    assert returned is matrix
+    assert events == [
+        ("compile", "legacy-form", {"quadrature_degree": 16}),
+        ("assemble_matrix", compiled, {"bcs": []}),
+        "assemble",
+    ]
 
 
 def test_task42_adjoint_basis_refusal_precedes_adjoint_matrix_copy() -> None:
