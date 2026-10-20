@@ -3115,6 +3115,26 @@ def _task41_v6_report_requires_prefix_qualification(report: Mapping[str, Any]) -
     )
 
 
+def _task41_v6_global_attribution_identity_binding(
+    attribution: Mapping[str, Any], identity_audit: Mapping[str, Any]
+) -> None:
+    """Bind optional attribution identity copies to the independently checked parent audit."""
+    identity_fields = (
+        "candidate_evaluator_identity",
+        "candidate_evaluator_cache_identity",
+    )
+    parent_values = {field: identity_audit.get(field) for field in identity_fields}
+    if any(not isinstance(value, str) or not value for value in parent_values.values()):
+        raise ValueError("V6 global attribution parent identity_audit is incomplete")
+    if any(
+        field in attribution and attribution[field] != parent_values[field]
+        for field in identity_fields
+    ):
+        raise ValueError(
+            "V6 global attribution evaluator/cache identity differs from parent identity_audit"
+        )
+
+
 def _task41_mesh_actual_exact_candidate_recheck(
     report_path: Path,
     *,
@@ -3337,24 +3357,15 @@ def _task41_mesh_actual_exact_candidate_recheck(
             atol=1e-300,
         ):
             raise ValueError("V5 candidate report action difference differs from recomputation")
-    attribution = report.get("identity_audit", {}).get(
-        "global_geometry_native_elimination_attribution"
+    identity_audit = report.get("identity_audit", {})
+    attribution = (
+        identity_audit.get("global_geometry_native_elimination_attribution")
+        if isinstance(identity_audit, Mapping)
+        else None
     )
     if (
         not isinstance(attribution, Mapping)
-        or attribution.get("schema")
-        != profile["action_schema"]
-        or (
-            profile["version"] == "v6"
-            and (
-                attribution.get("candidate_evaluator_identity")
-                != report.get("identity_audit", {}).get("candidate_evaluator_identity")
-                or attribution.get("candidate_evaluator_cache_identity")
-                != report.get("identity_audit", {}).get(
-                    "candidate_evaluator_cache_identity"
-                )
-            )
-        )
+        or attribution.get("schema") != profile["action_schema"]
         or len(attribution.get("columns", ())) != 2
         or attribution.get("global_closure_status") != "DIAGNOSTIC_ONLY"
         or attribution.get("diagnostic_scales") != [
@@ -3364,6 +3375,8 @@ def _task41_mesh_actual_exact_candidate_recheck(
         ]
     ):
         raise ValueError("V5 global attribution receipt is missing or malformed")
+    if profile["version"] == "v6":
+        _task41_v6_global_attribution_identity_binding(attribution, identity_audit)
     closure_results = []
     expected_artifact_names: set[str] = {
         f"{candidate_prefix}_full_p6",

@@ -230,6 +230,37 @@ def _v6_candidate_audit_fixture(tmp_path: Path):
     return audit, helper, evaluator_source_path
 
 
+def test_v6_global_attribution_uses_parent_identity_metadata(tmp_path: Path) -> None:
+    from src.runners import task41_p0_checker as checker
+
+    identity_audit, _, _ = _v6_candidate_audit_fixture(tmp_path)
+    identity_audit["candidate_evaluator_identity"] = identity_audit[
+        "candidate_evaluator_audit"
+    ]["implementation"]
+    checker._task41_validate_v6_actual_qmetric_audit(identity_audit)
+    attribution = {
+        "schema": "task41.p0.v6.global_geometry_native_elimination_attribution.v1",
+        "columns": [{}, {}],
+        "global_closure_status": "DIAGNOSTIC_ONLY",
+        "diagnostic_scales": [
+            "left_and_right_identity_norms",
+            "frozen_candidate_denominator",
+            "sum_of_accumulated_term_norms",
+        ],
+    }
+
+    checker._task41_v6_global_attribution_identity_binding(attribution, identity_audit)
+    for field in (
+        "candidate_evaluator_identity",
+        "candidate_evaluator_cache_identity",
+    ):
+        inconsistent = {**attribution, field: "wrong-parent-binding"}
+        with pytest.raises(ValueError, match="differs from parent identity_audit"):
+            checker._task41_v6_global_attribution_identity_binding(
+                inconsistent, identity_audit
+            )
+
+
 @pytest.mark.parametrize("wrong_denominator", [True, False])
 def test_v6_candidate_recheck_checks_frozen_row_denominator_before_identity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, wrong_denominator: bool
