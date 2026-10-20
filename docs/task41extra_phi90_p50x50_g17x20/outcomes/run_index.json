@@ -711,6 +711,507 @@
         }
       },
       "evidence": "b0_v5_mesh_actual_exact_not_admitted_20261020.json"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt1",
+      "attempt_number": 1,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": null,
+      "status": "RECEIPT_NOT_FOUND",
+      "candidate_built": null,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": null,
+      "required_checker_status": "UNKNOWN",
+      "service_parent_seconds": null,
+      "service_receipt_status": "NOT_FOUND",
+      "service_receipt": null,
+      "watchdogs": [],
+      "raw_remote_directory": null,
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_FOUND"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt2",
+      "attempt_number": 2,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": "e9dd78510aaa1507bd58d197d894baf2c6b17e37",
+      "status": "failed_raw_evidence_retained",
+      "candidate_built": false,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": "not_applicable_candidate_not_built",
+      "required_checker_status": "not_run_candidate_not_admitted",
+      "service_parent_seconds": 4.493292409926653,
+      "service_receipt_status": "FOUND",
+      "service_receipt": {
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e9dd7851_20261020T1035Z_attempt2.service/task41_p0_service_receipt.json",
+        "bytes": 23188,
+        "sha256": "db885a63e54fdef4ec60b5314616fb61b3790082fbd1724073f245d403288d8e"
+      },
+      "watchdogs": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e9dd7851_20261020T1035Z_attempt2.service/volume_only_watchdog/summary.json",
+          "bytes": 11535,
+          "sha256": "b9f859d4c09c3457889907db6b2ec1b207474e9cd6533456e130e9ea355c8040",
+          "classification": "WORKER_FAILED",
+          "elapsed_seconds": 3.3776685507036746,
+          "leader_exit_code": 1,
+          "sampled_process_tree_rss_peak_bytes": 108867584,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      ],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e9dd7851_20261020T1035Z_attempt2",
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_IN_LIGHTWEIGHT_INVENTORY"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt3",
+      "attempt_number": 3,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": "ff5d8b49e84a3076dc470fde2754aac49d1cdf13",
+      "status": "failed_raw_evidence_retained",
+      "candidate_built": false,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": "not_applicable_candidate_not_built",
+      "required_checker_status": "not_run_candidate_not_admitted",
+      "service_parent_seconds": 4.580216045025736,
+      "service_receipt_status": "FOUND",
+      "service_receipt": {
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_ff5d8b49_20261020T104904Z_attempt3.service/task41_p0_service_receipt.json",
+        "bytes": 23224,
+        "sha256": "4d97b31e6d44bc06acd8ed78d1173474a31e8b5b84510d59e5c30d902beaf912"
+      },
+      "watchdogs": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_ff5d8b49_20261020T104904Z_attempt3.service/volume_only_watchdog/summary.json",
+          "bytes": 11543,
+          "sha256": "122e31b966f12460dd97bf318d3cdf005bdd613b6ccb038eb7d70a9c401f9e3b",
+          "classification": "WORKER_FAILED",
+          "elapsed_seconds": 3.4453202350996435,
+          "leader_exit_code": 1,
+          "sampled_process_tree_rss_peak_bytes": 112168960,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      ],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_ff5d8b49_20261020T104904Z_attempt3",
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_IN_LIGHTWEIGHT_INVENTORY"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt4",
+      "attempt_number": 4,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": "0087d6a4741555dd9a70b582630f6f7d5aa0713f",
+      "status": "failed_raw_evidence_retained",
+      "candidate_built": false,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": "not_applicable_candidate_not_built",
+      "required_checker_status": "not_run_candidate_not_admitted",
+      "service_parent_seconds": 101.60169839812443,
+      "service_receipt_status": "FOUND",
+      "service_receipt": {
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_0087d6a4_20261020T105332Z_attempt4.service/task41_p0_service_receipt.json",
+        "bytes": 30861,
+        "sha256": "811c27625e678e38a6487e5254ab67442b5159eba2fc9468daf888871a64ff47"
+      },
+      "watchdogs": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_0087d6a4_20261020T105332Z_attempt4.service/volume_only_watchdog/summary.json",
+          "bytes": 11557,
+          "sha256": "761e89e7b23ee40f3bde0e8ae11a8a55192f2f7dce45fcabf64eb48d87a77990",
+          "classification": "WORKER_FAILED",
+          "elapsed_seconds": 100.43891020212322,
+          "leader_exit_code": 3,
+          "sampled_process_tree_rss_peak_bytes": 6889762816,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      ],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_0087d6a4_20261020T105332Z_attempt4",
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_IN_LIGHTWEIGHT_INVENTORY"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt5",
+      "attempt_number": 5,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": "48da059d21f6241f5d81e73cebeb32325f27a871",
+      "status": "failed_raw_evidence_retained",
+      "candidate_built": false,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": "not_applicable_candidate_not_built",
+      "required_checker_status": "not_run_candidate_not_admitted",
+      "service_parent_seconds": 121.04630464268848,
+      "service_receipt_status": "FOUND",
+      "service_receipt": {
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_48da059d_20261020T110023Z_attempt5.service/task41_p0_service_receipt.json",
+        "bytes": 50835,
+        "sha256": "5ce5f6562c6dfdc216ce1ef61d2f50d63b3d0883539871c85a70d8fc952fc2c7"
+      },
+      "watchdogs": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_48da059d_20261020T110023Z_attempt5.service/volume_only_watchdog/summary.json",
+          "bytes": 11715,
+          "sha256": "474b58e0cce0d707a4e95354ae5d4b6b4d105df6d2823e425c4dcc8e8f4cfc89",
+          "classification": "WORKER_FAILED",
+          "elapsed_seconds": 119.94277043966576,
+          "leader_exit_code": 3,
+          "sampled_process_tree_rss_peak_bytes": 6729306112,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      ],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_48da059d_20261020T110023Z_attempt5",
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_IN_LIGHTWEIGHT_INVENTORY"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt6",
+      "attempt_number": 6,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": "d4e7595adf34bb407e31ffa01354f1bb8418e36c",
+      "status": "failed_raw_evidence_retained",
+      "candidate_built": false,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": "not_applicable_candidate_not_built",
+      "required_checker_status": "not_run_candidate_not_admitted",
+      "service_parent_seconds": 136.72242017276585,
+      "service_receipt_status": "FOUND",
+      "service_receipt": {
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_d4e7595a_20261020T111250Z_attempt6.service/task41_p0_service_receipt.json",
+        "bytes": 49081,
+        "sha256": "440d9129d438f07b02a917c508bd14e6586f81aa5c8570dbafdbf6754252f52c"
+      },
+      "watchdogs": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_d4e7595a_20261020T111250Z_attempt6.service/volume_only_watchdog/summary.json",
+          "bytes": 11786,
+          "sha256": "40a6f641bd7d4fde04afeb8b40bb44f7b46398089884634692ac60d98f5e0143",
+          "classification": "WORKER_FAILED",
+          "elapsed_seconds": 135.6509499247186,
+          "leader_exit_code": 3,
+          "sampled_process_tree_rss_peak_bytes": 6940360704,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      ],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_d4e7595a_20261020T111250Z_attempt6",
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_IN_LIGHTWEIGHT_INVENTORY"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt7",
+      "attempt_number": 7,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": "e58835fe4c6bd8587cec1ad1555e3450a2d0b631",
+      "status": "failed_raw_evidence_retained",
+      "candidate_built": false,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": "not_applicable_candidate_not_built",
+      "required_checker_status": "not_run_candidate_not_admitted",
+      "service_parent_seconds": 190.86754496768117,
+      "service_receipt_status": "FOUND",
+      "service_receipt": {
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e58835fe_20261020T114318Z_attempt7.service/task41_p0_service_receipt.json",
+        "bytes": 66716,
+        "sha256": "75371917dd84bdb72eb1996658998fa34d92b8606262d992dc11c8da9de6ae76"
+      },
+      "watchdogs": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e58835fe_20261020T114318Z_attempt7.service/volume_only_watchdog/summary.json",
+          "bytes": 11772,
+          "sha256": "d9a86888cb2580d5048fc45ca6585e2726a76a256038e83affbf22061493f37c",
+          "classification": "WORKER_FAILED",
+          "elapsed_seconds": 189.5156625052914,
+          "leader_exit_code": 3,
+          "sampled_process_tree_rss_peak_bytes": 6940057600,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      ],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e58835fe_20261020T114318Z_attempt7",
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_IN_LIGHTWEIGHT_INVENTORY"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt8",
+      "attempt_number": 8,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": null,
+      "status": "RECEIPT_NOT_FOUND",
+      "candidate_built": null,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": null,
+      "required_checker_status": "UNKNOWN",
+      "service_parent_seconds": null,
+      "service_receipt_status": "NOT_FOUND",
+      "service_receipt": null,
+      "watchdogs": [],
+      "raw_remote_directory": null,
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_FOUND"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020_actual_qmetric_attempt9",
+      "attempt_number": 9,
+      "stage": "B0_V6_actual_qmetric_candidate_admission_and_build",
+      "source_sha": "10d542d176afa10a5a55a73fa4d26b2e845c9fad",
+      "status": "failed_raw_evidence_retained",
+      "candidate_built": false,
+      "candidate_numeric_status": null,
+      "candidate_checker_status": "not_applicable_candidate_not_built",
+      "required_checker_status": "not_run_candidate_not_admitted",
+      "service_parent_seconds": 146.23133604973555,
+      "service_receipt_status": "FOUND",
+      "service_receipt": {
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_10d542d1_20261020T122325Z_attempt9.service/task41_p0_service_receipt.json",
+        "bytes": 131374,
+        "sha256": "e3f9ca366342e8d4d57baa16516324f3ffa58705d9c403fc486b43cbe22ef410"
+      },
+      "watchdogs": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_10d542d1_20261020T122325Z_attempt9.service/volume_only_watchdog/summary.json",
+          "bytes": 11793,
+          "sha256": "a2b4a8035d3435aab28524322091b84c2dfab867ea004a788cc30131912f9709",
+          "classification": "WORKER_FAILED",
+          "elapsed_seconds": 145.03189846035093,
+          "leader_exit_code": 3,
+          "sampled_process_tree_rss_peak_bytes": 6683176960,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      ],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_10d542d1_20261020T122325Z_attempt9",
+      "cost_scope": "service parent; watchdog elapsed is nested and must not be added",
+      "official_result": false,
+      "error_detail_status": "NOT_IN_LIGHTWEIGHT_INVENTORY"
+    },
+    {
+      "run_id": "task41extra_b0_p6_phi90_07nm_iterative__v6_actual_qmetric",
+      "attempt": "20261020T124053Z_attempt10",
+      "stage": "B0_V6_actual_qmetric_blocked_gram_full_two_column_action",
+      "service": "task41-v6-210fbbf2-20261020t124053z-attempt10.service",
+      "source_sha": "210fbbf271faa14c62ac30153b80332d0e645982",
+      "producer_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+      "status": "CANDIDATE_BUILD_COMPLETE_FULL_ACTION_FAILED",
+      "run_receipt_classification": "failed_raw_evidence_retained",
+      "classification": "ACTUAL_COORDINATES_INSUFFICIENT_FULL_ACTION_GATE_FAILED",
+      "official_result": false,
+      "compact": "b0_v6_actual_qmetric_full_action_failed_20261021.json",
+      "compact_sha256": "2c06adc2e4776691d4b2ccfff6d99134b7c64c0aa3447484e8b035be0ff8808b",
+      "raw_hash_index": "../b0_v6_actual_qmetric_hash_index_20261021.json",
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_210fbbf2_20261020T124053Z_attempt10",
+      "candidate_report_sha256": "72c01eb9a7780ba86a7d8b8de6cfc1fd25e04fead2170788a5f492cd12ebd06e",
+      "producer_contract_sha256": "9fe53c21e155e8ce1a74aaf0451658262f57e128a67d38922ba5948d91433172",
+      "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+      "exact_keys": {
+        "raw": 28000,
+        "oriented": 28000,
+        "completed": true
+      },
+      "local_prefix": {
+        "sample_count": 8,
+        "status": "PREFIX_QUALIFIED",
+        "all_gates_passed": true,
+        "limit": 1e-11
+      },
+      "full_action_relative_errors_frozen": [
+        1.7183209126709868e-10,
+        3.6180522433957604e-10
+      ],
+      "full_action_limit": 1e-11,
+      "candidate_recovery_forward_relative_errors": [
+        1.981377497384616e-11,
+        1.979023053583157e-11
+      ],
+      "candidate_recovery_additional_same_lu_corrections": 0,
+      "attribution": "DIAGNOSTIC_ONLY; closure about 0.08905/0.08904 of frozen scale; no root cause proven",
+      "new_persisted_arrays": 174,
+      "new_array_payload_bytes": 4514199336,
+      "donor_arrays_reused": 141,
+      "donor_arrays_copied": false,
+      "donor_array_bytes": 9379882344,
+      "workflow_elapsed_seconds": 28381.330578941852,
+      "fresh_owner_seconds": 24777.34818448685,
+      "service_parent_seconds": 28555.90928376885,
+      "process_tree_rss_peak_bytes": 367708164096,
+      "task_cgroup_memory_peak_bytes": 366622593024,
+      "task_tree_swap_peak_bytes": 0,
+      "task_cgroup_swap_peak_bytes": 0,
+      "host_global_pswpin_delta_pages": 31,
+      "host_global_pswpout_delta_pages": 58,
+      "descendants_cleared": true,
+      "resource_gate_triggered": false,
+      "time_gates_exceeded": false,
+      "next_math_stage": "STOP_BEFORE_200Q_FULL_ACTION_GATE_FAILED",
+      "error": "Top/bottom frozen-denominator full-action relative errors exceed 1e-11; candidate recovery forward errors also exceed 1e-11. No 200q/factor/KSP/full field was run."
+    },
+    {
+      "run_id": "myfenics-case-task41-v6-saved-audit-2489d75-20261020t211800z.service",
+      "attempt": "V6_saved_audit_attempt1",
+      "stage": "B0_V6_saved_only_candidate_checker",
+      "service": "myfenics-case-task41-v6-saved-audit-2489d75-20261020t211800z.service",
+      "source_sha": "2489d75bd12231306c6a79d4b61051efdc10b429",
+      "status": "WORKER_FAILED_CHECKER_NAMEERROR",
+      "run_receipt_classification": "WORKER_FAILED",
+      "classification": "WORKER_FAILED",
+      "official_result": false,
+      "service_parent_seconds": 156.40364084905013,
+      "watchdog_parent_seconds": 107.13874439802021,
+      "cost_scope": "supervised saved-audit attempt; no candidate producer/PDE rebuild",
+      "process_tree_rss_peak_bytes": 3977977856,
+      "cgroup_memory_peak_bytes": 830537728,
+      "process_tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1",
+      "raw_receipts": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/task41_p0_service_receipt.json",
+          "sha256": "1f7673bc654e4b018be7ff78e44651ae21af1bbc85d2d2d8586d88030b5f91f5"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/required_checker_watchdog/summary.json",
+          "sha256": "1343d45422e83a94c7cdfa292ed0e5b12750b0aab4694ca9de54da2f0a30493f"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/required_checker_watchdog/resources.jsonl",
+          "sha256": "17984fc04d56135c6b9db46d445012f9733344e98be9e3e5b22c6d0235ea0d09"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/required_checker_watchdog/worker.log",
+          "sha256": "0e5bde313c63e033020ee7be76024b03cbac789e9f22c7a7af550bc7c1eb99e6"
+        }
+      ],
+      "consumer_contract_sha256": "b1d4f47a7c0119c35856da4618973ce512c61f9137c252f5634652193453d688",
+      "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+      "error": "NameError: TASK41_V5_FROZEN_DENOMINATORS; report retained, numerical outputs unchanged."
+    },
+    {
+      "run_id": "saved_audit_attempt2_20261020T213127Z",
+      "attempt": "V6_saved_audit_attempt2",
+      "stage": "B0_V6_saved_only_candidate_checker_entry",
+      "service": null,
+      "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+      "status": "REJECTED_BEFORE_CHECKER",
+      "run_receipt_classification": "ENTRY_ARGUMENT_ERROR",
+      "classification": "ENTRY_REJECTED_BEFORE_CHECKER",
+      "official_result": false,
+      "service_parent_seconds": null,
+      "watchdog_parent_seconds": null,
+      "cost_scope": "not recorded; preserve as UNKNOWN",
+      "process_tree_rss_peak_bytes": null,
+      "cgroup_memory_peak_bytes": null,
+      "process_tree_swap_peak_bytes": null,
+      "cgroup_swap_peak_bytes": null,
+      "raw_remote_directory": null,
+      "raw_receipts": [],
+      "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+      "error": "ValueError: Task41 P0 service accepts exactly its contracted DAT path; an extra positional DAT was passed before the saved-audit route. No numerical worker/checker ran; service-level elapsed cost/hash were not available in the captured light receipt index."
+    },
+    {
+      "run_id": "myfenics-case-task41-v6-saved-audit-6757a5b8-20261020t213331z.service",
+      "attempt": "V6_saved_audit_attempt3",
+      "stage": "B0_V6_saved_only_candidate_checker",
+      "service": "myfenics-case-task41-v6-saved-audit-6757a5b8-20261020t213331z.service",
+      "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+      "status": "WORKER_FAILED_CHECKER_ATTRIBUTION_IDENTITY_LAYOUT",
+      "run_receipt_classification": "WORKER_FAILED",
+      "classification": "WORKER_FAILED",
+      "official_result": false,
+      "service_parent_seconds": 165.87995505379513,
+      "watchdog_parent_seconds": 116.92266370588914,
+      "cost_scope": "supervised saved-audit attempt; no candidate producer/PDE rebuild",
+      "process_tree_rss_peak_bytes": 3978133504,
+      "cgroup_memory_peak_bytes": 829734912,
+      "process_tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3",
+      "raw_receipts": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/task41_p0_service_receipt.json",
+          "sha256": "f449e1838d2c0025e81957a058b12c99313f4553647584b583255a811199298b"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/required_checker_watchdog/summary.json",
+          "sha256": "025c063851921855267ab3024a586996a93f2160a48be42d7ccf9c1a52aa8983"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/required_checker_watchdog/resources.jsonl",
+          "sha256": "c72c1db6ded66a3e943bb3e89f4822881e3e21f356fe748a423772becae85055"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/required_checker_watchdog/worker.log",
+          "sha256": "ec9c4966caf0bb8bd5a572ae17bb136dbcc073583cd93d6b15c785bd5c8a23f5"
+        }
+      ],
+      "consumer_contract_sha256": "764a65b873e4e7128b599c4518cff490e858da86d77b7d884d977c9237c89b7b",
+      "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+      "error": "ValueError: V5 global attribution receipt is missing or malformed. Producer stores already validated evaluator/cache identities on parent identity_audit; nested attribution omits those copies. Repair was narrowed to checker read layout."
+    },
+    {
+      "run_id": "myfenics-case-task41-v6-saved-audit-89e1e421-20261020t214246z.service",
+      "attempt": "V6_saved_audit_attempt4",
+      "stage": "B0_V6_saved_only_candidate_checker",
+      "service": "myfenics-case-task41-v6-saved-audit-89e1e421-20261020t214246z.service",
+      "source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
+      "status": "AUDIT_COMPLETE_NUMERICAL_FAIL",
+      "run_receipt_classification": "COMPLETED",
+      "classification": "COMPLETED",
+      "official_result": false,
+      "service_parent_seconds": 180.8804526119493,
+      "watchdog_parent_seconds": 131.0202877856791,
+      "cost_scope": "supervised saved-audit attempt; no candidate producer/PDE rebuild",
+      "process_tree_rss_peak_bytes": 5770784768,
+      "cgroup_memory_peak_bytes": 829353984,
+      "process_tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4",
+      "raw_receipts": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/task41_p0_service_receipt.json",
+          "sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/required_checker_watchdog/summary.json",
+          "sha256": "0a1898364bdd18f833ba2f6f8ee91f127bbafdf9794abc45c901321cb2bb400f"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/required_checker_watchdog/resources.jsonl",
+          "sha256": "e8f1819e3a67e28b09eda3997b3880bef942f191e2d394f9e21a1faeedc9db99"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/required_checker_watchdog/worker.log",
+          "sha256": "358b2f86ed1828d5cfa52fe4c834d305a0ebedc9707c79931e04982ac907b287"
+        }
+      ],
+      "audit_report_sha256": "5ebdc364416a5ba8eed34506fd232eae22e9c92f0968924d1064f70d1fb03460",
+      "consumer_contract_sha256": "0201a5d2f4918c6f1d7d9385ef97cd9c50173287d1ae4be52d336462281cee11",
+      "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+      "error": "Independent saved-only checker completed and rehashed/reopened the candidate arrays; both full-action columns and candidate recovery forward gate remain over 1e-11. Top-level recovery PASS belongs to the legacy donor."
     }
   ],
   "not_run": [
@@ -721,9 +1222,9 @@
     "a2_attempt7_official_result": false,
     "a2_saved_output_comparison": "PASS",
     "a2_required_checker_only_retry3": "PASS",
-    "0.7nm": "NOT_RUN_V5_FULL_CANDIDATE_NOT_ADMITTED; PRIOR_V3_FULL_ACTION_GATE_FAILED",
+    "0.7nm": "V6_FULL_ACTION_GATE_FAILED; CANDIDATE_RESTORED_CHECKER_COMPLETE; NO_200Q_OR_FULL_FIELD",
     "a_exit": "PASS",
-    "b0_p0_latest": "V5_CANDIDATE_NOT_ADMITTED_BY_FIXED_WINDOW; V3_FULL_ACTION_GATE_FAILED_ROOT_CAUSE_UNRESOLVED",
+    "b0_p0_latest": "V6_ACTUAL_QMETRIC_BUILT_28000_KEYS; FULL_ACTION_GATE_FAILED; SAVED_CHECKER_COMPLETE; OFFICIAL_RESULT_FALSE",
     "b0_p0_official_result": false,
     "b0_p0_carrier": "REQUIRE_EXISTING_DONOR_ADOPTION_PASS_64120_MODES; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED; FULL_B0_NOT_QUALIFIED",
     "b0_p0_saved_surface_application": "64120_OF_64120_COMPLETE; SELECTED_MODE_B_D_CONSUMER_RECEIPTS_2_OF_2_PASS; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED",
@@ -879,6 +1380,176 @@
       "wider_component_and_docs_validation": "32_PASSED_3_FAILED_HISTORICAL; THREE_FIXTURE_ONLY_REPAIRS_RETESTED_3_PASSED; SCIENTIFIC_SOURCE_UNCHANGED",
       "supplemental_pytest_output_sha256": "e2d1a3b4f98159bab57203be4372e1e77a2645b5b8a40793abab3839826deb79",
       "compact_sha256": "132168d3653f36fe267a99b35497b588c7aa73e3d85dea4c2e4d391427f79e32"
+    },
+    "b0_p0_v6_actual_qmetric": {
+      "classification": "FULL_ACTION_GATE_FAILED",
+      "source_sha": "210fbbf271faa14c62ac30153b80332d0e645982",
+      "candidate_report_sha256": "72c01eb9a7780ba86a7d8b8de6cfc1fd25e04fead2170788a5f492cd12ebd06e",
+      "raw_keys": 28000,
+      "oriented_keys": 28000,
+      "local_prefix": "8_OF_8_PASS_LIMIT_1E-11",
+      "full_action_relative_errors_frozen": [
+        1.7183209126709868e-10,
+        3.6180522433957604e-10
+      ],
+      "full_action_limit": 1e-11,
+      "official_result": false,
+      "next_stage": "STOP_BEFORE_200Q",
+      "compact": "b0_v6_actual_qmetric_full_action_failed_20261021.json",
+      "compact_sha256": "2c06adc2e4776691d4b2ccfff6d99134b7c64c0aa3447484e8b035be0ff8808b",
+      "hash_index": "../b0_v6_actual_qmetric_hash_index_20261021.json"
+    },
+    "b0_p0_v6_candidate_recovery": "FAIL_FORWARD_1.981377497384616E-11_AND_1.9790230535831552E-11_LIMIT_1E-11; NATIVE_RESIDUALS_1.4373E-15_AND_1.4365E-15_PASS_1E-10; ZERO_ADDITIONAL_CORRECTIONS",
+    "b0_p0_v6_attribution": "DIAGNOSTIC_ONLY; closure relative 0.0890506791 / 0.0890404748; root cause not proven",
+    "b0_p0_v6_saved_checker": {
+      "status": "COMPLETE",
+      "audit_completed": true,
+      "data_integrity": true,
+      "candidate_passed": false,
+      "joint_action_passed": false,
+      "qualification_passed": false,
+      "official_result": false,
+      "source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
+      "report_sha256": "5ebdc364416a5ba8eed34506fd232eae22e9c92f0968924d1064f70d1fb03460",
+      "service_receipt_sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167"
     }
+  },
+  "v6_candidate_history": {
+    "candidate_attempt": "20261020T124053Z_attempt10",
+    "candidate_attempt_run_index_position": 38,
+    "v6_candidate_attempts_1_to_9_positions": [
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37
+    ],
+    "original_identifiers_preserved": true,
+    "unknown_costs_remain_unknown": true
+  },
+  "v6_saved_audit_service_inventory": {
+    "attempts": [
+      {
+        "attempt_number": 1,
+        "receipt_status": "FOUND",
+        "source_sha": "2489d75bd12231306c6a79d4b61051efdc10b429",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 156.40364084905013,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/task41_p0_service_receipt.json",
+          "bytes": 144749,
+          "sha256": "1f7673bc654e4b018be7ff78e44651ae21af1bbc85d2d2d8586d88030b5f91f5"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/required_checker_watchdog/summary.json",
+            "bytes": 67731,
+            "sha256": "1343d45422e83a94c7cdfa292ed0e5b12750b0aab4694ca9de54da2f0a30493f",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 107.13874439802021,
+            "leader_exit_code": 1,
+            "sampled_process_tree_rss_peak_bytes": 3977977856,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ]
+      },
+      {
+        "attempt_number": 2,
+        "receipt_status": "NOT_FOUND",
+        "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+        "status": "REJECTED_BEFORE_CHECKER",
+        "service_seconds": null,
+        "service_receipt": null,
+        "watchdogs": [],
+        "note": "No service receipt/cost in the lightweight inventory; launcher rejected the extra positional DAT before numerical worker/checker. Service-level cost remains UNKNOWN."
+      },
+      {
+        "attempt_number": 3,
+        "receipt_status": "FOUND",
+        "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 165.87995505379513,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/task41_p0_service_receipt.json",
+          "bytes": 144748,
+          "sha256": "f449e1838d2c0025e81957a058b12c99313f4553647584b583255a811199298b"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/required_checker_watchdog/summary.json",
+            "bytes": 67742,
+            "sha256": "025c063851921855267ab3024a586996a93f2160a48be42d7ccf9c1a52aa8983",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 116.92266370588914,
+            "leader_exit_code": 2,
+            "sampled_process_tree_rss_peak_bytes": 3978133504,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ]
+      },
+      {
+        "attempt_number": 4,
+        "receipt_status": "FOUND",
+        "source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
+        "status": "completed",
+        "service_seconds": 180.8804526119493,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/task41_p0_service_receipt.json",
+          "bytes": 165455,
+          "sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/required_checker_watchdog/summary.json",
+            "bytes": 67743,
+            "sha256": "0a1898364bdd18f833ba2f6f8ee91f127bbafdf9794abc45c901321cb2bb400f",
+            "classification": "COMPLETED",
+            "elapsed_seconds": 131.0202877856791,
+            "leader_exit_code": 0,
+            "sampled_process_tree_rss_peak_bytes": 5770784768,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ]
+      }
+    ],
+    "source": "Controller-provided lightweight inventory; attempt2 service receipt/cost is NOT_FOUND/UNKNOWN."
+  },
+  "v6_service_accounting": {
+    "scope": "Known non-overlapping V6 service-parent wall time from the controller-provided lightweight inventory; nested watchdog durations are not added.",
+    "candidate_science_attempts_included": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10
+    ],
+    "candidate_science_known_service_parent_seconds": 29261.4520964548,
+    "saved_audit_attempts_included": [
+      1,
+      3,
+      4
+    ],
+    "saved_audit_known_service_parent_seconds": 503.16404851479456,
+    "known_nonoverlapping_total_service_parent_seconds": 29764.616144969594,
+    "unknown_cost_attempts": {
+      "candidate": [
+        1,
+        8
+      ],
+      "saved_audit": [
+        2
+      ]
+    },
+    "missing_receipts_remain_unknown": true
   }
 }

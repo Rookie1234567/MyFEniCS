@@ -1,6 +1,10 @@
-## Task41extra Review V5 最新登记入口（2026-10-20）
+## Task41extra Review V6 最新登记入口（2026-10-21）
 
-V5 的 mesh_actual_exact 候选让每个局部单元直接使用原 mesh 坐标，并以同一 rank-2 张量生成局部 LU 与 R/T/S；它旨在缩小 production/native 几何求值差异，代价是 exact key 从 V4 的 3 个 canonical 类增至 28,000。两个代表 cell 的坐标及 K/G/J/L 与保存 actual 记录逐位一致，但 full candidate 未构建，因固定窗口时间不足而 CANDIDATE_NOT_ADMITTED，不是新的数值失败。V3 两列 full-action FAIL 与 V4 saved audit / recovery / action 分类仍有效；V5 两列、checker、200q、factor、KSP、完整场和 R/T/A 均 NOT_RUN。全域峰值内存未实测；本轮 RSS/cgroup 只属于 inventory/prefix 服务。补充 audit-module/documentation 验证32通过、3失败，三个owner/replay fixture未提供 cfg.tags 或 owner.build_audit；随后仅补齐测试接口，三项复验3 passed in 0.90 s，原负记录保留；主控已核验17个证据原件hash/bytes，不能代替candidate checker。见 [V5 response](task41extra_phi90_p50x50_g17x20/response_v5.md)、[V5 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v5_mesh_actual_exact_not_admitted_20261020.json)、[V5 summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。
+V6 用 `actual_qmetric_blocked_gram` 共享参考基函数表、分块局部乘加，完成 28,000 个 `mesh_actual_exact` 几何键；八个代表键的 raw/oriented 张量、K/G/J/L、R/T/S 局部检查都通过 `1e-11`。完整 p6/native 两列按冻结分母重算为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，均高于 `1e-11`，故 full-action FAIL、`official_result=false`。恢复 forward 门也未过，且 3 次同-LU 修正额度未使用；归因仍为诊断，根因未证明。174 个新数组声明 payload 为 `4,514,199,336 B`；donor 141 个数组以只读方式复用。科学候选 attempts 2–7、9 加 attempt10 的已知 service-parent 时间为 `29,261.4520964548 s`；saved-audit attempts1、3、4 为 `503.16404851479456 s`；已知非重叠总计 `29,764.616144969594 s`。候选 attempts1、8 与 saved-audit attempt2 的缺失 receipt/成本保持 `NOT_FOUND` / `UNKNOWN`。200q、factor、KSP/FGMRES、完整场、独立 A6 和 R/T/A 均未运行。V6 固定窗口未刷新；V3/V4/V5 和 V6 saved-audit attempts 的负记录都保留。详见 [V6 response](task41extra_phi90_p50x50_g17x20/response_v6.md)、[V6 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_full_action_failed_20261021.json)、[V6 hash index](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_hash_index_20261021.json) 和 [V6 run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。
+
+## Task41extra Review V5 历史登记入口（2026-10-20）
+
+V5 的 `mesh_actual_exact` 全域候选在固定窗口准入前被拒绝，分类为 `CANDIDATE_NOT_ADMITTED`，不是数值失败或修复通过。V5 的两次工程启动失败和最终准入拒绝、各自 source、可测 service/watchdog 成本及原始路径均保留在 [V5 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v5_mesh_actual_exact_not_admitted_20261020.json) 与 run index 中；缺失的准备/入口成本继续记 `UNKNOWN`。V6 后续另在其固定窗口内完整构建候选，不能把 V5 的 NOT_ADMITTED 改写为 V6 的数值失败。
 
 ## Task41extra Review V4 历史登记入口（2026-10-20）
 
@@ -2248,6 +2252,20 @@ V3 将用户授权的原始证据上限提高至 16 GiB，保留 2 GiB free-spac
 数据与读取者身份分开绑定：V3 donor source `afbe91e5947ed18fb74d7105097e129c1b8b4cc7`；V4 volume-only consumer source `d883c1f3381b4f3d6100022097d615846564673c`、contract `9012ffc0e80fac30f2aa1307d266366e7607ebcd11b9e0e2278bb213514e4bcd`；V4 selected-geometry consumer source `02523b3d5a49d30d71caa8e7f8a9b9405a78fa33`、contract `8e041fc0fae6da0bab5855043e9ebe5678facad6bb319d0e0bc3ac5c08c89453`。窗口 SHA `68e6d8df…` 单独指向固定窗口记录，不是任一 consumer contract。V4 compact 保存了两列误差分块、局部代数闭合、资源/清场回执及只读窗口余额快照。
 
 证据与成本：[V4 response](task41extra_phi90_p50x50_g17x20/response_v4.md)、[V4 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)、[V4 outcomes](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。不改变普通 solver default，也不提升当前 B0 为 production-qualified。
+
+### Task41 P0 Review V6：actual-qmetric 候选完整作用门失败
+
+用共享参考基函数和分块局部矩阵乘加减少逐单元重复运算；最终仍对完整两列作用作独立核验。该做法改变浮点求和次序，因此局部张量通过并不能替代完整作用门。
+
+| 模型 / 阶段 | 方法与实测 | 当前结论 |
+|---|---|---|
+| B0 V6 actual-qmetric 局部候选 | `mesh_actual_exact` 几何；28,000 raw/oriented keys；8 键 raw/oriented、K/G/J/L、R/T/S 局部门均通过 `1e-11` | 候选完整构建；仅局部资格通过 |
+| 完整 p6/native 两列作用 | 冻结分母 `2225.481253487629` / `2225.4807123031883`；relative error `1.7183209126709868e-10` / `3.6180522433957604e-10` | 两列均超 `1e-11`；full-action FAIL，`official_result=false` |
+| 候选恢复与归因 | forward `1.981377497384616e-11` / `1.979023053583157e-11`；3 次同 LU 修正额度尚未使用；归因闭合约冻结尺度 `0.08905/0.08904` | 恢复 forward 未过门；归因仅作诊断，根因未证明 |
+| 保存证据独立检查 | checker 完成、受监督 service 对全部174条数组记录重算 SHA；checker 重开并重算 action/recovery/attribution 必需数组，`data_integrity=true`，最终候选数值资格仍 false | 审核成功完成不等于数值通过；不运行 200q、factor、KSP/FGMRES、完整场、独立 A6 或 R/T/A |
+| 时间与资源 | evaluator `19641.249084575567 s`；owner `24777.34818448685 s`；worker `28381.330578941852 s`；service `28555.90928376885 s`；tree RSS `367708164096 B`、task cgroup `366622593024 B`、任务 swap 0 | 不同计时/内存口径分别报告；Linux 宿主全局 +31/+58 页不归因给任务；PSS 未采样 |
+
+候选 source `210fbbf271faa14c62ac30153b80332d0e645982`、producer contract `9fe53c21e155e8ce1a74aaf0451658262f57e128a67d38922ba5948d91433172`；saved-audit source `89e1e42114870ba1db752dfaf6d893ad13f923d6`、contract `0201a5d2f4918c6f1d7d9385ef97cd9c50173287d1ae4be52d336462281cee11`。174 个新增数组为 `4514199336 B`；donor 的 141 个数组 `9379882344 B` 原样只读复用。另有 owner audit 早期阶段 raw-evidence counter 新增 `49825832 B`、累计 `9429708176 B`，不能当作全窗口或完整科学产物总账。旧 scientific attempts 与 V6 saved-audit attempts 均保留原 source、成本和路径；缺失项为 `UNKNOWN`。窗口 SHA `ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d` 未刷新。见 [V6 response](task41extra_phi90_p50x50_g17x20/response_v6.md)、[V6 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_full_action_failed_20261021.json)、[V6 hash index](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_hash_index_20261021.json) 和 [V6 run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。
 
 # 4. 今后新增模型的登记模板
 

@@ -1,6 +1,25 @@
 # Task41 阶段结果
 
-> **当前最新阶段：Task41extra Review V5；实际坐标候选完成 key/prefix 清点，但未获固定窗口准入。** V3 的两列 p6/native action 误差 3.042118678294192e-10 / 6.391893878204816e-10 仍超过原 1e-11 门，official_result=false；V4 保存审核和局部归因按原分类保留。V5 exact-key 库存为 28,000 raw / 28,000 oriented keys，8 个实际前缀 kernel 合计 419.1692760037258 s；cells 26762/26897 的实际坐标与 K/G/J/L 局部重放逐位一致。全域候选因固定窗口只余 712.863463 s、估计仍需 1,490,279.123 s 而 CANDIDATE_NOT_ADMITTED；这不是新数值失败。两列完整作用、candidate checker、200q、factor、KSP/FGMRES、完整场、A6、R/T/A 均 NOT_RUN。当前入口：[V5 response](../response_v5.md)、[V5 compact](b0_v5_mesh_actual_exact_not_admitted_20261020.json)、[V5 测试记录](test_summary.md)、[run index](run_index.json)。
+> **当前最新阶段：Task41extra Review V6；28,000 个 actual 几何键已构建，完整两列作用未通过原数值门。** 八个局部代表键均通过 `1e-11`；最终保存证据 checker 审计完成、数据完整，但 top/bottom 完整作用冻结分母相对误差为 `1.7183209126709868e-10` / `3.6180522433957604e-10`，均高于 `1e-11`，所以 `official_result=false`。按照 Review V6 停止，不启动 200q、factor、KSP/FGMRES、完整场、A6 或 official R/T/A。入口：[V6 response](../response_v6.md)、[V6 compact](b0_v6_actual_qmetric_full_action_failed_20261021.json)、[174项数组哈希索引](b0_v6_actual_qmetric_hash_index_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。
+
+## Task41 B0 V6：候选构建成功，完整作用门失败
+
+此模型仍是三维 p6 Maxwell 有限元：28,000 个单元用实际 mesh 坐标生成局部张量；共享参考基函数表并把矩阵乘加分块，是为了减少逐键重复计算。该组织方式加快了实际候选构建，但没有改变最终验收标准，也没有产生完整场。
+
+| 阶段 / 指标 | 实测结果 | 成功/失败的具体含义 |
+|---|---|---|
+| 候选身份 | source `210fbbf271faa14c62ac30153b80332d0e645982`；geometry `mesh_actual_exact`；evaluator `actual_qmetric_blocked_gram`；28,000 raw / 28,000 oriented keys | 候选生产路径完成；此前 V5 的时间准入拒绝仍是历史结论，V6 已在新固定窗口中实施 |
+| 八键局部资格 | raw/oriented 最大相对 Frobenius 差 `1.925763134488738e-15` / `1.925763134488735e-15`；K/G/J/L 最大差 `1.9351592008775263e-15` / `1.5612961744873414e-15` / `1.5663200066212496e-15` / `1.616229241762263e-15`；R/T/S 最大差 `8.726871992808957e-13` / `6.821847465821295e-14` / `1.047234456910219e-14` | 八键全部低于各自 `1e-11` 局部门；局部通过不代表完整两列通过 |
+| 构建时间 | evaluator 19,641.249084575567 s / 28,000 keys，平均 `0.7014731815919845 s/key`，最大 `5.322032446041703 s/key`；owner 24,777.34818448685 s，worker 28,381.330578941852 s，service parent 28,555.90928376885 s | 边界不同，父子不重复求和；阶段明细见 response/compact |
+| 新候选数组 | 174 个数组，声明 payload `4,514,199,336 B`；donor 的 141 个数组 `9,379,882,344 B` 原样复用且未复制 | 大数组保留在 ignored results；Git 中只新增 compact/hash 索引 |
+| 完整 p6/native action | top absolute L2 `3.824090978625035e-7`，冻结分母 `2225.481253487629`，相对差 `1.7183209126709868e-10`；bottom absolute L2 `8.051905483782545e-7`，冻结分母 `2225.4807123031883`，相对差 `3.6180522433957604e-10` | 两列均超过 `1e-11`；真实 full-action FAIL，`official_result=false` |
+| 候选恢复 | forward 相对差 `1.981377497384616e-11` / `1.979023053583157e-11`；native volume residual `1.4373046679706224e-15` / `1.436540888080939e-15` | forward 限值 `1e-11` 未过；native residual 限值 `1e-10` 通过；额外 same-LU 修正数为 0，未耗尽三次额度 |
+| 归因 | closure absolute L2 约 `198.18` / `198.16`，相对冻结分母约 `0.0890506791` / `0.0890404748` | `DIAGNOSTIC_ONLY`；没有证明舍入误差或其他单一根因 |
+| 同时资源 | build tree RSS `367,708,164,096 B`；task cgroup `366,622,593,024 B`；task tree/cgroup swap `0 B`；宿主全局增量 +31 swap-in / +58 swap-out 页 | 宿主页不是任务归因；RSS/cgroup 与宿主计数分开，不能称宿主零 swap；PSS未采样 |
+| 最终 checker | source `89e1e42114870ba1db752dfaf6d893ad13f923d6`；checker COMPLETE、data integrity true；受监督 service 重算全部 174 条数组记录内容 SHA，checker 重开并重算 action/recovery/attribution 必需数组；service 180.8804526119493 s、watchdog 131.0202877856791 s | checker 审核成功完成而数值资格失败；top-level donor recovery PASS 不属于 V6 candidate |
+| 停止阶段 | global volume matrix未物化；200q、factor、KSP/FGMRES、full field、A6、R/T/A、A_volume均 `NOT_RUN` | 按 Review V6 的 full-action FAIL 出口停止；不把未运行写成通过 |
+
+固定窗口 SHA `ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d` 未刷新；T0=`2026-10-20T10:21:59.261754681Z`，数值 cutoff=`2026-10-21T10:01:59.261754681Z`，总 deadline=`2026-10-21T10:21:59.261754681Z`。最终 audit SHA 为 `5ebdc364416a5ba8eed34506fd232eae22e9c92f0968924d1064f70d1fb03460`；完整身份、数组与原始失败回执见 [V6 compact](b0_v6_actual_qmetric_full_action_failed_20261021.json) 和 [hash index](b0_v6_actual_qmetric_hash_index_20261021.json)。
 
 ## 历史阶段记录：A1/A2 与较早 B0/V2/V3
 

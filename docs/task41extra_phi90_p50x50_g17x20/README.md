@@ -6,9 +6,11 @@
 
 ## 当前任务
 
-当前最新执行范围是 Review V5；结论见 [response_v5.md](response_v5.md) 和 [V5 outcomes](outcomes/summary.md)。V5 的 mesh_actual_exact 候选完成了 28,000 个 exact key 的清点、8 个真实 cache-miss 前缀测量，以及 cells 26762/26897 的实际坐标与 K/G/J/L 逐位重放核验。完整候选因固定窗口余额不足而 CANDIDATE_NOT_ADMITTED；全域两列、checker、200q、factor、KSP/FGMRES、完整场、A6 和 R/T/A 均未运行。V3 完整 action 数值失败与 V4 saved-evidence/recovery/action 分类仍按原样保留；V5 不是新的数值失败，也没有 official result。原始资源/数值合同未调整，新窗口没有自动续期。
+当前最新执行范围为 Task41extra Review V6；完整数值回应见 [response_v6.md](response_v6.md)，紧凑结果、逐数组哈希索引、测试与运行索引分别见 [V6 compact](outcomes/b0_v6_actual_qmetric_full_action_failed_20261021.json)、[V6 hash index](outcomes/b0_v6_actual_qmetric_hash_index_20261021.json)、[test summary](outcomes/test_summary.md) 和 [run index](outcomes/run_index.json)。
 
-V3 详细结果作为历史阶段保留在 [response_v3.md](response_v3.md) 与 [V3 compact](outcomes/b0_v3_full_action_failure_20261019.json)：恢复门通过，但两个完整作用误差仍超过 `1e-11`，不得改写为资源停止或 official result。
+V6 的 `actual_qmetric_blocked_gram` 候选已构建 28,000 个 `mesh_actual_exact` 键；八个代表键的 raw/oriented 张量、K/G/J/L 与 R/T/S 局部筛查均通过 `1e-11`。候选完整两列作用的冻结分母相对误差为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，超过原 `1e-11` 门；独立 saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。按 Review V6 停在 full-action gate，不进入 200q、factor、KSP/FGMRES、完整场、A6 或 R/T/A。候选恢复也未通过 forward 门，且只做了初次恢复，没有耗尽三次修正额度。V3/V4/V5 均保留为各自历史阶段，不用 donor PASS 替代 V6 候选结果。
+
+本轮固定窗口 T0、截止、1.5 TiB task cap、64 GiB host reserve、零 task swap、16 GiB 证据上限、数值阈值与 ordinary solver default 均未更改；没有合并 master。
 
 完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A出口已通过：A2保存场同离散比较与 checker-only retry3 PASS。attempt7 原 worker 的 `WORKER_FAILED` / `official_result=false` 作为历史保留；checker未重新组装FE算子。
 

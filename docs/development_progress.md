@@ -1,6 +1,25 @@
-## Task41extra Review V4 最新状态：归因已完成，完整作用门未闭合（2026-10-20）
+## Task41extra Review V6 最新状态：候选已建成，完整作用门失败（2026-10-21）
 
-V3 两列 recovery 通过，完整 p6/native action 仍分别为`3.042118678294192e-10`和`6.391893878204816e-10`，高于原`1e-11`门。V4 saved checker 与 volume-only/selected-geometry attribution 已完成；局部两格支持几何计算路径贡献，但不构成全域根因或修复通过。200q、factor、KSP/FGMRES、完整场及官方物理量仍`NOT_RUN`。先看[Task41 V4 response](task41extra_phi90_p50x50_g17x20/response_v4.md)、[结果摘要](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)与[compact evidence](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)。以下 Task40extra V33 及更旧条目均为历史快照。
+本轮在 `actual_qmetric_blocked_gram` 路径上完成了 28,000 个实际几何键，并通过八个代表键的局部张量检查。该路径共享参考基函数表、把局部矩阵乘加分块，目的是减少每个单元重复计算；它会改变浮点求和顺序，所以仍需原有完整两列门裁决。冻结分母下，top/bottom 完整 p6/native 作用相对误差为 `1.7183209126709868e-10` / `3.6180522433957604e-10`，均超过 `1e-11`；saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。不进入 200q、factor、KSP/FGMRES、完整场、独立 A6 或 R/T/A。
+
+| 项目 | V6 结果与边界 |
+|---|---|
+| 对象 | 50×50 nm 周期单胞、居中 17×20×120 nm Si 主体和 10 nm 显式 Si 基底；p6、10×200×14=28,000 cells、64,120 个传播与倏逝端口模式、200 个 q |
+| 局部筛查 | 8 个冻结代表键全部通过 `1e-11`；这不代表完整两列通过 |
+| 两列完整作用 | top `1.7183209126709868e-10`、bottom `3.6180522433957604e-10`；均高于原 `1e-11`，full-action FAIL |
+| 恢复与归因 | 候选 forward 差 `1.981377497384616e-11` / `1.979023053583157e-11`；三次同-LU 修正额度尚未使用。归因闭合仅约冻结尺度的 `0.08905/0.08904`，只是诊断，未证明根因 |
+| 时间 / 资源 | evaluator `19641.249084575567 s`；owner `24777.34818448685 s`；worker `28381.330578941852 s`；service `28555.90928376885 s`，口径不同且不相加。tree RSS `367708164096 B`、task cgroup `366622593024 B`、任务 swap 0；Linux 宿主全局计数 +31/+58 页，不归因给任务 |
+| 证据与下一步 | 174 个新数组 payload `4514199336 B`；donor 141 数组 `9379882344 B` 只读复用。owner audit 早期 raw-evidence counter 新增 `49825832 B`、累计 `9429708176 B`，不是全窗口/科学产物总账。后续应先核对保存的 native RHS 与 j0/j3 归因绑定，不据此断言舍入根因 |
+
+V6 固定窗口 SHA `ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d` 未刷新。完整边界、attempt 历史及原始证据见 [Task41 V6 response](task41extra_phi90_p50x50_g17x20/response_v6.md)、[V6 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_full_action_failed_20261021.json)、[V6 hash index](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_hash_index_20261021.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json) 和 [summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。以下 Task40extra V33 及更旧条目均为历史快照。
+
+## Task41extra Review V5 历史快照：候选未获准入（2026-10-20）
+
+V5 的 `mesh_actual_exact` 全域候选在固定窗口准入前被拒绝，分类为 `CANDIDATE_NOT_ADMITTED`，不是新的数值失败，也不是修复成功。V6 后续在新授权的固定窗口里实际完成了该方向的候选构建；V5 的失败和接入尝试仍原样保留。见 [V5 response](task41extra_phi90_p50x50_g17x20/response_v5.md)、[V5 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v5_mesh_actual_exact_not_admitted_20261020.json)。
+
+## Task41extra Review V4 历史快照：局部归因完成，完整作用门未闭合（2026-10-20）
+
+V3 两列 recovery 通过，完整 p6/native action 仍分别为 `3.042118678294192e-10` 和 `6.391893878204816e-10`，高于原 `1e-11` 门。V4 saved checker 与 volume-only/selected-geometry attribution 已完成；局部两格支持几何计算路径贡献，但不构成全域根因或修复通过。200q、factor、KSP/FGMRES、完整场及官方物理量仍 `NOT_RUN`。见 [Task41 V4 response](task41extra_phi90_p50x50_g17x20/response_v4.md)、[V4 compact evidence](task41extra_phi90_p50x50_g17x20/outcomes/b0_v4_volume_only_attribution_20261020.json)。
 
 ## Task40extra V33 历史快照：用户暂停，已收尾（2026-10-16）
 

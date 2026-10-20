@@ -1,4 +1,6 @@
-# V6 P0 准备包：尚未运行新数值资格
+# V6 P0 准备包（执行前快照；后续结论已收口）
+
+> 历史快照说明：下文记录的是候选正式运行前的准备状态，其中“未运行/NOT_RUN”仅表示准备包形成时的状态。之后 V6 已完成 28,000 键实际构建和独立 saved-only checker；完整作用门未通过。当前终态以 [response_v6.md](../response_v6.md)、[V6 compact](b0_v6_actual_qmetric_full_action_failed_20261021.json) 与 [run index](run_index.json) 为准；本文件不再代表当前未运行状态。
 
 本包把逐单元慢张量生成改成候选的分块矩阵乘法，同时保留冻结 FFCx 的实际几何表达式。它只是可审查实现，尚未证明加速、局部正确性或全域作用通过。
 

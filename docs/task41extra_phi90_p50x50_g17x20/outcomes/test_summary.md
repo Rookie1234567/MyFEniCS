@@ -261,3 +261,27 @@ python -m pytest -q src/test/test_task41_v4_volume_only_audit.py src/test/test_t
 - 主控审阅后的 fixture-only followup：将真实 config tags/material/physics、TinyOwner.build_audit 与 geometry_policy 参数补入三个测试替身；仅重跑原三项，3 passed in 0.90 s。仅修改 src/test/test_task41_v4_volume_only_audit.py，production source 未修改。修复前 wider validation 的32/3负结果保留；差异摘要 SHA-256 见 V5 compact。
 
 主控最终文档校正后只重跑三份受影响文档合同：`21 passed in 0.06 s`（工具输出 `7fc294`），命令为 `python -m pytest -q --tb=short src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py`。不构成新增科学资格，也未重新运行 FE。
+
+
+## V6 checker identity 修复与 saved-only audit
+
+候选 scientific build 和 saved-data numerical checker 是两项不同证据。候选 source `210fbbf271faa14c62ac30153b80332d0e645982` 完成八个局部代表键和 28,000 键构建，随后原完整 action 两列真实数值未过 `1e-11`；这不是 pytest 结果。required checker 起初分别遇到冻结常量名错误、入口误传 DAT、以及 evaluator identity 在生产 report 父/子层级与 checker 假设不同的问题。三次失败原始 receipts/logs 均保留，见 [V6 hash index](b0_v6_actual_qmetric_hash_index_20261021.json)。
+
+第二处 checker 修复按已验证的父 `identity_audit` identity/cache identity 读取生产者实际布局；若嵌套字段存在但不匹配，仍拒绝。source `89e1e42114870ba1db752dfaf6d893ad13f923d6` 下的定向回归在资格化 native complex activation（PETSc complex128/int32、MPI1）执行：
+
+```bash
+source scripts/task40_fresh_c1/activate_native_complex.sh \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache native_linux
+python -m py_compile src/runners/task41_p0_checker.py src/test/test_task41_p0_saved_output_continuation.py
+python -m pytest -q src/test/test_task41_p0_saved_output_continuation.py -k 'v6_global_attribution_uses_parent_identity_metadata or v6_candidate_recheck_checks_frozen_row_denominator_before_identity or v6_candidate_checker_binds_cache_identity_to_evaluator_source or v6_saved_report_binds_producer_contract_separately or b0_saved_evidence_audit_uses_supervised_service_route'
+```
+
+结果 **14 passed, 22 deselected in 1.12 s**；当时 `git diff --check` 通过，修复随后冻结为 source `89e1e421...`。这组测试验证 checker 的身份读取与失败关闭行为，不是 PDE 或候选 action 的数值 PASS。
+
+最终 attempt4 通过既有受监督 service 对保存证据执行 saved-only readback：checker `COMPLETE`、data integrity true；service 对全部 174 条数组记录内容重算 SHA，checker 只重开并重算 action/recovery/attribution 所需数组。candidate numerical status 仍为 `ACTUAL_COORDINATES_INSUFFICIENT`。service 180.8804526119493 s，watchdog 131.0202877856791 s；没有重建 FE、LU、候选张量或重新运行 PDE。顶层 `recovery_passed=true` 属于旧 V3 donor replay；同一报告中的 V6 candidate recovery 子节点为 false。
+
+V6 文档合同回归（主控提供的本机记录）：资格化 activation 已确认 PETSc complex128/int32；命令 `python -m pytest -q --tb=short src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py`，结果 **21 passed in 0.09 s**。该检查覆盖文档结构与模型登记合同，不是科学源代码测试或 PDE 资格；本任务执行者没有重跑这些测试。
+
+本次执行者文档收口另做 JSON 解析、原始文件哈希/字节/数组清单对照、V6 新增相对链接检查及 `git diff --check`；未重跑科学源代码测试、全仓 pytest、Ruff 或 PDE。没有 GitHub CI 结果声明。

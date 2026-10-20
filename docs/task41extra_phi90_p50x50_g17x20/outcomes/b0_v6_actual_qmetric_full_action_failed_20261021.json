@@ -1,0 +1,649 @@
+{
+  "schema": "task41extra.review_v6.actual_qmetric_full_action_closeout.v1",
+  "task": "Task41extra phi90 p50x50 g17x20",
+  "review": "Task41extra Review V6 (archive attachment; user-designated authority)",
+  "recorded_on": "2026-10-21",
+  "classification": "FULL_ACTION_GATE_FAILED",
+  "official_result": false,
+  "qualification_passed": false,
+  "source_identities": {
+    "candidate_producer_source_sha": "210fbbf271faa14c62ac30153b80332d0e645982",
+    "candidate_producer_contract_sha256": "9fe53c21e155e8ce1a74aaf0451658262f57e128a67d38922ba5948d91433172",
+    "candidate_consumer_source_sha": "210fbbf271faa14c62ac30153b80332d0e645982",
+    "saved_audit_consumer_source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
+    "saved_audit_consumer_contract_sha256": "0201a5d2f4918c6f1d7d9385ef97cd9c50173287d1ae4be52d336462281cee11",
+    "donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+    "donor_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+    "result_head": "89e1e42114870ba1db752dfaf6d893ad13f923d6"
+  },
+  "fixed_window": {
+    "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v6_24h.json",
+    "sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+    "t0_utc": "2026-10-20T10:21:59.261754681Z",
+    "numerical_cutoff_utc": "2026-10-21T10:01:59.261754681Z",
+    "deadline_utc": "2026-10-21T10:21:59.261754681Z",
+    "refreshed": false,
+    "total_seconds": 86400,
+    "numerical_seconds": 85200,
+    "closeout_seconds": 1200
+  },
+  "candidate": {
+    "path": "results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_210fbbf2_20261020T124053Z_attempt10/task41_p0_v6_actual_qmetric_candidate.json",
+    "sha256": "72c01eb9a7780ba86a7d8b8de6cfc1fd25e04fead2170788a5f492cd12ebd06e",
+    "bytes": 599214,
+    "candidate_status": "ACTUAL_COORDINATES_INSUFFICIENT",
+    "attribution_status": "DIAGNOSTIC_ONLY",
+    "geometry_policy": "mesh_actual_exact",
+    "evaluator": "actual_qmetric_blocked_gram",
+    "raw_key_count": 28000,
+    "oriented_key_count": 28000,
+    "prefix_qualification": {
+      "status": "PREFIX_QUALIFIED",
+      "sample_count": 8,
+      "relative_frobenius_maxima": {
+        "raw_tensor_relative_frobenius": 1.925763134488738e-15,
+        "oriented_tensor_relative_frobenius": 1.925763134488735e-15,
+        "K_G_J_L_relative_frobenius": {
+          "K": 1.9351592008775263e-15,
+          "G": 1.5612961744873414e-15,
+          "J": 1.5663200066212496e-15,
+          "L": 1.616229241762263e-15
+        },
+        "R_T_S_relative_frobenius": {
+          "R": 8.726871992808957e-13,
+          "T": 6.821847465821295e-14,
+          "S": 1.047234456910219e-14
+        }
+      },
+      "all_local_gates_passed": true,
+      "local_limit": 1e-11
+    },
+    "full_action": {
+      "status": "ACTUAL_COORDINATES_INSUFFICIENT",
+      "passed": false,
+      "limit": 1e-11,
+      "frozen_denominators": [
+        2225.481253487629,
+        2225.4807123031883
+      ],
+      "columns": [
+        {
+          "column": 0,
+          "label": "top",
+          "difference_absolute_l2": 3.824090978625035e-07,
+          "frozen_denominator": 2225.481253487629,
+          "relative_error": 1.7183209126709868e-10,
+          "dynamic_relative_error": 1.718320912676268e-10,
+          "max_abs": 2.888335236267911e-09,
+          "max_row": 4766937,
+          "passed": false
+        },
+        {
+          "column": 1,
+          "label": "bottom",
+          "difference_absolute_l2": 8.051905483782545e-07,
+          "frozen_denominator": 2225.4807123031883,
+          "relative_error": 3.6180522433957604e-10,
+          "dynamic_relative_error": 3.6180522433931414e-10,
+          "max_abs": 5.7088666004262765e-09,
+          "max_row": 4766937,
+          "passed": false
+        }
+      ],
+      "port_outputs_inherited_unchanged": true
+    },
+    "recovery": {
+      "status": "ACTUAL_COORDINATES_INSUFFICIENT",
+      "passed": false,
+      "additional_same_lu_corrections": 0,
+      "max_allowed_same_lu_corrections": 3,
+      "columns": [
+        {
+          "column": 0,
+          "forward_relative_error": 1.981377497384616e-11,
+          "forward_limit": 1e-11,
+          "native_volume_residual_relative": 1.4373046679706224e-15,
+          "native_volume_residual_limit": 1e-10,
+          "passed": false
+        },
+        {
+          "column": 1,
+          "forward_relative_error": 1.979023053583157e-11,
+          "forward_limit": 1e-11,
+          "native_volume_residual_relative": 1.436540888080939e-15,
+          "native_volume_residual_limit": 1e-10,
+          "passed": false
+        }
+      ],
+      "interpretation": "initial candidate recovery did not pass; the three-correction allowance was not exhausted"
+    },
+    "global_attribution": {
+      "status": "DIAGNOSTIC_ONLY",
+      "root_cause_proven": false,
+      "columns": [
+        {
+          "column": 0,
+          "closure_l2": 198.1806169837082,
+          "frozen_denominator": 2225.481253487629,
+          "relative_closure": 0.08905067911631809
+        },
+        {
+          "column": 1,
+          "closure_l2": 198.15785920015628,
+          "frozen_denominator": 2225.4807123031883,
+          "relative_closure": 0.08904047476335093
+        }
+      ],
+      "note": "saved j0/j3 labels describe donor states, not corrected V6 candidate recovery states"
+    },
+    "materialization": {
+      "global_volume_matrix_materialized": false,
+      "new_persisted_array_count": 174,
+      "new_persisted_array_declared_bytes": 4514199336,
+      "donor_arrays_reused_count": 141,
+      "donor_arrays_copied": false,
+      "donor_existing_bytes": 9379882344,
+      "candidate_raw_evidence_bytes_added": 49825832,
+      "candidate_raw_evidence_bytes_cumulative": 9429708176,
+      "counter_scopes_are_distinct": true,
+      "candidate_raw_evidence_counter_scope": "owner_audit early-stage evidence counter; not a full-window counter and not a total of all scientific artifacts",
+      "candidate_raw_evidence_bytes_is_full_window_total": false,
+      "candidate_raw_evidence_bytes_is_full_science_artifact_total": false
+    }
+  },
+  "timing": {
+    "candidate_preparation_seconds": 17.59478507982567,
+    "candidate_evaluator_class_count": 28000,
+    "candidate_evaluator_total_seconds": 19641.249084575567,
+    "candidate_evaluator_mean_seconds_per_key": 0.7014731815919846,
+    "candidate_evaluator_max_seconds_per_key": 5.322032446041703,
+    "candidate_evaluator_phase_seconds": {
+      "geometry": 134.55400196043774,
+      "gram": 16807.707907172386,
+      "pack": 955.8795079700649,
+      "release": 5.699226659256965,
+      "scatter": 1206.9749432522804
+    },
+    "fresh_owner_seconds": 24777.34818448685,
+    "worker_seconds": 28381.330578941852,
+    "producer_service_parent_seconds": 28555.90928376885,
+    "parent_child_durations_must_not_be_added": true,
+    "initial_checker_saved_audit_attempts": [
+      {
+        "attempt": 1,
+        "service_seconds": 156.40364084905013,
+        "watchdog_seconds": 107.13874439802021
+      },
+      {
+        "attempt": 2,
+        "service_seconds": null,
+        "watchdog_seconds": null,
+        "cost_status": "UNKNOWN"
+      },
+      {
+        "attempt": 3,
+        "service_seconds": 165.87995505379513,
+        "watchdog_seconds": 116.92266370588914
+      },
+      {
+        "attempt": 4,
+        "service_seconds": 180.8804526119493,
+        "watchdog_seconds": 131.0202877856791
+      }
+    ]
+  },
+  "resources": {
+    "candidate_build": {
+      "process_tree_rss_peak_bytes": 367708164096,
+      "dedicated_task_cgroup_memory_peak_bytes": 366622593024,
+      "task_tree_swap_peak_bytes": 0,
+      "task_cgroup_swap_peak_bytes": 0,
+      "host_global_pswpin_delta_pages": 31,
+      "host_global_pswpout_delta_pages": 58,
+      "host_page_deltas_are_not_task_attributed": true,
+      "pss": "NOT_SAMPLED",
+      "descendants_cleared": true
+    },
+    "final_saved_checker": {
+      "service_seconds": 180.8804526119493,
+      "watchdog_seconds": 131.0202877856791,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "process_tree_rss_peak_bytes": 5770784768,
+      "dedicated_job_cgroup_memory_peak_bytes": 829353984,
+      "task_cgroup_swap_peak_bytes": 0,
+      "global_swapin_delta_pages": 0,
+      "global_swapout_delta_pages": 0,
+      "remaining_child_pids": [],
+      "pss": "NOT_SAMPLED",
+      "memory_sampling_scopes_differ": true
+    }
+  },
+  "checker": {
+    "audit_status": "COMPLETE",
+    "audit_completed": true,
+    "data_integrity": true,
+    "report_classification_matches": true,
+    "candidate_passed": false,
+    "qualification_passed": false,
+    "joint_action_passed": false,
+    "official_result": false,
+    "checker_source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
+    "consumer_contract_sha256": "0201a5d2f4918c6f1d7d9385ef97cd9c50173287d1ae4be52d336462281cee11",
+    "top_level_recovery_passed_is_legacy_donor": "V3 donor recovery pass; not V6 candidate recovery",
+    "report_path": "results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4/task41_p0_b0_saved_evidence_audit.json",
+    "report_sha256": "5ebdc364416a5ba8eed34506fd232eae22e9c92f0968924d1064f70d1fb03460",
+    "service_receipt_sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167",
+    "watchdog_summary_sha256": "0a1898364bdd18f833ba2f6f8ee91f127bbafdf9794abc45c901321cb2bb400f",
+    "all_records_content_rehashed_by_supervised_service": true,
+    "required_action_recovery_attribution_arrays_reopened_by_checker": true
+  },
+  "historical_checker_attempts": [
+    {
+      "attempt": 1,
+      "source_sha": "2489d75bd12231306c6a79d4b61051efdc10b429",
+      "error": "NameError: TASK41_V5_FROZEN_DENOMINATORS",
+      "service_receipt_sha256": "1f7673bc654e4b018be7ff78e44651ae21af1bbc85d2d2d8586d88030b5f91f5",
+      "watchdog_summary_sha256": "1343d45422e83a94c7cdfa292ed0e5b12750b0aab4694ca9de54da2f0a30493f",
+      "worker_log_sha256": "0e5bde313c63e033020ee7be76024b03cbac789e9f22c7a7af550bc7c1eb99e6"
+    },
+    {
+      "attempt": 2,
+      "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+      "error": "ValueError: Task41 P0 service accepts exactly its contracted DAT path; extra positional DAT was rejected before checker",
+      "service_receipt_sha256": null,
+      "raw_cost_seconds": null,
+      "raw_cost_status": "UNKNOWN"
+    },
+    {
+      "attempt": 3,
+      "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+      "error": "ValueError: V5 global attribution receipt is missing or malformed",
+      "service_receipt_sha256": "f449e1838d2c0025e81957a058b12c99313f4553647584b583255a811199298b",
+      "watchdog_summary_sha256": "025c063851921855267ab3024a586996a93f2160a48be42d7ccf9c1a52aa8983",
+      "worker_log_sha256": "ec9c4966caf0bb8bd5a572ae17bb136dbcc073583cd93d6b15c785bd5c8a23f5"
+    },
+    {
+      "attempt": 4,
+      "source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
+      "result": "checker complete; candidate numerical fail",
+      "service_receipt_sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167"
+    }
+  ],
+  "stopped_dependencies": {
+    "global_volume_matrix": "NOT_MATERIALIZED",
+    "q200": "NOT_RUN",
+    "factor": "NOT_RUN",
+    "KSP_FGMRES": "NOT_RUN",
+    "full_field": "NOT_RUN",
+    "independent_A6": "NOT_RUN",
+    "official_R_T_A_A_volume": "NOT_RUN",
+    "final_mode_mesh_accuracy": "NOT_QUALIFIED",
+    "2TB_48h_cold_workflow": "NOT_QUALIFIED"
+  },
+  "links": {
+    "response": "../response_v6.md",
+    "hash_index": "b0_v6_actual_qmetric_hash_index_20261021.json",
+    "candidate_report_remote": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_210fbbf2_20261020T124053Z_attempt10/task41_p0_v6_actual_qmetric_candidate.json",
+    "final_audit_remote": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4/task41_p0_b0_saved_evidence_audit.json"
+  },
+  "v6_candidate_attempts_1_to_9": {
+    "source": "Controller-provided lightweight inventory, copied here; durable service/watchdog paths and hashes are stored per entry.",
+    "sequence": "V6 actual-qmetric candidate attempts preceding attempt10",
+    "attempts": [
+      {
+        "attempt_number": 1,
+        "receipt_status": "NOT_FOUND",
+        "source_sha": null,
+        "candidate_built": null,
+        "required_checker_status": "UNKNOWN",
+        "service_seconds": null,
+        "service_receipt": null,
+        "watchdogs": [],
+        "note": "Service receipt was NOT_FOUND in the controller-provided lightweight inventory; source, cost, and exact output path remain UNKNOWN."
+      },
+      {
+        "attempt_number": 2,
+        "receipt_status": "FOUND",
+        "source_sha": "e9dd78510aaa1507bd58d197d894baf2c6b17e37",
+        "candidate_built": false,
+        "candidate_numeric_status": null,
+        "candidate_checker_status": "not_applicable_candidate_not_built",
+        "required_checker_status": "not_run_candidate_not_admitted",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 4.493292409926653,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e9dd7851_20261020T1035Z_attempt2.service/task41_p0_service_receipt.json",
+          "bytes": 23188,
+          "sha256": "db885a63e54fdef4ec60b5314616fb61b3790082fbd1724073f245d403288d8e"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e9dd7851_20261020T1035Z_attempt2.service/volume_only_watchdog/summary.json",
+            "bytes": 11535,
+            "sha256": "b9f859d4c09c3457889907db6b2ec1b207474e9cd6533456e130e9ea355c8040",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 3.3776685507036746,
+            "leader_exit_code": 1,
+            "sampled_process_tree_rss_peak_bytes": 108867584,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ],
+        "exact_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e9dd7851_20261020T1035Z_attempt2"
+      },
+      {
+        "attempt_number": 3,
+        "receipt_status": "FOUND",
+        "source_sha": "ff5d8b49e84a3076dc470fde2754aac49d1cdf13",
+        "candidate_built": false,
+        "candidate_numeric_status": null,
+        "candidate_checker_status": "not_applicable_candidate_not_built",
+        "required_checker_status": "not_run_candidate_not_admitted",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 4.580216045025736,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_ff5d8b49_20261020T104904Z_attempt3.service/task41_p0_service_receipt.json",
+          "bytes": 23224,
+          "sha256": "4d97b31e6d44bc06acd8ed78d1173474a31e8b5b84510d59e5c30d902beaf912"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_ff5d8b49_20261020T104904Z_attempt3.service/volume_only_watchdog/summary.json",
+            "bytes": 11543,
+            "sha256": "122e31b966f12460dd97bf318d3cdf005bdd613b6ccb038eb7d70a9c401f9e3b",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 3.4453202350996435,
+            "leader_exit_code": 1,
+            "sampled_process_tree_rss_peak_bytes": 112168960,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ],
+        "exact_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_ff5d8b49_20261020T104904Z_attempt3"
+      },
+      {
+        "attempt_number": 4,
+        "receipt_status": "FOUND",
+        "source_sha": "0087d6a4741555dd9a70b582630f6f7d5aa0713f",
+        "candidate_built": false,
+        "candidate_numeric_status": null,
+        "candidate_checker_status": "not_applicable_candidate_not_built",
+        "required_checker_status": "not_run_candidate_not_admitted",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 101.60169839812443,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_0087d6a4_20261020T105332Z_attempt4.service/task41_p0_service_receipt.json",
+          "bytes": 30861,
+          "sha256": "811c27625e678e38a6487e5254ab67442b5159eba2fc9468daf888871a64ff47"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_0087d6a4_20261020T105332Z_attempt4.service/volume_only_watchdog/summary.json",
+            "bytes": 11557,
+            "sha256": "761e89e7b23ee40f3bde0e8ae11a8a55192f2f7dce45fcabf64eb48d87a77990",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 100.43891020212322,
+            "leader_exit_code": 3,
+            "sampled_process_tree_rss_peak_bytes": 6889762816,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ],
+        "exact_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_0087d6a4_20261020T105332Z_attempt4"
+      },
+      {
+        "attempt_number": 5,
+        "receipt_status": "FOUND",
+        "source_sha": "48da059d21f6241f5d81e73cebeb32325f27a871",
+        "candidate_built": false,
+        "candidate_numeric_status": null,
+        "candidate_checker_status": "not_applicable_candidate_not_built",
+        "required_checker_status": "not_run_candidate_not_admitted",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 121.04630464268848,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_48da059d_20261020T110023Z_attempt5.service/task41_p0_service_receipt.json",
+          "bytes": 50835,
+          "sha256": "5ce5f6562c6dfdc216ce1ef61d2f50d63b3d0883539871c85a70d8fc952fc2c7"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_48da059d_20261020T110023Z_attempt5.service/volume_only_watchdog/summary.json",
+            "bytes": 11715,
+            "sha256": "474b58e0cce0d707a4e95354ae5d4b6b4d105df6d2823e425c4dcc8e8f4cfc89",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 119.94277043966576,
+            "leader_exit_code": 3,
+            "sampled_process_tree_rss_peak_bytes": 6729306112,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ],
+        "exact_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_48da059d_20261020T110023Z_attempt5"
+      },
+      {
+        "attempt_number": 6,
+        "receipt_status": "FOUND",
+        "source_sha": "d4e7595adf34bb407e31ffa01354f1bb8418e36c",
+        "candidate_built": false,
+        "candidate_numeric_status": null,
+        "candidate_checker_status": "not_applicable_candidate_not_built",
+        "required_checker_status": "not_run_candidate_not_admitted",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 136.72242017276585,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_d4e7595a_20261020T111250Z_attempt6.service/task41_p0_service_receipt.json",
+          "bytes": 49081,
+          "sha256": "440d9129d438f07b02a917c508bd14e6586f81aa5c8570dbafdbf6754252f52c"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_d4e7595a_20261020T111250Z_attempt6.service/volume_only_watchdog/summary.json",
+            "bytes": 11786,
+            "sha256": "40a6f641bd7d4fde04afeb8b40bb44f7b46398089884634692ac60d98f5e0143",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 135.6509499247186,
+            "leader_exit_code": 3,
+            "sampled_process_tree_rss_peak_bytes": 6940360704,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ],
+        "exact_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_d4e7595a_20261020T111250Z_attempt6"
+      },
+      {
+        "attempt_number": 7,
+        "receipt_status": "FOUND",
+        "source_sha": "e58835fe4c6bd8587cec1ad1555e3450a2d0b631",
+        "candidate_built": false,
+        "candidate_numeric_status": null,
+        "candidate_checker_status": "not_applicable_candidate_not_built",
+        "required_checker_status": "not_run_candidate_not_admitted",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 190.86754496768117,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e58835fe_20261020T114318Z_attempt7.service/task41_p0_service_receipt.json",
+          "bytes": 66716,
+          "sha256": "75371917dd84bdb72eb1996658998fa34d92b8606262d992dc11c8da9de6ae76"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e58835fe_20261020T114318Z_attempt7.service/volume_only_watchdog/summary.json",
+            "bytes": 11772,
+            "sha256": "d9a86888cb2580d5048fc45ca6585e2726a76a256038e83affbf22061493f37c",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 189.5156625052914,
+            "leader_exit_code": 3,
+            "sampled_process_tree_rss_peak_bytes": 6940057600,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ],
+        "exact_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_e58835fe_20261020T114318Z_attempt7"
+      },
+      {
+        "attempt_number": 8,
+        "receipt_status": "NOT_FOUND",
+        "source_sha": null,
+        "candidate_built": null,
+        "required_checker_status": "UNKNOWN",
+        "service_seconds": null,
+        "service_receipt": null,
+        "watchdogs": [],
+        "note": "Service receipt was NOT_FOUND in the controller-provided lightweight inventory; source, cost, and exact output path remain UNKNOWN."
+      },
+      {
+        "attempt_number": 9,
+        "receipt_status": "FOUND",
+        "source_sha": "10d542d176afa10a5a55a73fa4d26b2e845c9fad",
+        "candidate_built": false,
+        "candidate_numeric_status": null,
+        "candidate_checker_status": "not_applicable_candidate_not_built",
+        "required_checker_status": "not_run_candidate_not_admitted",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 146.23133604973555,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_10d542d1_20261020T122325Z_attempt9.service/task41_p0_service_receipt.json",
+          "bytes": 131374,
+          "sha256": "e3f9ca366342e8d4d57baa16516324f3ffa58705d9c403fc486b43cbe22ef410"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_10d542d1_20261020T122325Z_attempt9.service/volume_only_watchdog/summary.json",
+            "bytes": 11793,
+            "sha256": "a2b4a8035d3435aab28524322091b84c2dfab867ea004a788cc30131912f9709",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 145.03189846035093,
+            "leader_exit_code": 3,
+            "sampled_process_tree_rss_peak_bytes": 6683176960,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ],
+        "exact_run_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_10d542d1_20261020T122325Z_attempt9"
+      }
+    ]
+  },
+  "saved_audit_service_inventory": {
+    "source": "Controller-provided lightweight inventory; exact raw paths and hashes are included below. No remote data was re-read.",
+    "attempts": [
+      {
+        "attempt_number": 1,
+        "receipt_status": "FOUND",
+        "source_sha": "2489d75bd12231306c6a79d4b61051efdc10b429",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 156.40364084905013,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/task41_p0_service_receipt.json",
+          "bytes": 144749,
+          "sha256": "1f7673bc654e4b018be7ff78e44651ae21af1bbc85d2d2d8586d88030b5f91f5"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_2489d75_20261020T211800Z_attempt1.service/required_checker_watchdog/summary.json",
+            "bytes": 67731,
+            "sha256": "1343d45422e83a94c7cdfa292ed0e5b12750b0aab4694ca9de54da2f0a30493f",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 107.13874439802021,
+            "leader_exit_code": 1,
+            "sampled_process_tree_rss_peak_bytes": 3977977856,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ]
+      },
+      {
+        "attempt_number": 2,
+        "receipt_status": "NOT_FOUND",
+        "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+        "status": "REJECTED_BEFORE_CHECKER",
+        "service_seconds": null,
+        "service_receipt": null,
+        "watchdogs": [],
+        "note": "No service receipt/cost in the lightweight inventory; launcher rejected the extra positional DAT before numerical worker/checker. Service-level cost remains UNKNOWN."
+      },
+      {
+        "attempt_number": 3,
+        "receipt_status": "FOUND",
+        "source_sha": "6757a5b8a33f93982f0d60c8fd1b52bbadeaf624",
+        "status": "failed_raw_evidence_retained",
+        "service_seconds": 165.87995505379513,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/task41_p0_service_receipt.json",
+          "bytes": 144748,
+          "sha256": "f449e1838d2c0025e81957a058b12c99313f4553647584b583255a811199298b"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_6757a5b8_20261020T213331Z_attempt3.service/required_checker_watchdog/summary.json",
+            "bytes": 67742,
+            "sha256": "025c063851921855267ab3024a586996a93f2160a48be42d7ccf9c1a52aa8983",
+            "classification": "WORKER_FAILED",
+            "elapsed_seconds": 116.92266370588914,
+            "leader_exit_code": 2,
+            "sampled_process_tree_rss_peak_bytes": 3978133504,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ]
+      },
+      {
+        "attempt_number": 4,
+        "receipt_status": "FOUND",
+        "source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
+        "status": "completed",
+        "service_seconds": 180.8804526119493,
+        "service_receipt": {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/task41_p0_service_receipt.json",
+          "bytes": 165455,
+          "sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167"
+        },
+        "watchdogs": [
+          {
+            "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_saved_candidate_audit_89e1e421_20261020T214246Z_attempt4.service/required_checker_watchdog/summary.json",
+            "bytes": 67743,
+            "sha256": "0a1898364bdd18f833ba2f6f8ee91f127bbafdf9794abc45c901321cb2bb400f",
+            "classification": "COMPLETED",
+            "elapsed_seconds": 131.0202877856791,
+            "leader_exit_code": 0,
+            "sampled_process_tree_rss_peak_bytes": 5770784768,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "descendants_cleared": true
+          }
+        ]
+      }
+    ]
+  },
+  "service_accounting": {
+    "scope": "Known non-overlapping V6 service-parent wall time from the controller-provided lightweight inventory; nested watchdog durations are not added.",
+    "candidate_science_attempts_included": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10
+    ],
+    "candidate_science_known_service_parent_seconds": 29261.4520964548,
+    "saved_audit_attempts_included": [
+      1,
+      3,
+      4
+    ],
+    "saved_audit_known_service_parent_seconds": 503.16404851479456,
+    "known_nonoverlapping_total_service_parent_seconds": 29764.616144969594,
+    "unknown_cost_attempts": {
+      "candidate": [
+        1,
+        8
+      ],
+      "saved_audit": [
+        2
+      ]
+    },
+    "missing_receipts_remain_unknown": true
+  }
+}
