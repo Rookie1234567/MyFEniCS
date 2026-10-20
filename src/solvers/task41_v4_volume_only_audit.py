@@ -122,6 +122,218 @@ def _difference_metrics(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
     }
 
 
+def audit_task41_v4_geometry_pair_attribution(
+    *,
+    cell_pairs: Mapping[int, Mapping[str, Any]],
+    saved_maps: Mapping[int, Mapping[str, np.ndarray]],
+    columns: Sequence[Mapping[str, Any]],
+    saved_classes: Mapping[int, Mapping[str, np.ndarray] | None],
+    saved_d_volume: Sequence[np.ndarray],
+    saved_reduce_r_volume: Mapping[tuple[int, str], np.ndarray],
+    original_denominators: Sequence[float],
+    target_active_row: int,
+    target_original_row: int,
+) -> dict[str, Any]:
+    """Attribute the saved selected-row discrepancy on two cell geometry paths."""
+
+    from scipy.sparse import csr_matrix
+
+    cell_indices = tuple(sorted(int(value) for value in cell_pairs))
+    if len(cell_indices) != 2 or len(columns) != 2:
+        raise ValueError("Task41 V4 geometry attribution requires the frozen two cells and two columns")
+    if not (
+        len(saved_d_volume) == len(columns)
+        and len(original_denominators) == len(columns)
+    ):
+        raise ValueError("Task41 V4 geometry attribution column inputs do not align")
+
+    local_maps: dict[int, tuple[Any, np.ndarray, int]] = {}
+    for cell_index in cell_indices:
+        pair = cell_pairs[cell_index]
+        map_arrays = saved_maps[cell_index]
+        trace_rows = np.asarray(map_arrays["trace_original_rows"], dtype=np.int64)
+        active_ids = np.asarray(map_arrays["active_ids"], dtype=np.int64)
+        E = csr_matrix(
+            (
+                np.asarray(map_arrays["trace_expansion_data"], dtype=np.complex128),
+                np.asarray(map_arrays["trace_expansion_indices"], dtype=np.int32),
+                np.asarray(map_arrays["trace_expansion_indptr"], dtype=np.int32),
+            ),
+            shape=(trace_rows.size, active_ids.size),
+        )
+        if not E.has_canonical_format:
+            raise ValueError(f"Task41 V4 cell expansion is not canonical for cell {cell_index}")
+        target_columns = np.flatnonzero(active_ids == int(target_active_row))
+        if target_columns.size != 1:
+            raise ValueError(f"Task41 V4 cell expansion omits or duplicates target row in cell {cell_index}")
+        local_maps[cell_index] = (
+            E,
+            np.asarray(E[:, int(target_columns[0])].toarray()).reshape(-1),
+            int(target_columns[0]),
+        )
+
+    output: list[dict[str, Any]] = []
+    delta_i_arrays: dict[str, np.ndarray] = {}
+    for column_index, column in enumerate(columns):
+        active_original_rows = np.asarray(column["active_original_rows"], dtype=np.int64)
+        if int(active_original_rows[target_active_row]) != int(target_original_row):
+            raise ValueError("Task41 V4 active/original target row identity differs")
+        fields = (
+            ("known", np.asarray(column["known_field"], dtype=np.complex128), None),
+            (
+                "j0",
+                np.asarray(column["states"][0]["storage"], dtype=np.complex128),
+                np.asarray(column["states"][0]["native_volume_action"], dtype=np.complex128),
+            ),
+            (
+                "j3",
+                np.asarray(column["states"][1]["storage"], dtype=np.complex128),
+                np.asarray(column["states"][1]["native_volume_action"], dtype=np.complex128),
+            ),
+        )
+        for state_label, field_values, native_action in fields:
+            state_result: dict[str, Any] = {
+                "column": column_index,
+                "state": state_label,
+                "native_action_reference": (
+                    "saved split rank-1 volume action" if native_action is not None else None
+                ),
+                "paths": {},
+            }
+            path_cells: dict[str, dict[int, dict[str, Any]]] = {}
+            for path_name in ("actual", "canonical"):
+                target_sum = 0.0 + 0.0j
+                term_a = 0.0 + 0.0j
+                term_t_di = 0.0 + 0.0j
+                selected_cells: list[dict[str, Any]] = []
+                path_cells[path_name] = {}
+                all_delta_i: list[np.ndarray] = []
+                for cell_index in cell_indices:
+                    pair = cell_pairs[cell_index]
+                    map_arrays = saved_maps[cell_index]
+                    E, target_weights, _target_col = local_maps[cell_index]
+                    interior_rows = np.asarray(
+                        map_arrays["interior_original_rows"], dtype=np.int64
+                    )
+                    active_ids = np.asarray(map_arrays["active_ids"], dtype=np.int64)
+                    active_values = field_values[active_original_rows[active_ids]]
+                    local_trace = np.asarray(E @ active_values, dtype=np.complex128).reshape(-1)
+                    local_interior = np.asarray(field_values[interior_rows], dtype=np.complex128)
+                    blocks = pair[path_name]
+                    action_i = blocks["K"] @ local_interior + blocks["G"] @ local_trace
+                    action_t = blocks["J"] @ local_interior + blocks["L"] @ local_trace
+                    target_cell_action = complex(np.vdot(target_weights, action_t))
+                    target_sum += target_cell_action
+                    cell_result: dict[str, Any] = {
+                        "cell_index": cell_index,
+                        "target_trace_action": [float(target_cell_action.real), float(target_cell_action.imag)],
+                    }
+                    path_cells[path_name][cell_index] = {
+                        "target_trace_action": target_cell_action,
+                        "delta_i": None,
+                    }
+                    if native_action is not None:
+                        delta_i = np.asarray(
+                            action_i - native_action[interior_rows], dtype=np.complex128
+                        )
+                        all_delta_i.append(delta_i)
+                        array_name = (
+                            f"col{column_index}_{state_label}_{path_name}_cell{cell_index}_delta_i"
+                        )
+                        delta_i_arrays[array_name] = delta_i
+                        path_cells[path_name][cell_index]["delta_i"] = delta_i
+                        cell_result["delta_i"] = _difference_metrics(
+                            action_i, native_action[interior_rows]
+                        )
+                        saved_class = saved_classes.get(cell_index)
+                        if saved_class is not None:
+                            term_a += complex(
+                                np.vdot(
+                                    target_weights,
+                                    (saved_class["S"] - blocks["L"] - saved_class["T"] @ blocks["G"])
+                                    @ local_trace
+                                    - (blocks["J"] + saved_class["T"] @ blocks["K"])
+                                    @ local_interior,
+                                )
+                            )
+                            term_t_di += complex(
+                                np.vdot(target_weights, saved_class["T"] @ delta_i)
+                            )
+                            cell_result["T_delta_i_target"] = [
+                                float(np.real(np.vdot(target_weights, saved_class["T"] @ delta_i))),
+                                float(np.imag(np.vdot(target_weights, saved_class["T"] @ delta_i))),
+                            ]
+                    selected_cells.append(cell_result)
+
+                path_report: dict[str, Any] = {
+                    "selected_cells": selected_cells,
+                    "selected_cells_target_trace_action_sum": [
+                        float(target_sum.real), float(target_sum.imag)
+                    ],
+                }
+                if native_action is not None:
+                    delta_t = complex(target_sum - native_action[target_original_row])
+                    path_report["native_comparison"] = {
+                        "delta_t": [float(delta_t.real), float(delta_t.imag)],
+                        "delta_t_abs": float(abs(delta_t)),
+                        "saved_native_target_action": [
+                            float(np.real(native_action[target_original_row])),
+                            float(np.imag(native_action[target_original_row])),
+                        ],
+                        "delta_i_total_l2": float(np.linalg.norm(np.concatenate(all_delta_i))),
+                    }
+                    if all(saved_classes.get(cell_index) is not None for cell_index in cell_indices):
+                        predicted = term_a + delta_t + term_t_di
+                        saved_target = complex(
+                            saved_d_volume[column_index][target_active_row]
+                            + saved_reduce_r_volume[(column_index, state_label)][target_active_row]
+                        )
+                        residual = predicted - saved_target
+                        denominator = float(original_denominators[column_index])
+                        path_report["native_comparison"].update(
+                            {
+                                "identity_term_A": [float(term_a.real), float(term_a.imag)],
+                                "identity_term_delta_t": [float(delta_t.real), float(delta_t.imag)],
+                                "identity_term_T_delta_i": [float(term_t_di.real), float(term_t_di.imag)],
+                                "predicted_d_volume_plus_reduce_r_volume": [
+                                    float(predicted.real), float(predicted.imag)
+                                ],
+                                "saved_d_volume_plus_reduce_r_volume": [
+                                    float(saved_target.real), float(saved_target.imag)
+                                ],
+                                "selected_row_identity_residual_abs": float(abs(residual)),
+                                "selected_row_residual_over_original_global_denominator": float(
+                                    abs(residual) / denominator
+                                ),
+                                "original_global_denominator": denominator,
+                                "global_column_gate_claim": False,
+                            }
+                        )
+                state_result["paths"][path_name] = path_report
+            for cell_index in cell_indices:
+                actual_value = path_cells["actual"][cell_index]["target_trace_action"]
+                canonical_value = path_cells["canonical"][cell_index]["target_trace_action"]
+                delta = actual_value - canonical_value
+                for path_name in ("actual", "canonical"):
+                    next(
+                        item
+                        for item in state_result["paths"][path_name]["selected_cells"]
+                        if item["cell_index"] == cell_index
+                    )["actual_minus_canonical_target_trace_action"] = [
+                        float(delta.real), float(delta.imag)
+                    ]
+                if native_action is not None:
+                    state_result["paths"]["actual"]["selected_cells"][
+                        cell_indices.index(cell_index)
+                    ]["actual_minus_canonical_delta_i"] = _difference_metrics(
+                        path_cells["actual"][cell_index]["delta_i"],
+                        path_cells["canonical"][cell_index]["delta_i"],
+                    )
+            output.append(state_result)
+
+    return {"attribution": output, "delta_i_arrays": delta_i_arrays}
+
+
 def _sum_metrics(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
     a = np.asarray(left).reshape(-1)
     b = np.asarray(right).reshape(-1)

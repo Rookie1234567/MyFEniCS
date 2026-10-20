@@ -1830,6 +1830,160 @@ def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> N
     tensor[:] = transpose.T
 
 
+def _tabulate_volume_audit_path(
+    compiled_form,
+    kernels: dict[int, Any],
+    element,
+    coordinates: np.ndarray,
+    *,
+    tag: int,
+    permutation: int,
+    dimension: int,
+    interior_positions: np.ndarray,
+    trace_positions: np.ndarray,
+) -> dict[str, np.ndarray]:
+    """Tabulate one coordinate path through the existing rank-2 FFCx kernels."""
+
+    raw_tensor = _tabulate_raw_tensor_class(
+        compiled_form,
+        kernels,
+        coordinates,
+        tag=tag,
+        dimension=dimension,
+    )
+    oriented_tensor = raw_tensor.copy()
+    _orient_cell_tensor(
+        element,
+        oriented_tensor,
+        np.asarray([permutation], dtype=np.uint32),
+    )
+    return {
+        "coordinates": np.ascontiguousarray(coordinates, dtype=np.float64),
+        "raw_tensor": raw_tensor,
+        "oriented_tensor": oriented_tensor,
+        "K": oriented_tensor[np.ix_(interior_positions, interior_positions)],
+        "G": oriented_tensor[np.ix_(interior_positions, trace_positions)],
+        "J": oriented_tensor[np.ix_(trace_positions, interior_positions)],
+        "L": oriented_tensor[np.ix_(trace_positions, trace_positions)],
+    }
+
+
+def tabulate_volume_audit_cell_geometry_pair(
+    compiled_form,
+    function_space,
+    cell_tags,
+    cell_index: int,
+) -> dict[str, Any]:
+    """Tabulate one cell with actual mesh and canonical coordinates.
+
+    This helper has no dependency on a condensed owner, its LU factors, or any
+    global volume cache. Both paths use the same compiled rank-2 FFCx kernels,
+    orientation transform, and local DoF partition.
+    """
+
+    if isinstance(cell_index, (bool, np.bool_)) or not isinstance(
+        cell_index, (int, np.integer)
+    ):
+        raise TypeError("cell_index must be an integer local cell index")
+    cell_index = int(cell_index)
+    mesh = function_space.mesh
+    tdim = int(mesh.topology.dim)
+    owned_cells = int(mesh.topology.index_map(tdim).size_local)
+    if cell_index < 0 or cell_index >= owned_cells:
+        raise IndexError(f"cell_index {cell_index} is outside [0, {owned_cells})")
+
+    geometry_dofmap = np.asarray(mesh.geometry.dofmap, dtype=np.int32)
+    geometry_coordinates = np.asarray(mesh.geometry.x, dtype=np.float64)
+    if geometry_dofmap.ndim != 2 or geometry_dofmap.shape[0] < owned_cells:
+        raise ValueError("mesh geometry DoF map does not cover owned cells")
+    geometry_dofs = np.ascontiguousarray(geometry_dofmap[cell_index]).copy()
+    actual_points = np.ascontiguousarray(geometry_coordinates[geometry_dofs]).copy()
+    if actual_points.ndim != 2 or actual_points.shape[1] != 3:
+        raise ValueError("actual cell coordinates must have shape (geometry_dofs, 3)")
+    actual_coordinates = np.ascontiguousarray(actual_points.reshape(-1))
+    canonical_coordinates, widths = _canonical_axis_aligned_coordinates(
+        mesh,
+        cell_index,
+        tolerance=1.0e-11,
+        preserve_exact_geometry=True,
+    )
+    canonical_points = np.ascontiguousarray(
+        np.asarray(canonical_coordinates, dtype=np.float64).reshape(actual_points.shape)
+    )
+    canonical_coordinates = np.ascontiguousarray(canonical_points.reshape(-1))
+
+    tag = int(_cell_tag_array(cell_tags, owned_cells)[cell_index])
+    mesh.topology.create_entity_permutations()
+    permutations = np.asarray(mesh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    if permutations.size < owned_cells:
+        raise ValueError("cell permutation inventory does not cover owned cells")
+    permutation = int(permutations[cell_index])
+
+    element = function_space.element
+    dimension = int(element.space_dimension)
+    interior_positions = np.asarray(
+        element.basix_element.entity_dofs[tdim][0], dtype=np.int32
+    )
+    trace_positions = np.setdiff1d(
+        np.arange(dimension, dtype=np.int32), interior_positions
+    )
+    local_dofs = np.asarray(
+        function_space.dofmap.cell_dofs(cell_index), dtype=np.int32
+    )
+    if local_dofs.shape != (dimension,):
+        raise ValueError("cell DoF map does not match the finite-element dimension")
+    original_dofs = np.asarray(
+        function_space.dofmap.index_map.local_to_global(local_dofs), dtype=np.int64
+    )
+    kernels = _cell_integral_kernels(
+        compiled_form,
+        sum_duplicate_cell_integrals=True,
+    )
+    common = {
+        "cell_index": cell_index,
+        "cell_tag": tag,
+        "class_key": (tag, *widths, permutation),
+        "cell_widths": widths,
+        "cell_permutation": permutation,
+        "geometry_dofs": geometry_dofs,
+        "actual_geometry_coordinates": actual_points,
+        "canonical_geometry_coordinates": canonical_points,
+        "local_dofs": local_dofs,
+        "original_dofs": original_dofs,
+        "interior_positions": interior_positions,
+        "trace_positions": trace_positions,
+        "interior_original_dofs": original_dofs[interior_positions],
+        "trace_original_dofs": original_dofs[trace_positions],
+        "integral_kernel_counts": {
+            "default": _kernel_count(kernels, -1),
+            "tagged": _kernel_count(kernels, tag),
+        },
+    }
+    common["actual"] = _tabulate_volume_audit_path(
+        compiled_form,
+        kernels,
+        element,
+        actual_coordinates,
+        tag=tag,
+        permutation=permutation,
+        dimension=dimension,
+        interior_positions=interior_positions,
+        trace_positions=trace_positions,
+    )
+    common["canonical"] = _tabulate_volume_audit_path(
+        compiled_form,
+        kernels,
+        element,
+        canonical_coordinates,
+        tag=tag,
+        permutation=permutation,
+        dimension=dimension,
+        interior_positions=interior_positions,
+        trace_positions=trace_positions,
+    )
+    return common
+
+
 def tabulate_volume_audit_cell(
     compiled_form,
     function_space,
@@ -1905,23 +2059,20 @@ def tabulate_volume_audit_cell(
         compiled_form,
         sum_duplicate_cell_integrals=True,
     )
-    raw_tensor = _tabulate_raw_tensor_class(
+    path = _tabulate_volume_audit_path(
         compiled_form,
         kernels,
+        element,
         coordinates,
         tag=tag,
+        permutation=permutation,
         dimension=dimension,
+        interior_positions=interior_positions,
+        trace_positions=trace_positions,
     )
-    oriented_tensor = raw_tensor.copy()
-    _orient_cell_tensor(
-        element,
-        oriented_tensor,
-        np.asarray([permutation], dtype=np.uint32),
-    )
-    K = oriented_tensor[np.ix_(interior_positions, interior_positions)]
-    G = oriented_tensor[np.ix_(interior_positions, trace_positions)]
-    J = oriented_tensor[np.ix_(trace_positions, interior_positions)]
-    L = oriented_tensor[np.ix_(trace_positions, trace_positions)]
+    raw_tensor = path["raw_tensor"]
+    oriented_tensor = path["oriented_tensor"]
+    K, G, J, L = (path[name] for name in ("K", "G", "J", "L"))
 
     arrays = {
         "canonical_coordinates": coordinates,

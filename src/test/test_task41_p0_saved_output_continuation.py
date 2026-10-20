@@ -795,15 +795,26 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
         _validate_original_attempt(run_root, contract, "f" * 64)
 
 
-@pytest.mark.parametrize("volume_only", [False, True])
+@pytest.mark.parametrize(
+    ("volume_only", "geometry_pair"),
+    [(False, False), (True, False), (True, True)],
+)
 def test_b0_saved_evidence_audit_uses_supervised_service_route(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, volume_only: bool
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    volume_only: bool,
+    geometry_pair: bool,
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
     import src.runners.task40_v10_campaign as campaign_module
     import benchmarks.subreaper_watchdog as watchdog_module
     import benchmarks.task034_wsl_resources as resource_module
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V4_SELECTED_ACTIVE_ROW,
+        TASK41_P0_V4_SELECTED_ORIGINAL_ROW,
+        TASK41_P0_V4_SOURCE_REPORT_SHA256,
+    )
 
     repo_root = tmp_path
     results_root = repo_root / "results" / contract_module.TASK41_MODEL_ID
@@ -899,6 +910,9 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     donor_contract_path.write_text(json.dumps(donor_contract), encoding="utf-8")
     consumer_contract_path.write_text(json.dumps(consumer_contract), encoding="utf-8")
     output_root = results_root / "saved_b0_audit_attempt1"
+    source_report_path = results_root / "v4_source" / "task41_p0_v4_volume_only_attribution.json"
+    source_report_path.parent.mkdir(parents=True)
+    source_report_path.write_text("{}\n", encoding="utf-8")
     environment = {
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
@@ -925,11 +939,27 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         if kwargs["campaign_phase"] == "numeric":
             assert volume_only is True
             assert command[1:4] == ["-m", "src.runners.task41_p0_v4_volume_only_audit", "--summary"]
-            volume_result = output_root / "task41_p0_v4_volume_only_attribution.json"
-            volume_result.write_text(
-                json.dumps({"status": "COMPLETED", "identity_audit": {"completed": True}}),
-                encoding="utf-8",
-            )
+            if geometry_pair:
+                assert "--geometry-pair-only" in command
+                assert command[command.index("--source-report") + 1] == str(source_report_path)
+                volume_result = output_root / "task41_p0_v4_geometry_pair_probe.json"
+                volume_result.write_text(json.dumps({
+                    "status": "COMPLETED_GEOMETRY_PAIR_PROBE",
+                    "geometry_pair_probe": {
+                        "schema": "task41.p0.v4.geometry_pair_probe.v1",
+                        "source_report_sha256": TASK41_P0_V4_SOURCE_REPORT_SHA256,
+                        "selected_active_row": TASK41_P0_V4_SELECTED_ACTIVE_ROW,
+                        "selected_original_row": TASK41_P0_V4_SELECTED_ORIGINAL_ROW,
+                        "selected_cells": [{"cell_index": 26762}, {"cell_index": 26897}],
+                    },
+                }), encoding="utf-8")
+            else:
+                assert "--geometry-pair-only" not in command
+                volume_result = output_root / "task41_p0_v4_volume_only_attribution.json"
+                volume_result.write_text(
+                    json.dumps({"status": "COMPLETED", "identity_audit": {"completed": True}}),
+                    encoding="utf-8",
+                )
             return {"classification": "COMPLETED", "leader_exit_code": 0}
         assert kwargs["campaign_phase"] == "closeout"
         assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
@@ -972,7 +1002,11 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     monkeypatch.setattr(
         contract_module,
         "sha256_file",
-        lambda path: hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+        lambda path: (
+            TASK41_P0_V4_SOURCE_REPORT_SHA256
+            if Path(path).resolve() == source_report_path.resolve()
+            else hashlib.sha256(Path(path).read_bytes()).hexdigest()
+        ),
     )
 
     class FakeCampaignAccount:
@@ -1037,6 +1071,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             "--summary", str(donor_summary),
             "--numerical-output", str(numerical_output),
             "--output-dir", str(output_root),
+            *( ["--geometry-pair-only", "--source-report", str(source_report_path)] if geometry_pair else [] ),
         ],
         contract_path=consumer_contract_path,
         repo_root=repo_root,
@@ -1053,8 +1088,17 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert calls[0][1]["campaign_phase"] == "closeout"
     assert receipt["status"] == "completed"
     assert receipt["mode"] == (
-        "saved_b0_v4_volume_only_attribution" if volume_only else "saved_b0_evidence_audit"
+        "saved_b0_v4_geometry_pair_probe"
+        if geometry_pair
+        else "saved_b0_v4_volume_only_attribution"
+        if volume_only
+        else "saved_b0_evidence_audit"
     )
+    if geometry_pair:
+        assert receipt["continuation_status"] == "v4_geometry_pair_probe_completed"
+        assert receipt["geometry_pair_probe_command"][-3:] == [
+            "--geometry-pair-only", "--source-report", str(source_report_path)
+        ]
     assert receipt["required_checker_status"] == "audit_completed"
     assert receipt["producer_source_sha"] == donor_source_sha
     assert receipt["consumer_source_sha"] == consumer_source_sha

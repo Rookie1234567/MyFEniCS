@@ -738,3 +738,122 @@ def test_volume_identity_metrics_reject_nonfinite_and_resource_gate_keeps_contra
         "task_cgroup_reserve_bytes": 0,
     }
     assert progress[0]["status"] == "PASSED"
+
+
+def test_compiled_kernel_identity_uses_bounded_real_ffcx_cell_metadata():
+    import ufl
+    from basix.ufl import element
+    from dolfinx import default_real_type, fem, mesh
+    from mpi4py import MPI
+
+    from src.runners.task41_p0_v4_volume_only_audit import _compiled_kernel_identity
+    from src.runners.task41_p0_contract import sha256_file
+
+    msh = mesh.create_unit_cube(MPI.COMM_SELF, 1, 1, 1)
+    space = fem.functionspace(
+        msh,
+        element("N1curl", msh.basix_cell(), 1, dtype=default_real_type),
+    )
+    trial = ufl.TrialFunction(space)
+    test = ufl.TestFunction(space)
+    dx = ufl.Measure("dx", domain=msh)
+    curl_form = ufl.inner(ufl.curl(trial), ufl.curl(test)) * dx
+    mass_form = ufl.inner(trial, test) * dx
+    rank_two = fem.form(curl_form + mass_form)
+    source = fem.Function(space)
+    rank_one = fem.form(ufl.action(curl_form, source))
+
+    rank_two_identity = _compiled_kernel_identity(
+        rank_two, rank=2, label="test_combined", sha256_file=sha256_file
+    )
+    rank_one_identity = _compiled_kernel_identity(
+        rank_one, rank=1, label="test_action", sha256_file=sha256_file
+    )
+
+    assert rank_two_identity["form_rank"] == 2
+    assert rank_one_identity["form_rank"] == 1
+    assert rank_two_identity["ffcx_form_signature"] != rank_one_identity["ffcx_form_signature"]
+    for identity in (rank_two_identity, rank_one_identity):
+        assert len(identity["cell_integral_offsets"]) == 2
+        assert identity["cell_integral_offsets"][0] == 0
+        assert identity["cell_integral_count"] > 0
+        assert sum(identity["integral_kernel_counts"].values()) > 0
+
+
+def test_geometry_pair_attribution_closes_selected_row_identity_algebraically():
+    from src.solvers.task41_v4_volume_only_audit import (
+        audit_task41_v4_geometry_pair_attribution,
+    )
+
+    cells = (26762, 26897)
+    cell_pairs = {}
+    saved_maps = {}
+    saved_classes = {}
+    for cell_index, interior_row in (
+        (cells[0], 0),
+        (cells[1], 2),
+    ):
+        cell_pairs[cell_index] = {
+            "actual": {
+                "K": np.asarray([[2.0]], dtype=np.complex128),
+                "G": np.asarray([[3.0]], dtype=np.complex128),
+                "J": np.asarray([[5.0]], dtype=np.complex128),
+                "L": np.asarray([[7.0]], dtype=np.complex128),
+            },
+            "canonical": {
+                "K": np.asarray([[1.0]], dtype=np.complex128),
+                "G": np.asarray([[2.0]], dtype=np.complex128),
+                "J": np.asarray([[4.0]], dtype=np.complex128),
+                "L": np.asarray([[6.0]], dtype=np.complex128),
+            },
+        }
+        saved_maps[cell_index] = {
+            "interior_original_rows": np.asarray([interior_row], dtype=np.int64),
+            "trace_original_rows": np.asarray([1 if interior_row == 0 else 3], dtype=np.int64),
+            "active_ids": np.asarray([0], dtype=np.int64),
+            "trace_expansion_data": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            "trace_expansion_indices": np.asarray([0], dtype=np.int32),
+            "trace_expansion_indptr": np.asarray([0, 1], dtype=np.int32),
+        }
+        saved_classes[cell_index] = {
+            "S": np.asarray([[11.0]], dtype=np.complex128),
+            "T": np.asarray([[13.0]], dtype=np.complex128),
+        }
+
+    field = np.asarray([17.0, 23.0, 19.0, 23.0], dtype=np.complex128)
+    native = np.asarray([31.0, 41.0, 37.0, 0.0], dtype=np.complex128)
+    columns = [
+        {
+            "active_original_rows": np.asarray([1], dtype=np.int64),
+            "known_field": field.copy(),
+            "states": [
+                {"storage": field.copy(), "native_volume_action": native.copy()},
+                {"storage": field.copy(), "native_volume_action": native.copy()},
+            ],
+        }
+        for _ in range(2)
+    ]
+    zero = np.zeros(1, dtype=np.complex128)
+    saved_reduce = {(column, state): zero.copy() for column in range(2) for state in ("j0", "j3")}
+    result = audit_task41_v4_geometry_pair_attribution(
+        cell_pairs=cell_pairs,
+        saved_maps=saved_maps,
+        columns=columns,
+        saved_classes=saved_classes,
+        saved_d_volume=[np.asarray([-419.0 + 0.0j]), np.asarray([-419.0 + 0.0j])],
+        saved_reduce_r_volume=saved_reduce,
+        original_denominators=[100.0, 100.0],
+        target_active_row=0,
+        target_original_row=1,
+    )
+
+    actual_j0 = result["attribution"][1]["paths"]["actual"]
+    canonical_j0 = result["attribution"][1]["paths"]["canonical"]
+    assert actual_j0["native_comparison"]["delta_t"] == [461.0, 0.0]
+    assert canonical_j0["native_comparison"]["delta_t"] == [379.0, 0.0]
+    assert actual_j0["native_comparison"]["selected_row_identity_residual_abs"] == 0.0
+    assert canonical_j0["native_comparison"]["selected_row_identity_residual_abs"] == 0.0
+    assert actual_j0["selected_cells"][0]["delta_i"]["max_abs"] == 72.0
+    assert canonical_j0["selected_cells"][0]["delta_i"]["max_abs"] == 32.0
+    assert actual_j0["selected_cells"][0]["actual_minus_canonical_target_trace_action"] == [40.0, 0.0]
+    assert result["attribution"][1]["paths"]["actual"]["native_comparison"]["global_column_gate_claim"] is False

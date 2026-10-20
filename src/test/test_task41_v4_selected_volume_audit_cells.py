@@ -9,6 +9,7 @@ from src.solvers.hcurl_assembly_time_condensation import (
     TraceConstraintMap,
     iter_selected_volume_audit_cells,
     tabulate_volume_audit_cell,
+    tabulate_volume_audit_cell_geometry_pair,
 )
 
 
@@ -206,6 +207,7 @@ def test_tabulate_volume_audit_cell_uses_all_kernels_rows_and_orientation(monkey
     assert not np.allclose(result["J"], result["G"].T)
     assert result["integral_kernel_counts"] == {"default": 1, "tagged": 2}
     assert tabulation_calls == list(kernels)
+
     assert result["class_key"] == class_key
     assert result["interior_original_dofs"].tolist() == [101, 103]
     assert result["trace_original_dofs"].tolist() == [100, 102]
@@ -236,3 +238,114 @@ def test_tabulate_volume_audit_cell_uses_all_kernels_rows_and_orientation(monkey
     with pytest.raises(ValueError, match="class identity mismatch"):
         tabulate_volume_audit_cell(form, function_space, cell_tags, wrong_direction, 0)
     assert tabulation_calls == list(kernels)
+
+
+def test_volume_geometry_pair_uses_actual_and_canonical_coordinates(monkeypatch):
+    class _Topology:
+        dim = 3
+
+        @staticmethod
+        def index_map(_dimension):
+            return SimpleNamespace(size_local=1)
+
+        @staticmethod
+        def create_entity_permutations():
+            return None
+
+        @staticmethod
+        def get_cell_permutation_info():
+            return np.asarray([7], dtype=np.uint32)
+
+    class _Element:
+        space_dimension = 4
+        basix_element = SimpleNamespace(entity_dofs=[[], [], [], [[1, 3]]])
+
+        @staticmethod
+        def T_apply(data, cell_info, dimension):
+            matrix = np.asarray(data).reshape(dimension, dimension)
+            if int(cell_info[0]) == 7:
+                matrix[:] = matrix[[1, 0, 2, 3]].copy()
+
+    actual_points = np.asarray(
+        [
+            [9, -4, 2], [10, -4, 2], [9, -3, 2], [10, -3, 2],
+            [9, -4, 3], [10, -4, 3], [9, -3, 3], [10, -3, 3],
+        ],
+        dtype=np.float64,
+    )
+    mesh = SimpleNamespace(
+        topology=_Topology(),
+        geometry=SimpleNamespace(
+            x=actual_points,
+            dofmap=np.arange(8, dtype=np.int32).reshape(1, 8),
+        ),
+    )
+    function_space = SimpleNamespace(
+        mesh=mesh,
+        element=_Element(),
+        dofmap=SimpleNamespace(
+            cell_dofs=lambda _cell: np.arange(4, dtype=np.int32),
+            index_map=SimpleNamespace(
+                local_to_global=lambda rows: np.asarray(rows, dtype=np.int64) + 100
+            ),
+        ),
+    )
+    cell_tags = SimpleNamespace(
+        indices=np.asarray([0], dtype=np.int32),
+        values=np.asarray([4], dtype=np.int32),
+    )
+    kernels = (object(), object())
+    form = SimpleNamespace(
+        ufcx_form=SimpleNamespace(
+            form_integral_offsets=np.asarray([0, 2], dtype=np.int32),
+            form_integral_ids=np.asarray([-1, 4], dtype=np.int32),
+            form_integrals=[
+                SimpleNamespace(tabulate_tensor_complex128=kernel)
+                for kernel in kernels
+            ],
+            num_coefficients=0,
+            num_constants=0,
+        ),
+        module=SimpleNamespace(ffi=SimpleNamespace(NULL=object())),
+    )
+    canonical_points = np.asarray(
+        [
+            [0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0],
+            [0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1],
+        ],
+        dtype=np.float64,
+    )
+    monkeypatch.setattr(
+        "src.solvers.hcurl_assembly_time_condensation._canonical_axis_aligned_coordinates",
+        lambda *_args, **_kwargs: (canonical_points.reshape(-1), (1.0, 1.0, 1.0)),
+    )
+    tabulated_coordinates = []
+
+    def fake_tabulate(_form, _kernel, coordinates, dimension):
+        tabulated_coordinates.append(np.asarray(coordinates).copy())
+        return np.eye(dimension, dtype=np.complex128) * float(coordinates[0])
+
+    monkeypatch.setattr(
+        "src.solvers.hcurl_assembly_time_condensation._tabulate_cell_tensor",
+        fake_tabulate,
+    )
+    result = tabulate_volume_audit_cell_geometry_pair(
+        form, function_space, cell_tags, 0
+    )
+
+    np.testing.assert_array_equal(result["actual_geometry_coordinates"], actual_points)
+    np.testing.assert_array_equal(result["canonical_geometry_coordinates"], canonical_points)
+    np.testing.assert_array_equal(result["geometry_dofs"], np.arange(8))
+    np.testing.assert_array_equal(result["local_dofs"], np.arange(4))
+    np.testing.assert_array_equal(result["original_dofs"], np.arange(100, 104))
+    np.testing.assert_array_equal(result["interior_original_dofs"], [101, 103])
+    np.testing.assert_array_equal(result["trace_original_dofs"], [100, 102])
+    assert result["class_key"] == (4, 1.0, 1.0, 1.0, 7)
+    assert result["integral_kernel_counts"] == {"default": 1, "tagged": 1}
+    assert len(tabulated_coordinates) == 4
+    np.testing.assert_array_equal(tabulated_coordinates[0], actual_points.reshape(-1))
+    np.testing.assert_array_equal(tabulated_coordinates[1], actual_points.reshape(-1))
+    np.testing.assert_array_equal(tabulated_coordinates[2], canonical_points.reshape(-1))
+    np.testing.assert_array_equal(tabulated_coordinates[3], canonical_points.reshape(-1))
+    assert result["actual"]["raw_tensor"][0, 0] == 18.0
+    assert result["canonical"]["raw_tensor"][0, 0] == 0.0

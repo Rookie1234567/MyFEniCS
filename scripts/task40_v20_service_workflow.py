@@ -9407,10 +9407,12 @@ def _run_task41_p0_saved_output_service(
     checker_snapshot_sha256: str | None,
     b0_evidence_audit_mode: bool = False,
     b0_v4_volume_only_mode: bool = False,
+    b0_v4_geometry_pair_mode: bool = False,
     donor_contract_path: Path | None = None,
     donor_contract_sha256: str | None = None,
     donor_summary_path: Path | None = None,
     donor_numerical_output: Path | None = None,
+    source_report_path: Path | None = None,
     input_path: Path,
     activation_command: Any,
     activation_identity: str,
@@ -9434,6 +9436,10 @@ def _run_task41_p0_saved_output_service(
         raise ValueError("saved B0 evidence audit must use the existing checker-only service mode")
     if b0_v4_volume_only_mode and not b0_evidence_audit_mode:
         raise ValueError("Task41 V4 volume-only extraction requires the saved B0 audit service")
+    if b0_v4_geometry_pair_mode and not b0_v4_volume_only_mode:
+        raise ValueError("Task41 V4 geometry-pair probe requires the volume-only service route")
+    if b0_v4_geometry_pair_mode != (source_report_path is not None):
+        raise ValueError("Task41 V4 geometry-pair mode requires its pinned source report")
     if checker_only and not b0_evidence_audit_mode:
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -9494,7 +9500,9 @@ def _run_task41_p0_saved_output_service(
         "schema": "task41.p0.saved_output_service_receipt.v1",
         "status": "running",
         "mode": (
-            "saved_b0_v4_volume_only_attribution"
+            "saved_b0_v4_geometry_pair_probe"
+            if b0_v4_geometry_pair_mode
+            else "saved_b0_v4_volume_only_attribution"
             if b0_v4_volume_only_mode
             else
             "saved_b0_evidence_audit"
@@ -9546,6 +9554,16 @@ def _run_task41_p0_saved_output_service(
             donor_numerical_output=str(donor_numerical_output),
             checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
         )
+    if b0_v4_geometry_pair_mode:
+        assert source_report_path is not None
+        from src.runners.task41_p0_v4_volume_only_audit import (
+            TASK41_P0_V4_SOURCE_REPORT_SHA256,
+        )
+
+        record.update(
+            geometry_pair_source_report_path=str(source_report_path),
+            geometry_pair_source_report_sha256=TASK41_P0_V4_SOURCE_REPORT_SHA256,
+        )
     _write_json_fsync(receipt_path, record)
     common_watchdog = {
         "interval": 1.0,
@@ -9570,7 +9588,11 @@ def _run_task41_p0_saved_output_service(
     result_code = 3
     try:
         if b0_v4_volume_only_mode:
-            volume_report_path = output_root / "task41_p0_v4_volume_only_attribution.json"
+            volume_report_path = output_root / (
+                "task41_p0_v4_geometry_pair_probe.json"
+                if b0_v4_geometry_pair_mode
+                else "task41_p0_v4_volume_only_attribution.json"
+            )
             volume_command = [
                 python,
                 "-m",
@@ -9590,6 +9612,11 @@ def _run_task41_p0_saved_output_service(
                 "--output-dir",
                 str(output_root),
             ]
+            if b0_v4_geometry_pair_mode:
+                assert source_report_path is not None
+                volume_command.extend(
+                    ["--geometry-pair-only", "--source-report", str(source_report_path)]
+                )
             volume_watchdog = supervise(
                 volume_command,
                 service_directory / "volume_only_watchdog",
@@ -9598,26 +9625,71 @@ def _run_task41_p0_saved_output_service(
                 campaign_phase="numeric",
                 **common_watchdog,
             )
-            record["volume_only_command"] = volume_command
-            record["volume_only_watchdog"] = volume_watchdog
+            record[
+                "geometry_pair_probe_command"
+                if b0_v4_geometry_pair_mode
+                else "volume_only_command"
+            ] = volume_command
+            record[
+                "geometry_pair_probe_watchdog"
+                if b0_v4_geometry_pair_mode
+                else "volume_only_watchdog"
+            ] = volume_watchdog
             volume_payload = (
                 json.loads(volume_report_path.read_text(encoding="utf-8"))
                 if volume_report_path.is_file()
                 else None
             )
-            record["volume_only_result_path"] = str(volume_report_path)
-            record["volume_only_result"] = volume_payload
-            worker_ok = bool(
-                volume_watchdog.get("classification") == "COMPLETED"
-                and volume_watchdog.get("leader_exit_code") == 0
-                and isinstance(volume_payload, Mapping)
-                and volume_payload.get("status") == "COMPLETED"
-                and isinstance(volume_payload.get("identity_audit"), Mapping)
-                and volume_payload["identity_audit"].get("completed") is True
-            )
-            record["continuation_status"] = (
-                "v4_volume_attribution_completed" if worker_ok else "v4_volume_attribution_failed"
-            )
+            result_prefix = "geometry_pair_probe" if b0_v4_geometry_pair_mode else "volume_only"
+            record[f"{result_prefix}_result_path"] = str(volume_report_path)
+            record[f"{result_prefix}_result"] = volume_payload
+            if b0_v4_geometry_pair_mode:
+                from src.runners.task41_p0_v4_volume_only_audit import (
+                    TASK41_P0_V4_SELECTED_ACTIVE_ROW,
+                    TASK41_P0_V4_SELECTED_ORIGINAL_ROW,
+                    TASK41_P0_V4_SOURCE_REPORT_SHA256,
+                )
+
+                probe = (
+                    volume_payload.get("geometry_pair_probe")
+                    if isinstance(volume_payload, Mapping)
+                    else None
+                )
+                worker_ok = bool(
+                    volume_watchdog.get("classification") == "COMPLETED"
+                    and volume_watchdog.get("leader_exit_code") == 0
+                    and isinstance(volume_payload, Mapping)
+                    and volume_payload.get("status") == "COMPLETED_GEOMETRY_PAIR_PROBE"
+                    and isinstance(probe, Mapping)
+                    and probe.get("schema") == "task41.p0.v4.geometry_pair_probe.v1"
+                    and probe.get("source_report_sha256")
+                    == TASK41_P0_V4_SOURCE_REPORT_SHA256
+                    and probe.get("selected_active_row") == TASK41_P0_V4_SELECTED_ACTIVE_ROW
+                    and probe.get("selected_original_row") == TASK41_P0_V4_SELECTED_ORIGINAL_ROW
+                    and isinstance(probe.get("selected_cells"), list)
+                    and all(isinstance(item, Mapping) for item in probe["selected_cells"])
+                    and [item.get("cell_index") for item in probe.get("selected_cells", [])]
+                    == [26762, 26897]
+                )
+                record["continuation_status"] = (
+                    "v4_geometry_pair_probe_completed"
+                    if worker_ok
+                    else "v4_geometry_pair_probe_failed"
+                )
+            else:
+                worker_ok = bool(
+                    volume_watchdog.get("classification") == "COMPLETED"
+                    and volume_watchdog.get("leader_exit_code") == 0
+                    and isinstance(volume_payload, Mapping)
+                    and volume_payload.get("status") == "COMPLETED"
+                    and isinstance(volume_payload.get("identity_audit"), Mapping)
+                    and volume_payload["identity_audit"].get("completed") is True
+                )
+                record["continuation_status"] = (
+                    "v4_volume_attribution_completed"
+                    if worker_ok
+                    else "v4_volume_attribution_failed"
+                )
         elif checker_only or b0_evidence_audit_mode:
             worker_ok = True
             record["continuation_status"] = (
@@ -9647,7 +9719,7 @@ def _run_task41_p0_saved_output_service(
             if checker_only
             else output_root / "task41_p0_saved_output_checker_input.json"
         )
-        if worker_ok and (
+        if (worker_ok or b0_evidence_audit_mode) and (
             b0_evidence_audit_mode
             or (checker_snapshot is not None and checker_snapshot.is_file())
         ):
@@ -9804,7 +9876,7 @@ def _run_task41_p0_saved_output_service(
                     }
                 )
                 _write_json_fsync(continuation_receipt_path, continuation_receipt)
-            result_code = 0 if checker_ok else 3
+            result_code = 0 if checker_ok and worker_ok else 3
         else:
             record["required_checker_status"] = "not_run_continuation_failed_or_snapshot_missing"
     except Exception as exc:
@@ -9912,6 +9984,7 @@ def _run_task41_p0_service(
     b0_v4_volume_only_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-volume-only-attribution"
     )
+    b0_v4_geometry_pair_mode = False
     b0_evidence_audit_mode = bool(
         case_args
         and case_args[0]
@@ -9929,9 +10002,10 @@ def _run_task41_p0_service(
     donor_contract_sha256: str | None = None
     donor_summary_path: Path | None = None
     donor_numerical_output: Path | None = None
+    source_report_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) != 11
+            len(case_args) not in {11, 14}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -9946,6 +10020,21 @@ def _run_task41_p0_service(
         donor_summary_path = Path(case_args[6]).resolve(strict=True)
         donor_numerical_output = Path(case_args[8]).resolve()
         continuation_output_root = Path(case_args[10]).resolve()
+        if len(case_args) == 14:
+            if (
+                not b0_v4_volume_only_mode
+                or case_args[11] != "--geometry-pair-only"
+                or case_args[12] != "--source-report"
+            ):
+                raise ValueError(
+                    "V4 geometry-pair service requires the volume-only route and one source report"
+                )
+            from src.runners.task41_p0_v4_volume_only_audit import (
+                TASK41_P0_V4_SOURCE_REPORT_SHA256,
+            )
+
+            b0_v4_geometry_pair_mode = True
+            source_report_path = Path(case_args[13]).resolve(strict=True)
     if continuation_mode:
         if (
             len(case_args) != 5
@@ -9977,6 +10066,18 @@ def _run_task41_p0_service(
         check_current_source=not (continuation_mode or checker_only_mode),
         require_clean_source=True,
     )
+    if b0_v4_geometry_pair_mode:
+        assert source_report_path is not None
+        results_root = (
+            repo_root / "results" / str(contract["case"]["model_id"])
+        ).resolve()
+        if (
+            not source_report_path.is_relative_to(results_root)
+            or sha256_file(source_report_path) != TASK41_P0_V4_SOURCE_REPORT_SHA256
+        ):
+            raise ValueError(
+                "Task41 V4 geometry-pair source report path or SHA-256 differs from the frozen receipt"
+            )
     case_id = task41_case_id_for_run_id(str(contract["case"]["run_id"]))
     continuation_source_sha: str | None = None
     checker_source_sha: str | None = None
@@ -10244,10 +10345,12 @@ def _run_task41_p0_service(
             checker_snapshot_sha256=checker_input_sha256,
             b0_evidence_audit_mode=b0_evidence_audit_mode,
             b0_v4_volume_only_mode=b0_v4_volume_only_mode,
+            b0_v4_geometry_pair_mode=b0_v4_geometry_pair_mode,
             donor_contract_path=donor_contract_path,
             donor_contract_sha256=donor_contract_sha256,
             donor_summary_path=donor_summary_path,
             donor_numerical_output=donor_numerical_output,
+            source_report_path=source_report_path,
             input_path=input_path,
             activation_command=activation_command,
             activation_identity=activation_marker,
