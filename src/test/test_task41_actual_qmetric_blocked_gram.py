@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import shutil
+import subprocess
 from pathlib import Path
 
 import numpy as np
@@ -43,20 +45,15 @@ def test_feature_pair_map_is_recovered_from_frozen_scalar_products():
 
 
 def test_geometry_copy_stays_inside_the_frozen_q_loop():
-    declarations = "\n".join(f"  double fw{index} = {index}.0;" for index in range(144))
-    body = (
-        "for (int iq = 0; iq < 512; ++iq)\n{\n"
-        + declarations
-        + "\n  }\n  // ------------------------ \n  // ------------------------ \n"
-        "// Section: Tensor Computation\n"
-    )
-    snippet = _geometry_snippet(body, "fixture")
+    body, digest = _original_kernel_geometry_fixture()
+    snippet = _geometry_snippet(body, digest, include_trace=True)
     assert snippet.index("out[(iq - iq_begin) * 144 + 0] = fw0") > snippet.index(
         "for (int iq = iq_begin; iq < iq_end; ++iq)"
     )
     assert snippet.index("out[(iq - iq_begin) * 144 + 143] = fw143") < snippet.rindex(
         "  }"
     )
+    assert snippet.endswith("\n  }\n}\n")
 
 
 def test_frozen_table_extent_is_read_from_the_declaration_and_checked():
@@ -80,12 +77,12 @@ def _original_kernel_geometry_fixture() -> tuple[str, str]:
     function_name = f"tabulate_tensor_integral_{digest}_hexahedron"
     declarations = [f"  double J0_c{index} = {index}.0;" for index in range(9)]
     declarations.extend(
-        f"  double sv_907_{index} = {index}.0;"
-        for index in (17, 18, 22, 23, 39, 44, 49, 75, 80, 85)
-    )
-    declarations.extend(
         f"  double _Complex fw{index} = {index}.0;" for index in range(144)
     )
+    intermediate_declarations = [
+        f"    double sv_907_{index} = {index}.0;"
+        for index in (17, 18, 22, 23, 39, 44, 49, 75, 80, 85)
+    ]
     body = (
         f"void {function_name}(double _Complex* restrict A, "
         "const double _Complex* restrict w, const double _Complex* restrict c, "
@@ -93,10 +90,42 @@ def _original_kernel_geometry_fixture() -> tuple[str, str]:
         "const uint8_t* restrict quadrature_permutation, void* custom_data)\n{\n"
         "for (int iq = 0; iq < 512; ++iq)\n{\n"
         + "\n".join(declarations)
+        + "\n  {\n"
+        + "\n".join(intermediate_declarations)
         + "\n  }\n  // ------------------------\n  // ------------------------\n"
-        "// Section: Tensor Computation\n  A[0] += fw0;\n}\n"
+        "// Section: Tensor Computation\n  A[0] += fw0;\n}\n}\n"
     )
     return body, digest
+
+
+def test_nested_geometry_helper_and_oracle_sources_compile_independently(
+    tmp_path: Path,
+):
+    body, digest = _original_kernel_geometry_fixture()
+    helper_snippet = _geometry_snippet(body, digest, include_trace=True)
+    helper_source = (
+        "#include <complex.h>\n#include <stdint.h>\n"
+        "static void task41_geometry_fixture(const double *coordinate_dofs, "
+        "int iq_begin, int iq_end, double _Complex *out, double _Complex *trace)\n{\n"
+        + helper_snippet
+        + "}\n"
+    )
+    oracle_source, _fields, _clone_name = _instrument_original_kernel_geometry_oracle(
+        body, digest
+    )
+    compiler = shutil.which("gcc") or shutil.which("cc")
+    assert compiler is not None, "a C compiler is required for the V6 source regression"
+
+    for name, source in (("helper", helper_source), ("oracle", oracle_source)):
+        path = tmp_path / f"task41_{name}.c"
+        path.write_text(source, encoding="ascii")
+        result = subprocess.run(
+            [compiler, "-std=c17", "-fsyntax-only", str(path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, f"{name} C syntax failed:\n{result.stderr}"
 
 
 def test_instrumented_oracle_clone_preserves_the_original_tensor_kernel():

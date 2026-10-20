@@ -293,7 +293,10 @@ def _geometry_snippet(
             for index, name in enumerate(trace_fields)
         )
         output.append("    }")
-    return snippet.rstrip() + "\n" + "\n".join(output) + "\n  }\n"
+    # The retained Q907 code opens an intermediate-computation block inside
+    # the iq loop. Keep generated writes in that scope for sv_907 locals,
+    # then close both the intermediate block and the iq loop.
+    return snippet.rstrip() + "\n" + "\n".join(output) + "\n  }\n}\n"
 
 
 def _instrument_original_kernel_geometry_oracle(
