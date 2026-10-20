@@ -2927,7 +2927,7 @@ def _task41_validate_v6_actual_qmetric_audit(
         candidate.get("implementation") != IDENTITY
         or candidate.get("qualification_status") != QUALIFICATION_STATUS
         or candidate.get("expected_ufcx_signature") != EXPECTED_UFCX_SIGNATURE
-        or candidate.get("ufcx_form_signature") != EXPECTED_UFCX_SIGNATURE
+        or candidate.get("full_form_signature") != EXPECTED_UFCX_SIGNATURE
         or candidate.get("ffcx_module_sha256") != EXPECTED_UFCX_MODULE_SHA256
         or candidate.get("ffcx_default_kernel_absent") is not True
         or candidate.get("point_block_size") != POINT_BLOCK_SIZE
@@ -3009,7 +3009,7 @@ def _task41_validate_v6_actual_qmetric_audit(
         != "frozen_FFCx_Q907_Jacobian_and_fw_graph"
         or helper.get("geometry_shortcut_used") is not False
         or helper.get("compiler_flags") != list(HELPER_COMPILER_FLAGS)
-        or helper.get("integral_body_by_tag") != expected_body_map
+        or candidate.get("integral_body_by_tag") != expected_body_map
         or not isinstance(feature_pairs, list)
         or len(feature_pairs) != 144
         or observed_pairs != expected_pairs

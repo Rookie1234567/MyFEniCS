@@ -173,9 +173,6 @@ def _v6_candidate_audit_fixture(tmp_path: Path):
         "original_kernel_oracle_artifact_bytes": 0,
         "original_kernel_oracle_compile_audits": {},
         "compiler_flags": list(HELPER_COMPILER_FLAGS),
-        "integral_body_by_tag": {
-            str(tag): digest for tag, digest in INTEGRAL_BODY_BY_TAG.items()
-        },
     }
     audit = {
         "candidate_evaluator_cache_identity": cache_identity,
@@ -183,7 +180,8 @@ def _v6_candidate_audit_fixture(tmp_path: Path):
             "implementation": IDENTITY,
             "qualification_status": QUALIFICATION_STATUS,
             "expected_ufcx_signature": EXPECTED_UFCX_SIGNATURE,
-            "ufcx_form_signature": EXPECTED_UFCX_SIGNATURE,
+            "full_form_signature": EXPECTED_UFCX_SIGNATURE,
+            "integral_body_by_tag": body_map,
             "ffcx_module_sha256": EXPECTED_UFCX_MODULE_SHA256,
             "ffcx_default_kernel_absent": True,
             "point_block_size": POINT_BLOCK_SIZE,
@@ -235,6 +233,24 @@ def test_v6_candidate_checker_rechecks_the_frozen_evaluator_audit(tmp_path: Path
     audit, helper, _ = _v6_candidate_audit_fixture(tmp_path)
     _task41_validate_v6_actual_qmetric_audit(audit)
     helper["source_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="frozen source profile"):
+        _task41_validate_v6_actual_qmetric_audit(audit)
+
+
+@pytest.mark.parametrize("misbound_field", ["full_form_signature", "integral_body_by_tag"])
+def test_v6_candidate_checker_rejects_misbound_profile_fields(
+    tmp_path: Path, misbound_field: str
+) -> None:
+    audit, helper, _ = _v6_candidate_audit_fixture(tmp_path)
+    candidate = audit["candidate_evaluator_audit"]
+    if misbound_field == "full_form_signature":
+        candidate["ufcx_form_signature"] = candidate["expected_ufcx_signature"]
+        candidate["full_form_signature"] = "0" * len(
+            candidate["expected_ufcx_signature"]
+        )
+    else:
+        helper["integral_body_by_tag"] = dict(candidate["integral_body_by_tag"])
+        candidate["integral_body_by_tag"]["1"] = "0" * 40
     with pytest.raises(ValueError, match="frozen source profile"):
         _task41_validate_v6_actual_qmetric_audit(audit)
 
