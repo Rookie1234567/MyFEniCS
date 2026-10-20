@@ -9408,11 +9408,13 @@ def _run_task41_p0_saved_output_service(
     b0_evidence_audit_mode: bool = False,
     b0_v4_volume_only_mode: bool = False,
     b0_v4_geometry_pair_mode: bool = False,
+    b0_v5_mesh_actual_exact_mode: bool = False,
     donor_contract_path: Path | None = None,
     donor_contract_sha256: str | None = None,
     donor_summary_path: Path | None = None,
     donor_numerical_output: Path | None = None,
     source_report_path: Path | None = None,
+    geometry_reference_report_path: Path | None = None,
     input_path: Path,
     activation_command: Any,
     activation_identity: str,
@@ -9440,6 +9442,28 @@ def _run_task41_p0_saved_output_service(
         raise ValueError("Task41 V4 geometry-pair probe requires the volume-only service route")
     if b0_v4_geometry_pair_mode != (source_report_path is not None):
         raise ValueError("Task41 V4 geometry-pair mode requires its pinned source report")
+    if b0_v5_mesh_actual_exact_mode and (
+        not b0_v4_volume_only_mode
+        or not b0_evidence_audit_mode
+        or b0_v4_geometry_pair_mode
+        or geometry_reference_report_path is None
+    ):
+        raise ValueError("Task41 V5 exact-geometry mode requires the saved volume-only audit route and frozen reference")
+    if not b0_v5_mesh_actual_exact_mode and geometry_reference_report_path is not None:
+        raise ValueError("Task41 V5 geometry reference is only valid for exact-geometry mode")
+    if b0_v5_mesh_actual_exact_mode:
+        from src.runners.task41_p0_v4_volume_only_audit import (
+            TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+        )
+
+        geometry_reference_report_path = geometry_reference_report_path.resolve(strict=True)
+        if (
+            not geometry_reference_report_path.is_relative_to(results_root)
+            or geometry_reference_report_path.name != "task41_p0_v4_geometry_pair_probe.json"
+            or sha256_file(geometry_reference_report_path)
+            != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+        ):
+            raise ValueError("Task41 V5 two-cell geometry reference path/hash differs from the frozen receipt")
     if checker_only and not b0_evidence_audit_mode:
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -9500,6 +9524,9 @@ def _run_task41_p0_saved_output_service(
         "schema": "task41.p0.saved_output_service_receipt.v1",
         "status": "running",
         "mode": (
+            "saved_b0_v5_mesh_actual_exact_candidate"
+            if b0_v5_mesh_actual_exact_mode
+            else
             "saved_b0_v4_geometry_pair_probe"
             if b0_v4_geometry_pair_mode
             else "saved_b0_v4_volume_only_attribution"
@@ -9564,6 +9591,16 @@ def _run_task41_p0_saved_output_service(
             geometry_pair_source_report_path=str(source_report_path),
             geometry_pair_source_report_sha256=TASK41_P0_V4_SOURCE_REPORT_SHA256,
         )
+    if b0_v5_mesh_actual_exact_mode:
+        from src.runners.task41_p0_v4_volume_only_audit import (
+            TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+        )
+
+        record.update(
+            geometry_policy="mesh_actual_exact",
+            geometry_reference_report_path=str(geometry_reference_report_path),
+            geometry_reference_report_sha256=TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+        )
     _write_json_fsync(receipt_path, record)
     common_watchdog = {
         "interval": 1.0,
@@ -9586,11 +9623,15 @@ def _run_task41_p0_saved_output_service(
         "worker_environment": environment,
     }
     result_code = 3
+    v5_candidate_report_ready = False
+    v5_candidate_numerical_passed = False
     try:
         if b0_v4_volume_only_mode:
             volume_report_path = output_root / (
                 "task41_p0_v4_geometry_pair_probe.json"
                 if b0_v4_geometry_pair_mode
+                else "task41_p0_v5_mesh_actual_exact_attribution.json"
+                if b0_v5_mesh_actual_exact_mode
                 else "task41_p0_v4_volume_only_attribution.json"
             )
             volume_command = [
@@ -9616,6 +9657,16 @@ def _run_task41_p0_saved_output_service(
                 assert source_report_path is not None
                 volume_command.extend(
                     ["--geometry-pair-only", "--source-report", str(source_report_path)]
+                )
+            if b0_v5_mesh_actual_exact_mode:
+                assert geometry_reference_report_path is not None
+                volume_command.extend(
+                    [
+                        "--geometry-policy",
+                        "mesh_actual_exact",
+                        "--geometry-reference-report",
+                        str(geometry_reference_report_path),
+                    ]
                 )
             volume_watchdog = supervise(
                 volume_command,
@@ -9643,7 +9694,79 @@ def _run_task41_p0_saved_output_service(
             result_prefix = "geometry_pair_probe" if b0_v4_geometry_pair_mode else "volume_only"
             record[f"{result_prefix}_result_path"] = str(volume_report_path)
             record[f"{result_prefix}_result"] = volume_payload
-            if b0_v4_geometry_pair_mode:
+            if b0_v5_mesh_actual_exact_mode and volume_report_path.is_file():
+                record["mesh_actual_exact_report_sha256"] = sha256_file(volume_report_path)
+            if b0_v5_mesh_actual_exact_mode:
+                identity = (
+                    volume_payload.get("identity_audit")
+                    if isinstance(volume_payload, Mapping)
+                    else None
+                )
+                action_gate = (
+                    identity.get("candidate_full_action_gate")
+                    if isinstance(identity, Mapping)
+                    else None
+                )
+                recovery_gate = (
+                    identity.get("candidate_recovery_gate")
+                    if isinstance(identity, Mapping)
+                    else None
+                )
+                attribution = (
+                    identity.get("global_geometry_native_elimination_attribution")
+                    if isinstance(identity, Mapping)
+                    else None
+                )
+                v5_candidate_report_ready = bool(
+                    isinstance(volume_payload, Mapping)
+                    and volume_payload.get("status")
+                    in {
+                        "CANDIDATE_NUMERICAL_PASS_CHECKER_PENDING",
+                        "ACTUAL_COORDINATES_INSUFFICIENT",
+                    }
+                    and isinstance(identity, Mapping)
+                    and identity.get("completed") is True
+                    and isinstance(action_gate, Mapping)
+                    and action_gate.get("status")
+                    in {"PASS", "ACTUAL_COORDINATES_INSUFFICIENT"}
+                    and isinstance(recovery_gate, Mapping)
+                    and recovery_gate.get("status")
+                    in {"PASS", "ACTUAL_COORDINATES_INSUFFICIENT"}
+                    and recovery_gate.get("native_volume_action_count") == 2
+                    and volume_payload.get("candidate_numeric_status")
+                    in {"PASS", "ACTUAL_COORDINATES_INSUFFICIENT"}
+                    and isinstance(attribution, Mapping)
+                    and attribution.get("global_closure_status") == "DIAGNOSTIC_ONLY"
+                )
+                worker_ok = bool(
+                    volume_watchdog.get("classification") == "COMPLETED"
+                    and volume_watchdog.get("leader_exit_code") == 0
+                    and v5_candidate_report_ready
+                )
+                record["candidate_numeric_status"] = (
+                    volume_payload.get("candidate_numeric_status")
+                    if isinstance(volume_payload, Mapping)
+                    else None
+                )
+                record["candidate_action_status"] = (
+                    action_gate.get("status") if isinstance(action_gate, Mapping) else None
+                )
+                record["candidate_recovery_status"] = (
+                    recovery_gate.get("status")
+                    if isinstance(recovery_gate, Mapping)
+                    else None
+                )
+                record["candidate_numerical_passed"] = (
+                    volume_payload.get("candidate_numeric_status") == "PASS"
+                    if isinstance(volume_payload, Mapping)
+                    else False
+                )
+                record["continuation_status"] = (
+                    "v5_mesh_actual_exact_candidate_completed"
+                    if worker_ok
+                    else "v5_mesh_actual_exact_candidate_failed_or_not_admitted"
+                )
+            elif b0_v4_geometry_pair_mode:
                 from src.runners.task41_p0_v4_volume_only_audit import (
                     TASK41_P0_V4_SELECTED_ACTIVE_ROW,
                     TASK41_P0_V4_SELECTED_ORIGINAL_ROW,
@@ -9676,7 +9799,7 @@ def _run_task41_p0_saved_output_service(
                     if worker_ok
                     else "v4_geometry_pair_probe_failed"
                 )
-            else:
+            elif not b0_v5_mesh_actual_exact_mode:
                 worker_ok = bool(
                     volume_watchdog.get("classification") == "COMPLETED"
                     and volume_watchdog.get("leader_exit_code") == 0
@@ -9719,7 +9842,13 @@ def _run_task41_p0_saved_output_service(
             if checker_only
             else output_root / "task41_p0_saved_output_checker_input.json"
         )
-        if (worker_ok or b0_evidence_audit_mode) and (
+        run_saved_b0_checker = (
+            b0_evidence_audit_mode and not b0_v5_mesh_actual_exact_mode
+        )
+        run_v5_candidate_checker = (
+            b0_v5_mesh_actual_exact_mode and v5_candidate_report_ready
+        )
+        if (worker_ok or run_saved_b0_checker or run_v5_candidate_checker) and (
             b0_evidence_audit_mode
             or (checker_snapshot is not None and checker_snapshot.is_file())
         ):
@@ -9747,6 +9876,10 @@ def _run_task41_p0_saved_output_service(
                     "--output",
                     str(checker_result_path),
                 ]
+                if v5_candidate_report_ready:
+                    checker_command.extend(
+                        ["--mesh-actual-exact-report", str(volume_report_path)]
+                    )
             else:
                 assert checker_snapshot is not None
                 checker_result_path = output_root / "task41_p0_saved_output_checker_result.json"
@@ -9800,6 +9933,33 @@ def _run_task41_p0_saved_output_service(
                     donor_input_path,
                     donor_config_path.resolve(),
                 ]
+                if v5_candidate_report_ready:
+                    assert isinstance(volume_payload, Mapping)
+                    from src.runners.task41_p0_v4_volume_only_audit import (
+                        TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+                    )
+
+                    authorized_inputs.extend(
+                        [
+                            volume_report_path.resolve(strict=True),
+                            geometry_reference_report_path.resolve(strict=True),
+                        ]
+                    )
+                    evidence_arrays = volume_payload.get("persisted_evidence_arrays")
+                    if not isinstance(evidence_arrays, list):
+                        raise ValueError("V5 candidate report omits its persisted array inventory")
+                    for artifact in evidence_arrays:
+                        if not isinstance(artifact, Mapping) or not isinstance(artifact.get("path"), str):
+                            raise ValueError("V5 candidate persisted-array inventory is malformed")
+                        artifact_path = Path(str(artifact["path"])).resolve(strict=True)
+                        if (
+                            not artifact_path.is_relative_to(output_root.resolve())
+                            or sha256_file(artifact_path) != artifact.get("sha256")
+                        ):
+                            raise ValueError("V5 candidate persisted-array path/hash differs before checker admission")
+                        authorized_inputs.append(artifact_path)
+                    if sha256_file(geometry_reference_report_path) != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256:
+                        raise ValueError("V5 geometry reference changed before checker admission")
                 checker_kind = "task41_p0_b0_saved_evidence_audit_checker"
             else:
                 assert checker_snapshot is not None
@@ -9842,10 +10002,31 @@ def _run_task41_p0_saved_output_service(
                 and isinstance(checker_payload, Mapping)
                 and (
                     checker_payload.get("audit_completed") is True
+                    and (
+                        not v5_candidate_report_ready
+                        or (
+                            isinstance(checker_payload.get("mesh_actual_exact_candidate_check"), Mapping)
+                            and checker_payload["mesh_actual_exact_candidate_check"].get("check_completed") is True
+                        )
+                    )
                     if b0_evidence_audit_mode
                     else checker_payload.get("checker_passed") is True
                 )
             )
+            if v5_candidate_report_ready:
+                v5_check = (
+                    checker_payload.get("mesh_actual_exact_candidate_check")
+                    if isinstance(checker_payload, Mapping)
+                    else None
+                )
+                v5_candidate_numerical_passed = bool(
+                    isinstance(v5_check, Mapping)
+                    and v5_check.get("candidate_passed") is True
+                )
+                record["candidate_checker_status"] = (
+                    "numerical_pass" if v5_candidate_numerical_passed else "numerical_fail"
+                )
+                record["candidate_numerical_passed"] = v5_candidate_numerical_passed
             record.update(
                 required_checker_status=(
                     "audit_completed" if checker_ok and b0_evidence_audit_mode
@@ -9876,9 +10057,29 @@ def _run_task41_p0_saved_output_service(
                     }
                 )
                 _write_json_fsync(continuation_receipt_path, continuation_receipt)
-            result_code = 0 if checker_ok and worker_ok else 3
+            result_code = (
+                0
+                if checker_ok
+                and worker_ok
+                and (not b0_v5_mesh_actual_exact_mode or v5_candidate_numerical_passed)
+                else 3
+            )
         else:
-            record["required_checker_status"] = "not_run_continuation_failed_or_snapshot_missing"
+            if b0_v5_mesh_actual_exact_mode:
+                record["required_checker_status"] = "not_run_candidate_not_admitted"
+                record["candidate_checker_status"] = "not_applicable_candidate_not_built"
+                record["candidate_checker_reason"] = (
+                    "full mesh_actual_exact candidate was not structurally complete; "
+                    "prefix evidence was retained without replaying the accepted donor audit"
+                )
+                record["candidate_admission_status"] = (
+                    volume_payload.get("candidate_admission", {}).get("status")
+                    if isinstance(volume_payload, Mapping)
+                    and isinstance(volume_payload.get("candidate_admission"), Mapping)
+                    else None
+                )
+            else:
+                record["required_checker_status"] = "not_run_continuation_failed_or_snapshot_missing"
     except Exception as exc:
         record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
         result_code = 3
@@ -9985,6 +10186,7 @@ def _run_task41_p0_service(
         case_args and case_args[0] == "--task41-p0-saved-b0-volume-only-attribution"
     )
     b0_v4_geometry_pair_mode = False
+    b0_v5_mesh_actual_exact_mode = False
     b0_evidence_audit_mode = bool(
         case_args
         and case_args[0]
@@ -10003,9 +10205,10 @@ def _run_task41_p0_service(
     donor_summary_path: Path | None = None
     donor_numerical_output: Path | None = None
     source_report_path: Path | None = None
+    geometry_reference_report_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14}
+            len(case_args) not in {11, 14, 15}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -10035,6 +10238,18 @@ def _run_task41_p0_service(
 
             b0_v4_geometry_pair_mode = True
             source_report_path = Path(case_args[13]).resolve(strict=True)
+        if len(case_args) == 15:
+            if (
+                not b0_v4_volume_only_mode
+                or case_args[11] != "--geometry-policy"
+                or case_args[12] != "mesh_actual_exact"
+                or case_args[13] != "--geometry-reference-report"
+            ):
+                raise ValueError(
+                    "V5 exact-geometry service requires the volume-only route and frozen geometry reference"
+                )
+            b0_v5_mesh_actual_exact_mode = True
+            geometry_reference_report_path = Path(case_args[14]).resolve(strict=True)
     if continuation_mode:
         if (
             len(case_args) != 5
@@ -10077,6 +10292,24 @@ def _run_task41_p0_service(
         ):
             raise ValueError(
                 "Task41 V4 geometry-pair source report path or SHA-256 differs from the frozen receipt"
+            )
+    if b0_v5_mesh_actual_exact_mode:
+        from src.runners.task41_p0_v4_volume_only_audit import (
+            TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+        )
+
+        results_root = (
+            repo_root / "results" / str(contract["case"]["model_id"])
+        ).resolve()
+        if (
+            geometry_reference_report_path is None
+            or not geometry_reference_report_path.is_relative_to(results_root)
+            or geometry_reference_report_path.name != "task41_p0_v4_geometry_pair_probe.json"
+            or sha256_file(geometry_reference_report_path)
+            != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+        ):
+            raise ValueError(
+                "Task41 V5 geometry-reference path or SHA-256 differs from the frozen receipt"
             )
     case_id = task41_case_id_for_run_id(str(contract["case"]["run_id"]))
     continuation_source_sha: str | None = None
@@ -10295,6 +10528,13 @@ def _run_task41_p0_service(
             ),
             "TASK41_P0_B0_V4_VOLUME_ONLY": "1" if b0_v4_volume_only_mode else "0",
         })
+        if b0_v5_mesh_actual_exact_mode:
+            environment.update({
+                "TASK41_P0_B0_V5_MESH_ACTUAL_EXACT": "1",
+                "TASK41_P0_B0_V5_GEOMETRY_REFERENCE_PATH": str(
+                    geometry_reference_report_path
+                ),
+            })
     activation_marker = _qualified_activation_identity(environment)
     if activation_marker is None:
         raise RuntimeError("Task41 service did not receive its contracted qualified activation")
@@ -10346,11 +10586,13 @@ def _run_task41_p0_service(
             b0_evidence_audit_mode=b0_evidence_audit_mode,
             b0_v4_volume_only_mode=b0_v4_volume_only_mode,
             b0_v4_geometry_pair_mode=b0_v4_geometry_pair_mode,
+            b0_v5_mesh_actual_exact_mode=b0_v5_mesh_actual_exact_mode,
             donor_contract_path=donor_contract_path,
             donor_contract_sha256=donor_contract_sha256,
             donor_summary_path=donor_summary_path,
             donor_numerical_output=donor_numerical_output,
             source_report_path=source_report_path,
+            geometry_reference_report_path=geometry_reference_report_path,
             input_path=input_path,
             activation_command=activation_command,
             activation_identity=activation_marker,

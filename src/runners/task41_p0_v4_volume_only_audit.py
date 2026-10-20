@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import sys
 from time import perf_counter
+import math
 from typing import Any, Mapping
 
 import numpy as np
@@ -20,8 +21,19 @@ if str(ROOT) not in sys.path:
 TASK41_P0_V4_SOURCE_REPORT_SHA256 = (
     "09e96eb8c9d52b4cf0c29570fd8df3c1f820bc208104d91edd102978dfc9c4d5"
 )
+TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256 = (
+    "a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031"
+)
+TASK41_P0_V5_REFERENCE_CELLS = (26762, 26897)
 TASK41_P0_V4_SELECTED_ACTIVE_ROW = 5_458_716
 TASK41_P0_V4_SELECTED_ORIGINAL_ROW = 17_692_332
+TASK41_P0_V5_POSTBUILD_SAFETY_FACTOR = 1.10
+TASK41_P0_V5_PREFIX_MINIMUM_SECONDS = 600.0
+TASK41_P0_V5_TERMINATION_RESERVE_SECONDS = 300.0
+
+
+class _CandidateNotAdmitted(RuntimeError):
+    """Exact-geometry candidate lacks fixed-window or resource headroom."""
 
 
 def _write_json_atomic(path: Path, payload: Mapping[str, Any]) -> None:
@@ -78,7 +90,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--consumer-contract-sha256", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--geometry-pair-only", action="store_true")
+    parser.add_argument(
+        "--geometry-policy",
+        choices=("canonical", "mesh_actual_exact"),
+        default="canonical",
+    )
     parser.add_argument("--source-report", type=Path)
+    parser.add_argument("--geometry-reference-report", type=Path)
     return parser.parse_args(argv)
 
 
@@ -175,6 +193,87 @@ def _load_bound_report_array(
     if list(value.shape) != list(record.get("shape", ())) or str(value.dtype) != str(record.get("dtype")):
         raise ValueError(f"Task41 V4 source array metadata differs for {name}")
     return np.asarray(value)
+
+
+def _load_v5_geometry_reference(
+    report_path: Path,
+    *,
+    donor_manifest_sha256: str,
+    sha256_file: Any,
+) -> dict[str, Any]:
+    report_path = report_path.resolve(strict=True)
+    source_root = report_path.parent.resolve(strict=True)
+    if not source_root.is_relative_to((ROOT / "results").resolve()):
+        raise ValueError("V5 geometry reference report must remain in the registered results tree")
+    if sha256_file(report_path) != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256:
+        raise ValueError("V5 geometry reference report SHA-256 differs from the frozen V4 evidence")
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    probe = report.get("geometry_pair_probe")
+    if (
+        report.get("status") != "COMPLETED_GEOMETRY_PAIR_PROBE"
+        or not isinstance(probe, Mapping)
+        or probe.get("schema") != "task41.p0.v4.geometry_pair_probe.v1"
+        or probe.get("source_report_sha256") != TASK41_P0_V4_SOURCE_REPORT_SHA256
+        or probe.get("source_donor_manifest_sha256") != donor_manifest_sha256
+        or [item.get("cell_index") for item in probe.get("selected_cells", [])]
+        != list(TASK41_P0_V5_REFERENCE_CELLS)
+    ):
+        raise ValueError("V5 geometry reference is not the frozen two-cell V4 report")
+    records_list = report.get("persisted_evidence_arrays")
+    if not isinstance(records_list, list):
+        raise ValueError("V5 geometry reference omits its hash-bound array inventory")
+    records = {
+        str(item["name"]): item
+        for item in records_list
+        if isinstance(item, Mapping) and isinstance(item.get("name"), str)
+    }
+    if len(records) != len(records_list):
+        raise ValueError("V5 geometry reference has duplicate or malformed array identities")
+    references: dict[int, dict[str, Any]] = {}
+    for cell in probe["selected_cells"]:
+        index = int(cell["cell_index"])
+        prefix = f"cell{index}_actual_"
+        geometry = _load_bound_report_array(
+            source_root,
+            records,
+            f"cell{index}_actual_geometry_coordinates",
+            sha256_file=sha256_file,
+        )
+        blocks = {
+            name: _load_bound_report_array(
+                source_root,
+                records,
+                prefix + name,
+                sha256_file=sha256_file,
+            )
+            for name in ("K", "G", "J", "L")
+        }
+        block_meta = cell["block_artifacts"]["actual"]
+        if any(
+            not isinstance(block_meta.get(name), Mapping)
+            or block_meta[name].get("sha256") != records[prefix + name].get("sha256")
+            or block_meta[name].get("shape") != records[prefix + name].get("shape")
+            or block_meta[name].get("dtype") != records[prefix + name].get("dtype")
+            for name in ("K", "G", "J", "L")
+        ):
+            raise ValueError(f"V5 reference inventory disagrees with selected cell {index} block metadata")
+        references[index] = {
+            "coordinates": geometry,
+            "blocks": blocks,
+            "block_sha256": {
+                name: str(records[prefix + name]["sha256"])
+                for name in ("K", "G", "J", "L")
+            },
+            "coordinates_sha256": str(
+                records[f"cell{index}_actual_geometry_coordinates"]["sha256"]
+            ),
+        }
+    return {
+        "path": str(report_path),
+        "sha256": TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+        "source_root": str(source_root),
+        "cells": references,
+    }
 
 
 def _run_geometry_pair_probe(
@@ -472,12 +571,20 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     if args.geometry_pair_only != (args.source_report is not None):
         raise ValueError("--geometry-pair-only and --source-report must be provided together")
+    if args.geometry_pair_only and args.geometry_policy != "canonical":
+        raise ValueError("the selected-cell geometry-pair diagnostic remains canonical-only")
+    if args.geometry_policy == "mesh_actual_exact" and args.geometry_reference_report is None:
+        raise ValueError("mesh_actual_exact requires the frozen two-cell V4 geometry reference report")
+    if args.geometry_policy != "mesh_actual_exact" and args.geometry_reference_report is not None:
+        raise ValueError("V4 canonical paths cannot consume the V5 exact-geometry reference")
     from src.runners.task40_v20_stage_runner import _resource_snapshot
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.runners.task41_p0_checker import load_task41_v4_volume_only_donor
     from src.runners.task41_p0_contract import require_task41_p0_contract, sha256_file
     from src.solvers.task40_v22_operator_probe import _resource_admission
     from src.solvers.task41_v4_volume_only_audit import (
+        TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT,
+        Task41V5VolumeAttributionAccumulator,
         audit_task41_v4_volume_identity,
         build_task41_v4_volume_only_owner,
     )
@@ -496,6 +603,48 @@ def main(argv: list[str] | None = None) -> int:
         check_current_source=True,
         require_clean_source=True,
     )
+    fixed_window = None
+    initial_fixed_window_state = None
+    postbuild_reserve_evidence: dict[str, Any] | None = None
+    if args.geometry_policy == "mesh_actual_exact":
+        from src.runners.task41_p0_contract import load_task41_p0_fixed_window
+        from src.runners.task40_v10_campaign import read_campaign_state
+
+        fixed_window = load_task41_p0_fixed_window(
+            consumer_contract,
+            current_root=ROOT,
+        )
+        initial_fixed_window_state = read_campaign_state(
+            fixed_window,
+            phase="numeric",
+        )
+        v4_receipt_path = (
+            ROOT
+            / "docs/task41extra_phi90_p50x50_g17x20/outcomes/"
+            / "b0_v4_volume_only_attribution_20261020.json"
+        )
+        v4_receipt = json.loads(v4_receipt_path.read_text(encoding="utf-8"))
+        v4_identity = v4_receipt.get("identity", {})
+        v4_extraction = v4_receipt.get("volume_only_extraction", {})
+        if (
+            v4_identity.get("campaign_window_sha256") != fixed_window.sha256
+            or v4_extraction.get("status") != "COMPLETED"
+        ):
+            raise ValueError("V5 post-build reserve lacks a completed V4 receipt on the same fixed window")
+        postbuild_parent_seconds = float(v4_extraction["service_parent_seconds"])
+        if not math.isfinite(postbuild_parent_seconds) or postbuild_parent_seconds <= 0.0:
+            raise ValueError("V4 measured post-build service time is not finite and positive")
+        postbuild_reserve_evidence = {
+            "path": str(v4_receipt_path),
+            "sha256": sha256_file(v4_receipt_path),
+            "campaign_window_sha256": fixed_window.sha256,
+            "measured_service_parent_seconds": postbuild_parent_seconds,
+            "measured_worker_seconds": float(v4_extraction["worker_elapsed_seconds"]),
+            "required_checker_watchdog_seconds": float(
+                v4_extraction["required_checker_watchdog_seconds"]
+            ),
+            "safety_factor": TASK41_P0_V5_POSTBUILD_SAFETY_FACTOR,
+        }
     donor_case = donor_contract.get("case", {})
     consumer_case = consumer_contract.get("case", {})
     for key in (
@@ -519,12 +668,18 @@ def main(argv: list[str] | None = None) -> int:
     cfg = simulation_config_3d_from_normalized(resolved)
     output_root = args.output_dir.resolve(strict=True)
     output_directory = output_root / (
-        "geometry_pair" if args.geometry_pair_only else "volume_only"
+        "geometry_pair"
+        if args.geometry_pair_only
+        else "mesh_actual_exact"
+        if args.geometry_policy == "mesh_actual_exact"
+        else "volume_only"
     )
     output_directory.mkdir(parents=True, exist_ok=False)
     report_path = output_root / (
         "task41_p0_v4_geometry_pair_probe.json"
         if args.geometry_pair_only
+        else "task41_p0_v5_mesh_actual_exact_attribution.json"
+        if args.geometry_policy == "mesh_actual_exact"
         else "task41_p0_v4_volume_only_attribution.json"
     )
     if report_path.exists():
@@ -535,13 +690,25 @@ def main(argv: list[str] | None = None) -> int:
         summary_path=args.summary,
         numerical_output=args.numerical_output,
     )
+    geometry_reference = (
+        _load_v5_geometry_reference(
+            args.geometry_reference_report,
+            donor_manifest_sha256=str(donor["manifest_sha256"]),
+            sha256_file=sha256_file,
+        )
+        if args.geometry_policy == "mesh_actual_exact"
+        else None
+    )
     run_record: dict[str, Any] = {
-        "schema": (
+            "schema": (
             "task41.p0.v4.geometry_pair_probe_receipt.v1"
             if args.geometry_pair_only
-            else "task41.p0.v4.volume_only_attribution_receipt.v1"
+                else "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1"
+                if args.geometry_policy == "mesh_actual_exact"
+                else "task41.p0.v4.volume_only_attribution_receipt.v1"
         ),
         "status": "RUNNING",
+        "geometry_policy": args.geometry_policy,
         "started_at_utc": started_at_utc,
         "worker_started_perf_counter": started_perf,
         "donor_contract_path": str(args.donor_contract.resolve()),
@@ -557,9 +724,17 @@ def main(argv: list[str] | None = None) -> int:
         "source_report_path": (
             str(args.source_report.resolve()) if args.source_report is not None else None
         ),
+        "geometry_reference_report_path": (
+            geometry_reference["path"] if geometry_reference is not None else None
+        ),
+        "geometry_reference_report_sha256": (
+            geometry_reference["sha256"] if geometry_reference is not None else None
+        ),
         "phase_path": str(phase_path),
         "event_log_path": str(event_path),
         "preparation_elapsed_seconds": perf_counter() - started_perf,
+        "initial_fixed_window_state": initial_fixed_window_state,
+        "postbuild_reserve_evidence": postbuild_reserve_evidence,
     }
     _write_json_atomic(report_path, run_record)
     phase_started: dict[tuple[str, Any], float] = {}
@@ -584,6 +759,23 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(row, ensure_ascii=False, sort_keys=True, allow_nan=False), flush=True)
 
     def persist_volume_array(name: str, array: np.ndarray) -> dict[str, Any]:
+        array_bytes_upper = int(np.asarray(array).nbytes) + 4096
+        cumulative_before = (
+            int(donor.get("existing_evidence_bytes", 0))
+            + int(run_record.get("candidate_admission_evidence_bytes", 0))
+            + int(run_record.get("persisted_evidence_bytes", 0))
+        )
+        if cumulative_before + array_bytes_upper > 16 * 1024**3:
+            raise MemoryError(
+                "Task41 V5 evidence write would exceed the unchanged 16 GiB cap by "
+                f"{cumulative_before + array_bytes_upper - 16 * 1024**3} bytes"
+            )
+        free_before = int(shutil.disk_usage(output_directory).free)
+        if free_before - array_bytes_upper < 2 * 1024**3:
+            raise OSError(
+                "Task41 V5 evidence write would breach the 2 GiB free-space floor by "
+                f"{2 * 1024**3 - (free_before - array_bytes_upper)} bytes"
+            )
         artifact = _persist_array(
             output_directory, name, array, sha256_file=sha256_file
         )
@@ -595,17 +787,368 @@ def main(argv: list[str] | None = None) -> int:
         _write_json_atomic(report_path, run_record)
         return artifact
 
+    exact_attribution = (
+        Task41V5VolumeAttributionAccumulator(donor)
+        if args.geometry_policy == "mesh_actual_exact"
+        else None
+    )
+
     def allocation_gate(label: str, facts: Mapping[str, Any]) -> None:
-        _checked_allocation_gate(
-            label,
-            facts,
-            resource_admission=_resource_admission,
-            resource_snapshot=_resource_snapshot,
-            resources=consumer_contract["resources"],
-            progress=progress,
-        )
+        checked_facts = dict(facts)
+        if args.geometry_policy == "mesh_actual_exact" and label in {
+            "mesh_actual_exact_prefix_preflight",
+            "mesh_actual_exact_full_admission",
+        }:
+            if label == "mesh_actual_exact_full_admission":
+                active_rows = int(donor["manifest"]["active_trace_rows"])
+                port_rows = int(donor["manifest"]["port_rows"])
+                full_rows = int(donor["manifest"]["full_storage_rows"])
+                candidate_rows = active_rows + port_rows
+                candidate_array_bytes = (
+                    2 * candidate_rows * 2 * np.dtype(np.complex128).itemsize
+                )
+                accumulator_bytes = (
+                    TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT
+                    * active_rows
+                    * np.dtype(np.complex128).itemsize
+                )
+                action_and_closure_workspace = (
+                    np.dtype(np.complex128).itemsize
+                    * (full_rows + 4 * (active_rows + 1))
+                    + candidate_array_bytes
+                    + 4 * active_rows * np.dtype(np.complex128).itemsize
+                )
+                expected_identity_evidence = (
+                    26 * active_rows * np.dtype(np.complex128).itemsize
+                    + 28 * 4096
+                    + candidate_array_bytes
+                    + 4 * full_rows * np.dtype(np.complex128).itemsize
+                    + 4 * 4096
+                )
+                expected_evidence_total = (
+                    int(donor.get("existing_evidence_bytes", 0))
+                    + int(run_record.get("candidate_admission_evidence_bytes", 0))
+                    + expected_identity_evidence
+                )
+                if expected_evidence_total > 16 * 1024**3:
+                    raise _CandidateNotAdmitted(
+                        "V5 selected output arrays exceed the unchanged 16 GiB evidence cap by "
+                        f"{expected_evidence_total - 16 * 1024**3} bytes"
+                    )
+                checked_facts["additional_payload_bytes"] = int(
+                    checked_facts.get("additional_payload_bytes", 0)
+                ) + accumulator_bytes
+                checked_facts["workspace_bytes"] = max(
+                    int(checked_facts.get("workspace_bytes", 0)),
+                    action_and_closure_workspace,
+                )
+                checked_facts["v5_postbuild_reserve"] = {
+                    "candidate_rows_active_plus_port": candidate_rows,
+                    "candidate_full_array_bytes": candidate_array_bytes,
+                    "attribution_accumulator_bytes": accumulator_bytes,
+                    "attribution_accumulators": TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT,
+                    "production_action_and_global_closure_workspace_bytes": action_and_closure_workspace,
+                    "projected_identity_evidence_bytes": expected_identity_evidence,
+                    "projected_evidence_total_bytes": expected_evidence_total,
+                    "evidence_cap_bytes": 16 * 1024**3,
+                    "free_space_floor_bytes": 2 * 1024**3,
+                }
+                verified = {
+                    int(item["cell_index"]): item
+                    for item in checked_facts.get("prefix_records", ())
+                    if isinstance(item, Mapping)
+                    and isinstance(item.get("reference_validation"), Mapping)
+                }
+                if set(verified) != set(TASK41_P0_V5_REFERENCE_CELLS) or any(
+                    item["reference_validation"].get("coordinates_bitwise_equal") is not True
+                    or item["reference_validation"].get("K_G_J_L_bitwise_equal") is not True
+                    for item in verified.values()
+                ):
+                    raise ValueError(
+                        "V5 exact prefix did not reproduce the frozen actual coordinates/K/G/J/L "
+                        "for cells 26762 and 26897"
+                    )
+            key_inventory = checked_facts.pop("exact_key_inventory", None)
+            artifact = None
+            if key_inventory is not None:
+                inventory_path = output_directory / "mesh_actual_exact_key_inventory.json"
+                if inventory_path.exists():
+                    raise FileExistsError(f"exact key inventory already exists: {inventory_path}")
+                encoded = json.dumps(
+                    {
+                        "schema": "task41.p0.v5.mesh_actual_exact_key_inventory.v1",
+                        "consumer_source_sha": consumer_contract.get("source", {}).get("sha"),
+                        "campaign_window_sha256": fixed_window.sha256,
+                        "form_identity": checked_facts.get("exact_form_identity"),
+                        "geometry_material_identity_by_tag": checked_facts.get(
+                            "geometry_material_identity_by_tag"
+                        ),
+                        "keys": key_inventory,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    indent=2,
+                    allow_nan=False,
+                ) + "\n"
+                payload_size = len(encoded.encode("utf-8"))
+                current_bytes = int(donor.get("existing_evidence_bytes", 0)) + int(
+                    run_record.get("candidate_admission_evidence_bytes", 0)
+                )
+                free_bytes = int(shutil.disk_usage(output_directory).free)
+                if current_bytes + payload_size > 16 * 1024**3:
+                    raise _CandidateNotAdmitted(
+                        f"exact key inventory would exceed the unchanged 16 GiB evidence cap by "
+                        f"{current_bytes + payload_size - 16 * 1024**3} bytes"
+                    )
+                if free_bytes - payload_size < 2 * 1024**3:
+                    raise _CandidateNotAdmitted(
+                        f"exact key inventory would breach the 2 GiB free-space floor by "
+                        f"{2 * 1024**3 - (free_bytes - payload_size)} bytes"
+                    )
+                _write_json_atomic(inventory_path, json.loads(encoded))
+                artifact = {
+                    "path": str(inventory_path.resolve()),
+                    "sha256": sha256_file(inventory_path),
+                    "bytes": int(inventory_path.stat().st_size),
+                    "key_count": len(key_inventory),
+                }
+                run_record["candidate_key_inventory"] = artifact
+                run_record["candidate_key_inventory_bytes"] = artifact["bytes"]
+                run_record["candidate_admission_evidence_bytes"] = int(
+                    run_record.get("candidate_admission_evidence_bytes", 0)
+                ) + int(artifact["bytes"])
+            if label == "mesh_actual_exact_full_admission":
+                measurement_path = output_directory / "mesh_actual_exact_prefix_measurement.json"
+                if measurement_path.exists():
+                    raise FileExistsError(f"exact prefix measurement already exists: {measurement_path}")
+                measurement_size_upper = len(
+                    json.dumps(
+                        {"schema": "task41.p0.v5.mesh_actual_exact_prefix_measurement.v1", "facts": checked_facts},
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        indent=2,
+                        allow_nan=False,
+                    ).encode("utf-8")
+                ) + 512
+                current_bytes = int(donor.get("existing_evidence_bytes", 0)) + int(
+                    run_record.get("candidate_admission_evidence_bytes", 0)
+                )
+                free_bytes = int(shutil.disk_usage(output_directory).free)
+                if current_bytes + measurement_size_upper > 16 * 1024**3:
+                    raise _CandidateNotAdmitted(
+                        f"prefix measurement would exceed the unchanged 16 GiB evidence cap by "
+                        f"{current_bytes + measurement_size_upper - 16 * 1024**3} bytes"
+                    )
+                if free_bytes - measurement_size_upper < 2 * 1024**3:
+                    raise _CandidateNotAdmitted(
+                        f"prefix measurement would breach the 2 GiB free-space floor by "
+                        f"{2 * 1024**3 - (free_bytes - measurement_size_upper)} bytes"
+                    )
+                measurement_payload = {
+                    "schema": "task41.p0.v5.mesh_actual_exact_prefix_measurement.v1",
+                    "campaign_window_sha256": fixed_window.sha256,
+                    "facts": checked_facts,
+                }
+                _write_json_atomic(measurement_path, measurement_payload)
+                run_record["candidate_prefix_measurement"] = {
+                    "path": str(measurement_path.resolve()),
+                    "sha256": sha256_file(measurement_path),
+                    "bytes": int(measurement_path.stat().st_size),
+                    "measured_misses": int(
+                        checked_facts.get("measured_prefix_cache_misses", 0)
+                    ),
+                }
+                run_record["candidate_prefix_measurement_bytes"] = int(
+                    measurement_path.stat().st_size
+                )
+                run_record["candidate_admission_evidence_bytes"] = int(
+                    run_record.get("candidate_admission_evidence_bytes", 0)
+                ) + int(measurement_path.stat().st_size)
+            gate_record = {
+                "gate": label,
+                "status": "INPUTS_RECORDED_BEFORE_ADMISSION",
+                "key_inventory_artifact": artifact,
+            }
+            if label == "mesh_actual_exact_prefix_preflight":
+                gate_record["facts"] = checked_facts
+            else:
+                gate_record["facts_artifact"] = run_record.get(
+                    "candidate_prefix_measurement"
+                )
+                gate_record["facts_summary"] = {
+                    "raw_key_count": checked_facts.get("raw_key_count"),
+                    "oriented_key_count": checked_facts.get("oriented_key_count"),
+                    "measured_prefix_cache_misses": checked_facts.get(
+                        "measured_prefix_cache_misses"
+                    ),
+                    "projected_remaining_class_build_seconds_upper": checked_facts.get(
+                        "projected_remaining_class_build_seconds_upper"
+                    ),
+                }
+            run_record.setdefault("candidate_admission_gates", []).append(gate_record)
+            _write_json_atomic(report_path, run_record)
+            progress(
+                {
+                    "phase": "mesh_actual_exact_gate_evidence",
+                    "status": "INPUTS_RECORDED_BEFORE_ADMISSION",
+                    **gate_record,
+                }
+            )
+        if args.geometry_policy == "mesh_actual_exact":
+            assert fixed_window is not None
+            from src.runners.task40_v10_campaign import read_campaign_state
+
+            from src.runners.workflow_timebase import TimebaseInconsistency
+
+            try:
+                state = read_campaign_state(fixed_window, phase="numeric")
+            except TimebaseInconsistency as exc:
+                admission = {
+                    "status": "CANDIDATE_NOT_ADMITTED",
+                    "reason": f"fixed-window balance could not be verified: {type(exc).__name__}: {exc}",
+                    "gate": label,
+                    "facts": checked_facts,
+                }
+                run_record["candidate_admission"] = admission
+                progress(
+                    {
+                        "phase": "mesh_actual_exact_candidate_admission",
+                        "status": "CANDIDATE_NOT_ADMITTED",
+                        **admission,
+                    }
+                )
+                raise _CandidateNotAdmitted(admission["reason"]) from exc
+            remaining = float(state["remaining_phase_seconds"])
+            postbuild_reserve = math.ceil(
+                float(postbuild_reserve_evidence["measured_service_parent_seconds"])
+                * TASK41_P0_V5_POSTBUILD_SAFETY_FACTOR
+            )
+            if label == "mesh_actual_exact_prefix_preflight":
+                estimated_required = (
+                    TASK41_P0_V5_PREFIX_MINIMUM_SECONDS
+                    + TASK41_P0_V5_TERMINATION_RESERVE_SECONDS
+                )
+            elif label == "mesh_actual_exact_full_admission":
+                estimated_required = (
+                    float(facts["projected_remaining_class_build_seconds_upper"])
+                    + postbuild_reserve
+                    + TASK41_P0_V5_TERMINATION_RESERVE_SECONDS
+                )
+            else:
+                estimated_required = 0.0
+            checked_facts["fixed_window_admission"] = {
+                "campaign_window_sha256": fixed_window.sha256,
+                "remaining_numeric_seconds": remaining,
+                "estimated_required_seconds": estimated_required,
+                "postbuild_two_column_action_write_checker_reserve_seconds": postbuild_reserve,
+                "termination_reserve_seconds": (
+                    TASK41_P0_V5_TERMINATION_RESERVE_SECONDS
+                    if label == "mesh_actual_exact_full_admission"
+                    else 0.0
+                ),
+                "source_of_postbuild_reserve": postbuild_reserve_evidence,
+                "read_only_live_campaign_state": state,
+            }
+            if label in {"mesh_actual_exact_prefix_preflight", "mesh_actual_exact_full_admission"}:
+                gate_rows = run_record.get("candidate_admission_gates", [])
+                if gate_rows and gate_rows[-1].get("gate") == label:
+                    gate_rows[-1]["fixed_window_admission"] = checked_facts[
+                        "fixed_window_admission"
+                    ]
+                if label == "mesh_actual_exact_full_admission":
+                    measurement_path = output_directory / "mesh_actual_exact_prefix_measurement.json"
+                    _write_json_atomic(
+                        measurement_path,
+                        {
+                            "schema": "task41.p0.v5.mesh_actual_exact_prefix_measurement.v1",
+                            "campaign_window_sha256": fixed_window.sha256,
+                            "facts": checked_facts,
+                        },
+                    )
+                    run_record["candidate_prefix_measurement"].update(
+                        {
+                            "sha256": sha256_file(measurement_path),
+                            "bytes": int(measurement_path.stat().st_size),
+                        }
+                    )
+                    gate_rows[-1]["measurement_artifact"] = dict(
+                        run_record["candidate_prefix_measurement"]
+                    )
+                _write_json_atomic(report_path, run_record)
+                progress(
+                    {
+                        "phase": "mesh_actual_exact_gate_evidence",
+                        "status": "LIVE_WINDOW_BALANCE_RECORDED",
+                        "gate": label,
+                        "fixed_window_admission": checked_facts["fixed_window_admission"],
+                    }
+                )
+            if estimated_required > remaining:
+                admission = {
+                    "status": "CANDIDATE_NOT_ADMITTED",
+                    "reason": "fixed-window numeric balance is below conservative remaining-work estimate",
+                    "gate": label,
+                    "facts": checked_facts,
+                    "time_deficit_seconds": estimated_required - remaining,
+                }
+                run_record["candidate_admission"] = admission
+                progress(
+                    {
+                        "phase": "mesh_actual_exact_candidate_admission",
+                        "status": "CANDIDATE_NOT_ADMITTED",
+                        **admission,
+                    }
+                )
+                raise _CandidateNotAdmitted(
+                    f"{label}: fixed-window deficit {estimated_required - remaining:.3f}s; "
+                    f"N={facts.get('oriented_key_count')}, "
+                    f"working_set={facts.get('projected_condensation_and_key_bytes_upper')} bytes"
+                )
+        from src.solvers.task40_v22_operator_probe import _ProbeResourceBlocked
+
+        try:
+            _checked_allocation_gate(
+                label,
+                checked_facts,
+                resource_admission=_resource_admission,
+                resource_snapshot=_resource_snapshot,
+                resources=consumer_contract["resources"],
+                progress=progress,
+            )
+        except _ProbeResourceBlocked as exc:
+            if args.geometry_policy != "mesh_actual_exact" or label not in {
+                "mesh_actual_exact_prefix_preflight",
+                "mesh_actual_exact_full_admission",
+            }:
+                raise
+            admission = {
+                "status": "CANDIDATE_NOT_ADMITTED",
+                "reason": f"resource admission rejected the exact candidate: {exc}",
+                "gate": label,
+                "facts": checked_facts,
+                "resource_block": getattr(exc, "facts", None),
+            }
+            run_record["candidate_admission"] = admission
+            progress(
+                {
+                    "phase": "mesh_actual_exact_candidate_admission",
+                    "status": "CANDIDATE_NOT_ADMITTED",
+                    **admission,
+                }
+            )
+            raise _CandidateNotAdmitted(
+                f"{label}: {type(exc).__name__}; N={facts.get('oriented_key_count')}, "
+                f"projected_retained={facts.get('projected_retained_numeric_bytes_upper')} bytes"
+            ) from exc
+        if (
+            args.geometry_policy == "mesh_actual_exact"
+            and label == "mesh_actual_exact_full_admission"
+        ):
+            assert exact_attribution is not None
+            exact_attribution.admit(int(donor["manifest"]["active_trace_rows"]))
 
     owner_result = None
+    native_volume_action = None
     try:
         if args.geometry_pair_only:
             probe = _run_geometry_pair_probe(
@@ -637,6 +1180,44 @@ def main(argv: list[str] | None = None) -> int:
             _write_json_atomic(report_path, run_record)
             progress({"phase": "v4_geometry_pair_probe", "status": "COMPLETED"})
             return 0
+        donor["prior_new_evidence_bytes"] = int(
+            run_record.get("candidate_admission_evidence_bytes", 0)
+        )
+
+        def validate_exact_prefix_cell(
+            cell_index: int,
+            coordinates: np.ndarray,
+            blocks: Mapping[str, np.ndarray],
+        ) -> Mapping[str, Any]:
+            if geometry_reference is None or cell_index not in geometry_reference["cells"]:
+                return {}
+            reference = geometry_reference["cells"][cell_index]
+            coordinates_equal = np.array_equal(
+                np.asarray(coordinates, dtype=np.float64), reference["coordinates"]
+            )
+            block_equal = all(
+                np.array_equal(np.asarray(blocks[name]), reference["blocks"][name])
+                for name in ("K", "G", "J", "L")
+            )
+            if not coordinates_equal or not block_equal:
+                mismatches = [
+                    name
+                    for name in ("K", "G", "J", "L")
+                    if not np.array_equal(np.asarray(blocks[name]), reference["blocks"][name])
+                ]
+                raise ValueError(
+                    f"V5 exact prefix differs from frozen V4 actual evidence for cell {cell_index}: "
+                    f"coordinates_equal={coordinates_equal}, block_mismatches={mismatches}"
+                )
+            return {
+                "cell_index": int(cell_index),
+                "reference_report_sha256": geometry_reference["sha256"],
+                "coordinates_bitwise_equal": True,
+                "coordinates_sha256": reference["coordinates_sha256"],
+                "K_G_J_L_bitwise_equal": True,
+                "block_sha256": dict(reference["block_sha256"]),
+            }
+
         owner_result = build_task41_v4_volume_only_owner(
             cfg,
             donor,
@@ -644,9 +1225,92 @@ def main(argv: list[str] | None = None) -> int:
             allocation_gate=allocation_gate,
             progress_callback=progress,
             persist_array=persist_volume_array,
+            geometry_policy=args.geometry_policy,
+            required_prefix_cells=(
+                TASK41_P0_V5_REFERENCE_CELLS
+                if args.geometry_policy == "mesh_actual_exact"
+                else ()
+            ),
+            prefix_cell_validator=(
+                validate_exact_prefix_cell
+                if args.geometry_policy == "mesh_actual_exact"
+                else None
+            ),
+            exact_cell_observer=(
+                exact_attribution.observe
+                if exact_attribution is not None
+                else None
+            ),
         )
-        donor["prior_new_evidence_bytes"] = int(owner_result["audit"]["evidence_bytes_added"])
+        donor["prior_new_evidence_bytes"] += int(
+            owner_result["audit"]["evidence_bytes_added"]
+        )
         donor["attribution"]["local_class_identities"] = owner_result["audit"]["local_class_identities"]
+        native_volume_apply = None
+        if args.geometry_policy == "mesh_actual_exact":
+            from mpi4py import MPI
+            from petsc4py import PETSc
+            from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+                _build_split_volume_action,
+            )
+            from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import (
+                SAME_MESH_JIT_OPTIONS,
+            )
+
+            levels = owner_result["levels"]
+            full_rows = int(owner_result["condensed"].full_rows)
+            allocation_gate(
+                "v5_candidate_recovery_native_action_preflight",
+                {
+                    "additional_payload_bytes": 0,
+                    "workspace_bytes": 3 * full_rows * np.dtype(np.complex128).itemsize,
+                    "native_volume_action_calls": 2,
+                    "candidate_recovery_vectors": 2,
+                    "port_or_surface_action": False,
+                },
+            )
+            progress(
+                {
+                    "phase": "v5_candidate_recovery_native_action_build",
+                    "status": "STARTED",
+                    "action": "existing split volume-only form action",
+                }
+            )
+            native_volume_action = _build_split_volume_action(
+                levels["mesh_data"],
+                cfg,
+                levels["spaces"][6],
+                levels["floquets"][6],
+                jit_options=dict(SAME_MESH_JIT_OPTIONS),
+            )
+            native_apply_count = 0
+
+            def native_volume_apply(values: np.ndarray) -> np.ndarray:
+                nonlocal native_apply_count
+                if native_apply_count >= 2:
+                    raise RuntimeError("V5 recovery exceeded its two native volume-only action calls")
+                source_values = np.asarray(values, dtype=np.complex128)
+                if source_values.shape != (full_rows,) or not np.isfinite(source_values).all():
+                    raise ValueError("V5 candidate recovery storage has an invalid full-space layout")
+                source = PETSc.Vec().createWithArray(source_values, comm=MPI.COMM_SELF)
+                try:
+                    result = native_volume_action.apply(source)
+                    # The split action owns and reuses its returned work Vec; copy
+                    # the values and keep that Vec alive for the next column.
+                    output = np.array(
+                        result.getArray(readonly=True), dtype=np.complex128, copy=True
+                    )
+                finally:
+                    source.destroy()
+                native_apply_count += 1
+                return output
+
+            progress(
+                {
+                    "phase": "v5_candidate_recovery_native_action_build",
+                    "status": "COMPLETED",
+                }
+            )
         identity_report = audit_task41_v4_volume_identity(
             owner_result["condensed"],
             donor,
@@ -654,10 +1318,77 @@ def main(argv: list[str] | None = None) -> int:
             progress_callback=progress,
             persist_array=persist_volume_array,
             output_directory=output_directory,
+            native_volume_apply=native_volume_apply,
         )
+        if exact_attribution is not None:
+            array_records = {
+                str(item["name"]): item
+                for item in run_record.get("persisted_evidence_arrays", ())
+                if isinstance(item, Mapping) and item.get("name")
+            }
+            p6_record = array_records.get("task41_p0_v5_candidate_full_p6")
+            reduced_record = array_records.get(
+                "task41_p0_v5_candidate_full_reduced_rhs"
+            )
+            if p6_record is None or reduced_record is None:
+                raise RuntimeError("V5 full-action arrays were not persisted before attribution")
+            candidate_p6 = np.load(
+                p6_record["path"], mmap_mode="r", allow_pickle=False
+            )
+            candidate_reduced = np.load(
+                reduced_record["path"], mmap_mode="r", allow_pickle=False
+            )
+            identity_report["global_geometry_native_elimination_attribution"] = (
+                exact_attribution.finalize(
+                    candidate_p6,
+                    candidate_reduced,
+                    active_rows=owner_result["condensed"].active_rows,
+                    persist_array=persist_volume_array,
+                )
+            )
+            del candidate_p6, candidate_reduced
+        candidate_gate = identity_report.get("candidate_full_action_gate")
+        action_candidate_status = (
+            str(candidate_gate.get("status"))
+            if args.geometry_policy == "mesh_actual_exact" and candidate_gate is not None
+            else None
+        )
+        recovery_gate = identity_report.get("candidate_recovery_gate")
+        candidate_status = (
+            "PASS"
+            if args.geometry_policy == "mesh_actual_exact"
+            and action_candidate_status == "PASS"
+            and isinstance(recovery_gate, Mapping)
+            and recovery_gate.get("status") == "PASS"
+            else "ACTUAL_COORDINATES_INSUFFICIENT"
+            if args.geometry_policy == "mesh_actual_exact"
+            else None
+        )
+        if args.geometry_policy == "mesh_actual_exact" and candidate_status is None:
+            raise RuntimeError("exact-geometry audit did not produce full-action and recovery gates")
+        attribution_status = (
+            identity_report.get("global_geometry_native_elimination_attribution", {}).get(
+                "global_closure_status"
+            )
+            if args.geometry_policy == "mesh_actual_exact"
+            else None
+        )
+        if args.geometry_policy == "mesh_actual_exact" and attribution_status is None:
+            raise RuntimeError("exact-geometry audit did not produce the global attribution closure")
+        if args.geometry_policy == "mesh_actual_exact":
+            run_status = (
+                "CANDIDATE_NUMERICAL_PASS_CHECKER_PENDING"
+                if candidate_status == "PASS"
+                else "ACTUAL_COORDINATES_INSUFFICIENT"
+            )
+            run_record["candidate_attribution_status"] = attribution_status
+            run_record["independent_checker_status"] = "NOT_RUN"
+            run_record["candidate_numeric_status"] = candidate_status
+        else:
+            run_status = "COMPLETED"
         run_record.update(
             {
-                "status": "COMPLETED",
+                "status": run_status,
                 "completed_at_utc": datetime.now(timezone.utc).isoformat(),
                 "elapsed_since_worker_start_seconds": perf_counter() - started_perf,
                 "owner_audit": owner_result["audit"],
@@ -667,10 +1398,43 @@ def main(argv: list[str] | None = None) -> int:
             }
         )
         _write_json_atomic(report_path, run_record)
-        progress({"phase": "v4_volume_only_attribution", "status": "COMPLETED"})
+        progress(
+            {
+                "phase": (
+                    "v5_mesh_actual_exact_full_action"
+                    if args.geometry_policy == "mesh_actual_exact"
+                    else "v4_volume_only_attribution"
+                ),
+                "status": (
+                    "PASS_CHECKER_PENDING"
+                    if candidate_status == "PASS"
+                    else "ACTUAL_COORDINATES_INSUFFICIENT"
+                    if candidate_status is not None
+                    else "COMPLETED"
+                ),
+            }
+        )
+        # A complete exact-geometry report, including a numerical negative, is
+        # worker-success evidence so the independent checker can run. The
+        # service records scientific acceptance separately from audit completion.
         return 0
     except Exception as exc:
+        if isinstance(exc, _CandidateNotAdmitted) and "candidate_admission" not in run_record:
+            last_gate = (
+                run_record.get("candidate_admission_gates", [])[-1]
+                if run_record.get("candidate_admission_gates")
+                else {}
+            )
+            run_record["candidate_admission"] = {
+                "status": "CANDIDATE_NOT_ADMITTED",
+                "reason": str(exc),
+                "gate": last_gate.get("gate"),
+                "gate_evidence": last_gate,
+            }
         failure_status = (
+            "CANDIDATE_NOT_ADMITTED"
+            if isinstance(exc, _CandidateNotAdmitted)
+            else
             "FAILED_GEOMETRY_PAIR_EVIDENCE_RETAINED"
             if args.geometry_pair_only
             else "FAILED_RAW_EVIDENCE_RETAINED"
@@ -697,6 +1461,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 3
     finally:
+        if native_volume_action is not None:
+            native_volume_action.destroy()
         if owner_result is not None:
             owner_result["condensed"].destroy()
 

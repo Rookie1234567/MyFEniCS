@@ -43,6 +43,14 @@ PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES = 128 * 1024**2
 CAMPAIGN_CLOSEOUT_PARENT_FLUSH_RESERVE_SECONDS = 30.0
 
 
+def _sha256_file(path: str | Path, *, chunk_bytes: int = 1024 * 1024) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(chunk_bytes), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _validate_task41_consumer_source(contract: dict[str, Any], environment: dict[str, str]) -> bool:
     continuation = environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION')
     consumer_sha = environment.get('TASK41_P0_CONSUMER_SOURCE_SHA')
@@ -269,14 +277,23 @@ def _validate_campaign_closeout_authorization(
             / 'bin/python'
         ).resolve()
         if checker_kind == 'task41_p0_b0_saved_evidence_audit_checker':
+            v5_candidate_report_path = None
+            if len(argv) == 20:
+                if argv[18] != '--mesh-actual-exact-report':
+                    raise ValueError('V5 saved B0 checker report option is malformed')
+                v5_candidate_report_path = Path(argv[19]).resolve()
+            elif len(argv) != 18:
+                raise ValueError('saved B0 evidence auditor command has an unexpected argument count')
+            v5_mode = v5_candidate_report_path is not None
             if (
                 environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') != '1'
                 or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
-                or len(argv) != 18
+                or environment.get('TASK41_P0_B0_V5_MESH_ACTUAL_EXACT')
+                != ('1' if v5_mode else None)
                 or Path(argv[0]).resolve() != expected_python
                 or argv[1:3] != ['-m', 'src.runners.task41_p0_checker']
                 or argv[3] != '--saved-b0-evidence-audit'
-                or argv[4::2] != [
+                or argv[4:18:2] != [
                     '--summary', '--numerical-output', '--contract', '--contract-sha256',
                     '--consumer-contract', '--consumer-contract-sha256', '--output',
                 ]
@@ -363,6 +380,62 @@ def _validate_campaign_closeout_authorization(
                 donor_contract_path, Path(str(contract_path)).resolve(), donor_summary_path,
                 donor_manifest, donor_run_summary, input_path, resolved_config,
             )]
+            if v5_candidate_report_path is not None:
+                from src.runners.task41_p0_v4_volume_only_audit import (
+                    TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+                )
+
+                output_root = Path(environment.get('TASK41_P0_B0_OUTPUT_DIR', '')).resolve()
+                if (
+                    v5_candidate_report_path.name
+                    != 'task41_p0_v5_mesh_actual_exact_attribution.json'
+                    or not v5_candidate_report_path.is_relative_to(output_root)
+                    or output_path != Path(environment.get('TASK41_P0_B0_RESULT_PATH', '')).resolve()
+                ):
+                    raise ValueError('V5 candidate report path differs from the registered B0 output directory')
+                candidate_report = json.loads(
+                    v5_candidate_report_path.read_text(encoding='utf-8')
+                )
+                reference_path = Path(
+                    str(candidate_report.get('geometry_reference_report_path', ''))
+                ).resolve()
+                if (
+                    candidate_report.get('schema')
+                    != 'task41.p0.v5.mesh_actual_exact_attribution_receipt.v1'
+                    or candidate_report.get('geometry_policy') != 'mesh_actual_exact'
+                    or candidate_report.get('donor_contract_sha256') != donor_digest
+                    or candidate_report.get('consumer_contract_sha256') != contract_sha
+                    or reference_path.name != 'task41_p0_v4_geometry_pair_probe.json'
+                    or not reference_path.is_relative_to(results_root)
+                    or candidate_report.get('geometry_reference_report_sha256')
+                    != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+                    or _sha256_file(reference_path)
+                    != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+                    or environment.get('TASK41_P0_B0_V5_GEOMETRY_REFERENCE_PATH')
+                    != str(reference_path)
+                ):
+                    raise ValueError('V5 candidate report geometry/source identities are invalid')
+                arrays = candidate_report.get('persisted_evidence_arrays')
+                if not isinstance(arrays, list):
+                    raise ValueError('V5 candidate report lacks its persisted-array inventory')
+                input_paths.extend(
+                    [str(v5_candidate_report_path), str(reference_path)]
+                )
+                seen_array_paths = set()
+                for artifact in arrays:
+                    if not isinstance(artifact, dict) or not isinstance(artifact.get('path'), str):
+                        raise ValueError('V5 candidate persisted-array inventory is malformed')
+                    artifact_path = Path(artifact['path']).resolve()
+                    if (
+                        not artifact_path.is_relative_to(output_root)
+                        or artifact_path in seen_array_paths
+                        or not artifact_path.is_file()
+                        or _sha256_file(artifact_path)
+                        != artifact.get('sha256')
+                    ):
+                        raise ValueError('V5 candidate persisted-array path/hash is invalid')
+                    seen_array_paths.add(artifact_path)
+                    input_paths.append(str(artifact_path))
         elif checker_kind == 'task41_p0_saved_output_continuation_checker':
             checker_only = (
                 environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') == '1'
@@ -495,7 +568,7 @@ def _validate_campaign_closeout_authorization(
         if (
             not path.is_file()
             or not re.fullmatch(r'[0-9a-f]{64}', str(expected_sha))
-            or hashlib.sha256(path.read_bytes()).hexdigest() != expected_sha
+            or _sha256_file(path) != expected_sha
         ):
             raise ValueError('closeout checker input hash changed after service authorization')
 

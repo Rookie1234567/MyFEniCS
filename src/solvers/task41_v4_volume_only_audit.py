@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
 import hashlib
+import math
 from pathlib import Path
 import shutil
 from typing import Any
@@ -38,12 +39,73 @@ TASK41_V4_ACTIVE_TRACE_ROWS = 5_688_000
 TASK41_V4_APPENDED_ROWS = 64_120
 TASK41_V4_SELECTED_ACTIVE_ROW = 5_458_716
 TASK41_V4_SELECTED_ORIGINAL_ROW = 17_692_332
+TASK41_V5_FROZEN_DENOMINATORS = (2225.481253487629, 2225.4807123031883)
+TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE = 1.0e-11
+TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT = 12
 
 
-def _class_key(value: Sequence[Any]) -> tuple[int, float, float, float, int]:
-    if len(value) != 5:
-        raise ValueError(f"Task41 V4 class key must have five fields: {value!r}")
-    return (int(value[0]), float(value[1]), float(value[2]), float(value[3]), int(value[4]))
+def _class_key(value: Sequence[Any]) -> tuple[Any, ...]:
+    """Read legacy canonical keys and the explicitly tagged exact-geometry keys."""
+
+    if len(value) == 5:
+        return (
+            int(value[0]),
+            float(value[1]),
+            float(value[2]),
+            float(value[3]),
+            int(value[4]),
+        )
+    if len(value) == 8 and value[0] == "mesh_actual_exact":
+        tag, material_sha, layout_sha, shape, dtype, coordinate_sha, permutation = value[1:]
+        if (
+            isinstance(tag, bool)
+            or not isinstance(tag, (int, np.integer))
+            or isinstance(permutation, bool)
+            or not isinstance(permutation, (int, np.integer))
+            or any(
+                not isinstance(item, str) or len(item) != 64
+                for item in (material_sha, layout_sha, coordinate_sha)
+            )
+            or tuple(shape) != (8, 3)
+            or dtype != np.dtype(np.float64).str
+        ):
+            raise ValueError(f"Task41 mesh_actual_exact key is malformed: {value!r}")
+        return (
+            "mesh_actual_exact",
+            int(tag),
+            str(material_sha),
+            str(layout_sha),
+            (8, 3),
+            str(dtype),
+            str(coordinate_sha),
+            int(permutation),
+        )
+    raise ValueError(f"Task41 class key has an unsupported schema: {value!r}")
+
+
+def _task41_material_identity_by_tag(cfg: Any) -> dict[int, dict[str, Any]]:
+    def complex_identity(value: Any) -> dict[str, str]:
+        number = complex(value)
+        return {
+            "real_hex": float(number.real).hex(),
+            "imag_hex": float(number.imag).hex(),
+        }
+
+    coefficients = {
+        int(cfg.tags.air): complex(cfg.eps_r),
+        int(cfg.tags.substrate): complex(cfg.substrate_index) ** 2,
+        int(cfg.tags.grating): complex(cfg.grating_index) ** 2,
+    }
+    return {
+        tag: {
+            "mu_r": complex_identity(cfg.mu_r),
+            "k0": complex_identity(cfg.k0),
+            "curl_coefficient": complex_identity(1.0 / complex(cfg.mu_r)),
+            "mass_coefficient": complex_identity(-complex(cfg.k0) ** 2 * epsilon),
+            "epsilon_r": complex_identity(epsilon),
+        }
+        for tag, epsilon in coefficients.items()
+    }
 
 
 def _check_artifact_array(record: Mapping[str, Any], array: Any, label: str) -> np.ndarray:
@@ -120,6 +182,233 @@ def _difference_metrics(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
         "max_abs": max_abs,
         "max_row": max_row,
     }
+
+
+class Task41V5VolumeAttributionAccumulator:
+    """Bounded per-cell attribution using the exact tensors before release."""
+
+    def __init__(self, donor: Mapping[str, Any]) -> None:
+        self.donor = donor
+        self.pending: list[dict[str, Any]] = []
+        self.accumulators: dict[tuple[int, str], dict[str, Any]] | None = None
+
+    def _merge(self, piece: Mapping[str, Any]) -> None:
+        if self.accumulators is None:
+            self.pending.append(dict(piece))
+            return
+        key = (int(piece["column"]), str(piece["state"]))
+        target = self.accumulators[key]
+        ids = np.asarray(piece["active_ids"], dtype=np.int64)
+        for name in ("delta_t", "T_r_i", "attributed_terms"):
+            np.add.at(target[name], ids, np.asarray(piece[name], dtype=np.complex128))
+        for name, value in piece["local_l2"].items():
+            target["local_l2_sum"][name] = math.hypot(
+                float(target["local_l2_sum"][name]), float(value)
+            )
+
+    def observe(
+        self,
+        _cell_index: int,
+        _coordinates: np.ndarray,
+        blocks: Mapping[str, np.ndarray],
+        context: Mapping[str, Any],
+    ) -> None:
+        original = np.asarray(context["original_dofs"], dtype=np.int64)
+        interior_positions = np.asarray(context["interior_positions"], dtype=np.int64)
+        trace_positions = np.asarray(context["trace_positions"], dtype=np.int64)
+        interior_rows = original[interior_positions]
+        trace_expansion = context["trace_expansion"]
+        active_ids = np.asarray(context["active_ids"], dtype=np.int64)
+        R = np.asarray(context["R"], dtype=np.complex128)
+        T = np.asarray(context["T"], dtype=np.complex128)
+        S = np.asarray(context["S"], dtype=np.complex128)
+        K = np.asarray(blocks["K"], dtype=np.complex128)
+        G = np.asarray(blocks["G"], dtype=np.complex128)
+        J = np.asarray(blocks["J"], dtype=np.complex128)
+        L = np.asarray(blocks["L"], dtype=np.complex128)
+        for column_index, column in enumerate(self.donor["columns"]):
+            native_rhs = np.asarray(column["native_rhs"])
+            for state in column["states"]:
+                state_label = str(state["label"])
+                storage = np.asarray(state["storage"])
+                native_action = np.asarray(state["native_volume_action"])
+                active_original = np.asarray(
+                    column["active_original_rows"], dtype=np.int64
+                )
+                if (
+                    trace_expansion.shape != (len(trace_positions), len(active_ids))
+                    or (active_ids.size and (active_ids.min() < 0 or active_ids.max() >= active_original.size))
+                ):
+                    raise ValueError("V5 cell MPC expansion differs from the saved active-row map")
+                u_i = np.asarray(storage[interior_rows], dtype=np.complex128)
+                # Saved storage vectors deliberately keep MPC slave rows zero.
+                # Reconstruct each physical local trace from active values and
+                # the cell's exact complex expansion before applying K/G/J/L.
+                active_trace = storage[active_original[active_ids]]
+                t_c = np.asarray(trace_expansion @ active_trace).reshape(-1)
+                native_i = np.asarray(native_action[interior_rows], dtype=np.complex128)
+                r_i = np.asarray(native_rhs[interior_rows], dtype=np.complex128) - native_i
+                K_u = K @ u_i
+                G_t = G @ t_c
+                actual_i = K_u + G_t
+                delta_i = actual_i - native_i
+                J_u = J @ u_i
+                L_t = L @ t_c
+                actual_t = J_u + L_t
+                local_t_r_i = T @ r_i
+                # Apply (J + T K) and (S - L - T G) to the vectors directly.
+                # This preserves the review identity without materializing two
+                # extra dense defect matrices for every cell.
+                E_T_u = J_u + T @ K_u
+                E_S_t = S @ t_c - L_t - T @ G_t
+                T_delta_i = T @ delta_i
+                local_attributed = T_delta_i + E_S_t - E_T_u
+                projected_actual_t = np.asarray(trace_expansion.conj().T @ actual_t).reshape(-1)
+                self._merge(
+                    {
+                        "column": column_index,
+                        "state": state_label,
+                        "active_ids": active_ids,
+                        "delta_t": projected_actual_t,
+                        "T_r_i": np.asarray(trace_expansion.conj().T @ local_t_r_i).reshape(-1),
+                        "attributed_terms": np.asarray(
+                            trace_expansion.conj().T @ local_attributed
+                        ).reshape(-1),
+                        "local_l2": {
+                            "delta_i": _vector_norm(delta_i),
+                            "T_delta_i": _vector_norm(T_delta_i),
+                            "E_S_t": _vector_norm(E_S_t),
+                            "E_T_u_i": _vector_norm(E_T_u),
+                            "projected_actual_trace": _vector_norm(projected_actual_t),
+                        },
+                    }
+                )
+
+    def admit(self, active_rows: int) -> None:
+        if self.accumulators is not None:
+            raise RuntimeError("V5 attribution accumulator was admitted more than once")
+        self.accumulators = {}
+        for column_index, column in enumerate(self.donor["columns"]):
+            active_original = np.asarray(column["active_original_rows"], dtype=np.int64)
+            if active_original.shape != (active_rows,):
+                raise ValueError("V5 attribution active row map differs from the owner")
+            for state in column["states"]:
+                key = (column_index, str(state["label"]))
+                native_action = np.asarray(state["native_volume_action"])
+                self.accumulators[key] = {
+                    "delta_t": -np.asarray(
+                        native_action[active_original], dtype=np.complex128
+                    ).copy(),
+                    "T_r_i": np.zeros(active_rows, dtype=np.complex128),
+                    "attributed_terms": np.zeros(active_rows, dtype=np.complex128),
+                    "local_l2_sum": {
+                        "delta_i": 0.0,
+                        "T_delta_i": 0.0,
+                        "E_S_t": 0.0,
+                        "E_T_u_i": 0.0,
+                        "projected_actual_trace": 0.0,
+                    },
+                }
+        pending, self.pending = self.pending, []
+        for piece in pending:
+            self._merge(piece)
+
+    def finalize(
+        self,
+        candidate_p6: np.ndarray,
+        candidate_reduced: np.ndarray,
+        *,
+        active_rows: int,
+        persist_array: Callable[[str, np.ndarray], Mapping[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        if self.accumulators is None:
+            raise RuntimeError("V5 attribution accumulator was not admitted")
+        columns = []
+        for column_index, column in enumerate(self.donor["columns"]):
+            active_original = np.asarray(column["active_original_rows"], dtype=np.int64)
+            native_rhs = np.asarray(column["native_rhs"])
+            states = []
+            for state in column["states"]:
+                label = str(state["label"])
+                accumulated = self.accumulators[(column_index, label)]
+                native_action = np.asarray(state["native_volume_action"])
+                d = np.asarray(
+                    candidate_p6[:active_rows, column_index]
+                    - candidate_reduced[:active_rows, column_index],
+                    dtype=np.complex128,
+                )
+                r_t = np.asarray(
+                    native_rhs[active_original] - native_action[active_original],
+                    dtype=np.complex128,
+                )
+                left = d + r_t + accumulated["T_r_i"]
+                right = accumulated["delta_t"] + accumulated["attributed_terms"]
+                closure = _difference_metrics(left, right)
+                left_l2 = _vector_norm(left)
+                right_l2 = _vector_norm(right)
+                frozen_denominator = TASK41_V5_FROZEN_DENOMINATORS[column_index]
+                closure_frozen_relative = closure["absolute_l2"] / frozen_denominator
+                accumulation_scale = (
+                    _vector_norm(d)
+                    + _vector_norm(r_t)
+                    + _vector_norm(accumulated["T_r_i"])
+                    + _vector_norm(accumulated["delta_t"])
+                    + _vector_norm(accumulated["attributed_terms"])
+                )
+                accumulator_artifacts = {}
+                if persist_array is not None:
+                    for artifact_name, values in (
+                        ("T_r_i", accumulated["T_r_i"]),
+                        ("delta_t", accumulated["delta_t"]),
+                        ("attributed_terms", accumulated["attributed_terms"]),
+                    ):
+                        name = (
+                            f"task41_p0_v5_attribution_col{column_index}_"
+                            f"{label}_{artifact_name}"
+                        )
+                        accumulator_artifacts[artifact_name] = {
+                            "name": name,
+                            **dict(persist_array(name, values)),
+                        }
+                states.append(
+                    {
+                        "state": label,
+                        "accumulator_artifacts": accumulator_artifacts,
+                        "delta_t_actual_trace_minus_native_trace_l2": _vector_norm(
+                            accumulated["delta_t"]
+                        ),
+                        "delta_i_l2_over_cells": accumulated["local_l2_sum"]["delta_i"],
+                        "T_r_i_global_l2": _vector_norm(accumulated["T_r_i"]),
+                        "T_delta_i_l2_over_cells": accumulated["local_l2_sum"]["T_delta_i"],
+                        "E_S_t_l2_over_cells": accumulated["local_l2_sum"]["E_S_t"],
+                        "E_T_u_i_l2_over_cells": accumulated["local_l2_sum"]["E_T_u_i"],
+                        "left_d_plus_r_t_plus_T_r_i_l2": left_l2,
+                        "right_delta_t_plus_local_defects_l2": right_l2,
+                        "closure_difference": closure,
+                        "closure_frozen_denominator": frozen_denominator,
+                        "closure_frozen_denominator_relative": closure_frozen_relative,
+                        "closure_relative_to_accumulation_scale": (
+                            closure["absolute_l2"] / max(accumulation_scale, np.finfo(float).tiny)
+                        ),
+                        "accumulation_scale_l2_sum": accumulation_scale,
+                    }
+                )
+            columns.append({"column": column_index, "states": states})
+        return {
+            "schema": "task41.p0.v5.global_geometry_native_elimination_attribution.v1",
+            "identity": "d + r_t + sum(E^H T r_i) = Delta_t + sum(E^H(T Delta_i + E_S t - E_T u_i))",
+            "accumulation_order": "cell order with local E^H projections; native trace action subtracted once globally",
+            "slave_trace_reconstruction": "local E times saved active trace values; saved slave storage remains zero",
+            "defect_application": "E_T u_i and E_S t applied as vector products without dense defect-matrix materialization",
+            "raw_actual_tensor_retention": "none; observe then release each exact key",
+            "diagnostic_scales": [
+                "left_and_right_identity_norms",
+                "frozen_candidate_denominator",
+                "sum_of_accumulated_term_norms",
+            ],
+            "global_closure_status": "DIAGNOSTIC_ONLY",
+            "columns": columns,
+        }
 
 
 def audit_task41_v4_geometry_pair_attribution(
@@ -461,6 +750,16 @@ def build_task41_v4_volume_only_owner(
     allocation_gate: Callable[[str, Mapping[str, Any]], Any],
     progress_callback: Callable[[Mapping[str, Any]], Any],
     persist_array: Callable[[str, np.ndarray], Mapping[str, Any]],
+    geometry_policy: str = "canonical",
+    required_prefix_cells: Sequence[int] = (),
+    prefix_cell_validator: Callable[
+        [int, np.ndarray, Mapping[str, np.ndarray]], Mapping[str, Any]
+    ]
+    | None = None,
+    exact_cell_observer: Callable[
+        [int, np.ndarray, Mapping[str, np.ndarray], Mapping[str, Any]], None
+    ]
+    | None = None,
 ) -> dict[str, Any]:
     """Build one fresh MPI1 volume owner and persist only selected local evidence.
 
@@ -475,12 +774,15 @@ def build_task41_v4_volume_only_owner(
 
     if not all(callable(item) for item in (allocation_gate, progress_callback, persist_array)):
         raise TypeError("Task41 V4 requires allocation, progress, and persistence callbacks")
+    if geometry_policy not in {"canonical", "mesh_actual_exact"}:
+        raise ValueError(f"unknown Task41 geometry policy {geometry_policy!r}")
     manifest = donor["manifest"]
     if donor.get("manifest_sha256") != TASK41_V4_DONOR_MANIFEST_SHA256:
         raise ValueError("Task41 V4 donor recovery-manifest identity differs")
-    existing_bytes = int(donor.get("existing_evidence_bytes", -1))
-    if existing_bytes != TASK41_V4_DONOR_NPY_BYTES:
+    donor_existing_bytes = int(donor.get("existing_evidence_bytes", -1))
+    if donor_existing_bytes != TASK41_V4_DONOR_NPY_BYTES:
         raise ValueError("Task41 V4 donor NPY byte count differs from the frozen 141-array set")
+    existing_bytes = donor_existing_bytes + int(donor.get("prior_new_evidence_bytes", 0))
     if (
         int(manifest.get("full_storage_rows", -1)) != TASK41_V4_FULL_STORAGE_ROWS
         or int(manifest.get("active_trace_rows", -1)) != TASK41_V4_ACTIVE_TRACE_ROWS
@@ -524,6 +826,7 @@ def build_task41_v4_volume_only_owner(
             curl_curl + material_mass,
             jit_options=dict(SAME_MESH_JIT_OPTIONS),
         )
+        material_identity_by_tag = _task41_material_identity_by_tag(cfg)
         progress(phase, "COMPLETED", construction="curl_plus_mass_only")
 
         phase = "fresh_volume_owner"
@@ -545,8 +848,15 @@ def build_task41_v4_volume_only_owner(
             retain_local_schur_for_matrix_free=True,
             share_identity_cache=True,
             preserve_exact_geometry=True,
+            geometry_policy=geometry_policy,
+            geometry_material_identity_by_tag=material_identity_by_tag,
+            required_prefix_cells=required_prefix_cells,
+            prefix_cell_validator=prefix_cell_validator,
+            exact_cell_observer=exact_cell_observer,
             allocation_gate=allocation_gate,
         )
+        owner.build_audit["geometry_policy"] = geometry_policy
+        owner.build_audit["geometry_material_identity_by_tag"] = material_identity_by_tag
         progress(
             phase,
             "COMPLETED",
@@ -672,16 +982,21 @@ def build_task41_v4_volume_only_owner(
         if len(cell_maps) != 6 or set(cell_maps) != set(manifest_cells):
             raise ValueError("Task41 V4 donor must provide exactly the six manifested cell maps")
 
-        owner_cells_by_class: dict[tuple[int, float, float, float, int], int] = {}
+        owner_cells_by_class: dict[tuple[Any, ...], int] = {}
         for cell_index, cell in enumerate(owner.cell_recovery_maps):
             owner_cells_by_class.setdefault(_class_key(cell.class_key), cell_index)
-        fresh_class_records: dict[tuple[int, float, float, float, int], Mapping[str, Any]] = {}
+        fresh_class_records: dict[tuple[Any, ...], Mapping[str, Any]] = {}
         dimension = int(space.element.space_dimension)
         raw_class_workspace_bytes = (
             4 * dimension * dimension * np.dtype(np.complex128).itemsize
         )
 
-        def independently_tabulate(cell_index: int, class_key: tuple[Any, ...]):
+        def independently_tabulate(
+            cell_index: int,
+            class_key: tuple[Any, ...],
+            *,
+            geometry_policy: str | None = None,
+        ):
             allocation_gate(
                 "task41_v4_raw_class_retabulation",
                 {
@@ -698,10 +1013,16 @@ def build_task41_v4_volume_only_owner(
                 mesh_data.cell_tags,
                 owner,
                 cell_index,
+                geometry_policy=geometry_policy,
             )
 
+        canonical_representative_by_key: dict[tuple[Any, ...], int] = {}
+        for saved in cell_maps.values():
+            canonical_representative_by_key.setdefault(
+                _class_key(saved["class_key"]), int(saved["cell_index"])
+            )
         for key, saved_class in raw_by_key.items():
-            if key not in owner_cells_by_class:
+            if geometry_policy == "canonical" and key not in owner_cells_by_class:
                 raise ValueError(f"fresh owner is missing saved raw class {key!r}")
             saved_vii = _check_artifact_array(
                 manifest_classes[key]["Vii"], saved_class["Vii"], f"saved Vii class {key!r}"
@@ -709,30 +1030,46 @@ def build_task41_v4_volume_only_owner(
             saved_vit = _check_artifact_array(
                 manifest_classes[key]["Vit"], saved_class["Vit"], f"saved Vit class {key!r}"
             )
-            fresh = independently_tabulate(owner_cells_by_class[key], key)
+            representative = (
+                owner_cells_by_class[key]
+                if geometry_policy == "canonical"
+                else canonical_representative_by_key.get(key)
+            )
+            if representative is None:
+                raise ValueError(f"V4 donor has no cell map representative for class {key!r}")
+            fresh = independently_tabulate(
+                representative,
+                key,
+                geometry_policy=("canonical" if geometry_policy == "mesh_actual_exact" else None),
+            )
             if not (np.array_equal(saved_vii, fresh["K"]) and np.array_equal(saved_vit, fresh["G"])):
                 raise ValueError(f"fresh independent K/G differ from saved class {key!r}")
             fresh_class_records[key] = fresh
 
         local_class_identities = []
-        for key in sorted(fresh_class_records):
-            local_class_identities.append(
-                _local_class_identity(
-                    key,
-                    fresh_class_records[key],
-                    T=owner.trace_from_interior_rhs_by_class[key],
-                    R=owner.interior_from_trace_by_class[key],
-                    S=owner.retained_local_schur_by_class[key],
+        if geometry_policy == "canonical":
+            for key in sorted(fresh_class_records):
+                local_class_identities.append(
+                    _local_class_identity(
+                        key,
+                        fresh_class_records[key],
+                        T=owner.trace_from_interior_rhs_by_class[key],
+                        R=owner.interior_from_trace_by_class[key],
+                        S=owner.retained_local_schur_by_class[key],
+                    )
                 )
-            )
 
         for identity, saved in cell_maps.items():
             column_index, cell_index = identity
             manifest_cell = manifest_cells[identity]
             key = _class_key(saved["class_key"])
             cell = owner.cell_recovery_maps[cell_index]
-            if key != _class_key(manifest_cell["class_key"]) or key != _class_key(cell.class_key):
-                raise ValueError(f"fresh Task41 V4 class identity differs for cell {identity}")
+            if key != _class_key(manifest_cell["class_key"]):
+                raise ValueError(f"V4 donor/manifest canonical class identity differs for cell {identity}")
+            if geometry_policy == "canonical" and key != _class_key(cell.class_key):
+                raise ValueError(f"fresh canonical Task41 class identity differs for cell {identity}")
+            if geometry_policy == "mesh_actual_exact" and int(cell.class_key[-1]) != key[-1]:
+                raise ValueError(f"fresh exact Task41 orientation differs from the V4 map for cell {identity}")
             arrays_meta = manifest_cell["artifacts"]
             for field, name in (
                 ("interior_original_rows", "interior_original_rows"),
@@ -786,7 +1123,7 @@ def build_task41_v4_volume_only_owner(
         )
 
         phase = "evidence_budget_preflight"
-        arrays_by_class: dict[tuple[int, float, float, float, int], Mapping[str, Any]] = {}
+        arrays_by_class: dict[tuple[Any, ...], Mapping[str, Any]] = {}
         for class_key in selected_classes:
             record = fresh_class_records.get(class_key)
             if record is None:
@@ -795,9 +1132,25 @@ def build_task41_v4_volume_only_owner(
                     for cell in selected_cells
                     if cell["class_key"] == class_key
                 )
-                record = independently_tabulate(representative, class_key)
+                record = independently_tabulate(
+                    representative,
+                    class_key,
+                    geometry_policy=("mesh_actual_exact" if geometry_policy == "mesh_actual_exact" else None),
+                )
                 fresh_class_records[class_key] = record
             arrays_by_class[class_key] = record
+
+        if geometry_policy == "mesh_actual_exact":
+            for key in selected_classes:
+                local_class_identities.append(
+                    _local_class_identity(
+                        key,
+                        arrays_by_class[key],
+                        T=owner.trace_from_interior_rhs_by_class[key],
+                        R=owner.interior_from_trace_by_class[key],
+                        S=owner.retained_local_schur_by_class[key],
+                    )
+                )
 
         class_cache_bytes = 0
         for class_key in selected_classes:
@@ -989,6 +1342,7 @@ def audit_task41_v4_volume_identity(
     progress_callback: Callable[[Mapping[str, Any]], Any],
     persist_array: Callable[[str, np.ndarray], Mapping[str, Any]],
     output_directory: str | Path,
+    native_volume_apply: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> dict[str, Any]:
     """Replay the trace-only production P6 action and RHS identities.
 
@@ -1008,6 +1362,9 @@ def audit_task41_v4_volume_identity(
     active_rows = int(owner.active_rows)
     port_rows = int(owner.appended_rows)
     full_rows = int(owner.full_rows)
+    exact_candidate = owner.build_audit.get("geometry_policy") == "mesh_actual_exact"
+    if exact_candidate and not callable(native_volume_apply):
+        raise ValueError("V5 candidate recovery requires the independent volume-only native action")
     if (
         len(columns) != 2
         or saved_p6.shape != (active_rows + port_rows, 2)
@@ -1061,7 +1418,32 @@ def audit_task41_v4_volume_identity(
         + np.dtype(np.complex128).itemsize * expansion_nnz_upper
         + 512 * cell_count
     )
-    identity_array_bytes = 14 * active_rows * np.dtype(np.complex128).itemsize + 14 * 4096
+    candidate_rows = active_rows + port_rows
+    candidate_full_bytes = (
+        2 * candidate_rows * 2 * np.dtype(np.complex128).itemsize
+        if exact_candidate
+        else 0
+    )
+    attribution_accumulator_bytes = (
+        TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT
+        * active_rows
+        * np.dtype(np.complex128).itemsize
+        if exact_candidate
+        else 0
+    )
+    identity_output_arrays = (26 if exact_candidate else 14)
+    recovery_evidence_bytes = (
+        4 * full_rows * np.dtype(np.complex128).itemsize + 4 * 4096
+        if exact_candidate
+        else 0
+    )
+    identity_array_bytes = (
+        identity_output_arrays * active_rows * np.dtype(np.complex128).itemsize
+        + identity_output_arrays * 4096
+        + candidate_full_bytes
+        + (2 * 4096 if exact_candidate else 0)
+        + recovery_evidence_bytes
+    )
     prior_new_bytes = int(donor.get("prior_new_evidence_bytes", 0))
     cumulative_evidence_upper = (
         int(donor["existing_evidence_bytes"]) + prior_new_bytes + identity_array_bytes
@@ -1076,13 +1458,18 @@ def audit_task41_v4_volume_identity(
     if free_bytes - identity_array_bytes < TASK41_V4_FREE_SPACE_FLOOR_BYTES:
         raise OSError("Task41 V4 identity evidence would breach the 2 GiB free-space floor")
     vector_workspace = np.dtype(np.complex128).itemsize * (
-        full_rows + 4 * (active_rows + 1)
-    )
+        (3 if exact_candidate else 1) * full_rows + 4 * (active_rows + 1)
+    ) + candidate_full_bytes
     allocation_gate(
         "task41_v4_production_volume_action_preflight",
         {
             "additional_payload_bytes": int(action_payload_upper),
             "workspace_bytes": int(vector_workspace),
+            "already_resident_attribution_accumulator_bytes": int(
+                attribution_accumulator_bytes
+            ),
+            "candidate_full_array_bytes": int(candidate_full_bytes),
+            "candidate_array_rows": int(candidate_rows),
             "cell_count": cell_count,
             "max_constraint_expansion_terms": max_expansion_terms,
             "active_rows": active_rows,
@@ -1090,6 +1477,8 @@ def audit_task41_v4_volume_identity(
             "global_matrix_materialized": False,
             "dense_port_block_materialized": False,
             "new_identity_evidence_bytes_upper": identity_array_bytes,
+            "identity_output_array_count": identity_output_arrays,
+            "persisted_attribution_accumulator_arrays": (12 if exact_candidate else 0),
             "cumulative_evidence_bytes_upper": cumulative_evidence_upper,
             "evidence_cap_bytes": TASK41_V4_EVIDENCE_CAP_BYTES,
             "free_space_bytes": free_bytes,
@@ -1104,7 +1493,14 @@ def audit_task41_v4_volume_identity(
         volume_owner,
         H_p=np.zeros((0, 0), dtype=np.complex128),
     )
+    candidate_p6 = np.array(saved_p6, dtype=np.complex128, copy=True, order="C") if exact_candidate else None
+    candidate_reduced = (
+        np.array(saved_reduced, dtype=np.complex128, copy=True, order="C")
+        if exact_candidate
+        else None
+    )
     column_metrics = []
+    candidate_recovery_columns: list[dict[str, Any]] = []
     replay_artifacts: list[dict[str, Any]] = []
     persisted_bytes = 0
 
@@ -1116,6 +1512,7 @@ def audit_task41_v4_volume_identity(
         if int(donor["existing_evidence_bytes"]) + prior_new_bytes + persisted_bytes > TASK41_V4_EVIDENCE_CAP_BYTES:
             raise MemoryError("Task41 V4 persisted identity evidence exceeded the cumulative 16 GiB cap")
         replay_artifacts.append({"name": name, **artifact})
+        return artifact
     try:
         for column_index, column in enumerate(columns):
             progress_callback({"phase": "production_volume_column", "status": "STARTED", "column": column_index})
@@ -1140,6 +1537,101 @@ def audit_task41_v4_volume_identity(
                 or any_nonzero_at_rows(volume_rhs, slave_rows)
             ):
                 raise ValueError(f"Task41 V4 column {column_index} has invalid vectors or slave-row support")
+            if exact_candidate:
+                assert native_volume_apply is not None
+                progress_callback(
+                    {
+                        "phase": "v5_candidate_recovery",
+                        "status": "STARTED",
+                        "column": column_index,
+                        "native_volume_action_calls_before": len(candidate_recovery_columns),
+                    }
+                )
+                candidate_storage = action.recover_storage(
+                    known[active_original],
+                    full_rhs=volume_rhs,
+                    expand_trace=False,
+                )
+                recovery_difference = _difference_metrics(candidate_storage, known)
+                known_norm = _vector_norm(known)
+                forward_relative = recovery_difference["absolute_l2"] / max(
+                    known_norm, np.finfo(float).tiny
+                )
+                active_trace_exact = np.array_equal(
+                    candidate_storage[active_original], known[active_original]
+                )
+                slave_rows_zero = not any_nonzero_at_rows(candidate_storage, slave_rows)
+
+                # The runner callback returns an explicitly owned complex128 copy.
+                native_volume_action_values = native_volume_apply(candidate_storage)
+                if native_volume_action_values.shape != (full_rows,) or not native_volume_action_values.flags.writeable:
+                    raise ValueError("V5 native volume action returned an invalid recovery vector")
+                native_volume_action_values *= -1.0
+                native_volume_action_values += volume_rhs
+                native_volume_residual = native_volume_action_values
+                rhs_norm = _vector_norm(volume_rhs)
+                native_residual_norm = _vector_norm(native_volume_residual)
+                native_residual_relative = native_residual_norm / max(
+                    rhs_norm, np.finfo(float).tiny
+                )
+                residual_slave_rows_zero = not any_nonzero_at_rows(
+                    native_volume_residual, slave_rows
+                )
+                forward_gate_passed = bool(
+                    np.isfinite(forward_relative) and forward_relative <= 1.0e-11
+                )
+                native_residual_gate_passed = bool(
+                    np.isfinite(native_residual_relative)
+                    and native_residual_relative <= 1.0e-10
+                )
+                column_recovery_passed = bool(
+                    forward_gate_passed
+                    and native_residual_gate_passed
+                    and active_trace_exact
+                    and slave_rows_zero
+                    and residual_slave_rows_zero
+                )
+                recovered_name = f"task41_p0_v5_candidate_recovered_storage_col{column_index}"
+                residual_name = f"task41_p0_v5_candidate_native_volume_residual_col{column_index}"
+                recovered_artifact = dict(persist(recovered_name, candidate_storage))
+                residual_artifact = dict(persist(residual_name, native_volume_residual))
+                candidate_recovery_columns.append(
+                    {
+                        "column": column_index,
+                        "forward_error_absolute_l2": recovery_difference["absolute_l2"],
+                        "forward_error_relative": forward_relative,
+                        "forward_gate_tolerance": 1.0e-11,
+                        "forward_gate_passed": forward_gate_passed,
+                        "native_volume_residual_absolute_l2": native_residual_norm,
+                        "native_volume_residual_relative": native_residual_relative,
+                        "native_volume_residual_gate_tolerance": 1.0e-10,
+                        "native_volume_residual_gate_passed": native_residual_gate_passed,
+                        "active_trace_exact": active_trace_exact,
+                        "slave_rows_zero": slave_rows_zero,
+                        "residual_slave_rows_zero": residual_slave_rows_zero,
+                        "passed": column_recovery_passed,
+                        "recovered_storage_artifact": {
+                            "name": recovered_name,
+                            **recovered_artifact,
+                        },
+                        "native_volume_residual_artifact": {
+                            "name": residual_name,
+                            **residual_artifact,
+                        },
+                    }
+                )
+                progress_callback(
+                    {
+                        "phase": "v5_candidate_recovery",
+                        "status": "COMPLETED" if column_recovery_passed else "GATE_FAILED",
+                        "column": column_index,
+                        "forward_error_relative": forward_relative,
+                        "native_volume_residual_relative": native_residual_relative,
+                        "active_trace_exact": active_trace_exact,
+                        "slave_rows_zero": slave_rows_zero,
+                    }
+                )
+                del candidate_storage, native_volume_residual, native_volume_action_values
             slave_positions = np.searchsorted(slave_rows, b_alpha_rows)
             if slave_positions.size and len(slave_rows):
                 valid_slave_positions = slave_positions < len(slave_rows)
@@ -1174,6 +1666,10 @@ def audit_task41_v4_volume_identity(
             persist(f"task41_v4_s_full_trace_col{column_index}", s_full)
             persist(f"task41_v4_g_full_trace_col{column_index}", g_full)
             persist(f"task41_v4_d_volume_trace_col{column_index}", d_volume)
+            if exact_candidate:
+                assert candidate_p6 is not None and candidate_reduced is not None
+                candidate_p6[:active_rows, column_index] = s_full
+                candidate_reduced[:active_rows, column_index] = g_full
             rhs_decomposition_roundoff = _rhs_decomposition_metrics(
                 native_rhs, volume_rhs, b_alpha_rows, b_alpha_values
             )
@@ -1314,8 +1810,66 @@ def audit_task41_v4_volume_identity(
             progress_callback(
                 {"phase": "production_volume_column", "status": "COMPLETED", "column": column_index}
             )
+        candidate_action_gate = None
+        if exact_candidate:
+            assert candidate_p6 is not None and candidate_reduced is not None
+            persist("task41_p0_v5_candidate_full_p6", candidate_p6)
+            persist("task41_p0_v5_candidate_full_reduced_rhs", candidate_reduced)
+            candidate_columns = []
+            for column_index, frozen_denominator in enumerate(TASK41_V5_FROZEN_DENOMINATORS):
+                difference = _difference_metrics(
+                    candidate_p6[:, column_index], candidate_reduced[:, column_index]
+                )
+                dynamic_denominator = max(
+                    _vector_norm(candidate_p6[:, column_index]),
+                    _vector_norm(candidate_reduced[:, column_index]),
+                    np.finfo(float).tiny,
+                )
+                dynamic_relative = difference["absolute_l2"] / dynamic_denominator
+                frozen_relative = difference["absolute_l2"] / frozen_denominator
+                candidate_columns.append(
+                    {
+                        "column": column_index,
+                        "difference": difference,
+                        "dynamic_denominator": dynamic_denominator,
+                        "dynamic_denominator_relative": dynamic_relative,
+                        "frozen_denominator": frozen_denominator,
+                        "frozen_denominator_relative": frozen_relative,
+                        "dynamic_gate_passed": dynamic_relative
+                        <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+                        "frozen_gate_passed": frozen_relative
+                        <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+                    }
+                )
+            candidate_action_gate = {
+                "status": "PASS"
+                if all(
+                    item["dynamic_gate_passed"] and item["frozen_gate_passed"]
+                    for item in candidate_columns
+                )
+                else "ACTUAL_COORDINATES_INSUFFICIENT",
+                "relative_tolerance": TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+                "columns": candidate_columns,
+                "full_action_artifact": "task41_p0_v5_candidate_full_p6",
+                "full_reduced_rhs_artifact": "task41_p0_v5_candidate_full_reduced_rhs",
+                "port_rows_inherited_after_validation": True,
+                "frozen_denominators_source": "review_report_v5.md",
+            }
+        candidate_recovery_status = (
+            "PASS"
+            if exact_candidate
+            and len(candidate_recovery_columns) == 2
+            and all(item["passed"] for item in candidate_recovery_columns)
+            else "ACTUAL_COORDINATES_INSUFFICIENT"
+            if exact_candidate
+            else None
+        )
         return {
-            "schema": "task41.p0.v4.volume_only_attribution.v1",
+            "schema": (
+                "task41.p0.v5.mesh_actual_exact_attribution.v1"
+                if exact_candidate
+                else "task41.p0.v4.volume_only_attribution.v1"
+            ),
             "completed": True,
             "production_action": "P6CellCondensedAction_active_only_shared_owner_caches",
             "rhs_reducer": "P6CellCondensedAction.reduce_rhs(rhs_is_mpc_dual=True)",
@@ -1330,6 +1884,19 @@ def audit_task41_v4_volume_identity(
             "new_identity_evidence_bytes": persisted_bytes,
             "cumulative_evidence_bytes": int(donor["existing_evidence_bytes"]) + prior_new_bytes + persisted_bytes,
             "columns": column_metrics,
+            "candidate_full_action_gate": candidate_action_gate,
+            "candidate_recovery_gate": (
+                {
+                    "status": candidate_recovery_status,
+                    "relative_forward_tolerance": 1.0e-11,
+                    "native_volume_residual_relative_tolerance": 1.0e-10,
+                    "native_volume_action_count": len(candidate_recovery_columns),
+                    "recovery_source": "saved native_volume_rhs with the current exact-geometry owner",
+                    "columns": candidate_recovery_columns,
+                }
+                if exact_candidate
+                else None
+            ),
         }
     finally:
         action.destroy()

@@ -796,14 +796,22 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
 
 
 @pytest.mark.parametrize(
-    ("volume_only", "geometry_pair"),
-    [(False, False), (True, False), (True, True)],
+    ("volume_only", "geometry_pair", "v5_mode", "v5_complete"),
+    [
+        (False, False, False, False),
+        (True, False, False, False),
+        (True, True, False, False),
+        (True, False, True, False),
+        (True, False, True, True),
+    ],
 )
 def test_b0_saved_evidence_audit_uses_supervised_service_route(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     volume_only: bool,
     geometry_pair: bool,
+    v5_mode: bool,
+    v5_complete: bool,
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
@@ -814,6 +822,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         TASK41_P0_V4_SELECTED_ACTIVE_ROW,
         TASK41_P0_V4_SELECTED_ORIGINAL_ROW,
         TASK41_P0_V4_SOURCE_REPORT_SHA256,
+        TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
     )
 
     repo_root = tmp_path
@@ -913,6 +922,8 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     source_report_path = results_root / "v4_source" / "task41_p0_v4_volume_only_attribution.json"
     source_report_path.parent.mkdir(parents=True)
     source_report_path.write_text("{}\n", encoding="utf-8")
+    geometry_reference_path = results_root / "v4_source" / "task41_p0_v4_geometry_pair_probe.json"
+    geometry_reference_path.write_text("{}\n", encoding="utf-8")
     environment = {
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
@@ -953,6 +964,59 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                         "selected_cells": [{"cell_index": 26762}, {"cell_index": 26897}],
                     },
                 }), encoding="utf-8")
+            elif v5_complete:
+                assert "--geometry-policy" in command
+                assert command[command.index("--geometry-policy") + 1] == "mesh_actual_exact"
+                assert Path(command[command.index("--geometry-reference-report") + 1]) == geometry_reference_path
+                volume_result = output_root / "task41_p0_v5_mesh_actual_exact_attribution.json"
+                evidence_dir = output_root / "volume_evidence"
+                evidence_dir.mkdir()
+                evidence_arrays = []
+                for index in range(2):
+                    artifact_path = evidence_dir / f"fixture-{index}.npy"
+                    artifact_path.write_bytes(f"fixture-{index}".encode())
+                    evidence_arrays.append({
+                        "name": f"fixture-{index}",
+                        "path": str(artifact_path),
+                        "sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+                        "bytes": artifact_path.stat().st_size,
+                        "shape": [1],
+                        "dtype": "complex128",
+                    })
+                volume_result.write_text(
+                    json.dumps({
+                        "schema": "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1",
+                        "status": "ACTUAL_COORDINATES_INSUFFICIENT",
+                        "geometry_policy": "mesh_actual_exact",
+                        "donor_contract_sha256": donor_contract_sha,
+                        "consumer_contract_sha256": consumer_contract_sha,
+                        "geometry_reference_report_path": str(geometry_reference_path.resolve()),
+                        "geometry_reference_report_sha256": TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+                        "candidate_numeric_status": "ACTUAL_COORDINATES_INSUFFICIENT",
+                        "persisted_evidence_arrays": evidence_arrays,
+                        "identity_audit": {
+                            "completed": True,
+                            "candidate_full_action_gate": {"status": "ACTUAL_COORDINATES_INSUFFICIENT"},
+                            "candidate_recovery_gate": {
+                                "status": "ACTUAL_COORDINATES_INSUFFICIENT",
+                                "native_volume_action_count": 2,
+                            },
+                            "global_geometry_native_elimination_attribution": {
+                                "global_closure_status": "DIAGNOSTIC_ONLY",
+                            },
+                        },
+                    }),
+                    encoding="utf-8",
+                )
+            elif v5_mode:
+                volume_result = output_root / "task41_p0_v5_mesh_actual_exact_attribution.json"
+                volume_result.write_text(
+                    json.dumps({
+                        "status": "CANDIDATE_NOT_ADMITTED",
+                        "candidate_admission": {"status": "CANDIDATE_NOT_ADMITTED"},
+                    }),
+                    encoding="utf-8",
+                )
             else:
                 assert "--geometry-pair-only" not in command
                 volume_result = output_root / "task41_p0_v4_volume_only_attribution.json"
@@ -960,10 +1024,19 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                     json.dumps({"status": "COMPLETED", "identity_audit": {"completed": True}}),
                     encoding="utf-8",
                 )
-            return {"classification": "COMPLETED", "leader_exit_code": 0}
+            return {
+                "classification": "COMPLETED",
+                "leader_exit_code": 3 if v5_mode and not v5_complete else 0,
+            }
         assert kwargs["campaign_phase"] == "closeout"
         assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
         assert "run_case.py" not in command
+        if v5_complete:
+            assert command[command.index("--mesh-actual-exact-report") + 1] == str(
+                output_root / "task41_p0_v5_mesh_actual_exact_attribution.json"
+            )
+        elif v5_mode:
+            assert "--mesh-actual-exact-report" not in command
         result_path = Path(command[command.index("--output") + 1])
         assert result_path == output_root / "task41_p0_b0_saved_evidence_audit.json"
         result_path.write_text(json.dumps({
@@ -971,6 +1044,12 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             "qualification_passed": False,
             "joint_action_passed": False,
             "official_result": False,
+            **({
+                "mesh_actual_exact_candidate_check": {
+                    "check_completed": True,
+                    "candidate_passed": False,
+                }
+            } if v5_complete else {}),
         }), encoding="utf-8")
         authorization = kwargs["campaign_phase_authorization"]
         assert authorization["checker_kind"] == "task41_p0_b0_saved_evidence_audit_checker"
@@ -996,6 +1075,16 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert kwargs["require_clean_source"] is False
         return donor_contract, donor_contract_sha
 
+    real_watchdog_sha256 = watchdog_module._sha256_file
+    monkeypatch.setattr(
+        watchdog_module,
+        "_sha256_file",
+        lambda path: (
+            TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+            if Path(path).resolve() == geometry_reference_path.resolve()
+            else real_watchdog_sha256(path)
+        ),
+    )
     monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
     monkeypatch.setattr(contract_module, "load_task41_p0_fixed_window", lambda *_a, **_k: window)
     monkeypatch.setattr(contract_module, "__file__", str(repo_root / "src/runners/task41_p0_contract.py"))
@@ -1005,6 +1094,8 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         lambda path: (
             TASK41_P0_V4_SOURCE_REPORT_SHA256
             if Path(path).resolve() == source_report_path.resolve()
+            else TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+            if Path(path).resolve() == geometry_reference_path.resolve()
             else hashlib.sha256(Path(path).read_bytes()).hexdigest()
         ),
     )
@@ -1072,23 +1163,30 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             "--numerical-output", str(numerical_output),
             "--output-dir", str(output_root),
             *( ["--geometry-pair-only", "--source-report", str(source_report_path)] if geometry_pair else [] ),
+            *( ["--geometry-policy", "mesh_actual_exact", "--geometry-reference-report", str(geometry_reference_path)] if v5_mode else [] ),
         ],
         contract_path=consumer_contract_path,
         repo_root=repo_root,
     )
 
     receipt = json.loads((output_root.with_name(output_root.name + ".service") / "task41_p0_service_receipt.json").read_text())
-    assert result == 0, receipt.get("workflow_error")
-    assert len(calls) == (2 if volume_only else 1)
+    assert result == (3 if v5_mode else 0), receipt.get("workflow_error")
+    expected_calls = 1 if not volume_only or (v5_mode and not v5_complete) else 2
+    assert len(calls) == expected_calls
     if volume_only:
         assert calls[0][1]["campaign_phase"] == "numeric"
         assert calls[0][1]["wall_seconds"] == window.cutoff_seconds
-        assert calls[1][1]["campaign_phase"] == "closeout"
+        if expected_calls == 2:
+            assert calls[1][1]["campaign_phase"] == "closeout"
     else:
         assert calls[0][1]["campaign_phase"] == "closeout"
-    assert receipt["status"] == "completed"
+    assert receipt["status"] == (
+        "failed_raw_evidence_retained" if v5_mode else "completed"
+    )
     assert receipt["mode"] == (
-        "saved_b0_v4_geometry_pair_probe"
+        "saved_b0_v5_mesh_actual_exact_candidate"
+        if v5_mode
+        else "saved_b0_v4_geometry_pair_probe"
         if geometry_pair
         else "saved_b0_v4_volume_only_attribution"
         if volume_only
@@ -1099,11 +1197,26 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert receipt["geometry_pair_probe_command"][-3:] == [
             "--geometry-pair-only", "--source-report", str(source_report_path)
         ]
-    assert receipt["required_checker_status"] == "audit_completed"
+    if v5_mode:
+        assert receipt["continuation_status"] == (
+            "v5_mesh_actual_exact_candidate_completed"
+            if v5_complete
+            else "v5_mesh_actual_exact_candidate_failed_or_not_admitted"
+        )
+        if v5_complete:
+            assert receipt["required_checker_result"]["audit_completed"] is True
+            assert receipt["candidate_checker_status"] == "numerical_fail"
+            assert receipt["candidate_numerical_passed"] is False
+    if v5_mode and not v5_complete:
+        assert receipt["required_checker_status"] == "not_run_candidate_not_admitted"
+        assert receipt["candidate_checker_status"] == "not_applicable_candidate_not_built"
+        assert "required_checker_result" not in receipt
+    else:
+        assert receipt["required_checker_status"] == "audit_completed"
+        assert receipt["required_checker_result"]["official_result"] is False
     assert receipt["producer_source_sha"] == donor_source_sha
     assert receipt["consumer_source_sha"] == consumer_source_sha
     assert receipt["donor_source_sha"] == donor_source_sha
-    assert receipt["required_checker_result"]["official_result"] is False
     assert "continuation_watchdog" not in receipt
     assert not numerical_output.exists()
     assert hashlib.sha256(donor_evidence.read_bytes()).hexdigest() == source_artifact_hash

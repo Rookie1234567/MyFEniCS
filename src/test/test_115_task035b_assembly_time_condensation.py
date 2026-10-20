@@ -138,6 +138,68 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(class_counts["raw_class_count"], 1)
         self.assertEqual(class_counts["oriented_class_count"], 1)
 
+    def test_mesh_actual_exact_builder_keeps_original_cell_coordinates(self) -> None:
+        msh, tags, V, compiled = _two_cell_problem(
+            distinct_materials=False, degree=2
+        )
+        msh.geometry.x[:, :] += np.asarray([0.123, 0.257, 0.431])
+        observed: dict[int, np.ndarray] = {}
+        validated: set[int] = set()
+        gates: list[str] = []
+
+        def allocation_gate(label, _facts):
+            gates.append(label)
+
+        def validate_prefix(cell, coordinates, blocks):
+            expected = np.asarray(
+                msh.geometry.x[msh.geometry.dofmap[cell]], dtype=np.float64
+            )
+            np.testing.assert_array_equal(coordinates, expected)
+            self.assertTrue(all(blocks[name].size for name in ("K", "G", "J", "L")))
+            validated.add(cell)
+            return {"coordinates_bitwise_equal": True}
+
+        def observe_exact(cell, coordinates, _blocks, context):
+            expected = np.asarray(
+                msh.geometry.x[msh.geometry.dofmap[cell]], dtype=np.float64
+            )
+            np.testing.assert_array_equal(coordinates, expected)
+            self.assertTrue({"R", "T", "S"}.issubset(context))
+            observed[cell] = np.asarray(coordinates).copy()
+
+        owner = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            tags,
+            strict_local_checks=True,
+            materialize_global_matrix=False,
+            retain_local_schur_for_matrix_free=True,
+            share_identity_cache=True,
+            geometry_policy="mesh_actual_exact",
+            required_prefix_cells=(0, 1),
+            prefix_cell_validator=validate_prefix,
+            exact_cell_observer=observe_exact,
+            allocation_gate=allocation_gate,
+        )
+        try:
+            canonical_counts = assembly_time.assembly_time_geometry_class_counts(
+                msh, tags
+            )
+            self.assertEqual(canonical_counts["raw_class_count"], 1)
+            self.assertEqual(owner.build_audit["mesh_actual_exact_raw_key_count"], 2)
+            self.assertEqual(owner.build_audit["mesh_actual_exact_oriented_key_count"], 2)
+            self.assertEqual(validated, {0, 1})
+            self.assertEqual(set(observed), {0, 1})
+            self.assertIn("mesh_actual_exact_prefix_preflight", gates)
+            self.assertIn("mesh_actual_exact_full_admission", gates)
+            for cell in (0, 1):
+                np.testing.assert_array_equal(
+                    observed[cell],
+                    np.asarray(msh.geometry.x[msh.geometry.dofmap[cell]]),
+                )
+        finally:
+            owner.destroy()
+
     def test_fixed_p5_trace_p6_interior_kernel_condenses_exactly(
         self,
     ) -> None:

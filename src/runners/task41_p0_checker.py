@@ -42,6 +42,11 @@ from src.runners.task41_p0_comparison import (
 CHECKER_SCHEMA = "task41.p0.direct_checker.v1"
 A2_CHECKER_SCHEMA = "task41.p0.a2_iterative_checker.v1"
 B0_CHECKER_SCHEMA = "task41.p0.b0_iterative_checker.v1"
+TASK41_P0_V5_FROZEN_DENOMINATORS = (2225.481253487629, 2225.4807123031883)
+TASK41_P0_V5_RELATIVE_TOLERANCE = 1.0e-11
+TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256 = (
+    "a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031"
+)
 
 
 def evaluate_task41_numerical_summary(
@@ -2479,6 +2484,505 @@ def load_task41_v4_volume_only_donor(
     }
 
 
+def _task41_v5_mesh_actual_exact_candidate_recheck(
+    report_path: Path,
+    *,
+    donor: Mapping[str, Any],
+    donor_contract_sha256: str,
+    consumer: Mapping[str, Any],
+    consumer_contract_sha256: str,
+    donor_contract: Mapping[str, Any],
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Independently recheck persisted V5 vectors and global closure, without FE work."""
+    report_path = Path(report_path).resolve(strict=True)
+    results_root = (Path(repo_root) / "results").resolve()
+    if (
+        report_path.name != "task41_p0_v5_mesh_actual_exact_attribution.json"
+        or not report_path.is_relative_to(results_root)
+    ):
+        raise ValueError("V5 candidate report is outside the registered results tree")
+    report = _json_object(report_path, "Task41 V5 mesh-actual-exact report")
+    if (
+        report.get("schema") != "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1"
+        or report.get("geometry_policy") != "mesh_actual_exact"
+        or report.get("donor_contract_sha256") != donor_contract_sha256
+        or report.get("consumer_contract_sha256") != consumer_contract_sha256
+        or report.get("donor_source_sha") != donor_contract.get("source", {}).get("sha")
+        or report.get("consumer_source_sha") != consumer.get("source", {}).get("sha")
+        or report.get("donor_manifest_sha256") != donor.get("manifest_sha256")
+        or report.get("independent_checker_status") != "NOT_RUN"
+    ):
+        raise ValueError("V5 candidate report donor/consumer/geometry identity differs")
+    candidate_output = report.get("output_directory")
+    evidence_directory = report.get("volume_evidence_directory")
+    if (
+        not isinstance(candidate_output, str)
+        or Path(candidate_output).resolve() != report_path.parent
+        or not isinstance(evidence_directory, str)
+    ):
+        raise ValueError("V5 candidate output directory differs from its report path")
+    evidence_root = Path(evidence_directory).resolve(strict=True)
+    if not evidence_root.is_relative_to(report_path.parent.resolve()):
+        raise ValueError("V5 candidate evidence arrays escape the consumer output directory")
+    reference_path = Path(str(report.get("geometry_reference_report_path", ""))).resolve(strict=True)
+    if (
+        not reference_path.is_relative_to(results_root)
+        or report.get("geometry_reference_report_sha256")
+        != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+        or sha256_file(reference_path) != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+    ):
+        raise ValueError("V5 frozen two-cell geometry reference path/hash differs")
+
+    manifest = donor.get("manifest")
+    columns = donor.get("columns")
+    if not isinstance(manifest, Mapping) or not isinstance(columns, (list, tuple)) or len(columns) != 2:
+        raise ValueError("V5 candidate checker requires the normalized two-column B0 donor")
+    active_rows = int(manifest.get("active_trace_rows", -1))
+    port_rows = int(manifest.get("port_rows", -1))
+    full_rows = int(manifest.get("full_storage_rows", -1))
+    if active_rows < 1 or port_rows < 0 or full_rows < 1:
+        raise ValueError("V5 donor row counts are invalid")
+    candidate_rows = active_rows + port_rows
+
+    records_raw = report.get("persisted_evidence_arrays")
+    if not isinstance(records_raw, list):
+        raise ValueError("V5 candidate report omits persisted evidence-array records")
+    records: dict[str, Mapping[str, Any]] = {}
+    for item in records_raw:
+        if not isinstance(item, Mapping) or not isinstance(item.get("name"), str):
+            raise ValueError("V5 candidate evidence-array record is malformed")
+        name = str(item["name"])
+        if name in records:
+            raise ValueError(f"V5 candidate evidence-array name is duplicated: {name}")
+        records[name] = item
+
+    loaded: dict[str, np.ndarray] = {}
+
+    def load_array(name: str, expected_shape: tuple[int, ...]) -> np.ndarray:
+        record = records.get(name)
+        if record is None:
+            raise ValueError(f"V5 candidate evidence is missing array {name}")
+        path = Path(str(record.get("path", ""))).resolve(strict=True)
+        if (
+            not path.is_relative_to(evidence_root)
+            or path.stat().st_size != int(record.get("bytes", -1))
+            or sha256_file(path) != record.get("sha256")
+        ):
+            raise ValueError(f"V5 candidate evidence path/hash differs for {name}")
+        array = np.load(path, mmap_mode="r", allow_pickle=False)
+        if (
+            array.shape != expected_shape
+            or array.dtype != np.dtype(np.complex128)
+            or record.get("shape") != list(expected_shape)
+            or record.get("dtype") != "complex128"
+        ):
+            raise ValueError(f"V5 candidate evidence shape/dtype differs for {name}")
+        for start in range(0, int(array.shape[0]), 262_144):
+            if not np.isfinite(np.asarray(array[start : start + 262_144])).all():
+                raise ValueError(f"V5 candidate evidence contains non-finite values: {name}")
+        loaded[name] = array
+        return array
+
+    candidate_p6 = load_array("task41_p0_v5_candidate_full_p6", (candidate_rows, 2))
+    candidate_reduced = load_array(
+        "task41_p0_v5_candidate_full_reduced_rhs", (candidate_rows, 2)
+    )
+    saved_port_rhs = np.asarray(donor["attribution"]["joint"]["port_rhs"])
+    if saved_port_rhs.shape != (port_rows, 2) or saved_port_rhs.dtype != np.dtype(np.complex128):
+        raise ValueError("V5 inherited donor port output has an invalid shape or dtype")
+    if not (
+        np.array_equal(candidate_p6[active_rows:, :], saved_port_rhs)
+        and np.array_equal(candidate_reduced[active_rows:, :], saved_port_rhs)
+    ):
+        raise ValueError("V5 candidate changed the inherited port outputs")
+
+    action_columns = []
+    for column_index, frozen_denominator in enumerate(
+        TASK41_P0_V5_FROZEN_DENOMINATORS
+    ):
+        difference = _task41_b0_chunked_difference_summary(
+            candidate_p6[:, column_index], candidate_reduced[:, column_index]
+        )
+        dynamic_denominator = max(
+            _task41_b0_chunked_norm(candidate_p6[:, column_index]),
+            _task41_b0_chunked_norm(candidate_reduced[:, column_index]),
+            np.finfo(float).tiny,
+        )
+        dynamic_relative = difference["absolute_l2"] / dynamic_denominator
+        frozen_relative = difference["absolute_l2"] / frozen_denominator
+        action_columns.append(
+            {
+                "column": column_index,
+                "difference": difference,
+                "dynamic_denominator": dynamic_denominator,
+                "dynamic_denominator_relative": dynamic_relative,
+                "frozen_denominator": frozen_denominator,
+                "frozen_denominator_relative": frozen_relative,
+                "dynamic_gate_passed": dynamic_relative
+                <= TASK41_P0_V5_RELATIVE_TOLERANCE,
+                "frozen_gate_passed": frozen_relative
+                <= TASK41_P0_V5_RELATIVE_TOLERANCE,
+            }
+        )
+    action_status = (
+        "PASS"
+        if all(
+            item["dynamic_gate_passed"] and item["frozen_gate_passed"]
+            for item in action_columns
+        )
+        else "ACTUAL_COORDINATES_INSUFFICIENT"
+    )
+    reported_action = report.get("identity_audit", {}).get("candidate_full_action_gate")
+    if (
+        not isinstance(reported_action, Mapping)
+        or reported_action.get("relative_tolerance") != TASK41_P0_V5_RELATIVE_TOLERANCE
+        or reported_action.get("status") != action_status
+        or reported_action.get("frozen_denominators_source") != "review_report_v5.md"
+        or len(reported_action.get("columns", ())) != 2
+    ):
+        raise ValueError("V5 candidate report action-gate classification differs from recomputation")
+    for actual, recorded in zip(action_columns, reported_action["columns"], strict=True):
+        if not isinstance(recorded, Mapping):
+            raise ValueError("V5 candidate report action column is malformed")
+        for key in ("dynamic_gate_passed", "frozen_gate_passed", "frozen_denominator"):
+            if recorded.get(key) != actual[key]:
+                raise ValueError(f"V5 candidate report action {key} differs from recomputation")
+        for key in ("dynamic_denominator", "dynamic_denominator_relative", "frozen_denominator_relative"):
+            if not np.isclose(float(recorded.get(key, np.nan)), actual[key], rtol=2e-12, atol=1e-300):
+                raise ValueError(f"V5 candidate report action {key} differs from recomputation")
+        recorded_difference = recorded.get("difference")
+        if not isinstance(recorded_difference, Mapping) or not np.isclose(
+            float(recorded_difference.get("absolute_l2", np.nan)),
+            actual["difference"]["absolute_l2"],
+            rtol=2e-12,
+            atol=1e-300,
+        ):
+            raise ValueError("V5 candidate report action difference differs from recomputation")
+    attribution = report.get("identity_audit", {}).get(
+        "global_geometry_native_elimination_attribution"
+    )
+    if (
+        not isinstance(attribution, Mapping)
+        or attribution.get("schema")
+        != "task41.p0.v5.global_geometry_native_elimination_attribution.v1"
+        or len(attribution.get("columns", ())) != 2
+        or attribution.get("global_closure_status") != "DIAGNOSTIC_ONLY"
+        or attribution.get("diagnostic_scales") != [
+            "left_and_right_identity_norms",
+            "frozen_candidate_denominator",
+            "sum_of_accumulated_term_norms",
+        ]
+    ):
+        raise ValueError("V5 global attribution receipt is missing or malformed")
+    closure_results = []
+    expected_artifact_names: set[str] = {
+        "task41_p0_v5_candidate_full_p6",
+        "task41_p0_v5_candidate_full_reduced_rhs",
+    }
+    recovery_gate = report.get("identity_audit", {}).get("candidate_recovery_gate")
+    if (
+        not isinstance(recovery_gate, Mapping)
+        or recovery_gate.get("relative_forward_tolerance") != 1.0e-11
+        or recovery_gate.get("native_volume_residual_relative_tolerance") != 1.0e-10
+        or recovery_gate.get("native_volume_action_count") != 2
+        or recovery_gate.get("recovery_source")
+        != "saved native_volume_rhs with the current exact-geometry owner"
+        or not isinstance(recovery_gate.get("columns"), list)
+        or len(recovery_gate["columns"]) != 2
+    ):
+        raise ValueError("V5 candidate report omits the two-column affected recovery gate")
+    recovery_results = []
+    for column_index, (recorded, donor_column) in enumerate(
+        zip(recovery_gate["columns"], columns, strict=True)
+    ):
+        if not isinstance(recorded, Mapping) or recorded.get("column") != column_index:
+            raise ValueError("V5 candidate recovery column record is malformed")
+        expected_names = {
+            "recovered_storage_artifact": (
+                f"task41_p0_v5_candidate_recovered_storage_col{column_index}",
+                "recovered_storage",
+            ),
+            "native_volume_residual_artifact": (
+                f"task41_p0_v5_candidate_native_volume_residual_col{column_index}",
+                "native_volume_residual",
+            ),
+        }
+        arrays = {}
+        for field, (name, label) in expected_names.items():
+            artifact = recorded.get(field)
+            record = records.get(name)
+            if (
+                not isinstance(artifact, Mapping)
+                or artifact.get("name") != name
+                or not isinstance(record, Mapping)
+                or any(
+                    artifact.get(key) != record.get(key)
+                    for key in ("path", "sha256", "bytes", "shape", "dtype")
+                )
+            ):
+                raise ValueError(f"V5 candidate {label} artifact metadata differs")
+            expected_artifact_names.add(name)
+            arrays[label] = load_array(name, (full_rows,))
+        known = np.asarray(donor_column["known_field"], dtype=np.complex128)
+        rhs = np.asarray(donor_column["native_volume_rhs"], dtype=np.complex128)
+        active_original = np.asarray(donor_column["active_original_rows"], dtype=np.int64)
+        slave_rows = np.asarray(donor_column["slave_rows"], dtype=np.int64)
+        recovered = arrays["recovered_storage"]
+        residual = arrays["native_volume_residual"]
+        if (
+            known.shape != (full_rows,)
+            or rhs.shape != (full_rows,)
+            or active_original.shape != (active_rows,)
+            or slave_rows.ndim != 1
+        ):
+            raise ValueError(f"V5 candidate recovery vectors have invalid donor layout in column {column_index}")
+        forward = _task41_b0_chunked_difference_summary(recovered, known)
+        forward_relative = forward["absolute_l2"] / max(
+            _task41_b0_chunked_norm(known), np.finfo(float).tiny
+        )
+        residual_norm = _task41_b0_chunked_norm(residual)
+        residual_relative = residual_norm / max(
+            _task41_b0_chunked_norm(rhs), np.finfo(float).tiny
+        )
+        active_trace_exact = _task41_b0_indexed_arrays_equal(
+            recovered, known, active_original
+        )
+        slave_rows_zero = _task41_b0_indexed_arrays_equal(
+            recovered, recovered, slave_rows, zero=True
+        )
+        residual_slave_rows_zero = _task41_b0_indexed_arrays_equal(
+            residual, residual, slave_rows, zero=True
+        )
+        forward_passed = bool(
+            np.isfinite(forward_relative) and forward_relative <= 1.0e-11
+        )
+        residual_passed = bool(
+            np.isfinite(residual_relative) and residual_relative <= 1.0e-10
+        )
+        passed = bool(
+            forward_passed
+            and residual_passed
+            and active_trace_exact
+            and slave_rows_zero
+            and residual_slave_rows_zero
+        )
+        for key, actual in (
+            ("forward_error_absolute_l2", forward["absolute_l2"]),
+            ("forward_error_relative", forward_relative),
+            ("native_volume_residual_absolute_l2", residual_norm),
+            ("native_volume_residual_relative", residual_relative),
+        ):
+            if not np.isclose(float(recorded.get(key, np.nan)), actual, rtol=2e-12, atol=1e-300):
+                raise ValueError(f"V5 candidate recovery {key} differs from independent recheck")
+        for key, actual in (
+            ("forward_gate_passed", forward_passed),
+            ("native_volume_residual_gate_passed", residual_passed),
+            ("active_trace_exact", active_trace_exact),
+            ("slave_rows_zero", slave_rows_zero),
+            ("residual_slave_rows_zero", residual_slave_rows_zero),
+            ("passed", passed),
+        ):
+            if recorded.get(key) is not actual:
+                raise ValueError(f"V5 candidate recovery {key} differs from independent recheck")
+        recovery_results.append(
+            {
+                "column": column_index,
+                "forward_error_relative": forward_relative,
+                "native_volume_residual_relative": residual_relative,
+                "active_trace_exact": active_trace_exact,
+                "slave_rows_zero": slave_rows_zero,
+                "residual_slave_rows_zero": residual_slave_rows_zero,
+                "passed": passed,
+            }
+        )
+    recovery_status = (
+        "PASS" if all(item["passed"] for item in recovery_results) else "ACTUAL_COORDINATES_INSUFFICIENT"
+    )
+    if recovery_gate.get("status") != recovery_status:
+        raise ValueError("V5 candidate recovery-gate classification differs from independent recheck")
+    for column_index, (column_report, donor_column) in enumerate(
+        zip(attribution["columns"], columns, strict=True)
+    ):
+        active_original = np.asarray(donor_column["active_original_rows"], dtype=np.int64)
+        native_rhs = np.asarray(donor_column["native_rhs"], dtype=np.complex128)
+        if active_original.shape != (active_rows,) or native_rhs.ndim != 1:
+            raise ValueError(f"V5 donor column {column_index} has invalid trace rows")
+        donor_states = {str(item["label"]): item for item in donor_column["states"]}
+        state_reports = column_report.get("states")
+        if not isinstance(state_reports, list) or set(
+            str(item.get("state")) for item in state_reports if isinstance(item, Mapping)
+        ) != set(donor_states):
+            raise ValueError(f"V5 attribution states differ in column {column_index}")
+        for state_report in state_reports:
+            state_label = str(state_report["state"])
+            donor_state = donor_states[state_label]
+            native_action = np.asarray(
+                donor_state["native_volume_action"], dtype=np.complex128
+            )
+            if native_action.shape != native_rhs.shape:
+                raise ValueError("V5 native RHS/action vectors differ in shape")
+            artifact_report = state_report.get("accumulator_artifacts")
+            if not isinstance(artifact_report, Mapping):
+                raise ValueError("V5 attribution report omits full accumulator vectors")
+            arrays = {}
+            for field in ("T_r_i", "delta_t", "attributed_terms"):
+                artifact = artifact_report.get(field)
+                if not isinstance(artifact, Mapping) or not isinstance(artifact.get("name"), str):
+                    raise ValueError(f"V5 attribution artifact {field} is malformed")
+                name = str(artifact["name"])
+                expected_name = f"task41_p0_v5_attribution_col{column_index}_{state_label}_{field}"
+                if name != expected_name:
+                    raise ValueError("V5 attribution artifact name is not bound to its column/state")
+                expected_artifact_names.add(name)
+                record = records.get(name)
+                if not isinstance(record, Mapping) or any(
+                    artifact.get(key) != record.get(key)
+                    for key in ("path", "sha256", "bytes", "shape", "dtype")
+                ):
+                    raise ValueError(f"V5 attribution artifact record differs for {name}")
+                arrays[field] = load_array(name, (active_rows,))
+            lhs_sq = rhs_sq = error_sq = 0.0
+            accumulated_term_norm_squares = [0.0] * 5
+            max_abs = 0.0
+            for start in range(0, active_rows, 262_144):
+                stop = min(active_rows, start + 262_144)
+                d = np.asarray(candidate_p6[start:stop, column_index]) - np.asarray(
+                    candidate_reduced[start:stop, column_index]
+                )
+                r_t = (
+                    native_rhs[active_original[start:stop]]
+                    - native_action[active_original[start:stop]]
+                )
+                t_r_i = np.asarray(arrays["T_r_i"][start:stop])
+                delta_t = np.asarray(arrays["delta_t"][start:stop])
+                attributed_terms = np.asarray(arrays["attributed_terms"][start:stop])
+                lhs = d + r_t + t_r_i
+                rhs = delta_t + attributed_terms
+                difference = lhs - rhs
+                if not all(np.isfinite(value).all() for value in (lhs, rhs, difference)):
+                    raise ValueError("V5 attribution closure contains non-finite values")
+                lhs_sq += float(np.vdot(lhs, lhs).real)
+                rhs_sq += float(np.vdot(rhs, rhs).real)
+                error_sq += float(np.vdot(difference, difference).real)
+                for term_index, term in enumerate((d, r_t, t_r_i, delta_t, attributed_terms)):
+                    accumulated_term_norm_squares[term_index] += float(np.vdot(term, term).real)
+                if difference.size:
+                    max_abs = max(max_abs, float(np.max(np.abs(difference))))
+            closure_l2 = float(np.sqrt(max(0.0, error_sq)))
+            lhs_l2 = float(np.sqrt(max(0.0, lhs_sq)))
+            rhs_l2 = float(np.sqrt(max(0.0, rhs_sq)))
+            frozen_relative = closure_l2 / TASK41_P0_V5_FROZEN_DENOMINATORS[column_index]
+            accumulation_scale = float(
+                sum(np.sqrt(max(0.0, value)) for value in accumulated_term_norm_squares)
+            )
+            accumulation_relative = closure_l2 / max(accumulation_scale, np.finfo(float).tiny)
+            recorded_closure = state_report.get("closure_difference")
+            if (
+                not isinstance(recorded_closure, Mapping)
+                or not np.isclose(
+                    float(recorded_closure.get("absolute_l2", np.nan)),
+                    closure_l2,
+                    rtol=2e-12,
+                    atol=1e-300,
+                )
+                or not np.isclose(
+                    float(recorded_closure.get("max_abs", np.nan)),
+                    max_abs,
+                    rtol=2e-12,
+                    atol=1e-300,
+                )
+                or not np.isclose(
+                    float(state_report.get("left_d_plus_r_t_plus_T_r_i_l2", np.nan)),
+                    lhs_l2,
+                    rtol=2e-12,
+                    atol=1e-300,
+                )
+                or not np.isclose(
+                    float(state_report.get("right_delta_t_plus_local_defects_l2", np.nan)),
+                    rhs_l2,
+                    rtol=2e-12,
+                    atol=1e-300,
+                )
+                or not np.isclose(
+                    float(state_report.get("closure_frozen_denominator", np.nan)),
+                    TASK41_P0_V5_FROZEN_DENOMINATORS[column_index],
+                    rtol=0.0,
+                    atol=0.0,
+                )
+                or not np.isclose(
+                    float(state_report.get("closure_frozen_denominator_relative", np.nan)),
+                    frozen_relative,
+                    rtol=2e-12,
+                    atol=1e-300,
+                )
+                or not np.isclose(
+                    float(state_report.get("accumulation_scale_l2_sum", np.nan)),
+                    accumulation_scale,
+                    rtol=2e-12,
+                    atol=1e-300,
+                )
+                or not np.isclose(
+                    float(state_report.get("closure_relative_to_accumulation_scale", np.nan)),
+                    accumulation_relative,
+                    rtol=2e-12,
+                    atol=1e-300,
+                )
+            ):
+                raise ValueError("V5 global closure diagnostics differ from independent vector recheck")
+            closure_results.append(
+                {
+                    "column": column_index,
+                    "state": state_label,
+                    "absolute_l2": closure_l2,
+                    "max_abs": max_abs,
+                    "left_l2": lhs_l2,
+                    "right_l2": rhs_l2,
+                    "frozen_denominator": TASK41_P0_V5_FROZEN_DENOMINATORS[column_index],
+                    "frozen_denominator_relative": frozen_relative,
+                    "accumulation_scale": accumulation_scale,
+                    "relative_to_accumulation_scale": accumulation_relative,
+                }
+            )
+    if set(records) & expected_artifact_names != expected_artifact_names:
+        raise ValueError("V5 candidate report is missing independently consumed evidence arrays")
+    closure_status = "DIAGNOSTIC_ONLY"
+    candidate_status = (
+        "PASS" if action_status == "PASS" and recovery_status == "PASS"
+        else "ACTUAL_COORDINATES_INSUFFICIENT"
+    )
+    if report.get("candidate_numeric_status") != candidate_status:
+        raise ValueError("V5 candidate numeric status differs from independent action/recovery recheck")
+    run_status = (
+        "CANDIDATE_NUMERICAL_PASS_CHECKER_PENDING"
+        if candidate_status == "PASS"
+        else "ACTUAL_COORDINATES_INSUFFICIENT"
+    )
+    if report.get("status") != run_status or attribution.get("global_closure_status") != closure_status:
+        raise ValueError("V5 candidate/action or attribution-diagnostic classification differs from independent recheck")
+    return {
+        "schema": "task41.p0.v5.mesh_actual_exact_candidate_check.v1",
+        "check_completed": True,
+        "report_classification_matches": True,
+        "action_status": action_status,
+        "action_passed": action_status == "PASS",
+        "recovery_status": recovery_status,
+        "recovery_passed": recovery_status == "PASS",
+        "recovery_columns": recovery_results,
+        "attribution_closure_status": closure_status,
+        "attribution_closure_passed": None,
+        "candidate_passed": candidate_status == "PASS",
+        "candidate_status": candidate_status,
+        "action_columns": action_columns,
+        "global_closure_states": closure_results,
+        "candidate_report_path": str(report_path),
+        "candidate_report_sha256": sha256_file(report_path),
+        "geometry_reference_report_sha256": TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+        "candidate_arrays_rehashed_and_reopened": True,
+        "port_outputs_inherited_unchanged": True,
+    }
+
+
 def check_task41_p0_b0_saved_evidence_audit(
     *,
     summary_path: Path,
@@ -2489,6 +2993,7 @@ def check_task41_p0_b0_saved_evidence_audit(
     consumer_contract_sha256: str,
     output_path: Path,
     repo_root: Path,
+    mesh_actual_exact_report_path: Path | None = None,
 ) -> dict[str, Any]:
     """Audit producer arrays read-only under a separately bound consumer window/source."""
     donor, donor_digest = require_task41_p0_contract(
@@ -2605,10 +3110,27 @@ def check_task41_p0_b0_saved_evidence_audit(
             "consumer_window_sha256": consumer.get("window", {}).get("sha256"),
         },
     )
+    v5_candidate_check = None
+    if mesh_actual_exact_report_path is not None:
+        normalized_donor = load_task41_v4_volume_only_donor(
+            summary_path=summary_path, numerical_output=numerical_output
+        )
+        v5_candidate_check = _task41_v5_mesh_actual_exact_candidate_recheck(
+            mesh_actual_exact_report_path,
+            donor=normalized_donor,
+            donor_contract_sha256=donor_digest,
+            donor_contract=donor,
+            consumer=consumer,
+            consumer_contract_sha256=consumer_digest,
+            repo_root=repo_root,
+        )
+    audit_completed = bool(evidence.get("audit_completed") is True) and (
+        v5_candidate_check is None or v5_candidate_check.get("check_completed") is True
+    )
     payload = {
         "schema": "task41.p0.b0.saved_evidence_audit.v1",
-        "status": "COMPLETE" if evidence.get("audit_completed") is True else "INCOMPLETE",
-        "audit_completed": evidence.get("audit_completed") is True,
+        "status": "COMPLETE" if audit_completed else "INCOMPLETE",
+        "audit_completed": audit_completed,
         "data_integrity": evidence.get("data_integrity") is True,
         "recovery_passed": evidence.get("recovery_passed") is True,
         "joint_action_passed": evidence.get("joint_action_passed"),
@@ -2632,6 +3154,11 @@ def check_task41_p0_b0_saved_evidence_audit(
             "window_sha256": consumer.get("window", {}).get("sha256"),
         },
         "recovery_evidence_recheck": evidence,
+        **(
+            {"mesh_actual_exact_candidate_check": v5_candidate_check}
+            if v5_candidate_check is not None
+            else {}
+        ),
         "checkpoints": evidence.get("checkpoints", []),
         "raw_evidence_retained": True,
     }
@@ -3127,6 +3654,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--consumer-contract", type=Path)
     parser.add_argument("--consumer-contract-sha256")
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--mesh-actual-exact-report", type=Path)
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
     if args.saved_b0_evidence_audit:
@@ -3153,6 +3681,7 @@ def main(argv: list[str] | None = None) -> int:
                 consumer_contract_sha256=args.consumer_contract_sha256,
                 output_path=args.output,
                 repo_root=root,
+                mesh_actual_exact_report_path=args.mesh_actual_exact_report,
             )
         except (OSError, ValueError, RuntimeError, KeyError) as exc:
             result = {

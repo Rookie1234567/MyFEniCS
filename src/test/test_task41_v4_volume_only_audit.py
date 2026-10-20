@@ -468,7 +468,108 @@ def test_volume_identity_replays_production_volume_and_two_state_residuals(tmp_p
     assert report["columns"][0]["replayed_full_d_trace_and_original_gate"]["same_original_1e_11_gate_passed"] is False
 
 
-def test_volume_identity_replays_real_p6_action_and_rhs_reducer(tmp_path):
+def test_v5_attribution_reconstructs_nonzero_complex_mpc_slave_trace():
+    from src.solvers.task41_v4_volume_only_audit import (
+        Task41V5VolumeAttributionAccumulator,
+    )
+
+    K = np.asarray([[2.0 + 0.3j]], dtype=np.complex128)
+    G = np.asarray([[0.2 + 0.1j, -0.4 + 0.2j]], dtype=np.complex128)
+    J = np.asarray([[0.3 - 0.1j], [0.2 + 0.25j]], dtype=np.complex128)
+    L = np.asarray(
+        [[1.0 + 0.1j, 0.15j], [0.2 + 0.1j, 0.7 - 0.05j]],
+        dtype=np.complex128,
+    )
+    R = -np.linalg.solve(K, G)
+    T = -J @ np.linalg.inv(K)
+    S = L + J @ R
+    phase = 0.6 + 0.8j
+    expansion = sparse.csr_matrix(
+        np.asarray([[1.0 + 0.0j], [phase]], dtype=np.complex128)
+    )
+    active_original = np.asarray([1], dtype=np.int64)
+    active_ids = np.asarray([0], dtype=np.int64)
+    interior_positions = np.asarray([0], dtype=np.int64)
+    trace_positions = np.asarray([1, 2], dtype=np.int64)
+    original_dofs = np.asarray([0, 1, 2], dtype=np.int64)
+    u_i = 0.4 - 0.2j
+    active_value = 0.7 + 0.1j
+    physical_trace = expansion @ np.asarray([active_value])
+    storage = np.asarray([u_i, active_value, 0.0j], dtype=np.complex128)
+    native_action = np.asarray([0.8 - 0.1j, 0.3 + 0.05j, 0.0j], dtype=np.complex128)
+    native_rhs = np.asarray([0.9 + 0.2j, 0.6 - 0.1j, 0.0j], dtype=np.complex128)
+    native_i = native_action[0]
+    r_i = native_rhs[0] - native_i
+    delta_i = (K @ np.asarray([u_i]) + G @ physical_trace).reshape(-1) - native_i
+    actual_trace = J @ np.asarray([u_i]) + L @ physical_trace
+    delta_t = (expansion.conj().T @ actual_trace).reshape(-1) - native_action[1:2]
+    E_T_u = J @ np.asarray([u_i]) + T @ (K @ np.asarray([u_i]))
+    E_S_t = S @ physical_trace - L @ physical_trace - T @ (G @ physical_trace)
+    attributed = T @ delta_i + E_S_t - E_T_u
+    right = delta_t + expansion.conj().T @ attributed
+    T_r_i = (expansion.conj().T @ (T @ np.asarray([r_i]))).reshape(-1)
+    r_t = native_rhs[1:2] - native_action[1:2]
+    d = (right - r_t - T_r_i).reshape(-1)[0]
+
+    state = {
+        "label": "j0",
+        "storage": storage,
+        "native_volume_action": native_action,
+    }
+    donor = {
+        "columns": [
+            {
+                "active_original_rows": active_original,
+                "native_rhs": native_rhs,
+                "states": [state, {**state, "label": "j3"}],
+            },
+            {
+                "active_original_rows": active_original,
+                "native_rhs": native_rhs,
+                "states": [state, {**state, "label": "j3"}],
+            },
+        ]
+    }
+    accumulator = Task41V5VolumeAttributionAccumulator(donor)
+    accumulator.observe(
+        0,
+        np.zeros((8, 3), dtype=np.float64),
+        {"K": K, "G": G, "J": J, "L": L},
+        {
+            "original_dofs": original_dofs,
+            "interior_positions": interior_positions,
+            "trace_positions": trace_positions,
+            "trace_expansion": expansion,
+            "active_ids": active_ids,
+            "R": R,
+            "T": T,
+            "S": S,
+        },
+    )
+    accumulator.admit(active_rows=1)
+    candidate_p6 = np.full((1, 2), d, dtype=np.complex128)
+    candidate_reduced = np.zeros_like(candidate_p6)
+    report = accumulator.finalize(
+        candidate_p6, candidate_reduced, active_rows=1
+    )
+
+    assert storage[2] == 0.0j
+    assert physical_trace[1] == pytest.approx(phase * active_value)
+    assert report["global_closure_status"] == "DIAGNOSTIC_ONLY"
+    assert report["slave_trace_reconstruction"].startswith("local E times")
+    for column in report["columns"]:
+        for result in column["states"]:
+            assert result["closure_difference"]["absolute_l2"] < 1.0e-13
+            assert result["closure_relative_to_accumulation_scale"] < 1.0e-12
+
+
+@pytest.mark.parametrize(
+    ("geometry_policy", "port_error"),
+    (("canonical", 0.0), ("mesh_actual_exact", 0.0), ("mesh_actual_exact", 1.0e-6)),
+)
+def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
+    tmp_path, geometry_policy, port_error
+):
     from mpi4py import MPI
     from scipy.linalg import lu_factor
 
@@ -519,7 +620,7 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(tmp_path):
         appended_rows=1,
         interior_rows=1,
         active_interior_rows=1,
-        build_audit={},
+        build_audit={"geometry_policy": geometry_policy},
         comm=MPI.COMM_SELF,
         owned_active_rows=1,
         owned_appended_rows=1,
@@ -584,11 +685,14 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(tmp_path):
                 ],
             }
         )
+    saved_reduced = reduced.copy()
+    if port_error:
+        saved_reduced[1, 0] += port_error
     donor = {
         "existing_evidence_bytes": 0,
         "columns": columns,
         "attribution": {
-            "joint": {"p6_result": p6, "reduced_rhs": reduced, "port_rhs": port_rhs},
+            "joint": {"p6_result": p6, "reduced_rhs": saved_reduced, "port_rhs": port_rhs},
             "local_class_identities": [],
         },
     }
@@ -605,14 +709,59 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(tmp_path):
         progress_callback=lambda *_args: None,
         persist_array=persist,
         output_directory=tmp_path,
+        native_volume_apply=(
+            apply_native_volume if geometry_policy == "mesh_actual_exact" else None
+        ),
     )
 
     assert report["completed"] is True
     assert report["production_action"] == "P6CellCondensedAction_active_only_shared_owner_caches"
     assert report["saved_port_rows_reused"] is True
-    assert len(persisted) == 14
-    for column in report["columns"]:
-        assert column["replayed_full_d_trace_and_original_gate"]["same_original_1e_11_gate_passed"] is True
+    if geometry_policy == "mesh_actual_exact":
+        assert len(persisted) == 20
+        assert report["candidate_recovery_gate"]["native_volume_action_count"] == 2
+        assert report["candidate_recovery_gate"]["status"] == "ACTUAL_COORDINATES_INSUFFICIENT"
+        assert set(
+            name
+            for name in persisted
+            if "candidate_recovered_storage" in name
+            or "candidate_native_volume_residual" in name
+        ) == {
+            "task41_p0_v5_candidate_recovered_storage_col0",
+            "task41_p0_v5_candidate_recovered_storage_col1",
+            "task41_p0_v5_candidate_native_volume_residual_col0",
+            "task41_p0_v5_candidate_native_volume_residual_col1",
+        }
+        np.testing.assert_array_equal(
+            persisted["task41_p0_v5_candidate_full_p6"], p6
+        )
+        expected_reduced = saved_reduced.copy()
+        np.testing.assert_allclose(
+            persisted["task41_p0_v5_candidate_full_reduced_rhs"],
+            expected_reduced,
+            rtol=0.0,
+            atol=1.0e-15,
+        )
+        candidate_gate = report["candidate_full_action_gate"]
+        assert candidate_gate["status"] == (
+            "PASS" if port_error == 0.0 else "ACTUAL_COORDINATES_INSUFFICIENT"
+        )
+        assert [item["frozen_denominator"] for item in candidate_gate["columns"]] == [
+            2225.481253487629,
+            2225.4807123031883,
+        ]
+        assert all(
+            item["dynamic_gate_passed"] and item["frozen_gate_passed"]
+            for item in candidate_gate["columns"]
+        ) is (port_error == 0.0)
+    else:
+        assert len(persisted) == 14
+        assert report["candidate_full_action_gate"] is None
+        assert report["candidate_recovery_gate"] is None
+    for column_index, column in enumerate(report["columns"]):
+        assert column["replayed_full_d_trace_and_original_gate"]["same_original_1e_11_gate_passed"] is (
+            port_error == 0.0 or column_index == 1
+        )
         for state in column["states"]:
             assert state["volume_identity_dvol_plus_reduce_rvol"]["absolute_l2"] < 1.0e-13
             assert state["full_identity_dfull_plus_reduce_rfull"]["absolute_l2"] < 1.0e-13

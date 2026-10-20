@@ -22,6 +22,8 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 import hashlib
+import json
+from pathlib import Path
 from time import perf_counter
 from types import MappingProxyType
 from typing import Any, Callable
@@ -1417,12 +1419,136 @@ def _canonical_axis_aligned_coordinates(
     return np.ascontiguousarray(canonical.ravel()), geometry_widths
 
 
+def _mesh_actual_exact_coordinates(mesh, cell: int, *, tolerance: float) -> tuple[np.ndarray, tuple[float, float, float]]:
+    """Return the untouched mesh coordinate DoFs for one affine box cell."""
+
+    geometry_dofs = np.asarray(mesh.geometry.dofmap[cell], dtype=np.int32)
+    points = np.asarray(mesh.geometry.x[geometry_dofs], dtype=np.float64)
+    if points.shape != (8, 3):
+        raise ValueError(
+            "mesh_actual_exact requires first-order hexahedral coordinate DoFs"
+        )
+    # Reuse only the established geometric validity check.  Its translated and
+    # endpoint-normalized coordinates are deliberately discarded here.
+    _canonical, widths = _canonical_axis_aligned_coordinates(
+        mesh, cell, tolerance=tolerance, preserve_exact_geometry=True
+    )
+    return np.ascontiguousarray(points), widths
+
+
+def _mesh_actual_form_identity(compiled_form, element, kernels: Mapping[int, Any]) -> tuple[str, str, str]:
+    """Bind exact keys to the compiled kernel, material code, and FE layout."""
+
+    ffi = compiled_form.module.ffi
+    signature = ffi.string(compiled_form.ufcx_form.signature).decode("ascii")
+    module_path = getattr(compiled_form.module, "__file__", None)
+    module_sha = None
+    if module_path and Path(module_path).is_file():
+        digest = hashlib.sha256()
+        with Path(module_path).open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        module_sha = digest.hexdigest()
+    kernel_identity = {
+        "ufcx_signature": signature,
+        "module_sha256": module_sha,
+        "integral_ids": [int(key) for key in sorted(kernels)],
+        "integral_kernel_counts": [
+            [int(key), _kernel_count(dict(kernels), int(key))]
+            for key in sorted(kernels)
+        ],
+        "dtype": str(np.dtype(compiled_form.dtype)),
+    }
+    basix = element.basix_element
+    layout_identity = {
+        "element_hash": int(basix.hash()),
+        "space_dimension": int(element.space_dimension),
+        "entity_dofs": [
+            [list(map(int, entity)) for entity in dimension]
+            for dimension in basix.entity_dofs
+        ],
+    }
+    # In this Task41 form, material constants are compiled into the cell
+    # kernels; the integral tag selects the material branch.  The module hash
+    # and UFL signature therefore bind those coefficients along with the tag.
+    kernel_json = json.dumps(kernel_identity, sort_keys=True, separators=(",", ":"))
+    layout_json = json.dumps(layout_identity, sort_keys=True, separators=(",", ":"))
+    return (
+        hashlib.sha256(kernel_json.encode("utf-8")).hexdigest(),
+        hashlib.sha256(layout_json.encode("utf-8")).hexdigest(),
+        signature,
+    )
+
+
+def _mesh_actual_raw_key(
+    compiled_form,
+    element,
+    kernels: Mapping[int, Any],
+    *,
+    tag: int,
+    coordinates: np.ndarray,
+    material_identity: Mapping[str, Any] | None,
+    form_identity: tuple[str, str, str] | None = None,
+    material_sha256: str | None = None,
+) -> tuple[tuple[Any, ...], bytes]:
+    """Construct a collision-checked identity for unmodified coordinate bytes."""
+
+    coordinate_array = np.ascontiguousarray(coordinates, dtype=np.float64)
+    coordinate_bytes = memoryview(coordinate_array).cast("B").tobytes()
+    kernel_sha, layout_sha, signature = form_identity or _mesh_actual_form_identity(
+        compiled_form, element, kernels
+    )
+    if material_sha256 is None:
+        material_payload = {
+            "cell_tag": int(tag),
+            "compiled_kernel_sha256": kernel_sha,
+            "ufcx_signature": signature,
+            "explicit_material_identity": dict(material_identity or {}),
+        }
+        material_json = json.dumps(
+            material_payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+        )
+        material_sha256 = hashlib.sha256(material_json.encode("utf-8")).hexdigest()
+    coordinate_sha = hashlib.sha256(coordinate_bytes).hexdigest()
+    key = (
+        "mesh_actual_exact",
+        int(tag),
+        material_sha256,
+        layout_sha,
+        tuple(int(value) for value in coordinate_array.shape),
+        coordinate_array.dtype.str,
+        coordinate_sha,
+    )
+    return key, coordinate_bytes
+
+
+def _mesh_actual_material_sha256(
+    form_identity: tuple[str, str, str],
+    *,
+    tag: int,
+    material_identity: Mapping[str, Any] | None,
+) -> str:
+    kernel_sha, _layout_sha, signature = form_identity
+    payload = {
+        "cell_tag": int(tag),
+        "compiled_kernel_sha256": kernel_sha,
+        "ufcx_signature": signature,
+        "explicit_material_identity": dict(material_identity or {}),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
 def assembly_time_geometry_class_counts(
     mesh,
     cell_tags,
     *,
     tolerance: float = 1.0e-11,
     preserve_exact_geometry: bool = False,
+    geometry_policy: str = "canonical",
+    compiled_form: Any | None = None,
+    function_space: Any | None = None,
+    geometry_material_identity_by_tag: Mapping[int, Mapping[str, Any]] | None = None,
 ) -> dict[str, int]:
     """Count global raw/oriented cache keys without constructing local tensors."""
 
@@ -1434,14 +1560,64 @@ def assembly_time_geometry_class_counts(
     permutations = mesh.topology.get_cell_permutation_info()
     local_raw_classes = set()
     local_oriented_classes = set()
+    if geometry_policy not in {"canonical", "mesh_actual_exact"}:
+        raise ValueError(f"unknown assembly-time geometry policy {geometry_policy!r}")
+    if geometry_policy == "mesh_actual_exact" and allocation_gate is None:
+        raise ValueError("mesh_actual_exact requires metadata and continuation allocation gates")
+    if geometry_policy == "mesh_actual_exact" and raw_tensor_evaluator is not None:
+        raise ValueError("mesh_actual_exact uses the original compiled rank-2 kernel directly")
+    if geometry_policy == "mesh_actual_exact" and materialize_global_matrix:
+        raise ValueError("mesh_actual_exact is restricted to the production matrix-free action route")
+    if geometry_policy == "mesh_actual_exact" and (
+        compiled_form is None or function_space is None
+    ):
+        raise ValueError("mesh_actual_exact census requires the compiled form and function space")
+    exact_coordinate_bytes: dict[tuple[Any, ...], bytes] = {}
+    kernels = (
+        _cell_integral_kernels(compiled_form)
+        if geometry_policy == "mesh_actual_exact"
+        else None
+    )
+    exact_form_identity = (
+        _mesh_actual_form_identity(compiled_form, function_space.element, kernels)
+        if geometry_policy == "mesh_actual_exact"
+        else None
+    )
+    exact_material_hashes: dict[int, str] = {}
     for cell in range(owned_cells):
-        _coordinates, widths = _canonical_axis_aligned_coordinates(
-            mesh,
-            cell,
-            tolerance=tolerance,
-            preserve_exact_geometry=preserve_exact_geometry,
-        )
-        raw_key = (int(tags[cell]), *widths)
+        if geometry_policy == "mesh_actual_exact":
+            coordinates, _widths = _mesh_actual_exact_coordinates(
+                mesh, cell, tolerance=tolerance
+            )
+            tag = int(tags[cell])
+            if tag not in exact_material_hashes:
+                exact_material_hashes[tag] = _mesh_actual_material_sha256(
+                    exact_form_identity,
+                    tag=tag,
+                    material_identity=(geometry_material_identity_by_tag or {}).get(tag),
+                )
+            raw_key, coordinate_bytes = _mesh_actual_raw_key(
+                compiled_form,
+                function_space.element,
+                kernels,
+                tag=tag,
+                coordinates=coordinates,
+                material_identity=(geometry_material_identity_by_tag or {}).get(tag),
+                form_identity=exact_form_identity,
+                material_sha256=exact_material_hashes[tag],
+            )
+            previous_bytes = exact_coordinate_bytes.get(raw_key)
+            if previous_bytes is not None and previous_bytes != coordinate_bytes:
+                raise RuntimeError("mesh_actual_exact coordinate digest collision detected")
+            exact_coordinate_bytes[raw_key] = coordinate_bytes
+        else:
+            _coordinates, widths = _canonical_axis_aligned_coordinates(
+                mesh,
+                cell,
+                tolerance=tolerance,
+                preserve_exact_geometry=preserve_exact_geometry,
+            )
+            raw_key = (int(tags[cell]), *widths)
         local_raw_classes.add(raw_key)
         local_oriented_classes.add(
             (raw_key, int(permutations[cell]))
@@ -1990,6 +2166,8 @@ def tabulate_volume_audit_cell(
     cell_tags,
     condensed: AssemblyTimeCondensedSystem,
     cell_index: int,
+    *,
+    geometry_policy: str | None = None,
 ) -> dict[str, Any]:
     """Tabulate and identify one cell's original oriented volume blocks.
 
@@ -2011,20 +2189,64 @@ def tabulate_volume_audit_cell(
         raise IndexError(f"cell_index {cell_index} is outside [0, {owned_cells})")
     cell_map = condensed.cell_recovery_maps[cell_index]
     tag = int(_cell_tag_array(cell_tags, owned_cells)[cell_index])
-    coordinates, widths = _canonical_axis_aligned_coordinates(
-        mesh,
-        cell_index,
-        tolerance=1.0e-11,
-        preserve_exact_geometry=True,
-    )
+    owner_policy = str(condensed.build_audit.get("geometry_policy", "canonical"))
+    selected_policy = owner_policy if geometry_policy is None else str(geometry_policy)
+    if selected_policy not in {"canonical", "mesh_actual_exact"}:
+        raise ValueError(f"unknown volume audit geometry policy {selected_policy!r}")
+    if selected_policy == "mesh_actual_exact":
+        coordinates, widths = _mesh_actual_exact_coordinates(
+            mesh, cell_index, tolerance=1.0e-11
+        )
+    else:
+        coordinates, widths = _canonical_axis_aligned_coordinates(
+            mesh,
+            cell_index,
+            tolerance=1.0e-11,
+            preserve_exact_geometry=True,
+        )
     mesh.topology.create_entity_permutations()
     permutations = np.asarray(mesh.topology.get_cell_permutation_info(), dtype=np.uint32)
     permutation = int(permutations[cell_index])
     class_key = cell_map.class_key
-    if class_key != (tag, *widths, permutation):
+    kernels = _cell_integral_kernels(
+        compiled_form,
+        sum_duplicate_cell_integrals=True,
+    )
+    if selected_policy == "mesh_actual_exact":
+        form_identity = condensed.build_audit.get("geometry_form_identity")
+        if form_identity is None:
+            form_identity = _mesh_actual_form_identity(
+                compiled_form, function_space.element, kernels
+            )
+        material_by_tag = condensed.build_audit.get(
+            "geometry_material_identity_by_tag", {}
+        )
+        material_identity = material_by_tag.get(tag, material_by_tag.get(str(tag)))
+        material_hashes = condensed.build_audit.get("geometry_material_sha256_by_tag", {})
+        material_sha = material_hashes.get(tag, material_hashes.get(str(tag)))
+        if material_sha is None:
+            material_sha = _mesh_actual_material_sha256(
+                form_identity,
+                tag=tag,
+                material_identity=material_identity,
+            )
+        raw_key, _coordinate_bytes = _mesh_actual_raw_key(
+            compiled_form,
+            function_space.element,
+            kernels,
+            tag=tag,
+            coordinates=coordinates,
+            material_identity=material_identity,
+            form_identity=form_identity,
+            material_sha256=material_sha,
+        )
+        expected_class_key = (*raw_key, permutation)
+    else:
+        expected_class_key = (tag, *widths, permutation)
+    if selected_policy == owner_policy and class_key != expected_class_key:
         raise ValueError(
             f"volume audit class identity mismatch for cell {cell_index}: "
-            f"owner={class_key!r}, fresh={(tag, *widths, permutation)!r}"
+            f"owner={class_key!r}, fresh={expected_class_key!r}"
         )
 
     element = function_space.element
@@ -2055,10 +2277,6 @@ def tabulate_volume_audit_cell(
     ):
         raise ValueError(f"volume audit original-row identity mismatch for cell {cell_index}")
 
-    kernels = _cell_integral_kernels(
-        compiled_form,
-        sum_duplicate_cell_integrals=True,
-    )
     path = _tabulate_volume_audit_path(
         compiled_form,
         kernels,
@@ -2097,6 +2315,7 @@ def tabulate_volume_audit_cell(
         "cell_index": cell_index,
         "cell_tag": tag,
         "class_key": class_key,
+        "geometry_policy": selected_policy,
         "cell_widths": widths,
         "cell_permutation": permutation,
         "canonical_coordinates": coordinates,
@@ -2182,6 +2401,17 @@ def build_unconstrained_assembly_time_condensation(
     compact_action_only_maps: bool = False,
     geometry_tolerance: float = 1.0e-11,
     preserve_exact_geometry: bool = False,
+    geometry_policy: str = "canonical",
+    geometry_material_identity_by_tag: Mapping[int, Mapping[str, Any]] | None = None,
+    required_prefix_cells: Sequence[int] = (),
+    prefix_cell_validator: Callable[
+        [int, np.ndarray, Mapping[str, np.ndarray]], Mapping[str, Any]
+    ]
+    | None = None,
+    exact_cell_observer: Callable[
+        [int, np.ndarray, Mapping[str, np.ndarray], Mapping[str, Any]], None
+    ]
+    | None = None,
     allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
     raw_tensor_evaluator: Callable[..., np.ndarray] | None = None,
 ) -> AssemblyTimeCondensedSystem:
@@ -2201,6 +2431,15 @@ def build_unconstrained_assembly_time_condensation(
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
         raise TypeError("assembly-time condensation requires complex128")
+    if geometry_policy not in {"canonical", "mesh_actual_exact"}:
+        raise ValueError(f"unknown assembly-time geometry policy {geometry_policy!r}")
+    required_prefix_cells = tuple(int(cell) for cell in required_prefix_cells)
+    if (required_prefix_cells or prefix_cell_validator is not None) and geometry_policy != "mesh_actual_exact":
+        raise ValueError("required exact-prefix cell checks need mesh_actual_exact geometry")
+    if exact_cell_observer is not None and geometry_policy != "mesh_actual_exact":
+        raise ValueError("exact-cell observer requires mesh_actual_exact geometry")
+    if len(set(required_prefix_cells)) != len(required_prefix_cells):
+        raise ValueError("required exact-prefix cell indices must be unique")
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
     materialize_global_matrix = bool(materialize_global_matrix)
@@ -2213,6 +2452,12 @@ def build_unconstrained_assembly_time_condensation(
     appended_global_rows = int(appended_global_rows)
     mesh = function_space.mesh
     comm = mesh.comm
+    if geometry_policy == "mesh_actual_exact" and comm.size != 1:
+        raise NotImplementedError("mesh_actual_exact is qualified only for the frozen MPI1 candidate")
+    if geometry_policy == "mesh_actual_exact" and not share_identity_cache:
+        raise ValueError("mesh_actual_exact requires the shared identity cache for capacity accounting")
+    if geometry_policy == "mesh_actual_exact" and materialize_global_matrix:
+        raise ValueError("mesh_actual_exact is restricted to the production matrix-free action route")
     if "hexahedron" not in str(mesh.basix_cell()).lower():
         raise NotImplementedError(
             "assembly-time condensation currently supports hexahedra only"
@@ -2237,6 +2482,11 @@ def build_unconstrained_assembly_time_condensation(
     element = function_space.element
     basix_element = element.basix_element
     dimension = int(element.space_dimension)
+    exact_form_identity = (
+        _mesh_actual_form_identity(compiled_form, element, kernels)
+        if geometry_policy == "mesh_actual_exact"
+        else None
+    )
     entity_dofs = basix_element.entity_dofs
     interior_positions = np.asarray(entity_dofs[tdim][0], dtype=np.int32)
     if len(interior_positions) == 0:
@@ -2409,30 +2659,78 @@ def build_unconstrained_assembly_time_condensation(
     cell_permutations = mesh.topology.get_cell_permutation_info()
     local_class_coordinates: dict[tuple[Any, ...], np.ndarray] = {}
     cell_raw_metadata: list[tuple[tuple[Any, ...], tuple[Any, ...]]] = []
+    exact_coordinate_bytes: dict[tuple[Any, ...], bytes] = {}
+    exact_class_descriptors: dict[tuple[Any, ...], dict[str, Any]] = {}
+    exact_cells_by_oriented_class: dict[tuple[Any, ...], list[int]] = {}
+    exact_build_cell_order = list(range(owned_cells))
+    exact_probe_count = 0
+    exact_material_hashes: dict[int, str] = {}
     local_metadata_error = None
     try:
         for cell in range(owned_cells):
-            canonical_coordinates, widths = _canonical_axis_aligned_coordinates(
-                mesh,
-                cell,
-                tolerance=geometry_tolerance,
-                preserve_exact_geometry=preserve_exact_geometry,
-            )
             tag = int(tags[cell])
-            raw_key = (tag, *widths)
-            policy_raw_key = ("actual_space", *raw_key)
+            if geometry_policy == "mesh_actual_exact":
+                actual_coordinates, widths = _mesh_actual_exact_coordinates(
+                    mesh, cell, tolerance=geometry_tolerance
+                )
+                if tag not in exact_material_hashes:
+                    exact_material_hashes[tag] = _mesh_actual_material_sha256(
+                        exact_form_identity,
+                        tag=tag,
+                        material_identity=(geometry_material_identity_by_tag or {}).get(tag),
+                    )
+                raw_key, coordinate_bytes = _mesh_actual_raw_key(
+                    compiled_form,
+                    element,
+                    kernels,
+                    tag=tag,
+                    coordinates=actual_coordinates,
+                    material_identity=(geometry_material_identity_by_tag or {}).get(tag),
+                    form_identity=exact_form_identity,
+                    material_sha256=exact_material_hashes[tag],
+                )
+                previous_bytes = exact_coordinate_bytes.get(raw_key)
+                if previous_bytes is not None and previous_bytes != coordinate_bytes:
+                    raise RuntimeError(
+                        "mesh_actual_exact coordinate digest collision detected"
+                    )
+                exact_coordinate_bytes[raw_key] = coordinate_bytes
+                coordinates_for_kernel = actual_coordinates
+                policy_raw_key = raw_key
+                oriented_key = (raw_key, int(cell_permutations[cell]))
+                exact_class_descriptors.setdefault(
+                    oriented_key,
+                    {
+                        "cell_index": int(cell),
+                        "tag": int(tag),
+                        "widths": [float(value) for value in widths],
+                        "center": np.asarray(actual_coordinates).mean(axis=0).tolist(),
+                        "permutation": int(cell_permutations[cell]),
+                    },
+                )
+                exact_cells_by_oriented_class.setdefault(oriented_key, []).append(int(cell))
+            else:
+                canonical_coordinates, widths = _canonical_axis_aligned_coordinates(
+                    mesh,
+                    cell,
+                    tolerance=geometry_tolerance,
+                    preserve_exact_geometry=preserve_exact_geometry,
+                )
+                raw_key = (tag, *widths)
+                policy_raw_key = ("actual_space", *raw_key)
+                coordinates_for_kernel = canonical_coordinates
             previous = local_class_coordinates.get(policy_raw_key)
             if previous is not None and not np.array_equal(
                 previous,
-                canonical_coordinates,
+                coordinates_for_kernel,
             ):
                 raise RuntimeError(
-                    "raw tensor class has inconsistent canonical geometry "
+                    "raw tensor class has inconsistent geometry "
                     "on one MPI rank"
                 )
             local_class_coordinates.setdefault(
                 policy_raw_key,
-                canonical_coordinates,
+                coordinates_for_kernel,
             )
             cell_raw_metadata.append((raw_key, policy_raw_key))
     except Exception as error:
@@ -2462,7 +2760,7 @@ def build_unconstrained_assembly_time_condensation(
                 if error is not None
             )
         )
-    if allocation_gate is not None:
+    if allocation_gate is not None and geometry_policy == "canonical":
         # This gate is deliberately based only on the class metadata already
         # collected above.  It runs before the raw tensor broadcast and the
         # first oriented Schur class are materialized, so the caller can
@@ -2555,20 +2853,164 @@ def build_unconstrained_assembly_time_condensation(
                 "gate_scope": "before_raw_and_oriented_cell_tensor_cache_construction",
             },
         )
-    policy_forms: dict[str, tuple[Any, dict[int, Any], int]] = {
-        "actual_space": (compiled_form, kernels, dimension),
-    }
-    try:
-        raw_cache, raw_cache_audit, local_kernel_seconds = _global_raw_tensor_cache(
-            comm,
-            local_class_coordinates,
-            policy_forms,
-            raw_tensor_evaluator=raw_tensor_evaluator,
+    elif allocation_gate is not None:
+        exact_raw_classes = {raw_key for raw_key, _policy_raw_key in cell_raw_metadata}
+        exact_oriented_classes = {
+            (raw_key, int(cell_permutations[cell]))
+            for cell, (raw_key, _policy_raw_key) in enumerate(cell_raw_metadata)
+        }
+        exact_count = len(exact_oriented_classes)
+        descriptors = exact_class_descriptors
+        class_order = list(descriptors)
+        selected_keys: list[tuple[Any, ...]] = []
+        covered_strata: set[tuple[int, int]] = set()
+        selected_sample_cell: dict[tuple[Any, ...], int] = {}
+        if any(cell < 0 or cell >= owned_cells for cell in required_prefix_cells):
+            raise IndexError("required exact-prefix cell lies outside owned cells")
+        for cell in required_prefix_cells:
+            raw_key = cell_raw_metadata[cell][0]
+            key = (raw_key, int(cell_permutations[cell]))
+            if key not in selected_sample_cell:
+                selected_keys.append(key)
+                selected_sample_cell[key] = cell
+            covered_strata.add(
+                (int(descriptors[key]["tag"]), int(descriptors[key]["permutation"]))
+            )
+        if len(selected_keys) > min(8, exact_count):
+            raise ValueError("required exact-prefix cells exceed the eight-key V5 prefix cap")
+        for key in class_order:
+            descriptor = descriptors[key]
+            stratum = (int(descriptor["tag"]), int(descriptor["permutation"]))
+            if (
+                stratum not in covered_strata
+                and key not in selected_sample_cell
+                and len(selected_keys) < min(8, exact_count)
+            ):
+                selected_keys.append(key)
+                selected_sample_cell[key] = int(descriptor["cell_index"])
+                covered_strata.add(stratum)
+        feature_rows = [
+            np.asarray([*descriptors[key]["center"], *descriptors[key]["widths"]], dtype=np.float64)
+            for key in class_order
+        ]
+        if feature_rows:
+            features = np.stack(feature_rows)
+            spans = np.ptp(features, axis=0)
+            spans[spans == 0.0] = 1.0
+            normalized = (features - features.min(axis=0)) / spans
+            while len(selected_keys) < min(8, exact_count):
+                selected_positions = [class_order.index(key) for key in selected_keys]
+                remaining_positions = [
+                    index for index, key in enumerate(class_order) if key not in selected_keys
+                ]
+                if not selected_positions:
+                    chosen_position = remaining_positions[0]
+                else:
+                    chosen_position = max(
+                        remaining_positions,
+                        key=lambda index: (
+                            min(float(np.linalg.norm(normalized[index] - normalized[chosen])) for chosen in selected_positions),
+                            -int(descriptors[class_order[index]]["cell_index"]),
+                        ),
+                    )
+                chosen_key = class_order[chosen_position]
+                selected_keys.append(chosen_key)
+                selected_sample_cell[chosen_key] = int(descriptors[chosen_key]["cell_index"])
+        sample_cells = [selected_sample_cell[key] for key in selected_keys]
+        sampled_cell_set = set(sample_cells)
+        exact_build_cell_order = sample_cells + [
+            cell for cell in range(owned_cells) if cell not in sampled_cell_set
+        ]
+        exact_probe_count = len(sample_cells)
+        capacity = assembly_time_condensation_capacity_facts(
+            dimension=int(dimension),
+            interior_dimension=len(interior_positions),
+            trace_dimension=len(trace_positions),
+            raw_class_count=0,
+            oriented_class_count=exact_count,
+            identity_class_count=(1 if share_identity_cache and exact_count else exact_count),
+            retain_local_schur=retain_local_schur_for_matrix_free,
+            scalar_bytes=int(np.dtype(np.complex128).itemsize),
+            index_bytes=int(np.dtype(PETSc.IntType).itemsize),
+            real_bytes=int(np.dtype(np.float64).itemsize),
         )
-    except Exception:
-        if condensed is not None:
-            condensed.destroy()
-        raise
+        exact_capacity = capacity
+        exact_class_count = exact_count
+        prefix_count = exact_probe_count
+        prefix_payload = (
+            prefix_count * int(capacity["retained_per_oriented_class_bytes"])
+            + int(capacity["identity_cache_bytes_upper"])
+        )
+        one_class_workspace = int(capacity["local_working_bytes_upper"])
+        allocation_gate(
+            "mesh_actual_exact_prefix_preflight",
+            {
+                "additional_payload_bytes": int(prefix_payload),
+                "workspace_bytes": one_class_workspace,
+                "raw_key_count": len(exact_raw_classes),
+                "oriented_key_count": exact_count,
+                "prefix_misses_to_measure": prefix_count,
+                "prefix_sample_cells": sample_cells,
+                "prefix_sample_tag_orientation_strata": [
+                    [int(descriptors[key]["tag"]), int(descriptors[key]["permutation"])]
+                    for key in selected_keys
+                ],
+                "uncovered_tag_orientation_strata": [
+                    [int(descriptors[key]["tag"]), int(descriptors[key]["permutation"])]
+                    for key in class_order
+                    if (int(descriptors[key]["tag"]), int(descriptors[key]["permutation"]))
+                    not in covered_strata
+                ],
+                "retained_per_oriented_class_bytes": int(
+                    capacity["retained_per_oriented_class_bytes"]
+                ),
+                "projected_retained_numeric_bytes_upper": int(
+                    capacity["retained_numeric_bytes_upper"]
+                ),
+                "raw_cache_bytes_upper": 0,
+                "raw_tensor_retention_policy": "one_exact_key_then_release_after_elimination",
+                "key_inventory_status": "METADATA_ONLY",
+                "exact_form_identity": list(exact_form_identity),
+                "geometry_material_identity_by_tag": dict(
+                    geometry_material_identity_by_tag or {}
+                ),
+                "exact_key_inventory": [
+                    {
+                        "raw_class_key": list(key[0]),
+                        "permutation": int(key[1]),
+                        **dict(descriptors[key]),
+                    }
+                    for key in class_order
+                ],
+                "gate_scope": "before_first_actual_rank2_kernel_tabulation",
+            },
+        )
+    if geometry_policy == "mesh_actual_exact":
+        raw_cache = {}
+        local_kernel_seconds = 0.0
+        raw_cache_audit = {
+            "raw_tensor_class_count_sum": 0,
+            "raw_tensor_class_use_count_sum": len(cell_raw_metadata),
+            "raw_tensor_class_count_global_unique": len(local_class_coordinates),
+            "raw_tensor_global_owner_policy": "mesh_actual_exact_local_key_stream",
+            "raw_tensor_cross_rank_dedup_active": False,
+            "raw_tensor_retention_policy": "one_actual_rank2_tensor_per_new_oriented_key_then_release",
+        }
+    else:
+        policy_forms: dict[str, tuple[Any, dict[int, Any], int]] = {
+            "actual_space": (compiled_form, kernels, dimension),
+        }
+        try:
+            raw_cache, raw_cache_audit, local_kernel_seconds = _global_raw_tensor_cache(
+                comm,
+                local_class_coordinates,
+                policy_forms,
+                raw_tensor_evaluator=raw_tensor_evaluator,
+            )
+        except Exception:
+            if condensed is not None:
+                condensed.destroy()
+            raise
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
@@ -2576,7 +3018,14 @@ def build_unconstrained_assembly_time_condensation(
     solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
-    recovery_maps: list[CellRecoveryMap] = []
+    recovery_maps: list[CellRecoveryMap | None] = (
+        [None] * owned_cells
+        if geometry_policy == "mesh_actual_exact"
+        else []
+    )
+    exact_probe_records: list[dict[str, Any]] = []
+    exact_cache_misses = 0
+    exact_full_admission_passed = False
     action_tensor_identities: dict[str, Any] = {}
     local_schur_seconds = 0.0
     local_insert_seconds = 0.0
@@ -2587,18 +3036,40 @@ def build_unconstrained_assembly_time_condensation(
             len(interior_positions), dtype=np.float64
         )
         shared_interior_identity.setflags(write=False)
-    for cell, (original_dofs, metadata) in enumerate(
-        zip(local_cell_dofs, cell_raw_metadata, strict=True)
-    ):
+    cell_build_order = (
+        exact_build_cell_order
+        if geometry_policy == "mesh_actual_exact"
+        else list(range(owned_cells))
+    )
+    for cell in cell_build_order:
+        original_dofs = local_cell_dofs[cell]
+        metadata = cell_raw_metadata[cell]
         raw_key, policy_raw_key = metadata
-        tensor = raw_cache[policy_raw_key]
         class_key = (
             *raw_key,
             int(cell_permutations[cell]),
         )
+        exact_oriented_key = (raw_key, int(cell_permutations[cell]))
         schur = schur_cache.get(class_key)
         if schur is None:
-            schur_started = perf_counter()
+            kernel_seconds = 0.0
+            prefix_validation = None
+            observer_seconds = 0.0
+            tensor_prepare_seconds = 0.0
+            if geometry_policy == "mesh_actual_exact":
+                raw_started = perf_counter()
+                tensor = _tabulate_raw_tensor_class(
+                    compiled_form,
+                    kernels,
+                    local_class_coordinates[policy_raw_key],
+                    tag=int(tags[cell]),
+                    dimension=dimension,
+                )
+                kernel_seconds = perf_counter() - raw_started
+                local_kernel_seconds += kernel_seconds
+            else:
+                tensor = raw_cache[policy_raw_key]
+            orientation_started = perf_counter()
             oriented = tensor.copy()
             _orient_cell_tensor(
                 element,
@@ -2608,6 +3079,9 @@ def build_unconstrained_assembly_time_condensation(
                     dtype=np.uint32,
                 ),
             )
+            orientation_seconds = perf_counter() - orientation_started
+            schur_started = perf_counter()
+            tensor_prepare_started = perf_counter()
             if not materialize_global_matrix:
                 # Bind the complete physical tensor before elimination.  Only
                 # digests survive; no extra full local tensor is retained.
@@ -2620,6 +3094,23 @@ def build_unconstrained_assembly_time_condensation(
             A_it = oriented[np.ix_(interior_positions, trace_positions)]
             A_ti = oriented[np.ix_(trace_positions, interior_positions)]
             A_tt = oriented[np.ix_(trace_positions, trace_positions)]
+            blocks = {"K": A_ii, "G": A_it, "J": A_ti, "L": A_tt}
+            if geometry_policy == "mesh_actual_exact" and prefix_cell_validator is not None:
+                raw_key_for_cell, _ = metadata
+                for prefix_cell in exact_cells_by_oriented_class[exact_oriented_key]:
+                    if prefix_cell in required_prefix_cells:
+                        validation = dict(
+                            prefix_cell_validator(
+                                int(prefix_cell),
+                                local_class_coordinates[raw_key_for_cell],
+                                blocks,
+                            )
+                        )
+                        if prefix_cell == int(cell):
+                            prefix_validation = validation
+            if geometry_policy == "mesh_actual_exact":
+                tensor_prepare_seconds = perf_counter() - tensor_prepare_started
+            lu_started = perf_counter()
             try:
                 if strict_local_checks:
                     interior_lu, lu_residual = _strict_local_lu(A_ii)
@@ -2644,7 +3135,10 @@ def build_unconstrained_assembly_time_condensation(
                 trans=2,
             )
             trace_from_interior_rhs = -adjoint_trace_solution.conj().T
+            lu_seconds = perf_counter() - lu_started
+            schur_product_started = perf_counter()
             schur = A_tt + A_ti @ interior_from_trace
+            schur_product_seconds = perf_counter() - schur_product_started
             local_schur_seconds += perf_counter() - schur_started
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
@@ -2660,6 +3154,121 @@ def build_unconstrained_assembly_time_condensation(
             solution_embedding_cache[class_key] = interior_identity
             rhs_trace_cache[class_key] = trace_from_interior_rhs
             residual_projection_cache[class_key] = interior_identity
+            if exact_cell_observer is not None:
+                observer_started = perf_counter()
+                raw_key_for_cell, _ = metadata
+                for observed_cell in exact_cells_by_oriented_class[exact_oriented_key]:
+                    active_ids, trace_expansion, _identity = _cell_trace_expansion(
+                        local_cell_dofs[observed_cell][trace_positions],
+                        trace_constraints,
+                    )
+                    exact_cell_observer(
+                        int(observed_cell),
+                        local_class_coordinates[raw_key_for_cell],
+                        blocks,
+                        {
+                            "class_key": class_key,
+                            "original_dofs": local_cell_dofs[observed_cell],
+                            "interior_positions": interior_positions,
+                            "trace_positions": trace_positions,
+                            "trace_expansion": trace_expansion,
+                            "active_ids": active_ids,
+                            "R": interior_from_trace,
+                            "T": trace_from_interior_rhs,
+                            "S": schur,
+                        },
+                    )
+                observer_seconds = perf_counter() - observer_started
+            if geometry_policy == "mesh_actual_exact":
+                exact_cache_misses += 1
+                release_started = perf_counter()
+                del tensor, oriented, blocks, A_ii, A_it, A_ti, A_tt, adjoint_trace_solution
+                release_seconds = perf_counter() - release_started
+                if len(exact_probe_records) < exact_probe_count:
+                    exact_probe_records.append(
+                        {
+                            "cell_index": int(cell),
+                            "raw_key": repr(raw_key),
+                            "oriented_key": repr(class_key),
+                            "cell_tag": int(tags[cell]),
+                            "permutation": int(cell_permutations[cell]),
+                            "kernel_seconds": float(kernel_seconds),
+                            "orientation_seconds": float(orientation_seconds),
+                            "tensor_prepare_seconds": float(tensor_prepare_seconds),
+                            "lu_solve_seconds": float(lu_seconds),
+                            "schur_seconds": float(schur_product_seconds),
+                            "observer_seconds": float(observer_seconds),
+                            "release_seconds": float(release_seconds),
+                            "reference_validation": prefix_validation,
+                        }
+                    )
+                    if len(exact_probe_records) == exact_probe_count:
+                        phase_names = (
+                            "kernel_seconds",
+                            "orientation_seconds",
+                            "tensor_prepare_seconds",
+                            "lu_solve_seconds",
+                            "schur_seconds",
+                            "observer_seconds",
+                            "release_seconds",
+                        )
+                        phase_max = {
+                            name: max(float(row[name]) for row in exact_probe_records)
+                            for name in phase_names
+                        }
+                        phase_mean = {
+                            name: float(np.mean([row[name] for row in exact_probe_records]))
+                            for name in phase_names
+                        }
+                        remaining_misses = max(0, int(exact_class_count) - exact_probe_count)
+                        conservative_per_class = float(sum(phase_max.values()))
+                        projected_build_seconds = remaining_misses * conservative_per_class
+                        projected_retained = int(
+                            exact_capacity["retained_numeric_bytes_upper"]
+                        )
+                        prefix_retained = (
+                            exact_probe_count
+                            * int(exact_capacity["retained_per_oriented_class_bytes"])
+                            + int(exact_capacity["identity_cache_bytes_upper"])
+                        )
+                        exact_metadata_bytes_upper = (
+                            len(exact_coordinate_bytes) * (8 * 3 * 8 + 8 * 3 * 8 + 1024)
+                            + owned_cells * 512
+                        )
+                        allocation_gate(
+                            "mesh_actual_exact_full_admission",
+                            {
+                                "additional_payload_bytes": max(
+                                    0, projected_retained - prefix_retained
+                                ),
+                                "workspace_bytes": int(exact_capacity["local_working_bytes_upper"]),
+                                "raw_key_count": len(exact_coordinate_bytes),
+                                "oriented_key_count": int(exact_class_count),
+                                "measured_prefix_cache_misses": len(exact_probe_records),
+                                "prefix_records": exact_probe_records,
+                                "prefix_phase_mean_seconds": phase_mean,
+                                "prefix_phase_max_seconds": phase_max,
+                                "prefix_phase_timing_scope": {
+                                    "tensor_prepare_seconds": (
+                                        "raw/oriented tensor SHA-256, K/G/J/L block extraction, and any frozen prefix-cell validation"
+                                    ),
+                                    "schur_seconds": "Schur product only",
+                                },
+                                "projected_remaining_class_build_seconds_upper": projected_build_seconds,
+                                "remaining_miss_projection_method": "sum per-phase maxima from a tag/orientation/coordinate-spread sample",
+                                "post_build_action_checker_seconds_reserve": "must_be_added_by_fixed_window_controller_before_admission",
+                                "projected_retained_numeric_bytes_upper": projected_retained,
+                                "prefix_retained_numeric_bytes_already_resident": int(prefix_retained),
+                                "exact_key_and_cell_metadata_bytes_upper": int(exact_metadata_bytes_upper),
+                                "projected_condensation_and_key_bytes_upper": int(
+                                    projected_retained + exact_metadata_bytes_upper
+                                ),
+                                "raw_cache_bytes_upper": 0,
+                                "raw_tensor_retention_policy": "one_exact_key_then_release_after_elimination",
+                                "time_gate_status": "requires_build_plus_two_column_action_write_and_independent_checker_balance",
+                            },
+                        )
+                        exact_full_admission_passed = True
         trace_original = original_dofs[trace_positions]
         if materialize_global_matrix:
             active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
@@ -2677,13 +3286,15 @@ def build_unconstrained_assembly_time_condensation(
                 addv=PETSc.InsertMode.ADD_VALUES,
             )
             local_insert_seconds += perf_counter() - insert_started
-        recovery_maps.append(
-            CellRecoveryMap(
-                interior_original_dofs=original_dofs[interior_positions],
-                trace_original_dofs=trace_original,
-                class_key=class_key,
-            )
+        cell_map = CellRecoveryMap(
+            interior_original_dofs=original_dofs[interior_positions],
+            trace_original_dofs=trace_original,
+            class_key=class_key,
         )
+        if geometry_policy == "mesh_actual_exact":
+            recovery_maps[cell] = cell_map
+        else:
+            recovery_maps.append(cell_map)
     if materialize_global_matrix:
         preassembly_sync_started = perf_counter()
         comm.Barrier()
@@ -2708,6 +3319,14 @@ def build_unconstrained_assembly_time_condensation(
     else:
         preassembly_sync_seconds = None
         final_assembly_seconds = None
+    if geometry_policy == "mesh_actual_exact":
+        if not exact_full_admission_passed:
+            raise RuntimeError("mesh_actual_exact full admission did not run")
+        if any(cell_map is None for cell_map in recovery_maps):
+            raise RuntimeError("mesh_actual_exact did not restore the original cell-map order")
+        recovery_maps = [cell_map for cell_map in recovery_maps if cell_map is not None]
+        raw_cache_audit["raw_tensor_class_count_sum"] = int(exact_cache_misses)
+        raw_cache_audit["raw_tensor_class_count_global_unique"] = int(exact_cache_misses)
     interior_rows = full_rows - trace_rows
     global_cells = int(comm.allreduce(owned_cells, op=MPI.SUM))
     active_interior_rows = interior_rows
@@ -2862,8 +3481,34 @@ def build_unconstrained_assembly_time_condensation(
             ),
             "axis_aligned_affine_geometry_verified": True,
             "preserve_exact_geometry": bool(preserve_exact_geometry),
+            "geometry_policy": geometry_policy,
+            "geometry_form_identity": exact_form_identity,
+            "geometry_material_identity_by_tag": dict(geometry_material_identity_by_tag or {}),
+            "geometry_material_sha256_by_tag": dict(exact_material_hashes),
+            "mesh_actual_exact_raw_key_count": (
+                len(exact_coordinate_bytes)
+                if geometry_policy == "mesh_actual_exact"
+                else None
+            ),
+            "mesh_actual_exact_oriented_key_count": (
+                len(exact_class_descriptors)
+                if geometry_policy == "mesh_actual_exact"
+                else None
+            ),
+            "mesh_actual_exact_prefix_records": (
+                list(exact_probe_records)
+                if geometry_policy == "mesh_actual_exact"
+                else None
+            ),
+            "mesh_actual_exact_full_admission_passed": (
+                bool(exact_full_admission_passed)
+                if geometry_policy == "mesh_actual_exact"
+                else None
+            ),
             "geometry_identity_policy": (
-                "exact_mesh_widths"
+                "mesh_actual_exact_coordinate_bytes"
+                if geometry_policy == "mesh_actual_exact"
+                else "exact_mesh_widths"
                 if preserve_exact_geometry
                 else "legacy_rounded_12_decimal_widths"
             ),
@@ -2893,14 +3538,24 @@ def build_unconstrained_assembly_time_condensation(
             **raw_cache_audit,
             "operator_cache_identity": {
                 "scope": "single builder invocation; no cross-form reuse",
-                "key_dependencies": [
-                    "material_tag",
-                    "cell_widths_and_jacobian",
-                    "cell_orientation",
-                    "polynomial_degree_and_basis_hash",
-                    "ufcx_integral_ids_and_kernel_counts",
-                    "complex128_scalar_type",
-                ],
+                "key_dependencies": (
+                    [
+                        "material_tag_and_coefficient_identity",
+                        "compiled_kernel_and_integral_identity",
+                        "coordinate_shape_dtype_and_full_bytes_sha256_collision_checked",
+                        "FE_layout_identity",
+                        "cell_orientation",
+                    ]
+                    if geometry_policy == "mesh_actual_exact"
+                    else [
+                        "material_tag",
+                        "cell_widths_and_jacobian",
+                        "cell_orientation",
+                        "polynomial_degree_and_basis_hash",
+                        "ufcx_integral_ids_and_kernel_counts",
+                        "complex128_scalar_type",
+                    ]
+                ),
                 "policy_signatures": raw_cache_audit.get(
                     "raw_tensor_policy_signatures", {}
                 ),
