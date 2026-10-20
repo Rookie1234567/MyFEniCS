@@ -23,9 +23,113 @@ from src.solvers.task41_actual_qmetric_blocked_gram import (
     _geometry_trace_fields,
     _geometry_snippet,
     _instrument_original_kernel_geometry_oracle,
+    _ffcx_static_real_array_identity,
     assemble_blocked_gram,
     compare_geometry_traces,
 )
+
+
+def test_ffcx_static_identity_replays_weight_format_and_table_clamp_strictly():
+    analyzed_weights = np.array(
+        [0.000129663841670984, 0.00046456240886174276], dtype=np.float64
+    )
+    frozen_c_weights = np.array(
+        [0.000129663841670984, 0.0004645624088617428], dtype=np.float64
+    )
+    weight_audit = _ffcx_static_real_array_identity(
+        analyzed_weights,
+        frozen_c_weights,
+        name="Q907 fixture weights",
+        element_table=False,
+    )
+    assert weight_audit["raw_bitwise_mismatch_count"] == 1
+    assert weight_audit["normalized_bitwise_mismatch_count"] == 0
+    assert weight_audit["scalar_formatter"].endswith("CFormatter._format_number")
+
+    with pytest.raises(ValueError, match="not bitwise equal"):
+        _ffcx_static_real_array_identity(
+            analyzed_weights,
+            frozen_c_weights[::-1],
+            name="reordered Q907 fixture weights",
+            element_table=False,
+        )
+    wrong_rule_weights = frozen_c_weights.copy()
+    wrong_rule_weights[1] = 0.0005
+    with pytest.raises(ValueError, match="not bitwise equal"):
+        _ffcx_static_real_array_identity(
+            analyzed_weights,
+            wrong_rule_weights,
+            name="wrong-rule Q907 fixture weights",
+            element_table=False,
+        )
+
+    analyzed_table = np.array(
+        [
+            0.16073717120991327,
+            -0.26734944679534073,
+            0.3174516222581348,
+            -0.3289082262712715,
+        ],
+        dtype=np.float64,
+    )
+    frozen_c_table = np.array(
+        [
+            0.1607371712099133,
+            -0.2673494467953407,
+            0.3174516222581348,
+            -0.3289082262712715,
+        ],
+        dtype=np.float64,
+    )
+    table_audit = _ffcx_static_real_array_identity(
+        analyzed_table,
+        frozen_c_table,
+        name="FE0_C0_Q907 fixture row",
+        element_table=True,
+    )
+    assert table_audit["raw_bitwise_mismatch_count"] == 2
+    assert table_audit["normalized_bitwise_mismatch_count"] == 0
+    assert table_audit["clamped_value_count"] == 0
+    assert table_audit["zero_pattern_mismatch_count_after_normalization"] == 0
+
+    with pytest.raises(ValueError, match="not bitwise equal"):
+        _ffcx_static_real_array_identity(
+            analyzed_table,
+            frozen_c_table[::-1],
+            name="reordered FE0 fixture row",
+            element_table=True,
+        )
+    wrong_nonzero = frozen_c_table.copy()
+    wrong_nonzero[0] = 0.1607371712099132
+    with pytest.raises(ValueError, match="not bitwise equal"):
+        _ffcx_static_real_array_identity(
+            analyzed_table,
+            wrong_nonzero,
+            name="changed FE0 fixture value",
+            element_table=True,
+        )
+
+    analyzed_small_derivative = np.array([-7.304211609504224e-16])
+    frozen_c_small_derivative = np.array([0.0])
+    zero_audit = _ffcx_static_real_array_identity(
+        analyzed_small_derivative,
+        frozen_c_small_derivative,
+        name="FE0_C0_D100_Q907 fixture zero",
+        element_table=True,
+    )
+    assert zero_audit["raw_bitwise_mismatch_count"] == 1
+    assert zero_audit["normalized_bitwise_mismatch_count"] == 0
+    assert zero_audit["clamped_value_count"] == 1
+    assert zero_audit["zero_pattern_mismatch_count_after_normalization"] == 0
+    assert zero_audit["element_table_clamp"]["rtol"] == 1e-6
+    assert zero_audit["element_table_clamp"]["atol"] == 1e-9
+    with pytest.raises(ValueError, match="not bitwise equal"):
+        _ffcx_static_real_array_identity(
+            analyzed_small_derivative,
+            analyzed_small_derivative,
+            name="unclamped FE0 fixture zero",
+            element_table=True,
+        )
 
 
 def test_feature_pair_map_is_recovered_from_frozen_scalar_products():

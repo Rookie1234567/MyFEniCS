@@ -106,6 +106,97 @@ def _cache_identity_digest(payload: dict[str, Any]) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
+def _ffcx_static_real_values(
+    values: np.ndarray, *, element_table: bool
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Replay FFCx's existing table clamp and C-literal formatting exactly."""
+
+    from ffcx.codegeneration.C.c_implementation import CFormatter
+
+    prepared = np.array(values, dtype=np.float64, copy=True, order="C")
+    normalization: dict[str, Any] = {
+        "scalar_formatter": "ffcx.codegeneration.C.c_implementation.CFormatter._format_number",
+        "element_table_clamp": None,
+        "clamped_value_count": 0,
+    }
+    if element_table:
+        import inspect
+
+        from ffcx.ir import elementtables
+
+        clamp = elementtables.clamp_table_small_numbers
+        options = inspect.signature(clamp).parameters
+        before = prepared.view(np.uint64).copy()
+        clamp(prepared)
+        normalization["element_table_clamp"] = {
+            "function": "ffcx.ir.elementtables.clamp_table_small_numbers",
+            "rtol": float(options["rtol"].default),
+            "atol": float(options["atol"].default),
+            "numbers": [float(value) for value in options["numbers"].default],
+        }
+        normalization["clamped_value_count"] = int(
+            np.count_nonzero(before != prepared.view(np.uint64))
+        )
+
+    formatter = CFormatter(np.complex128)
+    serialized = np.fromiter(
+        (float(formatter._format_number(value)) for value in prepared.flat),
+        dtype=np.float64,
+        count=prepared.size,
+    ).reshape(prepared.shape)
+    return serialized, normalization
+
+
+def _ffcx_static_real_array_identity(
+    expected: np.ndarray,
+    actual: np.ndarray,
+    *,
+    name: str,
+    element_table: bool,
+) -> dict[str, Any]:
+    """Require bitwise identity after the original FFCx C-table generation."""
+
+    expected_values = np.asarray(expected, dtype=np.float64)
+    actual_values = np.asarray(actual, dtype=np.float64)
+    if expected_values.shape != actual_values.shape:
+        raise ValueError(
+            f"{name} FFCx static-table shape differs "
+            f"({expected_values.shape} != {actual_values.shape})"
+        )
+    serialized, normalization = _ffcx_static_real_values(
+        expected_values, element_table=element_table
+    )
+    expected_bits = np.ascontiguousarray(expected_values).view(np.uint64)
+    actual_bits = np.ascontiguousarray(actual_values).view(np.uint64)
+    serialized_bits = np.ascontiguousarray(serialized).view(np.uint64)
+    raw_mismatch_count = int(np.count_nonzero(expected_bits != actual_bits))
+    normalized_mismatch_count = int(np.count_nonzero(serialized_bits != actual_bits))
+    zero_pattern_mismatch_count = int(
+        np.count_nonzero((serialized == 0.0) != (actual_values == 0.0))
+    )
+    max_abs_before_normalization = float(
+        np.abs(expected_values - actual_values).max(initial=0.0)
+    )
+    if normalized_mismatch_count:
+        raise ValueError(
+            f"{name} is not bitwise equal after frozen FFCx static-table processing "
+            f"(raw_bitwise_mismatches={raw_mismatch_count}, "
+            f"normalized_bitwise_mismatches={normalized_mismatch_count}, "
+            f"zero_pattern_mismatches={zero_pattern_mismatch_count}, "
+            f"max_abs_before_normalization={max_abs_before_normalization:.17g})"
+        )
+    return {
+        "name": name,
+        "status": "BITWISE_EQUAL_AFTER_FFCX_STATIC_TABLE_PROCESSING",
+        "shape": list(expected_values.shape),
+        "raw_bitwise_mismatch_count": raw_mismatch_count,
+        "normalized_bitwise_mismatch_count": normalized_mismatch_count,
+        "zero_pattern_mismatch_count_after_normalization": zero_pattern_mismatch_count,
+        "max_abs_before_normalization": max_abs_before_normalization,
+        **normalization,
+    }
+
+
 INTEGRAL_BODY_BY_TAG = {
     1: "864d4c7eed2757a5abf2d85edfb0b0c88b2dd0a1",
     2: "400b1484491f511cf882a0fa24bcbec7f47377f5",
@@ -599,6 +690,8 @@ class _FrozenFFCxGeometryHelper:
         self._weights: np.ndarray | None = None
         self._reference_table_zero_counts: list[int] = []
         self._reference_table_zero_pattern_hashes: list[str] = []
+        self.reference_table_validation: list[dict[str, Any]] = []
+        self.reference_weight_validation: dict[str, Any] | None = None
         self.reference_weight_sha256: str | None = None
         self.static_table_shapes: dict[str, tuple[int, ...]] = {}
         self._geometry_functions: dict[str, Any] = {}
@@ -736,8 +829,12 @@ class _FrozenFFCxGeometryHelper:
             raise RuntimeError("frozen helper returned no Q907 weight table")
         weights = np.ctypeslib.as_array(weight_pointer, shape=(POINT_COUNT,))
         weights.setflags(write=False)
-        if not np.array_equal(weights, np.asarray(expected_rule_weights, dtype=np.float64)):
-            raise ValueError("FFCx Q907 weights differ from analyzed full-form weights")
+        self.reference_weight_validation = _ffcx_static_real_array_identity(
+            expected_rule_weights,
+            weights,
+            name="FFCx Q907 weights",
+            element_table=False,
+        )
         if np.asarray(expected_rule_points).shape != (POINT_COUNT, 3):
             raise ValueError("analyzed full-form rule is not the frozen 512-point Q907 rule")
         self._library = library
@@ -757,32 +854,21 @@ class _FrozenFFCxGeometryHelper:
 
         element = self._profile_element
         tabulation = np.asarray(element.tabulate(1, np.asarray(points, dtype=np.float64)))
+        records = []
         for table_index, (component, derivative) in enumerate(FEATURE_COMPONENT_DERIVATIVE):
             expected = np.asarray(
                 tabulation[basix.index(*derivative), :, :, component], dtype=np.float64
             )
             actual = self._reference_tables[table_index]
-            bitwise_equal = np.array_equal(expected, actual)
-            if not bitwise_equal:
-                difference = np.abs(expected - actual)
-                structural_zero_equal = np.array_equal(
-                    expected == 0.0, actual == 0.0
+            records.append(
+                _ffcx_static_real_array_identity(
+                    expected,
+                    actual,
+                    name=f"Basix cross-check {FEATURE_NAMES[table_index]}",
+                    element_table=True,
                 )
-                zero_mismatches = int(
-                    np.count_nonzero((expected == 0.0) != (actual == 0.0))
-                )
-                mismatch_kind = (
-                    "structural zero pattern differs"
-                    if not structural_zero_equal
-                    else "values differ with structural zero pattern preserved"
-                )
-                raise ValueError(
-                    "Basix cross-check against the frozen FFCx reference table is not "
-                    f"bitwise equal ({mismatch_kind}; table={FEATURE_NAMES[table_index]}, "
-                    f"zero_pattern_mismatches={zero_mismatches}, "
-                    f"max_abs={float(difference.max(initial=0.0)):.17g}); "
-                    "this is a table-identity diagnostic, not a geometry result"
-                )
+            )
+        self.reference_table_validation = records
 
     def bind_element(self, element: Any) -> None:
         self._profile_element = element
@@ -1139,6 +1225,8 @@ class _FrozenFFCxGeometryHelper:
                 else None
             ),
             "reference_weight_sha256": self.reference_weight_sha256,
+            "reference_weight_validation": self.reference_weight_validation,
+            "reference_table_validation": list(self.reference_table_validation),
             "reference_table_zero_counts": list(self._reference_table_zero_counts),
             "reference_table_zero_pattern_hashes": list(
                 self._reference_table_zero_pattern_hashes
