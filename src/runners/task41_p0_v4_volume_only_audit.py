@@ -36,6 +36,15 @@ class _CandidateNotAdmitted(RuntimeError):
     """Exact-geometry candidate lacks fixed-window or resource headroom."""
 
 
+def _v4_required_checker_watchdog_elapsed_seconds(
+    v4_extraction: Mapping[str, Any],
+) -> float:
+    value = float(v4_extraction["required_checker_watchdog_elapsed_seconds"])
+    if not math.isfinite(value) or value <= 0.0:
+        raise ValueError("V4 required-checker watchdog elapsed time is not finite and positive")
+    return value
+
+
 def _write_json_atomic(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
@@ -640,8 +649,8 @@ def main(argv: list[str] | None = None) -> int:
             "campaign_window_sha256": fixed_window.sha256,
             "measured_service_parent_seconds": postbuild_parent_seconds,
             "measured_worker_seconds": float(v4_extraction["worker_elapsed_seconds"]),
-            "required_checker_watchdog_seconds": float(
-                v4_extraction["required_checker_watchdog_seconds"]
+            "required_checker_watchdog_seconds": (
+                _v4_required_checker_watchdog_elapsed_seconds(v4_extraction)
             ),
             "safety_factor": TASK41_P0_V5_POSTBUILD_SAFETY_FACTOR,
         }

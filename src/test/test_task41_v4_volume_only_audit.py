@@ -291,6 +291,31 @@ def _fixture(tmp_path: Path, monkeypatch):
     )
 
 
+def test_v5_postbuild_reserve_reads_frozen_v4_checker_watchdog_elapsed_seconds():
+    import json
+
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        _v4_required_checker_watchdog_elapsed_seconds,
+    )
+
+    repo_root = Path(__file__).resolve().parents[2]
+    receipt_path = (
+        repo_root
+        / "docs/task41extra_phi90_p50x50_g17x20/outcomes/"
+        / "b0_v4_volume_only_attribution_20261020.json"
+    )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert (
+        receipt["identity"]["campaign_window_sha256"]
+        == "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38"
+    )
+    extraction = receipt["volume_only_extraction"]
+    assert extraction["status"] == "COMPLETED"
+    assert _v4_required_checker_watchdog_elapsed_seconds(extraction) == pytest.approx(
+        59.97374047804624
+    )
+
+
 def test_volume_only_owner_avoids_surface_and_persists_each_class_once(tmp_path, monkeypatch):
     case = _fixture(tmp_path, monkeypatch)
 
