@@ -152,10 +152,16 @@ TASK41_B0_V3_TOTAL_SECONDS = 86_400.0
 TASK41_B0_V3_NUMERICAL_SECONDS = 85_200.0
 TASK41_B0_V6_WINDOW_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v6_24h.json"
 TASK41_B0_V6_AUTH_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "v6_24h_authorization.json"
-TASK41_B0_V6_AUTH_SCHEMA = "task41.b0.v6.user_continuation_authorization.v1"
+TASK41_B0_V6_AUTH_LEGACY_SCHEMA = "task41.b0.v6.user_continuation_authorization.v1"
+TASK41_B0_V6_AUTH_SCHEMA = "task41.b0.v6.user_continuation_authorization.v2"
 TASK41_B0_V6_AUTHORIZATION = "user_explicit_v6_24h_20261020"
 TASK41_B0_V6_TOTAL_SECONDS = 86_400.0
 TASK41_B0_V6_NUMERICAL_SECONDS = 85_200.0
+TASK41_B0_V6_PREPARATION_T0_KIND = "user_approved_v6_preparation_start"
+TASK41_B0_V6_PREPARATION_BOOTSTRAP_TREATMENT = (
+    "preparation_start_to_anchor_utc_elapsed_charged; "
+    "pre_anchor_monotonic_and_boottime_unknown"
+)
 
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
@@ -1212,17 +1218,37 @@ def _task41_v6_authorization(root: Path) -> tuple[dict[str, Any], str]:
         payload = json.loads(raw)
     except (OSError, json.JSONDecodeError) as exc:
         raise Task41ContractError("Task41 V6 continuation requires an explicit authorization receipt") from exc
-    expected_fields = {
+    common_fields = {
         "schema", "authorization", "source_at_entry", "parent_window_path",
         "parent_window_sha256", "total_seconds", "numerical_seconds",
         "closeout_seconds",
     }
+    if not isinstance(payload, dict):
+        raise Task41ContractError("Task41 V6 authorization or preserved V3 parent identity changed")
+    schema = payload.get("schema")
+    if schema == TASK41_B0_V6_AUTH_LEGACY_SCHEMA:
+        expected_fields = common_fields
+    elif schema == TASK41_B0_V6_AUTH_SCHEMA:
+        expected_fields = common_fields | {"preparation_started_utc"}
+    else:
+        raise Task41ContractError("Task41 V6 authorization schema is not supported")
+    if set(payload) != expected_fields:
+        raise Task41ContractError("Task41 V6 authorization fields are incomplete or unexpected")
+    if schema == TASK41_B0_V6_AUTH_SCHEMA:
+        preparation_started_utc = payload.get("preparation_started_utc")
+        try:
+            preparation_started_ns = _utc_ns(preparation_started_utc)
+        except (TypeError, ValueError) as exc:
+            raise Task41ContractError(
+                "Task41 V6 preparation start must be a canonical UTC timestamp"
+            ) from exc
+        if preparation_started_utc != _utc_text_from_ns(preparation_started_ns):
+            raise Task41ContractError(
+                "Task41 V6 preparation start must be a canonical UTC timestamp"
+            )
     parent_path = root / TASK41_B0_V3_WINDOW_RELATIVE
     if (
-        not isinstance(payload, dict)
-        or set(payload) != expected_fields
-        or payload.get("schema") != TASK41_B0_V6_AUTH_SCHEMA
-        or payload.get("authorization") != TASK41_B0_V6_AUTHORIZATION
+        payload.get("authorization") != TASK41_B0_V6_AUTHORIZATION
         or payload.get("total_seconds") != TASK41_B0_V6_TOTAL_SECONDS
         or payload.get("numerical_seconds") != TASK41_B0_V6_NUMERICAL_SECONDS
         or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
@@ -1322,19 +1348,36 @@ def load_task41_p0_fixed_window(
         bootstrap_seconds = 180.0
     elif is_v6_continuation:
         authorization, authorization_sha = _task41_v6_authorization(root)
+        preparation_started_utc = authorization.get("preparation_started_utc")
+        if preparation_started_utc is None:
+            expected_t0_ns = int(anchor["utc_ns"])
+            expected_bootstrap_seconds = 0.0
+            expected_t0_basis = {"kind": "user_approved_v6_24h_continuation"}
+            expected_bootstrap_treatment = "new_approved_window_anchor_is_t0"
+        else:
+            expected_t0_ns = _utc_ns(preparation_started_utc)
+            expected_bootstrap_seconds = (
+                int(anchor["utc_ns"]) - expected_t0_ns
+            ) / 1e9
+            expected_t0_basis = {"kind": TASK41_B0_V6_PREPARATION_T0_KIND}
+            expected_bootstrap_treatment = TASK41_B0_V6_PREPARATION_BOOTSTRAP_TREATMENT
+        recorded_bootstrap = payload.get("bootstrap_utc_elapsed_seconds")
         if (
-            t0_ns != int(anchor["utc_ns"])
+            t0_ns != expected_t0_ns
+            or expected_bootstrap_seconds < 0
             or payload["source_sha"] != authorization["source_at_entry"]
             or payload["continuation_authorization_sha256"] != authorization_sha
             or payload.get("parent_window_path") != str(TASK41_B0_V3_WINDOW_RELATIVE)
             or payload.get("parent_window_sha256") != TASK41_B0_V3_WINDOW_SHA256
-            or payload.get("t0_basis") != {"kind": "user_approved_v6_24h_continuation"}
-            or payload.get("bootstrap_utc_elapsed_seconds") != 0.0
+            or payload.get("t0_basis") != expected_t0_basis
+            or not isinstance(recorded_bootstrap, (int, float))
+            or isinstance(recorded_bootstrap, bool)
+            or abs(float(recorded_bootstrap) - expected_bootstrap_seconds) > 1e-6
             or payload.get("bootstrap_boottime_elapsed_seconds") is not None
-            or payload.get("bootstrap_time_treatment") != "new_approved_window_anchor_is_t0"
+            or payload.get("bootstrap_time_treatment") != expected_bootstrap_treatment
         ):
             raise Task41ContractError("Task41 V6 window clock, approval, or V3 parent changed")
-        bootstrap_seconds = 0.0
+        bootstrap_seconds = expected_bootstrap_seconds
     elif is_b0:
         expected_t0_ns = _utc_ns(TASK41_B0_T0_UTC)
         bootstrap_utc = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
@@ -1534,7 +1577,21 @@ def prepare_task41_p0(
     if b0_v6_continuation and not window_path.exists():
         assert v6_authorization is not None and v6_authorization_sha is not None
         anchor = clock_sample(include_boot_id=True)
-        t0_ns = int(anchor["utc_ns"])
+        preparation_started_utc = v6_authorization.get("preparation_started_utc")
+        if preparation_started_utc is None:
+            t0_ns = int(anchor["utc_ns"])
+            bootstrap_seconds = 0.0
+            t0_basis = {"kind": "user_approved_v6_24h_continuation"}
+            bootstrap_treatment = "new_approved_window_anchor_is_t0"
+        else:
+            t0_ns = _utc_ns(preparation_started_utc)
+            if int(anchor["utc_ns"]) < t0_ns:
+                raise Task41ContractError(
+                    "Task41 V6 preparation start is later than the current clock anchor"
+                )
+            bootstrap_seconds = (int(anchor["utc_ns"]) - t0_ns) / 1e9
+            t0_basis = {"kind": TASK41_B0_V6_PREPARATION_T0_KIND}
+            bootstrap_treatment = TASK41_B0_V6_PREPARATION_BOOTSTRAP_TREATMENT
         v6_payload = {
             "schema": TASK41_P0_WINDOW_SCHEMA,
             "task_id": TASK41_MODEL_ID,
@@ -1553,10 +1610,10 @@ def prepare_task41_p0(
             "accounting_path": str(
                 (root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v6_24h.jsonl").resolve()
             ),
-            "t0_basis": {"kind": "user_approved_v6_24h_continuation"},
-            "bootstrap_utc_elapsed_seconds": 0.0,
+            "t0_basis": t0_basis,
+            "bootstrap_utc_elapsed_seconds": bootstrap_seconds,
             "bootstrap_boottime_elapsed_seconds": None,
-            "bootstrap_time_treatment": "new_approved_window_anchor_is_t0",
+            "bootstrap_time_treatment": bootstrap_treatment,
             "continuation_authorization_sha256": v6_authorization_sha,
             "parent_window_path": str(TASK41_B0_V3_WINDOW_RELATIVE),
             "parent_window_sha256": TASK41_B0_V3_WINDOW_SHA256,

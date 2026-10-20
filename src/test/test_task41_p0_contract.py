@@ -1325,7 +1325,14 @@ def test_task41_v3_window_immutable_and_parent_bound(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize(
     "authorization_state",
-    ("missing", "wrong_parent_path", "wrong_parent_sha", "missing_parent_file"),
+    (
+        "missing",
+        "wrong_parent_path",
+        "wrong_parent_sha",
+        "missing_parent_file",
+        "missing_preparation_start",
+        "invalid_preparation_start",
+    ),
 )
 def test_task41_v6_prepare_rejects_missing_authorization_or_wrong_parent_before_window(
     tmp_path, monkeypatch, authorization_state
@@ -1364,6 +1371,12 @@ def test_task41_v6_prepare_rejects_missing_authorization_or_wrong_parent_before_
             "numerical_seconds": module.TASK41_B0_V6_NUMERICAL_SECONDS,
             "closeout_seconds": module.TASK41_CLOSEOUT_SECONDS,
         }
+        if authorization_state != "missing_preparation_start":
+            auth["preparation_started_utc"] = (
+                "not-a-utc-timestamp"
+                if authorization_state == "invalid_preparation_start"
+                else "2026-10-20T10:21:59.261754681Z"
+            )
         if authorization_state == "wrong_parent_path":
             auth["parent_window_path"] = str(module.TASK41_B0_WINDOW_RELATIVE)
         elif authorization_state == "wrong_parent_sha":
@@ -1381,6 +1394,10 @@ def test_task41_v6_prepare_rejects_missing_authorization_or_wrong_parent_before_
     error = (
         "explicit authorization"
         if authorization_state == "missing"
+        else "fields are incomplete"
+        if authorization_state == "missing_preparation_start"
+        else "preparation start must be a canonical UTC timestamp"
+        if authorization_state == "invalid_preparation_start"
         else "preserved V3 parent identity"
     )
     with pytest.raises(Task41ContractError, match=error):
@@ -1395,7 +1412,10 @@ def test_task41_v6_prepare_rejects_missing_authorization_or_wrong_parent_before_
     assert not window_path.exists()
 
 
-def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(tmp_path, monkeypatch):
+@pytest.mark.parametrize("legacy_receipt", (False, True))
+def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(
+    tmp_path, monkeypatch, legacy_receipt
+):
     import src.runners.task41_p0_contract as module
     from src.runners.task41_p0_contract import launcher_values
 
@@ -1408,8 +1428,16 @@ def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(tmp_path, mon
     parent_path.write_bytes(b"fixture V3 parent window")
     parent_sha = hashlib.sha256(parent_path.read_bytes()).hexdigest()
     monkeypatch.setattr(module, "TASK41_B0_V3_WINDOW_SHA256", parent_sha)
+    real_clock_sample = module.clock_sample
+    frozen_anchor = real_clock_sample(include_boot_id=True)
+    preparation_started_ns = int(frozen_anchor["utc_ns"]) - 37_654_321_987
+    preparation_started_utc = module._utc_text_from_ns(preparation_started_ns)
     auth = {
-        "schema": module.TASK41_B0_V6_AUTH_SCHEMA,
+        "schema": (
+            module.TASK41_B0_V6_AUTH_LEGACY_SCHEMA
+            if legacy_receipt
+            else module.TASK41_B0_V6_AUTH_SCHEMA
+        ),
         "authorization": module.TASK41_B0_V6_AUTHORIZATION,
         "source_at_entry": source_sha,
         "parent_window_path": str(module.TASK41_B0_V3_WINDOW_RELATIVE),
@@ -1418,6 +1446,8 @@ def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(tmp_path, mon
         "numerical_seconds": module.TASK41_B0_V6_NUMERICAL_SECONDS,
         "closeout_seconds": module.TASK41_CLOSEOUT_SECONDS,
     }
+    if not legacy_receipt:
+        auth["preparation_started_utc"] = preparation_started_utc
     auth_path = tmp_path / module.TASK41_B0_V6_AUTH_RELATIVE
     auth_path.parent.mkdir(parents=True, exist_ok=True)
     auth_path.write_text(json.dumps(auth), encoding="utf-8")
@@ -1434,11 +1464,10 @@ def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(tmp_path, mon
         raise AssertionError(f"unexpected git query: {args}")
 
     monkeypatch.setattr(module, "_git", fake_git)
-    real_clock_sample = module.clock_sample
     clock_samples = []
 
     def counted_clock_sample(*, include_boot_id):
-        sample = real_clock_sample(include_boot_id=include_boot_id)
+        sample = dict(frozen_anchor)
         clock_samples.append(sample)
         return sample
 
@@ -1465,14 +1494,39 @@ def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(tmp_path, mon
     window_path = tmp_path / result["window_path"]
     frozen_window_bytes = window_path.read_bytes()
     window_payload = json.loads(frozen_window_bytes)
-    assert result["window_t0_utc"] == window_payload["t0_utc"]
+    expected_t0_utc = (
+        _utc_z(int(frozen_anchor["utc_ns"]))
+        if legacy_receipt
+        else preparation_started_utc
+    )
+    expected_bootstrap_seconds = (
+        0.0
+        if legacy_receipt
+        else (int(frozen_anchor["utc_ns"]) - preparation_started_ns) / 1e9
+    )
+    assert result["window_t0_utc"] == expected_t0_utc
+    assert window_payload["t0_utc"] == expected_t0_utc
     assert window_payload["source_sha"] == source_sha
     assert window_payload["total_seconds"] == 86_400.0
     assert window_payload["numerical_seconds"] == 85_200.0
     assert window_payload["closeout_seconds"] == 1_200.0
     assert window_payload["anchor"] == clock_samples[0]
-    assert window_payload["t0_basis"] == {"kind": "user_approved_v6_24h_continuation"}
-    assert window_payload["bootstrap_utc_elapsed_seconds"] == 0.0
+    assert window_payload["t0_basis"] == {
+        "kind": (
+            "user_approved_v6_24h_continuation"
+            if legacy_receipt
+            else module.TASK41_B0_V6_PREPARATION_T0_KIND
+        )
+    }
+    assert window_payload["bootstrap_utc_elapsed_seconds"] == pytest.approx(
+        expected_bootstrap_seconds
+    )
+    assert window_payload["bootstrap_boottime_elapsed_seconds"] is None
+    assert window_payload["bootstrap_time_treatment"] == (
+        "new_approved_window_anchor_is_t0"
+        if legacy_receipt
+        else module.TASK41_B0_V6_PREPARATION_BOOTSTRAP_TREATMENT
+    )
 
     contract_path = tmp_path / result["contract_path"]
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
@@ -1527,6 +1581,22 @@ def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(tmp_path, mon
     assert source_b_launch[5] == str(window_path)
     assert source_b_launch[6] == hashlib.sha256(frozen_window_bytes).hexdigest()
     assert loaded_source_b["source"]["sha"] == source_b_sha
+
+    if not legacy_receipt:
+        tampered_bootstrap_payload = json.loads(json.dumps(window_payload))
+        tampered_bootstrap_payload["bootstrap_utc_elapsed_seconds"] += 1.0
+        tampered_bootstrap_bytes = (
+            json.dumps(tampered_bootstrap_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            + "\n"
+        ).encode("utf-8")
+        window_path.write_bytes(tampered_bootstrap_bytes)
+        tampered_bootstrap_contract = json.loads(json.dumps(source_b_contract))
+        tampered_bootstrap_contract["window"]["sha256"] = hashlib.sha256(
+            tampered_bootstrap_bytes
+        ).hexdigest()
+        with pytest.raises(Task41ContractError, match="window clock, approval, or V3 parent changed"):
+            load_task41_p0_fixed_window(tampered_bootstrap_contract, current_root=tmp_path)
+        window_path.write_bytes(frozen_window_bytes)
 
     tampered_entry = json.loads(json.dumps(source_b_contract))
     tampered_entry["window"]["entry_source_sha"] = source_b_sha
