@@ -189,7 +189,7 @@ def _fixture(tmp_path: Path, monkeypatch):
     )
     space = SimpleNamespace(
         dofmap=SimpleNamespace(index_map=IndexMap()),
-        element=SimpleNamespace(space_dimension=2),
+        element=SimpleNamespace(space_dimension=2, basix_element="fixture-basix-element"),
         mesh=mesh,
     )
     levels = {
@@ -370,6 +370,43 @@ def test_volume_only_owner_avoids_surface_and_persists_each_class_once(tmp_path,
     ]
 
 
+def test_v6_volume_owner_forwards_selected_evaluator_to_actual_builder(tmp_path, monkeypatch):
+    from src.solvers import task41_actual_qmetric_blocked_gram as candidate_module
+
+    case = _fixture(tmp_path, monkeypatch)
+    source_path = tmp_path / "frozen-profile.c"
+    source_path.write_text("fixture only", encoding="ascii")
+    created = []
+
+    class FakeCandidate:
+        identity = "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+
+        def __init__(self, *args, **kwargs):
+            created.append((args, kwargs, self))
+
+    monkeypatch.setattr(
+        candidate_module,
+        "Task41ActualQMetricBlockedGramCandidate",
+        FakeCandidate,
+        raising=False,
+    )
+    case.audit.build_task41_v4_volume_only_owner(
+        _volume_only_config(),
+        case.donor,
+        case.tmp_path,
+        allocation_gate=case.allocation_gate,
+        progress_callback=lambda _event: None,
+        persist_array=case.persist_array,
+        geometry_policy="mesh_actual_exact",
+        raw_tensor_evaluator_kind="actual_qmetric_blocked_gram",
+        ffcx_c_source_path=source_path,
+    )
+    forwarded = case.owner_calls[0][1]["raw_tensor_evaluator"]
+    assert forwarded is created[0][2]
+    assert created[0][1]["c_source_path"] == source_path
+    assert created[0][1]["scratch_directory"] == case.tmp_path
+
+
 def test_volume_only_owner_rejects_fresh_numbering_mismatch_before_persist(tmp_path, monkeypatch):
     case = _fixture(tmp_path, monkeypatch)
     case.donor["columns"][0]["active_original_rows"] = np.asarray([9, 11], dtype=np.int64)
@@ -512,7 +549,21 @@ def test_volume_identity_replays_production_volume_and_two_state_residuals(tmp_p
     assert report["columns"][0]["replayed_full_d_trace_and_original_gate"]["same_original_1e_11_gate_passed"] is False
 
 
-def test_v5_attribution_reconstructs_nonzero_complex_mpc_slave_trace():
+@pytest.mark.parametrize(
+    ("candidate_identity", "artifact_prefix", "attribution_prefix", "expected_schema"),
+    [
+        (None, "task41_p0_v5_candidate", "task41_p0_v5_attribution", "task41.p0.v5.global_geometry_native_elimination_attribution.v1"),
+        (
+            "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+            "task41_p0_v6_qmetric_candidate",
+            "task41_p0_v6_qmetric_candidate_attribution",
+            "task41.p0.v6.global_geometry_native_elimination_attribution.v1",
+        ),
+    ],
+)
+def test_attribution_reconstructs_nonzero_complex_mpc_slave_trace(
+    candidate_identity, artifact_prefix, attribution_prefix, expected_schema
+):
     from src.solvers.task41_v4_volume_only_audit import (
         Task41V5VolumeAttributionAccumulator,
     )
@@ -574,7 +625,12 @@ def test_v5_attribution_reconstructs_nonzero_complex_mpc_slave_trace():
             },
         ]
     }
-    accumulator = Task41V5VolumeAttributionAccumulator(donor)
+    accumulator = Task41V5VolumeAttributionAccumulator(
+        donor,
+        artifact_prefix=artifact_prefix,
+        attribution_prefix=attribution_prefix,
+        candidate_identity=candidate_identity,
+    )
     accumulator.observe(
         0,
         np.zeros((8, 3), dtype=np.float64),
@@ -593,13 +649,24 @@ def test_v5_attribution_reconstructs_nonzero_complex_mpc_slave_trace():
     accumulator.admit(active_rows=1)
     candidate_p6 = np.full((1, 2), d, dtype=np.complex128)
     candidate_reduced = np.zeros_like(candidate_p6)
+    saved_artifacts = []
+
+    def persist(name, values):
+        saved_artifacts.append(name)
+        return {"path": name + ".npy", "bytes": np.asarray(values).nbytes}
+
     report = accumulator.finalize(
-        candidate_p6, candidate_reduced, active_rows=1
+        candidate_p6,
+        candidate_reduced,
+        active_rows=1,
+        persist_array=persist,
     )
 
     assert storage[2] == 0.0j
     assert physical_trace[1] == pytest.approx(phase * active_value)
     assert report["global_closure_status"] == "DIAGNOSTIC_ONLY"
+    assert report["schema"] == expected_schema
+    assert f"{attribution_prefix}_col0_j0_T_r_i" in saved_artifacts
     assert report["slave_trace_reconstruction"].startswith("local E times")
     for column in report["columns"]:
         for result in column["states"]:
@@ -608,11 +675,21 @@ def test_v5_attribution_reconstructs_nonzero_complex_mpc_slave_trace():
 
 
 @pytest.mark.parametrize(
-    ("geometry_policy", "port_error"),
-    (("canonical", 0.0), ("mesh_actual_exact", 0.0), ("mesh_actual_exact", 1.0e-6)),
+    ("geometry_policy", "port_error", "candidate_identity", "artifact_prefix"),
+    (
+        ("canonical", 0.0, None, "task41_p0_v4_volume"),
+        ("mesh_actual_exact", 0.0, None, "task41_p0_v5_candidate"),
+        ("mesh_actual_exact", 1.0e-6, None, "task41_p0_v5_candidate"),
+        (
+            "mesh_actual_exact",
+            0.0,
+            "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+            "task41_p0_v6_qmetric_candidate",
+        ),
+    ),
 )
 def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
-    tmp_path, geometry_policy, port_error
+    tmp_path, geometry_policy, port_error, candidate_identity, artifact_prefix
 ):
     from mpi4py import MPI
     from scipy.linalg import lu_factor
@@ -664,7 +741,19 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
         appended_rows=1,
         interior_rows=1,
         active_interior_rows=1,
-        build_audit={"geometry_policy": geometry_policy},
+        build_audit={
+            "geometry_policy": geometry_policy,
+            **(
+                {
+                    "raw_tensor_evaluator": {
+                        "implementation": candidate_identity,
+                        "cache_identity": "task41-v6-test-cache-identity",
+                    }
+                }
+                if candidate_identity is not None
+                else {}
+            ),
+        },
         comm=MPI.COMM_SELF,
         owned_active_rows=1,
         owned_appended_rows=1,
@@ -756,11 +845,20 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
         native_volume_apply=(
             apply_native_volume if geometry_policy == "mesh_actual_exact" else None
         ),
+        artifact_prefix=artifact_prefix,
+        candidate_identity=candidate_identity,
+        candidate_cache_identity=(
+            "task41-v6-test-cache-identity" if candidate_identity is not None else None
+        ),
     )
 
     assert report["completed"] is True
     assert report["production_action"] == "P6CellCondensedAction_active_only_shared_owner_caches"
     assert report["saved_port_rows_reused"] is True
+    assert report["candidate_evaluator_identity"] == candidate_identity
+    assert report["candidate_evaluator_cache_identity"] == (
+        "task41-v6-test-cache-identity" if candidate_identity is not None else None
+    )
     if geometry_policy == "mesh_actual_exact":
         assert len(persisted) == 20
         assert report["candidate_recovery_gate"]["native_volume_action_count"] == 2
@@ -771,17 +869,17 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
             if "candidate_recovered_storage" in name
             or "candidate_native_volume_residual" in name
         ) == {
-            "task41_p0_v5_candidate_recovered_storage_col0",
-            "task41_p0_v5_candidate_recovered_storage_col1",
-            "task41_p0_v5_candidate_native_volume_residual_col0",
-            "task41_p0_v5_candidate_native_volume_residual_col1",
+            f"{artifact_prefix}_recovered_storage_col0",
+            f"{artifact_prefix}_recovered_storage_col1",
+            f"{artifact_prefix}_native_volume_residual_col0",
+            f"{artifact_prefix}_native_volume_residual_col1",
         }
         np.testing.assert_array_equal(
-            persisted["task41_p0_v5_candidate_full_p6"], p6
+            persisted[f"{artifact_prefix}_full_p6"], p6
         )
         expected_reduced = saved_reduced.copy()
         np.testing.assert_allclose(
-            persisted["task41_p0_v5_candidate_full_reduced_rhs"],
+            persisted[f"{artifact_prefix}_full_reduced_rhs"],
             expected_reduced,
             rtol=0.0,
             atol=1.0e-15,

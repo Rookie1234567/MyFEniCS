@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 import shutil
@@ -26,11 +27,109 @@ TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256 = (
     "a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031"
 )
 TASK41_P0_V5_REFERENCE_CELLS = (26762, 26897)
+TASK41_P0_V6_PREFIX_CELLS = (26762, 26897, 0, 1, 2, 5, 6, 7505)
+TASK41_P0_V6_LOCAL_SCREEN = 1.0e-11
 TASK41_P0_V4_SELECTED_ACTIVE_ROW = 5_458_716
 TASK41_P0_V4_SELECTED_ORIGINAL_ROW = 17_692_332
 TASK41_P0_V5_POSTBUILD_SAFETY_FACTOR = 1.10
 TASK41_P0_V5_PREFIX_MINIMUM_SECONDS = 600.0
 TASK41_P0_V5_TERMINATION_RESERVE_SECONDS = 300.0
+
+
+def _v6_screen_metrics(candidate: np.ndarray, reference: np.ndarray) -> dict[str, Any]:
+    left = np.asarray(candidate, dtype=np.complex128)
+    right = np.asarray(reference, dtype=np.complex128)
+    if left.shape != right.shape or not np.isfinite(left).all() or not np.isfinite(right).all():
+        raise ValueError("V6 local comparison arrays must be finite and have matching shapes")
+    difference = left - right
+    absolute = float(np.linalg.norm(difference.ravel()))
+    relative = absolute / max(
+        float(np.linalg.norm(right.ravel())), np.finfo(np.float64).tiny
+    )
+    maximum = float(np.max(np.abs(difference), initial=0.0))
+    return {
+        "status": "PASS" if relative <= TASK41_P0_V6_LOCAL_SCREEN else "FAIL",
+        "relative_frobenius": relative,
+        "absolute_frobenius": absolute,
+        "max_abs": maximum,
+        "relative_limit": TASK41_P0_V6_LOCAL_SCREEN,
+    }
+
+
+def _v6_reconstruct_oriented_tensor(
+    blocks: Mapping[str, np.ndarray],
+    interior_positions: np.ndarray,
+    trace_positions: np.ndarray,
+    dimension: int,
+) -> np.ndarray:
+    interior = np.asarray(interior_positions, dtype=np.int64)
+    trace = np.asarray(trace_positions, dtype=np.int64)
+    if (
+        interior.ndim != 1
+        or trace.ndim != 1
+        or np.intersect1d(interior, trace).size
+        or np.unique(np.concatenate((interior, trace))).size != dimension
+        or not np.array_equal(
+            np.sort(np.concatenate((interior, trace))), np.arange(dimension)
+        )
+    ):
+        raise ValueError("V6 interior/trace positions do not partition the local tensor")
+    expected = {
+        "K": (len(interior), len(interior)),
+        "G": (len(interior), len(trace)),
+        "J": (len(trace), len(interior)),
+        "L": (len(trace), len(trace)),
+    }
+    if any(np.asarray(blocks[name]).shape != shape for name, shape in expected.items()):
+        raise ValueError("V6 saved actual block has the wrong local shape")
+    result = np.empty((dimension, dimension), dtype=np.complex128)
+    result[np.ix_(interior, interior)] = np.asarray(blocks["K"])
+    result[np.ix_(interior, trace)] = np.asarray(blocks["G"])
+    result[np.ix_(trace, interior)] = np.asarray(blocks["J"])
+    result[np.ix_(trace, trace)] = np.asarray(blocks["L"])
+    if not np.isfinite(result).all():
+        raise ValueError("V6 reconstructed V4 actual tensor contains non-finite values")
+    return result
+
+
+def _v6_condense_blocks(blocks: Mapping[str, np.ndarray]) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    from scipy.linalg import lu_solve
+
+    from src.solvers.hcurl_assembly_time_condensation import _strict_local_lu
+
+    K = np.asarray(blocks["K"], dtype=np.complex128)
+    G = np.asarray(blocks["G"], dtype=np.complex128)
+    J = np.asarray(blocks["J"], dtype=np.complex128)
+    L = np.asarray(blocks["L"], dtype=np.complex128)
+    factor, strict_residual = _strict_local_lu(K)
+    R = -lu_solve(factor, G)
+    adjoint_solution = lu_solve(factor, J.conj().T, trans=2)
+    T = -adjoint_solution.conj().T
+    S = L + J @ R
+    return {"R": R, "T": T, "S": S}, {
+        "strict_lu_identity_relative_defect": float(strict_residual),
+        "strict_lu_passed": True,
+        "condensation_defects_relative": _v6_condensation_defects(
+            blocks, {"R": R, "T": T}
+        ),
+    }
+
+
+def _v6_condensation_defects(
+    blocks: Mapping[str, np.ndarray], rts: Mapping[str, np.ndarray]
+) -> dict[str, float]:
+    K = np.asarray(blocks["K"], dtype=np.complex128)
+    G = np.asarray(blocks["G"], dtype=np.complex128)
+    J = np.asarray(blocks["J"], dtype=np.complex128)
+    R = np.asarray(rts["R"], dtype=np.complex128)
+    T = np.asarray(rts["T"], dtype=np.complex128)
+    tiny = np.finfo(np.float64).tiny
+    return {
+        "KR_plus_G": float(np.linalg.norm((K @ R + G).ravel()))
+        / max(float(np.linalg.norm(G.ravel())), float(np.linalg.norm((K @ R).ravel())), tiny),
+        "TK_plus_J": float(np.linalg.norm((T @ K + J).ravel()))
+        / max(float(np.linalg.norm(J.ravel())), float(np.linalg.norm((T @ K).ravel())), tiny),
+    }
 
 
 class _CandidateNotAdmitted(RuntimeError):
@@ -105,6 +204,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("canonical", "mesh_actual_exact"),
         default="canonical",
     )
+    parser.add_argument(
+        "--raw-tensor-evaluator",
+        choices=("actual_qmetric_blocked_gram",),
+        help="select the explicitly unqualified Review V6 actual-geometry candidate",
+    )
+    parser.add_argument("--ffcx-c-source", type=Path)
     parser.add_argument("--source-report", type=Path)
     parser.add_argument("--geometry-reference-report", type=Path)
     return parser.parse_args(argv)
@@ -270,6 +375,8 @@ def _load_v5_geometry_reference(
         references[index] = {
             "coordinates": geometry,
             "blocks": blocks,
+            "cell_tag": int(cell["cell_tag"]),
+            "cell_permutation": int(cell["cell_permutation"]),
             "block_sha256": {
                 name: str(records[prefix + name]["sha256"])
                 for name in ("K", "G", "J", "L")
@@ -587,6 +694,10 @@ def main(argv: list[str] | None = None) -> int:
         raise ValueError("mesh_actual_exact requires the frozen two-cell V4 geometry reference report")
     if args.geometry_policy != "mesh_actual_exact" and args.geometry_reference_report is not None:
         raise ValueError("V4 canonical paths cannot consume the V5 exact-geometry reference")
+    if args.raw_tensor_evaluator is not None and args.geometry_policy != "mesh_actual_exact":
+        raise ValueError("actual q-metric evaluator requires --geometry-policy mesh_actual_exact")
+    if (args.raw_tensor_evaluator is None) != (args.ffcx_c_source is None):
+        raise ValueError("--ffcx-c-source must be supplied exactly with --raw-tensor-evaluator")
     from src.runners.task40_v20_stage_runner import _resource_snapshot
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.runners.task41_p0_checker import load_task41_v4_volume_only_donor
@@ -677,9 +788,12 @@ def main(argv: list[str] | None = None) -> int:
     resolved = json.loads(config_path.read_text(encoding="utf-8"))
     cfg = simulation_config_3d_from_normalized(resolved)
     output_root = args.output_dir.resolve(strict=True)
+    v6_actual_qmetric_mode = args.raw_tensor_evaluator == "actual_qmetric_blocked_gram"
     output_directory = output_root / (
         "geometry_pair"
         if args.geometry_pair_only
+        else "actual_qmetric_blocked_gram"
+        if v6_actual_qmetric_mode
         else "mesh_actual_exact"
         if args.geometry_policy == "mesh_actual_exact"
         else "volume_only"
@@ -688,6 +802,8 @@ def main(argv: list[str] | None = None) -> int:
     report_path = output_root / (
         "task41_p0_v4_geometry_pair_probe.json"
         if args.geometry_pair_only
+        else "task41_p0_v6_actual_qmetric_candidate.json"
+        if v6_actual_qmetric_mode
         else "task41_p0_v5_mesh_actual_exact_attribution.json"
         if args.geometry_policy == "mesh_actual_exact"
         else "task41_p0_v4_volume_only_attribution.json"
@@ -710,15 +826,18 @@ def main(argv: list[str] | None = None) -> int:
         else None
     )
     run_record: dict[str, Any] = {
-            "schema": (
+        "schema": (
             "task41.p0.v4.geometry_pair_probe_receipt.v1"
             if args.geometry_pair_only
-                else "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1"
-                if args.geometry_policy == "mesh_actual_exact"
-                else "task41.p0.v4.volume_only_attribution_receipt.v1"
+            else "task41.p0.v6.actual_qmetric_candidate_receipt.v1"
+            if v6_actual_qmetric_mode
+            else "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1"
+            if args.geometry_policy == "mesh_actual_exact"
+            else "task41.p0.v4.volume_only_attribution_receipt.v1"
         ),
         "status": "RUNNING",
         "geometry_policy": args.geometry_policy,
+        "raw_tensor_evaluator": args.raw_tensor_evaluator,
         "started_at_utc": started_at_utc,
         "worker_started_perf_counter": started_perf,
         "donor_contract_path": str(args.donor_contract.resolve()),
@@ -746,6 +865,18 @@ def main(argv: list[str] | None = None) -> int:
         "initial_fixed_window_state": initial_fixed_window_state,
         "postbuild_reserve_evidence": postbuild_reserve_evidence,
     }
+    if v6_actual_qmetric_mode:
+        run_record["candidate_prefix_qualification"] = {
+            "schema": "task41.p0.v6.actual_qmetric_prefix_qualification.v1",
+            "status": "PREFIX_QUALIFICATION_PENDING",
+            "required_sample_cell_indices": list(TASK41_P0_V6_PREFIX_CELLS),
+            "sample_count": 0,
+            "required_sample_count": len(TASK41_P0_V6_PREFIX_CELLS),
+            "geometry_witness_count": 0,
+            "full_admission_eligible": False,
+            "records": [],
+            "global_b_t_accumulation": "not_performed_by_local_prefix_qualification",
+        }
     _write_json_atomic(report_path, run_record)
     phase_started: dict[tuple[str, Any], float] = {}
 
@@ -770,21 +901,33 @@ def main(argv: list[str] | None = None) -> int:
 
     def persist_volume_array(name: str, array: np.ndarray) -> dict[str, Any]:
         array_bytes_upper = int(np.asarray(array).nbytes) + 4096
+        prefix_budget_remaining = int(
+            run_record.get("candidate_prefix_evidence_reserve_remaining_bytes", 0)
+        )
+        if name.startswith("task41_v6_prefix_") and array_bytes_upper > prefix_budget_remaining:
+            raise MemoryError(
+                "V6 prefix artifact exceeds its reserved evidence budget by "
+                f"{array_bytes_upper - prefix_budget_remaining} bytes"
+            )
+        prefix_budget_consumed = (
+            array_bytes_upper if name.startswith("task41_v6_prefix_") else 0
+        )
+        prefix_budget_after = prefix_budget_remaining - prefix_budget_consumed
         cumulative_before = (
             int(donor.get("existing_evidence_bytes", 0))
             + int(run_record.get("candidate_admission_evidence_bytes", 0))
             + int(run_record.get("persisted_evidence_bytes", 0))
         )
-        if cumulative_before + array_bytes_upper > 16 * 1024**3:
+        if cumulative_before + array_bytes_upper + prefix_budget_after > 16 * 1024**3:
             raise MemoryError(
                 "Task41 V5 evidence write would exceed the unchanged 16 GiB cap by "
-                f"{cumulative_before + array_bytes_upper - 16 * 1024**3} bytes"
+                f"{cumulative_before + array_bytes_upper + prefix_budget_after - 16 * 1024**3} bytes"
             )
         free_before = int(shutil.disk_usage(output_directory).free)
-        if free_before - array_bytes_upper < 2 * 1024**3:
+        if free_before - array_bytes_upper - prefix_budget_after < 2 * 1024**3:
             raise OSError(
                 "Task41 V5 evidence write would breach the 2 GiB free-space floor by "
-                f"{2 * 1024**3 - (free_before - array_bytes_upper)} bytes"
+                f"{2 * 1024**3 - (free_before - array_bytes_upper - prefix_budget_after)} bytes"
             )
         artifact = _persist_array(
             output_directory, name, array, sha256_file=sha256_file
@@ -794,17 +937,117 @@ def main(argv: list[str] | None = None) -> int:
         run_record["persisted_evidence_bytes"] = sum(
             int(item["bytes"]) for item in records
         )
+        if prefix_budget_consumed:
+            run_record["candidate_prefix_evidence_reserve_remaining_bytes"] = (
+                prefix_budget_after
+            )
         _write_json_atomic(report_path, run_record)
         return artifact
 
+    candidate_identity = None
+    candidate_artifact_prefix = "task41_p0_v5_candidate"
+    candidate_attribution_prefix = "task41_p0_v5_attribution"
+    if v6_actual_qmetric_mode:
+        from src.solvers.task41_actual_qmetric_blocked_gram import IDENTITY
+
+        candidate_identity = IDENTITY
+        candidate_artifact_prefix = "task41_p0_v6_qmetric_candidate"
+        candidate_attribution_prefix = "task41_p0_v6_qmetric_candidate_attribution"
     exact_attribution = (
-        Task41V5VolumeAttributionAccumulator(donor)
+        Task41V5VolumeAttributionAccumulator(
+            donor,
+            artifact_prefix=candidate_artifact_prefix,
+            attribution_prefix=candidate_attribution_prefix,
+            candidate_identity=candidate_identity,
+        )
         if args.geometry_policy == "mesh_actual_exact"
         else None
     )
 
     def allocation_gate(label: str, facts: Mapping[str, Any]) -> None:
         checked_facts = dict(facts)
+        scratch_reserve_bytes = 0
+        if (
+            args.geometry_policy == "mesh_actual_exact"
+            and label == "mesh_actual_exact_prefix_preflight"
+        ):
+            scratch_reserve_bytes = int(
+                checked_facts.get("raw_tensor_candidate_scratch_bytes_upper", 0)
+            )
+            if scratch_reserve_bytes < 0:
+                raise ValueError("candidate scratch reservation cannot be negative")
+            free_bytes = int(shutil.disk_usage(output_directory).free)
+            checked_facts["candidate_scratch_disk_preflight"] = {
+                "reserved_scratch_bytes_upper": scratch_reserve_bytes,
+                "free_bytes_before_scratch": free_bytes,
+                "free_bytes_after_reservation": free_bytes - scratch_reserve_bytes,
+                "free_space_floor_bytes": 2 * 1024**3,
+            }
+            if free_bytes - scratch_reserve_bytes < 2 * 1024**3:
+                raise _CandidateNotAdmitted(
+                    "actual-qmetric helper/oracle scratch would breach the 2 GiB "
+                    "free-space floor before preparation"
+                )
+            if v6_actual_qmetric_mode:
+                dimension = int(checked_facts["tensor_dimension"])
+                interior_dimension = int(checked_facts["interior_dimension"])
+                trace_dimension = int(checked_facts["trace_dimension"])
+                matrix_bytes = dimension * dimension * np.dtype(np.complex128).itemsize
+                rts_bytes_per_key = (
+                    interior_dimension * interior_dimension
+                    + 2 * interior_dimension * trace_dimension
+                    + trace_dimension * trace_dimension
+                ) * np.dtype(np.complex128).itemsize
+                prefix_evidence_reserve = (
+                    32 * matrix_bytes
+                    + 8 * 2 * rts_bytes_per_key
+                    + 2 * 2 * 3 * 2 * dimension * np.dtype(np.complex128).itemsize
+                    + 8 * (8 * 3 * np.dtype(np.float64).itemsize + 4096)
+                    + 8 * 1024**2
+                )
+                evidence_bytes_before = (
+                    int(donor.get("existing_evidence_bytes", 0))
+                    + int(run_record.get("candidate_admission_evidence_bytes", 0))
+                    + int(run_record.get("persisted_evidence_bytes", 0))
+                )
+                free_bytes = int(shutil.disk_usage(output_directory).free)
+                checked_facts["v6_prefix_qualification_evidence_reserve"] = {
+                    "required_cells": list(TASK41_P0_V6_PREFIX_CELLS),
+                    "candidate_and_reference_tensor_bytes_upper": 32 * matrix_bytes,
+                    "candidate_and_reference_RTS_bytes_upper": 8 * 2 * rts_bytes_per_key,
+                    "saved_cell_action_bytes_upper": (
+                        2 * 2 * 3 * 2 * dimension * np.dtype(np.complex128).itemsize
+                    ),
+                    "artifact_and_json_overhead_bytes_upper": (
+                        8 * (8 * 3 * np.dtype(np.float64).itemsize + 4096)
+                        + 8 * 1024**2
+                    ),
+                    "total_reserved_bytes_upper": int(prefix_evidence_reserve),
+                    "evidence_bytes_before": evidence_bytes_before,
+                    "free_bytes_before": free_bytes,
+                    "evidence_cap_bytes": 16 * 1024**3,
+                    "free_space_floor_bytes": 2 * 1024**3,
+                }
+                if evidence_bytes_before + prefix_evidence_reserve > 16 * 1024**3:
+                    raise _CandidateNotAdmitted(
+                        "V6 eight-key qualification evidence would exceed the unchanged 16 GiB cap"
+                    )
+                if (
+                    free_bytes
+                    - scratch_reserve_bytes
+                    - prefix_evidence_reserve
+                    < 2 * 1024**3
+                ):
+                    raise _CandidateNotAdmitted(
+                        "V6 prefix evidence and oracle scratch would breach the 2 GiB free-space floor"
+                    )
+                run_record["candidate_prefix_evidence_reserve_bytes"] = int(
+                    prefix_evidence_reserve
+                )
+                run_record["candidate_prefix_evidence_reserve_remaining_bytes"] = int(
+                    prefix_evidence_reserve
+                )
+                _write_json_atomic(report_path, run_record)
         if args.geometry_policy == "mesh_actual_exact" and label in {
             "mesh_actual_exact_prefix_preflight",
             "mesh_actual_exact_full_admission",
@@ -838,6 +1081,7 @@ def main(argv: list[str] | None = None) -> int:
                 expected_evidence_total = (
                     int(donor.get("existing_evidence_bytes", 0))
                     + int(run_record.get("candidate_admission_evidence_bytes", 0))
+                    + int(run_record.get("persisted_evidence_bytes", 0))
                     + expected_identity_evidence
                 )
                 if expected_evidence_total > 16 * 1024**3:
@@ -869,7 +1113,28 @@ def main(argv: list[str] | None = None) -> int:
                     if isinstance(item, Mapping)
                     and isinstance(item.get("reference_validation"), Mapping)
                 }
-                if set(verified) != set(TASK41_P0_V5_REFERENCE_CELLS) or any(
+                if v6_actual_qmetric_mode:
+                    qualification = run_record.get("candidate_prefix_qualification", {})
+                    if (
+                        set(verified) != set(TASK41_P0_V6_PREFIX_CELLS)
+                        or qualification.get("status") != "PREFIX_QUALIFIED"
+                        or qualification.get("sample_count") != 8
+                        or qualification.get("geometry_witness_count", 0) < 1
+                        or any(
+                            item["reference_validation"].get("status") != "PASS"
+                            for item in verified.values()
+                        )
+                        or int(
+                            run_record.get(
+                                "candidate_prefix_evidence_reserve_remaining_bytes", 0
+                            )
+                        ) != 0
+                    ):
+                        raise ValueError(
+                            "V6 full admission requires eight passing actual-key records, "
+                            "a frozen-FFCx geometry witness, and fully saved prefix evidence"
+                        )
+                elif set(verified) != set(TASK41_P0_V5_REFERENCE_CELLS) or any(
                     item["reference_validation"].get("coordinates_bitwise_equal") is not True
                     or item["reference_validation"].get("K_G_J_L_bitwise_equal") is not True
                     for item in verified.values()
@@ -910,10 +1175,11 @@ def main(argv: list[str] | None = None) -> int:
                         f"exact key inventory would exceed the unchanged 16 GiB evidence cap by "
                         f"{current_bytes + payload_size - 16 * 1024**3} bytes"
                     )
-                if free_bytes - payload_size < 2 * 1024**3:
+                if free_bytes - payload_size - scratch_reserve_bytes < 2 * 1024**3:
                     raise _CandidateNotAdmitted(
-                        f"exact key inventory would breach the 2 GiB free-space floor by "
-                        f"{2 * 1024**3 - (free_bytes - payload_size)} bytes"
+                        f"exact key inventory plus candidate scratch would breach the "
+                        f"2 GiB free-space floor by "
+                        f"{2 * 1024**3 - (free_bytes - payload_size - scratch_reserve_bytes)} bytes"
                     )
                 _write_json_atomic(inventory_path, json.loads(encoded))
                 artifact = {
@@ -1198,35 +1464,506 @@ def main(argv: list[str] | None = None) -> int:
             cell_index: int,
             coordinates: np.ndarray,
             blocks: Mapping[str, np.ndarray],
+            context: Mapping[str, Any],
         ) -> Mapping[str, Any]:
-            if geometry_reference is None or cell_index not in geometry_reference["cells"]:
-                return {}
-            reference = geometry_reference["cells"][cell_index]
-            coordinates_equal = np.array_equal(
-                np.asarray(coordinates, dtype=np.float64), reference["coordinates"]
-            )
-            block_equal = all(
-                np.array_equal(np.asarray(blocks[name]), reference["blocks"][name])
-                for name in ("K", "G", "J", "L")
-            )
-            if not coordinates_equal or not block_equal:
-                mismatches = [
-                    name
-                    for name in ("K", "G", "J", "L")
-                    if not np.array_equal(np.asarray(blocks[name]), reference["blocks"][name])
-                ]
-                raise ValueError(
-                    f"V5 exact prefix differs from frozen V4 actual evidence for cell {cell_index}: "
-                    f"coordinates_equal={coordinates_equal}, block_mismatches={mismatches}"
+            if not v6_actual_qmetric_mode:
+                if geometry_reference is None or cell_index not in geometry_reference["cells"]:
+                    return {}
+                reference = geometry_reference["cells"][cell_index]
+                coordinates_equal = np.array_equal(
+                    np.asarray(coordinates, dtype=np.float64), reference["coordinates"]
                 )
-            return {
+                block_equal = all(
+                    np.array_equal(np.asarray(blocks[name]), reference["blocks"][name])
+                    for name in ("K", "G", "J", "L")
+                )
+                if not coordinates_equal or not block_equal:
+                    mismatches = [
+                        name
+                        for name in ("K", "G", "J", "L")
+                        if not np.array_equal(np.asarray(blocks[name]), reference["blocks"][name])
+                    ]
+                    raise ValueError(
+                        f"V5 exact prefix differs from frozen V4 actual evidence for cell {cell_index}: "
+                        f"coordinates_equal={coordinates_equal}, block_mismatches={mismatches}"
+                    )
+                return {
+                    "cell_index": int(cell_index),
+                    "reference_report_sha256": geometry_reference["sha256"],
+                    "coordinates_bitwise_equal": True,
+                    "coordinates_sha256": reference["coordinates_sha256"],
+                    "K_G_J_L_bitwise_equal": True,
+                    "block_sha256": dict(reference["block_sha256"]),
+                }
+
+            from src.solvers.hcurl_assembly_time_condensation import (
+                _orient_cell_tensor,
+                _unorient_cell_tensor,
+            )
+            from src.solvers.task41_actual_qmetric_blocked_gram import (
+                V6_PREFIX_SAMPLE_CELL_INDICES,
+            )
+
+            if tuple(V6_PREFIX_SAMPLE_CELL_INDICES) != TASK41_P0_V6_PREFIX_CELLS:
+                raise RuntimeError("V6 runner and evaluator prefix sample inventories differ")
+            if cell_index not in TASK41_P0_V6_PREFIX_CELLS:
+                raise ValueError(f"V6 prefix received non-inventory cell {cell_index}")
+            evaluator = context.get("raw_tensor_evaluator")
+            if evaluator is None or not callable(
+                getattr(evaluator, "run_original_kernel_geometry_oracle", None)
+            ):
+                raise RuntimeError("V6 exact builder did not supply its bound oracle evaluator")
+            coordinate_array = np.asarray(coordinates)
+            candidate_raw = np.asarray(context["raw_tensor"], dtype=np.complex128)
+            candidate_oriented = np.asarray(context["oriented_tensor"], dtype=np.complex128)
+            coordinates_sha = hashlib.sha256(
+                np.ascontiguousarray(coordinate_array).tobytes()
+            ).hexdigest()
+            sample_prefix = f"task41_v6_prefix_cell{cell_index}"
+            record: dict[str, Any] = {
                 "cell_index": int(cell_index),
-                "reference_report_sha256": geometry_reference["sha256"],
-                "coordinates_bitwise_equal": True,
-                "coordinates_sha256": reference["coordinates_sha256"],
-                "K_G_J_L_bitwise_equal": True,
-                "block_sha256": dict(reference["block_sha256"]),
+                "tag": int(context["tag"]),
+                "permutation": int(context["permutation"]),
+                "coordinates_shape": list(coordinate_array.shape),
+                "coordinates_dtype": str(coordinate_array.dtype),
+                "coordinates_sha256": coordinates_sha,
+                "coordinates_bitwise_identity_passed": bool(
+                    coordinate_array.dtype == np.dtype(np.float64)
+                    and coordinate_array.shape == (8, 3)
+                    and coordinate_array.flags.c_contiguous
+                ),
+                "candidate_build_seconds": float(context["candidate_build_seconds"]),
+                "candidate_artifacts": {},
+                "reference_artifacts": {},
+                "local_RTS_artifacts": {},
+                "local_action_comparisons": [],
+                "status": "IN_PROGRESS",
             }
+            record_finished = False
+
+            def checkpoint_prefix_record() -> None:
+                qualification = run_record.setdefault(
+                    "candidate_prefix_qualification",
+                    {
+                        "schema": "task41.p0.v6.actual_qmetric_prefix_qualification.v1",
+                        "status": "PREFIX_QUALIFICATION_PENDING",
+                        "required_sample_cell_indices": list(TASK41_P0_V6_PREFIX_CELLS),
+                        "records": [],
+                    },
+                )
+                stored_records = qualification.setdefault("records", [])
+                existing_index = next(
+                    (
+                        index
+                        for index, item in enumerate(stored_records)
+                        if item.get("cell_index") == cell_index
+                    ),
+                    None,
+                )
+                if existing_index is None:
+                    stored_records.append(dict(record))
+                else:
+                    stored_records[existing_index] = dict(record)
+                qualification["sample_count"] = len(stored_records)
+                qualification["required_sample_count"] = len(TASK41_P0_V6_PREFIX_CELLS)
+                qualification.setdefault("geometry_witness_count", 0)
+                qualification.setdefault("full_admission_eligible", False)
+                _write_json_atomic(report_path, run_record)
+
+            def persist_reference_artifact(role: str, array: np.ndarray) -> None:
+                artifact_name = f"{sample_prefix}_{role}"
+                record["reference_artifacts"][role] = {
+                    "name": artifact_name,
+                    **persist_volume_array(artifact_name, array),
+                }
+                checkpoint_prefix_record()
+
+            def finish_prefix_record() -> None:
+                nonlocal record_finished
+                if record_finished:
+                    return
+                evaluator.record_prefix_qualification(record)
+                qualification = run_record.setdefault(
+                    "candidate_prefix_qualification",
+                    {
+                        "schema": "task41.p0.v6.actual_qmetric_prefix_qualification.v1",
+                        "required_sample_cell_indices": list(TASK41_P0_V6_PREFIX_CELLS),
+                        "records": [],
+                    },
+                )
+                stored_records = qualification.setdefault("records", [])
+                existing_index = next(
+                    (
+                        index
+                        for index, item in enumerate(stored_records)
+                        if item.get("cell_index") == cell_index
+                    ),
+                    None,
+                )
+                if existing_index is None:
+                    stored_records.append(dict(record))
+                else:
+                    stored_records[existing_index] = dict(record)
+                audit = evaluator.prefix_qualification_audit()
+                qualification.update(
+                    {
+                        "status": audit["status"],
+                        "sample_count": audit["sample_count"],
+                        "required_sample_count": audit["required_sample_count"],
+                        "geometry_witness_count": audit["geometry_witness_count"],
+                        "full_admission_eligible": audit["full_admission_eligible"],
+                    }
+                )
+                qualification["original_kernel_oracle_inventory"] = {
+                    "execution_count": len(evaluator.original_kernel_oracle_records),
+                    "maximum_additional_executions": 6,
+                    "records": [
+                        dict(item) for item in evaluator.original_kernel_oracle_records
+                    ],
+                }
+                saved_action_cells = [
+                    item
+                    for item in stored_records
+                    if item.get("source") == "V4_SAVED_ACTUAL_BLOCKS"
+                ]
+                incident: dict[str, dict[str, Any]] = {}
+                for saved_cell in saved_action_cells:
+                    for action in saved_cell.get("local_action_comparisons", ()):
+                        key = f"col{action['column']}_{action['state']}"
+                        row = incident.setdefault(
+                            key,
+                            {
+                                "column": int(action["column"]),
+                                "state": str(action["state"]),
+                                "cell_count": 0,
+                                "reference_sum": 0.0 + 0.0j,
+                                "candidate_sum": 0.0 + 0.0j,
+                                "frozen_denominator": float(action["frozen_denominator"]),
+                            },
+                        )
+                        row["cell_count"] += 1
+                        row["reference_sum"] += complex(*action["selected_row_reference"])
+                        row["candidate_sum"] += complex(*action["selected_row_candidate"])
+                qualification["original_failed_row_incident_contributions"] = [
+                    {
+                        "column": row["column"],
+                        "state": row["state"],
+                        "cell_count": row["cell_count"],
+                        "reference_sum": [row["reference_sum"].real, row["reference_sum"].imag],
+                        "candidate_sum": [row["candidate_sum"].real, row["candidate_sum"].imag],
+                        "difference_abs": abs(row["candidate_sum"] - row["reference_sum"]),
+                        "difference_over_frozen_denominator": (
+                            abs(row["candidate_sum"] - row["reference_sum"])
+                            / row["frozen_denominator"]
+                        ),
+                        "frozen_denominator": row["frozen_denominator"],
+                    }
+                    for _key, row in sorted(incident.items())
+                ]
+                qualification["global_b_t_accumulation"] = (
+                    "not_performed_by_local_prefix_qualification"
+                )
+                if audit["status"] == "PREFIX_QUALIFIED":
+                    reserve_remaining = int(
+                        run_record.get(
+                            "candidate_prefix_evidence_reserve_remaining_bytes", 0
+                        )
+                    )
+                    run_record["candidate_prefix_evidence_reserve_released_bytes"] = (
+                        int(
+                            run_record.get(
+                                "candidate_prefix_evidence_reserve_released_bytes", 0
+                            )
+                        )
+                        + reserve_remaining
+                    )
+                    run_record["candidate_prefix_evidence_reserve_remaining_bytes"] = 0
+                _write_json_atomic(report_path, run_record)
+                record_finished = True
+
+            try:
+                if not record["coordinates_bitwise_identity_passed"]:
+                    raise ValueError("V6 prefix coordinates are not original contiguous float64 (8, 3) bytes")
+                for role, array in (
+                    ("candidate_raw_tensor", candidate_raw),
+                    ("candidate_oriented_tensor", candidate_oriented),
+                    ("candidate_coordinates", coordinate_array),
+                ):
+                    artifact_name = f"{sample_prefix}_{role}"
+                    record["candidate_artifacts"][role] = {
+                        "name": artifact_name,
+                        **persist_volume_array(artifact_name, array),
+                    }
+                checkpoint_prefix_record()
+
+                if cell_index in TASK41_P0_V5_REFERENCE_CELLS:
+                    reference = geometry_reference["cells"][cell_index]
+                    coordinates_equal = np.array_equal(
+                        coordinate_array, reference["coordinates"]
+                    )
+                    if (
+                        not coordinates_equal
+                        or int(context["tag"]) != reference["cell_tag"]
+                        or int(context["permutation"]) != reference["cell_permutation"]
+                    ):
+                        raise ValueError(
+                            f"V6 saved V4 cell identity differs at cell {cell_index}: "
+                            f"coordinates_equal={coordinates_equal}, "
+                            f"tag={context['tag']}/{reference['cell_tag']}, "
+                            f"permutation={context['permutation']}/{reference['cell_permutation']}"
+                        )
+                    reference_blocks = reference["blocks"]
+                    allocation_gate(
+                        "task41_v6_prefix_saved_reference_reconstruction",
+                        {
+                            "additional_payload_bytes": 0,
+                            "workspace_bytes": int(
+                                4 * candidate_oriented.nbytes
+                                + 2 * candidate_raw.nbytes
+                            ),
+                            "cell_index": int(cell_index),
+                            "reference_source": "frozen_V4_saved_actual_KGJL_blocks",
+                        },
+                    )
+                    reference_oriented = _v6_reconstruct_oriented_tensor(
+                        reference_blocks,
+                        np.asarray(context["interior_positions"]),
+                        np.asarray(context["trace_positions"]),
+                        candidate_oriented.shape[0],
+                    )
+                    reference_raw = reference_oriented.copy()
+                    _unorient_cell_tensor(
+                        context["element"],
+                        reference_raw,
+                        np.asarray([context["permutation"]], dtype=np.uint32),
+                    )
+                    record["source"] = "V4_SAVED_ACTUAL_BLOCKS"
+                    record["reference_report_sha256"] = geometry_reference["sha256"]
+                    record["reference_coordinates_sha256"] = reference["coordinates_sha256"]
+                    record["reference_block_sha256"] = dict(reference["block_sha256"])
+                    record["reference_tag"] = int(reference["cell_tag"])
+                    record["reference_permutation"] = int(reference["cell_permutation"])
+                    geometry_witness = {
+                        "status": "NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS",
+                        "source_report_sha256": geometry_reference["sha256"],
+                        "coordinates_bitwise_equal": True,
+                    }
+                    persist_reference_artifact("reference_raw_tensor", reference_raw)
+                    persist_reference_artifact(
+                        "reference_oriented_tensor", reference_oriented
+                    )
+                else:
+                    record["source"] = "ORIGINAL_FFCX_KERNEL_ORACLE"
+                    oracle = evaluator.run_original_kernel_geometry_oracle(
+                        int(context["tag"]),
+                        coordinate_array,
+                        0,
+                        512,
+                        allocation_gate=allocation_gate,
+                        candidate_tensor=candidate_raw,
+                        candidate_build_seconds=float(context["candidate_build_seconds"]),
+                    )
+                    geometry_witness = {
+                        "status": oracle["geometry_comparison"]["status"],
+                        "q_begin": int(oracle["q_begin"]),
+                        "q_end": int(oracle["q_end"]),
+                        "point_count": int(oracle["geometry_comparison"]["point_count"]),
+                        "field_count": int(oracle["geometry_comparison"]["field_count"]),
+                        "field_names_sha256": oracle["geometry_comparison"]["field_names_sha256"],
+                        "max_abs": float(oracle["geometry_comparison"]["max_abs"]),
+                        "relative_frobenius": float(oracle["geometry_comparison"]["relative_frobenius"]),
+                        "compile_audit": dict(oracle["compile_audit"]),
+                    }
+                    record["original_kernel_oracle_timing"] = {
+                        "source_generation_seconds": float(oracle["compile_audit"].get("source_generation_seconds", 0.0)),
+                        "compiler_seconds": float(oracle["compile_audit"].get("compiler_seconds", 0.0)),
+                        "kernel_call_seconds": float(oracle["kernel_call_seconds"]),
+                        "output_allocation_seconds": float(oracle["output_allocation_seconds"]),
+                    }
+                    reference_raw = np.asarray(oracle["tensor"], dtype=np.complex128)
+                    persist_reference_artifact("reference_raw_tensor", reference_raw)
+                    reference_oriented = reference_raw.copy()
+                    _orient_cell_tensor(
+                        context["element"],
+                        reference_oriented,
+                        np.asarray([context["permutation"]], dtype=np.uint32),
+                    )
+                    persist_reference_artifact(
+                        "reference_oriented_tensor", reference_oriented
+                    )
+                    interior = np.asarray(context["interior_positions"], dtype=np.int64)
+                    trace = np.asarray(context["trace_positions"], dtype=np.int64)
+                    reference_blocks = {
+                        "K": reference_oriented[np.ix_(interior, interior)],
+                        "G": reference_oriented[np.ix_(interior, trace)],
+                        "J": reference_oriented[np.ix_(trace, interior)],
+                        "L": reference_oriented[np.ix_(trace, trace)],
+                    }
+                record["geometry_witness"] = geometry_witness
+                checkpoint_prefix_record()
+                raw_metrics = _v6_screen_metrics(candidate_raw, reference_raw)
+                oriented_metrics = _v6_screen_metrics(candidate_oriented, reference_oriented)
+                block_metrics = {
+                    name: _v6_screen_metrics(blocks[name], reference_blocks[name])
+                    for name in ("K", "G", "J", "L")
+                }
+                reference_rts, reference_lu = _v6_condense_blocks(reference_blocks)
+                candidate_rts = {
+                    name: np.asarray(context[name], dtype=np.complex128)
+                    for name in ("R", "T", "S")
+                }
+                candidate_defects = _v6_condensation_defects(blocks, candidate_rts)
+                rts_metrics = {
+                    name: _v6_screen_metrics(candidate_rts[name], reference_rts[name])
+                    for name in ("R", "T", "S")
+                }
+                for role, rts in (("reference", reference_rts), ("candidate", candidate_rts)):
+                    for name, array in rts.items():
+                        artifact_name = f"{sample_prefix}_{role}_{name}"
+                        record["local_RTS_artifacts"][f"{role}_{name}"] = {
+                            "name": artifact_name,
+                            **persist_volume_array(artifact_name, array),
+                        }
+                for name, array in block_metrics.items():
+                    del name, array
+                record["comparisons"] = {
+                    "raw_tensor": raw_metrics,
+                    "oriented_tensor": oriented_metrics,
+                    "K_G_J_L": block_metrics,
+                    "R_T_S": rts_metrics,
+                    "reference_condensation_defects_relative": reference_lu["condensation_defects_relative"],
+                    "candidate_condensation_defects_relative": candidate_defects,
+                    "condensation_defects_classification": "diagnostic_only",
+                    "strict_lu": {
+                        "reference": reference_lu["strict_lu_identity_relative_defect"],
+                        "candidate": float(context["strict_lu_residual"]),
+                        "relative_limit": 1.0e-11,
+                        "passed": (
+                            reference_lu["strict_lu_identity_relative_defect"] <= 1.0e-11
+                            and float(context["strict_lu_residual"]) <= 1.0e-11
+                        ),
+                    },
+                }
+                local_comparisons_pass = (
+                    raw_metrics["status"] == "PASS"
+                    and oriented_metrics["status"] == "PASS"
+                    and all(item["status"] == "PASS" for item in block_metrics.values())
+                    and all(item["status"] == "PASS" for item in rts_metrics.values())
+                    and record["comparisons"]["strict_lu"]["passed"]
+                    and all(
+                        np.isfinite(value) and value >= 0.0
+                        for defect_map in (
+                            reference_lu["condensation_defects_relative"],
+                            candidate_defects,
+                        )
+                        for value in defect_map.values()
+                    )
+                    and geometry_witness["status"] in {
+                        "BITWISE_EQUAL",
+                        "NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS",
+                    }
+                )
+
+                if cell_index in TASK41_P0_V5_REFERENCE_CELLS:
+                    interior = np.asarray(context["interior_positions"], dtype=np.int64)
+                    trace = np.asarray(context["trace_positions"], dtype=np.int64)
+                    original_dofs = np.asarray(context["original_dofs"], dtype=np.int64)
+                    active_ids = np.asarray(context["active_ids"], dtype=np.int64)
+                    expansion = context["trace_expansion"]
+                    for column_index, column in enumerate(donor["columns"]):
+                        frozen_denominator = float(TASK41_V5_FROZEN_DENOMINATORS[column_index])
+                        field_inputs = [("known", column["known_field"])] + [
+                            (str(state["label"]), state["storage"])
+                            for state in column["states"]
+                        ]
+                        for state_label, full_values in field_inputs:
+                            local_values = np.asarray(full_values, dtype=np.complex128)[original_dofs]
+                            reference_action = reference_oriented @ local_values
+                            candidate_action = candidate_oriented @ local_values
+                            reference_action_name = (
+                                f"{sample_prefix}_col{column_index}_{state_label}_reference_local_action"
+                            )
+                            candidate_action_name = (
+                                f"{sample_prefix}_col{column_index}_{state_label}_candidate_local_action"
+                            )
+                            action_difference = _v6_screen_metrics(candidate_action, reference_action)
+                            action_record: dict[str, Any] = {
+                                "column": int(column_index),
+                                "state": state_label,
+                                "reference_artifact": {
+                                    "name": reference_action_name,
+                                    **persist_volume_array(reference_action_name, reference_action),
+                                },
+                                "candidate_artifact": {
+                                    "name": candidate_action_name,
+                                    **persist_volume_array(candidate_action_name, candidate_action),
+                                },
+                                "full_local_action": action_difference,
+                                "full_local_action_difference_over_frozen_denominator": (
+                                    action_difference["absolute_frobenius"]
+                                    / frozen_denominator
+                                ),
+                                "full_local_action_scale_check": "diagnostic_only",
+                                "frozen_denominator": frozen_denominator,
+                            }
+                            target_locations = np.flatnonzero(
+                                active_ids == TASK41_P0_V4_SELECTED_ACTIVE_ROW
+                            )
+                            if target_locations.size > 1:
+                                raise ValueError("V6 selected active row is duplicated in a cell trace map")
+                            if target_locations.size:
+                                weights = np.asarray(
+                                    expansion.getcol(int(target_locations[0])).toarray(),
+                                    dtype=np.complex128,
+                                ).reshape(-1)
+                                reference_row = complex(np.vdot(weights, reference_action[trace]))
+                                candidate_row = complex(np.vdot(weights, candidate_action[trace]))
+                            else:
+                                reference_row = candidate_row = 0.0 + 0.0j
+                            action_record.update(
+                                {
+                                    "selected_active_row": TASK41_P0_V4_SELECTED_ACTIVE_ROW,
+                                    "selected_row_reference": [reference_row.real, reference_row.imag],
+                                    "selected_row_candidate": [candidate_row.real, candidate_row.imag],
+                                    "selected_row_difference_over_frozen_denominator": (
+                                        abs(candidate_row - reference_row) / frozen_denominator
+                                    ),
+                                    "selected_row_scale_check": "diagnostic_only",
+                                }
+                            )
+                            record["local_action_comparisons"].append(action_record)
+
+                record["status"] = "PASS" if local_comparisons_pass else "FAIL"
+                record["admission_eligible"] = bool(local_comparisons_pass)
+                finish_prefix_record()
+                if not local_comparisons_pass:
+                    raise ValueError(
+                        f"V6 prefix local qualification failed at cell {cell_index}; "
+                        "raw evidence and comparison metrics were persisted before rejection"
+                    )
+                return {
+                    "status": "PASS",
+                    "cell_index": int(cell_index),
+                    "source": record["source"],
+                    "coordinates_bitwise_equal": True,
+                    "raw_tensor": raw_metrics,
+                    "oriented_tensor": oriented_metrics,
+                    "K_G_J_L": block_metrics,
+                    "R_T_S": rts_metrics,
+                    "strict_lu_passed": True,
+                    "geometry_witness": geometry_witness,
+                }
+            except Exception as exc:
+                if not record_finished:
+                    record.update(
+                        {
+                            "status": "FAIL",
+                            "admission_eligible": False,
+                            "error": {"type": type(exc).__name__, "message": str(exc)},
+                        }
+                    )
+                    finish_prefix_record()
+                raise
 
         owner_result = build_task41_v4_volume_only_owner(
             cfg,
@@ -1236,8 +1973,12 @@ def main(argv: list[str] | None = None) -> int:
             progress_callback=progress,
             persist_array=persist_volume_array,
             geometry_policy=args.geometry_policy,
+            raw_tensor_evaluator_kind=args.raw_tensor_evaluator,
+            ffcx_c_source_path=args.ffcx_c_source,
             required_prefix_cells=(
-                TASK41_P0_V5_REFERENCE_CELLS
+                TASK41_P0_V6_PREFIX_CELLS
+                if v6_actual_qmetric_mode
+                else TASK41_P0_V5_REFERENCE_CELLS
                 if args.geometry_policy == "mesh_actual_exact"
                 else ()
             ),
@@ -1321,6 +2062,16 @@ def main(argv: list[str] | None = None) -> int:
                     "status": "COMPLETED",
                 }
             )
+        candidate_evaluator_audit = owner_result["condensed"].build_audit.get(
+            "raw_tensor_evaluator"
+        )
+        candidate_cache_identity = None
+        if v6_actual_qmetric_mode:
+            if not isinstance(candidate_evaluator_audit, Mapping):
+                raise RuntimeError("V6 volume owner omitted its raw-tensor evaluator audit")
+            candidate_cache_identity = candidate_evaluator_audit.get("cache_identity")
+            if not isinstance(candidate_cache_identity, str) or not candidate_cache_identity:
+                raise RuntimeError("V6 volume owner omitted its dynamic evaluator cache identity")
         identity_report = audit_task41_v4_volume_identity(
             owner_result["condensed"],
             donor,
@@ -1329,16 +2080,30 @@ def main(argv: list[str] | None = None) -> int:
             persist_array=persist_volume_array,
             output_directory=output_directory,
             native_volume_apply=native_volume_apply,
+            artifact_prefix=candidate_artifact_prefix,
+            candidate_identity=candidate_identity,
+            candidate_cache_identity=candidate_cache_identity,
         )
+        if v6_actual_qmetric_mode:
+            assert isinstance(candidate_evaluator_audit, Mapping)
+            identity_report["candidate_evaluator_audit"] = dict(candidate_evaluator_audit)
+            identity_report["candidate_evaluator_cache_identity"] = candidate_cache_identity
+            if exact_attribution is not None:
+                exact_attribution.candidate_cache_identity = candidate_cache_identity
         if exact_attribution is not None:
             array_records = {
                 str(item["name"]): item
                 for item in run_record.get("persisted_evidence_arrays", ())
                 if isinstance(item, Mapping) and item.get("name")
             }
-            p6_record = array_records.get("task41_p0_v5_candidate_full_p6")
+            candidate_evidence_prefix = (
+                "task41_p0_v6_qmetric_candidate"
+                if v6_actual_qmetric_mode
+                else "task41_p0_v5_candidate"
+            )
+            p6_record = array_records.get(f"{candidate_evidence_prefix}_full_p6")
             reduced_record = array_records.get(
-                "task41_p0_v5_candidate_full_reduced_rhs"
+                f"{candidate_evidence_prefix}_full_reduced_rhs"
             )
             if p6_record is None or reduced_record is None:
                 raise RuntimeError("V5 full-action arrays were not persisted before attribution")
@@ -1411,7 +2176,9 @@ def main(argv: list[str] | None = None) -> int:
         progress(
             {
                 "phase": (
-                    "v5_mesh_actual_exact_full_action"
+                    "v6_actual_qmetric_full_action"
+                    if v6_actual_qmetric_mode
+                    else "v5_mesh_actual_exact_full_action"
                     if args.geometry_policy == "mesh_actual_exact"
                     else "v4_volume_only_attribution"
                 ),

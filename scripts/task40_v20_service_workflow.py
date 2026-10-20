@@ -9409,12 +9409,14 @@ def _run_task41_p0_saved_output_service(
     b0_v4_volume_only_mode: bool = False,
     b0_v4_geometry_pair_mode: bool = False,
     b0_v5_mesh_actual_exact_mode: bool = False,
+    b0_v6_actual_qmetric_mode: bool = False,
     donor_contract_path: Path | None = None,
     donor_contract_sha256: str | None = None,
     donor_summary_path: Path | None = None,
     donor_numerical_output: Path | None = None,
     source_report_path: Path | None = None,
     geometry_reference_report_path: Path | None = None,
+    ffcx_c_source_path: Path | None = None,
     input_path: Path,
     activation_command: Any,
     activation_identity: str,
@@ -9464,6 +9466,16 @@ def _run_task41_p0_saved_output_service(
             != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
         ):
             raise ValueError("Task41 V5 two-cell geometry reference path/hash differs from the frozen receipt")
+    if b0_v6_actual_qmetric_mode and (
+        not b0_v5_mesh_actual_exact_mode or ffcx_c_source_path is None
+    ):
+        raise ValueError("Task41 V6 q-metric mode requires the V5 exact-geometry route and frozen C source")
+    if not b0_v6_actual_qmetric_mode and ffcx_c_source_path is not None:
+        raise ValueError("Task41 FFCx C source is only valid with the V6 q-metric evaluator")
+    if b0_v6_actual_qmetric_mode:
+        ffcx_c_source_path = ffcx_c_source_path.resolve(strict=True)
+        if ffcx_c_source_path.suffix != ".c":
+            raise ValueError("Task41 V6 q-metric source must be the generated .c file")
     if checker_only and not b0_evidence_audit_mode:
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -9524,6 +9536,9 @@ def _run_task41_p0_saved_output_service(
         "schema": "task41.p0.saved_output_service_receipt.v1",
         "status": "running",
         "mode": (
+            "saved_b0_v6_actual_qmetric_candidate"
+            if b0_v6_actual_qmetric_mode
+            else
             "saved_b0_v5_mesh_actual_exact_candidate"
             if b0_v5_mesh_actual_exact_mode
             else
@@ -9630,6 +9645,8 @@ def _run_task41_p0_saved_output_service(
             volume_report_path = output_root / (
                 "task41_p0_v4_geometry_pair_probe.json"
                 if b0_v4_geometry_pair_mode
+                else "task41_p0_v6_actual_qmetric_candidate.json"
+                if b0_v6_actual_qmetric_mode
                 else "task41_p0_v5_mesh_actual_exact_attribution.json"
                 if b0_v5_mesh_actual_exact_mode
                 else "task41_p0_v4_volume_only_attribution.json"
@@ -9666,6 +9683,16 @@ def _run_task41_p0_saved_output_service(
                         "mesh_actual_exact",
                         "--geometry-reference-report",
                         str(geometry_reference_report_path),
+                    ]
+                )
+            if b0_v6_actual_qmetric_mode:
+                assert ffcx_c_source_path is not None
+                volume_command.extend(
+                    [
+                        "--raw-tensor-evaluator",
+                        "actual_qmetric_blocked_gram",
+                        "--ffcx-c-source",
+                        str(ffcx_c_source_path),
                     ]
                 )
             volume_watchdog = supervise(
@@ -9762,7 +9789,11 @@ def _run_task41_p0_saved_output_service(
                     else False
                 )
                 record["continuation_status"] = (
-                    "v5_mesh_actual_exact_candidate_completed"
+                    "v6_actual_qmetric_candidate_completed"
+                    if worker_ok and b0_v6_actual_qmetric_mode
+                    else "v6_actual_qmetric_candidate_failed_or_not_admitted"
+                    if b0_v6_actual_qmetric_mode
+                    else "v5_mesh_actual_exact_candidate_completed"
                     if worker_ok
                     else "v5_mesh_actual_exact_candidate_failed_or_not_admitted"
                 )
@@ -10187,6 +10218,7 @@ def _run_task41_p0_service(
     )
     b0_v4_geometry_pair_mode = False
     b0_v5_mesh_actual_exact_mode = False
+    b0_v6_actual_qmetric_mode = False
     b0_evidence_audit_mode = bool(
         case_args
         and case_args[0]
@@ -10206,9 +10238,10 @@ def _run_task41_p0_service(
     donor_numerical_output: Path | None = None
     source_report_path: Path | None = None
     geometry_reference_report_path: Path | None = None
+    ffcx_c_source_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14, 15}
+            len(case_args) not in {11, 14, 15, 19}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -10250,6 +10283,21 @@ def _run_task41_p0_service(
                 )
             b0_v5_mesh_actual_exact_mode = True
             geometry_reference_report_path = Path(case_args[14]).resolve(strict=True)
+        if len(case_args) == 19:
+            if (
+                not b0_v4_volume_only_mode
+                or case_args[11] != "--geometry-policy"
+                or case_args[12] != "mesh_actual_exact"
+                or case_args[13] != "--geometry-reference-report"
+                or case_args[15] != "--raw-tensor-evaluator"
+                or case_args[16] != "actual_qmetric_blocked_gram"
+                or case_args[17] != "--ffcx-c-source"
+            ):
+                raise ValueError("V6 actual-qmetric service arguments differ from the frozen route")
+            b0_v5_mesh_actual_exact_mode = True
+            b0_v6_actual_qmetric_mode = True
+            geometry_reference_report_path = Path(case_args[14]).resolve(strict=True)
+            ffcx_c_source_path = Path(case_args[18]).resolve(strict=True)
     if continuation_mode:
         if (
             len(case_args) != 5
@@ -10535,6 +10583,8 @@ def _run_task41_p0_service(
                     geometry_reference_report_path
                 ),
             })
+        if b0_v6_actual_qmetric_mode:
+            environment["TASK41_P0_B0_V6_ACTUAL_QMETRIC"] = "1"
     activation_marker = _qualified_activation_identity(environment)
     if activation_marker is None:
         raise RuntimeError("Task41 service did not receive its contracted qualified activation")
@@ -10587,12 +10637,14 @@ def _run_task41_p0_service(
             b0_v4_volume_only_mode=b0_v4_volume_only_mode,
             b0_v4_geometry_pair_mode=b0_v4_geometry_pair_mode,
             b0_v5_mesh_actual_exact_mode=b0_v5_mesh_actual_exact_mode,
+            b0_v6_actual_qmetric_mode=b0_v6_actual_qmetric_mode,
             donor_contract_path=donor_contract_path,
             donor_contract_sha256=donor_contract_sha256,
             donor_summary_path=donor_summary_path,
             donor_numerical_output=donor_numerical_output,
             source_report_path=source_report_path,
             geometry_reference_report_path=geometry_reference_report_path,
+            ffcx_c_source_path=ffcx_c_source_path,
             input_path=input_path,
             activation_command=activation_command,
             activation_identity=activation_marker,

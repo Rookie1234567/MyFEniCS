@@ -19,7 +19,13 @@ from src.runners.task41_p0_saved_output_continuation import (
     validate_saved_a6_packet,
     check_task41_p0_saved_output_continuation,
 )
-from src.runners.task41_p0_checker import _task41_a2_diagnostic_inventory_from_data
+from src.runners.task41_p0_checker import (
+    _task41_a2_diagnostic_inventory_from_data,
+    _task41_mesh_actual_exact_candidate_profile,
+    _task41_validate_v6_actual_qmetric_audit,
+    _task41_validate_v6_prefix_qualification,
+    _task41_v6_report_requires_prefix_qualification,
+)
 from src.runners import task41_p0_contract
 from src.runners.task40_v10_campaign import FixedCampaignWindow
 from src.runners.workflow_timebase import clock_sample
@@ -28,6 +34,376 @@ from scripts.task40_v20_service_workflow import (
     _task41_p0_checker_only_snapshot_identity,
     _run_task41_p0_service,
 )
+
+
+@pytest.mark.parametrize(
+    ("report_name", "report", "expected_version"),
+    [
+        (
+            "task41_p0_v5_mesh_actual_exact_attribution.json",
+            {"schema": "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1"},
+            "v5",
+        ),
+        (
+            "task41_p0_v6_actual_qmetric_candidate.json",
+            {
+                "schema": "task41.p0.v6.actual_qmetric_candidate_receipt.v1",
+                "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+                "identity_audit": {
+                    "candidate_evaluator_identity": (
+                        "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+                    )
+                },
+            },
+            "v6",
+        ),
+    ],
+)
+def test_mesh_actual_exact_candidate_checker_selects_frozen_profile(
+    tmp_path: Path, report_name: str, report: dict[str, object], expected_version: str
+) -> None:
+    profile = _task41_mesh_actual_exact_candidate_profile(tmp_path / report_name, report)
+    assert profile["version"] == expected_version
+    assert profile["denominators_source"] == f"review_report_{expected_version}.md"
+    assert profile["check_schema"].startswith(f"task41.p0.{expected_version}.")
+
+
+def test_mesh_actual_exact_candidate_checker_rejects_unbound_v6_identity(tmp_path: Path) -> None:
+    report = {
+        "schema": "task41.p0.v6.actual_qmetric_candidate_receipt.v1",
+        "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+        "identity_audit": {"candidate_evaluator_identity": "unexpected"},
+    }
+    with pytest.raises(ValueError, match="V6 actual-qmetric candidate identity"):
+        _task41_mesh_actual_exact_candidate_profile(
+            tmp_path / "task41_p0_v6_actual_qmetric_candidate.json", report
+        )
+
+
+def _v6_candidate_audit_fixture(tmp_path: Path):
+    from src.solvers.task41_actual_qmetric_blocked_gram import (
+        CACHE_IDENTITY_SCHEMA,
+        DIMENSION,
+        EXPECTED_C_CACHE_SHA256,
+        EXPECTED_C_SOURCE_BYTES,
+        EXPECTED_C_SOURCE_SHA256,
+        EXPECTED_GEOMETRY_TABLE_NAMES,
+        EXPECTED_STATIC_TABLE_EXTENTS,
+        EXPECTED_UFCX_MODULE_SHA256,
+        EXPECTED_UFCX_SIGNATURE,
+        FEATURE_NAMES,
+        GEOMETRY_ORACLE_TRACE_SCHEMA,
+        HELPER_COMPILER_FLAGS,
+        IDENTITY,
+        INTEGRAL_BODY_BY_TAG,
+        POINT_BLOCK_SIZE,
+        POINT_COUNT,
+        QUALIFICATION_STATUS,
+        REQUIRED_GEOMETRY_TRACE_FIELDS,
+        V6_PREFIX_QUALIFICATION_SCHEMA,
+        V6_PREFIX_SAMPLE_CELL_INDICES,
+        _cache_identity_digest,
+    )
+
+    source_path = (tmp_path / "libffcx.c").resolve()
+    evaluator_source_path = (tmp_path / "task41_actual_qmetric_blocked_gram.py").resolve()
+    evaluator_source_path.write_text("# frozen evaluator fixture\n", encoding="utf-8")
+    evaluator_source_sha256 = hashlib.sha256(evaluator_source_path.read_bytes()).hexdigest()
+    body_map = {str(tag): digest for tag, digest in INTEGRAL_BODY_BY_TAG.items()}
+    cache_payload = {
+        "schema": CACHE_IDENTITY_SCHEMA,
+        "implementation": IDENTITY,
+        "evaluator_source_sha256": evaluator_source_sha256,
+        "ffcx_c_source_sha256": EXPECTED_C_SOURCE_SHA256,
+        "ffcx_compile_metadata_sha256": EXPECTED_C_CACHE_SHA256,
+        "ffcx_module_sha256": EXPECTED_UFCX_MODULE_SHA256,
+        "ufcx_signature": EXPECTED_UFCX_SIGNATURE,
+        "reference_table_source_sha256": EXPECTED_C_SOURCE_SHA256,
+        "integral_body_by_tag": body_map,
+        "table_extent_contract": {
+            "FE0": [1, 1, POINT_COUNT, DIMENSION],
+            "FE2": [1, 1, POINT_COUNT, 8],
+            "weights": [POINT_COUNT],
+        },
+        "compiler_flags": list(HELPER_COMPILER_FLAGS),
+        "geometry_oracle_trace_schema": GEOMETRY_ORACLE_TRACE_SCHEMA,
+    }
+    cache_identity_sha256 = _cache_identity_digest(cache_payload)
+    cache_identity = f"{IDENTITY}:{cache_identity_sha256}"
+    reference_table_bytes = len(FEATURE_NAMES) * POINT_COUNT * DIMENSION * 8 + POINT_COUNT * 8
+    shared_table_bytes_upper = reference_table_bytes + len(
+        set(INTEGRAL_BODY_BY_TAG.values())
+    ) * sum(
+        int(np.prod(EXPECTED_STATIC_TABLE_EXTENTS[name])) * 8
+        for name in EXPECTED_GEOMETRY_TABLE_NAMES
+    )
+    helper = {
+        "source_path": str(source_path),
+        "source_sha256": EXPECTED_C_SOURCE_SHA256,
+        "source_bytes": EXPECTED_C_SOURCE_BYTES,
+        "compile_metadata_path": str(Path(str(source_path) + ".cached")),
+        "compile_metadata_sha256": EXPECTED_C_CACHE_SHA256,
+        "helper_source_sha256": "a" * 64,
+        "helper_source_bytes": 2048,
+        "helper_library_sha256": "b" * 64,
+        "helper_library_bytes": 4096,
+        "helper_scratch_retained_bytes": 6144,
+        "reference_table_names": list(FEATURE_NAMES),
+        "reference_table_bytes": reference_table_bytes,
+        "shared_table_bytes_upper": shared_table_bytes_upper,
+        "reference_table_hashes": ["c" * 64] * len(FEATURE_NAMES),
+        "reference_weight_sha256": "e" * 64,
+        "reference_table_zero_counts": [0] * len(FEATURE_NAMES),
+        "reference_table_zero_pattern_hashes": ["d" * 64] * len(FEATURE_NAMES),
+        "static_table_declared_extents": {
+            name: list(shape) for name, shape in EXPECTED_STATIC_TABLE_EXTENTS.items()
+        },
+        "geometry_trace_fields": sorted(REQUIRED_GEOMETRY_TRACE_FIELDS),
+        "feature_pair_map": [[left, right] for left in range(12) for right in range(12)],
+        "quadrature_point_count": POINT_COUNT,
+        "geometry_helper_block_size": POINT_BLOCK_SIZE,
+        "geometry_expression_source": "frozen_FFCx_Q907_Jacobian_and_fw_graph",
+        "geometry_shortcut_used": False,
+        "geometry_trace_source": "same_frozen_FFCx_scalar_graph_as_actual_qmetric_block",
+        "original_kernel_oracle_generator": (
+            "_FrozenFFCxGeometryHelper.original_kernel_oracle_source"
+        ),
+        "original_kernel_oracle_execution_status": "NOT_RUN_NO_WINDOW_APPROVAL",
+        "original_kernel_oracle_execution_count": 0,
+        "original_kernel_oracle_artifact_bytes": 0,
+        "original_kernel_oracle_compile_audits": {},
+        "compiler_flags": list(HELPER_COMPILER_FLAGS),
+        "integral_body_by_tag": {
+            str(tag): digest for tag, digest in INTEGRAL_BODY_BY_TAG.items()
+        },
+    }
+    audit = {
+        "candidate_evaluator_cache_identity": cache_identity,
+        "candidate_evaluator_audit": {
+            "implementation": IDENTITY,
+            "qualification_status": QUALIFICATION_STATUS,
+            "expected_ufcx_signature": EXPECTED_UFCX_SIGNATURE,
+            "ufcx_form_signature": EXPECTED_UFCX_SIGNATURE,
+            "ffcx_module_sha256": EXPECTED_UFCX_MODULE_SHA256,
+            "ffcx_default_kernel_absent": True,
+            "point_block_size": POINT_BLOCK_SIZE,
+            "workspace_bytes_upper": 1024**3,
+            "prepare_workspace_bytes_upper": 1024**3,
+            "key_workspace_bytes_upper": 128 * 1024**2,
+            "class_timing_metadata_bytes_upper": 16 * 1024**2,
+            "class_timing_metadata_bytes": 512,
+            "helper_scratch_bytes_upper": 128 * 1024**2,
+            "original_kernel_oracle_scratch_bytes_upper": 512 * 1024**2,
+            "original_kernel_oracle_workspace_bytes_upper": 1024**3,
+            "original_kernel_oracle_source_bytes_upper": 2 * EXPECTED_C_SOURCE_BYTES,
+            "geometry_oracle_comparison_records": [],
+            "original_kernel_oracle_records": [],
+            "prefix_qualification": {
+                "schema": V6_PREFIX_QUALIFICATION_SCHEMA,
+                "status": "P0_NOT_RUN_NO_WINDOW_APPROVAL",
+                "required_sample_cell_indices": list(V6_PREFIX_SAMPLE_CELL_INDICES),
+                "sample_count": 0,
+                "required_sample_count": len(V6_PREFIX_SAMPLE_CELL_INDICES),
+                "geometry_witness_count": 0,
+                "full_admission_eligible": False,
+                "records": [],
+            },
+            "cache_identity": cache_identity,
+            "cache_identity_sha256": cache_identity_sha256,
+            "cache_identity_payload": cache_payload,
+            "evaluator_source_path": str(evaluator_source_path),
+            "evaluator_source_sha256": evaluator_source_sha256,
+            "class_count": 0,
+            "class_seconds_summary": {"count": 0, "total": 0.0, "max": 0.0},
+            "phase_seconds_by_stage": {
+                "geometry": 0.0,
+                "pack": 0.0,
+                "gram": 0.0,
+                "scatter": 0.0,
+                "release": 0.0,
+            },
+            "mass_coefficient_conjugated": False,
+            "hermitian_assumption": False,
+            "raw_tensor_built_before_original_schur": True,
+            "geometry_helper": helper,
+        }
+    }
+    return audit, helper, evaluator_source_path
+
+
+def test_v6_candidate_checker_rechecks_the_frozen_evaluator_audit(tmp_path: Path) -> None:
+    audit, helper, _ = _v6_candidate_audit_fixture(tmp_path)
+    _task41_validate_v6_actual_qmetric_audit(audit)
+    helper["source_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="frozen source profile"):
+        _task41_validate_v6_actual_qmetric_audit(audit)
+
+
+def test_v6_no_window_prefix_cannot_admit_a_completed_candidate(tmp_path: Path) -> None:
+    audit, _, _ = _v6_candidate_audit_fixture(tmp_path)
+    assert not _task41_v6_report_requires_prefix_qualification(
+        {"status": "P0_NOT_RUN_NO_WINDOW_APPROVAL", "candidate_numeric_status": "NOT_RUN"}
+    )
+    completed_negative = {
+        "status": "ACTUAL_COORDINATES_INSUFFICIENT",
+        "candidate_numeric_status": "ACTUAL_COORDINATES_INSUFFICIENT",
+    }
+    assert _task41_v6_report_requires_prefix_qualification(completed_negative)
+    with pytest.raises(ValueError, match="P0 no-window record"):
+        _task41_validate_v6_actual_qmetric_audit(
+            audit, require_prefix_qualified=True
+        )
+
+
+def test_v6_forged_qualified_prefix_without_eight_records_is_rejected(
+    tmp_path: Path,
+) -> None:
+    audit, _, _ = _v6_candidate_audit_fixture(tmp_path)
+    prefix = audit["candidate_evaluator_audit"]["prefix_qualification"]
+    prefix.update(
+        {
+            "status": "PREFIX_QUALIFIED",
+            "geometry_witness_count": 1,
+            "full_admission_eligible": True,
+        }
+    )
+    with pytest.raises(ValueError, match="qualified prefix is incomplete"):
+        _task41_validate_v6_actual_qmetric_audit(audit)
+
+
+def test_v6_checker_distinguishes_a_qualified_prefix_inventory_from_p0_not_run() -> None:
+    from src.solvers.task41_actual_qmetric_blocked_gram import (
+        V6_PREFIX_QUALIFICATION_SCHEMA,
+        V6_PREFIX_SAMPLE_CELL_INDICES,
+    )
+    from src.runners.task41_p0_checker import TASK41_P0_V5_FROZEN_DENOMINATORS
+    from src.runners.task41_p0_v4_volume_only_audit import TASK41_P0_V5_REFERENCE_CELLS
+
+    records = []
+    for cell_index in V6_PREFIX_SAMPLE_CELL_INDICES:
+        saved = cell_index in TASK41_P0_V5_REFERENCE_CELLS
+        witness = (
+            {"status": "NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS"}
+            if saved
+            else {"status": "BITWISE_EQUAL", "q_begin": 0, "q_end": 512}
+        )
+        record = {
+            "cell_index": cell_index,
+            "source": (
+                "V4_SAVED_ACTUAL_BLOCKS"
+                if saved
+                else "ORIGINAL_FFCX_KERNEL_ORACLE"
+            ),
+            "coordinates_bitwise_identity_passed": True,
+            "geometry_witness": witness,
+            "status": "PASS",
+            "admission_eligible": True,
+            "comparisons": {
+                "raw_tensor": {"status": "PASS", "relative_limit": 1.0e-11},
+                "oriented_tensor": {"status": "PASS", "relative_limit": 1.0e-11},
+                "K_G_J_L": {
+                    name: {"status": "PASS", "relative_limit": 1.0e-11}
+                    for name in ("K", "G", "J", "L")
+                },
+                "R_T_S": {
+                    name: {"status": "PASS", "relative_limit": 1.0e-11}
+                    for name in ("R", "T", "S")
+                },
+                "strict_lu": {"passed": True, "relative_limit": 1.0e-11},
+                "reference_condensation_defects_relative": {
+                    "KR_plus_G": 2.0e-8, "TK_plus_J": 1.5e-8
+                },
+                "candidate_condensation_defects_relative": {
+                    "KR_plus_G": 3.0e-8, "TK_plus_J": 2.5e-8
+                },
+                "condensation_defects_classification": "diagnostic_only",
+            },
+        }
+        if saved:
+            record["reference_report_sha256"] = "a" * 64
+            record["local_action_comparisons"] = [
+                {
+                    "column": column,
+                    "state": state,
+                    "selected_active_row": 5_458_716,
+                    "frozen_denominator": TASK41_P0_V5_FROZEN_DENOMINATORS[column],
+                    "selected_row_scale_check": "diagnostic_only",
+                    "selected_row_difference_over_frozen_denominator": 0.0,
+                    "full_local_action": {"absolute_frobenius": 2.0},
+                    "full_local_action_scale_check": "diagnostic_only",
+                    "full_local_action_difference_over_frozen_denominator": (
+                        2.0 / TASK41_P0_V5_FROZEN_DENOMINATORS[column]
+                    ),
+                }
+                for column in (0, 1)
+                for state in ("known", "j0", "j3")
+            ]
+        records.append(record)
+    qualification = {
+        "schema": V6_PREFIX_QUALIFICATION_SCHEMA,
+        "status": "PREFIX_QUALIFIED",
+        "required_sample_cell_indices": list(V6_PREFIX_SAMPLE_CELL_INDICES),
+        "sample_count": len(records),
+        "required_sample_count": len(V6_PREFIX_SAMPLE_CELL_INDICES),
+        "geometry_witness_count": 6,
+        "full_admission_eligible": True,
+        "records": records,
+    }
+    assert (
+        _task41_validate_v6_prefix_qualification(
+            qualification, require_qualified=False
+        )
+        == "PREFIX_QUALIFIED_INVENTORY"
+    )
+    assert (
+        _task41_validate_v6_prefix_qualification(
+            qualification, require_qualified=True
+        )
+        == "PREFIX_QUALIFIED"
+    )
+    assert (
+        records[0]["comparisons"]["candidate_condensation_defects_relative"]["KR_plus_G"]
+        > 1.0e-11
+    )
+    records[0]["comparisons"]["candidate_condensation_defects_relative"]["KR_plus_G"] = -1.0
+    with pytest.raises(ValueError, match="invalid diagnostic condensation defects"):
+        _task41_validate_v6_prefix_qualification(
+            qualification, require_qualified=False
+        )
+    records[0]["comparisons"]["candidate_condensation_defects_relative"]["KR_plus_G"] = 3.0e-8
+    records[0]["comparisons"]["condensation_defects_classification"] = "hard_gate"
+    with pytest.raises(ValueError, match="mislabeled diagnostic_only"):
+        _task41_validate_v6_prefix_qualification(
+            qualification, require_qualified=False
+        )
+    records[0]["comparisons"]["condensation_defects_classification"] = "diagnostic_only"
+    records[0]["local_action_comparisons"][0][
+        "full_local_action_difference_over_frozen_denominator"
+    ] = 100.0
+    with pytest.raises(ValueError, match="saved-cell action evidence"):
+        _task41_validate_v6_prefix_qualification(
+            qualification, require_qualified=False
+        )
+
+
+def test_v6_candidate_checker_binds_cache_identity_to_evaluator_source(tmp_path: Path) -> None:
+    audit, _, evaluator_source_path = _v6_candidate_audit_fixture(tmp_path)
+    evaluator_source_path.write_text("# changed evaluator fixture\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="frozen source profile"):
+        _task41_validate_v6_actual_qmetric_audit(audit)
+
+
+@pytest.mark.parametrize("field", ["static_table_declared_extents", "reference_table_zero_pattern_hashes"])
+def test_v6_candidate_checker_rejects_invalid_reference_table_structure(
+    tmp_path: Path, field: str
+) -> None:
+    audit, helper, _ = _v6_candidate_audit_fixture(tmp_path)
+    if field == "static_table_declared_extents":
+        helper[field]["FE0_C0_Q907"][-1] -= 1
+    else:
+        helper[field].pop()
+    with pytest.raises(ValueError, match="frozen source profile"):
+        _task41_validate_v6_actual_qmetric_audit(audit)
 
 
 def _write_a6_packet(path: Path, *, stored_native_relative: float | None = None) -> None:
@@ -796,13 +1172,14 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
 
 
 @pytest.mark.parametrize(
-    ("volume_only", "geometry_pair", "v5_mode", "v5_complete"),
+    ("volume_only", "geometry_pair", "v5_mode", "v5_complete", "v6_mode"),
     [
-        (False, False, False, False),
-        (True, False, False, False),
-        (True, True, False, False),
-        (True, False, True, False),
-        (True, False, True, True),
+        (False, False, False, False, False),
+        (True, False, False, False, False),
+        (True, True, False, False, False),
+        (True, False, True, False, False),
+        (True, False, True, True, False),
+        (True, False, True, True, True),
     ],
 )
 def test_b0_saved_evidence_audit_uses_supervised_service_route(
@@ -812,6 +1189,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     geometry_pair: bool,
     v5_mode: bool,
     v5_complete: bool,
+    v6_mode: bool,
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
@@ -924,6 +1302,8 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     source_report_path.write_text("{}\n", encoding="utf-8")
     geometry_reference_path = results_root / "v4_source" / "task41_p0_v4_geometry_pair_probe.json"
     geometry_reference_path.write_text("{}\n", encoding="utf-8")
+    ffcx_c_source_path = repo_root / "frozen_ffcx_form.c"
+    ffcx_c_source_path.write_text("/* frozen fixture */\n", encoding="utf-8")
     environment = {
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
@@ -968,7 +1348,14 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                 assert "--geometry-policy" in command
                 assert command[command.index("--geometry-policy") + 1] == "mesh_actual_exact"
                 assert Path(command[command.index("--geometry-reference-report") + 1]) == geometry_reference_path
-                volume_result = output_root / "task41_p0_v5_mesh_actual_exact_attribution.json"
+                if v6_mode:
+                    assert command[command.index("--raw-tensor-evaluator") + 1] == "actual_qmetric_blocked_gram"
+                    assert Path(command[command.index("--ffcx-c-source") + 1]) == ffcx_c_source_path
+                volume_result = output_root / (
+                    "task41_p0_v6_actual_qmetric_candidate.json"
+                    if v6_mode
+                    else "task41_p0_v5_mesh_actual_exact_attribution.json"
+                )
                 evidence_dir = output_root / "volume_evidence"
                 evidence_dir.mkdir()
                 evidence_arrays = []
@@ -985,9 +1372,14 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                     })
                 volume_result.write_text(
                     json.dumps({
-                        "schema": "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1",
+                        "schema": (
+                            "task41.p0.v6.actual_qmetric_candidate_receipt.v1"
+                            if v6_mode
+                            else "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1"
+                        ),
                         "status": "ACTUAL_COORDINATES_INSUFFICIENT",
                         "geometry_policy": "mesh_actual_exact",
+                        "raw_tensor_evaluator": "actual_qmetric_blocked_gram" if v6_mode else None,
                         "donor_contract_sha256": donor_contract_sha,
                         "consumer_contract_sha256": consumer_contract_sha,
                         "geometry_reference_report_path": str(geometry_reference_path.resolve()),
@@ -996,12 +1388,22 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                         "persisted_evidence_arrays": evidence_arrays,
                         "identity_audit": {
                             "completed": True,
+                            "candidate_evaluator_identity": (
+                                "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+                                if v6_mode
+                                else None
+                            ),
                             "candidate_full_action_gate": {"status": "ACTUAL_COORDINATES_INSUFFICIENT"},
                             "candidate_recovery_gate": {
                                 "status": "ACTUAL_COORDINATES_INSUFFICIENT",
                                 "native_volume_action_count": 2,
                             },
                             "global_geometry_native_elimination_attribution": {
+                                "schema": (
+                                    "task41.p0.v6.global_geometry_native_elimination_attribution.v1"
+                                    if v6_mode
+                                    else "task41.p0.v5.global_geometry_native_elimination_attribution.v1"
+                                ),
                                 "global_closure_status": "DIAGNOSTIC_ONLY",
                             },
                         },
@@ -1009,7 +1411,11 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                     encoding="utf-8",
                 )
             elif v5_mode:
-                volume_result = output_root / "task41_p0_v5_mesh_actual_exact_attribution.json"
+                volume_result = output_root / (
+                    "task41_p0_v6_actual_qmetric_candidate.json"
+                    if v6_mode
+                    else "task41_p0_v5_mesh_actual_exact_attribution.json"
+                )
                 volume_result.write_text(
                     json.dumps({
                         "status": "CANDIDATE_NOT_ADMITTED",
@@ -1033,7 +1439,12 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert "run_case.py" not in command
         if v5_complete:
             assert command[command.index("--mesh-actual-exact-report") + 1] == str(
-                output_root / "task41_p0_v5_mesh_actual_exact_attribution.json"
+                output_root
+                / (
+                    "task41_p0_v6_actual_qmetric_candidate.json"
+                    if v6_mode
+                    else "task41_p0_v5_mesh_actual_exact_attribution.json"
+                )
             )
         elif v5_mode:
             assert "--mesh-actual-exact-report" not in command
@@ -1164,6 +1575,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             "--output-dir", str(output_root),
             *( ["--geometry-pair-only", "--source-report", str(source_report_path)] if geometry_pair else [] ),
             *( ["--geometry-policy", "mesh_actual_exact", "--geometry-reference-report", str(geometry_reference_path)] if v5_mode else [] ),
+            *( ["--raw-tensor-evaluator", "actual_qmetric_blocked_gram", "--ffcx-c-source", str(ffcx_c_source_path)] if v6_mode else [] ),
         ],
         contract_path=consumer_contract_path,
         repo_root=repo_root,
@@ -1184,7 +1596,9 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         "failed_raw_evidence_retained" if v5_mode else "completed"
     )
     assert receipt["mode"] == (
-        "saved_b0_v5_mesh_actual_exact_candidate"
+        "saved_b0_v6_actual_qmetric_candidate"
+        if v6_mode
+        else "saved_b0_v5_mesh_actual_exact_candidate"
         if v5_mode
         else "saved_b0_v4_geometry_pair_probe"
         if geometry_pair
@@ -1199,8 +1613,12 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         ]
     if v5_mode:
         assert receipt["continuation_status"] == (
-            "v5_mesh_actual_exact_candidate_completed"
+            "v6_actual_qmetric_candidate_completed"
+            if v6_mode
+            else "v5_mesh_actual_exact_candidate_completed"
             if v5_complete
+            else "v6_actual_qmetric_candidate_failed_or_not_admitted"
+            if v6_mode
             else "v5_mesh_actual_exact_candidate_failed_or_not_admitted"
         )
         if v5_complete:

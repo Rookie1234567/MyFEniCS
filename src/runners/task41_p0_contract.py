@@ -147,8 +147,15 @@ TASK41_B0_BOOTSTRAP_TREATMENT = (
 TASK41_B0_V3_WINDOW_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v3_24h.json"
 TASK41_B0_V3_AUTH_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "v3_24h_authorization.json"
 TASK41_B0_PARENT_WINDOW_SHA256 = "87dd4ec560a208122e9959987a392bf878162793c61582877969206686d922e6"
+TASK41_B0_V3_WINDOW_SHA256 = "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38"
 TASK41_B0_V3_TOTAL_SECONDS = 86_400.0
 TASK41_B0_V3_NUMERICAL_SECONDS = 85_200.0
+TASK41_B0_V6_WINDOW_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v6_24h.json"
+TASK41_B0_V6_AUTH_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "v6_24h_authorization.json"
+TASK41_B0_V6_AUTH_SCHEMA = "task41.b0.v6.user_continuation_authorization.v1"
+TASK41_B0_V6_AUTHORIZATION = "user_explicit_v6_24h_20261020"
+TASK41_B0_V6_TOTAL_SECONDS = 86_400.0
+TASK41_B0_V6_NUMERICAL_SECONDS = 85_200.0
 
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
@@ -1144,10 +1151,31 @@ def require_task41_p0_contract(
 
 def task41_window_spec(contract: Mapping[str, Any], root: Path) -> tuple[Path, float, float, bool]:
     case = _task41_case(task41_case_id_for_run_id(str(contract.get("case", {}).get("run_id", ""))))
-    path = _resolve(root, contract.get("window", {}).get("path"), "window.path")
-    continuation = case["case_id"] == "B0" and path == (root / TASK41_B0_V3_WINDOW_RELATIVE).resolve()
-    if continuation:
+    window_info = contract.get("window", {})
+    path = _resolve(root, window_info.get("path"), "window.path")
+    if case["case_id"] == "B0" and path == (root / TASK41_B0_V3_WINDOW_RELATIVE).resolve():
         return path, TASK41_B0_V3_TOTAL_SECONDS, TASK41_B0_V3_NUMERICAL_SECONDS, True
+    if case["case_id"] == "B0" and path == (root / TASK41_B0_V6_WINDOW_RELATIVE).resolve():
+        authorization, authorization_sha = _task41_v6_authorization(root)
+        parent_path = str(TASK41_B0_V3_WINDOW_RELATIVE)
+        parent_sha = TASK41_B0_V3_WINDOW_SHA256
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise Task41ContractError("Task41 V6 fixed window is missing or invalid") from exc
+        if (
+            not isinstance(payload, Mapping)
+            or payload.get("continuation_authorization_sha256") != authorization_sha
+            or payload.get("parent_window_path") != parent_path
+            or payload.get("parent_window_sha256") != parent_sha
+            or window_info.get("continuation_authorization_sha256") != authorization_sha
+            or window_info.get("parent_window_path") != parent_path
+            or window_info.get("parent_window_sha256") != parent_sha
+            or payload.get("source_sha") != authorization["source_at_entry"]
+            or window_info.get("entry_source_sha") != authorization["source_at_entry"]
+        ):
+            raise Task41ContractError("Task41 V6 contract is not bound to its approved V3 parent and authorization")
+        return path, TASK41_B0_V6_TOTAL_SECONDS, TASK41_B0_V6_NUMERICAL_SECONDS, True
     if path != (root / case["window_relative"]).resolve():
         raise Task41ContractError("Task41 fixed window path is not registered")
     return path, TASK41_TOTAL_SECONDS, TASK41_NUMERICAL_SECONDS, False
@@ -1177,6 +1205,37 @@ def _task41_v3_authorization(root: Path) -> tuple[dict[str, Any], str]:
     return payload, hashlib.sha256(raw).hexdigest()
 
 
+def _task41_v6_authorization(root: Path) -> tuple[dict[str, Any], str]:
+    path = root / TASK41_B0_V6_AUTH_RELATIVE
+    try:
+        raw = path.read_bytes()
+        payload = json.loads(raw)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise Task41ContractError("Task41 V6 continuation requires an explicit authorization receipt") from exc
+    expected_fields = {
+        "schema", "authorization", "source_at_entry", "parent_window_path",
+        "parent_window_sha256", "total_seconds", "numerical_seconds",
+        "closeout_seconds",
+    }
+    parent_path = root / TASK41_B0_V3_WINDOW_RELATIVE
+    if (
+        not isinstance(payload, dict)
+        or set(payload) != expected_fields
+        or payload.get("schema") != TASK41_B0_V6_AUTH_SCHEMA
+        or payload.get("authorization") != TASK41_B0_V6_AUTHORIZATION
+        or payload.get("total_seconds") != TASK41_B0_V6_TOTAL_SECONDS
+        or payload.get("numerical_seconds") != TASK41_B0_V6_NUMERICAL_SECONDS
+        or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
+        or payload.get("parent_window_path") != str(TASK41_B0_V3_WINDOW_RELATIVE)
+        or payload.get("parent_window_sha256") != TASK41_B0_V3_WINDOW_SHA256
+        or not re.fullmatch(r"[0-9a-f]{40}", str(payload.get("source_at_entry", "")))
+        or not parent_path.is_file()
+        or sha256_file(parent_path) != TASK41_B0_V3_WINDOW_SHA256
+    ):
+        raise Task41ContractError("Task41 V6 authorization or preserved V3 parent identity changed")
+    return payload, hashlib.sha256(raw).hexdigest()
+
+
 def load_task41_p0_fixed_window(
     contract: Mapping[str, Any], *, current_root: str | Path | None = None,
     require_current_boot: bool = True,
@@ -1187,6 +1246,8 @@ def load_task41_p0_fixed_window(
     )
     window_info = contract["window"]
     path, total_seconds, numerical_seconds, continuation = task41_window_spec(contract, root)
+    is_v3_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V3_WINDOW_RELATIVE).resolve()
+    is_v6_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V6_WINDOW_RELATIVE).resolve()
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     if digest != window_info["sha256"]:
@@ -1205,8 +1266,12 @@ def load_task41_p0_fixed_window(
             "bootstrap_boottime_elapsed_seconds",
             "bootstrap_time_treatment",
         }
-    if continuation:
+    if is_v3_continuation:
         expected_fields |= {"continuation_authorization_sha256", "parent_window_sha256"}
+    if is_v6_continuation:
+        expected_fields |= {
+            "continuation_authorization_sha256", "parent_window_path", "parent_window_sha256"
+        }
     if not isinstance(payload, dict) or set(payload) != expected_fields:
         raise Task41ContractError("Task41 fixed execution window has an open or incomplete schema")
     if (
@@ -1239,7 +1304,7 @@ def load_task41_p0_fixed_window(
     ):
         raise Task41ContractError("Task41 execution window timestamps are inconsistent")
     bootstrap_seconds = 0.0
-    if continuation:
+    if is_v3_continuation:
         authorization, authorization_sha = _task41_v3_authorization(root)
         expected_t0_ns = int(authorization["anchor"]["utc_ns"]) - 180_000_000_000
         if (
@@ -1255,6 +1320,21 @@ def load_task41_p0_fixed_window(
         ):
             raise Task41ContractError("Task41 V3 continuation clock or authorization changed")
         bootstrap_seconds = 180.0
+    elif is_v6_continuation:
+        authorization, authorization_sha = _task41_v6_authorization(root)
+        if (
+            t0_ns != int(anchor["utc_ns"])
+            or payload["source_sha"] != authorization["source_at_entry"]
+            or payload["continuation_authorization_sha256"] != authorization_sha
+            or payload.get("parent_window_path") != str(TASK41_B0_V3_WINDOW_RELATIVE)
+            or payload.get("parent_window_sha256") != TASK41_B0_V3_WINDOW_SHA256
+            or payload.get("t0_basis") != {"kind": "user_approved_v6_24h_continuation"}
+            or payload.get("bootstrap_utc_elapsed_seconds") != 0.0
+            or payload.get("bootstrap_boottime_elapsed_seconds") is not None
+            or payload.get("bootstrap_time_treatment") != "new_approved_window_anchor_is_t0"
+        ):
+            raise Task41ContractError("Task41 V6 window clock, approval, or V3 parent changed")
+        bootstrap_seconds = 0.0
     elif is_b0:
         expected_t0_ns = _utc_ns(TASK41_B0_T0_UTC)
         bootstrap_utc = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
@@ -1295,10 +1375,17 @@ def load_task41_p0_fixed_window(
 
 
 def _task41_window_for_contract(
-    root: Path, case_id: str = "A1", *, b0_v3_continuation: bool = False
+    root: Path, case_id: str = "A1", *, b0_v3_continuation: bool = False,
+    b0_v6_continuation: bool = False,
 ) -> tuple[FixedCampaignWindow, str, dict[str, Any]]:
     case_spec = _task41_case(case_id)
-    relative = TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation else case_spec["window_relative"]
+    if b0_v3_continuation and b0_v6_continuation:
+        raise Task41ContractError("Task41 B0 continuation window routes are mutually exclusive")
+    relative = (
+        TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
+        else TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation
+        else case_spec["window_relative"]
+    )
     path = (root / relative).resolve()
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
@@ -1311,10 +1398,20 @@ def _task41_window_for_contract(
     entry_source = payload.get("source_sha")
     window_contract = {
         "case": {"run_id": case_spec["run_id"]},
+        "source": {"sha": entry_source},
         "window": {
             "path": str(relative),
             "sha256": digest,
             "entry_source_sha": entry_source,
+            **(
+                {
+                    "continuation_authorization_sha256": payload.get("continuation_authorization_sha256"),
+                    "parent_window_path": payload.get("parent_window_path"),
+                    "parent_window_sha256": payload.get("parent_window_sha256"),
+                }
+                if b0_v6_continuation
+                else {}
+            ),
         },
     }
     window = load_task41_p0_fixed_window(
@@ -1375,6 +1472,7 @@ def prepare_task41_p0(
     case_id: str = "A1",
     a2_q_csr_manifests: Sequence[str | Path] | None = None,
     b0_v3_continuation: bool = False,
+    b0_v6_continuation: bool = False,
 ) -> dict[str, Any]:
     """Register or reuse the one fixed P0 window, then write a source-bound contract.
 
@@ -1393,8 +1491,22 @@ def prepare_task41_p0(
 
     if b0_v3_continuation and case_id != "B0":
         raise Task41ContractError("V3 continuation applies only to the authorized B0 case")
-    window_relative = TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation else case_spec["window_relative"]
+    if b0_v6_continuation and case_id != "B0":
+        raise Task41ContractError("V6 continuation applies only to the authorized B0 case")
+    if b0_v3_continuation and b0_v6_continuation:
+        raise Task41ContractError("V3 and V6 continuation routes are mutually exclusive")
+    window_relative = (
+        TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
+        else TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation
+        else case_spec["window_relative"]
+    )
     window_path = (root / window_relative).resolve()
+    v6_authorization = None
+    v6_authorization_sha = None
+    if b0_v6_continuation:
+        v6_authorization, v6_authorization_sha = _task41_v6_authorization(root)
+        if not window_path.exists() and v6_authorization["source_at_entry"] != source_sha:
+            raise Task41ContractError("Task41 V6 approval receipt does not bind the frozen source SHA")
     if b0_v3_continuation and not window_path.exists():
         authorization, authorization_sha = _task41_v3_authorization(root)
         anchor = authorization["anchor"]
@@ -1419,6 +1531,37 @@ def prepare_task41_p0(
             "parent_window_sha256": TASK41_B0_PARENT_WINDOW_SHA256,
         }
         _write_json_no_replace(window_path, continuation_payload)
+    if b0_v6_continuation and not window_path.exists():
+        assert v6_authorization is not None and v6_authorization_sha is not None
+        anchor = clock_sample(include_boot_id=True)
+        t0_ns = int(anchor["utc_ns"])
+        v6_payload = {
+            "schema": TASK41_P0_WINDOW_SCHEMA,
+            "task_id": TASK41_MODEL_ID,
+            "source_sha": v6_authorization["source_at_entry"],
+            "t0_utc": _utc_text_from_ns(t0_ns),
+            "numerical_deadline_utc": _utc_text_from_ns(
+                t0_ns + int(TASK41_B0_V6_NUMERICAL_SECONDS * 1e9)
+            ),
+            "deadline_utc": _utc_text_from_ns(
+                t0_ns + int(TASK41_B0_V6_TOTAL_SECONDS * 1e9)
+            ),
+            "total_seconds": TASK41_B0_V6_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_B0_V6_NUMERICAL_SECONDS,
+            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+            "anchor": anchor,
+            "accounting_path": str(
+                (root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v6_24h.jsonl").resolve()
+            ),
+            "t0_basis": {"kind": "user_approved_v6_24h_continuation"},
+            "bootstrap_utc_elapsed_seconds": 0.0,
+            "bootstrap_boottime_elapsed_seconds": None,
+            "bootstrap_time_treatment": "new_approved_window_anchor_is_t0",
+            "continuation_authorization_sha256": v6_authorization_sha,
+            "parent_window_path": str(TASK41_B0_V3_WINDOW_RELATIVE),
+            "parent_window_sha256": TASK41_B0_V3_WINDOW_SHA256,
+        }
+        _write_json_no_replace(window_path, v6_payload)
     if not window_path.exists():
         anchor = clock_sample(include_boot_id=True)
         t0_ns = (
@@ -1462,7 +1605,8 @@ def prepare_task41_p0(
         _write_json_no_replace(window_path, window_payload)
 
     window, window_sha, window_payload = _task41_window_for_contract(
-        root, case_id, b0_v3_continuation=b0_v3_continuation
+        root, case_id, b0_v3_continuation=b0_v3_continuation,
+        b0_v6_continuation=b0_v6_continuation,
     )
 
     runtime_path = _resolve(root, str(runtime_prefix), "runtime_prefix")
@@ -1583,6 +1727,15 @@ def prepare_task41_p0(
             "path": str(window_relative),
             "sha256": window_sha,
             "entry_source_sha": window_payload["source_sha"],
+            **(
+                {
+                    "continuation_authorization_sha256": v6_authorization_sha,
+                    "parent_window_path": str(TASK41_B0_V3_WINDOW_RELATIVE),
+                    "parent_window_sha256": TASK41_B0_V3_WINDOW_SHA256,
+                }
+                if b0_v6_continuation
+                else {}
+            ),
         },
         "resources": {
             "task_memory_max_bytes": TASK41_TASK_MEMORY_MAX_BYTES,
@@ -1840,6 +1993,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--abi-receipt", type=Path)
     parser.add_argument("--jit-cache", type=Path)
     parser.add_argument("--b0-v3-continuation", action="store_true")
+    parser.add_argument("--b0-v6-continuation", action="store_true")
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")
     parser.add_argument("--a2-q-csr-manifest", action="append", type=Path)
     args = parser.parse_args(argv)
@@ -1867,6 +2021,7 @@ def main(argv: list[str] | None = None) -> int:
             case_id=args.case,
             a2_q_csr_manifests=args.a2_q_csr_manifest,
             b0_v3_continuation=args.b0_v3_continuation,
+            b0_v6_continuation=args.b0_v6_continuation,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

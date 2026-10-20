@@ -187,8 +187,20 @@ def _difference_metrics(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
 class Task41V5VolumeAttributionAccumulator:
     """Bounded per-cell attribution using the exact tensors before release."""
 
-    def __init__(self, donor: Mapping[str, Any]) -> None:
+    def __init__(
+        self,
+        donor: Mapping[str, Any],
+        *,
+        artifact_prefix: str = "task41_p0_v5_candidate",
+        attribution_prefix: str = "task41_p0_v5_attribution",
+        candidate_identity: str | None = None,
+        candidate_cache_identity: str | None = None,
+    ) -> None:
         self.donor = donor
+        self.artifact_prefix = str(artifact_prefix)
+        self.attribution_prefix = str(attribution_prefix)
+        self.candidate_identity = candidate_identity
+        self.candidate_cache_identity = candidate_cache_identity
         self.pending: list[dict[str, Any]] = []
         self.accumulators: dict[tuple[int, str], dict[str, Any]] | None = None
 
@@ -363,7 +375,7 @@ class Task41V5VolumeAttributionAccumulator:
                         ("attributed_terms", accumulated["attributed_terms"]),
                     ):
                         name = (
-                            f"task41_p0_v5_attribution_col{column_index}_"
+                            f"{self.attribution_prefix}_col{column_index}_"
                             f"{label}_{artifact_name}"
                         )
                         accumulator_artifacts[artifact_name] = {
@@ -395,7 +407,11 @@ class Task41V5VolumeAttributionAccumulator:
                 )
             columns.append({"column": column_index, "states": states})
         return {
-            "schema": "task41.p0.v5.global_geometry_native_elimination_attribution.v1",
+            "schema": (
+                "task41.p0.v6.global_geometry_native_elimination_attribution.v1"
+                if self.candidate_identity is not None
+                else "task41.p0.v5.global_geometry_native_elimination_attribution.v1"
+            ),
             "identity": "d + r_t + sum(E^H T r_i) = Delta_t + sum(E^H(T Delta_i + E_S t - E_T u_i))",
             "accumulation_order": "cell order with local E^H projections; native trace action subtracted once globally",
             "slave_trace_reconstruction": "local E times saved active trace values; saved slave storage remains zero",
@@ -751,9 +767,11 @@ def build_task41_v4_volume_only_owner(
     progress_callback: Callable[[Mapping[str, Any]], Any],
     persist_array: Callable[[str, np.ndarray], Mapping[str, Any]],
     geometry_policy: str = "canonical",
+    raw_tensor_evaluator_kind: str | None = None,
+    ffcx_c_source_path: str | Path | None = None,
     required_prefix_cells: Sequence[int] = (),
     prefix_cell_validator: Callable[
-        [int, np.ndarray, Mapping[str, np.ndarray]], Mapping[str, Any]
+        [int, np.ndarray, Mapping[str, np.ndarray], Mapping[str, Any]], Mapping[str, Any]
     ]
     | None = None,
     exact_cell_observer: Callable[
@@ -776,6 +794,16 @@ def build_task41_v4_volume_only_owner(
         raise TypeError("Task41 V4 requires allocation, progress, and persistence callbacks")
     if geometry_policy not in {"canonical", "mesh_actual_exact"}:
         raise ValueError(f"unknown Task41 geometry policy {geometry_policy!r}")
+    if raw_tensor_evaluator_kind not in {None, "actual_qmetric_blocked_gram"}:
+        raise ValueError(
+            f"unknown Task41 raw-tensor evaluator {raw_tensor_evaluator_kind!r}"
+        )
+    if raw_tensor_evaluator_kind is not None and geometry_policy != "mesh_actual_exact":
+        raise ValueError("actual q-metric evaluation requires mesh_actual_exact geometry")
+    if (raw_tensor_evaluator_kind is None) != (ffcx_c_source_path is None):
+        raise ValueError(
+            "--ffcx-c-source is required exactly when an actual q-metric evaluator is selected"
+        )
     manifest = donor["manifest"]
     if donor.get("manifest_sha256") != TASK41_V4_DONOR_MANIFEST_SHA256:
         raise ValueError("Task41 V4 donor recovery-manifest identity differs")
@@ -826,6 +854,19 @@ def build_task41_v4_volume_only_owner(
             curl_curl + material_mass,
             jit_options=dict(SAME_MESH_JIT_OPTIONS),
         )
+        raw_tensor_evaluator = None
+        if raw_tensor_evaluator_kind == "actual_qmetric_blocked_gram":
+            from src.solvers.task41_actual_qmetric_blocked_gram import (
+                Task41ActualQMetricBlockedGramCandidate,
+            )
+
+            raw_tensor_evaluator = Task41ActualQMetricBlockedGramCandidate(
+                space.element.basix_element,
+                curl_curl + material_mass,
+                compiled_form,
+                c_source_path=ffcx_c_source_path,
+                scratch_directory=output_directory,
+            )
         material_identity_by_tag = _task41_material_identity_by_tag(cfg)
         progress(phase, "COMPLETED", construction="curl_plus_mass_only")
 
@@ -850,6 +891,7 @@ def build_task41_v4_volume_only_owner(
             preserve_exact_geometry=True,
             geometry_policy=geometry_policy,
             geometry_material_identity_by_tag=material_identity_by_tag,
+            raw_tensor_evaluator=raw_tensor_evaluator,
             required_prefix_cells=required_prefix_cells,
             prefix_cell_validator=prefix_cell_validator,
             exact_cell_observer=exact_cell_observer,
@@ -1343,6 +1385,9 @@ def audit_task41_v4_volume_identity(
     persist_array: Callable[[str, np.ndarray], Mapping[str, Any]],
     output_directory: str | Path,
     native_volume_apply: Callable[[np.ndarray], np.ndarray] | None = None,
+    artifact_prefix: str | None = None,
+    candidate_identity: str | None = None,
+    candidate_cache_identity: str | None = None,
 ) -> dict[str, Any]:
     """Replay the trace-only production P6 action and RHS identities.
 
@@ -1363,6 +1408,20 @@ def audit_task41_v4_volume_identity(
     port_rows = int(owner.appended_rows)
     full_rows = int(owner.full_rows)
     exact_candidate = owner.build_audit.get("geometry_policy") == "mesh_actual_exact"
+    evaluator_audit = owner.build_audit.get("raw_tensor_evaluator")
+    if isinstance(evaluator_audit, Mapping):
+        if candidate_identity is None:
+            candidate_identity = evaluator_audit.get("implementation")
+        if candidate_cache_identity is None:
+            candidate_cache_identity = evaluator_audit.get("cache_identity")
+    if artifact_prefix is None:
+        artifact_prefix = (
+            "task41_p0_v6_qmetric_candidate"
+            if candidate_identity == "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+            else "task41_p0_v5_candidate"
+            if exact_candidate
+            else "task41_p0_v4_volume"
+        )
     if exact_candidate and not callable(native_volume_apply):
         raise ValueError("V5 candidate recovery requires the independent volume-only native action")
     if (
@@ -1591,8 +1650,8 @@ def audit_task41_v4_volume_identity(
                     and slave_rows_zero
                     and residual_slave_rows_zero
                 )
-                recovered_name = f"task41_p0_v5_candidate_recovered_storage_col{column_index}"
-                residual_name = f"task41_p0_v5_candidate_native_volume_residual_col{column_index}"
+                recovered_name = f"{artifact_prefix}_recovered_storage_col{column_index}"
+                residual_name = f"{artifact_prefix}_native_volume_residual_col{column_index}"
                 recovered_artifact = dict(persist(recovered_name, candidate_storage))
                 residual_artifact = dict(persist(residual_name, native_volume_residual))
                 candidate_recovery_columns.append(
@@ -1813,8 +1872,10 @@ def audit_task41_v4_volume_identity(
         candidate_action_gate = None
         if exact_candidate:
             assert candidate_p6 is not None and candidate_reduced is not None
-            persist("task41_p0_v5_candidate_full_p6", candidate_p6)
-            persist("task41_p0_v5_candidate_full_reduced_rhs", candidate_reduced)
+            full_p6_name = f"{artifact_prefix}_full_p6"
+            reduced_rhs_name = f"{artifact_prefix}_full_reduced_rhs"
+            persist(full_p6_name, candidate_p6)
+            persist(reduced_rhs_name, candidate_reduced)
             candidate_columns = []
             for column_index, frozen_denominator in enumerate(TASK41_V5_FROZEN_DENOMINATORS):
                 difference = _difference_metrics(
@@ -1850,10 +1911,14 @@ def audit_task41_v4_volume_identity(
                 else "ACTUAL_COORDINATES_INSUFFICIENT",
                 "relative_tolerance": TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
                 "columns": candidate_columns,
-                "full_action_artifact": "task41_p0_v5_candidate_full_p6",
-                "full_reduced_rhs_artifact": "task41_p0_v5_candidate_full_reduced_rhs",
+                "full_action_artifact": full_p6_name,
+                "full_reduced_rhs_artifact": reduced_rhs_name,
                 "port_rows_inherited_after_validation": True,
-                "frozen_denominators_source": "review_report_v5.md",
+                "frozen_denominators_source": (
+                    "review_report_v6.md"
+                    if candidate_identity is not None
+                    else "review_report_v5.md"
+                ),
             }
         candidate_recovery_status = (
             "PASS"
@@ -1866,10 +1931,14 @@ def audit_task41_v4_volume_identity(
         )
         return {
             "schema": (
-                "task41.p0.v5.mesh_actual_exact_attribution.v1"
+                "task41.p0.v6.actual_qmetric_attribution.v1"
+                if exact_candidate and candidate_identity is not None
+                else "task41.p0.v5.mesh_actual_exact_attribution.v1"
                 if exact_candidate
                 else "task41.p0.v4.volume_only_attribution.v1"
             ),
+            "candidate_evaluator_identity": candidate_identity,
+            "candidate_evaluator_cache_identity": candidate_cache_identity,
             "completed": True,
             "production_action": "P6CellCondensedAction_active_only_shared_owner_caches",
             "rhs_reducer": "P6CellCondensedAction.reduce_rhs(rhs_is_mpc_dual=True)",

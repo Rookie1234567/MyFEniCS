@@ -150,7 +150,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         def allocation_gate(label, _facts):
             gates.append(label)
 
-        def validate_prefix(cell, coordinates, blocks):
+        def validate_prefix(cell, coordinates, blocks, _context):
             expected = np.asarray(
                 msh.geometry.x[msh.geometry.dofmap[cell]], dtype=np.float64
             )
@@ -199,6 +199,209 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                 )
         finally:
             owner.destroy()
+
+    def test_mesh_actual_exact_builder_calls_explicit_raw_tensor_evaluator(self) -> None:
+        msh, tags, V, compiled = _two_cell_problem(
+            distinct_materials=False, degree=2
+        )
+        original = assembly_time._tabulate_raw_tensor_class
+        gates: dict[str, dict[str, object]] = {}
+
+        class RecordingEvaluator:
+            identity = "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+            profile_name = "task41_p0_v6_b0_actual_qmetric"
+            workspace_bytes_upper = 4096
+            helper_scratch_bytes_upper = 2048
+
+            def __init__(self):
+                self.prepared = False
+                self.calls = []
+
+            def validate_compiled_form(self, _compiled_form, _kernels):
+                return None
+
+            def prepare(self):
+                self.prepared = True
+
+            def __call__(self, compiled_form, kernels, coordinates, *, tag, dimension):
+                self.calls.append((np.asarray(coordinates).copy(), int(tag)))
+                return original(
+                    compiled_form,
+                    kernels,
+                    coordinates,
+                    tag=tag,
+                    dimension=dimension,
+                )
+
+            def audit(self):
+                return {
+                    "implementation": self.identity,
+                    "qualification_status": "UNQUALIFIED_PENDING_BOUNDED_FFCX_ORACLE",
+                    "class_count": len(self.calls),
+                }
+
+        evaluator = RecordingEvaluator()
+
+        def allocation_gate(label, facts):
+            gates[label] = dict(facts)
+
+        owner = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            tags,
+            strict_local_checks=True,
+            materialize_global_matrix=False,
+            retain_local_schur_for_matrix_free=True,
+            share_identity_cache=True,
+            geometry_policy="mesh_actual_exact",
+            required_prefix_cells=(0, 1),
+            allocation_gate=allocation_gate,
+            raw_tensor_evaluator=evaluator,
+        )
+        try:
+            self.assertTrue(evaluator.prepared)
+            self.assertEqual(len(evaluator.calls), 2)
+            self.assertEqual(owner.build_audit["raw_tensor_evaluator_identity"], evaluator.identity)
+            self.assertEqual(
+                owner.build_audit["raw_tensor_evaluator"]["qualification_status"],
+                "UNQUALIFIED_PENDING_BOUNDED_FFCX_ORACLE",
+            )
+            preflight = gates["mesh_actual_exact_prefix_preflight"]
+            self.assertEqual(preflight["raw_tensor_candidate_workspace_bytes_upper"], 4096)
+            self.assertEqual(preflight["raw_tensor_candidate_scratch_bytes_upper"], 2048)
+            full_gate = gates["mesh_actual_exact_full_admission"]
+            self.assertEqual(full_gate["raw_tensor_candidate_workspace_bytes_upper"], 4096)
+            self.assertIn(
+                "raw_tensor_evaluator_source_table_helper_module_cache_identity",
+                owner.build_audit["operator_cache_identity"]["key_dependencies"],
+            )
+        finally:
+            owner.destroy()
+
+    def test_v6_prefix_oracle_must_pass_before_full_exact_build(self) -> None:
+        original = assembly_time._tabulate_raw_tensor_class
+        for outcome in ("not_run", "failed"):
+            with self.subTest(outcome=outcome):
+                msh, tags, V, compiled = _two_cell_problem(
+                    distinct_materials=False, degree=2
+                )
+                gates = []
+
+                class PrefixEvaluator:
+                    identity = "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+                    profile_name = "task41_p0_v6_b0_actual_qmetric"
+                    workspace_bytes_upper = 4096
+                    helper_scratch_bytes_upper = 2048
+                    requires_prefix_qualification = True
+                    required_prefix_sample_cell_indices = (0, 1)
+
+                    def __init__(self):
+                        self.calls = []
+                        self.records = []
+
+                    def validate_compiled_form(self, _form, _kernels):
+                        return None
+
+                    def prepare(self):
+                        return None
+
+                    def __call__(self, form, kernels, coordinates, *, tag, dimension):
+                        self.calls.append((np.asarray(coordinates).copy(), int(tag)))
+                        return original(
+                            form,
+                            kernels,
+                            coordinates,
+                            tag=tag,
+                            dimension=dimension,
+                        )
+
+                    def record_prefix_qualification(self, record):
+                        self.records.append(dict(record))
+
+                    def prefix_qualification_audit(self):
+                        complete = len(self.records) == 2
+                        passed = complete and all(
+                            item.get("status") == "PASS" for item in self.records
+                        )
+                        return {
+                            "status": "PREFIX_QUALIFIED" if passed else "PREFIX_QUALIFICATION_INCOMPLETE_OR_FAILED",
+                            "full_admission_eligible": passed,
+                        }
+
+                    def audit(self):
+                        return {"implementation": self.identity}
+
+                evaluator = PrefixEvaluator()
+
+                def allocation_gate(label, _facts):
+                    gates.append(label)
+
+                def validator(cell, coordinates, blocks, context):
+                    self.assertEqual(np.asarray(coordinates).dtype, np.dtype(np.float64))
+                    self.assertEqual(context["raw_tensor"].shape, (int(V.element.space_dimension),) * 2)
+                    self.assertEqual(context["oriented_tensor"].shape, context["raw_tensor"].shape)
+                    self.assertTrue({"R", "T", "S"}.issubset(context))
+                    self.assertEqual(set(blocks), {"K", "G", "J", "L"})
+                    if outcome == "not_run":
+                        return {"cell_index": cell, "status": "NOT_RUN"}
+                    record = {"cell_index": cell, "status": "FAIL"}
+                    evaluator.record_prefix_qualification(record)
+                    return record
+
+                with self.assertRaisesRegex(
+                    RuntimeError, "V6 eight-key original-kernel prefix qualification"
+                ):
+                    build_unconstrained_assembly_time_condensation(
+                        compiled,
+                        V,
+                        tags,
+                        strict_local_checks=True,
+                        materialize_global_matrix=False,
+                        retain_local_schur_for_matrix_free=True,
+                        share_identity_cache=True,
+                        geometry_policy="mesh_actual_exact",
+                        required_prefix_cells=(0, 1),
+                        prefix_cell_validator=validator,
+                        allocation_gate=allocation_gate,
+                        raw_tensor_evaluator=evaluator,
+                    )
+                self.assertEqual(len(evaluator.calls), 2)
+                self.assertNotIn("mesh_actual_exact_full_admission", gates)
+
+    def test_v4_saved_oriented_blocks_can_be_unoriented_for_raw_screen(self) -> None:
+        msh, _tags, V, _compiled = _two_cell_problem(
+            distinct_materials=False, degree=2
+        )
+        msh.topology.create_entity_permutations()
+        permutation_info = np.asarray(
+            msh.topology.get_cell_permutation_info(), dtype=np.uint32
+        )
+        dimension = int(V.element.space_dimension)
+        raw = (
+            np.arange(dimension * dimension, dtype=np.float64).reshape(
+                dimension, dimension
+            )
+            / max(dimension * dimension, 1)
+            + 1j
+            * np.arange(dimension * dimension, dtype=np.float64).reshape(
+                dimension, dimension
+            )[::-1]
+            / max(dimension * dimension, 1)
+        ).astype(np.complex128)
+        for cell_info in permutation_info[:2]:
+            oriented = raw.copy()
+            assembly_time._orient_cell_tensor(
+                V.element,
+                oriented,
+                np.asarray([cell_info], dtype=np.uint32),
+            )
+            recovered = oriented.copy()
+            assembly_time._unorient_cell_tensor(
+                V.element,
+                recovered,
+                np.asarray([cell_info], dtype=np.uint32),
+            )
+            np.testing.assert_allclose(recovered, raw, rtol=2.0e-12, atol=2.0e-12)
 
     def test_fixed_p5_trace_p6_interior_kernel_condenses_exactly(
         self,

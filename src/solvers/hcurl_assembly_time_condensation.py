@@ -1480,6 +1480,12 @@ def _mesh_actual_form_identity(compiled_form, element, kernels: Mapping[int, Any
     )
 
 
+def _raw_tensor_evaluator_cache_identity(evaluator: Any) -> str:
+    """Return a source-bound cache identity, with legacy fallback for other evaluators."""
+
+    return str(getattr(evaluator, "cache_identity", evaluator.identity))
+
+
 def _mesh_actual_raw_key(
     compiled_form,
     element,
@@ -1490,6 +1496,7 @@ def _mesh_actual_raw_key(
     material_identity: Mapping[str, Any] | None,
     form_identity: tuple[str, str, str] | None = None,
     material_sha256: str | None = None,
+    raw_tensor_evaluator_identity: str | None = None,
 ) -> tuple[tuple[Any, ...], bytes]:
     """Construct a collision-checked identity for unmodified coordinate bytes."""
 
@@ -1505,6 +1512,10 @@ def _mesh_actual_raw_key(
             "ufcx_signature": signature,
             "explicit_material_identity": dict(material_identity or {}),
         }
+        if raw_tensor_evaluator_identity is not None:
+            material_payload["raw_tensor_evaluator_identity"] = (
+                raw_tensor_evaluator_identity
+            )
         material_json = json.dumps(
             material_payload, sort_keys=True, separators=(",", ":"), allow_nan=False
         )
@@ -1527,6 +1538,7 @@ def _mesh_actual_material_sha256(
     *,
     tag: int,
     material_identity: Mapping[str, Any] | None,
+    raw_tensor_evaluator_identity: str | None = None,
 ) -> str:
     kernel_sha, _layout_sha, signature = form_identity
     payload = {
@@ -1535,6 +1547,8 @@ def _mesh_actual_material_sha256(
         "ufcx_signature": signature,
         "explicit_material_identity": dict(material_identity or {}),
     }
+    if raw_tensor_evaluator_identity is not None:
+        payload["raw_tensor_evaluator_identity"] = raw_tensor_evaluator_identity
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
@@ -1727,6 +1741,9 @@ def _global_raw_tensor_cache(
                 if raw_tensor_evaluator is None
                 else {
                     "identity": str(raw_tensor_evaluator.identity),
+                    "cache_identity": _raw_tensor_evaluator_cache_identity(
+                        raw_tensor_evaluator
+                    ),
                     "full_form_signature": str(
                         raw_tensor_evaluator.analysis_facts["full_form_signature"]
                     ),
@@ -1886,15 +1903,23 @@ def _global_raw_tensor_cache(
     if raw_tensor_evaluator is not None:
         local_evaluator_facts = {
             "class_count": int(raw_tensor_evaluator.class_count),
-            "class_seconds": dict(raw_tensor_evaluator.class_seconds),
+            "class_seconds_total": float(
+                getattr(raw_tensor_evaluator, "class_seconds_total", 0.0)
+            ),
+            "class_seconds_max": float(
+                getattr(raw_tensor_evaluator, "class_seconds_max", 0.0)
+            ),
         }
         evaluator_packets = comm.allgather(local_evaluator_facts)
-        class_seconds: dict[str, float] = {}
-        for packet in evaluator_packets:
-            for key, seconds in packet["class_seconds"].items():
-                if key in class_seconds:
-                    raise RuntimeError("p6 raw tensor class was evaluated more than once")
-                class_seconds[str(key)] = float(seconds)
+        class_count_sum = int(
+            sum(packet["class_count"] for packet in evaluator_packets)
+        )
+        class_seconds_total = float(
+            sum(packet["class_seconds_total"] for packet in evaluator_packets)
+        )
+        class_seconds_max = float(
+            max((packet["class_seconds_max"] for packet in evaluator_packets), default=0.0)
+        )
         evaluator_audit = raw_tensor_evaluator.audit()
         evaluator_audit.update({
             "implementation": str(raw_tensor_evaluator.identity),
@@ -1904,10 +1929,12 @@ def _global_raw_tensor_cache(
             "ufcx_form_signature": str(
                 raw_tensor_evaluator.expected_ufcx_signature
             ),
-            "class_count_sum": int(
-                sum(packet["class_count"] for packet in evaluator_packets)
-            ),
-            "class_seconds": class_seconds,
+            "class_count_sum": class_count_sum,
+            "class_seconds_summary": {
+                "count": class_count_sum,
+                "total": class_seconds_total,
+                "max": class_seconds_max,
+            },
             "workspace_bytes_upper": int(
                 raw_tensor_evaluator.workspace_bytes_upper
             ),
@@ -2004,6 +2031,31 @@ def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> N
             int(cell_info[0]),
         )
     tensor[:] = transpose.T
+
+
+def _unorient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> None:
+    """Invert the exact Basix congruence used by ``_orient_cell_tensor``.
+
+    This is used only to compare a saved, already-oriented V4 actual block
+    partition against the candidate's raw tensor.  It derives the transform
+    from the bound element and cell permutation, then solves both sides with
+    the same nonsingular transform; no coordinate or tensor normalization is
+    introduced.
+    """
+
+    values = np.asarray(tensor)
+    if values.ndim != 2 or values.shape[0] != values.shape[1]:
+        raise ValueError("cell tensor orientation inverse requires a square matrix")
+    dimension = int(values.shape[0])
+    transform = np.eye(dimension, dtype=np.float64)
+    info = np.asarray(cell_info, dtype=np.uint32)
+    if hasattr(element, "space_dimension"):
+        element.T_apply(transform.ravel(), info, dimension)
+    else:
+        element.T_apply(transform.ravel(), dimension, int(info[0]))
+    transform_lu = lu_factor(transform, check_finite=True)
+    left_solved = lu_solve(transform_lu, np.asarray(values, dtype=np.complex128))
+    values[:] = lu_solve(transform_lu, left_solved.T).T
 
 
 def _tabulate_volume_audit_path(
@@ -2229,6 +2281,9 @@ def tabulate_volume_audit_cell(
                 form_identity,
                 tag=tag,
                 material_identity=material_identity,
+                raw_tensor_evaluator_identity=condensed.build_audit.get(
+                    "raw_tensor_evaluator_identity"
+                ),
             )
         raw_key, _coordinate_bytes = _mesh_actual_raw_key(
             compiled_form,
@@ -2239,6 +2294,9 @@ def tabulate_volume_audit_cell(
             material_identity=material_identity,
             form_identity=form_identity,
             material_sha256=material_sha,
+            raw_tensor_evaluator_identity=condensed.build_audit.get(
+                "raw_tensor_evaluator_identity"
+            ),
         )
         expected_class_key = (*raw_key, permutation)
     else:
@@ -2405,7 +2463,7 @@ def build_unconstrained_assembly_time_condensation(
     geometry_material_identity_by_tag: Mapping[int, Mapping[str, Any]] | None = None,
     required_prefix_cells: Sequence[int] = (),
     prefix_cell_validator: Callable[
-        [int, np.ndarray, Mapping[str, np.ndarray]], Mapping[str, Any]
+        [int, np.ndarray, Mapping[str, np.ndarray], Mapping[str, Any]], Mapping[str, Any]
     ]
     | None = None,
     exact_cell_observer: Callable[
@@ -2487,6 +2545,17 @@ def build_unconstrained_assembly_time_condensation(
         if geometry_policy == "mesh_actual_exact"
         else None
     )
+    if geometry_policy == "mesh_actual_exact" and raw_tensor_evaluator is not None:
+        if (
+            getattr(raw_tensor_evaluator, "identity", None)
+            != "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+            or getattr(raw_tensor_evaluator, "profile_name", None)
+            != "task41_p0_v6_b0_actual_qmetric"
+        ):
+            raise ValueError(
+                "mesh_actual_exact accepts only the explicitly reviewed V6 actual-qmetric evaluator"
+            )
+        raw_tensor_evaluator.validate_compiled_form(compiled_form, kernels)
     entity_dofs = basix_element.entity_dofs
     interior_positions = np.asarray(entity_dofs[tdim][0], dtype=np.int32)
     if len(interior_positions) == 0:
@@ -2678,6 +2747,13 @@ def build_unconstrained_assembly_time_condensation(
                         exact_form_identity,
                         tag=tag,
                         material_identity=(geometry_material_identity_by_tag or {}).get(tag),
+                        raw_tensor_evaluator_identity=(
+                            None
+                            if raw_tensor_evaluator is None
+                            else _raw_tensor_evaluator_cache_identity(
+                                raw_tensor_evaluator
+                            )
+                        ),
                     )
                 raw_key, coordinate_bytes = _mesh_actual_raw_key(
                     compiled_form,
@@ -2688,6 +2764,13 @@ def build_unconstrained_assembly_time_condensation(
                     material_identity=(geometry_material_identity_by_tag or {}).get(tag),
                     form_identity=exact_form_identity,
                     material_sha256=exact_material_hashes[tag],
+                    raw_tensor_evaluator_identity=(
+                        None
+                        if raw_tensor_evaluator is None
+                        else _raw_tensor_evaluator_cache_identity(
+                            raw_tensor_evaluator
+                        )
+                    ),
                 )
                 previous_bytes = exact_coordinate_bytes.get(raw_key)
                 if previous_bytes is not None and previous_bytes != coordinate_bytes:
@@ -2917,6 +3000,22 @@ def build_unconstrained_assembly_time_condensation(
                 selected_keys.append(chosen_key)
                 selected_sample_cell[chosen_key] = int(descriptors[chosen_key]["cell_index"])
         sample_cells = [selected_sample_cell[key] for key in selected_keys]
+        required_qualification_cells = tuple(
+            int(value)
+            for value in getattr(
+                raw_tensor_evaluator,
+                "required_prefix_sample_cell_indices",
+                (),
+            )
+        )
+        if required_qualification_cells and (
+            tuple(required_prefix_cells) != required_qualification_cells
+            or tuple(sample_cells) != required_qualification_cells
+            or len(set(selected_keys)) != len(required_qualification_cells)
+        ):
+            raise RuntimeError(
+                "V6 actual-qmetric prefix does not match the frozen eight-key inventory"
+            )
         sampled_cell_set = set(sample_cells)
         exact_build_cell_order = sample_cells + [
             cell for cell in range(owned_cells) if cell not in sampled_cell_set
@@ -2942,11 +3041,78 @@ def build_unconstrained_assembly_time_condensation(
             + int(capacity["identity_cache_bytes_upper"])
         )
         one_class_workspace = int(capacity["local_working_bytes_upper"])
+        evaluator_prepare_workspace = int(
+            0
+            if raw_tensor_evaluator is None
+            else getattr(
+                raw_tensor_evaluator,
+                "prepare_workspace_bytes_upper",
+                raw_tensor_evaluator.workspace_bytes_upper,
+            )
+        )
+        evaluator_key_workspace = int(
+            0
+            if raw_tensor_evaluator is None
+            else getattr(
+                raw_tensor_evaluator,
+                "key_workspace_bytes_upper",
+                raw_tensor_evaluator.workspace_bytes_upper,
+            )
+        )
+        evaluator_class_timing_bytes = int(
+            0
+            if raw_tensor_evaluator is None
+            else getattr(
+                raw_tensor_evaluator,
+                "class_timing_metadata_bytes_upper",
+                0,
+            )
+        )
+        evaluator_scratch_bytes = int(
+            0
+            if raw_tensor_evaluator is None
+            else getattr(raw_tensor_evaluator, "helper_scratch_bytes_upper", 0)
+            + getattr(
+                raw_tensor_evaluator,
+                "original_kernel_oracle_scratch_bytes_upper",
+                0,
+            )
+        )
+        evaluator_shared_table_bytes = 0
         allocation_gate(
             "mesh_actual_exact_prefix_preflight",
             {
                 "additional_payload_bytes": int(prefix_payload),
-                "workspace_bytes": one_class_workspace,
+                "workspace_bytes": one_class_workspace + evaluator_prepare_workspace,
+                **(
+                    {
+                        "raw_tensor_candidate_prepare_workspace_bytes_upper": (
+                            evaluator_prepare_workspace
+                        ),
+                        "raw_tensor_candidate_key_workspace_bytes_upper": (
+                            evaluator_key_workspace
+                        ),
+                        "raw_tensor_candidate_class_timing_metadata_bytes_upper": (
+                            evaluator_class_timing_bytes
+                        ),
+                        "raw_tensor_candidate_workspace_bytes_upper": (
+                            evaluator_prepare_workspace
+                        ),
+                        "raw_tensor_candidate_helper_scratch_bytes_upper": int(
+                            getattr(raw_tensor_evaluator, "helper_scratch_bytes_upper", 0)
+                        ),
+                        "raw_tensor_candidate_original_kernel_oracle_scratch_bytes_upper": int(
+                            getattr(
+                                raw_tensor_evaluator,
+                                "original_kernel_oracle_scratch_bytes_upper",
+                                0,
+                            )
+                        ),
+                        "raw_tensor_candidate_scratch_bytes_upper": evaluator_scratch_bytes,
+                    }
+                    if raw_tensor_evaluator is not None
+                    else {}
+                ),
                 "raw_key_count": len(exact_raw_classes),
                 "oriented_key_count": exact_count,
                 "prefix_misses_to_measure": prefix_count,
@@ -2982,9 +3148,38 @@ def build_unconstrained_assembly_time_condensation(
                     }
                     for key in class_order
                 ],
-                "gate_scope": "before_first_actual_rank2_kernel_tabulation",
+                "gate_scope": (
+                    "before_first_actual_kernel_or_qmetric_helper_preparation"
+                    if raw_tensor_evaluator is not None
+                    else "before_first_actual_rank2_kernel_tabulation"
+                ),
+                **(
+                    {
+                        "raw_tensor_evaluator_implementation": str(
+                            raw_tensor_evaluator.identity
+                        ),
+                        "raw_tensor_evaluator_identity": _raw_tensor_evaluator_cache_identity(
+                            raw_tensor_evaluator
+                        ),
+                    }
+                    if raw_tensor_evaluator is not None
+                    else {}
+                ),
             },
         )
+        evaluator_prepare_seconds = 0.0
+        if raw_tensor_evaluator is not None:
+            prepare_started = perf_counter()
+            raw_tensor_evaluator.prepare()
+            evaluator_prepare_seconds = float(perf_counter() - prepare_started)
+            if hasattr(raw_tensor_evaluator, "preparation_seconds"):
+                raw_tensor_evaluator.preparation_seconds = evaluator_prepare_seconds
+            evaluator_shared_table_bytes = int(
+                getattr(raw_tensor_evaluator, "shared_table_bytes_upper", 0)
+            )
+    else:
+        evaluator_workspace = 0
+        evaluator_prepare_seconds = 0.0
     if geometry_policy == "mesh_actual_exact":
         raw_cache = {}
         local_kernel_seconds = 0.0
@@ -2994,7 +3189,26 @@ def build_unconstrained_assembly_time_condensation(
             "raw_tensor_class_count_global_unique": len(local_class_coordinates),
             "raw_tensor_global_owner_policy": "mesh_actual_exact_local_key_stream",
             "raw_tensor_cross_rank_dedup_active": False,
-            "raw_tensor_retention_policy": "one_actual_rank2_tensor_per_new_oriented_key_then_release",
+            "raw_tensor_retention_policy": (
+                "one_actual_qmetric_blocked_tensor_per_new_oriented_key_then_release"
+                if raw_tensor_evaluator is not None
+                else "one_actual_rank2_tensor_per_new_oriented_key_then_release"
+            ),
+            **(
+                {
+                    "raw_tensor_evaluator_implementation": str(
+                        raw_tensor_evaluator.identity
+                    ),
+                    "raw_tensor_evaluator_identity": _raw_tensor_evaluator_cache_identity(
+                        raw_tensor_evaluator
+                    ),
+                    "raw_tensor_evaluator_prepare_seconds": float(
+                        evaluator_prepare_seconds
+                    ),
+                }
+                if raw_tensor_evaluator is not None
+                else {}
+            ),
         }
     else:
         policy_forms: dict[str, tuple[Any, dict[int, Any], int]] = {
@@ -3028,6 +3242,13 @@ def build_unconstrained_assembly_time_condensation(
     exact_full_admission_passed = False
     action_tensor_identities: dict[str, Any] = {}
     local_schur_seconds = 0.0
+    local_orientation_seconds = 0.0
+    local_tensor_hash_seconds = 0.0
+    local_tensor_prepare_seconds = 0.0
+    local_lu_solve_seconds = 0.0
+    local_schur_product_seconds = 0.0
+    local_observer_seconds = 0.0
+    local_release_seconds = 0.0
     local_insert_seconds = 0.0
     local_lu_residual_max = 0.0
     shared_interior_identity = None
@@ -3058,13 +3279,22 @@ def build_unconstrained_assembly_time_condensation(
             tensor_prepare_seconds = 0.0
             if geometry_policy == "mesh_actual_exact":
                 raw_started = perf_counter()
-                tensor = _tabulate_raw_tensor_class(
-                    compiled_form,
-                    kernels,
-                    local_class_coordinates[policy_raw_key],
-                    tag=int(tags[cell]),
-                    dimension=dimension,
-                )
+                if raw_tensor_evaluator is None:
+                    tensor = _tabulate_raw_tensor_class(
+                        compiled_form,
+                        kernels,
+                        local_class_coordinates[policy_raw_key],
+                        tag=int(tags[cell]),
+                        dimension=dimension,
+                    )
+                else:
+                    tensor = raw_tensor_evaluator(
+                        compiled_form,
+                        kernels,
+                        local_class_coordinates[policy_raw_key],
+                        tag=int(tags[cell]),
+                        dimension=dimension,
+                    )
                 kernel_seconds = perf_counter() - raw_started
                 local_kernel_seconds += kernel_seconds
             else:
@@ -3080,36 +3310,30 @@ def build_unconstrained_assembly_time_condensation(
                 ),
             )
             orientation_seconds = perf_counter() - orientation_started
+            local_orientation_seconds += orientation_seconds
             schur_started = perf_counter()
-            tensor_prepare_started = perf_counter()
             if not materialize_global_matrix:
                 # Bind the complete physical tensor before elimination.  Only
                 # digests survive; no extra full local tensor is retained.
+                hash_started = perf_counter()
                 action_tensor_identities[repr(class_key)] = {
                     "shape": list(oriented.shape), "dtype": str(oriented.dtype),
                     "raw_sha256": hashlib.sha256(memoryview(np.ascontiguousarray(tensor)).cast("B")).hexdigest(),
                     "oriented_sha256": hashlib.sha256(memoryview(np.ascontiguousarray(oriented)).cast("B")).hexdigest(),
                 }
+                tensor_hash_seconds = perf_counter() - hash_started
+            else:
+                tensor_hash_seconds = 0.0
+            tensor_prepare_started = perf_counter()
             A_ii = oriented[np.ix_(interior_positions, interior_positions)]
             A_it = oriented[np.ix_(interior_positions, trace_positions)]
             A_ti = oriented[np.ix_(trace_positions, interior_positions)]
             A_tt = oriented[np.ix_(trace_positions, trace_positions)]
             blocks = {"K": A_ii, "G": A_it, "J": A_ti, "L": A_tt}
-            if geometry_policy == "mesh_actual_exact" and prefix_cell_validator is not None:
-                raw_key_for_cell, _ = metadata
-                for prefix_cell in exact_cells_by_oriented_class[exact_oriented_key]:
-                    if prefix_cell in required_prefix_cells:
-                        validation = dict(
-                            prefix_cell_validator(
-                                int(prefix_cell),
-                                local_class_coordinates[raw_key_for_cell],
-                                blocks,
-                            )
-                        )
-                        if prefix_cell == int(cell):
-                            prefix_validation = validation
             if geometry_policy == "mesh_actual_exact":
                 tensor_prepare_seconds = perf_counter() - tensor_prepare_started
+                local_tensor_hash_seconds += tensor_hash_seconds
+                local_tensor_prepare_seconds += tensor_prepare_seconds
             lu_started = perf_counter()
             try:
                 if strict_local_checks:
@@ -3136,10 +3360,52 @@ def build_unconstrained_assembly_time_condensation(
             )
             trace_from_interior_rhs = -adjoint_trace_solution.conj().T
             lu_seconds = perf_counter() - lu_started
+            local_lu_solve_seconds += lu_seconds
             schur_product_started = perf_counter()
             schur = A_tt + A_ti @ interior_from_trace
             schur_product_seconds = perf_counter() - schur_product_started
+            local_schur_product_seconds += schur_product_seconds
             local_schur_seconds += perf_counter() - schur_started
+            if geometry_policy == "mesh_actual_exact" and prefix_cell_validator is not None:
+                raw_key_for_cell, _ = metadata
+                for prefix_cell in exact_cells_by_oriented_class[exact_oriented_key]:
+                    if prefix_cell not in required_prefix_cells:
+                        continue
+                    prefix_original_dofs = local_cell_dofs[prefix_cell]
+                    prefix_active_ids, prefix_trace_expansion, _ = _cell_trace_expansion(
+                        prefix_original_dofs[trace_positions],
+                        trace_constraints,
+                    )
+                    validation = dict(
+                        prefix_cell_validator(
+                            int(prefix_cell),
+                            local_class_coordinates[raw_key_for_cell],
+                            blocks,
+                            {
+                                "raw_tensor": tensor,
+                                "oriented_tensor": oriented,
+                                "raw_tensor_evaluator": raw_tensor_evaluator,
+                                "cell_index": int(prefix_cell),
+                                "tag": int(tags[prefix_cell]),
+                                "element": element,
+                                "permutation": int(cell_permutations[prefix_cell]),
+                                "interior_positions": interior_positions,
+                                "trace_positions": trace_positions,
+                                "original_dofs": prefix_original_dofs,
+                                "R": interior_from_trace,
+                                "T": trace_from_interior_rhs,
+                                "S": schur,
+                                "strict_lu_residual": float(
+                                    lu_residual if strict_local_checks else 0.0
+                                ),
+                                "candidate_build_seconds": float(kernel_seconds),
+                                "trace_expansion": prefix_trace_expansion,
+                                "active_ids": prefix_active_ids,
+                            },
+                        )
+                    )
+                    if prefix_cell == int(cell):
+                        prefix_validation = validation
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
             lu_cache[class_key] = interior_lu
@@ -3179,11 +3445,13 @@ def build_unconstrained_assembly_time_condensation(
                         },
                     )
                 observer_seconds = perf_counter() - observer_started
+                local_observer_seconds += observer_seconds
             if geometry_policy == "mesh_actual_exact":
                 exact_cache_misses += 1
                 release_started = perf_counter()
                 del tensor, oriented, blocks, A_ii, A_it, A_ti, A_tt, adjoint_trace_solution
                 release_seconds = perf_counter() - release_started
+                local_release_seconds += release_seconds
                 if len(exact_probe_records) < exact_probe_count:
                     exact_probe_records.append(
                         {
@@ -3194,6 +3462,7 @@ def build_unconstrained_assembly_time_condensation(
                             "permutation": int(cell_permutations[cell]),
                             "kernel_seconds": float(kernel_seconds),
                             "orientation_seconds": float(orientation_seconds),
+                            "tensor_hash_seconds": float(tensor_hash_seconds),
                             "tensor_prepare_seconds": float(tensor_prepare_seconds),
                             "lu_solve_seconds": float(lu_seconds),
                             "schur_seconds": float(schur_product_seconds),
@@ -3206,6 +3475,7 @@ def build_unconstrained_assembly_time_condensation(
                         phase_names = (
                             "kernel_seconds",
                             "orientation_seconds",
+                            "tensor_hash_seconds",
                             "tensor_prepare_seconds",
                             "lu_solve_seconds",
                             "schur_seconds",
@@ -3235,22 +3505,84 @@ def build_unconstrained_assembly_time_condensation(
                             len(exact_coordinate_bytes) * (8 * 3 * 8 + 8 * 3 * 8 + 1024)
                             + owned_cells * 512
                         )
+                        prefix_qualification = None
+                        if raw_tensor_evaluator is not None and getattr(
+                            raw_tensor_evaluator,
+                            "requires_prefix_qualification",
+                            False,
+                        ):
+                            prefix_qualification = (
+                                raw_tensor_evaluator.prefix_qualification_audit()
+                            )
+                            if (
+                                prefix_qualification.get("full_admission_eligible")
+                                is not True
+                                or prefix_qualification.get("status")
+                                != "PREFIX_QUALIFIED"
+                                or [row.get("cell_index") for row in exact_probe_records]
+                                != list(required_qualification_cells)
+                                or any(
+                                    not isinstance(row.get("reference_validation"), Mapping)
+                                    or row["reference_validation"].get("status") != "PASS"
+                                    for row in exact_probe_records
+                                )
+                            ):
+                                raise RuntimeError(
+                                    "V6 eight-key original-kernel prefix qualification is incomplete or failed"
+                                )
                         allocation_gate(
                             "mesh_actual_exact_full_admission",
                             {
                                 "additional_payload_bytes": max(
                                     0, projected_retained - prefix_retained
                                 ),
-                                "workspace_bytes": int(exact_capacity["local_working_bytes_upper"]),
+                                "workspace_bytes": int(
+                                    exact_capacity["local_working_bytes_upper"]
+                                    + evaluator_key_workspace
+                                    + evaluator_class_timing_bytes
+                                    + evaluator_shared_table_bytes
+                                ),
+                                **(
+                                    {
+                                        "raw_tensor_candidate_prepare_workspace_bytes_upper": (
+                                            evaluator_prepare_workspace
+                                        ),
+                                        "raw_tensor_candidate_workspace_bytes_upper": (
+                                            evaluator_key_workspace
+                                        ),
+                                        "raw_tensor_candidate_key_workspace_bytes_upper": (
+                                            evaluator_key_workspace
+                                        ),
+                                        "raw_tensor_candidate_class_timing_metadata_bytes_upper": (
+                                            evaluator_class_timing_bytes
+                                        ),
+                                        "raw_tensor_candidate_shared_table_bytes": int(
+                                            evaluator_shared_table_bytes
+                                        ),
+                                        "raw_tensor_evaluator_identity": _raw_tensor_evaluator_cache_identity(
+                                            raw_tensor_evaluator
+                                        ),
+                                    }
+                                    if raw_tensor_evaluator is not None
+                                    else {}
+                                ),
                                 "raw_key_count": len(exact_coordinate_bytes),
                                 "oriented_key_count": int(exact_class_count),
                                 "measured_prefix_cache_misses": len(exact_probe_records),
                                 "prefix_records": exact_probe_records,
+                                **(
+                                    {"prefix_qualification": prefix_qualification}
+                                    if prefix_qualification is not None
+                                    else {}
+                                ),
                                 "prefix_phase_mean_seconds": phase_mean,
                                 "prefix_phase_max_seconds": phase_max,
                                 "prefix_phase_timing_scope": {
+                                    "tensor_hash_seconds": (
+                                        "SHA-256 over the complete raw and oriented local tensors"
+                                    ),
                                     "tensor_prepare_seconds": (
-                                        "raw/oriented tensor SHA-256, K/G/J/L block extraction, and any frozen prefix-cell validation"
+                                        "K/G/J/L block extraction and any frozen prefix-cell validation; excludes tensor_hash_seconds"
                                     ),
                                     "schur_seconds": "Schur product only",
                                 },
@@ -3327,6 +3659,8 @@ def build_unconstrained_assembly_time_condensation(
         recovery_maps = [cell_map for cell_map in recovery_maps if cell_map is not None]
         raw_cache_audit["raw_tensor_class_count_sum"] = int(exact_cache_misses)
         raw_cache_audit["raw_tensor_class_count_global_unique"] = int(exact_cache_misses)
+        if raw_tensor_evaluator is not None:
+            raw_cache_audit["raw_tensor_evaluator"] = raw_tensor_evaluator.audit()
     interior_rows = full_rows - trace_rows
     global_cells = int(comm.allreduce(owned_cells, op=MPI.SUM))
     active_interior_rows = interior_rows
@@ -3479,11 +3813,23 @@ def build_unconstrained_assembly_time_condensation(
             "local_lu_identity_relative_residual_max": float(
                 comm.allreduce(local_lu_residual_max, op=MPI.MAX)
             ),
-            "axis_aligned_affine_geometry_verified": True,
+            "axis_aligned_affine_geometry_verified": raw_tensor_evaluator is None,
             "preserve_exact_geometry": bool(preserve_exact_geometry),
             "geometry_policy": geometry_policy,
             "geometry_form_identity": exact_form_identity,
             "geometry_material_identity_by_tag": dict(geometry_material_identity_by_tag or {}),
+            **(
+                {
+                    "raw_tensor_evaluator_implementation": str(
+                        raw_tensor_evaluator.identity
+                    ),
+                    "raw_tensor_evaluator_identity": _raw_tensor_evaluator_cache_identity(
+                        raw_tensor_evaluator
+                    ),
+                }
+                if raw_tensor_evaluator is not None
+                else {}
+            ),
             "geometry_material_sha256_by_tag": dict(exact_material_hashes),
             "mesh_actual_exact_raw_key_count": (
                 len(exact_coordinate_bytes)
@@ -3545,6 +3891,13 @@ def build_unconstrained_assembly_time_condensation(
                         "coordinate_shape_dtype_and_full_bytes_sha256_collision_checked",
                         "FE_layout_identity",
                         "cell_orientation",
+                        *(
+                            [
+                                "raw_tensor_evaluator_source_table_helper_module_cache_identity"
+                            ]
+                            if raw_tensor_evaluator is not None
+                            else []
+                        ),
                     ]
                     if geometry_policy == "mesh_actual_exact"
                     else [
@@ -3577,6 +3930,43 @@ def build_unconstrained_assembly_time_condensation(
             ),
             "local_schur_seconds_max": float(
                 comm.allreduce(local_schur_seconds, op=MPI.MAX)
+            ),
+            **(
+                {
+                    "actual_qmetric_external_phase_seconds_max": {
+                        "evaluator_prepare": float(
+                            comm.allreduce(evaluator_prepare_seconds, op=MPI.MAX)
+                        ),
+                        "orientation": float(
+                            comm.allreduce(local_orientation_seconds, op=MPI.MAX)
+                        ),
+                        "tensor_hash": float(
+                            comm.allreduce(local_tensor_hash_seconds, op=MPI.MAX)
+                        ),
+                        "block_extract_and_validation": float(
+                            comm.allreduce(local_tensor_prepare_seconds, op=MPI.MAX)
+                        ),
+                        "lu_solve": float(
+                            comm.allreduce(local_lu_solve_seconds, op=MPI.MAX)
+                        ),
+                        "schur_product": float(
+                            comm.allreduce(local_schur_product_seconds, op=MPI.MAX)
+                        ),
+                        "observer": float(
+                            comm.allreduce(local_observer_seconds, op=MPI.MAX)
+                        ),
+                        "raw_tensor_and_block_release": float(
+                            comm.allreduce(local_release_seconds, op=MPI.MAX)
+                        ),
+                    },
+                    "actual_qmetric_evaluator_phase_seconds_local": dict(
+                        raw_cache_audit.get("raw_tensor_evaluator", {}).get(
+                            "phase_seconds_by_stage", {}
+                        )
+                    ),
+                }
+                if raw_tensor_evaluator is not None
+                else {}
             ),
             "local_insert_seconds_max": (
                 float(comm.allreduce(local_insert_seconds, op=MPI.MAX))

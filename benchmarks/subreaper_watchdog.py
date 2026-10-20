@@ -277,19 +277,23 @@ def _validate_campaign_closeout_authorization(
             / 'bin/python'
         ).resolve()
         if checker_kind == 'task41_p0_b0_saved_evidence_audit_checker':
-            v5_candidate_report_path = None
+            candidate_report_path = None
             if len(argv) == 20:
                 if argv[18] != '--mesh-actual-exact-report':
-                    raise ValueError('V5 saved B0 checker report option is malformed')
-                v5_candidate_report_path = Path(argv[19]).resolve()
+                    raise ValueError('exact-geometry saved B0 checker report option is malformed')
+                candidate_report_path = Path(argv[19]).resolve()
             elif len(argv) != 18:
                 raise ValueError('saved B0 evidence auditor command has an unexpected argument count')
-            v5_mode = v5_candidate_report_path is not None
+            exact_geometry_mode = candidate_report_path is not None
+            v6_mode = environment.get('TASK41_P0_B0_V6_ACTUAL_QMETRIC') == '1'
             if (
                 environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') != '1'
                 or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
                 or environment.get('TASK41_P0_B0_V5_MESH_ACTUAL_EXACT')
-                != ('1' if v5_mode else None)
+                != ('1' if exact_geometry_mode else None)
+                or environment.get('TASK41_P0_B0_V6_ACTUAL_QMETRIC')
+                != ('1' if v6_mode else None)
+                or (v6_mode and not exact_geometry_mode)
                 or Path(argv[0]).resolve() != expected_python
                 or argv[1:3] != ['-m', 'src.runners.task41_p0_checker']
                 or argv[3] != '--saved-b0-evidence-audit'
@@ -380,29 +384,46 @@ def _validate_campaign_closeout_authorization(
                 donor_contract_path, Path(str(contract_path)).resolve(), donor_summary_path,
                 donor_manifest, donor_run_summary, input_path, resolved_config,
             )]
-            if v5_candidate_report_path is not None:
+            if candidate_report_path is not None:
                 from src.runners.task41_p0_v4_volume_only_audit import (
                     TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
                 )
 
                 output_root = Path(environment.get('TASK41_P0_B0_OUTPUT_DIR', '')).resolve()
+                expected_report_name = (
+                    'task41_p0_v6_actual_qmetric_candidate.json'
+                    if v6_mode
+                    else 'task41_p0_v5_mesh_actual_exact_attribution.json'
+                )
                 if (
-                    v5_candidate_report_path.name
-                    != 'task41_p0_v5_mesh_actual_exact_attribution.json'
-                    or not v5_candidate_report_path.is_relative_to(output_root)
+                    candidate_report_path.name != expected_report_name
+                    or not candidate_report_path.is_relative_to(output_root)
                     or output_path != Path(environment.get('TASK41_P0_B0_RESULT_PATH', '')).resolve()
                 ):
-                    raise ValueError('V5 candidate report path differs from the registered B0 output directory')
+                    raise ValueError('exact-geometry candidate report path differs from the registered B0 output directory')
                 candidate_report = json.loads(
-                    v5_candidate_report_path.read_text(encoding='utf-8')
+                    candidate_report_path.read_text(encoding='utf-8')
                 )
+                candidate_identity = candidate_report.get('identity_audit')
                 reference_path = Path(
                     str(candidate_report.get('geometry_reference_report_path', ''))
                 ).resolve()
                 if (
                     candidate_report.get('schema')
-                    != 'task41.p0.v5.mesh_actual_exact_attribution_receipt.v1'
+                    != (
+                        'task41.p0.v6.actual_qmetric_candidate_receipt.v1'
+                        if v6_mode
+                        else 'task41.p0.v5.mesh_actual_exact_attribution_receipt.v1'
+                    )
                     or candidate_report.get('geometry_policy') != 'mesh_actual_exact'
+                    or candidate_report.get('raw_tensor_evaluator')
+                    != ('actual_qmetric_blocked_gram' if v6_mode else None)
+                    or (v6_mode and not isinstance(candidate_identity, dict))
+                    or (
+                        v6_mode
+                        and candidate_identity.get('candidate_evaluator_identity')
+                        != 'task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1'
+                    )
                     or candidate_report.get('donor_contract_sha256') != donor_digest
                     or candidate_report.get('consumer_contract_sha256') != contract_sha
                     or reference_path.name != 'task41_p0_v4_geometry_pair_probe.json'
@@ -414,17 +435,17 @@ def _validate_campaign_closeout_authorization(
                     or environment.get('TASK41_P0_B0_V5_GEOMETRY_REFERENCE_PATH')
                     != str(reference_path)
                 ):
-                    raise ValueError('V5 candidate report geometry/source identities are invalid')
+                    raise ValueError('exact-geometry candidate report geometry/source identities are invalid')
                 arrays = candidate_report.get('persisted_evidence_arrays')
                 if not isinstance(arrays, list):
-                    raise ValueError('V5 candidate report lacks its persisted-array inventory')
+                    raise ValueError('exact-geometry candidate report lacks its persisted-array inventory')
                 input_paths.extend(
-                    [str(v5_candidate_report_path), str(reference_path)]
+                    [str(candidate_report_path), str(reference_path)]
                 )
                 seen_array_paths = set()
                 for artifact in arrays:
                     if not isinstance(artifact, dict) or not isinstance(artifact.get('path'), str):
-                        raise ValueError('V5 candidate persisted-array inventory is malformed')
+                        raise ValueError('exact-geometry candidate persisted-array inventory is malformed')
                     artifact_path = Path(artifact['path']).resolve()
                     if (
                         not artifact_path.is_relative_to(output_root)
@@ -433,7 +454,7 @@ def _validate_campaign_closeout_authorization(
                         or _sha256_file(artifact_path)
                         != artifact.get('sha256')
                     ):
-                        raise ValueError('V5 candidate persisted-array path/hash is invalid')
+                        raise ValueError('exact-geometry candidate persisted-array path/hash is invalid')
                     seen_array_paths.add(artifact_path)
                     input_paths.append(str(artifact_path))
         elif checker_kind == 'task41_p0_saved_output_continuation_checker':

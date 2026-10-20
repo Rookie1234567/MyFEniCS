@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 from typing import Any, Mapping
 
@@ -2484,7 +2485,555 @@ def load_task41_v4_volume_only_donor(
     }
 
 
-def _task41_v5_mesh_actual_exact_candidate_recheck(
+def _task41_mesh_actual_exact_candidate_profile(
+    report_path: Path, report: Mapping[str, Any]
+) -> dict[str, str]:
+    """Select only the frozen V5 or V6 artifact contract for an exact-geometry receipt."""
+    if report_path.name == "task41_p0_v5_mesh_actual_exact_attribution.json":
+        if report.get("schema") != "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1":
+            raise ValueError("V5 candidate report schema differs")
+        return {
+            "version": "v5",
+            "candidate_prefix": "task41_p0_v5_candidate",
+            "attribution_prefix": "task41_p0_v5_attribution",
+            "action_schema": "task41.p0.v5.global_geometry_native_elimination_attribution.v1",
+            "denominators_source": "review_report_v5.md",
+            "check_schema": "task41.p0.v5.mesh_actual_exact_candidate_check.v1",
+        }
+    if report_path.name == "task41_p0_v6_actual_qmetric_candidate.json":
+        expected_identity = "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+        identity_audit = report.get("identity_audit")
+        if (
+            report.get("schema") != "task41.p0.v6.actual_qmetric_candidate_receipt.v1"
+            or report.get("raw_tensor_evaluator") != "actual_qmetric_blocked_gram"
+            or not isinstance(identity_audit, Mapping)
+            or identity_audit.get("candidate_evaluator_identity") != expected_identity
+        ):
+            raise ValueError("V6 actual-qmetric candidate identity differs")
+        return {
+            "version": "v6",
+            "candidate_prefix": "task41_p0_v6_qmetric_candidate",
+            "attribution_prefix": "task41_p0_v6_qmetric_candidate_attribution",
+            "action_schema": "task41.p0.v6.global_geometry_native_elimination_attribution.v1",
+            "denominators_source": "review_report_v6.md",
+            "check_schema": "task41.p0.v6.actual_qmetric_candidate_check.v1",
+        }
+    raise ValueError("exact-geometry candidate report filename is not registered")
+
+
+def _task41_validate_v6_prefix_qualification(
+    qualification: Any,
+    *,
+    require_qualified: bool,
+) -> str:
+    from src.solvers.task41_actual_qmetric_blocked_gram import (
+        V6_PREFIX_QUALIFICATION_SCHEMA,
+        V6_PREFIX_SAMPLE_CELL_INDICES,
+    )
+    from src.solvers.task41_v4_volume_only_audit import (
+        TASK41_V5_FROZEN_DENOMINATORS,
+    )
+
+    if not isinstance(qualification, Mapping):
+        raise ValueError("V6 candidate evaluator omits its prefix qualification state")
+    records = qualification.get("records")
+    if (
+        qualification.get("schema") != V6_PREFIX_QUALIFICATION_SCHEMA
+        or qualification.get("required_sample_cell_indices")
+        != list(V6_PREFIX_SAMPLE_CELL_INDICES)
+        or not isinstance(records, list)
+        or qualification.get("sample_count") != len(records)
+        or qualification.get("required_sample_count")
+        != len(V6_PREFIX_SAMPLE_CELL_INDICES)
+    ):
+        raise ValueError("V6 prefix qualification inventory is malformed")
+    status = qualification.get("status")
+    if status == "P0_NOT_RUN_NO_WINDOW_APPROVAL":
+        if (
+            records
+            or qualification.get("sample_count") != 0
+            or qualification.get("geometry_witness_count") != 0
+            or qualification.get("full_admission_eligible") is not False
+            or require_qualified
+        ):
+            raise ValueError(
+                "a P0 no-window record is legal only as non-qualified inventory, never full admission"
+            )
+        return "P0_NOT_RUN_NO_WINDOW_APPROVAL"
+    if status != "PREFIX_QUALIFIED":
+        if require_qualified:
+            raise ValueError("V6 full candidate admission requires a qualified eight-key prefix")
+        return str(status)
+    if (
+        len(records) != len(V6_PREFIX_SAMPLE_CELL_INDICES)
+        or [record.get("cell_index") for record in records]
+        != list(V6_PREFIX_SAMPLE_CELL_INDICES)
+        or qualification.get("geometry_witness_count", 0) < 1
+        or qualification.get("full_admission_eligible") is not True
+    ):
+        raise ValueError("V6 qualified prefix is incomplete or attached to a non-qualified report")
+    saved_count = 0
+    oracle_count = 0
+    for record in records:
+        source = record.get("source")
+        if source == "V4_SAVED_ACTUAL_BLOCKS":
+            saved_count += 1
+            witness = record.get("geometry_witness")
+            if (
+                record.get("coordinates_bitwise_identity_passed") is not True
+                or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("reference_report_sha256", "")))
+                or not isinstance(witness, Mapping)
+                or witness.get("status") != "NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS"
+                or len(record.get("local_action_comparisons", ())) != 6
+            ):
+                raise ValueError("V6 V4-saved prefix record omits actual identity or local-action evidence")
+            observed_actions = record.get("local_action_comparisons", ())
+            expected_action_keys = {
+                (column, state)
+                for column in (0, 1)
+                for state in ("known", "j0", "j3")
+            }
+            if {
+                (item.get("column"), item.get("state")) for item in observed_actions
+            } != expected_action_keys or any(
+                item.get("selected_active_row") != 5_458_716
+                or item.get("frozen_denominator")
+                != TASK41_V5_FROZEN_DENOMINATORS[item.get("column")]
+                or item.get("selected_row_scale_check") != "diagnostic_only"
+                or not np.isfinite(item.get("selected_row_difference_over_frozen_denominator", np.nan))
+                or not isinstance(item.get("full_local_action"), Mapping)
+                or not isinstance(
+                    item.get("full_local_action", {}).get("absolute_frobenius"),
+                    (int, float),
+                )
+                or not np.isfinite(
+                    item.get("full_local_action", {}).get("absolute_frobenius", np.nan)
+                )
+                or item.get("full_local_action_scale_check") != "diagnostic_only"
+                or not isinstance(
+                    item.get("full_local_action_difference_over_frozen_denominator"),
+                    (int, float),
+                )
+                or not np.isfinite(
+                    item.get("full_local_action_difference_over_frozen_denominator", np.nan)
+                )
+                or not np.isclose(
+                    item.get("full_local_action_difference_over_frozen_denominator", np.nan),
+                    item["full_local_action"]["absolute_frobenius"]
+                    / item["frozen_denominator"],
+                    rtol=1.0e-12,
+                    atol=0.0,
+                )
+                for item in observed_actions
+            ):
+                raise ValueError("V6 saved-cell action evidence omits frozen denominator checks")
+        elif source == "ORIGINAL_FFCX_KERNEL_ORACLE":
+            oracle_count += 1
+            witness = record.get("geometry_witness")
+            if (
+                record.get("coordinates_bitwise_identity_passed") is not True
+                or not isinstance(witness, Mapping)
+                or witness.get("status") != "BITWISE_EQUAL"
+                or witness.get("q_begin") != 0
+                or witness.get("q_end") != 512
+            ):
+                raise ValueError("V6 missing-key sample lacks a full original-kernel geometry witness")
+        else:
+            raise ValueError("V6 prefix sample source is not registered")
+        comparisons = record.get("comparisons")
+        if (
+            record.get("status") != "PASS"
+            or record.get("admission_eligible") is not True
+            or not isinstance(comparisons, Mapping)
+            or any(
+                not isinstance(comparisons.get(name), Mapping)
+                or comparisons[name].get("status") != "PASS"
+                or comparisons[name].get("relative_limit") != 1.0e-11
+                for name in ("raw_tensor", "oriented_tensor")
+            )
+            or not isinstance(comparisons.get("K_G_J_L"), Mapping)
+            or set(comparisons["K_G_J_L"]) != {"K", "G", "J", "L"}
+            or any(
+                comparisons["K_G_J_L"][name].get("status") != "PASS"
+                or comparisons["K_G_J_L"][name].get("relative_limit") != 1.0e-11
+                for name in ("K", "G", "J", "L")
+            )
+            or not isinstance(comparisons.get("R_T_S"), Mapping)
+            or set(comparisons["R_T_S"]) != {"R", "T", "S"}
+            or any(
+                comparisons["R_T_S"][name].get("status") != "PASS"
+                or comparisons["R_T_S"][name].get("relative_limit") != 1.0e-11
+                for name in ("R", "T", "S")
+            )
+            or not isinstance(comparisons.get("strict_lu"), Mapping)
+            or comparisons["strict_lu"].get("passed") is not True
+            or comparisons["strict_lu"].get("relative_limit") != 1.0e-11
+            or comparisons.get("condensation_defects_classification") != "diagnostic_only"
+        ):
+            raise ValueError(
+                "V6 prefix sample has a failed/malformed tensor/Schur screen "
+                "or mislabeled diagnostic_only defects"
+            )
+        for defect_name in ("reference_condensation_defects_relative", "candidate_condensation_defects_relative"):
+            defects = comparisons.get(defect_name)
+            if (
+                not isinstance(defects, Mapping)
+                or set(defects) != {"KR_plus_G", "TK_plus_J"}
+                or any(
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not np.isfinite(value)
+                    or value < 0.0
+                    for value in defects.values()
+                )
+            ):
+                raise ValueError("V6 prefix sample has invalid diagnostic condensation defects")
+    if saved_count != 2 or oracle_count != 6:
+        raise ValueError("V6 prefix qualification must use two saved V4 keys and six missing-key oracles")
+    return "PREFIX_QUALIFIED" if require_qualified else "PREFIX_QUALIFIED_INVENTORY"
+
+
+def _task41_validate_v6_actual_qmetric_audit(
+    identity_audit: Mapping[str, Any],
+    *,
+    require_prefix_qualified: bool = False,
+) -> None:
+    """Check the source, table, geometry, and compiler profile recorded by V6."""
+    from src.solvers.task41_actual_qmetric_blocked_gram import (
+        CACHE_IDENTITY_SCHEMA,
+        DIMENSION,
+        EXPECTED_C_CACHE_SHA256,
+        EXPECTED_C_SOURCE_BYTES,
+        EXPECTED_C_SOURCE_SHA256,
+        EXPECTED_STATIC_TABLE_EXTENTS,
+        EXPECTED_GEOMETRY_TABLE_NAMES,
+        EXPECTED_UFCX_MODULE_SHA256,
+        EXPECTED_UFCX_SIGNATURE,
+        FEATURE_NAMES,
+        GEOMETRY_ORACLE_TRACE_SCHEMA,
+        HELPER_COMPILER_FLAGS,
+        IDENTITY,
+        INTEGRAL_BODY_BY_TAG,
+        POINT_BLOCK_SIZE,
+        POINT_COUNT,
+        PROFILE_TAGS,
+        MAX_GEOMETRY_ORACLE_COMPARISONS,
+        QUALIFICATION_STATUS,
+        REQUIRED_GEOMETRY_TRACE_FIELDS,
+        _cache_identity_digest,
+    )
+
+    candidate = identity_audit.get("candidate_evaluator_audit")
+    if not isinstance(candidate, Mapping):
+        raise ValueError("V6 candidate report omits its evaluator audit")
+    prefix_qualification = candidate.get("prefix_qualification")
+    prefix_state = _task41_validate_v6_prefix_qualification(
+        prefix_qualification,
+        require_qualified=require_prefix_qualified,
+    )
+    helper = candidate.get("geometry_helper")
+    if not isinstance(helper, Mapping):
+        raise ValueError("V6 candidate report omits its frozen geometry-helper audit")
+    source_path = Path(str(helper.get("source_path", "")))
+    cache_path = Path(str(helper.get("compile_metadata_path", "")))
+    source_hash = str(helper.get("source_sha256", ""))
+    cache_hash = str(helper.get("compile_metadata_sha256", ""))
+    helper_source_hash = str(helper.get("helper_source_sha256", ""))
+    helper_library_hash = str(helper.get("helper_library_sha256", ""))
+    reference_hashes = helper.get("reference_table_hashes")
+    reference_zero_counts = helper.get("reference_table_zero_counts")
+    reference_zero_hashes = helper.get("reference_table_zero_pattern_hashes")
+    static_extents = helper.get("static_table_declared_extents")
+    geometry_trace_fields = helper.get("geometry_trace_fields")
+    feature_pairs = helper.get("feature_pair_map")
+    cache_payload = candidate.get("cache_identity_payload")
+    cache_identity = str(candidate.get("cache_identity", ""))
+    cache_identity_sha256 = str(candidate.get("cache_identity_sha256", ""))
+    evaluator_source_path = Path(str(candidate.get("evaluator_source_path", "")))
+    evaluator_source_hash = (
+        sha256_file(evaluator_source_path)
+        if evaluator_source_path.is_file()
+        else ""
+    )
+    expected_pairs = {(left, right) for left in range(12) for right in range(12)}
+    observed_pairs = (
+        {tuple(pair) for pair in feature_pairs}
+        if isinstance(feature_pairs, list)
+        and all(
+            isinstance(pair, list)
+            and len(pair) == 2
+            and all(type(index) is int for index in pair)
+            for pair in feature_pairs
+        )
+        else set()
+    )
+    expected_body_map = {str(tag): digest for tag, digest in INTEGRAL_BODY_BY_TAG.items()}
+    expected_extents = {
+        name: list(shape) for name, shape in EXPECTED_STATIC_TABLE_EXTENTS.items()
+    }
+    reference_table_bytes = (
+        len(FEATURE_NAMES) * POINT_COUNT * DIMENSION * np.dtype(np.float64).itemsize
+        + POINT_COUNT * np.dtype(np.float64).itemsize
+    )
+    geometry_table_bytes = sum(
+        int(np.prod(EXPECTED_STATIC_TABLE_EXTENTS[name], dtype=np.int64))
+        * np.dtype(np.float64).itemsize
+        for name in EXPECTED_GEOMETRY_TABLE_NAMES
+    ) * len(set(INTEGRAL_BODY_BY_TAG.values()))
+    expected_cache_payload = {
+        "schema": CACHE_IDENTITY_SCHEMA,
+        "implementation": IDENTITY,
+        "evaluator_source_sha256": candidate.get("evaluator_source_sha256"),
+        "ffcx_c_source_sha256": EXPECTED_C_SOURCE_SHA256,
+        "ffcx_compile_metadata_sha256": EXPECTED_C_CACHE_SHA256,
+        "ffcx_module_sha256": EXPECTED_UFCX_MODULE_SHA256,
+        "ufcx_signature": EXPECTED_UFCX_SIGNATURE,
+        "reference_table_source_sha256": EXPECTED_C_SOURCE_SHA256,
+        "integral_body_by_tag": expected_body_map,
+        "table_extent_contract": {
+            "FE0": [1, 1, POINT_COUNT, DIMENSION],
+            "FE2": [1, 1, POINT_COUNT, 8],
+            "weights": [POINT_COUNT],
+        },
+        "compiler_flags": list(HELPER_COMPILER_FLAGS),
+        "geometry_oracle_trace_schema": GEOMETRY_ORACLE_TRACE_SCHEMA,
+    }
+    oracle_count = helper.get("original_kernel_oracle_execution_count")
+    oracle_status = helper.get("original_kernel_oracle_execution_status")
+    oracle_artifact_bytes = helper.get("original_kernel_oracle_artifact_bytes")
+    oracle_compile_audits = helper.get("original_kernel_oracle_compile_audits")
+    oracle_records = candidate.get("original_kernel_oracle_records")
+    geometry_records = candidate.get("geometry_oracle_comparison_records")
+    valid_oracle_inventory = (
+        type(oracle_count) is int
+        and 0 <= oracle_count <= MAX_GEOMETRY_ORACLE_COMPARISONS
+        and isinstance(oracle_artifact_bytes, int)
+        and 0 <= oracle_artifact_bytes <= 512 * 1024**2
+        and isinstance(oracle_compile_audits, Mapping)
+        and isinstance(oracle_records, list)
+        and len(oracle_records) == oracle_count
+        and isinstance(geometry_records, list)
+        and len(geometry_records) == oracle_count
+    )
+    if valid_oracle_inventory:
+        allowed_digests = set(INTEGRAL_BODY_BY_TAG.values())
+        valid_oracle_inventory = set(oracle_compile_audits).issubset(allowed_digests)
+        audited_artifact_bytes = 0
+        for digest, compile_audit in oracle_compile_audits.items():
+            if not isinstance(compile_audit, Mapping):
+                valid_oracle_inventory = False
+                break
+            source_bytes = compile_audit.get("source_bytes")
+            library_bytes = compile_audit.get("library_bytes")
+            if (
+                type(source_bytes) is not int
+                or not 0 < source_bytes <= 2 * EXPECTED_C_SOURCE_BYTES
+                or type(library_bytes) is not int
+                or library_bytes <= 0
+                or compile_audit.get("compile_metadata_sha256") != EXPECTED_C_CACHE_SHA256
+                or not re.fullmatch(r"[0-9a-f]{64}", str(compile_audit.get("source_sha256", "")))
+                or not re.fullmatch(r"[0-9a-f]{64}", str(compile_audit.get("library_sha256", "")))
+                or not isinstance(compile_audit.get("compiler_flags"), list)
+                or not isinstance(compile_audit.get("command"), list)
+                or any(
+                    not isinstance(compile_audit.get(key), (int, float))
+                    or not np.isfinite(compile_audit.get(key))
+                    or compile_audit.get(key) < 0
+                    for key in ("source_generation_seconds", "compiler_seconds")
+                )
+            ):
+                valid_oracle_inventory = False
+                break
+            audited_artifact_bytes += source_bytes + library_bytes
+        if audited_artifact_bytes != oracle_artifact_bytes:
+            valid_oracle_inventory = False
+        for index, record in enumerate(oracle_records):
+            geometry_record = geometry_records[index]
+            if not isinstance(record, Mapping) or not isinstance(geometry_record, Mapping):
+                valid_oracle_inventory = False
+                break
+            tag = record.get("tag")
+            body_digest = INTEGRAL_BODY_BY_TAG.get(tag) if type(tag) is int else None
+            tensor_comparison = record.get("tensor_comparison")
+            geometry_comparison = record.get("geometry_comparison")
+            times = (
+                "kernel_call_seconds",
+                "output_allocation_seconds",
+                "source_generation_seconds",
+                "compiler_seconds",
+                "candidate_build_seconds",
+            )
+            if (
+                tag not in PROFILE_TAGS
+                or body_digest not in oracle_compile_audits
+                or record.get("execution_status") != "EXECUTED_BOUNDED_ORIGINAL_KERNEL_ORACLE"
+                or type(record.get("q_begin")) is not int
+                or type(record.get("q_end")) is not int
+                or not 0 <= record["q_begin"] < record["q_end"] <= POINT_COUNT
+                or any(
+                    not isinstance(record.get(key), (int, float))
+                    or not np.isfinite(record.get(key))
+                    or record.get(key) < 0
+                    for key in times
+                )
+                or not isinstance(tensor_comparison, Mapping)
+                or tensor_comparison.get("relative_limit") != 1.0e-11
+                or tensor_comparison.get("status")
+                != ("PASS_SCREEN" if tensor_comparison.get("relative_frobenius", np.inf) <= 1.0e-11 else "FAIL_SCREEN")
+                or any(
+                    not isinstance(tensor_comparison.get(key), (int, float))
+                    or not np.isfinite(tensor_comparison.get(key))
+                    or tensor_comparison.get(key) < 0
+                    for key in ("relative_frobenius", "absolute_frobenius", "max_abs")
+                )
+                or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("original_tensor_sha256", "")))
+                or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_tensor_sha256", "")))
+                or not isinstance(geometry_comparison, Mapping)
+                or geometry_comparison.get("status") not in {"BITWISE_EQUAL", "MISMATCH"}
+                or geometry_record.get("tag") != tag
+                or geometry_record.get("q_begin") != record.get("q_begin")
+                or geometry_record.get("q_end") != record.get("q_end")
+                or geometry_record.get("status") != geometry_comparison.get("status")
+                or record.get("compile_audit") != oracle_compile_audits.get(body_digest)
+            ):
+                valid_oracle_inventory = False
+                break
+    if valid_oracle_inventory and oracle_count == 0:
+        valid_oracle_inventory = (
+            oracle_status == "NOT_RUN_NO_WINDOW_APPROVAL"
+            and oracle_artifact_bytes == 0
+            and not oracle_compile_audits
+            and prefix_state == "P0_NOT_RUN_NO_WINDOW_APPROVAL"
+            and not require_prefix_qualified
+        )
+    elif valid_oracle_inventory:
+        valid_oracle_inventory = (
+            oracle_status == "EXECUTED_BOUNDED_ORIGINAL_KERNEL_ORACLE"
+            and bool(oracle_compile_audits)
+            and (
+                prefix_state
+                not in {"PREFIX_QUALIFIED", "PREFIX_QUALIFIED_INVENTORY"}
+                or oracle_count == 6
+            )
+            and (
+                not require_prefix_qualified
+                or (oracle_count == 6 and prefix_state == "PREFIX_QUALIFIED")
+            )
+        )
+    if not valid_oracle_inventory:
+        raise ValueError("V6 bounded original-kernel oracle inventory is malformed")
+    cache_identity_digest = _cache_identity_digest(expected_cache_payload)
+    if (
+        candidate.get("implementation") != IDENTITY
+        or candidate.get("qualification_status") != QUALIFICATION_STATUS
+        or candidate.get("expected_ufcx_signature") != EXPECTED_UFCX_SIGNATURE
+        or candidate.get("ufcx_form_signature") != EXPECTED_UFCX_SIGNATURE
+        or candidate.get("ffcx_module_sha256") != EXPECTED_UFCX_MODULE_SHA256
+        or candidate.get("ffcx_default_kernel_absent") is not True
+        or candidate.get("point_block_size") != POINT_BLOCK_SIZE
+        or candidate.get("workspace_bytes_upper") != 1024**3
+        or candidate.get("prepare_workspace_bytes_upper") != 1024**3
+        or candidate.get("key_workspace_bytes_upper") != 128 * 1024**2
+        or candidate.get("class_timing_metadata_bytes_upper") != 16 * 1024**2
+        or candidate.get("helper_scratch_bytes_upper") != 128 * 1024**2
+        or candidate.get("original_kernel_oracle_scratch_bytes_upper") != 512 * 1024**2
+        or type(candidate.get("class_timing_metadata_bytes")) is not int
+        or not 0 <= candidate.get("class_timing_metadata_bytes", -1)
+        <= candidate.get("class_timing_metadata_bytes_upper", 0)
+        or not isinstance(candidate.get("phase_seconds_by_stage"), Mapping)
+        or set(candidate.get("phase_seconds_by_stage", {}))
+        != {"geometry", "pack", "gram", "scatter", "release"}
+        or any(
+            not isinstance(value, (int, float))
+            or not np.isfinite(value)
+            or value < 0
+            for value in candidate.get("phase_seconds_by_stage", {}).values()
+        )
+        or not isinstance(candidate.get("class_seconds_summary"), Mapping)
+        or candidate.get("class_seconds_summary", {}).get("count")
+        != candidate.get("class_count")
+        or not isinstance(candidate.get("class_seconds_summary", {}).get("total"), (int, float))
+        or not isinstance(candidate.get("class_seconds_summary", {}).get("max"), (int, float))
+        or candidate.get("class_seconds_summary", {}).get("total", -1) < 0
+        or candidate.get("class_seconds_summary", {}).get("max", -1) < 0
+        or candidate.get("class_seconds_summary", {}).get("max", 0)
+        > candidate.get("class_seconds_summary", {}).get("total", 0)
+        or not isinstance(helper.get("helper_source_bytes"), int)
+        or helper.get("helper_source_bytes", -1) < 0
+        or not isinstance(helper.get("helper_library_bytes"), int)
+        or helper.get("helper_library_bytes", -1) < 0
+        or helper.get("helper_scratch_retained_bytes")
+        != helper.get("helper_source_bytes", 0) + helper.get("helper_library_bytes", 0)
+        or helper.get("helper_scratch_retained_bytes", 0) > 128 * 1024**2
+        or candidate.get("cache_identity_payload") != expected_cache_payload
+        or cache_identity_sha256 != cache_identity_digest
+        or cache_identity != f"{IDENTITY}:{cache_identity_digest}"
+        or identity_audit.get("candidate_evaluator_cache_identity") != cache_identity
+        or candidate.get("evaluator_source_path") is None
+        or not Path(str(candidate.get("evaluator_source_path"))).is_absolute()
+        or not re.fullmatch(r"[0-9a-f]{64}", str(candidate.get("evaluator_source_sha256", "")))
+        or evaluator_source_hash != candidate.get("evaluator_source_sha256")
+        or candidate.get("mass_coefficient_conjugated") is not False
+        or candidate.get("hermitian_assumption") is not False
+        or candidate.get("raw_tensor_built_before_original_schur") is not True
+        or not source_path.is_absolute()
+        or source_path.suffix != ".c"
+        or cache_path != Path(str(source_path) + ".cached")
+        or helper.get("source_bytes") != EXPECTED_C_SOURCE_BYTES
+        or source_hash != EXPECTED_C_SOURCE_SHA256
+        or cache_hash != EXPECTED_C_CACHE_SHA256
+        or helper.get("reference_table_names") != list(FEATURE_NAMES)
+        or helper.get("reference_table_bytes") != reference_table_bytes
+        or helper.get("shared_table_bytes_upper")
+        != reference_table_bytes + geometry_table_bytes
+        or static_extents != expected_extents
+        or not isinstance(reference_zero_counts, list)
+        or len(reference_zero_counts) != len(FEATURE_NAMES)
+        or any(type(value) is not int or not 0 <= value <= POINT_COUNT * DIMENSION for value in reference_zero_counts)
+        or not isinstance(reference_zero_hashes, list)
+        or len(reference_zero_hashes) != len(FEATURE_NAMES)
+        or any(not re.fullmatch(r"[0-9a-f]{64}", str(item)) for item in reference_zero_hashes)
+        or not isinstance(geometry_trace_fields, list)
+        or not REQUIRED_GEOMETRY_TRACE_FIELDS.issubset(geometry_trace_fields)
+        or helper.get("geometry_trace_source")
+        != "same_frozen_FFCx_scalar_graph_as_actual_qmetric_block"
+        or helper.get("original_kernel_oracle_generator")
+        != "_FrozenFFCxGeometryHelper.original_kernel_oracle_source"
+        or candidate.get("original_kernel_oracle_workspace_bytes_upper") != 1024**3
+        or candidate.get("original_kernel_oracle_source_bytes_upper")
+        != 2 * EXPECTED_C_SOURCE_BYTES
+        or not isinstance(candidate.get("geometry_oracle_comparison_records"), list)
+        or helper.get("quadrature_point_count") != POINT_COUNT
+        or helper.get("geometry_helper_block_size") != POINT_BLOCK_SIZE
+        or helper.get("geometry_expression_source")
+        != "frozen_FFCx_Q907_Jacobian_and_fw_graph"
+        or helper.get("geometry_shortcut_used") is not False
+        or helper.get("compiler_flags") != list(HELPER_COMPILER_FLAGS)
+        or helper.get("integral_body_by_tag") != expected_body_map
+        or not isinstance(feature_pairs, list)
+        or len(feature_pairs) != 144
+        or observed_pairs != expected_pairs
+        or not isinstance(reference_hashes, list)
+        or len(reference_hashes) != len(FEATURE_NAMES)
+        or any(not re.fullmatch(r"[0-9a-f]{64}", str(item)) for item in reference_hashes)
+        or not re.fullmatch(r"[0-9a-f]{64}", str(helper.get("reference_weight_sha256", "")))
+        or not re.fullmatch(r"[0-9a-f]{64}", helper_source_hash)
+        or not re.fullmatch(r"[0-9a-f]{64}", helper_library_hash)
+    ):
+        raise ValueError("V6 candidate evaluator audit differs from the frozen source profile")
+
+
+def _task41_v6_report_requires_prefix_qualification(report: Mapping[str, Any]) -> bool:
+    """Require a passing eight-key prefix for every completed full candidate outcome."""
+    return (
+        report.get("candidate_numeric_status")
+        in {"PASS", "ACTUAL_COORDINATES_INSUFFICIENT"}
+        or report.get("status")
+        in {"CANDIDATE_NUMERICAL_PASS_CHECKER_PENDING", "ACTUAL_COORDINATES_INSUFFICIENT"}
+    )
+
+
+def _task41_mesh_actual_exact_candidate_recheck(
     report_path: Path,
     *,
     donor: Mapping[str, Any],
@@ -2494,18 +3043,49 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
     donor_contract: Mapping[str, Any],
     repo_root: Path,
 ) -> dict[str, Any]:
-    """Independently recheck persisted V5 vectors and global closure, without FE work."""
+    """Independently recheck persisted exact-geometry candidate vectors, without FE work."""
     report_path = Path(report_path).resolve(strict=True)
     results_root = (Path(repo_root) / "results").resolve()
+    if not report_path.is_relative_to(results_root):
+        raise ValueError("exact-geometry candidate report is outside the registered results tree")
+    report = _json_object(report_path, "Task41 exact-geometry candidate report")
+    profile = _task41_mesh_actual_exact_candidate_profile(report_path, report)
+    candidate_prefix = profile["candidate_prefix"]
+    attribution_prefix = profile["attribution_prefix"]
+    if profile["version"] == "v6":
+        require_prefix_qualified = _task41_v6_report_requires_prefix_qualification(
+            report
+        )
+        _task41_validate_v6_actual_qmetric_audit(
+            report.get("identity_audit", {}),
+            require_prefix_qualified=require_prefix_qualified,
+        )
+        if require_prefix_qualified:
+            _task41_validate_v6_prefix_qualification(
+                report.get("candidate_prefix_qualification"),
+                require_qualified=True,
+            )
+            incident = report["candidate_prefix_qualification"].get(
+                "original_failed_row_incident_contributions"
+            )
+            if (
+                not isinstance(incident, list)
+                or len(incident) != 6
+                or any(
+                    item.get("cell_count") != 2
+                    or item.get("frozen_denominator")
+                    != TASK41_V5_FROZEN_DENOMINATORS[item.get("column")]
+                    or not np.isfinite(
+                        item.get("difference_over_frozen_denominator", np.nan)
+                    )
+                    for item in incident
+                )
+            ):
+                raise ValueError(
+                    "V6 candidate report omits the two saved-cell contributions on the frozen failed row"
+                )
     if (
-        report_path.name != "task41_p0_v5_mesh_actual_exact_attribution.json"
-        or not report_path.is_relative_to(results_root)
-    ):
-        raise ValueError("V5 candidate report is outside the registered results tree")
-    report = _json_object(report_path, "Task41 V5 mesh-actual-exact report")
-    if (
-        report.get("schema") != "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1"
-        or report.get("geometry_policy") != "mesh_actual_exact"
+        report.get("geometry_policy") != "mesh_actual_exact"
         or report.get("donor_contract_sha256") != donor_contract_sha256
         or report.get("consumer_contract_sha256") != consumer_contract_sha256
         or report.get("donor_source_sha") != donor_contract.get("source", {}).get("sha")
@@ -2584,9 +3164,9 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
         loaded[name] = array
         return array
 
-    candidate_p6 = load_array("task41_p0_v5_candidate_full_p6", (candidate_rows, 2))
+    candidate_p6 = load_array(f"{candidate_prefix}_full_p6", (candidate_rows, 2))
     candidate_reduced = load_array(
-        "task41_p0_v5_candidate_full_reduced_rhs", (candidate_rows, 2)
+        f"{candidate_prefix}_full_reduced_rhs", (candidate_rows, 2)
     )
     saved_port_rhs = np.asarray(donor["attribution"]["joint"]["port_rhs"])
     if saved_port_rhs.shape != (port_rows, 2) or saved_port_rhs.dtype != np.dtype(np.complex128):
@@ -2638,7 +3218,11 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
         not isinstance(reported_action, Mapping)
         or reported_action.get("relative_tolerance") != TASK41_P0_V5_RELATIVE_TOLERANCE
         or reported_action.get("status") != action_status
-        or reported_action.get("frozen_denominators_source") != "review_report_v5.md"
+        or reported_action.get("frozen_denominators_source") != profile["denominators_source"]
+        or reported_action.get("full_action_artifact") != f"{candidate_prefix}_full_p6"
+        or reported_action.get("full_reduced_rhs_artifact")
+        != f"{candidate_prefix}_full_reduced_rhs"
+        or reported_action.get("port_rows_inherited_after_validation") is not True
         or len(reported_action.get("columns", ())) != 2
     ):
         raise ValueError("V5 candidate report action-gate classification differs from recomputation")
@@ -2665,7 +3249,18 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
     if (
         not isinstance(attribution, Mapping)
         or attribution.get("schema")
-        != "task41.p0.v5.global_geometry_native_elimination_attribution.v1"
+        != profile["action_schema"]
+        or (
+            profile["version"] == "v6"
+            and (
+                attribution.get("candidate_evaluator_identity")
+                != report.get("identity_audit", {}).get("candidate_evaluator_identity")
+                or attribution.get("candidate_evaluator_cache_identity")
+                != report.get("identity_audit", {}).get(
+                    "candidate_evaluator_cache_identity"
+                )
+            )
+        )
         or len(attribution.get("columns", ())) != 2
         or attribution.get("global_closure_status") != "DIAGNOSTIC_ONLY"
         or attribution.get("diagnostic_scales") != [
@@ -2677,8 +3272,8 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
         raise ValueError("V5 global attribution receipt is missing or malformed")
     closure_results = []
     expected_artifact_names: set[str] = {
-        "task41_p0_v5_candidate_full_p6",
-        "task41_p0_v5_candidate_full_reduced_rhs",
+        f"{candidate_prefix}_full_p6",
+        f"{candidate_prefix}_full_reduced_rhs",
     }
     recovery_gate = report.get("identity_audit", {}).get("candidate_recovery_gate")
     if (
@@ -2700,11 +3295,11 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
             raise ValueError("V5 candidate recovery column record is malformed")
         expected_names = {
             "recovered_storage_artifact": (
-                f"task41_p0_v5_candidate_recovered_storage_col{column_index}",
+                f"{candidate_prefix}_recovered_storage_col{column_index}",
                 "recovered_storage",
             ),
             "native_volume_residual_artifact": (
-                f"task41_p0_v5_candidate_native_volume_residual_col{column_index}",
+                f"{candidate_prefix}_native_volume_residual_col{column_index}",
                 "native_volume_residual",
             ),
         }
@@ -2831,7 +3426,7 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
                 if not isinstance(artifact, Mapping) or not isinstance(artifact.get("name"), str):
                     raise ValueError(f"V5 attribution artifact {field} is malformed")
                 name = str(artifact["name"])
-                expected_name = f"task41_p0_v5_attribution_col{column_index}_{state_label}_{field}"
+                expected_name = f"{attribution_prefix}_col{column_index}_{state_label}_{field}"
                 if name != expected_name:
                     raise ValueError("V5 attribution artifact name is not bound to its column/state")
                 expected_artifact_names.add(name)
@@ -2961,7 +3556,7 @@ def _task41_v5_mesh_actual_exact_candidate_recheck(
     if report.get("status") != run_status or attribution.get("global_closure_status") != closure_status:
         raise ValueError("V5 candidate/action or attribution-diagnostic classification differs from independent recheck")
     return {
-        "schema": "task41.p0.v5.mesh_actual_exact_candidate_check.v1",
+        "schema": profile["check_schema"],
         "check_completed": True,
         "report_classification_matches": True,
         "action_status": action_status,
@@ -3110,12 +3705,12 @@ def check_task41_p0_b0_saved_evidence_audit(
             "consumer_window_sha256": consumer.get("window", {}).get("sha256"),
         },
     )
-    v5_candidate_check = None
+    mesh_actual_candidate_check = None
     if mesh_actual_exact_report_path is not None:
         normalized_donor = load_task41_v4_volume_only_donor(
             summary_path=summary_path, numerical_output=numerical_output
         )
-        v5_candidate_check = _task41_v5_mesh_actual_exact_candidate_recheck(
+        mesh_actual_candidate_check = _task41_mesh_actual_exact_candidate_recheck(
             mesh_actual_exact_report_path,
             donor=normalized_donor,
             donor_contract_sha256=donor_digest,
@@ -3125,7 +3720,8 @@ def check_task41_p0_b0_saved_evidence_audit(
             repo_root=repo_root,
         )
     audit_completed = bool(evidence.get("audit_completed") is True) and (
-        v5_candidate_check is None or v5_candidate_check.get("check_completed") is True
+        mesh_actual_candidate_check is None
+        or mesh_actual_candidate_check.get("check_completed") is True
     )
     payload = {
         "schema": "task41.p0.b0.saved_evidence_audit.v1",
@@ -3155,8 +3751,8 @@ def check_task41_p0_b0_saved_evidence_audit(
         },
         "recovery_evidence_recheck": evidence,
         **(
-            {"mesh_actual_exact_candidate_check": v5_candidate_check}
-            if v5_candidate_check is not None
+            {"mesh_actual_exact_candidate_check": mesh_actual_candidate_check}
+            if mesh_actual_candidate_check is not None
             else {}
         ),
         "checkpoints": evidence.get("checkpoints", []),
