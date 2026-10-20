@@ -230,6 +230,82 @@ def _v6_candidate_audit_fixture(tmp_path: Path):
     return audit, helper, evaluator_source_path
 
 
+@pytest.mark.parametrize("wrong_denominator", [True, False])
+def test_v6_candidate_recheck_checks_frozen_row_denominator_before_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, wrong_denominator: bool
+) -> None:
+    from src.runners import task41_p0_checker as checker
+
+    report_path = (
+        tmp_path
+        / "results"
+        / "task41extra_phi90_p50x50_g17x20"
+        / "attempt"
+        / "task41_p0_v6_actual_qmetric_candidate.json"
+    )
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("{}\n", encoding="utf-8")
+    denominators = (2225.481253487629, 2225.4807123031883)
+    incident = [
+        {
+            "column": column,
+            "cell_count": 2,
+            "frozen_denominator": denominators[column],
+            "difference_over_frozen_denominator": 0.0,
+        }
+        for column in (0, 1, 0, 1, 0, 1)
+    ]
+    if wrong_denominator:
+        incident[0]["frozen_denominator"] = 1.0
+    report = {
+        "schema": "task41.p0.v6.actual_qmetric_candidate_receipt.v1",
+        "status": "ACTUAL_COORDINATES_INSUFFICIENT",
+        "candidate_numeric_status": "ACTUAL_COORDINATES_INSUFFICIENT",
+        "identity_audit": {},
+        "candidate_prefix_qualification": {
+            "original_failed_row_incident_contributions": incident,
+        },
+    }
+    monkeypatch.setattr(checker, "_json_object", lambda *_args: report)
+    monkeypatch.setattr(
+        checker,
+        "_task41_mesh_actual_exact_candidate_profile",
+        lambda *_args: {
+            "version": "v6",
+            "candidate_prefix": "candidate",
+            "attribution_prefix": "donor",
+        },
+    )
+    monkeypatch.setattr(
+        checker,
+        "_task41_validate_v6_actual_qmetric_audit",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        checker,
+        "_task41_validate_v6_prefix_qualification",
+        lambda *_args, **_kwargs: "PREFIX_QUALIFIED",
+    )
+
+    expected_error = (
+        "two saved-cell contributions on the frozen failed row"
+        if wrong_denominator
+        else "donor/consumer/geometry identity differs"
+    )
+    with pytest.raises(ValueError, match=expected_error):
+        checker._task41_mesh_actual_exact_candidate_recheck(
+            report_path,
+            donor={},
+            donor_contract_sha256="a" * 64,
+            consumer={},
+            consumer_contract_sha256="b" * 64,
+            donor_contract={},
+            repo_root=tmp_path,
+            candidate_producer_contract={"source": {"sha": "c" * 40}},
+            candidate_producer_contract_sha256="c" * 64,
+        )
+
+
 def test_v6_candidate_checker_rechecks_the_frozen_evaluator_audit(tmp_path: Path) -> None:
     audit, helper, _ = _v6_candidate_audit_fixture(tmp_path)
     _task41_validate_v6_actual_qmetric_audit(audit)

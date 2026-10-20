@@ -3158,7 +3158,7 @@ def _task41_mesh_actual_exact_candidate_recheck(
                 or any(
                     item.get("cell_count") != 2
                     or item.get("frozen_denominator")
-                    != TASK41_V5_FROZEN_DENOMINATORS[item.get("column")]
+                    != TASK41_P0_V5_FROZEN_DENOMINATORS[item.get("column")]
                     or not np.isfinite(
                         item.get("difference_over_frozen_denominator", np.nan)
                     )
