@@ -9411,6 +9411,7 @@ def _run_task41_p0_saved_output_service(
     b0_v5_mesh_actual_exact_mode: bool = False,
     b0_v6_actual_qmetric_mode: bool = False,
     b0_v6_saved_candidate_audit_mode: bool = False,
+    b0_v8_saved_trace_star_audit_mode: bool = False,
     b0_v8_selected_trace_star_mode: bool = False,
     candidate_report_path: Path | None = None,
     candidate_report_sha256: str | None = None,
@@ -9500,16 +9501,30 @@ def _run_task41_p0_saved_output_service(
         or candidate_report_sha256 is None
     ):
         raise ValueError("Task41 V6 saved-candidate audit requires the checker-only B0 route and a report/hash")
-    if not b0_v6_saved_candidate_audit_mode and (
+    if b0_v8_saved_trace_star_audit_mode and (
+        not b0_evidence_audit_mode
+        or not checker_only
+        or b0_v4_volume_only_mode
+        or b0_v4_geometry_pair_mode
+        or b0_v5_mesh_actual_exact_mode
+        or b0_v6_actual_qmetric_mode
+        or b0_v6_saved_candidate_audit_mode
+        or b0_v8_selected_trace_star_mode
+        or candidate_report_path is None
+        or candidate_report_sha256 is None
+    ):
+        raise ValueError("Task41 V8 saved trace-star audit requires the checker-only B0 route and a report/hash")
+    if not (b0_v6_saved_candidate_audit_mode or b0_v8_saved_trace_star_audit_mode) and (
         candidate_report_path is not None or candidate_report_sha256 is not None
     ):
-        raise ValueError("Task41 V6 candidate report binding is only valid for its saved checker route")
+        raise ValueError("Task41 candidate report binding is only valid for a saved checker route")
     candidate_report_payload: Mapping[str, Any] | None = None
     candidate_producer_contract_path: Path | None = None
     candidate_producer_contract_sha256: str | None = None
     candidate_producer_source_sha: str | None = None
     candidate_geometry_reference_path: Path | None = None
     candidate_array_paths: list[Path] = []
+    candidate_source_artifact_paths: list[Path] = []
     if b0_v6_saved_candidate_audit_mode:
         assert candidate_report_path is not None and candidate_report_sha256 is not None
         candidate_report_path = candidate_report_path.resolve(strict=True)
@@ -9585,6 +9600,124 @@ def _run_task41_p0_saved_output_service(
                 raise ValueError("Task41 V6 persisted-array path/size/hash differs from the saved report")
             candidate_array_paths.append(artifact_path)
         candidate_report_payload = candidate_report_value
+    elif b0_v8_saved_trace_star_audit_mode:
+        assert candidate_report_path is not None and candidate_report_sha256 is not None
+        candidate_report_path = candidate_report_path.resolve(strict=True)
+        if (
+            not candidate_report_path.is_relative_to(results_root)
+            or candidate_report_path.name != "task41_p0_v8_selected_trace_star_audit.json"
+            or re.fullmatch(r"[0-9a-f]{64}", candidate_report_sha256) is None
+            or sha256_file(candidate_report_path) != candidate_report_sha256
+        ):
+            raise ValueError("Task41 V8 saved report path or SHA-256 differs")
+        candidate_report_value = json.loads(candidate_report_path.read_text(encoding="utf-8"))
+        if not isinstance(candidate_report_value, Mapping):
+            raise ValueError("Task41 V8 saved trace-star report must be a JSON object")
+        from src.runners.task41_p0_checker import (
+            TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256,
+            TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA,
+            TASK41_P0_V8_LEGACY_REPORT_SHA256,
+            _task41_mesh_actual_exact_candidate_profile,
+            _task41_v6_candidate_producer_contract,
+            _task41_v8_report_independent_checker_status,
+        )
+
+        if (
+            candidate_report_sha256 != TASK41_P0_V8_LEGACY_REPORT_SHA256
+            or _task41_mesh_actual_exact_candidate_profile(
+                candidate_report_path, candidate_report_value
+            ).get("version") != "v8"
+            or _task41_v8_report_independent_checker_status(
+                candidate_report_value,
+                expected_report_sha256=candidate_report_sha256,
+            )
+            != "NOT_RUN"
+            or candidate_report_value.get("consumer_source_sha")
+            != TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA
+            or candidate_report_value.get("consumer_contract_sha256")
+            != TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256
+        ):
+            raise ValueError("Task41 V8 saved report is outside its pinned legacy identity")
+        raw_producer_contract_path = candidate_report_value.get("consumer_contract_path")
+        if not isinstance(raw_producer_contract_path, str):
+            raise ValueError("Task41 V8 saved report omits its original consumer contract path")
+        candidate_producer_contract_path = Path(raw_producer_contract_path)
+        candidate_producer_contract_path = (
+            candidate_producer_contract_path
+            if candidate_producer_contract_path.is_absolute()
+            else repo_root / candidate_producer_contract_path
+        ).resolve(strict=True)
+        producer_contract, candidate_producer_contract_sha256 = (
+            _task41_v6_candidate_producer_contract(
+                candidate_report_path,
+                expected_report_sha256=candidate_report_sha256,
+                consumer_contract=contract,
+                repo_root=repo_root,
+            )
+        )
+        if not isinstance(producer_contract, Mapping) or candidate_producer_contract_sha256 is None:
+            raise ValueError("Task41 V8 saved report producer contract did not validate")
+        candidate_producer_source_sha = str(
+            producer_contract.get("source", {}).get("sha", "")
+        )
+        if candidate_producer_source_sha != TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA:
+            raise ValueError("Task41 V8 saved report producer contract source SHA differs")
+        evidence_arrays = candidate_report_value.get("persisted_evidence_arrays")
+        candidate_root = candidate_report_path.parent.resolve(strict=True)
+        if not isinstance(evidence_arrays, list) or not evidence_arrays:
+            raise ValueError("Task41 V8 saved report omits its persisted-array inventory")
+        for artifact in evidence_arrays:
+            if (
+                not isinstance(artifact, Mapping)
+                or not isinstance(artifact.get("path"), str)
+                or not isinstance(artifact.get("bytes"), int)
+                or not isinstance(artifact.get("sha256"), str)
+            ):
+                raise ValueError("Task41 V8 persisted-array inventory entry is malformed")
+            artifact_path = Path(str(artifact["path"])).resolve(strict=True)
+            if (
+                not artifact_path.is_relative_to(candidate_root)
+                or artifact_path.stat().st_size != artifact["bytes"]
+                or sha256_file(artifact_path) != artifact["sha256"]
+            ):
+                raise ValueError("Task41 V8 persisted-array path/size/hash differs from the saved report")
+            candidate_array_paths.append(artifact_path)
+        selected_star = candidate_report_value.get("selected_trace_star_audit")
+        replay = (
+            selected_star.get("saved_operand_recomposition")
+            if isinstance(selected_star, Mapping)
+            else None
+        )
+        source_artifacts = replay.get("source_artifacts") if isinstance(replay, Mapping) else None
+        if not isinstance(source_artifacts, Mapping):
+            raise ValueError("Task41 V8 saved report omits its V6/V7 source bindings")
+        for source_key in ("v6_index", "v6_report", "v7_index", "v7_report"):
+            source_path = Path(str(source_artifacts.get(source_key, ""))).resolve(strict=True)
+            source_sha = source_artifacts.get(f"{source_key}_sha256")
+            if not isinstance(source_sha, str) or sha256_file(source_path) != source_sha:
+                raise ValueError(f"Task41 V8 {source_key} source identity changed")
+            candidate_source_artifact_paths.append(source_path)
+        for arrays_key in ("v6_arrays", "v7_arrays"):
+            source_arrays = source_artifacts.get(arrays_key)
+            if not isinstance(source_arrays, Mapping):
+                raise ValueError(f"Task41 V8 saved {arrays_key} inventory is malformed")
+            for artifact in source_arrays.values():
+                if (
+                    not isinstance(artifact, Mapping)
+                    or not isinstance(artifact.get("path"), str)
+                    or not isinstance(artifact.get("bytes"), int)
+                    or not isinstance(artifact.get("sha256"), str)
+                ):
+                    raise ValueError(f"Task41 V8 saved {arrays_key} artifact is malformed")
+                artifact_path = Path(str(artifact["path"])).resolve(strict=True)
+                if (
+                    not artifact_path.is_relative_to((repo_root / "results").resolve())
+                    or artifact_path.stat().st_size != artifact["bytes"]
+                    or sha256_file(artifact_path) != artifact["sha256"]
+                ):
+                    raise ValueError(f"Task41 V8 saved {arrays_key} artifact identity changed")
+                candidate_source_artifact_paths.append(artifact_path)
+        candidate_report_payload = candidate_report_value
     if checker_only and not b0_evidence_audit_mode:
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -9645,6 +9778,9 @@ def _run_task41_p0_saved_output_service(
         "schema": "task41.p0.saved_output_service_receipt.v1",
         "status": "running",
         "mode": (
+            "saved_b0_v8_selected_trace_star_checker"
+            if b0_v8_saved_trace_star_audit_mode
+            else
             "saved_b0_v8_selected_trace_star_audit"
             if b0_v8_selected_trace_star_mode
             else
@@ -9705,6 +9841,18 @@ def _run_task41_p0_saved_output_service(
             candidate_producer_contract_sha256=candidate_producer_contract_sha256,
             candidate_producer_source_sha=candidate_producer_source_sha,
             candidate_geometry_reference_path=str(candidate_geometry_reference_path),
+        )
+    if b0_v8_saved_trace_star_audit_mode:
+        assert candidate_report_path is not None
+        assert candidate_report_sha256 is not None
+        assert candidate_producer_contract_path is not None
+        assert candidate_producer_contract_sha256 is not None
+        record.update(
+            candidate_report_path=str(candidate_report_path),
+            candidate_report_sha256=candidate_report_sha256,
+            candidate_producer_contract_path=str(candidate_producer_contract_path),
+            candidate_producer_contract_sha256=candidate_producer_contract_sha256,
+            candidate_producer_source_sha=candidate_producer_source_sha,
         )
     if continuation_command is not None:
         record["continuation_command"] = continuation_command
@@ -10094,6 +10242,14 @@ def _run_task41_p0_saved_output_service(
                     "candidate_numeric_status"
                 )
                 record["candidate_report_replayed_read_only"] = True
+            elif b0_v8_saved_trace_star_audit_mode:
+                assert candidate_report_path is not None
+                assert candidate_report_payload is not None
+                volume_report_path = candidate_report_path
+                volume_payload = candidate_report_payload
+                v8_selected_trace_star_report_ready = True
+                record["candidate_report_replayed_read_only"] = True
+                record["candidate_report_sha256"] = candidate_report_sha256
         else:
             worker_watchdog = supervise(
                 continuation_command,
@@ -10160,6 +10316,7 @@ def _run_task41_p0_saved_output_service(
                     report_sha256 = (
                         candidate_report_sha256
                         if b0_v6_saved_candidate_audit_mode
+                        or b0_v8_saved_trace_star_audit_mode
                         else sha256_file(volume_report_path)
                     )
                     if report_sha256 is None:
@@ -10262,6 +10419,21 @@ def _run_task41_p0_saved_output_service(
                         authorized_inputs.append(artifact_path)
                     if sha256_file(geometry_reference_report_path) != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256:
                         raise ValueError("V5 geometry reference changed before checker admission")
+                elif b0_v8_saved_trace_star_audit_mode:
+                    assert candidate_report_path is not None
+                    assert candidate_report_sha256 is not None
+                    assert candidate_producer_contract_path is not None
+                    assert volume_report_path is not None
+                    if sha256_file(candidate_report_path) != candidate_report_sha256:
+                        raise ValueError("V8 saved candidate report changed before checker authorization")
+                    authorized_inputs.extend(
+                        [
+                            candidate_report_path.resolve(strict=True),
+                            candidate_producer_contract_path.resolve(strict=True),
+                            *candidate_array_paths,
+                            *candidate_source_artifact_paths,
+                        ]
+                    )
                 elif v8_selected_trace_star_report_ready:
                     assert isinstance(volume_payload, Mapping)
                     assert volume_report_path is not None
@@ -10596,6 +10768,7 @@ def _run_task41_p0_service(
     b0_v5_mesh_actual_exact_mode = False
     b0_v6_actual_qmetric_mode = False
     b0_v6_saved_candidate_audit_mode = False
+    b0_v8_saved_trace_star_audit_mode = False
     b0_evidence_audit_mode = bool(
         case_args
         and case_args[0]
@@ -10659,18 +10832,28 @@ def _run_task41_p0_service(
                 or case_args[13] != "--mesh-actual-exact-report-sha256"
             ):
                 raise ValueError("V6 saved-candidate audit requires its explicit report path and SHA-256")
-            b0_v6_saved_candidate_audit_mode = True
             candidate_report_path = Path(case_args[12]).resolve(strict=True)
             candidate_report_sha256 = case_args[14]
             candidate_report_value = read_json_object(
-                candidate_report_path, "Task41 V6 candidate report"
+                candidate_report_path, "Task41 saved candidate report"
             )
-            raw_geometry_reference = candidate_report_value.get(
-                "geometry_reference_report_path"
+            from src.runners.task41_p0_checker import (
+                _task41_mesh_actual_exact_candidate_profile,
             )
-            if not isinstance(raw_geometry_reference, str):
-                raise ValueError("Task41 V6 candidate report omits its geometry reference path")
-            candidate_geometry_reference_path = Path(raw_geometry_reference).resolve(strict=True)
+
+            candidate_profile_version = _task41_mesh_actual_exact_candidate_profile(
+                candidate_report_path, candidate_report_value
+            ).get("version")
+            if candidate_profile_version == "v8":
+                b0_v8_saved_trace_star_audit_mode = True
+            else:
+                b0_v6_saved_candidate_audit_mode = True
+                raw_geometry_reference = candidate_report_value.get(
+                    "geometry_reference_report_path"
+                )
+                if not isinstance(raw_geometry_reference, str):
+                    raise ValueError("Task41 V6 candidate report omits its geometry reference path")
+                candidate_geometry_reference_path = Path(raw_geometry_reference).resolve(strict=True)
         elif len(case_args) == 15:
             if (
                 not b0_v4_volume_only_mode
@@ -11009,12 +11192,22 @@ def _run_task41_p0_service(
                     candidate_geometry_reference_path
                 ),
             })
+        for v8_environment_key in (
+            "TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT",
+            "TASK41_P0_B0_V8_SAVED_TRACE_STAR_CHECKER",
+            "TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH",
+            "TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_PATH",
+            "TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_SHA256",
+        ):
+            environment.pop(v8_environment_key, None)
         if b0_v8_selected_trace_star_mode:
             assert ffcx_c_source_path is not None
             environment.update({
                 "TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT": "1",
                 "TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH": str(ffcx_c_source_path),
             })
+        if b0_v8_saved_trace_star_audit_mode:
+            environment["TASK41_P0_B0_V8_SAVED_TRACE_STAR_CHECKER"] = "1"
     activation_marker = _qualified_activation_identity(environment)
     if activation_marker is None:
         raise RuntimeError("Task41 service did not receive its contracted qualified activation")
@@ -11069,6 +11262,7 @@ def _run_task41_p0_service(
             b0_v5_mesh_actual_exact_mode=b0_v5_mesh_actual_exact_mode,
             b0_v6_actual_qmetric_mode=b0_v6_actual_qmetric_mode,
             b0_v6_saved_candidate_audit_mode=b0_v6_saved_candidate_audit_mode,
+            b0_v8_saved_trace_star_audit_mode=b0_v8_saved_trace_star_audit_mode,
             b0_v8_selected_trace_star_mode=b0_v8_selected_trace_star_mode,
             candidate_report_path=candidate_report_path,
             candidate_report_sha256=candidate_report_sha256,

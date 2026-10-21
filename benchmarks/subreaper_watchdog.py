@@ -295,6 +295,10 @@ def _validate_campaign_closeout_authorization(
             v8_selected_trace_star = (
                 environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT') == '1'
             )
+            saved_v8_trace_star_replay = (
+                environment.get('TASK41_P0_B0_V8_SAVED_TRACE_STAR_CHECKER') == '1'
+            )
+            v8_trace_star_report = v8_selected_trace_star or saved_v8_trace_star_replay
             exact_geometry_mode = candidate_report_path is not None
             v6_mode = (
                 environment.get('TASK41_P0_B0_V6_ACTUAL_QMETRIC') == '1'
@@ -308,14 +312,14 @@ def _validate_campaign_closeout_authorization(
                     '1'
                     if exact_geometry_mode
                     and not saved_v6_candidate_replay
-                    and not v8_selected_trace_star
+                    and not v8_trace_star_report
                     else None
                 )
                 or environment.get('TASK41_P0_B0_V6_ACTUAL_QMETRIC')
                 != ('1' if v6_mode and not saved_v6_candidate_replay else None)
-                or (v8_selected_trace_star and (not exact_geometry_mode or v6_mode))
+                or (v8_trace_star_report and (not exact_geometry_mode or v6_mode))
                 or (
-                    v8_selected_trace_star
+                    v8_trace_star_report
                     and (
                         not isinstance(candidate_report_sha256, str)
                         or not re.fullmatch(r'[0-9a-f]{64}', candidate_report_sha256)
@@ -323,11 +327,18 @@ def _validate_campaign_closeout_authorization(
                         != str(candidate_report_path)
                         or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_SHA256')
                         != candidate_report_sha256
-                        or environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is None
+                        or (
+                            v8_selected_trace_star
+                            and environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is None
+                        )
+                        or (
+                            saved_v8_trace_star_replay
+                            and environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is not None
+                        )
                     )
                 )
                 or (
-                    not v8_selected_trace_star
+                    not v8_trace_star_report
                     and (
                         environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_PATH')
                         is not None
@@ -336,6 +347,8 @@ def _validate_campaign_closeout_authorization(
                         or environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is not None
                     )
                 )
+                or (saved_v8_trace_star_replay and not exact_geometry_mode)
+                or (saved_v8_trace_star_replay and v8_selected_trace_star)
                 or (saved_v6_candidate_replay and not exact_geometry_mode)
                 or (
                     saved_v6_candidate_replay
@@ -455,7 +468,7 @@ def _validate_campaign_closeout_authorization(
                 output_root = Path(environment.get('TASK41_P0_B0_OUTPUT_DIR', '')).resolve()
                 expected_report_name = (
                     'task41_p0_v8_selected_trace_star_audit.json'
-                    if v8_selected_trace_star
+                    if v8_trace_star_report
                     else 'task41_p0_v6_actual_qmetric_candidate.json'
                     if v6_mode
                     else 'task41_p0_v5_mesh_actual_exact_attribution.json'
@@ -467,7 +480,7 @@ def _validate_campaign_closeout_authorization(
                     or _sha256_file(candidate_report_path) != candidate_report_sha256
                     or (
                         not candidate_report_path.is_relative_to(results_root)
-                        if saved_v6_candidate_replay
+                        if saved_v6_candidate_replay or saved_v8_trace_star_replay
                         else not candidate_report_path.is_relative_to(output_root)
                     )
                 ):
@@ -478,14 +491,15 @@ def _validate_campaign_closeout_authorization(
                 candidate_identity = candidate_report.get('identity_audit')
                 reference_path = (
                     None
-                    if v8_selected_trace_star
+                    if v8_trace_star_report
                     else Path(
                         str(candidate_report.get('geometry_reference_report_path', ''))
                     ).resolve(strict=True)
                 )
                 candidate_producer_contract_path = None
+                candidate_producer_source_sha = None
                 expected_candidate_contract_sha = contract_sha
-                if saved_v6_candidate_replay:
+                if saved_v6_candidate_replay or saved_v8_trace_star_replay:
                     from src.runners.task41_p0_checker import (
                         _task41_v6_candidate_producer_contract,
                     )
@@ -497,8 +511,9 @@ def _validate_campaign_closeout_authorization(
                         repo_root=root,
                     )
                     if not isinstance(producer_contract, dict) or not isinstance(producer_digest, str):
-                        raise ValueError('V6 saved candidate producer contract did not validate')
+                        raise ValueError('saved V6/V8 candidate producer contract did not validate')
                     expected_candidate_contract_sha = producer_digest
+                    candidate_producer_source_sha = producer_contract.get('source', {}).get('sha')
                     candidate_producer_contract_path = Path(
                         str(candidate_report.get('consumer_contract_path', ''))
                     ).resolve(strict=True)
@@ -506,7 +521,7 @@ def _validate_campaign_closeout_authorization(
                     candidate_report.get('schema')
                     != (
                         'task41.p0.v8.selected_trace_star_audit_receipt.v1'
-                        if v8_selected_trace_star
+                        if v8_trace_star_report
                         else 'task41.p0.v6.actual_qmetric_candidate_receipt.v1'
                         if v6_mode
                         else 'task41.p0.v5.mesh_actual_exact_attribution_receipt.v1'
@@ -515,7 +530,7 @@ def _validate_campaign_closeout_authorization(
                     or candidate_report.get('raw_tensor_evaluator')
                     != (
                         'actual_qmetric_blocked_gram'
-                        if v6_mode or v8_selected_trace_star
+                        if v6_mode or v8_trace_star_report
                         else None
                     )
                     or (v6_mode and not isinstance(candidate_identity, dict))
@@ -528,7 +543,12 @@ def _validate_campaign_closeout_authorization(
                     or candidate_report.get('consumer_contract_sha256')
                     != expected_candidate_contract_sha
                     or (
-                        not v8_selected_trace_star
+                        saved_v8_trace_star_replay
+                        and candidate_report.get('consumer_source_sha')
+                        != candidate_producer_source_sha
+                    )
+                    or (
+                        not v8_trace_star_report
                         and (
                             reference_path is None
                             or reference_path.name != 'task41_p0_v4_geometry_pair_probe.json'
@@ -543,14 +563,21 @@ def _validate_campaign_closeout_authorization(
                     )
                 ):
                     raise ValueError('exact-geometry candidate report geometry/source identities are invalid')
-                if v8_selected_trace_star:
+                if v8_trace_star_report:
+                    from src.runners.task41_p0_checker import (
+                        _task41_v8_report_independent_checker_status,
+                    )
+
                     selected_star = candidate_report.get('selected_trace_star_audit')
                     metadata = selected_star.get('metadata') if isinstance(selected_star, dict) else None
                     p3 = selected_star.get('p3_production_row_replay') if isinstance(selected_star, dict) else None
                     source_artifacts = selected_star.get('saved_operand_recomposition', {}).get('source_artifacts') if isinstance(selected_star, dict) and isinstance(selected_star.get('saved_operand_recomposition'), dict) else None
                     if (
                         candidate_report.get('status') != 'COMPLETED_SELECTED_TRACE_STAR_AUDIT'
-                        or candidate_report.get('independent_checker_status') != 'NOT_RUN'
+                        or _task41_v8_report_independent_checker_status(
+                            candidate_report,
+                            expected_report_sha256=str(candidate_report_sha256),
+                        ) != 'NOT_RUN'
                         or not isinstance(selected_star, dict)
                         or selected_star.get('schema') != 'task41.p0.v8.selected_trace_star_audit_result.v1'
                         or selected_star.get('status') != 'COMPLETED_SELECTED_TRACE_STAR_AUDIT'
@@ -567,15 +594,15 @@ def _validate_campaign_closeout_authorization(
                 if not isinstance(arrays, list):
                     raise ValueError('exact-geometry candidate report lacks its persisted-array inventory')
                 input_paths.append(str(candidate_report_path))
-                if saved_v6_candidate_replay:
+                if saved_v6_candidate_replay or saved_v8_trace_star_replay:
                     assert candidate_producer_contract_path is not None
                     input_paths.append(str(candidate_producer_contract_path))
-                if not v8_selected_trace_star:
+                if not v8_trace_star_report:
                     assert reference_path is not None
                     input_paths.append(str(reference_path))
                 array_root = (
                     candidate_report_path.parent.resolve()
-                    if saved_v6_candidate_replay
+                    if saved_v6_candidate_replay or saved_v8_trace_star_replay
                     else output_root
                 )
                 seen_array_paths = set()
@@ -593,7 +620,7 @@ def _validate_campaign_closeout_authorization(
                         raise ValueError('exact-geometry candidate persisted-array path/size/hash is invalid')
                     seen_array_paths.add(artifact_path)
                     input_paths.append(str(artifact_path))
-                if v8_selected_trace_star:
+                if v8_trace_star_report:
                     from src.runners.task41_p0_v4_volume_only_audit import (
                         TASK41_P0_V8_V6_INDEX_SHA256,
                         TASK41_P0_V8_V6_REPORT_SHA256,

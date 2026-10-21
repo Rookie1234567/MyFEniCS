@@ -1526,16 +1526,18 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
         "v6_mode",
         "v6_saved_replay",
         "v8_mode",
+        "v8_saved_replay",
     ),
     [
-        (False, False, False, False, False, False, False),
-        (True, False, False, False, False, False, False),
-        (True, True, False, False, False, False, False),
-        (True, False, True, False, False, False, False),
-        (True, False, True, True, False, False, False),
-        (True, False, True, True, True, False, False),
-        (False, False, False, False, False, True, False),
-        (False, False, False, False, False, False, True),
+        (False, False, False, False, False, False, False, False),
+        (True, False, False, False, False, False, False, False),
+        (True, True, False, False, False, False, False, False),
+        (True, False, True, False, False, False, False, False),
+        (True, False, True, True, False, False, False, False),
+        (True, False, True, True, True, False, False, False),
+        (False, False, False, False, False, True, False, False),
+        (False, False, False, False, False, False, True, False),
+        (False, False, False, False, False, False, False, True),
     ],
 )
 def test_b0_saved_evidence_audit_uses_supervised_service_route(
@@ -1548,6 +1550,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     v6_mode: bool,
     v6_saved_replay: bool,
     v8_mode: bool,
+    v8_saved_replay: bool,
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
@@ -1662,7 +1665,13 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     source_report_path.write_text("{}\n", encoding="utf-8")
     geometry_reference_path = results_root / "v4_source" / "task41_p0_v4_geometry_pair_probe.json"
     geometry_reference_path.write_text("{}\n", encoding="utf-8")
-    candidate_report_path = results_root / "attempt10" / "task41_p0_v6_actual_qmetric_candidate.json"
+    candidate_report_path = results_root / (
+        "attempt_v8_saved" if v8_saved_replay else "attempt10"
+    ) / (
+        "task41_p0_v8_selected_trace_star_audit.json"
+        if v8_saved_replay
+        else "task41_p0_v6_actual_qmetric_candidate.json"
+    )
     candidate_report_sha256: str | None = None
     candidate_producer_contract_path: Path | None = None
     candidate_array_paths: list[Path] = []
@@ -1719,7 +1728,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     ffcx_c_source_path = repo_root / "frozen_ffcx_form.c"
     ffcx_c_source_path.write_text("/* frozen fixture */\n", encoding="utf-8")
     v8_source_artifacts: dict[str, object] = {}
-    if v8_mode:
+    if v8_mode or v8_saved_replay:
         source_root = results_root / "v8_authorized_sources"
         source_root.mkdir(parents=True)
         frozen_docs_root = Path(__file__).resolve().parents[2] / "docs"
@@ -1771,6 +1780,67 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             "v6_arrays": {"v6-array": v6_array},
             "v7_arrays": {"v7-array": v7_array},
         }
+    if v8_saved_replay:
+        from src.runners.task41_p0_contract import contract_relative_path
+
+        candidate_producer_source_sha = "8" * 40
+        candidate_producer_contract_path = repo_root / contract_relative_path(
+            candidate_producer_source_sha, "B0"
+        )
+        candidate_producer_contract_path.parent.mkdir(parents=True, exist_ok=True)
+        candidate_producer_contract = json.loads(json.dumps(consumer_contract))
+        candidate_producer_contract["source"]["sha"] = candidate_producer_source_sha
+        candidate_producer_contract_path.write_text(
+            json.dumps(candidate_producer_contract), encoding="utf-8"
+        )
+        candidate_producer_contract_sha256 = hashlib.sha256(
+            candidate_producer_contract_path.read_bytes()
+        ).hexdigest()
+        candidate_report_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact = fixture_artifact(
+            "v8-saved-array",
+            candidate_report_path.parent / "saved_evidence.npy",
+            b"pinned-v8-saved-array",
+        )
+        candidate_report = {
+            "schema": "task41.p0.v8.selected_trace_star_audit_receipt.v1",
+            "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+            "geometry_policy": "mesh_actual_exact",
+            "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+            "donor_contract_sha256": donor_contract_sha,
+            "consumer_source_sha": candidate_producer_source_sha,
+            "consumer_contract_path": str(candidate_producer_contract_path.resolve()),
+            "consumer_contract_sha256": candidate_producer_contract_sha256,
+            "persisted_evidence_arrays": [artifact],
+            "selected_trace_star_audit": {
+                "schema": "task41.p0.v8.selected_trace_star_audit_result.v1",
+                "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+                "metadata": {"selected_original_row": 5001},
+                "p3_production_row_replay": {
+                    "schema": "task41.p0.v8.selected_trace_star_p3_replay.v1",
+                    "complete_incident_cell_coverage": True,
+                    "incident_cell_count": 1,
+                },
+                "saved_operand_recomposition": {"source_artifacts": v8_source_artifacts},
+            },
+        }
+        candidate_report_path.write_text(json.dumps(candidate_report), encoding="utf-8")
+        candidate_report_sha256 = hashlib.sha256(candidate_report_path.read_bytes()).hexdigest()
+        monkeypatch.setattr(
+            checker_module,
+            "TASK41_P0_V8_LEGACY_REPORT_SHA256",
+            candidate_report_sha256,
+        )
+        monkeypatch.setattr(
+            checker_module,
+            "TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA",
+            candidate_producer_source_sha,
+        )
+        monkeypatch.setattr(
+            checker_module,
+            "TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256",
+            candidate_producer_contract_sha256,
+        )
     environment = {
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
@@ -1956,11 +2026,21 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert kwargs["campaign_phase"] == "closeout"
         assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
         assert "run_case.py" not in command
-        if v8_mode:
-            report_path = output_root / "task41_p0_v8_selected_trace_star_audit.json"
+        if v8_mode or v8_saved_replay:
+            report_path = (
+                candidate_report_path
+                if v8_saved_replay
+                else output_root / "task41_p0_v8_selected_trace_star_audit.json"
+            )
             assert Path(command[command.index("--mesh-actual-exact-report") + 1]) == report_path
-            assert command[command.index("--mesh-actual-exact-report-sha256") + 1] == hashlib.sha256(report_path.read_bytes()).hexdigest()
+            assert command[command.index("--mesh-actual-exact-report-sha256") + 1] == (
+                candidate_report_sha256
+                if v8_saved_replay
+                else hashlib.sha256(report_path.read_bytes()).hexdigest()
+            )
             assert "--geometry-reference-report" not in command
+            assert Path(command[command.index("--consumer-contract") + 1]) == consumer_contract_path
+            assert command[command.index("--consumer-contract-sha256") + 1] == consumer_contract_sha
         if v6_saved_replay:
             assert command[command.index("--mesh-actual-exact-report") + 1] == str(candidate_report_path)
             assert command[command.index("--mesh-actual-exact-report-sha256") + 1] == candidate_report_sha256
@@ -1988,7 +2068,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                     "check_completed": True,
                     "candidate_passed": False,
                 }
-            } if v5_complete or v6_saved_replay or v8_mode else {}),
+            } if v5_complete or v6_saved_replay or v8_mode or v8_saved_replay else {}),
         }), encoding="utf-8")
         authorization = kwargs["campaign_phase_authorization"]
         assert authorization["checker_kind"] == "task41_p0_b0_saved_evidence_audit_checker"
@@ -2008,6 +2088,11 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             assert kwargs["check_current_source"] is True
             assert kwargs["require_clean_source"] is True
             return consumer_contract, consumer_contract_sha
+        if v8_saved_replay and Path(path).resolve() == candidate_producer_contract_path.resolve():
+            assert kwargs["expected_sha256"] == candidate_producer_contract_sha256
+            assert kwargs["check_current_source"] is False
+            assert kwargs["require_clean_source"] is False
+            return candidate_producer_contract, candidate_producer_contract_sha256
         assert Path(path).resolve() == donor_contract_path.resolve()
         assert kwargs["expected_sha256"] == donor_contract_sha
         assert kwargs["check_current_source"] is False
@@ -2025,6 +2110,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         ),
     )
     monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
+    monkeypatch.setattr(checker_module, "require_task41_p0_contract", require_contract)
     if v6_saved_replay:
         def fake_candidate_producer_contract(
             report_path: Path,
@@ -2130,7 +2216,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                 str(candidate_report_path),
                 "--mesh-actual-exact-report-sha256",
                 str(candidate_report_sha256),
-            ] if v6_saved_replay else [] ),
+            ] if v6_saved_replay or v8_saved_replay else [] ),
             *( [
                 "--geometry-policy", "mesh_actual_exact",
                 "--raw-tensor-evaluator", "actual_qmetric_blocked_gram",
@@ -2157,6 +2243,9 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         "failed_raw_evidence_retained" if v5_mode else "completed"
     )
     assert receipt["mode"] == (
+        "saved_b0_v8_selected_trace_star_checker"
+        if v8_saved_replay
+        else
         "saved_b0_v8_selected_trace_star_audit"
         if v8_mode
         else "saved_b0_v6_candidate_evidence_audit"
@@ -2182,6 +2271,26 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         for key in ("v6_arrays", "v7_arrays"):
             for artifact in v8_source_artifacts[key].values():
                 assert artifact["path"] in authorized
+    if v8_saved_replay:
+        assert len(calls) == 1
+        assert calls[0][1]["campaign_phase"] == "closeout"
+        assert "volume_only_command" not in receipt
+        assert "volume_only_watchdog" not in receipt
+        assert receipt["candidate_report_replayed_read_only"] is True
+        assert receipt["candidate_report_sha256"] == candidate_report_sha256
+        assert receipt["selected_trace_star_checker_status"] == "independent_replay_completed"
+        assert receipt["continuation_status"] == "v8_selected_trace_star_audit_completed"
+        auth_inputs = receipt["required_checker_authorization"]["input_paths"]
+        for bound_path in [
+            candidate_report_path,
+            candidate_producer_contract_path,
+            *candidate_array_paths,
+            *(
+                [Path(v8_source_artifacts[key]) for key in ("v6_index", "v6_report", "v7_index", "v7_report")]
+                + [Path(item["path"]) for group in ("v6_arrays", "v7_arrays") for item in v8_source_artifacts[group].values()]
+            ),
+        ]:
+            assert bound_path.resolve().as_posix() in auth_inputs
     if geometry_pair:
         assert receipt["continuation_status"] == "v4_geometry_pair_probe_completed"
         assert receipt["geometry_pair_probe_command"][-3:] == [

@@ -2926,7 +2926,7 @@ def _task41_v6_candidate_producer_contract(
     consumer_contract: Mapping[str, Any],
     repo_root: Path,
 ) -> tuple[dict[str, Any] | None, str | None]:
-    """Reopen a saved V6 report's original producer contract beside the current checker contract."""
+    """Reopen a saved V6/V8 report's producer contract beside the current checker contract."""
     report_path = Path(report_path).resolve(strict=True)
     results_root = (Path(repo_root) / "results").resolve()
     if not report_path.is_relative_to(results_root):
@@ -2938,7 +2938,7 @@ def _task41_v6_candidate_producer_contract(
         raise ValueError("exact-geometry candidate report SHA-256 differs from the explicit binding")
     report = _json_object(report_path, "Task41 exact-geometry candidate report")
     profile = _task41_mesh_actual_exact_candidate_profile(report_path, report)
-    if profile["version"] != "v6":
+    if profile["version"] not in {"v6", "v8"}:
         return None, None
 
     source_sha = report.get("consumer_source_sha")
@@ -3729,6 +3729,36 @@ def _task41_v8_local_p3_replay(
     return arrays, scalars
 
 
+TASK41_P0_V8_LEGACY_REPORT_SHA256 = "1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f"
+TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA = "35fd1bbf2bca13bd17e89cc79cf7cd825b94411c"
+TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256 = "a6a69b75e48572d59ae73f12a9424b06a3accdca957c6a32b5c72bcf2fb867da"
+TASK41_P0_V8_SELECTED_TRACE_STAR_REPORT_SCHEMA = (
+    "task41.p0.v8.selected_trace_star_audit_receipt.v1"
+)
+
+
+def _task41_v8_report_independent_checker_status(
+    report: Mapping[str, Any], *, expected_report_sha256: str
+) -> str | None:
+    """Treat only the pinned pre-field V8 receipt as an explicitly not-run checker."""
+    if report.get("independent_checker_status") == "NOT_RUN":
+        return "NOT_RUN"
+    if (
+        "independent_checker_status" not in report
+        and expected_report_sha256 == TASK41_P0_V8_LEGACY_REPORT_SHA256
+        and report.get("schema") == TASK41_P0_V8_SELECTED_TRACE_STAR_REPORT_SCHEMA
+        and report.get("status") == "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
+        and report.get("geometry_policy") == "mesh_actual_exact"
+        and report.get("raw_tensor_evaluator") == "actual_qmetric_blocked_gram"
+        and report.get("consumer_source_sha")
+        == TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA
+        and report.get("consumer_contract_sha256")
+        == TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256
+    ):
+        return "NOT_RUN"
+    return None
+
+
 def _task41_v8_selected_trace_star_recheck(
     report_path: Path,
     *,
@@ -3737,6 +3767,8 @@ def _task41_v8_selected_trace_star_recheck(
     donor_contract_sha256: str,
     consumer: Mapping[str, Any],
     consumer_contract_sha256: str,
+    candidate_producer_contract: Mapping[str, Any] | None,
+    candidate_producer_contract_sha256: str | None,
     donor_contract: Mapping[str, Any],
     repo_root: Path,
 ) -> dict[str, Any]:
@@ -3763,15 +3795,20 @@ def _task41_v8_selected_trace_star_recheck(
     if profile["version"] != "v8":
         raise ValueError("V8 independent checker received a different candidate profile")
     consumer_case = consumer.get("case")
+    report_producer = candidate_producer_contract or consumer
+    report_producer_sha256 = candidate_producer_contract_sha256 or consumer_contract_sha256
     if (
         report.get("geometry_policy") != "mesh_actual_exact"
         or report.get("raw_tensor_evaluator") != "actual_qmetric_blocked_gram"
         or report.get("donor_contract_sha256") != donor_contract_sha256
-        or report.get("consumer_contract_sha256") != consumer_contract_sha256
+        or report.get("consumer_contract_sha256") != report_producer_sha256
         or report.get("donor_source_sha") != donor_contract.get("source", {}).get("sha")
-        or report.get("consumer_source_sha") != consumer.get("source", {}).get("sha")
+        or report.get("consumer_source_sha") != report_producer.get("source", {}).get("sha")
         or report.get("donor_manifest_sha256") != donor.get("manifest_sha256")
-        or report.get("independent_checker_status") != "NOT_RUN"
+        or _task41_v8_report_independent_checker_status(
+            report, expected_report_sha256=expected_report_sha256
+        )
+        != "NOT_RUN"
         or not isinstance(consumer_case, Mapping)
     ):
         raise ValueError("V8 report donor/consumer/geometry identity differs")
@@ -4351,6 +4388,9 @@ def _task41_v8_selected_trace_star_recheck(
         "candidate_passed": None,
         "formal_candidate_or_residual_gate_changed": False,
         "report_sha256_rechecked": expected_report_sha256,
+        "report_producer_source_sha": report_producer.get("source", {}).get("sha"),
+        "report_producer_contract_sha256": report_producer_sha256,
+        "checker_consumer_source_sha": consumer.get("source", {}).get("sha"),
         "authorized_v8_array_count": len(v8_records),
         "authorized_v6_array_count": len(v6_source_arrays),
         "authorized_v7_array_count": len(v7_source_arrays),
@@ -4402,6 +4442,8 @@ def _task41_mesh_actual_exact_candidate_recheck(
             donor_contract_sha256=donor_contract_sha256,
             consumer=consumer,
             consumer_contract_sha256=consumer_contract_sha256,
+            candidate_producer_contract=candidate_producer_contract,
+            candidate_producer_contract_sha256=candidate_producer_contract_sha256,
             donor_contract=donor_contract,
             repo_root=repo_root,
         )
@@ -5202,6 +5244,8 @@ def check_task41_p0_b0_saved_evidence_audit(
     mesh_actual_exact_report_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Audit producer arrays read-only under a separately bound consumer window/source."""
+    if (mesh_actual_exact_report_path is None) != (mesh_actual_exact_report_sha256 is None):
+        raise ValueError("saved B0 candidate report requires both explicit path and SHA-256")
     donor, donor_digest = require_task41_p0_contract(
         contract_path,
         expected_sha256=contract_sha256,
@@ -5215,6 +5259,7 @@ def check_task41_p0_b0_saved_evidence_audit(
         current_root=repo_root,
         check_current_source=True,
         require_clean_source=True,
+        case_id="B0",
     )
     donor_case = donor.get("case")
     consumer_case = consumer.get("case")
@@ -5319,8 +5364,6 @@ def check_task41_p0_b0_saved_evidence_audit(
     mesh_actual_candidate_check = None
     candidate_producer_contract = None
     candidate_producer_contract_sha256 = None
-    if (mesh_actual_exact_report_path is None) != (mesh_actual_exact_report_sha256 is None):
-        raise ValueError("saved B0 candidate report requires both explicit path and SHA-256")
     if mesh_actual_exact_report_path is not None:
         candidate_producer_contract, candidate_producer_contract_sha256 = (
             _task41_v6_candidate_producer_contract(

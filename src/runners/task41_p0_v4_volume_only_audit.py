@@ -4779,6 +4779,7 @@ def main(argv: list[str] | None = None) -> int:
             run_record.update(
                 {
                     "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+                    "independent_checker_status": "NOT_RUN",
                     "completed_at_utc": datetime.now(timezone.utc).isoformat(),
                     "elapsed_since_worker_start_seconds": perf_counter() - started_perf,
                     "selected_trace_star_audit": selected_result,

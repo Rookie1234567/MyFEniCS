@@ -545,3 +545,42 @@ def test_v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only
     assert defects["diagnostic_only"] is True
     assert defects["new_rejection_tolerance"] is None
     assert set(("E_R", "E_T", "C_S", "E_S", "E_S_identity_residual")) <= defects.keys()
+
+
+def test_v8_legacy_missing_checker_field_is_exact_hash_and_identity_bound():
+    from src.runners.task41_p0_checker import (
+        TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256,
+        TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA,
+        TASK41_P0_V8_LEGACY_REPORT_SHA256,
+        TASK41_P0_V8_SELECTED_TRACE_STAR_REPORT_SCHEMA,
+        _task41_v8_report_independent_checker_status,
+    )
+
+    assert TASK41_P0_V8_LEGACY_REPORT_SHA256 == (
+        "1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f"
+    )
+    assert len(TASK41_P0_V8_LEGACY_REPORT_SHA256) == 64
+    report = {
+        "schema": TASK41_P0_V8_SELECTED_TRACE_STAR_REPORT_SCHEMA,
+        "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+        "geometry_policy": "mesh_actual_exact",
+        "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+        "consumer_source_sha": TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA,
+        "consumer_contract_sha256": TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256,
+    }
+    assert _task41_v8_report_independent_checker_status(
+        report, expected_report_sha256=TASK41_P0_V8_LEGACY_REPORT_SHA256
+    ) == "NOT_RUN"
+    assert _task41_v8_report_independent_checker_status(
+        report, expected_report_sha256="0" * 64
+    ) is None
+    for key, value in (
+        ("consumer_source_sha", "0" * 40),
+        ("consumer_contract_sha256", "0" * 64),
+        ("schema", "task41.p0.v8.other_receipt.v1"),
+        ("independent_checker_status", "PASS"),
+    ):
+        tampered = {**report, key: value}
+        assert _task41_v8_report_independent_checker_status(
+            tampered, expected_report_sha256=TASK41_P0_V8_LEGACY_REPORT_SHA256
+        ) is None
