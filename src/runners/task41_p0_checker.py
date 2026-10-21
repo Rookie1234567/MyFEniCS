@@ -3543,6 +3543,19 @@ def _task41_v8_complex_pair(value: Any, label: str) -> complex:
     return complex(float(value[0]), float(value[1]))
 
 
+def _task41_v8_complex_pairs(value: Any, label: str) -> np.ndarray:
+    """Decode the producer's JSON list of [real, imag] coefficients."""
+    if not isinstance(value, (list, tuple)):
+        raise ValueError(f"V8 {label} is not a sequence of real/imaginary pairs")
+    return np.asarray(
+        [
+            _task41_v8_complex_pair(pair, f"{label}[{index}]")
+            for index, pair in enumerate(value)
+        ],
+        dtype=np.complex128,
+    )
+
+
 def _task41_v8_assert_close(actual: Any, expected: Any, label: str) -> None:
     left = np.asarray(actual)
     right = np.asarray(expected)
@@ -4053,7 +4066,10 @@ def _task41_v8_selected_trace_star_recheck(
         trace_rows = np.asarray(numeric.get("trace_original_rows"), dtype=np.int64)
         active_ids = np.asarray(numeric.get("active_ids"), dtype=np.int64)
         selected_local_rows = np.asarray(local_meta["selected_local_trace_rows"], dtype=np.int64)
-        selected_coefficients = np.asarray(local_meta["selected_trace_coefficients"], dtype=np.complex128)
+        selected_coefficients = _task41_v8_complex_pairs(
+            local_meta["selected_trace_coefficients"],
+            f"cell {cell_index} selected trace coefficients",
+        )
         if (
             interior_positions.ndim != 1
             or trace_positions.ndim != 1

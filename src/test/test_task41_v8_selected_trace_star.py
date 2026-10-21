@@ -483,9 +483,11 @@ def test_v8_sparse_selected_row_projection_and_original_order_delta_t_are_explic
 
 def test_v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only():
     from src.runners.task41_p0_checker import (
+        _task41_v8_complex_pairs,
         _task41_v8_local_matrix_defect_diagnostic,
         _task41_v8_local_p3_replay,
     )
+    import pytest
 
     tensor = np.asarray(
         [
@@ -505,6 +507,14 @@ def test_v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only
     t_c = np.asarray([1.0 - 0.5j, 0.2 + 0.8j])
     b_i = np.asarray([0.3j, 1.2 - 0.1j])
     n_i = np.asarray([-0.1 + 0.2j, 0.7j])
+    # This nested pair shape matches the saved V8 JSON field. Its non-real
+    # value exercises the Hermitian row product after decoding.
+    assert _task41_v8_complex_pairs([[1.0, 0.0]], "saved selector").shape == (1,)
+    coefficients = _task41_v8_complex_pairs(
+        [[0.3, 0.6]], "selected trace coefficients"
+    )
+    assert coefficients.shape == (1,)
+    assert coefficients[0] == complex(0.3, 0.6)
     arrays, scalars = _task41_v8_local_p3_replay(
         tensor=tensor,
         interior_positions=interior,
@@ -517,18 +527,18 @@ def test_v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only
         b_i=b_i,
         n_i=n_i,
         selected_local_rows=np.asarray([1]),
-        selected_coefficients=np.asarray([0.3 + 0.6j]),
+        selected_coefficients=coefficients,
     )
     K = tensor[np.ix_(interior, interior)]
     G = tensor[np.ix_(interior, trace)]
     J = tensor[np.ix_(trace, interior)]
     L = tensor[np.ix_(trace, trace)]
     actual_t = J @ u_i + L @ t_c
-    expected_delta = np.vdot(np.asarray([0.3 + 0.6j]), actual_t[[1]])
+    expected_delta = np.vdot(coefficients, actual_t[[1]])
     np.testing.assert_allclose(arrays["delta_i"], K @ u_i + G @ t_c - n_i)
     np.testing.assert_allclose(scalars["delta_t"], expected_delta)
     np.testing.assert_allclose(
-        scalars["Q"], np.vdot([0.3 + 0.6j], arrays["Q_local"][[1]])
+        scalars["Q"], np.vdot(coefficients, arrays["Q_local"][[1]])
     )
     np.testing.assert_allclose(
         arrays["Q_regrouped_local"], (S - L) @ t_c - J @ u_i - T @ n_i
@@ -545,6 +555,8 @@ def test_v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only
     assert defects["diagnostic_only"] is True
     assert defects["new_rejection_tolerance"] is None
     assert set(("E_R", "E_T", "C_S", "E_S", "E_S_identity_residual")) <= defects.keys()
+    with pytest.raises(ValueError, match="real/imaginary pair"):
+        _task41_v8_complex_pairs([[1.0, 0.0, 2.0]], "selected trace coefficients")
 
 
 def test_v8_legacy_missing_checker_field_is_exact_hash_and_identity_bound():
