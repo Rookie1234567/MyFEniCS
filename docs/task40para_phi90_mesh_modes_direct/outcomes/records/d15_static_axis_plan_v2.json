@@ -1,0 +1,446 @@
+{
+  "axes": {
+    "x": {
+      "10": {
+        "coordinates_nm": [
+          0.0,
+          5.5,
+          11.0,
+          16.5,
+          20.75,
+          25.0,
+          29.25,
+          33.5,
+          39.0,
+          44.5,
+          50.0
+        ],
+        "segment_counts": [
+          3,
+          4,
+          3
+        ],
+        "sha256_le_f64": "5aeca229192ae6c745a47a29c937ea6326fbed913a51a778727e28e7d04e0609"
+      },
+      "12": {
+        "coordinates_nm": [
+          0.0,
+          4.125,
+          8.25,
+          12.375,
+          16.5,
+          20.75,
+          25.0,
+          29.25,
+          33.5,
+          37.625,
+          41.75,
+          45.875,
+          50.0
+        ],
+        "segment_counts": [
+          4,
+          4,
+          4
+        ],
+        "sha256_le_f64": "471f68208000c748761f359419073794ac4ba5693bc3d4bd95b85d6d6ceca33d"
+      },
+      "6": {
+        "coordinates_nm": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "segment_counts": [
+          2,
+          2,
+          2
+        ],
+        "sha256_le_f64": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361"
+      },
+      "8": {
+        "coordinates_nm": [
+          0.0,
+          8.25,
+          16.5,
+          20.75,
+          25.0,
+          29.25,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "segment_counts": [
+          2,
+          4,
+          2
+        ],
+        "sha256_le_f64": "12f1a4344e3ecb5f2efcefcb59214804f5b81a96a40b53d3c1d581c197184020"
+      }
+    },
+    "y": {
+      "10": {
+        "coordinates_nm": [
+          0.0,
+          5.0,
+          10.0,
+          15.0,
+          20.0,
+          25.0,
+          30.0,
+          35.0,
+          40.0,
+          45.0,
+          50.0
+        ],
+        "segment_counts": [
+          3,
+          4,
+          3
+        ],
+        "sha256_le_f64": "3c5e071970351e7b894027da1880869ff7a784370a752a10db2febfd88020d25"
+      },
+      "4": {
+        "coordinates_nm": [
+          0.0,
+          15.0,
+          25.0,
+          35.0,
+          50.0
+        ],
+        "segment_counts": [
+          1,
+          2,
+          1
+        ],
+        "sha256_le_f64": "c0a1052034574ddda40b805390f8debb6abd3da6ec558cc0458820ee941198ba"
+      },
+      "6": {
+        "coordinates_nm": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "segment_counts": [
+          2,
+          2,
+          2
+        ],
+        "sha256_le_f64": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef"
+      },
+      "8": {
+        "coordinates_nm": [
+          0.0,
+          7.5,
+          15.0,
+          20.0,
+          25.0,
+          30.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "segment_counts": [
+          2,
+          4,
+          2
+        ],
+        "sha256_le_f64": "b1fd15acfa436302fc18623ecdd435765857a4b8354cf5980ac15ed682af6990"
+      }
+    },
+    "z": {
+      "10": {
+        "coordinates_nm": [
+          -10.0,
+          0.0,
+          15.0,
+          30.0,
+          45.0,
+          60.0,
+          75.0,
+          90.0,
+          105.0,
+          120.0,
+          130.0
+        ],
+        "segment_counts": [
+          1,
+          8,
+          1
+        ],
+        "sha256_le_f64": "bb32b94989a71ad930f909244cfada93e60634920ffdbf156378ae8f5df6888d"
+      },
+      "12": {
+        "coordinates_nm": [
+          -10.0,
+          0.0,
+          12.0,
+          24.0,
+          36.0,
+          48.0,
+          60.0,
+          72.0,
+          84.0,
+          96.0,
+          108.0,
+          120.0,
+          130.0
+        ],
+        "segment_counts": [
+          1,
+          10,
+          1
+        ],
+        "sha256_le_f64": "f6b10c0a842e7ee60f53023d0ab36e70a601b7de779af35ba80ef7b511f2faa4"
+      },
+      "6": {
+        "coordinates_nm": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ],
+        "segment_counts": [
+          1,
+          4,
+          1
+        ],
+        "sha256_le_f64": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+      },
+      "8": {
+        "coordinates_nm": [
+          -10.0,
+          0.0,
+          20.0,
+          40.0,
+          60.0,
+          80.0,
+          100.0,
+          120.0,
+          130.0
+        ],
+        "segment_counts": [
+          1,
+          6,
+          1
+        ],
+        "sha256_le_f64": "82d51947444eb3e27d0678b92be099c1f86e7e42f5c5bfa5cefdb8ce4ea07d37"
+      }
+    }
+  },
+  "cases": [
+    {
+      "axis_cell_counts": [
+        6,
+        4,
+        6
+      ],
+      "case": "B",
+      "cells": 144,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": true,
+      "static_midpoint_tags": {
+        "air": 104,
+        "grating": 16,
+        "substrate": 24
+      }
+    },
+    {
+      "axis_cell_counts": [
+        8,
+        4,
+        6
+      ],
+      "case": "X1",
+      "cells": 192,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": true,
+      "static_midpoint_tags": {
+        "air": 128,
+        "grating": 32,
+        "substrate": 32
+      }
+    },
+    {
+      "axis_cell_counts": [
+        10,
+        4,
+        6
+      ],
+      "case": "X2",
+      "cells": 240,
+      "nestedness_from_B": false,
+      "nestedness_from_previous_level": false,
+      "static_midpoint_tags": {
+        "air": 168,
+        "grating": 32,
+        "substrate": 40
+      }
+    },
+    {
+      "axis_cell_counts": [
+        12,
+        4,
+        6
+      ],
+      "case": "X3",
+      "cells": 288,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": false,
+      "static_midpoint_tags": {
+        "air": 208,
+        "grating": 32,
+        "substrate": 48
+      }
+    },
+    {
+      "axis_cell_counts": [
+        6,
+        6,
+        6
+      ],
+      "case": "Y1",
+      "cells": 216,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": true,
+      "static_midpoint_tags": {
+        "air": 164,
+        "grating": 16,
+        "substrate": 36
+      }
+    },
+    {
+      "axis_cell_counts": [
+        6,
+        8,
+        6
+      ],
+      "case": "Y2",
+      "cells": 288,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": true,
+      "static_midpoint_tags": {
+        "air": 208,
+        "grating": 32,
+        "substrate": 48
+      }
+    },
+    {
+      "axis_cell_counts": [
+        6,
+        10,
+        6
+      ],
+      "case": "Y3",
+      "cells": 360,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": false,
+      "static_midpoint_tags": {
+        "air": 268,
+        "grating": 32,
+        "substrate": 60
+      }
+    },
+    {
+      "axis_cell_counts": [
+        6,
+        4,
+        8
+      ],
+      "case": "Z1",
+      "cells": 192,
+      "nestedness_from_B": false,
+      "nestedness_from_previous_level": false,
+      "static_midpoint_tags": {
+        "air": 144,
+        "grating": 24,
+        "substrate": 24
+      }
+    },
+    {
+      "axis_cell_counts": [
+        6,
+        4,
+        10
+      ],
+      "case": "Z2",
+      "cells": 240,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": false,
+      "static_midpoint_tags": {
+        "air": 184,
+        "grating": 32,
+        "substrate": 24
+      }
+    },
+    {
+      "axis_cell_counts": [
+        6,
+        4,
+        12
+      ],
+      "case": "Z3",
+      "cells": 288,
+      "nestedness_from_B": false,
+      "nestedness_from_previous_level": false,
+      "static_midpoint_tags": {
+        "air": 224,
+        "grating": 40,
+        "substrate": 24
+      }
+    }
+  ],
+  "d15_z2_historical_reuse": {
+    "axis_cell_counts": [
+      6,
+      4,
+      10
+    ],
+    "axis_sha256_le_f64": {
+      "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+      "y": "c0a1052034574ddda40b805390f8debb6abd3da6ec558cc0458820ee941198ba",
+      "z": "bb32b94989a71ad930f909244cfada93e60634920ffdbf156378ae8f5df6888d"
+    },
+    "case_role": "D15-Z2",
+    "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+    "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    "identity_basis": "run_manifest + p6_condensed_direct_summary; old H15 name/source/run retained unchanged",
+    "input_sha256": "ec5053a0d24e0e737faaccba027864e59cf0508aa63324f2bb2afc463cc18ec4",
+    "mode_count": 612,
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "operator_scope": "task40_phi90_H15_B_R13_finite_rectangle",
+    "physical_model_sha256": "515971779c8348f4914dad6a098bbc2c1f1dc4d22639779a71c3697cd7fe5974",
+    "profile_identity": "task40para_phi90_13p5_H15_B_p6_direct_v1",
+    "resolved_config_sha256": "ae4f6fde9a0ec10db248f75f23c53dca69ce4760022aaacbdbfac3629e38d104",
+    "run_directory": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_H15_B_p6_direct_v1__full3d_direct__mpi1__Mna/20261017T052011.288309Z",
+    "run_id": "task40_phi90_13p5_H15_B_p6_direct_v1",
+    "source_sha": "d9edbcd583bb74dde36e3c9552893560f47bd230",
+    "status": "REUSED_EXISTING_COMPLETED_H15_B_RESULT_NO_NEW_RUN",
+    "surface_quadrature_degree": 28,
+    "volume_quadrature": {
+      "degree": 15,
+      "rule": "default"
+    }
+  },
+  "note": "piecewise uniform with exact material breakpoints; some levels are nonnested; untouched axes identical; no PDE/imports; Y3 correction per user instruction 2026-10-21; no live mesh QA or launch authorization implied; nestedness reported separately against D15-B and previous axis level",
+  "schema": "task40.d15.static_axes.v2",
+  "status": "STATIC_AXES_V2_USER_CORRECTED_NOT_LIVE_MESH_QA_NOT_LAUNCH_PACKAGE",
+  "supersedes": {
+    "change": "Y3 y segment counts 2/6/2 -> 3/4/3; y coordinates to 5nm cells; tags 252/60/48 -> 268/60/32",
+    "proposal_path": "/tmp/task40_d15_supervisor_static_axes_20261021.json",
+    "proposal_sha256": "6c068546fbfa8f99aa93c0456dcf3a73cbacc430885abd9bf38b0730127e7e6c"
+  },
+  "wavelength_nm": 13.5
+}

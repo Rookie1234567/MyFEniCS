@@ -127,6 +127,12 @@ TASK40_PHI90_H15_PROFILES = {
     TASK40_PHI90_H15_Z_P6_DIRECT_PROFILE: "Z",
     TASK40_PHI90_H15_YZ480_P6_DIRECT_PROFILE: "YZ480",
 }
+# D15 is a distinct 13.5 nm study. D15-Z2 is deliberately omitted because it
+# is an identity-based reuse alias to the completed H15-B result.
+TASK40_PHI90_D15_PROFILES = {
+    f"task40para_phi90_13p5_D15_{case}_p6_direct_v1": case
+    for case in ("B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Z1", "Z3")
+}
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
     "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
     "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
@@ -234,6 +240,7 @@ TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(
         TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE,
         *TASK40_PHI90_D5_PROFILES,
         *TASK40_PHI90_H15_PROFILES,
+        *TASK40_PHI90_D15_PROFILES,
     }
 )
 P6_CONDENSED_DIRECT_PROFILES = (
@@ -336,6 +343,8 @@ for _task40_profile in TASK40_PHI90_H15_PROFILES:
     NATIVE_CASES[_task40_profile] = (13.5, (15.0,), None, None, None)
 for _task40_profile in TASK40_PHI90_D5_PROFILES:
     NATIVE_CASES[_task40_profile] = (5.0, (4.0,), None, None, None)
+for _task40_profile in TASK40_PHI90_D15_PROFILES:
+    NATIVE_CASES[_task40_profile] = (13.5, (15.0,), None, None, None)
 NATIVE_CASES[TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE] = (
     13.5, (10.0,), None, None, None
 )
@@ -1425,11 +1434,130 @@ def _task40_phi90_h15_profile_facts(identity):
     return base
 
 
+def _task40_phi90_d15_profile_facts(identity):
+    """Freeze one launchable D15 axis case without relabeling historical H15 runs."""
+    from copy import deepcopy
+
+    from src.geometry.task40_phi90_d15_axis_plan import (
+        D15_CASES,
+        D15_STATIC_PLAN_SHA256,
+        D15_Z2_HISTORICAL_REUSE,
+        d15_axis_plan,
+    )
+
+    try:
+        case_name = TASK40_PHI90_D15_PROFILES[identity]
+    except KeyError as exc:
+        raise ValueError(f"unsupported Task40 D15 profile: {identity}") from exc
+    case = D15_CASES[case_name]
+    plan = d15_axis_plan(case_name)
+    counts = tuple(int(value) for value in plan["axis_cell_counts"])
+    expected_cells = int(plan["expected_global_cell_count"])
+    tags = dict(plan["static_midpoint_tags"])
+    tag_counts = {"1": tags["air"], "2": tags["substrate"], "3": tags["grating"]}
+    operator_scope = f"task40_phi90_D15_{case_name}_R13_finite_rectangle"
+    base = deepcopy(
+        _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_B_P6_DIRECT_PROFILE)
+    )
+    base.update(
+        identity=identity,
+        model_id="si_block_phi90_50x50_17x20_h120",
+        execution_mode="full_solve",
+        wavelength_nm=13.5,
+        allowed_mesh_targets_nm=[15.0],
+        formal_runner="src.runners.p6_condensed_direct",
+        route=f"TASK40_PHI90_D15_{case_name}_P6_CONDENSED_DIRECT_R13",
+        operator_scope=operator_scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+    )
+    options = base["component_options"]
+    # Bind the D15 finite rectangle explicitly; the copied D13-B facts provide
+    # the numerical policy, but the D15 manifest must carry its own mode identity.
+    options["mode_selection"].update(
+        reference_mode_label="R13",
+        expected_mode_count=612,
+        expected_mode_sha256=(
+            "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e"
+        ),
+    )
+    options.update(
+        task_family="task40_phi90_d15_mesh_modes_direct",
+        mesh_target_nm=15.0,
+        expected_axis_cell_counts=list(counts),
+        expected_global_cell_count=expected_cells,
+        directional_mesh_comparison={
+            "mesh_plan_family": "d15",
+            "case": case_name,
+            "parent_case": case["parent_case"],
+            "changed_axis": case["changed_axis"],
+            "axis_cell_counts": list(counts),
+            "segment_cell_counts": {
+                axis: list(values)
+                for axis, values in plan["segment_cell_counts"].items()
+            },
+            "base_axis_sha256_le_f64": dict(plan["base_axis_sha256_le_f64"]),
+            "expected_material_tag_counts": tag_counts,
+            "mesh_plan_id": plan["plan_id"],
+            "mesh_plan_sha256": plan["mesh_plan_sha256"],
+            "expected_axis_sha256_le_f64": dict(plan["axis_sha256_le_f64"]),
+            "explicit_axis_counts_in_input": True,
+            "only_axis_changes_from_B": case["changed_axis"],
+            "previous_case": plan["previous_case"],
+            "nestedness_from_B": bool(plan["nestedness_from_B"]),
+            "nestedness_from_previous_level": bool(
+                plan["nestedness_from_previous_level"]
+            ),
+            "static_plan_record": (
+                "docs/task40para_phi90_mesh_modes_direct/outcomes/records/"
+                "d15_static_axis_plan_v2.json"
+            ),
+            "static_plan_sha256": D15_STATIC_PLAN_SHA256,
+            "historical_D15_Z2_role_reuse": (
+                dict(D15_Z2_HISTORICAL_REUSE) if case_name == "B" else None
+            ),
+            "acceptance_thresholds": {
+                "total_R_T_A_balance_A_volume_abs": 1.0e-5,
+                "each_channel_R_T_abs_all_active_and_power_carrying": 1.0e-6,
+                "boundary_complex_amplitude_relative_l2_no_phase_fit": 1.0e-4,
+                "same_coordinate_complex_E_H_relative_l2_no_phase_fit": 1.0e-4,
+                "horizontal_Et_Ht_scope": "reported_as_existing_horizontal_diagnostic",
+                "canonical_sidewall_Et_Ht": "NOT_MEASURED",
+                "all_612_common_channels_required": True,
+                "lossy_power_carrying_included_even_if_not_propagating": True,
+            },
+        },
+    )
+    options["surface_quadrature"].update(
+        authority="fixed_R13_plus_two_m6_n10_envelope_before_D15_B"
+    )
+    base["backend"]["operator_scope"] = operator_scope
+    base["condensed_route"].update(
+        name="task40_phi90_d15_p6_exact_local_condensation_direct_v1",
+        operator_family=f"D15_{case_name}_R13_finite_rectangle",
+        expected_global_cell_count=expected_cells,
+        operator_scope=operator_scope,
+    )
+    base["campaign_authorization"]["source"] = (
+        "user-authorized D15 13.5 nm coarse baseline and bounded one-axis "
+        "direction study; D15-Z2 maps to the completed H15-B result"
+    )
+    base["campaign_authorization"]["direct_route"]["mesh_target_nm"] = 15.0
+    base["campaign_authorization"]["direct_route"]["d15_axis_case"] = case_name
+    base["campaign_authorization"]["direct_route"]["d15_static_plan_sha256"] = (
+        D15_STATIC_PLAN_SHA256
+    )
+    base["campaign_authorization"]["direct_route"]["reuse_D15_Z2_without_new_run"] = True
+    base["resources"]["rss_hard_limit_bytes"] = None
+    return base
+
+
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5_PROFILES:
             return _task40_phi90_d5_profile_facts(identity)
+        if identity in TASK40_PHI90_D15_PROFILES:
+            return _task40_phi90_d15_profile_facts(identity)
         if identity in TASK40_PHI90_H15_PROFILES:
             return _task40_phi90_h15_profile_facts(identity)
         if identity == TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE:
@@ -2835,6 +2963,60 @@ def _validate_task40_phi90_d13_case(config: dict, identity: str) -> None:
         raise InputError(f'{identity} requires at least 64 full-3D y samples for phase resolution')
 
 
+def _validate_task40_phi90_d15_case(config: dict, identity: str) -> None:
+    """Validate D15 axes, then reuse the D13 baseline's unchanged physics contract."""
+    from copy import deepcopy
+
+    from src.geometry.task40_phi90_d15_axis_plan import validate_frozen_d15_axes
+    from .input_loader import InputError
+
+    facts = _task40_phi90_d15_profile_facts(identity)
+    comparison = facts["component_options"]["directional_mesh_comparison"]
+    discretization = config.get("discretization", {})
+    if discretization.get("mesh_target_nm") != 15.0:
+        raise InputError(f"{identity} fixes discretization.mesh_target_nm=15.0")
+    payload = {
+        "mesh_plan_id": discretization.get("mesh_plan_id"),
+        "mesh_plan_sha256": discretization.get("mesh_plan_sha256"),
+        "mesh_axis_cell_counts": discretization.get("mesh_axis_cell_counts"),
+        "mesh_axis_x_values": discretization.get("mesh_axis_x_values"),
+        "mesh_axis_y_values": discretization.get("mesh_axis_y_values"),
+        "mesh_axis_z_values": discretization.get("mesh_axis_z_values"),
+    }
+    try:
+        validate_frozen_d15_axes(payload)
+    except ValueError as exc:
+        raise InputError(f"{identity} has invalid frozen D15 axes: {exc}") from exc
+    if tuple(payload["mesh_axis_cell_counts"] or ()) != tuple(
+        comparison["axis_cell_counts"]
+    ):
+        raise InputError(f"{identity} D15 counts differ from profile facts")
+    if discretization.get("mesh_axis_z_profile") is not None:
+        raise InputError(f"{identity} does not use a z-profile alias")
+
+    # All non-axis fields are frozen by the already tested D13-B physical,
+    # mode, integration, output, and direct-solver contract.
+    inherited = deepcopy(config)
+    inherited.setdefault("solver", {})[
+        "native_capacity_profile"
+    ] = TASK40_PHI90_D13_B_P6_DIRECT_PROFILE
+    inherited_discretization = inherited["discretization"]
+    inherited_discretization["mesh_target_nm"] = 10.0
+    for key in (
+        "mesh_axis_cell_counts",
+        "mesh_axis_x_values",
+        "mesh_axis_y_values",
+        "mesh_axis_z_values",
+        "mesh_axis_z_profile",
+        "mesh_plan_id",
+        "mesh_plan_sha256",
+    ):
+        inherited_discretization.pop(key, None)
+    _validate_task40_phi90_d13_case(
+        inherited, TASK40_PHI90_D13_B_P6_DIRECT_PROFILE
+    )
+
+
 def _validate_task40_phi90_h15_case(config: dict, identity: str) -> None:
     """Validate one explicit H15 base/refinement input without D13 aliases."""
     from src.geometry.task40_phi90_h15_axis_plan import validate_frozen_h15_axes
@@ -3088,6 +3270,8 @@ def validate_native_case(config):
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5_PROFILES:
             _validate_task40_phi90_d5_case(config, identity)
+        elif identity in TASK40_PHI90_D15_PROFILES:
+            _validate_task40_phi90_d15_case(config, identity)
         elif identity in TASK40_PHI90_H15_PROFILES:
             _validate_task40_phi90_h15_case(config, identity)
         elif identity == TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE:

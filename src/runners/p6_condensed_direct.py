@@ -140,6 +140,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
         TASK40_PHI90_D5_PROFILES,
+        TASK40_PHI90_D15_PROFILES,
         TASK40_PHI90_H15_PROFILES,
         TASK40_PHI90_P6_DIRECT_PROFILES,
         V6_F5_P6_DIRECT_FULL600_PROFILE,
@@ -182,9 +183,14 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         expected_counts = list(mesh_case["axis_cell_counts"])
         expected_cells = int(options["expected_global_cell_count"])
         h15_case = profile_identity in TASK40_PHI90_H15_PROFILES
+        d15_case = profile_identity in TASK40_PHI90_D15_PROFILES
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
-        family_label = "d5" if d5_case else "h15" if h15_case else "d13"
-        route_label = "D5" if d5_case else "H15" if h15_case else "D13"
+        family_label = (
+            "d15" if d15_case else "d5" if d5_case else "h15" if h15_case else "d13"
+        )
+        route_label = (
+            "D15" if d15_case else "D5" if d5_case else "H15" if h15_case else "D13"
+        )
         plan_id = mesh_case["mesh_plan_id"]
         plan_sha = mesh_case["mesh_plan_sha256"]
         base_axis_hashes = dict(mesh_case["base_axis_sha256_le_f64"])
@@ -263,21 +269,21 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "max_same_factor_corrections": 2,
             "expected_axis_cell_counts": expected_counts,
             "expected_global_cell_count": expected_cells,
-            "d13_case": case_name if not h15_case and not d5_case else None,
+            "d13_case": case_name if not h15_case and not d5_case and not d15_case else None,
             "changed_axis": mesh_case["changed_axis"],
-            "d13_mesh_plan_id": plan_id if not h15_case and not d5_case else None,
-            "d13_mesh_plan_sha256": plan_sha if not h15_case and not d5_case else None,
+            "d13_mesh_plan_id": plan_id if not h15_case and not d5_case and not d15_case else None,
+            "d13_mesh_plan_sha256": plan_sha if not h15_case and not d5_case and not d15_case else None,
             "d13_expected_axis_sha256_le_f64": (
-                expected_axis_hashes if not h15_case and not d5_case else None
+                expected_axis_hashes if not h15_case and not d5_case and not d15_case else None
             ),
             "d13_base_axis_sha256_le_f64": (
-                base_axis_hashes if not h15_case and not d5_case else None
+                base_axis_hashes if not h15_case and not d5_case and not d15_case else None
             ),
             "d13_axis_comparison_parent": mesh_case.get(
                 "axis_comparison_parent", "B"
-            ) if not h15_case and not d5_case else None,
+            ) if not h15_case and not d5_case and not d15_case else None,
             "d13_expected_material_tag_counts": (
-                expected_tag_counts if not h15_case and not d5_case else None
+                expected_tag_counts if not h15_case and not d5_case and not d15_case else None
             ),
             "diagnostic_scope": (
                 f"TASK40_{route_label}_{case_name}_"
@@ -1080,6 +1086,102 @@ def _task40_h15_mesh_evidence(
         "expected_material_tag_counts": {
             str(tag): count for tag, count in expected.items()
         },
+        "expected_analytic_material_volumes_nm3": {
+            "substrate": 25000.0,
+            "grating": 40800.0,
+            "air": 284200.0,
+            "total": 350000.0,
+            "measurement": "geometry_arithmetic_only; live cell-volume integration NOT_RUN",
+        },
+        "mpi_size": 1,
+    }
+
+
+def _task40_d15_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Check actual D15 coordinates, one-axis lineage, and independent tag totals."""
+    from src.geometry.task40_phi90_d15_axis_plan import d15_axis_plan
+
+    case_name = str(route["task40_mesh_case"])
+    plan = d15_axis_plan(case_name)
+    if not plan["launchable"]:
+        raise ValueError(f"D15-{case_name} is a reuse alias, not a launchable mesh")
+    msh = levels["mesh_data"].mesh
+    axes = {
+        axis: tuple(
+            float(value)
+            for value in np.unique(np.asarray(msh.geometry.x)[:, index])
+        )
+        for index, axis in enumerate(("x", "y", "z"))
+    }
+    expected_axes = {
+        axis: tuple(float(value) for value in plan["axes_nm"][axis])
+        for axis in ("x", "y", "z")
+    }
+    if axes != expected_axes:
+        raise ValueError(f"actual D15-{case_name} coordinates differ from frozen plan")
+    hashes = {
+        axis: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+        for axis, values in axes.items()
+    }
+    if hashes != route["task40_expected_axis_sha256_le_f64"]:
+        raise ValueError(f"actual D15-{case_name} axis hashes differ from profile facts")
+    if hashes != plan["axis_sha256_le_f64"]:
+        raise ValueError(f"actual D15-{case_name} axis hashes differ from frozen plan")
+    if route.get("task40_parent_case") != plan["parent_case"]:
+        raise ValueError(f"D15-{case_name} parent case differs from frozen plan")
+    if route.get("task40_changed_axis") != plan["changed_axis"]:
+        raise ValueError(f"D15-{case_name} changed-axis identity differs from plan")
+    parent_hashes = plan["base_axis_sha256_le_f64"]
+    changed_axis = plan["changed_axis"]
+    if changed_axis is None:
+        if hashes != parent_hashes:
+            raise ValueError("D15-B differs from frozen D15 baseline axes")
+    else:
+        for axis in ("x", "y", "z"):
+            if axis == changed_axis and hashes[axis] == parent_hashes[axis]:
+                raise ValueError(f"D15-{case_name} did not change {axis}")
+            if axis != changed_axis and hashes[axis] != parent_hashes[axis]:
+                raise ValueError(f"D15-{case_name} changed non-target {axis}")
+    counts = tuple(len(axes[axis]) - 1 for axis in ("x", "y", "z"))
+    cells = int(msh.topology.index_map(msh.topology.dim).size_global)
+    expected_counts = tuple(int(value) for value in route["expected_axis_cell_counts"])
+    expected_cells = int(route["expected_global_cell_count"])
+    if counts != expected_counts or cells != expected_cells:
+        raise ValueError(
+            f"actual D15-{case_name} counts differ from plan: counts={counts}, cells={cells}"
+        )
+    if str(msh.topology.cell_name()) != "hexahedron":
+        raise ValueError("Task40 D15 requires hexahedral cells")
+    tags = np.asarray(levels["mesh_data"].cell_tags.values, dtype=np.int64)
+    tag_counts = route["task40_expected_material_tag_counts"]
+    expected = {
+        int(cfg.tags.air): int(tag_counts["1"]),
+        int(cfg.tags.substrate): int(tag_counts["2"]),
+        int(cfg.tags.grating): int(tag_counts["3"]),
+    }
+    actual = {tag: int(np.count_nonzero(tags == tag)) for tag in expected}
+    if tags.size != cells or actual != expected:
+        raise ValueError(
+            f"actual D15-{case_name} material tags differ: {actual} != {expected}"
+        )
+    return {
+        "status": "PASS",
+        "profile": route["profile_identity"],
+        "family": "D15_13p5nm_R13",
+        "case": case_name,
+        "parent_case": "D15_B",
+        "changed_axis": changed_axis,
+        "geometry": "rectangular_block_grating",
+        "cell_type": "hexahedron",
+        "actual_global_cell_count": cells,
+        "axis_cell_counts": list(counts),
+        "axis_sha256_le_f64": hashes,
+        "actual_axes_match_frozen_d15_coordinates": True,
+        "only_declared_axis_changed_from_parent": True,
+        "material_tag_counts": {str(tag): count for tag, count in actual.items()},
+        "expected_material_tag_counts": {str(tag): count for tag, count in expected.items()},
         "expected_analytic_material_volumes_nm3": {
             "substrate": 25000.0,
             "grating": 40800.0,
@@ -2238,7 +2340,9 @@ def run_p6_condensed_direct(
         elif route["family"] == "dispersion_flat":
             mesh_evidence = _dispersion_flat_mesh_evidence(levels, cfg)
         elif route["family"] == "task40_phi90":
-            if route["task40_mesh_plan_family"] == "d5":
+            if route["task40_mesh_plan_family"] == "d15":
+                mesh_evidence = _task40_d15_mesh_evidence(levels, cfg, route)
+            elif route["task40_mesh_plan_family"] == "d5":
                 mesh_evidence = _task40_d5_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "h15":
                 mesh_evidence = _task40_h15_mesh_evidence(levels, cfg, route)
