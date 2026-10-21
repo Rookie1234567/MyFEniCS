@@ -1,0 +1,193 @@
+{
+  "authorization": "User-authorized two sequential 16-y-layer cases, each independently derived from Y5-1; run Y6-1 first, and only after its terminal solver PASS and cleared tree run Y6-2.",
+  "cases": {
+    "Y6-1": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          3.0,
+          6.0,
+          9.0,
+          12.0,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          38.0,
+          41.0,
+          44.0,
+          47.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        16,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "627914e2ee5e1ccd87435801a5ec3d13a4cd8579f2b379b3f9ebf431cd026a0e",
+        "z": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+      },
+      "expected_global_cell_count": 576,
+      "expected_midpoint_material_tag_counts_air_substrate_grating": {
+        "air": 432,
+        "grating": 48,
+        "substrate": 96
+      },
+      "internal_case": "Y6_1",
+      "nested_from_parent": false,
+      "parent_case": "Y5-1",
+      "purpose": "add one y interval to each outer segment relative to Y5-1 while keeping six pillar-interior intervals",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          5,
+          6,
+          5
+        ],
+        "z": [
+          1,
+          4,
+          1
+        ]
+      }
+    },
+    "Y6-2": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          3.75,
+          7.5,
+          11.25,
+          15.0,
+          17.5,
+          20.0,
+          22.5,
+          25.0,
+          27.5,
+          30.0,
+          32.5,
+          35.0,
+          38.75,
+          42.5,
+          46.25,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        16,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ae219ad7546cddaa8694033b8bc78850f3c385583e5ecc63649f2ed0923f88ec",
+        "z": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+      },
+      "expected_global_cell_count": 576,
+      "expected_midpoint_material_tag_counts_air_substrate_grating": {
+        "air": 416,
+        "grating": 64,
+        "substrate": 96
+      },
+      "internal_case": "Y6_2",
+      "nested_from_parent": false,
+      "parent_case": "Y5-1",
+      "purpose": "keep four outer intervals per side and refine the pillar interior from six to eight y intervals",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          4,
+          8,
+          4
+        ],
+        "z": [
+          1,
+          4,
+          1
+        ]
+      }
+    }
+  },
+  "fixed_axis_sha256_le_f64": {
+    "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "z": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+  },
+  "mesh_comparison_gates": {
+    "boundary_complex_amplitude_relative_l2_no_phase_fit": 0.0001,
+    "each_channel_R_T_all_active_and_power_carrying_abs": 1e-06,
+    "global_R_T_A_balance_A_volume_abs": 1e-05,
+    "same_coordinate_complex_E_H_relative_l2_no_phase_fit": 0.0001
+  },
+  "parent_case": "Y5-1 (internal D15 Y5_1; [6,14,6], 4/6/4)",
+  "physics_and_operator_contract": "13.5 nm Task40 direct p6; 612 R13 modes; surface q28; volume q15/default; scale_homogeneous_relative_only_v1 at 1e-13; unchanged solver and mesh-comparison gates.",
+  "schema": "task40.phi90.d15.y6_siblings.static_axis_plan.v1",
+  "shared_x_axis_nm": [
+    0.0,
+    8.25,
+    16.5,
+    25.0,
+    33.5,
+    41.75,
+    50.0
+  ],
+  "shared_z_axis_nm": [
+    -10.0,
+    0.0,
+    30.0,
+    60.0,
+    90.0,
+    120.0,
+    130.0
+  ],
+  "status": "STATIC_PLAN_ONLY_NOT_LIVE_MESH_QA"
+}

@@ -380,6 +380,51 @@ def test_d15_y5_1_common_refinement_static_axes_and_independent_tags():
     assert frozen["expected_midpoint_material_tag_counts_air_substrate_grating"] == independent
 
 
+@pytest.mark.parametrize(
+    ("case", "segments", "y_values", "tags"),
+    (
+        (
+            "Y6_1", (5, 6, 5),
+            (0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.333333333333332,
+             21.666666666666668, 25.0, 28.333333333333336,
+             31.666666666666668, 35.0, 38.0, 41.0, 44.0, 47.0, 50.0),
+            {"air": 432, "substrate": 96, "grating": 48},
+        ),
+        (
+            "Y6_2", (4, 8, 4),
+            (0.0, 3.75, 7.5, 11.25, 15.0, 17.5, 20.0, 22.5, 25.0,
+             27.5, 30.0, 32.5, 35.0, 38.75, 42.5, 46.25, 50.0),
+            {"air": 416, "substrate": 96, "grating": 64},
+        ),
+    ),
+)
+def test_d15_y6_siblings_have_independent_midpoint_tags_and_y5_parent(case, segments, y_values, tags):
+    plan = D15_AXIS_PLANS[case]
+    parent = D15_AXIS_PLANS["Y5_1"]
+    assert plan["plan_id"] == f"task40_phi90_d15_{case.lower()}_axes_v1"
+    assert plan["axis_cell_counts"] == [6, 16, 6]
+    assert plan["expected_global_cell_count"] == 576
+    assert plan["parent_case"] == "Y5_1" and plan["previous_case"] == "Y5_1"
+    assert plan["segment_cell_counts"]["y"] == list(segments)
+    assert plan["axes_nm"]["y"] == list(y_values)
+    assert plan["nestedness_from_previous_level"] is False
+    for axis in ("x", "z"):
+        assert plan["axes_nm"][axis] == parent["axes_nm"][axis]
+        assert plan["axis_sha256_le_f64"][axis] == parent["axis_sha256_le_f64"][axis]
+    independently_classified = _midpoint_cell_tags(plan)
+    actual = {
+        "air": int(np.count_nonzero(independently_classified == 1)),
+        "substrate": int(np.count_nonzero(independently_classified == 2)),
+        "grating": int(np.count_nonzero(independently_classified == 3)),
+    }
+    assert actual == tags == plan["static_midpoint_tags"]
+    record = ROOT / plan["static_plan_record"]
+    assert hashlib.sha256(record.read_bytes()).hexdigest() == plan["static_plan_sha256"]
+    frozen = json.loads(record.read_text())["cases"][case.replace("_", "-")]
+    assert frozen["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
+    assert frozen["expected_midpoint_material_tag_counts_air_substrate_grating"] == actual
+
+
 def test_d15_axis_validator_fails_closed_on_y3_axis_drift():
     plan = D15_AXIS_PLANS["Y3"]
     payload = {
@@ -400,7 +445,7 @@ def test_d15_axis_validator_fails_closed_on_y3_axis_drift():
         validate_frozen_d15_axes(wrong_hash)
 
 
-@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2", "Y3_3", "Y3_4", "Y4_4_4", "Y5_1"))
+@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2", "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Y6_1", "Y6_2"))
 def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case):
     specification = load_and_resolve(D15_INPUTS[case])
     run_directory = (tmp_path / "run").resolve()
@@ -476,6 +521,24 @@ def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case
         )
         assert directional["expected_material_tag_counts"] == {
             "1": 372, "2": 84, "3": 48
+        }
+    if case == "Y6_1":
+        assert tuple(directional["segment_cell_counts"]["y"]) == (5, 6, 5)
+        assert tuple(directional["axis_cell_counts"]) == (6, 16, 6)
+        assert tuple(normalized["discretization"]["mesh_axis_y_values"]) == tuple(
+            D15_AXIS_PLANS["Y6_1"]["axes_nm"]["y"]
+        )
+        assert directional["expected_material_tag_counts"] == {
+            "1": 432, "2": 96, "3": 48
+        }
+    if case == "Y6_2":
+        assert tuple(directional["segment_cell_counts"]["y"]) == (4, 8, 4)
+        assert tuple(directional["axis_cell_counts"]) == (6, 16, 6)
+        assert tuple(normalized["discretization"]["mesh_axis_y_values"]) == tuple(
+            D15_AXIS_PLANS["Y6_2"]["axes_nm"]["y"]
+        )
+        assert directional["expected_material_tag_counts"] == {
+            "1": 416, "2": 96, "3": 64
         }
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
     assert manifest["component_options"] == thaw(profile["component_options"])
