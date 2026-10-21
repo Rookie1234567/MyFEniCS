@@ -2953,3 +2953,11 @@ Y2→Y3同策略比较的总R差`8.7031e-10`、总T差`9.6121e-11`、A_volume差
 | measured | 同策略Y2/Y3有限R13结果接近；逐模R/T、复边界幅值、场样本和资源摘要在[Task40 outcomes summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md)、[response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_y2_y3_same_relative_only.md)及[612-mode CSV](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y2_y3_same_relative_only_all_612_modes_v1.csv) |
 | not established | `FULL_DTN_NOT_VERIFIED`、canonical方柱侧壁`NOT_MEASURED`；原V4/V5 max-facet `FAIL/OPEN`保留。旧场与新场仍有cutoff-policy混合，不把混合比较称同算子收敛 |
 | not run | Y4、D5/M5、reference-tail扩展及额外FE/factor；本次同策略比较后不自动启动下一场 |
+
+## Task40para：D15 Y5/Y6 同策略比较及后续 z-only 静态候选（2026-10-21）
+
+**背景与基线。** 方柱新模型仍使用 13.5 nm、p6 凝聚直接法、612 个 R13 通道、surface q28、volume q15/default 和 relative-only cutoff。Y5-1 `[6,14,6]` 是当前 y 方向工程候选；Y6-1、Y6-2 以它为父网格改变 y 分配，用于比较 y 敏感性。
+
+**方法与结果。** 读取既有三个正式 run 的小型 summary、mode 输出及同坐标保存样本；分析 JSON 对 Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 全部覆盖 global R/T/A、全612通道逐模 R/T、边界复幅和同坐标复 E/H（不做相位拟合）。三对均通过既定 `1e-5 / 1e-6 / 1e-4` 三组比较门，最大 E/H 相对差 `1.2510e-6/9.2654e-6`。peak RSS 分别是 `21.436/26.919/24.496 GB`，按同一 process-tree simultaneous RSS；不跨场相加。详细身份与结果见[Task40 Y5/Y6 comparison](task40para_phi90_mesh_modes_direct/outcomes/records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json)。
+
+**决策和边界。** 停止继续加密 y，暂以 Y5-1 作工程候选；z=6 格仍未被证明充分。已静态绑定一个只改变 z 的候选：从 Y5-1 实际 x/y 轴哈希出发，z 从 `[-10,0,30,60,90,120,130]` 改为 `[-10,0,20,40,60,80,100,120,130]`，总 `[6,14,8]` / 672 cells，静态 midpoint tags `516/84/72`。这是非嵌套 z 计划，不是 live QA、FE 或数值结果。精确 axes/hash/lineage 见[response](task40para_phi90_mesh_modes_direct/outcomes/response_d15_y5_z_refinement_static_20261021.md)与[静态 JSON](task40para_phi90_mesh_modes_direct/outcomes/records/d15_y5_1_z_refinement_static_plan_v1.json)。`FULL_DTN_NOT_VERIFIED`、canonical sidewall `NOT_MEASURED` 与 `AUTHORITY_LIMITED` 仍有效；fresh/运行须待独立包审。

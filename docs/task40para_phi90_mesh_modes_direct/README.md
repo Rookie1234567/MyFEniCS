@@ -28,3 +28,7 @@
 按用户授权，当前顺序执行三个同总量 y 分配，均以 Y3-2 `[2,6,2]` 为共同父方案、固定 x/z、612 模式、q28/q15 和 relative-only 算子身份，彼此不是累计细化。统一展示名与冻结内部 case/run 身份如下：Y4-1=`Y3_3` `[3,6,3]`、Y4-2=`Y3_4` `[2,8,2]`、Y4-3=`Y4_4_4` `[4,4,4]`；三场均 `[6,12,6]` / 432 cells。展示名映射及轴身份见 `outcomes/records/d15_y4_display_name_map_20261021.json`，完整静态轴与 SHA 见 `outcomes/records/d15_y3_2_siblings_static_axis_v2.json`。独立中点 tag 预测按 air/substrate/grating 分别为 Y4-1 `312/72/48`、Y4-2 `296/72/64`、Y4-3 `328/72/32`；这是计划预测，不是 live mesh QA。三场按序 fresh/单场运行，每场均依全球量、全部612共同/功率承载通道、边界复幅和同坐标复场三组既定门比较；不通过时保留失败证据。
 
 Y3-2 离线比较 v1 保留原样；v2 只纠正 Y2→Y3-2 全局差值字段的 case 标签，未重算数值。详情见 `outcomes/records/d15_y2_y3_y3_2_saved_output_comparison_20261021_v2.json`。`FULL_DTN_NOT_VERIFIED` 与 canonical sidewall `NOT_MEASURED` 继续有效。
+
+### 2026-10-21 后续：Y5/Y6 对照与 z-only 静态候选
+
+上述 Y4 三场后，用户又授权 D15 的 Y5/Y6 方向研究。Y5-1 `[6,14,6]` 与 Y6-1/Y6-2 的三组保存结果比较均通过原三类差异门；因此当前将 Y5-1 暂作 y 方向工程候选，停止继续加密 y。它不证明当前 z 离散充分。现在只登记一个由真实 Y5-1 x/y 轴派生的 z-only 候选 `[6,14,8]` / 672 cells，z=`[-10,0,20,40,60,80,100,120,130]` nm，预期静态 tags air/substrate/grating=`516/84/72`。轴SHA、父run与静态标签依据见[response](outcomes/response_d15_y5_z_refinement_static_20261021.md)和[静态JSON](outcomes/records/d15_y5_1_z_refinement_static_plan_v1.json)。它尚未经过 live mesh QA 或 FE；需要另行审精确包与fresh，`FULL_DTN_NOT_VERIFIED`、canonical sidewall `NOT_MEASURED`仍保持。

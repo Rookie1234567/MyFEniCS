@@ -1133,7 +1133,12 @@ def _task40_d15_mesh_evidence(
         raise ValueError(f"D15-{case_name} parent case differs from frozen plan")
     if route.get("task40_changed_axis") != plan["changed_axis"]:
         raise ValueError(f"D15-{case_name} changed-axis identity differs from plan")
-    parent_hashes = plan["base_axis_sha256_le_f64"]
+    parent_hashes = plan.get(
+        "parent_axis_sha256_le_f64", plan["base_axis_sha256_le_f64"]
+    )
+    declared_parent_hashes = route.get("task40_parent_axis_sha256_le_f64")
+    if declared_parent_hashes is not None and declared_parent_hashes != parent_hashes:
+        raise ValueError(f"D15-{case_name} parent-axis hashes differ from frozen plan")
     changed_axis = plan["changed_axis"]
     if changed_axis is None:
         if hashes != parent_hashes:

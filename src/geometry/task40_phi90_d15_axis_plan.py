@@ -44,6 +44,13 @@ D15_Y6_SIBLINGS_STATIC_PLAN_RECORD = (
     "d15_y6_siblings_static_axis_plan_v1.json"
 )
 D15_Y6_SIBLINGS_STATIC_PLAN_SHA256 = "d6b81cfac1c58cb4ae1e19f132b94d3676679db89858b1b9dff48736668c6035"
+D15_Y5_1_Z_STATIC_PLAN_RECORD = (
+    "docs/task40para_phi90_mesh_modes_direct/outcomes/records/"
+    "d15_y5_1_z_refinement_static_plan_v1.json"
+)
+D15_Y5_1_Z_STATIC_PLAN_SHA256 = (
+    "584023b9c810774bfecc9126365f68a22bf0c04050e242ee0b39225106b5244c"
+)
 D15_Y3_2_Y_COORDINATES_NM = (
     0.0,
     7.5,
@@ -123,6 +130,7 @@ D15_CASES: dict[str, dict[str, object]] = {
     "Y5_1": {"axis_cell_counts": (6, 14, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 6, 4), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y3", "expected_tags": {"air": 372, "substrate": 84, "grating": 48}, "launchable": True},
     "Y6_1": {"axis_cell_counts": (6, 16, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (5, 6, 5), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y5_1", "expected_tags": {"air": 432, "substrate": 96, "grating": 48}, "launchable": True},
     "Y6_2": {"axis_cell_counts": (6, 16, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 8, 4), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y5_1", "expected_tags": {"air": 416, "substrate": 96, "grating": 64}, "launchable": True},
+    "Y5_Z2": {"axis_cell_counts": (6, 14, 8), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 6, 4), "z": (1, 6, 1)}, "changed_axis": "z", "parent_case": "Y5_1", "expected_tags": {"air": 516, "substrate": 84, "grating": 72}, "launchable": True},
     "Z1": {"axis_cell_counts": (6, 4, 8), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 6, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 144, "substrate": 24, "grating": 24}, "launchable": True},
     "Z2": {"axis_cell_counts": (6, 4, 10), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 8, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 184, "substrate": 24, "grating": 32}, "launchable": False},
     "Z3": {"axis_cell_counts": (6, 4, 12), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 10, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 224, "substrate": 24, "grating": 40}, "launchable": True},
@@ -143,6 +151,7 @@ D15_PREVIOUS_CASE = {
     "Y5_1": "Y4_4_4",
     "Y6_1": "Y5_1",
     "Y6_2": "Y5_1",
+    "Y5_Z2": "Y5_1",
     "Z1": "B",
     "Z2": "Z1",
     "Z3": "Z2",
@@ -196,6 +205,8 @@ def _case_axis_values(case: str, axis: str, count: int) -> tuple[float, ...]:
             return D15_Y6_1_Y_COORDINATES_NM
         if case == "Y6_2":
             return D15_Y6_2_Y_COORDINATES_NM
+        if case == "Y5_Z2":
+            return D15_Y5_1_Y_COORDINATES_NM
     return tuple(D15_AXIS_COORDINATES_NM[axis][count])
 
 def d15_axis_plan(case: str) -> dict[str, object]:
@@ -263,6 +274,9 @@ def d15_axis_plan(case: str) -> dict[str, object]:
     elif case in {"Y6_1", "Y6_2"}:
         static_plan_record = D15_Y6_SIBLINGS_STATIC_PLAN_RECORD
         static_plan_sha = D15_Y6_SIBLINGS_STATIC_PLAN_SHA256
+    elif case == "Y5_Z2":
+        static_plan_record = D15_Y5_1_Z_STATIC_PLAN_RECORD
+        static_plan_sha = D15_Y5_1_Z_STATIC_PLAN_SHA256
     else:
         static_plan_record = D15_STATIC_PLAN_RECORD
         static_plan_sha = D15_STATIC_PLAN_SHA256
@@ -282,6 +296,16 @@ def d15_axis_plan(case: str) -> dict[str, object]:
                 raise AssertionError(f"Task40 D15 {case} did not change {axis}")
             if axis != changed_axis and actual_hashes[axis] != parent_hashes[axis]:
                 raise AssertionError(f"Task40 D15 {case} changed non-target {axis}")
+    if parent is None:
+        parent_axis_hashes = base_hashes
+    else:
+        parent_counts = tuple(D15_CASES[parent]["axis_cell_counts"])
+        parent_axis_hashes = {
+            axis: _axis_sha256(
+                _case_axis_values(parent, axis, parent_counts[index])
+            )
+            for index, axis in enumerate(("x", "y", "z"))
+        }
     payload = {
         "schema": "task40.phi90.d15.axis_plan.v2",
         "case": case,
@@ -299,6 +323,8 @@ def d15_axis_plan(case: str) -> dict[str, object]:
         "static_plan_sha256": static_plan_sha,
         "reuse_existing_h15_b": case == "Z2",
     }
+    if case == "Y5_Z2":
+        payload["parent_axis_sha256_le_f64"] = parent_axis_hashes
     plan_sha = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return {
         **payload,
@@ -309,6 +335,8 @@ def d15_axis_plan(case: str) -> dict[str, object]:
             if case == "Y5_1"
             else f"task40_phi90_d15_{case.lower()}_axes_v1"
             if case in {"Y6_1", "Y6_2"}
+            else "task40_phi90_d15_y5_z2_axes_v1"
+            if case == "Y5_Z2"
             else f"task40_phi90_d15_{case.lower()}_axes_v2"
         ),
         "static_plan_record": static_plan_record,

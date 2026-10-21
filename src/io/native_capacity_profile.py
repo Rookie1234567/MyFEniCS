@@ -133,7 +133,8 @@ TASK40_PHI90_D15_PROFILES = {
     f"task40para_phi90_13p5_D15_{case}_p6_direct_v1": case
     for case in (
         "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y3_2",
-        "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Y6_1", "Y6_2", "Z1", "Z3"
+        "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Y6_1", "Y6_2", "Y5_Z2",
+        "Z1", "Z3",
     )
 }
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
@@ -1528,6 +1529,15 @@ def _task40_phi90_d15_profile_facts(identity):
             },
         },
     )
+    if case_name == "Y5_Z2":
+        directional = options["directional_mesh_comparison"]
+        directional.pop("only_axis_changes_from_B", None)
+        directional.update(
+            only_axis_changes_from_parent=["z"],
+            parent_axis_sha256_le_f64=dict(
+                plan["parent_axis_sha256_le_f64"]
+            ),
+        )
     options["surface_quadrature"].update(
         authority="fixed_R13_plus_two_m6_n10_envelope_before_D15_B"
     )
@@ -1548,6 +1558,14 @@ def _task40_phi90_d15_profile_facts(identity):
         plan["static_plan_sha256"]
     )
     base["campaign_authorization"]["direct_route"]["reuse_D15_Z2_without_new_run"] = True
+    if case_name == "Y5_Z2":
+        base["campaign_authorization"]["source"] = (
+            "user-authorized independent z-only p6 direct refinement from the "
+            "completed D15-Y5-1 grid; this is not the historical D15-Z2/H15-B reuse"
+        )
+        base["campaign_authorization"]["direct_route"][
+            "reuse_D15_Z2_without_new_run"
+        ] = False
     base["resources"]["rss_hard_limit_bytes"] = None
     return base
 

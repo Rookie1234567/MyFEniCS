@@ -92,6 +92,20 @@ Y3 的有限 R13 端口—体吸收闭合 `5.7914e-11`，但 official scope 是 
 
 本阶段未启动 Y4、D5、M5、额外 reference-tail 或新因子。下一步不由本记录自动授权；如继续，需要依据这份同策略对照重新界定范围。即便有限 R13 的 Y2/Y3 很接近，canonical sidewall 和完整 parent DtN 仍未验证，旧 V4/V5 max-facet `FAIL/OPEN` 继续保留。
 
+## 2026-10-21 后续：Y5/Y6 同策略比较与 Y5-1 后 z 静态计划
+
+较新的用户授权续行覆盖上文“下一步不自动启动”的当时状态；历史段落保留。Y5-1 `[6,14,6]` 为当前 13.5 nm y 方向工程候选。Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 三组比较均通过原 global、全612逐通道 R/T、边界复幅及同坐标复 E/H 门。它们支持停止继续加密 y，但不证明 z=6 格充分、连续收敛、canonical sidewall 或 full DtN。
+
+| 状态 | 网格/结果 | 资源与范围 | 证据 |
+|---|---|---|---|
+| measured：Y5-1 | `[6,14,6]` / 504 cells；R/T/A_volume=`0.251354516833 / 0.057128000037 / 0.691517483140`；凝聚 `2.8179e-12`、A6 `1.6969e-10` | workflow `1870.909 s`；同一树RSS峰 `21,435,727,872 B`；task swap峰0，PSS关闭，64 GiB host floor | run `20261021T115035.556208Z`；[Y5/Y6 comparison](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json) |
+| measured：Y6-1 | `[6,16,6]` / 576 cells；R/T/A_volume=`0.251354466181 / 0.057128007072 / 0.691517526782`；凝聚 `2.8571e-12`、A6 `2.2717e-10` | workflow `1909.739 s`；同一树RSS峰 `26,919,141,376 B`；task swap峰0；全局pswpin +1页未归因 | run `20261021T123416.289376Z`；同上 JSON |
+| measured：Y6-2 | `[6,16,6]` / 576 cells；R/T/A_volume=`0.251354507926 / 0.057128001222 / 0.691517490858`；凝聚 `3.4068e-12`、A6 `2.8576e-10` | workflow `1545.915 s`；同一树RSS峰 `24,495,742,976 B`；task swap峰0；全局swap变化未观察到 | run `20261021T131331.217615Z`；同上 JSON |
+| comparison：三对 | 最大 `|ΔR|/|ΔT|`：Y5→Y6-1 `5.0652e-8/7.0344e-9`；Y5→Y6-2 `8.9067e-9/1.1849e-9`；Y6-1↔Y6-2 `4.1745e-8/5.8497e-9`；边界/E/H 最大相对差仍低于 `1e-4` | saved-field 同坐标比较；未拟合相位；只代表有限 R13 及保存样本范围 | [JSON](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json)、[脚本](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.py) |
+| static-only：Y5-1 后 z 细化 | Y5-1 实际 x/y 不变；z 由 `[1,4,1]` 改 `[1,6,1]`，候选 `[6,14,8]` / 672 cells，z=`[-10,0,20,40,60,80,100,120,130]` nm；静态 tags air/substrate/grating=`516/84/72` | z 轴不嵌套；没有 live mesh/Jacobian、FE、资源或数值结果 | [static plan](records/d15_y5_1_z_refinement_static_plan_v1.json)、[response](response_d15_y5_z_refinement_static_20261021.md) |
+
+三个 D15 run 的输入、physical、resolved、mode、q、资源和原门身份均在 comparison JSON 中逐场绑定。三场各自有限算子状态仍为 `FULL_DTN_NOT_VERIFIED`，canonical sidewall 为 `NOT_MEASURED`。新 z 候选尚未启动；不得把静态 tags/轴算术写成现场 QA 或容量保证。
+
 ## 可复现证据
 
 - [分析脚本](analysis/compare_d13_relative_cutoff_runs.py)，SHA256 `dc1d60e3be5a7181390f2878f657f74bd41e6d8d1f47227273ccf22fa08fa53c`

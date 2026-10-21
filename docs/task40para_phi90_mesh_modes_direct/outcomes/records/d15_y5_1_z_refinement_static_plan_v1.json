@@ -1,0 +1,199 @@
+{
+  "axes_nm": {
+    "x": [
+      0.0,
+      8.25,
+      16.5,
+      25.0,
+      33.5,
+      41.75,
+      50.0
+    ],
+    "y": [
+      0.0,
+      3.75,
+      7.5,
+      11.25,
+      15.0,
+      18.333333333333332,
+      21.666666666666668,
+      25.0,
+      28.333333333333336,
+      31.666666666666668,
+      35.0,
+      38.75,
+      42.5,
+      46.25,
+      50.0
+    ],
+    "z": [
+      -10.0,
+      0.0,
+      20.0,
+      40.0,
+      60.0,
+      80.0,
+      100.0,
+      120.0,
+      130.0
+    ]
+  },
+  "axis_cell_counts": [
+    6,
+    14,
+    8
+  ],
+  "axis_extent_nm": {
+    "x": [
+      0.0,
+      50.0
+    ],
+    "y": [
+      0.0,
+      50.0
+    ],
+    "z": [
+      -10.0,
+      130.0
+    ]
+  },
+  "axis_sha256_le_f64": {
+    "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "y": "c0961ba718983e4a2a1c376cd969324e57001f7147bb33d3ef35b06256c175b7",
+    "z": "82d51947444eb3e27d0678b92be099c1f86e7e42f5c5bfa5cefdb8ce4ea07d37"
+  },
+  "case": "Y5_Z2",
+  "changed_axis": "z",
+  "display_label": "D15-Z-after-Y5-1",
+  "expected_global_cell_count": 672,
+  "fixed_operator_contract": {
+    "comparison_thresholds": {
+      "boundary_complex_amplitude_relative_l2_no_phase_fit": 0.0001,
+      "global_R_T_A_balance_A_volume_abs": 1e-05,
+      "per_channel_R_T_abs_all_active_and_power_carrying": 1e-06,
+      "same_coordinate_complex_E_H_relative_l2_no_phase_fit": 0.0001
+    },
+    "direct_solver": "p6 condensed MUMPS",
+    "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+    "max_same_factor_corrections": 2,
+    "mode_count": 612,
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "nedelec_degree": 6,
+    "surface_quadrature_degree": 28,
+    "volume_quadrature_degree": 15,
+    "volume_quadrature_rule": "default",
+    "wavelength_nm": 13.5
+  },
+  "interpretation": "Independent z-only comparison against actual Y5-1 saved grid: x and y are copied exactly from Y5-1; z changes from 1/4/1 (6 cells) to 1/6/1 (8 cells). The z interior partition is non-nested relative to Y5-1 because 30 and 90 nm are not retained. Static counts/tags are not live mesh or solver evidence.",
+  "matching_existing_completed_identity_search": {
+    "compact_D15_summaries_checked": 12,
+    "exact_same_x_y_axis_hashes_mode_and_relative_policy_hits": 0
+  },
+  "material_and_port_planes_nm": {
+    "x": [
+      0.0,
+      16.5,
+      33.5,
+      50.0
+    ],
+    "y": [
+      0.0,
+      15.0,
+      35.0,
+      50.0
+    ],
+    "z": [
+      -10.0,
+      0.0,
+      120.0,
+      130.0
+    ]
+  },
+  "nestedness_from_parent": {
+    "overall": false,
+    "x": true,
+    "y": true,
+    "z": false
+  },
+  "parent_axis_sha256_le_f64": {
+    "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "y": "c0961ba718983e4a2a1c376cd969324e57001f7147bb33d3ef35b06256c175b7",
+    "z": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+  },
+  "parent_case": "Y5_1",
+  "parent_input_sha256": "362a796ebfabecffc675d338cd22f44fc959534bf2eb50895e24ab151a6fe4b5",
+  "parent_physical_model_sha256": "1b2344a9a1fb010260e33982e3a64d0f7ccb874bda2e16c2a29c7446bd535ca1",
+  "parent_resolved_config_sha256": "f34628a9487e6b16239fa747121cf8f5c78263106d46253e7f6ba377538801d3",
+  "parent_run_directory": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y5_1_p6_direct_v1__full3d_direct__mpi1__Mna/20261021T115035.556208Z",
+  "parent_run_id": "task40_phi90_13p5_D15_Y5_1_p6_direct_v1",
+  "parent_source_sha": "55c58972d230f53103f8ef6cb950ebb9417711cb",
+  "schema": "task40.phi90.d15.y5_z2.static_axis_plan.v1",
+  "segment_boundaries_nm": {
+    "x": [
+      0.0,
+      16.5,
+      33.5,
+      50.0
+    ],
+    "y": [
+      0.0,
+      15.0,
+      35.0,
+      50.0
+    ],
+    "z": [
+      -10.0,
+      0.0,
+      120.0,
+      130.0
+    ]
+  },
+  "segment_cell_counts": {
+    "x": [
+      2,
+      2,
+      2
+    ],
+    "y": [
+      4,
+      6,
+      4
+    ],
+    "z": [
+      1,
+      6,
+      1
+    ]
+  },
+  "segment_step_sizes_nm": {
+    "x": [
+      8.25,
+      8.5,
+      8.25
+    ],
+    "y": [
+      3.75,
+      3.3333333333333335,
+      3.75
+    ],
+    "z": [
+      10.0,
+      20.0,
+      10.0
+    ]
+  },
+  "static_midpoint_material_tag_counts": {
+    "air": 516,
+    "grating": 72,
+    "substrate": 84
+  },
+  "status": "STATIC_PLAN_ONLY_NOT_LIVE_MESH_OR_LAUNCH_AUTHORITY",
+  "tag_scope": "independent interval-midpoint geometry classification; static arithmetic only, live mesh QA still required",
+  "unchanged_axes_match_parent": {
+    "x": true,
+    "y": true,
+    "z": false
+  },
+  "z_step_ratio_adjacent_max": 2.0
+}

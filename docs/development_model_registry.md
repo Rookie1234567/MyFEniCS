@@ -1757,3 +1757,15 @@ canonical pillar sidewall trace `NOT_MEASURED`、`FULL_DTN_NOT_VERIFIED`、D13 `
 Y2→Y3同策略对照中，R、R00,s、T、A_volume差分别为`8.7031e-10`、`8.7024e-10`、`9.6121e-11`、`6.8655e-10`；612模式boundary outgoing复振幅相对L2差`1.8483e-9`，同坐标无相位拟合E/H相对差`2.8365e-7/5.8524e-7`。raw倏逝振幅差另列，受指数尺度影响。physical/resolved identity因包含y网格/profile provenance而不同，比较确认其余物理输入一致，x/z轴SHA相同。
 
 此同策略有限R13比较不验证完整DtN或连续网格收敛。`FULL_DTN_NOT_VERIFIED`、canonical pillar sidewall `NOT_MEASURED`、D13 `AUTHORITY_LIMITED`与原V4/V5 saved-field `FAIL/OPEN`均保持；Y4/D5/reference-tail未运行。八个成功D13 direct场累计workflow墙钟`23243.808540 s`（非CPU时间），最高单场RSS为本Y3的`179617648640 B`，不跨run相加。逐模结果、身份、资源与脚本hash见[Task40 summary](task40para_phi90_mesh_modes_direct/outcomes/summary.md)、[同策略response](task40para_phi90_mesh_modes_direct/outcomes/response_d13_y2_y3_same_relative_only.md)及[tracked JSON](task40para_phi90_mesh_modes_direct/outcomes/records/d13_y2_y3_same_relative_only_comparison_v1.json)。
+
+## 3.54 Task40para：D15 Y5-1/Y6 同策略比较与 z-only 静态候选（2026-10-21）
+
+| 模型 / run | 网格与 measured 结果 | 单场残差/资源 | 状态与证据 |
+|---|---|---|---|
+| D15-Y5-1；source `55c58972d230f53103f8ef6cb950ebb9417711cb`；run `20261021T115035.556208Z` | `[6,14,6]` / 504 cells；R/T/Avolume `0.251354516833 / 0.057128000037 / 0.691517483140` | condensed `2.8179e-12`、A6 `1.6969e-10`；workflow `1870.909 s`、tree RSS峰 `21,435,727,872 B`、task swap峰0 | `COMPLETED_AUTHORITY_LIMITED`；[comparison identity](task40para_phi90_mesh_modes_direct/outcomes/records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json) |
+| D15-Y6-1；source `6320ae621ddf94d39e9006628a5ef68b0dfdfffe`；run `20261021T123416.289376Z` | `[6,16,6]` / 576 cells；R/T/Avolume `0.251354466181 / 0.057128007072 / 0.691517526782` | condensed `2.8571e-12`、A6 `2.2717e-10`；workflow `1909.739 s`、tree RSS峰 `26,919,141,376 B`、task swap峰0；global pswpin +1页未归因 | `COMPLETED_AUTHORITY_LIMITED`；同上 JSON |
+| D15-Y6-2；source `6320ae621ddf94d39e9006628a5ef68b0dfdfffe`；run `20261021T131331.217615Z` | `[6,16,6]` / 576 cells；R/T/Avolume `0.251354507926 / 0.057128001222 / 0.691517490858` | condensed `3.4068e-12`、A6 `2.8576e-10`；workflow `1545.915 s`、tree RSS峰 `24,495,742,976 B`、task swap峰0 | `COMPLETED_AUTHORITY_LIMITED`；同上 JSON |
+
+Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 三对保存输出比较均通过既定三组门：global R/T/A balance/Avolume `1e-5`，全612及 power-carrying 通道逐模R/T `1e-6`，边界复幅及同坐标复E/H `1e-4`；未做相位拟合。最大逐模差为 `|ΔR|=5.0652e-8`、`|ΔT|=7.0344e-9`，最大 E/H 相对差 `1.2510e-6/9.2654e-6`。这是有限 R13 和保存样本范围，不证明z=6格充分、连续收敛、canonical侧壁或完整DtN。
+
+后续仅静态准备一个从Y5-1实际x/y轴派生的z-only候选`[6,14,8]`/672 cells，z由`[-10,0,30,60,90,120,130]`变为`[-10,0,20,40,60,80,100,120,130]`，静态 midpoint tag air/substrate/grating=`516/84/72`。新旧z网格非嵌套，轴计划不是live QA或数值结果；见[静态计划response](task40para_phi90_mesh_modes_direct/outcomes/response_d15_y5_z_refinement_static_20261021.md)和[机器记录](task40para_phi90_mesh_modes_direct/outcomes/records/d15_y5_1_z_refinement_static_plan_v1.json)。
