@@ -23,6 +23,8 @@ from src.geometry.task40_phi90_d15_axis_plan import (
     D15_SUPERSEDED_STATIC_PROPOSAL_SHA256,
     D15_Y3_2_SIBLINGS_STATIC_PLAN_RECORD,
     D15_Y3_2_SIBLINGS_STATIC_PLAN_SHA256,
+    D15_Y5_1_STATIC_PLAN_RECORD,
+    D15_Y5_1_STATIC_PLAN_SHA256,
     D15_Z2_HISTORICAL_REUSE,
     validate_frozen_d15_axes,
 )
@@ -344,6 +346,40 @@ def test_d15_z2_is_exact_h15_b_historical_reuse_not_a_launch_input():
     ]
 
 
+def test_d15_y5_1_common_refinement_static_axes_and_independent_tags():
+    plan = D15_AXIS_PLANS["Y5_1"]
+    assert plan["plan_id"] == "task40_phi90_d15_y5_1_axes_v1"
+    assert plan["axis_cell_counts"] == [6, 14, 6]
+    assert plan["expected_global_cell_count"] == 504
+    assert plan["segment_cell_counts"] == {
+        "x": [2, 2, 2], "y": [4, 6, 4], "z": [1, 4, 1]
+    }
+    assert tuple(plan["axes_nm"]["y"]) == (
+        0.0, 3.75, 7.5, 11.25, 15.0, 18.333333333333332,
+        21.666666666666668, 25.0, 28.333333333333336,
+        31.666666666666668, 35.0, 38.75, 42.5, 46.25, 50.0
+    )
+    assert plan["parent_case"] == "Y3"
+    assert plan["previous_case"] == "Y4_4_4"
+    assert plan["nestedness_from_previous_level"] is False
+    for axis in ("x", "z"):
+        assert plan["axes_nm"][axis] == D15_AXIS_PLANS["B"]["axes_nm"][axis]
+        assert plan["axis_sha256_le_f64"][axis] == D15_AXIS_PLANS["B"]["axis_sha256_le_f64"][axis]
+    tags = _midpoint_cell_tags(plan)
+    independent = {
+        "air": int(np.count_nonzero(tags == 1)),
+        "substrate": int(np.count_nonzero(tags == 2)),
+        "grating": int(np.count_nonzero(tags == 3)),
+    }
+    assert independent == {"air": 372, "substrate": 84, "grating": 48}
+    assert independent == plan["static_midpoint_tags"]
+    record = ROOT / D15_Y5_1_STATIC_PLAN_RECORD
+    assert hashlib.sha256(record.read_bytes()).hexdigest() == D15_Y5_1_STATIC_PLAN_SHA256
+    frozen = json.loads(record.read_text())
+    assert frozen["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
+    assert frozen["expected_midpoint_material_tag_counts_air_substrate_grating"] == independent
+
+
 def test_d15_axis_validator_fails_closed_on_y3_axis_drift():
     plan = D15_AXIS_PLANS["Y3"]
     payload = {
@@ -364,7 +400,7 @@ def test_d15_axis_validator_fails_closed_on_y3_axis_drift():
         validate_frozen_d15_axes(wrong_hash)
 
 
-@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2", "Y3_3", "Y3_4", "Y4_4_4"))
+@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2", "Y3_3", "Y3_4", "Y4_4_4", "Y5_1"))
 def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case):
     specification = load_and_resolve(D15_INPUTS[case])
     run_directory = (tmp_path / "run").resolve()
@@ -431,6 +467,15 @@ def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case
         )
         assert directional["expected_material_tag_counts"] == {
             "1": 328, "2": 72, "3": 32
+        }
+    if case == "Y5_1":
+        assert tuple(directional["segment_cell_counts"]["y"]) == (4, 6, 4)
+        assert tuple(directional["axis_cell_counts"]) == (6, 14, 6)
+        assert tuple(normalized["discretization"]["mesh_axis_y_values"]) == tuple(
+            D15_AXIS_PLANS["Y5_1"]["axes_nm"]["y"]
+        )
+        assert directional["expected_material_tag_counts"] == {
+            "1": 372, "2": 84, "3": 48
         }
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
     assert manifest["component_options"] == thaw(profile["component_options"])

@@ -133,7 +133,7 @@ TASK40_PHI90_D15_PROFILES = {
     f"task40para_phi90_13p5_D15_{case}_p6_direct_v1": case
     for case in (
         "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y3_2",
-        "Y3_3", "Y3_4", "Y4_4_4", "Z1", "Z3"
+        "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Z1", "Z3"
     )
 }
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {

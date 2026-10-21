@@ -1,0 +1,115 @@
+{
+  "authorization": "User-authorized single Y5-1 case following the two offline single-axis comparisons; no additional Y5/5nm run is implied.",
+  "axes_nm": {
+    "x": [
+      0.0,
+      8.25,
+      16.5,
+      25.0,
+      33.5,
+      41.75,
+      50.0
+    ],
+    "y": [
+      0.0,
+      3.75,
+      7.5,
+      11.25,
+      15.0,
+      18.333333333333332,
+      21.666666666666668,
+      25.0,
+      28.333333333333336,
+      31.666666666666668,
+      35.0,
+      38.75,
+      42.5,
+      46.25,
+      50.0
+    ],
+    "z": [
+      -10.0,
+      0.0,
+      30.0,
+      60.0,
+      90.0,
+      120.0,
+      130.0
+    ]
+  },
+  "axis_cell_counts": [
+    6,
+    14,
+    6
+  ],
+  "axis_sha256_le_f64": {
+    "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "y": "c0961ba718983e4a2a1c376cd969324e57001f7147bb33d3ef35b06256c175b7",
+    "z": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+  },
+  "display_name": "Y5-1",
+  "expected_global_cell_count": 504,
+  "expected_midpoint_material_tag_counts_air_substrate_grating": {
+    "air": 372,
+    "grating": 48,
+    "substrate": 84
+  },
+  "geometry_bounds_nm": {
+    "x_grating": [
+      16.5,
+      33.5
+    ],
+    "x_period": [
+      0.0,
+      50.0
+    ],
+    "y_grating": [
+      15.0,
+      35.0
+    ],
+    "y_period": [
+      0.0,
+      50.0
+    ],
+    "z_domain": [
+      -10.0,
+      130.0
+    ],
+    "z_material_interfaces": [
+      0.0,
+      120.0
+    ]
+  },
+  "internal_case": "Y5_1",
+  "physics_and_operator_contract": "13.5 nm Task40 direct p6; 612 R13 modes; surface q28; volume q15/default; scale_homogeneous_relative_only_v1; unchanged production thresholds and host-floor resource policy.",
+  "purpose": "One 14-layer y common refinement to compare the previously observed interior-only and outer-only y sensitivity changes.",
+  "relationship": {
+    "common_reference": "Y3 3/4/3",
+    "comparisons": [
+      "Y4-1 3/6/3",
+      "Y4-3 4/4/4"
+    ],
+    "non_nested_from_y4_1": true,
+    "non_nested_from_y4_3": true
+  },
+  "schema": "task40.phi90.d15.y5_1.static_axis_plan.v1",
+  "segment_cell_counts": {
+    "x": [
+      2,
+      2,
+      2
+    ],
+    "y": [
+      4,
+      6,
+      4
+    ],
+    "z": [
+      1,
+      4,
+      1
+    ]
+  },
+  "status": "STATIC_PLAN_ONLY_NOT_LIVE_MESH_QA",
+  "tag_count_method": "independent interval-midpoint classification using x/y pillar bounds and z material interfaces; not live mesh evidence."
+}

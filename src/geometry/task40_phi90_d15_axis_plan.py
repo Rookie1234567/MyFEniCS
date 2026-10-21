@@ -34,6 +34,11 @@ D15_Y3_2_SIBLINGS_STATIC_PLAN_RECORD = (
 D15_Y3_2_SIBLINGS_STATIC_PLAN_SHA256 = (
     "9ad27c53e6668aeace605dbcbf47053aeccecc1102a383fb3864861811aa22fd"
 )
+D15_Y5_1_STATIC_PLAN_RECORD = (
+    "docs/task40para_phi90_mesh_modes_direct/outcomes/records/"
+    "d15_y5_1_static_axis_plan_v1.json"
+)
+D15_Y5_1_STATIC_PLAN_SHA256 = "122d947787fa51b9d5e70e97d9f61ba34a0802aa152cf70a18cbf149c71fa5ba"
 D15_Y3_2_Y_COORDINATES_NM = (
     0.0,
     7.5,
@@ -58,6 +63,12 @@ D15_Y3_4_Y_COORDINATES_NM = (
 D15_Y4_4_4_Y_COORDINATES_NM = (
     0.0, 3.75, 7.5, 11.25, 15.0, 20.0, 25.0, 30.0, 35.0,
     38.75, 42.5, 46.25, 50.0,
+)
+
+D15_Y5_1_Y_COORDINATES_NM = (
+    0.0, 3.75, 7.5, 11.25, 15.0, 18.333333333333332,
+    21.666666666666668, 25.0, 28.333333333333336, 31.666666666666668,
+    35.0, 38.75, 42.5, 46.25, 50.0,
 )
 
 D15_AXIS_COORDINATES_NM: dict[str, dict[int, tuple[float, ...]]] = {
@@ -93,6 +104,7 @@ D15_CASES: dict[str, dict[str, object]] = {
     "Y3_3": {"axis_cell_counts": (6, 12, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (3, 6, 3), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y3_2", "expected_tags": {"air": 312, "substrate": 72, "grating": 48}, "launchable": True},
     "Y3_4": {"axis_cell_counts": (6, 12, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (2, 8, 2), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y3_2", "expected_tags": {"air": 296, "substrate": 72, "grating": 64}, "launchable": True},
     "Y4_4_4": {"axis_cell_counts": (6, 12, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 4, 4), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y3_2", "expected_tags": {"air": 328, "substrate": 72, "grating": 32}, "launchable": True},
+    "Y5_1": {"axis_cell_counts": (6, 14, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 6, 4), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y3", "expected_tags": {"air": 372, "substrate": 84, "grating": 48}, "launchable": True},
     "Z1": {"axis_cell_counts": (6, 4, 8), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 6, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 144, "substrate": 24, "grating": 24}, "launchable": True},
     "Z2": {"axis_cell_counts": (6, 4, 10), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 8, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 184, "substrate": 24, "grating": 32}, "launchable": False},
     "Z3": {"axis_cell_counts": (6, 4, 12), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 10, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 224, "substrate": 24, "grating": 40}, "launchable": True},
@@ -110,6 +122,7 @@ D15_PREVIOUS_CASE = {
     "Y3_3": "Y3_2",
     "Y3_4": "Y3_2",
     "Y4_4_4": "Y3_2",
+    "Y5_1": "Y4_4_4",
     "Z1": "B",
     "Z2": "Z1",
     "Z3": "Z2",
@@ -157,6 +170,8 @@ def _case_axis_values(case: str, axis: str, count: int) -> tuple[float, ...]:
             return D15_Y3_4_Y_COORDINATES_NM
         if case == "Y4_4_4":
             return D15_Y4_4_4_Y_COORDINATES_NM
+        if case == "Y5_1":
+            return D15_Y5_1_Y_COORDINATES_NM
     return tuple(D15_AXIS_COORDINATES_NM[axis][count])
 
 def d15_axis_plan(case: str) -> dict[str, object]:
@@ -218,6 +233,9 @@ def d15_axis_plan(case: str) -> dict[str, object]:
     elif case in {"Y3_3", "Y3_4", "Y4_4_4"}:
         static_plan_record = D15_Y3_2_SIBLINGS_STATIC_PLAN_RECORD
         static_plan_sha = D15_Y3_2_SIBLINGS_STATIC_PLAN_SHA256
+    elif case == "Y5_1":
+        static_plan_record = D15_Y5_1_STATIC_PLAN_RECORD
+        static_plan_sha = D15_Y5_1_STATIC_PLAN_SHA256
     else:
         static_plan_record = D15_STATIC_PLAN_RECORD
         static_plan_sha = D15_STATIC_PLAN_SHA256
@@ -260,6 +278,8 @@ def d15_axis_plan(case: str) -> dict[str, object]:
         "plan_id": (
             "task40_phi90_d15_y3_2_axes_v1"
             if case == "Y3_2"
+            else "task40_phi90_d15_y5_1_axes_v1"
+            if case == "Y5_1"
             else f"task40_phi90_d15_{case.lower()}_axes_v2"
         ),
         "static_plan_record": static_plan_record,
