@@ -715,3 +715,72 @@ def test_v8_legacy_missing_checker_field_is_exact_hash_and_identity_bound():
         assert _task41_v8_report_independent_checker_status(
             tampered, expected_report_sha256=TASK41_P0_V8_LEGACY_REPORT_SHA256
         ) is None
+
+
+def test_v8_ordered_summary_keeps_grouped_left_distinct_from_closure():
+    import pytest
+
+    from src.runners.task41_p0_checker import (
+        _task41_v8_check_ordered_summary_closures,
+    )
+
+    left_volume = 1.25 - 0.75j
+    left_full = -0.5 + 1.5j
+    right_attribution = 0.4 - 0.25j
+    closure_volume = left_volume - right_attribution
+    closure_full = left_full - right_attribution
+    replay = {
+        "v7_grouped_left_volume": [left_volume.real, left_volume.imag],
+        "v7_grouped_left_full": [left_full.real, left_full.imag],
+    }
+    comparisons = {
+        "star_corrected_volume_closure": [closure_volume.real, closure_volume.imag],
+        "star_corrected_full_closure": [closure_full.real, closure_full.imag],
+    }
+
+    candidate = _task41_v8_check_ordered_summary_closures(
+        replay=replay,
+        expected_left_volume=left_volume,
+        expected_left_full=left_full,
+        expected_closure_volume=closure_volume,
+        expected_closure_full=closure_full,
+        comparisons=comparisons,
+        role="candidate",
+        label="fixture",
+    )
+    assert candidate["closure_comparison"] == "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+    assert candidate["v7_grouped_left_volume"] == [left_volume.real, left_volume.imag]
+    assert candidate["recomputed_closure_volume"] == [closure_volume.real, closure_volume.imag]
+
+    wrong_binding = {
+        **comparisons,
+        "star_corrected_volume_closure": [left_volume.real, left_volume.imag],
+        "star_corrected_full_closure": [left_full.real, left_full.imag],
+    }
+    with pytest.raises(ValueError, match="star_corrected_volume_closure"):
+        _task41_v8_check_ordered_summary_closures(
+            replay=replay,
+            expected_left_volume=left_volume,
+            expected_left_full=left_full,
+            expected_closure_volume=closure_volume,
+            expected_closure_full=closure_full,
+            comparisons=wrong_binding,
+            role="candidate",
+            label="fixture",
+        )
+
+    reference = _task41_v8_check_ordered_summary_closures(
+        replay=replay,
+        expected_left_volume=left_volume,
+        expected_left_full=left_full,
+        expected_closure_volume=closure_volume,
+        expected_closure_full=closure_full,
+        comparisons=None,
+        role="reference",
+        label="fixture",
+    )
+    assert (
+        reference["closure_comparison"]
+        == "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+    )
+    assert reference["recomputed_closure_full"] == [closure_full.real, closure_full.imag]

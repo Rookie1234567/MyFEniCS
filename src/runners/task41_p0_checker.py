@@ -3600,6 +3600,55 @@ def _task41_v8_assert_close(actual: Any, expected: Any, label: str) -> None:
         raise ValueError(f"V8 independent replay differs from saved {label}")
 
 
+def _task41_v8_check_ordered_summary_closures(
+    *,
+    replay: Mapping[str, Any],
+    expected_left_volume: complex,
+    expected_left_full: complex,
+    expected_closure_volume: complex,
+    expected_closure_full: complex,
+    comparisons: Mapping[str, Any] | None,
+    role: str,
+    label: str,
+) -> dict[str, Any]:
+    """Bind saved grouped-left values and candidate closures by meaning."""
+    for report_key, expected in (
+        ("v7_grouped_left_volume", expected_left_volume),
+        ("v7_grouped_left_full", expected_left_full),
+    ):
+        _task41_v8_assert_close(
+            _task41_v8_complex_pair(replay.get(report_key), report_key),
+            expected,
+            f"{label} {report_key}",
+        )
+
+    if role == "candidate":
+        if not isinstance(comparisons, Mapping):
+            raise ValueError(f"{label} candidate summary omits saved closure comparisons")
+        for report_key, expected in (
+            ("star_corrected_volume_closure", expected_closure_volume),
+            ("star_corrected_full_closure", expected_closure_full),
+        ):
+            _task41_v8_assert_close(
+                expected,
+                _task41_v8_complex_pair(comparisons.get(report_key), report_key),
+                f"{label} {report_key}",
+            )
+        closure_comparison = "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+    elif role == "reference":
+        closure_comparison = "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+    else:
+        raise ValueError(f"{label} has an unsupported ordered-summary role {role!r}")
+
+    return {
+        "v7_grouped_left_volume": [expected_left_volume.real, expected_left_volume.imag],
+        "v7_grouped_left_full": [expected_left_full.real, expected_left_full.imag],
+        "recomputed_closure_volume": [expected_closure_volume.real, expected_closure_volume.imag],
+        "recomputed_closure_full": [expected_closure_full.real, expected_closure_full.imag],
+        "closure_comparison": closure_comparison,
+    }
+
+
 def _task41_v8_lu_rhs_counterfactual(
     *,
     K: np.ndarray,
@@ -4614,9 +4663,8 @@ def _task41_v8_selected_trace_star_recheck(
         "delta_t": "delta_t_original_order_starts_at_minus_native_action",
         "Q": "Q_sum_wH_attributed_terms",
         "Q_regrouped": "Q_regrouped_sum",
-        "closure_volume": "v7_grouped_left_volume",
-        "closure_full": "v7_grouped_left_full",
     }
+    ordered_p3_row_checks = []
     for order_name, order in (("production_original_cell_order", production_order), ("v6_eight_key_prefix_observer_order", observer_order)):
         if ordered_summaries.get(order_name) is None:
             raise ValueError(f"V8 P3 summary omits order {order_name}")
@@ -4654,8 +4702,11 @@ def _task41_v8_selected_trace_star_recheck(
                     r_full = native_f - native_action - beta_value
                     d_volume_saved = complex(source_value(f"task41_v4_d_volume_trace_col{column_index}", "V6 d_volume")[selected_active_row])
                     d_full_saved = complex(p6_saved[selected_active_row, column_index] - reduced_saved[selected_active_row, column_index])
-                    closure_volume = (d_volume_saved + r_volume) + totals["T_r_i"] - (totals["delta_t"] + totals["Q"])
-                    closure_full = (d_full_saved + r_full) + totals["T_r_i"] - (totals["delta_t"] + totals["Q"])
+                    left_volume = (d_volume_saved + r_volume) + totals["T_r_i"]
+                    left_full = (d_full_saved + r_full) + totals["T_r_i"]
+                    right_attribution = totals["delta_t"] + totals["Q"]
+                    closure_volume = left_volume - right_attribution
+                    closure_full = left_full - right_attribution
                     expected_values = {
                         "s": totals["s"],
                         "s_full": s_full,
@@ -4667,8 +4718,6 @@ def _task41_v8_selected_trace_star_recheck(
                         "delta_t": totals["delta_t"],
                         "Q": totals["Q"],
                         "Q_regrouped": totals["Q_regrouped"],
-                        "closure_volume": closure_volume,
-                        "closure_full": closure_full,
                     }
                     row = next(
                         (item for item in report_rows if isinstance(item, Mapping) and item.get("column") == column_index and item.get("state") == state_label and item.get("role") == role),
@@ -4696,10 +4745,33 @@ def _task41_v8_selected_trace_star_recheck(
                     for name, report_key in summary_field_map.items():
                         actual = _task41_v8_complex_pair(replay.get(report_key), report_key)
                         _task41_v8_assert_close(actual, expected_values[name], f"{order_name} {report_key}")
+                    comparisons = (
+                        row.get("saved_v6_v7_row_comparisons")
+                        if role == "candidate"
+                        else None
+                    )
+                    if role == "candidate" and not isinstance(comparisons, Mapping):
+                        raise ValueError("V8 candidate P3 summary omits its V6/V7 comparisons")
+                    closure_check = _task41_v8_check_ordered_summary_closures(
+                        replay=replay,
+                        expected_left_volume=left_volume,
+                        expected_left_full=left_full,
+                        expected_closure_volume=closure_volume,
+                        expected_closure_full=closure_full,
+                        comparisons=comparisons,
+                        role=role,
+                        label=f"{order_name}/{column_index}/{state_label}/{role}",
+                    )
+                    ordered_p3_row_checks.append(
+                        {
+                            "order": order_name,
+                            "column": column_index,
+                            "state": state_label,
+                            "role": role,
+                            **closure_check,
+                        }
+                    )
                     if role == "candidate":
-                        comparisons = row.get("saved_v6_v7_row_comparisons")
-                        if not isinstance(comparisons, Mapping):
-                            raise ValueError("V8 candidate P3 summary omits its V6/V7 comparisons")
                         expected_differences = {
                             "star_s_full_minus_V6_full_p6": s_full - complex(p6_saved[selected_active_row, column_index]),
                             "star_g_full_minus_V6_full_reduced_rhs": g_full - complex(reduced_saved[selected_active_row, column_index]),
@@ -4903,6 +4975,7 @@ def _task41_v8_selected_trace_star_recheck(
         "local_matrix_defect_diagnostics": local_matrix_defects,
         "local_rhs_lu_counterfactual": local_rhs_lu_counterfactual,
         "ordered_p3_summary_rows_recomputed": scalar_rows_checked,
+        "ordered_p3_row_checks": ordered_p3_row_checks,
         "native_rhs_split_epsilon_by_column": {
             str(column): [value.real, value.imag]
             for column, value in native_rhs_split_epsilon.items()
