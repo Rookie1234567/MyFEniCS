@@ -2871,7 +2871,7 @@ def load_task41_v4_volume_only_donor(
 def _task41_mesh_actual_exact_candidate_profile(
     report_path: Path, report: Mapping[str, Any]
 ) -> dict[str, str]:
-    """Select only the frozen V5 or V6 artifact contract for an exact-geometry receipt."""
+    """Select a frozen V5, V6, or V8 exact-geometry evidence contract."""
     if report_path.name == "task41_p0_v5_mesh_actual_exact_attribution.json":
         if report.get("schema") != "task41.p0.v5.mesh_actual_exact_attribution_receipt.v1":
             raise ValueError("V5 candidate report schema differs")
@@ -2900,6 +2900,21 @@ def _task41_mesh_actual_exact_candidate_profile(
             "action_schema": "task41.p0.v6.global_geometry_native_elimination_attribution.v1",
             "denominators_source": "review_report_v6.md",
             "check_schema": "task41.p0.v6.actual_qmetric_candidate_check.v1",
+        }
+    if report_path.name == "task41_p0_v8_selected_trace_star_audit.json":
+        if (
+            report.get("schema") != "task41.p0.v8.selected_trace_star_audit_receipt.v1"
+            or report.get("status") != "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
+            or report.get("raw_tensor_evaluator") != "actual_qmetric_blocked_gram"
+        ):
+            raise ValueError("V8 selected trace-star report schema or status differs")
+        return {
+            "version": "v8",
+            "candidate_prefix": "task41_p0_v8_selected_cell",
+            "attribution_prefix": "task41_p0_v8_selected_cell",
+            "action_schema": "task41.p0.v8.selected_trace_star_p3_replay.v1",
+            "denominators_source": "review_report_v8.md",
+            "check_schema": "task41.p0.v8.selected_trace_star_independent_check.v1",
         }
     raise ValueError("exact-geometry candidate report filename is not registered")
 
@@ -3517,9 +3532,849 @@ def _task41_v6_global_attribution_identity_binding(
         )
 
 
+def _task41_v8_complex_pair(value: Any, label: str) -> complex:
+    if (
+        not isinstance(value, (list, tuple))
+        or len(value) != 2
+        or any(type(part) not in (int, float) for part in value)
+        or not np.isfinite(np.asarray(value, dtype=np.float64)).all()
+    ):
+        raise ValueError(f"V8 {label} is not a finite real/imaginary pair")
+    return complex(float(value[0]), float(value[1]))
+
+
+def _task41_v8_assert_close(actual: Any, expected: Any, label: str) -> None:
+    left = np.asarray(actual)
+    right = np.asarray(expected)
+    if (
+        left.shape != right.shape
+        or not np.isfinite(left).all()
+        or not np.isfinite(right).all()
+        or not np.allclose(left, right, rtol=2.0e-12, atol=2.0e-13)
+    ):
+        raise ValueError(f"V8 independent replay differs from saved {label}")
+
+
+def _task41_v8_local_matrix_defect_diagnostic(
+    *,
+    tensor: np.ndarray,
+    interior_positions: np.ndarray,
+    trace_positions: np.ndarray,
+    R: np.ndarray,
+    T: np.ndarray,
+    S: np.ndarray,
+) -> dict[str, Any]:
+    """Measure the four saved elimination defects without imposing a new gate."""
+    block = np.asarray(tensor, dtype=np.complex128)
+    interior = np.asarray(interior_positions, dtype=np.int64)
+    trace = np.asarray(trace_positions, dtype=np.int64)
+    R = np.asarray(R, dtype=np.complex128)
+    T = np.asarray(T, dtype=np.complex128)
+    S = np.asarray(S, dtype=np.complex128)
+    dimension = block.shape[0] if block.ndim == 2 else -1
+    if (
+        block.ndim != 2
+        or block.shape != (dimension, dimension)
+        or not np.array_equal(
+            np.sort(np.concatenate((interior, trace))), np.arange(dimension)
+        )
+    ):
+        raise ValueError("V8 local tensor partition is malformed")
+    K = block[np.ix_(interior, interior)]
+    G = block[np.ix_(interior, trace)]
+    J = block[np.ix_(trace, interior)]
+    L = block[np.ix_(trace, trace)]
+    if (
+        R.shape != G.shape
+        or T.shape != J.shape
+        or S.shape != L.shape
+        or any(not np.isfinite(value).all() for value in (K, G, J, L, R, T, S))
+    ):
+        raise ValueError("V8 saved local matrix layouts or values are malformed")
+    E_R = K @ R + G
+    E_T = J + T @ K
+    C_S = S - L - J @ R
+    E_S = S - L - T @ G
+    identity_rhs = C_S + E_T @ R - T @ E_R
+    identity_residual = E_S - identity_rhs
+
+    def metrics(values: np.ndarray) -> dict[str, float]:
+        matrix = np.asarray(values, dtype=np.complex128)
+        return {
+            "frobenius": float(np.linalg.norm(matrix.ravel())),
+            "max_abs": float(np.max(np.abs(matrix), initial=0.0)),
+        }
+
+    return {
+        "E_R": metrics(E_R),
+        "E_T": metrics(E_T),
+        "C_S": metrics(C_S),
+        "E_S": metrics(E_S),
+        "E_S_identity_residual": metrics(identity_residual),
+        "diagnostic_only": True,
+        "new_rejection_tolerance": None,
+    }
+
+
+def _task41_v8_local_p3_replay(
+    *,
+    tensor: np.ndarray,
+    interior_positions: np.ndarray,
+    trace_positions: np.ndarray,
+    R: np.ndarray,
+    T: np.ndarray,
+    S: np.ndarray,
+    u_i: np.ndarray,
+    t_c: np.ndarray,
+    b_i: np.ndarray,
+    n_i: np.ndarray,
+    selected_local_rows: np.ndarray,
+    selected_coefficients: np.ndarray,
+) -> tuple[dict[str, np.ndarray], dict[str, complex]]:
+    """Recreate the saved local P3 vectors and sparse E^H selected-row products."""
+    block = np.asarray(tensor, dtype=np.complex128)
+    interior = np.asarray(interior_positions, dtype=np.int64)
+    trace = np.asarray(trace_positions, dtype=np.int64)
+    R = np.asarray(R, dtype=np.complex128)
+    T = np.asarray(T, dtype=np.complex128)
+    S = np.asarray(S, dtype=np.complex128)
+    u_i, t_c, b_i, n_i = (
+        np.asarray(value, dtype=np.complex128) for value in (u_i, t_c, b_i, n_i)
+    )
+    selected_rows = np.asarray(selected_local_rows, dtype=np.int64)
+    coefficients = np.asarray(selected_coefficients, dtype=np.complex128)
+    dimension = block.shape[0] if block.ndim == 2 else -1
+    if (
+        block.ndim != 2
+        or block.shape != (dimension, dimension)
+        or interior.ndim != 1
+        or trace.ndim != 1
+        or np.intersect1d(interior, trace).size
+        or not np.array_equal(
+            np.sort(np.concatenate((interior, trace))), np.arange(dimension)
+        )
+        or u_i.shape != (len(interior),)
+        or b_i.shape != u_i.shape
+        or n_i.shape != u_i.shape
+        or t_c.shape != (len(trace),)
+        or selected_rows.ndim != 1
+        or coefficients.shape != selected_rows.shape
+        or selected_rows.size == 0
+        or np.any(selected_rows < 0)
+        or np.any(selected_rows >= len(trace))
+        or np.unique(selected_rows).size != selected_rows.size
+        or not np.isfinite(block).all()
+        or not all(np.isfinite(value).all() for value in (R, T, S, u_i, t_c, b_i, n_i, coefficients))
+    ):
+        raise ValueError("V8 saved local P3 inputs or tensor partition are malformed")
+
+    K = block[np.ix_(interior, interior)]
+    G = block[np.ix_(interior, trace)]
+    J = block[np.ix_(trace, interior)]
+    L = block[np.ix_(trace, trace)]
+    if (
+        R.shape != G.shape
+        or T.shape != J.shape
+        or S.shape != L.shape
+    ):
+        raise ValueError("V8 saved local R/T/S matrix layouts differ from the oriented tensor")
+
+    K_u = K @ u_i
+    G_t = G @ t_c
+    actual_i = K_u + G_t
+    delta_i = actual_i - n_i
+    J_u = J @ u_i
+    L_t = L @ t_c
+    actual_t = J_u + L_t
+    S_action = S @ t_c
+    local_reduced_rhs = T @ b_i
+    T_r_i = T @ (b_i - n_i)
+    T_delta_i = T @ delta_i
+    E_S_t = S_action - L_t - T @ G_t
+    E_T_u = J_u + T @ K_u
+    minus_E_T_u = -E_T_u
+    Q_local = T_delta_i + E_S_t - E_T_u
+    Q_regrouped_local = (S - L) @ t_c - J_u - T @ n_i
+    arrays = {
+        "K_u": K_u,
+        "G_t": G_t,
+        "actual_i": actual_i,
+        "delta_i": delta_i,
+        "J_u": J_u,
+        "L_t": L_t,
+        "actual_t": actual_t,
+        "S_action": S_action,
+        "local_reduced_rhs": local_reduced_rhs,
+        "T_r_i": T_r_i,
+        "T_delta_i": T_delta_i,
+        "E_S_t": E_S_t,
+        "minus_E_T_u": minus_E_T_u,
+        "Q_local": Q_local,
+        "Q_regrouped_local": Q_regrouped_local,
+    }
+    weights = np.zeros(len(trace), dtype=np.complex128)
+    weights[selected_rows] = coefficients
+    scalar_names = {
+        "s": S_action,
+        "rhs_i": local_reduced_rhs,
+        "T_r_i": T_r_i,
+        "delta_t": actual_t,
+        "Q": Q_local,
+        "Q_regrouped": Q_regrouped_local,
+    }
+    scalars = {
+        name: complex(np.vdot(weights, vector))
+        for name, vector in scalar_names.items()
+    }
+    return arrays, scalars
+
+
+def _task41_v8_selected_trace_star_recheck(
+    report_path: Path,
+    *,
+    expected_report_sha256: str,
+    donor: Mapping[str, Any],
+    donor_contract_sha256: str,
+    consumer: Mapping[str, Any],
+    consumer_contract_sha256: str,
+    donor_contract: Mapping[str, Any],
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Recheck only hash-authorized V8 local operands and selected-row attribution."""
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V8_SELECTED_ACTIVE_ROW,
+        TASK41_P0_V8_V6_INDEX_SHA256,
+        TASK41_P0_V8_V6_REPORT_SHA256,
+        TASK41_P0_V8_V7_ARRAY_SHA256,
+        TASK41_P0_V8_V7_INDEX_SHA256,
+    )
+
+    report_path = Path(report_path).resolve(strict=True)
+    repo_root = Path(repo_root).resolve(strict=True)
+    results_root = (repo_root / "results").resolve()
+    if (
+        not report_path.is_relative_to(results_root)
+        or not re.fullmatch(r"[0-9a-f]{64}", str(expected_report_sha256))
+        or sha256_file(report_path) != expected_report_sha256
+    ):
+        raise ValueError("V8 report path or explicit SHA-256 differs")
+    report = _json_object(report_path, "V8 selected trace-star report")
+    profile = _task41_mesh_actual_exact_candidate_profile(report_path, report)
+    if profile["version"] != "v8":
+        raise ValueError("V8 independent checker received a different candidate profile")
+    consumer_case = consumer.get("case")
+    if (
+        report.get("geometry_policy") != "mesh_actual_exact"
+        or report.get("raw_tensor_evaluator") != "actual_qmetric_blocked_gram"
+        or report.get("donor_contract_sha256") != donor_contract_sha256
+        or report.get("consumer_contract_sha256") != consumer_contract_sha256
+        or report.get("donor_source_sha") != donor_contract.get("source", {}).get("sha")
+        or report.get("consumer_source_sha") != consumer.get("source", {}).get("sha")
+        or report.get("donor_manifest_sha256") != donor.get("manifest_sha256")
+        or report.get("independent_checker_status") != "NOT_RUN"
+        or not isinstance(consumer_case, Mapping)
+    ):
+        raise ValueError("V8 report donor/consumer/geometry identity differs")
+    selected = report.get("selected_trace_star_audit")
+    if not isinstance(selected, Mapping):
+        raise ValueError("V8 report omits its selected trace-star result")
+    metadata = selected.get("metadata")
+    p3 = selected.get("p3_production_row_replay")
+    source_replay = selected.get("saved_operand_recomposition")
+    source_artifacts = (
+        source_replay.get("source_artifacts")
+        if isinstance(source_replay, Mapping)
+        else None
+    )
+    if (
+        selected.get("status") != "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
+        or selected.get("selected_active_row") != TASK41_P0_V8_SELECTED_ACTIVE_ROW
+        or not isinstance(metadata, Mapping)
+        or not isinstance(p3, Mapping)
+        or not isinstance(source_artifacts, Mapping)
+        or p3.get("schema") != "task41.p0.v8.selected_trace_star_p3_replay.v1"
+        or p3.get("complete_incident_cell_coverage") is not True
+    ):
+        raise ValueError("V8 selected trace-star report lacks its complete P3 receipt")
+
+    expected_indices = {
+        "v6_index": (
+            repo_root
+            / "docs/task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_hash_index_20261021.json",
+            TASK41_P0_V8_V6_INDEX_SHA256,
+        ),
+        "v7_index": (
+            repo_root
+            / "docs/task41extra_phi90_p50x50_g17x20/outcomes/b0_v7_saved_attribution_20261021.json",
+            TASK41_P0_V8_V7_INDEX_SHA256,
+        ),
+    }
+    source_documents: dict[str, tuple[Path, dict[str, Any]]] = {}
+    for key, (expected_path, expected_sha) in expected_indices.items():
+        path = Path(str(source_artifacts.get(key, ""))).resolve(strict=True)
+        digest = source_artifacts.get(f"{key}_sha256")
+        if path != expected_path.resolve() or digest != expected_sha or sha256_file(path) != expected_sha:
+            raise ValueError(f"V8 frozen {key} path or SHA-256 differs")
+        source_documents[key] = (path, _json_object(path, f"V8 {key}"))
+
+    v6_index = source_documents["v6_index"][1]
+    v7_index = source_documents["v7_index"][1]
+    v6_payload = v6_index.get("candidate_persisted_arrays")
+    v7_payload = v7_index.get("arrays")
+    v7_audit = v7_index.get("audit")
+    if not isinstance(v6_payload, Mapping) or not isinstance(v7_payload, Mapping) or not isinstance(v7_audit, Mapping):
+        raise ValueError("V8 V6/V7 source indexes are malformed")
+    v6_report_path = Path(str(source_artifacts.get("v6_report", ""))).resolve(strict=True)
+    v7_report_path = Path(str(source_artifacts.get("v7_report", ""))).resolve(strict=True)
+    if (
+        v6_report_path != Path(str(v6_index.get("candidate_report_path", ""))).resolve()
+        or not v6_report_path.is_relative_to(results_root)
+        or source_artifacts.get("v6_report_sha256") != TASK41_P0_V8_V6_REPORT_SHA256
+        or sha256_file(v6_report_path) != TASK41_P0_V8_V6_REPORT_SHA256
+        or v7_report_path != Path(str(v7_audit.get("report_path", ""))).resolve()
+        or not v7_report_path.is_relative_to(results_root)
+        or source_artifacts.get("v7_report_sha256") != v7_audit.get("report_sha256")
+        or sha256_file(v7_report_path) != v7_audit.get("report_sha256")
+    ):
+        raise ValueError("V8 V6/V7 source report path or SHA-256 differs from its index")
+    v6_report = _json_object(v6_report_path, "V8 V6 source report")
+    v7_report = _json_object(v7_report_path, "V8 V7 source report")
+    v6_index_records = v6_payload.get("items")
+    v6_report_records = v6_report.get("persisted_evidence_arrays")
+    v7_index_records = v7_payload.get("records")
+    if not all(isinstance(value, list) for value in (v6_index_records, v6_report_records, v7_index_records)):
+        raise ValueError("V8 V6/V7 source indexes omit their array lists")
+    v6_index_by_name = {item.get("name"): item for item in v6_index_records if isinstance(item, Mapping)}
+    v6_report_by_name = {item.get("name"): item for item in v6_report_records if isinstance(item, Mapping)}
+    v7_index_by_name = {item.get("name"): item for item in v7_index_records if isinstance(item, Mapping)}
+    v6_source_arrays = source_artifacts.get("v6_arrays")
+    v7_source_arrays = source_artifacts.get("v7_arrays")
+    if (
+        not isinstance(v6_source_arrays, Mapping)
+        or not isinstance(v7_source_arrays, Mapping)
+        or not v6_source_arrays
+        or set(v6_source_arrays) - set(v6_index_by_name)
+        or set(v6_source_arrays) - set(v6_report_by_name)
+        or set(v7_source_arrays) != set(v7_index_by_name)
+        or set(v7_source_arrays) != set(TASK41_P0_V8_V7_ARRAY_SHA256)
+    ):
+        raise ValueError("V8 explicit V6/V7 authorized-array lists differ from frozen indexes")
+
+    def same_array_identity(left: Mapping[str, Any], right: Mapping[str, Any], basis: Path) -> bool:
+        left_path = Path(str(left.get("path", "")))
+        right_path = Path(str(right.get("path", "")))
+        left_resolved = (left_path if left_path.is_absolute() else basis / left_path).resolve()
+        right_resolved = (right_path if right_path.is_absolute() else repo_root / right_path).resolve()
+        return bool(
+            left.get("name") == right.get("name")
+            and left_resolved == right_resolved
+            and all(left.get(field) == right.get(field) for field in ("sha256", "bytes", "shape", "dtype"))
+        )
+
+    v6_basis = Path(str(v6_payload.get("path_basis", ""))).resolve(strict=True)
+    if v6_basis != repo_root:
+        raise ValueError("V8 V6 array index has a different path basis")
+    for name, ref in v6_source_arrays.items():
+        if (
+            not isinstance(ref, Mapping)
+            or not same_array_identity(ref, v6_index_by_name[name], v6_basis)
+            or not same_array_identity(ref, v6_report_by_name[name], repo_root)
+        ):
+            raise ValueError(f"V8 V6 explicit array authorization differs for {name}")
+    for name, ref in v7_source_arrays.items():
+        expected_sha = TASK41_P0_V8_V7_ARRAY_SHA256[name]
+        if (
+            not isinstance(ref, Mapping)
+            or not same_array_identity(ref, v7_index_by_name[name], repo_root)
+            or ref.get("sha256") != expected_sha
+        ):
+            raise ValueError(f"V8 V7 explicit array authorization differs for {name}")
+
+    v8_records_raw = report.get("persisted_evidence_arrays")
+    if not isinstance(v8_records_raw, list):
+        raise ValueError("V8 report omits its explicit saved-array inventory")
+    v8_records: dict[str, Mapping[str, Any]] = {}
+    for item in v8_records_raw:
+        if not isinstance(item, Mapping) or not isinstance(item.get("name"), str):
+            raise ValueError("V8 persisted-array inventory has a malformed item")
+        name = str(item["name"])
+        if name in v8_records:
+            raise ValueError(f"V8 persisted-array name is duplicated: {name}")
+        path = Path(str(item.get("path", ""))).resolve(strict=True)
+        if (
+            not path.is_relative_to(report_path.parent)
+            or path.stat().st_size != item.get("bytes")
+            or not isinstance(item.get("sha256"), str)
+            or sha256_file(path) != item.get("sha256")
+        ):
+            raise ValueError(f"V8 persisted-array path/hash differs for {name}")
+        v8_records[name] = item
+
+    cache: dict[tuple[str, str], np.ndarray] = {}
+
+    def load_array_ref(ref: Any, label: str) -> np.ndarray:
+        if not isinstance(ref, Mapping) or not isinstance(ref.get("name"), str):
+            raise ValueError(f"V8 {label} omits its named array authorization")
+        name = str(ref["name"])
+        if name in v8_records:
+            inventory, basis = v8_records[name], report_path.parent
+            cache_key = ("v8", name)
+        elif name in v6_source_arrays:
+            inventory, basis = v6_source_arrays[name], v6_basis
+            cache_key = ("v6", name)
+        elif name in v7_source_arrays:
+            inventory, basis = v7_source_arrays[name], repo_root
+            cache_key = ("v7", name)
+        else:
+            raise ValueError(f"V8 {label} references an unauthorized array: {name}")
+        if not same_array_identity(ref, inventory, basis):
+            raise ValueError(f"V8 {label} identity differs from its authorized inventory")
+        if cache_key not in cache:
+            path = Path(str(inventory["path"]))
+            path = (path if path.is_absolute() else basis / path).resolve(strict=True)
+            if (
+                not path.is_relative_to(results_root)
+                or path.stat().st_size != inventory.get("bytes")
+                or sha256_file(path) != inventory.get("sha256")
+            ):
+                raise ValueError(f"V8 {label} array path/hash changed: {name}")
+            array = np.load(path, mmap_mode="r", allow_pickle=False)
+            if (
+                list(array.shape) != inventory.get("shape")
+                or str(array.dtype) != inventory.get("dtype")
+                or array.dtype.kind not in "fciu"
+                or not np.isfinite(array).all()
+            ):
+                raise ValueError(f"V8 {label} array layout or values changed: {name}")
+            cache[cache_key] = array
+        return cache[cache_key]
+
+    incident_order = metadata.get("incident_cell_order")
+    selected_active_row = selected.get("selected_active_row")
+    selected_original_row = selected.get("selected_original_row")
+    if (
+        not isinstance(incident_order, list)
+        or not incident_order
+        or any(type(cell) is not int for cell in incident_order)
+        or incident_order != sorted(set(incident_order))
+        or type(selected_original_row) is not int
+        or metadata.get("incident_cell_count") != len(incident_order)
+        or selected_active_row != TASK41_P0_V8_SELECTED_ACTIVE_ROW
+    ):
+        raise ValueError("V8 selected row or incident-cell map is malformed")
+    columns = donor.get("columns")
+    if not isinstance(columns, (list, tuple)) or len(columns) != 2:
+        raise ValueError("V8 checker requires the normalized two-column saved donor")
+    for column in columns:
+        active = np.asarray(column["active_original_rows"])
+        if (
+            active.ndim != 1
+            or active.dtype.kind not in "iu"
+            or selected_active_row >= active.size
+            or int(active[selected_active_row]) != selected_original_row
+        ):
+            raise ValueError("V8 selected original row does not resolve through donor map")
+
+    numeric_records = selected.get("local_numeric_cell_identity_and_artifacts")
+    selected_cells = metadata.get("selected_cells")
+    per_cell_rows = p3.get("per_cell_signed_contributions")
+    if not all(isinstance(value, list) for value in (numeric_records, selected_cells, per_cell_rows)):
+        raise ValueError("V8 selected-star report omits local cells or P3 inputs")
+    selected_by_id = {item.get("cell_index"): item for item in selected_cells if isinstance(item, Mapping)}
+    numeric_by_id = {item.get("cell_index"): item for item in numeric_records if isinstance(item, Mapping)}
+    p3_by_id = {item.get("cell_index"): item for item in per_cell_rows if isinstance(item, Mapping)}
+    if (
+        len(selected_by_id) != len(selected_cells)
+        or len(numeric_by_id) != len(numeric_records)
+        or len(p3_by_id) != len(per_cell_rows)
+        or list(selected_by_id) != incident_order
+        or set(incident_order) - set(numeric_by_id)
+        or set(p3_by_id) != set(incident_order)
+    ):
+        raise ValueError("V8 selected-cell identity does not cover the complete incident star")
+
+    cell_terms: dict[tuple[int, int, str, str], dict[str, complex]] = {}
+    local_vector_checks = 0
+    local_matrix_defects: list[dict[str, Any]] = []
+    for cell_index in incident_order:
+        numeric = numeric_by_id[cell_index]
+        selected_map = selected_by_id[cell_index]
+        if numeric.get("is_target_row_incident") is not True:
+            raise ValueError("V8 numeric-cell inventory marks an incident cell as nonincident")
+        local_meta = {
+            key: numeric.get(key)
+            for key in ("selected_local_trace_rows", "selected_trace_coefficients")
+        }
+        if (
+            local_meta["selected_local_trace_rows"] != selected_map.get("selected_local_trace_rows")
+            or local_meta["selected_trace_coefficients"] != selected_map.get("selected_trace_coefficients")
+        ):
+            raise ValueError(f"V8 selected-row support differs between cell {cell_index} records")
+        interior_positions = np.asarray(numeric.get("true_interior_positions"), dtype=np.int64)
+        trace_positions = np.asarray(numeric.get("trace_complement_positions"), dtype=np.int64)
+        interior_rows = np.asarray(numeric.get("interior_original_rows"), dtype=np.int64)
+        trace_rows = np.asarray(numeric.get("trace_original_rows"), dtype=np.int64)
+        active_ids = np.asarray(numeric.get("active_ids"), dtype=np.int64)
+        selected_local_rows = np.asarray(local_meta["selected_local_trace_rows"], dtype=np.int64)
+        selected_coefficients = np.asarray(local_meta["selected_trace_coefficients"], dtype=np.complex128)
+        if (
+            interior_positions.ndim != 1
+            or trace_positions.ndim != 1
+            or interior_rows.shape != interior_positions.shape
+            or trace_rows.shape != trace_positions.shape
+            or active_ids.ndim != 1
+            or np.intersect1d(interior_positions, trace_positions).size
+            or not np.array_equal(
+                np.sort(np.concatenate((interior_positions, trace_positions))),
+                np.arange(len(interior_positions) + len(trace_positions)),
+            )
+            or selected_local_rows.size == 0
+            or np.any(selected_local_rows >= len(trace_positions))
+            or np.unique(selected_local_rows).size != selected_local_rows.size
+            or not np.isfinite(selected_coefficients).all()
+            or not np.any(selected_coefficients != 0.0)
+        ):
+            raise ValueError(f"V8 cell {cell_index} selected-row local partition is malformed")
+        locations = np.flatnonzero(active_ids == selected_active_row)
+        if locations.size != 1 or not np.array_equal(selected_local_rows, np.asarray(selected_map["selected_local_trace_rows"], dtype=np.int64)):
+            raise ValueError(f"V8 cell {cell_index} active trace row is missing or duplicated")
+
+        role_records = numeric.get("roles")
+        state_records = p3_by_id[cell_index].get("roles_and_states")
+        if not isinstance(role_records, list) or not isinstance(state_records, list):
+            raise ValueError(f"V8 cell {cell_index} omits role/state records")
+        roles_by_name = {row.get("role"): row for row in role_records if isinstance(row, Mapping)}
+        if set(roles_by_name) != {"candidate", "reference"}:
+            raise ValueError(f"V8 cell {cell_index} does not bind both numeric roles")
+        state_lookup = {
+            (row.get("column"), row.get("state")): row
+            for row in state_records
+            if isinstance(row, Mapping)
+        }
+        if set(state_lookup) != {
+            (column, state) for column in range(2) for state in ("j0", "j3")
+        }:
+            raise ValueError(f"V8 cell {cell_index} does not bind both columns and paired states")
+
+        for role in ("candidate", "reference"):
+            role_row = roles_by_name[role]
+            if (
+                role_row.get("producer_identity")
+                != (selected.get("candidate_identity") if role == "candidate" else "original_ffcx_reference_kernel")
+                or not isinstance(role_row.get("raw_oriented_RTS_artifacts"), Mapping)
+            ):
+                raise ValueError(f"V8 cell {cell_index} {role} producer identity is missing")
+            artifact_refs = role_row["raw_oriented_RTS_artifacts"]
+            tensors = load_array_ref(artifact_refs.get("oriented_tensor"), f"cell {cell_index} {role} tensor")
+            if tensors.shape != (len(interior_positions) + len(trace_positions),) * 2:
+                raise ValueError(f"V8 cell {cell_index} {role} oriented tensor shape differs")
+            RTS = {
+                name: load_array_ref(artifact_refs.get(name), f"cell {cell_index} {role} {name}")
+                for name in ("R", "T", "S")
+            }
+            if any(array.dtype != np.dtype(np.complex128) for array in [tensors, *RTS.values()]):
+                raise ValueError(f"V8 cell {cell_index} {role} local matrices are not complex128")
+            local_matrix_defects.append(
+                {
+                    "cell_index": cell_index,
+                    "role": role,
+                    **_task41_v8_local_matrix_defect_diagnostic(
+                        tensor=tensors,
+                        interior_positions=interior_positions,
+                        trace_positions=trace_positions,
+                        R=RTS["R"],
+                        T=RTS["T"],
+                        S=RTS["S"],
+                    ),
+                }
+            )
+            for column_index in range(2):
+                donor_column = columns[column_index]
+                native_volume_rhs = np.asarray(donor_column["native_volume_rhs"], dtype=np.complex128)
+                native_rhs = np.asarray(donor_column["native_rhs"], dtype=np.complex128)
+                for state_label in ("j0", "j3"):
+                    state_row = state_lookup[(column_index, state_label)]
+                    if state_row.get("native_full_rhs_at_selected_original_row") is None:
+                        raise ValueError("V8 P3 state omits its native full RHS value")
+                    state_role = next(
+                        (
+                            entry for entry in state_row.get("roles", [])
+                            if isinstance(entry, Mapping) and entry.get("role") == role
+                        ),
+                        None,
+                    )
+                    if not isinstance(state_role, Mapping):
+                        raise ValueError(f"V8 cell {cell_index} {role} P3 state input is absent")
+                    local_values = state_role.get("local_values")
+                    signed_refs = state_role.get("signed_action_artifacts")
+                    if not isinstance(local_values, Mapping) or not isinstance(signed_refs, Mapping):
+                        raise ValueError("V8 P3 state does not bind its local inputs/actions")
+                    state = next(item for item in donor_column["states"] if item.get("label") == state_label)
+                    storage = np.asarray(state["storage"], dtype=np.complex128)
+                    native_action = np.asarray(state["native_volume_action"], dtype=np.complex128)
+                    inputs = {
+                        "u_i": load_array_ref(local_values.get("u_i"), "u_i"),
+                        "t_c": load_array_ref(local_values.get("t_c"), "t_c"),
+                        "b_i": load_array_ref(local_values.get("b_i"), "b_i"),
+                        "n_i": load_array_ref(local_values.get("n_i"), "n_i"),
+                    }
+                    _task41_v8_assert_close(inputs["u_i"], storage[interior_rows], f"cell {cell_index} u_i donor slice")
+                    _task41_v8_assert_close(inputs["t_c"], storage[trace_rows], f"cell {cell_index} t_c donor slice")
+                    _task41_v8_assert_close(inputs["b_i"], native_volume_rhs[interior_rows], f"cell {cell_index} b_i donor slice")
+                    _task41_v8_assert_close(inputs["n_i"], native_action[interior_rows], f"cell {cell_index} n_i donor slice")
+                    vectors, scalars = _task41_v8_local_p3_replay(
+                        tensor=tensors,
+                        interior_positions=interior_positions,
+                        trace_positions=trace_positions,
+                        R=RTS["R"],
+                        T=RTS["T"],
+                        S=RTS["S"],
+                        u_i=inputs["u_i"],
+                        t_c=inputs["t_c"],
+                        b_i=inputs["b_i"],
+                        n_i=inputs["n_i"],
+                        selected_local_rows=selected_local_rows,
+                        selected_coefficients=selected_coefficients,
+                    )
+                    for name, expected in vectors.items():
+                        actual = load_array_ref(signed_refs.get(name), f"cell {cell_index} {name}")
+                        _task41_v8_assert_close(actual, expected, f"cell {cell_index} {name}")
+                        local_vector_checks += 1
+                    projected_location = int(locations[0])
+                    for name, scalar_name in (
+                        ("projected_actual_trace", "delta_t"),
+                        ("projected_T_r_i", "T_r_i"),
+                        ("projected_Q", "Q"),
+                        ("projected_Q_regrouped", "Q_regrouped"),
+                    ):
+                        projected = load_array_ref(
+                            signed_refs.get(name), f"cell {cell_index} {name}"
+                        )
+                        if projected.shape != (active_ids.size,):
+                            raise ValueError(
+                                f"V8 cell {cell_index} {name} projection layout differs"
+                            )
+                        _task41_v8_assert_close(
+                            projected[projected_location],
+                            scalars[scalar_name],
+                            f"cell {cell_index} selected {name}",
+                        )
+                        local_vector_checks += 1
+                    contributions = state_role.get("selected_row_contributions")
+                    if not isinstance(contributions, Mapping):
+                        raise ValueError("V8 P3 state omits selected scalar contributions")
+                    field_keys = {
+                        "s": "S_action",
+                        "rhs_i": "local_reduced_rhs_T_b_i",
+                        "T_r_i": "T_r_i",
+                        "delta_t": "delta_t_cell",
+                        "Q": "Q_cell",
+                        "Q_regrouped": "Q_regrouped_cell",
+                    }
+                    for field, report_key in field_keys.items():
+                        value = _task41_v8_complex_pair(contributions.get(report_key), report_key)
+                        _task41_v8_assert_close(value, scalars[field], f"cell {cell_index} scalar {report_key}")
+                    for report_key, scalar_name in (
+                        ("projected_actual_trace", "delta_t"),
+                        ("projected_T_r_i", "T_r_i"),
+                        ("projected_Q", "Q"),
+                        ("projected_Q_regrouped", "Q_regrouped"),
+                    ):
+                        _task41_v8_assert_close(
+                            _task41_v8_complex_pair(contributions.get(report_key), report_key),
+                            scalars[scalar_name],
+                            f"cell {cell_index} scalar {report_key}",
+                        )
+                    cell_terms[(cell_index, column_index, state_label, role)] = scalars
+
+    v6_index_by_name = {str(name): value for name, value in v6_index_by_name.items()}
+    v7_values = {str(name): value for name, value in v7_index_by_name.items()}
+
+    def source_value(name: str, label: str) -> np.ndarray:
+        ref = v6_source_arrays.get(name) or v7_source_arrays.get(name)
+        if not isinstance(ref, Mapping):
+            raise ValueError(f"V8 required saved {label} is not in its authorized source list")
+        return load_array_ref(ref, label)
+
+    active_rows = int(donor["manifest"].get("active_trace_rows", -1))
+    p6_saved = source_value("task41_p0_v6_qmetric_candidate_full_p6", "V6 full_p6")
+    reduced_saved = source_value("task41_p0_v6_qmetric_candidate_full_reduced_rhs", "V6 full reduced RHS")
+    if p6_saved.shape[0] <= selected_active_row or reduced_saved.shape != p6_saved.shape:
+        raise ValueError("V8 V6 full-row arrays have an invalid layout")
+    v6_attribution: dict[tuple[int, str, str], complex] = {}
+    v7_closures: dict[tuple[int, str, str], complex] = {}
+    for column_index in range(2):
+        for state_label in ("j0", "j3"):
+            prefix = f"task41_p0_v6_qmetric_candidate_attribution_col{column_index}_{state_label}_"
+            for field in ("T_r_i", "delta_t", "attributed_terms"):
+                v6_attribution[(column_index, state_label, field)] = complex(
+                    source_value(prefix + field, f"V6 {field}")[selected_active_row]
+                )
+            for kind in ("full", "volume"):
+                name = f"task41_p0_v7_attribution_col{column_index}_{state_label}_corrected_{kind}_closure"
+                v7_closures[(column_index, state_label, kind)] = complex(
+                    source_value(name, f"V7 {kind} closure")[selected_active_row]
+                )
+
+    expected_orders = p3.get("cell_sum_orders")
+    if not isinstance(expected_orders, Mapping):
+        raise ValueError("V8 P3 report omits its two ordered summation maps")
+    production_order = expected_orders.get("production_original_cell_order")
+    observer_order = expected_orders.get("v6_eight_key_prefix_observer_order")
+    prefix_order = expected_orders.get("v6_eight_key_prefix_order")
+    if production_order != incident_order or not isinstance(observer_order, list) or not isinstance(prefix_order, list) or len(prefix_order) != 8:
+        raise ValueError("V8 production or V6-prefix summation order differs")
+    ordered_summaries = p3.get("ordered_summaries")
+    if not isinstance(ordered_summaries, Mapping):
+        raise ValueError("V8 P3 report omits ordered selected-row summaries")
+    scalar_rows_checked = 0
+    native_rhs_split_epsilon: dict[int, complex] = {}
+    summary_field_map = {
+        "s": "s_r_volume_sum_wH_S_t",
+        "s_full": "s_r_full_volume_plus_B_alpha_once",
+        "g_volume": "g_volume_r_b_t_plus_sum_wH_T_b_i",
+        "d_volume_star": "d_volume_star_s_minus_g_volume",
+        "g_full": "g_full_r_f_t_plus_sum_wH_T_b_i",
+        "d_full_star": "d_full_star_s_plus_B_alpha_minus_g_full",
+        "T_r_i": "sum_wH_T_r_i",
+        "delta_t": "delta_t_original_order_starts_at_minus_native_action",
+        "Q": "Q_sum_wH_attributed_terms",
+        "Q_regrouped": "Q_regrouped_sum",
+        "closure_volume": "v7_grouped_left_volume",
+        "closure_full": "v7_grouped_left_full",
+    }
+    for order_name, order in (("production_original_cell_order", production_order), ("v6_eight_key_prefix_observer_order", observer_order)):
+        if ordered_summaries.get(order_name) is None:
+            raise ValueError(f"V8 P3 summary omits order {order_name}")
+        report_rows = ordered_summaries[order_name]
+        if not isinstance(report_rows, list):
+            raise ValueError(f"V8 P3 summary rows are malformed for {order_name}")
+        for column_index in range(2):
+            donor_column = columns[column_index]
+            native_v = complex(donor_column["native_volume_rhs"][selected_original_row])
+            native_f = complex(donor_column["native_rhs"][selected_original_row])
+            state_by_label = {item["label"]: item for item in donor_column["states"]}
+            beta_rows = np.asarray(donor_column["b_alpha_rows"], dtype=np.int64)
+            beta_values = np.asarray(donor_column["b_alpha_values"], dtype=np.complex128)
+            beta = beta_values[beta_rows == selected_original_row]
+            if beta.size > 1:
+                raise ValueError("V8 donor B-alpha has duplicate selected-row entries")
+            beta_value = complex(beta[0]) if beta.size else 0.0 + 0.0j
+            native_rhs_split_epsilon[column_index] = native_f - native_v - beta_value
+            for state_label in ("j0", "j3"):
+                native_action = complex(state_by_label[state_label]["native_volume_action"][selected_original_row])
+                for role in ("candidate", "reference"):
+                    totals = {name: 0.0 + 0.0j for name in ("s", "rhs_i", "T_r_i", "Q", "Q_regrouped")}
+                    totals["delta_t"] = -native_action
+                    for cell_index in order:
+                        terms = cell_terms.get((cell_index, column_index, state_label, role))
+                        if terms is not None:
+                            for name, value in terms.items():
+                                totals[name] += value
+                    s_full = totals["s"] + beta_value
+                    g_volume = native_v + totals["rhs_i"]
+                    g_full = native_f + totals["rhs_i"]
+                    d_volume = totals["s"] - g_volume
+                    d_full = s_full - g_full
+                    r_volume = native_v - native_action
+                    r_full = native_f - native_action - beta_value
+                    d_volume_saved = complex(source_value(f"task41_v4_d_volume_trace_col{column_index}", "V6 d_volume")[selected_active_row])
+                    d_full_saved = complex(p6_saved[selected_active_row, column_index] - reduced_saved[selected_active_row, column_index])
+                    closure_volume = (d_volume_saved + r_volume) + totals["T_r_i"] - (totals["delta_t"] + totals["Q"])
+                    closure_full = (d_full_saved + r_full) + totals["T_r_i"] - (totals["delta_t"] + totals["Q"])
+                    expected_values = {
+                        "s": totals["s"],
+                        "s_full": s_full,
+                        "g_volume": g_volume,
+                        "d_volume_star": d_volume,
+                        "g_full": g_full,
+                        "d_full_star": d_full,
+                        "T_r_i": totals["T_r_i"],
+                        "delta_t": totals["delta_t"],
+                        "Q": totals["Q"],
+                        "Q_regrouped": totals["Q_regrouped"],
+                        "closure_volume": closure_volume,
+                        "closure_full": closure_full,
+                    }
+                    row = next(
+                        (item for item in report_rows if isinstance(item, Mapping) and item.get("column") == column_index and item.get("state") == state_label and item.get("role") == role),
+                        None,
+                    )
+                    if not isinstance(row, Mapping):
+                        raise ValueError(f"V8 P3 ordered summary row is missing: {order_name}/{column_index}/{state_label}/{role}")
+                    native_record = row.get("selected_row_rhs_and_action")
+                    if not isinstance(native_record, Mapping):
+                        raise ValueError("V8 P3 ordered summary omits its native row split")
+                    for report_key, expected in (
+                        ("native_volume_rhs_b_t", native_v),
+                        ("native_full_rhs_f_t", native_f),
+                        ("native_volume_action_n_t", native_action),
+                        ("B_alpha_selected_row_applied_once", beta_value),
+                    ):
+                        _task41_v8_assert_close(
+                            _task41_v8_complex_pair(native_record.get(report_key), report_key),
+                            expected,
+                            f"{order_name} {report_key}",
+                        )
+                    replay = row.get("production_row_replay")
+                    if not isinstance(replay, Mapping):
+                        raise ValueError("V8 P3 ordered summary omits production terms")
+                    for name, report_key in summary_field_map.items():
+                        actual = _task41_v8_complex_pair(replay.get(report_key), report_key)
+                        _task41_v8_assert_close(actual, expected_values[name], f"{order_name} {report_key}")
+                    if role == "candidate":
+                        comparisons = row.get("saved_v6_v7_row_comparisons")
+                        if not isinstance(comparisons, Mapping):
+                            raise ValueError("V8 candidate P3 summary omits its V6/V7 comparisons")
+                        expected_differences = {
+                            "star_s_full_minus_V6_full_p6": s_full - complex(p6_saved[selected_active_row, column_index]),
+                            "star_g_full_minus_V6_full_reduced_rhs": g_full - complex(reduced_saved[selected_active_row, column_index]),
+                            "star_d_volume_minus_V6_d_volume": d_volume - d_volume_saved,
+                            "star_d_full_minus_V6_d_full": d_full - d_full_saved,
+                            "star_delta_t_minus_V6": totals["delta_t"] - v6_attribution[(column_index, state_label, "delta_t")],
+                            "star_T_r_i_minus_V6": totals["T_r_i"] - v6_attribution[(column_index, state_label, "T_r_i")],
+                            "star_Q_minus_V6": totals["Q"] - v6_attribution[(column_index, state_label, "attributed_terms")],
+                            "recomposed_full_closure_minus_V7": closure_full - v7_closures[(column_index, state_label, "full")],
+                            "recomposed_volume_closure_minus_V7": closure_volume - v7_closures[(column_index, state_label, "volume")],
+                        }
+                        for name, expected in expected_differences.items():
+                            _task41_v8_assert_close(
+                                _task41_v8_complex_pair(comparisons.get(name), name),
+                                expected,
+                                f"{order_name} {name}",
+                            )
+                    scalar_rows_checked += 1
+
+    return {
+        "schema": "task41.p0.v8.selected_trace_star_independent_check.v1",
+        "check_completed": True,
+        "candidate_passed": None,
+        "formal_candidate_or_residual_gate_changed": False,
+        "report_sha256_rechecked": expected_report_sha256,
+        "authorized_v8_array_count": len(v8_records),
+        "authorized_v6_array_count": len(v6_source_arrays),
+        "authorized_v7_array_count": len(v7_source_arrays),
+        "incident_cell_count": len(incident_order),
+        "local_saved_vector_recomputations": local_vector_checks,
+        "local_matrix_defect_diagnostics": local_matrix_defects,
+        "ordered_p3_summary_rows_recomputed": scalar_rows_checked,
+        "native_rhs_split_epsilon_by_column": {
+            str(column): [value.real, value.imag]
+            for column, value in native_rhs_split_epsilon.items()
+        },
+        "recomputed_production_splits": {
+            "s_full": "sum(w^H S t) + sparse B_alpha exactly once",
+            "g_full": "saved native full RHS once + sum(w^H T b_i)",
+            "r_full": "native full RHS - native action - sparse B_alpha exactly once",
+            "closure_grouping": "(d + r) + T_r_i - (delta_t + Q)",
+        },
+    }
+
+
 def _task41_mesh_actual_exact_candidate_recheck(
     report_path: Path,
     *,
+    expected_report_sha256: str | None = None,
     donor: Mapping[str, Any],
     donor_contract_sha256: str,
     consumer: Mapping[str, Any],
@@ -3537,6 +4392,19 @@ def _task41_mesh_actual_exact_candidate_recheck(
         raise ValueError("exact-geometry candidate report is outside the registered results tree")
     report = _json_object(report_path, "Task41 exact-geometry candidate report")
     profile = _task41_mesh_actual_exact_candidate_profile(report_path, report)
+    if profile["version"] == "v8":
+        if expected_report_sha256 is None:
+            raise ValueError("V8 selected trace-star checker requires the explicit report SHA-256")
+        return _task41_v8_selected_trace_star_recheck(
+            report_path,
+            expected_report_sha256=expected_report_sha256,
+            donor=donor,
+            donor_contract_sha256=donor_contract_sha256,
+            consumer=consumer,
+            consumer_contract_sha256=consumer_contract_sha256,
+            donor_contract=donor_contract,
+            repo_root=repo_root,
+        )
     candidate_prefix = profile["candidate_prefix"]
     attribution_prefix = profile["attribution_prefix"]
     if profile["version"] == "v6":
@@ -4467,6 +5335,7 @@ def check_task41_p0_b0_saved_evidence_audit(
         )
         mesh_actual_candidate_check = _task41_mesh_actual_exact_candidate_recheck(
             mesh_actual_exact_report_path,
+            expected_report_sha256=mesh_actual_exact_report_sha256,
             donor=normalized_donor,
             donor_contract_sha256=donor_digest,
             donor_contract=donor,

@@ -1525,15 +1525,17 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
         "v5_complete",
         "v6_mode",
         "v6_saved_replay",
+        "v8_mode",
     ),
     [
-        (False, False, False, False, False, False),
-        (True, False, False, False, False, False),
-        (True, True, False, False, False, False),
-        (True, False, True, False, False, False),
-        (True, False, True, True, False, False),
-        (True, False, True, True, True, False),
-        (False, False, False, False, False, True),
+        (False, False, False, False, False, False, False),
+        (True, False, False, False, False, False, False),
+        (True, True, False, False, False, False, False),
+        (True, False, True, False, False, False, False),
+        (True, False, True, True, False, False, False),
+        (True, False, True, True, True, False, False),
+        (False, False, False, False, False, True, False),
+        (False, False, False, False, False, False, True),
     ],
 )
 def test_b0_saved_evidence_audit_uses_supervised_service_route(
@@ -1545,6 +1547,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
     v5_complete: bool,
     v6_mode: bool,
     v6_saved_replay: bool,
+    v8_mode: bool,
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
@@ -1557,6 +1560,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         TASK41_P0_V4_SELECTED_ORIGINAL_ROW,
         TASK41_P0_V4_SOURCE_REPORT_SHA256,
         TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+        TASK41_P0_V8_SELECTED_ACTIVE_ROW,
     )
 
     repo_root = tmp_path
@@ -1714,6 +1718,59 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         candidate_report_sha256 = hashlib.sha256(candidate_report_path.read_bytes()).hexdigest()
     ffcx_c_source_path = repo_root / "frozen_ffcx_form.c"
     ffcx_c_source_path.write_text("/* frozen fixture */\n", encoding="utf-8")
+    v8_source_artifacts: dict[str, object] = {}
+    if v8_mode:
+        source_root = results_root / "v8_authorized_sources"
+        source_root.mkdir(parents=True)
+        frozen_docs_root = Path(__file__).resolve().parents[2] / "docs"
+        source_index_relatives = {
+            "v6_index": Path(
+                "task41extra_phi90_p50x50_g17x20/outcomes/"
+                "b0_v6_actual_qmetric_hash_index_20261021.json"
+            ),
+            "v7_index": Path(
+                "task41extra_phi90_p50x50_g17x20/outcomes/"
+                "b0_v7_saved_attribution_20261021.json"
+            ),
+        }
+        source_indexes = {}
+        for key, relative in source_index_relatives.items():
+            destination = repo_root / "docs" / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes((frozen_docs_root / relative).read_bytes())
+            source_indexes[key] = {
+                "path": str(destination.resolve()),
+                "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
+            }
+
+        def fixture_artifact(name: str, path: Path, payload: bytes) -> dict[str, object]:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(payload)
+            return {
+                "name": name,
+                "path": str(path.resolve()),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "bytes": len(payload),
+                "shape": [1],
+                "dtype": "float64",
+            }
+
+        v6_report = fixture_artifact("v6-report", source_root / "v6-report.json", b'{"v6_report":true}\n')
+        v7_report = fixture_artifact("v7-report", source_root / "v7-report.json", b'{"v7_report":true}\n')
+        v6_array = fixture_artifact("v6-array", source_root / "v6-array.npy", b"v6-authorized-array")
+        v7_array = fixture_artifact("v7-array", source_root / "v7-array.npy", b"v7-authorized-array")
+        v8_source_artifacts = {
+            "v6_index": source_indexes["v6_index"]["path"],
+            "v6_index_sha256": source_indexes["v6_index"]["sha256"],
+            "v6_report": v6_report["path"],
+            "v6_report_sha256": v6_report["sha256"],
+            "v7_index": source_indexes["v7_index"]["path"],
+            "v7_index_sha256": source_indexes["v7_index"]["sha256"],
+            "v7_report": v7_report["path"],
+            "v7_report_sha256": v7_report["sha256"],
+            "v6_arrays": {"v6-array": v6_array},
+            "v7_arrays": {"v7-array": v7_array},
+        }
     environment = {
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
@@ -1738,9 +1795,61 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert Path(command[command.index("--numerical-output") + 1]) == numerical_output
         assert kwargs["campaign_window_sha256"] == window_sha
         if kwargs["campaign_phase"] == "numeric":
-            assert volume_only is True
+            assert volume_only is True or v8_mode is True
             assert command[1:4] == ["-m", "src.runners.task41_p0_v4_volume_only_audit", "--summary"]
-            if geometry_pair:
+            if v8_mode:
+                assert command[command.index("--geometry-policy") + 1] == "mesh_actual_exact"
+                assert command[command.index("--raw-tensor-evaluator") + 1] == "actual_qmetric_blocked_gram"
+                assert Path(command[command.index("--ffcx-c-source") + 1]) == ffcx_c_source_path
+                assert "--selected-trace-star-audit" in command
+                array_record = fixture_artifact(
+                    "v8-array",
+                    output_root / "v8_evidence" / "selected_local.npy",
+                    b"v8-authorized-array",
+                )
+                incident_cell = 103
+                selected_star = {
+                    "schema": "task41.p0.v8.selected_trace_star_audit_result.v1",
+                    "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+                    "selected_active_row": TASK41_P0_V8_SELECTED_ACTIVE_ROW,
+                    "metadata": {
+                        "selected_original_row": 5001,
+                        "incident_cell_order": [incident_cell],
+                    },
+                    "local_numeric_cell_identity_and_artifacts": [
+                        {
+                            "cell_index": incident_cell,
+                            "is_target_row_incident": True,
+                            "roles": [
+                                {"role": "candidate", "source": "RECONSTRUCTED_SELECTED_CELL"},
+                                {"role": "reference", "source": "RECONSTRUCTED_SELECTED_CELL"},
+                            ],
+                        }
+                    ],
+                    "p0_prefix_four_matrix_defects_and_state_actions": [{} for _ in range(8)],
+                    "p3_production_row_replay": {
+                        "schema": "task41.p0.v8.selected_trace_star_p3_replay.v1",
+                        "complete_incident_cell_coverage": True,
+                        "incident_cell_count": 1,
+                    },
+                    "saved_operand_recomposition": {"source_artifacts": v8_source_artifacts},
+                }
+                volume_result = output_root / "task41_p0_v8_selected_trace_star_audit.json"
+                volume_result.write_text(
+                    json.dumps({
+                        "schema": "task41.p0.v8.selected_trace_star_audit_receipt.v1",
+                        "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+                        "geometry_policy": "mesh_actual_exact",
+                        "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+                        "donor_contract_sha256": donor_contract_sha,
+                        "consumer_contract_sha256": consumer_contract_sha,
+                        "independent_checker_status": "NOT_RUN",
+                        "selected_trace_star_audit": selected_star,
+                        "persisted_evidence_arrays": [array_record],
+                    }),
+                    encoding="utf-8",
+                )
+            elif geometry_pair:
                 assert "--geometry-pair-only" in command
                 assert command[command.index("--source-report") + 1] == str(source_report_path)
                 volume_result = output_root / "task41_p0_v4_geometry_pair_probe.json"
@@ -1847,6 +1956,11 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         assert kwargs["campaign_phase"] == "closeout"
         assert command[1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
         assert "run_case.py" not in command
+        if v8_mode:
+            report_path = output_root / "task41_p0_v8_selected_trace_star_audit.json"
+            assert Path(command[command.index("--mesh-actual-exact-report") + 1]) == report_path
+            assert command[command.index("--mesh-actual-exact-report-sha256") + 1] == hashlib.sha256(report_path.read_bytes()).hexdigest()
+            assert "--geometry-reference-report" not in command
         if v6_saved_replay:
             assert command[command.index("--mesh-actual-exact-report") + 1] == str(candidate_report_path)
             assert command[command.index("--mesh-actual-exact-report-sha256") + 1] == candidate_report_sha256
@@ -1874,7 +1988,7 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                     "check_completed": True,
                     "candidate_passed": False,
                 }
-            } if v5_complete or v6_saved_replay else {}),
+            } if v5_complete or v6_saved_replay or v8_mode else {}),
         }), encoding="utf-8")
         authorization = kwargs["campaign_phase_authorization"]
         assert authorization["checker_kind"] == "task41_p0_b0_saved_evidence_audit_checker"
@@ -1997,7 +2111,9 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         jit_cache=repo_root / "jit",
         case_args=[
             (
-                "--task41-p0-saved-b0-volume-only-attribution"
+                "--task41-p0-saved-b0-selected-trace-star-audit"
+                if v8_mode
+                else "--task41-p0-saved-b0-volume-only-attribution"
                 if volume_only
                 else "--task41-p0-saved-b0-evidence-audit"
             ),
@@ -2015,6 +2131,12 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
                 "--mesh-actual-exact-report-sha256",
                 str(candidate_report_sha256),
             ] if v6_saved_replay else [] ),
+            *( [
+                "--geometry-policy", "mesh_actual_exact",
+                "--raw-tensor-evaluator", "actual_qmetric_blocked_gram",
+                "--ffcx-c-source", str(ffcx_c_source_path),
+                "--selected-trace-star-audit",
+            ] if v8_mode else [] ),
         ],
         contract_path=consumer_contract_path,
         repo_root=repo_root,
@@ -2022,9 +2144,9 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
 
     receipt = json.loads((output_root.with_name(output_root.name + ".service") / "task41_p0_service_receipt.json").read_text())
     assert result == (3 if v5_mode else 0), receipt.get("workflow_error")
-    expected_calls = 1 if not volume_only or (v5_mode and not v5_complete) else 2
+    expected_calls = 2 if v8_mode else 1 if not volume_only or (v5_mode and not v5_complete) else 2
     assert len(calls) == expected_calls
-    if volume_only:
+    if volume_only or v8_mode:
         assert calls[0][1]["campaign_phase"] == "numeric"
         assert calls[0][1]["wall_seconds"] == window.cutoff_seconds
         if expected_calls == 2:
@@ -2035,7 +2157,9 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         "failed_raw_evidence_retained" if v5_mode else "completed"
     )
     assert receipt["mode"] == (
-        "saved_b0_v6_candidate_evidence_audit"
+        "saved_b0_v8_selected_trace_star_audit"
+        if v8_mode
+        else "saved_b0_v6_candidate_evidence_audit"
         if v6_saved_replay
         else "saved_b0_v6_actual_qmetric_candidate"
         if v6_mode
@@ -2047,6 +2171,17 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
         if volume_only
         else "saved_b0_evidence_audit"
     )
+    if v8_mode:
+        assert receipt["continuation_status"] == "v8_selected_trace_star_audit_completed"
+        assert receipt["selected_trace_star_checker_status"] == "independent_replay_completed"
+        assert receipt["candidate_numerical_passed"] is None
+        authorization = calls[1][1]["campaign_phase_authorization"]
+        authorized = set(authorization["input_paths"])
+        for key in ("v6_index", "v6_report", "v7_index", "v7_report"):
+            assert v8_source_artifacts[key] in authorized
+        for key in ("v6_arrays", "v7_arrays"):
+            for artifact in v8_source_artifacts[key].values():
+                assert artifact["path"] in authorized
     if geometry_pair:
         assert receipt["continuation_status"] == "v4_geometry_pair_probe_completed"
         assert receipt["geometry_pair_probe_command"][-3:] == [

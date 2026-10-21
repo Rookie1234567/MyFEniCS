@@ -1029,6 +1029,252 @@ def iter_selected_volume_audit_cells(
         }
 
 
+def _selected_trace_column_support(
+    active_ids: np.ndarray,
+    expansion: sparse.csr_matrix,
+    selected_active_row: int,
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Return local trace rows and coefficients for one active column.
+
+    This helper deliberately inspects the expansion matrix itself. An active
+    row may enter a cell through a finalized MPC slave even when its original
+    row is absent from that cell's direct DoF list.
+    """
+
+    ids = np.asarray(active_ids)
+    if ids.ndim != 1 or ids.dtype.kind not in "iu":
+        raise ValueError("active_ids must be a one-dimensional integer array")
+    if not sparse.isspmatrix_csr(expansion):
+        raise TypeError("trace expansion must be a CSR matrix")
+    if expansion.shape[1] != len(ids) or expansion.ndim != 2:
+        raise ValueError("trace expansion columns differ from active_ids")
+    if isinstance(selected_active_row, (bool, np.bool_)) or not isinstance(
+        selected_active_row, (int, np.integer)
+    ):
+        raise TypeError("selected_active_row must be an integer active row")
+    columns = np.flatnonzero(ids == int(selected_active_row))
+    if columns.size == 0:
+        return None
+    if columns.size != 1:
+        raise ValueError("cell expansion repeats the selected active row")
+    column = expansion.getcol(int(columns[0])).tocoo()
+    nonzero = np.asarray(column.data) != 0.0
+    if not np.any(nonzero):
+        return None
+    rows = np.asarray(column.row[nonzero], dtype=np.int32)
+    coefficients = np.asarray(column.data[nonzero], dtype=np.complex128)
+    if not np.isfinite(coefficients).all():
+        raise ValueError("selected trace expansion contains non-finite coefficients")
+    return rows, coefficients
+
+
+def build_selected_volume_trace_star_metadata(
+    function_space: Any,
+    mpc: Any,
+    cell_tags: Any,
+    *,
+    selected_active_row: int,
+    expected_active_original_rows: np.ndarray,
+    witness_cell_indices: Iterable[int] = (),
+    progress_callback: Callable[[Mapping[str, Any]], Any] | None = None,
+) -> dict[str, Any]:
+    """Build only the exact MPI1 metadata star for one saved active trace row.
+
+    The routine reuses the production interior/trace partition, compact row
+    numbering, finalized-MPC expansion, and cell expansion helpers. It does
+    not compile a form, tabulate a cell tensor, factor a matrix, construct an
+    ``AssemblyTimeCondensedSystem``, or allocate any global numeric operator.
+    The returned CSR maps and actual coordinates are limited to incident
+    cells; callers may persist those records before creating local tensors.
+    """
+
+    if isinstance(selected_active_row, (bool, np.bool_)) or not isinstance(
+        selected_active_row, (int, np.integer)
+    ):
+        raise TypeError("selected_active_row must be an integer active row")
+    selected_active_row = int(selected_active_row)
+    mesh = function_space.mesh
+    comm = mesh.comm
+    if int(comm.size) != 1 or int(comm.rank) != 0:
+        raise NotImplementedError("selected trace-star metadata is qualified for MPI1 only")
+    dofmap = function_space.dofmap
+    index_map = dofmap.index_map
+    if int(dofmap.index_map_bs) != 1:
+        raise NotImplementedError("selected trace-star metadata requires scalar-blocked DoFs")
+    full_rows = int(index_map.size_global)
+    if tuple(map(int, index_map.local_range)) != (0, full_rows):
+        raise ValueError("selected trace-star metadata requires contiguous MPI1 rows")
+    tdim = int(mesh.topology.dim)
+    owned_cells = int(mesh.topology.index_map(tdim).size_local)
+    element = function_space.element
+    dimension = int(element.space_dimension)
+    interior_positions = np.asarray(
+        element.basix_element.entity_dofs[tdim][0], dtype=np.int32
+    )
+    if interior_positions.ndim != 1 or interior_positions.size == 0:
+        raise ValueError("selected trace-star element has no cell-interior DoFs")
+    trace_positions = np.setdiff1d(
+        np.arange(dimension, dtype=np.int32), interior_positions, assume_unique=True
+    )
+
+    local_interiors: list[np.ndarray] = []
+    for cell_index in range(owned_cells):
+        local_dofs = np.asarray(dofmap.cell_dofs(cell_index), dtype=np.int32)
+        if local_dofs.shape != (dimension,):
+            raise ValueError(f"cell {cell_index} DoF map differs from the p6 element layout")
+        original_rows = np.asarray(
+            index_map.local_to_global(local_dofs), dtype=np.int64
+        ).reshape(-1)
+        if original_rows.shape != (dimension,):
+            raise ValueError(f"cell {cell_index} original row map has an invalid shape")
+        local_interiors.append(
+            np.asarray(original_rows[interior_positions], dtype=np.int64).copy()
+        )
+
+    owned_trace, original_to_trace, trace_rows, numbered_full_rows = (
+        _owned_trace_numbering(
+            function_space, tuple(local_interiors), compact=True
+        )
+    )
+    if numbered_full_rows != full_rows:
+        raise ValueError("production trace numbering returned a different full row count")
+    constraints = _trace_constraint_map(
+        function_space,
+        owned_trace,
+        original_to_trace,
+        trace_rows,
+        mpc,
+        compact=True,
+    )
+    expected_active = np.asarray(expected_active_original_rows)
+    if expected_active.ndim != 1 or expected_active.dtype.kind not in "iu":
+        raise ValueError("saved active_original_rows must be a one-dimensional integer map")
+    expected_active = np.asarray(expected_active, dtype=np.int64)
+    fresh_active = np.asarray(constraints.owned_active_original_dofs, dtype=np.int64)
+    if expected_active.shape != fresh_active.shape:
+        raise ValueError(
+            "same-mesh active_original_rows shape differs from saved numbering "
+            f"({fresh_active.shape} != {expected_active.shape})"
+        )
+    if not np.array_equal(expected_active, fresh_active):
+        mismatch = np.flatnonzero(expected_active != fresh_active)
+        raise ValueError(
+            "same-mesh active_original_rows differ from saved numbering at rows "
+            f"{mismatch[:8].tolist()}"
+        )
+    if selected_active_row < 0 or selected_active_row >= len(fresh_active):
+        raise IndexError("selected active row lies outside the saved trace map")
+    selected_original_row = int(fresh_active[selected_active_row])
+
+    tags = _cell_tag_array(cell_tags, owned_cells)
+    mesh.topology.create_entity_permutations()
+    permutations = np.asarray(mesh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    geometry_dofmap = np.asarray(mesh.geometry.dofmap, dtype=np.int32)
+    geometry_coordinates = np.asarray(mesh.geometry.x, dtype=np.float64)
+    if permutations.shape[0] < owned_cells or geometry_dofmap.shape[0] < owned_cells:
+        raise ValueError("mesh permutation or geometry map omits owned cells")
+
+    witness_indices = frozenset(int(value) for value in witness_cell_indices)
+    if any(value < 0 or value >= owned_cells for value in witness_indices):
+        raise IndexError("selected trace-star witness cell lies outside the owned cell range")
+    incidents: list[dict[str, Any]] = []
+    witnesses: dict[int, dict[str, Any]] = {}
+    for cell_index in range(owned_cells):
+        local_dofs = np.asarray(dofmap.cell_dofs(cell_index), dtype=np.int32)
+        original_rows = np.asarray(
+            index_map.local_to_global(local_dofs), dtype=np.int64
+        ).reshape(-1)
+        trace_original_rows = np.asarray(original_rows[trace_positions], dtype=np.int64)
+        active_ids, expansion, _identity = _cell_trace_expansion(
+            trace_original_rows, constraints
+        )
+        support = _selected_trace_column_support(
+            active_ids, expansion, selected_active_row
+        )
+        if progress_callback is not None and (cell_index + 1) % 1024 == 0:
+            progress_callback(
+                {
+                    "phase": "selected_trace_star_metadata",
+                    "status": "SCANNING",
+                    "scanned_cells": int(cell_index + 1),
+                    "total_cells": owned_cells,
+                    "incident_cells_found": len(incidents),
+                }
+            )
+        is_witness = cell_index in witness_indices
+        if support is None and not is_witness:
+            continue
+        local_trace_rows, coefficients = (
+            support
+            if support is not None
+            else (
+                np.empty(0, dtype=np.int32),
+                np.empty(0, dtype=np.complex128),
+            )
+        )
+        geometry_dofs = np.asarray(geometry_dofmap[cell_index], dtype=np.int32).copy()
+        actual_coordinates = np.ascontiguousarray(
+            geometry_coordinates[geometry_dofs], dtype=np.float64
+        )
+        if actual_coordinates.shape != (8, 3) or not np.isfinite(actual_coordinates).all():
+            raise ValueError(f"cell {cell_index} actual geometry coordinates are invalid")
+        coordinate_sha = hashlib.sha256(
+            memoryview(actual_coordinates).cast("B")
+        ).hexdigest()
+        record = {
+                "cell_index": int(cell_index),
+                "cell_tag": int(tags[cell_index]),
+                "cell_permutation": int(permutations[cell_index]),
+                "geometry_dofs": geometry_dofs,
+                "actual_geometry_coordinates": actual_coordinates,
+                "actual_coordinate_sha256": coordinate_sha,
+                "local_dofs": local_dofs.copy(),
+                "original_rows": original_rows.copy(),
+                "interior_positions": interior_positions.copy(),
+                "trace_positions": trace_positions.copy(),
+                "interior_original_rows": np.asarray(
+                    original_rows[interior_positions], dtype=np.int64
+                ).copy(),
+                "trace_original_rows": trace_original_rows.copy(),
+                "active_ids": np.asarray(active_ids, dtype=np.int64).copy(),
+                "trace_expansion_data": np.asarray(expansion.data, dtype=np.complex128).copy(),
+                "trace_expansion_indices": np.asarray(expansion.indices, dtype=np.int32).copy(),
+                "trace_expansion_indptr": np.asarray(expansion.indptr, dtype=np.int32).copy(),
+                "selected_local_trace_rows": local_trace_rows,
+                "selected_trace_coefficients": coefficients,
+                "selected_trace_contribution_kinds": [
+                    "direct_original_row"
+                    if int(trace_original_rows[position]) == selected_original_row
+                    else "mpc_expansion_preimage"
+                    for position in local_trace_rows
+                ],
+            }
+        if support is not None:
+            incidents.append(record)
+        if is_witness:
+            witnesses[int(cell_index)] = record
+    if not incidents:
+        raise ValueError(
+            f"active trace row {selected_active_row} has no incident cell in the fresh p6/MPC map"
+        )
+    return {
+        "trace_constraints": constraints,
+        "active_original_rows": fresh_active,
+        "selected_active_row": selected_active_row,
+        "selected_original_row": selected_original_row,
+        "full_storage_rows": full_rows,
+        "full_trace_rows": int(constraints.full_trace_rows),
+        "active_trace_rows": int(constraints.active_rows),
+        "slave_rows": int(constraints.slave_rows),
+        "owned_cells": owned_cells,
+        "element_dimension": dimension,
+        "interior_positions": interior_positions,
+        "trace_positions": trace_positions,
+        "incidents": incidents,
+        "witness_cells": witnesses,
+    }
+
+
 def _collective_preallocation_error(
     errors: list[str | None],
     *,
@@ -2069,16 +2315,26 @@ def _tabulate_volume_audit_path(
     dimension: int,
     interior_positions: np.ndarray,
     trace_positions: np.ndarray,
+    raw_tensor_evaluator: Any | None = None,
 ) -> dict[str, np.ndarray]:
     """Tabulate one coordinate path through the existing rank-2 FFCx kernels."""
 
-    raw_tensor = _tabulate_raw_tensor_class(
-        compiled_form,
-        kernels,
-        coordinates,
-        tag=tag,
-        dimension=dimension,
-    )
+    if raw_tensor_evaluator is None:
+        raw_tensor = _tabulate_raw_tensor_class(
+            compiled_form,
+            kernels,
+            coordinates,
+            tag=tag,
+            dimension=dimension,
+        )
+    else:
+        raw_tensor = raw_tensor_evaluator(
+            compiled_form,
+            kernels,
+            coordinates,
+            tag=tag,
+            dimension=dimension,
+        )
     oriented_tensor = raw_tensor.copy()
     _orient_cell_tensor(
         element,
@@ -2428,6 +2684,59 @@ def _strict_local_lu(
             f"relative defect {relative_defect:.3e} > {float(residual_tolerance):.3e}"
         )
     return (lu, pivots), relative_defect
+
+
+def condense_selected_volume_tensor(
+    oriented_tensor: np.ndarray,
+    interior_positions: np.ndarray,
+    trace_positions: np.ndarray,
+) -> dict[str, Any]:
+    """Apply the production strict-LU R/T/S formulas to one selected cell."""
+
+    tensor = np.asarray(oriented_tensor, dtype=np.complex128)
+    interior = np.asarray(interior_positions, dtype=np.int64)
+    trace = np.asarray(trace_positions, dtype=np.int64)
+    if tensor.ndim != 2 or tensor.shape[0] != tensor.shape[1]:
+        raise ValueError("selected volume tensor must be square")
+    dimension = int(tensor.shape[0])
+    if (
+        interior.ndim != 1
+        or trace.ndim != 1
+        or not interior.size
+        or not trace.size
+        or np.any(interior < 0)
+        or np.any(trace < 0)
+        or np.any(interior >= dimension)
+        or np.any(trace >= dimension)
+        or np.unique(interior).size != interior.size
+        or np.unique(trace).size != trace.size
+        or np.intersect1d(interior, trace).size
+        or not np.array_equal(
+            np.sort(np.concatenate((interior, trace))), np.arange(dimension)
+        )
+    ):
+        raise ValueError("selected volume tensor I/T positions do not partition the local layout")
+    K = tensor[np.ix_(interior, interior)]
+    G = tensor[np.ix_(interior, trace)]
+    J = tensor[np.ix_(trace, interior)]
+    L = tensor[np.ix_(trace, trace)]
+    interior_lu, lu_residual = _strict_local_lu(K)
+    R = -lu_solve(interior_lu, G)
+    adjoint_trace_solution = lu_solve(interior_lu, J.conj().T, trans=2)
+    T = -adjoint_trace_solution.conj().T
+    S = L + J @ R
+    return {
+        "K": K,
+        "G": G,
+        "J": J,
+        "L": L,
+        "R": R,
+        "T": T,
+        "S": S,
+        "interior_lu": interior_lu[0],
+        "interior_lu_pivots": np.asarray(interior_lu[1], dtype=np.int32),
+        "strict_lu_residual": float(lu_residual),
+    }
 
 
 def _retained_array_bytes(value: Any) -> int:

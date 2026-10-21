@@ -292,6 +292,9 @@ def _validate_campaign_closeout_authorization(
             saved_v6_candidate_replay = (
                 environment.get('TASK41_P0_B0_V6_SAVED_CANDIDATE_AUDIT') == '1'
             )
+            v8_selected_trace_star = (
+                environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT') == '1'
+            )
             exact_geometry_mode = candidate_report_path is not None
             v6_mode = (
                 environment.get('TASK41_P0_B0_V6_ACTUAL_QMETRIC') == '1'
@@ -301,9 +304,38 @@ def _validate_campaign_closeout_authorization(
                 environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') != '1'
                 or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
                 or environment.get('TASK41_P0_B0_V5_MESH_ACTUAL_EXACT')
-                != ('1' if exact_geometry_mode and not saved_v6_candidate_replay else None)
+                != (
+                    '1'
+                    if exact_geometry_mode
+                    and not saved_v6_candidate_replay
+                    and not v8_selected_trace_star
+                    else None
+                )
                 or environment.get('TASK41_P0_B0_V6_ACTUAL_QMETRIC')
                 != ('1' if v6_mode and not saved_v6_candidate_replay else None)
+                or (v8_selected_trace_star and (not exact_geometry_mode or v6_mode))
+                or (
+                    v8_selected_trace_star
+                    and (
+                        not isinstance(candidate_report_sha256, str)
+                        or not re.fullmatch(r'[0-9a-f]{64}', candidate_report_sha256)
+                        or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_PATH')
+                        != str(candidate_report_path)
+                        or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_SHA256')
+                        != candidate_report_sha256
+                        or environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is None
+                    )
+                )
+                or (
+                    not v8_selected_trace_star
+                    and (
+                        environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_PATH')
+                        is not None
+                        or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_REPORT_SHA256')
+                        is not None
+                        or environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is not None
+                    )
+                )
                 or (saved_v6_candidate_replay and not exact_geometry_mode)
                 or (
                     saved_v6_candidate_replay
@@ -415,13 +447,16 @@ def _validate_campaign_closeout_authorization(
                 donor_manifest, donor_run_summary, input_path, resolved_config,
             )]
             if candidate_report_path is not None:
-                from src.runners.task41_p0_v4_volume_only_audit import (
-                    TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
-                )
+                if not v8_selected_trace_star:
+                    from src.runners.task41_p0_v4_volume_only_audit import (
+                        TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256,
+                    )
 
                 output_root = Path(environment.get('TASK41_P0_B0_OUTPUT_DIR', '')).resolve()
                 expected_report_name = (
-                    'task41_p0_v6_actual_qmetric_candidate.json'
+                    'task41_p0_v8_selected_trace_star_audit.json'
+                    if v8_selected_trace_star
+                    else 'task41_p0_v6_actual_qmetric_candidate.json'
                     if v6_mode
                     else 'task41_p0_v5_mesh_actual_exact_attribution.json'
                 )
@@ -441,9 +476,13 @@ def _validate_campaign_closeout_authorization(
                     candidate_report_path.read_text(encoding='utf-8')
                 )
                 candidate_identity = candidate_report.get('identity_audit')
-                reference_path = Path(
-                    str(candidate_report.get('geometry_reference_report_path', ''))
-                ).resolve(strict=True)
+                reference_path = (
+                    None
+                    if v8_selected_trace_star
+                    else Path(
+                        str(candidate_report.get('geometry_reference_report_path', ''))
+                    ).resolve(strict=True)
+                )
                 candidate_producer_contract_path = None
                 expected_candidate_contract_sha = contract_sha
                 if saved_v6_candidate_replay:
@@ -466,13 +505,19 @@ def _validate_campaign_closeout_authorization(
                 if (
                     candidate_report.get('schema')
                     != (
-                        'task41.p0.v6.actual_qmetric_candidate_receipt.v1'
+                        'task41.p0.v8.selected_trace_star_audit_receipt.v1'
+                        if v8_selected_trace_star
+                        else 'task41.p0.v6.actual_qmetric_candidate_receipt.v1'
                         if v6_mode
                         else 'task41.p0.v5.mesh_actual_exact_attribution_receipt.v1'
                     )
                     or candidate_report.get('geometry_policy') != 'mesh_actual_exact'
                     or candidate_report.get('raw_tensor_evaluator')
-                    != ('actual_qmetric_blocked_gram' if v6_mode else None)
+                    != (
+                        'actual_qmetric_blocked_gram'
+                        if v6_mode or v8_selected_trace_star
+                        else None
+                    )
                     or (v6_mode and not isinstance(candidate_identity, dict))
                     or (
                         v6_mode
@@ -482,16 +527,42 @@ def _validate_campaign_closeout_authorization(
                     or candidate_report.get('donor_contract_sha256') != donor_digest
                     or candidate_report.get('consumer_contract_sha256')
                     != expected_candidate_contract_sha
-                    or reference_path.name != 'task41_p0_v4_geometry_pair_probe.json'
-                    or not reference_path.is_relative_to(results_root)
-                    or candidate_report.get('geometry_reference_report_sha256')
-                    != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
-                    or _sha256_file(reference_path)
-                    != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
-                    or environment.get('TASK41_P0_B0_V5_GEOMETRY_REFERENCE_PATH')
-                    != str(reference_path)
+                    or (
+                        not v8_selected_trace_star
+                        and (
+                            reference_path is None
+                            or reference_path.name != 'task41_p0_v4_geometry_pair_probe.json'
+                            or not reference_path.is_relative_to(results_root)
+                            or candidate_report.get('geometry_reference_report_sha256')
+                            != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+                            or _sha256_file(reference_path)
+                            != TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256
+                            or environment.get('TASK41_P0_B0_V5_GEOMETRY_REFERENCE_PATH')
+                            != str(reference_path)
+                        )
+                    )
                 ):
                     raise ValueError('exact-geometry candidate report geometry/source identities are invalid')
+                if v8_selected_trace_star:
+                    selected_star = candidate_report.get('selected_trace_star_audit')
+                    metadata = selected_star.get('metadata') if isinstance(selected_star, dict) else None
+                    p3 = selected_star.get('p3_production_row_replay') if isinstance(selected_star, dict) else None
+                    source_artifacts = selected_star.get('saved_operand_recomposition', {}).get('source_artifacts') if isinstance(selected_star, dict) and isinstance(selected_star.get('saved_operand_recomposition'), dict) else None
+                    if (
+                        candidate_report.get('status') != 'COMPLETED_SELECTED_TRACE_STAR_AUDIT'
+                        or candidate_report.get('independent_checker_status') != 'NOT_RUN'
+                        or not isinstance(selected_star, dict)
+                        or selected_star.get('schema') != 'task41.p0.v8.selected_trace_star_audit_result.v1'
+                        or selected_star.get('status') != 'COMPLETED_SELECTED_TRACE_STAR_AUDIT'
+                        or not isinstance(metadata, dict)
+                        or not isinstance(p3, dict)
+                        or p3.get('schema') != 'task41.p0.v8.selected_trace_star_p3_replay.v1'
+                        or p3.get('complete_incident_cell_coverage') is not True
+                        or type(p3.get('incident_cell_count')) is not int
+                        or p3.get('incident_cell_count') < 1
+                        or not isinstance(source_artifacts, dict)
+                    ):
+                        raise ValueError('V8 selected-star report receipt is incomplete')
                 arrays = candidate_report.get('persisted_evidence_arrays')
                 if not isinstance(arrays, list):
                     raise ValueError('exact-geometry candidate report lacks its persisted-array inventory')
@@ -499,7 +570,9 @@ def _validate_campaign_closeout_authorization(
                 if saved_v6_candidate_replay:
                     assert candidate_producer_contract_path is not None
                     input_paths.append(str(candidate_producer_contract_path))
-                input_paths.append(str(reference_path))
+                if not v8_selected_trace_star:
+                    assert reference_path is not None
+                    input_paths.append(str(reference_path))
                 array_root = (
                     candidate_report_path.parent.resolve()
                     if saved_v6_candidate_replay
@@ -520,6 +593,68 @@ def _validate_campaign_closeout_authorization(
                         raise ValueError('exact-geometry candidate persisted-array path/size/hash is invalid')
                     seen_array_paths.add(artifact_path)
                     input_paths.append(str(artifact_path))
+                if v8_selected_trace_star:
+                    from src.runners.task41_p0_v4_volume_only_audit import (
+                        TASK41_P0_V8_V6_INDEX_SHA256,
+                        TASK41_P0_V8_V6_REPORT_SHA256,
+                        TASK41_P0_V8_V7_INDEX_SHA256,
+                    )
+
+                    source_artifacts = candidate_report['selected_trace_star_audit'][
+                        'saved_operand_recomposition'
+                    ]['source_artifacts']
+                    expected_indexes = {
+                        'v6_index': (
+                            root / 'docs/task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_hash_index_20261021.json',
+                            TASK41_P0_V8_V6_INDEX_SHA256,
+                        ),
+                        'v7_index': (
+                            root / 'docs/task41extra_phi90_p50x50_g17x20/outcomes/b0_v7_saved_attribution_20261021.json',
+                            TASK41_P0_V8_V7_INDEX_SHA256,
+                        ),
+                    }
+                    source_paths = {}
+                    for key, (expected_path, expected_sha) in expected_indexes.items():
+                        source_path = Path(str(source_artifacts.get(key, ''))).resolve()
+                        if (
+                            source_path != expected_path.resolve()
+                            or source_artifacts.get(f'{key}_sha256') != expected_sha
+                            or not source_path.is_file()
+                            or _sha256_file(source_path) != expected_sha
+                        ):
+                            raise ValueError(f'V8 frozen {key} path/hash differs from its registered source')
+                        source_paths[key] = source_path
+                    for key in ('v6_report', 'v7_report'):
+                        source_path = Path(str(source_artifacts.get(key, ''))).resolve()
+                        source_sha = source_artifacts.get(f'{key}_sha256')
+                        if (
+                            not source_path.is_relative_to(results_root)
+                            or not source_path.is_file()
+                            or not isinstance(source_sha, str)
+                            or not re.fullmatch(r'[0-9a-f]{64}', source_sha)
+                            or _sha256_file(source_path) != source_sha
+                        ):
+                            raise ValueError(f'V8 saved {key} path/hash differs from its registered results tree')
+                        source_paths[key] = source_path
+                    # Source indexes/reports are authorized before their explicitly named arrays.
+                    input_paths.extend(str(source_paths[key]) for key in ('v6_index', 'v6_report', 'v7_index', 'v7_report'))
+                    for arrays_key in ('v6_arrays', 'v7_arrays'):
+                        source_arrays = source_artifacts.get(arrays_key)
+                        if not isinstance(source_arrays, dict) or not source_arrays:
+                            raise ValueError(f'V8 {arrays_key} inventory is missing')
+                        for artifact in source_arrays.values():
+                            if not isinstance(artifact, dict) or not isinstance(artifact.get('path'), str):
+                                raise ValueError(f'V8 {arrays_key} artifact is malformed')
+                            artifact_path = Path(artifact['path']).resolve()
+                            if (
+                                not artifact_path.is_relative_to(results_root)
+                                or not artifact_path.is_file()
+                                or artifact.get('bytes') != artifact_path.stat().st_size
+                                or not isinstance(artifact.get('sha256'), str)
+                                or _sha256_file(artifact_path) != artifact.get('sha256')
+                            ):
+                                raise ValueError(f'V8 {arrays_key} path/size/hash differs from its registered results tree')
+                            input_paths.append(str(artifact_path))
         elif checker_kind == 'task41_p0_saved_output_continuation_checker':
             checker_only = (
                 environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') == '1'
