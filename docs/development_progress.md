@@ -3857,3 +3857,7 @@ V5 将局部凝聚 rank-2 张量改为直接读取原 mesh coordinates，并让�
 | 后续求解 | 两列、checker、200q/factor/KSP/FGMRES、完整场、A6、R/T/A | NOT_RUN；V3 full-action 数值失败仍保留，V4 保存数据与局部归因不被V5覆盖 |
 
 三次正式 service parent 合计622.824231967 s；准备/入口费用没有合格计时，标 UNKNOWN。补充 volume-only audit/doc 验证32通过、3失败，三个owner/replay fixture未提供 cfg.tags 或 owner.build_audit；随后仅补齐测试接口，三项复验3 passed in 0.90 s，原负记录保留；17个原始证据文件经主控核验路径/bytes/SHA一致，但candidate numerical checker未运行。V5 原始 SHA、阶段与资源证据见 [response](task41extra_phi90_p50x50_g17x20/response_v5.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v5_mesh_actual_exact_not_admitted_20261020.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json) 和 [tests](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。数值阈值、固定 T0、ordinary default 和 master 均未改变；新窗口须另行明确授权。
+
+## Task41extra Review V7（2026-10-21）
+
+在Task41分支完成saved-only归因复核：实际Bα复数向量确认旧闭合约198来自完整RHS残差漏减端口项；修正式后四组闭合仍占对应d的5.66%-10.76%，公式修正不等同于科学action通过。两列原full-action仍超1e-11门，V6候选初始恢复forward也仍超门；旧donor三次LU修正的通过结果不转给候选。P3继承V6八键矩阵资格（未新重算），但最大误差row 4,766,937的incident-cell映射和逐cell分项缺失；历史S_minus_L_plus_JR=0不证明V7 E_S为0。父时250.111 s包含200.484 s checker；RSS树与cgroup峰值分开记，swap为0。执行者首轮10 passed/48 deselected/0.94 s；主控同source最终复验10 passed/48 deselected/1.13 s，命令与日志hash已绑定V7 compact。official_result=false；不自动升级200q或完整场。详见Task41 [V7回应](task41extra_phi90_p50x50_g17x20/response_v7.md)和[compact结果](task41extra_phi90_p50x50_g17x20/outcomes/b0_v7_saved_attribution_20261021.json)。

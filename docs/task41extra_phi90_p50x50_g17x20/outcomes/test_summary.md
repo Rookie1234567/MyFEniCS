@@ -285,3 +285,9 @@ python -m pytest -q src/test/test_task41_p0_saved_output_continuation.py -k 'v6_
 V6 文档合同回归（主控提供的本机记录）：资格化 activation 已确认 PETSc complex128/int32；命令 `python -m pytest -q --tb=short src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py`，结果 **21 passed in 0.09 s**。该检查覆盖文档结构与模型登记合同，不是科学源代码测试或 PDE 资格；本任务执行者没有重跑这些测试。
 
 本次执行者文档收口另做 JSON 解析、原始文件哈希/字节/数组清单对照、V6 新增相对链接检查及 `git diff --check`；未重跑科学源代码测试、全仓 pytest、Ruff 或 PDE。没有 GitHub CI 结果声明。
+
+## Task41extra Review V7：定向测试记录（2026-10-21）
+
+执行者首轮终端记录：**10 passed, 48 deselected, 0.94 s**；该首轮没有另存raw log。主控同source的最终定向复验与日志hash见下。文档收口另完成compact JSON解析、证据字节/SHA核对、链接检查和git diff --check；没有重跑昂贵科学数据、全仓pytest、Ruff或PDE。
+
+V7主控最终同source定向复验：10 passed / 48 deselected / 1.13 s，qualified WSL complex128/int32。命令及原始日志绑定见 V7 compact tests；SHA-256 `3b36563d720a44cfdf0571940f63900a595adc5d5a7fb795cf52b5e799a88b6b`。无全仓/PDE/CI声明。

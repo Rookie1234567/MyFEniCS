@@ -1,0 +1,339 @@
+{
+  "schema": "task41.p0.b0.v7.saved_attribution_compact.v1",
+  "review": "Task41 Review V7",
+  "date": "2026-10-21",
+  "classification": "SAVED_ONLY_ATTRIBUTION_AUDIT_COMPLETE_SCIENTIFIC_GATES_REMAIN_FAILED",
+  "official_result": false,
+  "qualification_passed": false,
+  "identity": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "consumer_source_sha": "184822fa7ec5cd2af33a6ff39b5c6e7e5641cab6",
+    "consumer_contract_sha256": "c4240948e717f763675327e28ccc0edc94e43cdfc81a781c7a2bc25231615474",
+    "candidate_producer_source_sha": "210fbbf271faa14c62ac30153b80332d0e645982",
+    "candidate_producer_contract_sha256": "9fe53c21e155e8ce1a74aaf0451658262f57e128a67d38922ba5948d91433172",
+    "historical_donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+    "donor_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+    "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+    "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+    "review_head": "c4fea92f2d9853aa6724ba035acc54fe64c75e4c",
+    "result_base": "bc305e02861968d9c790472a85af67acf42fbc8f"
+  },
+  "audit": {
+    "status": "COMPLETE",
+    "audit_completed": true,
+    "data_integrity": true,
+    "raw_evidence_retained": true,
+    "joint_action_passed": false,
+    "top_level_recovery_passed": true,
+    "qualification_passed": false,
+    "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit.json",
+    "report_bytes": 68891,
+    "report_sha256": "8ffa70f89eccbf05ec8f4dfded584686de8db8e5c125c35f5e72d697759c1426"
+  },
+  "attribution": {
+    "finding": "Legacy full-RHS residual omitted B_alpha. Actual complex-vector comparison confirms legacy closure minus active B_alpha matches corrected full closure to about 1.13e-14 L2. Diagnostic repair only.",
+    "legacy_closure_l2": [
+      198.1806169837082,
+      198.15785920015628
+    ],
+    "full": [
+      {
+        "column": 0,
+        "state": "j0",
+        "l2": 4.1145860220002625e-08,
+        "over_D": 1.848852249621133e-11,
+        "over_d": 0.10759644697259992
+      },
+      {
+        "column": 0,
+        "state": "j3",
+        "l2": 2.168621678652181e-08,
+        "over_D": 9.744506610665259e-12,
+        "over_d": 0.05670946875411203
+      },
+      {
+        "column": 1,
+        "state": "j0",
+        "l2": 8.640671724938034e-08,
+        "over_D": 3.8826091267246497e-11,
+        "over_d": 0.10731213552296821
+      },
+      {
+        "column": 1,
+        "state": "j3",
+        "l2": 4.559526019572616e-08,
+        "over_D": 2.0487825368991332e-11,
+        "over_d": 0.05662667090114286
+      }
+    ],
+    "volume": [
+      {
+        "column": 0,
+        "state": "j0",
+        "l2": 4.114586021593275e-08,
+        "over_D": 1.848852249438257e-11,
+        "over_d": 0.10759643991058507
+      },
+      {
+        "column": 0,
+        "state": "j3",
+        "l2": 2.1686216782089815e-08,
+        "over_D": 9.744506608673782e-12,
+        "over_d": 0.05670946502604679
+      },
+      {
+        "column": 1,
+        "state": "j0",
+        "l2": 8.640671725461464e-08,
+        "over_D": 3.882609126959849e-11,
+        "over_d": 0.10731214526096466
+      },
+      {
+        "column": 1,
+        "state": "j3",
+        "l2": 4.559526019906995e-08,
+        "over_D": 2.0487825370493834e-11,
+        "over_d": 0.05662667604042975
+      }
+    ],
+    "epsilon_rhs_l2": [
+      1.9838432520779475e-10,
+      4.5807759675738086e-11
+    ],
+    "dhat_j0_vs_j3_l2": [
+      3.992795315768375e-08,
+      8.380520829133848e-08
+    ],
+    "reduce_r_volume_crosscheck_l2": [
+      1.6134657865865844e-22,
+      4.653609820770655e-24,
+      3.3972248678880903e-22,
+      9.786483172582673e-24
+    ],
+    "full_volume_d_rhs_split_l2": [
+      3.443052727611797e-14,
+      3.687097276593462e-14
+    ],
+    "meaning": "Corrected closure is 5.66%-10.76% of corresponding d and does not identify the remaining source."
+  },
+  "science": {
+    "action_limit": 1e-11,
+    "action_relative": [
+      1.7183209126709868e-10,
+      3.6180522433957604e-10
+    ],
+    "action_absolute_l2": [
+      3.824090978625035e-07,
+      8.051905483782545e-07
+    ],
+    "max_error_row": 4766937,
+    "action": "FAIL",
+    "candidate_forward_relative": [
+      1.981377497384616e-11,
+      1.979023053583157e-11
+    ],
+    "candidate_native_residual_relative": [
+      1.4373046679706224e-15,
+      1.436540888080939e-15
+    ],
+    "candidate_extra_same_lu_corrections": 0,
+    "candidate_recovery": "FAIL_FORWARD",
+    "donor_recovery": "Three same-LU corrections passed for separate historical donor; not transferable.",
+    "max_error_row_index_space": "active trace index, not original full-storage row"
+  },
+  "p3": {
+    "scope": "Existing eight-key same-input matrices only; no new computation.",
+    "raw_oriented_and_K_G_J_L_R_T_S": "PASS_PER_EXISTING_V6_REPORT",
+    "relative_max": {
+      "raw_oriented": 1.925763e-15,
+      "R": 8.726871992808957e-13,
+      "T": 6.821847465821295e-14,
+      "S": 1.047234456910219e-14
+    },
+    "target_row": 4766937,
+    "incident_cell_map": "MISSING",
+    "old_pair_field": "S_minus_L_plus_JR=0 for cells 26762/26897; sign contract unclear. If it means S-(L+JR), it is not E_S=S-L-TG under finite R/T solve errors and does not prove E_S=0.",
+    "minimum_missing": [
+      "Hash-bound row 4766937 to all incident cells and exact actual geometry key/permutation.",
+      "Per-cell original interior/trace row maps, active_ids and MPC/trace expansion CSR.",
+      "Identity-matched candidate/reference K/G/J/L and R/T/S or raw local tensors with persisted positions.",
+      "Per column and donor j0/j3 local interior states/residuals and trace E^H expansion/scatter for T delta_i, E_S t_c and -E_T u_i."
+    ],
+    "not_run": "No global remap, retabulation or carrier scan.",
+    "invalid_layout_attempt": {
+      "status": "INVALID_LAYOUT_ATTEMPT",
+      "description": "只读探索曾以未经验证的连续切片切分882张量；与保存R/T/S布局不符，结果作废，未作为科学负结果或通过依据。",
+      "raw_artifact": "NOT_PERSISTED; execution chat command trace only",
+      "elapsed_seconds": null,
+      "included_in_formal_service": false
+    }
+  },
+  "arrays": {
+    "count": 8,
+    "each_file_bytes": 91008128,
+    "payload_bytes": 728064000,
+    "array_files_actual_bytes": 728065024,
+    "output_root_actual_bytes": 728133915,
+    "sha256": [
+      "b8e01f2aa0b3497a4094c809ededf7b18cd34ba056dfe8679901831e0f555966",
+      "dc722dccf3b80e374b488026ec54adddc26b4c36e536cccc25b06ae5f5eac045",
+      "6f489cdcbe1ac3bd4bdbe5e63488993fd61af0e685e2e3d9d075870fc92ae363",
+      "c6def8084dddbc33d223071c6d54483dbf9450052e83ca6eac97cee47c612e3a",
+      "ea35cfaf104013401845ee8246fbe14319c7153f1b5fa57a9cb02b713b284fc9",
+      "5340d84a86b2848ff8337f85ef310a41e2082531a3a73179de75a1a2115132b8",
+      "1fe9e1125d187fe2c4007eae50456d3a591b6dcfd3790d2783fe1a0942c42ba2",
+      "54bc113c027b5538c3fed6fe3bbfb5e8d46358360100a98733d700d975d0d8e2"
+    ],
+    "records": [
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col0_j0_corrected_full_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col0_j0_corrected_full_closure.npy",
+        "sha256": "b8e01f2aa0b3497a4094c809ededf7b18cd34ba056dfe8679901831e0f555966",
+        "shape": [
+          5688000
+        ]
+      },
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col0_j0_corrected_volume_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col0_j0_corrected_volume_closure.npy",
+        "sha256": "dc722dccf3b80e374b488026ec54adddc26b4c36e536cccc25b06ae5f5eac045",
+        "shape": [
+          5688000
+        ]
+      },
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col0_j3_corrected_full_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col0_j3_corrected_full_closure.npy",
+        "sha256": "6f489cdcbe1ac3bd4bdbe5e63488993fd61af0e685e2e3d9d075870fc92ae363",
+        "shape": [
+          5688000
+        ]
+      },
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col0_j3_corrected_volume_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col0_j3_corrected_volume_closure.npy",
+        "sha256": "c6def8084dddbc33d223071c6d54483dbf9450052e83ca6eac97cee47c612e3a",
+        "shape": [
+          5688000
+        ]
+      },
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col1_j0_corrected_full_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col1_j0_corrected_full_closure.npy",
+        "sha256": "ea35cfaf104013401845ee8246fbe14319c7153f1b5fa57a9cb02b713b284fc9",
+        "shape": [
+          5688000
+        ]
+      },
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col1_j0_corrected_volume_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col1_j0_corrected_volume_closure.npy",
+        "sha256": "5340d84a86b2848ff8337f85ef310a41e2082531a3a73179de75a1a2115132b8",
+        "shape": [
+          5688000
+        ]
+      },
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col1_j3_corrected_full_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col1_j3_corrected_full_closure.npy",
+        "sha256": "1fe9e1125d187fe2c4007eae50456d3a591b6dcfd3790d2783fe1a0942c42ba2",
+        "shape": [
+          5688000
+        ]
+      },
+      {
+        "bytes": 91008128,
+        "dtype": "complex128",
+        "name": "task41_p0_v7_attribution_col1_j3_corrected_volume_closure",
+        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit_v7_attribution_arrays/task41_p0_v7_attribution_col1_j3_corrected_volume_closure.npy",
+        "sha256": "54bc113c027b5538c3fed6fe3bbfb5e8d46358360100a98733d700d975d0d8e2",
+        "shape": [
+          5688000
+        ]
+      }
+    ]
+  },
+  "resource": {
+    "unit": "task41-v7-saved-audit-184822fa-20261021T023918z",
+    "status": "completed",
+    "parent_seconds": 250.1106050624512,
+    "receipt": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/task41_p0_service_receipt.json",
+      "bytes": 208118,
+      "sha256": "d384f8935501601ec48d7522e76d0cdef0e62b9051599bea11225336d9b8ecfb"
+    },
+    "watchdog": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/required_checker_watchdog/summary.json",
+      "bytes": 67701,
+      "sha256": "2b3b0d8dbd46aadbabd626079dbbaa7ad3a98690cfa60d97e873ac8a24b8d121",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 200.4840597989969,
+      "workflow_elapsed_seconds": 200.48515146919567,
+      "workflow_budget_seconds": 1140.0,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_pids": [],
+      "process_tree_rss_peak_bytes": 9049808896,
+      "cgroup_memory_peak_bytes": 1801805824,
+      "cgroup_memory_end_bytes": 830488576,
+      "cgroup_memory_limit_bytes": 1649267441664,
+      "tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "host_swap_delta_pages": [
+        0,
+        0
+      ],
+      "pss": null,
+      "pss_status": "DISABLED_BY_PROFILE"
+    },
+    "resources": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/required_checker_watchdog/resources.jsonl",
+      "bytes": 1772797,
+      "sha256": "019d9988a70afd8cfac5c6d41d8ada1a40b7858653a0041954f9e1539005e83d"
+    },
+    "worker": {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/required_checker_watchdog/worker.log",
+      "bytes": 48446,
+      "sha256": "fb7bcb38a4d57503f18036163f6f946c6b59c298d54a00bb8b8b7ae27b574d94"
+    }
+  },
+  "window": {
+    "t0": "2026-10-20T10:21:59.261754681Z",
+    "numerical_cutoff": "2026-10-21T10:01:59.261754681Z",
+    "deadline": "2026-10-21T10:21:59.261754681Z",
+    "tail_seq": 25976,
+    "tail_utc": "2026-10-21T02:43:30.736292140Z",
+    "charged_seconds": 58891.482073122505,
+    "numerical_remaining_seconds": 26308.5179268775,
+    "total_remaining_seconds": 27508.5179268775,
+    "service_entry_cumulative_seconds": 58641.570849532,
+    "note": "Service parent includes checker interval; do not add nested checker time."
+  },
+  "tests": {
+    "executor_first_run": "10 passed, 48 deselected, 0.94 s; historical tool output, not a separately persisted raw log",
+    "controller_verification": "10 passed, 48 deselected, 1.13 s",
+    "raw_command": "python -m pytest -q src/test/test_task41_v4_volume_only_audit.py src/test/test_task41_p0_saved_output_continuation.py -k 'attribution_reconstructs_nonzero_complex_mpc_slave_trace or v7_saved_checker_recomputes_complex_balpha_scopes_and_state_binding or b0_saved_evidence_audit_uses_supervised_service_route'",
+    "activation": "source scripts/activate_myfenics_wsl.sh",
+    "execution_cwd": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering",
+    "runtime": "local qualified WSL .venv; complex128/int32; not a workstation PDE run",
+    "source_sha": "184822fa7ec5cd2af33a6ff39b5c6e7e5641cab6",
+    "raw_log_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v7_targeted_tests_local_wsl_184822fa.log",
+    "raw_log_sha256": "3b36563d720a44cfdf0571940f63900a595adc5d5a7fb795cf52b5e799a88b6b",
+    "ci_claim": false,
+    "cost_scope": "engineering verification, outside saved-service parent; entire engineering cost UNKNOWN"
+  }
+}

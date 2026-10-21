@@ -1212,6 +1212,59 @@
       "consumer_contract_sha256": "0201a5d2f4918c6f1d7d9385ef97cd9c50173287d1ae4be52d336462281cee11",
       "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
       "error": "Independent saved-only checker completed and rehashed/reopened the candidate arrays; both full-action columns and candidate recovery forward gate remain over 1e-11. Top-level recovery PASS belongs to the legacy donor."
+    },
+    {
+      "run_id": "task41-v7-saved-audit-184822fa-20261021T023918z.service",
+      "attempt": "V7_saved_attribution_attempt1",
+      "stage": "B0_V7_saved_only_attribution_and_evidence_audit",
+      "service": "task41-v7-saved-audit-184822fa-20261021T023918z",
+      "source_sha": "184822fa7ec5cd2af33a6ff39b5c6e7e5641cab6",
+      "status": "SAVED_AUDIT_COMPLETE_DIAGNOSTIC_ONLY_SCIENTIFIC_GATES_FAILED",
+      "classification": "COMPLETED",
+      "official_result": false,
+      "service_parent_seconds": 250.1106050624512,
+      "watchdog_parent_seconds": 200.4840597989969,
+      "cost_scope": "supervised saved-only audit; watchdog nested in service parent; no producer/PDE rebuild",
+      "process_tree_rss_peak_bytes": 9049808896,
+      "cgroup_memory_peak_bytes": 1801805824,
+      "process_tree_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "raw_remote_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1",
+      "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1/task41_p0_b0_saved_evidence_audit.json",
+      "report_bytes": 68891,
+      "report_sha256": "8ffa70f89eccbf05ec8f4dfded584686de8db8e5c125c35f5e72d697759c1426",
+      "receipts": [
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/task41_p0_service_receipt.json",
+          "bytes": 208118,
+          "sha256": "d384f8935501601ec48d7522e76d0cdef0e62b9051599bea11225336d9b8ecfb"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/required_checker_watchdog/summary.json",
+          "bytes": 67701,
+          "sha256": "2b3b0d8dbd46aadbabd626079dbbaa7ad3a98690cfa60d97e873ac8a24b8d121"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/required_checker_watchdog/resources.jsonl",
+          "bytes": 1772797,
+          "sha256": "019d9988a70afd8cfac5c6d41d8ada1a40b7858653a0041954f9e1539005e83d"
+        },
+        {
+          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v7_saved_attribution_184822fa_20261021T023918Z_attempt1.service/required_checker_watchdog/worker.log",
+          "bytes": 48446,
+          "sha256": "fb7bcb38a4d57503f18036163f6f946c6b59c298d54a00bb8b8b7ae27b574d94"
+        }
+      ],
+      "consumer_contract_sha256": "c4240948e717f763675327e28ccc0edc94e43cdfc81a781c7a2bc25231615474",
+      "candidate_producer_source_sha": "210fbbf271faa14c62ac30153b80332d0e645982",
+      "candidate_producer_contract_sha256": "9fe53c21e155e8ce1a74aaf0451658262f57e128a67d38922ba5948d91433172",
+      "donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+      "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+      "compact": "b0_v7_saved_attribution_20261021.json",
+      "compact_sha256": "59237641d681a48220afa6662c57df4ebfad7a9340054630a614d1cda7a8c621",
+      "tests": "CONTROLLER_10_PASSED_48_DESELECTED_1.13S; COMMAND_AND_LOG_HASH_IN_V7_COMPACT"
     }
   ],
   "not_run": [
@@ -1412,6 +1465,23 @@
       "source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
       "report_sha256": "5ebdc364416a5ba8eed34506fd232eae22e9c92f0968924d1064f70d1fb03460",
       "service_receipt_sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167"
+    },
+    "b0_p0_v7_saved_attribution": {
+      "classification": "SAVED_ATTRIBUTION_AUDIT_COMPLETE_SCIENTIFIC_GATES_FAILED",
+      "official_result": false,
+      "formula": "LEGACY_FULL_RHS_RESIDUAL_OMITTED_B_ALPHA; ACTUAL_VECTOR_CHECK_CONFIRMED",
+      "corrected_closure": "DIAGNOSTIC_ONLY; 5.66_TO_10.76_PERCENT_OF_D",
+      "full_action_relative": [
+        1.7183209126709868e-10,
+        3.6180522433957604e-10
+      ],
+      "candidate_initial_recovery_forward": [
+        1.981377497384616e-11,
+        1.979023053583157e-11
+      ],
+      "p3": "EIGHT_SAVED_KEYS_RECHECKED; TARGET_ROW_4766937_INCIDENT_CELL_MAP_AND_LOCAL_PARTS_MISSING",
+      "service": "task41-v7-saved-audit-184822fa-20261021T023918z.service",
+      "compact": "b0_v7_saved_attribution_20261021.json"
     }
   },
   "v6_candidate_history": {

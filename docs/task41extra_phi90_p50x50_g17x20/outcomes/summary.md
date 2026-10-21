@@ -294,3 +294,11 @@ No safe full-domain production fix is established by two cells. The next bounded
 | 后续数值阶段 | 全域两列、checker、200q、factor、KSP/FGMRES、完整场、A6、R/T/A | NOT_RUN；V3 full-action FAIL 与 V4 saved-audit 结论原样保留 |
 
 三次正式 service parent 总计 622.824231967 s；准备和入口费用没有同口径的合格计时，记 UNKNOWN。各次 source、失败/准入分类、watchdog 子段与 raw receipt hash 见 [V5 response](../response_v5.md)、[V5 compact](b0_v5_mesh_actual_exact_not_admitted_20261020.json) 和 [run index](run_index.json)。16 GiB 证据上限、2 GiB free-space floor、1.5 TiB task cap、64 GiB host reserve、task swap 0、数值阈值和 T0 均未更改；没有新窗口或重跑 V5。 补充 component/documentation validation 原始结果为32通过、3失败；主控复核后仅修正三个测试替身，三项定向重跑3通过（0.90 s），production source未改；修复前负记录与 fixture差异见 test_summary。主控已核验17个本地原件的路径/bytes/SHA，属于证据完整性核验，不是candidate checker。
+
+## Task41extra Review V7：Bα归因修正与保存证据复核（2026-10-21）
+
+V7在既有数组上完成saved-only审核。旧完整归因式漏减端口项Bα；实际复数向量比较显示，旧约198.18/198.16闭合减去active Bα后，与修正完整闭合相差约1.13e-14。公式错误得到定位，但修正闭合仍为对应d的5.66%-10.76%，不能可靠解释d差异，也不改变科学门。
+
+原full-action两列相对误差为1.7183209126709868e-10和3.6180522433957604e-10，限值1e-11，仍失败；最大误差行4,766,937。V6候选初始恢复forward误差1.981377497384616e-11和1.979023053583157e-11，也高于1e-11；native volume residual低于1e-10，但不抵消forward失败。历史donor经三次同LU修正的通过证据不转给V6候选。P3仅复核现存八键矩阵；目标行incident-cell映射及局部分项缺失，故不重建映射或重扫carrier。历史字段S_minus_L_plus_JR=0不能证明V7的E_S为0。
+
+V7受监督saved-only服务父时长250.111 s，watchdog子时长200.484 s（包含于父时长）；RSS树峰值9,049,808,896 B、job-cgroup峰值1,801,805,824 B、tree/cgroup swap均0、后代清场。截至2026-10-21T02:43:30.736292140Z的监督账本快照累计58,891.482 s，当时数值余额26,308.518 s、总余额27,508.518 s（不是后续启动余额）。详见[response_v7](../response_v7.md)和[V7 compact](b0_v7_saved_attribution_20261021.json)。official_result=false；200q、factor、KSP/FGMRES、完整场及A6/R/T/A均未运行。

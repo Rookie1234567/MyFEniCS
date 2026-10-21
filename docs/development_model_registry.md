@@ -2483,3 +2483,19 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 第三次 task-cgroup peak 11,872,563,200 B 属于 donor consumer/recovery；早先 carrier-build resource stop 的 1,580,571,795,456 B 属于不同阶段，不得写成同 scope 的内存下降。父 workflow 9,364.071 s 包含 surface apply 4,257.864 s 与 read/parse 子计时；不重复相加。宿主全局 swapin/out 13/0 页的 task attribution UNKNOWN；PSS与数组/backing常驻峰值 UNKNOWN。本机回归身份为 source-tree HEAD 5e82225427d91d2ec4650169e558b6da29e75a8e 加 tracked-diff SHA 9c8707fc9541087d1d7523edfa1eb10f18842845ed8b4ead70a97369561b98e7，不能与 formal service source 混写。13.5 nm A1/A2 结果保持不变；0.7 nm目标还没有完整场、最终精度或2 TB/48 h资格。
 
 测试结论与限制见 [test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。下一检查点是 ChatGPT 基于数值门失败与缺少首列向量证据审阅后续处置；重点是保留首个失败列输入/native RHS/recovered 向量及 local residual，区分 native/local 与 LU 误差来源。本阶段没有自动重复 heavy。
+
+
+## Task41 Review V7：保存数组归因修正，完整作用仍未资格（2026-10-21）
+
+本轮把诊断等式中漏掉的端口激励Bα补回：它只修复“如何解释原差异”，没有改写原差异向量或求解结果。复用V6全域候选与历史donor，未重建FE、carrier或因子。
+
+| 登记项 | 实际结果 | 边界 |
+|---|---|---|
+| 旧闭合约198 | 保存复数Bα向量解释了主要漏项；corrected full/volume均已复算 | 不是物理解误差，也不是原action修复 |
+| 四组corrected full闭合 / 原D | 1.84885e-11、9.74451e-12、3.88261e-11、2.04878e-11 | 仍占原d约5.66%–10.76%，DIAGNOSTIC_ONLY |
+| 完整action / 原D | 1.7183209126709868e-10、3.6180522433957604e-10 | 原1e-11门仍FAIL |
+| V6候选恢复forward | 1.981377497384616e-11、1.979023053583157e-11，额外修正0次 | 原1e-11门仍FAIL；donor j3不转授 |
+| 成本/资源 | service250.110605s（含checker200.484060s）；tree RSS9049808896B，cgroup峰1801805824B；task swap0，后代清场 | 分口径，不相加；其余工程成本UNKNOWN |
+| 下一最小证据 | active行4766937关联cell/key/maps和同身份局部分项；现有全域Q未拆分 | 不用旧两格或局部PASS替代全域归因；200q/FGMRES未解锁 |
+
+源184822fa7ec5cd2af33a6ff39b5c6e7e5641cab6；审核及合同身份、8份新闭合向量hash、旧负结果与窗口账见[response_v7](task41extra_phi90_p50x50_g17x20/response_v7.md)、[V7 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v7_saved_attribution_20261021.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。没有新增模型求解或最终2TB/48h资格。
