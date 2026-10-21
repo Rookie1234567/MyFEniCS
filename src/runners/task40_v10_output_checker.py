@@ -2172,6 +2172,75 @@ def verify_v10_regular_internal_witness(packet_json: str | Path) -> dict[str, An
     }
 
 
+def _task41_b0_authority_strategy_policy(
+    authority: Mapping[str, Any], *, current_root: str | Path
+) -> dict[str, Any]:
+    """Preserve legacy B0 authority reads while pinning explicit V9/v2 bindings."""
+
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V9_WINDOW_RELATIVE,
+        require_task41_p0_contract,
+    )
+
+    root = Path(current_root).resolve()
+    strategy = authority.get("internal_rhs_strategy")
+    dispatch_schema = authority.get("task41_dispatch_binding_schema")
+    window_value = authority.get("campaign_window_path")
+    window_path = Path(str(window_value or ""))
+    if not window_path.is_absolute():
+        window_path = root / window_path
+    is_v9_window = window_path.resolve() == (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve()
+    is_explicit_v9 = bool(
+        is_v9_window
+        or strategy == "same_lu_rhs_solve"
+        or dispatch_schema == "task41.p0.dispatch_binding.v2"
+    )
+    contract_sha = authority.get("task41_contract_sha256")
+    if not isinstance(contract_sha, str) or re.fullmatch(r"[0-9a-f]{64}", contract_sha) is None:
+        raise ValueError("Task41 B0 worker authority has no valid contract SHA-256")
+
+    if not is_explicit_v9:
+        if strategy not in (None, "stored_T") or dispatch_schema not in (
+            None,
+            "task41.p0.dispatch_binding.v1",
+        ):
+            raise ValueError("Task41 B0 legacy authority has an unsupported RHS strategy binding")
+        return {
+            "is_explicit_v9": False,
+            "internal_rhs_strategy": "stored_T",
+            "dispatch_binding_schema": "task41.p0.dispatch_binding.v1",
+            "contract_sha256": contract_sha,
+        }
+
+    contract_path = authority.get("task41_contract_path")
+    if not isinstance(contract_path, str) or not contract_path:
+        raise ValueError("Task41 B0 V9/v2 authority omits its bound execution contract path")
+    contract, actual_contract_sha = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=contract_sha,
+        current_root=root,
+        case_id="B0",
+    )
+    expected_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+    }
+    if (
+        contract.get("numerical_strategy") != expected_strategy
+        or strategy != expected_strategy["internal_rhs_strategy"]
+        or dispatch_schema != "task41.p0.dispatch_binding.v2"
+    ):
+        raise ValueError(
+            "Task41 B0 V9/v2 authority must explicitly bind same_lu_rhs_solve and dispatch v2"
+        )
+    return {
+        "is_explicit_v9": True,
+        "internal_rhs_strategy": expected_strategy["internal_rhs_strategy"],
+        "dispatch_binding_schema": "task41.p0.dispatch_binding.v2",
+        "contract_sha256": actual_contract_sha,
+    }
+
+
 def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
     """Recompute V15 state identities, native budget terms, and admission."""
 
@@ -2892,6 +2961,14 @@ def verify_v10_output_bundle(
         worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
         summary_identity = worker_summary.get("scientific_identity")
         authority = worker_summary.get("campaign_authority")
+        if not isinstance(authority, Mapping):
+            raise ValueError("Task41 B0 worker summary has no fixed contract authority")
+        authority_policy = _task41_b0_authority_strategy_policy(
+            authority, current_root=Path(__file__).resolve().parents[2]
+        )
+        task41_contract_sha = authority_policy["contract_sha256"]
+        expected_internal_rhs_strategy = authority_policy["internal_rhs_strategy"]
+        expected_dispatch_binding_schema = authority_policy["dispatch_binding_schema"]
         if (
             run_manifest.get("source_sha") != source_sha
             or run_manifest.get("run_id") != run_id
@@ -2910,8 +2987,6 @@ def verify_v10_output_bundle(
             or authority.get("case_id") != "B0"
             or authority.get("comparison_binding") is not None
             or authority.get("q_csr_reuse") is not None
-            or not isinstance(authority.get("task41_contract_sha256"), str)
-            or re.fullmatch(r"[0-9a-f]{64}", authority["task41_contract_sha256"]) is None
             or worker_summary.get("comparison_authority") is not None
             or "task41_a1_a2_comparison" in worker_summary
         ):
@@ -2979,6 +3054,9 @@ def verify_v10_output_bundle(
             "mode_count": b0_profile_capability["mode_count"],
             "q_count": b0_profile_capability["q_count"],
             "sector_count": b0_profile_capability["twist_count"],
+            "internal_rhs_strategy": expected_internal_rhs_strategy,
+            "dispatch_binding_schema": expected_dispatch_binding_schema,
+            "execution_contract_sha256": task41_contract_sha,
             "worker_summary_binding_passed": True,
             "run_manifest_binding_passed": True,
             "profile_reconstructed_from_run_artifacts": True,

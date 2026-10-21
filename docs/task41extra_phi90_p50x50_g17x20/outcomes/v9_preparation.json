@@ -1,0 +1,155 @@
+{
+  "schema": "task41.v9.preparation_receipt.v1",
+  "status": "PREPARATION_ONLY_PENDING_WINDOW_APPROVAL",
+  "recorded_at_utc": "2026-10-21T15:26:33.111849+00:00",
+  "review_head": "b24b6ce6577225af7fb03e4a62bef80126efc9b8",
+  "results_base": "a63e51f39ee7ed35b03d521cb42fa3fe6c9f834f",
+  "source_binding": "working_tree_files_tested_before_controller_freeze",
+  "source_files": [
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "bytes": 114187,
+      "sha256": "0602081b5d685f25c95b4bc6f476165c175ecfb46c740c31fd4b3eba3c286784"
+    },
+    {
+      "path": "scripts/run_case_in_user_service.sh",
+      "bytes": 19940,
+      "sha256": "6639018cd540bf4352e436419cdb2508678da3a831ab92b4c8eb24071ab9e6ba"
+    },
+    {
+      "path": "scripts/task40_v20_service_workflow.py",
+      "bytes": 658191,
+      "sha256": "0afd5e0e784c6198e7d5ba8f8bee70a8c330b6b010dc029bb84452ee92317a2d"
+    },
+    {
+      "path": "src/runners/physical_dual_cell_condensed_lowmem_v20.py",
+      "bytes": 113310,
+      "sha256": "5fa3a9521923492979ad75dfff15e9a52fa103ee63429f90a95b24e5b9ef206c"
+    },
+    {
+      "path": "src/runners/physical_retained_outer_adapter.py",
+      "bytes": 98402,
+      "sha256": "e656d6877a0c4d46c747ef82f32fdb37259f0cf48006919845175f09562f6294"
+    },
+    {
+      "path": "src/runners/task038_full3d_iterative.py",
+      "bytes": 53784,
+      "sha256": "b93fa2cc1ac137274d3d2537183fe058d2eb3714cbc256bc1dfd780bca842ff3"
+    },
+    {
+      "path": "src/runners/task40_v10_output_checker.py",
+      "bytes": 164052,
+      "sha256": "a1b6e6032bc80e8196621b23e2ba3f629ab84e876ca06bebfa838851c0dc115c"
+    },
+    {
+      "path": "src/runners/task40_v10_worker.py",
+      "bytes": 695051,
+      "sha256": "f50b1534c5959de0aca48b6a5cd0812b70bddafe7293b3eb64831f8fc13a6171"
+    },
+    {
+      "path": "src/runners/task41_p0_checker.py",
+      "bytes": 384788,
+      "sha256": "756dcc756c124eac4cee8c5bf8ab6377c9f5c8cef33d2276dd04837b7009bf3d"
+    },
+    {
+      "path": "src/runners/task41_p0_contract.py",
+      "bytes": 114825,
+      "sha256": "5c89d611f75e987056d634e001d5a73ef39abb839919a9897bc1740b3051a260"
+    },
+    {
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "bytes": 215182,
+      "sha256": "d45dd5ede0684b969c4bedef7e6c43df817d2eb1a8800ad3e945e308d9204ba8"
+    },
+    {
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "bytes": 197108,
+      "sha256": "dc314cb0db912abfe5f683de35d88da580f62291aba4586cb8c234353562c01c"
+    },
+    {
+      "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+      "bytes": 137737,
+      "sha256": "9ad52fae4b270af27e05c86355eb4d0761e83edf50b65d34df62dbe0408462d9"
+    },
+    {
+      "path": "src/test/test_task40_v10_output_checker.py",
+      "bytes": 67100,
+      "sha256": "fe8e5b948afbf64c2dcd856f84a80e46620874ffc7d9cd65e806a7710ee925dc"
+    },
+    {
+      "path": "src/test/test_task41_b0_dispatch.py",
+      "bytes": 31514,
+      "sha256": "9cebfb202708e3ad4c92a59519bbe2f080f003ee5669c5ffba717e299c065ba0"
+    },
+    {
+      "path": "src/test/test_task41_p0_contract.py",
+      "bytes": 77469,
+      "sha256": "00f2306593b07a0df4ce1d262e12751caf6b2c06968e10997a881ce80e86df09"
+    },
+    {
+      "path": "src/test/test_task41_p0_saved_output_continuation.py",
+      "bytes": 123082,
+      "sha256": "aa49753b36e774854cba341ff3f8d14d8b154c27c293e3d03f4001988a7cb055"
+    },
+    {
+      "path": "src/test/test_task41_v8_selected_trace_star.py",
+      "bytes": 55153,
+      "sha256": "955fde1b39a105aa2e645f2331537ebe88b3aaee5e565ade44e360340df7163d"
+    }
+  ],
+  "new_window_created": false,
+  "formal_saved_screen": "NOT_RUN",
+  "full_action": "NOT_RUN",
+  "candidate_recovery": "NOT_RUN",
+  "official": false,
+  "pending_full_integration": [
+    "Task41 actual volume-only owner strategy/J binding",
+    "compact action/recovery output and independent terminal checker",
+    "qualified owner same-process handoff to target/reference"
+  ],
+  "tests": {
+    "activation": "scripts/activate_myfenics_wsl.sh",
+    "command_argv": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v8_rhs_counterfactual_uses_original_full_storage_row_once",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_contract_wrapper_is_local_only_and_persists_result",
+      "src/test/test_task41_p0_saved_output_continuation.py::test_v9_saved_star_selector_passes_candidate_binding_guard_without_fe",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_stored_t_owner_destroy_keeps_legacy_cache_references",
+      "src/test/test_task40_v10_output_checker.py::test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior",
+      "src/test/test_task40_v10_output_checker.py::test_task41_b0_v9_authority_missing_strategy_is_rejected"
+    ],
+    "final_result": "10 passed in 0.51s",
+    "raw": {
+      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261021/final_targeted.txt",
+      "bytes": 99,
+      "sha256": "3489eb2434195e306846bfcca847a76580c07ad48fe60931d3b8ca824d487e2e"
+    },
+    "abi": {
+      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261021/abi_preflight.txt",
+      "bytes": 527,
+      "sha256": "9c5f454497bb6e17f1cdf5017c8234052fe1c9f4f57293f6eb10b3bcf4716cd1"
+    },
+    "executor_prior_targeted": "26 passed in 1.04s before final review fixes; final executor affected nodes 10 passed in 0.54s",
+    "legacy_expired_fixture_failures": 3,
+    "ruff": "NOT_RUN: module unavailable",
+    "full_repository_pytest": "NOT_RUN",
+    "ci": "NOT_RUN"
+  },
+  "scope": "Local code/fixture preparation only. No remote formal service, FE rebuild or saved scientific computation.",
+  "costs": {
+    "full_preparation_parent_seconds": "UNKNOWN",
+    "executor_first_implementation_turn_utc": "2026-10-21T13:19:04Z",
+    "scientific_getrs_seconds": "NOT_RUN",
+    "j_retained_payload_bytes_derived": 87091200000,
+    "local_numeric_plus_j_bytes_derived": 435653172000,
+    "new_formal_peak_rss_bytes": null
+  }
+}

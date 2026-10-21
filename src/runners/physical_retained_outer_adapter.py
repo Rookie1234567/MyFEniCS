@@ -459,6 +459,7 @@ class RetainedOuterAdapter:
         compiled_form=None,
         raw_tensor_evaluator=None,
         identity_cache_mode="per_oriented_class",
+        internal_rhs_strategy="stored_T",
         preserve_exact_geometry=False,
         persist_native_stop_records=False,
         evidence_prefix="v19",
@@ -480,6 +481,11 @@ class RetainedOuterAdapter:
         self.raw_tensor_evaluator = raw_tensor_evaluator
         self.raw_tensor_candidate_gate_facts = None
         self.identity_cache_mode = str(identity_cache_mode)
+        self.internal_rhs_strategy = str(internal_rhs_strategy)
+        if self.internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+            raise ValueError(
+                f"unsupported internal RHS strategy: {self.internal_rhs_strategy}"
+            )
         self.preserve_exact_geometry = bool(preserve_exact_geometry)
         self.persist_native_stop_records = bool(persist_native_stop_records)
         self._append_record = None
@@ -602,6 +608,7 @@ class RetainedOuterAdapter:
             appended_global_rows=len(self.common["fine"]["dtn_action"].carrier.entries),
             sum_duplicate_cell_integrals=True, strict_local_checks=True,
             materialize_global_matrix=False, retain_local_schur_for_matrix_free=True,
+            internal_rhs_strategy=self.internal_rhs_strategy,
             share_identity_cache=(self.identity_cache_mode == "shared_read_only_per_interior_shape"),
             preserve_exact_geometry=self.preserve_exact_geometry,
             allocation_gate=allocation_gate,
@@ -611,6 +618,7 @@ class RetainedOuterAdapter:
             self.condensed.build_audit[
                 "raw_tensor_candidate_allocation_gate"
             ] = dict(self.raw_tensor_candidate_gate_facts or {})
+        self.condensed.build_audit["internal_rhs_strategy"] = self.internal_rhs_strategy
         setup_phases["condensation_builder_seconds"] = perf_counter() - phase_started
         runtime.release_workspace(f"{prefix}_p6_setup")
         runtime.reserve_workspace(f"{prefix}_p6_setup", 128 << 20)

@@ -175,7 +175,9 @@ def test_task41_b0_carrier_upper_bound_counts_two_pairs_slave_rows_and_full_vect
     assert bound["measurement_status"] == "not_a_measured_process_memory_peak"
 
 
-def _dispatch_fixture(root: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict[str, Any], str]:
+def _dispatch_fixture(
+    root: Path, monkeypatch: pytest.MonkeyPatch, *, v9: bool = False
+) -> tuple[dict[str, Any], str]:
     import src.runners.task41_p0_contract as contract_module
 
     source_sha = "c" * 40
@@ -209,31 +211,105 @@ def _dispatch_fixture(root: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict
     jit_cache.mkdir()
 
     anchor = clock_sample(include_boot_id=True)
-    t0_ns = _utc_ns(TASK41_B0_T0_UTC)
-    bootstrap = (int(anchor["utc_ns"]) - t0_ns) / 1.0e9
-    window_payload = {
-        "schema": TASK41_P0_WINDOW_SCHEMA,
-        "task_id": TASK41_MODEL_ID,
-        "source_sha": TASK41_B0_T0_SOURCE_SHA,
-        "t0_utc": TASK41_B0_T0_UTC,
-        "numerical_deadline_utc": _utc_z(
-            t0_ns + int(TASK41_NUMERICAL_SECONDS * 1_000_000_000)
-        ),
-        "deadline_utc": _utc_z(t0_ns + int(TASK41_TOTAL_SECONDS * 1_000_000_000)),
-        "total_seconds": TASK41_TOTAL_SECONDS,
-        "numerical_seconds": TASK41_NUMERICAL_SECONDS,
-        "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
-        "anchor": anchor,
-        "accounting_path": str(
-            (root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v10.jsonl").resolve()
-        ),
-        "t0_basis": TASK41_B0_T0_BASIS,
-        "bootstrap_utc_elapsed_seconds": bootstrap,
-        "bootstrap_boottime_elapsed_seconds": None,
-        "bootstrap_time_treatment": TASK41_B0_BOOTSTRAP_TREATMENT,
-    }
-    window_path = root / TASK41_B0_WINDOW_RELATIVE
-    window_path.parent.mkdir(parents=True)
+    if v9:
+        controller = root / TASK41_B0_CONTROLLER_RELATIVE
+        controller.mkdir(parents=True, exist_ok=True)
+        parent_cost_path = controller / "campaign_accounting_v6_24h.jsonl"
+        parent_cost_path.write_bytes(b"V6 cost fixture; unknown amounts remain unknown\n")
+        parent_window_path = root / contract_module.TASK41_B0_V6_WINDOW_RELATIVE
+        parent_window_path.write_text(
+            json.dumps({"accounting_path": str(parent_cost_path.resolve())}),
+            encoding="utf-8",
+        )
+        parent_window_sha = hashlib.sha256(parent_window_path.read_bytes()).hexdigest()
+        monkeypatch.setattr(
+            contract_module, "TASK41_B0_V6_WINDOW_SHA256", parent_window_sha
+        )
+        parent_cost_sha = hashlib.sha256(parent_cost_path.read_bytes()).hexdigest()
+        t0_ns = int(anchor["utc_ns"]) - 37_123_000_000
+        preparation_started_utc = contract_module._utc_text_from_ns(t0_ns)
+        authorization = {
+            "schema": contract_module.TASK41_B0_V9_AUTH_SCHEMA,
+            "authorization": contract_module.TASK41_B0_V9_AUTHORIZATION,
+            "source_at_entry": source_sha,
+            "parent_window_path": str(contract_module.TASK41_B0_V6_WINDOW_RELATIVE),
+            "parent_window_sha256": parent_window_sha,
+            "parent_cost_ledger_path": str(
+                contract_module.TASK41_B0_V6_WINDOW_RELATIVE.parent
+                / "campaign_accounting_v6_24h.jsonl"
+            ),
+            "parent_cost_ledger_sha256": parent_cost_sha,
+            "total_seconds": contract_module.TASK41_B0_V9_TOTAL_SECONDS,
+            "numerical_seconds": contract_module.TASK41_B0_V9_NUMERICAL_SECONDS,
+            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+            "preparation_started_utc": preparation_started_utc,
+        }
+        authorization_path = root / contract_module.TASK41_B0_V9_AUTH_RELATIVE
+        authorization_path.write_text(json.dumps(authorization), encoding="utf-8")
+        authorization_sha = hashlib.sha256(authorization_path.read_bytes()).hexdigest()
+        bootstrap = (int(anchor["utc_ns"]) - t0_ns) / 1.0e9
+        window_payload = {
+            "schema": TASK41_P0_WINDOW_SCHEMA,
+            "task_id": TASK41_MODEL_ID,
+            "source_sha": source_sha,
+            "t0_utc": preparation_started_utc,
+            "numerical_deadline_utc": _utc_z(
+                t0_ns + int(contract_module.TASK41_B0_V9_NUMERICAL_SECONDS * 1e9)
+            ),
+            "deadline_utc": _utc_z(
+                t0_ns + int(contract_module.TASK41_B0_V9_TOTAL_SECONDS * 1e9)
+            ),
+            "total_seconds": contract_module.TASK41_B0_V9_TOTAL_SECONDS,
+            "numerical_seconds": contract_module.TASK41_B0_V9_NUMERICAL_SECONDS,
+            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+            "anchor": anchor,
+            "accounting_path": str(
+                (controller / "campaign_accounting_v9_24h.jsonl").resolve()
+            ),
+            "t0_basis": {"kind": contract_module.TASK41_B0_V9_PREPARATION_T0_KIND},
+            "bootstrap_utc_elapsed_seconds": bootstrap,
+            "bootstrap_boottime_elapsed_seconds": None,
+            "bootstrap_time_treatment": contract_module.TASK41_B0_V9_PREPARATION_BOOTSTRAP_TREATMENT,
+            "continuation_authorization_sha256": authorization_sha,
+            "parent_window_path": str(contract_module.TASK41_B0_V6_WINDOW_RELATIVE),
+            "parent_window_sha256": parent_window_sha,
+            "parent_cost_ledger_path": authorization["parent_cost_ledger_path"],
+            "parent_cost_ledger_sha256": parent_cost_sha,
+        }
+        window_path = root / contract_module.TASK41_B0_V9_WINDOW_RELATIVE
+    else:
+        t0_ns = _utc_ns(TASK41_B0_T0_UTC)
+        anchor = dict(anchor)
+        anchor["utc_ns"] = t0_ns + 60_000_000_000
+        monkeypatch.setattr(
+            contract_module,
+            "clock_sample",
+            lambda **_kwargs: dict(anchor),
+        )
+        bootstrap = (int(anchor["utc_ns"]) - t0_ns) / 1.0e9
+        window_payload = {
+            "schema": TASK41_P0_WINDOW_SCHEMA,
+            "task_id": TASK41_MODEL_ID,
+            "source_sha": TASK41_B0_T0_SOURCE_SHA,
+            "t0_utc": TASK41_B0_T0_UTC,
+            "numerical_deadline_utc": _utc_z(
+                t0_ns + int(TASK41_NUMERICAL_SECONDS * 1_000_000_000)
+            ),
+            "deadline_utc": _utc_z(t0_ns + int(TASK41_TOTAL_SECONDS * 1_000_000_000)),
+            "total_seconds": TASK41_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_NUMERICAL_SECONDS,
+            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+            "anchor": anchor,
+            "accounting_path": str(
+                (root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v10.jsonl").resolve()
+            ),
+            "t0_basis": TASK41_B0_T0_BASIS,
+            "bootstrap_utc_elapsed_seconds": bootstrap,
+            "bootstrap_boottime_elapsed_seconds": None,
+            "bootstrap_time_treatment": TASK41_B0_BOOTSTRAP_TREATMENT,
+        }
+        window_path = root / TASK41_B0_WINDOW_RELATIVE
+    window_path.parent.mkdir(parents=True, exist_ok=True)
     window_path.write_text(
         json.dumps(window_payload, sort_keys=True, separators=(",", ":")) + "\n",
         encoding="utf-8",
@@ -269,9 +345,13 @@ def _dispatch_fixture(root: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict
             "math_threads": 1,
         },
         "window": {
-            "path": str(TASK41_B0_WINDOW_RELATIVE),
+            "path": str(
+                contract_module.TASK41_B0_V9_WINDOW_RELATIVE
+                if v9
+                else TASK41_B0_WINDOW_RELATIVE
+            ),
             "sha256": window_sha,
-            "entry_source_sha": TASK41_B0_T0_SOURCE_SHA,
+            "entry_source_sha": source_sha if v9 else TASK41_B0_T0_SOURCE_SHA,
         },
         "resources": {
             "task_memory_max_bytes": TASK41_TASK_MEMORY_MAX_BYTES,
@@ -292,6 +372,25 @@ def _dispatch_fixture(root: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict
     contract["preparation"] = {
         "existing_surface_donor": contract_module.TASK41_B0_SAVED_SURFACE_DONOR,
     }
+    if v9:
+        contract["time"] = {
+            "total_seconds": contract_module.TASK41_B0_V9_TOTAL_SECONDS,
+            "numerical_seconds": contract_module.TASK41_B0_V9_NUMERICAL_SECONDS,
+            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+        }
+        contract["window"].update(
+            {
+                "continuation_authorization_sha256": authorization_sha,
+                "parent_window_path": str(contract_module.TASK41_B0_V6_WINDOW_RELATIVE),
+                "parent_window_sha256": parent_window_sha,
+                "parent_cost_ledger_path": authorization["parent_cost_ledger_path"],
+                "parent_cost_ledger_sha256": parent_cost_sha,
+            }
+        )
+        contract["numerical_strategy"] = {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        }
     contract_path = root / contract_relative_path(source_sha, "B0")
     contract_path.parent.mkdir(parents=True, exist_ok=True)
     contract_path.write_text(
@@ -355,12 +454,48 @@ def test_task41_b0_dispatch_binds_contract_and_preserves_mixed_reference_checks(
     assert binding["case_id"] == "B0"
     assert binding["source_sha"] == source_sha
     assert binding["input_sha256"] == payload["provenance"]["input_sha256"]
+    assert binding["schema"] == "task41.p0.dispatch_binding.v1"
+    assert binding["internal_rhs_strategy"] == "stored_T"
     assert binding["comparison_binding"] is None
+    assert calls[0]["args"][0]["solver"]["internal_rhs_strategy"] == "stored_T"
     assert call["profile_identity"] == TASK41_B0_PRECONDITIONER
     assert call["share_transform_bank"] is True
     assert worker._include_mixed_fe_port_reference_cases(
         route_contract=None, task41_p0_iterative=True
     ) is True
+
+
+def test_task41_b0_v9_dispatch_binds_and_passes_same_lu_strategy_to_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import src.runners.task038_full3d_iterative as iterative
+    import src.runners.task40_v10_worker as worker
+
+    payload, source_sha = _dispatch_fixture(tmp_path, monkeypatch, v9=True)
+    original_binding = iterative._task41_b0_dispatch_binding
+    monkeypatch.setattr(
+        iterative,
+        "_task41_b0_dispatch_binding",
+        lambda data, *, source_sha: original_binding(
+            data, source_sha=source_sha, current_root=tmp_path
+        ),
+    )
+    calls: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        worker,
+        "run_task40_v10_p6_reference_worker",
+        lambda *args, **kwargs: calls.append({"args": args, "kwargs": kwargs})
+        or {"status": "fixture_capture"},
+    )
+    result = iterative.run_full3d_iterative(
+        payload, tmp_path / "run", source_sha=source_sha
+    )
+    assert result["status"] == "fixture_capture"
+    assert len(calls) == 1
+    binding = calls[0]["kwargs"]["task41_contract_binding"]
+    assert binding["schema"] == "task41.p0.dispatch_binding.v2"
+    assert binding["internal_rhs_strategy"] == "same_lu_rhs_solve"
+    assert calls[0]["args"][0]["solver"]["internal_rhs_strategy"] == "same_lu_rhs_solve"
 
 
 @pytest.mark.parametrize(

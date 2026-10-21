@@ -18,8 +18,13 @@ from scipy import sparse
 from scipy.linalg import lu_factor, lu_solve
 
 from src.solvers.hcurl_assembly_time_condensation import (
+    AssemblyTimeCondensedSystem,
     CellRecoveryMap,
     TraceConstraintMap,
+    assembly_time_condensation_capacity_facts,
+    condense_unconstrained_vector_to_active_trace,
+    prepare_saved_lu_pivots_for_getrs,
+    project_internal_rhs_same_lu,
 )
 from src.solvers.augmented_reference_correction import (
     augmented_port_state_offset,
@@ -136,6 +141,348 @@ def _problem() -> tuple[_FakeCondensed, dict[str, np.ndarray], P6CellCondensedAc
     }
     action = P6CellCondensedAction(condensed, H_p=block["H"] * 0.0 + _matrix(rng, 2, 2, 6.0), port_terms=terms)
     return condensed, block, action
+
+
+def _same_lu_owner(
+    *, retain_j: bool = True, strategy: str = "same_lu_rhs_solve"
+) -> tuple[AssemblyTimeCondensedSystem, dict[str, np.ndarray], np.ndarray | None, np.ndarray]:
+    fake, block, stored_t_action = _problem()
+    hp = stored_t_action._H_p.copy()
+    stored_t_action.destroy()
+    phase = np.exp(0.43j)
+    constraints = TraceConstraintMap(
+        owned_active_original_dofs=np.asarray([2], dtype=PETSc.IntType),
+        original_to_active={2: 0},
+        expansion_by_original={
+            2: (
+                np.asarray([0], dtype=PETSc.IntType),
+                np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            ),
+            3: (
+                np.asarray([0], dtype=PETSc.IntType),
+                np.asarray([phase], dtype=np.complex128),
+            ),
+        },
+        full_trace_rows=2,
+        active_rows=1,
+        slave_rows=1,
+        owned_active_range=(0, 1),
+        build_audit={},
+    )
+    trace_interior = block["Vti"].copy()
+    trace_interior.flags.writeable = False
+    identity_by_class = {
+        key: np.eye(2, dtype=np.complex128)
+        for key in fake.interior_lu_by_class
+    }
+    condensed = AssemblyTimeCondensedSystem(
+        matrix=None,
+        owned_trace_original_dofs=np.asarray([2], dtype=PETSc.IntType),
+        original_to_trace={2: 0, 3: 1},
+        trace_constraints=constraints,
+        cell_recovery_maps=fake.cell_recovery_maps,
+        interior_from_trace_by_class=fake.interior_from_trace_by_class,
+        interior_lu_by_class=fake.interior_lu_by_class,
+        interior_rhs_projection_by_class=dict(identity_by_class),
+        interior_solution_embedding_by_class=dict(identity_by_class),
+        trace_from_interior_rhs_by_class=fake.trace_from_interior_rhs_by_class,
+        interior_residual_projection_by_class={},
+        full_rows=4,
+        trace_rows=2,
+        active_rows=1,
+        appended_rows=2,
+        interior_rows=2,
+        active_interior_rows=2,
+        build_audit={},
+        comm=MPI.COMM_SELF,
+        owned_active_rows=1,
+        owned_appended_rows=2,
+        retained_local_schur_by_class=fake.retained_local_schur_by_class,
+        retained_trace_interior_by_class=(
+            {(0,): trace_interior} if retain_j else None
+        ),
+        internal_rhs_strategy=strategy,
+    )
+    return condensed, block, trace_interior if retain_j else None, hp
+
+
+def _same_lu_action(
+    condensed: AssemblyTimeCondensedSystem,
+    block: dict[str, np.ndarray],
+    hp: np.ndarray,
+) -> P6CellCondensedAction:
+    bt = block["Bt"].copy()
+    bt[1, :] = 0.0
+    dt = block["Dt"].copy()
+    dt[:, 1] = 0.0
+    return P6CellCondensedAction(
+        condensed,
+        H_p=hp,
+        port_terms={
+            0: P6CellPortTerms(
+                block["Bi"],
+                block["Di"],
+                np.asarray([0, 1], dtype=PETSc.IntType),
+                Bt=bt,
+                Dt=dt,
+                H=block["H"],
+            )
+        },
+    )
+
+
+def test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j(monkeypatch) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    condensed, block, J, hp = _same_lu_owner()
+    action = _same_lu_action(condensed, block, hp)
+    second_action = _same_lu_action(condensed, block, hp)
+    assert action._cells[0].trace_interior is J
+    assert second_action._cells[0].trace_interior is J
+    assert not J.flags.writeable
+    assert condensed._trace_interior_rhs_borrowers == 2
+    cache_identity = action.cache_identity
+    assert cache_identity["schema_version"].endswith("cache-identity.v2")
+    assert cache_identity["internal_rhs_strategy"] == "same_lu_rhs_solve"
+    class_identity = next(iter(cache_identity["class_payloads"].values()))
+    assert class_identity["trace_interior_J_sha256"]
+    assert class_identity["LU_pivots_sha256"]
+    pivots = np.ascontiguousarray(action._cells[0].interior_lu[1])
+    expected_pivot_sha = hashlib.sha256(
+        repr((pivots.shape, str(pivots.dtype))).encode()
+        + pivots.tobytes(order="C")
+    ).hexdigest()
+    assert class_identity["LU_pivots_sha256"] == expected_pivot_sha
+    original_solve = hcurl.lu_solve
+    getrs_calls = []
+
+    def counted_solve(*args, **kwargs):
+        getrs_calls.append(1)
+        return original_solve(*args, **kwargs)
+
+    monkeypatch.setattr(hcurl, "lu_solve", counted_solve)
+    rhs = np.asarray(
+        [0.5 - 0.4j, 0.2 + 0.6j, 1.25 - 0.75j, 0.0j],
+        dtype=np.complex128,
+    )
+    port_rhs = np.asarray([0.3 + 0.2j, -0.6 + 0.1j], dtype=np.complex128)
+
+    full_vector = PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
+    full_vector.getArray()[:] = rhs
+    trace_only = condense_unconstrained_vector_to_active_trace(
+        condensed, full_vector, side="right"
+    )
+    trace_only_values = np.array(
+        trace_only.getArray(readonly=True), dtype=np.complex128, copy=True
+    )
+    assert len(getrs_calls) == 1
+    trace_only_expected = rhs[2] - np.vdot(
+        np.asarray([1.0 + 0.0j, np.exp(0.43j)]),
+        J @ np.linalg.solve(block["Vii"], rhs[:2]),
+    )
+    np.testing.assert_allclose(
+        trace_only_values,
+        [trace_only_expected, 0.0j, 0.0j],
+    )
+    trace_only.destroy()
+    full_vector.destroy()
+
+    reduced = action.reduce_rhs(rhs, port_rhs=port_rhs, rhs_is_mpc_dual=True)
+    z = np.linalg.solve(block["Vii"], rhs[:2])
+    phase = np.exp(0.43j)
+    expected_trace = rhs[2] - np.vdot(
+        np.asarray([1.0 + 0.0j, phase], dtype=np.complex128), J @ z
+    )
+    expected_ports = port_rhs + block["Di"] @ z
+    np.testing.assert_allclose(reduced, np.r_[expected_trace, expected_ports])
+    assert len(getrs_calls) == 2
+    assert action._audit["same_lu_rhs_operation_costs"]["actual_rhs"]["getrs_count"] == 1
+    assert action._audit["same_lu_rhs_operation_costs"]["actual_rhs"]["mpc_scatter_seconds"] >= 0.0
+
+    zero_rhs = np.asarray([0.0j, 0.0j, 0.8 + 0.1j, 0.0j], dtype=np.complex128)
+    zero_reduced = action.reduce_rhs(
+        zero_rhs,
+        port_rhs=port_rhs,
+        rhs_is_mpc_dual=True,
+    )
+    np.testing.assert_array_equal(zero_reduced, np.r_[zero_rhs[2], port_rhs])
+    assert len(getrs_calls) == 2
+    assert action._audit["same_lu_rhs_operation_costs"]["actual_rhs"]["getrs_count"] == 1
+    second_rhs = np.asarray([0.1 - 0.3j, 0.7 + 0.2j], dtype=np.complex128)
+    second_action._project_internal_rhs(
+        second_action._cells[0], second_rhs, purpose="residual_diagnostic"
+    )
+    assert len(getrs_calls) == 3
+    assert second_action._audit["same_lu_rhs_operation_costs"][
+        "residual_diagnostic"
+    ]["getrs_count"] == 1
+    with pytest.raises(RuntimeError, match="still borrow"):
+        condensed.destroy()
+
+    action.destroy()
+    assert condensed._trace_interior_rhs_borrowers == 1
+    np.testing.assert_allclose(
+        second_action.reduce_rhs(rhs, rhs_is_mpc_dual=True)[0],
+        expected_trace,
+    )
+    second_action.destroy()
+    assert condensed._trace_interior_rhs_borrowers == 0
+    condensed.destroy()
+    assert condensed.retained_trace_interior_by_class is None
+    assert condensed.trace_constraints is None
+    assert condensed.cell_recovery_maps == ()
+    assert condensed.interior_lu_by_class == {}
+    assert condensed.interior_from_trace_by_class == {}
+    assert condensed.retained_local_schur_by_class is None
+
+
+def test_same_lu_rhs_missing_j_fails_closed() -> None:
+    with pytest.raises(ValueError, match="missing its retained actual J"):
+        _same_lu_owner(retain_j=False)
+
+
+def test_same_lu_identity_maps_reject_shared_array_with_different_dimension() -> None:
+    condensed, _block, _J, _hp = _same_lu_owner()
+    shared = condensed.interior_rhs_projection_by_class[(0,)]
+    condensed.cell_recovery_maps += (
+        CellRecoveryMap(
+            interior_original_dofs=np.asarray([5], dtype=PETSc.IntType),
+            trace_original_dofs=np.asarray([6], dtype=PETSc.IntType),
+            class_key=(1,),
+        ),
+    )
+    condensed.interior_rhs_projection_by_class[(1,)] = shared
+    condensed.interior_solution_embedding_by_class[(1,)] = shared
+    try:
+        with pytest.raises(NotImplementedError, match="identity"):
+            condensed.require_identity_internal_rhs_maps()
+    finally:
+        condensed.destroy()
+
+
+def test_same_lu_action_rechecks_identity_maps_before_borrowing_j() -> None:
+    condensed, block, _J, hp = _same_lu_owner()
+    condensed.interior_rhs_projection_by_class[(0,)] = np.diag(
+        np.asarray([2.0, 1.0], dtype=np.complex128)
+    )
+    try:
+        with pytest.raises(NotImplementedError, match="identity"):
+            _same_lu_action(condensed, block, hp)
+    finally:
+        condensed.destroy()
+
+
+def test_stored_t_owner_destroy_keeps_legacy_cache_references() -> None:
+    condensed, block, _J, hp = _same_lu_owner(strategy="stored_T")
+    action = _same_lu_action(condensed, block, hp)
+    constraints = condensed.trace_constraints
+    recovery_maps = condensed.cell_recovery_maps
+    lu_map = condensed.interior_lu_by_class
+    try:
+        cache_identity = action.cache_identity
+        assert cache_identity["schema_version"] == (
+            "task039extra.v19.p6-cell-condensed-cache-identity.v1"
+        )
+        assert "internal_rhs_strategy" not in cache_identity
+        class_identity = next(iter(cache_identity["class_payloads"].values()))
+        assert set(class_identity) == {
+            "S_V_sha256",
+            "recovery_sha256",
+            "trace_rhs_projection_sha256",
+            "LU_payload_sha256",
+        }
+        cell = action._cells[0]
+        lu_payload = np.ascontiguousarray(
+            cell.interior_lu[0], dtype=np.complex128
+        )
+        expected_legacy_lu_sha = hashlib.sha256(
+            repr((lu_payload.shape, str(lu_payload.dtype))).encode()
+            + lu_payload.tobytes(order="C")
+        ).hexdigest()
+        assert class_identity["LU_payload_sha256"] == expected_legacy_lu_sha
+        condensed.destroy()
+        assert condensed.trace_constraints is constraints
+        assert condensed.cell_recovery_maps is recovery_maps
+        assert condensed.interior_lu_by_class is lu_map
+        assert condensed.interior_lu_by_class
+    finally:
+        condensed.destroy()
+
+
+def test_same_lu_projection_nonhermitian_zero_rhs_saved_pivots_and_j_capacity(monkeypatch) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    matrix = np.asarray(
+        [[3.0 + 0.2j, 0.7 - 0.4j], [-0.3 + 0.8j, 2.5 - 0.1j]],
+        dtype=np.complex128,
+    )
+    J = np.asarray(
+        [[0.4 + 0.6j, -0.2 + 0.3j], [0.8 - 0.1j, 0.5 + 0.7j]],
+        dtype=np.complex128,
+    )
+    factor = lu_factor(matrix)
+    rhs = np.asarray([0.3 - 0.2j, 1.1 + 0.4j], dtype=np.complex128)
+    original_solve = hcurl.lu_solve
+    calls = []
+
+    def counted_solve(*args, **kwargs):
+        calls.append(1)
+        return original_solve(*args, **kwargs)
+
+    monkeypatch.setattr(hcurl, "lu_solve", counted_solve)
+    solved, correction, timing = project_internal_rhs_same_lu(factor, J, rhs)
+    np.testing.assert_allclose(matrix @ solved, rhs, rtol=1.0e-13, atol=1.0e-13)
+    np.testing.assert_allclose(correction, -(J @ solved), rtol=0.0, atol=0.0)
+    assert timing["nonzero_rhs"] is True
+    assert len(calls) == 1
+
+    zero_solved, zero_correction, zero_timing = project_internal_rhs_same_lu(
+        factor, J, np.zeros(2, dtype=np.complex128)
+    )
+    np.testing.assert_array_equal(zero_solved, np.zeros(2, dtype=np.complex128))
+    np.testing.assert_array_equal(zero_correction, np.zeros(2, dtype=np.complex128))
+    assert zero_timing["nonzero_rhs"] is False
+    assert len(calls) == 1
+
+    readonly_pivots = np.asarray([0, 1], dtype=np.int32)
+    readonly_pivots.flags.writeable = False
+    normalized = prepare_saved_lu_pivots_for_getrs(readonly_pivots, dimension=2)
+    assert normalized.dtype == np.dtype(np.int32)
+    assert normalized.flags.owndata and normalized.flags.writeable
+    normalized[0] = 0
+    with pytest.raises(ValueError, match="LAPACK step bounds"):
+        prepare_saved_lu_pivots_for_getrs(np.asarray([1, 0]), dimension=2)
+
+    without_j = assembly_time_condensation_capacity_facts(
+        dimension=4,
+        interior_dimension=2,
+        trace_dimension=2,
+        raw_class_count=1,
+        oriented_class_count=3,
+        identity_class_count=0,
+        retain_local_schur=False,
+        scalar_bytes=16,
+        index_bytes=4,
+        real_bytes=8,
+    )
+    with_j = assembly_time_condensation_capacity_facts(
+        dimension=4,
+        interior_dimension=2,
+        trace_dimension=2,
+        raw_class_count=1,
+        oriented_class_count=3,
+        identity_class_count=0,
+        retain_local_schur=False,
+        retain_trace_interior_for_same_lu_rhs=True,
+        scalar_bytes=16,
+        index_bytes=4,
+        real_bytes=8,
+    )
+    assert (
+        with_j["retained_numeric_bytes_upper"]
+        - without_j["retained_numeric_bytes_upper"]
+        == 3 * 2 * 2 * 16
+    )
 
 
 def test_same_lu_internal_correction_updates_only_cell_interior_rows() -> None:

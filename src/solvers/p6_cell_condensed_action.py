@@ -32,6 +32,7 @@ from scipy.linalg import lu_factor, lu_solve
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
     _cell_trace_expansion,
+    project_internal_rhs_same_lu,
     _strict_local_lu,
 )
 from .original_port_blocks import (
@@ -92,7 +93,13 @@ def _readonly(value: np.ndarray) -> np.ndarray:
     return result
 
 
-def _borrow_matrix(value: Any, name: str, *, shape: tuple[int, int] | None = None) -> np.ndarray:
+def _borrow_matrix(
+    value: Any,
+    name: str,
+    *,
+    shape: tuple[int, int] | None = None,
+    check_finite: bool = True,
+) -> np.ndarray:
     """Validate a retained class array without making a per-cell copy."""
 
     result = np.asarray(value, dtype=np.complex128)
@@ -100,7 +107,7 @@ def _borrow_matrix(value: Any, name: str, *, shape: tuple[int, int] | None = Non
         raise ValueError(f"{name} must be two-dimensional")
     if shape is not None and result.shape != shape:
         raise ValueError(f"{name} has shape {result.shape}, expected {shape}")
-    if not np.isfinite(result).all():
+    if check_finite and not np.isfinite(result).all():
         raise ValueError(f"{name} contains non-finite values")
     return result
 
@@ -141,6 +148,16 @@ def _array_sha256(value: np.ndarray) -> str:
     """Hash one native little-endian array without gathering any matrix."""
 
     array = np.ascontiguousarray(value, dtype=np.complex128)
+    return hashlib.sha256(
+        repr((array.shape, str(array.dtype))).encode()
+        + array.tobytes(order="C")
+    ).hexdigest()
+
+
+def _pivot_array_sha256(value: np.ndarray) -> str:
+    """Hash integer LU pivots while preserving their saved dtype."""
+
+    array = np.ascontiguousarray(value)
     return hashlib.sha256(
         repr((array.shape, str(array.dtype))).encode()
         + array.tobytes(order="C")
@@ -1123,6 +1140,7 @@ class _CellActionData:
     S_V: np.ndarray
     recovery: np.ndarray
     trace_from_interior: np.ndarray
+    trace_interior: np.ndarray | None
     interior_lu: tuple[np.ndarray, np.ndarray]
     Bi: np.ndarray
     Bt: np.ndarray | None
@@ -1251,8 +1269,33 @@ class P6CellCondensedAction:
         self.port_block_layout = str(port_block_layout)
         self.port_coupling_mode = str(port_coupling_mode)
         self.condensed = condensed
+        self.internal_rhs_strategy = str(
+            getattr(condensed, "internal_rhs_strategy", "stored_T")
+        )
+        if self.internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+            raise ValueError("condensation owner has an unknown internal RHS strategy")
+        if (
+            self.internal_rhs_strategy == "same_lu_rhs_solve"
+            and getattr(condensed, "retained_trace_interior_by_class", None) is None
+        ):
+            raise ValueError("same_lu_rhs_solve owner is missing its retained actual J map")
+        if self.internal_rhs_strategy == "same_lu_rhs_solve":
+            condensed.require_identity_internal_rhs_maps()
         self._global_direct_provider = global_direct_provider
         self.owns_condensed = bool(owns_condensed)
+        self._same_lu_rhs_borrowed = False
+        self._same_lu_rhs_solve_count = 0
+        self._same_lu_rhs_costs = {
+            name: {
+                "getrs_count": 0,
+                "getrs_seconds": 0.0,
+                "j_matvec_seconds": 0.0,
+                "core_seconds": 0.0,
+                "port_D_seconds": 0.0,
+                "mpc_scatter_seconds": 0.0,
+            }
+            for name in ("actual_rhs", "residual_diagnostic")
+        }
         self._streamed_action_lu_solve_count = 0
         self._streamed_recovery_lu_solve_count = 0
         self._streamed_hhat_lu_solve_count = 0
@@ -1399,6 +1442,11 @@ class P6CellCondensedAction:
             "shared_S_V_buffer_count": len({id(cell.S_V) for cell in self._cells}),
             "shared_recovery_buffer_count": len({id(cell.recovery) for cell in self._cells}),
             "shared_LU_factor_buffer_count": len({id(cell.interior_lu[0]) for cell in self._cells}),
+            "internal_rhs_strategy": self.internal_rhs_strategy,
+            "shared_J_buffer_count": len(
+                {id(cell.trace_interior) for cell in self._cells if cell.trace_interior is not None}
+            ),
+            "J_readonly_borrowed_from_owner": self.internal_rhs_strategy == "same_lu_rhs_solve",
             "class_cache_shared_across_cells": True,
             "direct_trace_B_entry_count": int(sum(len(rows) for rows, _values in self._direct_B_original.values())),
             "direct_trace_D_entry_count": int(sum(len(rows) for rows, _values in self._direct_D_original.values())),
@@ -1443,6 +1491,9 @@ class P6CellCondensedAction:
                 "internal temporaries or workspace"
             ),
         }
+        if self.internal_rhs_strategy == "same_lu_rhs_solve":
+            condensed._register_trace_interior_rhs_borrower()
+            self._same_lu_rhs_borrowed = True
         condensed.build_audit.setdefault("p6_cell_condensed_action", dict(self._audit))
 
     def _build_cells(self, retained: Mapping[tuple[Any, ...], np.ndarray]) -> tuple[_CellActionData, ...]:
@@ -1514,6 +1565,25 @@ class P6CellCondensedAction:
                 "trace RHS projection",
                 shape=(nt, ni),
             )
+            trace_interior = None
+            if self.internal_rhs_strategy == "same_lu_rhs_solve":
+                retained_j = getattr(
+                    self.condensed, "retained_trace_interior_by_class", None
+                )
+                assert retained_j is not None
+                try:
+                    trace_interior = _borrow_matrix(
+                        retained_j[cell.class_key],
+                        "retained oriented A_ti block J",
+                        shape=(nt, ni),
+                        check_finite=False,
+                    )
+                except KeyError as exc:
+                    raise ValueError(
+                        f"same-LU RHS owner is missing actual J for class {cell.class_key!r}"
+                    ) from exc
+                if trace_interior.flags.writeable:
+                    raise ValueError("retained actual J must be readonly")
             factor = self.condensed.interior_lu_by_class[cell.class_key]
             if self.port_coupling_mode == "cached":
                 xib = np.ascontiguousarray(lu_solve(factor, bi))
@@ -1552,6 +1622,7 @@ class P6CellCondensedAction:
                     S_V=schur,
                     recovery=recovery,
                     trace_from_interior=trace_from_interior,
+                    trace_interior=trace_interior,
                     interior_lu=factor,
                     Bi=_readonly(bi),
                     Bt=None if bt is None else _readonly(bt),
@@ -1964,20 +2035,42 @@ class P6CellCondensedAction:
     def cache_identity(self) -> Mapping[str, Any]:
         """Hash retained class arrays and the two small port blocks."""
 
+        same_lu_rhs_solve = self.internal_rhs_strategy == "same_lu_rhs_solve"
         classes: dict[str, dict[str, str]] = {}
         for cell in self._cells:
             key = repr(cell.class_key)
             if key in classes:
                 continue
-            classes[key] = {
+            class_identity = {
                 "S_V_sha256": _array_sha256(cell.S_V),
                 "recovery_sha256": _array_sha256(cell.recovery),
                 "trace_rhs_projection_sha256": _array_sha256(cell.trace_from_interior),
                 "LU_payload_sha256": _array_sha256(cell.interior_lu[0]),
             }
+            if same_lu_rhs_solve:
+                class_identity.update(
+                    {
+                        "LU_pivots_sha256": _pivot_array_sha256(cell.interior_lu[1]),
+                        "trace_interior_J_sha256": (
+                            None
+                            if cell.trace_interior is None
+                            else _array_sha256(cell.trace_interior)
+                        ),
+                    }
+                )
+            classes[key] = class_identity
         return MappingProxyType(
             {
-                "schema_version": "task039extra.v19.p6-cell-condensed-cache-identity.v1",
+                "schema_version": (
+                    "task039extra.v19.p6-cell-condensed-cache-identity.v2"
+                    if same_lu_rhs_solve
+                    else "task039extra.v19.p6-cell-condensed-cache-identity.v1"
+                ),
+                **(
+                    {"internal_rhs_strategy": self.internal_rhs_strategy}
+                    if same_lu_rhs_solve
+                    else {}
+                ),
                 "class_payloads": classes,
                 "H_p_sha256": (
                     _array_sha256(self._H_p) if self._H_p is not None
@@ -3019,6 +3112,41 @@ class P6CellCondensedAction:
     def _cell_internal_rhs(self, full: np.ndarray, cell: _CellActionData) -> np.ndarray:
         return np.asarray(full[cell.original_interiors], dtype=np.complex128)
 
+    def _project_internal_rhs(
+        self,
+        cell: _CellActionData,
+        internal_rhs: np.ndarray,
+        *,
+        purpose: str,
+    ) -> tuple[np.ndarray, np.ndarray | None]:
+        """Project one internal RHS using the owner's explicit strategy.
+
+        The same-LU mode returns the solved vector so a port ``Di`` correction
+        can reuse that exact GETRS result.
+        """
+
+        if self.internal_rhs_strategy == "stored_T":
+            return cell.trace_from_interior @ internal_rhs, None
+        if cell.trace_interior is None:
+            raise RuntimeError("same-LU RHS projection lost its borrowed actual J")
+        if purpose not in self._same_lu_rhs_costs:
+            raise ValueError(f"unknown same-LU RHS accounting purpose {purpose!r}")
+        solved, correction, timing = project_internal_rhs_same_lu(
+            cell.interior_lu, cell.trace_interior, internal_rhs
+        )
+        costs = self._same_lu_rhs_costs[purpose]
+        if timing["nonzero_rhs"]:
+            costs["getrs_count"] += 1
+            self._same_lu_rhs_solve_count += 1
+        costs["getrs_seconds"] += float(timing["getrs_seconds"])
+        costs["j_matvec_seconds"] += float(timing["j_matvec_seconds"])
+        costs["core_seconds"] += float(timing["core_seconds"])
+        self._audit["same_lu_rhs_solve_count"] = self._same_lu_rhs_solve_count
+        self._audit["same_lu_rhs_operation_costs"] = {
+            name: dict(value) for name, value in self._same_lu_rhs_costs.items()
+        }
+        return correction, solved
+
     def reduce_rhs(
         self,
         full_rhs: Any,
@@ -3030,6 +3158,7 @@ class P6CellCondensedAction:
 
         if self.condensed.comm.Get_size() != 1:
             raise NotImplementedError("global NumPy RHS reduction is MPI1-only")
+        reduce_started = time.perf_counter()
         full = self._full_array(full_rhs, "full p6 RHS")
         result = np.zeros(self.reduced_size, dtype=np.complex128)
         constraints = self.condensed.trace_constraints
@@ -3052,12 +3181,21 @@ class P6CellCondensedAction:
             bi = self._cell_internal_rhs(full, cell)
             if not np.any(bi):
                 continue
-            correction = cell.trace_from_interior @ bi
+            correction, solved_rhs = self._project_internal_rhs(
+                cell, bi, purpose="actual_rhs"
+            )
+            scatter_started = time.perf_counter()
             for row, original in enumerate(cell.original_trace):
                 ids, coefficients = constraints.expansion_by_original[int(original)]
                 result[ids] += np.conjugate(coefficients) * correction[row]
+            if self.internal_rhs_strategy == "same_lu_rhs_solve":
+                self._same_lu_rhs_costs["actual_rhs"]["mpc_scatter_seconds"] += (
+                    time.perf_counter() - scatter_started
+                )
             if len(cell.ports):
-                solved_rhs = lu_solve(cell.interior_lu, bi)
+                port_d_started = time.perf_counter()
+                if solved_rhs is None:
+                    solved_rhs = lu_solve(cell.interior_lu, bi)
                 if cell.generated_action is None:
                     port_rhs_correction = cell.Di @ solved_rhs
                 else:
@@ -3067,9 +3205,21 @@ class P6CellCondensedAction:
                         np.zeros(len(cell.original_trace), dtype=np.complex128),
                     )
                 result[self.condensed.active_rows + cell.ports] += port_rhs_correction
+                if self.internal_rhs_strategy == "same_lu_rhs_solve":
+                    self._same_lu_rhs_costs["actual_rhs"]["port_D_seconds"] += (
+                        time.perf_counter() - port_d_started
+                    )
         if port_rhs is not None:
             result[self.condensed.active_rows :] += _complex_vector(
                 port_rhs, "port RHS", size=self.condensed.appended_rows
+            )
+        if self.internal_rhs_strategy == "same_lu_rhs_solve":
+            self._audit["same_lu_rhs_operation_costs"] = {
+                name: dict(value) for name, value in self._same_lu_rhs_costs.items()
+            }
+            self._audit["same_lu_rhs_reduce_rhs_seconds"] = (
+                self._audit.get("same_lu_rhs_reduce_rhs_seconds", 0.0)
+                + time.perf_counter() - reduce_started
             )
         return result
 
@@ -3459,12 +3609,21 @@ class P6CellCondensedAction:
             lhs_i = vii_xi + vit_xt + bi_alpha
             internal_error = rhs_i - lhs_i
             internal_residuals.append(internal_error)
-            trace_correction = cell.trace_from_interior @ internal_error
+            trace_correction, solved_error = self._project_internal_rhs(
+                cell, internal_error, purpose="residual_diagnostic"
+            )
+            scatter_started = time.perf_counter()
             for row, original in enumerate(cell.original_trace):
                 ids, coefficients = self.condensed.trace_constraints.expansion_by_original[int(original)]
                 trace_internal_correction[ids] += np.conjugate(coefficients) * trace_correction[row]
+            if self.internal_rhs_strategy == "same_lu_rhs_solve":
+                self._same_lu_rhs_costs["residual_diagnostic"][
+                    "mpc_scatter_seconds"
+                ] += time.perf_counter() - scatter_started
             if len(cell.ports):
-                solved_error = lu_solve(cell.interior_lu, internal_error)
+                port_d_started = time.perf_counter()
+                if solved_error is None:
+                    solved_error = lu_solve(cell.interior_lu, internal_error)
                 if cell.generated_action is None:
                     port_correction = cell.Di @ solved_error
                 else:
@@ -3474,6 +3633,10 @@ class P6CellCondensedAction:
                         np.zeros(len(cell.original_trace), dtype=np.complex128),
                     )
                 port_internal_correction[cell.ports] += port_correction
+                if self.internal_rhs_strategy == "same_lu_rhs_solve":
+                    self._same_lu_rhs_costs["residual_diagnostic"][
+                        "port_D_seconds"
+                    ] += time.perf_counter() - port_d_started
             internal_scales.append(
                 max(
                     float(np.linalg.norm(vii_xi))
@@ -3672,6 +3835,10 @@ class P6CellCondensedAction:
         self._destroyed = True
         if matrix is not None and _matrix is None:
             matrix.destroy()
+        self._cells = ()
+        if self._same_lu_rhs_borrowed:
+            self.condensed._release_trace_interior_rhs_borrower()
+            self._same_lu_rhs_borrowed = False
         if self.owns_condensed:
             self.condensed.destroy()
 

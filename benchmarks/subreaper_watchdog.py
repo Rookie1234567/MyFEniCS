@@ -268,6 +268,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_b0_independent_iterative_checker',
         'task41_p0_saved_output_continuation_checker',
         'task41_p0_b0_saved_evidence_audit_checker',
+        'task41_p0_b0_v9_saved_star_screen_checker',
     }:
         if contract_version != 41:
             raise ValueError('Task41 checker requires a Task41 P0 execution contract')
@@ -276,7 +277,149 @@ def _validate_campaign_closeout_authorization(
             Path(str(contract.get('runtime', {}).get('runtime_prefix', '')))
             / 'bin/python'
         ).resolve()
-        if checker_kind == 'task41_p0_b0_saved_evidence_audit_checker':
+        if checker_kind == 'task41_p0_b0_v9_saved_star_screen_checker':
+            from src.runners.task41_p0_contract import (
+                TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+                TASK41_B0_V9_WINDOW_RELATIVE,
+                task41_case_id_for_run_id,
+            )
+            from src.runners.task41_p0_checker import (
+                TASK41_P0_V9_V8_CHECKER_RESULT_SHA256,
+                TASK41_P0_V9_V8_REPORT_SHA256,
+            )
+
+            if (
+                len(argv) != 18
+                or Path(argv[0]).resolve() != expected_python
+                or argv[1:4] != ['-m', 'src.runners.task41_p0_checker', '--v9-saved-star-screen']
+                or argv[4::2] != [
+                    '--contract', '--contract-sha256', '--v8-report',
+                    '--v8-report-sha256', '--v8-checker-result',
+                    '--v8-checker-result-sha256', '--output',
+                ]
+                or argv[7] != contract_sha
+                or authorization.get('expected_channel_count') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
+                or environment.get('TASK41_P0_B0_V9_SAVED_STAR_SCREEN') != '1'
+                or environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') is not None
+                or environment.get('TASK41_P0_CHECKER_SOURCE_SHA')
+                != authorization.get('source_sha')
+            ):
+                raise ValueError('closeout command is not the registered V9 saved-star screen checker')
+            case = contract.get('case')
+            if (
+                not isinstance(case, dict)
+                or task41_case_id_for_run_id(str(case.get('run_id', ''))) != 'B0'
+                or contract.get('numerical_strategy', {}).get('internal_rhs_strategy')
+                != TASK41_B0_V9_INTERNAL_RHS_STRATEGY
+                or contract.get('window', {}).get('path')
+                != str(TASK41_B0_V9_WINDOW_RELATIVE)
+                or authorization.get('source_sha') != contract.get('source', {}).get('sha')
+                or authorization.get('source_branch') != contract.get('branch')
+                or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA')
+                != authorization.get('source_sha')
+                or Path(argv[5]).resolve() != Path(str(contract_path)).resolve()
+                or Path(argv[9]).resolve()
+                != Path(environment.get('TASK41_P0_B0_V9_V8_REPORT_PATH', '')).resolve()
+                or argv[11] != TASK41_P0_V9_V8_REPORT_SHA256
+                or argv[11] != environment.get('TASK41_P0_B0_V9_V8_REPORT_SHA256')
+                or Path(argv[13]).resolve()
+                != Path(environment.get('TASK41_P0_B0_V9_V8_CHECKER_RESULT_PATH', '')).resolve()
+                or argv[15] != TASK41_P0_V9_V8_CHECKER_RESULT_SHA256
+                or argv[15] != environment.get('TASK41_P0_B0_V9_V8_CHECKER_RESULT_SHA256')
+            ):
+                raise ValueError('V9 saved-star contract, V8 evidence binding, or route markers differ')
+            results_root = (root / 'results' / str(case.get('model_id', ''))).resolve()
+            report_path = Path(argv[9]).resolve()
+            checker_result_path = Path(argv[13]).resolve()
+            output_path = Path(argv[17]).resolve()
+            if (
+                report_path.name != 'task41_p0_v8_selected_trace_star_audit.json'
+                or checker_result_path.name != 'task41_p0_b0_saved_evidence_audit.json'
+                or output_path.name != 'task41_p0_b0_v9_saved_star_screen.json'
+                or not report_path.is_relative_to(results_root)
+                or not checker_result_path.is_relative_to(results_root)
+                or not output_path.is_relative_to(results_root)
+                or output_path != Path(environment.get('TASK41_P0_B0_V9_RESULT_PATH', '')).resolve()
+                or output_path.exists()
+            ):
+                raise ValueError('V9 saved-star report/result paths differ from the registered B0 results tree')
+            try:
+                report = json.loads(report_path.read_text(encoding='utf-8'))
+                checker_result = json.loads(checker_result_path.read_text(encoding='utf-8'))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError('V9 saved-star input reports are unavailable or malformed') from exc
+            mesh_check = (
+                checker_result.get('mesh_actual_exact_candidate_check')
+                if isinstance(checker_result, dict)
+                else None
+            )
+            counterfactual = (
+                mesh_check.get('local_rhs_lu_counterfactual')
+                if isinstance(mesh_check, dict)
+                else None
+            )
+            report_arrays = report.get('persisted_evidence_arrays') if isinstance(report, dict) else None
+            checker_arrays = (
+                counterfactual.get('array_artifacts')
+                if isinstance(counterfactual, dict)
+                else None
+            )
+            if (
+                not isinstance(report, dict)
+                or report.get('schema') != 'task41.p0.v8.selected_trace_star_audit_receipt.v1'
+                or report.get('status') != 'COMPLETED_SELECTED_TRACE_STAR_AUDIT'
+                or not isinstance(checker_result, dict)
+                or checker_result.get('schema') != 'task41.p0.b0.saved_evidence_audit.v1'
+                or checker_result.get('status') != 'COMPLETE'
+                or not isinstance(mesh_check, dict)
+                or mesh_check.get('check_completed') is not True
+                or not isinstance(report_arrays, list)
+                or not report_arrays
+                or not isinstance(checker_arrays, list)
+                or not checker_arrays
+                or hashlib.sha256(report_path.read_bytes()).hexdigest()
+                != TASK41_P0_V9_V8_REPORT_SHA256
+                or hashlib.sha256(checker_result_path.read_bytes()).hexdigest()
+                != TASK41_P0_V9_V8_CHECKER_RESULT_SHA256
+            ):
+                raise ValueError('V9 saved-star input reports are incomplete or differ from their pinned identities')
+
+            input_paths = [str(Path(argv[5]).resolve()), str(report_path), str(checker_result_path)]
+
+            def append_saved_artifacts(entries: list[Any], *, base: Path, label: str) -> None:
+                seen: set[Path] = set()
+                for entry in entries:
+                    if (
+                        not isinstance(entry, dict)
+                        or not isinstance(entry.get('path'), str)
+                        or type(entry.get('bytes')) is not int
+                        or not isinstance(entry.get('sha256'), str)
+                        or not re.fullmatch(r'[0-9a-f]{64}', entry['sha256'])
+                    ):
+                        raise ValueError(f'V9 {label} array inventory is malformed')
+                    raw_path = Path(entry['path'])
+                    artifact_path = (raw_path if raw_path.is_absolute() else base / raw_path).resolve()
+                    if (
+                        artifact_path in seen
+                        or not artifact_path.is_relative_to(base.resolve())
+                        or not artifact_path.is_relative_to(results_root)
+                        or not artifact_path.is_file()
+                        or artifact_path.stat().st_size != entry['bytes']
+                        or _sha256_file(artifact_path) != entry['sha256']
+                    ):
+                        raise ValueError(f'V9 {label} array path, size, or hash differs from its saved report')
+                    seen.add(artifact_path)
+                    input_paths.append(str(artifact_path))
+
+            append_saved_artifacts(
+                report_arrays, base=report_path.parent, label='V8 producer'
+            )
+            append_saved_artifacts(
+                checker_arrays, base=checker_result_path.parent, label='V8 checker'
+            )
+        elif checker_kind == 'task41_p0_b0_saved_evidence_audit_checker':
             candidate_report_path = None
             candidate_report_sha256 = None
             if len(argv) == 22:

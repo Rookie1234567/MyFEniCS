@@ -303,3 +303,10 @@ V8有三组定向回归。表中SHA是补丁测试后冻结的source身份；测
 | `3ce1a158e3e0b6556a2e094755adf9b5bd18ae08` | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q --tb=short src/test/test_task41_v8_selected_trace_star.py::test_v8_ordered_summary_keeps_grouped_left_distinct_from_closure` | 1 passed in 0.51 s | V7 grouped-left与closure字段映射；不是科学门/PDE通过 |
 
 前两组是在相应源码冻结前执行的定向测试，最终组对应checker映射修正。qualified activation preflight为PETSc complex128/int32，同一Linux ABI栈。V8收口未运行全仓pytest、GitHub CI或PDE。曾尝试`python -m ruff`，返回`No module named ruff`，因此Ruff检查未完成；没有安装依赖，原错误保留。保存审计成功不等于V6 candidate full-action通过。
+
+
+## Review V9 准备阶段定向回归（2026-10-21）
+
+同 LU RHS 路径、保存 d 判别、J 共享释放、新窗口合同和 service/watchdog 路由先完成 26 项定向组合（1.04 s）。主控审查后，针对旧 V8/缓存/authority 兼容与有符号诊断独立性补修；最后受影响 10 节点由执行者通过（0.54 s），主控同工作树复验 **10 passed in 0.51 s**。节点、工作树文件 SHA、命令与原始日志见 [V9 preparation receipt](v9_preparation.json)。`bash -n`、相关 compileall、`git diff --check` 通过。
+
+ABI 是本机 qualified WSL complex128/int32；不是工作站正式 service 资格。Ruff 不可用，未安装。历史 fixed-window 三项失败仍保留，未刷新旧时间门；诊断偏置 fixture 曾 9 passed/1 failed，修正其预期后通过。没有重跑全仓测试或科学数据，没有 V9 局部/全域数值 PASS、CI PASS 或新窗口批准。

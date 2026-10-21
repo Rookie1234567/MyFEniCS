@@ -1,8 +1,10 @@
 import hashlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from src.solvers import hcurl_assembly_time_condensation as condensation
 from src.solvers.hcurl_assembly_time_condensation import TraceConstraintMap
@@ -784,3 +786,582 @@ def test_v8_ordered_summary_keeps_grouped_left_distinct_from_closure():
         == "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
     )
     assert reference["recomputed_closure_full"] == [closure_full.real, closure_full.imag]
+
+
+def test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows():
+    from src.runners.task41_p0_checker import _task41_v9_signed_local_identity
+
+    K = np.asarray(
+        [[2.0 + 0.3j, 0.2 + 0.8j], [-0.4 + 0.1j, 1.7 - 0.2j]],
+        dtype=np.complex128,
+    )
+    J = np.asarray(
+        [[0.3 + 0.5j, -0.7 + 0.2j], [0.1 - 0.4j, 0.8 + 0.1j],
+         [-0.2 + 0.9j, 0.4 - 0.6j]],
+        dtype=np.complex128,
+    )
+    T = np.asarray(
+        [[0.6 - 0.1j, 0.2 + 0.7j], [-0.3 + 0.8j, 0.5 + 0.1j],
+         [0.9 + 0.2j, -0.4 + 0.3j]],
+        dtype=np.complex128,
+    )
+    b_i = np.asarray([0.8 - 0.2j, -0.5 + 0.7j], dtype=np.complex128)
+    z = np.linalg.solve(K, b_i) + np.asarray([2.0e-5 - 3.0e-5j, -1.0e-5 + 4.0e-5j])
+    rows = np.asarray([0, 2], dtype=np.int64)
+    coefficients = np.asarray([0.5 + 0.8j, -0.3 + 0.4j], dtype=np.complex128)
+
+    result = _task41_v9_signed_local_identity(
+        K=K,
+        J=J,
+        T=T,
+        b_i=b_i,
+        z=z,
+        selected_local_rows=rows,
+        selected_coefficients=coefficients,
+    )
+
+    selected_T_b_i = T[rows, :] @ b_i
+    selected_J_z = J[rows, :] @ z
+    selected_E_T = J[rows, :] + T[rows, :] @ K
+    selected_E_T_z = selected_E_T @ z
+    selected_reassociated = selected_J_z + T[rows, :] @ (K @ z)
+    selected_T_residual = T[rows, :] @ (b_i - K @ z)
+    signed_lhs = np.vdot(coefficients, selected_T_b_i + selected_J_z)
+    signed_rhs = np.vdot(coefficients, selected_E_T_z + selected_T_residual)
+
+    assert result["projected_T_b_i"] == pytest.approx(np.vdot(coefficients, selected_T_b_i))
+    assert result["projected_J_z"] == pytest.approx(np.vdot(coefficients, selected_J_z))
+    assert result["projected_(J+TK)_z"] == pytest.approx(
+        np.vdot(coefficients, selected_E_T_z)
+    )
+    assert result["projected_reassociated_Jz_plus_TKz"] == pytest.approx(
+        np.vdot(coefficients, selected_reassociated)
+    )
+    assert result["projected_T_(b_i-Kz)"] == pytest.approx(
+        np.vdot(coefficients, selected_T_residual)
+    )
+    assert result["projected_signed_lhs"] == pytest.approx(signed_lhs)
+    assert result["projected_signed_rhs"] == pytest.approx(signed_rhs)
+    assert result["projection_identity_remainder"] == pytest.approx(signed_lhs - signed_rhs)
+    assert result["projection_reassociation_difference"] == pytest.approx(
+        np.vdot(coefficients, selected_reassociated)
+        - np.vdot(coefficients, selected_E_T_z)
+    )
+    assert abs(signed_lhs - np.dot(coefficients, selected_T_b_i + selected_J_z)) > 1.0e-3
+
+
+def test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states():
+    from src.runners.task41_p0_checker import (
+        _task41_v9_classify_candidate_self_d,
+        _task41_v9_wide_local_projection,
+        _task41_v9_wide_local_rhs_totals,
+    )
+
+    matrix = np.asarray(
+        [[1.2 + 0.4j, -0.3 + 0.8j], [0.7 - 0.2j, 1.5 + 0.1j]],
+        dtype=np.complex128,
+    )
+    vector = np.asarray([0.4 - 0.6j, 0.2 + 0.3j], dtype=np.complex128)
+    projection = _task41_v9_wide_local_projection(
+        matrix,
+        vector,
+        selected_local_rows=np.asarray([0, 1]),
+        selected_coefficients=np.asarray([0.3 + 0.6j, -0.2 + 0.5j]),
+    )
+    expected = np.vdot(
+        np.asarray([0.3 + 0.6j, -0.2 + 0.5j]), matrix @ vector
+    )
+    np.testing.assert_allclose(
+        complex(float(projection[0]), float(projection[1])), expected,
+        rtol=1.0e-15, atol=1.0e-15,
+    )
+    totals = _task41_v9_wide_local_rhs_totals(
+        native_volume_rhs_at_selected_row=2.0 + 0.5j,
+        wide_s_sum=(np.longdouble(1.0), np.longdouble(-0.5)),
+        wide_old_local_rhs_sum=(np.longdouble(-0.25), np.longdouble(0.1)),
+        wide_new_local_rhs_sum=(np.longdouble(-0.5), np.longdouble(0.2)),
+    )
+    assert totals["wide_g_old_b_t_plus_T_b_i"] == [1.75, 0.6]
+    assert totals["wide_d_old_S_minus_g_old"] == [-0.75, -1.1]
+    assert totals["wide_g_new_b_t_plus_direct_minus_J_solve_K_b_i"] == [1.5, 0.7]
+
+    cases = []
+    for role in ("candidate", "reference"):
+        for column in range(2):
+            for state in ("j0", "j3"):
+                scale = 1.0 if role == "candidate" else 12.0
+                old = scale + 0.2j
+                new = (0.45 * scale) + 0.1j if role == "candidate" else scale + 0.2j
+                cases.append(
+                    {
+                        "role": role,
+                        "column": column,
+                        "state": state,
+                        "d_old_S_minus_g_old": [old.real, old.imag],
+                        "d_new_S_minus_g_new": [new.real, new.imag],
+                        "wide_d_old_S_minus_g_old": [old.real + 1.0e-5, old.imag],
+                        "wide_d_new_S_minus_g_new": [new.real + 1.0e-5, new.imag],
+                    }
+                )
+
+    ready = _task41_v9_classify_candidate_self_d(
+        cases,
+        identity_replay_closed=True,
+        production_core_replay_closed=True,
+    )
+    assert ready["status"] == "LOCAL_CANDIDATE_READY"
+    assert len(ready["candidate_and_reference_own_d"]) == 8
+    assert all(gate["passed"] for gate in ready["candidate_column_gates"])
+    assert all(
+        item["role"] == "reference" or item["improvement_beyond_last_combination_uncertainty"]
+        for item in ready["candidate_and_reference_own_d"]
+    )
+
+    rejected_cases = [dict(item) for item in cases]
+    failed = next(
+        item
+        for item in rejected_cases
+        if item["role"] == "candidate" and item["column"] == 1 and item["state"] == "j3"
+    )
+    failed["d_new_S_minus_g_new"] = failed["d_old_S_minus_g_old"]
+    failed["wide_d_new_S_minus_g_new"] = failed["wide_d_old_S_minus_g_old"]
+    rejected = _task41_v9_classify_candidate_self_d(
+        rejected_cases,
+        identity_replay_closed=True,
+        production_core_replay_closed=True,
+    )
+    assert rejected["status"] == "LOCAL_CANDIDATE_REJECTED"
+    assert [gate["passed"] for gate in rejected["candidate_column_gates"]] == [True, False]
+
+
+def test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor(tmp_path, monkeypatch):
+    from scipy.linalg import lu_factor, lu_solve
+    import pytest
+    from src.runners import task41_p0_checker as checker
+
+    root = tmp_path
+    results = root / "results"
+    report_dir = results / "v8_selected_star"
+    checker_dir = results / "v8_saved_checker"
+    source_arrays = report_dir / "arrays"
+    checker_arrays = checker_dir / "arrays"
+    source_arrays.mkdir(parents=True)
+    checker_arrays.mkdir(parents=True)
+    source_inventory = []
+    checker_inventory = []
+
+    def save_array(directory, inventory, name, value, kind):
+        path = directory / f"{name}.npy"
+        np.save(path, np.asarray(value), allow_pickle=False)
+        item = {
+            "name": name,
+            "path": str(path),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "bytes": path.stat().st_size,
+            "dtype": str(np.load(path, allow_pickle=False).dtype),
+            "shape": list(np.load(path, allow_pickle=False).shape),
+            "kind": kind,
+        }
+        inventory.append(item)
+        return item
+
+    cells = (23352, 23493)
+    roles = ("candidate", "reference")
+    states = ("j0", "j3")
+    numeric_cells = []
+    p3_cells = []
+    factorizations = []
+    checker_terms = {(role, column, state): [] for role in roles for column in range(2) for state in states}
+    tensors = {}
+    matrices = {}
+    factors = {}
+    b_i_values = {}
+    b_t_by_column = {0: 0.1 - 0.05j, 1: -0.2 + 0.08j}
+
+    for cell_offset, cell in enumerate(cells):
+        role_rows = []
+        for role_offset, role in enumerate(roles):
+            K = np.asarray(
+                [[3.0 + 0.1j * role_offset, 0.2 - 0.05j], [0.1j, 2.0 + 0.2j * cell_offset]],
+                dtype=np.complex128,
+            )
+            J = np.asarray([[0.4 + 0.1j * role_offset, -0.15 + 0.03j]], dtype=np.complex128)
+            T = np.zeros((1, 2), dtype=np.complex128)
+            S = np.ones((1, 1), dtype=np.complex128)
+            tensor = np.zeros((3, 3), dtype=np.complex128)
+            tensor[:2, :2] = K
+            tensor[2:, :2] = J
+            tensor[:2, 2:] = np.asarray([[0.1 + 0.02j], [-0.04j]])
+            tensor[2, 2] = 1.3 + 0.1j
+            tensor_ref = save_array(
+                source_arrays, source_inventory,
+                f"cell{cell}_{role}_oriented_tensor", tensor, "oriented_tensor",
+            )
+            T_ref = save_array(source_arrays, source_inventory, f"cell{cell}_{role}_T", T, "T")
+            S_ref = save_array(source_arrays, source_inventory, f"cell{cell}_{role}_S", S, "S")
+            tensors[(cell, role)] = tensor
+            matrices[(cell, role)] = (K, J, T, S)
+            lu, pivots = lu_factor(K)
+            factor_ref = save_array(
+                checker_arrays, checker_inventory,
+                f"lu_cell{cell}_{role}", lu, "LOCAL_LU_RECONSTRUCTED_FROM_SAVED_TENSOR",
+            )
+            pivot_ref = save_array(
+                checker_arrays, checker_inventory,
+                f"lu_cell{cell}_{role}_pivots", pivots.astype(np.int32), "LOCAL_LU_PIVOTS",
+            )
+            factors[(cell, role)] = (lu, pivots)
+            factorizations.append(
+                {
+                    "cell_index": cell,
+                    "role": role,
+                    "factorization_identity": "fresh _strict_local_lu(K) from saved oriented_tensor; reused for both columns and states",
+                    "K_sha256": hashlib.sha256(np.ascontiguousarray(K).view(np.uint8)).hexdigest(),
+                    "oriented_tensor_sha256": tensor_ref["sha256"],
+                    "saved_T_sha256": T_ref["sha256"],
+                    "lu_factor_artifact": factor_ref,
+                    "owned_pivots_artifact": pivot_ref,
+                }
+            )
+            role_rows.append(
+                {
+                    "role": role,
+                    "producer_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1" if role == "candidate" else "original_ffcx_reference_kernel",
+                    "raw_oriented_RTS_artifacts": {
+                        "oriented_tensor": tensor_ref,
+                        "T": T_ref,
+                        "S": S_ref,
+                    },
+                }
+            )
+
+        numeric_cells.append(
+            {
+                "cell_index": cell,
+                "true_interior_positions": [0, 1],
+                "trace_complement_positions": [2],
+                "selected_local_trace_rows": [0],
+                "selected_trace_coefficients": [[1.0, 0.0]],
+                "roles": role_rows,
+            }
+        )
+        state_rows = []
+        for column in range(2):
+            for state in states:
+                p3_roles = []
+                for role in roles:
+                    K, J, T, S = matrices[(cell, role)]
+                    b_i = np.asarray([1.0 + 0.2j * column, -0.4 + 0.3j * cell_offset], dtype=np.complex128)
+                    z = lu_solve(factors[(cell, role)], b_i)
+                    b_i_values[(cell, role, column, state)] = b_i
+                    if role == "candidate":
+                        t_c = np.asarray([b_t_by_column[column] - (J @ z)[0]], dtype=np.complex128)
+                    else:
+                        t_c = np.asarray([b_t_by_column[column]], dtype=np.complex128)
+                    b_ref = save_array(
+                        source_arrays, source_inventory,
+                        f"cell{cell}_{role}_col{column}_{state}_b_i", b_i, "b_i",
+                    )
+                    t_ref = save_array(
+                        source_arrays, source_inventory,
+                        f"cell{cell}_{role}_col{column}_{state}_t_c", t_c, "t_c",
+                    )
+                    old = complex(np.vdot(np.asarray([1.0 + 0.0j]), T @ b_i))
+                    s_term = complex(np.vdot(np.asarray([1.0 + 0.0j]), S @ t_c))
+                    new = complex(np.vdot(np.asarray([1.0 + 0.0j]), -(J @ z)))
+                    p3_roles.append(
+                        {
+                            "role": role,
+                            "local_values": {"b_i": b_ref, "t_c": t_ref},
+                            "selected_row_contributions": {
+                            "T_r_i": [1.0e-8, -2.0e-8],
+                            "local_reduced_rhs_T_b_i": [old.real, old.imag],
+                                "S_action": [s_term.real, s_term.imag],
+                            },
+                        }
+                    )
+                    checker_terms[(role, column, state)].append(
+                        {
+                            "cell_index": cell,
+                            "old_T_b_i_projected": [old.real, old.imag],
+                            "new_minus_J_solve_K_b_i_projected": [new.real, new.imag],
+                        }
+                    )
+                bt = b_t_by_column[column]
+                state_rows.append(
+                    {
+                        "column": column,
+                        "state": state,
+                        "native_volume_rhs_at_selected_original_row": [bt.real, bt.imag],
+                        "roles": p3_roles,
+                    }
+                )
+        p3_cells.append({"cell_index": cell, "roles_and_states": state_rows})
+
+    report = {
+        "schema": "task41.p0.v8.selected_trace_star_audit_receipt.v1",
+        "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+        "geometry_policy": "mesh_actual_exact",
+        "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+        "consumer_source_sha": checker.TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA,
+        "consumer_contract_sha256": checker.TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256,
+        "persisted_evidence_arrays": source_inventory,
+        "selected_trace_star_audit": {
+            "selected_active_row": 4_766_937,
+            "selected_original_row": 15_440_235,
+            "candidate_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+            "metadata": {"incident_cell_order": list(cells)},
+            "local_numeric_cell_identity_and_artifacts": numeric_cells,
+            "p3_production_row_replay": {
+                "per_cell_signed_contributions": p3_cells,
+            },
+        },
+    }
+    report_path = report_dir / "task41_v8_selected_star.json"
+    report_path.write_text(json.dumps(report, sort_keys=True))
+    report_sha = hashlib.sha256(report_path.read_bytes()).hexdigest()
+
+    for role in roles:
+        for column in range(2):
+            for state in states:
+                local = []
+                bt = b_t_by_column[column]
+                for cell in cells:
+                    K, J, _T, _S = matrices[(cell, role)]
+                    b_i = b_i_values[(cell, role, column, state)]
+                    z = lu_solve(factors[(cell, role)], b_i)
+                    residual = K @ z - b_i
+                    z_ref = save_array(
+                        checker_arrays, checker_inventory,
+                        f"v8_lu_solve_cell{cell}_{role}_col{column}_solution", z, "LOCAL_LU_SOLUTION",
+                    ) if state == "j0" else next(
+                        item for item in checker_inventory
+                        if item["name"] == f"v8_lu_solve_cell{cell}_{role}_col{column}_solution"
+                    )
+                    _residual_ref = save_array(
+                        checker_arrays, checker_inventory,
+                        f"v8_lu_solve_cell{cell}_{role}_col{column}_residual", residual, "LOCAL_LU_SOLVE_RESIDUAL",
+                    ) if state == "j0" else next(
+                        item for item in checker_inventory
+                        if item["name"] == f"v8_lu_solve_cell{cell}_{role}_col{column}_residual"
+                    )
+                    term = checker_terms[(role, column, state)][cells.index(cell)]
+                    local.append(term)
+                s_sum = sum(
+                    complex(*next(
+                        item["selected_row_contributions"]["S_action"]
+                        for p3 in p3_cells if p3["cell_index"] == cell
+                        for state_row in p3["roles_and_states"]
+                        if state_row["column"] == column and state_row["state"] == state
+                        for item in state_row["roles"] if item["role"] == role
+                    ))
+                    for cell in cells
+                )
+                old_sum = sum(complex(*item["old_T_b_i_projected"]) for item in local)
+                new_sum = sum(complex(*item["new_minus_J_solve_K_b_i_projected"]) for item in local)
+                g_old = bt + old_sum
+                g_new = bt + new_sum
+                d_old = s_sum - g_old
+                d_new = s_sum - g_new
+                checker_terms[(role, column, state)] = local
+                if state == "j0":
+                    checker_terms[(role, column, state)] = {
+                        "cell_terms": local,
+                        "d_old": [d_old.real, d_old.imag],
+                        "d_new": [d_new.real, d_new.imag],
+                    }
+                else:
+                    checker_terms[(role, column, state)] = {
+                        "cell_terms": local,
+                        "d_old": [d_old.real, d_old.imag],
+                        "d_new": [d_new.real, d_new.imag],
+                    }
+
+    cases = []
+    for role in roles:
+        for column in range(2):
+            for state in states:
+                data = checker_terms[(role, column, state)]
+                cases.append(
+                    {
+                        "role": role,
+                        "column": column,
+                        "state": state,
+                        "d_old_S_minus_g_old": data["d_old"],
+                        "d_new_S_minus_g_new": data["d_new"],
+                        "cell_terms": data["cell_terms"],
+                    }
+                )
+    checker_result = {
+        "schema": "task41.p0.b0.saved_evidence_audit.v1",
+        "status": "COMPLETE",
+        "mesh_actual_exact_candidate_check": {
+            "check_completed": True,
+            "report_sha256_rechecked": report_sha,
+            "local_rhs_lu_counterfactual": {
+                "schema": "task41.p0.v8.local_rhs_lu_counterfactual.v1",
+                "source_report_sha256_rechecked": report_sha,
+                "new_strict_lu_factorization_count": 4,
+                "direct_rhs_solve_count": 8,
+                "factorizations": factorizations,
+                "array_artifacts": checker_inventory,
+                "cases": cases,
+            },
+        },
+    }
+    checker_path = checker_dir / "task41_v8_saved_checker_result.json"
+    checker_path.write_text(json.dumps(checker_result, sort_keys=True))
+    checker_sha = hashlib.sha256(checker_path.read_bytes()).hexdigest()
+    saved_d_by_key = {
+        (item["role"], item["column"], item["state"]): (
+            item["d_old_S_minus_g_old"],
+            item["d_new_S_minus_g_new"],
+        )
+        for item in cases
+    }
+    monkeypatch.setattr(checker, "TASK41_P0_V9_V8_REPORT_SHA256", report_sha)
+    monkeypatch.setattr(checker, "TASK41_P0_V9_V8_CHECKER_RESULT_SHA256", checker_sha)
+    original_signed_identity = checker._task41_v9_signed_local_identity
+    diagnostic_bias = 0.25 + 0.5j
+
+    def biased_diagnostic_only_identity(**kwargs):
+        result = original_signed_identity(**kwargs)
+        return {name: value + diagnostic_bias for name, value in result.items()}
+
+    monkeypatch.setattr(
+        checker,
+        "_task41_v9_signed_local_identity",
+        biased_diagnostic_only_identity,
+    )
+
+    result = checker.task41_p0_v9_saved_star_screen(
+        v8_report_path=report_path,
+        v8_report_sha256=report_sha,
+        v8_checker_result_path=checker_path,
+        v8_checker_result_sha256=checker_sha,
+        repo_root=root,
+    )
+    assert result["status"] == "LOCAL_CANDIDATE_READY"
+    assert result["replay_checks"]["production_core_GETRS_count"] == 8
+    assert result["replay_checks"]["old_original_path_and_V8_d_replayed_check_count"] == 64
+    assert result["replay_checks"]["wide_local_projection_recompute_is_diagnostic_only"] is True
+    assert all(gate["passed"] for gate in result["candidate_column_gates"])
+    assert len(result["candidate_and_reference_recomputed_s_g_d"]) == 8
+    for case in result["candidate_and_reference_recomputed_s_g_d"]:
+        saved_d = saved_d_by_key[(case["role"], case["column"], case["state"])]
+        assert case["d_T_complex128"] == saved_d[0]
+        assert case["d_LU_complex128"] == saved_d[1]
+        b_t = complex(*case["original_b_t_added_once"])
+        cells = case["cell_terms"]
+        sum_t_b_i = sum(
+            complex(*cell["T_b_i_projected_complex128"]) for cell in cells
+        )
+        sum_minus_j_z = sum(
+            complex(*cell["minus_J_z_projected_complex128"]) for cell in cells
+        )
+        assert complex(*case["g_T_complex128"]) == pytest.approx(b_t + sum_t_b_i)
+        assert complex(*case["g_LU_complex128"]) == pytest.approx(b_t + sum_minus_j_z)
+        assert all(
+            cell["signed_saved_lu_identity_projection"]["formula"]
+            == "T b_i + J z = (J + T K) z + T (b_i - K z)"
+            for cell in cells
+        )
+        assert all(
+            complex(
+                *cell["selected_row_vs_full_matvec_projection_remainders"][
+                    "E_H_T_b_i_selected_minus_full"
+                ]
+            )
+            == pytest.approx(diagnostic_bias)
+            for cell in cells
+        )
+        diagnostic = case["signed_d_LU_minus_d_T_identity_diagnostic"]
+        direct = complex(*diagnostic["direct_d_LU_minus_d_T_complex128"])
+        accurate = complex(*diagnostic["accurate_sum_of_rounded_signed_E_H_terms"])
+        remainder = complex(
+            *diagnostic["fpu_remainder_direct_minus_accurate_projection_sum"]
+        )
+        assert accurate == pytest.approx(
+            sum_t_b_i - sum_minus_j_z + 4 * diagnostic_bias
+        )
+        assert direct == pytest.approx(
+            complex(*case["d_LU_complex128"])
+            - complex(*case["d_T_complex128"])
+        )
+        assert remainder == pytest.approx(direct - accurate)
+        assert diagnostic["diagnostic_only_not_used_for_gate"] is True
+
+    corrupted = bytearray(checker_path.read_bytes())
+    corrupted[-2] ^= 1
+    checker_path.write_bytes(corrupted)
+    with pytest.raises(ValueError, match="frozen SHA-256 differs"):
+        checker.task41_p0_v9_saved_star_screen(
+            v8_report_path=report_path,
+            v8_report_sha256=report_sha,
+            v8_checker_result_path=checker_path,
+            v8_checker_result_sha256=checker_sha,
+            repo_root=root,
+        )
+
+
+def test_v9_saved_star_screen_contract_wrapper_is_local_only_and_persists_result(
+    tmp_path, monkeypatch
+):
+    from src.runners import task41_p0_checker as checker
+    from src.runners.task41_p0_contract import TASK41_B0_V9_WINDOW_RELATIVE
+
+    root = tmp_path.resolve()
+    contract_path = root / "contract.json"
+    contract_path.write_text("{}\n", encoding="utf-8")
+    output_path = root / "results" / "v9_screen.json"
+    contract = {
+        "task_id": "task41extra_phi90_p50x50_g17x20",
+        "case": {"run_id": "task41extra_b0_p6_phi90_07nm_iterative"},
+        "source": {"sha": "c" * 40},
+        "window": {
+            "path": str(TASK41_B0_V9_WINDOW_RELATIVE),
+            "sha256": "d" * 64,
+        },
+        "numerical_strategy": {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        },
+    }
+    monkeypatch.setattr(
+        checker,
+        "require_task41_p0_contract",
+        lambda *_args, **_kwargs: (contract, "e" * 64),
+    )
+    monkeypatch.setattr(
+        checker,
+        "task41_p0_v9_saved_star_screen",
+        lambda **_kwargs: {
+            "schema": "task41.p0.v9.saved_star_screen.v1",
+            "status": "LOCAL_CANDIDATE_READY",
+        },
+    )
+    result = checker.check_task41_p0_b0_v9_saved_star_screen(
+        contract_path=contract_path,
+        contract_sha256="f" * 64,
+        v8_report_path=root / "results/v8.json",
+        v8_report_sha256="1" * 64,
+        v8_checker_result_path=root / "results/v8_checker.json",
+        v8_checker_result_sha256="2" * 64,
+        output_path=output_path,
+        repo_root=root,
+    )
+    assert result["screen_completed"] is True
+    assert result["local_candidate_ready"] is True
+    assert result["official_result"] is False
+    assert json.loads(output_path.read_text())["contract_sha256"] == "e" * 64
+    with pytest.raises(ValueError, match="already exists"):
+        checker.check_task41_p0_b0_v9_saved_star_screen(
+            contract_path=contract_path,
+            contract_sha256="f" * 64,
+            v8_report_path=root / "results/v8.json",
+            v8_report_sha256="1" * 64,
+            v8_checker_result_path=root / "results/v8_checker.json",
+            v8_checker_result_sha256="2" * 64,
+            output_path=output_path,
+            repo_root=root,
+        )

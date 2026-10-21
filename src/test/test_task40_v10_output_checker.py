@@ -1608,3 +1608,63 @@ def test_task41_b0_authorized_raw_disk_16gib_preserves_other_gates(tmp_path, mon
     monkeypatch.setattr(worker.shutil, "disk_usage", lambda _path: SimpleNamespace(free=12 << 30))
     with pytest.raises(V14ResourceStop):
         worker._disk_admit(runtime, additional_bytes=11683674525, label="free_floor")
+
+
+def test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import src.runners.task41_p0_contract as task41_contract
+
+    def unexpected_contract_read(*_args, **_kwargs):
+        raise AssertionError("legacy B0 authority must not reopen an execution contract")
+
+    monkeypatch.setattr(task41_contract, "require_task41_p0_contract", unexpected_contract_read)
+    authority = {
+        "case_id": "B0",
+        "task41_contract_path": str(tmp_path / "historical_contract_no_longer_present.json"),
+        "task41_contract_sha256": "a" * 64,
+        "campaign_window_path": str(tmp_path / "historical_window.json"),
+    }
+
+    policy = output_checker._task41_b0_authority_strategy_policy(
+        authority, current_root=tmp_path
+    )
+
+    assert policy == {
+        "is_explicit_v9": False,
+        "internal_rhs_strategy": "stored_T",
+        "dispatch_binding_schema": "task41.p0.dispatch_binding.v1",
+        "contract_sha256": "a" * 64,
+    }
+
+
+def test_task41_b0_v9_authority_missing_strategy_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import src.runners.task41_p0_contract as task41_contract
+    from src.runners.task41_p0_contract import TASK41_B0_V9_WINDOW_RELATIVE
+
+    contract_sha = "b" * 64
+    contract = {
+        "numerical_strategy": {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        }
+    }
+
+    def require_v9_contract(*_args, **_kwargs):
+        return contract, contract_sha
+
+    monkeypatch.setattr(task41_contract, "require_task41_p0_contract", require_v9_contract)
+    authority = {
+        "case_id": "B0",
+        "task41_contract_path": str(tmp_path / "v9_contract.json"),
+        "task41_contract_sha256": contract_sha,
+        "campaign_window_path": str((tmp_path / TASK41_B0_V9_WINDOW_RELATIVE).resolve()),
+        "task41_dispatch_binding_schema": "task41.p0.dispatch_binding.v2",
+    }
+
+    with pytest.raises(ValueError, match="must explicitly bind same_lu_rhs_solve"):
+        output_checker._task41_b0_authority_strategy_policy(
+            authority, current_root=tmp_path
+        )

@@ -6,12 +6,14 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+from math import fsum
 import os
 from pathlib import Path
 import re
 import sys
+import tempfile
 import time
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 
@@ -49,6 +51,12 @@ TASK41_P0_V5_FROZEN_DENOMINATORS = (2225.481253487629, 2225.4807123031883)
 TASK41_P0_V5_RELATIVE_TOLERANCE = 1.0e-11
 TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256 = (
     "a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031"
+)
+TASK41_P0_V9_V8_REPORT_SHA256 = (
+    "1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f"
+)
+TASK41_P0_V9_V8_CHECKER_RESULT_SHA256 = (
+    "b12af06f818dd4a93443498371aa653216b1646207418f8eaac265e09ddf78c6"
 )
 
 
@@ -3783,6 +3791,1156 @@ def _task41_v8_lu_rhs_totals(
     }
 
 
+def _task41_v9_wide_local_projection(
+    matrix: np.ndarray,
+    vector: np.ndarray,
+    *,
+    selected_local_rows: np.ndarray,
+    selected_coefficients: np.ndarray,
+) -> tuple[np.longdouble, np.longdouble]:
+    """Re-evaluate a small saved local complex projection in longdouble."""
+
+    A = np.asarray(matrix, dtype=np.complex128)
+    x = np.asarray(vector, dtype=np.complex128)
+    rows = np.asarray(selected_local_rows, dtype=np.int64)
+    coefficients = np.asarray(selected_coefficients, dtype=np.complex128)
+    if (
+        A.ndim != 2
+        or x.shape != (A.shape[1],)
+        or rows.ndim != 1
+        or coefficients.shape != rows.shape
+        or not rows.size
+        or np.any(rows < 0)
+        or np.any(rows >= A.shape[0])
+        or not all(np.isfinite(value).all() for value in (A, x, coefficients))
+    ):
+        raise ValueError("V9 wide local projection inputs are malformed")
+    wide = np.longdouble
+    xr = x.real.astype(wide)
+    xi = x.imag.astype(wide)
+    selected_A = A[rows, :]
+    vr = np.sum(
+        selected_A.real.astype(wide) * xr[None, :]
+        - selected_A.imag.astype(wide) * xi[None, :],
+        axis=1,
+        dtype=wide,
+    )
+    vi = np.sum(
+        selected_A.real.astype(wide) * xi[None, :]
+        + selected_A.imag.astype(wide) * xr[None, :],
+        axis=1,
+        dtype=wide,
+    )
+    cr = coefficients.real.astype(wide)
+    ci = coefficients.imag.astype(wide)
+    projected_real = np.sum(cr * vr + ci * vi, dtype=wide)
+    projected_imag = np.sum(cr * vi - ci * vr, dtype=wide)
+    if not np.isfinite(projected_real) or not np.isfinite(projected_imag):
+        raise ValueError("V9 wide local projection produced non-finite values")
+    return projected_real, projected_imag
+
+
+def _task41_v9_signed_local_identity(
+    *,
+    K: np.ndarray,
+    J: np.ndarray,
+    T: np.ndarray,
+    b_i: np.ndarray,
+    z: np.ndarray,
+    selected_local_rows: np.ndarray,
+    selected_coefficients: np.ndarray,
+) -> dict[str, complex]:
+    """Project the signed saved-LU identity using only selected trace rows."""
+
+    K = np.asarray(K, dtype=np.complex128)
+    J = np.asarray(J, dtype=np.complex128)
+    T = np.asarray(T, dtype=np.complex128)
+    rhs = np.asarray(b_i, dtype=np.complex128)
+    solution = np.asarray(z, dtype=np.complex128)
+    rows = np.asarray(selected_local_rows, dtype=np.int64)
+    coefficients = np.asarray(selected_coefficients, dtype=np.complex128)
+    if (
+        K.ndim != 2
+        or K.shape[0] != K.shape[1]
+        or J.ndim != 2
+        or J.shape[1] != K.shape[0]
+        or T.shape != J.shape
+        or rhs.shape != (K.shape[0],)
+        or solution.shape != rhs.shape
+        or rows.ndim != 1
+        or coefficients.shape != rows.shape
+        or rows.size == 0
+        or np.any(rows < 0)
+        or np.any(rows >= J.shape[0])
+        or not all(
+            np.isfinite(value).all()
+            for value in (K, J, T, rhs, solution, coefficients)
+        )
+    ):
+        raise ValueError("V9 signed saved-LU identity inputs are malformed")
+
+    kz = K @ solution
+    selected_J = J[rows, :]
+    selected_T = T[rows, :]
+    selected_tb = selected_T @ rhs
+    selected_jz = selected_J @ solution
+    selected_E_T = selected_J + selected_T @ K
+    selected_rhs_j_tk = selected_E_T @ solution
+    selected_reassociated_j_tk = selected_jz + selected_T @ kz
+    selected_rhs_residual = selected_T @ (rhs - kz)
+
+    def project(value: np.ndarray) -> complex:
+        return complex(np.vdot(coefficients, value))
+
+    projected_tb = project(selected_tb)
+    projected_jz = project(selected_jz)
+    projected_lhs = projected_tb + projected_jz
+    projected_j_tk = project(selected_rhs_j_tk)
+    projected_reassociated_j_tk = project(selected_reassociated_j_tk)
+    projected_t_residual = project(selected_rhs_residual)
+    projected_rhs = projected_j_tk + projected_t_residual
+    values = (
+        projected_tb,
+        projected_jz,
+        projected_lhs,
+        projected_j_tk,
+        projected_reassociated_j_tk,
+        projected_t_residual,
+        projected_rhs,
+    )
+    if not np.isfinite(
+        [component for value in values for component in (value.real, value.imag)]
+    ).all():
+        raise ValueError("V9 signed saved-LU identity produced non-finite projections")
+    return {
+        "projected_T_b_i": projected_tb,
+        "projected_J_z": projected_jz,
+        "projected_signed_lhs": projected_lhs,
+        "projected_(J+TK)_z": projected_j_tk,
+        "projected_reassociated_Jz_plus_TKz": projected_reassociated_j_tk,
+        "projection_reassociation_difference": (
+            projected_reassociated_j_tk - projected_j_tk
+        ),
+        "projected_T_(b_i-Kz)": projected_t_residual,
+        "projected_signed_rhs": projected_rhs,
+        "projection_identity_remainder": projected_lhs - projected_rhs,
+    }
+
+
+def _task41_v9_wide_local_rhs_totals(
+    *,
+    native_volume_rhs_at_selected_row: complex,
+    wide_s_sum: tuple[np.longdouble, np.longdouble],
+    wide_old_local_rhs_sum: tuple[np.longdouble, np.longdouble],
+    wide_new_local_rhs_sum: tuple[np.longdouble, np.longdouble],
+) -> dict[str, list[float]]:
+    b_t = complex(native_volume_rhs_at_selected_row)
+    if not np.isfinite([b_t.real, b_t.imag]).all():
+        raise ValueError("V9 wide local RHS totals have a non-finite native row")
+    wide = np.longdouble
+    btr, bti = wide(b_t.real), wide(b_t.imag)
+    old_gr = btr + wide_old_local_rhs_sum[0]
+    old_gi = bti + wide_old_local_rhs_sum[1]
+    new_gr = btr + wide_new_local_rhs_sum[0]
+    new_gi = bti + wide_new_local_rhs_sum[1]
+    old_dr = wide_s_sum[0] - old_gr
+    old_di = wide_s_sum[1] - old_gi
+    new_dr = wide_s_sum[0] - new_gr
+    new_di = wide_s_sum[1] - new_gi
+    return {
+        "wide_selected_S_sum": [float(wide_s_sum[0]), float(wide_s_sum[1])],
+        "wide_g_old_b_t_plus_T_b_i": [float(old_gr), float(old_gi)],
+        "wide_g_new_b_t_plus_direct_minus_J_solve_K_b_i": [
+            float(new_gr), float(new_gi)
+        ],
+        "wide_d_old_S_minus_g_old": [float(old_dr), float(old_di)],
+        "wide_d_new_S_minus_g_new": [float(new_dr), float(new_di)],
+    }
+
+
+def _task41_v9_wide_sum_complex(values: Sequence[complex]) -> tuple[np.longdouble, np.longdouble]:
+    """Sum already-computed complex128 local contributions at wider precision."""
+
+    wide = np.longdouble
+    real = wide(0.0)
+    imag = wide(0.0)
+    for value in values:
+        item = complex(value)
+        if not np.isfinite([item.real, item.imag]).all():
+            raise ValueError("V9 local contribution is non-finite")
+        real += wide(item.real)
+        imag += wide(item.imag)
+    return real, imag
+
+
+def task41_p0_v9_saved_star_screen(
+    *,
+    v8_report_path: Path,
+    v8_report_sha256: str,
+    v8_checker_result_path: Path,
+    v8_checker_result_sha256: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Screen the frozen two-cell V8 star using its saved LU and RHS evidence.
+
+    This narrow consumer intentionally avoids the older V8 rechecker, which
+    rebuilds four local factorizations. It reads only the two incident cells,
+    their selected-row state inputs, and the already-saved V8 LU/pivot/z files.
+    """
+
+    from src.solvers.hcurl_assembly_time_condensation import (
+        prepare_saved_lu_pivots_for_getrs,
+        project_internal_rhs_same_lu,
+    )
+
+    repo_root = Path(repo_root).resolve(strict=True)
+    results_root = (repo_root / "results").resolve()
+    report_path = Path(v8_report_path).resolve(strict=True)
+    checker_path = Path(v8_checker_result_path).resolve(strict=True)
+    if (
+        not report_path.is_relative_to(results_root)
+        or not checker_path.is_relative_to(results_root)
+        or v8_report_sha256 != TASK41_P0_V9_V8_REPORT_SHA256
+        or v8_checker_result_sha256 != TASK41_P0_V9_V8_CHECKER_RESULT_SHA256
+        or sha256_file(report_path) != v8_report_sha256
+        or sha256_file(checker_path) != v8_checker_result_sha256
+    ):
+        raise ValueError("V9 saved-star input report path or frozen SHA-256 differs")
+    report = _json_object(report_path, "V9 V8 selected-star report")
+    checker = _json_object(checker_path, "V9 V8 saved checker result")
+    mesh_check = checker.get("mesh_actual_exact_candidate_check")
+    counterfactual = (
+        mesh_check.get("local_rhs_lu_counterfactual")
+        if isinstance(mesh_check, Mapping)
+        else None
+    )
+    if (
+        report.get("schema") != TASK41_P0_V8_SELECTED_TRACE_STAR_REPORT_SCHEMA
+        or report.get("status") != "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
+        or report.get("geometry_policy") != "mesh_actual_exact"
+        or report.get("raw_tensor_evaluator") != "actual_qmetric_blocked_gram"
+        or report.get("consumer_source_sha")
+        != TASK41_P0_V8_LEGACY_CONSUMER_SOURCE_SHA
+        or report.get("consumer_contract_sha256")
+        != TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256
+        or checker.get("schema") != "task41.p0.b0.saved_evidence_audit.v1"
+        or checker.get("status") != "COMPLETE"
+        or not isinstance(mesh_check, Mapping)
+        or mesh_check.get("check_completed") is not True
+        or mesh_check.get("report_sha256_rechecked") != v8_report_sha256
+        or not isinstance(counterfactual, Mapping)
+        or counterfactual.get("schema")
+        != "task41.p0.v8.local_rhs_lu_counterfactual.v1"
+        or counterfactual.get("source_report_sha256_rechecked")
+        != v8_report_sha256
+        or counterfactual.get("new_strict_lu_factorization_count") != 4
+        or counterfactual.get("direct_rhs_solve_count") != 8
+    ):
+        raise ValueError("V9 saved-star inputs do not match the frozen completed V8 evidence")
+
+    selected = report.get("selected_trace_star_audit")
+    if not isinstance(selected, Mapping):
+        raise ValueError("V9 V8 report omits its selected trace-star section")
+    metadata = selected.get("metadata")
+    numeric_rows = selected.get("local_numeric_cell_identity_and_artifacts")
+    p3 = selected.get("p3_production_row_replay")
+    persisted = report.get("persisted_evidence_arrays")
+    if (
+        not isinstance(metadata, Mapping)
+        or not isinstance(numeric_rows, list)
+        or not isinstance(p3, Mapping)
+        or not isinstance(persisted, list)
+        or selected.get("selected_active_row") != 4_766_937
+        or selected.get("selected_original_row") != 15_440_235
+        or metadata.get("incident_cell_order") != [23_352, 23_493]
+    ):
+        raise ValueError("V9 V8 selected-row/cell identity differs from the frozen star")
+
+    cells = (23_352, 23_493)
+    roles = ("candidate", "reference")
+    states = ("j0", "j3")
+    numeric_by_cell = {
+        row.get("cell_index"): row
+        for row in numeric_rows
+        if isinstance(row, Mapping) and row.get("cell_index") in cells
+    }
+    p3_rows_raw = p3.get("per_cell_signed_contributions")
+    if not isinstance(p3_rows_raw, list):
+        raise ValueError("V9 V8 selected-star P3 section omits incident cell rows")
+    p3_by_cell = {
+        row.get("cell_index"): row
+        for row in p3_rows_raw
+        if isinstance(row, Mapping) and row.get("cell_index") in cells
+    }
+    if set(numeric_by_cell) != set(cells) or set(p3_by_cell) != set(cells):
+        raise ValueError("V9 V8 report lacks one of the two frozen incident cells")
+
+    source_inventory: dict[str, Mapping[str, Any]] = {}
+    for item in persisted:
+        if not isinstance(item, Mapping) or not isinstance(item.get("name"), str):
+            raise ValueError("V9 V8 saved-array inventory is malformed")
+        name = str(item["name"])
+        if name in source_inventory:
+            raise ValueError(f"V9 V8 saved-array name is duplicated: {name}")
+        source_inventory[name] = item
+    checker_arrays_raw = counterfactual.get("array_artifacts")
+    factorizations_raw = counterfactual.get("factorizations")
+    if not isinstance(checker_arrays_raw, list) or not isinstance(factorizations_raw, list):
+        raise ValueError("V9 V8 checker result omits its saved LU/RHS array inventory")
+    checker_inventory: dict[str, Mapping[str, Any]] = {}
+    for item in checker_arrays_raw:
+        if not isinstance(item, Mapping) or not isinstance(item.get("name"), str):
+            raise ValueError("V9 V8 checker array inventory is malformed")
+        name = str(item["name"])
+        if name in checker_inventory:
+            raise ValueError(f"V9 V8 checker array name is duplicated: {name}")
+        checker_inventory[name] = item
+
+    source_cache: dict[str, np.ndarray] = {}
+    checker_cache: dict[str, np.ndarray] = {}
+
+    def load_array(
+        ref: Any,
+        *,
+        inventory: Mapping[str, Mapping[str, Any]],
+        cache: dict[str, np.ndarray],
+        basis: Path,
+        label: str,
+        expected_dtype: str | None = None,
+    ) -> np.ndarray:
+        if not isinstance(ref, Mapping) or not isinstance(ref.get("name"), str):
+            raise ValueError(f"V9 {label} omits its named array authorization")
+        name = str(ref["name"])
+        item = inventory.get(name)
+        if not isinstance(item, Mapping):
+            raise ValueError(f"V9 {label} is not in the fixed V8 array inventory: {name}")
+        for field in ("name", "path", "sha256", "bytes", "dtype", "shape"):
+            if ref.get(field) != item.get(field):
+                raise ValueError(f"V9 {label} inventory identity differs at {field}: {name}")
+        if name not in cache:
+            raw_path = Path(str(item.get("path", "")))
+            path = (raw_path if raw_path.is_absolute() else basis / raw_path).resolve(strict=True)
+            if (
+                not path.is_relative_to(basis.resolve())
+                or not path.is_relative_to(results_root)
+                or path.stat().st_size != item.get("bytes")
+                or not isinstance(item.get("sha256"), str)
+                or sha256_file(path) != item.get("sha256")
+            ):
+                raise ValueError(f"V9 {label} array path, size, or SHA-256 changed: {name}")
+            array = np.load(path, mmap_mode="r", allow_pickle=False)
+            if (
+                list(array.shape) != item.get("shape")
+                or str(array.dtype) != item.get("dtype")
+                or (expected_dtype is not None and str(array.dtype) != expected_dtype)
+                or array.dtype.kind not in "fciu"
+                or not np.isfinite(array).all()
+            ):
+                raise ValueError(f"V9 {label} array shape, dtype, or values changed: {name}")
+            cache[name] = array
+        return cache[name]
+
+    factor_by_key: dict[tuple[int, str], Mapping[str, Any]] = {}
+    for factor in factorizations_raw:
+        if not isinstance(factor, Mapping):
+            raise ValueError("V9 V8 factorization record is malformed")
+        key = (factor.get("cell_index"), factor.get("role"))
+        if key in factor_by_key:
+            raise ValueError(f"V9 V8 factorization record is duplicated: {key!r}")
+        factor_by_key[key] = factor
+    expected_factor_keys = {(cell, role) for cell in cells for role in roles}
+    if set(factor_by_key) != expected_factor_keys:
+        raise ValueError("V9 V8 saved LU inventory does not cover both cells and roles")
+
+    case_rows = counterfactual.get("cases")
+    if not isinstance(case_rows, list):
+        raise ValueError("V9 V8 checker result omits the saved RHS case records")
+    checker_case_by_key = {
+        (item.get("role"), item.get("column"), item.get("state")): item
+        for item in case_rows
+        if isinstance(item, Mapping)
+    }
+    expected_case_keys = {
+        (role, column, state)
+        for role in roles
+        for column in range(2)
+        for state in states
+    }
+    if set(checker_case_by_key) != expected_case_keys:
+        raise ValueError("V9 V8 checker RHS records do not cover both roles, columns, and states")
+
+    numeric_data: dict[tuple[int, str], dict[str, Any]] = {}
+    for cell in cells:
+        numeric = numeric_by_cell[cell]
+        interior = np.asarray(numeric.get("true_interior_positions"), dtype=np.int64)
+        trace = np.asarray(numeric.get("trace_complement_positions"), dtype=np.int64)
+        selected_rows = np.asarray(numeric.get("selected_local_trace_rows"), dtype=np.int64)
+        coefficients = _task41_v8_complex_pairs(
+            numeric.get("selected_trace_coefficients"),
+            f"V9 cell {cell} selected trace coefficients",
+        )
+        if (
+            interior.ndim != 1
+            or trace.ndim != 1
+            or selected_rows.ndim != 1
+            or not selected_rows.size
+            or coefficients.shape != selected_rows.shape
+            or np.intersect1d(interior, trace).size
+            or not np.array_equal(np.sort(np.r_[interior, trace]), np.arange(interior.size + trace.size))
+            or np.any(selected_rows < 0)
+            or np.any(selected_rows >= trace.size)
+        ):
+            raise ValueError(f"V9 cell {cell} selected local map is malformed")
+        role_rows = numeric.get("roles")
+        if not isinstance(role_rows, list):
+            raise ValueError(f"V9 cell {cell} omits candidate/reference matrix artifacts")
+        roles_by_name = {item.get("role"): item for item in role_rows if isinstance(item, Mapping)}
+        if set(roles_by_name) != set(roles):
+            raise ValueError(f"V9 cell {cell} role inventory differs")
+        for role in roles:
+            role_row = roles_by_name[role]
+            artifacts = role_row.get("raw_oriented_RTS_artifacts")
+            if not isinstance(artifacts, Mapping):
+                raise ValueError(f"V9 cell {cell} {role} omits saved oriented blocks")
+            tensor = load_array(
+                artifacts.get("oriented_tensor"), inventory=source_inventory,
+                cache=source_cache, basis=report_path.parent,
+                label=f"cell {cell} {role} oriented tensor",
+                expected_dtype="complex128",
+            )
+            T = load_array(
+                artifacts.get("T"), inventory=source_inventory,
+                cache=source_cache, basis=report_path.parent,
+                label=f"cell {cell} {role} T",
+                expected_dtype="complex128",
+            )
+            S = load_array(
+                artifacts.get("S"), inventory=source_inventory,
+                cache=source_cache, basis=report_path.parent,
+                label=f"cell {cell} {role} S",
+                expected_dtype="complex128",
+            )
+            if (
+                tensor.shape != (interior.size + trace.size,) * 2
+                or T.shape != (trace.size, interior.size)
+                or S.shape != (trace.size, trace.size)
+            ):
+                raise ValueError(f"V9 cell {cell} {role} local matrix dimensions differ")
+            K = np.asarray(tensor[np.ix_(interior, interior)], dtype=np.complex128)
+            J = np.asarray(tensor[np.ix_(trace, interior)], dtype=np.complex128)
+            factor_record = factor_by_key[(cell, role)]
+            if (
+                factor_record.get("factorization_identity")
+                != "fresh _strict_local_lu(K) from saved oriented_tensor; reused for both columns and states"
+                or factor_record.get("oriented_tensor_sha256")
+                != artifacts["oriented_tensor"].get("sha256")
+                or factor_record.get("saved_T_sha256") != artifacts["T"].get("sha256")
+                or factor_record.get("K_sha256")
+                != hashlib.sha256(np.ascontiguousarray(K).view(np.uint8)).hexdigest()
+            ):
+                raise ValueError(f"V9 cell {cell} {role} saved LU is not bound to its K/T/tensor")
+            factor = load_array(
+                factor_record.get("lu_factor_artifact"), inventory=checker_inventory,
+                cache=checker_cache, basis=checker_path.parent,
+                label=f"cell {cell} {role} saved LU",
+                expected_dtype="complex128",
+            )
+            pivots = load_array(
+                factor_record.get("owned_pivots_artifact"), inventory=checker_inventory,
+                cache=checker_cache, basis=checker_path.parent,
+                label=f"cell {cell} {role} saved pivots",
+                expected_dtype="int32",
+            )
+            if factor.shape != K.shape or pivots.shape != (K.shape[0],):
+                raise ValueError(f"V9 cell {cell} {role} saved LU layout differs")
+            normalized_pivots = prepare_saved_lu_pivots_for_getrs(
+                pivots, dimension=K.shape[0]
+            )
+            numeric_data[(cell, role)] = {
+                "K": K,
+                "J": J,
+                "T": T,
+                "S": S,
+                "selected_rows": selected_rows,
+                "coefficients": coefficients,
+                "factor": (factor, normalized_pivots),
+                "factor_record": factor_record,
+                "tensor_sha256": artifacts["oriented_tensor"].get("sha256"),
+                "T_sha256": artifacts["T"].get("sha256"),
+            }
+
+    p3_state_by_key: dict[tuple[int, int, str], Mapping[str, Any]] = {}
+    for cell in cells:
+        rows = p3_by_cell[cell].get("roles_and_states")
+        if not isinstance(rows, list):
+            raise ValueError(f"V9 cell {cell} omits its saved P3 state rows")
+        for row in rows:
+            if not isinstance(row, Mapping):
+                raise ValueError(f"V9 cell {cell} P3 state row is malformed")
+            key = (cell, row.get("column"), row.get("state"))
+            if key in p3_state_by_key:
+                raise ValueError(f"V9 cell {cell} P3 state row is duplicated: {key!r}")
+            p3_state_by_key[key] = row
+    expected_state_keys = {
+        (cell, column, state)
+        for cell in cells
+        for column in range(2)
+        for state in states
+    }
+    if set(p3_state_by_key) != expected_state_keys:
+        raise ValueError("V9 V8 P3 states do not cover both cells, columns, and j0/j3")
+
+    z_by_rhs: dict[tuple[int, str, int], np.ndarray] = {}
+    rhs_by_pair: dict[tuple[int, str, int], np.ndarray] = {}
+    residual_checks: list[dict[str, Any]] = []
+    local_cases: list[dict[str, Any]] = []
+    original_path_checks = 0
+    production_core_checks = 0
+    for role in roles:
+        for column in range(2):
+            for state in states:
+                ordinary_s_terms: list[complex] = []
+                ordinary_old_terms: list[complex] = []
+                ordinary_new_terms: list[complex] = []
+                signed_identity_terms: list[complex] = []
+                signed_projection_terms: list[complex] = []
+                signed_identity_remainders: list[complex] = []
+                b_t_for_row: complex | None = None
+                cell_output = []
+                saved_checker_case = checker_case_by_key[(role, column, state)]
+                saved_cell_terms = saved_checker_case.get("cell_terms")
+                if not isinstance(saved_cell_terms, list) or len(saved_cell_terms) != len(cells):
+                    raise ValueError("V9 V8 checker case omits the two saved local terms")
+                checker_terms_by_cell = {
+                    item.get("cell_index"): item
+                    for item in saved_cell_terms
+                    if isinstance(item, Mapping)
+                }
+                if set(checker_terms_by_cell) != set(cells):
+                    raise ValueError("V9 V8 checker local terms do not bind the fixed cells")
+                for cell in cells:
+                    p3_state = p3_state_by_key[(cell, column, state)]
+                    native_b_t = _task41_v8_complex_pair(
+                        p3_state.get("native_volume_rhs_at_selected_original_row"),
+                        "V9 original native b_t",
+                    )
+                    if b_t_for_row is None:
+                        b_t_for_row = native_b_t
+                    elif native_b_t != b_t_for_row:
+                        raise ValueError("V9 V8 original native b_t differs across incident cells")
+                    p3_roles = p3_state.get("roles")
+                    if not isinstance(p3_roles, list):
+                        raise ValueError(f"V9 cell {cell} omits candidate/reference P3 roles")
+                    p3_role_by_name = {
+                        item.get("role"): item for item in p3_roles if isinstance(item, Mapping)
+                    }
+                    if set(p3_role_by_name) != set(roles):
+                        raise ValueError(f"V9 cell {cell} P3 roles differ")
+                    p3_role = p3_role_by_name[role]
+                    local_values = p3_role.get("local_values")
+                    saved_row_terms = p3_role.get("selected_row_contributions")
+                    if not isinstance(local_values, Mapping) or not isinstance(saved_row_terms, Mapping):
+                        raise ValueError(f"V9 cell {cell} {role} omits original local RHS inputs")
+                    b_i = load_array(
+                        local_values.get("b_i"), inventory=source_inventory,
+                        cache=source_cache, basis=report_path.parent,
+                        label=f"cell {cell} {role} col{column} {state} b_i",
+                        expected_dtype="complex128",
+                    )
+                    t_c = load_array(
+                        local_values.get("t_c"), inventory=source_inventory,
+                        cache=source_cache, basis=report_path.parent,
+                        label=f"cell {cell} {role} col{column} {state} t_c",
+                        expected_dtype="complex128",
+                    )
+                    local = numeric_data[(cell, role)]
+                    K, J, T, S = local["K"], local["J"], local["T"], local["S"]
+                    if b_i.shape != (K.shape[0],) or t_c.shape != (S.shape[1],):
+                        raise ValueError(f"V9 cell {cell} {role} b_i/t_c layout differs")
+                    rhs_key = (cell, role, column)
+                    if state == "j0":
+                        rhs_by_pair[rhs_key] = b_i
+                        solution_ref_name = (
+                            f"v8_lu_solve_cell{cell}_{role}_col{column}_solution"
+                        )
+                        residual_ref_name = (
+                            f"v8_lu_solve_cell{cell}_{role}_col{column}_residual"
+                        )
+                        saved_solution = load_array(
+                            checker_inventory.get(solution_ref_name),
+                            inventory=checker_inventory, cache=checker_cache,
+                            basis=checker_path.parent,
+                            label=f"cell {cell} {role} col{column} saved z",
+                            expected_dtype="complex128",
+                        )
+                        saved_residual = load_array(
+                            checker_inventory.get(residual_ref_name),
+                            inventory=checker_inventory, cache=checker_cache,
+                            basis=checker_path.parent,
+                            label=f"cell {cell} {role} col{column} saved residual",
+                            expected_dtype="complex128",
+                        )
+                        if not np.array_equal(K @ saved_solution - b_i, saved_residual):
+                            scale = max(float(np.linalg.norm(K) * np.linalg.norm(saved_solution) + np.linalg.norm(b_i)), 1.0)
+                            if np.linalg.norm(K @ saved_solution - b_i - saved_residual) > 1.0e-13 * scale:
+                                raise ValueError(f"V9 cell {cell} {role} saved z residual does not recompute")
+                        solved, correction, core_timing = project_internal_rhs_same_lu(
+                            local["factor"], J, b_i
+                        )
+                        if not np.allclose(solved, saved_solution, rtol=1.0e-13, atol=1.0e-13):
+                            raise ValueError(f"V9 cell {cell} {role} production-core z differs from saved z")
+                        new_residual = K @ solved - b_i
+                        saved_norm = float(np.linalg.norm(saved_residual))
+                        new_norm = float(np.linalg.norm(new_residual))
+                        scale = max(float(np.linalg.norm(K) * np.linalg.norm(solved) + np.linalg.norm(b_i)), 1.0)
+                        saved_relative = saved_norm / scale
+                        new_relative = new_norm / scale
+                        if new_relative > saved_relative + 1.0e-13:
+                            raise ValueError(f"V9 cell {cell} {role} production-core residual worsened")
+                        z_by_rhs[rhs_key] = solved
+                        residual_checks.append(
+                            {
+                                "cell_index": cell,
+                                "role": role,
+                                "column": column,
+                                "saved_z_matches_production_core": True,
+                                "saved_residual_recomputed": True,
+                                "saved_backward_relative_residual": saved_relative,
+                                "production_core_backward_relative_residual": new_relative,
+                                "getrs_count": 1,
+                                "getrs_seconds": core_timing["getrs_seconds"],
+                            }
+                        )
+                        production_core_checks += 1
+                    elif not np.array_equal(b_i, rhs_by_pair[rhs_key]):
+                        raise ValueError(f"V9 cell {cell} {role} paired j0/j3 b_i changed")
+                    z = z_by_rhs.get(rhs_key)
+                    if z is None:
+                        raise ValueError(f"V9 cell {cell} {role} paired state has no saved-LU z")
+                    selected_rows = local["selected_rows"]
+                    coefficients = local["coefficients"]
+
+                    # Keep the frozen full-vector BLAS evaluation order on all
+                    # values that feed g, d, and the candidate gate.
+                    old_vector = T @ b_i
+                    s_vector = S @ t_c
+                    new_vector = -(J @ z)
+                    old_projected = complex(
+                        np.vdot(coefficients, old_vector[selected_rows])
+                    )
+                    s_projected = complex(
+                        np.vdot(coefficients, s_vector[selected_rows])
+                    )
+                    new_projected = complex(
+                        np.vdot(coefficients, new_vector[selected_rows])
+                    )
+
+                    # This selected-row algebra is diagnostic-only. In
+                    # particular, it must never supply a g/d/gate projection.
+                    signed_identity = _task41_v9_signed_local_identity(
+                        K=K,
+                        J=J,
+                        T=T,
+                        b_i=b_i,
+                        z=z,
+                        selected_local_rows=selected_rows,
+                        selected_coefficients=coefficients,
+                    )
+                    j_z_projected = -new_projected
+                    selected_s_diagnostic = complex(
+                        np.vdot(coefficients, S[selected_rows, :] @ t_c)
+                    )
+                    _task41_v8_assert_close(
+                        _task41_v8_complex_pair(
+                            saved_row_terms.get("local_reduced_rhs_T_b_i"),
+                            "V8 local_reduced_rhs_T_b_i",
+                        ),
+                        old_projected,
+                        f"V9 original T b_i row replay cell {cell} {role} col{column} {state}",
+                    )
+                    _task41_v8_assert_close(
+                        _task41_v8_complex_pair(saved_row_terms.get("S_action"), "V8 S_action"),
+                        s_projected,
+                        f"V9 original S t row replay cell {cell} {role} col{column} {state}",
+                    )
+                    checker_term = checker_terms_by_cell[cell]
+                    _task41_v8_assert_close(
+                        _task41_v8_complex_pair(
+                            checker_term.get("old_T_b_i_projected"), "V8 saved old projection"
+                        ),
+                        old_projected,
+                        f"V9 V8 old RHS diagnostic replay cell {cell} {role} col{column} {state}",
+                    )
+                    _task41_v8_assert_close(
+                        _task41_v8_complex_pair(
+                            checker_term.get("new_minus_J_solve_K_b_i_projected"),
+                            "V8 saved new projection",
+                        ),
+                        new_projected,
+                        f"V9 V8 saved-LU projection replay cell {cell} {role} col{column} {state}",
+                    )
+                    original_path_checks += 3
+                    ordinary_s_terms.append(s_projected)
+                    ordinary_old_terms.append(old_projected)
+                    ordinary_new_terms.append(new_projected)
+                    signed_identity_terms.append(
+                        signed_identity["projected_signed_lhs"]
+                    )
+                    signed_projection_terms.extend(
+                        (
+                            signed_identity["projected_T_b_i"],
+                            signed_identity["projected_J_z"],
+                        )
+                    )
+                    signed_identity_remainders.append(
+                        signed_identity["projection_identity_remainder"]
+                    )
+                    wide_projection = {
+                        "S_action": _task41_v9_wide_local_projection(
+                            S, t_c, selected_local_rows=selected_rows,
+                            selected_coefficients=coefficients,
+                        ),
+                        "T_b_i": _task41_v9_wide_local_projection(
+                            T, b_i, selected_local_rows=selected_rows,
+                            selected_coefficients=coefficients,
+                        ),
+                        "J_z": _task41_v9_wide_local_projection(
+                            J, z, selected_local_rows=selected_rows,
+                            selected_coefficients=coefficients,
+                        ),
+                    }
+                    cell_output.append(
+                        {
+                            "cell_index": cell,
+                            "s_complex128": [s_projected.real, s_projected.imag],
+                            "T_b_i_projected_complex128": [old_projected.real, old_projected.imag],
+                            "J_z_projected_complex128": [j_z_projected.real, j_z_projected.imag],
+                            "minus_J_z_projected_complex128": [new_projected.real, new_projected.imag],
+                            "selected_row_vs_full_matvec_projection_remainders": {
+                                "E_H_T_b_i_selected_minus_full": [
+                                    (
+                                        signed_identity["projected_T_b_i"]
+                                        - old_projected
+                                    ).real,
+                                    (
+                                        signed_identity["projected_T_b_i"]
+                                        - old_projected
+                                    ).imag,
+                                ],
+                                "E_H_S_t_selected_minus_full": [
+                                    (selected_s_diagnostic - s_projected).real,
+                                    (selected_s_diagnostic - s_projected).imag,
+                                ],
+                                "E_H_J_z_selected_minus_full": [
+                                    (signed_identity["projected_J_z"] - j_z_projected).real,
+                                    (signed_identity["projected_J_z"] - j_z_projected).imag,
+                                ],
+                                "diagnostic_only_not_used_for_gate": True,
+                            },
+                            "signed_saved_lu_identity_projection": {
+                                "formula": "T b_i + J z = (J + T K) z + T (b_i - K z)",
+                                "E_H_T_b_i": [
+                                    signed_identity["projected_T_b_i"].real,
+                                    signed_identity["projected_T_b_i"].imag,
+                                ],
+                                "E_H_J_z": [
+                                    signed_identity["projected_J_z"].real,
+                                    signed_identity["projected_J_z"].imag,
+                                ],
+                                "E_H_signed_lhs": [
+                                    signed_identity["projected_signed_lhs"].real,
+                                    signed_identity["projected_signed_lhs"].imag,
+                                ],
+                                "E_H_(J+TK)_z": [
+                                    signed_identity["projected_(J+TK)_z"].real,
+                                    signed_identity["projected_(J+TK)_z"].imag,
+                                ],
+                                "E_H_reassociated_Jz_plus_TKz": [
+                                    signed_identity[
+                                        "projected_reassociated_Jz_plus_TKz"
+                                    ].real,
+                                    signed_identity[
+                                        "projected_reassociated_Jz_plus_TKz"
+                                    ].imag,
+                                ],
+                                "reassociation_difference": [
+                                    signed_identity[
+                                        "projection_reassociation_difference"
+                                    ].real,
+                                    signed_identity[
+                                        "projection_reassociation_difference"
+                                    ].imag,
+                                ],
+                                "E_H_T_(b_i-Kz)": [
+                                    signed_identity["projected_T_(b_i-Kz)"].real,
+                                    signed_identity["projected_T_(b_i-Kz)"].imag,
+                                ],
+                                "E_H_signed_rhs": [
+                                    signed_identity["projected_signed_rhs"].real,
+                                    signed_identity["projected_signed_rhs"].imag,
+                                ],
+                                "projection_identity_remainder": [
+                                    signed_identity["projection_identity_remainder"].real,
+                                    signed_identity["projection_identity_remainder"].imag,
+                                ],
+                                "diagnostic_only_not_used_for_gate": True,
+                            },
+                            "wide_local_projection_recompute_diagnostic": {
+                                name: [float(value[0]), float(value[1])]
+                                for name, value in wide_projection.items()
+                            },
+                            "local_projection_recompute_diagnostic_not_used_for_gate": True,
+                        }
+                    )
+                if b_t_for_row is None:
+                    raise ValueError("V9 saved star omitted its original native b_t")
+                s_sum = sum(ordinary_s_terms, 0.0 + 0.0j)
+                old_local_sum = sum(ordinary_old_terms, 0.0 + 0.0j)
+                new_local_sum = sum(ordinary_new_terms, 0.0 + 0.0j)
+                g_old = b_t_for_row + old_local_sum
+                g_new = b_t_for_row + new_local_sum
+                d_old = s_sum - g_old
+                d_new = s_sum - g_new
+                direct_delta_d = d_new - d_old
+                naive_signed_projection_sum = sum(signed_identity_terms, 0.0 + 0.0j)
+                accurate_signed_projection_sum = complex(
+                    fsum(value.real for value in signed_projection_terms),
+                    fsum(value.imag for value in signed_projection_terms),
+                )
+                fpu_remainder = direct_delta_d - accurate_signed_projection_sum
+                projection_identity_remainder_sum = sum(
+                    signed_identity_remainders, 0.0 + 0.0j
+                )
+                wide_totals = _task41_v9_wide_local_rhs_totals(
+                    native_volume_rhs_at_selected_row=b_t_for_row,
+                    wide_s_sum=_task41_v9_wide_sum_complex(ordinary_s_terms),
+                    wide_old_local_rhs_sum=_task41_v9_wide_sum_complex(ordinary_old_terms),
+                    wide_new_local_rhs_sum=_task41_v9_wide_sum_complex(ordinary_new_terms),
+                )
+                local_cases.append(
+                    {
+                        "role": role,
+                        "column": column,
+                        "state": state,
+                        "original_b_t_added_once": [b_t_for_row.real, b_t_for_row.imag],
+                        "s_complex128": [s_sum.real, s_sum.imag],
+                        "g_T_complex128": [g_old.real, g_old.imag],
+                        "g_LU_complex128": [g_new.real, g_new.imag],
+                        "d_T_complex128": [d_old.real, d_old.imag],
+                        "d_LU_complex128": [d_new.real, d_new.imag],
+                        "signed_d_LU_minus_d_T_identity_diagnostic": {
+                            "formula": "d_LU - d_T = sum_cells E^H(T b_i + J z); b_t cancels after being added once to each g",
+                            "signed_cell_projection_sum_complex128": [
+                                naive_signed_projection_sum.real,
+                                naive_signed_projection_sum.imag,
+                            ],
+                            "accurate_sum_of_rounded_signed_E_H_terms": [
+                                accurate_signed_projection_sum.real,
+                                accurate_signed_projection_sum.imag,
+                            ],
+                            "signed_E_H_projection_term_count": len(
+                                signed_projection_terms
+                            ),
+                            "direct_d_LU_minus_d_T_complex128": [
+                                direct_delta_d.real,
+                                direct_delta_d.imag,
+                            ],
+                            "fpu_remainder_direct_minus_accurate_projection_sum": [
+                                fpu_remainder.real,
+                                fpu_remainder.imag,
+                            ],
+                            "sum_of_cell_projection_identity_remainders": [
+                                projection_identity_remainder_sum.real,
+                                projection_identity_remainder_sum.imag,
+                            ],
+                            "diagnostic_only_not_used_for_gate": True,
+                        },
+                        **wide_totals,
+                        "cell_terms": cell_output,
+                    }
+                )
+
+    old_checker_cases_by_key = {
+        (item["role"], item["column"], item["state"]): item
+        for item in counterfactual.get("cases", [])
+    }
+    for item in local_cases:
+        old_case = old_checker_cases_by_key[
+            (item["role"], item["column"], item["state"])
+        ]
+        _task41_v8_assert_close(
+            _task41_v8_complex_pair(old_case.get("d_old_S_minus_g_old"), "V8 d_T"),
+            complex(*item["d_T_complex128"]),
+            f"V9 original candidate/reference d_T replay {item['role']} col{item['column']} {item['state']}",
+        )
+        _task41_v8_assert_close(
+            _task41_v8_complex_pair(old_case.get("d_new_S_minus_g_new"), "V8 d_LU"),
+            complex(*item["d_LU_complex128"]),
+            f"V9 saved-LU d_LU replay {item['role']} col{item['column']} {item['state']}",
+        )
+        original_path_checks += 2
+
+    classified = _task41_v9_classify_candidate_self_d(
+        [
+            {
+                "role": item["role"],
+                "column": item["column"],
+                "state": item["state"],
+                "d_old_S_minus_g_old": item["d_T_complex128"],
+                "d_new_S_minus_g_new": item["d_LU_complex128"],
+                "wide_d_old_S_minus_g_old": item["wide_d_old_S_minus_g_old"],
+                "wide_d_new_S_minus_g_new": item["wide_d_new_S_minus_g_new"],
+            }
+            for item in local_cases
+        ],
+        identity_replay_closed=(
+            original_path_checks
+            == len(roles) * 2 * len(states) * len(cells) * 3
+            + len(roles) * 2 * len(states) * 2
+        ),
+        production_core_replay_closed=(
+            production_core_checks == len(cells) * len(roles) * 2
+            and all(
+                item["saved_z_matches_production_core"]
+                and item["saved_residual_recomputed"]
+                and item["production_core_backward_relative_residual"]
+                <= item["saved_backward_relative_residual"] + 1.0e-13
+                and item["getrs_count"] == 1
+                for item in residual_checks
+            )
+        ),
+    )
+    gap_diagnostics = []
+    cases_by_key = {
+        (item["role"], item["column"], item["state"]): item
+        for item in local_cases
+    }
+    for column in range(2):
+        for state in states:
+            candidate = cases_by_key[("candidate", column, state)]
+            reference = cases_by_key[("reference", column, state)]
+            old_gap = np.asarray(candidate["g_T_complex128"]) - np.asarray(reference["g_T_complex128"])
+            new_gap = np.asarray(candidate["g_LU_complex128"]) - np.asarray(reference["g_LU_complex128"])
+            gap_diagnostics.append(
+                {
+                    "column": column,
+                    "state": state,
+                    "candidate_minus_reference_g_T": old_gap.tolist(),
+                    "candidate_minus_reference_g_LU": new_gap.tolist(),
+                    "diagnostic_only_not_candidate_gate": True,
+                }
+            )
+    return {
+        **classified,
+        "schema": "task41.p0.v9.saved_star_screen.v1",
+        "input_identity": {
+            "v8_report_sha256": v8_report_sha256,
+            "v8_checker_result_sha256": v8_checker_result_sha256,
+            "selected_active_row": selected["selected_active_row"],
+            "selected_original_row": selected["selected_original_row"],
+            "incident_cells": list(cells),
+            "loaded_source_array_count": len(source_cache),
+            "loaded_saved_lu_rhs_array_count": len(checker_cache),
+        },
+        "replay_checks": {
+            "original_s_and_T_b_i_reproduced_from_saved_V8_arrays": True,
+            "old_original_path_and_V8_d_replayed_check_count": original_path_checks,
+            "saved_z_and_residual_recomputed_with_shared_production_core": True,
+            "independent_Kz_minus_b_i_and_no_deterioration_check_count": production_core_checks,
+            "production_core_GETRS_count": production_core_checks,
+            "wide_local_projection_recompute_is_diagnostic_only": True,
+            "wide_uncertainty_gate_uses_only_complex128_local_terms_with_wide_final_sum": True,
+            "signed_saved_lu_identity_uses_selected_trace_rows_and_is_diagnostic_only": True,
+            "signed_d_lu_minus_d_t_fpu_remainder_is_diagnostic_only": True,
+        },
+        "candidate_reference_gap_diagnostics": gap_diagnostics,
+        "candidate_and_reference_recomputed_s_g_d": local_cases,
+        "saved_lu_residual_checks": residual_checks,
+    }
+
+
+def check_task41_p0_b0_v9_saved_star_screen(
+    *,
+    contract_path: Path,
+    contract_sha256: str,
+    v8_report_path: Path,
+    v8_report_sha256: str,
+    v8_checker_result_path: Path,
+    v8_checker_result_sha256: str,
+    output_path: Path,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Run and persist the V9 local screen under its frozen B0 contract."""
+
+    repo_root = Path(repo_root).resolve(strict=True)
+    contract_file = Path(contract_path).resolve(strict=True)
+    output_file = Path(output_path).resolve()
+    contract, actual_contract_sha = require_task41_p0_contract(
+        contract_file,
+        expected_sha256=contract_sha256,
+        current_root=repo_root,
+        require_clean_source=True,
+        check_current_source=True,
+        case_id="B0",
+    )
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+        TASK41_B0_V9_WINDOW_RELATIVE,
+    )
+
+    if (
+        contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+        != TASK41_B0_V9_INTERNAL_RHS_STRATEGY
+        or contract.get("window", {}).get("path") != str(TASK41_B0_V9_WINDOW_RELATIVE)
+    ):
+        raise ValueError("V9 saved-star screen requires the explicit V9 B0 window and strategy")
+    results_root = (repo_root / "results").resolve()
+    if not output_file.is_relative_to(results_root):
+        raise ValueError("V9 saved-star screen output must be inside repository results")
+    screen = task41_p0_v9_saved_star_screen(
+        v8_report_path=v8_report_path,
+        v8_report_sha256=v8_report_sha256,
+        v8_checker_result_path=v8_checker_result_path,
+        v8_checker_result_sha256=v8_checker_result_sha256,
+        repo_root=repo_root,
+    )
+    payload = {
+        "schema": "task41.p0.b0.v9.saved_star_screen_result.v1",
+        "status": screen["status"],
+        "screen_completed": True,
+        "local_candidate_ready": screen["status"] == "LOCAL_CANDIDATE_READY",
+        "official_result": False,
+        "task_id": contract["task_id"],
+        "run_id": contract["case"]["run_id"],
+        "source_sha": contract["source"]["sha"],
+        "contract_path": str(contract_file),
+        "contract_sha256": actual_contract_sha,
+        "window_path": contract["window"]["path"],
+        "window_sha256": contract["window"]["sha256"],
+        "saved_star_screen": screen,
+        "raw_evidence_retained": True,
+    }
+    if output_file.exists():
+        raise ValueError("V9 saved-star screen output already exists; refusing to overwrite it")
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{output_file.name}.", suffix=".tmp", dir=output_file.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, output_file)
+        except FileExistsError as exc:
+            raise ValueError("V9 saved-star screen output appeared concurrently") from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+    return payload
+
+
+def _task41_v9_classify_candidate_self_d(
+    cases: list[Mapping[str, Any]],
+    *,
+    identity_replay_closed: bool,
+    production_core_replay_closed: bool,
+) -> dict[str, Any]:
+    """Gate candidate-own d improvement after the measured last sum only."""
+
+    expected = {
+        (role, column, state)
+        for role in ("candidate", "reference")
+        for column in range(2)
+        for state in ("j0", "j3")
+    }
+    by_key: dict[tuple[str, int, str], Mapping[str, Any]] = {}
+    for item in cases:
+        if not isinstance(item, Mapping):
+            raise ValueError("V9 saved-star d cases must be mappings")
+        key = (item.get("role"), item.get("column"), item.get("state"))
+        if key in by_key:
+            raise ValueError(f"V9 saved-star d case is duplicated: {key!r}")
+        by_key[key] = item
+    if set(by_key) != expected:
+        raise ValueError("V9 saved-star d cases must bind both roles, columns, and states")
+
+    result_cases = []
+    candidate_by_column: dict[int, list[dict[str, Any]]] = {0: [], 1: []}
+    for role, column, state in sorted(expected):
+        item = by_key[(role, column, state)]
+        old = _task41_v8_complex_pair(item.get("d_old_S_minus_g_old"), "old d")
+        new = _task41_v8_complex_pair(item.get("d_new_S_minus_g_new"), "new d")
+        wide_old = _task41_v8_complex_pair(
+            item.get("wide_d_old_S_minus_g_old"), "wide old d"
+        )
+        wide_new = _task41_v8_complex_pair(
+            item.get("wide_d_new_S_minus_g_new"), "wide new d"
+        )
+        uncertainty_old = abs(old - wide_old)
+        uncertainty_new = abs(new - wide_new)
+        improvement_margin = (
+            abs(old) - abs(new) - uncertainty_old - uncertainty_new
+        )
+        frozen_denominator = TASK41_P0_V5_FROZEN_DENOMINATORS[column]
+        entry = {
+            "role": role,
+            "column": column,
+            "state": state,
+            "d_old": [old.real, old.imag],
+            "d_new": [new.real, new.imag],
+            "wide_d_old": [wide_old.real, wide_old.imag],
+            "wide_d_new": [wide_new.real, wide_new.imag],
+            "last_combination_uncertainty_old": uncertainty_old,
+            "last_combination_uncertainty_new": uncertainty_new,
+            "old_absolute_d": abs(old),
+            "new_absolute_d": abs(new),
+            "frozen_D": frozen_denominator,
+            "old_frozen_D_relative": abs(old) / frozen_denominator,
+            "new_frozen_D_relative": abs(new) / frozen_denominator,
+            "improvement_beyond_last_combination_uncertainty": (
+                improvement_margin > 0.0
+            ),
+            "improvement_margin_after_uncertainty": improvement_margin,
+        }
+        result_cases.append(entry)
+        if role == "candidate":
+            candidate_by_column[column].append(entry)
+    column_gates = [
+        {
+            "column": column,
+            "states": [item["state"] for item in candidate_by_column[column]],
+            "passed": len(candidate_by_column[column]) == 2
+            and all(
+                item["improvement_beyond_last_combination_uncertainty"]
+                for item in candidate_by_column[column]
+            ),
+        }
+        for column in range(2)
+    ]
+    passed = (
+        identity_replay_closed
+        and production_core_replay_closed
+        and all(item["passed"] for item in column_gates)
+    )
+    return {
+        "schema": "task41.p0.v9.saved_star_candidate_self_d_gate.v1",
+        "status": "LOCAL_CANDIDATE_READY" if passed else "LOCAL_CANDIDATE_REJECTED",
+        "identity_replay_closed": bool(identity_replay_closed),
+        "production_core_replay_closed": bool(production_core_replay_closed),
+        "candidate_gate_requires_both_columns_and_paired_states": True,
+        "candidate_column_gates": column_gates,
+        "candidate_and_reference_own_d": result_cases,
+        "method": (
+            "rebuild s, g_T, g_LU and d from saved two-cell terms; compare each "
+            "candidate-own |d| reduction after subtracting float64-versus-longdouble "
+            "last-combination uncertainty; report reference-own d without using the "
+            "candidate-reference gap as the gate"
+        ),
+    }
+
+
 def _task41_v8_local_matrix_defect_diagnostic(
     *,
     tensor: np.ndarray,
@@ -6497,6 +7655,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--input", type=Path)
     mode.add_argument("--saved-output-continuation-input", type=Path)
     mode.add_argument("--saved-b0-evidence-audit", action="store_true")
+    mode.add_argument("--v9-saved-star-screen", action="store_true")
     parser.add_argument("--summary", type=Path)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--numerical-output", type=Path)
@@ -6507,8 +7666,71 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--mesh-actual-exact-report", type=Path)
     parser.add_argument("--mesh-actual-exact-report-sha256")
+    parser.add_argument("--v8-report", type=Path)
+    parser.add_argument("--v8-report-sha256")
+    parser.add_argument("--v8-checker-result", type=Path)
+    parser.add_argument("--v8-checker-result-sha256")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
+    if args.v9_saved_star_screen:
+        if (
+            args.input is not None
+            or args.saved_output_continuation_input is not None
+            or args.saved_b0_evidence_audit
+            or args.summary is not None
+            or args.manifest is not None
+            or args.numerical_output is not None
+            or args.consumer_contract is not None
+            or args.consumer_contract_sha256 is not None
+            or args.mesh_actual_exact_report is not None
+            or args.mesh_actual_exact_report_sha256 is not None
+            or args.v8_report is None
+            or args.v8_report_sha256 is None
+            or args.v8_checker_result is None
+            or args.v8_checker_result_sha256 is None
+        ):
+            parser.error(
+                "V9 saved-star screen requires only its V9 contract and both hash-bound V8 reports"
+            )
+        try:
+            result = check_task41_p0_b0_v9_saved_star_screen(
+                contract_path=args.contract,
+                contract_sha256=args.contract_sha256,
+                v8_report_path=args.v8_report,
+                v8_report_sha256=args.v8_report_sha256,
+                v8_checker_result_path=args.v8_checker_result,
+                v8_checker_result_sha256=args.v8_checker_result_sha256,
+                output_path=args.output,
+                repo_root=root,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            result = {
+                "schema": "task41.p0.b0.v9.saved_star_screen_result.v1",
+                "status": "INCOMPLETE",
+                "screen_completed": False,
+                "local_candidate_ready": False,
+                "official_result": False,
+                "errors": [f"{type(exc).__name__}: {exc}"],
+                "raw_evidence_retained": True,
+            }
+            output_path = args.output.resolve()
+            if not output_path.exists() and output_path.is_relative_to((root / "results").resolve()):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                temporary = output_path.with_name(output_path.name + ".tmp")
+                temporary.write_text(
+                    json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                try:
+                    os.link(temporary, output_path)
+                except FileExistsError:
+                    pass
+                finally:
+                    temporary.unlink(missing_ok=True)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 2
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("screen_completed") is True else 2
     if args.saved_b0_evidence_audit:
         if (
             args.input is not None

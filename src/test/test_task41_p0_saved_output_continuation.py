@@ -1517,6 +1517,284 @@ def test_only_the_known_saved_output_worker_failure_is_eligible(tmp_path: Path) 
         _validate_original_attempt(run_root, contract, "f" * 64)
 
 
+def test_v9_saved_star_selector_passes_candidate_binding_guard_without_fe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import src.runners.task41_p0_checker as checker_module
+    import src.runners.task41_p0_contract as contract_module
+    import src.runners.task40_v10_campaign as campaign_module
+    import benchmarks.subreaper_watchdog as watchdog_module
+    import benchmarks.task034_wsl_resources as resource_module
+    import scripts.task40_v20_service_workflow as service_workflow
+
+    repo_root = tmp_path
+    results_root = repo_root / "results" / contract_module.TASK41_MODEL_ID
+    report_path = results_root / "v8_saved" / "task41_p0_v8_selected_trace_star_audit.json"
+    checker_result_path = (
+        results_root / "v8_checker" / "task41_p0_b0_saved_evidence_audit.json"
+    )
+    report_path.parent.mkdir(parents=True)
+    checker_result_path.parent.mkdir(parents=True)
+    report_array_path = report_path.parent / "selected_star.npy"
+    report_array_path.write_bytes(b"saved V8 producer array")
+    checker_array_path = checker_result_path.parent / "local_rhs_lu.npy"
+    checker_array_path.write_bytes(b"saved V8 checker array")
+
+    def saved_array_entry(path: Path) -> dict[str, object]:
+        data = path.read_bytes()
+        return {
+            "path": path.name,
+            "bytes": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
+        }
+
+    report_path.write_text(
+        json.dumps({
+            "schema": "task41.p0.v8.selected_trace_star_audit_receipt.v1",
+            "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
+            "persisted_evidence_arrays": [saved_array_entry(report_array_path)],
+        }),
+        encoding="utf-8",
+    )
+    checker_result_path.write_text(
+        json.dumps({
+            "schema": "task41.p0.b0.saved_evidence_audit.v1",
+            "status": "COMPLETE",
+            "mesh_actual_exact_candidate_check": {
+                "check_completed": True,
+                "local_rhs_lu_counterfactual": {
+                    "array_artifacts": [saved_array_entry(checker_array_path)],
+                },
+            },
+        }),
+        encoding="utf-8",
+    )
+    report_sha256 = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    checker_sha256 = hashlib.sha256(checker_result_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(checker_module, "TASK41_P0_V9_V8_REPORT_SHA256", report_sha256)
+    monkeypatch.setattr(
+        checker_module, "TASK41_P0_V9_V8_CHECKER_RESULT_SHA256", checker_sha256
+    )
+
+    input_path = repo_root / "b0.dat"
+    input_path.write_bytes(b"frozen B0 input\n")
+    input_sha256 = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    contract_path = repo_root / "task41_p0_contract.json"
+    contract_path.write_text("{}\n", encoding="utf-8")
+    contract_sha256 = "e" * 64
+    source_sha = "c" * 40
+    abi_sha = "d" * 64
+    runtime_prefix = Path(sys.executable).parent.parent
+    abi_receipt = repo_root / "abi.json"
+    jit_cache = repo_root / "jit"
+    window_sha256 = "f" * 64
+    window_path = repo_root / contract_module.TASK41_B0_V9_WINDOW_RELATIVE
+    window = FixedCampaignWindow(
+        path=window_path,
+        sha256=window_sha256,
+        payload={"accounting_path": str(repo_root / "accounting.jsonl")},
+        anchor={},
+        t0_utc_ns=100,
+        deadline_utc_ns=86_400_000_000_100,
+        total_seconds=86_400.0,
+        bootstrap_seconds=0.0,
+        closeout_seconds=1_200.0,
+    )
+    contract = {
+        "task_id": contract_module.TASK41_MODEL_ID,
+        "branch": contract_module.TASK41_BRANCH,
+        "source": {"sha": source_sha},
+        "window": {
+            "path": str(contract_module.TASK41_B0_V9_WINDOW_RELATIVE),
+            "sha256": window_sha256,
+        },
+        "numerical_strategy": {
+            "internal_rhs_strategy": contract_module.TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+        },
+        "case": {
+            "model_id": contract_module.TASK41_MODEL_ID,
+            "run_id": contract_module.TASK41_B0_RUN_ID,
+            "method": "full3d_iterative",
+            "mpi_size": 1,
+            "input_path": str(input_path),
+            "input_sha256": input_sha256,
+            "physical_model_sha256": "9" * 64,
+            "resolved_config_sha256": "8" * 64,
+        },
+        "resources": {
+            "task_memory_max_bytes": 1 << 30,
+            "host_reserve_bytes": 1 << 28,
+            "memory_swap_max_bytes": 0,
+        },
+        "runtime": {
+            "runtime_prefix": str(runtime_prefix),
+            "abi_receipt_path": str(abi_receipt),
+            "jit_cache": str(jit_cache),
+            "abi_receipt_sha256": abi_sha,
+        },
+    }
+    environment = {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": "1",
+        "_MYFENICS_CLOUD_RUNTIME_PROFILE": "native_linux",
+        "_MYFENICS_CLOUD_ABI_MANIFEST_SHA256": abi_sha,
+    }
+    monkeypatch.setenv("TASK41_P0_STRICT_EXECUTION", "1")
+    monkeypatch.setenv("TASK41_P0_CONTRACT_PATH", str(contract_path.resolve()))
+    monkeypatch.setenv("TASK41_P0_CONTRACT_SHA256", contract_sha256)
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_PATH", str(window.path))
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_SHA256", window_sha256)
+    monkeypatch.setenv("TASK41_P0_EXPECTED_SOURCE_SHA", source_sha)
+
+    require_contract_checks: list[bool] = []
+
+    def require_contract(path: Path, **kwargs: object) -> tuple[dict[str, object], str]:
+        assert Path(path).resolve() == contract_path.resolve()
+        assert kwargs["expected_sha256"] == contract_sha256
+        assert kwargs["require_clean_source"] is True
+        require_contract_checks.append(bool(kwargs["check_current_source"]))
+        return contract, contract_sha256
+
+    class FakeCampaignAccount:
+        def __init__(self, _window: FixedCampaignWindow) -> None:
+            pass
+
+        def record_sample(self, *, label: str, phase: str) -> dict[str, str]:
+            return {"label": label, "phase": phase, "window_sha256": window_sha256}
+
+    monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
+    monkeypatch.setattr(
+        contract_module, "load_task41_p0_fixed_window", lambda *_args, **_kwargs: window
+    )
+    monkeypatch.setattr(campaign_module, "CampaignAccount", FakeCampaignAccount)
+    monkeypatch.setattr(
+        resource_module,
+        "cgroup_snapshot",
+        lambda _pid: {
+            "dedicated_job_cgroup": True,
+            "readable": True,
+            "memory_limit_bytes": 1 << 30,
+            "swap_current_bytes": 0,
+            "memory_current_bytes": 1 << 20,
+        },
+    )
+    monkeypatch.setattr(
+        service_workflow, "_activation_environment",
+        lambda *_args, **_kwargs: (environment.copy(), ["activate"], 0, ""),
+    )
+    monkeypatch.setattr(
+        service_workflow, "_qualified_activation_identity", lambda _environment: "fixture-activation"
+    )
+    monkeypatch.setattr(
+        service_workflow, "_abi_preflight",
+        lambda *_args, **_kwargs: (
+            ["python", "preflight"],
+            0,
+            json.dumps({"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1}),
+            "",
+        ),
+    )
+    monkeypatch.setattr(
+        service_workflow.subprocess,
+        "check_output",
+        lambda command, **_kwargs: (
+            contract_module.TASK41_BRANCH
+            if command[-1] == "--show-current"
+            else source_sha
+        )
+        + "\n",
+    )
+
+    def fake_git_run(command: list[str], **_kwargs: object) -> object:
+        if command[1] == "status":
+            stdout = ""
+        elif command[1] == "rev-parse":
+            stdout = source_sha + "\n"
+        elif command[1] == "branch":
+            stdout = contract_module.TASK41_BRANCH + "\n"
+        else:
+            raise AssertionError(f"unexpected Git command: {command}")
+        return type("GitResult", (), {"returncode": 0, "stdout": stdout})()
+
+    monkeypatch.setattr(service_workflow.subprocess, "run", fake_git_run)
+    output_root = results_root / "v9_saved_star_screen_attempt1"
+    supervise_calls: list[list[str]] = []
+
+    def fake_supervise(
+        command: list[str], _directory: Path, **kwargs: object
+    ) -> dict[str, object]:
+        supervise_calls.append(command)
+        assert command[1:4] == [
+            "-m", "src.runners.task41_p0_checker", "--v9-saved-star-screen"
+        ]
+        assert "run_case.py" not in command
+        assert kwargs["campaign_phase"] == "closeout"
+        watchdog_module._validate_campaign_closeout_authorization(
+            command=command,
+            campaign=window,
+            authorization=kwargs["campaign_phase_authorization"],
+            worker_environment=kwargs["worker_environment"],
+        )
+        result_path = Path(command[command.index("--output") + 1])
+        result_path.write_text(
+            json.dumps({
+                "schema": "task41.p0.b0.v9.saved_star_screen_result.v1",
+                "status": "LOCAL_CANDIDATE_REJECTED",
+                "screen_completed": True,
+                "local_candidate_ready": False,
+                "official_result": False,
+            }),
+            encoding="utf-8",
+        )
+        return {"classification": "COMPLETED", "leader_exit_code": 0}
+
+    monkeypatch.setattr(watchdog_module, "supervise", fake_supervise)
+    monkeypatch.setattr(
+        watchdog_module, "_validate_task41_consumer_source", lambda *_args, **_kwargs: True
+    )
+    monkeypatch.chdir(repo_root)
+
+    assert _run_task41_p0_service(
+        unit="task41-v9-saved-star-screen-test",
+        runtime_prefix=runtime_prefix,
+        abi_receipt=abi_receipt,
+        jit_cache=jit_cache,
+        case_args=[
+            "--task41-p0-saved-b0-v9-star-screen",
+            "--v8-report",
+            str(report_path),
+            "--v8-report-sha256",
+            report_sha256,
+            "--v8-checker-result",
+            str(checker_result_path),
+            "--v8-checker-result-sha256",
+            checker_sha256,
+            "--output",
+            str(output_root / "task41_p0_b0_v9_saved_star_screen.json"),
+        ],
+        contract_path=contract_path,
+        repo_root=repo_root,
+    ) == 0
+    assert len(supervise_calls) == 1
+    assert require_contract_checks == [True, False]
+    receipt = json.loads(
+        (output_root.with_name(output_root.name + ".service") / "task41_p0_service_receipt.json")
+        .read_text(encoding="utf-8")
+    )
+    assert receipt["status"] == "completed"
+    assert receipt["mode"] == "saved_b0_v9_saved_star_screen"
+    assert receipt["required_checker_status"] == "audit_completed"
+    assert receipt["candidate_screen_status"] == "LOCAL_CANDIDATE_REJECTED"
+    assert receipt["local_candidate_ready"] is False
+    assert receipt["continuation_status"] == "v9_saved_star_screen_completed"
+    assert receipt["required_checker_authorization"]["checker_kind"] == (
+        "task41_p0_b0_v9_saved_star_screen_checker"
+    )
+
+
 @pytest.mark.parametrize(
     (
         "volume_only",

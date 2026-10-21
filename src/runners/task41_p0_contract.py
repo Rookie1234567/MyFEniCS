@@ -162,6 +162,19 @@ TASK41_B0_V6_PREPARATION_BOOTSTRAP_TREATMENT = (
     "preparation_start_to_anchor_utc_elapsed_charged; "
     "pre_anchor_monotonic_and_boottime_unknown"
 )
+TASK41_B0_V6_WINDOW_SHA256 = "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d"
+TASK41_B0_V9_WINDOW_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v9_24h.json"
+TASK41_B0_V9_AUTH_RELATIVE = TASK41_B0_CONTROLLER_RELATIVE / "v9_24h_authorization.json"
+TASK41_B0_V9_AUTH_SCHEMA = "task41.b0.v9.user_continuation_authorization.v1"
+TASK41_B0_V9_AUTHORIZATION = "user_explicit_v9_24h_20261021"
+TASK41_B0_V9_TOTAL_SECONDS = 86_400.0
+TASK41_B0_V9_NUMERICAL_SECONDS = 85_200.0
+TASK41_B0_V9_PREPARATION_T0_KIND = "user_approved_v9_preparation_start"
+TASK41_B0_V9_PREPARATION_BOOTSTRAP_TREATMENT = (
+    "preparation_start_to_anchor_utc_elapsed_charged; "
+    "pre_anchor_monotonic_and_boottime_unknown"
+)
+TASK41_B0_V9_INTERNAL_RHS_STRATEGY = "same_lu_rhs_solve"
 
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
@@ -177,6 +190,31 @@ class Task41ContractError(ValueError):
 
 def sha256_file(path: str | Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+_TASK41_V9_PARENT_LEDGER_HASH_CACHE: dict[
+    Path, tuple[tuple[int, int, int, int, int], str]
+] = {}
+
+
+def _task41_v9_parent_ledger_sha256(path: Path) -> str:
+    """Hash the preserved 31.5 MB V6 ledger once per unchanged file identity."""
+
+    resolved = path.resolve(strict=True)
+    stat = resolved.stat()
+    identity = (
+        int(stat.st_dev),
+        int(stat.st_ino),
+        int(stat.st_size),
+        int(stat.st_mtime_ns),
+        int(stat.st_ctime_ns),
+    )
+    cached = _TASK41_V9_PARENT_LEDGER_HASH_CACHE.get(resolved)
+    if cached is not None and cached[0] == identity:
+        return cached[1]
+    digest = sha256_file(resolved)
+    _TASK41_V9_PARENT_LEDGER_HASH_CACHE[resolved] = (identity, digest)
+    return digest
 
 
 def _sha256_file_streamed(path: str | Path) -> str:
@@ -1094,6 +1132,23 @@ def require_task41_p0_contract(
         raise Task41ContractError("Task41 runtime must be MPI1 with one math thread")
     if runtime.get("profile") != "native_linux":
         raise Task41ContractError("formal Task41 P0 execution requires the registered native_linux runtime")
+    numerical_strategy = contract.get("numerical_strategy")
+    is_v9_contract = (
+        case_id == "B0"
+        and _resolve(root, window.get("path"), "window.path")
+        == (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve()
+    )
+    if is_v9_contract:
+        if numerical_strategy != {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+        }:
+            raise Task41ContractError("Task41 V9 contract must explicitly bind same_lu_rhs_solve")
+    elif numerical_strategy is not None and numerical_strategy != {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": "stored_T",
+    }:
+        raise Task41ContractError("non-V9 Task41 contracts must retain the stored_T default")
     window_path, total_seconds, numerical_seconds, _continuation = task41_window_spec(contract, root)
     if not re.fullmatch(r"[0-9a-f]{64}", str(window.get("sha256", ""))):
         raise Task41ContractError("Task41 fixed window SHA-256 is invalid")
@@ -1182,6 +1237,36 @@ def task41_window_spec(contract: Mapping[str, Any], root: Path) -> tuple[Path, f
         ):
             raise Task41ContractError("Task41 V6 contract is not bound to its approved V3 parent and authorization")
         return path, TASK41_B0_V6_TOTAL_SECONDS, TASK41_B0_V6_NUMERICAL_SECONDS, True
+    if case["case_id"] == "B0" and path == (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve():
+        authorization, authorization_sha = _task41_v9_authorization(root)
+        parent_path = str(TASK41_B0_V6_WINDOW_RELATIVE)
+        parent_sha = TASK41_B0_V6_WINDOW_SHA256
+        parent_cost_path = str(authorization["parent_cost_ledger_path"])
+        parent_cost_sha = str(authorization["parent_cost_ledger_sha256"])
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise Task41ContractError("Task41 V9 fixed window is missing or invalid") from exc
+        expected_identity = {
+            "continuation_authorization_sha256": authorization_sha,
+            "parent_window_path": parent_path,
+            "parent_window_sha256": parent_sha,
+            "parent_cost_ledger_path": parent_cost_path,
+            "parent_cost_ledger_sha256": parent_cost_sha,
+        }
+        if (
+            not isinstance(payload, Mapping)
+            or any(payload.get(key) != value for key, value in expected_identity.items())
+            or any(window_info.get(key) != value for key, value in expected_identity.items())
+            or _resolve(root, payload.get("accounting_path"), "V9 accounting path")
+            != (root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl").resolve()
+            or payload.get("source_sha") != authorization["source_at_entry"]
+            or window_info.get("entry_source_sha") != authorization["source_at_entry"]
+        ):
+            raise Task41ContractError(
+                "Task41 V9 contract is not bound to its approved source, V6 parent, and cost ledger"
+            )
+        return path, TASK41_B0_V9_TOTAL_SECONDS, TASK41_B0_V9_NUMERICAL_SECONDS, True
     if path != (root / case["window_relative"]).resolve():
         raise Task41ContractError("Task41 fixed window path is not registered")
     return path, TASK41_TOTAL_SECONDS, TASK41_NUMERICAL_SECONDS, False
@@ -1262,6 +1347,87 @@ def _task41_v6_authorization(root: Path) -> tuple[dict[str, Any], str]:
     return payload, hashlib.sha256(raw).hexdigest()
 
 
+def _task41_v9_authorization(root: Path) -> tuple[dict[str, Any], str]:
+    """Require a new explicit V9 window approval bound to all V6 costs."""
+
+    path = root / TASK41_B0_V9_AUTH_RELATIVE
+    try:
+        raw = path.read_bytes()
+        payload = json.loads(raw)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise Task41ContractError(
+            "Task41 V9 continuation requires a new explicit user authorization receipt"
+        ) from exc
+    expected_fields = {
+        "schema",
+        "authorization",
+        "source_at_entry",
+        "parent_window_path",
+        "parent_window_sha256",
+        "parent_cost_ledger_path",
+        "parent_cost_ledger_sha256",
+        "total_seconds",
+        "numerical_seconds",
+        "closeout_seconds",
+        "preparation_started_utc",
+    }
+    if not isinstance(payload, dict) or set(payload) != expected_fields:
+        raise Task41ContractError("Task41 V9 authorization fields are incomplete or unexpected")
+    try:
+        preparation_started_ns = _utc_ns(payload.get("preparation_started_utc"))
+    except (TypeError, ValueError) as exc:
+        raise Task41ContractError(
+            "Task41 V9 preparation start must be a canonical UTC timestamp"
+        ) from exc
+    if payload.get("preparation_started_utc") != _utc_text_from_ns(preparation_started_ns):
+        raise Task41ContractError(
+            "Task41 V9 preparation start must be a canonical UTC timestamp"
+        )
+
+    parent_window_path = root / TASK41_B0_V6_WINDOW_RELATIVE
+    try:
+        parent_window_raw = parent_window_path.read_bytes()
+        parent_window = json.loads(parent_window_raw)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise Task41ContractError("Task41 V9 requires the preserved V6 parent window") from exc
+    if hashlib.sha256(parent_window_raw).hexdigest() != TASK41_B0_V6_WINDOW_SHA256:
+        raise Task41ContractError("Task41 V9 preserved V6 parent window hash changed")
+    if not isinstance(parent_window, Mapping):
+        raise Task41ContractError("Task41 V9 preserved V6 parent window is malformed")
+    expected_cost_path = _resolve(root, parent_window.get("accounting_path"), "V6 accounting path")
+    controller_root = (root / TASK41_B0_CONTROLLER_RELATIVE).resolve()
+    expected_cost_relative = (
+        TASK41_B0_V6_WINDOW_RELATIVE.parent / "campaign_accounting_v6_24h.jsonl"
+    )
+    if (
+        expected_cost_path != (root / expected_cost_relative).resolve()
+        or not expected_cost_path.is_relative_to(controller_root)
+    ):
+        raise Task41ContractError("Task41 V6 cost ledger escaped its controller artifact directory")
+    try:
+        expected_cost_sha = _task41_v9_parent_ledger_sha256(expected_cost_path)
+    except OSError as exc:
+        raise Task41ContractError("Task41 V9 requires the complete V6 cost ledger") from exc
+    if (
+        payload.get("schema") != TASK41_B0_V9_AUTH_SCHEMA
+        or payload.get("authorization") != TASK41_B0_V9_AUTHORIZATION
+        or not re.fullmatch(r"[0-9a-f]{40}", str(payload.get("source_at_entry", "")))
+        or payload.get("parent_window_path") != str(TASK41_B0_V6_WINDOW_RELATIVE)
+        or payload.get("parent_window_sha256") != TASK41_B0_V6_WINDOW_SHA256
+        or payload.get("parent_cost_ledger_path") != str(expected_cost_relative)
+        or payload.get("parent_cost_ledger_sha256") != expected_cost_sha
+        or payload.get("total_seconds") != TASK41_B0_V9_TOTAL_SECONDS
+        or payload.get("numerical_seconds") != TASK41_B0_V9_NUMERICAL_SECONDS
+        or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
+    ):
+        raise Task41ContractError(
+            "Task41 V9 authorization or preserved V6 window/cost identity changed"
+        )
+    normalized = dict(payload)
+    normalized["parent_cost_ledger_path"] = str(expected_cost_relative)
+    return normalized, hashlib.sha256(raw).hexdigest()
+
+
 def load_task41_p0_fixed_window(
     contract: Mapping[str, Any], *, current_root: str | Path | None = None,
     require_current_boot: bool = True,
@@ -1274,6 +1440,7 @@ def load_task41_p0_fixed_window(
     path, total_seconds, numerical_seconds, continuation = task41_window_spec(contract, root)
     is_v3_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V3_WINDOW_RELATIVE).resolve()
     is_v6_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V6_WINDOW_RELATIVE).resolve()
+    is_v9_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve()
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     if digest != window_info["sha256"]:
@@ -1297,6 +1464,14 @@ def load_task41_p0_fixed_window(
     if is_v6_continuation:
         expected_fields |= {
             "continuation_authorization_sha256", "parent_window_path", "parent_window_sha256"
+        }
+    if is_v9_continuation:
+        expected_fields |= {
+            "continuation_authorization_sha256",
+            "parent_window_path",
+            "parent_window_sha256",
+            "parent_cost_ledger_path",
+            "parent_cost_ledger_sha256",
         }
     if not isinstance(payload, dict) or set(payload) != expected_fields:
         raise Task41ContractError("Task41 fixed execution window has an open or incomplete schema")
@@ -1378,6 +1553,40 @@ def load_task41_p0_fixed_window(
         ):
             raise Task41ContractError("Task41 V6 window clock, approval, or V3 parent changed")
         bootstrap_seconds = expected_bootstrap_seconds
+    elif is_v9_continuation:
+        authorization, authorization_sha = _task41_v9_authorization(root)
+        expected_t0_ns = _utc_ns(authorization["preparation_started_utc"])
+        expected_bootstrap_seconds = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
+        if (
+            expected_bootstrap_seconds < 0
+            or t0_ns != expected_t0_ns
+            or payload["source_sha"] != authorization["source_at_entry"]
+            or payload.get("continuation_authorization_sha256") != authorization_sha
+            or payload.get("parent_window_path") != str(TASK41_B0_V6_WINDOW_RELATIVE)
+            or payload.get("parent_window_sha256") != TASK41_B0_V6_WINDOW_SHA256
+            or payload.get("parent_cost_ledger_path")
+            != authorization["parent_cost_ledger_path"]
+            or payload.get("parent_cost_ledger_sha256")
+            != authorization["parent_cost_ledger_sha256"]
+            or payload.get("t0_basis")
+            != {"kind": TASK41_B0_V9_PREPARATION_T0_KIND}
+            or not isinstance(payload.get("bootstrap_utc_elapsed_seconds"), (int, float))
+            or isinstance(payload.get("bootstrap_utc_elapsed_seconds"), bool)
+            or abs(
+                float(payload["bootstrap_utc_elapsed_seconds"])
+                - expected_bootstrap_seconds
+            ) > 1e-6
+            or payload.get("bootstrap_boottime_elapsed_seconds") is not None
+            or payload.get("bootstrap_time_treatment")
+            != TASK41_B0_V9_PREPARATION_BOOTSTRAP_TREATMENT
+            or _resolve(root, payload.get("accounting_path"), "V9 accounting path")
+            != (root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl").resolve()
+        ):
+            raise Task41ContractError(
+                "Task41 V9 window clock, approval, parent costs, or new ledger changed"
+            )
+        bootstrap_seconds = expected_bootstrap_seconds
+        bootstrap_seconds = expected_bootstrap_seconds
     elif is_b0:
         expected_t0_ns = _utc_ns(TASK41_B0_T0_UTC)
         bootstrap_utc = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
@@ -1419,13 +1628,14 @@ def load_task41_p0_fixed_window(
 
 def _task41_window_for_contract(
     root: Path, case_id: str = "A1", *, b0_v3_continuation: bool = False,
-    b0_v6_continuation: bool = False,
+    b0_v6_continuation: bool = False, b0_v9_continuation: bool = False,
 ) -> tuple[FixedCampaignWindow, str, dict[str, Any]]:
     case_spec = _task41_case(case_id)
-    if b0_v3_continuation and b0_v6_continuation:
+    if sum((b0_v3_continuation, b0_v6_continuation, b0_v9_continuation)) > 1:
         raise Task41ContractError("Task41 B0 continuation window routes are mutually exclusive")
     relative = (
-        TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
+        TASK41_B0_V9_WINDOW_RELATIVE if b0_v9_continuation
+        else TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
         else TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation
         else case_spec["window_relative"]
     )
@@ -1439,6 +1649,21 @@ def _task41_window_for_contract(
     if not isinstance(payload, dict):
         raise Task41ContractError("Task41 fixed execution window must be a JSON object")
     entry_source = payload.get("source_sha")
+    continuation_identity: dict[str, Any] = {}
+    if b0_v6_continuation:
+        continuation_identity = {
+            "continuation_authorization_sha256": payload.get("continuation_authorization_sha256"),
+            "parent_window_path": payload.get("parent_window_path"),
+            "parent_window_sha256": payload.get("parent_window_sha256"),
+        }
+    elif b0_v9_continuation:
+        continuation_identity = {
+            "continuation_authorization_sha256": payload.get("continuation_authorization_sha256"),
+            "parent_window_path": payload.get("parent_window_path"),
+            "parent_window_sha256": payload.get("parent_window_sha256"),
+            "parent_cost_ledger_path": payload.get("parent_cost_ledger_path"),
+            "parent_cost_ledger_sha256": payload.get("parent_cost_ledger_sha256"),
+        }
     window_contract = {
         "case": {"run_id": case_spec["run_id"]},
         "source": {"sha": entry_source},
@@ -1446,15 +1671,7 @@ def _task41_window_for_contract(
             "path": str(relative),
             "sha256": digest,
             "entry_source_sha": entry_source,
-            **(
-                {
-                    "continuation_authorization_sha256": payload.get("continuation_authorization_sha256"),
-                    "parent_window_path": payload.get("parent_window_path"),
-                    "parent_window_sha256": payload.get("parent_window_sha256"),
-                }
-                if b0_v6_continuation
-                else {}
-            ),
+            **continuation_identity,
         },
     }
     window = load_task41_p0_fixed_window(
@@ -1516,6 +1733,7 @@ def prepare_task41_p0(
     a2_q_csr_manifests: Sequence[str | Path] | None = None,
     b0_v3_continuation: bool = False,
     b0_v6_continuation: bool = False,
+    b0_v9_continuation: bool = False,
 ) -> dict[str, Any]:
     """Register or reuse the one fixed P0 window, then write a source-bound contract.
 
@@ -1536,20 +1754,29 @@ def prepare_task41_p0(
         raise Task41ContractError("V3 continuation applies only to the authorized B0 case")
     if b0_v6_continuation and case_id != "B0":
         raise Task41ContractError("V6 continuation applies only to the authorized B0 case")
-    if b0_v3_continuation and b0_v6_continuation:
-        raise Task41ContractError("V3 and V6 continuation routes are mutually exclusive")
+    if b0_v9_continuation and case_id != "B0":
+        raise Task41ContractError("V9 continuation applies only to the authorized B0 case")
+    if sum((b0_v3_continuation, b0_v6_continuation, b0_v9_continuation)) > 1:
+        raise Task41ContractError("V3, V6, and V9 continuation routes are mutually exclusive")
     window_relative = (
-        TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
+        TASK41_B0_V9_WINDOW_RELATIVE if b0_v9_continuation
+        else TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
         else TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation
         else case_spec["window_relative"]
     )
     window_path = (root / window_relative).resolve()
     v6_authorization = None
     v6_authorization_sha = None
+    v9_authorization = None
+    v9_authorization_sha = None
     if b0_v6_continuation:
         v6_authorization, v6_authorization_sha = _task41_v6_authorization(root)
         if not window_path.exists() and v6_authorization["source_at_entry"] != source_sha:
             raise Task41ContractError("Task41 V6 approval receipt does not bind the frozen source SHA")
+    if b0_v9_continuation:
+        v9_authorization, v9_authorization_sha = _task41_v9_authorization(root)
+        if not window_path.exists() and v9_authorization["source_at_entry"] != source_sha:
+            raise Task41ContractError("Task41 V9 approval receipt does not bind the frozen source SHA")
     if b0_v3_continuation and not window_path.exists():
         authorization, authorization_sha = _task41_v3_authorization(root)
         anchor = authorization["anchor"]
@@ -1619,6 +1846,46 @@ def prepare_task41_p0(
             "parent_window_sha256": TASK41_B0_V3_WINDOW_SHA256,
         }
         _write_json_no_replace(window_path, v6_payload)
+    if b0_v9_continuation and not window_path.exists():
+        assert v9_authorization is not None and v9_authorization_sha is not None
+        anchor = clock_sample(include_boot_id=True)
+        t0_ns = _utc_ns(v9_authorization["preparation_started_utc"])
+        if int(anchor["utc_ns"]) < t0_ns:
+            raise Task41ContractError(
+                "Task41 V9 preparation start is later than the current clock anchor"
+            )
+        bootstrap_seconds = (int(anchor["utc_ns"]) - t0_ns) / 1e9
+        v9_payload = {
+            "schema": TASK41_P0_WINDOW_SCHEMA,
+            "task_id": TASK41_MODEL_ID,
+            "source_sha": v9_authorization["source_at_entry"],
+            "t0_utc": _utc_text_from_ns(t0_ns),
+            "numerical_deadline_utc": _utc_text_from_ns(
+                t0_ns + int(TASK41_B0_V9_NUMERICAL_SECONDS * 1e9)
+            ),
+            "deadline_utc": _utc_text_from_ns(
+                t0_ns + int(TASK41_B0_V9_TOTAL_SECONDS * 1e9)
+            ),
+            "total_seconds": TASK41_B0_V9_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_B0_V9_NUMERICAL_SECONDS,
+            "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
+            "anchor": anchor,
+            "accounting_path": str(
+                (root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl").resolve()
+            ),
+            "t0_basis": {"kind": TASK41_B0_V9_PREPARATION_T0_KIND},
+            "bootstrap_utc_elapsed_seconds": bootstrap_seconds,
+            "bootstrap_boottime_elapsed_seconds": None,
+            "bootstrap_time_treatment": TASK41_B0_V9_PREPARATION_BOOTSTRAP_TREATMENT,
+            "continuation_authorization_sha256": v9_authorization_sha,
+            "parent_window_path": str(TASK41_B0_V6_WINDOW_RELATIVE),
+            "parent_window_sha256": TASK41_B0_V6_WINDOW_SHA256,
+            "parent_cost_ledger_path": v9_authorization["parent_cost_ledger_path"],
+            "parent_cost_ledger_sha256": v9_authorization[
+                "parent_cost_ledger_sha256"
+            ],
+        }
+        _write_json_no_replace(window_path, v9_payload)
     if not window_path.exists():
         anchor = clock_sample(include_boot_id=True)
         t0_ns = (
@@ -1664,6 +1931,7 @@ def prepare_task41_p0(
     window, window_sha, window_payload = _task41_window_for_contract(
         root, case_id, b0_v3_continuation=b0_v3_continuation,
         b0_v6_continuation=b0_v6_continuation,
+        b0_v9_continuation=b0_v9_continuation,
     )
 
     runtime_path = _resolve(root, str(runtime_prefix), "runtime_prefix")
@@ -1761,6 +2029,35 @@ def prepare_task41_p0(
     ) != TASK41_BRANCH or _git(root, "status", "--porcelain", "--untracked-files=normal"):
         raise Task41ContractError("Task41 source changed while the P0 contract was being prepared")
 
+    window_binding = {
+        "path": str(window_relative),
+        "sha256": window_sha,
+        "entry_source_sha": window_payload["source_sha"],
+    }
+    if b0_v6_continuation:
+        window_binding.update(
+            {
+                "continuation_authorization_sha256": v6_authorization_sha,
+                "parent_window_path": str(TASK41_B0_V3_WINDOW_RELATIVE),
+                "parent_window_sha256": TASK41_B0_V3_WINDOW_SHA256,
+            }
+        )
+    elif b0_v9_continuation:
+        assert v9_authorization is not None and v9_authorization_sha is not None
+        window_binding.update(
+            {
+                "continuation_authorization_sha256": v9_authorization_sha,
+                "parent_window_path": str(TASK41_B0_V6_WINDOW_RELATIVE),
+                "parent_window_sha256": TASK41_B0_V6_WINDOW_SHA256,
+                "parent_cost_ledger_path": v9_authorization[
+                    "parent_cost_ledger_path"
+                ],
+                "parent_cost_ledger_sha256": v9_authorization[
+                    "parent_cost_ledger_sha256"
+                ],
+            }
+        )
+
     contract_path = root / contract_relative_path(source_sha, case_id)
     if contract_path.exists():
         raise Task41ContractError("a Task41 contract already exists for this source SHA")
@@ -1780,20 +2077,7 @@ def prepare_task41_p0(
             "mpi_ranks": 1,
             "math_threads": 1,
         },
-        "window": {
-            "path": str(window_relative),
-            "sha256": window_sha,
-            "entry_source_sha": window_payload["source_sha"],
-            **(
-                {
-                    "continuation_authorization_sha256": v6_authorization_sha,
-                    "parent_window_path": str(TASK41_B0_V3_WINDOW_RELATIVE),
-                    "parent_window_sha256": TASK41_B0_V3_WINDOW_SHA256,
-                }
-                if b0_v6_continuation
-                else {}
-            ),
-        },
+        "window": window_binding,
         "resources": {
             "task_memory_max_bytes": TASK41_TASK_MEMORY_MAX_BYTES,
             "host_reserve_bytes": TASK41_HOST_RESERVE_BYTES,
@@ -1812,6 +2096,11 @@ def prepare_task41_p0(
             "raw_artifact_limit_bytes": 16 << 30,
             "free_space_floor_bytes": 2 << 30,
             "authorization": "user_20261019_16gib_evidence_only",
+        }
+    if b0_v9_continuation:
+        contract["numerical_strategy"] = {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
         }
     if comparison is not None:
         contract["comparison"] = comparison
@@ -2051,6 +2340,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--jit-cache", type=Path)
     parser.add_argument("--b0-v3-continuation", action="store_true")
     parser.add_argument("--b0-v6-continuation", action="store_true")
+    parser.add_argument("--b0-v9-continuation", action="store_true")
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")
     parser.add_argument("--a2-q-csr-manifest", action="append", type=Path)
     args = parser.parse_args(argv)
@@ -2079,6 +2369,7 @@ def main(argv: list[str] | None = None) -> int:
             a2_q_csr_manifests=args.a2_q_csr_manifest,
             b0_v3_continuation=args.b0_v3_continuation,
             b0_v6_continuation=args.b0_v6_continuation,
+            b0_v9_continuation=args.b0_v9_continuation,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

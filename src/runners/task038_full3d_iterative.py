@@ -41,6 +41,7 @@ def _task41_b0_dispatch_binding(
         TASK41_B0_PRECONDITIONER,
         TASK41_B0_RUN_ID,
         TASK41_B0_SAVED_SURFACE_DONOR,
+        TASK41_B0_V9_WINDOW_RELATIVE,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
     )
@@ -92,6 +93,15 @@ def _task41_b0_dispatch_binding(
     saved_surface_donor = contract.get("preparation", {}).get("existing_surface_donor")
     if saved_surface_donor != TASK41_B0_SAVED_SURFACE_DONOR:
         raise ValueError("Task41 B0 dispatcher contract omits the exact require-existing surface donor")
+    numerical_strategy = contract.get("numerical_strategy", {}).get(
+        "internal_rhs_strategy", "stored_T"
+    )
+    if numerical_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+        raise ValueError("Task41 B0 contract selects an unknown internal RHS strategy")
+    if numerical_strategy == "same_lu_rhs_solve" and Path(
+        str(contract.get("window", {}).get("path", ""))
+    ) != TASK41_B0_V9_WINDOW_RELATIVE:
+        raise ValueError("same_lu_rhs_solve is allowed only through the V9 B0 contract")
     window = load_task41_p0_fixed_window(contract, current_root=root)
     if (
         os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1"
@@ -101,7 +111,11 @@ def _task41_b0_dispatch_binding(
     ):
         raise RuntimeError("Task41 B0 dispatcher fixed window differs from its service environment")
     return {
-        "schema": "task41.p0.dispatch_binding.v1",
+        "schema": (
+            "task41.p0.dispatch_binding.v2"
+            if numerical_strategy == "same_lu_rhs_solve"
+            else "task41.p0.dispatch_binding.v1"
+        ),
         "case_id": "B0",
         "run_id": TASK41_B0_RUN_ID,
         "contract_path": str(contract_path.resolve()),
@@ -117,6 +131,7 @@ def _task41_b0_dispatch_binding(
         "window_path": str(window.path.resolve()),
         "window_sha256": window.sha256,
         "saved_surface_donor": saved_surface_donor,
+        "internal_rhs_strategy": numerical_strategy,
         "comparison_binding": None,
     }
 
@@ -175,10 +190,18 @@ def run_full3d_iterative(
             resolved_payload,
             source_sha=source_sha,
         )
+        dispatch_payload = deepcopy(dict(resolved_payload))
+        if not isinstance(solver, Mapping):
+            raise ValueError("Task41 B0 dispatch payload has no mutable solver section")
+        dispatch_solver = deepcopy(dict(solver))
+        dispatch_solver["internal_rhs_strategy"] = contract_binding[
+            "internal_rhs_strategy"
+        ]
+        dispatch_payload["solver"] = dispatch_solver
         from .task40_v10_worker import run_task40_v10_p6_reference_worker
 
         return run_task40_v10_p6_reference_worker(
-            resolved_payload,
+            dispatch_payload,
             Path(run_directory),
             source_sha=source_sha,
             profile_identity=TASK41_B0_PRECONDITIONER,

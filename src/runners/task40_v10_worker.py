@@ -8650,6 +8650,13 @@ def _task41_iterative_candidate_contract(
             and resolved.get("derived", {}).get("physical_intermediate_profile")
             == profile_contract
         ),
+        "internal_rhs_strategy": (
+            case_id != "B0"
+            or solver.get("internal_rhs_strategy", "stored_T")
+            == contract.get("numerical_strategy", {}).get(
+                "internal_rhs_strategy", "stored_T"
+            )
+        ),
         "not_a_task40_donor_route": (
             os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1"
             and os.environ.get("TASK40_V31_STRICT_EXECUTION") != "1"
@@ -8657,9 +8664,17 @@ def _task41_iterative_candidate_contract(
     }
     if case_id == "B0":
         contract_binding = task41_contract_binding
+        contract_rhs_strategy = contract.get("numerical_strategy", {}).get(
+            "internal_rhs_strategy", "stored_T"
+        )
+        expected_dispatch_schema = (
+            "task41.p0.dispatch_binding.v2"
+            if contract_rhs_strategy == "same_lu_rhs_solve"
+            else "task41.p0.dispatch_binding.v1"
+        )
         checks["explicit_dispatch_contract_binding"] = bool(
             isinstance(contract_binding, Mapping)
-            and contract_binding.get("schema") == "task41.p0.dispatch_binding.v1"
+            and contract_binding.get("schema") == expected_dispatch_schema
             and contract_binding.get("case_id") == "B0"
             and contract_binding.get("contract_path") == str(Path(contract_path).resolve())
             and contract_binding.get("contract_sha256") == contract_sha256
@@ -8668,6 +8683,8 @@ def _task41_iterative_candidate_contract(
             and contract_binding.get("window_sha256") == window.sha256
             and contract_binding.get("saved_surface_donor")
             == contract.get("preparation", {}).get("existing_surface_donor")
+            and contract_binding.get("internal_rhs_strategy")
+            == contract_rhs_strategy
         )
         checks["no_a1_or_a2_comparison_binding"] = (
             isinstance(contract_binding, Mapping)
@@ -8700,6 +8717,18 @@ def _task41_iterative_candidate_contract(
         "campaign_window_path": str(window.path),
         "campaign_window_sha256": window.sha256,
         "campaign_accounting_path": str(window.accounting_path),
+        "internal_rhs_strategy": (
+            contract.get("numerical_strategy", {}).get(
+                "internal_rhs_strategy", "stored_T"
+            )
+            if case_id == "B0"
+            else "stored_T"
+        ),
+        "task41_dispatch_binding_schema": (
+            task41_contract_binding.get("schema")
+            if case_id == "B0" and isinstance(task41_contract_binding, Mapping)
+            else None
+        ),
         "worker_reserved_seconds": reserved,
         "campaign_seconds": campaign_seconds,
         "closeout_reserve_seconds": closeout_seconds,

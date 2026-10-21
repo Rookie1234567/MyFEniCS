@@ -1608,6 +1608,159 @@ def test_task41_v6_prepare_freezes_once_and_reuses_approved_window(
         module.task41_window_spec(tampered_parent, tmp_path)
 
 
+def test_task41_v9_prepare_fails_closed_without_new_user_window_authorization(
+    tmp_path, monkeypatch
+):
+    import src.runners.task41_p0_contract as module
+
+    contract_path, fixture_contract = _write_contract(tmp_path, "B0")
+    contract_path.unlink()
+    source_sha = fixture_contract["source"]["sha"]
+
+    def fake_git(_root, *args):
+        if args == ("rev-parse", "HEAD"):
+            return source_sha
+        if args == ("branch", "--show-current"):
+            return TASK41_BRANCH
+        if args == ("status", "--porcelain", "--untracked-files=normal"):
+            return ""
+        raise AssertionError(f"unexpected git query: {args}")
+
+    monkeypatch.setattr(module, "_git", fake_git)
+    monkeypatch.setattr(
+        module,
+        "clock_sample",
+        lambda **_kwargs: pytest.fail("missing V9 authorization must fail before clock sampling"),
+    )
+    with pytest.raises(Task41ContractError, match="new explicit user authorization"):
+        prepare_task41_p0(
+            current_root=tmp_path,
+            case_id="B0",
+            b0_v9_continuation=True,
+            runtime_prefix=fixture_contract["runtime"]["runtime_prefix"],
+            abi_receipt=fixture_contract["runtime"]["abi_receipt_path"],
+            jit_cache=fixture_contract["runtime"]["jit_cache"],
+        )
+    assert not (tmp_path / module.TASK41_B0_V9_WINDOW_RELATIVE).exists()
+
+
+def test_task41_v9_prepare_uses_new_window_and_binds_historical_cost_ledger_once(
+    tmp_path, monkeypatch
+):
+    import src.runners.task41_p0_contract as module
+    from src.runners.task41_p0_contract import launcher_values
+
+    original_contract_path, fixture_contract = _write_contract(tmp_path, "B0")
+    original_contract_path.unlink()
+    source_sha = fixture_contract["source"]["sha"]
+    controller = tmp_path / module.TASK41_B0_CONTROLLER_RELATIVE
+    parent_cost_path = controller / "campaign_accounting_v6_24h.jsonl"
+    parent_cost_path.write_bytes(b"V6 costs retained; unknown entries remain unknown\n")
+    parent_window_path = tmp_path / module.TASK41_B0_V6_WINDOW_RELATIVE
+    parent_window_path.write_text(
+        json.dumps({"accounting_path": str(parent_cost_path.resolve())}),
+        encoding="utf-8",
+    )
+    parent_window_sha = hashlib.sha256(parent_window_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(module, "TASK41_B0_V6_WINDOW_SHA256", parent_window_sha)
+    parent_cost_sha = hashlib.sha256(parent_cost_path.read_bytes()).hexdigest()
+
+    frozen_anchor = clock_sample(include_boot_id=True)
+    preparation_started_ns = int(frozen_anchor["utc_ns"]) - 7_654_321_000
+    preparation_started_utc = module._utc_text_from_ns(preparation_started_ns)
+    authorization = {
+        "schema": module.TASK41_B0_V9_AUTH_SCHEMA,
+        "authorization": module.TASK41_B0_V9_AUTHORIZATION,
+        "source_at_entry": source_sha,
+        "parent_window_path": str(module.TASK41_B0_V6_WINDOW_RELATIVE),
+        "parent_window_sha256": parent_window_sha,
+        "parent_cost_ledger_path": str(
+            module.TASK41_B0_V6_WINDOW_RELATIVE.parent
+            / "campaign_accounting_v6_24h.jsonl"
+        ),
+        "parent_cost_ledger_sha256": parent_cost_sha,
+        "total_seconds": module.TASK41_B0_V9_TOTAL_SECONDS,
+        "numerical_seconds": module.TASK41_B0_V9_NUMERICAL_SECONDS,
+        "closeout_seconds": module.TASK41_CLOSEOUT_SECONDS,
+        "preparation_started_utc": preparation_started_utc,
+    }
+    authorization_path = tmp_path / module.TASK41_B0_V9_AUTH_RELATIVE
+    authorization_path.parent.mkdir(parents=True, exist_ok=True)
+    authorization_path.write_text(json.dumps(authorization), encoding="utf-8")
+
+    def fake_git(_root, *args):
+        if args == ("rev-parse", "HEAD"):
+            return source_sha
+        if args == ("branch", "--show-current"):
+            return TASK41_BRANCH
+        if args == ("status", "--porcelain", "--untracked-files=normal"):
+            return ""
+        raise AssertionError(f"unexpected git query: {args}")
+
+    monkeypatch.setattr(module, "_git", fake_git)
+    monkeypatch.setattr(
+        module,
+        "clock_sample",
+        lambda **_kwargs: dict(frozen_anchor),
+    )
+    monkeypatch.setattr(
+        module,
+        "_check_task41_native_receipt",
+        lambda receipt_path, *_args: hashlib.sha256(Path(receipt_path).read_bytes()).hexdigest(),
+    )
+    monkeypatch.setattr(
+        module,
+        "verify_task41_b0_saved_surface_donor",
+        lambda *_args, **_kwargs: None,
+    )
+    original_sha256_file = module.sha256_file
+    ledger_hash_calls = []
+
+    def counted_sha256_file(path):
+        if Path(path).resolve() == parent_cost_path.resolve():
+            ledger_hash_calls.append(1)
+        return original_sha256_file(path)
+
+    monkeypatch.setattr(module, "sha256_file", counted_sha256_file)
+    result = prepare_task41_p0(
+        current_root=tmp_path,
+        case_id="B0",
+        b0_v9_continuation=True,
+        runtime_prefix=fixture_contract["runtime"]["runtime_prefix"],
+        abi_receipt=fixture_contract["runtime"]["abi_receipt_path"],
+        jit_cache=fixture_contract["runtime"]["jit_cache"],
+    )
+    window_path = tmp_path / result["window_path"]
+    window_payload = json.loads(window_path.read_text(encoding="utf-8"))
+    assert window_path == tmp_path / module.TASK41_B0_V9_WINDOW_RELATIVE
+    assert window_payload["t0_utc"] == preparation_started_utc
+    assert window_payload["source_sha"] == source_sha
+    assert window_payload["total_seconds"] == 86_400.0
+    assert window_payload["numerical_seconds"] == 85_200.0
+    assert window_payload["accounting_path"].endswith("campaign_accounting_v9_24h.jsonl")
+    assert window_payload["accounting_path"] != str(parent_cost_path.resolve())
+    assert window_payload["parent_window_sha256"] == parent_window_sha
+    assert window_payload["parent_cost_ledger_sha256"] == parent_cost_sha
+    assert ledger_hash_calls == [1]
+
+    contract_path = tmp_path / result["contract_path"]
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    assert contract["window"]["path"] == str(module.TASK41_B0_V9_WINDOW_RELATIVE)
+    assert contract["window"]["parent_window_path"] == str(
+        module.TASK41_B0_V6_WINDOW_RELATIVE
+    )
+    assert contract["window"]["parent_cost_ledger_sha256"] == parent_cost_sha
+    assert contract["numerical_strategy"]["internal_rhs_strategy"] == "same_lu_rhs_solve"
+    loaded, contract_sha = require_task41_p0_contract(
+        contract_path, current_root=tmp_path
+    )
+    launch = launcher_values(contract_path, current_root=tmp_path)
+    assert launch[4] == contract_sha
+    assert launch[5] == str(window_path)
+    assert loaded["window"]["path"] == str(module.TASK41_B0_V9_WINDOW_RELATIVE)
+    assert ledger_hash_calls == [1]
+
+
 def test_task41_v6_service_cli_keeps_saved_volume_selector_first(monkeypatch, tmp_path):
     import scripts.task40_v20_service_workflow as workflow
 

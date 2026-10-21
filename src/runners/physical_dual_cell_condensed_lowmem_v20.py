@@ -501,6 +501,7 @@ def v22_capacity_context(
     coarse_degree: int = 4,
     evidence_prefix: str = "v22",
     task40_profile: bool = False,
+    internal_rhs_strategy: str = "stored_T",
 ) -> dict:
     """Derive the fixed-B future ledger from live common/class metadata.
 
@@ -517,6 +518,8 @@ def v22_capacity_context(
         raise TypeError("V22 requires live p6 FE/MPC space facts")
     if not isinstance(p4_metadata, Mapping):
         raise TypeError("V22 requires assembled p4 capacity metadata")
+    if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+        raise ValueError(f"unknown internal RHS strategy {internal_rhs_strategy!r}")
     task40_plan = _task40_capacity_mesh_plan(cfg) if task40_profile else None
 
     fine_carrier = common["fine"]["dtn_action"].carrier
@@ -692,6 +695,9 @@ def v22_capacity_context(
         oriented_class_count=p6_capacity_oriented_class_count,
         identity_class_count=1,
         retain_local_schur=True,
+        retain_trace_interior_for_same_lu_rhs=(
+            internal_rhs_strategy == "same_lu_rhs_solve"
+        ),
         scalar_bytes=scalar_bytes,
         index_bytes=index_bytes,
         real_bytes=real_bytes,
@@ -967,6 +973,7 @@ def _v22_capacity_callbacks(
     native_quota_mb: int = 4687,
     evidence_prefix: str = "v22",
     task40_profile: bool = False,
+    internal_rhs_strategy: str = "stored_T",
 ):
     """Build the production V22 factor callbacks from final live facts.
 
@@ -1007,6 +1014,7 @@ def _v22_capacity_callbacks(
             coarse_degree=coarse_degree,
             evidence_prefix=evidence_prefix,
             task40_profile=task40_profile,
+            internal_rhs_strategy=internal_rhs_strategy,
         )
         # This is frozen before any post-numeric RSS or allocated-memory gate.
         write_json(directory / f"{evidence_prefix}_capacity_context.json", capacity_context)
@@ -2054,6 +2062,11 @@ def _run_physical_dual_cell_condensed_lowmem(
                 native_quota_mb=4687,
                 evidence_prefix=evidence_prefix,
                 task40_profile=(profile_identity in TASK40_PROFILES),
+                internal_rhs_strategy=str(
+                    resolved_payload.get("solver", {}).get(
+                        "internal_rhs_strategy", "stored_T"
+                    )
+                ),
             )
 
         def stack_factory(runtime_, common_, resolved_, *, stage):
@@ -2108,6 +2121,11 @@ def _run_physical_dual_cell_condensed_lowmem(
                 ),
                 bounded_direct_term_build=(
                     profile_identity in TASK40_PROFILES
+                ),
+                internal_rhs_strategy=str(
+                    resolved_.get("solver", {}).get(
+                        "internal_rhs_strategy", "stored_T"
+                    )
                 ),
                 evidence_prefix=evidence_prefix,
                 expected_space_counts=expected_space_counts,

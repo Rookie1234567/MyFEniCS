@@ -45,6 +45,7 @@ def assembly_time_condensation_capacity_facts(
     oriented_class_count: int,
     identity_class_count: int,
     retain_local_schur: bool,
+    retain_trace_interior_for_same_lu_rhs: bool = False,
     scalar_bytes: int,
     index_bytes: int,
     real_bytes: int,
@@ -80,6 +81,11 @@ def assembly_time_condensation_capacity_facts(
         interior_dimension * interior_dimension * scalar_bytes
         + interior_dimension * index_bytes
         + 2 * interior_dimension * trace_dimension * scalar_bytes
+        + (
+            interior_dimension * trace_dimension * scalar_bytes
+            if retain_trace_interior_for_same_lu_rhs
+            else 0
+        )
         + (schur_bytes if retain_local_schur else 0)
     )
     identity_cache_bytes_upper = (
@@ -99,6 +105,7 @@ def assembly_time_condensation_capacity_facts(
         + 2 * schur_bytes
     )
     retained_schur_term = "t*t*s" if retain_local_schur else "0"
+    retained_j_term = "i*t*s" if retain_trace_interior_for_same_lu_rhs else "0"
     return {
         "full_tensor_bytes": full_tensor_bytes,
         "schur_bytes": schur_bytes,
@@ -111,6 +118,14 @@ def assembly_time_condensation_capacity_facts(
         "raw_cache_bytes_upper": raw_cache_bytes_upper,
         "oriented_tensor_bytes_upper": oriented_tensor_bytes_upper,
         "schur_cache_bytes_upper": schur_cache_bytes_upper,
+        "retained_trace_interior_bytes_upper": (
+            oriented_class_count
+            * interior_dimension
+            * trace_dimension
+            * scalar_bytes
+            if retain_trace_interior_for_same_lu_rhs
+            else 0
+        ),
         "local_working_bytes_upper": local_working_bytes_upper,
         "workspace_bytes_upper": (
             raw_cache_bytes_upper
@@ -119,12 +134,91 @@ def assembly_time_condensation_capacity_facts(
             + local_working_bytes_upper
         ),
         "retain_local_schur": bool(retain_local_schur),
+        "retain_trace_interior_for_same_lu_rhs": bool(
+            retain_trace_interior_for_same_lu_rhs
+        ),
         "formula": (
             "retained=o*(i*i*s+i*index+2*i*t*s+"
-            f"{retained_schur_term})+{identity_class_count}*i*i*real; "
+            f"{retained_j_term}+{retained_schur_term})+{identity_class_count}*i*i*real; "
             "workspace=r*F+o*F+o*T+(3*F+i*i*s+i*index+2*i*t*s+2*T)"
         ),
     }
+
+
+def project_internal_rhs_same_lu(
+    factor: tuple[np.ndarray, np.ndarray],
+    actual_trace_interior: np.ndarray,
+    internal_rhs: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, dict[str, float | bool]]:
+    """Solve ``K z = b_i`` once and return ``z`` and ``-J z``."""
+
+    core_started = perf_counter()
+    rhs = np.asarray(internal_rhs, dtype=np.complex128)
+    J = np.asarray(actual_trace_interior, dtype=np.complex128)
+    if rhs.ndim != 1 or J.ndim != 2 or J.shape[1] != rhs.size:
+        raise ValueError("same-LU RHS/J dimensions do not agree")
+    if not np.isfinite(rhs).all():
+        raise ValueError("same-LU RHS contains non-finite values")
+    if not np.any(rhs):
+        return (
+            np.zeros(rhs.size, dtype=np.complex128),
+            np.zeros(J.shape[0], dtype=np.complex128),
+            {
+                "nonzero_rhs": False,
+                "getrs_seconds": 0.0,
+                "j_matvec_seconds": 0.0,
+                "core_seconds": float(perf_counter() - core_started),
+            },
+        )
+    started = perf_counter()
+    solved = lu_solve(factor, rhs)
+    getrs_seconds = float(perf_counter() - started)
+    if not np.isfinite(solved).all():
+        raise ValueError("same-LU internal RHS solve produced non-finite values")
+    started = perf_counter()
+    correction = -(J @ solved)
+    j_matvec_seconds = float(perf_counter() - started)
+    if not np.isfinite(correction).all():
+        raise ValueError("same-LU internal RHS projection produced non-finite values")
+    return solved, correction, {
+        "nonzero_rhs": True,
+        "getrs_seconds": getrs_seconds,
+        "j_matvec_seconds": j_matvec_seconds,
+        "core_seconds": float(perf_counter() - core_started),
+    }
+
+
+def prepare_saved_lu_pivots_for_getrs(
+    pivots: np.ndarray, *, dimension: int
+) -> np.ndarray:
+    """Validate saved pivots and return an owned writable int32 copy."""
+
+    raw = np.asarray(pivots)
+    if (
+        isinstance(dimension, bool)
+        or not isinstance(dimension, (int, np.integer))
+        or int(dimension) <= 0
+        or raw.ndim != 1
+        or raw.shape != (int(dimension),)
+        or raw.dtype.kind not in "iu"
+        or raw.dtype.kind == "b"
+    ):
+        raise ValueError("saved LU pivots must be an integer vector of the LU dimension")
+    bounds = np.iinfo(np.int32)
+    if raw.size and (
+        int(raw.min()) < int(bounds.min) or int(raw.max()) > int(bounds.max)
+    ):
+        raise ValueError("saved LU pivot index does not fit int32")
+    wide = np.asarray(raw, dtype=np.int64)
+    if any(
+        int(pivot) < index or int(pivot) >= int(dimension)
+        for index, pivot in enumerate(wide)
+    ):
+        raise ValueError("saved LU pivot vector is outside LAPACK step bounds")
+    result = np.array(wide, dtype=np.int32, copy=True, order="C")
+    if not result.flags.owndata or not result.flags.writeable:
+        raise RuntimeError("normalized saved LU pivots are not owned and writable")
+    return result
 
 
 def _idx(values) -> np.ndarray:
@@ -360,7 +454,7 @@ class AssemblyTimeCondensedSystem:
     matrix: PETSc.Mat | None
     owned_trace_original_dofs: np.ndarray
     original_to_trace: Mapping[int, int]
-    trace_constraints: TraceConstraintMap
+    trace_constraints: TraceConstraintMap | None
     cell_recovery_maps: tuple[CellRecoveryMap, ...]
     interior_from_trace_by_class: dict[tuple[Any, ...], np.ndarray]
     interior_lu_by_class: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]]
@@ -379,7 +473,59 @@ class AssemblyTimeCondensedSystem:
     owned_active_rows: int
     owned_appended_rows: int
     retained_local_schur_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
+    retained_trace_interior_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
+    internal_rhs_strategy: str = "stored_T"
     _destroyed: bool = field(default=False, init=False, repr=False)
+    _trace_interior_rhs_borrowers: int = field(default=0, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if self.internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+            raise ValueError(f"unknown internal RHS strategy {self.internal_rhs_strategy!r}")
+        if self.internal_rhs_strategy == "same_lu_rhs_solve":
+            if self.retained_trace_interior_by_class is None:
+                raise ValueError("same_lu_rhs_solve owner is missing its retained actual J map")
+            self.require_identity_internal_rhs_maps()
+
+    def require_identity_internal_rhs_maps(self) -> None:
+        """Fail closed unless the opt-in RHS path uses qualified identity maps."""
+
+        if self.internal_rhs_strategy != "same_lu_rhs_solve":
+            return
+        class_dimensions = {
+            cell.class_key: len(cell.interior_original_dofs)
+            for cell in self.cell_recovery_maps
+        }
+        for label, mapping in (
+            ("interior RHS projection", self.interior_rhs_projection_by_class),
+            ("interior solution embedding", self.interior_solution_embedding_by_class),
+        ):
+            seen_arrays: set[int] = set()
+            for class_key, dimension in class_dimensions.items():
+                try:
+                    value = mapping[class_key]
+                except KeyError as exc:
+                    raise NotImplementedError(
+                        f"same_lu_rhs_solve requires an explicit identity {label}"
+                    ) from exc
+                array = np.asarray(value)
+                if array.shape != (dimension, dimension):
+                    raise NotImplementedError(
+                        f"same_lu_rhs_solve currently requires identity {label} maps"
+                    )
+                if id(value) in seen_arrays:
+                    continue
+                seen_arrays.add(id(value))
+                if (
+                    array.dtype.kind not in "fc"
+                    or not np.isfinite(array).all()
+                    or np.count_nonzero(array) != dimension
+                    or not np.array_equal(
+                        np.diag(array), np.ones(dimension, dtype=array.dtype)
+                    )
+                ):
+                    raise NotImplementedError(
+                        f"same_lu_rhs_solve currently requires identity {label} maps"
+                    )
 
     def create_active_vector(self) -> PETSc.Vec:
         return PETSc.Vec().createMPI(
@@ -399,9 +545,40 @@ class AssemblyTimeCondensedSystem:
     def destroy(self) -> None:
         if self._destroyed:
             return
+        if self._trace_interior_rhs_borrowers:
+            raise RuntimeError(
+                "cannot release retained J while same-LU RHS actions still borrow it"
+            )
         if self.matrix is not None:
             self.matrix.destroy()
+        if self.internal_rhs_strategy == "same_lu_rhs_solve":
+            # Release only the new opt-in owner's large maps, after its
+            # borrowers are gone. Rebind mappings instead of mutating shared
+            # dictionaries that another owner may still reference.
+            self.matrix = None
+            self.cell_recovery_maps = ()
+            self.owned_trace_original_dofs = np.empty(0, dtype=PETSc.IntType)
+            self.original_to_trace = {}
+            self.interior_from_trace_by_class = {}
+            self.interior_lu_by_class = {}
+            self.interior_rhs_projection_by_class = {}
+            self.interior_solution_embedding_by_class = {}
+            self.trace_from_interior_rhs_by_class = {}
+            self.interior_residual_projection_by_class = {}
+            self.retained_local_schur_by_class = None
+            self.retained_trace_interior_by_class = None
+            self.trace_constraints = None
         self._destroyed = True
+
+    def _register_trace_interior_rhs_borrower(self) -> None:
+        if self._destroyed or self.retained_trace_interior_by_class is None:
+            raise RuntimeError("same-LU RHS action requires a live retained J owner")
+        self._trace_interior_rhs_borrowers += 1
+
+    def _release_trace_interior_rhs_borrower(self) -> None:
+        if self._trace_interior_rhs_borrowers <= 0:
+            raise RuntimeError("same-LU RHS J borrower count underflow")
+        self._trace_interior_rhs_borrowers -= 1
 
 
 def _owned_trace_numbering(
@@ -2763,6 +2940,7 @@ def build_unconstrained_assembly_time_condensation(
     strict_local_checks: bool = False,
     defer_final_assembly: bool = False,
     retain_local_schur_for_matrix_free: bool = False,
+    internal_rhs_strategy: str = "stored_T",
     share_identity_cache: bool = False,
     materialize_global_matrix: bool = True,
     compact_action_only_maps: bool = False,
@@ -2810,6 +2988,11 @@ def build_unconstrained_assembly_time_condensation(
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
     materialize_global_matrix = bool(materialize_global_matrix)
+    if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+        raise ValueError(f"unknown internal RHS strategy {internal_rhs_strategy!r}")
+    retain_trace_interior_for_same_lu_rhs = (
+        internal_rhs_strategy == "same_lu_rhs_solve"
+    )
     if not materialize_global_matrix and not retain_local_schur_for_matrix_free:
         raise ValueError(
             "action-only condensation requires retained local Schur classes"
@@ -3189,6 +3372,9 @@ def build_unconstrained_assembly_time_condensation(
             oriented_class_count=len(global_oriented_classes),
             identity_class_count=identity_class_count,
             retain_local_schur=retain_local_schur_for_matrix_free,
+            retain_trace_interior_for_same_lu_rhs=(
+                retain_trace_interior_for_same_lu_rhs
+            ),
             scalar_bytes=scalar_bytes,
             index_bytes=index_bytes,
             real_bytes=real_bytes,
@@ -3338,6 +3524,9 @@ def build_unconstrained_assembly_time_condensation(
             oriented_class_count=exact_count,
             identity_class_count=(1 if share_identity_cache and exact_count else exact_count),
             retain_local_schur=retain_local_schur_for_matrix_free,
+            retain_trace_interior_for_same_lu_rhs=(
+                retain_trace_interior_for_same_lu_rhs
+            ),
             scalar_bytes=int(np.dtype(np.complex128).itemsize),
             index_bytes=int(np.dtype(PETSc.IntType).itemsize),
             real_bytes=int(np.dtype(np.float64).itemsize),
@@ -3543,6 +3732,7 @@ def build_unconstrained_assembly_time_condensation(
     rhs_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    trace_interior_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap | None] = (
         [None] * owned_cells
@@ -3553,6 +3743,7 @@ def build_unconstrained_assembly_time_condensation(
     exact_cache_misses = 0
     exact_full_admission_passed = False
     action_tensor_identities: dict[str, Any] = {}
+    trace_interior_identities: dict[str, Any] = {}
     local_schur_seconds = 0.0
     local_orientation_seconds = 0.0
     local_tensor_hash_seconds = 0.0
@@ -3731,6 +3922,19 @@ def build_unconstrained_assembly_time_condensation(
             rhs_projection_cache[class_key] = interior_identity
             solution_embedding_cache[class_key] = interior_identity
             rhs_trace_cache[class_key] = trace_from_interior_rhs
+            if retain_trace_interior_for_same_lu_rhs:
+                if not np.isfinite(A_ti).all():
+                    raise ValueError("retained actual A_ti block contains non-finite values")
+                # This is the actual oriented A_ti block from the same
+                # class-build generation as K/LU. Keep the extraction once
+                # per oriented key; actions only borrow this readonly array.
+                A_ti.flags.writeable = False
+                trace_interior_cache[class_key] = A_ti
+                trace_interior_identities[repr(class_key)] = {
+                    "shape": list(A_ti.shape),
+                    "dtype": str(A_ti.dtype),
+                    "sha256": hashlib.sha256(memoryview(A_ti).cast("B")).hexdigest(),
+                }
             residual_projection_cache[class_key] = interior_identity
             if exact_cell_observer is not None:
                 observer_started = perf_counter()
@@ -4018,6 +4222,7 @@ def build_unconstrained_assembly_time_condensation(
             ("lu_bytes", lu_cache),
             ("recovery_bytes", recovery_cache),
             ("rhs_trace_bytes", rhs_trace_cache),
+            ("trace_interior_bytes", trace_interior_cache),
             ("rhs_projection_bytes", rhs_projection_cache),
             ("solution_embedding_bytes", solution_embedding_cache),
             ("residual_projection_bytes", residual_projection_cache),
@@ -4080,6 +4285,12 @@ def build_unconstrained_assembly_time_condensation(
             if retain_local_schur_for_matrix_free
             else None
         ),
+        retained_trace_interior_by_class=(
+            MappingProxyType(trace_interior_cache)
+            if retain_trace_interior_for_same_lu_rhs
+            else None
+        ),
+        internal_rhs_strategy=internal_rhs_strategy,
         build_audit={
             "schema_version": "task035b.assembly-time-cell-condensation.v1",
             "status": "unconstrained_trace_schur_built_without_full_matrix",
@@ -4171,6 +4382,20 @@ def build_unconstrained_assembly_time_condensation(
                 else "legacy_rounded_12_decimal_widths"
             ),
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
+            "internal_rhs_strategy": internal_rhs_strategy,
+            "same_lu_rhs_j_retained": bool(
+                retain_trace_interior_for_same_lu_rhs
+            ),
+            "same_lu_rhs_j_class_count_local": len(trace_interior_cache),
+            "same_lu_rhs_j_bytes_local": int(
+                retained_cache_bytes_local["trace_interior_bytes"]
+            ),
+            "same_lu_rhs_j_key_policy": (
+                "same_oriented_class_key_and_build_generation_as_K_LU"
+                if retain_trace_interior_for_same_lu_rhs
+                else "not_retained"
+            ),
+            "same_lu_rhs_j_sha256_by_class": trace_interior_identities,
             "retained_local_schur_class_count_local": retained_class_count_local,
             "retained_local_schur_class_count_sum": retained_class_count_sum,
             "retained_local_schur_bytes_local": retained_bytes_local,
@@ -4387,10 +4612,35 @@ def condense_unconstrained_vector_to_active_trace(
         if float(np.max(np.abs(interior_values), initial=0.0)) <= cutoff:
             continue
         if side == "right":
-            correction = (
-                condensed.trace_from_interior_rhs_by_class[cell.class_key]
-                @ interior_values
-            )
+            rhs_strategy = getattr(condensed, "internal_rhs_strategy", "stored_T")
+            if rhs_strategy == "same_lu_rhs_solve":
+                retained_j = getattr(condensed, "retained_trace_interior_by_class", None)
+                if retained_j is None:
+                    active.destroy()
+                    raise RuntimeError(
+                        "same-LU RHS owner is missing its retained actual J map"
+                    )
+                try:
+                    J = retained_j[cell.class_key]
+                    factor = condensed.interior_lu_by_class[cell.class_key]
+                except KeyError as exc:
+                    active.destroy()
+                    raise RuntimeError(
+                        f"same-LU RHS owner is missing class cache {cell.class_key!r}"
+                    ) from exc
+                _solved, correction, _timing = project_internal_rhs_same_lu(
+                    factor, J, interior_values
+                )
+            elif rhs_strategy == "stored_T":
+                correction = (
+                    condensed.trace_from_interior_rhs_by_class[cell.class_key]
+                    @ interior_values
+                )
+            else:
+                active.destroy()
+                raise RuntimeError(
+                    f"unknown owner internal RHS strategy {rhs_strategy!r}"
+                )
         else:
             correction = (
                 condensed.interior_from_trace_by_class[cell.class_key].conj().T
