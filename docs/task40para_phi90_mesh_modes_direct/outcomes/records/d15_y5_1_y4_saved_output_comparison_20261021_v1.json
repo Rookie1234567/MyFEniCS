@@ -1,0 +1,671 @@
+{
+  "aliases": {
+    "Y4-1": "internal D15_Y3_3 3/6/3",
+    "Y4-3": "internal D15_Y4_4_4 4/4/4",
+    "Y5-1": "internal D15_Y5_1 4/6/4"
+  },
+  "comparisons": [
+    {
+      "all_three_gate_groups_pass": false,
+      "boundary_complex_amplitude": {
+        "count": 612,
+        "difference_l2": 1.844068036061101e-06,
+        "limit": 0.0001,
+        "max_abs_delta": 1.7722221613148735e-06,
+        "max_abs_index": [
+          459
+        ],
+        "max_delta_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "pass": true,
+        "reference_l2": 0.5296406342408104,
+        "relative_l2_no_phase_fit": 3.4817344381146237e-06
+      },
+      "candidate": "Y5-1",
+      "gate_groups": {
+        "all_common_mode_R_T_including_power_carrying_and_R00_s": false,
+        "boundary_and_same_coordinate_E_H": true,
+        "global_R_T_A_balance_A_volume": true
+      },
+      "global_observables": {
+        "A_balance": {
+          "abs_delta": 1.3579954944997752e-06,
+          "candidate": 0.6915174831306486,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.6915161251351541,
+          "signed_delta": 1.3579954944997752e-06
+        },
+        "A_volume": {
+          "abs_delta": 1.357993069217578e-06,
+          "candidate": 0.691517483139861,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.6915161251467917,
+          "signed_delta": 1.357993069217578e-06
+        },
+        "R00_s": {
+          "abs_delta": 1.5798745502393352e-06,
+          "candidate": 0.2513223618515188,
+          "limit": 1e-06,
+          "pass": false,
+          "reference": 0.25132394172606903,
+          "signed_delta": -1.5798745502393352e-06
+        },
+        "R00_total": {
+          "abs_delta": 1.5798745502393352e-06,
+          "candidate": 0.2513223618515188,
+          "limit": 1e-06,
+          "pass": false,
+          "reference": 0.25132394172606903,
+          "signed_delta": -1.5798745502393352e-06
+        },
+        "R_total": {
+          "abs_delta": 1.5798614307338532e-06,
+          "candidate": 0.2513545168325538,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.2513560966939845,
+          "signed_delta": -1.5798614307338532e-06
+        },
+        "T_total": {
+          "abs_delta": 2.2186593623407802e-07,
+          "candidate": 0.0571280000367976,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.057127778170861364,
+          "signed_delta": 2.2186593623407802e-07
+        }
+      },
+      "per_mode_R_T": {
+        "all_612": {
+          "R": {
+            "candidate": 0.2513223618515188,
+            "count": 612,
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.5798745502596047e-06,
+            "limit": 1e-06,
+            "max_abs_delta": 1.5798745502393352e-06,
+            "over_limit_count": 1,
+            "pass": false,
+            "reference": 0.25132394172606903,
+            "signed_delta": -1.5798745502393352e-06
+          },
+          "T": {
+            "candidate": 0.057088892277564404,
+            "count": 612,
+            "key": [
+              "bottom",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 2.2182602555117194e-07,
+            "limit": 1e-06,
+            "max_abs_delta": 2.2182602485432135e-07,
+            "over_limit_count": 0,
+            "pass": true,
+            "reference": 0.05708867045153955,
+            "signed_delta": 2.2182602485432135e-07
+          }
+        },
+        "power_carrying": {
+          "R": {
+            "candidate": 0.2513223618515188,
+            "count": 390,
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.5798745502596047e-06,
+            "limit": 1e-06,
+            "max_abs_delta": 1.5798745502393352e-06,
+            "over_limit_count": 1,
+            "pass": false,
+            "reference": 0.25132394172606903,
+            "signed_delta": -1.5798745502393352e-06
+          },
+          "T": {
+            "candidate": 0.057088892277564404,
+            "count": 390,
+            "key": [
+              "bottom",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 2.2182602555117194e-07,
+            "limit": 1e-06,
+            "max_abs_delta": 2.2182602485432135e-07,
+            "over_limit_count": 0,
+            "pass": true,
+            "reference": 0.05708867045153955,
+            "signed_delta": 2.2182602485432135e-07
+          }
+        },
+        "propagating": {
+          "R": {
+            "candidate": 0.2513223618515188,
+            "count": 166,
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.5798745502596047e-06,
+            "limit": 1e-06,
+            "max_abs_delta": 1.5798745502393352e-06,
+            "over_limit_count": 1,
+            "pass": false,
+            "reference": 0.25132394172606903,
+            "signed_delta": -1.5798745502393352e-06
+          },
+          "T": {
+            "candidate": 9.272511872041415e-06,
+            "count": 166,
+            "key": [
+              "bottom",
+              1,
+              -1,
+              "s"
+            ],
+            "l2_delta": 1.75826102302158e-11,
+            "limit": 1e-06,
+            "max_abs_delta": 1.0181541029992782e-11,
+            "over_limit_count": 0,
+            "pass": true,
+            "reference": 9.272501690500385e-06,
+            "signed_delta": 1.0181541029992782e-11
+          }
+        }
+      },
+      "reference": "Y4-1",
+      "same_coordinate_fields": {
+        "E_H": {
+          "E_V_per_m": {
+            "difference_l2": 0.0004864247481589288,
+            "limit": 0.0001,
+            "max_abs_delta": 1.583747386572191e-05,
+            "max_abs_index": [
+              4,
+              15,
+              26,
+              0
+            ],
+            "pass": true,
+            "reference_l2": 73.66792987331608,
+            "relative_l2_no_phase_fit": 6.602937655441313e-06
+          },
+          "H_A_per_m": {
+            "difference_l2": 9.21324765572409e-06,
+            "limit": 0.0001,
+            "max_abs_delta": 2.432337411141811e-07,
+            "max_abs_index": [
+              4,
+              57,
+              0,
+              2
+            ],
+            "pass": true,
+            "reference_l2": 0.19557810608882129,
+            "relative_l2_no_phase_fit": 4.7107765996772246e-05
+          }
+        },
+        "canonical_sidewall": "NOT_MEASURED",
+        "comparison": "saved complex arrays on exact common coordinates; no interpolation; no phase fitting",
+        "coordinates_exact_equal": {
+          "interface_z_nm": true,
+          "x_nm": true,
+          "y_nm": true,
+          "z_nm": true
+        },
+        "horizontal_Et_Ht_diagnostics_only": {
+          "E_t_interface_V_per_m": {
+            "difference_l2": 0.0003259662672577004,
+            "max_abs_delta": 1.583747386572191e-05,
+            "max_abs_index": [
+              1,
+              15,
+              26,
+              0
+            ],
+            "reference_l2": 49.85940783504988,
+            "relative_l2_no_phase_fit": 6.53770835658731e-06,
+            "scope": "horizontal interface z planes only; not canonical pillar sidewalls"
+          },
+          "H_t_interface_A_per_m": {
+            "difference_l2": 2.0838425745092566e-08,
+            "max_abs_delta": 7.059379622489161e-10,
+            "max_abs_index": [
+              1,
+              61,
+              20,
+              1
+            ],
+            "reference_l2": 0.003275190858259872,
+            "relative_l2_no_phase_fit": 6.362507300159034e-06,
+            "scope": "horizontal interface z planes only; not canonical pillar sidewalls"
+          }
+        }
+      }
+    },
+    {
+      "all_three_gate_groups_pass": false,
+      "boundary_complex_amplitude": {
+        "count": 612,
+        "difference_l2": 1.257308430877525e-06,
+        "limit": 0.0001,
+        "max_abs_delta": 1.2074183936726274e-06,
+        "max_abs_index": [
+          459
+        ],
+        "max_delta_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "pass": true,
+        "reference_l2": 0.529640197217301,
+        "relative_l2_no_phase_fit": 2.3738916296069498e-06
+      },
+      "candidate": "Y5-1",
+      "gate_groups": {
+        "all_common_mode_R_T_including_power_carrying_and_R00_s": false,
+        "boundary_and_same_coordinate_E_H": true,
+        "global_R_T_A_balance_A_volume": true
+      },
+      "global_observables": {
+        "A_balance": {
+          "abs_delta": 9.302236594344038e-07,
+          "candidate": 0.6915174831306486,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.6915165529069892,
+          "signed_delta": 9.302236594344038e-07
+        },
+        "A_volume": {
+          "abs_delta": 9.302243350051143e-07,
+          "candidate": 0.691517483139861,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.6915165529155259,
+          "signed_delta": 9.302243350051143e-07
+        },
+        "R00_s": {
+          "abs_delta": 1.080163778255372e-06,
+          "candidate": 0.2513223618515188,
+          "limit": 1e-06,
+          "pass": false,
+          "reference": 0.25132344201529705,
+          "signed_delta": -1.080163778255372e-06
+        },
+        "R00_total": {
+          "abs_delta": 1.080163778255372e-06,
+          "candidate": 0.2513223618515188,
+          "limit": 1e-06,
+          "pass": false,
+          "reference": 0.25132344201529705,
+          "signed_delta": -1.080163778255372e-06
+        },
+        "R_total": {
+          "abs_delta": 1.080150057508611e-06,
+          "candidate": 0.2513545168325538,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.2513555969826113,
+          "signed_delta": -1.080150057508611e-06
+        },
+        "T_total": {
+          "abs_delta": 1.499263981366572e-07,
+          "candidate": 0.0571280000367976,
+          "limit": 1e-05,
+          "pass": true,
+          "reference": 0.05712785011039946,
+          "signed_delta": 1.499263981366572e-07
+        }
+      },
+      "per_mode_R_T": {
+        "all_612": {
+          "R": {
+            "candidate": 0.2513223618515188,
+            "count": 612,
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.080163778273201e-06,
+            "limit": 1e-06,
+            "max_abs_delta": 1.080163778255372e-06,
+            "over_limit_count": 1,
+            "pass": false,
+            "reference": 0.25132344201529705,
+            "signed_delta": -1.080163778255372e-06
+          },
+          "T": {
+            "candidate": 0.057088892277564404,
+            "count": 612,
+            "key": [
+              "bottom",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.4989857349110155e-07,
+            "limit": 1e-06,
+            "max_abs_delta": 1.4989857296393572e-07,
+            "over_limit_count": 0,
+            "pass": true,
+            "reference": 0.05708874237899144,
+            "signed_delta": 1.4989857296393572e-07
+          }
+        },
+        "power_carrying": {
+          "R": {
+            "candidate": 0.2513223618515188,
+            "count": 390,
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.080163778273201e-06,
+            "limit": 1e-06,
+            "max_abs_delta": 1.080163778255372e-06,
+            "over_limit_count": 1,
+            "pass": false,
+            "reference": 0.25132344201529705,
+            "signed_delta": -1.080163778255372e-06
+          },
+          "T": {
+            "candidate": 0.057088892277564404,
+            "count": 390,
+            "key": [
+              "bottom",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.4989857349110155e-07,
+            "limit": 1e-06,
+            "max_abs_delta": 1.4989857296393572e-07,
+            "over_limit_count": 0,
+            "pass": true,
+            "reference": 0.05708874237899144,
+            "signed_delta": 1.4989857296393572e-07
+          }
+        },
+        "propagating": {
+          "R": {
+            "candidate": 0.2513223618515188,
+            "count": 166,
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "l2_delta": 1.080163778273201e-06,
+            "limit": 1e-06,
+            "max_abs_delta": 1.080163778255372e-06,
+            "over_limit_count": 1,
+            "pass": false,
+            "reference": 0.25132344201529705,
+            "signed_delta": -1.080163778255372e-06
+          },
+          "T": {
+            "candidate": 9.272511872041415e-06,
+            "count": 166,
+            "key": [
+              "bottom",
+              1,
+              -1,
+              "s"
+            ],
+            "l2_delta": 1.257129975855541e-11,
+            "limit": 1e-06,
+            "max_abs_delta": 6.9412171628156164e-12,
+            "over_limit_count": 0,
+            "pass": true,
+            "reference": 9.272504930824252e-06,
+            "signed_delta": 6.9412171628156164e-12
+          }
+        }
+      },
+      "reference": "Y4-3",
+      "same_coordinate_fields": {
+        "E_H": {
+          "E_V_per_m": {
+            "difference_l2": 0.0004400764706630828,
+            "limit": 0.0001,
+            "max_abs_delta": 2.336934110372189e-05,
+            "max_abs_index": [
+              4,
+              21,
+              13,
+              0
+            ],
+            "pass": true,
+            "reference_l2": 73.66794330698121,
+            "relative_l2_no_phase_fit": 5.973785216579795e-06
+          },
+          "H_A_per_m": {
+            "difference_l2": 7.308451860847625e-06,
+            "limit": 0.0001,
+            "max_abs_delta": 2.5890303946547106e-07,
+            "max_abs_index": [
+              4,
+              25,
+              0,
+              2
+            ],
+            "pass": true,
+            "reference_l2": 0.1955784748962744,
+            "relative_l2_no_phase_fit": 3.7368385578851066e-05
+          }
+        },
+        "canonical_sidewall": "NOT_MEASURED",
+        "comparison": "saved complex arrays on exact common coordinates; no interpolation; no phase fitting",
+        "coordinates_exact_equal": {
+          "interface_z_nm": true,
+          "x_nm": true,
+          "y_nm": true,
+          "z_nm": true
+        },
+        "horizontal_Et_Ht_diagnostics_only": {
+          "E_t_interface_V_per_m": {
+            "difference_l2": 0.00029596711990233443,
+            "max_abs_delta": 2.336934110372189e-05,
+            "max_abs_index": [
+              1,
+              21,
+              13,
+              0
+            ],
+            "reference_l2": 49.859412299322,
+            "relative_l2_no_phase_fit": 5.9360330628357414e-06,
+            "scope": "horizontal interface z planes only; not canonical pillar sidewalls"
+          },
+          "H_t_interface_A_per_m": {
+            "difference_l2": 1.8485840857235022e-08,
+            "max_abs_delta": 7.167511943570467e-10,
+            "max_abs_index": [
+              1,
+              34,
+              20,
+              1
+            ],
+            "reference_l2": 0.0032751906058501768,
+            "relative_l2_no_phase_fit": 5.644203065377458e-06,
+            "scope": "horizontal interface z planes only; not canonical pillar sidewalls"
+          }
+        }
+      }
+    }
+  ],
+  "created_utc": "2026-10-21T12:24:46Z",
+  "grid_scope": {
+    "Y4-1_to_Y5-1": "y segment counts 3/6/3 -> 4/6/4; x,z unchanged.",
+    "Y4-3_to_Y5-1": "y segment counts 4/4/4 -> 4/6/4; x,z unchanged."
+  },
+  "identities": {
+    "Y4-1": {
+      "axis_cell_counts": [
+        6,
+        12,
+        6
+      ],
+      "cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "factor_evidence_sha256": "73fc0d8e5af1844c6e73df492b4b8b5e773d92eb5e3fe8cd55127b63d1fe5db3",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_sha256": "4e338c3927eb24082ef88e950f785c32e3a5294c622fce4e8fee3fec53e94c4e",
+      "mode_count": 612,
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "operator_scope": "task40_phi90_D15_Y3_3_R13_finite_rectangle",
+      "phase_sha256": "ec19ecfe9663e81d9b231949d5ff0a44c32f3178ed5d389cb60ffb28f2488d29",
+      "physical_model_sha256": "1284828a4d6d6ff4bdc431c5188fb0537995dbd013c162ba08af4f62f57921b6",
+      "resolved_config_sha256": "a671cd507760375944828c76bd8d4f60ca751d493a30aa8b08b447a9f87f36c3",
+      "run_id": "task40_phi90_13p5_D15_Y3_3_p6_direct_v1",
+      "run_manifest_sha256": "da3534b5388cc6780c4776a2bac710221ebd73d418db5711a69591c453599591",
+      "run_summary_sha256": "000084c96df054db4bf54a921f5b8535942e4d154a797f6cbf3d95173bf812ca",
+      "sample_archive_internal_sha256": "0354ce08de4af9fb6d2847293c69c788d518c775f2a867fe533d085173d62abd",
+      "sample_archive_sha256": "0354ce08de4af9fb6d2847293c69c788d518c775f2a867fe533d085173d62abd",
+      "single_run_status": "TASK40_PHI90_D15_Y3_3_P6_DIRECT_R13_COMPLETED_AUTHORITY_LIMITED",
+      "source_sha": "ee5793a9b6a62de52730f1b78de334ac01a53ced",
+      "surface_q": 28,
+      "volume_q": 15,
+      "volume_rule": "default",
+      "y_values_nm": [
+        0.0,
+        5.0,
+        10.0,
+        15.0,
+        18.333333333333332,
+        21.666666666666668,
+        25.0,
+        28.333333333333336,
+        31.666666666666668,
+        35.0,
+        40.0,
+        45.0,
+        50.0
+      ]
+    },
+    "Y4-3": {
+      "axis_cell_counts": [
+        6,
+        12,
+        6
+      ],
+      "cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "factor_evidence_sha256": "fc787fda17c391d1f210b283ae7fc7eb942e774967d85a1fcbd24ba9462998ed",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_sha256": "f2085003471e38b8c0edda83bcff47c6691c5d08229380955d241bdc903129f7",
+      "mode_count": 612,
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "operator_scope": "task40_phi90_D15_Y4_4_4_R13_finite_rectangle",
+      "phase_sha256": "bef6a06f196f53e419d9e8e228bf85dce71042da77eab846fec52a4c6bee9baa",
+      "physical_model_sha256": "9d4053ff3e48a409f0115c8335e2e984ffb36b4d327cb5902da832d93c501b1c",
+      "resolved_config_sha256": "ac22e8db8eebdb626d76e6454ab0e57b131d5cbefb7eea9ac850ce4d320e5c6f",
+      "run_id": "task40_phi90_13p5_D15_Y4_4_4_p6_direct_v1",
+      "run_manifest_sha256": "08f9ac12dd96bb3fa0235ce154389da6e23f6c651bd57727e7f36ce977a94e2c",
+      "run_summary_sha256": "a1d05c9cbf1ea4e7ebbe04de656a1a3b7fad2cfe0f398f7d14d90de399c987be",
+      "sample_archive_internal_sha256": "8087696cdf02f14998d8ebbfe6d2db6a8f75d891727bfb1366397241e2a705d3",
+      "sample_archive_sha256": "8087696cdf02f14998d8ebbfe6d2db6a8f75d891727bfb1366397241e2a705d3",
+      "single_run_status": "TASK40_PHI90_D15_Y4_4_4_P6_DIRECT_R13_COMPLETED_AUTHORITY_LIMITED",
+      "source_sha": "ee5793a9b6a62de52730f1b78de334ac01a53ced",
+      "surface_q": 28,
+      "volume_q": 15,
+      "volume_rule": "default",
+      "y_values_nm": [
+        0.0,
+        3.75,
+        7.5,
+        11.25,
+        15.0,
+        20.0,
+        25.0,
+        30.0,
+        35.0,
+        38.75,
+        42.5,
+        46.25,
+        50.0
+      ]
+    },
+    "Y5-1": {
+      "axis_cell_counts": [
+        6,
+        14,
+        6
+      ],
+      "cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "factor_evidence_sha256": "e4f77eb043f0aed5e490b3a91f63dc617991320db956f8060e89a82b17e45864",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_sha256": "362a796ebfabecffc675d338cd22f44fc959534bf2eb50895e24ab151a6fe4b5",
+      "mode_count": 612,
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "operator_scope": "task40_phi90_D15_Y5_1_R13_finite_rectangle",
+      "phase_sha256": "4342362c97f8feb407bcd86f6c84981be0ed68151ce0ab1d7f8aa9ac87f61167",
+      "physical_model_sha256": "1b2344a9a1fb010260e33982e3a64d0f7ccb874bda2e16c2a29c7446bd535ca1",
+      "resolved_config_sha256": "f34628a9487e6b16239fa747121cf8f5c78263106d46253e7f6ba377538801d3",
+      "run_id": "task40_phi90_13p5_D15_Y5_1_p6_direct_v1",
+      "run_manifest_sha256": "f6dbf9ad17b979ad84de03ddd5a9dbfecac68942f077425decc33392c1c18c33",
+      "run_summary_sha256": "6b198deed0746e80ea7b7c70eca63725d991e325228ce99cc4681a9016abdea9",
+      "sample_archive_internal_sha256": "109868e625a128453750c2f755ebfa75d2b69c6daf9be70afe94c00e46f1efc2",
+      "sample_archive_sha256": "109868e625a128453750c2f755ebfa75d2b69c6daf9be70afe94c00e46f1efc2",
+      "single_run_status": "TASK40_PHI90_D15_Y5_1_P6_DIRECT_R13_COMPLETED_AUTHORITY_LIMITED",
+      "source_sha": "55c58972d230f53103f8ef6cb950ebb9417711cb",
+      "surface_q": 28,
+      "volume_q": 15,
+      "volume_rule": "default",
+      "y_values_nm": [
+        0.0,
+        3.75,
+        7.5,
+        11.25,
+        15.0,
+        18.333333333333332,
+        21.666666666666668,
+        25.0,
+        28.333333333333336,
+        31.666666666666668,
+        35.0,
+        38.75,
+        42.5,
+        46.25,
+        50.0
+      ]
+    }
+  },
+  "limitations": [
+    "FULL_DTN_NOT_VERIFIED",
+    "canonical_sidewall_NOT_MEASURED; horizontal Et/Ht are diagnostics only"
+  ],
+  "method": "mode-key joins by side,m,n,polarization; all 612 plus power-carrying and propagating groups reported. Boundary uses saved outgoing amplitude at boundary plane. E/H samples compared as exact common complex arrays; no interpolation/phase fitting.",
+  "schema": "task40.d15.y5_1_y4_saved_output_comparison.v1",
+  "scope": "offline saved-output comparisons only; no FE, factor, VTU or resource-stream reads",
+  "source_identity_note": "Y4-1 and Y4-3 use source ee5793a9b6a62de52730f1b78de334ac01a53ced; Y5-1 uses source 55c58972d230f53103f8ef6cb950ebb9417711cb. The source diff is limited to the new Y5-1 axis plan, dat/profile dispatch and its focused tests; no operator, quadrature, cutoff, assembly or solve arithmetic changed.",
+  "thresholds": {
+    "R00_s_R00_total_abs": 1e-06,
+    "boundary_complex_amplitude_relative_l2_no_phase_fit": 0.0001,
+    "each_channel_R_T_abs_all_612_and_power_carrying": 1e-06,
+    "global_R_T_A_balance_A_volume_abs": 1e-05,
+    "same_coordinate_complex_E_H_relative_l2_no_phase_fit": 0.0001
+  }
+}
