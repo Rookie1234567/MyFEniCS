@@ -1,0 +1,56 @@
+{
+  "schema": "task40.d15.y4.display-name-map.v1",
+  "status": "DISPLAY_ALIAS_ONLY_NO_INPUT_OR_RUN_IDENTITY_CHANGE",
+  "purpose": "The user names the three authorized 12-layer D15 allocations as Y4-1, Y4-2, and Y4-3. Frozen internal case/profile/input/run identities are retained for reproducibility.",
+  "common_contract": {
+    "parent_case": "Y3_2",
+    "axis_cell_counts": [6, 12, 6],
+    "total_cells": 432,
+    "fixed_x_axis_sha256": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "fixed_z_axis_sha256": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6",
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "active_mode_count": 612,
+    "surface_quadrature_degree": 28,
+    "volume_quadrature": {"degree": 15, "rule": "default"},
+    "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "sparse_cutoff_relative_tolerance": 1e-13,
+    "comparison_gates": {
+      "global_R_T_A_balance_A_volume_abs_max": 1e-5,
+      "all_common_and_power_carrying_channel_R_T_abs_max": 1e-6,
+      "boundary_complex_relative_l2_no_phase_fit_max": 1e-4,
+      "same_coordinate_complex_E_H_relative_l2_no_phase_fit_max": 1e-4
+    }
+  },
+  "display_cases": [
+    {
+      "display_name": "Y4-1",
+      "internal_case": "Y3_3",
+      "segment_counts_y": [3, 6, 3],
+      "axis_sha256_le_f64": "ceb0f46c6ab238890679d9673de348344307d4acdb1acbd08e1155b6e76162ec",
+      "expected_midpoint_tags_air_substrate_grating": [312, 72, 48],
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d15_y3_3_r13_p6_direct.dat",
+      "profile_and_run_id": "task40_phi90_13p5_D15_Y3_3_p6_direct_v1"
+    },
+    {
+      "display_name": "Y4-2",
+      "internal_case": "Y3_4",
+      "segment_counts_y": [2, 8, 2],
+      "axis_sha256_le_f64": "cd6ef7bb13dfcb1906d4e583bb1f75616531b3b917ecb2913dd93d4ee739109e",
+      "expected_midpoint_tags_air_substrate_grating": [296, 72, 64],
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d15_y3_4_r13_p6_direct.dat",
+      "profile_and_run_id": "task40_phi90_13p5_D15_Y3_4_p6_direct_v1"
+    },
+    {
+      "display_name": "Y4-3",
+      "internal_case": "Y4_4_4",
+      "segment_counts_y": [4, 4, 4],
+      "axis_sha256_le_f64": "025e40390932986d8f37dd36795bb67a66fb274b642aec1bb6299744861b6ed0",
+      "expected_midpoint_tags_air_substrate_grating": [328, 72, 32],
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d15_y4_4_4_r13_p6_direct.dat",
+      "profile_and_run_id": "task40_phi90_13p5_D15_Y4_4_4_p6_direct_v1"
+    }
+  ],
+  "naming_note": "Use Y4-1/2/3 in user-facing reports and comparison tables; preserve internal_case/profile_and_run_id exactly in provenance. The older D15 case named Y3 remains distinct and is not renamed. This record supersedes only the display-label interpretation in the static-axis plan, not its coordinates, tags, or hashes.",
+  "execution_order": ["Y4-1", "Y4-2", "Y4-3"],
+  "runtime_status": "NOT_STARTED_AT_RECORD_CREATION"
+}

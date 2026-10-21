@@ -25,6 +25,6 @@
 
 以下状态更新 supersedes 上述表格中“下一场为 R14”的旧指针；历史任务顺序和结果不作改写。D15-Y3-2 已自然结束，run `20261021T084703.634131Z` 的单场凝聚、独立 A6 与能量门通过，但 Y2→Y3-2 全通道 R 门以 `1.0804674384e-6` 略超 `1e-6`，Y3↔Y3-2 三组网格比较均失败。
 
-按用户授权，当前准备三个同总量 y 分配，均以 Y3-2 `[2,6,2]` 为共同父方案、固定 x/z、612 模式、q28/q15 和 relative-only 算子身份，彼此不是累计细化：Y3-3 `[3,6,3]`、Y3-4 `[2,8,2]`、用户 Y4 组的独立标签 `Y4_4_4` `[4,4,4]`；三场均 `[6,12,6]` / 432 cells。静态轴、SHA、中点 tag 预测和主控对早期 tag 算术的更正见 `outcomes/records/d15_y3_2_siblings_static_axis_v2.json`；其独立 tag 为 Y3-3 `312/72/48`、Y3-4 `296/72/64`、Y4_4_4 `328/72/32`（air/substrate/grating）。这些是规划预测，不是 live mesh QA。三场按序 fresh/单场运行，每场均依全球量、全部612共同/功率承载通道、边界复幅和同坐标复场三组既定门比较；不通过时保留失败证据。
+按用户授权，当前顺序执行三个同总量 y 分配，均以 Y3-2 `[2,6,2]` 为共同父方案、固定 x/z、612 模式、q28/q15 和 relative-only 算子身份，彼此不是累计细化。统一展示名与冻结内部 case/run 身份如下：Y4-1=`Y3_3` `[3,6,3]`、Y4-2=`Y3_4` `[2,8,2]`、Y4-3=`Y4_4_4` `[4,4,4]`；三场均 `[6,12,6]` / 432 cells。展示名映射及轴身份见 `outcomes/records/d15_y4_display_name_map_20261021.json`，完整静态轴与 SHA 见 `outcomes/records/d15_y3_2_siblings_static_axis_v2.json`。独立中点 tag 预测按 air/substrate/grating 分别为 Y4-1 `312/72/48`、Y4-2 `296/72/64`、Y4-3 `328/72/32`；这是计划预测，不是 live mesh QA。三场按序 fresh/单场运行，每场均依全球量、全部612共同/功率承载通道、边界复幅和同坐标复场三组既定门比较；不通过时保留失败证据。
 
 Y3-2 离线比较 v1 保留原样；v2 只纠正 Y2→Y3-2 全局差值字段的 case 标签，未重算数值。详情见 `outcomes/records/d15_y2_y3_y3_2_saved_output_comparison_20261021_v2.json`。`FULL_DTN_NOT_VERIFIED` 与 canonical sidewall `NOT_MEASURED` 继续有效。

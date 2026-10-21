@@ -1,4 +1,8 @@
-# D15-Y3-2 结果与同层 sibling 准备（2026-10-21）
+# D15-Y3-2 结果与 Y4 同层分配（2026-10-21）
+
+## 统一展示名
+
+本轮用户将三个同为 12 层 y 分配的 D15 case 统一命名为 Y4-1/2/3。内部 profile、input、run_id 与已冻结身份保持不变：Y4-1=`Y3_3`（3/6/3），Y4-2=`Y3_4`（2/8/2），Y4-3=`Y4_4_4`（4/4/4）。后续报告、总账、比较表均以 Y4-1/2/3 为展示名，并同时保留内部 case/run_id 供溯源；别名表见 `records/d15_y4_display_name_map_20261021.json`。
 
 ## Y3-2 单场终态
 
@@ -21,10 +25,12 @@ Run：`results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y3_2_p6_dir
 
 | case | y 每段 cell | y 坐标 nm | y SHA256 (little-endian f64) | 预期 air/substrate/grating tags |
 |---|---|---|---|---|
-| Y3-3 | 3/6/3 | 0, 5, 10, 15, 18.333333333333332, 21.666666666666668, 25, 28.333333333333336, 31.666666666666668, 35, 40, 45, 50 | `ceb0f46c…e76162ec` | 312/72/48 |
-| Y3-4 | 2/8/2 | 0, 7.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 42.5, 50 | `cd6ef7bb…739109e` | 296/72/64 |
-| Y4_4_4 | 4/4/4 | 0, 3.75, 7.5, 11.25, 15, 20, 25, 30, 35, 38.75, 42.5, 46.25, 50 | `025e4039…61b6ed0` | 328/72/32 |
+| 展示名 | 内部 case | y 每段 cell | y 坐标 nm | y SHA256 (little-endian f64) | 预期 air/substrate/grating tags |
+|---|---|---|---|---|---|
+| Y4-1 | Y3_3 | 3/6/3 | 0, 5, 10, 15, 18.333333333333332, 21.666666666666668, 25, 28.333333333333336, 31.666666666666668, 35, 40, 45, 50 | `ceb0f46c…e76162ec` | 312/72/48 |
+| Y4-2 | Y3_4 | 2/8/2 | 0, 7.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 42.5, 50 | `cd6ef7bb…739109e` | 296/72/64 |
+| Y4-3 | Y4_4_4 | 4/4/4 | 0, 3.75, 7.5, 11.25, 15, 20, 25, 30, 35, 38.75, 42.5, 46.25, 50 | `025e4039…61b6ed0` | 328/72/32 |
 
 主控更正了早期 Y4 tag 算术；保留坐标与材料几何时，中点分类为 `2 x-center × 4 y-center × 4 z-interior = 32` grating、`6 x × 12 y × 1 bottom-z = 72` substrate、剩余 328 air。静态计划 v1 只列 Y3-3/Y3-4，SHA `d8c90a6bfb603fa835450e3a30f8922de4adaf40ab11c7a72d915a90f855317a`；v2 加入独立 Y4_4_4 标签并保留该更正，SHA `9ad27c53e6668aeace605dbcbf47053aeccecc1102a383fb3864861811aa22fd`。这只是轴/hash/tag 规划；实际 mesh QA 必须由每场运行验证。
 
-定向 Task40 D15 planner/profile/mesh QA/manifest→worker tests：`25 passed / 1.20 s`。测试经 Task40 PORD64 activation，无 mesh/FE 计算。后续按 Y3-3、Y3-4、Y4_4_4 顺序运行；每场比较共同父 Y3-2及其他已完成 sibling，使用三组原门。每场运行前重新 fresh，不并发。canonical sidewall 仍 `NOT_MEASURED`，有限 R13 rectangle 仍不构成 full-DtN qualification。
+定向 Task40 D15 planner/profile/mesh QA/manifest→worker tests：`25 passed / 1.20 s`。测试经 Task40 PORD64 activation，无 mesh/FE 计算。后续按 Y4-1、Y4-2、Y4-3 顺序运行；每场比较共同父 Y3-2及其他已完成 sibling，使用三组原门。每场运行前重新 fresh，不并发。canonical sidewall 仍 `NOT_MEASURED`，有限 R13 rectangle 仍不构成 full-DtN qualification。
