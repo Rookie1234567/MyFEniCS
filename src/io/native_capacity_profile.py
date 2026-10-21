@@ -131,7 +131,9 @@ TASK40_PHI90_H15_PROFILES = {
 # is an identity-based reuse alias to the completed H15-B result.
 TASK40_PHI90_D15_PROFILES = {
     f"task40para_phi90_13p5_D15_{case}_p6_direct_v1": case
-    for case in ("B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Z1", "Z3")
+    for case in (
+        "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y3_2", "Z1", "Z3"
+    )
 }
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
     "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
@@ -1440,7 +1442,6 @@ def _task40_phi90_d15_profile_facts(identity):
 
     from src.geometry.task40_phi90_d15_axis_plan import (
         D15_CASES,
-        D15_STATIC_PLAN_SHA256,
         D15_Z2_HISTORICAL_REUSE,
         d15_axis_plan,
     )
@@ -1508,10 +1509,9 @@ def _task40_phi90_d15_profile_facts(identity):
                 plan["nestedness_from_previous_level"]
             ),
             "static_plan_record": (
-                "docs/task40para_phi90_mesh_modes_direct/outcomes/records/"
-                "d15_static_axis_plan_v2.json"
+                plan["static_plan_record"]
             ),
-            "static_plan_sha256": D15_STATIC_PLAN_SHA256,
+            "static_plan_sha256": plan["static_plan_sha256"],
             "historical_D15_Z2_role_reuse": (
                 dict(D15_Z2_HISTORICAL_REUSE) if case_name == "B" else None
             ),
@@ -1544,7 +1544,7 @@ def _task40_phi90_d15_profile_facts(identity):
     base["campaign_authorization"]["direct_route"]["mesh_target_nm"] = 15.0
     base["campaign_authorization"]["direct_route"]["d15_axis_case"] = case_name
     base["campaign_authorization"]["direct_route"]["d15_static_plan_sha256"] = (
-        D15_STATIC_PLAN_SHA256
+        plan["static_plan_sha256"]
     )
     base["campaign_authorization"]["direct_route"]["reuse_D15_Z2_without_new_run"] = True
     base["resources"]["rss_hard_limit_bytes"] = None

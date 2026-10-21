@@ -129,8 +129,8 @@ def test_d15_inputs_resolve_to_frozen_planner_route_and_independent_tags(case):
     assert facts["resources"]["rss_hard_limit_bytes"] is None
     assert facts["full_dtn_status"] == "FULL_DTN_NOT_VERIFIED"
     assert directional["mesh_plan_family"] == "d15"
-    assert directional["static_plan_record"] == D15_STATIC_PLAN_RECORD
-    assert directional["static_plan_sha256"] == D15_STATIC_PLAN_SHA256
+    assert directional["static_plan_record"] == plan["static_plan_record"]
+    assert directional["static_plan_sha256"] == plan["static_plan_sha256"]
     assert directional["expected_axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
     assert tuple(route["expected_axis_cell_counts"]) == tuple(plan["axis_cell_counts"])
     assert route["expected_global_cell_count"] == plan["expected_global_cell_count"]
@@ -216,6 +216,38 @@ def test_d15_y3_user_correction_and_static_record_supersede_v1():
     ] == {"air": 268, "substrate": 60, "grating": 32}
 
 
+def test_d15_y3_2_uses_supplemental_2_6_2_axes_and_independent_tags():
+    plan = D15_AXIS_PLANS["Y3_2"]
+    assert plan["plan_id"] == "task40_phi90_d15_y3_2_axes_v1"
+    assert plan["axis_cell_counts"] == [6, 10, 6]
+    assert plan["expected_global_cell_count"] == 360
+    assert plan["segment_cell_counts"] == {
+        "x": [2, 2, 2], "y": [2, 6, 2], "z": [1, 4, 1]
+    }
+    assert tuple(plan["axes_nm"]["y"]) == (
+        0.0, 7.5, 15.0, 18.333333333333332, 21.666666666666668,
+        25.0, 28.333333333333336, 31.666666666666668, 35.0, 42.5, 50.0
+    )
+    assert plan["axes_nm"]["x"] == D15_AXIS_PLANS["B"]["axes_nm"]["x"]
+    assert plan["axes_nm"]["z"] == D15_AXIS_PLANS["B"]["axes_nm"]["z"]
+    assert plan["axis_sha256_le_f64"]["x"] == D15_AXIS_PLANS["B"]["axis_sha256_le_f64"]["x"]
+    assert plan["axis_sha256_le_f64"]["z"] == D15_AXIS_PLANS["B"]["axis_sha256_le_f64"]["z"]
+    assert plan["static_midpoint_tags"] == {
+        "air": 252, "substrate": 60, "grating": 48
+    }
+    assert plan["parent_case"] == "B"
+    assert plan["previous_case"] == "Y3"
+    assert plan["nestedness_from_previous_level"] is False
+    supplement = ROOT / plan["static_plan_record"]
+    assert hashlib.sha256(supplement.read_bytes()).hexdigest() == plan["static_plan_sha256"]
+    resolved = load_and_resolve(D15_INPUTS["Y3_2"]).as_jsonable()
+    discretization = resolved["discretization"]
+    assert tuple(discretization["mesh_axis_cell_counts"]) == (6, 10, 6)
+    assert tuple(discretization["mesh_axis_y_values"]) == tuple(plan["axes_nm"]["y"])
+    assert discretization["mesh_plan_id"] == plan["plan_id"]
+    assert discretization["mesh_plan_sha256"] == plan["mesh_plan_sha256"]
+
+
 def test_d15_z2_is_exact_h15_b_historical_reuse_not_a_launch_input():
     plan = D15_AXIS_PLANS["Z2"]
     reuse = D15_Z2_HISTORICAL_REUSE
@@ -269,7 +301,7 @@ def test_d15_axis_validator_fails_closed_on_y3_axis_drift():
         validate_frozen_d15_axes(wrong_hash)
 
 
-@pytest.mark.parametrize("case", ("B", "Y3"))
+@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2"))
 def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case):
     specification = load_and_resolve(D15_INPUTS[case])
     run_directory = (tmp_path / "run").resolve()
@@ -306,6 +338,14 @@ def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case
         )
         assert directional["expected_material_tag_counts"] == {
             "1": 268, "2": 60, "3": 32
+        }
+    if case == "Y3_2":
+        assert tuple(directional["segment_cell_counts"]["y"]) == (2, 6, 2)
+        assert tuple(normalized["discretization"]["mesh_axis_y_values"]) == tuple(
+            D15_AXIS_PLANS["Y3_2"]["axes_nm"]["y"]
+        )
+        assert directional["expected_material_tag_counts"] == {
+            "1": 252, "2": 60, "3": 48
         }
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
     assert manifest["component_options"] == thaw(profile["component_options"])

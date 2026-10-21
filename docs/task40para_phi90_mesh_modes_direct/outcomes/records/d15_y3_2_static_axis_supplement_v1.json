@@ -1,0 +1,123 @@
+{
+  "axes_nm": {
+    "x": [
+      0.0,
+      8.25,
+      16.5,
+      25.0,
+      33.5,
+      41.75,
+      50.0
+    ],
+    "y": [
+      0.0,
+      7.5,
+      15.0,
+      18.333333333333332,
+      21.666666666666668,
+      25.0,
+      28.333333333333336,
+      31.666666666666668,
+      35.0,
+      42.5,
+      50.0
+    ],
+    "z": [
+      -10.0,
+      0.0,
+      30.0,
+      60.0,
+      90.0,
+      120.0,
+      130.0
+    ]
+  },
+  "axis_cell_counts": [
+    6,
+    10,
+    6
+  ],
+  "axis_sha256_le_f64": {
+    "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "y": "9adb867e3e11b08db1999e8e9710aec3027c64cb2f4c3c580afc469af04b21a6",
+    "z": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+  },
+  "case": "Y3-2",
+  "changed_axis": "y",
+  "comparison_cases": [
+    "Y2",
+    "Y3"
+  ],
+  "comparison_thresholds": {
+    "boundary_complex_relative_l2_no_phase_fit": 0.0001,
+    "global_R_T_A_balance_A_volume_abs": 1e-05,
+    "per_mode_R_T_all_612_and_power_carrying_abs": 1e-06,
+    "same_coordinate_E_H_relative_l2_no_phase_fit": 0.0001
+  },
+  "expected_global_cell_count": 360,
+  "expected_midpoint_material_tags": {
+    "air": 252,
+    "grating": 48,
+    "substrate": 60
+  },
+  "interpretation": "Same x/z axes as D15-B; only y differs. This allocation raises y total to 10 while putting six cells inside the grating interval and two on each exterior interval. It is compared against both Y2 and Y3 using all three unchanged mesh-comparison gate groups; it is not a solver qualification or full-DtN verification.",
+  "material_breakpoints_nm": {
+    "x": [
+      0.0,
+      16.5,
+      33.5,
+      50.0
+    ],
+    "y": [
+      0.0,
+      15.0,
+      35.0,
+      50.0
+    ],
+    "z": [
+      -10.0,
+      0.0,
+      120.0,
+      130.0
+    ]
+  },
+  "nestedness": {
+    "from_B": true,
+    "from_Y2": false,
+    "from_Y3": false
+  },
+  "no_live_mesh_or_FE_claim": true,
+  "parent_case": "B",
+  "preserved_contract": {
+    "canonical_sidewall": "NOT_MEASURED",
+    "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+    "full_dtn": "FULL_DTN_NOT_VERIFIED",
+    "mode_count": 612,
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "surface_quadrature_degree": 28,
+    "volume_quadrature_degree": 15,
+    "volume_quadrature_rule": "default"
+  },
+  "schema": "task40.d15.static_axis_supplement.v1",
+  "segment_cell_counts": {
+    "x": [
+      2,
+      2,
+      2
+    ],
+    "y": [
+      2,
+      6,
+      2
+    ],
+    "z": [
+      1,
+      4,
+      1
+    ]
+  },
+  "status": "FROZEN_CANDIDATE_FOR_ONE_AUTHORIZED_RUN",
+  "supersedes": null,
+  "wavelength_nm": 13.5
+}
