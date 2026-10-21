@@ -1,6 +1,23 @@
 # Task41 阶段结果
 
-> **当前最新阶段：Task41extra Review V6；28,000 个 actual 几何键已构建，完整两列作用未通过原数值门。** 八个局部代表键均通过 `1e-11`；最终保存证据 checker 审计完成、数据完整，但 top/bottom 完整作用冻结分母相对误差为 `1.7183209126709868e-10` / `3.6180522433957604e-10`，均高于 `1e-11`，所以 `official_result=false`。按照 Review V6 停止，不启动 200q、factor、KSP/FGMRES、完整场、A6 或 official R/T/A。入口：[V6 response](../response_v6.md)、[V6 compact](b0_v6_actual_qmetric_full_action_failed_20261021.json)、[174项数组哈希索引](b0_v6_actual_qmetric_hash_index_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。
+> **当前最新阶段：Task41extra Review V8 selected-star 局部复核；未形成全域candidate资格。** V6 candidate 原完整两列action仍失败（相对误差`1.7183209126709868e-10` / `3.6180522433957604e-10`，限值`1e-11`）；V8未重跑这两列。V8较早的producer扫描28,000-cell metadata并仅重建目标行两个incident cells的缺失局部张量；此后的独立checker attempts 1–4 为saved-only。V8完成304个保存向量复算，另做局部RHS次序反事实，但saved donor完整action仍失败；candidate数值状态未重验，`official_result=false`。不进入200q、factor、KSP/FGMRES、完整场、A6或official R/T/A。入口：[V8 response](../response_v8.md)、[V8 compact](b0_v8_selected_trace_star_audit_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。
+
+## Task41extra Review V8：目标行局部证据与失败边界
+
+该任务是三维p6 Maxwell离散。active trace row 4,766,937映射到original full-storage row 15,440,235，关联cell 23352和23493。producer只补取这两个单元的candidate/reference局部张量与R/T/S；后续checker只读保存数据。V6 candidate完整action的两列仍分别为`1.7183209126709868e-10`和`3.6180522433957604e-10`，均超过`1e-11`；V8另行重放的donor两列为`3.0421186782950706e-10`和`6.391893878206601e-10`，也失败。donor recovery通过不属于candidate。
+
+| 项目 | 实测结果 | 解释与资格边界 |
+|---|---|---|
+| V8 producer范围 | 扫描28,000个单元metadata；只重建两个incident cells的缺失局部candidate/reference张量与R/T/S | 无全域FE assembly、PDE或完整作用求解 |
+| 行与单元身份 | active trace row 4,766,937 → original full-storage row 15,440,235；cell 23352、23493 | selected row仅关联这两格；局部I/T位置见response和compact |
+| V6 candidate full action | top/bottom相对差`1.7183209126709868e-10` / `3.6180522433957604e-10` | 原`1e-11`门失败；V8没有重跑candidate全域作用 |
+| 保存 donor action replay | top/bottom相对差`3.0421186782950706e-10` / `6.391893878206601e-10` | 独立donor证据，非candidate结果；门失败 |
+| 局部RHS反事实 | candidate-reference投影差top `2.433304760925843e-9 → 5.157211896343317e-10`，bottom `4.976414600781769e-9 → 7.809377196826238e-10` | 只覆盖两个单元与目标行；不是全域根因或production pass；候选改动位于`src/solvers/p6_cell_condensed_action.py::reduce_rhs`，尚未实施 |
+| 已知V8 service成本 | 五个非重叠父段合计`1005.333930809905 s` | 子时钟已包含；两次prepare错误和未计量工程准备为UNKNOWN，不充作冷流程成本 |
+| 资格与下一步 | candidate recovery、完整两列重验、200q/因子/完整场/A6/R/T/A未完成 | `official_result=false`；不得据局部结果进入下一数值阶段 |
+
+V8的五段服务、3次checker失败、24个诊断数组hash与两次无service的prepare错误见[response](../response_v8.md)、[compact](b0_v8_selected_trace_star_audit_20261021.json)和[run index](run_index.json)。
+
 
 ## Task41 B0 V6：候选构建成功，完整作用门失败
 
@@ -302,3 +319,17 @@ V7在既有数组上完成saved-only审核。旧完整归因式漏减端口项B�
 原full-action两列相对误差为1.7183209126709868e-10和3.6180522433957604e-10，限值1e-11，仍失败；最大误差行4,766,937。V6候选初始恢复forward误差1.981377497384616e-11和1.979023053583157e-11，也高于1e-11；native volume residual低于1e-10，但不抵消forward失败。历史donor经三次同LU修正的通过证据不转给V6候选。P3仅复核现存八键矩阵；目标行incident-cell映射及局部分项缺失，故不重建映射或重扫carrier。历史字段S_minus_L_plus_JR=0不能证明V7的E_S为0。
 
 V7受监督saved-only服务父时长250.111 s，watchdog子时长200.484 s（包含于父时长）；RSS树峰值9,049,808,896 B、job-cgroup峰值1,801,805,824 B、tree/cgroup swap均0、后代清场。截至2026-10-21T02:43:30.736292140Z的监督账本快照累计58,891.482 s，当时数值余额26,308.518 s、总余额27,508.518 s（不是后续启动余额）。详见[response_v7](../response_v7.md)和[V7 compact](b0_v7_saved_attribution_20261021.json)。official_result=false；200q、factor、KSP/FGMRES、完整场及A6/R/T/A均未运行。
+
+## Task41extra Review V8：目标行保存数据审计完成，科学门仍失败（2026-10-21）
+
+| 项目 | V8 结果与解释 | 证据 |
+|---|---|---|
+| checker 与保存数据 | attempt4 saved-only checker 完成；数据完整，donor recovery replay 通过，joint action 失败，candidate 全域门未重验，qualification=false、official_result=false | [V8 response](../response_v8.md)、[V8 compact](b0_v8_selected_trace_star_audit_20261021.json) |
+| checker 修正 | 将V7 grouped-left中间项与候选保存closure分开；候选两列、j0/j3在两个顺序下共16行复算；参考closure重新计算并标明没有saved reference closure字段 | [V8 compact](b0_v8_selected_trace_star_audit_20261021.json) |
+| 目标行局部 RHS 诊断 | active row 4,766,937 的两个incident cells为23352/23493；4个严格局部LU、8次RHS solve，候选/参考投影g差分别由2.4333e-9降至5.1572e-10、由4.9764e-9降至7.8094e-10。局部现象不构成全域通过 | [V8 response](../response_v8.md) 与 compact |
+| 原始 action | 保存donor两列差为3.0421186782950706e-10和6.391893878206601e-10，高于原1e-11；V6候选既有action失败状态不改变，V8没有重跑它 | V8 compact；V6结果仍保留 |
+| 运行资源 | attempt4父service 157.833339 s，watchdog子段116.206022 s（不重复相加）；tree RSS 4,001,955,840 B，task cgroup 854,421,504 B，swap0，后代清理完成 | V8 compact |
+| evidence | 新增24个counterfactual数组13,085,472 B；存档累计14,789,864,384 B，小于16 GiB cap；compact列出每个数组的SHA-256、dtype和shape | V8 compact |
+| 下一步边界 | 可由主控评估 reduce_rhs 的 -J solve(K,b_i) 局部稳定性建议；实施或全域重验尚未授权。200q、factor/KSP、完整场、A6和R/T/A均未运行 | V8 response |
+
+V8的局部反事实支持进一步审阅 RHS reduction 的求值次序：从同一保存K、J和b_i直接求 -J solve(K,b_i)，而非先形成T后乘b_i。它增加每个RHS的三角求解和J应用成本；本轮没有改生产路径，也未证明参考d或完整action改善。原始完整作用门仍失败，不能用局部投影差距缩小替代全域两列requalification。

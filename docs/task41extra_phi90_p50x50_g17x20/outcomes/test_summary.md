@@ -291,3 +291,15 @@ V6 文档合同回归（主控提供的本机记录）：资格化 activation �
 执行者首轮终端记录：**10 passed, 48 deselected, 0.94 s**；该首轮没有另存raw log。主控同source的最终定向复验与日志hash见下。文档收口另完成compact JSON解析、证据字节/SHA核对、链接检查和git diff --check；没有重跑昂贵科学数据、全仓pytest、Ruff或PDE。
 
 V7主控最终同source定向复验：10 passed / 48 deselected / 1.13 s，qualified WSL complex128/int32。命令及原始日志绑定见 V7 compact tests；SHA-256 `3b36563d720a44cfdf0571940f63900a595adc5d5a7fb795cf52b5e799a88b6b`。无全仓/PDE/CI声明。
+
+## Task41extra Review V8 checker 修正与保存审计（2026-10-21）
+
+V8有三组定向回归。表中SHA是补丁测试后冻结的source身份；测试在对应提交前工作树执行，并非声称测试时HEAD已是该SHA。日志hash未单独保存时标为`NOT_RECORDED`。
+
+| 补丁随后冻结的source SHA | 定向命令 | 结果 | 边界 |
+|---|---|---|---|
+| `6021691906a8d4db48a0261140c6601027ad49a8` | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q --tb=short src/test/test_task41_p0_saved_output_continuation.py src/test/test_task41_v8_selected_trace_star.py -k 'test_b0_saved_evidence_audit_uses_supervised_service_route or test_v8_legacy_missing_checker_field_is_exact_hash_and_identity_bound'` | 首轮10 passed/38 deselected，0.59 s；最终复验10 passed/38 deselected，0.62 s | saved-only service路由与legacy字段身份约束；日志SHA `NOT_RECORDED` |
+| `23ba24414a02d9e4e8e921ff97d48d5d1d9d1fe0` | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q --tb=short src/test/test_task41_v8_selected_trace_star.py -k 'v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only or v8_selected_scalar_replay_matches_p3_producer_schema or v8_rhs_counterfactual_uses_original_full_storage_row_once'` | 首轮3 passed/8 deselected，0.44 s；最终3 passed/8 deselected，0.41 s；`git diff --check`通过 | 保存复数向量、P3 schema和full-storage row mapping；日志SHA `NOT_RECORDED` |
+| `3ce1a158e3e0b6556a2e094755adf9b5bd18ae08` | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q --tb=short src/test/test_task41_v8_selected_trace_star.py::test_v8_ordered_summary_keeps_grouped_left_distinct_from_closure` | 1 passed in 0.51 s | V7 grouped-left与closure字段映射；不是科学门/PDE通过 |
+
+前两组是在相应源码冻结前执行的定向测试，最终组对应checker映射修正。qualified activation preflight为PETSc complex128/int32，同一Linux ABI栈。V8收口未运行全仓pytest、GitHub CI或PDE。曾尝试`python -m ruff`，返回`No module named ruff`，因此Ruff检查未完成；没有安装依赖，原错误保留。保存审计成功不等于V6 candidate full-action通过。

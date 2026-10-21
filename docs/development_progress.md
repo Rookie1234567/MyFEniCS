@@ -1,4 +1,12 @@
-## Task41extra Review V6 最新状态：候选已建成，完整作用门失败（2026-10-21）
+## Task41extra Review V8：目标行局部复核完成，全域candidate门仍失败（2026-10-21）
+
+本轮先由selected-star producer扫描28,000个单元metadata并为目标行仅重建cell 23352、23493缺失的candidate/reference局部张量和R/T/S；随后checker attempts 1–4只读保存数据。active trace row 4,766,937映射到original full-storage row 15,440,235。saved-only checker在冻结source `3ce1a158e3e0b6556a2e094755adf9b5bd18ae08`下完成304个保存向量复算、16个ordered P3 summary rows及目标行局部误差诊断。
+
+V6 candidate原完整两列action仍为`1.7183209126709868e-10` / `3.6180522433957604e-10`，均超过原`1e-11`；V8未重跑candidate全域action/recovery。保存donor action replay为`3.0421186782950706e-10` / `6.391893878206601e-10`，同样失败。局部`-J solve(K,b_i)`反事实只显示两个incident cells上的投影差缩小，参考`d`没有改善；无全域根因证明或production变更。
+
+五个已知service父段合计`1005.333930809905 s`，两个prepare错误和未计量工程准备成本`UNKNOWN`；checker子段不重复加。attempt3 service为173.562185 s，attempt4为157.833339 s；task swap均0、后代已清理。V8 final checker审核完成，但candidate qualification与official结果仍false。200q、factor/KSP、完整场、A6及R/T/A均未运行。完整账目、attempt哈希和24数组索引见[response V8](task41extra_phi90_p50x50_g17x20/response_v8.md)、[V8 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v8_selected_trace_star_audit_20261021.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)与[test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
+
+## Task41extra Review V6 历史快照：候选已建成，完整作用门失败（2026-10-21)
 
 本轮在 `actual_qmetric_blocked_gram` 路径上完成了 28,000 个实际几何键，并通过八个代表键的局部张量检查。该路径共享参考基函数表、把局部矩阵乘加分块，目的是减少每个单元重复计算；它会改变浮点求和顺序，所以仍需原有完整两列门裁决。冻结分母下，top/bottom 完整 p6/native 作用相对误差为 `1.7183209126709868e-10` / `3.6180522433957604e-10`，均超过 `1e-11`；saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。不进入 200q、factor、KSP/FGMRES、完整场、独立 A6 或 R/T/A。
 

@@ -1,0 +1,2932 @@
+{
+  "schema": "task41.p0.v8.saved_checker_closeout.v1",
+  "date": "2026-10-21",
+  "task": "Task41extra Review V8 selected-trace-star saved-evidence audit",
+  "run": {
+    "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+    "invocation_id": "6e8991ded3534f3aa27e961630bb8374",
+    "attempt4_service": "task41-v8-check-3ce1a158-20261021t092516z.service",
+    "attempt4_output_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_saved_checker_3ce1a158_20261021T092516Z_attempt4",
+    "selected_trace_star_producer_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_selected_star_35fd1bbf_20261021T072801Z_attempt1",
+    "donor_run_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z",
+    "checker_source_sha": "3ce1a158e3e0b6556a2e094755adf9b5bd18ae08",
+    "checker_contract_sha256": "40bebce4e1845252ff99e9dbe39fc72d626250befdd72c69ef211efd569bc754",
+    "fixed_window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+    "candidate_producer_source_sha": "35fd1bbf2bca13bd17e89cc79cf7cd825b94411c",
+    "candidate_producer_contract_sha256": "a6a69b75e48572d59ae73f12a9424b06a3accdca957c6a32b5c72bcf2fb867da",
+    "candidate_report_sha256_rechecked": "1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f",
+    "donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+    "donor_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c"
+  },
+  "attempt4_checker_result": {
+    "status": "COMPLETE",
+    "audit_completed": true,
+    "data_integrity": true,
+    "saved_donor_recovery_recheck_passed": true,
+    "joint_action_passed": false,
+    "qualification_passed": false,
+    "candidate_numerical_passed": null,
+    "formal_candidate_or_residual_gate_changed": false,
+    "official_result": false,
+    "local_saved_vector_recomputations": 304,
+    "ordered_p3_summary_rows_recomputed": 16,
+    "incident_cells": [
+      23352,
+      23493
+    ],
+    "authorized_source_array_counts": {
+      "v6": 140,
+      "v7": 8,
+      "v8": 840
+    },
+    "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_saved_checker_3ce1a158_20261021T092516Z_attempt4/task41_p0_b0_saved_evidence_audit.json",
+    "report_bytes": 114018,
+    "report_sha256": "b12af06f818dd4a93443498371aa653216b1646207418f8eaac265e09ddf78c6",
+    "producer_report_sha256_rechecked": "1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f"
+  },
+  "saved_original_full_action": {
+    "threshold": 1e-11,
+    "columns": [
+      {
+        "column": 0,
+        "mode_index": 16030,
+        "relative_error": 3.0421186782950706e-10,
+        "absolute_l2": 6.770178089430243e-07,
+        "original_denominator": 2225.481253487629,
+        "max_abs_row_index_reduced_vector": 5458716,
+        "port_difference_l2": 0.0,
+        "gate": "FAIL"
+      },
+      {
+        "column": 1,
+        "mode_index": 48090,
+        "relative_error": 6.391893878206601e-10,
+        "absolute_l2": 1.4225036541037616e-06,
+        "original_denominator": 2225.4807123031883,
+        "max_abs_row_index_reduced_vector": 5458716,
+        "port_difference_l2": 0.0,
+        "gate": "FAIL"
+      }
+    ],
+    "interpretation": "Saved donor action replay; gate remains failed and no new FE/PDE solve was run."
+  },
+  "saved_donor_recovery": {
+    "scope": "Historical donor replay only; not V6 candidate recovery qualification.",
+    "columns": [
+      {
+        "column": 0,
+        "mode_index": 16030,
+        "initial_forward_relative": 2.045408389927967e-11,
+        "initial_gate_passed": false,
+        "same_lu_steps_replayed": 3,
+        "final_forward_relative": 8.452404647963959e-14,
+        "final_gate_passed": true,
+        "native_volume_residual_relative": 5.198444248305058e-16
+      },
+      {
+        "column": 1,
+        "mode_index": 48090,
+        "initial_forward_relative": 2.0406316710485045e-11,
+        "initial_gate_passed": false,
+        "same_lu_steps_replayed": 3,
+        "final_forward_relative": 8.462099738746e-14,
+        "final_gate_passed": true,
+        "native_volume_residual_relative": 5.177707803728547e-16
+      }
+    ]
+  },
+  "selected_trace_row": {
+    "active_trace_row": 4766937,
+    "mapped_original_full_storage_row": 15440235,
+    "incident_cell_count": 2,
+    "incident_cells": [
+      23352,
+      23493
+    ],
+    "ordered_p3_rows": [
+      {
+        "role": "candidate",
+        "column": 0,
+        "state": "j0",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          -2.516118874422491e-09,
+          -1.3884302795759863e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.516118874422491e-09,
+          -1.3884302795759863e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -5.5638262968987926e-11,
+          -1.644751242796985e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -5.5638262968987926e-11,
+          -1.644751242796985e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "state": "j0",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          -2.51611887442259e-09,
+          -1.388430279576036e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.51611887442259e-09,
+          -1.388430279576036e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -2.184991783964469e-09,
+          -1.2190787792239617e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -2.184991783964469e-09,
+          -1.2190787792239617e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      },
+      {
+        "role": "candidate",
+        "column": 0,
+        "state": "j3",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          -2.536441155856294e-09,
+          -1.3931147928278036e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.536441155856294e-09,
+          -1.3931147928278036e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          9.915291272318565e-12,
+          1.7243740923508842e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          9.915291272318565e-12,
+          1.7243740923508842e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "state": "j3",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          -2.536441155856293e-09,
+          -1.3931147928278044e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.536441155856293e-09,
+          -1.3931147928278044e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -2.1006269691678414e-09,
+          -1.2359322763807884e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -2.1006269691678414e-09,
+          -1.2359322763807884e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "state": "j0",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          2.9430600338918144e-09,
+          -4.687612283707516e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          2.9430600338918144e-09,
+          -4.687612283707516e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -5.517700079373241e-11,
+          2.6029110031535152e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -5.517700079373241e-11,
+          2.6029110031535152e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "state": "j0",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          2.94306003389198e-09,
+          -4.687612283707747e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          2.94306003389198e-09,
+          -4.687612283707747e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          2.5783791011790526e-09,
+          -4.213860189397367e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          2.5783791011790526e-09,
+          -4.213860189397367e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "state": "j3",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          3.0330544967039886e-09,
+          -4.653845725160673e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          3.0330544967039886e-09,
+          -4.653845725160673e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -8.627548835330364e-12,
+          6.208955701368551e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -8.627548835330364e-12,
+          6.208955701368551e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "state": "j3",
+        "order": "production_original_cell_order",
+        "grouped_left_full_real_imag": [
+          3.033054496703987e-09,
+          -4.653845725160672e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          3.033054496703987e-09,
+          -4.653845725160672e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          2.6069431089020378e-09,
+          -4.1034531737301195e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          2.6069431089020378e-09,
+          -4.1034531737301195e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      },
+      {
+        "role": "candidate",
+        "column": 0,
+        "state": "j0",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          -2.516118874422491e-09,
+          -1.3884302795759863e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.516118874422491e-09,
+          -1.3884302795759863e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -5.5638262968987926e-11,
+          -1.644751242796985e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -5.5638262968987926e-11,
+          -1.644751242796985e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "state": "j0",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          -2.51611887442259e-09,
+          -1.388430279576036e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.51611887442259e-09,
+          -1.388430279576036e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -2.184991783964469e-09,
+          -1.2190787792239617e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -2.184991783964469e-09,
+          -1.2190787792239617e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      },
+      {
+        "role": "candidate",
+        "column": 0,
+        "state": "j3",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          -2.536441155856294e-09,
+          -1.3931147928278036e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.536441155856294e-09,
+          -1.3931147928278036e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          9.915291272318565e-12,
+          1.7243740923508842e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          9.915291272318565e-12,
+          1.7243740923508842e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "state": "j3",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          -2.536441155856293e-09,
+          -1.3931147928278044e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          -2.536441155856293e-09,
+          -1.3931147928278044e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -2.1006269691678414e-09,
+          -1.2359322763807884e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -2.1006269691678414e-09,
+          -1.2359322763807884e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "state": "j0",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          2.9430600338918144e-09,
+          -4.687612283707516e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          2.9430600338918144e-09,
+          -4.687612283707516e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -5.517700079373241e-11,
+          2.6029110031535152e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -5.517700079373241e-11,
+          2.6029110031535152e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "state": "j0",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          2.94306003389198e-09,
+          -4.687612283707747e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          2.94306003389198e-09,
+          -4.687612283707747e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          2.5783791011790526e-09,
+          -4.213860189397367e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          2.5783791011790526e-09,
+          -4.213860189397367e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "state": "j3",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          3.0330544967039886e-09,
+          -4.653845725160673e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          3.0330544967039886e-09,
+          -4.653845725160673e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          -8.627548835330364e-12,
+          6.208955701368551e-11
+        ],
+        "recomputed_closure_volume_real_imag": [
+          -8.627548835330364e-12,
+          6.208955701368551e-11
+        ],
+        "saved_closure_comparison": "MATCHED_SAVED_CANDIDATE_CORRECTED_CLOSURES"
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "state": "j3",
+        "order": "v6_eight_key_prefix_observer_order",
+        "grouped_left_full_real_imag": [
+          3.033054496703987e-09,
+          -4.653845725160672e-09
+        ],
+        "grouped_left_volume_real_imag": [
+          3.033054496703987e-09,
+          -4.653845725160672e-09
+        ],
+        "recomputed_closure_full_real_imag": [
+          2.6069431089020378e-09,
+          -4.1034531737301195e-09
+        ],
+        "recomputed_closure_volume_real_imag": [
+          2.6069431089020378e-09,
+          -4.1034531737301195e-09
+        ],
+        "saved_closure_comparison": "REFERENCE_CLOSURES_RECOMPUTED_NO_SAVED_REFERENCE_CLOSURE"
+      }
+    ],
+    "reference_closure_status": "Recomputed; no saved reference-closure field existed.",
+    "selected_cells": [
+      {
+        "cell_index": 23352,
+        "tag": 2,
+        "permutation": 4680,
+        "actual_geometry_coordinates_sha256": "00be22d015fe207dd28a8c246380144e51b8ba2d7a3ff63562dfca38b65024e6",
+        "selected_local_trace_row": 375,
+        "selected_trace_coefficient_real_imag": [
+          1.0,
+          0.0
+        ],
+        "element_dimension": 882,
+        "I_local_positions": "432..881",
+        "T_local_positions": "0..431",
+        "source": "reconstructed missing candidate/reference local tensors and R/T/S"
+      },
+      {
+        "cell_index": 23493,
+        "tag": 1,
+        "permutation": 0,
+        "actual_geometry_coordinates_sha256": "0fbdca58aeb8061e226f1c298a610bbd63f2f43fa15a6830afd3fa435a667ca6",
+        "selected_local_trace_row": 75,
+        "selected_trace_coefficient_real_imag": [
+          1.0,
+          0.0
+        ],
+        "element_dimension": 882,
+        "I_local_positions": "432..881",
+        "T_local_positions": "0..431",
+        "source": "reconstructed missing candidate/reference local tensors and R/T/S"
+      }
+    ],
+    "partition_basis": "I/T positions are from the same Basix entity_dofs and saved cell partition; they were not assumed as contiguous 450/432 slices."
+  },
+  "local_rhs_lu_counterfactual": {
+    "status": "DIAGNOSTIC_ONLY",
+    "scope": "Saved incident cells only; no tensor regeneration, FE/PDE run, refinement, production change, or threshold change.",
+    "method": "Rebuild one strict LU per saved cell/role, reuse it for both columns; verify j0/j3 b_i equality and solve only once per pair; compare saved T @ b_i with -J @ solve(K, b_i), project by selected local-row coefficients, then add the original global b_t once.",
+    "production_solver_changed": false,
+    "new_strict_lu_factorization_count": 4,
+    "direct_rhs_solve_count": 8,
+    "paired_state_rhs_reuse_count": 8,
+    "strict_factorization_seconds_sum": 0.1329756253398955,
+    "rhs_counterfactual_seconds_sum": 0.03073071874678135,
+    "factorizations": [
+      {
+        "cell": 23352,
+        "role": "candidate",
+        "factorization_seconds": 0.03360192896798253,
+        "K_sha256": "593b102fcb68d26ab076e3365866b9f50acc9fd164cf41a794864b3fcfbd4491",
+        "oriented_tensor_sha256": "2c078a5d0b02f5553a10f32f5331768824be4b9428a845b81e604e81b6a0cb84"
+      },
+      {
+        "cell": 23352,
+        "role": "reference",
+        "factorization_seconds": 0.032427402678877115,
+        "K_sha256": "f6c27306467f8fb70b5b05b42201b324aa94c21b29b68335f9a5e2f79791ad13",
+        "oriented_tensor_sha256": "79fa7b9b34aab6759e96063c3426f1fabec0e18d7f054b737c62f176cd82d78f"
+      },
+      {
+        "cell": 23493,
+        "role": "candidate",
+        "factorization_seconds": 0.03383221477270126,
+        "K_sha256": "00c77d9d9a59fe64adfe27c1fdb5cd18e1c0f647cbb9c5cfdc90a96f5f0a49bd",
+        "oriented_tensor_sha256": "337d7d1daad34333bfaf356f68e26bae5566622f794b6d81a21d65caaec986a7"
+      },
+      {
+        "cell": 23493,
+        "role": "reference",
+        "factorization_seconds": 0.03311407892033458,
+        "K_sha256": "4a998b5cb2d1cd04221faf456e13efefbd48e40cff2b0b7fd86345c24523b63d",
+        "oriented_tensor_sha256": "bc4025fcfc487c5e06dba3bebe2a368f9d312422d878f8aa32a00eb6e68ac948"
+      }
+    ],
+    "per_cell_signed_projected_terms": [
+      {
+        "role": "candidate",
+        "column": 0,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          131718.98503777248,
+          75938.77094870158
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          131718.98503777117,
+          75938.77094870106
+        ],
+        "new_minus_old_real_imag": [
+          -1.3096723705530167e-09,
+          -5.238689482212067e-10
+        ],
+        "solve_seconds": 0.0010187872685492039,
+        "solve_residual_relative_to_rhs": 1.0667467139744373e-15
+      },
+      {
+        "role": "candidate",
+        "column": 0,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          7089.269538052555,
+          3964.628607074519
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          7089.269538050696,
+          3964.6286070741867
+        ],
+        "new_minus_old_real_imag": [
+          -1.8590071704238653e-09,
+          -3.3242031349800527e-10
+        ],
+        "solve_seconds": 0.0008342829532921314,
+        "solve_residual_relative_to_rhs": 1.122138028258635e-15
+      },
+      {
+        "role": "candidate",
+        "column": 0,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          131718.98503777248,
+          75938.77094870158
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          131718.98503777117,
+          75938.77094870106
+        ],
+        "new_minus_old_real_imag": [
+          -1.3096723705530167e-09,
+          -5.238689482212067e-10
+        ],
+        "solve_seconds": 0.0010187872685492039,
+        "solve_residual_relative_to_rhs": 1.0667467139744373e-15
+      },
+      {
+        "role": "candidate",
+        "column": 0,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          7089.269538052555,
+          3964.628607074519
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          7089.269538050696,
+          3964.6286070741867
+        ],
+        "new_minus_old_real_imag": [
+          -1.8590071704238653e-09,
+          -3.3242031349800527e-10
+        ],
+        "solve_seconds": 0.0008342829532921314,
+        "solve_residual_relative_to_rhs": 1.122138028258635e-15
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          -187504.23471550658,
+          263437.52798701066
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -187504.23471550556,
+          263437.52798700804
+        ],
+        "new_minus_old_real_imag": [
+          1.0186340659856796e-09,
+          -2.6193447411060333e-09
+        ],
+        "solve_seconds": 0.0010005570948123932,
+        "solve_residual_relative_to_rhs": 1.2002247453553658e-15
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          -10213.91046903051,
+          14178.53907610511
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -10213.91046902925,
+          14178.539076101391
+        ],
+        "new_minus_old_real_imag": [
+          1.2605596566572785e-09,
+          -3.7180143408477306e-09
+        ],
+        "solve_seconds": 0.000955651979893446,
+        "solve_residual_relative_to_rhs": 1.1191927691311966e-15
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          -187504.23471550658,
+          263437.52798701066
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -187504.23471550556,
+          263437.52798700804
+        ],
+        "new_minus_old_real_imag": [
+          1.0186340659856796e-09,
+          -2.6193447411060333e-09
+        ],
+        "solve_seconds": 0.0010005570948123932,
+        "solve_residual_relative_to_rhs": 1.2002247453553658e-15
+      },
+      {
+        "role": "candidate",
+        "column": 1,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          -10213.91046903051,
+          14178.53907610511
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -10213.91046902925,
+          14178.539076101391
+        ],
+        "new_minus_old_real_imag": [
+          1.2605596566572785e-09,
+          -3.7180143408477306e-09
+        ],
+        "solve_seconds": 0.000955651979893446,
+        "solve_residual_relative_to_rhs": 1.1191927691311966e-15
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          131718.9850377719,
+          75938.77094870123
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          131718.98503777175,
+          75938.77094870113
+        ],
+        "new_minus_old_real_imag": [
+          -1.4551915228366852e-10,
+          -1.0186340659856796e-10
+        ],
+        "solve_seconds": 0.0009089559316635132,
+        "solve_residual_relative_to_rhs": 1.109379526962507e-15
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          7089.269538051038,
+          3964.62860707363
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          7089.269538050608,
+          3964.6286070742667
+        ],
+        "new_minus_old_real_imag": [
+          -4.2928149923682213e-10,
+          6.366462912410498e-10
+        ],
+        "solve_seconds": 0.0009869509376585484,
+        "solve_residual_relative_to_rhs": 1.0775465966168889e-15
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          131718.9850377719,
+          75938.77094870123
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          131718.98503777175,
+          75938.77094870113
+        ],
+        "new_minus_old_real_imag": [
+          -1.4551915228366852e-10,
+          -1.0186340659856796e-10
+        ],
+        "solve_seconds": 0.0009089559316635132,
+        "solve_residual_relative_to_rhs": 1.109379526962507e-15
+      },
+      {
+        "role": "reference",
+        "column": 0,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          7089.269538051038,
+          3964.62860707363
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          7089.269538050608,
+          3964.6286070742667
+        ],
+        "new_minus_old_real_imag": [
+          -4.2928149923682213e-10,
+          6.366462912410498e-10
+        ],
+        "solve_seconds": 0.0009869509376585484,
+        "solve_residual_relative_to_rhs": 1.0775465966168889e-15
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          -187504.23471550603,
+          263437.52798700944
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -187504.23471550585,
+          263437.5279870089
+        ],
+        "new_minus_old_real_imag": [
+          1.7462298274040222e-10,
+          -5.238689482212067e-10
+        ],
+        "solve_seconds": 0.000951539259403944,
+        "solve_residual_relative_to_rhs": 9.578526425755282e-16
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          -10213.910469028475,
+          14178.539076102075
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -10213.91046902861,
+          14178.539076101217
+        ],
+        "new_minus_old_real_imag": [
+          -1.3460521586239338e-10,
+          -8.585629984736443e-10
+        ],
+        "solve_seconds": 0.0010908180847764015,
+        "solve_residual_relative_to_rhs": 1.0588415391478326e-15
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "cell": 23352,
+        "old_T_b_i_projected_real_imag": [
+          -187504.23471550603,
+          263437.52798700944
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -187504.23471550585,
+          263437.5279870089
+        ],
+        "new_minus_old_real_imag": [
+          1.7462298274040222e-10,
+          -5.238689482212067e-10
+        ],
+        "solve_seconds": 0.000951539259403944,
+        "solve_residual_relative_to_rhs": 9.578526425755282e-16
+      },
+      {
+        "role": "reference",
+        "column": 1,
+        "cell": 23493,
+        "old_T_b_i_projected_real_imag": [
+          -10213.910469028475,
+          14178.539076102075
+        ],
+        "new_minus_J_solve_K_b_i_projected_real_imag": [
+          -10213.91046902861,
+          14178.539076101217
+        ],
+        "new_minus_old_real_imag": [
+          -1.3460521586239338e-10,
+          -8.585629984736443e-10
+        ],
+        "solve_seconds": 0.0010908180847764015,
+        "solve_residual_relative_to_rhs": 1.0588415391478326e-15
+      }
+    ],
+    "selected_candidate_reference_projected_g_gaps": [
+      {
+        "column": 0,
+        "new_absolute_gap": 5.157211896343317e-10,
+        "new_candidate_minus_reference_g": [
+          -4.94765117764473e-10,
+          -1.4551915228366852e-10
+        ],
+        "old_absolute_gap": 2.433304760925843e-09,
+        "old_candidate_minus_reference_g": [
+          2.0954757928848267e-09,
+          1.2369127944111824e-09
+        ],
+        "state_used": "j0 (paired j3 b_i reuse is checked above)"
+      },
+      {
+        "column": 1,
+        "new_absolute_gap": 7.809377196826238e-10,
+        "new_candidate_minus_reference_g": [
+          -3.4924596548080444e-10,
+          -6.984919309616089e-10
+        ],
+        "old_absolute_gap": 4.976414600781769e-09,
+        "old_candidate_minus_reference_g": [
+          -2.5902409106492996e-09,
+          4.249159246683121e-09
+        ],
+        "state_used": "j0 (paired j3 b_i reuse is checked above)"
+      }
+    ],
+    "evidence_cap_accounting": {
+      "cumulative_persisted_bytes_after_write": 14789864384,
+      "diagnostic_array_payload_bytes": 13082400,
+      "diagnostic_npy_header_allowance_bytes": 24576,
+      "diagnostic_persisted_file_bytes": 13085472,
+      "evidence_cap_bytes": 17179869184,
+      "free_space_after_bytes": 2000087490560,
+      "free_space_before_bytes": 2000100618240,
+      "free_space_floor_bytes": 2147483648,
+      "prior_array_payload_bytes": 14622146704,
+      "projected_cumulative_bytes_with_header_allowance": 14789885888,
+      "report_persisted_evidence_bytes": 154632208
+    },
+    "array_artifact_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_saved_checker_3ce1a158_20261021T092516Z_attempt4/local_rhs_lu_counterfactual",
+    "array_artifacts": [
+      {
+        "name": "v8_lu_cell23352_candidate",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23352_candidate.npy",
+        "sha256": "dc35b59a3133f0899cf45bacb7bbbdf7fd96243ef5365493b9f57deb9865215d",
+        "dtype": "complex128",
+        "shape": [
+          450,
+          450
+        ],
+        "file_bytes": 3240128
+      },
+      {
+        "name": "v8_lu_cell23352_candidate_pivots",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23352_candidate_pivots.npy",
+        "sha256": "6c0d4e8b271e8240e307d2c7318882fdf9b42e90cad47387850a7aa40e00bd3d",
+        "dtype": "int32",
+        "shape": [
+          450
+        ],
+        "file_bytes": 1928
+      },
+      {
+        "name": "v8_lu_cell23352_reference",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23352_reference.npy",
+        "sha256": "a514aeca34e6d1b5edff88f2a14c50d5b987c189a0951076842bc1de09fe2939",
+        "dtype": "complex128",
+        "shape": [
+          450,
+          450
+        ],
+        "file_bytes": 3240128
+      },
+      {
+        "name": "v8_lu_cell23352_reference_pivots",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23352_reference_pivots.npy",
+        "sha256": "f3fd2043bc081026c788876924225f78800d9524bf8074c01d7ccaff7bf57379",
+        "dtype": "int32",
+        "shape": [
+          450
+        ],
+        "file_bytes": 1928
+      },
+      {
+        "name": "v8_lu_cell23493_candidate",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23493_candidate.npy",
+        "sha256": "a975c42c2af30ea9e371a53996b31aa7ab1c69f0008dbe54e34743d867019ab2",
+        "dtype": "complex128",
+        "shape": [
+          450,
+          450
+        ],
+        "file_bytes": 3240128
+      },
+      {
+        "name": "v8_lu_cell23493_candidate_pivots",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23493_candidate_pivots.npy",
+        "sha256": "599c128b1c8c75bddc87b17d7e335233730a6199904d0dc94c06c4422ea246a1",
+        "dtype": "int32",
+        "shape": [
+          450
+        ],
+        "file_bytes": 1928
+      },
+      {
+        "name": "v8_lu_cell23493_reference",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23493_reference.npy",
+        "sha256": "40f049b4950606e9d1388dd44e5e81233c92d895c0392c6592d4ae7119bc57ef",
+        "dtype": "complex128",
+        "shape": [
+          450,
+          450
+        ],
+        "file_bytes": 3240128
+      },
+      {
+        "name": "v8_lu_cell23493_reference_pivots",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_cell23493_reference_pivots.npy",
+        "sha256": "ba8ba754c69af187572fcc8f81da08f5af5d37da89be082962f267ab5636592f",
+        "dtype": "int32",
+        "shape": [
+          450
+        ],
+        "file_bytes": 1928
+      },
+      {
+        "name": "v8_lu_solve_cell23352_candidate_col0_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_candidate_col0_solution.npy",
+        "sha256": "0c60222c49534f718003194120a4fa8332382e4772155fd9f3eda9e1370e53ce",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23352_candidate_col0_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_candidate_col0_residual.npy",
+        "sha256": "f75853ee01a939e84860ac9b3767eba1522859e346d29b39e053c04f77443b71",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23352_candidate_col1_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_candidate_col1_solution.npy",
+        "sha256": "a77f1f106679ab7987c5cd4a68116646376296b3819495f905f1257ffe84157d",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23352_candidate_col1_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_candidate_col1_residual.npy",
+        "sha256": "6f780374b1a6c25ea035ba2ceedc53d9bceacd5bb3ea0c4072f10621ac5bf533",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23352_reference_col0_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_reference_col0_solution.npy",
+        "sha256": "2b1fa9d84ac6715f247c7ea5e4e85fee0c3dfcd96d9240b4ed115f0ca40d25df",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23352_reference_col0_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_reference_col0_residual.npy",
+        "sha256": "d344c0fdc4fc52107ac20174a6b87adcba62966666d99571be9d472456113c06",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23352_reference_col1_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_reference_col1_solution.npy",
+        "sha256": "15d03de2fe08f956660c1fab97a67624636a2905568a0216d11633ecd338aa03",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23352_reference_col1_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23352_reference_col1_residual.npy",
+        "sha256": "72b4a9c5dac388f857e6d69e4c80880afab3c8dc18b1cb9f3210a98e107c224b",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_candidate_col0_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_candidate_col0_solution.npy",
+        "sha256": "71eadbdcbbcc93bb7882c0f9d70d0cbb13ccc5b3751c41053a710b38d2924290",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_candidate_col0_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_candidate_col0_residual.npy",
+        "sha256": "b2432b8f4f908ab1f06e589948f298713ae73ce27167adc59edc9d35df33f0fb",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_candidate_col1_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_candidate_col1_solution.npy",
+        "sha256": "be7a22ff46addd3fa3cb765fe9c37c79750e4ae3b6cacde697eb2f796b12439f",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_candidate_col1_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_candidate_col1_residual.npy",
+        "sha256": "cdf7a10663e6e975ca3c53af2ed62060a6b0f8ce7a3215de993d1c785ce103d0",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_reference_col0_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_reference_col0_solution.npy",
+        "sha256": "39ad22104f563b4758574a1678839cceee0ee2e8773d0c2d70cd636313054c00",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_reference_col0_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_reference_col0_residual.npy",
+        "sha256": "ad82d8b902c7a3cb52534afbb528958085037f3a67bb70e167cb40a48384d3a9",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_reference_col1_solution",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_reference_col1_solution.npy",
+        "sha256": "d0ad2bd3bc5a71a29dea1f2afdf535534aa41008f76b976bdbe23e13c143f0d5",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      },
+      {
+        "name": "v8_lu_solve_cell23493_reference_col1_residual",
+        "relative_path": "local_rhs_lu_counterfactual/v8_lu_solve_cell23493_reference_col1_residual.npy",
+        "sha256": "cb1d03cb385d83e27ea92abc4ea3dfd048e93f355ea867e0e848b2dcd1ddbbef",
+        "dtype": "complex128",
+        "shape": [
+          450
+        ],
+        "file_bytes": 7328
+      }
+    ]
+  },
+  "attempt_history": [
+    {
+      "stage": "controller_prepare_r1",
+      "status": "FAILED_PREPARE_REPORT_PATH",
+      "error": "FileNotFoundError: selected report path pointed at attempt3 instead of attempt1.",
+      "service_or_worker_started": false,
+      "fe_or_pde_started": false,
+      "elapsed_cost": "UNKNOWN"
+    },
+    {
+      "stage": "controller_prepare_r2",
+      "status": "FAILED_ONE_TIME_CONTRACT_REUSE",
+      "error": "A Task41 contract already exists for this source SHA.",
+      "service_or_worker_started": false,
+      "fe_or_pde_started": false,
+      "elapsed_cost": "UNKNOWN"
+    },
+    {
+      "stage": "selected_star_producer_attempt1",
+      "source_sha": "35fd1bbf2bca13bd17e89cc79cf7cd825b94411c",
+      "service": "20261021t072801z",
+      "status": "PRODUCER_DATA_COMPLETE_SERVICE_FAILED_MISSING_INDEPENDENT_CHECKER_STATUS",
+      "service_parent_seconds": 373.167504155,
+      "worker_seconds": 345.5888976738788,
+      "watchdog_seconds": 349.56170725496486,
+      "process_tree_rss_peak_bytes": 9867120640,
+      "task_cgroup_memory_peak_bytes": 2619072512,
+      "task_swap_peak_bytes": 0,
+      "service_receipt_sha256": "86288a16d52507e263f6c85c78d8801553c24fea099e36bb15f706c3fb638ee6",
+      "watchdog_summary_sha256": "28ea6271808d47c3d68854c26d20de92147795f1ae0f939c39600d585c8fbb7c",
+      "fe_or_pde_started": false
+    },
+    {
+      "stage": "attempt1_checker_complex_pair_decode",
+      "source_sha": "6021691906a8d4db48a0261140c6601027ad49a8",
+      "service": "task41-v8-check-60216919-20261021t081356z",
+      "status": "WORKER_FAILED",
+      "error": "Saved complex-pair decode failure",
+      "service_parent_seconds": 156.27261233795434,
+      "checker_watchdog_seconds": 114.15835478901863,
+      "process_tree_rss_peak_bytes": 3998121984,
+      "task_cgroup_memory_peak_bytes": 851173376,
+      "task_swap_peak_bytes": 0,
+      "service_receipt_sha256": "df81472f481ecf9df6df09036068c85e755c19da77ac8798e33414a8cb58e7cd",
+      "watchdog_summary_sha256": "99e5f518c3f6f7f7e0e7554772c9c7211f2e0edeff4efa8bb995271500f29d70",
+      "fe_or_pde_started": false
+    },
+    {
+      "stage": "attempt2_checker_nonexistent_projected_T_r_i_field",
+      "source_sha": "19116086b4a7e1828535773fca2342afff9bec1f",
+      "service": "task41-v8-check-19116086-20261021t083218z",
+      "status": "WORKER_FAILED",
+      "error": "Checker treated nonexistent projected_T_r_i scalar as complex pair",
+      "service_parent_seconds": 144.49828982399777,
+      "checker_watchdog_seconds": 103.05878994520754,
+      "process_tree_rss_peak_bytes": 3998904320,
+      "task_cgroup_memory_peak_bytes": 851288064,
+      "task_swap_peak_bytes": 0,
+      "service_receipt_sha256": "a2484df9b2dff3b79b56ebaf371c780d37dc1bce99a02b2bc21e326c890047cc",
+      "watchdog_summary_sha256": "d3ac7ca9e28599c70e42dadcd062f1f7291baea60038291b0d1ae24cb52af7c4",
+      "fe_or_pde_started": false
+    },
+    {
+      "stage": "attempt3_old_checker",
+      "source_sha": "23ba24414a02d9e4e8e921ff97d48d5d1d9d1fe0",
+      "service": "task41-v8-check-23ba2441-20261021t091054z.service",
+      "status": "WORKER_FAILED",
+      "error": "ValueError: V8 independent replay differs from saved production_original_cell_order v7_grouped_left_volume.",
+      "service_parent_seconds": 173.56218544300646,
+      "checker_watchdog_seconds": 130.71125259809196,
+      "service_receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_saved_checker_23ba2441_20261021T091054Z_attempt3.service/task41_p0_service_receipt.json",
+      "service_receipt_sha256": "1e36e5bdc5c8e6289b6ff730d3304e5370ac44b2d1932e2b8d83e6a422c71c9f",
+      "watchdog_summary_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_saved_checker_23ba2441_20261021T091054Z_attempt3.service/required_checker_watchdog/summary.json",
+      "watchdog_summary_sha256": "a69d681189e8e214d056d203e289016b5693655327ae7128ac7f0a86bf9cf8b9",
+      "process_tree_rss_peak_bytes": 3966922752,
+      "task_cgroup_memory_peak_bytes": 852905984,
+      "process_tree_swap_peak_bytes": 0,
+      "task_cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "fe_or_pde_started": false
+    },
+    {
+      "stage": "attempt4_fixed_checker",
+      "source_sha": "3ce1a158e3e0b6556a2e094755adf9b5bd18ae08",
+      "service": "task41-v8-check-3ce1a158-20261021t092516z.service",
+      "status": "COMPLETED",
+      "service_parent_seconds": 157.83333904994652,
+      "checker_watchdog_seconds": 116.20602159714326,
+      "watchdog_classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "watchdog_samples": 102,
+      "service_receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_saved_checker_3ce1a158_20261021T092516Z_attempt4.service/task41_p0_service_receipt.json",
+      "service_receipt_bytes": 767078,
+      "service_receipt_sha256": "86a58559045a641f9df3e1ed9cbc0eb91a7c35c063d7208d7844b10797698556",
+      "watchdog_summary_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v8_saved_checker_3ce1a158_20261021T092516Z_attempt4.service/required_checker_watchdog/summary.json",
+      "watchdog_summary_bytes": 323536,
+      "watchdog_summary_sha256": "d22ab840f07f7d4cdda53713b8035473bfb9108aa47ad7ff31ed75fc9bd6bf5f",
+      "process_tree_rss_peak_bytes": 4001955840,
+      "task_cgroup_memory_peak_bytes": 854421504,
+      "process_tree_swap_peak_bytes": 0,
+      "task_cgroup_swap_peak_bytes": 0,
+      "resource_gate_triggered": false,
+      "time_gate_triggered": false,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "fe_or_pde_started": false
+    }
+  ],
+  "engineering_fix_and_test": {
+    "bug": "Checker mapped the V7 grouped-left intermediate fields to candidate closure fields.",
+    "correct_mapping": "Compare candidate closure against saved star_corrected_volume_closure/full_closure; retain grouped-left separately. Recompute reference closures and label that no saved reference closure field exists.",
+    "example_column0_j0": {
+      "grouped_left_real_imag": [
+        -2.516118874422491e-09,
+        -1.3884302795759863e-09
+      ],
+      "recomputed_candidate_closure_real_imag": [
+        -5.5638262968987926e-11,
+        -1.644751242796985e-11
+      ],
+      "difference_real_imag": [
+        -2.460480611453503e-09,
+        -1.3719827671480165e-09
+      ],
+      "difference_abs": 2.8171442193628875e-09
+    },
+    "targeted_test": "src/test/test_task41_v8_selected_trace_star.py::test_v8_ordered_summary_keeps_grouped_left_distinct_from_closure",
+    "result": "1 passed in 0.51 s",
+    "qualified_environment": "scripts/activate_myfenics_wsl.sh; qualified activation; PETSc complex128/int32; one WSL Linux ABI stack",
+    "other_check": "git diff --check passed before closeout; no full pytest, Ruff, or PDE run."
+  },
+  "engineering_diagnostics": [
+    {
+      "path": "/tmp/task41_v8_saved_rhs_lu_counterfactual_19116086.json",
+      "sha256": "ba622405bb15052550443e598fb32472eef8403305d4b5bcf7cf2163322cba57",
+      "elapsed_seconds": 0.526,
+      "classification": "Engineering diagnostic only; not formal evidence."
+    },
+    {
+      "event": "An initial local preflight symlink-resolution assertion was incorrect; corrected activation-path check passed.",
+      "classification": "No test or PDE was started before corrected preflight."
+    }
+  ],
+  "not_run": [
+    "FE/PDE assembly or solve",
+    "200q, global factorization, KSP/FGMRES, full field, independent A6, official R/T/A",
+    "full two-column requalification of V6 candidate after local diagnostic",
+    "full-domain root-cause proof or promotion of reduce_rhs change",
+    "full repository pytest, Ruff, GitHub CI"
+  ],
+  "producer_reconstruction": {
+    "source_sha": "35fd1bbf2bca13bd17e89cc79cf7cd825b94411c",
+    "contract_sha256": "a6a69b75e48572d59ae73f12a9424b06a3accdca957c6a32b5c72bcf2fb867da",
+    "scope": "28,000-cell metadata/row-map/incident-set scan; only missing local candidate/reference tensors and R/T/S for cells 23352 and 23493 reconstructed; no global FE assembly, PDE, or full action solve",
+    "owned_cells_scanned": 28000,
+    "coverage_complete": true,
+    "incident_cells": [
+      23352,
+      23493
+    ],
+    "authorized_source_array_count": 840,
+    "persisted_evidence_bytes": 154632208,
+    "mapped_row": {
+      "active_trace_row": 4766937,
+      "original_full_storage_row": 15440235
+    },
+    "slave_rows_scanned": 213024,
+    "additional_slave_contribution_for_selected_row": false,
+    "qualification": "Local evidence only; producer service was marked failed because independent_checker_status was missing."
+  },
+  "candidate_v6_original_full_action": {
+    "threshold": 1e-11,
+    "columns": [
+      {
+        "column": 0,
+        "mode_index": 16030,
+        "absolute_l2": 3.824090978625035e-07,
+        "denominator": 2225.481253487629,
+        "relative_error": 1.7183209126709868e-10,
+        "gate": "FAIL"
+      },
+      {
+        "column": 1,
+        "mode_index": 48090,
+        "absolute_l2": 8.051905483782545e-07,
+        "denominator": 2225.4807123031883,
+        "relative_error": 3.6180522433957604e-10,
+        "gate": "FAIL"
+      }
+    ],
+    "initial_recovery_forward_relative": [
+      1.981377497384616e-11,
+      1.979023053583157e-11
+    ],
+    "initial_recovery_gate": "FAIL",
+    "same_lu_corrections": 0,
+    "v8_full_candidate_action_replayed": false
+  },
+  "local_matrix_defect_diagnostics": {
+    "formulas": {
+      "E_R": "K R + G",
+      "E_T": "J + T K",
+      "C_S": "S - L - J R",
+      "E_S": "S - L - T G",
+      "identity": "E_S = C_S + E_T R - T E_R"
+    },
+    "scope": "Frobenius norms for the two target-row incident cells; diagnostic only.",
+    "rows": [
+      {
+        "cell": 23352,
+        "role": "candidate",
+        "E_R": 7.052450992722958e-10,
+        "E_T": 5.798103533389314e-09,
+        "C_S": 8.846249516328489e-12,
+        "E_S": 7.434234761500625e-10,
+        "identity_residual": 1.1030881298015738e-10
+      },
+      {
+        "cell": 23352,
+        "role": "reference",
+        "E_R": 7.142416308733377e-10,
+        "E_T": 6.175873345787944e-09,
+        "C_S": 7.50867773689017e-12,
+        "E_S": 8.027642279259724e-10,
+        "identity_residual": 1.1158201553404031e-10
+      },
+      {
+        "cell": 23493,
+        "role": "candidate",
+        "E_R": 7.490548021088263e-10,
+        "E_T": 6.773751191828563e-09,
+        "C_S": 7.701313019362266e-12,
+        "E_S": 7.725975144379914e-10,
+        "identity_residual": 1.073604575822952e-10
+      },
+      {
+        "cell": 23493,
+        "role": "reference",
+        "E_R": 7.623058898782803e-10,
+        "E_T": 5.745953680186077e-09,
+        "C_S": 6.833359571603421e-12,
+        "E_S": 8.081901479331808e-10,
+        "identity_residual": 1.0823959216743285e-10
+      }
+    ]
+  },
+  "p3_signed_and_wide_arithmetic": {
+    "scope": "All 16 signed local entries over two cells × two columns × j0/j3 × candidate/reference; no full-action pass implied.",
+    "signed_per_cell_rows": [
+      {
+        "cell": 23352,
+        "column": 0,
+        "state": "j0",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -1.2346973280588563e-09,
+            -6.19286049135405e-10
+          ],
+          "Q_regrouped_cell": [
+            -1.2514647096395493e-09,
+            -6.111804395914078e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            8.036861793169614e-09,
+            4.298839921695555e-09
+          ],
+          "delta_t_cell": [
+            -131718.98503776317,
+            -75938.77094869666
+          ],
+          "local_reduced_rhs_T_b_i": [
+            131718.98503777248,
+            75938.77094870158
+          ],
+          "projected_Q": [
+            -1.2346973280588563e-09,
+            -6.19286049135405e-10
+          ],
+          "projected_Q_regrouped": [
+            -1.2514647096395493e-09,
+            -6.111804395914078e-10
+          ],
+          "projected_actual_trace": [
+            -131718.98503776317,
+            -75938.77094869666
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -9.97829410677268e-10,
+            -5.780539403171045e-10
+          ],
+          "Q_regrouped": [
+            -9.97843585537339e-10,
+            -5.780478318229143e-10
+          ],
+          "T_r_i": [
+            8.036861793169619e-09,
+            4.298839921695559e-09
+          ],
+          "delta_t": [
+            -131718.9850377633,
+            -75938.77094869665
+          ],
+          "rhs_i": [
+            131718.98503777233,
+            75938.77094870152
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23352,
+        "column": 0,
+        "state": "j0",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -5.522873586685769e-10,
+            -3.122540338838715e-10
+          ],
+          "Q_regrouped_cell": [
+            -5.820766091346741e-10,
+            -3.055902197957039e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            8.036861793169598e-09,
+            4.298839921695543e-09
+          ],
+          "delta_t_cell": [
+            -131718.98503776325,
+            -75938.77094869665
+          ],
+          "local_reduced_rhs_T_b_i": [
+            131718.9850377719,
+            75938.77094870123
+          ],
+          "projected_Q": [
+            -5.522873586685769e-10,
+            -3.122540338838715e-10
+          ],
+          "projected_Q_regrouped": [
+            -5.820766091346741e-10,
+            -3.055902197957039e-10
+          ],
+          "projected_actual_trace": [
+            -131718.98503776325,
+            -75938.77094869665
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -5.215424704967762e-10,
+            -3.0319197129526475e-10
+          ],
+          "Q_regrouped": [
+            -5.215525789026287e-10,
+            -3.0319569077619235e-10
+          ],
+          "T_r_i": [
+            8.036861793169599e-09,
+            4.298839921695545e-09
+          ],
+          "delta_t": [
+            -131718.9850377633,
+            -75938.77094869665
+          ],
+          "rhs_i": [
+            131718.98503777187,
+            75938.77094870126
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23352,
+        "column": 0,
+        "state": "j3",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -1.1793168659440772e-09,
+            -6.432662277899872e-10
+          ],
+          "Q_regrouped_cell": [
+            -1.1932570487260818e-09,
+            -6.402842700481415e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            1.525993300622645e-11,
+            1.1658620424465019e-11
+          ],
+          "delta_t_cell": [
+            -131718.9850377713,
+            -75938.77094870094
+          ],
+          "local_reduced_rhs_T_b_i": [
+            131718.98503777248,
+            75938.77094870158
+          ],
+          "projected_Q": [
+            -1.1793168659440772e-09,
+            -6.432662277899872e-10
+          ],
+          "projected_Q_regrouped": [
+            -1.1932570487260818e-09,
+            -6.402842700481415e-10
+          ],
+          "projected_actual_trace": [
+            -131718.9850377713,
+            -75938.77094870094
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -9.97293568379786e-10,
+            -5.394380509988984e-10
+          ],
+          "Q_regrouped": [
+            -9.973035730581614e-10,
+            -5.394369395617105e-10
+          ],
+          "T_r_i": [
+            1.525993300622645e-11,
+            1.1658620424465028e-11
+          ],
+          "delta_t": [
+            -131718.98503777132,
+            -75938.77094870099
+          ],
+          "rhs_i": [
+            131718.98503777233,
+            75938.77094870152
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23352,
+        "column": 0,
+        "state": "j3",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -5.653462374556434e-10,
+            -3.036473367756169e-10
+          ],
+          "Q_regrouped_cell": [
+            -5.820766091346741e-10,
+            -3.055902197957039e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            1.525993300622678e-11,
+            1.1658620424464482e-11
+          ],
+          "delta_t_cell": [
+            -131718.98503777132,
+            -75938.77094870091
+          ],
+          "local_reduced_rhs_T_b_i": [
+            131718.9850377719,
+            75938.77094870123
+          ],
+          "projected_Q": [
+            -5.653462374556434e-10,
+            -3.036473367756169e-10
+          ],
+          "projected_Q_regrouped": [
+            -5.820766091346741e-10,
+            -3.055902197957039e-10
+          ],
+          "projected_actual_trace": [
+            -131718.98503777132,
+            -75938.77094870091
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -5.210328223600964e-10,
+            -2.646037170986284e-10
+          ],
+          "Q_regrouped": [
+            -5.210267772781663e-10,
+            -2.645990093697037e-10
+          ],
+          "T_r_i": [
+            1.5259933006226787e-11,
+            1.1658620424464494e-11
+          ],
+          "delta_t": [
+            -131718.98503777134,
+            -75938.77094870099
+          ],
+          "rhs_i": [
+            131718.98503777187,
+            75938.77094870126
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23352,
+        "column": 1,
+        "state": "j0",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            1.3492104439918668e-09,
+            -2.3784901487766923e-09
+          ],
+          "Q_regrouped_cell": [
+            1.3096723705530167e-09,
+            -2.3865140974521637e-09
+          ],
+          "S_action": [
+            -0.5282490889160869,
+            0.5775178546823636
+          ],
+          "T_r_i": [
+            -1.1133619377726109e-08,
+            1.4854464696127764e-08
+          ],
+          "delta_t_cell": [
+            187503.70646640525,
+            -263436.9504691388
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -187504.23471550658,
+            263437.52798701066
+          ],
+          "projected_Q": [
+            1.3492104439918668e-09,
+            -2.3784901487766923e-09
+          ],
+          "projected_Q_regrouped": [
+            1.3096723705530167e-09,
+            -2.3865140974521637e-09
+          ],
+          "projected_actual_trace": [
+            187503.70646640525,
+            -263436.9504691388
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            1.3203378059407416e-09,
+            -1.984721315948753e-09
+          ],
+          "Q_regrouped": [
+            1.3203589332988486e-09,
+            -1.9847163912345422e-09
+          ],
+          "T_r_i": [
+            -1.1133619377726112e-08,
+            1.4854464696127754e-08
+          ],
+          "delta_t": [
+            187503.7064664053,
+            -263436.9504691389
+          ],
+          "rhs_i": [
+            -187504.23471550667,
+            263437.5279870104
+          ],
+          "s": [
+            -0.5282490889160866,
+            0.5775178546823637
+          ]
+        }
+      },
+      {
+        "cell": 23352,
+        "column": 1,
+        "state": "j0",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            7.09892785135342e-10,
+            -1.0906956134716945e-09
+          ],
+          "Q_regrouped_cell": [
+            7.275957614183426e-10,
+            -9.89530235528946e-10
+          ],
+          "S_action": [
+            -0.5282490889160878,
+            0.5775178546823649
+          ],
+          "T_r_i": [
+            -1.1133619377726064e-08,
+            1.4854464696127696e-08
+          ],
+          "delta_t_cell": [
+            187503.70646640522,
+            -263436.9504691389
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -187504.23471550603,
+            263437.52798700944
+          ],
+          "projected_Q": [
+            7.09892785135342e-10,
+            -1.0906956134716945e-09
+          ],
+          "projected_Q_regrouped": [
+            7.275957614183426e-10,
+            -9.89530235528946e-10
+          ],
+          "projected_actual_trace": [
+            187503.70646640522,
+            -263436.9504691389
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            6.426686979231686e-10,
+            -1.0322711205963069e-09
+          ],
+          "Q_regrouped": [
+            6.426859044950106e-10,
+            -1.0322480648028431e-09
+          ],
+          "T_r_i": [
+            -1.1133619377726078e-08,
+            1.4854464696127694e-08
+          ],
+          "delta_t": [
+            187503.7064664053,
+            -263436.9504691389
+          ],
+          "rhs_i": [
+            -187504.234715506,
+            263437.5279870095
+          ],
+          "s": [
+            -0.5282490889160877,
+            0.5775178546823649
+          ]
+        }
+      },
+      {
+        "cell": 23352,
+        "column": 1,
+        "state": "j3",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            1.2198738449099565e-09,
+            -2.4475174071130277e-09
+          ],
+          "Q_regrouped_cell": [
+            1.2514647096395493e-09,
+            -2.3865140974521637e-09
+          ],
+          "S_action": [
+            -0.5282490889160869,
+            0.5775178546823636
+          ],
+          "T_r_i": [
+            -9.707556989637696e-11,
+            -6.659000634215106e-11
+          ],
+          "delta_t_cell": [
+            187503.70646641636,
+            -263436.95046915364
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -187504.23471550658,
+            263437.52798701066
+          ],
+          "projected_Q": [
+            1.2198738449099565e-09,
+            -2.4475174071130277e-09
+          ],
+          "projected_Q_regrouped": [
+            1.2514647096395493e-09,
+            -2.3865140974521637e-09
+          ],
+          "projected_actual_trace": [
+            187503.70646641636,
+            -263436.95046915364
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            1.3135457745016106e-09,
+            -2.017367480303179e-09
+          ],
+          "Q_regrouped": [
+            1.3135519338902668e-09,
+            -2.017401357079507e-09
+          ],
+          "T_r_i": [
+            -9.707556989637693e-11,
+            -6.659000634215109e-11
+          ],
+          "delta_t": [
+            187503.70646641633,
+            -263436.9504691538
+          ],
+          "rhs_i": [
+            -187504.23471550667,
+            263437.5279870104
+          ],
+          "s": [
+            -0.5282490889160866,
+            0.5775178546823637
+          ]
+        }
+      },
+      {
+        "cell": 23352,
+        "column": 1,
+        "state": "j3",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            6.09266133608079e-10,
+            -1.15870261844574e-09
+          ],
+          "Q_regrouped_cell": [
+            6.402842700481415e-10,
+            -9.89530235528946e-10
+          ],
+          "S_action": [
+            -0.5282490889160878,
+            0.5775178546823649
+          ],
+          "T_r_i": [
+            -9.707556989637515e-11,
+            -6.6590006342151e-11
+          ],
+          "delta_t_cell": [
+            187503.70646641636,
+            -263436.9504691538
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -187504.23471550603,
+            263437.52798700944
+          ],
+          "projected_Q": [
+            6.09266133608079e-10,
+            -1.15870261844574e-09
+          ],
+          "projected_Q_regrouped": [
+            6.402842700481415e-10,
+            -9.89530235528946e-10
+          ],
+          "projected_actual_trace": [
+            187503.70646641636,
+            -263436.9504691538
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            6.359151518224397e-10,
+            -1.0648442287400114e-09
+          ],
+          "Q_regrouped": [
+            6.359215376505745e-10,
+            -1.0648477655195165e-09
+          ],
+          "T_r_i": [
+            -9.707556989637512e-11,
+            -6.6590006342151e-11
+          ],
+          "delta_t": [
+            187503.70646641633,
+            -263436.9504691538
+          ],
+          "rhs_i": [
+            -187504.234715506,
+            263437.5279870095
+          ],
+          "s": [
+            -0.5282490889160877,
+            0.5775178546823649
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 0,
+        "state": "j0",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -1.2803529655010224e-09,
+            -8.086306421716466e-10
+          ],
+          "Q_regrouped_cell": [
+            -1.2769305612891912e-09,
+            -8.199094736482948e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            1.146759176014843e-09,
+            -9.20587959644867e-11
+          ],
+          "delta_t_cell": [
+            -7089.269538050114,
+            -3964.6286070737865
+          ],
+          "local_reduced_rhs_T_b_i": [
+            7089.269538052555,
+            3964.628607074519
+          ],
+          "projected_Q": [
+            -1.2803529655010224e-09,
+            -8.086306421716466e-10
+          ],
+          "projected_Q_regrouped": [
+            -1.2769305612891912e-09,
+            -8.199094736482948e-10
+          ],
+          "projected_actual_trace": [
+            -7089.269538050114,
+            -3964.6286070737865
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -1.2512146371013987e-09,
+            -7.147219056682523e-10
+          ],
+          "Q_regrouped": [
+            -1.2512200164849219e-09,
+            -7.147187286449252e-10
+          ],
+          "T_r_i": [
+            1.1467591760148419e-09,
+            -9.205879596448661e-11
+          ],
+          "delta_t": [
+            -7089.269538050114,
+            -3964.628607073839
+          ],
+          "rhs_i": [
+            7089.269538052512,
+            3964.6286070744613
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 0,
+        "state": "j0",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            2.3935016224591447e-10,
+            6.514073653021179e-11
+          ],
+          "Q_regrouped_cell": [
+            2.546585164964199e-10,
+            6.184563972055912e-11
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            1.1467591760147614e-09,
+            -9.205879596452441e-11
+          ],
+          "delta_t_cell": [
+            -7089.269538050099,
+            -3964.628607073779
+          ],
+          "local_reduced_rhs_T_b_i": [
+            7089.269538051038,
+            3964.62860707363
+          ],
+          "projected_Q": [
+            2.3935016224591447e-10,
+            6.514073653021179e-11
+          ],
+          "projected_Q_regrouped": [
+            2.546585164964199e-10,
+            6.184563972055912e-11
+          ],
+          "projected_actual_trace": [
+            -7089.269538050099,
+            -3964.628607073779
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            2.4125288921561804e-10,
+            1.2041450509113363e-10
+          ],
+          "Q_regrouped": [
+            2.4125368369709577e-10,
+            1.204167876522888e-10
+          ],
+          "T_r_i": [
+            1.146759176014763e-09,
+            -9.205879596452469e-11
+          ],
+          "delta_t": [
+            -7089.2695380501145,
+            -3964.6286070738392
+          ],
+          "rhs_i": [
+            7089.26953805102,
+            3964.628607073627
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 0,
+        "state": "j3",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -1.4070573480625442e-09,
+            -8.375781453487271e-10
+          ],
+          "Q_regrouped_cell": [
+            -1.407897798344493e-09,
+            -8.344613888766617e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            9.435991330045468e-12,
+            -5.135937148673535e-13
+          ],
+          "delta_t_cell": [
+            -7089.269538051147,
+            -3964.6286070736846
+          ],
+          "local_reduced_rhs_T_b_i": [
+            7089.269538052555,
+            3964.628607074519
+          ],
+          "projected_Q": [
+            -1.4070573480625442e-09,
+            -8.375781453487271e-10
+          ],
+          "projected_Q_regrouped": [
+            -1.407897798344493e-09,
+            -8.344613888766617e-10
+          ],
+          "projected_actual_trace": [
+            -7089.269538051147,
+            -3964.6286070736846
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -1.2660323117549327e-09,
+            -7.233818960614979e-10
+          ],
+          "Q_regrouped": [
+            -1.2660281711873722e-09,
+            -7.233837973075197e-10
+          ],
+          "T_r_i": [
+            9.435991330045468e-12,
+            -5.1359371486736e-13
+          ],
+          "delta_t": [
+            -7089.269538051236,
+            -3964.6286070737383
+          ],
+          "rhs_i": [
+            7089.269538052512,
+            3964.6286070744613
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 0,
+        "state": "j3",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            1.3317002957428332e-10,
+            5.4151108098648767e-11
+          ],
+          "Q_regrouped_cell": [
+            1.2369127944111824e-10,
+            5.4569682106375694e-11
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            9.435991330045857e-12,
+            -5.135937148676438e-13
+          ],
+          "delta_t_cell": [
+            -7089.269538051161,
+            -3964.628607073692
+          ],
+          "local_reduced_rhs_T_b_i": [
+            7089.269538051038,
+            3964.62860707363
+          ],
+          "projected_Q": [
+            1.3317002957428332e-10,
+            5.4151108098648767e-11
+          ],
+          "projected_Q_regrouped": [
+            1.2369127944111824e-10,
+            5.4569682106375694e-11
+          ],
+          "projected_actual_trace": [
+            -7089.269538051161,
+            -3964.628607073692
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            2.2643422986589067e-10,
+            1.1175849007055219e-10
+          ],
+          "Q_regrouped": [
+            2.2643398267518933e-10,
+            1.1175949055086676e-10
+          ],
+          "T_r_i": [
+            9.435991330045846e-12,
+            -5.135937148676387e-13
+          ],
+          "delta_t": [
+            -7089.269538051237,
+            -3964.628607073739
+          ],
+          "rhs_i": [
+            7089.26953805102,
+            3964.628607073627
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 1,
+        "state": "j0",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            1.6581215377114093e-09,
+            -2.5607059310020447e-09
+          ],
+          "Q_regrouped_cell": [
+            1.6534613678231835e-09,
+            -2.5538611225783825e-09
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            -1.6454683942565182e-09,
+            2.293518352029686e-09
+          ],
+          "delta_t_cell": [
+            10213.910469027198,
+            -14178.539076100227
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -10213.91046903051,
+            14178.53907610511
+          ],
+          "projected_Q": [
+            1.6581215377114093e-09,
+            -2.5607059310020447e-09
+          ],
+          "projected_Q_regrouped": [
+            1.6534613678231835e-09,
+            -2.5538611225783825e-09
+          ],
+          "projected_actual_trace": [
+            10213.910469027198,
+            -14178.539076100227
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            1.7207808156018625e-09,
+            -2.5024292742027974e-09
+          ],
+          "Q_regrouped": [
+            1.7207790747875151e-09,
+            -2.5024400329698437e-09
+          ],
+          "T_r_i": [
+            -1.6454683942565194e-09,
+            2.2935183520296837e-09
+          ],
+          "delta_t": [
+            10213.910469027249,
+            -14178.539076100227
+          ],
+          "rhs_i": [
+            -10213.910469030616,
+            14178.539076105024
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 1,
+        "state": "j0",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -3.797726510897861e-10,
+            4.787003244918289e-10
+          ],
+          "Q_regrouped_cell": [
+            -3.8198777474462986e-10,
+            5.093170329928398e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            -1.645468394256399e-09,
+            2.293518352029523e-09
+          ],
+          "delta_t_cell": [
+            10213.91046902727,
+            -14178.539076100198
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -10213.910469028475,
+            14178.539076102075
+          ],
+          "projected_Q": [
+            -3.797726510897861e-10,
+            4.787003244918289e-10
+          ],
+          "projected_Q_regrouped": [
+            -3.8198777474462986e-10,
+            5.093170329928398e-10
+          ],
+          "projected_actual_trace": [
+            10213.91046902727,
+            -14178.539076100198
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -4.290121516327075e-10,
+            4.825057784312361e-10
+          ],
+          "Q_regrouped": [
+            -4.290106048188136e-10,
+            4.825073673941915e-10
+          ],
+          "T_r_i": [
+            -1.6454683942563997e-09,
+            2.293518352029526e-09
+          ],
+          "delta_t": [
+            10213.91046902725,
+            -14178.539076100229
+          ],
+          "rhs_i": [
+            -10213.910469028466,
+            14178.53907610204
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 1,
+        "state": "j3",
+        "role": "candidate",
+        "selected_row_contributions": {
+          "Q_cell": [
+            1.801799317190358e-09,
+            -2.8141146961250883e-09
+          ],
+          "Q_regrouped_cell": [
+            1.813532435335219e-09,
+            -2.815795596688986e-09
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            -1.916298196511705e-11,
+            1.8871982660090935e-11
+          ],
+          "delta_t_cell": [
+            10213.910469028682,
+            -14178.539076102294
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -10213.91046903051,
+            14178.53907610511
+          ],
+          "projected_Q": [
+            1.801799317190358e-09,
+            -2.8141146961250883e-09
+          ],
+          "projected_Q_regrouped": [
+            1.813532435335219e-09,
+            -2.815795596688986e-09
+          ],
+          "projected_actual_trace": [
+            10213.910469028682,
+            -14178.539076102294
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            1.8486788379671768e-09,
+            -2.5320646235098654e-09
+          ],
+          "Q_regrouped": [
+            1.8486749908674938e-09,
+            -2.5320563423747444e-09
+          ],
+          "T_r_i": [
+            -1.9162981965117032e-11,
+            1.8871982660090935e-11
+          ],
+          "delta_t": [
+            10213.910469028748,
+            -14178.539076102472
+          ],
+          "rhs_i": [
+            -10213.910469030616,
+            14178.539076105024
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "cell": 23493,
+        "column": 1,
+        "state": "j3",
+        "role": "reference",
+        "selected_row_contributions": {
+          "Q_cell": [
+            -2.177155444735012e-10,
+            2.6634005914856665e-10
+          ],
+          "Q_regrouped_cell": [
+            -2.3646862246096134e-10,
+            2.473825588822365e-10
+          ],
+          "S_action": [
+            0.0,
+            0.0
+          ],
+          "T_r_i": [
+            -1.916298196512039e-11,
+            1.8871982660091714e-11
+          ],
+          "delta_t_cell": [
+            10213.910469028697,
+            -14178.539076102323
+          ],
+          "local_reduced_rhs_T_b_i": [
+            -10213.910469028475,
+            14178.539076102075
+          ],
+          "projected_Q": [
+            -2.177155444735012e-10,
+            2.6634005914856665e-10
+          ],
+          "projected_Q_regrouped": [
+            -2.3646862246096134e-10,
+            2.473825588822365e-10
+          ],
+          "projected_actual_trace": [
+            10213.910469028697,
+            -14178.539076102323
+          ]
+        },
+        "wide_selected_row_contributions": {
+          "Q": [
+            -3.011483017757739e-10,
+            4.5286845973178133e-10
+          ],
+          "Q_regrouped": [
+            -3.0113600502090776e-10,
+            4.5286796535037865e-10
+          ],
+          "T_r_i": [
+            -1.9162981965120402e-11,
+            1.887198266009169e-11
+          ],
+          "delta_t": [
+            10213.91046902875,
+            -14178.539076102474
+          ],
+          "rhs_i": [
+            -10213.910469028466,
+            14178.53907610204
+          ],
+          "s": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    ],
+    "j0_j3_d_hat_state_invariance_production_order": [
+      {
+        "cell_order": "production_original_cell_order",
+        "column": 0,
+        "float64_j0_minus_j3_d_hat_full": [
+          6.555355424130649e-11,
+          3.3691253351478485e-11
+        ],
+        "float64_j0_minus_j3_d_hat_volume": [
+          6.555355424130649e-11,
+          3.3691253351478485e-11
+        ],
+        "role": "candidate",
+        "wide_j0_minus_j3_d_hat_full": [
+          -5.276715891535502e-15,
+          -1.8107153846577843e-14
+        ],
+        "wide_j0_minus_j3_d_hat_volume": [
+          -5.276715891535502e-15,
+          -1.8107153846577843e-14
+        ]
+      },
+      {
+        "cell_order": "production_original_cell_order",
+        "column": 0,
+        "float64_j0_minus_j3_d_hat_full": [
+          8.436481479662715e-11,
+          -1.6853497156827157e-11
+        ],
+        "float64_j0_minus_j3_d_hat_volume": [
+          8.436481479662715e-11,
+          -1.6853497156827157e-11
+        ],
+        "role": "reference",
+        "wide_j0_minus_j3_d_hat_full": [
+          1.568489226595893e-14,
+          7.995085764525681e-15
+        ],
+        "wide_j0_minus_j3_d_hat_volume": [
+          1.568489226595893e-14,
+          7.995085764525681e-15
+        ]
+      },
+      {
+        "cell_order": "production_original_cell_order",
+        "column": 1,
+        "float64_j0_minus_j3_d_hat_full": [
+          4.654945195840205e-11,
+          3.606044698215118e-11
+        ],
+        "float64_j0_minus_j3_d_hat_volume": [
+          4.654945195840205e-11,
+          3.606044698215118e-11
+        ],
+        "role": "candidate",
+        "wide_j0_minus_j3_d_hat_full": [
+          -4.855320847018534e-15,
+          2.2342588167785133e-15
+        ],
+        "wide_j0_minus_j3_d_hat_volume": [
+          -4.855320847018534e-15,
+          2.2342588167785133e-15
+        ]
+      },
+      {
+        "cell_order": "production_original_cell_order",
+        "column": 1,
+        "float64_j0_minus_j3_d_hat_full": [
+          2.856400772298439e-11,
+          1.1040701566724697e-10
+        ],
+        "float64_j0_minus_j3_d_hat_volume": [
+          2.856400772298439e-11,
+          1.1040701566724697e-10
+        ],
+        "role": "reference",
+        "wide_j0_minus_j3_d_hat_full": [
+          -9.168151025157379e-15,
+          -5.286534774579828e-14
+        ],
+        "wide_j0_minus_j3_d_hat_volume": [
+          -9.168151025157379e-15,
+          -5.286534774579828e-14
+        ]
+      }
+    ],
+    "local_E_S_state_pair_check": {
+      "records": 8,
+      "all_bitwise_equal": true,
+      "local_vector_length": 432
+    },
+    "wide_precision_method": "Separate real/imag numpy.longdouble multiply-add and ordered scalar accumulation; mantissa_bits=63, wider than float64 but not 4x precision; formal complex128 output unchanged."
+  },
+  "service_accounting": {
+    "known_formal_service_parent_seconds": 1005.333930809905,
+    "scope": "Five non-overlapping parent service segments only; checker/watchdog/worker child times are included and not added again. Controller preparation errors and any unmeasured engineering preparation are UNKNOWN.",
+    "segments": [
+      {
+        "attempt": "selected_star_producer_attempt1",
+        "source_sha": "35fd1bbf2bca13bd17e89cc79cf7cd825b94411c",
+        "service": "20261021t072801z",
+        "status": "producer data completed; service failed because independent_checker_status was missing",
+        "parent_seconds": 373.167504155,
+        "worker_seconds": 345.5888976738788,
+        "watchdog_seconds": 349.56170725496486,
+        "tree_rss_peak_bytes": 9867120640,
+        "cgroup_memory_peak_bytes": 2619072512,
+        "task_swap_peak_bytes": 0,
+        "receipt_sha256": "86288a16d52507e263f6c85c78d8801553c24fea099e36bb15f706c3fb638ee6",
+        "watchdog_sha256": "28ea6271808d47c3d68854c26d20de92147795f1ae0f939c39600d585c8fbb7c"
+      },
+      {
+        "attempt": "saved_checker_attempt1",
+        "source_sha": "6021691906a8d4db48a0261140c6601027ad49a8",
+        "service": "task41-v8-check-60216919-20261021t081356z",
+        "status": "WORKER_FAILED complex-pair decode",
+        "parent_seconds": 156.27261233795434,
+        "checker_seconds": 114.15835478901863,
+        "tree_rss_peak_bytes": 3998121984,
+        "cgroup_memory_peak_bytes": 851173376,
+        "task_swap_peak_bytes": 0,
+        "receipt_sha256": "df81472f481ecf9df6df09036068c85e755c19da77ac8798e33414a8cb58e7cd",
+        "watchdog_sha256": "99e5f518c3f6f7f7e0e7554772c9c7211f2e0edeff4efa8bb995271500f29d70"
+      },
+      {
+        "attempt": "saved_checker_attempt2",
+        "source_sha": "19116086b4a7e1828535773fca2342afff9bec1f",
+        "service": "task41-v8-check-19116086-20261021t083218z",
+        "status": "WORKER_FAILED nonexistent projected_T_r_i scalar treated as complex pair",
+        "parent_seconds": 144.49828982399777,
+        "checker_seconds": 103.05878994520754,
+        "tree_rss_peak_bytes": 3998904320,
+        "cgroup_memory_peak_bytes": 851288064,
+        "task_swap_peak_bytes": 0,
+        "receipt_sha256": "a2484df9b2dff3b79b56ebaf371c780d37dc1bce99a02b2bc21e326c890047cc",
+        "watchdog_sha256": "d3ac7ca9e28599c70e42dadcd062f1f7291baea60038291b0d1ae24cb52af7c4"
+      },
+      {
+        "attempt": "saved_checker_attempt3",
+        "source_sha": "23ba24414a02d9e4e8e921ff97d48d5d1d9d1fe0",
+        "service": "task41-v8-check-23ba2441-20261021t091054z",
+        "status": "WORKER_FAILED grouped-left/closure field binding",
+        "parent_seconds": 173.56218544300646,
+        "checker_seconds": 130.71125259809196,
+        "tree_rss_peak_bytes": 3966922752,
+        "cgroup_memory_peak_bytes": 852905984,
+        "task_swap_peak_bytes": 0,
+        "receipt_sha256": "1e36e5bdc5c8e6289b6ff730d3304e5370ac44b2d1932e2b8d83e6a422c71c9f",
+        "watchdog_sha256": "a69d681189e8e214d056d203e289016b5693655327ae7128ac7f0a86bf9cf8b9"
+      },
+      {
+        "attempt": "saved_checker_attempt4",
+        "source_sha": "3ce1a158e3e0b6556a2e094755adf9b5bd18ae08",
+        "service": "task41-v8-check-3ce1a158-20261021t092516z",
+        "status": "COMPLETED audit; action and qualification gates failed",
+        "parent_seconds": 157.83333904994652,
+        "checker_seconds": 116.20602159714326,
+        "tree_rss_peak_bytes": 4001955840,
+        "cgroup_memory_peak_bytes": 854421504,
+        "task_swap_peak_bytes": 0,
+        "receipt_sha256": "86a58559045a641f9df3e1ed9cbc0eb91a7c35c063d7208d7844b10797698556",
+        "watchdog_sha256": "d22ab840f07f7d4cdda53713b8035473bfb9108aa47ad7ff31ed75fc9bd6bf5f"
+      }
+    ]
+  },
+  "source_specific_checker_tests": [
+    {
+      "source_sha": "6021691906a8d4db48a0261140c6601027ad49a8",
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q --tb=short src/test/test_task41_p0_saved_output_continuation.py src/test/test_task41_v8_selected_trace_star.py -k 'test_b0_saved_evidence_audit_uses_supervised_service_route or test_v8_legacy_missing_checker_field_is_exact_hash_and_identity_bound'",
+      "first": "10 passed, 38 deselected, 0.59 s",
+      "final": "10 passed, 38 deselected, 0.62 s",
+      "test_log_sha256": "NOT_RECORDED"
+    },
+    {
+      "source_sha": "23ba24414a02d9e4e8e921ff97d48d5d1d9d1fe0",
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q --tb=short src/test/test_task41_v8_selected_trace_star.py -k 'v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only or v8_selected_scalar_replay_matches_p3_producer_schema or v8_rhs_counterfactual_uses_original_full_storage_row_once'",
+      "first": "3 passed, 8 deselected, 0.44 s",
+      "final": "3 passed, 8 deselected, 0.41 s; git diff --check passed",
+      "test_log_sha256": "NOT_RECORDED"
+    },
+    {
+      "source_sha": "3ce1a158e3e0b6556a2e094755adf9b5bd18ae08",
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q --tb=short src/test/test_task41_v8_selected_trace_star.py::test_v8_ordered_summary_keeps_grouped_left_distinct_from_closure",
+      "result": "1 passed in 0.51 s",
+      "source_identity_note": "This is the source SHA the patch was later frozen into; test ran in the pre-commit working tree."
+    }
+  ],
+  "reused_v6_prefix_matrix_defects": [
+    {
+      "cell": 26762,
+      "tag": 1,
+      "permutation": 0,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.410355401479483e-10,
+        "E_T": 5.410131315358186e-09,
+        "C_S": 7.71159222004325e-12,
+        "E_S": 7.930157995895e-10,
+        "E_S_identity_residual": 1.0649178462939816e-10
+      }
+    },
+    {
+      "cell": 26762,
+      "tag": 1,
+      "permutation": 0,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.218341061561575e-10,
+        "E_T": 5.679379302638314e-09,
+        "C_S": 6.4778562320022615e-12,
+        "E_S": 7.822936480980103e-10,
+        "E_S_identity_residual": 9.869304793312122e-11
+      }
+    },
+    {
+      "cell": 26897,
+      "tag": 1,
+      "permutation": 0,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.043180181243333e-10,
+        "E_T": 5.553881372325836e-09,
+        "C_S": 7.583750468824273e-12,
+        "E_S": 7.614336427400963e-10,
+        "E_S_identity_residual": 1.0154111213845159e-10
+      }
+    },
+    {
+      "cell": 26897,
+      "tag": 1,
+      "permutation": 0,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.070287151689052e-10,
+        "E_T": 5.635283032120597e-09,
+        "C_S": 6.185499557699407e-12,
+        "E_S": 7.705180349185522e-10,
+        "E_S_identity_residual": 1.0135071201836375e-10
+      }
+    },
+    {
+      "cell": 0,
+      "tag": 2,
+      "permutation": 0,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.439396088924649e-10,
+        "E_T": 5.910356902822997e-09,
+        "C_S": 7.084343169334449e-12,
+        "E_S": 7.641511546202521e-10,
+        "E_S_identity_residual": 1.0017606166942185e-10
+      }
+    },
+    {
+      "cell": 0,
+      "tag": 2,
+      "permutation": 0,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.153919425279423e-10,
+        "E_T": 5.657961595111811e-09,
+        "C_S": 7.3059433089227e-12,
+        "E_S": 7.984299962393485e-10,
+        "E_S_identity_residual": 1.0740661673035693e-10
+      }
+    },
+    {
+      "cell": 1,
+      "tag": 2,
+      "permutation": 36873,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.632979458457488e-10,
+        "E_T": 5.61121449266664e-09,
+        "C_S": 8.136484020256542e-12,
+        "E_S": 7.830776080533483e-10,
+        "E_S_identity_residual": 1.0001703626767194e-10
+      }
+    },
+    {
+      "cell": 1,
+      "tag": 2,
+      "permutation": 36873,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.130766688930966e-10,
+        "E_T": 6.110911334901034e-09,
+        "C_S": 7.517319073706486e-12,
+        "E_S": 8.192085452235871e-10,
+        "E_S_identity_residual": 1.0385617443282965e-10
+      }
+    },
+    {
+      "cell": 2,
+      "tag": 2,
+      "permutation": 576,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 8.163937813881454e-10,
+        "E_T": 5.442271036396545e-09,
+        "C_S": 8.078170701712728e-12,
+        "E_S": 8.17150542829601e-10,
+        "E_S_identity_residual": 1.0526102912963183e-10
+      }
+    },
+    {
+      "cell": 2,
+      "tag": 2,
+      "permutation": 576,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.586214123840396e-10,
+        "E_T": 5.662234844653011e-09,
+        "C_S": 6.9535556508648165e-12,
+        "E_S": 7.674034417130633e-10,
+        "E_S_identity_residual": 1.075109427219316e-10
+      }
+    },
+    {
+      "cell": 5,
+      "tag": 2,
+      "permutation": 4680,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.437228909136731e-10,
+        "E_T": 5.632100332639627e-09,
+        "C_S": 7.895307762907915e-12,
+        "E_S": 8.592059895256317e-10,
+        "E_S_identity_residual": 1.0808674424866925e-10
+      }
+    },
+    {
+      "cell": 5,
+      "tag": 2,
+      "permutation": 4680,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.170289541281833e-10,
+        "E_T": 5.542343429132675e-09,
+        "C_S": 8.475469247824492e-12,
+        "E_S": 7.804675491667138e-10,
+        "E_S_identity_residual": 1.0575296434633299e-10
+      }
+    },
+    {
+      "cell": 6,
+      "tag": 1,
+      "permutation": 32769,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.678870148481183e-10,
+        "E_T": 5.375999699825215e-09,
+        "C_S": 7.698657591132479e-12,
+        "E_S": 7.732268586696331e-10,
+        "E_S_identity_residual": 1.0225162872292488e-10
+      }
+    },
+    {
+      "cell": 6,
+      "tag": 1,
+      "permutation": 32769,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 7.912176506110629e-10,
+        "E_T": 5.629608482103385e-09,
+        "C_S": 7.922764550034703e-12,
+        "E_S": 8.07832880141169e-10,
+        "E_S_identity_residual": 1.0196900572167707e-10
+      }
+    },
+    {
+      "cell": 7505,
+      "tag": 3,
+      "permutation": 0,
+      "role": "candidate",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 6.352558836489095e-10,
+        "E_T": 4.375455863982958e-09,
+        "C_S": 5.272775345007429e-12,
+        "E_S": 6.71512967233917e-10,
+        "E_S_identity_residual": 1.0945645277535657e-10
+      }
+    },
+    {
+      "cell": 7505,
+      "tag": 3,
+      "permutation": 0,
+      "role": "reference",
+      "source": "REUSED_HASH_BOUND_V6_PREFIX",
+      "frobenius_norms": {
+        "E_R": 6.411364578488219e-10,
+        "E_T": 4.241704795852997e-09,
+        "C_S": 5.006754525068346e-12,
+        "E_S": 6.734508569112359e-10,
+        "E_S_identity_residual": 1.13585699678593e-10
+      }
+    }
+  ]
+}

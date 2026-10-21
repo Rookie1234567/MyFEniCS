@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-当前最新执行范围为 Task41extra Review V6；完整数值回应见 [response_v6.md](response_v6.md)，紧凑结果、逐数组哈希索引、测试与运行索引分别见 [V6 compact](outcomes/b0_v6_actual_qmetric_full_action_failed_20261021.json)、[V6 hash index](outcomes/b0_v6_actual_qmetric_hash_index_20261021.json)、[test summary](outcomes/test_summary.md) 和 [run index](outcomes/run_index.json)。
+当前最新执行范围为 Task41extra Review V8；完整回应见 [response_v8.md](response_v8.md)，紧凑证据、测试与运行索引见 [V8 compact](outcomes/b0_v8_selected_trace_star_audit_20261021.json)、[test summary](outcomes/test_summary.md) 和 [run index](outcomes/run_index.json)。
 
 V6 的 `actual_qmetric_blocked_gram` 候选已构建 28,000 个 `mesh_actual_exact` 键；八个代表键的 raw/oriented 张量、K/G/J/L 与 R/T/S 局部筛查均通过 `1e-11`。候选完整两列作用的冻结分母相对误差为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，超过原 `1e-11` 门；独立 saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。按 Review V6 停在 full-action gate，不进入 200q、factor、KSP/FGMRES、完整场、A6 或 R/T/A。候选恢复也未通过 forward 门，且只做了初次恢复，没有耗尽三次修正额度。V3/V4/V5 均保留为各自历史阶段，不用 donor PASS 替代 V6 候选结果。
 

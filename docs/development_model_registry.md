@@ -1,4 +1,19 @@
-## Task41extra Review V6 最新登记入口（2026-10-21）
+## Task41extra Review V8 当前登记入口（2026-10-21）
+
+V8完成目标行的保存数据审计与两单元RHS次序反事实；它没有形成完整三维candidate资格。这里“producer”曾扫描全体单元的轻量metadata，并为目标行关联的两个单元补建局部candidate/reference张量；后续checker只读保存证据。V6 candidate的原始完整两列action仍失败，V8没有重跑它。
+
+| 对象 / 阶段 | source与方法 | 实测结果 | 状态与资格范围 |
+|---|---|---|---|
+| V6 candidate全域action基线 | source由V6记录；p6/native、28,000 cells | top/bottom相对差`1.7183209126709868e-10` / `3.6180522433957604e-10`，限`1e-11` | FAIL；V8未重跑candidate全域action与recovery |
+| V8 selected-star producer | source `35fd1bbf2bca13bd17e89cc79cf7cd825b94411c`；metadata扫描28,000 cells，目标row 4,766,937→original full-storage row 15,440,235 | incident cell 23352、23493；仅补建两格局部candidate/reference张量和R/T/S | 局部输入准备已完成；不是全域FE assembly或PDE |
+| V8 saved checker | source `3ce1a158e3e0b6556a2e094755adf9b5bd18ae08`；checker attempts 1–4 | attempt4重算304个保存向量及16条P3有序行；V6 candidate没有全域重算 | checker COMPLETE；candidate资格为空，official false |
+| donor独立action重放 | 历史donor保存向量 | 两列相对差`3.0421186782950706e-10` / `6.391893878206601e-10` | donor两列失败；不得当作candidate结果 |
+| 局部RHS反事实 | 两个incident cells上比较`T b_i`与`-J solve(K,b_i)` | top gap `2.433304760925843e-9→5.157211896343317e-10`；bottom `4.976414600781769e-9→7.809377196826238e-10` | 仅诊断；建议评估`src/solvers/p6_cell_condensed_action.py::reduce_rhs`，未实施且需完整两列重验 |
+| 未完成范围 | 两列candidate action/recovery、200q、factor、KSP/FGMRES、full field、A6、R/T/A | — | `NOT_RUN`；不能因局部差距缩小或donor recovery pass升级资格 |
+
+五段V8正式service父时钟已知合计1005.333930809905 s；两个prepare错误与未量测工程准备时间为UNKNOWN，子段不重复求和。原始负结果、资源分项、tests及compact证据见[Task41 V8 response](task41extra_phi90_p50x50_g17x20/response_v8.md)、[V8 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v8_selected_trace_star_audit_20261021.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)与[test summary](task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md)。
+
+## Task41extra Review V6 历史登记入口（2026-10-21）
 
 V6 用 `actual_qmetric_blocked_gram` 共享参考基函数表、分块局部乘加，完成 28,000 个 `mesh_actual_exact` 几何键；八个代表键的 raw/oriented 张量、K/G/J/L、R/T/S 局部检查都通过 `1e-11`。完整 p6/native 两列按冻结分母重算为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，均高于 `1e-11`，故 full-action FAIL、`official_result=false`。恢复 forward 门也未过，且 3 次同-LU 修正额度未使用；归因仍为诊断，根因未证明。174 个新数组声明 payload 为 `4,514,199,336 B`；donor 141 个数组以只读方式复用。科学候选 attempts 2–7、9 加 attempt10 的已知 service-parent 时间为 `29,261.4520964548 s`；saved-audit attempts1、3、4 为 `503.16404851479456 s`；已知非重叠总计 `29,764.616144969594 s`。候选 attempts1、8 与 saved-audit attempt2 的缺失 receipt/成本保持 `NOT_FOUND` / `UNKNOWN`。200q、factor、KSP/FGMRES、完整场、独立 A6 和 R/T/A 均未运行。V6 固定窗口未刷新；V3/V4/V5 和 V6 saved-audit attempts 的负记录都保留。详见 [V6 response](task41extra_phi90_p50x50_g17x20/response_v6.md)、[V6 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_full_action_failed_20261021.json)、[V6 hash index](task41extra_phi90_p50x50_g17x20/outcomes/b0_v6_actual_qmetric_hash_index_20261021.json) 和 [V6 run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。
 
