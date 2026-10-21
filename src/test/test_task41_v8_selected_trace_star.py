@@ -559,6 +559,125 @@ def test_v8_checker_replays_saved_complex_local_vectors_and_reports_defects_only
         _task41_v8_complex_pairs([[1.0, 0.0, 2.0]], "selected trace coefficients")
 
 
+def test_v8_selected_scalar_replay_matches_p3_producer_schema():
+    import pytest
+
+    from src.runners.task41_p0_checker import (
+        _task41_v8_check_selected_row_contributions,
+    )
+
+    scalars = {
+        "s": 1.25 + 0.5j,
+        "rhs_i": -0.25 + 0.75j,
+        "T_r_i": 0.4 - 0.3j,
+        "delta_t": -0.2 + 0.1j,
+        "Q": 0.6 + 0.8j,
+        "Q_regrouped": 0.5 - 0.9j,
+    }
+
+    def pair(value):
+        return [value.real, value.imag]
+
+    # This mirrors P3: projected_T_r_i is an array reference under
+    # signed_action_artifacts; its selected value is already checked from
+    # that array. selected_row_contributions only has the T_r_i scalar.
+    contributions = {
+        "S_action": pair(scalars["s"]),
+        "local_reduced_rhs_T_b_i": pair(scalars["rhs_i"]),
+        "T_r_i": pair(scalars["T_r_i"]),
+        "delta_t_cell": pair(scalars["delta_t"]),
+        "Q_cell": pair(scalars["Q"]),
+        "Q_regrouped_cell": pair(scalars["Q_regrouped"]),
+        "projected_actual_trace": pair(scalars["delta_t"]),
+        "projected_Q": pair(scalars["Q"]),
+        "projected_Q_regrouped": pair(scalars["Q_regrouped"]),
+    }
+    signed_action_artifacts = {
+        "projected_T_r_i": {
+            "path": "projected_T_r_i.npy",
+            "shape": [4],
+            "dtype": "complex128",
+        }
+    }
+
+    assert "projected_T_r_i" not in contributions
+    assert "projected_T_r_i" in signed_action_artifacts
+    _task41_v8_check_selected_row_contributions(
+        contributions, scalars, "fixture cell"
+    )
+    wrong_scalar = dict(contributions, T_r_i=[0.0, 0.0])
+    with pytest.raises(ValueError, match="T_r_i"):
+        _task41_v8_check_selected_row_contributions(
+            wrong_scalar, scalars, "fixture cell"
+        )
+
+
+def test_v8_rhs_counterfactual_uses_original_full_storage_row_once():
+    from src.runners.task41_p0_checker import (
+        _task41_v8_lu_rhs_counterfactual,
+        _task41_v8_lu_rhs_totals,
+    )
+    from src.solvers.hcurl_assembly_time_condensation import _strict_local_lu
+
+    K = np.asarray(
+        [[3.0 + 0.2j, 0.1 - 0.3j], [0.4j, 2.0 - 0.1j]],
+        dtype=np.complex128,
+    )
+    J = np.asarray([[0.7 + 0.2j, -0.1 + 0.3j]], dtype=np.complex128)
+    b_i = np.asarray([0.5 - 0.4j, 0.2 + 0.6j], dtype=np.complex128)
+    T = -J @ np.linalg.solve(K, np.eye(2, dtype=np.complex128)) + np.asarray(
+        [[1.0e-4 - 2.0e-4j, -3.0e-4 + 1.0e-4j]], dtype=np.complex128
+    )
+    lu, _ = _strict_local_lu(K)
+    local = _task41_v8_lu_rhs_counterfactual(
+        K=K,
+        J=J,
+        T=T,
+        b_i=b_i,
+        factor=lu,
+        selected_local_rows=np.asarray([0]),
+        selected_coefficients=np.asarray([1.0 + 0.0j]),
+    )
+    expected_old = T @ b_i
+    expected_solution = np.linalg.solve(K, b_i)
+    expected_new = -(J @ expected_solution)
+    np.testing.assert_allclose(
+        local["old_T_b_i_projected"], [expected_old[0].real, expected_old[0].imag]
+    )
+    np.testing.assert_allclose(
+        local["new_minus_J_solve_K_b_i_projected"],
+        [expected_new[0].real, expected_new[0].imag],
+    )
+    np.testing.assert_allclose(
+        local["_residual_array"], K @ local["_solution_array"] - b_i
+    )
+    assert local["solve_residual_norm"] >= 0.0
+    assert local["solve_residual_rhs_norm"] == np.linalg.norm(b_i)
+    assert local["solve_solution_norm"] == np.linalg.norm(local["_solution_array"])
+    assert local["solve_backward_residual_scale"] > 0.0
+
+    native_volume_rhs = np.asarray(
+        [10 + 1j, 20 + 2j, 30 + 3j, 40 + 4j, 50 + 5j],
+        dtype=np.complex128,
+    )
+    result = _task41_v8_lu_rhs_totals(
+        native_volume_rhs=native_volume_rhs,
+        selected_active_row=1,
+        selected_original_row=4,
+        selected_S_sum=9 + 1j,
+        old_local_rhs_sum=2 + 2j,
+        new_local_rhs_sum=3 + 4j,
+    )
+
+    assert result["selected_active_row"] == 1
+    assert result["selected_original_row"] == 4
+    assert result["original_b_t_added_once"] == [50.0, 5.0]
+    assert result["g_old_b_t_plus_T_b_i"] == [52.0, 7.0]
+    assert result["g_new_b_t_plus_direct_minus_J_solve_K_b_i"] == [53.0, 9.0]
+    assert result["d_old_S_minus_g_old"] == [-43.0, -6.0]
+    assert result["d_new_S_minus_g_new"] == [-44.0, -8.0]
+
+
 def test_v8_legacy_missing_checker_field_is_exact_hash_and_identity_bound():
     from src.runners.task41_p0_checker import (
         TASK41_P0_V8_LEGACY_CONSUMER_CONTRACT_SHA256,

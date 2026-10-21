@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import time
 from typing import Any, Mapping
 
 import numpy as np
@@ -3556,6 +3557,37 @@ def _task41_v8_complex_pairs(value: Any, label: str) -> np.ndarray:
     )
 
 
+def _task41_v8_check_selected_row_contributions(
+    contributions: Mapping[str, Any], scalars: Mapping[str, complex], label: str
+) -> None:
+    """Check producer-owned selected-row scalars without treating arrays as scalars."""
+    if not isinstance(contributions, Mapping):
+        raise ValueError(f"V8 {label} omits selected scalar contributions")
+    field_keys = {
+        "s": "S_action",
+        "rhs_i": "local_reduced_rhs_T_b_i",
+        "T_r_i": "T_r_i",
+        "delta_t": "delta_t_cell",
+        "Q": "Q_cell",
+        "Q_regrouped": "Q_regrouped_cell",
+    }
+    for field, report_key in field_keys.items():
+        value = _task41_v8_complex_pair(contributions.get(report_key), report_key)
+        _task41_v8_assert_close(value, scalars[field], f"{label} scalar {report_key}")
+    # projected_T_r_i is intentionally absent here: the producer saves it as
+    # an array in signed_action_artifacts, and the caller checks that array.
+    for report_key, scalar_name in (
+        ("projected_actual_trace", "delta_t"),
+        ("projected_Q", "Q"),
+        ("projected_Q_regrouped", "Q_regrouped"),
+    ):
+        _task41_v8_assert_close(
+            _task41_v8_complex_pair(contributions.get(report_key), report_key),
+            scalars[scalar_name],
+            f"{label} scalar {report_key}",
+        )
+
+
 def _task41_v8_assert_close(actual: Any, expected: Any, label: str) -> None:
     left = np.asarray(actual)
     right = np.asarray(expected)
@@ -3566,6 +3598,140 @@ def _task41_v8_assert_close(actual: Any, expected: Any, label: str) -> None:
         or not np.allclose(left, right, rtol=2.0e-12, atol=2.0e-13)
     ):
         raise ValueError(f"V8 independent replay differs from saved {label}")
+
+
+def _task41_v8_lu_rhs_counterfactual(
+    *,
+    K: np.ndarray,
+    J: np.ndarray,
+    T: np.ndarray,
+    b_i: np.ndarray,
+    factor: tuple[np.ndarray, np.ndarray],
+    selected_local_rows: np.ndarray,
+    selected_coefficients: np.ndarray,
+) -> dict[str, Any]:
+    """Compare saved T @ b_i with -J @ solve(K, b_i) for one saved cell RHS."""
+    from scipy.linalg import lu_solve
+
+    counterfactual_started = time.perf_counter()
+    K = np.asarray(K, dtype=np.complex128)
+    J = np.asarray(J, dtype=np.complex128)
+    T = np.asarray(T, dtype=np.complex128)
+    rhs = np.asarray(b_i, dtype=np.complex128)
+    rows = np.asarray(selected_local_rows, dtype=np.int64)
+    coefficients = np.asarray(selected_coefficients, dtype=np.complex128)
+    if (
+        K.ndim != 2
+        or K.shape[0] != K.shape[1]
+        or J.ndim != 2
+        or J.shape[1] != K.shape[0]
+        or T.shape != J.shape
+        or rhs.shape != (K.shape[0],)
+        or rows.ndim != 1
+        or coefficients.shape != rows.shape
+        or rows.size == 0
+        or np.any(rows < 0)
+        or np.any(rows >= J.shape[0])
+        or not all(np.isfinite(value).all() for value in (K, J, T, rhs, coefficients))
+    ):
+        raise ValueError("V8 saved RHS LU counterfactual inputs are malformed")
+    solve_started = time.perf_counter()
+    solution = lu_solve(factor, rhs, check_finite=True)
+    solve_seconds = time.perf_counter() - solve_started
+    residual = K @ solution - rhs
+    residual_norm = float(np.linalg.norm(residual))
+    rhs_norm = float(np.linalg.norm(rhs))
+    solution_norm = float(np.linalg.norm(solution))
+    backward_residual_scale = float(
+        np.linalg.norm(K) * solution_norm + rhs_norm
+    )
+    old_vector = T @ rhs
+    new_vector = -(J @ solution)
+    old_projected = complex(np.vdot(coefficients, old_vector[rows]))
+    new_projected = complex(np.vdot(coefficients, new_vector[rows]))
+    if not np.isfinite(
+        [
+            residual_norm,
+            rhs_norm,
+            solution_norm,
+            backward_residual_scale,
+            old_projected.real,
+            old_projected.imag,
+            new_projected.real,
+            new_projected.imag,
+        ]
+    ).all():
+        raise ValueError("V8 saved RHS LU counterfactual produced non-finite values")
+    delta = new_projected - old_projected
+    return {
+        "old_T_b_i_projected": [old_projected.real, old_projected.imag],
+        "new_minus_J_solve_K_b_i_projected": [new_projected.real, new_projected.imag],
+        "complex_signed_new_minus_old": [delta.real, delta.imag],
+        "solve_residual_norm": residual_norm,
+        "solve_residual_rhs_norm": rhs_norm,
+        "solve_solution_norm": solution_norm,
+        "solve_backward_residual_scale": backward_residual_scale,
+        "solve_residual_relative_to_rhs": residual_norm
+        / max(rhs_norm, np.finfo(np.float64).tiny),
+        "solve_residual_backward_scaled": residual_norm
+        / max(backward_residual_scale, 1.0),
+        "solve_seconds": solve_seconds,
+        "counterfactual_seconds": time.perf_counter() - counterfactual_started,
+        "_solution_array": solution,
+        "_residual_array": residual,
+    }
+
+
+def _task41_v8_lu_rhs_totals(
+    *,
+    native_volume_rhs: np.ndarray,
+    selected_active_row: int,
+    selected_original_row: int,
+    selected_S_sum: complex,
+    old_local_rhs_sum: complex,
+    new_local_rhs_sum: complex,
+) -> dict[str, Any]:
+    """Combine two-cell RHS terms with the global volume RHS at its original row."""
+    native = np.asarray(native_volume_rhs, dtype=np.complex128)
+    if (
+        native.ndim != 1
+        or type(selected_active_row) is not int
+        or type(selected_original_row) is not int
+        or selected_active_row < 0
+        or selected_original_row < 0
+        or selected_original_row >= native.size
+    ):
+        raise ValueError("V8 local RHS totals have an invalid active/original row map")
+    b_t = complex(native[selected_original_row])
+    s_sum = complex(selected_S_sum)
+    old_sum = complex(old_local_rhs_sum)
+    new_sum = complex(new_local_rhs_sum)
+    if not np.isfinite(
+        [b_t.real, b_t.imag, s_sum.real, s_sum.imag, old_sum.real, old_sum.imag, new_sum.real, new_sum.imag]
+    ).all():
+        raise ValueError("V8 local RHS totals contain non-finite values")
+    g_old = b_t + old_sum
+    g_new = b_t + new_sum
+    d_old = s_sum - g_old
+    d_new = s_sum - g_new
+    return {
+        "selected_active_row": selected_active_row,
+        "selected_original_row": selected_original_row,
+        "original_b_t_added_once": [b_t.real, b_t.imag],
+        "selected_S_sum": [s_sum.real, s_sum.imag],
+        "g_old_b_t_plus_T_b_i": [g_old.real, g_old.imag],
+        "g_new_b_t_plus_direct_minus_J_solve_K_b_i": [g_new.real, g_new.imag],
+        "d_old_S_minus_g_old": [d_old.real, d_old.imag],
+        "d_new_S_minus_g_new": [d_new.real, d_new.imag],
+        "complex_signed_delta_g_new_minus_old": [
+            (g_new - g_old).real,
+            (g_new - g_old).imag,
+        ],
+        "complex_signed_delta_d_new_minus_old": [
+            (d_new - d_old).real,
+            (d_new - d_old).imag,
+        ],
+    }
 
 
 def _task41_v8_local_matrix_defect_diagnostic(
@@ -3784,6 +3950,7 @@ def _task41_v8_selected_trace_star_recheck(
     candidate_producer_contract_sha256: str | None,
     donor_contract: Mapping[str, Any],
     repo_root: Path,
+    output_directory: Path,
 ) -> dict[str, Any]:
     """Recheck only hash-authorized V8 local operands and selected-row attribution."""
     from src.runners.task41_p0_v4_volume_only_audit import (
@@ -4043,9 +4210,17 @@ def _task41_v8_selected_trace_star_recheck(
     ):
         raise ValueError("V8 selected-cell identity does not cover the complete incident star")
 
+    from src.solvers.hcurl_assembly_time_condensation import _strict_local_lu
+
     cell_terms: dict[tuple[int, int, str, str], dict[str, complex]] = {}
     local_vector_checks = 0
     local_matrix_defects: list[dict[str, Any]] = []
+    local_rhs_lu_factors: dict[tuple[int, str], dict[str, Any]] = {}
+    local_rhs_lu_inputs: dict[tuple[int, str, int], np.ndarray] = {}
+    local_rhs_lu_terms: dict[tuple[int, str, int], dict[str, Any]] = {}
+    local_rhs_lu_solution_arrays: dict[tuple[int, str, int], dict[str, np.ndarray]] = {}
+    local_rhs_lu_factorizations: list[dict[str, Any]] = []
+    local_rhs_lu_state_pair_reuses = 0
     for cell_index in incident_order:
         numeric = numeric_by_id[cell_index]
         selected_map = selected_by_id[cell_index]
@@ -4141,6 +4316,42 @@ def _task41_v8_selected_trace_star_recheck(
                     ),
                 }
             )
+            K = np.asarray(
+                tensors[np.ix_(interior_positions, interior_positions)],
+                dtype=np.complex128,
+            )
+            J = np.asarray(
+                tensors[np.ix_(trace_positions, interior_positions)],
+                dtype=np.complex128,
+            )
+            factor_key = (cell_index, role)
+            if factor_key in local_rhs_lu_factors:
+                raise ValueError(f"V8 local RHS diagnostic repeats LU factor {factor_key}")
+            K_sha256 = hashlib.sha256(np.ascontiguousarray(K).view(np.uint8)).hexdigest()
+            factor_started = time.perf_counter()
+            local_factor, strict_identity_defect = _strict_local_lu(K)
+            factor_seconds = time.perf_counter() - factor_started
+            local_rhs_lu_factors[factor_key] = {
+                "factor": local_factor,
+                "K": K,
+                "J": J,
+                "T": RTS["T"],
+                "selected_local_rows": selected_local_rows,
+                "selected_coefficients": selected_coefficients,
+                "K_sha256": K_sha256,
+            }
+            local_rhs_lu_factorizations.append(
+                {
+                    "cell_index": cell_index,
+                    "role": role,
+                    "factorization_identity": "fresh _strict_local_lu(K) from saved oriented_tensor; reused for both columns and states",
+                    "K_sha256": K_sha256,
+                    "oriented_tensor_sha256": artifact_refs["oriented_tensor"].get("sha256"),
+                    "saved_T_sha256": artifact_refs["T"].get("sha256"),
+                    "strict_identity_relative_defect": strict_identity_defect,
+                    "factorization_seconds": factor_seconds,
+                }
+            )
             for column_index in range(2):
                 donor_column = columns[column_index]
                 native_volume_rhs = np.asarray(donor_column["native_volume_rhs"], dtype=np.complex128)
@@ -4214,31 +4425,141 @@ def _task41_v8_selected_trace_star_recheck(
                         )
                         local_vector_checks += 1
                     contributions = state_role.get("selected_row_contributions")
-                    if not isinstance(contributions, Mapping):
-                        raise ValueError("V8 P3 state omits selected scalar contributions")
-                    field_keys = {
-                        "s": "S_action",
-                        "rhs_i": "local_reduced_rhs_T_b_i",
-                        "T_r_i": "T_r_i",
-                        "delta_t": "delta_t_cell",
-                        "Q": "Q_cell",
-                        "Q_regrouped": "Q_regrouped_cell",
-                    }
-                    for field, report_key in field_keys.items():
-                        value = _task41_v8_complex_pair(contributions.get(report_key), report_key)
-                        _task41_v8_assert_close(value, scalars[field], f"cell {cell_index} scalar {report_key}")
-                    for report_key, scalar_name in (
-                        ("projected_actual_trace", "delta_t"),
-                        ("projected_T_r_i", "T_r_i"),
-                        ("projected_Q", "Q"),
-                        ("projected_Q_regrouped", "Q_regrouped"),
-                    ):
-                        _task41_v8_assert_close(
-                            _task41_v8_complex_pair(contributions.get(report_key), report_key),
-                            scalars[scalar_name],
-                            f"cell {cell_index} scalar {report_key}",
+                    _task41_v8_check_selected_row_contributions(
+                        contributions, scalars, f"cell {cell_index}"
+                    )
+                    rhs_key = (cell_index, role, column_index)
+                    if state_label == "j0":
+                        if rhs_key in local_rhs_lu_terms:
+                            raise ValueError(f"V8 local RHS diagnostic duplicates {rhs_key}")
+                        lu_data = local_rhs_lu_factors[(cell_index, role)]
+                        rhs_diagnostic = _task41_v8_lu_rhs_counterfactual(
+                            K=lu_data["K"],
+                            J=lu_data["J"],
+                            T=lu_data["T"],
+                            b_i=inputs["b_i"],
+                            factor=lu_data["factor"],
+                            selected_local_rows=lu_data["selected_local_rows"],
+                            selected_coefficients=lu_data["selected_coefficients"],
                         )
+                        local_rhs_lu_solution_arrays[rhs_key] = {
+                            "solution": rhs_diagnostic.pop("_solution_array"),
+                            "residual": rhs_diagnostic.pop("_residual_array"),
+                        }
+                        local_rhs_lu_terms[rhs_key] = rhs_diagnostic
+                        local_rhs_lu_inputs[rhs_key] = inputs["b_i"]
+                        local_rhs_lu_terms[rhs_key].update(
+                            {
+                                "cell_index": cell_index,
+                                "role": role,
+                                "column": column_index,
+                                "b_i_sha256": local_values["b_i"].get("sha256"),
+                                "factorization_K_sha256": lu_data["K_sha256"],
+                            }
+                        )
+                    else:
+                        previous_rhs = local_rhs_lu_inputs.get(rhs_key)
+                        if previous_rhs is None or not np.array_equal(
+                            inputs["b_i"], previous_rhs
+                        ):
+                            raise ValueError(
+                                f"V8 paired-state b_i differs for local RHS LU reuse {rhs_key}"
+                            )
+                        local_rhs_lu_state_pair_reuses += 1
                     cell_terms[(cell_index, column_index, state_label, role)] = scalars
+
+    local_rhs_lu_cases: list[dict[str, Any]] = []
+    for role in ("candidate", "reference"):
+        for column_index in range(2):
+            native_volume_rhs = np.asarray(
+                columns[column_index]["native_volume_rhs"], dtype=np.complex128
+            )
+            for state_label in ("j0", "j3"):
+                s_sum = sum(
+                    cell_terms[(cell_index, column_index, state_label, role)]["s"]
+                    for cell_index in incident_order
+                )
+                old_rhs_sum = sum(
+                    complex(*local_rhs_lu_terms[(cell_index, role, column_index)]["old_T_b_i_projected"])
+                    for cell_index in incident_order
+                )
+                new_rhs_sum = sum(
+                    complex(*local_rhs_lu_terms[(cell_index, role, column_index)]["new_minus_J_solve_K_b_i_projected"])
+                    for cell_index in incident_order
+                )
+                local_rhs_lu_cases.append(
+                    {
+                        "role": role,
+                        "column": column_index,
+                        "state": state_label,
+                        **_task41_v8_lu_rhs_totals(
+                            native_volume_rhs=native_volume_rhs,
+                            selected_active_row=selected_active_row,
+                            selected_original_row=selected_original_row,
+                            selected_S_sum=s_sum,
+                            old_local_rhs_sum=old_rhs_sum,
+                            new_local_rhs_sum=new_rhs_sum,
+                        ),
+                        "cell_terms": [
+                            local_rhs_lu_terms[(cell_index, role, column_index)]
+                            for cell_index in incident_order
+                        ],
+                    }
+                )
+    local_rhs_lu_case_by_key = {
+        (item["role"], item["column"], item["state"]): item
+        for item in local_rhs_lu_cases
+    }
+    local_rhs_lu_candidate_reference_gaps = []
+    for column_index in range(2):
+        candidate = local_rhs_lu_case_by_key[("candidate", column_index, "j0")]
+        reference = local_rhs_lu_case_by_key[("reference", column_index, "j0")]
+        old_gap = np.asarray(candidate["g_old_b_t_plus_T_b_i"]) - np.asarray(
+            reference["g_old_b_t_plus_T_b_i"]
+        )
+        new_gap = np.asarray(
+            candidate["g_new_b_t_plus_direct_minus_J_solve_K_b_i"]
+        ) - np.asarray(reference["g_new_b_t_plus_direct_minus_J_solve_K_b_i"])
+        local_rhs_lu_candidate_reference_gaps.append(
+            {
+                "column": column_index,
+                "state_used": "j0 (paired j3 b_i reuse is checked above)",
+                "old_candidate_minus_reference_g": old_gap.tolist(),
+                "new_candidate_minus_reference_g": new_gap.tolist(),
+                "old_absolute_gap": float(np.linalg.norm(old_gap)),
+                "new_absolute_gap": float(np.linalg.norm(new_gap)),
+            }
+        )
+    expected_factorizations = len(incident_order) * 2
+    expected_rhs_pairs = len(incident_order) * 2 * 2
+    if (
+        len(local_rhs_lu_factorizations) != expected_factorizations
+        or len(local_rhs_lu_terms) != expected_rhs_pairs
+        or local_rhs_lu_state_pair_reuses != expected_rhs_pairs
+    ):
+        raise ValueError("V8 saved local RHS LU counterfactual is incomplete")
+    local_rhs_lu_counterfactual = {
+        "schema": "task41.p0.v8.local_rhs_lu_counterfactual.v1",
+        "status": "DIAGNOSTIC_ONLY",
+        "source_report_sha256_rechecked": expected_report_sha256,
+        "formal_candidate_or_residual_gate_changed": False,
+        "production_solver_changed": False,
+        "incident_cells": incident_order,
+        "new_strict_lu_factorization_count": len(local_rhs_lu_factorizations),
+        "direct_rhs_solve_count": len(local_rhs_lu_terms),
+        "paired_state_rhs_reuse_count": local_rhs_lu_state_pair_reuses,
+        "strict_factorization_seconds_sum": sum(
+            row["factorization_seconds"] for row in local_rhs_lu_factorizations
+        ),
+        "rhs_counterfactual_seconds_sum": sum(
+            row["counterfactual_seconds"] for row in local_rhs_lu_terms.values()
+        ),
+        "factorizations": local_rhs_lu_factorizations,
+        "cases": local_rhs_lu_cases,
+        "candidate_reference_gaps": local_rhs_lu_candidate_reference_gaps,
+        "method": "Rebuild one strict LU per saved cell/role, reuse it for both columns; verify j0/j3 b_i equality and solve only once per pair; compare saved T @ b_i with -J @ solve(K, b_i), project by selected local-row coefficients, then add the original global b_t once.",
+        "scope": "Saved incident cells only; no tensor regeneration, FE/PDE run, refinement, production change, or threshold change.",
+    }
 
     v6_index_by_name = {str(name): value for name, value in v6_index_by_name.items()}
     v7_values = {str(name): value for name, value in v7_index_by_name.items()}
@@ -4398,6 +4719,173 @@ def _task41_v8_selected_trace_star_recheck(
                             )
                     scalar_rows_checked += 1
 
+    production_rows = ordered_summaries["production_original_cell_order"]
+    old_baseline_crosschecks = []
+    for case in local_rhs_lu_cases:
+        summary_row = next(
+            (
+                item
+                for item in production_rows
+                if isinstance(item, Mapping)
+                and item.get("column") == case["column"]
+                and item.get("state") == case["state"]
+                and item.get("role") == case["role"]
+            ),
+            None,
+        )
+        replay = summary_row.get("production_row_replay") if isinstance(summary_row, Mapping) else None
+        if not isinstance(replay, Mapping):
+            raise ValueError("V8 local RHS counterfactual cannot bind production-order baseline")
+        expected_g = _task41_v8_complex_pair(
+            replay.get(summary_field_map["g_volume"]), "production-order g_volume"
+        )
+        expected_d = _task41_v8_complex_pair(
+            replay.get(summary_field_map["d_volume_star"]),
+            "production-order d_volume_star",
+        )
+        actual_g = complex(*case["g_old_b_t_plus_T_b_i"])
+        actual_d = complex(*case["d_old_S_minus_g_old"])
+        _task41_v8_assert_close(
+            actual_g, expected_g, "production-order local RHS counterfactual g_old"
+        )
+        _task41_v8_assert_close(
+            actual_d, expected_d, "production-order local RHS counterfactual d_old"
+        )
+        old_baseline_crosschecks.append(
+            {
+                "order": "production_original_cell_order",
+                "role": case["role"],
+                "column": case["column"],
+                "state": case["state"],
+                "g_old_matches_existing_ordered_summary": True,
+                "d_old_matches_existing_ordered_summary": True,
+            }
+        )
+    local_rhs_lu_counterfactual["production_order_old_baseline_crosschecks"] = (
+        old_baseline_crosschecks
+    )
+
+    import shutil
+
+    from src.runners.task41_p0_v4_volume_only_audit import _persist_array
+
+    diagnostic_output = Path(output_directory).resolve(strict=True)
+    if not diagnostic_output.is_relative_to(results_root) or not diagnostic_output.is_dir():
+        raise ValueError("V8 local RHS diagnostic output must be inside the registered results tree")
+    planned_arrays: list[tuple[str, np.ndarray, str, dict[str, Any], str]] = []
+    factor_record_by_key = {
+        (row["cell_index"], row["role"]): row
+        for row in local_rhs_lu_factorizations
+    }
+    for key, lu_data in local_rhs_lu_factors.items():
+        cell_index, role = key
+        factor_lu, factor_pivots = lu_data["factor"]
+        planned_arrays.extend(
+            (
+                (
+                    f"v8_lu_cell{cell_index}_{role}",
+                    factor_lu,
+                    "LOCAL_LU_RECONSTRUCTED_FROM_SAVED_TENSOR",
+                    factor_record_by_key[key],
+                    "lu_factor_artifact",
+                ),
+                (
+                    f"v8_lu_cell{cell_index}_{role}_pivots",
+                    factor_pivots,
+                    "LOCAL_LU_PIVOTS",
+                    factor_record_by_key[key],
+                    "owned_pivots_artifact",
+                ),
+            )
+        )
+    for key, arrays in local_rhs_lu_solution_arrays.items():
+        cell_index, role, column_index = key
+        term_record = local_rhs_lu_terms[key]
+        planned_arrays.extend(
+            (
+                (
+                    f"v8_lu_solve_cell{cell_index}_{role}_col{column_index}_solution",
+                    arrays["solution"],
+                    "LOCAL_LU_SOLUTION",
+                    term_record,
+                    "solution_artifact",
+                ),
+                (
+                    f"v8_lu_solve_cell{cell_index}_{role}_col{column_index}_residual",
+                    arrays["residual"],
+                    "LOCAL_LU_SOLVE_RESIDUAL",
+                    term_record,
+                    "residual_artifact",
+                ),
+            )
+        )
+    planned_array_payload_bytes = sum(int(array.nbytes) for _, array, _, _, _ in planned_arrays)
+    planned_npy_header_allowance = 1024 * len(planned_arrays)
+    prior_array_payload_bytes = int(selected.get("prior_array_payload_bytes", -1))
+    persisted_report_bytes = int(report.get("persisted_evidence_bytes", -1))
+    evidence_cap_bytes = int(report.get("evidence_cap_bytes", -1))
+    free_space_floor_bytes = int(report.get("free_space_floor_bytes", -1))
+    if min(
+        prior_array_payload_bytes,
+        persisted_report_bytes,
+        evidence_cap_bytes,
+        free_space_floor_bytes,
+    ) < 0:
+        raise ValueError("V8 report omits evidence-cap or free-space accounting")
+    preflight_increment_bytes = planned_array_payload_bytes + planned_npy_header_allowance
+    projected_cumulative_bytes = (
+        prior_array_payload_bytes + persisted_report_bytes + preflight_increment_bytes
+    )
+    free_space_before_bytes = shutil.disk_usage(diagnostic_output).free
+    if projected_cumulative_bytes > evidence_cap_bytes:
+        raise ValueError("V8 local RHS LU artifacts exceed the report evidence cap")
+    if free_space_before_bytes < preflight_increment_bytes + free_space_floor_bytes:
+        raise ValueError("V8 local RHS LU artifacts would violate the report free-space floor")
+    diagnostic_arrays_directory = diagnostic_output / "local_rhs_lu_counterfactual"
+    diagnostic_arrays_directory.mkdir(parents=False, exist_ok=False)
+    array_artifacts = []
+
+    def persist_diagnostic_array(name: str, array: np.ndarray, *, kind: str) -> dict[str, Any]:
+        record = _persist_array(
+            diagnostic_arrays_directory,
+            name,
+            array,
+            sha256_file=sha256_file,
+        )
+        item = {"name": name, "kind": kind, **record}
+        array_artifacts.append(item)
+        return item
+
+    for name, array, kind, owner, field in planned_arrays:
+        owner[field] = persist_diagnostic_array(name, array, kind=kind)
+    persisted_diagnostic_bytes = sum(int(item["bytes"]) for item in array_artifacts)
+    cumulative_bytes_after = (
+        prior_array_payload_bytes + persisted_report_bytes + persisted_diagnostic_bytes
+    )
+    free_space_after_bytes = shutil.disk_usage(diagnostic_output).free
+    if cumulative_bytes_after > evidence_cap_bytes:
+        raise RuntimeError("V8 local RHS LU artifacts exceeded the report evidence cap after writing")
+    if free_space_after_bytes < free_space_floor_bytes:
+        raise RuntimeError("V8 local RHS LU artifacts violated the report free-space floor after writing")
+    local_rhs_lu_counterfactual["array_directory"] = str(
+        diagnostic_arrays_directory.resolve()
+    )
+    local_rhs_lu_counterfactual["array_artifact_count"] = len(array_artifacts)
+    local_rhs_lu_counterfactual["array_artifacts"] = array_artifacts
+    local_rhs_lu_counterfactual["evidence_cap_accounting"] = {
+        "prior_array_payload_bytes": prior_array_payload_bytes,
+        "report_persisted_evidence_bytes": persisted_report_bytes,
+        "diagnostic_array_payload_bytes": planned_array_payload_bytes,
+        "diagnostic_npy_header_allowance_bytes": planned_npy_header_allowance,
+        "diagnostic_persisted_file_bytes": persisted_diagnostic_bytes,
+        "evidence_cap_bytes": evidence_cap_bytes,
+        "projected_cumulative_bytes_with_header_allowance": projected_cumulative_bytes,
+        "cumulative_persisted_bytes_after_write": cumulative_bytes_after,
+        "free_space_before_bytes": free_space_before_bytes,
+        "free_space_after_bytes": free_space_after_bytes,
+        "free_space_floor_bytes": free_space_floor_bytes,
+    }
+
     return {
         "schema": "task41.p0.v8.selected_trace_star_independent_check.v1",
         "check_completed": True,
@@ -4413,6 +4901,7 @@ def _task41_v8_selected_trace_star_recheck(
         "incident_cell_count": len(incident_order),
         "local_saved_vector_recomputations": local_vector_checks,
         "local_matrix_defect_diagnostics": local_matrix_defects,
+        "local_rhs_lu_counterfactual": local_rhs_lu_counterfactual,
         "ordered_p3_summary_rows_recomputed": scalar_rows_checked,
         "native_rhs_split_epsilon_by_column": {
             str(column): [value.real, value.imag]
@@ -4440,6 +4929,7 @@ def _task41_mesh_actual_exact_candidate_recheck(
     candidate_producer_contract: Mapping[str, Any] | None = None,
     candidate_producer_contract_sha256: str | None = None,
     v7_evidence_directory: Path | None = None,
+    diagnostic_output_directory: Path | None = None,
 ) -> dict[str, Any]:
     """Independently recheck persisted exact-geometry candidate vectors, without FE work."""
     report_path = Path(report_path).resolve(strict=True)
@@ -4449,8 +4939,10 @@ def _task41_mesh_actual_exact_candidate_recheck(
     report = _json_object(report_path, "Task41 exact-geometry candidate report")
     profile = _task41_mesh_actual_exact_candidate_profile(report_path, report)
     if profile["version"] == "v8":
-        if expected_report_sha256 is None:
-            raise ValueError("V8 selected trace-star checker requires the explicit report SHA-256")
+        if expected_report_sha256 is None or diagnostic_output_directory is None:
+            raise ValueError(
+                "V8 selected trace-star checker requires its report SHA-256 and consumer output directory"
+            )
         return _task41_v8_selected_trace_star_recheck(
             report_path,
             expected_report_sha256=expected_report_sha256,
@@ -4462,6 +4954,7 @@ def _task41_mesh_actual_exact_candidate_recheck(
             candidate_producer_contract_sha256=candidate_producer_contract_sha256,
             donor_contract=donor_contract,
             repo_root=repo_root,
+            output_directory=diagnostic_output_directory,
         )
     candidate_prefix = profile["candidate_prefix"]
     attribution_prefix = profile["attribution_prefix"]
@@ -5406,6 +5899,7 @@ def check_task41_p0_b0_saved_evidence_audit(
             v7_evidence_directory=(
                 output_path.with_name(output_path.stem + "_v7_attribution_arrays")
             ),
+            diagnostic_output_directory=output_path.parent,
         )
     audit_completed = bool(evidence.get("audit_completed") is True) and (
         mesh_actual_candidate_check is None
