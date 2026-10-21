@@ -1243,6 +1243,388 @@ def _task41_b0_chunked_difference_summary(
     }
 
 
+def _task41_b0_v7_map_original_rows_to_active(
+    original_rows: np.ndarray, active_original_rows: np.ndarray
+) -> np.ndarray:
+    """Map sparse original B-alpha rows to active ids without another MPC map."""
+    rows = np.asarray(original_rows, dtype=np.int64)
+    active = np.asarray(active_original_rows, dtype=np.int64)
+    if rows.ndim != 1 or active.ndim != 1 or np.unique(active).size != active.size:
+        raise ValueError("Task41 V7 original/active row maps are malformed")
+    if rows.size and not active.size:
+        raise ValueError("Task41 V7 B-alpha cannot map to an empty active trace")
+    order = np.argsort(active, kind="stable")
+    sorted_active = active[order]
+    positions = np.searchsorted(sorted_active, rows)
+    if positions.size and (
+        np.any(positions >= sorted_active.size)
+        or np.any(sorted_active[np.minimum(positions, sorted_active.size - 1)] != rows)
+    ):
+        raise ValueError("Task41 V7 B-alpha row is not an independent active row")
+    return order[positions]
+
+
+def _task41_b0_v7_metric_state() -> dict[str, Any]:
+    return {"sum_squares": 0.0, "max_abs": 0.0, "max_row": None}
+
+
+def _task41_b0_v7_add_metric(
+    state: dict[str, Any],
+    values: np.ndarray,
+    *,
+    row_offset: int,
+    row_indices: np.ndarray | None = None,
+) -> None:
+    vector = np.asarray(values, dtype=np.complex128).reshape(-1)
+    if not np.isfinite(vector).all():
+        raise ValueError("Task41 V7 diagnostic vector contains non-finite values")
+    state["sum_squares"] += float(np.vdot(vector, vector).real)
+    if vector.size:
+        magnitudes = np.abs(vector)
+        local_index = int(np.argmax(magnitudes))
+        local_max = float(magnitudes[local_index])
+        if state["max_row"] is None or local_max > float(state["max_abs"]):
+            state["max_abs"] = local_max
+            state["max_row"] = (
+                int(np.asarray(row_indices, dtype=np.int64)[local_index])
+                if row_indices is not None
+                else row_offset + local_index
+            )
+
+
+def _task41_b0_v7_finish_metric(state: Mapping[str, Any]) -> dict[str, Any]:
+    sum_squares = max(0.0, float(state["sum_squares"]))
+    return {
+        "absolute_l2": float(np.sqrt(sum_squares)),
+        "sum_squares": sum_squares,
+        "max_abs": float(state["max_abs"]),
+        "max_row": state["max_row"],
+    }
+
+
+def _task41_b0_v7_rhs_split_metrics(
+    native_rhs: np.ndarray,
+    native_volume_rhs: np.ndarray,
+    b_alpha_rows: np.ndarray,
+    b_alpha_values: np.ndarray,
+    *,
+    chunk_rows: int = 262_144,
+) -> dict[str, Any]:
+    if (
+        native_rhs.ndim != 1
+        or native_volume_rhs.shape != native_rhs.shape
+        or b_alpha_rows.ndim != 1
+        or b_alpha_values.shape != b_alpha_rows.shape
+        or b_alpha_rows.dtype.kind not in "iu"
+        or b_alpha_values.dtype != np.dtype(np.complex128)
+        or (b_alpha_rows.size and np.any(b_alpha_rows >= native_rhs.size))
+        or (b_alpha_rows.size and np.any(b_alpha_rows < 0))
+    ):
+        raise ValueError("Task41 V7 full/volume RHS and B-alpha layouts differ")
+    order = np.argsort(b_alpha_rows, kind="stable")
+    rows = np.asarray(b_alpha_rows[order], dtype=np.int64)
+    values = np.asarray(b_alpha_values[order], dtype=np.complex128)
+    metrics = _task41_b0_v7_metric_state()
+    for start in range(0, int(native_rhs.size), chunk_rows):
+        stop = min(int(native_rhs.size), start + chunk_rows)
+        difference = np.asarray(native_rhs[start:stop], dtype=np.complex128) - np.asarray(
+            native_volume_rhs[start:stop], dtype=np.complex128
+        )
+        lo = int(np.searchsorted(rows, start, side="left"))
+        hi = int(np.searchsorted(rows, stop, side="left"))
+        if hi > lo:
+            np.add.at(difference, rows[lo:hi] - start, -values[lo:hi])
+        _task41_b0_v7_add_metric(metrics, difference, row_offset=start)
+    return _task41_b0_v7_finish_metric(metrics)
+
+
+def _task41_b0_v7_nonactive_rhs_difference(
+    native_rhs: np.ndarray,
+    native_volume_rhs: np.ndarray,
+    active_original_rows: np.ndarray,
+    *,
+    chunk_rows: int = 262_144,
+) -> dict[str, Any]:
+    if native_rhs.ndim != 1 or native_volume_rhs.shape != native_rhs.shape:
+        raise ValueError("Task41 V7 nonactive RHS vectors differ in layout")
+    active = np.asarray(active_original_rows, dtype=np.int64)
+    if active.ndim != 1 or (active.size and (np.any(active < 0) or np.any(active >= native_rhs.size))):
+        raise ValueError("Task41 V7 active original-row map is invalid")
+    active_mask = np.zeros(native_rhs.size, dtype=np.bool_)
+    active_mask[active] = True
+    metrics = _task41_b0_v7_metric_state()
+    for start in range(0, int(native_rhs.size), chunk_rows):
+        stop = min(int(native_rhs.size), start + chunk_rows)
+        selected = ~active_mask[start:stop]
+        difference = (
+            np.asarray(native_rhs[start:stop], dtype=np.complex128)
+            - np.asarray(native_volume_rhs[start:stop], dtype=np.complex128)
+        )
+        row_indices = np.flatnonzero(selected) + start
+        _task41_b0_v7_add_metric(
+            metrics,
+            difference[selected],
+            row_offset=start,
+            row_indices=row_indices,
+        )
+    return _task41_b0_v7_finish_metric(metrics)
+
+
+def _task41_b0_v7_attribution_state_recheck(
+    *,
+    candidate_d_full: np.ndarray,
+    candidate_d_volume: np.ndarray,
+    active_original_rows: np.ndarray,
+    native_rhs: np.ndarray,
+    native_volume_rhs: np.ndarray,
+    b_alpha_rows: np.ndarray,
+    b_alpha_values: np.ndarray,
+    native_volume_action: np.ndarray,
+    T_r_i: np.ndarray,
+    delta_t: np.ndarray,
+    attributed_terms: np.ndarray,
+    reduce_r_volume: np.ndarray,
+    reduce_r_full: np.ndarray,
+    frozen_denominator: float,
+    evidence_directory: Path | None = None,
+    evidence_prefix: str | None = None,
+) -> dict[str, Any]:
+    """Independently recompute V7 full/volume formulas from saved arrays."""
+    active = np.asarray(active_original_rows, dtype=np.int64)
+    active_rows = int(active.size)
+    if (
+        active.ndim != 1
+        or np.unique(active).size != active_rows
+        or any(
+            np.asarray(value).shape != (active_rows,)
+            for value in (
+                candidate_d_full,
+                candidate_d_volume,
+                T_r_i,
+                delta_t,
+                attributed_terms,
+                reduce_r_volume,
+                reduce_r_full,
+            )
+        )
+        or native_rhs.ndim != 1
+        or native_volume_rhs.shape != native_rhs.shape
+        or native_volume_action.shape != native_rhs.shape
+        or (active.size and (np.any(active < 0) or np.any(active >= native_rhs.size)))
+        or b_alpha_rows.shape != b_alpha_values.shape
+        or b_alpha_values.dtype != np.dtype(np.complex128)
+    ):
+        raise ValueError("Task41 V7 attribution state arrays have incompatible identities/layouts")
+    beta_active_ids = _task41_b0_v7_map_original_rows_to_active(
+        b_alpha_rows, active
+    )
+    beta_active = np.zeros(active_rows, dtype=np.complex128)
+    np.add.at(beta_active, beta_active_ids, b_alpha_values)
+    support_mask = np.zeros(active_rows, dtype=np.bool_)
+    support_mask[beta_active_ids] = True
+    metrics = {
+        key: _task41_b0_v7_metric_state()
+        for key in (
+            "legacy_closure_minus_beta_active",
+            "legacy_closure_vector",
+            "legacy_minus_beta_vs_corrected_full",
+            "legacy_closure_on_beta_support",
+            "legacy_closure_off_beta_support",
+            "corrected_full_closure",
+            "corrected_volume_closure",
+            "reduce_r_volume_vs_raw_trace_plus_T_r_i",
+            "d_volume_plus_reduce_r_volume_vs_delta_plus_Q",
+            "reduce_r_full_vs_raw_trace_plus_T_r_i",
+            "d_full_plus_reduce_r_full_vs_delta_plus_Q",
+            "d_hat_full_minus_candidate_d_full",
+            "d_hat_volume_minus_saved_d_volume",
+            "full_minus_volume_d_plus_rhs_split",
+        )
+    }
+    beta_norm_sq = 0.0
+    beta_inner = 0.0 + 0.0j
+    term_norm_squares = {
+        name: 0.0
+        for name in (
+            "delta_t",
+            "attributed_terms_Q",
+            "r_volume_trace",
+            "r_full_trace",
+            "T_r_i",
+            "candidate_d_full",
+            "saved_d_volume",
+        )
+    }
+    d_hat_volume = np.empty(active_rows, dtype=np.complex128)
+    d_hat_full = np.empty(active_rows, dtype=np.complex128)
+    array_outputs: dict[str, Any] = {}
+    output_maps: dict[str, np.memmap] = {}
+    temporary_paths: dict[str, Path] = {}
+    final_paths: dict[str, Path] = {}
+    if evidence_directory is not None:
+        if not evidence_prefix:
+            raise ValueError("Task41 V7 closure arrays require a bound artifact prefix")
+        evidence_directory = Path(evidence_directory).resolve()
+        if not evidence_directory.is_dir():
+            raise FileNotFoundError("Task41 V7 evidence directory was not prepared")
+        for field in ("corrected_full_closure", "corrected_volume_closure"):
+            name = f"{evidence_prefix}_{field}"
+            final_path = evidence_directory / f"{name}.npy"
+            temporary_path = evidence_directory / f".{name}.npy.tmp"
+            if final_path.exists() or temporary_path.exists():
+                raise FileExistsError(f"Task41 V7 closure artifact already exists: {name}")
+            output_maps[field] = np.lib.format.open_memmap(
+                temporary_path,
+                mode="w+",
+                dtype=np.complex128,
+                shape=(active_rows,),
+            )
+            temporary_paths[field] = temporary_path
+            final_paths[field] = final_path
+    for start in range(0, active_rows, 262_144):
+        stop = min(active_rows, start + 262_144)
+        original = active[start:stop]
+        d_full = np.asarray(candidate_d_full[start:stop], dtype=np.complex128)
+        d_volume = np.asarray(candidate_d_volume[start:stop], dtype=np.complex128)
+        f_t = np.asarray(native_rhs[original], dtype=np.complex128)
+        b_t = np.asarray(native_volume_rhs[original], dtype=np.complex128)
+        n_t = np.asarray(native_volume_action[original], dtype=np.complex128)
+        beta = beta_active[start:stop]
+        u = np.asarray(T_r_i[start:stop], dtype=np.complex128)
+        delta = np.asarray(delta_t[start:stop], dtype=np.complex128)
+        q = np.asarray(attributed_terms[start:stop], dtype=np.complex128)
+        volume_reduce = np.asarray(reduce_r_volume[start:stop], dtype=np.complex128)
+        full_reduce = np.asarray(reduce_r_full[start:stop], dtype=np.complex128)
+        right = delta + q
+        r_volume = b_t - n_t
+        r_full = f_t - n_t - beta
+        legacy = d_full + (f_t - n_t) + u - right
+        legacy_minus_beta = legacy - beta
+        corrected_full = d_full + r_full + u - right
+        corrected_volume = d_volume + r_volume + u - right
+        expected_volume_reduce = r_volume + u
+        expected_full_reduce = r_full + u
+        d_volume_plus_reduce = d_volume + volume_reduce - right
+        d_full_plus_reduce = d_full + full_reduce - right
+        hat_volume = right - r_volume - u
+        hat_full = right - r_full - u
+        rhs_split_active = f_t - b_t - beta
+        split = (d_full - d_volume) + rhs_split_active
+        d_hat_volume[start:stop] = hat_volume
+        d_hat_full[start:stop] = hat_full
+        if output_maps:
+            output_maps["corrected_full_closure"][start:stop] = corrected_full
+            output_maps["corrected_volume_closure"][start:stop] = corrected_volume
+        chunk_vectors = {
+            "legacy_closure_minus_beta_active": legacy_minus_beta,
+            "legacy_closure_vector": legacy,
+            "legacy_minus_beta_vs_corrected_full": corrected_full - legacy_minus_beta,
+            "legacy_closure_on_beta_support": legacy[support_mask[start:stop]],
+            "legacy_closure_off_beta_support": legacy[~support_mask[start:stop]],
+            "corrected_full_closure": corrected_full,
+            "corrected_volume_closure": corrected_volume,
+            "reduce_r_volume_vs_raw_trace_plus_T_r_i": volume_reduce - expected_volume_reduce,
+            "d_volume_plus_reduce_r_volume_vs_delta_plus_Q": d_volume_plus_reduce,
+            "reduce_r_full_vs_raw_trace_plus_T_r_i": full_reduce - expected_full_reduce,
+            "d_full_plus_reduce_r_full_vs_delta_plus_Q": d_full_plus_reduce,
+            "d_hat_full_minus_candidate_d_full": hat_full - d_full,
+            "d_hat_volume_minus_saved_d_volume": hat_volume - d_volume,
+            "full_minus_volume_d_plus_rhs_split": split,
+        }
+        for key, values in chunk_vectors.items():
+            if key == "legacy_closure_on_beta_support":
+                selected = np.flatnonzero(support_mask[start:stop]) + start
+                _task41_b0_v7_add_metric(
+                    metrics[key], values, row_offset=start, row_indices=selected
+                )
+            elif key == "legacy_closure_off_beta_support":
+                selected = np.flatnonzero(~support_mask[start:stop]) + start
+                _task41_b0_v7_add_metric(
+                    metrics[key], values, row_offset=start, row_indices=selected
+                )
+            else:
+                _task41_b0_v7_add_metric(metrics[key], values, row_offset=start)
+        beta_norm_sq += float(np.vdot(beta, beta).real)
+        beta_inner += complex(np.vdot(beta, legacy))
+        for name, term in (
+            ("delta_t", delta),
+            ("attributed_terms_Q", q),
+            ("r_volume_trace", r_volume),
+            ("r_full_trace", r_full),
+            ("T_r_i", u),
+            ("candidate_d_full", d_full),
+            ("saved_d_volume", d_volume),
+        ):
+            term_norm_squares[name] += float(np.vdot(term, term).real)
+    if output_maps:
+        for value in output_maps.values():
+            value.flush()
+        output_maps.clear()
+        import os
+
+        for field, temporary_path in temporary_paths.items():
+            final_path = final_paths[field]
+            os.replace(temporary_path, final_path)
+            array_outputs[field] = {
+                "name": final_path.stem,
+                "path": str(final_path),
+                "sha256": sha256_file(final_path),
+                "bytes": final_path.stat().st_size,
+                "shape": [active_rows],
+                "dtype": "complex128",
+            }
+    diagnostics = {key: _task41_b0_v7_finish_metric(value) for key, value in metrics.items()}
+    term_scales = {
+        name: {
+            "absolute_l2": float(np.sqrt(max(0.0, square_sum))),
+            "frozen_denominator": float(frozen_denominator),
+            "frozen_denominator_relative": float(np.sqrt(max(0.0, square_sum)))
+            / frozen_denominator,
+        }
+        for name, square_sum in term_norm_squares.items()
+    }
+    d_volume_norm = term_scales["saved_d_volume"]["absolute_l2"]
+    d_full_norm = term_scales["candidate_d_full"]["absolute_l2"]
+    diagnostics.update(
+        {
+            "corrected_full_closure_frozen_denominator_relative": diagnostics[
+                "corrected_full_closure"
+            ]["absolute_l2"]
+            / frozen_denominator,
+            "corrected_volume_closure_frozen_denominator_relative": diagnostics[
+                "corrected_volume_closure"
+            ]["absolute_l2"]
+            / frozen_denominator,
+            "corrected_full_closure_relative_to_d_full": diagnostics[
+                "corrected_full_closure"
+            ]["absolute_l2"]
+            / max(d_full_norm, np.finfo(float).tiny),
+            "corrected_volume_closure_relative_to_d_volume": diagnostics[
+                "corrected_volume_closure"
+            ]["absolute_l2"]
+            / max(d_volume_norm, np.finfo(float).tiny),
+            "term_scales": term_scales,
+        }
+    )
+    return {
+        "diagnostics": diagnostics,
+        "legacy_closure_beta_active_l2": float(np.sqrt(max(0.0, beta_norm_sq))),
+        "legacy_beta_conjugate_inner_product": {
+            "real": float(beta_inner.real),
+            "imag": float(beta_inner.imag),
+        },
+        "epsilon_rhs_native_minus_volume_minus_Balpha": _task41_b0_v7_rhs_split_metrics(
+            native_rhs,
+            native_volume_rhs,
+            np.asarray(b_alpha_rows, dtype=np.int64),
+            b_alpha_values,
+        ),
+        "_d_hat_volume": d_hat_volume,
+        "_d_hat_full": d_hat_full,
+        "persisted_closure_arrays": array_outputs,
+    }
+
+
 def _task41_b0_chunked_relative_error(
     actual: np.ndarray, expected: np.ndarray, *, chunk_rows: int = 262_144
 ) -> float:
@@ -3146,6 +3528,7 @@ def _task41_mesh_actual_exact_candidate_recheck(
     repo_root: Path,
     candidate_producer_contract: Mapping[str, Any] | None = None,
     candidate_producer_contract_sha256: str | None = None,
+    v7_evidence_directory: Path | None = None,
 ) -> dict[str, Any]:
     """Independently recheck persisted exact-geometry candidate vectors, without FE work."""
     report_path = Path(report_path).resolve(strict=True)
@@ -3219,6 +3602,9 @@ def _task41_mesh_actual_exact_candidate_recheck(
     evidence_root = Path(evidence_directory).resolve(strict=True)
     if not evidence_root.is_relative_to(report_path.parent.resolve()):
         raise ValueError("V5 candidate evidence arrays escape the consumer output directory")
+    v7_array_directory: Path | None = None
+    v7_expected_bytes = 0
+    v7_evidence_accounting: dict[str, Any] | None = None
     reference_path = Path(str(report.get("geometry_reference_report_path", ""))).resolve(strict=True)
     if (
         not reference_path.is_relative_to(results_root)
@@ -3277,6 +3663,58 @@ def _task41_mesh_actual_exact_candidate_recheck(
                 raise ValueError(f"V5 candidate evidence contains non-finite values: {name}")
         loaded[name] = array
         return array
+
+    if profile["version"] == "v6":
+        if v7_evidence_directory is None:
+            raise ValueError("V7 saved checker requires a dedicated closure-array directory")
+        v7_array_directory = Path(v7_evidence_directory).resolve()
+        if (
+            not v7_array_directory.is_relative_to(results_root)
+            or v7_array_directory.is_relative_to(evidence_root)
+            or v7_array_directory.is_relative_to(report_path.parent.resolve())
+            or v7_array_directory.exists()
+        ):
+            raise ValueError("V7 closure-array output must be new and separate under results")
+        unique_candidate_paths: dict[str, int] = {}
+        for record in records.values():
+            raw_path = Path(str(record.get("path", ""))).resolve()
+            byte_count = int(record.get("bytes", -1))
+            if byte_count < 0:
+                raise ValueError("V6 candidate inventory has an invalid byte count")
+            previous = unique_candidate_paths.setdefault(str(raw_path), byte_count)
+            if previous != byte_count:
+                raise ValueError("V6 candidate paths have conflicting byte counts")
+        donor_bytes = int(donor.get("existing_evidence_bytes", -1))
+        candidate_bytes = sum(unique_candidate_paths.values())
+        if donor_bytes < 0 or (
+            report.get("persisted_evidence_bytes") is not None
+            and int(report["persisted_evidence_bytes"]) != candidate_bytes
+        ):
+            raise ValueError("V7 evidence accounting differs from donor/candidate inventories")
+        v7_payload_bytes = active_rows * np.dtype(np.complex128).itemsize * 2 * 4
+        v7_expected_bytes = v7_payload_bytes + 4096 * 8
+        evidence_cap_bytes = 16 * 1024**3
+        if donor_bytes + candidate_bytes + v7_expected_bytes > evidence_cap_bytes:
+            raise MemoryError("V7 closure arrays would exceed the fixed 16 GiB evidence cap")
+        import shutil
+
+        anchor = v7_array_directory.parent
+        while not anchor.exists() and anchor != anchor.parent:
+            anchor = anchor.parent
+        free_bytes = int(shutil.disk_usage(anchor).free)
+        free_floor_bytes = 2 * 1024**3
+        if free_bytes < v7_expected_bytes + free_floor_bytes:
+            raise OSError("V7 closure arrays would violate the fixed 2 GiB free-space floor")
+        v7_evidence_accounting = {
+            "donor_bytes": donor_bytes,
+            "candidate_unique_path_bytes": candidate_bytes,
+            "new_closure_array_payload_bytes": v7_payload_bytes,
+            "new_closure_array_bytes_expected": v7_expected_bytes,
+            "cumulative_bytes_expected": donor_bytes + candidate_bytes + v7_expected_bytes,
+            "evidence_cap_bytes": evidence_cap_bytes,
+            "free_bytes_before_write": free_bytes,
+            "free_space_floor_bytes": free_floor_bytes,
+        }
 
     candidate_p6 = load_array(f"{candidate_prefix}_full_p6", (candidate_rows, 2))
     candidate_reduced = load_array(
@@ -3378,6 +3816,7 @@ def _task41_mesh_actual_exact_candidate_recheck(
     if profile["version"] == "v6":
         _task41_v6_global_attribution_identity_binding(attribution, identity_audit)
     closure_results = []
+    v7_formula_columns = []
     expected_artifact_names: set[str] = {
         f"{candidate_prefix}_full_p6",
         f"{candidate_prefix}_full_reduced_rhs",
@@ -3503,12 +3942,40 @@ def _task41_mesh_actual_exact_candidate_recheck(
     )
     if recovery_gate.get("status") != recovery_status:
         raise ValueError("V5 candidate recovery-gate classification differs from independent recheck")
+    if v7_array_directory is not None:
+        if v7_array_directory.exists():
+            raise FileExistsError("V7 closure-array output directory appeared after preflight")
+        import shutil
+
+        anchor = v7_array_directory.parent
+        while not anchor.exists() and anchor != anchor.parent:
+            anchor = anchor.parent
+        free_before_write = int(shutil.disk_usage(anchor).free)
+        if free_before_write < v7_expected_bytes + 2 * 1024**3:
+            raise OSError("V7 closure-array output lost its fixed 2 GiB free-space reserve")
+        v7_array_directory.mkdir(parents=True, exist_ok=False)
+        if v7_evidence_accounting is not None:
+            v7_evidence_accounting["free_bytes_before_write"] = free_before_write
     for column_index, (column_report, donor_column) in enumerate(
         zip(attribution["columns"], columns, strict=True)
     ):
         active_original = np.asarray(donor_column["active_original_rows"], dtype=np.int64)
         native_rhs = np.asarray(donor_column["native_rhs"], dtype=np.complex128)
-        if active_original.shape != (active_rows,) or native_rhs.ndim != 1:
+        native_volume_rhs = np.asarray(
+            donor_column["native_volume_rhs"], dtype=np.complex128
+        )
+        b_alpha_rows = np.asarray(donor_column["b_alpha_rows"], dtype=np.int64)
+        b_alpha_values = np.asarray(donor_column["b_alpha_values"], dtype=np.complex128)
+        if (
+            active_original.shape != (active_rows,)
+            or native_rhs.ndim != 1
+            or native_volume_rhs.shape != native_rhs.shape
+            or b_alpha_rows.shape != b_alpha_values.shape
+            or b_alpha_rows.ndim != 1
+            or b_alpha_values.dtype != np.dtype(np.complex128)
+            or not np.isfinite(b_alpha_values).all()
+            or (b_alpha_rows.size and (np.any(b_alpha_rows < 0) or np.any(b_alpha_rows >= full_rows)))
+        ):
             raise ValueError(f"V5 donor column {column_index} has invalid trace rows")
         donor_states = {str(item["label"]): item for item in donor_column["states"]}
         state_reports = column_report.get("states")
@@ -3516,6 +3983,25 @@ def _task41_mesh_actual_exact_candidate_recheck(
             str(item.get("state")) for item in state_reports if isinstance(item, Mapping)
         ) != set(donor_states):
             raise ValueError(f"V5 attribution states differ in column {column_index}")
+        if profile["version"] == "v6" and set(donor_states) != {"j0", "j3"}:
+            raise ValueError("V7 donor attribution requires the bound j0 and j3 states")
+        slave_rows = np.asarray(donor_column["slave_rows"], dtype=np.int64)
+        if b_alpha_rows.size and slave_rows.size and np.isin(b_alpha_rows, slave_rows).any():
+            raise ValueError("V7 saved B-alpha has support on an MPC slave row")
+        _task41_b0_v7_map_original_rows_to_active(b_alpha_rows, active_original)
+        nonactive_rhs_difference = _task41_b0_v7_nonactive_rhs_difference(
+            native_rhs, native_volume_rhs, active_original
+        )
+        if profile["version"] == "v6":
+            volume_d_name = f"task41_v4_d_volume_trace_col{column_index}"
+            expected_artifact_names.add(volume_d_name)
+            d_volume = load_array(volume_d_name, (active_rows,))
+            d_full = np.asarray(candidate_p6[:active_rows, column_index]) - np.asarray(
+                candidate_reduced[:active_rows, column_index]
+            )
+        else:
+            d_volume = d_full = None
+        v7_states = []
         for state_report in state_reports:
             state_label = str(state_report["state"])
             donor_state = donor_states[state_label]
@@ -3524,6 +4010,16 @@ def _task41_mesh_actual_exact_candidate_recheck(
             )
             if native_action.shape != native_rhs.shape:
                 raise ValueError("V5 native RHS/action vectors differ in shape")
+            state_storage = np.asarray(donor_state["storage"], dtype=np.complex128)
+            known_field = np.asarray(donor_column["known_field"], dtype=np.complex128)
+            if (
+                state_storage.shape != native_rhs.shape
+                or known_field.shape != native_rhs.shape
+                or not _task41_b0_indexed_arrays_equal(
+                    state_storage, known_field, active_original
+                )
+            ):
+                raise ValueError("V7 donor j0/j3 state trace differs from its bound known field")
             artifact_report = state_report.get("accumulator_artifacts")
             if not isinstance(artifact_report, Mapping):
                 raise ValueError("V5 attribution report omits full accumulator vectors")
@@ -3646,6 +4142,106 @@ def _task41_mesh_actual_exact_candidate_recheck(
                     "relative_to_accumulation_scale": accumulation_relative,
                 }
             )
+            if profile["version"] != "v6":
+                continue
+            reduce_volume_name = (
+                f"task41_v4_reduce_r_volume_{state_label}_col{column_index}"
+            )
+            reduce_full_name = f"task41_v4_reduce_r_full_{state_label}_col{column_index}"
+            expected_artifact_names.update((reduce_volume_name, reduce_full_name))
+            formula = _task41_b0_v7_attribution_state_recheck(
+                candidate_d_full=d_full,
+                candidate_d_volume=d_volume,
+                active_original_rows=active_original,
+                native_rhs=native_rhs,
+                native_volume_rhs=native_volume_rhs,
+                b_alpha_rows=b_alpha_rows,
+                b_alpha_values=b_alpha_values,
+                native_volume_action=native_action,
+                T_r_i=arrays["T_r_i"],
+                delta_t=arrays["delta_t"],
+                attributed_terms=arrays["attributed_terms"],
+                reduce_r_volume=load_array(reduce_volume_name, (active_rows,)),
+                reduce_r_full=load_array(reduce_full_name, (active_rows,)),
+                frozen_denominator=TASK41_P0_V5_FROZEN_DENOMINATORS[column_index],
+                evidence_directory=v7_array_directory,
+                evidence_prefix=(
+                    f"task41_p0_v7_attribution_col{column_index}_{state_label}"
+                    if profile["version"] == "v6"
+                    else None
+                ),
+            )
+            v7_states.append(
+                {
+                    "state": state_label,
+                    "diagnostics": formula["diagnostics"],
+                    "epsilon_rhs_native_minus_volume_minus_Balpha": formula[
+                        "epsilon_rhs_native_minus_volume_minus_Balpha"
+                    ],
+                    "legacy_closure_beta_active_l2": formula[
+                        "legacy_closure_beta_active_l2"
+                    ],
+                    "legacy_beta_conjugate_inner_product": formula[
+                        "legacy_beta_conjugate_inner_product"
+                    ],
+                    "persisted_closure_arrays": formula["persisted_closure_arrays"],
+                    "_d_hat_volume": formula["_d_hat_volume"],
+                    "_d_hat_full": formula["_d_hat_full"],
+                }
+            )
+        state_consistency = {}
+        if len(v7_states) == 2:
+            left_state, right_state = v7_states
+            state_consistency = {
+                "d_hat_volume_between_donor_states": _task41_b0_chunked_difference_summary(
+                    left_state["_d_hat_volume"], right_state["_d_hat_volume"]
+                ),
+                "d_hat_full_between_donor_states": _task41_b0_chunked_difference_summary(
+                    left_state["_d_hat_full"], right_state["_d_hat_full"]
+                ),
+            }
+        rhs_split_receipt = (
+            v7_states[0]["epsilon_rhs_native_minus_volume_minus_Balpha"]
+            if v7_states
+            else None
+        )
+        surface_support = donor.get("manifest", {}).get(
+            "saved_surface_support_certificate", {}
+        )
+        interior_rhs_identity_verified = bool(
+            profile["version"] == "v6"
+            and nonactive_rhs_difference["absolute_l2"] == 0.0
+            and isinstance(surface_support, Mapping)
+            and surface_support.get("cell_interior_nonzero_values") == 0
+            and donor.get("manifest", {}).get("local_interior_Bi_Di_exact_zero") is True
+        )
+        for state in v7_states:
+            state.pop("_d_hat_volume")
+            state.pop("_d_hat_full")
+        v7_formula_columns.append(
+            {
+                "column": column_index,
+                "states": v7_states,
+                "same_trace_donor_state_consistency": state_consistency,
+                "B_alpha_rows_map_once_to_active_trace": profile["version"] == "v6",
+                "interior_f_equals_b_verified": interior_rhs_identity_verified,
+                "interior_rhs_identity_basis": {
+                    "native_rhs_minus_native_volume_rhs_on_nonactive_rows": nonactive_rhs_difference,
+                    "full_rhs_split_epsilon_absolute_l2": rhs_split_receipt.get("absolute_l2")
+                    if isinstance(rhs_split_receipt, Mapping)
+                    else None,
+                    "saved_cell_interior_nonzero_values": surface_support.get(
+                        "cell_interior_nonzero_values"
+                    )
+                    if isinstance(surface_support, Mapping)
+                    else None,
+                    "local_interior_Bi_Di_exact_zero": donor.get("manifest", {}).get(
+                        "local_interior_Bi_Di_exact_zero"
+                    ),
+                },
+                "candidate_initial_recovery_is_separate": True,
+            }
+        )
     if set(records) & expected_artifact_names != expected_artifact_names:
         raise ValueError("V5 candidate report is missing independently consumed evidence arrays")
     closure_status = "DIAGNOSTIC_ONLY"
@@ -3662,6 +4258,27 @@ def _task41_mesh_actual_exact_candidate_recheck(
     )
     if report.get("status") != run_status or attribution.get("global_closure_status") != closure_status:
         raise ValueError("V5 candidate/action or attribution-diagnostic classification differs from independent recheck")
+    if v7_array_directory is not None and v7_evidence_accounting is not None:
+        closure_records = [
+            record
+            for column in v7_formula_columns
+            for state in column["states"]
+            for record in state["persisted_closure_arrays"].values()
+        ]
+        actual_new_bytes = sum(int(record["bytes"]) for record in closure_records)
+        if actual_new_bytes > v7_expected_bytes or len(closure_records) != 8:
+            raise ValueError("V7 corrected closure array inventory differs from its preflight")
+        v7_evidence_accounting.update(
+            {
+                "new_closure_array_bytes_actual": actual_new_bytes,
+                "cumulative_bytes_actual": int(v7_evidence_accounting["donor_bytes"])
+                + int(v7_evidence_accounting["candidate_unique_path_bytes"])
+                + actual_new_bytes,
+                "closure_array_bytes_expected_upper": v7_expected_bytes,
+                "closure_array_records": closure_records,
+                "evidence_directory": str(v7_array_directory),
+            }
+        )
     return {
         "schema": profile["check_schema"],
         "check_completed": True,
@@ -3677,6 +4294,20 @@ def _task41_mesh_actual_exact_candidate_recheck(
         "candidate_status": candidate_status,
         "action_columns": action_columns,
         "global_closure_states": closure_results,
+        "attribution_v7_formula_recheck": {
+            "schema": "task41.p0.v7.saved_full_volume_attribution_recheck.v1",
+            "independently_recomputed_from_hash_bound_arrays": True,
+            "legacy_global_closure_preserves_v6_formula": True,
+            "corrected_full_residual": "native_rhs_trace - native_volume_action_trace - B_alpha_trace",
+            "corrected_volume_residual": "native_volume_rhs_trace - native_volume_action_trace",
+            "corrected_full_identity": "d_full + r_full_trace + T_r_i = delta_t + attributed_terms",
+            "corrected_volume_identity": "d_volume + r_volume_trace + T_r_i = delta_t + attributed_terms",
+            "formula_status": "DIAGNOSTIC_ONLY"
+            if profile["version"] == "v6"
+            else "NOT_APPLICABLE_V5",
+            "columns": v7_formula_columns,
+            "evidence_accounting": v7_evidence_accounting,
+        },
         "candidate_report_path": str(report_path),
         "candidate_report_sha256": sha256_file(report_path),
         "candidate_producer_source_sha": candidate_contract.get("source", {}).get("sha"),
@@ -3844,6 +4475,9 @@ def check_task41_p0_b0_saved_evidence_audit(
             repo_root=repo_root,
             candidate_producer_contract=candidate_producer_contract,
             candidate_producer_contract_sha256=candidate_producer_contract_sha256,
+            v7_evidence_directory=(
+                output_path.with_name(output_path.stem + "_v7_attribution_arrays")
+            ),
         )
     audit_completed = bool(evidence.get("audit_completed") is True) and (
         mesh_actual_candidate_check is None

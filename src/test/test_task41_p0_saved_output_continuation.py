@@ -81,6 +81,132 @@ def test_mesh_actual_exact_candidate_checker_rejects_unbound_v6_identity(tmp_pat
         )
 
 
+def test_v7_saved_checker_recomputes_complex_balpha_scopes_and_state_binding(
+    tmp_path: Path,
+) -> None:
+    from src.runners.task41_p0_checker import (
+        _task41_b0_v7_attribution_state_recheck,
+        _task41_b0_v7_map_original_rows_to_active,
+        _task41_b0_v7_nonactive_rhs_difference,
+    )
+
+    active = np.asarray([2, 0], dtype=np.int64)
+    volume_rhs = np.asarray([0.25 + 0.1j, 0.0j, 0.5 - 0.2j, 0.0j], dtype=np.complex128)
+    beta = 0.18 + 0.13j
+    native_rhs = volume_rhs.copy()
+    native_rhs[0] += beta
+    assert _task41_b0_v7_nonactive_rhs_difference(
+        native_rhs, volume_rhs, active
+    )["absolute_l2"] == 0.0
+    bad_interior_rhs = native_rhs.copy()
+    bad_interior_rhs[1] += 0.01j
+    assert _task41_b0_v7_nonactive_rhs_difference(
+        bad_interior_rhs, volume_rhs, active
+    )["absolute_l2"] == pytest.approx(0.01)
+    beta_rows = np.asarray([0], dtype=np.int64)
+    beta_values = np.asarray([beta], dtype=np.complex128)
+    beta_active = np.zeros(2, dtype=np.complex128)
+    np.add.at(
+        beta_active,
+        _task41_b0_v7_map_original_rows_to_active(beta_rows, active),
+        beta_values,
+    )
+    assert np.array_equal(beta_active, np.asarray([0.0j, beta]))
+    d_volume = np.asarray([0.4 - 0.2j, -0.3 + 0.1j], dtype=np.complex128)
+    state_inputs = []
+    for native_action, T_r_i, delta_t in (
+        (
+            np.asarray([0.07 + 0.02j, 0.0j, -0.03 + 0.08j, 0.0j]),
+            np.asarray([0.03 + 0.01j, -0.04 + 0.02j]),
+            np.asarray([0.2 + 0.05j, -0.1 + 0.03j]),
+        ),
+        (
+            np.asarray([-0.02 + 0.04j, 0.0j, 0.09 - 0.01j, 0.0j]),
+            np.asarray([-0.06 + 0.02j, 0.08 - 0.03j]),
+            np.asarray([-0.03 + 0.11j, 0.12 - 0.04j]),
+        ),
+    ):
+        r_volume = volume_rhs[active] - native_action[active]
+        delta_t_plus_Q = d_volume + r_volume + T_r_i
+        attributed_terms = delta_t_plus_Q - delta_t
+        r_full = native_rhs[active] - native_action[active] - beta_active
+        state_inputs.append(
+            {
+                "native_action": native_action,
+                "T_r_i": T_r_i,
+                "delta_t": delta_t,
+                "attributed_terms": attributed_terms,
+                "reduce_r_volume": r_volume + T_r_i,
+                "reduce_r_full": r_full + T_r_i,
+            }
+        )
+
+    def recheck(
+        state: dict[str, np.ndarray],
+        *,
+        beta_values: np.ndarray = beta_values,
+        saved_d: np.ndarray = d_volume,
+        evidence_directory: Path | None = None,
+        evidence_prefix: str | None = None,
+    ):
+        return _task41_b0_v7_attribution_state_recheck(
+            candidate_d_full=d_volume,
+            candidate_d_volume=saved_d,
+            active_original_rows=active,
+            native_rhs=native_rhs,
+            native_volume_rhs=volume_rhs,
+            b_alpha_rows=beta_rows,
+            b_alpha_values=beta_values,
+            native_volume_action=state["native_action"],
+            T_r_i=state["T_r_i"],
+            delta_t=state["delta_t"],
+            attributed_terms=state["attributed_terms"],
+            reduce_r_volume=state["reduce_r_volume"],
+            reduce_r_full=state["reduce_r_full"],
+            frozen_denominator=2.0,
+            evidence_directory=evidence_directory,
+            evidence_prefix=evidence_prefix,
+        )
+
+    checked = [
+        recheck(
+            state_inputs[0],
+            evidence_directory=tmp_path,
+            evidence_prefix="task41_p0_v7_attribution_col0_j0",
+        ),
+        recheck(state_inputs[1]),
+    ]
+    for result in checked:
+        diagnostics = result["diagnostics"]
+        assert diagnostics["legacy_closure_minus_beta_active"]["absolute_l2"] < 1.0e-14
+        assert diagnostics["corrected_full_closure"]["absolute_l2"] < 1.0e-14
+        assert diagnostics["corrected_volume_closure"]["absolute_l2"] < 1.0e-14
+        assert diagnostics["reduce_r_volume_vs_raw_trace_plus_T_r_i"]["absolute_l2"] < 1.0e-14
+        assert diagnostics["reduce_r_full_vs_raw_trace_plus_T_r_i"]["absolute_l2"] < 1.0e-14
+        assert diagnostics["d_hat_volume_minus_saved_d_volume"]["absolute_l2"] < 1.0e-14
+        assert diagnostics["d_hat_full_minus_candidate_d_full"]["absolute_l2"] < 1.0e-14
+    assert np.linalg.norm(checked[0]["_d_hat_volume"] - checked[1]["_d_hat_volume"]) < 1.0e-14
+    assert set(checked[0]["persisted_closure_arrays"]) == {
+        "corrected_full_closure",
+        "corrected_volume_closure",
+    }
+    for artifact in checked[0]["persisted_closure_arrays"].values():
+        path = Path(artifact["path"])
+        assert path.is_file()
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == artifact["sha256"]
+        loaded = np.load(path, allow_pickle=False)
+        assert loaded.shape == (2,)
+        assert loaded.dtype == np.dtype(np.complex128)
+
+    wrong_state = dict(state_inputs[0])
+    wrong_state["native_action"] = state_inputs[1]["native_action"]
+    assert recheck(wrong_state)["diagnostics"]["corrected_volume_closure"]["absolute_l2"] > 1.0e-2
+    wrong_phase = recheck(state_inputs[0], beta_values=np.asarray([beta * (0.6 + 0.8j)]))
+    assert wrong_phase["epsilon_rhs_native_minus_volume_minus_Balpha"]["absolute_l2"] > 1.0e-2
+    old_d = recheck(state_inputs[0], saved_d=d_volume + 0.25)
+    assert old_d["diagnostics"]["d_hat_volume_minus_saved_d_volume"]["absolute_l2"] > 0.3
+
+
 def _v6_candidate_audit_fixture(tmp_path: Path):
     from src.solvers.task41_actual_qmetric_blocked_gram import (
         CACHE_IDENTITY_SCHEMA,
@@ -1942,6 +2068,11 @@ def test_b0_saved_evidence_audit_uses_supervised_service_route(
             assert receipt["candidate_numerical_passed"] is False
     if v6_saved_replay:
         assert calls[0][1]["campaign_phase"] == "closeout"
+        assert calls[0][0][1:4] == ["-m", "src.runners.task41_p0_checker", "--saved-b0-evidence-audit"]
+        assert not any(
+            marker in " ".join(calls[0][0]).lower()
+            for marker in ("run_case.py", "volume_only_audit", "owner", "evaluator", "carrier", "factor")
+        )
         assert "volume_only_command" not in receipt
         assert "volume_only_watchdog" not in receipt
         assert receipt["candidate_report_replayed_read_only"] is True

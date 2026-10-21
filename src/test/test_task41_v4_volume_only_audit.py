@@ -655,8 +655,12 @@ def test_attribution_reconstructs_nonzero_complex_mpc_slave_trace(
         dtype=np.complex128,
     )
     R = -np.linalg.solve(K, G)
-    T = -J @ np.linalg.inv(K)
-    S = L + J @ R
+    T_exact = -J @ np.linalg.inv(K)
+    S_exact = L + J @ R
+    T = T_exact + np.asarray([[0.025 + 0.015j], [-0.01 + 0.02j]])
+    S = S_exact + np.asarray(
+        [[0.04 - 0.02j, 0.015j], [-0.01 + 0.01j, 0.03 + 0.025j]]
+    )
     phase = 0.6 + 0.8j
     expansion = sparse.csr_matrix(
         np.asarray([[1.0 + 0.0j], [phase]], dtype=np.complex128)
@@ -669,38 +673,57 @@ def test_attribution_reconstructs_nonzero_complex_mpc_slave_trace(
     u_i = 0.4 - 0.2j
     active_value = 0.7 + 0.1j
     physical_trace = expansion @ np.asarray([active_value])
-    storage = np.asarray([u_i, active_value, 0.0j], dtype=np.complex128)
-    native_action = np.asarray([0.8 - 0.1j, 0.3 + 0.05j, 0.0j], dtype=np.complex128)
-    native_rhs = np.asarray([0.9 + 0.2j, 0.6 - 0.1j, 0.0j], dtype=np.complex128)
-    native_i = native_action[0]
-    r_i = native_rhs[0] - native_i
-    delta_i = (K @ np.asarray([u_i]) + G @ physical_trace).reshape(-1) - native_i
-    actual_trace = J @ np.asarray([u_i]) + L @ physical_trace
-    delta_t = (expansion.conj().T @ actual_trace).reshape(-1) - native_action[1:2]
-    E_T_u = J @ np.asarray([u_i]) + T @ (K @ np.asarray([u_i]))
-    E_S_t = S @ physical_trace - L @ physical_trace - T @ (G @ physical_trace)
-    attributed = T @ delta_i + E_S_t - E_T_u
-    right = delta_t + expansion.conj().T @ attributed
-    T_r_i = (expansion.conj().T @ (T @ np.asarray([r_i]))).reshape(-1)
-    r_t = native_rhs[1:2] - native_action[1:2]
-    d = (right - r_t - T_r_i).reshape(-1)[0]
-
-    state = {
-        "label": "j0",
-        "storage": storage,
-        "native_volume_action": native_action,
-    }
+    beta = 0.13 - 0.07j
+    native_volume_rhs = np.asarray(
+        [0.9 + 0.2j, 0.6 - 0.1j, 0.0j], dtype=np.complex128
+    )
+    native_rhs = native_volume_rhs.copy()
+    native_rhs[1] += beta
+    g_volume = (
+        native_volume_rhs[1]
+        + (expansion.conj().T @ (T @ native_volume_rhs[0:1])).reshape(-1)[0]
+    )
+    s_volume = (expansion.conj().T @ (S @ physical_trace)).reshape(-1)[0]
+    d_volume = s_volume - g_volume
+    # Build full P6 and reduced RHS from S t + B-alpha and the actual reducer.
+    candidate_full_action = s_volume + beta
+    candidate_full_reduced_rhs = g_volume + beta
+    d_full = candidate_full_action - candidate_full_reduced_rhs
+    assert np.linalg.norm(J + T @ K) > 1.0e-3
+    assert np.linalg.norm(S - L - T @ G) > 1.0e-3
+    states = [
+        {
+            "label": "j0",
+            "storage": np.asarray([u_i, active_value, 0.0j], dtype=np.complex128),
+            "native_volume_action": np.asarray(
+                [0.8 - 0.1j, 0.3 + 0.05j, 0.0j], dtype=np.complex128
+            ),
+        },
+        {
+            "label": "j3",
+            "storage": np.asarray([-0.2 + 0.45j, active_value, 0.0j], dtype=np.complex128),
+            "native_volume_action": np.asarray(
+                [0.42 + 0.17j, 0.21 - 0.11j, 0.0j], dtype=np.complex128
+            ),
+        },
+    ]
     donor = {
         "columns": [
             {
                 "active_original_rows": active_original,
                 "native_rhs": native_rhs,
-                "states": [state, {**state, "label": "j3"}],
+                "native_volume_rhs": native_volume_rhs,
+                "b_alpha_rows": np.asarray([1], dtype=np.int64),
+                "b_alpha_values": np.asarray([beta], dtype=np.complex128),
+                "states": states,
             },
             {
                 "active_original_rows": active_original,
                 "native_rhs": native_rhs,
-                "states": [state, {**state, "label": "j3"}],
+                "native_volume_rhs": native_volume_rhs,
+                "b_alpha_rows": np.asarray([1], dtype=np.int64),
+                "b_alpha_values": np.asarray([beta], dtype=np.complex128),
+                "states": states,
             },
         ]
     }
@@ -726,8 +749,8 @@ def test_attribution_reconstructs_nonzero_complex_mpc_slave_trace(
         },
     )
     accumulator.admit(active_rows=1)
-    candidate_p6 = np.full((1, 2), d, dtype=np.complex128)
-    candidate_reduced = np.zeros_like(candidate_p6)
+    candidate_p6 = np.full((1, 2), candidate_full_action, dtype=np.complex128)
+    candidate_reduced = np.full((1, 2), candidate_full_reduced_rhs, dtype=np.complex128)
     saved_artifacts = []
 
     def persist(name, values):
@@ -738,10 +761,14 @@ def test_attribution_reconstructs_nonzero_complex_mpc_slave_trace(
         candidate_p6,
         candidate_reduced,
         active_rows=1,
+        candidate_d_volume_columns=[
+            np.asarray([d_volume], dtype=np.complex128),
+            np.asarray([d_volume], dtype=np.complex128),
+        ],
         persist_array=persist,
     )
 
-    assert storage[2] == 0.0j
+    assert states[0]["storage"][2] == 0.0j
     assert physical_trace[1] == pytest.approx(phase * active_value)
     assert report["global_closure_status"] == "DIAGNOSTIC_ONLY"
     assert report["schema"] == expected_schema
@@ -749,8 +776,17 @@ def test_attribution_reconstructs_nonzero_complex_mpc_slave_trace(
     assert report["slave_trace_reconstruction"].startswith("local E times")
     for column in report["columns"]:
         for result in column["states"]:
-            assert result["closure_difference"]["absolute_l2"] < 1.0e-13
-            assert result["closure_relative_to_accumulation_scale"] < 1.0e-12
+            v7 = result["v7_formula_diagnostics"]
+            assert result["closure_difference"]["absolute_l2"] == pytest.approx(abs(beta))
+            assert v7["legacy_closure_minus_beta_active"]["absolute_l2"] < 1.0e-13
+            assert v7["corrected_full_closure"]["absolute_l2"] < 1.0e-13
+            assert v7["corrected_volume_closure"]["absolute_l2"] < 1.0e-13
+            assert v7["epsilon_rhs_native_minus_volume_minus_Balpha"]["absolute_l2"] == pytest.approx(0.0)
+            assert v7["d_hat_volume_minus_saved_d_volume"]["absolute_l2"] < 1.0e-13
+            assert v7["d_hat_full_minus_candidate_d_full"]["absolute_l2"] < 1.0e-13
+            assert result["closure_relative_to_accumulation_scale"] == pytest.approx(
+                abs(beta) / result["accumulation_scale_l2_sum"]
+            )
 
 
 @pytest.mark.parametrize(

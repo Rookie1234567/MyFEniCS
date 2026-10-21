@@ -184,6 +184,82 @@ def _difference_metrics(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
     }
 
 
+def _vector_metrics(
+    value: np.ndarray, *, row_indices: np.ndarray | None = None
+) -> dict[str, Any]:
+    flat = np.asarray(value).reshape(-1)
+    indices = None if row_indices is None else np.asarray(row_indices, dtype=np.int64)
+    if indices is not None and indices.shape != flat.shape:
+        raise ValueError("Task41 V4 metric row-index map differs from its vector")
+    scale = 0.0
+    squares = 1.0
+    max_abs = 0.0
+    max_row: int | None = None
+    for start in range(0, flat.size, 262_144):
+        chunk = np.asarray(flat[start : start + 262_144], dtype=np.complex128)
+        if not np.isfinite(chunk).all():
+            raise ValueError("Task41 V4 vector contains non-finite values")
+        magnitude = np.abs(chunk)
+        if not magnitude.size:
+            continue
+        local_index = int(np.argmax(magnitude))
+        local_max = float(magnitude[local_index])
+        if local_max > max_abs:
+            max_abs = local_max
+            max_row = int(indices[start + local_index]) if indices is not None else start + local_index
+        local_norm = float(np.linalg.norm(chunk))
+        if scale < local_norm:
+            squares = 1.0 + squares * (scale / local_norm) ** 2
+            scale = local_norm
+        elif local_norm:
+            squares += (local_norm / scale) ** 2
+    return {
+        "absolute_l2": float(scale * np.sqrt(squares)) if scale else 0.0,
+        "sum_squares": float(scale * scale * squares) if scale else 0.0,
+        "max_abs": max_abs,
+        "max_row": max_row,
+    }
+
+
+def _map_original_rows_to_active(
+    original_rows: np.ndarray, active_original_rows: np.ndarray
+) -> np.ndarray:
+    """Map original storage rows to active ids without applying MPC twice."""
+    rows = np.asarray(original_rows, dtype=np.int64)
+    active = np.asarray(active_original_rows, dtype=np.int64)
+    if rows.ndim != 1 or active.ndim != 1 or np.unique(active).size != active.size:
+        raise ValueError("Task41 V4 original/active row maps are malformed")
+    if rows.size and not active.size:
+        raise ValueError("saved B-alpha rows cannot map to an empty active trace")
+    order = np.argsort(active, kind="stable")
+    sorted_active = active[order]
+    positions = np.searchsorted(sorted_active, rows)
+    if positions.size and (
+        np.any(positions >= sorted_active.size)
+        or np.any(sorted_active[np.minimum(positions, sorted_active.size - 1)] != rows)
+    ):
+        raise ValueError("saved B-alpha row is not an independent active trace row")
+    return order[positions]
+
+
+def _rhs_split_metrics(
+    native_rhs: np.ndarray,
+    native_volume_rhs: np.ndarray,
+    b_alpha_rows: np.ndarray,
+    b_alpha_values: np.ndarray,
+) -> dict[str, Any]:
+    if native_rhs.shape != native_volume_rhs.shape or native_rhs.ndim != 1:
+        raise ValueError("Task41 V4 full and volume RHS layouts differ")
+    if b_alpha_rows.shape != b_alpha_values.shape or b_alpha_rows.ndim != 1:
+        raise ValueError("Task41 V4 B-alpha sparse frame is malformed")
+    residual = np.array(native_rhs, dtype=np.complex128, copy=True)
+    residual -= np.asarray(native_volume_rhs, dtype=np.complex128)
+    np.add.at(residual, np.asarray(b_alpha_rows, dtype=np.int64), -b_alpha_values)
+    metrics = _vector_metrics(residual)
+    del residual
+    return metrics
+
+
 class Task41V5VolumeAttributionAccumulator:
     """Bounded per-cell attribution using the exact tensors before release."""
 
@@ -239,6 +315,7 @@ class Task41V5VolumeAttributionAccumulator:
         J = np.asarray(blocks["J"], dtype=np.complex128)
         L = np.asarray(blocks["L"], dtype=np.complex128)
         for column_index, column in enumerate(self.donor["columns"]):
+            native_volume_rhs = np.asarray(column["native_volume_rhs"])
             native_rhs = np.asarray(column["native_rhs"])
             for state in column["states"]:
                 state_label = str(state["label"])
@@ -252,6 +329,10 @@ class Task41V5VolumeAttributionAccumulator:
                     or (active_ids.size and (active_ids.min() < 0 or active_ids.max() >= active_original.size))
                 ):
                     raise ValueError("V5 cell MPC expansion differs from the saved active-row map")
+                if not np.array_equal(
+                    native_rhs[interior_rows], native_volume_rhs[interior_rows]
+                ):
+                    raise ValueError("V7 requires native full and volume RHS to match on every visited interior row")
                 u_i = np.asarray(storage[interior_rows], dtype=np.complex128)
                 # Saved storage vectors deliberately keep MPC slave rows zero.
                 # Reconstruct each physical local trace from active values and
@@ -259,7 +340,7 @@ class Task41V5VolumeAttributionAccumulator:
                 active_trace = storage[active_original[active_ids]]
                 t_c = np.asarray(trace_expansion @ active_trace).reshape(-1)
                 native_i = np.asarray(native_action[interior_rows], dtype=np.complex128)
-                r_i = np.asarray(native_rhs[interior_rows], dtype=np.complex128) - native_i
+                r_i = np.asarray(native_volume_rhs[interior_rows], dtype=np.complex128) - native_i
                 K_u = K @ u_i
                 G_t = G @ t_c
                 actual_i = K_u + G_t
@@ -331,41 +412,95 @@ class Task41V5VolumeAttributionAccumulator:
         candidate_reduced: np.ndarray,
         *,
         active_rows: int,
+        candidate_d_volume_columns: Sequence[np.ndarray] | None = None,
         persist_array: Callable[[str, np.ndarray], Mapping[str, Any]] | None = None,
     ) -> dict[str, Any]:
         if self.accumulators is None:
             raise RuntimeError("V5 attribution accumulator was not admitted")
+        if candidate_d_volume_columns is None or len(candidate_d_volume_columns) != len(
+            self.donor["columns"]
+        ):
+            raise ValueError("V7 attribution requires each hash-bound candidate volume d vector")
         columns = []
+        state_d_hat: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         for column_index, column in enumerate(self.donor["columns"]):
             active_original = np.asarray(column["active_original_rows"], dtype=np.int64)
             native_rhs = np.asarray(column["native_rhs"])
+            native_volume_rhs = np.asarray(column["native_volume_rhs"])
+            b_alpha_rows = np.asarray(column["b_alpha_rows"], dtype=np.int64)
+            b_alpha_values = np.asarray(column["b_alpha_values"], dtype=np.complex128)
+            if (
+                native_rhs.shape != native_volume_rhs.shape
+                or native_rhs.ndim != 1
+                or b_alpha_rows.shape != b_alpha_values.shape
+                or b_alpha_rows.ndim != 1
+                or b_alpha_values.dtype != np.dtype(np.complex128)
+                or not np.isfinite(b_alpha_values).all()
+                or (b_alpha_rows.size and (np.any(b_alpha_rows < 0) or np.any(b_alpha_rows >= native_rhs.size)))
+            ):
+                raise ValueError("V7 attribution donor RHS/B-alpha identities are malformed")
+            beta_active = np.zeros(active_rows, dtype=np.complex128)
+            beta_active_ids = _map_original_rows_to_active(b_alpha_rows, active_original)
+            np.add.at(beta_active, beta_active_ids, b_alpha_values)
+            d_volume = np.asarray(candidate_d_volume_columns[column_index])
+            if d_volume.shape != (active_rows,) or d_volume.dtype != np.dtype(np.complex128):
+                raise ValueError("V7 candidate volume d vector has an invalid layout")
+            rhs_split = _rhs_split_metrics(
+                native_rhs, native_volume_rhs, b_alpha_rows, b_alpha_values
+            )
             states = []
             for state in column["states"]:
                 label = str(state["label"])
                 accumulated = self.accumulators[(column_index, label)]
                 native_action = np.asarray(state["native_volume_action"])
-                d = np.asarray(
+                d_full = np.asarray(
                     candidate_p6[:active_rows, column_index]
                     - candidate_reduced[:active_rows, column_index],
                     dtype=np.complex128,
                 )
-                r_t = np.asarray(
-                    native_rhs[active_original] - native_action[active_original],
+                f_t = np.asarray(native_rhs[active_original], dtype=np.complex128)
+                b_t = np.asarray(native_volume_rhs[active_original], dtype=np.complex128)
+                n_t = np.asarray(native_action[active_original], dtype=np.complex128)
+                r_t_legacy = np.asarray(
+                    f_t - n_t,
                     dtype=np.complex128,
                 )
-                left = d + r_t + accumulated["T_r_i"]
                 right = accumulated["delta_t"] + accumulated["attributed_terms"]
-                closure = _difference_metrics(left, right)
-                left_l2 = _vector_norm(left)
+                legacy_left = d_full + r_t_legacy + accumulated["T_r_i"]
+                legacy_closure_vector = legacy_left - right
+                closure = _vector_metrics(legacy_closure_vector)
+                left_l2 = _vector_norm(legacy_left)
                 right_l2 = _vector_norm(right)
                 frozen_denominator = TASK41_V5_FROZEN_DENOMINATORS[column_index]
                 closure_frozen_relative = closure["absolute_l2"] / frozen_denominator
                 accumulation_scale = (
-                    _vector_norm(d)
-                    + _vector_norm(r_t)
+                    _vector_norm(d_full)
+                    + _vector_norm(r_t_legacy)
                     + _vector_norm(accumulated["T_r_i"])
                     + _vector_norm(accumulated["delta_t"])
                     + _vector_norm(accumulated["attributed_terms"])
+                )
+                legacy_minus_beta = legacy_closure_vector - beta_active
+                r_volume = b_t - n_t
+                r_full = f_t - n_t - beta_active
+                volume_left = d_volume + r_volume + accumulated["T_r_i"]
+                full_left = d_full + r_full + accumulated["T_r_i"]
+                corrected_volume = volume_left - right
+                corrected_full = full_left - right
+                d_hat_volume = right - r_volume - accumulated["T_r_i"]
+                d_hat_full = right - r_full - accumulated["T_r_i"]
+                rhs_split_active = f_t - b_t - beta_active
+                d_full_split = (d_full - d_volume) + rhs_split_active
+                cross_product = np.vdot(beta_active, legacy_closure_vector)
+                support_mask = np.zeros(active_rows, dtype=np.bool_)
+                support_mask[beta_active_ids] = True
+                beta_support_ids = np.flatnonzero(support_mask)
+                beta_nonsupport_ids = np.flatnonzero(~support_mask)
+                beta_support_closure = _vector_metrics(
+                    legacy_closure_vector[beta_support_ids], row_indices=beta_support_ids
+                )
+                beta_nonsupport_closure = _vector_metrics(
+                    legacy_closure_vector[beta_nonsupport_ids], row_indices=beta_nonsupport_ids
                 )
                 accumulator_artifacts = {}
                 if persist_array is not None:
@@ -403,7 +538,98 @@ class Task41V5VolumeAttributionAccumulator:
                             closure["absolute_l2"] / max(accumulation_scale, np.finfo(float).tiny)
                         ),
                         "accumulation_scale_l2_sum": accumulation_scale,
+                        "v7_formula_diagnostics": {
+                            "legacy_closure_minus_beta_active": _vector_metrics(legacy_minus_beta),
+                            "legacy_closure_vector": _vector_metrics(legacy_closure_vector),
+                            "legacy_closure_beta_active_l2": _vector_norm(beta_active),
+                            "legacy_beta_conjugate_inner_product": {
+                                "real": float(cross_product.real),
+                                "imag": float(cross_product.imag),
+                            },
+                            "legacy_closure_on_beta_support": beta_support_closure,
+                            "legacy_closure_off_beta_support": beta_nonsupport_closure,
+                            "corrected_full_closure": _vector_metrics(corrected_full),
+                            "corrected_volume_closure": _vector_metrics(corrected_volume),
+                            "corrected_full_closure_frozen_denominator_relative": (
+                                _vector_norm(corrected_full) / frozen_denominator
+                            ),
+                            "corrected_volume_closure_frozen_denominator_relative": (
+                                _vector_norm(corrected_volume) / frozen_denominator
+                            ),
+                            "corrected_full_closure_relative_to_d_full": (
+                                _vector_norm(corrected_full)
+                                / max(_vector_norm(d_full), np.finfo(float).tiny)
+                            ),
+                            "corrected_volume_closure_relative_to_d_volume": (
+                                _vector_norm(corrected_volume)
+                                / max(_vector_norm(d_volume), np.finfo(float).tiny)
+                            ),
+                            "term_scales": {
+                                "delta_t": {
+                                    "absolute_l2": _vector_norm(accumulated["delta_t"]),
+                                    "frozen_denominator_relative": _vector_norm(accumulated["delta_t"]) / frozen_denominator,
+                                },
+                                "attributed_terms_Q": {
+                                    "absolute_l2": _vector_norm(accumulated["attributed_terms"]),
+                                    "frozen_denominator_relative": _vector_norm(accumulated["attributed_terms"]) / frozen_denominator,
+                                },
+                                "r_volume_trace": {
+                                    "absolute_l2": _vector_norm(r_volume),
+                                    "frozen_denominator_relative": _vector_norm(r_volume) / frozen_denominator,
+                                },
+                                "T_r_i": {
+                                    "absolute_l2": _vector_norm(accumulated["T_r_i"]),
+                                    "frozen_denominator_relative": _vector_norm(accumulated["T_r_i"]) / frozen_denominator,
+                                },
+                                "candidate_d_full": {
+                                    "absolute_l2": _vector_norm(d_full),
+                                    "frozen_denominator_relative": _vector_norm(d_full) / frozen_denominator,
+                                },
+                                "saved_d_volume": {
+                                    "absolute_l2": _vector_norm(d_volume),
+                                    "frozen_denominator_relative": _vector_norm(d_volume) / frozen_denominator,
+                                },
+                            },
+                            "epsilon_rhs_native_minus_volume_minus_Balpha": rhs_split,
+                            "full_minus_volume_d_plus_rhs_split": _vector_metrics(d_full_split),
+                            "d_hat_full_minus_candidate_d_full": _difference_metrics(
+                                d_hat_full, d_full
+                            ),
+                            "d_hat_volume_minus_saved_d_volume": _difference_metrics(
+                                d_hat_volume, d_volume
+                            ),
+                        },
                     }
+                )
+                previous_hat = state_d_hat.get(column_index)
+                if previous_hat is None:
+                    state_d_hat[column_index] = (d_hat_volume.copy(), d_hat_full.copy())
+                else:
+                    state_metrics = states[-1]["v7_formula_diagnostics"]
+                    state_metrics["d_hat_volume_vs_previous_donor_state"] = _difference_metrics(
+                        d_hat_volume, previous_hat[0]
+                    )
+                    state_metrics["d_hat_full_vs_previous_donor_state"] = _difference_metrics(
+                        d_hat_full, previous_hat[1]
+                    )
+                    del state_d_hat[column_index]
+                del (
+                    legacy_left,
+                    legacy_closure_vector,
+                    legacy_minus_beta,
+                    r_volume,
+                    r_full,
+                    volume_left,
+                    full_left,
+                    corrected_volume,
+                    corrected_full,
+                    d_hat_volume,
+                    d_hat_full,
+                    d_full_split,
+                    support_mask,
+                    beta_support_closure,
+                    beta_nonsupport_closure,
+                    cross_product,
                 )
             columns.append({"column": column_index, "states": states})
         return {
@@ -422,6 +648,14 @@ class Task41V5VolumeAttributionAccumulator:
                 "frozen_candidate_denominator",
                 "sum_of_accumulated_term_norms",
             ],
+            "formula_version": "task41.p0.v7.full_and_volume_attribution.v1",
+            "legacy_closure_difference_definition": "d_full + (native_rhs_trace - native_volume_action_trace) + T_r_i - (delta_t + attributed_terms); retained only to reproduce the V6 receipt",
+            "corrected_full_residual_definition": "native_rhs_trace - native_volume_action_trace - B_alpha_trace",
+            "corrected_volume_residual_definition": "native_volume_rhs_trace - native_volume_action_trace",
+            "corrected_full_identity_definition": "d_full + r_full_trace + T_r_i = delta_t + attributed_terms",
+            "corrected_volume_identity_definition": "d_volume + r_volume_trace + T_r_i = delta_t + attributed_terms",
+            "rhs_split": "native_rhs - native_volume_rhs - B_alpha; B_alpha rows are renumbered to active ids once",
+            "interior_rhs_identity": "observe verifies native_rhs == native_volume_rhs on every visited cell interior row",
             "global_closure_status": "DIAGNOSTIC_ONLY",
             "columns": columns,
         }

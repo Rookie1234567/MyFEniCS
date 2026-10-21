@@ -2206,6 +2206,24 @@ def main(argv: list[str] | None = None) -> int:
             )
             if p6_record is None or reduced_record is None:
                 raise RuntimeError("V5 full-action arrays were not persisted before attribution")
+            active_rows = int(owner_result["condensed"].active_rows)
+            d_volume_records = [
+                array_records.get(f"task41_v4_d_volume_trace_col{column_index}")
+                for column_index in range(2)
+            ]
+            if any(record is None for record in d_volume_records):
+                raise RuntimeError("V7 saved volume-defect arrays were not persisted before attribution")
+            candidate_d_volume_columns = [
+                np.load(record["path"], mmap_mode="r", allow_pickle=False)
+                for record in d_volume_records
+                if record is not None
+            ]
+            if any(
+                values.shape != (active_rows,)
+                or values.dtype != np.dtype(np.complex128)
+                for values in candidate_d_volume_columns
+            ):
+                raise ValueError("V7 saved volume-defect arrays have invalid layouts")
             candidate_p6 = np.load(
                 p6_record["path"], mmap_mode="r", allow_pickle=False
             )
@@ -2216,11 +2234,12 @@ def main(argv: list[str] | None = None) -> int:
                 exact_attribution.finalize(
                     candidate_p6,
                     candidate_reduced,
-                    active_rows=owner_result["condensed"].active_rows,
+                    active_rows=active_rows,
+                    candidate_d_volume_columns=candidate_d_volume_columns,
                     persist_array=persist_volume_array,
                 )
             )
-            del candidate_p6, candidate_reduced
+            del candidate_p6, candidate_reduced, candidate_d_volume_columns
         candidate_gate = identity_report.get("candidate_full_action_gate")
         action_candidate_status = (
             str(candidate_gate.get("status"))
