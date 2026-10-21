@@ -1,0 +1,173 @@
+{
+  "cases": [
+    {
+      "axes_cells": [
+        6,
+        12,
+        6
+      ],
+      "case": "Y3_3",
+      "independent_midpoint_tag_counts": {
+        "air": 312,
+        "grating": 48,
+        "substrate": 72
+      },
+      "nested_from_parent_or_sibling": false,
+      "relationship": "sibling_of_Y3_2_not_cumulative",
+      "total_cells": 432,
+      "y_nm": [
+        0,
+        5,
+        10,
+        15,
+        18.333333333333332,
+        21.666666666666668,
+        25,
+        28.333333333333336,
+        31.666666666666668,
+        35,
+        40,
+        45,
+        50
+      ],
+      "y_segments_by_material_interval": [
+        3,
+        6,
+        3
+      ],
+      "y_sha256": "ceb0f46c6ab238890679d9673de348344307d4acdb1acbd08e1155b6e76162ec"
+    },
+    {
+      "axes_cells": [
+        6,
+        12,
+        6
+      ],
+      "case": "Y3_4",
+      "independent_midpoint_tag_counts": {
+        "air": 296,
+        "grating": 64,
+        "substrate": 72
+      },
+      "nested_from_parent_or_sibling": false,
+      "relationship": "sibling_of_Y3_2_not_cumulative",
+      "total_cells": 432,
+      "y_nm": [
+        0,
+        7.5,
+        15,
+        17.5,
+        20,
+        22.5,
+        25,
+        27.5,
+        30,
+        32.5,
+        35,
+        42.5,
+        50
+      ],
+      "y_segments_by_material_interval": [
+        2,
+        8,
+        2
+      ],
+      "y_sha256": "cd6ef7bb13dfcb1906d4e583bb1f75616531b3b917ecb2913dd93d4ee739109e"
+    }
+  ],
+  "fixed_axes": {
+    "x_nm": [
+      0,
+      8.25,
+      16.5,
+      25,
+      33.5,
+      41.75,
+      50
+    ],
+    "x_segments_by_material_interval": [
+      2,
+      2,
+      2
+    ],
+    "x_sha256": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+    "z_nm": [
+      -10,
+      0,
+      30,
+      60,
+      90,
+      120,
+      130
+    ],
+    "z_segments_by_material_interval": [
+      1,
+      4,
+      1
+    ],
+    "z_sha256": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+  },
+  "limitations": [
+    "Static coordinate/count/hash plan only, not live mesh QA or numerical evidence.",
+    "The two alternatives share the Y3_2 parent and are not cumulative; do not construct a 3/8/3 allocation.",
+    "A passing sibling comparison is limited to the stated cases and gates; it does not establish full-DtN qualification or canonical sidewall evidence."
+  ],
+  "material_breakpoints_nm": {
+    "x": [
+      0,
+      16.5,
+      33.5,
+      50
+    ],
+    "y": [
+      0,
+      15,
+      35,
+      50
+    ],
+    "z": [
+      -10,
+      0,
+      120,
+      130
+    ]
+  },
+  "ordering": [
+    "Y3_3",
+    "then_Y3_4_only_after_Y3_3_natural_terminal_and_comparison"
+  ],
+  "parent_case": {
+    "case": "Y3_2",
+    "input_sha256": "968f47485f8e14bfac81da30e711b0fd4963be8402139d7560315d823142b01c",
+    "parent_y_segments": [
+      2,
+      6,
+      2
+    ],
+    "parent_y_sha256": "9adb867e3e11b08db1999e8e9710aec3027c64cb2f4c3c580afc469af04b21a6",
+    "run_id": "task40_phi90_13p5_D15_Y3_2_p6_direct_v1",
+    "source_sha": "a0d67b7f7052d80eff4bd5c9488384a2cd5a9864"
+  },
+  "purpose": "Two noncumulative 12-layer y-distribution siblings of D15-Y3-2; each keeps x/z and physical/operator contracts fixed.",
+  "schema": "task40_d15_sibling_axis_plan_v1",
+  "shared_contract": {
+    "comparison_gates": {
+      "all_active_and_power_carrying_per_mode_R_T_absolute": 1e-06,
+      "boundary_complex_relative_l2_without_phase_fit": 0.0001,
+      "global_R_T_A_balance_A_volume_absolute": 1e-05,
+      "same_coordinate_complex_E_H_relative_l2_without_phase_fit": 0.0001,
+      "single_run_condensed_residual_relative": 1e-09,
+      "single_run_energy_closure_absolute": 1e-05,
+      "single_run_independent_A6_residual_relative": 1e-06
+    },
+    "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "parent_mode_count": 612,
+    "surface_quadrature_degree": 28,
+    "volume_quadrature_degree": 15,
+    "volume_quadrature_rule": "default",
+    "wavelength_nm": 13.5
+  },
+  "status": "STATIC_PLAN_ONLY_NOT_LIVE_MESH_OR_SOLVER_EVIDENCE"
+}

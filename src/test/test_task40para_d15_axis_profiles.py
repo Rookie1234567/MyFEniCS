@@ -17,9 +17,12 @@ from src.geometry.mesh_builder_3d import stage4_axis_plan
 from src.geometry.task40_phi90_d15_axis_plan import (
     D15_AXIS_PLANS,
     D15_LAUNCHABLE_CASES,
+    D15_PREVIOUS_CASE,
     D15_STATIC_PLAN_RECORD,
     D15_STATIC_PLAN_SHA256,
     D15_SUPERSEDED_STATIC_PROPOSAL_SHA256,
+    D15_Y3_2_SIBLINGS_STATIC_PLAN_RECORD,
+    D15_Y3_2_SIBLINGS_STATIC_PLAN_SHA256,
     D15_Z2_HISTORICAL_REUSE,
     validate_frozen_d15_axes,
 )
@@ -172,6 +175,8 @@ def test_d15_inputs_resolve_to_frozen_planner_route_and_independent_tags(case):
         route,
     )
     assert evidence["status"] == "PASS"
+    expected_parent = f"D15_{plan['parent_case']}" if plan["parent_case"] else "D15_B"
+    assert evidence["parent_case"] == expected_parent
     assert evidence["actual_global_cell_count"] == plan["expected_global_cell_count"]
     assert evidence["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
     assert evidence["material_tag_counts"] == {
@@ -248,6 +253,64 @@ def test_d15_y3_2_uses_supplemental_2_6_2_axes_and_independent_tags():
     assert discretization["mesh_plan_sha256"] == plan["mesh_plan_sha256"]
 
 
+def test_d15_y3_3_and_y3_4_are_non_cumulative_same_parent_siblings():
+    expected = {
+        "Y3_3": {
+            "segments": (3, 6, 3),
+            "y": (0.0, 5.0, 10.0, 15.0, 18.333333333333332,
+                  21.666666666666668, 25.0, 28.333333333333336,
+                  31.666666666666668, 35.0, 40.0, 45.0, 50.0),
+            "tags": {"air": 312, "substrate": 72, "grating": 48},
+        },
+        "Y3_4": {
+            "segments": (2, 8, 2),
+            "y": (0.0, 7.5, 15.0, 17.5, 20.0, 22.5, 25.0, 27.5,
+                  30.0, 32.5, 35.0, 42.5, 50.0),
+            "tags": {"air": 296, "substrate": 72, "grating": 64},
+        },
+        "Y4_4_4": {
+            "segments": (4, 4, 4),
+            "y": (0.0, 3.75, 7.5, 11.25, 15.0, 20.0, 25.0, 30.0,
+                  35.0, 38.75, 42.5, 46.25, 50.0),
+            "tags": {"air": 328, "substrate": 72, "grating": 32},
+        },
+    }
+    record_path = ROOT / D15_Y3_2_SIBLINGS_STATIC_PLAN_RECORD
+    assert hashlib.sha256(record_path.read_bytes()).hexdigest() == (
+        D15_Y3_2_SIBLINGS_STATIC_PLAN_SHA256
+    )
+    record = json.loads(record_path.read_text())
+    assert record["supersedes_static_plan_v1_sha256"] == (
+        "d8c90a6bfb603fa835450e3a30f8922de4adaf40ab11c7a72d915a90f855317a"
+    )
+    assert record["main_correction"]["discarded_expected_tags"] == {
+        "air": 324, "substrate": 72, "grating": 36
+    }
+    assert record["main_correction"]["independent_midpoint_tags_for_y4_4_4"] == {
+        "air": 328, "substrate": 72, "grating": 32
+    }
+    for case, facts in expected.items():
+        plan = D15_AXIS_PLANS[case]
+        assert plan["axis_cell_counts"] == [6, 12, 6]
+        assert plan["expected_global_cell_count"] == 432
+        assert tuple(plan["segment_cell_counts"]["y"]) == facts["segments"]
+        assert tuple(plan["axes_nm"]["y"]) == facts["y"]
+        assert plan["static_midpoint_tags"] == facts["tags"]
+        assert plan["parent_case"] == "Y3_2"
+        assert D15_PREVIOUS_CASE[case] == "Y3_2"
+        assert plan["nestedness_from_previous_level"] is False
+        assert plan["axes_nm"]["x"] == D15_AXIS_PLANS["Y3_2"]["axes_nm"]["x"]
+        assert plan["axes_nm"]["z"] == D15_AXIS_PLANS["Y3_2"]["axes_nm"]["z"]
+        assert plan["axis_sha256_le_f64"]["x"] == D15_AXIS_PLANS["Y3_2"]["axis_sha256_le_f64"]["x"]
+        assert plan["axis_sha256_le_f64"]["z"] == D15_AXIS_PLANS["Y3_2"]["axis_sha256_le_f64"]["z"]
+        assert plan["axis_sha256_le_f64"]["y"] == hashlib.sha256(
+            np.asarray(facts["y"], dtype="<f8").tobytes()
+        ).hexdigest()
+        assert tuple(plan["segment_cell_counts"]["y"]) != (3, 8, 3)
+    assert D15_AXIS_PLANS["Y3_3"]["axes_nm"]["y"] != D15_AXIS_PLANS["Y3_4"]["axes_nm"]["y"]
+    assert D15_AXIS_PLANS["Y4_4_4"]["axes_nm"]["y"] != D15_AXIS_PLANS["Y3"]["axes_nm"]["y"]
+
+
 def test_d15_z2_is_exact_h15_b_historical_reuse_not_a_launch_input():
     plan = D15_AXIS_PLANS["Z2"]
     reuse = D15_Z2_HISTORICAL_REUSE
@@ -301,7 +364,7 @@ def test_d15_axis_validator_fails_closed_on_y3_axis_drift():
         validate_frozen_d15_axes(wrong_hash)
 
 
-@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2"))
+@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2", "Y3_3", "Y3_4", "Y4_4_4"))
 def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case):
     specification = load_and_resolve(D15_INPUTS[case])
     run_directory = (tmp_path / "run").resolve()
@@ -346,6 +409,28 @@ def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case
         )
         assert directional["expected_material_tag_counts"] == {
             "1": 252, "2": 60, "3": 48
+        }
+    if case == "Y3_3":
+        assert tuple(directional["segment_cell_counts"]["y"]) == (3, 6, 3)
+        assert tuple(directional["axis_cell_counts"]) == (6, 12, 6)
+        assert directional["expected_material_tag_counts"] == {
+            "1": 312, "2": 72, "3": 48
+        }
+    if case == "Y3_4":
+        assert tuple(directional["segment_cell_counts"]["y"]) == (2, 8, 2)
+        assert tuple(directional["axis_cell_counts"]) == (6, 12, 6)
+        assert directional["expected_material_tag_counts"] == {
+            "1": 296, "2": 72, "3": 64
+        }
+    if case == "Y4_4_4":
+        assert tuple(directional["segment_cell_counts"]["y"]) == (4, 4, 4)
+        assert tuple(directional["axis_cell_counts"]) == (6, 12, 6)
+        assert tuple(normalized["discretization"]["mesh_axis_y_values"]) == (
+            0.0, 3.75, 7.5, 11.25, 15.0, 20.0, 25.0, 30.0,
+            35.0, 38.75, 42.5, 46.25, 50.0
+        )
+        assert directional["expected_material_tag_counts"] == {
+            "1": 328, "2": 72, "3": 32
         }
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
     assert manifest["component_options"] == thaw(profile["component_options"])

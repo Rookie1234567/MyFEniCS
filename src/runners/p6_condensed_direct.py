@@ -1171,7 +1171,11 @@ def _task40_d15_mesh_evidence(
         "profile": route["profile_identity"],
         "family": "D15_13p5nm_R13",
         "case": case_name,
-        "parent_case": "D15_B",
+        "parent_case": (
+            f"D15_{route['task40_parent_case']}"
+            if route.get("task40_parent_case")
+            else "D15_B"
+        ),
         "changed_axis": changed_axis,
         "geometry": "rectangular_block_grating",
         "cell_type": "hexahedron",
