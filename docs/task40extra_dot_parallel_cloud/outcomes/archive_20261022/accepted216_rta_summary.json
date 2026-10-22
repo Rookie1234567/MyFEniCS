@@ -1,0 +1,78 @@
+{
+  "checkpoint_generation": 14,
+  "checkpoint_identity": {
+    "RHS_definition": "CANONICAL_TRACTION_MINUS_INCIDENT_MODAL_DTN",
+    "actual_identity_inventory": {
+      "bytes": 890282,
+      "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_metadata_preparation01/attempt01/result.json",
+      "sha256": "209ef63d6290334daea556c243743084823e3b1faa426e89b487dd1b345258b7"
+    },
+    "coarse_degree": 5,
+    "coarse_raw_registry": {
+      "bytes": 98557,
+      "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_p5_job1_preparation01/raw_registry.json",
+      "sha256": "101c465d9a432c696377a4c05474efec45208b7057b4b2366f59875cbf89ef04"
+    },
+    "fine_degree": 6,
+    "fine_raw_registry": {
+      "bytes": 356250,
+      "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_p6_raw_preparation01/attempt01/registry.json",
+      "sha256": "c9aab9bbe17ae32a254a04eed979d9edf33f9517dce9db496819eb0884486b5f"
+    },
+    "full_rows": 148944,
+    "mesh_update": "two_hotspots_same_y_plane_hy_tensor_closure_189_to_216",
+    "ordered_mode_sha256": "f3e3aedd76050b2e866f9c55e235af481e6ad18c7fa76628361f79e41ffc11de",
+    "physical_input": {
+      "bytes": 3350,
+      "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_metadata_preparation01/input_hp216_capacity_probe.json",
+      "sha256": "bb139e4fde819d4aaa72686b86cb6652d9813f168dc49873bf31da5d4192607b"
+    },
+    "physical_model_sha256": "4598a76274bcb516ac9b53d84ba0cde9ba35f42026f4e1c929f4d2ec44a7a109",
+    "retained_rows": 44664,
+    "source_iterations": 976,
+    "source_sha": "322e62e11a80969b3a35f0cbb08b25c11c539ea6",
+    "transfer_seed_manifest": {
+      "bytes": 299736,
+      "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_transfer_execution01/attempt01/seed_manifest.json",
+      "sha256": "cb44ea6bf0c6614a32de2cb05b01893ab0a9526c59b3115f5b7f165d1c8707db"
+    }
+  },
+  "closure_signed": 2.816296085228487e-10,
+  "field_reconstruction": "canonical assign + homogenize + single MPC backsubstitution",
+  "flux_minus_port": {
+    "R": -1.3359661077447238e-05,
+    "T": 1.310877637505925e-05
+  },
+  "independent_eh_all_reporting_orders": {
+    "A_balance_from_eh_fourier": 0.009932249490750888,
+    "R_plus_T_from_eh_fourier": 0.9900677505092491,
+    "R_total_from_eh_fourier": 0.093725797944236,
+    "T_total_from_eh_fourier": 0.8963419525650131,
+    "diffraction_bottom_eh_fourier_fit_residual_max": 5.121936101670666e-05,
+    "diffraction_top_eh_fourier_fit_residual_max": 0.9391992802318686
+  },
+  "independent_eh_retained": {
+    "R": 0.093725797944236,
+    "R_minus_port": 1.6214763824823342e-06,
+    "T": 0.8963419525569132,
+    "T_minus_port": 1.3119259934302185e-05
+  },
+  "independent_sampled_net_flux": {
+    "R": 0.09371081680677606,
+    "T": 0.8963419420733539,
+    "bottom_signed_power": 0.05257358505573088,
+    "top_signed_power": -0.05315702548458738
+  },
+  "official": {
+    "A_balance": 0.009946990235167652,
+    "A_volume": 0.009946990516797262,
+    "R": 0.09372417646785351,
+    "T": 0.8963288332969789
+  },
+  "reference_planes": {
+    "bottom": -0.5185185185185185,
+    "top": 6.7407407407407405
+  },
+  "status": "OUTPUTS_COMPUTED_NOT_AUTOMATICALLY_SCIENTIFICALLY_ACCEPTED",
+  "warning": "Modal/flux discrepancies and energy closure require review; no tolerances were loosened or inferred."
+}

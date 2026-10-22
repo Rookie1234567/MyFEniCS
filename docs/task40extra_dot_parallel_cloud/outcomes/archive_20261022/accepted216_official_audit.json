@@ -1,0 +1,152 @@
+{
+  "actual216_inventory": {
+    "bytes": 497515,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_future_output/metadata01/result.json",
+    "sha256": "0cc996f7145ffa969ce886b3d6970a7f3df153ce6a92b2322f68ade307a33587"
+  },
+  "actual216_recipe_reuse": {
+    "bytes": 21217,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_future_output/actual216_output5_reuse_report.json",
+    "sha256": "85915e01728d8a15538fe17c7f4f2f7a668888359fba3de4a88ea2a127fb5d27"
+  },
+  "actual_result": {
+    "bytes": 5549,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_future_output/official01/result.json",
+    "sha256": "fa2387a55ce5241b7482ca07e970f60f6016c83946307dc9c0d3247b4d2be5f7"
+  },
+  "actual_terminal": {
+    "bytes": 1143,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_future_output/official01/summary.json",
+    "sha256": "13658032962405b0205ebc04529cde89669c627e46f524ef6061fd8e50d6c7c5"
+  },
+  "additional_reporting_order_fit_max": 0.9391992802318686,
+  "audit_source": {
+    "bytes": 11376,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_postsolve_preparation01/rta_control/audit_official.py",
+    "sha256": "5b3e865f462933019c303c05568952fc6263bbfa6f247c3ef38c9c0f98060ce4"
+  },
+  "canonical_rhs_helper": {
+    "bytes": 1988,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_canonical_rhs_production01/complete_physical_rhs.py",
+    "sha256": "42d8d397e4ff2a3bd432db5b88f0c625179ebea561a6662580c90ef5c8f75e39"
+  },
+  "closure_signed": 2.816296085228487e-10,
+  "command": {
+    "bytes": 530931,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_future_output/official01.command.json",
+    "sha256": "93a911174833652e62dad6593e05127c9f736453852d26aafc4a27586ed7257a"
+  },
+  "explicit_symlink_pins": 1,
+  "flux_minus_port": {
+    "R": -1.3359661077447238e-05,
+    "T": 1.310877637505925e-05
+  },
+  "formula_identity": {
+    "bytes": 2263,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp189_future_output/preparation01/postprocess_equivalence.json",
+    "sha256": "59afcce63ae5c6b65f54ee3e9e7449b24e12310e7d780f933e1c8d58e9001d99"
+  },
+  "independent_EH_retained": {
+    "R": 0.093725797944236,
+    "R_minus_port": 1.6214763824823342e-06,
+    "T": 0.8963419525569132,
+    "T_minus_port": 1.3119259934302185e-05
+  },
+  "independent_field_audit": {
+    "bytes": 11404,
+    "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_postsolve_preparation01/accepted216_after_solver04/audit.json",
+    "sha256": "d31eb161b11a4a1fc9353a947bed049ea9b201ab3dcc0a2445cbbf9ea715865b"
+  },
+  "independent_same_plane_flux": {
+    "R": 0.09371081680677606,
+    "T": 0.8963419420733539,
+    "bottom_signed_power": 0.05257358505573088,
+    "top_signed_power": -0.05315702548458738
+  },
+  "limitations": [
+    "Near-zero energy closure does not establish spatial accuracy or hp convergence.",
+    "E/H and sampled-flux differences are reported without a new acceptance tolerance.",
+    "Additional reporting-order fit residual is distinct from retained-mode fit residual.",
+    "The post-update common-patch spatial indicator has separate evidence."
+  ],
+  "linear_scale": 1,
+  "native_cache_audits": [
+    {
+      "bytes": 16815,
+      "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_future_output/official01/qualification_cache_audit.json",
+      "sha256": "674957051467dfc8f95f19f32927d0c9c048317469ace78b997ad56b08c8fad9"
+    },
+    {
+      "bytes": 16810,
+      "path": "/workspace/scratch/9c465670b46b/recovery_20261018_0935/scaled07_hp216_future_output/official01/official_cache_audit.json",
+      "sha256": "192a7bd1851711238e987757ffb5a6fba804d07b800248cce7c7a56ec9e4ae84"
+    }
+  ],
+  "native_kernel_calls": 10,
+  "native_qualification": {
+    "H_native_values": 222264,
+    "H_relative_max_error": 1.6068422268482787e-11,
+    "analytic_curl": [
+      -0.2,
+      -0.3,
+      -0.1
+    ],
+    "canonical_output5_only": true,
+    "manufactured_field": "E=(1+0.2i+0.1y, -0.3+0.7i+0.2z, 0.4-0.1i+0.3x)",
+    "qualified": true,
+    "regions": {
+      "grating": {
+        "absorption_relative_error": 7.337119253204371e-16,
+        "actual_absorption": 0.0005910778522576121,
+        "actual_volume": 5.687913427831136,
+        "analytic_absorption": 0.0005910778522576125,
+        "analytic_volume": 5.687913427831123,
+        "volume_relative_error": 2.186126429941672e-15
+      },
+      "substrate": {
+        "absorption_relative_error": 3.0608600440676e-16,
+        "actual_absorption": 0.00035421487976454474,
+        "actual_volume": 3.485241070974948,
+        "analytic_absorption": 0.00035421487976454485,
+        "analytic_volume": 3.4852410709749524,
+        "volume_relative_error": 1.2741994048802892e-15
+      }
+    },
+    "status": "PASS_ALL_FIVE_NATIVE_ANALYTIC_QUALIFICATION",
+    "tolerances": {
+      "H": 2e-09,
+      "absorption": 5e-10,
+      "volume": 5e-11
+    }
+  },
+  "new_KSP_iterations": 0,
+  "official": {
+    "A_balance": 0.009946990235167652,
+    "A_volume": 0.009946990516797262,
+    "R": 0.09372417646785351,
+    "T": 0.8963288332969789
+  },
+  "resource": {
+    "fresh_future_admissions": 25,
+    "minimum_disk_free": 15257419776,
+    "minimum_host_available": 9057906688,
+    "peak_actual_VmSize": 890212352,
+    "peak_new_artifacts": 3206320,
+    "peak_prospective_AS": 5950742336,
+    "peak_prospective_tree": 5423812416,
+    "peak_tree_RSS": 364150784,
+    "resource_rows": 118,
+    "safety_bytes": 536870912,
+    "swap_bytes": 0
+  },
+  "retained_bottom_EH_fit_residual_max": 8.888497163033734e-16,
+  "retained_modes": 168,
+  "retained_top_EH_fit_residual_max": 9.449592911084892e-16,
+  "runtime_compilation": false,
+  "schema": "recovered.actual216.official-output-audit.v1",
+  "scientific_execution_during_audit": false,
+  "seconds": 33.10704341100063,
+  "source_pins": 1662,
+  "spatial_accuracy_qualified": false,
+  "status": "PASS_ACTUAL216_SOURCE_CACHE_RESOURCE_AND_POWER_AUDIT"
+}

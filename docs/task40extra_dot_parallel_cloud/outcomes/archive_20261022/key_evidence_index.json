@@ -1,0 +1,50 @@
+[
+  {
+    "published_file": "accepted216_linear_audit.json",
+    "original_relative_path": "scaled07_hp216_postsolve_preparation01/accepted216_after_solver04/audit.json",
+    "bytes": 11404,
+    "sha256": "d31eb161b11a4a1fc9353a947bed049ea9b201ab3dcc0a2445cbbf9ea715865b"
+  },
+  {
+    "published_file": "accepted216_official_audit.json",
+    "original_relative_path": "scaled07_hp216_future_output/official_audit.json",
+    "bytes": 6127,
+    "sha256": "fcd1ba1ae044a9c3f580117eff0acd6e934ec07f2a690da27772f718669528cb"
+  },
+  {
+    "published_file": "accepted216_rta_summary.json",
+    "original_relative_path": "scaled07_hp216_future_output/official01/official/rta_summary.json",
+    "bytes": 3415,
+    "sha256": "ca3178e460b146523211fe3df6a47b42d4e79515713db9c3e1f914ca3a8a0377"
+  },
+  {
+    "published_file": "hp189_closed_loop_report_zh.md",
+    "original_relative_path": "scaled07_hp189_closed_loop_report01/REPORT.zh.md",
+    "bytes": 5686,
+    "sha256": "0a0869eba863997a30a4d9da0f83d29a3c7bc83ae4bd1ff619d735f733ffc299"
+  },
+  {
+    "published_file": "hp189_closed_loop_summary.json",
+    "original_relative_path": "scaled07_hp189_closed_loop_report01/summary.json",
+    "bytes": 30454,
+    "sha256": "8b502f5aa35d87f027d3d58aae3b7c01e6f3445c14279f6030e662cb15b8cd71"
+  },
+  {
+    "published_file": "cycle03_restricted_comparison_zh.md",
+    "original_relative_path": "scaled07_hp216_cycle03_restricted_target_execution01/restricted_expanded_target_comparison_report01_zh02.md",
+    "bytes": 9793,
+    "sha256": "b944b8617b7ad3aed8f914de0128124e4f8f1016b6d414e77d318d55a846803b"
+  },
+  {
+    "published_file": "capacity05_terminal_receipt.json",
+    "original_relative_path": "scaled07_hp216_mixed_bubble_preparation03/import_diagnostic_source01/terminal_receipt01.json",
+    "bytes": 2776,
+    "sha256": "a98ab4e20f73fa58d57bc45ae0279f28ce9a37da51b476da1450f3517c2f2d4e"
+  },
+  {
+    "published_file": "restricted_forward_closeout.json",
+    "original_relative_path": "scaled07_hp216_mixed_bubble_preparation03/restricted_forward_source01/control/evidence/forward_closeout01.json",
+    "bytes": 18157,
+    "sha256": "6873f07cf562d65a5e136018e289768318ac774df7e49f33506a0def504ca4ce"
+  }
+]

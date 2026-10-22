@@ -1,0 +1,30 @@
+{
+  "base_scan": {
+    "files_inventoried": 35734,
+    "files_archived": 30167,
+    "unique_archived_blobs": 11875,
+    "unique_archived_bytes": 761564871,
+    "inventory_only_bytes": 12092488553,
+    "archive_bytes": 96942843,
+    "archive_sha256": "ce0cc736be402d4221b9b5574ec7e0a742d88d80254936d35b1aa1ce13b2d8b7",
+    "inventory_sha256": "8ceb5d09c073cbae07293a0218225558dac36359a780048d2a656296a901aff7"
+  },
+  "note": "Base scan archive_bytes/archive_sha256 describe the original intermediate gzip; published base is the byte-equivalent tar recompressed as xz below.",
+  "published_bundles": [
+    {
+      "file": "records.tar.xz",
+      "bytes": 46143016,
+      "sha256": "64fd72d7550d5831a49721519fdd4aa12adaab8d47900791e334990a21edff89"
+    },
+    {
+      "file": "supplement.tar.gz",
+      "bytes": 17061890,
+      "sha256": "e20e39e32dcf105c67175a65518b65324c968003a9a30867b4526b10712472c9"
+    }
+  ],
+  "supplement_files": 537,
+  "supplement_uncompressed_file_bytes": 35231086,
+  "remaining_unbacked_file_entries": 5556,
+  "remaining_unbacked_bytes": 12036192293,
+  "remote_binary_readback": "Git-blob SHA plus final tree/commit binding; connector cannot return binary body."
+}

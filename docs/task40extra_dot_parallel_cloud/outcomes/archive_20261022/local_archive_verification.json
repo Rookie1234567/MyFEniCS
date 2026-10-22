@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "archives": {
+    "records.tar.xz": {
+      "files": 11876,
+      "uncompressed_bytes": 774829532,
+      "sha256": "64fd72d7550d5831a49721519fdd4aa12adaab8d47900791e334990a21edff89"
+    },
+    "supplement.tar.gz": {
+      "files": 538,
+      "uncompressed_bytes": 35351679,
+      "sha256": "e20e39e32dcf105c67175a65518b65324c968003a9a30867b4526b10712472c9"
+    }
+  },
+  "secret_scan_patterns": [
+    "private_key",
+    "github_token",
+    "aws_key",
+    "openai_key",
+    "slack_token",
+    "credential_uri"
+  ],
+  "secret_matches_without_values": [],
+  "limitations": "Pattern scan cannot prove absence of every unknown credential format. Scope excludes .git, installed runtime/env/library trees and private conversation exports. Worker exports are known source/tool artifacts, not chat transcripts.",
+  "checked_original_bytes": true
+}

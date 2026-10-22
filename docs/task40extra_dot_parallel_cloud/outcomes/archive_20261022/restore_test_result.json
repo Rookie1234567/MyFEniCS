@@ -1,0 +1,7 @@
+{
+  "status": "PASS_LOCAL_REASSEMBLY_AND_SAFE_EXTRACTION",
+  "tool_chunk": "633b12",
+  "exit_code": 0,
+  "commands_executed_from_archive": false,
+  "output": "Verified and extracted records.tar.xz\nVerified and extracted supplement.tar.gz\nNo commands executed. Restore selected original paths manually using inventory.json; do not overwrite live locks/fences.\n"
+}
