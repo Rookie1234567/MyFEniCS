@@ -988,7 +988,7 @@ def build_variable_p_assembly_time_reduction(
     defer_final_assembly: bool = False,
     retain_local_schur_for_research: bool = False,
 ) -> VariablePAssemblyTimeReduction:
-    """Build one hash-bound Task035d p4/p5/p6 reduction."""
+    """Build one hash-bound Task43 p3-p6 reduction in a p6 carrier."""
 
     if local_h_context is None:
         if degree_plan_path is None:

@@ -633,7 +633,7 @@ def main(argv: list[str] | None = None):
         "--stage4-variable-p-cell-degree-plan",
         default=None,
         help=(
-            "Task035d geometry-bound p4/p5/p6 cell-plan JSON. It is "
+            "Task43 geometry-bound p3-p6 cell-plan JSON. It is "
             "required only by assembly_time_variable_p_condensed."
         ),
     )

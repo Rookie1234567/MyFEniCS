@@ -4,8 +4,8 @@ The DOLFINx carrier intentionally does not join one coarse face to four fine
 faces.  This module ignores partition-dependent DOLFINx entity IDs and rebuilds
 the H(curl) trace universe from quantized physical edge/face geometry:
 
-* fine-patch coefficients depend on the coarse trace through the qualified
-  p4/p5/p6 restriction;
+* fine-patch coefficients depend on the coarse trace through the p3-p6
+  restriction;
 * x/y boundary entities form canonical Floquet stars; and
 * hanging/Floquet chains are flattened before any global matrix numbering.
 
@@ -52,7 +52,7 @@ class PhysicalTraceEntity:
         geometry_key = tuple(map(int, self.geometry_key))
         degree = int(self.degree)
         rows = tuple(self.rows)
-        if dimension not in {1, 2} or degree not in {4, 5, 6}:
+        if dimension not in {1, 2} or degree not in {3, 4, 5, 6}:
             raise ValueError("physical trace entity degree is invalid")
         if len(rows) != _mode_count(dimension, degree):
             raise ValueError(
@@ -751,8 +751,8 @@ def build_broken_hexa_trace_constraint_authority(
     """Build actual physical hanging/Floquet relations and flatten them."""
 
     degree = int(degree)
-    if degree not in {4, 5, 6}:
-        raise ValueError("Task035d broken trace graph qualifies p4/p5/p6")
+    if degree not in {3, 4, 5, 6}:
+        raise ValueError("Task43 broken trace graph supports p3 through p6")
     if carrier.audit["pass"] is not True or forest.audit["pass"] is not True:
         raise ValueError("forest and carrier must pass before trace graph")
     if str(carrier.audit["leaf_catalog_sha256"]) != str(

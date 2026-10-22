@@ -184,7 +184,7 @@ class SimulationConfig3D:
     # internal compatibility state, not public user-selection ports.
     stage4_full3d_assembly_backend: str = STANDARD_FULL_ASSEMBLY_BACKEND
     # Task035d research opt-in. The JSON is bound to the actual cell-box
-    # geometry and closes cell p4/p5/p6 decisions onto shared edge/face modes.
+    # geometry and closes cell p3-p6 decisions onto shared edge/face modes.
     stage4_variable_p_cell_degree_plan: str | None = None
     # Task035d research opt-in for one balanced dyadic local-h cycle.  The
     # plan is geometry/hash bound and is accepted only by the inactive-row-free
@@ -909,7 +909,7 @@ def qualify_stage4_full3d_assembly_backend(
                 "variable_cell_interior"
             )
             if cfg.stage4_local_h_refinement_plan
-            else "exact_sequence_variable_p4_p5_p6_in_p6_container"
+            else "exact_sequence_variable_p3_p4_p5_p6_in_p6_container"
         )
     else:
         try:

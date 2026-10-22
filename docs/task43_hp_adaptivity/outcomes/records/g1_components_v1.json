@@ -1,0 +1,159 @@
+{
+  "schema_version": "task43.g1-component-evidence.v1",
+  "task": "task43_hp_adaptivity",
+  "branch": "task43_hp_adaptivity",
+  "artifact_directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/g1",
+  "tracked_record": "docs/task43_hp_adaptivity/outcomes/records/g1_components_v1.json",
+  "head_at_start_and_record": "0a625d770e1d3638bf53016a72facecfc8c81407",
+  "worktree": {
+    "status": "dirty_uncommitted",
+    "identity_note": "HEAD remains the start commit; current implementation identity is the per-file SHA-256 map below, not HEAD.",
+    "non_g1_changes_present": [
+      ".gitignore modification by main agent",
+      "docs/task43_hp_adaptivity/outcomes/ created by main agent"
+    ],
+    "git_diff_check": "pass"
+  },
+  "environment": {
+    "id": "task40_shared_pord64_int64_complex128",
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int64",
+    "mpi_ranks": 1,
+    "math_threads": 1,
+    "cpu_affinity": [
+      1
+    ],
+    "pde_runs": 0
+  },
+  "source_files_sha256": {
+    "src/adaptivity/exact_sequence_variable_p.py": "d6b12b8090af35ce72e6d002d8e676ab256164e084e4571fdff2ca4a44061dc0",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "8bf903d65cc7035a7e981586021075ad7706597f9bf54f843afd66c581600376",
+    "src/adaptivity/hcurl_hanging_trace.py": "350cd2999d50aaad62a85f8cda98a6994b6456a680d13142b3029922834af993",
+    "src/adaptivity/hcurl_trace_constraint_graph.py": "2cb443a46fa82f06ca625ba44ced3a8cbeed9282a81a80c9a53d85e3d958f371",
+    "src/adaptivity/stage4_local_h.py": "b5c6fb1a34b6bfca81ba8ab48dcc9dd6d9947c74755108f09af576a6191fd8db",
+    "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+    "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+    "src/common/config_3d.py": "89df2bb00c6b93323caa24b35b195810c910872e3b589deb45ace7926f091e57",
+    "src/runners/run_3d_cases.py": "4c7f82d452f71b120108420de4adda4952d2ab4ecb94e74eab9256a173128b8c",
+    "src/solvers/hcurl_variable_p_reduction.py": "534e87a681bd9a88a77fc0f25c0689fd6d1a2bfaff2961511cb7880e75083884",
+    "src/test/test_178_task035b_public_assembly_backend.py": "b6d8168c367102cd0308a74bd4f0e1c333bc37002067a5c0e70c353435fdbd4c",
+    "src/test/test_183_task035d_reference_active_space.py": "5054abac551283d921d0010892c29b4f4d77e59421c07734d84a954c65c76929",
+    "src/test/test_185_task035d_variable_p_petsc_assembly.py": "27b4a88e901cfe9933fd1bcd5668d4d56bd383497d05cd0b48ca231eb3c4edcc",
+    "src/test/test_188_task035d_variable_p_degree_plan.py": "deb7250beb6fb7b6692013ab2da12f4743d1fcf8e2881356714f71010b80f098",
+    "src/test/test_197_task035d_hanging_trace.py": "327610d0661328e170284fbe7c3327c5ddf196b4e73f9a6a733f9382a54c3946",
+    "src/test/test_203_task035d_stage4_local_h.py": "eb92998210b22bcbdda11257a008e0f145c364874958a06953dc206ac6d393d0"
+  },
+  "checks": [
+    {
+      "name": "pre_fix_mixed_3_3_4_rank_diagnostic",
+      "status": "failed_then_corrected",
+      "result": "QR-diagonal rank reported 83 instead of 82 while the smallest singular value was 2.9040e-14 below the standard 4.0006e-13 cutoff; constant-gradient residual 2.7843e-13, sampled-curl nullity 82, curl-grad max 1.3022e-12.",
+      "log": "g1_rank_diagnostics.log",
+      "log_sha256": "1da1c9931cca67caffdd675000a460d4d5f4356e60bed900da6b23f5c5f387ca"
+    },
+    {
+      "name": "p3_p4_exact_sequence_and_local_schur_final",
+      "status": "pass",
+      "result": "1 passed in 10.36s; standard SVD rank formula, constant kernel, curl-grad and Schur recovery checked.",
+      "command": "python -m pytest -q src/test/test_183_task035d_reference_active_space.py::Task035dReferenceActiveSpaceTests::test_task43_p3_p4_mixed_exact_sequence_and_local_schur",
+      "log": "g1_exact_sequence.final.log",
+      "log_sha256": "3739fbf9db2417dfd720eeacf7844141b1b01c49905870d4a0dd35cda7b2555c"
+    },
+    {
+      "name": "planner_generated_p3_p4_reference_and_periodic",
+      "status": "pass",
+      "result": "2 passed in 47.28s; planner-owned mixed maps pass the exact-sequence audit and periodic constraints close.",
+      "command": "python -m pytest -q src/test/test_183_task035d_reference_active_space.py::Task035dReferenceActiveSpaceTests::test_task43_p3_p4_mixed_exact_sequence_and_local_schur src/test/test_188_task035d_variable_p_degree_plan.py::Task035dVariablePDegreePlanTests::test_task43_p3_p4_cell_plan_closes_and_is_periodic",
+      "log": "g1_exact_sequence.targeted.log",
+      "log_sha256": "14a5918aaa9970bba37340a62e37b66f08a243435904696752cb785a087b4488"
+    },
+    {
+      "name": "p4_p5_p6_reference_space_regression_module",
+      "status": "pass",
+      "result": "9 passed in 101.75s; legacy catalog, mixed maps, orientations, transfers and Schur recovery passed.",
+      "command": "python -m pytest -q src/test/test_183_task035d_reference_active_space.py",
+      "log": "g1_reference_full.log",
+      "log_sha256": "81a8e676fc6bfe6ad72121bee3e3a4c8482e150671eb6235723ba6201d5c4849"
+    },
+    {
+      "name": "legacy_p5_p6_geometry_degree_plan",
+      "status": "pass",
+      "result": "1 passed in 3.69s after restoring the separate p4-p6 legacy count tuple.",
+      "command": "python -m pytest -q src/test/test_188_task035d_variable_p_degree_plan.py::Task035dVariablePDegreePlanTests::test_geometry_plan_is_partition_independent_and_periodic",
+      "log": "g1_legacy_degree_plan.targeted.log",
+      "log_sha256": "06c1e5ff9f897e20e4980e0bbc488431301f0e9ef00d1ce169f682f716f7419a"
+    },
+    {
+      "name": "mixed_p3_p4_petsc_assembly_and_recovery",
+      "status": "pass",
+      "result": "1 passed in 6.11s; complex assembly and active cell-interior residual recovery passed.",
+      "command": "python -m pytest -q src/test/test_185_task035d_variable_p_petsc_assembly.py::Task035dVariablePPETScAssemblyTests::test_task43_mixed_p3_p4_assembles_and_recovers_cell_interiors",
+      "log": "g1_assembly.targeted.log",
+      "log_sha256": "1646045e50fc86077cd7d4c91c07e321502380fa7ee3d8d73d98688276fce1d8"
+    },
+    {
+      "name": "hanging_trace_component_regression",
+      "status": "failed_existing_frozen_hash_mismatch",
+      "result": "17 passed, 1 failed: p4 hash expected 7c1a37... but current and initial-source output is 493a19...; all p3-p6 rank, shape, condition and commuting assertions passed.",
+      "command": "python -m pytest -q src/test/test_197_task035d_hanging_trace.py",
+      "log": "g1_hanging_trace.targeted.log",
+      "log_sha256": "d29546dcea59f95a4604d17c5cf94914935ae6de1e33516489201f03253b2447"
+    },
+    {
+      "name": "p4_hanging_hash_initial_source_comparison",
+      "status": "failed_existing_identity_mismatch_confirmed",
+      "result": "Initial-source and working matrices are bitwise equal (0 differing entries, max absolute difference 0); both hash to 493a19..., not frozen 7c1a37.... Golden was not changed.",
+      "initial_commit": "0a625d770e1d3638bf53016a72facecfc8c81407",
+      "initial_module_sha256": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "log": "g1_p4_hash_baseline_comparison.log",
+      "log_sha256": "c6b8d96d52ed1d44c8395eebb78ae98e972d2cf1f0d33182b954f0d3551154c6"
+    },
+    {
+      "name": "task43_local_h_p3_trace_and_mixed_p3_p4_interiors",
+      "status": "pass",
+      "result": "1 passed in 9.58s; geometry authority/closure passed, no PDE solve.",
+      "command": "python -m pytest -q src/test/test_203_task035d_stage4_local_h.py::test_task43_local_h_p3_trace_and_mixed_p3_p4_interiors_close",
+      "log": "g1_local_h.targeted.log",
+      "log_sha256": "a384ca6ff93aa396ff61374f65b7cfab87f40b324c7ae76b5f687a6801ef7b65"
+    },
+    {
+      "name": "legacy_p5_p6_stage4_local_h_authority",
+      "status": "pass",
+      "result": "1 passed in 55.61s; legacy cell-interior count shape and 210-row reduction retained, no PDE solve.",
+      "command": "python -m pytest -q src/test/test_203_task035d_stage4_local_h.py::test_h100_true_variable_cell_interiors_remove_p6_rows",
+      "log": "g1_stage4_p4_p6_compat.targeted.log",
+      "log_sha256": "0b12a9eee0b6f6c996831a707f42ffc5827f33cbd5a427c8e628b6e69e888c6f"
+    }
+  ],
+  "not_run": [
+    "full Task43 model/PDE",
+    "MPI2 or larger-mpi tests",
+    "full repository pytest"
+  ],
+  "evidence_logs": [
+    "g1_rank_diagnostics.log",
+    "g1_reference.log",
+    "g1_degree_diag.log",
+    "g1_exact_sequence.final.log",
+    "g1_reference_full.log",
+    "g1_exact_sequence.targeted.log",
+    "g1_hanging_trace.targeted.log",
+    "g1_assembly.targeted.log",
+    "g1_local_h.targeted.log",
+    "g1_legacy_degree_plan.targeted.log",
+    "g1_stage4_p4_p6_compat.targeted.log",
+    "g1_p4_hash_baseline_comparison.log"
+  ],
+  "static_checks": {
+    "compileall_changed_python": "pass",
+    "ruff_F_changed_python": "pass",
+    "ruff_default_changed_python": "failed_38_findings_baseline_attribution_not_completed",
+    "diff_check": "pass",
+    "logs": [
+      "benchmarks/artifacts/task43/g1/ruff_all_rules.log",
+      "benchmarks/artifacts/task43/g1/ruff_f_rules.log"
+    ]
+  }
+}

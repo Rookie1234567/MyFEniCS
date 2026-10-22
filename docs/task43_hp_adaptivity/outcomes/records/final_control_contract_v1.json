@@ -1,0 +1,112 @@
+{
+  "user_confirmed": {
+    "domain_nm": [
+      50,
+      50,
+      140
+    ],
+    "cell_counts": [
+      6,
+      10,
+      6
+    ],
+    "uniform_degree": 6,
+    "goal": "same_accuracy_with_fewer_independent_active_FE_dofs"
+  },
+  "selection_policy": "Task43 initial candidate, field indicators and actual solves; do not use this control mesh to generate or rank adaptive actions",
+  "knowledge_boundary": "user disclosed a successful mesh; algorithm is not described as globally blind/reference_free",
+  "axis_identity_ambiguity": "two existing axis distributions share the user supplied counts; preserve both identities until original artifact/control is bound",
+  "controls": [
+    {
+      "input": "input/task40para_phi90_mesh_modes_direct/d15_y3_r13_p6_direct.dat",
+      "sha256": "bf27bd09cb2b01509b13d2da414919db8b14fd49842e632cfa932fb00baa5943",
+      "degree": 6,
+      "axis_counts": [
+        6,
+        10,
+        6
+      ],
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          5.0,
+          10.0,
+          15.0,
+          20.0,
+          25.0,
+          30.0,
+          35.0,
+          40.0,
+          45.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      },
+      "role": "post_selection_control_only",
+      "task43_same_accuracy_gate": "NOT_RUN"
+    },
+    {
+      "input": "input/task40para_phi90_mesh_modes_direct/d15_y3_2_r13_p6_direct.dat",
+      "sha256": "968f47485f8e14bfac81da30e711b0fd4963be8402139d7560315d823142b01c",
+      "degree": 6,
+      "axis_counts": [
+        6,
+        10,
+        6
+      ],
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      },
+      "role": "post_selection_control_only",
+      "task43_same_accuracy_gate": "NOT_RUN"
+    }
+  ],
+  "solver_cost_policy": "compare both final cold necessary path and all adaptive attempts; no advantage before equal-accuracy gate"
+}

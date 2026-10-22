@@ -17,6 +17,10 @@ from src.adaptivity.variable_p_entity_map import (
     build_variable_p_global_entity_map,
     structural_sparsity_audit,
 )
+from src.adaptivity.variable_p_degree_plan import (
+    build_variable_p_cell_degree_plan,
+    cell_box_catalog,
+)
 from src.adaptivity.variable_p_periodic_orbits import (
     build_variable_p_periodic_constraint_map,
 )
@@ -568,6 +572,95 @@ class Task035dVariablePPETScAssemblyTests(unittest.TestCase):
                 value = locals().get(name)
                 if value is not None:
                     value.destroy()
+            system.destroy()
+
+    def test_task43_mixed_p3_p4_assembles_and_recovers_cell_interiors(
+        self,
+    ) -> None:
+        if MPI.COMM_WORLD.size not in {1, 2}:
+            self.skipTest("Task43 mixed-p fixture qualifies serial/MPI2")
+        msh = mesh.create_unit_cube(
+            MPI.COMM_WORLD,
+            2,
+            2,
+            2,
+            cell_type=mesh.CellType.hexahedron,
+            ghost_mode=mesh.GhostMode.shared_facet,
+        )
+        boxes = cell_box_catalog(msh)
+        degree_plan = build_variable_p_cell_degree_plan(
+            msh,
+            {box: 3 if box[2] < 0.5 else 4 for box in boxes},
+        )
+        entity_map = degree_plan.entity_map
+        constraints = build_variable_p_periodic_constraint_map(
+            entity_map,
+            axes=("x", "y"),
+            phase_x=np.exp(0.2j),
+            phase_y=np.exp(-0.3j),
+        )
+        p6_tensor = _dense_p6_tensor().astype(np.complex128)
+        tensors = [p6_tensor] * len(entity_map.owned_cells)
+        system = build_variable_p_condensed_trace_system(
+            entity_map,
+            tensors,
+            tensor_class_keys=("task43-p3-p4",) * len(tensors),
+            periodic_constraints=constraints,
+        )
+        try:
+            audit = system.build_audit
+            self.assertTrue(audit["pass"])
+            self.assertEqual(
+                degree_plan.audit["cell_degree_counts"],
+                {"p3": 4, "p4": 4, "p5": 0, "p6": 0},
+            )
+            self.assertEqual(
+                audit["matrix_rows"],
+                constraints.independent_trace_rows,
+            )
+            self.assertLess(
+                entity_map.active_rows,
+                entity_map.uniform_p6_rows,
+            )
+            self.assertLessEqual(
+                _relative_hermitian_action_error(system.matrix),
+                2.0e-12,
+            )
+
+            rng = np.random.default_rng(351843)
+            trace_values = (
+                rng.standard_normal(constraints.independent_trace_rows)
+                + 1j
+                * rng.standard_normal(constraints.independent_trace_rows)
+            )
+            recovered = system.recover_owned_active_cells(trace_values)
+            global_degrees = {
+                degree
+                for packet in MPI.COMM_WORLD.allgather(
+                    tuple(cell.degree_map.cell for cell, _active in recovered)
+                )
+                for degree in packet
+            }
+            self.assertEqual(global_degrees, {3, 4})
+            for cell, active in recovered:
+                space = build_variable_p_reference_space(cell.degree_map)
+                self.assertEqual(active.shape, (space.hcurl_dimension,))
+                local_tensor = project_p6_local_tensor(space, p6_tensor)
+                oriented = space.orient_hcurl_tensor(
+                    local_tensor,
+                    cell_info=cell.cell_info,
+                )
+                residual = oriented @ active
+                self.assertLessEqual(
+                    float(
+                        np.max(
+                            np.abs(residual[space.interior_dofs]),
+                            initial=0.0,
+                        )
+                    ),
+                    2.0e-10,
+                )
+        finally:
             system.destroy()
 
 

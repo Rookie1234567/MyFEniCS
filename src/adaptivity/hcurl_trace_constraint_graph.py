@@ -47,8 +47,8 @@ class PhysicalTraceRowKey:
             raise ValueError("H(curl) trace rows must belong to edges or faces")
         if not geometry:
             raise ValueError("physical trace geometry key cannot be empty")
-        if degree not in {4, 5, 6}:
-            raise ValueError("Task035d trace graph qualifies p4/p5/p6 only")
+        if degree not in {3, 4, 5, 6}:
+            raise ValueError("Task43 trace graph supports p3 through p6")
         if mode < 0:
             raise ValueError("trace mode must be non-negative")
         object.__setattr__(self, "entity_dimension", dimension)

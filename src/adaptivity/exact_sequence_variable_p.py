@@ -23,16 +23,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 import hashlib
-from typing import Any, Literal
+from typing import Any
 
 import basix
 import basix.ufl
 import numpy as np
-from scipy.linalg import qr
 
 
-QualifiedDegree = Literal[4, 5, 6]
 _QUALIFIED_DEGREES = (4, 5, 6)
+_SUPPORTED_DEGREES = (3, 4, 5, 6)
 _HCURL_FAMILY = "hcurl"
 _H1_FAMILY = "h1"
 _FAMILIES = (_HCURL_FAMILY, _H1_FAMILY)
@@ -84,11 +83,11 @@ class HexaEntityDegreeMap:
         invalid = [
             degree
             for degree in (*edges, *faces, cell)
-            if degree not in _QUALIFIED_DEGREES
+            if degree not in _SUPPORTED_DEGREES
         ]
         if invalid:
             raise ValueError(
-                "Task035d qualifies only p4/p5/p6 entity degrees; "
+                "Task43 supports p3/p4/p5/p6 entity degrees; "
                 f"observed={sorted(set(invalid))}"
             )
         violations: list[str] = []
@@ -391,26 +390,28 @@ def _matrix_sha256(matrix: np.ndarray) -> str:
 
 
 def _numerical_rank(matrix: np.ndarray) -> tuple[int, float]:
+    """Return the SVD numerical rank using the standard floating cutoff.
+
+    Pivoted-QR diagonal entries are not singular values.  In particular, the
+    last diagonal can sit above a matrix-size-scaled cutoff even when the
+    matrix's smallest singular value is below it, falsely increasing the
+    gradient rank and rejecting a valid constant nullspace.
+    """
+
     values = np.asarray(matrix)
     if min(values.shape, default=0) == 0:
         return 0, 0.0
-    _orthogonal, upper, _pivots = qr(
-        values,
-        mode="economic",
-        pivoting=True,
-        check_finite=False,
-    )
-    diagonal = np.abs(np.diag(upper))
+    singular_values = np.linalg.svd(values, compute_uv=False)
     tolerance = (
         0.0
-        if len(diagonal) == 0
+        if len(singular_values) == 0
         else float(
-            diagonal[0]
+            singular_values[0]
             * max(values.shape)
             * np.finfo(np.float64).eps
         )
     )
-    return int(np.count_nonzero(diagonal > tolerance)), tolerance
+    return int(np.count_nonzero(singular_values > tolerance)), tolerance
 
 
 def _active_dimension(family: str, degree_map: HexaEntityDegreeMap) -> int:

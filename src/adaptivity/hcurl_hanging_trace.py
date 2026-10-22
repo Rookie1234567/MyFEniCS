@@ -191,8 +191,8 @@ def build_quad_child_trace_restriction(
 
     degree = int(degree)
     normalized = tuple(map(int, quadrant))
-    if degree not in {4, 5, 6}:
-        raise ValueError("Task035d hanging traces qualify p4/p5/p6 only")
+    if degree not in {3, 4, 5, 6}:
+        raise ValueError("Task43 hanging traces support p3 through p6")
     if normalized not in _QUADRANTS:
         raise ValueError("quadrant must be one of the four dyadic children")
     hcurl = _hcurl_element(degree)
@@ -295,8 +295,8 @@ def build_quad_d4_trace_transform_pair(
 
     degree = int(degree)
     permutation = tuple(map(int, vertex_permutation))
-    if degree not in {4, 5, 6}:
-        raise ValueError("Task035d D4 traces qualify p4/p5/p6 only")
+    if degree not in {3, 4, 5, 6}:
+        raise ValueError("Task43 D4 traces support p3 through p6")
     if permutation not in quadrilateral_d4_vertex_permutations():
         raise ValueError("vertex permutation is not a quadrilateral D4 symmetry")
     offset, jacobian = _quad_affine_chart(permutation)
@@ -816,8 +816,8 @@ def build_hexa_face_trace_pair(
 
     degree = int(degree)
     local_face = int(local_face)
-    if degree not in {4, 5, 6}:
-        raise ValueError("Task035d hexa traces qualify p4/p5/p6 only")
+    if degree not in {3, 4, 5, 6}:
+        raise ValueError("Task43 hexa traces support p3 through p6")
     normal_axis, side, tangential_axes = _hexa_face_chart(local_face)
     hcurl_hexa, h1_hexa = _hexa_elements(degree)
     hcurl_quad = _hcurl_element(degree)

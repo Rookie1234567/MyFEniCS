@@ -1,0 +1,14 @@
+{
+  "classification": "derived_not_measured",
+  "scope": "affine tensor-product N1curl, uniform degree p, periodic x/y, open z, no hanging cells",
+  "independent_FE_formula": "3*Nx*Ny*Nz*p^3 + 2*Nx*Ny*p^2",
+  "eliminated_cell_interior_formula": "Nx*Ny*Nz*3*p*(p-1)^2",
+  "retained_trace_formula": "independent_FE - eliminated_cell_interior",
+  "explanation": "Count tangential x/y components with the two open z planes and normal z components with periodic x/y. Static condensation removes cell-interior unknowns but does not change the independent FE approximation dimension.",
+  "rows": [
+    {"role": "task_start", "cells": [3, 10, 6], "p": 3, "independent_FE": 15120, "cell_interior": 6480, "retained_trace": 8640, "R13_augmented_rows": 9252},
+    {"role": "p_rich_start", "cells": [3, 10, 6], "p": 4, "independent_FE": 35520, "cell_interior": 19440, "retained_trace": 16080, "R13_augmented_rows": 16692},
+    {"role": "post_selection_user_control", "cells": [6, 10, 6], "p": 6, "independent_FE": 237600, "cell_interior": 162000, "retained_trace": 75600, "R13_augmented_rows": 76212}
+  ],
+  "limitations": "Validate against the actual mesh, constraint and degree-plan audits before reporting measured DoFs. No memory, time or accuracy conclusion follows from these counts. The control is excluded from adaptive marking and ranking."
+}

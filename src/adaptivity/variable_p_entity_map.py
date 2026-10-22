@@ -20,13 +20,13 @@ from scipy import sparse
 from .exact_sequence_variable_p import HexaEntityDegreeMap
 
 
-_QUALIFIED_DEGREES = (4, 5, 6)
+_SUPPORTED_DEGREES = (3, 4, 5, 6)
 
 
 def _mode_count(dimension: int, degree: int) -> int:
     degree = int(degree)
-    if degree not in _QUALIFIED_DEGREES:
-        raise ValueError("Task035d entity numbering supports p4/p5/p6 only")
+    if degree not in _SUPPORTED_DEGREES:
+        raise ValueError("Task43 entity numbering supports p3 through p6")
     if dimension == 1:
         return degree
     if dimension == 2:
@@ -85,9 +85,9 @@ def _validate_local_degrees(
             f"dimension {dimension} degree array shape {degrees.shape} "
             f"does not match local+ghost entity count {(local_size,)}"
         )
-    if not np.all(np.isin(degrees, _QUALIFIED_DEGREES)):
+    if not np.all(np.isin(degrees, _SUPPORTED_DEGREES)):
         raise ValueError(
-            f"dimension {dimension} degrees contain values outside p4/p5/p6"
+            f"dimension {dimension} degrees contain values outside p3/p4/p5/p6"
         )
     return np.ascontiguousarray(degrees)
 

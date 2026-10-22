@@ -1,0 +1,59 @@
+{
+  "observed_utc": "2026-10-22T14:35:48.717639+00:00",
+  "host": "fenics-ws01",
+  "cwd": "/home/fenics/Projects/NN-Lab-V2",
+  "branch": "task43_hp_adaptivity",
+  "head_at_setup": "0a625d770e1d3638bf53016a72facecfc8c81407",
+  "initial_commit": "0a625d770e1d3638bf53016a72facecfc8c81407",
+  "base_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+  "remote": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "upstream": "origin/task43_hp_adaptivity",
+  "ahead_behind": "0\t0",
+  "registered_worktrees": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nHEAD 922466da9d7faff408cbb47b7882d179320bdc44\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 922466da9d7faff408cbb47b7882d179320bdc44\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD c6a7ea25753f116cb7fa7ca871fd8cf29d449444\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Phi90\nHEAD 405e3aff42ac421a4c99315df1ed9b96941ecbe4\nbranch refs/heads/task40para_phi90_mesh_modes_direct\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 81c049e09a61efa38f8c7a6a762f02e8835c9b3f\nbranch refs/heads/task42_neural_coarse_inverse\n\nworktree /home/fenics/Projects/NN-Lab-V2\nHEAD 0a625d770e1d3638bf53016a72facecfc8c81407\nbranch refs/heads/task43_hp_adaptivity",
+  "old_branch_preserved": "8bf3241713e2ddd24986126f348f766d9262d346",
+  "activation": "scripts/activate_task40_phi90_pord64.sh",
+  "executable": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+  "native_marker": "1",
+  "scalar": "<class 'numpy.complex128'>",
+  "int": "<class 'numpy.int64'>",
+  "petsc_version": [
+    3,
+    19,
+    6
+  ],
+  "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023",
+  "modules": {
+    "numpy": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+    "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+    "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+    "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+    "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+    "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py"
+  },
+  "slepc": "NOT_LOADED_NOT_REQUIRED_BY_DIRECT_PATH",
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "probe_affinity": [
+    1
+  ],
+  "cpu_policy": "prefer_cpu1_other_idle_cores_allowed_recheck_before_each_run",
+  "formal_task43_pde": "NOT_RUN",
+  "prior_attempts": [
+    {
+      "entry": "activate_myfenics_linux.sh in sandbox",
+      "result": "MPI_INIT_SOCKET_DENIED",
+      "pde_started": false
+    },
+    {
+      "entry": "activate_myfenics_linux.sh on host",
+      "result": "dolfinx_mpc unavailable in legacy local activation",
+      "pde_started": false
+    }
+  ],
+  "environment_mutation": "NONE_shared_stack_read_only",
+  "old_artifact_cleanup": "old_artifact_cleanup.txt",
+  "qualification_scope": "import_scalar_int_native_marker_only; numerical/MPI2 qualification pending"
+}

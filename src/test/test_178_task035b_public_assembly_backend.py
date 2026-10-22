@@ -81,7 +81,7 @@ def test_variable_p_backend_is_explicit_and_fail_closed():
     assert audit["ordinary_default_selected"] is False
     assert qualification["status"] == "qualified"
     assert qualification["element_contract"] == (
-        "exact_sequence_variable_p4_p5_p6_in_p6_container"
+        "exact_sequence_variable_p3_p4_p5_p6_in_p6_container"
     )
     assert (
         "geometry_bound_inactive_row_free_variable_p"

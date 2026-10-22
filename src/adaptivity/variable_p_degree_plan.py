@@ -21,6 +21,7 @@ from .variable_p_entity_map import (
 CellBoxKey = tuple[float, float, float, float, float, float]
 EntityGeometryKey = tuple[tuple[float, float, float], ...]
 _QUALIFIED_DEGREES = (4, 5, 6)
+_SUPPORTED_DEGREES = (3, 4, 5, 6)
 
 
 @dataclass(frozen=True)
@@ -211,12 +212,12 @@ def build_variable_p_cell_degree_plan(
         {
             degree
             for degree in normalized.values()
-            if degree not in _QUALIFIED_DEGREES
+            if degree not in _SUPPORTED_DEGREES
         }
     )
     if invalid:
         raise ValueError(
-            f"cell degree plan contains values outside p4/p5/p6: {invalid}"
+            f"cell degree plan contains values outside p3/p4/p5/p6: {invalid}"
         )
     if previous_cell_degree_by_box is not None:
         previous = {
@@ -311,11 +312,16 @@ def build_variable_p_cell_degree_plan(
             separators=(",", ":"),
         ).encode("ascii")
     ).hexdigest()
+    reported_degrees = (
+        _SUPPORTED_DEGREES
+        if 3 in normalized.values()
+        else _QUALIFIED_DEGREES
+    )
     counts = {
         f"p{degree}": sum(
             value == degree for value in normalized.values()
         )
-        for degree in _QUALIFIED_DEGREES
+        for degree in reported_degrees
     }
     audit = MappingProxyType(
         {

@@ -288,6 +288,45 @@ def test_h100_true_variable_cell_interiors_remove_p6_rows() -> None:
     assert mixed.audit["active_fe_dof_gate_pass"] is True
 
 
+def test_task43_local_h_p3_trace_and_mixed_p3_p4_interiors_close() -> None:
+    _cfg, _path, _mesh_data, seed_context = _h100_context(
+        trace_degree=3,
+    )
+    overrides = {
+        leaf.box: (
+            3
+            if 0.5 * (leaf.box[2] + leaf.box[5]) < 125.0
+            else 4
+        )
+        for leaf in seed_context.forest.leaves
+    }
+    assert set(overrides.values()) == {3, 4}
+
+    _cfg, _path, _mesh_data, context = _h100_context(
+        trace_degree=3,
+        cell_interior_degree_overrides=overrides,
+    )
+    authority = build_stage4_local_h_reduction_authority(
+        context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+
+    assert authority.audit["pass"] is True
+    assert authority.audit["active_fe_dof_gate_pass"] is True
+    assert authority.audit["hanging_slave_rows"] > 0
+    assert authority.audit["periodic_slave_rows"] > 0
+    assert authority.degree_plan.audit["cell_degree_counts"] == {
+        "p3": sum(value == 3 for value in overrides.values()),
+        "p4": sum(value == 4 for value in overrides.values()),
+        "p5": 0,
+        "p6": 0,
+    }
+    assert set(
+        authority.trace_constraints.audit["constraint_kinds"]
+    ) == {"floquet", "hanging"}
+
+
 def test_h100_selective_nonhanging_p6_face_enters_stage4_authority() -> None:
     _cfg, _path, _mesh_data, base_context = _h100_context()
     base = build_stage4_local_h_reduction_authority(

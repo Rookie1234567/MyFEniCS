@@ -37,6 +37,17 @@ def test_p4_unique_hanging_face_restriction_matches_frozen_authority() -> None:
     )
 
 
+def test_task43_p3_hanging_face_restriction_is_full_rank_and_commuting() -> None:
+    pair = build_hanging_face_reference_pair(3)
+    assert pair.audit["pass"] is True
+    assert pair.hcurl_unique_fine_from_coarse.shape == (84, 24)
+    assert pair.h1_unique_fine_from_coarse.shape == (49, 16)
+    assert pair.audit["hcurl_restriction_rank"] == 24
+    assert pair.audit["unique_commuting_error"] <= 5.0e-11
+    assert pair.audit["fine_discrete_gradient_rank"] == 48
+    assert pair.audit["curl_grad_maximum_error"] <= 2.0e-10
+
+
 @pytest.mark.parametrize(
     ("degree", "hcurl_shape", "h1_shape", "expected_condition"),
     (
@@ -91,13 +102,13 @@ def test_random_static_condensation_commutes_with_hanging_elimination() -> None:
 
 
 def test_hanging_reference_input_fails_closed() -> None:
-    with pytest.raises(ValueError, match="p4/p5/p6"):
-        build_hanging_face_reference_pair(3)
+    with pytest.raises(ValueError, match="p3 through p6"):
+        build_hanging_face_reference_pair(2)
     with pytest.raises(ValueError, match="quadrant"):
         build_quad_child_trace_restriction(4, (2, 0))
 
 
-@pytest.mark.parametrize("degree", (4, 5, 6))
+@pytest.mark.parametrize("degree", (3, 4, 5, 6))
 def test_all_hexa_face_trace_charts_are_isomorphisms_and_commute(
     degree: int,
 ) -> None:

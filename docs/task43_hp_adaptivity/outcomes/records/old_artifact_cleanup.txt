@@ -1,0 +1,12 @@
+utc=2026-10-22T14:33:54Z
+authorization=user_explicit_delete_old_benchmark_artifacts_and_results
+old_branch=task42extra_feinn_5nm
+old_head=8bf3241713e2ddd24986126f348f766d9262d346
+tracked_files_in_deleted_paths=none
+active_project_compute_or_locks=none_observed_in_host_precheck
+historical_large_artifacts=will_be_deleted_not_reproducible_from_this_worktree_after_cleanup
+57055720191	benchmarks/artifacts/task42extra
+968065386	results/task42extra
+cleanup_exit=completed
+0	benchmarks/artifacts
+0	results

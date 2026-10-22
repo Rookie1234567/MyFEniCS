@@ -8,6 +8,9 @@ import unittest
 from dolfinx import mesh
 from mpi4py import MPI
 
+from src.adaptivity.exact_sequence_variable_p import (
+    build_variable_p_reference_space,
+)
 from src.adaptivity.variable_p_degree_plan import (
     build_variable_p_cell_degree_plan,
     cell_box_catalog,
@@ -78,6 +81,67 @@ class Task035dVariablePDegreePlanTests(unittest.TestCase):
             )
         )
         self.assertEqual(len(set(identities)), 1)
+
+    def test_task43_p3_p4_cell_plan_closes_and_is_periodic(self) -> None:
+        msh = mesh.create_unit_cube(
+            MPI.COMM_WORLD,
+            2,
+            2,
+            2,
+            cell_type=mesh.CellType.hexahedron,
+            ghost_mode=mesh.GhostMode.shared_facet,
+        )
+        boxes = cell_box_catalog(msh)
+        degrees = {
+            box: 3 if box[2] < 0.5 else 4
+            for box in boxes
+        }
+        plan = build_variable_p_cell_degree_plan(
+            msh,
+            degrees,
+            previous_cell_degree_by_box={box: 4 for box in boxes},
+        )
+        self.assertTrue(plan.audit["pass"])
+        self.assertEqual(
+            plan.audit["cell_degree_counts"],
+            {"p3": 4, "p4": 4, "p5": 0, "p6": 0},
+        )
+        self.assertEqual(
+            plan.audit["maximum_adjacent_cell_degree_jump"],
+            1,
+        )
+        self.assertTrue(plan.audit["transition_from_previous_checked"])
+        local_cell_degrees = tuple(
+            cell.degree_map.cell for cell in plan.entity_map.owned_cells
+        )
+        global_cell_degrees = {
+            degree
+            for rank_degrees in MPI.COMM_WORLD.allgather(local_cell_degrees)
+            for degree in rank_degrees
+        }
+        self.assertEqual(global_cell_degrees, {3, 4})
+        local_mixed_p3_p4 = False
+        for cell in plan.entity_map.owned_cells:
+            space = build_variable_p_reference_space(cell.degree_map)
+            self.assertTrue(space.audit["pass"])
+            local_mixed_p3_p4 |= (
+                cell.degree_map.cell == 4
+                and 3 in (*cell.degree_map.edges, *cell.degree_map.faces)
+                and 4 in (*cell.degree_map.edges, *cell.degree_map.faces)
+            )
+        self.assertTrue(any(MPI.COMM_WORLD.allgather(local_mixed_p3_p4)))
+        self.assertLess(
+            plan.entity_map.active_rows,
+            plan.entity_map.uniform_p6_rows,
+        )
+        constraints = build_variable_p_periodic_constraint_map(
+            plan.entity_map,
+            axes=("x", "y"),
+            phase_x=complex(0.9, 0.1),
+            phase_y=complex(0.8, -0.2),
+        )
+        self.assertTrue(constraints.audit["pass"])
+        self.assertGreater(constraints.independent_trace_rows, 0)
 
     def test_illegal_p_jump_and_two_level_transition_fail_closed(
         self,

@@ -99,8 +99,85 @@ class Task035dReferenceActiveSpaceTests(unittest.TestCase):
                 face_degree=6,
                 cell_degree=5,
             )
-        with self.assertRaisesRegex(ValueError, "p4/p5/p6"):
+        with self.assertRaisesRegex(ValueError, "p3/p4/p5/p6"):
+            HexaEntityDegreeMap.uniform(2)
+
+    def test_task43_p3_p4_mixed_exact_sequence_and_local_schur(self) -> None:
+        p3 = build_variable_p_reference_space(
             HexaEntityDegreeMap.uniform(3)
+        )
+        self.assertEqual(p3.hcurl_dimension, 144)
+        self.assertEqual(p3.h1_dimension, 64)
+        self.assertEqual(p3.audit["gradient_rank"], 63)
+        self.assertTrue(p3.audit["hcurl_orientation"]["pass"])
+
+        space = build_variable_p_reference_space(
+            HexaEntityDegreeMap.dimension_uniform(
+                edge_degree=3,
+                face_degree=3,
+                cell_degree=4,
+            )
+        )
+        self.assertTrue(space.audit["pass"])
+        self.assertEqual(space.hcurl_dimension, 216)
+        self.assertEqual(space.h1_dimension, 83)
+        self.assertEqual(space.audit["gradient_rank"], 82)
+        self.assertEqual(space.audit["sampled_curl_nullity"], 82)
+        gradient_singular_values = np.linalg.svd(
+            space.discrete_gradient,
+            compute_uv=False,
+        )
+        expected_rank_tolerance = (
+            gradient_singular_values[0]
+            * max(space.discrete_gradient.shape)
+            * np.finfo(np.float64).eps
+        )
+        np.testing.assert_allclose(
+            space.audit["gradient_rank_tolerance"],
+            expected_rank_tolerance,
+            rtol=1.0e-12,
+            atol=0.0,
+        )
+        self.assertLessEqual(
+            space.audit["constant_gradient_error_max"],
+            5.0e-11,
+        )
+        self.assertLessEqual(
+            space.audit["curl_gradient_error_max"],
+            2.0e-10,
+        )
+        self.assertTrue(space.audit["hcurl_orientation"]["pass"])
+        self.assertTrue(space.audit["h1_orientation"]["pass"])
+
+        p6_space = build_variable_p_reference_space(
+            HexaEntityDegreeMap.uniform(6)
+        )
+        p6_tensor = self._tensor(p6_space.hcurl_element)
+        projected = project_p6_local_tensor(space, p6_tensor)
+        direct = self._tensor(space.hcurl_element)
+        relative = np.linalg.norm(projected - direct) / np.linalg.norm(direct)
+        self.assertLessEqual(relative, 2.0e-12)
+
+        rng = np.random.default_rng(350430)
+        expected_active = (
+            rng.standard_normal(space.hcurl_dimension)
+            + 1j * rng.standard_normal(space.hcurl_dimension)
+        )
+        expected_p6 = space.expand_hcurl_coefficients(expected_active)
+        condensed = condense_variable_p_local_tensor(
+            space,
+            p6_tensor,
+            p6_tensor @ expected_p6,
+        )
+        recovered = condensed.recover_active_coefficients(
+            expected_active[space.trace_dofs]
+        )
+        np.testing.assert_allclose(
+            recovered,
+            expected_active,
+            rtol=2.0e-9,
+            atol=1.0e-9,
+        )
 
     def test_uniform_and_mixed_reference_spaces_close_exact_sequence(
         self,

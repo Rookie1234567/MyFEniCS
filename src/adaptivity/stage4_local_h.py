@@ -133,15 +133,15 @@ def _cell_interior_degree_catalog(
         {
             degree
             for degree in result.values()
-            if degree not in {5, 6}
+            if degree not in {3, 4, 5, 6}
             or degree < int(trace_degree)
             or degree > int(container_degree)
         }
     )
     if invalid:
         raise ValueError(
-            "the first local-h variable-interior cycle permits only "
-            "p6->p5 and requires trace_degree <= degree <= p6: "
+            "the local-h variable-interior cycle supports p3-p6 and "
+            "requires trace_degree <= degree <= p6: "
             f"{invalid}"
         )
     return result
@@ -414,8 +414,8 @@ def stage4_local_h_refinement_plan_payload(
 
     trace_degree = int(trace_degree)
     cell_interior_degree = int(cell_interior_degree)
-    if trace_degree not in {4, 5, 6}:
-        raise ValueError("local-h trace degree must be p4, p5, or p6")
+    if trace_degree not in {3, 4, 5, 6}:
+        raise ValueError("local-h trace degree must be between p3 and p6")
     if cell_interior_degree != 6 or trace_degree > cell_interior_degree:
         raise ValueError(
             "current local-h production adapter requires a p6 container"
@@ -550,7 +550,7 @@ def build_stage4_local_h_mesh_data(
     )
     trace_degree = int(payload.get("trace_degree", -1))
     cell_interior_degree = int(payload.get("cell_interior_degree", -1))
-    if trace_degree not in {4, 5, 6}:
+    if trace_degree not in {3, 4, 5, 6}:
         raise ValueError("Stage-4 local-h plan has an invalid trace degree")
     if cell_interior_degree != int(cfg.nedelec_degree):
         raise ValueError(
@@ -592,7 +592,11 @@ def build_stage4_local_h_mesh_data(
             value == degree
             for value in cell_interior_degree_by_box.values()
         )
-        for degree in (4, 5, 6)
+        for degree in (
+            (3, 4, 5, 6)
+            if 3 in cell_interior_degree_by_box.values()
+            else (4, 5, 6)
+        )
     }
     plan_file_sha256 = _file_sha256(resolved)
     audit = MappingProxyType(
@@ -734,7 +738,11 @@ def build_stage4_local_h_reduction_authority(
             value == degree
             for value in context.cell_interior_degree_by_box.values()
         )
-        for degree in (4, 5, 6)
+        for degree in (
+            (3, 4, 5, 6)
+            if 3 in context.cell_interior_degree_by_box.values()
+            else (4, 5, 6)
+        )
     }
     variable_interior = len(
         set(context.cell_interior_degree_by_box.values())
@@ -807,18 +815,18 @@ def build_stage4_local_h_reduction_authority(
                 (
                     "p5 edge and base face degree with whole, non-hanging "
                     "periodic-orbit p6 physical faces; geometry-bound "
-                    "p5/p6 cell-interior degree with "
+                    "p3-p6 cell-interior degree with "
                     "trace_degree <= cell degree"
                 )
                 if context.selected_p6_face_geometry_keys
                 else (
                     "uniform fixed trace degree on every physical "
-                    "edge/face; geometry-bound p5/p6 cell-interior degree "
+                    "edge/face; geometry-bound p3-p6 cell-interior degree "
                     "with trace_degree <= cell degree"
                 )
             ),
             "adaptation_cycle_scope": (
-                "first p6-to-p5 cell-interior-only cycle"
+                "single-level fixed-trace p3-p6 variable cell-interior cycle"
             ),
             "local_variable_trace_implemented": bool(
                 physical.audit["selected_p6_face_count"]
