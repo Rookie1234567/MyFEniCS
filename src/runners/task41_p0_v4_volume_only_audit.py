@@ -399,6 +399,8 @@ def _v8_load_saved_operand_arrays(
     fixed_window_sha256: str,
     donor_existing_evidence_bytes: int,
     sha256_file: Any,
+    selected_v6_names: set[str] | None = None,
+    load_v7_payloads: bool = True,
 ) -> dict[str, Any]:
     """Bind only the V6/V7 arrays needed by the selected-row operand audit."""
 
@@ -533,6 +535,11 @@ def _v8_load_saved_operand_arrays(
             for state in ("j0", "j3")
             for role in ("candidate", "reference")
         )
+    if selected_v6_names is not None:
+        selected_v6_names = {str(name) for name in selected_v6_names}
+        if not selected_v6_names <= index_by_name.keys():
+            raise ValueError("selected V6 input names are absent from the frozen hash index")
+        required_v6_names = selected_v6_names
     missing = required_v6_names - index_by_name.keys()
     if missing:
         raise ValueError(f"V8 V6 input index omits selected closure operands: {sorted(missing)}")
@@ -564,14 +571,15 @@ def _v8_load_saved_operand_arrays(
             or record.get("bytes") != 91_008_128
         ):
             raise ValueError(f"V8 frozen V7 closure array metadata differs for {name}")
-        array, artifact = _v8_load_bound_array(
-            record,
-            results_root=results_root,
-            sha256_file=sha256_file,
-            expected_sha256=TASK41_P0_V8_V7_ARRAY_SHA256[name],
-        )
-        v7_arrays[name] = array
-        v7_artifacts[name] = artifact
+        if load_v7_payloads:
+            array, artifact = _v8_load_bound_array(
+                record,
+                results_root=results_root,
+                sha256_file=sha256_file,
+                expected_sha256=TASK41_P0_V8_V7_ARRAY_SHA256[name],
+            )
+            v7_arrays[name] = array
+            v7_artifacts[name] = artifact
 
     prior_array_bytes = (
         int(donor_existing_evidence_bytes)
@@ -588,6 +596,7 @@ def _v8_load_saved_operand_arrays(
         "v7_arrays": v7_arrays,
         "v6_artifacts": v6_artifacts,
         "v7_artifacts": v7_artifacts,
+        "v7_payloads_loaded": bool(load_v7_payloads),
         "v6_report": v6_report,
         "v6_records_by_name": index_by_name,
         "v6_index_path": str(v6_index_path.resolve()),

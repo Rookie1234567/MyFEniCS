@@ -5002,6 +5002,7 @@ def build_task40_v10_p6_local_sector_owner(
     saved_port_owner: Mapping[str, Any] | None = None,
     surface_functional_checkpoint: Mapping[str, Any] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    internal_rhs_strategy: str = "stored_T",
 ) -> dict[str, Any]:
     """Build one reusable local FE/recovery owner before the global reference.
 
@@ -5033,6 +5034,10 @@ def build_task40_v10_p6_local_sector_owner(
 
     if not callable(allocation_gate):
         raise TypeError("local p6 sector owner requires a live allocation gate")
+    if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+        raise ValueError(
+            f"unknown Task41 local-sector internal RHS strategy {internal_rhs_strategy!r}"
+        )
     if not isinstance(context, Task40V10SectorContext):
         raise TypeError("local p6 sector owner requires a frozen sector context")
     if len(global_modes) != len(global_mode_rows):
@@ -5335,6 +5340,7 @@ def build_task40_v10_p6_local_sector_owner(
                 strict_local_checks=True,
                 materialize_global_matrix=False,
                 retain_local_schur_for_matrix_free=True,
+                internal_rhs_strategy=internal_rhs_strategy,
                 share_identity_cache=True,
                 preserve_exact_geometry=True,
                 allocation_gate=allocation_gate,
@@ -5813,6 +5819,7 @@ def build_task40_v10_p6_reference_inverse(
         int, tuple[Mapping[int, sparse.csr_matrix], Mapping[str, Any]]
     ] | None = None,
     regular_reference_fills_y_period: bool = False,
+    internal_rhs_strategy: str = "stored_T",
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -5851,6 +5858,8 @@ def build_task40_v10_p6_reference_inverse(
         raise TypeError("p6 reference builder requires a Task40 periodic case profile")
     if type(regular_reference_fills_y_period) is not bool:
         raise TypeError("regular reference y-period fill must be an explicit boolean")
+    if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+        raise ValueError(f"unknown Task41 reference internal RHS strategy {internal_rhs_strategy!r}")
     if not callable(allocation_gate):
         raise TypeError("p6 reference construction requires a live allocation gate")
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
@@ -6346,6 +6355,7 @@ def build_task40_v10_p6_reference_inverse(
                         if sector_first and event is not None
                         else None
                     ),
+                    internal_rhs_strategy=internal_rhs_strategy,
                 )
             else:
                 validate_prebuilt_sector(context, pending_sector)

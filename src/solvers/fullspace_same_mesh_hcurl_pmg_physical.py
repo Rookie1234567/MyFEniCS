@@ -1354,6 +1354,7 @@ def build_same_mesh_physical_action(
     saved_surface_offset_index_path: str | Path | None = None,
     research_phase_override: tuple[complex, complex] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    pre_donor_qualification_callback: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -1670,6 +1671,7 @@ def build_same_mesh_physical_action(
     physical_action = None
     assembly_context = None
     compiled_gauss = None
+    pre_donor_qualification = None
     try:
         if dtn_phase_gauge == BOUNDARY_PLANE:
             assembly_context = run_stage(
@@ -1702,6 +1704,39 @@ def build_same_mesh_physical_action(
                 updated_context["gauss"] = gauss
                 from .dtn_boundary_phase_gauge import deep_frozen_identity
                 assembly_context = deep_frozen_identity(updated_context)
+        if pre_donor_qualification_callback is not None:
+            if saved_surface_donor is None or not isinstance(
+                saved_surface_support, _Task41SavedSurfaceSupport
+            ):
+                raise ValueError("pre-donor qualification requires a freshly inventoried saved donor")
+            volume_action = run_stage(
+                "volume_form_jit",
+                lambda: _build_split_volume_action(
+                    setup["mesh_data"],
+                    cfg,
+                    function_space,
+                    floquet,
+                    jit_options=options,
+                    volume_quadrature_metadata=volume_quadrature_metadata,
+                ),
+            )
+            pre_donor_qualification = pre_donor_qualification_callback(
+                {
+                    "volume_action": volume_action,
+                    "volume_form": volume_action.bilinear_form,
+                    "function_space": function_space,
+                    "floquet": floquet,
+                    "support_groups": support_groups,
+                    "support_rows": saved_surface_support.row_groups,
+                    "saved_surface_support": saved_surface_support,
+                    "modes": modes,
+                    "mode_rows": mode_rows,
+                    "mode_sha256": mode_sha,
+                    "assembly_context": assembly_context,
+                }
+            )
+            if not isinstance(pre_donor_qualification, Mapping):
+                raise TypeError("pre-donor qualification callback must return its owner and evidence mapping")
         if saved_surface_donor is not None:
             if not isinstance(saved_surface_support, _Task41SavedSurfaceSupport):
                 raise RuntimeError("Task41 B0 saved donor has no fresh FE support inventory")
@@ -1881,17 +1916,18 @@ def build_same_mesh_physical_action(
             "dtn_action_wrap",
             lambda: build_fullspace_dtn_action(carrier, comm=setup["mesh"].comm),
         )
-        volume_action = run_stage(
-            "volume_form_jit",
-            lambda: _build_split_volume_action(
-                setup["mesh_data"],
-                cfg,
-                function_space,
-                floquet,
-                jit_options=options,
-                volume_quadrature_metadata=volume_quadrature_metadata,
-            ),
-        )
+        if volume_action is None:
+            volume_action = run_stage(
+                "volume_form_jit",
+                lambda: _build_split_volume_action(
+                    setup["mesh_data"],
+                    cfg,
+                    function_space,
+                    floquet,
+                    jit_options=options,
+                    volume_quadrature_metadata=volume_quadrature_metadata,
+                ),
+            )
         physical_action = run_stage(
             "physical_action_combine",
             lambda: FullspacePhysicalAction(volume_action, dtn_action),
@@ -1929,6 +1965,11 @@ def build_same_mesh_physical_action(
             "action": physical_action,
             "physical_action": physical_action,
             "volume_action": owned_volume_action,
+            **(
+                {"pre_donor_qualification": dict(pre_donor_qualification)}
+                if pre_donor_qualification is not None
+                else {}
+            ),
             "dtn_action": owned_dtn_action,
             "modes": modes,
             "mode_rows": mode_rows,
@@ -1952,6 +1993,11 @@ def build_same_mesh_physical_action(
             ),
         }
     except Exception:
+        if isinstance(pre_donor_qualification, Mapping):
+            owner_result = pre_donor_qualification.get("owner_result")
+            condensed = owner_result.get("condensed") if isinstance(owner_result, Mapping) else None
+            if condensed is not None and hasattr(condensed, "destroy"):
+                condensed.destroy()
         if physical_action is not None:
             physical_action.destroy()
         else:

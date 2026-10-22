@@ -369,6 +369,204 @@ def test_physical_action_builder_selects_requested_level_and_keeps_p6_entrypoint
     assert tuple(old_signature.parameters) == ("cfg", "comm", "stage_callback")
 
 
+def test_saved_donor_volume_qualification_runs_before_source_scan(tmp_path, monkeypatch):
+    from src.solvers import (
+        directional_boundary,
+        dtn_boundary_phase_gauge,
+        fullspace_dtn_action,
+        task40_v22_operator_probe,
+        task40_v25_selected_q0,
+    )
+
+    order = []
+
+    class _Volume(_Disposable):
+        bilinear_form = object()
+        audit = {"schema": "fixture.volume"}
+
+    class _Support:
+        def __init__(self, _space, _modes, groups, _allowed, *, allocation_gate):
+            self.groups = tuple(groups)
+            self.row_groups = (1,)
+            self.max_frame_bytes = 32
+            self.audit = {"fixture": True}
+
+        def observe(self, *_args, **_kwargs):
+            pass
+
+        def materialize_port_terms(self):
+            return {0: object()}
+
+    class _NativeRule:
+        candidate_rows = np.asarray([0], dtype=np.int32)
+        _master_rows = np.asarray([], dtype=np.int32)
+        assembly_stats = {"fixture": True}
+
+        def __init__(self, **_kwargs):
+            pass
+
+        def assemblers(self):
+            return {("top", "s"): SimpleNamespace(compiled_gauss_identity={"fixture": True})}
+
+    class _Source:
+        def __init__(self, *_args, **_kwargs):
+            order.append("source_scan")
+            self.audit = {
+                "read_modes_after_validation": 0,
+                "read_bytes_after_validation": 0,
+                "read_frame_parse_seconds_after_validation": 0.0,
+            }
+
+        def iter_entries(self):
+            return iter(())
+
+    root = tmp_path / "repo"
+    solver_dir = root / "src/solvers"
+    solver_dir.mkdir(parents=True)
+    for filename in (
+        "fullspace_same_mesh_hcurl_pmg_physical.py",
+        "task40_v22_operator_probe.py",
+        "task40_v25_selected_q0.py",
+        "directional_boundary.py",
+    ):
+        (solver_dir / filename).write_text("fixture", encoding="ascii")
+    donor_dir = root / "results/donor"
+    donor_dir.mkdir(parents=True)
+    for filename in ("surface.bin", "checkpoint.json", "manifest.json"):
+        (donor_dir / filename).write_bytes(b"fixture")
+
+    index_map = SimpleNamespace(
+        local_range=(0, 2),
+        size_local=2,
+        size_global=2,
+        local_to_global=lambda rows: np.asarray(rows, dtype=np.int64),
+    )
+    space = SimpleNamespace(
+        dofmap=SimpleNamespace(index_map=index_map),
+        mesh=SimpleNamespace(comm=PETSc.COMM_SELF, topology=SimpleNamespace(dim=3)),
+        element=SimpleNamespace(
+            basix_element=SimpleNamespace(entity_dofs=[[], [], [], [[0]]])
+        ),
+    )
+    mpc = SimpleNamespace(slaves=np.asarray([], dtype=np.int32))
+    setup = {
+        "spaces": {6: space},
+        "floquets": {6: SimpleNamespace(mpc=mpc)},
+        "mesh_data": object(),
+        "mesh": SimpleNamespace(comm=PETSc.COMM_SELF),
+    }
+    carrier = SimpleNamespace(
+        entries=(SimpleNamespace(normalization_h=1.0),),
+        mode_manifest_sha256="mode-sha",
+        assembly_context_sha256="assembly-sha",
+    )
+    monkeypatch.setattr(
+        physical_module,
+        "__file__",
+        str(solver_dir / "fullspace_same_mesh_hcurl_pmg_physical.py"),
+    )
+    monkeypatch.setattr(common_forms_module, "_validate_physical_split_profile", lambda _cfg: None)
+    monkeypatch.setattr(dtn_port_module, "_dtn_surface_quadrature_degree", lambda _cfg, _modes: 11)
+    monkeypatch.setattr(
+        dtn_boundary_phase_gauge,
+        "build_gauge_assembly_context",
+        lambda *_args, **_kwargs: {"source_sha256": {}, "gauss": {}},
+    )
+    monkeypatch.setattr(dtn_boundary_phase_gauge, "deep_frozen_identity", lambda value: dict(value))
+    monkeypatch.setattr(
+        dtn_boundary_phase_gauge,
+        "incident_projection_in_solver_coordinates",
+        lambda *_args: 0.0j,
+    )
+    monkeypatch.setattr(
+        physical_module,
+        "_surface_assemblers",
+        lambda *_args, **_kwargs: {
+            ("top", "s"): SimpleNamespace(compiled_gauss_identity={"fixture": True})
+        },
+    )
+    monkeypatch.setattr(physical_module, "_task41_native_surface_memory_upper_bound", lambda *_args: {})
+    monkeypatch.setattr(physical_module, "_task41_verify_compiled_native_quadrature", lambda *_args: {"fixture": True})
+    monkeypatch.setattr(physical_module, "_Task41SavedSurfaceSupport", _Support)
+    monkeypatch.setattr(
+        task40_v25_selected_q0,
+        "_q0_reference_surface_inventory",
+        lambda *_args: (
+            np.asarray([0]),
+            (np.asarray([0]), np.asarray([1])),
+            (np.asarray([0]), np.asarray([1])),
+            np.asarray([0], dtype=np.int32),
+            {"fixture": True},
+        ),
+    )
+    monkeypatch.setattr(task40_v22_operator_probe, "_global_mpc_expansions", lambda *_args: {})
+    monkeypatch.setattr(task40_v22_operator_probe, "_V22NativeFacetRule", _NativeRule)
+    monkeypatch.setattr(directional_boundary, "FacetPolynomial", lambda *_args: object())
+    monkeypatch.setattr(fullspace_dtn_action, "ReadOnlySurfaceFunctionalSource", _Source)
+    monkeypatch.setattr(
+        physical_module,
+        "_task41_b0_saved_surface_identity_gate",
+        lambda **_kwargs: (
+            np.asarray([1.0]),
+            lambda *_args: None,
+            {"fixture": True, "producer_reconstructed_assembly_context_sha256": "assembly-sha"},
+        ),
+    )
+    monkeypatch.setattr(
+        fullspace_dtn_action,
+        "build_fullspace_dtn_carrier_from_validated_source",
+        lambda source, _mpc: setattr(carrier, "surface_source", source) or carrier,
+    )
+    monkeypatch.setattr(
+        fullspace_dtn_action, "build_fullspace_dtn_action", lambda *_args, **_kwargs: _Disposable("dtn")
+    )
+    monkeypatch.setattr(physical_module, "_build_split_volume_action", lambda *_args, **_kwargs: _Volume("volume"))
+    monkeypatch.setattr(physical_action_module, "FullspacePhysicalAction", lambda *_args: _Disposable("physical"))
+
+    def qualify(context):
+        order.append("volume_qualification")
+        assert context["support_rows"] == (1,)
+        return {"fixture_qualification": "PASS"}
+
+    donor = {
+        "root_relative_path": "results/donor",
+        "binary_name": "surface.bin",
+        "checkpoint_name": "checkpoint.json",
+        "manifest_name": "manifest.json",
+        "committed": {
+            "manifest_sha256": "a" * 64,
+            "checkpoint_sha256": "b" * 64,
+            "prefix_sha256": "c" * 64,
+            "mode_count": 1,
+            "bytes": 7,
+        },
+        "producer": {"producer_identity_sha256": "d" * 64},
+    }
+    bundle = build_same_mesh_physical_action(
+        setup,
+        SimpleNamespace(),
+        6,
+        mode_inventory=(
+            (SimpleNamespace(side="top", m=0, n=0, polarization="s"),),
+            ({"mode_index": 0},),
+            "mode-sha",
+        ),
+        jit_options={},
+        dtn_phase_gauge=dtn_boundary_phase_gauge.BOUNDARY_PLANE,
+        verify_dtn_quadrature=True,
+        surface_assembly_backend="native_boundary_plane",
+        saved_surface_donor=donor,
+        saved_surface_offset_index_path=tmp_path / "offsets.i64",
+        stage_callback=lambda _facts: None,
+        pre_donor_qualification_callback=qualify,
+    )
+    try:
+        assert bundle["pre_donor_qualification"] == {"fixture_qualification": "PASS"}
+        assert order == ["volume_qualification", "source_scan"]
+    finally:
+        destroy_same_mesh_physical_action(bundle)
+
+
 @pytest.mark.parametrize("degree", (3, 6))
 def test_physical_rhs_uses_bundle_degree_for_form_and_mpc(
     monkeypatch, degree: int

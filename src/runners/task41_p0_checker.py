@@ -1800,6 +1800,191 @@ def _task41_b0_recovery_evidence_checks(
         errors.append(message)
         joint_action_errors.append(message)
 
+    campaign_authority = summary.get("campaign_authority")
+    contract_strategy = contract.get("numerical_strategy", {}).get(
+        "internal_rhs_strategy"
+    ) if isinstance(contract.get("numerical_strategy"), Mapping) else None
+    campaign_strategy = (
+        campaign_authority.get("internal_rhs_strategy")
+        if isinstance(campaign_authority, Mapping)
+        else None
+    )
+    if "same_lu_rhs_solve" in {contract_strategy, campaign_strategy}:
+        v9_binding = summary.get("b0_v9_compact_volume_audit")
+        checker_binding = summary.get("b0_v9_independent_check")
+        if not isinstance(v9_binding, Mapping) or not isinstance(checker_binding, Mapping):
+            message = "Task41 B0 same-LU strategy requires the V9 compact volume audit and independent checker"
+            return {
+                "schema": "task41.p0.b0.recovery_evidence_checker.v1",
+                "terminal_route": "task41_b0_v9_compact_volume_audit",
+                "audit_completed": False,
+                "data_integrity": False,
+                "recovery_passed": False,
+                "joint_action_passed": False,
+                "official_result": False,
+                "integrity_errors": [message],
+                "recovery_errors": [],
+                "joint_action_errors": [],
+                "errors": [message],
+                "passed": False,
+            }
+        try:
+            run_root = numerical_output.parent.resolve(strict=True)
+            repo_root = Path(__file__).resolve().parents[2]
+            v9_path = _task41_run_artifact(run_root, v9_binding, "V9 compact volume audit")
+            checker_path = _task41_run_artifact(
+                run_root, checker_binding, "V9 independent compact checker"
+            )
+            v9_report = _json_object(v9_path, "V9 compact volume audit")
+            v9_checker = _json_object(checker_path, "V9 independent compact checker")
+            donor_binding = summary.get("b0_v9_volume_donor_binding")
+            prefix_binding = summary.get("b0_v9_saved_prefix_binding")
+            if not isinstance(donor_binding, Mapping) or not isinstance(prefix_binding, Mapping):
+                raise ValueError("V9 terminal summary omits donor or source-prefix identity")
+            from src.runners.task41_p0_contract import TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
+            from src.solvers.task41_v4_volume_only_audit import TASK41_V4_APPENDED_ROWS
+
+            donor_run = (repo_root / TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE).resolve(strict=True)
+            donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+            if (
+                donor_binding.get("relative_path")
+                != TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE.as_posix()
+                or donor_binding.get("attempt_id") != TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE.name
+                or donor_binding.get("summary_bytes") != donor_summary_path.stat().st_size
+                or donor_binding.get("summary_sha256") != sha256_file(donor_summary_path)
+            ):
+                raise ValueError("V9 frozen V4 donor summary identity differs")
+            donor = load_task41_v4_volume_only_donor(
+                summary_path=donor_summary_path,
+                numerical_output=donor_run / "numerical_output",
+            )
+            if (
+                donor_binding.get("manifest_sha256") != donor.get("manifest_sha256")
+                or donor_binding.get("existing_evidence_bytes")
+                != donor.get("existing_evidence_bytes")
+                or type(donor_binding.get("prior_new_evidence_bytes")) is not int
+            ):
+                raise ValueError("V9 frozen V4 donor manifest or evidence accounting differs")
+            source_path = Path(str(prefix_binding.get("c_source_path", ""))).resolve(strict=True)
+            if (
+                not source_path.is_relative_to(repo_root)
+                or sha256_file(source_path) != prefix_binding.get("c_source_sha256")
+                or prefix_binding.get("candidate_evaluator_identity")
+                != "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
+                or not isinstance(prefix_binding.get("candidate_cache_identity"), str)
+                or not prefix_binding.get("candidate_cache_identity")
+                or prefix_binding.get("owner_internal_rhs_strategy") != "same_lu_rhs_solve"
+                or prefix_binding.get("owner_geometry_policy") != "mesh_actual_exact"
+                or prefix_binding.get("appended_rows") != TASK41_V4_APPENDED_ROWS
+                or prefix_binding.get("loaded_v7_payloads") is not False
+            ):
+                raise ValueError("V9 frozen source/cache or live-owner identity differs")
+            action_gate = v9_report.get("candidate_full_action_gate")
+            recovery_gate = v9_report.get("candidate_recovery_gate")
+            if not isinstance(action_gate, Mapping) or not isinstance(recovery_gate, Mapping):
+                raise ValueError("V9 compact report omits its action or recovery gate")
+            action_status = action_gate.get("status")
+            recovery_status = recovery_gate.get("status")
+            action_passed = action_status == "PASS"
+            recovery_passed = recovery_status == "PASS"
+            qualification_passed = bool(action_passed and recovery_passed)
+            expected_report_status = "PASS" if qualification_passed else "GATE_FAILED"
+            checker_errors = v9_checker.get("errors")
+            if (
+                contract_strategy != "same_lu_rhs_solve"
+                or campaign_strategy != "same_lu_rhs_solve"
+                or v9_report.get("schema") != "task41.p0.b0.v9.compact_volume_identity.v1"
+                or v9_report.get("completed") is not True
+                or v9_report.get("official_result") is not False
+                or v9_report.get("internal_rhs_strategy") != "same_lu_rhs_solve"
+                or v9_report.get("donor_manifest_sha256") != donor_binding.get("manifest_sha256")
+                or v9_report.get("existing_evidence_bytes")
+                != donor_binding.get("existing_evidence_bytes")
+                or v9_report.get("prior_new_evidence_bytes")
+                != donor_binding.get("prior_new_evidence_bytes")
+                or v9_report.get("status") != expected_report_status
+                or v9_binding.get("schema") != v9_report.get("schema")
+                or v9_binding.get("status") != v9_report.get("status")
+                or v9_binding.get("action_gate") != action_gate
+                or v9_binding.get("recovery_gate") != recovery_gate
+                or v9_checker.get("schema")
+                != "task41.p0.b0.v9.compact_volume_independent_check.v1"
+                or v9_checker.get("official_result") is not False
+                or v9_checker.get("status") != ("PASS" if qualification_passed else "FAIL")
+                or v9_checker.get("passed") is not qualification_passed
+                or checker_binding.get("schema") != v9_checker.get("schema")
+                or checker_binding.get("status") != v9_checker.get("status")
+                or checker_binding.get("passed") is not qualification_passed
+                or not isinstance(checker_errors, list)
+                or checker_errors
+            ):
+                raise ValueError("V9 summary, compact audit, and independent checker identities disagree")
+            replay = check_task41_b0_v9_compact_volume_audit(
+                v9_report,
+                donor,
+                output_directory=run_root,
+                native_volume_apply=None,
+                native_action_receipt=v9_checker,
+                expected_candidate_identity=str(
+                    prefix_binding["candidate_evaluator_identity"]
+                ),
+                expected_cache_identity=str(prefix_binding["candidate_cache_identity"]),
+            )
+            if (
+                replay.get("schema")
+                != "task41.p0.b0.v9.compact_volume_independent_check.v1"
+                or replay.get("status") != v9_checker.get("status")
+                or replay.get("passed") is not v9_checker.get("passed")
+                or replay.get("errors")
+                or replay.get("native_action_receipts_reused")
+                != (2 if action_passed else 0)
+            ):
+                raise ValueError("V9 saved-only replay differs from its live native-action checker")
+            audit_completed = True
+            data_integrity = True
+            return {
+                "schema": "task41.p0.b0.recovery_evidence_checker.v1",
+                "terminal_route": "task41_b0_v9_compact_volume_audit",
+                "manifest_path": str(v9_path),
+                "manifest_stage": "V9_COMPACT_VOLUME_ONLY",
+                "audit_completed": audit_completed,
+                "data_integrity": data_integrity,
+                "integrity_errors": [],
+                "recovery_passed": recovery_passed,
+                "recovery_errors": [],
+                "joint_action_status": action_status,
+                "joint_action_passed": action_passed,
+                "joint_action_replayed": replay.get("checks", {}).get(
+                    "both_dynamic_and_frozen_action_gates"
+                ) is not None,
+                "joint_action_errors": [],
+                "qualification_passed": qualification_passed,
+                "official_result": False,
+                "run_identity_rechecked": True,
+                "support_certificate_rechecked": None,
+                "saved_only_compact_replay": replay,
+                "columns": [],
+                "errors": [],
+                "passed": qualification_passed,
+            }
+        except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+            message = f"Task41 B0 V9 compact terminal evidence recheck failed: {type(exc).__name__}: {exc}"
+            return {
+                "schema": "task41.p0.b0.recovery_evidence_checker.v1",
+                "terminal_route": "task41_b0_v9_compact_volume_audit",
+                "audit_completed": False,
+                "data_integrity": False,
+                "recovery_passed": False,
+                "joint_action_passed": None,
+                "qualification_passed": False,
+                "official_result": False,
+                "integrity_errors": [message],
+                "recovery_errors": [],
+                "joint_action_errors": [],
+                "errors": [message],
+                "passed": False,
+            }
+
     binding = summary.get("b0_recovery_evidence")
     if not isinstance(binding, Mapping):
         message = "Task41 B0 summary omits its recovery evidence binding"
@@ -2874,6 +3059,462 @@ def load_task41_v4_volume_only_donor(
             },
             "local_class_identities": [],
         },
+    }
+
+
+def check_task41_b0_v9_compact_volume_audit(
+    report: Mapping[str, Any],
+    donor: Mapping[str, Any],
+    *,
+    output_directory: str | Path,
+    native_volume_apply: Any | None,
+    native_action_receipt: Mapping[str, Any] | None = None,
+    expected_candidate_identity: str | None = None,
+    expected_cache_identity: str | None = None,
+) -> dict[str, Any]:
+    """Reopen compact V9 artifacts and recompute gates, replaying native action only when live."""
+
+    from src.solvers.task41_v4_volume_only_audit import (
+        TASK41_V4_ACTIVE_TRACE_ROWS,
+        TASK41_V4_APPENDED_ROWS,
+        TASK41_V4_FULL_STORAGE_ROWS,
+        TASK41_V5_FROZEN_DENOMINATORS,
+        TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+    )
+
+    root = Path(output_directory).resolve(strict=True)
+    columns = tuple(donor.get("columns", ()))
+    joint = donor.get("attribution", {}).get("joint", {})
+    saved_p6 = np.asarray(joint.get("p6_result"))
+    saved_reduced = np.asarray(joint.get("reduced_rhs"))
+    saved_port_rhs = np.asarray(joint.get("port_rhs"))
+    errors: list[str] = []
+    action_receipts: list[dict[str, Any]] = []
+    native_action_calls = 0
+    reused_action_receipts = 0
+
+    def array_sha256(values: np.ndarray) -> str:
+        array = np.asarray(values)
+        if not array.flags.c_contiguous:
+            array = np.ascontiguousarray(array)
+        return hashlib.sha256(memoryview(array).cast("B")).hexdigest()
+
+    def bound_array(binding: Mapping[str, Any]) -> np.ndarray:
+        raw = Path(str(binding.get("path", "")))
+        path = (raw if raw.is_absolute() else root / raw).resolve(strict=True)
+        if (
+            not path.is_relative_to(root)
+            or type(binding.get("bytes")) is not int
+            or path.stat().st_size != binding["bytes"]
+            or sha256_file(path) != binding.get("sha256")
+        ):
+            raise ValueError("V9 compact array path, byte count, or file SHA-256 differs")
+        array = np.load(path, mmap_mode="r", allow_pickle=False)
+        if (
+            list(array.shape) != binding.get("shape")
+            or str(array.dtype) != binding.get("dtype")
+            or array.dtype != np.dtype(np.complex128)
+        ):
+            raise ValueError("V9 compact array shape or dtype differs from its binding")
+        return array
+
+    def referenced_array(binding: Mapping[str, Any], label: str) -> np.ndarray:
+        kind = binding.get("kind")
+        if kind == "artifact":
+            return bound_array(binding)
+        column_index = binding.get("column")
+        if type(column_index) is not int or not 0 <= column_index < len(columns):
+            raise ValueError(f"V9 {label} donor column reference is malformed")
+        if kind == "v4_donor_known_field":
+            return np.asarray(columns[column_index]["known_field"])
+        if kind == "v4_donor_initial_native_volume_residual":
+            return np.asarray(columns[column_index]["states"][0]["native_volume_residual"])
+        raise ValueError(f"V9 {label} artifact reference kind is unknown")
+
+    def squared_norm(values: np.ndarray) -> float:
+        total = 0.0
+        for start in range(0, values.size, 262_144):
+            chunk = np.asarray(values[start : start + 262_144], dtype=np.complex128)
+            total += float(np.vdot(chunk, chunk).real)
+        return total
+
+    def squared_difference(left: np.ndarray, right: np.ndarray) -> float:
+        if left.shape != right.shape:
+            raise ValueError("V9 independent comparison array shapes differ")
+        total = 0.0
+        for start in range(0, left.size, 262_144):
+            stop = min(left.size, start + 262_144)
+            delta = np.asarray(left[start:stop], dtype=np.complex128) - np.asarray(
+                right[start:stop], dtype=np.complex128
+            )
+            total += float(np.vdot(delta, delta).real)
+        return total
+
+    def finite(values: np.ndarray) -> bool:
+        return all(
+            bool(np.isfinite(np.asarray(values[start : start + 262_144])).all())
+            for start in range(0, values.size, 262_144)
+        )
+
+    checks: dict[str, bool] = {
+        "compact_schema_and_strategy": bool(
+            report.get("schema") == "task41.p0.b0.v9.compact_volume_identity.v1"
+            and report.get("internal_rhs_strategy") == "same_lu_rhs_solve"
+            and report.get("geometry_policy") == "mesh_actual_exact"
+            and report.get("official_result") is False
+            and isinstance(report.get("candidate_evaluator_identity"), str)
+            and report.get("candidate_evaluator_identity")
+            and (
+                expected_candidate_identity is None
+                or report.get("candidate_evaluator_identity") == expected_candidate_identity
+            )
+            and isinstance(report.get("candidate_evaluator_cache_identity"), str)
+            and report.get("candidate_evaluator_cache_identity")
+            and (
+                expected_cache_identity is None
+                or report.get("candidate_evaluator_cache_identity") == expected_cache_identity
+            )
+            and report.get("donor_manifest_sha256") == donor.get("manifest_sha256")
+            and report.get("existing_evidence_bytes") == donor.get("existing_evidence_bytes")
+            and type(report.get("prior_new_evidence_bytes")) is int
+        ),
+        "frozen_layout": bool(
+            len(columns) == 2
+            and report.get("active_rows") == TASK41_V4_ACTIVE_TRACE_ROWS
+            and report.get("appended_rows") == TASK41_V4_APPENDED_ROWS
+            and report.get("full_storage_rows") == TASK41_V4_FULL_STORAGE_ROWS
+            and saved_p6.shape == (TASK41_V4_ACTIVE_TRACE_ROWS + TASK41_V4_APPENDED_ROWS, 2)
+            and saved_reduced.shape == saved_p6.shape
+            and saved_port_rhs.shape == (TASK41_V4_APPENDED_ROWS, 2)
+        ),
+    }
+    try:
+        if not all(checks.values()):
+            raise ValueError("V9 compact report schema or frozen donor layout differs")
+        if not callable(native_volume_apply):
+            if not isinstance(native_action_receipt, Mapping):
+                raise ValueError("saved-only V9 replay requires the hash-bound live native-action receipt")
+            if (
+                native_action_receipt.get("schema")
+                != "task41.p0.b0.v9.compact_volume_independent_check.v1"
+                or native_action_receipt.get("official_result") is not False
+                or not isinstance(native_action_receipt.get("errors"), list)
+                or native_action_receipt.get("errors")
+            ):
+                raise ValueError("saved-only V9 native-action receipt has invalid identity or errors")
+            receipt_rows = native_action_receipt.get("native_volume_action_receipts")
+            if not isinstance(receipt_rows, list):
+                raise ValueError("saved-only V9 native-action receipt omits per-column identities")
+            action_receipts = [dict(item) for item in receipt_rows if isinstance(item, Mapping)]
+            if len(action_receipts) != len(receipt_rows):
+                raise ValueError("saved-only V9 native-action receipt has malformed column rows")
+        else:
+            action_receipts = []
+        gate = report.get("candidate_full_action_gate")
+        if not isinstance(gate, Mapping):
+            raise ValueError("V9 compact report omits its full-action gate")
+        full_p6 = bound_array(gate["full_action_artifact"])
+        full_reduced = bound_array(gate["full_reduced_rhs_artifact"])
+        checks["action_artifacts_finite"] = finite(full_p6) and finite(full_reduced)
+        checks["saved_port_rows_unchanged"] = bool(
+            np.array_equal(full_p6[TASK41_V4_ACTIVE_TRACE_ROWS :], saved_p6[TASK41_V4_ACTIVE_TRACE_ROWS :])
+            and np.array_equal(
+                full_reduced[TASK41_V4_ACTIVE_TRACE_ROWS :],
+                saved_reduced[TASK41_V4_ACTIVE_TRACE_ROWS :],
+            )
+            and np.array_equal(full_p6[TASK41_V4_ACTIVE_TRACE_ROWS :], saved_port_rhs)
+            and np.array_equal(full_reduced[TASK41_V4_ACTIVE_TRACE_ROWS :], saved_port_rhs)
+        )
+        action_columns = []
+        reported_action_columns = gate.get("columns")
+        reported_action_columns_match = isinstance(reported_action_columns, list) and len(
+            reported_action_columns
+        ) == 2
+        for column_index, frozen_denominator in enumerate(TASK41_V5_FROZEN_DENOMINATORS):
+            delta_squared = squared_difference(full_p6[:, column_index], full_reduced[:, column_index])
+            difference = float(np.sqrt(max(0.0, delta_squared)))
+            dynamic_denom = max(
+                float(np.sqrt(max(0.0, squared_norm(full_p6[:, column_index])))),
+                float(np.sqrt(max(0.0, squared_norm(full_reduced[:, column_index])))),
+                np.finfo(float).tiny,
+            )
+            dynamic_relative = difference / dynamic_denom
+            frozen_relative = difference / frozen_denominator
+            dynamic_passed = dynamic_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE
+            frozen_passed = frozen_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE
+            action_columns.append(bool(dynamic_passed and frozen_passed))
+            if not isinstance(reported_action_columns, list) or len(reported_action_columns) != 2:
+                continue
+            reported = reported_action_columns[column_index]
+            try:
+                reported_difference = reported["difference"]
+                reported_action_columns_match = bool(
+                    reported_action_columns_match
+                    and isinstance(reported, Mapping)
+                    and reported.get("column") == column_index
+                    and type(reported.get("frozen_denominator")) in {int, float}
+                    and float(reported["frozen_denominator"]) == float(frozen_denominator)
+                    and type(reported.get("dynamic_gate_passed")) is bool
+                    and reported.get("dynamic_gate_passed") is bool(dynamic_passed)
+                    and type(reported.get("frozen_gate_passed")) is bool
+                    and reported.get("frozen_gate_passed") is bool(frozen_passed)
+                    and abs(float(reported.get("dynamic_denominator_relative")) - dynamic_relative)
+                    <= 5.0e-13 * max(1.0, abs(dynamic_relative))
+                    and abs(float(reported.get("frozen_denominator_relative")) - frozen_relative)
+                    <= 5.0e-13 * max(1.0, abs(frozen_relative))
+                    and isinstance(reported_difference, Mapping)
+                    and abs(float(reported_difference.get("absolute_l2")) - difference)
+                    <= 5.0e-13 * max(1.0, abs(difference))
+                )
+            except (KeyError, TypeError, ValueError):
+                reported_action_columns_match = False
+        checks["reported_action_columns_match_recalculation"] = reported_action_columns_match
+        checks["reported_frozen_denominators_match_contract"] = bool(
+            reported_action_columns_match
+            and isinstance(reported_action_columns, list)
+            and all(
+                type(item.get("frozen_denominator")) in {int, float}
+                and float(item["frozen_denominator"]) == float(expected)
+                for item, expected in zip(
+                    reported_action_columns, TASK41_V5_FROZEN_DENOMINATORS, strict=True
+                )
+                if isinstance(item, Mapping)
+            )
+        )
+        checks["both_dynamic_and_frozen_action_gates"] = all(action_columns)
+
+        recovery_gate = report.get("candidate_recovery_gate")
+        if not isinstance(recovery_gate, Mapping):
+            raise ValueError("V9 compact report omits its recovery gate")
+        recovery_columns = recovery_gate.get("columns")
+        independent_action_gate_passed = bool(
+            all(action_columns) and checks["saved_port_rows_unchanged"]
+        )
+        checks["reported_action_gate_matches_recalculation"] = gate.get("status") == (
+            "PASS" if independent_action_gate_passed else "GATE_FAILED"
+        )
+        if not independent_action_gate_passed:
+            checks["recovery_not_run_after_action_gate_failure"] = bool(
+                recovery_gate.get("status") == "NOT_RUN_ACTION_GATE_FAILED"
+                and recovery_columns == []
+                and recovery_gate.get("native_volume_action_calls") == 0
+            )
+            checks["both_candidate_recovery_gates"] = False
+            checks["independent_native_volume_action_call_count"] = native_action_calls == 0
+            checks["native_action_receipt_branch_matches"] = bool(
+                not callable(native_volume_apply)
+                and native_action_receipt is not None
+                and native_action_receipt.get("native_volume_action_receipts") == []
+                and native_action_receipt.get("independent_native_volume_action_calls") == 0
+            ) if not callable(native_volume_apply) else True
+            if not checks["recovery_not_run_after_action_gate_failure"]:
+                raise ValueError(
+                    "V9 recovery was run or malformed after the independently recomputed action gate failed"
+                )
+        else:
+            if not isinstance(recovery_columns, list) or len(recovery_columns) != 2:
+                raise ValueError("V9 compact report omits its two recovery columns")
+            if recovery_gate.get("status") not in {"PASS", "GATE_FAILED"}:
+                raise ValueError("V9 recovery gate has an invalid completed status")
+            recovery_passes = []
+            producer_native_action_calls = 0
+            for column_index, item in enumerate(recovery_columns):
+                if not isinstance(item, Mapping) or item.get("column") != column_index:
+                    raise ValueError("V9 compact recovery column order differs")
+                steps = item.get("step_records")
+                corrections = item.get("same_lu_corrections")
+                if (
+                    not isinstance(steps, list)
+                    or not steps
+                    or len(steps) > 4
+                    or type(corrections) is not int
+                    or corrections != len(steps) - 1
+                    or corrections > 3
+                    or item.get("maximum_same_lu_corrections") != 3
+                    or item.get("native_volume_action_calls") != len(steps)
+                ):
+                    raise ValueError("V9 compact correction inventory is malformed or exceeds three steps")
+                for step_index, record in enumerate(steps):
+                    if (
+                        not isinstance(record, Mapping)
+                        or record.get("step") != step_index
+                        or record.get("native_volume_action_calls") != step_index + 1
+                    ):
+                        raise ValueError("V9 same-LU step records are not a consecutive bounded sequence")
+                initial_storage = referenced_array(item["initial_storage_artifact"], "initial storage")
+                final_storage = referenced_array(item["final_storage_artifact"], "final storage")
+                final_residual = referenced_array(
+                    item["final_native_volume_residual_artifact"], "final native residual"
+                )
+                known = np.asarray(columns[column_index]["known_field"])
+                volume_rhs = np.asarray(columns[column_index]["native_volume_rhs"])
+                active_original = np.asarray(columns[column_index]["active_original_rows"])
+                slave_rows = np.asarray(columns[column_index]["slave_rows"])
+                if any(
+                    array.shape != (TASK41_V4_FULL_STORAGE_ROWS,)
+                    or array.dtype != np.dtype(np.complex128)
+                    or not finite(array)
+                    for array in (initial_storage, final_storage, final_residual, known, volume_rhs)
+                ):
+                    raise ValueError("V9 recovery field or residual has an invalid shape/dtype/value")
+                final_forward_relative = float(
+                    np.sqrt(max(0.0, squared_difference(final_storage, known)))
+                    / max(np.sqrt(max(0.0, squared_norm(known))), np.finfo(float).tiny)
+                )
+                trace_exact = all(
+                    np.array_equal(
+                        final_storage[active_original[start : start + 262_144]],
+                        known[active_original[start : start + 262_144]],
+                    )
+                    for start in range(0, active_original.size, 262_144)
+                )
+                final_slave_zero = all(
+                    not np.any(final_storage[slave_rows[start : start + 262_144]] != 0.0)
+                    for start in range(0, slave_rows.size, 262_144)
+                )
+                residual_slave_zero = all(
+                    not np.any(final_residual[slave_rows[start : start + 262_144]] != 0.0)
+                    for start in range(0, slave_rows.size, 262_144)
+                )
+                residual_identity_squared = 0.0
+                final_storage_sha256 = array_sha256(final_storage)
+                if callable(native_volume_apply):
+                    independently_applied = np.asarray(
+                        native_volume_apply(
+                            np.array(final_storage, dtype=np.complex128, copy=True)
+                        ),
+                        dtype=np.complex128,
+                    )
+                    native_action_calls += 1
+                    if (
+                        independently_applied.shape != (TASK41_V4_FULL_STORAGE_ROWS,)
+                        or not finite(independently_applied)
+                    ):
+                        raise ValueError("V9 independent native volume action returned an invalid vector")
+                    for start in range(0, TASK41_V4_FULL_STORAGE_ROWS, 262_144):
+                        stop = min(TASK41_V4_FULL_STORAGE_ROWS, start + 262_144)
+                        difference = (
+                            np.asarray(volume_rhs[start:stop], dtype=np.complex128)
+                            - independently_applied[start:stop]
+                            - np.asarray(final_residual[start:stop], dtype=np.complex128)
+                        )
+                        residual_identity_squared += float(np.vdot(difference, difference).real)
+                    residual_identity_relative = float(
+                        np.sqrt(max(0.0, residual_identity_squared))
+                        / max(np.sqrt(max(0.0, squared_norm(volume_rhs))), 1.0)
+                    )
+                    action_receipts.append(
+                        {
+                            "schema": "task41.p0.b0.v9.live_native_action_receipt.v1",
+                            "column": column_index,
+                            "native_action_calls": 1,
+                            "input_storage_sha256": final_storage_sha256,
+                            "output_action_sha256": array_sha256(independently_applied),
+                            "candidate_evaluator_identity": expected_candidate_identity
+                            or report.get("candidate_evaluator_identity"),
+                            "candidate_cache_identity": expected_cache_identity
+                            or report.get("candidate_evaluator_cache_identity"),
+                            "residual_identity_relative": residual_identity_relative,
+                        }
+                    )
+                    del independently_applied
+                else:
+                    receipt = next(
+                        (row for row in action_receipts if row.get("column") == column_index),
+                        None,
+                    )
+                    if (
+                        not isinstance(receipt, Mapping)
+                        or receipt.get("schema")
+                        != "task41.p0.b0.v9.live_native_action_receipt.v1"
+                        or receipt.get("native_action_calls") != 1
+                        or receipt.get("input_storage_sha256") != final_storage_sha256
+                        or receipt.get("candidate_evaluator_identity")
+                        != report.get("candidate_evaluator_identity")
+                        or receipt.get("candidate_cache_identity")
+                        != report.get("candidate_evaluator_cache_identity")
+                        or not isinstance(receipt.get("output_action_sha256"), str)
+                        or len(receipt["output_action_sha256"]) != 64
+                        or any(char not in "0123456789abcdef" for char in receipt["output_action_sha256"])
+                    ):
+                        raise ValueError("V9 inherited native-action receipt does not bind this saved column")
+                    try:
+                        residual_identity_relative = float(receipt["residual_identity_relative"])
+                    except (KeyError, TypeError, ValueError) as exc:
+                        raise ValueError("V9 inherited native-action receipt omits its residual identity") from exc
+                    if not np.isfinite(residual_identity_relative):
+                        raise ValueError("V9 inherited native-action residual identity is non-finite")
+                    reused_action_receipts += 1
+                residual_identity_squared = residual_identity_relative * residual_identity_relative
+                residual_relative = float(
+                    np.sqrt(max(0.0, squared_norm(final_residual)))
+                    / max(np.sqrt(max(0.0, squared_norm(volume_rhs))), np.finfo(float).tiny)
+                )
+                step0 = steps[0]
+                storage_hash_matches = array_sha256(final_storage) == item.get("final_storage_sha256")
+                residual_hash_matches = array_sha256(final_residual) == item.get("final_native_residual_sha256")
+                actual_initial_sha256 = array_sha256(initial_storage)
+                column_passed = bool(
+                    item.get("initial_storage_sha256") == actual_initial_sha256
+                    and step0.get("storage_sha256") == actual_initial_sha256
+                    and final_forward_relative <= 1.0e-11
+                    and residual_relative <= 1.0e-10
+                    and residual_identity_relative <= 1.0e-12
+                    and trace_exact
+                    and final_slave_zero
+                    and residual_slave_zero
+                    and storage_hash_matches
+                    and residual_hash_matches
+                    and item.get("final_native_action_sha256")
+                    == (
+                        action_receipts[-1].get("output_action_sha256")
+                        if callable(native_volume_apply)
+                        else next(
+                            row.get("output_action_sha256")
+                            for row in action_receipts
+                            if row.get("column") == column_index
+                        )
+                    )
+                    and step0.get("active_trace_unchanged") is True
+                    and step0.get("slave_rows_zero") is True
+                )
+                recovery_passes.append(column_passed)
+                producer_native_action_calls += int(item["native_volume_action_calls"])
+            checks["reported_recovery_columns_match_recalculation"] = all(
+                item.get("passed") is passed
+                for item, passed in zip(recovery_columns, recovery_passes, strict=True)
+            )
+            checks["reported_recovery_action_call_count_matches_columns"] = (
+                recovery_gate.get("native_volume_action_calls") == producer_native_action_calls
+            )
+            checks["both_candidate_recovery_gates"] = len(recovery_passes) == 2 and all(recovery_passes)
+            checks["reported_recovery_gate_matches_recalculation"] = recovery_gate.get(
+                "status"
+            ) == ("PASS" if all(recovery_passes) else "GATE_FAILED")
+            checks["independent_native_volume_action_call_count"] = native_action_calls == (
+                2 if callable(native_volume_apply) else 0
+            )
+            checks["native_action_receipt_branch_matches"] = bool(
+                native_action_receipt is None
+                if callable(native_volume_apply)
+                else reused_action_receipts == 2
+                and len(action_receipts) == 2
+                and native_action_receipt.get("independent_native_volume_action_calls") == 2
+            )
+        checks["reported_port_rows_unchanged"] = report.get("saved_port_rows_unchanged") is True
+    except (KeyError, OSError, ValueError, TypeError, FloatingPointError) as exc:
+        errors.append(f"{type(exc).__name__}: {exc}")
+    passed = not errors and all(checks.values())
+    return {
+        "schema": "task41.p0.b0.v9.compact_volume_independent_check.v1",
+        "status": "PASS" if passed else "FAIL",
+        "passed": passed,
+        "official_result": False,
+        "checks": checks,
+        "independent_native_volume_action_calls": native_action_calls,
+        "native_volume_action_receipts": action_receipts,
+        "native_action_receipts_reused": reused_action_receipts,
+        "errors": errors,
     }
 
 

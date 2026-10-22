@@ -175,6 +175,11 @@ TASK41_B0_V9_PREPARATION_BOOTSTRAP_TREATMENT = (
     "pre_anchor_monotonic_and_boottime_unknown"
 )
 TASK41_B0_V9_INTERNAL_RHS_STRATEGY = "same_lu_rhs_solve"
+TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE = Path(
+    "results/task41extra_phi90_p50x50_g17x20"
+    "/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna"
+    "/20261019T053402.514018Z"
+)
 
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0

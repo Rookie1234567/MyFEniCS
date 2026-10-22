@@ -8451,6 +8451,37 @@ def _task41_a2_load_saved_q_csr_pair(
     }
     return matrices, audit
 
+
+def _task41_b0_v9_pre_donor_condensed(
+    target_bundle: Mapping[str, Any],
+) -> Any | None:
+    """Register the V9 owner as soon as its physical-action builder returns."""
+    qualification = target_bundle.get("pre_donor_qualification")
+    if qualification is None:
+        return None
+    if not isinstance(qualification, Mapping):
+        raise ValueError("Task41 V9 pre-donor qualification is malformed")
+    owner_result = qualification.get("owner_result")
+    if not isinstance(owner_result, Mapping) or owner_result.get("condensed") is None:
+        raise ValueError("Task41 V9 pre-donor qualification omitted its live condensed owner")
+    return owner_result["condensed"]
+
+
+def _task41_destroy_pending_condensed(
+    owner: Any | None,
+    *,
+    summary: dict[str, Any] | None = None,
+) -> None:
+    """Release a worker-owned condensed object if the target action did not take it."""
+    if owner is not None:
+        try:
+            owner.destroy()
+        except Exception as exc:
+            if summary is not None:
+                summary.setdefault("cleanup_errors", []).append(
+                    {"type": type(exc).__name__, "message": str(exc)}
+                )
+
 def _task41_iterative_candidate_contract(
     resolved: Mapping[str, Any],
     profile_contract: Mapping[str, Any],
@@ -8672,6 +8703,7 @@ def _task41_iterative_candidate_contract(
             if contract_rhs_strategy == "same_lu_rhs_solve"
             else "task41.p0.dispatch_binding.v1"
         )
+        dispatch_strategy = contract_binding.get("internal_rhs_strategy", "stored_T") if isinstance(contract_binding, Mapping) else None
         checks["explicit_dispatch_contract_binding"] = bool(
             isinstance(contract_binding, Mapping)
             and contract_binding.get("schema") == expected_dispatch_schema
@@ -8683,8 +8715,7 @@ def _task41_iterative_candidate_contract(
             and contract_binding.get("window_sha256") == window.sha256
             and contract_binding.get("saved_surface_donor")
             == contract.get("preparation", {}).get("existing_surface_donor")
-            and contract_binding.get("internal_rhs_strategy")
-            == contract_rhs_strategy
+            and dispatch_strategy == contract_rhs_strategy
         )
         checks["no_a1_or_a2_comparison_binding"] = (
             isinstance(contract_binding, Mapping)
@@ -10249,6 +10280,7 @@ def run_task40_v10_p6_reference_worker(
     target_fast_bundle = None
     target_action = None
     target_condensed = None
+    task41_internal_rhs_strategy = "stored_T"
     mode_identity: dict[str, Any] = {}
     mode_inventory_preflight: dict[str, Any] = {}
     task41_mode_inventory: tuple[Any, Any, str] | None = None
@@ -10364,6 +10396,26 @@ def run_task40_v10_p6_reference_worker(
             task41_source_sha=(source_sha if is_task41_p0_iterative else None),
             task41_contract_binding=task41_contract_binding,
         )
+        if is_task41_b0:
+            campaign_authority = summary.get("campaign_authority")
+            if not isinstance(campaign_authority, Mapping):
+                raise ValueError("Task41 B0 campaign authority is missing")
+            campaign_strategy = campaign_authority.get(
+                "internal_rhs_strategy", "stored_T"
+            )
+            dispatch_strategy = (
+                task41_contract_binding.get("internal_rhs_strategy", "stored_T")
+                if isinstance(task41_contract_binding, Mapping)
+                else None
+            )
+            if (
+                campaign_strategy not in {"stored_T", "same_lu_rhs_solve"}
+                or campaign_strategy != dispatch_strategy
+            ):
+                raise ValueError(
+                    "Task41 B0 actual-owner strategy is missing or differs from the validated dispatch contract"
+                )
+            task41_internal_rhs_strategy = str(campaign_strategy)
         if is_task41_p0_iterative:
             runtime.raw_artifact_limit_bytes = summary["campaign_authority"]["raw_artifact_limit_bytes"]
             summary["raw_artifact_limit_bytes"] = runtime.raw_artifact_limit_bytes
@@ -11017,6 +11069,379 @@ def run_task40_v10_p6_reference_worker(
                             facts = {**dict(facts), "supervised_resource_sample": sample}
                         runtime.marker("task41_b0_target_physical_action_stage", dict(facts))
 
+            task41_b0_v9_pre_donor_state = None
+            pre_donor_qualification_callback = None
+            if is_task41_b0 and task41_internal_rhs_strategy == "same_lu_rhs_solve":
+                def qualify_task41_b0_v9_before_donor_scan(
+                    context: Mapping[str, Any],
+                ) -> Mapping[str, Any]:
+                    owner_result = None
+                    try:
+                        from src.runners.task41_p0_checker import (
+                            check_task41_b0_v9_compact_volume_audit,
+                            load_task41_v4_volume_only_donor,
+                            sha256_file,
+                        )
+                        from src.runners.task41_p0_contract import (
+                            TASK41_B0_V6_WINDOW_SHA256,
+                            TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE,
+                        )
+                        from src.runners.task41_p0_v4_volume_only_audit import (
+                            TASK41_P0_V6_PREFIX_CELLS,
+                            TASK41_P0_V8_PRIOR_ARRAY_BYTES,
+                            _v8_load_saved_operand_arrays,
+                        )
+                        from src.solvers.task41_v4_volume_only_audit import (
+                            TASK41_V4_DONOR_NPY_BYTES,
+                            TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
+                            build_task41_v4_volume_only_owner,
+                            audit_task41_v4_volume_identity,
+                        )
+                        from src.solvers.task40_v25_complete_volume import _atomic_save_array
+
+                        repo_root = Path(_repo_root()).resolve(strict=True)
+                        donor_run = (
+                            repo_root / TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
+                        ).resolve(strict=True)
+                        if donor_run.name != TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE.name:
+                            raise ValueError("Task41 V9 frozen V4 donor attempt identity differs")
+                        donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+                        donor = load_task41_v4_volume_only_donor(
+                            summary_path=donor_summary_path,
+                            numerical_output=donor_run / "numerical_output",
+                        )
+                        donor_binding = {
+                            "relative_path": TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE.as_posix(),
+                            "attempt_id": donor_run.name,
+                            "summary_bytes": int(donor_summary_path.stat().st_size),
+                            "summary_sha256": sha256_file(donor_summary_path),
+                            "manifest_sha256": donor["manifest_sha256"],
+                            "existing_evidence_bytes": int(donor["existing_evidence_bytes"]),
+                        }
+                        summary["b0_v9_volume_donor_binding"] = donor_binding
+                        if donor["existing_evidence_bytes"] != TASK41_V4_DONOR_NPY_BYTES:
+                            raise ValueError("Task41 V9 loaded V4 donor byte identity differs")
+                        prefix_names = {
+                            f"task41_v6_prefix_cell{cell}_candidate_{role}"
+                            for cell in TASK41_P0_V6_PREFIX_CELLS
+                            for role in ("raw_tensor", "oriented_tensor", "coordinates")
+                        }
+                        saved_operands = _v8_load_saved_operand_arrays(
+                            results_root=repo_root / "results/task41extra_phi90_p50x50_g17x20",
+                            fixed_window_sha256=TASK41_B0_V6_WINDOW_SHA256,
+                            donor_existing_evidence_bytes=TASK41_V4_DONOR_NPY_BYTES,
+                            sha256_file=sha256_file,
+                            selected_v6_names=prefix_names,
+                            load_v7_payloads=False,
+                        )
+                        if saved_operands["prior_array_payload_bytes"] != TASK41_P0_V8_PRIOR_ARRAY_BYTES:
+                            raise ValueError("Task41 V9 saved-prefix cumulative evidence identity differs")
+                        donor["prior_new_evidence_bytes"] = (
+                            saved_operands["prior_array_payload_bytes"]
+                            - donor["existing_evidence_bytes"]
+                        )
+                        donor_binding["prior_new_evidence_bytes"] = int(
+                            donor["prior_new_evidence_bytes"]
+                        )
+                        prefix_arrays = saved_operands["v6_arrays"]
+                        prefix_report = saved_operands["v6_report"]
+                        qualification = prefix_report.get("candidate_prefix_qualification")
+                        prefix_records = (
+                            qualification.get("records")
+                            if isinstance(qualification, Mapping)
+                            else None
+                        )
+                        if (
+                            not isinstance(qualification, Mapping)
+                            or qualification.get("status") != "PREFIX_QUALIFIED"
+                            or qualification.get("full_admission_eligible") is not True
+                            or qualification.get("required_sample_cell_indices")
+                            != list(TASK41_P0_V6_PREFIX_CELLS)
+                            or not isinstance(prefix_records, list)
+                            or len(prefix_records) != len(TASK41_P0_V6_PREFIX_CELLS)
+                            or {
+                                item.get("cell_index")
+                                for item in prefix_records
+                                if isinstance(item, Mapping)
+                            }
+                            != set(TASK41_P0_V6_PREFIX_CELLS)
+                            or any(
+                                not isinstance(item, Mapping) or item.get("status") != "PASS"
+                                for item in prefix_records
+                            )
+                            or int(qualification.get("geometry_witness_count", 0)) < 1
+                        ):
+                            raise ValueError("Task41 V9 V6 eight-cell prefix source is not fully qualified")
+
+                        def validate_v9_prefix_cell(
+                            cell_index: int,
+                            coordinates: np.ndarray,
+                            _blocks: Mapping[str, np.ndarray],
+                            cell_context: Mapping[str, Any],
+                        ) -> Mapping[str, Any]:
+                            if cell_index not in TASK41_P0_V6_PREFIX_CELLS:
+                                raise ValueError(
+                                    "Task41 V9 exact-q-metric owner visited a non-prefix sample key"
+                                )
+                            prefix = f"task41_v6_prefix_cell{cell_index}_candidate_"
+                            saved_coordinates = prefix_arrays[prefix + "coordinates"]
+                            saved_raw = prefix_arrays[prefix + "raw_tensor"]
+                            saved_oriented = prefix_arrays[prefix + "oriented_tensor"]
+                            actual_coordinates = np.asarray(coordinates)
+                            actual_raw = np.asarray(cell_context.get("raw_tensor"))
+                            actual_oriented = np.asarray(cell_context.get("oriented_tensor"))
+                            if (
+                                actual_coordinates.dtype != np.dtype(np.float64)
+                                or actual_coordinates.shape != (8, 3)
+                                or actual_raw.dtype != np.dtype(np.complex128)
+                                or actual_oriented.dtype != np.dtype(np.complex128)
+                                or not np.array_equal(actual_coordinates, saved_coordinates)
+                                or not np.array_equal(actual_raw, saved_raw)
+                                or not np.array_equal(actual_oriented, saved_oriented)
+                            ):
+                                raise ValueError(
+                                    "Task41 V9 actual q-metric owner differs from saved V6 "
+                                    f"prefix cell {cell_index}"
+                                )
+                            return {
+                                "status": "PASS",
+                                "cell_index": int(cell_index),
+                                "coordinates_bitwise_equal": True,
+                                "raw_tensor_bitwise_equal": True,
+                                "oriented_tensor_bitwise_equal": True,
+                                "coordinates_sha256": hashlib.sha256(
+                                    np.ascontiguousarray(actual_coordinates).tobytes()
+                                ).hexdigest(),
+                                "raw_tensor_sha256": hashlib.sha256(
+                                    np.ascontiguousarray(actual_raw).tobytes()
+                                ).hexdigest(),
+                                "oriented_tensor_sha256": hashlib.sha256(
+                                    np.ascontiguousarray(actual_oriented).tobytes()
+                                ).hexdigest(),
+                            }
+
+                        evaluator_identity = prefix_report.get("identity_audit", {}).get(
+                            "candidate_evaluator_audit", {}
+                        )
+                        c_source_path = Path(str(evaluator_identity.get("source_path", ""))).resolve(
+                            strict=True
+                        )
+                        if (
+                            not c_source_path.is_relative_to(repo_root)
+                            or sha256_file(c_source_path) != evaluator_identity.get("source_sha256")
+                        ):
+                            raise ValueError("Task41 V9 frozen actual-q-metric C-source identity differs")
+                        compiled_form = fem.form(
+                            context["volume_form"],
+                            jit_options=dict(SAME_MESH_JIT_OPTIONS),
+                        )
+                        owner_result = build_task41_v4_volume_only_owner(
+                            cfg,
+                            donor,
+                            directory,
+                            allocation_gate=allocation_gate,
+                            progress_callback=lambda event: runtime.marker(
+                                "task41_b0_v9_volume_owner", dict(event)
+                            ),
+                            persist_array=lambda name, values: (_ for _ in ()).throw(
+                                RuntimeError(
+                                    "V9 same-owner qualification must not persist duplicate V4 selected arrays"
+                                )
+                            ),
+                            geometry_policy="mesh_actual_exact",
+                            raw_tensor_evaluator_kind="actual_qmetric_blocked_gram",
+                            ffcx_c_source_path=c_source_path,
+                            internal_rhs_strategy="same_lu_rhs_solve",
+                            levels=target_levels,
+                            volume_form=context["volume_form"],
+                            compiled_form=compiled_form,
+                            appended_support_owned_cell_groups=context["support_groups"],
+                            appended_support_group_by_row=context["support_rows"],
+                            persist_selected_evidence=False,
+                            reserved_followup_evidence_bytes=TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
+                            required_prefix_cells=TASK41_P0_V6_PREFIX_CELLS,
+                            prefix_cell_validator=validate_v9_prefix_cell,
+                        )
+                        condensed = owner_result["condensed"]
+                        if (
+                            owner_result["levels"] is not target_levels
+                            or owner_result["compiled_form"] is not compiled_form
+                            or condensed.internal_rhs_strategy != "same_lu_rhs_solve"
+                            or condensed.build_audit.get("geometry_policy") != "mesh_actual_exact"
+                            or condensed.appended_rows != 64_120
+                        ):
+                            raise ValueError(
+                                "Task41 V9 owner did not reuse the pre-donor target FE/J setup"
+                            )
+                        evaluator_audit = condensed.build_audit.get("raw_tensor_evaluator")
+                        if not isinstance(evaluator_audit, Mapping):
+                            raise ValueError(
+                                "Task41 V9 owner has no raw-tensor source/cache identity"
+                            )
+                        prefix_owner_evaluator = evaluator_audit
+                        prefix_receipt = {
+                            "status": "PASS",
+                            "v6_report_path": saved_operands["v6_report_path"],
+                            "v6_report_sha256": saved_operands["v6_report_sha256"],
+                            "v6_index_sha256": saved_operands["v6_index_sha256"],
+                            "required_cells": list(TASK41_P0_V6_PREFIX_CELLS),
+                            "source_prefix_status": qualification["status"],
+                            "loaded_v7_payloads": False,
+                            "saved_arrays_loaded": sorted(prefix_names),
+                            "c_source_path": str(c_source_path),
+                            "c_source_sha256": str(evaluator_identity["source_sha256"]),
+                            "candidate_evaluator_identity": str(
+                                prefix_owner_evaluator["implementation"]
+                            ),
+                            "candidate_cache_identity": str(
+                                prefix_owner_evaluator["cache_identity"]
+                            ),
+                            "owner_internal_rhs_strategy": condensed.internal_rhs_strategy,
+                            "owner_geometry_policy": condensed.build_audit["geometry_policy"],
+                            "appended_rows": int(condensed.appended_rows),
+                        }
+                        summary["b0_v9_saved_prefix_binding"] = prefix_receipt
+
+                        native_volume_action_calls = 0
+
+                        def native_volume_apply(values: np.ndarray) -> np.ndarray:
+                            nonlocal native_volume_action_calls
+                            source_values = np.asarray(values, dtype=np.complex128)
+                            if (
+                                source_values.shape != (condensed.full_rows,)
+                                or not np.isfinite(source_values).all()
+                            ):
+                                raise ValueError(
+                                    "Task41 V9 native volume input has an invalid full-space layout"
+                                )
+                            source = PETSc.Vec().createWithArray(
+                                source_values, comm=MPI.COMM_SELF
+                            )
+                            try:
+                                result_vec = context["volume_action"].apply(source)
+                                output = np.array(
+                                    result_vec.getArray(readonly=True),
+                                    dtype=np.complex128,
+                                    copy=True,
+                                )
+                            finally:
+                                source.destroy()
+                            native_volume_action_calls += 1
+                            return output
+
+                        def save_v9_array(name: str, values: np.ndarray) -> dict[str, Any]:
+                            record = _atomic_save_array(directory, f"{name}.npy", np.asarray(values))
+                            return {
+                                "path": str((directory / record["path"]).resolve()),
+                                "bytes": int(record["bytes"]),
+                                "sha256": str(record["file_sha256"]),
+                                "array_sha256": str(record["array_sha256"]),
+                                "shape": list(record["shape"]),
+                                "dtype": str(record["dtype"]),
+                            }
+
+                        def v9_audit_progress(event: Mapping[str, Any]) -> None:
+                            facts = dict(event)
+                            runtime.marker(
+                                "task41_b0_v9_compact_volume_audit_progress", facts
+                            )
+                            if facts.get("status") in {"STARTED", "COMPLETED", "GATE_FAILED"}:
+                                runtime.sample("task41_b0_v9_compact_volume_audit_progress")
+
+                        identity_report = audit_task41_v4_volume_identity(
+                            condensed,
+                            donor,
+                            allocation_gate=allocation_gate,
+                            progress_callback=v9_audit_progress,
+                            persist_array=save_v9_array,
+                            output_directory=directory,
+                            native_volume_apply=native_volume_apply,
+                            artifact_prefix="task41_p0_b0_v9_compact_candidate",
+                            candidate_identity=str(evaluator_audit["implementation"]),
+                            candidate_cache_identity=str(evaluator_audit["cache_identity"]),
+                            compact_evidence=True,
+                            recovery_refinement_max_steps=3,
+                            reserved_followup_evidence_bytes=TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
+                        )
+                        identity_path = directory / "task41_p0_b0_v9_compact_volume_audit.json"
+                        _write_json(identity_path, identity_report)
+                        allocation_gate(
+                            "task41_v9_independent_terminal_checker",
+                            {
+                                "additional_payload_bytes": 0,
+                                "workspace_bytes": 2
+                                * condensed.full_rows
+                                * np.dtype(np.complex128).itemsize,
+                                "native_volume_action_calls": 2,
+                                "saved_surface_or_carrier_reads": 0,
+                                "reopens_compact_artifacts": True,
+                                "runs_before_full_surface_donor_scan": True,
+                            },
+                        )
+                        independent_check = check_task41_b0_v9_compact_volume_audit(
+                            identity_report,
+                            donor,
+                            output_directory=directory,
+                            native_volume_apply=native_volume_apply,
+                            expected_candidate_identity=str(evaluator_audit["implementation"]),
+                            expected_cache_identity=str(evaluator_audit["cache_identity"]),
+                        )
+                        checker_path = directory / "task41_p0_b0_v9_compact_independent_check.json"
+                        _write_json(checker_path, independent_check)
+                        summary["b0_v9_compact_volume_audit"] = {
+                            "schema": identity_report["schema"],
+                            "status": identity_report["status"],
+                            "path": str(identity_path),
+                            "bytes": int(identity_path.stat().st_size),
+                            "sha256": sha256_file(identity_path),
+                            "action_gate": identity_report["candidate_full_action_gate"],
+                            "recovery_gate": identity_report["candidate_recovery_gate"],
+                            "new_evidence_bytes": identity_report["new_evidence_bytes"],
+                            "cumulative_evidence_bytes": identity_report["cumulative_evidence_bytes"],
+                        }
+                        summary["b0_v9_independent_check"] = {
+                            **independent_check,
+                            "path": str(checker_path),
+                            "bytes": int(checker_path.stat().st_size),
+                            "sha256": sha256_file(checker_path),
+                            "native_volume_action_calls_total": native_volume_action_calls,
+                        }
+                        runtime.marker(
+                            "task41_b0_v9_compact_volume_qualification",
+                            {
+                                "audit_status": identity_report["status"],
+                                "independent_checker_status": independent_check["status"],
+                                "independent_checker_passed": independent_check["passed"],
+                                "audit_path": str(identity_path),
+                                "checker_path": str(checker_path),
+                                "before_full_surface_donor_scan": True,
+                            },
+                        )
+                        if (
+                            identity_report.get("status") != "PASS"
+                            or independent_check.get("passed") is not True
+                        ):
+                            raise ValueError(
+                                "Task41 V9 compact action/recovery audit or independent checker failed"
+                            )
+                        return {
+                            "donor": donor,
+                            "owner_result": owner_result,
+                            "compiled_form": compiled_form,
+                            "prefix_receipt": prefix_receipt,
+                            "identity_report": identity_report,
+                            "independent_check": independent_check,
+                            "native_volume_action_calls": native_volume_action_calls,
+                        }
+                    except Exception:
+                        if isinstance(owner_result, Mapping):
+                            condensed = owner_result.get("condensed")
+                            if condensed is not None and hasattr(condensed, "destroy"):
+                                condensed.destroy()
+                        raise
+
+                pre_donor_qualification_callback = qualify_task41_b0_v9_before_donor_scan
+
             target_bundle = build_same_mesh_physical_action(
                 target_levels,
                 cfg,
@@ -11048,8 +11473,10 @@ def run_task40_v10_p6_reference_worker(
                     if is_task41_b0
                     else None
                 ),
+                pre_donor_qualification_callback=pre_donor_qualification_callback,
                 stage_callback=target_stage_callback,
             )
+            target_condensed = _task41_b0_v9_pre_donor_condensed(target_bundle)
             if len(target_bundle["modes"]) != periodic_profile.mode_count:
                 raise ValueError(
                     f"{case_label} target must retain all "
@@ -11146,26 +11573,41 @@ def run_task40_v10_p6_reference_worker(
                 b0_recovery_refinement_max_steps = 0
             else:
                 support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
-            compiled_target = fem.form(
-                target_bundle["volume_action"].bilinear_form,
-                jit_options=dict(SAME_MESH_JIT_OPTIONS),
-            )
-            target_condensed = build_unconstrained_assembly_time_condensation(
-                compiled_target,
-                target_levels["spaces"][6],
-                target_levels["mesh_data"].cell_tags,
-                mpc=target_levels["floquets"][6].mpc,
-                appended_global_rows=len(target_bundle["dtn_action"].carrier.entries),
-                appended_support_owned_cell_groups=support_groups,
-                appended_support_group_by_row=support_rows,
-                sum_duplicate_cell_integrals=True,
-                strict_local_checks=True,
-                materialize_global_matrix=False,
-                retain_local_schur_for_matrix_free=True,
-                share_identity_cache=is_v16 or is_v17,
-                preserve_exact_geometry=True,
-                allocation_gate=allocation_gate,
-            )
+            target_volume_form = target_bundle["volume_action"].bilinear_form
+            task41_b0_v9_donor = None
+            task41_b0_v9_owner_result = None
+            task41_b0_v9_pre_donor_state = target_bundle.get("pre_donor_qualification")
+            if is_task41_b0 and task41_internal_rhs_strategy == "same_lu_rhs_solve":
+                if not isinstance(task41_b0_v9_pre_donor_state, Mapping):
+                    raise ValueError("Task41 V9 physical-action builder omitted its pre-donor qualification")
+                task41_b0_v9_donor = task41_b0_v9_pre_donor_state["donor"]
+                task41_b0_v9_owner_result = task41_b0_v9_pre_donor_state["owner_result"]
+                target_condensed = task41_b0_v9_owner_result["condensed"]
+                compiled_target = task41_b0_v9_pre_donor_state["compiled_form"]
+            else:
+                compiled_target = fem.form(
+                    target_volume_form,
+                    jit_options=dict(SAME_MESH_JIT_OPTIONS),
+                )
+                target_condensed = build_unconstrained_assembly_time_condensation(
+                    compiled_target,
+                    target_levels["spaces"][6],
+                    target_levels["mesh_data"].cell_tags,
+                    mpc=target_levels["floquets"][6].mpc,
+                    appended_global_rows=len(target_bundle["dtn_action"].carrier.entries),
+                    appended_support_owned_cell_groups=support_groups,
+                    appended_support_group_by_row=support_rows,
+                    sum_duplicate_cell_integrals=True,
+                    strict_local_checks=True,
+                    materialize_global_matrix=False,
+                    retain_local_schur_for_matrix_free=True,
+                    share_identity_cache=is_v16 or is_v17,
+                    preserve_exact_geometry=True,
+                    internal_rhs_strategy=(
+                        task41_internal_rhs_strategy if is_task41_b0 else "stored_T"
+                    ),
+                    allocation_gate=allocation_gate,
+                )
             if is_task41_b0:
                 saved_surface_support.validate_condensed(target_condensed)
             target_identity_cache_audit = {
@@ -11217,6 +11659,20 @@ def run_task40_v10_p6_reference_worker(
                     progress_callback=saved_surface_apply_progress,
                     progress_interval_seconds=60.0,
                 )
+                if task41_internal_rhs_strategy == "same_lu_rhs_solve":
+                    pre_donor_state = target_bundle.get("pre_donor_qualification")
+                    if not isinstance(pre_donor_state, Mapping):
+                        raise ValueError("Task41 V9 qualification did not run before the donor scan")
+                    identity_report = pre_donor_state["identity_report"]
+                    independent_check = pre_donor_state["independent_check"]
+                    if (
+                        identity_report.get("status") != "PASS"
+                        or independent_check.get("passed") is not True
+                        or independent_check.get("errors")
+                    ):
+                        raise ValueError("Task41 V9 pre-donor compact qualification did not pass")
+                    b0_recovery_refinement_max_steps = 3
+                    summary["b0_recovery_refinement_max_steps"] = 3
                 target_action = build_p6_cell_condensed_action_from_generated(
                     target_condensed,
                     original_port_block,
@@ -11225,6 +11681,25 @@ def run_task40_v10_p6_reference_worker(
                     global_direct_provider=saved_surface_provider,
                     owns_condensed=True,
                 )
+                target_owner_binding = {
+                    "schema": "task41.p0.b0.live_target_owner_identity.v1",
+                    "action_uses_same_condensed_object": target_action.condensed is target_condensed,
+                    "internal_rhs_strategy": target_condensed.internal_rhs_strategy,
+                    "geometry_policy": target_condensed.build_audit.get("geometry_policy"),
+                    "active_rows": int(target_condensed.active_rows),
+                    "appended_rows": int(target_condensed.appended_rows),
+                    "target_action_owns_condensed": bool(target_action._owns_condensed),
+                }
+                if not (
+                    target_owner_binding["action_uses_same_condensed_object"]
+                    and target_owner_binding["target_action_owns_condensed"]
+                    and target_owner_binding["internal_rhs_strategy"] == task41_internal_rhs_strategy
+                ):
+                    raise ValueError("Task41 B0 real action did not receive the qualified live owner")
+                summary["b0_actual_target_owner_binding"] = target_owner_binding
+                # Transfer the sole live FE/MPC/LU/R/S/J owner to the action
+                # that qualification and the real target consumer both use.
+                target_condensed = None
                 donor_producer = task41_b0_saved_surface_donor.get("producer", {})
                 provenance = resolved_payload.get("provenance", {})
                 b0_recovery_identity = {
@@ -11255,55 +11730,56 @@ def run_task40_v10_p6_reference_worker(
                     ),
                     "saved_surface_support_certificate": support_certificate,
                 }
-                pair_consumer_checks = _task41_b0_saved_surface_consumer_checks(
-                    carrier=carrier,
-                    action=target_action,
-                    provider=saved_surface_provider,
-                    volume_action=target_bundle["volume_action"],
-                    original_port_block=original_port_block,
-                    donor_binding=task41_b0_saved_surface_donor,
-                    output_directory=directory,
-                    allocation_gate=allocation_gate,
-                    runtime=runtime,
-                    compiled_form=compiled_target,
-                    target_levels=target_levels,
-                    run_identity=b0_recovery_identity,
-                    summary=summary,
-                )
-                recovery_check = pair_consumer_checks[-1]
-                recovery_manifest = recovery_check.get("recovery_manifest", {})
-                if (
-                    recovery_check.get("status") != "PASS"
-                    or recovery_check.get("saved_surface_support_certificate_passed") is not True
-                    or recovery_manifest.get("stage") != "FULL_ACTION_QUALIFIED"
-                ):
-                    raise ValueError("Task41 B0 native recovery evidence did not qualify")
-                b0_recovery_refinement_max_steps = 3
-                summary["b0_recovery_refinement_max_steps"] = (
-                    b0_recovery_refinement_max_steps
-                )
-                summary["b0_recovery_evidence"] = {
-                    "schema": "task41.p0.b0.recovery_evidence_binding.v1",
-                    "manifest": dict(recovery_manifest),
-                    "receipt_path": recovery_check.get("receipt_path"),
-                    "stage": recovery_manifest.get("stage"),
-                    "status": recovery_check.get("status"),
-                    "same_lu_refinement_loop": dict(
-                        recovery_check.get("same_lu_refinement_loop", {})
-                    ),
-                    "run_identity": b0_recovery_identity,
-                    "limits": recovery_check.get("limits"),
-                }
-                summary["b0_saved_surface_p6_consumer_checks"] = pair_consumer_checks
-                _write_json(
-                    directory / "task41_b0_saved_surface_p6_consumer_checks.json",
-                    {
-                        "schema": "task41.p0.b0.saved_surface_p6_consumer_check_set.v1",
-                        "status": "PASS",
-                        "checks": pair_consumer_checks,
-                        "source_audit": dict(saved_source.audit),
-                    },
-                )
+                if task41_internal_rhs_strategy == "stored_T":
+                    pair_consumer_checks = _task41_b0_saved_surface_consumer_checks(
+                        carrier=carrier,
+                        action=target_action,
+                        provider=saved_surface_provider,
+                        volume_action=target_bundle["volume_action"],
+                        original_port_block=original_port_block,
+                        donor_binding=task41_b0_saved_surface_donor,
+                        output_directory=directory,
+                        allocation_gate=allocation_gate,
+                        runtime=runtime,
+                        compiled_form=compiled_target,
+                        target_levels=target_levels,
+                        run_identity=b0_recovery_identity,
+                        summary=summary,
+                    )
+                    recovery_check = pair_consumer_checks[-1]
+                    recovery_manifest = recovery_check.get("recovery_manifest", {})
+                    if (
+                        recovery_check.get("status") != "PASS"
+                        or recovery_check.get("saved_surface_support_certificate_passed") is not True
+                        or recovery_manifest.get("stage") != "FULL_ACTION_QUALIFIED"
+                    ):
+                        raise ValueError("Task41 B0 native recovery evidence did not qualify")
+                    b0_recovery_refinement_max_steps = 3
+                    summary["b0_recovery_refinement_max_steps"] = (
+                        b0_recovery_refinement_max_steps
+                    )
+                    summary["b0_recovery_evidence"] = {
+                        "schema": "task41.p0.b0.recovery_evidence_binding.v1",
+                        "manifest": dict(recovery_manifest),
+                        "receipt_path": recovery_check.get("receipt_path"),
+                        "stage": recovery_manifest.get("stage"),
+                        "status": recovery_check.get("status"),
+                        "same_lu_refinement_loop": dict(
+                            recovery_check.get("same_lu_refinement_loop", {})
+                        ),
+                        "run_identity": b0_recovery_identity,
+                        "limits": recovery_check.get("limits"),
+                    }
+                    summary["b0_saved_surface_p6_consumer_checks"] = pair_consumer_checks
+                    _write_json(
+                        directory / "task41_b0_saved_surface_p6_consumer_checks.json",
+                        {
+                            "schema": "task41.p0.b0.saved_surface_p6_consumer_check_set.v1",
+                            "status": "PASS",
+                            "checks": pair_consumer_checks,
+                            "source_audit": dict(saved_source.audit),
+                        },
+                    )
             else:
                 target_action = build_p6_cell_condensed_action_from_carrier(
                     target_condensed,
@@ -12898,6 +13374,9 @@ def run_task40_v10_p6_reference_worker(
                 saved_port_owner=saved_port_owner,
                 surface_functional_checkpoint=surface_functional_checkpoint,
                 stage_callback=saved_stage_callback,
+                internal_rhs_strategy=(
+                    task41_internal_rhs_strategy if is_task41_b0 else "stored_T"
+                ),
             )
             prebuilt_twist0_owner = local_owner
             local_owner.setdefault("owner_receipt", {}).update(
@@ -13191,6 +13670,7 @@ def run_task40_v10_p6_reference_worker(
                         if factor_config is not None
                         else None
                     ),
+                    internal_rhs_strategy=task41_internal_rhs_strategy,
                     regular_reference_fills_y_period=is_task41_p0_iterative,
                 )
             except BaseException as error:
@@ -14345,11 +14825,7 @@ def run_task40_v10_p6_reference_worker(
             physical_rhs.destroy()
         if final_full_solution is not None:
             final_full_solution.destroy()
-        if target_condensed is not None:
-            try:
-                target_condensed.destroy()
-            except Exception:
-                pass
+        _task41_destroy_pending_condensed(target_condensed, summary=summary)
         if pc is not None and pc.owner is not None:
             try:
                 summary["reference_pc_audit_before_failure_cleanup"] = pc.detach()

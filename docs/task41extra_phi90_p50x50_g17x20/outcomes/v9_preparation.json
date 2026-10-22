@@ -1,220 +1,120 @@
 {
-  "schema": "task41.v9.preparation_receipt.v1",
-  "status": "PREPARATION_ONLY_PENDING_WINDOW_APPROVAL",
-  "recorded_at_utc": "2026-10-21T15:26:33.111849+00:00",
-  "review_head": "b24b6ce6577225af7fb03e4a62bef80126efc9b8",
-  "results_base": "a63e51f39ee7ed35b03d521cb42fa3fe6c9f834f",
-  "source_binding": "working_tree_files_tested_before_controller_freeze",
-  "source_files": [
-    {
-      "path": "benchmarks/subreaper_watchdog.py",
-      "bytes": 114187,
-      "sha256": "0602081b5d685f25c95b4bc6f476165c175ecfb46c740c31fd4b3eba3c286784"
-    },
-    {
-      "path": "scripts/run_case_in_user_service.sh",
-      "bytes": 19940,
-      "sha256": "6639018cd540bf4352e436419cdb2508678da3a831ab92b4c8eb24071ab9e6ba"
-    },
-    {
-      "path": "scripts/task40_v20_service_workflow.py",
-      "bytes": 658191,
-      "sha256": "0afd5e0e784c6198e7d5ba8f8bee70a8c330b6b010dc029bb84452ee92317a2d"
-    },
-    {
-      "path": "src/runners/physical_dual_cell_condensed_lowmem_v20.py",
-      "bytes": 113310,
-      "sha256": "5fa3a9521923492979ad75dfff15e9a52fa103ee63429f90a95b24e5b9ef206c"
-    },
-    {
-      "path": "src/runners/physical_retained_outer_adapter.py",
-      "bytes": 98402,
-      "sha256": "e656d6877a0c4d46c747ef82f32fdb37259f0cf48006919845175f09562f6294"
-    },
-    {
-      "path": "src/runners/task038_full3d_iterative.py",
-      "bytes": 53784,
-      "sha256": "b93fa2cc1ac137274d3d2537183fe058d2eb3714cbc256bc1dfd780bca842ff3"
-    },
-    {
-      "path": "src/runners/task40_v10_output_checker.py",
-      "bytes": 164052,
-      "sha256": "a1b6e6032bc80e8196621b23e2ba3f629ab84e876ca06bebfa838851c0dc115c"
-    },
-    {
-      "path": "src/runners/task40_v10_worker.py",
-      "bytes": 695051,
-      "sha256": "f50b1534c5959de0aca48b6a5cd0812b70bddafe7293b3eb64831f8fc13a6171"
-    },
-    {
-      "path": "src/runners/task41_p0_checker.py",
-      "bytes": 384788,
-      "sha256": "756dcc756c124eac4cee8c5bf8ab6377c9f5c8cef33d2276dd04837b7009bf3d"
-    },
-    {
-      "path": "src/runners/task41_p0_contract.py",
-      "bytes": 114825,
-      "sha256": "5c89d611f75e987056d634e001d5a73ef39abb839919a9897bc1740b3051a260"
-    },
-    {
-      "path": "src/solvers/hcurl_assembly_time_condensation.py",
-      "bytes": 215182,
-      "sha256": "d45dd5ede0684b969c4bedef7e6c43df817d2eb1a8800ad3e945e308d9204ba8"
-    },
-    {
-      "path": "src/solvers/p6_cell_condensed_action.py",
-      "bytes": 197108,
-      "sha256": "dc314cb0db912abfe5f683de35d88da580f62291aba4586cb8c234353562c01c"
-    },
-    {
-      "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
-      "bytes": 137737,
-      "sha256": "9ad52fae4b270af27e05c86355eb4d0761e83edf50b65d34df62dbe0408462d9"
-    },
-    {
-      "path": "src/test/test_task40_v10_output_checker.py",
-      "bytes": 67100,
-      "sha256": "fe8e5b948afbf64c2dcd856f84a80e46620874ffc7d9cd65e806a7710ee925dc"
-    },
-    {
-      "path": "src/test/test_task41_b0_dispatch.py",
-      "bytes": 31514,
-      "sha256": "9cebfb202708e3ad4c92a59519bbe2f080f003ee5669c5ffba717e299c065ba0"
-    },
-    {
-      "path": "src/test/test_task41_p0_contract.py",
-      "bytes": 77469,
-      "sha256": "00f2306593b07a0df4ce1d262e12751caf6b2c06968e10997a881ce80e86df09"
-    },
-    {
-      "path": "src/test/test_task41_p0_saved_output_continuation.py",
-      "bytes": 123082,
-      "sha256": "aa49753b36e774854cba341ff3f8d14d8b154c27c293e3d03f4001988a7cb055"
-    },
-    {
-      "path": "src/test/test_task41_v8_selected_trace_star.py",
-      "bytes": 55153,
-      "sha256": "955fde1b39a105aa2e645f2331537ebe88b3aaee5e565ade44e360340df7163d"
-    }
-  ],
-  "new_window_created": false,
-  "formal_saved_screen": "NOT_RUN",
-  "full_action": "NOT_RUN",
   "candidate_recovery": "NOT_RUN",
+  "costs": {
+    "executor_first_implementation_turn_utc": "2026-10-21T13:19:04Z",
+    "full_preparation_parent_seconds": "UNKNOWN",
+    "j_retained_payload_bytes_derived": 87091200000,
+    "local_numeric_plus_j_bytes_derived": 435653172000,
+    "new_formal_peak_rss_bytes": null,
+    "saved_screen_process_tree_sampled_rss_peak_bytes": 378245120,
+    "saved_screen_service_elapsed_seconds": 21.348425769712776,
+    "saved_screen_swap_peak_bytes": 0,
+    "saved_screen_systemd_cpu_seconds": 27.481,
+    "saved_screen_unit_cgroup_memory_peak_bytes": 201084928,
+    "scientific_getrs_seconds": "NOT_RUN"
+  },
+  "execution_window": {
+    "closeout_seconds": 1200,
+    "continuity": "same window and ledger; no T0 reset",
+    "deadline_utc": "2026-10-23T01:12:42.209257168Z",
+    "numerical_deadline_utc": "2026-10-23T00:52:42.209257168Z",
+    "numerical_seconds": 85200,
+    "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v9_24h.json",
+    "sha256": "a7cac8f274dc17f552c57462da0a386a0c808580b8fc1172c1c88f0ee3075477",
+    "t0_utc": "2026-10-22T01:12:42.209257168Z",
+    "total_seconds": 86400
+  },
+  "formal_saved_screen": "MEASURED_LOCAL_CANDIDATE_READY",
+  "frozen_screen_source_sha": "708d0c3b99cde06561c13e89f85ed262f1756af7",
+  "full_action": "NOT_RUN",
+  "new_window_created": true,
   "official": false,
   "pending_full_integration": [
     "Task41 actual volume-only owner strategy/J binding",
     "compact action/recovery output and independent terminal checker",
     "qualified owner same-process handoff to target/reference"
   ],
-  "tests": {
-    "activation": "scripts/activate_myfenics_wsl.sh",
-    "command_argv": [
-      "python",
-      "-m",
-      "pytest",
-      "-q",
-      "--tb=short",
-      "src/test/test_task41_v8_selected_trace_star.py::test_v8_rhs_counterfactual_uses_original_full_storage_row_once",
-      "src/test/test_task41_v8_selected_trace_star.py::test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows",
-      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states",
-      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor",
-      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_contract_wrapper_is_local_only_and_persists_result",
-      "src/test/test_task41_p0_saved_output_continuation.py::test_v9_saved_star_selector_passes_candidate_binding_guard_without_fe",
-      "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j",
-      "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_stored_t_owner_destroy_keeps_legacy_cache_references",
-      "src/test/test_task40_v10_output_checker.py::test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior",
-      "src/test/test_task40_v10_output_checker.py::test_task41_b0_v9_authority_missing_strategy_is_rejected"
-    ],
-    "final_result": "10 passed in 0.51s",
-    "raw": {
-      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261021/final_targeted.txt",
-      "bytes": 99,
-      "sha256": "3489eb2434195e306846bfcca847a76580c07ad48fe60931d3b8ca824d487e2e"
-    },
-    "abi": {
-      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261021/abi_preflight.txt",
-      "bytes": 527,
-      "sha256": "9c5f454497bb6e17f1cdf5017c8234052fe1c9f4f57293f6eb10b3bcf4716cd1"
-    },
-    "executor_prior_targeted": "26 passed in 1.04s before final review fixes; final executor affected nodes 10 passed in 0.54s",
-    "legacy_expired_fixture_failures": 3,
-    "ruff": "NOT_RUN: module unavailable",
-    "full_repository_pytest": "NOT_RUN",
-    "ci": "NOT_RUN"
-  },
-  "scope": "Local code/fixture preparation only. No remote formal service, FE rebuild or saved scientific computation.",
-  "costs": {
-    "full_preparation_parent_seconds": "UNKNOWN",
-    "executor_first_implementation_turn_utc": "2026-10-21T13:19:04Z",
-    "scientific_getrs_seconds": "NOT_RUN",
-    "j_retained_payload_bytes_derived": 87091200000,
-    "local_numeric_plus_j_bytes_derived": 435653172000,
-    "new_formal_peak_rss_bytes": null
-  },
+  "recorded_at_utc": "2026-10-21T15:26:33.111849+00:00",
+  "results_base": "a63e51f39ee7ed35b03d521cb42fa3fe6c9f834f",
+  "review_head": "b24b6ce6577225af7fb03e4a62bef80126efc9b8",
   "review_v10_local_fixes": {
+    "abi_preflight": {
+      "PETSc.IntType": "numpy.int32",
+      "PETSc.ScalarType": "numpy.complex128",
+      "activation": "scripts/activate_myfenics_wsl.sh",
+      "module_paths": {
+        "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+        "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+        "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+        "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py"
+      },
+      "qualified_activation": true,
+      "raw": {
+        "bytes": 690,
+        "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/abi_preflight_v10.txt",
+        "sha256": "d85aae6a016240073a8c1a519b4bd723b9b1dcca196631317039a2a73a6daf0c"
+      },
+      "sys_executable": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+      "sys_executable_under_venv": true
+    },
+    "baseline_head": "9e9ecf0e0ee7f658fc7d84e7302d8df936e7ca0f",
+    "candidate_recovery": "NOT_RUN",
+    "controller_review": {
+      "formal_saved_screen": "NOT_RUN",
+      "full_preparation_parent_seconds": "UNKNOWN",
+      "old_v8_helper_unchanged": true,
+      "source_and_evidence_hashes_rechecked": true,
+      "window": "PENDING_USER_APPROVAL"
+    },
+    "executor_no_commit_or_push": true,
+    "formal_saved_screen": "NOT_RUN",
+    "full_action": "NOT_RUN",
+    "negative_records": [
+      "Returned correction was independently checked against full -(J@z); fixtures keep z valid and corrupt correction shape, dtype, finiteness, sign, and value, each rejected.",
+      "j3 b_i and t_c were each changed while updating the array SHA-256 and report/checker bindings; both paired-state checks rejected the changed input.",
+      "A strong-cancellation complex-MPC case calls the existing small action reduce_rhs(..., rhs_is_mpc_dual=True) and compares production-order selected replay; the grouped replay differs. The same fixture compares selected sparse E^H S action with action.apply.",
+      "A case with equal V8-grouped and production complex128 d but a nonzero wider final-sum delta is rejected when that wider delta exceeds candidate improvement; a platform without wider longdouble reports the gate as not evaluable and cannot return READY.",
+      "An owner action with another live J borrower raises before mutation; after borrower release, retry destroys the owner and releases retained J."
+    ],
+    "new_window_created": false,
+    "official": false,
+    "response_v9_created": false,
     "review": {
       "path": "docs/task41extra_phi90_p50x50_g17x20/review_report_v10.md",
       "sha256": "04e62197267551baeab5e258111fd5ed3f7b8f28204d7b743d074664e1fa7b91"
     },
-    "baseline_head": "9e9ecf0e0ee7f658fc7d84e7302d8df936e7ca0f",
-    "source_binding": "The listed source bytes passed the final local targeted run. Executor did not commit/push; controller reviewed the diff and verified source/evidence hashes before central commit.",
-    "status": "LOCAL_FIXTURES_PASS_FORMAL_SAVED_SCREEN_NOT_RUN",
     "schema_changed": false,
-    "response_v9_created": false,
-    "official": false,
-    "new_window_created": false,
-    "formal_saved_screen": "NOT_RUN",
-    "full_action": "NOT_RUN",
-    "candidate_recovery": "NOT_RUN",
+    "source_binding": "The listed source bytes passed the final local targeted run. Executor did not commit/push; controller reviewed the diff and verified source/evidence hashes before central commit.",
     "source_files": [
       {
-        "path": "src/runners/task41_p0_checker.py",
         "bytes": 412633,
+        "path": "src/runners/task41_p0_checker.py",
         "sha256": "734145bb52ff69aa7b59d0f512a8948267635464378bcbf27d33a982e44a0fd9"
       },
       {
-        "path": "src/solvers/p6_cell_condensed_action.py",
         "bytes": 197705,
+        "path": "src/solvers/p6_cell_condensed_action.py",
         "sha256": "b177c060fa8f619659f4291f205c54d1219935eb1da20e1f4aac3afcd9d80382"
       },
       {
-        "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
         "bytes": 141889,
+        "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
         "sha256": "42dcd17340e29e46c22ff192c3a8edd17039065e4f1854c4b98bfd485bf5a684"
       },
       {
-        "path": "src/test/test_task41_v8_selected_trace_star.py",
         "bytes": 69815,
+        "path": "src/test/test_task41_v8_selected_trace_star.py",
         "sha256": "792a29688ba370dd1313c96132d6a54ac6f08b19907b20c8228704dcb5b9e0c3"
       },
       {
-        "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v9_preparation.md",
         "bytes": 10803,
+        "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v9_preparation.md",
         "sha256": "b64d11253729ab1fa78d11f8c4a460445830ad1f48fc5d300c1dd3753fdf3b8c"
       }
     ],
-    "abi_preflight": {
-      "activation": "scripts/activate_myfenics_wsl.sh",
-      "qualified_activation": true,
-      "sys_executable": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
-      "sys_executable_under_venv": true,
-      "PETSc.ScalarType": "numpy.complex128",
-      "PETSc.IntType": "numpy.int32",
-      "module_paths": {
-        "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
-        "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
-        "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
-        "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
-      },
-      "raw": {
-        "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/abi_preflight_v10.txt",
-        "bytes": 690,
-        "sha256": "d85aae6a016240073a8c1a519b4bd723b9b1dcca196631317039a2a73a6daf0c"
-      }
-    },
+    "status": "LOCAL_FIXTURES_PASS_FORMAL_SAVED_SCREEN_NOT_RUN",
     "tests": {
-      "compileall": "passed for the four source/test Python files listed above",
+      "ci": "NOT_RUN",
       "command_argv": [
         "python",
         "-m",
@@ -236,6 +136,9 @@
         "src/test/test_task40_v10_output_checker.py::test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior",
         "src/test/test_task40_v10_output_checker.py::test_task41_b0_v9_authority_missing_strategy_is_rejected"
       ],
+      "compileall": "passed for the four source/test Python files listed above",
+      "final_result": "14 passed in 0.61s",
+      "full_repository_pytest": "NOT_RUN",
       "nodes": [
         "src/test/test_task41_v8_selected_trace_star.py::test_v8_rhs_counterfactual_uses_original_full_storage_row_once",
         "src/test/test_task41_v8_selected_trace_star.py::test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows",
@@ -252,29 +155,334 @@
         "src/test/test_task40_v10_output_checker.py::test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior",
         "src/test/test_task40_v10_output_checker.py::test_task41_b0_v9_authority_missing_strategy_is_rejected"
       ],
-      "final_result": "14 passed in 0.61s",
       "raw": {
-        "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/final_targeted_v10.txt",
         "bytes": 99,
+        "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/final_targeted_v10.txt",
         "sha256": "19c8483afe6819e0a6a3fc8ef9a27080703cac338577a8cbfd95d69c3e927b92"
-      },
-      "full_repository_pytest": "NOT_RUN",
-      "ci": "NOT_RUN"
-    },
-    "negative_records": [
-      "Returned correction was independently checked against full -(J@z); fixtures keep z valid and corrupt correction shape, dtype, finiteness, sign, and value, each rejected.",
-      "j3 b_i and t_c were each changed while updating the array SHA-256 and report/checker bindings; both paired-state checks rejected the changed input.",
-      "A strong-cancellation complex-MPC case calls the existing small action reduce_rhs(..., rhs_is_mpc_dual=True) and compares production-order selected replay; the grouped replay differs. The same fixture compares selected sparse E^H S action with action.apply.",
-      "A case with equal V8-grouped and production complex128 d but a nonzero wider final-sum delta is rejected when that wider delta exceeds candidate improvement; a platform without wider longdouble reports the gate as not evaluable and cannot return READY.",
-      "An owner action with another live J borrower raises before mutation; after borrower release, retry destroys the owner and releases retained J."
-    ],
-    "executor_no_commit_or_push": true,
-    "controller_review": {
-      "old_v8_helper_unchanged": true,
-      "source_and_evidence_hashes_rechecked": true,
-      "formal_saved_screen": "NOT_RUN",
-      "window": "PENDING_USER_APPROVAL",
-      "full_preparation_parent_seconds": "UNKNOWN"
+      }
     }
+  },
+  "saved_local_screen": {
+    "candidate_gate_blockers": [],
+    "columns": [
+      {
+        "column": 0,
+        "d_new": [
+          6.366462912410498e-10,
+          -5.334186425898224e-10
+        ],
+        "d_old": [
+          -2.5320332497358322e-09,
+          -1.3897079043090343e-09
+        ],
+        "improvement_margin_after_uncertainty": 2.044299577056769e-09,
+        "new_absolute_d": 8.305744689149506e-10,
+        "new_uncertainty": 6.1852326820078106e-12,
+        "old_absolute_d": 2.8883352362679107e-09,
+        "old_uncertainty": 7.275957614183426e-12,
+        "passed": true,
+        "states": "j0,j3"
+      },
+      {
+        "column": 1,
+        "d_new": [
+          8.409954954657906e-10,
+          1.556608397734749e-09
+        ],
+        "d_old": [
+          3.1201892181087487e-09,
+          -4.780750684219015e-09
+        ],
+        "improvement_margin_after_uncertainty": 3.91595347012099e-09,
+        "new_absolute_d": 1.7692662680591898e-09,
+        "new_uncertainty": 9.094947017729282e-12,
+        "old_absolute_d": 5.708866600426276e-09,
+        "old_uncertainty": 1.4551915228366852e-11,
+        "passed": true,
+        "states": "j0,j3"
+      }
+    ],
+    "contract_sha256": "37d287014e0b1d3a3cc9201d138ce4880263e2a8a5d2c5c2fbf687f52603a0ae",
+    "identity_replay_closed": true,
+    "local_candidate_ready": true,
+    "official_result": false,
+    "production_core_replay_closed": true,
+    "result_bytes": 138731,
+    "result_path": "results/task41extra_phi90_p50x50_g17x20/task41_b0_v9_saved_star_screen_708d0c3b_20261022T0133Z_attempt3/task41_p0_b0_v9_saved_star_screen.json",
+    "result_sha256": "c3be6adeb8c9b5e27d193c597302117db9be78118592e444bd45801b30535684",
+    "scope_note": "saved-local screening only; not FE/full action/recovery and not official",
+    "screen_completed": true,
+    "service_receipt_bytes": 711522,
+    "service_receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_b0_v9_saved_star_screen_708d0c3b_20261022T0133Z_attempt3.service/task41_p0_service_receipt.json",
+    "service_receipt_sha256": "7d14eaf65585a29a4de736a5008a4377dea9b89b372581301e6cce609909b246",
+    "status": "LOCAL_CANDIDATE_READY",
+    "wide_significand_bits_including_leading_bit": 64,
+    "window_sha256": "a7cac8f274dc17f552c57462da0a386a0c808580b8fc1172c1c88f0ee3075477"
+  },
+  "saved_screen_recorded_at_utc": "2026-10-22T01:51:37Z",
+  "saved_screen_resources": {
+    "complete_child_identity_coverage": true,
+    "descendants_cleared": true,
+    "process_tree_pss_peak_bytes": null,
+    "remaining_child_pids": [],
+    "sampled_process_tree_rss_peak_bytes": 378245120,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "service_elapsed_seconds": 21.348425769712776,
+    "service_start_utc": "2026-10-22T01:44:31.318539927Z",
+    "systemd_cpu_metric_note": "CPU time, not wall duration; previously captured from transient unit accounting",
+    "systemd_cpu_time_seconds": 27.481,
+    "unit_cgroup_memory_peak_bytes": 201084928,
+    "unit_cgroup_swap_peak_bytes": 0,
+    "watchdog_clock_end_utc": "2026-10-22T01:44:43.061272468Z",
+    "watchdog_elapsed_seconds": 11.735384862869978,
+    "watchdog_end_accounting_sample_utc": "2026-10-22T01:44:43.067090741Z",
+    "watchdog_workflow_clock_budget_seconds": 11.742834749529719,
+    "window_cumulative_seconds_after": 1920.8579010974584,
+    "window_cumulative_seconds_before": 1900.3151092078751,
+    "wsl_global_swap_delta_pages": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "wsl_global_swap_is_diagnostic_only": true
+  },
+  "schema": "task41.v9.preparation_receipt.v1",
+  "scope": "Saved-local V9 screen measured from frozen V8 arrays; no FE rebuild, full action/recovery, 200q, or official result.",
+  "service_attempts": [
+    {
+      "attempt": 1,
+      "log_bytes": 979,
+      "log_path": "benchmarks/artifacts/user_services/task41-b0-v9-saved-star-screen-3d0dafa3-20261022t0122z-a1.log",
+      "log_sha256": "986e2949d7ec14c5ea84eba5b04144953b1b2942bc4cb8e2b81a6e3ed74efc13",
+      "reason": "source/result paths differ from registered B0 results tree",
+      "status": "failed_path_guard",
+      "unit": "task41-b0-v9-saved-star-screen-3d0dafa3-20261022t0122z-a1.service"
+    },
+    {
+      "attempt": 2,
+      "log_bytes": 1042,
+      "log_path": "benchmarks/artifacts/user_services/task41-b0-v9-saved-star-screen-3d0dafa3-20261022t0138z-a2.log",
+      "log_sha256": "19bb58ae0b18a6ed86d82e5b46f439a034d260316ffaaa51a17776cea60e4ce6",
+      "reason": "service did not receive its contracted qualified activation",
+      "status": "failed_activation_gate",
+      "unit": "task41-b0-v9-saved-star-screen-3d0dafa3-20261022t0138z-a2.service"
+    },
+    {
+      "attempt": 3,
+      "log_bytes": 213,
+      "log_path": "benchmarks/artifacts/user_services/task41-b0-v9-saved-star-screen-708d0c3b-20261022t0133z-a3.log",
+      "log_sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7",
+      "status": "completed",
+      "unit": "task41-b0-v9-saved-star-screen-708d0c3b-20261022t0133z-a3.service"
+    }
+  ],
+  "source_binding": "working_tree_files_tested_before_controller_freeze",
+  "source_files": [
+    {
+      "bytes": 114187,
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "0602081b5d685f25c95b4bc6f476165c175ecfb46c740c31fd4b3eba3c286784"
+    },
+    {
+      "bytes": 19940,
+      "path": "scripts/run_case_in_user_service.sh",
+      "sha256": "6639018cd540bf4352e436419cdb2508678da3a831ab92b4c8eb24071ab9e6ba"
+    },
+    {
+      "bytes": 658191,
+      "path": "scripts/task40_v20_service_workflow.py",
+      "sha256": "0afd5e0e784c6198e7d5ba8f8bee70a8c330b6b010dc029bb84452ee92317a2d"
+    },
+    {
+      "bytes": 113310,
+      "path": "src/runners/physical_dual_cell_condensed_lowmem_v20.py",
+      "sha256": "5fa3a9521923492979ad75dfff15e9a52fa103ee63429f90a95b24e5b9ef206c"
+    },
+    {
+      "bytes": 98402,
+      "path": "src/runners/physical_retained_outer_adapter.py",
+      "sha256": "e656d6877a0c4d46c747ef82f32fdb37259f0cf48006919845175f09562f6294"
+    },
+    {
+      "bytes": 53784,
+      "path": "src/runners/task038_full3d_iterative.py",
+      "sha256": "b93fa2cc1ac137274d3d2537183fe058d2eb3714cbc256bc1dfd780bca842ff3"
+    },
+    {
+      "bytes": 164052,
+      "path": "src/runners/task40_v10_output_checker.py",
+      "sha256": "a1b6e6032bc80e8196621b23e2ba3f629ab84e876ca06bebfa838851c0dc115c"
+    },
+    {
+      "bytes": 695051,
+      "path": "src/runners/task40_v10_worker.py",
+      "sha256": "f50b1534c5959de0aca48b6a5cd0812b70bddafe7293b3eb64831f8fc13a6171"
+    },
+    {
+      "bytes": 384788,
+      "path": "src/runners/task41_p0_checker.py",
+      "sha256": "756dcc756c124eac4cee8c5bf8ab6377c9f5c8cef33d2276dd04837b7009bf3d"
+    },
+    {
+      "bytes": 114825,
+      "path": "src/runners/task41_p0_contract.py",
+      "sha256": "5c89d611f75e987056d634e001d5a73ef39abb839919a9897bc1740b3051a260"
+    },
+    {
+      "bytes": 215182,
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "sha256": "d45dd5ede0684b969c4bedef7e6c43df817d2eb1a8800ad3e945e308d9204ba8"
+    },
+    {
+      "bytes": 197108,
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "sha256": "dc314cb0db912abfe5f683de35d88da580f62291aba4586cb8c234353562c01c"
+    },
+    {
+      "bytes": 137737,
+      "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+      "sha256": "9ad52fae4b270af27e05c86355eb4d0761e83edf50b65d34df62dbe0408462d9"
+    },
+    {
+      "bytes": 67100,
+      "path": "src/test/test_task40_v10_output_checker.py",
+      "sha256": "fe8e5b948afbf64c2dcd856f84a80e46620874ffc7d9cd65e806a7710ee925dc"
+    },
+    {
+      "bytes": 31514,
+      "path": "src/test/test_task41_b0_dispatch.py",
+      "sha256": "9cebfb202708e3ad4c92a59519bbe2f080f003ee5669c5ffba717e299c065ba0"
+    },
+    {
+      "bytes": 77469,
+      "path": "src/test/test_task41_p0_contract.py",
+      "sha256": "00f2306593b07a0df4ce1d262e12751caf6b2c06968e10997a881ce80e86df09"
+    },
+    {
+      "bytes": 123082,
+      "path": "src/test/test_task41_p0_saved_output_continuation.py",
+      "sha256": "aa49753b36e774854cba341ff3f8d14d8b154c27c293e3d03f4001988a7cb055"
+    },
+    {
+      "bytes": 55153,
+      "path": "src/test/test_task41_v8_selected_trace_star.py",
+      "sha256": "955fde1b39a105aa2e645f2331537ebe88b3aaee5e565ade44e360340df7163d"
+    }
+  ],
+  "status": "SAVED_LOCAL_SCREEN_READY_FULL_ACTION_RECOVERY_NOT_RUN",
+  "tests": {
+    "abi": {
+      "bytes": 527,
+      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261021/abi_preflight.txt",
+      "sha256": "9c5f454497bb6e17f1cdf5017c8234052fe1c9f4f57293f6eb10b3bcf4716cd1"
+    },
+    "activation": "scripts/activate_myfenics_wsl.sh",
+    "ci": "NOT_RUN",
+    "command_argv": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v8_rhs_counterfactual_uses_original_full_storage_row_once",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor",
+      "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_contract_wrapper_is_local_only_and_persists_result",
+      "src/test/test_task41_p0_saved_output_continuation.py::test_v9_saved_star_selector_passes_candidate_binding_guard_without_fe",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_stored_t_owner_destroy_keeps_legacy_cache_references",
+      "src/test/test_task40_v10_output_checker.py::test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior",
+      "src/test/test_task40_v10_output_checker.py::test_task41_b0_v9_authority_missing_strategy_is_rejected"
+    ],
+    "executor_prior_targeted": "26 passed in 1.04s before final review fixes; final executor affected nodes 10 passed in 0.54s",
+    "final_result": "10 passed in 0.51s",
+    "full_repository_pytest": "NOT_RUN",
+    "legacy_expired_fixture_failures": 3,
+    "raw": {
+      "bytes": 99,
+      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261021/final_targeted.txt",
+      "sha256": "3489eb2434195e306846bfcca847a76580c07ad48fe60931d3b8ca824d487e2e"
+    },
+    "ruff": "NOT_RUN: module unavailable"
+  },
+  "review_v10_v9_wiring": {
+    "base_head": "708d0c3b99cde06561c13e89f85ed262f1756af7",
+    "status": "LOCAL_WIRING_FIXTURES_PASS_FULL_DOMAIN_NOT_RUN",
+    "official": false,
+    "measured_local_saved_screen": "MEASURED_LOCAL_CANDIDATE_READY",
+    "full_domain_fe_action_recovery": "NOT_RUN",
+    "full_repository_pytest": "NOT_RUN",
+    "ci": "NOT_RUN",
+    "validation": {
+      "focused_nodes": [
+        "src/test/test_task41_v4_volume_only_audit.py::test_v6_volume_owner_forwards_selected_evaluator_to_actual_builder",
+        "src/test/test_task41_v4_volume_only_audit.py::test_volume_only_owner_rejects_unknown_internal_rhs_strategy_before_build",
+        "src/test/test_task41_v4_volume_only_audit.py::test_v9_compact_producer_live_checker_and_terminal_saved_replay",
+        "src/test/test_task41_v4_volume_only_audit.py::test_v9_compact_terminal_saved_replay_rejects_corrupt_bindings",
+        "src/test/test_task41_v4_volume_only_audit.py::test_v9_pre_donor_owner_is_released_if_a_post_build_gate_raises",
+        "src/test/test_343_task038_full3d_physical_pcoarse.py::test_saved_donor_volume_qualification_runs_before_source_scan",
+        "src/test/test_task41_v4_volume_only_audit.py::test_v9_pending_owner_destroy_failure_is_recorded_for_cleanup"
+      ],
+      "result": "10 passed in 0.94s",
+      "py_compile": "passed for all modified Python implementation and test files",
+      "git_diff_check": "passed",
+      "pytest_flags": [
+        "--tb=short"
+      ]
+    },
+    "wired_paths": [
+      "V9 volume owner, compact action/recovery producer, and live independent checker run in the physical builder callback before ReadOnlySurfaceFunctionalSource is constructed.",
+      "The same compiled volume form and condensed owner are reused by the target P6 action.",
+      "Worker registers the callback owner immediately after builder return and releases it if a later pre-action gate raises.",
+      "Terminal replay reopens and hashes saved arrays, recomputes frozen action/recovery gates, and reuses the live native-action receipt without rebuilding FE; support_certificate_rechecked is null.",
+      "If pending-owner destroy raises in worker finally, the exception type and message are appended to summary.cleanup_errors; cleanup continues."
+    ],
+    "source_files": [
+      {
+        "path": "src/runners/task40_v10_worker.py",
+        "bytes": 724033,
+        "sha256": "57217fa318fe66dc7171874c002aa013d10e78c4f3822a0adf8089377685b4c4"
+      },
+      {
+        "path": "src/runners/task41_p0_checker.py",
+        "bytes": 448446,
+        "sha256": "3f30a3b38d3bb640c3ba36ce221d9f2fcbbad8ba35efaa6751911bdaf7b2767a"
+      },
+      {
+        "path": "src/runners/task41_p0_contract.py",
+        "bytes": 118593,
+        "sha256": "ecb38a4afe9f194ecdb27961825b472b177c91e877e2cadc53ea54faad2557a7"
+      },
+      {
+        "path": "src/runners/task41_p0_v4_volume_only_audit.py",
+        "bytes": 265666,
+        "sha256": "c38465f71cd450ab4b1468fd01935078692003cf4c4d8d0974b9260f4566d015"
+      },
+      {
+        "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+        "bytes": 109653,
+        "sha256": "f83c8d0042cad9fab1886e08ce8bdd7435aa2f24f91770ce3df487344ee24ae4"
+      },
+      {
+        "path": "src/solvers/task40_v10_p6_yorbit.py",
+        "bytes": 331514,
+        "sha256": "9fc8f860a565d7707bd290b97d73fde50651cdb830facc3c0dca6d16ddd4e89d"
+      },
+      {
+        "path": "src/solvers/task41_v4_volume_only_audit.py",
+        "bytes": 143372,
+        "sha256": "ff06e2704d2d999fbe6b73b7eef5ac6a26a8a25e3ab9f4e6681eaa6442d4ea4b"
+      },
+      {
+        "path": "src/test/test_343_task038_full3d_physical_pcoarse.py",
+        "bytes": 39356,
+        "sha256": "ef3e11927ee8d5aedc94c1b5a20ef909e22c51989b04127f332ca338b65cb5e3"
+      },
+      {
+        "path": "src/test/test_task41_v4_volume_only_audit.py",
+        "bytes": 67246,
+        "sha256": "eb78109da6a32946c1620df9d60acc236acb4e320514468ae0a10e5f9ca054de"
+      }
+    ]
   }
 }

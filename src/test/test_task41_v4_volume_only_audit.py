@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -434,6 +436,7 @@ def test_volume_only_owner_avoids_surface_and_persists_each_class_once(tmp_path,
     }
     assert case.level_calls[0][0][1:] == (case.audit.MPI.COMM_SELF, (6,))
     assert len(case.volume_calls) == 1
+    assert case.owner_calls[0][1]["internal_rhs_strategy"] == "stored_T"
     assert result["condensed"] is case.owner
     assert case.owner.destroyed is False
     assert len(result["class_records"]) == 1
@@ -456,6 +459,8 @@ def test_v6_volume_owner_forwards_selected_evaluator_to_actual_builder(tmp_path,
     source_path = tmp_path / "frozen-profile.c"
     source_path.write_text("fixture only", encoding="ascii")
     created = []
+    volume_form = object()
+    compiled_form = object()
 
     class FakeCandidate:
         identity = "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1"
@@ -479,11 +484,90 @@ def test_v6_volume_owner_forwards_selected_evaluator_to_actual_builder(tmp_path,
         geometry_policy="mesh_actual_exact",
         raw_tensor_evaluator_kind="actual_qmetric_blocked_gram",
         ffcx_c_source_path=source_path,
+        internal_rhs_strategy="same_lu_rhs_solve",
+        levels=case.levels,
+        volume_form=volume_form,
+        compiled_form=compiled_form,
     )
     forwarded = case.owner_calls[0][1]["raw_tensor_evaluator"]
     assert forwarded is created[0][2]
+    assert created[0][0][1] is volume_form
+    assert created[0][0][2] is compiled_form
+    assert case.owner_calls[0][0][0] is compiled_form
     assert created[0][1]["c_source_path"] == source_path
     assert created[0][1]["scratch_directory"] == case.tmp_path
+    assert case.owner_calls[0][1]["geometry_policy"] == "mesh_actual_exact"
+    assert case.owner_calls[0][1]["internal_rhs_strategy"] == "same_lu_rhs_solve"
+    assert case.level_calls == []
+    assert case.volume_calls == []
+
+
+def test_volume_only_owner_rejects_unknown_internal_rhs_strategy_before_build(
+    tmp_path, monkeypatch
+):
+    case = _fixture(tmp_path, monkeypatch)
+
+    with pytest.raises(ValueError, match="unknown Task41 internal RHS strategy"):
+        case.audit.build_task41_v4_volume_only_owner(
+            _volume_only_config(),
+            case.donor,
+            case.tmp_path,
+            allocation_gate=case.allocation_gate,
+            progress_callback=lambda _event: None,
+            persist_array=case.persist_array,
+            internal_rhs_strategy="unqualified",
+        )
+
+    assert case.level_calls == []
+    assert case.owner_calls == []
+    assert case.persisted == {}
+
+
+def test_volume_only_owner_rejects_partial_reused_fe_setup_before_build(
+    tmp_path, monkeypatch
+):
+    case = _fixture(tmp_path, monkeypatch)
+
+    with pytest.raises(ValueError, match="requires both levels and volume_form"):
+        case.audit.build_task41_v4_volume_only_owner(
+            _volume_only_config(),
+            case.donor,
+            case.tmp_path,
+            allocation_gate=case.allocation_gate,
+            progress_callback=lambda _event: None,
+            persist_array=case.persist_array,
+            levels=case.levels,
+        )
+
+    assert case.level_calls == []
+    assert case.owner_calls == []
+    assert case.persisted == {}
+
+
+def test_volume_only_owner_can_reuse_identity_evidence_without_duplicate_arrays(
+    tmp_path, monkeypatch
+):
+    case = _fixture(tmp_path, monkeypatch)
+
+    result = case.audit.build_task41_v4_volume_only_owner(
+        _volume_only_config(),
+        case.donor,
+        case.tmp_path,
+        allocation_gate=case.allocation_gate,
+        progress_callback=lambda _event: None,
+        persist_array=case.persist_array,
+        persist_selected_evidence=False,
+    )
+
+    assert result["condensed"] is case.owner
+    assert case.owner.destroyed is False
+    assert result["class_records"]
+    assert result["cell_records"]
+    assert all(not item["artifacts"] for item in result["class_records"])
+    assert all(not item["artifacts"] for item in result["cell_records"])
+    assert result["audit"]["selected_evidence_persisted"] is False
+    assert result["audit"]["evidence_bytes_added"] == 0
+    assert case.persisted == {}
 
 
 def test_volume_only_owner_rejects_fresh_numbering_mismatch_before_persist(tmp_path, monkeypatch):
@@ -1023,6 +1107,333 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
             assert state["volume_identity_dvol_plus_reduce_rvol"]["absolute_l2"] < 1.0e-13
             assert state["full_identity_dfull_plus_reduce_rfull"]["absolute_l2"] < 1.0e-13
             assert state["rhs_split_roundoff_native_rhs_minus_Balpha_minus_volume_rhs"]["absolute_l2"] < 1.0e-13
+
+def _task41_v9_compact_terminal_fixture(tmp_path, monkeypatch, *, action_passes: bool):
+    from src.runners import task41_p0_checker, task41_p0_contract
+    from src.solvers import task41_v4_volume_only_audit as audit
+
+    case = _fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(audit, "TASK41_V4_ACTIVE_TRACE_ROWS", 2)
+    monkeypatch.setattr(audit, "TASK41_V4_APPENDED_ROWS", 2)
+    monkeypatch.setattr(audit, "TASK41_V4_FULL_STORAGE_ROWS", 13)
+    monkeypatch.setattr(
+        audit,
+        "TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES",
+        2 * (2 + 2) * 2 * 16 + 6 * 13 * 16 + 10 * 4096,
+    )
+    monkeypatch.setattr(audit, "TASK41_V5_FROZEN_DENOMINATORS", (11.0, 13.0))
+    monkeypatch.setattr(audit.shutil, "disk_usage", lambda _path: SimpleNamespace(free=10**12))
+    monkeypatch.setattr(
+        audit,
+        "replace",
+        lambda owner, **changes: SimpleNamespace(**{**vars(owner), **changes}),
+    )
+    owner = case.owner
+    owner.internal_rhs_strategy = "same_lu_rhs_solve"
+    owner.build_audit = {"geometry_policy": "mesh_actual_exact"}
+    owner.trace_constraints.owned_active_original_dofs = np.asarray([10, 11], dtype=np.int64)
+    donor = case.donor
+    donor["manifest_sha256"] = "fixture-manifest-sha256"
+    donor["existing_evidence_bytes"] = 100
+    donor["prior_new_evidence_bytes"] = 20
+    zeros = np.zeros(13, dtype=np.complex128)
+    for column_index, column in enumerate(donor["columns"]):
+        known = zeros.copy()
+        known[10] = 1.0 + column_index
+        known[11] = 2.0 + 2.0 * column_index
+        column.update(
+            {
+                "known_field": known,
+                "native_rhs": zeros.copy(),
+                "native_volume_rhs": zeros.copy(),
+                "b_alpha_rows": np.empty(0, dtype=np.int64),
+                "b_alpha_values": np.empty(0, dtype=np.complex128),
+                "states": [{"native_volume_residual": zeros.copy()}],
+            }
+        )
+    donor["attribution"] = {
+        "joint": {
+            "p6_result": np.zeros((4, 2), dtype=np.complex128),
+            "reduced_rhs": np.zeros((4, 2), dtype=np.complex128),
+            "port_rhs": np.zeros((2, 2), dtype=np.complex128),
+        }
+    }
+
+    class FakeP6Action:
+        def __init__(self, condensed, *, H_p):
+            assert condensed.appended_rows == 0
+            assert H_p.shape == (0, 0)
+
+        @staticmethod
+        def apply(_source):
+            return np.zeros(2, dtype=np.complex128)
+
+        @staticmethod
+        def reduce_rhs(_rhs, *, rhs_is_mpc_dual):
+            assert rhs_is_mpc_dual is True
+            return np.zeros(2, dtype=np.complex128) if action_passes else np.ones(2, dtype=np.complex128)
+
+        @staticmethod
+        def recover_storage(active_rhs, *, full_rhs, expand_trace):
+            assert expand_trace is False
+            result = np.zeros_like(full_rhs)
+            result[10:12] = active_rhs
+            return result
+
+        @staticmethod
+        def refine_internal_storage_with_native_volume_residual(
+            initial_storage,
+            _full_rhs,
+            _native_volume_apply,
+            *,
+            initial_volume_action,
+            initial_residual,
+            forward_reference,
+            on_state,
+            max_steps,
+        ):
+            assert max_steps == 3
+            storage = np.array(initial_storage, copy=True)
+            action = np.array(initial_volume_action, copy=True)
+            residual = np.array(initial_residual, copy=True)
+            assert np.array_equal(storage, forward_reference)
+            on_state(
+                0,
+                storage,
+                action,
+                residual,
+                {
+                    "forward_relative_error": 0.0,
+                    "native_volume_residual_norm": 0.0,
+                    "native_volume_residual_relative": 0.0,
+                    "native_internal_residual_relative": 0.0,
+                },
+            )
+            return {
+                "storage_solution": storage,
+                "native_volume_action": action,
+                "native_volume_residual": residual,
+            }
+
+        @staticmethod
+        def destroy():
+            return None
+
+    monkeypatch.setattr(audit, "P6CellCondensedAction", FakeP6Action)
+    run_root = tmp_path / "consumer-run"
+    numerical_output = run_root / "numerical_output"
+    numerical_output.mkdir(parents=True)
+
+    def persist_array(name, values):
+        array = np.asarray(values)
+        path = numerical_output / f"{name}.npy"
+        np.save(path, array, allow_pickle=False)
+        return {
+            "path": str(path),
+            "bytes": path.stat().st_size,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "array_sha256": hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest(),
+            "shape": list(array.shape),
+            "dtype": str(array.dtype),
+        }
+
+    report = audit._task41_v9_compact_volume_identity(
+        owner,
+        donor,
+        allocation_gate=lambda *_args: None,
+        progress_callback=lambda _event: None,
+        persist_array=persist_array,
+        output_directory=numerical_output,
+        native_volume_apply=lambda values: np.zeros_like(values),
+        artifact_prefix="fixture_v9",
+        candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+        candidate_cache_identity="fixture-cache-identity",
+        recovery_refinement_max_steps=3,
+        reserved_followup_evidence_bytes=audit.TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
+    )
+    identity_path = numerical_output / "identity.json"
+    identity_path.write_text(json.dumps(report, sort_keys=True, allow_nan=False), encoding="utf-8")
+    live_check = task41_p0_checker.check_task41_b0_v9_compact_volume_audit(
+        report,
+        donor,
+        output_directory=numerical_output,
+        native_volume_apply=lambda values: np.zeros_like(values),
+        expected_candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+        expected_cache_identity="fixture-cache-identity",
+    )
+    checker_path = numerical_output / "independent.json"
+    checker_path.write_text(json.dumps(live_check, sort_keys=True, allow_nan=False), encoding="utf-8")
+
+    fake_repo = tmp_path / "fake-repo"
+    fake_checker_path = fake_repo / "src/runners/task41_p0_checker.py"
+    fake_checker_path.parent.mkdir(parents=True)
+    fake_checker_path.write_text("# fixture repo root", encoding="ascii")
+    source_path = fake_repo / "src/candidate_qmetric.c"
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+    source_path.write_text("candidate source fixture", encoding="ascii")
+    donor_relative = Path("results/frozen-v4-donor")
+    donor_run = fake_repo / donor_relative
+    donor_run.mkdir(parents=True)
+    donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+    donor_summary_path.write_text("frozen donor summary fixture", encoding="ascii")
+    monkeypatch.setattr(task41_p0_checker, "__file__", str(fake_checker_path))
+    monkeypatch.setattr(task41_p0_checker, "load_task41_v4_volume_only_donor", lambda **_kwargs: donor)
+    monkeypatch.setattr(task41_p0_contract, "TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE", donor_relative)
+
+    def file_binding(path):
+        return {
+            "path": str(path),
+            "bytes": path.stat().st_size,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+
+    summary = {
+        "campaign_authority": {"internal_rhs_strategy": "same_lu_rhs_solve"},
+        "b0_v9_volume_donor_binding": {
+            "relative_path": donor_relative.as_posix(),
+            "attempt_id": donor_relative.name,
+            "summary_bytes": donor_summary_path.stat().st_size,
+            "summary_sha256": hashlib.sha256(donor_summary_path.read_bytes()).hexdigest(),
+            "manifest_sha256": donor["manifest_sha256"],
+            "existing_evidence_bytes": donor["existing_evidence_bytes"],
+            "prior_new_evidence_bytes": donor["prior_new_evidence_bytes"],
+        },
+        "b0_v9_saved_prefix_binding": {
+            "c_source_path": str(source_path),
+            "c_source_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
+            "candidate_evaluator_identity": report["candidate_evaluator_identity"],
+            "candidate_cache_identity": report["candidate_evaluator_cache_identity"],
+            "owner_internal_rhs_strategy": "same_lu_rhs_solve",
+            "owner_geometry_policy": "mesh_actual_exact",
+            "appended_rows": 2,
+            "loaded_v7_payloads": False,
+        },
+        "b0_v9_compact_volume_audit": {
+            **file_binding(identity_path),
+            "schema": report["schema"],
+            "status": report["status"],
+            "action_gate": report["candidate_full_action_gate"],
+            "recovery_gate": report["candidate_recovery_gate"],
+        },
+        "b0_v9_independent_check": {
+            **live_check,
+            **file_binding(checker_path),
+        },
+    }
+    return task41_p0_checker, summary, numerical_output, identity_path
+
+
+@pytest.mark.parametrize("action_passes", (True, False))
+def test_v9_compact_producer_live_checker_and_terminal_saved_replay(
+    tmp_path, monkeypatch, action_passes
+):
+    checker, summary, numerical_output, _identity_path = _task41_v9_compact_terminal_fixture(
+        tmp_path, monkeypatch, action_passes=action_passes
+    )
+    result = checker._task41_b0_recovery_evidence_checks(
+        summary,
+        numerical_output,
+        {"numerical_strategy": {"internal_rhs_strategy": "same_lu_rhs_solve"}},
+        contract_sha256="fixture-contract-sha256",
+    )
+
+    assert result["terminal_route"] == "task41_b0_v9_compact_volume_audit"
+    assert result["audit_completed"] is True, result
+    assert result["data_integrity"] is True
+    assert result["support_certificate_rechecked"] is None
+    assert result["qualification_passed"] is action_passes
+    assert result["errors"] == []
+    assert result["saved_only_compact_replay"]["native_action_receipts_reused"] == (
+        2 if action_passes else 0
+    )
+    assert result["saved_only_compact_replay"]["independent_native_volume_action_calls"] == 0
+    assert result["saved_only_compact_replay"]["checks"]["reported_frozen_denominators_match_contract"] is True
+
+
+@pytest.mark.parametrize("damage", ("array", "column", "source"))
+def test_v9_compact_terminal_saved_replay_rejects_corrupt_bindings(
+    tmp_path, monkeypatch, damage
+):
+    checker, summary, numerical_output, identity_path = _task41_v9_compact_terminal_fixture(
+        tmp_path, monkeypatch, action_passes=True
+    )
+    report = json.loads(identity_path.read_text(encoding="utf-8"))
+    if damage == "array":
+        artifact_path = Path(report["candidate_full_action_gate"]["full_action_artifact"]["path"])
+        with artifact_path.open("r+b") as stream:
+            stream.seek(-1, os.SEEK_END)
+            stream.write(b"x")
+    elif damage == "column":
+        report["candidate_recovery_gate"]["columns"][0]["column"] = 1
+        identity_path.write_text(json.dumps(report, sort_keys=True, allow_nan=False), encoding="utf-8")
+        identity_binding = summary["b0_v9_compact_volume_audit"]
+        identity_binding.update(
+            {
+                "bytes": identity_path.stat().st_size,
+                "sha256": hashlib.sha256(identity_path.read_bytes()).hexdigest(),
+                "recovery_gate": report["candidate_recovery_gate"],
+            }
+        )
+    else:
+        source_path = Path(summary["b0_v9_saved_prefix_binding"]["c_source_path"])
+        source_path.write_text("tampered source fixture", encoding="ascii")
+
+    result = checker._task41_b0_recovery_evidence_checks(
+        summary,
+        numerical_output,
+        {"numerical_strategy": {"internal_rhs_strategy": "same_lu_rhs_solve"}},
+        contract_sha256="fixture-contract-sha256",
+    )
+
+    assert result["audit_completed"] is False
+    assert result["data_integrity"] is False
+    assert result["qualification_passed"] is False
+    assert result["errors"]
+
+
+def test_v9_pre_donor_owner_is_released_if_a_post_build_gate_raises():
+    from src.runners import task40_v10_worker
+
+    class CondensedOwner:
+        def __init__(self):
+            self.destroy_calls = 0
+
+        def destroy(self):
+            self.destroy_calls += 1
+
+    owner = CondensedOwner()
+    target_bundle = {
+        "pre_donor_qualification": {"owner_result": {"condensed": owner}}
+    }
+    registered_owner = task40_v10_worker._task41_b0_v9_pre_donor_condensed(target_bundle)
+    assert registered_owner is owner
+
+    with pytest.raises(RuntimeError, match="post-build profile gate"):
+        try:
+            raise RuntimeError("post-build profile gate")
+        finally:
+            task40_v10_worker._task41_destroy_pending_condensed(registered_owner)
+
+    assert owner.destroy_calls == 1
+
+
+def test_v9_pending_owner_destroy_failure_is_recorded_for_cleanup():
+    from src.runners import task40_v10_worker
+
+    class FailingOwner:
+        def destroy(self):
+            raise RuntimeError("fixture destroy failure")
+
+    summary = {}
+    task40_v10_worker._task41_destroy_pending_condensed(
+        FailingOwner(), summary=summary
+    )
+
+    assert summary == {
+        "cleanup_errors": [
+            {"type": "RuntimeError", "message": "fixture destroy failure"}
+        ]
+    }
 
 
 @pytest.mark.parametrize("column_index", (0, 1))

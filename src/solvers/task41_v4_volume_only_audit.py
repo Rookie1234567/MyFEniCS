@@ -42,6 +42,11 @@ TASK41_V4_SELECTED_ORIGINAL_ROW = 17_692_332
 TASK41_V5_FROZEN_DENOMINATORS = (2225.481253487629, 2225.4807123031883)
 TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE = 1.0e-11
 TASK41_V5_ATTRIBUTION_ACCUMULATOR_COUNT = 12
+TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES = (
+    2 * (TASK41_V4_ACTIVE_TRACE_ROWS + TASK41_V4_APPENDED_ROWS) * 2 * 16
+    + 6 * TASK41_V4_FULL_STORAGE_ROWS * 16
+    + 10 * 4096
+)
 
 
 def _class_key(value: Sequence[Any]) -> tuple[Any, ...]:
@@ -1003,6 +1008,14 @@ def build_task41_v4_volume_only_owner(
     geometry_policy: str = "canonical",
     raw_tensor_evaluator_kind: str | None = None,
     ffcx_c_source_path: str | Path | None = None,
+    internal_rhs_strategy: str = "stored_T",
+    levels: Mapping[str, Any] | None = None,
+    volume_form: Any | None = None,
+    compiled_form: Any | None = None,
+    appended_support_owned_cell_groups: Sequence[Sequence[int]] | None = None,
+    appended_support_group_by_row: Sequence[int] | None = None,
+    persist_selected_evidence: bool = True,
+    reserved_followup_evidence_bytes: int = 0,
     required_prefix_cells: Sequence[int] = (),
     prefix_cell_validator: Callable[
         [int, np.ndarray, Mapping[str, np.ndarray], Mapping[str, Any]], Mapping[str, Any]
@@ -1038,6 +1051,15 @@ def build_task41_v4_volume_only_owner(
         raise ValueError(
             "--ffcx-c-source is required exactly when an actual q-metric evaluator is selected"
         )
+    if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
+        raise ValueError(f"unknown Task41 internal RHS strategy {internal_rhs_strategy!r}")
+    reused_setup = levels is not None or volume_form is not None or compiled_form is not None
+    if reused_setup and (levels is None or volume_form is None):
+        raise ValueError("reused Task41 FE construction requires both levels and volume_form")
+    if compiled_form is not None and not reused_setup:
+        raise ValueError("compiled_form can only be reused with its levels and volume_form")
+    if (appended_support_owned_cell_groups is None) != (appended_support_group_by_row is None):
+        raise ValueError("reused Task41 port support requires both cell groups and row groups")
     manifest = donor["manifest"]
     if donor.get("manifest_sha256") != TASK41_V4_DONOR_MANIFEST_SHA256:
         raise ValueError("Task41 V4 donor recovery-manifest identity differs")
@@ -1045,6 +1067,36 @@ def build_task41_v4_volume_only_owner(
     if donor_existing_bytes != TASK41_V4_DONOR_NPY_BYTES:
         raise ValueError("Task41 V4 donor NPY byte count differs from the frozen 141-array set")
     existing_bytes = donor_existing_bytes + int(donor.get("prior_new_evidence_bytes", 0))
+    if (
+        isinstance(reserved_followup_evidence_bytes, bool)
+        or not isinstance(reserved_followup_evidence_bytes, (int, np.integer))
+        or int(reserved_followup_evidence_bytes) < 0
+    ):
+        raise ValueError("reserved Task41 follow-up evidence bytes must be a non-negative integer")
+    reserved_followup_evidence_bytes = int(reserved_followup_evidence_bytes)
+    if existing_bytes + reserved_followup_evidence_bytes > TASK41_V4_EVIDENCE_CAP_BYTES:
+        raise MemoryError("Task41 V4 owner plus reserved follow-up evidence exceeds the 16 GiB cap")
+    preflight_path = Path(output_directory)
+    preflight_probe = preflight_path if preflight_path.exists() else preflight_path.parent
+    while not preflight_probe.exists() and preflight_probe != preflight_probe.parent:
+        preflight_probe = preflight_probe.parent
+    preflight_free_bytes = int(shutil.disk_usage(preflight_probe).free)
+    if preflight_free_bytes - reserved_followup_evidence_bytes < TASK41_V4_FREE_SPACE_FLOOR_BYTES:
+        raise OSError("Task41 follow-up evidence reservation would breach the 2 GiB free-space floor")
+    allocation_gate(
+        "task41_v4_initial_followup_evidence_reservation",
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": 0,
+            "existing_evidence_bytes": existing_bytes,
+            "reserved_followup_evidence_bytes": reserved_followup_evidence_bytes,
+            "cumulative_evidence_bytes_upper": existing_bytes + reserved_followup_evidence_bytes,
+            "evidence_cap_bytes": TASK41_V4_EVIDENCE_CAP_BYTES,
+            "free_space_bytes": preflight_free_bytes,
+            "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
+            "before_fresh_volume_owner": True,
+        },
+    )
     if (
         int(manifest.get("full_storage_rows", -1)) != TASK41_V4_FULL_STORAGE_ROWS
         or int(manifest.get("active_trace_rows", -1)) != TASK41_V4_ACTIVE_TRACE_ROWS
@@ -1065,29 +1117,46 @@ def build_task41_v4_volume_only_owner(
         progress_callback({"phase": stage, "status": status, **facts})
 
     try:
-        progress(phase, "STARTED", degree=6, include_positive_coefficients=False)
-        levels = _build_same_mesh_levels(
-            cfg,
-            MPI.COMM_SELF,
-            (6,),
-            include_positive_coefficients=False,
-        )
-        progress(phase, "COMPLETED", owned_cells=int(
-            levels["mesh"].topology.index_map(3).size_local
-        ))
+        if levels is None:
+            progress(phase, "STARTED", degree=6, include_positive_coefficients=False)
+            levels = _build_same_mesh_levels(
+                cfg,
+                MPI.COMM_SELF,
+                (6,),
+                include_positive_coefficients=False,
+            )
+            progress(phase, "COMPLETED", owned_cells=int(
+                levels["mesh"].topology.index_map(3).size_local
+            ))
+        else:
+            for key in ("mesh", "mesh_data", "spaces", "floquets"):
+                if key not in levels:
+                    raise ValueError(f"reused Task41 FE levels omit {key!r}")
+            if 6 not in levels["spaces"] or 6 not in levels["floquets"]:
+                raise ValueError("reused Task41 FE levels do not contain degree 6")
+            progress(
+                phase,
+                "REUSED",
+                degree=6,
+                include_positive_coefficients=False,
+                owned_cells=int(levels["mesh"].topology.index_map(3).size_local),
+            )
 
         phase = "direct_volume_form_compile"
         progress(phase, "STARTED")
         space = levels["spaces"][6]
         mesh_data = levels["mesh_data"]
-        trial = ufl.TrialFunction(space)
-        test = ufl.TestFunction(space)
-        dx = ufl.Measure("dx", domain=levels["mesh"], subdomain_data=mesh_data.cell_tags)
-        curl_curl, material_mass = _build_physical_volume_terms(cfg, trial, test, dx)
-        compiled_form = fem.form(
-            curl_curl + material_mass,
-            jit_options=dict(SAME_MESH_JIT_OPTIONS),
-        )
+        if volume_form is None:
+            trial = ufl.TrialFunction(space)
+            test = ufl.TestFunction(space)
+            dx = ufl.Measure("dx", domain=levels["mesh"], subdomain_data=mesh_data.cell_tags)
+            curl_curl, material_mass = _build_physical_volume_terms(cfg, trial, test, dx)
+            volume_form = curl_curl + material_mass
+        if compiled_form is None:
+            compiled_form = fem.form(
+                volume_form,
+                jit_options=dict(SAME_MESH_JIT_OPTIONS),
+            )
         raw_tensor_evaluator = None
         if raw_tensor_evaluator_kind == "actual_qmetric_blocked_gram":
             from src.solvers.task41_actual_qmetric_blocked_gram import (
@@ -1096,7 +1165,7 @@ def build_task41_v4_volume_only_owner(
 
             raw_tensor_evaluator = Task41ActualQMetricBlockedGramCandidate(
                 space.element.basix_element,
-                curl_curl + material_mass,
+                volume_form,
                 compiled_form,
                 c_source_path=ffcx_c_source_path,
                 scratch_directory=output_directory,
@@ -1117,10 +1186,13 @@ def build_task41_v4_volume_only_owner(
             mesh_data.cell_tags,
             mpc=levels["floquets"][6].mpc,
             appended_global_rows=TASK41_V4_APPENDED_ROWS,
+            appended_support_owned_cell_groups=appended_support_owned_cell_groups,
+            appended_support_group_by_row=appended_support_group_by_row,
             sum_duplicate_cell_integrals=True,
             strict_local_checks=True,
             materialize_global_matrix=False,
             retain_local_schur_for_matrix_free=True,
+            internal_rhs_strategy=internal_rhs_strategy,
             share_identity_cache=True,
             preserve_exact_geometry=True,
             geometry_policy=geometry_policy,
@@ -1460,9 +1532,12 @@ def build_task41_v4_volume_only_owner(
         ]
         map_bytes = sum(array.nbytes for array in map_arrays)
         array_count = 9 * len(selected_classes) + 6 * len(selected_cells)
-        new_evidence_upper = (
+        selected_evidence_upper = (
             class_cache_bytes + block_bytes + map_bytes + array_count * 4096 + 1_048_576
+            if persist_selected_evidence
+            else 0
         )
+        new_evidence_upper = selected_evidence_upper + reserved_followup_evidence_bytes
         cumulative_upper = existing_bytes + new_evidence_upper
         if cumulative_upper > TASK41_V4_EVIDENCE_CAP_BYTES:
             raise MemoryError(
@@ -1487,11 +1562,14 @@ def build_task41_v4_volume_only_owner(
                 "incident_classes": len(selected_classes),
                 "existing_donor_bytes": existing_bytes,
                 "new_evidence_bytes_upper": new_evidence_upper,
+                "selected_evidence_bytes_upper": selected_evidence_upper,
+                "reserved_followup_evidence_bytes": reserved_followup_evidence_bytes,
                 "cumulative_evidence_bytes_upper": cumulative_upper,
                 "evidence_cap_bytes": TASK41_V4_EVIDENCE_CAP_BYTES,
                 "free_space_bytes": free_bytes,
                 "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
                 "donor_arrays_copied": False,
+                "selected_evidence_persisted": bool(persist_selected_evidence),
             },
         )
         progress(
@@ -1504,7 +1582,12 @@ def build_task41_v4_volume_only_owner(
         )
 
         phase = "selected_volume_class_and_map_persist"
-        progress(phase, "STARTED", classes=len(selected_classes), cells=len(selected_cells))
+        progress(
+            phase,
+            "STARTED" if persist_selected_evidence else "REUSED_NO_DUPLICATE_PERSIST",
+            classes=len(selected_classes),
+            cells=len(selected_cells),
+        )
 
         def persist(name: str, array: np.ndarray) -> Mapping[str, Any]:
             return persist_array(name, np.asarray(array))
@@ -1527,13 +1610,14 @@ def build_task41_v4_volume_only_owner(
                 "LU_pivots": pivots,
             }
             artifacts = {}
-            for name, array in payloads.items():
-                artifact = persist(
-                    f"task41_v4_volume_class_{class_digest}_{name}",
-                    np.asarray(array),
-                )
-                artifacts[name] = dict(artifact)
-                persisted_bytes += int(artifact.get("bytes", array.nbytes + 4096))
+            if persist_selected_evidence:
+                for name, array in payloads.items():
+                    artifact = persist(
+                        f"task41_v4_volume_class_{class_digest}_{name}",
+                        np.asarray(array),
+                    )
+                    artifacts[name] = dict(artifact)
+                    persisted_bytes += int(artifact.get("bytes", array.nbytes + 4096))
             class_records.append(
                 {
                     "class_key": class_key,
@@ -1555,13 +1639,14 @@ def build_task41_v4_volume_only_owner(
                 "trace_expansion_indptr": cell["E"].indptr,
             }
             artifacts = {}
-            for name, array in payloads.items():
-                artifact = persist(
-                    f"task41_v4_volume_cell_{cell_index:05d}_{name}",
-                    np.asarray(array),
-                )
-                artifacts[name] = dict(artifact)
-                persisted_bytes += int(artifact.get("bytes", array.nbytes + 4096))
+            if persist_selected_evidence:
+                for name, array in payloads.items():
+                    artifact = persist(
+                        f"task41_v4_volume_cell_{cell_index:05d}_{name}",
+                        np.asarray(array),
+                    )
+                    artifacts[name] = dict(artifact)
+                    persisted_bytes += int(artifact.get("bytes", array.nbytes + 4096))
             cell_records.append(
                 {
                     "cell_index": cell_index,
@@ -1570,7 +1655,10 @@ def build_task41_v4_volume_only_owner(
                     "artifacts": artifacts,
                 }
             )
-        if existing_bytes + persisted_bytes > TASK41_V4_EVIDENCE_CAP_BYTES:
+        if (
+            existing_bytes + reserved_followup_evidence_bytes + persisted_bytes
+            > TASK41_V4_EVIDENCE_CAP_BYTES
+        ):
             raise MemoryError("Task41 V4 persisted evidence exceeded its cumulative 16 GiB cap")
         progress(
             phase,
@@ -1597,6 +1685,8 @@ def build_task41_v4_volume_only_owner(
                 "donor_arrays_copied": False,
                 "matrix_materialized": False,
                 "surface_or_carrier_constructed": False,
+                "selected_evidence_persisted": bool(persist_selected_evidence),
+                "reserved_followup_evidence_bytes": reserved_followup_evidence_bytes,
                 "local_class_identities": local_class_identities,
                 "evidence_bytes_existing": existing_bytes,
                 "evidence_bytes_added": persisted_bytes,
@@ -1608,6 +1698,572 @@ def build_task41_v4_volume_only_owner(
         if owner is not None:
             owner.destroy()
         raise
+
+
+def _task41_v9_array_sha256(values: np.ndarray) -> str:
+    array = np.asarray(values)
+    if not array.flags.c_contiguous:
+        array = np.ascontiguousarray(array)
+    return hashlib.sha256(memoryview(array).cast("B")).hexdigest()
+
+
+def _task41_v9_chunked_metrics(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
+    left = np.asarray(left)
+    right = np.asarray(right)
+    if left.shape != right.shape:
+        raise ValueError("Task41 V9 compact comparison arrays have different shapes")
+    square = 0.0
+    reference_square = 0.0
+    max_abs = 0.0
+    max_row = None
+    for start in range(0, left.size, 262_144):
+        stop = min(left.size, start + 262_144)
+        a = np.asarray(left[start:stop], dtype=np.complex128)
+        b = np.asarray(right[start:stop], dtype=np.complex128)
+        delta = a - b
+        square += float(np.vdot(delta, delta).real)
+        reference_square += float(np.vdot(b, b).real)
+        if delta.size:
+            position = int(np.argmax(np.abs(delta)))
+            value = float(abs(delta[position]))
+            if value > max_abs:
+                max_abs = value
+                max_row = start + position
+    return {
+        "absolute_l2": float(np.sqrt(max(0.0, square))),
+        "reference_l2": float(np.sqrt(max(0.0, reference_square))),
+        "max_abs": max_abs,
+        "max_row": max_row,
+    }
+
+
+def _task41_v9_compact_volume_identity(
+    owner: AssemblyTimeCondensedSystem,
+    donor: Mapping[str, Any],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    progress_callback: Callable[[Mapping[str, Any]], Any],
+    persist_array: Callable[[str, np.ndarray], Mapping[str, Any]],
+    output_directory: str | Path,
+    native_volume_apply: Callable[[np.ndarray], np.ndarray] | None,
+    artifact_prefix: str | None,
+    candidate_identity: str | None,
+    candidate_cache_identity: str | None,
+    recovery_refinement_max_steps: int,
+    reserved_followup_evidence_bytes: int,
+) -> dict[str, Any]:
+    """Replay the two full volume actions and retain compact recovery evidence."""
+
+    if (
+        owner.build_audit.get("geometry_policy") != "mesh_actual_exact"
+        or getattr(owner, "internal_rhs_strategy", None) != "same_lu_rhs_solve"
+        or int(owner.appended_rows) != TASK41_V4_APPENDED_ROWS
+        or not callable(native_volume_apply)
+    ):
+        raise ValueError("Task41 V9 requires the live exact-geometry same-LU owner and native volume action")
+    if (
+        isinstance(recovery_refinement_max_steps, bool)
+        or not isinstance(recovery_refinement_max_steps, (int, np.integer))
+        or not 0 <= int(recovery_refinement_max_steps) <= 3
+    ):
+        raise ValueError("Task41 V9 same-LU recovery refinement must be bounded to 0..3 steps")
+    recovery_refinement_max_steps = int(recovery_refinement_max_steps)
+    if int(reserved_followup_evidence_bytes) != TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES:
+        raise ValueError("Task41 V9 compact evidence must use its frozen full reservation")
+
+    columns = tuple(donor.get("columns", ()))
+    joint = donor.get("attribution", {}).get("joint", {})
+    saved_p6 = np.asarray(joint.get("p6_result"))
+    saved_reduced = np.asarray(joint.get("reduced_rhs"))
+    saved_port_rhs = np.asarray(joint.get("port_rhs"))
+    active_rows = int(owner.active_rows)
+    port_rows = int(owner.appended_rows)
+    full_rows = int(owner.full_rows)
+    candidate_rows = active_rows + port_rows
+    if (
+        len(columns) != 2
+        or active_rows != TASK41_V4_ACTIVE_TRACE_ROWS
+        or port_rows != TASK41_V4_APPENDED_ROWS
+        or full_rows != TASK41_V4_FULL_STORAGE_ROWS
+        or saved_p6.shape != (candidate_rows, 2)
+        or saved_reduced.shape != saved_p6.shape
+        or saved_port_rhs.shape != (port_rows, 2)
+        or any(
+            value.dtype != np.dtype(np.complex128) or not np.isfinite(value).all()
+            for value in (saved_p6, saved_reduced, saved_port_rhs)
+        )
+    ):
+        raise ValueError("Task41 V9 donor and live owner differ from the frozen two-column layout")
+    active_original = np.asarray(columns[0]["active_original_rows"])
+    slave_rows = np.asarray(columns[0]["slave_rows"])
+    if (
+        active_original.shape != (active_rows,)
+        or active_original.dtype.kind not in "iu"
+        or slave_rows.ndim != 1
+        or slave_rows.dtype.kind not in "iu"
+        or not np.array_equal(
+            active_original,
+            np.asarray(owner.trace_constraints.owned_active_original_dofs),
+        )
+        or any(
+            not np.array_equal(active_original, np.asarray(column["active_original_rows"]))
+            or not np.array_equal(slave_rows, np.asarray(column["slave_rows"]))
+            for column in columns[1:]
+        )
+    ):
+        raise ValueError("Task41 V9 donor numbering differs from the live owner")
+    if artifact_prefix is None:
+        artifact_prefix = "task41_p0_b0_v9_compact_candidate"
+
+    new_evidence_upper = TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES
+    prior_new_bytes = int(donor.get("prior_new_evidence_bytes", 0))
+    existing_bytes = int(donor["existing_evidence_bytes"])
+    cumulative_upper = existing_bytes + prior_new_bytes + new_evidence_upper
+    if cumulative_upper > TASK41_V4_EVIDENCE_CAP_BYTES:
+        raise MemoryError("Task41 V9 compact evidence would exceed the cumulative 16 GiB cap")
+    output_path = Path(output_directory)
+    disk_probe = output_path if output_path.exists() else output_path.parent
+    while not disk_probe.exists() and disk_probe != disk_probe.parent:
+        disk_probe = disk_probe.parent
+    free_bytes = int(shutil.disk_usage(disk_probe).free)
+    if free_bytes - new_evidence_upper < TASK41_V4_FREE_SPACE_FLOOR_BYTES:
+        raise OSError("Task41 V9 compact evidence would breach the 2 GiB free-space floor")
+
+    action_matrix_bytes = 2 * candidate_rows * 2 * np.dtype(np.complex128).itemsize
+    recovery_vector_bytes = 6 * full_rows * np.dtype(np.complex128).itemsize
+    progress_callback(
+        {
+            "phase": "task41_v9_compact_volume_identity_preflight",
+            "status": "STARTED",
+            "full_rows": full_rows,
+            "active_rows": active_rows,
+            "appended_rows": port_rows,
+            "new_evidence_bytes_upper": new_evidence_upper,
+            "cumulative_evidence_bytes_upper": cumulative_upper,
+            "free_space_bytes": free_bytes,
+        }
+    )
+    allocation_gate(
+        "task41_v9_compact_volume_identity_and_recovery",
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": (
+                4 * full_rows * np.dtype(np.complex128).itemsize
+                + action_matrix_bytes
+                + 2 * active_rows * np.dtype(np.complex128).itemsize
+            ),
+            "new_evidence_bytes_upper": new_evidence_upper,
+            "candidate_full_action_array_bytes": action_matrix_bytes,
+            "initial_final_residual_storage_bytes_upper": recovery_vector_bytes,
+            "cumulative_evidence_bytes_upper": cumulative_upper,
+            "evidence_cap_bytes": TASK41_V4_EVIDENCE_CAP_BYTES,
+            "free_space_bytes": free_bytes,
+            "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
+            "native_volume_action_calls_upper": 8,
+            "maximum_same_lu_corrections_per_column": recovery_refinement_max_steps,
+            "ports_scanned_or_replayed": False,
+        },
+    )
+
+    volume_owner = replace(owner, appended_rows=0, owned_appended_rows=0)
+    action = P6CellCondensedAction(volume_owner, H_p=np.zeros((0, 0), dtype=np.complex128))
+    candidate_p6 = np.array(saved_p6, dtype=np.complex128, copy=True, order="C")
+    candidate_reduced = np.array(saved_reduced, dtype=np.complex128, copy=True, order="C")
+    persisted_bytes = 0
+    artifacts: list[dict[str, Any]] = []
+    column_reports: list[dict[str, Any]] = []
+
+    def persist(name: str, values: np.ndarray) -> dict[str, Any]:
+        nonlocal persisted_bytes
+        record = dict(persist_array(name, np.asarray(values)))
+        if not all(key in record for key in ("path", "bytes", "sha256", "shape", "dtype")):
+            raise ValueError("Task41 V9 persistence callback returned an incomplete artifact binding")
+        persisted_bytes += int(record["bytes"])
+        if (
+            persisted_bytes > new_evidence_upper
+            or existing_bytes + prior_new_bytes + persisted_bytes > TASK41_V4_EVIDENCE_CAP_BYTES
+        ):
+            raise MemoryError("Task41 V9 compact output exceeded its admitted evidence reservation")
+        artifact = {"name": name, **record}
+        artifacts.append(artifact)
+        return artifact
+
+    def any_nonzero(values: np.ndarray, rows: np.ndarray) -> bool:
+        for start in range(0, rows.size, 262_144):
+            if np.any(np.asarray(values[rows[start : start + 262_144]]) != 0.0):
+                return True
+        return False
+
+    try:
+        prepared_columns: list[dict[str, Any]] = []
+        for column_index, column in enumerate(columns):
+            known = np.asarray(column["known_field"])
+            native_rhs = np.asarray(column["native_rhs"])
+            volume_rhs = np.asarray(column["native_volume_rhs"])
+            b_rows = np.asarray(column["b_alpha_rows"])
+            b_values = np.asarray(column["b_alpha_values"])
+            if (
+                known.shape != (full_rows,)
+                or native_rhs.shape != (full_rows,)
+                or volume_rhs.shape != (full_rows,)
+                or any(
+                    value.dtype != np.dtype(np.complex128) or not np.isfinite(value).all()
+                    for value in (known, native_rhs, volume_rhs)
+                )
+                or b_rows.ndim != 1
+                or b_rows.dtype.kind not in "iu"
+                or b_values.shape != b_rows.shape
+                or b_values.dtype != np.dtype(np.complex128)
+                or not np.isfinite(b_values).all()
+                or (b_rows.size and (int(b_rows.min()) < 0 or int(b_rows.max()) >= full_rows))
+                or any_nonzero(known, slave_rows)
+                or any_nonzero(native_rhs, slave_rows)
+                or any_nonzero(volume_rhs, slave_rows)
+            ):
+                raise ValueError(f"Task41 V9 donor column {column_index} has invalid full-space vectors")
+            b_active = np.empty(b_rows.size, dtype=np.int64)
+            for position, original_row in enumerate(b_rows):
+                active_id = owner.trace_constraints.original_to_active.get(int(original_row))
+                if active_id is None:
+                    raise ValueError("Task41 V9 B-alpha row is not an independent active trace row")
+                b_active[position] = int(active_id)
+
+            progress_callback(
+                {"phase": "task41_v9_full_action", "status": "STARTED", "column": column_index}
+            )
+            active_source = np.array(known[active_original], dtype=np.complex128, copy=True)
+            full_trace_action = action.apply(active_source)
+            full_trace_rhs = action.reduce_rhs(native_rhs, rhs_is_mpc_dual=True)
+            if (
+                full_trace_action.shape != (active_rows,)
+                or full_trace_rhs.shape != (active_rows,)
+                or not np.isfinite(full_trace_action).all()
+                or not np.isfinite(full_trace_rhs).all()
+            ):
+                raise ValueError("Task41 V9 P6 action/reducer returned an invalid full trace")
+            np.add.at(full_trace_action, b_active, b_values)
+            candidate_p6[:active_rows, column_index] = full_trace_action
+            candidate_reduced[:active_rows, column_index] = full_trace_rhs
+            prepared_columns.append(
+                {
+                    "column": column,
+                    "known": known,
+                    "volume_rhs": volume_rhs,
+                }
+            )
+            progress_callback(
+                {"phase": "task41_v9_full_action", "status": "COMPLETED", "column": column_index}
+            )
+            del active_source, full_trace_action, full_trace_rhs
+
+        port_action_unchanged = np.array_equal(candidate_p6[active_rows:], saved_p6[active_rows:])
+        port_reduced_unchanged = np.array_equal(candidate_reduced[active_rows:], saved_reduced[active_rows:])
+        port_rhs_unchanged = np.array_equal(candidate_p6[active_rows:], saved_port_rhs) and np.array_equal(
+            candidate_reduced[active_rows:], saved_port_rhs
+        )
+        full_p6_ref = persist(f"{artifact_prefix}_full_p6", candidate_p6)
+        full_reduced_ref = persist(f"{artifact_prefix}_full_reduced_rhs", candidate_reduced)
+        action_columns = []
+        for column_index, frozen_denominator in enumerate(TASK41_V5_FROZEN_DENOMINATORS):
+            difference = _task41_v9_chunked_metrics(
+                candidate_p6[:, column_index], candidate_reduced[:, column_index]
+            )
+            dynamic_denom = max(
+                _vector_norm(candidate_p6[:, column_index]),
+                _vector_norm(candidate_reduced[:, column_index]),
+                np.finfo(float).tiny,
+            )
+            dynamic_relative = difference["absolute_l2"] / dynamic_denom
+            frozen_relative = difference["absolute_l2"] / frozen_denominator
+            action_columns.append(
+                {
+                    "column": column_index,
+                    "difference": difference,
+                    "dynamic_denominator": dynamic_denom,
+                    "dynamic_denominator_relative": dynamic_relative,
+                    "frozen_denominator": frozen_denominator,
+                    "frozen_denominator_relative": frozen_relative,
+                    "dynamic_gate_passed": bool(
+                        dynamic_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE
+                    ),
+                    "frozen_gate_passed": bool(
+                        frozen_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE
+                    ),
+                }
+            )
+        action_passed = bool(
+            port_action_unchanged
+            and port_reduced_unchanged
+            and port_rhs_unchanged
+            and all(item["dynamic_gate_passed"] and item["frozen_gate_passed"] for item in action_columns)
+        )
+        candidate_action_gate = {
+            "status": "PASS" if action_passed else "GATE_FAILED",
+            "relative_tolerance": TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+            "columns": action_columns,
+            "full_action_artifact": full_p6_ref,
+            "full_reduced_rhs_artifact": full_reduced_ref,
+            "saved_port_rows_unchanged": bool(
+                port_action_unchanged and port_reduced_unchanged and port_rhs_unchanged
+            ),
+        }
+        progress_callback(
+            {
+                "phase": "task41_v9_full_action_gate",
+                "status": "COMPLETED" if action_passed else "GATE_FAILED",
+                "action_artifacts_saved_before_recovery": True,
+                "columns": action_columns,
+            }
+        )
+        if not action_passed:
+            return {
+                "schema": "task41.p0.b0.v9.compact_volume_identity.v1",
+                "status": "GATE_FAILED",
+                "completed": True,
+                "official_result": False,
+                "candidate_evaluator_identity": candidate_identity,
+                "candidate_evaluator_cache_identity": candidate_cache_identity,
+                "donor_manifest_sha256": str(donor["manifest_sha256"]),
+                "existing_evidence_bytes": existing_bytes,
+                "prior_new_evidence_bytes": prior_new_bytes,
+                "internal_rhs_strategy": "same_lu_rhs_solve",
+                "geometry_policy": "mesh_actual_exact",
+                "active_rows": active_rows,
+                "appended_rows": port_rows,
+                "full_storage_rows": full_rows,
+                "global_volume_matrix_materialized": False,
+                "dense_port_matrix_materialized": False,
+                "surface_or_carrier_replayed": False,
+                "saved_port_rows_unchanged": candidate_action_gate["saved_port_rows_unchanged"],
+                "new_evidence_bytes_upper": new_evidence_upper,
+                "new_evidence_bytes": persisted_bytes,
+                "cumulative_evidence_bytes": existing_bytes + prior_new_bytes + persisted_bytes,
+                "evidence_cap_bytes": TASK41_V4_EVIDENCE_CAP_BYTES,
+                "free_space_bytes_before_persist": free_bytes,
+                "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
+                "persisted_artifacts": artifacts,
+                "candidate_full_action_gate": candidate_action_gate,
+                "candidate_recovery_gate": {
+                    "status": "NOT_RUN_ACTION_GATE_FAILED",
+                    "relative_forward_tolerance": 1.0e-11,
+                    "native_volume_residual_relative_tolerance": 1.0e-10,
+                    "maximum_same_lu_corrections_per_column": recovery_refinement_max_steps,
+                    "native_volume_action_calls": 0,
+                    "columns": [],
+                },
+            }
+
+        for column_index, prepared in enumerate(prepared_columns):
+            column = prepared["column"]
+            known = prepared["known"]
+            volume_rhs = prepared["volume_rhs"]
+            progress_callback(
+                {
+                    "phase": "task41_v9_same_lu_recovery",
+                    "status": "STARTED",
+                    "column": column_index,
+                    "maximum_corrections": recovery_refinement_max_steps,
+                }
+            )
+            initial_storage = action.recover_storage(
+                known[active_original], full_rhs=volume_rhs, expand_trace=False
+            )
+            initial_volume_action = np.array(
+                native_volume_apply(initial_storage), dtype=np.complex128, copy=True
+            )
+            if (
+                initial_volume_action.shape != (full_rows,)
+                or not np.isfinite(initial_volume_action).all()
+            ):
+                raise ValueError("Task41 V9 native volume action returned an invalid initial vector")
+            initial_residual = np.asarray(volume_rhs - initial_volume_action, dtype=np.complex128)
+            initial_storage_sha256 = _task41_v9_array_sha256(initial_storage)
+            initial_ref: dict[str, Any] = {
+                "kind": "artifact",
+                **persist(f"{artifact_prefix}_initial_storage_col{column_index}", initial_storage),
+            }
+            step_records: list[dict[str, Any]] = []
+
+            def capture_step(
+                step: int,
+                storage: np.ndarray,
+                _volume_action: np.ndarray,
+                residual: np.ndarray,
+                facts: Mapping[str, Any],
+            ) -> None:
+                trace_equal = all(
+                    np.array_equal(
+                        storage[active_original[start : start + 262_144]],
+                        known[active_original[start : start + 262_144]],
+                    )
+                    for start in range(0, active_rows, 262_144)
+                )
+                step_records.append(
+                    {
+                        "step": int(step),
+                        "forward_relative_error": facts.get("forward_relative_error"),
+                        "native_volume_residual_norm": facts.get("native_volume_residual_norm"),
+                        "native_volume_residual_relative": facts.get("native_volume_residual_relative"),
+                        "native_internal_residual_relative": facts.get("native_internal_residual_relative"),
+                        "native_volume_action_calls": int(step) + 1,
+                        "storage_sha256": _task41_v9_array_sha256(storage),
+                        "residual_sha256": _task41_v9_array_sha256(residual),
+                        "active_trace_unchanged": bool(trace_equal),
+                        "slave_rows_zero": not any_nonzero(storage, slave_rows),
+                    }
+                )
+
+            refined = action.refine_internal_storage_with_native_volume_residual(
+                initial_storage,
+                volume_rhs,
+                native_volume_apply,
+                max_steps=recovery_refinement_max_steps,
+                initial_volume_action=initial_volume_action,
+                initial_residual=initial_residual,
+                forward_reference=known,
+                on_state=capture_step,
+            )
+            if _task41_v9_array_sha256(initial_storage) != initial_storage_sha256:
+                raise ValueError("Task41 V9 recovery refinement mutated the frozen initial storage")
+            final_storage = np.asarray(refined["storage_solution"], dtype=np.complex128)
+            final_residual = np.asarray(refined["native_volume_residual"], dtype=np.complex128)
+            final_volume_action = np.asarray(refined["native_volume_action"], dtype=np.complex128)
+            initial_matches_known = np.array_equal(initial_storage, known)
+            if np.array_equal(final_storage, known):
+                final_ref: dict[str, Any] = {"kind": "v4_donor_known_field", "column": column_index}
+            elif not initial_matches_known and np.array_equal(final_storage, initial_storage):
+                final_ref = dict(initial_ref)
+            else:
+                final_ref = {
+                    "kind": "artifact",
+                    **persist(f"{artifact_prefix}_final_storage_col{column_index}", final_storage),
+                }
+            donor_initial_residual = np.asarray(column["states"][0]["native_volume_residual"])
+            if np.array_equal(final_residual, donor_initial_residual):
+                residual_ref: dict[str, Any] = {
+                    "kind": "v4_donor_initial_native_volume_residual",
+                    "column": column_index,
+                }
+            else:
+                residual_ref = {
+                    "kind": "artifact",
+                    **persist(f"{artifact_prefix}_final_native_volume_residual_col{column_index}", final_residual),
+                }
+            forward = _task41_v9_chunked_metrics(final_storage, known)
+            forward_relative = forward["absolute_l2"] / max(
+                _vector_norm(known), np.finfo(float).tiny
+            )
+            residual_norm = _vector_norm(final_residual)
+            residual_relative = residual_norm / max(_vector_norm(volume_rhs), np.finfo(float).tiny)
+            active_trace_exact = all(
+                np.array_equal(
+                    final_storage[active_original[start : start + 262_144]],
+                    known[active_original[start : start + 262_144]],
+                )
+                for start in range(0, active_rows, 262_144)
+            )
+            slave_rows_zero = not any_nonzero(final_storage, slave_rows)
+            residual_slave_rows_zero = not any_nonzero(final_residual, slave_rows)
+            action_calls = len(step_records)
+            recovery_passed = bool(
+                np.isfinite(forward_relative)
+                and forward_relative <= 1.0e-11
+                and np.isfinite(residual_relative)
+                and residual_relative <= 1.0e-10
+                and active_trace_exact
+                and slave_rows_zero
+                and residual_slave_rows_zero
+                and action_calls <= recovery_refinement_max_steps + 1
+            )
+            column_reports.append(
+                {
+                    "column": column_index,
+                    "initial_matches_saved_known_field": initial_matches_known,
+                    "initial_storage_artifact": initial_ref,
+                    "initial_storage_sha256": initial_storage_sha256,
+                    "final_storage_artifact": final_ref,
+                    "final_native_volume_residual_artifact": residual_ref,
+                    "forward_error_absolute_l2": forward["absolute_l2"],
+                    "forward_error_relative": forward_relative,
+                    "forward_gate_tolerance": 1.0e-11,
+                    "native_volume_residual_absolute_l2": residual_norm,
+                    "native_volume_residual_relative": residual_relative,
+                    "native_volume_residual_gate_tolerance": 1.0e-10,
+                    "active_trace_exact": active_trace_exact,
+                    "slave_rows_zero": slave_rows_zero,
+                    "residual_slave_rows_zero": residual_slave_rows_zero,
+                    "native_volume_action_calls": action_calls,
+                    "same_lu_corrections": max(0, action_calls - 1),
+                    "maximum_same_lu_corrections": recovery_refinement_max_steps,
+                    "step_records": step_records,
+                    "passed": recovery_passed,
+                    "final_storage_sha256": _task41_v9_array_sha256(final_storage),
+                    "final_native_residual_sha256": _task41_v9_array_sha256(final_residual),
+                    "final_native_action_sha256": _task41_v9_array_sha256(final_volume_action),
+                }
+            )
+            progress_callback(
+                {
+                    "phase": "task41_v9_same_lu_recovery",
+                    "status": "COMPLETED" if recovery_passed else "GATE_FAILED",
+                    "column": column_index,
+                    "same_lu_corrections": max(0, action_calls - 1),
+                    "forward_error_relative": forward_relative,
+                    "native_volume_residual_relative": residual_relative,
+                }
+            )
+            del initial_storage, initial_volume_action, initial_residual
+            del final_storage, final_residual, final_volume_action, refined
+
+        recovery_passed = len(column_reports) == 2 and all(item["passed"] for item in column_reports)
+        result = {
+            "schema": "task41.p0.b0.v9.compact_volume_identity.v1",
+            "status": "PASS" if action_passed and recovery_passed else "GATE_FAILED",
+            "completed": True,
+            "official_result": False,
+            "candidate_evaluator_identity": candidate_identity,
+            "candidate_evaluator_cache_identity": candidate_cache_identity,
+            "donor_manifest_sha256": str(donor["manifest_sha256"]),
+            "existing_evidence_bytes": existing_bytes,
+            "prior_new_evidence_bytes": prior_new_bytes,
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+            "geometry_policy": "mesh_actual_exact",
+            "active_rows": active_rows,
+            "appended_rows": port_rows,
+            "full_storage_rows": full_rows,
+            "global_volume_matrix_materialized": False,
+            "dense_port_matrix_materialized": False,
+            "surface_or_carrier_replayed": False,
+            "saved_port_rows_unchanged": candidate_action_gate["saved_port_rows_unchanged"],
+            "new_evidence_bytes_upper": new_evidence_upper,
+            "new_evidence_bytes": persisted_bytes,
+            "cumulative_evidence_bytes": existing_bytes + prior_new_bytes + persisted_bytes,
+            "evidence_cap_bytes": TASK41_V4_EVIDENCE_CAP_BYTES,
+            "free_space_bytes_before_persist": free_bytes,
+            "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
+            "persisted_artifacts": artifacts,
+            "candidate_full_action_gate": candidate_action_gate,
+            "candidate_recovery_gate": {
+                "status": "PASS" if recovery_passed else "GATE_FAILED",
+                "relative_forward_tolerance": 1.0e-11,
+                "native_volume_residual_relative_tolerance": 1.0e-10,
+                "maximum_same_lu_corrections_per_column": recovery_refinement_max_steps,
+                "recovery_source": "saved native_volume_rhs with the current exact-geometry same-LU owner",
+                "native_volume_action_calls": sum(item["native_volume_action_calls"] for item in column_reports),
+                "columns": column_reports,
+            },
+        }
+        progress_callback(
+            {
+                "phase": "task41_v9_compact_volume_identity",
+                "status": "COMPLETED" if result["status"] == "PASS" else "GATE_FAILED",
+                "new_evidence_bytes": persisted_bytes,
+                "cumulative_evidence_bytes": result["cumulative_evidence_bytes"],
+            }
+        )
+        return result
+    finally:
+        action.destroy()
 
 
 def audit_task41_v4_volume_identity(
@@ -1622,6 +2278,9 @@ def audit_task41_v4_volume_identity(
     artifact_prefix: str | None = None,
     candidate_identity: str | None = None,
     candidate_cache_identity: str | None = None,
+    compact_evidence: bool = False,
+    recovery_refinement_max_steps: int = 0,
+    reserved_followup_evidence_bytes: int = 0,
 ) -> dict[str, Any]:
     """Replay the trace-only production P6 action and RHS identities.
 
@@ -1632,6 +2291,23 @@ def audit_task41_v4_volume_identity(
 
     if not all(callable(item) for item in (allocation_gate, progress_callback, persist_array)):
         raise TypeError("Task41 V4 identity replay requires allocation, progress, and persistence callbacks")
+    if compact_evidence:
+        return _task41_v9_compact_volume_identity(
+            owner,
+            donor,
+            allocation_gate=allocation_gate,
+            progress_callback=progress_callback,
+            persist_array=persist_array,
+            output_directory=output_directory,
+            native_volume_apply=native_volume_apply,
+            artifact_prefix=artifact_prefix,
+            candidate_identity=candidate_identity,
+            candidate_cache_identity=candidate_cache_identity,
+            recovery_refinement_max_steps=recovery_refinement_max_steps,
+            reserved_followup_evidence_bytes=reserved_followup_evidence_bytes,
+        )
+    if reserved_followup_evidence_bytes:
+        raise ValueError("follow-up evidence reservation is only valid for compact V9 evidence")
     columns = tuple(donor["columns"])
     identity = donor["attribution"]
     joint = identity["joint"]
@@ -1802,7 +2478,13 @@ def audit_task41_v4_volume_identity(
         artifact = dict(persist_array(name, np.asarray(values)))
         artifact_bytes = int(artifact.get("bytes", np.asarray(values).nbytes + 4096))
         persisted_bytes += artifact_bytes
-        if int(donor["existing_evidence_bytes"]) + prior_new_bytes + persisted_bytes > TASK41_V4_EVIDENCE_CAP_BYTES:
+        if (
+            int(donor["existing_evidence_bytes"])
+            + prior_new_bytes
+            + reserved_followup_evidence_bytes
+            + persisted_bytes
+            > TASK41_V4_EVIDENCE_CAP_BYTES
+        ):
             raise MemoryError("Task41 V4 persisted identity evidence exceeded the cumulative 16 GiB cap")
         replay_artifacts.append({"name": name, **artifact})
         return artifact
