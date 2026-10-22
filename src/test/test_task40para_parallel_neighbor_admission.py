@@ -12,6 +12,11 @@ from src.runners import reviewed_workstation_admission as admission
 
 REPO = Path(__file__).resolve().parents[2]
 INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d15_z3_3_r13_p6_direct.dat"
+K_INPUTS = {
+    k: REPO
+    / f"input/task40para_phi90_mesh_modes_direct/d15_y3_k{k}_r13_p6_direct.dat"
+    for k in range(1, 5)
+}
 ROOT_PID = 81001
 MPI_PID = 81002
 PROXY_PID = 81003
@@ -59,7 +64,9 @@ def _write_process(proc_root, node, *, rss_bytes=100_000_000, thread=False):
 
 def _fixture(
     tmp_path, monkeypatch, *, large_neighbor=True, authorize=True,
-    anchor_verified=True,
+    anchor_verified=True, task40_input_path=INPUT,
+    task40_profile="task40para_phi90_13p5_D15_Z3_3_p6_direct_v1",
+    task40_run_id="task40_phi90_13p5_D15_Z3_3_p6_direct_v1",
 ):
     proc_root = tmp_path / "proc"
     sys_root = tmp_path / "sys"
@@ -84,7 +91,7 @@ def _fixture(
 
     run_directory = (tmp_path / RUN_DIRECTORY_NAME).resolve()
     run_directory.mkdir(parents=True)
-    input_path = INPUT.resolve()
+    input_path = task40_input_path.resolve()
     input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
     resolved_path = run_directory / "resolved_config.json"
     resolved_raw = b'{"identity":"fixture-resolved"}\n'
@@ -173,14 +180,27 @@ def _fixture(
     parent_path = tmp_path / "user_authority.json"
     parent_path.write_text(json.dumps(parent_authority, sort_keys=True) + "\n")
     parent_sha = hashlib.sha256(parent_path.read_bytes()).hexdigest()
+    task40_scope = (
+        [
+            {"profile_identity": task40_profile, "run_id": task40_run_id}
+        ]
+        if task40_profile.startswith(
+            "task40para_phi90_13p5_D15_Y3_K"
+        )
+        else [
+            {
+                "profile_identity": "task40para_phi90_13p5_D15_Z3_3_p6_direct_v1",
+                "run_id": "task40_phi90_13p5_D15_Z3_3_p6_direct_v1",
+            },
+            {
+                "profile_identity": "task40para_phi90_13p5_D15_X2_p6_direct_v1",
+                "run_id": "task40_phi90_13p5_D15_X2_p6_direct_v1",
+            },
+        ]
+    )
     record = {
         "schema": "task40.cross_project_parallel_authority.v1",
-        "scope": {"task40_runs": [
-            {"profile_identity": "task40para_phi90_13p5_D15_Z3_3_p6_direct_v1",
-             "run_id": "task40_phi90_13p5_D15_Z3_3_p6_direct_v1"},
-            {"profile_identity": "task40para_phi90_13p5_D15_X2_p6_direct_v1",
-             "run_id": "task40_phi90_13p5_D15_X2_p6_direct_v1"},
-        ]},
+        "scope": {"task40_runs": task40_scope},
         "parent_user_authority_path": str(parent_path),
         "parent_user_authority_sha256": parent_sha,
         "cpu_activity_sample_path": str(cpu_path),
@@ -264,6 +284,9 @@ def _fixture(
         "authorization_path": auth_path,
         "authorization_sha256": auth_sha,
         "fake_run": fake_run,
+        "task40_input_path": task40_input_path,
+        "task40_profile": task40_profile,
+        "task40_run_id": task40_run_id,
     }
 
 
@@ -290,6 +313,69 @@ def test_task40_run_case_allows_exact_authorized_task41_tree_including_mpiexec_w
     assert admission_result["rss_hard_limit_bytes"] is None
     assert admission_result["parallel_neighbor_authorization"][
         "cpu_activity_sample"]["exclusive_cpu_claim"] is False
+
+
+@pytest.mark.parametrize("k", range(1, 5))
+def test_task40_run_case_allows_one_exact_authorized_d15_y3_k_run(
+    k, tmp_path, monkeypatch, capsys
+):
+    profile = f"task40para_phi90_13p5_D15_Y3_K{k}_p6_direct_v1"
+    run_id = f"task40_phi90_13p5_D15_Y3_K{k}_p6_direct_v1"
+    input_path = K_INPUTS[k]
+    state = _fixture(
+        tmp_path,
+        monkeypatch,
+        large_neighbor=True,
+        authorize=True,
+        task40_input_path=input_path,
+        task40_profile=profile,
+        task40_run_id=run_id,
+    )
+    from scripts.run_case import main
+
+    assert main([str(input_path)]) == 0
+    capsys.readouterr()
+    isolation = json.loads((state["fake_run"] / "workstation_isolation.json").read_text())
+    admission_result = isolation["node_memory_admission"]
+    assert admission_result["parallel_neighbor_authorized"] is True
+    assert admission_result["blocking_active_solver_candidates"] == []
+    assert admission_result["blocking_large_processes"] == []
+    assert admission_result["minimum_available_bytes"] == 64 * 1024**3
+    assert admission_result["rss_hard_limit_bytes"] is None
+
+
+def test_task40_run_case_rejects_cross_case_parallel_authorization_scope(
+    tmp_path, monkeypatch, capsys
+):
+    input_path = K_INPUTS[1]
+    state = _fixture(
+        tmp_path,
+        monkeypatch,
+        large_neighbor=False,
+        authorize=True,
+        task40_input_path=input_path,
+        task40_profile="task40para_phi90_13p5_D15_Y3_K1_p6_direct_v1",
+        task40_run_id="task40_phi90_13p5_D15_Y3_K1_p6_direct_v1",
+    )
+    record = json.loads(state["authorization_path"].read_text())
+    record["scope"]["task40_runs"].append(
+        {
+            "profile_identity": "task40para_phi90_13p5_D15_Y3_K2_p6_direct_v1",
+            "run_id": "task40_phi90_13p5_D15_Y3_K2_p6_direct_v1",
+        }
+    )
+    state["authorization_path"].write_text(
+        json.dumps(record, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    updated_sha = hashlib.sha256(state["authorization_path"].read_bytes()).hexdigest()
+    monkeypatch.setenv(
+        "TASK40_PARALLEL_AUTHORIZATION_SHA256", updated_sha
+    )
+    from scripts.run_case import main
+
+    assert main([str(input_path)]) == 2
+    assert not state["fake_run"].exists()
+    assert "must bind one exact run" in capsys.readouterr().err
 
 
 def test_task40_run_case_keeps_default_deny_without_authorization(

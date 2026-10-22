@@ -15,7 +15,7 @@ from src.io.input_loader import InputError
 _TASK40_PARALLEL_AUTH_FILE_ENV = 'TASK40_PARALLEL_AUTHORIZATION_FILE'
 _TASK40_PARALLEL_AUTH_SHA_ENV = 'TASK40_PARALLEL_AUTHORIZATION_SHA256'
 _TASK40_PARALLEL_NEIGHBOR_RUN_ID = 'task41extra_b0_p6_phi90_07nm_iterative'
-_TASK40_PARALLEL_ALLOWED_RUNS = {
+_TASK40_PARALLEL_LEGACY_SCOPE = frozenset({
     (
         'task40para_phi90_13p5_D15_Z3_3_p6_direct_v1',
         'task40_phi90_13p5_D15_Z3_3_p6_direct_v1',
@@ -24,7 +24,14 @@ _TASK40_PARALLEL_ALLOWED_RUNS = {
         'task40para_phi90_13p5_D15_X2_p6_direct_v1',
         'task40_phi90_13p5_D15_X2_p6_direct_v1',
     ),
-}
+})
+_TASK40_PARALLEL_ALLOWED_RUNS = _TASK40_PARALLEL_LEGACY_SCOPE | frozenset(
+    (
+        f'task40para_phi90_13p5_D15_Y3_K{k}_p6_direct_v1',
+        f'task40_phi90_13p5_D15_Y3_K{k}_p6_direct_v1',
+    )
+    for k in range(1, 5)
+)
 
 
 def _proc_root():
@@ -168,14 +175,20 @@ def _task40_parallel_authorization(path, expected_sha256, profile, run_id):
         raise InputError('Task40 parallel authorization record SHA256 mismatch')
     if record.get('schema') != 'task40.cross_project_parallel_authority.v1':
         raise InputError('Task40 parallel authorization schema is unsupported')
-    authorized_runs = {
+    authorized_runs = frozenset({
         (item.get('profile_identity'), item.get('run_id'))
         for item in record.get('scope', {}).get('task40_runs', [])
         if isinstance(item, dict)
-    }
-    if authorized_runs != _TASK40_PARALLEL_ALLOWED_RUNS:
-        raise InputError('Task40 parallel authorization run scope is not the reviewed two-case set')
-    if (str(profile), str(run_id)) not in authorized_runs:
+    })
+    requested_run = (str(profile), str(run_id))
+    if requested_run not in _TASK40_PARALLEL_ALLOWED_RUNS:
+        raise InputError('Task40 parallel authorization does not cover a reviewed run identity')
+    if authorized_runs not in (
+        _TASK40_PARALLEL_LEGACY_SCOPE,
+        frozenset({requested_run}),
+    ):
+        raise InputError('Task40 parallel authorization must bind one exact run or the legacy pair')
+    if requested_run not in authorized_runs:
         raise InputError('Task40 parallel authorization does not cover this profile/run_id')
     neighbor = record.get('task41_neighbor')
     if not isinstance(neighbor, dict) or neighbor.get('run_id') != _TASK40_PARALLEL_NEIGHBOR_RUN_ID:
