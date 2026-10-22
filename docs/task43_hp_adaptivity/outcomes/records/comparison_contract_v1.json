@@ -1,0 +1,84 @@
+{
+  "schema": "task43.comparison-contract.v1",
+  "classification": "frozen_comparison_definition_not_measured_evidence",
+  "authority": "docs/task43_hp_adaptivity/task.md sections 5 and 6",
+  "scope": "13.5 nm phi90; frozen before the first formal adaptive selection",
+  "physical_domain_nm": [[0.0, 50.0], [0.0, 50.0], [-10.0, 130.0]],
+  "domain_volume_nm3": 350000.0,
+  "incident_scales": {
+    "classification": "derived_from_unit_air_incident_plane_wave",
+    "field_convention": "exp(i k dot r), exp(-i omega t); code electric amplitude 1",
+    "extension": "the same incident air plane wave extended over the entire comparison domain",
+    "electric_L2_squared_code_nm3": 350000.0,
+    "curl_electric_L2_squared_over_k0_squared_code_nm3": 350000.0,
+    "G_squared_code_nm3": 700000.0,
+    "G_definition": "integral(|E|^2 + |curl(E)|^2/k0^2) dV",
+    "H_L2_floor_definition": "sqrt(350000) times resolved cfg.magnetic_field_scale_A_per_m for mu_r=1",
+    "runtime_validation": "check resolved amplitude, n_air, mu_r, wavevector and units before applying these derived scales",
+    "not_a_layered_background_norm": true
+  },
+  "field_comparison": {
+    "common_rule": "tensor Gauss over the union of physical cell breakpoints from every compared mesh, including references",
+    "initial_gauss_order_per_axis_per_interval": 8,
+    "stricter_gauss_order_per_axis_per_interval": 10,
+    "exact_polynomial_scope": "affine Cartesian N1curl degree <= 6 E and curl(E), represented by the qualified cell-local DGQ6 export",
+    "nonpolynomial_background_requires_stricter_rule_check": true,
+    "phase_fit": false,
+    "E_H_relative_denominator": "max(reference L2 norm, corresponding fixed incident L2 norm)",
+    "G_relative_denominator": "max(reference G norm, sqrt(700000))",
+    "scatter_definition": "total field minus the same analytic flat air/substrate Fresnel background evaluated directly at common physical points",
+    "background_E_implementation": "src.common.analytic_fields_3d.electric_field_code_values",
+    "background_H_implementation": "src.common.analytic_fields_3d.magnetic_field_code_values with resolved physical H scale",
+    "scatter_report": "absolute L2 difference, raw relative difference when reference is nonzero, and relative difference with fixed incident floor",
+    "zero_reference_raw_relative": null,
+    "low_order_VTU_not_an_authoritative_field": true
+  },
+  "observable_vector": {
+    "inventory": "all ordered parsed top/bottom s/p modes; R13 has 612 entries; bind actual mode identities and physical wave data",
+    "power": ["R_total", "T_total", "A_volume", "R00_s", "R00_p", "R00_total", "every individual reflected and transmitted channel power"],
+    "amplitudes": "all complex amplitudes including evanescent modes, in the same physical boundary amplitude convention",
+    "amplitude_grouping": ["top_s", "top_p", "bottom_s", "bottom_p"],
+    "amplitude_group_metric": "complex vector Euclidean L2 difference divided by max(reference group L2, unit incident modal amplitude); no fitted phase",
+    "fields": ["total E volume L2", "total H volume L2", "scattered E volume L2", "scattered H volume L2", "G norm field difference"],
+    "different_mode_windows": "compare common identities explicitly and report added modes separately; never truncate silently to a favorable subset"
+  },
+  "final_tolerances": {
+    "independent_full_active_relative_residual": 1e-6,
+    "small_direct_target_relative_residual": 1e-8,
+    "condensed_direct_relative_residual": 1e-9,
+    "absolute_energy_closure_1_minus_R_minus_T_minus_A_volume": 1e-5,
+    "absolute_R_T_A_volume_and_R00_total_difference": 1e-5,
+    "absolute_individual_channel_power_including_R00_s_R00_p_difference": 1e-6,
+    "relative_field_and_boundary_amplitude_difference_with_incident_floor": 1e-4,
+    "relative_G_difference_with_incident_floor": 1e-4,
+    "port_and_quadrature_perturbation_fraction_of_each_final_tolerance": 0.1
+  },
+  "vertical_sidewalls": {
+    "status": "not_run",
+    "definition": "one-sided mathematical traces of full complex E and H on each open vertical grating face, evaluated from the selected material-side cell",
+    "normal_convention": "outward from the Si block",
+    "distance_nm": 0.0,
+    "sides": ["inside Si", "outside air"],
+    "faces": [
+      {"axis": "x", "coordinate_nm": 16.5, "normal": [-1, 0, 0], "tangential_bounds_nm": [[15.0, 35.0], [0.0, 120.0]]},
+      {"axis": "x", "coordinate_nm": 33.5, "normal": [1, 0, 0], "tangential_bounds_nm": [[15.0, 35.0], [0.0, 120.0]]},
+      {"axis": "y", "coordinate_nm": 15.0, "normal": [0, -1, 0], "tangential_bounds_nm": [[16.5, 33.5], [0.0, 120.0]]},
+      {"axis": "y", "coordinate_nm": 35.0, "normal": [0, 1, 0], "tangential_bounds_nm": [[16.5, 33.5], [0.0, 120.0]]}
+    ],
+    "quadrature": "surface tensor Gauss on the union of both meshes' tangential breakpoints, order 8 then 10",
+    "corners_and_edges": "Gauss points lie strictly inside surface subrectangles; no singular corner point values are compared",
+    "metric": "per face and per material side complex E/H surface L2, with the corresponding incident field surface norm as denominator floor",
+    "qualification_rule": "requires a tested one-sided sampler; arbitrary colliding-cell choice is invalid; if absent retain the sidewall qualification gap",
+    "offset_diagnostic_rule": "any nonzero offset must be separately labelled and cannot count as this zero-distance trace measurement"
+  },
+  "selection": {
+    "marking": "cell contributions to the common G-norm field difference",
+    "dorfler_theta": 0.5,
+    "maximum_primary_solved_candidates_per_round": 2,
+    "same_round_reference_rule_scales_frozen": true,
+    "acceptance": "valid space and full residual pass; eta_G decrease exceeds measured solve/quadrature/reference uncertainty; maximum normalized complete-output error J_infinity does not significantly worsen beyond measured uncertainty",
+    "uncertainty": "not_measured; record tighter-solve, stricter quadrature and independent-reference observations before accepting an update; do not substitute arbitrary epsilon",
+    "known_6x10x6_p6_control": "post-selection comparison only; excluded from marking and candidate ranking",
+    "discrete_agreement_is_not_continuum_convergence": true
+  }
+}

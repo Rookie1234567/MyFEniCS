@@ -1,0 +1,877 @@
+{
+  "classification": "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim",
+  "common_physical_and_mesh_identity": {
+    "axes_nm_xyz": [
+      [
+        0.0,
+        16.5,
+        33.5,
+        50.0
+      ],
+      [
+        0.0,
+        15.0,
+        35.0,
+        50.0
+      ],
+      [
+        -10.0,
+        0.0,
+        60.0,
+        120.0,
+        130.0
+      ]
+    ],
+    "axis_cell_counts_xyz": [
+      3,
+      3,
+      4
+    ],
+    "axis_values_sha256": "215910390413b53df7d87f701931b079f2eed439bfb134b0b2225355aa50f61a",
+    "base_plan_identity_sha256": "54bab402c42da90ed93286ca1bbaf6f36dbdf6c4e71d749e8650159e098fe65d",
+    "empty_h_plan": {
+      "active_interior_degree_counts": {
+        "p3": 36,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0
+      },
+      "allow_no_refinement": true,
+      "hanging_patch_count": 0,
+      "leaf_cells": 36,
+      "marked_root_count": 0,
+      "plan_sha256": "d0d0502c42deb39fb968e3bc8ae34f0a0f14a5e67e7b8e4e2f2c789c0551886d",
+      "root_cells": 36
+    },
+    "field_comparison": {
+      "background": "analytic_flat_air_substrate_fresnel",
+      "fixed_incident_G_norm_squared": 700000.0,
+      "phase_fit": false,
+      "physical_H_from_recovered_curl": true,
+      "rule_orders": [
+        8,
+        10
+      ]
+    },
+    "geometry": "rectangular_block_grating",
+    "global_cells": 36,
+    "incident_amplitude_v_per_m": 1.0,
+    "incident_phi_deg": 90.0,
+    "incident_theta_deg": 89.0,
+    "lambda0_nm": 13.5,
+    "material_planes_all_aligned": true,
+    "mesh_type": "hexahedron",
+    "ports": {
+      "bottom_mode_count": 306,
+      "boundary_amplitude_scale": "boundary_magnitude_scaled_r5_v1",
+      "ordered_mode_count": 612,
+      "relative_cutoff_tolerance": 1e-13,
+      "relative_only_cutoff": "scale_homogeneous_relative_only_v1",
+      "surface_quadrature_degree": 28,
+      "top_mode_count": 306,
+      "volume_quadrature_degree": 15
+    }
+  },
+  "dof_accounting": {
+    "active_p3_on_p6_carrier": {
+      "active_cell_interior_rows": 1296,
+      "augmented_independent_rows_before_cell_interior_condensation": 3690,
+      "condensed_nnz": 547386,
+      "condensed_solver_rows": 2394,
+      "independent_active_fe_dofs": 3078,
+      "independent_active_trace_rows": 1782,
+      "note": "Carrier storage and matrix rows are different spaces; the independent active FE count is trace plus active cell interiors (1782+1296).",
+      "ordered_modal_unknowns": 612,
+      "p6_carrier_storage_dofs_before_constraints": 25764
+    },
+    "native_p3": {
+      "augmented_nnz": 1048424,
+      "augmented_solver_rows": 4152,
+      "independent_fe_dofs": 3078,
+      "ordered_modal_unknowns": 612,
+      "periodic_slave_rows": 462,
+      "storage_fe_dofs_including_periodic_slave_rows": 3540
+    }
+  },
+  "independent_root_recheck": {
+    "method": "Separate raw-array recomputation from q8/q10 field NPZ samples and raw 612-channel JSON identities/powers; not a CI result and not the runner comparison call.",
+    "scope": [
+      "native p3 vs empty-h active p3 MPI1",
+      "native p3 vs empty-h active p3 MPI2",
+      "empty-h active p3 MPI1 vs MPI2"
+    ],
+    "status": "passed"
+  },
+  "launch_host_snapshots": {
+    "empty_h_active_p3_mpi1": {
+      "cpu_idle_percent": {
+        "1": 96.5
+      },
+      "mem_available_gib": 1740.65,
+      "method": "two-second /proc/stat per-CPU sample immediately before launch",
+      "path": "benchmarks/artifacts/task43/h100_anchor/logs/empty_h_active_p3_mpi1_host_preflight.txt",
+      "resource_gate": "not_run",
+      "selected_affinity": [
+        1
+      ],
+      "sha256": "498de7852b07d53f092015bfb2f6220fec709ae0f48b211efb2a6bf90fd8400d",
+      "swap_used_gib": 0.89
+    },
+    "empty_h_active_p3_mpi2": {
+      "cpu_idle_percent": {
+        "1": 92.0,
+        "29": 87.1
+      },
+      "mem_available_gib": 1739.17,
+      "method": "two-second /proc/stat per-CPU sample immediately before launch",
+      "path": "benchmarks/artifacts/task43/h100_anchor/logs/empty_h_active_p3_mpi2_host_preflight.txt",
+      "resource_gate": "not_run",
+      "selected_rank_affinities": [
+        [
+          1
+        ],
+        [
+          29
+        ]
+      ],
+      "sha256": "d785787dfcaabad17eabdbd955c4a1e8f101b337ee9b8482c230887b7fbceaa4",
+      "swap_used_gib": 0.89
+    },
+    "native_p3_mpi1": {
+      "cpu1_idle_percent": 93.9,
+      "mem_available_gib_rounded": 1740.0,
+      "method": "mpstat 3-second average plus host Mem/Swap and process snapshot",
+      "path": "benchmarks/artifacts/task43/h100_anchor/native_p3_mpi1_host_preflight.txt",
+      "resource_gate": "not_run",
+      "selected_affinity": [
+        1
+      ],
+      "sha256": "9b5edf86b6aaa486f0416832fe0835d1bce526fac30d1864b68557b3394f664e",
+      "swap_used_gib_rounded": 0.89
+    }
+  },
+  "not_run": [
+    "frozen 180-cell initial Task43 model",
+    "adaptive marking, candidate acceptance, and at least two accepted updates",
+    "final uniform p6 comparator",
+    "selection-reference/calibration/independent-holdout qualification",
+    "R14 comparison",
+    "four-sidewall one-sided mathematical trace comparison",
+    "formal resource-profile gate for the 180-cell campaign",
+    "continuum convergence or accuracy claim"
+  ],
+  "related_tests": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && taskset -c 1 env OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 python -m pytest -q src/test/test_task43_initial_profile.py src/test/test_physical_field_comparison.py",
+    "log": {
+      "path": "benchmarks/artifacts/task43/h100_anchor/logs/final-focused-tests.log",
+      "sha256": "942316dae68f30b13d58150e1657fe9cb8d525aebe6e6edd2e8949999ed0c40e"
+    },
+    "result": "6 passed in 2.17s",
+    "scope": "focused profile identity and common physical-field comparison unit tests; no PDE",
+    "status": "passed"
+  },
+  "runs": {
+    "empty_h_active_p3_mpi1": {
+      "artifacts": {
+        "amplitude_rows": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi1/solve/dtn_auxiliary_amplitudes_3d.json",
+          "sha256": "08f840bab55af4282821cedb208d785c7f9bdefb6061d137eba7c34537418ebe"
+        },
+        "channel_rows": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi1/solve/dtn_port_diffraction_orders_3d.json",
+          "sha256": "4e64852faf1ea6defe9f716b7ec31405d7a1034519a2a2995625a1c9e8aaf029"
+        },
+        "field_samples": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi1/field_samples_q8_q10.npz",
+          "sha256": "b00222f154e0c1f2e15e192980f6165d321abe9a1c4a58431e375ea209ea9d90"
+        },
+        "log": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/logs/empty_h_active_p3_mpi1.log",
+          "sha256": "e8e8fb6aa6d875ea14fbb00550f8d0e07c56ca14450cf0b0522642342720a939"
+        },
+        "ordered_boundary_amplitudes_sha256": "602d9c414c0bd4bd523243730d2e37dff13f9d5f45fcbb7fe050653cebe5e809",
+        "ordered_channel_power_sha256": "561adbf389b0aae7d971f6aab0a8416bcf64f4647f7ac53679e5f88877a8786f",
+        "ordered_mode_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+        "raw_record": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi1/task43_h100_anchor_record.json",
+          "sha256": "4a0e118d7845867e6c13ea584c1c8c3e132c9b32737135cc686923757203ffe9"
+        }
+      },
+      "case_id": "empty_h_active_p3_mpi1",
+      "classification": "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim",
+      "degrees_of_freedom": {
+        "active_cell_interior_rows": 1296,
+        "augmented_independent_rows_before_cell_interior_condensation": 3690,
+        "cell_static_condensation": true,
+        "condensed_solver_rows": 2394,
+        "empty_h_audit": {
+          "cell_interior_degree_counts": {
+            "p3": 36,
+            "p4": 0,
+            "p5": 0,
+            "p6": 0
+          },
+          "hanging_patch_count": 0,
+          "leaf_cells": 36,
+          "passed": true,
+          "root_cells": 36
+        },
+        "independent_active_fe_dofs": 3078,
+        "independent_active_trace_rows": 1782,
+        "modal_rows": 612,
+        "p6_carrier_storage_dofs_before_constraints": 25764
+      },
+      "environment": {
+        "math_threads": {
+          "MKL_NUM_THREADS": "1",
+          "NUMEXPR_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1"
+        },
+        "mpi_size": 1,
+        "petsc_int_type": "<class 'numpy.int64'>",
+        "petsc_scalar_type": "<class 'numpy.complex128'>",
+        "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+        "python_version": "3.12.3",
+        "qualified_activation_marker": true,
+        "rank_affinity": [
+          [
+            1
+          ]
+        ]
+      },
+      "field_samples": {
+        "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi1/field_samples_q8_q10.npz",
+        "phase_fit": false,
+        "physical_H_from_recovered_curl": true,
+        "q10_points": 36000,
+        "q8_points": 18432,
+        "scattered_background": "analytic_flat_air_substrate_fresnel",
+        "sha256": "b00222f154e0c1f2e15e192980f6165d321abe9a1c4a58431e375ea209ea9d90"
+      },
+      "gates": {
+        "all_612_ordered_modes_present": true,
+        "condensed_active_residual_le_1e-9": true,
+        "independent_A6_relative_to_rhs_le_1e-9": true,
+        "native_p3_aggregate_power_max_absolute_le_1e-8": true,
+        "native_p3_field_and_modal_amplitude_max_relative_le_1e-8": true,
+        "native_p3_maximum_channel_power_absolute_le_1e-8": true,
+        "pass": true,
+        "solver_completed_and_official": true,
+        "status": "passed"
+      },
+      "method": "empty-h p3 active space on p6 carrier, variable-p backend",
+      "power": {
+        "A_volume_total": 2.4120154951913e-06,
+        "R00_p": 3.030005180287869e-31,
+        "R00_s": 0.9958545860964326,
+        "R00_total": 0.9958545860964326,
+        "R_total": 0.9999860055613888,
+        "T_total": 1.1582422933065922e-05,
+        "amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
+        "ordered_modes": 612,
+        "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "sparse_cutoff_relative_tolerance": 1e-13,
+        "surface_quadrature_degree": 28,
+        "volume_quadrature_degree": 15,
+        "volume_quadrature_rule": "default"
+      },
+      "reference_comparisons": {
+        "native_p3_mpi1": {
+          "aggregate_power_absolute_differences": {
+            "A_volume_total": 1.8211208365967457e-19,
+            "R00_p": 3.0031921825572244e-31,
+            "R00_s": 0.0,
+            "R00_total": 0.0,
+            "R_total": 4.440892098500626e-16,
+            "T_total": 2.261577969168982e-18
+          },
+          "amplitude_groups_raw_and_fixed_floor_relative": {
+            "bottom_p": {
+              "entry_count": 153,
+              "raw_relative": 3.6537812535252376e-10,
+              "relative_with_unit_modal_floor": 3.759562585572537e-16
+            },
+            "bottom_s": {
+              "entry_count": 153,
+              "raw_relative": 1.410553135180099e-12,
+              "relative_with_unit_modal_floor": 7.918240244247621e-16
+            },
+            "top_p": {
+              "entry_count": 153,
+              "raw_relative": 1.0730402865577072e-09,
+              "relative_with_unit_modal_floor": 4.2345270579143965e-15
+            },
+            "top_s": {
+              "entry_count": 153,
+              "raw_relative": 3.988396825751942e-15,
+              "relative_with_unit_modal_floor": 3.980615754376393e-15
+            }
+          },
+          "gates": {
+            "aggregate_power_max_absolute_le_1e-8": true,
+            "field_and_modal_amplitude_max_relative_le_1e-8": true,
+            "maximum_channel_power_absolute_le_1e-8": true
+          },
+          "maximum_channel_power_absolute_difference": 4.453902524570452e-16,
+          "maximum_channel_power_difference_mode": [
+            "top",
+            0,
+            -1,
+            "s"
+          ],
+          "mode_count": 612,
+          "q8_q10_field_metrics": {
+            "q10": {
+              "E_scattered_relative_to_reference": 2.384817416681763e-15,
+              "E_total_relative_to_reference": 7.792736259606055e-13,
+              "G_relative_with_fixed_incident_floor": 3.5442497838126058e-15,
+              "H_scattered_relative_to_reference": 3.4825568188331924e-15,
+              "H_total_relative_to_reference": 8.419043709270709e-13,
+              "curl_E_over_k0_relative_to_reference": 8.419037809201239e-13
+            },
+            "q8": {
+              "E_scattered_relative_to_reference": 2.384450000482413e-15,
+              "E_total_relative_to_reference": 7.792723091967849e-13,
+              "G_relative_with_fixed_incident_floor": 3.5442471673307563e-15,
+              "H_scattered_relative_to_reference": 3.4825711029677384e-15,
+              "H_total_relative_to_reference": 8.419039343000152e-13,
+              "curl_E_over_k0_relative_to_reference": 8.419039104717935e-13
+            }
+          }
+        }
+      },
+      "residuals": {
+        "condensed_reduced_trace_dtn_relative": 1.22807024624238e-12,
+        "independent_A6_definition": "reassembled original volume action and incident/port vectors; actual entity/Floquet C^H trace projection; active interiors retained; independent raw and solver-gauge modal lower rows",
+        "independent_group_raw_norms": {
+          "independent_active_interior_residual": {
+            "raw_l2_norm": 1.2154208349001105e-12,
+            "raw_max_abs": 3.0478186608111837e-13,
+            "row_count": 1296
+          },
+          "independent_active_trace_residual": {
+            "raw_l2_norm": 1.2157996361493137e-12,
+            "raw_max_abs": 2.5073471127943995e-13,
+            "row_count": 1782
+          },
+          "modal_lower_normalized_solver_gauge": {
+            "raw_l2_norm": 8.136042280810056e-16,
+            "raw_max_abs": 8.105405452237922e-16,
+            "row_count": 612
+          },
+          "modal_lower_raw_original_equation": {
+            "raw_l2_norm": 1.1388571431601706e-13,
+            "raw_max_abs": 5.912893988513174e-14,
+            "row_count": 612
+          }
+        },
+        "independent_original_form_A6_limit": 1e-09,
+        "independent_original_form_A6_pass": true,
+        "independent_original_form_A6_raw_norm": 1.719132695030237e-12,
+        "independent_original_form_A6_rhs_relative": 2.142875345379373e-12,
+        "legacy_full_active_definition": "exact block-Gaussian transformed residual: explicit variable-p reduced trace+DtN Mat action plus LU-reconstructed action on every eliminated active cell-interior equation; the trace-only port gate makes auxiliary cell-interior columns structurally zero",
+        "legacy_transformed_full_active_raw_norm": 9.766535969181998e-13,
+        "legacy_transformed_full_active_relative": 1.22807024624238e-12
+      },
+      "solver": {
+        "case_complete_wall_seconds": 280.42793161422014,
+        "finite_element_storage_dofs_before_periodic_independence": 25764,
+        "matrix": {
+          "nnz_allocated": 1058310,
+          "nnz_used": 547386,
+          "rows": 2394
+        },
+        "memory_reported_historical_rss": {
+          "maximum_rank_mb": 765.7,
+          "measurement": "solver log historical rank RSS; not simultaneous process-tree/cgroup peak",
+          "sum_of_rank_historical_peaks_upper_bound_mb": 765.7
+        },
+        "official_result_in_runner": true,
+        "periodic_constraint_rows_reported": 1788,
+        "stage4_assembly_and_solve_seconds": 265.50802795542404,
+        "status": "completed",
+        "timings_seconds": {
+          "boundary_condition_setup": 8.149072527885437e-06,
+          "config_validation": 8.866237476468086e-05,
+          "diffraction_postprocess": 2.4781180769205093,
+          "field_formulation_setup": 0.004382989834994078,
+          "floquet_constraint_setup_outer": 2.9701459095813334,
+          "floquet_mpc_finalize": 0.0032144971191883087,
+          "floquet_phase_update": 0.07236865255981684,
+          "floquet_topology_build_current": 1.1179398400709033,
+          "floquet_total": 2.9681455781683326,
+          "function_space_setup": 1.9072483791969717,
+          "matrix_stats": 0.06967121874913573,
+          "mesh_build": 0.000909268856048584,
+          "postprocess": 3.5093437773175538,
+          "stage4_dtn_port_assembly_and_solve": 265.50802795542404,
+          "variable_p_mesh_identity": 0.010748774278908968,
+          "variational_form_setup": 0.25442117964848876,
+          "volume_absorption_postprocess": 0.14356877794489264
+        },
+        "wall_seconds_through_record": 280.2760237529874
+      }
+    },
+    "empty_h_active_p3_mpi2": {
+      "artifacts": {
+        "amplitude_rows": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi2/solve/dtn_auxiliary_amplitudes_3d.json",
+          "sha256": "00bb45058b094fbb65826e0512706b28d276db03df7c01eabfbb758b65067977"
+        },
+        "channel_rows": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi2/solve/dtn_port_diffraction_orders_3d.json",
+          "sha256": "76f8a7d15fe58aacf965e7b76fa5ad7fe51bf83c2a097d839b07d71ee402d376"
+        },
+        "field_samples": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi2/field_samples_q8_q10.npz",
+          "sha256": "9051a24cc24e4efad3948a21b0f256159c529f085afc55693dac4f145e240b34"
+        },
+        "log": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/logs/empty_h_active_p3_mpi2.log",
+          "sha256": "2cdc4fc2a1d2d23f0e90b48a0645a523fab1c65dd047863c73a4d55da904e4c5"
+        },
+        "ordered_boundary_amplitudes_sha256": "4bd202d673403ef124369a322f5c1d1daf33fb090af1b6f3dfdc6c22084f1785",
+        "ordered_channel_power_sha256": "7d5b05ffa67187d0ced47c47d4e4c33b29eed55ed863f2694a7979db890d88c8",
+        "ordered_mode_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+        "raw_record": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi2/task43_h100_anchor_record.json",
+          "sha256": "f1e42cc0cb5f3cad67400da4cf7b8eb9fcb4ff13e0c9d420676932e3d1f0cdae"
+        }
+      },
+      "case_id": "empty_h_active_p3_mpi2",
+      "classification": "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim",
+      "degrees_of_freedom": {
+        "active_cell_interior_rows": 1296,
+        "augmented_independent_rows_before_cell_interior_condensation": 3690,
+        "cell_static_condensation": true,
+        "condensed_solver_rows": 2394,
+        "empty_h_audit": {
+          "cell_interior_degree_counts": {
+            "p3": 36,
+            "p4": 0,
+            "p5": 0,
+            "p6": 0
+          },
+          "hanging_patch_count": 0,
+          "leaf_cells": 36,
+          "passed": true,
+          "root_cells": 36
+        },
+        "independent_active_fe_dofs": 3078,
+        "independent_active_trace_rows": 1782,
+        "modal_rows": 612,
+        "p6_carrier_storage_dofs_before_constraints": 25764
+      },
+      "environment": {
+        "math_threads": {
+          "MKL_NUM_THREADS": "1",
+          "NUMEXPR_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1"
+        },
+        "mpi_size": 2,
+        "petsc_int_type": "<class 'numpy.int64'>",
+        "petsc_scalar_type": "<class 'numpy.complex128'>",
+        "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+        "python_version": "3.12.3",
+        "qualified_activation_marker": true,
+        "rank_affinity": [
+          [
+            1
+          ],
+          [
+            29
+          ]
+        ]
+      },
+      "field_samples": {
+        "path": "benchmarks/artifacts/task43/h100_anchor/empty_h_active_p3_mpi2/field_samples_q8_q10.npz",
+        "phase_fit": false,
+        "physical_H_from_recovered_curl": true,
+        "q10_points": 36000,
+        "q8_points": 18432,
+        "scattered_background": "analytic_flat_air_substrate_fresnel",
+        "sha256": "9051a24cc24e4efad3948a21b0f256159c529f085afc55693dac4f145e240b34"
+      },
+      "gates": {
+        "active_mpi1_aggregate_power_max_absolute_le_1e-8": true,
+        "active_mpi1_field_and_modal_amplitude_max_relative_le_1e-8": true,
+        "active_mpi1_maximum_channel_power_absolute_le_1e-8": true,
+        "all_612_ordered_modes_present": true,
+        "condensed_active_residual_le_1e-9": true,
+        "independent_A6_relative_to_rhs_le_1e-9": true,
+        "native_p3_aggregate_power_max_absolute_le_1e-8": true,
+        "native_p3_field_and_modal_amplitude_max_relative_le_1e-8": true,
+        "native_p3_maximum_channel_power_absolute_le_1e-8": true,
+        "pass": true,
+        "solver_completed_and_official": true,
+        "status": "passed"
+      },
+      "method": "empty-h p3 active space on p6 carrier, variable-p backend",
+      "power": {
+        "A_volume_total": 2.4120154951913616e-06,
+        "R00_p": 5.361793167194949e-35,
+        "R00_s": 0.995854586096433,
+        "R00_total": 0.995854586096433,
+        "R_total": 0.9999860055613893,
+        "T_total": 1.1582422933066756e-05,
+        "amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
+        "ordered_modes": 612,
+        "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "sparse_cutoff_relative_tolerance": 1e-13,
+        "surface_quadrature_degree": 28,
+        "volume_quadrature_degree": 15,
+        "volume_quadrature_rule": "default"
+      },
+      "reference_comparisons": {
+        "empty_h_active_p3_mpi1": {
+          "aggregate_power_absolute_differences": {
+            "A_volume_total": 6.140988867593677e-20,
+            "R00_p": 3.0294690009711495e-31,
+            "R00_s": 3.3306690738754696e-16,
+            "R00_total": 3.3306690738754696e-16,
+            "R_total": 4.440892098500626e-16,
+            "T_total": 8.334804200982315e-19
+          },
+          "amplitude_groups_raw_and_fixed_floor_relative": {
+            "bottom_p": {
+              "entry_count": 153,
+              "raw_relative": 3.397043613239477e-10,
+              "relative_with_unit_modal_floor": 3.4953920837801806e-16
+            },
+            "bottom_s": {
+              "entry_count": 153,
+              "raw_relative": 1.0103502859410297e-12,
+              "relative_with_unit_modal_floor": 5.671673115598792e-16
+            },
+            "top_p": {
+              "entry_count": 153,
+              "raw_relative": 8.428256612462998e-10,
+              "relative_with_unit_modal_floor": 3.32603361924817e-15
+            },
+            "top_s": {
+              "entry_count": 153,
+              "raw_relative": 3.207869254052862e-15,
+              "relative_with_unit_modal_floor": 3.2016109350540975e-15
+            }
+          },
+          "gates": {
+            "aggregate_power_max_absolute_le_1e-8": true,
+            "field_and_modal_amplitude_max_relative_le_1e-8": true,
+            "maximum_channel_power_absolute_le_1e-8": true
+          },
+          "maximum_channel_power_absolute_difference": 3.3306690738754696e-16,
+          "maximum_channel_power_difference_mode": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "mode_count": 612,
+          "q8_q10_field_metrics": {
+            "q10": {
+              "E_scattered_relative_to_reference": 1.9462530756089378e-15,
+              "E_total_relative_to_reference": 6.358077661790256e-13,
+              "G_relative_with_fixed_incident_floor": 2.3068854091097673e-15,
+              "H_scattered_relative_to_reference": 1.940414904866016e-15,
+              "H_total_relative_to_reference": 4.689044057201183e-13,
+              "curl_E_over_k0_relative_to_reference": 4.689041477772923e-13
+            },
+            "q8": {
+              "E_scattered_relative_to_reference": 1.9460436867857556e-15,
+              "E_total_relative_to_reference": 6.358085231872314e-13,
+              "G_relative_with_fixed_incident_floor": 2.3068830578825742e-15,
+              "H_scattered_relative_to_reference": 1.9405768052083775e-15,
+              "H_total_relative_to_reference": 4.689032165438785e-13,
+              "curl_E_over_k0_relative_to_reference": 4.689026773864686e-13
+            }
+          }
+        },
+        "native_p3_mpi1": {
+          "aggregate_power_absolute_differences": {
+            "A_volume_total": 1.207021949837378e-19,
+            "R00_p": 2.6276818413925183e-33,
+            "R00_s": 3.3306690738754696e-16,
+            "R00_total": 3.3306690738754696e-16,
+            "R_total": 0.0,
+            "T_total": 1.4280975490707504e-18
+          },
+          "amplitude_groups_raw_and_fixed_floor_relative": {
+            "bottom_p": {
+              "entry_count": 153,
+              "raw_relative": 3.2794543333677333e-10,
+              "relative_with_unit_modal_floor": 3.3743984539105895e-16
+            },
+            "bottom_s": {
+              "entry_count": 153,
+              "raw_relative": 9.175120381073854e-13,
+              "relative_with_unit_modal_floor": 5.150519015220191e-16
+            },
+            "top_p": {
+              "entry_count": 153,
+              "raw_relative": 6.072579507569764e-10,
+              "relative_with_unit_modal_floor": 2.3964153590758724e-15
+            },
+            "top_s": {
+              "entry_count": 153,
+              "raw_relative": 2.408988429812189e-15,
+              "relative_with_unit_modal_floor": 2.4042886690476103e-15
+            }
+          },
+          "gates": {
+            "aggregate_power_max_absolute_le_1e-8": true,
+            "field_and_modal_amplitude_max_relative_le_1e-8": true,
+            "maximum_channel_power_absolute_le_1e-8": true
+          },
+          "maximum_channel_power_absolute_difference": 3.3306690738754696e-16,
+          "maximum_channel_power_difference_mode": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "mode_count": 612,
+          "q8_q10_field_metrics": {
+            "q10": {
+              "E_scattered_relative_to_reference": 1.4164099256598982e-15,
+              "E_total_relative_to_reference": 4.625426859140652e-13,
+              "G_relative_with_fixed_incident_floor": 2.727599268838778e-15,
+              "H_scattered_relative_to_reference": 2.92364313009363e-15,
+              "H_total_relative_to_reference": 7.06760684947756e-13,
+              "curl_E_over_k0_relative_to_reference": 7.067608145365447e-13
+            },
+            "q8": {
+              "E_scattered_relative_to_reference": 1.4161980106701728e-15,
+              "E_total_relative_to_reference": 4.625442874055507e-13,
+              "G_relative_with_fixed_incident_floor": 2.7275976525971017e-15,
+              "H_scattered_relative_to_reference": 2.9237012282621607e-15,
+              "H_total_relative_to_reference": 7.06760060050513e-13,
+              "curl_E_over_k0_relative_to_reference": 7.067595724880088e-13
+            }
+          }
+        }
+      },
+      "residuals": {
+        "condensed_reduced_trace_dtn_relative": 1.3528386877185685e-14,
+        "independent_A6_definition": "reassembled original volume action and incident/port vectors; actual entity/Floquet C^H trace projection; active interiors retained; independent raw and solver-gauge modal lower rows",
+        "independent_group_raw_norms": {
+          "independent_active_interior_residual": {
+            "raw_l2_norm": 1.2268098482765173e-12,
+            "raw_max_abs": 3.050161458123262e-13,
+            "row_count": 1296
+          },
+          "independent_active_trace_residual": {
+            "raw_l2_norm": 7.249657622748342e-13,
+            "raw_max_abs": 1.731955299840985e-13,
+            "row_count": 1782
+          },
+          "modal_lower_normalized_solver_gauge": {
+            "raw_l2_norm": 8.146338494127497e-16,
+            "raw_max_abs": 8.105412958072775e-16,
+            "row_count": 612
+          },
+          "modal_lower_raw_original_equation": {
+            "raw_l2_norm": 1.6211679744290388e-13,
+            "raw_max_abs": 1.2912538128792226e-13,
+            "row_count": 612
+          }
+        },
+        "independent_original_form_A6_limit": 1e-09,
+        "independent_original_form_A6_pass": true,
+        "independent_original_form_A6_raw_norm": 1.4250047101421424e-12,
+        "independent_original_form_A6_rhs_relative": 1.7762488429430798e-12,
+        "legacy_full_active_definition": "exact block-Gaussian transformed residual: explicit variable-p reduced trace+DtN Mat action plus LU-reconstructed action on every eliminated active cell-interior equation; the trace-only port gate makes auxiliary cell-interior columns structurally zero",
+        "legacy_transformed_full_active_raw_norm": 1.0758788224478046e-14,
+        "legacy_transformed_full_active_relative": 1.3528386877185685e-14
+      },
+      "solver": {
+        "case_complete_wall_seconds": 173.97277110489085,
+        "finite_element_storage_dofs_before_periodic_independence": 25764,
+        "matrix": {
+          "nnz_allocated": 1058310,
+          "nnz_used": 547386,
+          "rows": 2394
+        },
+        "memory_reported_historical_rss": {
+          "maximum_rank_mb": 585.5,
+          "measurement": "solver log historical rank RSS; not simultaneous process-tree/cgroup peak",
+          "sum_of_rank_historical_peaks_upper_bound_mb": 1170.0
+        },
+        "official_result_in_runner": true,
+        "periodic_constraint_rows_reported": 1788,
+        "stage4_assembly_and_solve_seconds": 163.74815095122904,
+        "status": "completed",
+        "timings_seconds": {
+          "boundary_condition_setup": 1.4738645404577255e-05,
+          "config_validation": 1.3040844351053238e-05,
+          "diffraction_postprocess": 1.717999910004437,
+          "field_formulation_setup": 0.004227652680128813,
+          "floquet_constraint_setup_outer": 2.0000047921203077,
+          "floquet_mpc_finalize": 0.0025348509661853313,
+          "floquet_phase_update": 0.03710544295608997,
+          "floquet_topology_build_current": 0.8925450728274882,
+          "floquet_total": 1.998282971791923,
+          "function_space_setup": 1.772232014220208,
+          "matrix_stats": 0.012857638765126467,
+          "mesh_build": 0.0004974822513759136,
+          "postprocess": 2.639354360755533,
+          "stage4_dtn_port_assembly_and_solve": 163.74815095122904,
+          "variable_p_mesh_identity": 0.0044882697984576225,
+          "variational_form_setup": 0.034184282179921865,
+          "volume_absorption_postprocess": 0.12281745811924338
+        },
+        "wall_seconds_through_record": 173.86381227569655
+      }
+    },
+    "native_p3_mpi1": {
+      "artifacts": {
+        "amplitude_rows": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/native_p3_mpi1/solve/dtn_auxiliary_amplitudes_3d.json",
+          "sha256": "4e62e6e6b4d47e2d6f9c906876e1f9ed2ed78bbbb62b51eb4b95d8ffe84d9bb9"
+        },
+        "channel_rows": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/native_p3_mpi1/solve/dtn_port_diffraction_orders_3d.json",
+          "sha256": "6d53d6d62ef28a6a84e0eb82fe80feb79c3faf8f2766bf9e5e64d6127ad78909"
+        },
+        "field_samples": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/native_p3_mpi1/field_samples_q8_q10.npz",
+          "sha256": "d727540f014a45d9b16bbf9e78fa18cae5fc6d502a3820ec8e79c568c34cc117"
+        },
+        "log": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/logs/native_p3_mpi1.log",
+          "sha256": "82674a3ba726f4927a25fc73d5581d16cb23b4933e2fbc815e2234cc7d4d4f80"
+        },
+        "ordered_boundary_amplitudes_sha256": "44f72197140ede7d20a521e5e7ac184e559192d6ed142108097d09d30a859040",
+        "ordered_channel_power_sha256": "0c7bc09f4d1b8bc520892949b0a900c45feb8d8313d49ff260ac8acccd55bf48",
+        "ordered_mode_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+        "raw_record": {
+          "path": "benchmarks/artifacts/task43/h100_anchor/native_p3_mpi1/task43_h100_anchor_record.json",
+          "sha256": "9e387cc2a9a55d3aa994712c1f7696ff8ee6d009675b1b90f709d48c496ef961"
+        }
+      },
+      "case_id": "native_p3_mpi1",
+      "classification": "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim",
+      "degrees_of_freedom": {
+        "augmented_solver_rows": 4152,
+        "independent_fe_dofs": 3078,
+        "matrix_contains_cell_static_condensation": false,
+        "modal_rows": 612,
+        "periodic_slave_rows": 462,
+        "storage_fe_dofs_including_periodic_slave_rows": 3540
+      },
+      "environment": {
+        "math_threads": {
+          "MKL_NUM_THREADS": "1",
+          "NUMEXPR_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1"
+        },
+        "mpi_size": 1,
+        "petsc_int_type": "<class 'numpy.int64'>",
+        "petsc_scalar_type": "<class 'numpy.complex128'>",
+        "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+        "python_version": "3.12.3",
+        "qualified_activation_marker": true,
+        "rank_affinity": [
+          [
+            1
+          ]
+        ]
+      },
+      "field_samples": {
+        "path": "benchmarks/artifacts/task43/h100_anchor/native_p3_mpi1/field_samples_q8_q10.npz",
+        "phase_fit": false,
+        "physical_H_from_recovered_curl": true,
+        "q10_points": 36000,
+        "q8_points": 18432,
+        "scattered_background": "analytic_flat_air_substrate_fresnel",
+        "sha256": "d727540f014a45d9b16bbf9e78fa18cae5fc6d502a3820ec8e79c568c34cc117"
+      },
+      "gates": {
+        "all_612_ordered_modes_present": true,
+        "native_explicit_Ax_minus_b_relative_le_1e-9": true,
+        "pass": true,
+        "solver_completed_and_official": true,
+        "status": "passed"
+      },
+      "method": "native degree-3 Nedelec, standard_full backend",
+      "power": {
+        "A_volume_total": 2.4120154951914823e-06,
+        "R00_p": 2.6812997730644677e-33,
+        "R00_s": 0.9958545860964326,
+        "R00_total": 0.9958545860964326,
+        "R_total": 0.9999860055613893,
+        "T_total": 1.1582422933068184e-05,
+        "amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
+        "ordered_modes": 612,
+        "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "sparse_cutoff_relative_tolerance": 1e-13,
+        "surface_quadrature_degree": 28,
+        "volume_quadrature_degree": 15,
+        "volume_quadrature_rule": "default"
+      },
+      "reference_comparisons": {},
+      "residuals": {
+        "augmented_rhs_norm": 0.8022551095830923,
+        "explicit_augmented_Ax_minus_b_norm": 6.054276811885618e-13,
+        "method": "standard_full_explicit_augmented_true_residual",
+        "relative_to_rhs": 7.546573078271626e-13
+      },
+      "solver": {
+        "case_complete_wall_seconds": 115.70061709359288,
+        "finite_element_storage_dofs_before_periodic_independence": 3540,
+        "matrix": {
+          "nnz_allocated": 1048424,
+          "nnz_used": 1048424,
+          "rows": 4152
+        },
+        "memory_reported_historical_rss": {
+          "maximum_rank_mb": 364.1,
+          "measurement": "solver log historical rank RSS; not simultaneous process-tree/cgroup peak",
+          "sum_of_rank_historical_peaks_upper_bound_mb": 364.1
+        },
+        "official_result_in_runner": true,
+        "periodic_constraint_rows_reported": 462,
+        "stage4_assembly_and_solve_seconds": 86.74148466903716,
+        "status": "completed",
+        "timings_seconds": {
+          "boundary_condition_setup": 1.39591284096241e-05,
+          "config_validation": 2.229306846857071e-05,
+          "diffraction_postprocess": 3.1308020390570164,
+          "field_formulation_setup": 0.001463484950363636,
+          "floquet_constraint_setup_outer": 0.14043164299800992,
+          "floquet_mpc_finalize": 0.0018126163631677628,
+          "floquet_phase_update": 0.013064981903880835,
+          "floquet_topology_build_current": 0.10974695812910795,
+          "floquet_total": 0.13935039192438126,
+          "function_space_setup": 0.020529942121356726,
+          "matrix_stats": 0.09984571626409888,
+          "mesh_build": 0.0006612851284444332,
+          "postprocess": 5.70802108803764,
+          "stage4_dtn_port_assembly_and_solve": 86.74148466903716,
+          "variational_form_setup": 1.9226606800220907,
+          "volume_absorption_postprocess": 5.021003942005336
+        },
+        "wall_seconds_through_record": 115.67046637600288
+      }
+    }
+  },
+  "schema": "task43_h100_anchor_triplet_v1",
+  "scope_note": "Three same-geometry 36-cell h100 anchors qualify native p3, empty-h active p3, and MPI1/MPI2 reproducibility. They are not the frozen 180-cell initial mesh, not an adaptive selection run, and not a final accuracy claim.",
+  "source_identity": {
+    "all_three_case_source_maps_equal": true,
+    "git_head": "a7904a64405c9c19d641dbc4d43fb25f7a80f793",
+    "source_archive": {
+      "path": "benchmarks/artifacts/task43/h100_anchor/source_snapshots/native_p3_mpi1_pre_run_v2/source_files.tar",
+      "sha256": "3c5abc98e68f81bd537addd92bf92fa6271a412aa8821377d6ed5299fc8e4e0b"
+    },
+    "source_file_count": 33,
+    "source_file_sha256_map_digest": "b48b3536a7e07b22d46399b546e90e1eca524ec08c1027b1f238fb852aa25920",
+    "tracked_dirty_patch": {
+      "path": "benchmarks/artifacts/task43/h100_anchor/source_snapshots/native_p3_mpi1_pre_run_v2/tracked_dirty.patch",
+      "sha256": "620175576e5594ea94e570b3df5bd6ac6767041c835f865c435dd938a26075b8"
+    }
+  },
+  "status": "passed"
+}

@@ -2293,11 +2293,19 @@ def build_broken_hexa_cell_trace_constraint_map(
             "full_p6_trace_matrix_constructed": False,
             "local_variable_trace_implemented": bool(
                 authority.audit["selected_p6_face_count"]
+                or authority.audit.get("variable_trace_opt_in", False)
+            ),
+            "variable_trace_opt_in": bool(
+                authority.audit.get("variable_trace_opt_in", False)
             ),
             "selective_trace_action": (
-                "non_hanging_whole_physical_face_p5_to_p6"
-                if authority.audit["selected_p6_face_count"]
-                else "uniform_base_trace"
+                "cell_driven_p3_p6_exact_sequence"
+                if authority.audit.get("variable_trace_opt_in", False)
+                else (
+                    "non_hanging_whole_physical_face_p5_to_p6"
+                    if authority.audit["selected_p6_face_count"]
+                    else "uniform_base_trace"
+                )
             ),
             "hanging_or_floquet_slave_rows_globally_numbered": False,
             "pde_accuracy_credit": False,

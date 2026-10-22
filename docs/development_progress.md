@@ -1,3 +1,20 @@
+# Task43：从局部 h/p 组件进入真实模型等价验证
+
+当前工作在既有 `task43_hp_adaptivity` 分支推进，复用 NN-Lab-V2 注册 worktree 和工作站 complex128/int64 环境。基线固定为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`；旧分支保留，用户授权删除的旧 Task42extra 大型 artifacts/results 已有路径与体积记录。未启动 NN/FTT 或新的预条件器扫描。
+
+| 阶段 | 已取得的证据 | 尚不能宣称的结论 |
+|---|---|---|
+| 局部空间与恢复 | p3–6 增量资格化；p3/p4、p4/p5 的 9↔12 单元已知场检查通过；原始高阶电场/旋度的完整采样、serial/MPI2 聚合组件检查通过 | 不代表任意散射解的空间误差已小 |
+| 真实方程残差 | attempt1 未缩放端口负结果保留；启用既有边界幅值缩放后的 36 单元组件 A6/RHS 为 8.7763e−13；新空 h active-p3 MPI1/MPI2 锚点分别为 2.1429e−12/1.7762e−12 | 残差说明离散方程解准，不证明网格精度够高 |
+| 同阶原生及分布式锚点 | 36 单元原生 p3/standard_full、p6 载体空 h active-p3 MPI1、同 active-p3 MPI2 均完成；全域 q8/q10 E/curl/H、612 模态、R/T/A 和 independent A6 Gate 通过 | 均为 `numerical_sanity_only`，不代替冻结起点或独立精度参考 |
+| 自适应与独立验收 | 已冻结公共积分、场/模态比较尺度和接受规则；可恢复的丰富完整场见证已登记 | 正式起点、参考场资格、候选求解、accepted updates、独立精度与同精度成本均尚未完成 |
+
+三个 h100 锚点在相同的 phi90、13.5 nm、36 单元网格上完成了空间等价和 MPI1/MPI2 完整观测核对；详见 [Task43 三锚点 compact record](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。接下来先完成正式起点所需的资源 Gate、未舍入几何身份和参考场角色核验，再在真实候选求解中根据误差作局部 h/p 选择。每个候选都须实际求解、通过完整残差，并将参考求解、失败尝试和检查成本计入全过程。最终对照为用户确认的 6×10×6、p6；它不进入标记与候选排序。当前还没有 accepted update 或生产资格。
+
+实测数值、源码/数据身份及既有 p4 字节哈希负结果见 [Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md) 和[模型总账](development_model_registry.md)。本节为进行中的检查点，后续按实际结果更新；以下历史正文中的“当前”只指其原有任务阶段。
+
+---
+
 # Task39extra_para 2026-10-16：色散方向离线收口与原光栅 D 诊断
 
 V0/V1/V2 的离线整理支持 Hx 色散机制；随后只运行用户授权的候选 D 一场。D 的 R/T/A_volume 接近已归档 RCWA 报告总量，但同时改变 x 和 z，且源码身份与旧 A 不同。它是 `CROSS_CHANGED_GRID_DIAGNOSTIC`，不是单轴收敛或连续精度证明。V0 原始 `EVIDENCE_INCOMPLETE` provenance 保留；V1 实际 Basix N1E 与 FFCx 规则、V2 同平层 Nx2/4/8 和 D 的输出比较分别记录。

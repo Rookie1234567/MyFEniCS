@@ -1,0 +1,11 @@
+{
+  "initial_source_sha": "0a625d770e1d3638bf53016a72facecfc8c81407",
+  "g1_source_sha": "a7904a64405c9c19d641dbc4d43fb25f7a80f793",
+  "method": "git show SHA:path piped into Ruff --stdin-filename path, same file context and rule selection; compare filename/code/message with multiplicity, excluding shifted line numbers",
+  "initial_count": 38,
+  "g1_count": 38,
+  "same_findings": true,
+  "introduced": [],
+  "removed": [],
+  "scope": "16 G1 changed Python files; full-rule Ruff remains failed with unchanged 38 baseline findings; F-select passed"
+}

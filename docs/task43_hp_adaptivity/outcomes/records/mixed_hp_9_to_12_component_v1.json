@@ -1,0 +1,245 @@
+{
+  "cases": [
+    {
+      "broken": {
+        "curl_vs_manufactured": {
+          "candidate_l2": 1.5232627801381986,
+          "difference_l2": 1.3337811547542921e-12,
+          "reference_l2": 1.523262780138246,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 8.756080514441788e-13,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 8.756080514441788e-13
+        },
+        "electric_vs_manufactured": {
+          "candidate_l2": 0.32217156924575874,
+          "difference_l2": 1.2892278163252165e-12,
+          "reference_l2": 0.32217156924569607,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 4.001680903574764e-12,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 4.001680903574764e-12
+        },
+        "independent_active_rows": 1082,
+        "independent_full_action_relative_residual": 1.0674620964011307e-14,
+        "independent_interior_residual_l2": 1.0545087325361524e-13,
+        "independent_trace_residual_l2": 3.8881243831200185e-14,
+        "reduced_relative_residual": 2.3443534149586646e-15,
+        "solver_converged_reason": 4
+      },
+      "broken_vs_conforming": {
+        "curl_electric": {
+          "candidate_l2": 1.5232627801381986,
+          "difference_l2": 1.490832925745754e-12,
+          "reference_l2": 1.523262780138162,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 9.787102692882271e-13,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 9.787102692882271e-13
+        },
+        "electric": {
+          "candidate_l2": 0.32217156924575874,
+          "difference_l2": 4.437762704217803e-12,
+          "reference_l2": 0.32217156924596246,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 1.3774532354311453e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 1.3774532354311453e-11
+        }
+      },
+      "common_quadrature_sha256": "2ac63a66803c20dcbcecae4f4313c2cb07449a84cd9dff503cd673efacb68158",
+      "comparison_space_note": "The 9-leaf hanging mesh and 12-cell conforming mesh have different FE spaces and independent DoF counts; comparison uses a shared manufactured field and common physical integral.",
+      "conforming": {
+        "curl_vs_manufactured": {
+          "candidate_l2": 1.523262780138162,
+          "difference_l2": 1.228817642299189e-12,
+          "reference_l2": 1.523262780138246,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 8.067010225167229e-13,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 8.067010225167229e-13
+        },
+        "electric_vs_manufactured": {
+          "candidate_l2": 0.32217156924596246,
+          "difference_l2": 4.417094040083157e-12,
+          "reference_l2": 0.32217156924569607,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 1.3710378139278239e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 1.3710378139278239e-11
+        },
+        "independent_active_rows": 1782,
+        "independent_full_action_relative_residual": 1.8691053139716963e-14,
+        "independent_interior_residual_l2": 1.9385758476212253e-13,
+        "independent_trace_residual_l2": 1.0788550916244943e-13,
+        "reduced_relative_residual": 2.4771529796356e-15,
+        "solver_converged_reason": 4
+      },
+      "higher_degree": 4,
+      "lower_degree": 3
+    },
+    {
+      "broken": {
+        "curl_vs_manufactured": {
+          "candidate_l2": 1.4933955264472059,
+          "difference_l2": 1.2835341079993487e-12,
+          "reference_l2": 1.4933955264472636,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 8.594736526717956e-13,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 8.594736526717956e-13
+        },
+        "electric_vs_manufactured": {
+          "candidate_l2": 0.2503918571691725,
+          "difference_l2": 3.10423708111817e-12,
+          "reference_l2": 0.25039185716903495,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 1.2397516102221154e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 1.2397516102221154e-11
+        },
+        "independent_active_rows": 2320,
+        "independent_full_action_relative_residual": 1.1087458516501923e-14,
+        "independent_interior_residual_l2": 1.5448657242438462e-13,
+        "independent_trace_residual_l2": 5.633882778589661e-14,
+        "reduced_relative_residual": 3.5416539562985506e-15,
+        "solver_converged_reason": 4
+      },
+      "broken_vs_conforming": {
+        "curl_electric": {
+          "candidate_l2": 1.4933955264472059,
+          "difference_l2": 1.4244947444882725e-12,
+          "reference_l2": 1.493395526447165,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 9.538630049851498e-13,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 9.538630049851498e-13
+        },
+        "electric": {
+          "candidate_l2": 0.2503918571691725,
+          "difference_l2": 8.51232225621469e-12,
+          "reference_l2": 0.2503918571692963,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 3.399600271529314e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 3.399600271529314e-11
+        }
+      },
+      "common_quadrature_sha256": "2ac63a66803c20dcbcecae4f4313c2cb07449a84cd9dff503cd673efacb68158",
+      "comparison_space_note": "The 9-leaf hanging mesh and 12-cell conforming mesh have different FE spaces and independent DoF counts; comparison uses a shared manufactured field and common physical integral.",
+      "conforming": {
+        "curl_vs_manufactured": {
+          "candidate_l2": 1.493395526447165,
+          "difference_l2": 1.1759746188080017e-12,
+          "reference_l2": 1.4933955264472636,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 7.8745020858982e-13,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 7.8745020858982e-13
+        },
+        "electric_vs_manufactured": {
+          "candidate_l2": 0.2503918571692963,
+          "difference_l2": 8.108865120118503e-12,
+          "reference_l2": 0.25039185716903495,
+          "reference_norm_floor": 0.0,
+          "relative_to_reference": 3.238469977338104e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 3.238469977338104e-11
+        },
+        "independent_active_rows": 3649,
+        "independent_full_action_relative_residual": 1.88242783885831e-14,
+        "independent_interior_residual_l2": 2.7595597608677246e-13,
+        "independent_trace_residual_l2": 9.484572418183046e-14,
+        "reduced_relative_residual": 3.566066778391654e-15,
+        "solver_converged_reason": 4
+      },
+      "higher_degree": 5,
+      "lower_degree": 4
+    }
+  ],
+  "classification": "component_qualification",
+  "component_full_action_check_definition": {
+    "action": "Per-cell p6 local tensors projected to the local variable-p active space and applied to recovered cell vectors.",
+    "denominator": "max(sqrt(sum_cell(norm(A_cell u_cell)^2)), sqrt(sum_cell(norm(b_cell)^2)), tiny)",
+    "label": "Component full-action consistency check; not production A6.",
+    "numerator": "hypot(norm(C^H projected trace residual), norm(assembled interior residual))",
+    "rhs": "Independent cellwise UFL assembled volume action on the manufactured field."
+  },
+  "execution": {
+    "abi_preflight": {
+      "activation_marker": "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION=1",
+      "interpreter": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "linux_cpu_affinity": [
+        45
+      ],
+      "mpi_world_size": 1,
+      "petsc_int_type": "int64",
+      "petsc_scalar_type": "complex128"
+    },
+    "command": "source scripts/activate_task40_phi90_pord64.sh; OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=MKL_NUM_THREADS=NUMEXPR_NUM_THREADS=1; taskset -c 45 python -m pytest -q -s -o faulthandler_timeout=300 src/test/test_task43_mixed_hp_9_to_12.py",
+    "initial_p3_p4_log_artifact": "benchmarks/artifacts/task43/mixed_hp_9_to_12/attempt_p3_p4_initial/run.log",
+    "initial_p3_p4_log_sha256": "aa14257ffa0431784337d07b8aed53e3c9cb5d35cfa868919275339221d53329",
+    "initial_p3_p4_test_log_line": "TASK43_MIXED_P3_P4_9_TO_12 broken_active=1082 conforming_active=1782 broken_A6=1.067462e-14 conforming_A6=1.869105e-14 E_cross=1.377453e-11 curl_cross=9.787103e-13 common_rule=2ac63a66803c20dcbcecae4f4313c2cb07449a84cd9dff503cd673efacb68158",
+    "log_artifact": "benchmarks/artifacts/task43/mixed_hp_9_to_12/attempt_param_p3p4_p4p5/run.log",
+    "log_sha256": "af5de29c62321a92c4fb72e63e456c8eee017d14edbb21c778dd3a3011a0b6a0",
+    "pytest_summary": "2 passed in 55.82s",
+    "started_utc_from_host_log": "2026-10-22T17:06:40Z",
+    "status": "passed"
+  },
+  "fixture_contract": {
+    "broken_mesh": "Two adjacent roots; refine only the left root, yielding 9 leaves and one hanging face.",
+    "common_field_integral": {
+      "axis_breakpoint_union": true,
+      "fields": [
+        "electric",
+        "curl_electric"
+      ],
+      "gauss_order": 8,
+      "phase_fit": false,
+      "rule_sha256": "2ac63a66803c20dcbcecae4f4313c2cb07449a84cd9dff503cd673efacb68158"
+    },
+    "conforming_mesh": "12 Cartesian cells with x=[0,0.5,1,2], y=z=[0,0.5,1].",
+    "degree_cases": [
+      {
+        "broken_hanging_trace_degree": 3,
+        "lower_degree": 3,
+        "upper_degree": 4
+      },
+      {
+        "broken_hanging_trace_degree": 4,
+        "lower_degree": 4,
+        "upper_degree": 5
+      }
+    ],
+    "excluded": [
+      "full Task43 port/mode solve",
+      "R/T/A",
+      "production runner",
+      "official model A6"
+    ],
+    "manufactured_rhs": "Independent cellwise UFL linear-form assembly; not generated by multiplying the tested Schur matrix.",
+    "p_jump": "Maximum adjacent-cell degree jump 1; hanging trace uses the lower incident degree.",
+    "periodicity": "None in this small manufactured component fixture.",
+    "space_boundary": "The 9-leaf hanging and 12-cell conforming meshes are different FE spaces and have different independent DoF counts. The test compares independently solved fields/curls against the same exactly representable manufactured field on one common physical integral; it does not assert general matrix or solution equality.",
+    "volume_form": "Task43-profile curl plus material-mass terms; quadrature degree 15 with explicit default rule."
+  },
+  "official_A6_status": "not_run",
+  "official_model_status": "not_run",
+  "purpose": "Exercise one-level hanging mixed-p trace closure, local active condensation/recovery, independent cellwise volume RHS, and common physical E/curl sampling on p3/p4 and p4/p5 manufactured cases.",
+  "schema_version": 1,
+  "source_identity": {
+    "executed_test_sha256": "08902029aacfe02d93c1c7449320efd2a57395b4db671c7b635ca78d7296b56a",
+    "git_head": "a7904a64405c9c19d641dbc4d43fb25f7a80f793",
+    "initial_p3_p4_source_artifact": "benchmarks/artifacts/task43/mixed_hp_9_to_12/attempt_p3_p4_initial/test_task43_mixed_hp_9_to_12.py",
+    "initial_p3_p4_source_sha256": "53683da7a8cc59973a9d512f2d8f861a44be4fcf79eaa5a3d7980d7e34a867db",
+    "test_source_artifact": "benchmarks/artifacts/task43/mixed_hp_9_to_12/attempt_param_p3p4_p4p5/test_task43_mixed_hp_9_to_12.py",
+    "test_source_artifact_sha256": "08902029aacfe02d93c1c7449320efd2a57395b4db671c7b635ca78d7296b56a",
+    "worktree_dirty": true
+  },
+  "thresholds": {
+    "component_full_action_relative_residual_max": 1e-09,
+    "field_and_curl_relative_error_and_cross_max": 1e-08,
+    "ksp_converged_reason": "positive",
+    "reduced_relative_residual_max": 1e-09
+  }
+}

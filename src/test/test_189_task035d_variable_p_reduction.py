@@ -20,6 +20,7 @@ from src.adaptivity.variable_p_transfer import (
     build_variable_p_global_transfer,
 )
 from src.solvers.hcurl_variable_p_assembly import (
+    _active_vector_entry_cutoff,
     _iteratively_refined_lu_solve,
     build_variable_p_condensed_trace_system,
 )
@@ -47,6 +48,26 @@ def _nonhermitian_p6_tensor() -> np.ndarray:
 
 
 class Task035dVariablePReductionTests(unittest.TestCase):
+    def test_relative_only_vector_cutoff_preserves_tiny_scaled_structure(
+        self,
+    ) -> None:
+        tiny_vector = np.asarray([1.0e-200, 1.0e-212, 1.0e-214])
+        legacy_cutoff = _active_vector_entry_cutoff(
+            float(np.max(tiny_vector)),
+            relative_tolerance=1.0e-14,
+            absolute_tolerance=1.0e-30,
+        )
+        task43_cutoff = _active_vector_entry_cutoff(
+            float(np.max(tiny_vector)),
+            relative_tolerance=1.0e-13,
+            absolute_tolerance=0.0,
+        )
+
+        self.assertEqual(legacy_cutoff, 1.0e-30)
+        self.assertEqual(task43_cutoff, 1.0e-213)
+        self.assertGreater(tiny_vector[1], task43_cutoff)
+        self.assertLess(tiny_vector[2], task43_cutoff)
+
     def test_lu_factor_action_reconstructs_pivoted_complex_matrix(
         self,
     ) -> None:

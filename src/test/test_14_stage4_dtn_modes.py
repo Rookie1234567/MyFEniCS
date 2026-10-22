@@ -400,6 +400,71 @@ class Stage4DtnModeTests(unittest.TestCase):
         self.assertEqual(metrics["R_plus_T"], metrics["R_plus_T_dtn_port_modal"])
         self.assertIn("top outgoing amplitude", metrics["dtn_port_modal_amplitude_convention"])
 
+    def test_stage4_boundary_scale_is_written_with_solver_to_boundary_map(self):
+        cfg = _grazing_fixture_b_cfg()
+        cfg.stage4_port_boundary_amplitude_scale_policy = (
+            "boundary_magnitude_scaled_r5_v1"
+        )
+        modes = outgoing_port_modes_3d(cfg)
+        incident_projections = [
+            _incident_projection_onto_top_mode(mode, cfg)
+            if mode.side == "top"
+            else 0.0 + 0.0j
+            for mode in modes
+        ]
+        aux_values = np.asarray(incident_projections, dtype=np.complex128)
+        metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            out_dir = Path(temp_dir)
+            _write_port_outputs(
+                out_dir,
+                cfg,
+                modes,
+                aux_values,
+                incident_projections,
+                metrics,
+                MPI.COMM_SELF,
+            )
+            orders = json.loads(
+                (out_dir / "dtn_port_diffraction_orders_3d.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            port = json.loads(
+                (out_dir / "port_power.json").read_text(encoding="utf-8")
+            )
+            amplitudes = json.loads(
+                (out_dir / "dtn_auxiliary_amplitudes_3d.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        self.assertEqual(
+            orders["boundary_amplitude_scale_policy"],
+            "boundary_magnitude_scaled_r5_v1",
+        )
+        self.assertIn("dtn_port_solver_basis_to_boundary_mapping", metrics)
+        self.assertEqual(
+            port["boundary_amplitude_scale_policy"],
+            "boundary_magnitude_scaled_r5_v1",
+        )
+        for mode, row, amplitude in zip(
+            modes, orders["orders"], amplitudes, strict=True
+        ):
+            self.assertAlmostEqual(
+                row["boundary_amplitude_scale"],
+                mode.boundary_amplitude_scale,
+            )
+            self.assertAlmostEqual(
+                row["boundary_amplitude_log_scale"],
+                mode.boundary_amplitude_log_scale,
+            )
+            self.assertAlmostEqual(
+                amplitude["boundary_amplitude_scale"],
+                mode.boundary_amplitude_scale,
+            )
+
     def test_lossy_below_critical_mode_counts_finite_port_transmission(self):
         cfg = _grazing_fixture_b_cfg()
         modes, bottom_index, incident_projections, aux_values, metrics = self._single_bottom_s_power(cfg)

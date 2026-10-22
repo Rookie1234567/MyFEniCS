@@ -1405,6 +1405,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
     defer_final_assembly: bool = False,
     geometry_tolerance: float = 1.0e-11,
     retain_local_schur_for_research: bool = False,
+    raw_tensor_evaluator: Any | None = None,
 ) -> VariablePCondensedTraceSystem:
     """Evaluate p6 FFCx tensor classes and assemble the true active system."""
 
@@ -1450,6 +1451,11 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
         raise RuntimeError("variable-p entity map misses owned mesh cells")
     tags = _cell_tag_array(cell_tags, owned_cells)
     kernels = _cell_integral_kernels(compiled_form)
+    if raw_tensor_evaluator is not None:
+        # The blocked-Gram evaluator shares the raw-tensor entry point used
+        # by the native one-or-many-kernel path.  Keep its one-kernel check
+        # explicit while leaving the FFCx-default path unchanged.
+        kernels = {tag: (kernel,) for tag, kernel in kernels.items()}
     unknown_tags = (
         []
         if -1 in kernels
@@ -1500,6 +1506,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
                     882,
                 )
             },
+            raw_tensor_evaluator=raw_tensor_evaluator,
         )
     )
     system = build_variable_p_condensed_trace_system(
@@ -1563,23 +1570,58 @@ def _global_active_vector_values(
     return values
 
 
+def _active_vector_entry_cutoff(
+    maximum_magnitude: float,
+    *,
+    relative_tolerance: float,
+    absolute_tolerance: float,
+) -> float:
+    """Combine the legacy absolute floor and optional relative threshold."""
+
+    maximum = float(maximum_magnitude)
+    relative = float(relative_tolerance)
+    absolute = float(absolute_tolerance)
+    if (
+        not np.isfinite(maximum)
+        or maximum < 0.0
+        or not np.isfinite(relative)
+        or not 0.0 <= relative < 1.0
+        or not np.isfinite(absolute)
+        or absolute < 0.0
+    ):
+        raise ValueError("active vector entry cutoff inputs are invalid")
+    return max(absolute, relative * maximum)
+
+
 def condense_variable_p_active_vector_to_trace(
     system: VariablePCondensedTraceSystem,
     active_full_vector: PETSc.Vec,
     *,
     side: str,
     relative_tolerance: float = 1.0e-14,
+    absolute_tolerance: float = 1.0e-30,
 ) -> PETSc.Vec:
     """Apply local Schur and Floquet reductions to an active full vector."""
 
     if side not in {"right", "left"}:
         raise ValueError("vector condensation side must be right or left")
+    if (
+        not np.isfinite(float(relative_tolerance))
+        or float(relative_tolerance) < 0.0
+        or float(relative_tolerance) >= 1.0
+    ):
+        raise ValueError("vector condensation tolerance must be in [0, 1)")
+    if (
+        not np.isfinite(float(absolute_tolerance))
+        or float(absolute_tolerance) < 0.0
+    ):
+        raise ValueError("vector condensation absolute tolerance is invalid")
     comm = system.entity_map.mesh.comm
     values = _global_active_vector_values(system, active_full_vector)
-    cutoff = max(
-        1.0e-30,
-        float(relative_tolerance)
-        * float(np.max(np.abs(values), initial=0.0)),
+    cutoff = _active_vector_entry_cutoff(
+        float(np.max(np.abs(values), initial=0.0)),
+        relative_tolerance=relative_tolerance,
+        absolute_tolerance=absolute_tolerance,
     )
     target = system.matrix.createVecRight()
     row_start, row_end = map(

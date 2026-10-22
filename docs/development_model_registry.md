@@ -1,3 +1,23 @@
+# Task43：局部 h/p 自适应进行中
+
+Task43 使用新 phi90 模型：周期 50×50 nm、计算域 z=−10…130 nm、Si 光栅 17×20×120 nm、波长 13.5 nm、入射 theta=89°/phi=90°、s 偏振。执行分支为 `task43_hp_adaptivity`，源码基线为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。下表登记组件验证，尚无正式自适应精度或成本优势结论；旧任务记录继续保留。
+
+局部 h 把选中的单元分小，局部 p 增加选中单元的多项式阶次。它们旨在把自由度用在更需要分辨的区域，但必须额外维护相邻单元和周期边界的连接约束，并付出候选求解与误差检查的成本。
+
+| 对象与目的 | 实测结果 | 成本口径与边界 |
+|---|---|---|
+| 9↔12 单元、mixed p3/p4 与 p4/p5；验证局部细化和变阶连接 | 已知复数场检查通过；两网格电场相对 L2 差分别 1.3775e−11、3.3996e−11 | 参数化两项检查 55.82 s；不同离散空间上双方均可表示的已知场，不是散射精度对照 |
+| 36 单元、active p3/p6 carrier、R13 共 612 模态，attempt1 | 缩放前 active 残差 1.6445e64，失败；独立 A6 尚未调用 | 真实负结果保留，不产生正式物理结论 |
+| 同一 36 单元组件，attempt2 | 边界幅值缩放后独立 A6 相对残差 8.7763e−13；R=0.9999860056、T=1.15824e−5、A_volume=2.4120155e−6 | 完整 pytest 595.14 s；单 rank 历史 RSS 约 1072 MiB，非进程树峰；数值健全性检查，不是精度合格模型 |
+| 36 单元原生 p3 / `standard_full` / MPI1 | 显式完整 Ax−b 相对残差 7.5466e−13；同网格空 h active-p3 的 q8/q10 场、旋度、H 和 612 端口模态逐项通过 | runner wall 115.70 s；与空 h active-p3 MPI1 的 DoF 空间相同，求解实现不同 |
+| 36 单元空 h active-p3 / MPI1 | active trace+interior 为 1782+1296=3078 独立 FE DoF；独立 A6/RHS 相对残差 2.1429e−12；对原生 p3 的完整观测 Gate 通过 | condensed 2394 行、runner wall 280.43 s；Top-p 原始相对幅值差 1.0730e−9，固定单位模态尺度差 4.2345e−15，两者均保留 |
+| 同一 active-p3 / MPI2 | independent A6/RHS 1.7762e−12；对 MPI1 及原生 p3 的场、612 模态和功率 Gate 通过 | rank affinity CPU1/29；condensed 2394 行、runner wall 173.97 s；两 rank RSS 历史峰上界 1170 MiB，非进程树峰 |
+| 冻结 3×10×6 起点及实际自适应更新 | `not_run`；accepted updates=0 | 三个小锚点不是正式起点；独立加丰富核验、候选选择和同精度 p-only/h-only 成本仍未完成 |
+
+三锚点使用同一已记录 dirty source map（33 个依赖文件哈希）和源码归档；Git HEAD `a7904a64405c9c19d641dbc4d43fb25f7a80f793` 只是基线，不能代表未提交实现。三个小模型均为 `numerical_sanity_only`，不是冻结起点或精度证明。详细原始残差、字段身份、DoF 口径、负结果和限制见 [Task43 执行索引](task43_hp_adaptivity/outcomes/summary.md) 和[三锚点证据](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。用户确认的 6×10×6、uniform p6 仅作选择结束后的对照；其独立 FE DoF 公式估计为 237600，仍需实际约束审计，不与凝聚矩阵行数混称。
+
+---
+
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。

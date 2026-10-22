@@ -49,7 +49,24 @@ def _region_volume(mesh_data, tag: int) -> float:
 
 def _region_absorbed_power(mesh_data, cfg: SimulationConfig3D, E_total, tag: int, eps_r: complex) -> float:
     msh = mesh_data.mesh
-    dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
+    quadrature_degree = getattr(
+        cfg, "stage4_volume_quadrature_degree", None
+    )
+    dx_kwargs = (
+        {}
+        if quadrature_degree is None
+        else {
+            "metadata": {
+                "quadrature_degree": int(quadrature_degree),
+                "quadrature_rule": str(
+                    getattr(cfg, "stage4_volume_quadrature_rule", "default")
+                ),
+            }
+        }
+    )
+    dx = ufl.Measure(
+        "dx", domain=msh, subdomain_data=mesh_data.cell_tags, **dx_kwargs
+    )
     field_abs2 = ufl.real(ufl.inner(E_total, E_total))
     density_scale = 0.5 * cfg.k0 * float(complex(eps_r).imag)
     local = fem.assemble_scalar(fem.form(density_scale * field_abs2 * dx(tag)))

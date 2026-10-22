@@ -78,6 +78,7 @@ from .hcurl_variable_p_reduction import (
     VariablePRecoveredSolution,
     build_variable_p_assembly_time_reduction,
 )
+from .independent_active_action import action_group_metrics
 from .mpc_form_action import MpcFormActionContext
 from .solve_vector_maxwell import _json_default
 from .static_local_schur_action import create_static_local_schur_action
@@ -117,6 +118,9 @@ class Stage4VariablePLiveView:
     port_operator_audit: Mapping[str, Any]
     full_active_residual: Mapping[str, Any]
     primal_solver_telemetry: Mapping[str, Any]
+    volume_bilinear_form: Any | None = None
+    volume_linear_form: Any | None = None
+    dtn_surface_quadrature_degree: int | None = None
 
 
 @dataclass(frozen=True)
@@ -4522,6 +4526,15 @@ def _mode_boundary_z(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
     return float(cfg.physical_z_max if mode.side == "top" else cfg.physical_z_min)
 
 
+def _port_boundary_amplitude_scale_policy(
+    cfg: SimulationConfig3D,
+) -> str | None:
+    policy = getattr(cfg, "stage4_port_boundary_amplitude_scale_policy", None)
+    if policy is None:
+        policy = getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+    return None if policy is None else str(policy)
+
+
 def _mode_boundary_phase(mode: PortMode3D, cfg: SimulationConfig3D) -> complex:
     log_scale = float(getattr(mode, "boundary_amplitude_log_scale", 0.0))
     if not np.isfinite(log_scale):
@@ -4673,6 +4686,611 @@ def _mode_projection_from_solution(
     total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
     denominator = _mode_projection_denominator(mode, cfg)
     return complex(total / denominator)
+
+
+def _independent_active_action_relative_cutoff(
+    values: np.ndarray,
+    *,
+    policy: str,
+    relative_tolerance: float,
+) -> np.ndarray:
+    """Apply the same final extraction cutoff used by a reduced active vector."""
+
+    vector = np.asarray(values, dtype=np.complex128)
+    if vector.ndim != 1 or not np.isfinite(vector).all():
+        raise ValueError("independent active action must be a finite vector")
+    normalized_policy = normalize_dtn_sparse_cutoff_policy(policy)
+    tolerance = float(relative_tolerance)
+    if not np.isfinite(tolerance) or not 0.0 < tolerance < 1.0:
+        raise ValueError("independent active action cutoff is invalid")
+    maximum = float(np.max(np.abs(vector), initial=0.0))
+    if normalized_policy == SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY:
+        keep = _scale_homogeneous_keep_mask(
+            np.abs(vector),
+            global_maximum=maximum,
+            relative_tol=tolerance,
+        )
+    else:
+        keep = np.abs(vector) > max(1.0e-30, tolerance * maximum)
+    return np.where(keep, vector, 0.0 + 0.0j)
+
+
+def _independent_active_action_owned_entries(
+    view: Stage4VariablePLiveView,
+    values: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Extract owned independent trace entries with the solver's cutoff."""
+
+    system = view.reduction.system
+    trace_rows = int(system.active_trace_rows)
+    vector = np.asarray(values, dtype=np.complex128)
+    if vector.shape != (trace_rows,):
+        raise ValueError("independent active trace vector has the wrong size")
+    reduced_layout = system.matrix.createVecRight()
+    try:
+        start, stop = map(int, reduced_layout.getOwnershipRange())
+    finally:
+        reduced_layout.destroy()
+    start = max(start, 0)
+    stop = min(stop, trace_rows)
+    filtered = _independent_active_action_relative_cutoff(
+        vector,
+        policy=getattr(
+            view.config,
+            "stage4_dtn_sparse_cutoff_policy",
+            LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+        ),
+        relative_tolerance=float(
+            getattr(
+                view.config,
+                "stage4_dtn_sparse_cutoff_relative_tolerance",
+                1.0e-13,
+            )
+        ),
+    )
+    local = filtered[start:stop]
+    retained = np.abs(local) > 0.0
+    return (
+        np.arange(start, stop, dtype=PETSc.IntType)[retained],
+        local[retained].copy(),
+    )
+
+
+def _independent_active_action_project_p6_dual(
+    view: Stage4VariablePLiveView,
+    vector: PETSc.Vec,
+    *,
+    role: str,
+    require_trace_only: bool,
+) -> dict[str, Any]:
+    """Map a freshly assembled p6 dual vector to the true active test rows."""
+
+    active = view.reduction.project_p6_vector(vector)
+    try:
+        trace_audit = None
+        if require_trace_only:
+            trace_audit = view.reduction.enforce_trace_only_active_functional(
+                active,
+                role=role,
+            )
+        projected = view.reduction.project_active_dual_to_independent_test_space(
+            active
+        )
+        trace = np.asarray(
+            projected["trace_independent_dual"],
+            dtype=np.complex128,
+        )
+        interior = np.asarray(
+            projected["active_cell_interior_dual"],
+            dtype=np.complex128,
+        )
+        if trace_audit is not None and interior.size:
+            # The established boundary-functional gate zeros roundoff-only
+            # cell-interior entries before the independent test projection.
+            if np.any(interior):
+                raise RuntimeError(
+                    f"{role} retained nonzero active interior rows after its gate"
+                )
+        return {
+            "trace": trace,
+            "interior": interior,
+            "trace_only_audit": trace_audit,
+        }
+    finally:
+        active.destroy()
+
+
+def compute_stage4_independent_active_action(
+    view: Stage4VariablePLiveView,
+) -> dict[str, Any]:
+    """Independently evaluate the original variable-p Stage-4 active equations.
+
+    The volume action is reassembled from the original forms on the recovered
+    p6-carrier field.  Incident and DtN trace vectors are reassembled at the
+    resolved Stage-4 quadrature and mapped through the actual entity/Floquet
+    constraints.  The modal lower rows are independently integrated as both
+    raw ``D*alpha - integral(conj(mode)*E)`` equations and solver-gauge rows.
+    """
+
+    if view.volume_bilinear_form is None or view.volume_linear_form is None:
+        raise ValueError("live view does not carry the original volume forms")
+    cfg = view.config
+    policy = normalize_dtn_sparse_cutoff_policy(
+        getattr(
+            cfg,
+            "stage4_dtn_sparse_cutoff_policy",
+            LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+        )
+    )
+    if policy != SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY:
+        raise ValueError(
+            "independent Task43 active action requires the explicit "
+            "relative-only cutoff profile"
+        )
+    relative_tolerance = float(
+        getattr(cfg, "stage4_dtn_sparse_cutoff_relative_tolerance", 1.0e-13)
+    )
+    if not np.isfinite(relative_tolerance) or not 0.0 < relative_tolerance < 1.0:
+        raise ValueError("independent active action requires a valid cutoff")
+    if view.dtn_surface_quadrature_degree is None:
+        raise ValueError("live view does not carry its resolved port quadrature")
+
+    comm = view.mesh_data.mesh.comm
+    modes = tuple(view.goal_context["modes"])
+    auxiliary_values = np.asarray(
+        view.goal_context["auxiliary_values"], dtype=np.complex128
+    )
+    stored_incident_projections = np.asarray(
+        view.goal_context["incident_projections"], dtype=np.complex128
+    )
+    if (
+        auxiliary_values.shape != (len(modes),)
+        or stored_incident_projections.shape != (len(modes),)
+    ):
+        raise ValueError("live view mode-indexed port data do not close")
+
+    action_form = fem.form(ufl.action(view.volume_bilinear_form, view.field))
+    action_vector = _assemble_unconstrained_form_vector(action_form)
+    linear_vector = _assemble_unconstrained_form_vector(
+        fem.form(view.volume_linear_form)
+    )
+    try:
+        action_vector.axpy(PETSc.ScalarType(-1.0), linear_vector)
+        volume_dual = _independent_active_action_project_p6_dual(
+            view,
+            action_vector,
+            role="independent A6 volume action",
+            require_trace_only=False,
+        )
+        linear_dual = _independent_active_action_project_p6_dual(
+            view,
+            linear_vector,
+            role="independent A6 volume RHS",
+            require_trace_only=False,
+        )
+    finally:
+        action_vector.destroy()
+        linear_vector.destroy()
+
+    volume_trace = volume_dual["trace"]
+    volume_interior = volume_dual["interior"]
+    linear_trace = linear_dual["trace"]
+    linear_interior = linear_dual["interior"]
+    trace_rows = int(view.reduction.system.active_trace_rows)
+    if volume_trace.shape != (trace_rows,) or linear_trace.shape != (trace_rows,):
+        raise RuntimeError("independent volume trace row projection did not close")
+    if volume_interior.shape != linear_interior.shape:
+        raise RuntimeError("independent volume interior row projection did not close")
+
+    incident_vector = _assemble_assembly_time_incident_traction(
+        view.field.function_space,
+        view.mesh_data,
+        cfg,
+        dtn_quadrature_degree=int(view.dtn_surface_quadrature_degree),
+        diagnostic_reference_incident_quadrature=False,
+    )
+    try:
+        incident_dual = _independent_active_action_project_p6_dual(
+            view,
+            incident_vector,
+            role="independent A6 incident traction",
+            require_trace_only=True,
+        )
+    finally:
+        incident_vector.destroy()
+    incident_trace = _independent_active_action_relative_cutoff(
+        incident_dual["trace"],
+        policy=policy,
+        relative_tolerance=relative_tolerance,
+    )
+    incident_interior = incident_dual["interior"]
+
+    scaled_mode_basis = bool(
+        getattr(cfg, "stage4_port_boundary_amplitude_scale_policy", None)
+        or getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+    )
+    surface_assemblers = {
+        (side, component): _ReusableSurfaceComponentAssembler(
+            view.field.function_space,
+            view.mesh_data,
+            cfg.tags.z_max if side == "top" else cfg.tags.z_min,
+            component,
+            quadrature_degree=int(view.dtn_surface_quadrature_degree),
+            scaled_mode_basis=scaled_mode_basis,
+        )
+        for side in ("top", "bottom")
+        for component in (0, 1)
+    }
+    modal_moment_assemblers = {
+        side: _IndependentModeSurfaceMomentAssembler(
+            view.field,
+            view.mesh_data,
+            cfg.tags.z_max if side == "top" else cfg.tags.z_min,
+            quadrature_degree=int(view.dtn_surface_quadrature_degree),
+        )
+        for side in ("top", "bottom")
+    }
+    component_cache: dict[
+        tuple[str, int, int, complex],
+        tuple[
+            tuple[np.ndarray, np.ndarray],
+            tuple[np.ndarray, np.ndarray],
+        ],
+    ] = {}
+    port_alpha_trace_local = np.zeros(trace_rows, dtype=np.complex128)
+    port_incident_trace_local = np.zeros(trace_rows, dtype=np.complex128)
+    port_records: list[dict[str, Any]] = []
+    modal_raw_rows: list[complex] = []
+    modal_solver_gauge_rows: list[complex] = []
+    modal_records: list[dict[str, Any]] = []
+
+    for index, mode in enumerate(modes):
+        mode_key = (
+            str(mode.side),
+            int(mode.m),
+            int(mode.n),
+            complex(mode.k_vector[2]),
+        )
+        if mode_key not in component_cache:
+            entries = []
+            for component in (0, 1):
+                full_vector = surface_assemblers[
+                    (mode.side, component)
+                ].assemble_unconstrained_vector(mode)
+                try:
+                    active_dual = _independent_active_action_project_p6_dual(
+                        view,
+                        full_vector,
+                        role=(
+                            f"independent A6 {mode.side} surface component "
+                            f"{component} m{mode.m} n{mode.n}"
+                        ),
+                        require_trace_only=True,
+                    )
+                finally:
+                    full_vector.destroy()
+                entries.append(
+                    _independent_active_action_owned_entries(
+                        view,
+                        active_dual["trace"],
+                    )
+                )
+            component_cache[mode_key] = (entries[0], entries[1])
+
+        traction = _traction_vector(mode, cfg)
+        traction_rows, traction_values = _combine_owned_entries(
+            component_cache[mode_key],
+            (traction[0], traction[1]),
+            comm=comm,
+            relative_tol=relative_tolerance,
+            sparse_cutoff_policy=policy,
+        )
+        incident_projection = _incident_projection_onto_top_mode(mode, cfg)
+        stored_projection = stored_incident_projections[index]
+        projection_difference = complex(incident_projection - stored_projection)
+        if abs(projection_difference) > 5.0e-13 * max(
+            abs(incident_projection), abs(stored_projection), 1.0
+        ):
+            raise RuntimeError(
+                "independent analytic incident projection differs from the "
+                "assembled mode RHS coefficient"
+            )
+        auxiliary = complex(auxiliary_values[index])
+        if traction_rows.size:
+            np.add.at(
+                port_alpha_trace_local,
+                traction_rows,
+                traction_values * (-auxiliary),
+            )
+            np.add.at(
+                port_incident_trace_local,
+                traction_rows,
+                traction_values * incident_projection,
+            )
+        local_traction_sq = float(np.vdot(traction_values, traction_values).real)
+        traction_l2 = float(np.sqrt(comm.allreduce(local_traction_sq, op=MPI.SUM)))
+        traction_max = float(
+            comm.allreduce(
+                float(np.max(np.abs(traction_values), initial=0.0)),
+                op=MPI.MAX,
+            )
+        )
+        traction_count = int(comm.allreduce(len(traction_rows), op=MPI.SUM))
+        port_records.append(
+            {
+                "mode_index": index,
+                "side": str(mode.side),
+                "m": int(mode.m),
+                "n": int(mode.n),
+                "polarization": str(mode.polarization),
+                "traction_action_raw_row_count": traction_count,
+                "traction_action_raw_l2_norm": traction_l2,
+                "traction_action_raw_max_abs": traction_max,
+                "auxiliary_amplitude": [auxiliary.real, auxiliary.imag],
+                "incident_projection": [
+                    incident_projection.real,
+                    incident_projection.imag,
+                ],
+                "stored_incident_projection_difference": [
+                    projection_difference.real,
+                    projection_difference.imag,
+                ],
+            }
+        )
+
+        modal_moment = _independent_mode_surface_moment(
+            view.field,
+            mode,
+            view.mesh_data,
+            cfg,
+            quadrature_degree=int(view.dtn_surface_quadrature_degree),
+            assembler=modal_moment_assemblers[mode.side],
+        )
+        denominator = _mode_projection_denominator(mode, cfg)
+        if not np.isfinite(denominator) or denominator <= 0.0:
+            raise FloatingPointError(
+                f"mode projection denominator is invalid at index {index}"
+            )
+        raw_lower = complex(denominator * auxiliary - modal_moment)
+        normalized_lower = complex(auxiliary - modal_moment / denominator)
+        if not (
+            np.isfinite(raw_lower.real)
+            and np.isfinite(raw_lower.imag)
+            and np.isfinite(normalized_lower.real)
+            and np.isfinite(normalized_lower.imag)
+        ):
+            raise FloatingPointError(
+                f"modal lower action is non-finite at index {index}"
+            )
+        modal_raw_rows.append(raw_lower)
+        modal_solver_gauge_rows.append(normalized_lower)
+        modal_records.append(
+            {
+                "mode_index": index,
+                "side": str(mode.side),
+                "m": int(mode.m),
+                "n": int(mode.n),
+                "polarization": str(mode.polarization),
+                "denominator_D": float(denominator),
+                "auxiliary_amplitude": [auxiliary.real, auxiliary.imag],
+                "surface_moment": [modal_moment.real, modal_moment.imag],
+                "raw_D_alpha_minus_moment": [raw_lower.real, raw_lower.imag],
+                "normalized_solver_gauge_residual": [
+                    normalized_lower.real,
+                    normalized_lower.imag,
+                ],
+            }
+        )
+
+    port_alpha_trace = np.empty_like(port_alpha_trace_local)
+    port_incident_trace = np.empty_like(port_incident_trace_local)
+    comm.Allreduce(port_alpha_trace_local, port_alpha_trace, op=MPI.SUM)
+    comm.Allreduce(port_incident_trace_local, port_incident_trace, op=MPI.SUM)
+
+    residual_trace = (
+        volume_trace
+        - incident_trace
+        + port_alpha_trace
+        + port_incident_trace
+    )
+    residual_interior = volume_interior - incident_interior
+    modal_raw = np.asarray(modal_raw_rows, dtype=np.complex128)
+    modal_gauge = np.asarray(modal_solver_gauge_rows, dtype=np.complex128)
+    residual_norm = float(
+        np.sqrt(
+            np.linalg.norm(residual_trace) ** 2
+            + np.linalg.norm(residual_interior) ** 2
+            + np.linalg.norm(modal_gauge) ** 2
+        )
+    )
+    rhs_trace = linear_trace + incident_trace - port_incident_trace
+    rhs_interior = linear_interior + incident_interior
+    rhs_norm = float(
+        np.sqrt(np.linalg.norm(rhs_trace) ** 2 + np.linalg.norm(rhs_interior) ** 2)
+    )
+    relative_residual = residual_norm / max(rhs_norm, np.finfo(float).tiny)
+    direct_target_limit = 1.0e-8
+    task_gate_limit = 1.0e-6
+    finite = bool(
+        np.isfinite(residual_norm)
+        and np.isfinite(rhs_norm)
+        and np.isfinite(relative_residual)
+    )
+    return {
+        "schema_version": "stage4.independent-active-action.v1",
+        "method": (
+            "reassembled original volume action and incident/port vectors; "
+            "actual entity/Floquet C^H trace projection; active interiors "
+            "retained; independent raw and solver-gauge modal lower rows"
+        ),
+        "quadrature_degree": {
+            "volume_form_metadata": getattr(
+                cfg, "stage4_volume_quadrature_degree", None
+            ),
+            "incident": getattr(
+                cfg, "stage4_incident_quadrature_degree", None
+            ),
+            "ports_and_modal_rows": int(view.dtn_surface_quadrature_degree),
+        },
+        "sparse_cutoff": {
+            "policy": policy,
+            "relative_tolerance": relative_tolerance,
+            "application": (
+                "incident vector after independent C^H projection; each port "
+                "component and combined traction after the same projection"
+            ),
+        },
+        "rows": {
+            "independent_trace": trace_rows,
+            "active_cell_interior": int(residual_interior.size),
+            "modal_lower": int(modal_gauge.size),
+        },
+        "modal_lower_surface_assembly": {
+            "independent_direct_surface_forms_compiled": 2,
+            "form_reuse_scope": "one scalar form per top/bottom side",
+            "mode_parameters_are_fem_constants": True,
+            "mode_parameter_updates": len(modes),
+            "integral": "direct original unnormalized modal moment D*E",
+        },
+        "groups": {
+            "volume_action_minus_rhs_trace": action_group_metrics(volume_trace),
+            "volume_action_minus_rhs_active_interior": action_group_metrics(
+                volume_interior
+            ),
+            "incident_traction_trace_after_cutoff": action_group_metrics(
+                incident_trace
+            ),
+            "port_upper_alpha_action_trace": action_group_metrics(
+                port_alpha_trace
+            ),
+            "port_upper_incident_projection_trace": action_group_metrics(
+                port_incident_trace
+            ),
+            "independent_active_trace_residual": action_group_metrics(
+                residual_trace
+            ),
+            "independent_active_interior_residual": action_group_metrics(
+                residual_interior
+            ),
+            "modal_lower_raw_original_equation": action_group_metrics(
+                modal_raw
+            ),
+            "modal_lower_normalized_solver_gauge": action_group_metrics(
+                modal_gauge
+            ),
+        },
+        "rhs": {
+            "raw_l2_norm": rhs_norm,
+            "trace": action_group_metrics(rhs_trace),
+            "active_interior": action_group_metrics(rhs_interior),
+        },
+        "full_solver_gauge_residual": {
+            "raw_l2_norm": residual_norm,
+            "relative_to_independent_rhs": relative_residual,
+            "finite": finite,
+            "task_gate_limit": task_gate_limit,
+            "task_gate_pass": bool(finite and relative_residual <= task_gate_limit),
+            "small_direct_target_limit": direct_target_limit,
+            "small_direct_target_pass": bool(
+                finite and relative_residual <= direct_target_limit
+            ),
+        },
+        "port_upper_rows": port_records,
+        "modal_lower_rows": modal_records,
+        "independent_of_solver_condensed_residual": True,
+        "inactive_carrier_tests_excluded": True,
+    }
+
+
+class _IndependentModeSurfaceMomentAssembler:
+    """Reuse one directly assembled lower-row form per physical port side."""
+
+    def __init__(
+        self,
+        field,
+        mesh_data,
+        tag: int,
+        *,
+        quadrature_degree: int,
+    ) -> None:
+        self.mesh_data = mesh_data
+        self.quadrature_degree = int(quadrature_degree)
+        mesh = mesh_data.mesh
+        self.alpha = fem.Constant(mesh, PETSc.ScalarType(0.0))
+        self.gamma = fem.Constant(mesh, PETSc.ScalarType(0.0))
+        self.kz = fem.Constant(mesh, PETSc.ScalarType(0.0))
+        self.log_scale = fem.Constant(mesh, PETSc.ScalarType(0.0))
+        self.mode_ex = fem.Constant(mesh, PETSc.ScalarType(0.0))
+        self.mode_ey = fem.Constant(mesh, PETSc.ScalarType(0.0))
+        coordinate = ufl.SpatialCoordinate(mesh)
+        phase = ufl.exp(
+            PETSc.ScalarType(1j) * self.alpha * coordinate[0]
+            + PETSc.ScalarType(1j) * self.gamma * coordinate[1]
+            + PETSc.ScalarType(1j) * self.kz * coordinate[2]
+            + self.log_scale
+        )
+        field_tangential = ufl.as_vector(
+            (field[0], field[1], PETSc.ScalarType(0.0))
+        )
+        mode_tangential = ufl.as_vector(
+            (self.mode_ex * phase, self.mode_ey * phase, PETSc.ScalarType(0.0))
+        )
+        ds = ufl.Measure(
+            "ds", domain=mesh, subdomain_data=mesh_data.facet_tags
+        )
+        self.form = fem.form(
+            _with_quadrature_degree(
+                ufl.inner(field_tangential, mode_tangential) * ds(int(tag)),
+                self.quadrature_degree,
+            )
+        )
+
+    def assemble(self, mode: PortMode3D) -> complex:
+        parameters = (
+            (self.alpha, complex(mode.alpha)),
+            (self.gamma, complex(mode.gamma)),
+            (self.kz, complex(mode.k_vector[2])),
+            (
+                self.log_scale,
+                complex(
+                    float(getattr(mode, "boundary_amplitude_log_scale", 0.0))
+                ),
+            ),
+            (self.mode_ex, complex(mode.e_vector[0])),
+            (self.mode_ey, complex(mode.e_vector[1])),
+        )
+        for constant, value in parameters:
+            if not np.isfinite(value.real) or not np.isfinite(value.imag):
+                raise ValueError("DtN mode surface parameter must be finite")
+            _set_scalar_constant(constant, value)
+        local = fem.assemble_scalar(self.form)
+        total = self.mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
+        return complex(total)
+
+
+def _independent_mode_surface_moment(
+    field,
+    mode: PortMode3D,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    *,
+    quadrature_degree: int,
+    assembler: _IndependentModeSurfaceMomentAssembler | None = None,
+) -> complex:
+    """Integrate the unnormalized original lower modal equation directly."""
+
+    if assembler is None:
+        assembler = _IndependentModeSurfaceMomentAssembler(
+            field,
+            mesh_data,
+            cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min,
+            quadrature_degree=int(quadrature_degree),
+        )
+    if assembler.mesh_data is not mesh_data:
+        raise ValueError("mode surface assembler belongs to another mesh")
+    if assembler.quadrature_degree != int(quadrature_degree):
+        raise ValueError("mode surface assembler quadrature differs from request")
+    return assembler.assemble(mode)
 
 
 def _sampled_tangential_projection(
@@ -5561,7 +6179,7 @@ def _write_port_outputs(
                 "R": float(power) if mode.side == "top" and power_carrying else 0.0,
                 "T": float(power) if mode.side == "bottom" and power_carrying else 0.0,
             }
-        if getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None) is not None:
+        if _port_boundary_amplitude_scale_policy(cfg) is not None:
             row["boundary_amplitude_scale"] = float(
                 getattr(mode, "boundary_amplitude_scale", 1.0)
             )
@@ -5571,7 +6189,10 @@ def _write_port_outputs(
         rows.append(row)
     if comm.rank != 0:
         return
+    scale_policy = _port_boundary_amplitude_scale_policy(cfg)
     payload = {"metrics": metrics, "orders": rows}
+    if scale_policy is not None:
+        payload["boundary_amplitude_scale_policy"] = scale_policy
     port_payload = {
         "method": "port",
         "role": "primary",
@@ -5608,6 +6229,8 @@ def _write_port_outputs(
         "orders": rows,
         "note": metrics.get("dtn_port_power_metric_note"),
     }
+    if scale_policy is not None:
+        port_payload["boundary_amplitude_scale_policy"] = scale_policy
     (out_dir / "port_power.json").write_text(
         json.dumps(port_payload, ensure_ascii=False, indent=2, default=_json_default),
         encoding="utf-8",
@@ -5680,8 +6303,7 @@ def _write_port_outputs(
                         getattr(mode, "boundary_amplitude_log_scale", 0.0)
                     ),
                 }
-                if getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
-                is not None
+                if _port_boundary_amplitude_scale_policy(cfg) is not None
                 else {}
             ),
         }
@@ -5723,7 +6345,7 @@ def _port_power_metrics(
         else:
             T_total += float(power)
     R00_total = float(sum(R00_by_polarization.values()))
-    return {
+    metrics = {
         "R_total": float(R_total),
         "R00_total": R00_total,
         "R00_s": float(R00_by_polarization.get("s", 0.0)),
@@ -5775,6 +6397,22 @@ def _port_power_metrics(
         "port_power_csv": "port_power.csv",
         "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json",
     }
+    scale_policy = _port_boundary_amplitude_scale_policy(cfg)
+    if scale_policy is not None:
+        metrics["dtn_port_boundary_amplitude_scale_policy"] = scale_policy
+        metrics["dtn_port_solver_basis_to_boundary_mapping"] = (
+            "For each mode q=exp(Im(kz)*z_boundary); solver auxiliary and "
+            "incident projections use the q-scaled basis, and the recorded "
+            "boundary_phase applies q*exp(i*kz*z_boundary) before reporting "
+            "outgoing_amplitude_at_boundary. Per-mode q and log(q) are "
+            "included in the diffraction-order and auxiliary-amplitude rows."
+        )
+        metrics["dtn_port_modal_amplitude_convention"] += (
+            " This run uses per-mode boundary-magnitude scaling; the actual "
+            "q and boundary phase are recorded for the solver-to-boundary "
+            "amplitude conversion."
+        )
+    return metrics
 
 
 def _port_mode_count_metrics(modes: list[PortMode3D]) -> dict[str, int]:
@@ -5798,9 +6436,17 @@ def _assemble_assembly_time_incident_traction(V, mesh_data, cfg, *,
         dtn_quadrature_degree, diagnostic_reference_incident_quadrature=False):
     """Default keeps historical integration; diagnostic reference matches native RHS."""
     form = _incident_top_traction_form(V, mesh_data, cfg)
-    options = ({'quadrature_degree': dtn_quadrature_degree}
-               if diagnostic_reference_incident_quadrature else {})
-    return _assemble_unconstrained_vector(form, **options)
+    configured_degree = getattr(
+        cfg, "stage4_incident_quadrature_degree", None
+    )
+    if configured_degree is None and diagnostic_reference_incident_quadrature:
+        configured_degree = dtn_quadrature_degree
+    return _assemble_unconstrained_vector(
+        form,
+        quadrature_degree=(
+            None if configured_degree is None else int(configured_degree)
+        ),
+    )
 
 
 def _solve_stage4_dtn_port_total_field_impl(
@@ -5989,13 +6635,44 @@ def _solve_stage4_dtn_port_total_field_impl(
         return zero_order_result
 
     stage_start = time.perf_counter()
-    timing_details: dict[str, float | int] = {}
+    timing_details: dict[str, float | int | str] = {}
     modes = outgoing_port_modes_3d(cfg)
     n_aux = len(modes)
     if n_aux == 0:
         raise RuntimeError("Stage-4 DtN selected zero port modes.")
     dtn_quadrature_degree = _dtn_surface_quadrature_degree(cfg, modes)
     timing_details["stage4_dtn_surface_quadrature_degree"] = int(dtn_quadrature_degree)
+    sparse_cutoff_policy = normalize_dtn_sparse_cutoff_policy(
+        getattr(
+            cfg,
+            "stage4_dtn_sparse_cutoff_policy",
+            LEGACY_DTN_SPARSE_CUTOFF_POLICY,
+        )
+    )
+    sparse_cutoff_relative_tolerance = float(
+        getattr(cfg, "stage4_dtn_sparse_cutoff_relative_tolerance", 1.0e-13)
+    )
+    if (
+        not np.isfinite(sparse_cutoff_relative_tolerance)
+        or not 0.0 < sparse_cutoff_relative_tolerance < 1.0
+    ):
+        raise ValueError("Stage-4 sparse cutoff relative tolerance is invalid")
+    active_reduction_tolerance = (
+        0.0
+        if sparse_cutoff_policy
+        == SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY
+        else 1.0e-14
+    )
+    active_reduction_absolute_tolerance = (
+        0.0
+        if sparse_cutoff_policy
+        == SCALE_HOMOGENEOUS_DTN_SPARSE_CUTOFF_POLICY
+        else 1.0e-30
+    )
+    timing_details["stage4_dtn_sparse_cutoff_policy"] = sparse_cutoff_policy
+    timing_details["stage4_dtn_sparse_cutoff_relative_tolerance"] = (
+        sparse_cutoff_relative_tolerance
+    )
     assembly_time_system: AssemblyTimeCondensedSystem | None = None
     variable_p_reduction: VariablePAssemblyTimeReduction | None = None
     local_h_context = getattr(mesh_data, "local_h_context", None)
@@ -6030,8 +6707,32 @@ def _solve_stage4_dtn_port_total_field_impl(
                 raise RuntimeError(
                     "qualified variable-p backend lost both of its plans"
                 )
+            compiled_volume_form = fem.form(a)
+            raw_tensor_backend = getattr(
+                cfg,
+                "stage4_variable_p_raw_tensor_backend",
+                "ffcx",
+            )
+            raw_tensor_evaluator = None
+            if raw_tensor_backend == "blocked_gram_v1":
+                from .hcurl_blocked_gram_tensor import HcurlBlockedGramTensor
+
+                raw_tensor_evaluator = HcurlBlockedGramTensor(
+                    V.element.basix_element,
+                    cfg,
+                    a,
+                    compiled_form=compiled_volume_form,
+                )
+            elif raw_tensor_backend not in {None, "ffcx"}:
+                raise ValueError(
+                    "unsupported variable-p raw tensor backend "
+                    f"{raw_tensor_backend!r}"
+                )
+            timing_details["stage4_variable_p_raw_tensor_backend"] = str(
+                "ffcx" if raw_tensor_backend is None else raw_tensor_backend
+            )
             variable_p_reduction = build_variable_p_assembly_time_reduction(
-                fem.form(a),
+                compiled_volume_form,
                 V,
                 mesh_data.cell_tags,
                 degree_plan_path=cfg.stage4_variable_p_cell_degree_plan,
@@ -6045,6 +6746,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                 retain_local_schur_for_research=(
                     variable_p_retain_local_schur_for_research
                 ),
+                raw_tensor_evaluator=raw_tensor_evaluator,
             )
             reduction_system = variable_p_reduction.system
         else:
@@ -6448,6 +7150,8 @@ def _solve_stage4_dtn_port_total_field_impl(
             reduced_incident = variable_p_reduction.reduce_active_vector(
                 active_incident,
                 side="right",
+                relative_tolerance=active_reduction_tolerance,
+                absolute_tolerance=active_reduction_absolute_tolerance,
             )
             variable_p_active_full_rhs.axpy(
                 PETSc.ScalarType(1.0),
@@ -6459,7 +7163,11 @@ def _solve_stage4_dtn_port_total_field_impl(
                 incident_traction_vec,
                 side="right",
             )
-        inc_rows, inc_values = _vec_nonzero_owned_entries(reduced_incident)
+        inc_rows, inc_values = _vec_nonzero_owned_entries(
+            reduced_incident,
+            relative_tol=sparse_cutoff_relative_tolerance,
+            sparse_cutoff_policy=sparse_cutoff_policy,
+        )
         if variable_p_reduction is None:
             assembly_time_full_rhs.axpy(
                 PETSc.ScalarType(1.0),
@@ -6471,8 +7179,15 @@ def _solve_stage4_dtn_port_total_field_impl(
         incident_traction_vec = _assemble_mpc_vector(
             _incident_top_traction_form(V, mesh_data, cfg),
             floquet_data.mpc,
+            quadrature_degree=getattr(
+                cfg, "stage4_incident_quadrature_degree", None
+            ),
         )
-        inc_rows, inc_values = _vec_nonzero_owned_entries(incident_traction_vec)
+        inc_rows, inc_values = _vec_nonzero_owned_entries(
+            incident_traction_vec,
+            relative_tol=sparse_cutoff_relative_tolerance,
+            sparse_cutoff_policy=sparse_cutoff_policy,
+        )
         incident_traction_vec.destroy()
     if external_rhs_digest is not None:
         _update_evidence_digest_sparse(
@@ -6506,16 +7221,48 @@ def _solve_stage4_dtn_port_total_field_impl(
     incident_projections: list[complex] = []
     surface_assemblers = {
         ("top", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree
+            V,
+            mesh_data,
+            cfg.tags.z_max,
+            0,
+            quadrature_degree=dtn_quadrature_degree,
+            scaled_mode_basis=bool(
+                getattr(cfg, "stage4_port_boundary_amplitude_scale_policy", None)
+                or getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+            ),
         ),
         ("top", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 1, quadrature_degree=dtn_quadrature_degree
+            V,
+            mesh_data,
+            cfg.tags.z_max,
+            1,
+            quadrature_degree=dtn_quadrature_degree,
+            scaled_mode_basis=bool(
+                getattr(cfg, "stage4_port_boundary_amplitude_scale_policy", None)
+                or getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+            ),
         ),
         ("bottom", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 0, quadrature_degree=dtn_quadrature_degree
+            V,
+            mesh_data,
+            cfg.tags.z_min,
+            0,
+            quadrature_degree=dtn_quadrature_degree,
+            scaled_mode_basis=bool(
+                getattr(cfg, "stage4_port_boundary_amplitude_scale_policy", None)
+                or getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+            ),
         ),
         ("bottom", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree
+            V,
+            mesh_data,
+            cfg.tags.z_min,
+            1,
+            quadrature_degree=dtn_quadrature_degree,
+            scaled_mode_basis=bool(
+                getattr(cfg, "stage4_port_boundary_amplitude_scale_policy", None)
+                or getattr(cfg, "task40_port_boundary_amplitude_scale_policy", None)
+            ),
         ),
     }
     try:
@@ -6613,6 +7360,8 @@ def _solve_stage4_dtn_port_total_field_impl(
                         variable_p_reduction.reduce_active_vector(
                             vector,
                             side="right",
+                            relative_tolerance=active_reduction_tolerance,
+                            absolute_tolerance=active_reduction_absolute_tolerance,
                         )
                         for vector in component_active_vectors
                     )
@@ -6620,6 +7369,8 @@ def _solve_stage4_dtn_port_total_field_impl(
                         variable_p_reduction.reduce_active_vector(
                             vector,
                             side="left",
+                            relative_tolerance=active_reduction_tolerance,
+                            absolute_tolerance=active_reduction_absolute_tolerance,
                         )
                         for vector in component_active_vectors
                     )
@@ -6639,10 +7390,20 @@ def _solve_stage4_dtn_port_total_field_impl(
                         for vector in component_full_vectors
                     )
                 component_right_entries = tuple(
-                    _vec_nonzero_owned_entries(vector) for vector in right_vectors
+                    _vec_nonzero_owned_entries(
+                        vector,
+                        relative_tol=sparse_cutoff_relative_tolerance,
+                        sparse_cutoff_policy=sparse_cutoff_policy,
+                    )
+                    for vector in right_vectors
                 )
                 component_left_entries = tuple(
-                    _vec_nonzero_owned_entries(vector) for vector in left_vectors
+                    _vec_nonzero_owned_entries(
+                        vector,
+                        relative_tol=sparse_cutoff_relative_tolerance,
+                        sparse_cutoff_policy=sparse_cutoff_policy,
+                    )
+                    for vector in left_vectors
                 )
                 for vector in (*right_vectors, *left_vectors):
                     vector.destroy()
@@ -6693,11 +7454,15 @@ def _solve_stage4_dtn_port_total_field_impl(
             component_left_entries,
             (mode.e_vector[0], mode.e_vector[1]),
             comm=comm,
+            relative_tol=sparse_cutoff_relative_tolerance,
+            sparse_cutoff_policy=sparse_cutoff_policy,
         )
         traction_rows, traction_values = _combine_owned_entries(
             component_right_entries,
             (traction_vector[0], traction_vector[1]),
             comm=comm,
+            relative_tol=sparse_cutoff_relative_tolerance,
+            sparse_cutoff_policy=sparse_cutoff_policy,
         )
         aux_global = n_fe + aux_index
         denominator = _mode_projection_denominator(mode, cfg)
@@ -7998,6 +8763,9 @@ def _solve_stage4_dtn_port_total_field_impl(
                         **dict(linear_residual),
                     }
                 ),
+                volume_bilinear_form=a,
+                volume_linear_form=L,
+                dtn_surface_quadrature_degree=int(dtn_quadrature_degree),
             )
         except Exception as exc:
             local_view_errors.append(

@@ -29,6 +29,7 @@ from src.adaptivity.stage4_local_h import (
     build_stage4_local_h_reduction_authority,
 )
 
+from .independent_active_action import project_trace_dual_blocks
 from .hcurl_variable_p_assembly import (
     VariablePCondensedTraceSystem,
     _lu_factor_matrix_action,
@@ -173,11 +174,89 @@ class VariablePAssemblyTimeReduction:
             p6_vector,
         )
 
+    def project_active_dual_to_independent_test_space(
+        self,
+        active_full_vector: PETSc.Vec,
+    ) -> dict[str, Any]:
+        """Project active FE residual rows through actual trace constraints.
+
+        The returned trace entries are the raw dual action ``C^H r`` in the
+        independent entity test basis.  Active cell-interior equations remain
+        present and are returned separately; no Schur complement or Gram
+        metric is applied.
+        """
+
+        system = self.system
+        expected = int(system.entity_map.active_rows)
+        if active_full_vector.getSize() != expected:
+            raise ValueError("active full dual has the wrong global size")
+        comm = system.entity_map.mesh.comm
+        comparison = MPI.Comm.Compare(
+            comm,
+            active_full_vector.getComm().tompi4py(),
+        )
+        if comparison not in {MPI.IDENT, MPI.CONGRUENT}:
+            raise ValueError("active full dual uses a different communicator")
+        full_values = _global_values(active_full_vector, expected, comm)
+        full_trace_rows = int(system.entity_map.active_trace_rows)
+        full_trace = full_values[:full_trace_rows]
+        constraints = system.trace_constraints
+        if constraints is None:
+            if int(system.active_trace_rows) != full_trace_rows:
+                raise RuntimeError(
+                    "unconstrained trace row counts are inconsistent"
+                )
+            independent_trace = full_trace.copy()
+        else:
+            work_owned = getattr(
+                constraints,
+                "work_owned_entity_blocks",
+                None,
+            )
+            if work_owned is None:
+                start, stop = map(
+                    int,
+                    active_full_vector.getOwnershipRange(),
+                )
+                blocks = tuple(
+                    block
+                    for block in constraints.entity_blocks.values()
+                    if start <= int(block.full_rows[0]) < stop
+                )
+            else:
+                blocks = tuple(work_owned)
+            local_trace = project_trace_dual_blocks(
+                full_trace,
+                int(system.active_trace_rows),
+                blocks,
+            )
+            independent_trace = np.empty_like(local_trace)
+            comm.Allreduce(local_trace, independent_trace, op=MPI.SUM)
+        active_interiors = full_values[full_trace_rows:].copy()
+        expected_interiors = int(
+            system.entity_map.active_cell_interior_rows
+        )
+        if active_interiors.shape != (expected_interiors,):
+            raise RuntimeError("active interior residual rows do not close")
+        return {
+            "trace_independent_dual": independent_trace,
+            "active_cell_interior_dual": active_interiors,
+            "full_unconstrained_trace_rows": full_trace_rows,
+            "independent_trace_rows": int(system.active_trace_rows),
+            "active_cell_interior_rows": expected_interiors,
+            "projection": (
+                "raw active trace dual mapped by entity-block C^H; cell-"
+                "interior rows retained without condensation"
+            ),
+        }
+
     def reduce_active_vector(
         self,
         active_full_vector: PETSc.Vec,
         *,
         side: str,
+        relative_tolerance: float = 1.0e-14,
+        absolute_tolerance: float = 1.0e-30,
     ) -> PETSc.Vec:
         """Condense an already projected active vector."""
 
@@ -185,6 +264,8 @@ class VariablePAssemblyTimeReduction:
             self.system,
             active_full_vector,
             side=side,
+            relative_tolerance=relative_tolerance,
+            absolute_tolerance=absolute_tolerance,
         )
 
     def enforce_trace_only_active_functional(
@@ -987,6 +1068,7 @@ def build_variable_p_assembly_time_reduction(
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
     retain_local_schur_for_research: bool = False,
+    raw_tensor_evaluator: Any | None = None,
 ) -> VariablePAssemblyTimeReduction:
     """Build one hash-bound Task43 p3-p6 reduction in a p6 carrier."""
 
@@ -1060,6 +1142,7 @@ def build_variable_p_assembly_time_reduction(
             retain_local_schur_for_research=(
                 retain_local_schur_for_research
             ),
+            raw_tensor_evaluator=raw_tensor_evaluator,
         )
     )
     audit = {

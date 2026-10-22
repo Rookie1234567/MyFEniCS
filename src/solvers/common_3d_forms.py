@@ -74,7 +74,24 @@ def _build_variational_forms(
     """
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
-    dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
+    volume_quadrature_degree = getattr(
+        cfg, "stage4_volume_quadrature_degree", None
+    )
+    dx_kwargs = (
+        {}
+        if volume_quadrature_degree is None
+        else {
+            "metadata": {
+                "quadrature_degree": int(volume_quadrature_degree),
+                "quadrature_rule": str(
+                    getattr(cfg, "stage4_volume_quadrature_rule", "default")
+                ),
+            }
+        }
+    )
+    dx = ufl.Measure(
+        "dx", domain=msh, subdomain_data=mesh_data.cell_tags, **dx_kwargs
+    )
     ds = ufl.Measure("ds", domain=msh, subdomain_data=mesh_data.facet_tags)
     zero = fem.Constant(msh, np.zeros(3, dtype=default_scalar_type))
     curl_u = ufl.curl(u)

@@ -57,6 +57,8 @@ def _h100_context(
     trace_degree: int = 5,
     cell_interior_degree_overrides=None,
     selected_p6_face_geometry_keys=(),
+    variable_trace_from_cell_degrees: bool = False,
+    allow_no_refinement: bool = False,
 ):
     cfg = target_stage4_config(degree=6, h_nm=100.0)
     marked = ((0.0, 0.0, 120.0, 16.5, 12.5, 130.0),)
@@ -77,6 +79,10 @@ def _h100_context(
         selected_p6_face_geometry_keys=(
             selected_p6_face_geometry_keys
         ),
+        variable_trace_from_cell_degrees=(
+            variable_trace_from_cell_degrees
+        ),
+        allow_no_refinement=allow_no_refinement,
     )
     override_label = (
         "uniform"
@@ -305,6 +311,7 @@ def test_task43_local_h_p3_trace_and_mixed_p3_p4_interiors_close() -> None:
     _cfg, _path, _mesh_data, context = _h100_context(
         trace_degree=3,
         cell_interior_degree_overrides=overrides,
+        variable_trace_from_cell_degrees=True,
     )
     authority = build_stage4_local_h_reduction_authority(
         context,
@@ -322,9 +329,63 @@ def test_task43_local_h_p3_trace_and_mixed_p3_p4_interiors_close() -> None:
         "p5": 0,
         "p6": 0,
     }
+    assert context.audit["variable_trace_from_cell_degrees"] is True
+    assert authority.degree_plan.audit["variable_trace_from_cell_degrees"] is True
+    assert authority.degree_plan.audit["trace_degree_values"] == [3, 4]
+    assert authority.degree_plan.audit[
+        "geometry_canonical_entity_degree_sha256"
+    ]
+    assert authority.trace_constraints.audit["variable_trace_opt_in"] is True
+    assert authority.trace_constraints.audit[
+        "local_variable_trace_implemented"
+    ] is True
     assert set(
         authority.trace_constraints.audit["constraint_kinds"]
     ) == {"floquet", "hanging"}
+
+
+def test_task43_empty_h_anchor_keeps_root_mesh_and_same_p3_plan() -> None:
+    cfg, _path, _mesh_data, seed_context = _h100_context()
+    root_boxes = tuple(seed_context.forest.root_boxes)
+    p3_by_root = {box: 3 for box in root_boxes}
+    payload = stage4_local_h_refinement_plan_payload(
+        cfg,
+        (),
+        comm_size=MPI.COMM_WORLD.size,
+        trace_degree=3,
+        cell_interior_degree=6,
+        provenance={
+            "purpose": "Task43 empty-h same-order p3 anchor fixture",
+            "accuracy_credit": False,
+            "ordinary_default_changed": False,
+        },
+        cell_interior_degree_overrides=p3_by_root,
+        variable_trace_from_cell_degrees=True,
+        allow_no_refinement=True,
+    )
+    path = _shared_plan_path(payload, name="task43-empty-h-p3-anchor")
+    mesh_data = build_stage4_local_h_mesh_data(cfg, path)
+    context = mesh_data.local_h_context
+    assert isinstance(context, Stage4LocalHContext)
+    authority = build_stage4_local_h_reduction_authority(
+        context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+
+    assert payload["allow_no_refinement"] is True
+    assert len(context.forest.leaves) == len(context.forest.root_boxes)
+    assert context.audit["hanging_patch_count"] == 0
+    assert context.audit["allow_no_refinement"] is True
+    assert set(context.cell_interior_degree_by_box.values()) == {3}
+    assert authority.degree_plan.audit["trace_degree_values"] == [3]
+    assert authority.degree_plan.audit["cell_degree_counts"] == {
+        "p3": len(root_boxes),
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+    }
+    assert authority.audit["pass"] is True
 
 
 def test_h100_selective_nonhanging_p6_face_enters_stage4_authority() -> None:

@@ -534,6 +534,20 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                         f"invalid Task40 D5 frozen mesh input: {exc}"
                     ) from exc
         if frozen_axes is None:
+            from src.geometry.task43_hp_adaptivity_axis_plan import (
+                TASK43_AXIS_PLAN_ID,
+                validate_frozen_task43_axes,
+            )
+
+            if cfg.mesh_plan_id == TASK43_AXIS_PLAN_ID:
+                try:
+                    frozen_axes = validate_frozen_task43_axes(plan_identity)
+                    frozen_plan_family = "task43_hp_adaptivity"
+                except ValueError as exc:
+                    raise ValueError(
+                        f"invalid Task43 frozen mesh input: {exc}"
+                    ) from exc
+        if frozen_axes is None:
             from src.geometry.task39extra_v5_r13_mesh_plan import (
                 validate_frozen_r13_axes,
             )

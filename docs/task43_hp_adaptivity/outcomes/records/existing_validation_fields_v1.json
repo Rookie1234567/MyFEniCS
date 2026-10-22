@@ -1,0 +1,189 @@
+{
+  "classification": "existing_artifact_inventory_only",
+  "cases": [
+    {
+      "label": "Y3",
+      "role": "post_selection_control_only",
+      "directory": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261021T081011.745578Z",
+      "source_sha": "ba26075e2a871db10a81efbceeb32b51d95ea96b",
+      "historical_status": "TASK40_PHI90_D15_Y3_P6_DIRECT_R13_COMPLETED_AUTHORITY_LIMITED",
+      "residuals": {
+        "condensed_direct_relative": 6.545720338904796E-10,
+        "condensed_direct_residual_gate": 1E-9,
+        "dtn_sparse_cutoff_identity_sha256": "bd35b7553d1e0397425f933ddb59522b8a11239a827404496fb5e77a4e5d57ba",
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1E-13,
+        "finite": true,
+        "max_same_factor_corrections": 2,
+        "native_identity_formula": "e_FE-B*H_p^{-1}*e_p",
+        "native_identity_relative": 4.2889192640726495E-11,
+        "operator_scope": "A6_D15_Y3_R13_active_rectangle",
+        "original_A6_active_rectangle_relative": 1.6626020119980456E-10,
+        "original_A6_active_rectangle_relative_gate": 0.000001,
+        "rhs_norm": 1.4934556485909263,
+        "same_factor_correction_count": 0,
+        "wall_seconds": 24.303867768961936
+      },
+      "axes": [
+        6,
+        10,
+        6
+      ],
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "mode_count": 612,
+      "surface_q": 28,
+      "volume_q": [
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        },
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        }
+      ],
+      "cutoff": "scale_homogeneous_relative_only_v1",
+      "power": {
+        "R": 0.2513571768732806,
+        "T": 0.05712762824637183,
+        "A_volume": 0.691515194892358
+      },
+      "storage": {
+        "bytes": 3914432,
+        "dtype": "complex128",
+        "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y3_p6_direct_v1__full3d_direct__mpi1__Mna/20261021T081011.745578Z/numerical_output/task40_direct_factor_evidence/recovered_p6_storage_coefficients.npy",
+        "sha256": "b62003f2c6b8396e706c7d67818a713fcb6d70d5c126dc6d836d423cfb5764d6",
+        "shape": [
+          244644
+        ]
+      },
+      "actual_storage_sha256": "b62003f2c6b8396e706c7d67818a713fcb6d70d5c126dc6d836d423cfb5764d6",
+      "storage_hash_matches": true,
+      "reconstruction_and_task43_validation": "NOT_RUN",
+      "cost_scope": "historical_source_and_runtime_only; not a measured fresh Task43 cold solve"
+    },
+    {
+      "label": "Y3_2",
+      "role": "post_selection_control_only",
+      "directory": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y3_2_p6_direct_v1__full3d_direct__mpi1__Mna/20261021T084703.634131Z",
+      "source_sha": "a0d67b7f7052d80eff4bd5c9488384a2cd5a9864",
+      "historical_status": "TASK40_PHI90_D15_Y3_2_P6_DIRECT_R13_COMPLETED_AUTHORITY_LIMITED",
+      "residuals": {
+        "condensed_direct_relative": 2.787171433121226E-12,
+        "condensed_direct_residual_gate": 1E-9,
+        "dtn_sparse_cutoff_identity_sha256": "bd35b7553d1e0397425f933ddb59522b8a11239a827404496fb5e77a4e5d57ba",
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1E-13,
+        "finite": true,
+        "max_same_factor_corrections": 2,
+        "native_identity_formula": "e_FE-B*H_p^{-1}*e_p",
+        "native_identity_relative": 4.824416385026935E-11,
+        "operator_scope": "A6_D15_Y3_2_R13_active_rectangle",
+        "original_A6_active_rectangle_relative": 9.627505579465452E-11,
+        "original_A6_active_rectangle_relative_gate": 0.000001,
+        "rhs_norm": 1.591285561722706,
+        "same_factor_correction_count": 1,
+        "wall_seconds": 27.249686961062253
+      },
+      "axes": [
+        6,
+        10,
+        6
+      ],
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "mode_count": 612,
+      "surface_q": 28,
+      "volume_q": [
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        },
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        }
+      ],
+      "cutoff": "scale_homogeneous_relative_only_v1",
+      "power": {
+        "R": 0.25154108472141545,
+        "T": 0.05710176881120594,
+        "A_volume": 0.691357146465415
+      },
+      "storage": {
+        "bytes": 3914432,
+        "dtype": "complex128",
+        "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y3_2_p6_direct_v1__full3d_direct__mpi1__Mna/20261021T084703.634131Z/numerical_output/task40_direct_factor_evidence/recovered_p6_storage_coefficients.npy",
+        "sha256": "2dc183aa1aecf00f15a483ec34ef380c180b2c093e470b9f2d51cdc9258345a6",
+        "shape": [
+          244644
+        ]
+      },
+      "actual_storage_sha256": "2dc183aa1aecf00f15a483ec34ef380c180b2c093e470b9f2d51cdc9258345a6",
+      "storage_hash_matches": true,
+      "reconstruction_and_task43_validation": "NOT_RUN",
+      "cost_scope": "historical_source_and_runtime_only; not a measured fresh Task43 cold solve"
+    },
+    {
+      "label": "Y5_1",
+      "role": "potential_independent_validation_only",
+      "directory": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y5_1_p6_direct_v1__full3d_direct__mpi1__Mna/20261021T115035.556208Z",
+      "source_sha": "55c58972d230f53103f8ef6cb950ebb9417711cb",
+      "historical_status": "TASK40_PHI90_D15_Y5_1_P6_DIRECT_R13_COMPLETED_AUTHORITY_LIMITED",
+      "residuals": {
+        "condensed_direct_relative": 2.8178767765217214E-12,
+        "condensed_direct_residual_gate": 1E-9,
+        "dtn_sparse_cutoff_identity_sha256": "bd35b7553d1e0397425f933ddb59522b8a11239a827404496fb5e77a4e5d57ba",
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1E-13,
+        "finite": true,
+        "max_same_factor_corrections": 2,
+        "native_identity_formula": "e_FE-B*H_p^{-1}*e_p",
+        "native_identity_relative": 8.502400167250219E-11,
+        "operator_scope": "A6_D15_Y5_1_R13_active_rectangle",
+        "original_A6_active_rectangle_relative": 1.6968842596739194E-10,
+        "original_A6_active_rectangle_relative_gate": 0.000001,
+        "rhs_norm": 1.2813654235277134,
+        "same_factor_correction_count": 1,
+        "wall_seconds": 27.598046815022826
+      },
+      "axes": [
+        6,
+        14,
+        6
+      ],
+      "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+      "mode_count": 612,
+      "surface_q": 28,
+      "volume_q": [
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        },
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        }
+      ],
+      "cutoff": "scale_homogeneous_relative_only_v1",
+      "power": {
+        "R": 0.2513545168325538,
+        "T": 0.0571280000367976,
+        "A_volume": 0.691517483139861
+      },
+      "storage": {
+        "bytes": 5463104,
+        "dtype": "complex128",
+        "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40_phi90_13p5_D15_Y5_1_p6_direct_v1__full3d_direct__mpi1__Mna/20261021T115035.556208Z/numerical_output/task40_direct_factor_evidence/recovered_p6_storage_coefficients.npy",
+        "sha256": "7dbfc0af4a5958f1c5da484e11564924cc35cf3fde4795ad9414cd7e40b74e11",
+        "shape": [
+          341436
+        ]
+      },
+      "actual_storage_sha256": "7dbfc0af4a5958f1c5da484e11564924cc35cf3fde4795ad9414cd7e40b74e11",
+      "storage_hash_matches": true,
+      "reconstruction_and_task43_validation": "NOT_RUN",
+      "cost_scope": "historical_source_and_runtime_only; not a measured fresh Task43 cold solve"
+    }
+  ],
+  "note": "Full saved FE coefficients exist and their file hashes were checked. Use requires matching mesh/DoF ordering, constraint recovery and reproduced output verification. No fields from this inventory enter initial adaptive marking."
+}

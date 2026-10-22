@@ -1,0 +1,65 @@
+{
+  "classification": "failed_component_algebraic_precheck",
+  "formal_task43_campaign_case": false,
+  "case": "phi90_13p5nm_boundary_fitted_h100_uniform_p3_on_p6_carrier",
+  "purpose": "Task43 R13/q15/q28 original-active-action qualification before the frozen 180-cell start",
+  "source": {
+    "base_sha": "a7904a64405c9c19d641dbc4d43fb25f7a80f793",
+    "dirty": true,
+    "loaded_source_snapshot_note": "benchmarks/artifacts/task43/a6_component_attempt1/snapshot_note.json"
+  },
+  "execution": {
+    "mpi": 1,
+    "cpu_affinity": [
+      44
+    ],
+    "math_threads": 1,
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "scalar": "complex128",
+    "integer": "int64"
+  },
+  "discretization": {
+    "cells": 36,
+    "carrier_dofs": 25764,
+    "carrier_floquet_constraints": 1788,
+    "retained_independent_trace_rows": 1782,
+    "port_rows": 612,
+    "matrix_rows": 2394,
+    "matrix_nnz": 547318,
+    "volume_q": 15,
+    "surface_q": 28,
+    "cutoff": "scale_homogeneous_relative_only_v1",
+    "boundary_amplitude_scaling_policy": null
+  },
+  "failure": {
+    "stage": "variable_p_live_observer_preflight",
+    "recovered_active_residual_relative": 1.6444992679498607e+64,
+    "preflight_limit": 1e-09,
+    "independent_A6_action_status": "not_run_observer_rejected_before_invocation",
+    "official_result_identity": null,
+    "output_files_role": "diagnostic_only_even_where_legacy_file_labels_say_ok"
+  },
+  "timing": {
+    "elapsed_to_mode_stage_seconds": 1726.5099308621138,
+    "elapsed_to_residual_seconds": 1909.1797872358002,
+    "last_progress_elapsed_seconds": 1909.5437362920493,
+    "includes_failed_attempt_in_total_cost": true
+  },
+  "memory": {
+    "rank_historical_peak_mib": 743.7734375,
+    "scope": "single_rank_historical_RSS_peak; not simultaneous_process_tree_peak",
+    "compiler_descendants_included": false,
+    "formal_resource_gate_pass": null
+  },
+  "diagnosis": {
+    "hypothesis": "unscaled R13 evanescent modal coefficients make normalized lower rows severely ill-scaled",
+    "confirmed_by_scaled_rerun": false,
+    "next_action": "retain gate; use existing boundary amplitude scaling and qualify same model again"
+  },
+  "artifact_sha256": {
+    "benchmarks/artifacts/task43/a6_component_attempt1/pytest.log": "67cd8fcb70b07f1c8561c16b4ce408c7424d8647795cdcf5141a3f6be83b46cf",
+    "benchmarks/artifacts/task43/a6_component_attempt1/run/solve/progress_3d.jsonl": "067ae25e51609e1608253be2883cabe64c600ed7bd1218237de1e662320c6323",
+    "benchmarks/artifacts/task43/a6_component_attempt1/loaded_source.tar": "83b11dc0fa7c06f79cf511d3ceed778456200fdb10ec2a88daf6e92d1efecef9",
+    "benchmarks/artifacts/task43/a6_component_attempt1/loaded_source.patch": "b3186662097a6bf515cae90bda6eb193ce3febf06890d51c370ec9dde441db9a"
+  }
+}

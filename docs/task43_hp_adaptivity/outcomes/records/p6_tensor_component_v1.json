@@ -1,0 +1,78 @@
+{
+  "builder": {
+    "builder_seconds": 6.960605,
+    "default_ffcx_path_preserved": true,
+    "pytest": "4 passed in 12.90s",
+    "status": "pass",
+    "test": "active p3 plan assembled on p6 carrier using opt-in blocked-gram evaluator",
+    "unique_raw_tensor_classes": 1
+  },
+  "case": {
+    "comparison": "direct original FFCx tabulation versus existing HcurlBlockedGramTensor evaluator",
+    "element": "N1curl p6 hexahedron carrier",
+    "material_branch": "Task43 grating-tag physical coefficients",
+    "matrix": "complete cell tensor from curl-curl plus material mass terms",
+    "quadrature": {
+      "degree": 15,
+      "rule": "default"
+    },
+    "scalar_type": "complex128"
+  },
+  "classification": "component_matrix_equivalence_and_builder_qualification",
+  "limits": [
+    "One-cell tensor equivalence and builder qualification only; not a full 36-cell or formal Task43 PDE accuracy result.",
+    "The production geometry canonicalization caveat is recorded separately in a6_component_attempt2_v1.json."
+  ],
+  "matrix_comparison": {
+    "acceptance_limit": 1e-10,
+    "audit": {
+      "element_degree": 6,
+      "ffcx_default_kernel_absent": true,
+      "integral_rule_matches_degree15_default": true
+    },
+    "blocked_gram_seconds": 3.990485,
+    "ffcx_seconds": 141.743453,
+    "relative_frobenius_norm": 1.7235420876424604e-15,
+    "status": "pass"
+  },
+  "preserved_test_history": {
+    "adapter_retry": {
+      "artifact": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p6_builder_retry_pass.log",
+      "classification": "pass",
+      "sha256": "5c769ed8ec32117671a3a541139363cb7ac34de6270b985a67994f82b36e6cfd"
+    },
+    "combined_first_run": {
+      "artifact": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p6_matrix_pass_then_builder_interface_failure.log",
+      "classification": "matrix_witness_pass_then_test_interface_failure",
+      "failure": "compiled raw tensor kernel was a CFFI cdata function; the adapter expected a one-item kernel collection",
+      "sha256": "96e1ad0c0f0546b02a343a9a14d80c7215491bbad6fd7a3e4be86bbc6cd72d36"
+    },
+    "p3_builder_trial": {
+      "artifact": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p3_builder_interface_failure.log",
+      "classification": "test_interface_failure_not_numerical_failure",
+      "failure": "legacy builder requires p6 carrier; p3 direct builder fixture was not a valid production configuration",
+      "sha256": "cc15b5f6c2fc7cb6cd3efda0d173b72718d4adfd95fa1f15b024521990379baa"
+    }
+  },
+  "schema_version": "task43.p6_tensor_component.v1",
+  "source_and_result_artifacts": {
+    "builder_retry_log": {
+      "path": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p6_builder_retry_pass.log",
+      "sha256": "5c769ed8ec32117671a3a541139363cb7ac34de6270b985a67994f82b36e6cfd"
+    },
+    "ffcx_comparison_log": {
+      "path": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p6_matrix_pass_then_builder_interface_failure.log",
+      "sha256": "96e1ad0c0f0546b02a343a9a14d80c7215491bbad6fd7a3e4be86bbc6cd72d36"
+    },
+    "test_source_sha256": "d2df23ec9116159d89a6a19d9cdf65409c5106b611e86cedc02d9e64841880f3",
+    "variable_p_builder_source_sha256": "c1610b07802ff45f74434566edde7d39c3ea3fa166e92dae9b8ab7fa340925c2"
+  },
+  "source_identity": {
+    "branch": "task43_hp_adaptivity",
+    "head_sha": "a7904a64405c9c19d641dbc4d43fb25f7a80f793",
+    "snapshot_directory": "benchmarks/artifacts/task43/a6_component_attempt2",
+    "tracked_dirty_patch_sha256": "de720bbc5cfd26be23a03227df835bfb77cbcabe70e7118824bae6ed470d0eed",
+    "untracked_source_archive_sha256": "1fe3879db398b2fb455c00e4f19e0013223918a9f15838e6a947b13790322e32",
+    "snapshot_scope_note": "This snapshot is from the later split-test/builder-adapter retry, not an exact complete source snapshot of the earlier 141.743 s FFCx comparison invocation. The actual volume form and BlockedGram numerical kernel were unchanged between those invocations; the current test-source hash is for the reorganized reproducible test. The earlier output log is preserved, and no unsaved old test snapshot is claimed."
+  }
+}

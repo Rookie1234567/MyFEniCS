@@ -1,0 +1,334 @@
+{
+  "artifacts": {
+    "pytest.log": {
+      "bytes": 15580,
+      "sha256": "45b700fa89ceead25dea241bcac43d37a3dcaece14a682deaa428c616c778a39"
+    },
+    "run/independent_active_action_record.json": {
+      "bytes": 734501,
+      "sha256": "84dac6fa2e940db22898f5668958039579c6b56e3f41e494d30172e34b9cc15c"
+    },
+    "run/mesh/mesh_3d.h5": {
+      "bytes": 9736,
+      "sha256": "4c2a2aa3b4c36d938a8e1dbcb0a8276240dade9766d0fc7bdada44659166e625"
+    },
+    "run/solve/dtn_auxiliary_amplitudes_3d.json": {
+      "bytes": 552047,
+      "sha256": "d6c9474920f65fe2cd9c40698dc1ef623622efc48d52c5111e8cf4a89d042af0"
+    },
+    "run/solve/dtn_port_diffraction_orders_3d.json": {
+      "bytes": 904735,
+      "sha256": "694bcf507d2d5b34c8727e071ad9cdbf3df30c2633e5b2ccf98d7e2e11a0c178"
+    },
+    "run/solve/dtn_port_power_metrics_3d.json": {
+      "bytes": 5581,
+      "sha256": "956996c83b667a9f7505fe16f28e715ef272b504ac157bfb83008a5fc1829d59"
+    },
+    "run/solve/power_metrics_3d.json": {
+      "bytes": 5269,
+      "sha256": "e5c66e2e2a9985754e910b732eefea9b7e56dd9861ab5294ca243e82d3e4fbf0"
+    },
+    "run/solve/progress_3d.jsonl": {
+      "bytes": 58472,
+      "sha256": "4e2e9b677b9aec37a07c9a1a289c227a56ca8c54f0d747479c123981a0bb7dcd"
+    },
+    "run/solve/run_summary.json": {
+      "bytes": 82246,
+      "sha256": "a06120d830546f5a769e9edce67a73284a1ee62f2012f9066c783ef72c8dc10f"
+    },
+    "run/solve/volume_absorption.json": {
+      "bytes": 2374,
+      "sha256": "e5fcdd978c8c0f76271e319be01e66481734ba69a7b2d89818e7cd9f5dd889fb"
+    },
+    "run/uniform_p3_degree_plan.json": {
+      "bytes": 7463,
+      "sha256": "54b5b78d50570164803940bed43251ff23bf01320f6e8b69bc35845eda9a740d"
+    }
+  },
+  "case": {
+    "FE_counts": {
+      "active_cell_interior_rows": 1296,
+      "condensed_matrix_rows": 2394,
+      "independent_active_FE_rows": 3078,
+      "independent_trace_rows": 1782,
+      "matrix_nnz": 547318,
+      "modal_rows": 612,
+      "p6_carrier_N1curl_dofs": 25764,
+      "p6_floquet_constraints": 1788
+    },
+    "active_cell_degree": "uniform p3 on p6 storage carrier",
+    "geometry_identity_caveat": "The assembly path still uses axis-coordinate canonicalization rounded to 12 decimals. This h100 fixture does not qualify a full-chain raw-unrounded policy; do not claim approximation-free coordinates.",
+    "grating_bounds_nm": [
+      16.5,
+      33.5,
+      15.0,
+      35.0,
+      0.0,
+      120.0
+    ],
+    "materials": {
+      "grating": "Si / silicon",
+      "n_grating": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "n_substrate": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "substrate": "Si / silicon"
+    },
+    "mesh": {
+      "global_cells": 36,
+      "mode": "boundary_fitted",
+      "resolved_axis_cells_xyz": [
+        3,
+        3,
+        4
+      ],
+      "role": "boundary-fitted h100 component qualification; not frozen Task43 start"
+    },
+    "period_nm": [
+      50.0,
+      50.0
+    ],
+    "physics": "phi=90 degrees, lambda0=13.5 nm, s polarization, theta=89 degrees, unit incident amplitude",
+    "port_and_modal_quadrature_degree": 28,
+    "port_basis_scaling": "boundary_magnitude_scaled_r5_v1",
+    "ports": "R13 explicit rectangle m<=4,n<=8; actual ordered mode count 612, 306 top and 306 bottom",
+    "sparse_cutoff": {
+      "policy": "scale_homogeneous_relative_only_v1",
+      "relative_tolerance": 1e-13
+    },
+    "substrate_z_bounds_nm": [
+      -10.0,
+      0.0
+    ],
+    "volume_quadrature": {
+      "degree": 15,
+      "rule": "default"
+    },
+    "volume_raw_tensor_backend": "blocked_gram_v1"
+  },
+  "classification": "component_qualification_not_task43_start_or_accuracy_claim",
+  "execution": {
+    "abi": {
+      "petsc_integer": "int64",
+      "petsc_scalar": "complex128",
+      "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "qualified_activation": "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION=1"
+    },
+    "command": "source scripts/activate_task40_phi90_pord64.sh; MYFENICS_RUN_TASK43_A6_SMALL_FIXTURE=1 TASK43_A6_FIXTURE_ROOT=/tmp/task43_a6_phi90_h100_p3_r13_fixture_mpi1_attempt2 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 taskset -c 38 python -m pytest -q -s -o faulthandler_timeout=300 src/test/test_task43_independent_active_action_fixture.py::Task43IndependentActiveActionFixture::test_phi90_h100_p3_r13_active_action",
+    "external_log": "/tmp/task43/a6-small-fixture-attempt2.log",
+    "faulthandler": "300s traceback diagnostic only; one stack during FFCx/C compile, run continued and passed",
+    "linux_cpu_affinity": [
+      38
+    ],
+    "mpi_world_size": 1,
+    "pytest_log": "benchmarks/artifacts/task43/a6_component_attempt2/pytest.log",
+    "run_root": "/tmp/task43_a6_phi90_h100_p3_r13_fixture_mpi1_attempt2",
+    "started_local": "2026-10-23T00:31:40+08:00",
+    "thread_environment": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "limitations": [
+    "Not the frozen 3x10x6/180-cell Task43 start.",
+    "Does not establish adaptive marking quality, h/p efficiency, common-field error, or convergence.",
+    "Official-result flag here is the solver runner flag; task-level classification remains component qualification only.",
+    "The earlier unscaled-basis numerical preflight failure remains a distinct negative result; p3/p6 builder failures are test-interface failures, not numerical failures."
+  ],
+  "memory_observation": {
+    "max_rank_historical_rss_mib": 1071.54296875,
+    "scope": "single-rank historical RSS from runner progress; not simultaneous process-tree peak and not a formal resource-gate pass"
+  },
+  "power_diagnostics": {
+    "A_balance": 2.4120156779868526e-06,
+    "A_volume_total": 2.4120154951915158e-06,
+    "R00_by_polarization": {
+      "p": 3.422370202275346e-32,
+      "s": 0.9958545860964323
+    },
+    "R_plus_T_plus_A_volume": 0.9999999999998173,
+    "R_total": 0.999986005561389,
+    "T_total": 1.1582422933066686e-05,
+    "energy_closure_error_dtn_port_modal_volume": -1.8274270985330077e-13,
+    "physical_benchmark_flag": false,
+    "runner_official_result_flag": true,
+    "sampling_diagnostics_only": {
+      "note": "Not the primary modal R/T observable; component fixture only.",
+      "probe_EH_fourier_R": 0.06730504,
+      "probe_EH_fourier_T": 1.076061e-05,
+      "sampled_net_flux_R": 1.000061,
+      "sampled_net_flux_T": 1.111525e-05
+    },
+    "source": "dtn_port_modal_amplitudes",
+    "validation_role": "numerical_sanity_only"
+  },
+  "prior_negative_and_interface_evidence_preserved": {
+    "attempt1_unscaled_modal_basis_preflight": {
+      "artifact": "docs/task43_hp_adaptivity/outcomes/records/a6_component_attempt1_v1.json",
+      "classification": "numerical_gate_failure_preserved",
+      "result": "recovered active relative residual 1.6444992679498607e64 > 1e-9; independent A6 was not invoked; boundary amplitude scaling policy was unset",
+      "sha256": "f300c4d7991e9f9fa3e4a1c25c5711ccbd913cd536d0ecf088cc800dbe5bafa2"
+    },
+    "p3_builder_interface_failure": {
+      "artifact": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p3_builder_interface_failure.log",
+      "classification": "test_interface_failure_not_numerical_failure",
+      "result": "1 failed, 3 passed; p3 one-cell builder path rejected because this legacy builder required a p6 H(curl) carrier",
+      "sha256": "cc15b5f6c2fc7cb6cd3efda0d173b72718d4adfd95fa1f15b024521990379baa"
+    },
+    "p6_builder_adapter_retry": {
+      "artifact": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p6_builder_retry_pass.log",
+      "classification": "test_pass",
+      "result": "4 passed in 12.90s; p6 carrier builder with active p3; builder stage 6.960605s",
+      "sha256": "5c769ed8ec32117671a3a541139363cb7ac34de6270b985a67994f82b36e6cfd"
+    },
+    "p6_matrix_witness_then_initial_builder_interface_failure": {
+      "artifact": "benchmarks/artifacts/task43/a6_component_attempt2/prior_component_tests/p6_matrix_pass_then_builder_interface_failure.log",
+      "classification": "matrix_witness_pass_followed_by_test_interface_failure",
+      "result": {
+        "blocked_gram_seconds": 3.990485,
+        "p6_grating_ffcx_seconds": 141.743453,
+        "relative_matrix_norm": 1.7235420876424604e-15,
+        "subsequent_builder_failure": "raw tensor compiled kernel interface returned cdata; no len()"
+      },
+      "sha256": "96e1ad0c0f0546b02a343a9a14d80c7215491bbad6fd7a3e4be86bbc6cd72d36"
+    }
+  },
+  "residuals": {
+    "condensed_solver": {
+      "absolute_residual_norm": 2.435987956887775e-13,
+      "eliminated_cell_interior_residual_norm": 0.0,
+      "reduced_trace_residual_norm": 2.435987956887775e-13,
+      "true_relative_residual": 3.06307614030034e-13
+    },
+    "independent_a6": {
+      "full_solver_gauge": {
+        "finite": true,
+        "raw_l2_norm": 7.040842101332394e-13,
+        "relative_to_independent_rhs": 8.776313191687003e-13,
+        "small_direct_target_limit": 1e-08,
+        "small_direct_target_pass": true,
+        "task_gate_limit": 1e-06,
+        "task_gate_pass": true
+      },
+      "groups": {
+        "incident_traction_trace_after_cutoff": {
+          "raw_l2_norm": 0.4011275547915829,
+          "raw_max_abs": 0.09228063259201576,
+          "row_count": 1782
+        },
+        "independent_active_interior_residual": {
+          "raw_l2_norm": 5.580368853529062e-13,
+          "raw_max_abs": 2.5822752041224275e-13,
+          "row_count": 1296
+        },
+        "independent_active_trace_residual": {
+          "raw_l2_norm": 4.2933524059009655e-13,
+          "raw_max_abs": 1.4431168836883036e-13,
+          "row_count": 1782
+        },
+        "modal_lower_normalized_solver_gauge": {
+          "raw_l2_norm": 8.12854242120106e-16,
+          "raw_max_abs": 8.105611471007667e-16,
+          "row_count": 612
+        },
+        "modal_lower_raw_original_equation": {
+          "raw_l2_norm": 1.1028023762746591e-13,
+          "raw_max_abs": 5.828406534472335e-14,
+          "row_count": 612
+        },
+        "port_upper_alpha_action_trace": {
+          "raw_l2_norm": 0.2666744805099063,
+          "raw_max_abs": 0.07145086878809337,
+          "row_count": 1782
+        },
+        "port_upper_incident_projection_trace": {
+          "raw_l2_norm": 0.40112755479150936,
+          "raw_max_abs": 0.09228063259199895,
+          "row_count": 1782
+        },
+        "volume_action_minus_rhs_active_interior": {
+          "raw_l2_norm": 5.580368853529062e-13,
+          "raw_max_abs": 2.5822752041224275e-13,
+          "row_count": 1296
+        },
+        "volume_action_minus_rhs_trace": {
+          "raw_l2_norm": 0.6353539364360792,
+          "raw_max_abs": 0.1393560035780428,
+          "row_count": 1782
+        }
+      },
+      "independent_of_condensed_residual": true,
+      "interpretation": "Final projected trace/interior and raw modal lower equations pass; component-vector norms are separately retained as unbalanced intermediate terms, not standalone residual failures.",
+      "method": "reassembled original volume action and incident/port vectors; actual entity/Floquet C^H trace projection; active interiors retained; independent raw and solver-gauge modal lower rows",
+      "quadrature_degree": {
+        "incident": 28,
+        "ports_and_modal_rows": 28,
+        "volume_form_metadata": 15
+      },
+      "rhs": {
+        "active_interior": {
+          "raw_l2_norm": 0.0,
+          "raw_max_abs": 0.0,
+          "row_count": 1296
+        },
+        "raw_l2_norm": 0.8022551095830922,
+        "trace": {
+          "raw_l2_norm": 0.8022551095830922,
+          "raw_max_abs": 0.1845612651840147,
+          "row_count": 1782
+        }
+      },
+      "rows": {
+        "active_cell_interior": 1296,
+        "independent_trace": 1782,
+        "modal_lower": 612
+      },
+      "sparse_cutoff": {
+        "application": "incident vector after independent C^H projection; each port component and combined traction after the same projection",
+        "policy": "scale_homogeneous_relative_only_v1",
+        "relative_tolerance": 1e-13
+      }
+    }
+  },
+  "schema_version": "task43.a6_component_attempt.v1",
+  "source_identity": {
+    "branch": "task43_hp_adaptivity",
+    "dirty": true,
+    "head_sha": "a7904a64405c9c19d641dbc4d43fb25f7a80f793",
+    "loaded_source_patch": "benchmarks/artifacts/task43/a6_component_attempt2/loaded_source.patch",
+    "snapshot_directory": "benchmarks/artifacts/task43/a6_component_attempt2",
+    "snapshot_note": "benchmarks/artifacts/task43/a6_component_attempt2/snapshot_note.json",
+    "source_mutation_during_run": "none; post-run records/artifact copies only",
+    "tracked_dirty_patch_sha256": "de720bbc5cfd26be23a03227df835bfb77cbcabe70e7118824bae6ed470d0eed",
+    "untracked_source_archive": "benchmarks/artifacts/task43/a6_component_attempt2/untracked_source.tar",
+    "untracked_source_archive_sha256": "1fe3879db398b2fb455c00e4f19e0013223918a9f15838e6a947b13790322e32"
+  },
+  "status": {
+    "accuracy_or_convergence_claim": "not_made",
+    "attempt": "attempt2",
+    "formal_task43_start": "not_run",
+    "independent_a6": "passed",
+    "pytest": "passed",
+    "pytest_summary": "1 passed in 595.14s",
+    "repository_changes_committed": "false",
+    "solver": "completed"
+  },
+  "timing_seconds": {
+    "a6_compile_vs_action_split": "not instrumented; combined observer interval includes the diagnosed FFCx/C compile and independent action evaluation",
+    "a6_observer_combined_interval_from_after_official_rta": 263.74253959814087,
+    "a6_observer_end_elapsed_from_process_start": 466.28631807118654,
+    "diffraction_postprocess": 34.373,
+    "postprocess": 74.565,
+    "pytest_total": 595.14,
+    "runner_total": 540.855,
+    "stage4_dtn_port_assembly_and_solve": 451.272,
+    "variational_form_setup": 12.447,
+    "volume_absorption_postprocess": 17.392
+  }
+}

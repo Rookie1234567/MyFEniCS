@@ -210,11 +210,16 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
     if policy == "zero_order":
         orders = enumerate_diffraction_orders_3d(cfg, max_m_override=0, max_n_override=0)
     elif policy == "explicit_rectangle":
-        # Private profile-bound fields are assigned by the direct Task40 route;
+        # Generic profile-bound fields take precedence.  The private Task40
+        # names remain as a compatibility fallback for its existing routes;
         # this is a hard rectangle and deliberately does not apply the legacy
         # manual policy's max(user, auto) widening.
-        max_m = getattr(cfg, "task40_dtn_rectangle_max_m", None)
-        max_n = getattr(cfg, "task40_dtn_rectangle_max_n", None)
+        max_m = getattr(cfg, "stage4_dtn_rectangle_max_m", None)
+        max_n = getattr(cfg, "stage4_dtn_rectangle_max_n", None)
+        if max_m is None:
+            max_m = getattr(cfg, "task40_dtn_rectangle_max_m", None)
+        if max_n is None:
+            max_n = getattr(cfg, "task40_dtn_rectangle_max_n", None)
         if (
             isinstance(max_m, (bool, np.bool_))
             or not isinstance(max_m, (int, np.integer))
@@ -224,7 +229,7 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
             or int(max_n) < 0
         ):
             raise ValueError(
-                "explicit_rectangle requires non-negative Task40 m/n bounds"
+                "explicit_rectangle requires non-negative profile-bound m/n bounds"
             )
         orders = enumerate_diffraction_orders_3d(
             cfg, max_m_override=int(max_m), max_n_override=int(max_n)
@@ -274,8 +279,12 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
                 if tangential_norm_sq <= 1.0e-30:
                     continue
                 scale_policy = getattr(
-                    cfg, "task40_port_boundary_amplitude_scale_policy", None
+                    cfg, "stage4_port_boundary_amplitude_scale_policy", None
                 )
+                if scale_policy is None:
+                    scale_policy = getattr(
+                        cfg, "task40_port_boundary_amplitude_scale_policy", None
+                    )
                 if scale_policy is None:
                     boundary_amplitude_scale = 1.0
                     boundary_amplitude_log_scale = 0.0
