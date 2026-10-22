@@ -30,6 +30,143 @@ _MAPPING_IDENTITY_LIMIT = 1.0e-12
 _A6_RESIDUAL_LIMIT = 1.0e-6
 _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
+_TASK41_V9_PREFIX_REUSE_SCHEMA = "task41.b0.v9.saved_v6_prefix_reuse.v1"
+
+
+def _task41_v9_register_saved_prefix_record(
+    *,
+    cell_index: int,
+    actual_coordinates: Any,
+    actual_raw_tensor: Any,
+    actual_oriented_tensor: Any,
+    saved_coordinates: Any,
+    saved_raw_tensor: Any,
+    saved_oriented_tensor: Any,
+    saved_record: Mapping[str, Any],
+    saved_report_sha256: str,
+    saved_index_sha256: str,
+    saved_evaluator_identity: str,
+    saved_evaluator_cache_identity: str,
+    evaluator: Any,
+    persist_event: Callable[[Mapping[str, Any]], None],
+) -> dict[str, Any]:
+    """Reuse a saved V6 key only after the current V9 arrays and evaluator match."""
+    current = {
+        "coordinates": np.asarray(actual_coordinates),
+        "raw_tensor": np.asarray(actual_raw_tensor),
+        "oriented_tensor": np.asarray(actual_oriented_tensor),
+    }
+    saved = {
+        "coordinates": np.asarray(saved_coordinates),
+        "raw_tensor": np.asarray(saved_raw_tensor),
+        "oriented_tensor": np.asarray(saved_oriented_tensor),
+    }
+    comparisons = {
+        name: bool(np.array_equal(current[name], saved[name]))
+        for name in current
+    }
+    current_hashes = {
+        name: hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest()
+        for name, array in current.items()
+    }
+    source = saved_record.get("source")
+    witness = saved_record.get("geometry_witness")
+    witness_status = witness.get("status") if isinstance(witness, Mapping) else None
+    expected_witness = {
+        "V4_SAVED_ACTUAL_BLOCKS": "NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS",
+        "ORIGINAL_FFCX_KERNEL_ORACLE": "BITWISE_EQUAL",
+    }.get(source)
+    source_and_witness_match = (
+        expected_witness is not None and witness_status == expected_witness
+    )
+    current_identity = getattr(evaluator, "identity", None)
+    current_cache_identity = getattr(evaluator, "cache_identity", None)
+    validation = {
+        "source_and_witness_match": bool(source_and_witness_match),
+        "coordinates_layout_match": (
+            current["coordinates"].dtype == np.dtype(np.float64)
+            and current["coordinates"].shape == (8, 3)
+        ),
+        "tensor_dtypes_match": all(
+            current[name].dtype == np.dtype(np.complex128)
+            and saved[name].dtype == np.dtype(np.complex128)
+            for name in ("raw_tensor", "oriented_tensor")
+        ),
+        "arrays_match": all(comparisons.values()),
+        "evaluator_identity_matches": current_identity == saved_evaluator_identity,
+        "evaluator_cache_identity_matches": (
+            current_cache_identity == saved_evaluator_cache_identity
+        ),
+    }
+    record_sha256 = hashlib.sha256(
+        json.dumps(
+            dict(saved_record),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    origin = {
+        "schema": _TASK41_V9_PREFIX_REUSE_SCHEMA,
+        "kind": "saved_v6_record_reused_after_current_v9_array_equality",
+        "v6_report_sha256": saved_report_sha256,
+        "v6_index_sha256": saved_index_sha256,
+        "v6_record_sha256": record_sha256,
+        "saved_source": source,
+        "saved_geometry_witness_status": witness_status,
+        "array_comparison": "numpy.array_equal",
+        "current_v9_array_sha256": current_hashes,
+        "evaluator_identity": current_identity,
+        "evaluator_cache_identity": current_cache_identity,
+    }
+    before_audit = evaluator.prefix_qualification_audit()
+    event = {
+        "schema": _TASK41_V9_PREFIX_REUSE_SCHEMA,
+        "cell_index": int(cell_index),
+        "event_stage": "MATCHED_BEFORE_REGISTRATION",
+        "status": "MATCHED",
+        "validation": validation,
+        "evaluator_audit_before": {
+            key: before_audit.get(key)
+            for key in ("status", "sample_count", "required_sample_count", "full_admission_eligible")
+        },
+        "qualification_origin": origin,
+    }
+    passed = all(validation.values())
+    if not passed:
+        event.update(event_stage="COMPARE_FAILED", status="FAIL")
+        persist_event(dict(event))
+        return event
+    persist_event(dict(event))
+
+    inherited_record = copy.deepcopy(dict(saved_record))
+    inherited_record["qualification_origin"] = copy.deepcopy(origin)
+    evaluator.record_prefix_qualification(inherited_record)
+    after_audit = evaluator.prefix_qualification_audit()
+    event.update(
+        event_stage="REGISTERED",
+        status="PASS",
+        evaluator_audit={
+            key: after_audit.get(key)
+            for key in (
+                "status",
+                "sample_count",
+                "required_sample_count",
+                "geometry_witness_count",
+                "full_admission_eligible",
+            )
+        },
+    )
+    persist_event(dict(event))
+    return {
+        "status": "PASS",
+        "cell_index": int(cell_index),
+        "comparisons": comparisons,
+        "current_v9_array_sha256": current_hashes,
+        "saved_v6_record_sha256": record_sha256,
+        "qualification_origin": origin,
+        "evaluator_audit": event["evaluator_audit"],
+    }
 
 
 def _task41_json_finite_float(value: Any) -> float | None:
@@ -11210,6 +11347,48 @@ def run_task40_v10_p6_reference_worker(
                         ):
                             raise ValueError("Task41 V9 V6 eight-cell prefix source is not fully qualified")
 
+                        prefix_records_by_cell = {
+                            int(record["cell_index"]): record
+                            for record in prefix_records
+                        }
+                        identity_audit = prefix_report.get("identity_audit")
+                        if not isinstance(identity_audit, Mapping):
+                            raise ValueError(
+                                "Task41 V9 saved V6 prefix report has no evaluator identity audit"
+                            )
+                        saved_evaluator_identity = identity_audit.get(
+                            "candidate_evaluator_identity"
+                        )
+                        saved_evaluator_cache_identity = identity_audit.get(
+                            "candidate_evaluator_cache_identity"
+                        )
+                        if not isinstance(saved_evaluator_identity, str) or not isinstance(
+                            saved_evaluator_cache_identity, str
+                        ):
+                            raise ValueError(
+                                "Task41 V9 saved V6 evaluator/cache identity is missing"
+                            )
+                        prefix_reuse_summary: dict[str, Any] = {
+                            "schema": _TASK41_V9_PREFIX_REUSE_SCHEMA,
+                            "status": "IN_PROGRESS",
+                            "required_cells": list(TASK41_P0_V6_PREFIX_CELLS),
+                            "v6_report_path": saved_operands["v6_report_path"],
+                            "v6_report_sha256": saved_operands["v6_report_sha256"],
+                            "v6_index_sha256": saved_operands["v6_index_sha256"],
+                            "saved_evaluator_identity": saved_evaluator_identity,
+                            "saved_evaluator_cache_identity": saved_evaluator_cache_identity,
+                            "records": [],
+                        }
+                        summary["b0_v9_saved_prefix_reuse"] = prefix_reuse_summary
+
+                        def persist_prefix_reuse_event(event: Mapping[str, Any]) -> None:
+                            persisted = dict(event)
+                            prefix_reuse_summary["records"].append(persisted)
+                            runtime.marker(
+                                "task41_b0_v9_saved_prefix_reuse",
+                                persisted,
+                            )
+
                         def validate_v9_prefix_cell(
                             cell_index: int,
                             coordinates: np.ndarray,
@@ -11221,40 +11400,69 @@ def run_task40_v10_p6_reference_worker(
                                     "Task41 V9 exact-q-metric owner visited a non-prefix sample key"
                                 )
                             prefix = f"task41_v6_prefix_cell{cell_index}_candidate_"
+                            saved_record = prefix_records_by_cell.get(cell_index)
+                            if not isinstance(saved_record, Mapping):
+                                raise ValueError(
+                                    "Task41 V9 saved V6 qualification has no record for "
+                                    f"prefix cell {cell_index}"
+                                )
                             saved_coordinates = prefix_arrays[prefix + "coordinates"]
                             saved_raw = prefix_arrays[prefix + "raw_tensor"]
                             saved_oriented = prefix_arrays[prefix + "oriented_tensor"]
-                            actual_coordinates = np.asarray(coordinates)
-                            actual_raw = np.asarray(cell_context.get("raw_tensor"))
-                            actual_oriented = np.asarray(cell_context.get("oriented_tensor"))
-                            if (
-                                actual_coordinates.dtype != np.dtype(np.float64)
-                                or actual_coordinates.shape != (8, 3)
-                                or actual_raw.dtype != np.dtype(np.complex128)
-                                or actual_oriented.dtype != np.dtype(np.complex128)
-                                or not np.array_equal(actual_coordinates, saved_coordinates)
-                                or not np.array_equal(actual_raw, saved_raw)
-                                or not np.array_equal(actual_oriented, saved_oriented)
-                            ):
+                            actual_evaluator = cell_context.get("raw_tensor_evaluator")
+                            validation = _task41_v9_register_saved_prefix_record(
+                                cell_index=int(cell_index),
+                                actual_coordinates=coordinates,
+                                actual_raw_tensor=cell_context.get("raw_tensor"),
+                                actual_oriented_tensor=cell_context.get("oriented_tensor"),
+                                saved_coordinates=saved_coordinates,
+                                saved_raw_tensor=saved_raw,
+                                saved_oriented_tensor=saved_oriented,
+                                saved_record=saved_record,
+                                saved_report_sha256=str(
+                                    saved_operands["v6_report_sha256"]
+                                ),
+                                saved_index_sha256=str(
+                                    saved_operands["v6_index_sha256"]
+                                ),
+                                saved_evaluator_identity=saved_evaluator_identity,
+                                saved_evaluator_cache_identity=saved_evaluator_cache_identity,
+                                evaluator=actual_evaluator,
+                                persist_event=persist_prefix_reuse_event,
+                            )
+                            if validation.get("status") != "PASS":
+                                prefix_reuse_summary["status"] = "FAILED"
                                 raise ValueError(
-                                    "Task41 V9 actual q-metric owner differs from saved V6 "
-                                    f"prefix cell {cell_index}"
+                                    "Task41 V9 saved V6 prefix reuse failed for cell "
+                                    f"{cell_index}: {validation.get('validation')}"
                                 )
                             return {
                                 "status": "PASS",
                                 "cell_index": int(cell_index),
-                                "coordinates_bitwise_equal": True,
-                                "raw_tensor_bitwise_equal": True,
-                                "oriented_tensor_bitwise_equal": True,
-                                "coordinates_sha256": hashlib.sha256(
-                                    np.ascontiguousarray(actual_coordinates).tobytes()
-                                ).hexdigest(),
-                                "raw_tensor_sha256": hashlib.sha256(
-                                    np.ascontiguousarray(actual_raw).tobytes()
-                                ).hexdigest(),
-                                "oriented_tensor_sha256": hashlib.sha256(
-                                    np.ascontiguousarray(actual_oriented).tobytes()
-                                ).hexdigest(),
+                                "coordinates_array_equal": bool(
+                                    validation["comparisons"]["coordinates"]
+                                ),
+                                "raw_tensor_array_equal": bool(
+                                    validation["comparisons"]["raw_tensor"]
+                                ),
+                                "oriented_tensor_array_equal": bool(
+                                    validation["comparisons"]["oriented_tensor"]
+                                ),
+                                "coordinates_sha256": validation[
+                                    "current_v9_array_sha256"
+                                ]["coordinates"],
+                                "raw_tensor_sha256": validation[
+                                    "current_v9_array_sha256"
+                                ]["raw_tensor"],
+                                "oriented_tensor_sha256": validation[
+                                    "current_v9_array_sha256"
+                                ]["oriented_tensor"],
+                                "saved_v6_record_sha256": validation[
+                                    "saved_v6_record_sha256"
+                                ],
+                                "qualification_origin": validation[
+                                    "qualification_origin"
+                                ],
                             }
 
                         c_source_path, c_source_sha256 = _task41_v9_frozen_c_source_binding(
@@ -11310,6 +11518,22 @@ def run_task40_v10_p6_reference_worker(
                                 "Task41 V9 owner has no raw-tensor source/cache identity"
                             )
                         prefix_owner_evaluator = evaluator_audit
+                        final_prefix_audit = evaluator_audit.get("prefix_qualification")
+                        if isinstance(final_prefix_audit, Mapping):
+                            prefix_reuse_summary["evaluator_audit"] = {
+                                key: final_prefix_audit.get(key)
+                                for key in (
+                                    "status",
+                                    "required_sample_cell_indices",
+                                    "sample_count",
+                                    "required_sample_count",
+                                    "geometry_witness_count",
+                                    "full_admission_eligible",
+                                )
+                            }
+                            prefix_reuse_summary["status"] = str(
+                                final_prefix_audit.get("status")
+                            )
                         prefix_receipt = {
                             "status": "PASS",
                             "v6_report_path": saved_operands["v6_report_path"],

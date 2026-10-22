@@ -484,5 +484,75 @@
         "sha256": "eb78109da6a32946c1620df9d60acc236acb4e320514468ae0a10e5f9ca054de"
       }
     ]
+  },
+  "current_v9_prefix_audit_followup": {
+    "recorded_at_utc": "2026-10-22T05:17:31Z",
+    "attempt": {
+      "run_id": "20261022T041809.325937Z",
+      "service": "myfenics-case-20261022T041728-2705780.service",
+      "source_sha": "4dcea02bdaea4bbbeb50b935f655a6c94d8716e1",
+      "terminal_status": "WORKER_FAILED",
+      "worker_exit_code": 4,
+      "phase": "fresh_volume_owner",
+      "phase_failed_at_utc": "2026-10-22T04:53:46.632Z",
+      "error": "RuntimeError: V6 eight-key original-kernel prefix qualification is incomplete or failed",
+      "official_result": false,
+      "resource_or_time_gate": false,
+      "preserved": true,
+      "per_key_v9_comparisons": "UNKNOWN_NOT_PERSISTED",
+      "current_evaluator_audit": "UNKNOWN_NOT_PERSISTED"
+    },
+    "diagnosis": {
+      "kind": "source_control_flow_inference",
+      "finding": "The V9 callback validators did not register inherited records through record_prefix_qualification; the later full-admission audit therefore saw incomplete evaluator qualification.",
+      "not_a_claim_of": [
+        "current per-key V9 measured values",
+        "V6 numerical threshold failure"
+      ],
+      "old_attempt_reclassified": false
+    },
+    "saved_v6_qualification": {
+      "report": "results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_210fbbf2_20261020T124053Z_attempt10/task41_p0_v6_actual_qmetric_candidate.json",
+      "report_sha256": "72c01eb9a7780ba86a7d8b8de6cfc1fd25e04fead2170788a5f492cd12ebd06e",
+      "status": "PASS",
+      "passed_keys": 8,
+      "required_keys": 8,
+      "original_relative_limit": 1e-11,
+      "source_witness_counts": {
+        "V4_SAVED_ACTUAL_BLOCKS__NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS": 2,
+        "ORIGINAL_FFCX_KERNEL_ORACLE__BITWISE_EQUAL": 6
+      },
+      "evaluator_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+      "evaluator_cache_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1:abf508c661fd79892922d6a0a245fcbc50afeaf7df79f4f202345fe7b634c225",
+      "applies_to_current_v9_measurements": false
+    },
+    "repair": {
+      "scope": "worker prefix callback and focused fixture only",
+      "behavior": "After allowed source/witness, dtype/shape, array equality and evaluator/cache identity checks, deep-copy the original V6 record, add separate qualification_origin provenance, register it with the actual evaluator, and persist per-key pre/post audit summaries.",
+      "unknown_source_with_missing_witness_rejected": true,
+      "numerical_gate_changed": false,
+      "full_admission_builder_changed": false
+    },
+    "validation": {
+      "qualified_activation": "controller-confirmed WSL activation; complex128 PETSc ABI",
+      "command": "python -m pytest -q src/test/test_task41_v4_volume_only_audit.py -k 'v9_saved_v6_prefix_reuse or v6_volume_owner_forwards_selected_evaluator_to_actual_builder'",
+      "result": "5 passed, 38 deselected in 1.04 s",
+      "raw_log_path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/prefix_registration_controller.txt",
+      "raw_log_sha256": "0a4f71d9950e051ee0fc77fb244865219cb212d99f5dee01a99003bb856adfcb",
+      "git_diff_check": "PASS",
+      "ruff": "NOT_RUN_UNAVAILABLE",
+      "executor_preflight_attempt": "Stopped before pytest and not counted; controller ran the qualified validation above."
+    },
+    "files": {
+      "src/runners/task40_v10_worker.py": "68b5008a8f88af8c26892e13b220b60a0bec1816d8f8272e166aa48f8270717e",
+      "src/test/test_task41_v4_volume_only_audit.py": "57639f5ac7e5ef1ca26ce69ce6f9f15db9d583f9b2453207f53694e0014897fa"
+    },
+    "full_action_recovery": "NOT_RUN",
+    "new_fe_or_pde_result": "NOT_RUN",
+    "official": false,
+    "window_sha256": "a7cac8f274dc17f552c57462da0a386a0c808580b8fc1172c1c88f0ee3075477",
+    "window_refreshed": false,
+    "commit_or_push_by_executor": false,
+    "status": "LOCAL_FIXTURE_PASS_PENDING_MAIN_FREEZE"
   }
 }

@@ -502,6 +502,174 @@ def test_v6_volume_owner_forwards_selected_evaluator_to_actual_builder(tmp_path,
     assert case.volume_calls == []
 
 
+def _v9_prefix_reuse_fixture():
+    from src.solvers.task41_actual_qmetric_blocked_gram import (
+        Task41ActualQMetricBlockedGramCandidate,
+        V6_PREFIX_SAMPLE_CELL_INDICES,
+    )
+
+    evaluator = object.__new__(Task41ActualQMetricBlockedGramCandidate)
+    evaluator.prefix_qualification_records = []
+    evaluator.cache_identity = (
+        "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1:"
+        "abf508c661fd79892922d6a0a245fcbc50afeaf7df79f4f202345fe7b634c225"
+    )
+    cells = tuple(V6_PREFIX_SAMPLE_CELL_INDICES)
+    coordinates = np.arange(24, dtype=np.float64).reshape(8, 3)
+    raw_tensor = np.arange(64 * 64, dtype=np.float64).astype(np.complex128).reshape(64, 64)
+    oriented_tensor = raw_tensor * np.complex128(1.0 + 0.25j)
+    arrays = {
+        "coordinates": coordinates,
+        "raw_tensor": raw_tensor,
+        "oriented_tensor": oriented_tensor,
+    }
+    records = {}
+    for index, cell_index in enumerate(cells):
+        saved_blocks = index < 2
+        records[cell_index] = {
+            "cell_index": int(cell_index),
+            "status": "PASS",
+            "admission_eligible": True,
+            "source": (
+                "V4_SAVED_ACTUAL_BLOCKS"
+                if saved_blocks
+                else "ORIGINAL_FFCX_KERNEL_ORACLE"
+            ),
+            "candidate_build_seconds": 0.25 + index,
+            "geometry_witness": {
+                "status": (
+                    "NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS"
+                    if saved_blocks
+                    else "BITWISE_EQUAL"
+                ),
+                "source_report_sha256": "c" * 64,
+            },
+            "reference_artifacts": {
+                "raw_tensor": {"path": f"saved/{cell_index}.npy", "sha256": "d" * 64}
+            },
+        }
+    return evaluator, cells, arrays, records
+
+
+def _v9_register_fixture_prefix_cell(
+    evaluator,
+    cell_index,
+    arrays,
+    record,
+    *,
+    actual_arrays=None,
+    events=None,
+):
+    from src.runners.task40_v10_worker import _task41_v9_register_saved_prefix_record
+
+    if events is None:
+        events = []
+
+    return _task41_v9_register_saved_prefix_record(
+        cell_index=cell_index,
+        actual_coordinates=(actual_arrays or arrays)["coordinates"],
+        actual_raw_tensor=(actual_arrays or arrays)["raw_tensor"],
+        actual_oriented_tensor=(actual_arrays or arrays)["oriented_tensor"],
+        saved_coordinates=arrays["coordinates"],
+        saved_raw_tensor=arrays["raw_tensor"],
+        saved_oriented_tensor=arrays["oriented_tensor"],
+        saved_record=record,
+        saved_report_sha256="a" * 64,
+        saved_index_sha256="b" * 64,
+        saved_evaluator_identity=evaluator.identity,
+        saved_evaluator_cache_identity=evaluator.cache_identity,
+        evaluator=evaluator,
+        persist_event=(events.append if events is not None else None),
+    )
+
+
+def test_v9_saved_v6_prefix_reuse_registers_eight_keys_into_real_evaluator_audit():
+    evaluator, cells, arrays, records = _v9_prefix_reuse_fixture()
+    events = []
+    results = {}
+    for cell_index in cells:
+        result = _v9_register_fixture_prefix_cell(
+            evaluator,
+            cell_index,
+            arrays,
+            records[cell_index],
+            events=events,
+        )
+        assert result["status"] == "PASS"
+        results[cell_index] = result
+
+    audit = evaluator.prefix_qualification_audit()
+    assert audit["status"] == "PREFIX_QUALIFIED"
+    assert audit["required_sample_cell_indices"] == list(cells)
+    assert audit["sample_count"] == 8
+    assert audit["required_sample_count"] == 8
+    assert audit["geometry_witness_count"] == 6
+    assert audit["full_admission_eligible"] is True
+    assert len(events) == 16
+    audited_by_cell = {record["cell_index"]: record for record in audit["records"]}
+    assert set(audited_by_cell) == set(cells)
+    for cell_index in cells:
+        original = records[cell_index]
+        inherited = audited_by_cell[cell_index]
+        assert inherited["status"] == "PASS"
+        assert inherited["source"] == original["source"]
+        assert inherited["geometry_witness"] == original["geometry_witness"]
+        assert inherited["reference_artifacts"] == original["reference_artifacts"]
+        assert inherited["candidate_build_seconds"] == original["candidate_build_seconds"]
+        assert inherited["qualification_origin"]["v6_record_sha256"] == results[
+            cell_index
+        ]["saved_v6_record_sha256"]
+        assert results[cell_index]["evaluator_audit"]["sample_count"] == (
+            list(cells).index(cell_index) + 1
+        )
+    assert records[cells[0]]["source"] == "V4_SAVED_ACTUAL_BLOCKS"
+
+
+def test_v9_saved_v6_prefix_reuse_missing_key_stays_ineligible():
+    evaluator, cells, arrays, records = _v9_prefix_reuse_fixture()
+    for cell_index in cells[:-1]:
+        result = _v9_register_fixture_prefix_cell(
+            evaluator, cell_index, arrays, records[cell_index]
+        )
+        assert result["status"] == "PASS"
+    audit = evaluator.prefix_qualification_audit()
+    assert audit["status"] == "PREFIX_QUALIFICATION_INCOMPLETE_OR_FAILED"
+    assert audit["sample_count"] == 7
+    assert audit["full_admission_eligible"] is False
+
+
+@pytest.mark.parametrize("failure", ["array_mismatch", "wrong_source"])
+def test_v9_saved_v6_prefix_reuse_failure_never_registers_pass(failure):
+    evaluator, cells, arrays, records = _v9_prefix_reuse_fixture()
+    cell_index = cells[0]
+    actual_arrays = dict(arrays)
+    if failure == "array_mismatch":
+        actual_arrays["raw_tensor"] = arrays["raw_tensor"].copy()
+        actual_arrays["raw_tensor"][0, 0] += 1.0
+    elif failure == "wrong_source":
+        records[cell_index] = dict(
+            records[cell_index], source="UNVERIFIED_SOURCE", geometry_witness=None
+        )
+    events = []
+    result = _v9_register_fixture_prefix_cell(
+        evaluator,
+        cell_index,
+        arrays,
+        records[cell_index],
+        actual_arrays=actual_arrays,
+        events=events,
+    )
+    assert result["status"] == "FAIL"
+    assert result["event_stage"] == "COMPARE_FAILED"
+    assert evaluator.prefix_qualification_records == []
+    assert evaluator.prefix_qualification_audit()["full_admission_eligible"] is False
+    assert events[0]["status"] == "FAIL"
+    if failure == "array_mismatch":
+        assert result["validation"]["arrays_match"] is False
+    if failure == "wrong_source":
+        assert result["validation"]["source_and_witness_match"] is False
+
+
 def test_volume_only_owner_rejects_unknown_internal_rhs_strategy_before_build(
     tmp_path, monkeypatch
 ):

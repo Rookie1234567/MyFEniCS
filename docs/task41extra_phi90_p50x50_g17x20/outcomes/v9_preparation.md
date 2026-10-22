@@ -99,3 +99,20 @@ worker 现从保存报告的嵌套字段读取路径和哈希；在构造 owner 
 |---|---|
 | `src/runners/task40_v10_worker.py` | `2772a9f07f9c61a95be711ad051e2fff323246836becc9670097004c5b84bb0d` |
 | `src/test/test_task41_v4_volume_only_audit.py` | `47e153bdd786ef1448e9c5196d7012fa09814d391dfc3ca2e3baea9e3b01aa17` |
+
+## V9 owner prefix-audit registration follow-up (2026-10-22)
+
+全域 attempt `20261022T041809.325937Z`（service `myfenics-case-20261022T041728-2705780.service`，run source `4dcea02bdaea4bbbeb50b935f655a6c94d8716e1`）在 `fresh_volume_owner` 阶段失败，worker exit 4；04:53:46.632Z 记录 owner phase `FAILED`，错误为 `RuntimeError: V6 eight-key original-kernel prefix qualification is incomplete or failed`。该 attempt 没有 official result。现存 summary 没有持久化本次逐键比较与 evaluator 审计记录；因此本次 V9 的逐键数值、比较布尔值和 audit 计数均记为 **UNKNOWN / NOT_PERSISTED**，不从旧资格记录补写成本次实测。没有触发资源或时间 gate，失败 attempt 与其证据保留。
+
+源码调用路径显示，新 V9 callback 完成代表键 validator 后没有调用 evaluator 的 `record_prefix_qualification`；后续 builder 因此从空的 evaluator audit 读到不完整资格并拒绝。这是对失败门的源码控制流归因，不是缺失的逐键运行记录。既有 V6 报告 `task41_p0_v6_actual_qmetric_candidate.json`（SHA-256 `72c01eb9a7780ba86a7d8b8de6cfc1fd25e04fead2170788a5f492cd12ebd06e`）单独记录 8/8 PASS：其中 2 项来源为 `V4_SAVED_ACTUAL_BLOCKS` 且 witness 为 `NOT_REQUIRED_V4_SAVED_ACTUAL_BLOCKS`，另 6 项为 `ORIGINAL_FFCX_KERNEL_ORACLE` 且 witness 为 `BITWISE_EQUAL`，旧记录的比较限值为 `1e-11`。其 evaluator identity/cache identity 为 `task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1` / `task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1:abf508c661fd79892922d6a0a245fcbc50afeaf7df79f4f202345fe7b634c225`。这些是 V6 历史资格事实，不是本次 V9 的测量。
+
+本地窄修复只补资格登记：对来源与 geometry witness 的允许配对、当前数组 dtype/shape、坐标/raw/oriented tensor 的 `numpy.array_equal` 结果及当前 evaluator/cache identity 全部核对后，才把原 V6 record 深拷贝登记到真实 evaluator。原 `source`、`reference_artifacts`、`geometry_witness` 和历史耗时保留；新信息单独写入 `qualification_origin`，绑定 V6 report/index/record 与当前数组 hash、evaluator identity。每键登记前后 audit 摘要写入事件日志和候选 summary。未知来源即使缺失 witness 也会拒绝，不能由 `None == None` 误通过。数值门、V6 限值和 full-admission builder 未改。
+
+主控在合格 activation 下复验定向节点：`python -m pytest -q src/test/test_task41_v4_volume_only_audit.py -k 'v9_saved_v6_prefix_reuse or v6_volume_owner_forwards_selected_evaluator_to_actual_builder'`，结果 **5 passed, 38 deselected in 1.04 s**；`git diff --check` 通过。覆盖真实 evaluator 的八键登记及完整 audit、缺键不具备资格、数组不符与未知来源/缺失 witness 拒绝，并包含 owner evaluator 转发节点。测试原始日志 `benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/prefix_registration_controller.txt`，SHA-256 `0a4f71d9950e051ee0fc77fb244865219cb212d99f5dee01a99003bb856adfcb`。执行者另一次本地预检在 pytest 启动前停止，不计入验证；上述结果来自主控合格环境复验。
+
+| 文件 | 当前内容 SHA-256 |
+|---|---|
+| `src/runners/task40_v10_worker.py` | `68b5008a8f88af8c26892e13b220b60a0bec1816d8f8272e166aa48f8270717e` |
+| `src/test/test_task41_v4_volume_only_audit.py` | `57639f5ac7e5ef1ca26ce69ce6f9f15db9d583f9b2453207f53694e0014897fa` |
+
+以上只是接线修复与 fixture/audit 验证。此记录不改判失败 attempt，不代表新 FE、full action/recovery、200q 或 official result 已通过；固定 V9 窗口保持原样，等待主控冻结后再依其指令续作。
