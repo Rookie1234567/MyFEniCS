@@ -852,6 +852,7 @@ def test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows():
 
 def test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states():
     from src.runners.task41_p0_checker import (
+        TASK41_P0_V5_FROZEN_DENOMINATORS,
         _task41_v9_classify_candidate_self_d,
         _task41_v9_wide_local_projection,
         _task41_v9_wide_local_rhs_totals,
@@ -901,6 +902,12 @@ def test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states(
                         "d_new_S_minus_g_new": [new.real, new.imag],
                         "wide_d_old_S_minus_g_old": [old.real + 1.0e-5, old.imag],
                         "wide_d_new_S_minus_g_new": [new.real + 1.0e-5, new.imag],
+                        "production_vs_v8_grouped_delta_old": 2.0e-6,
+                        "production_vs_v8_grouped_delta_new": 3.0e-6,
+                        "wide_vs_production_delta_old": 1.0e-5,
+                        "wide_vs_production_delta_new": 1.0e-5,
+                        "wide_comparison_available": True,
+                        "frozen_D": TASK41_P0_V5_FROZEN_DENOMINATORS[column],
                     }
                 )
 
@@ -914,6 +921,16 @@ def test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states(
     assert all(gate["passed"] for gate in ready["candidate_column_gates"])
     assert all(
         item["role"] == "reference" or item["improvement_beyond_last_combination_uncertainty"]
+        for item in ready["candidate_and_reference_own_d"]
+    )
+    assert all(
+        item["last_combination_uncertainty_old"] == 1.0e-5
+        and item["last_combination_uncertainty_new"] == 1.0e-5
+        for item in ready["candidate_and_reference_own_d"]
+    )
+    assert all(
+        item["old_frozen_D_relative"]
+        == item["old_absolute_d"] / TASK41_P0_V5_FROZEN_DENOMINATORS[item["column"]]
         for item in ready["candidate_and_reference_own_d"]
     )
 
@@ -932,6 +949,158 @@ def test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states(
     )
     assert rejected["status"] == "LOCAL_CANDIDATE_REJECTED"
     assert [gate["passed"] for gate in rejected["candidate_column_gates"]] == [True, False]
+
+    # If the grouped order agrees exactly with production, a distinct wider
+    # final-combination delta must still constrain the margin.
+    wide_limited_cases = [dict(item) for item in cases]
+    for item in wide_limited_cases:
+        if item["role"] == "candidate":
+            old = complex(*item["d_old_S_minus_g_old"])
+            new = old * 0.999
+            item["d_new_S_minus_g_new"] = [new.real, new.imag]
+            item["production_vs_v8_grouped_delta_old"] = 0.0
+            item["production_vs_v8_grouped_delta_new"] = 0.0
+            item["wide_vs_production_delta_old"] = 0.01
+            item["wide_vs_production_delta_new"] = 0.01
+            item["wide_d_old_S_minus_g_old"] = [old.real + 0.01, old.imag]
+            item["wide_d_new_S_minus_g_new"] = [new.real + 0.01, new.imag]
+    wide_limited = _task41_v9_classify_candidate_self_d(
+        wide_limited_cases,
+        identity_replay_closed=True,
+        production_core_replay_closed=True,
+    )
+    assert wide_limited["status"] == "LOCAL_CANDIDATE_REJECTED"
+    assert not any(gate["passed"] for gate in wide_limited["candidate_column_gates"])
+    assert all(
+        item["wide_vs_production_delta_new_diagnostic_only"] == 0.01
+        and item["last_combination_uncertainty_new"] == 0.01
+        for item in wide_limited["candidate_and_reference_own_d"]
+        if item["role"] == "candidate"
+    )
+
+    unavailable_cases = [dict(item) for item in cases]
+    for item in unavailable_cases:
+        item["wide_comparison_available"] = False
+        item["wide_d_old_S_minus_g_old"] = None
+        item["wide_d_new_S_minus_g_new"] = None
+        item["wide_vs_production_delta_old"] = None
+        item["wide_vs_production_delta_new"] = None
+    unavailable = _task41_v9_classify_candidate_self_d(
+        unavailable_cases,
+        identity_replay_closed=True,
+        production_core_replay_closed=True,
+    )
+    assert unavailable["status"] == "LOCAL_CANDIDATE_REJECTED"
+    assert unavailable["candidate_gate_evaluable"] is False
+    assert unavailable["candidate_gate_blockers"]
+    assert all(
+        item["last_combination_uncertainty_old"] is None
+        and item["improvement_margin_after_uncertainty"] is None
+        for item in unavailable["candidate_and_reference_own_d"]
+    )
+
+
+def test_v9_production_rhs_scatter_and_sparse_s_projection_keep_mpc_order():
+    from scipy import sparse
+    from src.runners.task41_p0_checker import (
+        _task41_v9_apply_cell_s_to_selected_active_row,
+        _task41_v9_rhs_scatter_selected_row,
+    )
+
+    coefficient = 1.0 + 1.0j
+    selected_rows = np.asarray([0, 1], dtype=np.int64)
+    coefficients = np.asarray([coefficient, coefficient], dtype=np.complex128)
+    first_cell_t = np.asarray(
+        [5.0e15 + 5.0e15j, 0.5 + 0.5j], dtype=np.complex128
+    )
+    second_cell_t = np.asarray([-5.0e15 - 5.0e15j], dtype=np.complex128)
+    b_t = 1.0 + 0.0j
+
+    production = np.asarray([b_t], dtype=np.complex128)
+    first_trace = _task41_v9_rhs_scatter_selected_row(
+        production,
+        first_cell_t,
+        selected_local_rows=selected_rows,
+        selected_coefficients=coefficients,
+    )
+    second_trace = _task41_v9_rhs_scatter_selected_row(
+        production,
+        second_cell_t,
+        selected_local_rows=np.asarray([0], dtype=np.int64),
+        selected_coefficients=np.asarray([coefficient], dtype=np.complex128),
+    )
+    grouped_cells = np.vdot(coefficients, first_cell_t) + np.vdot(
+        np.asarray([coefficient], dtype=np.complex128), second_cell_t
+    )
+    grouped = b_t + grouped_cells
+    assert first_trace[0]["term"] == [1.0e16, 0.0]
+    assert first_trace[1]["term"] == [1.0, 0.0]
+    assert first_trace[0]["coefficient"] == [1.0, 1.0]
+    assert second_trace[0]["term"] == [-1.0e16, 0.0]
+    assert production[0] == 0.0 + 0.0j
+    assert grouped == 1.0 + 0.0j
+
+    # S follows the production cell operation: a complete local action, then
+    # sparse E^H projection, then a cell-wise target update. It is not an RHS
+    # original-trace scatter or a selected-row vdot.
+    full_expansion = sparse.csr_matrix(
+        np.asarray(
+            [
+                [1.0 + 1.0j, 0.3 - 0.2j],
+                [1.0 + 1.0j, -0.4 + 0.5j],
+                [0.0 + 0.0j, 0.8 + 0.1j],
+            ],
+            dtype=np.complex128,
+        )
+    )
+    local_s = np.asarray(
+        [2.0e15 + 3.0e15j, 4.0e15 - 1.0e15j, -0.5 + 0.25j],
+        dtype=np.complex128,
+    )
+    selected_s = _task41_v9_apply_cell_s_to_selected_active_row(
+        local_s,
+        selected_local_rows=np.asarray([0, 1], dtype=np.int64),
+        selected_coefficients=np.asarray([1.0 + 1.0j, 1.0 + 1.0j]),
+    )
+    full_sparse_action = np.asarray(full_expansion.conjugate().T @ local_s)
+    assert selected_s.shape == (1,)
+    assert selected_s[0] == full_sparse_action[0]
+    assert selected_s[0] == complex(
+        np.vdot(np.asarray([1.0 + 1.0j, 1.0 + 1.0j]), local_s[:2])
+    )
+
+
+def test_v9_wide_final_sum_delta_survives_float64_equal_grouped_and_production():
+    from src.runners.task41_p0_checker import (
+        _task41_v9_wide_final_combination_diagnostic,
+        _task41_v9_wide_precision_metadata,
+    )
+
+    terms = [1.0e16 + 0.0j, 1.0 + 0.0j]
+    production_s = np.zeros(1, dtype=np.complex128)
+    for term in terms:
+        production_s[0] += term
+    grouped_s = sum(terms, 0.0 + 0.0j)
+    assert production_s[0] == grouped_s == 1.0e16 + 0.0j
+
+    precision = _task41_v9_wide_precision_metadata()
+    diagnostic = _task41_v9_wide_final_combination_diagnostic(
+        native_volume_rhs_at_selected_row=0.0 + 0.0j,
+        production_s_terms=terms,
+        production_old_rhs_terms=(),
+        production_new_rhs_terms=(),
+        production_d_old=complex(production_s[0]),
+        production_d_new=complex(production_s[0]),
+    )
+    assert diagnostic["not_a_strict_error_bound"] is True
+    assert diagnostic["not_used_as_complex128_d_answer"] is True
+    if precision["wider_than_float64"]:
+        assert diagnostic["absolute_wide_minus_production_d_T"] == 1.0
+        assert diagnostic["absolute_wide_minus_production_d_LU"] == 1.0
+        assert diagnostic["wide_d_T_longdouble_components"][0] != str(production_s[0].real)
+    else:
+        # The screen gate separately refuses READY without wider precision.
+        assert precision["wider_than_float64"] is False
 
 
 def test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor(tmp_path, monkeypatch):
@@ -1234,6 +1403,19 @@ def test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor(tmp_path
         biased_diagnostic_only_identity,
     )
 
+    from src.solvers import hcurl_assembly_time_condensation as hcurl
+
+    original_project_internal_rhs = hcurl.project_internal_rhs_same_lu
+    production_core_calls = []
+
+    def counted_project_internal_rhs(*args, **kwargs):
+        production_core_calls.append(1)
+        return original_project_internal_rhs(*args, **kwargs)
+
+    monkeypatch.setattr(
+        hcurl, "project_internal_rhs_same_lu", counted_project_internal_rhs
+    )
+
     result = checker.task41_p0_v9_saved_star_screen(
         v8_report_path=report_path,
         v8_report_sha256=report_sha,
@@ -1241,16 +1423,31 @@ def test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor(tmp_path
         v8_checker_result_sha256=checker_sha,
         repo_root=root,
     )
-    assert result["status"] == "LOCAL_CANDIDATE_READY"
+    expected_status = (
+        "LOCAL_CANDIDATE_READY"
+        if result["wide_precision"]["wider_than_float64"]
+        else "LOCAL_CANDIDATE_REJECTED"
+    )
+    assert result["status"] == expected_status
     assert result["replay_checks"]["production_core_GETRS_count"] == 8
+    assert len(production_core_calls) == 8
+    assert result["replay_checks"]["cached_correction_j3_reuse_count_without_extra_GETRS"] == 8
+    assert result["replay_checks"]["paired_j0_j3_b_i_check_count"] == 8
+    assert result["replay_checks"]["paired_j0_j3_t_c_check_count"] == 8
+    assert result["replay_checks"]["paired_j0_j3_b_t_check_count"] == 4
+    assert result["replay_checks"]["production_core_correction_cached_and_consumed_by_gate"]
     assert result["replay_checks"]["old_original_path_and_V8_d_replayed_check_count"] == 64
     assert result["replay_checks"]["wide_local_projection_recompute_is_diagnostic_only"] is True
-    assert all(gate["passed"] for gate in result["candidate_column_gates"])
+    assert all(gate["passed"] for gate in result["candidate_column_gates"]) is (
+        result["wide_precision"]["wider_than_float64"]
+    )
     assert len(result["candidate_and_reference_recomputed_s_g_d"]) == 8
     for case in result["candidate_and_reference_recomputed_s_g_d"]:
         saved_d = saved_d_by_key[(case["role"], case["column"], case["state"])]
-        assert case["d_T_complex128"] == saved_d[0]
-        assert case["d_LU_complex128"] == saved_d[1]
+        assert case["v8_grouped_replay"]["d_T_complex128"] == saved_d[0]
+        assert case["v8_grouped_replay"]["d_LU_complex128"] == saved_d[1]
+        assert case["selected_original_row"] == 15_440_235
+        assert case["frozen_D"] == checker.TASK41_P0_V5_FROZEN_DENOMINATORS[case["column"]]
         b_t = complex(*case["original_b_t_added_once"])
         cells = case["cell_terms"]
         sum_t_b_i = sum(
@@ -1259,8 +1456,34 @@ def test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor(tmp_path
         sum_minus_j_z = sum(
             complex(*cell["minus_J_z_projected_complex128"]) for cell in cells
         )
-        assert complex(*case["g_T_complex128"]) == pytest.approx(b_t + sum_t_b_i)
-        assert complex(*case["g_LU_complex128"]) == pytest.approx(b_t + sum_minus_j_z)
+        assert complex(*case["v8_grouped_replay"]["g_T_complex128"]) == pytest.approx(
+            b_t + sum_t_b_i
+        )
+        assert complex(*case["v8_grouped_replay"]["g_LU_complex128"]) == pytest.approx(
+            b_t + sum_minus_j_z
+        )
+        production_old = np.asarray([b_t], dtype=np.complex128)
+        production_new = np.asarray([b_t], dtype=np.complex128)
+        production_s = np.zeros(1, dtype=np.complex128)
+        for cell in cells:
+            for contribution in cell["production_reduce_rhs_T_b_i_original_trace_scatter"]:
+                production_old[0] += complex(*contribution["term"])
+            for contribution in cell["production_reduce_rhs_returned_correction_original_trace_scatter"]:
+                production_new[0] += complex(*contribution["term"])
+            production_s += np.asarray(
+                [complex(*cell["production_apply_sparse_EH_S_t_selected_active_row"])],
+                dtype=np.complex128,
+            )
+        assert complex(*case["g_T_complex128"]) == production_old[0]
+        assert complex(*case["g_LU_complex128"]) == production_new[0]
+        assert complex(*case["s_complex128"]) == production_s[0]
+        assert case["production_order"]["candidate_gate_uses_returned_correction"] is True
+        assert case["wide_final_combination_diagnostic"][
+            "used_only_in_conservative_uncertainty_estimate"
+        ] is result["wide_precision"]["wider_than_float64"]
+        assert case["wide_final_combination_diagnostic"][
+            "not_used_as_complex128_d_answer"
+        ] is True
         assert all(
             cell["signed_saved_lu_identity_projection"]["formula"]
             == "T b_i + J z = (J + T K) z + T (b_i - K z)"
@@ -1290,6 +1513,105 @@ def test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor(tmp_path
         )
         assert remainder == pytest.approx(direct - accurate)
         assert diagnostic["diagnostic_only_not_used_for_gate"] is True
+
+    def corrupt_correction(correction, kind):
+        if kind == "shape":
+            return np.r_[correction, np.asarray([0.0j], dtype=np.complex128)]
+        if kind == "dtype":
+            return correction.astype(np.complex64)
+        if kind == "finite":
+            broken = correction.copy()
+            broken[0] = np.nan + 0.0j
+            return broken
+        if kind == "sign":
+            return -correction
+        if kind == "value":
+            return correction + np.asarray([1.0e-6 + 0.0j], dtype=np.complex128)
+        raise AssertionError(kind)
+
+    for kind in ("shape", "dtype", "finite", "sign", "value"):
+        def corrupted_project_internal_rhs(*args, _kind=kind, **kwargs):
+            solved, correction, timing = original_project_internal_rhs(*args, **kwargs)
+            return solved, corrupt_correction(correction, _kind), timing
+
+        with monkeypatch.context() as patch_context:
+            patch_context.setattr(
+                hcurl, "project_internal_rhs_same_lu", corrupted_project_internal_rhs
+            )
+            with pytest.raises(ValueError, match="production-core correction"):
+                checker.task41_p0_v9_saved_star_screen(
+                    v8_report_path=report_path,
+                    v8_report_sha256=report_sha,
+                    v8_checker_result_path=checker_path,
+                    v8_checker_result_sha256=checker_sha,
+                    repo_root=root,
+                )
+
+    original_report_bytes = report_path.read_bytes()
+    original_checker_bytes = checker_path.read_bytes()
+    original_source_array_bytes = {
+        item["name"]: Path(item["path"]).read_bytes() for item in source_inventory
+    }
+    source_path_by_name = {item["name"]: Path(item["path"]) for item in source_inventory}
+
+    def replace_named_metadata(node, name, updates):
+        if isinstance(node, dict):
+            if node.get("name") == name:
+                node.update(updates)
+            for value in node.values():
+                replace_named_metadata(value, name, updates)
+        elif isinstance(node, list):
+            for value in node:
+                replace_named_metadata(value, name, updates)
+
+    def assert_changed_pair_is_rejected(name, expected_message):
+        for array_name, raw_bytes in original_source_array_bytes.items():
+            source_path_by_name[array_name].write_bytes(raw_bytes)
+        report_document = json.loads(original_report_bytes)
+        checker_document = json.loads(original_checker_bytes)
+        path = source_path_by_name[name]
+        changed = np.load(path, allow_pickle=False).copy()
+        changed[0] += np.asarray([1.0e-5 + 2.0e-6j], dtype=np.complex128)[0]
+        np.save(path, changed, allow_pickle=False)
+        updated_metadata = {
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "bytes": path.stat().st_size,
+        }
+        replace_named_metadata(report_document, name, updated_metadata)
+        report_path.write_text(json.dumps(report_document, sort_keys=True))
+        changed_report_sha = hashlib.sha256(report_path.read_bytes()).hexdigest()
+        mesh_document = checker_document["mesh_actual_exact_candidate_check"]
+        mesh_document["report_sha256_rechecked"] = changed_report_sha
+        mesh_document["local_rhs_lu_counterfactual"][
+            "source_report_sha256_rechecked"
+        ] = changed_report_sha
+        checker_path.write_text(json.dumps(checker_document, sort_keys=True))
+        changed_checker_sha = hashlib.sha256(checker_path.read_bytes()).hexdigest()
+        monkeypatch.setattr(checker, "TASK41_P0_V9_V8_REPORT_SHA256", changed_report_sha)
+        monkeypatch.setattr(
+            checker, "TASK41_P0_V9_V8_CHECKER_RESULT_SHA256", changed_checker_sha
+        )
+        with pytest.raises(ValueError, match=expected_message):
+            checker.task41_p0_v9_saved_star_screen(
+                v8_report_path=report_path,
+                v8_report_sha256=changed_report_sha,
+                v8_checker_result_path=checker_path,
+                v8_checker_result_sha256=changed_checker_sha,
+                repo_root=root,
+            )
+
+    assert_changed_pair_is_rejected(
+        "cell23352_candidate_col0_j3_b_i", "paired j0/j3 b_i changed"
+    )
+    assert_changed_pair_is_rejected(
+        "cell23352_candidate_col0_j3_t_c", "paired j0/j3 t_c changed"
+    )
+    for array_name, raw_bytes in original_source_array_bytes.items():
+        source_path_by_name[array_name].write_bytes(raw_bytes)
+    report_path.write_bytes(original_report_bytes)
+    checker_path.write_bytes(original_checker_bytes)
+    monkeypatch.setattr(checker, "TASK41_P0_V9_V8_REPORT_SHA256", report_sha)
+    monkeypatch.setattr(checker, "TASK41_P0_V9_V8_CHECKER_RESULT_SHA256", checker_sha)
 
     corrupted = bytearray(checker_path.read_bytes())
     corrupted[-2] ^= 1

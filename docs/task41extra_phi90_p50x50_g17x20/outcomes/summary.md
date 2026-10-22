@@ -1,6 +1,6 @@
 # Task41 阶段结果
 
-> **V9 当前为准备阶段，正式数值 NOT_RUN。** 新策略用原局部 LU 解内部 RHS 后乘原 J，目的是减少预存 T 乘法带来的误差；是否改善必须先由两列保存数据重放判别。新窗口待批准，旧全域 action/recovery 负结果不变。当前代码与命令、测试边界见 [V9 preparation](v9_preparation.md)。本段不是窗口授权或全域准入。
+> **V9 当前为准备阶段，正式数值 NOT_RUN。** 新策略用原局部 LU 解内部 RHS 后乘原 J，目的是减少预存 T 乘法带来的误差；是否改善必须先由两列保存数据重放判别。新窗口待批准，旧全域 action/recovery 负结果不变。Review V10 要求的 correction 消费、生产次序重放与释放重试已完成窄修，14 项相关本机测试通过；真实保存数据筛选尚未运行。当前代码与命令、测试边界见 [V9 preparation](v9_preparation.md)。本段不是窗口授权或全域准入。
 
 > **最新已完成科学阶段：Task41extra Review V8 selected-star 局部复核；未形成全域candidate资格。** V6 candidate 原完整两列action仍失败（相对误差`1.7183209126709868e-10` / `3.6180522433957604e-10`，限值`1e-11`）；V8未重跑这两列。V8较早的producer扫描28,000-cell metadata并仅重建目标行两个incident cells的缺失局部张量；此后的独立checker attempts 1–4 为saved-only。V8完成304个保存向量复算，另做局部RHS次序反事实，但saved donor完整action仍失败；candidate数值状态未重验，`official_result=false`。不进入200q、factor、KSP/FGMRES、完整场、A6或official R/T/A。入口：[V8 response](../response_v8.md)、[V8 compact](b0_v8_selected_trace_star_audit_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。
 

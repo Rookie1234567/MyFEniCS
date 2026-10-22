@@ -310,3 +310,9 @@ V8有三组定向回归。表中SHA是补丁测试后冻结的source身份；测
 同 LU RHS 路径、保存 d 判别、J 共享释放、新窗口合同和 service/watchdog 路由先完成 26 项定向组合（1.04 s）。主控审查后，针对旧 V8/缓存/authority 兼容与有符号诊断独立性补修；最后受影响 10 节点由执行者通过（0.54 s），主控同工作树复验 **10 passed in 0.51 s**。节点、工作树文件 SHA、命令与原始日志见 [V9 preparation receipt](v9_preparation.json)。`bash -n`、相关 compileall、`git diff --check` 通过。
 
 ABI 是本机 qualified WSL complex128/int32；不是工作站正式 service 资格。Ruff 不可用，未安装。历史 fixed-window 三项失败仍保留，未刷新旧时间门；诊断偏置 fixture 曾 9 passed/1 failed，修正其预期后通过。没有重跑全仓测试或科学数据，没有 V9 局部/全域数值 PASS、CI PASS 或新窗口批准。
+
+## Review V10 对 V9 准备的窄修验证（2026-10-22）
+
+在本机资格化 activation（complex128/int32）下，最终 **14 passed in 0.61 s**。覆盖 correction 返回量污染、j0/j3 trace/RHS 混配、复 MPC 强相消的真实 action 调用、较宽算术的保守诊断、错误释放顺序后重试，以及旧 V8/default/authority 兼容。四个变更 Python 文件 compileall 与 git diff --check 通过；主控审查实际数据流并回读源码、ABI、测试日志 hash，未重复全仓或科学计算。具体 argv、原始日志 SHA 和文件内容身份见 [v9_preparation.json](v9_preparation.json) 的 `review_v10_local_fixes`。
+
+旧 V8 helper 字节未改；正式保存包筛选、全域 action/recovery 与新窗口仍分别为 NOT_RUN / PENDING_USER_APPROVAL。没有 response_v9、工作站运行或新增数值 PASS。历史失败及旧准备费用保留，本轮完整准备父时长未连续计量，仍为 UNKNOWN。

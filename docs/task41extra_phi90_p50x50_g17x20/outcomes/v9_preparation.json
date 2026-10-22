@@ -151,5 +151,130 @@
     "j_retained_payload_bytes_derived": 87091200000,
     "local_numeric_plus_j_bytes_derived": 435653172000,
     "new_formal_peak_rss_bytes": null
+  },
+  "review_v10_local_fixes": {
+    "review": {
+      "path": "docs/task41extra_phi90_p50x50_g17x20/review_report_v10.md",
+      "sha256": "04e62197267551baeab5e258111fd5ed3f7b8f28204d7b743d074664e1fa7b91"
+    },
+    "baseline_head": "9e9ecf0e0ee7f658fc7d84e7302d8df936e7ca0f",
+    "source_binding": "The listed source bytes passed the final local targeted run. Executor did not commit/push; controller reviewed the diff and verified source/evidence hashes before central commit.",
+    "status": "LOCAL_FIXTURES_PASS_FORMAL_SAVED_SCREEN_NOT_RUN",
+    "schema_changed": false,
+    "response_v9_created": false,
+    "official": false,
+    "new_window_created": false,
+    "formal_saved_screen": "NOT_RUN",
+    "full_action": "NOT_RUN",
+    "candidate_recovery": "NOT_RUN",
+    "source_files": [
+      {
+        "path": "src/runners/task41_p0_checker.py",
+        "bytes": 412633,
+        "sha256": "734145bb52ff69aa7b59d0f512a8948267635464378bcbf27d33a982e44a0fd9"
+      },
+      {
+        "path": "src/solvers/p6_cell_condensed_action.py",
+        "bytes": 197705,
+        "sha256": "b177c060fa8f619659f4291f205c54d1219935eb1da20e1f4aac3afcd9d80382"
+      },
+      {
+        "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+        "bytes": 141889,
+        "sha256": "42dcd17340e29e46c22ff192c3a8edd17039065e4f1854c4b98bfd485bf5a684"
+      },
+      {
+        "path": "src/test/test_task41_v8_selected_trace_star.py",
+        "bytes": 69815,
+        "sha256": "792a29688ba370dd1313c96132d6a54ac6f08b19907b20c8228704dcb5b9e0c3"
+      },
+      {
+        "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v9_preparation.md",
+        "bytes": 10803,
+        "sha256": "b64d11253729ab1fa78d11f8c4a460445830ad1f48fc5d300c1dd3753fdf3b8c"
+      }
+    ],
+    "abi_preflight": {
+      "activation": "scripts/activate_myfenics_wsl.sh",
+      "qualified_activation": true,
+      "sys_executable": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+      "sys_executable_under_venv": true,
+      "PETSc.ScalarType": "numpy.complex128",
+      "PETSc.IntType": "numpy.int32",
+      "module_paths": {
+        "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+        "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+        "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+        "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
+      },
+      "raw": {
+        "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/abi_preflight_v10.txt",
+        "bytes": 690,
+        "sha256": "d85aae6a016240073a8c1a519b4bd723b9b1dcca196631317039a2a73a6daf0c"
+      }
+    },
+    "tests": {
+      "compileall": "passed for the four source/test Python files listed above",
+      "command_argv": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v8_rhs_counterfactual_uses_original_full_storage_row_once",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_production_rhs_scatter_and_sparse_s_projection_keep_mpc_order",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_wide_final_sum_delta_survives_float64_equal_grouped_and_production",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_contract_wrapper_is_local_only_and_persists_result",
+        "src/test/test_task41_p0_saved_output_continuation.py::test_v9_saved_star_selector_passes_candidate_binding_guard_without_fe",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_owned_same_lu_action_destroy_retries_after_other_borrower_releases",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_v9_selected_replay_matches_small_action_reduce_rhs_and_apply",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_stored_t_owner_destroy_keeps_legacy_cache_references",
+        "src/test/test_task40_v10_output_checker.py::test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior",
+        "src/test/test_task40_v10_output_checker.py::test_task41_b0_v9_authority_missing_strategy_is_rejected"
+      ],
+      "nodes": [
+        "src/test/test_task41_v8_selected_trace_star.py::test_v8_rhs_counterfactual_uses_original_full_storage_row_once",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_signed_saved_lu_identity_uses_complex_mpc_and_selected_rows",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_candidate_own_d_gate_uses_both_columns_and_paired_states",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_production_rhs_scatter_and_sparse_s_projection_keep_mpc_order",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_wide_final_sum_delta_survives_float64_equal_grouped_and_production",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_reopens_pinned_lu_arrays_without_refactor",
+        "src/test/test_task41_v8_selected_trace_star.py::test_v9_saved_star_screen_contract_wrapper_is_local_only_and_persists_result",
+        "src/test/test_task41_p0_saved_output_continuation.py::test_v9_saved_star_selector_passes_candidate_binding_guard_without_fe",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_owned_same_lu_action_destroy_retries_after_other_borrower_releases",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_v9_selected_replay_matches_small_action_reduce_rhs_and_apply",
+        "src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_stored_t_owner_destroy_keeps_legacy_cache_references",
+        "src/test/test_task40_v10_output_checker.py::test_task41_b0_legacy_authority_keeps_hash_only_v1_behavior",
+        "src/test/test_task40_v10_output_checker.py::test_task41_b0_v9_authority_missing_strategy_is_rejected"
+      ],
+      "final_result": "14 passed in 0.61s",
+      "raw": {
+        "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/final_targeted_v10.txt",
+        "bytes": 99,
+        "sha256": "19c8483afe6819e0a6a3fc8ef9a27080703cac338577a8cbfd95d69c3e927b92"
+      },
+      "full_repository_pytest": "NOT_RUN",
+      "ci": "NOT_RUN"
+    },
+    "negative_records": [
+      "Returned correction was independently checked against full -(J@z); fixtures keep z valid and corrupt correction shape, dtype, finiteness, sign, and value, each rejected.",
+      "j3 b_i and t_c were each changed while updating the array SHA-256 and report/checker bindings; both paired-state checks rejected the changed input.",
+      "A strong-cancellation complex-MPC case calls the existing small action reduce_rhs(..., rhs_is_mpc_dual=True) and compares production-order selected replay; the grouped replay differs. The same fixture compares selected sparse E^H S action with action.apply.",
+      "A case with equal V8-grouped and production complex128 d but a nonzero wider final-sum delta is rejected when that wider delta exceeds candidate improvement; a platform without wider longdouble reports the gate as not evaluable and cannot return READY.",
+      "An owner action with another live J borrower raises before mutation; after borrower release, retry destroys the owner and releases retained J."
+    ],
+    "executor_no_commit_or_push": true,
+    "controller_review": {
+      "old_v8_helper_unchanged": true,
+      "source_and_evidence_hashes_rechecked": true,
+      "formal_saved_screen": "NOT_RUN",
+      "window": "PENDING_USER_APPROVAL",
+      "full_preparation_parent_seconds": "UNKNOWN"
+    }
   }
 }

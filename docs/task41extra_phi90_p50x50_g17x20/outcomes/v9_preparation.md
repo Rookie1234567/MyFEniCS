@@ -2,6 +2,21 @@
 
 本文件只记录 Review V9 的准备里程碑，不是 `response_v9`，也不是新的执行授权。执行依据仍为 `review_report_v9.md`（`b24b6ce6577225af7fb03e4a62bef80126efc9b8`）。结果基线为 `a63e51f39ee7ed35b03d521cb42fa3fe6c9f834f`。
 
+## Review V10 对 V9 准备代码的局部增量（2026-10-22）
+
+本节补记 V10 对现有 V9 screen 的 A/B/C 窄修；不创建 V10 schema、合同、`response_v9` 或新科学结果。原回执仍为 `PREPARATION_ONLY_PENDING_WINDOW_APPROVAL`，保存包上的正式 saved-star screen、FE、full action/recovery 与 official 仍为 **NOT_RUN**。
+
+| 项目 | 实施与边界 |
+|---|---|
+| A：生产 correction | screen 按 `(cell, role, column)` 同时缓存生产核心返回的 `z` 和 `correction`；j3 复用二者，不增加 GETRS。每次状态保留完整 `-(J @ z)` matvec，核对 correction 的 shape、dtype、finite、符号和逐值相等；新 gate 消费返回的 correction。保存绝对残差、`norm(Kz-b_i)/norm(b_i)` 与原 backward-scaled residual 三项。 |
+| B：累加次序 | 原 V8 grouped replay 原样保留并继续对照 V8 d。新 RHS gate 从 `b_t` 开始，再按 cell `[23352,23493]`、每 cell 的 `original_trace` 行及复 MPC 系数逐项 `+=`，对应 `reduce_rhs`。新 S gate 先做完整 `S @ t_c`，再做稀疏 `Eᴴ @ local_action`，最后按 cell 累加，对应 `_apply_array`；不把 S 改写成 RHS scatter 或 `vdot`。T、S、J 均保留完整向量 matvec。 |
+| B：候选门和数值精度 | candidate 自身两列、j0/j3 的生产序 d 是答案，reference 和 candidate-reference gap 不作为候选门。分别记录 V8 grouped/production 差和 longdouble/production 差；old/new 各自的不确定度取两项较大者。longdouble 差只作保守筛选量，不替代 complex128 d，也不是严格误差界；同时记录 `np.longdouble` 的真实 mantissa 位数。平台没有额外精度时，wide 比较标为不可评价，候选不能 READY。冻结 `D0/D1` 与选中原行保持固定。 |
+| C：借用者释放 | owner action 在销毁任何 matrix 或状态前检查其他 retained-J 借用者；仍有其他借用者时抛错且对象保持可重试。其他借用者正常释放后，重试 owner 销毁成功。`stored_T` 默认/cache v1、旧 V8 helper 与旧 B0 authority/v1 行为保持不变。 |
+
+定向负例包含：z 正确但 correction 被改成错 shape、错 dtype、非有限、反号或错数值时全部拒绝；分别更改 j3 的 `b_i`、`t_c`，同步更新数组 SHA 与报告/检查器身份后仍分别被配对门拒绝。强相消复 MPC fixture 直接调用现有小型 action 的 `reduce_rhs(..., rhs_is_mpc_dual=True)` 与 `apply`，并与 selected-row 重放逐位对照；分组次序和生产次序在 RHS 例子中得到不同结果。另有 grouped d 与 production d 相同、但更宽最终组合不同的 fixture，验证该差仍进入保守余量；没有宽精度时则不使用零余量。
+
+最终局部验证：在资格化 activation 与 complex128 PETSc ABI 下，4 个变更 Python 文件 compileall 通过，**14 个受影响定向节点通过**；完整 argv、输出和环境绑定见 [V10 定向测试日志](../../../benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/final_targeted_v10.txt) 与 [V10 ABI 记录](../../../benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v9_preparation_20261022/abi_preflight_v10.txt)。它们是本机合成 fixture 结果，不是工作站 service、真实保存数组筛选或 FE 结果；执行者未自行 commit/push；由主控审查后集中提交推送。
+
 ## 当前状态与边界
 
 | 项目 | 当前事实 |

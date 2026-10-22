@@ -3973,6 +3973,166 @@ def _task41_v9_wide_sum_complex(values: Sequence[complex]) -> tuple[np.longdoubl
     return real, imag
 
 
+def _task41_v9_rhs_scatter_selected_row(
+    target: np.ndarray,
+    local_vector: np.ndarray,
+    *,
+    selected_local_rows: np.ndarray,
+    selected_coefficients: np.ndarray,
+) -> list[dict[str, Any]]:
+    """Replay one selected active row of ``reduce_rhs`` in original-row order.
+
+    The production reducer updates ``result[ids]`` once per original trace row.
+    This helper keeps that update order for the selected active row instead of
+    first collapsing a cell with ``vdot``.
+    """
+
+    result = np.asarray(target)
+    vector = np.asarray(local_vector, dtype=np.complex128)
+    rows = np.asarray(selected_local_rows, dtype=np.int64)
+    coefficients = np.asarray(selected_coefficients, dtype=np.complex128)
+    if (
+        result.shape != (1,)
+        or result.dtype != np.dtype(np.complex128)
+        or vector.ndim != 1
+        or rows.ndim != 1
+        or not rows.size
+        or coefficients.shape != rows.shape
+        or np.any(rows < 0)
+        or np.any(rows >= vector.size)
+        or len(np.unique(rows)) != len(rows)
+        or not all(np.isfinite(value).all() for value in (result, vector, coefficients))
+    ):
+        raise ValueError("V9 production RHS selected-row scatter inputs are malformed")
+    coefficient_by_row = {
+        int(row): np.complex128(coefficient)
+        for row, coefficient in zip(rows, coefficients, strict=True)
+    }
+    contributions: list[dict[str, Any]] = []
+    for row in range(vector.size):
+        coefficient = coefficient_by_row.get(row)
+        if coefficient is None:
+            continue
+        term = np.conjugate(coefficient) * vector[row]
+        result[0] += term
+        contributions.append(
+            {
+                "original_trace_position": row,
+                "coefficient": [float(coefficient.real), float(coefficient.imag)],
+                "term": [float(term.real), float(term.imag)],
+                "accumulator_after": [float(result[0].real), float(result[0].imag)],
+            }
+        )
+    return contributions
+
+
+def _task41_v9_apply_cell_s_to_selected_active_row(
+    local_action: np.ndarray,
+    *,
+    selected_local_rows: np.ndarray,
+    selected_coefficients: np.ndarray,
+) -> np.ndarray:
+    """Apply one cell's actual sparse ``E.conjugate().T @ local_action``.
+
+    Only the selected active column is needed by the local screen.  A CSR with
+    that exact column preserves the sorted local-row order of the full
+    ``cell.expansion`` used by ``P6CellCondensedAction._apply_array``.
+    """
+
+    from scipy import sparse
+
+    vector = np.asarray(local_action, dtype=np.complex128)
+    rows = np.asarray(selected_local_rows, dtype=np.int64)
+    coefficients = np.asarray(selected_coefficients, dtype=np.complex128)
+    if (
+        vector.ndim != 1
+        or rows.ndim != 1
+        or not rows.size
+        or coefficients.shape != rows.shape
+        or np.any(rows < 0)
+        or np.any(rows >= vector.size)
+        or len(np.unique(rows)) != len(rows)
+        or not all(np.isfinite(value).all() for value in (vector, coefficients))
+    ):
+        raise ValueError("V9 production S selected-column projection inputs are malformed")
+    expansion_column = sparse.csr_matrix(
+        (
+            coefficients,
+            (rows.astype(np.int32, copy=False), np.zeros(rows.size, dtype=np.int32)),
+        ),
+        shape=(vector.size, 1),
+        dtype=np.complex128,
+    )
+    projected = np.asarray(
+        expansion_column.conjugate().T @ vector, dtype=np.complex128
+    ).reshape(-1)
+    if projected.shape != (1,) or not np.isfinite(projected).all():
+        raise ValueError("V9 production S selected-column projection is malformed")
+    return projected
+
+
+def _task41_v9_wide_precision_metadata() -> dict[str, Any]:
+    """Describe actual NumPy mantissa widths without implying a zero error."""
+
+    longdouble_info = np.finfo(np.longdouble)
+    float64_info = np.finfo(np.float64)
+    # ``nmant`` excludes the implicit leading bit for the IEEE formats used
+    # here; report both that field and total significand bits explicitly.
+    longdouble_bits = int(longdouble_info.nmant) + 1
+    float64_bits = int(float64_info.nmant) + 1
+    return {
+        "dtype": str(np.dtype(np.longdouble)),
+        "numpy_finfo_nmant_fraction_bits": int(longdouble_info.nmant),
+        "significand_bits_including_leading_bit": longdouble_bits,
+        "float64_significand_bits_including_leading_bit": float64_bits,
+        "wider_than_float64": longdouble_bits > float64_bits,
+        "wide_value_not_used_as_complex128_d_answer": True,
+        "wide_delta_used_only_for_conservative_uncertainty": True,
+    }
+
+
+def _task41_v9_wide_final_combination_diagnostic(
+    *,
+    native_volume_rhs_at_selected_row: complex,
+    production_s_terms: Sequence[complex],
+    production_old_rhs_terms: Sequence[complex],
+    production_new_rhs_terms: Sequence[complex],
+    production_d_old: complex,
+    production_d_new: complex,
+) -> dict[str, Any]:
+    """Compare wider final sums to production d before any float64 conversion."""
+
+    wide = np.longdouble
+    bt = complex(native_volume_rhs_at_selected_row)
+    if not np.isfinite([bt.real, bt.imag]).all():
+        raise ValueError("V9 wide final-combination diagnostic has a non-finite b_t")
+    wide_s = _task41_v9_wide_sum_complex(production_s_terms)
+    wide_old = _task41_v9_wide_sum_complex(production_old_rhs_terms)
+    wide_new = _task41_v9_wide_sum_complex(production_new_rhs_terms)
+    old_g = (wide(bt.real) + wide_old[0], wide(bt.imag) + wide_old[1])
+    new_g = (wide(bt.real) + wide_new[0], wide(bt.imag) + wide_new[1])
+    old_d = (wide_s[0] - old_g[0], wide_s[1] - old_g[1])
+    new_d = (wide_s[0] - new_g[0], wide_s[1] - new_g[1])
+    old_answer = complex(production_d_old)
+    new_answer = complex(production_d_new)
+    old_delta = np.hypot(
+        old_d[0] - wide(old_answer.real), old_d[1] - wide(old_answer.imag)
+    )
+    new_delta = np.hypot(
+        new_d[0] - wide(new_answer.real), new_d[1] - wide(new_answer.imag)
+    )
+    if not np.isfinite([old_delta, new_delta]).all():
+        raise ValueError("V9 wide final-combination diagnostic is non-finite")
+    return {
+        "wide_d_T_longdouble_components": [str(old_d[0]), str(old_d[1])],
+        "wide_d_LU_longdouble_components": [str(new_d[0]), str(new_d[1])],
+        "absolute_wide_minus_production_d_T": float(old_delta),
+        "absolute_wide_minus_production_d_LU": float(new_delta),
+        "not_a_strict_error_bound": True,
+        "not_used_as_complex128_d_answer": True,
+    }
+
+
 def task41_p0_v9_saved_star_screen(
     *,
     v8_report_path: Path,
@@ -4291,21 +4451,61 @@ def task41_p0_v9_saved_star_screen(
         raise ValueError("V9 V8 P3 states do not cover both cells, columns, and j0/j3")
 
     z_by_rhs: dict[tuple[int, str, int], np.ndarray] = {}
+    correction_by_rhs: dict[tuple[int, str, int], np.ndarray] = {}
     rhs_by_pair: dict[tuple[int, str, int], np.ndarray] = {}
+    trace_by_pair: dict[tuple[int, str, int], np.ndarray] = {}
+    b_t_by_pair: dict[tuple[str, int], complex] = {}
     residual_checks: list[dict[str, Any]] = []
     local_cases: list[dict[str, Any]] = []
     original_path_checks = 0
     production_core_checks = 0
+    paired_rhs_checks = 0
+    paired_trace_checks = 0
+    paired_b_t_checks = 0
+    production_rhs_scatter_count = 0
+    production_s_cell_projection_count = 0
+    cached_correction_reuse_count = 0
+    wide_precision = _task41_v9_wide_precision_metadata()
     for role in roles:
         for column in range(2):
             for state in states:
                 ordinary_s_terms: list[complex] = []
                 ordinary_old_terms: list[complex] = []
                 ordinary_new_terms: list[complex] = []
+                production_s_terms: list[complex] = []
+                production_old_terms: list[complex] = []
+                production_new_terms: list[complex] = []
                 signed_identity_terms: list[complex] = []
                 signed_projection_terms: list[complex] = []
                 signed_identity_remainders: list[complex] = []
-                b_t_for_row: complex | None = None
+                native_b_t_values = [
+                    _task41_v8_complex_pair(
+                        p3_state_by_key[(cell, column, state)].get(
+                            "native_volume_rhs_at_selected_original_row"
+                        ),
+                        "V9 original native b_t",
+                    )
+                    for cell in cells
+                ]
+                if any(value != native_b_t_values[0] for value in native_b_t_values[1:]):
+                    raise ValueError(
+                        "V9 V8 original native b_t differs across incident cells"
+                    )
+                b_t_for_row = native_b_t_values[0]
+                b_t_pair_key = (role, column)
+                if state == "j0":
+                    b_t_by_pair[b_t_pair_key] = b_t_for_row
+                elif b_t_by_pair.get(b_t_pair_key) != b_t_for_row:
+                    raise ValueError("V9 paired j0/j3 selected original-row b_t changed")
+                else:
+                    paired_b_t_checks += 1
+                # reduce_rhs writes the selected original b_t before entering
+                # its cell/original-trace/MPC scatter loops.
+                production_g_t = np.asarray([b_t_for_row], dtype=np.complex128)
+                production_g_lu = np.asarray([b_t_for_row], dtype=np.complex128)
+                # _apply_array initializes its result to zero, then adds one
+                # sparse E^H local projection per cell in owner order.
+                production_s = np.zeros(1, dtype=np.complex128)
                 cell_output = []
                 saved_checker_case = checker_case_by_key[(role, column, state)]
                 saved_cell_terms = saved_checker_case.get("cell_terms")
@@ -4320,14 +4520,6 @@ def task41_p0_v9_saved_star_screen(
                     raise ValueError("V9 V8 checker local terms do not bind the fixed cells")
                 for cell in cells:
                     p3_state = p3_state_by_key[(cell, column, state)]
-                    native_b_t = _task41_v8_complex_pair(
-                        p3_state.get("native_volume_rhs_at_selected_original_row"),
-                        "V9 original native b_t",
-                    )
-                    if b_t_for_row is None:
-                        b_t_for_row = native_b_t
-                    elif native_b_t != b_t_for_row:
-                        raise ValueError("V9 V8 original native b_t differs across incident cells")
                     p3_roles = p3_state.get("roles")
                     if not isinstance(p3_roles, list):
                         raise ValueError(f"V9 cell {cell} omits candidate/reference P3 roles")
@@ -4359,7 +4551,16 @@ def task41_p0_v9_saved_star_screen(
                         raise ValueError(f"V9 cell {cell} {role} b_i/t_c layout differs")
                     rhs_key = (cell, role, column)
                     if state == "j0":
-                        rhs_by_pair[rhs_key] = b_i
+                        rhs_by_pair[rhs_key] = np.asarray(b_i, dtype=np.complex128).copy()
+                        trace_by_pair[rhs_key] = np.asarray(t_c, dtype=np.complex128).copy()
+                    else:
+                        if not np.array_equal(b_i, rhs_by_pair.get(rhs_key)):
+                            raise ValueError(f"V9 cell {cell} {role} paired j0/j3 b_i changed")
+                        if not np.array_equal(t_c, trace_by_pair.get(rhs_key)):
+                            raise ValueError(f"V9 cell {cell} {role} paired j0/j3 t_c changed")
+                        paired_rhs_checks += 1
+                        paired_trace_checks += 1
+                    if state == "j0":
                         solution_ref_name = (
                             f"v8_lu_solve_cell{cell}_{role}_col{column}_solution"
                         )
@@ -4387,17 +4588,45 @@ def task41_p0_v9_saved_star_screen(
                         solved, correction, core_timing = project_internal_rhs_same_lu(
                             local["factor"], J, b_i
                         )
-                        if not np.allclose(solved, saved_solution, rtol=1.0e-13, atol=1.0e-13):
+                        if (
+                            not isinstance(solved, np.ndarray)
+                            or solved.shape != (K.shape[0],)
+                            or solved.dtype != np.dtype(np.complex128)
+                            or not np.isfinite(solved).all()
+                            or not np.allclose(solved, saved_solution, rtol=1.0e-13, atol=1.0e-13)
+                        ):
                             raise ValueError(f"V9 cell {cell} {role} production-core z differs from saved z")
+                        independent_minus_jz = -(J @ solved)
+                        if (
+                            not isinstance(correction, np.ndarray)
+                            or correction.shape != (J.shape[0],)
+                            or correction.dtype != np.dtype(np.complex128)
+                            or not np.isfinite(correction).all()
+                            or not np.array_equal(correction, independent_minus_jz)
+                        ):
+                            raise ValueError(
+                                f"V9 cell {cell} {role} production-core correction disagrees "
+                                "with independent full -(J@z) shape/dtype/finite/sign/value check"
+                            )
+                        correction = np.asarray(correction, dtype=np.complex128).copy()
                         new_residual = K @ solved - b_i
                         saved_norm = float(np.linalg.norm(saved_residual))
                         new_norm = float(np.linalg.norm(new_residual))
+                        saved_rhs_norm = float(np.linalg.norm(b_i))
+                        new_rhs_norm = float(np.linalg.norm(b_i))
+                        saved_rhs_relative = saved_norm / max(
+                            saved_rhs_norm, np.finfo(np.float64).tiny
+                        )
+                        new_rhs_relative = new_norm / max(
+                            new_rhs_norm, np.finfo(np.float64).tiny
+                        )
                         scale = max(float(np.linalg.norm(K) * np.linalg.norm(solved) + np.linalg.norm(b_i)), 1.0)
                         saved_relative = saved_norm / scale
                         new_relative = new_norm / scale
                         if new_relative > saved_relative + 1.0e-13:
                             raise ValueError(f"V9 cell {cell} {role} production-core residual worsened")
-                        z_by_rhs[rhs_key] = solved
+                        z_by_rhs[rhs_key] = np.asarray(solved, dtype=np.complex128).copy()
+                        correction_by_rhs[rhs_key] = correction
                         residual_checks.append(
                             {
                                 "cell_index": cell,
@@ -4405,26 +4634,42 @@ def task41_p0_v9_saved_star_screen(
                                 "column": column,
                                 "saved_z_matches_production_core": True,
                                 "saved_residual_recomputed": True,
+                                "saved_residual_absolute_norm": saved_norm,
+                                "production_core_residual_absolute_norm": new_norm,
+                                "saved_residual_relative_to_rhs": saved_rhs_relative,
+                                "production_core_residual_relative_to_rhs": new_rhs_relative,
                                 "saved_backward_relative_residual": saved_relative,
                                 "production_core_backward_relative_residual": new_relative,
+                                "backward_residual_scale": scale,
+                                "production_correction_matches_independent_full_minus_Jz": True,
+                                "correction_independent_max_abs_difference": float(
+                                    np.max(np.abs(correction - independent_minus_jz), initial=0.0)
+                                ),
                                 "getrs_count": 1,
                                 "getrs_seconds": core_timing["getrs_seconds"],
                             }
                         )
                         production_core_checks += 1
-                    elif not np.array_equal(b_i, rhs_by_pair[rhs_key]):
-                        raise ValueError(f"V9 cell {cell} {role} paired j0/j3 b_i changed")
                     z = z_by_rhs.get(rhs_key)
-                    if z is None:
-                        raise ValueError(f"V9 cell {cell} {role} paired state has no saved-LU z")
+                    correction = correction_by_rhs.get(rhs_key)
+                    if z is None or correction is None:
+                        raise ValueError(
+                            f"V9 cell {cell} {role} paired state has no cached saved-LU z/correction"
+                        )
                     selected_rows = local["selected_rows"]
                     coefficients = local["coefficients"]
 
-                    # Keep the frozen full-vector BLAS evaluation order on all
-                    # values that feed g, d, and the candidate gate.
+                    # Keep all three full-vector matvecs.  V8's grouped replay
+                    # uses its historical selected-row dot product below;
+                    # the new gate consumes the returned production correction
+                    # and production scatter order instead.
                     old_vector = T @ b_i
                     s_vector = S @ t_c
                     new_vector = -(J @ z)
+                    if not np.array_equal(correction, new_vector):
+                        raise ValueError(
+                            f"V9 cell {cell} {role} cached correction changed from independent full -(J@z)"
+                        )
                     old_projected = complex(
                         np.vdot(coefficients, old_vector[selected_rows])
                     )
@@ -4434,6 +4679,39 @@ def task41_p0_v9_saved_star_screen(
                     new_projected = complex(
                         np.vdot(coefficients, new_vector[selected_rows])
                     )
+                    rhs_old_scatter = _task41_v9_rhs_scatter_selected_row(
+                        production_g_t,
+                        old_vector,
+                        selected_local_rows=selected_rows,
+                        selected_coefficients=coefficients,
+                    )
+                    rhs_correction_scatter = _task41_v9_rhs_scatter_selected_row(
+                        production_g_lu,
+                        correction,
+                        selected_local_rows=selected_rows,
+                        selected_coefficients=coefficients,
+                    )
+                    s_cell_projection = _task41_v9_apply_cell_s_to_selected_active_row(
+                        s_vector,
+                        selected_local_rows=selected_rows,
+                        selected_coefficients=coefficients,
+                    )
+                    production_s += s_cell_projection
+                    production_s_cell_projection_count += 1
+                    production_rhs_scatter_count += (
+                        len(rhs_old_scatter) + len(rhs_correction_scatter)
+                    )
+                    production_old_terms.extend(
+                        complex(*item["term"]) for item in rhs_old_scatter
+                    )
+                    production_new_terms.extend(
+                        complex(*item["term"]) for item in rhs_correction_scatter
+                    )
+                    production_s_terms.append(complex(s_cell_projection[0]))
+                    if state == "j3":
+                        # The cached pair is consumed again for j3.  This count
+                        # closes reuse without a second GETRS call.
+                        cached_correction_reuse_count += 1
 
                     # This selected-row algebra is diagnostic-only. In
                     # particular, it must never supply a g/d/gate projection.
@@ -4513,9 +4791,23 @@ def task41_p0_v9_saved_star_screen(
                         {
                             "cell_index": cell,
                             "s_complex128": [s_projected.real, s_projected.imag],
+                            "production_apply_sparse_EH_S_t_selected_active_row": [
+                                float(s_cell_projection[0].real),
+                                float(s_cell_projection[0].imag),
+                            ],
+                            "production_reduce_rhs_T_b_i_original_trace_scatter": rhs_old_scatter,
+                            "production_reduce_rhs_returned_correction_original_trace_scatter": rhs_correction_scatter,
                             "T_b_i_projected_complex128": [old_projected.real, old_projected.imag],
                             "J_z_projected_complex128": [j_z_projected.real, j_z_projected.imag],
                             "minus_J_z_projected_complex128": [new_projected.real, new_projected.imag],
+                            "returned_correction_projected_complex128": [
+                                complex(np.vdot(coefficients, correction[selected_rows])).real,
+                                complex(np.vdot(coefficients, correction[selected_rows])).imag,
+                            ],
+                            "independent_full_minus_Jz_matches_returned_correction": True,
+                            "correction_independent_max_abs_difference": float(
+                                np.max(np.abs(correction - new_vector), initial=0.0)
+                            ),
                             "selected_row_vs_full_matvec_projection_remainders": {
                                 "E_H_T_b_i_selected_minus_full": [
                                     (
@@ -4592,16 +4884,30 @@ def task41_p0_v9_saved_star_screen(
                             "local_projection_recompute_diagnostic_not_used_for_gate": True,
                         }
                     )
-                if b_t_for_row is None:
-                    raise ValueError("V9 saved star omitted its original native b_t")
-                s_sum = sum(ordinary_s_terms, 0.0 + 0.0j)
-                old_local_sum = sum(ordinary_old_terms, 0.0 + 0.0j)
-                new_local_sum = sum(ordinary_new_terms, 0.0 + 0.0j)
-                g_old = b_t_for_row + old_local_sum
-                g_new = b_t_for_row + new_local_sum
+                # Preserve the V8 historical grouped calculation independently
+                # for comparison. It is not the new candidate gate.
+                v8_grouped_s = sum(ordinary_s_terms, 0.0 + 0.0j)
+                v8_grouped_g_old = b_t_for_row + sum(
+                    ordinary_old_terms, 0.0 + 0.0j
+                )
+                v8_grouped_g_new = b_t_for_row + sum(
+                    ordinary_new_terms, 0.0 + 0.0j
+                )
+                v8_grouped_d_old = v8_grouped_s - v8_grouped_g_old
+                v8_grouped_d_new = v8_grouped_s - v8_grouped_g_new
+
+                # Gate values follow the actual production paths: reduce_rhs
+                # starts from b_t then scatters each original trace row; apply
+                # computes one full S@t_c and sparse E^H result per cell before
+                # adding that vector to its active IDs.
+                s_sum = complex(production_s[0])
+                g_old = complex(production_g_t[0])
+                g_new = complex(production_g_lu[0])
                 d_old = s_sum - g_old
                 d_new = s_sum - g_new
                 direct_delta_d = d_new - d_old
+                measured_old_order_delta = abs(d_old - v8_grouped_d_old)
+                measured_new_order_delta = abs(d_new - v8_grouped_d_new)
                 naive_signed_projection_sum = sum(signed_identity_terms, 0.0 + 0.0j)
                 accurate_signed_projection_sum = complex(
                     fsum(value.real for value in signed_projection_terms),
@@ -4613,21 +4919,107 @@ def task41_p0_v9_saved_star_screen(
                 )
                 wide_totals = _task41_v9_wide_local_rhs_totals(
                     native_volume_rhs_at_selected_row=b_t_for_row,
-                    wide_s_sum=_task41_v9_wide_sum_complex(ordinary_s_terms),
-                    wide_old_local_rhs_sum=_task41_v9_wide_sum_complex(ordinary_old_terms),
-                    wide_new_local_rhs_sum=_task41_v9_wide_sum_complex(ordinary_new_terms),
+                    wide_s_sum=_task41_v9_wide_sum_complex(production_s_terms),
+                    wide_old_local_rhs_sum=_task41_v9_wide_sum_complex(production_old_terms),
+                    wide_new_local_rhs_sum=_task41_v9_wide_sum_complex(production_new_terms),
                 )
+                if wide_precision["wider_than_float64"]:
+                    wide_final_diagnostic = _task41_v9_wide_final_combination_diagnostic(
+                        native_volume_rhs_at_selected_row=b_t_for_row,
+                        production_s_terms=production_s_terms,
+                        production_old_rhs_terms=production_old_terms,
+                        production_new_rhs_terms=production_new_terms,
+                        production_d_old=d_old,
+                        production_d_new=d_new,
+                    )
+                    wide_old_final_difference = wide_final_diagnostic[
+                        "absolute_wide_minus_production_d_T"
+                    ]
+                    wide_new_final_difference = wide_final_diagnostic[
+                        "absolute_wide_minus_production_d_LU"
+                    ]
+                else:
+                    # Do not present float64-as-longdouble equality as zero
+                    # uncertainty when the platform has no additional bits.
+                    wide_totals = {name: None for name in wide_totals}
+                    wide_old_final_difference = None
+                    wide_new_final_difference = None
+                    wide_final_diagnostic = None
                 local_cases.append(
                     {
                         "role": role,
                         "column": column,
                         "state": state,
+                        "selected_original_row": int(selected["selected_original_row"]),
+                        "frozen_D": float(TASK41_P0_V5_FROZEN_DENOMINATORS[column]),
                         "original_b_t_added_once": [b_t_for_row.real, b_t_for_row.imag],
                         "s_complex128": [s_sum.real, s_sum.imag],
                         "g_T_complex128": [g_old.real, g_old.imag],
                         "g_LU_complex128": [g_new.real, g_new.imag],
                         "d_T_complex128": [d_old.real, d_old.imag],
                         "d_LU_complex128": [d_new.real, d_new.imag],
+                        "production_order": {
+                            "rhs": "b_t first; then incident cells in [23352,23493] order; within each cell original_trace row order with MPC coefficient applied per row using +=",
+                            "S": "full S@t_c per cell; sparse expansion.conjugate().T @ local_action; then result[cell.active_ids] += in incident-cell order",
+                            "candidate_gate_uses_returned_correction": True,
+                        },
+                        "v8_grouped_replay": {
+                            "s_complex128": [v8_grouped_s.real, v8_grouped_s.imag],
+                            "g_T_complex128": [v8_grouped_g_old.real, v8_grouped_g_old.imag],
+                            "g_LU_complex128": [v8_grouped_g_new.real, v8_grouped_g_new.imag],
+                            "d_T_complex128": [v8_grouped_d_old.real, v8_grouped_d_old.imag],
+                            "d_LU_complex128": [v8_grouped_d_new.real, v8_grouped_d_new.imag],
+                            "preserved_for_historical_V8_comparison": True,
+                        },
+                        "measured_last_combination_order_delta": {
+                            "v8_grouped_vs_production_d_T": measured_old_order_delta,
+                            "v8_grouped_vs_production_d_LU": measured_new_order_delta,
+                            "wide_vs_production_d_T": wide_old_final_difference,
+                            "wide_vs_production_d_LU": wide_new_final_difference,
+                            "conservative_max_d_T": (
+                                max(measured_old_order_delta, wide_old_final_difference)
+                                if wide_old_final_difference is not None
+                                else None
+                            ),
+                            "conservative_max_d_LU": (
+                                max(measured_new_order_delta, wide_new_final_difference)
+                                if wide_new_final_difference is not None
+                                else None
+                            ),
+                            "method": "record V8 grouped versus production-order complex128 difference and wide versus production-order diagnostic separately; use their maximum per old/new d only when longdouble is wider",
+                            "wide_comparison_available": bool(
+                                wide_precision["wider_than_float64"]
+                            ),
+                            "wide_is_not_a_strict_error_bound": True,
+                            "used_for_candidate_gate": bool(
+                                wide_precision["wider_than_float64"]
+                            ),
+                        },
+                        "wide_final_combination_diagnostic": {
+                            "precision": wide_precision,
+                            "available": bool(wide_precision["wider_than_float64"]),
+                            "absolute_wide_minus_production_d_T": wide_old_final_difference,
+                            "absolute_wide_minus_production_d_LU": wide_new_final_difference,
+                            "wide_d_T_longdouble_components": (
+                                None
+                                if wide_final_diagnostic is None
+                                else wide_final_diagnostic[
+                                    "wide_d_T_longdouble_components"
+                                ]
+                            ),
+                            "wide_d_LU_longdouble_components": (
+                                None
+                                if wide_final_diagnostic is None
+                                else wide_final_diagnostic[
+                                    "wide_d_LU_longdouble_components"
+                                ]
+                            ),
+                            "not_a_strict_error_bound": True,
+                            "used_only_in_conservative_uncertainty_estimate": bool(
+                                wide_precision["wider_than_float64"]
+                            ),
+                            "not_used_as_complex128_d_answer": True,
+                        },
                         "signed_d_LU_minus_d_T_identity_diagnostic": {
                             "formula": "d_LU - d_T = sum_cells E^H(T b_i + J z); b_t cancels after being added once to each g",
                             "signed_cell_projection_sum_complex128": [
@@ -4656,6 +5048,15 @@ def task41_p0_v9_saved_star_screen(
                             "diagnostic_only_not_used_for_gate": True,
                         },
                         **wide_totals,
+                        "production_order_accumulators": {
+                            "reduce_rhs_g_T": [float(g_old.real), float(g_old.imag)],
+                            "reduce_rhs_g_LU_from_returned_correction": [
+                                float(g_new.real), float(g_new.imag)
+                            ],
+                            "apply_S_selected_active_row": [
+                                float(s_sum.real), float(s_sum.imag)
+                            ],
+                        },
                         "cell_terms": cell_output,
                     }
                 )
@@ -4670,12 +5071,12 @@ def task41_p0_v9_saved_star_screen(
         ]
         _task41_v8_assert_close(
             _task41_v8_complex_pair(old_case.get("d_old_S_minus_g_old"), "V8 d_T"),
-            complex(*item["d_T_complex128"]),
+            complex(*item["v8_grouped_replay"]["d_T_complex128"]),
             f"V9 original candidate/reference d_T replay {item['role']} col{item['column']} {item['state']}",
         )
         _task41_v8_assert_close(
             _task41_v8_complex_pair(old_case.get("d_new_S_minus_g_new"), "V8 d_LU"),
-            complex(*item["d_LU_complex128"]),
+            complex(*item["v8_grouped_replay"]["d_LU_complex128"]),
             f"V9 saved-LU d_LU replay {item['role']} col{item['column']} {item['state']}",
         )
         original_path_checks += 2
@@ -4688,6 +5089,28 @@ def task41_p0_v9_saved_star_screen(
                 "state": item["state"],
                 "d_old_S_minus_g_old": item["d_T_complex128"],
                 "d_new_S_minus_g_new": item["d_LU_complex128"],
+                "last_combination_uncertainty_old": item[
+                    "measured_last_combination_order_delta"
+                ]["conservative_max_d_T"],
+                "last_combination_uncertainty_new": item[
+                    "measured_last_combination_order_delta"
+                ]["conservative_max_d_LU"],
+                "production_vs_v8_grouped_delta_old": item[
+                    "measured_last_combination_order_delta"
+                ]["v8_grouped_vs_production_d_T"],
+                "production_vs_v8_grouped_delta_new": item[
+                    "measured_last_combination_order_delta"
+                ]["v8_grouped_vs_production_d_LU"],
+                "wide_vs_production_delta_old": item[
+                    "measured_last_combination_order_delta"
+                ]["wide_vs_production_d_T"],
+                "wide_vs_production_delta_new": item[
+                    "measured_last_combination_order_delta"
+                ]["wide_vs_production_d_LU"],
+                "wide_comparison_available": item[
+                    "measured_last_combination_order_delta"
+                ]["wide_comparison_available"],
+                "frozen_D": item["frozen_D"],
                 "wide_d_old_S_minus_g_old": item["wide_d_old_S_minus_g_old"],
                 "wide_d_new_S_minus_g_new": item["wide_d_new_S_minus_g_new"],
             }
@@ -4705,9 +5128,17 @@ def task41_p0_v9_saved_star_screen(
                 and item["saved_residual_recomputed"]
                 and item["production_core_backward_relative_residual"]
                 <= item["saved_backward_relative_residual"] + 1.0e-13
+                and item["production_correction_matches_independent_full_minus_Jz"]
+                and item["correction_independent_max_abs_difference"] == 0.0
                 and item["getrs_count"] == 1
                 for item in residual_checks
             )
+            and cached_correction_reuse_count == len(cells) * len(roles) * 2
+            and paired_rhs_checks == len(cells) * len(roles) * 2
+            and paired_trace_checks == len(cells) * len(roles) * 2
+            and paired_b_t_checks == len(roles) * 2
+            and production_s_cell_projection_count
+            == len(cells) * len(roles) * 2 * len(states)
         ),
     )
     gap_diagnostics = []
@@ -4748,11 +5179,24 @@ def task41_p0_v9_saved_star_screen(
             "saved_z_and_residual_recomputed_with_shared_production_core": True,
             "independent_Kz_minus_b_i_and_no_deterioration_check_count": production_core_checks,
             "production_core_GETRS_count": production_core_checks,
+            "production_core_correction_cached_and_consumed_by_gate": True,
+            "cached_correction_j3_reuse_count_without_extra_GETRS": cached_correction_reuse_count,
+            "paired_j0_j3_b_i_check_count": paired_rhs_checks,
+            "paired_j0_j3_t_c_check_count": paired_trace_checks,
+            "paired_j0_j3_b_t_check_count": paired_b_t_checks,
+            "production_reduce_rhs_original_trace_scatter_contribution_count": production_rhs_scatter_count,
+            "production_apply_sparse_EH_cell_projection_count": production_s_cell_projection_count,
+            "production_reduce_rhs_and_apply_orders_replayed_separately": True,
+            "v8_grouped_historical_replay_retained_and_compared": True,
+            "measured_production_vs_v8_grouped_order_delta_used_for_gate": True,
             "wide_local_projection_recompute_is_diagnostic_only": True,
-            "wide_uncertainty_gate_uses_only_complex128_local_terms_with_wide_final_sum": True,
+            "wide_final_combination_difference_is_diagnostic_only": True,
+            "wide_vs_production_difference_used_only_in_conservative_uncertainty": True,
+            "wide_arithmetic_not_used_as_d_answer_or_strict_error_bound": True,
             "signed_saved_lu_identity_uses_selected_trace_rows_and_is_diagnostic_only": True,
             "signed_d_lu_minus_d_t_fpu_remainder_is_diagnostic_only": True,
         },
+        "wide_precision": wide_precision,
         "candidate_reference_gap_diagnostics": gap_diagnostics,
         "candidate_and_reference_recomputed_s_g_d": local_cases,
         "saved_lu_residual_checks": residual_checks,
@@ -4872,35 +5316,93 @@ def _task41_v9_classify_candidate_self_d(
         item = by_key[(role, column, state)]
         old = _task41_v8_complex_pair(item.get("d_old_S_minus_g_old"), "old d")
         new = _task41_v8_complex_pair(item.get("d_new_S_minus_g_new"), "new d")
-        wide_old = _task41_v8_complex_pair(
-            item.get("wide_d_old_S_minus_g_old"), "wide old d"
+        raw_wide_old = item.get("wide_d_old_S_minus_g_old")
+        raw_wide_new = item.get("wide_d_new_S_minus_g_new")
+        wide_old = (
+            None
+            if raw_wide_old is None
+            else _task41_v8_complex_pair(raw_wide_old, "wide old d")
         )
-        wide_new = _task41_v8_complex_pair(
-            item.get("wide_d_new_S_minus_g_new"), "wide new d"
+        wide_new = (
+            None
+            if raw_wide_new is None
+            else _task41_v8_complex_pair(raw_wide_new, "wide new d")
         )
-        uncertainty_old = abs(old - wide_old)
-        uncertainty_new = abs(new - wide_new)
+        grouped_delta_old = item.get("production_vs_v8_grouped_delta_old")
+        grouped_delta_new = item.get("production_vs_v8_grouped_delta_new")
+        wide_delta_old = item.get("wide_vs_production_delta_old")
+        wide_delta_new = item.get("wide_vs_production_delta_new")
+        wide_comparison_available = item.get("wide_comparison_available") is True
+        if (
+            isinstance(grouped_delta_old, bool)
+            or not isinstance(grouped_delta_old, (int, float))
+            or not np.isfinite(grouped_delta_old)
+            or grouped_delta_old < 0.0
+            or isinstance(grouped_delta_new, bool)
+            or not isinstance(grouped_delta_new, (int, float))
+            or not np.isfinite(grouped_delta_new)
+            or grouped_delta_new < 0.0
+        ):
+            raise ValueError("V9 V8-grouped/production deltas must be finite and nonnegative")
+        if wide_comparison_available:
+            if (
+                wide_old is None
+                or wide_new is None
+                or isinstance(wide_delta_old, bool)
+                or not isinstance(wide_delta_old, (int, float))
+                or not np.isfinite(wide_delta_old)
+                or wide_delta_old < 0.0
+                or isinstance(wide_delta_new, bool)
+                or not isinstance(wide_delta_new, (int, float))
+                or not np.isfinite(wide_delta_new)
+                or wide_delta_new < 0.0
+            ):
+                raise ValueError(
+                    "V9 wider-longdouble comparison is missing finite production deltas"
+                )
+            uncertainty_old = max(grouped_delta_old, wide_delta_old)
+            uncertainty_new = max(grouped_delta_new, wide_delta_new)
+        else:
+            # Missing extra precision is not treated as a measured zero delta.
+            uncertainty_old = None
+            uncertainty_new = None
+        frozen_denominator = item.get("frozen_D")
+        if frozen_denominator != TASK41_P0_V5_FROZEN_DENOMINATORS[column]:
+            raise ValueError(f"V9 saved-star frozen D changed for column {column}")
         improvement_margin = (
-            abs(old) - abs(new) - uncertainty_old - uncertainty_new
+            None
+            if uncertainty_old is None or uncertainty_new is None
+            else abs(old) - abs(new) - uncertainty_old - uncertainty_new
         )
-        frozen_denominator = TASK41_P0_V5_FROZEN_DENOMINATORS[column]
         entry = {
             "role": role,
             "column": column,
             "state": state,
             "d_old": [old.real, old.imag],
             "d_new": [new.real, new.imag],
-            "wide_d_old": [wide_old.real, wide_old.imag],
-            "wide_d_new": [wide_new.real, wide_new.imag],
+            "wide_d_old_diagnostic_only": (
+                None if wide_old is None else [wide_old.real, wide_old.imag]
+            ),
+            "wide_d_new_diagnostic_only": (
+                None if wide_new is None else [wide_new.real, wide_new.imag]
+            ),
+            "wide_comparison_available": wide_comparison_available,
+            "production_vs_v8_grouped_delta_old": grouped_delta_old,
+            "production_vs_v8_grouped_delta_new": grouped_delta_new,
+            "wide_vs_production_delta_old_diagnostic_only": wide_delta_old,
+            "wide_vs_production_delta_new_diagnostic_only": wide_delta_new,
             "last_combination_uncertainty_old": uncertainty_old,
             "last_combination_uncertainty_new": uncertainty_new,
+            "last_combination_uncertainty_source": (
+                "maximum of measured V8-grouped/production and wider-longdouble/production d differences"
+            ),
             "old_absolute_d": abs(old),
             "new_absolute_d": abs(new),
             "frozen_D": frozen_denominator,
             "old_frozen_D_relative": abs(old) / frozen_denominator,
             "new_frozen_D_relative": abs(new) / frozen_denominator,
             "improvement_beyond_last_combination_uncertainty": (
-                improvement_margin > 0.0
+                improvement_margin is not None and improvement_margin > 0.0
             ),
             "improvement_margin_after_uncertainty": improvement_margin,
         }
@@ -4911,7 +5413,10 @@ def _task41_v9_classify_candidate_self_d(
         {
             "column": column,
             "states": [item["state"] for item in candidate_by_column[column]],
+            "evaluable": len(candidate_by_column[column]) == 2
+            and all(item["wide_comparison_available"] for item in candidate_by_column[column]),
             "passed": len(candidate_by_column[column]) == 2
+            and all(item["wide_comparison_available"] for item in candidate_by_column[column])
             and all(
                 item["improvement_beyond_last_combination_uncertainty"]
                 for item in candidate_by_column[column]
@@ -4919,6 +5424,7 @@ def _task41_v9_classify_candidate_self_d(
         }
         for column in range(2)
     ]
+    candidate_gate_evaluable = all(item["evaluable"] for item in column_gates)
     passed = (
         identity_replay_closed
         and production_core_replay_closed
@@ -4929,13 +5435,24 @@ def _task41_v9_classify_candidate_self_d(
         "status": "LOCAL_CANDIDATE_READY" if passed else "LOCAL_CANDIDATE_REJECTED",
         "identity_replay_closed": bool(identity_replay_closed),
         "production_core_replay_closed": bool(production_core_replay_closed),
+        "candidate_gate_evaluable": candidate_gate_evaluable,
+        "candidate_gate_blockers": (
+            []
+            if candidate_gate_evaluable
+            else [
+                "longdouble does not provide wider precision, so wide-vs-production delta is not evaluable"
+            ]
+        ),
         "candidate_gate_requires_both_columns_and_paired_states": True,
         "candidate_column_gates": column_gates,
         "candidate_and_reference_own_d": result_cases,
         "method": (
-            "rebuild s, g_T, g_LU and d from saved two-cell terms; compare each "
-            "candidate-own |d| reduction after subtracting float64-versus-longdouble "
-            "last-combination uncertainty; report reference-own d without using the "
+            "rebuild production-order s, g_T, g_LU and d from saved two-cell terms; "
+            "compare each candidate-own |d| reduction after subtracting the larger "
+            "of the measured V8-grouped/production and wider-longdouble/production "
+            "d differences; wide math never replaces the complex128 answer and is "
+            "not a strict error bound; platforms without wider longdouble are not "
+            "eligible for READY; reference-own d is reported without using the "
             "candidate-reference gap as the gate"
         ),
     }

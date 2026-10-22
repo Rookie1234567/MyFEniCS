@@ -210,6 +210,8 @@ def _same_lu_action(
     condensed: AssemblyTimeCondensedSystem,
     block: dict[str, np.ndarray],
     hp: np.ndarray,
+    *,
+    owns_condensed: bool = False,
 ) -> P6CellCondensedAction:
     bt = block["Bt"].copy()
     bt[1, :] = 0.0
@@ -218,6 +220,7 @@ def _same_lu_action(
     return P6CellCondensedAction(
         condensed,
         H_p=hp,
+        owns_condensed=owns_condensed,
         port_terms={
             0: P6CellPortTerms(
                 block["Bi"],
@@ -339,6 +342,108 @@ def test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j(monkey
 def test_same_lu_rhs_missing_j_fails_closed() -> None:
     with pytest.raises(ValueError, match="missing its retained actual J"):
         _same_lu_owner(retain_j=False)
+
+
+def test_owned_same_lu_action_destroy_retries_after_other_borrower_releases() -> None:
+    condensed, block, _J, hp = _same_lu_owner()
+    owner_action = _same_lu_action(
+        condensed, block, hp, owns_condensed=True
+    )
+    borrower_action = _same_lu_action(condensed, block, hp)
+    owner_matrix = owner_action._matrix
+    assert condensed._trace_interior_rhs_borrowers == 2
+
+    with pytest.raises(RuntimeError, match="another action still borrows"):
+        owner_action.destroy()
+
+    assert owner_action._destroyed is False
+    assert owner_action._matrix is owner_matrix
+    assert owner_action._cells
+    assert owner_action._same_lu_rhs_borrowed is True
+    assert condensed._trace_interior_rhs_borrowers == 2
+    assert condensed._destroyed is False
+
+    borrower_action.destroy()
+    assert condensed._trace_interior_rhs_borrowers == 1
+    owner_action.destroy()
+
+    assert owner_action._destroyed is True
+    assert owner_action._matrix is None
+    assert owner_action._same_lu_rhs_borrowed is False
+    assert condensed._trace_interior_rhs_borrowers == 0
+    assert condensed._destroyed is True
+    assert condensed.retained_trace_interior_by_class is None
+
+
+def test_v9_selected_replay_matches_small_action_reduce_rhs_and_apply(monkeypatch) -> None:
+    from src.runners.task41_p0_checker import (
+        _task41_v9_apply_cell_s_to_selected_active_row,
+        _task41_v9_rhs_scatter_selected_row,
+    )
+
+    condensed, block, _J, hp = _same_lu_owner()
+    # Give the slave row a visibly complex MPC coefficient while retaining the
+    # same one-active-row small action shape.
+    constraints = condensed.trace_constraints
+    constraints.expansion_by_original[3] = (
+        np.asarray([0], dtype=PETSc.IntType),
+        np.asarray([1.0 + 1.0j], dtype=np.complex128),
+    )
+    action = _same_lu_action(condensed, block, hp)
+    try:
+        cell = action._cells[0]
+        selected_rows = np.asarray([0, 1], dtype=np.int64)
+        selected_coefficients = np.asarray(
+            cell.expansion.toarray()[:, 0], dtype=np.complex128
+        )
+        correction = np.asarray(
+            [1.0e16 + 0.0j, -5.0e15 - 5.0e15j], dtype=np.complex128
+        )
+        assert np.vdot(selected_coefficients, correction) == 0.0 + 0.0j
+
+        def fixed_projection(_cell, _rhs, *, purpose):
+            assert purpose == "actual_rhs"
+            return correction.copy(), np.zeros(len(_cell.original_interiors), dtype=np.complex128)
+
+        monkeypatch.setattr(action, "_project_internal_rhs", fixed_projection)
+        full_rhs = np.zeros(condensed.full_rows, dtype=np.complex128)
+        full_rhs[int(cell.original_interiors[0])] = 1.0 + 0.0j
+        full_rhs[int(cell.original_trace[0])] = 1.0 + 0.0j
+        reduced_rhs = action.reduce_rhs(full_rhs, rhs_is_mpc_dual=True)
+
+        selected_rhs = np.asarray(
+            [full_rhs[int(cell.original_trace[0])]], dtype=np.complex128
+        )
+        _task41_v9_rhs_scatter_selected_row(
+            selected_rhs,
+            correction,
+            selected_local_rows=selected_rows,
+            selected_coefficients=selected_coefficients,
+        )
+        np.testing.assert_array_equal(reduced_rhs[:1], selected_rhs)
+        grouped_rhs = (
+            full_rhs[int(cell.original_trace[0])]
+            + np.vdot(selected_coefficients, correction)
+        )
+        assert grouped_rhs == 1.0 + 0.0j
+        assert selected_rhs[0] == 0.0 + 0.0j
+
+        source = np.zeros(action.reduced_size, dtype=np.complex128)
+        source[0] = 0.5 - 0.25j
+        applied = action.apply(source)
+        local_trace = np.asarray(
+            cell.expansion @ source[cell.active_ids], dtype=np.complex128
+        ).reshape(-1)
+        local_action = cell.S_V @ local_trace
+        selected_s = _task41_v9_apply_cell_s_to_selected_active_row(
+            local_action,
+            selected_local_rows=selected_rows,
+            selected_coefficients=selected_coefficients,
+        )
+        np.testing.assert_array_equal(applied[:1], selected_s)
+    finally:
+        action.destroy()
+        condensed.destroy()
 
 
 def test_same_lu_identity_maps_reject_shared_array_with_different_dimension() -> None:

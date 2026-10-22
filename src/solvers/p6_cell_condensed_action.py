@@ -3830,6 +3830,19 @@ class P6CellCondensedAction:
     def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
         if self._destroyed:
             return
+        if self.owns_condensed:
+            outstanding = int(
+                getattr(self.condensed, "_trace_interior_rhs_borrowers", 0)
+            )
+            own_borrow = int(self._same_lu_rhs_borrowed)
+            if outstanding < own_borrow:
+                raise RuntimeError(
+                    "owned condensed system has an inconsistent retained-J borrower count"
+                )
+            if outstanding > own_borrow:
+                raise RuntimeError(
+                    "cannot destroy owned condensed system while another action still borrows retained J"
+                )
         matrix = self._matrix
         self._matrix = None
         self._destroyed = True
