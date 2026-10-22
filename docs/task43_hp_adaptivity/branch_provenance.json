@@ -1,0 +1,39 @@
+{
+  "schema": "task43_initial_branch_provenance_v1",
+  "created_date_utc": "2026-10-22",
+  "repository": "Rookie1234567/MyFEniCS",
+  "execution_branch": "task43_hp_adaptivity",
+  "base_branch": "task40para_phi90_mesh_modes_direct",
+  "base_commit": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+  "base_tree": "87b08dc47047c8ae3537428b8419e402d71d60e9",
+  "creation_authorization": "User explicitly requested a new Task43 branch from the appropriate existing mainline and a new task specification in this session.",
+  "publication_method": "GitHub connector: new documentation tree and commit with the pinned base as sole parent; new branch ref points to that commit.",
+  "status": "TASK_DEFINED_NUMERICAL_WORK_NOT_RUN",
+  "numerical_changes_in_initial_commit": false,
+  "pde_runs_in_this_session": 0,
+  "branch_deletions_in_this_session": [],
+  "force_pushes_in_this_session": 0,
+  "source_snapshots": {
+    "task41extra_phi90_p50x50_g17x20": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
+    "task42_neural_coarse_inverse": "81c049e09a61efa38f8c7a6a762f02e8835c9b3f",
+    "task42extra_feinn_5nm": "8bf3241713e2ddd24986126f348f766d9262d346",
+    "task40extra_dot_parallel_cloud": "a9b21d8a79d70c3b3ad1a62e748872af11ff0f79",
+    "codex/20260728-task35e-reference-blind-multilevel-hp-adaptivity": "f0f10be9268ca9348ed7f40fb2237fbcd5474252"
+  },
+  "workstation_reuse_candidate": "/home/fenics/Projects/NN-Lab-V2",
+  "workstation_path_verified_live_in_this_session": false,
+  "workstation_preconditions": [
+    "Verify canonical clone or registered worktree, repository remote and actual path.",
+    "Inspect active processes and preserve uncommitted work and old ignored artifacts.",
+    "Fetch the published branch and verify HEAD, upstream, ancestry and ahead/behind.",
+    "Use the existing qualified complex128 ABI environment.",
+    "Queue heavy runs without assuming existing Task40/Task41 parallel admission includes Task43."
+  ],
+  "numerical_qualification_boundaries": [
+    "The inherited local hp path is qualified historically for p4/p5/p6, not newly qualified for p3.",
+    "Presence of source files does not imply all Task35e multilevel changes are inherited.",
+    "The dot hp overlay implementation was not fully synchronized to its remote branch.",
+    "Small direct verification does not qualify an adaptive iterative production path.",
+    "Agreement between finite discretizations is not a certified continuum error bound."
+  ]
+}

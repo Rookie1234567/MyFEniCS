@@ -100,6 +100,7 @@
 | Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 | Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
 | Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
+| Task43 | [`task43_hp_adaptivity/README.md`](task43_hp_adaptivity/README.md) | 任务书已建立；local h/p 自适应闭环、独立参考与同精度成本验收均 `not_run`；从冻结 Task40para 基线建立独立分支 |
 
 ## Task28 审计入口
 
@@ -208,3 +209,19 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | 任务 | 阶段与入口 |
 |---|---|
 | Task40para | [`task.md`](task40para_phi90_mesh_modes_direct/task.md)、[`README.md`](task40para_phi90_mesh_modes_direct/README.md)、[`outcomes/summary.md`](task40para_phi90_mesh_modes_direct/outcomes/summary.md)；phi90 方柱阵列新物理模型；D13 已完成 B/X/Y/Z、legacy Y2/Y3 和 relative-only Y2。当前仍 `AUTHORITY_LIMITED`，full DtN 与 canonical sidewall trace 未验证；D5/M5/后续波长阶段尚未由本记录启动。所有执行材料仅在独立 Task40 分支 |
+
+## Task43 自适应 h/p 入口
+
+任务书已建立，执行分支为 `task43_hp_adaptivity`，冻结 base 为 `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4`。本任务研究怎样让网格和单元阶数随实际误差调整，在同等精度下减少未知量与全过程成本；当前没有新 PDE、accepted cycle 或性能结果，统一登记为 `not_run`。
+
+| 文件 | 内容与当前边界 |
+|---|---|
+| [README](task43_hp_adaptivity/README.md) | 新任务入口、执行顺序与尚未运行的范围 |
+| [task.md](task43_hp_adaptivity/task.md) | 新 phi90、50×50 nm 周期、17×20 nm 光栅模型；先做 13.5 nm 小型 direct 校准及 2–3 个真实 accepted h/p cycles，再接迭代路径，满足条件后进行 0.7 nm 缩比 pilot |
+| [AGENTS](task43_hp_adaptivity/AGENTS.md) | Task43 的角色、目录、执行与证据规则 |
+| [baseline_audit](task43_hp_adaptivity/baseline_audit.md) | 基线选择、旧 h/p 与 dot 资产的复用边界、历史失败和未关闭资格 |
+| [codex_handoff](task43_hp_adaptivity/codex_handoff.md) | 工作站现有项目目录的安全接手、精确分支同步与首轮执行文本 |
+| [branch_provenance](task43_hp_adaptivity/branch_provenance.json) | 冻结来源与任务身份；文档发布不等于科学运行 source |
+
+Task43 是新的独立研究范围，不整体承接 Task41／Task42 的旧待执行清单，也不改写其失败或未关闭 Gate。任务书中的循环、精度与资源要求是待执行的合同；实际求解、误差估计、h/p 标记、转移和接受记录，以及独立参考和同精度全过程成本，均须由后续 Codex 结果证明。
+

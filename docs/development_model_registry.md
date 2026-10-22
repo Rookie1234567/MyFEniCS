@@ -1769,3 +1769,22 @@ Y2→Y3同策略对照中，R、R00,s、T、A_volume差分别为`8.7031e-10`、`
 Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 三对保存输出比较均通过既定三组门：global R/T/A balance/Avolume `1e-5`，全612及 power-carrying 通道逐模R/T `1e-6`，边界复幅及同坐标复E/H `1e-4`；未做相位拟合。最大逐模差为 `|ΔR|=5.0652e-8`、`|ΔT|=7.0344e-9`，最大 E/H 相对差 `1.2510e-6/9.2654e-6`。这是有限 R13 和保存样本范围，不证明z=6格充分、连续收敛、canonical侧壁或完整DtN。
 
 后续仅静态准备一个从Y5-1实际x/y轴派生的z-only候选`[6,14,8]`/672 cells，z由`[-10,0,30,60,90,120,130]`变为`[-10,0,20,40,60,80,100,120,130]`，静态 midpoint tag air/substrate/grating=`516/84/72`。新旧z网格非嵌套，轴计划不是live QA或数值结果；见[静态计划response](task40para_phi90_mesh_modes_direct/outcomes/response_d15_y5_z_refinement_static_20261021.md)和[机器记录](task40para_phi90_mesh_modes_direct/outcomes/records/d15_y5_1_z_refinement_static_plan_v1.json)。
+
+## 3.55 Task43：新 phi90 模型的自适应 h/p 闭环（2026-10-22，任务建立）
+
+局部 h 自适应把误差较大的区域细分为较小单元，局部 p 自适应提高所选单元的表示阶数。本任务要验证两者能否根据实际误差形成连续的“求解—恢复—估计—标记—更新—转移—再求解”闭环，并在同等精度下减少未知量、内存和总时间。它针对均匀加密成本高、既有自适应未形成可复现接受循环的问题；当前只是建立任务合同，没有新增科学运行。
+
+| 登记项 | Task43 当前事实／计划 | 数据身份与证据 |
+|---|---|---|
+| 任务／分支 | `Task43`／`task43_hp_adaptivity`；任务书已建立 | 文档身份；[README](task43_hp_adaptivity/README.md)、[task](task43_hp_adaptivity/task.md) |
+| 冻结 base | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` | 来源身份；[branch_provenance](task43_hp_adaptivity/branch_provenance.json) |
+| 首轮物理范围 | phi90、x/y 周期 50/50 nm、光栅 x/y 尺寸 17/20 nm；先在 13.5 nm 模型上作小型 direct 校准，完整物理与数值身份按 task 冻结 | `not_run`；不能沿用旧 phi0 或不同几何结果填本行 |
+| 自适应闭环 | 计划完成 2–3 个有实际候选求解与接受证据的 local h/p cycles；保留局部约束、Floquet 配对、解转移和拒绝记录 | `not_run`；现有 Task035 系列／dot 资产只是审计和复用依据，见 [baseline_audit](task43_hp_adaptivity/baseline_audit.md) |
+| 独立准确性验收 | 独立参考、原方程 residual、R/T/A 与体吸收、同坐标复 E/H、衍射级及空间增量分别检查 | `not_run`；无 Task43 新 residual、R/T/A、场或通道实测值 |
+| 规模与完整成本 | 实际 cells、p 分布、DoF/rows/NNZ、同时进程树 RSS 峰值（B）、全过程时间（s）、swap，以及相对同精度对照的收益均待测 | `not_run`；计划或推导量不得写成 measured；估计／转移／重建成本须计入 |
+| 后续晋级 | 小型 direct 校准和 h/p 验收后接迭代路径；满足 task 条件后才作 0.7 nm 缩比 pilot | 两阶段均 `not_run`；缩比通过也不等于原尺寸 0.7 nm／2 TB／48 h 资格 |
+| 本轮失败／未关闭项 | 尚未执行，无新的数值失败结论；旧 Task40para 的 authority 限制及 Task41／Task42 的未关闭项保持各自原状态 | 新任务不整体继承旧执行清单，也不替旧任务关闭 Gate；[baseline_audit](task43_hp_adaptivity/baseline_audit.md) |
+| 当前裁决 | `not_run（任务书已建立）`；尚无新 PDE、accepted cycle、同精度性能收益或 production／merge 资格 | [AGENTS](task43_hp_adaptivity/AGENTS.md)、[codex_handoff](task43_hp_adaptivity/codex_handoff.md) |
+
+后续每轮把真实实现、循环决策、完整物理与成本结果写入本任务 `outcomes/summary.md` 和 `response_vN.md`，再同步此节；不能以任务书、测试数量或旧分支的成功数据代替 Task43 的数值证据。
+
