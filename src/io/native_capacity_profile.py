@@ -47,6 +47,7 @@ V6_F5_P6_DIRECT_N0_PROFILE = 'task39extra_v6_f5_p6_condensed_direct_n0_v1'
 V6_F5_P6_DIRECT_PROFILES = frozenset(
     {V6_F5_P6_DIRECT_FULL600_PROFILE, V6_F5_P6_DIRECT_N0_PROFILE}
 )
+TASK43_HP_ADAPTIVITY_RESOURCE_PROFILE = "task43_hp_adaptivity_resource_v1"
 DISPERSION_FLAT_P6_PROFILE = "task39extra_dispersion_flat_0p7_p6_v1"
 DISPERSION_FLAT_P6_RAISED_RSS_PROFILE = (
     "task39extra_dispersion_flat_0p7_p6_raised_rss_v2"
@@ -1572,6 +1573,36 @@ def _task40_phi90_d15_profile_facts(identity):
 
 
 def native_profile_facts(identity):
+    if identity == TASK43_HP_ADAPTIVITY_RESOURCE_PROFILE:
+        gib = 1024**3
+        return {
+            "identity": identity,
+            "profile_schema": "task43.explicit-resource-profile.v1",
+            "resources": {
+                "resource_stop_policy": "legacy",
+                "absolute_cap_bytes": 192 * gib,
+                "planning_cap_bytes": 192 * gib,
+                "reserve_min_bytes": 64 * gib,
+                "reserve_fraction": 0.15,
+                "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+                "launch_cap_policy": (
+                    "min(192GiB, 80% of effective total, "
+                    "effective available minus effective reserve)"
+                ),
+                "planning_cap_policy": (
+                    "min(192GiB, 75% of effective total, launch cap)"
+                ),
+                "memavailable_runtime_policy": "stop_below_effective_reserve",
+                "rss_runtime_policy": "stop_at_launch_cap",
+                "require_zero_swap": True,
+                "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+                "global_swap_delta_policy": "observe_only",
+                "stop_on_global_swap": False,
+                "pss_sampling_policy": "disabled_by_profile",
+                "concurrent_neighbor_authorized": False,
+                "research_scope": "Task43 only; no Task39/40/41 profile alias",
+            },
+        }
     from .physical_balanced_profile import balanced_profile_facts
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5_PROFILES:

@@ -28,8 +28,10 @@ from src.adaptivity.stage4_local_h import (
     Stage4LocalHContext,
     build_stage4_local_h_reduction_authority,
 )
-
-from .independent_active_action import project_trace_dual_blocks
+from src.common.config_3d import (
+    LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+    variable_p_active_fe_dof_gate_limit,
+)
 from .hcurl_variable_p_assembly import (
     VariablePCondensedTraceSystem,
     _lu_factor_matrix_action,
@@ -40,6 +42,7 @@ from .hcurl_variable_p_assembly import (
     recover_variable_p_active_full_vector,
     variable_p_cell_interior_schur_bilinear,
 )
+from .independent_active_action import project_trace_dual_blocks
 
 
 @dataclass
@@ -1069,6 +1072,8 @@ def build_variable_p_assembly_time_reduction(
     defer_final_assembly: bool = False,
     retain_local_schur_for_research: bool = False,
     raw_tensor_evaluator: Any | None = None,
+    active_fe_dof_gate_policy: str = LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+    geometry_identity_policy: str = "rounded_12",
 ) -> VariablePAssemblyTimeReduction:
     """Build one hash-bound Task43 p3-p6 reduction in a p6 carrier."""
 
@@ -1103,6 +1108,7 @@ def build_variable_p_assembly_time_reduction(
             local_h_context,
             phase_x=complex(phase_x),
             phase_y=complex(phase_y),
+            active_fe_dof_gate_policy=active_fe_dof_gate_policy,
         )
         degree_plan = local_h.degree_plan
         trace_constraints = local_h.trace_constraints
@@ -1113,10 +1119,21 @@ def build_variable_p_assembly_time_reduction(
             ]
         )
         local_h_audit = dict(local_h.audit)
-    if physical_active_fe_dofs > 90_000:
+    active_fe_dof_gate_limit = variable_p_active_fe_dof_gate_limit(
+        active_fe_dof_gate_policy
+    )
+    active_fe_dof_gate_pass = (
+        active_fe_dof_gate_limit is None
+        or physical_active_fe_dofs <= active_fe_dof_gate_limit
+    )
+    if (
+        active_fe_dof_gate_limit is not None
+        and physical_active_fe_dofs > active_fe_dof_gate_limit
+    ):
         raise RuntimeError(
-            "Task035d variable-p candidate exceeds the fail-closed "
-            "90,000 active FE DoF gate; use the standard/static backend "
+            f"{active_fe_dof_gate_policy} variable-p candidate exceeds the "
+            f"fail-closed {active_fe_dof_gate_limit:,} active FE DoF gate; "
+            "use the standard/static backend "
             "for a global-p control"
         )
     transfer = build_variable_p_global_transfer(
@@ -1139,11 +1156,19 @@ def build_variable_p_assembly_time_reduction(
                 appended_support_group_by_row
             ),
             defer_final_assembly=defer_final_assembly,
+            geometry_identity_policy=geometry_identity_policy,
             retain_local_schur_for_research=(
                 retain_local_schur_for_research
             ),
             raw_tensor_evaluator=raw_tensor_evaluator,
         )
+    )
+    independent_trace_rows = int(system.active_trace_rows)
+    independent_cell_interior_rows = int(
+        degree_plan.entity_map.active_cell_interior_rows
+    )
+    independent_active_fe_dofs = (
+        independent_trace_rows + independent_cell_interior_rows
     )
     audit = {
         "schema_version": "task035d.variable-p-assembly-reduction.v1",
@@ -1167,13 +1192,20 @@ def build_variable_p_assembly_time_reduction(
         "actual_full3d_equivalent_active_fe_dofs": (
             physical_active_fe_dofs
         ),
+        "independent_trace_rows": independent_trace_rows,
+        "independent_cell_interior_rows": independent_cell_interior_rows,
+        "independent_active_fe_dofs": independent_active_fe_dofs,
+        "independent_active_fe_dof_semantics": (
+            "post-hanging/Floquet independent trace rows plus active "
+            "cell-interior rows; carrier periodic slaves are excluded"
+        ),
         "raw_broken_active_fe_dofs": (
             degree_plan.entity_map.active_rows
         ),
-        "active_fe_dof_gate_limit": 90_000,
-        "active_fe_dof_gate_pass": (
-            physical_active_fe_dofs <= 90_000
-        ),
+        "active_fe_dof_gate_policy": active_fe_dof_gate_policy,
+        "active_fe_dof_gate_limit": active_fe_dof_gate_limit,
+        "active_fe_dof_gate_pass": active_fe_dof_gate_pass,
+        "legacy_90k_gate_overridden": active_fe_dof_gate_limit is None,
         "full_p6_global_matrix_allocated": False,
         "inactive_p6_rows_globally_numbered": False,
         "ordinary_default_changed": False,

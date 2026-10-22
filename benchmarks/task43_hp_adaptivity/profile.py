@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import os
+from itertools import pairwise
 
 from src.common.config_3d import (
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     EUV_REFERENCE_WAVELENGTH_NM,
+    LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
     SI_GRATING_INDEX_EUV_13P5_NM,
     SI_SUBSTRATE_INDEX_EUV_13P5_NM,
+    TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
     target_stage4_config,
 )
 from src.geometry.task43_hp_adaptivity_axis_plan import (
@@ -17,6 +22,10 @@ from src.geometry.task43_hp_adaptivity_axis_plan import (
     TASK43_AXIS_CELL_COUNTS,
     TASK43_AXIS_PLAN_ID,
     TASK43_AXIS_PLAN_SHA256,
+)
+from src.io.native_capacity_profile import (
+    TASK43_HP_ADAPTIVITY_RESOURCE_PROFILE,
+    native_profile_facts,
 )
 
 TASK43_R13_MAX_M = 4
@@ -31,6 +40,43 @@ TASK43_PORT_BOUNDARY_AMPLITUDE_SCALE_POLICY = (
     "boundary_magnitude_scaled_r5_v1"
 )
 TASK43_RAW_TENSOR_BACKEND = "blocked_gram_v1"
+_GIB = 1024**3
+
+
+def task43_watchdog_resource_gate_from_environment(
+    environment: dict[str, str] | None = None,
+) -> dict[str, object]:
+    """Require the live worker markers exported by the Task43 watchdog."""
+
+    env = os.environ if environment is None else environment
+    expected_profile = TASK43_HP_ADAPTIVITY_RESOURCE_PROFILE
+    if env.get("PHYSICAL_WATCHDOG_RESOURCE_PROFILE_IDENTITY") != expected_profile:
+        raise RuntimeError("the live worker is not bound to the Task43 resource profile")
+    if env.get("PHYSICAL_WATCHDOG_RESOURCE_STOP_POLICY") != "legacy":
+        raise RuntimeError("the Task43 watchdog must use its RSS/reserve/swap gates")
+    if env.get("PHYSICAL_WATCHDOG_REQUIRE_ZERO_SWAP") != "1":
+        raise RuntimeError("the Task43 watchdog has not enabled its zero-task-swap gate")
+    try:
+        launch_cap = int(env["PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES"])
+        reserve = int(env["PHYSICAL_WATCHDOG_RESERVE_BYTES"])
+        planning_cap = int(env["PHYSICAL_WATCHDOG_PLANNING_CAP_BYTES"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("the Task43 watchdog did not export a valid memory envelope") from exc
+    if not 0 < launch_cap <= 192 * _GIB:
+        raise RuntimeError("the Task43 watchdog launch cap is outside (0, 192 GiB]")
+    if reserve < 64 * _GIB:
+        raise RuntimeError("the Task43 watchdog effective reserve is below 64 GiB")
+    if not 0 < planning_cap <= launch_cap:
+        raise RuntimeError("the Task43 planning cap exceeds its launch cap")
+    return {
+        "status": "verified",
+        "resource_profile_identity": expected_profile,
+        "resource_stop_policy": "legacy",
+        "launch_cap_bytes": launch_cap,
+        "effective_reserve_bytes": reserve,
+        "planning_cap_bytes": planning_cap,
+        "zero_task_tree_swap_required": True,
+    }
 
 
 def task43_initial_profile(
@@ -84,6 +130,10 @@ def task43_initial_profile(
         TASK43_PORT_BOUNDARY_AMPLITUDE_SCALE_POLICY
     )
     cfg.stage4_variable_p_raw_tensor_backend = TASK43_RAW_TENSOR_BACKEND
+    cfg.stage4_variable_p_geometry_identity_policy = "raw_unrounded"
+    cfg.stage4_variable_p_active_fe_dof_gate_policy = (
+        TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY
+    )
     cfg.stage4_full3d_assembly_backend = (
         ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
     )
@@ -125,7 +175,13 @@ def _mode_identity(mode) -> dict[str, object]:
     }
 
 
-def task43_profile_identity(cfg, modes) -> dict[str, object]:
+def task43_profile_identity(
+    cfg,
+    modes,
+    *,
+    resolved_axes_nm: dict[str, object] | None = None,
+    resolved_mesh_audit: dict[str, object] | None = None,
+) -> dict[str, object]:
     """Bind a run record to resolved config and the modes actually selected.
 
     ``expected_contract`` captures the intended Task43 starting controls.
@@ -152,12 +208,61 @@ def task43_profile_identity(cfg, modes) -> dict[str, object]:
         float(cfg.grating_z_min),
         float(cfg.grating_z_max),
     ]
-    axes = {
-        "x": [float(value) for value in cfg.mesh_axis_x_values],
-        "y": [float(value) for value in cfg.mesh_axis_y_values],
-        "z": [float(value) for value in cfg.mesh_axis_z_values],
+    configured_axes = {
+        "x": cfg.mesh_axis_x_values,
+        "y": cfg.mesh_axis_y_values,
+        "z": cfg.mesh_axis_z_values,
     }
-    cell_counts = [len(axes[axis]) - 1 for axis in ("x", "y", "z")]
+    if all(value is not None for value in configured_axes.values()):
+        base_axes = {
+            axis: [float(value) for value in values]
+            for axis, values in configured_axes.items()
+        }
+        base_axes_source = "resolved_config_axis_plan"
+    else:
+        base_axes = None
+        base_axes_source = "no_frozen_axis_plan"
+    if resolved_axes_nm is not None:
+        actual_axes = {
+            axis: [float(value) for value in resolved_axes_nm[axis]]
+            for axis in ("x", "y", "z")
+        }
+        for axis, values in actual_axes.items():
+            if len(values) < 2 or any(not math.isfinite(value) for value in values):
+                raise ValueError(f"actual {axis}-axis must contain finite coordinates")
+            if any(right <= left for left, right in pairwise(values)):
+                raise ValueError(f"actual {axis}-axis must be strictly increasing")
+        actual_axes_source = "actual_resolved_mesh_geometry"
+    else:
+        actual_axes = None
+        actual_axes_source = "not_supplied"
+    if resolved_mesh_audit is not None and actual_axes is None:
+        raise ValueError(
+            "actual mesh counts require the actual resolved mesh axes"
+        )
+    if actual_axes is None:
+        common_cartesian_partition_cell_counts = None
+        common_cartesian_partition_cell_count = None
+    else:
+        common_cartesian_partition_cell_counts = {
+            axis: len(actual_axes[axis]) - 1 for axis in ("x", "y", "z")
+        }
+        common_cartesian_partition_cell_count = int(
+            common_cartesian_partition_cell_counts["x"]
+            * common_cartesian_partition_cell_counts["y"]
+            * common_cartesian_partition_cell_counts["z"]
+        )
+    actual_mesh_audit = resolved_mesh_audit or {}
+    actual_global_cell_count = actual_mesh_audit.get("global_cell_count")
+    actual_leaf_cell_count = actual_mesh_audit.get("leaf_cell_count")
+    if actual_global_cell_count is not None:
+        actual_global_cell_count = int(actual_global_cell_count)
+        if actual_global_cell_count < 0:
+            raise ValueError("actual global cell count must be nonnegative")
+    if actual_leaf_cell_count is not None:
+        actual_leaf_cell_count = int(actual_leaf_cell_count)
+        if actual_leaf_cell_count < 0:
+            raise ValueError("actual leaf cell count must be nonnegative")
     return {
         "profile_id": "task43_initial_r13_v1",
         "expected_contract": {
@@ -199,6 +304,15 @@ def task43_profile_identity(cfg, modes) -> dict[str, object]:
                 TASK43_PORT_BOUNDARY_AMPLITUDE_SCALE_POLICY
             ),
             "raw_tensor_backend": TASK43_RAW_TENSOR_BACKEND,
+            "geometry_identity_scope": (
+                "raw_unrounded applies to variable-p tensor geometry/cache; "
+                "local-h forest and topological box keys still round to 12 digits"
+            ),
+            "geometry_identity_policy": "raw_unrounded",
+            "active_fe_dof_gate_policy": (
+                TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY
+            ),
+            "resource_profile_id": TASK43_HP_ADAPTIVITY_RESOURCE_PROFILE,
             "axis_plan_id": TASK43_AXIS_PLAN_ID,
             "axis_plan_sha256": TASK43_AXIS_PLAN_SHA256,
             "axis_cell_counts_xyz": list(TASK43_AXIS_CELL_COUNTS),
@@ -278,17 +392,57 @@ def task43_profile_identity(cfg, modes) -> dict[str, object]:
                 "stage4_variable_p_raw_tensor_backend",
                 "ffcx",
             ),
-            "axis_plan": {
-                "id": str(cfg.mesh_plan_id),
-                "sha256": str(cfg.mesh_plan_sha256),
-                "axes_nm": axes,
-                "cell_counts_xyz": cell_counts,
-                "global_cell_count": int(
-                    cell_counts[0] * cell_counts[1] * cell_counts[2]
+            "variable_p_geometry_identity_policy": str(
+                getattr(cfg, "stage4_variable_p_geometry_identity_policy", "rounded_12")
+            ),
+            "variable_p_geometry_identity_scope": (
+                "raw_unrounded applies to variable-p tensor geometry/cache; "
+                "local-h forest and topological box keys still round to 12 digits"
+            ),
+            "variable_p_active_fe_dof_gate_policy": str(
+                getattr(
+                    cfg,
+                    "stage4_variable_p_active_fe_dof_gate_policy",
+                    LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+                )
+            ),
+            "base_axis_plan": {
+                "id": cfg.mesh_plan_id,
+                "sha256": cfg.mesh_plan_sha256,
+                "axes_nm": base_axes,
+                "axes_source": base_axes_source,
+                "cell_counts_xyz": (
+                    None
+                    if base_axes is None
+                    else [len(base_axes[axis]) - 1 for axis in ("x", "y", "z")]
+                ),
+            },
+            "actual_mesh": {
+                "axes_nm": actual_axes,
+                "axes_source": actual_axes_source,
+                "common_cartesian_partition_cell_counts_xyz": (
+                    common_cartesian_partition_cell_counts
+                ),
+                "common_cartesian_partition_cell_count": (
+                    common_cartesian_partition_cell_count
+                ),
+                "global_cell_count": actual_global_cell_count,
+                "leaf_cell_count": actual_leaf_cell_count,
+                "cell_count_source": (
+                    "resolved_mesh_audit"
+                    if resolved_mesh_audit is not None
+                    else "not_supplied"
                 ),
             },
         },
+        "resource_profile": native_profile_facts(
+            TASK43_HP_ADAPTIVITY_RESOURCE_PROFILE
+        ),
     }
 
 
-__all__ = ["task43_initial_profile", "task43_profile_identity"]
+__all__ = [
+    "task43_initial_profile",
+    "task43_profile_identity",
+    "task43_watchdog_resource_gate_from_environment",
+]

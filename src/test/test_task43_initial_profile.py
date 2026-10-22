@@ -14,6 +14,7 @@ from benchmarks.task43_hp_adaptivity.profile import (
     TASK43_R13_MAX_N,
     TASK43_RAW_TENSOR_BACKEND,
     TASK43_SPARSE_CUTOFF_POLICY,
+    TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
     TASK43_VOLUME_QUADRATURE_DEGREE,
     TASK43_VOLUME_QUADRATURE_RULE,
     task43_initial_profile,
@@ -21,7 +22,10 @@ from benchmarks.task43_hp_adaptivity.profile import (
 )
 from src.common.modes_3d import outgoing_port_modes_3d
 from src.geometry.mesh_builder_3d import stage4_axis_plan
-from src.geometry.task43_hp_adaptivity_axis_plan import task43_axis_plan
+from src.geometry.task43_hp_adaptivity_axis_plan import (
+    TASK43_AXES_NM,
+    task43_axis_plan,
+)
 
 
 class Task43InitialProfileTests(unittest.TestCase):
@@ -71,6 +75,14 @@ class Task43InitialProfileTests(unittest.TestCase):
         self.assertEqual(
             cfg.stage4_variable_p_raw_tensor_backend,
             TASK43_RAW_TENSOR_BACKEND,
+        )
+        self.assertEqual(
+            cfg.stage4_variable_p_geometry_identity_policy,
+            "raw_unrounded",
+        )
+        self.assertEqual(
+            cfg.stage4_variable_p_active_fe_dof_gate_policy,
+            TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
         )
         expected_mode_keys = {
             key
@@ -130,7 +142,24 @@ class Task43InitialProfileTests(unittest.TestCase):
             rtol=0.0,
             atol=1.0e-15,
         )
-        self.assertEqual(resolved["axis_plan"]["global_cell_count"], 180)
+        self.assertEqual(
+            resolved["base_axis_plan"]["axes_nm"]["x"],
+            list(TASK43_AXES_NM["x"]),
+        )
+        self.assertIsNone(resolved["actual_mesh"]["axes_nm"])
+        self.assertIsNone(resolved["actual_mesh"]["global_cell_count"])
+        self.assertEqual(
+            identity["expected_contract"]["active_fe_dof_gate_policy"],
+            TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+        )
+        self.assertEqual(
+            identity["resource_profile"]["identity"],
+            "task43_hp_adaptivity_resource_v1",
+        )
+        self.assertEqual(
+            identity["resource_profile"]["resources"]["absolute_cap_bytes"],
+            192 * 1024**3,
+        )
         self.assertEqual(
             resolved["quadrature_degree"],
             {"volume": 15, "incident": 28, "ports": 28},
@@ -181,6 +210,50 @@ class Task43InitialProfileTests(unittest.TestCase):
                 outgoing_port_modes_3d(task43_initial_profile()),
             )["resolved"]["mode_selection"]["mode_inventory_sha256"],
         )
+
+    def test_actual_mesh_axes_and_leaf_count_are_not_their_cartesian_product(self):
+        cfg = task43_initial_profile()
+        modes = outgoing_port_modes_3d(cfg)
+        # One root cell is bisected in x/y/z.  The global union axes therefore
+        # describe a larger Cartesian integration partition than the 187-leaf
+        # local forest actually contains.
+        actual_axes = {
+            "x": [0.0, 8.25, 16.5, 33.5, 50.0],
+            "y": [0.0, 2.5, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0],
+            "z": [-10.0, -5.0, 0.0, 30.0, 60.0, 90.0, 120.0, 130.0],
+        }
+        identity = task43_profile_identity(
+            cfg,
+            modes,
+            resolved_axes_nm=actual_axes,
+            resolved_mesh_audit={
+                "global_cell_count": 187,
+                "leaf_cell_count": 187,
+            },
+        )
+        mesh = identity["resolved"]["actual_mesh"]
+        self.assertEqual(mesh["axes_nm"], actual_axes)
+        self.assertEqual(mesh["global_cell_count"], 187)
+        self.assertEqual(mesh["leaf_cell_count"], 187)
+        self.assertEqual(
+            mesh["common_cartesian_partition_cell_counts_xyz"],
+            {"x": 4, "y": 11, "z": 7},
+        )
+        self.assertEqual(mesh["common_cartesian_partition_cell_count"], 308)
+        self.assertEqual(
+            identity["resolved"]["base_axis_plan"]["axes_nm"]["x"],
+            list(TASK43_AXES_NM["x"]),
+        )
+
+    def test_mesh_counts_require_resolved_axes(self):
+        cfg = task43_initial_profile()
+        modes = outgoing_port_modes_3d(cfg)
+        with self.assertRaisesRegex(ValueError, "actual resolved mesh axes"):
+            task43_profile_identity(
+                cfg,
+                modes,
+                resolved_mesh_audit={"global_cell_count": 180},
+            )
 
 
 if __name__ == "__main__":

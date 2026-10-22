@@ -22,6 +22,7 @@ from petsc4py import PETSc
 
 from ..common.config_3d import (
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+    LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
     SimulationConfig3D,
     qualify_stage4_full3d_assembly_backend,
     resolve_stage4_full3d_assembly_backend,
@@ -706,6 +707,7 @@ def _dof_row_semantics(
     active_exact_sequence_fe_dofs: int,
     storage_carrier_fe_dofs: int,
     independent_trace_rows: int | None,
+    independent_active_fe_dofs: int | None = None,
     augmented_rows: int,
     auxiliary_rows: int,
 ) -> dict[str, Any]:
@@ -715,6 +717,11 @@ def _dof_row_semantics(
     storage = int(storage_carrier_fe_dofs)
     independent = (
         None if independent_trace_rows is None else int(independent_trace_rows)
+    )
+    independent_fe = (
+        None
+        if independent_active_fe_dofs is None
+        else int(independent_active_fe_dofs)
     )
     augmented = int(augmented_rows)
     auxiliary = int(auxiliary_rows)
@@ -730,10 +737,17 @@ def _dof_row_semantics(
                 "Augmented rows must equal independent trace plus auxiliary "
                 "rows when independent trace elimination is active."
             )
+    if independent_fe is not None and (
+        independent_fe < 0 or independent_fe > active
+    ):
+        raise ValueError(
+            "Independent active FE DoFs must not exceed the legacy active count."
+        )
     return {
         "num_active_exact_sequence_fe_dofs": active,
         "num_storage_carrier_fe_dofs": storage,
         "num_independent_trace_rows": independent,
+        "num_independent_active_fe_dofs": independent_fe,
         "num_augmented_rows": augmented,
         "dof_row_semantics": {
             "num_active_exact_sequence_fe_dofs": (
@@ -746,6 +760,10 @@ def _dof_row_semantics(
             "num_independent_trace_rows": (
                 "FE trace rows after cell-interior and Floquet-slave "
                 "elimination; null when that reduction is not active"
+            ),
+            "num_independent_active_fe_dofs": (
+                "post-hanging/Floquet independent trace rows plus active "
+                "cell-interior rows; populated for the Task43 variable-p path"
             ),
             "num_augmented_rows": (
                 "actual solved matrix rows including DtN auxiliary rows"
@@ -6747,6 +6765,16 @@ def _solve_stage4_dtn_port_total_field_impl(
                     variable_p_retain_local_schur_for_research
                 ),
                 raw_tensor_evaluator=raw_tensor_evaluator,
+                active_fe_dof_gate_policy=getattr(
+                    cfg,
+                    "stage4_variable_p_active_fe_dof_gate_policy",
+                    LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+                ),
+                geometry_identity_policy=getattr(
+                    cfg,
+                    "stage4_variable_p_geometry_identity_policy",
+                    "rounded_12",
+                ),
             )
             reduction_system = variable_p_reduction.system
         else:
@@ -7779,6 +7807,13 @@ def _solve_stage4_dtn_port_total_field_impl(
         active_exact_sequence_fe_dofs=active_exact_sequence_fe_dofs,
         storage_carrier_fe_dofs=storage_carrier_fe_dofs,
         independent_trace_rows=int(n_fe) if assembly_time_active else None,
+        independent_active_fe_dofs=(
+            None
+            if variable_p_reduction is None
+            else int(
+                variable_p_reduction.build_audit["independent_active_fe_dofs"]
+            )
+        ),
         augmented_rows=int(n_fe + n_aux),
         auxiliary_rows=int(n_aux),
     )
@@ -8005,6 +8040,13 @@ def _solve_stage4_dtn_port_total_field_impl(
         active_exact_sequence_fe_dofs=active_exact_sequence_fe_dofs,
         storage_carrier_fe_dofs=storage_carrier_fe_dofs,
         independent_trace_rows=independent_trace_rows,
+        independent_active_fe_dofs=(
+            None
+            if variable_p_reduction is None
+            else int(
+                variable_p_reduction.build_audit["independent_active_fe_dofs"]
+            )
+        ),
         augmented_rows=int(solve_A.getSize()[0]),
         auxiliary_rows=int(n_aux),
     )

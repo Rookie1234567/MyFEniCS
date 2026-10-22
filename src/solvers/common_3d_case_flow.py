@@ -483,6 +483,9 @@ def _direct_solve_failure_summary(
             "num_storage_carrier_fe_dofs"
         ),
         "num_independent_trace_rows": dtn_solver_info.get("num_independent_trace_rows"),
+        "num_independent_active_fe_dofs": dtn_solver_info.get(
+            "num_independent_active_fe_dofs"
+        ),
         "num_augmented_rows": dtn_solver_info.get("num_augmented_rows"),
         "dof_row_semantics": dtn_solver_info.get("dof_row_semantics"),
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
@@ -1940,6 +1943,9 @@ def run_prepared_3d_case_flow(
         "num_independent_trace_rows": None
         if dtn_solver_info is None
         else dtn_solver_info.get("num_independent_trace_rows"),
+        "num_independent_active_fe_dofs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("num_independent_active_fe_dofs"),
         "num_augmented_rows": None
         if dtn_solver_info is None
         else dtn_solver_info.get("num_augmented_rows"),

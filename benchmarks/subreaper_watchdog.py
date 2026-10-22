@@ -22,6 +22,8 @@ from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
 from src.runners.workflow_timebase import (TimebaseInconsistency, budget_elapsed,
     clock_info, clock_sample, ClockBudget, STRICT, POLICY_VERSION)
 
+_TASK43_RESOURCE_PROFILE_IDENTITY = 'task43_hp_adaptivity_resource_v1'
+
 
 def memory_envelope() -> dict:
     memory = wsl_memory_snapshot()
@@ -68,10 +70,18 @@ def memory_envelope() -> dict:
         if node_cap is not None:
             cap = min(cap, int(node_cap))
             planning = min(planning, cap)
-    return {**memory, 'effective_total_bytes': total,
-            'effective_available_bytes': available, 'reserve_bytes': reserve,
-            'launch_cap_bytes': cap, 'planning_cap_bytes': planning,
-            'cgroup_limits': ancestors}
+    envelope = {
+        **memory,
+        'effective_total_bytes': total,
+        'effective_available_bytes': available,
+        'reserve_bytes': reserve,
+        'launch_cap_bytes': cap,
+        'planning_cap_bytes': planning,
+        'cgroup_limits': ancestors,
+    }
+    if native == _TASK43_RESOURCE_PROFILE_IDENTITY:
+        envelope['resource_profile_identity'] = native
+    return envelope
 
 
 def _children() -> dict[int, tuple[int, int]]:
@@ -201,6 +211,26 @@ def _unreadable_sample_outcome(resource_stop_policy, attempts, elapsed_seconds):
             else 'MONITORING_LOST')
 
 
+def _legacy_resource_stop_reason(
+    *,
+    process_tree_rss_bytes: int,
+    launch_cap_bytes: int,
+    effective_available_bytes: int,
+    reserve_bytes: int,
+    process_tree_swap_bytes: int,
+) -> str | None:
+    """Apply the established RSS, reserve, and task-swap runtime gates."""
+
+    if (
+        int(process_tree_rss_bytes) >= int(launch_cap_bytes)
+        or int(effective_available_bytes) < int(reserve_bytes)
+        or process_tree_swap_bytes is None
+        or int(process_tree_swap_bytes) != 0
+    ):
+        return 'RESOURCE_CONTROLLED_STOP'
+    return None
+
+
 def _host_floor_swap_activity(task_swap_bytes, baseline, current):
     """Terminal swap wording for host-floor runs; always observation-only."""
     classification = _swap_observation(task_swap_bytes, baseline, current)['classification']
@@ -242,7 +272,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         'legacy', 'measured_tree_rss_only_v3', 'host_available_floor_v1'
     ):
         raise ValueError(f'unsupported resource_stop_policy: {resource_stop_policy!r}')
-    pss_sampling_policy = pss_sampling_policy or os.environ.get('PHYSICAL_WATCHDOG_PSS_POLICY', 'legacy')
+    native_profile_identity = os.environ.get('PHYSICAL_NATIVE_CAPACITY')
+    requested_pss_policy = pss_sampling_policy or os.environ.get(
+        'PHYSICAL_WATCHDOG_PSS_POLICY'
+    )
+    if (
+        native_profile_identity == _TASK43_RESOURCE_PROFILE_IDENTITY
+        and requested_pss_policy is None
+    ):
+        pss_sampling_policy = 'disabled_by_profile'
+    else:
+        pss_sampling_policy = requested_pss_policy or 'legacy'
     if pss_sampling_policy not in ('legacy', 'sampled', 'disabled_by_profile'):
         raise ValueError(f'unsupported PSS sampling policy: {pss_sampling_policy!r}')
     if rss_hard_limit_bytes is not None and int(rss_hard_limit_bytes) <= 0:
@@ -273,6 +313,50 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
     directory.mkdir(parents=True, exist_ok=False)
     envelope = memory_envelope()
     cap = envelope['launch_cap_bytes']
+    native_profile = None
+    native_resources = None
+    native_profile_sha256 = None
+    if native_profile_identity == _TASK43_RESOURCE_PROFILE_IDENTITY:
+        from src.io.native_capacity_profile import (
+            native_profile_facts,
+        )
+
+        native_profile = native_profile_facts(native_profile_identity)
+        native_resources = native_profile.get('resources')
+        native_profile_sha256 = hashlib.sha256(
+            json.dumps(
+                native_profile,
+                sort_keys=True,
+                separators=(',', ':'),
+                allow_nan=False,
+            ).encode('utf-8')
+        ).hexdigest()
+        if resource_stop_policy != native_resources['resource_stop_policy']:
+            raise ValueError(
+                'Task43 requires the profile-bound legacy RSS/reserve/swap gates'
+            )
+        if pss_sampling_policy != native_resources['pss_sampling_policy']:
+            raise ValueError('Task43 resource profile disables PSS sampling')
+        if stop_on_global_swap:
+            raise ValueError('Task43 observes global swap but does not gate on it')
+        if rss_hard_limit_bytes is not None or rss_warning_bytes is not None:
+            raise ValueError('Task43 cap must come from its effective memory profile')
+        if envelope.get('resource_profile_identity') != native_profile_identity:
+            raise RuntimeError('Task43 memory envelope has a different profile identity')
+        if int(envelope['launch_cap_bytes']) <= 0:
+            raise RuntimeError('Task43 effective launch cap is not positive')
+        if int(envelope['launch_cap_bytes']) > int(
+            native_resources['absolute_cap_bytes']
+        ):
+            raise RuntimeError('Task43 launch cap exceeds its absolute cap')
+        if int(envelope['planning_cap_bytes']) > int(
+            envelope['launch_cap_bytes']
+        ):
+            raise RuntimeError('Task43 planning cap exceeds its launch cap')
+        if int(envelope['reserve_bytes']) < int(
+            native_resources['reserve_min_bytes']
+        ):
+            raise RuntimeError('Task43 effective reserve is below its minimum')
     if resource_stop_policy == 'host_available_floor_v1':
         if int(envelope['effective_available_bytes']) < int(minimum_available_bytes):
             raise RuntimeError(
@@ -343,6 +427,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
             'measured_tree_rss_only_v3', 'host_available_floor_v1'
         ) else ('stop' if stop_on_global_swap else 'observe_only'),
     }
+    if native_profile_identity == _TASK43_RESOURCE_PROFILE_IDENTITY:
+        summary.update(
+            native_capacity_profile_identity=native_profile_identity,
+            native_capacity_profile_facts_sha256=native_profile_sha256,
+            native_capacity_resource_facts=native_resources,
+            launch_memory_envelope=envelope,
+        )
     clock_start = clock_sample() if timebase_guard else None
     clock_budget = ClockBudget(clock_start, policy=timebase_policy) if timebase_guard else None
     solve_budget = None
@@ -369,6 +460,31 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         with (directory / 'worker.log').open('w') as output, (directory / 'resources.jsonl').open('w') as timeline:
             environment = os.environ.copy()
             environment.update(worker_environment or {})
+            if native_profile_identity == _TASK43_RESOURCE_PROFILE_IDENTITY:
+                environment['PHYSICAL_NATIVE_CAPACITY'] = native_profile_identity
+                environment['PHYSICAL_WATCHDOG_RESOURCE_PROFILE_IDENTITY'] = (
+                    native_profile_identity
+                )
+                environment['PHYSICAL_WATCHDOG_RESOURCE_STOP_POLICY'] = (
+                    resource_stop_policy
+                )
+                if cap is not None:
+                    environment['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'] = str(
+                        int(cap)
+                    )
+                if envelope.get('reserve_bytes') is not None:
+                    environment['PHYSICAL_WATCHDOG_RESERVE_BYTES'] = str(
+                        int(envelope['reserve_bytes'])
+                    )
+                if envelope.get('planning_cap_bytes') is not None:
+                    environment['PHYSICAL_WATCHDOG_PLANNING_CAP_BYTES'] = str(
+                        int(envelope['planning_cap_bytes'])
+                    )
+                if (
+                    native_resources is not None
+                    and native_resources.get('require_zero_swap') is True
+                ):
+                    environment['PHYSICAL_WATCHDOG_REQUIRE_ZERO_SWAP'] = '1'
             if pss_sampling_policy == 'disabled_by_profile':
                 environment['PHYSICAL_WATCHDOG_PSS_POLICY'] = pss_sampling_policy
             if timebase_guard:
@@ -524,10 +640,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                             'USER_CONTROLLED_STOP' if requested_signal else None
                         )
                     else:
+                        resource_reason = _legacy_resource_stop_reason(
+                            process_tree_rss_bytes=sample['rss_bytes'],
+                            launch_cap_bytes=cap,
+                            effective_available_bytes=current['effective_available_bytes'],
+                            reserve_bytes=current['reserve_bytes'],
+                            process_tree_swap_bytes=sample['swap_bytes'],
+                        )
                         reason = (
-                        'RESOURCE_CONTROLLED_STOP' if sample['rss_bytes'] >= cap
-                        or current['effective_available_bytes'] < current['reserve_bytes']
-                        or sample['swap_bytes'] != 0 else
+                        resource_reason if resource_reason is not None else
                         'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
                         'TIMEBASE_INCONSISTENCY' if clock_issue else
                         'PERFORMANCE_CONTROLLED_STOP' if (

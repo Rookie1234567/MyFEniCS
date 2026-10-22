@@ -21,7 +21,10 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from benchmarks.task43_hp_adaptivity.profile import task43_initial_profile
+from benchmarks.task43_hp_adaptivity.profile import (
+    task43_initial_profile,
+    task43_watchdog_resource_gate_from_environment,
+)
 from src.adaptivity.stage4_local_h import (
     build_stage4_local_h_mesh_data,
     stage4_local_h_refinement_plan_payload,
@@ -62,6 +65,7 @@ _THREAD_ENV = (
 _SOURCE_FILES = (
     "benchmarks/task43_hp_adaptivity/h100_anchor.py",
     "benchmarks/task43_hp_adaptivity/profile.py",
+    "benchmarks/subreaper_watchdog.py",
     "src/adaptivity/exact_sequence_variable_p.py",
     "src/adaptivity/hcurl_broken_cell_trace.py",
     "src/adaptivity/hcurl_broken_trace_graph.py",
@@ -74,6 +78,7 @@ _SOURCE_FILES = (
     "src/constraints/floquet_3d.py",
     "src/geometry/mesh_builder_3d.py",
     "src/geometry/task43_hp_adaptivity_axis_plan.py",
+    "src/io/native_capacity_profile.py",
     "src/postprocessing/diffraction_3d.py",
     "src/postprocessing/physical_field_comparison.py",
     "src/postprocessing/physical_field_sampling.py",
@@ -645,9 +650,11 @@ def _compare_against_reference(
 def _check_environment(comm: MPI.Intracomm) -> dict[str, Any]:
     local_error = None
     threads = {name: os.environ.get(name) for name in _THREAD_ENV}
+    resource_gate = None
     try:
         if os.environ.get("_MYFENICS_NATIVE_QUALIFIED_ACTIVATION") != "1":
             raise RuntimeError("qualified native activation marker is missing")
+        resource_gate = task43_watchdog_resource_gate_from_environment()
         if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
             raise RuntimeError(
                 f"PETSc scalar type is not complex128: {PETSc.ScalarType}"
@@ -671,6 +678,9 @@ def _check_environment(comm: MPI.Intracomm) -> dict[str, Any]:
                 if error is not None
             )
         )
+    resource_gates = comm.allgather(resource_gate)
+    if any(gate != resource_gates[0] for gate in resource_gates[1:]):
+        raise RuntimeError("MPI ranks have different Task43 watchdog resource gates")
     return {
         "python": sys.executable,
         "python_version": sys.version.split()[0],
@@ -680,6 +690,7 @@ def _check_environment(comm: MPI.Intracomm) -> dict[str, Any]:
         "mpi_size": int(comm.size),
         "rank_affinity": comm.allgather(sorted(os.sched_getaffinity(0))),
         "math_threads": threads,
+        "task43_watchdog_resource_gate": resource_gates[0],
     }
 
 

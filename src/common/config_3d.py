@@ -20,6 +20,12 @@ ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND = "assembly_time_static_condensed"
 ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND = (
     "assembly_time_variable_p_condensed"
 )
+LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY = "task035d_90000"
+TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY = "task43_hp_adaptivity_192gib_v1"
+_VARIABLE_P_ACTIVE_FE_DOF_GATE_LIMITS = {
+    LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY: 90_000,
+    TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY: None,
+}
 _STAGE4_FULL3D_ASSEMBLY_BACKENDS = frozenset(
     {
         STANDARD_FULL_ASSEMBLY_BACKEND,
@@ -27,6 +33,17 @@ _STAGE4_FULL3D_ASSEMBLY_BACKENDS = frozenset(
         ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     }
 )
+
+
+def variable_p_active_fe_dof_gate_limit(policy: str) -> int | None:
+    """Resolve an explicit legacy or Task43 variable-p DoF gate policy."""
+
+    try:
+        return _VARIABLE_P_ACTIVE_FE_DOF_GATE_LIMITS[str(policy)]
+    except KeyError as exc:
+        raise ValueError(
+            f"unsupported variable-p active FE DoF gate policy: {policy!r}"
+        ) from exc
 
 
 @dataclass(frozen=True)
@@ -186,6 +203,12 @@ class SimulationConfig3D:
     # Task035d research opt-in. The JSON is bound to the actual cell-box
     # geometry and closes cell p3-p6 decisions onto shared edge/face modes.
     stage4_variable_p_cell_degree_plan: str | None = None
+    # Geometry identity and DoF admission for the variable-p research path.
+    # The legacy rounded keys and 90k gate remain the defaults.
+    stage4_variable_p_geometry_identity_policy: str = "rounded_12"
+    stage4_variable_p_active_fe_dof_gate_policy: str = (
+        LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY
+    )
     # Task035d research opt-in for one balanced dyadic local-h cycle.  The
     # plan is geometry/hash bound and is accepted only by the inactive-row-free
     # assembly-time backend.  None preserves the ordinary conforming mesh.

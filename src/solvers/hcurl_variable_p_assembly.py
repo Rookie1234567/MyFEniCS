@@ -1404,6 +1404,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
     geometry_tolerance: float = 1.0e-11,
+    geometry_identity_policy: str = "rounded_12",
     retain_local_schur_for_research: bool = False,
     raw_tensor_evaluator: Any | None = None,
 ) -> VariablePCondensedTraceSystem:
@@ -1475,6 +1476,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
             msh,
             cell,
             tolerance=float(geometry_tolerance),
+            geometry_identity_policy=geometry_identity_policy,
         )
         tag = int(tags[cell])
         policy_key = ("p6_actual_space", tag, *widths)
@@ -1537,6 +1539,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
                 np.dtype(compiled_form.dtype)
             ),
             "compiled_p6_element_hash": int(element.hash()),
+            "geometry_identity_policy": str(geometry_identity_policy),
             "raw_tensor_metadata_seconds": metadata_seconds,
             "raw_tensor_kernel_seconds_max": float(
                 comm.allreduce(local_kernel_seconds, op=MPI.MAX)

@@ -18,7 +18,11 @@ from typing import Any, Mapping, Sequence
 from mpi4py import MPI
 import numpy as np
 
-from src.common.config_3d import SimulationConfig3D
+from src.common.config_3d import (
+    LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+    SimulationConfig3D,
+    variable_p_active_fe_dof_gate_limit,
+)
 from src.geometry.mesh_builder_3d import AirBox3DMesh, stage4_axis_plan
 
 from .dyadic_hexa_broken_mesh import (
@@ -669,6 +673,14 @@ def build_stage4_local_h_mesh_data(
             else (4, 5, 6)
         )
     }
+    active_fe_dof_gate_policy = getattr(
+        cfg,
+        "stage4_variable_p_active_fe_dof_gate_policy",
+        LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+    )
+    active_fe_dof_gate_limit = variable_p_active_fe_dof_gate_limit(
+        active_fe_dof_gate_policy
+    )
     plan_file_sha256 = _file_sha256(resolved)
     audit = MappingProxyType(
         {
@@ -708,7 +720,16 @@ def build_stage4_local_h_mesh_data(
             "hanging_patch_count": len(forest.hanging_faces),
             "forest": dict(forest.audit),
             "carrier": dict(carrier.audit),
-            "full3d_equivalent_dof_gate_limit": 90_000,
+            "full3d_equivalent_dof_gate_policy": active_fe_dof_gate_policy,
+            "full3d_equivalent_dof_gate_limit": active_fe_dof_gate_limit,
+            "legacy_90k_gate_overridden": (
+                active_fe_dof_gate_limit is None
+            ),
+            "geometry_key_rounding_digits": 12,
+            "geometry_key_rounding_scope": (
+                "local-h topological box/forest identity keys; the raw_unrounded "
+                "variable-p policy applies only to volume tensor geometry/cache"
+            ),
             "ordinary_default_changed": False,
             "pde_accuracy_credit": False,
         }
@@ -760,6 +781,7 @@ def build_stage4_local_h_reduction_authority(
     *,
     phase_x: complex,
     phase_y: complex,
+    active_fe_dof_gate_policy: str = LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
 ) -> Stage4LocalHReductionAuthority:
     """Bind fixed trace and true variable interiors to physical roots."""
 
@@ -967,6 +989,13 @@ def build_stage4_local_h_reduction_authority(
     full3d_equivalent = int(
         entity_map.active_rows - hanging_slave_rows
     )
+    active_fe_dof_gate_limit = variable_p_active_fe_dof_gate_limit(
+        active_fe_dof_gate_policy
+    )
+    active_fe_dof_gate_pass = (
+        active_fe_dof_gate_limit is None
+        or full3d_equivalent <= active_fe_dof_gate_limit
+    )
     audit = MappingProxyType(
         {
             "schema_version": (
@@ -990,15 +1019,23 @@ def build_stage4_local_h_reduction_authority(
             "independent_trace_rows": (
                 constraints.independent_trace_rows
             ),
-            "active_fe_dof_gate_limit": 90_000,
-            "active_fe_dof_gate_pass": full3d_equivalent <= 90_000,
+            "active_fe_dof_gate_policy": active_fe_dof_gate_policy,
+            "active_fe_dof_gate_limit": active_fe_dof_gate_limit,
+            "active_fe_dof_gate_pass": active_fe_dof_gate_pass,
+            "legacy_90k_gate_overridden": (
+                active_fe_dof_gate_limit is None
+            ),
             "hanging_or_floquet_slave_rows_globally_numbered": False,
             "ordinary_default_changed": False,
         }
     )
-    if full3d_equivalent > 90_000:
+    if (
+        active_fe_dof_gate_limit is not None
+        and full3d_equivalent > active_fe_dof_gate_limit
+    ):
         raise RuntimeError(
-            "Task035d local-h candidate exceeds 90,000 "
+            f"{active_fe_dof_gate_policy} local-h candidate exceeds "
+            f"{active_fe_dof_gate_limit:,} "
             "Full3D-equivalent DoF"
         )
     return Stage4LocalHReductionAuthority(
