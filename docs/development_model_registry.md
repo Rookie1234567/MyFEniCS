@@ -1810,7 +1810,7 @@ Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 三对保存输出比较均通过既定�
 | 后续晋级 | transition 1继续真实解转移与下一轮标记；首轮h尚未完成Task43数值资格；后续仍需holdout与最终p6对照 | 迭代后续轮次、独立holdout和0.7nm缩比pilot均未完成；通过小模型或一轮中间规则不等于原尺寸生产资格 |
 | 本轮失败／未关闭项 | h watchdog记录`USER_CONTROLLED_STOP`，但来源身份未知；用户已明确表示没有手动停止，日志也没有发送方PID，且没有candidate recovered storage或Task43 record。h求解器只保存旧残差和R/T，`A_volume_total=null` | h资格为unknown/controlled_stop，既不称solver failure也不称Gate通过；已有比较包装启动问题及Y6_2模态加载守卫错误仍按工具/接线失败保留。Round-2 p-up 首次旧 full-active residual 为9.1353e−8，超过1e−9 preflight；同LU修正组件已通过、正式重试待运行。详细证据见[Task43总结](task43_hp_adaptivity/outcomes/summary.md)、[transition 1记录](task43_hp_adaptivity/outcomes/records/round1_selection_transition1_v1.json)和[修正组件记录](task43_hp_adaptivity/outcomes/records/same_lu_residual_correction_component_v1.json) |
 | 当前裁决 | p-up按冻结规则接受为transition 1（accepted updates=1）；首轮h数值资格unknown，最终精度及同精度成本优势未建立 | [AGENTS](task43_hp_adaptivity/AGENTS.md)、[codex_handoff](task43_hp_adaptivity/codex_handoff.md) |
-| Round-2 p-up 与同LU修正 | 首次实际 p-up 解的旧 full-active relative residual=9.1353e−8，超过 1e−9 preflight，未进入恢复/A6；默认关闭的同 LU 修正已在 27 单元 mixed-p 组件、observer/lifecycle 回归中通过，尚未正式重试 | [Round-2 失败与组件证据](task43_hp_adaptivity/outcomes/records/same_lu_residual_correction_component_v1.json)；组件不是正式精度结果或新接受转移 |
+| Round-2 p-up 与同LU修正 | 首次实际 p-up 解的旧 full-active relative residual=9.1353e−8，超过 1e−9 preflight；progress 到达内部场恢复后，在 live-observer 入口失败，尚未写 Task43 完整场 checkpoint/采样或运行独立 A6。默认关闭的同 LU 修正已在 27 单元 mixed-p 组件、observer/lifecycle 回归中通过，尚未正式重试 | [Round-2 失败与组件证据](task43_hp_adaptivity/outcomes/records/same_lu_residual_correction_component_v1.json)；组件不是正式精度结果或新接受转移 |
 
 后续每轮把真实实现、循环决策、完整物理与成本结果写入本任务 `outcomes/summary.md` 和 `response_vN.md`，再同步此节；不能以任务书、测试数量或旧分支的成功数据代替 Task43 的数值证据。
 
