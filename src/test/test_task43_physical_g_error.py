@@ -117,6 +117,15 @@ class Task43PhysicalGErrorTests(unittest.TestCase):
         self.assertEqual(report["marked_global_cell_ids_sha256"], permuted_report["marked_global_cell_ids_sha256"])
         self.assertGreaterEqual(report["captured_fraction"], 0.75)
 
+    def test_full_marking_handles_cumulative_roundoff(self) -> None:
+        ids = np.arange(10, dtype=np.int64)
+        contributions = np.ones(10, dtype=np.float64)
+        self.assertLess(float(np.cumsum(contributions / contributions.sum())[-1]), 1.0)
+        marked, report = dorfler_mark_physical_g(ids, contributions, theta=1.0)
+        np.testing.assert_array_equal(marked, ids)
+        self.assertEqual(report["minimal_count_before_tie_expansion"], 10)
+        self.assertEqual(report["captured_fraction"], 1.0)
+
     def test_zero_reference_raw_ratio_is_undefined_but_floor_ratio_is_finite(self) -> None:
         zeros = np.zeros((2, 3), dtype=np.complex128)
         candidate = np.ones((2, 3), dtype=np.complex128)

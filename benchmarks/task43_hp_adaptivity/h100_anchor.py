@@ -11,9 +11,11 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -26,16 +28,22 @@ from benchmarks.task43_hp_adaptivity.profile import (
     task43_profile_identity,
     task43_watchdog_resource_gate_from_environment,
 )
+from src.adaptivity.physical_g_error import physical_g_difference_metrics
 from src.adaptivity.stage4_local_h import (
     build_stage4_local_h_mesh_data,
     stage4_local_h_refinement_plan_payload,
 )
 from src.adaptivity.variable_p_degree_plan import cell_box_catalog
+from src.common.analytic_fields_3d import (
+    electric_field_code_values,
+    magnetic_field_code_values,
+)
 from src.common.config_3d import (
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     STANDARD_FULL_ASSEMBLY_BACKEND,
     resolve_stage4_full3d_assembly_backend,
 )
+from src.common.modes_3d import incident_power_3d
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.task43_hp_adaptivity_axis_plan import (
     TASK43_AXES_NM,
@@ -51,7 +59,18 @@ from src.postprocessing.physical_field_sampling import (
     prepare_cell_local_vector_field_export,
     sample_cell_local_vector_fields,
 )
-from src.solvers.dtn_port_3d import compute_stage4_independent_active_action
+from src.postprocessing.rta_3d import compute_volume_absorption_3d
+from src.solvers.dtn_port_3d import (
+    Stage4VariablePLiveView,
+    _deep_readonly_copy,
+    _gather_auxiliary_values,
+    _linear_residual,
+    _port_power_metrics,
+    _readonly_goal_context,
+    _write_port_outputs,
+    compute_stage4_independent_active_action,
+)
+from src.solvers.petsc_residual_correction import single_petsc_residual_correction
 from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
     run_stage4b_block_grating_3d_case,
 )
@@ -61,8 +80,10 @@ _CASES = {
     "empty_h_active_p3_mpi1": (1, "empty_h_active_p3"),
     "empty_h_active_p3_mpi2": (2, "empty_h_active_p3"),
     "current_active_p3_initial180_mpi1": (1, "empty_h_active_p3"),
+    "round1_candidate_mpi1": (1, "empty_h_active_p3"),
 }
 _CURRENT_CASE = "current_active_p3_initial180_mpi1"
+_ROUND1_CANDIDATE_CASE = "round1_candidate_mpi1"
 _THREAD_ENV = (
     "OMP_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
@@ -71,6 +92,8 @@ _THREAD_ENV = (
 )
 _SOURCE_FILES = (
     "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+    "src/adaptivity/physical_g_error.py",
     "benchmarks/task43_hp_adaptivity/profile.py",
     "benchmarks/subreaper_watchdog.py",
     "src/adaptivity/exact_sequence_variable_p.py",
@@ -104,6 +127,7 @@ _SOURCE_FILES = (
     "src/solvers/hcurl_variable_p_assembly.py",
     "src/solvers/hcurl_variable_p_reduction.py",
     "src/solvers/independent_active_action.py",
+    "src/solvers/petsc_residual_correction.py",
     "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
 )
 
@@ -188,6 +212,114 @@ def _validate_reference_run(
         "record_sha256": _sha256_file(record_path),
         "verified_artifact_sha256": verified,
     }
+
+
+def _validate_round1_candidate_inputs(
+    *,
+    candidate_plan_path: Path,
+    candidate_id: str,
+    parent_run_root: Path,
+    tightening_run_root: Path,
+    marking_record_path: Path,
+    acceptance_contract_path: Path,
+) -> tuple[dict[str, Any], str, dict[str, Any]]:
+    plan_path = candidate_plan_path.resolve()
+    plan_sha = _sha256_file(plan_path)
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    candidate = plan.get("task43_candidate")
+    if not isinstance(candidate, dict) or candidate.get("candidate_id") != candidate_id:
+        raise ValueError("candidate ID does not match the geometry-bound plan")
+    action = candidate.get("action")
+    if action not in {"p_up", "h_refine"}:
+        raise ValueError(f"unsupported Task43 candidate action: {action!r}")
+    provenance = candidate.get("provenance")
+    if not isinstance(provenance, dict):
+        raise TypeError("candidate plan is missing its frozen parent identity")
+    if (
+        plan.get("trace_degree") != 3
+        or plan.get("cell_interior_degree") != 6
+        or plan.get("variable_trace_from_cell_degrees") is not True
+        or len(plan.get("cell_interior_degrees", []))
+        != int(plan.get("expected_forest", {}).get("leaf_cell_count", -1))
+    ):
+        raise ValueError("candidate plan is not a complete p3-p6 degree map")
+    expected_empty_h = action == "p_up"
+    if bool(plan.get("allow_no_refinement", False)) is not expected_empty_h:
+        raise ValueError("candidate h/no-h policy does not match its action")
+
+    parent_record_path = parent_run_root / "task43_initial180_current_record.json"
+    parent_storage_path = parent_run_root / "recovered_solution_storage.npz"
+    parent_record = json.loads(parent_record_path.read_text(encoding="utf-8"))
+    parent_record_sha = _sha256_file(parent_record_path)
+    parent_storage_sha = _sha256_file(parent_storage_path)
+    if parent_record.get("case_id") != _CURRENT_CASE:
+        raise ValueError("candidate parent record is not the frozen 180-cell current")
+    if parent_record.get("gates", {}).get("pass") is not True:
+        raise ValueError("candidate parent did not pass its current hard gates")
+    if (
+        parent_record.get("solver", {}).get("case_status") != "completed"
+        or parent_record.get("solver", {}).get("official_result") is not True
+    ):
+        raise ValueError("candidate parent is not a gated completed numerical result")
+    if parent_record.get("recovered_solution_storage", {}).get("sha256") != parent_storage_sha:
+        raise ValueError("candidate parent recovered storage differs from its record")
+    if provenance.get("parent_case_record_sha256") != parent_record_sha:
+        raise ValueError("candidate plan is bound to another parent case record")
+    if provenance.get("parent_recovered_storage_sha256") != parent_storage_sha:
+        raise ValueError("candidate plan is bound to another parent recovered field")
+
+    tightening_record_path = tightening_run_root / "task43_initial180_current_record.json"
+    tightening_record = json.loads(tightening_record_path.read_text(encoding="utf-8"))
+    tightening_record_sha = _sha256_file(tightening_record_path)
+    tight_storage = tightening_record.get("same_lu_tightening", {}).get(
+        "recovered_solution_storage", {}
+    )
+    if provenance.get("tightening_record_sha256") != tightening_record_sha:
+        raise ValueError("candidate plan is bound to another same-LU tightening record")
+    if not isinstance(tight_storage, dict) or not tight_storage.get("sha256"):
+        raise ValueError("same-LU tightening record lacks corrected full field storage")
+    if _sha256_file(Path(tight_storage["file"])) != tight_storage["sha256"]:
+        raise ValueError("corrected same-LU field differs from its record")
+
+    marking_record_path = marking_record_path.resolve()
+    marking_record_sha = _sha256_file(marking_record_path)
+    marking_record = json.loads(marking_record_path.read_text(encoding="utf-8"))
+    if provenance.get("marking_record_sha256") != marking_record_sha:
+        raise ValueError("candidate plan is bound to another Dörfler marker record")
+    marked_ids = [int(value) for value in marking_record["dorfler"]["initial_marked_global_cell_ids"]]
+    if marked_ids != [int(value) for value in provenance.get("marked_global_cell_ids", [])]:
+        raise ValueError("candidate plan Dörfler cell IDs differ from the frozen record")
+    if marking_record["dorfler"].get("theta") != 0.5:
+        raise ValueError("candidate plan marker is not the frozen theta=0.5 set")
+
+    acceptance_contract_path = acceptance_contract_path.resolve()
+    acceptance_sha = _sha256_file(acceptance_contract_path)
+    if provenance.get("acceptance_contract_sha256") != acceptance_sha:
+        raise ValueError("candidate plan is bound to another acceptance contract")
+    acceptance = json.loads(acceptance_contract_path.read_text(encoding="utf-8"))
+    if acceptance.get("schema") != "task43.round1-acceptance-contract.v1":
+        raise ValueError("round-one acceptance contract schema is unknown")
+    for evidence_key, actual_sha in (
+        ("solver_tightening", tightening_record_sha),
+        ("tightening_marking", marking_record_sha),
+    ):
+        if acceptance["evidence"][evidence_key]["sha256"] != actual_sha:
+            raise ValueError(f"acceptance contract {evidence_key} evidence changed")
+
+    identity = {
+        "candidate_id": candidate_id,
+        "action": action,
+        "plan_path": str(plan_path),
+        "plan_sha256": plan_sha,
+        "parent_case_record_sha256": parent_record_sha,
+        "parent_recovered_storage_sha256": parent_storage_sha,
+        "tightening_record_sha256": tightening_record_sha,
+        "tightened_recovered_storage_sha256": str(tight_storage["sha256"]),
+        "marking_record_sha256": marking_record_sha,
+        "acceptance_contract_sha256": acceptance_sha,
+        "acceptance_contract_schema": acceptance["schema"],
+    }
+    return plan, plan_sha, identity
 
 
 def _sha256_json(value: Any) -> str:
@@ -275,10 +407,93 @@ def _assert_mesh_profile(
     mesh_data,
     axes: tuple[np.ndarray, ...],
     geometry_profile: str,
+    candidate_plan: dict[str, Any] | None = None,
+    candidate_plan_sha256: str | None = None,
 ) -> dict[str, Any]:
     cell_map = mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim)
     global_cells = int(cell_map.size_global)
     cell_counts = tuple(len(axis) - 1 for axis in axes)
+    if geometry_profile == "candidate_initial180":
+        if candidate_plan is None:
+            raise ValueError("candidate mesh validation requires its exact plan")
+        context = mesh_data.local_h_context
+        forest = context.forest
+        expected_forest = candidate_plan["expected_forest"]
+        forest_audit = context.audit["forest"]
+        root_catalog_sha256 = _sha256_json(
+            [
+                {"box": list(box), "material_tag": int(tag)}
+                for box, tag in zip(
+                    forest.root_boxes,
+                    forest.root_material_tags,
+                    strict=True,
+                )
+            ]
+        )
+        base_axes = tuple(
+            np.asarray(TASK43_AXES_NM[name], dtype=np.float64)
+            for name in ("x", "y", "z")
+        )
+        if any(
+            not set(axis.tolist()).issubset(set(actual.tolist()))
+            for axis, actual in zip(base_axes, axes, strict=True)
+        ):
+            raise RuntimeError("candidate mesh lost a frozen 180-cell base-axis breakpoint")
+        if global_cells != int(expected_forest["leaf_cell_count"]):
+            raise RuntimeError(
+                "candidate global cell count differs from its audited forest: "
+                f"mesh={global_cells}, plan={expected_forest['leaf_cell_count']}"
+            )
+        if len(forest.root_boxes) != int(expected_forest["root_cell_count"]):
+            raise RuntimeError("candidate forest root count differs from its plan")
+        if len(forest.leaves) != global_cells:
+            raise RuntimeError("candidate forest leaf count differs from the global mesh")
+        if len(context.cell_interior_degree_by_box) != global_cells:
+            raise RuntimeError("candidate degree map is not complete over actual leaves")
+        if (
+            candidate_plan_sha256 is None
+            or context.audit["plan_file_sha256"] != candidate_plan_sha256
+        ):
+            raise RuntimeError("candidate mesh did not load the supplied plan identity")
+        if forest_audit["leaf_catalog_sha256"] != expected_forest[
+            "leaf_catalog_sha256"
+        ]:
+            raise RuntimeError("candidate leaf catalogue differs from its plan")
+        if root_catalog_sha256 != expected_forest["root_catalog_sha256"]:
+            raise RuntimeError("candidate root catalogue differs from its plan")
+        if context.audit["cell_interior_degree_plan_sha256"] != candidate_plan[
+            "cell_interior_degree_plan_sha256"
+        ]:
+            raise RuntimeError("candidate degree map differs from its plan")
+        expected_bounds = ((0.0, 50.0), (0.0, 50.0), (-10.0, 130.0))
+        for axis, bounds in zip(axes, expected_bounds, strict=True):
+            if not np.isclose(axis[0], bounds[0]) or not np.isclose(axis[-1], bounds[1]):
+                raise RuntimeError(f"candidate mesh has unexpected domain endpoints: {axis}")
+        return {
+            "geometry_profile": geometry_profile,
+            "global_cells": global_cells,
+            "root_cell_count": len(forest.root_boxes),
+            "leaf_cell_count": len(forest.leaves),
+            "axis_union_interval_counts_xyz": list(cell_counts),
+            "axis_union_interval_product_not_global_cell_count": True,
+            "axes_nm": [axis.tolist() for axis in axes],
+            "axis_values_sha256": _sha256_json([axis.tolist() for axis in axes]),
+            "base_axis_values_sha256": _sha256_json(
+                [axis.tolist() for axis in base_axes]
+            ),
+            "leaf_catalog_sha256": str(
+                forest_audit["leaf_catalog_sha256"]
+            ),
+            "root_catalog_sha256": root_catalog_sha256,
+            "closure_split_counts": dict(
+                forest_audit["closure_split_counts"]
+            ),
+            "hanging_patch_count": int(context.audit["hanging_patch_count"]),
+            "plan_sha256": str(context.audit["plan_file_sha256"]),
+            "spacing_mode_resolved": str(mesh_data.mesh_spacing_mode_resolved),
+            "mesh_cell_type_resolved": str(mesh_data.mesh_cell_type_resolved),
+            "material_plane_alignment": mesh_data.material_plane_alignment,
+        }
     if geometry_profile == "h100":
         expected_global_cells = 36
         expected_counts = (3, 3, 4)
@@ -429,12 +644,20 @@ def _active_solution_storage(view) -> tuple[dict[str, np.ndarray], dict[str, Any
         "p6_owned_global_dof_block_ids",
         "p6_ghost_global_dof_block_ids",
     )
+    cell_degree_counts = dict(view.reduction.degree_plan.audit["cell_degree_counts"])
+    independent_trace_rows = int(view.reduction.system.active_trace_rows)
+    active_cell_interior_rows = int(
+        view.reduction.system.entity_map.active_cell_interior_rows
+    )
+    reduction_audit = view.reduction.build_audit
+    trace_constraint_audit = reduction_audit.get("trace_constraints") or {}
     metadata = {
         "representation": (
-            "active-p3 solution recovered into the full p6 carrier function; "
+            "variable-p active solution recovered into the full p6 carrier function; "
             "the local carrier vector includes ghost slots and a separate owned "
-            "coefficient segment is stored"
+            "coefficient segment is stored; cell-degree counts are recorded"
         ),
+        "active_cell_degree_counts": cell_degree_counts,
         "mpi_size": int(MPI.COMM_WORLD.size),
         "p6_field_local_vector_size": int(field.x.array.size),
         "p6_field_owned_vector": vector_layout(field.x.petsc_vec),
@@ -450,9 +673,23 @@ def _active_solution_storage(view) -> tuple[dict[str, np.ndarray], dict[str, Any
         "active_full_rhs_vector": vector_layout(view.recovered.active_full_rhs),
         "active_rows": int(view.reduction.system.entity_map.active_rows),
         "active_trace_rows": int(view.reduction.system.active_trace_rows),
-        "active_cell_interior_rows": int(
-            view.reduction.system.entity_map.active_cell_interior_rows
+        "active_cell_interior_rows": active_cell_interior_rows,
+        "independent_trace_rows": independent_trace_rows,
+        "independent_active_fe_dofs": (
+            independent_trace_rows + active_cell_interior_rows
         ),
+        "active_fe_dof_gate_policy": reduction_audit.get(
+            "active_fe_dof_gate_policy"
+        ),
+        "active_fe_dof_gate_limit": reduction_audit.get(
+            "active_fe_dof_gate_limit"
+        ),
+        "active_fe_dof_gate_pass": reduction_audit.get(
+            "active_fe_dof_gate_pass"
+        ),
+        "degree_plan_pass": view.reduction.degree_plan.audit.get("pass"),
+        "trace_constraints_pass": trace_constraint_audit.get("pass"),
+        "trace_constraints_status": trace_constraint_audit.get("status"),
         "p6_field_recovery_audit": dict(view.recovered.audit),
         "mesh_and_dof_order_arrays": {
             name: _array_identity(arrays[name]) for name in mesh_identity_arrays
@@ -474,10 +711,19 @@ def _field_capture(
     comm: MPI.Intracomm,
     reference_axes: tuple[np.ndarray, ...] | None,
     geometry_profile: str = "h100",
+    candidate_plan: dict[str, Any] | None = None,
+    candidate_plan_sha256: str | None = None,
+    sample_fields: bool = True,
 ) -> dict[str, Any]:
     export = prepare_cell_local_vector_field_export(field)
     axes = _mesh_axes(mesh_data.mesh, comm)
-    mesh_identity = _assert_mesh_profile(mesh_data, axes, geometry_profile)
+    mesh_identity = _assert_mesh_profile(
+        mesh_data,
+        axes,
+        geometry_profile,
+        candidate_plan=candidate_plan,
+        candidate_plan_sha256=candidate_plan_sha256,
+    )
     if reference_axes is not None and any(
         not np.array_equal(axis, reference_axis)
         for axis, reference_axis in zip(axes, reference_axes, strict=True)
@@ -485,7 +731,7 @@ def _field_capture(
         raise RuntimeError("candidate mesh axes differ from the native h100 mesh")
     samples: dict[str, dict[str, np.ndarray]] = {}
     sample_error = None
-    for order in (8, 10):
+    for order in ((8, 10) if sample_fields else ()):
         common_axes = [axes] if reference_axes is None else [reference_axes, axes]
         quadrature = build_common_volume_quadrature(
             common_axes, gauss_order=order
@@ -812,6 +1058,421 @@ def _compare_against_reference(
     }
 
 
+def _tightening_field_metrics(
+    reference: dict[str, np.ndarray],
+    candidate: dict[str, np.ndarray],
+    cfg,
+) -> dict[str, Any]:
+    points = reference["points_nm"]
+    weights = reference["weights_nm3"]
+    if not np.array_equal(points, candidate["points_nm"]):
+        raise ValueError("same-LU field samples use different quadrature points")
+    if not np.array_equal(weights, candidate["weights_nm3"]):
+        raise ValueError("same-LU field samples use different quadrature weights")
+    volume = float(
+        cfg.period_x * cfg.period_y * (cfg.domain_z_max - cfg.domain_z_min)
+    )
+    e_floor = float(np.sqrt(volume))
+    h_floor = e_floor * float(cfg.magnetic_field_scale_A_per_m)
+    background_e = electric_field_code_values(cfg, points)
+    background_h = cfg.magnetic_field_scale_A_per_m * magnetic_field_code_values(
+        cfg, points
+    )
+    reference_e_scattered = scattered_field_samples(
+        reference["E_total"], background_e
+    )
+    candidate_e_scattered = scattered_field_samples(
+        candidate["E_total"], background_e
+    )
+    reference_h_scattered = scattered_field_samples(
+        reference["H_total_A_per_m"], background_h
+    )
+    candidate_h_scattered = scattered_field_samples(
+        candidate["H_total_A_per_m"], background_h
+    )
+    return {
+        "E_total_code": weighted_vector_field_metrics(
+            reference["E_total"], candidate["E_total"], weights,
+            reference_norm_floor=e_floor,
+        ),
+        "curl_E_over_k0_code": weighted_vector_field_metrics(
+            reference["curl_E_total"] / cfg.k0,
+            candidate["curl_E_total"] / cfg.k0,
+            weights,
+            reference_norm_floor=e_floor,
+        ),
+        "H_total_A_per_m": weighted_vector_field_metrics(
+            reference["H_total_A_per_m"],
+            candidate["H_total_A_per_m"],
+            weights,
+            reference_norm_floor=h_floor,
+        ),
+        "E_scattered_code": weighted_vector_field_metrics(
+            reference_e_scattered,
+            candidate_e_scattered,
+            weights,
+            reference_norm_floor=e_floor,
+        ),
+        "H_scattered_A_per_m": weighted_vector_field_metrics(
+            reference_h_scattered,
+            candidate_h_scattered,
+            weights,
+            reference_norm_floor=h_floor,
+        ),
+        "G": physical_g_difference_metrics(
+            reference["E_total"],
+            candidate["E_total"],
+            reference["curl_E_total"],
+            candidate["curl_E_total"],
+            weights,
+            k0_per_nm=cfg.k0,
+            incident_g_norm_floor=float(np.sqrt(2.0 * volume)),
+        ),
+    }
+
+
+def _tightening_modal_metrics(
+    reference_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    def key(row: dict[str, Any]) -> tuple[str, int, int, str]:
+        return str(row["side"]), int(row["m"]), int(row["n"]), str(row["polarization"])
+
+    reference_keys = [key(row) for row in reference_rows]
+    candidate_keys = [key(row) for row in candidate_rows]
+    if reference_keys != candidate_keys or len(reference_keys) != 612:
+        raise ValueError("same-LU modal inventories differ or are incomplete")
+    reference_amplitudes = _complex_rows(reference_rows)
+    candidate_amplitudes = _complex_rows(candidate_rows)
+    delta = candidate_amplitudes - reference_amplitudes
+    groups: dict[str, Any] = {}
+    for side in ("top", "bottom"):
+        for polarization in ("s", "p"):
+            indices = [
+                index for index, row in enumerate(reference_rows)
+                if row["side"] == side and row["polarization"] == polarization
+            ]
+            reference_norm = float(np.linalg.norm(reference_amplitudes[indices]))
+            difference_norm = float(np.linalg.norm(delta[indices]))
+            groups[f"{side}_{polarization}"] = {
+                "entry_count": len(indices),
+                "reference_boundary_amplitude_l2": reference_norm,
+                "difference_boundary_amplitude_l2": difference_norm,
+                "raw_relative": difference_norm / reference_norm if reference_norm else None,
+                "relative_with_unit_modal_floor": difference_norm / max(reference_norm, 1.0),
+            }
+    power_delta = np.asarray(
+        [
+            abs(float(candidate["power_ratio"]) - float(reference["power_ratio"]))
+            for reference, candidate in zip(reference_rows, candidate_rows, strict=True)
+        ],
+        dtype=np.float64,
+    )
+    max_index = int(np.argmax(power_delta))
+    return {
+        "mode_count": len(reference_rows),
+        "ordered_mode_keys_sha256": _sha256_json(reference_keys),
+        "maximum_channel_power_absolute_difference": float(power_delta[max_index]),
+        "maximum_channel_power_difference_mode": list(reference_keys[max_index]),
+        "amplitude_groups": groups,
+    }
+
+
+def _same_lu_tightening(
+    view: Stage4VariablePLiveView,
+    *,
+    run_root: Path,
+    comm: MPI.Intracomm,
+    started: float,
+    initial_fields: dict[str, Any],
+) -> dict[str, Any]:
+    """Apply one existing-KSP residual correction and capture the new state."""
+
+    if view.port_operator_audit.get("pass") is not True:
+        raise RuntimeError("same-LU correction requires the qualified trace-only port audit")
+    checks = view.port_operator_audit.get("checks", {})
+    if checks.get("no_auxiliary_interior_columns") is not True:
+        raise RuntimeError("same-LU correction requires no auxiliary interior columns")
+    old_auxiliary_action = view.recovered.active_auxiliary_interior_action
+    if old_auxiliary_action is not None and float(old_auxiliary_action.norm()) != 0.0:
+        raise RuntimeError("same-LU correction found nonzero auxiliary interior action")
+
+    _log_stage(comm, started, "same_lu_residual_correction", "begin")
+    corrected_x, correction = single_petsc_residual_correction(
+        view.A, view.b, view.x, view.ksp
+    )
+    try:
+        modes = tuple(view.goal_context["modes"])
+        n_auxiliary = len(modes)
+        n_fem_tail = int(corrected_x.getSize()) - n_auxiliary
+        if n_auxiliary != 612 or n_fem_tail < 0:
+            raise RuntimeError("corrected vector does not contain the full ordered R13 tail")
+        old_auxiliary = _gather_auxiliary_values(
+            view.x, int(view.x.getSize()) - n_auxiliary, n_auxiliary, comm
+        )
+        stored_auxiliary = np.asarray(
+            view.goal_context["auxiliary_values"], dtype=np.complex128
+        )
+        if not np.array_equal(old_auxiliary, stored_auxiliary):
+            raise RuntimeError("original ordered modal tail differs from the observer context")
+        corrected_auxiliary = _gather_auxiliary_values(
+            corrected_x, n_fem_tail, n_auxiliary, comm
+        )
+        incident_projections = [
+            complex(value)
+            for value in view.goal_context["incident_projections"]
+        ]
+        corrected_port_metrics = _port_power_metrics(
+            view.config,
+            list(modes),
+            corrected_auxiliary,
+            incident_projections,
+        )
+        corrected_reduced_residual = _linear_residual(view.A, view.b, corrected_x)
+        corrected_recovered = view.reduction.recover(
+            corrected_x,
+            None,
+            active_full_rhs_override=view.recovered.active_full_rhs,
+        )
+        try:
+            updated_goal_context = dict(view.goal_context)
+            updated_goal_context["auxiliary_values"] = corrected_auxiliary
+            _log_stage(comm, started, "same_lu_recovery_and_a6", "begin")
+            condensed_residual = view.reduction.full_active_residual(
+                view.A, view.b, corrected_x, corrected_recovered
+            )
+            corrected_view = replace(
+                view,
+                field=corrected_recovered.field,
+                x=corrected_x,
+                recovered=corrected_recovered,
+                goal_context=_readonly_goal_context(updated_goal_context),
+                port_metrics=_deep_readonly_copy(corrected_port_metrics),
+                full_active_residual=_deep_readonly_copy(condensed_residual),
+                primal_solver_telemetry=_deep_readonly_copy(
+                    {
+                        **dict(view.primal_solver_telemetry),
+                        **corrected_reduced_residual,
+                        "corrected_condensed_full_active_residual": condensed_residual,
+                        "residual_correction": correction,
+                    }
+                ),
+            )
+            independent_active_action = compute_stage4_independent_active_action(
+                corrected_view
+            )
+            _log_stage(comm, started, "same_lu_recovery_and_a6", "end")
+
+            root_error = None
+            tight_root = run_root / "same_lu_tightening"
+            ports_root = tight_root / "ports"
+            if comm.rank == 0:
+                try:
+                    if tight_root.exists() and any(tight_root.iterdir()):
+                        raise FileExistsError(
+                            f"refusing to overwrite same-LU result {tight_root}"
+                        )
+                    ports_root.mkdir(parents=True, exist_ok=True)
+                except OSError as exc:
+                    root_error = f"{type(exc).__name__}: {exc}"
+            root_error = comm.bcast(root_error, root=0)
+            if root_error is not None:
+                raise RuntimeError(root_error)
+            comm.Barrier()
+
+            _log_stage(comm, started, "same_lu_volume_absorption", "begin")
+            corrected_volume = compute_volume_absorption_3d(
+                view.mesh_data,
+                view.config,
+                corrected_recovered.field,
+                tight_root / "volume",
+                incident_power=incident_power_3d(view.config),
+                port_metrics=corrected_port_metrics,
+            )
+            corrected_a_volume = corrected_volume.get("A_volume_total")
+            if corrected_a_volume is None or not np.isfinite(float(corrected_a_volume)):
+                raise ValueError("same-LU corrected A_volume_total is missing or non-finite")
+            corrected_a_volume = float(corrected_a_volume)
+            corrected_port_metrics["R_plus_T_plus_A_volume"] = float(
+                corrected_port_metrics["R_total"]
+                + corrected_port_metrics["T_total"]
+                + corrected_a_volume
+            )
+            corrected_port_metrics["energy_closure_error_dtn_port_modal_volume"] = float(
+                corrected_port_metrics["R_plus_T_plus_A_volume"] - 1.0
+            )
+            _log_stage(comm, started, "same_lu_volume_absorption", "end")
+
+            write_error = None
+            try:
+                _write_port_outputs(
+                    ports_root,
+                    view.config,
+                    list(modes),
+                    corrected_auxiliary,
+                    incident_projections,
+                    corrected_port_metrics,
+                    comm,
+                )
+            except Exception as exc:  # noqa: BLE001 - synchronize root-only output failures
+                if comm.rank == 0:
+                    write_error = f"{type(exc).__name__}: {exc}"
+            write_error = comm.bcast(write_error, root=0)
+            if write_error is not None:
+                raise RuntimeError(f"same-LU modal output failed: {write_error}")
+
+            _log_stage(comm, started, "same_lu_field_capture", "begin")
+            corrected_fields = _field_capture(
+                corrected_recovered.field,
+                view.mesh_data,
+                view.config,
+                comm,
+                None,
+                "initial_180",
+            )
+            corrected_storage_arrays, corrected_storage_metadata = (
+                _active_solution_storage(corrected_view)
+            )
+            _log_stage(comm, started, "same_lu_field_capture", "end")
+
+            result = None
+            result_error = None
+            if comm.rank == 0:
+                try:
+                    original_port_path = (
+                        run_root / "solve" / "dtn_port_diffraction_orders_3d.json"
+                    )
+                    corrected_port_path = (
+                        ports_root / "dtn_port_diffraction_orders_3d.json"
+                    )
+                    with original_port_path.open(encoding="utf-8") as stream:
+                        original_port = json.load(stream)
+                    with corrected_port_path.open(encoding="utf-8") as stream:
+                        corrected_port = json.load(stream)
+                    modal_metrics = _tightening_modal_metrics(
+                        original_port["orders"], corrected_port["orders"]
+                    )
+                    field_metrics = {
+                        order: _tightening_field_metrics(
+                            initial_sample,
+                            corrected_fields["samples"][order],
+                            view.config,
+                        )
+                        for order, initial_sample in initial_fields["samples"].items()
+                    }
+                    independent_gauge = independent_active_action[
+                        "full_solver_gauge_residual"
+                    ]
+                    independent_a6 = float(
+                        independent_gauge["relative_to_independent_rhs"]
+                    )
+                    condensed_relative = float(
+                        condensed_residual["linear_system_relative_residual"]
+                    )
+                    reduced_relative = float(
+                        corrected_reduced_residual["linear_system_relative_residual"]
+                    )
+                    corrected_closure = float(
+                        corrected_port_metrics["energy_closure_error_dtn_port_modal_volume"]
+                    )
+                    quality_gates = {
+                        "residual_correction_converged": bool(
+                            int(correction["ksp_converged_reason"]) > 0
+                        ),
+                        "explicit_reduced_system_residual_le_1e-9": bool(
+                            np.isfinite(reduced_relative) and reduced_relative <= 1.0e-9
+                        ),
+                        "condensed_full_active_residual_le_1e-9": bool(
+                            np.isfinite(condensed_relative)
+                            and condensed_relative <= 1.0e-9
+                        ),
+                        "independent_A6_relative_to_rhs_le_1e-6": bool(
+                            bool(independent_gauge["finite"])
+                            and np.isfinite(independent_a6)
+                            and independent_a6 <= 1.0e-6
+                        ),
+                        "independent_A6_direct_target_le_1e-8": bool(
+                            bool(independent_gauge["finite"])
+                            and np.isfinite(independent_a6)
+                            and independent_a6 <= 1.0e-8
+                        ),
+                        "A_volume_finite": bool(np.isfinite(corrected_a_volume)),
+                        "energy_closure_abs_le_1e-5": bool(
+                            np.isfinite(corrected_closure)
+                            and abs(corrected_closure) <= 1.0e-5
+                        ),
+                    }
+                    quality_gates["pass"] = all(
+                        value is True for value in quality_gates.values()
+                    )
+                    samples_path = tight_root / "field_samples_q8_q10.npz"
+                    _write_samples(
+                        samples_path,
+                        corrected_fields["samples"],
+                        tuple(
+                            np.asarray(corrected_fields["axes_nm"][axis], dtype=np.float64)
+                            for axis in ("x", "y", "z")
+                        ),
+                    )
+                    storage_path = tight_root / "recovered_solution_storage.npz"
+                    np.savez_compressed(storage_path, **corrected_storage_arrays)
+                    result = {
+                        "classification": "same_matrix_rhs_and_factor_one_residual_correction_diagnostic",
+                        "matrix_or_rhs_reassembled": False,
+                        "ksp_operator_replaced": False,
+                        "residual_correction": correction,
+                        "explicit_reduced_system_residual": corrected_reduced_residual,
+                        "condensed_active_residual": condensed_residual,
+                        "independent_active_action": independent_active_action,
+                        "corrected_port_metrics": {
+                            name: corrected_port_metrics[name]
+                            for name in (
+                                "R_total", "T_total", "R00_s", "R00_p", "R00_total",
+                                "R_plus_T_plus_A_volume",
+                                "energy_closure_error_dtn_port_modal_volume",
+                            )
+                        },
+                        "corrected_A_volume_total": corrected_a_volume,
+                        "quality_gates": quality_gates,
+                        "field_difference_from_initial_q8_q10": field_metrics,
+                        "modal_difference_from_initial": modal_metrics,
+                        "field_samples": {
+                            "file": str(samples_path),
+                            "sha256": _sha256_file(samples_path),
+                            "rule_orders": [8, 10],
+                            "point_counts": {
+                                key: int(value["weights_nm3"].size)
+                                for key, value in corrected_fields["samples"].items()
+                            },
+                        },
+                        "recovered_solution_storage": {
+                            "file": str(storage_path),
+                            "sha256": _sha256_file(storage_path),
+                            "arrays": {
+                                name: _array_identity(values)
+                                for name, values in corrected_storage_arrays.items()
+                            },
+                            **corrected_storage_metadata,
+                        },
+                        "port_outputs": {
+                            "directory": str(ports_root),
+                            "orders_sha256": _sha256_file(corrected_port_path),
+                        },
+                        "case_elapsed_at_completion_seconds": time.perf_counter() - started,
+                    }
+                except Exception as exc:  # noqa: BLE001 - broadcast root comparison failures collectively
+                    result_error = f"{type(exc).__name__}: {exc}"
+            result, result_error = comm.bcast((result, result_error), root=0)
+            if result_error is not None:
+                raise RuntimeError(f"same-LU postprocessing failed: {result_error}")
+            _log_stage(comm, started, "same_lu_tightening", "end")
+            return result
+        finally:
+            corrected_recovered.destroy()
+    finally:
+        corrected_x.destroy()
+
+
 def _check_environment(comm: MPI.Intracomm) -> dict[str, Any]:
     local_error = None
     threads = {name: os.environ.get(name) for name in _THREAD_ENV}
@@ -882,15 +1543,33 @@ def _run(
     run_root: Path,
     reference_run_root: Path | None,
     parallel_reference_run_root: Path | None,
+    same_lu_tightening_enabled: bool = False,
+    candidate_plan_path: Path | None = None,
+    candidate_id: str | None = None,
+    candidate_parent_run_root: Path | None = None,
+    candidate_tightening_run_root: Path | None = None,
+    candidate_marking_record: Path | None = None,
+    candidate_acceptance_contract: Path | None = None,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
     expected_size, kind = _CASES[case]
     current_case = case == _CURRENT_CASE
-    geometry_profile = "initial_180" if current_case else "h100"
+    candidate_case = case == _ROUND1_CANDIDATE_CASE
+    geometry_profile = "initial_180" if current_case or candidate_case else "h100"
+    candidate_plan: dict[str, Any] | None = None
+    candidate_plan_sha256: str | None = None
+    candidate_identity: dict[str, Any] | None = None
     if int(comm.size) != expected_size:
         raise RuntimeError(f"case {case} requires MPI size {expected_size}, got {comm.size}")
-    _log_stage(comm, started, "preflight", "begin", case_id=case)
+    _log_stage(
+        comm,
+        started,
+        "preflight",
+        "begin",
+        case_id=case,
+        candidate_id=candidate_id if candidate_case else None,
+    )
     environment = _check_environment(comm)
     root_contract = (
         str(run_root.resolve()),
@@ -898,6 +1577,20 @@ def _run(
         None
         if parallel_reference_run_root is None
         else str(parallel_reference_run_root.resolve()),
+        None if candidate_plan_path is None else str(candidate_plan_path.resolve()),
+        candidate_id,
+        None
+        if candidate_parent_run_root is None
+        else str(candidate_parent_run_root.resolve()),
+        None
+        if candidate_tightening_run_root is None
+        else str(candidate_tightening_run_root.resolve()),
+        None
+        if candidate_marking_record is None
+        else str(candidate_marking_record.resolve()),
+        None
+        if candidate_acceptance_contract is None
+        else str(candidate_acceptance_contract.resolve()),
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
@@ -910,6 +1603,20 @@ def _run(
         None
         if root_contract[2] is None
         else Path(root_contract[2])
+    )
+    candidate_plan_path = None if root_contract[3] is None else Path(root_contract[3])
+    candidate_id = root_contract[4]
+    candidate_parent_run_root = (
+        None if root_contract[5] is None else Path(root_contract[5])
+    )
+    candidate_tightening_run_root = (
+        None if root_contract[6] is None else Path(root_contract[6])
+    )
+    candidate_marking_record = (
+        None if root_contract[7] is None else Path(root_contract[7])
+    )
+    candidate_acceptance_contract = (
+        None if root_contract[8] is None else Path(root_contract[8])
     )
     root_error = None
     if comm.rank == 0:
@@ -925,6 +1632,46 @@ def _run(
     if root_error is not None:
         raise RuntimeError(root_error)
     comm.Barrier()
+
+    if candidate_case:
+        if any(
+            value is None
+            for value in (
+                candidate_plan_path,
+                candidate_id,
+                candidate_parent_run_root,
+                candidate_tightening_run_root,
+                candidate_marking_record,
+                candidate_acceptance_contract,
+            )
+        ):
+            raise ValueError("round-one candidate case requires all frozen inputs")
+        (
+            candidate_plan,
+            candidate_plan_sha256,
+            candidate_identity,
+        ) = _validate_round1_candidate_inputs(
+            candidate_plan_path=candidate_plan_path,
+            candidate_id=str(candidate_id),
+            parent_run_root=candidate_parent_run_root,
+            tightening_run_root=candidate_tightening_run_root,
+            marking_record_path=candidate_marking_record,
+            acceptance_contract_path=candidate_acceptance_contract,
+        )
+        candidate_plan_copy = run_root / "candidate_plan.json"
+        copy_error = None
+        if comm.rank == 0:
+            try:
+                shutil.copyfile(candidate_plan_path, candidate_plan_copy)
+                if _sha256_file(candidate_plan_copy) != candidate_plan_sha256:
+                    raise RuntimeError("copied candidate plan hash changed")
+            except (OSError, RuntimeError) as exc:
+                copy_error = f"{type(exc).__name__}: {exc}"
+        copy_error = comm.bcast(copy_error, root=0)
+        if copy_error is not None:
+            raise RuntimeError(copy_error)
+        comm.Barrier()
+        candidate_identity["run_plan_path"] = str(candidate_plan_copy)
 
     reference_identities: dict[str, Any] = {}
     references = []
@@ -987,7 +1734,13 @@ def _run(
     cfg = _h100_config(
         kind=kind,
         case_name=(
-            f"task43_initial180_{case}" if current_case else f"task43_h100_{case}"
+            f"task43_initial180_{case}"
+            if current_case
+            else (
+                f"task43_{candidate_id}"
+                if candidate_case
+                else f"task43_h100_{case}"
+            )
         ),
         geometry_profile=geometry_profile,
     )
@@ -1006,50 +1759,56 @@ def _run(
             )
     local_h_plan_identity = None
     if kind == "empty_h_active_p3":
-        boxes = cell_box_catalog(mesh_data.mesh)
-        plan = stage4_local_h_refinement_plan_payload(
-            cfg,
-            (),
-            comm_size=comm.size,
-            trace_degree=3,
-            cell_interior_degree=6,
-            provenance={
-                "purpose": (
-                    "Task43 frozen initial-mesh active-p3 current"
-                    if current_case
-                    else "Task43 empty-h active-p3 same-mesh anchor"
-                ),
-                "mesh_role": (
-                    "frozen interface-fitted 180-cell 3x10x6 Task43 start"
-                    if current_case
-                    else "resolved boundary-fitted h100 36-cell geometry"
-                ),
-                "active_degree": 3,
-                "formal_candidate": False,
-            },
-            cell_interior_degree_overrides={box: 3 for box in boxes},
-            variable_trace_from_cell_degrees=True,
-            allow_no_refinement=True,
-        )
-        expected_leaf_count = int(
-            mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global
-        )
-        if plan["expected_forest"]["leaf_cell_count"] != expected_leaf_count:
-            raise RuntimeError("empty-h active plan changed the resolved cell set")
-        plan_path = run_root / "empty_h_active_p3_plan.json"
-        plan_error = None
-        if comm.rank == 0:
-            try:
-                plan_path.write_text(
-                    json.dumps(plan, indent=2, sort_keys=True) + "\n",
-                    encoding="utf-8",
-                )
-            except OSError as exc:
-                plan_error = f"{type(exc).__name__}: {exc}"
-        plan_error = comm.bcast(plan_error, root=0)
-        if plan_error is not None:
-            raise RuntimeError(plan_error)
-        comm.Barrier()
+        if candidate_case:
+            assert candidate_plan is not None
+            assert candidate_plan_sha256 is not None
+            plan = candidate_plan
+            plan_path = run_root / "candidate_plan.json"
+        else:
+            boxes = cell_box_catalog(mesh_data.mesh)
+            plan = stage4_local_h_refinement_plan_payload(
+                cfg,
+                (),
+                comm_size=comm.size,
+                trace_degree=3,
+                cell_interior_degree=6,
+                provenance={
+                    "purpose": (
+                        "Task43 frozen initial-mesh active-p3 current"
+                        if current_case
+                        else "Task43 empty-h active-p3 same-mesh anchor"
+                    ),
+                    "mesh_role": (
+                        "frozen interface-fitted 180-cell 3x10x6 Task43 start"
+                        if current_case
+                        else "resolved boundary-fitted h100 36-cell geometry"
+                    ),
+                    "active_degree": 3,
+                    "formal_candidate": False,
+                },
+                cell_interior_degree_overrides={box: 3 for box in boxes},
+                variable_trace_from_cell_degrees=True,
+                allow_no_refinement=True,
+            )
+            expected_leaf_count = int(
+                mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global
+            )
+            if plan["expected_forest"]["leaf_cell_count"] != expected_leaf_count:
+                raise RuntimeError("empty-h active plan changed the resolved cell set")
+            plan_path = run_root / "empty_h_active_p3_plan.json"
+            plan_error = None
+            if comm.rank == 0:
+                try:
+                    plan_path.write_text(
+                        json.dumps(plan, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
+                except OSError as exc:
+                    plan_error = f"{type(exc).__name__}: {exc}"
+            plan_error = comm.bcast(plan_error, root=0)
+            if plan_error is not None:
+                raise RuntimeError(plan_error)
+            comm.Barrier()
         cfg.stage4_local_h_refinement_plan = str(plan_path)
         mesh_data = build_stage4_local_h_mesh_data(
             cfg,
@@ -1057,24 +1816,50 @@ def _run(
             comm=comm,
         )
         axes = _mesh_axes(mesh_data.mesh, comm)
-        _assert_mesh_profile(mesh_data, axes, geometry_profile)
+        mesh_audit_profile = (
+            "candidate_initial180" if candidate_case else geometry_profile
+        )
+        actual_mesh_identity = _assert_mesh_profile(
+            mesh_data,
+            axes,
+            mesh_audit_profile,
+            candidate_plan=plan if candidate_case else None,
+            candidate_plan_sha256=candidate_plan_sha256,
+        )
+        actual_degree_counts = dict(
+            mesh_data.local_h_context.audit["cell_interior_degree_counts"]
+        )
+        local_h_context_audit = mesh_data.local_h_context.audit
         local_h_plan_identity = {
             "plan_sha256": _sha256_file(plan_path),
-            "root_cell_count": plan["expected_forest"]["root_cell_count"],
-            "leaf_cell_count": plan["expected_forest"]["leaf_cell_count"],
+            "candidate_id": candidate_id if candidate_case else None,
+            "action": plan.get("task43_candidate", {}).get("action"),
+            "root_cell_count": int(local_h_context_audit["root_cell_count"]),
+            "leaf_cell_count": int(local_h_context_audit["leaf_cell_count"]),
             "marked_root_count": len(plan["marked_root_boxes"]),
-            "cell_degree_counts": {
-                "p3": len(plan["cell_interior_degrees"]),
-                "p4_p5_p6": 0,
-            },
+            "cell_interior_degree_counts": actual_degree_counts,
+            "leaf_catalog_sha256": actual_mesh_identity.get(
+                "leaf_catalog_sha256"
+            ),
+            "root_catalog_sha256": actual_mesh_identity.get(
+                "root_catalog_sha256"
+            ),
+            "closure_split_counts": actual_mesh_identity.get(
+                "closure_split_counts"
+            ),
+            "hanging_patch_count": actual_mesh_identity.get(
+                "hanging_patch_count"
+            ),
             "trace_degree": int(plan["trace_degree"]),
             "cell_interior_degree": int(plan["cell_interior_degree"]),
             "variable_trace_from_cell_degrees": bool(
                 plan["variable_trace_from_cell_degrees"]
             ),
-            "allow_no_refinement": bool(plan["allow_no_refinement"]),
+            "allow_no_refinement": bool(plan.get("allow_no_refinement", False)),
         }
     if current_case:
+        mesh_data.mesh.topology.create_connectivity(mesh_data.mesh.topology.dim, 0)
+    if candidate_case:
         mesh_data.mesh.topology.create_connectivity(mesh_data.mesh.topology.dim, 0)
     _log_stage(
         comm,
@@ -1083,8 +1868,17 @@ def _run(
         "end",
         global_cells=int(mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global),
         axis_cell_counts_xyz=[len(axis) - 1 for axis in axes],
-        local_h_empty=kind == "empty_h_active_p3",
-        geometry_profile=geometry_profile,
+        local_h_allow_no_refinement=(
+            None
+            if local_h_plan_identity is None
+            else bool(local_h_plan_identity["allow_no_refinement"])
+        ),
+        base_geometry_profile=geometry_profile,
+        actual_mesh_profile=(
+            "candidate_local_h_from_initial180"
+            if candidate_case
+            else geometry_profile
+        ),
     )
 
     backend_audit = resolve_stage4_full3d_assembly_backend(cfg, apply=False)
@@ -1099,13 +1893,21 @@ def _run(
     captured: dict[str, Any] = {}
 
     def capture(field, live_mesh_data, live_cfg, goal_context) -> None:
+        field_mesh_profile = (
+            "candidate_initial180" if candidate_case else geometry_profile
+        )
         captured["fields"] = _field_capture(
             field,
             live_mesh_data,
             live_cfg,
             comm,
             reference_axes,
-            geometry_profile,
+            field_mesh_profile,
+            candidate_plan=candidate_plan if candidate_case else None,
+            candidate_plan_sha256=(
+                candidate_plan_sha256 if candidate_case else None
+            ),
+            sample_fields=not candidate_case,
         )
         modes = goal_context["modes"]
         captured["mode_count"] = len(modes)
@@ -1113,7 +1915,7 @@ def _run(
             [str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)]
             for mode in modes
         ]
-        if current_case:
+        if current_case or candidate_case:
             captured["resolved_profile_identity"] = task43_profile_identity(
                 live_cfg,
                 modes,
@@ -1142,6 +1944,14 @@ def _run(
 
     def active_observer(view) -> None:
         capture(view.field, view.mesh_data, view.config, view.goal_context)
+        captured["distinct_physical_trace_degrees"] = sorted(
+            {
+                int(value)
+                for value in view.reduction.degree_plan.audit[
+                    "trace_degree_values"
+                ]
+            }
+        )
         captured["independent_active_action"] = (
             compute_stage4_independent_active_action(view)
         )
@@ -1161,10 +1971,21 @@ def _run(
                 "allow_no_refinement",
             )
         }
-        if current_case:
+        captured["local_h_audit"]["closure_split_counts"] = dict(
+            audit["forest"]["closure_split_counts"]
+        )
+        if current_case or candidate_case:
             storage_arrays, storage_metadata = _active_solution_storage(view)
             captured["solution_storage_arrays"] = storage_arrays
             captured["solution_storage_metadata"] = storage_metadata
+            if same_lu_tightening_enabled:
+                captured["same_lu_tightening"] = _same_lu_tightening(
+                    view,
+                    run_root=run_root,
+                    comm=comm,
+                    started=started,
+                    initial_fields=captured["fields"],
+                )
 
     _log_stage(comm, started, "solve_and_observe", "begin")
     summary = run_stage4b_block_grating_3d_case(
@@ -1194,7 +2015,11 @@ def _run(
         record_path = run_root / (
             "task43_initial180_current_record.json"
             if current_case
-            else "task43_h100_anchor_record.json"
+            else (
+                "task43_round1_candidate_record.json"
+                if candidate_case
+                else "task43_h100_anchor_record.json"
+            )
         )
         try:
             orders_path = run_root / "solve" / "dtn_port_diffraction_orders_3d.json"
@@ -1214,17 +2039,23 @@ def _run(
                     "serialized channels differ from actual ordered mode inventory"
                 )
             fields = captured["fields"]
-            samples_path = run_root / "field_samples_q8_q10.npz"
-            _write_samples(samples_path, fields["samples"], axes)
+            samples_path = None
+            if not candidate_case:
+                samples_path = run_root / "field_samples_q8_q10.npz"
+                _write_samples(samples_path, fields["samples"], axes)
             storage_record = None
-            if current_case:
+            if current_case or candidate_case:
                 storage_arrays = captured.get("solution_storage_arrays")
                 storage_metadata = captured.get("solution_storage_metadata")
                 if not isinstance(storage_arrays, dict) or not isinstance(
                     storage_metadata, dict
                 ):
                     raise RuntimeError("current case did not capture recovered coefficients")
-                storage_path = run_root / "recovered_solution_storage.npz"
+                storage_path = run_root / (
+                    "recovered_solution_storage.npz"
+                    if current_case
+                    else "candidate_recovered_solution_storage.npz"
+                )
                 np.savez_compressed(storage_path, **storage_arrays)
                 storage_record = {
                     "file": str(storage_path),
@@ -1241,9 +2072,13 @@ def _run(
             a_volume = float(a_volume_value)
 
             gates: dict[str, Any] = {
-                ("solver_completed" if current_case else "solver_completed_and_official"): bool(
+                ("solver_completed" if current_case or candidate_case else "solver_completed_and_official"): bool(
                     summary.get("case_status") == "completed"
-                    and (current_case or summary.get("official_result") is True)
+                    and (
+                        current_case
+                        or candidate_case
+                        or summary.get("official_result") is True
+                    )
                 ),
                 "all_612_ordered_modes_present": len(rows) == 612,
             }
@@ -1260,7 +2095,7 @@ def _run(
                 ]
                 condensed = captured["condensed_residual"]
                 a6_relative = independent["relative_to_independent_rhs"]
-                if current_case:
+                if current_case or candidate_case:
                     gates["independent_A6_relative_to_rhs_le_1e-6"] = bool(
                         independent["finite"]
                         and np.isfinite(a6_relative)
@@ -1276,7 +2111,7 @@ def _run(
                             and np.isfinite(a6_relative)
                             and a6_relative <= 1.0e-8
                         ),
-                        "classification": "diagnostic_only_not_current_hard_gate",
+                        "classification": "diagnostic_only_not_hard_gate",
                     }
                 else:
                     gates["independent_A6_relative_to_rhs_le_1e-9"] = bool(
@@ -1288,7 +2123,22 @@ def _run(
                     np.isfinite(condensed["linear_system_relative_residual"])
                     and condensed["linear_system_relative_residual"] <= 1.0e-9
                 )
-            if current_case:
+                if candidate_case:
+                    storage_metadata = captured.get("solution_storage_metadata", {})
+                    local_h_audit = captured.get("local_h_audit", {})
+                    gates["local_h_closure_pass"] = bool(
+                        local_h_audit.get("pass") is True
+                    )
+                    gates["variable_p_degree_plan_pass"] = bool(
+                        storage_metadata.get("degree_plan_pass") is True
+                    )
+                    gates["trace_constraint_closure_pass"] = bool(
+                        storage_metadata.get("trace_constraints_pass") is True
+                    )
+                    gates["active_fe_dof_resource_gate_pass"] = bool(
+                        storage_metadata.get("active_fe_dof_gate_pass") is True
+                    )
+            if current_case or candidate_case:
                 closure = abs(
                     float(port_payload["metrics"]["R_total"])
                     + float(port_payload["metrics"]["T_total"])
@@ -1337,26 +2187,69 @@ def _run(
             gates["pass"] = all(value is True for value in gates.values())
             gates["status"] = "passed" if gates["pass"] else "failed"
             task43_gated_official_result = bool(
-                current_case
+                (current_case or candidate_case)
                 and gates["pass"]
                 and summary.get("case_status") == "completed"
             )
+            storage_metadata = captured.get("solution_storage_metadata")
+            active_space_summary = None
+            if isinstance(storage_metadata, dict):
+                active_space_summary = {
+                    key: storage_metadata.get(key)
+                    for key in (
+                        "active_cell_degree_counts",
+                        "active_trace_rows",
+                        "active_cell_interior_rows",
+                        "independent_trace_rows",
+                        "independent_active_fe_dofs",
+                        "active_fe_dof_gate_policy",
+                        "active_fe_dof_gate_limit",
+                        "active_fe_dof_gate_pass",
+                        "degree_plan_pass",
+                        "trace_constraints_pass",
+                        "trace_constraints_status",
+                    )
+                }
+            local_h_plan_record = None
+            if local_h_plan_identity is not None:
+                local_h_plan_record = dict(local_h_plan_identity)
+                local_h_plan_record[
+                    "distinct_physical_trace_degrees"
+                ] = captured.get("distinct_physical_trace_degrees")
             record = {
                 "schema": (
                     "task43.initial_180_cell_active_p3_current.v1"
                     if current_case
-                    else "task43.h100_same_mesh_p3_anchor.v1"
+                    else (
+                        "task43.round1_candidate_solve.v1"
+                        if candidate_case
+                        else "task43.h100_same_mesh_p3_anchor.v1"
+                    )
                 ),
                 "classification": (
                     "G2_frozen_initial_180_cell_current_numerical_result_not_accuracy_qualified"
                     if current_case
-                    else "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim"
+                    else (
+                        "G2_round1_candidate_numerically_gated_pending_common_comparison_and_acceptance"
+                        if candidate_case
+                        else "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim"
+                    )
                 ),
                 "case_id": case,
                 "method": (
                     "native degree-3 Nedelec, standard_full backend"
                     if kind == "native_p3"
-                    else "empty-h p3 active space on p6 carrier, variable-p backend"
+                    else (
+                        str(candidate_plan["task43_candidate"]["action_description"])
+                        if candidate_case
+                        else "empty-h p3 active space on p6 carrier, variable-p backend"
+                    )
+                ),
+                "candidate_identity": candidate_identity,
+                "selection_status": (
+                    "pending_common_q8_comparison_and_decision_under_frozen_contract"
+                    if candidate_case
+                    else None
                 ),
                 "environment": environment,
                 "resolved_config": cfg.as_jsonable(),
@@ -1382,7 +2275,11 @@ def _run(
                         cfg.stage4_port_boundary_amplitude_scale_policy
                     ),
                     "mesh": fields["mesh_identity"],
-                    "local_h_empty_plan": local_h_plan_identity,
+                    (
+                        "candidate_local_h_plan"
+                        if candidate_case
+                        else "local_h_empty_plan"
+                    ): local_h_plan_record,
                     "local_h_actual_audit": captured.get("local_h_audit"),
                     "ordered_mode_count": len(rows),
                     "ordered_mode_keys_sha256": _sha256_json(
@@ -1392,25 +2289,26 @@ def _run(
                     "resolved_task43_profile_identity": captured.get(
                         "resolved_profile_identity"
                     ),
+                    "active_space": active_space_summary,
                 },
                 "solver": {
                     "case_status": summary.get("case_status"),
                     "official_result": (
                         task43_gated_official_result
-                        if current_case
+                        if current_case or candidate_case
                         else summary.get("official_result")
                     ),
                     "official_result_scope": (
                         "Task43 gated result requiring independent A6, condensed residual, "
                         "energy closure, complete modes and solver completion"
-                        if current_case
+                        if current_case or candidate_case
                         else "legacy component-anchor solver result"
                     ),
                     "legacy_solver_reported_official_result": summary.get(
                         "official_result"
                     ),
                     "legacy_solver_result_is_diagnostic_only_if_task_gates_fail": (
-                        bool(current_case and not gates["pass"])
+                        bool((current_case or candidate_case) and not gates["pass"])
                     ),
                     "timings_seconds": summary.get("timings_seconds"),
                     "wall_seconds_through_record": time.perf_counter() - started,
@@ -1435,32 +2333,52 @@ def _run(
                         [float(row["power_ratio"]) for row in rows]
                     ),
                 },
-                "field_samples": {
-                    "file": str(samples_path),
-                    "sha256": _sha256_file(samples_path),
-                    "rule_orders": [8, 10],
-                    "point_counts": {
-                        key: int(values["weights_nm3"].size)
-                        for key, values in fields["samples"].items()
-                    },
-                    "physical_H_from_recovered_curl": True,
-                    "scattered_background": "analytic_flat_air_substrate_fresnel",
-                    "phase_fit": False,
-                },
+                "field_samples": (
+                    {
+                        "status": "not_run_candidate_uses_frozen_common_comparison_rule",
+                        "rule_orders": [],
+                        "physical_H_from_recovered_curl": True,
+                        "scattered_background": "analytic_flat_air_substrate_fresnel",
+                        "phase_fit": False,
+                    }
+                    if candidate_case
+                    else {
+                        "file": str(samples_path),
+                        "sha256": _sha256_file(samples_path),
+                        "rule_orders": [8, 10],
+                        "point_counts": {
+                            key: int(values["weights_nm3"].size)
+                            for key, values in fields["samples"].items()
+                        },
+                        "physical_H_from_recovered_curl": True,
+                        "scattered_background": "analytic_flat_air_substrate_fresnel",
+                        "phase_fit": False,
+                    }
+                ),
                 "recovered_solution_storage": storage_record,
                 "reference_identities": reference_identities,
                 "reference_comparison": {
                     "status": "not_run" if not comparisons else "measured",
                     "comparisons": comparisons,
                 },
+                "same_lu_tightening": captured.get("same_lu_tightening"),
                 "gates": gates,
                 "source_identity": source_identity,
-                "not_run": [
-                    "vertical sidewall one-sided mathematical traces",
-                    "adaptive selection or accepted h/p updates",
-                    "R14 port truncation comparison",
-                    "reference qualification and frozen marking/acceptance uncertainty",
-                ],
+                "not_run": (
+                    [
+                        "vertical sidewall one-sided mathematical traces",
+                        "candidate common-rule comparison and frozen-contract decision",
+                        "R14 port truncation comparison",
+                        "independent Y5_1 holdout qualification; final 6x10x6 p6 comparison is excluded from selection",
+                    ]
+                    if candidate_case
+                    else [
+                        "vertical sidewall one-sided mathematical traces",
+                        "adaptive selection or accepted h/p updates",
+                        "R14 port truncation comparison",
+                        "reference qualification and frozen marking/acceptance uncertainty",
+                    ]
+                ),
             }
             record_path.write_text(
                 json.dumps(record, indent=2, sort_keys=True, default=_json_default)
@@ -1497,7 +2415,7 @@ def _run(
                 )
             except OSError:
                 pass
-    if current_case:
+    if current_case or candidate_case:
         task43_gated_official_result = comm.bcast(
             task43_gated_official_result, root=0
         )
@@ -1532,18 +2450,35 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-root", type=Path, required=True)
     parser.add_argument("--reference-run-root", type=Path)
     parser.add_argument("--parallel-reference-run-root", type=Path)
+    parser.add_argument("--candidate-plan", type=Path)
+    parser.add_argument("--candidate-id")
+    parser.add_argument("--candidate-parent-run-root", type=Path)
+    parser.add_argument("--candidate-tightening-run-root", type=Path)
+    parser.add_argument("--candidate-marking-record", type=Path)
+    parser.add_argument("--candidate-acceptance-contract", type=Path)
+    parser.add_argument(
+        "--same-lu-tightening",
+        action="store_true",
+        help=(
+            "for the frozen 180-cell current only, perform one residual correction "
+            "with the already configured KSP and save a diagnostic field/modal comparison"
+        ),
+    )
     args = parser.parse_args(argv)
     comm = MPI.COMM_WORLD
     expected_size, kind = _CASES[args.case]
     is_current = args.case == _CURRENT_CASE
+    is_candidate = args.case == _ROUND1_CANDIDATE_CASE
     is_native = kind == "native_p3"
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
+    if args.same_lu_tightening and not is_current:
+        parser.error("--same-lu-tightening is only valid for the frozen current case")
     if is_native and (
         args.reference_run_root is not None
         or args.parallel_reference_run_root is not None
     ):
         parser.error("native p3 is the common reference and takes no reference path")
-    if not is_native and not is_current and args.reference_run_root is None:
+    if not is_native and not is_current and not is_candidate and args.reference_run_root is None:
         parser.error("empty-h active p3 requires --reference-run-root from native_p3_mpi1")
     if is_current and (
         args.reference_run_root is not None
@@ -1556,6 +2491,22 @@ def main(argv: list[str] | None = None) -> int:
         )
     if not is_mpi2 and args.parallel_reference_run_root is not None:
         parser.error("--parallel-reference-run-root is only used by the MPI2 active case")
+    candidate_arguments = (
+        args.candidate_plan,
+        args.candidate_id,
+        args.candidate_parent_run_root,
+        args.candidate_tightening_run_root,
+        args.candidate_marking_record,
+        args.candidate_acceptance_contract,
+    )
+    if is_candidate and any(value is None for value in candidate_arguments):
+        parser.error(
+            "round1_candidate_mpi1 requires --candidate-plan, --candidate-id, "
+            "--candidate-parent-run-root, --candidate-tightening-run-root, "
+            "--candidate-marking-record and --candidate-acceptance-contract"
+        )
+    if not is_candidate and any(value is not None for value in candidate_arguments):
+        parser.error("candidate inputs are only valid for round1_candidate_mpi1")
     if comm.size != expected_size:
         parser.error(f"--case {args.case} requires MPI size {expected_size}")
     summary = _run(
@@ -1563,12 +2514,20 @@ def main(argv: list[str] | None = None) -> int:
         args.run_root,
         args.reference_run_root,
         args.parallel_reference_run_root,
+        same_lu_tightening_enabled=args.same_lu_tightening,
+        candidate_plan_path=args.candidate_plan,
+        candidate_id=args.candidate_id,
+        candidate_parent_run_root=args.candidate_parent_run_root,
+        candidate_tightening_run_root=args.candidate_tightening_run_root,
+        candidate_marking_record=args.candidate_marking_record,
+        candidate_acceptance_contract=args.candidate_acceptance_contract,
     )
     if comm.rank == 0:
         print(
             json.dumps(
                 {
                     "case_id": args.case,
+                    "candidate_id": args.candidate_id,
                     "case_status": summary.get("case_status"),
                     "official_result": summary.get("official_result"),
                     "legacy_solver_reported_official_result": summary.get(

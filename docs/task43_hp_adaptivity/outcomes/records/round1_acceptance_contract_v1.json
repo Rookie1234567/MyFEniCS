@@ -1,0 +1,101 @@
+{
+  "schema": "task43.round1-acceptance-contract.v1",
+  "classification": "pre_candidate_frozen_rule_with_measured_initial_noise_calibration_not_a_continuum_error_bound",
+  "scope": "First pair of real p-up/local-h candidates from the frozen 180-cell p3 parent; no candidate PDE results existed when this record was written.",
+  "git_head_at_freeze": "6389b9f5e0a2151014021ad25618637cfd948c72",
+  "parent": {
+    "case": "current_active_p3_initial180_mpi1",
+    "independent_FE_dofs": 15120,
+    "selection_reference": "Y6_1",
+    "calibration_reference": "Y6_2",
+    "holdout": "Y5_1_excluded",
+    "control": "6x10x6 p6 excluded from marking and ranking",
+    "eta_G": 0.4280717295778482,
+    "J_infinity": {
+      "value": 556138.0874968931,
+      "witness": "R00_s"
+    }
+  },
+  "evidence": {
+    "comparison_contract": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+      "sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1"
+    },
+    "reference_and_quadrature": {
+      "path": "benchmarks/artifacts/task43/reference_comparison/attempt2/reference_calibration_v1.json",
+      "sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b"
+    },
+    "solver_tightening": {
+      "path": "benchmarks/artifacts/task43/current_180/tightening_attempt2/run/task43_initial180_current_record.json",
+      "sha256": "0ae23b39a10c45eb9bde6e846f60c0aaa474e2bbd508bdb0909f98c5d80df536"
+    },
+    "tightening_marking": {
+      "path": "benchmarks/artifacts/task43/current_180/tightening_marking_q8/attempt2/tightening_marking_q8.json",
+      "sha256": "5552870819441ff26b0b5f51ce0a1ef86ebf9445bbd7c9fb3ec2ef20bd3afb2c"
+    }
+  },
+  "metric_contract": {
+    "authority": "comparison_contract_v1.json",
+    "eta_G": "G(u-u_ref)/max(G(u_ref),sqrt(700000)); no phase fitting",
+    "J_infinity": "max_j(d_j/tau_j), using the complete frozen observable vector and reference/incident floors",
+    "inventory": "612 individual channel powers, R/T/A_volume, R00_s/R00_p/R00_total, four complete complex boundary-amplitude groups, total/scattered E/H volume norms and G",
+    "report_raw_ratios_also": true,
+    "shared_rule": "parent and candidate recomputed on one common q8 union-of-actual-leaf-breakpoints rule; reuse requires matching physical points, weights and full field identity",
+    "q8_scope": "Affine N1curl p<=6 squared E/curl differences have per-axis polynomial degree<=12, within Gauss-8 exactness; measured q8/q10 calibration retained. PDE q15/q28 and R13/R14 checks are separate pending final qualification."
+  },
+  "initial_measured_noise": {
+    "reference_G": 4.5440791376764035e-06,
+    "postprocessing_quadrature_G": 1.6653345369377348e-16,
+    "solver_G": 2.604587853230864e-13,
+    "reference_J": {
+      "value": 0.06358160465101542,
+      "witness": "H_scattered_A_per_m"
+    },
+    "postprocessing_quadrature_J": {
+      "value": 3.3306690738754696e-12,
+      "witness": "current_vs_Y6_1:E_scattered_code"
+    },
+    "solver_J": {
+      "value": 4.765077221691172e-07,
+      "witness": "maximum_individual_channel"
+    },
+    "interpretation": "Observed initial sensitivities, not rigorous bounds. Factor 2 is frozen conservatively for two-state comparisons before candidate results. Repeat tighter-solve and quadrature checks near final tolerance."
+  },
+  "acceptance": {
+    "epsilon_G_formula": "2 * (reference_G + postprocessing_quadrature_G + solver_G)",
+    "epsilon_G": 9.088158796603444e-06,
+    "epsilon_J_formula": "2 * (reference_J + postprocessing_quadrature_J + solver_J)",
+    "epsilon_J": 0.12716416232413652,
+    "hard_prerequisites": [
+      "valid actual entity/hanging/Floquet closure",
+      "finite complete output inventory",
+      "independent full active A6 <= 1e-6",
+      "condensed full-active residual <= 1e-9",
+      "abs(1-R-T-A_volume) <= 1e-5"
+    ],
+    "small_direct_A6_target": 1e-08,
+    "small_direct_target_is_separate_from_hard_gate": true,
+    "conditions": [
+      "eta_parent - eta_candidate > epsilon_G",
+      "J_candidate <= J_parent + epsilon_J"
+    ],
+    "final_accuracy_not_required_for_intermediate_acceptance": true,
+    "invalid_or_failed_candidates_cannot_win": true
+  },
+  "ranking": {
+    "primary_score": "(eta_parent-eta_candidate)/(independent_FE_dofs_candidate-independent_FE_dofs_parent)",
+    "positive_actual_dof_increment_required": true,
+    "include_forced_closure_dofs": true,
+    "not_dof_metrics": [
+      "p6 carrier storage rows",
+      "condensed matrix rows",
+      "port auxiliary rows"
+    ],
+    "maximum_primary_candidates": 2,
+    "noise_interval": "score +/- epsilon_G/actual_added_independent_FE_dofs",
+    "tie_when_intervals_overlap": "smaller measured candidate-specific full-path wall time, then fewer actual independent FE dofs, then lexical candidate_id",
+    "candidate_specific_full_path": "planning/closure/transfer + monitored solve/recovery/output + candidate-specific comparison; shared reference work counted once in campaign cost and excluded equally from both tie-break times",
+    "report_both_eligible_and_rejected_results": true
+  },
+  "stop_and_review": "Do not silently change metrics, reference, tolerance or noise calibration after seeing candidate results. Preserve failures and follow task.md repair/bootstrap rules."
+}

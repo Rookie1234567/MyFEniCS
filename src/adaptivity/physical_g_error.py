@@ -249,7 +249,12 @@ def dorfler_mark_physical_g(
     else:
         order = np.lexsort((ids, -values))
         normalized = values[order] / total
-        minimal_count = int(np.searchsorted(np.cumsum(normalized), theta_value, side="left") + 1)
+        # The normalized cumulative sum can finish just below one through
+        # roundoff, although theta=1 is a valid request for the full set.
+        minimal_count = min(
+            len(order),
+            int(np.searchsorted(np.cumsum(normalized), theta_value, side="left") + 1),
+        )
         cutoff_normalized = float(normalized[minimal_count - 1])
         count = minimal_count
         cutoff_tolerance = max(
