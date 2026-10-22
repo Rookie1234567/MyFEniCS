@@ -19,6 +19,13 @@ D5_INPUTS = {
     case: REPO / f"input/task40para_phi90_mesh_modes_direct/d5_{case.lower()}_r5_p6_direct.dat"
     for case in ("B", "X", "Y", "Z")
 }
+D5C_INPUTS = {
+    case: REPO / f"input/task40para_phi90_mesh_modes_direct/d5c_{case.lower()}_r5_p6_direct.dat"
+    for case in (
+        "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y4", "Y5",
+        "Z1", "Z2", "Z3",
+    )
+}
 Y3_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
 Y3_K_INPUTS = {
     k: REPO
@@ -152,6 +159,50 @@ def test_task40_d15_y3_k_manifest_roundtrips_through_worker_payload_gate(
     assert tuple(route["active_rectangle_max_abs_m_n"]) == (k, k)
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
     assert manifest["native_capacity_contract"]["direct_route"] == thaw(route)
+
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert errors == []
+    assert resolved is not None
+    assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+@pytest.mark.parametrize("case", tuple(D5C_INPUTS))
+def test_task40_d5c_manifest_roundtrips_through_worker_payload_gate(tmp_path, case):
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path, D5C_INPUTS[case]
+    )
+    profile = specification.derived["native_capacity_profile"]
+    options = profile["component_options"]
+    route = profile["campaign_authorization"]["direct_route"]
+    native_contract = manifest["native_capacity_contract"]
+
+    assert profile["identity"] == (
+        f"task40para_phi90_5_D5C_{case}_p6_direct_v1"
+    )
+    assert options["task_family"] == "task40_phi90_d5c_mesh_modes_direct"
+    assert options["coarse_study_lineage"]["baseline_case"] == "B"
+    assert options["coarse_study_lineage"]["historical_D5_family_modified"] is False
+    assert options["directional_mesh_comparison"]["display_name"] == f"D5C-{case}"
+    assert options["mode_selection"]["expected_mode_count"] == 3772
+    assert options["mode_selection"]["expected_mode_sha256"] == (
+        "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc"
+    )
+    assert options["mode_selection"]["boundary_amplitude_scale_policy"] == (
+        "boundary_magnitude_scaled_r5_v1"
+    )
+    assert options["surface_quadrature"]["degree"] == 39
+    assert options["volume_quadrature"]["degree"] == 15
+    assert route["d5c_case"] == case
+    assert route["parent_mode_count"] == 3772
+    assert manifest["native_capacity_profile_identity"] == profile["identity"]
+    assert native_contract["direct_route"] == thaw(route)
+    assert native_contract["resource_stop_policy"] == "host_available_floor_v1"
+    assert native_contract["rss_hard_limit_bytes"] is None
+    assert native_contract["minimum_available_bytes"] == 64 * 1024**3
+    assert native_contract["swap_policy"] == "observe_only"
+    assert profile["resources"]["stop_on_global_swap"] is False
 
     resolved, errors = _worker_validate(
         specification, run_directory, resolved_sha, plan

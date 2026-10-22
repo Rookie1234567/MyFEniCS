@@ -17,6 +17,10 @@ K_INPUTS = {
     / f"input/task40para_phi90_mesh_modes_direct/d15_y3_k{k}_r13_p6_direct.dat"
     for k in range(1, 5)
 }
+D5C_INPUTS = {
+    case: REPO / f"input/task40para_phi90_mesh_modes_direct/d5c_{case.lower()}_r5_p6_direct.dat"
+    for case in ("B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y4", "Y5", "Z1", "Z2", "Z3")
+}
 ROOT_PID = 81001
 MPI_PID = 81002
 PROXY_PID = 81003
@@ -184,9 +188,10 @@ def _fixture(
         [
             {"profile_identity": task40_profile, "run_id": task40_run_id}
         ]
-        if task40_profile.startswith(
-            "task40para_phi90_13p5_D15_Y3_K"
-        )
+        if task40_profile.startswith((
+            "task40para_phi90_13p5_D15_Y3_K",
+            "task40para_phi90_5_D5C_",
+        ))
         else [
             {
                 "profile_identity": "task40para_phi90_13p5_D15_Z3_3_p6_direct_v1",
@@ -371,6 +376,68 @@ def test_task40_run_case_rejects_cross_case_parallel_authorization_scope(
     monkeypatch.setenv(
         "TASK40_PARALLEL_AUTHORIZATION_SHA256", updated_sha
     )
+    from scripts.run_case import main
+
+    assert main([str(input_path)]) == 2
+    assert not state["fake_run"].exists()
+    assert "must bind one exact run" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("case", tuple(D5C_INPUTS))
+def test_task40_run_case_allows_only_exact_authorized_d5c_case(
+    case, tmp_path, monkeypatch, capsys
+):
+    input_path = D5C_INPUTS[case]
+    from src.io import load_and_resolve
+
+    specification = load_and_resolve(input_path)
+    profile = specification.solver["native_capacity_profile"]
+    run_id = specification.identity["run_id"]
+    state = _fixture(
+        tmp_path,
+        monkeypatch,
+        large_neighbor=True,
+        authorize=True,
+        task40_input_path=input_path,
+        task40_profile=profile,
+        task40_run_id=run_id,
+    )
+    from scripts.run_case import main
+
+    assert main([str(input_path)]) == 0
+    capsys.readouterr()
+    isolation = json.loads((state["fake_run"] / "workstation_isolation.json").read_text())
+    admission_result = isolation["node_memory_admission"]
+    assert admission_result["parallel_neighbor_authorized"] is True
+    assert admission_result["blocking_active_solver_candidates"] == []
+    assert admission_result["blocking_large_processes"] == []
+    assert admission_result["minimum_available_bytes"] == 64 * 1024**3
+    assert admission_result["rss_hard_limit_bytes"] is None
+
+
+def test_task40_run_case_rejects_d5c_parallel_profile_run_id_mismatch(
+    tmp_path, monkeypatch, capsys
+):
+    input_path = D5C_INPUTS["B"]
+    state = _fixture(
+        tmp_path,
+        monkeypatch,
+        large_neighbor=True,
+        authorize=True,
+        task40_input_path=input_path,
+        task40_profile="task40para_phi90_5_D5C_B_p6_direct_v1",
+        task40_run_id="task40para_phi90_5_D5C_B_p6_direct_v1",
+    )
+    record = json.loads(state["authorization_path"].read_text())
+    record["scope"]["task40_runs"] = [{
+        "profile_identity": "task40para_phi90_5_D5C_B_p6_direct_v1",
+        "run_id": "task40para_phi90_5_D5C_X1_p6_direct_v1",
+    }]
+    state["authorization_path"].write_text(
+        json.dumps(record, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    updated_sha = hashlib.sha256(state["authorization_path"].read_bytes()).hexdigest()
+    monkeypatch.setenv("TASK40_PARALLEL_AUTHORIZATION_SHA256", updated_sha)
     from scripts.run_case import main
 
     assert main([str(input_path)]) == 2

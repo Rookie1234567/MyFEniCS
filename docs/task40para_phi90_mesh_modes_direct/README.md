@@ -37,3 +37,10 @@ Y3-2 离线比较 v1 保留原样；v2 只纠正 Y2→Y3-2 全局差值字段的
 ## 2026-10-23 D15-Y3 模态截断结果
 
 K1–K4（`m,n∈[-K,K]`）四个独立完整场已运行；与原有限 R13/612-mode Y3 参照的全局量、全通道 R/T、边界复幅及同坐标 E/H 比较均已记录。四场都未通过完整三组比较门：K2/K3 逐通道量虽通过，边界与 E/H 仍超 `1e-4`。见[详细结果](outcomes/response_d15_y3_modal_truncations_20261023.md)及其 JSON/CSV 机器记录。
+
+
+## 2026-10-23 新授权：D5C 5 nm 粗网格序列
+
+用户新授权的 5 nm 研究使用独立 `D5C` 名称，保留历史 D5 family 与全部旧结果。唯一基准 `D5C-B` 为 x/y/z 三轴各段 `2/2/2`（`[6,6,6]`，216 cells）；随后逐一从 B 只改变一个轴，顺序为 X1–X3、Y1–Y5、Z1–Z3。12 场完整坐标、轴 SHA、静态标签和逐轴比较关系见[D5C静态计划](outcomes/records/d5c_static_axis_plan_20261023_v1.json)及[响应记录](outcomes/response_d5c_coarse_5nm_plan_20261023.md)。D5C 采用旧 5 nm 的材料/入射和 R5 p6 direct 算子身份，不复用旧网格上的 FE 对象、因子或解。
+
+该更新 supersedes 本 README 前文中“下一场为 R14”的运行指针，但不改写此前历史阶段与结果。当前只完成静态 planner、输入/profile/runner/worker 接线及定向接口验证；仍须逐场 fresh、实际 live mesh QA 和完整数值求解/比较。每场均保留全 3772 模态、q39 surface/q15 volume 与原三组比较门。

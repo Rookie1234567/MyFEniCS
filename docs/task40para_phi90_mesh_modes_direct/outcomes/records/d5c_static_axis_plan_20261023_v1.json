@@ -1,0 +1,1932 @@
+{
+  "branch": "task40para_phi90_mesh_modes_direct",
+  "cases": {
+    "B": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        6,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "B",
+      "changed_axis": null,
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": true,
+        "z": true
+      },
+      "display_name": "D5C-B",
+      "expected_global_cell_count": 216,
+      "expected_material_tag_counts": {
+        "1": 136,
+        "2": 72,
+        "3": 8
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_b_r5_p6_direct.dat",
+      "input_sha256": "70019a47cd18ed95e5b2b07f87867ff3df8938602604028d2fc42a8c9cb2bf86",
+      "mesh_plan_id": "task40_phi90_d5c_b_axes_v1",
+      "mesh_plan_sha256": "c42139e1b72635f27b15af4244dfef63a5370df1c80739738e7ccfe5e4d655d1",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "40156739255152e544f6f7c8bdf18dbcc590ba2e05a0829272cd0bb7cf35b101",
+      "profile_identity": "task40para_phi90_5_D5C_B_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_B_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          2,
+          2,
+          2
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          7.5,
+          10.0,
+          7.5
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 8.0,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 309.375,
+        "minimum_edge_nm": 5.0,
+        "strictly_increasing_axes": true
+      }
+    },
+    "X1": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          19.333333333333332,
+          22.166666666666668,
+          25.0,
+          27.833333333333336,
+          30.666666666666664,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        10,
+        6,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "7573094e52138c8f9d44c8b8e231a715ea06b208a663376163b43023d1e83499",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "X1",
+      "changed_axis": "x",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": true,
+        "z": true
+      },
+      "display_name": "D5C-X1",
+      "expected_global_cell_count": 360,
+      "expected_material_tag_counts": {
+        "1": 216,
+        "2": 120,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_x1_r5_p6_direct.dat",
+      "input_sha256": "50b96e77d210f80440233fbeadb23fbf7af2051502909a3b3bd25214b6fb8e60",
+      "mesh_plan_id": "task40_phi90_d5c_x1_axes_v1",
+      "mesh_plan_sha256": "7a607e606d2299a4b27f1647c23ca5ce7829c09a75c08f31e1ce2e788116e0c7",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "d99f47ddc8fdaadf4f1384db97b7ecc0560092624bbbbf9d3bf5c06c50cbfa1c",
+      "profile_identity": "task40para_phi90_5_D5C_X1_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_X1_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          6,
+          2
+        ],
+        "y": [
+          2,
+          2,
+          2
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          2.8333333333333335,
+          8.25
+        ],
+        "y": [
+          7.5,
+          10.0,
+          7.5
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 21.17647058823533,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 106.24999999999983,
+        "minimum_edge_nm": 2.8333333333333286,
+        "strictly_increasing_axes": true
+      }
+    },
+    "X2": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          3.3,
+          6.6,
+          9.9,
+          13.2,
+          16.5,
+          19.333333333333332,
+          22.166666666666668,
+          25.0,
+          27.833333333333336,
+          30.666666666666664,
+          33.5,
+          36.8,
+          40.1,
+          43.4,
+          46.7,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        16,
+        6,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "fd2386d07a9200145421642457a3dfbfc736ac8456d2712bfe09cf98c17123bf",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "X2",
+      "changed_axis": "x",
+      "coordinate_nested_from_B_by_axis": {
+        "x": false,
+        "y": true,
+        "z": true
+      },
+      "display_name": "D5C-X2",
+      "expected_global_cell_count": 576,
+      "expected_material_tag_counts": {
+        "1": 360,
+        "2": 192,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_x2_r5_p6_direct.dat",
+      "input_sha256": "f76fada0f66a41d8b733c8e7adc2917882fae1efaac0bad70712761648f639fd",
+      "mesh_plan_id": "task40_phi90_d5c_x2_axes_v1",
+      "mesh_plan_sha256": "12403a256a4e42fbc11090229a2f462578f699b760847e9ceb4999126361d476",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "9f54f9124c361596255ddde3e9565ca610b04a1341e36f6b0911dd85ce9f2ec4",
+      "profile_identity": "task40para_phi90_5_D5C_X2_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_X2_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          5,
+          6,
+          5
+        ],
+        "y": [
+          2,
+          2,
+          2
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          3.3,
+          2.8333333333333335,
+          3.3
+        ],
+        "y": [
+          7.5,
+          10.0,
+          7.5
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 21.17647058823533,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 106.24999999999983,
+        "minimum_edge_nm": 2.8333333333333286,
+        "strictly_increasing_axes": true
+      }
+    },
+    "X3": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          2.357142857142857,
+          4.714285714285714,
+          7.071428571428571,
+          9.428571428571429,
+          11.785714285714286,
+          14.142857142857142,
+          16.5,
+          19.333333333333332,
+          22.166666666666668,
+          25.0,
+          27.833333333333336,
+          30.666666666666664,
+          33.5,
+          35.857142857142854,
+          38.214285714285715,
+          40.57142857142857,
+          42.92857142857143,
+          45.285714285714285,
+          47.64285714285714,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        20,
+        6,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "3904b868c3507729a681bb26ccad0011538c67a7c924ed18a8df83b2da87ef81",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "X3",
+      "changed_axis": "x",
+      "coordinate_nested_from_B_by_axis": {
+        "x": false,
+        "y": true,
+        "z": true
+      },
+      "display_name": "D5C-X3",
+      "expected_global_cell_count": 720,
+      "expected_material_tag_counts": {
+        "1": 456,
+        "2": 240,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_x3_r5_p6_direct.dat",
+      "input_sha256": "20bc36e0b737be5c93de2b7bab9104689a8ae1151109bed3158f9410eadef158",
+      "mesh_plan_id": "task40_phi90_d5c_x3_axes_v1",
+      "mesh_plan_sha256": "08af2f9e58f40a37aa4c63b2f594136e0b4a159bf70c53bee9bf7b5395badc2d",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "d19be63c14c566cbf6bed73e8a8e0911f3cfb431fc53c90a7ba7e4c562c6e9df",
+      "profile_identity": "task40para_phi90_5_D5C_X3_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_X3_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          7,
+          6,
+          7
+        ],
+        "y": [
+          2,
+          2,
+          2
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          2.357142857142857,
+          2.8333333333333335,
+          2.357142857142857
+        ],
+        "y": [
+          7.5,
+          10.0,
+          7.5
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 25.45454545454549,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 88.39285714285703,
+        "minimum_edge_nm": 2.357142857142854,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Y1": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        10,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "9adb867e3e11b08db1999e8e9710aec3027c64cb2f4c3c580afc469af04b21a6",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y1",
+      "changed_axis": "y",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": true,
+        "z": true
+      },
+      "display_name": "D5C-Y1",
+      "expected_global_cell_count": 360,
+      "expected_material_tag_counts": {
+        "1": 216,
+        "2": 120,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y1_r5_p6_direct.dat",
+      "input_sha256": "264498014c51140221376dbff14fd4fe37acda21ae9127a52cc23bffebd17ccf",
+      "mesh_plan_id": "task40_phi90_d5c_y1_axes_v1",
+      "mesh_plan_sha256": "a7da5b56744053bf13b15e006647ac9137fd519780c30377b5ef19745bba8f2c",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "c7fdca9567694963463d9b98c00103277ca5f1a8de66cdacee854f69a393a561",
+      "profile_identity": "task40para_phi90_5_D5C_Y1_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Y1_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          2,
+          6,
+          2
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          7.5,
+          3.3333333333333335,
+          7.5
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 18.000000000000007,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 137.49999999999994,
+        "minimum_edge_nm": 3.333333333333332,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Y2": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          3.0,
+          6.0,
+          9.0,
+          12.0,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          38.0,
+          41.0,
+          44.0,
+          47.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        16,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "627914e2ee5e1ccd87435801a5ec3d13a4cd8579f2b379b3f9ebf431cd026a0e",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y2",
+      "changed_axis": "y",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": false,
+        "z": true
+      },
+      "display_name": "D5C-Y2",
+      "expected_global_cell_count": 576,
+      "expected_material_tag_counts": {
+        "1": 360,
+        "2": 192,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y2_r5_p6_direct.dat",
+      "input_sha256": "2f13e626c3a00ac5c770c4a3bbb84e4d73e25abbd275c10e036f0d11f583c469",
+      "mesh_plan_id": "task40_phi90_d5c_y2_axes_v1",
+      "mesh_plan_sha256": "454f765736f5435f2391db2c7b5dbe13b00bc91f058ac77edc92f577f19372fa",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "8cc4bb34b7854092a56e5cd28ddfa6e8f7ea23ca33b9e0ea313273e0a0d0f307",
+      "profile_identity": "task40para_phi90_5_D5C_Y2_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Y2_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          5,
+          6,
+          5
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          3.0,
+          3.3333333333333335,
+          3.0
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 20.0,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 123.75,
+        "minimum_edge_nm": 3.0,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Y3": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          2.142857142857143,
+          4.285714285714286,
+          6.428571428571429,
+          8.571428571428571,
+          10.714285714285714,
+          12.857142857142858,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          37.142857142857146,
+          39.285714285714285,
+          41.42857142857143,
+          43.57142857142857,
+          45.714285714285715,
+          47.85714285714286,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        20,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "9b5cb6a84cb12e7151e168c6769a9a9a785c56b539f575232a6cbe4412accebf",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y3",
+      "changed_axis": "y",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": false,
+        "z": true
+      },
+      "display_name": "D5C-Y3",
+      "expected_global_cell_count": 720,
+      "expected_material_tag_counts": {
+        "1": 456,
+        "2": 240,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y3_r5_p6_direct.dat",
+      "input_sha256": "a0b5b4c84404aba92261b1d5d037d4be79f89e68cf9004361d37502e1c70a9d7",
+      "mesh_plan_id": "task40_phi90_d5c_y3_axes_v1",
+      "mesh_plan_sha256": "07907d8a6e490f1783e506a757d2c53e22903f6a7bd803adecacb83f0ab22049",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "68531911d45d29cb7584a0d7da110b508d5ae3f048cffa29956106cba3e3485c",
+      "profile_identity": "task40para_phi90_5_D5C_Y3_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Y3_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          7,
+          6,
+          7
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          2.142857142857143,
+          3.3333333333333335,
+          2.142857142857143
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 28.000000000000053,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 88.39285714285697,
+        "minimum_edge_nm": 2.142857142857139,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Y4": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          3.0,
+          6.0,
+          9.0,
+          12.0,
+          15.0,
+          17.0,
+          19.0,
+          21.0,
+          23.0,
+          25.0,
+          27.0,
+          29.0,
+          31.0,
+          33.0,
+          35.0,
+          38.0,
+          41.0,
+          44.0,
+          47.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        20,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "d77730cd1a9aa95b42fd638934ba1787c2fd0e300967e3dd8a6840faeb987f88",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y4",
+      "changed_axis": "y",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": false,
+        "z": true
+      },
+      "display_name": "D5C-Y4",
+      "expected_global_cell_count": 720,
+      "expected_material_tag_counts": {
+        "1": 440,
+        "2": 240,
+        "3": 40
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y4_r5_p6_direct.dat",
+      "input_sha256": "787901cd63f8a92283a30b761fe0066d89a08932a67d6e99c85d2d03b1ea8a7b",
+      "mesh_plan_id": "task40_phi90_d5c_y4_axes_v1",
+      "mesh_plan_sha256": "ab1c8af103310600b97ed062b4b251cffba3f0e19275336792958b5761e0f80e",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "26212678784a87f913f07c293a7eaa82b53acfd00551dae3c752de6911084bd0",
+      "profile_identity": "task40para_phi90_5_D5C_Y4_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Y4_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          5,
+          10,
+          5
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          3.0,
+          2.0,
+          3.0
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 30.0,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 82.5,
+        "minimum_edge_nm": 2.0,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Y5": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          1.5,
+          3.0,
+          4.5,
+          6.0,
+          7.5,
+          9.0,
+          10.5,
+          12.0,
+          13.5,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          36.5,
+          38.0,
+          39.5,
+          41.0,
+          42.5,
+          44.0,
+          45.5,
+          47.0,
+          48.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        26,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "aa2a74d4601c89a8ef5f7ad94bbb19961ec058442307502c1c006dd792d77832",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y5",
+      "changed_axis": "y",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": true,
+        "z": true
+      },
+      "display_name": "D5C-Y5",
+      "expected_global_cell_count": 936,
+      "expected_material_tag_counts": {
+        "1": 600,
+        "2": 312,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y5_r5_p6_direct.dat",
+      "input_sha256": "a63f9506feafe8b74d9e9c91c9a3b2ad2678a3052be92b7228f55f968dc13616",
+      "mesh_plan_id": "task40_phi90_d5c_y5_axes_v1",
+      "mesh_plan_sha256": "e2e26999a3800a1e05a73a4397e2935c5a8faa0e98448649782ff091a75f61f2",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "575b42a5831f2b3f4a5436fc93519da78dafd6c75ff21a5db87e35fe444cc74c",
+      "profile_identity": "task40para_phi90_5_D5C_Y5_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Y5_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          10,
+          6,
+          10
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          1.5,
+          3.3333333333333335,
+          1.5
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 40.0,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 61.875,
+        "minimum_edge_nm": 1.5,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Z1": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          20.0,
+          40.0,
+          60.0,
+          80.0,
+          100.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        6,
+        10
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "718918180633ac02394768b4ad11f7472cc9e174ff6557481d9a9e9114543a20"
+      },
+      "case": "Z1",
+      "changed_axis": "z",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": true,
+        "z": true
+      },
+      "display_name": "D5C-Z1",
+      "expected_global_cell_count": 360,
+      "expected_material_tag_counts": {
+        "1": 264,
+        "2": 72,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_z1_r5_p6_direct.dat",
+      "input_sha256": "8af3369962e919cc79ba1f9122c73908c83073d5e2ae770efafdb472269b27de",
+      "mesh_plan_id": "task40_phi90_d5c_z1_axes_v1",
+      "mesh_plan_sha256": "8cedfc146793b88d8cd3f5039bd66f8ac6495c263586c809a956521b4012dac7",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "4a8f9209137fa17077fd96e24ba582fd1b3e672560383cebe490d26c5c1ea21b",
+      "profile_identity": "task40para_phi90_5_D5C_Z1_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Z1_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          2,
+          2,
+          2
+        ],
+        "z": [
+          2,
+          6,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          7.5,
+          10.0,
+          7.5
+        ],
+        "z": [
+          5.0,
+          20.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 2.6666666666666665,
+        "maximum_edge_nm": 20.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 309.375,
+        "minimum_edge_nm": 5.0,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Z2": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -8.0,
+          -6.0,
+          -4.0,
+          -2.0,
+          0.0,
+          20.0,
+          40.0,
+          60.0,
+          80.0,
+          100.0,
+          120.0,
+          122.0,
+          124.0,
+          126.0,
+          128.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        6,
+        16
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "960bcd9174d945152b5e81ebb27e27428096c4b3fd87ba8b31a89b344ecdc49d"
+      },
+      "case": "Z2",
+      "changed_axis": "z",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": true,
+        "z": false
+      },
+      "display_name": "D5C-Z2",
+      "expected_global_cell_count": 576,
+      "expected_material_tag_counts": {
+        "1": 372,
+        "2": 180,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_z2_r5_p6_direct.dat",
+      "input_sha256": "07ec0b51156f816a035b950b4382a2afcfd9d43173e21a87e9af3e21a5d0641d",
+      "mesh_plan_id": "task40_phi90_d5c_z2_axes_v1",
+      "mesh_plan_sha256": "9cf2bdfb1124b24e7337e4d36e1c513a06fcaf3d0078cacf3cbcfb5488e8f7c2",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "e4ed7941591ff202f3cd4727352cf6424a62d897af95f9c7d4313f81e4310fe8",
+      "profile_identity": "task40para_phi90_5_D5C_Z2_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Z2_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          2,
+          2,
+          2
+        ],
+        "z": [
+          5,
+          6,
+          5
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          7.5,
+          10.0,
+          7.5
+        ],
+        "z": [
+          2.0,
+          20.0,
+          2.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 5.0,
+        "maximum_edge_nm": 20.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 123.75,
+        "minimum_edge_nm": 2.0,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Z3": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          7.5,
+          15.0,
+          25.0,
+          35.0,
+          42.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -8.571428571428571,
+          -7.142857142857142,
+          -5.714285714285714,
+          -4.285714285714286,
+          -2.8571428571428568,
+          -1.4285714285714288,
+          0.0,
+          20.0,
+          40.0,
+          60.0,
+          80.0,
+          100.0,
+          120.0,
+          121.42857142857143,
+          122.85714285714286,
+          124.28571428571429,
+          125.71428571428571,
+          127.14285714285714,
+          128.57142857142858,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        6,
+        20
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "765a3c41f303bd1773d13f460d4229fa8ff8d0964baa8e44d136494e2e4401f6"
+      },
+      "case": "Z3",
+      "changed_axis": "z",
+      "coordinate_nested_from_B_by_axis": {
+        "x": true,
+        "y": true,
+        "z": false
+      },
+      "display_name": "D5C-Z3",
+      "expected_global_cell_count": 720,
+      "expected_material_tag_counts": {
+        "1": 444,
+        "2": 252,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_z3_r5_p6_direct.dat",
+      "input_sha256": "272a1da7775e2d1a7512871a96449cbf989df7573e56c38a6d7a98413780a393",
+      "mesh_plan_id": "task40_phi90_d5c_z3_axes_v1",
+      "mesh_plan_sha256": "f848db268463270e2829f349dbf469535db38f23952c7380df4c9faadd706f0d",
+      "operator_identity": {
+        "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_count": 3772,
+        "mode_label": "R5",
+        "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+        "surface_fixed_envelope_m_n": [
+          12,
+          21
+        ],
+        "surface_quadrature_degree": 39,
+        "surface_rule": "default",
+        "volume_quadrature_degree": 15,
+        "volume_rule": "default"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "physical_model_sha256": "d4e0d281faa04db9c649afab86a89dab4bbc7cf792c81b12c565c76f677a3c7d",
+      "profile_identity": "task40para_phi90_5_D5C_Z3_p6_direct_v1",
+      "resolved_config_sha256": "NOT_FROZEN_UNTIL_STANDARD_OUTPUT_PARENT_BINDING",
+      "run_id": "task40_phi90_5_D5C_Z3_p6_direct_v1",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          2,
+          2,
+          2
+        ],
+        "z": [
+          7,
+          6,
+          7
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          7.5,
+          10.0,
+          7.5
+        ],
+        "z": [
+          1.4285714285714286,
+          20.0,
+          1.4285714285714286
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 7.0000000000000595,
+        "maximum_edge_nm": 20.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 88.39285714285639,
+        "minimum_edge_nm": 1.4285714285714164,
+        "strictly_increasing_axes": true
+      }
+    }
+  },
+  "comparison_gates": {
+    "all_cases_compared_to_B": true,
+    "boundary_complex_relative_L2_max": 0.0001,
+    "global_abs_max": 1e-05,
+    "neighbor_and_same_cell_count_siblings_reported_separately": true,
+    "per_channel_scope": "all 3772 signed R5 modes including every power-carrying channel; no propagating-only substitution",
+    "per_signed_mode_R_T_abs_max": 1e-06,
+    "phase_fit": "forbidden",
+    "same_coordinate_complex_E_H_relative_L2_max": 0.0001
+  },
+  "comparison_plan": {
+    "all_variants_vs_baseline": [
+      "X1_vs_B",
+      "X2_vs_B",
+      "X3_vs_B",
+      "Y1_vs_B",
+      "Y2_vs_B",
+      "Y3_vs_B",
+      "Y4_vs_B",
+      "Y5_vs_B",
+      "Z1_vs_B",
+      "Z2_vs_B",
+      "Z3_vs_B"
+    ],
+    "notes": [
+      "Every listed pair uses the original three comparison gates and all 3772 signed R5 modes.",
+      "Y3 and Y4 both have 20 y cells but use different segment allocations; neither is assumed nested.",
+      "Cases are independent one-axis changes from D5C-B; variants do not accumulate."
+    ],
+    "same_cell_count_siblings": [
+      [
+        "Y3",
+        "Y4"
+      ]
+    ],
+    "within_axis_adjacent_pairs": {
+      "x": [
+        [
+          "B",
+          "X1"
+        ],
+        [
+          "X1",
+          "X2"
+        ],
+        [
+          "X2",
+          "X3"
+        ]
+      ],
+      "y": [
+        [
+          "B",
+          "Y1"
+        ],
+        [
+          "Y1",
+          "Y2"
+        ],
+        [
+          "Y2",
+          "Y3"
+        ],
+        [
+          "Y3",
+          "Y4"
+        ],
+        [
+          "Y4",
+          "Y5"
+        ]
+      ],
+      "z": [
+        [
+          "B",
+          "Z1"
+        ],
+        [
+          "Z1",
+          "Z2"
+        ],
+        [
+          "Z2",
+          "Z3"
+        ]
+      ]
+    }
+  },
+  "created_utc": "2026-10-22T23:18:24.370980+00:00",
+  "geometry": {
+    "block_x_nm": [
+      16.5,
+      33.5
+    ],
+    "block_y_nm": [
+      15.0,
+      35.0
+    ],
+    "block_z_nm": [
+      0.0,
+      120.0
+    ],
+    "domain_z_nm": [
+      -10.0,
+      130.0
+    ],
+    "element": "Nedelec p6 hexahedral",
+    "incidence": {
+      "azimuth_deg": 90.0,
+      "electric_amplitude": 1.0,
+      "grazing_angle_deg": 1.0,
+      "polarization": "s"
+    },
+    "material_segment_breakpoints_nm": {
+      "x": [
+        0.0,
+        16.5,
+        33.5,
+        50.0
+      ],
+      "y": [
+        0.0,
+        15.0,
+        35.0,
+        50.0
+      ],
+      "z": [
+        -10.0,
+        0.0,
+        120.0,
+        130.0
+      ]
+    },
+    "material_values_authority": "existing 5 nm D5 input values, copied unchanged into D5C inputs",
+    "model_id": "si_block_phi90_50x50_17x20_h120",
+    "period_nm": [
+      50.0,
+      50.0
+    ]
+  },
+  "historical_D5_reference": {
+    "historical_d5_inputs_untouched": true,
+    "input_sha256": "0495b48989ec02c6209d9bb0d45cb1ba8c9eaa4636fe13d8ea36a00c106def53",
+    "physical_model_sha256": "85df98b05cbec3d2f4832ae1bd9e0c5abddcce8a48c19135c8ce5d4b168b7bce",
+    "resolved_config_sha256": "df8fa661ac9f4b76c8cde6f6a08bd29442301d701f7669529b9494bc224c5c6d",
+    "role": "physics/material and R5 implementation lineage only; no FE object/factor/solution reused",
+    "run_directory": "results/si_block_phi90_50x50_17x20_h120/task40_phi90_5_D5_B_p6_direct_v1__full3d_direct__mpi1__Mna/20261018T102025.156358Z",
+    "source_sha": "8d44e06645346bd5a8b30a7784b093df3ca9d5fa"
+  },
+  "resources": {
+    "CPU_parent": 9,
+    "CPU_worker": 24,
+    "MPI": 1,
+    "NUMA": "interleave 0-1",
+    "PSS_USS_smaps": "off",
+    "capacity_note": "coarse cell count is not a MUMPS memory guarantee; assess actual fresh host floor and live RSS per run",
+    "effective_legacy_input_fields": {
+      "effective_watchdog_authority": "host_available_floor_v1",
+      "legacy_resource_fields_enforced_in_standard_manifest": false,
+      "warning_memory_gib_and_terminate_memory_gib": "present in copied input for schema compatibility, not effective native watchdog thresholds"
+    },
+    "fixed_RSS_cap_bytes": null,
+    "heavy_run_policy": "one Task40 run at a time; retain exact authorized Task41 identity exception only; unknown solvers remain blocked",
+    "host_floor_bytes": 68719476736,
+    "math_threads": 1,
+    "swap": "observe only"
+  },
+  "schema": "task40.phi90.d5c.static_sequence.v1",
+  "sequence": {
+    "baseline": "D5C-B",
+    "baseline_segment_counts": {
+      "x": [
+        2,
+        2,
+        2
+      ],
+      "y": [
+        2,
+        2,
+        2
+      ],
+      "z": [
+        2,
+        2,
+        2
+      ]
+    },
+    "case_count": 12,
+    "case_order": [
+      "B",
+      "X1",
+      "X2",
+      "X3",
+      "Y1",
+      "Y2",
+      "Y3",
+      "Y4",
+      "Y5",
+      "Z1",
+      "Z2",
+      "Z3"
+    ],
+    "cell_count_by_case": {
+      "B": 216,
+      "X1": 360,
+      "X2": 576,
+      "X3": 720,
+      "Y1": 360,
+      "Y2": 576,
+      "Y3": 720,
+      "Y4": 720,
+      "Y5": 936,
+      "Z1": 360,
+      "Z2": 576,
+      "Z3": 720
+    },
+    "old_D5_family_or_results_reused_for_D5C_FE": false,
+    "one_axis_only": true,
+    "sum_of_cell_counts_across_distinct_runs": 6840,
+    "variant_axis_hashes_must_equal_B": true,
+    "variants_are_not_assumed_nested": true
+  },
+  "solver_and_integrals": {
+    "13p5_modal_K_truncations_reused": false,
+    "condensed_residual_gate": 1e-09,
+    "energy_balance_gate": 1e-05,
+    "factor_lifecycle": "one matrix/factor per run, QA and solve on same factor",
+    "method": "p6 full 3D H(curl), exact cell condensation, direct MUMPS LU",
+    "mode_count": 3772,
+    "mode_reference": "R5 full finite rectangle including evanescent modes",
+    "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+    "original_A6_gate": 1e-06,
+    "same_factor_correction_max": 2,
+    "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "sparse_cutoff_relative_tolerance": 1e-13,
+    "surface_q": 39,
+    "surface_q_envelope_m_n": [
+      12,
+      21
+    ],
+    "surface_rule": "default",
+    "volume_q": 15,
+    "volume_rule": "default"
+  },
+  "source_parent_commit": "00d0a540dcf0eb3265cf2465b491aac9af897e8d",
+  "status": "STATIC_PLAN_AND_PURE_INTERFACE_TESTS_ONLY_NO_D5C_FE_RUN",
+  "study": "D5C",
+  "wavelength_nm": 5.0,
+  "worktree": "/home/fenics/Projects/Maxwell3D-Phi90"
+}
