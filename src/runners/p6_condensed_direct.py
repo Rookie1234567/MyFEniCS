@@ -168,6 +168,31 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             ("bottom", 0, 0, "s"),
             ("bottom", 4, 0, "p"),
         )
+        parent_mode_count = int(mode.get("expected_mode_count", 612))
+        active_mode_count = int(
+            mode.get("expected_active_mode_count", parent_mode_count)
+        )
+        active_rectangle = [
+            int(value)
+            for value in mode.get(
+                "active_rectangle_max_abs_m_n",
+                mode["parent_rectangle_max_abs_m_n"],
+            )
+        ]
+        truncated = active_mode_count != parent_mode_count
+        if truncated:
+            if (
+                len(active_rectangle) != 2
+                or active_rectangle[0] != active_rectangle[1]
+                or active_mode_count != 4 * (2 * active_rectangle[0] + 1) ** 2
+            ):
+                raise ValueError("Task40 modal rectangle count is not a symmetric two-port s/p subset")
+            k = active_rectangle[0]
+            required_evidence_keys = tuple(
+                key
+                for side in ("top", "bottom")
+                for key in ((side, -k, 0, "p"), (side, 0, 0, "s"), (side, k, 0, "p"))
+            )
         if (
             evidence.get("schema") != "task40.p6-direct-factor-evidence.v1"
             or evidence_keys != required_evidence_keys
@@ -197,8 +222,14 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         expected_axis_hashes = dict(mesh_case["expected_axis_sha256_le_f64"])
         expected_tag_counts = dict(mesh_case["expected_material_tag_counts"])
         reference_label = str(mode.get("reference_mode_label", "R13"))
-        expected_mode_count = int(mode.get("expected_mode_count", 612))
-        rectangle = list(mode["parent_rectangle_max_abs_m_n"])
+        expected_mode_count = parent_mode_count
+        expected_active_mode_count = active_mode_count
+        parent_rectangle = list(mode["parent_rectangle_max_abs_m_n"])
+        active_rectangle = list(active_rectangle)
+        expected_active_mode_sha256 = mode.get(
+            "expected_active_mode_sha256",
+            mode.get("expected_mode_sha256"),
+        )
         return {
             "family": "task40_phi90",
             "task40_mesh_plan_family": family_label,
@@ -219,7 +250,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "task40_base_axis_sha256_le_f64": base_axis_hashes,
             "task40_expected_material_tag_counts": expected_tag_counts,
             "profile_identity": profile_identity,
-            "truncated": False,
+            "truncated": truncated,
             "operator_scope": route_scope,
             "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
             "parent_inventory_scope": mode["parent_inventory_scope"],
@@ -227,19 +258,24 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "mode_basis_scale_policy": mode.get(
                 "boundary_amplitude_scale_policy"
             ),
-            "parent_rectangle_max_abs_m_n": list(
-                mode["parent_rectangle_max_abs_m_n"]
-            ),
-            "active_rectangle_max_abs_m_n": list(
-                mode["active_rectangle_max_abs_m_n"]
-            ),
+            "parent_rectangle_max_abs_m_n": parent_rectangle,
+            "active_rectangle_max_abs_m_n": active_rectangle,
             "reference_mode_label": reference_label,
+            "quadrature_reference_label": mode.get(
+                "quadrature_reference_label", reference_label
+            ),
             "parent_count": expected_mode_count,
             "expected_mode_sha256": mode.get("expected_mode_sha256"),
             "parent_sha256": None,
-            "active_count": expected_mode_count,
-            "active_sha256": None,
+            "active_count": expected_active_mode_count,
+            "active_sha256": expected_active_mode_sha256,
             "selected_parent_indices_sha256": None,
+            "expected_selected_parent_indices_sha256": mode.get(
+                "expected_selected_parent_indices_sha256"
+            ),
+            "expected_selected_signed_keys_sha256": mode.get(
+                "expected_selected_signed_keys_sha256"
+            ),
             "residual_key": "original_A6_active_rectangle_relative",
             "residual_scope": (
                 f"A6_{route_label}_{case_name}_{reference_label}_active_rectangle"
@@ -251,7 +287,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
                 f"{reference_label}"
             ),
             "expected_mode_count": expected_mode_count,
-            "expected_rectangle_max_abs_m_n": rectangle,
+            "expected_rectangle_max_abs_m_n": active_rectangle,
             "surface_quadrature_degree": int(
                 options["surface_quadrature"]["degree"]
             ),
@@ -587,6 +623,133 @@ def _build_f5_n0_inventory(parent_inventory, cfg):
     return active_inventory, selection, indices
 
 
+def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
+    """Select a symmetric Task40 rectangle from its exact finite parent order."""
+    from src.solvers.fullspace_dtn_action import (
+        _canonical_json_bytes,
+        build_ordered_mode_manifest,
+    )
+
+    parent_modes, parent_rows, parent_sha = parent_inventory
+    parent_modes = tuple(parent_modes)
+    parent_rows = tuple(parent_rows)
+    if (
+        len(parent_modes) != int(route["parent_count"])
+        or len(parent_rows) != int(route["parent_count"])
+        or str(parent_sha) != str(route["expected_mode_sha256"])
+    ):
+        raise ValueError("Task40 modal selection requires its exact frozen R13 parent")
+    for index, (mode, row) in enumerate(zip(parent_modes, parent_rows, strict=True)):
+        if (
+            not isinstance(row, Mapping)
+            or int(row.get("mode_index", -1)) != index
+            or int(row.get("m", 999999)) != int(mode.m)
+            or int(row.get("n", 999999)) != int(mode.n)
+            or str(row.get("side")) != str(mode.side)
+            or str(row.get("polarization")) != str(mode.polarization)
+        ):
+            raise ValueError("Task40 R13 parent rows do not match live mode objects")
+
+    rectangle = tuple(int(value) for value in route["active_rectangle_max_abs_m_n"])
+    if len(rectangle) != 2 or rectangle[0] != rectangle[1] or rectangle[0] < 1:
+        raise ValueError("Task40 truncation requires the declared symmetric m/n rectangle")
+    k = rectangle[0]
+    indices = tuple(
+        index
+        for index, mode in enumerate(parent_modes)
+        if abs(int(mode.m)) <= k and abs(int(mode.n)) <= k
+    )
+    expected_count = 4 * (2 * k + 1) ** 2
+    if len(indices) != expected_count or len(indices) != int(route["active_count"]):
+        raise ValueError("Task40 live rectangle has an unexpected two-port s/p mode count")
+
+    active_modes = tuple(parent_modes[index] for index in indices)
+    key_rows = [
+        {
+            "side": str(parent_rows[index]["side"]),
+            "m": int(parent_rows[index]["m"]),
+            "n": int(parent_rows[index]["n"]),
+            "polarization": str(parent_rows[index]["polarization"]),
+        }
+        for index in indices
+    ]
+    key_sha = hashlib.sha256(_canonical_json_bytes(key_rows)).hexdigest()
+    index_sha = hashlib.sha256(_canonical_json_bytes(list(indices))).hexdigest()
+    if key_sha != route["expected_selected_signed_keys_sha256"]:
+        raise ValueError("Task40 selected signed keys differ from the frozen Y3 plan")
+    if index_sha != route["expected_selected_parent_indices_sha256"]:
+        raise ValueError("Task40 selected parent indices differ from the frozen Y3 plan")
+
+    expected_keys = {
+        (side, m, n, polarization)
+        for side in ("top", "bottom")
+        for polarization in ("s", "p")
+        for m in range(-k, k + 1)
+        for n in range(-k, k + 1)
+    }
+    actual_keys = {
+        (row["side"], row["m"], row["n"], row["polarization"])
+        for row in key_rows
+    }
+    if actual_keys != expected_keys:
+        raise ValueError("Task40 selected modes do not cover the full signed rectangle")
+    side_polarization_counts = {
+        f"{side}_{polarization}": sum(
+            row["side"] == side and row["polarization"] == polarization
+            for row in key_rows
+        )
+        for side in ("bottom", "top")
+        for polarization in ("s", "p")
+    }
+    per_group = (2 * k + 1) ** 2
+    if set(side_polarization_counts.values()) != {per_group}:
+        raise ValueError("Task40 selected rectangle has unequal side/polarization groups")
+
+    active_rows, _encoded, active_sha = build_ordered_mode_manifest(active_modes, cfg)
+    if (
+        active_sha != route["active_sha256"]
+        or len(active_rows) != expected_count
+    ):
+        raise ValueError("Task40 active mode manifest differs from its frozen K identity")
+    selection = {
+        "schema": "task40.dtn-mode-selection.v1",
+        "policy": "explicit_symmetric_subrectangle_from_parent_v1",
+        "parent_mode_count": len(parent_modes),
+        "parent_mode_sha256": str(parent_sha),
+        "active_mode_count": len(active_modes),
+        "active_mode_sha256": active_sha,
+        "expected_active_mode_sha256": str(route["active_sha256"]),
+        "selected_parent_indices_sha256": index_sha,
+        "selected_signed_keys_sha256": key_sha,
+        "selected_signed_keys_order": "preserved_from_exact_parent_inventory",
+        "side_polarization_counts": side_polarization_counts,
+        "active_rectangle_max_abs_m_n": list(rectangle),
+        "quadrature_inventory": "full_D15_Y3_R13_parent_inventory",
+        "operator_scope": route["operator_scope"],
+    }
+    return (active_modes, tuple(active_rows), active_sha), selection, indices
+
+
+def _bind_task40_selected_parent_index_identity(
+    route: dict[str, Any], selection: Mapping[str, Any] | None
+) -> None:
+    """Bind the verified selection hash into the active-port output contract."""
+
+    if route.get("family") != "task40_phi90" or not route.get("truncated"):
+        raise ValueError("parent-index binding requires a truncated Task40 route")
+    if selection is None:
+        raise ValueError("Task40 truncated route is missing its verified parent selection")
+    selected_indices_sha = str(selection.get("selected_parent_indices_sha256", ""))
+    expected_sha = route.get("expected_selected_parent_indices_sha256")
+    if (
+        len(selected_indices_sha) != 64
+        or any(character not in "0123456789abcdef" for character in selected_indices_sha)
+        or selected_indices_sha != expected_sha
+    ):
+        raise ValueError("Task40 selected parent-index hash differs from its profile")
+    route["selected_parent_indices_sha256"] = selected_indices_sha
+
+
 def _persist_f5_inventory(directory, parent_inventory, active_inventory, selection, indices):
     from src.solvers.fullspace_dtn_action import (
         FULLSPACE_DTN_MANIFEST_SCHEMA,
@@ -704,6 +867,99 @@ def _persist_task40_inventory(
         "mode_sha256": expected_sha,
         "artifact_sha256": hashlib.sha256(encoded).hexdigest(),
         "bytes": len(encoded),
+    }
+
+
+def _persist_task40_selected_inventory(
+    directory: Path,
+    parent_inventory,
+    active_inventory,
+    selection: Mapping[str, Any],
+    indices: tuple[int, ...],
+    *,
+    reference_label: str,
+    parent_reference_label: str,
+    operator_scope: str,
+) -> dict[str, Any]:
+    """Persist a finite Task40 parent, active subset, and exact index map."""
+    from src.solvers.fullspace_dtn_action import (
+        FULLSPACE_DTN_MANIFEST_SCHEMA,
+        FULLSPACE_DTN_PROFILE,
+        _canonical_json_bytes,
+    )
+
+    parent_artifact = _persist_task40_inventory(
+        directory,
+        parent_inventory,
+        reference_label=parent_reference_label,
+        operator_scope=operator_scope,
+    )
+    active_modes, active_rows, active_sha = active_inventory
+    core = {
+        "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+        "profile": FULLSPACE_DTN_PROFILE,
+        "mode_count": len(active_modes),
+        "modes": active_rows,
+    }
+    if hashlib.sha256(_canonical_json_bytes(core)).hexdigest() != active_sha:
+        raise ValueError("Task40 active mode manifest serialization hash differs")
+    active_payload = {
+        **core,
+        "operator_scope": operator_scope,
+        "reference_mode_label": reference_label,
+        "selection_policy": selection["policy"],
+        "parent_mode_count": int(selection["parent_mode_count"]),
+        "parent_mode_sha256": str(selection["parent_mode_sha256"]),
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    }
+    active_encoded = _canonical_json_bytes(active_payload)
+    stem = f"task40_{reference_label.lower()}"
+    active_path = Path(directory) / f"{stem}_active_mode_manifest.json"
+    with active_path.open("xb") as stream:
+        stream.write(active_encoded)
+
+    parent_modes, parent_rows, _parent_sha = parent_inventory
+    old_to_new = [-1] * len(parent_modes)
+    for new_index, old_index in enumerate(indices):
+        old_to_new[int(old_index)] = int(new_index)
+    active_keys = [
+        [row["side"], int(row["m"]), int(row["n"]), row["polarization"]]
+        for row in active_rows
+    ]
+    omitted_keys = [
+        [row["side"], int(row["m"]), int(row["n"]), row["polarization"]]
+        for index, row in enumerate(parent_rows)
+        if old_to_new[index] < 0
+    ]
+    index_payload = {
+        "schema": "task40.d15.modal-parent-index-map.v1",
+        "operator_selection": dict(selection),
+        "selected_parent_indices": [int(index) for index in indices],
+        "old_to_new": old_to_new,
+        "active_keys": active_keys,
+        "omitted_parent_keys": omitted_keys,
+        "omitted_values_policy": (
+            "not computed in candidate solve; offline comparison zero-extends each candidate "
+            "over the exact 612-key parent reference"
+        ),
+    }
+    index_encoded = _canonical_json_bytes(index_payload)
+    index_path = Path(directory) / f"{stem}_mode_index_map.json"
+    with index_path.open("xb") as stream:
+        stream.write(index_encoded)
+    return {
+        "parent": parent_artifact,
+        "active": {
+            "filename": active_path.name,
+            "mode_sha256": active_sha,
+            "artifact_sha256": hashlib.sha256(active_encoded).hexdigest(),
+            "bytes": len(active_encoded),
+        },
+        "index_map": {
+            "filename": index_path.name,
+            "sha256": hashlib.sha256(index_encoded).hexdigest(),
+            "bytes": len(index_encoded),
+        },
     }
 
 
@@ -2404,8 +2660,9 @@ def run_p6_condensed_direct(
                     "from the frozen metadata inventory"
                 )
             route["parent_sha256"] = str(parent_inventory[2])
-            route["active_count"] = len(parent_inventory[0])
-            route["active_sha256"] = str(parent_inventory[2])
+            if not route["truncated"]:
+                route["active_count"] = len(parent_inventory[0])
+                route["active_sha256"] = str(parent_inventory[2])
         if route["family"] == "dispersion_flat":
             if (
                 not parent_inventory[0]
@@ -2425,7 +2682,11 @@ def run_p6_condensed_direct(
             or parent_inventory[2] != route["parent_sha256"]
         ):
             raise ValueError("live full parent inventory differs from the selected direct profile")
-        if route["family"] == "v7_aniso_n0":
+        if route["family"] == "task40_phi90" and route["truncated"]:
+            active_inventory, operator_selection, selected_parent_indices = (
+                _build_task40_rectangle_inventory(parent_inventory, cfg, route)
+            )
+        elif route["family"] == "v7_aniso_n0":
             active_inventory, operator_selection, selected_parent_indices = (
                 build_n0_mode_inventory(parent_inventory, cfg)
             )
@@ -2446,6 +2707,8 @@ def run_p6_condensed_direct(
             )
         ):
             raise ValueError("live active inventory differs from its direct profile identity")
+        if route["family"] == "task40_phi90" and route["truncated"]:
+            _bind_task40_selected_parent_index_identity(route, operator_selection)
         active_modes_by_side = _inventory_mode_counts_by_side(
             active_inventory[1], expected_total=route["active_count"]
         )
@@ -2467,14 +2730,28 @@ def run_p6_condensed_direct(
                 "parent": _persist_flat_parent_inventory(directory, parent_inventory)
             }
         elif route["family"] == "task40_phi90":
-            inventory_artifacts = {
-                "parent": _persist_task40_inventory(
+            if route["truncated"]:
+                inventory_artifacts = _persist_task40_selected_inventory(
                     directory,
                     parent_inventory,
+                    active_inventory,
+                    operator_selection,
+                    selected_parent_indices,
                     reference_label=route["reference_mode_label"],
+                    parent_reference_label=route.get(
+                        "quadrature_reference_label", "R13"
+                    ).replace("_full_612_parent", ""),
                     operator_scope=route["operator_scope"],
                 )
-            }
+            else:
+                inventory_artifacts = {
+                    "parent": _persist_task40_inventory(
+                        directory,
+                        parent_inventory,
+                        reference_label=route["reference_mode_label"],
+                        operator_scope=route["operator_scope"],
+                    )
+                }
         else:
             inventory_artifacts = _persist_f5_inventory(
                 directory,
@@ -2502,7 +2779,7 @@ def run_p6_condensed_direct(
                 else "all_auto_propagating_flat_inventory_q160"
                 if route["family"] == "dispersion_flat"
                 else (
-                    f"{route['reference_mode_label']}_parent_q"
+                    f"{route.get('quadrature_reference_label', route['reference_mode_label'])}_q"
                     f"{route['surface_quadrature_degree']}_fixed_envelope_"
                     f"m{route['surface_quadrature_envelope_max_abs_m_n'][0]}_"
                     f"n{route['surface_quadrature_envelope_max_abs_m_n'][1]}"

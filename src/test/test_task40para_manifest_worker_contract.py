@@ -20,6 +20,11 @@ D5_INPUTS = {
     for case in ("B", "X", "Y", "Z")
 }
 Y3_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
+Y3_K_INPUTS = {
+    k: REPO
+    / f"input/task40para_phi90_mesh_modes_direct/d15_y3_k{k}_r13_p6_direct.dat"
+    for k in range(1, 5)
+}
 Z2_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_z2_from_y2_r13_p6_direct.dat"
 H15_INPUTS = {
     case: REPO / f"input/task40para_phi90_mesh_modes_direct/h15_{case.lower()}_r13_p6_direct.dat"
@@ -109,6 +114,44 @@ def test_task40_y3_manifest_roundtrips_through_worker_payload_gate(tmp_path):
     assert manifest["native_capacity_contract"]["direct_route"] == thaw(
         profile["campaign_authorization"]["direct_route"]
     )
+
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert errors == []
+    assert resolved is not None
+    assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+@pytest.mark.parametrize(("k", "active_count"), ((1, 36), (2, 100), (3, 196), (4, 324)))
+def test_task40_d15_y3_k_manifest_roundtrips_through_worker_payload_gate(
+    tmp_path, k, active_count
+):
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path, Y3_K_INPUTS[k]
+    )
+    profile = specification.derived["native_capacity_profile"]
+    options = profile["component_options"]
+    mode = options["mode_selection"]
+    route = profile["campaign_authorization"]["direct_route"]
+
+    assert profile["identity"] == (
+        f"task40para_phi90_13p5_D15_Y3_K{k}_p6_direct_v1"
+    )
+    assert options["directional_mesh_comparison"]["case"] == "Y3"
+    assert tuple(options["expected_axis_cell_counts"]) == (6, 10, 6)
+    assert mode["parent_inventory_scope"] == "R13_finite_rectangle_including_evanescent"
+    assert mode["expected_mode_count"] == 612
+    assert mode["expected_active_mode_count"] == active_count
+    assert tuple(mode["active_rectangle_max_abs_m_n"]) == (k, k)
+    assert mode["quadrature_reference_label"] == "R13_full_612_parent"
+    assert options["surface_quadrature"]["degree"] == 28
+    assert options["volume_quadrature"]["degree"] == 15
+    assert route["parent_mode_count"] == 612
+    assert route["active_mode_count"] == active_count
+    assert tuple(route["active_rectangle_max_abs_m_n"]) == (k, k)
+    assert manifest["native_capacity_profile_identity"] == profile["identity"]
+    assert manifest["native_capacity_contract"]["direct_route"] == thaw(route)
 
     resolved, errors = _worker_validate(
         specification, run_directory, resolved_sha, plan

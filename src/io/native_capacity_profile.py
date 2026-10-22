@@ -137,6 +137,63 @@ TASK40_PHI90_D15_PROFILES = {
         "Z1", "Z3", "Z2_2", "Z3_2", "Z3_3",
     )
 }
+TASK40_PHI90_D15_Y3_MODAL_K = {
+    f"task40para_phi90_13p5_D15_Y3_K{k}_p6_direct_v1": k
+    for k in range(1, 5)
+}
+TASK40_PHI90_D15_K_SELECTIONS = {
+    1: {
+        "active_mode_count": 36,
+        "active_mode_sha256": (
+            "045b996778c449bf8be5bfcf155d2a1f752b1a5b4ae2dfae2ba98ec51c24e7b2"
+        ),
+        "selected_parent_indices_sha256": (
+            "d403f108e833abba7454e101324ecb14fbef8afa4b45eb8dc613f876da409019"
+        ),
+        "selected_signed_keys_sha256": (
+            "e7a48c62f8fceec071f1bc3b0d43708f7fc87273237f6acf546b1fbd64ee4a12"
+        ),
+    },
+    2: {
+        "active_mode_count": 100,
+        "active_mode_sha256": (
+            "b6511864775f7a3280c8690babccd23c106930e00e027d441082568cdc2f597d"
+        ),
+        "selected_parent_indices_sha256": (
+            "a92236ece070466c4fe76c63aa40c410dd698a72c9bccebe241c4efd3f3bc6de"
+        ),
+        "selected_signed_keys_sha256": (
+            "c221867bc88c744bcfdef54ec95453112a7064832914c095e351bf89f48e9d2b"
+        ),
+    },
+    3: {
+        "active_mode_count": 196,
+        "active_mode_sha256": (
+            "398b7db8c26e7b30ff198410b45ac2415ec8a785670fe351d3990781f056ae98"
+        ),
+        "selected_parent_indices_sha256": (
+            "dce336c56a7a3e9ce2c092fba29e602b625ba693b55bca5e57a682ed1cce9e20"
+        ),
+        "selected_signed_keys_sha256": (
+            "15d52238a648bcd8908ed3f8799f0dc991b472c1de8add1132ec416600a3b147"
+        ),
+    },
+    4: {
+        "active_mode_count": 324,
+        "active_mode_sha256": (
+            "c7281da5bfadbc9716e7cbcbe952037b592b59432e264db1632cf344af9edf89"
+        ),
+        "selected_parent_indices_sha256": (
+            "02abef46a37c04318dd997cce1df177b672c68b0a8ae6c385e4805ca22c5e6bd"
+        ),
+        "selected_signed_keys_sha256": (
+            "8bf6295a5c3249fddef80b52d4588a1b8cd778d34a5fabef8a1e949c100af616"
+        ),
+    },
+}
+TASK40_PHI90_D15_PROFILES.update(
+    {profile: "Y3" for profile in TASK40_PHI90_D15_Y3_MODAL_K}
+)
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
     "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
     "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
@@ -1452,13 +1509,18 @@ def _task40_phi90_d15_profile_facts(identity):
         case_name = TASK40_PHI90_D15_PROFILES[identity]
     except KeyError as exc:
         raise ValueError(f"unsupported Task40 D15 profile: {identity}") from exc
+    modal_k = TASK40_PHI90_D15_Y3_MODAL_K.get(identity)
     case = D15_CASES[case_name]
     plan = d15_axis_plan(case_name)
     counts = tuple(int(value) for value in plan["axis_cell_counts"])
     expected_cells = int(plan["expected_global_cell_count"])
     tags = dict(plan["static_midpoint_tags"])
     tag_counts = {"1": tags["air"], "2": tags["substrate"], "3": tags["grating"]}
-    operator_scope = f"task40_phi90_D15_{case_name}_R13_finite_rectangle"
+    operator_scope = (
+        f"task40_phi90_D15_Y3_R13_parent_to_K{modal_k}_subrectangle"
+        if modal_k is not None
+        else f"task40_phi90_D15_{case_name}_R13_finite_rectangle"
+    )
     base = deepcopy(
         _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_B_P6_DIRECT_PROFILE)
     )
@@ -1469,7 +1531,11 @@ def _task40_phi90_d15_profile_facts(identity):
         wavelength_nm=13.5,
         allowed_mesh_targets_nm=[15.0],
         formal_runner="src.runners.p6_condensed_direct",
-        route=f"TASK40_PHI90_D15_{case_name}_P6_CONDENSED_DIRECT_R13",
+        route=(
+            f"TASK40_PHI90_D15_Y3_K{modal_k}_P6_CONDENSED_DIRECT"
+            if modal_k is not None
+            else f"TASK40_PHI90_D15_{case_name}_P6_CONDENSED_DIRECT_R13"
+        ),
         operator_scope=operator_scope,
         full_dtn_status="FULL_DTN_NOT_VERIFIED",
     )
@@ -1483,6 +1549,64 @@ def _task40_phi90_d15_profile_facts(identity):
             "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e"
         ),
     )
+    if modal_k is not None:
+        selection = TASK40_PHI90_D15_K_SELECTIONS[modal_k]
+        active_mode_count = int(selection["active_mode_count"])
+        active_rectangle = [int(modal_k), int(modal_k)]
+        mode_selection = options["mode_selection"]
+        mode_selection.update(
+            policy="explicit_symmetric_subrectangle_from_parent_v1",
+            reference_mode_label=f"R13_K{modal_k}",
+            parent_rectangle_max_abs_m_n=[4, 8],
+            active_rectangle_max_abs_m_n=active_rectangle,
+            expected_mode_count=612,
+            expected_mode_sha256=(
+                "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e"
+            ),
+            expected_active_mode_count=active_mode_count,
+            expected_active_mode_sha256=selection["active_mode_sha256"],
+            expected_selected_parent_indices_sha256=(
+                selection["selected_parent_indices_sha256"]
+            ),
+            expected_selected_signed_keys_sha256=(
+                selection["selected_signed_keys_sha256"]
+            ),
+            quadrature_reference_label="R13_full_612_parent",
+            quadrature_inventory="full_D15_Y3_R13_parent_inventory",
+            operator_scope=operator_scope,
+        )
+        options["modal_truncation"] = {
+            "schema": "task40.d15.y3.modal-rectangle.v1",
+            "display_case": f"D15-Y3-K{modal_k}",
+            "geometry_reference_run_id": "task40_phi90_13p5_D15_Y3_p6_direct_v1",
+            "parent_mode_count": 612,
+            "parent_mode_sha256": mode_selection["expected_mode_sha256"],
+            "active_rectangle_max_abs_m_n": active_rectangle,
+            "active_mode_count": active_mode_count,
+            "active_mode_sha256": selection["active_mode_sha256"],
+            "selected_parent_indices_sha256": selection[
+                "selected_parent_indices_sha256"
+            ],
+            "selected_signed_keys_sha256": selection[
+                "selected_signed_keys_sha256"
+            ],
+            "omitted_reference_values": (
+                "not_computed; offline comparison zero-extends over all 612 parent keys"
+            ),
+            "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        }
+        evidence_keys = []
+        for side in ("top", "bottom"):
+            evidence_keys.extend(
+                (
+                    (side, -modal_k, 0, "p"),
+                    (side, 0, 0, "s"),
+                    (side, modal_k, 0, "p"),
+                )
+            )
+        options["direct_factor_evidence"]["mode_keys"] = [
+            list(key) for key in evidence_keys
+        ]
     options.update(
         task_family="task40_phi90_d15_mesh_modes_direct",
         mesh_target_nm=15.0,
@@ -1491,7 +1615,11 @@ def _task40_phi90_d15_profile_facts(identity):
         directional_mesh_comparison={
             "mesh_plan_family": "d15",
             "case": case_name,
-            "display_label": case.get("display_label", f"D15-{case_name.replace('_', '-')}"),
+            "display_label": (
+                f"D15-Y3-K{modal_k} on unchanged Y3 grid"
+                if modal_k is not None
+                else case.get("display_label", f"D15-{case_name.replace('_', '-')}")
+            ),
             "parent_case": case["parent_case"],
             "changed_axis": case["changed_axis"],
             "axis_cell_counts": list(counts),
@@ -1545,7 +1673,11 @@ def _task40_phi90_d15_profile_facts(identity):
     base["backend"]["operator_scope"] = operator_scope
     base["condensed_route"].update(
         name="task40_phi90_d15_p6_exact_local_condensation_direct_v1",
-        operator_family=f"D15_{case_name}_R13_finite_rectangle",
+        operator_family=(
+            f"D15_Y3_K{modal_k}_R13_parent_subrectangle"
+            if modal_k is not None
+            else f"D15_{case_name}_R13_finite_rectangle"
+        ),
         expected_global_cell_count=expected_cells,
         operator_scope=operator_scope,
     )
@@ -1559,6 +1691,21 @@ def _task40_phi90_d15_profile_facts(identity):
         plan["static_plan_sha256"]
     )
     base["campaign_authorization"]["direct_route"]["reuse_D15_Z2_without_new_run"] = True
+    if modal_k is not None:
+        base["campaign_authorization"]["source"] = (
+            "user-authorized D15-Y3 same-grid modal-rectangle truncation against "
+            "the saved finite R13 reference; execute all K=1..4 regardless of earlier results"
+        )
+        base["campaign_authorization"]["direct_route"].update(
+            modal_truncation_case=f"D15-Y3-K{modal_k}",
+            geometry_reference_run_id="task40_phi90_13p5_D15_Y3_p6_direct_v1",
+            parent_mode_count=612,
+            active_mode_count=TASK40_PHI90_D15_K_SELECTIONS[modal_k][
+                "active_mode_count"
+            ],
+            active_rectangle_max_abs_m_n=[modal_k, modal_k],
+            execution_order=f"K{modal_k}_after_X2",
+        )
     if case_name == "Y5_Z2":
         base["campaign_authorization"]["source"] = (
             "user-authorized independent z-only p6 direct refinement from the "

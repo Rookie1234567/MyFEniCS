@@ -25,6 +25,38 @@ PHYSICAL_BUNDLE_SCHEMA = "task038.same_mesh_hcurl_pmg.physical.v2"
 PHYSICAL_PROFILE = "same_mesh_hcurl_pmg_v1_requalified"
 
 
+def _expected_operator_parent_indices(
+    parent_mode_rows: tuple[Mapping[str, Any], ...],
+    operator_selection: Mapping[str, Any],
+) -> tuple[int, ...]:
+    """Resolve the exact supported active subset in a finite parent inventory."""
+
+    policy = operator_selection.get("policy")
+    if policy == "n_equals_zero_both_ports_both_polarizations":
+        return tuple(
+            index
+            for index, row in enumerate(parent_mode_rows)
+            if int(row.get("n", -1)) == 0
+        )
+    if policy == "explicit_symmetric_subrectangle_from_parent_v1":
+        rectangle = tuple(
+            int(value)
+            for value in operator_selection.get(
+                "active_rectangle_max_abs_m_n", ()
+            )
+        )
+        if len(rectangle) != 2 or rectangle[0] != rectangle[1] or rectangle[0] < 1:
+            raise ValueError("operator selection rectangle is malformed")
+        max_m, max_n = rectangle
+        return tuple(
+            index
+            for index, row in enumerate(parent_mode_rows)
+            if abs(int(row.get("m", 999999))) <= max_m
+            and abs(int(row.get("n", 999999))) <= max_n
+        )
+    raise ValueError("operator selection policy is unsupported")
+
+
 def _notify_stage(
     callback: Callable[[str, Mapping[str, Any]], None] | None,
     name: str,
@@ -365,13 +397,11 @@ def build_same_mesh_physical_action(
             )
         ):
             raise ValueError("operator selection parent indices are invalid")
-        expected_parent_indices = tuple(
-            index
-            for index, row in enumerate(parent_mode_rows)
-            if int(row.get("n", -1)) == 0
+        expected_parent_indices = _expected_operator_parent_indices(
+            parent_mode_rows, operator_selection
         )
         if selected_parent_indices != expected_parent_indices:
-            raise ValueError("operator selection indices are not the live n=0 rows")
+            raise ValueError("operator selection indices do not match its live parent filter")
         for active_index, parent_index in enumerate(selected_parent_indices):
             parent_row = dict(parent_mode_rows[parent_index])
             parent_row["mode_index"] = active_index
