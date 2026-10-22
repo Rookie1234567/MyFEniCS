@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
 import numpy as np
 from dolfinx import fem
@@ -267,6 +268,258 @@ def project_p6_dual_to_active_full(
     return active
 
 
+def extract_active_full_from_p6_field(
+    transfer: VariablePGlobalTransfer,
+    p6_field: Any,
+    *,
+    shared_row_tolerance: float = 5.0e-10,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Primal-extract one p6 field into a nested active variable-p space.
+
+    Each owned cell uses its verified Basix p6-to-active interpolation. Shared
+    active rows are reconciled collectively before trace constraints or p6
+    recovery are considered.
+    """
+
+    mesh = transfer.entity_map.mesh
+    if mesh.comm.size != 1:
+        raise ValueError("parent-to-candidate primal extraction is serial-only")
+    if p6_field.function_space.mesh is not mesh:
+        raise ValueError("p6 field and transfer must use the same mesh")
+    dofmap = transfer.p6_space.dofmap
+    if int(dofmap.index_map_bs) != 1:
+        raise ValueError("p6 primal extraction requires scalar-blocked H(curl)")
+    local_coefficients = np.asarray(
+        p6_field.x.array,
+        dtype=np.complex128,
+    )
+    expected_local_size = int(
+        dofmap.index_map.size_local + dofmap.index_map.num_ghosts
+    )
+    if local_coefficients.shape != (expected_local_size,):
+        raise ValueError("p6 field local coefficient layout differs from transfer")
+    tolerance = float(shared_row_tolerance)
+    if not np.isfinite(tolerance) or tolerance < 0.0:
+        raise ValueError("shared active-row tolerance must be finite and nonnegative")
+
+    cache_before = build_variable_p_reference_space.cache_info()
+    unique_maps = {cell.cell.degree_map for cell in transfer.cells}
+    row_packets: list[np.ndarray] = []
+    value_packets: list[np.ndarray] = []
+    local_interpolation_error = 0.0
+    for cell_transfer in transfer.cells:
+        reference_space = build_variable_p_reference_space(
+            cell_transfer.cell.degree_map
+        )
+        local_active, interpolation_audit = (
+            reference_space.extract_hcurl_coefficients_from_p6(
+                local_coefficients[cell_transfer.p6_local_dofs],
+                cell_info=cell_transfer.cell.cell_info,
+            )
+        )
+        row_packets.append(
+            np.asarray(cell_transfer.cell.active_rows, dtype=np.int64)
+        )
+        value_packets.append(np.asarray(local_active, dtype=np.complex128))
+        local_interpolation_error = max(
+            local_interpolation_error,
+            float(interpolation_audit["p6_to_active_identity_error_max"]),
+        )
+
+    comm = mesh.comm
+    gathered_rows = comm.allgather(
+        np.concatenate(row_packets)
+        if row_packets
+        else np.empty(0, dtype=np.int64)
+    )
+    gathered_values = comm.allgather(
+        np.concatenate(value_packets)
+        if value_packets
+        else np.empty(0, dtype=np.complex128)
+    )
+    active = np.zeros(transfer.entity_map.active_rows, dtype=np.complex128)
+    assigned = np.zeros(transfer.entity_map.active_rows, dtype=bool)
+    maximum_shared_error = 0.0
+    maximum_scale = 1.0
+    for rows, values in zip(gathered_rows, gathered_values, strict=True):
+        if rows.shape != values.shape:
+            raise RuntimeError("primal transfer row/value packets differ in shape")
+        if np.any(rows < 0) or np.any(rows >= transfer.entity_map.active_rows):
+            raise RuntimeError("primal transfer contains an out-of-range active row")
+        if not np.isfinite(values.real).all() or not np.isfinite(values.imag).all():
+            raise RuntimeError("p6-to-active primal extraction produced non-finite values")
+        for raw_row, raw_value in zip(rows, values, strict=True):
+            row = int(raw_row)
+            value = complex(raw_value)
+            maximum_scale = max(maximum_scale, abs(value))
+            if assigned[row]:
+                error = abs(active[row] - value)
+                maximum_shared_error = max(maximum_shared_error, error)
+                if error > tolerance * max(1.0, abs(active[row]), abs(value)):
+                    raise RuntimeError(
+                        "parent p6 field gives inconsistent shared active rows: "
+                        f"row={row}, error={error:.6e}"
+                    )
+            else:
+                active[row] = value
+                assigned[row] = True
+    if not np.all(assigned):
+        raise RuntimeError(
+            "p6-to-active extraction left active rows unset: "
+            f"missing={int(np.count_nonzero(~assigned))}"
+        )
+
+    cache_after = build_variable_p_reference_space.cache_info()
+    return active, {
+        "schema_version": "task035d.variable-p-p6-primal-extraction.v1",
+        "status": "primal_active_extraction_pass",
+        "pass": True,
+        "active_global_rows": int(transfer.entity_map.active_rows),
+        "owned_cells": int(transfer.audit["owned_cell_count_global"]),
+        "unique_cell_degree_maps": len(unique_maps),
+        "maximum_p6_to_active_identity_error": local_interpolation_error,
+        "maximum_shared_active_row_absolute_error": maximum_shared_error,
+        "maximum_shared_active_row_relative_error": (
+            maximum_shared_error / maximum_scale
+        ),
+        "shared_row_tolerance": tolerance,
+        "reference_space_cache_before": {
+            "hits": cache_before.hits,
+            "misses": cache_before.misses,
+            "maxsize": cache_before.maxsize,
+            "currsize": cache_before.currsize,
+        },
+        "reference_space_cache_after": {
+            "hits": cache_after.hits,
+            "misses": cache_after.misses,
+            "maxsize": cache_after.maxsize,
+            "currsize": cache_after.currsize,
+        },
+        "reference_space_cache_delta": {
+            "hits": cache_after.hits - cache_before.hits,
+            "misses": cache_after.misses - cache_before.misses,
+        },
+        "global_embedding_matrix_allocated": False,
+    }
+
+
+def audit_full_active_trace_constraints(
+    active_values: np.ndarray,
+    trace_constraints: Any,
+    *,
+    tolerance: float = 5.0e-10,
+) -> dict[str, Any]:
+    """Check a full active trace vector against one serial flattened authority.
+
+    Independent values are recovered only from physical root entity blocks.
+    Every edge and face block, including periodic slaves, is then checked
+    against its stored full-from-independent expansion.
+    """
+
+    comm = trace_constraints.entity_map.mesh.comm
+    if comm.size != 1:
+        raise ValueError("parent-to-candidate trace transfer audit is serial-only")
+    values = np.asarray(active_values, dtype=np.complex128)
+    entity_map = trace_constraints.entity_map
+    if values.shape != (entity_map.active_rows,):
+        raise ValueError("full active vector has the wrong entity-map size")
+    if not np.isfinite(values.real).all() or not np.isfinite(values.imag).all():
+        raise ValueError("full active vector contains non-finite values")
+    tolerance = float(tolerance)
+    if not np.isfinite(tolerance) or tolerance < 0.0:
+        raise ValueError("trace constraint tolerance must be finite and nonnegative")
+
+    authority_root_rows = set(trace_constraints.authority.graph.root_rows)
+    independent_rows = int(trace_constraints.independent_trace_rows)
+    independent_values = np.zeros(independent_rows, dtype=np.complex128)
+    assigned = np.zeros(independent_rows, dtype=bool)
+    root_block_count = 0
+    blocks = tuple(trace_constraints.entity_blocks.values())
+    for block in blocks:
+        root_flags = [
+            row in authority_root_rows for row in block.physical_entity.rows
+        ]
+        if any(root_flags) and not all(root_flags):
+            raise ValueError(
+                "mixed root/slave entity block is outside the serial p-only transfer audit"
+            )
+        if not all(root_flags):
+            continue
+        full_rows = np.asarray(block.full_rows, dtype=np.int64)
+        roots = np.asarray(block.independent_rows, dtype=np.int64)
+        expansion = np.asarray(block.full_from_independent, dtype=np.complex128)
+        if (
+            len(full_rows) != len(roots)
+            or expansion.shape != (len(full_rows), len(roots))
+            or np.linalg.matrix_rank(expansion) != len(roots)
+        ):
+            raise RuntimeError("physical root entity block is not invertible")
+        root_values = np.linalg.solve(expansion, values[full_rows])
+        for row, value in zip(roots, root_values, strict=True):
+            index = int(row)
+            if index < 0 or index >= independent_rows:
+                raise RuntimeError("root entity block has an invalid independent row")
+            if assigned[index]:
+                error = abs(independent_values[index] - value)
+                if error > tolerance * max(
+                    1.0,
+                    abs(independent_values[index]),
+                    abs(value),
+                ):
+                    raise RuntimeError(
+                        "physical root blocks disagree on an independent trace value"
+                    )
+            else:
+                independent_values[index] = value
+                assigned[index] = True
+        root_block_count += 1
+    if not np.all(assigned):
+        raise RuntimeError(
+            "physical root entity blocks do not cover all independent trace rows"
+        )
+
+    maximum_error = 0.0
+    scale = max(
+        1.0,
+        float(
+            np.max(
+                np.abs(values[: entity_map.active_trace_rows]),
+                initial=0.0,
+            )
+        ),
+    )
+    for block in blocks:
+        full_rows = np.asarray(block.full_rows, dtype=np.int64)
+        roots = np.asarray(block.independent_rows, dtype=np.int64)
+        predicted = (
+            np.asarray(block.full_from_independent, dtype=np.complex128)
+            @ independent_values[roots]
+        )
+        maximum_error = max(
+            maximum_error,
+            float(np.max(np.abs(values[full_rows] - predicted), initial=0.0)),
+        )
+    relative_error = maximum_error / scale
+    if relative_error > tolerance:
+        raise RuntimeError(
+            "candidate full trace violates hanging/Floquet constraints: "
+            f"relative_error={relative_error:.6e}"
+        )
+    return {
+        "schema_version": "task035d.variable-p-p6-trace-transfer-audit.v1",
+        "status": "full_active_trace_constraint_pass",
+        "pass": True,
+        "mpi_size": 1,
+        "independent_trace_rows": independent_rows,
+        "physical_entity_block_count": len(blocks),
+        "independent_root_block_count": root_block_count,
+        "full_active_trace_rows": int(entity_map.active_trace_rows),
+        "maximum_absolute_constraint_error": maximum_error,
+        "maximum_relative_constraint_error": relative_error,
+        "tolerance": tolerance,
+    }
+
+
 def recover_active_full_to_p6_field(
     transfer: VariablePGlobalTransfer,
     active_values: PETSc.Vec | np.ndarray,
@@ -344,7 +597,9 @@ def recover_active_full_to_p6_field(
 __all__ = [
     "VariablePCellTransfer",
     "VariablePGlobalTransfer",
+    "audit_full_active_trace_constraints",
     "build_variable_p_global_transfer",
+    "extract_active_full_from_p6_field",
     "project_p6_dual_to_active_full",
     "recover_active_full_to_p6_field",
 ]

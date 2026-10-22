@@ -13,6 +13,7 @@ from src.adaptivity.variable_p_entity_map import (
 )
 from src.adaptivity.variable_p_transfer import (
     build_variable_p_global_transfer,
+    extract_active_full_from_p6_field,
     project_p6_dual_to_active_full,
     recover_active_full_to_p6_field,
 )
@@ -29,6 +30,78 @@ def _degree_array(msh, dimension: int, degree: int) -> np.ndarray:
 
 
 class Task035dVariablePTransferTests(unittest.TestCase):
+    def test_parent_p4_field_primal_transfers_to_candidate_p5_and_recovers(self) -> None:
+        if MPI.COMM_WORLD.size != 1:
+            self.skipTest("parent-to-candidate primal extraction is serial-only")
+        msh = mesh.create_unit_cube(
+            MPI.COMM_WORLD,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+            ghost_mode=mesh.GhostMode.shared_facet,
+        )
+        parent_map = build_variable_p_global_entity_map(
+            msh,
+            edge_degrees=_degree_array(msh, 1, 4),
+            face_degrees=_degree_array(msh, 2, 4),
+            cell_degrees=_degree_array(msh, 3, 4),
+        )
+        candidate_map = build_variable_p_global_entity_map(
+            msh,
+            edge_degrees=_degree_array(msh, 1, 5),
+            face_degrees=_degree_array(msh, 2, 5),
+            cell_degrees=_degree_array(msh, 3, 5),
+        )
+        p6_space = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                6,
+                dtype=default_real_type,
+            ),
+        )
+        parent_transfer = build_variable_p_global_transfer(
+            parent_map,
+            p6_space,
+        )
+        candidate_transfer = build_variable_p_global_transfer(
+            candidate_map,
+            p6_space,
+        )
+        parent_rows = np.arange(parent_map.active_rows, dtype=np.float64)
+        parent_active = np.sin(0.011 * parent_rows) + 1j * np.cos(
+            0.017 * parent_rows
+        )
+        parent_field, _parent_recovery = recover_active_full_to_p6_field(
+            parent_transfer,
+            parent_active,
+        )
+
+        candidate_active, extraction = extract_active_full_from_p6_field(
+            candidate_transfer,
+            parent_field,
+        )
+        candidate_field, recovery = recover_active_full_to_p6_field(
+            candidate_transfer,
+            candidate_active,
+        )
+        self.assertTrue(extraction["pass"])
+        self.assertEqual(extraction["unique_cell_degree_maps"], 1)
+        self.assertLessEqual(
+            extraction["maximum_shared_active_row_relative_error"],
+            5.0e-10,
+        )
+        self.assertTrue(recovery["pass"])
+        old_values = np.asarray(parent_field.x.array, dtype=np.complex128)
+        new_values = np.asarray(candidate_field.x.array, dtype=np.complex128)
+        relative_error = float(
+            np.max(np.abs(old_values - new_values), initial=0.0)
+            / max(1.0, float(np.max(np.abs(old_values), initial=0.0)))
+        )
+        self.assertLessEqual(relative_error, 5.0e-10)
+
     def test_matrix_free_transfer_is_conforming_and_adjoint(self) -> None:
         if MPI.COMM_WORLD.size not in {1, 2}:
             self.skipTest("Task035d A4 qualifies serial and MPI2")

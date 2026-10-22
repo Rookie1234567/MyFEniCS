@@ -23,6 +23,12 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+    write_pre_validation_checkpoint,
+)
+from benchmarks.task43_hp_adaptivity.candidate_records import (
+    load_accepted_parent_artifacts,
+)
 from benchmarks.task43_hp_adaptivity.profile import (
     task43_initial_profile,
     task43_profile_identity,
@@ -92,6 +98,8 @@ _THREAD_ENV = (
 )
 _SOURCE_FILES = (
     "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/candidate_records.py",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
     "benchmarks/task43_hp_adaptivity/round1_candidates.py",
     "src/adaptivity/physical_g_error.py",
     "benchmarks/task43_hp_adaptivity/profile.py",
@@ -318,6 +326,88 @@ def _validate_round1_candidate_inputs(
         "marking_record_sha256": marking_record_sha,
         "acceptance_contract_sha256": acceptance_sha,
         "acceptance_contract_schema": acceptance["schema"],
+    }
+    return plan, plan_sha, identity
+
+
+def _validate_accepted_candidate_inputs(
+    *,
+    candidate_plan_path: Path,
+    candidate_id: str,
+    accepted_parent_selection_record: Path,
+    acceptance_contract_path: Path,
+) -> tuple[dict[str, Any], str, dict[str, Any]]:
+    """Validate a later-round candidate against a hash-bound accepted parent."""
+    plan_path = candidate_plan_path.resolve()
+    plan_sha = _sha256_file(plan_path)
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    candidate = plan.get("task43_candidate", {})
+    provenance = candidate.get("provenance", {})
+    if candidate.get("candidate_id") != candidate_id:
+        raise ValueError("candidate ID does not match its geometry-bound plan")
+    if candidate.get("action") not in {"p_up", "h_refine"}:
+        raise ValueError("accepted-parent plan has an unknown adaptive action")
+    if (
+        plan.get("trace_degree") != 3
+        or plan.get("cell_interior_degree") != 6
+        or plan.get("variable_trace_from_cell_degrees") is not True
+        or len(plan.get("cell_interior_degrees", []))
+        != int(plan.get("expected_forest", {}).get("leaf_cell_count", -1))
+    ):
+        raise ValueError("later-round candidate plan lacks its complete p3-p6 leaf degree map")
+    expected_no_refinement = (
+        candidate["action"] == "p_up" and not plan.get("marked_root_boxes", [])
+    )
+    if bool(plan.get("allow_no_refinement", False)) is not expected_no_refinement:
+        raise ValueError("later-round candidate h/no-h policy differs from its action")
+
+    accepted_parent = load_accepted_parent_artifacts(
+        accepted_parent_selection_record,
+        artifact_root=Path(__file__).resolve().parents[2],
+        acceptance_contract_path=acceptance_contract_path,
+    )
+    selection_path = accepted_parent["selection_path"]
+    selected = accepted_parent["selected"]
+    selection_sha = accepted_parent["selection_sha256"]
+    run_root = accepted_parent["run_root"]
+    record_sha = accepted_parent["hashes"]["record_sha256"]
+    storage_sha = accepted_parent["hashes"]["storage_sha256"]
+    parent_plan_sha = accepted_parent["hashes"]["plan_sha256"]
+    comparison_sha = accepted_parent["hashes"]["comparison_record_sha256"]
+    acceptance_sha = accepted_parent["acceptance_contract_sha256"]
+
+    expected_provenance = {
+        "accepted_parent_selection_sha256": selection_sha,
+        "parent_run_root": str(run_root),
+        "parent_candidate_id": selected["candidate_id"],
+        "parent_case_record_sha256": record_sha,
+        "parent_recovered_storage_sha256": storage_sha,
+        "parent_plan_sha256": parent_plan_sha,
+        "parent_comparison_sha256": comparison_sha,
+        "acceptance_contract_sha256": acceptance_sha,
+        "selection_reference_role": "Y6_1",
+        "holdout_excluded": "Y5_1",
+        "final_6x10x6_p6_control_excluded_from_selection": True,
+    }
+    if any(provenance.get(key) != value for key, value in expected_provenance.items()):
+        raise ValueError("candidate plan provenance differs from the accepted parent selection")
+    if Path(str(provenance.get("accepted_parent_selection_record_path"))).resolve() != selection_path:
+        raise ValueError("candidate plan names a different accepted selection record")
+
+    identity = {
+        "candidate_id": candidate_id,
+        "action": candidate["action"],
+        "plan_path": str(plan_path),
+        "plan_sha256": plan_sha,
+        "parent_selection_record_path": str(selection_path),
+        "accepted_parent_selection_sha256": selection_sha,
+        "parent_candidate_id": str(selected["candidate_id"]),
+        "parent_run_root": str(run_root),
+        "parent_case_record_sha256": record_sha,
+        "parent_recovered_storage_sha256": storage_sha,
+        "parent_plan_sha256": parent_plan_sha,
+        "parent_comparison_record_sha256": comparison_sha,
+        "acceptance_contract_sha256": acceptance_sha,
     }
     return plan, plan_sha, identity
 
@@ -1550,6 +1640,7 @@ def _run(
     candidate_tightening_run_root: Path | None = None,
     candidate_marking_record: Path | None = None,
     candidate_acceptance_contract: Path | None = None,
+    candidate_parent_selection_record: Path | None = None,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
@@ -1591,6 +1682,9 @@ def _run(
         None
         if candidate_acceptance_contract is None
         else str(candidate_acceptance_contract.resolve()),
+        None
+        if candidate_parent_selection_record is None
+        else str(candidate_parent_selection_record.resolve()),
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
@@ -1618,6 +1712,9 @@ def _run(
     candidate_acceptance_contract = (
         None if root_contract[8] is None else Path(root_contract[8])
     )
+    candidate_parent_selection_record = (
+        None if root_contract[9] is None else Path(root_contract[9])
+    )
     root_error = None
     if comm.rank == 0:
         try:
@@ -1634,30 +1731,34 @@ def _run(
     comm.Barrier()
 
     if candidate_case:
-        if any(
-            value is None
-            for value in (
-                candidate_plan_path,
-                candidate_id,
-                candidate_parent_run_root,
-                candidate_tightening_run_root,
-                candidate_marking_record,
-                candidate_acceptance_contract,
+        if any(value is None for value in (candidate_plan_path, candidate_id, candidate_acceptance_contract)):
+            raise ValueError("candidate case requires plan, ID and frozen acceptance contract")
+        if candidate_parent_selection_record is None:
+            if any(value is None for value in (candidate_parent_run_root, candidate_tightening_run_root, candidate_marking_record)):
+                raise ValueError("round-one candidate case requires its frozen initial inputs")
+            (
+                candidate_plan,
+                candidate_plan_sha256,
+                candidate_identity,
+            ) = _validate_round1_candidate_inputs(
+                candidate_plan_path=candidate_plan_path,
+                candidate_id=str(candidate_id),
+                parent_run_root=candidate_parent_run_root,
+                tightening_run_root=candidate_tightening_run_root,
+                marking_record_path=candidate_marking_record,
+                acceptance_contract_path=candidate_acceptance_contract,
             )
-        ):
-            raise ValueError("round-one candidate case requires all frozen inputs")
-        (
-            candidate_plan,
-            candidate_plan_sha256,
-            candidate_identity,
-        ) = _validate_round1_candidate_inputs(
-            candidate_plan_path=candidate_plan_path,
-            candidate_id=str(candidate_id),
-            parent_run_root=candidate_parent_run_root,
-            tightening_run_root=candidate_tightening_run_root,
-            marking_record_path=candidate_marking_record,
-            acceptance_contract_path=candidate_acceptance_contract,
-        )
+        else:
+            (
+                candidate_plan,
+                candidate_plan_sha256,
+                candidate_identity,
+            ) = _validate_accepted_candidate_inputs(
+                candidate_plan_path=candidate_plan_path,
+                candidate_id=str(candidate_id),
+                accepted_parent_selection_record=candidate_parent_selection_record,
+                acceptance_contract_path=candidate_acceptance_contract,
+            )
         candidate_plan_copy = run_root / "candidate_plan.json"
         copy_error = None
         if comm.rank == 0:
@@ -1672,6 +1773,7 @@ def _run(
             raise RuntimeError(copy_error)
         comm.Barrier()
         candidate_identity["run_plan_path"] = str(candidate_plan_copy)
+        candidate_identity["adaptive_round_id"] = str(candidate_id).split("_", 1)[0]
 
     reference_identities: dict[str, Any] = {}
     references = []
@@ -1943,6 +2045,91 @@ def _run(
         captured["port_metrics"] = kwargs["dtn_result"]["port_metrics"]
 
     def active_observer(view) -> None:
+        if current_case or candidate_case:
+            if comm.size == 1:
+                _log_stage(comm, started, "pre_validation_checkpoint", "begin")
+                storage_arrays, storage_metadata = _active_solution_storage(view)
+                modes = view.goal_context["modes"]
+                ordered_mode_keys = [
+                    [
+                        str(mode.side),
+                        int(mode.m),
+                        int(mode.n),
+                        str(mode.polarization),
+                    ]
+                    for mode in modes
+                ]
+                resolved_axes = {
+                    name: axis.tolist()
+                    for name, axis in zip(("x", "y", "z"), axes, strict=True)
+                }
+                resolved_mesh_audit = {
+                    "global_cell_count": int(local_h_plan_identity["leaf_cell_count"]),
+                    "leaf_cell_count": int(local_h_plan_identity["leaf_cell_count"]),
+                }
+                checkpoint_profile_identity = task43_profile_identity(
+                    view.config,
+                    modes,
+                    resolved_axes_nm=resolved_axes,
+                    resolved_mesh_audit=resolved_mesh_audit,
+                )
+                checkpoint_identity = {
+                    "case_id": case,
+                    "candidate_id": candidate_id if candidate_case else None,
+                    "candidate_action": (
+                        None
+                        if not candidate_case
+                        else candidate_identity.get("action")
+                    ),
+                    "candidate_plan_sha256": candidate_plan_sha256,
+                    "accepted_parent_selection_sha256": (
+                        None
+                        if not candidate_case
+                        else candidate_identity.get(
+                            "accepted_parent_selection_sha256"
+                        )
+                    ),
+                    "mpi_size": int(comm.size),
+                    "source_identity": source_identity,
+                    "resolved_profile_identity": checkpoint_profile_identity,
+                    "resolved_axes_nm": resolved_axes,
+                    "local_h_plan_identity": local_h_plan_identity,
+                    "ordered_mode_count": len(ordered_mode_keys),
+                    "ordered_mode_keys_sha256": _sha256_json(ordered_mode_keys),
+                    "active_degree_plan_sha256": storage_metadata[
+                        "active_degree_plan_sha256"
+                    ],
+                    "mesh_and_dof_order_sha256": storage_metadata[
+                        "mesh_and_dof_order_sha256"
+                    ],
+                }
+                checkpoint_path = run_root / "pre_validation_checkpoint.npz"
+                captured["pre_validation_checkpoint"] = (
+                    write_pre_validation_checkpoint(
+                        checkpoint_path,
+                        storage_arrays,
+                        identity=checkpoint_identity,
+                    )
+                )
+                captured["solution_storage_arrays"] = storage_arrays
+                captured["solution_storage_metadata"] = storage_metadata
+                _log_stage(
+                    comm,
+                    started,
+                    "pre_validation_checkpoint",
+                    "end",
+                    npz_sha256=captured["pre_validation_checkpoint"][
+                        "npz_sha256"
+                    ],
+                    official_result=False,
+                )
+            else:
+                captured["pre_validation_checkpoint"] = {
+                    "status": "not_written_mpi_size_not_one",
+                    "classification": "diagnostic_checkpoint_is_serial_only",
+                    "official_result": False,
+                    "mpi_size": int(comm.size),
+                }
         capture(view.field, view.mesh_data, view.config, view.goal_context)
         captured["distinct_physical_trace_degrees"] = sorted(
             {
@@ -1974,18 +2161,14 @@ def _run(
         captured["local_h_audit"]["closure_split_counts"] = dict(
             audit["forest"]["closure_split_counts"]
         )
-        if current_case or candidate_case:
-            storage_arrays, storage_metadata = _active_solution_storage(view)
-            captured["solution_storage_arrays"] = storage_arrays
-            captured["solution_storage_metadata"] = storage_metadata
-            if same_lu_tightening_enabled:
-                captured["same_lu_tightening"] = _same_lu_tightening(
-                    view,
-                    run_root=run_root,
-                    comm=comm,
-                    started=started,
-                    initial_fields=captured["fields"],
-                )
+        if (current_case or candidate_case) and same_lu_tightening_enabled:
+            captured["same_lu_tightening"] = _same_lu_tightening(
+                view,
+                run_root=run_root,
+                comm=comm,
+                started=started,
+                initial_fields=captured["fields"],
+            )
 
     _log_stage(comm, started, "solve_and_observe", "begin")
     summary = run_stage4b_block_grating_3d_case(
@@ -2230,7 +2413,7 @@ def _run(
                     "G2_frozen_initial_180_cell_current_numerical_result_not_accuracy_qualified"
                     if current_case
                     else (
-                        "G2_round1_candidate_numerically_gated_pending_common_comparison_and_acceptance"
+                        "G2_adaptive_candidate_numerically_gated_pending_common_comparison_and_acceptance"
                         if candidate_case
                         else "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim"
                     )
@@ -2356,6 +2539,9 @@ def _run(
                     }
                 ),
                 "recovered_solution_storage": storage_record,
+                "pre_validation_checkpoint": captured.get(
+                    "pre_validation_checkpoint"
+                ),
                 "reference_identities": reference_identities,
                 "reference_comparison": {
                     "status": "not_run" if not comparisons else "measured",
@@ -2456,6 +2642,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-tightening-run-root", type=Path)
     parser.add_argument("--candidate-marking-record", type=Path)
     parser.add_argument("--candidate-acceptance-contract", type=Path)
+    parser.add_argument("--candidate-parent-selection-record", type=Path)
     parser.add_argument(
         "--same-lu-tightening",
         action="store_true",
@@ -2491,21 +2678,35 @@ def main(argv: list[str] | None = None) -> int:
         )
     if not is_mpi2 and args.parallel_reference_run_root is not None:
         parser.error("--parallel-reference-run-root is only used by the MPI2 active case")
-    candidate_arguments = (
+    candidate_core_arguments = (
         args.candidate_plan,
         args.candidate_id,
+        args.candidate_acceptance_contract,
+    )
+    round1_candidate_arguments = (
         args.candidate_parent_run_root,
         args.candidate_tightening_run_root,
         args.candidate_marking_record,
-        args.candidate_acceptance_contract,
     )
-    if is_candidate and any(value is None for value in candidate_arguments):
+    if is_candidate and any(value is None for value in candidate_core_arguments):
         parser.error(
-            "round1_candidate_mpi1 requires --candidate-plan, --candidate-id, "
-            "--candidate-parent-run-root, --candidate-tightening-run-root, "
-            "--candidate-marking-record and --candidate-acceptance-contract"
+            "candidate case requires --candidate-plan, --candidate-id and "
+            "--candidate-acceptance-contract"
         )
-    if not is_candidate and any(value is not None for value in candidate_arguments):
+    if is_candidate and args.candidate_parent_selection_record is None and any(
+        value is None for value in round1_candidate_arguments
+    ):
+        parser.error("round-one candidate requires the initial parent/tightening/marking inputs")
+    if is_candidate and args.candidate_parent_selection_record is not None and any(
+        value is not None for value in round1_candidate_arguments
+    ):
+        parser.error("accepted-parent candidates do not take round-one initial inputs")
+    all_candidate_arguments = (
+        *candidate_core_arguments,
+        *round1_candidate_arguments,
+        args.candidate_parent_selection_record,
+    )
+    if not is_candidate and any(value is not None for value in all_candidate_arguments):
         parser.error("candidate inputs are only valid for round1_candidate_mpi1")
     if comm.size != expected_size:
         parser.error(f"--case {args.case} requires MPI size {expected_size}")
@@ -2521,6 +2722,7 @@ def main(argv: list[str] | None = None) -> int:
         candidate_tightening_run_root=args.candidate_tightening_run_root,
         candidate_marking_record=args.candidate_marking_record,
         candidate_acceptance_contract=args.candidate_acceptance_contract,
+        candidate_parent_selection_record=args.candidate_parent_selection_record,
     )
     if comm.rank == 0:
         print(

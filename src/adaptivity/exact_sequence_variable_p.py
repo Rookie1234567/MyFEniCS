@@ -275,6 +275,51 @@ class VariablePReferenceSpace:
             cell_info=cell_info,
         )
 
+    def extract_hcurl_coefficients_from_p6(
+        self,
+        p6_coefficients: np.ndarray,
+        *,
+        cell_info: int,
+    ) -> tuple[np.ndarray, dict[str, Any]]:
+        """Extract primal active coefficients from an oriented p6 field.
+
+        The reverse interpolation is a primal coefficient map.  It is not the
+        Hermitian transpose used by :meth:`project_p6_oriented_dual`.
+        """
+
+        values = np.asarray(p6_coefficients)
+        p6_dimension = int(_standard_element(_HCURL_FAMILY, 6).dim)
+        if values.shape != (p6_dimension,):
+            raise ValueError("p6 local primal coefficient vector has wrong size")
+        p6_space = build_variable_p_reference_space(
+            HexaEntityDegreeMap.uniform(6)
+        )
+        p6_reference = apply_active_dof_transformation(
+            p6_space,
+            values,
+            family=_HCURL_FAMILY,
+            cell_info=cell_info,
+            transpose=True,
+        )
+        interpolation, identity_error = _from_p6_interpolation(
+            self.degree_map
+        )
+        active_reference = np.ascontiguousarray(
+            interpolation @ p6_reference
+        )
+        active_oriented = apply_active_dof_transformation(
+            self,
+            active_reference,
+            family=_HCURL_FAMILY,
+            cell_info=cell_info,
+        )
+        return active_oriented, {
+            "method": "basix_p6_to_active_primal_interpolation",
+            "cell_info": int(cell_info),
+            "p6_to_active_identity_error_max": identity_error,
+            "transpose_dual_projection_used": False,
+        }
+
     def project_p6_oriented_dual(
         self,
         p6_dual: np.ndarray,
@@ -304,6 +349,37 @@ class VariablePReferenceSpace:
             active_reference_dual,
             cell_info=cell_info,
         )
+
+
+@lru_cache(maxsize=32)
+def _from_p6_interpolation(
+    degree_map: HexaEntityDegreeMap,
+) -> tuple[np.ndarray, float]:
+    """Build a primal p6-to-active interpolation and verify its left inverse."""
+
+    active = build_variable_p_reference_space(degree_map)
+    p6_element = _standard_element(_HCURL_FAMILY, 6)
+    interpolation = np.asarray(
+        basix.compute_interpolation_operator(
+            p6_element,
+            active.hcurl_element,
+        ),
+        dtype=np.float64,
+    )
+    identity = interpolation @ active.hcurl_to_p6
+    error = float(
+        np.max(
+            np.abs(identity - np.eye(active.hcurl_dimension)),
+            initial=0.0,
+        )
+    )
+    if error > 5.0e-10:
+        raise RuntimeError(
+            "candidate active space is not a verified p6 subspace: "
+            f"left_inverse_error={error:.3e}"
+        )
+    interpolation.setflags(write=False)
+    return interpolation, error
 
 
 def allowed_dimension_degree_triples() -> tuple[tuple[int, int, int], ...]:

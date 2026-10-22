@@ -16,15 +16,16 @@ accuracy credit.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
 import basix
-from dolfinx import mesh
 import numpy as np
+from dolfinx import mesh
 
 from .dyadic_hexa_broken_mesh import BrokenDyadicHexCarrier
 from .dyadic_hexa_refinement import BalancedDyadicHexForest, Box
@@ -483,6 +484,143 @@ def _face_adjacent_cell_pairs(
     return tuple(pairs)
 
 
+def _variable_p_cell_neighbor_pairs(
+    forest: BalancedDyadicHexForest,
+    *,
+    origin: np.ndarray,
+    tolerance: float,
+    domain_steps: tuple[int, int, int],
+    axes: tuple[str, ...],
+) -> tuple[tuple[Box, Box], ...]:
+    """Return the exact face and periodic cell neighbors used by p-jump checks."""
+
+    incidence, _ = _physical_entity_incidence(
+        forest,
+        origin=origin,
+        tolerance=tolerance,
+    )
+    pairs = {
+        tuple(sorted(pair))
+        for pair in _face_adjacent_cell_pairs(forest, tolerance=tolerance)
+    }
+    periodic_pairs = _periodic_entity_pairs(
+        set(incidence),
+        axes=axes,
+        domain_steps=domain_steps,
+    )
+    for left, right in periodic_pairs:
+        if left[0] != 2:
+            continue
+        for left_box in incidence[left]:
+            for right_box in incidence[right]:
+                if left_box != right_box:
+                    pairs.add(tuple(sorted((left_box, right_box))))
+    return tuple(sorted(pairs))
+
+
+def raise_cell_degrees_for_p_up(
+    forest: BalancedDyadicHexForest,
+    cell_degree_by_box: Mapping[Box, int],
+    marked_boxes: Sequence[Box],
+) -> tuple[Mapping[Box, int], Mapping[str, Any]]:
+    """Raise marked cells by one and minimally close ordinary/periodic p jumps."""
+
+    cells = dict(_normalize_cell_degree_by_box(forest, cell_degree_by_box))
+    bounds = forest.domain_bounds
+    origin = np.asarray(bounds[:3], dtype=np.float64)
+    extent = np.asarray(
+        [bounds[axis + 3] - bounds[axis] for axis in range(3)],
+        dtype=np.float64,
+    )
+    tolerance = max(float(np.max(extent)), 1.0) * 1.0e-11
+    domain_steps = tuple(np.rint(extent / tolerance).astype(np.int64).tolist())
+    neighbors = _variable_p_cell_neighbor_pairs(
+        forest,
+        origin=origin,
+        tolerance=tolerance,
+        domain_steps=domain_steps,
+        axes=tuple(forest.periodic_axes),
+    )
+    maximum_parent_jump = max(
+        (abs(cells[left] - cells[right]) for left, right in neighbors),
+        default=0,
+    )
+    if maximum_parent_jump > 1:
+        raise ValueError(
+            "p-up parent already violates the ordinary/periodic neighbor jump"
+        )
+
+    requested = {tuple(map(float, box)) for box in marked_boxes}
+    if len(requested) != len(marked_boxes):
+        raise ValueError("p-up marked boxes must be unique")
+    missing = requested - set(cells)
+    if missing:
+        raise ValueError(f"p-up marks absent forest leaves: {sorted(missing)[:2]}")
+    saturated = {box for box in requested if cells[box] == 6}
+    raised_requested = requested - saturated
+    for box in raised_requested:
+        cells[box] += 1
+    after_requested = dict(cells)
+    maximum_jump_before_closure = max(
+        (abs(cells[left] - cells[right]) for left, right in neighbors),
+        default=0,
+    )
+    iterations = 0
+    while True:
+        updated = dict(cells)
+        for left, right in neighbors:
+            if cells[left] > cells[right] + 1:
+                updated[right] = max(updated[right], cells[left] - 1)
+            elif cells[right] > cells[left] + 1:
+                updated[left] = max(updated[left], cells[right] - 1)
+        if updated == cells:
+            break
+        if any(degree > 6 for degree in updated.values()):
+            raise ValueError("minimal p-up closure exceeds the p6 carrier")
+        cells = updated
+        iterations += 1
+        if iterations > len(cells):
+            raise RuntimeError("minimal p-up degree closure did not converge")
+
+    forced_increments = {
+        box: cells[box] - after_requested[box]
+        for box in sorted(cells)
+        if cells[box] > after_requested[box]
+    }
+    maximum_jump = max(
+        (abs(cells[left] - cells[right]) for left, right in neighbors),
+        default=0,
+    )
+    if maximum_jump > 1:
+        raise RuntimeError("p-up degree closure left a neighbor jump above one")
+    return (
+        MappingProxyType(cells),
+        MappingProxyType(
+            {
+                "requested_mark_count": len(requested),
+                "requested_raised_count": len(raised_requested),
+                "saturated_mark_count": len(saturated),
+                "saturated_marked_boxes": [list(box) for box in sorted(saturated)],
+                "forced_increments": [
+                    {"box": list(box), "increment": increment}
+                    for box, increment in forced_increments.items()
+                ],
+                "forced_cell_count": len(forced_increments),
+                "neighbor_pair_count": len(neighbors),
+                "maximum_parent_neighbor_p_jump": maximum_parent_jump,
+                "maximum_neighbor_p_jump_before_closure": (
+                    maximum_jump_before_closure
+                ),
+                "maximum_neighbor_p_jump_after_closure": maximum_jump,
+                "closure_iterations": iterations,
+                "all_marked_cells_saturated": (
+                    bool(requested) and not raised_requested
+                ),
+            }
+        ),
+    )
+
+
 def _variable_trace_degree_maps(
     forest: BalancedDyadicHexForest,
     *,
@@ -550,24 +688,15 @@ def _variable_trace_degree_maps(
                 "variable trace degree closure did not reach a fixed point"
             )
 
-    adjacency = _face_adjacent_cell_pairs(
+    neighbor_pairs = _variable_p_cell_neighbor_pairs(
         forest,
+        origin=origin,
         tolerance=tolerance,
+        domain_steps=domain_steps,
+        axes=axes,
     )
-    adjacent_jumps = [
-        abs(cells[left] - cells[right]) for left, right in adjacency
-    ]
-    periodic_cell_jumps: list[int] = []
-    for left, right in periodic_pairs:
-        if left[0] != 2:
-            continue
-        for left_box in incidence[left]:
-            for right_box in incidence[right]:
-                periodic_cell_jumps.append(
-                    abs(cells[left_box] - cells[right_box])
-                )
     maximum_cell_jump = max(
-        (*adjacent_jumps, *periodic_cell_jumps),
+        (abs(cells[left] - cells[right]) for left, right in neighbor_pairs),
         default=0,
     )
     if maximum_cell_jump > 1:
@@ -1669,4 +1798,5 @@ __all__ = [
     "build_broken_hexa_entity_degree_arrays",
     "build_broken_hexa_trace_constraint_authority",
     "physical_face_closure_rows",
+    "raise_cell_degrees_for_p_up",
 ]

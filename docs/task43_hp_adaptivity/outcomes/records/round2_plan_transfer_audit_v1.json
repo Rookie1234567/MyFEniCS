@@ -1,0 +1,157 @@
+{
+  "schema": "task43.round2-plan-transfer-audit.v1",
+  "status": "plan_and_entity_audits_passed; same_mesh_p_transfer_passed; cross_mesh_transfer_not_run; PDE_not_run",
+  "classification": "accepted_parent_plan_mesh_closure_and_primal_transfer_qualification_only",
+  "official_result": false,
+  "pde_solve_performed": false,
+  "parent": {
+    "candidate_id": "round1_p_up_p4_46",
+    "selection_record": "docs/task43_hp_adaptivity/outcomes/records/round1_selection_transition1_v1.json",
+    "selection_sha256": "aa31fca51bc56fee1d2960a0cd7bcbf87ac26c518711282e4f00e5b128387366",
+    "case_record_sha256": "1cc787e4b0d7417e700cdc72d6698a9e8d2ee30b0c7a78c66c5d063fad7c4cce",
+    "storage_sha256": "253b9ea1b3f16414aea3cf71a6196518b7a2a895299bed17ccd751c30e0b998d",
+    "plan_sha256": "cf10fd68e36db37e3507dc390eb0dd10bc3f146b3fb485f619c93c1d16d47074",
+    "comparison_sha256": "48d508ed8f992412e8b33d7527e0d7eafa6f9b8c534fc214a6af7d7c4e48a224",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647"
+  },
+  "run": {
+    "base_git_head": "2e35567e909f71bf3a428456c59a113dc1fb0228",
+    "working_tree_was_dirty": true,
+    "command": "python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --accepted-parent-selection-record docs/task43_hp_adaptivity/outcomes/records/round1_selection_transition1_v1.json --round-id round2 --output-root benchmarks/artifacts/task43/round2_plan_transfer_smoke_attempt2",
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "abi_preflight": "PASS: qualified native activation, complex128, int64, MPI1",
+    "worker_affinity_linux_cpu_ids": [17],
+    "worker_exit_status": 0,
+    "started_local": "2026-10-23T06:10:00.344678225+08:00",
+    "completed_local": "2026-10-23T06:22:54.527511830+08:00",
+    "runner_internal_wall_seconds": 767.0957927680574,
+    "wrapper_wall_seconds_derived_from_shell_timestamps": 774.182833605,
+    "resource_peak_rss": "not measured as a process-tree peak; sampled host snapshots are not a peak claim",
+    "source_sha256_pre_and_post_match": true,
+    "source_sha256": {
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py": "1eb18fa7b1c295760ce5f0cfed987c875523e6ee9554dfc805f9a4a48ff4b1de",
+      "src/adaptivity/variable_p_transfer.py": "f17d851631052f5e6ed1f2ec829c14bbdee1f3af97aff7b829aec6c5f5e72ad4",
+      "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "src/adaptivity/exact_sequence_variable_p.py": "352af95d03d7e3efa5dde68c937e89d6d0f8e784ca4e60078037446db74b371f"
+    },
+    "bundle_path": "benchmarks/artifacts/task43/round2_plan_transfer_smoke_attempt2/plan_audit.json",
+    "bundle_sha256": "f6aa03c4adad79f605f9538ddc37e4dc622ca0d60124bfc8c5d2034f4182efca",
+    "p_up_plan_sha256": "c01f021df08d85a9b21a4bf31b133bc95aa5e8468a5a58402847658363e65a2f",
+    "p_up_audit_sha256": "7003287705027f9a1a40552126399169b04997f27f601ff2e1dacc4bffdc8d71",
+    "h_plan_sha256": "59bf60fe98058e6c6bcf104872be5a7aa80d3767277475c1b33582f12fb9aee7",
+    "h_audit_sha256": "6e47c8d8678cfd715feabb318fa1b1fcfb0f0b74391cfbb621edda60a37e164e",
+    "stdout_log_sha256": "22bf079300120c1036f8a33e65221ef02f28a6c72f6837c418d203276f966a6c",
+    "launch_and_source_hash_metadata_sha256": "270051583d676be52e2ee29f495b2e6c2a8c2eb219c1d0da0cce5a6197a0c26a"
+  },
+  "candidates": {
+    "round2_p_up": {
+      "plan_status": "plan_built_and_entity_audit_passed",
+      "forest": {
+        "root_cells": 180,
+        "actual_leaf_cells": 180,
+        "h_splits": 0,
+        "hanging_patches": 0,
+        "leaf_catalog_sha256": "53a1e36b24a676ceb5554c9bdddafe89a426d38f6a1d268515cb44b9586b5590"
+      },
+      "degree_histogram": {
+        "p3": 81,
+        "p4": 60,
+        "p5": 39
+      },
+      "distinct_physical_trace_degrees": [3, 4, 5],
+      "p_up_forced_closure_cells": 41,
+      "independent_dofs": {
+        "trace_rows": 13602,
+        "cell_interior_rows": 18756,
+        "total": 32358,
+        "parent_total": 19679,
+        "added": 12679,
+        "active_fe_gate_pass": true
+      },
+      "same_mesh_parent_transfer": {
+        "status": "pass",
+        "parent_geometry_and_p6_dof_identity_pass": true,
+        "parent_storage_sha256": "253b9ea1b3f16414aea3cf71a6196518b7a2a895299bed17ccd751c30e0b998d",
+        "unique_cell_degree_maps": 19,
+        "reference_space_cache_delta": {
+          "hits": 378,
+          "misses": 1
+        },
+        "maximum_shared_active_row_relative_error": 1.7720368703612883e-15,
+        "maximum_full_trace_constraint_relative_error": 3.500369599603709e-15,
+        "parent_to_candidate_recovered_p6_relative_error": 7.487328954168559e-14,
+        "tolerance": 5e-10,
+        "dense_embedding_matrix_allocated": false,
+        "PDE_solve_performed": false,
+        "transfer_wall_seconds": 80.28180568292737
+      },
+      "authority_and_mesh_wall_seconds": 219.23606868134812,
+      "total_audit_wall_seconds": 299.51935427775607
+    },
+    "round2_h_refine": {
+      "plan_status": "plan_built_and_entity_audit_passed",
+      "forest": {
+        "root_cells": 180,
+        "requested_root_splits": 51,
+        "forced_material_closure_splits": 6,
+        "actual_one_level_splits": 57,
+        "actual_leaf_cells": 579,
+        "hanging_patches": 76,
+        "leaf_catalog_sha256": "5d4e81f0156473b148843459e5113ef416a9cdac90f2b3f5fc7014d5794b65bc"
+      },
+      "degree_histogram": {
+        "p3": 246,
+        "p4": 333
+      },
+      "distinct_physical_trace_degrees": [3, 4],
+      "independent_dofs": {
+        "trace_rows": 35208,
+        "cell_interior_rows": 44820,
+        "total": 80028,
+        "parent_total": 19679,
+        "added": 60349,
+        "active_fe_gate_pass": true
+      },
+      "cross_mesh_parent_transfer": {
+        "status": "not_run_cross_mesh_transfer_not_qualified",
+        "PDE_solve_performed": false
+      },
+      "authority_and_mesh_wall_seconds": 461.3899225681089,
+      "total_audit_wall_seconds": 461.3922538026236
+    }
+  },
+  "predeclared_score_comparison_condition": {
+    "source": "round1_acceptance_contract_v1.json and independently reviewed round1 bounds",
+    "h_maximum_score_including_noise": 4.851247231261913e-6,
+    "p_candidate_eta_condition_for_its_conservative_score_to_exceed_h_bound": "eta_p < 0.23124077919666225, provided all frozen p acceptance gates pass",
+    "status": "predeclared_condition_only; no round2 solve or winner claim"
+  },
+  "tests": {
+    "variable_p_transfer_test": {
+      "command": "pytest -q src/test/test_186_task035d_variable_p_transfer.py",
+      "result": "2 passed in 54.84s",
+      "log_path": "/tmp/task43/test_186_variable_p_transfer_final.log",
+      "log_sha256": "6ab64edab121b65130781ed8b3613ac690b8c5bb8277c698f05c18aca7cea90b"
+    },
+    "compileall_ruff_diff_check": {
+      "result": "PASS",
+      "log_path": "/tmp/task43/round2_implementation_static_checks.log",
+      "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "earlier_task_focused_subset": {
+      "result": "15 passed in 171.90s",
+      "scope_note": "Earlier targeted candidate-record, checkpoint, p-up closure, primal-transfer, variable-p degree-plan, and local-h regression subset; run before the final planner audit timing/conditional-write edits."
+    }
+  },
+  "controlled_stop_attempt1": {
+    "status": "controlled_stop_implementation_bug_no_numerical_result",
+    "attempt_note_path": "benchmarks/artifacts/task43/round2_plan_transfer_smoke_attempt1/attempt_note.json",
+    "attempt_note_sha256": "b85582e850fc41d304566326f6a79f7fb81613ff532bca8966dff5710dfc067f",
+    "derived_wall_seconds_interval": [71, 273],
+    "observed_cpu_seconds_lower_bound": 53,
+    "sampled_rss_kib_not_peak": 502640,
+    "reason": "An initial orchestration version passed the accepted parent same-mesh identity into the different-mesh h candidate audit. Executor stopped the mesh-only process before any candidate audit was written; no solver/PDE was run."
+  }
+}

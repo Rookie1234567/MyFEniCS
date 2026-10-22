@@ -14,6 +14,9 @@ from dolfinx import fem
 from mpi4py import MPI
 
 from benchmarks.task43_hp_adaptivity import compare_initial_to_references as base
+from benchmarks.task43_hp_adaptivity.candidate_records import (
+    load_accepted_parent_artifacts,
+)
 from benchmarks.task43_hp_adaptivity.h100_anchor import (
     _assert_mesh_profile,
     _h100_config,
@@ -38,6 +41,7 @@ REFERENCE_ROOT = ROOT / "benchmarks/artifacts/task43/reference_imports/attempt2"
 REFERENCE_COMPARISON = ROOT / "benchmarks/artifacts/task43/reference_comparison/attempt2"
 ACCEPTANCE = ROOT / "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json"
 COMPARISON_CONTRACT = ROOT / "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json"
+CANDIDATE_RECORDS = Path(__file__).with_name("candidate_records.py")
 DEFAULT_OUTPUT = ROOT / "benchmarks/artifacts/task43/round1_candidates/comparisons"
 
 
@@ -139,14 +143,17 @@ def _restore_candidate(candidate_run_root: Path, output_root: Path) -> dict[str,
     if _sha256_file(ACCEPTANCE) != identity["acceptance_contract_sha256"]:
         raise ValueError("frozen round-one acceptance contract changed")
 
-    _validate_round1_candidate_inputs(
-        candidate_plan_path=plan_path,
-        candidate_id=candidate_id,
-        parent_run_root=CURRENT_RUN,
-        tightening_run_root=ROOT / "benchmarks/artifacts/task43/current_180/tightening_attempt2/run",
-        marking_record_path=ROOT / "benchmarks/artifacts/task43/current_180/tightening_marking_q8/attempt2/tightening_marking_q8.json",
-        acceptance_contract_path=ACCEPTANCE,
-    )
+    # Round-one candidates are bound to the frozen initial perturbation. Later
+    # candidates are checked against an already accepted parent by the caller.
+    if not identity.get("accepted_parent_selection_sha256"):
+        _validate_round1_candidate_inputs(
+            candidate_plan_path=plan_path,
+            candidate_id=candidate_id,
+            parent_run_root=CURRENT_RUN,
+            tightening_run_root=ROOT / "benchmarks/artifacts/task43/current_180/tightening_attempt2/run",
+            marking_record_path=ROOT / "benchmarks/artifacts/task43/current_180/tightening_marking_q8/attempt2/tightening_marking_q8.json",
+            acceptance_contract_path=ACCEPTANCE,
+        )
 
     storage_path = candidate_run_root / "candidate_recovered_solution_storage.npz"
     storage_identity = record["recovered_solution_storage"]
@@ -218,6 +225,16 @@ def _restore_candidate(candidate_run_root: Path, output_root: Path) -> dict[str,
         "storage_sha256": storage_identity["sha256"],
         "plan_sha256": plan_sha,
     }
+
+
+def _load_accepted_parent(selection_path: Path) -> dict[str, Any]:
+    """Resolve an accepted parent using the shared JSON/hash identity reader."""
+
+    return load_accepted_parent_artifacts(
+        selection_path,
+        artifact_root=ROOT,
+        acceptance_contract_path=ACCEPTANCE,
+    )
 
 
 def _validate_candidate_physics(
@@ -544,6 +561,7 @@ def _j_infinity(
 def compare_candidate(
     candidate_run_root: Path,
     output_root: Path,
+    parent_selection_path: Path | None = None,
 ) -> dict[str, Any]:
     if MPI.COMM_WORLD.size != 1:
         raise RuntimeError("round-one candidate comparison currently requires MPI1")
@@ -553,6 +571,7 @@ def compare_candidate(
     started = time.perf_counter()
     source_start = base._source_snapshot()
     source_start["candidate_comparator_sha256"] = _sha256_file(Path(__file__))
+    source_start["candidate_records_sha256"] = _sha256_file(CANDIDATE_RECORDS)
     (output_root / "source_identity_start.json").write_text(
         json.dumps(source_start, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -582,19 +601,73 @@ def compare_candidate(
     ):
         raise ValueError("frozen reference calibration is not a complete, source-stable pair")
     candidate = _restore_candidate(candidate_run_root, output_root)
-    parent_modal = _load_modal_case("current_180")
+    has_accepted_parent_binding = bool(
+        candidate["record"].get("candidate_identity", {}).get(
+            "accepted_parent_selection_sha256"
+        )
+    )
+    if has_accepted_parent_binding != (parent_selection_path is not None):
+        raise ValueError(
+            "candidate parent-selection binding and comparator parent argument disagree"
+        )
+    accepted_parent = (
+        None if parent_selection_path is None else _load_accepted_parent(parent_selection_path)
+    )
+    if accepted_parent is not None:
+        candidate_plan = _json(candidate_run_root / "candidate_plan.json")
+        provenance = candidate_plan.get("task43_candidate", {}).get("provenance", {})
+        parent_hashes = accepted_parent["hashes"]
+        expected_parent_identity = {
+            "accepted_parent_selection_sha256": accepted_parent["selection_sha256"],
+            "parent_run_root": str(accepted_parent["run_root"]),
+            "parent_candidate_id": accepted_parent["selected"]["candidate_id"],
+            "parent_case_record_sha256": parent_hashes["record_sha256"],
+            "parent_recovered_storage_sha256": parent_hashes["storage_sha256"],
+            "parent_plan_sha256": parent_hashes["plan_sha256"],
+            "parent_comparison_sha256": parent_hashes["comparison_record_sha256"],
+            "acceptance_contract_sha256": _sha256_file(ACCEPTANCE),
+        }
+        if any(provenance.get(key) != value for key, value in expected_parent_identity.items()):
+            raise ValueError("candidate plan is not bound to the accepted parent artifacts")
+        if Path(str(provenance.get("accepted_parent_selection_record_path"))).resolve() != accepted_parent["selection_path"]:
+            raise ValueError("candidate plan names a different accepted selection record")
+        candidate_identity = candidate["record"].get("candidate_identity", {})
+        if (
+        candidate_identity.get("accepted_parent_selection_sha256")
+            != accepted_parent["selection_sha256"]
+            or candidate_identity.get("parent_candidate_id")
+            != accepted_parent["selected"]["candidate_id"]
+        ):
+            raise ValueError("candidate solve record is not bound to the accepted parent selection")
+    if accepted_parent is None:
+        parent_candidate = None
+        parent_modal = _load_modal_case("current_180")
+        parent_label = "current_180"
+    else:
+        parent_candidate = _restore_candidate(
+            accepted_parent["run_root"], output_root / "accepted_parent_restore"
+        )
+        if parent_candidate["candidate_id"] != accepted_parent["selected"]["candidate_id"]:
+            raise ValueError("restored parent candidate differs from accepted selection")
+        parent_modal = {
+            "label": parent_candidate["candidate_id"],
+            "record": parent_candidate["record"],
+            "mode_payload": parent_candidate["mode_payload"],
+            "power": parent_candidate["power"],
+        }
+        parent_label = parent_candidate["candidate_id"]
     selection_modal = _load_modal_case("Y6_1")
     calibration_modal = _load_modal_case("Y6_2")
     calibration_mode_validation = base._validate_mode_physics(
         {
-            "current_180": parent_modal,
+            "current_180": {**parent_modal, "label": "current_180"},
             "Y6_1": selection_modal,
             "Y6_2": calibration_modal,
         }
     )
     calibration_q_validation = base._validate_recorded_quadrature_and_cutoff(
         {
-            "current_180": parent_modal,
+            "current_180": {**parent_modal, "label": "current_180"},
             "Y6_1": selection_modal,
             "Y6_2": calibration_modal,
         }
@@ -625,35 +698,43 @@ def compare_candidate(
     ):
         raise ValueError("cached q8 sample coordinates/weights differ from regenerated rule")
 
-    reuse_cached = _axes_subset(candidate["axes"], cached_axes)
+    reuse_cached = _axes_subset(candidate["axes"], cached_axes) and (
+        parent_candidate is None or _axes_subset(parent_candidate["axes"], cached_axes)
+    )
     cases: dict[str, dict[str, Any]] = {}
     if reuse_cached:
         quadrature = cached_rule
+        parent_samples = (
+            {"E": cached["current_180_E_code"], "curl_E": cached["current_180_curl_E_code"]}
+            if parent_candidate is None
+            else _sample_field(parent_candidate, quadrature.points_nm)
+        )
         sampled = {
-            "current_180": {"E": cached["current_180_E_code"], "curl_E": cached["current_180_curl_E_code"]},
+            parent_label: parent_samples,
             "Y6_1": {"E": cached["Y6_1_E_code"], "curl_E": cached["Y6_1_curl_E_code"]},
         }
     else:
-        cases = {
-            label: _restore_case_fields(label, output_root)
-            for label in ("current_180", "Y6_1")
-        }
-        # The frozen q8 axes are the union for current/Y6_1/Y6_2. Reuse those
-        # breakpoints, but resample only current and Y6_1 after the candidate
-        # adds new leaf boundaries; Y6_2 remains calibration-only.
+        cases = {"Y6_1": _restore_case_fields("Y6_1", output_root)}
+        if parent_candidate is None:
+            cases["current_180"] = _restore_case_fields("current_180", output_root)
+            parent_case = cases["current_180"]
+        else:
+            parent_case = parent_candidate
+        # The frozen q8 axes include both reference meshes; add actual parent
+        # and candidate leaf boundaries, then resample only Y6_1 and the parent.
         axes_to_merge = [cached_axes]
-        axes_to_merge.extend(cases[label]["axes"] for label in ("current_180", "Y6_1"))
+        axes_to_merge.extend((parent_case["axes"], cases["Y6_1"]["axes"]))
         axes_to_merge.append(candidate["axes"])
         quadrature = build_common_volume_quadrature(axes_to_merge, gauss_order=8)
-        sampled = {
-            label: _sample_field(case, quadrature.points_nm)
-            for label, case in cases.items()
-        }
+        sampled = {"Y6_1": _sample_field(cases["Y6_1"], quadrature.points_nm)}
+        sampled[parent_label] = _sample_field(parent_case, quadrature.points_nm)
 
     candidate_samples = _sample_field(candidate, quadrature.points_nm)
     sampled[candidate["label"]] = candidate_samples
-    current_record = parent_modal["record"]
-    if "current_180" not in cases:
+    if parent_candidate is not None:
+        cfg = parent_candidate["cfg"]
+    elif "current_180" not in cases:
+        current_record = parent_modal["record"]
         cfg = _h100_config(
             kind="empty_h_active_p3",
             case_name=str(current_record["resolved_config"]["case_name"]),
@@ -661,16 +742,13 @@ def compare_candidate(
         )
     else:
         cfg = cases["current_180"]["cfg"]
-    parent_modal_case = {
-        **parent_modal,
-        "label": "current_180",
-    }
+    parent_modal_case = {**parent_modal, "label": parent_label}
     reference_modal_case = {**selection_modal, "label": "Y6_1"}
     candidate_modal_case = {**candidate, "label": candidate["candidate_id"]}
     parent_modal_metrics = base._modal_comparison(reference_modal_case, parent_modal_case)
     candidate_modal_metrics = base._modal_comparison(reference_modal_case, candidate_modal_case)
     parent_field_metrics = base._field_metrics(
-        sampled["Y6_1"], sampled["current_180"], quadrature.points_nm,
+        sampled["Y6_1"], sampled[parent_label], quadrature.points_nm,
         quadrature.weights_nm3, cfg,
     )
     candidate_field_metrics = base._field_metrics(
@@ -709,7 +787,12 @@ def compare_candidate(
     eta_candidate = float(candidate_field_metrics["G"]["relative_with_incident_floor"])
     epsilon_g = float(contract["acceptance"]["epsilon_G"])
     epsilon_j = float(contract["acceptance"]["epsilon_J"])
-    parent_dofs = int(contract["parent"]["independent_FE_dofs"])
+    parent_gate_recalculation = _recompute_candidate_hard_gates(
+        parent_modal["record"], parent_modal["mode_payload"], comparison_contract
+    )
+    if not parent_gate_recalculation["pass"]:
+        raise ValueError("comparison parent fails raw hard-gate recalculation")
+    parent_dofs = int(parent_gate_recalculation["actual_space"]["independent_FE_dofs"])
     candidate_dofs = int(
         candidate_gate_recalculation["actual_space"]["independent_FE_dofs"]
     )
@@ -723,7 +806,11 @@ def compare_candidate(
     }
     gates["pass"] = all(gates.values())
 
-    sample_path = output_root / "round1_candidate_shared_volume_q8.npz"
+    sample_path = output_root / (
+        "round1_candidate_shared_volume_q8.npz"
+        if accepted_parent is None
+        else "candidate_shared_volume_q8.npz"
+    )
     sample_arrays = {
         "points_nm": quadrature.points_nm,
         "weights_nm3": quadrature.weights_nm3,
@@ -737,17 +824,20 @@ def compare_candidate(
 
     source_end = base._source_snapshot()
     source_end["candidate_comparator_sha256"] = _sha256_file(Path(__file__))
+    source_end["candidate_records_sha256"] = _sha256_file(CANDIDATE_RECORDS)
     sources_unchanged = bool(
         source_start["git_head"] == source_end["git_head"]
         and source_start["file_sha256"] == source_end["file_sha256"]
         and source_start["candidate_comparator_sha256"]
         == source_end["candidate_comparator_sha256"]
+        and source_start["candidate_records_sha256"]
+        == source_end["candidate_records_sha256"]
     )
     if not sources_unchanged:
         raise RuntimeError("comparison source identity changed during candidate postprocessing")
     record = {
         "schema": "task43.round1-candidate-comparison.v1",
-        "classification": "measured_candidate_against_frozen_selection_reference_under_round1_contract",
+        "classification": "measured_candidate_against_frozen_selection_reference_and_acceptance_contract",
         "candidate_id": candidate["candidate_id"],
         "candidate_action": candidate["candidate_action"],
         "candidate_run_root": str(candidate_run_root.resolve()),
@@ -766,22 +856,34 @@ def compare_candidate(
             "reference_q_and_cutoff_validation": calibration_q_validation,
             "candidate_physics_validation": candidate_physics_validation,
             "candidate_raw_hard_gate_recalculation": candidate_gate_recalculation,
+            "parent_raw_hard_gate_recalculation": parent_gate_recalculation,
         },
+        "parent_identity": (
+            None
+            if accepted_parent is None
+            else {
+                "selection_record_path": str(accepted_parent["selection_path"]),
+                "selection_record_sha256": accepted_parent["selection_sha256"],
+                "candidate_id": accepted_parent["selected"]["candidate_id"],
+                "run_root": str(accepted_parent["run_root"]),
+                **accepted_parent["hashes"],
+            }
+        ),
         "q8": {
             "rule_sha256": quadrature.rule_sha256,
             "axis_breakpoints_nm": [axis.tolist() for axis in quadrature.axis_breakpoints_nm],
             "sample_count": quadrature.point_count,
-            "reused_frozen_parent_reference_samples": reuse_cached,
+            "reused_frozen_reference_rule_and_selection_samples": reuse_cached,
             "sample_bundle": str(sample_path),
             "sample_bundle_sha256": _sha256_file(sample_path),
             "integrated_domain_volume_nm3": float(np.sum(quadrature.weights_nm3)),
         },
         "field_metrics_vs_selection_reference": {
-            "parent_current_180": parent_field_metrics,
+            "parent": parent_field_metrics,
             "candidate": candidate_field_metrics,
         },
         "modal_and_power_metrics_vs_selection_reference": {
-            "parent_current_180": parent_modal_metrics,
+            "parent": parent_modal_metrics,
             "candidate": candidate_modal_metrics,
         },
         "J_infinity": {
@@ -803,8 +905,18 @@ def compare_candidate(
             "primary_score_noise_half_width": (
                 epsilon_g / dof_increment if dof_increment > 0 else None
             ),
+            "primary_score_noise_interval": (
+                {
+                    "lower": (g_improvement - epsilon_g) / dof_increment,
+                    "upper": (g_improvement + epsilon_g) / dof_increment,
+                    "half_width": epsilon_g / dof_increment,
+                    "formula": "(eta_parent - eta_candidate +/- epsilon_G) / actual_added_independent_FE_dofs",
+                }
+                if dof_increment > 0
+                else None
+            ),
             "gates": gates,
-            "status": "eligible_under_frozen_round1_rule" if gates["pass"] else "rejected_under_frozen_round1_rule",
+            "status": "eligible_under_frozen_acceptance_contract" if gates["pass"] else "rejected_under_frozen_acceptance_contract",
         },
         "candidate_leaf_G_contributions": {
             "cell_global_ids": candidate_global_ids.tolist(),
@@ -818,7 +930,18 @@ def compare_candidate(
         "sources_unchanged_during_comparison": sources_unchanged,
         "wall_seconds": time.perf_counter() - started,
     }
-    output_path = output_root / "round1_candidate_comparison_v1.json"
+    output_name = (
+        "round1_candidate_comparison_v1.json"
+        if accepted_parent is None
+        else "candidate_comparison_v2.json"
+    )
+    record["schema"] = (
+        "task43.round1-candidate-comparison.v1"
+        if accepted_parent is None
+        else "task43.candidate-comparison.v2"
+    )
+    record["parent_candidate_id"] = None if accepted_parent is None else parent_label
+    output_path = output_root / output_name
     output_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(
         json.dumps(
@@ -842,12 +965,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate-run-root", type=Path, required=True)
     parser.add_argument("--attempt-id", required=True)
+    parser.add_argument("--accepted-parent-selection-record", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
     compare_candidate(
         args.candidate_run_root.resolve(),
         DEFAULT_OUTPUT / args.attempt_id,
+        args.accepted_parent_selection_record,
     )
     return 0
 
