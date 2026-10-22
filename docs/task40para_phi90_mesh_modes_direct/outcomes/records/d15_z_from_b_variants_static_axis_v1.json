@@ -1,0 +1,328 @@
+{
+  "authorization_source": "user authorization in conversation on 2026-10-22; three independent z variants from actual D15-B x/y axes",
+  "cases": [
+    {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          15.0,
+          25.0,
+          35.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          20.0,
+          40.0,
+          60.0,
+          80.0,
+          100.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        4,
+        10
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "c0a1052034574ddda40b805390f8debb6abd3da6ec558cc0458820ee941198ba",
+        "z": "718918180633ac02394768b4ad11f7472cc9e174ff6557481d9a9e9114543a20"
+      },
+      "case": "Z2_2",
+      "changed_axis": "z",
+      "comparison_previous_case": "Z1",
+      "display_name": "D15-Z2-2",
+      "expected_global_cell_count": 240,
+      "nestedness_from_B": false,
+      "nestedness_from_previous_level": true,
+      "parent_case": "B",
+      "run_id": "task40_phi90_13p5_D15_Z2_2_p6_direct_v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          1,
+          2,
+          1
+        ],
+        "z": [
+          2,
+          6,
+          2
+        ]
+      },
+      "static_midpoint_material_tag_counts_air_substrate_grating": {
+        "air": 168,
+        "grating": 24,
+        "substrate": 48
+      }
+    },
+    {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          15.0,
+          25.0,
+          35.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          15.0,
+          30.0,
+          45.0,
+          60.0,
+          75.0,
+          90.0,
+          105.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        4,
+        12
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "c0a1052034574ddda40b805390f8debb6abd3da6ec558cc0458820ee941198ba",
+        "z": "8fa1c4b26258e1710687c0a9fd3f1f963bd3e5164df1141bd49039a763caaca0"
+      },
+      "case": "Z3_2",
+      "changed_axis": "z",
+      "comparison_previous_case": "Z2_2",
+      "display_name": "D15-Z3-2",
+      "expected_global_cell_count": 288,
+      "nestedness_from_B": true,
+      "nestedness_from_previous_level": false,
+      "parent_case": "B",
+      "run_id": "task40_phi90_13p5_D15_Z3_2_p6_direct_v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          1,
+          2,
+          1
+        ],
+        "z": [
+          2,
+          8,
+          2
+        ]
+      },
+      "static_midpoint_material_tag_counts_air_substrate_grating": {
+        "air": 208,
+        "grating": 32,
+        "substrate": 48
+      }
+    },
+    {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          15.0,
+          25.0,
+          35.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -6.666666666666666,
+          -3.333333333333333,
+          0.0,
+          20.0,
+          40.0,
+          60.0,
+          80.0,
+          100.0,
+          120.0,
+          123.33333333333333,
+          126.66666666666667,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        4,
+        12
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "c0a1052034574ddda40b805390f8debb6abd3da6ec558cc0458820ee941198ba",
+        "z": "ff7bdf40fb227a07452cfe9bed26279e7f671164353131e03c8833b9f1281c12"
+      },
+      "case": "Z3_3",
+      "changed_axis": "z",
+      "comparison_previous_case": "Z2_2",
+      "display_name": "D15-Z3-3",
+      "expected_global_cell_count": 288,
+      "nestedness_from_B": false,
+      "nestedness_from_previous_level": false,
+      "parent_case": "B",
+      "run_id": "task40_phi90_13p5_D15_Z3_3_p6_direct_v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          1,
+          2,
+          1
+        ],
+        "z": [
+          3,
+          6,
+          3
+        ]
+      },
+      "static_midpoint_material_tag_counts_air_substrate_grating": {
+        "air": 192,
+        "grating": 24,
+        "substrate": 72
+      }
+    }
+  ],
+  "comparison_design": [
+    {
+      "from": "Z1",
+      "purpose": "endpoint layers 1/6/1 to 2/6/2 at fixed 6 inner layers",
+      "to": "Z2_2"
+    },
+    {
+      "from": "Z2_2",
+      "purpose": "middle segment 6 to 8 at fixed 2/6 endpoint segments",
+      "to": "Z3_2"
+    },
+    {
+      "from": "Z2_2",
+      "purpose": "endpoint segments 2 to 3 at fixed 6 middle segments",
+      "to": "Z3_3"
+    },
+    {
+      "from": "Z3_2",
+      "purpose": "same 12-layer sibling redistribution",
+      "to": "Z3_3"
+    }
+  ],
+  "mesh_note": "Static interval-midpoint classifications only. Actual planner, live mesh axes/hash, periodic faces, tags, Jacobian and aspect QA must pass at each run.",
+  "operator_contract": {
+    "comparison_thresholds": {
+      "boundary_complex_amplitude_relative_l2_no_phase_fit": 0.0001,
+      "each_channel_R_T_abs_all_active_and_power_carrying": 1e-06,
+      "same_coordinate_complex_E_H_relative_l2_no_phase_fit": 0.0001,
+      "total_R_T_A_balance_A_volume_abs": 1e-05
+    },
+    "dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "dtn_sparse_cutoff_relative_tolerance": 1e-13,
+    "max_same_factor_corrections": 2,
+    "mode_count": 612,
+    "mode_sha256": "1987a2b30de90aae9c253852f25c4192c7370e44d8793e91fc83dd28cf7e522e",
+    "nedelec_degree": 6,
+    "single_factor": true,
+    "surface_quadrature_degree": 28,
+    "volume_quadrature": {
+      "degree": 15,
+      "rule": "default"
+    }
+  },
+  "parent_D15_B": {
+    "axis_cell_counts": [
+      6,
+      4,
+      6
+    ],
+    "axis_sha256_le_f64": {
+      "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+      "y": "c0a1052034574ddda40b805390f8debb6abd3da6ec558cc0458820ee941198ba",
+      "z": "daf722948a31d19757622ba67544eeea6d49fdc2e433b979df9c11b2b450afb6"
+    },
+    "input_sha256": "57279867d909089baecda99b9802162439542ed56c683759945c90663c46faad",
+    "physical_model_sha256": "6f78cddfd5bcc0082e20a975be283ca2f1f38ce800b6c52b74cd630baacc85e1",
+    "resolved_config_sha256": "482a3655510d6730f2d6864e5afd1a9d0f6767b0d8f7fbd6009e024a10ddfa55",
+    "run_id": "task40_phi90_13p5_D15_B_p6_direct_v1",
+    "source_sha": "ba26075e2a871db10a81efbceeb32b51d95ea96b",
+    "x_coordinates_nm": [
+      0.0,
+      8.25,
+      16.5,
+      25.0,
+      33.5,
+      41.75,
+      50.0
+    ],
+    "y_coordinates_nm": [
+      0.0,
+      15.0,
+      25.0,
+      35.0,
+      50.0
+    ],
+    "z_coordinates_nm": [
+      -10.0,
+      0.0,
+      30.0,
+      60.0,
+      90.0,
+      120.0,
+      130.0
+    ]
+  },
+  "preserved_history": {
+    "historical_D15_Z2_role": "reuse actual completed H15-B result only; never overwrite or rerun",
+    "legacy_D15_Z3": "1/10/1 remains a distinct old identity; not substituted for Z3_2 or Z3_3",
+    "withdrawn_Y5_Z2": {
+      "enforcement": "retained input is non-launchable: profile route removed and load_and_resolve rejects it",
+      "historical_dat_file": "input/task40para_phi90_mesh_modes_direct/d15_y5_z2_r13_p6_direct.dat",
+      "status": "WITHDRAWN_BEFORE_RUN_CASE",
+      "withdrawal_receipt_sha256": "92260cc4d33e0a92775554b6f05e42d0ddc3196a8f0face54a483c518d72b791"
+    }
+  },
+  "schema": "task40.phi90.d15.z_from_b_variants.static_axis.v1",
+  "status": "STATIC_PLAN_ONLY_NOT_LIVE_MESH_OR_LAUNCH_EVIDENCE"
+}

@@ -133,8 +133,8 @@ TASK40_PHI90_D15_PROFILES = {
     f"task40para_phi90_13p5_D15_{case}_p6_direct_v1": case
     for case in (
         "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y3_2",
-        "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Y6_1", "Y6_2", "Y5_Z2",
-        "Z1", "Z3",
+        "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Y6_1", "Y6_2",
+        "Z1", "Z3", "Z2_2", "Z3_2", "Z3_3",
     )
 }
 TASK40_PHI90_D13_BASE_AXIS_SHA256 = {
@@ -1491,6 +1491,7 @@ def _task40_phi90_d15_profile_facts(identity):
         directional_mesh_comparison={
             "mesh_plan_family": "d15",
             "case": case_name,
+            "display_label": case.get("display_label", f"D15-{case_name.replace('_', '-')}"),
             "parent_case": case["parent_case"],
             "changed_axis": case["changed_axis"],
             "axis_cell_counts": list(counts),

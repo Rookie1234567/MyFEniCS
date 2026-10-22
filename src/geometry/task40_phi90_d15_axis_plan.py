@@ -94,6 +94,34 @@ D15_Y6_2_Y_COORDINATES_NM = (
     27.5, 30.0, 32.5, 35.0, 38.75, 42.5, 46.25, 50.0,
 )
 
+
+def _uniform_piecewise_axis(bounds: tuple[float, ...], counts: tuple[int, ...]) -> tuple[float, ...]:
+    """Create one deterministic float64 coordinate sequence from segment counts."""
+    if len(bounds) != len(counts) + 1 or any(int(count) <= 0 for count in counts):
+        raise ValueError("piecewise axis bounds/counts are inconsistent")
+    values: list[float] = []
+    for (start, stop), count in zip(pairwise(bounds), counts, strict=True):
+        count = int(count)
+        values.extend(float(start + (stop - start) * i / count) for i in range(count))
+    values.append(float(bounds[-1]))
+    if any(not math.isfinite(value) for value in values):
+        raise ValueError("piecewise axis contains a non-finite coordinate")
+    if any(right <= left for left, right in pairwise(values)):
+        raise ValueError("piecewise axis is not strictly increasing")
+    return tuple(values)
+
+
+# Authorized D15 z variants from the actual D15-B x/y baseline. Z3_3 endpoint
+# coordinates are generated once by the common segment planner above.
+D15_Z3_3_Z_COORDINATES_NM = _uniform_piecewise_axis(
+    (-10.0, 0.0, 120.0, 130.0), (3, 6, 3)
+)
+D15_Z_LEVEL_STATIC_PLAN_RECORD = (
+    "docs/task40para_phi90_mesh_modes_direct/outcomes/records/"
+    "d15_z_from_b_variants_static_axis_v1.json"
+)
+D15_Z_LEVEL_STATIC_PLAN_SHA256 = "1a96d63e4e99cd29147e77f4865e8da1770284cec48c25e6895708f50c6723fb"
+
 D15_AXIS_COORDINATES_NM: dict[str, dict[int, tuple[float, ...]]] = {
     "x": {
         6: (0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0),
@@ -130,10 +158,14 @@ D15_CASES: dict[str, dict[str, object]] = {
     "Y5_1": {"axis_cell_counts": (6, 14, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 6, 4), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y3", "expected_tags": {"air": 372, "substrate": 84, "grating": 48}, "launchable": True},
     "Y6_1": {"axis_cell_counts": (6, 16, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (5, 6, 5), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y5_1", "expected_tags": {"air": 432, "substrate": 96, "grating": 48}, "launchable": True},
     "Y6_2": {"axis_cell_counts": (6, 16, 6), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 8, 4), "z": (1, 4, 1)}, "changed_axis": "y", "parent_case": "Y5_1", "expected_tags": {"air": 416, "substrate": 96, "grating": 64}, "launchable": True},
-    "Y5_Z2": {"axis_cell_counts": (6, 14, 8), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 6, 4), "z": (1, 6, 1)}, "changed_axis": "z", "parent_case": "Y5_1", "expected_tags": {"air": 516, "substrate": 84, "grating": 72}, "launchable": True},
+    # Retained only as history for the explicitly withdrawn Y5-parent proposal.
+    "Y5_Z2": {"axis_cell_counts": (6, 14, 8), "segment_cell_counts": {"x": (2, 2, 2), "y": (4, 6, 4), "z": (1, 6, 1)}, "changed_axis": "z", "parent_case": "Y5_1", "expected_tags": {"air": 516, "substrate": 84, "grating": 72}, "launchable": False},
     "Z1": {"axis_cell_counts": (6, 4, 8), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 6, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 144, "substrate": 24, "grating": 24}, "launchable": True},
     "Z2": {"axis_cell_counts": (6, 4, 10), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 8, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 184, "substrate": 24, "grating": 32}, "launchable": False},
     "Z3": {"axis_cell_counts": (6, 4, 12), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (1, 10, 1)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 224, "substrate": 24, "grating": 40}, "launchable": True},
+    "Z2_2": {"display_label": "D15-Z2-2", "axis_cell_counts": (6, 4, 10), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (2, 6, 2)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 168, "substrate": 48, "grating": 24}, "launchable": True},
+    "Z3_2": {"display_label": "D15-Z3-2", "axis_cell_counts": (6, 4, 12), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (2, 8, 2)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 208, "substrate": 48, "grating": 32}, "launchable": True},
+    "Z3_3": {"display_label": "D15-Z3-3", "axis_cell_counts": (6, 4, 12), "segment_cell_counts": {"x": (2, 2, 2), "y": (1, 2, 1), "z": (3, 6, 3)}, "changed_axis": "z", "parent_case": "B", "expected_tags": {"air": 192, "substrate": 72, "grating": 24}, "launchable": True},
 }
 D15_LAUNCHABLE_CASES = tuple(case for case, facts in D15_CASES.items() if facts["launchable"])
 D15_PREVIOUS_CASE = {
@@ -155,6 +187,9 @@ D15_PREVIOUS_CASE = {
     "Z1": "B",
     "Z2": "Z1",
     "Z3": "Z2",
+    "Z2_2": "Z1",
+    "Z3_2": "Z2_2",
+    "Z3_3": "Z2_2",
 }
 
 D15_Z2_HISTORICAL_REUSE = {
@@ -190,6 +225,13 @@ def _segment_counts(values: tuple[float, ...], bounds: tuple[float, ...]) -> tup
     return tuple(sum(left >= low - 1e-12 and right <= high + 1e-12 for left, right in pairwise(values)) for low, high in pairwise(bounds))
 
 def _case_axis_values(case: str, axis: str, count: int) -> tuple[float, ...]:
+    if axis == "z":
+        if case == "Z2_2":
+            return (-10.0, -5.0, 0.0, 20.0, 40.0, 60.0, 80.0, 100.0, 120.0, 125.0, 130.0)
+        if case == "Z3_2":
+            return (-10.0, -5.0, 0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 105.0, 120.0, 125.0, 130.0)
+        if case == "Z3_3":
+            return D15_Z3_3_Z_COORDINATES_NM
     if axis == "y":
         if case == "Y3_2":
             return D15_Y3_2_Y_COORDINATES_NM
@@ -277,6 +319,9 @@ def d15_axis_plan(case: str) -> dict[str, object]:
     elif case == "Y5_Z2":
         static_plan_record = D15_Y5_1_Z_STATIC_PLAN_RECORD
         static_plan_sha = D15_Y5_1_Z_STATIC_PLAN_SHA256
+    elif case in {"Z2_2", "Z3_2", "Z3_3"}:
+        static_plan_record = D15_Z_LEVEL_STATIC_PLAN_RECORD
+        static_plan_sha = D15_Z_LEVEL_STATIC_PLAN_SHA256
     else:
         static_plan_record = D15_STATIC_PLAN_RECORD
         static_plan_sha = D15_STATIC_PLAN_SHA256
@@ -323,6 +368,8 @@ def d15_axis_plan(case: str) -> dict[str, object]:
         "static_plan_sha256": static_plan_sha,
         "reuse_existing_h15_b": case == "Z2",
     }
+    if case == "Y5_Z2":
+        payload["withdrawn_before_run_case"] = True
     if case == "Y5_Z2":
         payload["parent_axis_sha256_le_f64"] = parent_axis_hashes
     plan_sha = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()

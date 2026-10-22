@@ -25,13 +25,14 @@ from src.geometry.task40_phi90_d15_axis_plan import (
     D15_Y3_2_SIBLINGS_STATIC_PLAN_SHA256,
     D15_Y5_1_STATIC_PLAN_RECORD,
     D15_Y5_1_STATIC_PLAN_SHA256,
-    D15_Y5_1_Z_STATIC_PLAN_RECORD,
-    D15_Y5_1_Z_STATIC_PLAN_SHA256,
     D15_Z2_HISTORICAL_REUSE,
+    D15_Z_LEVEL_STATIC_PLAN_RECORD,
+    D15_Z_LEVEL_STATIC_PLAN_SHA256,
     validate_frozen_d15_axes,
 )
 from src.io.execution_plan import build_execution_plan
 from src.io.input_validation import (
+    InputError,
     load_and_resolve,
     simulation_config_3d_from_normalized,
 )
@@ -382,73 +383,96 @@ def test_d15_y5_1_common_refinement_static_axes_and_independent_tags():
     assert frozen["expected_midpoint_material_tag_counts_air_substrate_grating"] == independent
 
 
-def test_d15_y5_z2_refines_only_z_from_actual_y5_axes_and_roundtrips_input():
+def test_withdrawn_y5_z2_stays_historical_and_has_no_launch_route():
     plan = D15_AXIS_PLANS["Y5_Z2"]
-    parent = D15_AXIS_PLANS["Y5_1"]
-    assert plan["plan_id"] == "task40_phi90_d15_y5_z2_axes_v1"
-    assert plan["parent_case"] == plan["previous_case"] == "Y5_1"
-    assert plan["changed_axis"] == "z"
-    assert plan["axis_cell_counts"] == [6, 14, 8]
-    assert plan["expected_global_cell_count"] == 672
-    assert plan["segment_cell_counts"] == {
-        "x": [2, 2, 2], "y": [4, 6, 4], "z": [1, 6, 1]
-    }
-    assert plan["axes_nm"]["x"] == parent["axes_nm"]["x"]
-    assert plan["axes_nm"]["y"] == parent["axes_nm"]["y"]
-    assert plan["axis_sha256_le_f64"]["x"] == parent["axis_sha256_le_f64"]["x"]
-    assert plan["axis_sha256_le_f64"]["y"] == parent["axis_sha256_le_f64"]["y"]
-    assert plan["axes_nm"]["z"] == [
-        -10.0, 0.0, 20.0, 40.0, 60.0, 80.0, 100.0, 120.0, 130.0
-    ]
-    assert plan["axis_sha256_le_f64"]["z"] != parent["axis_sha256_le_f64"]["z"]
-    assert plan["nestedness_from_previous_level"] is False
-    midpoint_tags = _midpoint_cell_tags(plan)
-    actual = {
-        "air": int(np.count_nonzero(midpoint_tags == 1)),
-        "substrate": int(np.count_nonzero(midpoint_tags == 2)),
-        "grating": int(np.count_nonzero(midpoint_tags == 3)),
-    }
-    assert actual == plan["static_midpoint_tags"] == {
-        "air": 516, "substrate": 84, "grating": 72
-    }
-    record = ROOT / D15_Y5_1_Z_STATIC_PLAN_RECORD
-    assert hashlib.sha256(record.read_bytes()).hexdigest() == D15_Y5_1_Z_STATIC_PLAN_SHA256
-    frozen = json.loads(record.read_text())
-    assert frozen["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
-    assert frozen["static_midpoint_material_tag_counts"] == actual
+    assert plan["launchable"] is False
+    assert plan["withdrawn_before_run_case"] is True
+    assert "Y5_Z2" not in TASK40_PHI90_D15_PROFILES.values()
+    with pytest.raises(InputError, match="is not allowed"):
+        load_and_resolve(INPUTS / "d15_y5_z2_r13_p6_direct.dat")
 
-    spec = load_and_resolve(D15_INPUTS["Y5_Z2"])
-    normalized = spec.as_jsonable()
-    assert normalized["run_id"] == "task40_phi90_13p5_D15_Y5_Z2_p6_direct_v1"
-    assert normalized["discretization"]["mesh_plan_id"] == plan["plan_id"]
-    assert tuple(normalized["discretization"]["mesh_axis_cell_counts"]) == (6, 14, 8)
-    for axis in ("x", "y", "z"):
-        assert tuple(normalized["discretization"][f"mesh_axis_{axis}_values"]) == tuple(
-            plan["axes_nm"][axis]
-        )
-    profile = native_profile_facts(
-        "task40para_phi90_13p5_D15_Y5_Z2_p6_direct_v1"
-    )
-    assert profile["campaign_authorization"]["direct_route"][
-        "reuse_D15_Z2_without_new_run"
-    ] is False
-    assert "not the historical D15-Z2/H15-B reuse" in profile[
-        "campaign_authorization"
-    ]["source"]
-    directional = profile["component_options"]["directional_mesh_comparison"]
-    assert directional["case"] == "Y5_Z2"
-    assert directional["parent_case"] == "Y5_1"
-    assert directional["changed_axis"] == "z"
-    assert directional["only_axis_changes_from_parent"] == ["z"]
-    assert directional["parent_axis_sha256_le_f64"] == plan[
-        "parent_axis_sha256_le_f64"
-    ]
-    assert directional["expected_material_tag_counts"] == {
-        "1": 516, "2": 84, "3": 72
+
+@pytest.mark.parametrize(
+    ("case", "z_segments", "z_values", "tags", "previous"),
+    (
+        (
+            "Z2_2", (2, 6, 2),
+            (-10.0, -5.0, 0.0, 20.0, 40.0, 60.0, 80.0, 100.0,
+             120.0, 125.0, 130.0),
+            {"air": 168, "substrate": 48, "grating": 24}, "Z1",
+        ),
+        (
+            "Z3_2", (2, 8, 2),
+            (-10.0, -5.0, 0.0, 15.0, 30.0, 45.0, 60.0, 75.0,
+             90.0, 105.0, 120.0, 125.0, 130.0),
+            {"air": 208, "substrate": 48, "grating": 32}, "Z2_2",
+        ),
+        (
+            "Z3_3", (3, 6, 3),
+            (-10.0, -6.666666666666666, -3.333333333333333, 0.0,
+             20.0, 40.0, 60.0, 80.0, 100.0, 120.0,
+             123.33333333333333, 126.66666666666667, 130.0),
+            {"air": 192, "substrate": 72, "grating": 24}, "Z2_2",
+        ),
+    ),
+)
+def test_d15_z_from_b_variants_use_actual_b_xy_and_independent_tags(
+    case, z_segments, z_values, tags, previous
+):
+    plan = D15_AXIS_PLANS[case]
+    parent = D15_AXIS_PLANS["B"]
+    assert plan["parent_case"] == "B"
+    assert plan["previous_case"] == previous
+    assert plan["changed_axis"] == "z"
+    assert plan["axis_cell_counts"] == [6, 4, len(z_values) - 1]
+    assert plan["expected_global_cell_count"] == math.prod(plan["axis_cell_counts"])
+    assert plan["segment_cell_counts"] == {
+        "x": [2, 2, 2], "y": [1, 2, 1], "z": list(z_segments)
     }
-    assert directional["expected_axis_sha256_le_f64"] == plan[
-        "axis_sha256_le_f64"
-    ]
+    assert tuple(plan["axes_nm"]["z"]) == z_values
+    for axis in ("x", "y"):
+        assert plan["axes_nm"][axis] == parent["axes_nm"][axis]
+        assert plan["axis_sha256_le_f64"][axis] == parent["axis_sha256_le_f64"][axis]
+    assert plan["axis_sha256_le_f64"]["z"] != parent["axis_sha256_le_f64"]["z"]
+    assert plan["static_midpoint_tags"] == tags
+    midpoint = _midpoint_cell_tags(plan)
+    independently_classified = {
+        "air": int(np.count_nonzero(midpoint == 1)),
+        "substrate": int(np.count_nonzero(midpoint == 2)),
+        "grating": int(np.count_nonzero(midpoint == 3)),
+    }
+    assert independently_classified == tags
+    record_path = ROOT / D15_Z_LEVEL_STATIC_PLAN_RECORD
+    assert hashlib.sha256(record_path.read_bytes()).hexdigest() == (
+        D15_Z_LEVEL_STATIC_PLAN_SHA256
+    )
+    record = json.loads(record_path.read_text())
+    frozen = next(row for row in record["cases"] if row["case"] == case)
+    assert frozen["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
+    assert frozen["static_midpoint_material_tag_counts_air_substrate_grating"] == tags
+
+
+def test_d15_z_from_b_dat_routes_are_exact_profiles_and_do_not_reuse_history():
+    assert {"Z2_2", "Z3_2", "Z3_3"}.issubset(D15_LAUNCHABLE_CASES)
+    assert "Z2" not in TASK40_PHI90_D15_PROFILES.values()
+    assert D15_AXIS_PLANS["Z2"]["launchable"] is False
+    for case in ("Z2_2", "Z3_2", "Z3_3"):
+        plan = D15_AXIS_PLANS[case]
+        normalized = load_and_resolve(D15_INPUTS[case]).as_jsonable()
+        assert normalized["run_id"] == f"task40_phi90_13p5_D15_{case}_p6_direct_v1"
+        assert normalized["solver"]["native_capacity_profile"] == (
+            f"task40para_phi90_13p5_D15_{case}_p6_direct_v1"
+        )
+        discretization = normalized["discretization"]
+        assert tuple(discretization["mesh_axis_cell_counts"]) == tuple(
+            plan["axis_cell_counts"]
+        )
+        assert discretization["mesh_plan_id"] == plan["plan_id"]
+        assert discretization["mesh_plan_sha256"] == plan["mesh_plan_sha256"]
+        for axis in ("x", "y", "z"):
+            assert tuple(discretization[f"mesh_axis_{axis}_values"]) == tuple(
+                plan["axes_nm"][axis]
+            )
 
 
 @pytest.mark.parametrize(
@@ -516,7 +540,10 @@ def test_d15_axis_validator_fails_closed_on_y3_axis_drift():
         validate_frozen_d15_axes(wrong_hash)
 
 
-@pytest.mark.parametrize("case", ("B", "Y3", "Y3_2", "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Y6_1", "Y6_2"))
+@pytest.mark.parametrize("case", (
+    "B", "Y3", "Y3_2", "Y3_3", "Y3_4", "Y4_4_4", "Y5_1", "Y6_1", "Y6_2",
+    "Z2_2", "Z3_2", "Z3_3",
+))
 def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case):
     specification = load_and_resolve(D15_INPUTS[case])
     run_directory = (tmp_path / "run").resolve()
@@ -610,6 +637,16 @@ def test_d15_manifest_roundtrips_through_real_worker_payload_gate(tmp_path, case
         )
         assert directional["expected_material_tag_counts"] == {
             "1": 416, "2": 96, "3": 64
+        }
+    if case in {"Z2_2", "Z3_2", "Z3_3"}:
+        assert directional["parent_case"] == "B"
+        assert directional["changed_axis"] == "z"
+        assert directional["display_label"] == f"D15-{case.replace('_', '-')}"
+        assert tuple(directional["segment_cell_counts"]["y"]) == (1, 2, 1)
+        assert directional["expected_material_tag_counts"] == {
+            "1": plan["static_midpoint_tags"]["air"],
+            "2": plan["static_midpoint_tags"]["substrate"],
+            "3": plan["static_midpoint_tags"]["grating"],
         }
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
     assert manifest["component_options"] == thaw(profile["component_options"])
