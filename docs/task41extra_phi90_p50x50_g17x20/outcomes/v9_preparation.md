@@ -87,3 +87,15 @@ V9 saved-local screen 是前置依赖。Review V10 的实际 volume-only owner �
 冻结前修正已完成：旧 V8 helper 精确恢复；旧 stored_T cache identity v1 保留；旧 B0 authority/v1 不强迫新增字段，V9/v2 缺字段仍拒绝。有符号诊断真实计算选中行 `(J+TK)z` 并另列重组余差；candidate gate 仍由原完整 `T@bi`、`S@t`、`-(J@z)` 生成，诊断不能改变判门。最终执行者受影响节点 **10 passed in 0.54 s**；主控同工作树复验 **10 passed in 0.51 s**。其中故意污染诊断投影的 fixture 要求原 d 逐浮点列表不变。新增 fixture 首次预期遗漏诊断偏置，9 passed/1 failed，修正测试预期后通过，未放宽生产门。
 
 完整节点命令、测试日志和冻结前源码内容 hash 见 [准备回执](v9_preparation.json)。日志 SHA-256：`3489eb2434195e306846bfcca847a76580c07ad48fe60931d3b8ca824d487e2e`；本机 ABI 日志 SHA-256：`9c5f454497bb6e17f1cdf5017c8234052fe1c9f4f57293f6eb10b3bcf4716cd1`。这些日志留 ignored artifacts，没有复制旧科学数组。
+## V9 worker saved-source binding repair
+
+本次全域 attempt `20261022T034957.536640Z` 在构造 volume-only owner 前以 `WORKER_FAILED` 终止（worker exit 4）。保留的 `watchdog/worker.log` 与 worker summary 只记录 `IsADirectoryError: [Errno 21] Is a directory: '/home/fenics/Projects/laptop_share'`，没有保存 Python traceback 或栈行。源码检查将缺陷定位到 `src/runners/task40_v10_worker.py` 的 pre-donor callback：它从 `candidate_evaluator_audit` 顶层读取 `source_path` 和 `source_sha256`，而 hash-bound V6 报告将两者保存在 `candidate_evaluator_audit.geometry_helper` 下。缺失路径默认解析成工作目录，随后被传给文件哈希函数。原 run 目录、summary、事件日志、资源记录和 service 日志均保持原样。没有触发资源或时间门限，也没有生成正式结果或 owner。
+
+worker 现从保存报告的嵌套字段读取路径和哈希；在构造 owner 前拒绝缺失路径、非文件、canonical repository 之外的路径及哈希不匹配，并将同一已验证哈希写入 prefix receipt。donor 路径、数值方法、阈值和固定窗口未变。
+
+使用合格的本机 WSL activation 与现有 Linux complex ABI preflight 后，定向运行 source-binding fixtures 和 pre-donor owner 生命周期节点：**9 passed, 30 deselected in 0.21 s**。这只是 fixture 验证；没有重跑失败的全域 attempt。
+
+| 文件 | SHA-256 |
+|---|---|
+| `src/runners/task40_v10_worker.py` | `2772a9f07f9c61a95be711ad051e2fff323246836becc9670097004c5b84bb0d` |
+| `src/test/test_task41_v4_volume_only_audit.py` | `47e153bdd786ef1448e9c5196d7012fa09814d391dfc3ca2e3baea9e3b01aa17` |

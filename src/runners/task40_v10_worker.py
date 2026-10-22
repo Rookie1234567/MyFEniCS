@@ -8452,6 +8452,43 @@ def _task41_a2_load_saved_q_csr_pair(
     return matrices, audit
 
 
+def _task41_v9_frozen_c_source_binding(
+    prefix_report: Mapping[str, Any],
+    *,
+    repo_root: Path,
+    sha256_file: Callable[[Path], str],
+) -> tuple[Path, str]:
+    """Resolve the hash-bound FFCx source from the saved V6 report schema."""
+    identity_audit = prefix_report.get("identity_audit")
+    if not isinstance(identity_audit, Mapping):
+        raise ValueError("Task41 V9 V6 prefix report omits its identity audit")
+    candidate = identity_audit.get("candidate_evaluator_audit")
+    if not isinstance(candidate, Mapping):
+        raise ValueError("Task41 V9 V6 prefix report omits its candidate evaluator audit")
+    geometry_helper = candidate.get("geometry_helper")
+    if not isinstance(geometry_helper, Mapping):
+        raise ValueError("Task41 V9 V6 prefix report omits its geometry-helper audit")
+    raw_path = geometry_helper.get("source_path")
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        raise ValueError("Task41 V9 frozen geometry-helper C source path is absent")
+    expected_sha256 = geometry_helper.get("source_sha256")
+    if not isinstance(expected_sha256, str) or not expected_sha256:
+        raise ValueError("Task41 V9 frozen geometry-helper C source SHA-256 is absent")
+
+    canonical_root = Path(repo_root).resolve(strict=True)
+    try:
+        source_path = Path(raw_path).resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise ValueError("Task41 V9 frozen geometry-helper C source path is unavailable") from exc
+    if not source_path.is_relative_to(canonical_root):
+        raise ValueError("Task41 V9 frozen geometry-helper C source is outside the canonical repository")
+    if not source_path.is_file():
+        raise ValueError("Task41 V9 frozen geometry-helper C source is not a regular file")
+    if sha256_file(source_path) != expected_sha256:
+        raise ValueError("Task41 V9 frozen geometry-helper C-source SHA-256 differs")
+    return source_path, expected_sha256
+
+
 def _task41_b0_v9_pre_donor_condensed(
     target_bundle: Mapping[str, Any],
 ) -> Any | None:
@@ -11220,17 +11257,11 @@ def run_task40_v10_p6_reference_worker(
                                 ).hexdigest(),
                             }
 
-                        evaluator_identity = prefix_report.get("identity_audit", {}).get(
-                            "candidate_evaluator_audit", {}
+                        c_source_path, c_source_sha256 = _task41_v9_frozen_c_source_binding(
+                            prefix_report,
+                            repo_root=repo_root,
+                            sha256_file=sha256_file,
                         )
-                        c_source_path = Path(str(evaluator_identity.get("source_path", ""))).resolve(
-                            strict=True
-                        )
-                        if (
-                            not c_source_path.is_relative_to(repo_root)
-                            or sha256_file(c_source_path) != evaluator_identity.get("source_sha256")
-                        ):
-                            raise ValueError("Task41 V9 frozen actual-q-metric C-source identity differs")
                         compiled_form = fem.form(
                             context["volume_form"],
                             jit_options=dict(SAME_MESH_JIT_OPTIONS),
@@ -11289,7 +11320,7 @@ def run_task40_v10_p6_reference_worker(
                             "loaded_v7_payloads": False,
                             "saved_arrays_loaded": sorted(prefix_names),
                             "c_source_path": str(c_source_path),
-                            "c_source_sha256": str(evaluator_identity["source_sha256"]),
+                            "c_source_sha256": c_source_sha256,
                             "candidate_evaluator_identity": str(
                                 prefix_owner_evaluator["implementation"]
                             ),

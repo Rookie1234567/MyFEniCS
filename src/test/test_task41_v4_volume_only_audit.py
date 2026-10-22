@@ -1391,6 +1391,103 @@ def test_v9_compact_terminal_saved_replay_rejects_corrupt_bindings(
     assert result["errors"]
 
 
+def _v9_candidate_evaluator_report(source_path: Path, source_sha256: str) -> dict:
+    return {
+        "identity_audit": {
+            "candidate_evaluator_audit": {
+                "evaluator_source_path": "/fixture/repo/src/solvers/evaluator.py",
+                "evaluator_source_sha256": "a" * 64,
+                "geometry_helper": {
+                    "source_path": str(source_path),
+                    "source_sha256": source_sha256,
+                    "helper_source_sha256": "b" * 64,
+                },
+            }
+        }
+    }
+
+
+def _v9_sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_v9_frozen_c_source_binding_uses_saved_geometry_helper_schema(tmp_path):
+    from src.runners.task40_v10_worker import _task41_v9_frozen_c_source_binding
+
+    repo_root = tmp_path / "repo"
+    c_source = repo_root / "benchmarks/jit/candidate.c"
+    c_source.parent.mkdir(parents=True)
+    c_source.write_text("frozen generated C source", encoding="ascii")
+    expected_sha256 = _v9_sha256_file(c_source)
+    report = _v9_candidate_evaluator_report(c_source, expected_sha256)
+
+    actual_path, actual_sha256 = _task41_v9_frozen_c_source_binding(
+        report,
+        repo_root=repo_root,
+        sha256_file=_v9_sha256_file,
+    )
+
+    assert actual_path == c_source.resolve(strict=True)
+    assert actual_sha256 == expected_sha256
+
+
+@pytest.mark.parametrize(
+    ("damage", "message"),
+    (
+        ("missing_helper", "geometry-helper audit"),
+        ("missing_path", "C source path"),
+        ("empty_path", "C source path"),
+        ("directory_path", "not a regular file"),
+        ("outside_repo", "outside the canonical repository"),
+        ("missing_hash", "C source SHA-256 is absent"),
+        ("hash_mismatch", "C-source SHA-256 differs"),
+    ),
+)
+def test_v9_frozen_c_source_binding_rejects_invalid_saved_identity(
+    tmp_path, damage, message
+):
+    from src.runners.task40_v10_worker import _task41_v9_frozen_c_source_binding
+
+    repo_root = tmp_path / "repo"
+    c_source = repo_root / "benchmarks/jit/candidate.c"
+    c_source.parent.mkdir(parents=True)
+    c_source.write_text("frozen generated C source", encoding="ascii")
+    report = _v9_candidate_evaluator_report(c_source, _v9_sha256_file(c_source))
+    candidate = report["identity_audit"]["candidate_evaluator_audit"]
+    geometry_helper = candidate["geometry_helper"]
+    outside_source = tmp_path / "outside.c"
+    outside_source.write_text("outside generated C source", encoding="ascii")
+    if damage == "missing_helper":
+        candidate.pop("geometry_helper")
+    elif damage == "missing_path":
+        geometry_helper.pop("source_path")
+    elif damage == "empty_path":
+        geometry_helper["source_path"] = ""
+    elif damage == "directory_path":
+        geometry_helper["source_path"] = str(repo_root)
+    elif damage == "outside_repo":
+        geometry_helper["source_path"] = str(outside_source)
+    elif damage == "missing_hash":
+        geometry_helper.pop("source_sha256")
+    elif damage == "hash_mismatch":
+        geometry_helper["source_sha256"] = "0" * 64
+
+    hash_calls = []
+
+    def record_hash_call(path):
+        hash_calls.append(path)
+        return _v9_sha256_file(path)
+
+    with pytest.raises(ValueError, match=message):
+        _task41_v9_frozen_c_source_binding(
+            report,
+            repo_root=repo_root,
+            sha256_file=record_hash_call,
+        )
+
+    assert hash_calls == ([c_source.resolve(strict=True)] if damage == "hash_mismatch" else [])
+
+
 def test_v9_pre_donor_owner_is_released_if_a_post_build_gate_raises():
     from src.runners import task40_v10_worker
 
