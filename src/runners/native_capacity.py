@@ -207,11 +207,12 @@ def _validate_preexisting_swap(snapshot, *, observe_only=False):
 
 
 @contextmanager
-def native_capacity_guard(profile, *, memory_policy='none'):
+def native_capacity_guard(profile, *, memory_policy='none', task_run_id=None):
     """Reuse the reviewed native lock, parent CPU, and launch evidence."""
     from src.io.execution_plan import native_memory_policy_prefix
     from src.io.native_capacity_profile import (
-        TASK40_PHI90_P6_DIRECT_PROFILES, native_profile_facts,
+        TASK40_PHI90_P6_DIRECT_PROFILES,
+        native_profile_facts,
     )
 
     memory_prefix = native_memory_policy_prefix(memory_policy)
@@ -240,9 +241,17 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         if memory_policy == 'interleave_nodes0_1':
             os.environ.pop('PHYSICAL_NATIVE_NODE_CAP_BYTES', None)
             if profile_facts['resources'].get('resource_stop_policy') == 'host_available_floor_v1':
-                from .reviewed_workstation_admission import task40_host_floor_interleaved_admission
+                from .reviewed_workstation_admission import (
+                    _TASK40_PARALLEL_AUTH_FILE_ENV,
+                    _TASK40_PARALLEL_AUTH_SHA_ENV,
+                    task40_host_floor_interleaved_admission,
+                )
                 node_admission = task40_host_floor_interleaved_admission(
-                    profile_facts['resources'], worker_cpus
+                    profile_facts['resources'], worker_cpus,
+                    task_profile=profile,
+                    task_run_id=task_run_id,
+                    parallel_authority_path=os.environ.get(_TASK40_PARALLEL_AUTH_FILE_ENV),
+                    parallel_authority_sha256=os.environ.get(_TASK40_PARALLEL_AUTH_SHA_ENV),
                 )
             else:
                 from .reviewed_workstation_admission import (
@@ -394,8 +403,11 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
     )
     if profile is None:
         raise InputError('native capacity launch requires an explicit native profile')
-    with native_capacity_guard(profile,
-                               memory_policy=memory_policy) as (_root, isolation):
+    with native_capacity_guard(
+        profile,
+        memory_policy=memory_policy,
+        task_run_id=specification.identity.get('run_id'),
+    ) as (_root, isolation):
         launch_kwargs = {'prelaunch_isolation': isolation}
         if setup_only:
             launch_kwargs['setup_only'] = True
