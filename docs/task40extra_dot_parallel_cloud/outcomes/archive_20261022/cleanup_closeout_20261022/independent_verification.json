@@ -1,0 +1,10 @@
+{
+  "status": "INDEPENDENT_READ_ONLY_CHECK_PASSED",
+  "utc": "2026-10-22T23:12:22.484821+00:00",
+  "absent_candidates": 648,
+  "journal_confirmed_deleted_bytes": 4680932836,
+  "retained_objects_unchanged": 86331,
+  "retained_generated_sources_hash_verified": 7,
+  "original_lock_and_fence_preserved": true,
+  "no_restart": true
+}

@@ -1,0 +1,44 @@
+{
+  "scope": "Small cleanup closeout only; all artifacts are historical evidence, NOT an instruction to rerun deletion.",
+  "retained_snapshot_local_only": {
+    "path": "archive_20261022/cleanup_execution01/retained_before.json",
+    "bytes": 18795525,
+    "sha256": "1ba3835236cd21478b4812f7c818be0890158a3a6842ea87cbb908ee0f10041a",
+    "verified_unchanged_objects": 86331,
+    "uploaded": false
+  },
+  "files": [
+    {
+      "file": "cleanup_fixed648.py",
+      "bytes": 9403,
+      "sha256": "fccb2216166a48cc4c070aff3a9f88d1ff9d9d29d0a1ea370632de40fd02b3a8"
+    },
+    {
+      "file": "independent_verification.json",
+      "bytes": 330,
+      "sha256": "8968b34d2fa2e136d27f73f2b4d2890971e71c263690fa7de92c703cbc0a4029"
+    },
+    {
+      "file": "journal.jsonl",
+      "bytes": 231152,
+      "sha256": "cbf45e6567343846d93e558d56e8716647ae81c5289362e10e6a7d535885e1ff"
+    },
+    {
+      "file": "receipt.json",
+      "bytes": 528,
+      "sha256": "8ae00c30aee9c467bb56c66203f6f824bdd410719aade54ef3b39abc9f38c52c"
+    }
+  ],
+  "secret_scan": {
+    "status": "NO_PATTERN_MATCHES",
+    "patterns": [
+      "private_key",
+      "github_token",
+      "aws_key",
+      "openai_key",
+      "slack_token",
+      "credential_uri"
+    ],
+    "limitation": "Pattern scan does not establish absence of every unknown credential format."
+  }
+}
