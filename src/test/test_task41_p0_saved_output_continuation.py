@@ -1241,6 +1241,102 @@ def test_service_binding_keeps_producer_contract_and_consumer_activation_distinc
         _require_service_envelope(contract, contract_path, contract_sha, tmp_path)
 
 
+def test_v9_saved_star_activation_allows_only_current_b0_screen_inputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_sha = "a" * 40
+    contract_sha = "f" * 64
+    abi_sha = "d" * 64
+    branch = "task41extra_phi90_p50x50_g17x20"
+    model_id = "task41extra_phi90_p50x50_g17x20"
+    root = tmp_path
+    contract_module_path = root / "src" / "runners" / "task41_p0_contract.py"
+    contract_module_path.parent.mkdir(parents=True)
+    monkeypatch.setattr(task41_p0_contract, "__file__", str(contract_module_path))
+    results_root = root / "results" / model_id
+    report_path = results_root / "v8_report" / "task41_p0_v8_selected_trace_star_audit.json"
+    checker_path = results_root / "v8_checker" / "task41_p0_b0_saved_evidence_audit.json"
+    report_path.parent.mkdir(parents=True)
+    checker_path.parent.mkdir(parents=True)
+    report_bytes = b"frozen V8 selected-trace report"
+    checker_bytes = b"frozen V8 saved-evidence checker"
+    report_path.write_bytes(report_bytes)
+    checker_path.write_bytes(checker_bytes)
+    result_path = results_root / "v9_saved_star_attempt" / "task41_p0_b0_v9_saved_star_screen.json"
+    contract_path = root / "execution_contract.json"
+    contract = {
+        "branch": branch,
+        "source": {"sha": source_sha},
+        "case": {
+            "run_id": task41_p0_contract.TASK41_B0_RUN_ID,
+            "model_id": model_id,
+        },
+        "runtime": {
+            "runtime_prefix": str(Path(sys.executable).resolve().parents[1]),
+            "abi_receipt_sha256": abi_sha,
+        },
+    }
+    source_checks: list[bool] = []
+
+    def require_contract(*_args: object, **kwargs: object) -> tuple[dict[str, object], str]:
+        source_checks.append(kwargs.get("check_current_source") is True)
+        return contract, contract_sha
+
+    def consumer_source(
+        _contract: object, _root: Path, *, allow_current_source: bool = False
+    ) -> str:
+        return source_sha if allow_current_source else "b" * 40
+
+    monkeypatch.setattr(task41_p0_contract, "require_task41_p0_contract", require_contract)
+    monkeypatch.setattr(task41_p0_contract, "_saved_output_consumer_source_sha", consumer_source)
+    env = {
+        "TASK41_P0_STRICT_EXECUTION": "1",
+        "TASK41_P0_CONTRACT_PATH": str(contract_path),
+        "TASK41_P0_CONTRACT_SHA256": contract_sha,
+        "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+        "TASK41_P0_B0_V9_SAVED_STAR_SCREEN": "1",
+        "TASK41_P0_CONSUMER_SOURCE_SHA": source_sha,
+        "TASK41_P0_CHECKER_SOURCE_SHA": source_sha,
+        "TASK41_P0_EXPECTED_SOURCE_SHA": source_sha,
+        "TASK41_P0_B0_V9_V8_REPORT_PATH": str(report_path),
+        "TASK41_P0_B0_V9_V8_REPORT_SHA256": hashlib.sha256(report_bytes).hexdigest(),
+        "TASK41_P0_B0_V9_V8_CHECKER_RESULT_PATH": str(checker_path),
+        "TASK41_P0_B0_V9_V8_CHECKER_RESULT_SHA256": hashlib.sha256(checker_bytes).hexdigest(),
+        "TASK41_P0_B0_V9_RESULT_PATH": str(result_path),
+        "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": "1",
+        "_MYFENICS_CLOUD_RUNTIME_PROFILE": "native_linux",
+        "_MYFENICS_CLOUD_ABI_MANIFEST_SHA256": abi_sha,
+    }
+    assert task41_p0_contract.qualified_activation_identity(env) == (
+        f"task41_p0_native_complex:{abi_sha}"
+    )
+    assert source_checks == [True]
+
+    for key, value in (
+        ("TASK41_P0_B0_V9_SAVED_STAR_SCREEN", "0"),
+        ("TASK41_P0_CONSUMER_SOURCE_SHA", "c" * 40),
+        ("TASK41_P0_CHECKER_SOURCE_SHA", "c" * 40),
+        ("TASK41_P0_B0_V9_V8_REPORT_SHA256", "e" * 64),
+        ("TASK41_P0_B0_V9_RESULT_PATH", str(root / "outside" / result_path.name)),
+    ):
+        invalid_env = dict(env)
+        invalid_env[key] = value
+        assert task41_p0_contract.qualified_activation_identity(invalid_env) is None
+
+    legacy_env = dict(env)
+    legacy_env.pop("TASK41_P0_B0_V9_SAVED_STAR_SCREEN")
+    assert task41_p0_contract.qualified_activation_identity(legacy_env) is None
+
+    non_b0_contract = dict(contract)
+    non_b0_contract["case"] = {"run_id": "not-task41-b0", "model_id": model_id}
+    monkeypatch.setattr(
+        task41_p0_contract,
+        "require_task41_p0_contract",
+        lambda *_args, **_kwargs: (non_b0_contract, contract_sha),
+    )
+    assert task41_p0_contract.qualified_activation_identity(env) is None
+
+
 def test_service_call_chain_uses_string_activation_and_one_frozen_window(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

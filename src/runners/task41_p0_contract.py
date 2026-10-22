@@ -2227,11 +2227,17 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
         checker_only = checker_only_flag == "1"
         b0_audit_flag = environment.get("TASK41_P0_SAVED_B0_EVIDENCE_AUDIT")
         b0_audit = b0_audit_flag == "1"
+        v9_screen_flag = environment.get("TASK41_P0_B0_V9_SAVED_STAR_SCREEN")
+        v9_screen = v9_screen_flag == "1"
         if environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") not in {None, "1"}:
             return None
         if checker_only_flag not in {None, "1"} or (checker_only and not continuation):
             return None
         if b0_audit_flag not in {None, "1"} or (b0_audit and (not continuation or checker_only)):
+            return None
+        if v9_screen_flag not in {None, "1"} or (
+            v9_screen and (not continuation or checker_only or b0_audit)
+        ):
             return None
         if not continuation and environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") is not None:
             return None
@@ -2239,12 +2245,12 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
             contract_path or "",
             expected_sha256=contract_sha,
             current_root=root,
-            check_current_source=(not continuation or b0_audit),
+            check_current_source=(not continuation or b0_audit or v9_screen),
             require_clean_source=True,
         )
         if continuation:
             current_source_sha = _saved_output_consumer_source_sha(
-                contract, root, allow_current_source=b0_audit
+                contract, root, allow_current_source=(b0_audit or v9_screen)
             )
             consumer_sha = environment.get("TASK41_P0_CONSUMER_SOURCE_SHA", "")
             if b0_audit:
@@ -2308,6 +2314,63 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
                     text=True,
                 )
                 if ancestry.returncode != 0:
+                    return None
+            elif v9_screen:
+                case = contract.get("case")
+                source = contract.get("source")
+                if not isinstance(case, Mapping) or not isinstance(source, Mapping):
+                    return None
+                model_id = case.get("model_id")
+                source_sha = source.get("sha")
+                checker_sha = environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                report_raw = environment.get("TASK41_P0_B0_V9_V8_REPORT_PATH", "")
+                report_sha256 = environment.get("TASK41_P0_B0_V9_V8_REPORT_SHA256", "")
+                checker_raw = environment.get("TASK41_P0_B0_V9_V8_CHECKER_RESULT_PATH", "")
+                checker_sha256 = environment.get(
+                    "TASK41_P0_B0_V9_V8_CHECKER_RESULT_SHA256", ""
+                )
+                result_raw = environment.get("TASK41_P0_B0_V9_RESULT_PATH", "")
+                if (
+                    not isinstance(model_id, str)
+                    or not model_id
+                    or not isinstance(source_sha, str)
+                    or not re.fullmatch(r"[0-9a-f]{40}", source_sha)
+                    or task41_case_id_for_run_id(str(case.get("run_id", ""))) != "B0"
+                    or consumer_sha != current_source_sha
+                    or consumer_sha != source_sha
+                    or checker_sha != current_source_sha
+                    or environment.get("TASK41_P0_EXPECTED_SOURCE_SHA") != source_sha
+                    or not isinstance(report_sha256, str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", report_sha256)
+                    or not isinstance(checker_sha256, str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", checker_sha256)
+                    or not report_raw
+                    or not checker_raw
+                    or not result_raw
+                    or not Path(report_raw).is_absolute()
+                    or not Path(checker_raw).is_absolute()
+                    or not Path(result_raw).is_absolute()
+                ):
+                    return None
+                results_root = (root / "results" / model_id).resolve()
+                report_path = Path(report_raw).resolve()
+                checker_result_path = Path(checker_raw).resolve()
+                result_path = Path(result_raw).resolve()
+                if (
+                    report_path.name != "task41_p0_v8_selected_trace_star_audit.json"
+                    or checker_result_path.name != "task41_p0_b0_saved_evidence_audit.json"
+                    or result_path.name != "task41_p0_b0_v9_saved_star_screen.json"
+                    or report_path == checker_result_path
+                    or not report_path.is_relative_to(results_root)
+                    or not checker_result_path.is_relative_to(results_root)
+                    or not result_path.parent.is_relative_to(results_root)
+                    or result_path.parent.exists()
+                    or result_path.exists()
+                    or not report_path.is_file()
+                    or not checker_result_path.is_file()
+                    or sha256_file(report_path) != report_sha256
+                    or sha256_file(checker_result_path) != checker_sha256
+                ):
                     return None
             elif consumer_sha != current_source_sha:
                 return None
