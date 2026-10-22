@@ -134,3 +134,8 @@ Z2 `[6,24,28]` / 4032 cells 已自然完成；相对同策略 Y2 `[6,24,14]`，x
 当时计划中的 R14 已于 `20261018T071859.358847Z` 自然完成。它保持 Y2 网格 `[6,24,14]`、p6 direct、relative-only cutoff、volume q15及q28固定 `m6/n10` surface envelope；模式矩形扩为 `m=-5…5,n=-9…9`，实际枚举836个通道（上下各418，含倏逝）。同一 Y2 网格下与 R13 的离线比较见[专页](response_d13_y2_r14_mode_expansion.md)及[机器记录](records/d13_y2_r13_r14_same_mesh_mode_expansion_v1.json)。总 R/T/A_volume 差均小于 `9e-13`；共同612模式边界复振幅相对 L2 差 `4.97e-12`，新增224模式在R14中的T贡献合计 `2.02e-15`（其中112个power-carrying但均非propagating）。source SHA 不同，故不是 source-identical 对照。R14 单场凝聚、独立A6、能量门通过，峰值整树RSS `103,634,391,040 B`，task swap峰值0。有限模式算子仍为 `FULL_DTN_NOT_VERIFIED` / `AUTHORITY_LIMITED`；canonical侧壁仍 `NOT_MEASURED`。
 
 R14 不据此证明 continuum/full-DtN 收敛：新增模式没有 R13 逐模解作为误差基准；同坐标 E/H/Ht 仅为有限采样比较，六键 pre-release witness 仍 `OBSERVED_NOT_QUALIFICATION`。完整 source/input/resolved、模态身份、每模幅值/功率、样本哈希和资源口径见 R14 比较 JSON；逐模表见836行CSV。该比较不启动额外 FE/factor。
+
+
+## 2026-10-23：D15-Y3 有限 R13 模态截断 K1–K4
+
+用户授权的四个独立 p6-direct 场（`m,n∈[-K,K]`，K=1..4；36/100/196/324 modes）均自然完成并各自通过 condensed/A6/energy 单场门。与原 D15-Y3 有限 612-mode R13 比较时，K1 的总量和逐通道门有超限，K4 的 R 通道略超限；K2/K3 的总量与全通道 R/T 门通过，但四场的边界复振幅和同坐标 E/H 样本均超过 `1e-4`，所以四个候选都没有同时通过完整三组比较门。完整记录见[模态截断 response](response_d15_y3_modal_truncations_20261023.md)、[机器 JSON](records/d15_y3_modal_truncation_comparison_20261022_v1.json)和[全612键CSV](records/d15_y3_modal_truncation_all_612_20261022_v1.csv)。此结论仅针对有限 R13 Y3 参照，不表示 full DtN；canonical sidewall 仍 `NOT_MEASURED`。

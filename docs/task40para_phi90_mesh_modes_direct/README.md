@@ -32,3 +32,8 @@ Y3-2 离线比较 v1 保留原样；v2 只纠正 Y2→Y3-2 全局差值字段的
 ### 2026-10-21 后续：Y5/Y6 对照与 z-only 静态候选
 
 上述 Y4 三场后，用户又授权 D15 的 Y5/Y6 方向研究。Y5-1 `[6,14,6]` 与 Y6-1/Y6-2 的三组保存结果比较均通过原三类差异门；因此当前将 Y5-1 暂作 y 方向工程候选，停止继续加密 y。它不证明当前 z 离散充分。现在只登记一个由真实 Y5-1 x/y 轴派生的 z-only 候选 `[6,14,8]` / 672 cells，z=`[-10,0,20,40,60,80,100,120,130]` nm，预期静态 tags air/substrate/grating=`516/84/72`。轴SHA、父run与静态标签依据见[response](outcomes/response_d15_y5_z_refinement_static_20261021.md)和[静态JSON](outcomes/records/d15_y5_1_z_refinement_static_plan_v1.json)。它尚未经过 live mesh QA 或 FE；需要另行审精确包与fresh，`FULL_DTN_NOT_VERIFIED`、canonical sidewall `NOT_MEASURED`仍保持。
+
+
+## 2026-10-23 D15-Y3 模态截断结果
+
+K1–K4（`m,n∈[-K,K]`）四个独立完整场已运行；与原有限 R13/612-mode Y3 参照的全局量、全通道 R/T、边界复幅及同坐标 E/H 比较均已记录。四场都未通过完整三组比较门：K2/K3 逐通道量虽通过，边界与 E/H 仍超 `1e-4`。见[详细结果](outcomes/response_d15_y3_modal_truncations_20261023.md)及其 JSON/CSV 机器记录。
