@@ -1,0 +1,122 @@
+{
+  "schema": "task43_reference_comparison_v1",
+  "classification": "measured_reference_pair_disagreement_and_current_field_difference_not_accuracy_acceptance",
+  "status": "REFERENCE_PAIR_FIELD_AND_MODAL_COMPARISON_COMPLETE_CANDIDATE_RUNS_PENDING",
+  "identity": {
+    "git_head_at_comparison": "8fe6793e0a5e0689a5435ddf209d095b75b3bd0f",
+    "branch": "task43_hp_adaptivity",
+    "current_case": "frozen_180_cell_active_p3_current",
+    "selection_reference": "Y6_1",
+    "calibration_reference": "Y6_2",
+    "holdout": "Y5_1_not_read",
+    "final_6x10x6_p6_control": "excluded_from_marking_and_ranking",
+    "ordered_modes": 612,
+    "ordered_mode_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+    "comparison_source_unchanged_start_to_end": true,
+    "comparison_record_sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b"
+  },
+  "run": {
+    "attempt": "attempt2",
+    "command": "source scripts/activate_task40_phi90_pord64.sh; python -u -m benchmarks.task43_hp_adaptivity.compare_initial_to_references --attempt-id attempt2",
+    "wall_seconds_including_sampling_npz_and_hashing": 491.81592496018857,
+    "log": "/tmp/task43/reference-calibration-attempt2.log",
+    "log_sha256": "5fb9aa36aa6cd1f784de5742c96e07f354e4b68b14675571f1a9957ebe16960a",
+    "resource_peak": "not_measured_by_watchdog; the available single-process RSS snapshot is not a peak"
+  },
+  "integration": {
+    "domain_volume_nm3": 350000.0,
+    "incident_g_norm_floor": 836.6600265340755,
+    "rule": "tensor Gauss on the union of actual current/Y6_1/Y6_2 mesh breakpoint axes",
+    "sample_counts": {"q8": 589824, "q10": 1152000},
+    "sample_bundle_sha256": {
+      "q8": "88af00883347178074e367f7dd2a830ba7d33e05cccb3602944412c28b1921ee",
+      "q10": "b9ad37a752b8abff94bb33a597a5f95ba8a038a2751d10a807d0f83976a8b7a1"
+    },
+    "rule_sha256": {
+      "q8": "f9a607e2eb31fca35ba1bbbfee7a60517000ef54b3a27bea3d690c5e31df9e58",
+      "q10": "e5c819ee6a78437a43bf20421d375031cca4ce5975233995a43528e4a2bc48bc"
+    },
+    "field_representation": "recovered N1curl p6 carrier evaluated cellwise as DGQ6 E and curl(E)",
+    "phase_fit": false,
+    "scattered_background": "same analytic flat air/substrate Fresnel field at common points"
+  },
+  "measured": {
+    "current_vs_Y6_1": {
+      "q8": {
+        "G_difference_norm": 358.15050462709013,
+        "reference_G_norm": 554.5630106966479,
+        "G_relative_to_reference": 0.645824726350172,
+        "G_relative_with_fixed_incident_floor": 0.4280717295778482,
+        "E_total_difference_l2_code": 253.18256101972545,
+        "E_total_relative_with_floor": 0.4279566373377665,
+        "H_total_difference_l2_A_per_m": 0.672413959010891,
+        "H_total_relative_with_floor": 0.42818679088231154,
+        "curl_E_over_k0_difference_l2_code": 253.3187216929145,
+        "curl_E_over_k0_relative_with_floor": 0.4281867908823113
+      },
+      "q10": {
+        "G_difference_norm": 358.15050462709024,
+        "reference_G_norm": 554.5630106966478,
+        "G_relative_to_reference": 0.6458247263501723,
+        "G_relative_with_fixed_incident_floor": 0.4280717295778484,
+        "E_total_difference_l2_code": 253.18256101972563,
+        "E_total_relative_with_floor": 0.4279566373377668,
+        "H_total_difference_l2_A_per_m": 0.6724139590108912,
+        "H_total_relative_with_floor": 0.4281867908823117,
+        "curl_E_over_k0_difference_l2_code": 253.31872169291458,
+        "curl_E_over_k0_relative_with_floor": 0.4281867908823115
+      }
+    },
+    "Y6_2_vs_Y6_1_reference_disagreement": {
+      "q8_G_difference_norm": 0.003801849371901279,
+      "q8_G_relative_with_fixed_incident_floor": 4.5440791376764035e-6,
+      "q10_G_difference_norm": 0.0038018493719003017,
+      "q10_G_relative_with_fixed_incident_floor": 4.5440791376752355e-6,
+      "E_total_difference_l2_code": 0.0005521658008548231,
+      "E_total_relative_with_floor": 9.33330551816065e-7,
+      "H_total_difference_l2_A_per_m": 9.984698130355298e-6,
+      "H_total_relative_with_floor": 6.358160465101535e-6,
+      "curl_E_over_k0_difference_l2_code": 0.003761538458529043,
+      "curl_E_over_k0_relative_with_floor": 6.358160465101533e-6,
+      "maximum_individual_channel_power_ratio_absolute_difference": 4.174484630192765e-8,
+      "maximum_individual_channel_power_ratio_key": ["top", 0, 0, "s"]
+    },
+    "current_vs_Y6_1_ordered_mode_vector": {
+      "boundary_amplitude_l2_difference": 0.588383764917327,
+      "boundary_amplitude_max_abs_difference": 0.5719264462184265,
+      "maximum_individual_channel_power_ratio_absolute_difference": 0.5561380874968931,
+      "maximum_individual_channel_power_ratio_key": ["top", 0, 0, "s"],
+      "R_total_absolute_difference": 0.5561192114017978,
+      "T_total_absolute_difference": 0.05184900354951934,
+      "A_volume_absolute_difference": 0.5042702078886232
+    }
+  },
+  "dorfler_selection_indicator": {
+    "definition": "per-current-leaf integral of |delta E|^2 + |delta curl(E)/k0|^2 against Y6_1",
+    "theta": 0.5,
+    "q8_q10_marked_sets_identical": true,
+    "marked_global_cell_ids": [19, 21, 32, 33, 35, 48, 49, 50, 52, 66, 67, 68, 70, 84, 85, 86, 88, 102, 103, 104, 106, 120, 121, 122, 123, 124, 137, 138, 139, 140, 141, 152, 153, 154, 155, 156, 157, 164, 165, 166, 167, 168, 173, 174, 175, 178],
+    "marked_global_cell_ids_sha256": "302596119de469d23fd513cf3d7d896966102ce9653b6cf87afc7d6704677e6a",
+    "count": 46,
+    "captured_fraction": 0.5011250747614026,
+    "cutoff_tie_expansion_count": 0,
+    "sum_g_error_squared": 128271.78396463935,
+    "q8_leaf_sum_closure_relative": 3.4033786960611023e-16,
+    "q10_leaf_sum_closure_relative": 1.1344595653537e-16,
+    "q8_q10_max_abs_cell_contribution_difference": 1.6370904631912708e-11
+  },
+  "independent_raw_npz_recomputation": {
+    "status": "reviewer_recomputed_q8_and_q10_from_saved_arrays_and_matched_record",
+    "q8_G_difference_norm": 358.15050462709013,
+    "q10_G_difference_norm": 358.15050462709024,
+    "q8_q10_marked_ids_identical": true,
+    "included_in_CI": false
+  },
+  "limitations": [
+    "This is a measured finite-reference field difference and selection indicator, not a continuum error or accepted candidate.",
+    "Y6_1 and Y6_2 residuals were not independently recomputed in this comparison; their historical residual identity and restore checks were separately verified.",
+    "Y6_2/Y6_1 pair disagreement is a measured calibration difference, not a full numerical-uncertainty model; tighter-solve field perturbation is not_run.",
+    "Four vertical one-sided sidewall traces are not covered by this volume comparison.",
+    "No p/h candidate solve or accepted update is included; 6x10x6 p6 is excluded from marking and ranking."
+  ]
+}

@@ -81,3 +81,49 @@ def test_mpi2_non_affine_hex_rejection_is_collective() -> None:
     electric = fem.Function(space)
     with pytest.raises(ValueError, match="axis-aligned affine hexahedra"):
         prepare_cell_local_vector_field_export(electric)
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="distributed field sampling fixtures require exactly two ranks",
+)
+def test_mpi2_owned_samples_merge_on_root_only() -> None:
+    comm = MPI.COMM_WORLD
+    domain = mesh.create_box(
+        comm,
+        [np.zeros(3), np.ones(3)],
+        [comm.size, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = fem.functionspace(domain, ("N1curl", 1))
+    electric = fem.Function(space, name="distributed_zero_field")
+    points = np.asarray([[0.25, 0.5, 0.5], [0.75, 0.5, 0.5]])
+
+    samples = sample_cell_local_vector_fields({"electric": electric}, points)
+    if comm.rank == 0:
+        assert samples is not None
+        np.testing.assert_array_equal(samples["electric"], np.zeros((2, 3)))
+    else:
+        assert samples is None
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="collective root-merge failure fixture requires exactly two ranks",
+)
+def test_mpi2_root_merge_failure_is_reported_on_every_rank() -> None:
+    comm = MPI.COMM_WORLD
+    domain = mesh.create_box(
+        comm,
+        [np.zeros(3), np.ones(3)],
+        [comm.size, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = fem.functionspace(domain, ("N1curl", 1))
+    electric = fem.Function(space, name="distributed_zero_field")
+
+    with pytest.raises(RuntimeError, match=r"missing=\[0\]"):
+        sample_cell_local_vector_fields(
+            {"electric": electric},
+            np.asarray([[1.25, 0.5, 0.5]]),
+        )

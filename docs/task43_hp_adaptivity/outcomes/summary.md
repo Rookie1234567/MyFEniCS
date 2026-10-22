@@ -9,10 +9,12 @@
 | p4–6 兼容 | 参考空间模块 9 项通过，既有阶次计划及 local-h 内部阶次回归通过 | 同上 |
 | 悬挂约束 | 17 项通过，1 项旧 p4 字节哈希失败；初始源码与修改后矩阵在当前 ABI 下逐项相同 | 同上；失败不改为通过 |
 | one-level 联合 h/p 组件 | p3/p4、p4/p5 的 9↔12 单元独立已知场检查通过；真实 36 单元空 h active-p3 的独立残差、同阶完整场/612 模态对照和 MPI1/2 对照均通过 | [mixed-p 组件](records/mixed_hp_9_to_12_component_v1.json)；[三锚点记录](records/h100_anchor_triplet_v1.json) |
-| 完整场比较组件 | 原始 N1curl 电场及旋度转为逐单元 DGQ6 后与解析多项式一致；串行和 MPI2 采样、集体拒绝扭曲单元的测试通过 | 公共积分采用所有比较网格的断点并集；完整模型比较尚未运行 |
+| 完整场比较与当前标记 | 冻结 180 单元 active-p3 current 与 Y6_1/Y6_2 在共同 q8/q10 全域积分上比较；两阶得到相同 46 个 Dörfler 标记 | 当前相对 Y6_1 的固定入射尺度 G 差为 0.42807；这是有限参考场差和选择指标，不是连续真误差；候选未求解 |
 | p6 carrier 张量组件 | Task43 实际完整 curl+mass/q15/default grating 单元的 FFCx 与 BlockedGram 矩阵相对差 1.7235×10⁻¹⁵（门槛 1e−10）；p6 carrier 上 active p3 builder 定向重试 4 项通过 | [张量组件记录](records/p6_tensor_component_v1.json)；首轮接口失败日志保留 |
 | 36 单元小模型与独立 A6 | attempt1 **数值门失败**：active 预检查残差 1.6445×10⁶⁴，A6 未调用；attempt2 使用已授权的边界幅值缩放后，solver、完整独立 active action 和两级残差门均通过。A6 relative residual 为 8.7763×10⁻¹³（task gate 1e−6、小模型门 1e−8）；独立行数为 trace 1782 + cell interior 1296 + modal lower 612 | [attempt1 负结果](records/a6_component_attempt1_v1.json)；[attempt2 组件记录](records/a6_component_attempt2_v1.json)；全量逐模态数据留在 ignored artifact |
-| 真实场接线级锚点 | 三个 36 单元 h100 算例均通过同阶、完整场/端口和 MPI 等价 Gate | 属于 `numerical_sanity_only`；冻结 180 单元起点、正式 R/T/A 精度和自适应收益仍为 `not_run` |
+| 真实场接线级锚点 | 三个 36 单元 h100 算例均通过同阶、完整场/端口和 MPI 等价 Gate | 属于 `numerical_sanity_only`，不能代替空间精度证明 |
+| 正式 180 单元起点 | 3×10×6、active p3；独立 A6=2.3848e−10，condensed residual=6.3065e−11，能量闭合差3.2516e−13；15,120独立 FE DoF | [正式起点与参考恢复](records/initial_current_and_reference_restore_v1.json)；只通过离散求解门，空间精度待比较 |
+| 丰富参考的原场恢复 | Y6_1/Y6_2 的576单元p6系数、网格/周期约束与历史612模态身份吻合；12,800点E差0，H相对差约8.7e−16 | 同上；只取得恢复身份，不等于完整参考精度、q/R14或侧壁资格 |
 | 自适应闭环与成本 | `not_run`：accepted updates=0；尚无同精度成本优势 | 后续实施范围 |
 | 迭代与 0.7 nm | `not_run`，等待前置 Gate | 不启动额外 campaign |
 
@@ -26,7 +28,32 @@
 
 attempt1 与 attempt2 是两个独立结果，均保留。attempt1 使用未缩放衰减模态并在进入 observer 前因 active residual 超门而失败；attempt2 启用 `boundary_magnitude_scaled_r5_v1` 后，36 单元、uniform p3-on-p6 的同类组件算例完成。attempt2 的 condensed true relative residual 为 3.0631×10⁻¹³；独立重组的 FE trace、cell interior 和原始 modal lower 行残差范数分别为 4.2934×10⁻¹³、5.5804×10⁻¹³ 和 1.1028×10⁻¹³。primary modal R/T 为 0.9999860056 / 1.15824×10⁻⁵，`A_volume_total` 为 2.4120155×10⁻⁶，`R+T+A_volume` 与 1 的差约 1.83×10⁻¹³。这些量来自 `numerical_sanity_only` 组件；runner 内部 `official_result=true` 不代表 Task43 正式模型或精度结论。attempt2 runner 总时长约 541 秒，完整 pytest 595 秒；A6 observer 在报告中只记录合并区间，编译与后续 action 未分别计时。单 rank 历史 RSS 峰约 1072 MiB，不是编译子进程计入的进程树峰值，也不是资源 Gate。
 
-这三个 36 单元 fixture 都不是冻结的 3×10×6 起点。它们已验证同一几何上，原生 p3 有限元空间与 p6 载体上的空细化 active-p3 空间给出一致的全域场和 612 个端口模态；同一个 active-p3 算例在 MPI1/MPI2 下也一致。它们仍不能证明更细网格上的精度、自适应收益或完整任务完成。当前 variable-p 装配仍经过 axis-coordinate 的 12 位小数 canonicalization；后续三等分参考路径需审查这一近似，不能把现有 raw-tensor 单元比较解释为整条装配链都使用未舍入坐标。
+这三个 36 单元 fixture 都不是冻结的 3×10×6 起点。它们已验证同一几何上，原生 p3 有限元空间与 p6 载体上的空细化 active-p3 空间给出一致的全域场和 612 个端口模态；同一个 active-p3 算例在 MPI1/MPI2 下也一致。它们仍不能证明更细网格上的精度、自适应收益或完整任务完成。后续显式 Task43 profile 已将 variable-p 体张量的几何/缓存身份切换为 `raw_unrounded`；local-h forest及拓扑box key仍保留12位舍入，不能宣称整条链都不舍入。本次冻结轴及单层二分坐标可精确表示；历史三等分参考采用其原始 Task40 网格恢复协议。
+
+## 正式起点与丰富参考恢复（G2准备）
+
+正式起点用较少的多项式未知量先求一个场，再将它与更丰富的已存场比较，寻找需要提高表达能力的单元。本次求解采用直接消元，保存了完整恢复系数、实际网格和自由度顺序，使后续可以在新公共积分点重采样。这样避免因缺少场数据而重复求解，代价是额外存储和后处理时间。
+
+| 模型与目的 | R / T / A_volume | 自由度与方程 | 实测成本及结论 |
+|---|---|---|---|
+| phi90、13.5 nm、3×10×6、全体active p3；正式current | 0.807473677583 / 0.005279003523 / 0.187247318894 | 独立FE=8640 trace+6480 interior=15120；612端口；凝聚系统9252行、2,420,652 used NNZ；p6存储124530 | watchdog395.323s；同时进程树RSS峰1,270,714,368B（1.18345GiB），task VmSwap峰0；完整A6及物理闭合通过，尚未通过空间精度门 |
+| Y6_1 selection参考恢复；6×16×6、p6 | 历史功率只随原始身份保留 | 389832个complex128存储系数；历史unscaled模态转换到boundary规范后比较 | 恢复及核对21.776s；E历史样本差0、H相对差8.7304e−16；公共q8/q10比较完成，仍非精度/连续参考资格 |
+| Y6_2 calibration参考恢复；不同y分段的6×16×6、p6 | 用于测量参考之间的差异 | 389832个complex128存储系数；同612模态 | 恢复及核对21.254s；E差0、H相对差8.6978e−16；公共q8/q10比较完成，不替代最终holdout |
+
+current的R00_s=0.807460398697、R00_p=1.23971e−26，R00_total为两者之和。比较器在所有三张实际网格断点并集上用张量 Gauss 规则重新采样原始高阶电场和旋度；q8 有589,824点，q10 有1,152,000点，两者积分体积均为350,000 nm³。q8/q10 的每单元 G² 贡献最大绝对差为1.64e−11，46个标记完全相同，表明这次标记对积分阶数稳定。此处的 G 衡量电场及其旋度差异，用固定入射场范数处理近零分母；它用于分配下一轮计算，不表示已知连续真误差。
+
+| 比较对象（均以当前场/selection Y6_1 为主） | G 差范数 / 固定入射尺度相对差 | 电场总场 / 磁场 / 旋度相对差（固定尺度） | 612 通道及标记结果 |
+|---|---:|---:|---|
+| current 对 Y6_1，q8 与 q10 | 358.1505046 / 0.42807173；q8/q10差约3.2e−16 | E=0.42795664；H=0.42818679；curl(E)/k0=0.42818679 | 最大单通道功率差0.5561381（top,0,0,s）；46/180格捕获G²的0.5011251 |
+| 校准 Y6_2 对 Y6_1，q8 与 q10 | 0.0038018494 / 4.54408e−6 | E=9.33331e−7；H=6.35816e−6；curl(E)/k0=6.35816e−6 | 最大逐通道功率差4.17448e−8（top,0,0,s） |
+
+两参考的全域 G 差远小于当前相对 selection 参考的场差，因此可以用于下一轮选择研究；该两参考差只是一次校准观测，不是完整的不确定度模型。逐通道功率使用完整612个有序模态，未拟合全局相位。原始场数组和完整逐单元贡献留在 ignored artifact；hash、标记 IDs、全量字段与边界见[公共比较记录](records/reference_comparison_v1.json)及其所指向的 artifact。Y5_1未读取，最终6×10×6 p6对照不参与标记。四侧壁单侧迹、独立重算Y6_1/Y6_2完整残差和更紧求解扰动仍未完成；因此没有接受的自适应更新，也没有精度或DoF节省结论。
+
+主控还从保存的 q8/q10 原始场数组独立重算 G 差及标记；数值与该记录一致。这是审阅侧复算，不是 CI 测试。
+
+本次current基于 `8fe6793e0a5e0689a5435ddf209d095b75b3bd0f` 加已归档dirty源码；完整35文件快照、命令/环境、分阶段时间及原始artifact哈希见[轻量记录](records/initial_current_and_reference_restore_v1.json)。使用既有JIT缓存，395.323s不是隔离冷缓存成本，更不是同精度加速结论。正式新模型PDE计数目前为1，accepted updates=0。Y5_1未参与选择，6×10×6、p6仍仅作最后对照。
+
+启动包装器曾因可选版本字段及在watchdog父进程提前初始化MPI而退出，均发生在PDE worker启动前；失败日志保留。Y6_1首次恢复误用了Task43简化模态序列化，历史SHA检查失败；改用历史原函数后exact hash通过，未改预期值或覆盖首试证据。后续审核另发现MPI采样的非root提前返回、未参与最后错误广播；已局部修复并通过MPI2成功及域外点集体失败测试。本次current为MPI1，原数据不受该分布式控制流修正影响。
 
 新增的独立小组件把两个相邻单元中的一侧分成八块，得到 9 个叶单元；另行建立把接口切分贯穿到另一侧的 12 单元网格。两者的离散空间与自由度不同，检查采用双方均能表示的已知复数多项式场，右端由原始形式独立积分得到，再比较各自恢复场与已知场，不能解释为任意散射解在两网格上都严格相等。
 
@@ -53,4 +80,4 @@ attempt1 与 attempt2 是两个独立结果，均保留。attempt1 使用未缩�
 
 DoF 数必须区分“存储行”“独立有限元自由度”和“凝聚后矩阵行”。原生 p3 的 3540 存储行中 462 行由周期条件关联，所以独立 FE 为 3078。active p3 用 1782 个独立迹自由度和 1296 个单元内部自由度构成同一个 3078 维 FE 空间；另有 612 个端口未知量。凝聚只把内部未知量从全局矩阵中消去，求解后仍会恢复，所以 2394 个矩阵行不表示 active FE 只有 2394 个自由度。三个结果均标记为 `numerical_sanity_only`；runner 的 `official_result=true` 只表示本算例自身数值 Gate 通过，不表示 Task43 精度或自适应目标通过。
 
-复现和逐字段证据见[三锚点 compact record](records/h100_anchor_triplet_v1.json)，原始 solver records、q8/q10 场、模态 JSON、日志和源码快照按其中路径及 SHA256 绑定；全部大文件保留在 ignored `benchmarks/artifacts/task43/h100_anchor/`。下一阶段是补齐正式 180 单元任务的资源 Gate、未舍入几何身份及参考场角色/完整场资格，再开始真实候选闭环；本三锚点不提供候选排序依据，也没有运行最终 p6 对照。
+复现和逐字段证据见[三锚点 compact record](records/h100_anchor_triplet_v1.json)，原始 solver records、q8/q10 场、模态 JSON、日志和源码快照按其中路径及 SHA256 绑定；全部大文件保留在 ignored `benchmarks/artifacts/task43/h100_anchor/`。正式180单元起点、参考恢复和公共全域场比较已在前文登记；下一步先测更紧求解对场差与标记的影响，再进入真实候选闭环。本三锚点不提供候选排序依据，也没有运行最终p6对照。

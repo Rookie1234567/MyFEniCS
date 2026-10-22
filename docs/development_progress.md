@@ -1,4 +1,4 @@
-# Task43：从局部 h/p 组件进入真实模型等价验证
+# Task43：正式起点完成，准备基于场差的 h/p 选择
 
 当前工作在既有 `task43_hp_adaptivity` 分支推进，复用 NN-Lab-V2 注册 worktree 和工作站 complex128/int64 环境。基线固定为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`；旧分支保留，用户授权删除的旧 Task42extra 大型 artifacts/results 已有路径与体积记录。未启动 NN/FTT 或新的预条件器扫描。
 
@@ -7,9 +7,10 @@
 | 局部空间与恢复 | p3–6 增量资格化；p3/p4、p4/p5 的 9↔12 单元已知场检查通过；原始高阶电场/旋度的完整采样、serial/MPI2 聚合组件检查通过 | 不代表任意散射解的空间误差已小 |
 | 真实方程残差 | attempt1 未缩放端口负结果保留；启用既有边界幅值缩放后的 36 单元组件 A6/RHS 为 8.7763e−13；新空 h active-p3 MPI1/MPI2 锚点分别为 2.1429e−12/1.7762e−12 | 残差说明离散方程解准，不证明网格精度够高 |
 | 同阶原生及分布式锚点 | 36 单元原生 p3/standard_full、p6 载体空 h active-p3 MPI1、同 active-p3 MPI2 均完成；全域 q8/q10 E/curl/H、612 模态、R/T/A 和 independent A6 Gate 通过 | 均为 `numerical_sanity_only`，不代替冻结起点或独立精度参考 |
-| 自适应与独立验收 | 已冻结公共积分、场/模态比较尺度和接受规则；可恢复的丰富完整场见证已登记 | 正式起点、参考场资格、候选求解、accepted updates、独立精度与同精度成本均尚未完成 |
+| 正式起点与参考恢复 | 冻结180单元active p3完成：15120独立FE DoF，A6=2.3848e−10；Y6_1/Y6_2恢复身份通过；共同q8/q10全域E/curl/H和612模态比较完成 | current–Y6_1固定入射尺度G相对差0.4280717；两个有限参考彼此差4.5441e−6；不构成连续误差或精度通过 |
+| 自适应与独立验收 | q8/q10对Y6_1均标记46/180单元，捕获G²=0.5011251且集合相同；selection/calibration/holdout角色分开 | 尚无紧求解扰动、候选求解或accepted update；独立holdout、侧壁和同精度成本仍未完成 |
 
-三个 h100 锚点在相同的 phi90、13.5 nm、36 单元网格上完成了空间等价和 MPI1/MPI2 完整观测核对；详见 [Task43 三锚点 compact record](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。接下来先完成正式起点所需的资源 Gate、未舍入几何身份和参考场角色核验，再在真实候选求解中根据误差作局部 h/p 选择。每个候选都须实际求解、通过完整残差，并将参考求解、失败尝试和检查成本计入全过程。最终对照为用户确认的 6×10×6、p6；它不进入标记与候选排序。当前还没有 accepted update 或生产资格。
+三个 h100 锚点完成了同阶实现与MPI等价核对，见[三锚点记录](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。正式起点在CPU1完成，watchdog395.323s、同时进程树RSS峰1.18345GiB、task swap0；Y6_1/Y6_2恢复身份通过，见[起点与参考记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)。随后将当前与两份高阶有限场放到相同物理积分位置重新比较：当前相对Y6_1的G差为358.1505，固定单位入射尺度相对差0.4280717；两个参考彼此差0.00380185。以当前每单元场差的平方积分作贡献，最小46格捕获约50.1%，q8/q10标记完全一致；方法和限制见[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)。postprocess wall为491.82s，未使用watchdog，故不报告资源峰值。接下来先取得同LU更紧求解造成的实测场扰动，再冻结并求解少量p-up/local-h候选。每个候选都须通过完整残差，将参考、失败尝试和检查成本计入全过程。最终6×10×6、p6不进入标记或排序。accepted updates仍为0，尚无空间精度或成本优势结论。
 
 实测数值、源码/数据身份及既有 p4 字节哈希负结果见 [Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md) 和[模型总账](development_model_registry.md)。本节为进行中的检查点，后续按实际结果更新；以下历史正文中的“当前”只指其原有任务阶段。
 

@@ -23,6 +23,7 @@ from petsc4py import PETSc
 
 from benchmarks.task43_hp_adaptivity.profile import (
     task43_initial_profile,
+    task43_profile_identity,
     task43_watchdog_resource_gate_from_environment,
 )
 from src.adaptivity.stage4_local_h import (
@@ -36,6 +37,10 @@ from src.common.config_3d import (
     resolve_stage4_full3d_assembly_backend,
 )
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+from src.geometry.task43_hp_adaptivity_axis_plan import (
+    TASK43_AXES_NM,
+    TASK43_AXIS_CELL_COUNTS,
+)
 from src.postprocessing.physical_field_comparison import (
     build_common_volume_quadrature,
     magnetic_field_from_electric_curl,
@@ -55,7 +60,9 @@ _CASES = {
     "native_p3_mpi1": (1, "native_p3"),
     "empty_h_active_p3_mpi1": (1, "empty_h_active_p3"),
     "empty_h_active_p3_mpi2": (2, "empty_h_active_p3"),
+    "current_active_p3_initial180_mpi1": (1, "empty_h_active_p3"),
 }
+_CURRENT_CASE = "current_active_p3_initial180_mpi1"
 _THREAD_ENV = (
     "OMP_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
@@ -202,25 +209,33 @@ def _json_default(value: Any) -> Any:
     raise TypeError(f"cannot serialize {type(value).__name__}")
 
 
-def _h100_config(*, kind: str, case_name: str):
+def _h100_config(
+    *, kind: str, case_name: str, geometry_profile: str = "h100"
+):
     degree = 3 if kind == "native_p3" else 6
     cfg = task43_initial_profile(case_name=case_name)
     cfg.nedelec_degree = degree
     cfg.visualization_degree = degree
-    # This run deliberately resolves its own h=100 nm mesh.  In particular,
-    # it does not retain the frozen 3x10x6 starting-axis profile.
-    cfg.mesh_plan_id = None
-    cfg.mesh_plan_sha256 = None
-    cfg.mesh_axis_cell_counts = None
-    cfg.mesh_axis_x_values = None
-    cfg.mesh_axis_y_values = None
-    cfg.mesh_axis_z_values = None
-    cfg.mesh_axis_z_profile = None
-    cfg.mesh_spacing_mode = "boundary_fitted"
-    cfg.mesh_target_size = 100.0
+    if geometry_profile == "h100":
+        # The component anchors deliberately resolve their own h=100 nm mesh.
+        cfg.mesh_plan_id = None
+        cfg.mesh_plan_sha256 = None
+        cfg.mesh_axis_cell_counts = None
+        cfg.mesh_axis_x_values = None
+        cfg.mesh_axis_y_values = None
+        cfg.mesh_axis_z_values = None
+        cfg.mesh_axis_z_profile = None
+        cfg.mesh_spacing_mode = "boundary_fitted"
+        cfg.mesh_target_size = 100.0
+    elif geometry_profile == "initial_180":
+        if kind != "empty_h_active_p3":
+            raise ValueError("the frozen 180-cell current uses active-p3 on p6")
+    else:
+        raise ValueError(f"unknown Task43 geometry profile {geometry_profile!r}")
     cfg.mesh_cell_type = "hexahedron"
-    cfg.mesh_refined_size = None
-    cfg.mesh_refinement_radius = None
+    if geometry_profile == "h100":
+        cfg.mesh_refined_size = None
+        cfg.mesh_refinement_radius = None
     cfg.stage4_variable_p_cell_degree_plan = None
     cfg.stage4_local_h_refinement_plan = None
     cfg.matrix_diagnostics_assemble_only = False
@@ -256,13 +271,29 @@ def _mesh_axes(mesh, comm: MPI.Intracomm) -> tuple[np.ndarray, ...]:
     return axes
 
 
-def _assert_h100_mesh(mesh_data, axes: tuple[np.ndarray, ...]) -> dict[str, Any]:
+def _assert_mesh_profile(
+    mesh_data,
+    axes: tuple[np.ndarray, ...],
+    geometry_profile: str,
+) -> dict[str, Any]:
     cell_map = mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim)
     global_cells = int(cell_map.size_global)
     cell_counts = tuple(len(axis) - 1 for axis in axes)
-    if global_cells != 36 or cell_counts != (3, 3, 4):
+    if geometry_profile == "h100":
+        expected_global_cells = 36
+        expected_counts = (3, 3, 4)
+        expected_axes = None
+        profile_label = "qualified 36-cell 3x3x4 h100 geometry"
+    elif geometry_profile == "initial_180":
+        expected_global_cells = int(np.prod(TASK43_AXIS_CELL_COUNTS))
+        expected_counts = tuple(TASK43_AXIS_CELL_COUNTS)
+        expected_axes = TASK43_AXES_NM
+        profile_label = "frozen Task43 initial 180-cell 3x10x6 geometry"
+    else:
+        raise ValueError(f"unknown Task43 geometry profile {geometry_profile!r}")
+    if global_cells != expected_global_cells or cell_counts != expected_counts:
         raise RuntimeError(
-            "h100 anchor mesh differs from the qualified 36-cell 3x3x4 mesh: "
+            f"mesh differs from the {profile_label}: "
             f"cells={global_cells}, axes={cell_counts}"
         )
     if tuple(mesh_data.mesh_cells_resolved) != cell_counts:
@@ -270,11 +301,17 @@ def _assert_h100_mesh(mesh_data, axes: tuple[np.ndarray, ...]) -> dict[str, Any]
             "mesh builder cell counts disagree with resolved coordinate axes: "
             f"builder={mesh_data.mesh_cells_resolved}, axes={cell_counts}"
         )
+    if expected_axes is not None and any(
+        not np.array_equal(axis, np.asarray(expected_axes[name], dtype=np.float64))
+        for name, axis in zip(("x", "y", "z"), axes, strict=True)
+    ):
+        raise RuntimeError("actual mesh coordinates differ from frozen Task43 axes")
     expected_bounds = ((0.0, 50.0), (0.0, 50.0), (-10.0, 130.0))
     for axis, bounds in zip(axes, expected_bounds, strict=True):
         if not np.isclose(axis[0], bounds[0]) or not np.isclose(axis[-1], bounds[1]):
             raise RuntimeError(f"resolved mesh has unexpected domain endpoints: {axis}")
     return {
+        "geometry_profile": geometry_profile,
         "global_cells": global_cells,
         "axis_cell_counts_xyz": list(cell_counts),
         "axes_nm": [axis.tolist() for axis in axes],
@@ -283,6 +320,10 @@ def _assert_h100_mesh(mesh_data, axes: tuple[np.ndarray, ...]) -> dict[str, Any]
         "mesh_cell_type_resolved": str(mesh_data.mesh_cell_type_resolved),
         "material_plane_alignment": mesh_data.material_plane_alignment,
     }
+
+
+def _assert_h100_mesh(mesh_data, axes: tuple[np.ndarray, ...]) -> dict[str, Any]:
+    return _assert_mesh_profile(mesh_data, axes, "h100")
 
 
 def _native_explicit_residual(linear_system: dict[str, Any]) -> dict[str, float]:
@@ -307,16 +348,136 @@ def _native_explicit_residual(linear_system: dict[str, Any]) -> dict[str, float]
         residual.destroy()
 
 
+def _array_identity(values: np.ndarray) -> dict[str, Any]:
+    array = np.ascontiguousarray(values)
+    digest = hashlib.sha256()
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(json.dumps(list(array.shape)).encode("ascii"))
+    digest.update(array.view(np.uint8))
+    return {
+        "dtype": array.dtype.str,
+        "shape": list(array.shape),
+        "sha256": digest.hexdigest(),
+    }
+
+
+def _active_solution_storage(view) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    """Copy the recovered carrier and active vectors before the observer lease ends."""
+
+    field = view.recovered.field
+    mesh = view.mesh_data.mesh
+    function_dofmap = field.function_space.dofmap
+    function_index_map = function_dofmap.index_map
+    topology_dimension = int(mesh.topology.dim)
+    cell_connectivity = mesh.topology.connectivity(topology_dimension, 0)
+    if cell_connectivity is None:
+        raise RuntimeError("cell-to-vertex connectivity was not prepared before observation")
+    cell_vertices = cell_connectivity.array
+    cell_index_map = mesh.topology.index_map(topology_dimension)
+    cell_owned_ids = cell_index_map.local_to_global(
+        np.arange(cell_index_map.size_local, dtype=np.int32)
+    )
+    dof_owned_ids = function_index_map.local_to_global(
+        np.arange(function_index_map.size_local, dtype=np.int32)
+    )
+
+    def owned_values(vector) -> np.ndarray | None:
+        if vector is None:
+            return None
+        return np.asarray(vector.getArray(readonly=True)).copy()
+
+    p6_owned = owned_values(field.x.petsc_vec)
+    active_solution = owned_values(view.recovered.active_full_solution)
+    active_rhs = owned_values(view.recovered.active_full_rhs)
+    if p6_owned is None or active_solution is None or active_rhs is None:
+        raise RuntimeError("active current storage is missing an owned solution/RHS")
+    arrays: dict[str, np.ndarray] = {
+        "recovered_p6_local_coefficients": np.asarray(field.x.array).copy(),
+        "recovered_p6_owned_coefficients": p6_owned,
+        "mesh_geometry_coordinates_nm": np.asarray(mesh.geometry.x).copy(),
+        "mesh_geometry_dofmap": np.asarray(mesh.geometry.dofmap).copy(),
+        "mesh_owned_cell_global_ids": np.asarray(cell_owned_ids, dtype=np.int64),
+        "mesh_cell_vertex_dofmap": np.asarray(cell_vertices).copy(),
+        "p6_function_space_dofmap": np.asarray(function_dofmap.list).copy(),
+        "p6_owned_global_dof_block_ids": np.asarray(dof_owned_ids, dtype=np.int64),
+        "p6_ghost_global_dof_block_ids": np.asarray(
+            function_index_map.ghosts, dtype=np.int64
+        ).copy(),
+        "active_full_solution_owned": active_solution,
+        "active_full_rhs_owned": active_rhs,
+    }
+    if view.recovered.active_auxiliary_interior_action is not None:
+        arrays["active_auxiliary_interior_action_owned"] = owned_values(
+            view.recovered.active_auxiliary_interior_action
+        )
+
+    def vector_layout(vector) -> dict[str, Any] | None:
+        if vector is None:
+            return None
+        return {
+            "global_size": int(vector.getSize()),
+            "local_size": int(vector.getLocalSize()),
+            "ownership_range": [int(value) for value in vector.getOwnershipRange()],
+        }
+
+    mesh_identity_arrays = (
+        "mesh_geometry_coordinates_nm",
+        "mesh_geometry_dofmap",
+        "mesh_owned_cell_global_ids",
+        "mesh_cell_vertex_dofmap",
+        "p6_function_space_dofmap",
+        "p6_owned_global_dof_block_ids",
+        "p6_ghost_global_dof_block_ids",
+    )
+    metadata = {
+        "representation": (
+            "active-p3 solution recovered into the full p6 carrier function; "
+            "the local carrier vector includes ghost slots and a separate owned "
+            "coefficient segment is stored"
+        ),
+        "mpi_size": int(MPI.COMM_WORLD.size),
+        "p6_field_local_vector_size": int(field.x.array.size),
+        "p6_field_owned_vector": vector_layout(field.x.petsc_vec),
+        "p6_dof_index_map": {
+            "size_global_blocks": int(function_index_map.size_global),
+            "size_local_blocks": int(function_index_map.size_local),
+            "num_ghost_blocks": int(function_index_map.num_ghosts),
+            "block_size": int(function_dofmap.index_map_bs),
+        },
+        "active_full_solution_vector": vector_layout(
+            view.recovered.active_full_solution
+        ),
+        "active_full_rhs_vector": vector_layout(view.recovered.active_full_rhs),
+        "active_rows": int(view.reduction.system.entity_map.active_rows),
+        "active_trace_rows": int(view.reduction.system.active_trace_rows),
+        "active_cell_interior_rows": int(
+            view.reduction.system.entity_map.active_cell_interior_rows
+        ),
+        "p6_field_recovery_audit": dict(view.recovered.audit),
+        "mesh_and_dof_order_arrays": {
+            name: _array_identity(arrays[name]) for name in mesh_identity_arrays
+        },
+    }
+    metadata["mesh_and_dof_order_sha256"] = _sha256_json(
+        metadata["mesh_and_dof_order_arrays"]
+    )
+    metadata["active_degree_plan_sha256"] = str(
+        view.reduction.degree_plan.audit["cell_degree_plan_sha256"]
+    )
+    return arrays, metadata
+
+
 def _field_capture(
     field,
     mesh_data,
     cfg,
     comm: MPI.Intracomm,
     reference_axes: tuple[np.ndarray, ...] | None,
+    geometry_profile: str = "h100",
 ) -> dict[str, Any]:
     export = prepare_cell_local_vector_field_export(field)
     axes = _mesh_axes(mesh_data.mesh, comm)
-    mesh_identity = _assert_h100_mesh(mesh_data, axes)
+    mesh_identity = _assert_mesh_profile(mesh_data, axes, geometry_profile)
     if reference_axes is not None and any(
         not np.array_equal(axis, reference_axis)
         for axis, reference_axis in zip(axes, reference_axes, strict=True)
@@ -377,6 +538,10 @@ def _field_capture(
         "target_degree": int(export.target_degree),
         "representation": export.representation,
         "mesh_identity": mesh_identity,
+        "axes_nm": {
+            name: axis.tolist()
+            for name, axis in zip(("x", "y", "z"), axes, strict=True)
+        },
         "samples": samples,
     }
 
@@ -721,6 +886,8 @@ def _run(
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
     expected_size, kind = _CASES[case]
+    current_case = case == _CURRENT_CASE
+    geometry_profile = "initial_180" if current_case else "h100"
     if int(comm.size) != expected_size:
         raise RuntimeError(f"case {case} requires MPI size {expected_size}, got {comm.size}")
     _log_stage(comm, started, "preflight", "begin", case_id=case)
@@ -817,11 +984,17 @@ def _run(
         raise RuntimeError(f"could not capture run source snapshot: {source_error}")
     source_hashes_before = source_identity["file_sha256"]
 
-    cfg = _h100_config(kind=kind, case_name=f"task43_h100_{case}")
+    cfg = _h100_config(
+        kind=kind,
+        case_name=(
+            f"task43_initial180_{case}" if current_case else f"task43_h100_{case}"
+        ),
+        geometry_profile=geometry_profile,
+    )
     _log_stage(comm, started, "mesh_build", "begin")
     mesh_data = build_airbox_mesh_3d(cfg, run_root / "resolved_mesh")
     axes = _mesh_axes(mesh_data.mesh, comm)
-    _assert_h100_mesh(mesh_data, axes)
+    _assert_mesh_profile(mesh_data, axes, geometry_profile)
     reference_axes = None
     if reference_run_root is not None:
         with np.load(
@@ -841,8 +1014,16 @@ def _run(
             trace_degree=3,
             cell_interior_degree=6,
             provenance={
-                "purpose": "Task43 empty-h active-p3 same-mesh anchor",
-                "mesh_role": "resolved boundary-fitted h100 36-cell geometry",
+                "purpose": (
+                    "Task43 frozen initial-mesh active-p3 current"
+                    if current_case
+                    else "Task43 empty-h active-p3 same-mesh anchor"
+                ),
+                "mesh_role": (
+                    "frozen interface-fitted 180-cell 3x10x6 Task43 start"
+                    if current_case
+                    else "resolved boundary-fitted h100 36-cell geometry"
+                ),
                 "active_degree": 3,
                 "formal_candidate": False,
             },
@@ -850,8 +1031,11 @@ def _run(
             variable_trace_from_cell_degrees=True,
             allow_no_refinement=True,
         )
-        if plan["expected_forest"]["leaf_cell_count"] != 36:
-            raise RuntimeError("empty-h active plan changed the resolved h100 cell set")
+        expected_leaf_count = int(
+            mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global
+        )
+        if plan["expected_forest"]["leaf_cell_count"] != expected_leaf_count:
+            raise RuntimeError("empty-h active plan changed the resolved cell set")
         plan_path = run_root / "empty_h_active_p3_plan.json"
         plan_error = None
         if comm.rank == 0:
@@ -873,7 +1057,7 @@ def _run(
             comm=comm,
         )
         axes = _mesh_axes(mesh_data.mesh, comm)
-        _assert_h100_mesh(mesh_data, axes)
+        _assert_mesh_profile(mesh_data, axes, geometry_profile)
         local_h_plan_identity = {
             "plan_sha256": _sha256_file(plan_path),
             "root_cell_count": plan["expected_forest"]["root_cell_count"],
@@ -890,6 +1074,8 @@ def _run(
             ),
             "allow_no_refinement": bool(plan["allow_no_refinement"]),
         }
+    if current_case:
+        mesh_data.mesh.topology.create_connectivity(mesh_data.mesh.topology.dim, 0)
     _log_stage(
         comm,
         started,
@@ -898,6 +1084,7 @@ def _run(
         global_cells=int(mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global),
         axis_cell_counts_xyz=[len(axis) - 1 for axis in axes],
         local_h_empty=kind == "empty_h_active_p3",
+        geometry_profile=geometry_profile,
     )
 
     backend_audit = resolve_stage4_full3d_assembly_backend(cfg, apply=False)
@@ -913,7 +1100,12 @@ def _run(
 
     def capture(field, live_mesh_data, live_cfg, goal_context) -> None:
         captured["fields"] = _field_capture(
-            field, live_mesh_data, live_cfg, comm, reference_axes
+            field,
+            live_mesh_data,
+            live_cfg,
+            comm,
+            reference_axes,
+            geometry_profile,
         )
         modes = goal_context["modes"]
         captured["mode_count"] = len(modes)
@@ -921,6 +1113,20 @@ def _run(
             [str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)]
             for mode in modes
         ]
+        if current_case:
+            captured["resolved_profile_identity"] = task43_profile_identity(
+                live_cfg,
+                modes,
+                resolved_axes_nm=captured["fields"]["axes_nm"],
+                resolved_mesh_audit={
+                    "global_cell_count": int(
+                        captured["fields"]["mesh_identity"]["global_cells"]
+                    ),
+                    "leaf_cell_count": int(
+                        captured["fields"]["mesh_identity"]["global_cells"]
+                    ),
+                },
+            )
 
     def native_observer(**kwargs) -> None:
         capture(
@@ -955,6 +1161,10 @@ def _run(
                 "allow_no_refinement",
             )
         }
+        if current_case:
+            storage_arrays, storage_metadata = _active_solution_storage(view)
+            captured["solution_storage_arrays"] = storage_arrays
+            captured["solution_storage_metadata"] = storage_metadata
 
     _log_stage(comm, started, "solve_and_observe", "begin")
     summary = run_stage4b_block_grating_3d_case(
@@ -979,8 +1189,13 @@ def _run(
         raise RuntimeError(f"resolved R13 inventory is not 612 modes: {captured.get('mode_count')}")
     _log_stage(comm, started, "record_and_compare", "begin")
     post_error = None
+    task43_gated_official_result = None
     if comm.rank == 0:
-        record_path = run_root / "task43_h100_anchor_record.json"
+        record_path = run_root / (
+            "task43_initial180_current_record.json"
+            if current_case
+            else "task43_h100_anchor_record.json"
+        )
         try:
             orders_path = run_root / "solve" / "dtn_port_diffraction_orders_3d.json"
             with orders_path.open(encoding="utf-8") as stream:
@@ -1001,18 +1216,38 @@ def _run(
             fields = captured["fields"]
             samples_path = run_root / "field_samples_q8_q10.npz"
             _write_samples(samples_path, fields["samples"], axes)
+            storage_record = None
+            if current_case:
+                storage_arrays = captured.get("solution_storage_arrays")
+                storage_metadata = captured.get("solution_storage_metadata")
+                if not isinstance(storage_arrays, dict) or not isinstance(
+                    storage_metadata, dict
+                ):
+                    raise RuntimeError("current case did not capture recovered coefficients")
+                storage_path = run_root / "recovered_solution_storage.npz"
+                np.savez_compressed(storage_path, **storage_arrays)
+                storage_record = {
+                    "file": str(storage_path),
+                    "sha256": _sha256_file(storage_path),
+                    "arrays": {
+                        name: _array_identity(values)
+                        for name, values in storage_arrays.items()
+                    },
+                    **storage_metadata,
+                }
             a_volume_value = summary.get("A_volume_total")
             if a_volume_value is None or not np.isfinite(float(a_volume_value)):
                 raise ValueError("official A_volume_total is missing or non-finite")
             a_volume = float(a_volume_value)
 
             gates: dict[str, Any] = {
-                "solver_completed_and_official": bool(
+                ("solver_completed" if current_case else "solver_completed_and_official"): bool(
                     summary.get("case_status") == "completed"
-                    and summary.get("official_result") is True
+                    and (current_case or summary.get("official_result") is True)
                 ),
                 "all_612_ordered_modes_present": len(rows) == 612,
             }
+            small_direct_target_diagnostic = None
             if kind == "native_p3":
                 residual = captured["native_explicit_residual"]
                 gates["native_explicit_Ax_minus_b_relative_le_1e-9"] = bool(
@@ -1024,14 +1259,45 @@ def _run(
                     "full_solver_gauge_residual"
                 ]
                 condensed = captured["condensed_residual"]
-                gates["independent_A6_relative_to_rhs_le_1e-9"] = bool(
-                    independent["finite"]
-                    and np.isfinite(independent["relative_to_independent_rhs"])
-                    and independent["relative_to_independent_rhs"] <= 1.0e-9
-                )
+                a6_relative = independent["relative_to_independent_rhs"]
+                if current_case:
+                    gates["independent_A6_relative_to_rhs_le_1e-6"] = bool(
+                        independent["finite"]
+                        and np.isfinite(a6_relative)
+                        and a6_relative <= 1.0e-6
+                    )
+                    small_direct_target_diagnostic = {
+                        "relative_to_independent_rhs": (
+                            float(a6_relative) if np.isfinite(a6_relative) else None
+                        ),
+                        "limit": 1.0e-8,
+                        "passed": bool(
+                            independent["finite"]
+                            and np.isfinite(a6_relative)
+                            and a6_relative <= 1.0e-8
+                        ),
+                        "classification": "diagnostic_only_not_current_hard_gate",
+                    }
+                else:
+                    gates["independent_A6_relative_to_rhs_le_1e-9"] = bool(
+                        independent["finite"]
+                        and np.isfinite(a6_relative)
+                        and a6_relative <= 1.0e-9
+                    )
                 gates["condensed_active_residual_le_1e-9"] = bool(
                     np.isfinite(condensed["linear_system_relative_residual"])
                     and condensed["linear_system_relative_residual"] <= 1.0e-9
+                )
+            if current_case:
+                closure = abs(
+                    float(port_payload["metrics"]["R_total"])
+                    + float(port_payload["metrics"]["T_total"])
+                    + a_volume
+                    - 1.0
+                )
+                gates["finite_A_volume_total"] = bool(np.isfinite(a_volume))
+                gates["energy_closure_abs_le_1e-5"] = bool(
+                    np.isfinite(closure) and closure <= 1.0e-5
                 )
 
             comparisons: dict[str, Any] = {}
@@ -1070,9 +1336,22 @@ def _run(
 
             gates["pass"] = all(value is True for value in gates.values())
             gates["status"] = "passed" if gates["pass"] else "failed"
+            task43_gated_official_result = bool(
+                current_case
+                and gates["pass"]
+                and summary.get("case_status") == "completed"
+            )
             record = {
-                "schema": "task43.h100_same_mesh_p3_anchor.v1",
-                "classification": "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim",
+                "schema": (
+                    "task43.initial_180_cell_active_p3_current.v1"
+                    if current_case
+                    else "task43.h100_same_mesh_p3_anchor.v1"
+                ),
+                "classification": (
+                    "G2_frozen_initial_180_cell_current_numerical_result_not_accuracy_qualified"
+                    if current_case
+                    else "G1_same_mesh_component_anchor_not_adaptive_accuracy_claim"
+                ),
                 "case_id": case,
                 "method": (
                     "native degree-3 Nedelec, standard_full backend"
@@ -1110,10 +1389,29 @@ def _run(
                         captured["ordered_mode_keys"]
                     ),
                     "field_export": fields["representation"],
+                    "resolved_task43_profile_identity": captured.get(
+                        "resolved_profile_identity"
+                    ),
                 },
                 "solver": {
                     "case_status": summary.get("case_status"),
-                    "official_result": summary.get("official_result"),
+                    "official_result": (
+                        task43_gated_official_result
+                        if current_case
+                        else summary.get("official_result")
+                    ),
+                    "official_result_scope": (
+                        "Task43 gated result requiring independent A6, condensed residual, "
+                        "energy closure, complete modes and solver completion"
+                        if current_case
+                        else "legacy component-anchor solver result"
+                    ),
+                    "legacy_solver_reported_official_result": summary.get(
+                        "official_result"
+                    ),
+                    "legacy_solver_result_is_diagnostic_only_if_task_gates_fail": (
+                        bool(current_case and not gates["pass"])
+                    ),
                     "timings_seconds": summary.get("timings_seconds"),
                     "wall_seconds_through_record": time.perf_counter() - started,
                     "explicit_native_residual": captured.get(
@@ -1123,6 +1421,7 @@ def _run(
                     "independent_active_action": captured.get(
                         "independent_active_action"
                     ),
+                    "small_direct_target_diagnostic": small_direct_target_diagnostic,
                 },
                 "power": {
                     "aggregate": port_payload["metrics"],
@@ -1148,6 +1447,7 @@ def _run(
                     "scattered_background": "analytic_flat_air_substrate_fresnel",
                     "phase_fit": False,
                 },
+                "recovered_solution_storage": storage_record,
                 "reference_identities": reference_identities,
                 "reference_comparison": {
                     "status": "not_run" if not comparisons else "measured",
@@ -1159,6 +1459,7 @@ def _run(
                     "vertical sidewall one-sided mathematical traces",
                     "adaptive selection or accepted h/p updates",
                     "R14 port truncation comparison",
+                    "reference qualification and frozen marking/acceptance uncertainty",
                 ],
             }
             record_path.write_text(
@@ -1167,7 +1468,7 @@ def _run(
                 encoding="utf-8",
             )
             if not gates["pass"]:
-                post_error = f"Task43 h100 anchor gates failed; see {record_path}"
+                post_error = f"Task43 case gates failed; see {record_path}"
             _log_stage(
                 comm,
                 started,
@@ -1196,6 +1497,15 @@ def _run(
                 )
             except OSError:
                 pass
+    if current_case:
+        task43_gated_official_result = comm.bcast(
+            task43_gated_official_result, root=0
+        )
+        summary = dict(summary)
+        summary["legacy_solver_reported_official_result"] = summary.get(
+            "official_result"
+        )
+        summary["official_result"] = task43_gated_official_result
     post_error = comm.bcast(post_error, root=0)
     if post_error is not None:
         _log_stage(
@@ -1225,6 +1535,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     comm = MPI.COMM_WORLD
     expected_size, kind = _CASES[args.case]
+    is_current = args.case == _CURRENT_CASE
     is_native = kind == "native_p3"
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
     if is_native and (
@@ -1232,8 +1543,13 @@ def main(argv: list[str] | None = None) -> int:
         or args.parallel_reference_run_root is not None
     ):
         parser.error("native p3 is the common reference and takes no reference path")
-    if not is_native and args.reference_run_root is None:
+    if not is_native and not is_current and args.reference_run_root is None:
         parser.error("empty-h active p3 requires --reference-run-root from native_p3_mpi1")
+    if is_current and (
+        args.reference_run_root is not None
+        or args.parallel_reference_run_root is not None
+    ):
+        parser.error("the frozen 180-cell current does not use a reference for selection")
     if is_mpi2 and args.parallel_reference_run_root is None:
         parser.error(
             "MPI2 active p3 requires --parallel-reference-run-root from empty_h_active_p3_mpi1"
@@ -1255,6 +1571,9 @@ def main(argv: list[str] | None = None) -> int:
                     "case_id": args.case,
                     "case_status": summary.get("case_status"),
                     "official_result": summary.get("official_result"),
+                    "legacy_solver_reported_official_result": summary.get(
+                        "legacy_solver_reported_official_result"
+                    ),
                     "run_root": str(args.run_root.resolve()),
                 },
                 sort_keys=True,

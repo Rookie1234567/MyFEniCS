@@ -1,6 +1,6 @@
 # Task43：局部 h/p 自适应进行中
 
-Task43 使用新 phi90 模型：周期 50×50 nm、计算域 z=−10…130 nm、Si 光栅 17×20×120 nm、波长 13.5 nm、入射 theta=89°/phi=90°、s 偏振。执行分支为 `task43_hp_adaptivity`，源码基线为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。下表登记组件验证，尚无正式自适应精度或成本优势结论；旧任务记录继续保留。
+Task43 使用新 phi90 模型：周期 50×50 nm、计算域 z=−10…130 nm、Si 光栅 17×20×120 nm、波长 13.5 nm、入射 theta=89°/phi=90°、s 偏振。执行分支为 `task43_hp_adaptivity`，源码基线为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。下表登记组件验证及正式起点求解，尚无自适应精度或成本优势结论；旧任务记录继续保留。
 
 局部 h 把选中的单元分小，局部 p 增加选中单元的多项式阶次。它们旨在把自由度用在更需要分辨的区域，但必须额外维护相邻单元和周期边界的连接约束，并付出候选求解与误差检查的成本。
 
@@ -12,7 +12,12 @@ Task43 使用新 phi90 模型：周期 50×50 nm、计算域 z=−10…130 nm、
 | 36 单元原生 p3 / `standard_full` / MPI1 | 显式完整 Ax−b 相对残差 7.5466e−13；同网格空 h active-p3 的 q8/q10 场、旋度、H 和 612 端口模态逐项通过 | runner wall 115.70 s；与空 h active-p3 MPI1 的 DoF 空间相同，求解实现不同 |
 | 36 单元空 h active-p3 / MPI1 | active trace+interior 为 1782+1296=3078 独立 FE DoF；独立 A6/RHS 相对残差 2.1429e−12；对原生 p3 的完整观测 Gate 通过 | condensed 2394 行、runner wall 280.43 s；Top-p 原始相对幅值差 1.0730e−9，固定单位模态尺度差 4.2345e−15，两者均保留 |
 | 同一 active-p3 / MPI2 | independent A6/RHS 1.7762e−12；对 MPI1 及原生 p3 的场、612 模态和功率 Gate 通过 | rank affinity CPU1/29；condensed 2394 行、runner wall 173.97 s；两 rank RSS 历史峰上界 1170 MiB，非进程树峰 |
-| 冻结 3×10×6 起点及实际自适应更新 | `not_run`；accepted updates=0 | 三个小锚点不是正式起点；独立加丰富核验、候选选择和同精度 p-only/h-only 成本仍未完成 |
+| 冻结 3×10×6、active p3正式起点，MPI1/CPU1 | 独立FE15120；A6=2.3848e−10，能量闭合3.2516e−13；R/T/A_volume=0.807473677583/0.005279003523/0.187247318894；R00_s=0.807460398697、R00_p=1.2397e−26 | 凝聚9252行、used NNZ2420652；watchdog395.323s、实测同时进程树峰1.18345GiB、task swap0；有既存JIT缓存，只通过离散求解门 |
+| Y6_1/Y6_2旧丰富场恢复，576单元p6 | 原始hash、mesh/周期约束和612模态身份通过；12800点E差0、H相对差分别8.7304e−16/8.6978e−16 | 21.776s/21.254s，无新PDE；selection/calibration角色固定，完整公共积分比较已完成但不代表参考精度 |
+| 冻结180单元active-p3 current 对 Y6_1/Y6_2，q8/q10共同体积分 | current–Y6_1 的 G 差358.1505，固定入射尺度相对差0.4280717；Y6_2–Y6_1 的 G 差0.00380185，相对差4.5441e−6；q8/q10均选择同46格，捕获G²=0.5011251 | postprocess wall 491.82s，未使用 watchdog，不报告资源峰值；有限离散场差/选择指标，Y5_1未读，最终6×10×6 p6不参与标记；完整A6、侧壁与求解扰动未在此阶段重验 |
+| 实际自适应更新及同精度成本 | `not_run`；accepted updates=0 | p/h候选、独立holdout、p-only/h-only同精度成本及迭代接线仍未完成 |
+
+正式起点及参考恢复见[轻量记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)，全域场差和标记见[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)。当前与selection参考仍有明显差异，故不能把当前15120 DoF与最终237600 DoF对照的差直接称为压缩收益；起点尚未达到同一空间精度，也未产生候选更新。
 
 三锚点使用同一已记录 dirty source map（33 个依赖文件哈希）和源码归档；Git HEAD `a7904a64405c9c19d641dbc4d43fb25f7a80f793` 只是基线，不能代表未提交实现。三个小模型均为 `numerical_sanity_only`，不是冻结起点或精度证明。详细原始残差、字段身份、DoF 口径、负结果和限制见 [Task43 执行索引](task43_hp_adaptivity/outcomes/summary.md) 和[三锚点证据](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。用户确认的 6×10×6、uniform p6 仅作选择结束后的对照；其独立 FE DoF 公式估计为 237600，仍需实际约束审计，不与凝聚矩阵行数混称。
 

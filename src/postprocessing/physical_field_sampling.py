@@ -284,9 +284,6 @@ def sample_cell_local_vector_fields(
         local_values = {name: np.zeros((0, 3), dtype=np.complex128) for name in names}
 
     packets = comm.gather((local_indices, local_values), root=int(root))
-    if int(comm.rank) != int(root):
-        return None
-
     output: dict[str, np.ndarray] | None = None
     root_error = None
     if int(comm.rank) == int(root):
@@ -311,4 +308,4 @@ def sample_cell_local_vector_fields(
     root_error = comm.bcast(root_error, root=int(root))
     if root_error is not None:
         raise RuntimeError(root_error)
-    return output
+    return output if int(comm.rank) == int(root) else None
