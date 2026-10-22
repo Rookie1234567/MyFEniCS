@@ -81,6 +81,9 @@ from .hcurl_variable_p_reduction import (
 )
 from .independent_active_action import action_group_metrics
 from .mpc_form_action import MpcFormActionContext
+from .petsc_residual_correction import (
+    single_petsc_residual_correction_in_place,
+)
 from .solve_vector_maxwell import _json_default
 from .static_local_schur_action import create_static_local_schur_action
 
@@ -6494,6 +6497,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     canonical_vector_export: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
     diagnostic_reference_incident_quadrature: bool = False,
+    variable_p_single_lu_residual_correction: bool = False,
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
 
@@ -6563,6 +6567,15 @@ def _solve_stage4_dtn_port_total_field_impl(
             "the variable-p live observer requires the exact-sequence "
             "assembly-time variable-p backend"
         )
+    if variable_p_single_lu_residual_correction and (
+        variable_p_live_observer is None
+        or not variable_p_backend
+        or linear_solver_port is not None
+    ):
+        raise ValueError(
+            "same-LU variable-p residual correction requires the built-in "
+            "variable-p solve and its live observer"
+        )
     if canonical_vector_export and (
         not assembly_time_cell_static_condensation or variable_p_backend
     ):
@@ -6577,6 +6590,12 @@ def _solve_stage4_dtn_port_total_field_impl(
         raise ValueError("the variable-p live observer requires a complete solve")
     if variable_p_retain_local_schur_for_research and variable_p_live_observer is None:
         raise ValueError("research Schur retention requires a variable-p live observer")
+    if variable_p_single_lu_residual_correction and int(
+        (mesh_data.mesh.comm if mesh_data is not None else V.mesh.comm).size
+    ) != 1:
+        raise NotImplementedError(
+            "same-LU variable-p residual correction is currently qualified only for MPI1"
+        )
     log(
         "Stage-4 Full3D assembly backend "
         f"requested={assembly_backend_audit['requested']} "
@@ -8190,6 +8209,32 @@ def _solve_stage4_dtn_port_total_field_impl(
     setup_and_solve_seconds = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
     )
+    original_primal_ksp: dict[str, Any] | None = None
+    if variable_p_single_lu_residual_correction:
+        if ksp is None or external_snapshot is not None:
+            raise RuntimeError(
+                "same-LU residual correction requires the built-in direct KSP"
+            )
+        original_ksp_type = str(ksp.getType()).lower()
+        original_pc_type = str(ksp.getPC().getType()).lower()
+        original_primal_ksp = {
+            "converged_reason": int(ksp.getConvergedReason()),
+            "iterations": int(ksp.getIterationNumber()),
+            "residual_norm": float(ksp.getResidualNorm()),
+            "ksp_type": original_ksp_type,
+            "pc_type": original_pc_type,
+        }
+        if original_ksp_type != "preonly" or original_pc_type != "lu":
+            raise RuntimeError(
+                "same-LU residual correction requires KSP preonly with PC lu; "
+                f"got KSP={original_ksp_type!r}, PC={original_pc_type!r}"
+            )
+        if original_primal_ksp["converged_reason"] <= 0:
+            raise RuntimeError(
+                "same-LU residual correction requires a positive original "
+                "KSP converged reason; got "
+                f"{original_primal_ksp['converged_reason']}"
+            )
     released_external = bool(
         external_snapshot is not None
         and external_snapshot.assembled_matrix_released_before_solve
@@ -8246,6 +8291,84 @@ def _solve_stage4_dtn_port_total_field_impl(
             },
         }
     timing_details["stage4_dtn_linear_solve_seconds"] = setup_and_solve_seconds
+
+    same_lu_residual_correction: dict[str, Any] | None = None
+    if variable_p_single_lu_residual_correction:
+        correction_started = time.perf_counter()
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="variable_p_same_lu_residual_correction",
+            status="begin",
+            started=started,
+            dofs=solve_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=(
+                independent_trace_matrix_stats
+                if independent_trace_matrix_stats is not None
+                else condensed_matrix_stats
+                if condensed_matrix_stats is not None
+                else augmented_matrix_stats_after_finalize
+            ),
+            petsc_options=petsc_options,
+            extra={"original_primal_ksp": original_primal_ksp},
+        )
+        same_lu_residual_correction = single_petsc_residual_correction_in_place(
+            solve_A,
+            solve_b,
+            solve_x,
+            ksp,
+            enabled=True,
+        )
+        correction_seconds = float(
+            comm.allreduce(time.perf_counter() - correction_started, op=MPI.MAX)
+        )
+        same_lu_residual_correction["elapsed_seconds"] = correction_seconds
+        timing_details[
+            "stage4_variable_p_same_lu_residual_correction_seconds"
+        ] = correction_seconds
+        if same_lu_residual_correction.get("status") != "passed":
+            _write_progress_event(
+                out_dir,
+                comm,
+                stage="variable_p_same_lu_residual_correction",
+                status="failed",
+                started=started,
+                dofs=solve_dofs,
+                constraints=floquet_data.num_constraints,
+                matrix_stats=(
+                    independent_trace_matrix_stats
+                    if independent_trace_matrix_stats is not None
+                    else condensed_matrix_stats
+                    if condensed_matrix_stats is not None
+                    else augmented_matrix_stats_after_finalize
+                ),
+                petsc_options=petsc_options,
+                extra=same_lu_residual_correction,
+            )
+            raise RuntimeError(
+                "same-LU variable-p residual correction failed; refusing to "
+                "recover or report R/T from the uncorrected solution: "
+                + json.dumps(same_lu_residual_correction, sort_keys=True)
+            )
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="variable_p_same_lu_residual_correction",
+            status="end",
+            started=started,
+            dofs=solve_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=(
+                independent_trace_matrix_stats
+                if independent_trace_matrix_stats is not None
+                else condensed_matrix_stats
+                if condensed_matrix_stats is not None
+                else augmented_matrix_stats_after_finalize
+            ),
+            petsc_options=petsc_options,
+            extra=same_lu_residual_correction,
+        )
 
     assembly_time_field = None
     embedded_fe_solution = None
@@ -8582,11 +8705,20 @@ def _solve_stage4_dtn_port_total_field_impl(
             "ordinary_default_changed": False,
         }
     if external_snapshot is None:
-        solver_converged_reason = int(ksp.getConvergedReason())
-        solver_iterations = int(ksp.getIterationNumber())
-        solver_residual_norm = float(ksp.getResidualNorm())
-        solver_ksp_type = ksp.getType()
-        solver_pc_type = ksp.getPC().getType()
+        if same_lu_residual_correction is not None and original_primal_ksp is not None:
+            solver_converged_reason = int(
+                original_primal_ksp["converged_reason"]
+            )
+            solver_iterations = int(original_primal_ksp["iterations"])
+            solver_residual_norm = float(original_primal_ksp["residual_norm"])
+            solver_ksp_type = original_primal_ksp["ksp_type"]
+            solver_pc_type = original_primal_ksp["pc_type"]
+        else:
+            solver_converged_reason = int(ksp.getConvergedReason())
+            solver_iterations = int(ksp.getIterationNumber())
+            solver_residual_norm = float(ksp.getResidualNorm())
+            solver_ksp_type = ksp.getType()
+            solver_pc_type = ksp.getPC().getType()
     else:
         solver_converged_reason = int(external_snapshot.converged_reason)
         solver_iterations = int(external_snapshot.iterations)
@@ -8693,6 +8825,10 @@ def _solve_stage4_dtn_port_total_field_impl(
         **timing_details,
         **linear_residual,
     }
+    if same_lu_residual_correction is not None:
+        solver_info["variable_p_same_lu_residual_correction"] = (
+            same_lu_residual_correction
+        )
     if external_snapshot is not None:
         solver_info.update(
             {
@@ -8920,6 +9056,7 @@ def solve_stage4_dtn_port_total_field(
     matrix_free_dtn: bool = False,
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
+    variable_p_single_lu_residual_correction: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -8939,6 +9076,7 @@ def solve_stage4_dtn_port_total_field(
             bool(matrix_free_dtn_probe),
             bool(canonical_vector_export),
             bool(diagnostic_reference_incident_quadrature),
+            bool(variable_p_single_lu_residual_correction),
         )
     )
     if len(set(observer_flags)) != 1:
@@ -8972,6 +9110,9 @@ def solve_stage4_dtn_port_total_field(
             matrix_free_dtn=matrix_free_dtn,
             matrix_free_dtn_probe=matrix_free_dtn_probe,
             canonical_vector_export=canonical_vector_export,
+            variable_p_single_lu_residual_correction=(
+                variable_p_single_lu_residual_correction
+            ),
             _recovery_cleanup_sink=recovered_cleanup,
         )
     except BaseException:

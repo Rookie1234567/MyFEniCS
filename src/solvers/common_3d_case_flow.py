@@ -778,6 +778,7 @@ def run_prepared_3d_case_flow(
     matrix_free_dtn: bool = False,
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
+    variable_p_single_lu_residual_correction: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -808,6 +809,7 @@ def run_prepared_3d_case_flow(
             bool(static_retain_local_schur_for_matrix_free),
             bool(matrix_free_dtn),
             bool(matrix_free_dtn_probe),
+            bool(variable_p_single_lu_residual_correction),
         )
     )
     if len(set(live_observer_flags)) != 1:
@@ -862,6 +864,40 @@ def run_prepared_3d_case_flow(
             )
     elif variable_p_retain_local_schur_for_research:
         raise ValueError("research Schur retention requires a variable-p live observer")
+    if variable_p_single_lu_residual_correction:
+        local_correction_errors: list[str] = []
+        try:
+            if variable_p_live_observer is None:
+                raise ValueError(
+                    "same-LU variable-p correction requires the live observer"
+                )
+            if not solve_stage4_dtn_port:
+                raise ValueError(
+                    "same-LU variable-p correction requires the Stage-4 DtN solve"
+                )
+            backend = resolve_stage4_full3d_assembly_backend(cfg)
+            if backend["actual"] != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND:
+                raise ValueError(
+                    "same-LU variable-p correction requires the variable-p backend"
+                )
+            if comm.size != 1:
+                raise ValueError(
+                    "same-LU variable-p correction is qualified only for MPI1"
+                )
+        except Exception as exc:  # noqa: BLE001 - synchronize local preflight failures across ranks.
+            local_correction_errors.append(
+                f"rank {comm.rank}: {type(exc).__name__}: {exc}"
+            )
+        collective_correction_errors = [
+            error
+            for rank_errors in comm.allgather(local_correction_errors)
+            for error in rank_errors
+        ]
+        if collective_correction_errors:
+            raise ValueError(
+                "same-LU variable-p correction preflight failed collectively: "
+                + "; ".join(collective_correction_errors)
+            )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
@@ -1304,6 +1340,9 @@ def run_prepared_3d_case_flow(
                 matrix_free_dtn=matrix_free_dtn,
                 matrix_free_dtn_probe=matrix_free_dtn_probe,
                 canonical_vector_export=canonical_vector_export,
+                variable_p_single_lu_residual_correction=(
+                    variable_p_single_lu_residual_correction
+                ),
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
@@ -2224,6 +2263,10 @@ def run_prepared_3d_case_flow(
                 ),
             }
         )
+    if dtn_solver_info is not None and "variable_p_same_lu_residual_correction" in dtn_solver_info:
+        summary["variable_p_same_lu_residual_correction"] = dtn_solver_info[
+            "variable_p_same_lu_residual_correction"
+        ]
 
     if not converged:
         summary["mumps_ooc_runtime"] = {

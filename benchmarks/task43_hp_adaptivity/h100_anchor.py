@@ -1641,12 +1641,17 @@ def _run(
     candidate_marking_record: Path | None = None,
     candidate_acceptance_contract: Path | None = None,
     candidate_parent_selection_record: Path | None = None,
+    same_lu_solve_residual_correction_enabled: bool = False,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
     expected_size, kind = _CASES[case]
     current_case = case == _CURRENT_CASE
     candidate_case = case == _ROUND1_CANDIDATE_CASE
+    if same_lu_solve_residual_correction_enabled and not candidate_case:
+        raise ValueError(
+            "same-LU solve residual correction is only enabled for a candidate case"
+        )
     geometry_profile = "initial_180" if current_case or candidate_case else "h100"
     candidate_plan: dict[str, Any] | None = None
     candidate_plan_sha256: str | None = None
@@ -2178,6 +2183,9 @@ def _run(
         variable_p_live_observer=(
             active_observer if kind == "empty_h_active_p3" else None
         ),
+        variable_p_single_lu_residual_correction=(
+            same_lu_solve_residual_correction_enabled
+        ),
         mesh_data_override=mesh_data,
     )
     _log_stage(comm, started, "solve_and_observe", "end")
@@ -2502,6 +2510,9 @@ def _run(
                     "independent_active_action": captured.get(
                         "independent_active_action"
                     ),
+                    "same_lu_solver_residual_correction": summary.get(
+                        "variable_p_same_lu_residual_correction"
+                    ),
                     "small_direct_target_diagnostic": small_direct_target_diagnostic,
                 },
                 "power": {
@@ -2651,6 +2662,14 @@ def main(argv: list[str] | None = None) -> int:
             "with the already configured KSP and save a diagnostic field/modal comparison"
         ),
     )
+    parser.add_argument(
+        "--same-lu-solve-residual-correction",
+        action="store_true",
+        help=(
+            "for a variable-p candidate, apply one opt-in correction with the "
+            "already factored KSP before field recovery and official R/T"
+        ),
+    )
     args = parser.parse_args(argv)
     comm = MPI.COMM_WORLD
     expected_size, kind = _CASES[args.case]
@@ -2660,6 +2679,10 @@ def main(argv: list[str] | None = None) -> int:
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
     if args.same_lu_tightening and not is_current:
         parser.error("--same-lu-tightening is only valid for the frozen current case")
+    if args.same_lu_solve_residual_correction and not is_candidate:
+        parser.error(
+            "--same-lu-solve-residual-correction is only valid for a candidate case"
+        )
     if is_native and (
         args.reference_run_root is not None
         or args.parallel_reference_run_root is not None
@@ -2723,6 +2746,9 @@ def main(argv: list[str] | None = None) -> int:
         candidate_marking_record=args.candidate_marking_record,
         candidate_acceptance_contract=args.candidate_acceptance_contract,
         candidate_parent_selection_record=args.candidate_parent_selection_record,
+        same_lu_solve_residual_correction_enabled=(
+            args.same_lu_solve_residual_correction
+        ),
     )
     if comm.rank == 0:
         print(

@@ -1,0 +1,144 @@
+{
+  "schema": "task43.same-lu-residual-correction-component.v1",
+  "status": "component_qualified_formal_retry_pending",
+  "task43_official_result": false,
+  "scope": "Opt-in same-LU residual correction qualification after the Round-2 p-up candidate failed the existing full-active residual preflight. This record does not qualify a Task43 accuracy result or a new accepted transition.",
+  "source_identity": {
+    "base_head_before_changes": "58850040a2f94dd246c18e9d9f2c7a7c17cda7f0",
+    "working_tree_was_dirty": true,
+    "source_sha256": {
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "540e15ae4867a884d3e6b5339cee6a2c7d52b0c8e9b02f4776128f4e1cc8c56b",
+      "src/solvers/common_3d_case_flow.py": "f6646d69a0c4bc6a1e2f45a6ba1f072d0ba734032da735db054e125c317ce999",
+      "src/solvers/dtn_port_3d.py": "e84bc1aa2f39746062c971c96baf85e44decd45436763aa9e386f4754fdd03ea",
+      "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "97276baa03fb9ba9713418ff98be081a433960bf6f1d06d4037768c91054f6b8",
+      "src/test/test_petsc_residual_correction.py": "8741f22ee27b52fa9e0bc136888575672807dc50b194fe6d7e930cf442a2df05",
+      "src/test/test_task43_variable_p_same_lu_correction.py": "1efef518a4102c2ca10b550cbacfc70784611cecfb4eefa9d72560c959ef6399"
+    }
+  },
+  "triggering_formal_failure": {
+    "attempt": "round2_p_up_attempt1",
+    "plan": "benchmarks/artifacts/task43/round2_p_up_attempt1/run/candidate_plan.json",
+    "plan_sha256": "c01f021df08d85a9b21a4bf31b133bc95aa5e8468a5a58402847658363e65a2f",
+    "source_head": "58850040a2f94dd246c18e9d9f2c7a7c17cda7f0",
+    "old_full_active_relative_residual": 9.135296812339183e-8,
+    "preflight_limit": 1e-9,
+    "classification": "failed_existing_residual_gate_before_recovery_and_A6",
+    "elapsed_seconds": 1283.6054411781952,
+    "process_tree_rss_peak_bytes": 1965150208,
+    "process_tree_task_vmswap_peak_bytes": 0,
+    "children_cleared": true,
+    "candidate_field_checkpoint_written": false,
+    "artifacts": {
+      "watchdog_summary": {
+        "path": "benchmarks/artifacts/task43/round2_p_up_attempt1/watchdog/summary.json",
+        "sha256": "fe6e4fce879b72bd03ae2a17edc1bd56e583ef02e2f7813ce273fbac9095e5d0"
+      },
+      "progress": {
+        "path": "benchmarks/artifacts/task43/round2_p_up_attempt1/run/solve/progress_3d.jsonl",
+        "sha256": "cd44a28bbbfa53b7c5ce3cc37dca2b35b4011815e86c30fcf147e08b0c773e89"
+      },
+      "worker_log": {
+        "path": "benchmarks/artifacts/task43/round2_p_up_attempt1/watchdog/worker.log",
+        "sha256": "8367f136b5c6858e74e876405078325bb99876c844d65294e1f0b8653ea472af"
+      },
+      "pre_run_source_archive_sha256": "5e19cfe3d8717d30c85c791194abde1fe921253c3d9c659eb6e951a44d5a19e2"
+    }
+  },
+  "implementation": {
+    "default_enabled": false,
+    "eligibility": "Task43 variable-p live observer, complete direct solve, actual KSP preonly plus LU PC, positive original KSP convergence reason, MPI1",
+    "ordering": "After the original solve and before active/full recovery, live observer checks, field construction, or official R/T extraction",
+    "operation": "Compute r=b-Ax with the existing matrix and RHS, solve A delta=r through the existing LU KSP, and update the same caller-owned solution vector only if the correction is finite and strictly reduces the explicit condensed residual. The original matrix, RHS, and factorization remain unchanged.",
+    "failure_policy": "Fail closed before recovery/R/T when correction is nonfinite, non-improving, or not eligible; ordinary default path remains unchanged."
+  },
+  "component_fixture": {
+    "status": "passed",
+    "case": "Task43 phi90 13.5 nm boundary-fitted h100 component mesh, 27 cells, p6 carrier with mixed active p4/p5 (9/18 cells), four zero-order DtN modes, MPI1",
+    "validation_role": "numerical_sanity_only",
+    "not_a_task43_accuracy_result": true,
+    "affinity_linux_cpu_ids": [1],
+    "threads_per_rank": 1,
+    "petsc_scalar_type": "complex128",
+    "injected_pre_correction_condensed_relative_residual": 3.6918990789566325e-7,
+    "post_correction_condensed_relative_residual": 1.289878550317748e-14,
+    "full_system_explicit_relative_residual": 1.178668094381607e-14,
+    "correction_elapsed_seconds": 0.2200610633008182,
+    "observer_and_active_gate": "passed; observer saw the updated same solution vector before recovery; independent A6 was computed and asserted finite and <=1e-6, but its scalar value was not emitted",
+    "port_operator_audit": "passed",
+    "energy_closure_diagnostic": -1.8030021919912542e-13,
+    "R00_s_diagnostic": 0.9994418706858977,
+    "T_total_diagnostic": 2.1363190539735686e-8,
+    "whole_process_tree_peak": "not measured; the fixture was not run under the watchdog",
+    "run_output": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-mixed-p4-p5-attempt4",
+    "degree_plan_sha256": "15b976e63bf680af38fa8c5c4c13505d5f877d41a41916383627b7f792908fd0",
+    "component_run_summary_sha256": "75476081876afb2af3e631c76083607171f6fc0d88fcf7f947e8f740028f1ea8"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "classification": "fixture_setup_failure_periodic_degree_orbit_mismatch",
+      "detail": "The test split p4/p5 along periodic x, so periodic-orbit degree synchronization rejected the synthetic plan before the solver ran.",
+      "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-micro-pde.log",
+      "log_sha256": "3004622e74498499b54c9a32110991442f56a15eeb4c8654b980a9001a586e93"
+    },
+    {
+      "attempt": 2,
+      "classification": "postprocess_csv_schema_failure_after_correction_and_live_gate",
+      "detail": "Correction, full-active live gate and recovery ran; the legacy diffraction CSV writer rejected additional diagnostic columns. The observer computed A6, but post-return A6 assertions had not run, so this attempt is not a complete A6 assertion result.",
+      "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-micro-pde-attempt2.log",
+      "log_sha256": "ab915af63e566b77bcc53c0e02c574ffeb9354a0fe612a20c220f2bf9e1cc3bc"
+    },
+    {
+      "attempt": 3,
+      "classification": "postprocess_csv_schema_failure_after_correction_and_live_gate",
+      "detail": "The same legacy diagnostic CSV mismatch remained because the fixture had diffraction_zero_order_only=true, unlike the Task43 profile default. A6 was computed but the final test assertions were not reached. No generic CSV code was changed.",
+      "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-micro-pde-attempt3.log",
+      "log_sha256": "dc7e9973fa448977a12318e4b4886115aa6c86df9e31705aac4281fd25842147"
+    },
+    {
+      "attempt": 4,
+      "classification": "component_test_pass",
+      "detail": "The split was moved to non-periodic z and diagnostic configuration matched the Task43 profile default; all post-return assertions, including finite independent A6 <=1e-6, passed.",
+      "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-micro-pde-attempt4.log",
+      "log_sha256": "37fd49f6287ce4435ca6d7a7e89a2aa67e6e68137a4a48e50b6e8c3f0b71ecf7",
+      "duration_seconds": 111.23
+    }
+  ],
+  "tests": {
+    "qualified_activation": "scripts/activate_task40_phi90_pord64.sh",
+    "environment": "native Linux, PETSc complex128/int64 qualified stack, MPI1 for PDE fixture, one math thread",
+    "commands": [
+      "source scripts/activate_task40_phi90_pord64.sh && taskset -c 1 python -m pytest -q src/test/test_petsc_residual_correction.py",
+      "source scripts/activate_task40_phi90_pord64.sh && taskset -c 1 python -m pytest -q src/test/test_206_task035d_variable_p_live_observer.py",
+      "source scripts/activate_task40_phi90_pord64.sh && MYFENICS_RUN_TASK43_SAME_LU_CORRECTION_PDE=1 TASK43_SAME_LU_CORRECTION_FIXTURE_ROOT=/tmp/task43/same-lu-correction-mixed-p4-p5-attempt4 taskset -c 1 python -m pytest -q src/test/test_task43_variable_p_same_lu_correction.py"
+    ],
+    "results": [
+      {
+        "test": "src/test/test_petsc_residual_correction.py",
+        "result": "4 passed in 0.99 s",
+        "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-unit.log",
+        "log_sha256": "bfb4bd4c98a6f948ad0b8770c64130793357b693f61c65d3cc24fd314eeceaf3"
+      },
+      {
+        "test": "src/test/test_206_task035d_variable_p_live_observer.py",
+        "result": "17 passed, 2 MPI2-only skipped in 1.81 s",
+        "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-observer-regression.log",
+        "log_sha256": "8c93502b63d1de9c548e9638b6881f95c244a49da1edc3dfd8cf72a4bca06de8"
+      },
+      {
+        "test": "src/test/test_task43_variable_p_same_lu_correction.py",
+        "result": "1 passed in 111.23 s",
+        "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-micro-pde-attempt4.log",
+        "log_sha256": "37fd49f6287ce4435ca6d7a7e89a2aa67e6e68137a4a48e50b6e8c3f0b71ecf7"
+      },
+      {
+        "test": "static checks",
+        "result": "targeted Ruff, compileall and git diff --check passed",
+        "log": "benchmarks/artifacts/task43/same_lu_residual_correction_component/same-lu-correction-static.log",
+        "log_sha256": "11bb574d873991e2f3488e4d5108bdf2431c6f0f71eec7c93644b4382d0c987d"
+      }
+    ]
+  },
+  "next_action": "Retry the same frozen round2_p_up plan and acceptance contract with the new opt-in correction, after capturing a fresh source snapshot and passing the unchanged Task43 watchdog, ABI, and resource preflight. No new transition is accepted by this component record."
+}

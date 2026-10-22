@@ -10,6 +10,7 @@
 | 悬挂约束 | 17 项通过，1 项旧 p4 字节哈希失败；初始源码与修改后矩阵在当前 ABI 下逐项相同 | 同上；失败不改为通过 |
 | one-level 联合 h/p 组件 | p3/p4、p4/p5 的 9↔12 单元独立已知场检查通过；真实 36 单元空 h active-p3 的独立残差、同阶完整场/612 模态对照和 MPI1/2 对照均通过 | [mixed-p 组件](records/mixed_hp_9_to_12_component_v1.json)；[三锚点记录](records/h100_anchor_triplet_v1.json) |
 | 完整场比较与首轮选择 | 冻结180单元active-p3 current及Y6_1/Y6_2共同q8/q10积分选出46个单元；p-up通过冻结中间接受门并被接受为transition 1，accepted updates=1；h算例受控停止，资格状态unknown | 固定入射尺度 η_G 从0.4280717降至0.2927588；h缺独立A6/完整场/Task43记录；Y5_1及最终6×10×6 p6对照未读 |
+| Round-2 p-up 与残差修正 | 原 p-up 尝试的旧 full-active residual 为 9.1353×10⁻⁸，超过既有 1e−9 preflight，未恢复/未进入 A6；默认关闭的 same-LU 修正已在 mixed-p 组件中验证，正式重试待运行 | [修正组件记录](records/same_lu_residual_correction_component_v1.json)；不构成新接受转移或精度结果 |
 | p6 carrier 张量组件 | Task43 实际完整 curl+mass/q15/default grating 单元的 FFCx 与 BlockedGram 矩阵相对差 1.7235×10⁻¹⁵（门槛 1e−10）；p6 carrier 上 active p3 builder 定向重试 4 项通过 | [张量组件记录](records/p6_tensor_component_v1.json)；首轮接口失败日志保留 |
 | 36 单元小模型与独立 A6 | attempt1 **数值门失败**：active 预检查残差 1.6445×10⁶⁴，A6 未调用；attempt2 使用已授权的边界幅值缩放后，solver、完整独立 active action 和两级残差门均通过。A6 relative residual 为 8.7763×10⁻¹³（task gate 1e−6、小模型门 1e−8）；独立行数为 trace 1782 + cell interior 1296 + modal lower 612 | [attempt1 负结果](records/a6_component_attempt1_v1.json)；[attempt2 组件记录](records/a6_component_attempt2_v1.json)；全量逐模态数据留在 ignored artifact |
 | 真实场接线级锚点 | 三个 36 单元 h100 算例均通过同阶、完整场/端口和 MPI 等价 Gate | 属于 `numerical_sanity_only`，不能代替空间精度证明 |
@@ -56,6 +57,8 @@ p-up 将有限参考差降低，但相对场及边界量仍远高于最终 `1e�
 h算例完成矩阵分解、回代、旧求解器显式残差及其R/T输出后，watchdog记录受控停止并清理全部子进程。其progress记录分解setup 764.040s、solve 0.665s和旧残差7.4766e−10；这些不能替代Task43独立A6。当前目录没有 `candidate_recovered_solution_storage.npz` 或 `task43_round1_candidate_record.json`，端口记录的 `A_volume_total` 为空，因此无法从R/T或模态数据恢复完整场或计算 `eta_G`、`J_infinity`。h资格状态为unknown/controlled_stop，不能称h Gate通过或数值失败。watchdog只记录收到SIGTERM的时间和整树范围，不存发送者身份；没有证据能把停止归因于用户或工具会话清理。其原始hash索引与资源/失败成本列在上述compact记录中。
 
 主控还从保存的 q8/q10 原始场数组独立重算 G 差及标记；数值与该记录一致。这是审阅侧复算，不是 CI 测试。
+
+Round-2 p-up 首次实际求解因原 full-active residual 未过 1e−9 preflight 而在恢复和独立 A6 之前失败；保留该失败和资源记录。新增的默认关闭 same-LU 回代只复用原矩阵、右端和 LU 因子，且只在显式 true residual 有限并严格下降时更新原解向量；mixed-p 小算例及 observer/lifecycle 回归通过，但不代表正式 p-up 已重试。首轮 h 的 watchdog 原始分类仍为 `USER_CONTROLLED_STOP`；用户明确表示没有手动停止，停止发送方仍未知，不把记录归因于用户。完整尝试、测试和源码哈希见[组件记录](records/same_lu_residual_correction_component_v1.json)。
 
 本次current基于 `8fe6793e0a5e0689a5435ddf209d095b75b3bd0f` 加已归档dirty源码；完整35文件快照、命令/环境、分阶段时间及原始artifact哈希见[轻量记录](records/initial_current_and_reference_restore_v1.json)。使用既有JIT缓存，395.323s不是隔离冷缓存成本。首轮p-up按冻结单位DoF排名接受为transition 1，accepted updates=1；h已受控停止，h的独立Task43资格unknown，后续仍须取得完整资格证据。Y5_1未参与选择，6×10×6、p6仍仅作最后对照；当前没有最终精度或同精度成本优势结论。
 

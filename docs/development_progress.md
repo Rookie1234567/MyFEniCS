@@ -8,7 +8,7 @@
 | 真实方程残差 | attempt1 未缩放端口负结果保留；启用既有边界幅值缩放后的 36 单元组件 A6/RHS 为 8.7763e−13；新空 h active-p3 MPI1/MPI2 锚点分别为 2.1429e−12/1.7762e−12 | 残差说明离散方程解准，不证明网格精度够高 |
 | 同阶原生及分布式锚点 | 36 单元原生 p3/standard_full、p6 载体空 h active-p3 MPI1、同 active-p3 MPI2 均完成；全域 q8/q10 E/curl/H、612 模态、R/T/A 和 independent A6 Gate 通过 | 均为 `numerical_sanity_only`，不代替冻结起点或独立精度参考 |
 | 正式起点与参考恢复 | 冻结180单元active p3完成：15120独立FE DoF，A6=2.3848e−10；Y6_1/Y6_2恢复身份通过；共同q8/q10全域E/curl/H和612模态比较完成 | current–Y6_1固定入射尺度G相对差0.4280717；两个有限参考彼此差4.5441e−6；不构成连续误差或精度通过 |
-| 自适应与独立验收 | q8/q10均标记46/180单元且集合相同；同LU紧解扰动已测；p-up通过冻结中间门并按保守score界接受为transition 1（accepted updates=1） | h candidate于legacy solver R/T阶段后受控停止；缺Task43 A6/全场记录，资格unknown；最终精度、独立holdout、侧壁和同精度成本未通过 |
+| 自适应与独立验收 | q8/q10均标记46/180单元且集合相同；首轮p-up按冻结规则接受为transition 1（accepted updates=1）；Round-2 p-up 首次求解未过full-active residual preflight，same-LU修正仅完成组件资格化，正式重试待运行 | h candidate于legacy solver R/T阶段后受控停止；缺Task43 A6/全场记录，资格unknown；最终精度、独立holdout、侧壁和同精度成本未通过；[修正组件及Round-2失败证据](task43_hp_adaptivity/outcomes/records/same_lu_residual_correction_component_v1.json) |
 
 三个 h100 锚点完成同阶实现与MPI等价核对，见[三锚点记录](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。正式起点、Y6_1/Y6_2恢复、共同积分和46格标记见[起点与参考记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)及[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)。p-up完整求解通过首轮中间门；其保守单位DoF score下界2.96784e−5严格高于h计划的含噪理论上界1.33297e−5，故按冻结规则接受为transition 1（accepted updates=1）。h求解的矩阵分解、回代、legacy residual和R/T已完成，但watchdog记录controlled stop；没有Task43独立A6、A_volume或完整field/storage，资格状态unknown，后续仍须补齐适用的数值资格。全过程原始hash、停机分类、成本和失败入口见[transition 1记录](task43_hp_adaptivity/outcomes/records/round1_selection_transition1_v1.json)。最终6×10×6 p6不进入标记或排序；尚无最终精度或同精度成本优势结论。
 
