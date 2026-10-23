@@ -1800,7 +1800,7 @@ Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 三对保存输出比较均通过既定�
 
 ## 3.55 Task43：新 phi90 模型的自适应 h/p 闭环（2026-10-22，任务建立）
 
-局部 h 自适应把误差较大的区域细分为较小单元，局部 p 自适应提高所选单元的表示阶数。本任务要验证两者能否根据实际误差形成连续的“求解—恢复—估计—标记—更新—转移—再求解”闭环，并在同等精度下减少未知量、内存和总时间。它针对均匀加密成本高、既有自适应未形成可复现接受循环的问题。截至本轮，正式起点及八次p-up均按冻结数值规则接受，accepted updates=8（R8完整资源资格未成立）；Round-1 h为受控停止/unknown，Round-2至Round-8 h未求解（后几轮按冻结得分上界剪枝）；第8轮仅完成p/h空间审计。真实h资格、最终精度与同精度成本优势仍未通过。
+局部 h 自适应把误差较大的区域细分为较小单元，局部 p 自适应提高所选单元的表示阶数。本任务要验证两者能否根据实际误差形成连续的“求解—恢复—估计—标记—更新—转移—再求解”闭环，并在同等精度下减少未知量、内存和总时间。它针对均匀加密成本高、既有自适应未形成可复现接受循环的问题。截至本轮，正式起点及八次p-up均按冻结数值规则接受，accepted updates=8（R8完整资源资格未成立）；Round-1 h为受控停止/unknown，Round-2至Round-8 h未求解（后几轮按冻结得分上界剪枝）；第8轮数值场及独立比较完成，PDE资源终态缺失。真实h资格、最终精度与同精度成本优势仍未通过。
 
 | 登记项 | Task43 当前事实／计划 | 数据身份与证据 |
 |---|---|---|
@@ -1808,7 +1808,7 @@ Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 三对保存输出比较均通过既定�
 | 冻结 base | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` | 来源身份；[branch_provenance](task43_hp_adaptivity/branch_provenance.json) |
 | 首轮物理范围 | phi90、x/y 周期50/50 nm、光栅x/y尺寸17/20 nm、波长13.5 nm；180单元current与p-up使用已冻结物理身份 | [起点/参考记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)；[round-1 p-up原始记录](../benchmarks/artifacts/task43/round1_candidates/attempt2/p_up_attempt3/run/task43_round1_candidate_record.json) |
 | 自适应闭环 | frozen θ=.5；Round-1至Round-8 p-up依次接受数值transition1–8，accepted updates=8；第8轮完整资源／成本资格未成立；每轮从真实已接受父场重新标记 | Round-5 η_G=0.009542819712→0.003411538344；p保守单位FE得分3.69854e−7高于h5含噪上界5.91695e−8，h5仅计划剪枝；Y5_1和6×10×6 p6未参与选择 |
-| 独立准确性验收 | Round-7 A6=8.43966e−9、凝聚残差=5.46995e−13、闭合差=5.59885e−13，612通道；J∞=182.906→54.875，witness为R00_s | 最终J∞≤1尚未达；R/T/Av、R00_s与G的实际误差/限值见下文；R5体吸收误差曾略恶化的历史仍保留，不称全程单调 |
+| 独立准确性验收 | Round-8 A6=8.09060e−9（实际RHS1.05603261652）、凝聚残差5.27924e−13、闭合差1.76692e−12，完整612及11checkpoint数组；J∞=54.875→10.602439，witness R00_s | 最终J∞≤1仍未达；R/R00_s/R00_total、E/H总与散射、G及bottom_s幅组未过，Av/top_s幅组本轮新达；数值验收不修复PDE supervisor终态缺失/资源完整性资格 |
 | Round-5规模与成本（历史） | p-up独立FE依次19,679/32,358/43,208/53,659/70,212；Round-5迹23,874+内部46,338、Δ16,553、612端口；矩阵24,486行；operator NNZ14,583,076/17,936,292，factor NNZ72,608,080 | 求解3150.039591s、树RSS峰4,975,054,848B；比较276.609321s、峰1,136,553,984B，两者task swap0。h5计划810叶、215,092FE，authority3014.454s，未转移/求解。累计26条终态watchdog wall小计29,736.18805150129s，未覆盖未监控tests/工作及导入参考生成，非全campaign；factor对象估算1,742,789,816B非树RSS |
 | 预算与尝试口径 | 10条完整模型lineage、13次full-scale solver attempts，含same-LU加严及失败/受控停止/重试；16个p/h计划仅为plan-only | §9目标8–12、规划16；超计划前说明最小新增判断，不作无条件硬停。solver attempts不等于成功official结果；组件fixture与参考恢复另计；Root p5attempt1性能停止2230.240470s及零投影组件测试费用保留[原记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json) |
 | 后续晋级 | transition8作为数值working parent已接受；PDE supervisor终态缺失/outer143/senderUNKNOWN，完整资源与成本资格不成立；下一步仅accepted8真实场的R9轻量preview | h1受控停止且sender未知、用户未发；h2–h8未完整求解，真实h资格仍缺；最终holdout/p6对照、q/R14、侧壁和同精度成本仍未过 |
