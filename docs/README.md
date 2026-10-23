@@ -48,6 +48,7 @@
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
+| [`task43_hp_adaptivity/outcomes/summary.md`](task43_hp_adaptivity/outcomes/summary.md) | Task43：R9为最后接受态；R10因未越过冻结噪声而拒绝；最终空间精度未达；full pytest collection负结果保留；等待外部审阅 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -78,6 +79,7 @@
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
 | Task038 | 单一 `.dat` input-driven configuration | 已按 Review V1 白名单选择性进入 master；11 migrated/6 retained，ordinary defaults 不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
+| Task43 | 局部 h/p 自适应 Maxwell | accepted9/R9 为最后接受态，R10 因G改善未越冻结噪声而拒绝；最终空间精度、同精度FE/成本目标未达，q8/q10后验不反馈选择；full pytest collection negative 保留，待外部审阅 |
 
 ## 当前任务
 
@@ -100,7 +102,7 @@
 | Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 | Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
 | Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
-| Task43 | [`task43_hp_adaptivity/README.md`](task43_hp_adaptivity/README.md) | 任务书已建立；local h/p 自适应闭环、独立参考与同精度成本验收均 `not_run`；从冻结 Task40para 基线建立独立分支 |
+| Task43 | [`task43_hp_adaptivity/README.md`](task43_hp_adaptivity/README.md) | PARTIAL / CONTROLLED_NEGATIVE；accepted9/R9 frozen；R10 rejected；同精度目标未证明；等待ChatGPT外部审阅，无merge approval |
 
 ## Task28 审计入口
 
@@ -212,16 +214,19 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 
 ## Task43 自适应 h/p 入口
 
-任务书已建立，执行分支为 `task43_hp_adaptivity`，冻结 base 为 `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4`。本任务研究怎样让网格和单元阶数随实际误差调整，在同等精度下减少未知量与全过程成本；当前没有新 PDE、accepted cycle 或性能结果，统一登记为 `not_run`。
+Task43现已形成PARTIAL / CONTROLLED_NEGATIVE送审包，分支`task43_hp_adaptivity`、冻结base `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。R1–R9九次p-up被接受，R9为最后状态；R10因G改善未超过冻结参考噪声而拒绝。真实h1数值已资格化但精度未达，用户要求的相近精度与更少独立FE尚未证明。任务书另要求比较同精度全过程成本，但不要求成本必须获胜。后验六场比较不反馈选择；全仓pytest实际在collection中止，错误保留并详述于最终compact。执行分支等待ChatGPT外部审阅，未获merge approval。
 
 | 文件 | 内容与当前边界 |
 |---|---|
-| [README](task43_hp_adaptivity/README.md) | 新任务入口、执行顺序与尚未运行的范围 |
+| [README](task43_hp_adaptivity/README.md) | 任务入口、最终结果状态、后验比较与尚未完成的范围 |
 | [task.md](task43_hp_adaptivity/task.md) | 新 phi90、50×50 nm 周期、17×20 nm 光栅模型；先做 13.5 nm 小型 direct 校准及 2–3 个真实 accepted h/p cycles，再接迭代路径，满足条件后进行 0.7 nm 缩比 pilot |
 | [AGENTS](task43_hp_adaptivity/AGENTS.md) | Task43 的角色、目录、执行与证据规则 |
 | [baseline_audit](task43_hp_adaptivity/baseline_audit.md) | 基线选择、旧 h/p 与 dot 资产的复用边界、历史失败和未关闭资格 |
 | [codex_handoff](task43_hp_adaptivity/codex_handoff.md) | 工作站现有项目目录的安全接手、精确分支同步与首轮执行文本 |
 | [branch_provenance](task43_hp_adaptivity/branch_provenance.json) | 冻结来源与任务身份；文档发布不等于科学运行 source |
+| [outcomes summary](task43_hp_adaptivity/outcomes/summary.md) | R9/R10、全部solver尝试、后验九对、成本与负结果 |
+| [response](task43_hp_adaptivity/response_v1.md) / [selective merge manifest](task43_hp_adaptivity/outcomes/selective_merge_manifest.md) | 执行回应与依赖组送审边界 |
+| [final test compact](task43_hp_adaptivity/outcomes/records/final_test_attempts_v1.json) | Focused通过与全仓collection负结果的实际审计 |
 
-Task43 是新的独立研究范围，不整体承接 Task41／Task42 的旧待执行清单，也不改写其失败或未关闭 Gate。任务书中的循环、精度与资源要求是待执行的合同；实际求解、误差估计、h/p 标记、转移和接受记录，以及独立参考和同精度全过程成本，均须由后续 Codex 结果证明。
+Task43 是新的独立研究范围，不整体承接 Task41／Task42 的旧待执行清单，也不改写其失败或未关闭 Gate。本轮已有真实h/p求解、接受和拒绝记录，但最终精度和同精度更少FE尚未证明。任务书还要求比较同精度全过程成本，但不要求成本必须获胜；迭代/0.7 nm前置资格也未完成。详细数据以outcomes summary和response为准。
 

@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `TASK_DEFINED / NUMERICAL_WORK_NOT_RUN` |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；九次p更新已接受，最后状态R9；最终空间精度未达，等待ChatGPT外部审阅 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -18,7 +18,7 @@
 2. [AGENTS.md](AGENTS.md)：本目录执行规则；任务书与工作站实施之间的边界。
 3. [baseline_audit.md](baseline_audit.md)：主线判定、两条 NN 路线、旧 hp 与 dot 的固定 SHA 证据。
 4. [codex_handoff.md](codex_handoff.md)：工作站接入与可直接交给 Codex 的指令。
-5. [branch_provenance.json](branch_provenance.json)：建分支来源与尚未运行状态。
+5. [branch_provenance.json](branch_provenance.json)：建分支来源与立项时尚未运行状态。
 
 ## 与其他研究线的关系
 
@@ -27,4 +27,16 @@
 - `task42_neural_coarse_inverse` 与 `task42extra_feinn_5nm` 的当前研究可暂停投入；本次建立 Task43 不删除或改写它们的远端历史。
 - 旧 Task35d/e 数值核心按函数与依赖选择性复用；dot 的新 hp 报告是设计证据，其中未同步的外部源码不冒充可直接继承的实现。
 
-本次提交只建立任务与审计文档，没有运行 PDE，没有完成新的 h/p 资格化，也没有修改 ordinary solver defaults。实际结果由 Codex 写入本目录 `outcomes/` 与 `response_v1.md`，并同步仓库模型总账。
+## 最终结果入口
+
+九次按冻结规则接受的 p-up 将最后接受场推进到 R9（110,472 FE），但 top/bottom `(0,0,s)` 两个功率通道仍超过 `1e-6` 精度限值；R10自然到180格全p6、118,800 FE，G改善小于冻结参考噪声，拒绝且没有transition10。真实600叶局部h1已完成数值求解和全场比较，但同样未达到最终空间精度。用户要求的相近精度下更少独立未知量尚未证明；任务书还要求比较同精度全过程成本，但不要求成本必须获胜。
+
+停止选择后，三个恢复参考与R9/R10共同用q8/q10进行九组方向明确的全场比较；结果已由root从原始数组独立审计，未反馈选择或增加PDE。全仓 `pytest -q` 已真实尝试，但在collection阶段发生1次skip和8个collection errors，测试体执行0项；负结果与其SLEPc/忽略artifact来源保留。没有CI通过声明。
+
+- [结果与统一模型表](outcomes/summary.md)
+- [执行回应](response_v1.md)
+- [依赖组选择性合并清单](outcomes/selective_merge_manifest.md)
+- [后验六场比较compact](outcomes/records/post_selection_existing_fields_validation_v1.json)
+- [最终定向/全仓测试compact](outcomes/records/final_test_attempts_v1.json)
+
+数值/比较代码及最终pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；本轮新增报告工具由compact和图provenance内的脚本SHA绑定，最终送审commit绑定它们。旧 PDE 结果保留各次运行自己的 source snapshot/ABI/input 身份。执行分支 `task43_hp_adaptivity` 等待最终外部审阅，未获 merge approval，未合入 master。

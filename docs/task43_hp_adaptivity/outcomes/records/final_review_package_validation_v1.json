@@ -1,0 +1,273 @@
+{
+  "schema": "task43.final-review-package-validation.v1",
+  "status": "FINAL_LOCAL_REPORT_PACKAGE_CHECKS_PASS",
+  "scope": "Reporting generators and review-document contracts only; no PDE or Task-focused/full-suite pytest rerun for wording-only refresh; existing registry Markdown contract was rerun.",
+  "source_identity": {
+    "branch": "task43_hp_adaptivity",
+    "base_SHA": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+    "numerical_comparison_and_final_focused_full_test_source_HEAD": "3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0",
+    "reporting_scripts_added_in_this_review_diff": true,
+    "reporting_script_SHA_binding": "unified inventory and cycle-index generator_sha256 plus figure_provenance.generator_sha256"
+  },
+  "checks": {
+    "ruff_version": "0.16.5",
+    "ruff_format_check": "PASS",
+    "ruff_check": "PASS",
+    "compileall": "PASS",
+    "unified_inventory_generation": "PASS; 16 full-solver attempts, 5 imported fields, 67 input SHA entries",
+    "cycle_index_generation": "PASS; 10 decision rows, 52 input SHA entries",
+    "figure_generation": "PASS; 3 SVGs, 22 hash-bound inputs",
+    "registry_markdown_test": "PASS; 5 passed in 0.11 seconds (post-wording refresh)",
+    "json_xml_markdown_link_and_hash_contracts": "PASS; 234 hash checks, 29 Markdown tables, 150 local links, 3 SVG XML parses (post-wording refresh)",
+    "documentation_boundary_refresh": "PASS; reference direction, A_volume recomputation boundary, and branch-provenance timing wording corrected; no PDE/focused/full-suite rerun",
+    "local_contract_refresh_attempt": "final_report_package_validation_attempt2"
+  },
+  "reporting_generators": [
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reporting/build_unified_model_attempt_inventory.py",
+      "sha256": "ae59d586097b1252aaea1ad22587018de9668763cc6ca705686a7b8832e11585",
+      "bytes": 13817
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reporting/build_cycle_index.py",
+      "sha256": "84bfb0499050b7ab55737c50085e6e79c325bbcfa2b4ac4f9afb44afa17c2689",
+      "bytes": 4881
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reporting/build_final_review_figures.py",
+      "sha256": "e71711f80d1c03e8a5a0979af96b23b4f072b2310c5bd026d96a179894115be5",
+      "bytes": 9754
+    }
+  ],
+  "report_outputs": [
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/unified_model_attempt_inventory_v1.json",
+      "sha256": "611f15308366f81a08db4a0c71b977294881d46d4427dd83de12a276bfcd22ab",
+      "bytes": 273166
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/cycle_index_v1.json",
+      "sha256": "8a85a116b99f83e62735020ec403f43683fd701e1d8d27f7e7ade5cbb87e4ad2",
+      "bytes": 18132
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/figures/accepted9_mesh_degree.svg",
+      "sha256": "f5eb7f9cb1258c9f698d492432e16eafff048081de3bca1e7765068d75e8d853",
+      "bytes": 25200
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/figures/h1_mesh_levels.svg",
+      "sha256": "043ad0f605770e8a022c8edc246e9a0532d0f035bca7d3b145e6fbfbe590be68",
+      "bytes": 89376
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/figures/selection_trajectory.svg",
+      "sha256": "91af63ac5ae15708f250965a74f37d1d0292f376d4dd4d28fad18ca7e02da12f",
+      "bytes": 7267
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/figures/figure_provenance.json",
+      "sha256": "b2fe4a9c35522ae89d4888c622e023e0862e139c54af2d0a6c34e2bb72c83df1",
+      "bytes": 6882
+    }
+  ],
+  "review_documents": [
+    {
+      "path": "docs/README.md",
+      "sha256": "e211e9eaf08a709846ecf35329ce310f987f47348ba918af1789cd07d277992f",
+      "bytes": 31978
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "c283d02ee405ee8955d14cbbd5e59e65798b5eb8497aae7858bfa648467b1069",
+      "bytes": 230551
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "153730535898f1df9812b10ad1faf5175eff4035f6cc07e34ef0bcfd42d22612",
+      "bytes": 204159
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/README.md",
+      "sha256": "130499d0af7e18de9373bb361766319d337ba2044fa3a0b808304213095cbd13",
+      "bytes": 3800
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "sha256": "69d7bb89af1299658d50b8d0e62a93512f196195a6f2c06e3cee9625bd63e989",
+      "bytes": 28607
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/response_v1.md",
+      "sha256": "f10dd35555c0cb71fc5a46f5c05a8748a2946646d2e4d215c1e699c27fb5d110",
+      "bytes": 10596
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "sha256": "5e463435da20585455f661c6cf9387a5b78552c5e895e552bf97d6327cb0d8ec",
+      "bytes": 12903
+    }
+  ],
+  "evidence_records": [
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/final_test_attempts_v1.json",
+      "sha256": "c51fd3369dc54b2c3cba919652394d17608fee40e4a9fbcc7737d6ebb79c1a72",
+      "bytes": 10471
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/post_selection_existing_fields_validation_v1.json",
+      "sha256": "536f909137c3b0d775f571b088b8b8f1053b98ff01c80ba847bbe6fc7ea41cfe",
+      "bytes": 74732
+    }
+  ],
+  "root_audits": [
+    {
+      "path": "benchmarks/artifacts/task43/post_selection_joint_comparison_attempt1/root_review/root_post_selection_joint_raw_audit.json",
+      "sha256": "0eceaa946c7b1599f96021a417babec97292cb974b8dd8872501de47bf78f993",
+      "bytes": 78395
+    },
+    {
+      "path": "benchmarks/artifacts/task43/post_selection_joint_comparison_attempt1/root_review/root_post_selection_joint_resource_audit.json",
+      "sha256": "ba088032216e95264287a690217e0e345b68ebad091f7bc9413df34ab72951dc",
+      "bytes": 871
+    },
+    {
+      "path": "benchmarks/artifacts/task43/post_selection_restore_attempt1/root_review/root_post_selection_restore_audit.json",
+      "sha256": "8b38b582c132cc5f0abe8a34ebc232d64250a3a12116a6037b9336aa6777383b",
+      "bytes": 2716
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/root_review/root_final_test_terminal_audit.json",
+      "sha256": "126ba88ce1318cdb3ce6a36b111f081ad167537aa528ac28aa34d27603aff676",
+      "bytes": 999
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/root_review/root_final_test_terminal_audit.json",
+      "sha256": "7a9ecdad65287487f428cbec347ac150e73cafb5fbeb47cfa381e2a5e02ecadd",
+      "bytes": 1217
+    }
+  ],
+  "verification_artifacts": [
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/commands.txt",
+      "sha256": "d64cef8ae298aca1fc5fa208f79a5513d9cec90e23ce958a3472b13cc5f627a2",
+      "bytes": 1393
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/ruff_version.txt",
+      "sha256": "d96af80068b3c59ad7dc0918ef104a548327e4231208288eeaa43a3e5b3bad25",
+      "bytes": 12
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/ruff_format_check.stdout",
+      "sha256": "eee76f865de5a9f2456950f710ae5d5f9b5bd0ea02aa54f614c5eed6642a0bfd",
+      "bytes": 26
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/ruff_check.stdout",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/compileall.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/unified_inventory_build.stdout",
+      "sha256": "6766becded4767bb1ea6441b1ae5f2d950049637016a35002cc3a940fdda69bf",
+      "bytes": 34
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/cycle_index_build.stdout",
+      "sha256": "1679214500c30a6d85973d08434740ad19b813b07cc59ba819ec9bc7c06aa5d4",
+      "bytes": 6347
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/figures_build.stdout",
+      "sha256": "b370002373c4d2defc9fc6533cae218b5aa72f25c8c548964df07cca11d20c17",
+      "bytes": 84
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/registry_markdown_pytest.stdout",
+      "sha256": "d1978c1eb0cd573d5cf5e8ee23d605b25cb10239a5f893264096c00592fc2bbf",
+      "bytes": 98
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/registry_markdown_pytest.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/registry_markdown_pytest.exit_code.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/validate_review_package.py",
+      "sha256": "7562fb6d00328e4b7393d4a98b7e3bd0eea8ef60b1cee3d8612cc53d380a993d",
+      "bytes": 6845
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/local_contract_checks.json",
+      "sha256": "2e57b08e90c89a35ab7960064040dd5131eebe06733799cdfd33a5958768ecdb",
+      "bytes": 1605
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/local_contract_checks.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/commands.txt",
+      "sha256": "bf60dff6424467cf178df1d71736d0733f8e3d322b9e202f4848fb194e5302a3",
+      "bytes": 668
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/validate_review_package.py",
+      "sha256": "7562fb6d00328e4b7393d4a98b7e3bd0eea8ef60b1cee3d8612cc53d380a993d",
+      "bytes": 6845
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/registry_markdown_pytest.stdout",
+      "sha256": "6b9ffd6b9a3baa1f0f65b43fd8e9939ac47909d796917593222ef0ccd5a23556",
+      "bytes": 98
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/registry_markdown_pytest.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/registry_markdown_pytest.exit_code.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/local_contract_checks.json",
+      "sha256": "2e57b08e90c89a35ab7960064040dd5131eebe06733799cdfd33a5958768ecdb",
+      "bytes": 1605
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/local_contract_checks.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/local_contract_checks.exit_code.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    }
+  ],
+  "registry_markdown_test_command": "python -m pytest -q src/test/test_183_development_model_registry_markdown.py",
+  "registry_markdown_test_exit_code": 0,
+  "local_contract_check_scope": "The checker reads a fixed set of five review-facing Markdown documents, four compact JSON records, and figure provenance. This validation index is created after that run and is only syntax/path checked, not a checker input.",
+  "test_outcomes_preserved": {
+    "focused": "40 passed, 3 skipped; pytest-reported 21.25s; watchdog 30.9230939541s; exit 0 and cleanup",
+    "full_repository": "collection interrupted: 1 skip, 8 collection errors, zero test bodies executed; pytest-reported 91.42s; watchdog 104.2704194956s; exit 2 and cleanup",
+    "collection_error_breakdown": "1 ignored Task43 artifact module-name mismatch, 1 SLEPc key 1211220 registration conflict, 6 old ignored Task42 scratch missing modules",
+    "no_CI_claim": true,
+    "no_PDE_or_full_pytest_rerun_for_report_docs": true
+  },
+  "review_scope_boundary": "PDE and full-suite results remain bound to source HEAD 3da2fa6; added report generators are separately SHA-bound and will be bound by the eventual review commit."
+}

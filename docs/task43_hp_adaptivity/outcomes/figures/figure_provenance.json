@@ -1,0 +1,122 @@
+{
+  "accepted9": {
+    "plan": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json",
+    "leaves": 180,
+    "categories": {
+      "5": 28,
+      "6": 152
+    },
+    "nm_scale_pixels": 3.0,
+    "scope": "Actual leaf boxes. Slices do not display all 3D trace entity degrees."
+  },
+  "h1": {
+    "plan": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/run/candidate_plan.json",
+    "leaves": 600,
+    "categories": {
+      "0": 120,
+      "1": 480
+    },
+    "nm_scale_pixels": 3.0,
+    "scope": "Actual leaf boxes. Slices do not display all 3D trace entity degrees."
+  },
+  "trajectory": [
+    {
+      "cycle": 0,
+      "eta": 0.4280717295778482,
+      "J": 556138.0874968931,
+      "accepted": false,
+      "role": "initial"
+    },
+    {
+      "cycle": 1,
+      "eta": 0.2927588310006286,
+      "J": 367685.6637324901,
+      "accepted": true
+    },
+    {
+      "cycle": 2,
+      "eta": 0.12458684890039323,
+      "J": 134007.82955332665,
+      "accepted": true
+    },
+    {
+      "cycle": 3,
+      "eta": 0.0483360497034636,
+      "J": 42271.527200642704,
+      "accepted": true
+    },
+    {
+      "cycle": 4,
+      "eta": 0.00954281971170027,
+      "J": 7475.080039682059,
+      "accepted": true
+    },
+    {
+      "cycle": 5,
+      "eta": 0.003411538344083515,
+      "J": 3407.042750433187,
+      "accepted": true
+    },
+    {
+      "cycle": 6,
+      "eta": 0.0004096986620120242,
+      "J": 182.90587194208507,
+      "accepted": true
+    },
+    {
+      "cycle": 7,
+      "eta": 0.00019459114321942683,
+      "J": 54.87499312806232,
+      "accepted": true
+    },
+    {
+      "cycle": 8,
+      "eta": 0.00012588848818861328,
+      "J": 10.602439170670497,
+      "accepted": true
+    },
+    {
+      "cycle": 9,
+      "eta": 3.995683423458756e-05,
+      "J": 4.065061945224269,
+      "accepted": true
+    },
+    {
+      "cycle": 10,
+      "eta": 3.154393353284729e-05,
+      "J": 2.837172688008316,
+      "accepted": false,
+      "role": "rejected_diagnostic"
+    }
+  ],
+  "input_sha256": {
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/h1_real_action_qualification_v1.json": "8a35fe340bb02d7dedca62b579bf611102a94c551c18774bc41b3916aa217c0b",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/run/candidate_plan.json": "d96c3b46ec739c256e1072885795ec9a0eb502190bc99d83fdb78a6b3e3de10a",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_selection_transition1_v1.json": "aa31fca51bc56fee1d2960a0cd7bcbf87ac26c518711282e4f00e5b128387366",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/p_up_attempt3_retry3/round1_candidate_comparison_v1.json": "48d508ed8f992412e8b33d7527e0d7eafa6f9b8c534fc214a6af7d7c4e48a224",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round2_selection_transition2_v1.json": "b81f778fa7b9c526d786fcb62a4f74e8e41da503200435d2def6fa759fe1a6b7",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round2_p_up_attempt2/candidate_comparison_v2.json": "637b6567394c8925c3d05c84071a515ece05f900b5ea77025ba60b6f7fd6a2f4",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round3_selection_transition3_v1.json": "770c2207281e6c617f4509e104f848d9d52702e2c5701636b37c5ecaed5421aa",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round3_p_up_attempt1/candidate_comparison_v2.json": "e1b356a0c394bafd3b14b744aa1c6ea6b184cd1b37c2068557d991ae4497a244",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round4_selection_transition4_v1.json": "0d7317e81ccc03e24426c97930c1323fdc91865607dd55b3704392a1a72c8dc8",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round4_p_up_attempt1/candidate_comparison_v2.json": "4555754925cbdfc017b3e17faf2de02c856a3dedca033915fd2e96875bd6047c",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round5_selection_transition5_v1.json": "a2c315bf74173fc7f37ddda8b114b02b040288c080c90dbdee0501d86682dd14",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round5_p_up_attempt2/candidate_comparison_v2.json": "5bffebb45504ba677e92cd5ab2967d46be42050f62efc4dbb1fabe9586eb1a0b",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round6_selection_transition6_v1.json": "b5b63c69e6bd425b2f6fd5bbb4aaafa2e2321338fa101f844fd3c8a6e2668669",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round6_p_up_attempt1/candidate_comparison_v2.json": "f9ff61ffbe5026bb6ececaeb1ac43e206311996100ff0b4ed147090b190a0276",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round7_selection_transition7_v1.json": "053f1463d9b3112627c2876a70936c35739f5d990ebefb10e060889991dad8ac",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round7_p_up_attempt1/candidate_comparison_v2.json": "5431f17ce21fcba969c6d45cea9f2edf048ad58d93d91cda01a526ba3a028de9",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round8_p_up_attempt1/candidate_comparison_v2.json": "4c0da0a3ac185a3b31ea618da1bfa33a8d848a87e644c693f30337cf458d1ab9",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round10_p_up_attempt1/candidate_comparison_v2.json": "3db50c67e871520398eee3c05219d4ef3090c360f5f2b4495e5fe31f3c70b3e0"
+  },
+  "generator_sha256": "e71711f80d1c03e8a5a0979af96b23b4f072b2310c5bd026d96a179894115be5",
+  "output_sha256": {
+    "accepted9_mesh_degree.svg": "f5eb7f9cb1258c9f698d492432e16eafff048081de3bca1e7765068d75e8d853",
+    "h1_mesh_levels.svg": "043ad0f605770e8a022c8edc246e9a0532d0f035bca7d3b145e6fbfbe590be68",
+    "selection_trajectory.svg": "91af63ac5ae15708f250965a74f37d1d0292f376d4dd4d28fad18ca7e02da12f"
+  }
+}

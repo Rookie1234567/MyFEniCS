@@ -1,0 +1,201 @@
+{
+  "schema": "task43.final-local-test-attempts.v1",
+  "status": "FINAL_SOURCE_TESTS_AUDITED",
+  "source_HEAD": "3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0",
+  "source_tree_manifest_count": 916,
+  "attempts": [
+    {
+      "attempt_id": "final_focused_checks_attempt1",
+      "source_HEAD": "3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0",
+      "branch": "task43_hp_adaptivity",
+      "command": "python -m pytest -q src/test/test_task43_candidate_records.py src/test/test_task43_candidate_checkpoints.py src/test/test_task43_initial_profile.py src/test/test_task43_physical_g_error.py src/test/test_task43_p_up_degree_closure.py src/test/test_task43_resource_profile.py src/test/test_physical_field_comparison.py src/test/test_physical_field_sampling.py src/test/test_task43_independent_active_action_fixture.py::Task43IndependentActiveActionFixture::test_direct_factor_backend_cli_and_configuration",
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "environment": "native Linux, MPI1, threads1, CPU affinity [1], task43 profile 192GiB upper bound, zero task VmSwap; fixture TASK43_SAVED_POST_SELECTION_FIXTURE set to saved direct-backend pair; fresh PDE opt-ins unset.",
+      "result": {
+        "passed": 40,
+        "skipped": 3,
+        "pytest_reported_wall_seconds": 21.25
+      },
+      "pytest_exit_code": 0,
+      "pytest_raw_log_sha256": "5520d0b4c05651ae9e05bf5082ec3e974f7116084b5880581bd3f2c17b164044",
+      "watchdog": {
+        "classification": "COMPLETED",
+        "wall_seconds": 30.923093954101205,
+        "watchdog_exit_code": 0,
+        "simultaneous_process_tree_RSS_peak_bytes": 386138112,
+        "task_VmSwap_peak_bytes": 0,
+        "native_global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "samples": 26,
+        "descendants_cleared": true,
+        "pytest_reported_wall_seconds": 21.25
+      },
+      "source_and_input_audit": {
+        "source_files": 916,
+        "input_files": 56,
+        "listed_sources_sha256_file": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/source_snapshot_pre_run/listed_sources.sha256",
+          "sha256": "c4edb0a17dac51280949d271e467c122acc427dded559ebb196ea95f291c01a5"
+        },
+        "input_hashes_pre_sha256_file": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/input_hashes_pre.sha256",
+          "sha256": "c9e362bcc601e10bafe46ac7b26fa6f1be362483ce9f5c5047dea5ac88d8163b"
+        },
+        "all_hashes_match": true
+      },
+      "process_identity": {
+        "preterminal_identity_record": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/actual_launch_identity.json",
+          "sha256": "e56e56b0d25b6ca0c58aba28f7a0c691535112e2fcc856927a16cd736cd7583e"
+        },
+        "terminal_pid_starttick_absence_verified": true
+      },
+      "root_audit": {
+        "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/root_review/root_final_test_terminal_audit.json",
+        "sha256": "126ba88ce1318cdb3ce6a36b111f081ad167537aa528ac28aa34d27603aff676",
+        "audit_pass": true,
+        "auditor_script": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/root_review/root_final_test_terminal_audit.py",
+          "sha256": "e9bc541c3ff774c0961ed34179d6c9134ba292d40a5ca63379b7d67fe8dc6f57"
+        }
+      },
+      "artifact_files": {
+        "watchdog/summary.json": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/watchdog/summary.json",
+          "sha256": "40a82de936212a45f0dce5e53c379c60ef034c697cdb35cc48be22bc1b09e82e"
+        },
+        "watchdog/resources.jsonl": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/watchdog/resources.jsonl",
+          "sha256": "885d5576b008243f2a0634814895a577835497bde2f25815e77388c3a2e68d95"
+        },
+        "watchdog/worker.log": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/watchdog/worker.log",
+          "sha256": "5520d0b4c05651ae9e05bf5082ec3e974f7116084b5880581bd3f2c17b164044"
+        },
+        "launcher_exit_code.txt": {
+          "path": "benchmarks/artifacts/task43/final_focused_checks_attempt1/launcher_exit_code.txt",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        }
+      },
+      "scope": "Focused final local regressions only; not a full repository pass and not CI."
+    },
+    {
+      "attempt_id": "final_full_repository_pytest_attempt1",
+      "source_HEAD": "3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0",
+      "branch": "task43_hp_adaptivity",
+      "command": "python -m pytest -q",
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "environment": "native Linux, MPI1, threads1, CPU affinity [1], task43 profile 192GiB upper bound, zero task VmSwap; all saved-fixture and PDE opt-ins unset.",
+      "result": {
+        "test_bodies_executed": 0,
+        "collection_skips": 1,
+        "collection_errors": 8,
+        "causes": {
+          "ignored_Task43_test_snapshot_name_collision": 1,
+          "SLEPc_registration": 1,
+          "old_ignored_Task42_scratch_missing_modules": 6
+        },
+        "pytest_reported_wall_seconds": 91.42
+      },
+      "interpretation": "pytest collection was interrupted by 8 collection errors after 1 collection skip; test bodies executed: 0. This is not a claim that 8 test bodies failed or that zero tests were collected.",
+      "collection_error_causes": [
+        {
+          "count": 1,
+          "cause": "ignored Task43 mixed-hp test artifact copies share a module basename; import-file mismatch across two copy paths creates one collection error."
+        },
+        {
+          "count": 1,
+          "cause": "test179 SLEPc registration error: key 1211220 conflicts with an already registered PETSc Viewer."
+        },
+        {
+          "count": 6,
+          "cause": "old ignored tmp/task42extra scratch tests import modules absent from this checkout."
+        }
+      ],
+      "pytest_exit_code": 2,
+      "pytest_raw_log_sha256": "93662e5c157cebb9e5778a27c5513f241db99ec4b4389db599a5ab6a6738a7c7",
+      "watchdog": {
+        "classification": "WORKER_FAILED",
+        "wall_seconds": 104.27041949564591,
+        "watchdog_exit_code": 2,
+        "simultaneous_process_tree_RSS_peak_bytes": 406917120,
+        "task_VmSwap_peak_bytes": 0,
+        "native_global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "samples": 86,
+        "descendants_cleared": true,
+        "pytest_reported_wall_seconds": 91.42
+      },
+      "source_and_input_audit": {
+        "source_files": 916,
+        "input_files": 11,
+        "listed_sources_sha256_file": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/source_snapshot_pre_run/listed_sources.sha256",
+          "sha256": "c4edb0a17dac51280949d271e467c122acc427dded559ebb196ea95f291c01a5"
+        },
+        "input_hashes_pre_sha256_file": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/input_hashes_pre.sha256",
+          "sha256": "427fddb46586f809d85f8ae59672f57539707e2630a56d330376611631c9291a"
+        },
+        "all_hashes_match": true
+      },
+      "process_identity": {
+        "launcher_pid_recorded": 1135882,
+        "launcher_start_ticks": null,
+        "launcher_start_ticks_note": "Not captured before the launcher exited; no value inferred.",
+        "root_postterminal_observation": {
+          "watchdog_pid": 1135905,
+          "watchdog_start_ticks": 272169202,
+          "pytest_worker_pid": 1135917,
+          "pytest_worker_start_ticks": 272169247,
+          "sampled_pid_starttick_identities_gone": true,
+          "source": "independent root audit of original process samples and terminal /proc state"
+        }
+      },
+      "root_audit": {
+        "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/root_review/root_final_test_terminal_audit.json",
+        "sha256": "7a9ecdad65287487f428cbec347ac150e73cafb5fbeb47cfa381e2a5e02ecadd",
+        "audit_pass": true,
+        "auditor_script": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/root_review/root_final_test_terminal_audit.py",
+          "sha256": "e9bc541c3ff774c0961ed34179d6c9134ba292d40a5ca63379b7d67fe8dc6f57"
+        }
+      },
+      "artifact_files": {
+        "watchdog/summary.json": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/summary.json",
+          "sha256": "668846e70bd461360f23b4c3b0cbeb7201afcf0d33838c414cf8d7cf0d319235"
+        },
+        "watchdog/resources.jsonl": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/resources.jsonl",
+          "sha256": "06a70cf5b8feeb701440d9b1640b5478be7d9eb788e76382bed4c21ee110acf0"
+        },
+        "watchdog/worker.log": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/worker.log",
+          "sha256": "93662e5c157cebb9e5778a27c5513f241db99ec4b4389db599a5ab6a6738a7c7"
+        },
+        "launcher_pid.txt": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/launcher_pid.txt",
+          "sha256": "0117c8c85abd5c9f93e9b47594661ab4d5498b80614fcc1a5adafb01783486bb"
+        },
+        "launcher_exit_code.txt": {
+          "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/launcher_exit_code.txt",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        }
+      },
+      "scope": "Actual full repository local pytest attempt under the registered 7200s/192GiB/zero task-swap gate. Collection stopped; no CI or pass claim. No ignored files, test configuration, environment, or source fixtures were changed to reduce the error count."
+    }
+  ],
+  "total_watchdog_seconds_separate_test_category": 135.19351344974712,
+  "ci": "not_run",
+  "notes": [
+    "Final tests use source HEAD 3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0; only local tests are claimed.",
+    "The failed collection is retained without changing ignored artifacts, tests, pytest configuration, or ABI environment.",
+    "Do not add these test watchdog seconds to solver cost; they are reported as a separate final verification category."
+  ],
+  "total_pytest_reported_wall_seconds_separate_from_watchdog": 112.67
+}

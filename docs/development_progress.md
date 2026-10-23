@@ -1,4 +1,28 @@
-# Task43：九次更新已接受，体场达标、两功率通道仍未达
+# Task43最终收口（2026-10-24）：accepted9冻结，PARTIAL / CONTROLLED_NEGATIVE
+
+本任务研究用局部单元细分 h 或提高单元阶次 p 来减少达到目标精度所需的独立未知量。数值/比较代码及最终focused/full pytest使用source HEAD`3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；本轮新增报告生成器由compact和figure provenance中的脚本SHA绑定，最终送审commit绑定它们。分支`task43_hp_adaptivity`，基线`405e3aff42ac421a4c99315df1ed9b96941ecbe4`；各历史PDE仍绑定自己实际source snapshot/ABI/input，不把数值HEAD追溯套给旧求解。
+
+| 最终判断 | 实测证据 | 结论边界 |
+|---|---|---|
+| p-up闭环 | R1–R9按冻结规则接受9次，最后接受态R9为110,472 FE（35,352 trace + 75,120 interior）；R9的两零级s功率误差为`4.065061945e−6`和`2.148245071e−6`，均高于`1e−6` | 最终空间精度仍FAIL；接受的是中间迭代状态，不是最终验收通过 |
+| R10自然候选 | 180格全p6、118,800 FE；G改善`8.412900702e−6`低于事前冻结噪声`9.088158797e−6`，所以拒绝且无transition10 | 自身对Y6_1仍有top `(0,0,s)=2.837172688e−6`越限；解的残差通过不等于空间精度通过 |
+| 真实h动作 | 600个p3叶、47,235 FE、A6=`8.745351252e−10`，有完整612模式与共同场比较 | 数值资格已取得，但空间精度未达，不回写旧transition1 |
+| h10剪枝 | 内部DoF下界292,260已高于对照的237,600实际FE | derived目标DoF不可行；没有score剪枝/完整h空间/数值失败，actual trace/FE保持null |
+| 六场后验比较 | 联合1008子盒，q8 516,096点、q10 1,008,000点；九个有方向全场对均完成，q8/q10冻结结论相同，root独立重算raw field/power/Gauss/J及612通道 | Y5_1对R9/R10分别仍有2/1个零级s功率通道失败；以Y3为reference的Y3→R10单对PASS，其余控制或holdout比较限制详见compact。后验不反馈选择，不证明连续精度或参考自身q/R |
+| 用户要求的同精度FE与任务书成本比较 | 控制FE已从恢复约束实际核验，Y3/Y3_2各237,600、Y5_1 332,640；R9规模更小 | 尚未证明同精度FE目标。任务书要求比较同精度全过程成本，但成本优势不是必须获胜条件，当前没有同精度成本结论 |
+| 运行尝试与资源 | 16次完整求解尝试/12条lineage/accepted9；R8仅保留2491样本、3109.389197s观察窗、窗内RSS峰6,844,891,136B、task swap观测0，outer143/sender未知 | R8不称完整wall/峰/零swap/exit或完整清理；后续通过不会补写缺失终态 |
+
+| 最终本地测试 | 实际结果 | 说明 |
+|---|---|---|
+| Task-focused suite | 40 passed、3 skipped，pytest 21.25s；watchdog 30.923094s、树RSS峰386,138,112B、task/global swap增量0、exit0清理 | 916源码/56输入hash与逐样本RSS/swap和进程终态由root独立审计 |
+| 全仓 `python -m pytest -q` | 真实执行到collection：1 skip、8 errors、测试体0执行，pytest91.42s；watchdog104.270419s、树RSS峰406,917,120B、task/global swap增量0、exit2且后代清理 | 8个collection error=1个忽略Task43同名artifact模块冲突（两个副本路径但单error）+1个SLEPc key1211220注册冲突+6个旧忽略tmp/task42extra缺模块；不写成“8 tests失败”或“0 tests collected”，保留原始trace，不改环境/忽略配置 |
+| 成本分类 | 两次最终测试watchdog合计135.193513449747s，作为测试工作单列 | 原56份完整模型/组件watchdog 63,340.73598930752s，加R8 partial 3,109.3891972089186s为66,450.12518651644s观察下界；连测试简单相加为66,585.31869996618s，仍非完整campaign总成本 |
+
+以上均为本地结果，不声称CI通过。独立后验compact与root raw/resource audit见[Task43结果](task43_hp_adaptivity/outcomes/summary.md)、[post-selection验证](task43_hp_adaptivity/outcomes/records/post_selection_existing_fields_validation_v1.json)、[final test compact](task43_hp_adaptivity/outcomes/records/final_test_attempts_v1.json)。完整机器账包含16次尝试与5份导入场；选择性依赖组、fresh PDE证据和reporting scripts边界见[manifest](task43_hp_adaptivity/outcomes/selective_merge_manifest.md)。当前状态等待ChatGPT外部审阅，未获merge approval，未合入master。
+
+下文保留各次阶段检查点原文用于追溯；其中“当前/下一步”只代表写作当日阶段，最终状态以本节和Task43 outcomes为准。
+
+## Task43执行过程时间线（历史检查点）
 
 当前工作在既有 `task43_hp_adaptivity` 分支推进，复用 NN-Lab-V2 注册 worktree 和工作站 complex128/int64 环境。基线固定为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`；旧分支保留，用户授权删除的旧 Task42extra 大型 artifacts/results 已有路径与体积记录。未启动 NN/FTT 或新的预条件器扫描。
 
