@@ -1,0 +1,121 @@
+{
+  "window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+  "record": {
+    "schema": "task40extra.review_v10_campaign_accounting.v1",
+    "sequence": 215,
+    "label": "controller_v11_closeout_evidence_verified",
+    "phase": "closeout",
+    "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+    "t0_utc_ns": 1792732864242015987,
+    "deadline_utc_ns": 1792754464242015987,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "time_namespace_identity": {
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    },
+    "previous_sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2677266.624589518,
+      "monotonic": 2677266.624588834,
+      "utc_ns": 1792752271763723130
+    },
+    "sample": {
+      "monotonic": 2677944.409972699,
+      "boottime": 2677944.4099758,
+      "utc_ns": 1792752949549109572,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "adjacent_interval": {
+      "elapsed_seconds": {
+        "monotonic": 677.7853838647716,
+        "boottime": 677.7853862820193,
+        "utc": 677.785386442
+      },
+      "budget_seconds": 677.785386442,
+      "discrepancy_seconds": 2.577228428890521e-06,
+      "tolerance_seconds": 6.777853862820193,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 2.577228428890521e-06
+    },
+    "bootstrap_charged_seconds": 41.126738006,
+    "cumulative_charged_seconds": 20085.30723392936,
+    "cutoff_seconds": 20400.0
+  },
+  "state": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_saved_diagnostics_6h.jsonl",
+    "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+    "t0_utc_ns": 1792732864242015987,
+    "deadline_utc_ns": 1792754464242015987,
+    "phase": "closeout",
+    "accounting_record": {
+      "adjacent_interval": {
+        "budget_seconds": 677.785386442,
+        "discrepancy_seconds": 2.577228428890521e-06,
+        "elapsed_seconds": {
+          "boottime": 677.7853862820193,
+          "monotonic": 677.7853838647716,
+          "utc": 677.785386442
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "tolerance_seconds": 6.777853862820193,
+        "utc_minus_monotonic_seconds": 2.577228428890521e-06
+      },
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "bootstrap_charged_seconds": 41.126738006,
+      "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+      "cumulative_charged_seconds": 20085.30723392936,
+      "cutoff_seconds": 20400.0,
+      "deadline_utc_ns": 1792754464242015987,
+      "label": "controller_v11_closeout_evidence_verified",
+      "phase": "closeout",
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2677266.624589518,
+        "monotonic": 2677266.624588834,
+        "utc_ns": 1792752271763723130
+      },
+      "sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2677944.4099758,
+        "monotonic": 2677944.409972699,
+        "utc_ns": 1792752949549109572
+      },
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 215,
+      "t0_utc_ns": 1792732864242015987,
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      }
+    },
+    "sample": {
+      "monotonic": 2677944.412611392,
+      "boottime": 2677944.412614289,
+      "utc_ns": 1792752949551748406,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "adjacent_interval": {
+      "elapsed_seconds": {
+        "monotonic": 0.00263869296759367,
+        "boottime": 0.002638489007949829,
+        "utc": 0.002638834
+      },
+      "budget_seconds": 0.002638834,
+      "discrepancy_seconds": 3.449920501709565e-07,
+      "tolerance_seconds": 5.0,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 1.410324063301667e-07
+    },
+    "projected_cumulative_charged_seconds": 20085.309872763362,
+    "remaining_numerical_seconds": 0.0,
+    "remaining_closeout_seconds": 1200.0,
+    "remaining_phase_seconds": 1200.0,
+    "read_only": true
+  },
+  "ledger_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_saved_diagnostics_6h.jsonl",
+  "ledger_sha256_at_sample": "5e268eea7c855948bed597e1d55397abf8a02d3c73a384e1fe72cb2ca89fe01c",
+  "final_commit_push_cost_not_included_yet": true
+}

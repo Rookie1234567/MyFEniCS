@@ -1,5 +1,8 @@
 # Task41 阶段结果
 
+> **V11最新：已完成保存数据补审与全域分解；局部数值重放未获时间准入。** V6/V9完整y逐位相同，Δg只在trace，V9完整action仍FAIL。active87567→original250113完整incident为[360,446]；两cell数值未开始，attempt04余额996.109s低于1020s估计及终止预留。旧失败和费用保留，不解锁200q。见[response_v11](../response_v11.md)、[compact](b0_v11_saved_diagnostics_20261023.json)、[原始索引](v11_closeout/evidence_index.json)。下方V9是历史完整作用试验，不是本轮新完整场。
+
+
 > **V9 已形成首次正式 B0 结果。** 20261022T052401.200732Z 的两列 full-action 门均失败，compact independent checker 为 FAIL，正式 service terminal checker 因 numerical-output 目录缺失而 NOT_RUN；recovery 为 NOT_RUN_ACTION_GATE_FAILED，official_result=false。详见 [V9 response](../response_v9.md)、[run index](run_index.json) 与两级账。准备阶段测试和窗口资料仍保留在 [V9 preparation](v9_preparation.md)。
 
 > **V9 之前的历史科学阶段：Task41extra Review V8 selected-star 局部复核；未形成全域candidate资格。** V6 candidate 原完整两列action仍失败（相对误差`1.7183209126709868e-10` / `3.6180522433957604e-10`，限值`1e-11`）；V8未重跑这两列。V8较早的producer扫描28,000-cell metadata并仅重建目标行两个incident cells的缺失局部张量；此后的独立checker attempts 1–4 为saved-only。V8完成304个保存向量复算，另做局部RHS次序反事实，但saved donor完整action仍失败；candidate数值状态未重验，`official_result=false`。不进入200q、factor、KSP/FGMRES、完整场、A6或official R/T/A。入口：[V8 response](../response_v8.md)、[V8 compact](b0_v8_selected_trace_star_audit_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。

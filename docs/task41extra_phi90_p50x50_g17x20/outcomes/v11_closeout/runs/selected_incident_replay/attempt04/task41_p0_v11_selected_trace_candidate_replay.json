@@ -1,0 +1,130 @@
+{
+  "candidate_admission": {
+    "gate": null,
+    "gate_evidence": {},
+    "reason": "v11_selected_trace_star_candidate_replay_preflight: fixed-window balance 996.109s is below the selected-star estimate and termination reserve 1020.000s",
+    "status": "CANDIDATE_NOT_ADMITTED"
+  },
+  "candidate_prefix_qualification": {
+    "full_admission_eligible": false,
+    "geometry_witness_count": 0,
+    "global_b_t_accumulation": "not_performed_by_local_prefix_qualification",
+    "records": [],
+    "required_sample_cell_indices": [
+      26762,
+      26897,
+      0,
+      1,
+      2,
+      5,
+      6,
+      7505
+    ],
+    "required_sample_count": 8,
+    "sample_count": 0,
+    "schema": "task41.p0.v6.actual_qmetric_prefix_qualification.v1",
+    "status": "PREFIX_QUALIFICATION_PENDING"
+  },
+  "consumer_contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_f1697498699d9b4c2c4c4919b97e4a1e2bba22f5.json",
+  "consumer_contract_sha256": "3012fcdb04abdf7e768e0a71396117f26d9b671df0927c585f94d855787880fc",
+  "consumer_source_sha": "f1697498699d9b4c2c4c4919b97e4a1e2bba22f5",
+  "donor_contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_afbe91e5947ed18fb74d7105097e129c1b8b4cc7.json",
+  "donor_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+  "donor_manifest_sha256": "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465",
+  "donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+  "elapsed_since_worker_start_seconds": 34.060232882387936,
+  "error": {
+    "message": "v11_selected_trace_star_candidate_replay_preflight: fixed-window balance 996.109s is below the selected-star estimate and termination reserve 1020.000s",
+    "type": "_CandidateNotAdmitted"
+  },
+  "event_log_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay_events.jsonl",
+  "failed_at_utc": "2026-10-23T10:44:28.132834+00:00",
+  "geometry_policy": "mesh_actual_exact",
+  "geometry_reference_report_path": null,
+  "geometry_reference_report_sha256": null,
+  "initial_fixed_window_state": {
+    "accounting_record": {
+      "adjacent_interval": {
+        "budget_seconds": 1.1403244212269783,
+        "discrepancy_seconds": 7.232269783052914e-07,
+        "elapsed_seconds": {
+          "boottime": 1.1403237581253052,
+          "monotonic": 1.1403244212269783,
+          "utc": 1.140323698
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -7.232269783052914e-07
+      },
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "bootstrap_charged_seconds": 41.126738006,
+      "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+      "cumulative_charged_seconds": 19373.41705420866,
+      "cutoff_seconds": 20400.0,
+      "deadline_utc_ns": 1792754464242015987,
+      "label": "watchdog_sample_numeric",
+      "phase": "numeric",
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2677231.379476885,
+        "monotonic": 2677231.379475306,
+        "utc_ns": 1792752236518610576
+      },
+      "sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2677232.519800643,
+        "monotonic": 2677232.519799727,
+        "utc_ns": 1792752237658934274
+      },
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 185,
+      "t0_utc_ns": 1792732864242015987,
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      }
+    },
+    "adjacent_interval": {
+      "budget_seconds": 0.236843707,
+      "discrepancy_seconds": 1.892873180614485e-06,
+      "elapsed_seconds": {
+        "boottime": 0.23684281017631292,
+        "monotonic": 0.23684181412681937,
+        "utc": 0.236843707
+      },
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": 1.892873180614485e-06
+    },
+    "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+    "deadline_utc_ns": 1792754464242015987,
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_saved_diagnostics_6h.jsonl",
+    "phase": "numeric",
+    "projected_cumulative_charged_seconds": 19373.65389791566,
+    "read_only": true,
+    "remaining_closeout_seconds": 0.0,
+    "remaining_numerical_seconds": 1026.3461020843388,
+    "remaining_phase_seconds": 1026.3461020843388,
+    "sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2677232.756643453,
+      "monotonic": 2677232.756641541,
+      "utc_ns": 1792752237895777981
+    },
+    "t0_utc_ns": 1792732864242015987
+  },
+  "output_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04",
+  "phase_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay_phase.json",
+  "postbuild_reserve_evidence": null,
+  "preparation_elapsed_seconds": 29.584830762352794,
+  "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+  "resolved_config_sha256": "9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+  "schema": "task41.p0.v6.actual_qmetric_candidate_receipt.v1",
+  "source_report_path": null,
+  "started_at_utc": "2026-10-23T10:43:54.072723+00:00",
+  "status": "CANDIDATE_NOT_ADMITTED",
+  "volume_evidence_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04/selected_trace_star_candidate_replay",
+  "worker_started_perf_counter": 2677228.933577039
+}

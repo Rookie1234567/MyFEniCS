@@ -1,0 +1,9 @@
+{
+  "elapsed_in_phase_seconds": 88.85204589599743,
+  "elapsed_since_worker_start_seconds": 94.82625765400007,
+  "incident_cells": 2,
+  "numerical_work_started": false,
+  "phase": "selected_trace_star_metadata_only",
+  "status": "COMPLETED",
+  "timestamp_utc": "2026-10-23T09:08:26.393733+00:00"
+}

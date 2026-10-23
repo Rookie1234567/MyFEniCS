@@ -328,3 +328,12 @@ ABI 是本机 qualified WSL complex128/int32；不是工作站正式 service 资
 | 本收口验证 | JSON 解析通过；git diff --check 通过；没有运行 pytest | 只验证所更新的小型索引与文档差异；不声称 CI 或全仓测试通过 |
 
 独立 compact checker 的数值 FAIL 与正式 service terminal checker 的 NOT_RUN 分列记录。run summary、service receipt、compact audit/check 与资源口径见 response_v9.md、run_index.json 和两级账；未重跑 FE、recovery 或任何 checker。
+
+
+## V11窄续作（2026-10-23）
+
+最终科学source f1697498699d9b4c2c4c4919b97e4a1e2bba22f5。末次真实metadata账本path回归：主控在qualified WSL complex128/int32下执行 `python -m pytest -q --tb=short --show-capture=no src/test/test_task41_p0_v11_metadata_identity.py`，1 passed/0.06s；执行者同项1 passed/0.15s。`git diff --check`通过。此前selected-row累加、覆盖拒绝、诊断边界、真实service envelope和失败补审路由5项定向测试1.13s通过（source2b085de8冻结前），相关源码末次只变path检查。未运行全仓/MPI多进程/PDE，不声明CI；ruff未安装，不声明lint通过。
+
+实际工作站监督运行与fixture分开：补审确认旧action FAIL；y/g全域分解完成；metadata完整；selected attempt03身份路径bug，attempt04时间未准入。没有新局部数值PASS。详见[response_v11](../response_v11.md)和[原件](v11_closeout/evidence_index.json)。
+
+收口数据检查（不启动FE）：24份复制JSON原件字节/SHA与工作站索引一致；全部新增JSON可读；保存比较的Δy两列为0、Δg端口两列为0；response内相对证据链接均存在；最终`git diff --check`通过。轻量原件目录865524B（包含索引），原NPY与资源timeline仍在ignored artifacts。

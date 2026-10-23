@@ -1,0 +1,128 @@
+{
+  "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+  "activation_command": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; unset _MYFENICS_WSL_QUALIFIED_ACTIVATION; source scripts/task40_fresh_c1/activate_native_complex.sh \"$2\" \"$3\" \"$4\" native_linux; env -0 task40-v20-activation /home/fenics/Projects/laptop_share /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache",
+  "activation_identity": "task41_p0_native_complex:1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+  "case_id": "B0",
+  "cgroup_start": {
+    "dedicated_job_cgroup": true,
+    "member_count": 1,
+    "memory_current_bytes": 73498624,
+    "memory_limit_bytes": 1649267441664,
+    "memory_peak_bytes": 251006976,
+    "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261023T053700-3167418.service",
+    "readable": true,
+    "swap_current_bytes": 0
+  },
+  "checker_source_sha": "4e832a819bf0768d89f54a07330f852fe1e44d12",
+  "consumer_branch": "task41extra_phi90_p50x50_g17x20",
+  "consumer_output_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/v9_failed_terminal_audit/attempt02",
+  "consumer_source_sha": "4e832a819bf0768d89f54a07330f852fe1e44d12",
+  "continuation_status": "outputs_ready_reused",
+  "contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_4e832a819bf0768d89f54a07330f852fe1e44d12.json",
+  "contract_sha256": "c4d17e7b5a6e0040776f3f30acc91c7a48f0295932fed7ca0425d72f4c76c61b",
+  "host_reserve_bytes": 68719476736,
+  "input_path": "/home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+  "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+  "memory_swap_max_bytes": 0,
+  "mode": "saved_b0_v9_failed_terminal_audit",
+  "official_result": false,
+  "preflight": {
+    "abi_module_paths": {
+      "dolfinx": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/dolfinx/__init__.py",
+      "mpi4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/mpi4py/__init__.py",
+      "petsc4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/petsc4py/__init__.py",
+      "slepc4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/slepc4py/__init__.py"
+    },
+    "int_type": "int32",
+    "mpi_size": 1,
+    "python": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "scalar_type": "complex128"
+  },
+  "preflight_command": [
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "-c",
+    "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+  ],
+  "producer_run_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z",
+  "producer_source_sha": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
+  "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/v9_failed_terminal_audit/attempt02.service/task41_p0_service_receipt.json",
+  "result_classification": "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE",
+  "saved_diagnostics_disk_budget": {
+    "bound_raw_artifact_bytes_stat_deduplicated": 9748018280,
+    "cumulative_raw_artifact_limit_bytes": 17179869184,
+    "current_invocation_bytes": 8802,
+    "free_space_bytes": 2043123281920,
+    "free_space_floor_bytes": 2147483648,
+    "recorded_cumulative_raw_artifact_bytes": 14622146704,
+    "reserved_remaining_new_evidence_bytes": 0,
+    "status": "POST_WRITE_CHECKED",
+    "window_output_tree_bytes": 9125,
+    "window_wide_new_evidence_limit_bytes": 536870912
+  },
+  "schema": "task41.p0.saved_output_service_receipt.v1",
+  "service_elapsed_seconds": 201.932547681,
+  "service_entry_accounting": {
+    "adjacent_interval": {
+      "budget_seconds": 936.4940455942415,
+      "discrepancy_seconds": 3.22122414218029e-05,
+      "elapsed_seconds": {
+        "boottime": 936.4940304756165,
+        "monotonic": 936.4940455942415,
+        "utc": 936.494013382
+      },
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "tolerance_seconds": 9.364940455942415,
+      "utc_minus_monotonic_seconds": -3.22122414218029e-05
+    },
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap_charged_seconds": 41.126738006,
+    "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+    "cumulative_charged_seconds": 977.6207836002415,
+    "cutoff_seconds": 20400.0,
+    "deadline_utc_ns": 1792754464242015987,
+    "label": "task41_p0_service_entered",
+    "phase": "numeric",
+    "previous_sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2657900.229603119,
+      "monotonic": 2657900.229586898,
+      "utc_ns": 1792732905368753993
+    },
+    "sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2658836.723633595,
+      "monotonic": 2658836.723632492,
+      "utc_ns": 1792733841862767375
+    },
+    "schema": "task40extra.review_v10_campaign_accounting.v1",
+    "sequence": 0,
+    "t0_utc_ns": 1792732864242015987,
+    "time_namespace_identity": {
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    }
+  },
+  "service_started_sample": {
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "boottime": 2658828.045767801,
+    "monotonic": 2658828.045739112,
+    "utc_ns": 1792733833184903285
+  },
+  "status": "failed_raw_evidence_retained",
+  "task_id": "task41extra_phi90_p50x50_g17x20",
+  "task_memory_max_bytes": 1649267441664,
+  "unit": "myfenics-case-20261023T053700-3167418",
+  "v9_manifest_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z/run_manifest.json",
+  "v9_producer_contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_59722cca5e35eac65efead9fd27f7d7fc0c70419.json",
+  "v9_producer_contract_sha256": "5e6446a0f9990d668de90ef67f675f00e29f64ec273b31d2b9a140ab4a6610cf",
+  "v9_producer_source_sha": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
+  "v9_summary_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z/task40_v10_p6_candidate_summary.json",
+  "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_saved_diagnostics_6h.json",
+  "window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+  "workflow_error": {
+    "message": "numeric or arbitrary commands cannot use the closeout reserve",
+    "type": "ValueError"
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "schema": "task41.v11.closeout_evidence_index.v1",
+  "captured_at_utc": "2026-10-23T10:51:42.766787+00:00",
+  "consumer_scientific_source": "f1697498699d9b4c2c4c4919b97e4a1e2bba22f5",
+  "files": [
+    {
+      "archive_path": "runs/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay_phase.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay_phase.json",
+      "bytes": 311,
+      "sha256": "8a9b78a1d447ae47f93b0b3eae02fe9617498cb3c4aad3b3f7328e64e77ed339",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay_phase.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay.json",
+      "bytes": 6144,
+      "sha256": "222a35c94a809c268a2b86db9d985076f12813c87079283d7f2b236ae87fcfdf",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay_events.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay_events.jsonl",
+      "bytes": 297,
+      "sha256": "301ef58255d53337ad47a51b54263909605eb0589f6465b1ad4844a69a240db7",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt01.service/task41_p0_service_receipt.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt01.service/task41_p0_service_receipt.json",
+      "bytes": 8178,
+      "sha256": "a38956c4133bfa99186474970839ab785a035bca5f3e2f39e9e12b80ea9f43e4",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt01.service/task41_p0_service_receipt.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay_phase.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay_phase.json",
+      "bytes": 391,
+      "sha256": "9039f0ece443b95bfc41ea6ce3e4e4bf58311f50e4a853a761797b4b600859ab",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay_phase.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay.json",
+      "bytes": 6491,
+      "sha256": "50d1ef63efc57703ad24a6d16a32b6dd0c710bda5744be6972b9766fbe2ed8e2",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay_events.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04/task41_p0_v11_selected_trace_candidate_replay_events.jsonl",
+      "bytes": 377,
+      "sha256": "78ae0c430f68e436c743727017106751a8e152627deb6363646891660f00fa46",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt03.service/task41_p0_service_receipt.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt03.service/task41_p0_service_receipt.json",
+      "bytes": 31469,
+      "sha256": "83074ebb219ecf7fc32613a021ad5fb4cf4057943f3ec9eeebc5a2320100a604",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt03.service/task41_p0_service_receipt.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata_phase.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata_phase.json",
+      "bytes": 297,
+      "sha256": "26bb1b39f1e734995a3ae39990540c908870ea79c6b3ba79b9fdb55f4de21581",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata_phase.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata_events.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata_events.jsonl",
+      "bytes": 20863,
+      "sha256": "8b0a6ebca6ed2bc010208ed5ed7eb71db2d630f9c7f51e87efe07c9ad929f910",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata.json",
+      "bytes": 58424,
+      "sha256": "332baa3a5253a8322b56615c7fe087e401f909c3c889fa048fccc3f9f2b9fcd3",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt04.service/task41_p0_service_receipt.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04.service/task41_p0_service_receipt.json",
+      "bytes": 31835,
+      "sha256": "ef5c69c6f244410ddbf9332f763b87012362990085fce831732a7cfa13bd6256",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt04.service/task41_p0_service_receipt.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt02.service/task41_p0_service_receipt.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02.service/task41_p0_service_receipt.json",
+      "bytes": 86310,
+      "sha256": "ccf9c796ed38d21180e5336d59b8610a62fb869fc271dc3703a87cedb986eb4c",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt02.service/task41_p0_service_receipt.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt03.service/volume_only_watchdog/resources.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt03.service/volume_only_watchdog/resources.jsonl",
+      "bytes": 349464,
+      "sha256": "2b27ee8ff3a769d878f2948e8ecc5f599a3fb93a77d3cc19b2bce4771505588c",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt03.service/volume_only_watchdog/summary.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt03.service/volume_only_watchdog/summary.json",
+      "bytes": 11536,
+      "sha256": "cc9dda7ed64a7086d380287551064ef95ef97dca0deb9c74093da0e16ecdf6a8",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt03.service/volume_only_watchdog/summary.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt04.service/volume_only_watchdog/resources.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04.service/volume_only_watchdog/resources.jsonl",
+      "bytes": 361044,
+      "sha256": "5636bd400156a9c26ed81ea6ef6c0304daf508bc0cd5882bc9dc5d23a21b9927",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt04.service/volume_only_watchdog/summary.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt04.service/volume_only_watchdog/summary.json",
+      "bytes": 11540,
+      "sha256": "b9d46e19db596ac3ba377e3bd2c0034ad41e3800dcd048890fcf668e47ca6dbe",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt04.service/volume_only_watchdog/summary.json"
+    },
+    {
+      "archive_path": "runs/selected_incident_replay/attempt02.service/volume_only_watchdog/summary.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02.service/volume_only_watchdog/summary.json",
+      "bytes": 11541,
+      "sha256": "7c148d72ba059ad851f741b6a4aa3d66cf7feda3f475752ac3cac62985af088e",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/selected_incident_replay/attempt02.service/volume_only_watchdog/summary.json"
+    },
+    {
+      "archive_path": "runs/v9_failed_terminal_audit/attempt03/task41_p0_b0_v9_failed_terminal_audit.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/v9_failed_terminal_audit/attempt03/task41_p0_b0_v9_failed_terminal_audit.json",
+      "bytes": 3683,
+      "sha256": "292f5c734fd88487eb0ee651c54a4ed2d848de9135da521631fb82de9d283cef",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/v9_failed_terminal_audit/attempt03/task41_p0_b0_v9_failed_terminal_audit.json"
+    },
+    {
+      "archive_path": "runs/v9_failed_terminal_audit/attempt03.service/task41_p0_service_receipt.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/v9_failed_terminal_audit/attempt03.service/task41_p0_service_receipt.json",
+      "bytes": 126393,
+      "sha256": "27e3e7e037f62ec508981009895f3338869ddf36cc4bf8906afe406ab58d6391",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/v9_failed_terminal_audit/attempt03.service/task41_p0_service_receipt.json"
+    },
+    {
+      "archive_path": "runs/v9_failed_terminal_audit/attempt02.service/task41_p0_service_receipt.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/v9_failed_terminal_audit/attempt02.service/task41_p0_service_receipt.json",
+      "bytes": 8792,
+      "sha256": "cd0df92dc228acd4cb4231aba1668564e280425a343c926fe46dbab66ba2c25b",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/v9_failed_terminal_audit/attempt02.service/task41_p0_service_receipt.json"
+    },
+    {
+      "archive_path": "runs/v9_failed_terminal_audit/attempt03.service/required_checker_watchdog/resources.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/v9_failed_terminal_audit/attempt03.service/required_checker_watchdog/resources.jsonl",
+      "bytes": 290196,
+      "sha256": "afa8e11bfc2303273e55426e25fc0a280b9600482bc17bc56a83bd47bd4316e7",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "runs/v9_failed_terminal_audit/attempt03.service/required_checker_watchdog/summary.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/v9_failed_terminal_audit/attempt03.service/required_checker_watchdog/summary.json",
+      "bytes": 61171,
+      "sha256": "194fc4b799aa596064dd710a573cac9ee6de484ee4993c1e6de8c7729a846ced",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/v9_failed_terminal_audit/attempt03.service/required_checker_watchdog/summary.json"
+    },
+    {
+      "archive_path": "runs/saved_y_g_comparison/attempt02/task41_p0_b0_saved_y_g_comparison.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/saved_y_g_comparison/attempt02/task41_p0_b0_saved_y_g_comparison.json",
+      "bytes": 143696,
+      "sha256": "e4efa6429685d37286191533db1bf104ed8967b5378f5ed0fc68c3510cae7735",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/saved_y_g_comparison/attempt02/task41_p0_b0_saved_y_g_comparison.json"
+    },
+    {
+      "archive_path": "runs/saved_y_g_comparison/attempt02.service/task41_p0_service_receipt.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/saved_y_g_comparison/attempt02.service/task41_p0_service_receipt.json",
+      "bytes": 206256,
+      "sha256": "26d5a2fe42ea9ebfb1a313ead25be5ae933e89e30d6d056b473ade646f010839",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/saved_y_g_comparison/attempt02.service/task41_p0_service_receipt.json"
+    },
+    {
+      "archive_path": "runs/saved_y_g_comparison/attempt02.service/required_checker_watchdog/resources.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/saved_y_g_comparison/attempt02.service/required_checker_watchdog/resources.jsonl",
+      "bytes": 222934,
+      "sha256": "2273f64e0522a0b201ea5f38ef4a925dcc31be6214a96321caab7a312b9d6f66",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "runs/saved_y_g_comparison/attempt02.service/required_checker_watchdog/summary.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/saved_y_g_comparison/attempt02.service/required_checker_watchdog/summary.json",
+      "bytes": 17043,
+      "sha256": "22fd64263fd8666dc80d60c629719a7d0350890b6d1020ac0a978b35463a2d96",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/runs/saved_y_g_comparison/attempt02.service/required_checker_watchdog/summary.json"
+    },
+    {
+      "archive_path": "contract/execution_window_saved_diagnostics_6h.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_saved_diagnostics_6h.json",
+      "bytes": 1845,
+      "sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/contract/execution_window_saved_diagnostics_6h.json"
+    },
+    {
+      "archive_path": "contract/saved_diagnostics_6h_authorization.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/saved_diagnostics_6h_authorization.json",
+      "bytes": 1118,
+      "sha256": "5bd4ff75b3b1adb5382c3c0ecf304caa1295dce460261e21b24b9469f8e7c93b",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/contract/saved_diagnostics_6h_authorization.json"
+    },
+    {
+      "archive_path": "contract/campaign_accounting_saved_diagnostics_6h.jsonl",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_saved_diagnostics_6h.jsonl",
+      "bytes": 253135,
+      "sha256": "dcbdd7253cfd21849641669cb2c9407ed1e1df5aa2df6e294da1df9c1a72df48",
+      "repository_copy": null
+    },
+    {
+      "archive_path": "contract/execution_contract_source_f1697498699d9b4c2c4c4919b97e4a1e2bba22f5.json",
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_f1697498699d9b4c2c4c4919b97e4a1e2bba22f5.json",
+      "bytes": 6354,
+      "sha256": "3012fcdb04abdf7e768e0a71396117f26d9b671df0927c585f94d855787880fc",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/contract/execution_contract_source_f1697498699d9b4c2c4c4919b97e4a1e2bba22f5.json"
+    },
+    {
+      "archive_path": null,
+      "remote_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v11_controller_sync/controller_closeout_accounting.json",
+      "bytes": 4730,
+      "sha256": "9a335609c74e59fe34f520297a7ca85124719bf8baed7a1bec08076f52269f7f",
+      "repository_copy": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v11_closeout/contract/controller_closeout_accounting.json"
+    }
+  ],
+  "raw_npy_copied": false,
+  "original_remote_files_modified": false
+}

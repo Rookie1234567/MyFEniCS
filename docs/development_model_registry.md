@@ -2519,3 +2519,10 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 ## Task41extra V9完整作用负结果（2026-10-23）
 
 同LU直接RHS候选局部改善，但原尺寸28000-key两列action相对差2.674977063720297e-10、5.613598120037966e-10，均超过1e-11；恢复与200q未运行。workflow69966.90540991211s，owner68236.865869666s；tree RSS450117619712B、cgroup450366337024B，task swap0。窗口费用与workflow为包含关系，不相加；未记录子项保留UNKNOWN。compact审核重现FAIL，正式terminal checker缺numerical-output未运行。见[response_v9](task41extra_phi90_p50x50_g17x20/response_v9.md)及原始保存证据；完整场/精度/2TB/48h未通过。
+
+
+## Task41extra Review V11：全域变化定位缩减侧，局部数值仍缺（2026-10-23）
+
+保存数据交叉比较把“算子作用的变化”和“右端项缩减的变化”拆开，避免从总差猜根因。完整V6/V9 y相同，Δg只在trace、port0；V9原误差2.6749770637124364e-10/5.613598120039757e-10仍超过1e-11。新受监督补审确认旧FAIL，旧terminal NOT_RUN保留。87567完整incident [360,446]已保存，但候选数值未运行：attempt04真实余额996.109s不足1020s工作估计/终止预留；不是新数学或内存失败。补审/比较/metadata父时间约175.032/39.381/111.712s，末两失败47.918/49.321s；父子不相加，task swap0，后代清场。
+
+当前可排除本次恶化来自作用y或port变化；GETRS/J/逐key矩阵重放和累加机制尚未区分。只建议后续授权后复用完整metadata补两cell局部证据，不重建全域/200q。完整场、精度、2TB48h不通过。证据：[response_v11](task41extra_phi90_p50x50_g17x20/response_v11.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v11_saved_diagnostics_20261023.json)。

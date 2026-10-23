@@ -1443,12 +1443,99 @@
       "task_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "evidence": "v9_closeout/file_hashes.json"
+    },
+    {
+      "run_id": "v11/runs/saved_y_g_comparison/attempt02.service",
+      "source_sha": "77d65f19383c2dbf64543e9dbb294ee4ff9b485b",
+      "classification": "SAVED_VECTOR_COMPARISON_DIAGNOSTIC_ONLY",
+      "status": "completed",
+      "official_result": false,
+      "service_parent_seconds": 39.381449460051954,
+      "process_tree_rss_peak_bytes": 1132597248,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "evidence": "v11_closeout/runs/saved_y_g_comparison/attempt02.service/task41_p0_service_receipt.json"
+    },
+    {
+      "run_id": "v11/runs/selected_incident_replay/attempt01.service",
+      "source_sha": "95bdeeff7769efdb46729d602a11b3c3d3229875",
+      "classification": null,
+      "status": "failed_raw_evidence_retained",
+      "official_result": false,
+      "service_parent_seconds": 7.10767467,
+      "process_tree_rss_peak_bytes": null,
+      "task_swap_peak_bytes": null,
+      "descendants_cleared": null,
+      "evidence": "v11_closeout/runs/selected_incident_replay/attempt01.service/task41_p0_service_receipt.json"
+    },
+    {
+      "run_id": "v11/runs/selected_incident_replay/attempt02.service",
+      "source_sha": "967ad08d7da75ff8fa4e49bd63ed9abe53469d46",
+      "classification": "V8_SELECTED_TRACE_STAR_METADATA_ONLY_COMPLETED",
+      "status": "completed",
+      "official_result": false,
+      "service_parent_seconds": 111.71154267387465,
+      "process_tree_rss_peak_bytes": 2603089920,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "evidence": "v11_closeout/runs/selected_incident_replay/attempt02.service/task41_p0_service_receipt.json"
+    },
+    {
+      "run_id": "v11/runs/selected_incident_replay/attempt03.service",
+      "source_sha": "2b085de826b6cddf5727c68e53359f56d2fadaf1",
+      "classification": "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE",
+      "status": "failed_raw_evidence_retained",
+      "official_result": false,
+      "service_parent_seconds": 47.917511329986155,
+      "process_tree_rss_peak_bytes": 671997952,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "evidence": "v11_closeout/runs/selected_incident_replay/attempt03.service/task41_p0_service_receipt.json"
+    },
+    {
+      "run_id": "v11/runs/selected_incident_replay/attempt04.service",
+      "source_sha": "f1697498699d9b4c2c4c4919b97e4a1e2bba22f5",
+      "classification": "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE",
+      "status": "failed_raw_evidence_retained",
+      "official_result": false,
+      "service_parent_seconds": 49.320757986977696,
+      "process_tree_rss_peak_bytes": 671363072,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "evidence": "v11_closeout/runs/selected_incident_replay/attempt04.service/task41_p0_service_receipt.json"
+    },
+    {
+      "run_id": "v11/runs/v9_failed_terminal_audit/attempt02.service",
+      "source_sha": "4e832a819bf0768d89f54a07330f852fe1e44d12",
+      "classification": "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE",
+      "status": "failed_raw_evidence_retained",
+      "official_result": false,
+      "service_parent_seconds": 201.932547681,
+      "process_tree_rss_peak_bytes": null,
+      "task_swap_peak_bytes": null,
+      "descendants_cleared": null,
+      "evidence": "v11_closeout/runs/v9_failed_terminal_audit/attempt02.service/task41_p0_service_receipt.json"
+    },
+    {
+      "run_id": "v11/runs/v9_failed_terminal_audit/attempt03.service",
+      "source_sha": "8ead5068388670ca50d3ebe5bff32999b1c08ed5",
+      "classification": "SUPERVISED_NEGATIVE_RESULT_AUDIT_COMPLETED",
+      "status": "completed",
+      "official_result": false,
+      "service_parent_seconds": 175.031547463,
+      "process_tree_rss_peak_bytes": 552013824,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "evidence": "v11_closeout/runs/v9_failed_terminal_audit/attempt03.service/task41_p0_service_receipt.json"
     }
   ],
   "not_run": [
-    "0.7nm"
+    "0.7nm_complete_field_and_target_solve",
+    "V11_selected_candidate_tensor_replay",
+    "200q_reference_and_factors",
+    "final_0.7nm_accuracy_and_2TB_48h"
   ],
-  "current_state": "V9_FULL_REQUALIFICATION_FAILED_WAITING_REVIEW",
+  "current_state": "V11_SAVED_AUDIT_GLOBAL_DECOMPOSITION_COMPLETE_SELECTED_REPLAY_TIME_NOT_ADMITTED",
   "v6_candidate_history": {
     "candidate_attempt": "20261020T124053Z_attempt10",
     "candidate_attempt_run_index_position": 38,
@@ -1586,5 +1673,6 @@
       ]
     },
     "missing_receipts_remain_unknown": true
-  }
+  },
+  "v11_compact": "b0_v11_saved_diagnostics_20261023.json"
 }

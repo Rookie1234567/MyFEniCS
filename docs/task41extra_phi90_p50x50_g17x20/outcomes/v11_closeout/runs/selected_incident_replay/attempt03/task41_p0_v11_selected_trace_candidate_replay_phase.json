@@ -1,0 +1,8 @@
+{
+  "elapsed_in_phase_seconds": 0.0,
+  "elapsed_since_worker_start_seconds": 32.43330824561417,
+  "error": "V11 metadata attempt02 report identity or selected incident cells differ",
+  "phase": "v11_selected_trace_candidate_replay",
+  "status": "FAILED",
+  "timestamp_utc": "2026-10-23T10:30:35.609974+00:00"
+}

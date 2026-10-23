@@ -1,0 +1,8 @@
+{
+  "elapsed_in_phase_seconds": 0.0,
+  "elapsed_since_worker_start_seconds": 34.062678426969796,
+  "error": "v11_selected_trace_star_candidate_replay_preflight: fixed-window balance 996.109s is below the selected-star estimate and termination reserve 1020.000s",
+  "phase": "v11_selected_trace_candidate_replay",
+  "status": "FAILED",
+  "timestamp_utc": "2026-10-23T10:44:28.135394+00:00"
+}

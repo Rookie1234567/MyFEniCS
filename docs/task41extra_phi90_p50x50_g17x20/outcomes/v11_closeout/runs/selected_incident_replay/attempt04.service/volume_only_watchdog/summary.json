@@ -1,0 +1,327 @@
+{
+  "clock_info": {
+    "monotonic": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "utc": {
+      "implementation": "clock_gettime(CLOCK_REALTIME)",
+      "monotonic": false,
+      "adjustable": true,
+      "resolution": 1e-09
+    },
+    "boottime": {
+      "available": true,
+      "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+      "resolution": 1e-09
+    }
+  },
+  "clock_start": {
+    "monotonic": 2677228.693353108,
+    "boottime": 2677228.693370053,
+    "utc_ns": 1792752233832503714
+  },
+  "timebase_policy": "conservative_realtime",
+  "timebase_policy_version": 1,
+  "task40_v10_campaign": {
+    "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_saved_diagnostics_6h.json",
+    "window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+    "accounting_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_saved_diagnostics_6h.jsonl",
+    "t0_utc_ns": 1792732864242015987,
+    "deadline_utc_ns": 1792754464242015987,
+    "campaign_seconds": 21600.0,
+    "numerical_cutoff_seconds": 20400.0,
+    "closeout_reserve_seconds": 1200.0,
+    "phase": "numeric",
+    "phase_sub_budget_seconds": 1030.5594257418015,
+    "phase_termination_reserve_seconds": 0.0,
+    "closeout_parent_flush_reserve_seconds": 0.0,
+    "phase_authorization": null,
+    "watchdog_start_accounting": {
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 181,
+      "label": "watchdog_start_numeric",
+      "phase": "numeric",
+      "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+      "t0_utc_ns": 1792732864242015987,
+      "deadline_utc_ns": 1792754464242015987,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      },
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2677220.307983864,
+        "monotonic": 2677220.307983178,
+        "utc_ns": 1792752225447117452
+      },
+      "sample": {
+        "monotonic": 2677228.543320663,
+        "boottime": 2677228.543322451,
+        "utc_ns": 1792752233682456073,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+      },
+      "adjacent_interval": {
+        "elapsed_seconds": {
+          "monotonic": 8.235337484627962,
+          "boottime": 8.23533858684823,
+          "utc": 8.235338621
+        },
+        "budget_seconds": 8.235338621,
+        "discrepancy_seconds": 1.1363720382462361e-06,
+        "tolerance_seconds": 5.0,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 1.1363720382462361e-06
+      },
+      "bootstrap_charged_seconds": 41.126738006,
+      "cumulative_charged_seconds": 19369.4405742582,
+      "cutoff_seconds": 20400.0
+    },
+    "first_exact_monotonic_at_t0": "NOT_CAPTURED",
+    "watchdog_end_accounting": {
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 214,
+      "label": "watchdog_end",
+      "phase": "numeric",
+      "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+      "t0_utc_ns": 1792732864242015987,
+      "deadline_utc_ns": 1792754464242015987,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      },
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2677266.495193843,
+        "monotonic": 2677266.495192841,
+        "utc_ns": 1792752271634327516
+      },
+      "sample": {
+        "monotonic": 2677266.624588834,
+        "boottime": 2677266.624589518,
+        "utc_ns": 1792752271763723130,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+      },
+      "adjacent_interval": {
+        "elapsed_seconds": {
+          "monotonic": 0.12939599296078086,
+          "boottime": 0.12939567537978292,
+          "utc": 0.129395614
+        },
+        "budget_seconds": 0.12939599296078086,
+        "discrepancy_seconds": 3.789607808668549e-07,
+        "tolerance_seconds": 5.0,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -3.789607808668549e-07
+      },
+      "bootstrap_charged_seconds": 41.126738006,
+      "cumulative_charged_seconds": 19407.52184748736,
+      "cutoff_seconds": 20400.0
+    }
+  },
+  "time_policy": "enforce",
+  "time_gate_evaluated": true,
+  "time_gate_action": "enforce",
+  "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+  "swap_policy": "worker_defined",
+  "process_tree_swap_gate_enforced": true,
+  "global_swap_gate_enforced": false,
+  "job_cgroup_swap_gate_enforced": true,
+  "job_cgroup_swap_start_bytes": 0,
+  "time_reference_seconds": {
+    "workflow": 1030.5594257418015,
+    "solve": null,
+    "active_pc": null
+  },
+  "pss_sampling_policy": "disabled_by_profile",
+  "pss_status": "DISABLED_BY_PROFILE",
+  "sampled_process_tree_pss_peak_bytes": null,
+  "cache_metadata_stable": true,
+  "classification": "WORKER_FAILED",
+  "leader_exit_code": 3,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    4093549
+  ],
+  "observed_child_identities": [
+    {
+      "pid": 4093549,
+      "start_ticks": 267722869
+    }
+  ],
+  "sampled_process_tree_rss_peak_bytes": 671363072,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "process_tree_samples": 32,
+  "process_tree_all_status_readable": true,
+  "process_tree_all_identity_complete": true,
+  "process_tree_identity_coverage": "complete",
+  "process_tree_identity_sample_count": 61,
+  "observed_child_identity_coverage": "complete",
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 4250493,
+      "pswpout_pages": 7183007
+    },
+    "end": {
+      "pswpin_pages": 4250493,
+      "pswpout_pages": 7183007
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 2037746216960,
+    "effective_total_bytes": 1649267441664,
+    "effective_available_bytes": 1649153273856,
+    "host_mem_available_bytes": 2037746216960,
+    "task_cgroup_available_bytes": 1649153273856,
+    "host_launch_available_bytes": 1969026740224,
+    "task_cgroup_reserve_bytes": 0,
+    "task_cgroup_launch_available_bytes": 1649153273856,
+    "reserve_domains_separated": true,
+    "effective_available_after_reserves_bytes": 1649153273856,
+    "reserve_bytes": 68719476736,
+    "launch_cap_bytes": 1649267441664,
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+    "static_tree_cap_bytes": null,
+    "cgroup_limits": [
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261023T104335-4092511.service",
+        "limit_bytes": 1649267441664,
+        "current_bytes": 114167808,
+        "anon_bytes": 110739456,
+        "file_bytes": 1421312,
+        "file_dirty_bytes": 12288
+      }
+    ],
+    "cgroup_memory_stats": [
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261023T104335-4092511.service",
+        "limit_bytes": 1649267441664,
+        "current_bytes": 114167808,
+        "anon_bytes": 110739456,
+        "file_bytes": 1421312,
+        "file_dirty_bytes": 12288
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice",
+        "limit_bytes": null,
+        "current_bytes": 284369936384,
+        "anon_bytes": 499310592,
+        "file_bytes": 276723990528,
+        "file_dirty_bytes": 36864
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service",
+        "limit_bytes": null,
+        "current_bytes": 285776416768,
+        "anon_bytes": 779853824,
+        "file_bytes": 277751259136,
+        "file_dirty_bytes": 49152
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+        "limit_bytes": null,
+        "current_bytes": 937989353472,
+        "anon_bytes": 84079620096,
+        "file_bytes": 832994951168,
+        "file_dirty_bytes": 872448
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice",
+        "limit_bytes": null,
+        "current_bytes": 938120826880,
+        "anon_bytes": 84079628288,
+        "file_bytes": 833117761536,
+        "file_dirty_bytes": 872448
+      }
+    ],
+    "dynamic_launch_cap_bytes": 1649267441664,
+    "tree_cap_bytes": 1649267441664,
+    "cap_policy": "min(split_domain_dynamic_process_tree_cap, explicit_tree_cap)"
+  },
+  "samples": 32,
+  "elapsed_seconds": 37.93014527019113,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": "development_worktree; not formal PDE provenance",
+  "time_exceeded": {
+    "workflow": false,
+    "solve": false,
+    "active_pc": false
+  },
+  "job_cgroup_swap": {
+    "gate_enforced": true,
+    "start_swap_current_bytes": 0,
+    "peak_swap_current_bytes": 0,
+    "sample_count": 32,
+    "end": {
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261023T104335-4092511.service",
+      "readable": true,
+      "dedicated_job_cgroup": true,
+      "member_count": 1,
+      "memory_current_bytes": 116445184,
+      "memory_peak_bytes": 498778112,
+      "memory_limit_bytes": 1649267441664,
+      "swap_current_bytes": 0
+    },
+    "passed": true
+  },
+  "clock_end": {
+    "monotonic": 2677266.624200708,
+    "boottime": 2677266.624220703,
+    "utc_ns": 1792752271763358506,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  },
+  "workflow_clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 37.930847600102425,
+      "boottime": 37.930850649718195,
+      "utc": 37.930854792
+    },
+    "budget_seconds": 37.93100705044092,
+    "discrepancy_seconds": 7.19189757347749e-06,
+    "tolerance_seconds": 5.0,
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": 7.19189757347749e-06,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.12930543534457684,
+        "boottime": 0.12930796761065722,
+        "utc": 0.129311983
+      },
+      "budget_seconds": 0.129311983,
+      "discrepancy_seconds": 6.547655423155829e-06,
+      "tolerance_seconds": 5.0,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 6.547655423155829e-06
+    },
+    "utc_positive_excess_seconds": 2.0058357434321605e-05
+  },
+  "time_end_observation": {
+    "time_policy": "enforce",
+    "time_gate_evaluated": true,
+    "time_gate_action": "enforce",
+    "observed_seconds": 37.93100705044092,
+    "limit_seconds": 1030.5594257418015,
+    "inclusive": true,
+    "exceeded": false,
+    "passed": true
+  }
+}
