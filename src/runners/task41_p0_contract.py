@@ -758,6 +758,33 @@ def _git(root: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
+def _is_task41_b0_saved_diagnostics_contract(
+    contract: Mapping[str, Any], root: Path
+) -> bool:
+    case = contract.get("case")
+    source = contract.get("source")
+    window = contract.get("window")
+    if (
+        contract.get("task_id") != TASK41_MODEL_ID
+        or contract.get("execution_scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+        or not isinstance(case, Mapping)
+        or case.get("model_id") != TASK41_MODEL_ID
+        or case.get("run_id") != TASK41_B0_RUN_ID
+        or not isinstance(source, Mapping)
+        or not re.fullmatch(r"[0-9a-f]{40}", str(source.get("sha", "")))
+        or not isinstance(window, Mapping)
+        or window.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+        or not re.fullmatch(r"[0-9a-f]{40}", str(window.get("entry_source_sha", "")))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(window.get("authorization_sha256", "")))
+    ):
+        return False
+    try:
+        window_path = _resolve(root, window.get("path"), "window.path")
+    except Task41ContractError:
+        return False
+    return window_path == (root / TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE).resolve()
+
+
 def _saved_output_consumer_source_sha(
     contract: Mapping[str, Any], root: Path, *, allow_current_source: bool = False
 ) -> str:
@@ -2577,7 +2604,11 @@ def launcher_values(
         require_clean_source=True,
     )
     if saved_output_continuation:
-        _saved_output_consumer_source_sha(contract, root)
+        _saved_output_consumer_source_sha(
+            contract,
+            root,
+            allow_current_source=_is_task41_b0_saved_diagnostics_contract(contract, root),
+        )
     window = load_task41_p0_fixed_window(contract, current_root=root, require_current_boot=True)
     runtime = contract["runtime"]
     resources = contract["resources"]
@@ -2632,8 +2663,11 @@ def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
             require_clean_source=True,
         )
         if continuation:
+            saved_diagnostics_scope = _is_task41_b0_saved_diagnostics_contract(contract, root)
             current_source_sha = _saved_output_consumer_source_sha(
-                contract, root, allow_current_source=(b0_audit or v9_screen)
+                contract,
+                root,
+                allow_current_source=(b0_audit or v9_screen or saved_diagnostics_scope),
             )
             consumer_sha = environment.get("TASK41_P0_CONSUMER_SOURCE_SHA", "")
             if b0_audit:

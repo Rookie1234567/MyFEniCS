@@ -259,6 +259,111 @@ def test_saved_diagnostics_prepare_binds_scope_and_reuses_entry_source_window(
     )
 
 
+@pytest.mark.parametrize("failure", [None, "dirty", "branch", "source", "legacy_scope"])
+def test_saved_diagnostics_service_source_gate_allows_current_entry_only_for_v11_scope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
+) -> None:
+    root = Path(task41_p0_contract.__file__).resolve().parents[2]
+    head = "a" * 40
+    contract_sha = "d" * 64
+    abi_sha = "e" * 64
+    runtime = Path(sys.executable).resolve().parents[1]
+    contract = {
+        "task_id": task41_p0_contract.TASK41_MODEL_ID,
+        "branch": task41_p0_contract.TASK41_BRANCH,
+        "source": {"sha": head if failure != "source" else "b" * 40},
+        "execution_scope": task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+        "case": {
+            "model_id": task41_p0_contract.TASK41_MODEL_ID,
+            "run_id": task41_p0_contract.TASK41_B0_RUN_ID,
+            "input_path": "input/b0.dat",
+        },
+        "window": {
+            "path": str(task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE),
+            "sha256": "f" * 64,
+            "entry_source_sha": head,
+            "scope": task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            "authorization_sha256": "c" * 64,
+        },
+        "runtime": {
+            "runtime_prefix": str(runtime),
+            "abi_receipt_path": str(root / "abi.json"),
+            "abi_receipt_sha256": abi_sha,
+            "jit_cache": str(root / "jit"),
+        },
+        "resources": {
+            "task_memory_max_bytes": 1 << 30,
+            "host_reserve_bytes": 1 << 28,
+            "memory_swap_max_bytes": 0,
+        },
+    }
+    if failure == "legacy_scope":
+        contract.pop("execution_scope")
+        contract["window"] = {
+            "path": str(task41_p0_contract.TASK41_B0_V9_WINDOW_RELATIVE),
+            "sha256": "f" * 64,
+            "entry_source_sha": head,
+        }
+    current_branch = "wrong-branch" if failure == "branch" else task41_p0_contract.TASK41_BRANCH
+    status = " M src/runners/example.py" if failure == "dirty" else ""
+
+    def fake_git(_root: Path, *args: str) -> str:
+        if args == ("rev-parse", "HEAD"):
+            return head
+        if args == ("branch", "--show-current"):
+            return current_branch
+        if args == ("status", "--porcelain", "--untracked-files=normal"):
+            return status
+        raise AssertionError(f"unexpected git query: {args!r}")
+
+    def require_contract(_path: object, **kwargs: object) -> tuple[dict[str, object], str]:
+        assert kwargs["current_root"] == root
+        assert kwargs["check_current_source"] is False
+        assert kwargs["require_clean_source"] is True
+        return contract, contract_sha
+
+    monkeypatch.setattr(task41_p0_contract, "_git", fake_git)
+    monkeypatch.setattr(task41_p0_contract, "require_task41_p0_contract", require_contract)
+    monkeypatch.setattr(
+        task41_p0_contract,
+        "load_task41_p0_fixed_window",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            path=root / task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE,
+            sha256="f" * 64,
+        ),
+    )
+    if failure is not None:
+        expected = "distinct consumer head" if failure == "legacy_scope" else "current contracted source"
+        with pytest.raises(task41_p0_contract.Task41ContractError, match=expected):
+            task41_p0_contract.launcher_values(
+                tmp_path / "contract.json", current_root=root, saved_output_continuation=True
+            )
+        return
+
+    values = task41_p0_contract.launcher_values(
+        tmp_path / "contract.json", current_root=root, saved_output_continuation=True
+    )
+    assert values[-1] == head
+    environment = {
+        "TASK41_P0_STRICT_EXECUTION": "1",
+        "TASK41_P0_CONTRACT_PATH": str(tmp_path / "contract.json"),
+        "TASK41_P0_CONTRACT_SHA256": contract_sha,
+        "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+        "TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT": "1",
+        "TASK41_P0_CONSUMER_SOURCE_SHA": head,
+        "TASK41_P0_EXPECTED_SOURCE_SHA": head,
+        "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": "1",
+        "_MYFENICS_CLOUD_RUNTIME_PROFILE": "native_linux",
+        "_MYFENICS_CLOUD_ABI_MANIFEST_SHA256": abi_sha,
+    }
+    monkeypatch.setattr(
+        task41_p0_contract, "require_task41_p0_contract", require_contract
+    )
+    assert task41_p0_contract.qualified_activation_identity(environment) == (
+        f"task41_p0_native_complex:{abi_sha}"
+    )
+
+
 @pytest.mark.parametrize(
     ("report_name", "report", "expected_version"),
     [
@@ -3106,8 +3211,9 @@ def test_b0_saved_evidence_checker_accepts_only_missing_bound_output_child(
     assert recovery_calls == [numerical_output]
 
 
+@pytest.mark.parametrize("wrong_donor", [False, True])
 def test_v9_failed_terminal_audit_is_routed_through_saved_task41_service(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, wrong_donor: bool
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
@@ -3159,6 +3265,7 @@ def test_v9_failed_terminal_audit_is_routed_through_saved_task41_service(
     contract_sha = "f" * 64
     window_sha = "e" * 64
     v9_window_path = repo_root / contract_module.TASK41_B0_V9_WINDOW_RELATIVE
+    saved_window_path = repo_root / contract_module.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE
     output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha / "v9_failed_terminal_audit"
     contract_case = {
         "model_id": contract_module.TASK41_MODEL_ID,
@@ -3194,12 +3301,23 @@ def test_v9_failed_terminal_audit_is_routed_through_saved_task41_service(
         },
     }
     producer_contract = json.loads(json.dumps(base_contract))
+    producer_contract["window"]["sha256"] = "b" * 64
     consumer_contract = json.loads(json.dumps(base_contract))
     consumer_contract["source"]["sha"] = source_sha
+    consumer_contract["window"] = {
+        "path": str(saved_window_path),
+        "sha256": window_sha,
+        "entry_source_sha": source_sha,
+        "scope": contract_module.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+        "authorization_sha256": "9" * 64,
+    }
+    consumer_contract["execution_scope"] = contract_module.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+    if wrong_donor:
+        producer_contract["case"]["input_sha256"] = "0" * 64
     producer_sha = "a" * 64
 
     class FakeWindow:
-        path = v9_window_path
+        path = saved_window_path
         sha256 = window_sha
         accounting_path = repo_root / "accounting.jsonl"
         closeout_seconds = 1200.0
@@ -3279,24 +3397,33 @@ def test_v9_failed_terminal_audit_is_routed_through_saved_task41_service(
     monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_SHA256", window_sha)
     monkeypatch.setenv("TASK41_P0_EXPECTED_SOURCE_SHA", source_sha)
 
-    result = _run_task41_p0_service(
-        unit="myfenics-case-fixture.service",
-        runtime_prefix=runtime_prefix,
-        abi_receipt=abi_receipt,
-        jit_cache=jit_cache,
-        case_args=[
-            "--task41-p0-saved-b0-v9-failed-terminal-audit",
-            "--producer-contract", str(producer_contract_path),
-            "--producer-contract-sha256", producer_sha,
-            "--run-root", str(run_root),
-            "--summary", str(summary_path),
-            "--manifest", str(manifest_path),
-            "--output-dir", str(output_root),
-        ],
-        contract_path=consumer_contract_path,
-        repo_root=repo_root,
-    )
+    def run_service() -> int:
+        return _run_task41_p0_service(
+            unit="myfenics-case-fixture.service",
+            runtime_prefix=runtime_prefix,
+            abi_receipt=abi_receipt,
+            jit_cache=jit_cache,
+            case_args=[
+                "--task41-p0-saved-b0-v9-failed-terminal-audit",
+                "--producer-contract", str(producer_contract_path),
+                "--producer-contract-sha256", producer_sha,
+                "--run-root", str(run_root),
+                "--summary", str(summary_path),
+                "--manifest", str(manifest_path),
+                "--output-dir", str(output_root),
+            ],
+            contract_path=consumer_contract_path,
+            repo_root=repo_root,
+        )
 
+    if wrong_donor:
+        with pytest.raises(ValueError, match="V9 producer and current consumer contracts differ in B0 identity"):
+            run_service()
+        assert captured == {}
+        assert not output_root.exists()
+        return
+
+    result = run_service()
     assert result == 0
     assert captured["b0_v9_failed_terminal_audit_mode"] is True
     assert captured["checker_only"] is True
