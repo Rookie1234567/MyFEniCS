@@ -35,9 +35,9 @@ _SUPPORTED_DEGREES = (3, 4, 5, 6)
 _HCURL_FAMILY = "hcurl"
 _H1_FAMILY = "h1"
 _FAMILIES = (_HCURL_FAMILY, _H1_FAMILY)
-# Keep the bounded mixed-map working set larger than the measured 34-map
-# p3-p6 candidate, so per-cell transfer and surface projections can reuse it.
-_MIXED_REFERENCE_CACHE_MAXSIZE = 64
+# Retain consecutive mixed-layout working sets so per-cell transfer and
+# surface projections can reuse their reference spaces without reconstruction.
+_MIXED_REFERENCE_CACHE_MAXSIZE = 128
 
 
 class ExactSequenceDegreeError(ValueError):
