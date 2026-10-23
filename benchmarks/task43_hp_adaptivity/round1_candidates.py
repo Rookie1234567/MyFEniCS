@@ -562,6 +562,7 @@ def _audit_plan(
     parent_independent_fe_dofs: int = PARENT_INDEPENDENT_FE_DOFS,
     parent_storage_path: Path | None = None,
     parent_storage_sha256: str | None = None,
+    audit_parent_transfer: bool = True,
 ) -> dict[str, Any]:
     audit_started = time.perf_counter()
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
@@ -628,6 +629,20 @@ def _audit_plan(
             or actual_storage_sha256 != parent_storage_sha256
         ):
             raise ValueError("accepted parent storage SHA differs before transfer audit")
+        if not audit_parent_transfer:
+            transfer_audit = {
+                "classification": "accepted-parent-to-candidate-space-transfer",
+                "status": "not_run_direct_solve_does_not_use_initial_guess",
+                "pass": None,
+                "performed": False,
+                "parent_storage_path": str(parent_storage_path),
+                "parent_storage_sha256": actual_storage_sha256,
+                "mesh_and_p6_dof_identity_pass": None,
+                "cost_status": "not_incurred",
+                "wall_seconds": None,
+                "pde_solve_performed": False,
+            }
+    if parent_storage_path is not None and audit_parent_transfer:
         p6_space = _create_nedelec_space(mesh_data.mesh, cfg)
         actual_arrays = _actual_mesh_identity(mesh_data.mesh, p6_space)
         identity_to_storage = {
@@ -712,7 +727,7 @@ def _audit_plan(
             "pde_solve_performed": False,
             "wall_seconds": time.perf_counter() - transfer_started,
         }
-    elif plan["task43_candidate"]["provenance"].get(
+    elif parent_storage_path is None and plan["task43_candidate"]["provenance"].get(
         "accepted_parent_selection_sha256"
     ):
         transfer_audit = {
@@ -811,6 +826,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--marking-record", type=Path, default=DEFAULT_MARKING)
     parser.add_argument("--acceptance-contract", type=Path, default=DEFAULT_ACCEPTANCE)
     parser.add_argument("--accepted-parent-selection-record", type=Path)
+    parser.add_argument(
+        "--skip-parent-transfer",
+        action="store_true",
+        help="skip the accepted-parent p transfer audit unused by direct solves; keep actual space authority",
+    )
     parser.add_argument("--round-id", default="round1")
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
@@ -819,6 +839,8 @@ def main(argv: list[str] | None = None) -> int:
     comm = MPI.COMM_WORLD
     if comm.size != 1:
         parser.error("candidate plan audit is qualified here for MPI1 only")
+    if args.skip_parent_transfer and args.accepted_parent_selection_record is None:
+        parser.error("--skip-parent-transfer requires --accepted-parent-selection-record")
     cfg = _h100_config(
         kind="empty_h_active_p3",
         case_name=f"task43_{args.round_id}_candidate_plan_initial180_mpi1",
@@ -908,6 +930,7 @@ def main(argv: list[str] | None = None) -> int:
                 transfer_kwargs = {
                     "parent_storage_path": Path(parent["parent_storage_path"]),
                     "parent_storage_sha256": parent["parent_storage_sha256"],
+                    "audit_parent_transfer": not args.skip_parent_transfer,
                 }
             summaries.append(
                 _audit_plan(
@@ -933,6 +956,7 @@ def main(argv: list[str] | None = None) -> int:
             else "task43.adaptive-candidate-plan-audit-bundle.v1"
         ),
         "classification": "mesh_and_entity_closure_only_no_pde_solve",
+        "skip_parent_transfer_requested": args.skip_parent_transfer,
         "started_unix_seconds": program_started_unix_seconds,
         "completed_unix_seconds": time.time(),
         "total_wall_seconds": time.perf_counter() - program_started,
