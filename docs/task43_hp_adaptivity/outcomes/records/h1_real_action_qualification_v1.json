@@ -1,0 +1,411 @@
+{
+  "schema": "task43.h1-real-action-qualification.v1",
+  "status": "H_ACTION_NUMERICALLY_QUALIFIED_FINAL_ACCURACY_FAIL_WITH_AUXILIARY_ABI_EVIDENCE_GAP",
+  "scientific_scope": {
+    "candidate_id": "round1_h_split_46_p3",
+    "parent": "original initial180 current/tightening/marking triplet",
+    "frozen_plan_sha256": "d96c3b46ec739c256e1072885795ec9a0eb502190bc99d83fdb78a6b3e3de10a",
+    "not_accepted8_candidate": true,
+    "no_transition1_rewrite": true,
+    "working_parent": "accepted transition8/round8_p_up",
+    "accepted_updates": 8,
+    "scientific_model_lineages": 10,
+    "fullsolver_attempts": 14,
+    "formal_p_h_plans": 16,
+    "cross_mesh_transfer_status": "not_run_not_qualified"
+  },
+  "actual_h_geometry_and_FE": {
+    "root_cells": 180,
+    "user_splits": 46,
+    "closure_splits": 14,
+    "actual_splits": 60,
+    "leaves": 600,
+    "hanging_patches": 74,
+    "cell_degree": 3,
+    "independent_trace_rows": 25635,
+    "active_cell_interior_rows": 21600,
+    "independent_FE": 47235,
+    "added_FE_vs_initial": 32115,
+    "augmented_rows": 26247,
+    "independent_scope": "Root independently reconstructed actual600 storage leaf boxes/volume/degree and21600 interiors. Trace25635 uses qualified authority plus independent A6 row match, not second trace implementation."
+  },
+  "numeric_gates": {
+    "pass": true,
+    "A6": {
+      "independent_rhs_raw_l2_norm": 0.7290005680175513,
+      "relative": 8.74535125201844e-10,
+      "residual_raw_l2_norm": 6.375366030234446e-10
+    },
+    "condensed": {
+      "relative": 3.86145195222893e-13,
+      "residual_raw_l2_norm": 2.8149196702228836e-13,
+      "rhs_raw_l2_norm": 0.7289795924038467
+    },
+    "energy_closure": {
+      "A_volume": 0.43245432915201953,
+      "R_total": 0.552257539829509,
+      "T_total": 0.015288131019095815,
+      "absolute_1_minus_R_minus_T_minus_A": 6.243339178979568e-13
+    },
+    "backend_requested_live_summary": "mumps",
+    "full612_modes": true,
+    "checkpoint_shared_arrays_bitwise_equal": 11,
+    "same_LU_policy": "one natural existing correction; no perturbation/no repeated correction loop"
+  },
+  "comparison": {
+    "initial_eta_G": 0.4280717295778482,
+    "h_eta_G": 0.24564116106009204,
+    "h_J_infinity": 300895.0811789017,
+    "selection": {
+      "G_improvement": 0.1824305685177562,
+      "actual_added_independent_FE_dofs": 32115,
+      "candidate_independent_FE_dofs": 47235,
+      "epsilon_G": 9.088158796603444e-06,
+      "eta_candidate": 0.24564116106009204,
+      "eta_parent": 0.4280717295778482,
+      "gates": {
+        "G_decrease_exceeds_frozen_noise": true,
+        "J_infinity_within_frozen_noise": true,
+        "candidate_solver_hard_gates_pass": true,
+        "pass": true,
+        "positive_actual_independent_dof_increment": true
+      },
+      "parent_independent_FE_dofs": 15120,
+      "primary_score_G_improvement_per_added_independent_FE_dof": 5.680540822598667e-06,
+      "primary_score_noise_half_width": 2.829879743609978e-10,
+      "primary_score_noise_interval": {
+        "formula": "(eta_parent - eta_candidate +/- epsilon_G) / actual_added_independent_FE_dofs",
+        "half_width": 2.829879743609978e-10,
+        "lower": 5.680257834624305e-06,
+        "upper": 5.680823810573028e-06
+      },
+      "status": "eligible_under_frozen_acceptance_contract"
+    },
+    "q8_point_count": 995328,
+    "volume_nm3": 350000.00000000006,
+    "resampled_new_common_axes": true,
+    "root_audit_scope": "All q8 total E/curl/G,612 power,4 complex amplitude groups,11 checkpoint arrays and FE/score recomputed. Scattered components bounded below R00_s witness, not separately exact scattered norm recomputation.",
+    "final_accuracy": "FAIL: eta_G .245641>1e-4, J300895>1; h is a valid discrete real action, not an accuracy-qualified final model. Original transition1 p winner unchanged.",
+    "holdout_control_fields_read_for_selection": false,
+    "reference_access_scope": "This comparison uses original initial and frozen Y6_1/Y6_2 selection/calibration identities. Historical metadata has been seen; no global project blindness claim.",
+    "final_failed_quantities": {
+      "R_total": {
+        "absolute_error": 0.300903073648067,
+        "tolerance": 1e-05,
+        "pass": false
+      },
+      "T_total": {
+        "absolute_error": 0.041839876053321165,
+        "tolerance": 1e-05,
+        "pass": false
+      },
+      "A_volume": {
+        "absolute_error": 0.2590631976301412,
+        "tolerance": 1e-05,
+        "pass": false
+      },
+      "R00_s": {
+        "absolute_error": 0.3008950811789017,
+        "tolerance": 1e-06,
+        "pass": false
+      }
+    }
+  },
+  "source_identity": {
+    "PDE_clean_HEAD": "cf02416ca0c8bb958b05c3d1bb2ed1c75dfd5882",
+    "successful_comparator_clean_HEAD": "ee03b3985e0b1ffe6e28349704af8ba9d19eccc2",
+    "source_scope": "50 explicitly listed sources only, not transitive closure",
+    "PDE_completion_time_posthash_counts": [
+      50,
+      23
+    ],
+    "failed_comparison_completion_time_posthash_counts": [
+      50,
+      56
+    ],
+    "successful_comparison_current_posthash_counts": [
+      50,
+      69
+    ],
+    "auxiliary_ABI_gap": "After PDE and failed comparison completed+posthash persisted, a targeted-test ABI helper accidentally overwrote original standalone h1 ABI JSON. Old bytes/hash0bfe4124... not recovered in bounded snapshot search. Current original-path JSON is postrun; do not claim old manifest currently matches. Actual worker prePDE qualified ABI assertion log, original complete resource/field/checkpoint and completed-run postchecks persist. No timestamp reconstructed, no PDE rerun.",
+    "PDE_resource_terminal_complete": true,
+    "unconditional_provenance_PASS": false
+  },
+  "checker_fix": {
+    "commit": "ee03b3985e0b1ffe6e28349704af8ba9d19eccc2",
+    "cause": "Frozen initial schema lacks two later duplicate independent FE declarations; all original numerical gates already pass. Not h-method or initial-field numerical failure.",
+    "scope": "Default strict, legacy exception only explicit original initial-parent role+exact schema/case/absent declarations+8640trace/6480interior/15120 total/A6 rows. Absence stays null and both-declarations false. Modern candidates/accepted parents remain strict; parent gate now before field restoration/sampling.",
+    "targeted_pytest": "5passed3.48s",
+    "full_Ruff_compileall_diff_check": "PASS",
+    "PDE_rerun": "not_run_not_required"
+  },
+  "resources": {
+    "PDE": {
+      "watchdog": "COMPLETED",
+      "exit_code": 0,
+      "wall_seconds": 1547.4129733722657,
+      "samples": 1256,
+      "simultaneous_sampled_tree_RSS_peak_bytes": 2051149824,
+      "task_VmSwap_peak_bytes": 0,
+      "native_global_swap_pages_delta": 0,
+      "cleared": true,
+      "independent_launcher_exit_code": 0,
+      "gate_seconds": 7800
+    },
+    "failed_comparison": {
+      "watchdog": "WORKER_FAILED",
+      "worker_exit_code": 1,
+      "launcher_exit_code": 2,
+      "wall_seconds": 623.8585878540762,
+      "samples": 501,
+      "tree_RSS_peak_bytes": 1677959168,
+      "task_VmSwap_peak_bytes": 0,
+      "cleared": true
+    },
+    "successful_comparison": {
+      "watchdog": "COMPLETED",
+      "worker_exit_code": 0,
+      "launcher_exit_code": 0,
+      "wall_seconds": 712.5407533859834,
+      "samples": 575,
+      "tree_RSS_peak_bytes": 1653145600,
+      "task_VmSwap_peak_bytes": 0,
+      "native_global_swap_pages_delta": 0,
+      "cleared": true,
+      "gate_seconds": 3600
+    },
+    "legacy_global_label": "Raw WSL-global text retained; native-host all-machine diagnostic, not task attribution.",
+    "forecast_deviation": "PDE25.79min below45–110min forecast; actual comparison11.88min within6–15. No clean paired backend speedup or isolated cold cost claim.",
+    "stage_seconds": {
+      "base_matrix_assembly_seconds": 452.69830127991736,
+      "modal_vector_seconds": 376.332196502015,
+      "factor_setup_seconds": 19.44925588881597,
+      "recovery_seconds": 6.599904605187476
+    },
+    "independent_A6_seconds": 488.7262196983211,
+    "base_timing_scope": "Base452.698s includes actual h space/constraints preparation. Nested build/preallocation not added. Shared JIT not cold."
+  },
+  "costs": {
+    "complete_summary_watchdog_count": 47,
+    "complete_summary_watchdog_subtotal_seconds": 54859.449308278505,
+    "separate_R8_PDE_terminal_missing": true,
+    "R8_observed_elapsed_lower_bound_seconds": 3109.3891972089186,
+    "combined_observed_cost_lower_bound_seconds": 57968.83850548742,
+    "scope": "Listed watchdog subtotal includes watched fixtures/failures/recovery; not complete campaign, excludes unmonitored tests/work/imported reference generation. No cost advantage claim; worker wall not double-added. Original h1 interrupted2430.828569s and all previous negatives retained."
+  },
+  "next_minimum_judgment": {
+    "round9_light_preview": "complete without reference construction/authority/PDE",
+    "marked39": {
+      "p5_raised": 13,
+      "p6_saturated_no_raise": 26,
+      "theta": 0.5,
+      "captured_G2_fraction": 0.5026039634868352
+    },
+    "p_predicted_FE": 110472,
+    "p_predicted_delta_FE": 3747,
+    "h_actual_independent_trace": null,
+    "h_actual_total_FE": null,
+    "h_authority_status": "not_run",
+    "h_verified_interiors": 309060,
+    "h_delta_FE_lower_bound": 202335,
+    "h_conservative_score_upper": 6.670949019458657e-10,
+    "p_eta_strict_threshold_if_actual_delta3747": 0.00011430072479441868,
+    "policy": "Qualified h zero-trace cell interiors survive trace-only constraints, so totalFE>=interiors. Bound is looser than actual score; not actual h FE/cost/qualification. Only p authority next, actualdelta required; no R9 PDE yet. If actualdelta changes recompute derived threshold under unchanged frozen rule.",
+    "keys_p_h_intersection_union": [
+      7,
+      97,
+      5,
+      99
+    ],
+    "partial_three_matrix_bytes_not_RSS_bound": 895332280,
+    "cache_capacity": 128,
+    "budget": "Current attempt14; futureR9p would15; common-source finalbaseline/q/R14 minimum3 would18, two beyond §9 planning16. Disclose irreducible judgments, no automatic G3 authorization; reference-own qualification/control fresh solves separately minimized and released. Lineages never substitute for real attempt/cost count."
+  },
+  "evidence": {
+    "PDE_record": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/run/task43_round1_candidate_record.json",
+      "sha256": "97514dfa489cf0a9be28775de24641193fbe2fa496eff51bb861e1b73e033956",
+      "bytes": 3312092
+    },
+    "PDE_storage": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/run/candidate_recovered_solution_storage.npz",
+      "sha256": "52fbcac472e7ee36c1f92870f97ce6bb8174c10924e05a2653fd38acaac9fc1a",
+      "bytes": 13697119
+    },
+    "PDE_checkpoint": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/run/pre_validation_checkpoint.npz",
+      "sha256": "52fbcac472e7ee36c1f92870f97ce6bb8174c10924e05a2653fd38acaac9fc1a",
+      "bytes": 13697119
+    },
+    "PDE_modes": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "8d9472d5826e3ec3ed2defc5e3c80be0c7d6df6a6585efb8de8c677ebec658f3",
+      "bytes": 905058
+    },
+    "PDE_hard_gates": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/raw_hard_gate_check.json",
+      "sha256": "12562686d1a6c9f8921bb32df57660a4ef540d99e5660197ac3b218bee4d495c",
+      "bytes": 3877
+    },
+    "PDE_resource_and_posthash": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/solve_terminal_executor_audit.json",
+      "sha256": "81794f395cabd54a907727c8f79fe818753cb6e7335453b49d95740727e8a563",
+      "bytes": 1731
+    },
+    "PDE_timings": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/solve_stage_timing_inventory.json",
+      "sha256": "0acb5fc484a1504c78b73cd83ca536fad3df59428c1bf643e9cbea9523c0bf12",
+      "bytes": 4121
+    },
+    "PDE_forecast": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/forecast_preflight.json",
+      "sha256": "fee9d36344a569c4c11d7c47b33e9cac2dadf61cd8e7cae266d28a98817c45aa",
+      "bytes": 14142
+    },
+    "PDE_snapshot_manifest": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/source_snapshot_pre_run/manifest.json",
+      "sha256": "6ce73e46175bc3820ea20c17c769a00459c0b0f2190b2953405f45264b79a103",
+      "bytes": 6089
+    },
+    "PDE_original_source_archive": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+      "sha256": "f4872aa109ffb012a262ee8f433c3cb39ccec3329ed626a98f02e934baa4720e",
+      "bytes": 401168
+    },
+    "PDE_original_input_manifest": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/input_hashes_pre.sha256",
+      "sha256": "7c850ee4ce1786ac4236bb7f757ac77b50e53271775c625556d9c9c1e3459223",
+      "bytes": 3549
+    },
+    "auxiliary_ABI_overwrite_gap": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/postrun_ABI_auxiliary_overwrite_negative_note.json",
+      "sha256": "55de827a638e1f6e1fdca7080b0148a55b780be7905b2fccf3e173c50bef1058",
+      "bytes": 2367
+    },
+    "auxiliary_ABI_bounded_search": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/abi_original_bytes_bounded_search.json",
+      "sha256": "9ec765d4278cb540f5b715bcfbb08905d6b0de9a76ed6016ca9a800a546ce994",
+      "bytes": 2488
+    },
+    "checker_final_checks": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/legacy_parent_checker_fix_checks/checks_final.json",
+      "sha256": "29e8a24c6b862d64c2799a63d7dada0290d9feafaf2626c43906450d9f1e4efe",
+      "bytes": 2680
+    },
+    "checker_final_pytest": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/legacy_parent_checker_fix_checks/pytest_final.txt",
+      "sha256": "2a6cedadd67fa8285c356e622f1fe53118a67a84ad76602a6f0066ad6e04ec71",
+      "bytes": 98
+    },
+    "checker_full_Ruff": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/legacy_parent_checker_fix_checks/ruff_full.txt",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19
+    },
+    "checker_real_record_routes": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/legacy_parent_checker_fix_checks/real_record_route_checks.json",
+      "sha256": "9df0d19676d8d6b16ba821b908c61d77115929622891a0e1d0228ac3d54d92a0",
+      "bytes": 5549
+    },
+    "comparison1_failure": {
+      "path": "benchmarks/artifacts/task43/h1_qualification_comparison_attempt1/failure_terminal_executor_audit.json",
+      "sha256": "cfa1a93da165d327fe3552f16bf6e374c2d114c65b6393cdbbe6622f77b24b04",
+      "bytes": 1315
+    },
+    "comparison1_traceback": {
+      "path": "benchmarks/artifacts/task43/h1_qualification_comparison_attempt1/failure_traceback_original.txt",
+      "sha256": "ca718223b8172ad66957e1c28eede35ad614b10eff20ffeabdd7acfd394a3640",
+      "bytes": 780
+    },
+    "comparison1_parent_diagnosis": {
+      "path": "benchmarks/artifacts/task43/h1_qualification_comparison_attempt1/initial_parent_raw_gate_diagnosis.json",
+      "sha256": "de5787eecd6429607abe76edb91180013f16c95e1634051fea34f6f392b1dba7",
+      "bytes": 1568
+    },
+    "comparison2_record": {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/h1_qualification_retry_comparison_attempt2/round1_candidate_comparison_v1.json",
+      "sha256": "cb1e1aaa599a7bee3d91d8ce8ea2efd1871edd7bc07e08b90284deb106485c45",
+      "bytes": 91652
+    },
+    "comparison2_q8_bundle": {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/h1_qualification_retry_comparison_attempt2/round1_candidate_shared_volume_q8.npz",
+      "sha256": "51bc014d0942bfd43bf21f4f23eb2c330d3f2c81dbefdaa0054c93b48b6f4cf4",
+      "bytes": 279810129
+    },
+    "comparison2_resource_and_posthash": {
+      "path": "benchmarks/artifacts/task43/h1_qualification_comparison_attempt2/terminal_executor_audit.json",
+      "sha256": "78e97a41c601a70387db8daa0aff42c5e3f92d93ff6382d4705a1e7d6a3decae",
+      "bytes": 4104
+    },
+    "comparison2_snapshot": {
+      "path": "benchmarks/artifacts/task43/h1_qualification_comparison_attempt2/source_snapshot_pre_run/manifest.json",
+      "sha256": "81b77e209f057e9e6be2b5777d1405ff134572d3ae22ae90b2a2b224bb0e1944",
+      "bytes": 6097
+    },
+    "comparison2_input_manifest": {
+      "path": "benchmarks/artifacts/task43/h1_qualification_comparison_attempt2/comparison_input_hashes_pre.sha256",
+      "sha256": "91e818fc46fcf866d9b75587a61c3676d9f9d7f8e1b0f7aa58bd174d4631203b",
+      "bytes": 11013
+    },
+    "comparison2_forecast": {
+      "path": "benchmarks/artifacts/task43/h1_qualification_comparison_attempt2/comparison_forecast.json",
+      "sha256": "c76d10ed3374ccd2e9b2a75a4961453b742c4744c1e1dcf436f122bfb0a4404a",
+      "bytes": 1395
+    },
+    "frozen_transition1": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round1_selection_transition1_v1.json",
+      "sha256": "aa31fca51bc56fee1d2960a0cd7bcbf87ac26c518711282e4f00e5b128387366",
+      "bytes": 19754
+    },
+    "working_parent_transition8": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json",
+      "sha256": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2",
+      "bytes": 22617
+    },
+    "round9_preview": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/preview.json",
+      "sha256": "21ae0c3433bf534b35c4888bbe37cee082e3b1b8d47f6affa18a6e703e6b02cc",
+      "bytes": 192330
+    },
+    "round9_preview_cost": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/preview_cost_identity_index.json",
+      "sha256": "23c60358f4e29e17073471df91826701c8fa8db7d38027b0a97f6aae430dfb8f",
+      "bytes": 2434
+    },
+    "round9_bound_proof": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/root_review/root_round9_conservative_h_score_bound_proposal.json",
+      "sha256": "b347450e3066a757e4836231ff07c4e41cd350c6f81443d65fef75672de70053",
+      "bytes": 1890
+    },
+    "root_h1_solve_raw_audit.json": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/root_review/root_h1_solve_raw_audit.json",
+      "sha256": "4e0931ec6be678714485bdb637227e11a787afdd91400322560ec57d54ed824a",
+      "bytes": 3464
+    },
+    "root_solve_raw_audit.py": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/root_review/root_solve_raw_audit.py",
+      "sha256": "f096890ced7d19743e9260e612bcd3f44e5c686614939d1905c012aab730ecfd",
+      "bytes": 4361
+    },
+    "root_h1_geometry_resource_hash_audit.json": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/root_review/root_h1_geometry_resource_hash_audit.json",
+      "sha256": "84525b6f8d27fb7c60fdef516e4311b3017ae994289767b2fa833b8513626279",
+      "bytes": 1178
+    },
+    "root_h1_candidate_raw_audit.py": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/root_review/root_h1_candidate_raw_audit.py",
+      "sha256": "9f8fb5c7a34d3c1b41ccf53d3869d57ecfe05c0eaa2af85612abfc1084e26fac",
+      "bytes": 10035
+    },
+    "root_h1_candidate_raw_audit.json": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/root_review/root_h1_candidate_raw_audit.json",
+      "sha256": "3d0753d4407082d8145259be8c39acd30bdca6997f0139261d228628a738c990",
+      "bytes": 4163
+    },
+    "root_h1_comparison2_resource_hash_audit.json": {
+      "path": "benchmarks/artifacts/task43/round1_h_qualification_retry_attempt1/root_review/root_h1_comparison2_resource_hash_audit.json",
+      "sha256": "680f97f65c37964e3fc3a00ebeb051061e12d4287ea70f8c3642b7355d8f69d1",
+      "bytes": 983
+    }
+  }
+}

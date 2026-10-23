@@ -56,7 +56,7 @@ base assembly1205.705s含新进程空间准备，plan1223s只校准不额外叠�
 
 第8轮预览15.284s、cache前后0miss/0size；p/h工作集19/54、并58/交15，3矩阵522,009,312B仅部分对象体积，非RSS上界。无需数值源码或测试改动，正式plan source clean ca437b83b3e9a5a13fd257da403ddcd312ca202b，50listed源码/35输入posthash和plan-preview bytes一致。skip p转移保持not_run/pass null/wall null，不冒充测量零成本。原7200s plan草稿not_run保留；本次启动前按125min预测上沿+10min登记8100s，运行中未延长。下一例PDE仍独立使用7200s/192GiB门。
 
-第8轮p数值场和冻结q8比较随后完成，主控接受transition8作为下一working parent：η_G=.000125888488、J10.602439，p保守score6.502453778e−9>h上界1.321091630e−9。独立A6原范数8.54394e−9/本次RHS1.05603261652=8.09060e−9、cond5.27924e−13、closure1.76692e−12，612/11checkpoint数组、FE和所有原字段hash通过。h8仅按界剪枝notrun，真实h资格仍缺；[transition8](task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json)及[审计](task43_hp_adaptivity/outcomes/records/round8_independent_audit_v1.json)绑定全部原证据。
+第8轮p数值场和冻结q8比较随后完成，主控接受transition8作为下一working parent：η_G=.000125888488、J10.602439，p保守score6.502453778e−9>h上界1.321091630e−9。独立A6原范数8.54394e−9/本次RHS1.05603261652=8.09060e−9、cond5.27924e−13、closure1.76692e−12，612/11checkpoint数组、FE和所有原字段hash通过。h8仅按界剪枝notrun，当时真实h资格仍缺（随后h1重试见下文）；[transition8](task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json)及[审计](task43_hp_adaptivity/outcomes/records/round8_independent_audit_v1.json)绑定全部原证据。
 
 **第8轮PDE不是无条件run PASS：** session83325退出143、senderUNKNOWN、原watchdog summary缺失；2491采样截至elapsed3109.389197s仅观测下界，采样窗峰6,844,891,136B/观测taskVmSwap0不是全生命周期峰或whole-run零swap。worker自身wall3113.875850s完整结束、记录/恢复场通过；后来原PID+startticks消失不能反推watchdog清理/exit0。原summary不补造，不为元数据重跑PDE，全机swap增量未知。独立新比较watchdog另以241.821227s/196samples/峰1,152,663,552B/exit0清理完成，不修复PDE资源资格。
 
@@ -67,7 +67,20 @@ base assembly1205.705s含新进程空间准备，plan1223s只校准不额外叠�
 | E/H总场及散射场、G入射地板差 | E均1.109857e−4，H均1.392049e−4，G1.258885e−4；各门1e−4 | 全部仍未过 |
 | 四复幅组top_s/top_p/bottom_s/bottom_p | 9.595122e−5/4.119941e−5/1.129787e−4/5.913001e−5；各门1e−4 | top_s本轮新达，bottom_s未过；弱p raw15.49%/21.33%保留，bottom_p略恶化仍过地板门 |
 
-source e834841b2ca4777bbc76f56afd3c7d2968c99a3b clean，PDE50listed/31inputs、比较50listed/60inputs posthash通过；source仅listed scope。base1083.115823s含新空间准备，不加plan835s，port874.167547/setup103.140333/recovery24.010186及A6分列。当前8次接受/10条完整模型lineage/13次full-scale尝试/16计划；43份完整summary watchdog小计51,951.16159727797s，另R8 PDE观测3109.389197s下界，合计已观测下界55,060.55079448689s，不是完整campaign/PDE成本或成本胜出证据。未监控tests/工作、导入参考生成另记；所有原失败/停止/费用保留。下一步仅第9轮轻量preview；不启动authority/PDE/h/G3，不读holdout/control，真实h1资格不可跳过。
+source e834841b2ca4777bbc76f56afd3c7d2968c99a3b clean，PDE50listed/31inputs、比较50listed/60inputs posthash通过；source仅listed scope。base1083.115823s含新空间准备，不加plan835s，port874.167547/setup103.140333/recovery24.010186及A6分列。第8轮收口时8次接受/10条完整模型lineage/13次full-scale尝试/16计划；43份完整summary watchdog小计51,951.16159727797s，另R8 PDE观测3109.389197s下界，合计已观测下界55,060.55079448689s，不是完整campaign/PDE成本或成本胜出证据。未监控tests/工作、导入参考生成另记；所有原失败/停止/费用保留。当时下一步仅第9轮轻量preview；随后已完成预览及原h1重试，最新范围见下文。
+
+
+真实h动作现已补齐：原h1 plan、initial/tightening/marking及candidate id不变，固定MUMPS/一次自然same-LU完成600个p3叶，FE47,235=25,635迹+21,600内部。A6=8.74535125e−10、cond3.86145195e−13、closure6.24333918e−13，完整612/11checkpoint及995,328点公共q8已由主控独立复算；η=.428071730→.245641161、J300895.081仍远未最终合格。它是原h lineage第14次solver尝试，不新transition，不改原p1胜出，working parent仍accepted8。见[h1资格与全部负项](task43_hp_adaptivity/outcomes/records/h1_real_action_qualification_v1.json)。
+
+| 本次h1收口（measured） | 费用／资源 | 原因与边界 |
+|---|---|---|
+| PDE完成 | 1547.412973s/1256samples/树RSS峰2,051,149,824B/taskVmSwap0/native全机0/exit0清理 | 25.79min低于45–110min预测；base452.698s含空间准备、port376.332/setup19.449/A6488.726s不加嵌套；共享JIT不是冷启动 |
+| 比较首次失败／修后成功 | 623.858588s/501samples/峰1,677,959,168B；712.540753s/575samples/峰1,653,145,600B；均task swap0/清理 | 原initial旧schema缺后加重复FE声明；默认严格、仅显式精确初始父身份例外，absence保留null；父预检提前，最终5tests3.48s/fullRuff/compileall通过；不重跑PDE |
+| 独立ABI辅助文件缺口 | PDE与失败比较完成/posthash后，检查helper误覆盖原独立ABI JSON，旧字节未在有界快照内找到 | 原worker prePDE ABI日志、完整资源/场/当时postchecks保留；不返填时间，不声称旧manifest现在全匹配，不称PDE失败或无条件provenance PASS；成功比较新目标ABI与50source/69inputs hash完整 |
+
+当前47完整summary watchdog小计54,859.449308278505s，另R8 partial下界3109.389197s，合并观测下界57,968.83850548742s≠完整campaign费用；未监控tests/工作、导入参考另列，所有失败/原h1未知sender停止不改写。R8原supervisor缺终态的限制独立保留，h1完成不修复它。
+
+R9仅轻量预览完成：39格中13个p5可升、26个p6饱和，保留θ=.5；p预测110472=35352+75120、Δ3747，h91根八分/817叶，内部309060给Δh≥202335，但actual trace/总FE/authority=null/not_run。故冻结评分的保守h上界6.670949019e−10；若p actualΔ3747、η<.00011430072479441868并过其他门才可支配，不冒充测得h自由度/成本。root仅放行现有函数的p-only authority/显式skip转移，5–25min/1–5GiB是不确定预测、独立3600s/192GiB门；PDE待实际authority和预估。当前attempt14，R9p15后再做baseline/q/R14最低3次会达18，超§9规划16两次，只为三项不可替代判断预登记，G3尚未授权；参考自身资格/控制若需fresh另列最小增量。
 
 ---
 
