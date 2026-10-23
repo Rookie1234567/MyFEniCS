@@ -21,6 +21,10 @@ from src.adaptivity.stage4_local_h import (
 
 
 class Task43ParentTransferPolicyTests(unittest.TestCase):
+    def setUp(self):
+        if MPI.COMM_WORLD.size != 1:
+            self.skipTest("accepted-parent transfer policy is serial-only")
+
     def test_cli_keeps_transfer_by_default_and_skips_only_p_when_requested(self):
         parent = {
             "parent_storage_path": "unused-parent.npz",
@@ -50,8 +54,6 @@ class Task43ParentTransferPolicyTests(unittest.TestCase):
                 self.assertIs(bundle["skip_parent_transfer_requested"], skip)
 
     def test_skip_preserves_real_authority_and_rejects_changed_parent_hash(self):
-        if MPI.COMM_WORLD.size != 1:
-            self.skipTest("accepted-parent transfer policy is serial-only")
         cfg = candidates._h100_config(
             kind="empty_h_active_p3", case_name="task43_transfer_policy_component"
         )
