@@ -1,0 +1,358 @@
+{
+  "schema": "task43.round4-independent-audit.v1",
+  "classification": "主控从原始候选记录、比较数组、计划审计与资源样本进行的非CI独立复算；不代表最终精度验收",
+  "source_identity": {
+    "git_head_during_plan_solve_comparison": "90913116960e6e403998f82d1f1131223f3f48cc",
+    "branch": "task43_hp_adaptivity",
+    "dependency_archive_sha256": "4484f28b31bd2a3707df7b7d7a9cf26c1fe6cf33908485a723904d9e9dd7339e",
+    "comparison_source_identity_stable": true
+  },
+  "independent_source_audits": [
+    {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/marking_preview.json",
+      "sha256": "7037361a33ddc639ab478d031ee596c88c7baf5435d11b7564bd0e919f869a57",
+      "classification": "independent_round4_marking_recalculation",
+      "result": "57 marks; minimal Dörfler set, capture 0.5081869206283878; marked parent degrees p3/p4/p5 = 21/29/7; no p6 marks"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/entity_dof_derivation.json",
+      "sha256": "1b66ab6045d527eee8eb0a23f31bab59a9015726ae80e177fa266cbd56319c54",
+      "classification": "independent_entity_formula_cross_check",
+      "result": "Pre-cache-fix p plan derivation agreed with entity audit: 53,659 independent FE DoF, 19,435 trace + 34,224 interiors, delta 10,451"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/cache_revalidation_audit.json",
+      "sha256": "e82749ba6c6d5913492c59edd886a93f23b82ffafdf916a0d6a4fb330c9ee671",
+      "classification": "independent_same_plan_cache_revalidation",
+      "result": "Plan and entity/DoF/transfer identities unchanged; extraction misses 28 to 1; transfer wall 1171.1602728581056 to 255.14635319588706 s. This is plan/transfer evidence, not a whole-campaign speedup claim."
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/plan_complete_audit.json",
+      "sha256": "0af187223977e7136e1534e0ab9f8573eccce18ad9585385373f0f22034bb17b",
+      "classification": "independent_plan_resource_arithmetic_and_input_identity_review",
+      "result": "Both p/h plan identities and 1,719 watchdog samples checked; tree RSS peak 2,258,251,776 B, task swap peak 0, no resource warning"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/plan_attempt1_controlled_stop_audit.json",
+      "sha256": "ab2ad0ec2cc83ac5fc6ec00c7dad68f11d275b58b80c464947e86d2884c2e5c1",
+      "classification": "independent_raw_review_of_cache_performance_controlled_stop",
+      "result": "Attempt1 watchdog 1712.2734273900278 s, peak tree RSS 1,930,588,160 B, task swap 0, descendants cleared; controller stop was due to 32-entry cache working-set thrash, not numerical/resource failure"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/solve_audit.json",
+      "sha256": "812f74c1652cd712ff0ed34d6da1f37f48b14105aeba223addc1f95713553fef",
+      "classification": "independent_raw_residual_resource_and_power_review",
+      "result": "A6, condensed residual, energy closure, all 612 modal lower rows, and resource samples independently rechecked"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/comparison_audit.json",
+      "sha256": "53d5ff438441874c25e4d2a11154b9dd71f2fbb572690eb3758891fc05e137e8",
+      "classification": "independent_raw_recomputation_of_q8_G_J_DoF_and_score_order",
+      "result": "Selection gates pass; p conservative score lower bound strictly exceeds the h noise-inclusive plan upper bound"
+    }
+  ],
+  "round4_plan_audit": {
+    "classification": "mesh_and_entity_closure_only_no_pde_solve",
+    "bundle_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt3/plan_output/plan_audit.json",
+    "bundle_sha256": "58dcaa05fd63135bcd9f1e3446698e4bc6b4184f15004886fe1bf02dbee48765",
+    "watchdog_summary_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt3/watchdog/summary.json",
+    "watchdog_summary_sha256": "91159687f34f28f508f97012b2ede850b04de53044b860db02b0f7ba64d1d75f",
+    "watchdog_wall_seconds": 1992.9789607138373,
+    "tree_rss_peak_bytes": 2258251776,
+    "task_swap_peak_bytes": 0,
+    "p_candidate": {
+      "plan_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt3/plan_output/plans/round4_p_up.json",
+      "plan_sha256": "2704f49071a6c873e91d58e36ae4511a40abb3dc66a3ac76545c5ba93bad32f7",
+      "audit_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt3/plan_output/plans/round4_p_up.audit.json",
+      "audit_sha256": "5b73a1b871aadd372c9e3843bf3c3ab6fd308914c05f3db91a2b6819f2ddc0f0",
+      "root_cells": 180,
+      "leaf_cells": 180,
+      "requested_p_raises": 57,
+      "forced_neighbor_raises": 9,
+      "p_closure_iterations": 1,
+      "neighbor_p_jump": "2 to 1",
+      "cell_degree_histogram": {
+        "p3": 21,
+        "p4": 61,
+        "p5": 82,
+        "p6": 16
+      },
+      "independent_fe_dofs": 53659,
+      "trace_dofs": 19435,
+      "cell_interior_dofs": 34224,
+      "added_independent_fe_dofs": 10451,
+      "same_mesh_parent_transfer": {
+        "pass": true,
+        "p6_relative_error": 7.635030588589495e-14,
+        "shared_active_row_relative_error": 2.0285473452413606e-15,
+        "trace_constraint_relative_error": 3.09755567155659e-15,
+        "recovered_coefficient_relative_error": 5.488449593140721e-15,
+        "matrix_allocated": false,
+        "pde_solve_performed": false,
+        "wall_seconds": 255.14635319588706
+      },
+      "reference_space_cache": {
+        "mpi_size": 1,
+        "unique_local_cell_degree_maps": 34,
+        "including_uniform_p6_workset": 35,
+        "bounded_maxsize": 64,
+        "capacity_contains_workset": true,
+        "extraction_miss_delta": 1
+      },
+      "plan_and_authority_wall_seconds": 638.200523884967,
+      "total_audit_wall_seconds": 893.3488380773924
+    },
+    "h_candidate": {
+      "plan_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt3/plan_output/plans/round4_h_refine.json",
+      "plan_sha256": "6244cb139de28b8c47564a3bbf7cdd7090a9bfaa829a0e826e894509ec19a23e",
+      "audit_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt3/plan_output/plans/round4_h_refine.audit.json",
+      "audit_sha256": "583ffeb607461edf1ddf16b4ad1961d1a60280e42182357303844fa1aee6477f",
+      "classification": "plan_only_cross_mesh_transfer_and_pde_not_run",
+      "root_cells": 180,
+      "requested_root_splits": 57,
+      "forced_material_splits": 31,
+      "actual_root_splits": 88,
+      "leaf_cells": 796,
+      "hanging_patches": 36,
+      "cell_degree_histogram": {
+        "p3": 408,
+        "p4": 270,
+        "p5": 109,
+        "p6": 9
+      },
+      "independent_fe_dofs": 127397,
+      "trace_dofs": 53339,
+      "cell_interior_dofs": 74058,
+      "added_independent_fe_dofs": 84189,
+      "reference_space_cache": {
+        "mpi_size": 1,
+        "unique_local_cell_degree_maps": 55,
+        "including_uniform_p6_workset": 56,
+        "bounded_maxsize": 64,
+        "capacity_contains_workset": true,
+        "authority_miss_delta": 51
+      },
+      "plan_and_authority_wall_seconds": 1085.8651213641278,
+      "cross_mesh_transfer_status": "not_run_cross_mesh_transfer_not_qualified"
+    },
+    "cache_fix_revalidation": {
+      "source_capacity_change_commit": "8beb134b78425d9fc68db1dc91278ae81e8ef9a4",
+      "bounded_caches_changed": 2,
+      "capacity_before": 32,
+      "capacity_after": 64,
+      "internal_active_element_cache_unchanged": 32,
+      "same_p_plan_sha_and_audit_fields": true,
+      "same_transfer_errors": true,
+      "old_extraction_misses": 28,
+      "new_extraction_misses": 1,
+      "old_transfer_wall_seconds": 1171.1602728581056,
+      "new_transfer_wall_seconds": 255.14635319588706,
+      "old_p_audit_wall_seconds": 1578.7271853731945,
+      "new_p_audit_wall_seconds": 893.3488380773924,
+      "interpretation": "实际工作集加uniform-p6为35项，旧32项上限无法同时驻留；本次仍有1次必要的新map构建，避免了27次重复构建。plan/authority耗时在两次环境快照之间变化较大，不能将4.59倍transfer差异外推为求解或全campaign加速。"
+    }
+  },
+  "round4_solver_and_comparison": {
+    "candidate_id": "round4_p_up",
+    "candidate_record_path": "benchmarks/artifacts/task43/round4_p_up_attempt1/run/task43_round1_candidate_record.json",
+    "candidate_record_sha256": "6e2781cf77bdbf3961a82d8cacee15eb53fe2497acc08fa66e70a13d76767c33",
+    "candidate_plan_path": "benchmarks/artifacts/task43/round4_p_up_attempt1/run/candidate_plan.json",
+    "candidate_plan_sha256": "2704f49071a6c873e91d58e36ae4511a40abb3dc66a3ac76545c5ba93bad32f7",
+    "recovered_storage_path": "benchmarks/artifacts/task43/round4_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+    "recovered_storage_sha256": "001b2ea7583fbef9e8031ccc77248e0ba41a010716932368fe715f68b7137e17",
+    "pre_validation_checkpoint_npz_sha256": "001b2ea7583fbef9e8031ccc77248e0ba41a010716932368fe715f68b7137e17",
+    "pre_validation_checkpoint_sidecar_sha256": "4119cc40a0f71227489229ed55279e7a3fafbc4f2687ff53dabebb4b1673eb94",
+    "checkpoint_equals_final_storage_for_11_shared_arrays": true,
+    "source_head": "90913116960e6e403998f82d1f1131223f3f48cc",
+    "dependency_archive_sha256": "4484f28b31bd2a3707df7b7d7a9cf26c1fe6cf33908485a723904d9e9dd7339e",
+    "space": {
+      "leaves": 180,
+      "degree_histogram": {
+        "p3": 21,
+        "p4": 61,
+        "p5": 82,
+        "p6": 16
+      },
+      "independent_fe_dofs": 53659,
+      "trace_dofs": 19435,
+      "cell_interior_dofs": 34224,
+      "added_independent_fe_dofs": 10451,
+      "augmented_matrix_rows": 20047,
+      "operator_matrix_nnz_used": 10274139,
+      "operator_matrix_nnz_allocated": 12846443,
+      "factor_nnz": 54095179,
+      "factor_object_estimate_bytes": 1298444680
+    },
+    "solver_gates": {
+      "independent_A6_raw_norm": 4.223229837633075e-09,
+      "independent_A6_rhs_norm": 0.8482204004765149,
+      "independent_A6_relative": 4.978929810295226e-09,
+      "A6_task_limit": 1e-06,
+      "A6_direct_target": 1e-08,
+      "condensed_residual_relative": 5.188025067140253e-13,
+      "condensed_limit": 1e-09,
+      "energy_closure_abs": 8.384404281969182e-13,
+      "energy_closure_limit": 1e-05,
+      "R_total": 0.2588396443271808,
+      "T_total": 0.05215577922888083,
+      "A_volume": 0.6890045764447769,
+      "complete_unique_modes": 612,
+      "all_solver_hard_gates_pass": true
+    },
+    "same_lu_correction": {
+      "initial_condensed_relative": 2.2457970664486996e-09,
+      "corrected_condensed_relative": 5.248091614734346e-13,
+      "elapsed_seconds": 3.160610821098089,
+      "matrix_or_rhs_reassembled": false,
+      "same_factor_reused": true
+    },
+    "solve_watchdog": {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/watchdog/summary.json",
+      "sha256": "260f3eb152d02bffdeb25d0d9ff67f973db5595a264085af81484c4f262fd413",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 3704.761661950033,
+      "resource_sample_count": 3165,
+      "tree_rss_peak_bytes": 3752202240,
+      "task_swap_peak_bytes": 0,
+      "global_pswpin_pages_delta": 2,
+      "global_swap_attribution": "host-global swap diagnostic; +2 pages attribution unresolved; raw watchdog scope label retains legacy WSL-global wording"
+    },
+    "comparison": {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round4_p_up_attempt1/candidate_comparison_v2.json",
+      "sha256": "4555754925cbdfc017b3e17faf2de02c856a3dedca033915fd2e96875bd6047c",
+      "selection_status": "eligible_under_frozen_acceptance_contract",
+      "parent_candidate_id": "round3_p_up",
+      "selection_reference": "Y6_1",
+      "calibration_reference": "Y6_2",
+      "holdout_read": false,
+      "final_p6_control_read": false,
+      "q8_samples": 589824,
+      "q8_rule_sha256": "f9a607e2eb31fca35ba1bbbfee7a60517000ef54b3a27bea3d690c5e31df9e58",
+      "q8_sample_bundle_sha256": "40052762a62692a1e3218a80df507333918ba239dd4502c350a41304803c3aea",
+      "domain_volume_nm3": 349999.9999999998,
+      "eta_parent": 0.0483360497034636,
+      "eta_candidate": 0.009542819711700273,
+      "G_improvement": 0.03879322999176333,
+      "J_infinity_parent": 42271.527200642704,
+      "J_infinity_candidate": 7475.080039682059,
+      "J_infinity_witness": "power.R00_s",
+      "epsilon_G": 9.088158796603444e-06,
+      "epsilon_J": 0.12716416232413652,
+      "added_independent_FE_dofs": 10451,
+      "p_score_interval": {
+        "lower": 3.7110460083213784e-06,
+        "upper": 3.7127852024265558e-06
+      },
+      "h4_noise_inclusive_score_upper": 5.74245303570065e-07,
+      "strict_score_margin": 3.136800704751313e-06,
+      "acceptance_gates_pass": true,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/comparison_watchdog/summary.json",
+        "sha256": "0cab0fa10e0e831d239ee8fd15e9324310ea67e15e0ed5c3445f6bd5055bec58",
+        "classification": "COMPLETED",
+        "elapsed_seconds": 215.4762697275728,
+        "resource_sample_count": 176,
+        "tree_rss_peak_bytes": 1124446208,
+        "task_swap_peak_bytes": 0,
+        "global_swap_activity_delta_pages": 0
+      }
+    },
+    "independent_raw_review": {
+      "path": "benchmarks/artifacts/task43/round4_p_up_attempt1/root_review/comparison_audit.json",
+      "sha256": "53d5ff438441874c25e4d2a11154b9dd71f2fbb572690eb3758891fc05e137e8",
+      "classification": "non_ci_raw_array_recomputation",
+      "all_612_channel_powers_checked": true,
+      "full_J_witness_verified": true,
+      "A6_condensed_energy_and_DoF_recomputed": true,
+      "checkpoint_and_final_storage_11_shared_arrays_bitwise_equal": true,
+      "decision": "strict score order plus frozen full-observable gates supports accepted transition 4; final precision is not met"
+    }
+  },
+  "round4_execution_and_budget": {
+    "task_budget": {
+      "target_full_scale_PDE_model_cases": "about 8-12",
+      "distinct_model_case_lineages": [
+        "current",
+        "round1_p_up",
+        "round1_h_refine",
+        "round2_p_up",
+        "round3_p_up",
+        "round4_p_up"
+      ],
+      "distinct_model_case_lineage_count": 6,
+      "full_scale_solver_attempts_through_round4": 8,
+      "attempts_are_not_successful_official_results": true,
+      "full_scale_attempt_breakdown": [
+        "current initial solve: 1",
+        "fresh current same-LU tightening solve: 1",
+        "round1 p-up: 1",
+        "round1 h: 1 controlled stop before Task43 full gates",
+        "round2 p-up: 1 residual-gate failure and 1 corrected retry",
+        "round3 p-up: 1",
+        "round4 p-up: 1"
+      ],
+      "distinct_p_h_candidate_plans_audited": 8,
+      "candidate_plan_audits_consume_full_scale_PDE_case_budget": false,
+      "budget_accounting_note": "task.md §9 sets a target of about 8-12 complete full-scale PDE model cases and a planning budget of 16. If planning beyond 16, first state the smallest additional case(s) needed and which unresolved decision each would answer; 16 is not an unconditional hard stop. The eight solver attempts include one extra current same-LU tightening and one failed/retried round2 case; they are not eight successful official results or eight distinct scientific lineages. Plan-only candidate audits do not consume the full-scale PDE case budget.",
+      "component_fixtures_excluded_from_full_scale_case_count": true,
+      "Y6_1_Y6_2_reused_without_fresh_PDE": true,
+      "full_scale_PDE_model_case_planning_budget": 16
+    },
+    "round4_attempts": [
+      {
+        "attempt": "round4_plan_transfer_attempt1",
+        "classification": "controlled_stop_for_measured_cache_thrashing",
+        "watchdog_summary_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt1/watchdog/summary.json",
+        "watchdog_summary_sha256": "55ac589de6e66beaef475d4ca58b77ce6861be6aa218d14a62611e22c1f31e8a",
+        "elapsed_seconds": 1712.2734273900278,
+        "p_plan_audit_completed": true,
+        "h_plan_audit_completed": false,
+        "numerical_or_resource_failure": false
+      },
+      {
+        "attempt": "round4_plan_transfer_attempt2",
+        "classification": "wrapper_start_failure_before_worker",
+        "status_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt2/attempt_status.txt",
+        "status_sha256": "ce475436939ea8e6cc77ec9c7db5fd290f3a507f8014ca929ce76e4492c389cc",
+        "log_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt2/wrapper_start_failure.log",
+        "log_sha256": "4e10b73a432e3d1d09fb878a16df9d77153310299fb359b7a055d18ba41ce2d2",
+        "elapsed_seconds": 2.7,
+        "worker_started": false,
+        "pde_started": false
+      },
+      {
+        "attempt": "round4_plan_transfer_attempt3",
+        "classification": "completed_p_and_h_plan_audits_no_PDE",
+        "watchdog_elapsed_seconds": 1992.9789607138373,
+        "bundle_sha256": "58dcaa05fd63135bcd9f1e3446698e4bc6b4184f15004886fe1bf02dbee48765"
+      },
+      {
+        "attempt": "round4 cache-capacity targeted tests",
+        "classification": "component_test_success",
+        "log_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt1/cache_fix_targeted.log",
+        "log_sha256": "19b3baef37b825f05a0ab3d132b241cb8318f96f25ad9ee6c4828957fee4e566",
+        "result": "4 passed in 51.13 s"
+      }
+    ],
+    "completed_watchdog_cost_scope": {
+      "prior_inventory_path": "docs/task43_hp_adaptivity/outcomes/records/completed_watchdog_cost_inventory_v1.json",
+      "prior_inventory_sha256": "4126c02925d6b72507777d1b474c9ad77f22f7bfe29d0d3191f3929503dbdd99",
+      "prior_terminal_watchdog_count": 18,
+      "prior_watchdog_wall_sum_seconds": 12784.686087460723,
+      "round4_additional_watchdogs": 4,
+      "round4_watchdog_wall_sum_seconds": 7625.490319781471,
+      "cumulative_terminal_watchdog_count": 22,
+      "cumulative_watchdog_wall_sum_seconds": 20410.176407242194,
+      "round4_completed_plan_solve_comparison_subtotal_seconds": 5913.216892391443,
+      "round4_non_watchdog_wrapper_and_targeted_test_seconds": 53.83,
+      "scope": "Cumulative sum is derived by adding four round4 terminal watchdog records to the frozen v1 inventory; it excludes unmonitored planning/reference/component work beyond the named test and wrapper attempt and is not full campaign cost. Nested timings are not added."
+    }
+  },
+  "limitations": {
+    "final_precision": "not_passed: eta_G=0.0095428197 and J_infinity=7475.08 remain above final tolerances",
+    "h_qualification": "round4 h plan was audited but not solved; cross-mesh transfer is not qualified. The prior round1 h remains controlled_stop/unknown, not a numerical failure.",
+    "holdout_and_control": "Y5_1 holdout and final 6x10x6 uniform p6 control were not read or used for marking/selection.",
+    "sidewall_q_r14_iterative_and_cost_advantage": "not_run or not_qualified",
+    "continuum": "No continuum-convergence claim"
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "schema": "task43.selection-decision.v1",
+  "status": "accepted",
+  "selected_candidate": {
+    "candidate_id": "round4_p_up",
+    "run_root": "benchmarks/artifacts/task43/round4_p_up_attempt1/run",
+    "record_sha256": "6e2781cf77bdbf3961a82d8cacee15eb53fe2497acc08fa66e70a13d76767c33",
+    "storage_sha256": "001b2ea7583fbef9e8031ccc77248e0ba41a010716932368fe715f68b7137e17",
+    "plan_sha256": "2704f49071a6c873e91d58e36ae4511a40abb3dc66a3ac76545c5ba93bad32f7",
+    "comparison_record_path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round4_p_up_attempt1/candidate_comparison_v2.json",
+    "comparison_record_sha256": "4555754925cbdfc017b3e17faf2de02c856a3dedca033915fd2e96875bd6047c",
+    "independent_FE_dofs": 53659,
+    "operator_matrix_nnz_used": 10274139,
+    "operator_matrix_nnz_allocated": 12846443,
+    "factor_nnz": 54095179,
+    "factor_object_estimate_bytes": 1298444680,
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647"
+  },
+  "decision": {
+    "candidate_id": "round4_p_up",
+    "parent_candidate_id": "round3_p_up",
+    "parent_selection_record_path": "docs/task43_hp_adaptivity/outcomes/records/round3_selection_transition3_v1.json",
+    "parent_selection_record_sha256": "770c2207281e6c617f4509e104f848d9d52702e2c5701636b37c5ecaed5421aa",
+    "transition": 4,
+    "state": "accepted",
+    "acceptance_scope": "intermediate_round_transition_only",
+    "rationale": "独立重算的候选方程/物理硬门通过；相对同一冻结 Y6_1 reference 的 eta_G 下降超过冻结噪声，J_infinity 未超过父值加 epsilon_J。按实际独立 FE DoF 计算的 p 得分下界严格大于 round4 h 计划含噪上界，接受为一个中间状态转移。此决定不表示 h 资格通过或达到最终精度。",
+    "accepted_updates_count": 4,
+    "final_accuracy_or_cost_advantage_claimed": false
+  },
+  "frozen_rule": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "comparison_contract_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+    "reference_calibration_sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+    "selection_reference": "Y6_1",
+    "holdout_read": false,
+    "final_p6_control_read": false
+  },
+  "candidate_result": {
+    "action": "p_up",
+    "round": "round4",
+    "plan_audit_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt3/plan_output/plans/round4_p_up.audit.json",
+    "plan_audit_sha256": "5b73a1b871aadd372c9e3843bf3c3ab6fd308914c05f3db91a2b6819f2ddc0f0",
+    "candidate_plan_sha256": "2704f49071a6c873e91d58e36ae4511a40abb3dc66a3ac76545c5ba93bad32f7",
+    "candidate_record_path": "benchmarks/artifacts/task43/round4_p_up_attempt1/run/task43_round1_candidate_record.json",
+    "candidate_record_sha256": "6e2781cf77bdbf3961a82d8cacee15eb53fe2497acc08fa66e70a13d76767c33",
+    "recovered_storage_path": "benchmarks/artifacts/task43/round4_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+    "recovered_storage_sha256": "001b2ea7583fbef9e8031ccc77248e0ba41a010716932368fe715f68b7137e17",
+    "pre_validation_checkpoint_path": "benchmarks/artifacts/task43/round4_p_up_attempt1/run/pre_validation_checkpoint.npz",
+    "pre_validation_checkpoint_sha256": "001b2ea7583fbef9e8031ccc77248e0ba41a010716932368fe715f68b7137e17",
+    "pre_validation_checkpoint_sidecar_sha256": "4119cc40a0f71227489229ed55279e7a3fafbc4f2687ff53dabebb4b1673eb94",
+    "checkpoint_equals_final_storage_sha256": true,
+    "checkpoint_final_shared_array_bitwise_equal_count": 11,
+    "source_identity": {
+      "git_head": "90913116960e6e403998f82d1f1131223f3f48cc",
+      "dependency_archive_sha256": "4484f28b31bd2a3707df7b7d7a9cf26c1fe6cf33908485a723904d9e9dd7339e"
+    },
+    "space": {
+      "leaves": 180,
+      "requested_p_raises": 57,
+      "forced_p_neighbor_raises": 9,
+      "degree_histogram": {
+        "p3": 21,
+        "p4": 61,
+        "p5": 82,
+        "p6": 16
+      },
+      "independent_trace_dofs": 19435,
+      "active_cell_interior_dofs": 34224,
+      "independent_FE_dofs": 53659,
+      "added_independent_FE_dofs": 10451,
+      "augmented_matrix_rows": 20047,
+      "operator_matrix_nnz_used": 10274139,
+      "operator_matrix_nnz_allocated": 12846443,
+      "factor_nnz": 54095179,
+      "factor_object_estimate_bytes": 1298444680,
+      "p_closure_iterations": 1,
+      "maximum_neighbor_p_jump_before_closure": 2,
+      "maximum_neighbor_p_jump_after_closure": 1,
+      "same_mesh_parent_transfer_relative_error": 7.635030588589495e-14
+    },
+    "hard_gates": {
+      "independent_A6_relative": 4.978929810295226e-09,
+      "A6_limit": 1e-06,
+      "direct_A6_target": 1e-08,
+      "condensed_relative": 5.188025067140253e-13,
+      "condensed_limit": 1e-09,
+      "energy_closure_abs": 8.384404281969182e-13,
+      "energy_closure_limit": 1e-05,
+      "complete_612_mode_inventory_pass": true,
+      "all_hard_gates_pass": true
+    },
+    "physics": {
+      "R_total": 0.2588396443271808,
+      "T_total": 0.05215577922888083,
+      "A_volume": 0.6890045764447769,
+      "R00_s": 0.25879739123967915,
+      "R00_p": 4.104638021802041e-24,
+      "eta_parent": 0.0483360497034636,
+      "eta_candidate": 0.009542819711700273,
+      "G_improvement": 0.03879322999176333,
+      "J_infinity_parent": 42271.527200642704,
+      "J_infinity_candidate": 7475.080039682059,
+      "J_infinity_witness": "power.R00_s",
+      "J_infinity_noise_allowance": 0.12716416232413652
+    },
+    "ranking": {
+      "formula": "(eta_parent-eta_candidate +/- epsilon_G) / added_independent_FE_dofs",
+      "p_score_lower": 3.7110460083213784e-06,
+      "p_score_upper": 3.7127852024265558e-06,
+      "h4_score_upper_including_noise": 5.74245303570065e-07,
+      "strict_margin": 3.136800704751313e-06,
+      "h4_status": "audited_plan_only_pruned_by_frozen_rank_bound_not_run_unqualified",
+      "h4_added_independent_FE_dofs": 84189
+    },
+    "cost": {
+      "round4_plan_watchdog_seconds": 1992.9789607138373,
+      "round4_solve_watchdog_seconds": 3704.761661950033,
+      "round4_comparison_watchdog_seconds": 215.4762697275728,
+      "round4_completed_plan_solve_comparison_subtotal_seconds": 5913.216892391443,
+      "round4_prior_cache_stop_watchdog_seconds": 1712.2734273900278,
+      "round4_no_worker_wrapper_failure_seconds": 2.7,
+      "round4_cache_test_seconds": 51.13,
+      "cumulative_terminal_watchdog_count": 22,
+      "cumulative_watchdog_wall_sum_seconds": 20410.176407242194,
+      "cumulative_watchdog_inventory_v1_sha256": "4126c02925d6b72507777d1b474c9ad77f22f7bfe29d0d3191f3929503dbdd99",
+      "cost_scope": "Cumulative watchdog sum excludes unmonitored reference/fixture work and separate wrapper/cache-test wall; the frozen v1 inventory is unchanged."
+    }
+  },
+  "independent_review": {
+    "classification": "non_ci_raw_array_and_raw_record_recomputation",
+    "record_path": "docs/task43_hp_adaptivity/outcomes/records/round4_independent_audit_v1.json",
+    "record_sha256": "c3e31f84633d8ecab006c638be254afc19d153acdfcc8f67881319b3de67ead6",
+    "raw_solver_gates_rechecked": true,
+    "G_and_complete_J_recomputed_from_saved_arrays": true,
+    "all_612_channel_powers_checked": true,
+    "checkpoint_and_final_storage_shared_arrays_bitwise_equal_count": 11,
+    "selection_inputs_match_recomputed_values": true
+  },
+  "limitations": {
+    "h_qualification": "round4 h was plan-only and strictly pruned by the frozen rank bound; no PDE or cross-mesh transfer. At least one full real h action remains unqualified.",
+    "accuracy": "eta_G=0.0095428197 and J_infinity=7475.08 remain above final tolerances.",
+    "references": "Y5_1 holdout and final 6x10x6 p6 control remain excluded from marking and selection.",
+    "continuum": "No continuum-convergence claim."
+  }
+}
