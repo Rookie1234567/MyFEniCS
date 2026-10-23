@@ -1,0 +1,695 @@
+{
+  "schema": "task43.round5-independent-audit.v1",
+  "classification": "主控读取原始候选、全部q8积分数组、612通道、checkpoint、计划与资源进行的非CI复算；不是最终精度验收",
+  "source_identity": {
+    "git_head_during_solve_comparison": "366591b226ee69172fa7704224a66b814888070e",
+    "branch": "task43_hp_adaptivity",
+    "comparison_source_identity_stable": true,
+    "original_pre_run_listed_dependency_count": 40,
+    "original_pre_run_archive_sha256": "4484f28b31bd2a3707df7b7d7a9cf26c1fe6cf33908485a723904d9e9dd7339e",
+    "original_archive_is_complete_dependency_set": false,
+    "omitted_required_dependency": "src/adaptivity/variable_p_transfer.py",
+    "supplemental_manifest": {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/source_snapshot_supplemental/supplemental_dependency_manifest.json",
+      "sha256": "dc161ef8509dbd703d67a842764953de68fffa9e5c58f60f1d18b9d4502d7b55"
+    },
+    "supplemental_capture_utc": "2026-10-23T06:32:38.630739327Z",
+    "supplemental_capture_is_pre_run": false,
+    "supplemental_core_source_sha256": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+    "supplemental_matches_clean_HEAD_bytes": true,
+    "source_identity_note": "原40文件archive/manifest保持不可变；缺失依赖在运行中真实采集，不倒写成pre-run。19输入和40个已列源码的posthash全部匹配，但这不把原清单升级为完整依赖闭包。"
+  },
+  "accepted_parent": {
+    "candidate_id": "round4_p_up",
+    "comparison_record_sha256": "4555754925cbdfc017b3e17faf2de02c856a3dedca033915fd2e96875bd6047c",
+    "plan_sha256": "2704f49071a6c873e91d58e36ae4511a40abb3dc66a3ac76545c5ba93bad32f7",
+    "record_sha256": "6e2781cf77bdbf3961a82d8cacee15eb53fe2497acc08fa66e70a13d76767c33",
+    "run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round4_p_up_attempt1/run",
+    "selection_record_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round4_selection_transition4_v1.json",
+    "selection_record_sha256": "0d7317e81ccc03e24426c97930c1323fdc91865607dd55b3704392a1a72c8dc8",
+    "storage_sha256": "001b2ea7583fbef9e8031ccc77248e0ba41a010716932368fe715f68b7137e17"
+  },
+  "independent_source_audits": [
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/candidate_raw_audit.json",
+      "sha256": "aeb353006ec587e4d29345ce966e265b49aa6e1bef4c79d85d04293be0373f0f"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/comparison_resource_audit.json",
+      "sha256": "23d81bc4dc983f23dec045ed104527d32d6d9f6b6997efc780ea9c6ff05c5640"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/inputs_postcheck.txt",
+      "sha256": "51d4e5ace6c0469e2e055aa57992eb477bed652bcfcdb0e5dce653a424dcd115"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/solve_raw_audit.json",
+      "sha256": "4d02fbf405f27aea26ad0214156d1b8d3b789c6caccdcb8055c6180490a4e708"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/sources_postcheck.txt",
+      "sha256": "eaa2727b921a126a72e8e3f3902c3cc911964c112ddd88dbe92c5829f89f0829"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt1/root_review/root_round5_plan_complete_audit.json",
+      "sha256": "6098f8e8b6e56d04ac1cb19844503cbaab259f4bc9e37152b5f08e659d803847"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/root_review/root_round5_p_attempt1_controlled_stop_audit.json",
+      "sha256": "68bac8b0809dea36e0859e46664e13f7dfeb4a2c6d3574135604d57584b8790f"
+    }
+  ],
+  "post_run_identity_revalidation": {
+    "inputs": {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/inputs_postcheck.txt",
+      "sha256": "51d4e5ace6c0469e2e055aa57992eb477bed652bcfcdb0e5dce653a424dcd115",
+      "listed_count": 19,
+      "all_match": true
+    },
+    "listed_sources": {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/sources_postcheck.txt",
+      "sha256": "eaa2727b921a126a72e8e3f3902c3cc911964c112ddd88dbe92c5829f89f0829",
+      "listed_count": 40,
+      "all_match": true,
+      "complete_dependency_set_claimed": false
+    }
+  },
+  "round5_plan_audit": {
+    "bundle": {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plan_audit.json",
+      "sha256": "f88c70647335151153403be83a98fee09b6a6df446a5dc487a91000683b5c271"
+    },
+    "watchdog": {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/watchdog/summary.json",
+      "sha256": "30b571f199abd288f8c031b73de8aed96589af8111fd4721714ef8f7f5f9ba5a",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "elapsed_seconds": 3669.122261964716,
+      "samples": 2941,
+      "sampled_process_tree_rss_peak_bytes": 3177193472,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 4250459,
+          "pswpout_pages": 7183007
+        },
+        "end": {
+          "pswpin_pages": 4250459,
+          "pswpout_pages": 7183007
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "global_swap_scope_note": "native Linux host全机诊断；原watchdog字段保留legacy WSL-global文本，不改写原证据或从全机增量推断task归因。"
+    },
+    "p_candidate": {
+      "plan": {
+        "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_p_up.json",
+        "sha256": "bc912b671b86274b3038b8379ee739c678f7cabc2812ed169c82f8a388d3ac7c"
+      },
+      "audit": {
+        "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_p_up.audit.json",
+        "sha256": "49f8cf834c636ab39b5a66c24ce5e67d70846b8d8addb98476610e48c6c57f7d"
+      },
+      "space": {
+        "leaves": 180,
+        "marked_parent_cells": 60,
+        "requested_p_raises": 53,
+        "saturated_marked_parent_cells": 7,
+        "forced_p_neighbor_raises": 30,
+        "degree_histogram": {
+          "p4": 51,
+          "p5": 82,
+          "p6": 47
+        },
+        "independent_trace_dofs": 23874,
+        "active_cell_interior_dofs": 46338,
+        "independent_FE_dofs": 70212,
+        "added_independent_FE_dofs": 16553,
+        "augmented_matrix_rows": 24486,
+        "operator_matrix_nnz_used": 14583076,
+        "operator_matrix_nnz_allocated": 17936292,
+        "factor_nnz": 72608080,
+        "factor_object_estimate_bytes": 1742789816,
+        "factor_object_estimate_is_not_process_tree_RSS": true,
+        "p_closure_iterations": 1,
+        "maximum_neighbor_p_jump_before_closure": 2,
+        "maximum_neighbor_p_jump_after_closure": 1,
+        "same_mesh_parent_transfer_relative_error": 7.643931745581731e-14
+      },
+      "plan_and_authority_wall_seconds": 396.13876625010744,
+      "same_mesh_transfer_wall_seconds": 236.3442228520289,
+      "total_audit_wall_seconds": 632.483962811064,
+      "reference_space_cache": {
+        "build_cache_maxsize": 64,
+        "cache_after_authority": {
+          "currsize": 31,
+          "hits": 149,
+          "maxsize": 64,
+          "misses": 31
+        },
+        "cache_before_authority": {
+          "currsize": 0,
+          "hits": 0,
+          "maxsize": 64,
+          "misses": 0
+        },
+        "cache_delta_authority": {
+          "hits": 149,
+          "misses": 31
+        },
+        "capacity_contains_local_workset": true,
+        "local_maps_including_uniform_p6": 32,
+        "local_unique_cell_degree_map_count": 31,
+        "mpi_size": 1,
+        "rank": 0,
+        "scope": "per_rank_local_owned_cells"
+      }
+    },
+    "h_candidate": {
+      "plan": {
+        "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_h_refine.json",
+        "sha256": "edfac6077c0602c22eb0244e204d6b8ea0df2969ce683d6b2597da71095b08df"
+      },
+      "audit": {
+        "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_h_refine.audit.json",
+        "sha256": "92362d8b5fa467d2fb0afe1b70b0cbf9745b5cd1bd086194b08e3b679c87a06d"
+      },
+      "forest": {
+        "actual_leaf_cell_count": 810,
+        "actual_one_level_root_splits": 90,
+        "axis_partition_interval_product_is_not_leaf_count": true,
+        "closure_split_counts": {
+          "balance": 0,
+          "material": 30,
+          "periodic": 0,
+          "user": 60
+        },
+        "forced_closure_h_splits": 30,
+        "hanging_patch_count": 30,
+        "leaf_catalog_sha256": "e1cdee4af9131d67be9b4b3bd5aa2d2d4c6e1cd35b98d8d031abff8e2428b8d5",
+        "requested_h_root_splits": 60,
+        "root_cell_count": 180
+      },
+      "degrees": {
+        "p3": 168,
+        "p4": 278,
+        "p5": 299,
+        "p6": 65
+      },
+      "dofs": {
+        "active_cell_interior_rows": 137082,
+        "active_fe_dof_gate_limit": null,
+        "active_fe_dof_gate_pass": true,
+        "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+        "added_independent_fe_dofs": 161433,
+        "independent_active_fe_dofs": 215092,
+        "independent_trace_rows": 78010,
+        "parent_independent_fe_dofs": 53659,
+        "raw_broken_active_fe_dofs_before_hanging_floquet_constraints": 226353
+      },
+      "plan_and_authority_wall_seconds": 3014.4538051020354,
+      "reference_space_cache": {
+        "build_cache_maxsize": 64,
+        "cache_after_authority": {
+          "currsize": 64,
+          "hits": 2006,
+          "maxsize": 64,
+          "misses": 95
+        },
+        "cache_before_authority": {
+          "currsize": 32,
+          "hits": 1259,
+          "maxsize": 64,
+          "misses": 32
+        },
+        "cache_delta_authority": {
+          "hits": 747,
+          "misses": 63
+        },
+        "capacity_contains_local_workset": false,
+        "local_maps_including_uniform_p6": 67,
+        "local_unique_cell_degree_map_count": 66,
+        "mpi_size": 1,
+        "rank": 0,
+        "scope": "per_rank_local_owned_cells"
+      },
+      "status": "plan_only_rank_pruned_no_cross_mesh_transfer_no_PDE",
+      "cache_limitation": "实际reference maps加uniform p6工作集67项超出现有64项；只有h路径确需执行时才修复容量，不因未用h计划追加重算。"
+    }
+  },
+  "round5_solver_and_comparison": {
+    "space": {
+      "leaves": 180,
+      "marked_parent_cells": 60,
+      "requested_p_raises": 53,
+      "saturated_marked_parent_cells": 7,
+      "forced_p_neighbor_raises": 30,
+      "degree_histogram": {
+        "p4": 51,
+        "p5": 82,
+        "p6": 47
+      },
+      "independent_trace_dofs": 23874,
+      "active_cell_interior_dofs": 46338,
+      "independent_FE_dofs": 70212,
+      "added_independent_FE_dofs": 16553,
+      "augmented_matrix_rows": 24486,
+      "operator_matrix_nnz_used": 14583076,
+      "operator_matrix_nnz_allocated": 17936292,
+      "factor_nnz": 72608080,
+      "factor_object_estimate_bytes": 1742789816,
+      "factor_object_estimate_is_not_process_tree_RSS": true,
+      "p_closure_iterations": 1,
+      "maximum_neighbor_p_jump_before_closure": 2,
+      "maximum_neighbor_p_jump_after_closure": 1,
+      "same_mesh_parent_transfer_relative_error": 7.643931745581731e-14
+    },
+    "solver_gates": {
+      "independent_A6_raw_norm": 4.943218040933094e-09,
+      "independent_rhs_raw_norm": 0.8482204004765148,
+      "independent_A6_relative": 5.82775188872619e-09,
+      "A6_limit": 1e-06,
+      "direct_A6_target": 1e-08,
+      "condensed_relative": 5.400944605698828e-13,
+      "condensed_limit": 1e-09,
+      "energy_closure_abs": 1.2064793608601576e-12,
+      "energy_closure_limit": 1e-05,
+      "complete_612_mode_inventory_pass": true,
+      "all_hard_gates_pass": true
+    },
+    "physics": {
+      "R_total": 0.25476260450213173,
+      "T_total": 0.05676710121641066,
+      "A_volume": 0.688470294282664,
+      "R00_s": 0.2547293539504303,
+      "R00_p": 1.851460000804316e-24,
+      "R00_total": 0.2547293539504303,
+      "eta_parent": 0.00954281971170027,
+      "eta_candidate": 0.003411538344083515,
+      "G_improvement": 0.006131281367616754,
+      "J_infinity_parent": 7475.080039682059,
+      "J_infinity_candidate": 3407.042750433187,
+      "J_infinity_witness": "power.R00_s",
+      "J_infinity_noise_allowance": 0.12716416232413652,
+      "A_volume_absolute_error_parent": 0.002512950337383857,
+      "A_volume_absolute_error_candidate": 0.003047232499496677,
+      "all_observables_monotonically_improved": false,
+      "A_volume_note": "体吸收相对冻结Y6_1的绝对差由0.0025129503373838567增至0.0030472324994966768；本次按预冻结最大归一输出误差J接受，不声称每个物理量改善。"
+    },
+    "ranking": {
+      "formula": "(eta_parent-eta_candidate +/- epsilon_G) / added_independent_FE_dofs",
+      "p_score_lower": 3.6985399678729847e-07,
+      "p_score_upper": 3.709520646658223e-07,
+      "h5_score_upper_including_noise": 5.916948746846603e-08,
+      "strict_margin": 3.1068450931883244e-07,
+      "h5_status": "audited_plan_only_pruned_by_frozen_rank_bound_not_run_unqualified",
+      "h5_added_independent_FE_dofs": 161433
+    },
+    "same_lu_residual_correction": {
+      "corrected_condensed_relative_to_rhs": 5.470131616677909e-13,
+      "corrected_condensed_residual_norm": 4.639877230557785e-13,
+      "correction_ksp": {
+        "converged_reason": 4,
+        "iterations": 1,
+        "residual_norm": 0.0
+      },
+      "correction_norm": 2.4968627500392575e-08,
+      "correction_relative_to_solution": 5.420725338000995e-11,
+      "elapsed_seconds": 4.189681340940297,
+      "initial_condensed_relative_to_rhs": 3.3672340071620075e-09,
+      "initial_condensed_residual_norm": 2.8561565780531e-09,
+      "ksp_operator_replaced": false,
+      "matrix_or_rhs_reassembled": false,
+      "method": "same_ksp_single_residual_correction",
+      "original_primal_ksp": {
+        "converged_reason": 4,
+        "iterations": 1,
+        "ksp_type": "preonly",
+        "pc_type": "lu",
+        "residual_norm": 0.0
+      },
+      "requested": true,
+      "rhs_norm": 0.8482204004765155,
+      "solution_updated": true,
+      "source_identity": {
+        "implementation": "src.solvers.petsc_residual_correction.single_petsc_residual_correction_in_place"
+      },
+      "status": "passed"
+    },
+    "residual_metric_note": "same-LU绝对范数2.8561565780531e-9到4.639877230557785e-13；除其RHS后相对3.3672340071620075e-9到5.470131616677909e-13。恢复后的condensed相对残差5.400944605698828e-13另列，均不能替代独立A6。",
+    "solve_watchdog": {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/watchdog/summary.json",
+      "sha256": "4f3f617396ff345e4bd978df95adea2199283c0b4129c3a7a4599ff230e3cb3e",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "elapsed_seconds": 3150.039591130335,
+      "samples": 2628,
+      "sampled_process_tree_rss_peak_bytes": 4975054848,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 4250460,
+          "pswpout_pages": 7183007
+        },
+        "end": {
+          "pswpin_pages": 4250460,
+          "pswpout_pages": 7183007
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "global_swap_scope_note": "native Linux host全机诊断；原watchdog字段保留legacy WSL-global文本，不改写原证据或从全机增量推断task归因。"
+    },
+    "comparison_watchdog": {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/comparison_watchdog/summary.json",
+      "sha256": "aa16a3556a76dfb7b0bcb8fee20ee8618e94d1074e43ff26bd3e1602a8fa5ab1",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "elapsed_seconds": 276.6093208552338,
+      "samples": 233,
+      "sampled_process_tree_rss_peak_bytes": 1136553984,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 4250460,
+          "pswpout_pages": 7183007
+        },
+        "end": {
+          "pswpin_pages": 4250460,
+          "pswpout_pages": 7183007
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "global_swap_scope_note": "native Linux host全机诊断；原watchdog字段保留legacy WSL-global文本，不改写原证据或从全机增量推断task归因。"
+    },
+    "q8": {
+      "axis_breakpoints_nm": [
+        [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        [
+          0.0,
+          3.0,
+          3.75,
+          5.0,
+          6.0,
+          7.5,
+          9.0,
+          10.0,
+          11.25,
+          12.0,
+          15.0,
+          17.5,
+          18.333333333333332,
+          20.0,
+          21.666666666666668,
+          22.5,
+          25.0,
+          27.5,
+          28.333333333333336,
+          30.0,
+          31.666666666666668,
+          32.5,
+          35.0,
+          38.0,
+          38.75,
+          40.0,
+          41.0,
+          42.5,
+          44.0,
+          45.0,
+          46.25,
+          47.0,
+          50.0
+        ],
+        [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      ],
+      "integrated_domain_volume_nm3": 349999.9999999998,
+      "reused_frozen_reference_rule_and_selection_samples": true,
+      "rule_sha256": "f9a607e2eb31fca35ba1bbbfee7a60517000ef54b3a27bea3d690c5e31df9e58",
+      "sample_bundle": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round5_p_up_attempt2/candidate_shared_volume_q8.npz",
+      "sample_bundle_sha256": "fd2c40c802572931664ac40ecd7da754c064cb858a289fba66cc2c7272aea09c",
+      "sample_count": 589824
+    },
+    "raw_comparison": {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round5_p_up_attempt2/candidate_comparison_v2.json",
+      "sha256": "5bffebb45504ba677e92cd5ab2967d46be42050f62efc4dbb1fabe9586eb1a0b"
+    },
+    "checkpoint_final_shared_arrays_bitwise_equal": [
+      "active_full_rhs_owned",
+      "active_full_solution_owned",
+      "mesh_cell_vertex_dofmap",
+      "mesh_geometry_coordinates_nm",
+      "mesh_geometry_dofmap",
+      "mesh_owned_cell_global_ids",
+      "p6_function_space_dofmap",
+      "p6_ghost_global_dof_block_ids",
+      "p6_owned_global_dof_block_ids",
+      "recovered_p6_local_coefficients",
+      "recovered_p6_owned_coefficients"
+    ],
+    "holdout_read": false,
+    "final_p6_control_read": false
+  },
+  "round5_execution_and_budget": {
+    "distinct_full_scale_model_case_lineages": 7,
+    "full_scale_solver_attempts_through_round5": 10,
+    "p_and_h_plans_through_round5": 10,
+    "plan_only_is_not_PDE_case": true,
+    "attempts_are_not_successful_official_results": true,
+    "root_performance_stop": {
+      "record": {
+        "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/root_review/root_round5_p_attempt1_controlled_stop_audit.json",
+        "sha256": "68bac8b0809dea36e0859e46664e13f7dfeb4a2c6d3574135604d57584b8790f"
+      },
+      "elapsed_seconds": 2230.2404703088105,
+      "classification": "Root性能受控停止，非用户发起，非数值或资源失败；无候选场。"
+    },
+    "zero_skip_component_record": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json",
+      "sha256": "23c70ced4b6f9223316daa16175a8e3605727a16e88fd26e4201952b3b626215"
+    },
+    "cost": {
+      "round5_plan_watchdog_seconds": 3669.122261964716,
+      "round5_solve_attempt1_root_performance_stop_seconds": 2230.2404703088105,
+      "round5_solve_attempt2_watchdog_seconds": 3150.039591130335,
+      "round5_comparison_watchdog_seconds": 276.6093208552338,
+      "round5_completed_plan_solve_attempt2_comparison_subtotal_seconds": 7095.771173950285,
+      "round5_all_four_watchdog_wall_sum_seconds": 9326.011644259095,
+      "cumulative_terminal_watchdog_count": 26,
+      "cumulative_watchdog_wall_sum_seconds": 29736.18805150129,
+      "prior_round4_terminal_watchdog_count": 22,
+      "prior_round4_watchdog_wall_sum_seconds": 20410.176407242194,
+      "cumulative_watchdog_inventory_v1_sha256": "4126c02925d6b72507777d1b474c9ad77f22f7bfe29d0d3191f3929503dbdd99",
+      "separate_zero_skip_component_cost_record": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json",
+        "sha256": "23c70ced4b6f9223316daa16175a8e3605727a16e88fd26e4201952b3b626215"
+      },
+      "cost_scope": "26条终态watchdog的wall小计，不含全部tests、参考恢复及未监控工作；各嵌套阶段不重复相加。既有JIT缓存不称隔离冷启动成本。"
+    },
+    "executor_handoff": "本次运行未重启；在原PDE存活时由Luna交接给GPT-6.1 Sol high接管监控和后处理，Root独立审阅。"
+  },
+  "limitations": {
+    "final_precision": "eta_G=0.003411538344和J_infinity=3407.04275仍超最终门。",
+    "h_qualification": "h5仅计划审计并被严格排名界剪枝；h1受控停止、sender未知、用户未发；仍缺至少一次完整真实h。",
+    "independent_precision_and_cost": "holdout、6x10x6 p6最终对照、参考自身q/R14、侧壁迹、终点tighter solve、迭代和同精度成本资格仍未完成；不作连续收敛或成本优势声明。"
+  },
+  "artifact_manifest": [
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/run/task43_round1_candidate_record.json",
+      "sha256": "e428c12f6986853917021fc49cb20aa633a6ebf6b0b54cf741442f8d1d814b7d",
+      "bytes": 3311229
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/run/candidate_plan.json",
+      "sha256": "bc912b671b86274b3038b8379ee739c678f7cabc2812ed169c82f8a388d3ac7c",
+      "bytes": 58906
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/run/candidate_recovered_solution_storage.npz",
+      "sha256": "f2664b8f864ba5af666ba82992e8bc0c283b5565f6854cf776f48b32fc9c2184",
+      "bytes": 5264240
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/run/pre_validation_checkpoint.npz",
+      "sha256": "f2664b8f864ba5af666ba82992e8bc0c283b5565f6854cf776f48b32fc9c2184",
+      "bytes": 5264240
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/run/pre_validation_checkpoint.json",
+      "sha256": "33044f7c994a2395e3528dcc67a92315168fe09b3d42040b87e02410ca37d749",
+      "bytes": 1199224
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "328d481a2bf5ff61260751a685829a368b16a98c9681226bf57db01f2c3946a7",
+      "bytes": 905235
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/run/solve/progress_3d.jsonl",
+      "sha256": "d52c811c509a3b4b5481e658eb0c36744eb44d47506b146ebd6683ae4dd19ace",
+      "bytes": 62179
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/watchdog/summary.json",
+      "sha256": "4f3f617396ff345e4bd978df95adea2199283c0b4129c3a7a4599ff230e3cb3e",
+      "bytes": 3568
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/watchdog/resources.jsonl",
+      "sha256": "6f0dfeff31fd6bc5c9f6dea9bf1298bb762dda22f9347c48c26fe84c8bd17c6d",
+      "bytes": 14860909
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/comparison_watchdog/summary.json",
+      "sha256": "aa16a3556a76dfb7b0bcb8fee20ee8618e94d1074e43ff26bd3e1602a8fa5ab1",
+      "bytes": 3567
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/comparison_watchdog/resources.jsonl",
+      "sha256": "1f8162a3d6b7abd50ea90628d00a9ef7da0db637d2c22db4b0c0df0fcdc38891",
+      "bytes": 1190576
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/comparison_launch.sh",
+      "sha256": "a66f1c330ba502b94315ef1ce83d87daa16fd3eda22ba581c9f28d6d863cee4b",
+      "bytes": 2041
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round5_p_up_attempt2/candidate_comparison_v2.json",
+      "sha256": "5bffebb45504ba677e92cd5ab2967d46be42050f62efc4dbb1fabe9586eb1a0b",
+      "bytes": 76667
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round5_p_up_attempt2/candidate_shared_volume_q8.npz",
+      "sha256": "fd2c40c802572931664ac40ecd7da754c064cb858a289fba66cc2c7272aea09c",
+      "bytes": 165927737
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plan_audit.json",
+      "sha256": "f88c70647335151153403be83a98fee09b6a6df446a5dc487a91000683b5c271",
+      "bytes": 56938
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_p_up.json",
+      "sha256": "bc912b671b86274b3038b8379ee739c678f7cabc2812ed169c82f8a388d3ac7c",
+      "bytes": 58906
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_p_up.audit.json",
+      "sha256": "49f8cf834c636ab39b5a66c24ce5e67d70846b8d8addb98476610e48c6c57f7d",
+      "bytes": 28482
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_h_refine.json",
+      "sha256": "edfac6077c0602c22eb0244e204d6b8ea0df2969ce683d6b2597da71095b08df",
+      "bytes": 149680
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/plan_output/plans/round5_h_refine.audit.json",
+      "sha256": "92362d8b5fa467d2fb0afe1b70b0cbf9745b5cd1bd086194b08e3b679c87a06d",
+      "bytes": 5822
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/watchdog/summary.json",
+      "sha256": "30b571f199abd288f8c031b73de8aed96589af8111fd4721714ef8f7f5f9ba5a",
+      "bytes": 3568
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_plan_transfer_attempt1/affinity_change.log",
+      "sha256": "c45148b27329f7addb879f7469e0305968388e819cd65bfeb3ed1458250115cd",
+      "bytes": 923
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt1/root_review/root_round5_plan_complete_audit.json",
+      "sha256": "6098f8e8b6e56d04ac1cb19844503cbaab259f4bc9e37152b5f08e659d803847",
+      "bytes": 2924
+    },
+    {
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/root_review/root_round5_p_attempt1_controlled_stop_audit.json",
+      "sha256": "68bac8b0809dea36e0859e46664e13f7dfeb4a2c6d3574135604d57584b8790f",
+      "bytes": 1601
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/source_snapshot_supplemental/supplemental_dependency_manifest.json",
+      "sha256": "dc161ef8509dbd703d67a842764953de68fffa9e5c58f60f1d18b9d4502d7b55",
+      "bytes": 1210
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/source_snapshot_supplemental/variable_p_transfer.py",
+      "sha256": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "bytes": 23101
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/source_snapshot_pre_run/source_files.txt",
+      "sha256": "644021f8458f66bf2682f8805ea86889e3295dadbe0ae437717ab6d618bc5f9b",
+      "bytes": 1553
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/source_snapshot_pre_run/dependency_sources.sha256",
+      "sha256": "cc8ac9c3f69824fd5525773a7e0eb450c7a62bc0d98fbd96fd3a45d2afbf2dc7",
+      "bytes": 4193
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/source_snapshot_pre_run/source_snapshot.tar.gz",
+      "sha256": "4484f28b31bd2a3707df7b7d7a9cf26c1fe6cf33908485a723904d9e9dd7339e",
+      "bytes": 341671
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/candidate_raw_audit.json",
+      "sha256": "aeb353006ec587e4d29345ce966e265b49aa6e1bef4c79d85d04293be0373f0f",
+      "bytes": 3890
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/comparison_resource_audit.json",
+      "sha256": "23d81bc4dc983f23dec045ed104527d32d6d9f6b6997efc780ea9c6ff05c5640",
+      "bytes": 477
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/inputs_postcheck.txt",
+      "sha256": "51d4e5ace6c0469e2e055aa57992eb477bed652bcfcdb0e5dce653a424dcd115",
+      "bytes": 1801
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/solve_raw_audit.json",
+      "sha256": "4d02fbf405f27aea26ad0214156d1b8d3b789c6caccdcb8055c6180490a4e708",
+      "bytes": 3466
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round5_p_up_attempt2/root_review/sources_postcheck.txt",
+      "sha256": "eaa2727b921a126a72e8e3f3902c3cc911964c112ddd88dbe92c5829f89f0829",
+      "bytes": 1713
+    }
+  ]
+}

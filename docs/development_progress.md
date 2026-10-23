@@ -1,4 +1,4 @@
-# Task43：四次 p-up 已接受，继续后续闭环
+# Task43：五次 p-up 已接受，最终精度仍待提高
 
 当前工作在既有 `task43_hp_adaptivity` 分支推进，复用 NN-Lab-V2 注册 worktree 和工作站 complex128/int64 环境。基线固定为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`；旧分支保留，用户授权删除的旧 Task42extra 大型 artifacts/results 已有路径与体积记录。未启动 NN/FTT 或新的预条件器扫描。
 
@@ -8,11 +8,15 @@
 | 真实方程残差 | attempt1 未缩放端口负结果保留；启用既有边界幅值缩放后的 36 单元组件 A6/RHS 为 8.7763e−13；新空 h active-p3 MPI1/MPI2 锚点分别为 2.1429e−12/1.7762e−12 | 残差说明离散方程解准，不证明网格精度够高 |
 | 同阶原生及分布式锚点 | 36 单元原生 p3/standard_full、p6 载体空 h active-p3 MPI1、同 active-p3 MPI2 均完成；全域 q8/q10 E/curl/H、612 模态、R/T/A 和 independent A6 Gate 通过 | 均为 `numerical_sanity_only`，不代替冻结起点或独立精度参考 |
 | 正式起点与参考恢复 | 冻结180单元active p3完成：15120独立FE DoF，A6=2.3848e−10；Y6_1/Y6_2恢复身份通过；共同q8/q10全域E/curl/H和612模态比较完成 | current–Y6_1固定入射尺度G相对差0.4280717；两个有限参考彼此差4.5441e−6；不构成连续误差或精度通过 |
-| 自适应与独立验收 | Round-1至Round-4 p-up按冻结规则接受，accepted updates=4；Round-4 η_G=0.0095428197、J∞=7,475.08；Round-5 p-up首个尝试在150/612端口模态处由主控性能受控停止 | 该停止不是数值失败，无候选场/官方结果；严格零支撑跳过已serial/MPI2等价测试并复核36单元独立A6身份。最终精度、真实h、独立holdout、侧壁和同精度成本仍未通过；[transition 4](task43_hp_adaptivity/outcomes/records/round4_selection_transition4_v1.json)、[投影优化记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json) |
+| 自适应与独立验收 | Round-1至Round-5 p-up按冻结规则接受，accepted updates=5；Round-5 η_G=0.003411538344、J∞=3407.04275，A6=5.82775e−9 | J∞≤1才是全部输出达标，故最终精度仍未通过；体吸收误差0.002512950337→0.003047232499略恶化，按冻结最大J规则接受；[transition5](task43_hp_adaptivity/outcomes/records/round5_selection_transition5_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round5_independent_audit_v1.json) |
 
-三个 h100 锚点完成同阶实现与MPI等价核对，见[三锚点记录](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。正式起点、Y6_1/Y6_2恢复、共同积分和各轮标记见[起点与参考记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)、[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)和[Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md)。四次p-up均通过各自方程/物理硬门和冻结中间噪声排序；Round-4 η_G从0.0483360497降至0.0095428197，J∞从42271.53降至7475.08。h1仍为unknown/controlled_stop；h2–h4未完整求解，h4计划按严格排名界not_run，均不构成h数值资格通过。Round-2残差失败与同计划校正重试见[transition 2记录](task43_hp_adaptivity/outcomes/records/round2_selection_transition2_v1.json)。Round-4增广矩阵20,047行，operator NNZ used/allocated=10,274,139/12,846,443；factor NNZ=54,095,179，factor对象估算1,298,444,680 B，不能当作进程树RSS。截至transition 4，已有6条完整模型网格/p-map case lineage，实际full-scale solver attempts为8（含current加严与Round-2同计划重试）；此前8个p/h计划完成plan-only审计，不占task.md §9的完整模型case规划预算。§9的8–12为目标、16为规划预算；若计划超过16，应先说明新增判断所需的最少case，而非将16视作无条件硬停。transition 4时累计22条终态watchdog wall小计为20,410.176s，不含未监控参考、组件和部分规划成本，非campaign总成本；详细范围见[Round-4合并独立审计](task43_hp_adaptivity/outcomes/records/round4_independent_audit_v1.json)。此后Round-5新增p5候选lineage及一次受控停止的full-scale attempt，并完成p/h计划审计；相关24条终态watchdog小计为26,309.539s（含Round-5计划审计与受控停止），仍不含未监控参考、组件和其他规划/后处理，不能称为完整campaign总成本。Round-5独立成本依据见[稀疏零投影组件记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json)。Round-5 p-up受控停止未产生候选场；严格零载荷跳过已通过针对性serial/MPI2投影对照和36单元独立A6组件复核，完整测试与来源哈希见[投影优化记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json)。最终6×10×6 p6不进入标记或排序；accepted updates仍为4，最终精度、真实h资格、独立holdout和同精度成本优势尚无结论。下一步按同一冻结p5计划用新源码身份重试，PDE前重新检查ABI、CPU和输入哈希。
+三个h100锚点完成同阶实现与MPI等价核对，正式起点及Y6_1/Y6_2恢复和公共积分由[Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md)保存。Round-5从transition4真实恢复场重新标记60格（53可升、7已p6），另有30格邻接闭包强制升阶，形成180叶、p4/p5/p6=51/82/47。独立FE为23,874迹+46,338内部=70,212（较父增加16,553），612端口，凝聚矩阵24,486行；operator NNZ used/allocated为14,583,076/17,936,292，factor NNZ为72,608,080、对象估算1,742,789,816B，不等于树RSS。p保守单位DoF得分3.69854e−7高于h5上界5.91695e−8；h5虽完成810叶/215,092FE的计划审计，但未跨网格转移或求解，67项reference-space工作集超现有cache64。h1的停止sender未知且用户未发；h2–h5的剪枝均不能补足真实h资格。独立holdout、侧壁、参考自身q/R14、最终对照与同精度成本仍待完成。
 
 实测数值、源码/数据身份及既有 p4 字节哈希负结果见 [Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md) 和[模型总账](development_model_registry.md)。本节为进行中的检查点，后续按实际结果更新；以下历史正文中的“当前”只指其原有任务阶段。
+
+Round-5成功求解watchdog3150.039591s、进程树RSS峰4,975,054,848B，q8比较276.609321s、峰1,136,553,984B，两者task swap均0、后代清理完成；此前Root性能受控停止2230.240470s无候选场、非用户操作/数值/资源失败，零载荷投影优化的serial/MPI2/A6组件与失败测试费用保持[原记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json)。累计7条模型lineage、10次full-scale尝试；26条终态watchdog wall小计29,736.18805150129s，不含全部测试/参考及未监控工作，不是全campaign成本。无隔离冷启动或等精度收益结论。
+
+本轮源码HEAD为 `366591b226ee69172fa7704224a66b814888070e`；原40文件pre-run清单漏列variable_p_transfer，保留原archive并用2026-10-23T06:32:38.630739327Z运行中补充采集的同HEAD字节说明缺口，不倒写pre-run身份。原始输入/已列源码posthash及11个checkpoint共享数组一致性已由Root核验。残差绝对范数、same-LU相对残差、恢复后凝聚残差和独立A6分开记录。当前仅准备transition5上的第6轮轻量marking/计划预览，不新增正式PDE。
 
 ---
 

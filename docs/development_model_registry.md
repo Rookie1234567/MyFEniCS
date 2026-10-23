@@ -1798,21 +1798,23 @@ Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 三对保存输出比较均通过既定�
 
 ## 3.55 Task43：新 phi90 模型的自适应 h/p 闭环（2026-10-22，任务建立）
 
-局部 h 自适应把误差较大的区域细分为较小单元，局部 p 自适应提高所选单元的表示阶数。本任务要验证两者能否根据实际误差形成连续的“求解—恢复—估计—标记—更新—转移—再求解”闭环，并在同等精度下减少未知量、内存和总时间。它针对均匀加密成本高、既有自适应未形成可复现接受循环的问题。截至2026-10-23，正式起点及四次p-up均按冻结规则接受，accepted updates=4；Round-1 h为受控停止/unknown，Round-2至Round-4 h未求解（后几轮按冻结得分上界剪枝）。真实h资格、最终精度与同精度成本优势仍未通过。
+局部 h 自适应把误差较大的区域细分为较小单元，局部 p 自适应提高所选单元的表示阶数。本任务要验证两者能否根据实际误差形成连续的“求解—恢复—估计—标记—更新—转移—再求解”闭环，并在同等精度下减少未知量、内存和总时间。它针对均匀加密成本高、既有自适应未形成可复现接受循环的问题。截至2026-10-23，正式起点及五次p-up均按冻结规则接受，accepted updates=5；Round-1 h为受控停止/unknown，Round-2至Round-5 h未求解（后几轮按冻结得分上界剪枝）。真实h资格、最终精度与同精度成本优势仍未通过。
 
 | 登记项 | Task43 当前事实／计划 | 数据身份与证据 |
 |---|---|---|
 | 任务／分支 | `Task43`／`task43_hp_adaptivity`；任务书已建立 | 文档身份；[README](task43_hp_adaptivity/README.md)、[task](task43_hp_adaptivity/task.md) |
 | 冻结 base | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` | 来源身份；[branch_provenance](task43_hp_adaptivity/branch_provenance.json) |
 | 首轮物理范围 | phi90、x/y 周期50/50 nm、光栅x/y尺寸17/20 nm、波长13.5 nm；180单元current与p-up使用已冻结物理身份 | [起点/参考记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)；[round-1 p-up原始记录](../benchmarks/artifacts/task43/round1_candidates/attempt2/p_up_attempt3/run/task43_round1_candidate_record.json) |
-| 自适应闭环 | frozen θ=.5 标记并从每个已接受父场重新生成计划；Round-1至Round-4 p-up依次接受为transition 1–4（accepted updates=4） | Round-4 η_G从0.0483360497降至0.0095428197；p保守单位DoF得分下界3.71105e−6严格高于h4计划含噪上界5.74245e−7，故h4按冻结排名not_run，不是h数值资格通过；Y5_1未参与，6×10×6 p6仍只作最终对照 |
-| 独立准确性验收 | Round-4 p-up重算A6=4.9789e−9、凝聚残差=5.1880e−13、能量闭合差=8.3844e−13；η_G从0.0483360497降至0.0095428197，J∞从42271.53降至7475.08（witness为R00_s） | 方程硬门及中间G/J噪声条件通过；J∞仍高于最终容差，不能称最终精度通过。h的真实独立A6/完整场仍未完成 |
-| 规模与成本 | Round-1至Round-4 p-up独立FE依次为19,679 / 32,358 / 43,208 / 53,659；Round-4为迹19,435+内部34,224，较父增加10,451，612端口 | Round-4增广矩阵20,047行，operator NNZ used/allocated=10,274,139/12,846,443；factor NNZ=54,095,179，factor对象估算1,298,444,680 B（不是进程树峰值）。计划、求解、比较watchdog分别为1992.979 / 3704.762 / 215.476s；总和5913.217s，不重复累加嵌套阶段。进程树RSS峰3,752,202,240B、task VmSwap峰0。h4计划形成796叶、127,397独立FE（Δ=84,189），因排名界未运行。累计22条终态watchdog wall小计20,410.176s，不含未监控参考/组件等成本，非全campaign成本 |
-| 预算与尝试口径 | 6条完整模型网格/p-map case lineage：current、Round-1 p/h、Round-2 p、Round-3 p、Round-4 p；共8次实际full-scale solver attempts，含current加严及Round-2同计划失败/修正重试 | task.md §9 的8–12为目标、16为完整PDE模型case规划预算；若规划超过16，先说明新增判断所需的最少case，不把16当无条件硬停。8个p/h候选计划是plan-only审计，不占该预算。solver attempts不等于通过的official结果。36单元锚点与一般组件fixture另计；Y6_1/Y6_2复用历史场未fresh求解。Round-4缓存复核定向测试4项通过、51.13s；attempt1性能受控停止1,712.273s，attempt2外层无worker失败2.7s，均保留 |
-| 后续晋级 | transition 4已接受；从其恢复场重新标记并实际审计Round-5 p/h计划 | Round-1 h是受控停止且unknown；Round-2至Round-4 h未完整求解或按排序界未运行；仍需至少一次真实h资格、独立holdout、最终p6对照与最终精度门。中间更新不等于任务精度或同精度成本通过 |
+| 自适应闭环 | frozen θ=.5；Round-1至Round-5 p-up依次接受transition1–5，accepted updates=5；每轮从真实已接受父场重新标记 | Round-5 η_G=0.009542819712→0.003411538344；p保守单位FE得分3.69854e−7高于h5含噪上界5.91695e−8，h5仅计划剪枝；Y5_1和6×10×6 p6未参与选择 |
+| 独立准确性验收 | Round-5 A6=5.82775e−9、凝聚残差=5.40094e−13、闭合差=1.20648e−12，612通道；J∞=7475.08→3407.04，witness为R00_s | J∞≤1才为全量输出达标，最终精度未过；A_volume绝对误差0.002512950337→0.003047232499略恶化，按冻结max-J接受，不称所有量单调改善 |
+| 规模与成本 | p-up独立FE依次19,679/32,358/43,208/53,659/70,212；Round-5迹23,874+内部46,338、Δ16,553、612端口；矩阵24,486行；operator NNZ14,583,076/17,936,292，factor NNZ72,608,080 | 求解3150.039591s、树RSS峰4,975,054,848B；比较276.609321s、峰1,136,553,984B，两者task swap0。h5计划810叶、215,092FE，authority3014.454s，未转移/求解。累计26条终态watchdog wall小计29,736.18805150129s，排除全部tests/reference/未监控成本，非全campaign；factor对象估算1,742,789,816B非树RSS |
+| 预算与尝试口径 | 7条完整模型lineage、10次full-scale solver attempts，含same-LU加严及失败/受控停止/重试；10个p/h计划仅为plan-only | §9目标8–12、规划16；超计划前说明最小新增判断，不作无条件硬停。solver attempts不等于成功official结果；组件fixture与参考恢复另计；Root p5attempt1性能停止2230.240470s及零投影组件测试费用保留[原记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json) |
+| 后续晋级 | transition5已接受，准备第6轮真实场驱动的轻量marking及p/h计划预览 | h1受控停止且sender未知、用户未发；h2–h5未完整求解，真实h资格仍缺；最终holdout/p6对照、q/R14、侧壁和同精度成本仍未过 |
 | 本轮失败／未关闭项 | Round-2 p-up首尝试在内部场恢复后、live observer前因full-active residual 9.1353e−8超过1e−9失败，未写完整场checkpoint、采样或独立A6；same-LU修正后同计划重试已通过。首轮h原始watchdog为`USER_CONTROLLED_STOP`，用户确认未手动停止，信号来源仍未知 | Round-2失败尝试保留，独立字段与成本见[transition 2记录](task43_hp_adaptivity/outcomes/records/round2_selection_transition2_v1.json)；h保持unknown/controlled_stop或not_run，不称solver failure也不称Gate通过 |
-| 当前裁决 | Round-4 p-up按冻结规则接受为transition 4（accepted updates=4）；最终精度及同精度成本优势未建立 | [transition 4记录](task43_hp_adaptivity/outcomes/records/round4_selection_transition4_v1.json)、[Round-4合并审计](task43_hp_adaptivity/outcomes/records/round4_independent_audit_v1.json)、[Task43 AGENTS](task43_hp_adaptivity/AGENTS.md) |
+| 当前裁决 | Round-5 p-up接受为transition5（accepted updates=5）；最终精度及同精度成本优势未建立 | [transition5](task43_hp_adaptivity/outcomes/records/round5_selection_transition5_v1.json)、[Round-5独立审计](task43_hp_adaptivity/outcomes/records/round5_independent_audit_v1.json)、[Task43 AGENTS](task43_hp_adaptivity/AGENTS.md) |
 | Round-2 p-up 与同LU修正 | 首次残差 preflight 失败后默认关闭的same-LU校正已在小型mixed-p测试中验证，并在正式候选入口前通过有限且严格下降检查；校正后full active A6=2.7081e−9、凝聚残差=3.1939e−13、闭合差=2.7267e−13 | 正式p-up重试、checkpoint、完整场/612模态和共同比较均已完成；transition 2已按冻结中间规则接受。单步校正不改变矩阵或右端，不单独证明精度；[compact决策、失败成本和hash](task43_hp_adaptivity/outcomes/records/round2_selection_transition2_v1.json) |
+
+Round-5运行及比较绑定HEAD `366591b226ee69172fa7704224a66b814888070e`。原40文件pre-run archive漏列必需variable_p_transfer，原archive未改；缺失文件在2026-10-23T06:32:38.630739327Z运行中补充采集且与clean HEAD一致，不是pre-run补档。Root复核19输入/40已列源码posthash、11个checkpoint共享数组及原始G/J/612modal和资源；same-LU绝对/相对残差、恢复后凝聚残差及A6口径分开。证据及hash见[Round-5审计](task43_hp_adaptivity/outcomes/records/round5_independent_audit_v1.json)。
 
 后续每轮把真实实现、循环决策、完整物理与成本结果写入本任务 `outcomes/summary.md` 和 `response_vN.md`，再同步此节；不能以任务书、测试数量或旧分支的成功数据代替 Task43 的数值证据。
 
