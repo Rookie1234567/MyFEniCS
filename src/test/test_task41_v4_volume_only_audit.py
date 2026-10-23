@@ -2081,3 +2081,129 @@ def test_geometry_pair_attribution_closes_selected_row_identity_algebraically():
     assert canonical_j0["selected_cells"][0]["delta_i"]["max_abs"] == 32.0
     assert actual_j0["selected_cells"][0]["actual_minus_canonical_target_trace_action"] == [40.0, 0.0]
     assert result["attribution"][1]["paths"]["actual"]["native_comparison"]["global_column_gate_claim"] is False
+
+
+def test_v11_metadata_only_selected_row_persists_incident_metadata_without_numeric_work(
+    tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V11_METADATA_ACTIVE_ROW,
+        _run_v8_selected_trace_star_audit,
+    )
+    from src.runners import task41_p0_contract
+    import src.solvers.fullspace_same_mesh_hcurl_pmg_global as same_mesh
+    import src.solvers.hcurl_assembly_time_condensation as condensation
+
+    active_rows = np.arange(TASK41_P0_V11_METADATA_ACTIVE_ROW + 1, dtype=np.int64) + 100
+    donor = {
+        "columns": [
+            {"active_original_rows": active_rows},
+            {"active_original_rows": active_rows.copy()},
+        ]
+    }
+    metadata_fields = (
+        "geometry_dofs", "actual_geometry_coordinates", "local_dofs", "original_rows",
+        "interior_positions", "trace_positions", "interior_original_rows",
+        "trace_original_rows", "active_ids", "trace_expansion_data",
+        "trace_expansion_indices", "trace_expansion_indptr",
+        "selected_local_trace_rows", "selected_trace_coefficients",
+    )
+    cell = {
+        field: np.asarray([index + 1], dtype=np.complex128 if field in {
+            "trace_expansion_data", "selected_trace_coefficients"
+        } else np.float64 if field == "actual_geometry_coordinates" else np.int32)
+        for index, field in enumerate(metadata_fields)
+    }
+    cell.update({
+        "cell_index": 52,
+        "cell_tag": 13,
+        "cell_permutation": 1,
+        "actual_coordinate_sha256": "a" * 64,
+        "selected_trace_coefficients": np.asarray([1.0 - 0.25j], dtype=np.complex128),
+        "selected_trace_contribution_kinds": ["direct_original_row"],
+    })
+    fresh_metadata = {
+        "selected_original_row": int(active_rows[TASK41_P0_V11_METADATA_ACTIVE_ROW]),
+        "active_trace_rows": 2,
+        "full_trace_rows": 4,
+        "slave_rows": 1,
+        "full_storage_rows": 8,
+        "owned_cells": 60,
+        "element_dimension": 2,
+        "incidents": [cell],
+        "interior_positions": np.asarray([1], dtype=np.int64),
+        "trace_positions": np.asarray([0], dtype=np.int64),
+    }
+    build_calls = []
+    metadata_calls = []
+
+    def fake_build(cfg, comm, levels, *, include_positive_coefficients):
+        build_calls.append((cfg, comm, levels, include_positive_coefficients))
+        return {
+            "spaces": {6: "p6-space"},
+            "floquets": {6: SimpleNamespace(mpc="p6-mpc")},
+            "mesh_data": SimpleNamespace(cell_tags="cell-tags"),
+        }
+
+    def fake_metadata(space, mpc, cell_tags, *, selected_active_row,
+                      expected_active_original_rows, progress_callback):
+        metadata_calls.append((space, mpc, cell_tags, selected_active_row))
+        assert np.array_equal(expected_active_original_rows, active_rows)
+        return fresh_metadata
+
+    monkeypatch.setattr(same_mesh, "_build_same_mesh_levels", fake_build)
+    monkeypatch.setattr(
+        condensation, "build_selected_volume_trace_star_metadata", fake_metadata
+    )
+    gates, persisted, progress_events, checkpoints = [], [], [], []
+
+    def persist_array(name, array):
+        persisted.append((name, np.asarray(array).copy()))
+        return {"path": f"{name}.npy", "bytes": int(np.asarray(array).nbytes)}
+
+    result = _run_v8_selected_trace_star_audit(
+        cfg=object(),
+        donor=donor,
+        fixed_window=SimpleNamespace(sha256="b" * 64),
+        output_directory=tmp_path,
+        consumer_contract={
+            "case": {"run_id": task41_p0_contract.TASK41_B0_RUN_ID},
+            "window": {"sha256": "b" * 64},
+            "execution_scope": task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            "evidence": {"raw_disk_policy": {
+                "scope": "task41_b0_v3_recovery_evidence",
+                "raw_artifact_limit_bytes": 16 * 1024**3,
+                "free_space_floor_bytes": 2 * 1024**3,
+                "authorization": "user_20261019_16gib_evidence_only",
+                "new_evidence_limit_bytes": 512 * 1024**2,
+            }},
+        },
+        ffcx_c_source_path=None,
+        sha256_file=lambda _path: "0" * 64,
+        allocation_gate=lambda phase, facts: gates.append((phase, dict(facts))),
+        persist_array=persist_array,
+        progress=progress_events.append,
+        checkpoint=lambda phase, value: checkpoints.append((phase, value)),
+        metadata_only=True,
+        selected_active_row=TASK41_P0_V11_METADATA_ACTIVE_ROW,
+    )
+
+    assert len(build_calls) == len(metadata_calls) == 1
+    assert build_calls[0][2:] == ((6,), False)
+    assert metadata_calls[0] == ("p6-space", "p6-mpc", "cell-tags", 87567)
+    assert result["selected_original_row"] == 87667
+    assert result["numerical_work_started"] is False
+    assert result["incident_cell_order"] == [52]
+    assert result["selected_cells"][0]["selected_trace_coefficients"] == [[1.0, -0.25]]
+    assert len(persisted) == len(metadata_fields)
+    assert [phase for phase, _facts in gates] == [
+        "v11_selected_trace_star_metadata_preflight",
+        "v11_selected_trace_star_metadata_evidence_preflight",
+    ]
+    assert gates[0][1]["additional_payload_bytes"] == 0
+    assert gates[1][1]["metadata_only"] is True
+    assert gates[1][1]["incident_cells"] == [52]
+    assert checkpoints[-1] == ("selected_trace_star_metadata_only", result)
+    assert progress_events[-1]["status"] == "COMPLETED"

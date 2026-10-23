@@ -35,6 +35,7 @@ TASK41_P0_V6_LOCAL_SCREEN = 1.0e-11
 TASK41_P0_V4_SELECTED_ACTIVE_ROW = 5_458_716
 TASK41_P0_V4_SELECTED_ORIGINAL_ROW = 17_692_332
 TASK41_P0_V8_SELECTED_ACTIVE_ROW = 4_766_937
+TASK41_P0_V11_METADATA_ACTIVE_ROW = 87_567
 TASK41_P0_V8_V7_INDEX_SHA256 = (
     "59237641d681a48220afa6662c57df4ebfad7a9340054630a614d1cda7a8c621"
 )
@@ -1677,8 +1678,24 @@ def _run_v8_selected_trace_star_audit(
     persist_array: Any,
     progress: Any,
     checkpoint: Any,
+    metadata_only: bool = False,
+    selected_active_row: int = TASK41_P0_V8_SELECTED_ACTIVE_ROW,
 ) -> dict[str, Any]:
     """Replay saved B0 operands and only the V8 target row's complete cell star."""
+
+    if metadata_only:
+        return _run_v8_selected_trace_star_metadata_only(
+            cfg=cfg,
+            donor=donor,
+            fixed_window=fixed_window,
+            output_directory=output_directory,
+            consumer_contract=consumer_contract,
+            selected_active_row=selected_active_row,
+            allocation_gate=allocation_gate,
+            persist_array=persist_array,
+            progress=progress,
+            checkpoint=checkpoint,
+        )
 
     import ufl
     from basix.ufl import element
@@ -1778,7 +1795,7 @@ def _run_v8_selected_trace_star_audit(
         np.asarray(donor["columns"][1]["active_original_rows"], dtype=np.int64),
     ):
         raise ValueError("V8 donor columns disagree on the saved active-original row map")
-    selected_row = TASK41_P0_V8_SELECTED_ACTIVE_ROW
+    selected_row = int(selected_active_row)
     if not 0 <= selected_row < active_original_rows.size:
         raise IndexError("V8 selected active row lies outside the saved donor map")
     selected_original_row = int(active_original_rows[selected_row])
@@ -3346,6 +3363,204 @@ def _run_v8_selected_trace_star_audit(
     return result
 
 
+def _run_v8_selected_trace_star_metadata_only(
+    *,
+    cfg: Any,
+    donor: dict[str, Any],
+    fixed_window: Any,
+    output_directory: Path,
+    consumer_contract: Mapping[str, Any],
+    selected_active_row: int,
+    allocation_gate: Any,
+    persist_array: Any,
+    progress: Any,
+    checkpoint: Any,
+) -> dict[str, Any]:
+    """Persist one fresh selected-row MPC star without loading saved solution arrays."""
+
+    import hashlib
+    from mpi4py import MPI
+
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+    from src.solvers.hcurl_assembly_time_condensation import (
+        build_selected_volume_trace_star_metadata,
+    )
+
+    if fixed_window.sha256 != consumer_contract.get("window", {}).get("sha256"):
+        raise ValueError("V8 metadata-only fixed-window hash differs from the consumer contract")
+    if selected_active_row != TASK41_P0_V11_METADATA_ACTIVE_ROW:
+        raise ValueError("V11 metadata-only selected row differs from the frozen target row")
+    if len(donor.get("columns", ())) != 2:
+        raise ValueError("V8 metadata-only donor does not contain exactly two columns")
+    active_rows = np.asarray(donor["columns"][0]["active_original_rows"])
+    second_map = np.asarray(donor["columns"][1]["active_original_rows"])
+    if (
+        active_rows.ndim != 1
+        or active_rows.dtype.kind not in "iu"
+        or not np.array_equal(active_rows, second_map)
+    ):
+        raise ValueError("V8 metadata-only donor active-row maps are invalid or disagree")
+    active_rows = np.ascontiguousarray(active_rows, dtype=np.int64)
+    if not 0 <= selected_active_row < active_rows.size:
+        raise IndexError("V11 metadata-only active row lies outside the saved donor map")
+    selected_original_row = int(active_rows[selected_active_row])
+    allocation_gate(
+        "v11_selected_trace_star_metadata_preflight",
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": 6 * 1024**3,
+            "estimated_remaining_seconds_upper": TASK41_P0_V5_PREFIX_MINIMUM_SECONDS,
+            "metadata_only": True,
+            "selected_active_row": selected_active_row,
+            "selected_original_row": selected_original_row,
+            "selected_work_scope": (
+                "one p6/MPC row-numbering scan and selected incident-cell metadata; "
+                "no saved vector replay, form, tensor, FFCx, owner, factor, or carrier"
+            ),
+        },
+    )
+    progress(
+        {
+            "phase": "selected_trace_star_metadata_only",
+            "status": "STARTED",
+            "selected_active_row": selected_active_row,
+            "selected_original_row": selected_original_row,
+        }
+    )
+    levels = _build_same_mesh_levels(
+        cfg,
+        MPI.COMM_SELF,
+        (6,),
+        include_positive_coefficients=False,
+    )
+    space = levels["spaces"][6]
+    metadata = build_selected_volume_trace_star_metadata(
+        space,
+        levels["floquets"][6].mpc,
+        levels["mesh_data"].cell_tags,
+        selected_active_row=selected_active_row,
+        expected_active_original_rows=active_rows,
+        progress_callback=progress,
+    )
+    incidents = list(metadata["incidents"])
+    incident_order = [int(item["cell_index"]) for item in incidents]
+    if not incident_order or incident_order != sorted(set(incident_order)):
+        raise ValueError("V11 selected-row incident cell list is empty, duplicated, or unordered")
+    if int(metadata["selected_original_row"]) != selected_original_row:
+        raise ValueError("V11 fresh metadata resolves a different original storage row")
+
+    metadata_fields = (
+        "geometry_dofs",
+        "actual_geometry_coordinates",
+        "local_dofs",
+        "original_rows",
+        "interior_positions",
+        "trace_positions",
+        "interior_original_rows",
+        "trace_original_rows",
+        "active_ids",
+        "trace_expansion_data",
+        "trace_expansion_indices",
+        "trace_expansion_indptr",
+        "selected_local_trace_rows",
+        "selected_trace_coefficients",
+    )
+    estimated_payload_bytes = sum(
+        int(np.asarray(row[field]).nbytes) + 4096
+        for row in incidents
+        for field in metadata_fields
+    )
+    from src.runners.task41_p0_contract import task41_raw_artifact_limit_bytes
+
+    allocation_gate(
+        "v11_selected_trace_star_metadata_evidence_preflight",
+        {
+            "additional_payload_bytes": estimated_payload_bytes,
+            "evidence_reserve_bytes": estimated_payload_bytes,
+            "workspace_bytes": 512 * 1024**2,
+            "estimated_remaining_seconds_upper": 0.0,
+            "metadata_only": True,
+            "new_evidence_limit_bytes": int(
+                consumer_contract.get("execution_scope", {}).get(
+                    "new_evidence_limit_bytes", 0
+                )
+            ),
+            "raw_artifact_limit_bytes": int(
+                task41_raw_artifact_limit_bytes(consumer_contract)
+            ),
+            "incident_cells": incident_order,
+        },
+    )
+    selected_cells = []
+    for row in incidents:
+        cell_index = int(row["cell_index"])
+        arrays = {}
+        for field in metadata_fields:
+            name = f"task41_p0_v11_selected_cell{cell_index}_{field}"
+            arrays[field] = {"name": name, **persist_array(name, np.asarray(row[field]))}
+        selected_cells.append(
+            {
+                "cell_index": cell_index,
+                "cell_tag": int(row["cell_tag"]),
+                "cell_permutation": int(row["cell_permutation"]),
+                "actual_coordinate_sha256": str(row["actual_coordinate_sha256"]),
+                "selected_local_trace_rows": np.asarray(
+                    row["selected_local_trace_rows"], dtype=np.int64
+                ).tolist(),
+                "selected_trace_coefficients": [
+                    [float(value.real), float(value.imag)]
+                    for value in np.asarray(
+                        row["selected_trace_coefficients"], dtype=np.complex128
+                    )
+                ],
+                "selected_trace_contribution_kinds": list(
+                    row["selected_trace_contribution_kinds"]
+                ),
+                "arrays": arrays,
+            }
+        )
+    result = {
+        "schema": "task41.p0.v8.selected_trace_star_metadata_only.v1",
+        "status": "COMPLETED_METADATA_ONLY",
+        "selected_active_row": selected_active_row,
+        "selected_original_row": selected_original_row,
+        "saved_active_original_rows_sha256": hashlib.sha256(
+            memoryview(active_rows).cast("B")
+        ).hexdigest(),
+        "active_trace_rows": int(metadata["active_trace_rows"]),
+        "full_trace_rows": int(metadata["full_trace_rows"]),
+        "slave_rows": int(metadata["slave_rows"]),
+        "full_storage_rows": int(metadata["full_storage_rows"]),
+        "owned_cells_scanned": int(metadata["owned_cells"]),
+        "element_dimension": int(metadata["element_dimension"]),
+        "incident_cell_count": len(incident_order),
+        "incident_cell_order": incident_order,
+        "interior_positions": np.asarray(
+            metadata["interior_positions"], dtype=np.int64
+        ).tolist(),
+        "trace_positions": np.asarray(
+            metadata["trace_positions"], dtype=np.int64
+        ).tolist(),
+        "selected_cells": selected_cells,
+        "numerical_work_started": False,
+        "scope_note": (
+            "Fresh p6/MPC active-row map equality and complete incident-cell metadata only; "
+            "no saved solution-vector replay or numerical reconstruction."
+        ),
+    }
+    checkpoint("selected_trace_star_metadata_only", result)
+    progress(
+        {
+            "phase": "selected_trace_star_metadata_only",
+            "status": "COMPLETED",
+            "selected_active_row": selected_active_row,
+            "selected_original_row": selected_original_row,
+            "incident_cells": incident_order,
+        }
+    )
+    return result
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--summary", type=Path, required=True)
@@ -3357,6 +3572,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--geometry-pair-only", action="store_true")
     parser.add_argument("--selected-trace-star-audit", action="store_true")
+    parser.add_argument("--selected-trace-star-metadata-only", action="store_true")
+    parser.add_argument(
+        "--selected-active-row", type=int, default=TASK41_P0_V8_SELECTED_ACTIVE_ROW
+    )
     parser.add_argument(
         "--geometry-policy",
         choices=("canonical", "mesh_actual_exact"),
@@ -3450,11 +3669,19 @@ def _v8_selected_trace_star_allocation_gate(
     scratch_reserve = int(checked.get("scratch_reserve_bytes", 0))
     if evidence_reserve < 0 or scratch_reserve < 0:
         raise ValueError("V8 selected-star evidence and scratch reserves cannot be negative")
+    metadata_only = checked.get("metadata_only") is True
     cumulative = int(prior_array_payload_bytes) + int(persisted_array_bytes) + evidence_reserve
-    if cumulative > 16 * 1024**3:
+    if metadata_only and (
+        int(persisted_array_bytes) + evidence_reserve
+        > int(checked.get("new_evidence_limit_bytes", 0))
+    ):
         raise _CandidateNotAdmitted(
-            f"{label}: selected-star evidence would exceed the unchanged 16 GiB cap by "
-            f"{cumulative - 16 * 1024**3} bytes"
+            f"{label}: metadata-only evidence would exceed the fixed new-evidence limit"
+        )
+    if cumulative > int(checked.get("raw_artifact_limit_bytes", 16 * 1024**3)):
+        raise _CandidateNotAdmitted(
+            f"{label}: selected-star evidence would exceed its cumulative raw-artifact cap by "
+            f"{cumulative - int(checked.get('raw_artifact_limit_bytes', 16 * 1024**3))} bytes"
         )
     free_bytes = int(shutil.disk_usage(output_directory).free)
     if free_bytes - evidence_reserve - scratch_reserve < 2 * 1024**3:
@@ -3481,7 +3708,12 @@ def _v8_selected_trace_star_allocation_gate(
         "prior_array_payload_bytes": int(prior_array_payload_bytes),
         "persisted_array_bytes": int(persisted_array_bytes),
         "selected_star_evidence_reserve_bytes": evidence_reserve,
-        "evidence_cap_bytes": 16 * 1024**3,
+        "evidence_cap_bytes": int(
+            checked.get("new_evidence_limit_bytes", 16 * 1024**3)
+        ) if metadata_only else 16 * 1024**3,
+        "cumulative_raw_artifact_limit_bytes": int(
+            checked.get("raw_artifact_limit_bytes", 16 * 1024**3)
+        ),
         "free_bytes_before_reservation": free_bytes,
         "free_space_floor_bytes": 2 * 1024**3,
         "scratch_reserve_bytes": scratch_reserve,
@@ -3514,7 +3746,10 @@ def _v8_selected_trace_star_worker_allocation_gate(
 ) -> dict[str, Any]:
     """Route the real worker allocation gate through the V8 local admission."""
 
-    if not bool(getattr(worker_args, "selected_trace_star_audit", False)):
+    if not (
+        bool(getattr(worker_args, "selected_trace_star_audit", False))
+        or bool(getattr(worker_args, "selected_trace_star_metadata_only", False))
+    ):
         raise ValueError("V8 worker allocation gate was called outside the selected-star route")
     return _v8_selected_trace_star_allocation_gate(
         label,
@@ -3971,7 +4206,10 @@ def main(argv: list[str] | None = None) -> int:
     started_perf = perf_counter()
     started_at_utc = datetime.now(timezone.utc).isoformat()
     args = _parse_args(argv)
-    if args.selected_trace_star_audit and args.geometry_pair_only:
+    selected_trace_metadata_mode = bool(
+        args.selected_trace_star_audit or args.selected_trace_star_metadata_only
+    )
+    if (args.selected_trace_star_audit or args.selected_trace_star_metadata_only) and args.geometry_pair_only:
         raise ValueError("V8 selected trace-star audit cannot use the V4 geometry-pair mode")
     if args.geometry_pair_only != (args.source_report is not None):
         raise ValueError("--geometry-pair-only and --source-report must be provided together")
@@ -3980,7 +4218,7 @@ def main(argv: list[str] | None = None) -> int:
     if (
         args.geometry_policy == "mesh_actual_exact"
         and args.geometry_reference_report is None
-        and not args.selected_trace_star_audit
+        and not (args.selected_trace_star_audit or args.selected_trace_star_metadata_only)
     ):
         raise ValueError("mesh_actual_exact requires the frozen two-cell V4 geometry reference report")
     if args.geometry_policy != "mesh_actual_exact" and args.geometry_reference_report is not None:
@@ -3995,6 +4233,16 @@ def main(argv: list[str] | None = None) -> int:
     ):
         raise ValueError(
             "V8 selected trace-star audit requires mesh_actual_exact and the frozen actual-qmetric evaluator"
+        )
+    if args.selected_trace_star_metadata_only and (
+        args.geometry_policy != "mesh_actual_exact"
+        or args.selected_trace_star_audit
+        or args.raw_tensor_evaluator is not None
+        or args.ffcx_c_source is not None
+        or args.selected_active_row != TASK41_P0_V11_METADATA_ACTIVE_ROW
+    ):
+        raise ValueError(
+            "V11 metadata-only requires mesh_actual_exact, row 87567, and no numeric evaluator or FFCx source"
         )
     from src.runners.task40_v20_stage_runner import _resource_snapshot
     from src.io.input_validation import simulation_config_3d_from_normalized
@@ -4044,7 +4292,7 @@ def main(argv: list[str] | None = None) -> int:
             / "docs/task41extra_phi90_p50x50_g17x20/outcomes/"
             / "b0_v4_volume_only_attribution_20261020.json"
         )
-        if not args.selected_trace_star_audit:
+        if not selected_trace_metadata_mode:
             postbuild_reserve_evidence = _v6_postbuild_reserve_evidence(
                 v4_receipt_path,
                 donor_contract=donor_contract,
@@ -4079,7 +4327,9 @@ def main(argv: list[str] | None = None) -> int:
     output_root = args.output_dir.resolve(strict=True)
     v6_actual_qmetric_mode = args.raw_tensor_evaluator == "actual_qmetric_blocked_gram"
     output_directory = output_root / (
-        "selected_trace_star_audit"
+        "selected_trace_star_metadata_only"
+        if args.selected_trace_star_metadata_only
+        else "selected_trace_star_audit"
         if args.selected_trace_star_audit
         else "geometry_pair"
         if args.geometry_pair_only
@@ -4091,7 +4341,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     output_directory.mkdir(parents=True, exist_ok=False)
     report_path = output_root / (
-        "task41_p0_v8_selected_trace_star_audit.json"
+        "task41_p0_v8_selected_trace_star_metadata.json"
+        if args.selected_trace_star_metadata_only
+        else "task41_p0_v8_selected_trace_star_audit.json"
         if args.selected_trace_star_audit
         else "task41_p0_v4_geometry_pair_probe.json"
         if args.geometry_pair_only
@@ -4104,18 +4356,23 @@ def main(argv: list[str] | None = None) -> int:
     if report_path.exists():
         raise FileExistsError(f"Task41 V4 attribution report already exists: {report_path}")
     phase_path = output_root / (
-        "task41_p0_v8_selected_trace_star_phase.json"
+        "task41_p0_v8_selected_trace_star_metadata_phase.json"
+        if args.selected_trace_star_metadata_only
+        else "task41_p0_v8_selected_trace_star_phase.json"
         if args.selected_trace_star_audit
         else "task41_p0_v4_volume_only_phase.json"
     )
     event_path = output_root / (
-        "task41_p0_v8_selected_trace_star_events.jsonl"
+        "task41_p0_v8_selected_trace_star_metadata_events.jsonl"
+        if args.selected_trace_star_metadata_only
+        else "task41_p0_v8_selected_trace_star_events.jsonl"
         if args.selected_trace_star_audit
         else "task41_p0_v4_volume_only_events.jsonl"
     )
     donor = load_task41_v4_volume_only_donor(
         summary_path=args.summary,
         numerical_output=args.numerical_output,
+        metadata_only=args.selected_trace_star_metadata_only,
     )
     geometry_reference = (
         _load_v5_geometry_reference(
@@ -4123,12 +4380,14 @@ def main(argv: list[str] | None = None) -> int:
             donor_manifest_sha256=str(donor["manifest_sha256"]),
             sha256_file=sha256_file,
         )
-        if args.geometry_policy == "mesh_actual_exact" and not args.selected_trace_star_audit
+        if args.geometry_policy == "mesh_actual_exact" and not selected_trace_metadata_mode
         else None
     )
     run_record: dict[str, Any] = {
         "schema": (
-            "task41.p0.v8.selected_trace_star_audit_receipt.v1"
+            "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1"
+            if args.selected_trace_star_metadata_only
+            else "task41.p0.v8.selected_trace_star_audit_receipt.v1"
             if args.selected_trace_star_audit
             else "task41.p0.v4.geometry_pair_probe_receipt.v1"
             if args.geometry_pair_only
@@ -4220,7 +4479,31 @@ def main(argv: list[str] | None = None) -> int:
             array_bytes_upper if name.startswith("task41_v6_prefix_") else 0
         )
         prefix_budget_after = prefix_budget_remaining - prefix_budget_consumed
-        if args.selected_trace_star_audit:
+        if args.selected_trace_star_metadata_only:
+            from src.runners.task41_p0_contract import task41_raw_artifact_limit_bytes
+
+            new_cap = int(
+                consumer_contract.get("execution_scope", {}).get(
+                    "new_evidence_limit_bytes", 0
+                )
+            )
+            raw_cap = int(task41_raw_artifact_limit_bytes(consumer_contract))
+            persisted_after = int(run_record.get("persisted_evidence_bytes", 0)) + array_bytes_upper
+            cumulative_after = int(donor.get("existing_evidence_bytes", 0)) + persisted_after
+            if persisted_after > new_cap:
+                raise MemoryError(
+                    "V11 metadata-only evidence would exceed the fixed 512 MiB new-evidence cap"
+                )
+            if cumulative_after > raw_cap:
+                raise MemoryError(
+                    "V11 metadata-only evidence would exceed the fixed cumulative raw-artifact cap"
+                )
+            free_before = int(shutil.disk_usage(output_directory).free)
+            if free_before - array_bytes_upper < 2 * 1024**3:
+                raise OSError(
+                    "V11 metadata-only evidence write would breach the 2 GiB free-space floor"
+                )
+        elif args.selected_trace_star_audit:
             cumulative_after = (
                 TASK41_P0_V8_PRIOR_ARRAY_BYTES
                 + int(run_record.get("persisted_evidence_bytes", 0))
@@ -4284,15 +4567,33 @@ def main(argv: list[str] | None = None) -> int:
             attribution_prefix=candidate_attribution_prefix,
             candidate_identity=candidate_identity,
         )
-        if args.geometry_policy == "mesh_actual_exact" and not args.selected_trace_star_audit
+        if args.geometry_policy == "mesh_actual_exact" and not selected_trace_metadata_mode
         else None
     )
 
     def allocation_gate(label: str, facts: Mapping[str, Any]) -> None:
         checked_facts = dict(facts)
-        if args.selected_trace_star_audit:
+        if selected_trace_metadata_mode:
             if fixed_window is None:
                 raise RuntimeError("V8 selected-star admission requires the fixed numeric window")
+            checked_facts.setdefault(
+                "metadata_only", bool(args.selected_trace_star_metadata_only)
+            )
+            if args.selected_trace_star_metadata_only:
+                from src.runners.task41_p0_contract import task41_raw_artifact_limit_bytes
+
+                checked_facts.setdefault(
+                    "new_evidence_limit_bytes",
+                    int(
+                        consumer_contract.get("execution_scope", {}).get(
+                            "new_evidence_limit_bytes", 0
+                        )
+                    ),
+                )
+                checked_facts.setdefault(
+                    "raw_artifact_limit_bytes",
+                    int(task41_raw_artifact_limit_bytes(consumer_contract)),
+                )
             admission = _v8_selected_trace_star_worker_allocation_gate(
                 args,
                 label,
@@ -4302,7 +4603,11 @@ def main(argv: list[str] | None = None) -> int:
                 resource_admission=_resource_admission,
                 resource_snapshot=_resource_snapshot,
                 output_directory=output_directory,
-                prior_array_payload_bytes=TASK41_P0_V8_PRIOR_ARRAY_BYTES,
+                prior_array_payload_bytes=(
+                    int(donor.get("existing_evidence_bytes", 0))
+                    if args.selected_trace_star_metadata_only
+                    else TASK41_P0_V8_PRIOR_ARRAY_BYTES
+                ),
                 persisted_array_bytes=int(run_record.get("persisted_evidence_bytes", 0)),
                 progress=progress,
             )
@@ -4769,7 +5074,7 @@ def main(argv: list[str] | None = None) -> int:
     owner_result = None
     native_volume_action = None
     try:
-        if args.selected_trace_star_audit:
+        if selected_trace_metadata_mode:
             if fixed_window is None:
                 raise RuntimeError("V8 selected trace-star audit requires the fixed numeric window")
             selected_result = _run_v8_selected_trace_star_audit(
@@ -4784,36 +5089,60 @@ def main(argv: list[str] | None = None) -> int:
                 persist_array=persist_volume_array,
                 progress=progress,
                 checkpoint=checkpoint,
+                metadata_only=args.selected_trace_star_metadata_only,
+                selected_active_row=args.selected_active_row,
             )
             run_record.update(
                 {
-                    "status": "COMPLETED_SELECTED_TRACE_STAR_AUDIT",
-                    "independent_checker_status": "NOT_RUN",
+                    "status": (
+                        "COMPLETED_METADATA_ONLY"
+                        if args.selected_trace_star_metadata_only
+                        else "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
+                    ),
+                    "independent_checker_status": "NOT_APPLICABLE_METADATA_ONLY"
+                    if args.selected_trace_star_metadata_only
+                    else "NOT_RUN",
                     "completed_at_utc": datetime.now(timezone.utc).isoformat(),
                     "elapsed_since_worker_start_seconds": perf_counter() - started_perf,
-                    "selected_trace_star_audit": selected_result,
-                    "evidence_cap_bytes": 16 * 1024**3,
+                    "selected_trace_star_metadata_only"
+                    if args.selected_trace_star_metadata_only
+                    else "selected_trace_star_audit": selected_result,
+                    "evidence_cap_bytes": (
+                        int(consumer_contract.get("execution_scope", {}).get("new_evidence_limit_bytes", 0))
+                        if args.selected_trace_star_metadata_only
+                        else 16 * 1024**3
+                    ),
                     "free_space_floor_bytes": 2 * 1024**3,
                 }
             )
             _write_json_atomic(report_path, run_record)
             progress(
                 {
-                    "phase": "selected_trace_star_audit",
+                    "phase": "selected_trace_star_metadata_only"
+                    if args.selected_trace_star_metadata_only
+                    else "selected_trace_star_audit",
                     "status": "COMPLETED",
                     "incident_cells": int(
-                        selected_result["metadata"]["incident_cell_count"]
+                        selected_result["incident_cell_count"]
+                        if args.selected_trace_star_metadata_only
+                        else selected_result["metadata"]["incident_cell_count"]
                     ),
-                    "reconstructed_cells": sum(
-                        bool(cell.get("is_target_row_incident"))
-                        and any(
-                            role.get("role") == "candidate"
-                            and role.get("source") == "RECONSTRUCTED_SELECTED_CELL"
-                            for role in cell.get("roles", [])
-                        )
-                        for cell in selected_result[
-                            "local_numeric_cell_identity_and_artifacts"
-                        ]
+                    **(
+                        {"numerical_work_started": False}
+                        if args.selected_trace_star_metadata_only
+                        else {
+                            "reconstructed_cells": sum(
+                                bool(cell.get("is_target_row_incident"))
+                                and any(
+                                    role.get("role") == "candidate"
+                                    and role.get("source") == "RECONSTRUCTED_SELECTED_CELL"
+                                    for role in cell.get("roles", [])
+                                )
+                                for cell in selected_result[
+                                    "local_numeric_cell_identity_and_artifacts"
+                                ]
+                            )
+                        }
                     ),
                 }
             )
@@ -5598,6 +5927,8 @@ def main(argv: list[str] | None = None) -> int:
         failure_status = (
             "CANDIDATE_NOT_ADMITTED"
             if isinstance(exc, _CandidateNotAdmitted)
+            else "FAILED_METADATA_ONLY_EVIDENCE_RETAINED"
+            if args.selected_trace_star_metadata_only
             else "FAILED_SELECTED_TRACE_STAR_EVIDENCE_RETAINED"
             if args.selected_trace_star_audit
             else
@@ -5617,7 +5948,9 @@ def main(argv: list[str] | None = None) -> int:
         progress(
             {
                 "phase": (
-                    "v8_selected_trace_star_audit"
+                    "selected_trace_star_metadata_only"
+                    if args.selected_trace_star_metadata_only
+                    else "v8_selected_trace_star_audit"
                     if args.selected_trace_star_audit
                     else "v4_geometry_pair_probe"
                     if args.geometry_pair_only

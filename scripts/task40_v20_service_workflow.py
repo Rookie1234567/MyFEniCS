@@ -9417,6 +9417,7 @@ def _run_task41_p0_saved_output_service(
     b0_v6_saved_candidate_audit_mode: bool = False,
     b0_v8_saved_trace_star_audit_mode: bool = False,
     b0_v8_selected_trace_star_mode: bool = False,
+    b0_v8_selected_trace_star_metadata_only_mode: bool = False,
     candidate_report_path: Path | None = None,
     candidate_report_sha256: str | None = None,
     v8_checker_result_path: Path | None = None,
@@ -9438,6 +9439,8 @@ def _run_task41_p0_saved_output_service(
     donor_contract_sha256: str | None = None,
     donor_summary_path: Path | None = None,
     donor_numerical_output: Path | None = None,
+    v9_source_run_summary_path: Path | None = None,
+    v9_source_run_summary_sha256: str | None = None,
     source_report_path: Path | None = None,
     geometry_reference_report_path: Path | None = None,
     ffcx_c_source_path: Path | None = None,
@@ -9768,12 +9771,26 @@ def _run_task41_p0_saved_output_service(
         or b0_v5_mesh_actual_exact_mode
         or b0_v6_actual_qmetric_mode
         or b0_v6_saved_candidate_audit_mode
-        or ffcx_c_source_path is None
+        or (
+            not b0_v8_selected_trace_star_metadata_only_mode
+            and ffcx_c_source_path is None
+        )
+        or (
+            b0_v8_selected_trace_star_metadata_only_mode
+            and ffcx_c_source_path is not None
+        )
     ):
-        raise ValueError("Task41 V8 selected-star route requires the saved B0 audit and its frozen q-metric C source")
-    if not b0_v6_actual_qmetric_mode and not b0_v8_selected_trace_star_mode and ffcx_c_source_path is not None:
+        raise ValueError("Task41 V8 selected-star route has incompatible saved-audit or numeric-source bindings")
+    if (
+        not b0_v6_actual_qmetric_mode
+        and not b0_v8_selected_trace_star_mode
+        and ffcx_c_source_path is not None
+    ):
         raise ValueError("Task41 FFCx C source is only valid with a V6 or V8 q-metric evaluator")
-    if b0_v6_actual_qmetric_mode or b0_v8_selected_trace_star_mode:
+    if b0_v6_actual_qmetric_mode or (
+        b0_v8_selected_trace_star_mode
+        and not b0_v8_selected_trace_star_metadata_only_mode
+    ):
         ffcx_c_source_path = ffcx_c_source_path.resolve(strict=True)
         if ffcx_c_source_path.suffix != ".c":
             raise ValueError("Task41 V6/V8 q-metric source must be the generated .c file")
@@ -10264,6 +10281,66 @@ def _run_task41_p0_saved_output_service(
             sizes[path] = path.stat().st_size
         return sum(sizes.values())
 
+    def stat_only_b0_donor_arrays() -> tuple[list[Path], int, str]:
+        """Bind donor raw bytes from the small frozen manifest without hashing array payloads."""
+        assert donor_summary_path is not None
+        from src.solvers.task41_v4_volume_only_audit import (
+            TASK41_V4_DONOR_MANIFEST_SHA256,
+            TASK41_V4_DONOR_NPY_BYTES,
+        )
+
+        summary = read_json_object(donor_summary_path, "V4 B0 donor summary")
+        recovery = summary.get("b0_recovery_evidence")
+        manifest_record = recovery.get("manifest") if isinstance(recovery, Mapping) else None
+        if not isinstance(manifest_record, Mapping) or not isinstance(
+            manifest_record.get("path"), str
+        ):
+            raise ValueError("V11 metadata-only donor summary omits its frozen manifest")
+        raw_manifest = Path(str(manifest_record["path"]))
+        manifest_path = (
+            raw_manifest if raw_manifest.is_absolute() else run_root / raw_manifest
+        ).resolve(strict=True)
+        if (
+            not manifest_path.is_relative_to(run_root.resolve(strict=True))
+            or manifest_path.stat().st_size != manifest_record.get("bytes")
+            or sha256_file(manifest_path) != manifest_record.get("sha256")
+            or sha256_file(manifest_path) != TASK41_V4_DONOR_MANIFEST_SHA256
+        ):
+            raise ValueError("V11 metadata-only donor manifest identity differs from the frozen V4 source")
+        manifest = read_json_object(manifest_path, "V4 B0 donor manifest")
+        found: dict[Path, int] = {}
+
+        def visit(value: Any) -> None:
+            if isinstance(value, Mapping):
+                if (
+                    isinstance(value.get("path"), str)
+                    and isinstance(value.get("shape"), list)
+                    and isinstance(value.get("dtype"), str)
+                    and type(value.get("bytes")) is int
+                ):
+                    raw = Path(str(value["path"]))
+                    path = (raw if raw.is_absolute() else run_root / raw).resolve(strict=True)
+                    size = int(value["bytes"])
+                    if not path.is_relative_to(run_root.resolve()) or size <= 0:
+                        raise ValueError("V11 donor array path or size escaped the registered run")
+                    previous = found.setdefault(path, size)
+                    if previous != size:
+                        raise ValueError("V11 donor manifest repeats an array with conflicting sizes")
+                for nested in value.values():
+                    visit(nested)
+            elif isinstance(value, list):
+                for nested in value:
+                    visit(nested)
+
+        visit(manifest)
+        if len(found) != 141 or sum(found.values()) != TASK41_V4_DONOR_NPY_BYTES:
+            raise ValueError("V11 donor manifest differs from the frozen 141-array raw-evidence inventory")
+        paths = sorted(found)
+        stat_bytes = stat_bound_raw_bytes(paths)
+        if stat_bytes != TASK41_V4_DONOR_NPY_BYTES:
+            raise ValueError("V11 donor raw-array sizes differ from the frozen manifest inventory")
+        return paths, stat_bytes, sha256_file(manifest_path)
+
     def saved_diagnostics_budget_check(*, final: bool = False) -> dict[str, Any] | None:
         if contract.get("execution_scope") is None:
             return None
@@ -10279,6 +10356,7 @@ def _run_task41_p0_saved_output_service(
         expected_name = (
             "v9_failed_terminal_audit" if b0_v9_failed_terminal_audit_mode
             else "saved_y_g_comparison" if b0_saved_y_g_comparison_mode
+            else "selected_incident_replay" if b0_v8_selected_trace_star_metadata_only_mode
             else ""
         )
         mode_output_root = window_output_root / expected_name if expected_name else window_output_root
@@ -10371,6 +10449,8 @@ def _run_task41_p0_saved_output_service(
             if b0_saved_y_g_comparison_mode
             else "saved_b0_v9_failed_terminal_audit"
             if b0_v9_failed_terminal_audit_mode
+            else "saved_b0_v8_selected_trace_star_metadata_only"
+            if b0_v8_selected_trace_star_metadata_only_mode
             else "saved_b0_v9_saved_star_screen"
             if b0_v9_saved_star_screen_mode
             else "saved_b0_v8_selected_trace_star_checker"
@@ -10573,7 +10653,9 @@ def _run_task41_p0_saved_output_service(
     try:
         if b0_v4_volume_only_mode or b0_v8_selected_trace_star_mode:
             volume_report_path = output_root / (
-                "task41_p0_v8_selected_trace_star_audit.json"
+                "task41_p0_v8_selected_trace_star_metadata.json"
+                if b0_v8_selected_trace_star_metadata_only_mode
+                else "task41_p0_v8_selected_trace_star_audit.json"
                 if b0_v8_selected_trace_star_mode
                 else
                 "task41_p0_v4_geometry_pair_probe.json"
@@ -10629,17 +10711,77 @@ def _run_task41_p0_saved_output_service(
                     ]
                 )
             if b0_v8_selected_trace_star_mode:
-                assert ffcx_c_source_path is not None
-                volume_command.extend(
-                    [
-                        "--geometry-policy",
-                        "mesh_actual_exact",
-                        "--raw-tensor-evaluator",
-                        "actual_qmetric_blocked_gram",
-                        "--ffcx-c-source",
-                        str(ffcx_c_source_path),
-                        "--selected-trace-star-audit",
-                    ]
+                if b0_v8_selected_trace_star_metadata_only_mode:
+                    assert v9_source_run_summary_path is not None
+                    assert v9_source_run_summary_sha256 is not None
+                    volume_command.extend(
+                        [
+                            "--geometry-policy",
+                            "mesh_actual_exact",
+                            "--selected-trace-star-metadata-only",
+                            "--selected-active-row",
+                            "87567",
+                        ]
+                    )
+                else:
+                    assert ffcx_c_source_path is not None
+                    volume_command.extend(
+                        [
+                            "--geometry-policy",
+                            "mesh_actual_exact",
+                            "--raw-tensor-evaluator",
+                            "actual_qmetric_blocked_gram",
+                            "--ffcx-c-source",
+                            str(ffcx_c_source_path),
+                            "--selected-trace-star-audit",
+                        ]
+                    )
+            if b0_v8_selected_trace_star_metadata_only_mode:
+                assert v9_source_run_summary_path is not None
+                assert v9_source_run_summary_sha256 is not None
+                (
+                    saved_bound_raw_paths,
+                    donor_raw_bytes_stat_only,
+                    donor_manifest_sha256,
+                ) = stat_only_b0_donor_arrays()
+                if (
+                    v9_source_run_summary_path.name != "run_summary.json"
+                    or not v9_source_run_summary_path.is_relative_to(results_root)
+                    or v9_source_run_summary_path.stat().st_size > 8 * 1024**2
+                    or sha256_file(v9_source_run_summary_path)
+                    != v9_source_run_summary_sha256
+                ):
+                    raise ValueError("V11 V9 run-summary path, size, or SHA-256 differs")
+                v9_summary = read_json_object(
+                    v9_source_run_summary_path, "V9 source run summary"
+                )
+                v9_donor_binding = v9_summary.get("b0_v9_volume_donor_binding")
+                if (
+                    not isinstance(v9_donor_binding, Mapping)
+                    or v9_summary.get("run_id") != contract["case"].get("run_id")
+                    or v9_donor_binding.get("manifest_sha256") != donor_manifest_sha256
+                    or v9_donor_binding.get("existing_evidence_bytes")
+                    != donor_raw_bytes_stat_only
+                    or type(v9_donor_binding.get("prior_new_evidence_bytes")) is not int
+                    or v9_donor_binding["prior_new_evidence_bytes"] < 0
+                ):
+                    raise ValueError(
+                        "V11 V9 run summary does not bind the frozen donor and cumulative raw-evidence totals"
+                    )
+                saved_recorded_raw_bytes = (
+                    donor_raw_bytes_stat_only
+                    + int(v9_donor_binding["prior_new_evidence_bytes"])
+                )
+                saved_diagnostics_budget = saved_diagnostics_budget_check()
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
+                record["v9_source_run_summary_path"] = str(
+                    v9_source_run_summary_path
+                )
+                record["v9_source_run_summary_sha256"] = (
+                    v9_source_run_summary_sha256
+                )
+                record["v9_prior_new_evidence_bytes"] = int(
+                    v9_donor_binding["prior_new_evidence_bytes"]
                 )
             volume_watchdog = supervise(
                 volume_command,
@@ -10665,7 +10807,9 @@ def _run_task41_p0_saved_output_service(
                 else None
             )
             result_prefix = (
-                "selected_trace_star"
+                "selected_trace_star_metadata_only"
+                if b0_v8_selected_trace_star_metadata_only_mode
+                else "selected_trace_star"
                 if b0_v8_selected_trace_star_mode
                 else "geometry_pair_probe"
                 if b0_v4_geometry_pair_mode
@@ -10675,7 +10819,66 @@ def _run_task41_p0_saved_output_service(
             record[f"{result_prefix}_result"] = volume_payload
             if b0_v5_mesh_actual_exact_mode and volume_report_path.is_file():
                 record["mesh_actual_exact_report_sha256"] = sha256_file(volume_report_path)
-            if b0_v8_selected_trace_star_mode:
+            if b0_v8_selected_trace_star_metadata_only_mode:
+                metadata_only_result = (
+                    volume_payload.get("selected_trace_star_metadata_only")
+                    if isinstance(volume_payload, Mapping)
+                    else None
+                )
+                incident_order = (
+                    metadata_only_result.get("incident_cell_order")
+                    if isinstance(metadata_only_result, Mapping)
+                    else None
+                )
+                selected_cells = (
+                    metadata_only_result.get("selected_cells")
+                    if isinstance(metadata_only_result, Mapping)
+                    else None
+                )
+                incident_ids = (
+                    [int(value) for value in incident_order]
+                    if isinstance(incident_order, list)
+                    else []
+                )
+                worker_ok = bool(
+                    volume_watchdog.get("classification") == "COMPLETED"
+                    and volume_watchdog.get("leader_exit_code") == 0
+                    and isinstance(volume_payload, Mapping)
+                    and volume_payload.get("schema")
+                    == "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1"
+                    and volume_payload.get("status") == "COMPLETED_METADATA_ONLY"
+                    and isinstance(metadata_only_result, Mapping)
+                    and metadata_only_result.get("schema")
+                    == "task41.p0.v8.selected_trace_star_metadata_only.v1"
+                    and metadata_only_result.get("status") == "COMPLETED_METADATA_ONLY"
+                    and metadata_only_result.get("selected_active_row") == 87567
+                    and type(metadata_only_result.get("selected_original_row")) is int
+                    and metadata_only_result.get("numerical_work_started") is False
+                    and bool(incident_ids)
+                    and incident_ids == sorted(set(incident_ids))
+                    and isinstance(selected_cells, list)
+                    and [item.get("cell_index") for item in selected_cells]
+                    == incident_ids
+                    and all(
+                        isinstance(item, Mapping)
+                        and len(item.get("selected_local_trace_rows", []))
+                        == len(item.get("selected_trace_coefficients", []))
+                        == len(item.get("selected_trace_contribution_kinds", []))
+                        and bool(item.get("selected_trace_contribution_kinds"))
+                        and all(
+                            kind in {"direct_original_row", "mpc_expansion_preimage"}
+                            for kind in item.get("selected_trace_contribution_kinds", [])
+                        )
+                        for item in selected_cells
+                    )
+                )
+                record["selected_trace_star_metadata_only_status"] = (
+                    "metadata_only_completed" if worker_ok else "metadata_only_failed_or_incomplete"
+                )
+                record["continuation_status"] = record[
+                    "selected_trace_star_metadata_only_status"
+                ]
+            elif b0_v8_selected_trace_star_mode:
                 selected_star = (
                     volume_payload.get("selected_trace_star_audit")
                     if isinstance(volume_payload, Mapping)
@@ -10921,6 +11124,20 @@ def _run_task41_p0_saved_output_service(
                 and worker_watchdog.get("leader_exit_code") == 0
             )
             record["continuation_status"] = "outputs_ready" if worker_ok else "failed"
+        if b0_v8_selected_trace_star_metadata_only_mode:
+            saved_diagnostics_budget = saved_diagnostics_budget_check(final=True)
+            record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
+            record["result_classification"] = (
+                "V8_SELECTED_TRACE_STAR_METADATA_ONLY_COMPLETED"
+                if worker_ok
+                else "V8_SELECTED_TRACE_STAR_METADATA_ONLY_INCOMPLETE"
+            )
+            record["official_result"] = False
+            record["required_checker_status"] = "not_applicable_metadata_only"
+            record["selected_active_row"] = 87567
+            record["numerical_work_started"] = False
+            result_code = 0 if worker_ok else 3
+            return result_code
         checker_snapshot = (
             None
             if b0_evidence_audit_mode
@@ -11821,6 +12038,10 @@ def _run_task41_p0_service(
     b0_v8_selected_trace_star_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-selected-trace-star-audit"
     )
+    b0_v8_selected_trace_star_metadata_only_mode = bool(
+        b0_v8_selected_trace_star_mode
+        and "--selected-trace-star-metadata-only" in case_args
+    )
     b0_v9_saved_star_screen_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-v9-star-screen"
     )
@@ -11860,6 +12081,8 @@ def _run_task41_p0_service(
     donor_contract_sha256: str | None = None
     donor_summary_path: Path | None = None
     donor_numerical_output: Path | None = None
+    v9_source_run_summary_path: Path | None = None
+    v9_source_run_summary_sha256: str | None = None
     source_report_path: Path | None = None
     geometry_reference_report_path: Path | None = None
     ffcx_c_source_path: Path | None = None
@@ -11968,7 +12191,7 @@ def _run_task41_p0_service(
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14, 15, 18, 19}
+            len(case_args) not in {11, 14, 15, 18, 19, 20}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -12066,6 +12289,22 @@ def _run_task41_p0_service(
             ):
                 raise ValueError("V8 selected trace-star service arguments differ from its frozen route")
             ffcx_c_source_path = Path(case_args[16]).resolve(strict=True)
+        if len(case_args) == 20:
+            if (
+                not b0_v8_selected_trace_star_metadata_only_mode
+                or case_args[11] != "--geometry-policy"
+                or case_args[12] != "mesh_actual_exact"
+                or case_args[13] != "--selected-trace-star-metadata-only"
+                or case_args[14] != "--selected-active-row"
+                or case_args[15] != "87567"
+                or case_args[16] != "--v9-run-summary"
+                or case_args[18] != "--v9-run-summary-sha256"
+            ):
+                raise ValueError(
+                    "V11 selected-star metadata service requires row 87567 and its hash-bound V9 run summary"
+                )
+            v9_source_run_summary_path = Path(case_args[17]).resolve(strict=True)
+            v9_source_run_summary_sha256 = case_args[19]
     if continuation_mode:
         if (
             len(case_args) != 5
@@ -12101,7 +12340,9 @@ def _run_task41_p0_service(
     )
     saved_scope = contract.get("execution_scope")
     if saved_scope is not None and not (
-        b0_v9_failed_terminal_audit_mode or b0_saved_y_g_comparison_mode
+        b0_v9_failed_terminal_audit_mode
+        or b0_saved_y_g_comparison_mode
+        or b0_v8_selected_trace_star_metadata_only_mode
     ):
         raise ValueError(
             "saved-diagnostics contract is restricted to the V9 failed-terminal audit "
@@ -12110,6 +12351,13 @@ def _run_task41_p0_service(
     if b0_saved_y_g_comparison_mode and saved_scope is None:
         raise ValueError(
             "saved y/g comparison requires the explicitly prepared saved-diagnostics contract"
+        )
+    if b0_v8_selected_trace_star_metadata_only_mode and (
+        saved_scope is None
+        or "selected_incident_replay" not in saved_scope.get("actions", [])
+    ):
+        raise ValueError(
+            "V11 metadata-only requires selected_incident_replay in the fixed saved-diagnostics scope"
         )
     if b0_v4_geometry_pair_mode:
         assert source_report_path is not None
@@ -12617,11 +12865,15 @@ def _run_task41_p0_service(
         ):
             environment.pop(v8_environment_key, None)
         if b0_v8_selected_trace_star_mode:
-            assert ffcx_c_source_path is not None
-            environment.update({
-                "TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT": "1",
-                "TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH": str(ffcx_c_source_path),
-            })
+            environment["TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT"] = "1"
+            if b0_v8_selected_trace_star_metadata_only_mode:
+                environment["TASK41_P0_B0_V8_SELECTED_TRACE_STAR_METADATA_ONLY"] = "1"
+                environment["TASK41_P0_B0_V8_SELECTED_ACTIVE_ROW"] = "87567"
+            else:
+                assert ffcx_c_source_path is not None
+                environment["TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH"] = str(
+                    ffcx_c_source_path
+                )
         if b0_v8_saved_trace_star_audit_mode:
             environment["TASK41_P0_B0_V8_SAVED_TRACE_STAR_CHECKER"] = "1"
     activation_marker = _qualified_activation_identity(environment)
@@ -12689,6 +12941,9 @@ def _run_task41_p0_service(
             b0_v6_saved_candidate_audit_mode=b0_v6_saved_candidate_audit_mode,
             b0_v8_saved_trace_star_audit_mode=b0_v8_saved_trace_star_audit_mode,
             b0_v8_selected_trace_star_mode=b0_v8_selected_trace_star_mode,
+            b0_v8_selected_trace_star_metadata_only_mode=(
+                b0_v8_selected_trace_star_metadata_only_mode
+            ),
             candidate_report_path=candidate_report_path,
             candidate_report_sha256=candidate_report_sha256,
             v8_checker_result_path=v8_checker_result_path,
@@ -12710,6 +12965,8 @@ def _run_task41_p0_service(
             donor_contract_sha256=donor_contract_sha256,
             donor_summary_path=donor_summary_path,
             donor_numerical_output=donor_numerical_output,
+            v9_source_run_summary_path=v9_source_run_summary_path,
+            v9_source_run_summary_sha256=v9_source_run_summary_sha256,
             source_report_path=source_report_path,
             geometry_reference_report_path=geometry_reference_report_path,
             ffcx_c_source_path=ffcx_c_source_path,

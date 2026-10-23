@@ -4142,7 +4142,7 @@ def check_task41_p0_b0_v9_failed_terminal_audit(
 
 
 def load_task41_v4_volume_only_donor(
-    *, summary_path: Path, numerical_output: Path
+    *, summary_path: Path, numerical_output: Path, metadata_only: bool = False
 ) -> dict[str, Any]:
     """Load only the hash-bound B0 arrays needed by the V4 volume audit.
 
@@ -4211,6 +4211,33 @@ def load_task41_v4_volume_only_donor(
     raw_groups = manifest.get("raw_cell_diagnostics")
     if not isinstance(columns_meta, list) or len(columns_meta) != 2 or not isinstance(raw_groups, list) or len(raw_groups) != 2:
         raise ValueError("Task41 V4 donor manifest omits one of its two volume columns")
+    if metadata_only:
+        columns = []
+        for column_index, column_meta in enumerate(columns_meta):
+            artifacts = column_meta.get("artifacts")
+            if not isinstance(artifacts, Mapping):
+                raise ValueError(f"Task41 V4 column {column_index} artifact inventory is missing")
+            active_rows = load(
+                artifacts.get("active_original_rows"),
+                f"column {column_index} active_original_rows",
+            )
+            if active_rows.ndim != 1 or active_rows.dtype.kind not in "iu":
+                raise ValueError(
+                    f"Task41 V4 column {column_index} active-original row map is not a 1-D integer array"
+                )
+            columns.append({"active_original_rows": active_rows})
+        if not np.array_equal(
+            np.asarray(columns[0]["active_original_rows"]),
+            np.asarray(columns[1]["active_original_rows"]),
+        ):
+            raise ValueError("Task41 V4 donor columns disagree on the saved active-original row map")
+        return {
+            "manifest": manifest,
+            "manifest_sha256": manifest_sha256,
+            "existing_evidence_bytes": sum(evidence_records.values()),
+            "columns": columns,
+            "metadata_only": True,
+        }
     columns: list[dict[str, Any]] = []
     raw_by_key: dict[tuple[Any, ...], dict[str, Any]] = {}
     cell_maps: list[dict[str, Any]] = []

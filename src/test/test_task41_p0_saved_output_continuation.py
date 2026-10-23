@@ -4403,3 +4403,273 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     write_bound_reports_donor_hash(wrong_column_sha)
     with pytest.raises(ValueError, match="columns or input recipes are out of order"):
         real_compare(**direct_compare_kwargs("reject_donor_column_order.json"))
+
+    # V11's metadata-only route must carry the V9 prior-evidence total into
+    # the existing 16 GiB admission gate before the supervised worker starts.
+    monkeypatch.setattr(checker_module.np, "load", np.load)
+    donor_manifest["columns"][1]["column"] = 1
+    metadata_inventory: list[dict[str, object]] = []
+    for index in range(123):
+        stat_path = donor_arrays_root / f"metadata_inventory_{index:03d}.npy"
+        stat_path.write_bytes(b"x" * 1024)
+        metadata_inventory.append({
+            "path": str(stat_path.relative_to(donor_run)),
+            "bytes": stat_path.stat().st_size,
+            "shape": [1024],
+            "dtype": "uint8",
+        })
+    donor_manifest["metadata_inventory"] = metadata_inventory
+    v11_manifest_sha = write_mini_donor_manifest(donor_manifest)
+    donor_raw_bytes = sum(
+        int(artifact["bytes"])
+        for column in donor_manifest["columns"]
+        for artifact in column["artifacts"].values()
+    ) + sum(int(artifact["bytes"]) for artifact in metadata_inventory)
+    monkeypatch.setattr(v4_audit, "TASK41_V4_DONOR_NPY_BYTES", donor_raw_bytes)
+    prior_bytes = 0
+    v9_summary_path.write_text(json.dumps({
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+        "b0_v9_volume_donor_binding": {
+            "manifest_sha256": v11_manifest_sha,
+            "existing_evidence_bytes": donor_raw_bytes,
+            "prior_new_evidence_bytes": prior_bytes,
+        },
+    }), encoding="utf-8")
+    v9_summary_sha = hashlib.sha256(v9_summary_path.read_bytes()).hexdigest()
+    metadata_output_root = (
+        results_root / "task41_p0_saved_diagnostics_6h" / window.sha256
+        / "selected_incident_replay" / "attempt01"
+    )
+    metadata_commands: list[list[str]] = []
+
+    def fake_metadata_supervise(command, *_args, **_kwargs):
+        metadata_commands.append(list(command))
+        output_dir = Path(command[command.index("--output-dir") + 1])
+        metadata = {
+            "schema": "task41.p0.v8.selected_trace_star_metadata_only.v1",
+            "status": "COMPLETED_METADATA_ONLY",
+            "selected_active_row": 87567,
+            "selected_original_row": 250113,
+            "numerical_work_started": False,
+            "incident_cell_order": [1],
+            "selected_cells": [{
+                "cell_index": 1,
+                "selected_local_trace_rows": [0],
+                "selected_trace_coefficients": [1.0],
+                "selected_trace_contribution_kinds": ["direct_original_row"],
+            }],
+        }
+        (output_dir / "task41_p0_v8_selected_trace_star_metadata.json").write_text(
+            json.dumps({
+                "schema": "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1",
+                "status": "COMPLETED_METADATA_ONLY",
+                "selected_trace_star_metadata_only": metadata,
+            }), encoding="utf-8",
+        )
+        return {"classification": "COMPLETED", "leader_exit_code": 0}
+
+    metadata_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="myfenics-case-v11-metadata.service",
+        runtime_prefix=runtime_prefix,
+        environment={"TASK41_P0_CHECKER_SOURCE_SHA": consumer_source_sha},
+        window=window,
+        contract=contract,
+        contract_path=consumer_contract_path,
+        contract_sha=consumer_contract_sha,
+        case_id="B0",
+        run_root=donor_run,
+        output_root=metadata_output_root,
+        consumer_source_sha=consumer_source_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_evidence_audit_mode=True,
+        b0_v8_selected_trace_star_mode=True,
+        b0_v8_selected_trace_star_metadata_only_mode=True,
+        donor_contract_path=producer_contract_path,
+        donor_contract_sha256=producer_contract_sha,
+        donor_summary_path=donor_summary_path,
+        donor_numerical_output=donor_run / "numerical_output",
+        v9_source_run_summary_path=v9_summary_path,
+        v9_source_run_summary_sha256=v9_summary_sha,
+        input_path=input_path,
+        activation_command=["activate"],
+        activation_identity="qualified fixture",
+        preflight={"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1},
+        preflight_command=["preflight"],
+        cgroup_start={"memory_current_bytes": 1},
+        service_entry_accounting={"recorded": True},
+        service_start_sample=clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_metadata_supervise,
+        sha256_file=contract_module.sha256_file,
+    )
+    assert metadata_result == 0
+    assert len(metadata_commands) == 1
+    assert "--selected-trace-star-metadata-only" in metadata_commands[0]
+    assert metadata_commands[0][metadata_commands[0].index("--selected-active-row") + 1] == "87567"
+    assert "--ffcx-c-source" not in metadata_commands[0]
+    metadata_receipt = json.loads(
+        (metadata_output_root.with_name(metadata_output_root.name + ".service")
+         / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
+    )
+    assert metadata_receipt["result_classification"] == "V8_SELECTED_TRACE_STAR_METADATA_ONLY_COMPLETED"
+    assert metadata_receipt["official_result"] is False
+    assert metadata_receipt["numerical_work_started"] is False
+    assert metadata_receipt["saved_diagnostics_disk_budget"][
+        "recorded_cumulative_raw_artifact_bytes"
+    ] == donor_raw_bytes
+
+    # Near-cap history must reject before another worker invocation; counting
+    # only the V4 donor would incorrectly admit this 512 MiB reservation.
+    raw_cap = 16 * 1024**3
+    prior_bytes = raw_cap - donor_raw_bytes - 128 * 1024**2
+    v9_summary_path.write_text(json.dumps({
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+        "b0_v9_volume_donor_binding": {
+            "manifest_sha256": v11_manifest_sha,
+            "existing_evidence_bytes": donor_raw_bytes,
+            "prior_new_evidence_bytes": prior_bytes,
+        },
+    }), encoding="utf-8")
+    v9_summary_sha = hashlib.sha256(v9_summary_path.read_bytes()).hexdigest()
+    over_cap_output_root = metadata_output_root.with_name("attempt02")
+    before_supervise = len(metadata_commands)
+    over_cap_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="myfenics-case-v11-metadata-over-cap.service",
+        runtime_prefix=runtime_prefix,
+        environment={"TASK41_P0_CHECKER_SOURCE_SHA": consumer_source_sha},
+        window=window,
+        contract=contract,
+        contract_path=consumer_contract_path,
+        contract_sha=consumer_contract_sha,
+        case_id="B0",
+        run_root=donor_run,
+        output_root=over_cap_output_root,
+        consumer_source_sha=consumer_source_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_evidence_audit_mode=True,
+        b0_v8_selected_trace_star_mode=True,
+        b0_v8_selected_trace_star_metadata_only_mode=True,
+        donor_contract_path=producer_contract_path,
+        donor_contract_sha256=producer_contract_sha,
+        donor_summary_path=donor_summary_path,
+        donor_numerical_output=donor_run / "numerical_output",
+        v9_source_run_summary_path=v9_summary_path,
+        v9_source_run_summary_sha256=v9_summary_sha,
+        input_path=input_path,
+        activation_command=["activate"],
+        activation_identity="qualified fixture",
+        preflight={"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1},
+        preflight_command=["preflight"],
+        cgroup_start={"memory_current_bytes": 1},
+        service_entry_accounting={"recorded": True},
+        service_start_sample=clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_metadata_supervise,
+        sha256_file=contract_module.sha256_file,
+    )
+    over_cap_receipt = json.loads(
+        (over_cap_output_root.with_name(over_cap_output_root.name + ".service")
+         / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
+    )
+    assert over_cap_result == 3
+    assert len(metadata_commands) == before_supervise
+    assert "16 GiB cap" in over_cap_receipt["workflow_error"]["message"]
+
+    (donor_run / "resolved_config.json").write_text(
+        '{"resolved":true}\n', encoding="utf-8"
+    )
+    (donor_run / "run_manifest.json").write_text(json.dumps({
+        "output_directory": str(donor_run.resolve()),
+        "numerical_output_directory": str((donor_run / "numerical_output").resolve()),
+    }), encoding="utf-8")
+    (donor_run / "run_summary.json").write_text(json.dumps({
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+    }), encoding="utf-8")
+
+    v11_outer_dispatch: dict[str, object] = {}
+
+    def capture_v11_saved_service(**kwargs):
+        assert kwargs["b0_v8_selected_trace_star_mode"] is True
+        assert kwargs["b0_v8_selected_trace_star_metadata_only_mode"] is True
+        assert kwargs["v9_source_run_summary_path"] == v9_summary_path
+        assert kwargs["v9_source_run_summary_sha256"] == v9_summary_sha
+        v11_outer_dispatch.update(kwargs)
+        return 0
+
+    with monkeypatch.context() as outer_patch:
+        outer_patch.setattr(contract_module, "load_task41_p0_fixed_window", lambda *_a, **_k: window)
+        outer_patch.setattr(
+            campaign_module,
+            "CampaignAccount",
+            lambda _window: SimpleNamespace(record_sample=lambda **_kw: {"recorded": True}),
+        )
+        outer_patch.setattr(
+            resource_module, "cgroup_snapshot",
+            lambda _pid: {
+                "dedicated_job_cgroup": True, "readable": True,
+                "memory_limit_bytes": 1 << 30, "swap_current_bytes": 0,
+                "memory_current_bytes": 1 << 20,
+            },
+        )
+        outer_patch.setattr(
+            service_workflow, "_activation_environment",
+            lambda *_a, **_k: (
+                {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
+                 "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"},
+                ["activate"], 0, "",
+            ),
+        )
+        outer_patch.setattr(service_workflow, "_qualified_activation_identity", lambda _env: "qualified")
+        outer_patch.setattr(
+            service_workflow, "_abi_preflight",
+            lambda *_a: ([], 0,
+                         json.dumps({"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1}), ""),
+        )
+        outer_patch.setattr(
+            service_workflow.subprocess, "check_output",
+            lambda command, **_kw: (
+                consumer_source_sha if command[1] == "rev-parse"
+                else contract_module.TASK41_BRANCH
+            ),
+        )
+        outer_patch.setattr(
+            service_workflow, "_run_task41_p0_saved_output_service", capture_v11_saved_service
+        )
+        for key, value in {
+            "TASK41_P0_STRICT_EXECUTION": "1",
+            "TASK41_P0_CONTRACT_PATH": str(consumer_contract_path),
+            "TASK41_P0_CONTRACT_SHA256": consumer_contract_sha,
+            "TASK41_P0_EXECUTION_WINDOW_PATH": str(window.path),
+            "TASK41_P0_EXECUTION_WINDOW_SHA256": window.sha256,
+            "TASK41_P0_EXPECTED_SOURCE_SHA": consumer_source_sha,
+        }.items():
+            outer_patch.setenv(key, value)
+        outer_args = [
+            "--task41-p0-saved-b0-selected-trace-star-audit",
+            "--donor-contract", str(producer_contract_path),
+            "--donor-contract-sha256", producer_contract_sha,
+            "--summary", str(donor_summary_path),
+            "--numerical-output", str(donor_run / "numerical_output"),
+            "--output-dir", str(metadata_output_root.with_name("attempt03")),
+            "--geometry-policy", "mesh_actual_exact",
+            "--selected-trace-star-metadata-only",
+            "--selected-active-row", "87567",
+            "--v9-run-summary", str(v9_summary_path),
+            "--v9-run-summary-sha256", v9_summary_sha,
+        ]
+        outer_result = service_workflow._run_task41_p0_service(
+            unit="myfenics-case-v11-metadata-outer.service",
+            runtime_prefix=runtime_prefix,
+            abi_receipt=abi_receipt_path,
+            jit_cache=jit_cache,
+            case_args=outer_args,
+            contract_path=consumer_contract_path,
+            repo_root=repo_root,
+        )
+    assert outer_result == 0
+    assert v11_outer_dispatch["v9_source_run_summary_path"] == v9_summary_path
+    assert v11_outer_dispatch["b0_v8_selected_trace_star_metadata_only_mode"] is True
