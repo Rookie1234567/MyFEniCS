@@ -1,4 +1,4 @@
-"""Compare one solved Task43 round-one candidate on the frozen shared G rule."""
+"""Compare adaptive candidates, or explicitly diagnose frozen post-selection fields."""
 
 from __future__ import annotations
 
@@ -23,17 +23,25 @@ from benchmarks.task43_hp_adaptivity.h100_anchor import (
     _sha256_file,
     _validate_round1_candidate_inputs,
 )
+from benchmarks.task43_hp_adaptivity.profile import _mode_identity
+from benchmarks.task43_hp_adaptivity.reference_restore import _post_selection_binding
 from src.adaptivity.physical_g_error import (
     accumulate_physical_g_cell_contributions,
     dorfler_mark_physical_g,
 )
 from src.adaptivity.stage4_local_h import build_stage4_local_h_mesh_data
+from src.common.modes_3d import incident_power_3d, outgoing_port_modes_3d
 from src.postprocessing.physical_field_comparison import build_common_volume_quadrature
 from src.postprocessing.physical_field_sampling import (
     prepare_cell_local_vector_field_export,
     sample_cell_local_vector_fields,
 )
 from src.solvers.common_3d_solve import _create_nedelec_space
+from src.solvers.dtn_port_3d import (
+    _mode_boundary_phase,
+    _mode_carries_outward_power,
+    _mode_power_at_boundary,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 CURRENT_RUN = ROOT / "benchmarks/artifacts/task43/current_180/attempt1/run"
@@ -92,8 +100,14 @@ def _load_modal_case(label: str) -> dict[str, Any]:
     return {"label": label, "record": record, "mode_payload": mode_payload, "power": power}
 
 
-def _restore_case_fields(label: str, output_root: Path) -> dict[str, Any]:
-    loaded = base._load_field_case(label, output_root)
+def _restore_case_fields(
+    label: str, output_root: Path, *, reference_root: Path | None = None,
+    post_selection_record: Path | None = None, assets_manifest: Path | None = None,
+) -> dict[str, Any]:
+    loaded = base._load_field_case(
+        label, output_root, reference_root=reference_root,
+        post_selection_record=post_selection_record, assets_manifest=assets_manifest,
+    )
     label, cfg, mesh_data, coefficients, expected_arrays, record, mode_payload = loaded
     mesh = mesh_data.mesh
     if mesh.comm.size != 1:
@@ -998,19 +1012,252 @@ def compare_candidate(
     return record
 
 
+def _post_selection_full_mode_physics(case: dict[str, Any]) -> dict[str, Any]:
+    """Re-evaluate all saved612 modal rows with the existing physical helpers."""
+    modes = tuple(outgoing_port_modes_3d(case["cfg"]))
+    rows = case["mode_payload"]["orders"]
+    if len(modes) != 612 or len(rows) != 612:
+        raise ValueError("post-selection mode checker requires full612")
+    expected = {"mode_payload": {"orders": [
+        {**_mode_identity(mode), "kz": base._complex_components(mode.k_vector[2]),
+         "direction": "outgoing_up" if mode.side == "top" else "outgoing_down",
+         "medium": "air" if mode.side == "top" else "substrate",
+         "power_carrying": _mode_carries_outward_power(mode)} for mode in modes]}}
+    physics = base._validate_mode_physics(
+        {"expected": expected, "actual": case}, labels=("expected", "actual"))
+    incident = float(incident_power_3d(case["cfg"]))
+    if not np.isfinite(incident) or incident <= 0.0:
+        raise ValueError("post-selection incident power must be finite positive")
+    recomputed = []
+    boundary_errors = []
+    sums = {key: 0.0 for key in ("R_total", "T_total", "R00_s", "R00_p")}
+    for mode, row in zip(modes, rows, strict=True):
+        outgoing = base._complex_pair(row["outgoing_amplitude"])
+        boundary = outgoing * _mode_boundary_phase(mode, case["cfg"])
+        archived_boundary = base._complex_pair(row["outgoing_amplitude_at_boundary"])
+        if not np.isclose(boundary, archived_boundary, rtol=1e-12, atol=1e-14):
+            raise ValueError("post-selection raw boundary amplitude differs from physical basis conversion")
+        boundary_errors.append(float(abs(boundary - archived_boundary)))
+        power = float(_mode_power_at_boundary(mode, case["cfg"], outgoing) / incident)
+        if not np.isfinite(power) or not np.isclose(power, row["power_ratio"], rtol=1e-12, atol=1e-14):
+            raise ValueError("post-selection raw mode power differs from physical mode power")
+        r = power if mode.side == "top" and _mode_carries_outward_power(mode) else 0.0
+        t = power if mode.side == "bottom" and _mode_carries_outward_power(mode) else 0.0
+        if not np.isclose(r, row["R"], rtol=1e-12, atol=1e-14) or not np.isclose(t, row["T"], rtol=1e-12, atol=1e-14):
+            raise ValueError("post-selection raw row R/T differs from recomputed side power")
+        recomputed.append(power)
+        sums["R_total"] += r
+        sums["T_total"] += t
+        if mode.side == "top" and mode.m == 0 and mode.n == 0:
+            sums[f"R00_{mode.polarization}"] += r
+    sums["R00_total"] = sums["R00_s"] + sums["R00_p"]
+    if any(not np.isclose(value, case["power"][name], rtol=1e-12, atol=1e-14) for name, value in sums.items()):
+        raise ValueError("post-selection recomputed full mode sums differ from aggregate")
+    return {"physical_mode_identity": physics, "incident_power": incident,
+            "recomputed_all612_power_ratios": recomputed,
+            "boundary_amplitude_absolute_differences": boundary_errors,
+            "recomputed_power_sums": sums, "rtol": 1e-12, "atol": 1e-14,
+            "scope": "Actual historical-unscaled or Task43-scaled cfg; existing physical mode, phase and power functions; no phase fit"}
+
+
+def compare_post_selection(
+    stop_record: Path, assets_manifest: Path, reference_root: Path, output_root: Path,
+) -> dict[str, Any]:
+    """Compare frozen final records; this branch never marks or selects a parent."""
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("post-selection comparison requires MPI1")
+    binding = _post_selection_binding(stop_record)
+    decision = binding["decision"]
+    accepted = binding["accepted"]
+
+    def checked_reference(value: dict[str, Any]) -> Path:
+        path = Path(value["path"])
+        path = path if path.is_absolute() else ROOT / path
+        if _sha256_file(path) != value["sha256"]:
+            raise ValueError(f"post-selection artifact hash differs: {path}")
+        return path
+
+    rejected_record = checked_reference(decision["evidence"]["PDE_record"])
+    for name in ("PDE_storage", "PDE_modal_rows", "PDE_checkpoint"):
+        checked_reference(decision["evidence"][name])
+    rejected_root = rejected_record.parent
+    contract = _json(COMPARISON_CONTRACT)
+    acceptance = _json(ACCEPTANCE)
+    calibration_path = checked_reference(acceptance["evidence"]["reference_and_quadrature"])
+    checked_reference(acceptance["evidence"]["comparison_contract"])
+    calibration = _json(calibration_path)
+    candidate_roots = (accepted["run_root"], rejected_root)
+    hard_gates = {}
+    for run in candidate_roots:
+        record = _json(run / "task43_round1_candidate_record.json")
+        modal = _json(run / "solve/dtn_port_diffraction_orders_3d.json")
+        gate = _recompute_candidate_hard_gates(record, modal, contract)
+        if not gate["pass"]:
+            raise ValueError("post-selection candidate fails raw numerical gates")
+        hard_gates[record["candidate_identity"]["candidate_id"]] = gate
+    if accepted["candidate_id"] == decision["scientific_candidate_id"]:
+        raise ValueError("accepted and unaccepted diagnostic candidate ids must differ")
+    if _json(rejected_record)["candidate_identity"]["candidate_id"] != decision["scientific_candidate_id"]:
+        raise ValueError("rejected diagnostic candidate identity differs")
+    if output_root.exists():
+        raise FileExistsError(f"refusing to overwrite diagnostic output: {output_root}")
+    output_root.mkdir(parents=True, exist_ok=False)
+    started = time.perf_counter()
+    sources = base._source_snapshot()
+    sources["candidate_comparator_sha256"] = _sha256_file(Path(__file__))
+    sources["candidate_records_sha256"] = _sha256_file(CANDIDATE_RECORDS)
+    cases = {}
+    for run in candidate_roots:
+        case = _restore_candidate(run, output_root / run.name / run.parent.name)
+        cases[case["label"]] = case
+    candidates = tuple(cases)
+    cases["Y6_1"] = _restore_case_fields("Y6_1", output_root)
+    for label in ("Y5_1", "Y3", "Y3_2"):
+        cases[label] = _restore_case_fields(
+            label, output_root, reference_root=reference_root,
+            post_selection_record=stop_record, assets_manifest=assets_manifest,
+        )
+    labels = tuple(cases)
+    expected_keys = {(side, m, n, pol) for side in ("top", "bottom")
+                     for m in range(-4, 5) for n in range(-8, 9) for pol in ("s", "p")}
+    for label, case in cases.items():
+        keys, amplitudes, rows = base._modal_identity(case["mode_payload"], label)
+        if len(keys) != 612 or set(keys) != expected_keys or not np.all(np.isfinite(amplitudes)):
+            raise ValueError(f"{label} lacks the complete finite unique612 inventory")
+        if not all(np.isfinite(float(row["power_ratio"])) for row in rows):
+            raise ValueError(f"{label} has nonfinite raw channel powers")
+    full_mode_physics = {label: _post_selection_full_mode_physics(case) for label, case in cases.items()}
+    physics = base._validate_common_physics(cases, labels=labels)
+    modal_physics = base._validate_mode_physics(cases, labels=labels)
+    quadrature_controls = base._validate_recorded_quadrature_and_cutoff(
+        cases, labels=(candidates[0], "Y6_1", "Y5_1", "Y3", "Y3_2"),
+    )
+    candidate_physics = {
+        label: _validate_candidate_physics(cases[label], cases["Y6_1"], calibration)
+        for label in candidates
+    }
+    # The first entry of each pair is the reference and defines the denominator.
+    pairs = [(reference, candidate) for reference in ("Y5_1", "Y3", "Y3_2")
+             for candidate in candidates]
+    pairs += [("Y6_1", external) for external in ("Y5_1", "Y3", "Y3_2")]
+    modal_metrics = {
+        f"{reference}__vs__{candidate}": base._modal_comparison(cases[reference], cases[candidate])
+        for reference, candidate in pairs
+    }
+    rules = {}
+    results = {}
+    for order in (8, 10):
+        quadrature = build_common_volume_quadrature([case["axes"] for case in cases.values()], gauss_order=order)
+        volume = float(np.sum(quadrature.weights_nm3, dtype=np.float64))
+        if not np.isfinite(volume) or abs(volume - 350000.0) > 1.0e-8:
+            raise ValueError("post-selection actual quadrature volume differs")
+        sampled = {}
+        for label, case in cases.items():
+            sampled[label] = _sample_field(case, quadrature.points_nm)
+            if not all(np.all(np.isfinite(value)) for value in sampled[label].values()):
+                raise ValueError(f"{label} has nonfinite volume field samples")
+        path = output_root / f"post_selection_shared_q{order}.npz"
+        arrays = {"points_nm": quadrature.points_nm, "weights_nm3": quadrature.weights_nm3}
+        arrays.update({f"{label}_{name}": values for label, fields in sampled.items()
+                       for name, values in fields.items()})
+        np.savez(path, **arrays)
+        rules[f"q{order}"] = {
+            "rule_sha256": quadrature.rule_sha256, "sample_count": quadrature.point_count,
+            "partition_boxes": quadrature.partition_box_count,
+            "axis_breakpoints_nm": [axis.tolist() for axis in quadrature.axis_breakpoints_nm],
+            "integrated_domain_volume_nm3": volume,
+            "sample_bundle": str(path), "sample_bundle_sha256": _sha256_file(path),
+            "scope": "New post-selection union, does not overwrite earlier frozen selection rule",
+        }
+        results[f"q{order}"] = {}
+        for reference, candidate in pairs:
+            name = f"{reference}__vs__{candidate}"
+            field = base._field_metrics(sampled[reference], sampled[candidate],
+                                       quadrature.points_nm, quadrature.weights_nm3, cases[reference]["cfg"])
+            j = _j_infinity(modal_metrics[name], field)
+            results[f"q{order}"][name] = {
+                "reference_label": reference, "candidate_label": candidate,
+                "field_metrics": field, "J_infinity": j,
+                "same_frozen_thresholds_pass": bool(j["value"] <= 1.0),
+                "failed_components": {key: value for key, value in j["components"].items() if value > 1.0},
+            }
+        del sampled, arrays
+    observations = {}
+    for name in modal_metrics:
+        q8 = results["q8"][name]
+        q10 = results["q10"][name]
+        observations[name] = {
+            "normalized_component_q10_minus_q8": {
+                key: value - q8["J_infinity"]["components"][key]
+                for key, value in q10["J_infinity"]["components"].items()},
+            "absolute_field_difference_norm_q10_minus_q8": {
+                key: value["difference_l2"] - q8["field_metrics"][key]["difference_l2"]
+                for key, value in q10["field_metrics"].items() if "difference_l2" in value},
+            "G_absolute_difference_norm_q10_minus_q8": q10["field_metrics"]["G"]["difference_g_norm"] - q8["field_metrics"]["G"]["difference_g_norm"],
+            "any_frozen_component_pass_fail_changed": any(
+                (value <= 1.0) != (q8["J_infinity"]["components"][key] <= 1.0)
+                for key, value in q10["J_infinity"]["components"].items()),
+            "scope": "Stricter postprocessing observation; no new hard threshold and no PDE q qualification",
+        }
+    sources_end = base._source_snapshot()
+    sources_end["candidate_comparator_sha256"] = _sha256_file(Path(__file__))
+    sources_end["candidate_records_sha256"] = _sha256_file(CANDIDATE_RECORDS)
+    if sources != sources_end:
+        raise ValueError("sources changed during post-selection comparison")
+    record = {
+        "schema": "task43.post-selection-comparison.v1",
+        "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE", "selection_eligible": False,
+        "run_role": "post_selection_validation_only",
+        "frozen_selection_sha256": binding["selection_sha256"],
+        "selection_stop_record_sha256": binding["stop_sha256"],
+        "assets_manifest_sha256": _sha256_file(assets_manifest),
+        "accepted_candidate": candidates[0], "unaccepted_diagnostic_candidate": candidates[1],
+        "source_identity_start": sources, "source_identity_end": sources_end,
+        "hard_gate_recalculation": hard_gates, "common_physics": physics,
+        "modal_physics": modal_physics, "full_mode_physics_recalculation": full_mode_physics,
+        "recorded_quadrature_controls": quadrature_controls,
+        "candidate_physics": candidate_physics, "quadrature": rules,
+        "modal_and_power_metrics": modal_metrics, "results": results,
+        "q8_q10_observations": observations,
+        "actual_external_FE": {label: cases[label]["record"]["resolved_identity"]["actual_FE_from_restored_constraints"]
+                               for label in ("Y5_1", "Y3", "Y3_2")},
+        "raw_modal_artifacts": {
+            label: {"path": str((reference_root if label in ("Y5_1", "Y3", "Y3_2") else REFERENCE_ROOT)
+                                 / label / "numerical_output/dtn_port_diffraction_orders_3d.json")}
+            for label in ("Y6_1", "Y5_1", "Y3", "Y3_2")},
+        "wall_seconds_through_record_construction": time.perf_counter() - started,
+        "qualification_boundary": "Post-selection comparisons of stored fields only; no new accepted state, fresh PDE, continuum/q/R reference qualification, sidewall or matched cold-cost claim",
+    }
+    for value in record["raw_modal_artifacts"].values():
+        value["sha256"] = _sha256_file(Path(value["path"]))
+    (output_root / "post_selection_comparison.json").write_text(
+        json.dumps(record, indent=2, sort_keys=True, allow_nan=False) + "\n")
+    return record
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--candidate-run-root", type=Path, required=True)
+    parser.add_argument("--candidate-run-root", type=Path)
     parser.add_argument("--attempt-id", required=True)
     parser.add_argument("--accepted-parent-selection-record", type=Path)
+    parser.add_argument("--post-selection-record", type=Path)
+    parser.add_argument("--assets-manifest", type=Path)
+    parser.add_argument("--validation-reference-root", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
-    compare_candidate(
-        args.candidate_run_root.resolve(),
-        DEFAULT_OUTPUT / args.attempt_id,
-        args.accepted_parent_selection_record,
-    )
+    if args.post_selection_record is not None:
+        if (args.candidate_run_root is not None or args.accepted_parent_selection_record is not None
+                or args.assets_manifest is None or args.validation_reference_root is None):
+            parser.error("post-selection mode requires assets/reference roots and rejects adaptive arguments")
+        compare_post_selection(args.post_selection_record, args.assets_manifest,
+                               args.validation_reference_root, DEFAULT_OUTPUT / args.attempt_id)
+    else:
+        if (args.candidate_run_root is None or args.assets_manifest is not None
+                or args.validation_reference_root is not None):
+            parser.error("adaptive mode requires candidate root and rejects post-selection arguments")
+        compare_candidate(args.candidate_run_root.resolve(), DEFAULT_OUTPUT / args.attempt_id,
+                          args.accepted_parent_selection_record)
     return 0
 
 

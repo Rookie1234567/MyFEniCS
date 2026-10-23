@@ -1,0 +1,154 @@
+{
+  "schema": "task43.post-selection-preparation.v1",
+  "status": "TARGETED_CHECKS_PASS_FORMAL_RESTORATION_NOT_RUN",
+  "selection_eligible": false,
+  "selection_stopped": true,
+  "last_accepted_state": "transition9",
+  "unaccepted_diagnostic": "round10_p_up",
+  "numerical_core_or_PDE_changes": false,
+  "implementation_scope": "Three existing restoration/comparison files plus existing test; defaults remain selection/calibration only, explicit stopped-selection validation roles; no G3 solve draft applied.",
+  "source_files": {
+    "benchmarks/task43_hp_adaptivity/reference_restore.py": {
+      "path": "benchmarks/task43_hp_adaptivity/reference_restore.py",
+      "sha256": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+      "bytes": 37787
+    },
+    "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": {
+      "path": "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py",
+      "sha256": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+      "bytes": 46529
+    },
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": {
+      "path": "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "sha256": "c791d99998986ae53d81d39bf4f916e73d1ed9f4eb9cca9bb6f42fac871ffda8",
+      "bytes": 62056
+    },
+    "src/test/test_task43_candidate_records.py": {
+      "path": "src/test/test_task43_candidate_records.py",
+      "sha256": "2bf90260aa3719cab521598dff1dc2bc362e70756fe1f4f4600fd07a9c287dff",
+      "bytes": 21728
+    }
+  },
+  "qualification": {
+    "final_targeted": "12 passed; real stored36-cell full612 andq8/q10 arrays, power/R/boundary/aggregate tampering rejected,612missing/duplicate rejected; scaled weak amplitude/field reference directions distinguish raw1 versus reverse.5 while symmetric floor difference retained. No newPDE.",
+    "historical_unscaled_metadata": "Y5_1/Y3/Y3_2 all612 physical rows/basis phase/power/side aggregate recomputed with existing helpers; no spaces/field restoration or full-domain samples.",
+    "Ruff": "Final fourfiles PASS; initial added test import/style negatives retained and locally corrected.",
+    "compileall": "Final fourfiles PASS",
+    "full_repository_pytest": "not_run_yet; required once at finalsource beforedelivery, actual collectionfailure/0executed ifexistingABI limitation recurs",
+    "cost_scope": "Unmonitored targeted tests/metadata work separately retained; does not increment54 complete watchdog subtotal or16PDE attempts."
+  },
+  "formal_release": {
+    "root_release": "After clean code/evidence commitpush and fresh identity, only three sequential originalfield restores; root actualFE/identity audit before separate joint comparison launch.",
+    "restore_forecast_minutes": [
+      1,
+      8
+    ],
+    "restore_RSS_GiB": [
+      1,
+      3
+    ],
+    "restore_gate_seconds": 1800,
+    "joint_comparison_status": "not_run_await_restore_review",
+    "joint_forecast_minutes": [
+      20,
+      65
+    ],
+    "joint_RSS_GiB": [
+      2,
+      8
+    ],
+    "joint_gate_seconds": 5400,
+    "joint_reminder_seconds": 4500,
+    "PDE_solves_added": 0,
+    "frozen_thresholds_unchanged": true,
+    "all_nine_reference_candidate_pairs_required": true,
+    "selection_feedback_prohibited": true
+  },
+  "evidence": {
+    "0": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+      "sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+      "bytes": 10704
+    },
+    "1": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round10_rejected_candidate_v1.json",
+      "sha256": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51",
+      "bytes": 24712
+    },
+    "2": {
+      "path": "benchmarks/artifacts/task43/post_selection_asset_capture_attempt1/assets_manifest.json",
+      "sha256": "a39ee47af3f6c04db44cae90639315b58b76780dbd50454eb358b0fe7f24f68b",
+      "bytes": 18854
+    },
+    "3": {
+      "path": "benchmarks/artifacts/task43/post_selection_asset_capture_attempt1/root_capture_identity_audit.json",
+      "sha256": "72b11425fd63c81a87bb17aea68bc182ce602db8f67df19cfc7a3950a32f8ccd",
+      "bytes": 406
+    },
+    "4": {
+      "path": "benchmarks/artifacts/task43/post_selection_asset_capture_attempt1/union_metadata_preview.json",
+      "sha256": "7035340c5eb3f1a1a9e661000faa59b789d79c1f49daf526519e7b58d7886e1e",
+      "bytes": 1079
+    },
+    "5": {
+      "path": "benchmarks/artifacts/task43/post_selection_asset_capture_attempt1/historical_mode_physics_fixture.json",
+      "sha256": "732db7050df83bfceb5d0b002ba1fcd665191172a83a82b2b6d4169b0da54a74",
+      "bytes": 79488
+    },
+    "6": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_targeted_attempt2.txt",
+      "sha256": "cc78cca08cac3496765596b91d8eb14ddcc453b494675a3691b498887dcd73f5",
+      "bytes": 138
+    },
+    "7": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_final_targeted_direction.txt",
+      "sha256": "2df94449b0facfad9659b0e8822c78939bf104b2ed2f0f3ab84590531e0690c1",
+      "bytes": 119
+    },
+    "8": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_initial_ruff.txt",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19
+    },
+    "9": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_targeted_attempt1.txt",
+      "sha256": "0f2d150058ce8a77d1f6ccfbb4b2f558f03ac1df8b596b385dd9b547bb67a694",
+      "bytes": 157
+    },
+    "10": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_final_targeted.txt",
+      "sha256": "fce220911cdfb5d6259fa82b1b987d2b4bdc143e3c041531c7cfe703ed5ac2b9",
+      "bytes": 118
+    },
+    "11": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_real_identity_smoke.txt",
+      "sha256": "f9ed32d40eb978c6a8daf64393b1abb1f207908c34760b92f9594a49d363d440",
+      "bytes": 136
+    },
+    "12": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_fixture_initial_ruff.txt",
+      "sha256": "75d88073284e2eece4a3b07e3f5a6db9284af8e047a9d78412bf0258b0ed3f09",
+      "bytes": 5502
+    },
+    "13": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/post_selection_historical_mode_fixture.stdout.txt",
+      "sha256": "56be6c02d4e3ec9850fcc30c7c1c4b84cadba8fa4ed742c902258d923a7a1320",
+      "bytes": 88
+    },
+    "14": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/launch_draft/restore_argvs.json",
+      "sha256": "62807367e88ad1a70909e6c6a0ea1b630a21e1cbb5339b188772c936c800c819",
+      "bytes": 1771
+    },
+    "15": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/launch_draft/comparison_argv.json",
+      "sha256": "9efa71aeff528e2adcdc0ef5e73b470fc438c7f5cdc898bec0d32940363afeb8",
+      "bytes": 585
+    },
+    "16": {
+      "path": "benchmarks/artifacts/task43/post_selection_component_attempt1/launch_draft/forecast.json",
+      "sha256": "ef31d8db150bac92a5b8480f8c650c1ab10ca0b720073a1298b1a68838f3375d",
+      "bytes": 4067
+    }
+  }
+}

@@ -1,9 +1,8 @@
-"""Compare the frozen Task43 current with Y6_1/Y6_2 on shared volume rules.
+"""Compare stored Task43 fields on shared physical volume rules.
 
-This post-processing runner rebuilds each recorded mesh and function ordering,
-then evaluates the stored full fields.  It performs no PDE solve and is limited
-to the current, selection-reference, and calibration-reference roles; the
-Y5_1 holdout is not an accepted input.
+The default workflow uses the frozen current and Y6_1/Y6_2 references. Reserved
+holdout/control restoration is available only through explicit hash-bound
+post-selection parameters; no PDE is solved by these helpers.
 """
 
 from __future__ import annotations
@@ -23,6 +22,7 @@ from benchmarks.task43_hp_adaptivity.h100_anchor import _h100_config
 from benchmarks.task43_hp_adaptivity.reference_restore import (
     _configure_historical_direct_route,
     _load_inventory_entry,
+    _post_selection_binding,
 )
 from src.adaptivity.physical_g_error import (
     accumulate_physical_g_cell_contributions,
@@ -181,7 +181,10 @@ def _axes_from_mesh(mesh) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     )  # type: ignore[return-value]
 
 
-def _load_field_case(label: str, out_root: Path):
+def _load_field_case(
+    label: str, out_root: Path, *, reference_root: Path | None = None,
+    post_selection_record: Path | None = None, assets_manifest: Path | None = None,
+):
     if label == "current_180":
         record_path = CURRENT_RUN / "task43_initial180_current_record.json"
         record = json.loads(record_path.read_text(encoding="utf-8"))
@@ -238,10 +241,27 @@ def _load_field_case(label: str, out_root: Path):
             mode_payload = json.load(stream)
         return label, cfg, mesh_data, coefficients, expected_arrays, record, mode_payload
 
-    if label not in {"Y6_1", "Y6_2"}:
+    reserved = label in {"Y5_1", "Y3", "Y3_2"}
+    if label not in {"Y6_1", "Y6_2"} and not reserved:
         raise ValueError("only current_180, Y6_1 and Y6_2 are allowed")
-    case_root = REFERENCE_ROOT / label
+    if reserved and (reference_root is None or post_selection_record is None or assets_manifest is None):
+        raise ValueError("reserved fields require explicit post-selection binding")
+    inventory = _load_inventory_entry(label, post_selection_record=post_selection_record,
+                                      assets_manifest=assets_manifest)
+    case_root = (REFERENCE_ROOT if reference_root is None else reference_root) / label
     record = json.loads((case_root / "restore_identity_record.json").read_text())
+    if reserved:
+        binding = _post_selection_binding(post_selection_record)
+        resolved = record.get("resolved_identity", {})
+        if (
+            resolved.get("run_role") != "post_selection_validation_only"
+            or resolved.get("selection_eligible") is not False
+            or resolved.get("frozen_selection_sha256") != binding["selection_sha256"]
+            or resolved.get("selection_stop_record_sha256") != binding["stop_sha256"]
+            or resolved.get("assets_manifest_sha256") != _sha256_file(assets_manifest)
+            or record.get("label") != label
+        ):
+            raise ValueError("reserved restored field has invalid post-selection identity")
     if record.get("status") != "RESTORATION_IDENTITY_PASS_NOT_TASK43_QUALIFIED":
         raise ValueError(f"{label} does not have the expected restoration-only status")
     bundle_path = case_root / "recovered_reference_bundle.npz"
@@ -274,7 +294,6 @@ def _load_field_case(label: str, out_root: Path):
     if _sha256_file(config_path) != expected_config_sha:
         raise ValueError(f"{label} copied config differs from its restoration record")
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    inventory = _load_inventory_entry(label)
     cfg = _configure_historical_direct_route(config, inventory)
     mesh_data = build_airbox_mesh_3d(cfg, out_root / f"mesh_{label}")
     orders_path = case_root / "numerical_output/dtn_port_diffraction_orders_3d.json"
@@ -434,8 +453,10 @@ def _physical_configuration_identity(cfg) -> dict[str, Any]:
     }
 
 
-def _validate_common_physics(cases: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    labels = ("current_180", "Y6_1", "Y6_2")
+def _validate_common_physics(
+    cases: dict[str, dict[str, Any]], *,
+    labels: tuple[str, ...] = ("current_180", "Y6_1", "Y6_2"),
+) -> dict[str, Any]:
     baseline = _physical_configuration_identity(cases[labels[0]]["cfg"])
     numeric_differences: dict[str, dict[str, float]] = {}
     for label in labels:
@@ -454,7 +475,7 @@ def _validate_common_physics(cases: dict[str, dict[str, Any]]) -> dict[str, Any]
             if not np.allclose(actual_array, expected_array, rtol=1.0e-12, atol=1.0e-14):
                 raise ValueError(f"{label} {name} differs from the frozen current physics")
 
-    current = cases["current_180"]["cfg"]
+    current = cases[labels[0]]["cfg"]
     volume = float(current.period_x * current.period_y * (current.domain_z_max - current.domain_z_min))
     if (
         abs(complex(current.n_air) - 1.0) > 1.0e-14
@@ -475,12 +496,15 @@ def _validate_common_physics(cases: dict[str, dict[str, Any]]) -> dict[str, Any]
     }
 
 
-def _validate_mode_physics(cases: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def _validate_mode_physics(
+    cases: dict[str, dict[str, Any]], *,
+    labels: tuple[str, ...] = ("current_180", "Y6_1", "Y6_2"),
+) -> dict[str, Any]:
     fields = ("alpha", "gamma", "beta", "kz", "refractive_index")
     flags = ("direction", "medium", "vertical_sign", "propagating", "power_carrying")
-    baseline_rows = cases["current_180"]["mode_payload"]["orders"]
+    baseline_rows = cases[labels[0]]["mode_payload"]["orders"]
     differences: dict[str, dict[str, float]] = {}
-    for label in ("Y6_1", "Y6_2"):
+    for label in labels[1:]:
         rows = cases[label]["mode_payload"]["orders"]
         if len(rows) != len(baseline_rows):
             raise ValueError(f"{label} modal inventory length differs from current")
@@ -512,8 +536,9 @@ def _validate_mode_physics(cases: dict[str, dict[str, Any]]) -> dict[str, Any]:
 
 def _validate_recorded_quadrature_and_cutoff(
     cases: dict[str, dict[str, Any]],
+    *, labels: tuple[str, ...] = ("current_180", "Y6_1", "Y6_2"),
 ) -> dict[str, Any]:
-    current_controls = cases["current_180"]["record"]["numerical_controls"]
+    current_controls = cases[labels[0]]["record"]["numerical_controls"]
     expected = {
         "volume_degree": 15,
         "surface_and_incident_degree": 28,
@@ -535,7 +560,7 @@ def _validate_recorded_quadrature_and_cutoff(
     if current != expected:
         raise ValueError("current numerical integration/cutoff differs from Task43 profile")
     reference_records: dict[str, Any] = {}
-    for label in ("Y6_1", "Y6_2"):
+    for label in labels[1:]:
         resolved = cases[label]["record"]["resolved_identity"][
             "quadrature_and_cutoff"
         ]

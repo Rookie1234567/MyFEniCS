@@ -229,6 +229,175 @@ class ComparisonParentRawGateTests(unittest.TestCase):
                     broken[section].pop("independent_active_fe_dofs")
                 self.assertFalse(self.check(broken, self.modes, self.contract, allow_legacy_initial_parent=True)["pass"])
 
+class PostSelectionRoleTests(AcceptedParentArtifactsTests):
+    def test_diagnostic_record_cannot_be_accepted_parent(self) -> None:
+        _write_json(self.selection_path, {
+            "schema": "task43.post-selection-comparison.v1",
+            "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE",
+            "selection_eligible": False,
+        })
+        with self.assertRaisesRegex(ValueError, "frozen accepted decision"):
+            load_accepted_parent_artifacts(self.selection_path, artifact_root=self.root,
+                                          acceptance_contract_path=self.acceptance_path)
+
+    def test_reserved_fields_reject_default_and_wrong_frozen_hash(self) -> None:
+        from unittest.mock import patch
+
+        from benchmarks.task43_hp_adaptivity import reference_restore as restore
+        for label in ("Y5_1", "Y3", "Y3_2"):
+            with self.assertRaisesRegex(ValueError, "explicit post-selection"):
+                restore._load_inventory_entry(label)
+        path = self.root / "stop.json"
+        _write_json(path, {
+            "schema": "task43.rejected-candidate-closeout.v1",
+            "status": "REJECTED_UNDER_FROZEN_G_NOISE_GATE_SELECTION_STOPPED",
+            "transition10_created": False,
+            "last_accepted_state": {"frozen_after_selection_stop": True,
+                                    "selection_sha256": "wrong"},
+            "evidence": {"last_accepted_selection": {
+                "path": str(self.selection_path), "sha256": _sha256(self.selection_path)}},
+        })
+        with patch.object(restore, "ROOT", self.root), self.assertRaisesRegex(ValueError, "frozen selection hash"):
+            restore._post_selection_binding(path)
+
+    def test_reserved_loader_checks_nested_identity_before_bundle(self) -> None:
+        from unittest.mock import patch
+
+        from benchmarks.task43_hp_adaptivity import (
+            compare_initial_to_references as base,
+        )
+        directory = self.root / "Y5_1"
+        directory.mkdir()
+        # Bundle intentionally absent: failure must be role identity, not an I/O
+        # error from opening field coefficients.
+        manifest = self.root / "manifest.json"
+        manifest.write_text("{}")
+        binding = {"selection_sha256": "selection", "stop_sha256": "stop"}
+        resolved = {"run_role": "post_selection_validation_only",
+                    "selection_eligible": False, "frozen_selection_sha256": "wrong",
+                    "selection_stop_record_sha256": "stop",
+                    "assets_manifest_sha256": _sha256(manifest)}
+        with patch.object(base, "_load_inventory_entry", return_value={}), \
+             patch.object(base, "_post_selection_binding", return_value=binding):
+            for record in ({"label": "Y5_1"}, {"label": "Y5_1", "resolved_identity": resolved}):
+                _write_json(directory / "restore_identity_record.json", record)
+                with self.assertRaisesRegex(ValueError, "invalid post-selection identity"):
+                    base._load_field_case("Y5_1", self.root, reference_root=self.root,
+                                          post_selection_record=self.root / "stop.json",
+                                          assets_manifest=manifest)
+
+    def test_cli_rejects_adaptive_post_selection_argument_mixing(self) -> None:
+        from unittest.mock import patch
+
+        from benchmarks.task43_hp_adaptivity import compare_round1_candidate as compare
+        with patch("sys.argv", ["compare", "--attempt-id", "test",
+                                "--post-selection-record", "stop.json",
+                                "--candidate-run-root", "run"]), self.assertRaises(SystemExit) as error:
+            compare.main()
+        self.assertEqual(error.exception.code, 2)
+
+
+class SavedPostSelectionFieldsTests(unittest.TestCase):
+    """Offline full-array fixture from the already solved36-cell backend pair."""
+
+    def test_saved_full612_and_q8_q10_physical_metrics(self) -> None:
+        import os
+
+        import numpy as np
+
+        from benchmarks.task43_hp_adaptivity import (
+            compare_initial_to_references as base,
+        )
+        from benchmarks.task43_hp_adaptivity.compare_round1_candidate import (
+            _j_infinity,
+            _post_selection_full_mode_physics,
+        )
+        from benchmarks.task43_hp_adaptivity.profile import task43_initial_profile
+        from src.postprocessing.physical_field_comparison import (
+            magnetic_field_from_electric_curl,
+        )
+
+        fixture = os.environ.get("TASK43_SAVED_POST_SELECTION_FIXTURE")
+        if fixture is None:
+            self.skipTest("set TASK43_SAVED_POST_SELECTION_FIXTURE to existing36-cell pair; never solve here")
+        root = Path(fixture)
+        cases = {}
+        for label in ("petsc", "mumps"):
+            record = json.loads((root / label / "component_record.json").read_text())
+            cases[label] = {"label": label, "power": record["power"],
+                            "mode_payload": json.loads((root / label / "solve/dtn_port_diffraction_orders_3d.json").read_text())}
+        modal = base._modal_comparison(cases["petsc"], cases["mumps"])
+        self.assertEqual(modal["ordered_mode_count"], 612)
+        self.assertEqual(len(modal["individual_channel_power_ratio_absolute_differences"]), 612)
+        cfg = task43_initial_profile(case_name="post_selection_saved_array_fixture")
+        for case in cases.values():
+            case["cfg"] = cfg
+            physics = _post_selection_full_mode_physics(case)
+            self.assertEqual(len(physics["recomputed_all612_power_ratios"]), 612)
+        for inventory_error in ("missing", "duplicate"):
+            broken = copy.deepcopy(cases["petsc"])
+            rows = broken["mode_payload"]["orders"]
+            if inventory_error == "missing":
+                rows.pop()
+            else:
+                for key in ("side", "m", "n", "polarization"):
+                    rows[1][key] = rows[0][key]
+            with self.subTest(inventory_error=inventory_error), self.assertRaises(ValueError):
+                _post_selection_full_mode_physics(broken)
+        # Algebraic normalization fixture derived from saved amplitudes. These
+        # scaled metadata are not asserted to be a newly solved physical field.
+        weak = [copy.deepcopy(cases["petsc"]) for _ in range(2)]
+        for case, scale in zip(weak, (1e-4, 2e-4), strict=True):
+            for row in case["mode_payload"]["orders"]:
+                row["outgoing_amplitude_at_boundary"] = [scale * value for value in row["outgoing_amplitude_at_boundary"]]
+        forward = base._modal_comparison(weak[0], weak[1])["boundary_amplitude_groups"]["top_s"]
+        reverse = base._modal_comparison(weak[1], weak[0])["boundary_amplitude_groups"]["top_s"]
+        self.assertLess(forward["reference_boundary_amplitude_l2"], 1.0)
+        self.assertAlmostEqual(forward["relative_to_reference"], 1.0, places=12)
+        self.assertAlmostEqual(reverse["relative_to_reference"], .5, places=12)
+        self.assertAlmostEqual(forward["relative_with_unit_incident_modal_floor"], forward["reference_boundary_amplitude_l2"], places=12)
+        self.assertAlmostEqual(forward["relative_with_unit_incident_modal_floor"], reverse["relative_with_unit_incident_modal_floor"], places=12)
+        for mutation in ("power_ratio", "R", "boundary", "aggregate"):
+            broken = copy.deepcopy(cases["petsc"])
+            row = next(row for row in broken["mode_payload"]["orders"]
+                       if row["side"] == "top" and row["m"] == row["n"] == 0 and row["polarization"] == "s")
+            if mutation == "boundary":
+                row["outgoing_amplitude_at_boundary"][0] += 1e-5
+            elif mutation == "aggregate":
+                broken["power"]["R_total"] += 1e-5
+            else:
+                row[mutation] += 1e-5
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                _post_selection_full_mode_physics(broken)
+        with np.load(root / "petsc/raw_pair_arrays.npz", allow_pickle=False) as reference, \
+             np.load(root / "mumps/raw_pair_arrays.npz", allow_pickle=False) as candidate:
+            for q in ("q8", "q10"):
+                weights = reference[f"{q}_weights_nm3"]
+                self.assertAlmostEqual(float(np.sum(weights)), 350000.0, places=7)
+                self.assertTrue(np.array_equal(weights, candidate[f"{q}_weights_nm3"]))
+                samples = [{"E": archive[f"{q}_E_total"], "curl_E": archive[f"{q}_curl_E_total"]}
+                           for archive in (reference, candidate)]
+                field = base._field_metrics(samples[0], samples[1], reference[f"{q}_points_nm"], weights, cfg)
+                # Verify the explicitly chosen reference determines the norm.
+                expected = float(np.sqrt(np.sum(weights * np.sum(np.abs(samples[0]["E"]) ** 2, axis=1))))
+                self.assertAlmostEqual(field["E_total_code"]["reference_l2"], expected, places=10)
+                recovered_h = magnetic_field_from_electric_curl(
+                    samples[0]["curl_E"], magnetic_field_scale_A_per_m=cfg.magnetic_field_scale_A_per_m,
+                    k0_per_nm=cfg.k0, mu_r=cfg.mu_r)
+                self.assertLess(float(np.max(np.abs(recovered_h - reference[f"{q}_H_total_A_per_m"]))), 1e-12)
+                self.assertLess(_j_infinity(modal, field)["value"], 1e-6)
+                weak_samples = [{name: values * scale for name, values in samples[0].items()}
+                                for scale in (.01, .02)]
+                forward_field = base._field_metrics(weak_samples[0], weak_samples[1], reference[f"{q}_points_nm"], weights, cfg)["E_total_code"]
+                reverse_field = base._field_metrics(weak_samples[1], weak_samples[0], reference[f"{q}_points_nm"], weights, cfg)["E_total_code"]
+                self.assertLess(forward_field["candidate_l2"], forward_field["reference_norm_floor"])
+                self.assertAlmostEqual(forward_field["reference_l2"], .01 * expected, places=10)
+                self.assertAlmostEqual(reverse_field["reference_l2"], .02 * expected, places=10)
+                self.assertAlmostEqual(forward_field["relative_to_reference"], 1.0, places=12)
+                self.assertAlmostEqual(reverse_field["relative_to_reference"], .5, places=12)
+                self.assertAlmostEqual(forward_field["relative_to_reference_or_floor"], .01 * expected / forward_field["reference_norm_floor"], places=12)
+                self.assertAlmostEqual(forward_field["relative_to_reference_or_floor"], reverse_field["relative_to_reference_or_floor"], places=12)
+
 
 if __name__ == "__main__":
     unittest.main()

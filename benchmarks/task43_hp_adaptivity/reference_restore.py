@@ -1,8 +1,7 @@
-"""Restore only the inventoried Y6_1/Y6_2 p6 fields and verify their old samples.
+"""Restore inventoried historical fields without solving a PDE.
 
-This is an offline, no-solve utility.  It deliberately rejects every label
-except the selection candidate Y6_1 and calibration candidate Y6_2; Y5_1 is a
-holdout and is not a permitted input here.
+The default role permits only Y6_1/Y6_2. Reserved holdout and control fields
+require an explicit, hash-bound post-selection stop decision and asset manifest.
 """
 
 from __future__ import annotations
@@ -110,14 +109,85 @@ def _copy_verified_assets(label: str, entry: dict[str, Any], out_dir: Path) -> d
     return copied
 
 
-def _load_inventory_entry(label: str) -> dict[str, Any]:
-    if label not in {"Y6_1", "Y6_2"}:
-        raise ValueError("only Y6_1 selection and Y6_2 calibration assets are allowed")
+def _post_selection_binding(record_path: Path) -> dict[str, Any]:
+    """Validate the immutable stop decision before opening reserved fields."""
+    from benchmarks.task43_hp_adaptivity.candidate_records import (
+        load_accepted_parent_artifacts,
+    )
+
+    decision = json.loads(Path(record_path).read_text())
+    if (
+        decision.get("schema") != "task43.rejected-candidate-closeout.v1"
+        or decision.get("status")
+        != "REJECTED_UNDER_FROZEN_G_NOISE_GATE_SELECTION_STOPPED"
+        or decision.get("transition10_created") is not False
+        or decision.get("last_accepted_state", {}).get("frozen_after_selection_stop")
+        is not True
+    ):
+        raise ValueError("post-selection validation requires a frozen stop decision")
+    selection = decision["evidence"]["last_accepted_selection"]
+    selection_path = Path(selection["path"])
+    if not selection_path.is_absolute():
+        selection_path = ROOT / selection_path
+    if (
+        _sha256_file(selection_path) != selection["sha256"]
+        or selection["sha256"]
+        != decision["last_accepted_state"]["selection_sha256"]
+    ):
+        raise ValueError("post-selection frozen selection hash differs")
+    accepted = load_accepted_parent_artifacts(
+        selection_path,
+        artifact_root=ROOT,
+        acceptance_contract_path=ROOT / "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    )
+    if accepted["candidate_id"] != decision["last_accepted_state"]["candidate_id"]:
+        raise ValueError("post-selection accepted candidate differs")
+    return {"decision": decision, "accepted": accepted,
+            "stop_sha256": _sha256_file(Path(record_path)),
+            "selection_sha256": selection["sha256"]}
+
+
+def _load_inventory_entry(
+    label: str,
+    *,
+    post_selection_record: Path | None = None,
+    assets_manifest: Path | None = None,
+) -> dict[str, Any]:
+    reserved = label in {"Y5_1", "Y3", "Y3_2"}
+    if label not in {"Y6_1", "Y6_2"} and not reserved:
+        raise ValueError("unknown historical field label")
+    if reserved and (post_selection_record is None or assets_manifest is None):
+        raise ValueError("reserved fields require explicit post-selection binding")
     payload = json.loads(INVENTORY.read_text(encoding="utf-8"))
     matches = [entry for entry in payload["cases"] if entry.get("label") == label]
     if len(matches) != 1:
         raise ValueError(f"inventory must contain exactly one {label} entry")
-    return matches[0]
+    entry = matches[0]
+    if not reserved:
+        if post_selection_record is not None or assets_manifest is not None:
+            raise ValueError("selection/calibration restoration cannot use post-selection arguments")
+        return entry
+    binding = _post_selection_binding(post_selection_record)
+    manifest = json.loads(assets_manifest.read_text())
+    if (
+        manifest.get("schema") != "task43.post-selection-assets.v1"
+        or manifest.get("selection_eligible") is not False
+        or manifest["selection_stop_record"]["sha256"] != binding["stop_sha256"]
+        or manifest["frozen_selection"]["sha256"] != binding["selection_sha256"]
+        or manifest["original_inventory"]["sha256"] != _sha256_file(INVENTORY)
+    ):
+        raise ValueError("post-selection asset manifest binding differs")
+    augmented = [case for case in manifest["cases"] if case.get("label") == label]
+    if len(augmented) != 1 or any(augmented[0].get(k) != v for k, v in entry.items()):
+        raise ValueError("post-selection assets altered the original inventory")
+    if label in {"Y3", "Y3_2"}:
+        contract_path = ROOT / "docs/task43_hp_adaptivity/outcomes/records/final_control_contract_v1.json"
+        if manifest["controls_contract"]["sha256"] != _sha256_file(contract_path):
+            raise ValueError("frozen control contract hash differs")
+        control = json.loads(contract_path.read_text())["controls"][("Y3", "Y3_2").index(label)]
+        if augmented[0]["axis_values_nm"] != control["axes_nm"]:
+            raise ValueError("post-selection control axes differ from frozen contract")
+    return augmented[0]
 
 
 def _configure_historical_direct_route(config: dict[str, Any], entry: dict[str, Any]):
@@ -318,11 +388,16 @@ def _verify_historical_modes(
     return mode_rows, mode_hash, arrays
 
 
-def restore_reference(label: str, output_root: Path) -> dict[str, object]:
+def restore_reference(
+    label: str, output_root: Path, *,
+    post_selection_record: Path | None = None,
+    assets_manifest: Path | None = None,
+) -> dict[str, object]:
     if MPI.COMM_WORLD.size != 1:
         raise RuntimeError("historical reference restoration is qualified for MPI1 only")
     started = time.perf_counter()
-    entry = _load_inventory_entry(label)
+    entry = _load_inventory_entry(label, post_selection_record=post_selection_record,
+                                  assets_manifest=assets_manifest)
     out_dir = output_root / label
     if out_dir.exists():
         raise FileExistsError(
@@ -371,6 +446,26 @@ def restore_reference(label: str, output_root: Path) -> dict[str, object]:
     mesh.topology.create_entity_permutations()
     space = _create_nedelec_space(mesh, cfg)
     floquet = build_double_floquet_mpc(space, mesh_data, cfg)
+    actual_fe = None
+    if label in {"Y5_1", "Y3", "Y3_2"}:
+        storage_rows = int(space.dofmap.index_map.size_global * space.dofmap.index_map_bs)
+        slave_rows = np.asarray(floquet.mpc.slaves, dtype=np.int64)
+        if len(np.unique(slave_rows)) != len(slave_rows):
+            raise ValueError("restored Floquet slave rows are not unique")
+        independent_rows = storage_rows - len(slave_rows)
+        nx, ny, nz = (len(axis_values[a]) - 1 for a in ("x", "y", "z"))
+        degree = int(cfg.nedelec_degree)
+        interior = global_cells * 3 * degree * (degree - 1) ** 2
+        edges = nx * ny * (3 * nz + 2)
+        faces = nx * ny * (3 * nz + 1)
+        trace_formula = edges * degree + faces * 2 * degree * (degree - 1)
+        if independent_rows != trace_formula + interior:
+            raise ValueError("restored independent Floquet rows differ from periodic entity count")
+        actual_fe = {"storage_rows": storage_rows, "actual_Floquet_slave_rows": len(slave_rows),
+                     "independent_FE_from_restored_constraint_rows": independent_rows,
+                     "cell_interiors": interior, "independent_trace": independent_rows - interior,
+                     "periodic_entity_trace_crosscheck": trace_formula,
+                     "scope": "MPI1 actual restored space minus unique Floquet slaves; independent periodic entity crosscheck, not coefficient length renamed as FE"}
     floquet_seconds = time.perf_counter() - started - copied_seconds - mesh_seconds
     print(
         json.dumps({"label": label, "stage": "space_and_floquet_ready", "seconds": floquet_seconds}),
@@ -583,6 +678,16 @@ def restore_reference(label: str, output_root: Path) -> dict[str, object]:
         },
         "qualification_boundary": "restoration and historical sparse-sample identity only; not Task43 reference qualification, full-domain G, or four-sidewall qualification",
     }
+    if label in {"Y5_1", "Y3", "Y3_2"}:
+        binding = _post_selection_binding(post_selection_record)
+        cfg_identity.update({
+            "run_role": "post_selection_validation_only",
+            "selection_eligible": False,
+            "frozen_selection_sha256": binding["selection_sha256"],
+            "selection_stop_record_sha256": binding["stop_sha256"],
+            "assets_manifest_sha256": _sha256_file(assets_manifest),
+            "actual_FE_from_restored_constraints": actual_fe,
+        })
     record = {
         "schema_version": 1,
         "label": label,
@@ -689,16 +794,20 @@ def restore_reference(label: str, output_root: Path) -> dict[str, object]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--label", choices=("Y6_1", "Y6_2"), required=True)
+    parser.add_argument("--label", choices=("Y6_1", "Y6_2", "Y5_1", "Y3", "Y3_2"), required=True)
     parser.add_argument("--attempt-id", default="attempt1")
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
+    parser.add_argument("--post-selection-record", type=Path)
+    parser.add_argument("--assets-manifest", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or any(
         char not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
         for char in args.attempt_id
     ):
         raise ValueError("attempt id may contain only letters, digits, underscore and hyphen")
-    restore_reference(args.label, (args.output_root / args.attempt_id).resolve())
+    restore_reference(args.label, (args.output_root / args.attempt_id).resolve(),
+                      post_selection_record=args.post_selection_record,
+                      assets_manifest=args.assets_manifest)
 
 
 if __name__ == "__main__":
