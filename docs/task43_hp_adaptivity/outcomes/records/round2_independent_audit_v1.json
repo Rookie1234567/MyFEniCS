@@ -1,0 +1,185 @@
+{
+  "schema": "task43.independent-raw-audit.v1",
+  "classification": "non_ci_independent_recomputation_from_saved_solver_record_and_raw_field_arrays",
+  "review_scope": "主控从持久化solver/progress字段及保存的原始场数组独立复算；不运行PDE、不调用Task43 comparator来产生这些复算值，也不构成CI或最终精度验收。",
+  "input_bindings": {
+    "candidate_solve_record": {
+      "path": "benchmarks/artifacts/task43/round2_p_up_attempt2/run/task43_round1_candidate_record.json",
+      "sha256": "0b007385d4820abfab5146b09082bbac3dcf9a89751b5f21fa87aed4643233f0"
+    },
+    "candidate_comparison_record": {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round2_p_up_attempt2/candidate_comparison_v2.json",
+      "sha256": "637b6567394c8925c3d05c84071a515ece05f900b5ea77025ba60b6f7fd6a2f4"
+    },
+    "candidate_watchdog_summary": {
+      "path": "benchmarks/artifacts/task43/round2_p_up_attempt2/watchdog/summary.json",
+      "sha256": "8eed311be1e68c07c7dc5c97763082622b36be94434bcc25302d0c7a476d9d84"
+    },
+    "shared_q8_sample_bundle": {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round2_p_up_attempt2/candidate_shared_volume_q8.npz",
+      "sha256": "18b9356ccdb72842d3f3199cf2141d1eec1d9fb4ca45b931bf4456f3c673c7cb"
+    }
+  },
+  "upstream_review_artifacts": {
+    "solver_audit": {
+      "path": "/tmp/task43/root_round2_p_up_attempt2_solve_audit.json",
+      "sha256": "797ee4390a317b2ecb48e29f9075a91d3a27476cac003bda8806ac97b84da8c3"
+    },
+    "comparison_audit": {
+      "path": "/tmp/task43/root_round2_p_up_attempt2_comparison_audit.json",
+      "sha256": "e5efee987e4a5d83462845eacf4fcce710e7794591822a73cdb690af5ad0aff3"
+    }
+  },
+  "independent_solve_recheck": {
+    "watchdog": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2252.1829847469926,
+      "sampled_process_tree_rss_peak_bytes": 2165133312,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "raw_recomputed_resource_peak": {
+      "rss": 2165133312,
+      "swap": 0
+    },
+    "A6": 2.7080574091428743e-09,
+    "condensed": 3.1939458947860743e-13,
+    "energy_closure": 2.7267077484793845e-13,
+    "correction": {
+      "corrected_condensed_relative_to_rhs": 3.251560708147967e-13,
+      "corrected_condensed_residual_norm": 2.758040126038971e-13,
+      "correction_ksp": {
+        "converged_reason": 4,
+        "iterations": 1,
+        "residual_norm": 0.0
+      },
+      "correction_norm": 4.520274671067798e-07,
+      "correction_relative_to_solution": 1.0780736432307382e-09,
+      "elapsed_seconds": 0.3082574079744518,
+      "initial_condensed_relative_to_rhs": 9.54082516822685e-08,
+      "initial_condensed_residual_norm": 8.092722545069796e-08,
+      "ksp_operator_replaced": false,
+      "matrix_or_rhs_reassembled": false,
+      "method": "same_ksp_single_residual_correction",
+      "original_primal_ksp": {
+        "converged_reason": 4,
+        "iterations": 1,
+        "ksp_type": "preonly",
+        "pc_type": "lu",
+        "residual_norm": 0.0
+      },
+      "requested": true,
+      "rhs_norm": 0.8482204004765155,
+      "solution_updated": true,
+      "source_identity": {
+        "implementation": "src.solvers.petsc_residual_correction.single_petsc_residual_correction_in_place"
+      },
+      "status": "passed"
+    },
+    "gates": {
+      "active_fe_dof_resource_gate_pass": true,
+      "all_612_ordered_modes_present": true,
+      "condensed_active_residual_le_1e-9": true,
+      "energy_closure_abs_le_1e-5": true,
+      "finite_A_volume_total": true,
+      "independent_A6_relative_to_rhs_le_1e-6": true,
+      "local_h_closure_pass": true,
+      "pass": true,
+      "solver_completed": true,
+      "status": "passed",
+      "trace_constraint_closure_pass": true,
+      "variable_p_degree_plan_pass": true
+    },
+    "record_sha256": "0b007385d4820abfab5146b09082bbac3dcf9a89751b5f21fa87aed4643233f0"
+  },
+  "independent_field_comparison_recheck": {
+    "classification": "independent_review_of_raw_saved_fields_not_new_PDE",
+    "comparison_sha256": "637b6567394c8925c3d05c84071a515ece05f900b5ea77025ba60b6f7fd6a2f4",
+    "volume_nm3": 349999.9999999998,
+    "reference_G": 554.5630106966479,
+    "incident_G": 836.6600265340753,
+    "raw_field_metrics": {
+      "round1_p_up_p4_46": {
+        "G_difference": 244.93961131307103,
+        "eta_G": 0.2927588310006289,
+        "E_total_and_scattered_scaled_upper": 2926.2209614440962,
+        "curl_E_total_and_scattered_scaled_upper": 2928.955020237787
+      },
+      "round2_p_up": {
+        "G_difference": 104.23683630679982,
+        "eta_G": 0.1245868489003932,
+        "E_total_and_scattered_scaled_upper": 1244.7277585620425,
+        "curl_E_total_and_scattered_scaled_upper": 1247.0081759359061
+      }
+    },
+    "independent_FE_dofs": 32358,
+    "added_FE_dofs": 12679,
+    "independently_recomputed_J_with_field_upper_bounds": {
+      "round1_p_up_p4_46": {
+        "J_infinity": 367685.6637324901,
+        "witness": "power.R00_s",
+        "field_components_proven_upper_bound": 2928.955020237787,
+        "all_612_channels_checked": true,
+        "scaled_power_and_modal_components": {
+          "power.R_total": 36769.738089870516,
+          "power.T_total": 4500.183050533751,
+          "power.A_volume": 32269.55503715852,
+          "power.R00_s": 367685.6637324901,
+          "power.R00_p": 6.903706523457228e-17,
+          "power.R00_total": 36768.56637324901,
+          "power.max_individual_channel": 367685.6637324901,
+          "amplitude.top_s": 3674.574554922494,
+          "amplitude.top_p": 2.328942790813899,
+          "amplitude.bottom_s": 1110.844696528329,
+          "amplitude.bottom_p": 4.004389148089723
+        }
+      },
+      "round2_p_up": {
+        "J_infinity": 134007.82955332665,
+        "witness": "power.R00_s",
+        "field_components_proven_upper_bound": 1247.0081759359061,
+        "all_612_channels_checked": true,
+        "scaled_power_and_modal_components": {
+          "power.R_total": 13400.877500867307,
+          "power.T_total": 3348.311062349872,
+          "power.A_volume": 10052.56644214667,
+          "power.R00_s": 134007.82955332665,
+          "power.R00_p": 7.477990306169433e-16,
+          "power.R00_total": 13400.782955332661,
+          "power.max_individual_channel": 134007.82955332665,
+          "amplitude.top_s": 1203.5582547179845,
+          "amplitude.top_p": 2.5918955684139418,
+          "amplitude.bottom_s": 714.098580602627,
+          "amplitude.bottom_p": 2.88524279775367
+        }
+      }
+    },
+    "A6_relative": 2.7080574091428743e-09,
+    "condensed_relative": 3.1939458947860743e-13,
+    "energy_closure": 2.7267077484793845e-13,
+    "raw_hard_numeric_limits_pass": true,
+    "p_score_lower": 1.326310386792642e-05,
+    "h_noise_inclusive_score_upper": 4.851247231261917e-06,
+    "p_score_strictly_exceeds_h_upper": true,
+    "checkpoint_shared_arrays_bitwise_equal": [
+      "active_full_rhs_owned",
+      "active_full_solution_owned",
+      "mesh_cell_vertex_dofmap",
+      "mesh_geometry_coordinates_nm",
+      "mesh_geometry_dofmap",
+      "mesh_owned_cell_global_ids",
+      "p6_function_space_dofmap",
+      "p6_ghost_global_dof_block_ids",
+      "p6_owned_global_dof_block_ids",
+      "recovered_p6_local_coefficients",
+      "recovered_p6_owned_coefficients"
+    ],
+    "limitation": "Score ordering alone does not accept a candidate; frozen full observable J and valid-space gates also required."
+  },
+  "limitations": [
+    "A6数值由solver审计重读并复核；不是从保存场重新组装原方程后重算。",
+    "R/T/A、全模态与独立A6的数值Gate是离散方程/输出一致性证据，不表示最终1e-4精度、holdout、四侧壁或同精度成本优势已通过。",
+    "h候选未求解；p相对h的结论只是在冻结排序规则下由实际计划DoF和eta_h>=0得到的严格分数上界剪枝。"
+  ]
+}

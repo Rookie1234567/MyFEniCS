@@ -2135,7 +2135,27 @@ def _run(
                     "official_result": False,
                     "mpi_size": int(comm.size),
                 }
-        capture(view.field, view.mesh_data, view.config, view.goal_context)
+        capture_started = time.perf_counter()
+        _log_stage(comm, started, "field_capture", "begin")
+        try:
+            capture(view.field, view.mesh_data, view.config, view.goal_context)
+        except Exception as error:
+            _log_stage(
+                comm,
+                started,
+                "field_capture",
+                "failed",
+                stage_duration_seconds=time.perf_counter() - capture_started,
+                error=repr(error),
+            )
+            raise
+        _log_stage(
+            comm,
+            started,
+            "field_capture",
+            "end",
+            stage_duration_seconds=time.perf_counter() - capture_started,
+        )
         captured["distinct_physical_trace_degrees"] = sorted(
             {
                 int(value)
@@ -2144,8 +2164,28 @@ def _run(
                 ]
             }
         )
-        captured["independent_active_action"] = (
-            compute_stage4_independent_active_action(view)
+        action_started = time.perf_counter()
+        _log_stage(comm, started, "independent_active_action", "begin")
+        try:
+            captured["independent_active_action"] = (
+                compute_stage4_independent_active_action(view)
+            )
+        except Exception as error:
+            _log_stage(
+                comm,
+                started,
+                "independent_active_action",
+                "failed",
+                stage_duration_seconds=time.perf_counter() - action_started,
+                error=repr(error),
+            )
+            raise
+        _log_stage(
+            comm,
+            started,
+            "independent_active_action",
+            "end",
+            stage_duration_seconds=time.perf_counter() - action_started,
         )
         captured["condensed_residual"] = dict(view.full_active_residual)
         captured["port_metrics"] = dict(view.port_metrics)

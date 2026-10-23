@@ -8327,6 +8327,14 @@ def _solve_stage4_dtn_port_total_field_impl(
         timing_details[
             "stage4_variable_p_same_lu_residual_correction_seconds"
         ] = correction_seconds
+        correction_progress_extra = {
+            key: value
+            for key, value in same_lu_residual_correction.items()
+            if key != "elapsed_seconds"
+        }
+        correction_progress_extra["correction_elapsed_seconds"] = (
+            correction_seconds
+        )
         if same_lu_residual_correction.get("status") != "passed":
             _write_progress_event(
                 out_dir,
@@ -8344,7 +8352,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                     else augmented_matrix_stats_after_finalize
                 ),
                 petsc_options=petsc_options,
-                extra=same_lu_residual_correction,
+                extra=correction_progress_extra,
             )
             raise RuntimeError(
                 "same-LU variable-p residual correction failed; refusing to "
@@ -8367,7 +8375,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                 else augmented_matrix_stats_after_finalize
             ),
             petsc_options=petsc_options,
-            extra=same_lu_residual_correction,
+            extra=correction_progress_extra,
         )
 
     assembly_time_field = None

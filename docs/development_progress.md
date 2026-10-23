@@ -1,4 +1,4 @@
-# Task43：首轮 p-up 已接受为 transition 1，继续后续闭环
+# Task43：两次 p-up 已接受，继续后续闭环
 
 当前工作在既有 `task43_hp_adaptivity` 分支推进，复用 NN-Lab-V2 注册 worktree 和工作站 complex128/int64 环境。基线固定为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`；旧分支保留，用户授权删除的旧 Task42extra 大型 artifacts/results 已有路径与体积记录。未启动 NN/FTT 或新的预条件器扫描。
 
@@ -8,9 +8,9 @@
 | 真实方程残差 | attempt1 未缩放端口负结果保留；启用既有边界幅值缩放后的 36 单元组件 A6/RHS 为 8.7763e−13；新空 h active-p3 MPI1/MPI2 锚点分别为 2.1429e−12/1.7762e−12 | 残差说明离散方程解准，不证明网格精度够高 |
 | 同阶原生及分布式锚点 | 36 单元原生 p3/standard_full、p6 载体空 h active-p3 MPI1、同 active-p3 MPI2 均完成；全域 q8/q10 E/curl/H、612 模态、R/T/A 和 independent A6 Gate 通过 | 均为 `numerical_sanity_only`，不代替冻结起点或独立精度参考 |
 | 正式起点与参考恢复 | 冻结180单元active p3完成：15120独立FE DoF，A6=2.3848e−10；Y6_1/Y6_2恢复身份通过；共同q8/q10全域E/curl/H和612模态比较完成 | current–Y6_1固定入射尺度G相对差0.4280717；两个有限参考彼此差4.5441e−6；不构成连续误差或精度通过 |
-| 自适应与独立验收 | q8/q10均标记46/180单元且集合相同；首轮p-up按冻结规则接受为transition 1（accepted updates=1）；Round-2 p-up 首次求解未过full-active residual preflight，same-LU修正仅完成组件资格化，正式重试待运行 | h candidate于legacy solver R/T阶段后受控停止；缺Task43 A6/全场记录，资格unknown；最终精度、独立holdout、侧壁和同精度成本未通过；[修正组件及Round-2失败证据](task43_hp_adaptivity/outcomes/records/same_lu_residual_correction_component_v1.json) |
+| 自适应与独立验收 | 首轮p-up与Round-2 p-up均按冻结规则接受，accepted updates=2；Round-2 p-up的η_G=0.1245868489，仍远高于最终精度目标 | 首轮h为unknown/controlled_stop；Round-2 h仅计划审计且按含噪得分上界未运行，不是h资格通过。最终精度、独立holdout、侧壁和同精度成本仍未通过；[transition 2证据与失败成本](task43_hp_adaptivity/outcomes/records/round2_selection_transition2_v1.json) |
 
-三个 h100 锚点完成同阶实现与MPI等价核对，见[三锚点记录](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。正式起点、Y6_1/Y6_2恢复、共同积分和46格标记见[起点与参考记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)及[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)。p-up完整求解通过首轮中间门；其保守单位DoF score下界2.96784e−5严格高于h计划的含噪理论上界1.33297e−5，故按冻结规则接受为transition 1（accepted updates=1）。h求解的矩阵分解、回代、legacy residual和R/T已完成，但watchdog记录controlled stop；没有Task43独立A6、A_volume或完整field/storage，资格状态unknown，后续仍须补齐适用的数值资格。全过程原始hash、停机分类、成本和失败入口见[transition 1记录](task43_hp_adaptivity/outcomes/records/round1_selection_transition1_v1.json)。最终6×10×6 p6不进入标记或排序；尚无最终精度或同精度成本优势结论。
+三个 h100 锚点完成同阶实现与MPI等价核对，见[三锚点记录](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。正式起点、Y6_1/Y6_2恢复、共同积分和首轮46格标记见[起点与参考记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)及[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)。首轮p-up和Round-2 p-up均通过各自实际方程/物理Gate及冻结中间噪声排序，accepted updates=2；Round-2 η_G降至0.1245868489，J∞降至134007.83。p-up得分保守下界1.32631e−5高于Round-2 h计划含噪理论上界4.85125e−6，因此该轮h候选依冻结排名not_run；这既不是h数值资格通过，也不免除后续真实h资格工作。首轮h仍为unknown/controlled_stop，Round-2 p-up首尝试失败及后续同计划校正重试的源记录、残差、成本与artifact hashes见[transition 2记录](task43_hp_adaptivity/outcomes/records/round2_selection_transition2_v1.json)及[持久化独立复算](task43_hp_adaptivity/outcomes/records/round2_independent_audit_v1.json)。最终6×10×6 p6不进入标记或排序；最终精度、独立holdout和同精度成本优势尚无结论。
 
 实测数值、源码/数据身份及既有 p4 字节哈希负结果见 [Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md) 和[模型总账](development_model_registry.md)。本节为进行中的检查点，后续按实际结果更新；以下历史正文中的“当前”只指其原有任务阶段。
 
