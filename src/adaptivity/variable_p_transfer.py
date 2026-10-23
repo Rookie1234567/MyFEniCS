@@ -243,12 +243,15 @@ def project_p6_dual_to_active_full(
         ),
         comm=comm,
     )
+    active.set(PETSc.ScalarType(0.0))
     for cell_transfer in transfer.cells:
         selected = cell_transfer.designated_local_positions
         local_p6 = np.zeros(882, dtype=np.complex128)
         local_p6[selected] = local_values[
             cell_transfer.p6_local_dofs[selected]
         ]
+        if not np.any(local_p6):
+            continue
         space = build_variable_p_reference_space(
             cell_transfer.cell.degree_map
         )

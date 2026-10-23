@@ -1,0 +1,302 @@
+{
+  "artifact_manifest": [
+    {
+      "bytes": 734501,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/independent_active_action_record.json",
+      "sha256": "84dac6fa2e940db22898f5668958039579c6b56e3f41e494d30172e34b9cc15c"
+    },
+    {
+      "bytes": 9736,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/mesh/mesh_3d.h5",
+      "sha256": "4f25d33abf9f536699b3d20ba6afb8faf958470313e7305bb49442249668afc7"
+    },
+    {
+      "bytes": 652,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/mesh/mesh_3d.xdmf",
+      "sha256": "d6d944c87bbc9324572a1382e838f52a4737a4ba9ce9472e7b0a559769ab7d0c"
+    },
+    {
+      "bytes": 1314,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/mesh/mesh_3d_partition_note.txt",
+      "sha256": "d9c6fea89a97f45b370293548c54968a627f9426bef7ee5b5906b554ff683c51"
+    },
+    {
+      "bytes": 138009,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/diffraction_orders_3d.csv",
+      "sha256": "545d5002052529d93b4ed5f6145658034b91179dec2397b188fa112f473ff46d"
+    },
+    {
+      "bytes": 352731,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/diffraction_orders_3d.json",
+      "sha256": "92a282ae382247d358c14eee1d2aec8b2308ce17fe9f9718d40fb83f9618ef9a"
+    },
+    {
+      "bytes": 552047,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/dtn_auxiliary_amplitudes_3d.json",
+      "sha256": "d6c9474920f65fe2cd9c40698dc1ef623622efc48d52c5111e8cf4a89d042af0"
+    },
+    {
+      "bytes": 399688,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/dtn_port_diffraction_orders_3d.csv",
+      "sha256": "97f6e784f58d2668394626566927e1a1e9d8fe3f7ad199cb3bf2c2bebfa651ab"
+    },
+    {
+      "bytes": 904731,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "cac35f62873e3c6a9f785354571a28a4d1e390f082f7614433ae5977a67fa85b"
+    },
+    {
+      "bytes": 5577,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/dtn_port_power_metrics_3d.json",
+      "sha256": "6a06b80c226823226f10a001b41e06172bc7ae33d11f1fcd70016495281c5522"
+    },
+    {
+      "bytes": 2428496,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/fields_3d_for_paraview.vtu",
+      "sha256": "c4a0fc8978b8db15f4c7e67a8ed737813366f232d88d0884b8520dc961dfb5b3"
+    },
+    {
+      "bytes": 965,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/flux_power.json",
+      "sha256": "4c27409822f284e742d2c2d61c5afc044e6b40cfd5d8324ada641e896a6b930e"
+    },
+    {
+      "bytes": 399688,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/port_power.csv",
+      "sha256": "97f6e784f58d2668394626566927e1a1e9d8fe3f7ad199cb3bf2c2bebfa651ab"
+    },
+    {
+      "bytes": 901226,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/port_power.json",
+      "sha256": "d0afce3ea996f55066d133fc76d9928341e42b077b53c2460c679a7f68f60810"
+    },
+    {
+      "bytes": 5261,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/power_metrics_3d.json",
+      "sha256": "2e2eefd0bd5583ad078e897afb1819364172910e6a38a4edeeabc077fa7ac93f"
+    },
+    {
+      "bytes": 472,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/power_summary.csv",
+      "sha256": "6ca2054eff85107fce745a702c8be55f477f762f27379e02d337fb2af89bd694"
+    },
+    {
+      "bytes": 348980,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/probe_power.json",
+      "sha256": "ff0acb2e6e48e59ed2a43607d6aee5c1e996f8e15bcf7f6804043bd0103d5510"
+    },
+    {
+      "bytes": 58345,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/progress_3d.jsonl",
+      "sha256": "87e9c2912d96e4c92c741e5d91b1d26fae868bf892b35bc75e7e0072f27885fb"
+    },
+    {
+      "bytes": 83017,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/run_summary.json",
+      "sha256": "481f85f385842e580679d425a52ad5d4b545e4938f7658e949bbecf847256c1a"
+    },
+    {
+      "bytes": 7619,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/solver_log.txt",
+      "sha256": "b406c919a8c4ee9daea67bb2c59f71f2df924b059a5ae3c40f002fdb3da9b5ad"
+    },
+    {
+      "bytes": 2374,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/volume_absorption.json",
+      "sha256": "e5fcdd978c8c0f76271e319be01e66481734ba69a7b2d89818e7cd9f5dd889fb"
+    },
+    {
+      "bytes": 48,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/solve/vtx_3d_warning.txt",
+      "sha256": "fc0079852e37a3f1011ca97de32fb18c91e83476fb6bc6989ffaafb4aa69fcf4"
+    },
+    {
+      "bytes": 7463,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_run/uniform_p3_degree_plan.json",
+      "sha256": "54b5b78d50570164803940bed43251ff23bf01320f6e8b69bc35845eda9a740d"
+    },
+    {
+      "bytes": 7940,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/a6_component_stage.log",
+      "sha256": "b9e2bf07b96fed7dbe72a02e0994fb3be7d03e7792c3d029f4af097f7a472170"
+    },
+    {
+      "bytes": 734501,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/independent_active_action_record.json",
+      "sha256": "84dac6fa2e940db22898f5668958039579c6b56e3f41e494d30172e34b9cc15c"
+    },
+    {
+      "bytes": 418,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/mpi2_full.log",
+      "sha256": "1be7aeeaea70751fe8cfa7039d9780db05c6aab3d4c41479fac2af8ab259a4cd"
+    },
+    {
+      "bytes": 1601,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/root_review/root_round5_p_attempt1_controlled_stop_audit.json",
+      "sha256": "68bac8b0809dea36e0859e46664e13f7dfeb4a2c6d3574135604d57584b8790f"
+    },
+    {
+      "bytes": 3542,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/root_review/root_sparse_zero_skip_component_identity_audit.json",
+      "sha256": "597ecb898eb7188a9da7afb9ad8266416d24a40ebcd4bc0abef91d1f6572ad26"
+    },
+    {
+      "bytes": 472,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_full_final.log",
+      "sha256": "8265dace446d1dc7a4d89235147461e5c549b686d3e4838366fd7cf212f1571f"
+    },
+    {
+      "bytes": 2910,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_initial_fixture_failure.log",
+      "sha256": "3d6fc95edf81f3bd97ac3687e6a33e6e7589e6f98d9013a5e076ded9acb10650"
+    },
+    {
+      "bytes": 46,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_legacy_final.log",
+      "sha256": "e682264d4b51e63d159a468c85e1dd94e6c7b0606c202e02012a5e3911ce758c"
+    },
+    {
+      "bytes": 471,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_sparse_pass_attempt2.log",
+      "sha256": "cf781edc84312d40d433749fbcee8f826215acf505cc558dbbf38f146987051c"
+    },
+    {
+      "bytes": 17840,
+      "path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/source.patch",
+      "sha256": "b885409d7b2cf6b2717857b38857c2251df6059675fbce19601e11c94e5d5a1b"
+    }
+  ],
+  "campaign_state": {
+    "accepted_updates": 4,
+    "final_precision_gate": "not_passed",
+    "h_qualification": "still not complete; this exact-zero optimization does not qualify h",
+    "round5_p_retry": "not_run_pending source commit and fresh preflight"
+  },
+  "classification": "Exact-zero-support sparse-projection component qualification; no formal candidate accuracy result.",
+  "environment": {
+    "PETSc_int": "int64",
+    "PETSc_scalar": "complex128",
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "mpi2_size": 2,
+    "native_linux": true,
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "serial_mpi_size": 1
+  },
+  "historical_identity_crosscheck": {
+    "A6_RHS_relative_recomputed_by_root": 8.776313191687003e-13,
+    "audit_path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/root_review/root_sparse_zero_skip_component_identity_audit.json",
+    "audit_sha256": "597ecb898eb7188a9da7afb9ad8266416d24a40ebcd4bc0abef91d1f6572ad26",
+    "finding": "Against historical a6_component_attempt2, independent-active-action record, auxiliary amplitudes, and volume absorption are byte-identical. Complete port-order and port-power JSON numerical fields are identical except 14 timing fields; power-metrics numerical fields are identical except two artifact-path fields."
+  },
+  "implemented_behavior": {
+    "core_path": "project_p6_dual_to_active_full initializes the active PETSc vector to zero, then skips a cell only when all entries of its designated local p6 dual vector are exactly zero.",
+    "mathematics": "linear projection unchanged; nonzero contributions still use the original reference projection and ADD_VALUES accumulation",
+    "thresholding": "none; exact comparison only, including tested 1e-100 nonzero load"
+  },
+  "preceding_round5_attempt": {
+    "audit_path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/root_review/root_round5_p_attempt1_controlled_stop_audit.json",
+    "audit_sha256": "68bac8b0809dea36e0859e46664e13f7dfeb4a2c6d3574135604d57584b8790f",
+    "classification": "root_performance_controlled_stop; not numerical failure and not user-originated",
+    "descendants_cleared": true,
+    "elapsed_seconds": 2230.2404703088105,
+    "prepared_modes": 150,
+    "result": "No candidate record or field storage. Stop was initiated by Root to remove repeated dense projection over exact-zero cell-local loads.",
+    "task_swap_peak_bytes": 0,
+    "total_modes": 612,
+    "tree_peak_bytes": 2911133696
+  },
+  "schema_version": "task43.sparse-zero-projection-skip.v1",
+  "source_identity": {
+    "base_head_before_uncommitted_changes": "7228a5e9d712434ef022d653e44f6eb8daa54ddb",
+    "files_sha256": {
+      "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "src/test/test_186_task035d_variable_p_transfer.py": "447cb8e96a17184fe794c5448d67446c9bc2e76bf4c7f8e23548aecd5b09af29",
+      "src/test/test_task43_independent_active_action_fixture.py": "67d1e20410e9a73abe1dfabf3b7d8e7fbec1d867b4fec8c309bdd8eb3442333c"
+    },
+    "patch_sha256": "b885409d7b2cf6b2717857b38857c2251df6059675fbce19601e11c94e5d5a1b",
+    "worktree": "two intended tracked files modified; this compact record and three docs will be added before the same-stage commit"
+  },
+  "static_checks": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && python -m ruff check src/adaptivity/variable_p_transfer.py src/test/test_186_task035d_variable_p_transfer.py && python -m compileall -q src/adaptivity/variable_p_transfer.py src/test/test_186_task035d_variable_p_transfer.py && git diff --check",
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "ruff": "passed"
+  },
+  "status": "component_pass_with_qualifications",
+  "tests": [
+    {
+      "cause": "The test fixture requested exterior facets before creating facet-to-cell connectivity; fixed by creating that connectivity. This was not a projection or numerical failure.",
+      "log_path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_initial_fixture_failure.log",
+      "name": "serial initial full module attempt",
+      "result": "2 passed, 1 failed in 88.43s",
+      "status": "failed_test_fixture_setup"
+    },
+    {
+      "log_path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_sparse_pass_attempt2.log",
+      "measurements": "Top/bottom each 8/32 cells projected; 24 exact-zero cells skipped; max absolute and relative difference to the old all-cell oracle were zero. The 1e-100 input was retained and also matched exactly. Warm timings: top 0.454346s vs 1.68999996s; bottom 0.503330s vs 1.482409s.",
+      "name": "serial sparse projection after fixture fix",
+      "result": "1 passed in 108.09s",
+      "status": "passed"
+    },
+    {
+      "log_path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_full_final.log",
+      "measurements": "Top/bottom each 8/32 projected; max absolute and relative difference to the old all-cell oracle were zero. The 1e-100 input also matched exactly. Same-process warm diagnostic timings: top 0.351831s vs 1.703434s; bottom 0.324292s vs 1.084057s.",
+      "name": "serial full final module",
+      "result": "3 passed in 74.03s",
+      "status": "passed"
+    },
+    {
+      "log_path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/serial_legacy_final.log",
+      "name": "serial existing transfer/adjoint tests on final source",
+      "result": "2 passed, 1 deselected in 81.12s",
+      "status": "passed"
+    },
+    {
+      "log_path": "benchmarks/artifacts/task43/sparse_zero_skip_patch_attempt1/mpi2_full.log",
+      "measurements": "Observed rank affinity rank0 CPU1, rank1 CPU40. Exact argv was not persisted, so the launch is not claimed byte-for-byte reproducible; retained evidence records that OpenMPI binding was disabled and rank-local taskset was used. A reproducible equivalent launch should use mpiexec --bind-to none with rank-local taskset. Combined top+bottom load projected 16/32 cells and skipped 16 exact-zero cells. Max absolute/relative oracle difference was zero; 1e-100 load also matched exactly. Warm diagnostic wall max: sparse 0.614155s, all-cell 1.162234s.",
+      "name": "MPI2 full module",
+      "result": "2 passed, 1 skipped per rank; pytest wall 70.96s and 71.10s, report maximum 71.10s without summing ranks",
+      "status": "passed_with_skip"
+    },
+    {
+      "A6": {
+        "direct_target_limit": 1e-08,
+        "direct_target_pass": true,
+        "raw_l2_norm": 7.040842101332394e-13,
+        "rhs_relative": 8.776313191687003e-13,
+        "rows": {
+          "active_cell_interior": 1296,
+          "independent_trace": 1782,
+          "modal_lower": 612
+        },
+        "task_gate_limit": 1e-06,
+        "task_gate_pass": true
+      },
+      "actual_mesh": {
+        "axis_cells_xyz": [
+          3,
+          3,
+          4
+        ],
+        "cells": 36,
+        "spacing": "h100 boundary-fitted"
+      },
+      "condensed_relative_residual": 3.06307614030034e-13,
+      "modes": 612,
+      "name": "real Task43 independent-A6 component",
+      "node": "test_phi90_h100_p3_r13_active_action",
+      "physics": {
+        "A_volume_total": 2.4120154951915158e-06,
+        "R": 0.999986005561389,
+        "R_plus_T": 0.999997587984322,
+        "T": 1.1582422933066686e-05,
+        "port_volume_closure_error": -1.8274270985330077e-13
+      },
+      "qualification_boundary": "36-cell component sanity only; not frozen 180-cell start or spatial accuracy evidence. Its full independent-action record, solver summary, mesh, modes, powers, progress, and fields are copied under a6_component_run/.",
+      "result": "1 passed in 104.82s; runner elapsed 100.794s",
+      "space": "active p3 on p6 storage carrier",
+      "status": "passed_component_only"
+    }
+  ],
+  "timing_scope": "Projection timings warm both implementations first within the same process and then compare one execution; MPI values are maximum across ranks. They are diagnostic for this small fixture only, not cold-start or whole-PDE speedup claims. Pytest runs were not watchdog-wrapped, so no process-tree RSS or swap peak is claimed."
+}

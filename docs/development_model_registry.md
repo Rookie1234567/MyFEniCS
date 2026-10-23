@@ -15,9 +15,10 @@ Task43 使用新 phi90 模型：周期 50×50 nm、计算域 z=−10…130 nm、
 | 冻结 3×10×6、active p3正式起点，MPI1/CPU1 | 独立FE15120；A6=2.3848e−10，能量闭合3.2516e−13；R/T/A_volume=0.807473677583/0.005279003523/0.187247318894；R00_s=0.807460398697、R00_p=1.2397e−26 | 凝聚9252行、used NNZ2420652；watchdog395.323s、实测同时进程树峰1.18345GiB、task swap0；有既存JIT缓存，只通过离散求解门 |
 | Y6_1/Y6_2旧丰富场恢复，576单元p6 | 原始hash、mesh/周期约束和612模态身份通过；12800点E差0、H相对差分别8.7304e−16/8.6978e−16 | 21.776s/21.254s，无新PDE；selection/calibration角色固定，完整公共积分比较已完成但不代表参考精度 |
 | 冻结180单元active-p3 current 对 Y6_1/Y6_2，q8/q10共同体积分 | current–Y6_1 的 G 差358.1505，固定入射尺度相对差0.4280717；Y6_2–Y6_1 的 G 差0.00380185，相对差4.5441e−6；q8/q10均选择同46格，捕获G²=0.5011251 | postprocess wall 491.82s，未使用 watchdog，不报告资源峰值；有限离散场差/选择指标，Y5_1未读，最终6×10×6 p6不参与标记；完整A6、侧壁与求解扰动未在此阶段重验 |
-| 实际自适应更新及同精度成本 | p-up候选按冻结单位DoF分数接受为transition 1，accepted updates=1；h资格unknown | h受控停止，独立holdout、后续p/h迭代与同精度成本仍未完成；无精度或成本优势结论 |
+| 实际自适应更新及同精度成本 | Round-1至Round-4 p-up按冻结单位DoF分数接受，accepted updates=4；Round-4 η_G=0.0095428197、J∞=7,475.08 | 最终1e−4精度门仍未通过；真实h资格、独立holdout与同精度成本优势未完成 |
+| Round-5 p-up attempt1 与精确零载荷跳过 | 正式候选在端口模态准备150/612时由主控性能受控停止，无完整场；随后`project_p6_dual_to_active_full`仅跳过严格零cell-local载荷，独立A6记录、端口辅助幅值和体吸收文件与历史36-cell组件逐字节一致，端口功率数值字段一致 | 停止2,230.240s、进程树峰2,911,133,696B、task swap0、后代清理；serial/MPI2投影oracle等价，局部warm计时不代表全模型加速；下一次p5同计划待新源码预检 |
 
-正式起点及参考恢复见[轻量记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)，全域场差和标记见[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)。当前与selection参考仍有明显差异；p-up虽已降低有限参考差并被选作transition 1，但最终1e−4精度门尚未达到，因此不能把自由度差直接称为压缩收益。
+正式起点及参考恢复见[轻量记录](task43_hp_adaptivity/outcomes/records/initial_current_and_reference_restore_v1.json)，全域场差和标记见[公共比较记录](task43_hp_adaptivity/outcomes/records/reference_comparison_v1.json)。当前与selection参考仍有明显差异；四次p-up降低了有限参考差但最终1e−4精度门尚未达到，因此不能把自由度差直接称为压缩收益。Round-5 p-up首个执行尝试因严格零载荷单元的重复投影被主控受控停止；该停止不是数值失败。后续加入精确零值跳过，并以[稀疏投影组件记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json)绑定核心、测试、历史身份复核和完整36-cell fixture。
 
 三锚点使用同一已记录 dirty source map（33 个依赖文件哈希）和源码归档；Git HEAD `a7904a64405c9c19d641dbc4d43fb25f7a80f793` 只是基线，不能代表未提交实现。三个小模型均为 `numerical_sanity_only`，不是冻结起点或精度证明。详细原始残差、字段身份、DoF 口径、负结果和限制见 [Task43 执行索引](task43_hp_adaptivity/outcomes/summary.md) 和[三锚点证据](task43_hp_adaptivity/outcomes/records/h100_anchor_triplet_v1.json)。用户确认的 6×10×6、uniform p6 仅作选择结束后的对照；其独立 FE DoF 公式估计为 237600，仍需实际约束审计，不与凝聚矩阵行数混称。
 
