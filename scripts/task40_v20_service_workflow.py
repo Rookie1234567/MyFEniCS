@@ -12513,6 +12513,13 @@ def _run_task41_p0_service(
             "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
             "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
         })
+    elif b0_saved_y_g_comparison_mode:
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_B0_SAVED_Y_G_COMPARISON": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+            "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
+        })
     elif b0_v9_failed_terminal_audit_mode:
         assert v9_terminal_producer_contract_path is not None
         assert v9_terminal_producer_contract_sha256 is not None

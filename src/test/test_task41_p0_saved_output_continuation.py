@@ -3578,6 +3578,11 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
                 ),
             }
         },
+        "resources": {
+            "task_memory_max_bytes": 1 << 30,
+            "host_reserve_bytes": 1 << 28,
+            "memory_swap_max_bytes": 0,
+        },
         "runtime": {
             "runtime_prefix": str(runtime_prefix),
             "abi_receipt_path": str(abi_receipt_path),
@@ -3825,6 +3830,9 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     }
     consumer_contract_path.write_text(json.dumps(consumer_contract), encoding="utf-8")
     consumer_contract_sha = hashlib.sha256(consumer_contract_path.read_bytes()).hexdigest()
+    contract_bindings[consumer_contract_path.resolve()] = (
+        consumer_contract, consumer_contract_sha
+    )
     contract["execution_scope"] = scope
     contract["evidence"] = consumer_contract["evidence"]
 
@@ -3835,6 +3843,9 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     producer_contract["evidence"] = {"service_directory": str(producer_service_dir.resolve())}
     producer_contract_path.write_text(json.dumps(producer_contract), encoding="utf-8")
     producer_contract_sha = hashlib.sha256(producer_contract_path.read_bytes()).hexdigest()
+    contract_bindings[producer_contract_path.resolve()] = (
+        producer_contract, producer_contract_sha
+    )
 
     v9_report = json.loads(identity_path.read_text(encoding="utf-8"))
     donor_run = repo_root / contract_module.TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
@@ -4099,6 +4110,88 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     budget_probe.unlink()
     shutil.rmtree(y_g_output_root, ignore_errors=True)
     shutil.rmtree(y_g_output_root.with_name(y_g_output_root.name + ".service"), ignore_errors=True)
+
+    # The outer dispatcher must bind both source identities before the inner guard.
+    import benchmarks.task034_wsl_resources as resource_module
+    from src.runners import task40_v10_campaign as campaign_module
+
+    outer_dispatch: dict[str, object] = {}
+
+    def capture_outer_saved_service(**kwargs):
+        assert kwargs["b0_saved_y_g_comparison_mode"] is True
+        expected_source = kwargs["consumer_source_sha"]
+        assert kwargs["environment"]["TASK41_P0_SAVED_OUTPUT_CONTINUATION"] == "1"
+        assert kwargs["environment"]["TASK41_P0_B0_SAVED_Y_G_COMPARISON"] == "1"
+        assert kwargs["environment"]["TASK41_P0_CONSUMER_SOURCE_SHA"] == expected_source
+        assert kwargs["environment"]["TASK41_P0_CHECKER_SOURCE_SHA"] == expected_source
+        outer_dispatch.update(kwargs)
+        return 0
+
+    with monkeypatch.context() as outer_patch:
+        outer_patch.setattr(contract_module, "load_task41_p0_fixed_window", lambda *_a, **_k: window)
+        outer_patch.setattr(
+            campaign_module,
+            "CampaignAccount",
+            lambda _window: SimpleNamespace(record_sample=lambda **_kw: {"recorded": True}),
+        )
+        outer_patch.setattr(
+            resource_module, "cgroup_snapshot",
+            lambda _pid: {
+                "dedicated_job_cgroup": True, "readable": True,
+                "memory_limit_bytes": 1 << 30, "swap_current_bytes": 0,
+                "memory_current_bytes": 1 << 20,
+            },
+        )
+        outer_patch.setattr(
+            service_workflow, "_activation_environment",
+            lambda *_a, **_k: (
+                {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
+                 "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"},
+                ["activate"], 0, "",
+            ),
+        )
+        outer_patch.setattr(service_workflow, "_qualified_activation_identity", lambda _env: "qualified")
+        outer_patch.setattr(
+            service_workflow, "_abi_preflight",
+            lambda *_a: (["preflight"], 0,
+                         json.dumps({"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1}), ""),
+        )
+        outer_patch.setattr(
+            service_workflow.subprocess, "check_output",
+            lambda command, **_kw: (
+                consumer_source_sha if command[1] == "rev-parse"
+                else contract_module.TASK41_BRANCH
+            ),
+        )
+        outer_patch.setattr(
+            service_workflow, "_run_task41_p0_saved_output_service", capture_outer_saved_service
+        )
+        for key, value in {
+            "TASK41_P0_STRICT_EXECUTION": "1",
+            "TASK41_P0_CONTRACT_PATH": str(consumer_contract_path),
+            "TASK41_P0_CONTRACT_SHA256": consumer_contract_sha,
+            "TASK41_P0_EXECUTION_WINDOW_PATH": str(window.path),
+            "TASK41_P0_EXECUTION_WINDOW_SHA256": window.sha256,
+            "TASK41_P0_EXPECTED_SOURCE_SHA": consumer_source_sha,
+        }.items():
+            outer_patch.setenv(key, value)
+        outer_args = [
+            "--task41-p0-saved-b0-y-g-comparison",
+            "--v6-report", str(v6_report_path), "--v6-report-sha256", v6_report_sha,
+            "--v9-report", str(v9_report_path), "--v9-report-sha256", v9_report_sha,
+            "--v9-summary", str(v9_summary_path), "--v9-summary-sha256", v9_summary_sha,
+            "--v9-service-receipt", str(v9_receipt_path),
+            "--v9-service-receipt-sha256", v9_receipt_sha,
+            "--output-dir", str(y_g_output_root),
+        ]
+        outer_result = service_workflow._run_task41_p0_service(
+            unit="myfenics-case-y-g-outer-dispatch.service",
+            runtime_prefix=runtime_prefix, abi_receipt=abi_receipt_path, jit_cache=jit_cache,
+            case_args=outer_args, contract_path=consumer_contract_path, repo_root=repo_root,
+        )
+    assert outer_result == 0
+    assert outer_dispatch["environment"]["TASK41_P0_CHECKER_SOURCE_SHA"] == consumer_source_sha
+
     commands.clear()
     y_g_result = service_workflow._run_task41_p0_saved_output_service(
         unit="myfenics-case-y-g.service",
