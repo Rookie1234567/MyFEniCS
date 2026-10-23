@@ -689,6 +689,46 @@ def test_v11_candidate_replay_service_exit_status_tracks_checker_and_final_budge
     assert budget_failed["result_classification"] == "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE"
 
 
+def test_v12_candidate_integral_profile_requires_every_frozen_tag() -> None:
+    from src.runners.task41_p0_checker import (
+        _task41_p0_v12_integral_profile_matches_frozen_evaluator,
+    )
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        _task41_v12_curl_mass_integral_profile,
+    )
+    from src.solvers.task41_actual_qmetric_blocked_gram import PROFILE_TAGS
+
+    expected_tags = sorted(int(tag) for tag in PROFILE_TAGS)
+    assert expected_tags == [1, 2, 3]
+    kernels = {tag: [object()] for tag in expected_tags}
+    profile_tags, integral_ids, kernel_counts = _task41_v12_curl_mass_integral_profile(kernels)
+    assert profile_tags == integral_ids == expected_tags
+    assert kernel_counts == {str(tag): 1 for tag in expected_tags}
+    valid_identity = {
+        "frozen_evaluator_profile_tags": profile_tags,
+        "cell_integral_ids": integral_ids,
+        "integral_kernel_counts": kernel_counts,
+    }
+    assert _task41_p0_v12_integral_profile_matches_frozen_evaluator(valid_identity)
+
+    for missing_tag in expected_tags:
+        incomplete_kernels = {
+            tag: [object()] for tag in expected_tags if tag != missing_tag
+        }
+        with pytest.raises(ValueError, match="integral profile"):
+            _task41_v12_curl_mass_integral_profile(incomplete_kernels)
+        incomplete_identity = {
+            **valid_identity,
+            "cell_integral_ids": [tag for tag in expected_tags if tag != missing_tag],
+            "integral_kernel_counts": {
+                str(tag): 1 for tag in expected_tags if tag != missing_tag
+            },
+        }
+        assert not _task41_p0_v12_integral_profile_matches_frozen_evaluator(
+            incomplete_identity
+        )
+
+
 def test_v12_candidate_replay_prepare_uses_independent_window_and_contract_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -6330,7 +6370,9 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
                     "schema": "task41.p0.v12.same_mesh_p6_curl_plus_mass.v1",
                     "degree": 6,
                     "form_terms": ["curl", "mass"],
-                    "cell_integral_ids": [1, 2],
+                    "frozen_evaluator_profile_tags": [1, 2, 3],
+                    "cell_integral_ids": [1, 2, 3],
+                    "integral_kernel_counts": {"1": 1, "2": 1, "3": 1},
                     "sum_duplicate_cell_integrals": True,
                     "internal_rhs_strategy": "same_lu_rhs_solve",
                     "candidate_evaluator_identity": v9_report[

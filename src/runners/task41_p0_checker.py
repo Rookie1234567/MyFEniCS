@@ -4552,6 +4552,30 @@ def _task41_v11_load_selected_donor_vectors(
     }
 
 
+def _task41_p0_v12_integral_profile_matches_frozen_evaluator(
+    integration_identity: Mapping[str, Any],
+) -> bool:
+    """Independently require the full material-tag/kernel profile frozen by V6."""
+    from src.solvers.task41_actual_qmetric_blocked_gram import PROFILE_TAGS
+
+    expected_tags = sorted(int(tag) for tag in PROFILE_TAGS)
+    expected_counts = {str(tag): 1 for tag in expected_tags}
+    for key in ("frozen_evaluator_profile_tags", "cell_integral_ids"):
+        values = integration_identity.get(key)
+        if (
+            not isinstance(values, list)
+            or any(type(value) is not int for value in values)
+            or values != expected_tags
+        ):
+            return False
+    counts = integration_identity.get("integral_kernel_counts")
+    return (
+        isinstance(counts, Mapping)
+        and set(counts) == set(expected_counts)
+        and all(type(counts[key]) is int and counts[key] == 1 for key in expected_counts)
+    )
+
+
 def check_task41_p0_v11_candidate_replay_saved_arrays(
     *,
     summary_path: Path,
@@ -4776,7 +4800,7 @@ def check_task41_p0_v11_candidate_replay_saved_arrays(
         or integration_identity.get("schema") != "task41.p0.v12.same_mesh_p6_curl_plus_mass.v1"
         or integration_identity.get("degree") != 6
         or integration_identity.get("form_terms") != ["curl", "mass"]
-        or integration_identity.get("cell_integral_ids") != [1, 2]
+        or not _task41_p0_v12_integral_profile_matches_frozen_evaluator(integration_identity)
         or integration_identity.get("sum_duplicate_cell_integrals") is not True
         or integration_identity.get("internal_rhs_strategy") != "same_lu_rhs_solve"
         or integration_identity.get("candidate_evaluator_identity") != v9_report.get("candidate_evaluator_identity")

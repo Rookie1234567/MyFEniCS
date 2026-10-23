@@ -3868,6 +3868,31 @@ def _v11_load_completed_candidate_cell(
     }
 
 
+def _task41_v12_curl_mass_integral_profile(
+    kernels: Mapping[int, Any],
+) -> tuple[list[int], list[int], dict[str, int]]:
+    """Bind the prepared curl+mass form to every frozen evaluator material tag."""
+    from src.solvers.task41_actual_qmetric_blocked_gram import PROFILE_TAGS
+
+    expected_profile_tags = sorted(int(tag) for tag in PROFILE_TAGS)
+    cell_integral_ids = sorted(int(tag) for tag in kernels)
+    integral_kernel_counts = {
+        str(int(tag)): len(values)
+        for tag, values in sorted(kernels.items(), key=lambda item: int(item[0]))
+    }
+    expected_kernel_counts = {str(tag): 1 for tag in expected_profile_tags}
+    if (
+        cell_integral_ids != expected_profile_tags
+        or integral_kernel_counts != expected_kernel_counts
+    ):
+        raise ValueError(
+            "prepared candidate form integral profile differs from the frozen evaluator: "
+            f"ids={cell_integral_ids!r}, expected={expected_profile_tags!r}, "
+            f"kernel_counts={integral_kernel_counts!r}"
+        )
+    return expected_profile_tags, cell_integral_ids, integral_kernel_counts
+
+
 def _run_v11_selected_trace_star_candidate_replay(
     *,
     args: argparse.Namespace,
@@ -4271,18 +4296,23 @@ def _run_v11_selected_trace_star_candidate_replay(
         raise ValueError(
             "prepared candidate evaluator/cache or RHS integration strategy differs from V9 compact"
         )
+    (
+        frozen_evaluator_profile_tags,
+        cell_integral_ids,
+        integral_kernel_counts,
+    ) = _task41_v12_curl_mass_integral_profile(kernels)
     integration_identity = {
         "schema": "task41.p0.v12.same_mesh_p6_curl_plus_mass.v1",
         "degree": 6,
         "form_terms": ["curl", "mass"],
-        "cell_integral_ids": sorted(int(value) for value in kernels),
+        "frozen_evaluator_profile_tags": frozen_evaluator_profile_tags,
+        "cell_integral_ids": cell_integral_ids,
+        "integral_kernel_counts": integral_kernel_counts,
         "sum_duplicate_cell_integrals": True,
         "internal_rhs_strategy": "same_lu_rhs_solve",
         "candidate_evaluator_identity": evaluator.identity,
         "candidate_cache_identity": evaluator.cache_identity,
     }
-    if integration_identity["cell_integral_ids"] != [1, 2]:
-        raise ValueError("prepared candidate form integral IDs differ from the frozen V9 curl/mass form")
     progress(
         {
             "phase": "v11_selected_candidate_form_compile",
