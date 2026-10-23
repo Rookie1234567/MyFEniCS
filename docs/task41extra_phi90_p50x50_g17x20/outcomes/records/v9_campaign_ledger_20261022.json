@@ -6,7 +6,7 @@
   "service": "myfenics-case-20261022T052342-2715327.service",
   "source_sha": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
   "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v9_24h.json",
-  "window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+  "window_sha256": "a7cac8f274dc17f552c57462da0a386a0c808580b8fc1172c1c88f0ee3075477",
   "t0_utc": "2026-10-22T01:12:42.209257168Z",
   "numerical_deadline_utc": "2026-10-23T00:52:42.209257168Z",
   "overall_deadline_utc": "2026-10-23T01:12:42.209257168Z",
@@ -35,5 +35,6 @@
   "legacy_v6_parent_cost_ledger_available_at_capture": false,
   "unavailable_historical_costs": "UNKNOWN; not reconstructed from V9",
   "run_summary_full_workflow_monotonic_seconds": 69966.90540991211,
-  "run_summary_full_workflow_time_exceeded": false
+  "run_summary_full_workflow_time_exceeded": false,
+  "window_hash_verification": "remote sha256sum of unchanged manifest during controller closeout"
 }
