@@ -4707,14 +4707,14 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         "run_id": contract_module.TASK41_B0_RUN_ID,
     }), encoding="utf-8")
 
-    v11_outer_dispatch: dict[str, object] = {}
+    v11_outer_dispatches: list[dict[str, object]] = []
 
     def capture_v11_saved_service(**kwargs):
         assert kwargs["b0_v8_selected_trace_star_mode"] is True
-        assert kwargs["b0_v8_selected_trace_star_metadata_only_mode"] is True
-        assert kwargs["v9_source_run_summary_path"] == v9_summary_path
-        assert kwargs["v9_source_run_summary_sha256"] == v9_summary_sha
-        v11_outer_dispatch.update(kwargs)
+        if kwargs["b0_v8_selected_trace_star_metadata_only_mode"]:
+            assert kwargs["v9_source_run_summary_path"] == v9_summary_path
+            assert kwargs["v9_source_run_summary_sha256"] == v9_summary_sha
+        v11_outer_dispatches.append(kwargs)
         return 0
 
     with monkeypatch.context() as outer_patch:
@@ -4787,6 +4787,57 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
             contract_path=consumer_contract_path,
             repo_root=repo_root,
         )
+        v11_results_root = (
+            repo_root / "results" / str(consumer_contract["case"]["model_id"])
+        )
+        v11_results_root.mkdir(parents=True, exist_ok=True)
+        candidate_metadata_path = (
+            v11_results_root / "task41_p0_v8_selected_trace_star_metadata.json"
+        )
+        candidate_metadata_path.write_text("{}\n", encoding="utf-8")
+        candidate_compact_path = (
+            v11_results_root / "task41_p0_b0_v9_compact_volume_audit.json"
+        )
+        candidate_compact_path.write_text("{}\n", encoding="utf-8")
+        candidate_ffcx_source = v11_results_root / "generated_form.c"
+        candidate_ffcx_source.write_text("/* fixture */\n", encoding="utf-8")
+        metadata_sha = hashlib.sha256(candidate_metadata_path.read_bytes()).hexdigest()
+        compact_sha = hashlib.sha256(candidate_compact_path.read_bytes()).hexdigest()
+        candidate_args = [
+            "--task41-p0-saved-b0-selected-trace-star-audit",
+            "--donor-contract", str(producer_contract_path),
+            "--donor-contract-sha256", producer_contract_sha,
+            "--summary", str(donor_summary_path),
+            "--numerical-output", str(donor_run / "numerical_output"),
+            "--output-dir", str(metadata_output_root.with_name("attempt05")),
+            "--geometry-policy", "mesh_actual_exact",
+            "--raw-tensor-evaluator", "actual_qmetric_blocked_gram",
+            "--ffcx-c-source", str(candidate_ffcx_source),
+            "--selected-trace-star-candidate-replay",
+            "--selected-active-row", "87567",
+            "--selected-metadata-report", str(candidate_metadata_path),
+            "--selected-metadata-report-sha256", metadata_sha,
+            "--v9-compact-report", str(candidate_compact_path),
+            "--v9-compact-report-sha256", compact_sha,
+        ]
+        candidate_outer_result = service_workflow._run_task41_p0_service(
+            unit="myfenics-case-v11-candidate-outer.service",
+            runtime_prefix=runtime_prefix,
+            abi_receipt=abi_receipt_path,
+            jit_cache=jit_cache,
+            case_args=candidate_args,
+            contract_path=consumer_contract_path,
+            repo_root=repo_root,
+        )
     assert outer_result == 0
-    assert v11_outer_dispatch["v9_source_run_summary_path"] == v9_summary_path
-    assert v11_outer_dispatch["b0_v8_selected_trace_star_metadata_only_mode"] is True
+    assert candidate_outer_result == 0
+    assert len(v11_outer_dispatches) == 2
+    assert v11_outer_dispatches[0]["b0_v8_selected_trace_star_metadata_only_mode"] is True
+    assert v11_outer_dispatches[0]["b0_v8_selected_trace_star_candidate_replay_mode"] is False
+    assert v11_outer_dispatches[0]["v9_source_run_summary_path"] == v9_summary_path
+    assert v11_outer_dispatches[1]["b0_v8_selected_trace_star_metadata_only_mode"] is False
+    assert v11_outer_dispatches[1]["b0_v8_selected_trace_star_candidate_replay_mode"] is True
+    assert v11_outer_dispatches[1]["v11_metadata_report_path"] == candidate_metadata_path
+    assert v11_outer_dispatches[1]["v11_metadata_report_sha256"] == metadata_sha
+    assert v11_outer_dispatches[1]["v11_v9_compact_report_path"] == candidate_compact_path
+    assert v11_outer_dispatches[1]["v11_v9_compact_report_sha256"] == compact_sha

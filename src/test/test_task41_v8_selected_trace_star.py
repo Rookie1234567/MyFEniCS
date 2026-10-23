@@ -148,8 +148,9 @@ def test_selected_trace_star_uses_noncontiguous_partition_and_mpc_preimages(monk
     assert len(cells) == selected["owned_cells"]
 
 
-def test_v8_metadata_selection_reaches_both_production_roles_and_saved_arrays(
-    monkeypatch, tmp_path
+@pytest.mark.parametrize("candidate_only", [False, True])
+def test_v8_metadata_selection_reaches_requested_roles_and_saved_arrays(
+    monkeypatch, tmp_path, candidate_only
 ):
     from src.runners import task41_p0_v4_volume_only_audit as audit
 
@@ -253,14 +254,16 @@ def test_v8_metadata_selection_reaches_both_production_roles_and_saved_arrays(
             candidate_evaluator=candidate,
             persist_array=persist,
             progress=progress.append,
+            candidate_only=candidate_only,
         )
 
     assert set(role_results) == {0, 1}
     assert candidate.cells == [(1, 6, (8, 3)), (2, 6, (8, 3))]
-    assert reference_calls == candidate.cells
-    assert len(saved_arrays) == 2 * 2 * 7
+    expected_roles = {"candidate"} if candidate_only else {"candidate", "reference"}
+    assert reference_calls == ([] if candidate_only else candidate.cells)
+    assert len(saved_arrays) == 2 * len(expected_roles) * 7
     for cell_index, roles in role_results.items():
-        assert set(roles) == {"candidate", "reference"}
+        assert set(roles) == expected_roles
         for role, result in roles.items():
             assert result["source"] == "RECONSTRUCTED_SELECTED_CELL"
             assert set(result["artifacts"]) == {
@@ -290,7 +293,9 @@ def test_v8_metadata_selection_reaches_both_production_roles_and_saved_arrays(
                     hashlib.sha256(Path(artifact["path"]).read_bytes()).hexdigest()
                     == artifact["sha256"]
                 )
-    assert sum(event["status"] == "COMPLETED" for event in progress) == 4
+    assert sum(event["status"] == "COMPLETED" for event in progress) == (
+        2 * len(expected_roles)
+    )
 
 
 def test_selected_trace_column_support_ignores_exact_zero_but_keeps_complex_slave_term():
@@ -1687,3 +1692,205 @@ def test_v9_saved_star_screen_contract_wrapper_is_local_only_and_persists_result
             output_path=output_path,
             repo_root=root,
         )
+
+
+def test_v11_saved_candidate_row_terms_accumulate_cells_and_global_rows_once():
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        _v11_accumulate_saved_candidate_row_terms,
+    )
+
+    result = _v11_accumulate_saved_candidate_row_terms(
+        native_rhs_row=7.0 + 3.0j,
+        native_action_row=4.0 - 2.0j,
+        b_alpha_row=1.0 + 5.0j,
+        s_cell_terms=[2.0 + 1.0j, -3.0 + 4.0j],
+        same_lu_cell_terms=[11.0 + 2.0j, -5.0 + 1.0j],
+        stored_t_cell_terms=[1.0 + 7.0j, 4.0 - 3.0j],
+        delta_t_cell_terms=[2.0 + 3.0j, 5.0 - 1.0j],
+        cs_t_cell_terms=[1.0 + 1.0j, 0.0 + 2.0j],
+        j_middle_cell_terms=[-8.0 + 2.0j, -6.0 - 1.0j],
+        minus_j_z_r_cell_terms=[2.0 + 3.0j, -1.0 + 1.0j],
+    )
+
+    assert result["y9"] == 0.0 + 10.0j
+    assert result["g9_same_lu"] == 13.0 + 6.0j
+    assert result["g9_stored_t"] == 12.0 + 7.0j
+    assert result["native_residual_row"] == 2.0 + 0.0j
+    assert result["review_eq1_rhs"] == -10.0 + 8.0j
+    assert result["review_eq1_lhs"] == result["review_eq1_rhs"]
+
+    # Production begins with the global native RHS, then adds cell 360 and
+    # cell 446 in that order. Appending the global value after cell summation
+    # would round this example to zero instead of one.
+    ordered = _v11_accumulate_saved_candidate_row_terms(
+        native_rhs_row=1.0e16 + 0.0j,
+        native_action_row=0.0 + 0.0j,
+        b_alpha_row=0.0 + 0.0j,
+        s_cell_terms=[0.0 + 0.0j, 0.0 + 0.0j],
+        same_lu_cell_terms=[-1.0e16 + 0.0j, 1.0 + 0.0j],
+        stored_t_cell_terms=[-1.0e16 + 0.0j, 1.0 + 0.0j],
+        delta_t_cell_terms=[0.0 + 0.0j, 0.0 + 0.0j],
+        cs_t_cell_terms=[0.0 + 0.0j, 0.0 + 0.0j],
+        j_middle_cell_terms=[0.0 + 0.0j, 0.0 + 0.0j],
+        minus_j_z_r_cell_terms=[0.0 + 0.0j, 0.0 + 0.0j],
+    )
+    assert ordered["g9_same_lu"] == 1.0 + 0.0j
+    assert ordered["g9_stored_t"] == 1.0 + 0.0j
+
+
+def test_v11_saved_candidate_row_rejects_incomplete_incident_cell_terms():
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        _v11_accumulate_saved_candidate_row_terms,
+    )
+
+    with pytest.raises(ValueError, match="different incident-cell coverage"):
+        _v11_accumulate_saved_candidate_row_terms(
+            native_rhs_row=1.0 + 0.0j,
+            native_action_row=2.0 + 0.0j,
+            b_alpha_row=3.0 + 0.0j,
+            s_cell_terms=[4.0 + 0.0j, 5.0 + 0.0j],
+            same_lu_cell_terms=[6.0 + 0.0j],
+            stored_t_cell_terms=[7.0 + 0.0j, 8.0 + 0.0j],
+            delta_t_cell_terms=[9.0 + 0.0j, 10.0 + 0.0j],
+            cs_t_cell_terms=[11.0 + 0.0j, 12.0 + 0.0j],
+            j_middle_cell_terms=[13.0 + 0.0j, 14.0 + 0.0j],
+            minus_j_z_r_cell_terms=[15.0 + 0.0j, 16.0 + 0.0j],
+        )
+
+
+def test_v11_replay_bound_is_diagnostic_and_difference_is_scaled_by_original_d():
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        _v11_local_replay_delta_diagnostic,
+    )
+
+    result = _v11_local_replay_delta_diagnostic(
+        saved_value=100.0 + 2.0j,
+        replayed_value=100.1 + 2.0j,
+        original_d=10.0 + 0.0j,
+        roundoff_estimate=1.0,
+    )
+    assert result["delta_absolute"] == pytest.approx(0.1)
+    assert result["delta_relative_to_original_d"] == pytest.approx(0.01)
+    assert result["roundoff_estimate_contains_difference"] is True
+    assert result["status"] == "LOCAL_REPLAY_UNBOUND"
+
+    zero_d = _v11_local_replay_delta_diagnostic(
+        saved_value=1.0 + 0.0j,
+        replayed_value=1.0 + 0.0j,
+        original_d=0.0 + 0.0j,
+        roundoff_estimate=0.0,
+    )
+    assert zero_d["delta_relative_to_original_d"] is None
+    assert zero_d["status"] == "EXACT_SAVED_VALUE_REPRODUCED"
+
+
+def test_v11_service_accepts_worker_envelope_with_unbound_nested_local_replay():
+    from scripts.task40_v20_service_workflow import (
+        _task41_v11_candidate_replay_worker_completed,
+    )
+
+    metadata_path = Path("/saved/metadata.json")
+    compact_path = Path("/saved/v9_compact.json")
+    metadata_sha = "a" * 64
+    compact_sha = "b" * 64
+    watchdog = {"classification": "COMPLETED", "leader_exit_code": 0}
+
+    def worker_payload():
+        return {
+            "schema": "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1",
+            "status": "COMPLETED_LOCAL_CANDIDATE_REPLAY",
+            "v11_selected_trace_candidate_replay": {
+                "schema": "task41.p0.v11.selected_trace_star_candidate_replay.v1",
+                "status": "COMPLETED_LOCAL_CANDIDATE_REPLAY",
+                "classification": "LOCAL_REPLAY_UNBOUND",
+                "selected_active_row": 87567,
+                "selected_original_row": 250113,
+                "incident_cell_order": [360, 446],
+                "metadata_report_path": str(metadata_path),
+                "metadata_report_sha256": metadata_sha,
+                "metadata_consumer_contract_path": "/saved/consumer_contract.json",
+                "metadata_consumer_contract_sha256": "c" * 64,
+                "metadata_window_path": "/saved/window.json",
+                "metadata_window_sha256": "d" * 64,
+                "metadata_service_receipt_path": "/saved/metadata.service/task41_p0_service_receipt.json",
+                "metadata_service_receipt_sha256": "e" * 64,
+                "v9_compact_report_path": str(compact_path),
+                "v9_compact_report_sha256": compact_sha,
+                "source_semantics": {
+                    "y9": "candidate action applied to known_field[active_original_rows], then saved B_alpha at this row exactly once",
+                    "g9": "saved native_rhs at the original row once plus cellwise same-LU -J solve(K,b_i), projected through the saved E map",
+                    "j0_j3": "paired saved native action/residual inputs for Review V11 identities only; never substitute for known_field",
+                    "formal_action_gate_changed": False,
+                    "official_result": False,
+                },
+                "candidate_evaluator_identity": "actual_qmetric_blocked_gram_fixture",
+                "candidate_cache_identity": "fixture-cache-identity",
+                "ffcx_c_source_sha256": "f" * 64,
+                "cells": [{"cell_index": 360}, {"cell_index": 446}],
+                "columns": [
+                    {
+                        "column": column,
+                        "incident_cell_terms": [
+                            {"cell_index": 360}, {"cell_index": 446}
+                        ],
+                        "review_v11_row_identities": [
+                            {"state": "j0"}, {"state": "j3"}
+                        ],
+                        "y_replay_status": "LOCAL_REPLAY_UNBOUND",
+                        "g_replay_status": "LOCAL_REPLAY_UNBOUND",
+                    }
+                    for column in (0, 1)
+                ],
+                "review_v11_local_identities": [
+                    {"equation_1_status": "LOCAL_IDENTITY_UNBOUND"}
+                    for _ in range(4)
+                ],
+                "scope_note": (
+                    "Only the two complete saved-metadata incident cells for active row 87567 are rebuilt. "
+                    "Local replay diagnoses the stored V9 y9/g9 target row and does not pass or reopen the full action gate."
+                ),
+            },
+        }
+
+    valid = worker_payload()
+    assert _task41_v11_candidate_replay_worker_completed(
+        valid,
+        watchdog=watchdog,
+        metadata_report_path=metadata_path,
+        metadata_report_sha256=metadata_sha,
+        v9_compact_report_path=compact_path,
+        v9_compact_report_sha256=compact_sha,
+    )
+
+    # The worker receipt must retain its outer receipt schema and nested local
+    # replay object; a flattened report must not be mistaken for this envelope.
+    flattened = dict(valid)
+    flattened.update(flattened.pop("v11_selected_trace_candidate_replay"))
+    assert not _task41_v11_candidate_replay_worker_completed(
+        flattened,
+        watchdog=watchdog,
+        metadata_report_path=metadata_path,
+        metadata_report_sha256=metadata_sha,
+        v9_compact_report_path=compact_path,
+        v9_compact_report_sha256=compact_sha,
+    )
+
+    malformed = worker_payload()
+    malformed["v11_selected_trace_candidate_replay"]["cells"][0] = None
+    assert not _task41_v11_candidate_replay_worker_completed(
+        malformed,
+        watchdog=watchdog,
+        metadata_report_path=metadata_path,
+        metadata_report_sha256=metadata_sha,
+        v9_compact_report_path=compact_path,
+        v9_compact_report_sha256=compact_sha,
+    )
+
+    assert not _task41_v11_candidate_replay_worker_completed(
+        valid,
+        watchdog={"classification": "FAILED", "leader_exit_code": 1},
+        metadata_report_path=metadata_path,
+        metadata_report_sha256=metadata_sha,
+        v9_compact_report_path=compact_path,
+        v9_compact_report_sha256=compact_sha,
+    )

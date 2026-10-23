@@ -36,6 +36,39 @@ TASK41_P0_V4_SELECTED_ACTIVE_ROW = 5_458_716
 TASK41_P0_V4_SELECTED_ORIGINAL_ROW = 17_692_332
 TASK41_P0_V8_SELECTED_ACTIVE_ROW = 4_766_937
 TASK41_P0_V11_METADATA_ACTIVE_ROW = 87_567
+TASK41_P0_V11_METADATA_ORIGINAL_ROW = 250_113
+TASK41_P0_V11_METADATA_REPORT_SHA256 = (
+    "332baa3a5253a8322b56615c7fe087e401f909c3c889fa048fccc3f9f2b9fcd3"
+)
+TASK41_P0_V11_METADATA_SERVICE_RECEIPT_SHA256 = (
+    "ccf9c796ed38d21180e5336d59b8610a62fb869fc271dc3703a87cedb986eb4c"
+)
+TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA = (
+    "967ad08d7da75ff8fa4e49bd63ed9abe53469d46"
+)
+TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_SHA256 = (
+    "af27a07502f72f5d3d1effecf98bda21f09e95cca230278e05ed1a63eeaf8931"
+)
+TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_RELATIVE = Path(
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/"
+    "p0_b0_controller/execution_contract_source_967ad08d7da75ff8fa4e49bd63ed9abe53469d46.json"
+)
+TASK41_P0_V11_METADATA_WINDOW_SHA256 = (
+    "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4"
+)
+TASK41_P0_V11_V9_COMPACT_REPORT_SHA256 = (
+    "e4db4e42b8a4f3b407ed0b00add8029f7e066aad6c38a2945d60e33ffbde7d93"
+)
+TASK41_P0_V11_FFCX_C_SOURCE_SHA256 = (
+    "d3302fba22074b755ac3b7d4a0b361af926ae7801aac25a7f1cd1d69cbeb9f03"
+)
+TASK41_P0_V11_SELECTED_CELLS = (360, 446)
+TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256 = (
+    "740eae4b52d810060e334e96a62979626a7f13fe0464cf86f87670bd98c9eaac"
+)
+TASK41_P0_V11_V9_REDUCED_RHS_ARRAY_SHA256 = (
+    "ac5a86b9c06656d6d8461ec20db973ea8df0c6635a42af9d79d207b44362a55b"
+)
 TASK41_P0_V8_V7_INDEX_SHA256 = (
     "59237641d681a48220afa6662c57df4ebfad7a9340054630a614d1cda7a8c621"
 )
@@ -1562,8 +1595,17 @@ def _v8_rebuild_selected_cell_role_artifacts(
     candidate_evaluator: Any,
     persist_array: Any,
     progress: Any,
+    candidate_only: bool = False,
+    artifact_prefix_template: str = "task41_p0_v8_selected_cell{cell_index}_{role}",
 ) -> dict[str, dict[str, Any]]:
-    """Run and persist both production-role local paths for one selected cell."""
+    """Run and persist selected-cell production-role paths.
+
+    The default preserves the historical candidate-plus-reference audit.  A
+    candidate-only replay is useful when the saved metadata already identifies
+    the incident cells and the first required product is the actual candidate
+    tensor and its same-source R/T/S/LU artifacts; it avoids compiling the
+    expensive reference FFCx kernel before those products are durable.
+    """
     from src.solvers.hcurl_assembly_time_condensation import (
         _tabulate_volume_audit_path,
         condense_selected_volume_tensor,
@@ -1573,10 +1615,12 @@ def _v8_rebuild_selected_cell_role_artifacts(
         row["actual_geometry_coordinates"], dtype=np.float64
     )
     role_sets: dict[str, dict[str, Any]] = {}
-    for role, raw_evaluator in (
-        ("candidate", candidate_evaluator),
-        ("reference", None),
-    ):
+    role_evaluators = (
+        (("candidate", candidate_evaluator),)
+        if candidate_only
+        else (("candidate", candidate_evaluator), ("reference", None))
+    )
+    for role, raw_evaluator in role_evaluators:
         progress(
             {
                 "phase": "selected_trace_star_local_tensor",
@@ -1619,7 +1663,9 @@ def _v8_rebuild_selected_cell_role_artifacts(
                 candidate_evaluator.identity if role == "candidate" else None
             ),
         }
-        artifact_prefix = f"task41_p0_v8_selected_cell{cell_index}_{role}"
+        artifact_prefix = artifact_prefix_template.format(
+            cell_index=int(cell_index), role=role
+        )
         artifacts = {
             "raw_tensor": {
                 "name": f"{artifact_prefix}_raw_tensor",
@@ -3363,6 +3409,1030 @@ def _run_v8_selected_trace_star_audit(
     return result
 
 
+def _v11_accumulate_saved_candidate_row_terms(
+    *,
+    native_rhs_row: complex,
+    native_action_row: complex,
+    b_alpha_row: complex,
+    s_cell_terms: list[complex],
+    same_lu_cell_terms: list[complex],
+    stored_t_cell_terms: list[complex],
+    delta_t_cell_terms: list[complex],
+    cs_t_cell_terms: list[complex],
+    j_middle_cell_terms: list[complex],
+    minus_j_z_r_cell_terms: list[complex],
+) -> dict[str, complex]:
+    """Apply production row ordering and the V11 row identity's one global terms."""
+
+    cell_lengths = {
+        len(s_cell_terms),
+        len(same_lu_cell_terms),
+        len(stored_t_cell_terms),
+        len(delta_t_cell_terms),
+        len(cs_t_cell_terms),
+        len(j_middle_cell_terms),
+        len(minus_j_z_r_cell_terms),
+    }
+    if len(cell_lengths) != 1:
+        raise ValueError("V11 selected row term lists have different incident-cell coverage")
+    y_value = 0.0 + 0.0j
+    g_same_lu = complex(native_rhs_row)
+    g_stored_t = complex(native_rhs_row)
+    review_rhs = 0.0 + 0.0j
+    review_lu_residual = 0.0 + 0.0j
+    for s_term, lu_term, stored_t, delta_t, cs_t, j_middle, minus_j_z_r in zip(
+        s_cell_terms,
+        same_lu_cell_terms,
+        stored_t_cell_terms,
+        delta_t_cell_terms,
+        cs_t_cell_terms,
+        j_middle_cell_terms,
+        minus_j_z_r_cell_terms,
+        strict=True,
+    ):
+        y_value += complex(s_term)
+        g_same_lu += complex(lu_term)
+        g_stored_t += complex(stored_t)
+        review_rhs += complex(delta_t)
+        review_rhs += complex(cs_t)
+        review_rhs += complex(j_middle)
+        review_lu_residual += complex(minus_j_z_r)
+    y_value += complex(b_alpha_row)
+    review_rhs -= complex(native_action_row)
+    residual_row = complex(native_rhs_row) - complex(native_action_row) - complex(b_alpha_row)
+    return {
+        "y9": y_value,
+        "g9_same_lu": g_same_lu,
+        "g9_stored_t": g_stored_t,
+        "d_lu": y_value - g_same_lu,
+        "native_residual_row": residual_row,
+        "review_eq1_lhs": y_value - g_same_lu + residual_row + review_lu_residual,
+        "review_eq1_rhs": review_rhs,
+    }
+
+
+def _v11_local_replay_delta_diagnostic(
+    *,
+    saved_value: complex,
+    replayed_value: complex,
+    original_d: complex,
+    roundoff_estimate: float,
+) -> dict[str, Any]:
+    """Keep the conservative arithmetic bound separate from replay conclusions."""
+
+    delta = complex(replayed_value) - complex(saved_value)
+    d_abs = abs(complex(original_d))
+    delta_abs = abs(delta)
+    return {
+        "saved_value": complex(saved_value),
+        "replayed_value": complex(replayed_value),
+        "delta_replay_minus_saved": delta,
+        "delta_absolute": float(delta_abs),
+        "original_d": complex(original_d),
+        "original_d_absolute": float(d_abs),
+        "delta_relative_to_original_d": (
+            float(delta_abs / d_abs) if d_abs > 0.0 else None
+        ),
+        "roundoff_estimate": float(roundoff_estimate),
+        "roundoff_estimate_contains_difference": bool(
+            delta_abs <= float(roundoff_estimate)
+        ),
+        # The gamma*N estimate is a conservative diagnostic bound. It is not
+        # an acceptance threshold or evidence of causal closure.
+        "status": (
+            "EXACT_SAVED_VALUE_REPRODUCED"
+            if delta_abs == 0.0
+            else "LOCAL_REPLAY_UNBOUND"
+        ),
+    }
+
+
+def _run_v11_selected_trace_star_candidate_replay(
+    *,
+    args: argparse.Namespace,
+    cfg: Any,
+    donor: dict[str, Any],
+    fixed_window: Any,
+    output_directory: Path,
+    consumer_contract: Mapping[str, Any],
+    sha256_file: Any,
+    allocation_gate: Any,
+    persist_array: Any,
+    progress: Any,
+    checkpoint: Any,
+) -> dict[str, Any]:
+    """Rebuild only the two frozen candidate cells and replay the saved V9 target row."""
+
+    import hashlib
+    import json
+    import shutil
+
+    import ufl
+    from basix.ufl import element
+    from dolfinx import default_real_type, fem
+    from mpi4py import MPI
+    from scipy import sparse
+
+    from src.solvers.common_3d_forms import _build_physical_volume_terms
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+    from src.solvers.hcurl_assembly_time_condensation import (
+        _cell_integral_kernels,
+        _orient_cell_tensor,
+        project_internal_rhs_same_lu,
+    )
+    from src.solvers.task41_actual_qmetric_blocked_gram import (
+        IDENTITY as V6_CANDIDATE_IDENTITY,
+        Task41ActualQMetricBlockedGramCandidate,
+    )
+
+    if fixed_window is None or fixed_window.sha256 != consumer_contract.get(
+        "window", {}
+    ).get("sha256"):
+        raise ValueError("V11 candidate replay fixed-window hash differs from the consumer contract")
+    if fixed_window.sha256 != TASK41_P0_V11_METADATA_WINDOW_SHA256:
+        raise ValueError("V11 candidate replay is outside the fixed metadata window")
+    if args.selected_active_row != TASK41_P0_V11_METADATA_ACTIVE_ROW:
+        raise ValueError("V11 candidate replay target row differs from frozen active row 87567")
+    if len(donor.get("columns", ())) != 2:
+        raise ValueError("V11 candidate replay requires exactly two saved donor columns")
+    if args.ffcx_c_source is None or sha256_file(args.ffcx_c_source) != TASK41_P0_V11_FFCX_C_SOURCE_SHA256:
+        raise ValueError("V11 candidate replay FFCx source differs from the frozen V9 candidate source")
+
+    results_root = (ROOT / "results" / str(consumer_contract["case"]["model_id"])).resolve()
+    metadata_path = args.selected_metadata_report.resolve(strict=True)
+    if (
+        metadata_path.name != "task41_p0_v8_selected_trace_star_metadata.json"
+        or not metadata_path.is_relative_to(results_root)
+        or args.selected_metadata_report_sha256 != TASK41_P0_V11_METADATA_REPORT_SHA256
+        or sha256_file(metadata_path) != TASK41_P0_V11_METADATA_REPORT_SHA256
+    ):
+        raise ValueError("V11 selected metadata report path or SHA-256 differs from the frozen attempt02")
+    metadata_receipt_path = (
+        metadata_path.parent.with_name(metadata_path.parent.name + ".service")
+        / "task41_p0_service_receipt.json"
+    )
+    if sha256_file(metadata_receipt_path) != TASK41_P0_V11_METADATA_SERVICE_RECEIPT_SHA256:
+        raise ValueError("V11 metadata service receipt SHA-256 differs from the completed attempt02")
+    metadata_receipt = json.loads(metadata_receipt_path.read_text(encoding="utf-8"))
+    if (
+        metadata_receipt.get("schema") != "task41.p0.saved_output_service_receipt.v1"
+        or metadata_receipt.get("status") != "completed"
+        or metadata_receipt.get("mode") != "saved_b0_v8_selected_trace_star_metadata_only"
+        or metadata_receipt.get("contract_sha256")
+        != TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_SHA256
+        or metadata_receipt.get("selected_trace_star_metadata_only_result_path")
+        != str(metadata_path)
+        or metadata_receipt.get("selected_trace_star_metadata_only_status")
+        != "metadata_only_completed"
+    ):
+        raise ValueError("V11 completed metadata service receipt is not bound to attempt02")
+
+    metadata_report = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata = metadata_report.get("selected_trace_star_metadata_only")
+    from src.runners.task41_p0_contract import (
+        load_task41_p0_fixed_window,
+        require_task41_p0_contract,
+    )
+
+    old_contract_path = Path(str(metadata_report.get("consumer_contract_path", "")))
+    expected_old_contract_path = (
+        ROOT / TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_RELATIVE
+    ).resolve(strict=True)
+    if old_contract_path.resolve(strict=True) != expected_old_contract_path:
+        raise ValueError("V11 metadata report names a different frozen attempt02 consumer contract")
+    old_contract, old_contract_sha = require_task41_p0_contract(
+        old_contract_path,
+        expected_sha256=TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_SHA256,
+        current_root=ROOT,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    old_window = load_task41_p0_fixed_window(old_contract, current_root=ROOT)
+    metadata_window_state = metadata_report.get("initial_fixed_window_state")
+    metadata_window_accounting = (
+        metadata_window_state.get("accounting_record")
+        if isinstance(metadata_window_state, Mapping)
+        else None
+    )
+    if (
+        metadata_report.get("schema")
+        != "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1"
+        or metadata_report.get("status") != "COMPLETED_METADATA_ONLY"
+        or metadata_report.get("consumer_source_sha")
+        != TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA
+        or metadata_report.get("consumer_contract_sha256")
+        != old_contract_sha
+        or old_contract.get("source", {}).get("sha")
+        != TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA
+        or old_window.sha256 != TASK41_P0_V11_METADATA_WINDOW_SHA256
+        or fixed_window.sha256 != old_window.sha256
+        or not isinstance(metadata_window_state, Mapping)
+        or metadata_window_state.get("campaign_window_sha256") != old_window.sha256
+        or metadata_window_state.get("path") != str(old_window.path)
+        or not isinstance(metadata_window_accounting, Mapping)
+        or metadata_window_accounting.get("campaign_window_sha256") != old_window.sha256
+        or metadata_report.get("donor_manifest_sha256")
+        != donor.get("manifest_sha256")
+        or not isinstance(metadata, Mapping)
+        or metadata.get("schema") != "task41.p0.v8.selected_trace_star_metadata_only.v1"
+        or metadata.get("status") != "COMPLETED_METADATA_ONLY"
+        or metadata.get("selected_active_row") != TASK41_P0_V11_METADATA_ACTIVE_ROW
+        or metadata.get("selected_original_row") != TASK41_P0_V11_METADATA_ORIGINAL_ROW
+        or metadata.get("incident_cell_order") != list(TASK41_P0_V11_SELECTED_CELLS)
+        or metadata.get("numerical_work_started") is not False
+    ):
+        raise ValueError("V11 metadata attempt02 report identity or selected incident cells differ")
+
+    metadata_cells = metadata.get("selected_cells")
+    if not isinstance(metadata_cells, list) or [
+        item.get("cell_index") for item in metadata_cells if isinstance(item, Mapping)
+    ] != list(TASK41_P0_V11_SELECTED_CELLS):
+        raise ValueError("V11 attempt02 selected-cell inventory is incomplete or unordered")
+    metadata_root = metadata_path.parent.resolve(strict=True)
+    metadata_arrays: dict[int, dict[str, np.ndarray]] = {}
+    metadata_rows: dict[int, dict[str, Any]] = {}
+    metadata_array_fields = (
+        "geometry_dofs",
+        "actual_geometry_coordinates",
+        "local_dofs",
+        "original_rows",
+        "interior_positions",
+        "trace_positions",
+        "interior_original_rows",
+        "trace_original_rows",
+        "active_ids",
+        "trace_expansion_data",
+        "trace_expansion_indices",
+        "trace_expansion_indptr",
+        "selected_local_trace_rows",
+        "selected_trace_coefficients",
+    )
+    expected_cell_identity = {360: (2, 4680, 375), 446: (1, 0, 75)}
+    for cell_record in metadata_cells:
+        cell_index = int(cell_record["cell_index"])
+        expected_tag, expected_permutation, expected_local_trace = expected_cell_identity[cell_index]
+        arrays = cell_record.get("arrays")
+        if (
+            cell_record.get("cell_tag") != expected_tag
+            or cell_record.get("cell_permutation") != expected_permutation
+            or cell_record.get("selected_local_trace_rows") != [expected_local_trace]
+            or cell_record.get("selected_trace_coefficients") != [[1.0, 0.0]]
+            or cell_record.get("selected_trace_contribution_kinds")
+            != ["direct_original_row"]
+            or not isinstance(arrays, Mapping)
+            or set(arrays) != set(metadata_array_fields)
+        ):
+            raise ValueError(f"V11 attempt02 cell {cell_index} identity or array fields differ")
+        loaded: dict[str, np.ndarray] = {}
+        for field in metadata_array_fields:
+            record = arrays[field]
+            if not isinstance(record, Mapping) or record.get("name") != (
+                f"task41_p0_v11_selected_cell{cell_index}_{field}"
+            ):
+                raise ValueError(f"V11 attempt02 cell {cell_index} {field} record is malformed")
+            loaded[field] = _load_bound_report_array(
+                metadata_root, {field: record}, field, sha256_file=sha256_file
+            )
+        coordinates = np.ascontiguousarray(
+            loaded["actual_geometry_coordinates"], dtype=np.float64
+        )
+        coordinate_hash = hashlib.sha256(memoryview(coordinates).cast("B")).hexdigest()
+        if coordinate_hash != cell_record.get("actual_coordinate_sha256"):
+            raise ValueError(f"V11 attempt02 cell {cell_index} geometry hash differs")
+        row = dict(loaded)
+        row.update(
+            {
+                "cell_index": cell_index,
+                "cell_tag": expected_tag,
+                "cell_permutation": expected_permutation,
+                "actual_coordinate_sha256": coordinate_hash,
+            }
+        )
+        metadata_arrays[cell_index] = loaded
+        metadata_rows[cell_index] = row
+
+    active_rows = np.asarray(donor["columns"][0]["active_original_rows"])
+    second_active_rows = np.asarray(donor["columns"][1]["active_original_rows"])
+    if (
+        active_rows.ndim != 1
+        or active_rows.dtype.kind not in "iu"
+        or not np.array_equal(active_rows, second_active_rows)
+        or int(active_rows[TASK41_P0_V11_METADATA_ACTIVE_ROW])
+        != TASK41_P0_V11_METADATA_ORIGINAL_ROW
+    ):
+        raise ValueError("V11 metadata and donor active-to-original row maps differ")
+    selected_original_row = int(active_rows[TASK41_P0_V11_METADATA_ACTIVE_ROW])
+
+    v9_path = args.v9_compact_report.resolve(strict=True)
+    if (
+        v9_path.name != "task41_p0_b0_v9_compact_volume_audit.json"
+        or not v9_path.is_relative_to(results_root)
+        or args.v9_compact_report_sha256 != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+        or sha256_file(v9_path) != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+        or v9_path.stat().st_size > 8 * 1024**2
+    ):
+        raise ValueError("V11 V9 compact report path, size, or SHA-256 differs from the frozen source")
+    v9_report = json.loads(v9_path.read_text(encoding="utf-8"))
+    action_gate = v9_report.get("candidate_full_action_gate")
+    if (
+        v9_report.get("schema") != "task41.p0.b0.v9.compact_volume_identity.v1"
+        or v9_report.get("status") != "GATE_FAILED"
+        or v9_report.get("official_result") is not False
+        or v9_report.get("internal_rhs_strategy") != "same_lu_rhs_solve"
+        or v9_report.get("donor_manifest_sha256") != donor.get("manifest_sha256")
+        or not isinstance(action_gate, Mapping)
+        or action_gate.get("status") != "GATE_FAILED"
+    ):
+        raise ValueError("V11 V9 compact report is not the hash-bound failed same-LU action source")
+
+    def load_v9_full_vector(field: str, expected_sha: str) -> np.ndarray:
+        record = action_gate.get(field)
+        if not isinstance(record, Mapping):
+            raise ValueError(f"V11 V9 compact report omits {field}")
+        raw_path = Path(str(record.get("path", "")))
+        array_path = (
+            raw_path if raw_path.is_absolute() else v9_path.parent / raw_path
+        ).resolve(strict=True)
+        if (
+            not array_path.is_relative_to(v9_path.parent.resolve(strict=True))
+            or array_path.stat().st_size != int(record.get("bytes", -1))
+            or record.get("sha256") != expected_sha
+            or sha256_file(array_path) != expected_sha
+            or record.get("shape") != [5_752_120, 2]
+            or record.get("dtype") != "complex128"
+        ):
+            raise ValueError(f"V11 V9 compact {field} file identity is invalid")
+        value = np.load(array_path, mmap_mode="r", allow_pickle=False)
+        if value.shape != (5_752_120, 2) or value.dtype != np.dtype(np.complex128):
+            raise ValueError(f"V11 V9 compact {field} array shape or dtype differs")
+        return value
+
+    saved_y = load_v9_full_vector(
+        "full_action_artifact", TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256
+    )
+    saved_g = load_v9_full_vector(
+        "full_reduced_rhs_artifact", TASK41_P0_V11_V9_REDUCED_RHS_ARRAY_SHA256
+    )
+    y9_row = np.asarray(saved_y[TASK41_P0_V11_METADATA_ACTIVE_ROW, :]).copy()
+    g9_row = np.asarray(saved_g[TASK41_P0_V11_METADATA_ACTIVE_ROW, :]).copy()
+
+    interior_positions = np.asarray(metadata["interior_positions"], dtype=np.int64)
+    trace_positions = np.asarray(metadata["trace_positions"], dtype=np.int64)
+    dimension = int(metadata.get("element_dimension", -1))
+    if (
+        dimension < 1
+        or interior_positions.ndim != 1
+        or trace_positions.ndim != 1
+        or not np.array_equal(
+            np.sort(np.concatenate((interior_positions, trace_positions))),
+            np.arange(dimension, dtype=np.int64),
+        )
+        or any(
+            row["interior_positions"].tolist() != interior_positions.tolist()
+            or row["trace_positions"].tolist() != trace_positions.tolist()
+            for row in metadata_rows.values()
+        )
+    ):
+        raise ValueError("V11 saved row metadata local interior/trace partition is invalid")
+
+    estimated_evidence_bytes = 128 * 1024**2
+    allocation_gate(
+        "v11_selected_trace_star_candidate_replay_preflight",
+        {
+            "additional_payload_bytes": estimated_evidence_bytes,
+            "evidence_reserve_bytes": estimated_evidence_bytes,
+            "new_evidence_limit_bytes": 512 * 1024**2,
+            "raw_artifact_limit_bytes": 16 * 1024**3,
+            "workspace_bytes": 6 * 1024**3,
+            "scratch_reserve_bytes": 512 * 1024**2,
+            "estimated_remaining_seconds_upper": 900.0,
+            "termination_reserve_seconds": 120.0,
+            "candidate_only_replay": True,
+            "selected_active_row": TASK41_P0_V11_METADATA_ACTIVE_ROW,
+            "selected_original_row": selected_original_row,
+            "incident_cells": list(TASK41_P0_V11_SELECTED_CELLS),
+        },
+    )
+    if not output_directory.is_dir():
+        raise FileNotFoundError("V11 selected candidate output directory was not prepared")
+    free_before_compile = int(shutil.disk_usage(output_directory).free)
+    if free_before_compile < 2 * 1024**3 + estimated_evidence_bytes:
+        raise OSError("V11 selected candidate output violates its 2 GiB free-space floor")
+
+    progress(
+        {
+            "phase": "v11_selected_candidate_mesh_space",
+            "status": "STARTED",
+            "degree": 6,
+            "selected_active_row": TASK41_P0_V11_METADATA_ACTIVE_ROW,
+        }
+    )
+    levels = _build_same_mesh_levels(
+        cfg,
+        MPI.COMM_SELF,
+        (6,),
+        include_positive_coefficients=False,
+    )
+    space = levels["spaces"][6]
+    if int(space.element.space_dimension) != dimension:
+        raise ValueError("V11 saved incident cells use a different p6 element dimension")
+    progress(
+        {
+            "phase": "v11_selected_candidate_mesh_space",
+            "status": "COMPLETED",
+            "owned_cells": int(levels["mesh"].topology.index_map(levels["mesh"].topology.dim).size_local),
+            "global_dofs": int(space.dofmap.index_map.size_global),
+        }
+    )
+    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
+    dx = ufl.Measure("dx", domain=levels["mesh"], subdomain_data=levels["mesh_data"].cell_tags)
+    curl_form, mass_form = _build_physical_volume_terms(cfg, trial, test, dx)
+    combined_integrand = curl_form + mass_form
+    combined_form = fem.form(
+        combined_integrand,
+        jit_options=dict(SAME_MESH_JIT_OPTIONS),
+    )
+    kernels = _cell_integral_kernels(combined_form, sum_duplicate_cell_integrals=True)
+    evaluator = Task41ActualQMetricBlockedGramCandidate(
+        space.element.basix_element,
+        combined_integrand,
+        combined_form,
+        c_source_path=args.ffcx_c_source,
+        scratch_directory=output_directory / "actual_qmetric_scratch",
+    )
+    if evaluator.identity != V6_CANDIDATE_IDENTITY:
+        raise ValueError("V11 q-metric candidate identity differs from the frozen V9 evaluator")
+    evaluator.validate_compiled_form(combined_form, kernels)
+    evaluator.prepare()
+    progress(
+        {
+            "phase": "v11_selected_candidate_form_compile",
+            "status": "COMPLETED",
+            "candidate_identity": evaluator.identity,
+            "candidate_cache_identity": evaluator.cache_identity,
+            "candidate_prepare_seconds": float(evaluator.preparation_seconds),
+            "ffcx_c_source_sha256": TASK41_P0_V11_FFCX_C_SOURCE_SHA256,
+        }
+    )
+
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        _v8_rebuild_selected_cell_role_artifacts,
+    )
+
+    cell_numeric: dict[int, dict[str, Any]] = {}
+    for cell_index in TASK41_P0_V11_SELECTED_CELLS:
+        progress(
+            {
+                "phase": "v11_selected_candidate_cell",
+                "status": "STARTED",
+                "cell_index": cell_index,
+                "source": "RECONSTRUCTED_SELECTED_CELL",
+            }
+        )
+        role_sets = _v8_rebuild_selected_cell_role_artifacts(
+            cell_index=cell_index,
+            row=metadata_rows[cell_index],
+            combined_form=combined_form,
+            kernels=kernels,
+            element=space.element,
+            dimension=dimension,
+            interior_positions=interior_positions,
+            trace_positions=trace_positions,
+            candidate_evaluator=evaluator,
+            persist_array=persist_array,
+            progress=progress,
+            candidate_only=True,
+            artifact_prefix_template="task41_p0_v11_selected_cell{cell_index}_{role}",
+        )
+        if set(role_sets) != {"candidate"}:
+            raise ValueError(f"V11 selected cell {cell_index} did not save candidate only")
+        cell_numeric[cell_index] = role_sets
+        checkpoint(
+            "v11_selected_candidate_cell_progress",
+            {
+                "schema": "task41.p0.v11.selected_candidate_cell_progress.v1",
+                "completed_cells": sorted(cell_numeric),
+                "required_cells": list(TASK41_P0_V11_SELECTED_CELLS),
+            },
+        )
+
+    if not set(cell_numeric) == set(TASK41_P0_V11_SELECTED_CELLS):
+        raise ValueError("V11 candidate replay did not reconstruct both complete incident cells")
+
+    epsilon = np.finfo(np.float64).eps
+
+    def gamma(operations: int) -> float:
+        x = float(operations) * epsilon
+        return x / (1.0 - x) if x < 1.0 else float("inf")
+
+    def complex_pair(value: complex) -> list[float]:
+        value = complex(value)
+        return [float(value.real), float(value.imag)]
+
+    def persist_named(name: str, values: np.ndarray) -> dict[str, Any]:
+        array = np.asarray(values)
+        return {"name": name, **persist_array(name, array)}
+
+    def selected_value(expansion: Any, local_trace: np.ndarray) -> tuple[complex, np.ndarray, np.ndarray]:
+        projected = np.asarray(expansion.conjugate().transpose() @ local_trace).reshape(-1)
+        selected_local = np.flatnonzero(active_ids == TASK41_P0_V11_METADATA_ACTIVE_ROW)
+        if selected_local.size != 1:
+            raise ValueError("V11 selected active row is absent or duplicated in a saved cell map")
+        return complex(projected[int(selected_local[0])]), projected, np.abs(projected)
+
+    column_results = []
+    review_identity_results = []
+    for column_index, column in enumerate(donor["columns"]):
+        saved_y_value = complex(y9_row[column_index])
+        saved_g_value = complex(g9_row[column_index])
+        native_rhs = np.asarray(column["native_rhs"])
+        native_volume_rhs = np.asarray(column["native_volume_rhs"])
+        known = np.asarray(column["known_field"])
+        native_rhs_row = complex(native_rhs[selected_original_row])
+        native_rhs_t_for_state: dict[str, complex] = {}
+        native_action_t_for_state: dict[str, complex] = {}
+        s_cell_terms: list[complex] = []
+        same_lu_cell_terms: list[complex] = []
+        stored_t_cell_terms: list[complex] = []
+        review_cell_terms: dict[str, dict[str, list[complex]]] = {
+            label: {name: [] for name in ("delta_t", "cs_t", "j_middle", "minus_j_z_r")}
+            for label in ("j0", "j3")
+        }
+        beta_rows = np.asarray(column["b_alpha_rows"], dtype=np.int64)
+        beta_values = np.asarray(column["b_alpha_values"], dtype=np.complex128)
+        beta_match = beta_values[beta_rows == selected_original_row]
+        if beta_match.size > 1:
+            raise ValueError("V11 selected row has duplicate B-alpha entries")
+        beta_t = complex(beta_match[0]) if beta_match.size else 0.0 + 0.0j
+        y_abs_work = abs(saved_y_value)
+        g_abs_work = abs(saved_g_value) + abs(native_rhs_row)
+        per_cell_column = []
+        for cell_index in TASK41_P0_V11_SELECTED_CELLS:
+            row = metadata_rows[cell_index]
+            arrays = metadata_arrays[cell_index]
+            active_ids = np.asarray(row["active_ids"], dtype=np.int64)
+            original_rows = np.asarray(row["original_rows"], dtype=np.int64)
+            interior_rows = np.asarray(row["interior_original_rows"], dtype=np.int64)
+            trace_rows = np.asarray(row["trace_original_rows"], dtype=np.int64)
+            local_interior = np.asarray(row["interior_positions"], dtype=np.int64)
+            local_trace = np.asarray(row["trace_positions"], dtype=np.int64)
+            if (
+                not np.array_equal(original_rows[local_interior], interior_rows)
+                or not np.array_equal(original_rows[local_trace], trace_rows)
+                or np.any(active_ids < 0)
+                or np.any(active_ids >= active_rows.size)
+            ):
+                raise ValueError(f"V11 selected cell {cell_index} saved row-to-dof maps are inconsistent")
+            expansion = sparse.csr_matrix(
+                (
+                    np.asarray(row["trace_expansion_data"], dtype=np.complex128),
+                    np.asarray(row["trace_expansion_indices"], dtype=np.int32),
+                    np.asarray(row["trace_expansion_indptr"], dtype=np.int32),
+                ),
+                shape=(len(local_trace), len(active_ids)),
+            )
+            selected_local_rows = np.asarray(row["selected_local_trace_rows"], dtype=np.int64)
+            selected_coefficients = np.asarray(
+                row["selected_trace_coefficients"], dtype=np.complex128
+            )
+            weights = np.zeros(len(local_trace), dtype=np.complex128)
+            if (
+                selected_local_rows.size != selected_coefficients.size
+                or selected_local_rows.size == 0
+                or np.any(selected_local_rows < 0)
+                or np.any(selected_local_rows >= len(local_trace))
+            ):
+                raise ValueError(f"V11 selected cell {cell_index} row weights are malformed")
+            weights[selected_local_rows] = selected_coefficients
+            if not np.any(weights != 0.0):
+                raise ValueError(f"V11 selected cell {cell_index} target E column is zero")
+
+            known_active = np.asarray(
+                known[active_rows[active_ids]], dtype=np.complex128
+            )
+            t_c = np.asarray(expansion @ known_active, dtype=np.complex128).reshape(-1)
+            b_i = np.asarray(native_rhs[interior_rows], dtype=np.complex128)
+            volume_b_i = np.asarray(native_volume_rhs[interior_rows], dtype=np.complex128)
+            if not np.array_equal(b_i, volume_b_i):
+                raise ValueError(f"V11 full and volume native RHS differ on cell {cell_index} interior")
+            state_details = []
+            candidate = cell_numeric[cell_index]["candidate"]
+            tensor = np.asarray(candidate["oriented_tensor"], dtype=np.complex128)
+            K = tensor[np.ix_(local_interior, local_interior)]
+            G = tensor[np.ix_(local_interior, local_trace)]
+            J = tensor[np.ix_(local_trace, local_interior)]
+            L = tensor[np.ix_(local_trace, local_trace)]
+            R = np.asarray(candidate["rts"]["R"], dtype=np.complex128)
+            T = np.asarray(candidate["rts"]["T"], dtype=np.complex128)
+            S = np.asarray(candidate["rts"]["S"], dtype=np.complex128)
+            lu = np.asarray(candidate["lu"], dtype=np.complex128)
+            pivots = np.array(candidate["pivots"], dtype=np.int32, copy=True)
+            S_t = S @ t_c
+            T_b_i = T @ b_i
+            z_b, minus_J_z_b, z_b_timing = project_internal_rhs_same_lu(
+                (lu, pivots), J, b_i
+            )
+            independently_projected_z_b = -(J @ z_b)
+            same_lu_correction_difference = minus_J_z_b - independently_projected_z_b
+            if not np.array_equal(minus_J_z_b, independently_projected_z_b):
+                raise ValueError("V11 same-LU correction differs from an independent -Jz_b matvec")
+            projected_s, projected_S_t, _ = selected_value(expansion, S_t)
+            projected_T_b = np.asarray(
+                expansion.conjugate().transpose() @ T_b_i
+            ).reshape(-1)
+            projected_same_lu = np.asarray(
+                expansion.conjugate().transpose() @ minus_J_z_b
+            ).reshape(-1)
+            selected_map = np.flatnonzero(active_ids == TASK41_P0_V11_METADATA_ACTIVE_ROW)
+            if selected_map.size != 1:
+                raise ValueError(f"V11 selected row map is absent in cell {cell_index}")
+            selected_position = int(selected_map[0])
+            s_term = complex(projected_s)
+            tb_term = complex(projected_T_b[selected_position])
+            lu_term = complex(projected_same_lu[selected_position])
+            s_cell_terms.append(s_term)
+            same_lu_cell_terms.append(lu_term)
+            stored_t_cell_terms.append(tb_term)
+            y_abs_work += float(
+                np.sum(np.abs(weights) * (np.abs(S) @ np.abs(t_c)), dtype=np.float64)
+            )
+            g_abs_work += float(
+                np.sum(np.abs(weights) * (np.abs(T) @ np.abs(b_i)), dtype=np.float64)
+                + np.sum(np.abs(weights) * (np.abs(J) @ np.abs(z_b)), dtype=np.float64)
+            )
+
+            cell_base = f"task41_p0_v11_cell{cell_index}_col{column_index}"
+            per_cell_artifacts = {
+                "known_trace_local": persist_named(cell_base + "_known_trace_local", t_c),
+                "native_rhs_interior": persist_named(cell_base + "_native_rhs_interior", b_i),
+                "S_action": persist_named(cell_base + "_S_action", S_t),
+                "S_projected_active": persist_named(cell_base + "_S_projected_active", projected_S_t),
+                "T_native_rhs": persist_named(cell_base + "_T_native_rhs", T_b_i),
+                "T_projected_active": persist_named(cell_base + "_T_projected_active", projected_T_b),
+                "same_lu_z_b": persist_named(cell_base + "_same_lu_z_b", z_b),
+                "same_lu_minus_Jz_b": persist_named(cell_base + "_same_lu_minus_Jz_b", minus_J_z_b),
+                "same_lu_minus_Jz_b_independent_difference": persist_named(cell_base + "_same_lu_minus_Jz_b_independent_difference", same_lu_correction_difference),
+                "same_lu_z_b_timing": z_b_timing,
+                "same_lu_projected_active": persist_named(cell_base + "_same_lu_projected_active", projected_same_lu),
+            }
+
+            for state in column["states"]:
+                state_label = str(state["label"])
+                if state_label not in {"j0", "j3"}:
+                    raise ValueError(f"V11 donor has unknown paired state {state_label}")
+                storage = np.asarray(state["storage"])
+                native_action = np.asarray(state["native_volume_action"])
+                u_i = np.asarray(storage[interior_rows], dtype=np.complex128)
+                n_i = np.asarray(native_action[interior_rows], dtype=np.complex128)
+                n_t = np.asarray(native_action[trace_rows], dtype=np.complex128)
+                r_i = b_i - n_i
+                z_r, minus_J_z_r, z_r_timing = project_internal_rhs_same_lu(
+                    (lu, pivots), J, r_i
+                )
+                independently_projected_z_r = -(J @ z_r)
+                if not np.array_equal(minus_J_z_r, independently_projected_z_r):
+                    raise ValueError("V11 same-LU residual correction differs from independent -Jz_r")
+                r_b = b_i - K @ z_b
+                r_r = r_i - K @ z_r
+                delta_i = K @ u_i + G @ t_c - n_i
+                delta_t = J @ u_i + L @ t_c
+                E_R = K @ R + G
+                C_S = S - L - J @ R
+                E_R_t = E_R @ t_c
+                C_S_t = C_S @ t_c
+                review_middle = R @ t_c + z_b - z_r - u_i
+                review_eq2_left = K @ review_middle
+                review_eq2_right = E_R_t - delta_i - r_b + r_r
+                review_eq2_delta = review_eq2_left - review_eq2_right
+                native_rhs_t = native_rhs_row
+                native_action_t = complex(native_action[selected_original_row])
+                residual_t = native_rhs_t - native_action_t - beta_t
+                projected_delta_t = np.asarray(
+                    expansion.conjugate().transpose() @ delta_t
+                ).reshape(-1)
+                projected_CS_t = np.asarray(
+                    expansion.conjugate().transpose() @ C_S_t
+                ).reshape(-1)
+                projected_J_middle = np.asarray(
+                    expansion.conjugate().transpose() @ (J @ review_middle)
+                ).reshape(-1)
+                projected_J_z_r = np.asarray(
+                    expansion.conjugate().transpose() @ minus_J_z_r
+                ).reshape(-1)
+                projected_delta_t_term = complex(projected_delta_t[selected_position])
+                projected_cs_t_term = complex(projected_CS_t[selected_position])
+                projected_j_middle_term = complex(projected_J_middle[selected_position])
+                local_identity_rhs_contribution = (
+                    projected_delta_t_term + projected_cs_t_term + projected_j_middle_term
+                )
+                projected_minus_J_z_r = complex(projected_J_z_r[selected_position])
+                review_cell_terms[state_label]["delta_t"].append(projected_delta_t_term)
+                review_cell_terms[state_label]["cs_t"].append(projected_cs_t_term)
+                review_cell_terms[state_label]["j_middle"].append(projected_j_middle_term)
+                review_cell_terms[state_label]["minus_j_z_r"].append(projected_minus_J_z_r)
+                previous_rhs_t = native_rhs_t_for_state.setdefault(state_label, native_rhs_t)
+                previous_action_t = native_action_t_for_state.setdefault(
+                    state_label, native_action_t
+                )
+                if previous_rhs_t != native_rhs_t or previous_action_t != native_action_t:
+                    raise ValueError("V11 global native trace rows changed across incident cells")
+                equation2_bound = gamma(16 * max(1, dimension)) * max(
+                    1.0,
+                    float(np.max(np.abs(review_eq2_left), initial=0.0)),
+                    float(np.max(np.abs(review_eq2_right), initial=0.0)),
+                )
+                equation2_max = float(
+                    np.max(np.abs(review_eq2_delta), initial=0.0)
+                )
+                cell_base_state = cell_base + f"_{state_label}"
+                state_artifacts = {
+                    "u_i": persist_named(cell_base_state + "_u_i", u_i),
+                    "native_action_i": persist_named(cell_base_state + "_native_action_i", n_i),
+                    "native_action_global_trace_slice": persist_named(cell_base_state + "_native_action_global_trace_slice", n_t),
+                    "r_i": persist_named(cell_base_state + "_r_i", r_i),
+                    "same_lu_z_r": persist_named(cell_base_state + "_same_lu_z_r", z_r),
+                    "same_lu_minus_Jz_r": persist_named(cell_base_state + "_same_lu_minus_Jz_r", minus_J_z_r),
+                    "same_lu_z_r_timing": z_r_timing,
+                    "delta_i": persist_named(cell_base_state + "_delta_i", delta_i),
+                    "delta_t": persist_named(cell_base_state + "_delta_t", delta_t),
+                    "r_b": persist_named(cell_base_state + "_r_b", r_b),
+                    "r_r": persist_named(cell_base_state + "_r_r", r_r),
+                    "E_R_t": persist_named(cell_base_state + "_E_R_t", E_R_t),
+                    "C_S_t": persist_named(cell_base_state + "_C_S_t", C_S_t),
+                    "review_eq2_left": persist_named(cell_base_state + "_review_eq2_left", review_eq2_left),
+                    "review_eq2_right": persist_named(cell_base_state + "_review_eq2_right", review_eq2_right),
+                    "review_eq2_difference": persist_named(cell_base_state + "_review_eq2_difference", review_eq2_delta),
+                    "old_Tb_plus_Jzb": persist_named(
+                        cell_base_state + "_old_Tb_plus_Jzb", T_b_i + J @ z_b
+                    ),
+                    "old_identity_rhs": persist_named(
+                        cell_base_state + "_old_identity_rhs",
+                        (J + T @ K) @ z_b + T @ r_b,
+                    ),
+                    "old_identity_difference": persist_named(
+                        cell_base_state + "_old_identity_difference",
+                        (T @ b_i + J @ z_b) - ((J + T @ K) @ z_b + T @ r_b),
+                    ),
+                }
+                state_details.append(
+                    {
+                        "state": state_label,
+                        "inputs": {
+                            "u_i": state_artifacts["u_i"],
+                            "n_i": state_artifacts["native_action_i"],
+                            "n_t_global_trace_slice": state_artifacts["native_action_global_trace_slice"],
+                            "b_i": per_cell_artifacts["native_rhs_interior"],
+                            "t_c": per_cell_artifacts["known_trace_local"],
+                        },
+                        "review_identity": {
+                            "equation_1_rhs_cell_contribution": complex_pair(
+                                local_identity_rhs_contribution
+                            ),
+                            "equation_1_projected_minus_Jz_r_cell_contribution": complex_pair(
+                                projected_minus_J_z_r
+                            ),
+                            "equation_1_native_residual_row": complex_pair(residual_t),
+                            "equation_2_max_abs_difference": equation2_max,
+                            "equation_2_roundoff_bound": equation2_bound,
+                            "equation_2_status": (
+                                "WITHIN_ROUNDOFF_ESTIMATE"
+                                if equation2_max <= equation2_bound
+                                else "LOCAL_IDENTITY_UNBOUND"
+                            ),
+                            "old_Tb_Jzb_identity_max_abs_difference": float(
+                                np.max(
+                                    np.abs(
+                                        (T @ b_i + J @ z_b)
+                                        - ((J + T @ K) @ z_b + T @ r_b)
+                                    ),
+                                    initial=0.0,
+                                )
+                            ),
+                            "artifacts": state_artifacts,
+                        }
+                    }
+                )
+            per_cell_artifacts["states"] = state_details
+            per_cell_column.append(
+                {
+                    "cell_index": cell_index,
+                    "cell_tag": int(row["cell_tag"]),
+                    "cell_permutation": int(row["cell_permutation"]),
+                    "source": "RECONSTRUCTED_SELECTED_CELL",
+                    "candidate_identity": candidate["raw_tensor_evaluator_identity"],
+                    "strict_lu_residual": float(candidate["strict_lu_residual"]),
+                    "selected_row_terms": {
+                        "S_t": complex_pair(s_term),
+                        "T_b_i": complex_pair(tb_term),
+                        "same_lu_minus_Jz_b": complex_pair(lu_term),
+                        "same_lu_minus_stored_T": complex_pair(lu_term - tb_term),
+                    },
+                    "artifacts": per_cell_artifacts,
+                }
+            )
+        beta_rows = np.asarray(column["b_alpha_rows"], dtype=np.int64)
+        beta_values = np.asarray(column["b_alpha_values"], dtype=np.complex128)
+        beta_match = beta_values[beta_rows == selected_original_row]
+        if beta_match.size > 1:
+            raise ValueError("V11 selected row has duplicate B-alpha entries")
+        beta_t = complex(beta_match[0]) if beta_match.size else 0.0 + 0.0j
+        bound_y = gamma(32 * dimension * max(1, len(TASK41_P0_V11_SELECTED_CELLS))) * max(
+            1.0, y_abs_work + abs(beta_t)
+        )
+        bound_g = gamma(48 * dimension * max(1, len(TASK41_P0_V11_SELECTED_CELLS))) * max(
+            1.0, g_abs_work
+        )
+        row_replays = {}
+        column_review_identities = []
+        for state_label in ("j0", "j3"):
+            terms = review_cell_terms[state_label]
+            native_action_t = native_action_t_for_state[state_label]
+            row_replay = _v11_accumulate_saved_candidate_row_terms(
+                native_rhs_row=native_rhs_row,
+                native_action_row=native_action_t,
+                b_alpha_row=beta_t,
+                s_cell_terms=s_cell_terms,
+                same_lu_cell_terms=same_lu_cell_terms,
+                stored_t_cell_terms=stored_t_cell_terms,
+                delta_t_cell_terms=terms["delta_t"],
+                cs_t_cell_terms=terms["cs_t"],
+                j_middle_cell_terms=terms["j_middle"],
+                minus_j_z_r_cell_terms=terms["minus_j_z_r"],
+            )
+            row_replays[state_label] = row_replay
+            residual_t = row_replay["native_residual_row"]
+            lhs_identity = row_replay["review_eq1_lhs"]
+            rhs_identity = row_replay["review_eq1_rhs"]
+            lu_residual = sum(terms["minus_j_z_r"], 0.0 + 0.0j)
+            identity_delta = lhs_identity - rhs_identity
+            identity_scale = max(
+                1.0,
+                abs(lhs_identity),
+                abs(rhs_identity),
+                y_abs_work + g_abs_work + abs(native_action_t) + abs(lu_residual),
+            )
+            identity_bound = gamma(64 * dimension * len(TASK41_P0_V11_SELECTED_CELLS)) * identity_scale
+            identity_item = {
+                "column": column_index,
+                "state": state_label,
+                "d_lu_replayed_y_minus_g": complex_pair(row_replay["d_lu"]),
+                "native_residual_row": complex_pair(residual_t),
+                "global_native_action_row_subtracted_once": complex_pair(native_action_t),
+                "sum_projected_minus_Jz_r": complex_pair(lu_residual),
+                "equation_1_lhs": complex_pair(lhs_identity),
+                "equation_1_rhs": complex_pair(rhs_identity),
+                "equation_1_difference": complex_pair(identity_delta),
+                "equation_1_roundoff_estimate": identity_bound,
+                "equation_1_roundoff_estimate_contains_difference": bool(
+                    abs(identity_delta) <= identity_bound
+                ),
+                "equation_1_status": "LOCAL_IDENTITY_UNBOUND",
+                "cell_count": len(terms["delta_t"]),
+            }
+            column_review_identities.append(identity_item)
+            review_identity_results.append(identity_item)
+        replay_y = row_replays["j0"]["y9"]
+        replay_g_same_lu = row_replays["j0"]["g9_same_lu"]
+        replay_g_stored_t = row_replays["j0"]["g9_stored_t"]
+        if any(
+            row_replays[label][key] != row_replays["j0"][key]
+            for label in ("j3",)
+            for key in ("y9", "g9_same_lu", "g9_stored_t", "d_lu")
+        ):
+            raise ValueError("V11 paired Review states changed the saved target-row y/g replay")
+        original_d_row = saved_y_value - saved_g_value
+        y_diagnostic = _v11_local_replay_delta_diagnostic(
+            saved_value=saved_y_value,
+            replayed_value=replay_y,
+            original_d=original_d_row,
+            roundoff_estimate=bound_y,
+        )
+        g_diagnostic = _v11_local_replay_delta_diagnostic(
+            saved_value=saved_g_value,
+            replayed_value=replay_g_same_lu,
+            original_d=original_d_row,
+            roundoff_estimate=bound_g,
+        )
+        delta_y = y_diagnostic["delta_replay_minus_saved"]
+        delta_g = g_diagnostic["delta_replay_minus_saved"]
+        column_results.append(
+            {
+                "original_d_saved_y9_minus_saved_g9": complex_pair(original_d_row),
+                "original_d_absolute": float(abs(original_d_row)),
+                "column": column_index,
+                "saved_y9": complex_pair(y_diagnostic["saved_value"]),
+                "replayed_y9": complex_pair(y_diagnostic["replayed_value"]),
+                "saved_g9": complex_pair(g_diagnostic["saved_value"]),
+                "replayed_g9_same_lu": complex_pair(g_diagnostic["replayed_value"]),
+                "replayed_g9_stored_T": complex_pair(replay_g_stored_t),
+                "same_lu_minus_stored_T_g": complex_pair(
+                    replay_g_same_lu - replay_g_stored_t
+                ),
+                "delta_y_replay_minus_saved": complex_pair(delta_y),
+                "delta_y_absolute": y_diagnostic["delta_absolute"],
+                "delta_y_relative_to_original_d": y_diagnostic[
+                    "delta_relative_to_original_d"
+                ],
+                "delta_g_replay_minus_saved": complex_pair(delta_g),
+                "delta_g_absolute": g_diagnostic["delta_absolute"],
+                "delta_g_relative_to_original_d": g_diagnostic[
+                    "delta_relative_to_original_d"
+                ],
+                "y_roundoff_estimate": bound_y,
+                "y_roundoff_estimate_contains_difference": y_diagnostic[
+                    "roundoff_estimate_contains_difference"
+                ],
+                "g_roundoff_estimate": bound_g,
+                "g_roundoff_estimate_contains_difference": g_diagnostic[
+                    "roundoff_estimate_contains_difference"
+                ],
+                "roundoff_interpretation": (
+                    "conservative diagnostic bound only; overlap does not establish exact "
+                    "reproduction or causal attribution"
+                ),
+                "y_replay_status": y_diagnostic["status"],
+                "g_replay_status": g_diagnostic["status"],
+                "B_alpha_selected_original_row_applied_once": complex_pair(beta_t),
+                "incident_cell_terms": per_cell_column,
+                "review_v11_row_identities": column_review_identities,
+                "formal_action_gate_changed": False,
+            }
+        )
+
+    result = {
+        "schema": "task41.p0.v11.selected_trace_star_candidate_replay.v1",
+        "status": "COMPLETED_LOCAL_CANDIDATE_REPLAY",
+        "selected_active_row": TASK41_P0_V11_METADATA_ACTIVE_ROW,
+        "selected_original_row": selected_original_row,
+        "incident_cell_order": list(TASK41_P0_V11_SELECTED_CELLS),
+        "metadata_report_path": str(metadata_path),
+        "metadata_report_sha256": TASK41_P0_V11_METADATA_REPORT_SHA256,
+        "metadata_consumer_contract_path": str(old_contract_path),
+        "metadata_consumer_contract_sha256": old_contract_sha,
+        "metadata_window_path": str(old_window.path),
+        "metadata_window_sha256": old_window.sha256,
+        "metadata_service_receipt_path": str(metadata_receipt_path),
+        "metadata_service_receipt_sha256": TASK41_P0_V11_METADATA_SERVICE_RECEIPT_SHA256,
+        "v9_compact_report_path": str(v9_path),
+        "v9_compact_report_sha256": TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+        "source_semantics": {
+            "y9": "candidate action applied to known_field[active_original_rows], then saved B_alpha at this row exactly once",
+            "g9": "saved native_rhs at the original row once plus cellwise same-LU -J solve(K,b_i), projected through the saved E map",
+            "j0_j3": "paired saved native action/residual inputs for Review V11 identities only; never substitute for known_field",
+            "formal_action_gate_changed": False,
+            "official_result": False,
+        },
+        "candidate_evaluator_identity": evaluator.identity,
+        "candidate_cache_identity": evaluator.cache_identity,
+        "ffcx_c_source_sha256": TASK41_P0_V11_FFCX_C_SOURCE_SHA256,
+        "cells": [
+            {
+                "cell_index": cell_index,
+                "cell_tag": int(metadata_rows[cell_index]["cell_tag"]),
+                "cell_permutation": int(metadata_rows[cell_index]["cell_permutation"]),
+                "actual_coordinate_sha256": metadata_rows[cell_index][
+                    "actual_coordinate_sha256"
+                ],
+                "candidate_source": "RECONSTRUCTED_SELECTED_CELL",
+                "candidate_artifacts": cell_numeric[cell_index]["candidate"]["artifacts"],
+                "strict_lu_residual": float(
+                    cell_numeric[cell_index]["candidate"]["strict_lu_residual"]
+                ),
+            }
+            for cell_index in TASK41_P0_V11_SELECTED_CELLS
+        ],
+        "columns": column_results,
+        "review_v11_local_identities": review_identity_results,
+        "classification": (
+            "LOCAL_REPLAY_UNBOUND"
+            if any(
+                item["y_replay_status"] == "LOCAL_REPLAY_UNBOUND"
+                or item["g_replay_status"] == "LOCAL_REPLAY_UNBOUND"
+                or any(
+                    identity.get("equation_1_status") == "LOCAL_IDENTITY_UNBOUND"
+                    for identity in item["review_v11_row_identities"]
+                )
+                or any(
+                    state["review_identity"].get("equation_2_status") == "LOCAL_IDENTITY_UNBOUND"
+                    for cell in item["incident_cell_terms"]
+                    for state in cell["artifacts"]["states"]
+                )
+                for item in column_results
+            )
+            else "REPRODUCED_WITHIN_ROUNDOFF_ESTIMATE"
+        ),
+        "scope_note": (
+            "Only the two complete saved-metadata incident cells for active row 87567 are rebuilt. "
+            "Local replay diagnoses the stored V9 y9/g9 target row and does not pass or reopen the full action gate."
+        ),
+    }
+    checkpoint("v11_selected_trace_candidate_replay", result)
+    return result
+
+
+
 def _run_v8_selected_trace_star_metadata_only(
     *,
     cfg: Any,
@@ -3573,6 +4643,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--geometry-pair-only", action="store_true")
     parser.add_argument("--selected-trace-star-audit", action="store_true")
     parser.add_argument("--selected-trace-star-metadata-only", action="store_true")
+    parser.add_argument("--selected-trace-star-candidate-replay", action="store_true")
+    parser.add_argument("--selected-metadata-report", type=Path)
+    parser.add_argument("--selected-metadata-report-sha256")
+    parser.add_argument("--v9-compact-report", type=Path)
+    parser.add_argument("--v9-compact-report-sha256")
     parser.add_argument(
         "--selected-active-row", type=int, default=TASK41_P0_V8_SELECTED_ACTIVE_ROW
     )
@@ -3749,6 +4824,7 @@ def _v8_selected_trace_star_worker_allocation_gate(
     if not (
         bool(getattr(worker_args, "selected_trace_star_audit", False))
         or bool(getattr(worker_args, "selected_trace_star_metadata_only", False))
+        or bool(getattr(worker_args, "selected_trace_star_candidate_replay", False))
     ):
         raise ValueError("V8 worker allocation gate was called outside the selected-star route")
     return _v8_selected_trace_star_allocation_gate(
@@ -4207,9 +5283,11 @@ def main(argv: list[str] | None = None) -> int:
     started_at_utc = datetime.now(timezone.utc).isoformat()
     args = _parse_args(argv)
     selected_trace_metadata_mode = bool(
-        args.selected_trace_star_audit or args.selected_trace_star_metadata_only
+        args.selected_trace_star_audit
+        or args.selected_trace_star_metadata_only
+        or args.selected_trace_star_candidate_replay
     )
-    if (args.selected_trace_star_audit or args.selected_trace_star_metadata_only) and args.geometry_pair_only:
+    if selected_trace_metadata_mode and args.geometry_pair_only:
         raise ValueError("V8 selected trace-star audit cannot use the V4 geometry-pair mode")
     if args.geometry_pair_only != (args.source_report is not None):
         raise ValueError("--geometry-pair-only and --source-report must be provided together")
@@ -4218,7 +5296,7 @@ def main(argv: list[str] | None = None) -> int:
     if (
         args.geometry_policy == "mesh_actual_exact"
         and args.geometry_reference_report is None
-        and not (args.selected_trace_star_audit or args.selected_trace_star_metadata_only)
+        and not selected_trace_metadata_mode
     ):
         raise ValueError("mesh_actual_exact requires the frozen two-cell V4 geometry reference report")
     if args.geometry_policy != "mesh_actual_exact" and args.geometry_reference_report is not None:
@@ -4244,6 +5322,31 @@ def main(argv: list[str] | None = None) -> int:
         raise ValueError(
             "V11 metadata-only requires mesh_actual_exact, row 87567, and no numeric evaluator or FFCx source"
         )
+    if args.selected_trace_star_candidate_replay and (
+        args.geometry_policy != "mesh_actual_exact"
+        or args.selected_trace_star_audit
+        or args.selected_trace_star_metadata_only
+        or args.raw_tensor_evaluator != "actual_qmetric_blocked_gram"
+        or args.ffcx_c_source is None
+        or args.selected_active_row != TASK41_P0_V11_METADATA_ACTIVE_ROW
+        or args.selected_metadata_report is None
+        or args.selected_metadata_report_sha256 is None
+        or args.v9_compact_report is None
+        or args.v9_compact_report_sha256 is None
+    ):
+        raise ValueError(
+            "V11 candidate replay requires row 87567, frozen q-metric source, and hash-bound metadata/V9 reports"
+        )
+    if not args.selected_trace_star_candidate_replay and any(
+        value is not None
+        for value in (
+            args.selected_metadata_report,
+            args.selected_metadata_report_sha256,
+            args.v9_compact_report,
+            args.v9_compact_report_sha256,
+        )
+    ):
+        raise ValueError("V11 report bindings require the selected candidate replay mode")
     from src.runners.task40_v20_stage_runner import _resource_snapshot
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.runners.task41_p0_checker import load_task41_v4_volume_only_donor
@@ -4327,7 +5430,9 @@ def main(argv: list[str] | None = None) -> int:
     output_root = args.output_dir.resolve(strict=True)
     v6_actual_qmetric_mode = args.raw_tensor_evaluator == "actual_qmetric_blocked_gram"
     output_directory = output_root / (
-        "selected_trace_star_metadata_only"
+        "selected_trace_star_candidate_replay"
+        if args.selected_trace_star_candidate_replay
+        else "selected_trace_star_metadata_only"
         if args.selected_trace_star_metadata_only
         else "selected_trace_star_audit"
         if args.selected_trace_star_audit
@@ -4341,7 +5446,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     output_directory.mkdir(parents=True, exist_ok=False)
     report_path = output_root / (
-        "task41_p0_v8_selected_trace_star_metadata.json"
+        "task41_p0_v11_selected_trace_candidate_replay.json"
+        if args.selected_trace_star_candidate_replay
+        else "task41_p0_v8_selected_trace_star_metadata.json"
         if args.selected_trace_star_metadata_only
         else "task41_p0_v8_selected_trace_star_audit.json"
         if args.selected_trace_star_audit
@@ -4356,14 +5463,18 @@ def main(argv: list[str] | None = None) -> int:
     if report_path.exists():
         raise FileExistsError(f"Task41 V4 attribution report already exists: {report_path}")
     phase_path = output_root / (
-        "task41_p0_v8_selected_trace_star_metadata_phase.json"
+        "task41_p0_v11_selected_trace_candidate_replay_phase.json"
+        if args.selected_trace_star_candidate_replay
+        else "task41_p0_v8_selected_trace_star_metadata_phase.json"
         if args.selected_trace_star_metadata_only
         else "task41_p0_v8_selected_trace_star_phase.json"
         if args.selected_trace_star_audit
         else "task41_p0_v4_volume_only_phase.json"
     )
     event_path = output_root / (
-        "task41_p0_v8_selected_trace_star_metadata_events.jsonl"
+        "task41_p0_v11_selected_trace_candidate_replay_events.jsonl"
+        if args.selected_trace_star_candidate_replay
+        else "task41_p0_v8_selected_trace_star_metadata_events.jsonl"
         if args.selected_trace_star_metadata_only
         else "task41_p0_v8_selected_trace_star_events.jsonl"
         if args.selected_trace_star_audit
@@ -4374,6 +5485,17 @@ def main(argv: list[str] | None = None) -> int:
         numerical_output=args.numerical_output,
         metadata_only=args.selected_trace_star_metadata_only,
     )
+    v11_prior_cumulative_evidence_bytes = None
+    if args.selected_trace_star_candidate_replay:
+        if sha256_file(args.v9_compact_report) != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256:
+            raise ValueError("V11 compact report hash differs before evidence admission")
+        v11_compact_for_budget = json.loads(
+            args.v9_compact_report.read_text(encoding="utf-8")
+        )
+        prior_value = v11_compact_for_budget.get("cumulative_evidence_bytes")
+        if type(prior_value) is not int or prior_value < 0:
+            raise ValueError("V11 compact report omits its cumulative raw-evidence total")
+        v11_prior_cumulative_evidence_bytes = prior_value
     geometry_reference = (
         _load_v5_geometry_reference(
             args.geometry_reference_report,
@@ -4479,7 +5601,7 @@ def main(argv: list[str] | None = None) -> int:
             array_bytes_upper if name.startswith("task41_v6_prefix_") else 0
         )
         prefix_budget_after = prefix_budget_remaining - prefix_budget_consumed
-        if args.selected_trace_star_metadata_only:
+        if args.selected_trace_star_metadata_only or args.selected_trace_star_candidate_replay:
             from src.runners.task41_p0_contract import task41_raw_artifact_limit_bytes
 
             new_cap = int(
@@ -4489,19 +5611,31 @@ def main(argv: list[str] | None = None) -> int:
             )
             raw_cap = int(task41_raw_artifact_limit_bytes(consumer_contract))
             persisted_after = int(run_record.get("persisted_evidence_bytes", 0)) + array_bytes_upper
-            cumulative_after = int(donor.get("existing_evidence_bytes", 0)) + persisted_after
-            if persisted_after > new_cap:
+            cumulative_base = (
+                int(v11_prior_cumulative_evidence_bytes)
+                if args.selected_trace_star_candidate_replay
+                else int(donor.get("existing_evidence_bytes", 0))
+            )
+            cumulative_after = cumulative_base + persisted_after
+            window_root = output_root.parent.parent
+            prior_window_output_bytes = 0
+            if args.selected_trace_star_candidate_replay:
+                for prior_path in window_root.rglob("*"):
+                    if prior_path.is_file() and not prior_path.is_relative_to(output_root):
+                        prior_window_output_bytes += int(prior_path.stat().st_size)
+            new_evidence_after = prior_window_output_bytes + persisted_after
+            if new_evidence_after > new_cap:
                 raise MemoryError(
-                    "V11 metadata-only evidence would exceed the fixed 512 MiB new-evidence cap"
+                    "V11 candidate replay would exceed the fixed 512 MiB window-wide new-evidence cap"
                 )
             if cumulative_after > raw_cap:
                 raise MemoryError(
-                    "V11 metadata-only evidence would exceed the fixed cumulative raw-artifact cap"
+                    "V11 selected evidence would exceed the fixed cumulative raw-artifact cap"
                 )
             free_before = int(shutil.disk_usage(output_directory).free)
             if free_before - array_bytes_upper < 2 * 1024**3:
                 raise OSError(
-                    "V11 metadata-only evidence write would breach the 2 GiB free-space floor"
+                    "V11 selected evidence write would breach the 2 GiB free-space floor"
                 )
         elif args.selected_trace_star_audit:
             cumulative_after = (
@@ -4579,7 +5713,7 @@ def main(argv: list[str] | None = None) -> int:
             checked_facts.setdefault(
                 "metadata_only", bool(args.selected_trace_star_metadata_only)
             )
-            if args.selected_trace_star_metadata_only:
+            if args.selected_trace_star_metadata_only or args.selected_trace_star_candidate_replay:
                 from src.runners.task41_p0_contract import task41_raw_artifact_limit_bytes
 
                 checked_facts.setdefault(
@@ -4604,7 +5738,9 @@ def main(argv: list[str] | None = None) -> int:
                 resource_snapshot=_resource_snapshot,
                 output_directory=output_directory,
                 prior_array_payload_bytes=(
-                    int(donor.get("existing_evidence_bytes", 0))
+                    int(v11_prior_cumulative_evidence_bytes)
+                    if args.selected_trace_star_candidate_replay
+                    else int(donor.get("existing_evidence_bytes", 0))
                     if args.selected_trace_star_metadata_only
                     else TASK41_P0_V8_PRIOR_ARRAY_BYTES
                 ),
@@ -5077,25 +6213,48 @@ def main(argv: list[str] | None = None) -> int:
         if selected_trace_metadata_mode:
             if fixed_window is None:
                 raise RuntimeError("V8 selected trace-star audit requires the fixed numeric window")
-            selected_result = _run_v8_selected_trace_star_audit(
-                cfg=cfg,
-                donor=donor,
-                fixed_window=fixed_window,
-                output_directory=output_directory,
-                consumer_contract=consumer_contract,
-                ffcx_c_source_path=args.ffcx_c_source,
-                sha256_file=sha256_file,
-                allocation_gate=allocation_gate,
-                persist_array=persist_volume_array,
-                progress=progress,
-                checkpoint=checkpoint,
-                metadata_only=args.selected_trace_star_metadata_only,
-                selected_active_row=args.selected_active_row,
+            selected_result = (
+                _run_v11_selected_trace_star_candidate_replay(
+                    args=args,
+                    cfg=cfg,
+                    donor=donor,
+                    fixed_window=fixed_window,
+                    output_directory=output_directory,
+                    consumer_contract=consumer_contract,
+                    sha256_file=sha256_file,
+                    allocation_gate=allocation_gate,
+                    persist_array=persist_volume_array,
+                    progress=progress,
+                    checkpoint=checkpoint,
+                )
+                if args.selected_trace_star_candidate_replay
+                else _run_v8_selected_trace_star_audit(
+                    cfg=cfg,
+                    donor=donor,
+                    fixed_window=fixed_window,
+                    output_directory=output_directory,
+                    consumer_contract=consumer_contract,
+                    ffcx_c_source_path=args.ffcx_c_source,
+                    sha256_file=sha256_file,
+                    allocation_gate=allocation_gate,
+                    persist_array=persist_volume_array,
+                    progress=progress,
+                    checkpoint=checkpoint,
+                    metadata_only=args.selected_trace_star_metadata_only,
+                    selected_active_row=args.selected_active_row,
+                )
             )
             run_record.update(
                 {
+                    "schema": (
+                        "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1"
+                        if args.selected_trace_star_candidate_replay
+                        else run_record["schema"]
+                    ),
                     "status": (
-                        "COMPLETED_METADATA_ONLY"
+                        "COMPLETED_LOCAL_CANDIDATE_REPLAY"
+                        if args.selected_trace_star_candidate_replay
+                        else "COMPLETED_METADATA_ONLY"
                         if args.selected_trace_star_metadata_only
                         else "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
                     ),
@@ -5104,12 +6263,14 @@ def main(argv: list[str] | None = None) -> int:
                     else "NOT_RUN",
                     "completed_at_utc": datetime.now(timezone.utc).isoformat(),
                     "elapsed_since_worker_start_seconds": perf_counter() - started_perf,
-                    "selected_trace_star_metadata_only"
+                    "v11_selected_trace_candidate_replay"
+                    if args.selected_trace_star_candidate_replay
+                    else "selected_trace_star_metadata_only"
                     if args.selected_trace_star_metadata_only
                     else "selected_trace_star_audit": selected_result,
                     "evidence_cap_bytes": (
                         int(consumer_contract.get("execution_scope", {}).get("new_evidence_limit_bytes", 0))
-                        if args.selected_trace_star_metadata_only
+                        if args.selected_trace_star_metadata_only or args.selected_trace_star_candidate_replay
                         else 16 * 1024**3
                     ),
                     "free_space_floor_bytes": 2 * 1024**3,
@@ -5118,18 +6279,24 @@ def main(argv: list[str] | None = None) -> int:
             _write_json_atomic(report_path, run_record)
             progress(
                 {
-                    "phase": "selected_trace_star_metadata_only"
+                    "phase": "v11_selected_trace_candidate_replay"
+                    if args.selected_trace_star_candidate_replay
+                    else "selected_trace_star_metadata_only"
                     if args.selected_trace_star_metadata_only
                     else "selected_trace_star_audit",
                     "status": "COMPLETED",
                     "incident_cells": int(
-                        selected_result["incident_cell_count"]
+                        len(selected_result["incident_cell_order"])
+                        if args.selected_trace_star_candidate_replay
+                        else selected_result["incident_cell_count"]
                         if args.selected_trace_star_metadata_only
                         else selected_result["metadata"]["incident_cell_count"]
                     ),
                     **(
                         {"numerical_work_started": False}
                         if args.selected_trace_star_metadata_only
+                        else {"candidate_cells_reconstructed": list(TASK41_P0_V11_SELECTED_CELLS)}
+                        if args.selected_trace_star_candidate_replay
                         else {
                             "reconstructed_cells": sum(
                                 bool(cell.get("is_target_row_incident"))
@@ -5929,6 +7096,8 @@ def main(argv: list[str] | None = None) -> int:
             if isinstance(exc, _CandidateNotAdmitted)
             else "FAILED_METADATA_ONLY_EVIDENCE_RETAINED"
             if args.selected_trace_star_metadata_only
+            else "FAILED_SELECTED_CANDIDATE_REPLAY_EVIDENCE_RETAINED"
+            if args.selected_trace_star_candidate_replay
             else "FAILED_SELECTED_TRACE_STAR_EVIDENCE_RETAINED"
             if args.selected_trace_star_audit
             else
@@ -5948,7 +7117,9 @@ def main(argv: list[str] | None = None) -> int:
         progress(
             {
                 "phase": (
-                    "selected_trace_star_metadata_only"
+                    "v11_selected_trace_candidate_replay"
+                    if args.selected_trace_star_candidate_replay
+                    else "selected_trace_star_metadata_only"
                     if args.selected_trace_star_metadata_only
                     else "v8_selected_trace_star_audit"
                     if args.selected_trace_star_audit
