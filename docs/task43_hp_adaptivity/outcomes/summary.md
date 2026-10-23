@@ -176,7 +176,7 @@ base assembly1205.705467s包括新进程空间/约束准备；plan1223.015709s�
 
 ## 真实h1重试：补齐动作资格，保留失败与证据缺口
 
-这次只重做原首轮的一分八动作，验证较小单元能否形成合法场并降低误差；沿用原initial/tightening/marking、同一plan及candidate id，未使用accepted8作父场。它是同一h lineage的第14次完整solver尝试，不增加accepted transition，也不重写transition1的p获胜决定。跨网格转移仍not_run/未资格化。
+这次只重做原首轮的一分八动作，验证较小单元能否形成合法场并降低误差；沿用原initial/tightening/marking、同一plan及candidate id，未使用accepted8作父场。它是Task43全任务第14次完整求解尝试，属于原h1谱系的资格重试，不增加accepted transition，也不重写transition1的p获胜决定。跨网格转移仍not_run/未资格化。
 
 | h1资格项（measured，原initial/Y6_1） | 实测结果 | 边界与证据 |
 |---|---|---|

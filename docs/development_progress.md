@@ -70,7 +70,7 @@ base assembly1205.705s含新进程空间准备，plan1223s只校准不额外叠�
 source e834841b2ca4777bbc76f56afd3c7d2968c99a3b clean，PDE50listed/31inputs、比较50listed/60inputs posthash通过；source仅listed scope。base1083.115823s含新空间准备，不加plan835s，port874.167547/setup103.140333/recovery24.010186及A6分列。第8轮收口时8次接受/10条完整模型lineage/13次full-scale尝试/16计划；43份完整summary watchdog小计51,951.16159727797s，另R8 PDE观测3109.389197s下界，合计已观测下界55,060.55079448689s，不是完整campaign/PDE成本或成本胜出证据。未监控tests/工作、导入参考生成另记；所有原失败/停止/费用保留。当时下一步仅第9轮轻量preview；随后已完成预览及原h1重试，最新范围见下文。
 
 
-真实h动作现已补齐：原h1 plan、initial/tightening/marking及candidate id不变，固定MUMPS/一次自然same-LU完成600个p3叶，FE47,235=25,635迹+21,600内部。A6=8.74535125e−10、cond3.86145195e−13、closure6.24333918e−13，完整612/11checkpoint及995,328点公共q8已由主控独立复算；η=.428071730→.245641161、J300895.081仍远未最终合格。它是原h lineage第14次solver尝试，不新transition，不改原p1胜出，working parent仍accepted8。见[h1资格与全部负项](task43_hp_adaptivity/outcomes/records/h1_real_action_qualification_v1.json)。
+真实h动作现已补齐：原h1 plan、initial/tightening/marking及candidate id不变，固定MUMPS/一次自然same-LU完成600个p3叶，FE47,235=25,635迹+21,600内部。A6=8.74535125e−10、cond3.86145195e−13、closure6.24333918e−13，完整612/11checkpoint及995,328点公共q8已由主控独立复算；η=.428071730→.245641161、J300895.081仍远未最终合格。它是Task43全任务第14次完整求解尝试，属于原h1谱系的资格重试，不新transition，不改原p1胜出，working parent仍accepted8。见[h1资格与全部负项](task43_hp_adaptivity/outcomes/records/h1_real_action_qualification_v1.json)。
 
 | 本次h1收口（measured） | 费用／资源 | 原因与边界 |
 |---|---|---|
