@@ -316,3 +316,15 @@ ABI 是本机 qualified WSL complex128/int32；不是工作站正式 service 资
 在本机资格化 activation（complex128/int32）下，最终 **14 passed in 0.61 s**。覆盖 correction 返回量污染、j0/j3 trace/RHS 混配、复 MPC 强相消的真实 action 调用、较宽算术的保守诊断、错误释放顺序后重试，以及旧 V8/default/authority 兼容。四个变更 Python 文件 compileall 与 git diff --check 通过；主控审查实际数据流并回读源码、ABI、测试日志 hash，未重复全仓或科学计算。具体 argv、原始日志 SHA 和文件内容身份见 [v9_preparation.json](v9_preparation.json) 的 `review_v10_local_fixes`。
 
 旧 V8 helper 字节未改；正式保存包筛选、全域 action/recovery 与新窗口仍分别为 NOT_RUN / PENDING_USER_APPROVAL。没有 response_v9、工作站运行或新增数值 PASS。历史失败及旧准备费用保留，本轮完整准备父时长未连续计量，仍为 UNKNOWN。
+
+## Task41extra Review V10 后：V9 B0 正式 run 收口（2026-10-22/23）
+
+| 验证对象 | 结果 | 范围与边界 |
+|---|---|---|
+| Review V10 实现定向 fixtures | 14 passed in 0.61 s（准备记录） | 准备实现的小型回归；发生在正式 run 前，不证明全域数值资格 |
+| V9 compact independent checker | FAIL，passed=false | 读取已保存 compact volume audit；两列 action 门未通过 |
+| 正式 service required terminal checker | NOT_RUN | service receipt 中 run_case_returncode=3，ValueError: Task41 numerical-output directory is missing；没有 checker authority/result |
+| Full workflow | WORKER_FAILED，exit_status=4；full-workflow time exceeded=false | 真实正式尝试，科学 full-action gate 失败；不是 pytest 结果，也非资源/时间门停止 |
+| 本收口验证 | JSON 解析通过；git diff --check 通过；没有运行 pytest | 只验证所更新的小型索引与文档差异；不声称 CI 或全仓测试通过 |
+
+独立 compact checker 的数值 FAIL 与正式 service terminal checker 的 NOT_RUN 分列记录。run summary、service receipt、compact audit/check 与资源口径见 response_v9.md、run_index.json 和两级账；未重跑 FE、recovery 或任何 checker。

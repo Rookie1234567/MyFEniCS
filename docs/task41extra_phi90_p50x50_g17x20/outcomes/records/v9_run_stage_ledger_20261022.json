@@ -1,0 +1,111 @@
+{
+  "schema": "task41.v9.run_stage_child_ledger.v1",
+  "run_id": "20261022T052401.200732Z",
+  "service": "myfenics-case-20261022T052342-2715327.service",
+  "source_sha": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
+  "parent_wall_seconds": 69966.90540991211,
+  "resource_authority_elapsed_seconds": 69966.3689665068,
+  "parent_child_rule": "stage intervals are nested under the parent workflow; do not sum child phases into parent wall",
+  "stages": [
+    {
+      "name": "fresh_volume_owner",
+      "start_ns": "1792647469612212259",
+      "end_ns": "1792715706478081925",
+      "seconds": 68236.865869666
+    },
+    {
+      "name": "donor_identity_validation",
+      "start_ns": "1792715706482806049",
+      "end_ns": "1792715890144486447",
+      "seconds": 183.661680398
+    },
+    {
+      "name": "selected_incidence",
+      "start_ns": "1792715890145267654",
+      "end_ns": "1792715942707813923",
+      "seconds": 52.562546269
+    },
+    {
+      "name": "col0_full_action",
+      "start_ns": "1792716283267489698",
+      "end_ns": "1792716449098599877",
+      "seconds": 165.831110179
+    },
+    {
+      "name": "col1_full_action",
+      "start_ns": "1792716449689716291",
+      "end_ns": "1792716584964004226",
+      "seconds": 135.274287935
+    }
+  ],
+  "scientific_getrs_seconds": null,
+  "j_multiplication_seconds": null,
+  "unavailable_costs": [
+    "separate GETRS timing",
+    "separate J multiplication timing",
+    "unrecorded historical preparation items"
+  ],
+  "action_gate": {
+    "status": "GATE_FAILED",
+    "relative_tolerance": 1e-11,
+    "columns": [
+      {
+        "column": 0,
+        "absolute_l2": 5.953111308801364e-07,
+        "relative_dynamic": 2.674977063720297e-10,
+        "relative_frozen": 2.6749770637124157e-10,
+        "dynamic_gate_passed": false,
+        "frozen_gate_passed": false,
+        "max_abs": 4.714842990596683e-09,
+        "max_row": 87567
+      },
+      {
+        "column": 1,
+        "absolute_l2": 1.2492954342769817e-06,
+        "relative_dynamic": 5.613598120037966e-10,
+        "relative_frozen": 5.613598120039712e-10,
+        "dynamic_gate_passed": false,
+        "frozen_gate_passed": false,
+        "max_abs": 1.018211453698345e-08,
+        "max_row": 87567
+      }
+    ]
+  },
+  "recovery": {
+    "columns": [],
+    "maximum_same_lu_corrections_per_column": 3,
+    "native_volume_action_calls": 0,
+    "native_volume_residual_relative_tolerance": 1e-10,
+    "relative_forward_tolerance": 1e-11,
+    "status": "NOT_RUN_ACTION_GATE_FAILED"
+  },
+  "independent_compact_checker": {
+    "status": "FAIL",
+    "passed": false
+  },
+  "formal_terminal_checker": {
+    "status": "NOT_RUN",
+    "reason": {
+      "message": "Task41 numerical-output directory is missing",
+      "type": "ValueError"
+    },
+    "service_required_checker_status": null
+  },
+  "completion": {
+    "run_summary_status": "finished",
+    "run_summary_exit_status": 4,
+    "official_result": false,
+    "mode_truncation_status": "MODE_TRUNCATION_UNQUALIFIED",
+    "precision_status": "NOT_QUALIFIED"
+  },
+  "resources": {
+    "process_tree_rss_peak_bytes": 450117619712,
+    "job_cgroup_memory_peak_bytes": 450366337024,
+    "systemd_memory_peak_bytes": 449658327040,
+    "job_cgroup_swap_peak_bytes": 0,
+    "host_pswpin_delta_pages": 54,
+    "host_pswpout_delta_pages": 0,
+    "host_swap_scope": "host-wide diagnostic only; not attributable to the dedicated job",
+    "descendants_cleared": true
+  }
+}

@@ -1424,240 +1424,31 @@
       "new_local_rhs_counterfactual_array_count": 24,
       "new_local_rhs_counterfactual_file_bytes": 13085472,
       "fe_or_pde_started": false
+    },
+    {
+      "run_id": "20261022T052401.200732Z",
+      "source_sha": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
+      "classification": "FULL_REQUALIFICATION_FAILED",
+      "full_action_relative": [
+        2.674977063720297e-10,
+        5.613598120037966e-10
+      ],
+      "recovery": "NOT_RUN_ACTION_GATE_FAILED",
+      "required_terminal_checker": "NOT_RUN_NUMERICAL_OUTPUT_DIRECTORY_MISSING",
+      "compact_independent_check": "FAIL_REPRODUCED",
+      "official_result": false,
+      "full_workflow_seconds": 69966.90540991211,
+      "process_tree_rss_peak_bytes": 450117619712,
+      "cgroup_peak_bytes": 450366337024,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "evidence": "v9_closeout/file_hashes.json"
     }
   ],
   "not_run": [
     "0.7nm"
   ],
-  "current_state": {
-    "a2_attempt7_original_worker": "WORKER_FAILED",
-    "a2_attempt7_official_result": false,
-    "a2_saved_output_comparison": "PASS",
-    "a2_required_checker_only_retry3": "PASS",
-    "0.7nm": "V8_SELECTED_STAR_LOCAL_SAVED_AUDIT_COMPLETE; V6_CANDIDATE_FULL_ACTION_GATE_FAILED; NO_CANDIDATE_REQUALIFICATION_OR_200Q_OR_FULL_FIELD; OFFICIAL_RESULT_FALSE",
-    "a_exit": "PASS",
-    "b0_p0_latest": "V8_SELECTED_STAR_LOCAL_SAVED_AUDIT_COMPLETE; V6_CANDIDATE_FULL_ACTION_FAIL; DONOR_ACTION_FAIL; NO_200Q_OR_FULL_FIELD; OFFICIAL_RESULT_FALSE",
-    "b0_p0_official_result": false,
-    "b0_p0_carrier": "REQUIRE_EXISTING_DONOR_ADOPTION_PASS_64120_MODES; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED; FULL_B0_NOT_QUALIFIED",
-    "b0_p0_saved_surface_application": "64120_OF_64120_COMPLETE; SELECTED_MODE_B_D_CONSUMER_RECEIPTS_2_OF_2_PASS; FULL_RHS_RECOVERY_GATE_PASS; FULL_ACTION_GATE_FAILED",
-    "b0_p0_recovery": "FULL_RHS_RECOVERY_GATE_PASS_AFTER_3_SAME_LU_CORRECTIONS_PER_COLUMN",
-    "b0_p0_full_action": "FAIL_TWO_INPUT_P6_NATIVE_RELATIVE_ERRORS_3.042118678294192E-10_AND_6.391893878204816E-10_LIMIT_1E-11",
-    "b0_p0_disk_admission": "PASS_16_GIB_CAP_11886541965_B_CUMULATIVE",
-    "b0_p0_offline_checker": "INCONCLUSIVE_SIGSEGV",
-    "b0_p0_v4_volume_only_attribution": {
-      "classification": "V4_LOCAL_ATTRIBUTION_COMPLETE_GLOBAL_FULL_ACTION_GATE_UNCLOSED",
-      "official_result": false,
-      "donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
-      "formal_services": [
-        {
-          "stage": "volume_only_extraction",
-          "source_sha": "d883c1f3381b4f3d6100022097d615846564673c",
-          "contract_sha256": "9012ffc0e80fac30f2aa1307d266366e7607ebcd11b9e0e2278bb213514e4bcd",
-          "service_unit": "myfenics-case-20261019T232138-2271820.service",
-          "classification": "COMPLETED_VOLUME_ONLY_DIAGNOSTIC",
-          "service_parent_seconds": 1638.8259056420065,
-          "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_volume_only_d883c1f_20261019T232138Z/task41_p0_v4_volume_only_attribution.json",
-          "report_sha256": "09e96eb8c9d52b4cf0c29570fd8df3c1f820bc208104d91edd102978dfc9c4d5",
-          "service_receipt_path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/controller_v4_review/task41_p0_volume_only_service_receipt.json",
-          "service_receipt_sha256": "d08f45f35436df35bf927f5be67c25b7ab49891c23739d16878302f4f9eee10e",
-          "saved_evidence_audit": {
-            "status": "COMPLETE",
-            "report_sha256": "a2f540fb9778c038a2129a0f2119689fd832dc044e2a933ab2a45518ac37f94d"
-          }
-        },
-        {
-          "stage": "selected_geometry_pair_probe",
-          "source_sha": "02523b3d5a49d30d71caa8e7f8a9b9405a78fa33",
-          "contract_sha256": "8e041fc0fae6da0bab5855043e9ebe5678facad6bb319d0e0bc3ac5c08c89453",
-          "service_unit": "myfenics-case-20261020T004902-2286705.service",
-          "service_invocation_id": "03c854728dee48c49b66080f87545d5f",
-          "classification": "COMPLETED_SELECTED_PAIR_DIAGNOSTIC_NOT_GLOBAL_REQUALIFICATION",
-          "service_parent_seconds": 305.99965768121183,
-          "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_v4_geometry_pair_probe.json",
-          "report_sha256": "a47eb7a8795b5af542c23ae45915588d89c962d1af1bb8360b8a9d42f1e7c031",
-          "service_receipt_path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/controller_v4_review/task41_p0_geometry_pair_service_receipt.json",
-          "service_receipt_sha256": "9bf4234bca149b88af914a8b9a30c202feffab6433d745d02e5578588bac9e7b",
-          "required_saved_evidence_audit": {
-            "status": "COMPLETE",
-            "report_sha256": "427af9ffb5f41a129250a513eaa908c13efe79ac10d2bbf5468d1a69fa0113b8",
-            "data_integrity": true,
-            "recovery_passed": true,
-            "joint_action_passed": false,
-            "official_result": false
-          }
-        }
-      ],
-      "saved_only_diagnostics": [
-        {
-          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_volume_only_d883c1f_20261019T232138Z/task41_p0_v4_saved_data_diagnostic_20261020T000104Z.json",
-          "output_sha256": "72eaf681115929258f0e1a3aaa76073b2d7e4be94679ee68d34cc4b34069a8ae",
-          "script_sha256": "453e8eb1cea6ba60f3f296fe2039082452d5dc3adc5940bc4f50f00713f87f69",
-          "elapsed_seconds": 11.880770959891379,
-          "rss_peak_bytes": null
-        },
-        {
-          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_volume_only_d883c1f_20261019T232138Z/task41_p0_v4_native_local_decomposition_20261020T000440Z.json",
-          "output_sha256": "69e7e640c66c7ba5e84fd82b65b3929cf571de08bfcdbd1d39ed4164e947ce45",
-          "script_sha256": "99c3d3a03505eac5a27276e645edfe65fd7cdbfe1914522e877e2fcdd60125e7",
-          "elapsed_seconds": 2.6438243738375604,
-          "rss_peak_bytes": null
-        },
-        {
-          "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_v4_local_elimination_diagnostic.json",
-          "output_sha256": "27eb82d1e51fd62b2b80e74fe5129f7be0512c35f95d092c967aeca6f90216ae",
-          "script_sha256": "a57b8f10251d5e921ab2bc41e0a584aca5e6f18c3c797e606690f3cd503e1110",
-          "elapsed_seconds": 5.046073629986495,
-          "rss_peak_bytes": null,
-          "invalid_initial_output_preserved_and_excluded": true
-        }
-      ],
-      "invalid_diagnostic": {
-        "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_v4_local_elimination_diagnostic_initial_buggy.json",
-        "sha256": "b9dd5bf9b5dd906fa3dcd7485e11190101067fe2f552caed92f9e96f5046a955",
-        "classification": "INVALID_DIAGNOSTIC_DO_NOT_USE",
-        "defect": "global b_t was subtracted once per cell instead of once for the selected row"
-      },
-      "preserved_v3_full_action": {
-        "denominator_definition": "max(norm(p6_result), norm(reduced_rhs), tiny)",
-        "limit": 1e-11,
-        "columns": [
-          {
-            "column": "top_mode_16030",
-            "worker_gate_relative_error": 3.042118678294192e-10,
-            "independent_numpy_relative_error": 3.0421186782950535e-10,
-            "trace_absolute_l2": 6.770178089430243e-07,
-            "port_absolute_l2": 0.0,
-            "original_denominator": 2225.481253487629,
-            "trace_over_original_denominator": 3.0421186782950706e-10,
-            "port_over_original_denominator": 0.0
-          },
-          {
-            "column": "bottom_mode_48090",
-            "worker_gate_relative_error": 6.391893878204816e-10,
-            "independent_numpy_relative_error": 6.391893878206565e-10,
-            "trace_absolute_l2": 1.4225036541037616e-06,
-            "port_absolute_l2": 0.0,
-            "original_denominator": 2225.4807123031883,
-            "trace_over_original_denominator": 6.391893878206601e-10,
-            "port_over_original_denominator": 0.0
-          }
-        ],
-        "D_action_absolute_error": 0.0,
-        "classification": "trace-only discrepancy in this saved two-column decomposition; does not identify global root cause"
-      },
-      "next_stages": "global action requalification, q200/factor/KSP/FGMRES/full field/A6/R/T/A are NOT_RUN",
-      "fixed_window_snapshot": {
-        "observed_at_utc": "2026-10-20T01:23:41.166876Z",
-        "window_sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38",
-        "read_api": "Task41 load_task41_p0_fixed_window + read_campaign_state (read_only=true)",
-        "accounting_sequence": 37870,
-        "last_accounting_sample_utc_ns": 1792457649480526832,
-        "cumulative_charged_at_tail_seconds": 70262.39144400517,
-        "projected_cumulative_charged_seconds": 72034.07768519018,
-        "numerical_remaining_seconds": 13165.922314809824,
-        "closeout_remaining_seconds": 1200.0,
-        "total_remaining_seconds": 14365.922314809824,
-        "raw_accounting_ledger_appended": false,
-        "window_or_t0_changed": false,
-        "not_a_window_or_resource_stop": true
-      }
-    },
-    "b0_p0_offline_checker_latest": {
-      "source_sha": "02523b3d5a49d30d71caa8e7f8a9b9405a78fa33",
-      "consumer_contract_sha256": "8e041fc0fae6da0bab5855043e9ebe5678facad6bb319d0e0bc3ac5c08c89453",
-      "classification": "V4_SAVED_EVIDENCE_AUDIT_COMPLETE_JOINT_ACTION_FAIL",
-      "status": "COMPLETE",
-      "audit_completed": true,
-      "data_integrity": true,
-      "recovery_passed": true,
-      "joint_action_passed": false,
-      "official_result": false,
-      "report_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_v4_geometry_pair_02523b3d_attempt1/task41_p0_b0_saved_evidence_audit.json",
-      "report_sha256": "427af9ffb5f41a129250a513eaa908c13efe79ac10d2bbf5468d1a69fa0113b8",
-      "compact_path": "b0_v4_volume_only_attribution_20261020.json",
-      "preserves_historical_b0_p0_offline_checker": true
-    },
-    "b0_p0_v5_mesh_actual_exact": {
-      "classification": "CANDIDATE_NOT_ADMITTED",
-      "source_sha": "179cf7369e6bc5894fa87af6b74cf5c73938b6d4",
-      "raw_key_count": 28000,
-      "oriented_key_count": 28000,
-      "two_cell_actual_replay": "PASS_LOCAL_INTEGRATION_ONLY",
-      "full_two_column_action": "NOT_RUN",
-      "candidate_checker": "NOT_APPLICABLE_CANDIDATE_NOT_BUILT",
-      "time_deficit_seconds": 1489566.2591538844,
-      "official_result": false,
-      "compact": "b0_v5_mesh_actual_exact_not_admitted_20261020.json",
-      "raw_artifact_integrity_review": "17_PATH_BYTES_SHA_MATCHED_BY_MAIN_CONTROLLER; NUMERICAL_CHECKER_NOT_RUN",
-      "wider_component_and_docs_validation": "32_PASSED_3_FAILED_HISTORICAL; THREE_FIXTURE_ONLY_REPAIRS_RETESTED_3_PASSED; SCIENTIFIC_SOURCE_UNCHANGED",
-      "supplemental_pytest_output_sha256": "e2d1a3b4f98159bab57203be4372e1e77a2645b5b8a40793abab3839826deb79",
-      "compact_sha256": "132168d3653f36fe267a99b35497b588c7aa73e3d85dea4c2e4d391427f79e32"
-    },
-    "b0_p0_v6_actual_qmetric": {
-      "classification": "FULL_ACTION_GATE_FAILED",
-      "source_sha": "210fbbf271faa14c62ac30153b80332d0e645982",
-      "candidate_report_sha256": "72c01eb9a7780ba86a7d8b8de6cfc1fd25e04fead2170788a5f492cd12ebd06e",
-      "raw_keys": 28000,
-      "oriented_keys": 28000,
-      "local_prefix": "8_OF_8_PASS_LIMIT_1E-11",
-      "full_action_relative_errors_frozen": [
-        1.7183209126709868e-10,
-        3.6180522433957604e-10
-      ],
-      "full_action_limit": 1e-11,
-      "official_result": false,
-      "next_stage": "STOP_BEFORE_200Q",
-      "compact": "b0_v6_actual_qmetric_full_action_failed_20261021.json",
-      "compact_sha256": "2c06adc2e4776691d4b2ccfff6d99134b7c64c0aa3447484e8b035be0ff8808b",
-      "hash_index": "../b0_v6_actual_qmetric_hash_index_20261021.json"
-    },
-    "b0_p0_v6_candidate_recovery": "FAIL_FORWARD_1.981377497384616E-11_AND_1.9790230535831552E-11_LIMIT_1E-11; NATIVE_RESIDUALS_1.4373E-15_AND_1.4365E-15_PASS_1E-10; ZERO_ADDITIONAL_CORRECTIONS",
-    "b0_p0_v6_attribution": "DIAGNOSTIC_ONLY; closure relative 0.0890506791 / 0.0890404748; root cause not proven",
-    "b0_p0_v6_saved_checker": {
-      "status": "COMPLETE",
-      "audit_completed": true,
-      "data_integrity": true,
-      "candidate_passed": false,
-      "joint_action_passed": false,
-      "qualification_passed": false,
-      "official_result": false,
-      "source_sha": "89e1e42114870ba1db752dfaf6d893ad13f923d6",
-      "report_sha256": "5ebdc364416a5ba8eed34506fd232eae22e9c92f0968924d1064f70d1fb03460",
-      "service_receipt_sha256": "9a5bd49743033dd94d8e71c5d02d744c07f64eee1047ee8931b033d2f7186167"
-    },
-    "b0_p0_v7_saved_attribution": {
-      "classification": "SAVED_ATTRIBUTION_AUDIT_COMPLETE_SCIENTIFIC_GATES_FAILED",
-      "official_result": false,
-      "formula": "LEGACY_FULL_RHS_RESIDUAL_OMITTED_B_ALPHA; ACTUAL_VECTOR_CHECK_CONFIRMED",
-      "corrected_closure": "DIAGNOSTIC_ONLY; 5.66_TO_10.76_PERCENT_OF_D",
-      "full_action_relative": [
-        1.7183209126709868e-10,
-        3.6180522433957604e-10
-      ],
-      "candidate_initial_recovery_forward": [
-        1.981377497384616e-11,
-        1.979023053583157e-11
-      ],
-      "p3": "EIGHT_SAVED_KEYS_RECHECKED; TARGET_ROW_4766937_INCIDENT_CELL_MAP_AND_LOCAL_PARTS_MISSING",
-      "service": "task41-v7-saved-audit-184822fa-20261021T023918z.service",
-      "compact": "b0_v7_saved_attribution_20261021.json"
-    },
-    "b0_p0_v8_saved_audit": {
-      "status": "COMPLETE_LOCAL_DIAGNOSTIC_ONLY",
-      "candidate_full_action_replayed": false,
-      "candidate_full_action_baseline": "V6 original two-column errors 1.7183209126709868e-10 / 3.6180522433957604e-10 against 1e-11",
-      "saved_donor_action_errors": "3.0421186782950706e-10 / 6.391893878206601e-10 against 1e-11",
-      "local_rhs_counterfactual": "diagnostic only; not a production change",
-      "official_result": false
-    },
-    "b0_p0_v8_evidence_index": {
-      "compact": "b0_v8_selected_trace_star_audit_20261021.json",
-      "compact_sha256": "978d62ec241a2e85840e380e921c3c454f4e3d37857db3ea4816984a4c8ae8e5",
-      "review_result_base": "368124f5d17e99d6086424bf2b8cda73ebae95ef",
-      "review_head": "c3df1f4bc331d20e2f156cc7db0ad41ab749ef37",
-      "checker_source": "3ce1a158e3e0b6556a2e094755adf9b5bd18ae08"
-    }
-  },
+  "current_state": "V9_FULL_REQUALIFICATION_FAILED_WAITING_REVIEW",
   "v6_candidate_history": {
     "candidate_attempt": "20261020T124053Z_attempt10",
     "candidate_attempt_run_index_position": 38,

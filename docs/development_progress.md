@@ -3869,3 +3869,8 @@ V5 将局部凝聚 rank-2 张量改为直接读取原 mesh coordinates，并让�
 ## Task41extra Review V7（2026-10-21）
 
 在Task41分支完成saved-only归因复核：实际Bα复数向量确认旧闭合约198来自完整RHS残差漏减端口项；修正式后四组闭合仍占对应d的5.66%-10.76%，公式修正不等同于科学action通过。两列原full-action仍超1e-11门，V6候选初始恢复forward也仍超门；旧donor三次LU修正的通过结果不转给候选。P3继承V6八键矩阵资格（未新重算），但最大误差row 4,766,937的incident-cell映射和逐cell分项缺失；历史S_minus_L_plus_JR=0不证明V7 E_S为0。父时250.111 s包含200.484 s checker；RSS树与cgroup峰值分开记，swap为0。执行者首轮10 passed/48 deselected/0.94 s；主控同source最终复验10 passed/48 deselected/1.13 s，命令与日志hash已绑定V7 compact。official_result=false；不自动升级200q或完整场。详见Task41 [V7回应](task41extra_phi90_p50x50_g17x20/response_v7.md)和[compact结果](task41extra_phi90_p50x50_g17x20/outcomes/b0_v7_saved_attribution_20261021.json)。
+
+
+## Task41extra V9完整作用负结果（2026-10-23）
+
+同LU直接RHS候选局部改善，但原尺寸28000-key两列action相对差2.674977063720297e-10、5.613598120037966e-10，均超过1e-11；恢复与200q未运行。workflow69966.90540991211s，owner68236.865869666s；tree RSS450117619712B、cgroup450366337024B，task swap0。窗口费用与workflow为包含关系，不相加；未记录子项保留UNKNOWN。compact审核重现FAIL，正式terminal checker缺numerical-output未运行。见[response_v9](task41extra_phi90_p50x50_g17x20/response_v9.md)及原始保存证据；完整场/精度/2TB/48h未通过。

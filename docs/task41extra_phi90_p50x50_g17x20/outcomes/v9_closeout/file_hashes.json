@@ -1,0 +1,18 @@
+{
+  "run_summary.json": {
+    "bytes": 13468,
+    "sha256": "2a0217b345813f8a5a5e44deaa4f501cba34db7a223c3b2009dab780a8933091"
+  },
+  "task41_p0_service_receipt.json": {
+    "bytes": 7701,
+    "sha256": "47ceec26e329d312f846f71ae575319382533947ba15bec5ba12b286c40c0661"
+  },
+  "task41_p0_b0_v9_compact_volume_audit.json": {
+    "bytes": 4282,
+    "sha256": "e4db4e42b8a4f3b407ed0b00add8029f7e066aad6c38a2945d60e33ffbde7d93"
+  },
+  "task41_p0_b0_v9_compact_independent_check.json": {
+    "bytes": 791,
+    "sha256": "fdc0c4bd31649d0552fe758c768529c8bd1e6e76472eff7419dd75ecb69506f4"
+  }
+}

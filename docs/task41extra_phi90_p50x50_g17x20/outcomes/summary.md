@@ -1,8 +1,23 @@
 # Task41 阶段结果
 
-> **V9 当前为准备阶段，正式数值 NOT_RUN。** 新策略用原局部 LU 解内部 RHS 后乘原 J，目的是减少预存 T 乘法带来的误差；是否改善必须先由两列保存数据重放判别。新窗口待批准，旧全域 action/recovery 负结果不变。Review V10 要求的 correction 消费、生产次序重放与释放重试已完成窄修，14 项相关本机测试通过；真实保存数据筛选尚未运行。当前代码与命令、测试边界见 [V9 preparation](v9_preparation.md)。本段不是窗口授权或全域准入。
+> **V9 已形成首次正式 B0 结果。** 20261022T052401.200732Z 的两列 full-action 门均失败，compact independent checker 为 FAIL，正式 service terminal checker 因 numerical-output 目录缺失而 NOT_RUN；recovery 为 NOT_RUN_ACTION_GATE_FAILED，official_result=false。详见 [V9 response](../response_v9.md)、[run index](run_index.json) 与两级账。准备阶段测试和窗口资料仍保留在 [V9 preparation](v9_preparation.md)。
 
-> **最新已完成科学阶段：Task41extra Review V8 selected-star 局部复核；未形成全域candidate资格。** V6 candidate 原完整两列action仍失败（相对误差`1.7183209126709868e-10` / `3.6180522433957604e-10`，限值`1e-11`）；V8未重跑这两列。V8较早的producer扫描28,000-cell metadata并仅重建目标行两个incident cells的缺失局部张量；此后的独立checker attempts 1–4 为saved-only。V8完成304个保存向量复算，另做局部RHS次序反事实，但saved donor完整action仍失败；candidate数值状态未重验，`official_result=false`。不进入200q、factor、KSP/FGMRES、完整场、A6或official R/T/A。入口：[V8 response](../response_v8.md)、[V8 compact](b0_v8_selected_trace_star_audit_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。
+> **V9 之前的历史科学阶段：Task41extra Review V8 selected-star 局部复核；未形成全域candidate资格。** V6 candidate 原完整两列action仍失败（相对误差`1.7183209126709868e-10` / `3.6180522433957604e-10`，限值`1e-11`）；V8未重跑这两列。V8较早的producer扫描28,000-cell metadata并仅重建目标行两个incident cells的缺失局部张量；此后的独立checker attempts 1–4 为saved-only。V8完成304个保存向量复算，另做局部RHS次序反事实，但saved donor完整action仍失败；candidate数值状态未重验，`official_result=false`。不进入200q、factor、KSP/FGMRES、完整场、A6或official R/T/A。入口：[V8 response](../response_v8.md)、[V8 compact](b0_v8_selected_trace_star_audit_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。
+
+## 最新正式结果：V9 B0 full-action gate 失败
+
+本次首次正式 V9 B0 全域尝试 run 20261022T052401.200732Z（source SHA 59722cca5e35eac65efead9fd27f7d7fc0c70419）于 full-action 门失败。两列相对误差为 2.674977063720297e-10 和 5.613598120037966e-10，均高于 1e-11 限值；最大差行均为本次 row 87567。保存数据上的 compact independent checker 为 FAIL。正式 service required terminal checker 因 run_case 报 numerical-output directory missing 而 NOT_RUN，不能与 compact checker 混写。recovery 为 NOT_RUN_ACTION_GATE_FAILED，official_result=false。
+
+| 项目 | V9 实测 / 状态 | 解释 |
+|---|---|---|
+| 单次 workflow wall | 69966.90540991211 s；未触发 full-workflow time exceeded | run_summary 口径 |
+| fresh_volume_owner | 68236.865869666 s | 子阶段，嵌套于 full workflow；GETRS/J 分项为 UNKNOWN |
+| 资源峰值 | process-tree RSS 450117619712 B；cgroup 450366337024 B；systemd MemoryPeak 449658327040 B | 三种口径分列 |
+| Swap / 清场 | job cgroup swap peak 0 B；host pswpin +54 pages 属 host-wide 诊断；descendants_cleared=true | host 计数不归因到 job |
+| 后续阶段 | recovery、200q、factor、KSP/FGMRES、full field、A6、R/T/A均 NOT_RUN | 不生成 official result |
+
+详情见 [response_v9.md](../response_v9.md)、[compact audit](b0_v9_full_action_audit_20261022.json)、[independent check](b0_v9_independent_check_20261022.json)、[run index](run_index.json) 与 [窗口账](records/v9_campaign_ledger_20261022.json)、[运行账](records/v9_run_stage_ledger_20261022.json)。V8 及更早阶段仍作为历史结果保留，不再标为当前最新结果。
+
 
 ## Task41extra Review V8：目标行局部证据与失败边界
 

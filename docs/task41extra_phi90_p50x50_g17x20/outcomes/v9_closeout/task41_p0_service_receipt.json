@@ -1,0 +1,114 @@
+{
+  "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+  "activation_command": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; unset _MYFENICS_WSL_QUALIFIED_ACTIVATION; source scripts/task40_fresh_c1/activate_native_complex.sh \"$2\" \"$3\" \"$4\" native_linux; env -0 task40-v20-activation /home/fenics/Projects/laptop_share /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache",
+  "activation_identity": "task41_p0_native_complex:1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+  "case_id": "B0",
+  "cgroup_start": {
+    "dedicated_job_cgroup": true,
+    "member_count": 1,
+    "memory_current_bytes": 48627712,
+    "memory_limit_bytes": 1649267441664,
+    "memory_peak_bytes": 103657472,
+    "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261022T052342-2715327.service",
+    "readable": true,
+    "swap_current_bytes": 0
+  },
+  "contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_59722cca5e35eac65efead9fd27f7d7fc0c70419.json",
+  "contract_sha256": "5e6446a0f9990d668de90ef67f675f00e29f64ec273b31d2b9a140ab4a6610cf",
+  "host_reserve_bytes": 68719476736,
+  "input_path": "/home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+  "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+  "memory_swap_max_bytes": 0,
+  "preflight": {
+    "abi_module_paths": {
+      "dolfinx": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/dolfinx/__init__.py",
+      "mpi4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/mpi4py/__init__.py",
+      "petsc4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/petsc4py/__init__.py",
+      "slepc4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/slepc4py/__init__.py"
+    },
+    "int_type": "int32",
+    "mpi_size": 1,
+    "python": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "scalar_type": "complex128"
+  },
+  "preflight_command": [
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "-c",
+    "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+  ],
+  "receipt_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_59722cca5e35eac65efead9fd27f7d7fc0c70419/task41_p0_service_receipt.json",
+  "run_case_command": [
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "scripts/run_case.py",
+    "/home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+    "--task41-p0-execution-contract",
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_59722cca5e35eac65efead9fd27f7d7fc0c70419.json"
+  ],
+  "run_case_returncode": 3,
+  "run_case_stderr_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_59722cca5e35eac65efead9fd27f7d7fc0c70419/run_case.stderr.txt",
+  "run_case_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "run_case_stdout_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_59722cca5e35eac65efead9fd27f7d7fc0c70419/run_case.stdout.txt",
+  "run_case_stdout_sha256": "64a97f9bf4daed22a6affe6f5cc3fd23fffdc67e0118454c5156aa5083bd9761",
+  "schema": "task41.p0.service_receipt.v1",
+  "service_entry_accounting": {
+    "adjacent_interval": {
+      "budget_seconds": 1721.7871037414297,
+      "discrepancy_seconds": 8.227303624153137e-06,
+      "elapsed_seconds": {
+        "boottime": 1721.7870955141261,
+        "monotonic": 1721.7871037414297,
+        "utc": 1721.787101704
+      },
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "tolerance_seconds": 17.217871037414298,
+      "utc_minus_monotonic_seconds": -2.0374297946545994e-06
+    },
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap_charged_seconds": 570.145701239,
+    "campaign_window_sha256": "a7cac8f274dc17f552c57462da0a386a0c808580b8fc1172c1c88f0ee3075477",
+    "cumulative_charged_seconds": 15073.180389510884,
+    "cutoff_seconds": 85200.0,
+    "deadline_utc_ns": 1792717962209257168,
+    "label": "task41_p0_service_entered",
+    "phase": "numeric",
+    "previous_sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2569908.457814491,
+      "monotonic": 2569908.457797311,
+      "utc_ns": 1792644913596949737
+    },
+    "sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2571630.244910005,
+      "monotonic": 2571630.244901052,
+      "utc_ns": 1792646635384051441
+    },
+    "schema": "task40extra.review_v10_campaign_accounting.v1",
+    "sequence": 3390,
+    "t0_utc_ns": 1792631562209257168,
+    "time_namespace_identity": {
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    }
+  },
+  "service_started_sample": {
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "boottime": 2571629.477469143,
+    "monotonic": 2571629.477449338,
+    "utc_ns": 1792646634616606408
+  },
+  "source_sha": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
+  "status": "failed_raw_evidence_retained",
+  "task_id": "task41extra_phi90_p50x50_g17x20",
+  "task_memory_max_bytes": 1649267441664,
+  "unit": "myfenics-case-20261022T052342-2715327",
+  "window_entry_source_sha": "3d0dafa312f36b1953a80e364c21fa7998825b84",
+  "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v9_24h.json",
+  "window_sha256": "a7cac8f274dc17f552c57462da0a386a0c808580b8fc1172c1c88f0ee3075477",
+  "workflow_error": {
+    "message": "Task41 numerical-output directory is missing",
+    "type": "ValueError"
+  }
+}

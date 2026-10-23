@@ -1,0 +1,39 @@
+{
+  "schema": "task41.v9.campaign_run_parent_ledger.v1",
+  "task_id": "task41extra_phi90_p50x50_g17x20",
+  "case_id": "B0",
+  "run_id": "20261022T052401.200732Z",
+  "service": "myfenics-case-20261022T052342-2715327.service",
+  "source_sha": "59722cca5e35eac65efead9fd27f7d7fc0c70419",
+  "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v9_24h.json",
+  "window_sha256": "ea6b38c3bc791ace068c75188a562023cae197f7016f110b0b86970891c46c8d",
+  "t0_utc": "2026-10-22T01:12:42.209257168Z",
+  "numerical_deadline_utc": "2026-10-23T00:52:42.209257168Z",
+  "overall_deadline_utc": "2026-10-23T01:12:42.209257168Z",
+  "campaign_accounting": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v9_24h.jsonl",
+    "bytes_at_capture": 176702956,
+    "record_count_at_capture": 149601,
+    "start_record_for_run": {
+      "sequence": 3393,
+      "sample_utc": "2026-10-22T05:24:01.459270912Z",
+      "cumulative_charged_seconds": 15079.25563221474
+    },
+    "last_record": {
+      "sequence": 149600,
+      "label": "launcher_after_watchdog_task41_p0",
+      "phase": "numeric",
+      "sample_utc": "2026-10-23T00:50:08.039622539Z",
+      "cumulative_charged_seconds": 85045.9879224967,
+      "cutoff_seconds": 85200.0
+    },
+    "campaign_increment_between_records_seconds": 69966.73229028196,
+    "numeric_cutoff_remaining_at_last_record_seconds": 154.0120775033,
+    "interpretation": "append-only cumulative campaign ledger; this increment is a distinct accounting boundary and is not added to or substituted for run_summary full_workflow_monotonic_seconds"
+  },
+  "legacy_v6_parent_cost_ledger_reference": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v6_24h.jsonl",
+  "legacy_v6_parent_cost_ledger_available_at_capture": false,
+  "unavailable_historical_costs": "UNKNOWN; not reconstructed from V9",
+  "run_summary_full_workflow_monotonic_seconds": 69966.90540991211,
+  "run_summary_full_workflow_time_exceeded": false
+}

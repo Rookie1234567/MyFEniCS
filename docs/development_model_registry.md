@@ -2514,3 +2514,8 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 | 下一最小证据 | active行4766937关联cell/key/maps和同身份局部分项；现有全域Q未拆分 | 不用旧两格或局部PASS替代全域归因；200q/FGMRES未解锁 |
 
 源184822fa7ec5cd2af33a6ff39b5c6e7e5641cab6；审核及合同身份、8份新闭合向量hash、旧负结果与窗口账见[response_v7](task41extra_phi90_p50x50_g17x20/response_v7.md)、[V7 compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v7_saved_attribution_20261021.json)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)。没有新增模型求解或最终2TB/48h资格。
+
+
+## Task41extra V9完整作用负结果（2026-10-23）
+
+同LU直接RHS候选局部改善，但原尺寸28000-key两列action相对差2.674977063720297e-10、5.613598120037966e-10，均超过1e-11；恢复与200q未运行。workflow69966.90540991211s，owner68236.865869666s；tree RSS450117619712B、cgroup450366337024B，task swap0。窗口费用与workflow为包含关系，不相加；未记录子项保留UNKNOWN。compact审核重现FAIL，正式terminal checker缺numerical-output未运行。见[response_v9](task41extra_phi90_p50x50_g17x20/response_v9.md)及原始保存证据；完整场/精度/2TB/48h未通过。
