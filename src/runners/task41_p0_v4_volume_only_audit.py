@@ -3507,6 +3507,16 @@ def _v11_local_replay_delta_diagnostic(
     }
 
 
+
+def _task41_p0_v11_metadata_accounting_path_matches(
+    metadata_window_state: Mapping[str, Any],
+    old_window: Any,
+) -> bool:
+    """Bind the saved receipt path to the accounting ledger, not the window JSON."""
+
+    return metadata_window_state.get("path") == str(old_window.accounting_path)
+
+
 def _run_v11_selected_trace_star_candidate_replay(
     *,
     args: argparse.Namespace,
@@ -3630,7 +3640,7 @@ def _run_v11_selected_trace_star_candidate_replay(
         or fixed_window.sha256 != old_window.sha256
         or not isinstance(metadata_window_state, Mapping)
         or metadata_window_state.get("campaign_window_sha256") != old_window.sha256
-        or metadata_window_state.get("path") != str(old_window.path)
+        or not _task41_p0_v11_metadata_accounting_path_matches(metadata_window_state, old_window)
         or not isinstance(metadata_window_accounting, Mapping)
         or metadata_window_accounting.get("campaign_window_sha256") != old_window.sha256
         or metadata_report.get("donor_manifest_sha256")

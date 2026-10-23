@@ -1,0 +1,39 @@
+{
+  "_fixture_source": {
+    "path": "/tmp/task41-v11-audit/task41_p0_v8_selected_trace_star_metadata.json",
+    "sha256": "332baa3a5253a8322b56615c7fe087e401f909c3c889fa048fccc3f9f2b9fcd3"
+  },
+  "metadata_report": {
+    "consumer_contract_sha256": "af27a07502f72f5d3d1effecf98bda21f09e95cca230278e05ed1a63eeaf8931",
+    "consumer_source_sha": "967ad08d7da75ff8fa4e49bd63ed9abe53469d46",
+    "donor_manifest_sha256": "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465",
+    "initial_fixed_window_state": {
+      "accounting_record": {
+        "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4"
+      },
+      "campaign_window_sha256": "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_saved_diagnostics_6h.jsonl"
+    },
+    "schema": "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1",
+    "selected_trace_star_metadata_only": {
+      "incident_cell_order": [
+        360,
+        446
+      ],
+      "numerical_work_started": false,
+      "schema": "task41.p0.v8.selected_trace_star_metadata_only.v1",
+      "selected_active_row": 87567,
+      "selected_cells": [
+        {
+          "cell_index": 360
+        },
+        {
+          "cell_index": 446
+        }
+      ],
+      "selected_original_row": 250113,
+      "status": "COMPLETED_METADATA_ONLY"
+    },
+    "status": "COMPLETED_METADATA_ONLY"
+  }
+}
