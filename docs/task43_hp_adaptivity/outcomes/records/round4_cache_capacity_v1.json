@@ -102,7 +102,7 @@
     "abi": "PASS: qualified activation, PETSc complex128, int64, MPI size 1",
     "command": "source scripts/activate_task40_phi90_pord64.sh && taskset -c 1 python -m pytest -q -o faulthandler_timeout=300 src/test/test_task43_primal_p_transfer.py src/test/test_186_task035d_variable_p_transfer.py",
     "result": "4 passed in 51.13s",
-    "log_path": "/tmp/task43/round4_cache_fix_targeted.log",
+    "log_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt1/cache_fix_targeted.log",
     "log_sha256": "19b3baef37b825f05a0ab3d132b241cb8318f96f25ad9ee6c4828957fee4e566"
   },
   "static_checks": {
