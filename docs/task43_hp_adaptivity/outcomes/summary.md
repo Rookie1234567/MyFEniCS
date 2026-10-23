@@ -16,7 +16,7 @@
 | 真实场接线级锚点 | 三个 36 单元 h100 算例均通过同阶、完整场/端口和 MPI 等价 Gate | 属于 `numerical_sanity_only`，不能代替空间精度证明 |
 | 正式 180 单元起点 | 3×10×6、active p3；独立 A6=2.3848e−10，condensed residual=6.3065e−11，能量闭合差3.2516e−13；15,120独立 FE DoF | [正式起点与参考恢复](records/initial_current_and_reference_restore_v1.json)；只通过离散求解门，空间精度待比较 |
 | 丰富参考的原场恢复 | Y6_1/Y6_2 的576单元p6系数、网格/周期约束与历史612模态身份吻合；12,800点E差0，H相对差约8.7e−16 | 同上；只取得恢复身份，不等于完整参考精度、q/R14或侧壁资格 |
-| 自适应闭环与成本 | 两个p-up候选已按冻结噪声规则接受，accepted updates=2；Round-2 h被严格得分上界剪枝而未运行，h资格仍unknown；同精度成本优势未建立，最终精度仍未通过 | [transition 1记录](records/round1_selection_transition1_v1.json)；[transition 2及成本记录](records/round2_selection_transition2_v1.json) |
+| 自适应闭环与成本 | 三个p-up候选已按冻结噪声规则接受，accepted updates=3；Round-1 h受控停止/unknown，Round-2 h与Round-3 h均按严格含噪得分上界剪枝、未运行；真实h完整资格仍缺，最终精度与同精度成本优势未通过 | [transition 1](records/round1_selection_transition1_v1.json)、[transition 2](records/round2_selection_transition2_v1.json)、[transition 3](records/round3_selection_transition3_v1.json) |
 | 迭代与 0.7 nm | `not_run`，等待前置 Gate | 不启动额外 campaign |
 
 局部 p 自适应通过增加选定单元及共享边、面的多项式阶次来提高表达能力；局部 h 自适应把选定单元分成八个更小单元。二者均需额外约束，保证相邻单元和周期边界上的场能够正确连接。当前组件验证只说明这些空间与装配操作局部一致，还不能证明真实散射解更准确。
@@ -44,6 +44,8 @@ attempt1 与 attempt2 是两个独立结果，均保留。attempt1 使用未缩�
 | Round-1 h：46个标记根单元请求细化，闭包实际形成600个p3叶单元 | legacy求解器报告R/T=0.552257539825/0.015288131019；`A_volume_total=null`，不是Task43 gated物理结果 | 计划审计FE DoF=25,635迹+21,600内部=47,235（较parent +32,115）；增广矩阵26,247行、6,695,999 used NNZ | watchdog记录`USER_CONTROLLED_STOP`，2,430.829s，进程树RSS峰2,904,961,024B、task VmSwap峰0；solver residual=7.4766e−10。未保存Task43独立A6、完整field/storage或候选record，故h数值资格unknown |
 | Round-2 p-up：180叶；51个请求升阶、41个邻接闭包强制升阶，p3/p4/p5=81/60/39 | R/T/A_volume=0.385363241190/0.023644896449/0.590991862361；η_G=0.292758831001→0.124586848900；J∞=367685.6637→134007.8296，witness为R00_s | 独立FE=13,602迹+18,756内部=32,358（较parent +12,679）；612通道 | watchdog2,252.183s、进程树RSS峰2,165,133,312B、task VmSwap峰0；A6=2.7081e−9、凝聚残差=3.1939e−13、闭合差=2.7267e−13。top_p固定尺度误差2.32894e−4→2.59190e−4略恶化，bottom_p 4.00439e−4→2.88524e−4改善；依冻结单位DoF分数接受为transition 2，最终1e−4精度门未通过 |
 | Round-2 h：51个标记根请求细化、6个材料闭包强制细化，审计形成579叶、p3/p4=246/333 | 不运行PDE；按当前parent `η_G≥0`，新增独立FE DoF=60,349 | 独立FE=35,208迹+44,820内部=80,028；跨网格转移仍not_run | h实体审计嵌套耗时461.392s；包含p/h计划和p同网格转移的runner内部耗时767.096s（以外层shell时间推得的wrapper为774.183s，二者嵌套不相加）。含噪score上界4.85125e−6，低于实测p-up保守下界1.32631e−5，按预冻结规则剪枝本候选；该剪枝不构成h Gate通过，后续真实h资格仍未关闭 |
+| Round-3 p-up：60个请求升阶、9个邻接闭包强制升阶，180叶，p3/p4/p5/p6=51/60/60/9 | R/T/A_volume=0.293641473138/0.037723817989/0.668634708875；η_G=0.124586848900→0.048336049703；J∞=134007.8296→42271.5272，witness为R00_s | 独立FE=16,442迹+26,766内部=43,208（较parent +10,850）；增广矩阵17,054行、7,862,404 used NNZ；612通道 | watchdog 2,448.934s、进程树RSS峰2,783,928,320B、task VmSwap峰0；A6=4.4025e−9、凝聚残差=4.5730e−13、能量闭合差=1.5381e−12。按冻结规则接受为transition 3（accepted updates=3），但η_G/J∞仍远高于最终精度限值 |
+| Round-3 h：60个标记根请求细化，审计形成600叶、p3/p4/p5=228/270/102 | 不运行PDE；新增独立FE DoF=71,294，含噪score上界1.74764e−6；p-up保守下界7.02689e−6 | p/h两候选计划及p转移合计watchdog 918.234s（h实体审计约599.030s为其子阶段）；本轮h跨网格转移和求解均not_run | 按冻结分数界严格剪枝本h候选，不是h Gate通过；至少一次完整真实h资格仍未完成 |
 
 current的R00_s=0.807460398697、R00_p=1.23971e−26，R00_total为两者之和。比较器在所有三张实际网格断点并集上用张量 Gauss 规则重新采样原始高阶电场和旋度；q8 有589,824点，q10 有1,152,000点，两者积分体积均为350,000 nm³。q8/q10 的每单元 G² 贡献最大绝对差为1.64e−11，46个标记完全相同，表明这次标记对积分阶数稳定。此处的 G 衡量电场及其旋度差异，用固定入射场范数处理近零分母；它用于分配下一轮计算，不表示已知连续真误差。
 
@@ -62,7 +64,9 @@ h算例完成矩阵分解、回代、旧求解器显式残差及其R/T输出后�
 
 Round-2 p-up 首次求解完成内部有限元场恢复后，在进入 live observer 时因原 full-active residual 未过 1e−9 preflight 而失败；Task43 完整场 checkpoint/采样未写出，独立 A6 未运行。保留该失败和资源记录。之后同一计划显式启用 same-LU 回代：只复用原矩阵、右端和 LU 因子，true residual 有限且严格下降后才更新原解向量；重试完成完整 field capture、独立 A6 和冻结比较，并已接受为 transition 2。首轮 h 的 watchdog 原始分类仍为 `USER_CONTROLLED_STOP`；用户明确表示没有手动停止，停止发送方仍未知，不把记录归因于用户。失败、修正、比较和成本证据见[组件记录](records/same_lu_residual_correction_component_v1.json)与[transition 2记录](records/round2_selection_transition2_v1.json)。
 
-本次current基于 `8fe6793e0a5e0689a5435ddf209d095b75b3bd0f` 加已归档dirty源码；完整35文件快照、命令/环境、分阶段时间及原始artifact哈希见[轻量记录](records/initial_current_and_reference_restore_v1.json)。使用既有JIT缓存，395.323s不是隔离冷缓存成本。当前已有两次p-up中间接受（accepted updates=2），η_G降至0.1245868489，但最终精度门尚未通过。Round-1 h 保持unknown/controlled_stop；Round-2 h 的实际计划在噪声得分上界比较后not_run，二者都不能写成h数值资格通过。Y5_1未参与选择，6×10×6、p6仍只作后续最终对照；尚无最终精度或同精度成本优势结论。下一轮从已接受 Round-2 p-up 场重新按θ=.5标记，并先核验实际h/p计划与独立FE DoF。
+本次current基于 `8fe6793e0a5e0689a5435ddf209d095b75b3bd0f` 加已归档dirty源码；完整35文件快照、命令/环境、分阶段时间及原始artifact哈希见[轻量记录](records/initial_current_and_reference_restore_v1.json)。使用既有JIT缓存，395.323s不是隔离冷缓存成本。当前已有三次p-up中间接受（accepted updates=3），η_G降至0.0483360497、J∞降至42271.53，但最终精度门仍未通过。Round-1 h保持unknown/controlled_stop；Round-2与Round-3 h按冻结噪声得分上界剪枝而未运行，因此都不是h数值资格通过。Y5_1未参与选择，6×10×6、p6仍只作后续最终对照；尚无最终精度或同精度成本优势结论。下一步从已接受Round-3 p-up场重新按θ=.5标记并核验实际h/p计划、独立FE DoF与转移。
+
+Round-3候选的原始记录、完整场比较、计划身份及主控从保存数组进行的非CI独立复算见[transition 3选择记录](records/round3_selection_transition3_v1.json)和[合并审计](records/round3_independent_audit_v1.json)。计划、求解和比较三个完成watchdog合计3472.925s；累计18个已完成watchdog的wall小计为12784.686s，明确不含未监控的参考/组件/规划成本，不能当作完整campaign总耗时。Round-3 h的分数上界小于p-up保守下界，故本轮h候选not_run；后续仍须完成一次真实h动作的Task43完整Gate。
 
 启动包装器曾因可选版本字段及在watchdog父进程提前初始化MPI而退出，均发生在PDE worker启动前；失败日志保留。Y6_1首次恢复误用了Task43简化模态序列化，历史SHA检查失败；改用历史原函数后exact hash通过，未改预期值或覆盖首试证据。后续审核另发现MPI采样的非root提前返回、未参与最后错误广播；已局部修复并通过MPI2成功及域外点集体失败测试。本次current为MPI1，原数据不受该分布式控制流修正影响。
 

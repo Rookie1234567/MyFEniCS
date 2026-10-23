@@ -1,0 +1,168 @@
+{
+  "schema": "task43.selection-decision.v1",
+  "status": "accepted",
+  "selected_candidate": {
+    "candidate_id": "round3_p_up",
+    "run_root": "benchmarks/artifacts/task43/round3_p_up_attempt1/run",
+    "record_sha256": "7d8323ca77ec9404abd70968b1bd2d7643e1843ef03416aede4011dd3b3486b2",
+    "storage_sha256": "c9c3b20afb8c690063a0f487d86e0b5ceb2571f4a4c078baf3931fb2045b244b",
+    "plan_sha256": "a6a4105c48a39c27ee10d71aa440de0c7653d8b792d430ee593e590d09938a96",
+    "comparison_record_path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round3_p_up_attempt1/candidate_comparison_v2.json",
+    "comparison_record_sha256": "e1b356a0c394bafd3b14b744aa1c6ea6b184cd1b37c2068557d991ae4497a244",
+    "independent_FE_dofs": 43208,
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647"
+  },
+  "decision": {
+    "candidate_id": "round3_p_up",
+    "parent_candidate_id": "round2_p_up",
+    "parent_selection_record_path": "docs/task43_hp_adaptivity/outcomes/records/round2_selection_transition2_v1.json",
+    "parent_selection_record_sha256": "b81f778fa7b9c526d786fcb62a4f74e8e41da503200435d2def6fa759fe1a6b7",
+    "transition": 3,
+    "state": "accepted",
+    "acceptance_scope": "intermediate_round_transition_only",
+    "rationale": "Candidate passes independently rechecked solver and physical hard gates, reduces eta_G beyond the frozen noise allowance, and stays within the frozen J_infinity allowance. Its conservative score lower bound strictly exceeds the h3 noise-inclusive upper bound computed from the audited h-plan independent-DoF increment. This accepts one intermediate transition only; h3 remains not_run/unqualified and final precision is not met.",
+    "accepted_updates_count": 3,
+    "final_accuracy_or_cost_advantage_claimed": false
+  },
+  "frozen_rule": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "comparison_contract_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+    "reference_calibration_sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+    "selection_reference": "Y6_1",
+    "holdout_read": false,
+    "final_p6_control_read": false
+  },
+  "candidate_result": {
+    "action": "p_up",
+    "round": "round3",
+    "plan_audit_path": "benchmarks/artifacts/task43/round3_plan_transfer_attempt1/plan_output/plan_audit.json",
+    "plan_audit_sha256": "e89eaced5c6de1c0981a95f44f527a26f54995b21f954c4ba901fa12594a5783",
+    "candidate_plan_sha256": "a6a4105c48a39c27ee10d71aa440de0c7653d8b792d430ee593e590d09938a96",
+    "candidate_record_path": "benchmarks/artifacts/task43/round3_p_up_attempt1/run/task43_round1_candidate_record.json",
+    "candidate_record_sha256": "7d8323ca77ec9404abd70968b1bd2d7643e1843ef03416aede4011dd3b3486b2",
+    "recovered_storage_path": "benchmarks/artifacts/task43/round3_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+    "recovered_storage_sha256": "c9c3b20afb8c690063a0f487d86e0b5ceb2571f4a4c078baf3931fb2045b244b",
+    "pre_validation_checkpoint_path": "benchmarks/artifacts/task43/round3_p_up_attempt1/run/pre_validation_checkpoint.npz",
+    "pre_validation_checkpoint_sha256": "c9c3b20afb8c690063a0f487d86e0b5ceb2571f4a4c078baf3931fb2045b244b",
+    "checkpoint_equals_final_storage_sha256": true,
+    "source_identity": {
+      "git_head": "45c0be56204fe69305138f55a52e65eb1a9f51fe",
+      "dependency_archive_sha256": "6e9a2642a3b61b485d0085c92d135a0c9b0e9f44bc135ba06ba5d9eb1aff702d"
+    },
+    "space": {
+      "leaves": 180,
+      "requested_p_raises": 60,
+      "forced_p_neighbor_raises": 9,
+      "degree_histogram": {
+        "p3": 51,
+        "p4": 60,
+        "p5": 60,
+        "p6": 9
+      },
+      "independent_trace_dofs": 16442,
+      "active_cell_interior_dofs": 26766,
+      "independent_FE_dofs": 43208,
+      "added_independent_FE_dofs": 10850,
+      "augmented_matrix_rows": 17054,
+      "matrix_used_nnz": 7862404,
+      "matrix_allocated_nnz": 10306324,
+      "p_closure_iterations": 1,
+      "maximum_neighbor_p_jump_before_closure": 2,
+      "maximum_neighbor_p_jump_after_closure": 1
+    },
+    "hard_gates": {
+      "independent_A6_relative": 4.402493026846818e-09,
+      "A6_limit": 1e-06,
+      "direct_A6_target": 1e-08,
+      "condensed_relative": 4.573046632897864e-13,
+      "condensed_limit": 1e-09,
+      "energy_closure_abs": 1.5381029783156919e-12,
+      "energy_closure_limit": 1e-05,
+      "complete_612_mode_inventory_pass": true,
+      "all_hard_gates_pass": true
+    },
+    "physics": {
+      "R_total": 0.2936414731375668,
+      "T_total": 0.03772381798871858,
+      "A_volume": 0.6686347088752528,
+      "eta_parent": 0.12458684890039323,
+      "eta_candidate": 0.0483360497034636,
+      "G_improvement": 0.07625079919692963,
+      "J_infinity_parent": 134007.82955332665,
+      "J_infinity_candidate": 42271.527200642704,
+      "J_infinity_witness": "power.R00_s",
+      "J_infinity_noise_allowance": 0.12716416232413652
+    },
+    "ranking": {
+      "formula": "(eta_parent-eta_candidate +/- epsilon_G) / added_independent_FE_dofs",
+      "p_score_lower": 7.0268858099661775e-06,
+      "p_score_upper": 7.028561046610714e-06,
+      "h3_score_upper_including_noise": 1.7476356644204254e-06,
+      "strict_margin": 5.279250145545752e-06,
+      "h3_status": "pruned_by_frozen_rank_bound_not_run_unqualified",
+      "h3_added_independent_FE_dofs": 71294
+    },
+    "cost": {
+      "round3_plan_watchdog_seconds": 918.2344661178067,
+      "round3_solve_watchdog_seconds": 2448.93437492894,
+      "round3_comparison_watchdog_seconds": 105.75587855884805,
+      "round3_watchdog_cost_subtotal_seconds": 3472.924719605595,
+      "cumulative_completed_watchdog_count": 18,
+      "cumulative_completed_watchdog_wall_sum_seconds": 12784.686087460723,
+      "cumulative_inventory_path": "docs/task43_hp_adaptivity/outcomes/records/completed_watchdog_cost_inventory_v1.json",
+      "cumulative_inventory_sha256": "4126c02925d6b72507777d1b474c9ad77f22f7bfe29d0d3191f3929503dbdd99",
+      "scope": "The completed-watchdog subtotal excludes unmonitored planning, reference recovery/comparison and component work; it is not total campaign cost. Nested runner timings are not added.",
+      "watchdog_summaries": {
+        "plan": {
+          "path": "benchmarks/artifacts/task43/round3_plan_transfer_attempt1/watchdog/summary.json",
+          "sha256": "091c758f666f1f2130dac3d30b41ef0567f24b8cc6067146d9268316ba7dc4d1",
+          "classification": "COMPLETED",
+          "elapsed_seconds": 918.2344661178067
+        },
+        "solve": {
+          "path": "benchmarks/artifacts/task43/round3_p_up_attempt1/watchdog/summary.json",
+          "sha256": "04899044517bc1ac8bcdf59513b86942b5bae043d48b20ec649abd4846bfee03",
+          "classification": "COMPLETED",
+          "elapsed_seconds": 2448.93437492894
+        },
+        "comparison": {
+          "path": "benchmarks/artifacts/task43/round3_p_up_attempt1/comparison_watchdog/summary.json",
+          "sha256": "6ec1cb51f7d87ab346ea34fa57588249d4d4eb28f573adad83ffd84911373f4a",
+          "classification": "COMPLETED",
+          "elapsed_seconds": 105.75587855884805
+        }
+      }
+    },
+    "h_candidate": {
+      "candidate_id": "round3_h_refine",
+      "plan_path": "benchmarks/artifacts/task43/round3_plan_transfer_attempt1/plan_output/plans/round3_h_refine.json",
+      "plan_sha256": "019e6f8be4f4e0c7396dfebcbcafa8199a231898d3e0506c3fa377c918c08e44",
+      "plan_audit_path": "benchmarks/artifacts/task43/round3_plan_transfer_attempt1/plan_output/plan_audit.json",
+      "plan_audit_sha256": "e89eaced5c6de1c0981a95f44f527a26f54995b21f954c4ba901fa12594a5783",
+      "leaves": 600,
+      "independent_trace_dofs": 41804,
+      "active_cell_interior_dofs": 61848,
+      "independent_FE_dofs": 103652,
+      "added_independent_FE_dofs": 71294,
+      "score_upper_including_noise": 1.7476356644204254e-06,
+      "status": "pruned_by_frozen_rank_bound_not_run_unqualified"
+    }
+  },
+  "independent_review": {
+    "classification": "non_ci_independent_recomputation_from_saved_solver_record_fields_and_field_arrays",
+    "record_path": "docs/task43_hp_adaptivity/outcomes/records/round3_independent_audit_v1.json",
+    "record_sha256": "c4ffac387d5b582f8884e1978da125141d7c5aac6b284c34aa4aa6deca2eafa6",
+    "raw_solver_gates_rechecked": true,
+    "G_and_complete_J_recomputed_from_saved_arrays": true,
+    "storage_and_checkpoint_shared_arrays_bitwise_equal_count": 11,
+    "selection_inputs_match_recomputed_values": true
+  },
+  "limitations": {
+    "h_qualification": "A real h action with full Task43 gates remains outstanding; this round h3 was not run under the frozen ranking bound.",
+    "accuracy": "eta_G=0.048336 remains above the final accuracy tolerance; J_infinity=42271.53 also remains above its final tolerance.",
+    "references": "Y5_1 holdout and final 6x10x6 p6 control were excluded from marking and selection.",
+    "continuum": "No continuum-convergence claim."
+  }
+}

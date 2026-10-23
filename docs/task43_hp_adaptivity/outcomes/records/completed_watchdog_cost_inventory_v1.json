@@ -1,0 +1,170 @@
+{
+  "scope": "completed watchdog summaries only; excludes in-flight runs, unmonitored planning/reference costs and historical reference development; not full campaign total",
+  "rows": [
+    {
+      "path": "current_180/attempt1/watchdog_supervised/summary.json",
+      "sha256": "ebdd2dc18eea2e8852502ec5b2cbf06c485df24da305cf0470c0a77d91a10a84",
+      "classification": "COMPLETED",
+      "wall_seconds": 395.3232121630572,
+      "simultaneous_tree_rss_peak_bytes": 1270714368,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "current_180/tightening_attempt1/watchdog_supervised/summary.json",
+      "sha256": "8f09c88cc715806f8cba5668cf8e15358f1fee9c819eb9561f164c1006dc97c3",
+      "classification": "MONITORING_FAILED",
+      "wall_seconds": 0.05427989736199379,
+      "simultaneous_tree_rss_peak_bytes": null,
+      "task_swap_peak_bytes": null,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "current_180/tightening_attempt2/watchdog_supervised/summary.json",
+      "sha256": "39bc8a51889217c840193fbf51ae7e105b7d261ad35f1c676f1109cd5637dcfa",
+      "classification": "COMPLETED",
+      "wall_seconds": 930.6666831700131,
+      "simultaneous_tree_rss_peak_bytes": 1428434944,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "current_180/tightening_marking_q8/attempt1/watchdog_supervised/summary.json",
+      "sha256": "afa5412775419461cc6d9da060eba6464d25f62ec5a20daf301e00f528e0bd10",
+      "classification": "WORKER_FAILED",
+      "wall_seconds": 4.827293783891946,
+      "simultaneous_tree_rss_peak_bytes": 179331072,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "current_180/tightening_marking_q8_watchdog/attempt2/summary.json",
+      "sha256": "87c7f130c78977becb6d9564566bf9a11cf087fb06b32b5d98b27a47f6c882f7",
+      "classification": "COMPLETED",
+      "wall_seconds": 66.0884015779011,
+      "simultaneous_tree_rss_peak_bytes": 895148032,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round1_candidate_comparison_watchdogs/p_up_attempt3_retry2/summary.json",
+      "sha256": "40fc44b6491c95473578eabcc9333a831d516d710be712a32195052bb9579981",
+      "classification": "WORKER_FAILED",
+      "wall_seconds": 7.49261120473966,
+      "simultaneous_tree_rss_peak_bytes": 251088896,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round1_candidate_comparison_watchdogs/p_up_attempt3_retry3/summary.json",
+      "sha256": "4114aab19cfffc7cbc66b6e03aa7fe62cf54d1dbb6de99cf746b21e16e5844bc",
+      "classification": "COMPLETED",
+      "wall_seconds": 116.73290508473292,
+      "simultaneous_tree_rss_peak_bytes": 995164160,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round1_candidates/attempt2/h_attempt1/watchdog_supervised/summary.json",
+      "sha256": "eec4bacc3a426b44b0674c2f2e847368e49b86e6d8e9dc7845dafffec0e5e80a",
+      "classification": "USER_CONTROLLED_STOP",
+      "wall_seconds": 2430.828569317702,
+      "simultaneous_tree_rss_peak_bytes": 2904961024,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round1_candidates/attempt2/p_up/watchdog_supervised/summary.json",
+      "sha256": "5ef45ea1791b6c783db0b556bc5c7bf841a8f18b4c6ac6cde925263fa8c3206b",
+      "classification": "WORKER_FAILED",
+      "wall_seconds": 6.404696295969188,
+      "simultaneous_tree_rss_peak_bytes": 172339200,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round1_candidates/attempt2/p_up_attempt2/watchdog_supervised/summary.json",
+      "sha256": "6ea98a4512d6b5a67a81367d16a391f188701ac399891c8f45ad94bf8059c7f7",
+      "classification": "WORKER_FAILED",
+      "wall_seconds": 6.286850667092949,
+      "simultaneous_tree_rss_peak_bytes": 197406720,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round1_candidates/attempt2/p_up_attempt3/watchdog_supervised/summary.json",
+      "sha256": "62ae766bcb2f5d2a8742d96e821c6660a867eddb8fe26dfaa6846a9a2b17de27",
+      "classification": "COMPLETED",
+      "wall_seconds": 1694.6864669411443,
+      "simultaneous_tree_rss_peak_bytes": 1438400512,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round1_candidates/comparisons/p_up_attempt3_retry1/watchdog_supervised/summary.json",
+      "sha256": "0deadbf348b46f4b6336cfd79714450c4bffc6d5c46425e238463b4769df0b5a",
+      "classification": "WORKER_FAILED",
+      "wall_seconds": 7.510230244137347,
+      "simultaneous_tree_rss_peak_bytes": 227303424,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round2_p_up_attempt1/watchdog/summary.json",
+      "sha256": "fe6e4fce879b72bd03ae2a17edc1bd56e583ef02e2f7813ce273fbac9095e5d0",
+      "classification": "WORKER_FAILED",
+      "wall_seconds": 1283.6054411781952,
+      "simultaneous_tree_rss_peak_bytes": 1965150208,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round2_p_up_attempt2/watchdog/summary.json",
+      "sha256": "8eed311be1e68c07c7dc5c97763082622b36be94434bcc25302d0c7a476d9d84",
+      "classification": "COMPLETED",
+      "wall_seconds": 2252.1829847469926,
+      "simultaneous_tree_rss_peak_bytes": 2165133312,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round2_p_up_attempt2_comparison/watchdog/summary.json",
+      "sha256": "47f7ee856ef43ba793336b23b772ceba020cda130dd5386026a679b70a55314c",
+      "classification": "COMPLETED",
+      "wall_seconds": 109.0707415821962,
+      "simultaneous_tree_rss_peak_bytes": 1122385920,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round3_plan_transfer_attempt1/watchdog/summary.json",
+      "sha256": "091c758f666f1f2130dac3d30b41ef0567f24b8cc6067146d9268316ba7dc4d1",
+      "classification": "COMPLETED",
+      "wall_seconds": 918.2344661178067,
+      "simultaneous_tree_rss_peak_bytes": 1375952896,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round3_p_up_attempt1/watchdog/summary.json",
+      "sha256": "04899044517bc1ac8bcdf59513b86942b5bae043d48b20ec649abd4846bfee03",
+      "classification": "COMPLETED",
+      "wall_seconds": 2448.93437492894,
+      "simultaneous_tree_rss_peak_bytes": 2783928320,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "path": "round3_p_up_attempt1/comparison_watchdog/summary.json",
+      "sha256": "6ec1cb51f7d87ab346ea34fa57588249d4d4eb28f573adad83ffd84911373f4a",
+      "classification": "COMPLETED",
+      "wall_seconds": 105.75587855884805,
+      "simultaneous_tree_rss_peak_bytes": 1139666944,
+      "task_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    }
+  ],
+  "completed_watchdog_wall_sum_seconds": 12784.686087460723,
+  "completed_watchdog_count": 18,
+  "raw_stop_label_note": "USER_CONTROLLED_STOP is raw watchdog label; user, root and Luna deny issuing the old h termination. Sender unknown."
+}
