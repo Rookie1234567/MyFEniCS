@@ -35,6 +35,9 @@ _SUPPORTED_DEGREES = (3, 4, 5, 6)
 _HCURL_FAMILY = "hcurl"
 _H1_FAMILY = "h1"
 _FAMILIES = (_HCURL_FAMILY, _H1_FAMILY)
+# Keep the bounded mixed-map working set larger than the measured 34-map
+# p3-p6 candidate, so per-cell transfer and surface projections can reuse it.
+_MIXED_REFERENCE_CACHE_MAXSIZE = 64
 
 
 class ExactSequenceDegreeError(ValueError):
@@ -351,7 +354,7 @@ class VariablePReferenceSpace:
         )
 
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=_MIXED_REFERENCE_CACHE_MAXSIZE)
 def _from_p6_interpolation(
     degree_map: HexaEntityDegreeMap,
 ) -> tuple[np.ndarray, float]:
@@ -1042,7 +1045,7 @@ def build_p4_p6_entity_dof_catalog() -> dict[str, Any]:
     }
 
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=_MIXED_REFERENCE_CACHE_MAXSIZE)
 def build_variable_p_reference_space(
     degree_map: HexaEntityDegreeMap,
 ) -> VariablePReferenceSpace:

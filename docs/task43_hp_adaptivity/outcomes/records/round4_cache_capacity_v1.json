@@ -1,0 +1,121 @@
+{
+  "schema": "task43_cache_capacity_change_v1",
+  "status": "bounded_cache_fix_targeted_tests_pass_plan_revalidation_pending",
+  "base_commit": "406f3a4059afe415560bed1c2923830734d8e7cd",
+  "source_change": {
+    "files": [
+      {
+        "path": "src/adaptivity/exact_sequence_variable_p.py",
+        "before_sha256": "352af95d03d7e3efa5dde68c937e89d6d0f8e784ca4e60078037446db74b371f",
+        "after_sha256": "36e4d9d1212e3ec012484c72bd9d654e50aabd72435d58203611c8578e51c79b",
+        "change": "Increase only build_variable_p_reference_space and _from_p6_interpolation bounded LRU capacities from 32 to 64; keep _create_active_element at 32."
+      },
+      {
+        "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+        "before_identity": "file at commit 406f3a4059afe415560bed1c2923830734d8e7cd",
+        "after_sha256": "aa310573c6d9b9036fc01f451629ec59cdb364a9c906db1824bb486ca79f8fb3",
+        "change": "Plan audit records per-rank unique cell degree maps, the additional uniform-p6 map, reference-space cache capacity, and authority-phase hit/miss snapshots without rebuilding reference spaces or adding MPI collectives."
+      }
+    ],
+    "numerical_behavior_changed": false,
+    "memory_effect": "The two cache upper bounds grow by 32 entries; actual additional resident memory is not measured and will be checked in the repeated plan audit."
+  },
+  "trigger_attempt": {
+    "directory": "benchmarks/artifacts/task43/round4_plan_transfer_attempt1",
+    "source_hash_manifest_sha256": "7bf472ad30716557a20878e17d529e700a79dcd19d7624687a4b2798ee0cbcf5",
+    "input_hash_manifest_sha256": "ce3b24caad38c36ce78cc78272dba819836ef110b4c712a92058644accd870ae",
+    "p_plan_sha256": "2704f49071a6c873e91d58e36ae4511a40abb3dc66a3ac76545c5ba93bad32f7",
+    "p_audit_sha256": "ed32377f343a627a0db72d2456f93cbe2c87d8f7a19d0cdfacd5700f46062c2b",
+    "h_plan_sha256": "6244cb139de28b8c47564a3bbf7cdd7090a9bfaa829a0e826e894509ec19a23e",
+    "watchdog_summary_sha256": "55ac589de6e66beaef475d4ca58b77ce6861be6aa218d14a62611e22c1f31e8a",
+    "watchdog_classification": "USER_CONTROLLED_STOP",
+    "stop_initiator": "task controller",
+    "stop_reason": "Controlled stop after the completed p-transfer audit showed repeated construction with a 32-entry cache and the remaining h audit was still running. This is a performance/cache-capacity stop, not a numerical or resource failure.",
+    "watchdog_elapsed_seconds": 1712.2734273900278,
+    "sampled_process_tree_rss_peak_bytes": 1930588160,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "watchdog_summary_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt1/watchdog/summary.json"
+  },
+  "completed_p_plan_audit": {
+    "classification": "mesh_and_entity_closure_only_no_pde_solve",
+    "root_cells": 180,
+    "leaf_cells": 180,
+    "requested_p_raises": 57,
+    "forced_p_neighbor_raises": 9,
+    "closure_iterations": 1,
+    "maximum_neighbor_p_jump": "2 to 1",
+    "cell_interior_histogram": {
+      "p3": 21,
+      "p4": 61,
+      "p5": 82,
+      "p6": 16
+    },
+    "independent_fe_dofs": 53659,
+    "independent_trace_rows": 19435,
+    "active_cell_interior_rows": 34224,
+    "added_independent_fe_dofs": 10451,
+    "same_mesh_parent_transfer": {
+      "status": "pass",
+      "p6_relative_error": 7.635030588589495e-14,
+      "shared_active_row_relative_error": 2.0285473452413606e-15,
+      "trace_constraint_relative_error": 3.09755567155659e-15,
+      "recovered_coefficient_relative_error": 5.488449593140721e-15,
+      "matrix_allocated": false,
+      "pde_solve_performed": false
+    },
+    "timing_seconds": {
+      "plan_and_authority": 407.5658698063344,
+      "accepted_parent_transfer": 1171.1602728581056,
+      "total_p_audit": 1578.7271853731945
+    },
+    "reference_space_cache": {
+      "unique_cell_degree_maps": 34,
+      "maxsize_before": 32,
+      "before": {
+        "hits": 146,
+        "misses": 34,
+        "currsize": 32
+      },
+      "after": {
+        "hits": 512,
+        "misses": 62,
+        "currsize": 32
+      },
+      "transfer_delta": {
+        "hits": 366,
+        "misses": 28
+      },
+      "interpretation": "The 34-map workset exceeds the 32-entry bound; 28 cache misses/reconstructions occurred during the transfer audit. The repeated production port and independent-action projections traverse cells for each mode, so the same capacity mismatch could multiply this cost."
+    },
+    "audit_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt1/plan_output/plans/round4_p_up.audit.json"
+  },
+  "h_plan_audit": {
+    "plan_path": "benchmarks/artifacts/task43/round4_plan_transfer_attempt1/plan_output/plans/round4_h_refine.json",
+    "plan_sha256": "6244cb139de28b8c47564a3bbf7cdd7090a9bfaa829a0e826e894509ec19a23e",
+    "status": "not_completed",
+    "reason": "The controller stopped the watchdog before h authority/DoF audit completed.",
+    "numeric_or_resource_failure": false
+  },
+  "targeted_tests": {
+    "abi": "PASS: qualified activation, PETSc complex128, int64, MPI size 1",
+    "command": "source scripts/activate_task40_phi90_pord64.sh && taskset -c 1 python -m pytest -q -o faulthandler_timeout=300 src/test/test_task43_primal_p_transfer.py src/test/test_186_task035d_variable_p_transfer.py",
+    "result": "4 passed in 51.13s",
+    "log_path": "/tmp/task43/round4_cache_fix_targeted.log",
+    "log_sha256": "19b3baef37b825f05a0ab3d132b241cb8318f96f25ad9ee6c4828957fee4e566"
+  },
+  "static_checks": {
+    "ruff_changed_files_default": "round1_candidates.py passes; exact_sequence_variable_p.py retains the same baseline findings as the base commit: I001, C405, RUF022.",
+    "ruff_changed_files_select_E4_E7_E9_F": "PASS",
+    "compileall_changed_files": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "revalidation": {
+    "same_frozen_round4_plan": true,
+    "new_attempt_required": true,
+    "p_and_h_plan_identity_must_match": true,
+    "verify_cache_misses_transfer_wall_and_rss": true,
+    "status": "not_run"
+  }
+}

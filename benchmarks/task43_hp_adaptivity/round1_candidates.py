@@ -23,6 +23,10 @@ from benchmarks.task43_hp_adaptivity.h100_anchor import _h100_config
 from benchmarks.task43_hp_adaptivity.profile import (
     TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
 )
+from src.adaptivity.exact_sequence_variable_p import (
+    HexaEntityDegreeMap,
+    build_variable_p_reference_space,
+)
 from src.adaptivity.hcurl_broken_trace_graph import (
     raise_cell_degrees_for_p_up,
 )
@@ -561,6 +565,9 @@ def _audit_plan(
 ) -> dict[str, Any]:
     audit_started = time.perf_counter()
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    reference_cache_before = dict(
+        build_variable_p_reference_space.cache_info()._asdict()
+    )
     authority_started = time.perf_counter()
     mesh_data = build_stage4_local_h_mesh_data(cfg, plan_path, comm=comm)
     authority = build_stage4_local_h_reduction_authority(
@@ -570,6 +577,20 @@ def _audit_plan(
         active_fe_dof_gate_policy=TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
     )
     authority_wall_seconds = time.perf_counter() - authority_started
+    reference_cache_after = dict(
+        build_variable_p_reference_space.cache_info()._asdict()
+    )
+    local_degree_maps = {
+        cell.degree_map for cell in authority.degree_plan.entity_map.owned_cells
+    }
+    local_maps_with_uniform_p6 = local_degree_maps | {
+        HexaEntityDegreeMap.uniform(6)
+    }
+    local_reference_workset_size = len(local_maps_with_uniform_p6)
+    reference_cache_fits_local_workset = (
+        reference_cache_after["maxsize"] is None
+        or local_reference_workset_size <= reference_cache_after["maxsize"]
+    )
     audit = dict(authority.audit)
     degree_audit = dict(authority.degree_plan.audit)
     physical_audit = dict(audit["physical_trace"])
@@ -737,6 +758,23 @@ def _audit_plan(
             "maximum_trace_degree": max(distinct_trace_degrees),
             "degree_plan_pass": bool(degree_audit["pass"]),
             "entity_constraints_pass": bool(audit["pass"]),
+        },
+        "reference_space_cache_capacity_audit": {
+            "scope": "per_rank_local_owned_cells",
+            "rank": int(comm.rank),
+            "mpi_size": int(comm.size),
+            "local_unique_cell_degree_map_count": len(local_degree_maps),
+            "local_maps_including_uniform_p6": local_reference_workset_size,
+            "build_cache_maxsize": reference_cache_after["maxsize"],
+            "capacity_contains_local_workset": bool(
+                reference_cache_fits_local_workset
+            ),
+            "cache_before_authority": reference_cache_before,
+            "cache_after_authority": reference_cache_after,
+            "cache_delta_authority": {
+                key: int(reference_cache_after[key] - reference_cache_before[key])
+                for key in ("hits", "misses")
+            },
         },
         "dofs": {
             "parent_independent_fe_dofs": int(parent_independent_fe_dofs),
