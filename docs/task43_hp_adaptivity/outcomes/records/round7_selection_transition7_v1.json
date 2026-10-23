@@ -1,0 +1,242 @@
+{
+  "candidate_result": {
+    "action": "p_up",
+    "candidate_plan_sha256": "99105a4c6a54f8f5288f45ca9190e5ea3103d169e0f84627443230a815c3abcc",
+    "candidate_record_path": "benchmarks/artifacts/task43/round7_p_up_attempt1/run/task43_round1_candidate_record.json",
+    "candidate_record_sha256": "b888a91383a0f4def33752d14471021c2a004add74b57da621ef2d584db0d307",
+    "checkpoint_equals_final_storage_sha256": true,
+    "checkpoint_final_shared_array_bitwise_equal_count": 11,
+    "cost": {
+      "PDE_actual_within_overall_forecast": true,
+      "PDE_forecast_seconds": [
+        2700,
+        5100
+      ],
+      "base_assembly_includes_newprocess_spatial_preparation": true,
+      "cumulative_terminal_watchdog_count": 40,
+      "cumulative_watchdog_wall_sum_seconds": 48168.55420096498,
+      "historical_R6_p_transfer_1401s_retained_not_readded_to_PDE": true,
+      "no_same_problem_backend_speedup_claim": "R6/R7 p maps, FE andmatrix differ; measuredtimingdifferences do not prove optimization/backend acceleration.",
+      "plan1223s_is_calibration_not_extra_PDE_addend": true,
+      "prior_preparation_terminal_watchdog_count": 38,
+      "prior_preparation_watchdog_sum_seconds": 45188.612906735856,
+      "round7_comparison_watchdog_seconds": 239.52868414809927,
+      "round7_h_authority_seconds": 5380.286554027814,
+      "round7_light_preview_and_key_supplement_watchdog_seconds": 43.71652640495449,
+      "round7_p_authority_seconds": 1223.0157090299763,
+      "round7_p_transfer": "not_run_direct_solve_does_not_use_initial_guess",
+      "round7_p_transfer_wall_seconds": null,
+      "round7_plan_solve_comparison_watchdog_sum_seconds": 9605.71298382245,
+      "round7_plan_watchdog_seconds": 6625.771689593326,
+      "round7_solve_watchdog_seconds": 2740.4126100810245,
+      "scope": "only listed terminalwatchdog subtotal; includes watchedfixtures/failures/recovery; not unmonitoredtests/work or importedreferencegeneration, not fullcampaign total",
+      "stage_forecast_deviations": "setup62.240s below70–240s; A6692.990s below850–1300s. Formalh5380.287s exceeded25–75min prediction. Forecasts retained, not rewritten.",
+      "timing_inventory": {
+        "bytes": 4865,
+        "path": "benchmarks/artifacts/task43/round7_p_up_attempt1/solve_stage_timing_inventory.json",
+        "sha256": "42f72589a5add6827006a21e159d5cabc945b82e05fbb831c74b50dddd473a46"
+      }
+    },
+    "hard_gates": {
+      "channel_inventory": {
+        "all_numeric_outputs_finite": true,
+        "row_count": 612,
+        "unique_key_count": 612
+      },
+      "condensed_residual": {
+        "relative": 5.469946697245848e-13,
+        "residual_raw_l2_norm": 5.276309609090775e-13,
+        "rhs_raw_l2_norm": 0.9645998217400236
+      },
+      "energy_closure": {
+        "A_volume": 0.6914696566350618,
+        "R_total": 0.25141125128233965,
+        "T_total": 0.05711909208203873,
+        "absolute_1_minus_R_minus_T_minus_A": 5.598854713184664e-13
+      },
+      "independent_A6": {
+        "independent_rhs_raw_l2_norm": 0.9645998259017159,
+        "relative": 8.439660274144942e-09,
+        "residual_raw_l2_norm": 8.140894831109839e-09
+      },
+      "pass": true
+    },
+    "physics": {
+      "A_volume": 0.6914696566350618,
+      "G_improvement": 0.00021510751879259737,
+      "J_infinity_candidate": 54.87499312806232,
+      "J_infinity_noise_allowance": 0.12716416232413652,
+      "J_infinity_parent": 182.90587194208507,
+      "J_infinity_witness": "power.R00_s",
+      "R00_p": 3.0879278864466755e-24,
+      "R00_s": 0.25137718619312516,
+      "R00_s_absolute_tolerance": 1e-06,
+      "R00_total": 0.25137718619312516,
+      "R_total": 0.25141125128233965,
+      "T_total": 0.05711909208203873,
+      "aggregate_power_absolute_tolerance": 1e-05,
+      "all_J_components": {
+        "amplitude.bottom_p": 0.5337548609130081,
+        "amplitude.bottom_s": 1.1927729067109545,
+        "amplitude.top_p": 0.4249922549001348,
+        "amplitude.top_s": 1.210572417568829,
+        "field.E_scattered_code": 1.2839202588053735,
+        "field.E_total_code": 1.2839202588053735,
+        "field.G": 1.9459114321942683,
+        "field.H_scattered_A_per_m": 2.434068892393526,
+        "field.H_total_A_per_m": 2.4340688923935265,
+        "power.A_volume": 4.7870147098949545,
+        "power.R00_p": 7.449281437111698e-16,
+        "power.R00_s": 54.87499312806232,
+        "power.R00_total": 5.487499312806231,
+        "power.R_total": 5.678510089768273,
+        "power.T_total": 0.8914990378250386,
+        "power.max_individual_channel": 54.87499312806232
+      },
+      "eta_candidate": 0.00019459114321942683,
+      "eta_parent": 0.0004096986620120242,
+      "final_G_target": 0.0001,
+      "final_J_target": 1.0,
+      "final_accuracy_pass": false,
+      "power_absolute_errors_vs_Y6_1": {
+        "A_volume": 4.7870147098949545e-05,
+        "R00_p": 7.449281437111698e-22,
+        "R00_s": 5.487499312806232e-05,
+        "R00_total": 5.487499312806232e-05,
+        "R_total": 5.678510089768274e-05,
+        "T_total": 8.914990378250387e-06
+      },
+      "precision_note": "R/Av/R00_s及G仍超过最终限值，只有总T差已过1e-5；完整E/H和四组复幅未全部达标，J54.875>1。历史R5体吸收误差恶化保留，不称全程单调。"
+    },
+    "plan_audit_path": "benchmarks/artifacts/task43/round7_plan_authority_attempt1/plan_output/plans/round7_p_up.audit.json",
+    "plan_audit_sha256": "63d14a5174a8ab979b5df4d3a40ee0f05338562ac7d35e0d1b1bd6ee4c287530",
+    "pre_validation_checkpoint_path": "benchmarks/artifacts/task43/round7_p_up_attempt1/run/pre_validation_checkpoint.npz",
+    "pre_validation_checkpoint_sha256": "f82e658f06829d5b58cc7f8d75289c7421760ef38fbfed164f564b2c039aef94",
+    "pre_validation_checkpoint_sidecar_sha256": "16ea1c52eb18ad1af27f26482c570a08cb33c1a282ef1d0c9d9981f9891dc6c0",
+    "ranking": {
+      "formula": "(eta_parent-eta_candidate +/- epsilon_G) / actual_added_independent_FE_dofs",
+      "h_added_independent_FE_dofs": 189769,
+      "h_score_upper_including_noise": 2.206824195778172e-09,
+      "h_status": "audited_plan_only_pruned_by_frozen_rank_bound_not_run_unqualified",
+      "p_score_lower": 1.515071039829342e-08,
+      "p_score_upper": 1.6487400911104633e-08,
+      "root_recomputed_p_score_lower": 1.5150710398293432e-08,
+      "strict_margin": 1.2943886202515246e-08
+    },
+    "recovered_storage_path": "benchmarks/artifacts/task43/round7_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+    "recovered_storage_sha256": "f82e658f06829d5b58cc7f8d75289c7421760ef38fbfed164f564b2c039aef94",
+    "round": "round7",
+    "source_identity": {
+      "MPI_size": 1,
+      "PDE30_input_posthash_match": true,
+      "PETSc_int": "int64",
+      "PETSc_scalar": "complex128",
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "all50_source_posthash_match": true,
+      "branch": "task43_hp_adaptivity",
+      "clean_HEAD_actual_bytes_verified": true,
+      "comparison49_input_posthash_match": true,
+      "comparison_source_identity_stable": true,
+      "git_head_during_solve_comparison": "e53220aae5dff0af1996735254513c161eaa32f1",
+      "listed_scope_only_not_complete_transitive_closure": true,
+      "listed_source_count": 50,
+      "live_backend": "mumps",
+      "pre_run_archive": {
+        "bytes": 401168,
+        "path": "benchmarks/artifacts/task43/round7_p_up_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+        "sha256": "d8acf26c4c09aec405161353671c0952da0c115104f88ea495607b87aa05d9bc"
+      },
+      "pre_run_source_manifest": {
+        "bytes": 6169,
+        "path": "benchmarks/artifacts/task43/round7_p_up_attempt1/source_snapshot_pre_run/manifest.json",
+        "sha256": "583634fc0218c225f3f89a48c53dcab25d803f305c30561abb7c5e402b93c971"
+      },
+      "requested_backend": "mumps",
+      "summary_backend": "mumps",
+      "threads": 1,
+      "worker_CPU": [
+        1
+      ]
+    },
+    "space": {
+      "active_cell_interior_dofs": 65880,
+      "added_independent_FE_dofs": 13598,
+      "augmented_matrix_rows": 32289,
+      "degree_histogram": {
+        "p5": 72,
+        "p6": 108
+      },
+      "factor_nnz_reported": 120398039,
+      "factor_object_estimate_bytes_not_tree_RSS": 2889811256,
+      "forced_p_neighbor_raises": 0,
+      "independent_FE_dofs": 97557,
+      "independent_trace_dofs": 31677,
+      "leaves": 180,
+      "marked_parent_cells": 54,
+      "operator_matrix_nnz_allocated": 28987493,
+      "operator_matrix_nnz_used": 23873213,
+      "parent_storage_hash_still_verified": true,
+      "parent_transfer_cost_status": "not_incurred",
+      "parent_transfer_pass": null,
+      "parent_transfer_status": "not_run_direct_solve_does_not_use_initial_guess",
+      "parent_transfer_wall_seconds": null,
+      "requested_p_raises": 52,
+      "saturated_marked_parent_cells": 2
+    }
+  },
+  "decision": {
+    "acceptance_scope": "intermediate_round_transition_only",
+    "accepted_updates_count": 7,
+    "candidate_id": "round7_p_up",
+    "final_accuracy_or_cost_advantage_claimed": false,
+    "parent_candidate_id": "round6_p_up",
+    "parent_selection_record_path": "docs/task43_hp_adaptivity/outcomes/records/round6_selection_transition6_v1.json",
+    "parent_selection_record_sha256": "b5b63c69e6bd425b2f6fd5bbb4aaafa2e2321338fa101f844fd3c8a6e2668669",
+    "rationale": "Root正式确认原数组/完整G-J见证/612/11checkpoint及硬门、资源和输入身份后接受transition7。G下降超冻结噪声、J改善，p保守下界严格大于实际h计划的含噪上界；h7剪枝notrun，不授予真实h或最终精度资格。",
+    "state": "accepted",
+    "transition": 7
+  },
+  "frozen_rule": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "comparison_contract_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+    "final_p6_control_read": false,
+    "holdout_read": false,
+    "reference_access_scope_note": "holdout_read=false与final_p6_control_read=false仅指本轮选择未读取这些场、未用于marking/ranking；历史上主控/执行者已看过部分参考metadata，不构成整个项目全局盲法声明。",
+    "reference_calibration_sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+    "selection_reference": "Y6_1"
+  },
+  "independent_review": {
+    "bytes": 29035,
+    "checkpoint_shared_array_equality_count": 11,
+    "classification": "non_CI_raw_array_record_and_field_bound_review",
+    "complete_q8_total_fields_G_modal_and_J_witness_checked": true,
+    "path": "docs/task43_hp_adaptivity/outcomes/records/round7_independent_audit_v1.json",
+    "scattered_errors_bound_scope": "原始完整q8总场E/curl/G与612模态及11checkpoint逐项核对；scattered误差用已得总场误差和共同入射地板建立上界，该界小于R00_s见证，足以独立确认完整J最大值。未宣称另重算全部scattered分项的精确范数。",
+    "sha256": "e11c1269d0bd7fd291112289ee718359e968358dfbe2dd57172684c608fea7e6"
+  },
+  "limitations": {
+    "DoF_comparison": "97557与uniform-p6推导237600仅规模比较，非等精度收益",
+    "final_accuracy": "R/Av/R00_s/G及部分E/H/复幅超过最终限值，只有总T已过1e-5；J54.875>1，仍非最终成功",
+    "h": "h7真实authority合格但仅按严格排名界剪枝，跨网格转移与PDE均notrun；h1非用户停止/sender未知，真实h资格仍缺",
+    "independent_controls": "本轮未读holdout/control场用于选择，历史metadata已审阅，不作全局盲法；最终holdout/p6控制、q/R14、侧壁、终点加严、迭代与同精度成本仍未闭合"
+  },
+  "schema": "task43.selection-decision.v1",
+  "selected_candidate": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "candidate_id": "round7_p_up",
+    "comparison_record_path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round7_p_up_attempt1/candidate_comparison_v2.json",
+    "comparison_record_sha256": "5431f17ce21fcba969c6d45cea9f2edf048ad58d93d91cda01a526ba3a028de9",
+    "factor_nnz": 120398039,
+    "factor_object_estimate_bytes": 2889811256,
+    "independent_FE_dofs": 97557,
+    "operator_matrix_nnz_allocated": 28987493,
+    "operator_matrix_nnz_used": 23873213,
+    "plan_sha256": "99105a4c6a54f8f5288f45ca9190e5ea3103d169e0f84627443230a815c3abcc",
+    "record_sha256": "b888a91383a0f4def33752d14471021c2a004add74b57da621ef2d584db0d307",
+    "run_root": "benchmarks/artifacts/task43/round7_p_up_attempt1/run",
+    "storage_sha256": "f82e658f06829d5b58cc7f8d75289c7421760ef38fbfed164f564b2c039aef94"
+  },
+  "status": "accepted"
+}
