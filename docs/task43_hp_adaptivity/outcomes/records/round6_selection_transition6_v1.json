@@ -1,0 +1,233 @@
+{
+  "candidate_result": {
+    "action": "p_up",
+    "candidate_plan_sha256": "b6b4d42c1c9fe4baa7bca65a63c40001ee5664863860ce5360e3e572242ddf8b",
+    "candidate_record_path": "benchmarks/artifacts/task43/round6_p_up_attempt1/run/task43_round1_candidate_record.json",
+    "candidate_record_sha256": "3a05456f3e0f80d846f3d3a70bfbbed28081ccf7b1304341ea57bd89a239ca9f",
+    "checkpoint_equals_final_storage_sha256": true,
+    "checkpoint_final_shared_array_bitwise_equal_count": 11,
+    "cost": {
+      "PDE_actual_below_forecast": true,
+      "PDE_forecast_seconds": [
+        3600,
+        6000
+      ],
+      "cumulative_terminal_watchdog_count": 34,
+      "cumulative_watchdog_wall_sum_seconds": 38519.124690737575,
+      "no_same_problem_backend_speedup_claim": "R5 and R6 have different p-maps/FE/matrices; component order shares JIT. Actual setup70.235s is measured, not a paired acceleration ratio.",
+      "p_transfer_is_not_direct_warm_start_or_readded_PDE_cost": true,
+      "p_transfer_was_actually_performed_and_retained": true,
+      "prior_preparation_terminal_watchdog_count": 32,
+      "prior_preparation_watchdog_sum_seconds": 35384.03147977451,
+      "round6_comparison_watchdog_seconds": 216.73380692489445,
+      "round6_h_authority_seconds": 1280.1282973368652,
+      "round6_p_authority_seconds": 1839.2104838150553,
+      "round6_p_transfer_seconds": 1401.1892045186833,
+      "round6_plan_solve_comparison_watchdog_sum_seconds": 7671.909620749764,
+      "round6_plan_watchdog_seconds": 4536.8164097866975,
+      "round6_solve_watchdog_seconds": 2918.359404038172,
+      "scope": "only listed terminal watchdog subtotal; includes watched backend fixture/failures/recovery, excludes unmonitored tests/work/imported reference generation; not full campaign total",
+      "timing_inventory": {
+        "bytes": 5026,
+        "path": "benchmarks/artifacts/task43/round6_p_up_attempt1/solve_stage_timing_inventory.json",
+        "sha256": "965473c7a8409d346299c7c925a47f3d9f8bc915b18641c4e95b7b6d4ade651a"
+      }
+    },
+    "hard_gates": {
+      "channel_inventory": {
+        "all_numeric_outputs_finite": true,
+        "row_count": 612,
+        "unique_key_count": 612
+      },
+      "condensed_residual": {
+        "relative": 5.562866590119647e-13,
+        "residual_raw_l2_norm": 5.365940121192944e-13,
+        "rhs_raw_l2_norm": 0.9645998217400236
+      },
+      "energy_closure": {
+        "A_volume": 0.691445890896208,
+        "R_total": 0.2515407954213544,
+        "T_total": 0.057013313685032804,
+        "absolute_1_minus_R_minus_T_minus_A": 2.595257342363766e-12
+      },
+      "independent_A6": {
+        "independent_rhs_raw_l2_norm": 0.9645998259017158,
+        "relative": 7.668162167634242e-09,
+        "residual_raw_l2_norm": 7.396707891886114e-09
+      },
+      "pass": true
+    },
+    "physics": {
+      "A_volume": 0.691445890896208,
+      "G_improvement": 0.003001839682071491,
+      "J_infinity_candidate": 182.90587194208507,
+      "J_infinity_noise_allowance": 0.12716416232413652,
+      "J_infinity_parent": 3407.042750433187,
+      "J_infinity_witness": "power.R00_s",
+      "R00_p": 8.285478809689784e-24,
+      "R00_s": 0.2515052170719392,
+      "R00_s_absolute_tolerance": 1e-06,
+      "R00_total": 0.2515052170719392,
+      "R_total": 0.2515407954213544,
+      "T_total": 0.057013313685032804,
+      "aggregate_power_absolute_tolerance": 1e-05,
+      "all_J_components": {
+        "amplitude.bottom_p": 0.8710388371967577,
+        "amplitude.bottom_s": 3.291649961276706,
+        "amplitude.top_p": 0.8597551994380509,
+        "amplitude.top_s": 2.6929576260264807,
+        "field.E_scattered_code": 3.1390035649762584,
+        "field.E_total_code": 3.1390035649762584,
+        "field.G": 4.096986620120242,
+        "field.H_scattered_A_per_m": 4.870036483431611,
+        "field.H_total_A_per_m": 4.870036483431611,
+        "power.A_volume": 7.163588595271441,
+        "power.R00_p": 7.397305927879267e-16,
+        "power.R00_s": 182.90587194208507,
+        "power.R00_total": 18.290587194208506,
+        "power.R_total": 18.632923991240833,
+        "power.T_total": 11.469338738417932,
+        "power.max_individual_channel": 182.90587194208507
+      },
+      "eta_candidate": 0.0004096986620120242,
+      "eta_parent": 0.003411538344083515,
+      "final_G_target": 0.0001,
+      "final_J_target": 1.0,
+      "power_absolute_errors_vs_Y6_1": {
+        "A_volume": 7.163588595271442e-05,
+        "R00_p": 7.397305927879267e-22,
+        "R00_s": 0.00018290587194208507,
+        "R00_total": 0.00018290587194208507,
+        "R_total": 0.00018632923991240835,
+        "T_total": 0.00011469338738417933
+      },
+      "precision_note": "eta=4.09699e-4和J=182.906仍未达最终门；逐通道/全场/四组复幅见原比较数组。历史R5体吸收误差恶化证据保留，不作全程单调声明。"
+    },
+    "plan_audit_path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plans/round6_p_up.audit.json",
+    "plan_audit_sha256": "5e79f6700f659e63e6c03bec79b5c7fcb5ee8900a143b51a34e1004567fc10f5",
+    "pre_validation_checkpoint_path": "benchmarks/artifacts/task43/round6_p_up_attempt1/run/pre_validation_checkpoint.npz",
+    "pre_validation_checkpoint_sha256": "f06879cbe2b7f7fd0c4762d58e53fb43724692c0f849f83619cad59ede878a88",
+    "pre_validation_checkpoint_sidecar_sha256": "ab7afee8cea514128c480c2898a39f393243da7d74e00d5dfb9d728a9bc3db15",
+    "ranking": {
+      "formula": "(eta_parent-eta_candidate +/- epsilon_G) / actual_added_independent_FE_dofs",
+      "h_added_independent_FE_dofs": 100910,
+      "h_score_upper_including_noise": 3.389779509345081e-08,
+      "h_status": "audited_plan_only_pruned_by_frozen_rank_bound_not_run_unqualified",
+      "p_score_lower": 2.1770215489014968e-07,
+      "p_score_upper": 2.1902435737747104e-07,
+      "root_recomputed_p_score_lower": 2.1770215489014984e-07,
+      "strict_margin": 1.8380435979669886e-07
+    },
+    "recovered_storage_path": "benchmarks/artifacts/task43/round6_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+    "recovered_storage_sha256": "f06879cbe2b7f7fd0c4762d58e53fb43724692c0f849f83619cad59ede878a88",
+    "round": "round6",
+    "source_identity": {
+      "MPI_size": 1,
+      "PDE26_input_posthash_match": true,
+      "PETSc_int": "int64",
+      "PETSc_scalar": "complex128",
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "all49_source_posthash_match": true,
+      "branch": "task43_hp_adaptivity",
+      "clean_HEAD_actual_bytes_verified": true,
+      "comparison42_input_posthash_match": true,
+      "comparison_source_identity_stable": true,
+      "git_head_during_solve_comparison": "b5fd4c821eac858c60f266926eccd14850d4f34c",
+      "listed_scope_only_not_complete_transitive_closure": true,
+      "listed_source_count": 49,
+      "live_backend": "mumps",
+      "pre_run_archive": {
+        "bytes": 398724,
+        "path": "benchmarks/artifacts/task43/round6_p_up_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+        "sha256": "8454d4ae2680e02060b164f28ab77de0baccab9608a6f3c4fa1cc2a0fab11fe6"
+      },
+      "pre_run_source_manifest": {
+        "bytes": 5986,
+        "path": "benchmarks/artifacts/task43/round6_p_up_attempt1/source_snapshot_pre_run/manifest.json",
+        "sha256": "a3b934ee942c8e620f8ef0e9bead9d0eb40a87b70450ff62b0ef233ba42deb0c"
+      },
+      "requested_backend": "mumps",
+      "summary_backend": "mumps",
+      "threads": 1,
+      "worker_CPU": [
+        1
+      ]
+    },
+    "space": {
+      "active_cell_interior_dofs": 56598,
+      "added_independent_FE_dofs": 13747,
+      "augmented_matrix_rows": 27973,
+      "degree_histogram": {
+        "p4": 21,
+        "p5": 82,
+        "p6": 77
+      },
+      "factor_nnz_reported": 92517035,
+      "factor_object_estimate_bytes_not_tree_RSS": 2220632632,
+      "forced_p_neighbor_raises": 12,
+      "independent_FE_dofs": 83959,
+      "independent_trace_dofs": 27361,
+      "leaves": 180,
+      "marked_parent_cells": 48,
+      "operator_matrix_nnz_allocated": 22760057,
+      "operator_matrix_nnz_used": 18441921,
+      "requested_p_raises": 48,
+      "same_mesh_parent_transfer_relative_error": 3.244303143321806e-14,
+      "saturated_marked_parent_cells": 0
+    }
+  },
+  "decision": {
+    "acceptance_scope": "intermediate_round_transition_only",
+    "accepted_updates_count": 6,
+    "candidate_id": "round6_p_up",
+    "final_accuracy_or_cost_advantage_claimed": false,
+    "parent_candidate_id": "round5_p_up",
+    "parent_selection_record_path": "docs/task43_hp_adaptivity/outcomes/records/round5_selection_transition5_v1.json",
+    "parent_selection_record_sha256": "a2c315bf74173fc7f37ddda8b114b02b040288c080c90dbdee0501d86682dd14",
+    "rationale": "Root独立重算全量q8/612模态、J及G、checkpoint、A6/cond/closure、资源与输入身份后正式接受第6次更新。G下降超冻结噪声、最大J改善，p保守得分下界严格高于本轮h含噪上界；h仅剪枝，不代表真实h或最终精度通过。",
+    "state": "accepted",
+    "transition": 6
+  },
+  "frozen_rule": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "comparison_contract_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+    "final_p6_control_read": false,
+    "holdout_read": false,
+    "reference_access_scope_note": "holdout_read=false与final_p6_control_read=false仅指本轮选择未读取这些场、未用于marking/ranking；历史上主控/执行者已看过部分参考metadata，不构成整个项目全局盲法声明。",
+    "reference_calibration_sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+    "selection_reference": "Y6_1"
+  },
+  "independent_review": {
+    "bytes": 26220,
+    "checkpoint_shared_array_equality_count": 11,
+    "classification": "non_CI_raw_array_and_raw_record_recomputation",
+    "complete_q8_G_J_and_612_checked": true,
+    "path": "docs/task43_hp_adaptivity/outcomes/records/round6_independent_audit_v1.json",
+    "sha256": "bb14709265408e2951ef1f88c648e77a2dee8a673262bdc16583ceecb6c6af81"
+  },
+  "limitations": {
+    "DoF_comparison": "83959与uniform-p6推导237600只是规模差，不是等精度收益",
+    "final_accuracy": "R/T/Av与R00_s/G均超过各自最终容差，J182.906>1",
+    "h": "第6轮h仅实际authority/继承审计及严格排名剪枝，跨网格转移与PDE均未运行；h1停止非用户发起/sender未知，仍缺真实h资格",
+    "independent_controls": "holdout/control fields未用于本轮选择；历史metadata已审阅，不作全局盲法。最终holdout/p6控制、q/R14、侧壁、终点tighter solve、迭代与同精度成本仍未关闭"
+  },
+  "schema": "task43.selection-decision.v1",
+  "selected_candidate": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "candidate_id": "round6_p_up",
+    "comparison_record_path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round6_p_up_attempt1/candidate_comparison_v2.json",
+    "comparison_record_sha256": "f9ff61ffbe5026bb6ececaeb1ac43e206311996100ff0b4ed147090b190a0276",
+    "factor_nnz": 92517035,
+    "factor_object_estimate_bytes": 2220632632,
+    "independent_FE_dofs": 83959,
+    "operator_matrix_nnz_allocated": 22760057,
+    "operator_matrix_nnz_used": 18441921,
+    "plan_sha256": "b6b4d42c1c9fe4baa7bca65a63c40001ee5664863860ce5360e3e572242ddf8b",
+    "record_sha256": "3a05456f3e0f80d846f3d3a70bfbbed28081ccf7b1304341ea57bd89a239ca9f",
+    "run_root": "benchmarks/artifacts/task43/round6_p_up_attempt1/run",
+    "storage_sha256": "f06879cbe2b7f7fd0c4762d58e53fb43724692c0f849f83619cad59ede878a88"
+  },
+  "status": "accepted"
+}

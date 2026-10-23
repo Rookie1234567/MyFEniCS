@@ -1,4 +1,4 @@
-# Task43：五次 p-up 已接受，最终精度仍待提高
+# Task43：六次 p-up 已接受，最终精度仍待提高
 
 当前工作在既有 `task43_hp_adaptivity` 分支推进，复用 NN-Lab-V2 注册 worktree 和工作站 complex128/int64 环境。基线固定为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`；旧分支保留，用户授权删除的旧 Task42extra 大型 artifacts/results 已有路径与体积记录。未启动 NN/FTT 或新的预条件器扫描。
 
@@ -8,7 +8,7 @@
 | 真实方程残差 | attempt1 未缩放端口负结果保留；启用既有边界幅值缩放后的 36 单元组件 A6/RHS 为 8.7763e−13；新空 h active-p3 MPI1/MPI2 锚点分别为 2.1429e−12/1.7762e−12 | 残差说明离散方程解准，不证明网格精度够高 |
 | 同阶原生及分布式锚点 | 36 单元原生 p3/standard_full、p6 载体空 h active-p3 MPI1、同 active-p3 MPI2 均完成；全域 q8/q10 E/curl/H、612 模态、R/T/A 和 independent A6 Gate 通过 | 均为 `numerical_sanity_only`，不代替冻结起点或独立精度参考 |
 | 正式起点与参考恢复 | 冻结180单元active p3完成：15120独立FE DoF，A6=2.3848e−10；Y6_1/Y6_2恢复身份通过；共同q8/q10全域E/curl/H和612模态比较完成 | current–Y6_1固定入射尺度G相对差0.4280717；两个有限参考彼此差4.5441e−6；不构成连续误差或精度通过 |
-| 自适应与独立验收 | Round-1至Round-5 p-up按冻结规则接受，accepted updates=5；Round-5 η_G=0.003411538344、J∞=3407.04275，A6=5.82775e−9 | J∞≤1才是全部输出达标，故最终精度仍未通过；体吸收误差0.002512950337→0.003047232499略恶化，按冻结最大J规则接受；[transition5](task43_hp_adaptivity/outcomes/records/round5_selection_transition5_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round5_independent_audit_v1.json) |
+| 自适应与独立验收 | Round-1至Round-6 p-up按冻结规则接受，accepted updates=6；Round-6 η_G=0.000409698662、J∞=182.905872，A6=7.66816e−9 | J∞≤1才是全部输出达标，故最终精度仍未通过；体吸收误差0.002512950337→0.003047232499略恶化，按冻结最大J规则接受；[transition5](task43_hp_adaptivity/outcomes/records/round5_selection_transition5_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round5_independent_audit_v1.json) |
 
 三个h100锚点完成同阶实现与MPI等价核对，正式起点及Y6_1/Y6_2恢复和公共积分由[Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md)保存。Round-5从transition4真实恢复场重新标记60格（53可升、7已p6），另有30格邻接闭包强制升阶，形成180叶、p4/p5/p6=51/82/47。独立FE为23,874迹+46,338内部=70,212（较父增加16,553），612端口，凝聚矩阵24,486行；operator NNZ used/allocated为14,583,076/17,936,292，factor NNZ为72,608,080、对象估算1,742,789,816B，不等于树RSS。p保守单位DoF得分3.69854e−7高于h5上界5.91695e−8；h5虽完成810叶/215,092FE的计划审计，但未跨网格转移或求解，67项reference-space工作集超现有cache64。h1的停止sender未知且用户未发；h2–h5的剪枝均不能补足真实h资格。独立holdout、侧壁、参考自身q/R14、最终对照与同精度成本仍待完成。
 
@@ -16,15 +16,22 @@
 
 Round-5成功求解watchdog3150.039591s、进程树RSS峰4,975,054,848B，q8比较276.609321s、峰1,136,553,984B，两者task swap均0、后代清理完成；此前Root性能受控停止2230.240470s无候选场、非用户操作/数值/资源失败，零载荷投影优化的serial/MPI2/A6组件与失败测试费用保持[原记录](task43_hp_adaptivity/outcomes/records/sparse_zero_skip_component_v1.json)。累计7条模型lineage、10次full-scale尝试；26条终态watchdog wall小计29,736.18805150129s，不覆盖未纳入watchdog的测试/工作及导入参考生成，不是全campaign成本。无隔离冷启动或等精度收益结论。
 
-本轮源码HEAD为 `366591b226ee69172fa7704224a66b814888070e`；原40文件pre-run清单漏列variable_p_transfer，保留原archive并用2026-10-23T06:32:38.630739327Z运行中补充采集的同HEAD字节说明缺口，不倒写pre-run身份。原始输入/已列源码posthash及11个checkpoint共享数组一致性已由Root核验。残差绝对范数、same-LU相对残差、恢复后凝聚残差和独立A6分开记录。第6轮标记预览、正式p/h authority及p转移已完成，MUMPS组件通过原数组独立复核并恢复JSON比较；新PDE尚未运行，待主控核对提交后放行。
+Round-5源码HEAD为 `366591b226ee69172fa7704224a66b814888070e`；原40文件pre-run清单漏列variable_p_transfer，保留原archive并用2026-10-23T06:32:38.630739327Z运行中补充采集的同HEAD字节说明缺口，不倒写pre-run身份。原始输入/已列源码posthash及11个checkpoint共享数组一致性已由Root核验。残差绝对范数、same-LU相对残差、恢复后凝聚残差和独立A6分开记录。第6轮标记、正式p/h authority、p转移和固定MUMPS求解/比较均已完成，主控接受transition6；第7轮仅授权轻量预览，尚无新重型。
 
 
 Round-6将新误差主要标记到z90–130nm，48格无p6饱和，p增加12格闭包，180叶p4/p5/p6=21/82/77；实际FE=27,361迹+56,598内部=83,959（Δ13,747），同网格转移差3.24430e−14。h请求48根并有1周期闭包，形成523叶/55悬挂patch，flattened FE=60,020迹+111,102内部=171,122（Δ100,910），未跨网格转移或求解。[正式plan证据](task43_hp_adaptivity/outcomes/records/round6_plan_transfer_audit_v1.json)记录p authority1839.210s、p transfer1401.189s、h authority1280.128s；总watchdog4536.816s，原20–40min估计被超出。task VmSwap0而native host swapin+33页，归因UNRESOLVED；36/32工作集及父子联合42键fit64只排除简单容量超限，不能解释构造耗时。R5 h67>64/63miss及主机竞争也不能独立证明颠簸。
 
 为评估后续矩阵直接消元成本，runner增加显式固定MUMPS in-core入口，默认行为不变、live KSP与summary双核对。真实36格mixed p4/p5、完整612配对中，两侧独立A6约1.715e−11，恢复残差约1.2e−14，R/T/Av、全部612复幅/power、全系数和q8/q10 E/curl/H/G均通过固定1e−8差异门；实际积分V约350000nm³，弱量明确入射尺度地板，系数1单位只作代数尺度。原末尾numpy.bool_ JSON失败保留为WORKER_FAILED1064.968s，树RSS峰1,731,317,760B、task swap0；49源码posthash先通过，后仅bool包装修复，再从raw比较恢复44门（watchdog9.856s），未重复PDE。主控独立原数组复算通过；最终本地非重型Task43 suite 25 passed/3 skipped、CLI mapping/Ruff/compileall通过，[源码、raw、失败与恢复](task43_hp_adaptivity/outcomes/records/direct_factor_backend_component_v1.json)均hash绑定。不把共享JIT下572.636/478.365s的顺序组件生命周期当正式加速比，更不与不同模型Y6_1历史551.736s相比。
 
-当前accepted updates仍为5，7条完整模型lineage/10次full-scale attempts不变；32条终态watchdog小计35,384.03147977451s，三次预览36.203s及全部历史失败均含在相应分账，尚未覆盖未监控tests/工作及导入参考生成。固定MUMPS可能只改善factorization，后续PDE估时须计本轮1839s空间构造，已发生1401s转移不是direct warm start、不再重复加进PDE。最终精度、真实h、holdout/control和同精度成本仍未完成。
+在正式第6轮PDE前的历史检查点，accepted updates为5、7条完整模型lineage/10次full-scale attempts；当时32条终态watchdog小计35,384.03147977451s，三次预览36.203s及全部历史失败均含在相应分账，尚未覆盖未监控tests/工作及导入参考生成。固定MUMPS可能只改善factorization，后续PDE估时须计本轮1839s空间构造，已发生1401s转移不是direct warm start、不再重复加进PDE。最终精度、真实h、holdout/control和同精度成本仍未完成。
 
+
+
+主控独立复算原始612/全q8场/完整J/11checkpoint与资源后已接受第6次更新：[transition6](task43_hp_adaptivity/outcomes/records/round6_selection_transition6_v1.json)和[独立审计](task43_hp_adaptivity/outcomes/records/round6_independent_audit_v1.json)。η由.003411538344降为.000409698662、J由3407.04降为182.906，p保守score2.17702e−7高于h上界3.38978e−8；h仍未求解，不补足真实h。R/T/Av误差1.86329e−4/1.14693e−4/7.16359e−5仍高于1e−5，R00_s1.82906e−4高于1e−6，G4.09699e−4高于1e−4，最终精度未过。
+
+本次source clean b5fd4c821eac858c60f266926eccd14850d4f34c，49源码/26 PDE输入/42比较输入posthash一致，requested/live/summary均MUMPS；PDE A6=7.66816e−9、恢复后cond5.56287e−13、closure2.59526e−12。PDE2918.359s/同时树RSS峰5,598,105,600B，q8比较216.734s/峰1,139,601,408B，任务及native host全机swap增量均0、后代清理；保持原WSL-global文本与native说明。base assembly1588.028s包括空间准备，plan1839s仅预测校准，非PDE独立authority实测；port417.421/setup70.235/recovery20.618/field capture17.314/A6727.931s保留嵌套口径，不相加。原60–100min预测偏高，未回写。当前8条完整模型lineage/11次full-scale attempts；34条终态watchdog小计38,519.124690737575s，未覆盖未监控测试/工作及导入参考生成，不作R5不同p-map的同问题加速或等精度收益声明。
+
+下一步在现有plan runner增加默认保留行为的显式skip-parent-transfer：direct solve没有使用转移场作初值，新的未运行应清楚记为not_run/pass null，历史实际1401s及所有资格证据不移除；实际authority、parent hash、marking、closure和FE仍保留。代码/轻量测试独立提交后只做accepted6上第7轮marking与工作集预览，不启动正式authority/PDE。
 
 ---
 
