@@ -82,6 +82,9 @@ source e834841b2ca4777bbc76f56afd3c7d2968c99a3b clean，PDE50listed/31inputs、�
 
 R9仅轻量预览完成：39格中13个p5可升、26个p6饱和，保留θ=.5；p预测110472=35352+75120、Δ3747，h91根八分/817叶，内部309060给Δh≥202335，但actual trace/总FE/authority=null/not_run。故冻结评分的保守h上界6.670949019e−10；若p actualΔ3747、η<.00011430072479441868并过其他门才可支配，不冒充测得h自由度/成本。root仅放行现有函数的p-only authority/显式skip转移，5–25min/1–5GiB是不确定预测、独立3600s/192GiB门；PDE待实际authority和预估。当前attempt14，R9p15后再做baseline/q/R14最低3次会达18，超§9规划16两次，只为三项不可替代判断预登记，G3尚未授权；参考自身资格/控制若需fresh另列最小增量。
 
+
+R9 p-only authority随后实测通过：110472=35352迹+75120内部、Δ3747，p5/p6=28/152，与preview-plan bytes和独立周期公式相同；authority382.846s/cache7miss173hit，完整watchdog392.208s/306samples/树峰1,274,859,520B/taskSwap0/native全机0/exit0清理，50source27inputs当前hash通过，skip transfer保持not_run/null。h9实际trace/总FE/authority仍null，不把内部行当完整空间。正式带authority计划现17份、solver仍14/accepted8；48终态watchdog小计55,251.657448s+R8部分窗下界3109.389197s=58,361.046645s观测下界，非全campaign成本。[准备compact](task43_hp_adaptivity/outcomes/records/round9_p_only_plan_preparation_v1.json)绑定root审核及PDE草稿。root仅放行下一例R9p PDE，最终clean提交/preflight后按35–85min/6–16GiB uncertain、7200s/192GiB运行；382.846s已含于base准备预估，不另加。实际启动才计第15次尝试，独立比较待PDE原字段/完整资源审核；其余h9/G3/下一候选/holdout-control仍未放行。
+
 ---
 
 # Task39extra_para 2026-10-16：色散方向离线收口与原光栅 D 诊断

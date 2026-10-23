@@ -1,0 +1,241 @@
+{
+  "schema": "task43.p-only-authority-preparation.v1",
+  "status": "P_ACTUAL_AUTHORITY_PASS_H_CONSERVATIVE_BOUND_ONLY_PDE_NOT_RUN",
+  "source_HEAD": "9640df1f8f24ecee5378584fe86a0fb8f752e0ab",
+  "numerical_source_changes": "none; thin ignored call of existing load/build/audit functions only",
+  "actual_parent": "transition8/round8_p_up; numerical working parent with separately incomplete R8 supervisor resources",
+  "marking": {
+    "theta": 0.5,
+    "minimal_marked_cells": 39,
+    "previous38_capture": 0.49588687528689157,
+    "actual39_capture": 0.5026039634868352,
+    "p5_raised": 13,
+    "p6_saturated_retained_no_raise": 26,
+    "forced_p_closure": 0,
+    "no_theta_change_or_saturated_filter_reranking": true
+  },
+  "actual_p_space": {
+    "leaves": 180,
+    "p5": 28,
+    "p6": 152,
+    "trace": 35352,
+    "interior": 75120,
+    "independent_FE": 110472,
+    "added_FE": 3747,
+    "modes": 612,
+    "augmented_rows": 35964,
+    "actual_plan_preview_bytes_identical": true,
+    "entity_degree_and_constraints_pass": true,
+    "independent_check": "Root periodic entity formula600edges/570faces gives3452edge+31900face=35352trace;75120interior, matches actual authority."
+  },
+  "actual_p_authority": {
+    "wall_seconds": 382.84624957386404,
+    "whole_audit_seconds": 382.86692566331476,
+    "cache": {
+      "build_cache_maxsize": 128,
+      "cache_after_authority": {
+        "currsize": 7,
+        "hits": 173,
+        "maxsize": 128,
+        "misses": 7
+      },
+      "cache_before_authority": {
+        "currsize": 0,
+        "hits": 0,
+        "maxsize": 128,
+        "misses": 0
+      },
+      "cache_delta_authority": {
+        "hits": 173,
+        "misses": 7
+      },
+      "capacity_contains_local_workset": true,
+      "local_maps_including_uniform_p6": 7,
+      "local_unique_cell_degree_map_count": 7,
+      "mpi_size": 1,
+      "rank": 0,
+      "scope": "per_rank_local_owned_cells"
+    },
+    "transfer": {
+      "classification": "accepted-parent-to-candidate-space-transfer",
+      "cost_status": "not_incurred",
+      "mesh_and_p6_dof_identity_pass": null,
+      "parent_storage_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round8_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "parent_storage_sha256": "7420dd82d98dda8d50cae196d64d5d8e8175ef21c3a86847b071d3cc7aa2d1e2",
+      "pass": null,
+      "pde_solve_performed": false,
+      "performed": false,
+      "status": "not_run_direct_solve_does_not_use_initial_guess",
+      "wall_seconds": null
+    },
+    "scope": "Parent storage hash, real marks, closure and actual space still checked; unused direct initial-guess transfer not_run/passnull/wallnull, no expensive parent reference-space reconstruction."
+  },
+  "h_not_run_bound": {
+    "geometric_splits": 91,
+    "unchanged_roots": 89,
+    "leaves": 817,
+    "verified_cell_interiors": 309060,
+    "actual_independent_trace": null,
+    "actual_total_FE": null,
+    "authority_status": "not_run",
+    "actual_h_cost": null,
+    "added_FE_lower_bound": 202335,
+    "score_upper": 6.670949019458657e-10,
+    "proof": "Valid cell-interior zero-trace basis survives trace-only hanging/Floquet constraints. Nh=309060+Ntrace>=309060; deltaNh>=202335. For any nonnegative etah, frozen scoreh<=(eta8+epsilonG)/202335. Looser bound than actual h score, no measured h FE/cost/qualification claim.",
+    "actual_p_delta": 3747,
+    "p_eta_required_strictly_below": 0.00011430072479441868,
+    "acceptance_scope": "Future p actual solve must pass every frozen space/residual/finite/G/noise/full J gate and score lower>this upper. No candidate acceptance or next transition yet."
+  },
+  "resources": {
+    "watchdog": "COMPLETED",
+    "worker_exit_code": 0,
+    "launcher_exit_code": 0,
+    "wall_seconds": 392.2081399532035,
+    "samples": 306,
+    "simultaneous_tree_RSS_peak_bytes": 1274859520,
+    "task_VmSwap_peak_bytes": 0,
+    "native_global_swap_pages_delta": 0,
+    "descendants_cleared": true,
+    "listed_sources_current_posthash": 50,
+    "bound_inputs_current_posthash": 27,
+    "source_scope": "50 explicit listed source files, not transitive closure; thin caller separately input-bound",
+    "wall_gate_seconds": 3600,
+    "RSS_gate_bytes": 206158430208,
+    "legacy_raw_global_scope_label": "WSL-global unchanged, actual native all-machine diagnostic",
+    "forecast_result": "6.54min within5–25min uncertain forecast; actual RSS1.187GiB within1–5GiB planning range. No cache-speedup claim from seven keys."
+  },
+  "counters": {
+    "accepted_updates": 8,
+    "scientific_lineages": 10,
+    "fullsolver_attempts": 14,
+    "formal_p_h_space_audits": 17,
+    "h9_full_space_audits": 0,
+    "complete_summary_watchdogs": 48,
+    "complete_summary_watchdog_subtotal_seconds": 55251.65744823171,
+    "separate_R8_PDE_terminal_missing": true,
+    "separate_R8_observed_elapsed_lower_bound_seconds": 3109.3891972089186,
+    "combined_observed_cost_lower_bound_seconds": 58361.04664544063,
+    "cost_scope": "Listed monitored subtotal includes fixtures/failures/recovery; not complete campaign, excludes unmonitored tests/work/imported reference generation. Worker and nested stage times not double-added."
+  },
+  "next_authorized_scope": {
+    "PDE_at_record_creation": "not_run",
+    "root_release": "Exactly one round9_p_up PDE after preparation docs clean commit/push+fresh host/ABI/source/input snapshot. Existing h100/accepted8/fixedMUMPS/R13full612/q15q28/once natural sameLU/full capture+A6. New artifact round9_p_up_attempt1; nohup+setsid existing watchdog launch, outer set-e.",
+    "forecast_wall_minutes": [
+      35,
+      85
+    ],
+    "forecast_peak_tree_RSS_GiB": [
+      6,
+      16
+    ],
+    "PDE_registered_gate_seconds": 7200,
+    "PDE_RSS_gate_bytes": 206158430208,
+    "forecast_scope": "Uncertain newpmap/NNZ, R7 full lifecycle anchor; R8 only numerical worker stages/observed partial resource window, never full cost. Plan382.846s calibrates base including new-process space, not separately added.",
+    "PDE_attempt_ordinal_if_started": 15,
+    "independent_comparison": "Requires full raw numerical/resource review and separate root release after PDE completion.",
+    "not_released": [
+      "h9 authority or PDE",
+      "G3 implementation/solves",
+      "further candidates",
+      "holdout/control fields"
+    ]
+  },
+  "tests": "No numerical/core source change; existing qualified tests reused, JSON/hash/Markdown targeted checks only. No expensive test/PDE repeat for docs.",
+  "evidence": {
+    "actual_p_plan": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.json",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "bytes": 47658
+    },
+    "actual_p_authority": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.audit.json",
+      "sha256": "154dcc2f5f6e4a9f5152faf6cd65e55193216d71bf26dcc3c2098d43d932b118",
+      "bytes": 16360
+    },
+    "resource_posthash_identity": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/terminal_executor_audit.json",
+      "sha256": "2bb96f2a910775c3387013860d7e8ebe06c43af36da92ee6546691187f5856d8",
+      "bytes": 3690
+    },
+    "root_independent_authority_review": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/root_review/root_round9_p_authority_audit.json",
+      "sha256": "b53e4f7bbb7be3dbf33f7a78168930d3fcc1847f8b3af8b120825f548091180e",
+      "bytes": 1635
+    },
+    "source_snapshot": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/source_snapshot_pre_run/manifest.json",
+      "sha256": "7731cc283ad1c5db7160c4f5a77cd6e51f652786e675571ddd06036fbd822b8d",
+      "bytes": 6139
+    },
+    "source_archive": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+      "sha256": "249d0d7e9394f306a6aba0d46ce6b1a72033e56a11beab78f9fdad4c40190854",
+      "bytes": 401598
+    },
+    "input_manifest": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/input_hashes_pre.sha256",
+      "sha256": "15edc2e47f8c0b01222a8057f692ed16446c356f1a1bb394bed9facc79a095cb",
+      "bytes": 4082
+    },
+    "thin_existing_function_call": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/p_only_authority.py",
+      "sha256": "857bad9c7f9d35d55422069ab5683b2290c4515ceb828c9cc52a416668e0f76b",
+      "bytes": 3792
+    },
+    "registered_forecast_and_h_bound": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/forecast_identity_proof.json",
+      "sha256": "9e3fa461451d3df80b49963bf8ee1045e1b65cf89dd1eb657ab0cdcaa92259a1",
+      "bytes": 6288
+    },
+    "actual_launch_identity": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/actual_launch_identity.json",
+      "sha256": "b6ee21802ccefcfddc47d15e81b5e50b5241a037130945f62cd861bd80154e70",
+      "bytes": 4771
+    },
+    "preview": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/preview.json",
+      "sha256": "21ae0c3433bf534b35c4888bbe37cee082e3b1b8d47f6affa18a6e703e6b02cc",
+      "bytes": 192330
+    },
+    "preview_cost": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/preview_cost_identity_index.json",
+      "sha256": "23c60358f4e29e17073471df91826701c8fa8db7d38027b0a97f6aae430dfb8f",
+      "bytes": 2434
+    },
+    "h_geometry_plan_only": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/plans/round9_h_refine.json",
+      "sha256": "a785621afbbfb3ee824e6f50c8b12bf07c7bfefc707754f111ebc94266408d6c",
+      "bytes": 147566
+    },
+    "root_preview_review": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/root_review/root_round9_light_preview_audit.json",
+      "sha256": "7ede1c8e7f6d5fc1a5877835705fde0fab6772463c24960204c25701ae041c9a",
+      "bytes": 1249
+    },
+    "root_conservative_h_bound_proof": {
+      "path": "benchmarks/artifacts/task43/round9_light_preview_attempt1/root_review/root_round9_conservative_h_score_bound_proposal.json",
+      "sha256": "b347450e3066a757e4836231ff07c4e41cd350c6f81443d65fef75672de70053",
+      "bytes": 1890
+    },
+    "actual_parent_selection": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json",
+      "sha256": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2",
+      "bytes": 22617
+    },
+    "completed_real_h1_qualification": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/h1_real_action_qualification_v1.json",
+      "sha256": "8a35fe340bb02d7dedca62b579bf611102a94c551c18774bc41b3916aa217c0b",
+      "bytes": 20125
+    },
+    "PDE_forecast_draft": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/PDE_forecast_draft/forecast.json",
+      "sha256": "a0bada9ad4481af2c882c318843e80e96ebcc6e2f9217e593a0aca488c88d583",
+      "bytes": 6279
+    },
+    "PDE_argv_draft": {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/PDE_forecast_draft/worker_argv.json",
+      "sha256": "7429db86d5c5d37fdf4c798300d12431ac7bad030b8ed910cde35cf32c98c2fe",
+      "bytes": 808
+    }
+  }
+}
