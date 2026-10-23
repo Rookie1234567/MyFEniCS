@@ -54,16 +54,20 @@ base assembly563.106629s含新进程空间准备，plan authority382.846s仅校�
 截至R9收口，50份完整summary watchdog小计58,412.369848452974s；另R8部分窗下界3109.3891972089186s，合并观测下界61,521.75904566189s，不是完整campaign或完整R8成本。受监控组件／失败／恢复均保留，未监控tests/工作与导入参考生成另记。该R9历史检查点有11条模型lineage、15次实际完整solver尝试、17份带actual authority计划、accepted9；若最低共同源码baseline／联合q加严／R14三次后续solve实际执行，总尝试将到18，超§9规划16两次，仍须各自授权，不以lineage抵扣。第10轮轻量预览与唯一p实际authority现已完成，accepted仍9；按下述条件仅放行一次p PDE，不读holdout/control；G3草稿仅/tmp且未应用，最终独立参考自身资格、控制、q/R、侧壁、终点和同精度成本仍未关闭。证据见[transition9](records/round9_selection_transition9_v1.json)及[独立审计](records/round9_independent_audit_v1.json)。
 
 
-## 第10轮准备：规则自然到全体p6，尚未求解
+## 第10轮：全体p6实测被拒绝，停止自适应选择
 
 | 项目 | 实测／限定 |
 |---|---|
 | 原场标记与p空间 | accepted9按原θ=.5最少46格，28个剩余p5实升、18个p6饱和保留，无强制p闭包；自然形成180格全p6，非预设p扫描。实际FE118800=37800迹+81000内部，Δ8328，含612端口共38412行；计划与预览字节相同 |
 | 实际authority与资源 | authority206.957269s，cache1miss179hit；完整watchdog222.409305s/179samples/树RSS峰1,044,500,480B/taskVmSwap0/native全机增量0/exit0清理；50listed source33inputs posthash及独立周期公式通过，不据一键宣称加速 |
 | h仅几何与数学界 | 82根八分+98不变=754叶；内部292260行只给Δh≥181788，actual trace/总FE/authority仍null/not_run；score上界2.697922472e−10，p须实测η严格低于2.862184560e−5且其他冻结门全过才可剪h |
-| 下一唯一判断 | 仅R10 p PDE条件放行：prep文档/检查提交推送干净后，fresh host/ABI/source/input快照，固定MUMPS/R13/full612/q15q28/一次自然sameLU；35–85min与6–16GiB仅预测，7200s/192GiB/taskSwap0事前门、6000s提醒。PDE后先独审，再另放行比较，不自动accept10 |
+| 第10轮实测裁决 | η3.154393353e−5、J∞2.837172688；G改善8.412900702e−6小于冻结噪声ε9.088158797e−6，接受失败，**不造transition10、最后接受状态冻结accepted9**；R10保留未接受诊断 |
 
-截至本准备检查点，52份完整summary watchdog小计58,649.84554416314s，加R8部分窗只得到观测下界61,759.234741372056s，非全campaign／完整R8成本。18份actual authority计划，11条lineage／15次实际fullsolver尝试、accepted9；本次PDE若启动为全任务第16次，最低三次G3之后达19（超§9规划16三次），仅用于判断余下28格p5是否限制两零级功率，不扩扫描。207s authority已发生、只校准包含重新建空间的PDE base，不重复加账；未使用转移保持not_run/passnull/wallnull。G3仍仅/tmp，最终空间未冻结。轻量证据见[第10轮p-only准备](records/round10_p_only_plan_preparation_v1.json)。
+第10轮原方程A6=8.164074071e−9（raw8.621528503e−9/实际RHS1.05603261652）、cond5.312942031e−13、closure1.870281707e−12，完整612/11checkpoint数组与MUMPS三身份通过。仅top(0,0,s)功率差2.837172688e−6仍超1e−6，另611通道通过；E/H/G与四复幅地板指标均≤1e−4。Av误差由R9的1.916442280e−6略恶化为2.467609600e−6，仍过1e−5，不称全部物理量单调改善。p得分下界−8.108286442e−11，不能按score剪h；但h内部292260行已超过用户对照237600FE目标，合法总空间只会更大，故该动作对更少DoF目标为推导不可行（goal-DoF infeasible），不是h数值失败或score剪枝，actual trace/FE/authority仍null/not_run。
+
+PDE完整watchdog2588.517400s/2100samples/树峰6,572,441,600B，独立比较279.032614s/220samples/峰1,140,314,112B，均taskVmSwap0/native全机增量0/exit0清理、50source及34/68inputs posthash通过。base156.722900s（含新建空间）低于原阶段预测，ports916.661083/setup140.265198/A61217.569597s；207s先前authority不重加。比较新门1200s为本次启动前显式预算决定，R9原3600s不改。54份完整watchdog小计61,517.39555825014s，加R8部分窗仅观测下界64,626.784755459055s，不是全campaign或完整R8成本；18份actual authority计划／12条lineage／16次求解、accepted仍9。
+
+停止后续选择，不改θ、容差或重复饱和p求解。accepted9为最后接受状态，**其最终精度仍FAIL**；R10不是晋级终场。下一步仅准备使用原场的Y5_1独立holdout及两份已冻结6×10×6 p6控制的完整比较方案，审查后才读这些场；结果不得反馈选择。不默认实施G3三次q/R/endpoint求解，参考自身资格、侧壁、冷启动与同精度成本缺口如实保留。证据见[第10轮拒绝与独立审计绑定](records/round10_rejected_candidate_v1.json)。
 
 ## 正式起点与丰富参考恢复（G2准备）
 
