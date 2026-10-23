@@ -1,0 +1,669 @@
+{
+  "PDE_and_comparison_full_resource_qualification_pass": true,
+  "accepted_updates": 9,
+  "actual_parent": {
+    "bytes": 22617,
+    "path": "docs/task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json",
+    "sha256": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2"
+  },
+  "actual_space": {
+    "active_cell_interior_dofs": 75120,
+    "added_independent_FE_dofs": 3747,
+    "augmented_matrix_rows": 35964,
+    "degree_histogram": {
+      "p5": 28,
+      "p6": 152
+    },
+    "factor_nnz_reported": 153262664,
+    "factor_object_estimate_bytes_not_tree_RSS": 3678591656.0,
+    "forced_p_neighbor_raises": 0,
+    "independent_FE_dofs": 110472,
+    "independent_trace_dofs": 35352,
+    "leaves": 180,
+    "marked_parent_cells": 39,
+    "operator_matrix_nnz_allocated": 35352466,
+    "operator_matrix_nnz_used": 29002434,
+    "parent_transfer": {
+      "classification": "accepted-parent-to-candidate-space-transfer",
+      "cost_status": "not_incurred",
+      "mesh_and_p6_dof_identity_pass": null,
+      "parent_storage_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round8_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "parent_storage_sha256": "7420dd82d98dda8d50cae196d64d5d8e8175ef21c3a86847b071d3cc7aa2d1e2",
+      "pass": null,
+      "pde_solve_performed": false,
+      "performed": false,
+      "status": "not_run_direct_solve_does_not_use_initial_guess",
+      "wall_seconds": null
+    },
+    "requested_p_raises": 13,
+    "saturated_marked_parent_cells": 26
+  },
+  "artifact_manifest": [
+    {
+      "bytes": 77297,
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json",
+      "sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30"
+    },
+    {
+      "bytes": 165933837,
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_shared_volume_q8.npz",
+      "sha256": "f8b743b508d92dbcb4ce52fa50f992f80f06143b95fcdf6e49203982441312cd"
+    },
+    {
+      "bytes": 748,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/abi_preflight.json",
+      "sha256": "bfa5027fc71c85448ee99bfc1b3e72953ea475b6e867fbb96cc4ce52b5c96ea8"
+    },
+    {
+      "bytes": 5376,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/actual_launch_identity.json",
+      "sha256": "330c33826d34023abd5822b3ad29b8e13e0d95628866ee72aa6d50d66fd750ec"
+    },
+    {
+      "bytes": 9666,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/comparison_input_hashes_pre.sha256",
+      "sha256": "0a4780b350bfb8d4166d7270c01d45000fe148bdd1b3f3deac54df2144e47124"
+    },
+    {
+      "bytes": 5636,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/comparison_inputs_postcheck.txt",
+      "sha256": "4ad72bf9290ba50c37096c106e683c4d376251b2bb97bbf1d947f1e69e590481"
+    },
+    {
+      "bytes": 2211,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/comparison_listed_sources_postcheck.txt",
+      "sha256": "51a5e6960783b537b72814d64f55bd27a3838453442b78e9e038ebb72d928348"
+    },
+    {
+      "bytes": 2547,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/launch.sh",
+      "sha256": "99c6f183a2ebbac3d011e0d167f2b761e882c711cb13c308aa6829843cbf9413"
+    },
+    {
+      "bytes": 2,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/launcher_exit_code.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "bytes": 4603,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/root_review/root_round9_candidate_raw_audit.json",
+      "sha256": "6dba03930fe70d85367639beb66dfcb94775235fdc6f0a616b857c5a9532f1d9"
+    },
+    {
+      "bytes": 11496,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/root_review/root_round9_candidate_raw_audit.py",
+      "sha256": "22715f7afcd1b455764a003ebb19f3e6bf975f8a0ae8c8b501274664fd56297a"
+    },
+    {
+      "bytes": 1033,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/root_review/root_round9_comparison_resource_audit.json",
+      "sha256": "c0b3123132c2cf72e6355d8269ae77376ba8ce493404fdd0f7ded881644f3d7b"
+    },
+    {
+      "bytes": 580,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/root_review/root_round9_failing_channels.json",
+      "sha256": "b73c365a719bac86bcac451cb0c95328fe8dd7404c109c18b14bed04e5eadbe6"
+    },
+    {
+      "bytes": 5311,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/source_snapshot_pre_run/listed_sources.sha256",
+      "sha256": "1a9c4fee3778c995621d409ec48661db7d27971f1c5dcb7aec2814fec8cf9f69"
+    },
+    {
+      "bytes": 401598,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+      "sha256": "222bfaf1eb824f8aa6c067dfb75d341b6f6230959ad8c7089063eae11e9d0b16"
+    },
+    {
+      "bytes": 6104,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/source_snapshot_pre_run/manifest.json",
+      "sha256": "d59875f36fc6fb543daf2a7ed88c9161a2e194a8600d9f899a1f5b14beb9dd99"
+    },
+    {
+      "bytes": 5051,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/terminal_executor_audit.json",
+      "sha256": "66b1a4bca362c65f4b232fe594d6691f4eb8e5a9e97e0df6c8f4ea416741504d"
+    },
+    {
+      "bytes": 3564,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/watchdog/summary.json",
+      "sha256": "9d268eb7c9d6fa295fc4b6d72c433a8a76849693f0dec2720ab1e5a60d97ac40"
+    },
+    {
+      "bytes": 494,
+      "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/worker_argv.json",
+      "sha256": "0d6929edb0303c434ffca51f525a5a0782f0754eafdcb5fc0854b646f8ed2ace"
+    },
+    {
+      "bytes": 16360,
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.audit.json",
+      "sha256": "154dcc2f5f6e4a9f5152faf6cd65e55193216d71bf26dcc3c2098d43d932b118"
+    },
+    {
+      "bytes": 748,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/abi_preflight.json",
+      "sha256": "593652f37c1c1003400b741e937974db8964f2fb44e3b9b835c8e12cc744d2f5"
+    },
+    {
+      "bytes": 6311,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/actual_launch_identity.json",
+      "sha256": "5700a198546f80b9319912c5901c16e94c45d66f9e42afa261c1289ddcfe14bc"
+    },
+    {
+      "bytes": 4627,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/input_hashes_pre.sha256",
+      "sha256": "f1ac3964f0bf2f5fd00d20a9ab4a58aabeae162c0c44caf3d326128d038ab595"
+    },
+    {
+      "bytes": 2705,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/inputs_postcheck.txt",
+      "sha256": "81d4a16931400f16daf99d3b9c1599aa61e1ab16ea1b4cce06815d5d0290f4d5"
+    },
+    {
+      "bytes": 2624,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/launch.sh",
+      "sha256": "0bdda382768eff1c3d70b15db9a9c3a5ee763ec2b451ae4f9e0bca7dc2f28954"
+    },
+    {
+      "bytes": 2,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/launcher_exit_code.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "bytes": 2211,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/listed_sources_postcheck.txt",
+      "sha256": "51a5e6960783b537b72814d64f55bd27a3838453442b78e9e038ebb72d928348"
+    },
+    {
+      "bytes": 898,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/monitor_tool_event.json",
+      "sha256": "fdb28b35615d809c7f80be0327e7b89c97dfaada291f839c0f895dc4701ebd90"
+    },
+    {
+      "bytes": 3868,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/raw_hard_gate_check.json",
+      "sha256": "3befd7661149464b2e16500715b4eda6c06856a845763e47a04c65550b76e816"
+    },
+    {
+      "bytes": 3729,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/raw_hard_gate_check.py",
+      "sha256": "bda321bca6e82d12b8a1bd962094cb1ce9b89c97fd1f111908d8629555605960"
+    },
+    {
+      "bytes": 173,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/root_review/preparation_compact_hash_audit.json",
+      "sha256": "c59b4b5e91d2cc421df6f3b9ed7460cd2a14e36b8574e32d05334c9c58b2766d"
+    },
+    {
+      "bytes": 2139,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/root_review/root_round9_solve_identity_audit.json",
+      "sha256": "a475db917b0fcbe255546a65664493c6387ed30afad1253a5f1b3175aa6079bf"
+    },
+    {
+      "bytes": 3468,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/root_review/root_round9_solve_raw_audit.json",
+      "sha256": "c156adb0a0a4c6f4adad2b16fe93d05265c05f78be24f5a7fe0fce5b29395385"
+    },
+    {
+      "bytes": 708,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/root_review/root_round9_solve_resource_audit.json",
+      "sha256": "9d83daa95b5954e504e3001d6e4c241c37e554c5c7cad81090a1a6c26679ffda"
+    },
+    {
+      "bytes": 4361,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/root_review/root_solve_raw_audit.py",
+      "sha256": "f096890ced7d19743e9260e612bcd3f44e5c686614939d1905c012aab730ecfd"
+    },
+    {
+      "bytes": 47658,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947"
+    },
+    {
+      "bytes": 6066934,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893"
+    },
+    {
+      "bytes": 6066934,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/pre_validation_checkpoint.npz",
+      "sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893"
+    },
+    {
+      "bytes": 905192,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e"
+    },
+    {
+      "bytes": 961989,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/run_summary.json",
+      "sha256": "50133ad0d299f1c7ca154d750bb5ac26c4179ea006ad55d546fdaac275d67048"
+    },
+    {
+      "bytes": 3312110,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea"
+    },
+    {
+      "bytes": 4133,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/solve_stage_timing_inventory.json",
+      "sha256": "850953c980544b17ef35627acd4d7e8b8eb467099a91019ca78a5d8bc2577650"
+    },
+    {
+      "bytes": 1734,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/solve_terminal_executor_audit.json",
+      "sha256": "3f32c02d221b4913631eb68b34e4034b3451817661bf114bbea10b4a14ee8eed"
+    },
+    {
+      "bytes": 5311,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/source_snapshot_pre_run/listed_sources.sha256",
+      "sha256": "1a9c4fee3778c995621d409ec48661db7d27971f1c5dcb7aec2814fec8cf9f69"
+    },
+    {
+      "bytes": 401598,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+      "sha256": "b733f5f90c7d2a5eea117b994c7cd902df167eb2c2651868ee597f51709685ea"
+    },
+    {
+      "bytes": 6115,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/source_snapshot_pre_run/manifest.json",
+      "sha256": "2e3cb9a66ad30b786f5975f2a7dbf38b1c21d6df42d0f0461055ebde89d19d0c"
+    },
+    {
+      "bytes": 3565,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/watchdog/summary.json",
+      "sha256": "afddc2298a1c357eafc1746fb01fbef20010026cd3174d35073cb5ef2317b6e4"
+    },
+    {
+      "bytes": 808,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/worker_argv.json",
+      "sha256": "7429db86d5c5d37fdf4c798300d12431ac7bad030b8ed910cde35cf32c98c2fe"
+    },
+    {
+      "bytes": 1890,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/root_review/root_round9_conservative_h_score_bound_proposal.json",
+      "sha256": "b347450e3066a757e4836231ff07c4e41cd350c6f81443d65fef75672de70053"
+    }
+  ],
+  "classification": "root_raw_numeric_identity_resources_and_conservative_h_bound_review",
+  "costs": {
+    "combined_observed_lower_bound_seconds": 61521.75904566189,
+    "complete_summary_watchdog_count": 50,
+    "complete_summary_watchdog_subtotal_seconds": 58412.369848452974,
+    "new_transfer_cost_status": "not_incurred_not_measured_zero; old R6 transfer1401s remains in historical ledger",
+    "plan_authority_382s_not_readded_to_PDE_base": true,
+    "scope": "Only listed terminal watchdogs, includes monitored components/failures/recovery. Separate R8 partial window is not full lifecycle cost. Unmonitored tests/work and imported reference generation excluded; no full campaign/equal-accuracy advantage claim.",
+    "separate_R8_PDE_partial_elapsed_lower_bound_seconds": 3109.3891972089186,
+    "stage_timing_inventory": {
+      "bytes": 4133,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/solve_stage_timing_inventory.json",
+      "sha256": "850953c980544b17ef35627acd4d7e8b8eb467099a91019ca78a5d8bc2577650"
+    }
+  },
+  "execution_budget": {
+    "G3_runs_authorized": false,
+    "actual_space_authority_plan_count": 17,
+    "exceeds_planning16_by": 2,
+    "fullsolver_attempts": 15,
+    "h9_authority_not_run": true,
+    "prospective_three_irreducible_G3_solves_total_attempts": 18,
+    "scientific_lineages": 11
+  },
+  "hard_numeric_gates": {
+    "A6_group_norm_consistency": {
+      "recomputed_group_norm": 8.610578059580115e-09,
+      "recorded_norm": 8.610578059580115e-09,
+      "relative_difference": 0.0
+    },
+    "actual_space": {
+      "active_cell_interior_rows": 75120,
+      "active_space_declared_independent_FE_dofs": 110472,
+      "both_declarations_match_recomputed_sum": true,
+      "declaration_validation_route": "both_record_declarations_required",
+      "independent_FE_dofs": 110472,
+      "independent_trace_rows": 35352,
+      "residual_row_counts_match": true,
+      "storage_declared_independent_FE_dofs": 110472
+    },
+    "additional_checks": {
+      "actual_live_backend": true,
+      "actual_summary_backend": true,
+      "checkpoint_storage_shared_arrays_match": true,
+      "existing_checker_all_raw_hard_checks": true,
+      "expected_FE": true,
+      "expected_interior": true,
+      "expected_trace": true,
+      "group_norms_match": true,
+      "modal_hash_matches_record": true,
+      "requested_backend": true,
+      "storage_hash_matches_record": true
+    },
+    "channel_inventory": {
+      "all_numeric_outputs_finite": true,
+      "row_count": 612,
+      "unique_key_count": 612
+    },
+    "checkpoint_shared_array_equality": {
+      "active_full_rhs_owned": true,
+      "active_full_solution_owned": true,
+      "mesh_cell_vertex_dofmap": true,
+      "mesh_geometry_coordinates_nm": true,
+      "mesh_geometry_dofmap": true,
+      "mesh_owned_cell_global_ids": true,
+      "p6_function_space_dofmap": true,
+      "p6_ghost_global_dof_block_ids": true,
+      "p6_owned_global_dof_block_ids": true,
+      "recovered_p6_local_coefficients": true,
+      "recovered_p6_owned_coefficients": true
+    },
+    "classification": "checker_recomputed_from_raw_record_fields",
+    "condensed_residual": {
+      "relative": 5.404801892736497e-13,
+      "residual_raw_l2_norm": 5.707647083812112e-13,
+      "rhs_raw_l2_norm": 1.0560326163818528
+    },
+    "energy_closure": {
+      "A_volume": 0.6915156103398812,
+      "R_total": 0.2513585307019157,
+      "T_total": 0.05712585895625171,
+      "absolute_1_minus_R_minus_T_minus_A": 1.9514390103836377e-12
+    },
+    "hard_checks": {
+      "actual_mesh_and_closure_audit_pass": true,
+      "condensed_residual_le_1e-9": true,
+      "energy_closure_le_1e-5": true,
+      "finite_unique_612_mode_inventory": true,
+      "independent_A6_le_1e-6": true,
+      "independent_dofs_match_both_record_declarations": true,
+      "independent_dofs_match_residual_rows": true,
+      "recorded_gate_and_official_identity_pass": true,
+      "residual_denominators_are_positive": true,
+      "residual_norms_are_finite_and_nonnegative": true
+    },
+    "independent_A6": {
+      "independent_rhs_raw_l2_norm": 1.0560326165199965,
+      "relative": 8.153704653512537e-09,
+      "residual_raw_l2_norm": 8.610578059580115e-09
+    },
+    "input_sha256": {
+      "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_recovered_solution_storage.npz": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+      "benchmarks/artifacts/task43/round9_p_up_attempt1/run/pre_validation_checkpoint.npz": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+      "benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e",
+      "benchmarks/artifacts/task43/round9_p_up_attempt1/run/task43_round1_candidate_record.json": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea",
+      "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1"
+    },
+    "pass": true,
+    "scope": "existing checker raw ratios plus identity/backend/group consistency; not a second PDE solve or root independent audit",
+    "wall_seconds": 0.537657474167645
+  },
+  "historical_dependencies": [
+    {
+      "bytes": 31564,
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round8_independent_audit_v1.json",
+      "sha256": "955c01efe8c1f77d09924d0b6afb2994c06fc78aecbd02bf50e3c248a7cf815a"
+    },
+    {
+      "bytes": 20125,
+      "path": "docs/task43_hp_adaptivity/outcomes/records/h1_real_action_qualification_v1.json",
+      "sha256": "8a35fe340bb02d7dedca62b579bf611102a94c551c18774bc41b3916aa217c0b"
+    }
+  ],
+  "limitations": {
+    "DoF": "110472 versus derived uniform6x10x6 p6 FE237600 is scale only, not matched-accuracy performance evidence.",
+    "accuracy": "Final overall FAIL: top(0,0,s)4.065061945e-6 and bottom(0,0,s)2.148245071e-6 exceed1e-6;610 other powers pass. All field/complex-amplitude incident-floor differences pass this round.",
+    "history": "R8 PDE supervisor terminal absent/outer143/senderUNKNOWN remains resource/cost gap. Original h1 unknown-sender stop and later real-h qualification/ABI auxiliary overwrite gap preserved by historical dependency.",
+    "monitor": "Only lightweight monitor tool session90178 exited143; original R9 detached processes continued and full numeric/resource gates completed. Sender UNKNOWN, no relation to R8 inferred.",
+    "reference_scope": "Y5_1/control fields not used for marking/ranking this round; historical partial metadata viewed, no global-blindness assertion.",
+    "remaining": "Final space not frozen. Independent holdout/reference-own q/R14, one-sided sidewalls, final endpoint/tighter solve, iterative/equal-accuracy cost/control remain open. G3 tmp patch not applied or run.",
+    "root_J_scope": "Root independently recomputed all total q8 E/curl/G,612 powers/four amplitudes and11 checkpoint arrays; scattered bounds supported by common incident floors and total-field error, not independently exact scattered-norm recomputation."
+  },
+  "physics": {
+    "A_volume": 0.6915156103398812,
+    "J_candidate": 4.065061945224269,
+    "J_parent": 10.602439170670497,
+    "J_witness": "power.R00_s",
+    "R00_p": 1.5666447717428527e-23,
+    "R00_s": 0.2513263762619423,
+    "R00_total": 0.2513263762619423,
+    "R_total": 0.2513585307019157,
+    "T_total": 0.05712585895625171,
+    "all612_power_channels": {
+      "all612checked": true,
+      "failures": [
+        {
+          "absolute_difference": 4.065061945224269e-06,
+          "actual_power": 0.2513263762619423,
+          "mode": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "reference_power": 0.2513223111999971,
+          "tolerance": 1e-06
+        },
+        {
+          "absolute_difference": 2.1482450713386503e-06,
+          "actual_power": 0.05708675106689312,
+          "mode": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "reference_power": 0.05708889931196446,
+          "tolerance": 1e-06
+        }
+      ],
+      "passing_count": 610
+    },
+    "all_J_components": {
+      "amplitude.bottom_p": 0.008429571656732525,
+      "amplitude.bottom_s": 0.043191980308509445,
+      "amplitude.top_p": 0.003630501420762505,
+      "amplitude.top_s": 0.04073694195405854,
+      "field.E_scattered_code": 0.1469169825896326,
+      "field.E_total_code": 0.14691698258963262,
+      "field.G": 0.39956834234587557,
+      "field.H_scattered_A_per_m": 0.545641934455938,
+      "field.H_total_A_per_m": 0.5456419344559382,
+      "power.A_volume": 0.19164422795370226,
+      "power.R00_p": 7.323496238801879e-16,
+      "power.R00_s": 4.065061945224269,
+      "power.R00_total": 0.4065061945224268,
+      "power.R_total": 0.40645204737455026,
+      "power.T_total": 0.21481161652722733,
+      "power.max_individual_channel": 4.065061945224269
+    },
+    "all_four_boundary_amplitude_group_metrics": {
+      "bottom_p": {
+        "difference_boundary_amplitude_l2": 8.429571656732525e-07,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.00027720997077159245,
+        "relative_to_reference": 0.0030408616375772724,
+        "relative_with_unit_incident_modal_floor": 8.429571656732525e-07
+      },
+      "bottom_s": {
+        "difference_boundary_amplitude_l2": 4.3191980308509445e-06,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.1708593117579208,
+        "relative_to_reference": 2.5279266236133088e-05,
+        "relative_with_unit_incident_modal_floor": 4.3191980308509445e-06
+      },
+      "top_p": {
+        "difference_boundary_amplitude_l2": 3.6305014207625054e-07,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.0002660223339478603,
+        "relative_to_reference": 0.0013647355719667036,
+        "relative_with_unit_incident_modal_floor": 3.6305014207625054e-07
+      },
+      "top_s": {
+        "difference_boundary_amplitude_l2": 4.073694195405854e-06,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.5013228858864879,
+        "relative_to_reference": 8.125889142687655e-06,
+        "relative_with_unit_incident_modal_floor": 4.073694195405854e-06
+      }
+    },
+    "eta_candidate": 3.995683423458756e-05,
+    "eta_parent": 0.00012588848818861328,
+    "final_accuracy_pass": false,
+    "full_field_metrics": {
+      "E_scattered_code": {
+        "candidate_l2": 321.7054207032587,
+        "difference_l2": 0.008691725904925236,
+        "reference_l2": 321.70508582252245,
+        "reference_norm_floor": 591.6079783099616,
+        "relative_to_reference": 2.701768261668163e-05,
+        "relative_to_reference_defined": true,
+        "relative_to_reference_or_floor": 1.4691698258963259e-05
+      },
+      "E_total_code": {
+        "candidate_l2": 392.10336175880786,
+        "difference_l2": 0.008691725904925238,
+        "reference_l2": 392.1033687139939,
+        "reference_norm_floor": 591.6079783099616,
+        "relative_to_reference": 2.216692484288528e-05,
+        "relative_to_reference_defined": true,
+        "relative_to_reference_or_floor": 1.4691698258963263e-05
+      },
+      "G": {
+        "candidate_g_norm": 554.5630019218322,
+        "difference_g_norm": 0.033430285990927684,
+        "incident_g_norm_floor": 836.6600265340755,
+        "reference_g_norm": 554.5630106966479,
+        "relative_to_reference": 6.0282213826220046e-05,
+        "relative_to_reference_defined": true,
+        "relative_with_incident_floor": 3.995683423458756e-05
+      },
+      "H_scattered_A_per_m": {
+        "candidate_l2": 0.853979179149888,
+        "difference_l2": 8.568626150140189e-05,
+        "reference_l2": 0.8539782867130329,
+        "reference_norm_floor": 1.5703752972513016,
+        "relative_to_reference": 0.00010033775194824775,
+        "relative_to_reference_defined": true,
+        "relative_to_reference_or_floor": 5.45641934455938e-05
+      },
+      "H_total_A_per_m": {
+        "candidate_l2": 1.0409758384894876,
+        "difference_l2": 8.568626150140192e-05,
+        "reference_l2": 1.0409758529677473,
+        "reference_norm_floor": 1.5703752972513016,
+        "relative_to_reference": 8.231339973652276e-05,
+        "relative_to_reference_defined": true,
+        "relative_to_reference_or_floor": 5.456419344559382e-05
+      },
+      "curl_E_over_k0_code": {
+        "candidate_l2": 392.1671541549539,
+        "difference_l2": 0.032280612172461406,
+        "reference_l2": 392.16715960935295,
+        "reference_norm_floor": 591.6079783099616,
+        "relative_to_reference": 8.23133997365228e-05,
+        "relative_to_reference_defined": true,
+        "relative_to_reference_or_floor": 5.45641934455938e-05
+      }
+    },
+    "newly_reached_final_items": [
+      "R_total",
+      "R00_total",
+      "total/scattered E/H and G",
+      "bottom_s boundary amplitude group"
+    ],
+    "power_absolute_errors_vs_Y6_1": {
+      "A_volume": 1.916442279537023e-06,
+      "R00_p": 7.323496238801879e-22,
+      "R00_s": 4.065061945224269e-06,
+      "R00_total": 4.065061945224269e-06,
+      "R_total": 4.064520473745503e-06,
+      "T_total": 2.1481161652722736e-06
+    },
+    "weak_amount_scope": "top_p/bottom_p raw relative .00136473557/.00304086164 remain above1e-4; fixed unit-incident floors pass and raw norms preserved. No all-raw-relative PASS claim."
+  },
+  "preparation_dependency": {
+    "bytes": 11304,
+    "path": "docs/task43_hp_adaptivity/outcomes/records/round9_p_only_plan_preparation_v1.json",
+    "sha256": "8dd58637fd328d7fa99fcc484d44e250d4449603fa33f00fd1423fbff3f33f9a"
+  },
+  "ranking": {
+    "formula": "(eta_parent-eta_candidate +/- epsilon_G)/actual_added_independent_FE_dofs",
+    "h_actual_added_FE": null,
+    "h_actual_independent_FE": null,
+    "h_actual_trace": null,
+    "h_added_independent_FE_proven_lower_bound": 202335,
+    "h_authority_status": "not_run",
+    "h_leaf_count": 817,
+    "h_noise_inclusive_conservative_score_upper": 6.670949019458657e-10,
+    "h_pruning": "not_run_pruned_by_strict_dominance_over_looser_mathematical_upper_bound; interior lower bound never reported as actual total FE or measured h cost",
+    "h_verified_cell_interior_rows": 309060,
+    "p_actual_added_FE": 3747,
+    "p_score_lower": 2.050800511273613e-08,
+    "p_score_upper": 2.535890385658638e-08,
+    "proof_reference": {
+      "bytes": 1890,
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/root_review/root_round9_conservative_h_score_bound_proposal.json",
+      "sha256": "b347450e3066a757e4836231ff07c4e41cd350c6f81443d65fef75672de70053"
+    }
+  },
+  "resources": {
+    "PDE": {
+      "descendants_cleared": true,
+      "elapsed_seconds": 2878.9347875751555,
+      "launcher_exit_code": 0,
+      "leader_exit_code": 0,
+      "native_global_swap_delta_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "raw_global_scope_note": "Old WSL-global label retained; actual native all-machine diagnostic, not task attribution.",
+      "sample_count": 2291,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 6283513856,
+      "status": "COMPLETED",
+      "task_VmSwap_peak_bytes": 0,
+      "watchdog_summary": {
+        "bytes": 3565,
+        "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/watchdog/summary.json",
+        "sha256": "afddc2298a1c357eafc1746fb01fbef20010026cd3174d35073cb5ef2317b6e4"
+      }
+    },
+    "comparison": {
+      "descendants_cleared": true,
+      "elapsed_seconds": 281.77761264611036,
+      "launcher_exit_code": 0,
+      "leader_exit_code": 0,
+      "native_global_swap_delta_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "raw_global_scope_note": "Old WSL-global label retained; actual native all-machine diagnostic, not task attribution.",
+      "sample_count": 226,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 1126117376,
+      "status": "COMPLETED",
+      "task_VmSwap_peak_bytes": 0,
+      "watchdog_summary": {
+        "bytes": 3564,
+        "path": "benchmarks/artifacts/task43/round9_comparison_attempt1/watchdog/summary.json",
+        "sha256": "9d268eb7c9d6fa295fc4b6d72c433a8a76849693f0dec2720ab1e5a60d97ac40"
+      }
+    }
+  },
+  "schema": "task43.round9-independent-audit.v1",
+  "source_identity": {
+    "CPU": [
+      1
+    ],
+    "MPI": 1,
+    "PDE_prebound_inputs": 31,
+    "PETSc_int": "int64",
+    "PETSc_scalar": "complex128",
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "comparison_prebound_inputs": 65,
+    "direct_backend_requested_live_summary": "mumps",
+    "listed_source_count": 50,
+    "math_threads": 1,
+    "posthash_all_match": true,
+    "scope": "listed scope only, not transitive closure",
+    "source_HEAD": "db6d39dbc8688cf525e5462cc4f0eaa81fca00c4"
+  }
+}
