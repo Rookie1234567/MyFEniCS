@@ -201,6 +201,31 @@ TASK41_B0_SAVED_DIAGNOSTICS_SCOPE = {
     "carrier_replay": False,
     "full_q_scan": False,
 }
+TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE = "v12_two_cell_candidate_replay"
+TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE
+    / "execution_window_saved_diagnostics_v12_two_cell_candidate_replay_6h.json"
+)
+TASK41_B0_V12_CANDIDATE_REPLAY_AUTH_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE
+    / "saved_diagnostics_v12_two_cell_candidate_replay_authorization.json"
+)
+TASK41_B0_V12_CANDIDATE_REPLAY_ACCOUNTING_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE
+    / "campaign_accounting_v12_two_cell_candidate_replay_6h.jsonl"
+)
+TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE = {
+    "kind": "saved_diagnostics_candidate_replay_only",
+    "actions": ["selected_incident_replay"],
+    "max_new_incident_cells": 2,
+    "max_ffcx_reference_cells": 0,
+    "new_evidence_limit_bytes": TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES,
+    "cumulative_raw_artifact_limit_bytes": 16 * 1024**3,
+    "free_space_floor_bytes": 2 * 1024**3,
+    "full_owner": False,
+    "carrier_replay": False,
+    "full_q_scan": False,
+}
 TASK41_B0_V9_INTERNAL_RHS_STRATEGY = "same_lu_rhs_solve"
 TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE = Path(
     "results/task41extra_phi90_p50x50_g17x20"
@@ -218,6 +243,51 @@ TASK41_HOST_RESERVE_BYTES = 68_719_476_736
 
 class Task41ContractError(ValueError):
     """The fixed Task41 P0 execution contract is incomplete or inconsistent."""
+
+
+def _task41_saved_diagnostics_instance(instance: str | None = None) -> dict[str, Any]:
+    if instance is None:
+        return {
+            "instance": None,
+            "window_relative": TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE,
+            "authorization_relative": TASK41_B0_SAVED_DIAGNOSTICS_AUTH_RELATIVE,
+            "accounting_relative": (
+                TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_saved_diagnostics_6h.jsonl"
+            ),
+            "scope": TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            "authorization": TASK41_B0_SAVED_DIAGNOSTICS_AUTHORIZATION,
+            "prior_window_relative": TASK41_B0_V9_WINDOW_RELATIVE,
+            "prior_ledger_relative": (
+                TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl"
+            ),
+            "t0_basis": "user_approved_saved_diagnostics_6h",
+        }
+    if instance == TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE:
+        return {
+            "instance": instance,
+            "window_relative": TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE,
+            "authorization_relative": TASK41_B0_V12_CANDIDATE_REPLAY_AUTH_RELATIVE,
+            "accounting_relative": TASK41_B0_V12_CANDIDATE_REPLAY_ACCOUNTING_RELATIVE,
+            "scope": TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+            "authorization": "user_explicit_v12_two_cell_candidate_replay_6h",
+            "prior_window_relative": TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE,
+            "prior_ledger_relative": (
+                TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_saved_diagnostics_6h.jsonl"
+            ),
+            "t0_basis": "user_approved_v12_two_cell_candidate_replay_6h",
+        }
+    raise Task41ContractError(f"unknown saved-diagnostics instance: {instance!r}")
+
+
+def _task41_saved_diagnostics_instance_for_path(
+    root: Path, path: Path
+) -> dict[str, Any] | None:
+    resolved = Path(path).resolve()
+    for instance in (None, TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE):
+        config = _task41_saved_diagnostics_instance(instance)
+        if resolved == (root / config["window_relative"]).resolve():
+            return config
+    return None
 
 
 def sha256_file(path: str | Path) -> str:
@@ -766,14 +836,12 @@ def _is_task41_b0_saved_diagnostics_contract(
     window = contract.get("window")
     if (
         contract.get("task_id") != TASK41_MODEL_ID
-        or contract.get("execution_scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
         or not isinstance(case, Mapping)
         or case.get("model_id") != TASK41_MODEL_ID
         or case.get("run_id") != TASK41_B0_RUN_ID
         or not isinstance(source, Mapping)
         or not re.fullmatch(r"[0-9a-f]{40}", str(source.get("sha", "")))
         or not isinstance(window, Mapping)
-        or window.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
         or not re.fullmatch(r"[0-9a-f]{40}", str(window.get("entry_source_sha", "")))
         or not re.fullmatch(r"[0-9a-f]{64}", str(window.get("authorization_sha256", "")))
     ):
@@ -782,7 +850,12 @@ def _is_task41_b0_saved_diagnostics_contract(
         window_path = _resolve(root, window.get("path"), "window.path")
     except Task41ContractError:
         return False
-    return window_path == (root / TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE).resolve()
+    config = _task41_saved_diagnostics_instance_for_path(root, window_path)
+    return bool(
+        config is not None
+        and contract.get("execution_scope") == config["scope"]
+        and window.get("scope") == config["scope"]
+    )
 
 
 def _saved_output_consumer_source_sha(
@@ -1068,11 +1141,23 @@ def require_task41_a1_comparison_binding(
     return binding, digest
 
 
-def contract_relative_path(source_sha: str, case_id: str = "A1") -> Path:
+def contract_relative_path(
+    source_sha: str,
+    case_id: str = "A1",
+    *,
+    saved_diagnostics_instance: str | None = None,
+) -> Path:
     if not re.fullmatch(r"[0-9a-f]{40}", source_sha):
         raise Task41ContractError("Task41 source SHA is invalid")
     case = _task41_case(case_id)
-    return case["controller_relative"] / f"execution_contract_source_{source_sha}.json"
+    suffix = (
+        f"_{TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE}"
+        if saved_diagnostics_instance == TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE
+        else ""
+    )
+    if saved_diagnostics_instance not in (None, TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE):
+        raise Task41ContractError("unknown saved-diagnostics contract filename instance")
+    return case["controller_relative"] / f"execution_contract_source_{source_sha}{suffix}.json"
 
 
 def require_task41_p0_contract(
@@ -1101,7 +1186,7 @@ def require_task41_p0_contract(
             raise Task41ContractError("Task41 contract is outside a registered P0 controller directory")
     case_spec = _task41_case(case_id)
     if relative.parent != case_spec["controller_relative"] or not re.fullmatch(
-        r"execution_contract_source_[0-9a-f]{40}\.json", relative.name
+        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay)?\.json", relative.name
     ):
         raise Task41ContractError("Task41 contract is not in the registered P0 controller directory")
     raw = contract_path.read_bytes()
@@ -1127,7 +1212,20 @@ def require_task41_p0_contract(
         raise Task41ContractError("Task41 contract sections must be JSON objects")
     if not re.fullmatch(r"[0-9a-f]{40}", str(source.get("sha", ""))):
         raise Task41ContractError("Task41 contract source SHA is invalid")
-    if relative != contract_relative_path(str(source["sha"]), case_id):
+    contract_window_path = _resolve(root, window.get("path"), "window.path")
+    saved_config_for_name = (
+        _task41_saved_diagnostics_instance_for_path(root, contract_window_path)
+        if case_id == "B0"
+        else None
+    )
+    expected_relative = contract_relative_path(
+        str(source["sha"]),
+        case_id,
+        saved_diagnostics_instance=(
+            saved_config_for_name["instance"] if saved_config_for_name else None
+        ),
+    )
+    if relative != expected_relative:
         raise Task41ContractError("Task41 contract filename is not bound to its source SHA")
     if check_current_source:
         if _git(root, "rev-parse", "HEAD") != source["sha"]:
@@ -1197,11 +1295,14 @@ def require_task41_p0_contract(
         and _resolve(root, window.get("path"), "window.path")
         == (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve()
     )
-    is_saved_diagnostics_contract = (
-        case_id == "B0"
-        and _resolve(root, window.get("path"), "window.path")
-        == (root / TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE).resolve()
+    saved_diagnostics_config = (
+        _task41_saved_diagnostics_instance_for_path(
+            root, _resolve(root, window.get("path"), "window.path")
+        )
+        if case_id == "B0"
+        else None
     )
+    is_saved_diagnostics_contract = saved_diagnostics_config is not None
     if is_v9_contract or is_saved_diagnostics_contract:
         if numerical_strategy != {
             "schema": "task41.p0.b0.internal_rhs_strategy.v1",
@@ -1217,11 +1318,14 @@ def require_task41_p0_contract(
         raise Task41ContractError("non-V9 Task41 contracts must retain the stored_T default")
     window_path, total_seconds, numerical_seconds, _continuation = task41_window_spec(contract, root)
     if is_saved_diagnostics_contract:
-        if contract.get("execution_scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE:
+        assert saved_diagnostics_config is not None
+        if contract.get("execution_scope") != saved_diagnostics_config["scope"]:
             raise Task41ContractError(
                 "six-hour B0 contract does not carry the exact saved-diagnostics-only scope"
             )
-        authorization, authorization_sha = _task41_saved_diagnostics_authorization(root)
+        authorization, authorization_sha = _task41_saved_diagnostics_authorization(
+            root, instance=saved_diagnostics_config["instance"]
+        )
         expected_preparation_identity = {
             "saved_diagnostics_prior_window_path": authorization["prior_window_path"],
             "saved_diagnostics_prior_window_sha256": authorization["prior_window_sha256"],
@@ -1233,7 +1337,7 @@ def require_task41_p0_contract(
             not isinstance(preparation, Mapping)
             or any(preparation.get(key) != value for key, value in expected_preparation_identity.items())
             or window.get("authorization_sha256") != authorization_sha
-            or window.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+            or window.get("scope") != saved_diagnostics_config["scope"]
         ):
             raise Task41ContractError(
                 "six-hour B0 contract does not preserve its authorization and prior window/ledger identity"
@@ -1359,25 +1463,27 @@ def task41_window_spec(contract: Mapping[str, Any], root: Path) -> tuple[Path, f
                 "Task41 V9 contract is not bound to its approved source, V6 parent, and cost ledger"
             )
         return path, TASK41_B0_V9_TOTAL_SECONDS, TASK41_B0_V9_NUMERICAL_SECONDS, True
-    if (
-        case["case_id"] == "B0"
-        and path == (root / TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE).resolve()
-    ):
-        authorization, authorization_sha = _task41_saved_diagnostics_authorization(root)
+    saved_diagnostics_config = (
+        _task41_saved_diagnostics_instance_for_path(root, path)
+        if case["case_id"] == "B0"
+        else None
+    )
+    if saved_diagnostics_config is not None:
+        authorization, authorization_sha = _task41_saved_diagnostics_authorization(
+            root, instance=saved_diagnostics_config["instance"]
+        )
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise Task41ContractError("saved-diagnostics fixed window is missing or invalid") from exc
-        expected_accounting = (
-            TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_saved_diagnostics_6h.jsonl"
-        )
+        expected_scope = saved_diagnostics_config["scope"]
         if (
             not isinstance(payload, Mapping)
             or payload.get("authorization_sha256") != authorization_sha
-            or payload.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+            or payload.get("scope") != expected_scope
             or payload.get("source_sha") != authorization["source_at_entry"]
             or window_info.get("authorization_sha256") != authorization_sha
-            or window_info.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+            or window_info.get("scope") != expected_scope
             or window_info.get("entry_source_sha") != authorization["source_at_entry"]
             or payload.get("total_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS
             or payload.get("numerical_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS
@@ -1390,8 +1496,9 @@ def task41_window_spec(contract: Mapping[str, Any], root: Path) -> tuple[Path, f
             or window_info.get("prior_window_sha256") != authorization["prior_window_sha256"]
             or window_info.get("prior_ledger_path") != authorization["prior_ledger_path"]
             or window_info.get("prior_ledger_sha256") != authorization["prior_ledger_sha256"]
+            or payload.get("t0_basis") != {"kind": saved_diagnostics_config["t0_basis"]}
             or _resolve(root, payload.get("accounting_path"), "saved-diagnostics accounting path")
-            != (root / expected_accounting).resolve()
+            != (root / saved_diagnostics_config["accounting_relative"]).resolve()
         ):
             raise Task41ContractError(
                 "saved-diagnostics window is not bound to its explicit authorization and scope"
@@ -1563,9 +1670,12 @@ def _task41_v9_authorization(root: Path) -> tuple[dict[str, Any], str]:
     return normalized, hashlib.sha256(raw).hexdigest()
 
 
-def _task41_saved_diagnostics_authorization(root: Path) -> tuple[dict[str, Any], str]:
-    """Validate the one explicit, six-hour saved-diagnostics authorization record."""
-    path = root / TASK41_B0_SAVED_DIAGNOSTICS_AUTH_RELATIVE
+def _task41_saved_diagnostics_authorization(
+    root: Path, *, instance: str | None = None
+) -> tuple[dict[str, Any], str]:
+    """Validate one explicit six-hour saved-diagnostics authorization instance."""
+    config = _task41_saved_diagnostics_instance(instance)
+    path = root / config["authorization_relative"]
     try:
         raw = path.read_bytes()
         payload = json.loads(raw)
@@ -1579,30 +1689,30 @@ def _task41_saved_diagnostics_authorization(root: Path) -> tuple[dict[str, Any],
         "prior_window_path", "prior_window_sha256", "prior_ledger_path",
         "prior_ledger_sha256",
     }
-    prior_window_path = root / TASK41_B0_V9_WINDOW_RELATIVE
-    prior_ledger_path = root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl"
+    prior_window_path = root / config["prior_window_relative"]
+    prior_ledger_path = root / config["prior_ledger_relative"]
     try:
         prior_window_raw = prior_window_path.read_bytes()
         prior_window = json.loads(prior_window_raw)
     except (OSError, json.JSONDecodeError) as exc:
-        raise Task41ContractError("saved-diagnostics authorization requires the recorded V9 window") from exc
+        raise Task41ContractError("saved-diagnostics authorization requires its frozen parent window") from exc
     prior_window_sha = hashlib.sha256(prior_window_raw).hexdigest()
     prior_ledger_sha = sha256_file(prior_ledger_path) if prior_ledger_path.is_file() else None
     if (
         not isinstance(payload, dict)
         or set(payload) != expected_fields
         or payload.get("schema") != TASK41_B0_SAVED_DIAGNOSTICS_AUTH_SCHEMA
-        or payload.get("authorization") != TASK41_B0_SAVED_DIAGNOSTICS_AUTHORIZATION
+        or payload.get("authorization") != config["authorization"]
         or not re.fullmatch(r"[0-9a-f]{40}", str(payload.get("source_at_entry", "")))
         or payload.get("total_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS
         or payload.get("numerical_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS
         or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
-        or payload.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+        or payload.get("scope") != config["scope"]
         or not isinstance(prior_window, Mapping)
-        or payload.get("prior_window_path") != str(TASK41_B0_V9_WINDOW_RELATIVE)
+        or payload.get("prior_window_path") != str(config["prior_window_relative"])
         or payload.get("prior_window_sha256") != prior_window_sha
         or payload.get("prior_ledger_path")
-        != str(TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl")
+        != str(config["prior_ledger_relative"])
         or payload.get("prior_ledger_sha256") != prior_ledger_sha
         or _resolve(root, prior_window.get("accounting_path"), "prior V9 accounting path")
         != prior_ledger_path.resolve()
@@ -1634,10 +1744,12 @@ def load_task41_p0_fixed_window(
     is_v3_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V3_WINDOW_RELATIVE).resolve()
     is_v6_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V6_WINDOW_RELATIVE).resolve()
     is_v9_continuation = case_spec["case_id"] == "B0" and path == (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve()
-    is_saved_diagnostics_continuation = (
-        case_spec["case_id"] == "B0"
-        and path == (root / TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE).resolve()
+    saved_diagnostics_config = (
+        _task41_saved_diagnostics_instance_for_path(root, path)
+        if case_spec["case_id"] == "B0"
+        else None
     )
+    is_saved_diagnostics_continuation = saved_diagnostics_config is not None
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     if digest != window_info["sha256"]:
@@ -1790,7 +1902,10 @@ def load_task41_p0_fixed_window(
         bootstrap_seconds = expected_bootstrap_seconds
         bootstrap_seconds = expected_bootstrap_seconds
     elif is_saved_diagnostics_continuation:
-        authorization, authorization_sha = _task41_saved_diagnostics_authorization(root)
+        assert saved_diagnostics_config is not None
+        authorization, authorization_sha = _task41_saved_diagnostics_authorization(
+            root, instance=saved_diagnostics_config["instance"]
+        )
         expected_t0_ns = _utc_ns(authorization["preparation_started_utc"])
         expected_bootstrap_seconds = (int(anchor["utc_ns"]) - expected_t0_ns) / 1e9
         recorded_bootstrap = payload.get("bootstrap_utc_elapsed_seconds")
@@ -1800,8 +1915,8 @@ def load_task41_p0_fixed_window(
             or payload.get("source_sha") != authorization["source_at_entry"]
             or payload.get("authorization_sha256") != authorization_sha
             or window_info.get("authorization_sha256") != authorization_sha
-            or payload.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
-            or window_info.get("scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+            or payload.get("scope") != saved_diagnostics_config["scope"]
+            or window_info.get("scope") != saved_diagnostics_config["scope"]
             or payload.get("prior_window_path") != authorization["prior_window_path"]
             or payload.get("prior_window_sha256") != authorization["prior_window_sha256"]
             or payload.get("prior_ledger_path") != authorization["prior_ledger_path"]
@@ -1810,7 +1925,7 @@ def load_task41_p0_fixed_window(
             or window_info.get("prior_window_sha256") != authorization["prior_window_sha256"]
             or window_info.get("prior_ledger_path") != authorization["prior_ledger_path"]
             or window_info.get("prior_ledger_sha256") != authorization["prior_ledger_sha256"]
-            or payload.get("t0_basis") != {"kind": "user_approved_saved_diagnostics_6h"}
+            or payload.get("t0_basis") != {"kind": saved_diagnostics_config["t0_basis"]}
             or not isinstance(recorded_bootstrap, (int, float))
             or isinstance(recorded_bootstrap, bool)
             or abs(float(recorded_bootstrap) - expected_bootstrap_seconds) > 1e-6
@@ -1818,11 +1933,7 @@ def load_task41_p0_fixed_window(
             or payload.get("bootstrap_time_treatment")
             != "preparation_start_to_anchor_utc_elapsed_charged; pre_anchor_monotonic_and_boottime_unknown"
             or _resolve(root, payload.get("accounting_path"), "saved-diagnostics accounting path")
-            != (
-                root
-                / TASK41_B0_CONTROLLER_RELATIVE
-                / "campaign_accounting_saved_diagnostics_6h.jsonl"
-            ).resolve()
+            != (root / saved_diagnostics_config["accounting_relative"]).resolve()
         ):
             raise Task41ContractError(
                 "saved-diagnostics window clock, approval, scope, or accounting path changed"
@@ -1871,13 +1982,21 @@ def _task41_window_for_contract(
     root: Path, case_id: str = "A1", *, b0_v3_continuation: bool = False,
     b0_v6_continuation: bool = False, b0_v9_continuation: bool = False,
     b0_saved_diagnostics_6h: bool = False,
+    b0_saved_diagnostics_instance: str | None = None,
 ) -> tuple[FixedCampaignWindow, str, dict[str, Any]]:
     case_spec = _task41_case(case_id)
+    saved_instance = (
+        b0_saved_diagnostics_instance
+        if b0_saved_diagnostics_instance is not None
+        else None
+    )
+    saved_enabled = b0_saved_diagnostics_6h or saved_instance is not None
     if sum((b0_v3_continuation, b0_v6_continuation, b0_v9_continuation,
-            b0_saved_diagnostics_6h)) > 1:
+            saved_enabled)) > 1:
         raise Task41ContractError("Task41 B0 continuation window routes are mutually exclusive")
+    saved_config = _task41_saved_diagnostics_instance(saved_instance) if saved_enabled else None
     relative = (
-        TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE if b0_saved_diagnostics_6h
+        saved_config["window_relative"] if saved_config is not None
         else TASK41_B0_V9_WINDOW_RELATIVE if b0_v9_continuation
         else TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
         else TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation
@@ -1908,11 +2027,13 @@ def _task41_window_for_contract(
             "parent_cost_ledger_path": payload.get("parent_cost_ledger_path"),
             "parent_cost_ledger_sha256": payload.get("parent_cost_ledger_sha256"),
         }
-    elif b0_saved_diagnostics_6h:
-        authorization, authorization_sha = _task41_saved_diagnostics_authorization(root)
+    elif saved_config is not None:
+        authorization, authorization_sha = _task41_saved_diagnostics_authorization(
+            root, instance=saved_config["instance"]
+        )
         continuation_identity = {
             "authorization_sha256": authorization_sha,
-            "scope": TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            "scope": saved_config["scope"],
             "prior_window_path": authorization["prior_window_path"],
             "prior_window_sha256": authorization["prior_window_sha256"],
             "prior_ledger_path": authorization["prior_ledger_path"],
@@ -1972,7 +2093,10 @@ def task41_raw_artifact_limit_bytes(contract: Mapping[str, Any]) -> int:
         "free_space_floor_bytes": 2 << 30,
         "authorization": "user_20261019_16gib_evidence_only",
     }
-    if contract.get("execution_scope") == TASK41_B0_SAVED_DIAGNOSTICS_SCOPE:
+    if contract.get("execution_scope") in (
+        TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+        TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+    ):
         expected["new_evidence_limit_bytes"] = TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES
     if contract.get("case", {}).get("run_id") != TASK41_B0_RUN_ID or policy != expected:
         raise Task41ContractError("Task41 raw evidence policy differs from the authorized B0 override")
@@ -1991,6 +2115,7 @@ def prepare_task41_p0(
     b0_v6_continuation: bool = False,
     b0_v9_continuation: bool = False,
     b0_saved_diagnostics_6h: bool = False,
+    b0_saved_diagnostics_instance: str | None = None,
 ) -> dict[str, Any]:
     """Register or reuse the one fixed P0 window, then write a source-bound contract.
 
@@ -2013,13 +2138,24 @@ def prepare_task41_p0(
         raise Task41ContractError("V6 continuation applies only to the authorized B0 case")
     if b0_v9_continuation and case_id != "B0":
         raise Task41ContractError("V9 continuation applies only to the authorized B0 case")
-    if b0_saved_diagnostics_6h and case_id != "B0":
+    if b0_saved_diagnostics_6h and b0_saved_diagnostics_instance is not None:
+        raise Task41ContractError("choose either the legacy saved-diagnostics route or one named instance")
+    saved_diagnostics_instance = b0_saved_diagnostics_instance
+    saved_diagnostics_enabled = (
+        b0_saved_diagnostics_6h or saved_diagnostics_instance is not None
+    )
+    saved_diagnostics_config = (
+        _task41_saved_diagnostics_instance(saved_diagnostics_instance)
+        if saved_diagnostics_enabled
+        else None
+    )
+    if saved_diagnostics_enabled and case_id != "B0":
         raise Task41ContractError("saved-diagnostics six-hour window applies only to B0")
     if sum((b0_v3_continuation, b0_v6_continuation, b0_v9_continuation,
-            b0_saved_diagnostics_6h)) > 1:
+            saved_diagnostics_enabled)) > 1:
         raise Task41ContractError("B0 continuation routes are mutually exclusive")
     window_relative = (
-        TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE if b0_saved_diagnostics_6h
+        saved_diagnostics_config["window_relative"] if saved_diagnostics_config is not None
         else TASK41_B0_V9_WINDOW_RELATIVE if b0_v9_continuation
         else TASK41_B0_V6_WINDOW_RELATIVE if b0_v6_continuation
         else TASK41_B0_V3_WINDOW_RELATIVE if b0_v3_continuation
@@ -2040,32 +2176,30 @@ def prepare_task41_p0(
             raise Task41ContractError("Task41 V9 approval receipt does not bind the frozen source SHA")
     saved_diagnostics_authorization = None
     saved_diagnostics_authorization_sha = None
-    if b0_saved_diagnostics_6h:
-        saved_auth_path = root / TASK41_B0_SAVED_DIAGNOSTICS_AUTH_RELATIVE
+    if saved_diagnostics_config is not None:
+        saved_auth_path = root / saved_diagnostics_config["authorization_relative"]
         if not saved_auth_path.exists():
-            prior_window_path = root / TASK41_B0_V9_WINDOW_RELATIVE
+            prior_window_path = root / saved_diagnostics_config["prior_window_relative"]
             try:
                 prior_window_raw = prior_window_path.read_bytes()
                 prior_window_payload = json.loads(prior_window_raw)
             except (OSError, json.JSONDecodeError) as exc:
                 raise Task41ContractError(
-                    "saved-diagnostics preparation requires the existing V9 window identity"
+                    "saved-diagnostics preparation requires its existing frozen parent window"
                 ) from exc
-            prior_ledger_path = (
-                root / TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl"
-            )
+            prior_ledger_path = root / saved_diagnostics_config["prior_ledger_relative"]
             if (
                 not isinstance(prior_window_payload, Mapping)
-                or _resolve(root, prior_window_payload.get("accounting_path"), "prior V9 accounting path")
+                or _resolve(root, prior_window_payload.get("accounting_path"), "prior accounting path")
                 != prior_ledger_path.resolve()
             ):
                 raise Task41ContractError(
-                    "saved-diagnostics preparation found an unexpected prior V9 accounting path"
+                    "saved-diagnostics preparation found an unexpected prior accounting path"
                 )
             preparation_sample = clock_sample(include_boot_id=True)
             authorization_payload = {
                 "schema": TASK41_B0_SAVED_DIAGNOSTICS_AUTH_SCHEMA,
-                "authorization": TASK41_B0_SAVED_DIAGNOSTICS_AUTHORIZATION,
+                "authorization": saved_diagnostics_config["authorization"],
                 "source_at_entry": source_sha,
                 "preparation_started_utc": _utc_text_from_ns(
                     int(preparation_sample["utc_ns"])
@@ -2073,12 +2207,10 @@ def prepare_task41_p0(
                 "total_seconds": TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS,
                 "numerical_seconds": TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS,
                 "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
-                "scope": TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
-                "prior_window_path": str(TASK41_B0_V9_WINDOW_RELATIVE),
+                "scope": saved_diagnostics_config["scope"],
+                "prior_window_path": str(saved_diagnostics_config["prior_window_relative"]),
                 "prior_window_sha256": hashlib.sha256(prior_window_raw).hexdigest(),
-                "prior_ledger_path": str(
-                    TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl"
-                ),
+                "prior_ledger_path": str(saved_diagnostics_config["prior_ledger_relative"]),
                 "prior_ledger_sha256": (
                     sha256_file(prior_ledger_path) if prior_ledger_path.is_file() else None
                 ),
@@ -2088,13 +2220,15 @@ def prepare_task41_p0(
                     "saved-diagnostics authorization was concurrently created; inspect it before retrying"
                 )
         saved_diagnostics_authorization, saved_diagnostics_authorization_sha = (
-            _task41_saved_diagnostics_authorization(root)
+            _task41_saved_diagnostics_authorization(
+                root, instance=saved_diagnostics_instance
+            )
         )
         if not window_path.exists() and saved_diagnostics_authorization["source_at_entry"] != source_sha:
             raise Task41ContractError(
                 "saved-diagnostics authorization does not bind the frozen source SHA"
             )
-    if b0_saved_diagnostics_6h and not window_path.exists():
+    if saved_diagnostics_config is not None and not window_path.exists():
         assert saved_diagnostics_authorization is not None
         assert saved_diagnostics_authorization_sha is not None
         anchor = clock_sample(include_boot_id=True)
@@ -2121,11 +2255,10 @@ def prepare_task41_p0(
             "anchor": anchor,
             "accounting_path": str(
                 (
-                    root / TASK41_B0_CONTROLLER_RELATIVE
-                    / "campaign_accounting_saved_diagnostics_6h.jsonl"
+                root / saved_diagnostics_config["accounting_relative"]
                 ).resolve()
             ),
-            "t0_basis": {"kind": "user_approved_saved_diagnostics_6h"},
+            "t0_basis": {"kind": saved_diagnostics_config["t0_basis"]},
             "bootstrap_utc_elapsed_seconds": bootstrap_seconds,
             "bootstrap_boottime_elapsed_seconds": None,
             "bootstrap_time_treatment": (
@@ -2133,7 +2266,7 @@ def prepare_task41_p0(
                 "pre_anchor_monotonic_and_boottime_unknown"
             ),
             "authorization_sha256": saved_diagnostics_authorization_sha,
-            "scope": TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            "scope": saved_diagnostics_config["scope"],
             "prior_window_path": saved_diagnostics_authorization["prior_window_path"],
             "prior_window_sha256": saved_diagnostics_authorization["prior_window_sha256"],
             "prior_ledger_path": saved_diagnostics_authorization["prior_ledger_path"],
@@ -2295,7 +2428,10 @@ def prepare_task41_p0(
         root, case_id, b0_v3_continuation=b0_v3_continuation,
         b0_v6_continuation=b0_v6_continuation,
         b0_v9_continuation=b0_v9_continuation,
-        b0_saved_diagnostics_6h=b0_saved_diagnostics_6h,
+        b0_saved_diagnostics_6h=(
+            saved_diagnostics_enabled and saved_diagnostics_instance is None
+        ),
+        b0_saved_diagnostics_instance=saved_diagnostics_instance,
     )
 
     runtime_path = _resolve(root, str(runtime_prefix), "runtime_prefix")
@@ -2421,13 +2557,13 @@ def prepare_task41_p0(
                 ],
             }
         )
-    elif b0_saved_diagnostics_6h:
+    elif saved_diagnostics_config is not None:
         assert saved_diagnostics_authorization is not None
         assert saved_diagnostics_authorization_sha is not None
         window_binding.update(
             {
                 "authorization_sha256": saved_diagnostics_authorization_sha,
-                "scope": TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+                "scope": saved_diagnostics_config["scope"],
                 "prior_window_path": saved_diagnostics_authorization["prior_window_path"],
                 "prior_window_sha256": saved_diagnostics_authorization["prior_window_sha256"],
                 "prior_ledger_path": saved_diagnostics_authorization["prior_ledger_path"],
@@ -2435,7 +2571,15 @@ def prepare_task41_p0(
             }
         )
 
-    contract_path = root / contract_relative_path(source_sha, case_id)
+    contract_path = root / contract_relative_path(
+        source_sha,
+        case_id,
+        saved_diagnostics_instance=(
+            saved_diagnostics_instance
+            if saved_diagnostics_instance is not None
+            else None
+        ),
+    )
     if contract_path.exists():
         raise Task41ContractError("a Task41 contract already exists for this source SHA")
     service_directory = case_spec["service_relative"] / f"service_source_{source_sha}"
@@ -2474,11 +2618,11 @@ def prepare_task41_p0(
             "free_space_floor_bytes": 2 << 30,
             "authorization": "user_20261019_16gib_evidence_only",
         }
-        if b0_saved_diagnostics_6h:
+        if saved_diagnostics_config is not None:
             contract["evidence"]["raw_disk_policy"]["new_evidence_limit_bytes"] = (
                 TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES
             )
-    if b0_v9_continuation or b0_saved_diagnostics_6h:
+    if b0_v9_continuation or saved_diagnostics_config is not None:
         contract["numerical_strategy"] = {
             "schema": "task41.p0.b0.internal_rhs_strategy.v1",
             "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
@@ -2491,8 +2635,8 @@ def prepare_task41_p0(
         contract["preparation"] = {
             "existing_surface_donor": saved_surface_donor,
         }
-    if b0_saved_diagnostics_6h:
-        contract["execution_scope"] = TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+    if saved_diagnostics_config is not None:
+        contract["execution_scope"] = saved_diagnostics_config["scope"]
         contract["preparation"] = {
             **(contract.get("preparation") or {}),
             "saved_diagnostics_prior_window_path": saved_diagnostics_authorization[
@@ -2529,7 +2673,7 @@ def prepare_task41_p0(
         ),
         "service_command": (
             None
-            if b0_saved_diagnostics_6h
+            if saved_diagnostics_enabled
             else [
                 "bash",
                 "scripts/run_case_in_user_service.sh",
@@ -2543,7 +2687,7 @@ def prepare_task41_p0(
                 (root / "results" / TASK41_MODEL_ID
                  / "task41_p0_saved_diagnostics_6h" / window_sha).relative_to(root)
             )
-            if b0_saved_diagnostics_6h
+            if saved_diagnostics_enabled
             else None
         ),
         "saved_surface_donor": saved_surface_donor,
@@ -2822,6 +2966,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--b0-v6-continuation", action="store_true")
     parser.add_argument("--b0-v9-continuation", action="store_true")
     parser.add_argument("--b0-saved-diagnostics-6h", action="store_true")
+    parser.add_argument(
+        "--b0-saved-diagnostics-instance",
+        choices=(TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,),
+    )
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")
     parser.add_argument("--a2-q-csr-manifest", action="append", type=Path)
     args = parser.parse_args(argv)
@@ -2852,6 +3000,7 @@ def main(argv: list[str] | None = None) -> int:
             b0_v6_continuation=args.b0_v6_continuation,
             b0_v9_continuation=args.b0_v9_continuation,
             b0_saved_diagnostics_6h=args.b0_saved_diagnostics_6h,
+            b0_saved_diagnostics_instance=args.b0_saved_diagnostics_instance,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

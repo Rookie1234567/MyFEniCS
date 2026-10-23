@@ -56,6 +56,7 @@ TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_RELATIVE = Path(
 TASK41_P0_V11_METADATA_WINDOW_SHA256 = (
     "bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4"
 )
+TASK41_P0_V11_GLOBAL_ROW_COUNT = 5_752_120
 TASK41_P0_V11_V9_COMPACT_REPORT_SHA256 = (
     "e4db4e42b8a4f3b407ed0b00add8029f7e066aad6c38a2945d60e33ffbde7d93"
 )
@@ -3517,6 +3518,356 @@ def _task41_p0_v11_metadata_accounting_path_matches(
     return metadata_window_state.get("path") == str(old_window.accounting_path)
 
 
+def _v11_candidate_cell_reuse_identity(
+    *,
+    consumer_contract: Mapping[str, Any],
+    fixed_window: Any,
+    donor_manifest_sha256: str,
+    metadata_report_sha256: str,
+    v9_compact_report_sha256: str,
+    evaluator_identity: str,
+    cache_identity: str,
+    ffcx_c_source_sha256: str,
+    row: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Identify the numerical inputs that make one saved local cell reusable.
+
+    The consumer source/contract SHA is intentionally excluded: fixing worker
+    orchestration or checkpoint code must not invalidate unchanged local FE
+    products. The fixed authorization/window, source artifacts, form/cache,
+    cell coordinates and local partition remain exact reuse boundaries.
+    """
+    import hashlib
+    import json
+
+    def digest_json(value: Any) -> str:
+        raw = json.dumps(
+            value, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+        return hashlib.sha256(raw).hexdigest()
+
+    case = consumer_contract.get("case")
+    window = consumer_contract.get("window")
+    if not isinstance(case, Mapping) or not isinstance(window, Mapping):
+        raise ValueError("V11 cell reuse requires bound consumer case and window objects")
+    fixed_payload = fixed_window.payload
+    cell_index = int(row["cell_index"])
+    identity = {
+        "schema": "task41.p0.v12.candidate_cell_reuse_identity.v1",
+        "case": {
+            key: case.get(key)
+            for key in (
+                "model_id",
+                "run_id",
+                "input_sha256",
+                "physical_model_sha256",
+                "resolved_config_sha256",
+                "method",
+                "mpi_size",
+                "profile_identity",
+                "solver_stage",
+                "geometry_identity",
+            )
+        },
+        "numerical_strategy": consumer_contract.get("numerical_strategy"),
+        "window": {
+            "path": str(fixed_window.path),
+            "sha256": fixed_window.sha256,
+            "entry_source_sha": window.get("entry_source_sha"),
+            "authorization_sha256": window.get("authorization_sha256"),
+            "scope": window.get("scope"),
+            "source_sha_in_window": fixed_payload.get("source_sha"),
+            "prior_window_path": window.get("prior_window_path"),
+            "prior_window_sha256": window.get("prior_window_sha256"),
+            "prior_ledger_path": window.get("prior_ledger_path"),
+            "prior_ledger_sha256": window.get("prior_ledger_sha256"),
+        },
+        "donor_manifest_sha256": donor_manifest_sha256,
+        "selected_metadata_report_sha256": metadata_report_sha256,
+        "v9_compact_report_sha256": v9_compact_report_sha256,
+        "candidate_evaluator_identity": evaluator_identity,
+        "candidate_cache_identity": cache_identity,
+        "ffcx_c_source_sha256": ffcx_c_source_sha256,
+        "integration": {
+            "identity": "task41.p0.v11.same_mesh_p6.curl_plus_mass.v1",
+            "degree": 6,
+            "sum_duplicate_cell_integrals": True,
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        },
+        "cell": {
+            "cell_index": cell_index,
+            "cell_tag": int(row["cell_tag"]),
+            "cell_permutation": int(row["cell_permutation"]),
+            "actual_coordinate_sha256": row["actual_coordinate_sha256"],
+            "element_dimension": int(row["element_dimension"]),
+            "interior_positions_sha256": digest_json(
+                np.asarray(row["interior_positions"], dtype=np.int64).tolist()
+            ),
+            "trace_positions_sha256": digest_json(
+                np.asarray(row["trace_positions"], dtype=np.int64).tolist()
+            ),
+        },
+    }
+    return identity
+
+
+def _v11_prior_candidate_cell_progress(
+    prior_report: Mapping[str, Any],
+    *,
+    prior_report_path: Path,
+    fixed_window: Any,
+    consumer_contract: Mapping[str, Any],
+    donor_manifest_sha256: str,
+    metadata_report_path: Path,
+    metadata_report_sha256: str,
+    v9_compact_report_path: Path,
+    v9_compact_report_sha256: str,
+    current_root: Path,
+    require_contract: Any,
+) -> Mapping[str, Any] | None:
+    """Validate the failed/completed producer envelope before reading its cells."""
+    import re
+
+    if prior_report.get("schema") != (
+        "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1"
+    ):
+        return None
+    progress = prior_report.get("v11_selected_candidate_cell_progress")
+    if progress is None:
+        return None
+    if not isinstance(progress, Mapping) or progress.get("schema") != (
+        "task41.p0.v11.selected_candidate_cell_progress.v1"
+    ):
+        raise ValueError(
+            f"completed candidate progress in {prior_report_path} has an invalid schema"
+        )
+    cells = progress.get("cells")
+    completed = progress.get("completed_cells")
+    if not isinstance(cells, Mapping) or not isinstance(completed, list):
+        raise ValueError(
+            f"candidate progress in {prior_report_path} omits its completed-cell inventory"
+        )
+    if any(type(value) is not int for value in completed) or len(set(completed)) != len(completed):
+        raise ValueError(f"candidate progress in {prior_report_path} has a malformed cell inventory")
+    declared = {
+        int(key)
+        for key, value in cells.items()
+        if isinstance(key, str)
+        and key.isdigit()
+        and isinstance(value, Mapping)
+        and value.get("completion_status") == "CELL_COMPLETE"
+    }
+    if not completed and not declared:
+        return None
+    expected_cells = set(TASK41_P0_V11_SELECTED_CELLS)
+    if not set(completed).issubset(expected_cells) or set(completed) != declared:
+        raise ValueError(
+            f"candidate progress in {prior_report_path} has inconsistent complete-cell markers"
+        )
+
+    window_path = str(fixed_window.path)
+    if (
+        prior_report.get("consumer_window_path") != window_path
+        or prior_report.get("consumer_window_sha256") != fixed_window.sha256
+        or prior_report.get("selected_metadata_report_path")
+        != str(metadata_report_path.resolve())
+        or prior_report.get("selected_metadata_report_sha256")
+        != metadata_report_sha256
+        or prior_report.get("v9_compact_report_path")
+        != str(v9_compact_report_path.resolve())
+        or prior_report.get("v9_compact_report_sha256")
+        != v9_compact_report_sha256
+        or prior_report.get("donor_manifest_sha256") != donor_manifest_sha256
+    ):
+        raise ValueError(
+            f"completed candidate cells in {prior_report_path} have mismatched producer/window bindings"
+        )
+    old_source_sha = prior_report.get("consumer_source_sha")
+    old_contract_sha = prior_report.get("consumer_contract_sha256")
+    old_contract_path_value = prior_report.get("consumer_contract_path")
+    if (
+        not isinstance(old_source_sha, str)
+        or re.fullmatch(r"[0-9a-f]{40}", old_source_sha) is None
+        or not isinstance(old_contract_sha, str)
+        or re.fullmatch(r"[0-9a-f]{64}", old_contract_sha) is None
+        or not isinstance(old_contract_path_value, str)
+    ):
+        raise ValueError(
+            f"completed candidate cells in {prior_report_path} omit their source/contract binding"
+        )
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+        contract_relative_path,
+    )
+
+    old_contract_path = Path(old_contract_path_value).resolve(strict=True)
+    expected_old_path = (
+        current_root
+        / contract_relative_path(
+            old_source_sha,
+            "B0",
+            saved_diagnostics_instance=TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+        )
+    ).resolve()
+    if old_contract_path != expected_old_path:
+        raise ValueError(
+            f"completed candidate cells in {prior_report_path} point to an unregistered contract"
+        )
+    old_contract, old_digest = require_contract(
+        old_contract_path,
+        expected_sha256=old_contract_sha,
+        current_root=current_root,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    current_window = consumer_contract.get("window")
+    old_window = old_contract.get("window")
+    if (
+        old_digest != old_contract_sha
+        or old_contract.get("source", {}).get("sha") != old_source_sha
+        or prior_report.get("consumer_contract_path") != str(old_contract_path)
+        or not isinstance(old_window, Mapping)
+        or not isinstance(current_window, Mapping)
+        or any(
+            old_window.get(key) != current_window.get(key)
+            for key in (
+                "path",
+                "sha256",
+                "entry_source_sha",
+                "authorization_sha256",
+                "scope",
+                "prior_window_path",
+                "prior_window_sha256",
+                "prior_ledger_path",
+                "prior_ledger_sha256",
+            )
+        )
+        or old_window.get("sha256") != fixed_window.sha256
+        or old_window.get("entry_source_sha")
+        != fixed_window.payload.get("source_sha")
+        or any(
+            old_contract.get(key) != consumer_contract.get(key)
+            for key in (
+                "task_id",
+                "branch",
+                "case",
+                "runtime",
+                "resources",
+                "time",
+                "numerical_strategy",
+                "execution_scope",
+                "preparation",
+            )
+        )
+        or old_contract.get("evidence", {}).get("raw_disk_policy")
+        != consumer_contract.get("evidence", {}).get("raw_disk_policy")
+    ):
+        raise ValueError(
+            f"completed candidate cells in {prior_report_path} are not bound to the same authorized numerical inputs"
+        )
+    return progress
+
+
+def _v11_load_completed_candidate_cell(
+    saved_cell: Mapping[str, Any],
+    *,
+    expected_reuse_identity: Mapping[str, Any],
+    results_root: Path,
+    dimension: int,
+    interior_count: int,
+    trace_count: int,
+    sha256_file: Any,
+) -> dict[str, Any] | None:
+    """Hash-check every declared-complete array, then reuse only an exact math identity."""
+    import hashlib
+    import json
+    import math
+
+    cell_index = int(expected_reuse_identity["cell"]["cell_index"])
+    artifact_records = saved_cell.get("candidate_artifacts")
+    if (
+        saved_cell.get("completion_status") != "CELL_COMPLETE"
+        or saved_cell.get("cell_index") != cell_index
+        or not isinstance(artifact_records, Mapping)
+        or set(artifact_records)
+        != {"raw_tensor", "oriented_tensor", "R", "T", "S", "interior_lu", "interior_lu_pivots"}
+    ):
+        raise ValueError(f"declared-complete candidate cell {cell_index} has incomplete artifacts")
+    recorded_identity = saved_cell.get("reuse_identity")
+    recorded_identity_sha = saved_cell.get("reuse_identity_sha256")
+    if not isinstance(recorded_identity, Mapping) or not isinstance(recorded_identity_sha, str):
+        raise ValueError(f"declared-complete candidate cell {cell_index} omits its reuse identity")
+    identity_raw = json.dumps(
+        recorded_identity, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    if hashlib.sha256(identity_raw).hexdigest() != recorded_identity_sha:
+        raise ValueError(f"declared-complete candidate cell {cell_index} has a corrupt reuse-identity hash")
+
+    loaded: dict[str, np.ndarray] = {}
+    for name, record in artifact_records.items():
+        if not isinstance(record, Mapping):
+            raise ValueError(f"declared-complete candidate cell {cell_index} omits {name} metadata")
+        try:
+            array, _identity = _v8_load_bound_array(
+                record,
+                results_root=results_root,
+                path_basis=ROOT,
+                sha256_file=sha256_file,
+            )
+        except (OSError, ValueError) as exc:
+            raise ValueError(
+                f"declared-complete candidate cell {cell_index} artifact {name} failed path/hash/layout verification: {exc}"
+            ) from exc
+        loaded[name] = np.asarray(array)
+    expected_shapes = {
+        "raw_tensor": (dimension, dimension),
+        "oriented_tensor": (dimension, dimension),
+        "R": (interior_count, trace_count),
+        "T": (trace_count, interior_count),
+        "S": (trace_count, trace_count),
+        "interior_lu": (interior_count, interior_count),
+        "interior_lu_pivots": (interior_count,),
+    }
+    for name, shape in expected_shapes.items():
+        if loaded[name].shape != shape:
+            raise ValueError(
+                f"declared-complete candidate cell {cell_index} artifact {name} shape differs"
+            )
+    for name in expected_shapes.keys() - {"interior_lu_pivots"}:
+        if loaded[name].dtype != np.dtype(np.complex128):
+            raise ValueError(
+                f"declared-complete candidate cell {cell_index} artifact {name} dtype differs"
+            )
+    if loaded["interior_lu_pivots"].dtype != np.dtype(np.int32):
+        raise ValueError(
+            f"declared-complete candidate cell {cell_index} pivot dtype differs"
+        )
+    residual = saved_cell.get("strict_lu_residual")
+    if (
+        isinstance(residual, bool)
+        or not isinstance(residual, (int, float))
+        or not math.isfinite(float(residual))
+        or float(residual) < 0.0
+    ):
+        raise ValueError(f"declared-complete candidate cell {cell_index} LU residual is invalid")
+    if recorded_identity != expected_reuse_identity:
+        return None
+    return {
+        "source": "RECONSTRUCTED_SELECTED_CELL",
+        "raw_tensor": loaded["raw_tensor"],
+        "oriented_tensor": loaded["oriented_tensor"],
+        "rts": {name: loaded[name] for name in ("R", "T", "S")},
+        "lu": loaded["interior_lu"],
+        "pivots": loaded["interior_lu_pivots"].astype(np.int32, copy=True),
+        "strict_lu_residual": float(residual),
+        "raw_tensor_evaluator_identity": recorded_identity.get(
+            "candidate_evaluator_identity"
+        ),
+        "artifacts": dict(artifact_records),
+    }
+
+
 def _run_v11_selected_trace_star_candidate_replay(
     *,
     args: argparse.Namespace,
@@ -3525,6 +3876,7 @@ def _run_v11_selected_trace_star_candidate_replay(
     fixed_window: Any,
     output_directory: Path,
     consumer_contract: Mapping[str, Any],
+    consumer_contract_sha256: str,
     sha256_file: Any,
     allocation_gate: Any,
     persist_array: Any,
@@ -3560,8 +3912,35 @@ def _run_v11_selected_trace_star_candidate_replay(
         "window", {}
     ).get("sha256"):
         raise ValueError("V11 candidate replay fixed-window hash differs from the consumer contract")
-    if fixed_window.sha256 != TASK41_P0_V11_METADATA_WINDOW_SHA256:
-        raise ValueError("V11 candidate replay is outside the fixed metadata window")
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+    )
+
+    consumer_window = consumer_contract.get("window")
+    consumer_source = consumer_contract.get("source")
+    consumer_window_path_value = (
+        consumer_window.get("path") if isinstance(consumer_window, Mapping) else None
+    )
+    consumer_window_path = (
+        Path(str(consumer_window_path_value)) if consumer_window_path_value else None
+    )
+    if consumer_window_path is not None and not consumer_window_path.is_absolute():
+        consumer_window_path = ROOT / consumer_window_path
+    if (
+        consumer_contract.get("execution_scope") != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+        or not isinstance(consumer_window, Mapping)
+        or not isinstance(consumer_source, Mapping)
+        or consumer_window.get("sha256") != fixed_window.sha256
+        or consumer_window_path is None
+        or consumer_window_path.resolve() != Path(fixed_window.path).resolve()
+        or consumer_window.get("entry_source_sha")
+        != fixed_window.payload.get("source_sha")
+        or consumer_window.get("authorization_sha256")
+        != fixed_window.payload.get("authorization_sha256")
+    ):
+        raise ValueError(
+            "V12 candidate replay requires its independent authorization-bound consumer window"
+        )
     if args.selected_active_row != TASK41_P0_V11_METADATA_ACTIVE_ROW:
         raise ValueError("V11 candidate replay target row differs from frozen active row 87567")
     if len(donor.get("columns", ())) != 2:
@@ -3619,7 +3998,9 @@ def _run_v11_selected_trace_star_candidate_replay(
         require_clean_source=False,
         case_id="B0",
     )
-    old_window = load_task41_p0_fixed_window(old_contract, current_root=ROOT)
+    old_window = load_task41_p0_fixed_window(
+        old_contract, current_root=ROOT, require_current_boot=False
+    )
     metadata_window_state = metadata_report.get("initial_fixed_window_state")
     metadata_window_accounting = (
         metadata_window_state.get("accounting_record")
@@ -3637,7 +4018,6 @@ def _run_v11_selected_trace_star_candidate_replay(
         or old_contract.get("source", {}).get("sha")
         != TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA
         or old_window.sha256 != TASK41_P0_V11_METADATA_WINDOW_SHA256
-        or fixed_window.sha256 != old_window.sha256
         or not isinstance(metadata_window_state, Mapping)
         or metadata_window_state.get("campaign_window_sha256") != old_window.sha256
         or not _task41_p0_v11_metadata_accounting_path_matches(metadata_window_state, old_window)
@@ -3660,6 +4040,9 @@ def _run_v11_selected_trace_star_candidate_replay(
         item.get("cell_index") for item in metadata_cells if isinstance(item, Mapping)
     ] != list(TASK41_P0_V11_SELECTED_CELLS):
         raise ValueError("V11 attempt02 selected-cell inventory is incomplete or unordered")
+    dimension = int(metadata.get("element_dimension", -1))
+    if dimension < 1:
+        raise ValueError("V11 saved row metadata has no valid element dimension")
     metadata_root = metadata_path.parent.resolve(strict=True)
     metadata_arrays: dict[int, dict[str, np.ndarray]] = {}
     metadata_rows: dict[int, dict[str, Any]] = {}
@@ -3718,6 +4101,7 @@ def _run_v11_selected_trace_star_candidate_replay(
                 "cell_tag": expected_tag,
                 "cell_permutation": expected_permutation,
                 "actual_coordinate_sha256": coordinate_hash,
+                "element_dimension": dimension,
             }
         )
         metadata_arrays[cell_index] = loaded
@@ -3770,12 +4154,12 @@ def _run_v11_selected_trace_star_candidate_replay(
             or array_path.stat().st_size != int(record.get("bytes", -1))
             or record.get("sha256") != expected_sha
             or sha256_file(array_path) != expected_sha
-            or record.get("shape") != [5_752_120, 2]
+            or record.get("shape") != [TASK41_P0_V11_GLOBAL_ROW_COUNT, 2]
             or record.get("dtype") != "complex128"
         ):
             raise ValueError(f"V11 V9 compact {field} file identity is invalid")
         value = np.load(array_path, mmap_mode="r", allow_pickle=False)
-        if value.shape != (5_752_120, 2) or value.dtype != np.dtype(np.complex128):
+        if value.shape != (TASK41_P0_V11_GLOBAL_ROW_COUNT, 2) or value.dtype != np.dtype(np.complex128):
             raise ValueError(f"V11 V9 compact {field} array shape or dtype differs")
         return value
 
@@ -3790,10 +4174,8 @@ def _run_v11_selected_trace_star_candidate_replay(
 
     interior_positions = np.asarray(metadata["interior_positions"], dtype=np.int64)
     trace_positions = np.asarray(metadata["trace_positions"], dtype=np.int64)
-    dimension = int(metadata.get("element_dimension", -1))
     if (
-        dimension < 1
-        or interior_positions.ndim != 1
+        interior_positions.ndim != 1
         or trace_positions.ndim != 1
         or not np.array_equal(
             np.sort(np.concatenate((interior_positions, trace_positions))),
@@ -3876,6 +4258,31 @@ def _run_v11_selected_trace_star_candidate_replay(
         raise ValueError("V11 q-metric candidate identity differs from the frozen V9 evaluator")
     evaluator.validate_compiled_form(combined_form, kernels)
     evaluator.prepare()
+    if (
+        evaluator.identity != v9_report.get("candidate_evaluator_identity")
+        or evaluator.cache_identity
+        != v9_report.get("candidate_evaluator_cache_identity")
+        or consumer_contract.get("numerical_strategy", {}).get(
+            "internal_rhs_strategy"
+        )
+        != v9_report.get("internal_rhs_strategy")
+        or v9_report.get("internal_rhs_strategy") != "same_lu_rhs_solve"
+    ):
+        raise ValueError(
+            "prepared candidate evaluator/cache or RHS integration strategy differs from V9 compact"
+        )
+    integration_identity = {
+        "schema": "task41.p0.v12.same_mesh_p6_curl_plus_mass.v1",
+        "degree": 6,
+        "form_terms": ["curl", "mass"],
+        "cell_integral_ids": sorted(int(value) for value in kernels),
+        "sum_duplicate_cell_integrals": True,
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "candidate_evaluator_identity": evaluator.identity,
+        "candidate_cache_identity": evaluator.cache_identity,
+    }
+    if integration_identity["cell_integral_ids"] != [1, 2]:
+        raise ValueError("prepared candidate form integral IDs differ from the frozen V9 curl/mass form")
     progress(
         {
             "phase": "v11_selected_candidate_form_compile",
@@ -3892,7 +4299,101 @@ def _run_v11_selected_trace_star_candidate_replay(
     )
 
     cell_numeric: dict[int, dict[str, Any]] = {}
+    cell_progress_records: dict[str, dict[str, Any]] = {}
+    candidate_build_seconds = 0.0
+    candidate_cells_built: list[int] = []
+    candidate_cells_reused: list[int] = []
+    previous_attempt_root = output_directory.parent.parent
+    prior_reports = sorted(
+        previous_attempt_root.glob("attempt[0-9][0-9]*/task41_p0_v11_selected_trace_candidate_replay.json"),
+        reverse=True,
+    )
+    for prior_report_path in prior_reports:
+        if prior_report_path.resolve() == (output_directory.parent / "task41_p0_v11_selected_trace_candidate_replay.json").resolve():
+            continue
+        if prior_report_path.stat().st_size > 8 * 1024**2:
+            continue
+        try:
+            prior_report = json.loads(prior_report_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(prior_report, Mapping):
+            continue
+        prior_progress = _v11_prior_candidate_cell_progress(
+            prior_report,
+            prior_report_path=prior_report_path,
+            fixed_window=fixed_window,
+            consumer_contract=consumer_contract,
+            donor_manifest_sha256=str(donor.get("manifest_sha256")),
+            metadata_report_path=metadata_path,
+            metadata_report_sha256=TASK41_P0_V11_METADATA_REPORT_SHA256,
+            v9_compact_report_path=v9_path,
+            v9_compact_report_sha256=TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+            current_root=ROOT,
+            require_contract=require_task41_p0_contract,
+        )
+        if prior_progress is None:
+            continue
+        prior_cells = prior_progress.get("cells")
+        completed_cells = set(prior_progress["completed_cells"])
+        for cell_index in TASK41_P0_V11_SELECTED_CELLS:
+            cell_key = str(cell_index)
+            if cell_index in cell_numeric or cell_index not in completed_cells:
+                continue
+            if cell_key not in prior_cells:
+                raise ValueError(
+                    f"prior candidate progress declares cell {cell_index} complete without its record"
+                )
+            saved_cell = prior_cells[cell_key]
+            if not isinstance(saved_cell, Mapping):
+                raise ValueError(f"prior candidate cell {cell_index} record is malformed")
+            row = metadata_rows[cell_index]
+            reuse_identity = _v11_candidate_cell_reuse_identity(
+                consumer_contract=consumer_contract,
+                fixed_window=fixed_window,
+                donor_manifest_sha256=str(donor["manifest_sha256"]),
+                metadata_report_sha256=TASK41_P0_V11_METADATA_REPORT_SHA256,
+                v9_compact_report_sha256=TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+                evaluator_identity=evaluator.identity,
+                cache_identity=evaluator.cache_identity,
+                ffcx_c_source_sha256=TASK41_P0_V11_FFCX_C_SOURCE_SHA256,
+                row=row,
+            )
+            candidate = _v11_load_completed_candidate_cell(
+                saved_cell,
+                expected_reuse_identity=reuse_identity,
+                results_root=results_root,
+                dimension=dimension,
+                interior_count=len(row["interior_positions"]),
+                trace_count=len(row["trace_positions"]),
+                sha256_file=sha256_file,
+            )
+            if candidate is None:
+                progress(
+                    {
+                        "phase": "v11_selected_candidate_cell",
+                        "status": "NOT_REUSED_NUMERICAL_IDENTITY_CHANGED",
+                        "cell_index": cell_index,
+                        "prior_report_path": str(prior_report_path),
+                    }
+                )
+                continue
+            cell_numeric[cell_index] = {"candidate": candidate}
+            cell_progress_records[cell_key] = dict(saved_cell)
+            candidate_cells_reused.append(cell_index)
+            progress(
+                {
+                    "phase": "v11_selected_candidate_cell",
+                    "status": "READ_FROM_COMPLETED_CELL",
+                    "cell_index": cell_index,
+                    "source": "HASH_BOUND_PRIOR_ATTEMPT",
+                    "prior_report_path": str(prior_report_path),
+                }
+            )
+
     for cell_index in TASK41_P0_V11_SELECTED_CELLS:
+        if cell_index in cell_numeric:
+            continue
         progress(
             {
                 "phase": "v11_selected_candidate_cell",
@@ -3901,6 +4402,7 @@ def _run_v11_selected_trace_star_candidate_replay(
                 "source": "RECONSTRUCTED_SELECTED_CELL",
             }
         )
+        cell_build_started = perf_counter()
         role_sets = _v8_rebuild_selected_cell_role_artifacts(
             cell_index=cell_index,
             row=metadata_rows[cell_index],
@@ -3918,13 +4420,48 @@ def _run_v11_selected_trace_star_candidate_replay(
         )
         if set(role_sets) != {"candidate"}:
             raise ValueError(f"V11 selected cell {cell_index} did not save candidate only")
+        candidate_build_seconds += perf_counter() - cell_build_started
+        candidate_cells_built.append(cell_index)
         cell_numeric[cell_index] = role_sets
+        candidate = role_sets["candidate"]
+        reuse_identity = _v11_candidate_cell_reuse_identity(
+            consumer_contract=consumer_contract,
+            fixed_window=fixed_window,
+            donor_manifest_sha256=str(donor["manifest_sha256"]),
+            metadata_report_sha256=TASK41_P0_V11_METADATA_REPORT_SHA256,
+            v9_compact_report_sha256=TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+            evaluator_identity=evaluator.identity,
+            cache_identity=evaluator.cache_identity,
+            ffcx_c_source_sha256=TASK41_P0_V11_FFCX_C_SOURCE_SHA256,
+            row=metadata_rows[cell_index],
+        )
+        reuse_identity_sha256 = hashlib.sha256(
+            json.dumps(
+                reuse_identity,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        cell_progress_records[str(cell_index)] = {
+            "completion_status": "CELL_COMPLETE",
+            "cell_index": cell_index,
+            "source": "RECONSTRUCTED_SELECTED_CELL",
+            "strict_lu_residual": candidate["strict_lu_residual"],
+            "reuse_identity": reuse_identity,
+            "reuse_identity_sha256": reuse_identity_sha256,
+            "candidate_artifacts": {
+                name: dict(value)
+                for name, value in candidate["artifacts"].items()
+            },
+        }
         checkpoint(
             "v11_selected_candidate_cell_progress",
             {
                 "schema": "task41.p0.v11.selected_candidate_cell_progress.v1",
                 "completed_cells": sorted(cell_numeric),
                 "required_cells": list(TASK41_P0_V11_SELECTED_CELLS),
+                "cells": dict(cell_progress_records),
             },
         )
 
@@ -3954,7 +4491,20 @@ def _run_v11_selected_trace_star_candidate_replay(
 
     column_results = []
     review_identity_results = []
+    diagnostic_solve_calls = {"bi": 0, "ri": 0, "getrs": 0}
+    diagnostic_getrs_seconds = 0.0
     for column_index, column in enumerate(donor["columns"]):
+        if int(column.get("column", column_index)) != column_index:
+            raise ValueError("V12 donor columns are not in frozen [0, 1] order")
+        states = column.get("states")
+        if not isinstance(states, list):
+            raise ValueError(f"V12 donor column {column_index} omits its paired states")
+        labels = [state.get("label") for state in states if isinstance(state, Mapping)]
+        if len(states) != 2 or len(labels) != 2 or sorted(labels) != ["j0", "j3"]:
+            raise ValueError(
+                f"V12 donor column {column_index} must bind exactly one j0 and one j3 state"
+            )
+        states_by_label = {str(state["label"]): state for state in states}
         saved_y_value = complex(y9_row[column_index])
         saved_g_value = complex(g9_row[column_index])
         native_rhs = np.asarray(column["native_rhs"])
@@ -4023,6 +4573,36 @@ def _run_v11_selected_trace_star_candidate_replay(
                 known[active_rows[active_ids]], dtype=np.complex128
             )
             t_c = np.asarray(expansion @ known_active, dtype=np.complex128).reshape(-1)
+            selected_local_rows = np.asarray(
+                row["selected_local_trace_rows"], dtype=np.int64
+            )
+            selected_coefficients = np.asarray(
+                row["selected_trace_coefficients"], dtype=np.complex128
+            )
+            selected_active_local = np.flatnonzero(
+                active_ids == TASK41_P0_V11_METADATA_ACTIVE_ROW
+            )
+            if (
+                selected_local_rows.shape != (1,)
+                or selected_coefficients.shape != (1,)
+                or selected_coefficients[0] != 1.0 + 0.0j
+                or selected_active_local.shape != (1,)
+                or int(trace_rows[selected_local_rows[0]]) != selected_original_row
+            ):
+                raise ValueError(
+                    f"V12 selected trace/state binding is not the frozen one-entry coefficient at cell {cell_index}"
+                )
+            selected_expansion_row = expansion.getrow(int(selected_local_rows[0]))
+            if (
+                selected_expansion_row.nnz != 1
+                or int(selected_expansion_row.indices[0]) != int(selected_active_local[0])
+                or selected_expansion_row.data[0] != 1.0 + 0.0j
+                or t_c[int(selected_local_rows[0])]
+                != known[selected_original_row]
+            ):
+                raise ValueError(
+                    f"V12 selected known trace does not match its saved j0/j3 active-row mapping at cell {cell_index}"
+                )
             b_i = np.asarray(native_rhs[interior_rows], dtype=np.complex128)
             volume_b_i = np.asarray(native_volume_rhs[interior_rows], dtype=np.complex128)
             if not np.array_equal(b_i, volume_b_i):
@@ -4044,6 +4624,9 @@ def _run_v11_selected_trace_star_candidate_replay(
             z_b, minus_J_z_b, z_b_timing = project_internal_rhs_same_lu(
                 (lu, pivots), J, b_i
             )
+            diagnostic_solve_calls["bi"] += 1
+            diagnostic_solve_calls["getrs"] += int(z_b_timing["nonzero_rhs"] is True)
+            diagnostic_getrs_seconds += float(z_b_timing["getrs_seconds"])
             independently_projected_z_b = -(J @ z_b)
             same_lu_correction_difference = minus_J_z_b - independently_projected_z_b
             if not np.array_equal(minus_J_z_b, independently_projected_z_b):
@@ -4088,10 +4671,8 @@ def _run_v11_selected_trace_star_candidate_replay(
                 "same_lu_projected_active": persist_named(cell_base + "_same_lu_projected_active", projected_same_lu),
             }
 
-            for state in column["states"]:
-                state_label = str(state["label"])
-                if state_label not in {"j0", "j3"}:
-                    raise ValueError(f"V11 donor has unknown paired state {state_label}")
+            for state_label in ("j0", "j3"):
+                state = states_by_label[state_label]
                 storage = np.asarray(state["storage"])
                 native_action = np.asarray(state["native_volume_action"])
                 u_i = np.asarray(storage[interior_rows], dtype=np.complex128)
@@ -4101,6 +4682,9 @@ def _run_v11_selected_trace_star_candidate_replay(
                 z_r, minus_J_z_r, z_r_timing = project_internal_rhs_same_lu(
                     (lu, pivots), J, r_i
                 )
+                diagnostic_solve_calls["ri"] += 1
+                diagnostic_solve_calls["getrs"] += int(z_r_timing["nonzero_rhs"] is True)
+                diagnostic_getrs_seconds += float(z_r_timing["getrs_seconds"])
                 independently_projected_z_r = -(J @ z_r)
                 if not np.array_equal(minus_J_z_r, independently_projected_z_r):
                     raise ValueError("V11 same-LU residual correction differs from independent -Jz_r")
@@ -4206,11 +4790,7 @@ def _run_v11_selected_trace_star_candidate_replay(
                             "equation_1_native_residual_row": complex_pair(residual_t),
                             "equation_2_max_abs_difference": equation2_max,
                             "equation_2_roundoff_bound": equation2_bound,
-                            "equation_2_status": (
-                                "WITHIN_ROUNDOFF_ESTIMATE"
-                                if equation2_max <= equation2_bound
-                                else "LOCAL_IDENTITY_UNBOUND"
-                            ),
+                            "equation_2_status": "DIAGNOSTIC_ONLY",
                             "old_Tb_Jzb_identity_max_abs_difference": float(
                                 np.max(
                                     np.abs(
@@ -4298,7 +4878,7 @@ def _run_v11_selected_trace_star_candidate_replay(
                 "equation_1_roundoff_estimate_contains_difference": bool(
                     abs(identity_delta) <= identity_bound
                 ),
-                "equation_1_status": "LOCAL_IDENTITY_UNBOUND",
+                "equation_1_status": "DIAGNOSTIC_ONLY",
                 "cell_count": len(terms["delta_t"]),
             }
             column_review_identities.append(identity_item)
@@ -4371,9 +4951,42 @@ def _run_v11_selected_trace_star_candidate_replay(
             }
         )
 
+    if diagnostic_solve_calls != {"bi": 4, "ri": 8, "getrs": 12}:
+        raise ValueError(
+            f"V12 selected replay expected 4 bi and 8 ri GETRS calls, got {diagnostic_solve_calls}"
+        )
     result = {
         "schema": "task41.p0.v11.selected_trace_star_candidate_replay.v1",
         "status": "COMPLETED_LOCAL_CANDIDATE_REPLAY",
+        "replay_completed": True,
+        "data_integrity": True,
+        "y_replay_bound": all(
+            item["y_replay_status"] == "EXACT_SAVED_VALUE_REPRODUCED"
+            for item in column_results
+        ),
+        "g_replay_bound": all(
+            item["g_replay_status"] == "EXACT_SAVED_VALUE_REPRODUCED"
+            for item in column_results
+        ),
+        "identity_remainder_status": "DIAGNOSTIC_ONLY",
+        "scientific_qualified": False,
+        "integration_identity": integration_identity,
+        "v9_compact_evaluator_identity": v9_report["candidate_evaluator_identity"],
+        "v9_compact_cache_identity": v9_report["candidate_evaluator_cache_identity"],
+        "stage_accounting": {
+            "form_evaluator_prepare_seconds": float(evaluator.preparation_seconds),
+            "candidate_cells_built": candidate_cells_built,
+            "candidate_cells_reused": candidate_cells_reused,
+            "candidate_cell_build_seconds": float(candidate_build_seconds),
+            "diagnostic_same_lu_getrs": {
+                "bi_calls": diagnostic_solve_calls["bi"],
+                "ri_calls": diagnostic_solve_calls["ri"],
+                "getrs_calls": diagnostic_solve_calls["getrs"],
+                "expected_getrs_calls": 12,
+                "getrs_seconds": diagnostic_getrs_seconds,
+                "build_and_audit_accounted_separately": True,
+            },
+        },
         "selected_active_row": TASK41_P0_V11_METADATA_ACTIVE_ROW,
         "selected_original_row": selected_original_row,
         "incident_cell_order": list(TASK41_P0_V11_SELECTED_CELLS),
@@ -4381,8 +4994,12 @@ def _run_v11_selected_trace_star_candidate_replay(
         "metadata_report_sha256": TASK41_P0_V11_METADATA_REPORT_SHA256,
         "metadata_consumer_contract_path": str(old_contract_path),
         "metadata_consumer_contract_sha256": old_contract_sha,
+        "consumer_contract_sha256": consumer_contract_sha256,
         "metadata_window_path": str(old_window.path),
         "metadata_window_sha256": old_window.sha256,
+        "consumer_window_path": str(fixed_window.path),
+        "consumer_window_sha256": fixed_window.sha256,
+        "consumer_source_sha": str(consumer_source["sha"]),
         "metadata_service_receipt_path": str(metadata_receipt_path),
         "metadata_service_receipt_sha256": TASK41_P0_V11_METADATA_SERVICE_RECEIPT_SHA256,
         "v9_compact_report_path": str(v9_path),
@@ -4416,22 +5033,13 @@ def _run_v11_selected_trace_star_candidate_replay(
         "columns": column_results,
         "review_v11_local_identities": review_identity_results,
         "classification": (
-            "LOCAL_REPLAY_UNBOUND"
-            if any(
-                item["y_replay_status"] == "LOCAL_REPLAY_UNBOUND"
-                or item["g_replay_status"] == "LOCAL_REPLAY_UNBOUND"
-                or any(
-                    identity.get("equation_1_status") == "LOCAL_IDENTITY_UNBOUND"
-                    for identity in item["review_v11_row_identities"]
-                )
-                or any(
-                    state["review_identity"].get("equation_2_status") == "LOCAL_IDENTITY_UNBOUND"
-                    for cell in item["incident_cell_terms"]
-                    for state in cell["artifacts"]["states"]
-                )
+            "LOCAL_REPLAY_COMPLETED"
+            if all(
+                item["y_replay_status"] == "EXACT_SAVED_VALUE_REPRODUCED"
+                and item["g_replay_status"] == "EXACT_SAVED_VALUE_REPRODUCED"
                 for item in column_results
             )
-            else "REPRODUCED_WITHIN_ROUNDOFF_ESTIMATE"
+            else "LOCAL_REPLAY_UNBOUND"
         ),
         "scope_note": (
             "Only the two complete saved-metadata incident cells for active row 87567 are rebuilt. "
@@ -4675,6 +5283,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--source-report", type=Path)
     parser.add_argument("--geometry-reference-report", type=Path)
     return parser.parse_args(argv)
+
+
+def _dispatch_v11_candidate_replay_callback(
+    args: argparse.Namespace,
+    *,
+    callback: Any,
+    callback_kwargs: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Route the service-built candidate request to the local FE callback."""
+    if (
+        not args.selected_trace_star_candidate_replay
+        or args.selected_active_row != TASK41_P0_V11_METADATA_ACTIVE_ROW
+        or args.geometry_policy != "mesh_actual_exact"
+        or args.raw_tensor_evaluator != "actual_qmetric_blocked_gram"
+        or args.ffcx_c_source is None
+        or args.selected_metadata_report is None
+        or args.v9_compact_report is None
+    ):
+        raise ValueError("service worker request is not the frozen selected-candidate replay")
+    return callback(args=args, **dict(callback_kwargs))
 
 
 def _checked_allocation_gate(
@@ -5517,7 +6145,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     run_record: dict[str, Any] = {
         "schema": (
-            "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1"
+            "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1"
+            if args.selected_trace_star_candidate_replay
+            else "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1"
             if args.selected_trace_star_metadata_only
             else "task41.p0.v8.selected_trace_star_audit_receipt.v1"
             if args.selected_trace_star_audit
@@ -5540,6 +6170,20 @@ def main(argv: list[str] | None = None) -> int:
         "consumer_contract_path": str(args.consumer_contract.resolve()),
         "consumer_contract_sha256": consumer_digest,
         "consumer_source_sha": consumer_contract.get("source", {}).get("sha"),
+        "consumer_window_path": str(fixed_window.path) if fixed_window is not None else None,
+        "consumer_window_sha256": fixed_window.sha256 if fixed_window is not None else None,
+        "selected_metadata_report_path": (
+            str(args.selected_metadata_report.resolve())
+            if args.selected_metadata_report is not None
+            else None
+        ),
+        "selected_metadata_report_sha256": args.selected_metadata_report_sha256,
+        "v9_compact_report_path": (
+            str(args.v9_compact_report.resolve())
+            if args.v9_compact_report is not None
+            else None
+        ),
+        "v9_compact_report_sha256": args.v9_compact_report_sha256,
         "resolved_config_sha256": donor_case.get("resolved_config_sha256"),
         "donor_manifest_sha256": donor.get("manifest_sha256"),
         "output_directory": str(output_root),
@@ -6224,18 +6868,22 @@ def main(argv: list[str] | None = None) -> int:
             if fixed_window is None:
                 raise RuntimeError("V8 selected trace-star audit requires the fixed numeric window")
             selected_result = (
-                _run_v11_selected_trace_star_candidate_replay(
-                    args=args,
-                    cfg=cfg,
-                    donor=donor,
-                    fixed_window=fixed_window,
-                    output_directory=output_directory,
-                    consumer_contract=consumer_contract,
-                    sha256_file=sha256_file,
-                    allocation_gate=allocation_gate,
-                    persist_array=persist_volume_array,
-                    progress=progress,
-                    checkpoint=checkpoint,
+                _dispatch_v11_candidate_replay_callback(
+                    args,
+                    callback=_run_v11_selected_trace_star_candidate_replay,
+                    callback_kwargs={
+                        "cfg": cfg,
+                        "donor": donor,
+                        "fixed_window": fixed_window,
+                        "output_directory": output_directory,
+                        "consumer_contract": consumer_contract,
+                        "consumer_contract_sha256": consumer_digest,
+                        "sha256_file": sha256_file,
+                        "allocation_gate": allocation_gate,
+                        "persist_array": persist_volume_array,
+                        "progress": progress,
+                        "checkpoint": checkpoint,
+                    },
                 )
                 if args.selected_trace_star_candidate_replay
                 else _run_v8_selected_trace_star_audit(

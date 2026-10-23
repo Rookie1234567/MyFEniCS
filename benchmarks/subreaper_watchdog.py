@@ -222,6 +222,7 @@ def _validate_campaign_closeout_authorization(
         or window_sha != campaign.sha256
     ):
         raise ValueError(f'closeout checker contract points at a different V{contract_version} campaign window')
+    contract_file = Path(str(contract_path)).resolve(strict=True)
 
     if len(argv) < 3 or Path(argv[0]).resolve() != Path(sys.executable).resolve():
         raise ValueError('closeout checker must use the supervisor qualified interpreter')
@@ -271,6 +272,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_b0_v9_saved_star_screen_checker',
         'task41_p0_b0_v9_failed_terminal_audit_checker',
         'task41_p0_b0_saved_y_g_comparison_checker',
+        'task41_p0_v11_selected_cell_saved_array_checker',
     }:
         if contract_version != 41:
             raise ValueError('Task41 checker requires a Task41 P0 execution contract')
@@ -507,6 +509,233 @@ def _validate_campaign_closeout_authorization(
                 or output_path != Path(environment.get(result_env, '')).resolve()
             ):
                 raise ValueError('saved-diagnostics output or command inputs escaped their registered paths')
+        elif checker_kind == 'task41_p0_v11_selected_cell_saved_array_checker':
+            from src.runners.task41_p0_contract import (
+                TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+                TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE,
+                TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE,
+                task41_case_id_for_run_id,
+                require_task41_p0_contract,
+            )
+            from src.runners.task41_p0_v4_volume_only_audit import (
+                TASK41_P0_V11_FFCX_C_SOURCE_SHA256,
+            )
+
+            case = contract.get('case')
+            scope = contract.get('execution_scope')
+            window = contract.get('window')
+            if (
+                Path(argv[0]).resolve() != expected_python
+                or len(argv) != 20
+                or argv[1:4]
+                != ['-m', 'src.runners.task41_p0_checker', '--v11-candidate-replay-saved-check']
+                or argv[4::2]
+                != [
+                    '--contract', '--contract-sha256', '--consumer-contract',
+                    '--consumer-contract-sha256', '--summary', '--v11-report',
+                    '--v11-report-sha256', '--output',
+                ]
+                or authorization.get('expected_channel_count') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
+                or environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') != '1'
+                or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT') != '1'
+                or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_METADATA_ONLY') is not None
+                or environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is None
+                or environment.get('TASK41_P0_B0_V9_SAVED_STAR_SCREEN') is not None
+                or environment.get('TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT') is not None
+                or environment.get('TASK41_P0_B0_SAVED_Y_G_COMPARISON') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') is not None
+                or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA')
+                != authorization.get('source_sha')
+                or environment.get('TASK41_P0_CHECKER_SOURCE_SHA')
+                != authorization.get('source_sha')
+                or authorization.get('source_sha') != contract.get('source', {}).get('sha')
+                or authorization.get('source_branch') != contract.get('branch')
+                or not isinstance(case, dict)
+                or not isinstance(scope, dict)
+                or not isinstance(window, dict)
+                or task41_case_id_for_run_id(str(case.get('run_id', ''))) != 'B0'
+                or contract.get('numerical_strategy', {}).get('internal_rhs_strategy')
+                != 'same_lu_rhs_solve'
+                or scope != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+                or window.get('path') != TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE.as_posix()
+                or window.get('scope') != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+            ):
+                raise ValueError('V12 saved-array checker is not bound to its current-source B0 route')
+
+            root = Path.cwd().resolve()
+            results_root = (root / 'results' / str(case.get('model_id', ''))).resolve()
+            donor_contract_path = Path(argv[5]).resolve(strict=True)
+            donor_contract_sha256 = argv[7]
+            consumer_contract_argument = Path(argv[9]).resolve(strict=True)
+            summary_path = Path(argv[13]).resolve(strict=True)
+            candidate_report_path = Path(argv[15]).resolve(strict=True)
+            candidate_report_sha256 = argv[17]
+            output_path = Path(argv[19]).resolve()
+            if (
+                consumer_contract_argument != contract_file
+                or argv[11] != contract_sha
+                or consumer_contract_argument
+                != Path(environment.get('TASK41_P0_CONTRACT_PATH', '')).resolve()
+                or argv[11] != environment.get('TASK41_P0_CONTRACT_SHA256')
+                or Path(window.get('path', '')).is_absolute()
+                or (root / window['path']).resolve(strict=True) != campaign.path.resolve()
+                or window.get('sha256') != campaign.sha256
+            ):
+                raise ValueError('V12 checker consumer contract or fixed-window binding differs')
+
+            donor_contract, donor_digest = require_task41_p0_contract(
+                donor_contract_path,
+                expected_sha256=donor_contract_sha256,
+                current_root=root,
+                check_current_source=False,
+                require_clean_source=False,
+                case_id='B0',
+            )
+            donor_case = donor_contract.get('case')
+            if (
+                not isinstance(donor_case, dict)
+                or donor_digest != donor_contract_sha256
+                or any(
+                    donor_case.get(field) != case.get(field)
+                    for field in (
+                        'model_id', 'run_id', 'method', 'mpi_size', 'input_sha256',
+                        'physical_model_sha256', 'resolved_config_sha256',
+                    )
+                )
+            ):
+                raise ValueError('V12 checker donor contract differs from the current B0 identity')
+
+            donor_run = (root / TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE).resolve(strict=True)
+            if (
+                summary_path != donor_run / 'task40_v10_p6_candidate_summary.json'
+                or not summary_path.is_relative_to(results_root)
+            ):
+                raise ValueError('V12 checker summary is not the registered V9 donor run')
+            summary = json.loads(summary_path.read_text(encoding='utf-8'))
+            recovery = summary.get('b0_recovery_evidence')
+            manifest_record = recovery.get('manifest') if isinstance(recovery, dict) else None
+            if not isinstance(manifest_record, dict) or not isinstance(manifest_record.get('path'), str):
+                raise ValueError('V12 checker donor summary omits its recovery manifest')
+            manifest_raw = Path(manifest_record['path'])
+            donor_manifest_path = (
+                manifest_raw if manifest_raw.is_absolute() else donor_run / manifest_raw
+            ).resolve(strict=True)
+            if (
+                not donor_manifest_path.is_relative_to(donor_run)
+                or donor_manifest_path.stat().st_size != manifest_record.get('bytes')
+                or _sha256_file(donor_manifest_path) != manifest_record.get('sha256')
+            ):
+                raise ValueError('V12 checker donor manifest path, size, or hash differs from its summary')
+
+            if (
+                candidate_report_path.name != 'task41_p0_v11_selected_trace_candidate_replay.json'
+                or not candidate_report_path.is_relative_to(results_root)
+                or _sha256_file(candidate_report_path) != candidate_report_sha256
+                or not re.fullmatch(r'[0-9a-f]{64}', candidate_report_sha256)
+                or output_path.name != 'task41_p0_v11_candidate_replay_saved_array_check.json'
+                or output_path.parent != candidate_report_path.parent
+                or output_path.exists()
+                or not output_path.is_relative_to(results_root)
+            ):
+                raise ValueError('V12 checker candidate report or result path/hash differs')
+            attempt_root = candidate_report_path.parent.resolve(strict=True)
+            window_output_root = (
+                results_root / 'task41_p0_saved_diagnostics_6h' / str(window['sha256'])
+            )
+            if (
+                attempt_root.parent != window_output_root / 'selected_incident_replay'
+                or re.fullmatch(r'attempt[0-9]{2,}', attempt_root.name) is None
+            ):
+                raise ValueError('V12 checker attempt is outside the fixed-window replay directory')
+
+            envelope = json.loads(candidate_report_path.read_text(encoding='utf-8'))
+            replay = envelope.get('v11_selected_trace_candidate_replay')
+            if (
+                envelope.get('schema')
+                != 'task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1'
+                or envelope.get('status') != 'COMPLETED_LOCAL_CANDIDATE_REPLAY'
+                or Path(str(envelope.get('consumer_contract_path', ''))).resolve() != contract_file
+                or envelope.get('consumer_contract_sha256') != contract_sha
+                or Path(str(envelope.get('donor_contract_path', ''))).resolve() != donor_contract_path
+                or envelope.get('donor_contract_sha256') != donor_digest
+                or Path(str(envelope.get('consumer_window_path', ''))).resolve() != campaign.path.resolve()
+                or envelope.get('consumer_window_sha256') != campaign.sha256
+                or Path(str(envelope.get('output_directory', ''))).resolve() != attempt_root
+                or Path(str(envelope.get('volume_evidence_directory', ''))).resolve()
+                != (attempt_root / 'selected_trace_star_candidate_replay').resolve(strict=True)
+                or not isinstance(replay, dict)
+                or replay.get('schema') != 'task41.p0.v11.selected_trace_star_candidate_replay.v1'
+                or replay.get('status') != 'COMPLETED_LOCAL_CANDIDATE_REPLAY'
+                or replay.get('scientific_qualified') is not False
+                or not isinstance(replay.get('source_semantics'), dict)
+                or replay.get('source_semantics', {}).get('official_result') is not False
+                or replay.get('source_semantics', {}).get('formal_action_gate_changed') is not False
+                or replay.get('selected_active_row') != 87567
+                or replay.get('selected_original_row') != 250113
+                or replay.get('incident_cell_order') != [360, 446]
+            ):
+                raise ValueError('V12 checker worker receipt is incomplete or misbound')
+
+            metadata_path = Path(str(replay.get('metadata_report_path', ''))).resolve(strict=True)
+            compact_path = Path(str(replay.get('v9_compact_report_path', ''))).resolve(strict=True)
+            metadata = json.loads(metadata_path.read_text(encoding='utf-8'))
+            old_contract_path = Path(str(metadata.get('consumer_contract_path', ''))).resolve(strict=True)
+            receipt_path = Path(str(replay.get('metadata_service_receipt_path', ''))).resolve(strict=True)
+            expected_inputs = list(dict.fromkeys(str(path.resolve(strict=True)) for path in (
+                contract_file,
+                donor_contract_path,
+                summary_path,
+                donor_manifest_path,
+                candidate_report_path,
+                metadata_path,
+                compact_path,
+                old_contract_path,
+                receipt_path,
+                campaign.path,
+            )))
+            raw_paths = authorization.get('input_paths')
+            raw_hashes = authorization.get('input_sha256s')
+            if (
+                raw_paths != expected_inputs
+                or not isinstance(raw_hashes, list)
+                or len(raw_hashes) != len(expected_inputs)
+                or not all(re.fullmatch(r'[0-9a-f]{64}', str(value)) for value in raw_hashes)
+            ):
+                raise ValueError('V12 checker authorized inputs are not the complete fixed receipt set')
+            authorized_hashes = dict(zip(raw_paths, raw_hashes, strict=True))
+            if (
+                authorized_hashes.get(str(donor_contract_path)) != donor_digest
+                or authorized_hashes.get(str(contract_file)) != contract_sha
+                or authorized_hashes.get(str(candidate_report_path)) != candidate_report_sha256
+                or replay.get('metadata_report_sha256') != authorized_hashes.get(str(metadata_path))
+                or replay.get('v9_compact_report_sha256') != authorized_hashes.get(str(compact_path))
+                or replay.get('metadata_service_receipt_sha256') != authorized_hashes.get(str(receipt_path))
+            ):
+                raise ValueError('V12 checker command/input hashes differ from the worker receipt')
+            compact = json.loads(compact_path.read_text(encoding='utf-8'))
+            if (
+                metadata_path.name != 'task41_p0_v8_selected_trace_star_metadata.json'
+                or not metadata_path.is_relative_to(results_root)
+                or compact_path.name != 'task41_p0_b0_v9_compact_volume_audit.json'
+                or not compact_path.is_relative_to(results_root)
+                or metadata.get('schema') != 'task41.p0.v8.selected_trace_star_metadata_only_receipt.v1'
+                or metadata.get('status') != 'COMPLETED_METADATA_ONLY'
+                or compact.get('schema') != 'task41.p0.b0.v9.compact_volume_identity.v1'
+                or compact.get('status') != 'GATE_FAILED'
+                or compact.get('official_result') is not False
+                or compact.get('internal_rhs_strategy') != 'same_lu_rhs_solve'
+                or compact.get('donor_manifest_sha256') != manifest_record.get('sha256')
+            ):
+                raise ValueError('V12 checker metadata or compact donor receipt is not registered')
+            ffcx_path = Path(environment['TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH']).resolve(strict=True)
+            if (
+                not ffcx_path.is_relative_to(root)
+                or replay.get('ffcx_c_source_sha256') != TASK41_P0_V11_FFCX_C_SOURCE_SHA256
+                or _sha256_file(ffcx_path) != TASK41_P0_V11_FFCX_C_SOURCE_SHA256
+            ):
+                raise ValueError('V12 checker FFCx source differs from the frozen candidate receipt')
+            input_paths = expected_inputs
         elif checker_kind == 'task41_p0_b0_v9_saved_star_screen_checker':
             from src.runners.task41_p0_contract import (
                 TASK41_B0_V9_INTERNAL_RHS_STRATEGY,

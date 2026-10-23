@@ -259,6 +259,793 @@ def test_saved_diagnostics_prepare_binds_scope_and_reuses_entry_source_window(
     )
 
 
+def test_v11_saved_array_checker_recomputes_both_states_and_keeps_unbound_audit_complete() -> None:
+    from src.runners.task41_p0_checker import _task41_v11_recompute_saved_candidate_arrays
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V11_GLOBAL_ROW_COUNT,
+        TASK41_P0_V11_METADATA_ACTIVE_ROW,
+        TASK41_P0_V11_METADATA_ORIGINAL_ROW,
+        TASK41_P0_V11_SELECTED_CELLS,
+    )
+
+    active_row = TASK41_P0_V11_METADATA_ACTIVE_ROW
+    original_row = TASK41_P0_V11_METADATA_ORIGINAL_ROW
+    refs: dict[str, np.ndarray] = {}
+
+    def persist(value: np.ndarray) -> str:
+        name = f"saved-{len(refs)}"
+        refs[name] = np.asarray(value).copy()
+        return name
+
+    def load(reference: str, _label: str) -> np.ndarray:
+        return refs[reference]
+
+    def pair(value: complex) -> list[float]:
+        value = complex(value)
+        return [float(value.real), float(value.imag)]
+
+    def project(expansion: np.ndarray, value: np.ndarray, selected: int) -> complex:
+        return complex((expansion.conj().T @ value).reshape(-1)[selected])
+
+    dimension = 377
+    trace_count = dimension - 1
+    native_b = 1.0 + 0.5j
+    known_trace = 2.0 - 1.0j
+    native_row = 0.6 + 0.4j
+    beta = 0.15 + 0.1j
+    cell_records = []
+    metadata_cells = []
+    cell_reference_values = []
+    for cell_index, cell_tag, permutation, selected_trace in (
+        (360, 2, 4680, 375),
+        (446, 1, 0, 75),
+    ):
+        trace_positions = np.arange(1, dimension, dtype=np.int32)
+        interior_positions = np.asarray([0], dtype=np.int32)
+        selected_position = int(trace_positions[selected_trace])
+        trace_rows = np.zeros(trace_count, dtype=np.int64)
+        trace_rows[selected_trace] = original_row
+        original_rows = np.zeros(dimension, dtype=np.int64)
+        original_rows[0] = original_row - 1
+        original_rows[trace_positions] = trace_rows
+        active_ids = np.arange(trace_count, dtype=np.int64)
+        active_ids[selected_trace] = active_row
+        coordinates = np.zeros((8, 3), dtype=np.float64)
+        coordinate_sha = hashlib.sha256(np.ascontiguousarray(coordinates).tobytes()).hexdigest()
+        expansion = np.eye(trace_count, dtype=np.complex128)
+        metadata_arrays = {
+            "actual_geometry_coordinates": persist(coordinates),
+            "original_rows": persist(original_rows),
+            "interior_positions": persist(interior_positions),
+            "trace_positions": persist(trace_positions),
+            "interior_original_rows": persist(np.asarray([original_row - 1], dtype=np.int64)),
+            "trace_original_rows": persist(trace_rows),
+            "active_ids": persist(active_ids),
+            "trace_expansion_data": persist(np.ones(trace_count, dtype=np.complex128)),
+            "trace_expansion_indices": persist(np.arange(trace_count, dtype=np.int32)),
+            "trace_expansion_indptr": persist(np.arange(trace_count + 1, dtype=np.int32)),
+        }
+        metadata_cells.append(
+            {
+                "cell_index": cell_index,
+                "cell_tag": cell_tag,
+                "cell_permutation": permutation,
+                "selected_local_trace_rows": [selected_trace],
+                "selected_trace_coefficients": [[1.0, 0.0]],
+                "actual_coordinate_sha256": coordinate_sha,
+                "arrays": metadata_arrays,
+            }
+        )
+
+        tensor = np.zeros((dimension, dimension), dtype=np.complex128)
+        tensor[0, 0] = 2.0
+        tensor[0, selected_position] = 0.5
+        tensor[selected_position, 0] = 0.25
+        tensor[selected_position, selected_position] = 0.75
+        R = np.zeros((1, trace_count), dtype=np.complex128)
+        T = np.zeros((trace_count, 1), dtype=np.complex128)
+        S = np.zeros((trace_count, trace_count), dtype=np.complex128)
+        R[0, selected_trace] = 0.125
+        T[selected_trace, 0] = 0.25
+        S[selected_trace, selected_trace] = 0.5
+        candidate_arrays = {
+            "raw_tensor": persist(tensor.copy()),
+            "oriented_tensor": persist(tensor),
+            "R": persist(R),
+            "T": persist(T),
+            "S": persist(S),
+            "interior_lu": persist(np.asarray([[2.0 + 0.0j]], dtype=np.complex128)),
+            "interior_lu_pivots": persist(np.asarray([0], dtype=np.int64)),
+        }
+        K = tensor[np.ix_(interior_positions, interior_positions)]
+        G = tensor[np.ix_(interior_positions, trace_positions)]
+        J = tensor[np.ix_(trace_positions, interior_positions)]
+        L = tensor[np.ix_(trace_positions, trace_positions)]
+        t_c = np.zeros(trace_count, dtype=np.complex128)
+        t_c[selected_trace] = known_trace
+        b_i = np.asarray([native_b], dtype=np.complex128)
+        z_b = np.asarray([native_b / 2.0], dtype=np.complex128)
+        S_t, T_b = S @ t_c, T @ b_i
+        minus_J_z_b = -(J @ z_b)
+        pS, pT, pLU = expansion.conj().T @ S_t, expansion.conj().T @ T_b, expansion.conj().T @ minus_J_z_b
+        direct_artifacts = {
+            "known_trace_local": persist(t_c),
+            "native_rhs_interior": persist(b_i),
+            "S_action": persist(S_t),
+            "S_projected_active": persist(pS),
+            "T_native_rhs": persist(T_b),
+            "T_projected_active": persist(pT),
+            "same_lu_z_b": persist(z_b),
+            "same_lu_minus_Jz_b": persist(minus_J_z_b),
+            "same_lu_minus_Jz_b_independent_difference": persist(np.zeros_like(minus_J_z_b)),
+            "same_lu_projected_active": persist(pLU),
+        }
+        states = []
+        state_terms = {}
+        for label, u_value, n_value, action_value in (
+            ("j0", 0.2 + 0.1j, 0.1 - 0.05j, 0.3 + 0.1j),
+            ("j3", 0.5 - 0.2j, 0.3 + 0.15j, -0.2 + 0.4j),
+        ):
+            storage = np.zeros(original_row + 1, dtype=np.complex128)
+            storage[original_row - 1] = u_value
+            action = np.zeros(original_row + 1, dtype=np.complex128)
+            action[original_row - 1] = n_value
+            action[original_row] = action_value
+            u_i = np.asarray([u_value], dtype=np.complex128)
+            n_i = np.asarray([n_value], dtype=np.complex128)
+            n_t = action[trace_rows]
+            r_i = b_i - n_i
+            z_r = r_i / 2.0
+            minus_J_z_r = -(J @ z_r)
+            r_b, r_r = b_i - K @ z_b, r_i - K @ z_r
+            delta_i = K @ u_i + G @ t_c - n_i
+            delta_t = J @ u_i + L @ t_c
+            E_R_t = (K @ R + G) @ t_c
+            C_S_t = (S - L - J @ R) @ t_c
+            middle = R @ t_c + z_b - z_r - u_i
+            eq_l, eq_r = K @ middle, E_R_t - delta_i - r_b + r_r
+            old_t = T_b + J @ z_b
+            old_rhs = (J + T @ K) @ z_b + T @ r_b
+            state_artifacts = {
+                "u_i": persist(u_i),
+                "native_action_i": persist(n_i),
+                "native_action_global_trace_slice": persist(n_t),
+                "r_i": persist(r_i),
+                "same_lu_z_r": persist(z_r),
+                "same_lu_minus_Jz_r": persist(minus_J_z_r),
+                "delta_i": persist(delta_i),
+                "delta_t": persist(delta_t),
+                "r_b": persist(r_b),
+                "r_r": persist(r_r),
+                "E_R_t": persist(E_R_t),
+                "C_S_t": persist(C_S_t),
+                "review_eq2_left": persist(eq_l),
+                "review_eq2_right": persist(eq_r),
+                "review_eq2_difference": persist(eq_l - eq_r),
+                "old_Tb_plus_Jzb": persist(old_t),
+                "old_identity_rhs": persist(old_rhs),
+                "old_identity_difference": persist(old_t - old_rhs),
+            }
+            states.append({"state": label, "artifacts": state_artifacts})
+            state_terms[label] = {
+                "delta_t": project(expansion, delta_t, selected_trace),
+                "C_S_t": project(expansion, C_S_t, selected_trace),
+                "J_middle": project(expansion, J @ middle, selected_trace),
+                "minus_J_z_r": project(expansion, minus_J_z_r, selected_trace),
+                "action": action_value,
+            }
+
+        selected_position_in_active = int(np.flatnonzero(active_ids == active_row)[0])
+        assert selected_position_in_active == selected_trace
+        selected_terms = {
+            "s": complex(pS[selected_trace]),
+            "t": complex(pT[selected_trace]),
+            "lu": complex(pLU[selected_trace]),
+        }
+        cell_reference_values.append((selected_terms, state_terms))
+        cell_records.append(
+            {
+                "cell_index": cell_index,
+                "cell_tag": cell_tag,
+                "cell_permutation": permutation,
+                "actual_coordinate_sha256": coordinate_sha,
+                "candidate_artifacts": candidate_arrays,
+                "incident_cell_terms": {
+                    "artifacts": {**direct_artifacts, "states": states}
+                },
+            }
+        )
+
+    active_original_rows = np.zeros(TASK41_P0_V11_GLOBAL_ROW_COUNT, dtype=np.int64)
+    active_original_rows[active_row] = original_row
+    donor_columns = []
+    report_columns = []
+    saved_y_row = []
+    saved_g_row = []
+    saved_g_t_row = []
+    for _column in range(2):
+        known = np.zeros(original_row + 1, dtype=np.complex128)
+        known[original_row] = known_trace
+        native_rhs = np.zeros(original_row + 1, dtype=np.complex128)
+        native_rhs[original_row - 1] = native_b
+        native_rhs[original_row] = native_row
+        native_volume_rhs = native_rhs.copy()
+        donor_state = []
+        for label, _u, _n, action_value in (
+            ("j0", 0.2 + 0.1j, 0.1 - 0.05j, 0.3 + 0.1j),
+            ("j3", 0.5 - 0.2j, 0.3 + 0.15j, -0.2 + 0.4j),
+        ):
+            storage = np.zeros(original_row + 1, dtype=np.complex128)
+            storage[original_row - 1] = _u
+            action = np.zeros(original_row + 1, dtype=np.complex128)
+            action[original_row - 1] = _n
+            action[original_row] = action_value
+            donor_state.append({"label": label, "storage": storage, "native_volume_action": action})
+        donor_columns.append(
+            {
+                "active_original_rows": active_original_rows.copy(),
+                "known_field": known,
+                "native_rhs": native_rhs,
+                "native_volume_rhs": native_volume_rhs,
+                "b_alpha_rows": np.asarray([original_row], dtype=np.int64),
+                "b_alpha_values": np.asarray([beta], dtype=np.complex128),
+                "states": donor_state,
+            }
+        )
+
+        y = 0.0 + 0.0j
+        g = native_row
+        g_t = native_row
+        for terms, _state in cell_reference_values:
+            y += terms["s"]
+            g += terms["lu"]
+            g_t += terms["t"]
+        y += beta
+        saved_y_row.append(y)
+        saved_g_row.append(g)
+        saved_g_t_row.append(g_t)
+        reported_identities = []
+        for label in ("j0", "j3"):
+            rhs = 0.0 + 0.0j
+            lu_residual = 0.0 + 0.0j
+            action_value = None
+            for _terms, paired in cell_reference_values:
+                state_term = paired[label]
+                rhs += state_term["delta_t"]
+                rhs += state_term["C_S_t"]
+                rhs += state_term["J_middle"]
+                lu_residual += state_term["minus_J_z_r"]
+                action_value = state_term["action"]
+            rhs -= action_value
+            residual = native_row - action_value - beta
+            lhs = y - g + residual + lu_residual
+            reported_identities.append(
+                {
+                    "column": _column,
+                    "state": label,
+                    "equation_1_lhs": pair(lhs),
+                    "equation_1_rhs": pair(rhs),
+                }
+            )
+        report_columns.append(
+            {
+                "incident_cell_terms": [
+                    {"cell_index": cell["cell_index"], **cell["incident_cell_terms"]}
+                    for cell in cell_records
+                ],
+                "replayed_y9": pair(y),
+                "replayed_g9_same_lu": pair(g),
+                "replayed_g9_stored_T": pair(g_t),
+                "review_v11_row_identities": reported_identities,
+            }
+        )
+
+    report = {
+        "schema": "task41.p0.v11.selected_trace_star_candidate_replay.v1",
+        "status": "COMPLETED_LOCAL_CANDIDATE_REPLAY",
+        "selected_active_row": active_row,
+        "selected_original_row": original_row,
+        "incident_cell_order": list(TASK41_P0_V11_SELECTED_CELLS),
+        "scientific_qualified": False,
+        "cells": cell_records,
+        "columns": report_columns,
+        "stage_accounting": {
+            "diagnostic_same_lu_getrs": {
+                "bi_calls": 4,
+                "ri_calls": 8,
+                "getrs_calls": 12,
+                "expected_getrs_calls": 12,
+            }
+        },
+    }
+    result = _task41_v11_recompute_saved_candidate_arrays(
+        report,
+        {
+            "selected_active_row": active_row,
+            "selected_original_row": original_row,
+            "element_dimension": dimension,
+            "selected_cells": metadata_cells,
+        },
+        {"columns": donor_columns},
+        v9_y_row=np.asarray(saved_y_row, dtype=np.complex128),
+        v9_g_row=np.asarray(saved_g_row, dtype=np.complex128),
+        load_array=load,
+    )
+    assert result["check_completed"] is True
+    assert result["candidate_passed"] is None
+    assert result["official_result"] is False
+    assert result["exact_reproduction_status"] == "EXACT"
+    assert all(row["j0_j3_y_g_stored_T_exact"] for row in result["per_column_replays"])
+    assert result["independent_checker_solver_accounting"] == {
+        "bi": 4,
+        "ri": 8,
+        "getrs": 12,
+        "build_and_audit_separate": True,
+    }
+
+    result_unbound = _task41_v11_recompute_saved_candidate_arrays(
+        report,
+        {
+            "selected_active_row": active_row,
+            "selected_original_row": original_row,
+            "element_dimension": dimension,
+            "selected_cells": metadata_cells,
+        },
+        {"columns": donor_columns},
+        v9_y_row=np.asarray(saved_y_row, dtype=np.complex128) + np.asarray([1.0e-8, 0.0]),
+        v9_g_row=np.asarray(saved_g_row, dtype=np.complex128),
+        load_array=load,
+    )
+    assert result_unbound["check_completed"] is True
+    assert result_unbound["candidate_passed"] is None
+    assert result_unbound["scientific_qualified"] is False
+    assert result_unbound["exact_reproduction_status"] == "UNBOUND"
+    assert result_unbound["per_column_replays"][0]["states"]["j0"]["exactly_matches_saved_v9_y9"] is False
+
+
+def test_v12_prior_metadata_window_bytes_count_only_for_distinct_new_window(
+    tmp_path: Path,
+) -> None:
+    from scripts.task40_v20_service_workflow import _task41_v12_prior_metadata_window_bytes
+
+    results_root = tmp_path / "results"
+    prior_root = results_root / "prior-window"
+    report_path = prior_root / "selected_incident_replay" / "attempt02" / "metadata.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("{}\n", encoding="utf-8")
+    extra = prior_root / "service" / "receipt.json"
+    extra.parent.mkdir()
+    extra.write_bytes(b"prior V11 evidence")
+    expected_bytes = report_path.stat().st_size + extra.stat().st_size
+
+    def stat_tree(root: Path) -> int:
+        return sum(path.stat().st_size for path in root.rglob("*") if path.is_file())
+
+    assert _task41_v12_prior_metadata_window_bytes(
+        report_path,
+        current_window_root=results_root / "new-window",
+        results_root=results_root,
+        execution_scope=task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        stat_output_tree=stat_tree,
+    ) == expected_bytes
+    with pytest.raises(ValueError, match="distinct registered prior window"):
+        _task41_v12_prior_metadata_window_bytes(
+            report_path,
+            current_window_root=prior_root,
+            results_root=results_root,
+            execution_scope=task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+            stat_output_tree=stat_tree,
+        )
+    assert _task41_v12_prior_metadata_window_bytes(
+        report_path,
+        current_window_root=prior_root,
+        results_root=results_root,
+        execution_scope=task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+        stat_output_tree=stat_tree,
+    ) == 0
+
+
+def test_v11_candidate_replay_service_exit_status_tracks_checker_and_final_budget() -> None:
+    from scripts.task40_v20_service_workflow import _task41_v11_candidate_replay_exit
+
+    record = {
+        "candidate_replay_saved_array_checker": {"status": "COMPLETED_READ_ONLY"},
+        "required_checker_status": "independent_saved_array_check_completed",
+    }
+    assert _task41_v11_candidate_replay_exit(
+        record,
+        worker_ok=True,
+        checker_ok=True,
+        service_ok=True,
+        finalization_ok=True,
+    ) == 0
+    assert record["result_classification"] == "V11_SELECTED_TRACE_CANDIDATE_REPLAY_CHECKED"
+    assert record["official_result"] is False
+
+    failed_checker = {
+        "candidate_replay_saved_array_checker": {"status": "INCOMPLETE"},
+        "required_checker_status": "independent_saved_array_check_failed",
+    }
+    assert _task41_v11_candidate_replay_exit(
+        failed_checker,
+        worker_ok=True,
+        checker_ok=False,
+        service_ok=True,
+        finalization_ok=True,
+    ) == 3
+    assert failed_checker["result_classification"] == "V11_SELECTED_TRACE_CANDIDATE_REPLAY_CHECK_FAILED"
+
+    budget_failed = {
+        "candidate_replay_saved_array_checker": {"status": "COMPLETED_READ_ONLY"},
+        "required_checker_status": "independent_saved_array_check_completed",
+    }
+    assert _task41_v11_candidate_replay_exit(
+        budget_failed,
+        worker_ok=True,
+        checker_ok=True,
+        service_ok=True,
+        finalization_ok=False,
+    ) == 3
+    assert budget_failed["result_classification"] == "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE"
+
+
+def test_v12_candidate_replay_prepare_uses_independent_window_and_contract_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case_spec = task41_p0_contract._task41_case("B0")
+    root = tmp_path / "repo"
+    root.mkdir()
+    source_shas = ["a" * 40]
+
+    def fake_git(_root: Path, *args: str) -> str:
+        if args == ("rev-parse", "HEAD"):
+            return source_shas[0]
+        if args == ("branch", "--show-current"):
+            return task41_p0_contract.TASK41_BRANCH
+        if args == ("status", "--porcelain", "--untracked-files=normal"):
+            return ""
+        raise AssertionError(f"unexpected git query: {args!r}")
+
+    monkeypatch.setattr(task41_p0_contract, "_git", fake_git)
+    monkeypatch.setattr(
+        task41_p0_contract, "verify_task41_b0_saved_surface_donor", lambda *a, **k: None
+    )
+    monkeypatch.setattr(
+        task41_p0_contract, "validate_task41_specification", lambda *a, **k: None
+    )
+    input_path = root / case_spec["input_relative"]
+    input_path.parent.mkdir(parents=True)
+    input_path.write_bytes(b"test-only B0 specification")
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    specification = SimpleNamespace(
+        input_sha256=input_sha,
+        identity={"model_id": task41_p0_contract.TASK41_MODEL_ID, "run_id": case_spec["run_id"]},
+        physical_model_sha256="d" * 64,
+        method={"kind": case_spec["method"]},
+        execution={"mpi_size": 1},
+        as_jsonable=lambda: {},
+    )
+    from src.geometry import task41_phi90_profile
+    from src.io import execution_plan, input_validation
+
+    monkeypatch.setattr(input_validation, "load_and_resolve", lambda _path: specification)
+    monkeypatch.setattr(task41_phi90_profile, "task41_payload_errors", lambda _value: [])
+    monkeypatch.setattr(execution_plan, "resolved_config_bytes", lambda _spec: b"test-config")
+
+    runtime = root / "runtime"
+    python = runtime / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.write_text("", encoding="utf-8")
+    python.chmod(0o755)
+    abi_receipt = root / "abi.json"
+    abi_receipt.write_text("{}\n", encoding="utf-8")
+    jit_cache = root / "jit-cache"
+    jit_cache.mkdir()
+    monkeypatch.setattr(
+        task41_p0_contract,
+        "_check_task41_native_receipt",
+        lambda path, _runtime: hashlib.sha256(path.read_bytes()).hexdigest(),
+    )
+
+    controller = root / task41_p0_contract.TASK41_B0_CONTROLLER_RELATIVE
+    controller.mkdir(parents=True)
+    parent_ledger = controller / "campaign_accounting_saved_diagnostics_6h.jsonl"
+    parent_ledger.write_bytes(b'{"parent":"v11"}\n')
+    parent_window = root / task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE
+    parent_window.parent.mkdir(parents=True, exist_ok=True)
+    parent_window_raw = json.dumps(
+        {"accounting_path": str(parent_ledger.resolve()), "parent": "v11"},
+        sort_keys=True,
+    ).encode()
+    parent_window.write_bytes(parent_window_raw)
+    parent_window_before = parent_window.read_bytes()
+    parent_ledger_before = parent_ledger.read_bytes()
+
+    utc_ns = [1_800_000_000_000_000_000]
+
+    def fake_clock_sample(*, include_boot_id: bool = False) -> dict[str, object]:
+        utc_ns[0] += 10_000_000
+        return {
+            "monotonic": 1_000.0,
+            "boottime": 2_000.0,
+            "utc_ns": utc_ns[0],
+            "boot_id": "v12-saved-diagnostics-test-boot",
+        }
+
+    monkeypatch.setattr(task41_p0_contract, "clock_sample", fake_clock_sample)
+    kwargs = {
+        "runtime_prefix": runtime,
+        "abi_receipt": abi_receipt,
+        "jit_cache": jit_cache,
+        "current_root": root,
+        "case_id": "B0",
+        "b0_saved_diagnostics_instance": (
+            task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE
+        ),
+    }
+    first = task41_p0_contract.prepare_task41_p0(**kwargs)
+    new_window_path = root / first["window_path"]
+    first_window_bytes = new_window_path.read_bytes()
+    new_window = json.loads(new_window_path.read_text())
+    authorization_path = root / task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_AUTH_RELATIVE
+    authorization = json.loads(authorization_path.read_text())
+    assert new_window_path != parent_window
+    assert new_window["scope"] == task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+    assert new_window["accounting_path"].endswith(
+        "campaign_accounting_v12_two_cell_candidate_replay_6h.jsonl"
+    )
+    assert new_window["prior_window_path"] == str(
+        task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE
+    )
+    assert new_window["prior_ledger_path"] == str(
+        task41_p0_contract.TASK41_B0_CONTROLLER_RELATIVE
+        / "campaign_accounting_saved_diagnostics_6h.jsonl"
+    )
+    assert authorization["prior_window_sha256"] == hashlib.sha256(parent_window_before).hexdigest()
+    assert authorization["prior_ledger_sha256"] == hashlib.sha256(parent_ledger_before).hexdigest()
+
+    first_contract_path = root / first["contract_path"]
+    first_contract = json.loads(first_contract_path.read_text())
+    assert first_contract["execution_scope"] == task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+    assert first_contract_path.name.endswith("_v12_two_cell_candidate_replay.json")
+
+    source_shas[0] = "b" * 40
+    second = task41_p0_contract.prepare_task41_p0(**kwargs)
+    assert second["window_path"] == first["window_path"]
+    assert second["window_sha256"] == first["window_sha256"]
+    assert new_window_path.read_bytes() == first_window_bytes
+    assert parent_window.read_bytes() == parent_window_before
+    assert parent_ledger.read_bytes() == parent_ledger_before
+    assert json.loads((root / second["contract_path"]).read_text())["source"]["sha"] == "b" * 40
+
+
+def test_v12_candidate_replay_reuses_completed_cell_after_source_fix_and_failure(
+    tmp_path: Path,
+) -> None:
+    from src.runners import task41_p0_v4_volume_only_audit as audit
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    results_root = root / "results" / task41_p0_contract.TASK41_MODEL_ID
+    attempt_root = results_root / "task41_p0_saved_diagnostics_6h" / ("d" * 64)
+    prior_attempt = attempt_root / "selected_incident_replay" / "attempt01"
+    prior_attempt.mkdir(parents=True)
+    old_source, new_source, entry_source = "a" * 40, "b" * 40, "c" * 40
+    window_relative = task41_p0_contract._task41_saved_diagnostics_instance(
+        task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE
+    )["window_relative"]
+    window_path = root / window_relative
+    window_path.parent.mkdir(parents=True, exist_ok=True)
+    window_path.write_bytes(b"fixed authorized window")
+    window_sha = hashlib.sha256(window_path.read_bytes()).hexdigest()
+    authorization_sha = "e" * 64
+    common_window = {
+        "path": str(window_relative),
+        "sha256": window_sha,
+        "entry_source_sha": entry_source,
+        "authorization_sha256": authorization_sha,
+        "scope": task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        "prior_window_path": "prior-window.json",
+        "prior_window_sha256": "f" * 64,
+        "prior_ledger_path": "prior-ledger.jsonl",
+        "prior_ledger_sha256": "1" * 64,
+    }
+    case = {
+        "model_id": task41_p0_contract.TASK41_MODEL_ID,
+        "run_id": task41_p0_contract.TASK41_B0_RUN_ID,
+        "input_sha256": "2" * 64,
+        "physical_model_sha256": "3" * 64,
+        "resolved_config_sha256": "4" * 64,
+        "method": "full3d_iterative",
+        "mpi_size": 1,
+        "profile_identity": "task41_b0_profile",
+        "solver_stage": "TASK41_B0",
+        "geometry_identity": {"profile": "same"},
+    }
+    raw_disk_policy = {"raw_artifact_limit_bytes": 16 * 1024**3}
+    old_contract = {
+        "task_id": task41_p0_contract.TASK41_MODEL_ID,
+        "branch": task41_p0_contract.TASK41_BRANCH,
+        "source": {"sha": old_source},
+        "case": case,
+        "runtime": {"mpi_ranks": 1, "math_threads": 1},
+        "window": common_window,
+        "resources": {"memory_swap_max_bytes": 0},
+        "time": {"total_seconds": 21_600},
+        "numerical_strategy": {"internal_rhs_strategy": "same_lu_rhs_solve"},
+        "execution_scope": task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        "preparation": {"prior_window_sha256": "f" * 64},
+        "evidence": {
+            "service_directory": f"service_source_{old_source}",
+            "raw_disk_policy": raw_disk_policy,
+        },
+    }
+    current_contract = {
+        **old_contract,
+        "source": {"sha": new_source},
+        "evidence": {
+            "service_directory": f"service_source_{new_source}",
+            "raw_disk_policy": raw_disk_policy,
+        },
+    }
+    old_contract_path = root / task41_p0_contract.contract_relative_path(
+        old_source,
+        "B0",
+        saved_diagnostics_instance=task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+    )
+    old_contract_path.parent.mkdir(parents=True, exist_ok=True)
+    old_contract_path.write_text(json.dumps(old_contract), encoding="utf-8")
+    old_contract_sha = hashlib.sha256(old_contract_path.read_bytes()).hexdigest()
+    donor_sha, metadata_sha, v9_sha = "5" * 64, "6" * 64, "7" * 64
+    metadata_path = results_root / "attempt02" / "task41_p0_v8_selected_trace_star_metadata.json"
+    v9_path = results_root / "v9_compact_report.json"
+    prior_report_path = prior_attempt / "task41_p0_v11_selected_trace_candidate_replay.json"
+    prior_progress = {
+        "schema": "task41.p0.v11.selected_candidate_cell_progress.v1",
+        "completed_cells": [360],
+        "required_cells": [360, 446],
+        "cells": {"360": {"completion_status": "CELL_COMPLETE"}},
+    }
+    prior_report = {
+        "schema": "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1",
+        "status": "FAILED_SELECTED_CANDIDATE_REPLAY_EVIDENCE_RETAINED",
+        "consumer_contract_path": str(old_contract_path.resolve()),
+        "consumer_contract_sha256": old_contract_sha,
+        "consumer_source_sha": old_source,
+        "consumer_window_path": str(window_path.resolve()),
+        "consumer_window_sha256": window_sha,
+        "selected_metadata_report_path": str(metadata_path.resolve()),
+        "selected_metadata_report_sha256": metadata_sha,
+        "v9_compact_report_path": str(v9_path.resolve()),
+        "v9_compact_report_sha256": v9_sha,
+        "donor_manifest_sha256": donor_sha,
+        "v11_selected_candidate_cell_progress": prior_progress,
+    }
+    load_calls: list[tuple[Path, str]] = []
+
+    def load_prior_contract(path: Path, *, expected_sha256: str, **_kwargs):
+        load_calls.append((Path(path), expected_sha256))
+        assert path == old_contract_path.resolve()
+        assert expected_sha256 == old_contract_sha
+        return old_contract, old_contract_sha
+
+    fixed_window = SimpleNamespace(
+        path=window_path.resolve(),
+        sha256=window_sha,
+        payload={"source_sha": entry_source, "authorization_sha256": authorization_sha},
+    )
+    loaded_progress = audit._v11_prior_candidate_cell_progress(
+        prior_report,
+        prior_report_path=prior_report_path,
+        fixed_window=fixed_window,
+        consumer_contract=current_contract,
+        donor_manifest_sha256=donor_sha,
+        metadata_report_path=metadata_path,
+        metadata_report_sha256=metadata_sha,
+        v9_compact_report_path=v9_path,
+        v9_compact_report_sha256=v9_sha,
+        current_root=root,
+        require_contract=load_prior_contract,
+    )
+    assert loaded_progress is prior_progress
+    assert load_calls == [(old_contract_path.resolve(), old_contract_sha)]
+    assert current_contract["source"]["sha"] != fixed_window.payload["source_sha"]
+
+    row = {
+        "cell_index": 360,
+        "cell_tag": 2,
+        "cell_permutation": 4680,
+        "actual_coordinate_sha256": "8" * 64,
+        "element_dimension": 5,
+        "interior_positions": np.array([0, 1, 2], dtype=np.int64),
+        "trace_positions": np.array([3, 4], dtype=np.int64),
+    }
+    reuse_identity = audit._v11_candidate_cell_reuse_identity(
+        consumer_contract=current_contract,
+        fixed_window=fixed_window,
+        donor_manifest_sha256=donor_sha,
+        metadata_report_sha256=metadata_sha,
+        v9_compact_report_sha256=v9_sha,
+        evaluator_identity="candidate-v6",
+        cache_identity="candidate-v6:cache-sha",
+        ffcx_c_source_sha256="9" * 64,
+        row=row,
+    )
+    old_source_contract = {**current_contract, "source": {"sha": old_source}}
+    assert audit._v11_candidate_cell_reuse_identity(
+        consumer_contract=old_source_contract,
+        fixed_window=fixed_window,
+        donor_manifest_sha256=donor_sha,
+        metadata_report_sha256=metadata_sha,
+        v9_compact_report_sha256=v9_sha,
+        evaluator_identity="candidate-v6",
+        cache_identity="candidate-v6:cache-sha",
+        ffcx_c_source_sha256="9" * 64,
+        row=row,
+    ) == reuse_identity
+
+    artifacts_root = results_root / "attempt01" / "candidate"
+    artifacts_root.mkdir(parents=True)
+    arrays = {
+        "raw_tensor": np.eye(5, dtype=np.complex128),
+        "oriented_tensor": np.eye(5, dtype=np.complex128),
+        "R": np.ones((3, 2), dtype=np.complex128),
+        "T": np.ones((2, 3), dtype=np.complex128),
+        "S": np.eye(2, dtype=np.complex128),
+        "interior_lu": np.eye(3, dtype=np.complex128),
+        "interior_lu_pivots": np.arange(3, dtype=np.int32),
+    }
+    artifact_records = {}
+    for name, array in arrays.items():
+        path = artifacts_root / f"{name}.npy"
+        np.save(path, array, allow_pickle=False)
+        artifact_records[name] = {
+            "path": str(path.resolve()),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "bytes": path.stat().st_size,
+            "shape": list(array.shape),
+            "dtype": str(array.dtype),
+        }
+    identity_sha = hashlib.sha256(
+        json.dumps(reuse_identity, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    saved_cell = {
+        "completion_status": "CELL_COMPLETE",
+        "cell_index": 360,
+        "strict_lu_residual": 0.0,
+        "reuse_identity": reuse_identity,
+        "reuse_identity_sha256": identity_sha,
+        "candidate_artifacts": artifact_records,
+    }
+    reused = audit._v11_load_completed_candidate_cell(
+        saved_cell,
+        expected_reuse_identity=reuse_identity,
+        results_root=results_root.resolve(),
+        dimension=5,
+        interior_count=3,
+        trace_count=2,
+        sha256_file=task41_p0_contract.sha256_file,
+    )
+    assert reused is not None
+    assert reused["source"] == "RECONSTRUCTED_SELECTED_CELL"
+    assert reused["rts"]["T"].shape == (2, 3)
+
+    # A producer-declared complete record with a bad artifact is rejected;
+    # it may not be silently skipped and rebuilt.
+    t_path = Path(artifact_records["T"]["path"])
+    t_path.write_bytes(t_path.read_bytes() + b"tamper")
+    with pytest.raises(ValueError, match="artifact T failed path/hash/layout verification"):
+        audit._v11_load_completed_candidate_cell(
+            saved_cell,
+            expected_reuse_identity=reuse_identity,
+            results_root=results_root.resolve(),
+            dimension=5,
+            interior_count=3,
+            trace_count=2,
+            sha256_file=task41_p0_contract.sha256_file,
+        )
+
+
 @pytest.mark.parametrize("failure", [None, "dirty", "branch", "source", "legacy_scope"])
 def test_saved_diagnostics_service_source_gate_allows_current_entry_only_for_v11_scope(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
@@ -3605,10 +4392,19 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         consumer_contract_path.resolve(): (consumer_contract, consumer_contract_sha),
     }
 
+    contract_lookups: list[Path] = []
+
     def require_contract(path, *, expected_sha256, **_kwargs):
         path = Path(path).resolve()
-        contract, digest = contract_bindings[path]
-        assert expected_sha256 == digest
+        contract_lookups.append(path)
+        try:
+            contract, digest = contract_bindings[path]
+        except KeyError as exc:
+            raise AssertionError(
+                f"unregistered fixture contract {path}; registered: "
+                + ", ".join(str(value) for value in contract_bindings)
+            ) from exc
+        assert expected_sha256 == digest, f"contract binding mismatch: {path}"
         assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
         return contract, digest
 
@@ -4380,6 +5176,8 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
             "block_rows": 2,
         }
 
+    original_numpy_load = np.load
+
     def forbid_comparison_array_open(*_args, **_kwargs):
         raise AssertionError("invalid donor binding reached one of the four comparison arrays")
 
@@ -4407,7 +5205,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
 
     # V11's metadata-only route must carry the V9 prior-evidence total into
     # the existing 16 GiB admission gate before the supervised worker starts.
-    monkeypatch.setattr(checker_module.np, "load", np.load)
+    monkeypatch.setattr(checker_module.np, "load", original_numpy_load)
     donor_manifest["columns"][1]["column"] = 1
     metadata_inventory: list[dict[str, object]] = []
     for index in range(123):
@@ -4708,12 +5506,232 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     }), encoding="utf-8")
 
     v11_outer_dispatches: list[dict[str, object]] = []
+    candidate_replay_inputs: dict[str, object] = {}
+    candidate_build_reached: list[dict[str, object]] = []
 
     def capture_v11_saved_service(**kwargs):
         assert kwargs["b0_v8_selected_trace_star_mode"] is True
         if kwargs["b0_v8_selected_trace_star_metadata_only_mode"]:
             assert kwargs["v9_source_run_summary_path"] == v9_summary_path
             assert kwargs["v9_source_run_summary_sha256"] == v9_summary_sha
+        if kwargs["b0_v8_selected_trace_star_candidate_replay_mode"]:
+            from src.runners import task41_p0_v4_volume_only_audit as worker
+
+            worker_argv = service_workflow._task41_v11_candidate_replay_worker_args(
+                summary=kwargs["donor_summary_path"],
+                numerical_output=kwargs["donor_numerical_output"],
+                donor_contract=kwargs["donor_contract_path"],
+                donor_contract_sha256=kwargs["donor_contract_sha256"],
+                consumer_contract=kwargs["contract_path"],
+                consumer_contract_sha256=kwargs["contract_sha"],
+                output_directory=kwargs["output_root"],
+                ffcx_c_source=kwargs["ffcx_c_source_path"],
+                metadata_report=kwargs["v11_metadata_report_path"],
+                metadata_report_sha256=kwargs["v11_metadata_report_sha256"],
+                v9_compact_report=kwargs["v11_v9_compact_report_path"],
+                v9_compact_report_sha256=kwargs["v11_v9_compact_report_sha256"],
+            )
+            worker_args = worker._parse_args(worker_argv)
+            local_build_calls: list[dict[str, object]] = []
+            from src.runners import task41_p0_contract as replay_contract
+            from src.runners import task41_p0_v4_volume_only_audit as replay_worker
+            from src.solvers import fullspace_same_mesh_hcurl_pmg_global
+
+            class CandidateBuildReached(Exception):
+                pass
+
+            def stop_before_mesh_build(*_args, **_kwargs):
+                candidate_build_reached.append({"status": "BUILD_BOUNDARY_REACHED"})
+                raise CandidateBuildReached
+
+            def checked_old_contract(path, *, expected_sha256, **_kwargs):
+                path = Path(path).resolve(strict=True)
+                raw = path.read_bytes()
+                digest = hashlib.sha256(raw).hexdigest()
+                if digest != expected_sha256:
+                    raise ValueError("fixture old contract SHA-256 differs")
+                return json.loads(raw), digest
+
+            callback_kwargs = {
+                "consumer_contract_path": kwargs["contract_path"],
+                "consumer_contract_sha256": kwargs["contract_sha"],
+                "consumer_contract": consumer_contract,
+                "fixed_window": kwargs["window"],
+                "consumer_source_sha": kwargs["consumer_source_sha"],
+            }
+
+            def call_actual_replay(replay_args, context):
+                output_directory = Path(replay_args.output_dir)
+                output_directory.mkdir(parents=True, exist_ok=True)
+                return replay_worker._run_v11_selected_trace_star_candidate_replay(
+                    args=replay_args,
+                    cfg=None,
+                    donor=candidate_replay_inputs["donor"],
+                    fixed_window=context["fixed_window"],
+                    output_directory=output_directory,
+                    consumer_contract=context["consumer_contract"],
+                    consumer_contract_sha256=context["consumer_contract_sha256"],
+                    sha256_file=lambda path: hashlib.sha256(
+                        Path(path).read_bytes()
+                    ).hexdigest(),
+                    allocation_gate=lambda *_args, **_kwargs: None,
+                    persist_array=replay_worker._persist_array,
+                    progress=lambda _record: None,
+                    checkpoint=lambda *_args, **_kwargs: None,
+                )
+
+            def local_candidate_build_callback(*, args, **context):
+                local_build_calls.append({"args": args, **context})
+                return call_actual_replay(args, context)
+
+            with monkeypatch.context() as replay_patch:
+                replay_patch.setattr(replay_worker, "ROOT", repo_root)
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_REPORT_SHA256",
+                    candidate_replay_inputs["metadata_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_SERVICE_RECEIPT_SHA256",
+                    candidate_replay_inputs["receipt_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_GLOBAL_ROW_COUNT",
+                    candidate_replay_inputs["global_row_count"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA",
+                    candidate_replay_inputs["old_source_sha"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_SHA256",
+                    candidate_replay_inputs["old_contract_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_RELATIVE",
+                    candidate_replay_inputs["old_contract_relative"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_WINDOW_SHA256",
+                    candidate_replay_inputs["old_window_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_V9_COMPACT_REPORT_SHA256",
+                    candidate_replay_inputs["v9_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256",
+                    candidate_replay_inputs["full_action_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_V9_REDUCED_RHS_ARRAY_SHA256",
+                    candidate_replay_inputs["reduced_rhs_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_FFCX_C_SOURCE_SHA256",
+                    candidate_replay_inputs["ffcx_sha256"],
+                )
+                replay_patch.setattr(
+                    replay_contract,
+                    "require_task41_p0_contract",
+                    checked_old_contract,
+                )
+                replay_patch.setattr(
+                    replay_contract,
+                    "load_task41_p0_fixed_window",
+                    lambda *_args, **_kwargs: candidate_replay_inputs["old_window"],
+                )
+                replay_patch.setattr(
+                    fullspace_same_mesh_hcurl_pmg_global,
+                    "_build_same_mesh_levels",
+                    stop_before_mesh_build,
+                )
+                replay_patch.setattr(
+                    shutil,
+                    "disk_usage",
+                    lambda _path: SimpleNamespace(free=4 * (1 << 30)),
+                )
+
+                def dispatch(replay_args):
+                    return replay_worker._dispatch_v11_candidate_replay_callback(
+                        replay_args,
+                        callback=local_candidate_build_callback,
+                        callback_kwargs=callback_kwargs,
+                    )
+
+                try:
+                    dispatch(worker_args)
+                except CandidateBuildReached:
+                    pass
+                else:
+                    raise AssertionError(
+                        "valid cross-window candidate did not reach the mesh-build boundary"
+                    )
+                assert candidate_build_reached
+                assert len(local_build_calls) == 1
+                callback_args = local_build_calls[0]["args"]
+                assert callback_args.selected_trace_star_candidate_replay is True
+                assert callback_args.selected_active_row == 87567
+                assert callback_args.selected_metadata_report == kwargs["v11_metadata_report_path"]
+                assert callback_args.v9_compact_report == kwargs["v11_v9_compact_report_path"]
+                assert local_build_calls[0]["consumer_contract_path"] == kwargs["contract_path"]
+                assert local_build_calls[0]["fixed_window"] is kwargs["window"]
+
+                metadata_path = candidate_replay_inputs["metadata_path"]
+                valid_metadata_bytes = metadata_path.read_bytes()
+                metadata_path.write_bytes(valid_metadata_bytes + b"tampered\n")
+                with pytest.raises(ValueError, match="metadata report path or SHA-256"):
+                    dispatch(worker_args)
+                metadata_path.write_bytes(valid_metadata_bytes)
+
+                metadata_report = json.loads(valid_metadata_bytes)
+                metadata_report["initial_fixed_window_state"]["path"] = str(
+                    candidate_replay_inputs["wrong_ledger_path"]
+                )
+                metadata_path.write_text(
+                    json.dumps(metadata_report, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+                wrong_ledger_sha = hashlib.sha256(metadata_path.read_bytes()).hexdigest()
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_REPORT_SHA256",
+                    wrong_ledger_sha,
+                )
+                worker_args.selected_metadata_report_sha256 = wrong_ledger_sha
+                with pytest.raises(ValueError, match="metadata attempt02 report identity"):
+                    dispatch(worker_args)
+
+                metadata_report["initial_fixed_window_state"]["path"] = str(
+                    candidate_replay_inputs["old_window"].accounting_path
+                )
+                metadata_report["selected_trace_star_metadata_only"][
+                    "incident_cell_order"
+                ] = [360]
+                metadata_path.write_text(
+                    json.dumps(metadata_report, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+                wrong_coverage_sha = hashlib.sha256(metadata_path.read_bytes()).hexdigest()
+                replay_patch.setattr(
+                    replay_worker,
+                    "TASK41_P0_V11_METADATA_REPORT_SHA256",
+                    wrong_coverage_sha,
+                )
+                worker_args.selected_metadata_report_sha256 = wrong_coverage_sha
+                with pytest.raises(ValueError, match="metadata attempt02 report identity"):
+                    dispatch(worker_args)
+                metadata_path.write_bytes(valid_metadata_bytes)
         v11_outer_dispatches.append(kwargs)
         return 0
 
@@ -4791,18 +5809,364 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
             repo_root / "results" / str(consumer_contract["case"]["model_id"])
         )
         v11_results_root.mkdir(parents=True, exist_ok=True)
-        candidate_metadata_path = (
-            v11_results_root / "task41_p0_v8_selected_trace_star_metadata.json"
-        )
-        candidate_metadata_path.write_text("{}\n", encoding="utf-8")
         candidate_compact_path = (
             v11_results_root / "task41_p0_b0_v9_compact_volume_audit.json"
         )
         candidate_compact_path.write_text("{}\n", encoding="utf-8")
         candidate_ffcx_source = v11_results_root / "generated_form.c"
         candidate_ffcx_source.write_text("/* fixture */\n", encoding="utf-8")
-        metadata_sha = hashlib.sha256(candidate_metadata_path.read_bytes()).hexdigest()
         compact_sha = hashlib.sha256(candidate_compact_path.read_bytes()).hexdigest()
+        # The candidate consumer uses its own authorized window; the frozen
+        # metadata producer remains at the old V11 path and is passed unchanged.
+        v12_instance = contract_module._task41_saved_diagnostics_instance(
+            contract_module.TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE
+        )
+        v12_window_path = repo_root / v12_instance["window_relative"]
+        v12_window_path.parent.mkdir(parents=True, exist_ok=True)
+        v12_authorization_sha = "c" * 64
+        v12_window_payload = {
+            "schema": "task41.p0.fixed_window.v1",
+            "source_sha": consumer_source_sha,
+            "authorization_sha256": v12_authorization_sha,
+            "scope": contract_module.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+            "accounting_path": str(
+                repo_root / v12_instance["accounting_relative"]
+            ),
+        }
+        v12_window_path.write_text(
+            json.dumps(v12_window_payload, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        v12_window_sha = hashlib.sha256(v12_window_path.read_bytes()).hexdigest()
+        v12_prior_ledger_path = repo_root / v12_instance["prior_ledger_relative"]
+        v12_prior_ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        if not v12_prior_ledger_path.exists():
+            v12_prior_ledger_path.write_bytes(b'{"fixture":"preserved prior ledger"}\n')
+        window = FixedCampaignWindow(
+            path=v12_window_path.resolve(),
+            sha256=v12_window_sha,
+            payload=v12_window_payload,
+            anchor={},
+            t0_utc_ns=1_900_000_000_000_000_000,
+            deadline_utc_ns=1_900_021_600_000_000_000,
+            total_seconds=21_600.0,
+            bootstrap_seconds=0.0,
+            closeout_seconds=1_200.0,
+        )
+        v12_window_contract = {
+            "path": str(v12_instance["window_relative"]),
+            "sha256": v12_window_sha,
+            "entry_source_sha": consumer_source_sha,
+            "authorization_sha256": v12_authorization_sha,
+            "scope": contract_module.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+            "prior_window_path": str(v12_instance["prior_window_relative"]),
+            "prior_window_sha256": hashlib.sha256(
+                (repo_root / v12_instance["prior_window_relative"]).read_bytes()
+            ).hexdigest(),
+            "prior_ledger_path": str(v12_instance["prior_ledger_relative"]),
+            "prior_ledger_sha256": hashlib.sha256(
+                (repo_root / v12_instance["prior_ledger_relative"]).read_bytes()
+            ).hexdigest(),
+        }
+        consumer_contract["window"] = v12_window_contract
+        consumer_contract["execution_scope"] = (
+            contract_module.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+        )
+        contract["window"] = v12_window_contract
+        contract["execution_scope"] = contract_module.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+        consumer_contract_path.write_text(
+            json.dumps(consumer_contract), encoding="utf-8"
+        )
+        consumer_contract_sha = hashlib.sha256(
+            consumer_contract_path.read_bytes()
+        ).hexdigest()
+        contract_bindings[consumer_contract_path.resolve()] = (
+            consumer_contract, consumer_contract_sha
+        )
+        assert contract_bindings[consumer_contract_path.resolve()][1] == consumer_contract_sha
+        assert hashlib.sha256(consumer_contract_path.read_bytes()).hexdigest() == consumer_contract_sha
+        assert window.path != saved_window_path.resolve()
+        assert window.sha256 != hashlib.sha256(saved_window_path.read_bytes()).hexdigest()
+        outer_patch.setenv("TASK41_P0_CONTRACT_SHA256", consumer_contract_sha)
+        outer_patch.setenv("TASK41_P0_EXECUTION_WINDOW_PATH", str(window.path))
+        outer_patch.setenv("TASK41_P0_EXECUTION_WINDOW_SHA256", window.sha256)
+        from src.runners import task41_p0_v4_volume_only_audit as replay_worker
+
+        old_source_sha = "9" * 40
+        old_contract_relative = Path("fixtures/v11/old_metadata_contract.json")
+        old_contract_path = repo_root / old_contract_relative
+        old_contract_path.parent.mkdir(parents=True, exist_ok=True)
+        old_contract = {
+            "source": {"sha": old_source_sha},
+            "window": {"sha256": "old-window-binding"},
+        }
+        old_contract_path.write_text(
+            json.dumps(old_contract, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        old_contract_sha = hashlib.sha256(old_contract_path.read_bytes()).hexdigest()
+        old_window_path = repo_root / "fixtures" / "v11" / "old_window.json"
+        old_ledger_path = repo_root / "fixtures" / "v11" / "old_accounting.jsonl"
+        old_ledger_path.write_bytes(b'{"fixture":"old producer ledger"}\n')
+        old_window_payload = {
+            "schema": "task41.p0.fixed_window.v1",
+            "source_sha": old_source_sha,
+            "authorization_sha256": "d" * 64,
+            "accounting_path": str(old_ledger_path.resolve()),
+        }
+        old_window_path.write_text(
+            json.dumps(old_window_payload, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        old_window_sha = hashlib.sha256(old_window_path.read_bytes()).hexdigest()
+        old_window = FixedCampaignWindow(
+            path=old_window_path.resolve(),
+            sha256=old_window_sha,
+            payload=old_window_payload,
+            anchor={},
+            t0_utc_ns=1_800_000_000_000_000_000,
+            deadline_utc_ns=1_800_021_600_000_000_000,
+            total_seconds=21_600.0,
+            bootstrap_seconds=0.0,
+            closeout_seconds=1_200.0,
+        )
+        old_contract["window"]["sha256"] = old_window_sha
+        old_contract_path.write_text(
+            json.dumps(old_contract, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        old_contract_sha = hashlib.sha256(old_contract_path.read_bytes()).hexdigest()
+        candidate_metadata_root = (
+            v11_results_root
+            / "task41_p0_saved_diagnostics_6h"
+            / old_window_sha
+            / "selected_incident_replay"
+            / "attempt02"
+        )
+        candidate_metadata_root.mkdir(parents=True, exist_ok=True)
+        candidate_metadata_path = (
+            candidate_metadata_root / "task41_p0_v8_selected_trace_star_metadata.json"
+        )
+        candidate_metadata_path.write_text("{}\n", encoding="utf-8")
+        metadata_sha = hashlib.sha256(candidate_metadata_path.read_bytes()).hexdigest()
+        donor_manifest_sha256 = v11_manifest_sha
+        global_row_count = 87_568
+        active_original_rows = np.zeros(global_row_count, dtype=np.int64)
+        active_original_rows[87_567] = 250_113
+        donor = {
+            "manifest_sha256": donor_manifest_sha256,
+            "columns": [
+                {"active_original_rows": active_original_rows.copy()},
+                {"active_original_rows": active_original_rows.copy()},
+            ],
+        }
+        metadata_arrays_root = candidate_metadata_path.parent
+        metadata_arrays_root.mkdir(parents=True, exist_ok=True)
+        metadata_array_fields = (
+            "geometry_dofs",
+            "actual_geometry_coordinates",
+            "local_dofs",
+            "original_rows",
+            "interior_positions",
+            "trace_positions",
+            "interior_original_rows",
+            "trace_original_rows",
+            "active_ids",
+            "trace_expansion_data",
+            "trace_expansion_indices",
+            "trace_expansion_indptr",
+            "selected_local_trace_rows",
+            "selected_trace_coefficients",
+        )
+        selected_cells = []
+        for cell_index, cell_tag, permutation, local_trace in (
+            (360, 2, 4680, 375),
+            (446, 1, 0, 75),
+        ):
+            dimension = 377
+            trace_positions = np.arange(1, dimension, dtype=np.int32)
+            selected_trace_index = int(np.flatnonzero(trace_positions == local_trace)[0])
+            original_rows = np.zeros(dimension, dtype=np.int64)
+            original_rows[local_trace] = 250_113
+            trace_original_rows = np.zeros(len(trace_positions), dtype=np.int64)
+            trace_original_rows[selected_trace_index] = 250_113
+            active_ids = np.arange(len(trace_positions), dtype=np.int64)
+            active_ids[selected_trace_index] = 87_567
+            trace_expansion_indices = np.arange(len(trace_positions), dtype=np.int32)
+            trace_expansion_indptr = np.arange(
+                len(trace_positions) + 1, dtype=np.int32
+            )
+            arrays = {
+                "geometry_dofs": np.arange(8, dtype=np.int64) + cell_index * 8,
+                "actual_geometry_coordinates": (
+                    np.arange(24, dtype=np.float64).reshape(8, 3) + cell_index
+                ),
+                "local_dofs": np.arange(dimension, dtype=np.int64),
+                "original_rows": original_rows,
+                "interior_positions": np.asarray([0], dtype=np.int32),
+                "trace_positions": trace_positions,
+                "interior_original_rows": np.asarray([250_112], dtype=np.int64),
+                "trace_original_rows": trace_original_rows,
+                "active_ids": active_ids,
+                "trace_expansion_data": np.ones(
+                    len(trace_positions), dtype=np.complex128
+                ),
+                "trace_expansion_indices": trace_expansion_indices,
+                "trace_expansion_indptr": trace_expansion_indptr,
+                "selected_local_trace_rows": np.asarray([local_trace], dtype=np.int32),
+                "selected_trace_coefficients": np.asarray([[1.0, 0.0]], dtype=np.float64),
+            }
+            records = {}
+            for field in metadata_array_fields:
+                array_name = f"task41_p0_v11_selected_cell{cell_index}_{field}"
+                record = replay_worker._persist_array(
+                    metadata_arrays_root,
+                    array_name,
+                    arrays[field],
+                    sha256_file=lambda path: hashlib.sha256(
+                        Path(path).read_bytes()
+                    ).hexdigest(),
+                )
+                record["name"] = array_name
+                records[field] = record
+            coordinate_bytes = np.ascontiguousarray(
+                arrays["actual_geometry_coordinates"], dtype=np.float64
+            ).tobytes()
+            selected_cells.append(
+                {
+                    "cell_index": cell_index,
+                    "cell_tag": cell_tag,
+                    "cell_permutation": permutation,
+                    "selected_local_trace_rows": [local_trace],
+                    "selected_trace_coefficients": [[1.0, 0.0]],
+                    "selected_trace_contribution_kinds": ["direct_original_row"],
+                    "actual_coordinate_sha256": hashlib.sha256(
+                        coordinate_bytes
+                    ).hexdigest(),
+                    "arrays": records,
+                }
+            )
+
+        metadata_report = {
+            "schema": "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1",
+            "status": "COMPLETED_METADATA_ONLY",
+            "consumer_source_sha": old_source_sha,
+            "consumer_contract_path": str(old_contract_path.resolve()),
+            "consumer_contract_sha256": old_contract_sha,
+            "donor_manifest_sha256": v11_manifest_sha,
+            "initial_fixed_window_state": {
+                "path": str(old_window.accounting_path),
+                "campaign_window_sha256": old_window.sha256,
+                "accounting_record": {
+                    "campaign_window_sha256": old_window.sha256,
+                },
+            },
+            "selected_trace_star_metadata_only": {
+                "schema": "task41.p0.v8.selected_trace_star_metadata_only.v1",
+                "status": "COMPLETED_METADATA_ONLY",
+                "selected_active_row": 87_567,
+                "selected_original_row": 250_113,
+                "incident_cell_order": [360, 446],
+                "numerical_work_started": False,
+                "element_dimension": 377,
+                "interior_positions": [0],
+                "trace_positions": list(range(1, 377)),
+                "selected_cells": selected_cells,
+            },
+        }
+        candidate_metadata_path.write_text(
+            json.dumps(metadata_report, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        metadata_sha = hashlib.sha256(candidate_metadata_path.read_bytes()).hexdigest()
+        metadata_receipt_root = candidate_metadata_path.parent.with_name(
+            candidate_metadata_path.parent.name + ".service"
+        )
+        metadata_receipt_root.mkdir(parents=True, exist_ok=True)
+        metadata_receipt_path = metadata_receipt_root / "task41_p0_service_receipt.json"
+        metadata_receipt_path.write_text(
+            json.dumps(
+                {
+                    "schema": "task41.p0.saved_output_service_receipt.v1",
+                    "status": "completed",
+                    "mode": "saved_b0_v8_selected_trace_star_metadata_only",
+                    "contract_sha256": old_contract_sha,
+                    "selected_trace_star_metadata_only_result_path": str(
+                        candidate_metadata_path
+                    ),
+                    "selected_trace_star_metadata_only_status": "metadata_only_completed",
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        receipt_sha = hashlib.sha256(metadata_receipt_path.read_bytes()).hexdigest()
+
+        v9_array_records = {}
+        for field, filename in (
+            ("full_action_artifact", "v9_full_action.npy"),
+            ("full_reduced_rhs_artifact", "v9_reduced_rhs.npy"),
+        ):
+            array_path = candidate_compact_path.parent / filename
+            array_path.parent.mkdir(parents=True, exist_ok=True)
+            array = np.zeros((global_row_count, 2), dtype=np.complex128)
+            np.save(array_path, array, allow_pickle=False)
+            v9_array_records[field] = {
+                "path": filename,
+                "sha256": hashlib.sha256(array_path.read_bytes()).hexdigest(),
+                "bytes": array_path.stat().st_size,
+                "shape": [global_row_count, 2],
+                "dtype": "complex128",
+            }
+        v9_compact = {
+            "schema": "task41.p0.b0.v9.compact_volume_identity.v1",
+            "completed": True,
+            "status": "GATE_FAILED",
+            "official_result": False,
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+            "donor_manifest_sha256": v11_manifest_sha,
+            "candidate_evaluator_identity": v9_report[
+                "candidate_evaluator_identity"
+            ],
+            "candidate_evaluator_cache_identity": v9_report[
+                "candidate_evaluator_cache_identity"
+            ],
+            "existing_evidence_bytes": donor_raw_bytes,
+            "prior_new_evidence_bytes": prior_bytes,
+            "new_evidence_bytes": new_evidence_bytes,
+            "cumulative_evidence_bytes": (
+                donor_raw_bytes + prior_bytes + new_evidence_bytes
+            ),
+            "candidate_full_action_gate": {
+                "status": "GATE_FAILED",
+                **v9_array_records,
+            },
+        }
+        candidate_compact_path.write_text(
+            json.dumps(v9_compact, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        compact_sha = hashlib.sha256(candidate_compact_path.read_bytes()).hexdigest()
+        candidate_ffcx_source.write_bytes(b"/* V12 route fixture FFCx C source */\n")
+        ffcx_sha = hashlib.sha256(candidate_ffcx_source.read_bytes()).hexdigest()
+        candidate_replay_inputs.update(
+            {
+                "donor": donor,
+                "metadata_path": candidate_metadata_path,
+                "metadata_sha256": metadata_sha,
+                "receipt_sha256": receipt_sha,
+                "old_source_sha": old_source_sha,
+                "old_contract_sha256": old_contract_sha,
+                "old_contract_relative": old_contract_relative,
+                "old_window": old_window,
+                "old_window_sha256": old_window_sha,
+                "wrong_ledger_path": repo_root / "fixtures" / "v11" / "wrong_ledger.jsonl",
+                "v9_sha256": compact_sha,
+                "full_action_sha256": v9_array_records[
+                    "full_action_artifact"
+                ]["sha256"],
+                "reduced_rhs_sha256": v9_array_records[
+                    "full_reduced_rhs_artifact"
+                ]["sha256"],
+                "ffcx_sha256": ffcx_sha,
+                "global_row_count": global_row_count,
+            }
+        )
         candidate_args = [
             "--task41-p0-saved-b0-selected-trace-star-audit",
             "--donor-contract", str(producer_contract_path),
@@ -4841,3 +6205,316 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     assert v11_outer_dispatches[1]["v11_metadata_report_sha256"] == metadata_sha
     assert v11_outer_dispatches[1]["v11_v9_compact_report_path"] == candidate_compact_path
     assert v11_outer_dispatches[1]["v11_v9_compact_report_sha256"] == compact_sha
+
+    # Exercise the actual saved-output service through its checker watchdog,
+    # while keeping the costly worker represented by its real receipt schema.
+    from src.runners import task41_p0_checker as saved_checker
+
+    actual_output_root = (
+        results_root
+        / "task41_p0_saved_diagnostics_6h"
+        / v12_window_sha
+        / "selected_incident_replay"
+        / "attempt06"
+    )
+    for name, value in {
+        "TASK41_P0_V11_METADATA_REPORT_SHA256": metadata_sha,
+        "TASK41_P0_V11_METADATA_SERVICE_RECEIPT_SHA256": receipt_sha,
+        "TASK41_P0_V11_GLOBAL_ROW_COUNT": global_row_count,
+        "TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA": old_source_sha,
+        "TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_SHA256": old_contract_sha,
+        "TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_RELATIVE": old_contract_relative,
+        "TASK41_P0_V11_METADATA_WINDOW_SHA256": old_window_sha,
+        "TASK41_P0_V11_V9_COMPACT_REPORT_SHA256": compact_sha,
+        "TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256": v9_array_records[
+            "full_action_artifact"
+        ]["sha256"],
+        "TASK41_P0_V11_V9_REDUCED_RHS_ARRAY_SHA256": v9_array_records[
+            "full_reduced_rhs_artifact"
+        ]["sha256"],
+        "TASK41_P0_V11_FFCX_C_SOURCE_SHA256": ffcx_sha,
+    }.items():
+        monkeypatch.setattr(replay_worker, name, value)
+    contract_bindings[old_contract_path.resolve()] = (old_contract, old_contract_sha)
+
+    def load_fixture_window(contract_value, *, current_root, require_current_boot=False):
+        del current_root, require_current_boot
+        return (
+            old_window
+            if contract_value.get("window", {}).get("sha256") == old_window_sha
+            else window
+        )
+
+    monkeypatch.setattr(
+        contract_module, "load_task41_p0_fixed_window", load_fixture_window
+    )
+    monkeypatch.setattr(
+        saved_checker,
+        "__file__",
+        str(repo_root / "src" / "runners" / "task41_p0_checker.py"),
+    )
+    monkeypatch.setattr(
+        saved_checker,
+        "_task41_v11_load_selected_donor_vectors",
+        lambda **_kwargs: {
+            "manifest_sha256": v11_manifest_sha,
+            "summary_sha256": hashlib.sha256(donor_summary_path.read_bytes()).hexdigest(),
+        },
+    )
+
+    def fixture_saved_array_recheck(*_args, **_kwargs):
+        return {
+            "schema": "task41.p0.v11.selected_trace_star_saved_array_independent_check.v1",
+            "check_completed": True,
+            "candidate_passed": None,
+            "scientific_qualified": False,
+            "official_result": False,
+            "classification": "INDEPENDENT_SAVED_ARRAY_CHECK_COMPLETED",
+            "errors": [],
+            "raw_evidence_retained": True,
+        }
+
+    monkeypatch.setattr(
+        saved_checker,
+        "_task41_v11_recompute_saved_candidate_arrays",
+        fixture_saved_array_recheck,
+    )
+    actual_supervise_calls: list[dict[str, object]] = []
+
+    def actual_service_supervise(command, *_args, **kwargs):
+        actual_supervise_calls.append(
+            {
+                "command": list(command),
+                "campaign_phase": kwargs.get("campaign_phase"),
+                "authorization": kwargs.get("campaign_phase_authorization"),
+                "worker_environment": kwargs.get("worker_environment"),
+            }
+        )
+        if kwargs.get("campaign_phase") == "numeric":
+            worker_output = Path(command[command.index("--output-dir") + 1])
+            volume_directory = worker_output / "selected_trace_star_candidate_replay"
+            volume_directory.mkdir(parents=True, exist_ok=True)
+            replay = {
+                "schema": "task41.p0.v11.selected_trace_star_candidate_replay.v1",
+                "status": "COMPLETED_LOCAL_CANDIDATE_REPLAY",
+                "scientific_qualified": False,
+                "selected_active_row": 87567,
+                "selected_original_row": 250113,
+                "incident_cell_order": [360, 446],
+                "metadata_report_path": str(candidate_metadata_path),
+                "metadata_report_sha256": metadata_sha,
+                "metadata_service_receipt_path": str(metadata_receipt_path),
+                "metadata_service_receipt_sha256": receipt_sha,
+                "metadata_consumer_contract_sha256": old_contract_sha,
+                "v9_compact_report_path": str(candidate_compact_path),
+                "v9_compact_report_sha256": compact_sha,
+                "ffcx_c_source_sha256": ffcx_sha,
+                "consumer_contract_sha256": consumer_contract_sha,
+                "consumer_source_sha": consumer_source_sha,
+                "consumer_window_path": str(window.path),
+                "consumer_window_sha256": window.sha256,
+                "donor_manifest_sha256": v11_manifest_sha,
+                "candidate_evaluator_identity": v9_report[
+                    "candidate_evaluator_identity"
+                ],
+                "candidate_cache_identity": v9_report[
+                    "candidate_evaluator_cache_identity"
+                ],
+                "v9_compact_evaluator_identity": v9_report[
+                    "candidate_evaluator_identity"
+                ],
+                "v9_compact_cache_identity": v9_report[
+                    "candidate_evaluator_cache_identity"
+                ],
+                "integration_identity": {
+                    "schema": "task41.p0.v12.same_mesh_p6_curl_plus_mass.v1",
+                    "degree": 6,
+                    "form_terms": ["curl", "mass"],
+                    "cell_integral_ids": [1, 2],
+                    "sum_duplicate_cell_integrals": True,
+                    "internal_rhs_strategy": "same_lu_rhs_solve",
+                    "candidate_evaluator_identity": v9_report[
+                        "candidate_evaluator_identity"
+                    ],
+                    "candidate_cache_identity": v9_report[
+                        "candidate_evaluator_cache_identity"
+                    ],
+                },
+                "source_semantics": {
+                    "formal_action_gate_changed": False,
+                    "official_result": False,
+                },
+                "cells": [{"cell_index": value} for value in (360, 446)],
+                "columns": [
+                    {
+                        "column": column,
+                        "incident_cell_terms": [
+                            {"cell_index": value} for value in (360, 446)
+                        ],
+                        "review_v11_row_identities": [
+                            {"state": state} for state in ("j0", "j3")
+                        ],
+                        "y_replay_status": "LOCAL_REPLAY_UNBOUND",
+                        "g_replay_status": "LOCAL_REPLAY_UNBOUND",
+                    }
+                    for column in (0, 1)
+                ],
+                "review_v11_local_identities": [
+                    {"equation_1_status": "DIAGNOSTIC_ONLY"} for _ in range(4)
+                ],
+                "classification": "LOCAL_REPLAY_UNBOUND",
+            }
+            report_path = worker_output / (
+                "task41_p0_v11_selected_trace_candidate_replay.json"
+            )
+            report_path.write_text(
+                json.dumps(
+                    {
+                        "schema": "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1",
+                        "status": "COMPLETED_LOCAL_CANDIDATE_REPLAY",
+                        "consumer_contract_path": str(consumer_contract_path),
+                        "consumer_contract_sha256": consumer_contract_sha,
+                        "consumer_source_sha": consumer_source_sha,
+                        "consumer_window_path": str(window.path),
+                        "consumer_window_sha256": window.sha256,
+                        "donor_contract_path": str(historical_donor_contract_path),
+                        "donor_contract_sha256": historical_donor_contract_sha,
+                        "donor_source_sha": historical_donor_source_sha,
+                        "donor_manifest_sha256": v11_manifest_sha,
+                        "selected_metadata_report_path": str(candidate_metadata_path),
+                        "selected_metadata_report_sha256": metadata_sha,
+                        "v9_compact_report_path": str(candidate_compact_path),
+                        "v9_compact_report_sha256": compact_sha,
+                        "output_directory": str(worker_output),
+                        "volume_evidence_directory": str(volume_directory),
+                        "v11_selected_trace_candidate_replay": replay,
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            return {"classification": "COMPLETED", "leader_exit_code": 0}
+
+        authorization = kwargs["campaign_phase_authorization"]
+        validated = watchdog._validate_campaign_closeout_authorization(
+            command=list(command),
+            campaign=window,
+            authorization=authorization,
+            worker_environment=kwargs["worker_environment"],
+        )
+        assert validated == authorization
+        assert kwargs["campaign_phase"] == "closeout"
+        monkeypatch.setattr(saved_checker, "require_task41_p0_contract", require_contract)
+        monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
+        checker_result = saved_checker.main(list(command[3:]))
+        return {
+            "classification": "COMPLETED" if checker_result == 0 else "FAILED",
+            "leader_exit_code": checker_result,
+        }
+
+    fake_check_output = service_workflow.subprocess.check_output
+    monkeypatch.setattr(
+        service_workflow.subprocess,
+        "check_output",
+        lambda command, **_kwargs: (
+            f"{consumer_source_sha}\n"
+            if list(command)[1] == "rev-parse"
+            else f"{contract_module.TASK41_BRANCH}\n"
+        ),
+    )
+    monkeypatch.setattr(
+        service_workflow.shutil,
+        "disk_usage",
+        lambda _path: SimpleNamespace(free=64 * (1 << 30)),
+    )
+    historical_donor_source_sha = "afbe91e5947ed18fb74d7105097e129c1b8b4cc7"
+    historical_donor_contract = {
+        "task_id": model_id,
+        "branch": contract_module.TASK41_BRANCH,
+        "source": {"sha": historical_donor_source_sha},
+        "window": {
+            "path": contract_module.TASK41_B0_V3_WINDOW_RELATIVE.as_posix(),
+            "sha256": "68e6d8dfcccc9dee98bc161730957dc76f70a9e2dea2ee78455b66c9d8b37c38",
+        },
+        "case": dict(common_case),
+    }
+    historical_donor_contract_path = repo_root / "historical_v3_donor_contract.json"
+    historical_donor_contract_path.write_text(
+        json.dumps(historical_donor_contract, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    historical_donor_contract_sha = hashlib.sha256(
+        historical_donor_contract_path.read_bytes()
+    ).hexdigest()
+    contract_bindings[historical_donor_contract_path.resolve()] = (
+        historical_donor_contract,
+        historical_donor_contract_sha,
+    )
+    actual_service_kwargs = dict(v11_outer_dispatches[1])
+    actual_service_kwargs.update(
+        output_root=actual_output_root,
+        donor_contract_path=historical_donor_contract_path,
+        donor_contract_sha256=historical_donor_contract_sha,
+        supervise=actual_service_supervise,
+        sha256_file=contract_module.sha256_file,
+    )
+    actual_service_result = service_workflow._run_task41_p0_saved_output_service(
+        **actual_service_kwargs
+    )
+    monkeypatch.setattr(
+        service_workflow.subprocess, "check_output", fake_check_output
+    )
+    actual_service_receipt = json.loads(
+        (
+            actual_output_root.with_name(actual_output_root.name + ".service")
+            / "task41_p0_service_receipt.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert actual_service_result == 0, {
+        "workflow_error": actual_service_receipt.get("workflow_error"),
+        "finalization_error": actual_service_receipt.get("finalization_error"),
+        "required_checker_status": actual_service_receipt.get("required_checker_status"),
+        "checker_errors": [
+            error.rsplit("/", 1)[-1].rstrip("')") if "KeyError" in error else error
+            for error in (
+                json.loads(
+                    Path(actual_supervise_calls[-1]["command"][-1]).read_text()
+                ).get("errors", [])
+                if actual_supervise_calls
+                and Path(actual_supervise_calls[-1]["command"][-1]).is_file()
+                else []
+            )
+        ],
+        "contract_lookups": [path.name for path in contract_lookups],
+    }
+    assert len(actual_supervise_calls) == 2
+    assert "--selected-trace-star-candidate-replay" in actual_supervise_calls[0]["command"]
+    checker_command = actual_supervise_calls[1]["command"]
+    assert checker_command[1:3] == ["-m", "src.runners.task41_p0_checker"]
+    assert "--v11-candidate-replay-saved-check" in checker_command
+    checker_authorization = actual_supervise_calls[1]["authorization"]
+    assert checker_authorization["checker_kind"] == (
+        "task41_p0_v11_selected_cell_saved_array_checker"
+    )
+    assert checker_authorization["phase"] == "closeout"
+    tampered_environment = dict(actual_supervise_calls[1]["worker_environment"])
+    tampered_environment["TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT"] = "0"
+    with pytest.raises(
+        ValueError, match="V12 saved-array checker is not bound to its current-source B0 route"
+    ):
+        watchdog._validate_campaign_closeout_authorization(
+            command=checker_command,
+            campaign=window,
+            authorization=checker_authorization,
+            worker_environment=tampered_environment,
+        )
+    assert actual_service_receipt["required_checker_status"] == (
+        "independent_saved_array_check_completed"
+    )
+    assert actual_service_receipt["candidate_replay_saved_array_checker"]["status"] == (
+        "COMPLETED_READ_ONLY"
+    )
+    assert actual_service_receipt["result_classification"] == (
+        "V11_SELECTED_TRACE_CANDIDATE_REPLAY_CHECKED"
+    )
+    assert actual_service_receipt["official_result"] is False

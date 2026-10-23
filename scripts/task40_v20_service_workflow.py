@@ -9465,10 +9465,83 @@ def _task41_v11_candidate_replay_worker_completed(
         and all(isinstance(row, Mapping) for row in identities)
         and all(
             row.get("equation_1_status")
-            in {"WITHIN_ROUNDOFF_ESTIMATE", "LOCAL_IDENTITY_UNBOUND"}
+            in {"WITHIN_ROUNDOFF_ESTIMATE", "LOCAL_IDENTITY_UNBOUND", "DIAGNOSTIC_ONLY"}
             for row in identities
         )
     )
+
+
+def _task41_v11_candidate_replay_worker_args(
+    *,
+    summary: Path,
+    numerical_output: Path,
+    donor_contract: Path,
+    donor_contract_sha256: str,
+    consumer_contract: Path,
+    consumer_contract_sha256: str,
+    output_directory: Path,
+    ffcx_c_source: Path,
+    metadata_report: Path,
+    metadata_report_sha256: str,
+    v9_compact_report: Path,
+    v9_compact_report_sha256: str,
+) -> list[str]:
+    """Build the exact selected-cell worker argv consumed by the local callback."""
+    return [
+        "--summary", str(summary),
+        "--numerical-output", str(numerical_output),
+        "--donor-contract", str(donor_contract),
+        "--donor-contract-sha256", donor_contract_sha256,
+        "--consumer-contract", str(consumer_contract.resolve()),
+        "--consumer-contract-sha256", consumer_contract_sha256,
+        "--output-dir", str(output_directory),
+        "--geometry-policy", "mesh_actual_exact",
+        "--raw-tensor-evaluator", "actual_qmetric_blocked_gram",
+        "--ffcx-c-source", str(ffcx_c_source),
+        "--selected-trace-star-candidate-replay",
+        "--selected-active-row", "87567",
+        "--selected-metadata-report", str(metadata_report),
+        "--selected-metadata-report-sha256", metadata_report_sha256,
+        "--v9-compact-report", str(v9_compact_report),
+        "--v9-compact-report-sha256", v9_compact_report_sha256,
+    ]
+
+
+def _task41_v12_prior_metadata_window_bytes(
+    metadata_report_path: Path,
+    *,
+    current_window_root: Path,
+    results_root: Path,
+    execution_scope: Any,
+    stat_output_tree: Callable[[Path], int],
+) -> int:
+    from src.runners.task41_p0_contract import TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+
+    prior_root = Path(metadata_report_path).resolve(strict=True).parent.parent.parent
+    current_root = Path(current_window_root).resolve()
+    results_root = Path(results_root).resolve(strict=True)
+    is_v12_new_window = execution_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+    if not prior_root.is_relative_to(results_root) or (
+        is_v12_new_window and prior_root == current_root
+    ):
+        raise ValueError("V12 metadata output must remain in its distinct registered prior window")
+    return stat_output_tree(prior_root) if is_v12_new_window else 0
+
+
+def _task41_v11_candidate_replay_exit(record: dict[str, Any], *, worker_ok: bool, checker_ok: bool, service_ok: bool, finalization_ok: bool) -> int:
+    checker_status = record.get("candidate_replay_saved_array_checker", {}).get("status")
+    record["result_classification"] = (
+        "V11_SELECTED_TRACE_CANDIDATE_REPLAY_CHECKED"
+        if service_ok and finalization_ok and worker_ok and checker_ok and checker_status == "COMPLETED_READ_ONLY"
+        else "V11_SELECTED_TRACE_CANDIDATE_REPLAY_CHECK_FAILED"
+        if worker_ok and checker_status == "INCOMPLETE"
+        else "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE"
+    )
+    record["official_result"] = False
+    record.setdefault("required_checker_status", "not_run_candidate_replay_incomplete")
+    record["selected_active_row"] = 87567
+    record["numerical_work_started"] = True
+    return 0 if service_ok and finalization_ok and worker_ok and checker_ok else 3
 
 
 def _run_task41_p0_saved_output_service(
@@ -10482,11 +10555,20 @@ def _run_task41_p0_saved_output_service(
             return None
         from src.runners.task41_p0_contract import (
             TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
             task41_raw_artifact_limit_bytes,
         )
 
-        if contract.get("execution_scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE:
+        saved_scope = contract.get("execution_scope")
+        if saved_scope not in (
+            TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        ):
             raise ValueError("saved-diagnostics disk gate received a different execution scope")
+        if saved_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE and not (
+            b0_v8_selected_trace_star_candidate_replay_mode
+        ):
+            raise ValueError("V12 two-cell scope only admits its selected candidate replay")
         window_sha = str(contract.get("window", {}).get("sha256", ""))
         window_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha
         expected_name = (
@@ -10504,7 +10586,7 @@ def _run_task41_p0_saved_output_service(
             or re.fullmatch(r"attempt[0-9]{2,}", output_root.name) is None
         ):
             raise ValueError("saved-diagnostics output path must use a numbered attempt under its fixed window/mode directory")
-        new_cap = int(TASK41_B0_SAVED_DIAGNOSTICS_SCOPE["new_evidence_limit_bytes"])
+        new_cap = int(saved_scope["new_evidence_limit_bytes"])
         raw_cap = task41_raw_artifact_limit_bytes(contract)
         floor = int(contract["evidence"]["raw_disk_policy"]["free_space_floor_bytes"])
         current_window_output_bytes = stat_output_tree(window_output_root)
@@ -10784,6 +10866,9 @@ def _run_task41_p0_saved_output_service(
         "worker_environment": environment,
     }
     result_code = 3
+    candidate_replay_finalization_failed = False
+    worker_ok = False
+    checker_ok = False
     v5_candidate_report_ready = False
     v6_saved_candidate_report_ready = False
     v8_selected_trace_star_report_ready = False
@@ -10842,7 +10927,7 @@ def _run_task41_p0_saved_output_service(
                         str(geometry_reference_report_path),
                     ]
                 )
-            if b0_v6_actual_qmetric_mode:
+            if b0_v6_actual_qmetric_mode and not b0_v8_selected_trace_star_candidate_replay_mode:
                 assert ffcx_c_source_path is not None
                 volume_command.extend(
                     [
@@ -10859,27 +10944,25 @@ def _run_task41_p0_saved_output_service(
                     assert v11_metadata_report_sha256 is not None
                     assert v11_v9_compact_report_path is not None
                     assert v11_v9_compact_report_sha256 is not None
-                    volume_command.extend(
-                        [
-                            "--geometry-policy",
-                            "mesh_actual_exact",
-                            "--raw-tensor-evaluator",
-                            "actual_qmetric_blocked_gram",
-                            "--ffcx-c-source",
-                            str(ffcx_c_source_path),
-                            "--selected-trace-star-candidate-replay",
-                            "--selected-active-row",
-                            "87567",
-                            "--selected-metadata-report",
-                            str(v11_metadata_report_path),
-                            "--selected-metadata-report-sha256",
-                            v11_metadata_report_sha256,
-                            "--v9-compact-report",
-                            str(v11_v9_compact_report_path),
-                            "--v9-compact-report-sha256",
-                            v11_v9_compact_report_sha256,
-                        ]
-                    )
+                    volume_command = [
+                        python,
+                        "-m",
+                        "src.runners.task41_p0_v4_volume_only_audit",
+                        *_task41_v11_candidate_replay_worker_args(
+                            summary=donor_summary_path,
+                            numerical_output=donor_numerical_output,
+                            donor_contract=donor_contract_path,
+                            donor_contract_sha256=donor_contract_sha256,
+                            consumer_contract=contract_path,
+                            consumer_contract_sha256=contract_sha,
+                            output_directory=output_root,
+                            ffcx_c_source=ffcx_c_source_path,
+                            metadata_report=v11_metadata_report_path,
+                            metadata_report_sha256=v11_metadata_report_sha256,
+                            v9_compact_report=v11_v9_compact_report_path,
+                            v9_compact_report_sha256=v11_v9_compact_report_sha256,
+                        ),
+                    ]
                 elif b0_v8_selected_trace_star_metadata_only_mode:
                     assert v9_source_run_summary_path is not None
                     assert v9_source_run_summary_sha256 is not None
@@ -10916,14 +10999,19 @@ def _run_task41_p0_saved_output_service(
                 metadata_report_value = read_json_object(
                     v11_metadata_report_path, "V11 selected metadata report"
                 )
+                from src.runners.task41_p0_v4_volume_only_audit import (
+                    TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_SHA256,
+                    TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA,
+                )
+
                 if (
                     metadata_report_value.get("schema")
                     != "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1"
                     or metadata_report_value.get("status") != "COMPLETED_METADATA_ONLY"
                     or metadata_report_value.get("consumer_source_sha")
-                    != "967ad08d7da75ff8fa4e49bd63ed9abe53469d46"
+                    != TASK41_P0_V11_METADATA_CONSUMER_SOURCE_SHA
                     or metadata_report_value.get("consumer_contract_sha256")
-                    != "af27a07502f72f5d3d1effecf98bda21f09e95cca230278e05ed1a63eeaf8931"
+                    != TASK41_P0_V11_METADATA_CONSUMER_CONTRACT_SHA256
                     or metadata_report_value.get("donor_manifest_sha256")
                     != donor_manifest_sha256
                 ):
@@ -10963,6 +11051,7 @@ def _run_task41_p0_saved_output_service(
                     raise ValueError("V11 V9 compact report raw-evidence totals are inconsistent")
                 compact_array_paths: list[Path] = []
                 from src.runners.task41_p0_v4_volume_only_audit import (
+                    TASK41_P0_V11_GLOBAL_ROW_COUNT,
                     TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256,
                     TASK41_P0_V11_V9_REDUCED_RHS_ARRAY_SHA256,
                 )
@@ -10975,7 +11064,7 @@ def _run_task41_p0_saved_output_service(
                     if (
                         not isinstance(artifact, Mapping)
                         or artifact.get("sha256") != expected_sha
-                        or artifact.get("shape") != [5_752_120, 2]
+                        or artifact.get("shape") != [TASK41_P0_V11_GLOBAL_ROW_COUNT, 2]
                         or artifact.get("dtype") != "complex128"
                     ):
                         raise ValueError(f"V11 V9 compact {field} array binding differs")
@@ -10990,7 +11079,20 @@ def _run_task41_p0_saved_output_service(
                 if len(set(compact_array_paths)) != 2:
                     raise ValueError("V11 V9 action and reduced-RHS arrays are not distinct")
                 saved_bound_raw_paths = [*donor_array_paths, *compact_array_paths]
-                saved_recorded_raw_bytes = cumulative_bytes
+                assert v11_metadata_report_path is not None
+                current_window_root = (
+                    results_root
+                    / "task41_p0_saved_diagnostics_6h"
+                    / str(contract.get("window", {}).get("sha256", ""))
+                ).resolve()
+                old_metadata_window_bytes = _task41_v12_prior_metadata_window_bytes(
+                    v11_metadata_report_path,
+                    current_window_root=current_window_root,
+                    results_root=results_root,
+                    execution_scope=contract.get("execution_scope"),
+                    stat_output_tree=stat_output_tree,
+                )
+                saved_recorded_raw_bytes = cumulative_bytes + old_metadata_window_bytes
                 saved_diagnostics_budget = saved_diagnostics_budget_check()
                 record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
                 record["v11_selected_metadata_report_path"] = str(v11_metadata_report_path)
@@ -11001,6 +11103,7 @@ def _run_task41_p0_saved_output_service(
                 record["v9_prior_new_evidence_bytes"] = prior_bytes
                 record["v9_new_evidence_bytes"] = new_bytes
                 record["v9_cumulative_evidence_bytes"] = cumulative_bytes
+                record["v11_prior_metadata_window_output_bytes"] = old_metadata_window_bytes
             elif b0_v8_selected_trace_star_metadata_only_mode:
                 assert v9_source_run_summary_path is not None
                 assert v9_source_run_summary_sha256 is not None
@@ -11205,6 +11308,12 @@ def _run_task41_p0_saved_output_service(
                         v9_compact_report_sha256=v11_v9_compact_report_sha256,
                     )
                 )
+                if worker_ok:
+                    assert volume_report_path is not None
+                    candidate_report_path = volume_report_path.resolve(strict=True)
+                    candidate_report_sha256 = sha256_file(candidate_report_path)
+                    assert isinstance(candidate_replay, Mapping)
+                    candidate_report_payload = candidate_replay
                 record["v11_candidate_replay_status"] = (
                     candidate_replay.get("classification")
                     if isinstance(candidate_replay, Mapping)
@@ -11535,18 +11644,160 @@ def _run_task41_p0_saved_output_service(
             result_code = 0 if worker_ok else 3
             return result_code
         if b0_v8_selected_trace_star_candidate_replay_mode:
+            checker_ok = False
+            if worker_ok:
+                assert candidate_report_path is not None
+                assert candidate_report_sha256 is not None
+                assert donor_contract_path is not None
+                assert donor_contract_sha256 is not None
+                assert donor_summary_path is not None
+                assert v11_metadata_report_path is not None
+                assert v11_v9_compact_report_path is not None
+                assert candidate_report_payload is not None
+                checker_result_path = output_root / "task41_p0_v11_candidate_replay_saved_array_check.json"
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_checker",
+                    "--v11-candidate-replay-saved-check",
+                    "--contract",
+                    str(donor_contract_path.resolve()),
+                    "--contract-sha256",
+                    donor_contract_sha256,
+                    "--consumer-contract",
+                    str(contract_path.resolve()),
+                    "--consumer-contract-sha256",
+                    contract_sha,
+                    "--summary",
+                    str(donor_summary_path.resolve()),
+                    "--v11-report",
+                    str(candidate_report_path.resolve()),
+                    "--v11-report-sha256",
+                    candidate_report_sha256,
+                    "--output",
+                    str(checker_result_path.resolve()),
+                ]
+                metadata_report = read_json_object(
+                    v11_metadata_report_path, "V11 saved metadata report"
+                )
+                old_contract_path = Path(
+                    str(metadata_report.get("consumer_contract_path", ""))
+                ).resolve(strict=True)
+                metadata_receipt_path = Path(
+                    str(candidate_report_payload.get("metadata_service_receipt_path", ""))
+                ).resolve(strict=True)
+                donor_summary_value = read_json_object(
+                    donor_summary_path, "V11 saved donor summary"
+                )
+                recovery_binding = donor_summary_value.get("b0_recovery_evidence")
+                donor_ref = recovery_binding.get("manifest") if isinstance(recovery_binding, Mapping) else None
+                if not isinstance(donor_ref, Mapping):
+                    raise ValueError("V11 donor summary omits its selected-vector manifest")
+                donor_manifest_raw = Path(str(donor_ref.get("path", "")))
+                donor_manifest_path = (
+                    donor_manifest_raw
+                    if donor_manifest_raw.is_absolute()
+                    else donor_summary_path.parent / donor_manifest_raw
+                ).resolve(strict=True)
+                authorized_inputs = list(dict.fromkeys(
+                    path.resolve(strict=True)
+                    for path in (
+                        contract_path,
+                        donor_contract_path,
+                        donor_summary_path,
+                        donor_manifest_path,
+                        candidate_report_path,
+                        v11_metadata_report_path,
+                        v11_v9_compact_report_path,
+                        old_contract_path,
+                        metadata_receipt_path,
+                        window.path,
+                    )
+                ))
+                checker_source_sha = subprocess.check_output(
+                    ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
+                ).strip()
+                source_branch = subprocess.check_output(
+                    ["git", "branch", "--show-current"], cwd=repo_root, text=True
+                ).strip()
+                if (
+                    checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                    or checker_source_sha != consumer_source_sha
+                    or checker_source_sha != contract.get("source", {}).get("sha")
+                ):
+                    raise ValueError("V11 saved-array checker and consumer source identities differ")
+                checker_authorization = {
+                    "schema": "task41.p0.closeout_checker_authorization.v1",
+                    "phase": "closeout",
+                    "purpose": "registered_read_only_required_checker",
+                    "checker_kind": "task41_p0_v11_selected_cell_saved_array_checker",
+                    "command_sha256": hashlib.sha256(
+                        json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+                    ).hexdigest(),
+                    "input_paths": [str(path) for path in authorized_inputs],
+                    "input_sha256s": [sha256_file(path) for path in authorized_inputs],
+                    "expected_channel_count": None,
+                    "campaign_window_sha256": window.sha256,
+                    "task41_contract_sha256": contract_sha,
+                    "source_sha": checker_source_sha,
+                    "source_branch": source_branch,
+                    "source_clean": True,
+                }
+                checker_watchdog = supervise(
+                    checker_command,
+                    service_directory / "v11_saved_array_checker_watchdog",
+                    wall_seconds=window.closeout_seconds,
+                    phase_path=service_directory / "v11_saved_array_checker_phase.json",
+                    campaign_phase="closeout",
+                    campaign_phase_authorization=checker_authorization,
+                    **common_watchdog,
+                )
+                checker_payload = (
+                    read_json_object(checker_result_path, "V11 saved-array checker result")
+                    if checker_result_path.is_file()
+                    else None
+                )
+                checker_ok = bool(
+                    checker_watchdog.get("classification") == "COMPLETED"
+                    and checker_watchdog.get("leader_exit_code") == 0
+                    and isinstance(checker_payload, Mapping)
+                    and checker_payload.get("schema")
+                    == "task41.p0.v11.selected_trace_star_saved_array_independent_check.v1"
+                    and checker_payload.get("check_completed") is True
+                    and checker_payload.get("candidate_passed") is None
+                    and checker_payload.get("scientific_qualified") is False
+                    and checker_payload.get("official_result") is False
+                    and checker_payload.get("classification")
+                    == "INDEPENDENT_SAVED_ARRAY_CHECK_COMPLETED"
+                )
+                record["required_checker_status"] = (
+                    "independent_saved_array_check_completed"
+                    if checker_ok
+                    else "independent_saved_array_check_failed"
+                )
+                record["candidate_replay_saved_array_checker"] = {
+                    "status": "COMPLETED_READ_ONLY" if checker_ok else "INCOMPLETE",
+                    "result_path": str(checker_result_path),
+                    "result_sha256": sha256_file(checker_result_path)
+                    if checker_result_path.is_file()
+                    else None,
+                    "watchdog": checker_watchdog,
+                    "official_result": False,
+                }
+                if not checker_ok:
+                    result_code = 3
+            else:
+                record["required_checker_status"] = "not_run_candidate_replay_incomplete"
+                result_code = 3
             saved_diagnostics_budget = saved_diagnostics_budget_check(final=True)
             record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
-            record["result_classification"] = (
-                "V11_SELECTED_TRACE_CANDIDATE_REPLAY_COMPLETED"
-                if worker_ok
-                else "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE"
+            result_code = _task41_v11_candidate_replay_exit(
+                record,
+                worker_ok=worker_ok,
+                checker_ok=checker_ok,
+                service_ok=True,
+                finalization_ok=True,
             )
-            record["official_result"] = False
-            record["required_checker_status"] = "not_applicable_local_candidate_replay"
-            record["selected_active_row"] = 87567
-            record["numerical_work_started"] = True
-            result_code = 0 if worker_ok else 3
             return result_code
         checker_snapshot = (
             None
@@ -12328,15 +12579,13 @@ def _run_task41_p0_saved_output_service(
             record["selected_active_row"] = 87567
             record["numerical_work_started"] = False
         elif b0_v8_selected_trace_star_candidate_replay_mode:
-            record["result_classification"] = (
-                "V11_SELECTED_TRACE_CANDIDATE_REPLAY_COMPLETED"
-                if result_code == 0
-                else "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE"
+            result_code = _task41_v11_candidate_replay_exit(
+                record,
+                worker_ok=worker_ok,
+                checker_ok=checker_ok,
+                service_ok=result_code == 0,
+                finalization_ok=not candidate_replay_finalization_failed,
             )
-            record["official_result"] = False
-            record["required_checker_status"] = "not_applicable_local_candidate_replay"
-            record["selected_active_row"] = 87567
-            record["numerical_work_started"] = True
         elif b0_saved_y_g_comparison_mode:
             record["result_classification"] = (
                 "SAVED_VECTOR_COMPARISON_DIAGNOSTIC_ONLY"
@@ -12381,10 +12630,23 @@ def _run_task41_p0_saved_output_service(
                 elif b0_v8_selected_trace_star_candidate_replay_mode:
                     record["result_classification"] = "V11_SELECTED_TRACE_CANDIDATE_REPLAY_INCOMPLETE"
                     record["official_result"] = False
-                    record["required_checker_status"] = "not_applicable_local_candidate_replay"
+                    record.setdefault(
+                        "required_checker_status", "not_run_candidate_replay_incomplete"
+                    )
                     record["numerical_work_started"] = True
+                    candidate_replay_finalization_failed = True
                 result_code = 3
             _write_json_fsync(receipt_path, record)
+            if b0_v8_selected_trace_star_candidate_replay_mode:
+                result_code = _task41_v11_candidate_replay_exit(
+                    record,
+                    worker_ok=worker_ok,
+                    checker_ok=checker_ok,
+                    service_ok=result_code == 0,
+                    finalization_ok=not candidate_replay_finalization_failed,
+                )
+                _write_json_fsync(receipt_path, record)
+                return result_code
     return result_code
 
 
