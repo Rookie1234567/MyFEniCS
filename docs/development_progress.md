@@ -46,7 +46,17 @@ Round-6将新误差主要标记到z90–130nm，48格无p6饱和，p增加12格�
 
 base assembly1205.705s含新进程空间准备，plan1223s只校准不额外叠加，nested build70.975/preallocation1.165不相加；port657.165/setup62.240/A6692.990s另记。same-LU绝对9.21305e−11→5.37487e−13、相对9.55117e−11→5.57213e−13与恢复后cond分开。总45.67min在45–85min预测内，setup/A6低于阶段预测下界，R6/R7不同p-map不作同问题加速比，旧1401s转移成本完整保留。
 
-当前accepted7、完整模型9条/12次full-scale attempts，14份正式p/h计划；40条终态watchdog小计48,168.55420096498s，仅已列监控运行，不含未监控tests/工作及导入参考生成。原始依据见[transition7](task43_hp_adaptivity/outcomes/records/round7_selection_transition7_v1.json)和[独立审计](task43_hp_adaptivity/outcomes/records/round7_independent_audit_v1.json)。下一步仅accepted7新场驱动的第8轮轻量marking/plan/cache预览，不复用R7标记，不构造reference/authority，不跑PDE；最终holdout/control、真实h、q/R14、侧壁、终点加严和同精度成本仍待关闭。
+当前accepted7、完整模型9条/12次full-scale attempts，16份正式p/h计划；42条终态watchdog小计51,709.340370008256s，仅已列监控运行，含受监控组件/失败/恢复，不含未监控tests/工作及导入参考生成。原始依据见[transition7](task43_hp_adaptivity/outcomes/records/round7_selection_transition7_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round7_independent_audit_v1.json)及[第8轮准备compact](task43_hp_adaptivity/outcomes/records/round8_plan_preparation_audit_v1.json)。最终holdout/control、真实h、q/R14、侧壁、终点加严和同精度成本仍未关闭。
+
+| 第8轮准备（当前PDE未运行） | 实际空间／成本 | 限制与下一判断 |
+|---|---|---|
+| accepted7新场31marks，全p5 | capture.504682243901、前30.489098353029；31实升/0饱和/0额外p闭包；p候选180叶p5/p6=41/139 | p实际FE106,725=34,335迹+72,390内部、Δ9,168；authority835.046s，p13.917min低于预测15min下沿 |
+| h31请求+17材料闭包 | 48根八分/516叶/56悬挂patch；p5/p6=289/227；实际FE251,732=80,222迹+171,510内部、Δ154,175；authority2675.266s | trace来自合格authority，独立审计另核几何/继承/内部计数；broken271,166非独立FE，转移与PDE仍not_run |
+| 同进程p/h正式authority | 3525.502s/2842采样/树RSS峰4,409,544,704B/taskVmSwap0/exit0清理；总58miss=58keys，cache128 | native全机swapin+10页/out0归因UNRESOLVED，保留旧WSL标签；全58.758min在45–125min规划内，无缓存提速声明 |
+
+第8轮预览15.284s、cache前后0miss/0size；p/h工作集19/54、并58/交15，3矩阵522,009,312B仅部分对象体积，非RSS上界。无需数值源码或测试改动，正式plan source clean ca437b83b3e9a5a13fd257da403ddcd312ca202b，50listed源码/35输入posthash和plan-preview bytes一致。skip p转移保持not_run/pass null/wall null，不冒充测量零成本。原7200s plan草稿not_run保留；本次启动前按125min预测上沿+10min登记8100s，运行中未延长。下一例PDE仍独立使用7200s/192GiB门。
+
+第8轮h得分含噪上界1.321091630e−9；p实测η须<.0001733912163613156并过所有冻结门，才可支配。准备材料提交后，仅新host/ABI/源码输入快照合格的固定MUMPS/full612/自然same-LU/q15q28 p-up及parent7/Y6_1冻结比较被放行；40–85min/6–14GiB为预测，尚未执行或接受transition8，不启动h、下一轮或G3实现。
 
 ---
 
