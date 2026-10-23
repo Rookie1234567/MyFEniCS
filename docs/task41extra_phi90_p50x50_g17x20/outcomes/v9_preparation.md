@@ -1,5 +1,7 @@
 # V9 准备阶段：同一局部 LU 的 RHS 缩减与保存数据判别
 
+> 当前状态（2026-10-23）：V9 全域候选已经 FAIL；本文件前文为历史准备记录。当前 V11 窄准备与待批准六小时入口见文末，尚未运行新的科学扫描。
+
 本文件继续记录 Review V9 的准备与局部筛选证据，不是 `response_v9` 或 official 结果。执行依据仍为 `review_report_v10.md`（V9 准备审查），V9 原始 review 为 `b24b6ce6577225af7fb03e4a62bef80126efc9b8`；旧结果基线为 `a63e51f39ee7ed35b03d521cb42fa3fe6c9f834f`。saved-local screen 已实测 READY；Review V10 要求的全域接线已在当前本机 diff 中完成并由局部调用 fixture 验证，但 full-domain FE/action/recovery 尚未运行。
 
 ## Review V10：V9 全域接线的局部回执
@@ -116,3 +118,76 @@ worker 现从保存报告的嵌套字段读取路径和哈希；在构造 owner 
 | `src/test/test_task41_v4_volume_only_audit.py` | `57639f5ac7e5ef1ca26ce69ce6f9f15db9d583f9b2453207f53694e0014897fa` |
 
 以上只是接线修复与 fixture/audit 验证。此记录不改判失败 attempt，不代表新 FE、full action/recovery、200q 或 official result 已通过；固定 V9 窗口保持原样，等待主控冻结后再依其指令续作。
+
+## Review V11 窄准备（2026-10-23，当前状态）
+
+上文 V9/V10 的 READY、待冻结和 NOT_RUN 均是历史记录。V9 后来的全域结果见 [response_v9](../response_v9.md)：两列 action 真实 FAIL，candidate 恢复 NOT_RUN。当前依据 [Review V11](../review_report_v11.md)，仅准备失败终态补审、V6/V9 保存 y/g 的交叉分解和有条件的87567局部机制核查。**新六小时窗口 PENDING_USER_APPROVAL，尚无真实 T0；正式 saved scan、事后补审和新局部数值均 NOT_RUN。**本准备不改变既有科学算法或门限。
+
+保存对比逐块读取四份 complex128 NPY，把作用 y 与缩减 RHS g 分开，输出 trace/port 的变化、固定分母比值、误差能量分布和有符号内积。不会写新的全长差向量。共同 donor 的全局5688000 trace行、见证58000支撑行、213024 slave行和64120端口行分别核验；共同manifest绑定表示记录身份，不冒充重新核验旧局部数值缓存。
+
+失败审核在现有 service/required-checker 中选择真实 run manifest、summary、compact 和数组，不要求不存在的官方输出目录。审核完成与数值通过分开：预期忠实复现 action FAIL、recovery NOT_RUN、official=false。原 terminal NOT_RUN 不回写。该审核仍复用旧 compact checker 的 donor loader，因此会读取其所需旧 donor 数组/映射/状态；不是只读两个NPY，也不重新执行恢复或FE。y/g比较使用轻量共同manifest绑定，不调用完整 donor loader。各项真实读取成本在获准运行后计量。
+
+新输出按 `results/<model>/task41_p0_saved_diagnostics_6h/<window_sha>/<mode>/attemptNN` 隔离。新增512MiB是整个窗口总额，包含各attempt及其service输出；累计16GiB、磁盘余量2GiB仍受检查。旧累计14990282640 B是历史记录，启动实读文件大小另列，不把stat等同于内容hash验证。修复后的新attempt不删除旧目录、不刷新T0。准备函数对saved-only返回 `service_command=null`，避免给出普通DAT全场命令；现有service拒绝用此合同启动普通全场。条件87567接线尚未实施，只在保存分解证明必要后窄接，不据此放行全域或200q。
+
+### 获准后的真实入口（当前未执行）
+
+仅在主控同步已冻结科学源码、保全工作站已有改动、确认同分支干净并取得V11六小时明确批准后使用。以下命令在既有 `fenics-ws:/home/fenics/Projects/laptop_share` 执行；首条prepare登记唯一T0，后续修复重用同窗口。无需创建新环境或runner。
+
+```bash
+set -euo pipefail
+cd /home/fenics/Projects/laptop_share
+source scripts/task40_fresh_c1/activate_native_complex.sh \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache native_linux
+TASK41_V11_PREP=benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/prepared_saved_diagnostics_6h.json
+python -m src.runners.task41_p0_contract --prepare --case B0 --b0-saved-diagnostics-6h \
+  --runtime-prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix \
+  --abi-receipt benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json \
+  --jit-cache benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache \
+  > "$TASK41_V11_PREP"
+TASK41_V11_CONTRACT=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_path"])' "$TASK41_V11_PREP")
+TASK41_V11_OUT=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["saved_diagnostics_output_root"])' "$TASK41_V11_PREP")
+TASK41_V11_OLD=results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z
+TASK41_V11_RECEIPT=benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_59722cca5e35eac65efead9fd27f7d7fc0c70419/task41_p0_service_receipt.json
+TASK41_V11_PRODUCER=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_path"])' "$TASK41_V11_RECEIPT")
+TASK41_V11_PRODUCER_SHA=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_sha256"])' "$TASK41_V11_RECEIPT")
+bash scripts/run_case_in_user_service.sh \
+  --task41-p0-saved-b0-v9-failed-terminal-audit \
+  --producer-contract "$TASK41_V11_PRODUCER" --producer-contract-sha256 "$TASK41_V11_PRODUCER_SHA" \
+  --run-root "$TASK41_V11_OLD" \
+  --summary "$TASK41_V11_OLD/task40_v10_p6_candidate_summary.json" \
+  --manifest "$TASK41_V11_OLD/run_manifest.json" \
+  --output-dir "$TASK41_V11_OUT/v9_failed_terminal_audit/attempt01" \
+  --task41-p0-execution-contract "$TASK41_V11_CONTRACT"
+```
+
+上面wrapper返回不表示审核完成。主控确认service/required-checker已退出并核对真实负结果补审后，再在同一已激活shell执行下一条；新shell须重做上述activation和变量赋值，不能创建新window。
+
+```bash
+TASK41_V11_V6=results/task41extra_phi90_p50x50_g17x20/task41_b0_v6_actual_qmetric_210fbbf2_20261020T124053Z_attempt10/task41_p0_v6_actual_qmetric_candidate.json
+TASK41_V11_V9="$TASK41_V11_OLD/task41_p0_b0_v9_compact_volume_audit.json"
+TASK41_V11_SUMMARY="$TASK41_V11_OLD/run_summary.json"
+bash scripts/run_case_in_user_service.sh \
+  --task41-p0-saved-b0-y-g-comparison \
+  --v6-report "$TASK41_V11_V6" \
+  --v6-report-sha256 72c01eb9a7780ba86a7d8b8de6cfc1fd25e04fead2170788a5f492cd12ebd06e \
+  --v9-report "$TASK41_V11_V9" \
+  --v9-report-sha256 e4db4e42b8a4f3b407ed0b00add8029f7e066aad6c38a2945d60e33ffbde7d93 \
+  --v9-summary "$TASK41_V11_SUMMARY" \
+  --v9-summary-sha256 "$(sha256sum "$TASK41_V11_SUMMARY" | cut -d ' ' -f1)" \
+  --v9-service-receipt "$TASK41_V11_RECEIPT" \
+  --v9-service-receipt-sha256 47ceec26e329d312f846f71ae575319382533947ba15bec5ba12b286c40c0661 \
+  --output-dir "$TASK41_V11_OUT/saved_y_g_comparison/attempt01" \
+  --task41-p0-execution-contract "$TASK41_V11_CONTRACT"
+```
+
+required-checker命令由现有service生成并写入其receipt/authorization，必须在监督下运行；不以裸checker命令代替正式补审。本机fixture仅验证选择、合同传播、真正checker调用和负结果分类；不代表工作站数据审核完成。
+
+### V11 主控最终定向复验
+
+最终科学改动后，资格化本机 activation 下八个直接相关测试节点（含参数化）**12 passed in 0.93 s**；覆盖负结果service选择、真实checker入口、旧成功compact路径、损坏hash/跨run/列顺序拒绝、两侧变化统计、共同donor计数语义、新窗口source接续及累计配额。Python `py_compile`、`bash -n scripts/run_case_in_user_service.sh`、`git diff --check` 通过。没有全仓测试、CI或正式工作站科学审核PASS声明。
+
+最终日志：`benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v11_preparation_20261023/controller_targeted_final.txt`，SHA-256 `e1e7c05738de1958cb56efc46368627ec8c274a7c7e94db3a381fe6461f5f43c`。前次主控复验11通过/1失败（fixture使用未初始化window_sha）保留于同目录`controller_targeted.txt`，SHA-256 `b582ff5017fb0451f7a6d0a3fe3848591368510eb2436de57679d79bbb9cd294`。其后定位并修正selector错误导入与旧fixture缺少实际负结果结构，未放宽selector规则。编辑时遗漏activation的失败也不记作通过。
+
+本机ABI为资格化WSL Python、PETSc complex128/int32；此处只证明本机定向测试环境，不冒充工作站ABI或正式数据审核。工作站原服务终态已退出，原写入与旧窗口不恢复；同步前仍须保全工作站未提交的历史文档。V11科学扫描及监督补审继续 **NOT_RUN / PENDING_USER_APPROVAL**，准备耗时未作完整父计时，记UNKNOWN，不并入旧科学成本。

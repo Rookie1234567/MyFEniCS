@@ -10,6 +10,7 @@ import math
 import os
 from pathlib import Path
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -9407,6 +9408,8 @@ def _run_task41_p0_saved_output_service(
     checker_snapshot_sha256: str | None,
     b0_evidence_audit_mode: bool = False,
     b0_v9_saved_star_screen_mode: bool = False,
+    b0_v9_failed_terminal_audit_mode: bool = False,
+    b0_saved_y_g_comparison_mode: bool = False,
     b0_v4_volume_only_mode: bool = False,
     b0_v4_geometry_pair_mode: bool = False,
     b0_v5_mesh_actual_exact_mode: bool = False,
@@ -9419,6 +9422,18 @@ def _run_task41_p0_saved_output_service(
     v8_checker_result_path: Path | None = None,
     v8_checker_result_sha256: str | None = None,
     v9_screen_output_path: Path | None = None,
+    v9_terminal_producer_contract_path: Path | None = None,
+    v9_terminal_producer_contract_sha256: str | None = None,
+    v9_terminal_summary_path: Path | None = None,
+    v9_terminal_manifest_path: Path | None = None,
+    v6_y_g_report_path: Path | None = None,
+    v6_y_g_report_sha256: str | None = None,
+    v9_y_g_report_path: Path | None = None,
+    v9_y_g_report_sha256: str | None = None,
+    v9_y_g_summary_path: Path | None = None,
+    v9_y_g_summary_sha256: str | None = None,
+    v9_y_g_service_receipt_path: Path | None = None,
+    v9_y_g_service_receipt_sha256: str | None = None,
     donor_contract_path: Path | None = None,
     donor_contract_sha256: str | None = None,
     donor_summary_path: Path | None = None,
@@ -9447,12 +9462,203 @@ def _run_task41_p0_saved_output_service(
             raise ValueError(f"{label} must contain a JSON object")
         return value
 
+    def hash_bound_inputs(value: Any, *, allowed_root: Path, label: str) -> list[Path]:
+        """Collect and recheck file records carried by a saved audit binding."""
+        root = allowed_root.resolve(strict=True)
+        found: dict[Path, tuple[int, str]] = {}
+
+        def visit(item: Any) -> None:
+            if isinstance(item, Mapping):
+                path_value = item.get("path")
+                byte_count = item.get("bytes")
+                digest = item.get("sha256")
+                if (
+                    isinstance(path_value, str)
+                    and type(byte_count) is int
+                    and byte_count > 0
+                    and isinstance(digest, str)
+                ):
+                    raw_path = Path(path_value)
+                    artifact = (raw_path if raw_path.is_absolute() else root / raw_path).resolve(
+                        strict=True
+                    )
+                    if (
+                        not artifact.is_relative_to(root)
+                        or not artifact.is_file()
+                        or artifact.stat().st_size != byte_count
+                        or sha256_file(artifact) != digest
+                    ):
+                        raise ValueError(
+                            f"{label} file record has a changed path, size, or SHA-256"
+                        )
+                    previous = found.setdefault(artifact, (byte_count, digest))
+                    if previous != (byte_count, digest):
+                        raise ValueError(f"{label} repeats an artifact with conflicting identity")
+                for nested in item.values():
+                    visit(nested)
+            elif isinstance(item, list):
+                for nested in item:
+                    visit(nested)
+
+        visit(value)
+        return sorted(found)
+
+    def collect_saved_y_g_inputs() -> tuple[list[Path], str, dict[str, Any], int]:
+        assert v6_y_g_report_path is not None and v6_y_g_report_sha256 is not None
+        assert v9_y_g_report_path is not None and v9_y_g_report_sha256 is not None
+        assert v9_y_g_summary_path is not None and v9_y_g_summary_sha256 is not None
+        assert v9_y_g_service_receipt_path is not None and v9_y_g_service_receipt_sha256 is not None
+
+        def read_meta(path: Path, digest: str, label: str) -> dict[str, Any]:
+            path = path.resolve(strict=True)
+            if path.stat().st_size > 8 * 1024**2 or sha256_file(path) != digest:
+                raise ValueError(f"{label} path or SHA-256 differs")
+            return read_json_object(path, label)
+
+        v6 = read_meta(v6_y_g_report_path, v6_y_g_report_sha256, "V6 y/g report")
+        v9 = read_meta(v9_y_g_report_path, v9_y_g_report_sha256, "V9 y/g report")
+        v9_summary = read_meta(v9_y_g_summary_path, v9_y_g_summary_sha256, "V9 y/g summary")
+        receipt = read_meta(v9_y_g_service_receipt_path, v9_y_g_service_receipt_sha256, "V9 service receipt")
+        v6_identity = v6.get("identity_audit")
+        if (
+            not isinstance(v6_identity, Mapping)
+            or v6.get("donor_manifest_sha256") != v9.get("donor_manifest_sha256")
+            or v9_summary.get("run_id") != contract["case"]["run_id"]
+        ):
+            raise ValueError("V6/V9 reports do not share the bound B0 donor and run identity")
+        from src.runners.task41_p0_checker import (
+            TASK41_P0_B0_SAVED_Y_G_SHAPE,
+            _task41_p0_saved_y_g_common_donor_identity,
+        )
+
+        shared_donor_identity, donor_metadata_paths = _task41_p0_saved_y_g_common_donor_identity(
+            repo_root=repo_root,
+            expected_manifest_sha256=str(v6.get("donor_manifest_sha256", "")),
+            active_rows=v6_identity.get("active_rows"),
+            port_rows=v9.get("appended_rows"),
+            expected_shape=TASK41_P0_B0_SAVED_Y_G_SHAPE,
+        )
+        v6_identity = v6.get("identity_audit")
+        v6_gate = v6_identity.get("candidate_full_action_gate") if isinstance(v6_identity, Mapping) else None
+        v9_gate = v9.get("candidate_full_action_gate")
+        inventory = v6.get("persisted_evidence_arrays")
+        if not isinstance(v6_gate, Mapping) or not isinstance(v9_gate, Mapping) or not isinstance(inventory, list):
+            raise ValueError("V6/V9 reports omit selected y/g array records")
+        names = (v6_gate.get("full_action_artifact"), v6_gate.get("full_reduced_rhs_artifact"))
+        if not all(isinstance(name, str) for name in names):
+            raise ValueError("V6 report omits named full-action arrays")
+        v6_records = []
+        for name in names:
+            matches = [item for item in inventory if isinstance(item, Mapping) and item.get("name") == name]
+            if len(matches) != 1:
+                raise ValueError(f"V6 report must bind exactly one {name} array")
+            v6_records.append(matches[0])
+
+        def array_path(item: Any, basis: Path, label: str) -> Path:
+            if not isinstance(item, Mapping) or not isinstance(item.get("path"), str) or type(item.get("bytes")) is not int:
+                raise ValueError(f"{label} array record is malformed")
+            raw = Path(item["path"])
+            path = (raw if raw.is_absolute() else basis / raw).resolve(strict=True)
+            if not path.is_file() or not path.is_relative_to(basis.resolve()) or path.stat().st_size != item["bytes"]:
+                raise ValueError(f"{label} array path or size differs")
+            return path
+
+        arrays = [
+            array_path(v6_records[0], v6_y_g_report_path.parent, "V6 y"),
+            array_path(v6_records[1], v6_y_g_report_path.parent, "V6 g"),
+            array_path(v9_gate.get("full_action_artifact"), run_root, "V9 y"),
+            array_path(v9_gate.get("full_reduced_rhs_artifact"), run_root, "V9 g"),
+        ]
+        if len(set(arrays)) != 4:
+            raise ValueError("V6/V9 y/g inputs must be four distinct arrays")
+
+        contract_bindings = (
+            (v6.get("consumer_contract_path"), v6.get("consumer_contract_sha256")),
+            (receipt.get("contract_path"), receipt.get("contract_sha256")),
+        )
+        producer_contracts = []
+        for raw_value, digest in contract_bindings:
+            if not isinstance(raw_value, str) or not isinstance(digest, str):
+                raise ValueError("V6/V9 report omits its producer contract binding")
+            raw = Path(raw_value)
+            path = (raw if raw.is_absolute() else repo_root / raw).resolve(strict=True)
+            if not path.is_relative_to(repo_root.resolve()) or sha256_file(path) != digest:
+                raise ValueError("V6/V9 producer contract path or hash differs")
+            producer_contracts.append(path)
+
+        consumer_path = contract_path.resolve(strict=True)
+        if sha256_file(consumer_path) != contract_sha:
+            raise ValueError("saved-diagnostics consumer contract path or hash differs")
+        authorized = [
+            consumer_path, v6_y_g_report_path.resolve(strict=True), v9_y_g_report_path.resolve(strict=True),
+            v9_y_g_summary_path.resolve(strict=True), v9_y_g_service_receipt_path.resolve(strict=True),
+            *producer_contracts, *donor_metadata_paths, input_path.resolve(strict=True),
+            window.path.resolve(strict=True), *arrays,
+        ]
+        for path in [consumer_path, *producer_contracts]:
+            payload = read_json_object(path, "saved y/g contract")
+            for section_name, key in (("case", "input_path"), ("window", "path"), ("runtime", "abi_receipt_path")):
+                section = payload.get(section_name)
+                value = section.get(key) if isinstance(section, Mapping) else None
+                if isinstance(value, str):
+                    raw = Path(value)
+                    referenced = (raw if raw.is_absolute() else repo_root / raw).resolve(strict=True)
+                    if not referenced.is_relative_to(repo_root.resolve()) or not referenced.is_file():
+                        raise ValueError(f"saved y/g contract input {section_name}.{key} escaped the repository")
+                    authorized.append(referenced)
+        source_sha = receipt.get("source_sha")
+        if not isinstance(source_sha, str) or re.fullmatch(r"[0-9a-f]{40}", source_sha) is None:
+            raise ValueError("V9 service receipt omits its producer source SHA")
+        existing_raw = v9.get("existing_evidence_bytes")
+        prior_raw = v9.get("prior_new_evidence_bytes")
+        if type(existing_raw) is not int or existing_raw < 0 or type(prior_raw) is not int or prior_raw < 0:
+            raise ValueError("V9 compact report omits cumulative raw-evidence accounting")
+        return list(dict.fromkeys(authorized)), source_sha, shared_donor_identity, existing_raw + prior_raw
+
     results_root = (repo_root / "results" / str(contract["case"]["model_id"])).resolve()
     output_root = output_root.resolve()
     if not output_root.is_relative_to(results_root) or not run_root.is_relative_to(results_root):
         raise ValueError("saved-output source and destination must remain under the registered model results")
     if b0_evidence_audit_mode and not checker_only:
         raise ValueError("saved B0 evidence audit must use the existing checker-only service mode")
+    if b0_saved_y_g_comparison_mode and (
+        not checker_only
+        or b0_evidence_audit_mode
+        or b0_v9_saved_star_screen_mode
+        or b0_v9_failed_terminal_audit_mode
+        or b0_v4_volume_only_mode
+        or b0_v4_geometry_pair_mode
+        or b0_v5_mesh_actual_exact_mode
+        or b0_v6_actual_qmetric_mode
+        or b0_v6_saved_candidate_audit_mode
+        or b0_v8_saved_trace_star_audit_mode
+        or b0_v8_selected_trace_star_mode
+        or any(value is None for value in (
+            v6_y_g_report_path, v6_y_g_report_sha256,
+            v9_y_g_report_path, v9_y_g_report_sha256,
+            v9_y_g_summary_path, v9_y_g_summary_sha256,
+            v9_y_g_service_receipt_path, v9_y_g_service_receipt_sha256,
+        ))
+    ):
+        raise ValueError("saved y/g comparison requires its isolated checker-only bindings")
+    if not b0_saved_y_g_comparison_mode and any(value is not None for value in (
+        v6_y_g_report_path, v6_y_g_report_sha256,
+        v9_y_g_report_path, v9_y_g_report_sha256,
+        v9_y_g_summary_path, v9_y_g_summary_sha256,
+        v9_y_g_service_receipt_path, v9_y_g_service_receipt_sha256,
+    )):
+        raise ValueError("saved y/g report inputs are only valid in the explicit comparison route")
+    y_g_authorized_input_paths: list[Path] | None = None
+    y_g_producer_source_sha: str | None = None
+    y_g_shared_donor_identity: dict[str, Any] | None = None
+    saved_recorded_raw_bytes: int | None = None
+    if b0_saved_y_g_comparison_mode:
+        (
+            y_g_authorized_input_paths,
+            y_g_producer_source_sha,
+            y_g_shared_donor_identity,
+            saved_recorded_raw_bytes,
+        ) = collect_saved_y_g_inputs()
     if b0_v4_volume_only_mode and not b0_evidence_audit_mode:
         raise ValueError("Task41 V4 volume-only extraction requires the saved B0 audit service")
     if b0_v4_geometry_pair_mode and not b0_v4_volume_only_mode:
@@ -9550,10 +9756,38 @@ def _run_task41_p0_saved_output_service(
         )
     ):
         raise ValueError("V9 saved-star inputs are only valid for its explicit saved-screen route")
+    if b0_v9_failed_terminal_audit_mode and (
+        not checker_only
+        or b0_evidence_audit_mode
+        or b0_v4_volume_only_mode
+        or b0_v4_geometry_pair_mode
+        or b0_v5_mesh_actual_exact_mode
+        or b0_v6_actual_qmetric_mode
+        or b0_v6_saved_candidate_audit_mode
+        or b0_v8_saved_trace_star_audit_mode
+        or b0_v8_selected_trace_star_mode
+        or b0_v9_saved_star_screen_mode
+        or v9_terminal_producer_contract_path is None
+        or v9_terminal_producer_contract_sha256 is None
+        or v9_terminal_summary_path is None
+        or v9_terminal_manifest_path is None
+    ):
+        raise ValueError("V9 failed-terminal audit requires its isolated checker-only producer bindings")
+    if not b0_v9_failed_terminal_audit_mode and any(
+        value is not None
+        for value in (
+            v9_terminal_producer_contract_path,
+            v9_terminal_producer_contract_sha256,
+            v9_terminal_summary_path,
+            v9_terminal_manifest_path,
+        )
+    ):
+        raise ValueError("V9 failed-terminal inputs require their explicit service mode")
     if not (
         b0_v6_saved_candidate_audit_mode
         or b0_v8_saved_trace_star_audit_mode
         or b0_v9_saved_star_screen_mode
+        or b0_v9_failed_terminal_audit_mode
     ) and (candidate_report_path is not None or candidate_report_sha256 is not None):
         raise ValueError("Task41 candidate report binding is only valid for a saved checker route")
     candidate_report_payload: Mapping[str, Any] | None = None
@@ -9877,7 +10111,13 @@ def _run_task41_p0_saved_output_service(
         ]
         candidate_report_payload = candidate_report_value
         output_root.mkdir(parents=True, exist_ok=False)
-    if checker_only and not b0_evidence_audit_mode and not b0_v9_saved_star_screen_mode:
+    if (
+        checker_only
+        and not b0_evidence_audit_mode
+        and not b0_v9_saved_star_screen_mode
+        and not b0_v9_failed_terminal_audit_mode
+        and not b0_saved_y_g_comparison_mode
+    ):
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
         checker_snapshot_path = checker_snapshot_path.resolve(strict=True)
@@ -9905,10 +10145,124 @@ def _run_task41_p0_saved_output_service(
         ):
             raise ValueError("saved B0 audit donor paths differ from the checked producer run")
         output_root.mkdir(parents=True, exist_ok=False)
+    elif b0_v9_failed_terminal_audit_mode:
+        if (
+            checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+            or v9_terminal_producer_contract_path is None
+            or v9_terminal_producer_contract_sha256 is None
+            or v9_terminal_summary_path is None
+            or v9_terminal_manifest_path is None
+            or v9_terminal_summary_path.parent != run_root
+            or v9_terminal_manifest_path != run_root / "run_manifest.json"
+        ):
+            raise ValueError("V9 failed-terminal audit requires its manifest-parent producer bindings")
+        output_root.mkdir(parents=True, exist_ok=False)
+    elif b0_saved_y_g_comparison_mode:
+        if checker_snapshot_path is not None or checker_snapshot_sha256 is not None:
+            raise ValueError("saved y/g comparison cannot accept a saved-output snapshot")
+        if y_g_authorized_input_paths is None:
+            raise ValueError("saved y/g comparison input bindings were not prepared")
+        output_root.mkdir(parents=True, exist_ok=False)
     elif checker_snapshot_path is not None or checker_snapshot_sha256 is not None:
         raise ValueError("continuation service cannot accept a checker-only snapshot override")
     service_directory = output_root.with_name(output_root.name + ".service")
     service_directory.mkdir(parents=True, exist_ok=False)
+    saved_diagnostics_budget: dict[str, Any] | None = None
+    saved_bound_raw_paths: list[Path] = []
+
+    def stat_output_tree(path: Path) -> int:
+        if not path.exists():
+            return 0
+        if path.is_symlink() or not path.is_dir():
+            raise ValueError("saved-diagnostics output accounting root must be a real directory")
+        total = 0
+        for item in path.rglob("*"):
+            if item.is_symlink():
+                raise ValueError("saved-diagnostics output tree cannot contain symlinks")
+            if item.is_file():
+                total += item.stat().st_size
+        return total
+
+    def stat_bound_raw_bytes(paths: Sequence[Path]) -> int:
+        sizes: dict[Path, int] = {}
+        for raw_path in paths:
+            path = raw_path.resolve(strict=True)
+            if path.suffix.lower() not in {".npy", ".npz"}:
+                continue
+            if not path.is_file() or not path.is_relative_to(results_root):
+                raise ValueError("saved-diagnostics raw evidence escaped the registered results tree")
+            sizes[path] = path.stat().st_size
+        return sum(sizes.values())
+
+    def saved_diagnostics_budget_check(*, final: bool = False) -> dict[str, Any] | None:
+        if contract.get("execution_scope") is None:
+            return None
+        from src.runners.task41_p0_contract import (
+            TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+            task41_raw_artifact_limit_bytes,
+        )
+
+        if contract.get("execution_scope") != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE:
+            raise ValueError("saved-diagnostics disk gate received a different execution scope")
+        window_sha = str(contract.get("window", {}).get("sha256", ""))
+        window_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha
+        expected_name = (
+            "v9_failed_terminal_audit" if b0_v9_failed_terminal_audit_mode
+            else "saved_y_g_comparison" if b0_saved_y_g_comparison_mode
+            else ""
+        )
+        mode_output_root = window_output_root / expected_name if expected_name else window_output_root
+        if (
+            not expected_name
+            or output_root.parent != mode_output_root
+            or re.fullmatch(r"attempt[0-9]{2,}", output_root.name) is None
+        ):
+            raise ValueError("saved-diagnostics output path must use a numbered attempt under its fixed window/mode directory")
+        new_cap = int(TASK41_B0_SAVED_DIAGNOSTICS_SCOPE["new_evidence_limit_bytes"])
+        raw_cap = task41_raw_artifact_limit_bytes(contract)
+        floor = int(contract["evidence"]["raw_disk_policy"]["free_space_floor_bytes"])
+        current_window_output_bytes = stat_output_tree(window_output_root)
+        current_invocation_bytes = stat_output_tree(output_root) + stat_output_tree(service_directory)
+        if current_window_output_bytes > new_cap:
+            raise ValueError("saved-diagnostics outputs exceed the 512 MiB window-wide cap")
+        stat_raw_bytes = stat_bound_raw_bytes(saved_bound_raw_paths)
+        donor_raw_bytes = 0
+        if b0_saved_y_g_comparison_mode and y_g_shared_donor_identity is not None:
+            donor_raw_bytes = int(y_g_shared_donor_identity.get("raw_artifact_bytes_stat_only", 0))
+        recorded = saved_recorded_raw_bytes
+        if recorded is None and b0_v9_failed_terminal_audit_mode:
+            # The summary binding carries the old aggregate; donor paths themselves are statted below.
+            summary_value = read_json_object(v9_terminal_summary_path, "V9 terminal summary")
+            donor = summary_value.get("b0_v9_volume_donor_binding")
+            if not isinstance(donor, Mapping):
+                raise ValueError("V9 terminal summary omits raw evidence accounting")
+            existing = donor.get("existing_evidence_bytes")
+            prior = donor.get("prior_new_evidence_bytes")
+            if type(existing) is not int or existing < 0 or type(prior) is not int or prior < 0:
+                raise ValueError("V9 terminal summary raw evidence accounting is malformed")
+            recorded = existing + prior
+        if recorded is None:
+            raise ValueError("saved-diagnostics route lacks recorded cumulative raw evidence")
+        cumulative_before_new = max(recorded, stat_raw_bytes + donor_raw_bytes) + current_window_output_bytes
+        free_bytes = shutil.disk_usage(window_output_root.parent if window_output_root.parent.exists() else results_root).free
+        reserve = 0 if final else new_cap - current_window_output_bytes
+        if cumulative_before_new + reserve > raw_cap:
+            raise ValueError("saved-diagnostics cumulative evidence exceeds the 16 GiB cap")
+        if free_bytes < floor + reserve:
+            raise ValueError("saved-diagnostics output would violate the 2 GiB free-space floor")
+        return {
+            "status": "POST_WRITE_CHECKED" if final else "PRE_CHECKER_ADMITTED",
+            "recorded_cumulative_raw_artifact_bytes": recorded,
+            "bound_raw_artifact_bytes_stat_deduplicated": stat_raw_bytes + donor_raw_bytes,
+            "window_output_tree_bytes": current_window_output_bytes,
+            "current_invocation_bytes": current_invocation_bytes,
+            "window_wide_new_evidence_limit_bytes": new_cap,
+            "reserved_remaining_new_evidence_bytes": reserve,
+            "cumulative_raw_artifact_limit_bytes": raw_cap,
+            "free_space_bytes": free_bytes,
+            "free_space_floor_bytes": floor,
+        }
     receipt_path = service_directory / "task41_p0_service_receipt.json"
     resource = contract["resources"]
     case = contract["case"]
@@ -9933,11 +10287,22 @@ def _run_task41_p0_saved_output_service(
         assert donor_contract_path is not None
         donor_contract_payload = json.loads(donor_contract_path.read_text(encoding="utf-8"))
         donor_source_sha = donor_contract_payload.get("source", {}).get("sha")
+    v9_terminal_producer_source_sha = None
+    if b0_v9_failed_terminal_audit_mode:
+        assert v9_terminal_producer_contract_path is not None
+        producer_contract_payload = read_json_object(
+            v9_terminal_producer_contract_path, "V9 producer execution contract"
+        )
+        v9_terminal_producer_source_sha = producer_contract_payload.get("source", {}).get("sha")
     record: dict[str, Any] = {
         "schema": "task41.p0.saved_output_service_receipt.v1",
         "status": "running",
         "mode": (
-            "saved_b0_v9_saved_star_screen"
+            "saved_b0_y_g_comparison"
+            if b0_saved_y_g_comparison_mode
+            else "saved_b0_v9_failed_terminal_audit"
+            if b0_v9_failed_terminal_audit_mode
+            else "saved_b0_v9_saved_star_screen"
             if b0_v9_saved_star_screen_mode
             else "saved_b0_v8_selected_trace_star_checker"
             if b0_v8_saved_trace_star_audit_mode
@@ -9969,7 +10334,12 @@ def _run_task41_p0_saved_output_service(
         "case_id": case_id,
         "contract_path": str(contract_path.resolve()),
         "contract_sha256": contract_sha,
-        "producer_source_sha": donor_source_sha or contract["source"]["sha"],
+        "producer_source_sha": (
+            v9_terminal_producer_source_sha
+            or donor_source_sha
+            or y_g_producer_source_sha
+            or contract["source"]["sha"]
+        ),
         "consumer_source_sha": consumer_source_sha,
         "consumer_branch": contract["branch"],
         "window_path": str(window.path),
@@ -10017,7 +10387,13 @@ def _run_task41_p0_saved_output_service(
         )
     if continuation_command is not None:
         record["continuation_command"] = continuation_command
-    if checker_only and not b0_evidence_audit_mode and not b0_v9_saved_star_screen_mode:
+    if (
+        checker_only
+        and not b0_evidence_audit_mode
+        and not b0_v9_saved_star_screen_mode
+        and not b0_v9_failed_terminal_audit_mode
+        and not b0_saved_y_g_comparison_mode
+    ):
         record.update(
             checker_input_snapshot_path=str(checker_snapshot_path),
             checker_input_snapshot_sha256=checker_snapshot_sha256,
@@ -10036,6 +10412,37 @@ def _run_task41_p0_saved_output_service(
             v8_checker_result_path=str(v8_checker_result_path),
             v8_checker_result_sha256=v8_checker_result_sha256,
             v9_screen_output_path=str(v9_screen_output_path),
+        )
+    elif b0_v9_failed_terminal_audit_mode:
+        assert v9_terminal_producer_contract_path is not None
+        assert v9_terminal_producer_contract_sha256 is not None
+        assert v9_terminal_summary_path is not None
+        assert v9_terminal_manifest_path is not None
+        record.update(
+            checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
+            v9_producer_contract_path=str(v9_terminal_producer_contract_path),
+            v9_producer_contract_sha256=v9_terminal_producer_contract_sha256,
+            v9_producer_source_sha=v9_terminal_producer_source_sha,
+            v9_summary_path=str(v9_terminal_summary_path),
+            v9_manifest_path=str(v9_terminal_manifest_path),
+        )
+    elif b0_saved_y_g_comparison_mode:
+        assert v6_y_g_report_path is not None and v6_y_g_report_sha256 is not None
+        assert v9_y_g_report_path is not None and v9_y_g_report_sha256 is not None
+        assert v9_y_g_summary_path is not None and v9_y_g_summary_sha256 is not None
+        assert v9_y_g_service_receipt_path is not None
+        assert v9_y_g_service_receipt_sha256 is not None
+        record.update(
+            checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
+            v6_report_path=str(v6_y_g_report_path),
+            v6_report_sha256=v6_y_g_report_sha256,
+            v9_report_path=str(v9_y_g_report_path),
+            v9_report_sha256=v9_y_g_report_sha256,
+            v9_summary_path=str(v9_y_g_summary_path),
+            v9_summary_sha256=v9_y_g_summary_sha256,
+            v9_service_receipt_path=str(v9_y_g_service_receipt_path),
+            v9_service_receipt_sha256=v9_y_g_service_receipt_sha256,
+            shared_donor_identity=y_g_shared_donor_identity,
         )
     elif b0_evidence_audit_mode:
         record.update(
@@ -10406,7 +10813,9 @@ def _run_task41_p0_saved_output_service(
         elif checker_only or b0_evidence_audit_mode:
             worker_ok = True
             record["continuation_status"] = (
-                "saved_evidence_audit_only"
+                "saved_y_g_comparison_inputs_validated"
+                if b0_saved_y_g_comparison_mode
+                else "saved_evidence_audit_only"
                 if b0_evidence_audit_mode
                 else "outputs_ready_reused"
             )
@@ -10464,9 +10873,74 @@ def _run_task41_p0_saved_output_service(
         if (worker_ok or run_saved_b0_checker or run_v5_candidate_checker) and (
             b0_evidence_audit_mode
             or b0_v9_saved_star_screen_mode
+            or b0_v9_failed_terminal_audit_mode
+            or b0_saved_y_g_comparison_mode
             or (checker_snapshot is not None and checker_snapshot.is_file())
         ):
-            if b0_v9_saved_star_screen_mode:
+            if b0_saved_y_g_comparison_mode:
+                assert v6_y_g_report_path is not None and v6_y_g_report_sha256 is not None
+                assert v9_y_g_report_path is not None and v9_y_g_report_sha256 is not None
+                assert v9_y_g_summary_path is not None and v9_y_g_summary_sha256 is not None
+                assert v9_y_g_service_receipt_path is not None
+                assert v9_y_g_service_receipt_sha256 is not None
+                checker_result_path = output_root / "task41_p0_b0_saved_y_g_comparison.json"
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_checker",
+                    "--saved-b0-y-g-comparison",
+                    "--contract",
+                    str(contract_path.resolve()),
+                    "--contract-sha256",
+                    contract_sha,
+                    "--v6-report",
+                    str(v6_y_g_report_path),
+                    "--v6-report-sha256",
+                    v6_y_g_report_sha256,
+                    "--v9-report",
+                    str(v9_y_g_report_path),
+                    "--v9-report-sha256",
+                    v9_y_g_report_sha256,
+                    "--v9-summary",
+                    str(v9_y_g_summary_path),
+                    "--v9-summary-sha256",
+                    v9_y_g_summary_sha256,
+                    "--v9-service-receipt",
+                    str(v9_y_g_service_receipt_path),
+                    "--v9-service-receipt-sha256",
+                    v9_y_g_service_receipt_sha256,
+                    "--output",
+                    str(checker_result_path),
+                ]
+            elif b0_v9_failed_terminal_audit_mode:
+                assert v9_terminal_producer_contract_path is not None
+                assert v9_terminal_producer_contract_sha256 is not None
+                assert v9_terminal_summary_path is not None
+                assert v9_terminal_manifest_path is not None
+                checker_result_path = output_root / "task41_p0_b0_v9_failed_terminal_audit.json"
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_checker",
+                    "--v9-failed-terminal-audit",
+                    "--run-root",
+                    str(run_root),
+                    "--summary",
+                    str(v9_terminal_summary_path),
+                    "--manifest",
+                    str(v9_terminal_manifest_path),
+                    "--contract",
+                    str(v9_terminal_producer_contract_path),
+                    "--contract-sha256",
+                    v9_terminal_producer_contract_sha256,
+                    "--consumer-contract",
+                    str(contract_path.resolve()),
+                    "--consumer-contract-sha256",
+                    contract_sha,
+                    "--output",
+                    str(checker_result_path),
+                ]
+            elif b0_v9_saved_star_screen_mode:
                 assert candidate_report_path is not None
                 assert candidate_report_sha256 is not None
                 assert v8_checker_result_path is not None
@@ -10581,12 +11055,176 @@ def _run_task41_p0_saved_output_service(
                     or contract["source"]["sha"] != checker_source_sha
                 ):
                     raise ValueError("V9 saved-star consumer and checker source identities changed")
+            elif b0_v9_failed_terminal_audit_mode:
+                if (
+                    checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                    or consumer_source_sha != checker_source_sha
+                    or contract["source"]["sha"] != checker_source_sha
+                ):
+                    raise ValueError("V9 terminal-audit consumer and checker source identities changed")
+            elif b0_saved_y_g_comparison_mode:
+                if (
+                    checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                    or consumer_source_sha != checker_source_sha
+                    or contract["source"]["sha"] != checker_source_sha
+                ):
+                    raise ValueError("saved y/g comparison consumer and checker source identities changed")
             elif checker_only and (
                 checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
                 or consumer_source_sha == checker_source_sha
             ):
                 raise ValueError("checker-only service source identities changed after preflight")
-            if b0_evidence_audit_mode:
+            if b0_saved_y_g_comparison_mode:
+                if y_g_authorized_input_paths is None:
+                    raise ValueError("saved y/g comparison input allowlist was not prepared")
+                authorized_inputs = y_g_authorized_input_paths
+                checker_kind = "task41_p0_b0_saved_y_g_comparison_checker"
+            elif b0_v9_failed_terminal_audit_mode:
+                assert v9_terminal_producer_contract_path is not None
+                assert v9_terminal_summary_path is not None
+                assert v9_terminal_manifest_path is not None
+                authorized_inputs = [
+                    v9_terminal_producer_contract_path.resolve(strict=True),
+                    contract_path.resolve(strict=True),
+                    v9_terminal_summary_path.resolve(strict=True),
+                    v9_terminal_manifest_path.resolve(strict=True),
+                    (run_root / "run_summary.json").resolve(strict=True),
+                    (run_root / "input_original.dat").resolve(strict=True),
+                    (run_root / "resolved_config.json").resolve(strict=True),
+                    input_path.resolve(strict=True),
+                ]
+                v9_summary = read_json_object(
+                    v9_terminal_summary_path, "V9 terminal candidate summary"
+                )
+                compact_bindings = [
+                    v9_summary.get("b0_v9_compact_volume_audit"),
+                    v9_summary.get("b0_v9_independent_check"),
+                ]
+                if not all(isinstance(binding, Mapping) for binding in compact_bindings):
+                    raise ValueError(
+                        "V9 terminal summary omits its compact report or independent-check binding"
+                    )
+                for label, binding in zip(
+                    ("V9 compact report", "V9 independent checker"), compact_bindings
+                ):
+                    report_inputs = hash_bound_inputs(
+                        binding, allowed_root=run_root, label=label
+                    )
+                    authorized_inputs.extend(report_inputs)
+                    for report_path in report_inputs:
+                        if report_path.suffix == ".json":
+                            report_payload = read_json_object(report_path, label)
+                            authorized_inputs.extend(
+                                hash_bound_inputs(
+                                    report_payload,
+                                    allowed_root=run_root,
+                                    label=f"{label} nested evidence",
+                                )
+                            )
+                from src.runners.task41_p0_contract import (
+                    TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE,
+                )
+
+                donor_binding = v9_summary.get("b0_v9_volume_donor_binding")
+                prefix_binding = v9_summary.get("b0_v9_saved_prefix_binding")
+                if not isinstance(donor_binding, Mapping) or not isinstance(prefix_binding, Mapping):
+                    raise ValueError("V9 terminal summary omits its frozen donor or prefix identity")
+                donor_relative = Path(TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE)
+                if (
+                    donor_binding.get("relative_path") != donor_relative.as_posix()
+                    or donor_binding.get("attempt_id") != donor_relative.name
+                ):
+                    raise ValueError("V9 terminal summary selects a different frozen V4 donor")
+                donor_run = (repo_root / donor_relative).resolve(strict=True)
+                donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+                donor_summary_path = donor_summary_path.resolve(strict=True)
+                if (
+                    donor_binding.get("summary_bytes") != donor_summary_path.stat().st_size
+                    or donor_binding.get("summary_sha256") != sha256_file(donor_summary_path)
+                ):
+                    raise ValueError("V9 frozen donor summary size or SHA-256 changed")
+                donor_summary = read_json_object(donor_summary_path, "V9 frozen donor summary")
+                recovery_binding = donor_summary.get("b0_recovery_evidence")
+                donor_manifest_ref = (
+                    recovery_binding.get("manifest")
+                    if isinstance(recovery_binding, Mapping)
+                    else None
+                )
+                if not isinstance(donor_manifest_ref, Mapping):
+                    raise ValueError("V9 frozen donor summary omits its recovery manifest")
+                donor_manifest_raw = Path(str(donor_manifest_ref.get("path", "")))
+                donor_manifest_path = (
+                    donor_manifest_raw
+                    if donor_manifest_raw.is_absolute()
+                    else donor_run / donor_manifest_raw
+                ).resolve(strict=True)
+                donor_manifest_sha = sha256_file(donor_manifest_path)
+                if (
+                    not donor_manifest_path.is_relative_to(donor_run)
+                    or not donor_manifest_path.is_file()
+                    or donor_manifest_ref.get("bytes") != donor_manifest_path.stat().st_size
+                    or donor_manifest_ref.get("sha256") != donor_manifest_sha
+                    or donor_binding.get("manifest_sha256") != donor_manifest_sha
+                ):
+                    raise ValueError("V9 frozen donor manifest path, size, or SHA-256 changed")
+                donor_manifest = read_json_object(donor_manifest_path, "V9 frozen donor manifest")
+                donor_arrays: dict[Path, tuple[int, str]] = {}
+
+                def collect_donor_arrays(value: Any) -> None:
+                    if isinstance(value, Mapping):
+                        if (
+                            isinstance(value.get("path"), str)
+                            and isinstance(value.get("shape"), list)
+                            and isinstance(value.get("dtype"), str)
+                        ):
+                            raw_array = Path(str(value["path"]))
+                            array_path = (
+                                raw_array
+                                if raw_array.is_absolute()
+                                else donor_run / raw_array
+                            ).resolve(strict=True)
+                            size = value.get("bytes")
+                            digest = value.get("sha256")
+                            if (
+                                not array_path.is_relative_to(donor_run)
+                                or type(size) is not int
+                                or size <= 0
+                                or not isinstance(digest, str)
+                                or array_path.stat().st_size != size
+                                or sha256_file(array_path) != digest
+                            ):
+                                raise ValueError(
+                                    "V9 frozen donor array path, size, or SHA-256 changed"
+                                )
+                            prior = donor_arrays.setdefault(array_path, (size, digest))
+                            if prior != (size, digest):
+                                raise ValueError(
+                                    "V9 frozen donor manifest repeats an array with conflicting identity"
+                                )
+                        for nested in value.values():
+                            collect_donor_arrays(nested)
+                    elif isinstance(value, list):
+                        for nested in value:
+                            collect_donor_arrays(nested)
+
+                collect_donor_arrays(donor_manifest)
+                if not donor_arrays:
+                    raise ValueError("V9 frozen donor manifest has no hash-bound arrays")
+                prefix_source_path = Path(str(prefix_binding.get("c_source_path", ""))).resolve(
+                    strict=True
+                )
+                if (
+                    not prefix_source_path.is_relative_to(repo_root.resolve())
+                    or not prefix_source_path.is_file()
+                    or sha256_file(prefix_source_path) != prefix_binding.get("c_source_sha256")
+                ):
+                    raise ValueError("V9 generated C prefix source path or SHA-256 changed")
+                authorized_inputs.extend(
+                    [donor_summary_path, donor_manifest_path, *sorted(donor_arrays), prefix_source_path]
+                )
+                authorized_inputs = list(dict.fromkeys(authorized_inputs))
+                checker_kind = "task41_p0_b0_v9_failed_terminal_audit_checker"
+            elif b0_evidence_audit_mode:
                 assert donor_contract_path is not None and donor_summary_path is not None
                 assert donor_numerical_output is not None
                 donor_run_manifest_path = run_root / "run_manifest.json"
@@ -10741,6 +11379,9 @@ def _run_task41_p0_saved_output_service(
                 "source_branch": source_branch,
                 "source_clean": True,
             }
+            if contract.get("execution_scope") is not None:
+                saved_bound_raw_paths = list(authorized_inputs)
+                saved_diagnostics_budget = saved_diagnostics_budget_check()
             checker_watchdog = supervise(
                 checker_command,
                 service_directory / "required_checker_watchdog",
@@ -10755,7 +11396,65 @@ def _run_task41_p0_saved_output_service(
                 if checker_result_path.is_file()
                 else None
             )
-            if b0_v9_saved_star_screen_mode:
+            if contract.get("execution_scope") is not None:
+                saved_diagnostics_budget = saved_diagnostics_budget_check(final=True)
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
+            if b0_saved_y_g_comparison_mode:
+                checker_ok = bool(
+                    checker_watchdog.get("classification") == "COMPLETED"
+                    and checker_watchdog.get("leader_exit_code") == 0
+                    and isinstance(checker_payload, Mapping)
+                    and checker_payload.get("schema") == "task41.p0.b0.saved_y_g_comparison.v1"
+                    and checker_payload.get("status") == "COMPLETED"
+                    and checker_payload.get("data_integrity") is True
+                    and checker_payload.get("classification") == "SAVED_VECTOR_COMPARISON_DIAGNOSTIC_ONLY"
+                    and checker_payload.get("official_result") is False
+                    and checker_payload.get("errors") == []
+                )
+                record["continuation_status"] = (
+                    "saved_y_g_comparison_completed_diagnostic_only"
+                    if checker_ok
+                    else "saved_y_g_comparison_incomplete"
+                )
+                record["official_result"] = False
+                record["saved_y_g_comparison"] = {
+                    "status": "COMPLETED_DIAGNOSTIC_ONLY" if checker_ok else "INCOMPLETE",
+                    "result_path": str(checker_result_path),
+                    "result_sha256": sha256_file(checker_result_path)
+                    if checker_result_path.is_file()
+                    else None,
+                }
+            elif b0_v9_failed_terminal_audit_mode:
+                checker_ok = bool(
+                    checker_watchdog.get("classification") == "COMPLETED"
+                    and checker_watchdog.get("leader_exit_code") == 0
+                    and isinstance(checker_payload, Mapping)
+                    and checker_payload.get("schema")
+                    == "task41.p0.b0.v9.failed_terminal_audit.v1"
+                    and checker_payload.get("audit_completed") is True
+                    and checker_payload.get("data_integrity") is True
+                    and type(checker_payload.get("action_passed")) is bool
+                    and isinstance(checker_payload.get("recovery_status"), str)
+                    and checker_payload.get("official_result") is False
+                    and checker_payload.get("errors") == []
+                )
+                record.update(
+                    audit_completed=checker_payload.get("audit_completed") is True
+                    if isinstance(checker_payload, Mapping) else False,
+                    data_integrity=checker_payload.get("data_integrity") is True
+                    if isinstance(checker_payload, Mapping) else False,
+                    action_passed=checker_payload.get("action_passed")
+                    if isinstance(checker_payload, Mapping) else None,
+                    recovery_status=checker_payload.get("recovery_status")
+                    if isinstance(checker_payload, Mapping) else None,
+                    official_result=False,
+                )
+                record["continuation_status"] = (
+                    "v9_failed_terminal_audit_completed"
+                    if checker_ok
+                    else "v9_failed_terminal_audit_incomplete"
+                )
+            elif b0_v9_saved_star_screen_mode:
                 checker_ok = bool(
                     checker_watchdog.get("classification") == "COMPLETED"
                     and checker_watchdog.get("leader_exit_code") == 0
@@ -10846,8 +11545,15 @@ def _run_task41_p0_saved_output_service(
                     )
             record.update(
                 required_checker_status=(
-                    "audit_completed"
-                    if checker_ok and (b0_evidence_audit_mode or b0_v9_saved_star_screen_mode)
+                    "diagnostic_completed"
+                    if checker_ok and b0_saved_y_g_comparison_mode
+                    else "audit_completed"
+                    if checker_ok
+                    and (
+                        b0_evidence_audit_mode
+                        or b0_v9_saved_star_screen_mode
+                        or b0_v9_failed_terminal_audit_mode
+                    )
                     else "passed" if checker_ok
                     else "failed"
                 ),
@@ -10907,8 +11613,39 @@ def _run_task41_p0_saved_output_service(
             service_start_sample, end_sample, policy=CONSERVATIVE_REALTIME
         )["budget_seconds"]
         record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
+        if saved_diagnostics_budget is not None:
+            record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
+        if b0_saved_y_g_comparison_mode:
+            record["result_classification"] = (
+                "SAVED_VECTOR_COMPARISON_DIAGNOSTIC_ONLY"
+                if result_code == 0
+                else "SAVED_VECTOR_COMPARISON_INCOMPLETE"
+            )
+            record["official_result"] = False
+        if b0_v9_failed_terminal_audit_mode:
+            record["result_classification"] = (
+                "SUPERVISED_NEGATIVE_RESULT_AUDIT_COMPLETED"
+                if result_code == 0 and record.get("action_passed") is False
+                else "SUPERVISED_TERMINAL_AUDIT_COMPLETED"
+                if result_code == 0
+                else "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE"
+            )
+            record["official_result"] = False
         record["receipt_path"] = str(receipt_path)
         _write_json_fsync(receipt_path, record)
+        if contract.get("execution_scope") is not None and saved_bound_raw_paths:
+            try:
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check(final=True)
+            except Exception as exc:
+                record["status"] = "failed_raw_evidence_retained"
+                record["required_checker_status"] = "failed"
+                record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+                if b0_saved_y_g_comparison_mode:
+                    record["result_classification"] = "SAVED_VECTOR_COMPARISON_INCOMPLETE"
+                elif b0_v9_failed_terminal_audit_mode:
+                    record["result_classification"] = "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE"
+                result_code = 3
+            _write_json_fsync(receipt_path, record)
     return result_code
 
 
@@ -10984,6 +11721,9 @@ def _run_task41_p0_service(
         task41_case_id_for_run_id,
         task41_p0_checker_kind_for_case,
     )
+    from src.runners.task41_p0_checker import (
+        select_task41_p0_b0_v9_failed_terminal_audit_route,
+    )
     from src.runners.task40_v10_campaign import CampaignAccount
 
     def read_json_object(path: Path, label: str) -> dict[str, Any]:
@@ -11009,6 +11749,12 @@ def _run_task41_p0_service(
     b0_v9_saved_star_screen_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-v9-star-screen"
     )
+    b0_v9_failed_terminal_audit_mode = bool(
+        case_args and case_args[0] == "--task41-p0-saved-b0-v9-failed-terminal-audit"
+    )
+    b0_saved_y_g_comparison_mode = bool(
+        case_args and case_args[0] == "--task41-p0-saved-b0-y-g-comparison"
+    )
     b0_v4_geometry_pair_mode = False
     b0_v5_mesh_actual_exact_mode = False
     b0_v6_actual_qmetric_mode = False
@@ -11028,6 +11774,8 @@ def _run_task41_p0_service(
         or checker_only_mode
         or b0_evidence_audit_mode
         or b0_v9_saved_star_screen_mode
+        or b0_v9_failed_terminal_audit_mode
+        or b0_saved_y_g_comparison_mode
     )
     continuation_run_root: Path | None = None
     continuation_output_root: Path | None = None
@@ -11045,6 +11793,18 @@ def _run_task41_p0_service(
     v9_screen_output_path: Path | None = None
     candidate_report_path: Path | None = None
     candidate_report_sha256: str | None = None
+    v9_terminal_producer_contract_path: Path | None = None
+    v9_terminal_producer_contract_sha256: str | None = None
+    v9_terminal_summary_path: Path | None = None
+    v9_terminal_manifest_path: Path | None = None
+    v6_y_g_report_path: Path | None = None
+    v6_y_g_report_sha256: str | None = None
+    v9_y_g_report_path: Path | None = None
+    v9_y_g_report_sha256: str | None = None
+    v9_y_g_summary_path: Path | None = None
+    v9_y_g_summary_sha256: str | None = None
+    v9_y_g_service_receipt_path: Path | None = None
+    v9_y_g_service_receipt_sha256: str | None = None
     if b0_v9_saved_star_screen_mode:
         if (
             len(case_args) != 11
@@ -11064,6 +11824,72 @@ def _run_task41_p0_service(
         v9_screen_output_path = Path(case_args[10]).resolve()
         continuation_run_root = candidate_report_path.parent.resolve()
         continuation_output_root = v9_screen_output_path.parent.resolve()
+    if b0_v9_failed_terminal_audit_mode:
+        expected = [
+            "--task41-p0-saved-b0-v9-failed-terminal-audit",
+            "--producer-contract",
+            None,
+            "--producer-contract-sha256",
+            None,
+            "--run-root",
+            None,
+            "--summary",
+            None,
+            "--manifest",
+            None,
+            "--output-dir",
+            None,
+        ]
+        if len(case_args) != len(expected) or any(
+            wanted is not None and got != wanted
+            for got, wanted in zip(case_args, expected)
+        ):
+            raise ValueError(
+                "V9 failed-terminal service requires producer contract/hash, run root, "
+                "summary, manifest, and a new output directory"
+            )
+        v9_terminal_producer_contract_path = Path(case_args[2]).resolve(strict=True)
+        v9_terminal_producer_contract_sha256 = case_args[4]
+        continuation_run_root = Path(case_args[6]).resolve(strict=True)
+        v9_terminal_summary_path = Path(case_args[8]).resolve(strict=True)
+        v9_terminal_manifest_path = Path(case_args[10]).resolve(strict=True)
+        continuation_output_root = Path(case_args[12]).resolve()
+        if v9_terminal_manifest_path.parent != continuation_run_root:
+            raise ValueError("V9 failed-terminal run root must be the producer manifest parent")
+    if b0_saved_y_g_comparison_mode:
+        expected = [
+            "--task41-p0-saved-b0-y-g-comparison",
+            "--v6-report", None,
+            "--v6-report-sha256", None,
+            "--v9-report", None,
+            "--v9-report-sha256", None,
+            "--v9-summary", None,
+            "--v9-summary-sha256", None,
+            "--v9-service-receipt", None,
+            "--v9-service-receipt-sha256", None,
+            "--output-dir", None,
+        ]
+        if len(case_args) != len(expected) or any(
+            wanted is not None and got != wanted
+            for got, wanted in zip(case_args, expected)
+        ):
+            raise ValueError(
+                "saved y/g comparison requires hash-bound V6/V9 reports, V9 summary/receipt, "
+                "and a new output directory"
+            )
+        v6_y_g_report_path = Path(case_args[2]).resolve(strict=True)
+        v6_y_g_report_sha256 = case_args[4]
+        v9_y_g_report_path = Path(case_args[6]).resolve(strict=True)
+        v9_y_g_report_sha256 = case_args[8]
+        v9_y_g_summary_path = Path(case_args[10]).resolve(strict=True)
+        v9_y_g_summary_sha256 = case_args[12]
+        v9_y_g_service_receipt_path = Path(case_args[14]).resolve(strict=True)
+        v9_y_g_service_receipt_sha256 = case_args[16]
+        continuation_output_root = Path(case_args[18]).resolve()
+        v9_summary_value = read_json_object(v9_y_g_summary_path, "V9 run summary")
+        continuation_run_root = Path(
+            str(v9_summary_value.get("output_directory", ""))
+        ).resolve(strict=True)
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
@@ -11193,9 +12019,23 @@ def _run_task41_p0_service(
         contract_path,
         expected_sha256=os.environ.get("TASK41_P0_CONTRACT_SHA256"),
         current_root=repo_root,
-        check_current_source=not (continuation_mode or checker_only_mode),
+        check_current_source=not (
+            continuation_mode or checker_only_mode or b0_v9_failed_terminal_audit_mode
+        ),
         require_clean_source=True,
     )
+    saved_scope = contract.get("execution_scope")
+    if saved_scope is not None and not (
+        b0_v9_failed_terminal_audit_mode or b0_saved_y_g_comparison_mode
+    ):
+        raise ValueError(
+            "saved-diagnostics contract is restricted to the V9 failed-terminal audit "
+            "or saved y/g comparison route"
+        )
+    if b0_saved_y_g_comparison_mode and saved_scope is None:
+        raise ValueError(
+            "saved y/g comparison requires the explicitly prepared saved-diagnostics contract"
+        )
     if b0_v4_geometry_pair_mode:
         assert source_report_path is not None
         results_root = (
@@ -11236,7 +12076,7 @@ def _run_task41_p0_service(
         continuation_branch = subprocess.check_output(
             ["git", "branch", "--show-current"], cwd=repo_root, text=True
         ).strip()
-        if b0_evidence_audit_mode:
+        if b0_evidence_audit_mode or b0_saved_y_g_comparison_mode:
             if (
                 continuation_branch != contract["branch"]
                 or checker_source_sha != contract["source"]["sha"]
@@ -11250,6 +12090,15 @@ def _run_task41_p0_service(
             ):
                 raise ValueError(
                     "V9 saved-star screen requires the clean current consumer/checker source"
+                )
+            continuation_source_sha = checker_source_sha
+        elif b0_v9_failed_terminal_audit_mode:
+            if (
+                continuation_branch != contract["branch"]
+                or checker_source_sha != contract["source"]["sha"]
+            ):
+                raise ValueError(
+                    "V9 failed-terminal audit requires the clean current consumer/checker source"
                 )
             continuation_source_sha = checker_source_sha
         elif (
@@ -11357,6 +12206,152 @@ def _run_task41_p0_service(
             ):
                 raise ValueError("saved B0 donor input/config hashes differ from the frozen contracts")
             continuation_run_root = donor_run_root
+        elif b0_v9_failed_terminal_audit_mode:
+            assert continuation_run_root is not None
+            assert continuation_output_root is not None
+            assert v9_terminal_producer_contract_path is not None
+            assert v9_terminal_producer_contract_sha256 is not None
+            assert v9_terminal_summary_path is not None
+            assert v9_terminal_manifest_path is not None
+            producer_contract, _producer_digest = require_task41_p0_contract(
+                v9_terminal_producer_contract_path,
+                expected_sha256=v9_terminal_producer_contract_sha256,
+                current_root=repo_root,
+                check_current_source=False,
+                require_clean_source=False,
+                case_id="B0",
+            )
+            if select_task41_p0_b0_v9_failed_terminal_audit_route(
+                contract=producer_contract,
+                run_case_returncode=None,
+                explicit_saved_terminal=True,
+                run_root=continuation_run_root,
+                summary_path=v9_terminal_summary_path,
+                manifest_path=v9_terminal_manifest_path,
+                numerical_output_path=continuation_run_root / "numerical_output",
+                repo_root=repo_root,
+            ) != "v9_failed_terminal_audit":
+                raise ValueError(
+                    "V9 retrospective route requires the registered failed compact run without numerical output"
+                )
+            producer_case = producer_contract["case"]
+            consumer_case = contract["case"]
+            results_root = (repo_root / "results" / str(consumer_case["model_id"])).resolve()
+            if any(
+                producer_case.get(key) != consumer_case.get(key)
+                for key in (
+                    "model_id", "run_id", "method", "mpi_size", "input_sha256",
+                    "physical_model_sha256", "resolved_config_sha256", "profile_identity",
+                    "solver_stage", "comparison_group", "geometry_identity",
+                )
+            ):
+                raise ValueError("V9 producer and current consumer contracts differ in B0 identity")
+            if (
+                producer_contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+                != "same_lu_rhs_solve"
+                or contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+                != "same_lu_rhs_solve"
+            ):
+                raise ValueError("V9 terminal audit requires separately bound same-LU producer and consumer contracts")
+            if (
+                task41_case_id_for_run_id(str(consumer_case.get("run_id", ""))) != "B0"
+                or v9_terminal_summary_path
+                != continuation_run_root / "task40_v10_p6_candidate_summary.json"
+                or v9_terminal_manifest_path != continuation_run_root / "run_manifest.json"
+                or v9_terminal_manifest_path.parent != continuation_run_root
+                or not continuation_run_root.is_relative_to(results_root)
+                or not continuation_output_root.is_relative_to(results_root)
+                or continuation_output_root.exists()
+                or continuation_output_root == continuation_run_root
+                or continuation_output_root.is_relative_to(continuation_run_root)
+                or continuation_run_root.is_relative_to(continuation_output_root)
+            ):
+                raise ValueError("V9 terminal service paths differ from the bound producer run/new output")
+            input_path = Path(str(consumer_case["input_path"]))
+            input_path = (input_path if input_path.is_absolute() else repo_root / input_path).resolve()
+            if not input_path.is_file() or sha256_file(input_path) != producer_case["input_sha256"]:
+                raise ValueError("V9 producer/consumer DAT identity differs")
+        elif b0_saved_y_g_comparison_mode:
+            assert continuation_run_root is not None
+            assert continuation_output_root is not None
+            assert v6_y_g_report_path is not None
+            assert v9_y_g_report_path is not None
+            assert v9_y_g_summary_path is not None
+            assert v9_y_g_service_receipt_path is not None
+            if (
+                v9_y_g_service_receipt_path.name != "task41_p0_service_receipt.json"
+                or v9_y_g_service_receipt_path.stat().st_size > 8 * 1024**2
+                or sha256_file(v9_y_g_service_receipt_path) != v9_y_g_service_receipt_sha256
+            ):
+                raise ValueError("V9 service receipt path or SHA-256 differs")
+            v9_service_receipt = read_json_object(
+                v9_y_g_service_receipt_path, "V9 service receipt"
+            )
+            producer_contract_path_value = v9_service_receipt.get("contract_path")
+            producer_contract_sha256 = v9_service_receipt.get("contract_sha256")
+            if not isinstance(producer_contract_path_value, str) or not isinstance(
+                producer_contract_sha256, str
+            ):
+                raise ValueError("V9 service receipt omits its producer contract binding")
+            producer_contract_path = Path(producer_contract_path_value)
+            producer_contract_path = (
+                producer_contract_path
+                if producer_contract_path.is_absolute()
+                else repo_root / producer_contract_path
+            ).resolve(strict=True)
+            v9_producer_contract, _producer_contract_sha256 = require_task41_p0_contract(
+                producer_contract_path,
+                expected_sha256=producer_contract_sha256,
+                current_root=repo_root,
+                check_current_source=False,
+                require_clean_source=False,
+                case_id="B0",
+            )
+            producer_evidence = v9_producer_contract.get("evidence")
+            producer_service_directory_value = (
+                producer_evidence.get("service_directory")
+                if isinstance(producer_evidence, Mapping)
+                else None
+            )
+            if not isinstance(producer_service_directory_value, str):
+                raise ValueError("V9 producer contract omits evidence.service_directory")
+            producer_service_directory = Path(producer_service_directory_value)
+            producer_service_directory = (
+                producer_service_directory
+                if producer_service_directory.is_absolute()
+                else repo_root / producer_service_directory
+            ).resolve()
+            if v9_y_g_service_receipt_path != (
+                producer_service_directory / "task41_p0_service_receipt.json"
+            ):
+                raise ValueError(
+                    "V9 service receipt must remain in its producer contract evidence.service_directory"
+                )
+            results_root = (
+                repo_root / "results" / str(contract["case"]["model_id"])
+            ).resolve()
+            if (
+                task41_case_id_for_run_id(str(contract["case"].get("run_id", ""))) != "B0"
+                or not continuation_run_root.is_relative_to(results_root)
+                or not continuation_output_root.is_relative_to(results_root)
+                or continuation_output_root.exists()
+                or continuation_output_root == continuation_run_root
+                or continuation_output_root.is_relative_to(continuation_run_root)
+                or continuation_run_root.is_relative_to(continuation_output_root)
+                or not v6_y_g_report_path.is_relative_to(results_root)
+                or not v9_y_g_report_path.is_relative_to(continuation_run_root)
+                or v9_y_g_summary_path.parent != continuation_run_root
+            ):
+                raise ValueError(
+                    "saved y/g reports, V9 run root, and new comparison output must remain in the registered results tree"
+                )
+            from src.runners.task41_p0_contract import TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+
+            if (
+                saved_scope != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+                or "v6_v9_saved_y_g_comparison" not in saved_scope.get("actions", [])
+            ):
+                raise ValueError("saved y/g comparison is outside the explicit saved_diagnostics_only scope")
         elif b0_v9_saved_star_screen_mode:
             assert candidate_report_path is not None
             assert candidate_report_sha256 is not None
@@ -11442,6 +12437,22 @@ def _run_task41_p0_service(
         environment.update({
             "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
             "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+        })
+    elif b0_v9_failed_terminal_audit_mode:
+        assert v9_terminal_producer_contract_path is not None
+        assert v9_terminal_producer_contract_sha256 is not None
+        assert v9_terminal_summary_path is not None
+        assert v9_terminal_manifest_path is not None
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+            "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
+            "TASK41_P0_V9_PRODUCER_CONTRACT_PATH": str(v9_terminal_producer_contract_path),
+            "TASK41_P0_V9_PRODUCER_CONTRACT_SHA256": v9_terminal_producer_contract_sha256,
+            "TASK41_P0_V9_PRODUCER_RUN_ROOT": str(continuation_run_root),
+            "TASK41_P0_V9_PRODUCER_SUMMARY_PATH": str(v9_terminal_summary_path),
+            "TASK41_P0_V9_PRODUCER_MANIFEST_PATH": str(v9_terminal_manifest_path),
         })
     elif b0_v9_saved_star_screen_mode:
         assert candidate_report_path is not None
@@ -11580,11 +12591,15 @@ def _run_task41_p0_service(
                 checker_only_mode
                 or b0_evidence_audit_mode
                 or b0_v9_saved_star_screen_mode
+                or b0_v9_failed_terminal_audit_mode
+                or b0_saved_y_g_comparison_mode
             ),
             checker_snapshot_path=checker_input_path,
             checker_snapshot_sha256=checker_input_sha256,
             b0_evidence_audit_mode=b0_evidence_audit_mode,
             b0_v9_saved_star_screen_mode=b0_v9_saved_star_screen_mode,
+            b0_v9_failed_terminal_audit_mode=b0_v9_failed_terminal_audit_mode,
+            b0_saved_y_g_comparison_mode=b0_saved_y_g_comparison_mode,
             b0_v4_volume_only_mode=b0_v4_volume_only_mode,
             b0_v4_geometry_pair_mode=b0_v4_geometry_pair_mode,
             b0_v5_mesh_actual_exact_mode=b0_v5_mesh_actual_exact_mode,
@@ -11597,6 +12612,18 @@ def _run_task41_p0_service(
             v8_checker_result_path=v8_checker_result_path,
             v8_checker_result_sha256=v8_checker_result_sha256,
             v9_screen_output_path=v9_screen_output_path,
+            v9_terminal_producer_contract_path=v9_terminal_producer_contract_path,
+            v9_terminal_producer_contract_sha256=v9_terminal_producer_contract_sha256,
+            v9_terminal_summary_path=v9_terminal_summary_path,
+            v9_terminal_manifest_path=v9_terminal_manifest_path,
+            v6_y_g_report_path=v6_y_g_report_path,
+            v6_y_g_report_sha256=v6_y_g_report_sha256,
+            v9_y_g_report_path=v9_y_g_report_path,
+            v9_y_g_report_sha256=v9_y_g_report_sha256,
+            v9_y_g_summary_path=v9_y_g_summary_path,
+            v9_y_g_summary_sha256=v9_y_g_summary_sha256,
+            v9_y_g_service_receipt_path=v9_y_g_service_receipt_path,
+            v9_y_g_service_receipt_sha256=v9_y_g_service_receipt_sha256,
             donor_contract_path=donor_contract_path,
             donor_contract_sha256=donor_contract_sha256,
             donor_summary_path=donor_summary_path,
@@ -11705,7 +12732,96 @@ def _run_task41_p0_service(
                 "--output", str(checker_result_path),
             ]
             required_inputs = [input_path, summary_path, manifest_path, numerical_summary_path]
-            if not all(path.is_file() for path in required_inputs):
+            terminal_route = select_task41_p0_b0_v9_failed_terminal_audit_route(
+                contract=contract,
+                run_case_returncode=run_case_code,
+                run_root=summary_path.parent,
+                summary_path=numerical_summary_path,
+                manifest_path=manifest_path,
+                numerical_output_path=numerical_output,
+                repo_root=repo_root,
+            )
+            if terminal_route == "v9_failed_terminal_audit":
+                results_root = (repo_root / "results" / str(contract["case"]["model_id"])).resolve()
+                audit_output_root = results_root / (
+                    f"task41_p0_b0_v9_failed_terminal_audit_{os.getpid()}"
+                )
+                if audit_output_root.exists():
+                    raise FileExistsError("V9 failed-terminal audit output path already exists")
+                terminal_audit_environment = dict(environment)
+                terminal_audit_environment["TASK41_P0_CHECKER_SOURCE_SHA"] = str(
+                    contract["source"]["sha"]
+                )
+                audit_return_code = _run_task41_p0_saved_output_service(
+                    unit=unit,
+                    runtime_prefix=runtime_prefix,
+                    environment=terminal_audit_environment,
+                    window=window,
+                    contract=contract,
+                    contract_path=contract_path,
+                    contract_sha=contract_sha,
+                    case_id="B0",
+                    run_root=summary_path.parent.resolve(strict=True),
+                    output_root=audit_output_root,
+                    consumer_source_sha=str(contract["source"]["sha"]),
+                    checker_only=True,
+                    checker_snapshot_path=None,
+                    checker_snapshot_sha256=None,
+                    b0_v9_failed_terminal_audit_mode=True,
+                    v9_terminal_producer_contract_path=contract_path,
+                    v9_terminal_producer_contract_sha256=contract_sha,
+                    v9_terminal_summary_path=numerical_summary_path,
+                    v9_terminal_manifest_path=manifest_path,
+                    input_path=input_path,
+                    activation_command=activation_command,
+                    activation_identity=activation_marker,
+                    preflight=preflight,
+                    preflight_command=preflight_argv,
+                    cgroup_start=cgroup,
+                    service_entry_accounting=service_entry_record,
+                    service_start_sample=service_start_sample,
+                    repo_root=repo_root,
+                    supervise=supervise,
+                    sha256_file=sha256_file,
+                )
+                nested_receipt_path = audit_output_root.with_name(
+                    audit_output_root.name + ".service"
+                ) / "task41_p0_service_receipt.json"
+                nested_receipt = read_json_object(
+                    nested_receipt_path, "V9 failed-terminal audit service receipt"
+                )
+                audit_payload = nested_receipt.get("required_checker_result")
+                audit_completed = bool(
+                    audit_return_code == 0
+                    and nested_receipt.get("status") == "completed"
+                    and nested_receipt.get("required_checker_status") == "audit_completed"
+                    and isinstance(audit_payload, Mapping)
+                    and audit_payload.get("audit_completed") is True
+                    and audit_payload.get("data_integrity") is True
+                )
+                record.update(
+                    required_checker_status=("audit_completed" if audit_completed else "failed"),
+                    required_checker_result=audit_payload,
+                    required_checker_result_path=nested_receipt.get("required_checker_result_path"),
+                    required_checker_authorization=nested_receipt.get("required_checker_authorization"),
+                    required_checker_authority=nested_receipt.get("required_checker_watchdog"),
+                    v9_failed_terminal_audit_service_receipt=str(nested_receipt_path),
+                    result_classification=(
+                        "SUPERVISED_NEGATIVE_RESULT_AUDIT_COMPLETED"
+                        if audit_completed and audit_payload.get("action_passed") is False
+                        else "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE"
+                    ),
+                    action_passed=audit_payload.get("action_passed")
+                    if isinstance(audit_payload, Mapping)
+                    else None,
+                    recovery_status=audit_payload.get("recovery_status")
+                    if isinstance(audit_payload, Mapping)
+                    else None,
+                    official_result=False,
+                    raw_evidence_retained=True,
+                )
+                return_code = 0 if audit_completed else 3
+            elif not all(path.is_file() for path in required_inputs):
                 record["required_checker_status"] = "not_run_missing_hash_bound_inputs"
                 record["required_checker_missing_inputs"] = [
                     str(path) for path in required_inputs if not path.is_file()

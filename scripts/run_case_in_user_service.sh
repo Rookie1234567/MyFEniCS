@@ -53,6 +53,8 @@ task41_saved_output_continuation=0
 task41_saved_output_checker_only=0
 task41_saved_b0_evidence_audit=0
 task41_saved_b0_v9_star_screen=0
+task41_saved_b0_v9_failed_terminal_audit=0
+task41_saved_b0_y_g_comparison=0
 for ((index = 0; index < ${#args[@]}; index++)); do
     arg="${args[index]}"
     case "$arg" in
@@ -138,6 +140,12 @@ for ((index = 0; index < ${#args[@]}; index++)); do
         --task41-p0-saved-b0-v9-star-screen)
             task41_saved_b0_v9_star_screen=1
             ;;
+        --task41-p0-saved-b0-v9-failed-terminal-audit)
+            task41_saved_b0_v9_failed_terminal_audit=1
+            ;;
+        --task41-p0-saved-b0-y-g-comparison)
+            task41_saved_b0_y_g_comparison=1
+            ;;
     esac
 done
 v29_campaign=0
@@ -217,11 +225,19 @@ if (( task41_saved_b0_evidence_audit && (task41_saved_output_continuation || tas
     echo "Task41 B0 saved evidence audit cannot be combined with saved-output modes" >&2
     exit 2
 fi
-if (( task41_saved_b0_v9_star_screen && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit) )); then
+if (( task41_saved_b0_v9_star_screen && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison) )); then
     echo "Task41 V9 saved-star screen cannot be combined with another Task41 saved mode" >&2
     exit 2
 fi
-if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen )) && (( task41_contract_count != 1 )); then
+if (( task41_saved_b0_v9_failed_terminal_audit && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_y_g_comparison) )); then
+    echo "Task41 V9 failed-terminal audit cannot be combined with another Task41 saved mode" >&2
+    exit 2
+fi
+if (( task41_saved_b0_y_g_comparison && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit) )); then
+    echo "Task41 saved y/g comparison cannot be combined with another Task41 saved mode" >&2
+    exit 2
+fi
+if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison )) && (( task41_contract_count != 1 )); then
     echo "Task41 saved audit/output modes require exactly one Task41 P0 execution contract" >&2
     exit 2
 fi
@@ -231,7 +247,7 @@ if (( task41_contract_count != 0 )); then
         exit 2
     fi
     [[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
-    if (( task41_saved_output_continuation || task41_saved_output_checker_only )); then
+    if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison )); then
         if ! task41_values_text="$(cd -- "$repo_root" && python3 -m src.runners.task41_p0_contract \
             --launcher-values --contract "$task41_contract" --saved-output-continuation)"; then
             exit 2
@@ -314,14 +330,20 @@ args=("$@")
 [[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
 task41_saved_output_continuation=0
 task41_saved_output_checker_only=0
+task41_saved_b0_v9_failed_terminal_audit=0
+task41_saved_b0_y_g_comparison=0
 for arg in "${args[@]}"; do
     if [[ "$arg" == --task41-p0-saved-output-continuation ]]; then
         task41_saved_output_continuation=1
     elif [[ "$arg" == --task41-p0-saved-output-checker-only ]]; then
         task41_saved_output_checker_only=1
+    elif [[ "$arg" == --task41-p0-saved-b0-v9-failed-terminal-audit ]]; then
+        task41_saved_b0_v9_failed_terminal_audit=1
+    elif [[ "$arg" == --task41-p0-saved-b0-y-g-comparison ]]; then
+        task41_saved_b0_y_g_comparison=1
     fi
 done
-if (( task41_saved_output_continuation || task41_saved_output_checker_only )); then
+if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison )); then
     mapfile -t values < <(python3 -m src.runners.task41_p0_contract \
         --launcher-values --contract "$task41_contract" --saved-output-continuation)
 else

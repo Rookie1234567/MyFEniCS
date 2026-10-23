@@ -1276,7 +1276,14 @@ def test_volume_identity_replays_real_p6_action_and_rhs_reducer(
             assert state["full_identity_dfull_plus_reduce_rfull"]["absolute_l2"] < 1.0e-13
             assert state["rhs_split_roundoff_native_rhs_minus_Balpha_minus_volume_rhs"]["absolute_l2"] < 1.0e-13
 
-def _task41_v9_compact_terminal_fixture(tmp_path, monkeypatch, *, action_passes: bool):
+def _task41_v9_compact_terminal_fixture(
+    tmp_path,
+    monkeypatch,
+    *,
+    action_passes: bool,
+    missing_numerical_output: bool = False,
+    service_repo_root=None,
+):
     from src.runners import task41_p0_checker, task41_p0_contract
     from src.solvers import task41_v4_volume_only_audit as audit
 
@@ -1326,6 +1333,40 @@ def _task41_v9_compact_terminal_fixture(tmp_path, monkeypatch, *, action_passes:
             "port_rhs": np.zeros((2, 2), dtype=np.complex128),
         }
     }
+    if service_repo_root is not None:
+        from src.runners.task41_p0_contract import TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
+
+        donor_run = Path(service_repo_root) / TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
+        donor_run.mkdir(parents=True, exist_ok=True)
+        donor_arrays = []
+        for index in range(2):
+            artifact_path = donor_run / f"fixture-donor-{index}.npy"
+            artifact_path.write_bytes(f"fixture donor array {index}\n".encode())
+            donor_arrays.append(
+                {
+                    "path": str(artifact_path.relative_to(donor_run)),
+                    "bytes": artifact_path.stat().st_size,
+                    "sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+                    "shape": [1],
+                    "dtype": "complex128",
+                }
+            )
+        donor_manifest_path = donor_run / "fixture_manifest.json"
+        donor_manifest_path.write_text(
+            json.dumps({"fixture_arrays": donor_arrays}, sort_keys=True), encoding="utf-8"
+        )
+        donor_manifest_record = {
+            "path": str(donor_manifest_path.relative_to(donor_run)),
+            "bytes": donor_manifest_path.stat().st_size,
+            "sha256": hashlib.sha256(donor_manifest_path.read_bytes()).hexdigest(),
+        }
+        donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+        donor_summary_path.write_text(
+            json.dumps({"b0_recovery_evidence": {"manifest": donor_manifest_record}}),
+            encoding="utf-8",
+        )
+        donor["manifest_sha256"] = donor_manifest_record["sha256"]
+        donor["existing_evidence_bytes"] = sum(item["bytes"] for item in donor_arrays)
 
     class FakeP6Action:
         def __init__(self, condensed, *, H_p):
@@ -1388,13 +1429,24 @@ def _task41_v9_compact_terminal_fixture(tmp_path, monkeypatch, *, action_passes:
             return None
 
     monkeypatch.setattr(audit, "P6CellCondensedAction", FakeP6Action)
-    run_root = tmp_path / "consumer-run"
+    if service_repo_root is None:
+        run_root = tmp_path / "consumer-run"
+    else:
+        run_root = (
+            Path(service_repo_root)
+            / "results"
+            / task41_p0_contract.TASK41_MODEL_ID
+            / "task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna"
+            / "20261022T052401.200732Z"
+        )
+    run_root.mkdir(parents=True, exist_ok=True)
     numerical_output = run_root / "numerical_output"
-    numerical_output.mkdir(parents=True)
+    evidence_directory = run_root if missing_numerical_output else numerical_output
+    evidence_directory.mkdir(parents=True, exist_ok=True)
 
     def persist_array(name, values):
         array = np.asarray(values)
-        path = numerical_output / f"{name}.npy"
+        path = evidence_directory / f"{name}.npy"
         np.save(path, array, allow_pickle=False)
         return {
             "path": str(path),
@@ -1411,7 +1463,7 @@ def _task41_v9_compact_terminal_fixture(tmp_path, monkeypatch, *, action_passes:
         allocation_gate=lambda *_args: None,
         progress_callback=lambda _event: None,
         persist_array=persist_array,
-        output_directory=numerical_output,
+        output_directory=evidence_directory,
         native_volume_apply=lambda values: np.zeros_like(values),
         artifact_prefix="fixture_v9",
         candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
@@ -1419,31 +1471,36 @@ def _task41_v9_compact_terminal_fixture(tmp_path, monkeypatch, *, action_passes:
         recovery_refinement_max_steps=3,
         reserved_followup_evidence_bytes=audit.TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
     )
-    identity_path = numerical_output / "identity.json"
+    identity_path = evidence_directory / "identity.json"
     identity_path.write_text(json.dumps(report, sort_keys=True, allow_nan=False), encoding="utf-8")
     live_check = task41_p0_checker.check_task41_b0_v9_compact_volume_audit(
         report,
         donor,
-        output_directory=numerical_output,
+        output_directory=evidence_directory,
         native_volume_apply=lambda values: np.zeros_like(values),
         expected_candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
         expected_cache_identity="fixture-cache-identity",
     )
-    checker_path = numerical_output / "independent.json"
+    checker_path = evidence_directory / "independent.json"
     checker_path.write_text(json.dumps(live_check, sort_keys=True, allow_nan=False), encoding="utf-8")
 
-    fake_repo = tmp_path / "fake-repo"
+    fake_repo = Path(service_repo_root) if service_repo_root is not None else tmp_path / "fake-repo"
     fake_checker_path = fake_repo / "src/runners/task41_p0_checker.py"
     fake_checker_path.parent.mkdir(parents=True)
     fake_checker_path.write_text("# fixture repo root", encoding="ascii")
     source_path = fake_repo / "src/candidate_qmetric.c"
     source_path.parent.mkdir(parents=True, exist_ok=True)
     source_path.write_text("candidate source fixture", encoding="ascii")
-    donor_relative = Path("results/frozen-v4-donor")
+    donor_relative = (
+        Path("results/frozen-v4-donor")
+        if service_repo_root is None
+        else task41_p0_contract.TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
+    )
     donor_run = fake_repo / donor_relative
-    donor_run.mkdir(parents=True)
+    donor_run.mkdir(parents=True, exist_ok=True)
     donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
-    donor_summary_path.write_text("frozen donor summary fixture", encoding="ascii")
+    if not donor_summary_path.is_file():
+        donor_summary_path.write_text("frozen donor summary fixture", encoding="ascii")
     monkeypatch.setattr(task41_p0_checker, "__file__", str(fake_checker_path))
     monkeypatch.setattr(task41_p0_checker, "load_task41_v4_volume_only_donor", lambda **_kwargs: donor)
     monkeypatch.setattr(task41_p0_contract, "TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE", donor_relative)
@@ -1516,6 +1573,33 @@ def test_v9_compact_producer_live_checker_and_terminal_saved_replay(
     )
     assert result["saved_only_compact_replay"]["independent_native_volume_action_calls"] == 0
     assert result["saved_only_compact_replay"]["checks"]["reported_frozen_denominators_match_contract"] is True
+
+
+@pytest.mark.parametrize("action_passes", (True, False))
+def test_v9_compact_terminal_replay_uses_run_root_without_numerical_output(
+    tmp_path, monkeypatch, action_passes
+):
+    checker, summary, numerical_output, _identity_path = _task41_v9_compact_terminal_fixture(
+        tmp_path,
+        monkeypatch,
+        action_passes=action_passes,
+        missing_numerical_output=True,
+    )
+    assert not numerical_output.exists()
+
+    result = checker._task41_b0_recovery_evidence_checks(
+        summary,
+        numerical_output,
+        {"numerical_strategy": {"internal_rhs_strategy": "same_lu_rhs_solve"}},
+        contract_sha256="fixture-contract-sha256",
+        run_root=numerical_output.parent,
+    )
+
+    assert result["audit_completed"] is True, result
+    assert result["data_integrity"] is True
+    assert result["qualification_passed"] is action_passes
+    assert result["official_result"] is False
+    assert result["errors"] == []
 
 
 @pytest.mark.parametrize("damage", ("array", "column", "source"))

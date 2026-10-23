@@ -3,8 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -26,6 +28,7 @@ from src.runners.task41_p0_checker import (
     _task41_validate_v6_prefix_qualification,
     _task41_v6_candidate_producer_contract,
     _task41_v6_report_requires_prefix_qualification,
+    compare_task41_p0_b0_saved_y_g_arrays,
 )
 from src.runners import task41_p0_contract
 from src.runners.task40_v10_campaign import FixedCampaignWindow
@@ -35,6 +38,225 @@ from scripts.task40_v20_service_workflow import (
     _task41_p0_checker_only_snapshot_identity,
     _run_task41_p0_service,
 )
+
+
+def test_saved_y_g_comparison_distinguishes_rhs_only_change(tmp_path: Path) -> None:
+    arrays = {
+        "v6_y": np.array([[1 + 2j, 3 - 1j], [2 + 0j, 4 + 2j]], dtype=np.complex128),
+        "v6_g": np.array([[0 + 1j, 1 + 0j], [1 - 1j, 2 + 0j]], dtype=np.complex128),
+    }
+    arrays["v9_y"] = arrays["v6_y"].copy()
+    arrays["v9_g"] = arrays["v6_g"].copy()
+    arrays["v9_g"][1, 0] += 0.25 - 0.5j
+    paths = {}
+    hashes = {}
+    for name, array in arrays.items():
+        path = tmp_path / f"{name}.npy"
+        np.save(path, array, allow_pickle=False)
+        paths[name] = path
+        hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    result = compare_task41_p0_b0_saved_y_g_arrays(
+        v6_y_path=paths["v6_y"],
+        v6_g_path=paths["v6_g"],
+        v9_y_path=paths["v9_y"],
+        v9_g_path=paths["v9_g"],
+        expected_sha256s=hashes,
+        expected_shape=(2, 2),
+        trace_rows=1,
+        target_rows=(1,),
+        denominators=(10.0, 20.0),
+        block_rows=1,
+    )
+
+    assert result["status"] == "COMPLETED"
+    assert result["data_integrity"] is True
+    assert result["vectors"]["delta_y"]["norm2_by_column"] == [0.0, 0.0]
+    assert result["vectors"]["delta_g"]["norm2_by_column"][0] == pytest.approx(0.3125)
+    assert result["vectors"]["delta_g"]["norm2_by_column"][1] == 0.0
+    assert result["energy_identity"]["residual_lhs_minus_rhs_by_column"] == pytest.approx(
+        [0.0, 0.0], abs=1e-14
+    )
+    assert result["trace_port_split"]["status"] == "COMPLETED"
+    assert result["vectors"]["d9"]["norm2_by_region_and_column"]["trace"] != [0.0, 0.0]
+    assert result["vectors"]["d9"]["norm2_by_region_and_column"]["port"] != [0.0, 0.0]
+    assert result["vectors"]["d9"]["maxima_by_region_and_column"]["port"]["abs_row"][0] == 1
+    assert result["vectors"]["d9"]["norm_over_frozen_denominator_by_region_and_column"]["port"][0] > 0
+    assert result["selected_row_slices"]["1"]["d9"][0] == [0.75, 1.5]
+    assert result["subtraction_associativity"]["status"] == "COMPLETED"
+    assert result["vectors"]["d9"]["top10_energy_coverage_by_column"] == pytest.approx([1.0, 1.0])
+    assert result["numerical_accumulation"]["independent_scalar_reduction"] is True
+    assert result["energy_identity"]["independent_minus_numpy_2real_inner_by_column"] == pytest.approx(
+        [0.0, 0.0], abs=1e-14
+    )
+    assert result["full_length_delta_arrays_saved"] is False
+    assert result["official_result"] is False
+
+
+def test_saved_y_g_comparison_reports_changes_on_both_sides_and_rejects_bad_hash(
+    tmp_path: Path,
+) -> None:
+    arrays = {
+        "v6_y": np.array([[1 + 0j, 0 + 2j], [2 + 1j, 3 - 1j]], dtype=np.complex128),
+        "v6_g": np.array([[0 + 0j, 1 + 1j], [1 + 0j, 1 + 0j]], dtype=np.complex128),
+        "v9_y": np.array([[1.25 - 0.5j, 0 + 2j], [2 + 1j, 2.5 - 1j]], dtype=np.complex128),
+        "v9_g": np.array([[0.5 + 0j, 1 + 1j], [1 + 0j, 1.5 + 0.25j]], dtype=np.complex128),
+    }
+    paths = {}
+    hashes = {}
+    for name, array in arrays.items():
+        path = tmp_path / f"{name}.npy"
+        np.save(path, array, allow_pickle=False)
+        paths[name] = path
+        hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    kwargs = {
+        "v6_y_path": paths["v6_y"],
+        "v6_g_path": paths["v6_g"],
+        "v9_y_path": paths["v9_y"],
+        "v9_g_path": paths["v9_g"],
+        "expected_sha256s": hashes,
+        "expected_shape": (2, 2),
+        "trace_rows": 1,
+        "denominators": (3.0, 5.0),
+        "block_rows": 2,
+    }
+    result = compare_task41_p0_b0_saved_y_g_arrays(**kwargs)
+    assert result["vectors"]["delta_y"]["norm2_by_column"][0] > 0
+    assert result["vectors"]["delta_g"]["norm2_by_column"][0] > 0
+    assert result["vectors"]["delta_y"]["norm2_by_column"][1] > 0
+    assert result["vectors"]["delta_g"]["norm2_by_column"][1] > 0
+    assert result["vectors"]["y9_g6"]["norm2_by_column"][0] != result[
+        "vectors"
+    ]["y6_g9"]["norm2_by_column"][0]
+    assert result["energy_identity"]["residual_lhs_minus_rhs_by_column"] == pytest.approx(
+        [0.0, 0.0], abs=1e-13
+    )
+    bad_hashes = dict(hashes, v9_g="0" * 64)
+    with pytest.raises(ValueError, match="v9_g differs from its bound SHA-256"):
+        compare_task41_p0_b0_saved_y_g_arrays(**{**kwargs, "expected_sha256s": bad_hashes})
+
+
+def test_saved_diagnostics_prepare_binds_scope_and_reuses_entry_source_window(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case_spec = task41_p0_contract._task41_case("B0")
+    root = tmp_path / "repo"
+    root.mkdir()
+    source_shas = ["a" * 40]
+
+    def fake_git(_root: Path, *args: str) -> str:
+        if args == ("rev-parse", "HEAD"):
+            return source_shas[0]
+        if args == ("branch", "--show-current"):
+            return task41_p0_contract.TASK41_BRANCH
+        if args == ("status", "--porcelain", "--untracked-files=normal"):
+            return ""
+        raise AssertionError(f"unexpected git query: {args!r}")
+
+    monkeypatch.setattr(task41_p0_contract, "_git", fake_git)
+    monkeypatch.setattr(
+        task41_p0_contract, "verify_task41_b0_saved_surface_donor", lambda *a, **k: None
+    )
+    monkeypatch.setattr(
+        task41_p0_contract, "validate_task41_specification", lambda *a, **k: None
+    )
+
+    input_path = root / case_spec["input_relative"]
+    input_path.parent.mkdir(parents=True)
+    input_path.write_bytes(b"test-only B0 specification")
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    specification = SimpleNamespace(
+        input_sha256=input_sha,
+        identity={
+            "model_id": task41_p0_contract.TASK41_MODEL_ID,
+            "run_id": case_spec["run_id"],
+        },
+        physical_model_sha256="d" * 64,
+        method={"kind": case_spec["method"]},
+        execution={"mpi_size": 1},
+        as_jsonable=lambda: {},
+    )
+    from src.geometry import task41_phi90_profile
+    from src.io import execution_plan, input_validation
+
+    monkeypatch.setattr(input_validation, "load_and_resolve", lambda _path: specification)
+    monkeypatch.setattr(task41_phi90_profile, "task41_payload_errors", lambda _value: [])
+    monkeypatch.setattr(execution_plan, "resolved_config_bytes", lambda _spec: b"test-config")
+
+    runtime = root / "runtime"
+    python = runtime / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.write_text("", encoding="utf-8")
+    python.chmod(0o755)
+    abi_receipt = root / "abi.json"
+    abi_receipt.write_text("{}\n", encoding="utf-8")
+    jit_cache = root / "jit-cache"
+    jit_cache.mkdir()
+    monkeypatch.setattr(
+        task41_p0_contract,
+        "_check_task41_native_receipt",
+        lambda path, _runtime: hashlib.sha256(path.read_bytes()).hexdigest(),
+    )
+
+    controller = root / task41_p0_contract.TASK41_B0_CONTROLLER_RELATIVE
+    controller.mkdir(parents=True)
+    v9_ledger = controller / "campaign_accounting_v9_24h.jsonl"
+    v9_ledger.write_text("{}\n", encoding="utf-8")
+    v9_window = root / task41_p0_contract.TASK41_B0_V9_WINDOW_RELATIVE
+    v9_window.parent.mkdir(parents=True, exist_ok=True)
+    v9_window.write_text(
+        json.dumps({"accounting_path": str(v9_ledger.resolve())}), encoding="utf-8"
+    )
+
+    utc_ns = [1_800_000_000_000_000_000]
+
+    def fake_clock_sample(*, include_boot_id: bool = False) -> dict[str, object]:
+        utc_ns[0] += 10_000_000
+        sample: dict[str, object] = {
+            "monotonic": 1_000.0 + (utc_ns[0] - 1_800_000_000_000_000_000) / 1e9,
+            "boottime": 2_000.0 + (utc_ns[0] - 1_800_000_000_000_000_000) / 1e9,
+            "utc_ns": utc_ns[0],
+            "boot_id": "saved-diagnostics-test-boot",
+        }
+        return sample if include_boot_id else sample
+
+    monkeypatch.setattr(task41_p0_contract, "clock_sample", fake_clock_sample)
+    kwargs = {
+        "runtime_prefix": runtime,
+        "abi_receipt": abi_receipt,
+        "jit_cache": jit_cache,
+        "current_root": root,
+        "case_id": "B0",
+        "b0_saved_diagnostics_6h": True,
+    }
+    first = task41_p0_contract.prepare_task41_p0(**kwargs)
+    window_path = root / first["window_path"]
+    first_window_raw = window_path.read_bytes()
+    first_window = json.loads(first_window_raw)
+    assert first_window["total_seconds"] == 21_600.0
+    assert first_window["numerical_seconds"] == 20_400.0
+    assert first_window["closeout_seconds"] == 1_200.0
+    assert first_window["source_sha"] == "a" * 40
+
+    source_shas[0] = "b" * 40
+    second = task41_p0_contract.prepare_task41_p0(**kwargs)
+    assert second["window_path"] == first["window_path"]
+    assert second["window_sha256"] == first["window_sha256"]
+    assert window_path.read_bytes() == first_window_raw
+
+    contract_path = root / second["contract_path"]
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    assert contract["source"]["sha"] == "b" * 40
+    assert contract["window"]["entry_source_sha"] == "a" * 40
+    assert contract["numerical_strategy"] == {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": task41_p0_contract.TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+    }
+    assert contract["execution_scope"] == task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+    assert second["service_command"] is None
+    assert second["saved_diagnostics_output_root"] == str(
+        Path("results") / task41_p0_contract.TASK41_MODEL_ID / "task41_p0_saved_diagnostics_6h" / second["window_sha256"]
+    )
 
 
 @pytest.mark.parametrize(
@@ -2882,3 +3104,934 @@ def test_b0_saved_evidence_checker_accepts_only_missing_bound_output_child(
         )
     assert not bad_output.exists()
     assert recovery_calls == [numerical_output]
+
+
+def test_v9_failed_terminal_audit_is_routed_through_saved_task41_service(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import scripts.task40_v20_service_workflow as service_workflow
+    import src.runners.task41_p0_contract as contract_module
+    import src.runners.task40_v10_campaign as campaign_module
+    import benchmarks.task034_wsl_resources as resource_module
+
+    repo_root = tmp_path
+    results_root = repo_root / "results" / contract_module.TASK41_MODEL_ID
+    input_path = repo_root / "b0.dat"
+    input_path.write_bytes(b"fixture B0 input\n")
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    runtime_prefix = repo_root / "runtime"
+    abi_receipt = repo_root / "abi.json"
+    jit_cache = repo_root / "jit"
+    abi_receipt.write_text("{}\n", encoding="utf-8")
+    run_root = (
+        results_root
+        / "task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna"
+        / "20261022T052401.200732Z"
+    )
+    run_root.mkdir(parents=True)
+    manifest_path = run_root / "run_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "output_directory": str(run_root.resolve()),
+                "numerical_output_directory": str((run_root / "numerical_output").resolve()),
+            }
+        ) + "\n",
+        encoding="utf-8",
+    )
+    summary_path = run_root / "task40_v10_p6_candidate_summary.json"
+    summary_path.write_text(
+        json.dumps(
+            {
+                "b0_v9_compact_volume_audit": {},
+                "b0_v9_independent_check": {},
+            }
+        ) + "\n",
+        encoding="utf-8",
+    )
+    run_summary_path = run_root / "run_summary.json"
+    run_summary_path.write_text("{}\n", encoding="utf-8")
+    producer_contract_path = repo_root / "producer_contract.json"
+    producer_contract_path.write_text("{}\n", encoding="utf-8")
+    consumer_contract_path = repo_root / "consumer_contract.json"
+    consumer_contract_path.write_text("{}\n", encoding="utf-8")
+    source_sha = "c" * 40
+    contract_sha = "f" * 64
+    window_sha = "e" * 64
+    v9_window_path = repo_root / contract_module.TASK41_B0_V9_WINDOW_RELATIVE
+    output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha / "v9_failed_terminal_audit"
+    contract_case = {
+        "model_id": contract_module.TASK41_MODEL_ID,
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+        "method": "full3d_iterative",
+        "mpi_size": 1,
+        "input_path": str(input_path),
+        "input_sha256": input_sha,
+        "physical_model_sha256": "9" * 64,
+        "resolved_config_sha256": "8" * 64,
+        "profile_identity": contract_module.TASK41_B0_PRECONDITIONER,
+        "solver_stage": "TASK41_B0",
+        "comparison_group": contract_module.TASK41_B0_COMPARISON_GROUP,
+        "geometry_identity": "fixture-geometry",
+    }
+    base_contract = {
+        "task_id": contract_module.TASK41_MODEL_ID,
+        "branch": contract_module.TASK41_BRANCH,
+        "source": {"sha": source_sha},
+        "window": {"path": str(v9_window_path), "sha256": window_sha},
+        "case": dict(contract_case),
+        "numerical_strategy": {"internal_rhs_strategy": "same_lu_rhs_solve"},
+        "resources": {
+            "task_memory_max_bytes": 1 << 30,
+            "host_reserve_bytes": 1 << 28,
+            "memory_swap_max_bytes": 0,
+        },
+        "runtime": {
+            "runtime_prefix": str(runtime_prefix),
+            "abi_receipt_path": str(abi_receipt),
+            "jit_cache": str(jit_cache),
+            "abi_receipt_sha256": "d" * 64,
+        },
+    }
+    producer_contract = json.loads(json.dumps(base_contract))
+    consumer_contract = json.loads(json.dumps(base_contract))
+    consumer_contract["source"]["sha"] = source_sha
+    producer_sha = "a" * 64
+
+    class FakeWindow:
+        path = v9_window_path
+        sha256 = window_sha
+        accounting_path = repo_root / "accounting.jsonl"
+        closeout_seconds = 1200.0
+
+    class FakeAccount:
+        def __init__(self, _window):
+            pass
+
+        def record_sample(self, **_kwargs):
+            return {"recorded": True}
+
+    def require_contract(path, **_kwargs):
+        return (
+            (producer_contract, producer_sha)
+            if Path(path) == producer_contract_path
+            else (consumer_contract, contract_sha)
+        )
+
+    monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
+    monkeypatch.setattr(
+        contract_module,
+        "load_task41_p0_fixed_window",
+        lambda *_args, **_kwargs: FakeWindow(),
+    )
+    monkeypatch.setattr(campaign_module, "CampaignAccount", FakeAccount)
+    monkeypatch.setattr(
+        resource_module,
+        "cgroup_snapshot",
+        lambda _pid: {
+            "dedicated_job_cgroup": True,
+            "readable": True,
+            "memory_limit_bytes": 1 << 30,
+            "swap_current_bytes": 0,
+            "memory_current_bytes": 1 << 20,
+        },
+    )
+    thread_environment = {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+    }
+    monkeypatch.setattr(
+        service_workflow,
+        "_activation_environment",
+        lambda *_args, **_kwargs: (thread_environment.copy(), ["activate"], 0, ""),
+    )
+    monkeypatch.setattr(service_workflow, "_qualified_activation_identity", lambda _env: "qualified")
+    monkeypatch.setattr(
+        service_workflow,
+        "_abi_preflight",
+        lambda *_args: (["preflight"], 0, json.dumps({
+            "scalar_type": "complex128", "int_type": "int32", "mpi_size": 1
+        }), ""),
+    )
+    captured: dict[str, object] = {}
+
+    def capture_saved_service(**kwargs):
+        captured.update(kwargs)
+        return 0
+
+    monkeypatch.setattr(
+        service_workflow, "_run_task41_p0_saved_output_service", capture_saved_service
+    )
+    monkeypatch.setattr(
+        service_workflow.subprocess,
+        "check_output",
+        lambda command, **_kwargs: (
+            contract_module.TASK41_BRANCH
+            if command[1] == "branch"
+            else source_sha
+        ),
+    )
+    monkeypatch.setenv("TASK41_P0_STRICT_EXECUTION", "1")
+    monkeypatch.setenv("TASK41_P0_CONTRACT_PATH", str(consumer_contract_path))
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_PATH", str(FakeWindow.path))
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_SHA256", window_sha)
+    monkeypatch.setenv("TASK41_P0_EXPECTED_SOURCE_SHA", source_sha)
+
+    result = _run_task41_p0_service(
+        unit="myfenics-case-fixture.service",
+        runtime_prefix=runtime_prefix,
+        abi_receipt=abi_receipt,
+        jit_cache=jit_cache,
+        case_args=[
+            "--task41-p0-saved-b0-v9-failed-terminal-audit",
+            "--producer-contract", str(producer_contract_path),
+            "--producer-contract-sha256", producer_sha,
+            "--run-root", str(run_root),
+            "--summary", str(summary_path),
+            "--manifest", str(manifest_path),
+            "--output-dir", str(output_root),
+        ],
+        contract_path=consumer_contract_path,
+        repo_root=repo_root,
+    )
+
+    assert result == 0
+    assert captured["b0_v9_failed_terminal_audit_mode"] is True
+    assert captured["checker_only"] is True
+    assert captured["run_root"] == run_root
+    assert captured["v9_terminal_manifest_path"] == manifest_path
+    assert captured["v9_terminal_summary_path"] == summary_path
+    assert captured["v9_terminal_producer_contract_path"] == producer_contract_path
+    assert captured["contract"] is consumer_contract
+    assert not (run_root / "numerical_output").exists()
+
+
+def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numeric_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import scripts.task40_v20_service_workflow as service_workflow
+    import src.runners.task41_p0_contract as contract_module
+    from src.runners import task41_p0_checker as checker_module
+    from src.solvers import task41_v4_volume_only_audit as v4_audit
+    from src.geometry.task41_phi90_profile import TASK41_B0_GEOMETRY_IDENTITY
+    from src.test.test_task41_v4_volume_only_audit import (
+        _task41_v9_compact_terminal_fixture,
+    )
+
+    monkeypatch.setattr(checker_module, "TASK41_P0_B0_SAVED_Y_G_SHAPE", (4, 2))
+    repo_root = tmp_path / "fixture-repo"
+    repo_root.mkdir()
+    service_workflow.subprocess.run(
+        ["git", "init", "-b", contract_module.TASK41_BRANCH],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    service_workflow.subprocess.run(
+        ["git", "config", "user.email", "fixture@example.invalid"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    service_workflow.subprocess.run(
+        ["git", "config", "user.name", "Task41 test fixture"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    (repo_root / "source_identity.txt").write_text("frozen fixture source\n", encoding="utf-8")
+    service_workflow.subprocess.run(
+        ["git", "add", "source_identity.txt"], cwd=repo_root, check=True,
+        capture_output=True, text=True,
+    )
+    service_workflow.subprocess.run(
+        ["git", "commit", "-m", "fixture source identity"], cwd=repo_root, check=True,
+        capture_output=True, text=True,
+    )
+    consumer_source_sha = service_workflow.subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
+    ).strip()
+    model_id = contract_module.TASK41_MODEL_ID
+    results_root = repo_root / "results" / model_id
+    input_path = repo_root / "b0.dat"
+    input_path.write_bytes(b"fixture DAT\n")
+    checker, candidate_summary, _numerical_output, identity_path = (
+        _task41_v9_compact_terminal_fixture(
+            tmp_path,
+            monkeypatch,
+            action_passes=False,
+            missing_numerical_output=True,
+            service_repo_root=repo_root,
+        )
+    )
+    run_root = identity_path.parent
+    assert not (run_root / "numerical_output").exists()
+    summary_path = run_root / "task40_v10_p6_candidate_summary.json"
+    manifest_path = run_root / "run_manifest.json"
+    run_summary_path = run_root / "run_summary.json"
+    copied_input_path = run_root / "input_original.dat"
+    resolved_config_path = run_root / "resolved_config.json"
+    copied_input_path.write_bytes(input_path.read_bytes())
+    resolved_config_path.write_text('{"resolved":true}\n', encoding="utf-8")
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    resolved_sha = hashlib.sha256(resolved_config_path.read_bytes()).hexdigest()
+    physical_sha = "9" * 64
+    window_path = repo_root / contract_module.TASK41_B0_V9_WINDOW_RELATIVE
+    window_path.parent.mkdir(parents=True, exist_ok=True)
+    window_path.write_text('{"fixture_window":true}\n', encoding="utf-8")
+    window_sha = hashlib.sha256(window_path.read_bytes()).hexdigest()
+    producer_source_sha = "a" * 40
+    producer_contract_path = repo_root / "producer_contract.json"
+    consumer_contract_path = repo_root / "consumer_contract.json"
+    runtime_prefix = repo_root / "runtime"
+    (runtime_prefix / "bin").mkdir(parents=True)
+    (runtime_prefix / "bin" / "python").write_text("fixture python\n", encoding="utf-8")
+    abi_receipt_path = repo_root / "abi.json"
+    abi_receipt_path.write_text("{}\n", encoding="utf-8")
+    jit_cache = repo_root / "jit"
+    jit_cache.mkdir()
+    case_spec = contract_module._task41_case("B0")
+    common_case = {
+        "model_id": model_id,
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+        "method": case_spec["method"],
+        "mpi_size": 1,
+        "input_path": str(input_path.resolve()),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "profile_identity": case_spec["profile_identity"],
+        "solver_stage": case_spec["solver_stage"],
+        "comparison_group": case_spec["comparison_group"],
+        "geometry_identity": TASK41_B0_GEOMETRY_IDENTITY,
+    }
+    producer_contract = {
+        "task_id": model_id,
+        "branch": contract_module.TASK41_BRANCH,
+        "source": {"sha": producer_source_sha},
+        "window": {"path": str(window_path), "sha256": window_sha},
+        "numerical_strategy": {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        },
+        "case": dict(common_case),
+    }
+    consumer_contract = {
+        "task_id": model_id,
+        "branch": contract_module.TASK41_BRANCH,
+        "source": {"sha": consumer_source_sha},
+        "window": {"path": str(window_path), "sha256": window_sha},
+        "numerical_strategy": {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        },
+        "case": dict(common_case),
+    }
+    producer_contract_path.write_text(json.dumps(producer_contract), encoding="utf-8")
+    consumer_contract_path.write_text(json.dumps(consumer_contract), encoding="utf-8")
+    producer_contract_sha = hashlib.sha256(producer_contract_path.read_bytes()).hexdigest()
+    consumer_contract_sha = hashlib.sha256(consumer_contract_path.read_bytes()).hexdigest()
+
+    def require_contract(path, *, expected_sha256, **_kwargs):
+        path = Path(path).resolve()
+        expected = {
+            producer_contract_path.resolve(): (producer_contract, producer_contract_sha),
+            consumer_contract_path.resolve(): (consumer_contract, consumer_contract_sha),
+        }
+        contract, digest = expected[path]
+        assert expected_sha256 == digest
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
+        return contract, digest
+
+    monkeypatch.setattr(checker, "require_task41_p0_contract", require_contract)
+    candidate_summary.update(run_id=contract_module.TASK41_B0_RUN_ID, source_sha=producer_source_sha)
+    candidate_summary["campaign_authority"] = {
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "case_id": "B0",
+        "task41_contract_path": str(producer_contract_path.resolve()),
+        "task41_contract_sha256": producer_contract_sha,
+        "source_sha": producer_source_sha,
+        "campaign_window_path": str(window_path.resolve()),
+        "campaign_window_sha256": window_sha,
+    }
+    summary_path.write_text(
+        json.dumps(candidate_summary, sort_keys=True, allow_nan=False), encoding="utf-8"
+    )
+    manifest = {
+        "model_id": model_id,
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+        "method": case_spec["method"],
+        "mpi_size": 1,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "source_sha": producer_source_sha,
+        "output_directory": str(run_root.resolve()),
+        "numerical_output_directory": str((run_root / "numerical_output").resolve()),
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    run_summary_path.write_text(json.dumps({
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+        "output_directory": str(run_root.resolve()),
+        "numerical_output_directory": str((run_root / "numerical_output").resolve()),
+    }), encoding="utf-8")
+    assert checker_module.select_task41_p0_b0_v9_failed_terminal_audit_route(
+        contract=producer_contract,
+        run_case_returncode=7,
+        run_root=run_root,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output_path=run_root / "numerical_output",
+        repo_root=repo_root,
+    ) == "v9_failed_terminal_audit"
+    assert checker_module.select_task41_p0_b0_v9_failed_terminal_audit_route(
+        contract=producer_contract,
+        run_case_returncode=0,
+        run_root=run_root,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output_path=run_root / "numerical_output",
+        repo_root=repo_root,
+    ) == "ordinary"
+    assert checker_module.select_task41_p0_b0_v9_failed_terminal_audit_route(
+        contract=producer_contract,
+        run_case_returncode=None,
+        explicit_saved_terminal=True,
+        run_root=run_root,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output_path=run_root / "numerical_output",
+        repo_root=repo_root,
+    ) == "v9_failed_terminal_audit"
+    output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha / "v9_failed_terminal_audit"
+    window = FixedCampaignWindow(
+        path=window_path,
+        sha256=window_sha,
+        payload={"accounting_path": str(repo_root / "accounting.jsonl")},
+        anchor={},
+        t0_utc_ns=1,
+        deadline_utc_ns=2,
+        total_seconds=86400.0,
+        bootstrap_seconds=0.0,
+        closeout_seconds=1200.0,
+    )
+    contract = {
+        "task_id": model_id,
+        "branch": contract_module.TASK41_BRANCH,
+        "source": {"sha": consumer_source_sha},
+        "window": {"sha256": window.sha256},
+        "case": dict(common_case),
+        "resources": {
+            "task_memory_max_bytes": 1 << 30,
+            "host_reserve_bytes": 1 << 28,
+            "memory_swap_max_bytes": 0,
+        },
+        "runtime": {
+            "runtime_prefix": str(runtime_prefix),
+            "abi_receipt_path": str(abi_receipt_path),
+            "abi_receipt_sha256": hashlib.sha256(abi_receipt_path.read_bytes()).hexdigest(),
+            "jit_cache": str(jit_cache),
+        },
+    }
+    commands: list[list[str]] = []
+    checker_authorizations: list[dict[str, object]] = []
+
+    def fake_supervise(command, *_args, **kwargs):
+        commands.append(list(command))
+        authorization = kwargs["campaign_phase_authorization"]
+        checker_authorizations.append(dict(authorization))
+        return_code = checker.main(command[3:])
+        return {
+            "classification": "COMPLETED" if return_code == 0 else "FAILED",
+            "leader_exit_code": return_code,
+        }
+
+    def require_contract_for_checker(path, *, expected_sha256, **kwargs):
+        path = Path(path).resolve()
+        if path == producer_contract_path.resolve():
+            return require_contract(path, expected_sha256=expected_sha256, **kwargs)
+        return require_contract(path, expected_sha256=expected_sha256, **kwargs)
+
+    monkeypatch.setattr(checker, "require_task41_p0_contract", require_contract_for_checker)
+    result = service_workflow._run_task41_p0_saved_output_service(
+        unit="myfenics-case-v9-audit.service",
+        runtime_prefix=runtime_prefix,
+        environment={"TASK41_P0_CHECKER_SOURCE_SHA": consumer_source_sha},
+        window=window,
+        contract=contract,
+        contract_path=consumer_contract_path,
+        contract_sha=consumer_contract_sha,
+        case_id="B0",
+        run_root=run_root,
+        output_root=output_root,
+        consumer_source_sha=consumer_source_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_v9_failed_terminal_audit_mode=True,
+        v9_terminal_producer_contract_path=producer_contract_path,
+        v9_terminal_producer_contract_sha256=producer_contract_sha,
+        v9_terminal_summary_path=summary_path,
+        v9_terminal_manifest_path=run_root / "run_manifest.json",
+        input_path=input_path,
+        activation_command=["activate"],
+        activation_identity="qualified",
+        preflight={"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1},
+        preflight_command=["preflight"],
+        cgroup_start={"memory_current_bytes": 1},
+        service_entry_accounting={"recorded": True},
+        service_start_sample=clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_supervise,
+        sha256_file=contract_module.sha256_file,
+    )
+
+    receipt = json.loads(
+        (output_root.with_name(output_root.name + ".service") / "task41_p0_service_receipt.json")
+        .read_text(encoding="utf-8")
+    )
+    assert result == 0
+    assert len(commands) == 1
+    assert "--v9-failed-terminal-audit" in commands[0]
+    assert "--run-root" in commands[0]
+    assert "--numerical-output" not in commands[0]
+    assert receipt["status"] == "completed"
+    assert receipt["required_checker_status"] == "audit_completed"
+    assert receipt["result_classification"] == "SUPERVISED_NEGATIVE_RESULT_AUDIT_COMPLETED"
+    assert receipt["action_passed"] is False
+    assert receipt["recovery_status"] == "NOT_RUN_ACTION_GATE_FAILED"
+    assert receipt["official_result"] is False
+
+    # Reuse this fixture's producer, consumer, window, ABI, and watchdog setup
+    # to exercise the saved-vector route through the real checker CLI.
+    scope = contract_module.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+    consumer_contract["execution_scope"] = scope
+    consumer_contract["evidence"] = {
+        "raw_disk_policy": {
+            "scope": "task41_b0_v3_recovery_evidence",
+            "raw_artifact_limit_bytes": 16 << 30,
+            "free_space_floor_bytes": 2 << 30,
+            "authorization": "user_20261019_16gib_evidence_only",
+            "new_evidence_limit_bytes": task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES,
+        }
+    }
+    consumer_contract_path.write_text(json.dumps(consumer_contract), encoding="utf-8")
+    consumer_contract_sha = hashlib.sha256(consumer_contract_path.read_bytes()).hexdigest()
+    contract["execution_scope"] = scope
+    contract["evidence"] = consumer_contract["evidence"]
+
+    producer_service_dir = run_root / "v9_producer.service"
+    producer_service_dir.mkdir()
+    producer_contract["evidence"] = {"service_directory": str(producer_service_dir.resolve())}
+    producer_contract_path.write_text(json.dumps(producer_contract), encoding="utf-8")
+    producer_contract_sha = hashlib.sha256(producer_contract_path.read_bytes()).hexdigest()
+
+    v9_report = json.loads(identity_path.read_text(encoding="utf-8"))
+    donor_run = repo_root / contract_module.TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
+    donor_run.mkdir(parents=True, exist_ok=True)
+    donor_arrays_root = donor_run / "mini_arrays"
+    donor_arrays_root.mkdir()
+
+    def save_donor_array(name: str, array: np.ndarray) -> dict[str, object]:
+        path = donor_arrays_root / name
+        np.save(path, array, allow_pickle=False)
+        file_bytes = path.read_bytes()
+        return {
+            "path": str(path.relative_to(donor_run)),
+            "bytes": len(file_bytes),
+            "sha256": hashlib.sha256(file_bytes).hexdigest(),
+            "array_sha256": hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest(),
+            "shape": list(array.shape),
+            "dtype": str(array.dtype),
+        }
+
+    donor_columns = []
+    donor_inputs = []
+    donor_payload_paths: set[str] = set()
+    input_hash_fields = (
+        "probe_values_sha256", "active_original_rows_sha256", "mapped_active_rows_sha256",
+        "interior_rows_sha256", "interior_values_sha256", "raw_slave_rows_sha256",
+        "raw_slave_values_sha256",
+    )
+    for column in range(2):
+        artifacts = {
+            "active_original_rows": save_donor_array(
+                f"column_{column}_active.npy", np.array([10, 11], dtype=np.int64)
+            ),
+            "slave_rows": save_donor_array(
+                f"column_{column}_slaves.npy", np.array([0, 1, 12], dtype=np.int64)
+            ),
+            "known_field": save_donor_array(
+                f"column_{column}_known.npy",
+                np.arange(13, dtype=np.float64).astype(np.complex128) + 1j * column,
+            ),
+            "native_rhs": save_donor_array(
+                f"column_{column}_rhs.npy", np.zeros(13, dtype=np.complex128)
+            ),
+            "native_volume_rhs": save_donor_array(
+                f"column_{column}_volume_rhs.npy", np.ones(13, dtype=np.complex128)
+            ),
+            "b_alpha_rows": save_donor_array(
+                f"column_{column}_b_alpha_rows.npy", np.array([0], dtype=np.int64)
+            ),
+            "b_alpha_values": save_donor_array(
+                f"column_{column}_b_alpha_values.npy", np.array([1 + 2j], dtype=np.complex128)
+            ),
+            "selected_B_frame_rows": save_donor_array(
+                f"column_{column}_selected_B_rows.npy", np.array([0, 1], dtype=np.int64)
+            ),
+            "selected_B_frame_values": save_donor_array(
+                f"column_{column}_selected_B_values.npy",
+                np.array([0.5 + 0.25j, 1.5 - 0.75j], dtype=np.complex128),
+            ),
+        }
+        donor_payload_paths.update(
+            str((donor_run / record["path"]).resolve()) for record in artifacts.values()
+        )
+        donor_columns.append({"column": column, "mode_index": column, "artifacts": artifacts})
+        donor_inputs.append({
+            "mode_index": column,
+            "mode_key": [column, 0],
+            "probe_rows": 3,
+            "active_trace_rows": 1,
+            "cell_interior_rows": 1,
+            "mpc_slave_rows": 1,
+            **{name: f"{column + 1:064x}" for name in input_hash_fields},
+            "port_alpha": [float(column + 1), float(column) / 4.0],
+        })
+    donor_manifest = {
+        "schema": "task41.p0.b0.recovery_evidence.v1",
+        "full_storage_rows": 13,
+        "active_trace_rows": 2,
+        "port_rows": 2,
+        "columns": donor_columns,
+        "input_identities": donor_inputs,
+    }
+    donor_manifest_path = donor_run / "task41_b0_recovery_manifest.json"
+    donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+    donor_summary = json.loads(donor_summary_path.read_text(encoding="utf-8"))
+
+    def write_mini_donor_manifest(manifest_payload: dict[str, object]) -> str:
+        donor_manifest_path.write_text(
+            json.dumps(manifest_payload, sort_keys=True), encoding="utf-8"
+        )
+        manifest_bytes = donor_manifest_path.read_bytes()
+        digest = hashlib.sha256(manifest_bytes).hexdigest()
+        donor_summary["b0_recovery_evidence"] = {
+            "manifest": {
+                "path": str(donor_manifest_path.relative_to(donor_run)),
+                "bytes": len(manifest_bytes),
+                "sha256": digest,
+            }
+        }
+        donor_summary_path.write_text(json.dumps(donor_summary, sort_keys=True), encoding="utf-8")
+        monkeypatch.setattr(v4_audit, "TASK41_V4_DONOR_MANIFEST_SHA256", digest)
+        return digest
+
+    mini_donor_manifest_sha = write_mini_donor_manifest(donor_manifest)
+    v9_report["donor_manifest_sha256"] = mini_donor_manifest_sha
+    v9_report_path = run_root / "task41_p0_b0_v9_compact_volume_audit.json"
+    v9_report_path.write_text(json.dumps(v9_report), encoding="utf-8")
+    v9_report_sha = hashlib.sha256(v9_report_path.read_bytes()).hexdigest()
+    v9_summary_path = run_root / "task40_v10_p6_candidate_summary.json"
+    v9_summary_path.write_text(json.dumps({
+        "run_id": contract_module.TASK41_B0_RUN_ID,
+        "status": "finished",
+        "result_classification": "WORKER_FAILED",
+        "output_directory": str(run_root.resolve()),
+    }), encoding="utf-8")
+    v9_summary_sha = hashlib.sha256(v9_summary_path.read_bytes()).hexdigest()
+    v9_receipt_path = producer_service_dir / "task41_p0_service_receipt.json"
+    v9_receipt_path.write_text(json.dumps({
+        "schema": "task41.p0.service_receipt.v1",
+        "case_id": "B0",
+        "run_case_returncode": 7,
+        "contract_path": str(producer_contract_path.resolve()),
+        "contract_sha256": producer_contract_sha,
+        "source_sha": producer_source_sha,
+    }), encoding="utf-8")
+    v9_receipt_sha = hashlib.sha256(v9_receipt_path.read_bytes()).hexdigest()
+
+    v6_source_sha = "f" * 40
+    v6_contract_path = repo_root / "v6_producer_contract.json"
+    v6_contract = {**producer_contract, "source": {"sha": v6_source_sha}}
+    v6_contract_path.write_text(json.dumps(v6_contract), encoding="utf-8")
+    v6_contract_sha = hashlib.sha256(v6_contract_path.read_bytes()).hexdigest()
+    v6_run = results_root / "v6_saved_y_g_fixture"
+    v6_run.mkdir()
+    v6_arrays = {}
+    for name, values in {
+        "v6_y": np.array([[1 + 1j, 2], [2, 1 + 1j], [3, 2 + 1j], [1 + 2j, 4]]),
+        "v6_g": np.array([[1j, 1], [1, 1j], [2, 1], [2j, 2]]),
+    }.items():
+        array_path = v6_run / f"{name}.npy"
+        np.save(array_path, np.asarray(values, dtype=np.complex128), allow_pickle=False)
+        data = array_path.read_bytes()
+        v6_arrays[name] = {
+            "name": name,
+            "path": str(array_path.resolve()),
+            "bytes": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "dtype": "complex128",
+            "shape": [4, 2],
+        }
+    v9_gate = v9_report["candidate_full_action_gate"]
+    cache_identity = v9_report["candidate_evaluator_cache_identity"]
+    v6_report_path = v6_run / "task41_p0_v6_actual_qmetric_candidate.json"
+    v6_report_path.write_text(json.dumps({
+        "schema": "task41.p0.v6.actual_qmetric_candidate_receipt.v1",
+        "raw_tensor_evaluator": "actual_qmetric_blocked_gram",
+        "geometry_policy": "mesh_actual_exact",
+        "consumer_source_sha": v6_source_sha,
+        "consumer_contract_path": str(v6_contract_path.resolve()),
+        "consumer_contract_sha256": v6_contract_sha,
+        "donor_manifest_sha256": v9_report["donor_manifest_sha256"],
+        "identity_audit": {
+            "candidate_evaluator_identity": v9_report["candidate_evaluator_identity"],
+            "candidate_evaluator_cache_identity": cache_identity,
+            "candidate_evaluator_audit": {
+                "cache_identity": cache_identity,
+                "cache_identity_sha256": cache_identity.rsplit(":", 1)[-1],
+                "full_form_signature": "fixture-full-form-signature",
+            },
+            "active_rows": v9_report["active_rows"],
+            "saved_port_rows": v9_report["appended_rows"],
+            "rhs_reducer": "fixture-reducer",
+            "candidate_full_action_gate": {
+                "full_action_artifact": "v6_y",
+                "full_reduced_rhs_artifact": "v6_g",
+                "columns": v9_gate["columns"],
+                "relative_tolerance": v9_gate["relative_tolerance"],
+            },
+        },
+        "persisted_evidence_arrays": [v6_arrays["v6_y"], v6_arrays["v6_g"]],
+    }), encoding="utf-8")
+    v6_report_sha = hashlib.sha256(v6_report_path.read_bytes()).hexdigest()
+
+    v6_contract_bindings = {
+        producer_contract_path.resolve(): (producer_contract, producer_contract_sha),
+        consumer_contract_path.resolve(): (consumer_contract, consumer_contract_sha),
+        v6_contract_path.resolve(): (v6_contract, v6_contract_sha),
+    }
+
+    def require_y_g_contract(path, *, expected_sha256, **_kwargs):
+        contract_path = Path(path).resolve()
+        payload, digest = v6_contract_bindings[contract_path]
+        assert expected_sha256 == digest
+        assert hashlib.sha256(contract_path.read_bytes()).hexdigest() == digest
+        return payload, digest
+
+    monkeypatch.setattr(checker_module, "require_task41_p0_contract", require_y_g_contract)
+    real_compare = checker_module.compare_task41_p0_b0_saved_y_g_reports
+
+    def compare_miniature(**kwargs):
+        kwargs.update(
+            repo_root=repo_root,
+            expected_shape=(4, 2),
+            trace_rows=3,
+            target_rows=(3,),
+            block_rows=2,
+        )
+        return real_compare(**kwargs)
+
+    monkeypatch.setattr(checker_module, "compare_task41_p0_b0_saved_y_g_reports", compare_miniature)
+    commands.clear()
+    checker_authorizations.clear()
+    y_g_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window.sha256 / "saved_y_g_comparison" / "attempt01"
+    budget_probe = output_root / "overbudget.sparse"
+    with budget_probe.open("wb") as stream:
+        stream.truncate(3 * 1024**3)
+    commands.clear()
+    overbudget_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="myfenics-case-y-g-overbudget.service",
+        runtime_prefix=runtime_prefix,
+        environment={"TASK41_P0_CHECKER_SOURCE_SHA": consumer_source_sha},
+        window=window,
+        contract=contract,
+        contract_path=consumer_contract_path,
+        contract_sha=consumer_contract_sha,
+        case_id="B0",
+        run_root=run_root,
+        output_root=y_g_output_root,
+        consumer_source_sha=consumer_source_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_saved_y_g_comparison_mode=True,
+        v6_y_g_report_path=v6_report_path,
+        v6_y_g_report_sha256=v6_report_sha,
+        v9_y_g_report_path=v9_report_path,
+        v9_y_g_report_sha256=v9_report_sha,
+        v9_y_g_summary_path=v9_summary_path,
+        v9_y_g_summary_sha256=v9_summary_sha,
+        v9_y_g_service_receipt_path=v9_receipt_path,
+        v9_y_g_service_receipt_sha256=v9_receipt_sha,
+        input_path=input_path,
+        activation_command=["activate"],
+        activation_identity="qualified fixture",
+        preflight={"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1},
+        preflight_command=["preflight"],
+        cgroup_start={"memory_current_bytes": 1},
+        service_entry_accounting={"recorded": True},
+        service_start_sample=clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_supervise,
+        sha256_file=contract_module.sha256_file,
+    )
+    assert overbudget_result == 3
+    assert commands == []
+    overbudget_receipt = json.loads(
+        (y_g_output_root.with_name(y_g_output_root.name + ".service")
+         / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
+    )
+    assert "512 MiB window-wide cap" in overbudget_receipt["workflow_error"]["message"]
+    budget_probe.unlink()
+    shutil.rmtree(y_g_output_root, ignore_errors=True)
+    shutil.rmtree(y_g_output_root.with_name(y_g_output_root.name + ".service"), ignore_errors=True)
+    commands.clear()
+    y_g_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="myfenics-case-y-g.service",
+        runtime_prefix=runtime_prefix,
+        environment={"TASK41_P0_CHECKER_SOURCE_SHA": consumer_source_sha},
+        window=window,
+        contract=contract,
+        contract_path=consumer_contract_path,
+        contract_sha=consumer_contract_sha,
+        case_id="B0",
+        run_root=run_root,
+        output_root=y_g_output_root,
+        consumer_source_sha=consumer_source_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_saved_y_g_comparison_mode=True,
+        v6_y_g_report_path=v6_report_path,
+        v6_y_g_report_sha256=v6_report_sha,
+        v9_y_g_report_path=v9_report_path,
+        v9_y_g_report_sha256=v9_report_sha,
+        v9_y_g_summary_path=v9_summary_path,
+        v9_y_g_summary_sha256=v9_summary_sha,
+        v9_y_g_service_receipt_path=v9_receipt_path,
+        v9_y_g_service_receipt_sha256=v9_receipt_sha,
+        input_path=input_path,
+        activation_command=["activate"],
+        activation_identity="qualified fixture",
+        preflight={"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1},
+        preflight_command=["preflight"],
+        cgroup_start={"memory_current_bytes": 1},
+        service_entry_accounting={"recorded": True},
+        service_start_sample=clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_supervise,
+        sha256_file=contract_module.sha256_file,
+    )
+    y_g_receipt = json.loads(
+        (y_g_output_root.with_name(y_g_output_root.name + ".service")
+         / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
+    )
+    comparison_path = y_g_output_root / "task41_p0_b0_saved_y_g_comparison.json"
+    comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+    assert y_g_result == 0
+    assert len(commands) == len(checker_authorizations) == 1
+    assert "--saved-b0-y-g-comparison" in commands[0]
+    assert "--v6-report" in commands[0] and "--v9-service-receipt" in commands[0]
+    assert "--numerical-output" not in commands[0]
+    assert checker_authorizations[0]["checker_kind"] == "task41_p0_b0_saved_y_g_comparison_checker"
+    assert len(checker_authorizations[0]["input_paths"]) >= 10
+    authorized_paths = set(checker_authorizations[0]["input_paths"])
+    assert str(donor_summary_path.resolve()) in authorized_paths
+    assert str(donor_manifest_path.resolve()) in authorized_paths
+    assert not (donor_payload_paths & authorized_paths)
+    assert y_g_receipt["result_classification"] == "SAVED_VECTOR_COMPARISON_DIAGNOSTIC_ONLY"
+    assert y_g_receipt["official_result"] is False
+    assert y_g_receipt["required_checker_status"] == "diagnostic_completed"
+    assert y_g_receipt["saved_y_g_comparison"]["status"] == "COMPLETED_DIAGNOSTIC_ONLY"
+    assert y_g_receipt["saved_y_g_comparison"]["result_sha256"] == hashlib.sha256(
+        comparison_path.read_bytes()
+    ).hexdigest()
+    assert y_g_receipt["saved_diagnostics_disk_budget"]["status"] == "POST_WRITE_CHECKED"
+    assert y_g_receipt["saved_diagnostics_disk_budget"]["window_output_tree_bytes"] <= (
+        task41_p0_contract.TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES
+    )
+    assert y_g_receipt["saved_diagnostics_disk_budget"]["bound_raw_artifact_bytes_stat_deduplicated"] > 0
+    assert comparison["status"] == "COMPLETED"
+    assert comparison["errors"] == []
+    assert comparison["official_result"] is False
+    assert comparison["expected_shape"] == [4, 2]
+    shared_identity = comparison["shared_donor_identity"]
+    assert shared_identity["status"] == "HASH_BOUND_DONOR_METADATA_ONLY"
+    assert shared_identity["payload_arrays_opened"] is False
+    assert shared_identity["old_per_key_lu_identity"] == "UNKNOWN_NOT_PERSISTED_BY_V6"
+    assert len(shared_identity["shared_mapping_and_known_rhs_identity"]) == 2
+    assert shared_identity["shared_mapping_and_known_rhs_identity"][0]["artifacts"]["known_field"]["shape"] == [13]
+    first_donor_column = shared_identity["shared_mapping_and_known_rhs_identity"][0]
+    assert first_donor_column["input_recipe"]["active_trace_rows"] == 1
+    assert first_donor_column["full_active_mapping_artifact"]["shape"] == [2]
+    assert first_donor_column["artifacts"]["slave_rows"]["shape"] == [3]
+    assert first_donor_column["input_recipe"]["active_original_rows_sha256"] != (
+        first_donor_column["full_active_mapping_artifact"]["sha256"]
+    )
+    assert len(comparison["vectors"]["delta_y"]["block_energy_norm2_by_column"]) == 2
+    assert all(len(column) == 2 for column in comparison["vectors"]["delta_y"]["block_energy_norm2_by_column"])
+    assert not (y_g_output_root / "numerical_output").exists()
+
+    def write_bound_reports_donor_hash(digest: str) -> tuple[str, str]:
+        nonlocal v6_report_sha, v9_report_sha
+        v9_report["donor_manifest_sha256"] = digest
+        v9_report_path.write_text(json.dumps(v9_report), encoding="utf-8")
+        v9_report_sha = hashlib.sha256(v9_report_path.read_bytes()).hexdigest()
+        v6_payload = json.loads(v6_report_path.read_text(encoding="utf-8"))
+        v6_payload["donor_manifest_sha256"] = digest
+        v6_report_path.write_text(json.dumps(v6_payload), encoding="utf-8")
+        v6_report_sha = hashlib.sha256(v6_report_path.read_bytes()).hexdigest()
+        return v6_report_sha, v9_report_sha
+
+    def direct_compare_kwargs(output_name: str) -> dict[str, object]:
+        return {
+            "v6_report_path": v6_report_path,
+            "v6_report_sha256": v6_report_sha,
+            "v9_report_path": v9_report_path,
+            "v9_report_sha256": v9_report_sha,
+            "v9_summary_path": v9_summary_path,
+            "v9_summary_sha256": v9_summary_sha,
+            "v9_service_receipt_path": v9_receipt_path,
+            "v9_service_receipt_sha256": v9_receipt_sha,
+            "consumer_contract_path": consumer_contract_path,
+            "consumer_contract_sha256": consumer_contract_sha,
+            "output_path": tmp_path / output_name,
+            "repo_root": repo_root,
+            "expected_shape": (4, 2),
+            "trace_rows": 3,
+            "target_rows": (3,),
+            "block_rows": 2,
+        }
+
+    def forbid_comparison_array_open(*_args, **_kwargs):
+        raise AssertionError("invalid donor binding reached one of the four comparison arrays")
+
+    monkeypatch.setattr(checker_module.np, "load", forbid_comparison_array_open)
+    # A V6/V9 disagreement and a mutually consistent but unfrozen hash must
+    # both fail while only the hash-bound JSON metadata has been read.
+    write_bound_reports_donor_hash(mini_donor_manifest_sha)
+    v9_report["donor_manifest_sha256"] = "0" * 64
+    v9_report_path.write_text(json.dumps(v9_report), encoding="utf-8")
+    v9_report_sha = hashlib.sha256(v9_report_path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="donor, row map"):
+        real_compare(**direct_compare_kwargs("reject_v6_v9_donor_mismatch.json"))
+    write_bound_reports_donor_hash("0" * 64)
+    with pytest.raises(ValueError, match="frozen shared V4 donor manifest"):
+        real_compare(**direct_compare_kwargs("reject_unfrozen_donor_hash.json"))
+
+    # Even a mutually re-bound manifest is rejected if its column sequence is
+    # malformed; the four saved comparison NPYs remain unopened.
+    write_bound_reports_donor_hash(mini_donor_manifest_sha)
+    donor_manifest["columns"][1]["column"] = 0
+    wrong_column_sha = write_mini_donor_manifest(donor_manifest)
+    write_bound_reports_donor_hash(wrong_column_sha)
+    with pytest.raises(ValueError, match="columns or input recipes are out of order"):
+        real_compare(**direct_compare_kwargs("reject_donor_column_order.json"))
