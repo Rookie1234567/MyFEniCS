@@ -50,6 +50,9 @@ EXPECTED_TAGS = {
     "Y3": {"1": 456, "2": 240, "3": 24},
     "Y4": {"1": 440, "2": 240, "3": 40},
     "Y5": {"1": 600, "2": 312, "3": 24},
+    "Y6": {"1": 696, "2": 360, "3": 24},
+    "Y7": {"1": 680, "2": 360, "3": 40},
+    "Y8": {"1": 776, "2": 408, "3": 40},
     "Z1": {"1": 264, "2": 72, "3": 24},
     "Z2": {"1": 372, "2": 180, "3": 24},
     "Z3": {"1": 444, "2": 252, "3": 24},
@@ -201,3 +204,36 @@ def test_d5c_tag_midpoints_do_not_label_the_entire_middle_z_band_as_grating():
                 whole_middle_as_grating[2 if zm < 0 else 1 if zm >= 120 else 3] += 1
     assert whole_middle_as_grating == Counter({2: 72, 1: 72, 3: 72})
     assert whole_middle_as_grating != Counter({int(k): v for k, v in EXPECTED_TAGS["B"].items()})
+
+
+@pytest.mark.parametrize(
+    ("case", "expected_y_segments", "expected_cells", "expected_tags"),
+    [
+        ("Y6", (12, 6, 12), 1080, {"1": 696, "2": 360, "3": 24}),
+        ("Y7", (10, 10, 10), 1080, {"1": 680, "2": 360, "3": 40}),
+        ("Y8", (12, 10, 12), 1224, {"1": 776, "2": 408, "3": 40}),
+    ],
+)
+def test_d5c_y6_y7_y8_are_independent_b_children_and_y5_is_comparison_only(
+    case, expected_y_segments, expected_cells, expected_tags
+):
+    plan = d5c_axis_plan(case)
+    baseline = d5c_axis_plan("B")
+    y5 = d5c_axis_plan("Y5")
+    assert plan["parent_case"] == "B"
+    assert plan["changed_axis"] == "y"
+    assert plan["segment_cell_counts"]["y"] == list(expected_y_segments)
+    assert plan["expected_global_cell_count"] == expected_cells
+    assert plan["expected_material_tag_counts"] == expected_tags
+    assert dict(_independent_midpoint_tags(plan)) == expected_tags
+    for axis in ("x", "z"):
+        assert plan["axes_nm"][axis] == baseline["axes_nm"][axis]
+        assert plan["axis_sha256_le_f64"][axis] == baseline["axis_sha256_le_f64"][axis]
+    assert plan["axis_sha256_le_f64"]["y"] != baseline["axis_sha256_le_f64"]["y"]
+    assert y5["parent_case"] == "B"
+    assert y5["case"] == "Y5"
+    facts = native_profile_facts(TASK40_PHI90_D5C_PROFILE_BY_CASE[case])
+    lineage = facts["component_options"]["coarse_study_lineage"]
+    assert lineage["baseline_case"] == "B"
+    assert lineage["comparison_reference_case"] == "Y5"
+    assert lineage["cell_counts_by_case"][case] == expected_cells

@@ -44,3 +44,7 @@ K1–K4（`m,n∈[-K,K]`）四个独立完整场已运行；与原有限 R13/612
 用户新授权的 5 nm 研究使用独立 `D5C` 名称，保留历史 D5 family 与全部旧结果。唯一基准 `D5C-B` 为 x/y/z 三轴各段 `2/2/2`（`[6,6,6]`，216 cells）；随后逐一从 B 只改变一个轴，顺序为 X1–X3、Y1–Y5、Z1–Z3。12 场完整坐标、轴 SHA、静态标签和逐轴比较关系见[D5C静态计划](outcomes/records/d5c_static_axis_plan_20261023_v1.json)及[响应记录](outcomes/response_d5c_coarse_5nm_plan_20261023.md)。D5C 采用旧 5 nm 的材料/入射和 R5 p6 direct 算子身份，不复用旧网格上的 FE 对象、因子或解。
 
 该更新 supersedes 本 README 前文中“下一场为 R14”的运行指针，但不改写此前历史阶段与结果。当前只完成静态 planner、输入/profile/runner/worker 接线及定向接口验证；仍须逐场 fresh、实际 live mesh QA 和完整数值求解/比较。每场均保留全 3772 模态、q39 surface/q15 volume 与原三组比较门。
+
+### 2026-10-24 D5C y-only continuation
+
+在原 12 个 D5C 案例完成后，用户追加 Y6/Y7，并仅在三项指定比较未全部通过时追加 Y8。三者都直接以 D5C-B 为网格父；Y5 仅作比较参照。轴、hash、静态标签和条件顺序见[追加计划](outcomes/records/d5c_y6_y7_y8_static_axis_plan_20261024_v1.json)与[执行记录](outcomes/response_d5c_y6_y7_y8_20261024.md)。这一续行不改历史 12 场的输入、结果或原计划。

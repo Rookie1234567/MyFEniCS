@@ -1,0 +1,461 @@
+{
+  "cases": {
+    "Y6": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          1.25,
+          2.5,
+          3.75,
+          5.0,
+          6.25,
+          7.5,
+          8.75,
+          10.0,
+          11.25,
+          12.5,
+          13.75,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          36.25,
+          37.5,
+          38.75,
+          40.0,
+          41.25,
+          42.5,
+          43.75,
+          45.0,
+          46.25,
+          47.5,
+          48.75,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        30,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "385211e4b43e433975be8a5939903e725b2ea15529d1cd12b71db8e9710e3849",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y6",
+      "changed_axis": "y",
+      "display_name": "D5C-Y6",
+      "expected_global_cell_count": 1080,
+      "expected_material_tag_counts": {
+        "1": 696,
+        "2": 360,
+        "3": 24
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y6_r5_p6_direct.dat",
+      "input_sha256": "780b2642a7d54e9a2452d97249bcd8e75165216ac1f7e5d2faab0b21c375041a",
+      "mesh_plan_id": "task40_phi90_d5c_y6_axes_v1",
+      "mesh_plan_sha256": "9be33a21b8abcaee4b446314b8fe2339a933c2c807009835150cffbcdcfd07cd",
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          12,
+          6,
+          12
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          1.25,
+          3.3333333333333335,
+          1.25
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 48.0,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 51.5625,
+        "minimum_edge_nm": 1.25,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Y7": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          1.5,
+          3.0,
+          4.5,
+          6.0,
+          7.5,
+          9.0,
+          10.5,
+          12.0,
+          13.5,
+          15.0,
+          17.0,
+          19.0,
+          21.0,
+          23.0,
+          25.0,
+          27.0,
+          29.0,
+          31.0,
+          33.0,
+          35.0,
+          36.5,
+          38.0,
+          39.5,
+          41.0,
+          42.5,
+          44.0,
+          45.5,
+          47.0,
+          48.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        30,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "2dbea5cd468e6959c285266106d280ea2fa778bc63fe6bcce8fd47312cf8b668",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y7",
+      "changed_axis": "y",
+      "display_name": "D5C-Y7",
+      "expected_global_cell_count": 1080,
+      "expected_material_tag_counts": {
+        "1": 680,
+        "2": 360,
+        "3": 40
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y7_r5_p6_direct.dat",
+      "input_sha256": "53e82a6b60bacec37f34f1ce628c673fdfa376d666699c491c873a1b0b2f8bd6",
+      "mesh_plan_id": "task40_phi90_d5c_y7_axes_v1",
+      "mesh_plan_sha256": "63383d2d1015e5daeb32054229dde9d579571dbaa852cb819acb0cc08dfb7d25",
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          10,
+          10,
+          10
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          1.5,
+          2.0,
+          1.5
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 40.0,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 61.875,
+        "minimum_edge_nm": 1.5,
+        "strictly_increasing_axes": true
+      }
+    },
+    "Y8": {
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          1.25,
+          2.5,
+          3.75,
+          5.0,
+          6.25,
+          7.5,
+          8.75,
+          10.0,
+          11.25,
+          12.5,
+          13.75,
+          15.0,
+          17.0,
+          19.0,
+          21.0,
+          23.0,
+          25.0,
+          27.0,
+          29.0,
+          31.0,
+          33.0,
+          35.0,
+          36.25,
+          37.5,
+          38.75,
+          40.0,
+          41.25,
+          42.5,
+          43.75,
+          45.0,
+          46.25,
+          47.5,
+          48.75,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        34,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "b2f03e1650d8ba816e3cb8d4a43887639b7ac433089f1b0cec22206133f48cbb",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "case": "Y8",
+      "changed_axis": "y",
+      "display_name": "D5C-Y8",
+      "expected_global_cell_count": 1224,
+      "expected_material_tag_counts": {
+        "1": 776,
+        "2": 408,
+        "3": 40
+      },
+      "input_path": "input/task40para_phi90_mesh_modes_direct/d5c_y8_r5_p6_direct.dat",
+      "input_sha256": "f5a60e8e1ab5ce2b012572cf4437c6870d0fba03b1ae2a116453913e7370566a",
+      "mesh_plan_id": "task40_phi90_d5c_y8_axes_v1",
+      "mesh_plan_sha256": "6f7fb5a945183884b5c3fe58ba0c932e05581742baa206643021d80ed22e5d64",
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "ade66521c0b91557472bc44e87928403e2331bb5211d39406ed3fcb35a1780ef",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_case": "B",
+      "schema": "task40.phi90.d5c.axis_plan.v1",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          12,
+          10,
+          12
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "segment_step_nm": {
+        "x": [
+          8.25,
+          8.5,
+          8.25
+        ],
+        "y": [
+          1.25,
+          2.0,
+          1.25
+        ],
+        "z": [
+          5.0,
+          60.0,
+          5.0
+        ]
+      },
+      "static_geometry_only": {
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "material_and_periodic_endpoints_preserved": true,
+        "maximum_cell_aspect_ratio": 48.0,
+        "maximum_edge_nm": 60.0,
+        "method": "independent_axis_interval products; not a live mesh/Jacobian QA",
+        "minimum_cell_volume_nm3": 51.5625,
+        "minimum_edge_nm": 1.25,
+        "strictly_increasing_axes": true
+      }
+    }
+  },
+  "comparison_reference_case": "Y5",
+  "created_utc": "2026-10-24",
+  "decision_rule": {
+    "Y8_after_run_pairs": [
+      "Y6->Y8",
+      "Y7->Y8"
+    ],
+    "do_not_use": "Do not trigger Y8 from a known B-vs-fine mismatch alone.",
+    "pairs_before_Y8": [
+      "Y5->Y6",
+      "Y5->Y7",
+      "Y6<->Y7"
+    ],
+    "run_Y8_if": "any one of these three pairs fails any of the three existing comparison groups"
+  },
+  "fixed_contract": {
+    "comparison_gates": {
+      "all_3772_signed_and_power_carrying_channel_R_T_abs": 1e-06,
+      "boundary_complex_and_same_coordinate_E_H_relative_L2": 0.0001,
+      "global_R_T_A_balance_A_volume_abs": 1e-05,
+      "interpolation": false,
+      "phase_fit": false
+    },
+    "method": "p6 condensed direct MUMPS, one factor, at most two same-factor correction solves",
+    "mode_count": 3772,
+    "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+    "model_id": "si_block_phi90_50x50_17x20_h120",
+    "relative_tolerance": 1e-13,
+    "resource_contract": {
+      "math_threads": 1,
+      "minimum_available_bytes": 68719476736,
+      "mpi_size": 1,
+      "numa": "interleave 0-1",
+      "parent_cpu": 9,
+      "pss_uss": "disabled",
+      "rss_hard_limit_bytes": null,
+      "swap": "observe only",
+      "worker_cpu": 24
+    },
+    "single_run_gates": {
+      "active_R5_A6_relative": 1e-06,
+      "condensed_relative": 1e-09,
+      "energy_balance_relative": 1e-05
+    },
+    "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+    "surface_quadrature_degree": 39,
+    "volume_quadrature": "degree 15/default",
+    "wavelength_nm": 5.0
+  },
+  "limits": [
+    "No automatic Y9 or other mesh.",
+    "No RSS capacity guarantee from cell-count scaling.",
+    "FULL_DTN_NOT_VERIFIED; canonical sidewall NOT_MEASURED."
+  ],
+  "parent_case": "B",
+  "prior_static_plan_path": "docs/task40para_phi90_mesh_modes_direct/outcomes/records/d5c_static_axis_plan_20261023_v1.json",
+  "prior_static_plan_sha256": "2eb101bf97068a864307b669072e3b794abb58ef92909a013a8d08a2fbad0b86",
+  "purpose": "User-authorized D5C y-only follow-up. Y6 and Y7 are compared first; Y8 is conditional. All candidates are independent children of D5C-B; Y5 is comparison-only.",
+  "schema": "task40.phi90.d5c.y6_y7_y8.static_plan.v1",
+  "sequence": [
+    "Y6",
+    "Y7",
+    "Y8_conditional"
+  ],
+  "source_baseline": "70a64b0e133318d59b489b5475a9c346e8b5d3df",
+  "static_plan_sha256": "4a7911e3c3b87d3bd1f2701c1f3678f3464ca2219676a75bc0c1c3112c5f5bac"
+}

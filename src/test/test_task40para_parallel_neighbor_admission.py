@@ -19,7 +19,10 @@ K_INPUTS = {
 }
 D5C_INPUTS = {
     case: REPO / f"input/task40para_phi90_mesh_modes_direct/d5c_{case.lower()}_r5_p6_direct.dat"
-    for case in ("B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y4", "Y5", "Z1", "Z2", "Z3")
+    for case in (
+        "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y4", "Y5",
+        "Y6", "Y7", "Y8", "Z1", "Z2", "Z3",
+    )
 }
 ROOT_PID = 81001
 MPI_PID = 81002

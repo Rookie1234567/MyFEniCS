@@ -38,7 +38,8 @@ _TASK40_PARALLEL_ALLOWED_RUNS |= frozenset(
         f'task40para_phi90_5_D5C_{case}_p6_direct_v1',
     )
     for case in (
-        'B', 'X1', 'X2', 'X3', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5', 'Z1', 'Z2', 'Z3'
+        'B', 'X1', 'X2', 'X3', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5', 'Y6', 'Y7', 'Y8',
+        'Z1', 'Z2', 'Z3'
     )
 )
 

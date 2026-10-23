@@ -23,7 +23,7 @@ D5C_INPUTS = {
     case: REPO / f"input/task40para_phi90_mesh_modes_direct/d5c_{case.lower()}_r5_p6_direct.dat"
     for case in (
         "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y4", "Y5",
-        "Z1", "Z2", "Z3",
+        "Y6", "Y7", "Y8", "Z1", "Z2", "Z3",
     )
 }
 Y3_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
@@ -184,6 +184,11 @@ def test_task40_d5c_manifest_roundtrips_through_worker_payload_gate(tmp_path, ca
     assert options["task_family"] == "task40_phi90_d5c_mesh_modes_direct"
     assert options["coarse_study_lineage"]["baseline_case"] == "B"
     assert options["coarse_study_lineage"]["historical_D5_family_modified"] is False
+    if case in {"Y6", "Y7", "Y8"}:
+        assert options["coarse_study_lineage"]["comparison_reference_case"] == "Y5"
+        assert options["coarse_study_lineage"]["sequence_decision_rule"][
+            "pre_Y8_pairs"
+        ] == ("Y5->Y6", "Y5->Y7", "Y6<->Y7")
     assert options["directional_mesh_comparison"]["display_name"] == f"D5C-{case}"
     assert options["mode_selection"]["expected_mode_count"] == 3772
     assert options["mode_selection"]["expected_mode_sha256"] == (

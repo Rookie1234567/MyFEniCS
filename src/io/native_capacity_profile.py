@@ -112,6 +112,7 @@ TASK40_PHI90_D5C_PROFILE_BY_CASE = {
     case: f"task40para_phi90_5_D5C_{case}_p6_direct_v1"
     for case in (
         "B", "X1", "X2", "X3", "Y1", "Y2", "Y3", "Y4", "Y5",
+        "Y6", "Y7", "Y8",
         "Z1", "Z2", "Z3",
     )
 }
@@ -1407,6 +1408,10 @@ def _task40_phi90_d5c_profile_facts(identity):
             "cell_counts_by_case": {
                 case: int(D5C_AXIS_PLANS[case]["expected_global_cell_count"])
                 for case in D5C_AXIS_PLANS
+                if case in {
+                    "B", "X1", "X2", "X3", "Y1", "Y2", "Y3",
+                    "Y4", "Y5", "Z1", "Z2", "Z3",
+                } or case_name in {"Y6", "Y7", "Y8"}
             },
         },
         directional_mesh_comparison={
@@ -1429,6 +1434,13 @@ def _task40_phi90_d5c_profile_facts(identity):
             "candidate_not_convergence_claim": True,
         },
     )
+    if case_name in {"Y6", "Y7", "Y8"}:
+        options["coarse_study_lineage"]["comparison_reference_case"] = "Y5"
+        options["coarse_study_lineage"]["sequence_decision_rule"] = {
+            "pre_Y8_pairs": ["Y5->Y6", "Y5->Y7", "Y6<->Y7"],
+            "run_Y8_if_any_pair_fails_all_three_comparison_groups": True,
+            "do_not_trigger_from_known_B_to_fine_mismatch_alone": True,
+        }
     options["direct_factor_evidence"][
         "full_primal_projection_quadrature_degree"
     ] = 39
@@ -1473,10 +1485,17 @@ def _task40_phi90_d5c_profile_facts(identity):
     direct_route["parent_mode_sha256"] = options["mode_selection"][
         "expected_mode_sha256"
     ]
-    base["campaign_authorization"]["source"] = (
-        "User-authorized D5C coarse 5 nm study: one unique 2/2/2-per-segment "
-        "baseline and eleven one-axis variants; historical D5 inputs/results remain unchanged."
-    )
+    if case_name in {"Y6", "Y7", "Y8"}:
+        base["campaign_authorization"]["source"] = (
+            "User-authorized D5C 5 nm y-only follow-up: Y6/Y7 are compared first; "
+            "Y8 is conditional on the three specified comparison pairs not all passing. "
+            "All are independent children of D5C-B; Y5 is comparison-only."
+        )
+    else:
+        base["campaign_authorization"]["source"] = (
+            "User-authorized D5C coarse 5 nm study: one unique 2/2/2-per-segment "
+            "baseline and eleven one-axis variants; historical D5 inputs/results remain unchanged."
+        )
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
     base["resources"]["rss_hard_limit_bytes"] = None
