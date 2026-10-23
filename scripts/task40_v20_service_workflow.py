@@ -9456,6 +9456,75 @@ def _run_task41_p0_saved_output_service(
     """Use the registered Task41 service/watchdog for a saved-output continuation."""
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
 
+    saved_route_markers = (
+        "TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT",
+        "TASK41_P0_B0_SAVED_Y_G_COMPARISON",
+        "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT",
+        "TASK41_P0_B0_V9_SAVED_STAR_SCREEN",
+        "TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY",
+    )
+    if b0_v9_failed_terminal_audit_mode or b0_saved_y_g_comparison_mode:
+        if environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != consumer_source_sha:
+            raise ValueError("saved-diagnostics checker source differs from the current consumer")
+        for marker in saved_route_markers:
+            environment.pop(marker, None)
+        environment.update({
+            "TASK41_P0_STRICT_EXECUTION": "1",
+            "TASK41_P0_CONTRACT_PATH": str(contract_path.resolve()),
+            "TASK41_P0_CONTRACT_SHA256": contract_sha,
+            "TASK41_P0_EXECUTION_WINDOW_PATH": str(Path(window.path).resolve()),
+            "TASK41_P0_EXECUTION_WINDOW_SHA256": str(window.sha256),
+            "TASK41_P0_EXPECTED_SOURCE_SHA": str(contract.get("source", {}).get("sha", "")),
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": consumer_source_sha,
+        })
+        if b0_v9_failed_terminal_audit_mode:
+            environment.update({
+                "TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT": "1",
+                "TASK41_P0_V9_PRODUCER_CONTRACT_PATH": str(
+                    Path(str(v9_terminal_producer_contract_path)).resolve()
+                ),
+                "TASK41_P0_V9_PRODUCER_CONTRACT_SHA256": str(
+                    v9_terminal_producer_contract_sha256
+                ),
+                "TASK41_P0_V9_PRODUCER_RUN_ROOT": str(run_root.resolve()),
+                "TASK41_P0_V9_PRODUCER_SUMMARY_PATH": str(
+                    Path(str(v9_terminal_summary_path)).resolve()
+                ),
+                "TASK41_P0_V9_PRODUCER_MANIFEST_PATH": str(
+                    Path(str(v9_terminal_manifest_path)).resolve()
+                ),
+                "TASK41_P0_V9_FAILED_TERMINAL_AUDIT_RESULT_PATH": str(
+                    (output_root / "task41_p0_b0_v9_failed_terminal_audit.json").resolve()
+                ),
+            })
+        else:
+            environment.update({
+                "TASK41_P0_B0_SAVED_Y_G_COMPARISON": "1",
+                "TASK41_P0_SAVED_Y_G_RUN_ROOT": str(run_root.resolve()),
+                "TASK41_P0_SAVED_Y_G_V6_REPORT_PATH": str(
+                    Path(str(v6_y_g_report_path)).resolve()
+                ),
+                "TASK41_P0_SAVED_Y_G_V6_REPORT_SHA256": str(v6_y_g_report_sha256),
+                "TASK41_P0_SAVED_Y_G_V9_REPORT_PATH": str(
+                    Path(str(v9_y_g_report_path)).resolve()
+                ),
+                "TASK41_P0_SAVED_Y_G_V9_REPORT_SHA256": str(v9_y_g_report_sha256),
+                "TASK41_P0_SAVED_Y_G_V9_SUMMARY_PATH": str(
+                    Path(str(v9_y_g_summary_path)).resolve()
+                ),
+                "TASK41_P0_SAVED_Y_G_V9_SUMMARY_SHA256": str(v9_y_g_summary_sha256),
+                "TASK41_P0_SAVED_Y_G_V9_SERVICE_RECEIPT_PATH": str(
+                    Path(str(v9_y_g_service_receipt_path)).resolve()
+                ),
+                "TASK41_P0_SAVED_Y_G_V9_SERVICE_RECEIPT_SHA256": str(
+                    v9_y_g_service_receipt_sha256
+                ),
+                "TASK41_P0_SAVED_Y_G_RESULT_PATH": str(
+                    (output_root / "task41_p0_b0_saved_y_g_comparison.json").resolve()
+                ),
+            })
+
     def read_json_object(path: Path, label: str) -> dict[str, Any]:
         value = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(value, dict):
@@ -10884,6 +10953,9 @@ def _run_task41_p0_saved_output_service(
                 assert v9_y_g_service_receipt_path is not None
                 assert v9_y_g_service_receipt_sha256 is not None
                 checker_result_path = output_root / "task41_p0_b0_saved_y_g_comparison.json"
+                environment["TASK41_P0_SAVED_Y_G_RESULT_PATH"] = str(
+                    checker_result_path.resolve()
+                )
                 checker_command = [
                     python,
                     "-m",
@@ -10918,6 +10990,9 @@ def _run_task41_p0_saved_output_service(
                 assert v9_terminal_summary_path is not None
                 assert v9_terminal_manifest_path is not None
                 checker_result_path = output_root / "task41_p0_b0_v9_failed_terminal_audit.json"
+                environment["TASK41_P0_V9_FAILED_TERMINAL_AUDIT_RESULT_PATH"] = str(
+                    checker_result_path.resolve()
+                )
                 checker_command = [
                     python,
                     "-m",

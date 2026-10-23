@@ -3440,6 +3440,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
 ) -> None:
     import scripts.task40_v20_service_workflow as service_workflow
     import src.runners.task41_p0_contract as contract_module
+    import benchmarks.subreaper_watchdog as watchdog
     from src.runners import task41_p0_checker as checker_module
     from src.solvers import task41_v4_volume_only_audit as v4_audit
     from src.geometry.task41_phi90_profile import TASK41_B0_GEOMETRY_IDENTITY
@@ -3508,10 +3509,17 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
     resolved_sha = hashlib.sha256(resolved_config_path.read_bytes()).hexdigest()
     physical_sha = "9" * 64
-    window_path = repo_root / contract_module.TASK41_B0_V9_WINDOW_RELATIVE
-    window_path.parent.mkdir(parents=True, exist_ok=True)
-    window_path.write_text('{"fixture_window":true}\n', encoding="utf-8")
-    window_sha = hashlib.sha256(window_path.read_bytes()).hexdigest()
+    producer_window_path = repo_root / contract_module.TASK41_B0_V9_WINDOW_RELATIVE
+    producer_window_path.parent.mkdir(parents=True, exist_ok=True)
+    producer_window_path.write_text('{"fixture_window":"producer"}\n', encoding="utf-8")
+    producer_window_sha = hashlib.sha256(producer_window_path.read_bytes()).hexdigest()
+    saved_window_path = repo_root / contract_module.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE
+    saved_window_path.parent.mkdir(parents=True, exist_ok=True)
+    saved_scope = contract_module.TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+    saved_window_path.write_text(
+        json.dumps({"scope": saved_scope}, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    window_sha = hashlib.sha256(saved_window_path.read_bytes()).hexdigest()
     producer_source_sha = "a" * 40
     producer_contract_path = repo_root / "producer_contract.json"
     consumer_contract_path = repo_root / "consumer_contract.json"
@@ -3541,7 +3549,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         "task_id": model_id,
         "branch": contract_module.TASK41_BRANCH,
         "source": {"sha": producer_source_sha},
-        "window": {"path": str(window_path), "sha256": window_sha},
+        "window": {"path": str(producer_window_path), "sha256": producer_window_sha},
         "numerical_strategy": {
             "schema": "task41.p0.b0.internal_rhs_strategy.v1",
             "internal_rhs_strategy": "same_lu_rhs_solve",
@@ -3552,7 +3560,30 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         "task_id": model_id,
         "branch": contract_module.TASK41_BRANCH,
         "source": {"sha": consumer_source_sha},
-        "window": {"path": str(window_path), "sha256": window_sha},
+        "window": {
+            "path": contract_module.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE.as_posix(),
+            "sha256": window_sha,
+            "entry_source_sha": consumer_source_sha,
+            "scope": saved_scope,
+        },
+        "execution_scope": saved_scope,
+        "evidence": {
+            "raw_disk_policy": {
+                "scope": "task41_b0_v3_recovery_evidence",
+                "raw_artifact_limit_bytes": 16 << 30,
+                "free_space_floor_bytes": 2 << 30,
+                "authorization": "user_20261019_16gib_evidence_only",
+                "new_evidence_limit_bytes": (
+                    contract_module.TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES
+                ),
+            }
+        },
+        "runtime": {
+            "runtime_prefix": str(runtime_prefix),
+            "abi_receipt_path": str(abi_receipt_path),
+            "abi_receipt_sha256": hashlib.sha256(abi_receipt_path.read_bytes()).hexdigest(),
+            "jit_cache": str(jit_cache),
+        },
         "numerical_strategy": {
             "schema": "task41.p0.b0.internal_rhs_strategy.v1",
             "internal_rhs_strategy": "same_lu_rhs_solve",
@@ -3564,18 +3595,41 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     producer_contract_sha = hashlib.sha256(producer_contract_path.read_bytes()).hexdigest()
     consumer_contract_sha = hashlib.sha256(consumer_contract_path.read_bytes()).hexdigest()
 
+    contract_bindings = {
+        producer_contract_path.resolve(): (producer_contract, producer_contract_sha),
+        consumer_contract_path.resolve(): (consumer_contract, consumer_contract_sha),
+    }
+
     def require_contract(path, *, expected_sha256, **_kwargs):
         path = Path(path).resolve()
-        expected = {
-            producer_contract_path.resolve(): (producer_contract, producer_contract_sha),
-            consumer_contract_path.resolve(): (consumer_contract, consumer_contract_sha),
-        }
-        contract, digest = expected[path]
+        contract, digest = contract_bindings[path]
         assert expected_sha256 == digest
         assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
         return contract, digest
 
     monkeypatch.setattr(checker, "require_task41_p0_contract", require_contract)
+    monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
+
+    class FixturePath(type(Path())):
+        @classmethod
+        def cwd(cls):
+            return repo_root
+
+    monkeypatch.setattr(watchdog, "Path", FixturePath)
+    monkeypatch.setattr(
+        watchdog, "sys", SimpleNamespace(executable=str(runtime_prefix / "bin/python"))
+    )
+
+    def fake_watchdog_git(command, **_kwargs):
+        outputs = {
+            ("git", "rev-parse", "HEAD"): f"{consumer_source_sha}\n",
+            ("git", "branch", "--show-current"): f"{contract_module.TASK41_BRANCH}\n",
+            ("git", "status", "--porcelain", "--untracked-files=normal"): "",
+        }
+        return SimpleNamespace(returncode=0, stdout=outputs[tuple(command)], stderr="")
+
+    monkeypatch.setattr(watchdog, "subprocess", SimpleNamespace(run=fake_watchdog_git))
+    monkeypatch.chdir(repo_root)
     candidate_summary.update(run_id=contract_module.TASK41_B0_RUN_ID, source_sha=producer_source_sha)
     candidate_summary["campaign_authority"] = {
         "internal_rhs_strategy": "same_lu_rhs_solve",
@@ -3583,8 +3637,8 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         "task41_contract_path": str(producer_contract_path.resolve()),
         "task41_contract_sha256": producer_contract_sha,
         "source_sha": producer_source_sha,
-        "campaign_window_path": str(window_path.resolve()),
-        "campaign_window_sha256": window_sha,
+        "campaign_window_path": str(producer_window_path.resolve()),
+        "campaign_window_sha256": producer_window_sha,
     }
     summary_path.write_text(
         json.dumps(candidate_summary, sort_keys=True, allow_nan=False), encoding="utf-8"
@@ -3635,9 +3689,12 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         numerical_output_path=run_root / "numerical_output",
         repo_root=repo_root,
     ) == "v9_failed_terminal_audit"
-    output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha / "v9_failed_terminal_audit"
+    output_root = (
+        results_root / "task41_p0_saved_diagnostics_6h" / window_sha
+        / "v9_failed_terminal_audit" / "attempt02"
+    )
     window = FixedCampaignWindow(
-        path=window_path,
+        path=saved_window_path,
         sha256=window_sha,
         payload={"accounting_path": str(repo_root / "accounting.jsonl")},
         anchor={},
@@ -3651,7 +3708,13 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         "task_id": model_id,
         "branch": contract_module.TASK41_BRANCH,
         "source": {"sha": consumer_source_sha},
-        "window": {"sha256": window.sha256},
+        "window": {
+            "path": contract_module.TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE.as_posix(),
+            "sha256": window.sha256,
+            "scope": saved_scope,
+        },
+        "execution_scope": saved_scope,
+        "evidence": consumer_contract["evidence"],
         "case": dict(common_case),
         "resources": {
             "task_memory_max_bytes": 1 << 30,
@@ -3667,11 +3730,24 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     }
     commands: list[list[str]] = []
     checker_authorizations: list[dict[str, object]] = []
+    validator_calls: list[dict[str, object]] = []
 
     def fake_supervise(command, *_args, **kwargs):
         commands.append(list(command))
         authorization = kwargs["campaign_phase_authorization"]
         checker_authorizations.append(dict(authorization))
+        validator_calls.append({
+            "command": list(command),
+            "authorization": dict(authorization),
+            "environment": dict(kwargs["worker_environment"]),
+        })
+        validated = watchdog._validate_campaign_closeout_authorization(
+            command=list(command),
+            campaign=window,
+            authorization=authorization,
+            worker_environment=kwargs["worker_environment"],
+        )
+        assert validated == authorization
         return_code = checker.main(command[3:])
         return {
             "classification": "COMPLETED" if return_code == 0 else "FAILED",
@@ -3752,8 +3828,10 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     contract["execution_scope"] = scope
     contract["evidence"] = consumer_contract["evidence"]
 
-    producer_service_dir = run_root / "v9_producer.service"
-    producer_service_dir.mkdir()
+    producer_service_dir = (
+        repo_root / case_spec["service_relative"] / f"service_source_{producer_source_sha}"
+    )
+    producer_service_dir.mkdir(parents=True)
     producer_contract["evidence"] = {"service_directory": str(producer_service_dir.resolve())}
     producer_contract_path.write_text(json.dumps(producer_contract), encoding="utf-8")
     producer_contract_sha = hashlib.sha256(producer_contract_path.read_bytes()).hexdigest()
@@ -3865,7 +3943,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     v9_report_path = run_root / "task41_p0_b0_v9_compact_volume_audit.json"
     v9_report_path.write_text(json.dumps(v9_report), encoding="utf-8")
     v9_report_sha = hashlib.sha256(v9_report_path.read_bytes()).hexdigest()
-    v9_summary_path = run_root / "task40_v10_p6_candidate_summary.json"
+    v9_summary_path = run_root / "run_summary.json"
     v9_summary_path.write_text(json.dumps({
         "run_id": contract_module.TASK41_B0_RUN_ID,
         "status": "finished",
@@ -3889,6 +3967,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     v6_contract = {**producer_contract, "source": {"sha": v6_source_sha}}
     v6_contract_path.write_text(json.dumps(v6_contract), encoding="utf-8")
     v6_contract_sha = hashlib.sha256(v6_contract_path.read_bytes()).hexdigest()
+    contract_bindings[v6_contract_path.resolve()] = (v6_contract, v6_contract_sha)
     v6_run = results_root / "v6_saved_y_g_fixture"
     v6_run.mkdir()
     v6_arrays = {}
@@ -4106,6 +4185,75 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     assert len(comparison["vectors"]["delta_y"]["block_energy_norm2_by_column"]) == 2
     assert all(len(column) == 2 for column in comparison["vectors"]["delta_y"]["block_energy_norm2_by_column"])
     assert not (y_g_output_root / "numerical_output").exists()
+
+    assert len(validator_calls) == 2
+    for captured in validator_calls:
+        command = list(captured["command"])
+        authorization = dict(captured["authorization"])
+        environment = dict(captured["environment"])
+
+        wrong_command = list(command)
+        wrong_command[3] = "--numeric-or-arbitrary-command"
+        wrong_command_authorization = dict(authorization)
+        wrong_command_authorization["command_sha256"] = hashlib.sha256(
+            json.dumps(wrong_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
+        with pytest.raises(ValueError, match="registered.*checker"):
+            watchdog._validate_campaign_closeout_authorization(
+                command=wrong_command, campaign=window,
+                authorization=wrong_command_authorization, worker_environment=environment,
+            )
+
+        shadow_contract_path = repo_root / "consumer_contract_shadow.json"
+        shadow_contract_path.write_bytes(consumer_contract_path.read_bytes())
+        contract_bindings[shadow_contract_path.resolve()] = (
+            consumer_contract, consumer_contract_sha
+        )
+        wrong_contract_environment = dict(environment)
+        wrong_contract_environment["TASK41_P0_CONTRACT_PATH"] = str(
+            shadow_contract_path.resolve()
+        )
+        with pytest.raises(ValueError):
+            watchdog._validate_campaign_closeout_authorization(
+                command=command, campaign=window, authorization=authorization,
+                worker_environment=wrong_contract_environment,
+            )
+
+        wrong_window = SimpleNamespace(path=window.path, sha256="0" * 64)
+        with pytest.raises(ValueError, match="command/window/source"):
+            watchdog._validate_campaign_closeout_authorization(
+                command=command, campaign=wrong_window, authorization=authorization,
+                worker_environment=environment,
+            )
+
+        wrong_source_environment = dict(environment)
+        wrong_source_environment["TASK41_P0_CHECKER_SOURCE_SHA"] = "f" * 40
+        with pytest.raises(ValueError):
+            watchdog._validate_campaign_closeout_authorization(
+                command=command, campaign=window, authorization=authorization,
+                worker_environment=wrong_source_environment,
+            )
+
+        wrong_hash_authorization = dict(authorization)
+        wrong_hash_authorization["input_sha256s"] = list(authorization["input_sha256s"])
+        case_input_index = wrong_hash_authorization["input_paths"].index(
+            str(input_path.resolve())
+        )
+        wrong_hash_authorization["input_sha256s"][case_input_index] = "0" * 64
+        with pytest.raises(ValueError):
+            watchdog._validate_campaign_closeout_authorization(
+                command=command, campaign=window, authorization=wrong_hash_authorization,
+                worker_environment=environment,
+            )
+
+    arbitrary_authorization = dict(validator_calls[0]["authorization"])
+    arbitrary_authorization["checker_kind"] = "unregistered_arbitrary_checker"
+    with pytest.raises(ValueError, match="numeric or arbitrary"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=list(validator_calls[0]["command"]), campaign=window,
+            authorization=arbitrary_authorization,
+            worker_environment=dict(validator_calls[0]["environment"]),
+        )
 
     def write_bound_reports_donor_hash(digest: str) -> tuple[str, str]:
         nonlocal v6_report_sha, v9_report_sha

@@ -269,6 +269,8 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_saved_output_continuation_checker',
         'task41_p0_b0_saved_evidence_audit_checker',
         'task41_p0_b0_v9_saved_star_screen_checker',
+        'task41_p0_b0_v9_failed_terminal_audit_checker',
+        'task41_p0_b0_saved_y_g_comparison_checker',
     }:
         if contract_version != 41:
             raise ValueError('Task41 checker requires a Task41 P0 execution contract')
@@ -277,7 +279,235 @@ def _validate_campaign_closeout_authorization(
             Path(str(contract.get('runtime', {}).get('runtime_prefix', '')))
             / 'bin/python'
         ).resolve()
-        if checker_kind == 'task41_p0_b0_v9_saved_star_screen_checker':
+        if checker_kind in {
+            'task41_p0_b0_v9_failed_terminal_audit_checker',
+            'task41_p0_b0_saved_y_g_comparison_checker',
+        }:
+            from src.runners.task41_p0_contract import (
+                TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+                TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE,
+                task41_case_id_for_run_id,
+            )
+
+            failed_terminal = checker_kind == 'task41_p0_b0_v9_failed_terminal_audit_checker'
+            route_marker = (
+                'TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT'
+                if failed_terminal
+                else 'TASK41_P0_B0_SAVED_Y_G_COMPARISON'
+            )
+            opposite_marker = (
+                'TASK41_P0_B0_SAVED_Y_G_COMPARISON'
+                if failed_terminal
+                else 'TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT'
+            )
+            route_action = (
+                'v9_failed_terminal_audit'
+                if failed_terminal
+                else 'v6_v9_saved_y_g_comparison'
+            )
+            case = contract.get('case')
+            scope = contract.get('execution_scope')
+            window = contract.get('window')
+            if (
+                Path(argv[0]).resolve() != expected_python
+                or authorization.get('expected_channel_count') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
+                or environment.get(route_marker) != '1'
+                or environment.get(opposite_marker) is not None
+                or environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') is not None
+                or environment.get('TASK41_P0_B0_V9_SAVED_STAR_SCREEN') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') is not None
+                or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA') != authorization.get('source_sha')
+                or environment.get('TASK41_P0_CHECKER_SOURCE_SHA') != authorization.get('source_sha')
+                or authorization.get('source_sha') != contract.get('source', {}).get('sha')
+                or authorization.get('source_branch') != contract.get('branch')
+                or not isinstance(case, dict)
+                or not isinstance(scope, dict)
+                or not isinstance(window, dict)
+                or task41_case_id_for_run_id(str(case.get('run_id', ''))) != 'B0'
+                or contract.get('numerical_strategy', {}).get('internal_rhs_strategy') != 'same_lu_rhs_solve'
+                or scope != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+                or window.get('path') != TASK41_B0_SAVED_DIAGNOSTICS_WINDOW_RELATIVE.as_posix()
+                or window.get('scope') != TASK41_B0_SAVED_DIAGNOSTICS_SCOPE
+                or route_action not in scope.get('actions', [])
+            ):
+                raise ValueError('saved-diagnostics checker is not bound to its current-source B0 route')
+
+            results_root = (root / 'results' / str(case['model_id'])).resolve()
+            raw_paths = authorization.get('input_paths')
+            raw_hashes = authorization.get('input_sha256s')
+            if (
+                not isinstance(raw_paths, list)
+                or not raw_paths
+                or not all(isinstance(value, str) for value in raw_paths)
+                or len(set(raw_paths)) != len(raw_paths)
+                or not isinstance(raw_hashes, list)
+                or len(raw_hashes) != len(raw_paths)
+                or not all(re.fullmatch(r'[0-9a-f]{64}', str(value)) for value in raw_hashes)
+            ):
+                raise ValueError('saved-diagnostics checker input authorization is malformed')
+            authorized_hashes = dict(zip(raw_paths, raw_hashes, strict=True))
+            for raw_path in raw_paths:
+                path = Path(raw_path)
+                if (
+                    not path.is_absolute()
+                    or path.resolve(strict=True) != path
+                    or not path.is_file()
+                    or not path.is_relative_to(root)
+                ):
+                    raise ValueError('saved-diagnostics authorized input escaped the repository')
+
+            def require_registered_input(path: Path, *, expected_sha256: str | None = None) -> None:
+                canonical = str(path.resolve(strict=True))
+                if (
+                    canonical not in authorized_hashes
+                    or (expected_sha256 is not None and authorized_hashes[canonical] != expected_sha256)
+                ):
+                    raise ValueError('saved-diagnostics command input is not bound by its authorization hash')
+
+            contract_file = Path(str(contract_path)).resolve(strict=True)
+            if not contract_file.is_relative_to(root):
+                raise ValueError('saved-diagnostics consumer contract escaped the repository')
+            require_registered_input(contract_file, expected_sha256=str(contract_sha))
+            case_input_raw = Path(str(case.get('input_path', '')))
+            case_input = (case_input_raw if case_input_raw.is_absolute() else root / case_input_raw).resolve(strict=True)
+            if not case_input.is_file() or not case_input.is_relative_to(root):
+                raise ValueError('saved-diagnostics B0 source input escaped the repository')
+            require_registered_input(case_input)
+            input_paths = raw_paths
+
+            if failed_terminal:
+                if (
+                    len(argv) != 20
+                    or argv[1:4] != [
+                        '-m', 'src.runners.task41_p0_checker', '--v9-failed-terminal-audit'
+                    ]
+                    or argv[4::2] != [
+                        '--run-root', '--summary', '--manifest', '--contract',
+                        '--contract-sha256', '--consumer-contract',
+                        '--consumer-contract-sha256', '--output',
+                    ]
+                    or Path(argv[15]).resolve() != contract_file
+                    or argv[17] != contract_sha
+                    or Path(argv[15]).resolve()
+                    != Path(environment.get('TASK41_P0_CONTRACT_PATH', '')).resolve()
+                    or argv[17] != environment.get('TASK41_P0_CONTRACT_SHA256')
+                    or Path(argv[5]).resolve()
+                    != Path(environment.get('TASK41_P0_V9_PRODUCER_RUN_ROOT', '')).resolve()
+                    or Path(argv[7]).resolve()
+                    != Path(environment.get('TASK41_P0_V9_PRODUCER_SUMMARY_PATH', '')).resolve()
+                    or Path(argv[9]).resolve()
+                    != Path(environment.get('TASK41_P0_V9_PRODUCER_MANIFEST_PATH', '')).resolve()
+                    or Path(argv[11]).resolve()
+                    != Path(environment.get('TASK41_P0_V9_PRODUCER_CONTRACT_PATH', '')).resolve()
+                    or argv[13] != environment.get('TASK41_P0_V9_PRODUCER_CONTRACT_SHA256')
+                ):
+                    raise ValueError('closeout command is not the registered V9 failed-terminal checker')
+                run_root = Path(argv[5]).resolve(strict=True)
+                summary_path = Path(argv[7]).resolve(strict=True)
+                manifest_path = Path(argv[9]).resolve(strict=True)
+                producer_contract_path = Path(argv[11]).resolve(strict=True)
+                if (
+                    not run_root.is_relative_to(results_root)
+                    or summary_path.parent != run_root
+                    or summary_path.name != 'task40_v10_p6_candidate_summary.json'
+                    or manifest_path != run_root / 'run_manifest.json'
+                    or not producer_contract_path.is_relative_to(root)
+                ):
+                    raise ValueError('V9 failed-terminal checker paths escaped their registered run')
+                require_registered_input(summary_path)
+                require_registered_input(manifest_path)
+                require_registered_input(
+                    producer_contract_path,
+                    expected_sha256=str(environment.get('TASK41_P0_V9_PRODUCER_CONTRACT_SHA256')),
+                )
+                required_inputs = (summary_path, manifest_path, producer_contract_path, contract_file, case_input)
+                output_index = 19
+                mode_name = 'v9_failed_terminal_audit'
+                expected_name = 'task41_p0_b0_v9_failed_terminal_audit.json'
+                result_env = 'TASK41_P0_V9_FAILED_TERMINAL_AUDIT_RESULT_PATH'
+            else:
+                if (
+                    len(argv) != 26
+                    or argv[1:4] != [
+                        '-m', 'src.runners.task41_p0_checker', '--saved-b0-y-g-comparison'
+                    ]
+                    or argv[4::2] != [
+                        '--contract', '--contract-sha256', '--v6-report',
+                        '--v6-report-sha256', '--v9-report', '--v9-report-sha256',
+                        '--v9-summary', '--v9-summary-sha256', '--v9-service-receipt',
+                        '--v9-service-receipt-sha256', '--output',
+                    ]
+                    or Path(argv[5]).resolve() != contract_file
+                    or argv[7] != contract_sha
+                    or Path(argv[5]).resolve()
+                    != Path(environment.get('TASK41_P0_CONTRACT_PATH', '')).resolve()
+                    or argv[7] != environment.get('TASK41_P0_CONTRACT_SHA256')
+                ):
+                    raise ValueError('closeout command is not the registered saved y/g checker')
+                expected_bindings = (
+                    (Path(argv[9]).resolve(strict=True), argv[11],
+                     'TASK41_P0_SAVED_Y_G_V6_REPORT_PATH', 'TASK41_P0_SAVED_Y_G_V6_REPORT_SHA256'),
+                    (Path(argv[13]).resolve(strict=True), argv[15],
+                     'TASK41_P0_SAVED_Y_G_V9_REPORT_PATH', 'TASK41_P0_SAVED_Y_G_V9_REPORT_SHA256'),
+                    (Path(argv[17]).resolve(strict=True), argv[19],
+                     'TASK41_P0_SAVED_Y_G_V9_SUMMARY_PATH', 'TASK41_P0_SAVED_Y_G_V9_SUMMARY_SHA256'),
+                    (Path(argv[21]).resolve(strict=True), argv[23],
+                     'TASK41_P0_SAVED_Y_G_V9_SERVICE_RECEIPT_PATH',
+                     'TASK41_P0_SAVED_Y_G_V9_SERVICE_RECEIPT_SHA256'),
+                )
+                expected_names = (
+                    'task41_p0_v6_actual_qmetric_candidate.json',
+                    'task41_p0_b0_v9_compact_volume_audit.json',
+                    'run_summary.json',
+                    'task41_p0_service_receipt.json',
+                )
+                allowed_roots = (results_root, results_root, results_root, root)
+                for (path, digest, path_key, sha_key), name, allowed_root in zip(
+                    expected_bindings, expected_names, allowed_roots, strict=True
+                ):
+                    if (
+                        not path.is_relative_to(allowed_root)
+                        or path.name != name
+                        or environment.get(path_key) != str(path)
+                        or environment.get(sha_key) != digest
+                        or not re.fullmatch(r'[0-9a-f]{64}', str(digest))
+                    ):
+                        raise ValueError('saved y/g report path or hash differs from the service binding')
+                    require_registered_input(path, expected_sha256=str(digest))
+                v6_path, v9_path, summary_path, receipt_path = (
+                    item[0] for item in expected_bindings
+                )
+                run_root = Path(environment.get('TASK41_P0_SAVED_Y_G_RUN_ROOT', '')).resolve(strict=True)
+                if (
+                    run_root != summary_path.parent
+                    or summary_path.parent != run_root
+                    or v9_path.parent != run_root
+                    or not run_root.is_relative_to(results_root)
+                    or environment.get('TASK41_P0_SAVED_Y_G_RUN_ROOT') != str(run_root)
+                    or not receipt_path.is_relative_to(root)
+                ):
+                    raise ValueError('saved y/g inputs do not identify a registered B0 run')
+                required_inputs = (contract_file, case_input, *(item[0] for item in expected_bindings))
+                output_index = 25
+                mode_name = 'saved_y_g_comparison'
+                expected_name = 'task41_p0_b0_saved_y_g_comparison.json'
+                result_env = 'TASK41_P0_SAVED_Y_G_RESULT_PATH'
+
+            output_path = Path(argv[output_index]).resolve()
+            window_output_root = results_root / 'task41_p0_saved_diagnostics_6h' / str(window.get('sha256', ''))
+            if (
+                any(not path.is_relative_to(root) for path in required_inputs)
+                or any(str(path) not in authorized_hashes for path in required_inputs)
+                or output_path.name != expected_name
+                or output_path.parent.parent != window_output_root / mode_name
+                or re.fullmatch(r'attempt[0-9]{2,}', output_path.parent.name) is None
+                or output_path.exists()
+                or not output_path.is_relative_to(results_root)
+                or output_path != Path(environment.get(result_env, '')).resolve()
+            ):
+                raise ValueError('saved-diagnostics output or command inputs escaped their registered paths')
+        elif checker_kind == 'task41_p0_b0_v9_saved_star_screen_checker':
             from src.runners.task41_p0_contract import (
                 TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
                 TASK41_B0_V9_WINDOW_RELATIVE,
