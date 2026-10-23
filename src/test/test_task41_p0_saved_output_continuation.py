@@ -3955,6 +3955,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     v9_report_path.write_text(json.dumps(v9_report), encoding="utf-8")
     v9_report_sha = hashlib.sha256(v9_report_path.read_bytes()).hexdigest()
     v9_summary_path = run_root / "run_summary.json"
+    v9_candidate_summary_path = run_root / "task40_v10_p6_candidate_summary.json"
     v9_summary_path.write_text(json.dumps({
         "run_id": contract_module.TASK41_B0_RUN_ID,
         "status": "finished",
@@ -4426,16 +4427,57 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         for artifact in column["artifacts"].values()
     ) + sum(int(artifact["bytes"]) for artifact in metadata_inventory)
     monkeypatch.setattr(v4_audit, "TASK41_V4_DONOR_NPY_BYTES", donor_raw_bytes)
-    prior_bytes = 0
     v9_summary_path.write_text(json.dumps({
         "run_id": contract_module.TASK41_B0_RUN_ID,
-        "b0_v9_volume_donor_binding": {
-            "manifest_sha256": v11_manifest_sha,
-            "existing_evidence_bytes": donor_raw_bytes,
-            "prior_new_evidence_bytes": prior_bytes,
-        },
+        "status": "finished",
+        "result_classification": "WORKER_FAILED",
+        "output_directory": str(run_root.resolve()),
     }), encoding="utf-8")
     v9_summary_sha = hashlib.sha256(v9_summary_path.read_bytes()).hexdigest()
+    new_evidence_bytes = 8192
+
+    def write_v9_metadata_bindings(prior_new_bytes: int) -> str:
+        cumulative_bytes = donor_raw_bytes + prior_new_bytes + new_evidence_bytes
+        v9_report.update({
+            "schema": "task41.p0.b0.v9.compact_volume_identity.v1",
+            "completed": True,
+            "status": "GATE_FAILED",
+            "official_result": False,
+            "donor_manifest_sha256": v11_manifest_sha,
+            "existing_evidence_bytes": donor_raw_bytes,
+            "prior_new_evidence_bytes": prior_new_bytes,
+            "new_evidence_bytes": new_evidence_bytes,
+            "cumulative_evidence_bytes": cumulative_bytes,
+            "evidence_cap_bytes": 16 * 1024**3,
+        })
+        v9_report_path.write_text(json.dumps(v9_report), encoding="utf-8")
+        compact_sha = hashlib.sha256(v9_report_path.read_bytes()).hexdigest()
+        candidate_summary = {
+            "run_id": contract_module.TASK41_B0_RUN_ID,
+            "b0_v9_volume_donor_binding": {
+                "manifest_sha256": v11_manifest_sha,
+                "existing_evidence_bytes": donor_raw_bytes,
+                "prior_new_evidence_bytes": prior_new_bytes,
+            },
+            "b0_v9_compact_volume_audit": {
+                "path": str(v9_report_path),
+                "bytes": v9_report_path.stat().st_size,
+                "sha256": compact_sha,
+                "schema": v9_report["schema"],
+                "status": v9_report["status"],
+                "new_evidence_bytes": new_evidence_bytes,
+                "cumulative_evidence_bytes": cumulative_bytes,
+                "action_gate": v9_report.get("candidate_full_action_gate"),
+                "recovery_gate": v9_report.get("candidate_recovery_gate"),
+            },
+        }
+        v9_candidate_summary_path.write_text(
+            json.dumps(candidate_summary), encoding="utf-8"
+        )
+        return hashlib.sha256(v9_candidate_summary_path.read_bytes()).hexdigest()
+
+    prior_bytes = 4096
+    v9_candidate_summary_sha = write_v9_metadata_bindings(prior_bytes)
     metadata_output_root = (
         results_root / "task41_p0_saved_diagnostics_6h" / window.sha256
         / "selected_incident_replay" / "attempt01"
@@ -4516,23 +4558,28 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     assert metadata_receipt["result_classification"] == "V8_SELECTED_TRACE_STAR_METADATA_ONLY_COMPLETED"
     assert metadata_receipt["official_result"] is False
     assert metadata_receipt["numerical_work_started"] is False
+    assert metadata_receipt["v9_source_run_summary_path"] == str(v9_summary_path)
+    assert metadata_receipt["v9_candidate_summary_path"] == str(v9_candidate_summary_path)
+    assert metadata_receipt["v9_candidate_summary_sha256"] == v9_candidate_summary_sha
+    assert metadata_receipt["v9_compact_volume_audit_path"] == str(v9_report_path)
+    assert metadata_receipt["v9_compact_volume_audit_sha256"] == hashlib.sha256(
+        v9_report_path.read_bytes()
+    ).hexdigest()
+    assert metadata_receipt["v9_existing_evidence_bytes"] == donor_raw_bytes
+    assert metadata_receipt["v9_prior_new_evidence_bytes"] == prior_bytes
+    assert metadata_receipt["v9_new_evidence_bytes"] == new_evidence_bytes
+    assert metadata_receipt["v9_cumulative_evidence_bytes"] == (
+        donor_raw_bytes + prior_bytes + new_evidence_bytes
+    )
     assert metadata_receipt["saved_diagnostics_disk_budget"][
         "recorded_cumulative_raw_artifact_bytes"
-    ] == donor_raw_bytes
+    ] == donor_raw_bytes + prior_bytes + new_evidence_bytes
 
     # Near-cap history must reject before another worker invocation; counting
     # only the V4 donor would incorrectly admit this 512 MiB reservation.
     raw_cap = 16 * 1024**3
-    prior_bytes = raw_cap - donor_raw_bytes - 128 * 1024**2
-    v9_summary_path.write_text(json.dumps({
-        "run_id": contract_module.TASK41_B0_RUN_ID,
-        "b0_v9_volume_donor_binding": {
-            "manifest_sha256": v11_manifest_sha,
-            "existing_evidence_bytes": donor_raw_bytes,
-            "prior_new_evidence_bytes": prior_bytes,
-        },
-    }), encoding="utf-8")
-    v9_summary_sha = hashlib.sha256(v9_summary_path.read_bytes()).hexdigest()
+    prior_bytes = raw_cap - donor_raw_bytes - new_evidence_bytes - 128 * 1024**2
+    v9_candidate_summary_sha = write_v9_metadata_bindings(prior_bytes)
     over_cap_output_root = metadata_output_root.with_name("attempt02")
     before_supervise = len(metadata_commands)
     over_cap_result = service_workflow._run_task41_p0_saved_output_service(
@@ -4578,6 +4625,76 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     assert over_cap_result == 3
     assert len(metadata_commands) == before_supervise
     assert "16 GiB cap" in over_cap_receipt["workflow_error"]["message"]
+
+    # If preflight has already captured the primary candidate-binding error,
+    # a secondary finalization budget failure must not replace it.
+    prior_bytes = 4096
+    v9_candidate_summary_sha = write_v9_metadata_bindings(prior_bytes)
+    malformed_candidate = json.loads(v9_candidate_summary_path.read_text(encoding="utf-8"))
+    malformed_candidate["b0_v9_compact_volume_audit"]["sha256"] = "0" * 64
+    v9_candidate_summary_path.write_text(
+        json.dumps(malformed_candidate), encoding="utf-8"
+    )
+    v9_candidate_summary_sha = hashlib.sha256(
+        v9_candidate_summary_path.read_bytes()
+    ).hexdigest()
+    preservation_output_root = metadata_output_root.with_name("attempt04")
+    before_supervise = len(metadata_commands)
+    preservation_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="myfenics-case-v11-metadata-first-error.service",
+        runtime_prefix=runtime_prefix,
+        environment={"TASK41_P0_CHECKER_SOURCE_SHA": consumer_source_sha},
+        window=window,
+        contract=contract,
+        contract_path=consumer_contract_path,
+        contract_sha=consumer_contract_sha,
+        case_id="B0",
+        run_root=donor_run,
+        output_root=preservation_output_root,
+        consumer_source_sha=consumer_source_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_evidence_audit_mode=True,
+        b0_v8_selected_trace_star_mode=True,
+        b0_v8_selected_trace_star_metadata_only_mode=True,
+        donor_contract_path=producer_contract_path,
+        donor_contract_sha256=producer_contract_sha,
+        donor_summary_path=donor_summary_path,
+        donor_numerical_output=donor_run / "numerical_output",
+        v9_source_run_summary_path=v9_summary_path,
+        v9_source_run_summary_sha256=v9_summary_sha,
+        input_path=input_path,
+        activation_command=["activate"],
+        activation_identity="qualified fixture",
+        preflight={"scalar_type": "complex128", "int_type": "int32", "mpi_size": 1},
+        preflight_command=["preflight"],
+        cgroup_start={"memory_current_bytes": 1},
+        service_entry_accounting={"recorded": True},
+        service_start_sample=clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_metadata_supervise,
+        sha256_file=contract_module.sha256_file,
+    )
+    preservation_receipt = json.loads(
+        (preservation_output_root.with_name(preservation_output_root.name + ".service")
+         / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
+    )
+    assert preservation_result == 3
+    assert len(metadata_commands) == before_supervise
+    assert "compact volume audit" in preservation_receipt["workflow_error"]["message"]
+    assert preservation_receipt["finalization_error"]["message"] == (
+        "saved-diagnostics route lacks recorded cumulative raw evidence"
+    )
+    assert preservation_receipt["workflow_error"]["message"] != (
+        preservation_receipt["finalization_error"]["message"]
+    )
+    assert preservation_receipt["required_checker_status"] == "not_applicable_metadata_only"
+    assert preservation_receipt["result_classification"] == (
+        "V8_SELECTED_TRACE_STAR_METADATA_ONLY_INCOMPLETE"
+    )
+    assert preservation_receipt["official_result"] is False
+    assert preservation_receipt["numerical_work_started"] is False
 
     (donor_run / "resolved_config.json").write_text(
         '{"resolved":true}\n', encoding="utf-8"

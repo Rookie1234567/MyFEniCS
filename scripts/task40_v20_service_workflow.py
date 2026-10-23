@@ -10752,13 +10752,38 @@ def _run_task41_p0_saved_output_service(
                     != v9_source_run_summary_sha256
                 ):
                     raise ValueError("V11 V9 run-summary path, size, or SHA-256 differs")
-                v9_summary = read_json_object(
+                v9_run_root = v9_source_run_summary_path.parent.resolve(strict=True)
+                expected_candidate_summary = (
+                    v9_run_root / "task40_v10_p6_candidate_summary.json"
+                )
+                v9_candidate_summary_path = expected_candidate_summary.resolve(strict=True)
+                v9_candidate_summary_sha256 = sha256_file(v9_candidate_summary_path)
+                if (
+                    not v9_run_root.is_relative_to(results_root)
+                    or v9_candidate_summary_path.stat().st_size > 8 * 1024**2
+                ):
+                    raise ValueError(
+                        "V11 V9 candidate-summary path, size, or SHA-256 differs"
+                    )
+                v9_run_summary = read_json_object(
                     v9_source_run_summary_path, "V9 source run summary"
                 )
-                v9_donor_binding = v9_summary.get("b0_v9_volume_donor_binding")
+                v9_candidate_summary = read_json_object(
+                    v9_candidate_summary_path, "V9 candidate summary"
+                )
+                v9_donor_binding = v9_candidate_summary.get(
+                    "b0_v9_volume_donor_binding"
+                )
+                v9_compact_binding = v9_candidate_summary.get(
+                    "b0_v9_compact_volume_audit"
+                )
                 if (
                     not isinstance(v9_donor_binding, Mapping)
-                    or v9_summary.get("run_id") != contract["case"].get("run_id")
+                    or not isinstance(v9_compact_binding, Mapping)
+                    or v9_run_summary.get("run_id")
+                    != contract["case"].get("run_id")
+                    or v9_candidate_summary.get("run_id")
+                    != contract["case"].get("run_id")
                     or v9_donor_binding.get("manifest_sha256") != donor_manifest_sha256
                     or v9_donor_binding.get("existing_evidence_bytes")
                     != donor_raw_bytes_stat_only
@@ -10768,10 +10793,69 @@ def _run_task41_p0_saved_output_service(
                     raise ValueError(
                         "V11 V9 run summary does not bind the frozen donor and cumulative raw-evidence totals"
                     )
-                saved_recorded_raw_bytes = (
-                    donor_raw_bytes_stat_only
-                    + int(v9_donor_binding["prior_new_evidence_bytes"])
+                compact_record = {
+                    key: v9_compact_binding.get(key)
+                    for key in ("path", "bytes", "sha256")
+                }
+                if (
+                    not isinstance(compact_record["path"], str)
+                    or type(compact_record["bytes"]) is not int
+                    or compact_record["bytes"] <= 0
+                    or not isinstance(compact_record["sha256"], str)
+                ):
+                    raise ValueError(
+                        "V11 V9 candidate summary omits its compact-report file binding"
+                    )
+                compact_paths = hash_bound_inputs(
+                    compact_record,
+                    allowed_root=v9_run_root,
+                    label="V9 compact volume audit",
                 )
+                compact_report_path = Path(str(compact_record["path"]))
+                if not compact_report_path.is_absolute():
+                    compact_report_path = v9_run_root / compact_report_path
+                compact_report_path = compact_report_path.resolve(strict=True)
+                expected_compact_report = (
+                    v9_run_root / "task41_p0_b0_v9_compact_volume_audit.json"
+                ).resolve(strict=True)
+                if compact_paths != [expected_compact_report] or compact_report_path != expected_compact_report:
+                    raise ValueError(
+                        "V11 V9 compact-report binding is not the run's registered compact audit"
+                    )
+                compact_report = read_json_object(
+                    compact_report_path, "V9 compact volume audit"
+                )
+                existing_bytes = compact_report.get("existing_evidence_bytes")
+                prior_bytes = compact_report.get("prior_new_evidence_bytes")
+                new_bytes = compact_report.get("new_evidence_bytes")
+                cumulative_bytes = compact_report.get("cumulative_evidence_bytes")
+                if (
+                    compact_report.get("schema")
+                    != "task41.p0.b0.v9.compact_volume_identity.v1"
+                    or compact_report.get("completed") is not True
+                    or compact_report.get("status") != "GATE_FAILED"
+                    or compact_report.get("official_result") is not False
+                    or compact_report.get("donor_manifest_sha256")
+                    != donor_manifest_sha256
+                    or type(existing_bytes) is not int
+                    or existing_bytes != donor_raw_bytes_stat_only
+                    or type(prior_bytes) is not int
+                    or prior_bytes != v9_donor_binding["prior_new_evidence_bytes"]
+                    or prior_bytes < 0
+                    or type(new_bytes) is not int
+                    or new_bytes < 0
+                    or type(cumulative_bytes) is not int
+                    or cumulative_bytes != existing_bytes + prior_bytes + new_bytes
+                    or v9_compact_binding.get("schema") != compact_report.get("schema")
+                    or v9_compact_binding.get("status") != compact_report.get("status")
+                    or v9_compact_binding.get("new_evidence_bytes") != new_bytes
+                    or v9_compact_binding.get("cumulative_evidence_bytes")
+                    != cumulative_bytes
+                ):
+                    raise ValueError(
+                        "V11 V9 compact audit does not bind consistent donor and cumulative raw-evidence totals"
+                    )
+                saved_recorded_raw_bytes = cumulative_bytes
                 saved_diagnostics_budget = saved_diagnostics_budget_check()
                 record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
                 record["v9_source_run_summary_path"] = str(
@@ -10780,9 +10864,24 @@ def _run_task41_p0_saved_output_service(
                 record["v9_source_run_summary_sha256"] = (
                     v9_source_run_summary_sha256
                 )
-                record["v9_prior_new_evidence_bytes"] = int(
-                    v9_donor_binding["prior_new_evidence_bytes"]
+                record["v9_candidate_summary_path"] = str(
+                    v9_candidate_summary_path
                 )
+                record["v9_candidate_summary_sha256"] = (
+                    v9_candidate_summary_sha256
+                )
+                record["v9_compact_volume_audit_path"] = str(
+                    compact_report_path
+                )
+                record["v9_compact_volume_audit_sha256"] = str(
+                    compact_record["sha256"]
+                )
+                record["v9_existing_evidence_bytes"] = existing_bytes
+                record["v9_prior_new_evidence_bytes"] = int(
+                    prior_bytes
+                )
+                record["v9_new_evidence_bytes"] = new_bytes
+                record["v9_cumulative_evidence_bytes"] = cumulative_bytes
             volume_watchdog = supervise(
                 volume_command,
                 service_directory / "volume_only_watchdog",
@@ -11907,7 +12006,17 @@ def _run_task41_p0_saved_output_service(
         record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
         if saved_diagnostics_budget is not None:
             record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
-        if b0_saved_y_g_comparison_mode:
+        if b0_v8_selected_trace_star_metadata_only_mode:
+            record["result_classification"] = (
+                "V8_SELECTED_TRACE_STAR_METADATA_ONLY_COMPLETED"
+                if result_code == 0
+                else "V8_SELECTED_TRACE_STAR_METADATA_ONLY_INCOMPLETE"
+            )
+            record["official_result"] = False
+            record["required_checker_status"] = "not_applicable_metadata_only"
+            record["selected_active_row"] = 87567
+            record["numerical_work_started"] = False
+        elif b0_saved_y_g_comparison_mode:
             record["result_classification"] = (
                 "SAVED_VECTOR_COMPARISON_DIAGNOSTIC_ONLY"
                 if result_code == 0
@@ -11930,12 +12039,21 @@ def _run_task41_p0_saved_output_service(
                 record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check(final=True)
             except Exception as exc:
                 record["status"] = "failed_raw_evidence_retained"
-                record["required_checker_status"] = "failed"
-                record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+                record["finalization_error"] = {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                }
+                record.setdefault("workflow_error", record["finalization_error"])
+                if not b0_v8_selected_trace_star_metadata_only_mode:
+                    record["required_checker_status"] = "failed"
                 if b0_saved_y_g_comparison_mode:
                     record["result_classification"] = "SAVED_VECTOR_COMPARISON_INCOMPLETE"
                 elif b0_v9_failed_terminal_audit_mode:
                     record["result_classification"] = "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE"
+                elif b0_v8_selected_trace_star_metadata_only_mode:
+                    record["result_classification"] = "V8_SELECTED_TRACE_STAR_METADATA_ONLY_INCOMPLETE"
+                    record["official_result"] = False
+                    record["numerical_work_started"] = False
                 result_code = 3
             _write_json_fsync(receipt_path, record)
     return result_code
