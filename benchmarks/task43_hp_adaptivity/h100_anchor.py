@@ -110,6 +110,7 @@ _SOURCE_FILES = (
     "src/adaptivity/stage4_local_h.py",
     "src/adaptivity/variable_p_degree_plan.py",
     "src/adaptivity/variable_p_entity_map.py",
+    "src/adaptivity/variable_p_transfer.py",
     "src/common/analytic_fields_3d.py",
     "src/common/config_3d.py",
     "src/common/modes_3d.py",
@@ -1628,6 +1629,15 @@ def _write_samples(
     np.savez_compressed(path, **arrays)
 
 
+def _configure_direct_factor_backend(cfg, requested: str) -> None:
+    """Select an existing direct factor implementation; leave defaults intact."""
+    if requested not in {"default", "mumps"}:
+        raise ValueError(f"unsupported direct factor backend: {requested}")
+    if requested == "mumps":
+        cfg.petsc_extra_options = dict(cfg.petsc_extra_options or {})
+        cfg.petsc_extra_options["pc_factor_mat_solver_type"] = "mumps"
+
+
 def _run(
     case: str,
     run_root: Path,
@@ -1642,6 +1652,7 @@ def _run(
     candidate_acceptance_contract: Path | None = None,
     candidate_parent_selection_record: Path | None = None,
     same_lu_solve_residual_correction_enabled: bool = False,
+    direct_factor_backend: str = "default",
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
@@ -1690,6 +1701,7 @@ def _run(
         None
         if candidate_parent_selection_record is None
         else str(candidate_parent_selection_record.resolve()),
+        direct_factor_backend,
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
@@ -1851,6 +1863,7 @@ def _run(
         ),
         geometry_profile=geometry_profile,
     )
+    _configure_direct_factor_backend(cfg, direct_factor_backend)
     _log_stage(comm, started, "mesh_build", "begin")
     mesh_data = build_airbox_mesh_3d(cfg, run_root / "resolved_mesh")
     axes = _mesh_axes(mesh_data.mesh, comm)
@@ -2050,6 +2063,9 @@ def _run(
         captured["port_metrics"] = kwargs["dtn_result"]["port_metrics"]
 
     def active_observer(view) -> None:
+        captured["actual_live_factor_backend"] = (
+            view.ksp.getPC().getFactorSolverType()
+        )
         if current_case or candidate_case:
             if comm.size == 1:
                 _log_stage(comm, started, "pre_validation_checkpoint", "begin")
@@ -2229,6 +2245,14 @@ def _run(
         mesh_data_override=mesh_data,
     )
     _log_stage(comm, started, "solve_and_observe", "end")
+    actual_factor_backend = summary.get("actual_pc_factor_solver_type")
+    actual_live_factor_backend = captured.get("actual_live_factor_backend")
+    if kind == "empty_h_active_p3" and actual_live_factor_backend != actual_factor_backend:
+        raise RuntimeError("live and summary direct factor backend identities differ")
+    if direct_factor_backend == "mumps" and actual_factor_backend != "mumps":
+        raise RuntimeError(
+            f"requested MUMPS direct factor, actual backend={actual_factor_backend!r}"
+        )
     source_paths = {
         name: Path(__file__).resolve().parents[2] / name for name in _SOURCE_FILES
     }
@@ -2523,6 +2547,9 @@ def _run(
                     "active_space": active_space_summary,
                 },
                 "solver": {
+                    "requested_direct_factor_backend": direct_factor_backend,
+                    "actual_direct_factor_backend": actual_factor_backend,
+                    "actual_live_direct_factor_backend": actual_live_factor_backend,
                     "case_status": summary.get("case_status"),
                     "official_result": (
                         task43_gated_official_result
@@ -2695,6 +2722,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-acceptance-contract", type=Path)
     parser.add_argument("--candidate-parent-selection-record", type=Path)
     parser.add_argument(
+        "--direct-factor-backend", choices=("default", "mumps"), default="default",
+        help="use the existing direct LU backend; default preserves prior configuration",
+    )
+    parser.add_argument(
         "--same-lu-tightening",
         action="store_true",
         help=(
@@ -2778,6 +2809,7 @@ def main(argv: list[str] | None = None) -> int:
         args.run_root,
         args.reference_run_root,
         args.parallel_reference_run_root,
+        direct_factor_backend=args.direct_factor_backend,
         same_lu_tightening_enabled=args.same_lu_tightening,
         candidate_plan_path=args.candidate_plan,
         candidate_id=args.candidate_id,

@@ -1,0 +1,523 @@
+{
+  "PDE_solve_performed": false,
+  "accepted_updates": 5,
+  "artifacts": [
+    {
+      "bytes": 2519,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/launch.sh",
+      "sha256": "3dfd9263490e18d619862417d08eee702e1e1e57663f10991d619db8c05e6939"
+    },
+    {
+      "bytes": 877,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/abi_preflight.json",
+      "sha256": "ac63b757137a64f086d56e8eac740775e40c66aa45d8e9ceccdd81fe33f1b9c4"
+    },
+    {
+      "bytes": 2386,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/input_hashes_pre.sha256",
+      "sha256": "737b7e9b8b7e9c67e6c8772f37c29975ae073795c187670f4cc5cada81f9a64b"
+    },
+    {
+      "bytes": 1394,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/inputs_postcheck.txt",
+      "sha256": "b09dadd948ce1da892c2c2ca328dadb4da5b1ee3e26c9f14894afc6cb02399cc"
+    },
+    {
+      "bytes": 7610,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/source_snapshot_pre_run/manifest.json",
+      "sha256": "e9382f6db3975a7bc996ec7f8c61412f572419e22970220e51d9a5c86d0cdf02"
+    },
+    {
+      "bytes": 4946,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/source_snapshot_pre_run/dependency_sources.sha256",
+      "sha256": "76e011190e6499057ba68109d91c61f3e74ec61deaeaca5aa4e8bdd8c4283263"
+    },
+    {
+      "bytes": 377843,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+      "sha256": "b575ee267011f3cd03d4b8889d5bcdd8f6b97215582b8b13af36ac7d0b3ef559"
+    },
+    {
+      "bytes": 2032,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/listed_sources_postcheck.txt",
+      "sha256": "dfa3187274d5f8c7e006877d495909e53b686dde4bc43a99054fc91571a35bf8"
+    },
+    {
+      "bytes": 3579,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/watchdog/summary.json",
+      "sha256": "3af450d23d66521598be9791feb6ff28cb8ec07bb2af5723a2d3f422c36485bc"
+    },
+    {
+      "bytes": 20732543,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/watchdog/resources.jsonl",
+      "sha256": "bdf6a57b3d674ebaccb3a82934c93127a307bcb1269f59a0530274d78fd8b10f"
+    },
+    {
+      "bytes": 26934,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/watchdog/worker.log",
+      "sha256": "c32ae743c5cddc68ccbd6b4a92ee83250e3a96634e7468c9fc62b458ed76bbc0"
+    },
+    {
+      "bytes": 50561,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plan_audit.json",
+      "sha256": "8defe8b99b2e789c46643d150586d6545a3b03f046742f44ca10ebb5d102708f"
+    },
+    {
+      "bytes": 45306,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plans/round6_p_up.json",
+      "sha256": "b6b4d42c1c9fe4baa7bca65a63c40001ee5664863860ce5360e3e572242ddf8b"
+    },
+    {
+      "bytes": 101197,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plans/round6_h_refine.json",
+      "sha256": "b0adb0430d5256fea4b20c334c0cc0c7df094bcf7aa0d3ecafded3152c3f84f8"
+    },
+    {
+      "bytes": 16034,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plans/round6_p_up.audit.json",
+      "sha256": "5e79f6700f659e63e6c03bec79b5c7fcb5ee8900a143b51a34e1004567fc10f5"
+    },
+    {
+      "bytes": 5689,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plans/round6_h_refine.audit.json",
+      "sha256": "505241d5c8b379d4c25a85cc872a0a65fabea71e7c568fcbbf6aee42c9337de3"
+    },
+    {
+      "bytes": 2357,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/formal_plan_cost_index.json",
+      "sha256": "233395495226789e8fdc1808b2394ea8aaef1699417ff2851351fa58b29660fd"
+    },
+    {
+      "bytes": 1693,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/root_review/p_authority_review.json",
+      "sha256": "c4ac314ba2ac2ffed6f1c7487008d323e61819fc1a83c9f6ccd36c67352c21f3"
+    },
+    {
+      "bytes": 1933,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/root_review/plan_terminal_review.json",
+      "sha256": "369b3c9e51e8124b6ab27fde61076551fc7a7bb09717301166af1428cc4e1e71"
+    },
+    {
+      "bytes": 377,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/root_review/parent_candidate_cache_union.json",
+      "sha256": "1f1e2028637956eefc895d4e54c4f01efd547360dcdaf4098d8e867ac0b77ece"
+    },
+    {
+      "bytes": 1232,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/root_review/light_preview_audit.json",
+      "sha256": "8927999e988591dc33e0f26fc3e13a9f988fc3c5892239a0add78864e536ddbc"
+    },
+    {
+      "bytes": 16516,
+      "path": "benchmarks/artifacts/task43/round6_light_preview_attempt3/preview.json",
+      "sha256": "4a7980d1f2afe25e41aebdfd07c54b9b20376df25ccafc8a335f098890704b09"
+    },
+    {
+      "bytes": 10506,
+      "path": "benchmarks/artifacts/task43/round6_light_preview_attempt3/preview.py",
+      "sha256": "28984b58e9e87632c35d36381f5ce3e1ef9227391f96b98f57b61b68d2ed5d93"
+    },
+    {
+      "bytes": 6804,
+      "path": "benchmarks/artifacts/task43/round6_light_preview_attempt3/preview_cost_index.json",
+      "sha256": "0f9657dc848237d9379d20de966564dce49fba6dbb884fa778d499f4c9cbfa8c"
+    },
+    {
+      "bytes": 834,
+      "path": "benchmarks/artifacts/task43/round6_light_preview_attempt3/root_review/root_marking_preview.json",
+      "sha256": "8d5dfde1607253a5ccb85501bb22d26eeb9c1411a38c68577836eccef43654ad"
+    }
+  ],
+  "classification": "accepted5_geometry_degree_authority_and_same_mesh_p_transfer_only",
+  "conditional_ranking_bound": {
+    "all_other_frozen_gates_required": true,
+    "h_eta_nonnegative_score_upper": 3.3897795093450784e-08,
+    "h_pruned": false,
+    "p_eta_strict_dominance_threshold": 0.0029364571961372436,
+    "p_result_measured": false
+  },
+  "costs": {
+    "actual_seconds": 4536.8164097866975,
+    "excluded": "not covered: unmonitored tests/work and imported reference generation; this is only the listed terminal watchdog subtotal",
+    "forecast_exceeded": true,
+    "not_entire_campaign_cost": true,
+    "original_forecast_minutes": [
+      20,
+      40
+    ],
+    "terminal_watchdog_count_through_this_plan": 30,
+    "watchdog_wall_subtotal_seconds": 34309.20746446168
+  },
+  "h_candidate": {
+    "PDE_status": "not_run",
+    "actual_dofs": {
+      "active_cell_interior_rows": 111102,
+      "active_fe_dof_gate_limit": null,
+      "active_fe_dof_gate_pass": true,
+      "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+      "added_independent_fe_dofs": 100910,
+      "independent_active_fe_dofs": 171122,
+      "independent_trace_rows": 60020,
+      "parent_independent_fe_dofs": 70212,
+      "raw_broken_active_fe_dofs_before_hanging_floquet_constraints": 186971
+    },
+    "authority_wall_seconds": 1280.1282973368652,
+    "candidate_id": "round6_h_refine",
+    "cross_mesh_transfer": {
+      "classification": "accepted-parent-to-candidate-space-transfer",
+      "pass": null,
+      "pde_solve_performed": false,
+      "status": "not_run_cross_mesh_transfer_not_qualified"
+    },
+    "degree_histogram": {
+      "p4": 184,
+      "p5": 292,
+      "p6": 47
+    },
+    "degrees_and_constraints_pass": true,
+    "hanging_patches": 55,
+    "leaves": 523,
+    "matches_preview_bytes": true,
+    "periodic_closure_splits": 1,
+    "plan": {
+      "bytes": 101197,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plans/round6_h_refine.json",
+      "sha256": "b0adb0430d5256fea4b20c334c0cc0c7df094bcf7aa0d3ecafded3152c3f84f8"
+    },
+    "reference_space_cache": {
+      "build_cache_maxsize": 64,
+      "cache_after_authority": {
+        "currsize": 42,
+        "hits": 1776,
+        "maxsize": 64,
+        "misses": 42
+      },
+      "cache_before_authority": {
+        "currsize": 36,
+        "hits": 1259,
+        "maxsize": 64,
+        "misses": 36
+      },
+      "cache_delta_authority": {
+        "hits": 517,
+        "misses": 6
+      },
+      "capacity_contains_local_workset": true,
+      "local_maps_including_uniform_p6": 32,
+      "local_unique_cell_degree_map_count": 31,
+      "mpi_size": 1,
+      "rank": 0,
+      "scope": "per_rank_local_owned_cells"
+    },
+    "root_audit_scope": "root independently checked geometry and interior formula; hanging trace60020 is qualified authority, not a second independent trace implementation",
+    "root_splits": 49,
+    "total_audit_wall_seconds": 1280.1343401167542,
+    "user_splits": 48
+  },
+  "light_preview": {
+    "attempts": [
+      {
+        "attempt": 1,
+        "classification": "setup_failure_sorted_ID_comparison",
+        "wall_seconds": 8.592161974869668
+      },
+      {
+        "attempt": 2,
+        "classification": "setup_failure_missing_entity_to_cell_connectivity",
+        "wall_seconds": 10.758572021964937
+      },
+      {
+        "attempt": 3,
+        "classification": "completed",
+        "wall_seconds": 16.85226917685941
+      }
+    ],
+    "reference_space_cache_after": {
+      "currsize": 0,
+      "hits": 0,
+      "maxsize": 64,
+      "misses": 0
+    },
+    "reference_space_cache_before": {
+      "currsize": 0,
+      "hits": 0,
+      "maxsize": 64,
+      "misses": 0
+    },
+    "reference_space_construction_performed": false,
+    "total_watchdog_seconds": 36.203003173694015
+  },
+  "marking": {
+    "builder_marking": {
+      "captured_fraction": 0.5081433466590355,
+      "count": 48,
+      "cutoff_normalized_contribution": 0.008370514104523016,
+      "cutoff_tie_expansion_count": 0,
+      "marked_g_error_squared": 4.139851828776198,
+      "marked_global_cell_ids_sha256": "f0972667db70e2d17659be66f1d5f1e2c7581a9f702be27cc200df7a8a8db74c",
+      "minimal_count_before_tie_expansion": 48,
+      "theta": 0.5,
+      "tie_policy": "include_within_relative_1e-10_of_cutoff",
+      "total_g_error_squared": 8.147015711206471
+    },
+    "count": 48,
+    "marked_ids": [
+      19,
+      32,
+      33,
+      48,
+      49,
+      50,
+      66,
+      67,
+      68,
+      81,
+      82,
+      84,
+      85,
+      86,
+      99,
+      100,
+      102,
+      103,
+      104,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      149,
+      150,
+      151,
+      152,
+      153,
+      154,
+      162,
+      163,
+      164,
+      165,
+      166,
+      171,
+      172,
+      173,
+      174,
+      176,
+      178
+    ],
+    "marked_parent_degree_counts": {
+      "4": 18,
+      "5": 30
+    },
+    "marked_z_intervals": {
+      "(120.0, 130.0)": 18,
+      "(90.0, 120.0)": 30
+    },
+    "matches_root_preview": true,
+    "root_marking_preview_path": "/tmp/task43/root_round6_marking_preview.json",
+    "root_marking_preview_sha256": "8d5dfde1607253a5ccb85501bb22d26eeb9c1411a38c68577836eccef43654ad",
+    "theta": 0.5
+  },
+  "marking_minimality": {
+    "47_largest_contributions_capture": 0.4997728325545125,
+    "48_capture": 0.5081433466590356,
+    "error_region": "30 marked leaves z90–120 nm, 18 z120–130 nm",
+    "saturated_mark_count": 0
+  },
+  "official_result": false,
+  "p_candidate": {
+    "PDE_status": "not_run",
+    "actual_dofs": {
+      "active_cell_interior_rows": 56598,
+      "active_fe_dof_gate_limit": null,
+      "active_fe_dof_gate_pass": true,
+      "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+      "added_independent_fe_dofs": 13747,
+      "independent_active_fe_dofs": 83959,
+      "independent_trace_rows": 27361,
+      "parent_independent_fe_dofs": 70212,
+      "raw_broken_active_fe_dofs_before_hanging_floquet_constraints": 88376
+    },
+    "authority_wall_seconds": 1839.2104838150553,
+    "candidate_id": "round6_p_up",
+    "closure_raises": 12,
+    "degree_histogram": {
+      "p4": 21,
+      "p5": 82,
+      "p6": 77
+    },
+    "degrees_and_constraints_pass": true,
+    "independent_topology_count": "root formula 27361 trace +56598 interior =83959",
+    "leaves": 180,
+    "matches_preview_bytes": true,
+    "plan": {
+      "bytes": 45306,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/plan_output/plans/round6_p_up.json",
+      "sha256": "b6b4d42c1c9fe4baa7bca65a63c40001ee5664863860ce5360e3e572242ddf8b"
+    },
+    "reference_space_cache": {
+      "build_cache_maxsize": 64,
+      "cache_after_authority": {
+        "currsize": 35,
+        "hits": 145,
+        "maxsize": 64,
+        "misses": 35
+      },
+      "cache_before_authority": {
+        "currsize": 0,
+        "hits": 0,
+        "maxsize": 64,
+        "misses": 0
+      },
+      "cache_delta_authority": {
+        "hits": 145,
+        "misses": 35
+      },
+      "capacity_contains_local_workset": true,
+      "local_maps_including_uniform_p6": 36,
+      "local_unique_cell_degree_map_count": 35,
+      "mpi_size": 1,
+      "rank": 0,
+      "scope": "per_rank_local_owned_cells"
+    },
+    "requested_raises": 48,
+    "same_mesh_transfer": {
+      "active_extraction": {
+        "active_global_rows": 88376,
+        "global_embedding_matrix_allocated": false,
+        "maximum_p6_to_active_identity_error": 1.605590660425095e-13,
+        "maximum_shared_active_row_absolute_error": 4.270651487619868e-14,
+        "maximum_shared_active_row_relative_error": 1.7792797767714578e-15,
+        "owned_cells": 180,
+        "pass": true,
+        "reference_space_cache_after": {
+          "currsize": 36,
+          "hits": 539,
+          "maxsize": 64,
+          "misses": 36
+        },
+        "reference_space_cache_before": {
+          "currsize": 35,
+          "hits": 145,
+          "maxsize": 64,
+          "misses": 35
+        },
+        "reference_space_cache_delta": {
+          "hits": 394,
+          "misses": 1
+        },
+        "schema_version": "task035d.variable-p-p6-primal-extraction.v1",
+        "shared_row_tolerance": 5e-10,
+        "status": "primal_active_extraction_pass",
+        "unique_cell_degree_maps": 35
+      },
+      "candidate_independent_active_fe_dofs": 83959,
+      "classification": "same_mesh_accepted_parent_to_candidate_p_transfer",
+      "full_active_trace_constraint_audit": {
+        "full_active_trace_rows": 31778,
+        "independent_root_block_count": 1170,
+        "independent_trace_rows": 27361,
+        "maximum_absolute_constraint_error": 6.592635291719325e-14,
+        "maximum_relative_constraint_error": 2.7502803017075783e-15,
+        "mpi_size": 1,
+        "pass": true,
+        "physical_entity_block_count": 1423,
+        "schema_version": "task035d.variable-p-p6-trace-transfer-audit.v1",
+        "status": "full_active_trace_constraint_pass",
+        "tolerance": 5e-10
+      },
+      "matrix_allocated": false,
+      "mesh_and_p6_dof_identity_pass": true,
+      "p6_recovery": {
+        "absolute_shared_coefficient_error_max": 2.065008755330598e-13,
+        "conformity_tolerance": 5e-10,
+        "global_embedding_matrix_allocated": false,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "relative_shared_coefficient_error_max": 1.0220808136515173e-14,
+        "schema_version": "task035d.variable-p-p6-recovery.v1",
+        "status": "conforming_p6_storage_recovery_pass"
+      },
+      "parent_storage_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round5_p_up_attempt2/run/candidate_recovered_solution_storage.npz",
+      "parent_storage_sha256": "f2664b8f864ba5af666ba82992e8bc0c283b5565f6854cf776f48b32fc9c2184",
+      "parent_to_candidate_p6_relative_error": 3.244303143321806e-14,
+      "parent_to_candidate_p6_tolerance": 5e-10,
+      "pass": true,
+      "pde_solve_performed": false,
+      "reference_space_cache_delta": {
+        "hits": 394,
+        "misses": 1
+      },
+      "status": "pass",
+      "unique_cell_degree_map_count": 35,
+      "wall_seconds": 1401.1892045186833
+    },
+    "total_audit_wall_seconds": 3240.4016761737876
+  },
+  "parent": {
+    "candidate_id": "round5_p_up",
+    "independent_FE_dofs": 70212,
+    "independent_audit": {
+      "bytes": 29490,
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round5_independent_audit_v1.json",
+      "sha256": "8998261b436e8c4bccbbd464cf05a1fc17da61858327b118ff0c843e3a4b5fbb"
+    },
+    "recovered_storage_sha256": "f2664b8f864ba5af666ba82992e8bc0c283b5565f6854cf776f48b32fc9c2184",
+    "selection": {
+      "bytes": 10515,
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round5_selection_transition5_v1.json",
+      "sha256": "a2c315bf74173fc7f37ddda8b114b02b040288c080c90dbdee0501d86682dd14"
+    }
+  },
+  "performance_limits": [
+    "cache fitting is not proof that reference construction is fast",
+    "parent32/candidate36/intersection26/union42 <=64 only excludes this key-set capacity overflow",
+    "R5 h67>64 was a capacity risk; 63miss and host contention do not prove thrashing or explain 3014s",
+    "MUMPS may reduce factorization only, not measured 1839s authority/1401s transfer"
+  ],
+  "reference_access": {
+    "holdout_or_final_control_fields_used_for_this_selection": false,
+    "scope": "this round marking/ranking only; some historical reference metadata was reviewed, not global blindness"
+  },
+  "resources": {
+    "children_cleared": true,
+    "classification": "COMPLETED",
+    "elapsed_seconds": 4536.8164097866975,
+    "global_swap_job_attribution": "UNRESOLVED; legacy WSL scope text preserved",
+    "native_host_global_swap_delta_pages": {
+      "pswpin": 33,
+      "pswpout": 0
+    },
+    "sampled_tree_VmSwap_peak_bytes": 0,
+    "simultaneous_sampled_tree_RSS_peak_bytes": 3002015744,
+    "watchdog": {
+      "bytes": 3579,
+      "path": "benchmarks/artifacts/task43/round6_plan_transfer_attempt1/watchdog/summary.json",
+      "sha256": "3af450d23d66521598be9791feb6ff28cb8ec07bb2af5723a2d3f422c36485bc"
+    }
+  },
+  "run": {
+    "MPI_size": 1,
+    "PETSc_int": "int64",
+    "PETSc_scalar": "complex128",
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "deadline_seconds": 7200,
+    "input_pre_post_hash_match_count": 16,
+    "listed_source_pre_post_hash_match_count": 47,
+    "source_head": "a0fdfef53ffea06cb68816dcf65e5afe8a6dd0b4",
+    "source_snapshot_scope": "47 explicitly listed files, includes variable_p_transfer; not a complete transitive dependency closure",
+    "source_state": "clean throughout formal plan",
+    "threads": 1,
+    "worker_CPU": [
+      1
+    ]
+  },
+  "schema": "task43.round6-plan-transfer-audit.v1",
+  "status": "plan_authorities_and_p_transfer_passed; no_candidate_PDE_or_selection"
+}
