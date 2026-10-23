@@ -51,7 +51,19 @@ attempt1 与 attempt2 是两个独立结果，均保留。attempt1 使用未缩�
 
 base assembly563.106629s含新进程空间准备，plan authority382.846s仅校准、不另加；modal vector1003.347834/setup128.210813/recovery24.849347/field capture16.402932/独立A61027.401185s分账，嵌套计时不叠加。47.98min在35–85min预估内，既有7200s门未延长，共享JIT不算隔离冷启动，也不与不同p-map作后端加速比。轻量monitor工具session90178退出143时，原detached三进程仍同PID/startticks活跃并持续采样；它是监视工具事件，不是PDE停止，sender未知，不回填为R8原因。
 
-截至R9收口，50份完整summary watchdog小计58,412.369848452974s；另R8部分窗下界3109.3891972089186s，合并观测下界61,521.75904566189s，不是完整campaign或完整R8成本。受监控组件／失败／恢复均保留，未监控tests/工作与导入参考生成另记。当前11条模型lineage、15次实际完整solver尝试、17份带actual authority计划、accepted9；若最低共同源码baseline／联合q加严／R14三次后续solve实际执行，总尝试将到18，超§9规划16两次，仍须各自授权，不以lineage抵扣。下一步仅以accepted9重新做R10轻量marking/几何/pFE/cache预览，不构造reference spaces或正式authority/PDE，不复用旧标记、不读holdout/control；G3草稿仅/tmp且未应用，最终独立参考自身资格、控制、q/R、侧壁、终点和同精度成本仍未关闭。证据见[transition9](records/round9_selection_transition9_v1.json)及[独立审计](records/round9_independent_audit_v1.json)。
+截至R9收口，50份完整summary watchdog小计58,412.369848452974s；另R8部分窗下界3109.3891972089186s，合并观测下界61,521.75904566189s，不是完整campaign或完整R8成本。受监控组件／失败／恢复均保留，未监控tests/工作与导入参考生成另记。该R9历史检查点有11条模型lineage、15次实际完整solver尝试、17份带actual authority计划、accepted9；若最低共同源码baseline／联合q加严／R14三次后续solve实际执行，总尝试将到18，超§9规划16两次，仍须各自授权，不以lineage抵扣。第10轮轻量预览与唯一p实际authority现已完成，accepted仍9；按下述条件仅放行一次p PDE，不读holdout/control；G3草稿仅/tmp且未应用，最终独立参考自身资格、控制、q/R、侧壁、终点和同精度成本仍未关闭。证据见[transition9](records/round9_selection_transition9_v1.json)及[独立审计](records/round9_independent_audit_v1.json)。
+
+
+## 第10轮准备：规则自然到全体p6，尚未求解
+
+| 项目 | 实测／限定 |
+|---|---|
+| 原场标记与p空间 | accepted9按原θ=.5最少46格，28个剩余p5实升、18个p6饱和保留，无强制p闭包；自然形成180格全p6，非预设p扫描。实际FE118800=37800迹+81000内部，Δ8328，含612端口共38412行；计划与预览字节相同 |
+| 实际authority与资源 | authority206.957269s，cache1miss179hit；完整watchdog222.409305s/179samples/树RSS峰1,044,500,480B/taskVmSwap0/native全机增量0/exit0清理；50listed source33inputs posthash及独立周期公式通过，不据一键宣称加速 |
+| h仅几何与数学界 | 82根八分+98不变=754叶；内部292260行只给Δh≥181788，actual trace/总FE/authority仍null/not_run；score上界2.697922472e−10，p须实测η严格低于2.862184560e−5且其他冻结门全过才可剪h |
+| 下一唯一判断 | 仅R10 p PDE条件放行：prep文档/检查提交推送干净后，fresh host/ABI/source/input快照，固定MUMPS/R13/full612/q15q28/一次自然sameLU；35–85min与6–16GiB仅预测，7200s/192GiB/taskSwap0事前门、6000s提醒。PDE后先独审，再另放行比较，不自动accept10 |
+
+截至本准备检查点，52份完整summary watchdog小计58,649.84554416314s，加R8部分窗只得到观测下界61,759.234741372056s，非全campaign／完整R8成本。18份actual authority计划，11条lineage／15次实际fullsolver尝试、accepted9；本次PDE若启动为全任务第16次，最低三次G3之后达19（超§9规划16三次），仅用于判断余下28格p5是否限制两零级功率，不扩扫描。207s authority已发生、只校准包含重新建空间的PDE base，不重复加账；未使用转移保持not_run/passnull/wallnull。G3仍仅/tmp，最终空间未冻结。轻量证据见[第10轮p-only准备](records/round10_p_only_plan_preparation_v1.json)。
 
 ## 正式起点与丰富参考恢复（G2准备）
 
