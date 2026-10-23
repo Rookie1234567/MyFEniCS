@@ -358,7 +358,8 @@ def _validate_candidate_physics(
 
 
 def _recompute_candidate_hard_gates(
-    record: dict[str, Any], mode_payload: dict[str, Any], contract: dict[str, Any]
+    record: dict[str, Any], mode_payload: dict[str, Any], contract: dict[str, Any],
+    *, allow_legacy_initial_parent: bool = False,
 ) -> dict[str, Any]:
     solver = record["solver"]
     action = solver["independent_active_action"]
@@ -429,6 +430,22 @@ def _recompute_candidate_hard_gates(
         and interior_rows
         == int(residual_groups["independent_active_interior_residual"]["row_count"])
     )
+    # The frozen initial record predates the two duplicate FE declarations.
+    # Only its explicit parent role may use the original raw row identities.
+    legacy_initial_identity = (
+        allow_legacy_initial_parent
+        and record.get("schema") == "task43.initial_180_cell_active_p3_current.v1"
+        and record.get("case_id") == "current_active_p3_initial180_mpi1"
+        and "independent_active_fe_dofs" not in storage
+        and "active_space" not in record.get("numerical_controls", {})
+        and trace_rows == 8640 and interior_rows == 6480
+        and independent_dofs == 15120
+        and action.get("rows") == {
+            "independent_trace": 8640, "active_cell_interior": 6480,
+            "modal_lower": 612,
+        }
+        and dof_row_counts_match
+    )
     hard_limits = contract["final_tolerances"]
     mesh_audit_pass = (
         record["numerical_controls"].get("local_h_actual_audit", {}).get("pass") is True
@@ -453,7 +470,11 @@ def _recompute_candidate_hard_gates(
         "independent_dofs_match_residual_rows": bool(
             independent_dofs > 0 and dof_row_counts_match
         ),
-        "independent_dofs_match_both_record_declarations": dof_declarations_match,
+        ("legacy_initial_parent_raw_FE_identity_matches"
+         if legacy_initial_identity
+         else "independent_dofs_match_both_record_declarations"): (
+            legacy_initial_identity or dof_declarations_match
+        ),
         "actual_mesh_and_closure_audit_pass": mesh_audit_pass,
         "recorded_gate_and_official_identity_pass": bool(
             record.get("gates", {}).get("pass") is True
@@ -490,6 +511,10 @@ def _recompute_candidate_hard_gates(
             "storage_declared_independent_FE_dofs": storage_declared_dofs,
             "active_space_declared_independent_FE_dofs": summary_declared_dofs,
             "both_declarations_match_recomputed_sum": dof_declarations_match,
+            "declaration_validation_route": (
+                "explicit_legacy_initial_parent_storage_and_A6_rows"
+                if legacy_initial_identity else "both_record_declarations_required"
+            ),
             "residual_row_counts_match": dof_row_counts_match,
         },
         "hard_checks": raw_checks,
@@ -600,6 +625,27 @@ def compare_candidate(
         is not True
     ):
         raise ValueError("frozen reference calibration is not a complete, source-stable pair")
+    accepted_parent = (
+        None if parent_selection_path is None else _load_accepted_parent(parent_selection_path)
+    )
+    if accepted_parent is None:
+        parent_modal = _load_modal_case("current_180")
+    else:
+        parent_record = accepted_parent["record"]
+        parent_orders_path = accepted_parent["run_root"] / "solve/dtn_port_diffraction_orders_3d.json"
+        if _sha256_file(parent_orders_path) != parent_record["power"]["channel_rows_sha256"]:
+            raise ValueError("accepted parent modal rows differ from their record")
+        parent_modal = {"record": parent_record, "mode_payload": _json(parent_orders_path)}
+    parent_gate_recalculation = _recompute_candidate_hard_gates(
+        parent_modal["record"], parent_modal["mode_payload"], comparison_contract,
+        allow_legacy_initial_parent=accepted_parent is None,
+    )
+    (output_root / "parent_raw_hard_gate_precheck.json").write_text(
+        json.dumps(parent_gate_recalculation, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    if not parent_gate_recalculation["pass"]:
+        raise ValueError("comparison parent fails raw hard-gate recalculation")
     candidate = _restore_candidate(candidate_run_root, output_root)
     has_accepted_parent_binding = bool(
         candidate["record"].get("candidate_identity", {}).get(
@@ -610,9 +656,6 @@ def compare_candidate(
         raise ValueError(
             "candidate parent-selection binding and comparator parent argument disagree"
         )
-    accepted_parent = (
-        None if parent_selection_path is None else _load_accepted_parent(parent_selection_path)
-    )
     if accepted_parent is not None:
         candidate_plan = _json(candidate_run_root / "candidate_plan.json")
         provenance = candidate_plan.get("task43_candidate", {}).get("provenance", {})
@@ -641,7 +684,6 @@ def compare_candidate(
             raise ValueError("candidate solve record is not bound to the accepted parent selection")
     if accepted_parent is None:
         parent_candidate = None
-        parent_modal = _load_modal_case("current_180")
         parent_label = "current_180"
     else:
         parent_candidate = _restore_candidate(
@@ -787,11 +829,6 @@ def compare_candidate(
     eta_candidate = float(candidate_field_metrics["G"]["relative_with_incident_floor"])
     epsilon_g = float(contract["acceptance"]["epsilon_G"])
     epsilon_j = float(contract["acceptance"]["epsilon_J"])
-    parent_gate_recalculation = _recompute_candidate_hard_gates(
-        parent_modal["record"], parent_modal["mode_payload"], comparison_contract
-    )
-    if not parent_gate_recalculation["pass"]:
-        raise ValueError("comparison parent fails raw hard-gate recalculation")
     parent_dofs = int(parent_gate_recalculation["actual_space"]["independent_FE_dofs"])
     candidate_dofs = int(
         candidate_gate_recalculation["actual_space"]["independent_FE_dofs"]
