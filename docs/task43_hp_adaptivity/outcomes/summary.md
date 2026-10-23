@@ -16,11 +16,11 @@
 | 真实场接线级锚点 | 三个 36 单元 h100 算例均通过同阶、完整场/端口和 MPI 等价 Gate | 属于 `numerical_sanity_only`，不能代替空间精度证明 |
 | 正式 180 单元起点 | 3×10×6、active p3；独立 A6=2.3848e−10，condensed residual=6.3065e−11，能量闭合差3.2516e−13；15,120独立 FE DoF | [正式起点与参考恢复](records/initial_current_and_reference_restore_v1.json)；只通过离散求解门，空间精度待比较 |
 | 丰富参考的原场恢复 | Y6_1/Y6_2 的576单元p6系数、网格/周期约束与历史612模态身份吻合；12,800点E差0，H相对差约8.7e−16 | 同上；只取得恢复身份，不等于完整参考精度、q/R14或侧壁资格 |
-| 自适应闭环与成本 | 七个p-up候选已按冻结规则接受，accepted updates=7；Round-7 η_G=0.000194591143、J∞=54.874993，仍未达到最终精度；h1受控停止/unknown，h2–h7均未完整求解 | [transition7](records/round7_selection_transition7_v1.json)、[Round-7独立审计](records/round7_independent_audit_v1.json)；真实h、独立精度及同精度成本优势仍缺 |
+| 自适应闭环与成本 | 八次数值p-up更新已按冻结规则接受，accepted updates=8；η_G=.000125888488、J∞=10.602439，最终仍未达 | [transition8](records/round8_selection_transition8_v1.json)、[独立审计](records/round8_independent_audit_v1.json)；**第8轮PDE supervisor终态缺失，完整资源／成本资格未成立，不是无条件run PASS**；真实h仍缺 |
 | Round-6 真实父场计划 | accepted5重新标记48格，无p6饱和；p/h正式空间审计及p同网格转移完成；p候选后续以固定MUMPS完成并接受transition6；h仅计划审计后按界剪枝 | [Round-6计划与成本](records/round6_plan_transfer_audit_v1.json) |
 | 固定直接因子后端组件 | 真实36格mixed p4/p5、完整612模态的PETSc LU/MUMPS原数组等价检查通过；末尾JSON标量失败保留，比较从原数组单独恢复；默认后端不变 | [后端组件、失败与恢复](records/direct_factor_backend_component_v1.json)；不是正式候选精度或全流程加速证明 |
 | Round-7 准备与空间审计 | accepted6真实场重新标记54格，52可升、2已p6；显式跳过未使用的p转移，真实p/h authority均完成；p候选后续已解并接受transition7，h按界剪枝未解 | [计划、两项小修、测试与负证据](records/round7_plan_preparation_audit_v1.json) |
-| Round-8 真实父场计划 | accepted7重新标记31格，均p5可升；p/h实际空间authority完成，尚未运行第8轮PDE或接受transition8 | [第8轮准备compact](records/round8_plan_preparation_audit_v1.json)；无需源码/cache改动，转移显式not_run |
+| Round-8 真实父场计划 | accepted7重新标记31格，均p5可升；p/h实际空间authority完成；p随后数值接受transition8，PDE资源终态缺失，h仅按界剪枝 | [第8轮准备compact](records/round8_plan_preparation_audit_v1.json)；无需源码/cache改动，转移显式not_run |
 | 迭代与 0.7 nm | `not_run`，等待前置 Gate | 不启动额外 campaign |
 
 局部 p 自适应通过增加选定单元及共享边、面的多项式阶次来提高表达能力；局部 h 自适应把选定单元分成八个更小单元。二者均需额外约束，保证相邻单元和周期边界上的场能够正确连接。当前组件验证只说明这些空间与装配操作局部一致，还不能证明真实散射解更准确。
@@ -58,8 +58,8 @@ attempt1 与 attempt2 是两个独立结果，均保留。attempt1 使用未缩�
 | Round-6 p-up：从transition5重新标记48格、12格闭包，无p6饱和；180叶，p4/p5/p6=21/82/77 | R/T/A_volume=0.251540795421/0.057013313685/0.691445890896；η_G=0.003411538344→0.000409698662；J∞=3407.04275→182.905872，witness R00_s | FE=27,361迹+56,598内部=83,959，Δ13,747；612端口，矩阵27,973行；NNZ used/allocated=18,441,921/22,760,057；MUMPS factor NNZ92,517,035、因子对象估算2,220,632,632B非树RSS | PDE watchdog2918.359s、树RSS峰5,598,105,600B、task swap0；A6=7.66816e−9、cond=5.56287e−13、closure=2.59526e−12；主控独立复算后接受transition6，最终精度仍未过 |
 | Round-7 p-up：54标记中52实升、2已p6，无额外p闭包；180叶，p5/p6=72/108 | R/T/A_volume=.251411251282/.057119092082/.691469656635；η_G=.000409698662→.000194591143；J∞=182.905872→54.874993，witness R00_s | FE=31,677迹+65,880内部=97,557，Δ13,598；612端口/实际32,289行；NNZ used/allocated=23,873,213/28,987,493；MUMPS factor120,398,039项/对象估算2,889,811,256B非RSS | PDE2740.413s/树RSS峰6,623,186,944B/taskVmSwap0；A6=8.43966e−9、cond5.46995e−13、closure5.59885e−13；主控原数组审核后接受transition7，最终精度仍未过 |
 | Round-7 h计划：54请求+25材料闭包，79根分裂、733叶、107悬挂patch；p4/p5/p6=168/418/147 | h跨网格转移与PDE均not_run，不能称真实h资格通过 | qualified flattened authority FE=89,114迹+184,614内部=273,728，Δ189,769；broken301,502不是独立FE | authority5380.287s；新增84miss，p/h联合总110miss/110键、cache128；含噪score上界2.206824196e−9低于p实测保守下界1.515071040e−8，按冻结界剪枝not_run，不授予真实h资格 |
-| Round-8 p计划：31格p5→p6，无饱和或强制p闭包；180叶p5/p6=41/139 | PDE/功率/η/J尚未运行，不能填为通过 | 实际FE=34,335迹+72,390内部=106,725，Δ9,168；预期full612时增广34,947行 | authority835.046s，cache19miss/161hit；direct不使用转移初值，显式skip/pass null/wall null |
-| Round-8 h计划：31请求+17材料闭包，48根八分，516叶/56悬挂patch；p5/p6=289/227 | 跨网格转移/PDE均not_run，尚不能剪枝或接受 | qualified flattened authority FE=80,222迹+171,510内部=251,732，Δ154,175；broken271,166非独立FE | authority2675.266s，新增39miss；p/h总58miss=58keys，含噪score上界1.321091630e−9；不据此授予h资格 |
+| Round-8 p-up：31格p5→p6，无饱和或强制p闭包；180叶p5/p6=41/139 | R/T/Av=.251367166961/.057123097324/.691509735713；η_G=.000125888488、J∞=10.602439；仅数值working parent接受transition8 | FE=34,335迹+72,390内部=106,725，Δ9,168；增广34,947行；NNZ27,580,627 used/33,890,947 allocated；MUMPS factor143,208,081项/对象估算3,437,273,528B非RSS | A6=8.09060e−9、cond5.27924e−13、closure1.76692e−12；PDE外壳143/senderUNKNOWN/summary缺失，2491样本观测峰6,844,891,136B及观测swap0不是全程资格；完整比较另记 |
+| Round-8 h计划：31请求+17材料闭包，48根八分，516叶/56悬挂patch；p5/p6=289/227 | 跨网格转移/PDE均not_run，按严格数值排名界剪枝，不授予真实h资格 | qualified flattened authority FE=80,222迹+171,510内部=251,732，Δ154,175；broken271,166非独立FE | authority2675.266s，新增39miss；p/h总58miss=58keys，含噪score上界1.321091630e−9；p实测保守下界6.502453778e−9严格更高，h仍not_run |
 
 Round-5延续相同Y6_1选择参考及同一q8公共积分，共589,824点，域体积350,000 nm³。J∞表示把每个输出误差除以各自允许值后取最大值，只有J∞≤1才表示全部输出达标；本轮3407.04仍远高于1。候选的体吸收绝对误差由0.002512950337增至0.003047232499，虽然电磁场差与最大输出误差下降，也不能称所有物理量单调改善。按事前冻结的G下降、最大J不恶化以及实际新增FE得分规则，主控在独立重算完整数组/612通道后接受transition5。详细各分量见[transition5](records/round5_selection_transition5_v1.json)。
 
@@ -145,13 +145,33 @@ PDE/比较watchdog为2740.412610/239.528684s，2206/193条原采样、同时树R
 
 base assembly1205.705467s包括新进程空间/约束准备；plan1223.015709s仅校准，不额外叠加。嵌套total_build70.975482/preallocation1.165401/raw metadata.024957s不相加；port vector657.165467s、factor setup62.240171s、内部恢复18.305517s、field capture13.814926s、独立A6692.990341s另记。总45.67min在45–85min预测内，setup与A6低于各自阶段预测下界，原预测保留；R6/R7的p-map/矩阵不同，不作同问题后端加速比。p转移仍not_run/pass null，旧1401.189s成本保留。
 
-当前accepted updates=7，9条完整模型lineage/12次full-scale attempts，16份正式p/h计划另记；第8轮仅完成空间审计。42条终态watchdog wall小计51,709.340370008256s，仅已列监控成本，包含受监控组件/失败/恢复，未覆盖未监控tests/工作和导入参考生成；全部历史负项保留。候选106,725与uniform-p6推导237,600的规模差不构成等精度收益。已接受场及hash见[transition7](records/round7_selection_transition7_v1.json)和[独立审计](records/round7_independent_audit_v1.json)，下一判断见[第8轮准备compact](records/round8_plan_preparation_audit_v1.json)。真实h、最终holdout/control、q/R14、侧壁、终点加严、迭代与同精度成本仍未关闭。
+当前accepted updates=8，10条完整模型lineage/13次full-scale solver attempts，16份正式p/h计划另记；第8轮数值场完整，但PDE supervisor终态缺失。43份有完整summary的watchdog小计51,951.16159727797s，另1份R8 PDE只观测到elapsed下界3109.3891972089186s，合并后的已观测成本下界55,060.55079448689s，不是完整campaign或该PDE全流程成本。受监控组件/失败/恢复及所有旧负项保留，未监控tests/工作和导入参考生成另记；候选106,725与uniform-p6推导237,600的规模差不能证明等精度收益。最新证据见[transition8](records/round8_selection_transition8_v1.json)、[独立审计](records/round8_independent_audit_v1.json)，空间准备见[第8轮plan compact](records/round8_plan_preparation_audit_v1.json)。
 
 第8轮用accepted7真实场重新标记31格（z120–130有30格，z30–60有1格），捕获G²的.504682243901，前30格仅.489098353029；不是复用上轮标记。metadata预览15.284s，reference cache前后0miss/0size；实际degree-map工作集p19/h54、交15/并58，含uniform p6，现容量128足够，无源码修改。三矩阵shape部分体积522,009,312B不是RSS或内存上界。
 
 第8轮正式plan source clean `ca437b83b3e9a5a13fd257da403ddcd312ca202b`，50个listed源码/35输入posthash通过，p/h计划与preview字节相同。全队列3525.502383s/2842采样，同时树RSS峰4,409,544,704B、taskVmSwap0、exit0清理；native全机swapin+10页/out0归因UNRESOLVED，旧WSL-global标签保留。主控另审几何/阶次继承/内部计数及资源，h迹80,222采用合格flattened authority，未称第二套独立实现。p13.917min低于15–35min预测下沿，h44.588min/全58.758min在30–90/45–125min内；58miss只确认实际键计数，不证明缓存加速。原7200s草稿未启动、原样保留；主控按预测125min+10min余量，在此次启动前登记8100s门，全程未延长，也未放宽数值门。
 
-若第8轮p候选实测η严格低于.0001733912163613156且其余全部冻结残差/正ΔFE/G噪声/J门通过，才可严格支配第8轮h含噪上界；当前未有p结果。主控已审唯一p-up的固定MUMPS/自然same-LU/full612/q15q28草稿，预计40–85min/树RSS6–14GiB只是规划，PDE门为7200s/192GiB（不同于本轮plan的事前8100s）。提交准备证据后须新host/ABI/源码和输入快照；硬门通过可接既有parent7/Y6_1冻结q8比较，再交主控原数组审核，不自动接受transition8，不启动h/下一轮或读取holdout/control。
+第8轮实测η=.000125888488低于事前严格界.000173391216，且其余冻结A6/cond/closure/正ΔFE/G噪声/J门通过，p保守score6.502453777727978e−9严格高于h含噪上界1.3210916297456156e−9。主控独立核对全部q8总场E/curl/G、612功率及四组复振幅、11个checkpoint数组，并用共同入射地板和总场误差给scattered分量建立低于R00_s见证的上界，确认完整J；未宣称另独立重算每个scattered精确范数。第8次只接受为数值working parent，h按界剪枝not_run，最终准确性未过。
+
+**PDE资源记录不完整，不能记无条件run PASS或完整成本优势。** 原session83325返回143，信号来源未知；watchdog未留下summary，原文件不补造、不返填。worker仍完整写出case_complete（自身wall3113.875850s）、正式数值记录/恢复场，A6原范数8.543938277257993e−9除本次实际独立RHS1.0560326165199967得8.09060074812207e−9；不能沿用旧轮RHS.9646。恢复后cond5.279244354348199e−13、closure1.7669199436909366e−12，完整612及checkpoint/storage同SHA、11共享数组逐位同；requested/live/summary均MUMPS。2491原采样截至watchdog elapsed3109.389197s，采样窗观测树RSS峰6,844,891,136B/观测taskVmSwap0，不能称全生命周期峰或whole-run swap0；PDE全机swap baseline/end/delta未持久化。之后按PID+startticks核对原5个观测进程均消失，只是后续host观察，不能反推原watchdog清理或exit0。
+
+主控在数值/身份核对后另行放行独立比较；新artifact round8_comparison_attempt1 的完整watchdog为241.821227s/196采样/同时树RSS峰1,152,663,552B/taskVmSwap0/native全机0增量/exit0清理，保留原WSL-global标签。PDE的50listed源码/31输入、比较的50listed源码/60输入posthash匹配，clean source e834841b2ca4777bbc76f56afd3c7d2968c99a3b，只声明listed scope。比较成功不修复PDE资源缺口；原外层额外ABI JSON helper语法失败与postlaunch身份补充、真实内层pre-PDE ABI通过及所有原时序均绑定ignored原证据，无PDE重跑。
+
+第8轮base assembly1083.115823s含新进程空间准备，plan835s只校准不额外相加；嵌套build60.264626/preallocation1.639249不相加。端口vector874.167547s、MUMPS setup103.140333s、恢复24.010186s及独立A6各自记录。40–85min/6–14GiB原规划保留；worker数值完成wall与观测资源窗可分别报告，完整PDE lifecycle计时未知，不能据此构成成本胜出或不同p-map的后端加速结论。
+
+| 第8轮最终量（相对Y6_1） | 冻结尺度实际差 | 最终限值 | 结论 |
+|---|---:|---:|---|
+| R／T／A_volume绝对功率差 | 1.2700780055e−5／4.9097486502e−6／7.7910691914e−6 | 各1e−5 | R仍未过；T已过；A_volume本轮新达 |
+| R00_s／R00_p绝对功率差 | 1.0602439171e−5／7.3814520308e−22 | 各1e−6 | s仍未过，J见证10.6024；p已过 |
+| R00_total绝对功率差 | 1.0602439171e−5 | 1e−5 | 略未过 |
+| 612通道中超门的两项 | top(0,0,s) 1.0602439171e−5；bottom(0,0,s) 4.7919358605e−6 | 每项1e−6 | 两项未过，其他610项已过 |
+| E总场／散射场L2入射地板差 | 均1.1098569009e−4 | 各1e−4 | 均未过；原始相对分别1.67456e−4／2.04100e−4 |
+| H总场／散射场L2入射地板差 | 均1.3920488322e−4 | 各1e−4 | 均未过；原始相对分别2.09999e−4／2.55983e−4 |
+| G入射尺度差 | 1.2588848819e−4 | 1e−4 | 未过 |
+| top_s／bottom_s复振幅组 | 9.5951221095e−5／1.1297874103e−4 | 各1e−4 | top_s本轮新达，bottom_s仍未过 |
+| top_p／bottom_p复振幅组 | 4.1199408384e−5／5.9130013062e−5 | 各1e−4 | 固定单位入射模态地板下已过；原始相对15.49%／21.33%仍列出 |
+
+所有弱量分母、绝对L2差和原始相对值见compact绑定的完整表，不作相位拟合。bottom_p地板差由5.33755e−5略升至5.91300e−5但仍过门，不称所有物理量单调改善；R5体吸收恶化历史也保留。下一步仅accepted8真实新场的第9轮轻量标记/几何/pFE/cache预览，保留饱和p6，不改θ或重排剔除饱和格；不启动authority/PDE/h/G3。原h1真实h资格仍必须补齐，最终holdout/control、q/R14、侧壁、终点加严、迭代和同精度成本仍未关闭。
 
 current的R00_s=0.807460398697、R00_p=1.23971e−26，R00_total为两者之和。比较器在所有三张实际网格断点并集上用张量 Gauss 规则重新采样原始高阶电场和旋度；q8 有589,824点，q10 有1,152,000点，两者积分体积均为350,000 nm³。q8/q10 的每单元 G² 贡献最大绝对差为1.64e−11，46个标记完全相同，表明这次标记对积分阶数稳定。此处的 G 衡量电场及其旋度差异，用固定入射场范数处理近零分母；它用于分配下一轮计算，不表示已知连续真误差。
 

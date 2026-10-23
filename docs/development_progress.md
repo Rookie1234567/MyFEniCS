@@ -1,4 +1,4 @@
-# Task43：七次更新已接受，最终精度仍待提高
+# Task43：八次数值更新已接受，R8完整资源资格缺失
 
 当前工作在既有 `task43_hp_adaptivity` 分支推进，复用 NN-Lab-V2 注册 worktree 和工作站 complex128/int64 环境。基线固定为 `405e3aff42ac421a4c99315df1ed9b96941ecbe4`；旧分支保留，用户授权删除的旧 Task42extra 大型 artifacts/results 已有路径与体积记录。未启动 NN/FTT 或新的预条件器扫描。
 
@@ -8,7 +8,7 @@
 | 真实方程残差 | attempt1 未缩放端口负结果保留；启用既有边界幅值缩放后的 36 单元组件 A6/RHS 为 8.7763e−13；新空 h active-p3 MPI1/MPI2 锚点分别为 2.1429e−12/1.7762e−12 | 残差说明离散方程解准，不证明网格精度够高 |
 | 同阶原生及分布式锚点 | 36 单元原生 p3/standard_full、p6 载体空 h active-p3 MPI1、同 active-p3 MPI2 均完成；全域 q8/q10 E/curl/H、612 模态、R/T/A 和 independent A6 Gate 通过 | 均为 `numerical_sanity_only`，不代替冻结起点或独立精度参考 |
 | 正式起点与参考恢复 | 冻结180单元active p3完成：15120独立FE DoF，A6=2.3848e−10；Y6_1/Y6_2恢复身份通过；共同q8/q10全域E/curl/H和612模态比较完成 | current–Y6_1固定入射尺度G相对差0.4280717；两个有限参考彼此差4.5441e−6；不构成连续误差或精度通过 |
-| 自适应与独立验收 | Round-1至Round-7 p-up按冻结规则接受，accepted updates=7；Round-7 η_G=0.000194591143、J∞=54.874993，A6=8.43966e−9 | J∞≤1才是全部输出达标，故最终精度仍未通过；体吸收误差0.002512950337→0.003047232499略恶化，按冻结最大J规则接受；[transition7](task43_hp_adaptivity/outcomes/records/round7_selection_transition7_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round7_independent_audit_v1.json)；R5负项在下文保留 |
+| 自适应与独立验收 | Round-1至Round-8 p-up按冻结数值规则接受，accepted updates=8；η_G=.000125888488、J∞=10.602439，A6=8.09060e−9；R8 supervisor terminal缺失，完整资源／成本资格未成立 | J∞≤1才是全部输出达标，故最终精度仍未通过；体吸收误差0.002512950337→0.003047232499略恶化，按冻结最大J规则接受；[transition8](task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round8_independent_audit_v1.json)；R5负项在下文保留 |
 
 三个h100锚点完成同阶实现与MPI等价核对，正式起点及Y6_1/Y6_2恢复和公共积分由[Task43 outcomes](task43_hp_adaptivity/outcomes/summary.md)保存。Round-5从transition4真实恢复场重新标记60格（53可升、7已p6），另有30格邻接闭包强制升阶，形成180叶、p4/p5/p6=51/82/47。独立FE为23,874迹+46,338内部=70,212（较父增加16,553），612端口，凝聚矩阵24,486行；operator NNZ used/allocated为14,583,076/17,936,292，factor NNZ为72,608,080、对象估算1,742,789,816B，不等于树RSS。p保守单位DoF得分3.69854e−7高于h5上界5.91695e−8；h5虽完成810叶/215,092FE的计划审计，但未跨网格转移或求解，67项reference-space工作集超现有cache64。h1的停止sender未知且用户未发；h2–h5的剪枝均不能补足真实h资格。独立holdout、侧壁、参考自身q/R14、最终对照与同精度成本仍待完成。
 
@@ -46,9 +46,9 @@ Round-6将新误差主要标记到z90–130nm，48格无p6饱和，p增加12格�
 
 base assembly1205.705s含新进程空间准备，plan1223s只校准不额外叠加，nested build70.975/preallocation1.165不相加；port657.165/setup62.240/A6692.990s另记。same-LU绝对9.21305e−11→5.37487e−13、相对9.55117e−11→5.57213e−13与恢复后cond分开。总45.67min在45–85min预测内，setup/A6低于阶段预测下界，R6/R7不同p-map不作同问题加速比，旧1401s转移成本完整保留。
 
-当前accepted7、完整模型9条/12次full-scale attempts，16份正式p/h计划；42条终态watchdog小计51,709.340370008256s，仅已列监控运行，含受监控组件/失败/恢复，不含未监控tests/工作及导入参考生成。原始依据见[transition7](task43_hp_adaptivity/outcomes/records/round7_selection_transition7_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round7_independent_audit_v1.json)及[第8轮准备compact](task43_hp_adaptivity/outcomes/records/round8_plan_preparation_audit_v1.json)。最终holdout/control、真实h、q/R14、侧壁、终点加严和同精度成本仍未关闭。
+在第8轮计划完成的历史检查点，accepted7、完整模型9条/12次full-scale attempts、16份正式p/h计划，42条完整summary watchdog小计51,709.340370008256s，仅已列监控运行，含受监控组件/失败/恢复，不含未监控tests/工作及导入参考生成。原始依据见[transition7](task43_hp_adaptivity/outcomes/records/round7_selection_transition7_v1.json)、[独立审计](task43_hp_adaptivity/outcomes/records/round7_independent_audit_v1.json)及[第8轮准备compact](task43_hp_adaptivity/outcomes/records/round8_plan_preparation_audit_v1.json)。最终holdout/control、真实h、q/R14、侧壁、终点加严和同精度成本仍未关闭。
 
-| 第8轮准备（当前PDE未运行） | 实际空间／成本 | 限制与下一判断 |
+| 第8轮准备（历史空间检查点） | 实际空间／成本 | 限制与下一判断 |
 |---|---|---|
 | accepted7新场31marks，全p5 | capture.504682243901、前30.489098353029；31实升/0饱和/0额外p闭包；p候选180叶p5/p6=41/139 | p实际FE106,725=34,335迹+72,390内部、Δ9,168；authority835.046s，p13.917min低于预测15min下沿 |
 | h31请求+17材料闭包 | 48根八分/516叶/56悬挂patch；p5/p6=289/227；实际FE251,732=80,222迹+171,510内部、Δ154,175；authority2675.266s | trace来自合格authority，独立审计另核几何/继承/内部计数；broken271,166非独立FE，转移与PDE仍not_run |
@@ -56,7 +56,18 @@ base assembly1205.705s含新进程空间准备，plan1223s只校准不额外叠�
 
 第8轮预览15.284s、cache前后0miss/0size；p/h工作集19/54、并58/交15，3矩阵522,009,312B仅部分对象体积，非RSS上界。无需数值源码或测试改动，正式plan source clean ca437b83b3e9a5a13fd257da403ddcd312ca202b，50listed源码/35输入posthash和plan-preview bytes一致。skip p转移保持not_run/pass null/wall null，不冒充测量零成本。原7200s plan草稿not_run保留；本次启动前按125min预测上沿+10min登记8100s，运行中未延长。下一例PDE仍独立使用7200s/192GiB门。
 
-第8轮h得分含噪上界1.321091630e−9；p实测η须<.0001733912163613156并过所有冻结门，才可支配。准备材料提交后，仅新host/ABI/源码输入快照合格的固定MUMPS/full612/自然same-LU/q15q28 p-up及parent7/Y6_1冻结比较被放行；40–85min/6–14GiB为预测，尚未执行或接受transition8，不启动h、下一轮或G3实现。
+第8轮p数值场和冻结q8比较随后完成，主控接受transition8作为下一working parent：η_G=.000125888488、J10.602439，p保守score6.502453778e−9>h上界1.321091630e−9。独立A6原范数8.54394e−9/本次RHS1.05603261652=8.09060e−9、cond5.27924e−13、closure1.76692e−12，612/11checkpoint数组、FE和所有原字段hash通过。h8仅按界剪枝notrun，真实h资格仍缺；[transition8](task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json)及[审计](task43_hp_adaptivity/outcomes/records/round8_independent_audit_v1.json)绑定全部原证据。
+
+**第8轮PDE不是无条件run PASS：** session83325退出143、senderUNKNOWN、原watchdog summary缺失；2491采样截至elapsed3109.389197s仅观测下界，采样窗峰6,844,891,136B/观测taskVmSwap0不是全生命周期峰或whole-run零swap。worker自身wall3113.875850s完整结束、记录/恢复场通过；后来原PID+startticks消失不能反推watchdog清理/exit0。原summary不补造，不为元数据重跑PDE，全机swap增量未知。独立新比较watchdog另以241.821227s/196samples/峰1,152,663,552B/exit0清理完成，不修复PDE资源资格。
+
+| 第8轮最终精度 | 实际值／限值 | 结果 |
+|---|---|---|
+| R/T/A_volume绝对差 | 1.270078e−5/4.909749e−6/7.791069e−6，各门1e−5 | R未过，T已过，Av本轮新达 |
+| R00_s及612逐通道 | R00_s1.060244e−5>1e−6；另bottom(0,0,s)4.791936e−6>1e−6；R00_total1.060244e−5>1e−5 | 两通道及R00_total未过，J见证10.6024 |
+| E/H总场及散射场、G入射地板差 | E均1.109857e−4，H均1.392049e−4，G1.258885e−4；各门1e−4 | 全部仍未过 |
+| 四复幅组top_s/top_p/bottom_s/bottom_p | 9.595122e−5/4.119941e−5/1.129787e−4/5.913001e−5；各门1e−4 | top_s本轮新达，bottom_s未过；弱p raw15.49%/21.33%保留，bottom_p略恶化仍过地板门 |
+
+source e834841b2ca4777bbc76f56afd3c7d2968c99a3b clean，PDE50listed/31inputs、比较50listed/60inputs posthash通过；source仅listed scope。base1083.115823s含新空间准备，不加plan835s，port874.167547/setup103.140333/recovery24.010186及A6分列。当前8次接受/10条完整模型lineage/13次full-scale尝试/16计划；43份完整summary watchdog小计51,951.16159727797s，另R8 PDE观测3109.389197s下界，合计已观测下界55,060.55079448689s，不是完整campaign/PDE成本或成本胜出证据。未监控tests/工作、导入参考生成另记；所有原失败/停止/费用保留。下一步仅第9轮轻量preview；不启动authority/PDE/h/G3，不读holdout/control，真实h1资格不可跳过。
 
 ---
 

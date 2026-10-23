@@ -1,0 +1,432 @@
+{
+  "candidate_result": {
+    "action": "p_up",
+    "candidate_record_path": "benchmarks/artifacts/task43/round8_p_up_attempt1/run/task43_round1_candidate_record.json",
+    "candidate_record_sha256": "ae546f5182a66e11126c8e3092d7f7cc2d3007b04ae0788418845e89db7a2b31",
+    "checkpoint_final_shared_array_bitwise_equal_count": 11,
+    "cost": {
+      "PDE_full_lifecycle_wall_seconds": null,
+      "PDE_worker_case_wall_seconds_separate_not_additive": 3113.875850193668,
+      "additional_started_PDE_watchdog_without_terminal_summary_count": 1,
+      "base_assembly_includes_fresh_space_build": "1083.115823s includespreparation; separateplan835s calibrates, not extraaddend; nestedtimers notadded",
+      "comparison_watchdog_seconds": 241.82122726971284,
+      "complete_subtotal_plus_partial_observed_lower_bound_seconds": 55060.55079448689,
+      "complete_summary_watchdog_count": 43,
+      "complete_summary_watchdog_subtotal_seconds": 51951.16159727797,
+      "full_cost_or_equalaccuracy_advantage_claimed": false,
+      "new_transfer_cost": "not_incurred, not measuredzero",
+      "old_R6_transfer_1401s_retained_not_readded_to_PDE": true,
+      "partial_PDE_observed_elapsed_lower_bound_seconds": 3109.3891972089186,
+      "scope": "Only listed monitoredcost, incomplete PDE lowerbound explicitly separate; includes monitoredfixtures/failures/recovery, not unmonitoredtests/work or importedreferencegeneration; neither fullcampaign nor completePDEcost.",
+      "stage_timing_inventory": {
+        "bytes": 3838,
+        "path": "benchmarks/artifacts/task43/round8_p_up_attempt1/solve_stage_timing_inventory.json",
+        "sha256": "6279ea282e1b778db2139c5eb2d9e1dd3c70f7b38593b19f5eea00c7e5912943"
+      }
+    },
+    "hard_numeric_gates": {
+      "A6_group_norm_consistency": {
+        "recomputed_group_norm": 8.543938277257993e-09,
+        "recorded_norm": 8.543938277257993e-09,
+        "relative_difference": 0.0
+      },
+      "actual_space": {
+        "active_cell_interior_rows": 72390,
+        "active_space_declared_independent_FE_dofs": 106725,
+        "both_declarations_match_recomputed_sum": true,
+        "independent_FE_dofs": 106725,
+        "independent_trace_rows": 34335,
+        "residual_row_counts_match": true,
+        "storage_declared_independent_FE_dofs": 106725
+      },
+      "additional_checks": {
+        "actual_live_backend": true,
+        "actual_summary_backend": true,
+        "checkpoint_storage_shared_arrays_match": true,
+        "existing_checker_all_raw_hard_checks": true,
+        "expected_FE": true,
+        "expected_interior": true,
+        "expected_trace": true,
+        "group_norms_match": true,
+        "modal_hash_matches_record": true,
+        "requested_backend": true,
+        "storage_hash_matches_record": true
+      },
+      "channel_inventory": {
+        "all_numeric_outputs_finite": true,
+        "row_count": 612,
+        "unique_key_count": 612
+      },
+      "checkpoint_shared_array_equality": {
+        "active_full_rhs_owned": true,
+        "active_full_solution_owned": true,
+        "mesh_cell_vertex_dofmap": true,
+        "mesh_geometry_coordinates_nm": true,
+        "mesh_geometry_dofmap": true,
+        "mesh_owned_cell_global_ids": true,
+        "p6_function_space_dofmap": true,
+        "p6_ghost_global_dof_block_ids": true,
+        "p6_owned_global_dof_block_ids": true,
+        "recovered_p6_local_coefficients": true,
+        "recovered_p6_owned_coefficients": true
+      },
+      "classification": "checker_recomputed_from_raw_record_fields",
+      "condensed_residual": {
+        "relative": 5.279244354348199e-13,
+        "residual_raw_l2_norm": 5.575054228041454e-13,
+        "rhs_raw_l2_norm": 1.0560326163818528
+      },
+      "energy_closure": {
+        "A_volume": 0.6915097357129694,
+        "R_total": 0.25136716696149697,
+        "T_total": 0.057123097323766775,
+        "absolute_1_minus_R_minus_T_minus_A": 1.7669199436909366e-12
+      },
+      "hard_checks": {
+        "actual_mesh_and_closure_audit_pass": true,
+        "condensed_residual_le_1e-9": true,
+        "energy_closure_le_1e-5": true,
+        "finite_unique_612_mode_inventory": true,
+        "independent_A6_le_1e-6": true,
+        "independent_dofs_match_both_record_declarations": true,
+        "independent_dofs_match_residual_rows": true,
+        "recorded_gate_and_official_identity_pass": true,
+        "residual_denominators_are_positive": true,
+        "residual_norms_are_finite_and_nonnegative": true
+      },
+      "independent_A6": {
+        "independent_rhs_raw_l2_norm": 1.0560326165199967,
+        "relative": 8.09060074812207e-09,
+        "residual_raw_l2_norm": 8.543938277257993e-09
+      },
+      "input_sha256": {
+        "benchmarks/artifacts/task43/round8_p_up_attempt1/run/candidate_plan.json": "09fe932f0fe55c93f7a9eac0f83487b65ebe6ade6ffd27d6f1f702e3708148b4",
+        "benchmarks/artifacts/task43/round8_p_up_attempt1/run/candidate_recovered_solution_storage.npz": "7420dd82d98dda8d50cae196d64d5d8e8175ef21c3a86847b071d3cc7aa2d1e2",
+        "benchmarks/artifacts/task43/round8_p_up_attempt1/run/pre_validation_checkpoint.npz": "7420dd82d98dda8d50cae196d64d5d8e8175ef21c3a86847b071d3cc7aa2d1e2",
+        "benchmarks/artifacts/task43/round8_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json": "731c629fc7e49e37a920798dfc47908cbf103633bf8e2ea1ec77d0e043cf2987",
+        "benchmarks/artifacts/task43/round8_p_up_attempt1/run/task43_round1_candidate_record.json": "ae546f5182a66e11126c8e3092d7f7cc2d3007b04ae0788418845e89db7a2b31",
+        "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1"
+      },
+      "pass": true,
+      "scope": "existing checker raw ratios plus identity/backend/group consistency; not a second PDE solve or root independent audit",
+      "wall_seconds": 0.4437042470090091
+    },
+    "physics": {
+      "A_volume": 0.6915097357129694,
+      "J_candidate": 10.602439170670497,
+      "J_parent": 54.87499312806232,
+      "J_witness": "power.R00_s",
+      "R00_p": 9.870868520509447e-24,
+      "R00_s": 0.25133291363916777,
+      "R00_total": 0.25133291363916777,
+      "R_total": 0.25136716696149697,
+      "T_total": 0.057123097323766775,
+      "all_J_components": {
+        "amplitude.bottom_p": 0.591300130615706,
+        "amplitude.bottom_s": 1.1297874103392573,
+        "amplitude.top_p": 0.4119940838374512,
+        "amplitude.top_s": 0.9595122109458842,
+        "field.E_scattered_code": 1.1098569008757555,
+        "field.E_total_code": 1.1098569008757557,
+        "field.G": 1.2588848818861327,
+        "field.H_scattered_A_per_m": 1.3920488322114961,
+        "field.H_total_A_per_m": 1.3920488322114961,
+        "power.A_volume": 0.7791069191354082,
+        "power.R00_p": 7.38145203077107e-16,
+        "power.R00_s": 10.602439170670497,
+        "power.R00_total": 1.0602439170670497,
+        "power.R_total": 1.2700780054997196,
+        "power.T_total": 0.49097486502086557,
+        "power.max_individual_channel": 10.602439170670497
+      },
+      "all_four_boundary_amplitude_group_metrics": {
+        "bottom_p": {
+          "difference_boundary_amplitude_l2": 5.9130013061570595e-05,
+          "mode_count": 153,
+          "reference_boundary_amplitude_l2": 0.00027720997077159245,
+          "relative_to_reference": 0.21330406297070337,
+          "relative_with_unit_incident_modal_floor": 5.9130013061570595e-05
+        },
+        "bottom_s": {
+          "difference_boundary_amplitude_l2": 0.00011297874103392574,
+          "mode_count": 153,
+          "reference_boundary_amplitude_l2": 0.1708593117579208,
+          "relative_to_reference": 0.0006612384181553875,
+          "relative_with_unit_incident_modal_floor": 0.00011297874103392574
+        },
+        "top_p": {
+          "difference_boundary_amplitude_l2": 4.119940838374512e-05,
+          "mode_count": 153,
+          "reference_boundary_amplitude_l2": 0.0002660223339478603,
+          "relative_to_reference": 0.15487199052926173,
+          "relative_with_unit_incident_modal_floor": 4.119940838374512e-05
+        },
+        "top_s": {
+          "difference_boundary_amplitude_l2": 9.595122109458843e-05,
+          "mode_count": 153,
+          "reference_boundary_amplitude_l2": 0.5013228858864879,
+          "relative_to_reference": 0.00019139605191755438,
+          "relative_with_unit_incident_modal_floor": 9.595122109458843e-05
+        }
+      },
+      "eta_candidate": 0.00012588848818861328,
+      "eta_parent": 0.00019459114321942683,
+      "final_accuracy_pass": false,
+      "final_thresholds": {
+        "bytes": 7621,
+        "path": "benchmarks/artifacts/task43/round8_p_up_attempt1/final_thresholds.json",
+        "sha256": "ca4a93feecec8ab69196fe567390a841537ad8dd1c7f61c2720742531827a3cb"
+      },
+      "full_field_metrics_total_scattered_and_G": {
+        "E_scattered_code": {
+          "candidate_l2": 321.7055788430858,
+          "difference_l2": 0.06566001973404652,
+          "reference_l2": 321.70508582252245,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 0.0002041000364236383,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 0.00011098569008757555
+        },
+        "E_total_code": {
+          "candidate_l2": 392.10389708546563,
+          "difference_l2": 0.06566001973404653,
+          "reference_l2": 392.1033687139939,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 0.00016745589294322013,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 0.00011098569008757558
+        },
+        "G": {
+          "candidate_g_norm": 554.563760675705,
+          "difference_g_norm": 0.10532586586821985,
+          "incident_g_norm_floor": 836.6600265340755,
+          "reference_g_norm": 554.5630106966479,
+          "relative_to_reference": 0.00018992587647688293,
+          "relative_to_reference_defined": true,
+          "relative_with_incident_floor": 0.00012588848818861328
+        },
+        "H_scattered_A_per_m": {
+          "candidate_l2": 0.8539796034324819,
+          "difference_l2": 0.0002186039098672456,
+          "reference_l2": 0.8539782867130329,
+          "reference_norm_floor": 1.5703752972513016,
+          "relative_to_reference": 0.00025598298372275156,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 0.00013920488322114962
+        },
+        "H_total_A_per_m": {
+          "candidate_l2": 1.0409772658053948,
+          "difference_l2": 0.0002186039098672456,
+          "reference_l2": 1.0409758529677473,
+          "reference_norm_floor": 1.5703752972513016,
+          "relative_to_reference": 0.00020999902086491398,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 0.00013920488322114962
+        },
+        "curl_E_over_k0_code": {
+          "candidate_l2": 392.1676918681235,
+          "difference_l2": 0.08235471953333864,
+          "reference_l2": 392.16715960935295,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 0.0002099990208649142,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 0.00013920488322114965
+        }
+      },
+      "newly_reached_final_items": [
+        "A_volume",
+        "top_s boundary amplitude group"
+      ],
+      "not_all_quantities_monotone": "bottom_p incident-floor amplitude difference increased5.33755e-5→5.91300e-5 but remains below1e-4; historicalR5Av worsening retained.",
+      "power_absolute_errors_vs_Y6_1": {
+        "A_volume": 7.791069191354083e-06,
+        "R00_p": 7.38145203077107e-22,
+        "R00_s": 1.0602439170670497e-05,
+        "R00_total": 1.0602439170670497e-05,
+        "R_total": 1.2700780054997196e-05,
+        "T_total": 4.909748650208656e-06
+      }
+    },
+    "plan_audit_path": "benchmarks/artifacts/task43/round8_plan_authority_attempt1/plan_output/plans/round8_p_up.audit.json",
+    "plan_audit_sha256": "e5886e42fe7a724f758d90c511e8555cabc169844863b1a5ade41ebdad863ebb",
+    "pre_validation_checkpoint_path": "benchmarks/artifacts/task43/round8_p_up_attempt1/run/pre_validation_checkpoint.npz",
+    "pre_validation_checkpoint_sha256": "7420dd82d98dda8d50cae196d64d5d8e8175ef21c3a86847b071d3cc7aa2d1e2",
+    "ranking": {
+      "formula": "(eta_parent-eta_candidate +/- epsilon_G)/actual_added_independent_FE_dofs",
+      "h_added_independent_FE_dofs": 154175,
+      "h_noise_inclusive_score_upper": 1.3210916297456162e-09,
+      "h_status": "audited_plan_only_pruned_by_frozen_rank_bound_not_run_unqualified",
+      "p_score_lower": 6.502453777727978e-09,
+      "p_score_upper": 8.485036412240074e-09,
+      "root_numeric_acceptance": "explicit root accepted transition8 as numerical workingparent; not unconditionalrun/fullresource/cost qualification"
+    },
+    "recovered_storage_path": "benchmarks/artifacts/task43/round8_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+    "recovered_storage_sha256": "7420dd82d98dda8d50cae196d64d5d8e8175ef21c3a86847b071d3cc7aa2d1e2",
+    "resource_qualification": {
+      "PDE": {
+        "full_elapsed_seconds": null,
+        "full_lifecycle_peak_or_zero_swap_or_original_cleanup_or_exit0_claimed": false,
+        "global_swap_baseline_end_delta": "unavailable_missing_supervisor_terminal",
+        "host_identity_probe": {
+          "bytes": 271,
+          "path": "benchmarks/artifacts/task43/round8_p_up_attempt1/host_cleanup_post_completion_check.json",
+          "sha256": "c119fe6dc435e60f8ffe66f77f3d92dbe139b63303cc23b15f8c7f5b42c8bd1e"
+        },
+        "later_absence_not_original_watchdog_cleanup_assertion": true,
+        "later_all_observed_process_identities_absent": true,
+        "not_usable_as_complete_cost_victory_evidence": true,
+        "observed_elapsed_lower_bound_seconds": 3109.3891972089186,
+        "observed_sample_count": 2491,
+        "observed_sample_window_tree_RSS_peak_bytes_not_lifecycle_peak": 6844891136,
+        "original_summary_json_present": false,
+        "original_summary_not_fabricated_or_backfilled": true,
+        "outer_tool_session_exit_code": 143,
+        "partial_audit": {
+          "bytes": 6597,
+          "path": "benchmarks/artifacts/task43/round8_p_up_attempt1/partial_terminal_executor_audit.json",
+          "sha256": "00c54140b1a8551081afa193a220dd601f345eee1f091e806a3658c7edac6523"
+        },
+        "sample_window_task_VmSwap_peak_bytes": 0,
+        "signal_sender": "UNKNOWN",
+        "status": "supervisor_terminal_absent_full_resource_qualification_not_established",
+        "worker_case_complete_wall_seconds": 3113.875850193668
+      },
+      "comparison": {
+        "descendants_cleared_by_own_watchdog": true,
+        "does_not_repair_PDE_resource_gap": true,
+        "elapsed_seconds": 241.82122726971284,
+        "exit_code": 0,
+        "global_scope_note": "RawWSLglobal labelretained,actualnativehostdiagnostic0/0",
+        "independent_new_artifact": "benchmarks/artifacts/task43/round8_comparison_attempt1",
+        "native_global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "sample_count": 196,
+        "sampled_simultaneous_tree_RSS_peak_bytes": 1152663552,
+        "sampled_task_VmSwap_peak_bytes": 0,
+        "status": "COMPLETED",
+        "summary": {
+          "bytes": 3564,
+          "path": "benchmarks/artifacts/task43/round8_comparison_attempt1/watchdog/summary.json",
+          "sha256": "024a1c31f375a76535955aa3ccae25ed0b8079df7b7ab611eb094dc563c327af"
+        }
+      }
+    },
+    "round": "round8",
+    "source_identity": {
+      "HEAD_at_solve_and_comparison": "e834841b2ca4777bbc76f56afd3c7d2968c99a3b",
+      "MPI_size": 1,
+      "PDE_prebound_input_count": 31,
+      "PETSc_int": "int64",
+      "PETSc_scalar": "complex128",
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "actual_live_backend": "mumps",
+      "actual_summary_backend": "mumps",
+      "all_posthash_match": true,
+      "clean_source_bytes_equal_git_HEAD": true,
+      "comparison_prebound_input_count": 60,
+      "listed_source_count": 50,
+      "outer_extra_ABI_JSON_helper_failed": true,
+      "outer_failure_note": {
+        "bytes": 794,
+        "path": "benchmarks/artifacts/task43/round8_p_up_attempt1/outer_ABI_metadata_negative_note.json",
+        "sha256": "33171e738a26e63595be695c82a6a4866175b6b070357b8f43b7b28c2cb4b241"
+      },
+      "postlaunch_ABI_identity_supplement_not_backdated": {
+        "bytes": 1319,
+        "path": "benchmarks/artifacts/task43/round8_p_up_attempt1/abi_identity_postlaunch_supplement.json",
+        "sha256": "2d700212e3f5a9d189a8f7b70874d79df880f73a4329585b5a68a833b1916dd7"
+      },
+      "prePDE_inner_worker_ABI_gate_passed": true,
+      "requested_backend": "mumps",
+      "scope": "explicitly listed source only, not entire transitive dependency closure",
+      "threads": 1,
+      "worker_CPU": [
+        1
+      ]
+    },
+    "space": {
+      "active_cell_interior_dofs": 72390,
+      "added_independent_FE_dofs": 9168,
+      "augmented_matrix_rows": 34947,
+      "degree_histogram": {
+        "p5": 41,
+        "p6": 139
+      },
+      "factor_nnz_reported": 143208081,
+      "factor_object_estimate_bytes_not_tree_RSS": 3437273528,
+      "forced_p_neighbor_raises": 0,
+      "independent_FE_dofs": 106725,
+      "independent_trace_dofs": 34335,
+      "leaves": 180,
+      "marked_parent_cells": 31,
+      "operator_matrix_nnz_allocated": 33890947,
+      "operator_matrix_nnz_used": 27580627,
+      "parent_transfer_cost_status": "not_incurred",
+      "parent_transfer_pass": null,
+      "parent_transfer_status": "not_run_direct_solve_does_not_use_initial_guess",
+      "parent_transfer_wall_seconds": null,
+      "requested_p_raises": 31,
+      "saturated_marked_parent_cells": 0
+    }
+  },
+  "classification": "numerical_working_parent_only_full_PDE_resource_qualification_incomplete",
+  "decision": {
+    "acceptance_scope": "intermediate_numerical_working_parent_only_resource_terminal_incomplete",
+    "accepted_updates_count": 8,
+    "candidate_id": "round8_p_up",
+    "final_accuracy_or_cost_advantage_claimed": false,
+    "parent_candidate_id": "round7_p_up",
+    "parent_selection_record_path": "docs/task43_hp_adaptivity/outcomes/records/round7_selection_transition7_v1.json",
+    "parent_selection_record_sha256": "053f1463d9b3112627c2876a70936c35739f5d990ebefb10e060889991dad8ac",
+    "rationale": "Root独立原数组/612/11checkpoint及实际FE、硬数值门通过，p保守下界严格超过h含噪上界，批准第8次数值更新作为下一working parent。PDE supervisor terminal缺失/outer143/senderUNKNOWN及完整资源/成本资格不成立显著保留，不伪造summary；独立comparison watchdog完成不修复PDE缺口。",
+    "state": "accepted",
+    "transition": 8,
+    "unconditional_run_PASS": false
+  },
+  "frozen_rule": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "comparison_contract_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+    "final_p6_control_read": false,
+    "holdout_read": false,
+    "reference_access_scope_note": "holdout_read=false与final_p6_control_read=false仅指本轮选择未读取这些场、未用于marking/ranking；历史上主控/执行者已看过部分参考metadata，不构成整个项目全局盲法声明。",
+    "reference_calibration_sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+    "selection_reference": "Y6_1"
+  },
+  "independent_review": {
+    "bytes": 31564,
+    "classification": "root_independent_raw_numeric_and_scattered_upper_bound_J_review_with_partial_PDE_resources",
+    "path": "docs/task43_hp_adaptivity/outcomes/records/round8_independent_audit_v1.json",
+    "scattered_norm_scope": "Root independently recomputed alltotalq8E/curl/G and612powers/fouramplitudes/11checkpointarrays; scatterederrorsbounded byattainedtotalerrors/commonincidentfloors belowR00switness, notexactindependentscatterednormrecomputation.",
+    "sha256": "955c01efe8c1f77d09924d0b6afb2994c06fc78aecbd02bf50e3c248a7cf815a"
+  },
+  "limitations": {
+    "DoF": "106725vsderiveduniformp6control237600 onlysize comparison,not equalaccuracybenefit.",
+    "accuracy": "R/R00s/R00total/maximumchannel/bottoms amplitude/E/Htotalandscattered/G stillabovefinaltolerances; Avandtops amplitude newlyreached; nofinalPASS.",
+    "h": "h8 onlyprunedbyfrozenbound,notrealhqualification; oldh1 unknownsenderstop retained andh1actualqualification stillrequired.",
+    "reference_access": "No holdout/control fields usedforranking; historicalmetadata reviewed,notglobalblindness.",
+    "remaining": "finalholdout/control,referenceq/R14,one-sidedsidewall,endpointtighter-solve,iterative/equalaccuracycost remainopen.",
+    "resource": "Numericalfield complete andindependentlyaccepted, PDEsupervisor terminalabsent/outer143/senderUNKNOWN. Only2491observations/laterhostabsence; no originalcleanup/exit0/whole-runpeak/zero-swap/fullcost qualification.",
+    "root_J_scope": "Root independently recomputed alltotalq8E/curl/G and612powers/fouramplitudes/11checkpointarrays; scatterederrorsbounded byattainedtotalerrors/commonincidentfloors belowR00switness, notexactindependentscatterednormrecomputation."
+  },
+  "schema": "task43.selection-decision.v1",
+  "selected_candidate": {
+    "acceptance_contract_path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "candidate_id": "round8_p_up",
+    "comparison_record_path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round8_p_up_attempt1/candidate_comparison_v2.json",
+    "comparison_record_sha256": "4c0da0a3ac185a3b31ea618da1bfa33a8d848a87e644c693f30337cf458d1ab9",
+    "factor_nnz": 143208081,
+    "factor_object_estimate_bytes": 3437273528,
+    "independent_FE_dofs": 106725,
+    "operator_matrix_nnz_allocated": 33890947,
+    "operator_matrix_nnz_used": 27580627,
+    "plan_sha256": "09fe932f0fe55c93f7a9eac0f83487b65ebe6ade6ffd27d6f1f702e3708148b4",
+    "record_sha256": "ae546f5182a66e11126c8e3092d7f7cc2d3007b04ae0788418845e89db7a2b31",
+    "run_root": "benchmarks/artifacts/task43/round8_p_up_attempt1/run",
+    "storage_sha256": "7420dd82d98dda8d50cae196d64d5d8e8175ef21c3a86847b071d3cc7aa2d1e2"
+  },
+  "status": "accepted"
+}
