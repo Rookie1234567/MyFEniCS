@@ -7,6 +7,8 @@ import pytest
 from benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic import (
     _A2_NATIVE_CONTRACT_REL,
     _A2_NATIVE_CONTRACT_SHA256,
+    _A2_Q_RETRY_REL,
+    _A2_Q_RETRY_SHA256,
     _CONTRACT_REL,
     _CONTRACT_SHA256,
     _PLAN_REL,
@@ -20,6 +22,7 @@ from benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic import (
     _require_a2_budget_frozen_before_attempt,
     _require_a2_q_r13_same_source_identity,
     _validate_a2_native_contract_copy,
+    _validate_a2_q_retry_record,
     _validate_y6_recovered_bundle_binding,
 )
 from src.io.native_capacity_profile import TASK40_PHI90_D15_PROFILES
@@ -408,22 +411,22 @@ def test_task43_a2_output_directory_must_be_fresh_run_child(tmp_path):
         _a2_attempt_run_directory(attempt_root)
 
 
-def test_task43_y6_restore_identity_binds_actual_recovered_bundle_record():
-    identity_path = (
-        _REPO_ROOT
-        / "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json"
-    )
-    bundle_path = (
-        _REPO_ROOT
-        / "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz"
-    ).resolve()
-    bundle_sha256 = "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4"
-    identity = json.loads(identity_path.read_text(encoding="utf-8"))
+def test_task43_y6_restore_identity_binding_schema_with_fixture(tmp_path):
+    bundle_path = tmp_path / "recovered_reference_bundle.npz"
+    bundle_path.write_bytes(b"small identity fixture; no mesh or field data")
+    bundle_sha256 = hashlib.sha256(bundle_path.read_bytes()).hexdigest()
+    identity = {
+        "label": "Y6_1",
+        "recovered_bundle": {
+            "path": str(bundle_path.resolve()),
+            "sha256": bundle_sha256,
+        },
+    }
 
     _validate_y6_recovered_bundle_binding(identity, bundle_path, bundle_sha256)
 
     wrong_path = json.loads(json.dumps(identity))
-    wrong_path["recovered_bundle"]["path"] = str(identity_path)
+    wrong_path["recovered_bundle"]["path"] = str(tmp_path / "different-bundle.npz")
     with pytest.raises(ValueError, match="does not bind"):
         _validate_y6_recovered_bundle_binding(wrong_path, bundle_path, bundle_sha256)
 
@@ -505,6 +508,79 @@ def test_task43_a2_budget_is_frozen_to_actual_closed_a1_pair():
     ]["terminal_summary_sha256"] = None
     with pytest.raises(ValueError, match="lacks terminal A1_q evidence"):
         _require_a2_budget_frozen_before_attempt(missing_terminal)
+
+
+def test_task43_a2_q_retry_binds_attempt1_terminal_and_fixed_budget(tmp_path):
+    retry_path = _REPO_ROOT / _A2_Q_RETRY_REL
+    assert hashlib.sha256(retry_path.read_bytes()).hexdigest() == _A2_Q_RETRY_SHA256
+    record = json.loads(retry_path.read_text(encoding="utf-8"))
+    assert record["attempt_budget"]["counts_before_retry"]["total_started"] == 2
+    assert record["attempt_budget"]["counts_after_retry_dispatch"]["total_started"] == 3
+    assert record["authorization"]["A2_R_status"] == "cancelled_not_run"
+
+    terminal = record["consumed_attempt_1"]
+    summary = {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": True,
+    }
+    summary_path = tmp_path / "watchdog-summary.json"
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+    summary_bytes = summary_path.read_bytes()
+    summary_sha256 = hashlib.sha256(summary_bytes).hexdigest()
+    root_audit = {
+        "summary_sha256": summary_sha256,
+        "classification": "FAILED_NATIVE_WATCHDOG_PHASE_PATH_WIRING_BEFORE_MESH_NO_NUMERICAL_RESULT",
+        "formal_attempt_consumed": True,
+    }
+    root_audit_path = tmp_path / "root-terminal-audit.json"
+    root_audit_path.write_text(json.dumps(root_audit, sort_keys=True), encoding="utf-8")
+    root_audit_sha256 = hashlib.sha256(root_audit_path.read_bytes()).hexdigest()
+    launch_identity = {
+        "HEAD": terminal["source_head"],
+        "phase": "A2_q",
+        "attempt": 1,
+    }
+    launch_path = tmp_path / "launch-identity.json"
+    launch_path.write_text(
+        json.dumps(launch_identity, sort_keys=True), encoding="utf-8"
+    )
+    launch_sha256 = hashlib.sha256(launch_path.read_bytes()).hexdigest()
+    worker_log = (
+        b"RuntimeError: p6 condensed-direct route requires the native-capacity watchdog"
+    )
+    worker_log_path = tmp_path / "worker.log"
+    worker_log_path.write_bytes(worker_log)
+    worker_log_sha256 = hashlib.sha256(worker_log_path.read_bytes()).hexdigest()
+    terminal.update(
+        watchdog_summary_sha256=summary_sha256,
+        root_terminal_audit_sha256=root_audit_sha256,
+        launch_identity_sha256=launch_sha256,
+        worker_log_sha256=worker_log_sha256,
+    )
+    evidence = {
+        "actual_summary_sha256": summary_sha256,
+        "actual_root_audit_sha256": root_audit_sha256,
+        "actual_launch_identity_sha256": launch_sha256,
+        "actual_worker_log_sha256": worker_log_sha256,
+        "summary": summary,
+        "root_audit": root_audit,
+        "launch_identity": launch_identity,
+        "watchdog_exit_code": 2,
+        "launcher_exit_code": 2,
+        "numerical_output_files": [],
+    }
+    _validate_a2_q_retry_record(record, **evidence)
+
+    changed_terminal = json.loads(json.dumps(record))
+    changed_terminal["consumed_attempt_1"]["watchdog_summary_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="terminal evidence"):
+        _validate_a2_q_retry_record(changed_terminal, **evidence)
+
+    changed_budget = json.loads(json.dumps(record))
+    changed_budget["attempt_budget"]["counts_after_retry_dispatch"]["total_started"] = 4
+    with pytest.raises(ValueError, match="invalid actual attempt budget"):
+        _validate_a2_q_retry_record(changed_budget, **evidence)
 
 
 def test_task43_a2_r_requires_same_committed_q19_q32_r13_native_identity():

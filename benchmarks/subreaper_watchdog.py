@@ -833,13 +833,15 @@ def main() -> int:
     parser.add_argument('--interval', type=float, default=.25)
     parser.add_argument('--grace-seconds', type=float, default=2)
     parser.add_argument('--cache-path', type=Path)
+    parser.add_argument('--phase-path', type=Path)
     parser.add_argument('--timebase-guard', action='store_true')
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     summary = supervise(command, args.directory, wall_seconds=args.wall_seconds,
                         interval=args.interval, grace_seconds=args.grace_seconds,
-                        cache_path=args.cache_path, timebase_guard=args.timebase_guard)
+                        cache_path=args.cache_path, phase_path=args.phase_path,
+                        timebase_guard=args.timebase_guard)
     print(json.dumps(summary, allow_nan=False), flush=True)
     return 0 if summary['classification'] == 'COMPLETED' else 2
 

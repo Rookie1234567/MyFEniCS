@@ -1,0 +1,97 @@
+{
+  "schema": "task43.v2.a2_q_single_retry_authorization.v1",
+  "status": "frozen_before_retry_dispatch",
+  "authorization": {
+    "scope": "one A2_q attempt 2 only",
+    "authorization_basis": "existing user authorization counts failures and retries within the fixed budget and freezes adjustments prospectively; this one-time phase allocation is the main controller's execution decision, not a new ChatGPT review approval or a separate user confirmation",
+    "reason": "A2_q attempt 1 passed its adapter resolved-input checks and worker ABI preflight, then exited before native SimulationConfig3D construction, mesh creation, or PDE because the native runner did not receive the watchdog-owned WorkflowLedger phase path.",
+    "attempt_2_uses_remaining_A2_slot": true,
+    "replaces_unused_A2_R_slot": true,
+    "A2_R_status": "cancelled_not_run",
+    "no_A2_R_transition": true,
+    "no_A2_attempt_after_attempt_2": true,
+    "B_C_status": "locked_by_unqualified_A1_pair",
+    "settings_or_numeric_thresholds_changed": false,
+    "original_contract_or_attempt_1_rewritten": false
+  },
+  "original_frozen_inputs": {
+    "v2_contract_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json",
+    "v2_contract_sha256": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+    "a2_native_contract_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json",
+    "a2_native_contract_sha256": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
+    "plan_markdown_path": "docs/task43_hp_adaptivity/diagnostic_plan_v2.md",
+    "plan_markdown_sha256": "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e"
+  },
+  "consumed_attempt_1": {
+    "phase": "A2_q",
+    "attempt": 1,
+    "attempt_root": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1",
+    "launch_identity_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launch_identity.json",
+    "launch_identity_sha256": "07a6a88ac8e43888252e8517759ae22d8a3a149b7d2c98efd0fa5e8f9ce28ccf",
+    "source_head": "a3657ca1f82fbac0b18aead39ad78285b0887c38",
+    "watchdog_summary_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/summary.json",
+    "watchdog_summary_sha256": "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+    "root_terminal_audit_path": "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt1_terminal_audit.json",
+    "root_terminal_audit_sha256": "d42ec693f3a88600d53d12c04ab733b801a6255b8025f56b2bcf3e4b5a6f16a5",
+    "worker_log_sha256": "c720a66ddd9db53c942bd69c0f9256a61ee9755dc8f049d3c3ede81c12f8f44b",
+    "watchdog_classification": "WORKER_FAILED",
+    "watchdog_worker_exit_code": 1,
+    "watchdog_process_tree_cleared": true,
+    "launcher_exit_code": 2,
+    "failure_classification": "infrastructure_entry_failure_before_mesh_or_PDE",
+    "failure_detail": "PHYSICAL_WATCHDOG_PHASE_PATH was absent. The watchdog supervise API already supported phase_path, but its CLI exposed no --phase-path option and launch.sh did not pass one. The native runner raised at src/runners/p6_condensed_direct.py:2973 before SimulationConfig3D construction or mesh creation.",
+    "numeric_output_files": [],
+    "formal_attempt_consumed": true
+  },
+  "retry_endpoint": {
+    "phase": "A2_q",
+    "attempt": 2,
+    "attempt_root": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2",
+    "runner_output_directory": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/run",
+    "watchdog_directory": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog",
+    "watchdog_phase_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/workflow_phase.json",
+    "model": "native Task40 Y6_1 P6; finite R13 rectangle; unscaled native boundary modes",
+    "volume_quadrature_degree": 19,
+    "incident_and_port_quadrature_degree": 32,
+    "modal_rectangle_max_abs_m_n": [
+      4,
+      8
+    ],
+    "normal_same_factor_correction_limit": 2,
+    "extra_same_factor_diagnostic_corrections": 1,
+    "resource_profile": "task43_hp_adaptivity_resource_v1",
+    "whole_watchdog_wall_limit_seconds": 7200,
+    "dynamic_memory_profile_and_zero_task_swap_gate_unchanged": true,
+    "native_complex128_int64_mpi1_cpu1_single_thread_abi_gates_unchanged": true,
+    "original_physics_discretization_residual_energy_and_perturbation_gates_unchanged": true,
+    "this_does_not_restore_A2_R_or_unlock_B_C": true
+  },
+  "attempt_budget": {
+    "max_total": 6,
+    "A1_quota_max": 2,
+    "A2_quota_max": 2,
+    "counts_before_retry": {
+      "A1_q_started": 1,
+      "A1_R_started": 0,
+      "A2_q_started": 1,
+      "A2_R_started": 0,
+      "B_started": 0,
+      "C_started": 0,
+      "total_started": 2,
+      "remaining": 4
+    },
+    "counts_after_retry_dispatch": {
+      "A1_q_started": 1,
+      "A1_R_started": 0,
+      "A2_q_started": 2,
+      "A2_R_started": 0,
+      "B_started": 0,
+      "C_started": 0,
+      "total_started": 3,
+      "remaining": 3
+    },
+    "unused_A2_R_slot_reallocated_once_to_A2_q": true,
+    "no_quota_increase_or_further_redistribution": true,
+    "retry_failure_consumes_the_final_A2_slot": true
+  }
+}

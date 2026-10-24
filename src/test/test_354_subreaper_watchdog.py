@@ -45,6 +45,68 @@ def test_orphan_setsid_child_is_sampled_and_reaped(tmp_path, terminate):
     assert set(summary['global_swap_activity']['delta']) == {'pswpin_pages', 'pswpout_pages'}
 
 
+def test_cli_phase_path_exports_watchdog_identity_and_observes_workflow_ledger(tmp_path):
+    directory = tmp_path / 'watchdog'
+    run_directory = tmp_path / 'run'
+    phase_path = directory / 'workflow_phase.json'
+    proof_path = tmp_path / 'child_proof.json'
+    child = (
+        'import json,os,time; from pathlib import Path; '
+        'from src.runners.physical_intermediate import WorkflowLedger; '
+        f'run=Path({str(run_directory)!r}); run.mkdir(parents=True,exist_ok=True); '
+        'phase=Path(os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"]); '
+        'assert phase.is_absolute(); '
+        'ledger=WorkflowLedger(run,phase); ledger.set_phase("solve"); '
+        'phase_payload=json.loads(phase.read_text()); '
+        f'proof=Path({str(proof_path)!r}); '
+        'proof.write_text(json.dumps({"phase_path":str(phase),'
+        '"watchdog_pid":int(os.environ["PHYSICAL_WATCHDOG_PARENT_PID"]),'
+        '"actual_parent_pid":os.getppid(),"worker_pid":os.getpid(),'
+        '"phase":phase_payload["phase"]})); time.sleep(.25)'
+    )
+    result = subprocess.run(
+        [
+            sys.executable,
+            '-m',
+            'benchmarks.subreaper_watchdog',
+            '--directory',
+            str(directory),
+            '--wall-seconds',
+            '10',
+            '--interval',
+            '.05',
+            '--grace-seconds',
+            '.1',
+            '--phase-path',
+            str(phase_path),
+            '--',
+            sys.executable,
+            '-c',
+            child,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    summary = json.loads((directory / 'summary.json').read_text())
+    proof = json.loads(proof_path.read_text())
+    assert proof['phase_path'] == str(phase_path.resolve())
+    assert proof['watchdog_pid'] == proof['actual_parent_pid']
+    assert proof['worker_pid'] in summary['observed_child_pids']
+    assert proof['phase'] == 'solve'
+    rows = [
+        json.loads(line)
+        for line in (directory / 'resources.jsonl').read_text().splitlines()
+    ]
+    assert any(
+        row['worker_phase'].get('phase') == 'solve'
+        for row in rows
+    )
+    assert summary['classification'] == 'COMPLETED'
+    assert summary['descendants_cleared']
+
+
 def test_monitor_failure_cleans_live_child_and_records_original_error(tmp_path):
     directory, proof = tmp_path / 'run', tmp_path / 'proof'
     worker = ('import os,time,pathlib; '

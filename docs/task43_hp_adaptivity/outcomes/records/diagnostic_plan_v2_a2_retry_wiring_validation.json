@@ -1,0 +1,82 @@
+{
+  "schema": "task43.v2.a2_q_retry_wiring_validation.v1",
+  "status": "targeted_checks_passed_with_unchanged_inherited_ruff_findings",
+  "precommit_head": "a3657ca1f82fbac0b18aead39ad78285b0887c38",
+  "formal_model_attempts_added": 0,
+  "attempt_budget_at_validation": {
+    "A1_q_started": 1,
+    "A1_R_started": 0,
+    "A2_q_started": 1,
+    "A2_R_started": 0,
+    "total_started": 2,
+    "retry_authorized_but_not_started": true
+  },
+  "retry_authorization": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_q_retry_authorization.json",
+    "sha256": "f6b004d30e524a2c3560b6117983762c293602c5ddee8d92f2d9de40ffe073ed",
+    "attempt_1_watchdog_summary_sha256": "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+    "attempt_1_worker_log_sha256": "c720a66ddd9db53c942bd69c0f9256a61ee9755dc8f049d3c3ede81c12f8f44b",
+    "attempt_1_launch_identity_sha256": "07a6a88ac8e43888252e8517759ae22d8a3a149b7d2c98efd0fa5e8f9ce28ccf",
+    "attempt_1_root_terminal_audit_sha256": "d42ec693f3a88600d53d12c04ab733b801a6255b8025f56b2bcf3e4b5a6f16a5"
+  },
+  "environment": {
+    "activation_path": "scripts/activate_task40_phi90_pord64.sh",
+    "activation_sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "observed_identity_path": "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/environment.json",
+    "observed_identity_sha256": "cb3bd89d6f58d6901f80106914c541dc62303938bce7958257f6821b4b635004"
+  },
+  "source_file_sha256": {
+    "benchmarks/subreaper_watchdog.py": "a003d86ccc9f83db924b59842b7bcf242cace84d8ad96071221c4272402d4753",
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "196d7e07f6d177bb80b366791dce1cc7b09bf0cffd2b13036db509ab39e57b1d",
+    "src/test/test_354_subreaper_watchdog.py": "7a5d4b43cddc65e6e34d53ee58ed7b16d2c1f66ec2a7f8ce461b80f95d59a929",
+    "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "e006555e1d1c099936fe5bae187dc9b9955ed5c7394b81e22365fbf90115e855"
+  },
+  "verification": {
+    "clean_fixture_regression": {
+      "command": "bash -lc 'set -o pipefail; cd /home/fenics/Projects/NN-Lab-V2; source scripts/activate_task40_phi90_pord64.sh; python -m pytest -q src/test/test_task43_v2_native_p6_diagnostic_helpers.py src/test/test_354_subreaper_watchdog.py 2>&1 | tee benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/targeted_pytest.log'",
+      "exit_code": 0,
+      "result": "36 passed in 48.91s",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/targeted_pytest.log",
+      "log_sha256": "db1c72446a1bb8f9b54c033e94b698c3fd3da510131760bc2e76bdf9e8ada001",
+      "scope": "clean-checkout fixtures and a tiny watchdog child; no PDE and no ignored attempt-1 inputs read"
+    },
+    "post_format_helper_regression": {
+      "command": "bash -lc 'set -o pipefail; cd /home/fenics/Projects/NN-Lab-V2; source scripts/activate_task40_phi90_pord64.sh; python -m pytest -q src/test/test_task43_v2_native_p6_diagnostic_helpers.py 2>&1 | tee benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/helper_pytest.log'",
+      "exit_code": 0,
+      "result": "22 passed in 1.05s",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/helper_pytest.log",
+      "log_sha256": "da611d0218d6fd7321dd9a1a4de9ef4b8fb7e8188284102bc57ef5ec1a30c013"
+    },
+    "format_focused_lint_compile_and_json": {
+      "command": "bash -lc 'set -euo pipefail; cd /home/fenics/Projects/NN-Lab-V2; source scripts/activate_task40_phi90_pord64.sh; ruff format --check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py; ruff check --select E4,E7,E9,F benchmarks/subreaper_watchdog.py benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_354_subreaper_watchdog.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py; python -m compileall -q benchmarks/subreaper_watchdog.py benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_354_subreaper_watchdog.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py; python -m json.tool docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_q_retry_authorization.json >/dev/null; printf \"compileall and retry JSON parse passed\\n\"' 2>&1 | tee benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/lint_compile.log",
+      "exit_code": 0,
+      "result": "both changed files already formatted; focused Ruff passed; compileall and JSON parse passed",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/lint_compile.log",
+      "log_sha256": "69b3444e93c1844f37b5eaca2a17e864f615a6e74fd4ffbfc95eb7d3cbf1448c"
+    },
+    "default_ruff_baseline_comparison": {
+      "command": "ruff check --output-format json <four modified Python files>; normalized comparison by basename, rule, rule name, and message against the same files extracted with git show a3657ca1f82fbac0b18aead39ad78285b0887c38",
+      "current_exit_code": 1,
+      "current_findings": 21,
+      "baseline_findings": 21,
+      "new_findings": 0,
+      "removed_findings": 0,
+      "current_json_path": "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/ruff_current.json",
+      "current_json_sha256": "f811d88a1b9530ee14e9beffe60df8db8299bb730a6d8928c967b4094eb004a1",
+      "baseline_json_path": "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/ruff_baseline_a3657.json",
+      "baseline_json_sha256": "02d3075f1871003688c117d9a60e173809fc133b4b80c04d736157e6db8aa74b",
+      "delta_path": "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/ruff_baseline_delta.txt",
+      "delta_sha256": "107a006f6895b8ecb880c724c3d038033144b7e351938f4dbbf904103ad33cf1"
+    }
+  },
+  "preserved_early_test_fixture_failure": {
+    "command_scope": "same two-file targeted pytest invocation before correcting a stale identity_path reference in the new tmp_path-only Y6 fixture",
+    "result": "35 passed, 1 failed in 51.54s; NameError: identity_path is not defined",
+    "raw_output_status": "console output was observed but not saved to a file; final corrected reruns are hash-bound above"
+  },
+  "prelaunch_check_scope": {
+    "actual_attempt_1_loader": "_load_a2_q_retry_authorization() binds the tracked retry record to the actual ignored attempt-1 summary, root audit, launch identity, worker log, exit codes, and empty numerical-output directory",
+    "full_frozen_input_preflight": "_validate_frozen_inputs('A2_q') and the original frozen helper are to be run in the separate fresh attempt-2 prelaunch gate; these pytest fixtures do not claim to replay the actual attempt-1 or Y6 artifacts",
+    "launch_status": "not launched; requires root review of the committed launch material and explicit launch authorization"
+  }
+}

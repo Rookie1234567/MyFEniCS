@@ -26,6 +26,11 @@ _A2_NATIVE_CONTRACT_REL = Path(
 _A2_NATIVE_CONTRACT_SHA256 = (
     "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0"
 )
+_A2_Q_RETRY_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/"
+    "diagnostic_plan_v2_a2_q_retry_authorization.json"
+)
+_A2_Q_RETRY_SHA256 = "f6b004d30e524a2c3560b6117983762c293602c5ddee8d92f2d9de40ffe073ed"
 _PLAN_SHA256 = "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e"
 _Y6_ROOT = Path("benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1")
 _Y6_INPUT_SHA256 = "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc"
@@ -939,6 +944,239 @@ def _bind_file(relative: Path, expected_sha256: str, *, label: str) -> Path:
     return path
 
 
+def _validate_a2_q_retry_record(
+    record: dict[str, Any],
+    *,
+    actual_summary_sha256: str,
+    actual_root_audit_sha256: str,
+    actual_launch_identity_sha256: str,
+    actual_worker_log_sha256: str,
+    summary: dict[str, Any],
+    root_audit: dict[str, Any],
+    launch_identity: dict[str, Any],
+    watchdog_exit_code: int,
+    launcher_exit_code: int,
+    numerical_output_files: list[str],
+) -> None:
+    """Validate the one frozen A2_q retry against the consumed launch record."""
+
+    original = record.get("original_frozen_inputs", {})
+    if (
+        record.get("schema") != "task43.v2.a2_q_single_retry_authorization.v1"
+        or record.get("status") != "frozen_before_retry_dispatch"
+        or original.get("v2_contract_path") != str(_CONTRACT_REL)
+        or original.get("v2_contract_sha256") != _CONTRACT_SHA256
+        or original.get("a2_native_contract_path") != str(_A2_NATIVE_CONTRACT_REL)
+        or original.get("a2_native_contract_sha256") != _A2_NATIVE_CONTRACT_SHA256
+        or original.get("plan_markdown_path") != str(_PLAN_REL)
+        or original.get("plan_markdown_sha256") != _PLAN_SHA256
+    ):
+        raise ValueError("A2_q retry authorization changed its frozen source bindings")
+    authorization = record.get("authorization", {})
+    if (
+        authorization.get("scope") != "one A2_q attempt 2 only"
+        or authorization.get("authorization_basis")
+        != "existing user authorization counts failures and retries within the fixed budget and freezes adjustments prospectively; this one-time phase allocation is the main controller's execution decision, not a new ChatGPT review approval or a separate user confirmation"
+        or authorization.get("attempt_2_uses_remaining_A2_slot") is not True
+        or authorization.get("replaces_unused_A2_R_slot") is not True
+        or authorization.get("A2_R_status") != "cancelled_not_run"
+        or authorization.get("no_A2_R_transition") is not True
+        or authorization.get("no_A2_attempt_after_attempt_2") is not True
+        or authorization.get("B_C_status") != "locked_by_unqualified_A1_pair"
+        or authorization.get("settings_or_numeric_thresholds_changed") is not False
+        or authorization.get("original_contract_or_attempt_1_rewritten") is not False
+    ):
+        raise ValueError(
+            "A2_q retry authorization does not enforce its one-attempt scope"
+        )
+
+    endpoint = record.get("retry_endpoint", {})
+    if (
+        endpoint.get("phase") != "A2_q"
+        or endpoint.get("attempt") != 2
+        or endpoint.get("attempt_root")
+        != "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2"
+        or endpoint.get("runner_output_directory")
+        != "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/run"
+        or endpoint.get("watchdog_phase_path")
+        != "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/workflow_phase.json"
+        or endpoint.get("volume_quadrature_degree") != 19
+        or endpoint.get("incident_and_port_quadrature_degree") != 32
+        or endpoint.get("modal_rectangle_max_abs_m_n") != [4, 8]
+        or endpoint.get("normal_same_factor_correction_limit") != 2
+        or endpoint.get("extra_same_factor_diagnostic_corrections") != 1
+        or endpoint.get("resource_profile") != "task43_hp_adaptivity_resource_v1"
+        or endpoint.get("whole_watchdog_wall_limit_seconds") != 7200
+        or endpoint.get("dynamic_memory_profile_and_zero_task_swap_gate_unchanged")
+        is not True
+        or endpoint.get(
+            "native_complex128_int64_mpi1_cpu1_single_thread_abi_gates_unchanged"
+        )
+        is not True
+        or endpoint.get(
+            "original_physics_discretization_residual_energy_and_perturbation_gates_unchanged"
+        )
+        is not True
+        or endpoint.get("this_does_not_restore_A2_R_or_unlock_B_C") is not True
+    ):
+        raise ValueError("A2_q retry endpoint differs from the frozen A2_q settings")
+
+    budget = record.get("attempt_budget", {})
+    if (
+        budget.get("max_total") != 6
+        or budget.get("A1_quota_max") != 2
+        or budget.get("A2_quota_max") != 2
+        or budget.get("counts_before_retry")
+        != {
+            "A1_q_started": 1,
+            "A1_R_started": 0,
+            "A2_q_started": 1,
+            "A2_R_started": 0,
+            "B_started": 0,
+            "C_started": 0,
+            "total_started": 2,
+            "remaining": 4,
+        }
+        or budget.get("counts_after_retry_dispatch")
+        != {
+            "A1_q_started": 1,
+            "A1_R_started": 0,
+            "A2_q_started": 2,
+            "A2_R_started": 0,
+            "B_started": 0,
+            "C_started": 0,
+            "total_started": 3,
+            "remaining": 3,
+        }
+        or budget.get("unused_A2_R_slot_reallocated_once_to_A2_q") is not True
+        or budget.get("no_quota_increase_or_further_redistribution") is not True
+        or budget.get("retry_failure_consumes_the_final_A2_slot") is not True
+    ):
+        raise ValueError(
+            "A2_q retry authorization has an invalid actual attempt budget"
+        )
+
+    terminal = record.get("consumed_attempt_1", {})
+    expected_paths = {
+        "attempt_root": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1",
+        "launch_identity_path": (
+            "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launch_identity.json"
+        ),
+        "watchdog_summary_path": (
+            "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/summary.json"
+        ),
+        "root_terminal_audit_path": (
+            "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt1_terminal_audit.json"
+        ),
+    }
+    if any(terminal.get(key) != value for key, value in expected_paths.items()):
+        raise ValueError("A2_q retry is not bound to the consumed attempt-1 paths")
+    if (
+        terminal.get("phase") != "A2_q"
+        or terminal.get("attempt") != 1
+        or terminal.get("source_head") != "a3657ca1f82fbac0b18aead39ad78285b0887c38"
+        or terminal.get("launch_identity_sha256") != actual_launch_identity_sha256
+        or terminal.get("watchdog_summary_sha256") != actual_summary_sha256
+        or terminal.get("root_terminal_audit_sha256") != actual_root_audit_sha256
+        or terminal.get("worker_log_sha256") != actual_worker_log_sha256
+        or terminal.get("watchdog_classification") != "WORKER_FAILED"
+        or terminal.get("watchdog_worker_exit_code") != 1
+        or terminal.get("watchdog_process_tree_cleared") is not True
+        or terminal.get("launcher_exit_code") != 2
+        or terminal.get("failure_classification")
+        != "infrastructure_entry_failure_before_mesh_or_PDE"
+        or terminal.get("numeric_output_files") != []
+        or terminal.get("formal_attempt_consumed") is not True
+        or summary.get("classification") != "WORKER_FAILED"
+        or summary.get("leader_exit_code") != 1
+        or summary.get("descendants_cleared") is not True
+        or root_audit.get("summary_sha256") != actual_summary_sha256
+        or root_audit.get("classification")
+        != "FAILED_NATIVE_WATCHDOG_PHASE_PATH_WIRING_BEFORE_MESH_NO_NUMERICAL_RESULT"
+        or root_audit.get("formal_attempt_consumed") is not True
+        or launch_identity.get("HEAD") != terminal.get("source_head")
+        or launch_identity.get("phase") != "A2_q"
+        or launch_identity.get("attempt") != 1
+        or watchdog_exit_code != 2
+        or launcher_exit_code != 2
+        or numerical_output_files != []
+    ):
+        raise ValueError("A2_q retry terminal evidence does not match attempt 1")
+
+
+def _load_a2_q_retry_authorization() -> dict[str, Any]:
+    """Bind the one-time retry record to the actual failed pre-mesh attempt."""
+
+    retry_path = _bind_file(
+        _A2_Q_RETRY_REL, _A2_Q_RETRY_SHA256, label="A2_q retry authorization"
+    )
+    record = _read_json(retry_path)
+    terminal = record.get("consumed_attempt_1", {})
+    launch_path = _bind_file(
+        Path(terminal.get("launch_identity_path", "")),
+        str(terminal.get("launch_identity_sha256", "")),
+        label="A2_q attempt-1 launch identity",
+    )
+    summary_path = _bind_file(
+        Path(terminal.get("watchdog_summary_path", "")),
+        str(terminal.get("watchdog_summary_sha256", "")),
+        label="A2_q attempt-1 watchdog summary",
+    )
+    root_audit_path = _bind_file(
+        Path(terminal.get("root_terminal_audit_path", "")),
+        str(terminal.get("root_terminal_audit_sha256", "")),
+        label="A2_q attempt-1 root terminal audit",
+    )
+    log_path = (
+        _REPO_ROOT / str(terminal.get("attempt_root", "")) / "watchdog/worker.log"
+    )
+    if not log_path.is_file():
+        raise ValueError("A2_q attempt-1 watchdog log is missing")
+    worker_log_sha256 = _sha256(log_path)
+    worker_log = log_path.read_text(encoding="utf-8")
+    launch_identity = _read_json(launch_path)
+    summary = _read_json(summary_path)
+    root_audit = _read_json(root_audit_path)
+    attempt_root = _REPO_ROOT / str(terminal["attempt_root"])
+    numerical_directory = attempt_root / "run/numerical_output"
+    if not numerical_directory.is_dir():
+        raise ValueError("A2_q attempt-1 numerical-output directory is missing")
+    numerical_output_files = sorted(
+        str(path.relative_to(_REPO_ROOT))
+        for path in numerical_directory.rglob("*")
+        if path.is_file()
+    )
+    try:
+        watchdog_exit_code = int(
+            (attempt_root / "watchdog_exit_code.txt").read_text().strip()
+        )
+        launcher_exit_code = int(
+            (attempt_root / "launcher_exit_code.txt").read_text().strip()
+        )
+    except (OSError, ValueError) as error:
+        raise ValueError("A2_q attempt-1 exit-code records are unavailable") from error
+    if "requires the native-capacity watchdog" not in worker_log:
+        raise ValueError("A2_q attempt-1 worker log lacks its recorded entry failure")
+    _validate_a2_q_retry_record(
+        record,
+        actual_summary_sha256=_sha256(summary_path),
+        actual_root_audit_sha256=_sha256(root_audit_path),
+        actual_launch_identity_sha256=_sha256(launch_path),
+        actual_worker_log_sha256=worker_log_sha256,
+        summary=summary,
+        root_audit=root_audit,
+        launch_identity=launch_identity,
+        watchdog_exit_code=watchdog_exit_code,
+        launcher_exit_code=launcher_exit_code,
+        numerical_output_files=numerical_output_files,
+    )
+    return {
+        "path": str(retry_path),
+        "sha256": _A2_Q_RETRY_SHA256,
+        "record": record,
+    }
+
+
 def _validate_y6_recovered_bundle_binding(
     identity: dict[str, Any], expected_path: Path, expected_sha256: str
 ) -> None:
@@ -1735,10 +1973,19 @@ def _comparison_record(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=("A2_q", "A2_R"), required=True)
-    parser.add_argument("--attempt", type=int, choices=(1,), default=1)
+    parser.add_argument("--attempt", type=int, choices=(1, 2), default=1)
     parser.add_argument("--resolved-config", type=Path)
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args(argv)
+
+    retry_authorization = None
+    if args.phase == "A2_R":
+        _load_a2_q_retry_authorization()
+        raise ValueError("A2_R was cancelled by the frozen A2_q retry authorization")
+    if args.attempt == 2:
+        if args.phase != "A2_q":
+            raise ValueError("attempt 2 is frozen for A2_q only")
+        retry_authorization = _load_a2_q_retry_authorization()
 
     attempt_root = (
         _REPO_ROOT
@@ -1746,8 +1993,6 @@ def main(argv: list[str] | None = None) -> int:
         / f"{args.phase}_attempt{args.attempt}"
     )
     output_dir = _a2_attempt_run_directory(attempt_root, args.output_dir)
-    if args.attempt != 1:
-        raise ValueError("the frozen phase table authorizes one endpoint per A2 factor")
 
     diagnostic, frozen = _validate_frozen_inputs(args.phase)
     resolved_path = (
@@ -1775,6 +2020,22 @@ def main(argv: list[str] | None = None) -> int:
         raise
     summary_path = Path(result["summary"])
     runner_summary = _read_json(summary_path)
+    retry_binding = None
+    if retry_authorization is not None:
+        retry_binding = {
+            "path": retry_authorization["path"],
+            "sha256": retry_authorization["sha256"],
+            "replaces_unused_A2_R_slot": True,
+            "attempt_1_watchdog_summary_sha256": retry_authorization["record"][
+                "consumed_attempt_1"
+            ]["watchdog_summary_sha256"],
+        }
+        runner_summary["task43_v2_retry_authorization"] = retry_binding
+        summary_path.write_text(
+            json.dumps(runner_summary, sort_keys=True, indent=2, allow_nan=False)
+            + "\n",
+            encoding="utf-8",
+        )
     comparison = _comparison_record(
         args.phase,
         output_dir,
@@ -1782,6 +2043,16 @@ def main(argv: list[str] | None = None) -> int:
         diagnostic,
         frozen["old_summary"],
     )
+    if retry_binding is not None:
+        comparison["retry_authorization"] = retry_binding
+        comparison.update(
+            same_group_R_factor_may_continue=False,
+            A2_R_status="cancelled_by_A2_q_retry_authorization",
+            endpoint_qualification_scope=(
+                "local A2_q endpoint comparison only; does not establish a complete "
+                "A2 q/R reference or unlock B/C"
+            ),
+        )
     comparison_path = output_dir / "comparison_record.json"
     comparison_path.write_text(
         json.dumps(comparison, sort_keys=True, indent=2, allow_nan=False) + "\n",
@@ -1798,6 +2069,14 @@ def main(argv: list[str] | None = None) -> int:
         "extra_same_lu_uncertainty_gate": comparison["extra_same_lu_uncertainty"][
             "pass_10_percent_output_uncertainty_gate"
         ],
+        "same_group_R_factor_may_continue": comparison[
+            "same_group_R_factor_may_continue"
+        ],
+        "A2_R_status": comparison.get("A2_R_status", "not_cancelled_by_retry"),
+        "endpoint_qualification_scope": comparison.get(
+            "endpoint_qualification_scope",
+            "frozen A2 endpoint comparison",
+        ),
     }
     summary_path.write_text(
         json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
