@@ -6473,7 +6473,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
             output_path = Path(command[command.index("--output") + 1])
             assert not output_path.exists()
             assert diagnostic_path.name == "task41_p0_v13_saved_adjoint_diagnostic.json"
-            assert output_path.parent == diagnostic_path.parent
+            assert output_path.parent == diagnostic_path.parent.parent / "attempt09"
             assert Path(command[command.index("--consumer-contract") + 1]) != Path(
                 command[command.index("--checker-contract") + 1]
             )
@@ -6946,7 +6946,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         json.dumps(accepted_receipt, sort_keys=True) + "\n", encoding="utf-8"
     )
 
-    existing_output_root = actual_output_root.with_name("attempt08")
+    existing_output_root = actual_output_root.with_name("attempt09")
     assert not existing_output_root.exists()
     existing_kwargs = dict(readonly_service_kwargs)
     existing_environment = dict(readonly_service_kwargs["environment"])
@@ -6983,7 +6983,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         **existing_kwargs
     )
     existing_receipt = json.loads(
-        (existing_output_root.with_name("attempt08.service")
+        (existing_output_root.with_name("attempt09.service")
          / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
     )
     assert existing_result == 0, {
@@ -7000,6 +7000,13 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     assert Path(existing_command[existing_command.index("--v13-diagnostic") + 1]) == existing_diagnostic_path
     assert Path(existing_command[existing_command.index("--consumer-contract") + 1]) == consumer_contract_path
     assert Path(existing_command[existing_command.index("--checker-contract") + 1]) == checker_contract_path
+    expected_independent_output = (
+        existing_output_root / "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
+    ).resolve()
+    assert Path(existing_command[existing_command.index("--output") + 1]) == expected_independent_output
+    assert existing_receipt["saved_adjoint_diagnostic_independent_checker"]["result_path"] == str(
+        expected_independent_output
+    )
     assert existing_receipt["result_classification"] == (
         "V13_EXISTING_ADJOINT_DIAGNOSTIC_READ_ONLY_CLOSEOUT_COMPLETED"
     )
@@ -7367,6 +7374,47 @@ def test_v13_existing_adjoint_diagnostic_arguments_are_exact_and_hash_bound(
     wrong_hash[18] = "2" * 64
     with pytest.raises(ValueError, match="hash differs"):
         _parse_task41_p0_v13_existing_adjoint_diagnostic_args(wrong_hash)
+
+
+def test_v13_primary_global_row_uses_actual_d_eval_and_reconstruction_field_layout() -> None:
+    from src.runners.task41_p0_checker import (
+        _task41_p0_v13_pair_scalar,
+        _task41_p0_v13_saved_global_row_d_values,
+    )
+
+    payload = {
+        "global_rows": [
+            {
+                "column": 0,
+                "state_rows": [
+                    {
+                        "state": "j0",
+                        "d_eval": ["-4.7815188077903446535e-09", "5.3645044373614036156e-11"],
+                        "saved_original_d": ["-4.7148205339908599854e-09", "1.4551915228366851807e-11"],
+                        "d_eval_minus_saved_original_d": ["-6.6698273799484668165e-11", "3.909312914524718435e-11"],
+                        "d_reconstruction": {
+                            "reconstructed_d_lu": ["-4.7815188077903446535e-09", "5.3645044373614036156e-11"],
+                            "reconstruction_minus_saved_original_d": ["-6.6698273799484668165e-11", "3.909312914524718435e-11"],
+                            "replayed_d_lu": ["-4.7148205339908599854e-09", "1.4551915228366851807e-11"],
+                            "replayed_d_lu_comparison_only": ["-4.7148205339908599854e-09", "1.4551915228366851807e-11"],
+                            "reconstruction_minus_replayed_d": ["-6.6698273799484668165e-11", "3.909312914524718435e-11"],
+                            "d_eval_minus_replayed_d_comparison_only": ["-6.6698273799484668165e-11", "3.909312914524718435e-11"],
+                        },
+                    }
+                ],
+            }
+        ]
+    }
+    row = payload["global_rows"][0]["state_rows"][0]
+    detail, d_eval, saved_d, residual = _task41_p0_v13_saved_global_row_d_values(row)
+    assert detail["reconstructed_d_lu"] == row["d_eval"]
+    assert d_eval == _task41_p0_v13_pair_scalar(row["d_eval"], "fixture d_eval")
+    assert saved_d == _task41_p0_v13_pair_scalar(row["saved_original_d"], "fixture saved d")
+    assert residual == _task41_p0_v13_pair_scalar(
+        row["d_eval_minus_saved_original_d"], "fixture residual"
+    )
+    assert "d_eval" not in detail
+    assert "d_eval_minus_saved_original_d" not in detail
 
 
 def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_scope(

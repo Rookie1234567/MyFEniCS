@@ -12365,21 +12365,19 @@ def _run_task41_p0_saved_output_service(
                             != str(marker_path)
                         ):
                             raise ValueError("V13 primary diagnostic shared-cache binding differs")
-                        independent_result_path = (
-                            v13_diagnostic_input_path.parent
-                            if b0_v13_existing_adjoint_diagnostic_mode
-                            else output_root
-                        ) / "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
+                        independent_result_path = output_root / (
+                            "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
+                        )
                         if (
                             b0_v13_existing_adjoint_diagnostic_mode
                             and (
                                 independent_result_path.exists()
-                                or independent_result_path.parent
-                                != v13_diagnostic_input_path.parent
+                                or independent_result_path.parent != output_root.resolve()
+                                or output_root.name != "attempt09"
                             )
                         ):
                             raise ValueError(
-                                "V13 existing-diagnostic independent checker output must be a new attempt07 sibling"
+                                "V13 existing-diagnostic independent checker output must be new under attempt09"
                             )
                         independent_checker_command = _task41_p0_v13_independent_checker_command(
                             python=python,
@@ -14529,11 +14527,11 @@ def _run_task41_p0_service(
                         or diagnostic.get("official_result") is not False
                         or diagnostic.get("scientific_qualified") is not False
                         or continuation_output_root
-                        != expected_output_parent / "attempt08"
+                        != expected_output_parent / "attempt09"
                         or continuation_output_root.exists()
                     ):
                         raise ValueError(
-                            "V13 existing diagnostic, old consumer contract, current window, or attempt08 path differs"
+                            "V13 existing diagnostic, old consumer contract, current window, or attempt09 path differs"
                         )
                     v13_existing_diagnostic_payload = diagnostic
                     v13_diagnostic_consumer_contract = old_consumer_contract

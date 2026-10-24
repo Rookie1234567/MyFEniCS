@@ -607,6 +607,11 @@ def _validate_campaign_closeout_authorization(
             results_root = (
                 repository_root / 'results' / str(case['model_id'])
             ).resolve()
+            expected_output_parent = (
+                diagnostic_path.parent.parent / 'attempt09'
+                if consumer_contract_argument != checker_contract_argument
+                else diagnostic_path.parent
+            )
             if (
                 str(donor_contract_path) != argv[5]
                 or str(donor_summary_path) != argv[9]
@@ -628,7 +633,7 @@ def _validate_campaign_closeout_authorization(
                 or not diagnostic_path.is_relative_to(results_root)
                 or output_path.name
                 != 'task41_p0_v13_saved_adjoint_diagnostic_independent_check.json'
-                or output_path.parent != diagnostic_path.parent
+                or output_path.parent != expected_output_parent
                 or output_path.exists()
                 or not output_path.is_relative_to(results_root)
             ):

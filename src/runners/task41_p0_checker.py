@@ -7793,6 +7793,25 @@ def _task41_p0_v13_pair_scalar(value: Any, label: str) -> np.clongdouble:
     return np.clongdouble(value[0]) + 1j * np.clongdouble(value[1])
 
 
+def _task41_p0_v13_saved_global_row_d_values(
+    row: Any,
+) -> tuple[Mapping[str, Any], np.clongdouble, np.clongdouble, np.clongdouble]:
+    """Read the primary's actual state-row and nested reconstruction layout."""
+    if not isinstance(row, Mapping):
+        raise ValueError("V13 independent checker global state row is malformed")
+    detail = row.get("d_reconstruction")
+    if not isinstance(detail, Mapping):
+        raise ValueError("V13 independent checker global d reconstruction is missing")
+    return (
+        detail,
+        _task41_p0_v13_pair_scalar(row.get("d_eval"), "row d_eval"),
+        _task41_p0_v13_pair_scalar(row.get("saved_original_d"), "row saved original d"),
+        _task41_p0_v13_pair_scalar(
+            row.get("d_eval_minus_saved_original_d"), "row d_eval-saved d"
+        ),
+    )
+
+
 def _task41_p0_v13_close_scalar(left: Any, right: Any, scale: Any) -> bool:
     difference = abs(np.clongdouble(left) - np.clongdouble(right))
     tolerance = np.finfo(np.longdouble).eps * np.longdouble(256) * max(
@@ -8689,9 +8708,9 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
                     _task41_p0_v13_close_scalar(lhs, j_w, abs(lhs) + abs(j_w))
                 ):
                     raise ValueError("V13 independent checker Eq2 scalar identity differs")
-            detail = row.get("d_reconstruction")
-            if not isinstance(detail, Mapping):
-                raise ValueError("V13 independent checker global d reconstruction is missing")
+            detail, row_d_eval, row_saved_d, row_saved_residual = (
+                _task41_p0_v13_saved_global_row_d_values(row)
+            )
             raw_groups = [raw_group_by_key[(cell, column_index, state)] for cell in CELLS]
             local_ju_lt = [
                 _task41_p0_v13_pair_scalar(
@@ -8817,25 +8836,30 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
                 projected_minus_j_z_r_by_cell=qh_minus_jzr,
             )
             reported_d = _task41_p0_v13_pair_scalar(
-                detail.get("d_eval"), "reported d_eval"
-            )
-            row_d_eval = _task41_p0_v13_pair_scalar(row.get("d_eval"), "row d_eval")
-            row_saved_d = _task41_p0_v13_pair_scalar(
-                row.get("saved_original_d"), "row saved original d"
-            )
-            row_saved_residual = _task41_p0_v13_pair_scalar(
-                row.get("d_eval_minus_saved_original_d"), "row d_eval-saved d"
+                detail.get("reconstructed_d_lu"), "reported reconstructed d"
             )
             reported_replayed_d = raw_replayed_d
             reported_saved_d = raw_saved_d
             saved_d_residual = recomputed_d - reported_saved_d
             reported_saved_residual = _task41_p0_v13_pair_scalar(
-                detail.get("d_eval_minus_saved_original_d"), "reported d_eval-saved d"
+                detail.get("reconstruction_minus_saved_original_d"),
+                "reported reconstruction-saved d",
             )
             replay_residual = recomputed_d - reported_replayed_d
             reported_replay_residual = _task41_p0_v13_pair_scalar(
                 detail.get("d_eval_minus_replayed_d_comparison_only"),
                 "reported d_eval-replayed d",
+            )
+            reported_reconstruction_replay_residual = _task41_p0_v13_pair_scalar(
+                detail.get("reconstruction_minus_replayed_d"),
+                "reported reconstruction-replayed d",
+            )
+            reported_replayed_d = _task41_p0_v13_pair_scalar(
+                detail.get("replayed_d_lu"), "reported replayed d"
+            )
+            reported_replayed_d_comparison = _task41_p0_v13_pair_scalar(
+                detail.get("replayed_d_lu_comparison_only"),
+                "reported comparison-only replayed d",
             )
             expected_formula = (
                 "d_eval=sum_cells(q^H(Ju+Lt)+q^H C_S_t+q^H Jw*)"
@@ -8862,6 +8886,15 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
                 or not _task41_p0_v13_close_scalar(
                     replay_residual, reported_replay_residual, scale
                 )
+                or not _task41_p0_v13_close_scalar(
+                    replay_residual, reported_reconstruction_replay_residual, scale
+                )
+                or not _task41_p0_v13_close_scalar(
+                    reported_replayed_d, raw_replayed_d, scale
+                )
+                or not _task41_p0_v13_close_scalar(
+                    reported_replayed_d_comparison, raw_replayed_d, scale
+                )
                 or reported_saved_d != saved_d_column
                 or detail.get("denominator_used_as_gate") is not False
             ):
@@ -8877,10 +8910,21 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
             reported_relative = np.longdouble(
                 detail.get("relative_residual_to_frozen_denominator", "nan")
             )
-            if not _task41_p0_v13_close_scalar(
-                relative, reported_relative, max(abs(relative), np.longdouble(1))
+            reported_reconstruction_relative = np.longdouble(
+                detail.get("relative_reconstruction_residual_to_frozen_denominator", "nan")
+            )
+            if (
+                detail.get("relative_residual_reference")
+                != "d_eval_minus_saved_original_d"
+                or not _task41_p0_v13_close_scalar(
+                    relative, reported_relative, max(abs(relative), np.longdouble(1))
+                )
+                or not _task41_p0_v13_close_scalar(
+                    relative, reported_reconstruction_relative,
+                    max(abs(relative), np.longdouble(1)),
+                )
             ):
-                raise ValueError("V13 independent checker residual ratio differs")
+                raise ValueError("V13 independent checker residual ratio/reference differs")
             reported_g = _task41_p0_v13_pair_scalar(row.get("saved_g_prod"), "saved g_prod")
             row_b_t = _task41_p0_v13_pair_scalar(row.get("b_t_written_once"), "b_t")
             row_g_eval = _task41_p0_v13_pair_scalar(row.get("g_eval_wide_fixed_z_b"), "g_eval")
