@@ -376,3 +376,20 @@ attempt03使用既有metadata与donor输入建立必要原网格mesh/space，生
 | 后续阶段 | 全域action重验、200q/factor、KSP/FGMRES、完整场、A6、R/T/A、最终精度、2TB/48h | NOT_RUN或未资格化 |
 
 详细signed terms、四个equation1行、八个equation2残差、attempt分类及原始hash见[response_v12](../response_v12.md)和[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)。没有声称唯一根因；局部矩阵重建、LU求解、乘法与累加/散射顺序的混合影响仍未分清。
+
+## Task41extra Review V13：保存两cell归因收口，未找到单一可支持的生产修复（2026-10-24）
+
+| 证据/口径 | 实测与判定 | 边界 |
+|---|---|---|
+| 原 full-action 门 | 两列相对误差 2.6749770637124364e-10、5.613598120039757e-10；限值 1e-11，FAIL | official_result=false；不因本轮保存数据复核而改变 |
+| Equation2 误差账 | 8组，最大项为 e_b/e_delta；未解释余差最大值 4.106e-13–1.476e-12 | 内部误差记账，不自动指向唯一生产根因 |
+| 目标行 | 4条 d_eval−saved_d 的实部为 −6.919e-11 至 −5.896e-11；虚部为 −2.409e-10 至 +4.413e-11（逐项见 compact） | 两cell/两列/j0-j3局部覆盖，不是全域重验 |
+| 局部投影 | cell446 两列 projected local-reduction difference 为 [−4.6049e-9,−1.2318e-10] 与 [3.7505e-9,−9.2098e-9] | 作为对照，末端 J/scatter 投影较小；它不足以推翻 RHS 残差校正研究优先级 |
+| 修复因果 | 有界同 LU RHS 残差校正研究提案；生产修复未验证 | 不改生产代码、不增加修正次数、不进入200q |
+| 序列化缺陷 | 旧主报告四行的 cell-value tuple/array repr 字段单独标为 SERIALIZATION_DEFECT_CELL_VALUE_TUPLE_ARRAY_REPR | 保留 attempt07 原件；独立 checker 的重构值不覆盖旧字节，也不改变科学状态 |
+| attempt07–09 failed service parent | 37.221870233 / 34.980933937 / 31.620030194 s；attempt08/09 nested worker exit 2；其 cgroup peak 为 UNKNOWN_NOT_RECORDED | 原 receipt 与 watchdog 负记录保留；attempt07 watchdog completed 但 service receipt 仍为 failed_raw_evidence_retained |
+| attempt10 | independent read-only closeout 完成；GETRS=0，复用两个持久 lambda；service parent 17.004897 s，嵌套 checker 8.958905 s | nested 时间不重复计入parent；树 RSS 569,810,944 B、cgroup peak 533,737,472 B、task swap 0 |
+| 固定窗与磁盘 | sequence 427累计21,255.405 s/21,600 s，快照余量344.595 s；累计 raw evidence 14,993,367,461/17,179,869,184 B | 均是历史快照，不代表当前余额；2 GiB free-space floor 满足 |
+| 其他阶段 | 全域 action、candidate recovery、200q、factor、KSP/FGMRES、完整场、A6、R/T/A | NOT_RUN；无 scientific qualification |
+
+唯一下一研究靶点是 hcurl_assembly_time_condensation.py::project_internal_rhs_same_lu 的同 LU RHS 残差校正路径。令 A_rb=Σ_c(−λ_cᴴr_b,c)，norm(d−A_rb)/norm(d) 为 5.13% / 1.70%，末端 J/scatter 差相对 d 为 1.58% / 2.43%；两组比例分别解释，不能视作项贡献百分比；这支持有限的研究提案，不证明 GETRS 缺陷，也不是已验证的生产修复。固定窗口 T0、source 负结果和原报告均保持不变。行政文档收口发生在总截止之后；起止和成本未独立打点，记 UNKNOWN_NOT_MEASURED。详见 [response_v13](../response_v13.md)、[V13 compact](b0_v13_saved_diagnostic_closeout_20261024.json) 和 [V13 evidence index](v13_closeout/evidence_index.json)。

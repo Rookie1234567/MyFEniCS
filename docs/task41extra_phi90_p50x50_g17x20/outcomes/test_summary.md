@@ -344,3 +344,9 @@ ABI 是本机 qualified WSL complex128/int32；不是工作站正式 service 资
 attempt06受监督saved-array checker完成，184项数组重算为EXACT，data integrity=true；这是保存证据复核，不是FE、solver或科学资格测试。V12 attempt03另有局部producer工作：建立两格mesh/space并生成候选张量与LU，不能把整个V12概括成无FE工作。C1 native Linux ABI preflight通过：项目runtime Python、PETSc 3.25.6 complex128/int32、SLEPc 3.25.2、DOLFINx 0.10、mpi4py 4.1.2、MPI1。最终源码相关定向复验由主控记录为3 passed、59 deselected、1.82 s，运行在checker source 9a6ccdcefc12119275f1ce1082f154af5a881241；另有纯fixture定向测试test_saved_diagnostics_prepare_binds_scope_and_reuses_entry_source_window为1 passed in 0.21s，检查scope、entry source与window绑定，不代表数值通过。
 
 本次文档收口只做Markdown/JSON与链接结构核验及git diff --check；attempt04–06的saved-array checker正式attempt均已运行并保留；本次文档收口未追加checker。没有运行全仓pytest、Ruff或PDE，没有CI通过声明。attempt03/06源码与服务身份、数值结论和证据hash见[V12 response](../response_v12.md)及[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)。
+
+## Task41extra Review V13 定向测试与文档收口
+
+- 资格化 native activation 下，最终窄 fixture 子集为 2 passed / 42 deselected / 1.78 s：test_v13_cell_g_terms_unwrap_cell_tuple_and_separate_legacy_serialization_defect 与 test_v13_actual_independent_closeout_command_and_authorization_keep_exact_scope。测试时完整 source SHA 和原始日志 hash 未单独保留；之后冻结的运行合同绑定 HEAD af953ef38ba2f95a2e443e131dece20c17af8c1e。该测试证明 checker/fixture 行为，不证明 action 或科学门通过。
+- 纯文档收口只检查已保存 JSON、报告/receipt/ledger 哈希与差异格式；未重新运行 pytest、Ruff、PDE 或 CI。行政文档处理位于固定总截止之后，时间成本 UNKNOWN_NOT_MEASURED。
+- attempt10 的 8.958905 s watchdog 是 17.004897 s service parent 的子阶段，不另加。窗口账本 sequence 427 的累计 charged 为 21,255.405 s；该读数是 attempt10 结束时快照，不是当前余额。

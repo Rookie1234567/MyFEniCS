@@ -1,0 +1,146 @@
+{
+  "schema": "task41.p0.v13.closeout_evidence_index.v1",
+  "repository": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "pre_documentation_head": "af953ef38ba2f95a2e443e131dece20c17af8c1e",
+    "working_tree_before_documentation": "clean",
+    "scope": "Documentation and evidence index only; no source edit, new calculation, or test."
+  },
+  "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+  "evidence": [
+    {
+      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_af953ef38ba2f95a2e443e131dece20c17af8c1e_v12_two_cell_candidate_replay.json",
+      "bytes": 6361,
+      "sha256": "1cd4fb9f9b3c57069d78bb5bc3c260ccf7de3ab9ca37dab30ac53c0ae81f8a68",
+      "role": "Frozen V13 execution contract identity"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt07/task41_p0_v13_saved_adjoint_diagnostic.json",
+      "bytes": 2220414,
+      "sha256": "4ebd192847eb27d5ac6a908e84590552618ead2fe487eb2a86983640d8d3014a",
+      "role": "Primary saved two-cell adjoint diagnostic; eight groups/four rows; serialization defect retained"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt07/task41_p0_v13_saved_adjoint_diagnostic_independent_check.json",
+      "bytes": 289,
+      "sha256": "9e26968214d2e73304d30f5c99306e4c62dd629b028a465f77fb148e3aa9d86c",
+      "role": "Earlier incomplete independent-check attempt; retained negative record"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt07.service/v13_saved_adjoint_numeric_checker_watchdog/summary.json",
+      "bytes": 11645,
+      "sha256": "3c8f3bc03fac4b7e4313eae48483c86cfea143b60daaf39218c1f78da98a9a10",
+      "role": "Primary diagnostic watchdog summary"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt10/task41_p0_v13_saved_adjoint_diagnostic_independent_check.json",
+      "bytes": 8204,
+      "sha256": "b13b3ac27fdeb4cd5be95712936ef1640c24e70e3fe9d6ef8abd3b1d613dbc0c",
+      "role": "Attempt10 independent read-only closeout result"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt10.service/task41_p0_service_receipt.json",
+      "bytes": 97801,
+      "sha256": "3eaf9ada9f6bda82694e2f0b295b5ca73b99f6347cf064db02469afce9b6a451",
+      "role": "Attempt10 service receipt"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt10.service/v13_saved_adjoint_independent_closeout_watchdog/summary.json",
+      "bytes": 83730,
+      "sha256": "144b10141f0bad9e2212a14ad4f9cabf15428bc2e045b8c544baf2595d97cb70",
+      "role": "Attempt10 independent checker watchdog summary"
+    },
+    {
+      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v12_two_cell_candidate_replay_6h.jsonl",
+      "bytes": 504287,
+      "sha256": "968ceae9c16a7972238e4116b684b7615f5a46f221e9b0f4ecbaf7d4406defd5",
+      "role": "Existing fixed-window campaign ledger; sequence 427 snapshot"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/v13_adjoint_cache/task41_p0_v13_adjoint_solve_ledger.json",
+      "bytes": 1787,
+      "sha256": "4171f84ca321b07fe8ef59dcacf18fd2ddafbabb7f826bdef0bf51d9e488888e",
+      "role": "Existing two-call adjoint solve ledger"
+    },
+    {
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/b0_v13_saved_diagnostic_closeout_20261024.json",
+      "bytes": 157904,
+      "sha256": "da16d333d9295c56a80b229d5aabfdf7f9bcd95f7584d21c0b6e5efe4218695c",
+      "role": "V13 compact closeout derived only from hash-bound saved evidence"
+    },
+    {
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v13_closeout/timing_and_adjoint_ledgers.json",
+      "bytes": 6497,
+      "sha256": "bd0dc2117404d0d24fb2c0a3898fd28c8a4bcbc93e63838e30ee4cd9df660ef6",
+      "role": "Index for the two unchanged source ledgers"
+    },
+    {
+      "path": "docs/task41extra_phi90_p50x50_g17x20/response_v13.md",
+      "bytes": 8294,
+      "sha256": "627032a380c7d57bb15310ce5d96ac89212dcba3e3e751c75cdca77c92ce23ef",
+      "role": "Human-readable V13 response with the eight-group and four-row signed tables and bounded proposal"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt07.service/task41_p0_service_receipt.json",
+      "bytes": 9185,
+      "sha256": "edb04e5b3dc0388ba8d234a3c937fce6c31cc3420c64fec170fbd91511fc0645",
+      "role": "Attempt07 service receipt with preserved failed service status and parent cost"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt08.service/task41_p0_service_receipt.json",
+      "bytes": 97830,
+      "sha256": "3ebe83a443d88ecf5dddbf0c2aaa19a80eeeaad565b6992ef8bea29ee42b7d00",
+      "role": "Attempt08 service receipt with preserved failed service status and parent cost"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt08.service/v13_saved_adjoint_independent_closeout_watchdog/summary.json",
+      "bytes": 83747,
+      "sha256": "730369bd590ac7e4d1430ee2f8ee0d799d25f9c9d5e075c30ce1c8e1d1e2362c",
+      "role": "Attempt08 nested watchdog summary; do not add substage time to parent"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt09.service/task41_p0_service_receipt.json",
+      "bytes": 97783,
+      "sha256": "a7f69963390b92940f77a8b89f0663010c6060bbf70a5d054dec7424dfdc7131",
+      "role": "Attempt09 service receipt with preserved failed service status and parent cost"
+    },
+    {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt09.service/v13_saved_adjoint_independent_closeout_watchdog/summary.json",
+      "bytes": 83728,
+      "sha256": "9cf20be6b5b27b50ab375b12ac40381bacd55cc69950c5436aacdb07f7718fc9",
+      "role": "Attempt09 nested watchdog summary; do not add substage time to parent"
+    }
+  ],
+  "decisions": {
+    "official_result": false,
+    "scientific_qualified": false,
+    "original_full_action_gate": "FAIL",
+    "repair_causality": "SUPPORTED_BOUNDED_SAME_LU_RHS_RESIDUAL_CORRECTION_RESEARCH_PROPOSAL_NOT_IMPLEMENTED",
+    "legacy_serialization_defect_is_separate_from_scientific_status": true,
+    "production_fix_verified": false,
+    "next_review_target": "hcurl_assembly_time_condensation.py::project_internal_rhs_same_lu",
+    "signed_attribution_percent": {
+      "remainder_definition": "A_rb = sum_c(-lambda_c^H r_b,c); remainder = norm(d - A_rb) / norm(d)",
+      "rhs_remainder_percent_by_column": [
+        5.13,
+        1.7
+      ],
+      "signed_Sigma_minus_lambdaHrb_real_imag_by_column": [
+        [
+          "-4.9564304983e-09",
+          "4.3504314536e-12"
+        ],
+        [
+          "3.4478912707e-09",
+          "-9.5434045200e-09"
+        ]
+      ],
+      "terminal_J_scatter_percent_by_column": [
+        1.58,
+        2.43
+      ],
+      "interpretation": "5.13%/1.70% are remaining norm ratios, not the RHS term's contribution percentages."
+    }
+  },
+  "scope": "Documentation and evidence index only; no production numerical core edit, new calculation, or test."
+}

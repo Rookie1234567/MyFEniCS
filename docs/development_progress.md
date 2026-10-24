@@ -3888,3 +3888,8 @@ V5 将局部凝聚 rank-2 张量改为直接读取原 mesh coordinates，并让�
 attempt03使用既有metadata与donor输入建立局部mesh/space，生成cells 360/446候选张量与LU并完成选中行重放；producer source为196aedecbef5d129588c629fc091682d7a2900f4，保存198项数组共76,009,104 B；attempt06 checker source为9a6ccdcefc12119275f1ce1082f154af5a881241，saved-only checker独立重算184项并精确复现producer结果。attempt01为inner service缺strict Task41 marker启动失败；attempt04为checker错读嵌套identity schema，不据此判donor真实不匹配。attempt01–05失败与attempt03 checker身份失败均保留。attempt06没有FE装配、因子分解、新candidate生成或PDE solve；candidate_passed=null、scientific_qualified=false、official_result=false。
 
 V9完整action仍为2.6749770637124364e-10与5.613598120039757e-10，高于1e-11。局部选中行只覆盖既有V9误差能量约0.00627258%/0.00664272%；equation1和equation2残差仅用于诊断，不能声称“只是舍入”，唯一根因仍未确定。attempt02–06父service合计510.8661423435005秒，attempt01成本UNKNOWN_NOT_MEASURED；attempt06树RSS与cgroup峰值分列、task swap为0。详见[Task41 V12 response](task41extra_phi90_p50x50_g17x20/response_v12.md)、[compact ledger](task41extra_phi90_p50x50_g17x20/outcomes/b0_v12_saved_array_checker_closeout_20261024.json)、[Task41 outcomes summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。全域重验、200q/factor、KSP/FGMRES、完整场、A6、R/T/A、最终精度与2TB/48h仍未运行或未资格化。
+
+
+## Task41extra Review V13：保存两cell归因收口（2026-10-24）
+
+V13 对既有两cell保存包完成8组误差账与4条目标行独立复核；原 full-action 两列仍超过 1e-11，official_result=false。保存的 signed attribution 支持一个未实施的窄研究提案：hcurl_assembly_time_condensation.py::project_internal_rhs_same_lu 同LU RHS残差校正；未改生产数值核心，不代表GETRS缺陷或生产修复已验证。详见[response_v13](task41extra_phi90_p50x50_g17x20/response_v13.md)。

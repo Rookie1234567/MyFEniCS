@@ -1,0 +1,143 @@
+{
+  "schema": "task41.p0.v13.closeout_ledgers.v1",
+  "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+  "ledgers": [
+    {
+      "name": "campaign_time_ledger",
+      "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v12_two_cell_candidate_replay_6h.jsonl",
+      "sha256": "968ceae9c16a7972238e4116b684b7615f5a46f221e9b0f4ecbaf7d4406defd5",
+      "snapshot": {
+        "sequence": 427,
+        "phase": "closeout",
+        "cumulative_charged_seconds": 21255.405034775842,
+        "total_budget_seconds": 21600,
+        "remaining_seconds_at_snapshot": 344.594965224158
+      },
+      "measurement_boundary": "Window ledger includes setup/bootstrap and attempt10 through watchdog_end. It is not a live balance after sequence 427."
+    },
+    {
+      "name": "adjoint_solve_ledger",
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/v13_adjoint_cache/task41_p0_v13_adjoint_solve_ledger.json",
+      "sha256": "4171f84ca321b07fe8ef59dcacf18fd2ddafbabb7f826bdef0bf51d9e488888e",
+      "snapshot": {
+        "solve_calls": 2,
+        "cells": [
+          360,
+          446
+        ],
+        "purpose": "ADJOINT_DIAGNOSTIC",
+        "inflight_cell": null
+      },
+      "measurement_boundary": "Two primary saved-LU transpose solves only. Attempt10 independent checker reused both persisted lambda packages and made zero GETRS calls."
+    }
+  ],
+  "timing_separation": {
+    "attempt07_primary_analysis_seconds": 23.331,
+    "attempt07_two_getrs_combined_seconds": 0.0196566465,
+    "attempt07_getrs_is_nested_in_primary_analysis": true,
+    "attempt07_service_parent_seconds": 37.221870233,
+    "attempt07_watchdog_seconds_nested": 27.335549844894558,
+    "attempt08_service_parent_seconds": 34.980933936778456,
+    "attempt08_watchdog_seconds_nested": 14.539023727178574,
+    "attempt09_service_parent_seconds": 31.62003019405529,
+    "attempt09_watchdog_seconds_nested": 10.730579070746899,
+    "attempt10_service_parent_seconds": 17.004897352773696,
+    "attempt10_independent_checker_watchdog_seconds_nested": 8.9589050617069,
+    "known_service_parent_sum_attempt07_to10": 120.82773171660745,
+    "rule": "Nested watchdog and diagnostic subclocks are not added to service-parent time."
+  },
+  "administrative_closeout": {
+    "window_status": "outside_total_cutoff_after_2026-10-24T05:12:47Z",
+    "elapsed_cost": "UNKNOWN_NOT_MEASURED",
+    "t0_refreshed": false,
+    "new_computation_or_test": false
+  },
+  "service_attempts": [
+    {
+      "attempt": "07",
+      "service_status": "failed_raw_evidence_retained",
+      "service_parent_seconds": 37.221870233,
+      "watchdog_seconds_nested": 27.335549844894558,
+      "watchdog_classification": "COMPLETED",
+      "worker_exit_code": 0,
+      "process_tree_rss_peak_bytes": 674791424,
+      "cgroup_memory_peak_bytes": 505257984,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt07.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "edb04e5b3dc0388ba8d234a3c937fce6c31cc3420c64fec170fbd91511fc0645"
+    },
+    {
+      "attempt": "08",
+      "service_status": "failed_raw_evidence_retained",
+      "service_parent_seconds": 34.980933936778456,
+      "watchdog_seconds_nested": 14.539023727178574,
+      "watchdog_classification": "WORKER_FAILED",
+      "worker_exit_code": 2,
+      "process_tree_rss_peak_bytes": 705208320,
+      "cgroup_memory_peak_bytes": "UNKNOWN_NOT_RECORDED",
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt08.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "3ebe83a443d88ecf5dddbf0c2aaa19a80eeeaad565b6992ef8bea29ee42b7d00"
+    },
+    {
+      "attempt": "09",
+      "service_status": "failed_raw_evidence_retained",
+      "service_parent_seconds": 31.62003019405529,
+      "watchdog_seconds_nested": 10.730579070746899,
+      "watchdog_classification": "WORKER_FAILED",
+      "worker_exit_code": 2,
+      "process_tree_rss_peak_bytes": 714338304,
+      "cgroup_memory_peak_bytes": "UNKNOWN_NOT_RECORDED",
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt09.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "a7f69963390b92940f77a8b89f0663010c6060bbf70a5d054dec7424dfdc7131"
+    },
+    {
+      "attempt": "10",
+      "service_status": "completed",
+      "service_parent_seconds": 17.004897352773696,
+      "watchdog_seconds_nested": 8.9589050617069,
+      "watchdog_classification": "COMPLETED",
+      "worker_exit_code": 0,
+      "process_tree_rss_peak_bytes": 569810944,
+      "cgroup_memory_peak_bytes": 533737472,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt10.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "3eaf9ada9f6bda82694e2f0b295b5ca73b99f6347cf064db02469afce9b6a451"
+    }
+  ],
+  "primary_c_s_t_full_vector_summary": {
+    "exact_zero_groups": 6,
+    "nonzero_groups": [
+      {
+        "cell": 360,
+        "column": 1,
+        "state": "j0",
+        "max_abs": "8.348057249230113334e-15",
+        "index": 211,
+        "value_real_imag": [
+          "-8.338815749020511703e-15",
+          "-3.92698026874249706e-16"
+        ],
+        "target_row_projection": "0.0"
+      },
+      {
+        "cell": 360,
+        "column": 1,
+        "state": "j3",
+        "max_abs": "8.348057249230113334e-15",
+        "index": 211,
+        "value_real_imag": [
+          "-8.338815749020511703e-15",
+          "-3.92698026874249706e-16"
+        ],
+        "target_row_projection": "0.0"
+      }
+    ],
+    "warning": "A zero target-row projection does not establish a zero full 432-vector."
+  }
+}
