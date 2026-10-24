@@ -1,0 +1,102 @@
+{
+  "schema": "task43.stage1_gate.v2",
+  "status": "DIRECT_DIAGNOSTIC_GATE_PASS_WITH_LIMITATIONS; PRODUCTION_AND_FULLSUITE_GATES_BLOCKED",
+  "task_branch": "task43_hp_adaptivity",
+  "base": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+  "current_source_HEAD": "fad2df0fb5c15ab1e14fabddf262a772c126cda5",
+  "v1_numeric_and_pde_source_HEAD": "3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0",
+  "new_formal_model_pde_attempts": 0,
+  "question_records": {
+    "Q01_existing_field_replay_and_limitations": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/post_selection_old_field_replay_v2.json",
+      "sha256": "6f42e6b872c39085c3022dc1c260ae7dfbf3631a07247bf8fe54edef6fbe66ec",
+      "bytes": 2971
+    },
+    "Q02_collection_abi_and_direct_regressions": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/q02_collection_and_abi_v2.json",
+      "sha256": "0bf9cd88cf08a185d17489cc99eb98e376d1783dc577ab36fc39bb5bad40330e",
+      "bytes": 17901
+    },
+    "Q03_selective_dependency_closure": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/selective_merge_dependency_closure_v2.json",
+      "sha256": "a476507410855ec816e2e459e68153bcf8bd0dcf39702f77059c2a12ffdfce5e",
+      "bytes": 22173
+    },
+    "Q04_56_original_watchdog_summaries": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/completed_watchdog_cost_inventory_v2.json",
+      "sha256": "f6ec7bd31ccee9b027de4c4bc3c1e6879b63b589a0c6fd82e983ce3d58eb3f30",
+      "bytes": 34555
+    },
+    "Q05_initial_rule_freeze_timing": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round1_freeze_timing_evidence_v2.json",
+      "sha256": "34d4d49254af0ad294d622a41b5667217fd5d38d7a0fbb53dae3f7ca9a1b834b",
+      "bytes": 2687
+    },
+    "Q06_p3_complete_D4_and_oriented_child_properties": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/q06_q07_component_validation_v2.json",
+      "sha256": "c7339611a127971f274954878baecd60f289031f970e6b9e4c958f75d2fc01e8",
+      "bytes": 7064
+    },
+    "Q07_exact_R8_partial_exception_and_V2_inventory": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/q06_q07_component_validation_v2.json",
+      "sha256": "c7339611a127971f274954878baecd60f289031f970e6b9e4c958f75d2fc01e8",
+      "bytes": 7064
+    },
+    "Q08_registry_markdown_both_attempts": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/registry_markdown_attempts_v2.json",
+      "sha256": "eff458f2b5d37b8cb81c175deba960bc5c898aa1db20a723631908ae1993e163",
+      "bytes": 2884
+    }
+  },
+  "gate_facts": {
+    "Q02": "Original 8 full-pytest collection errors preserved; clean tracked collection 3121 items plus one SLEPc blocker; ABI mismatch localized. Current source-hash direct suite: saved-fixture 40 passed/3 MPI2-only skips, whose three nodes passed in separate MPI2 run; exact-sequence/assembly/recovery/active-action 3 passed; same-LU 27-cell component 1 passed under watchdog. Full suite did not execute test bodies.",
+    "Q03": "Root independently verified all 66 source/overlay hashes, base405 identity, 157-node raw collection, and that the four imports resolved from the isolated overlay. This proves import/collection closure only; no numerical execution or merge.",
+    "Q04": "56 unique pre-V2 watchdog summaries individually path/hash/classification/elapsed indexed; wall sum 63340.73598930752s. Root independently passed 56 rows, 58 raw hashes, 18 original R3 rows and 64 immutable V1 files. post_selection_restore_attempt1 is one completed restore workflow covering Y5_1/Y3/Y3_2; its summary whole-wall is 166.96172243729234s. R8 partial window is separate and incomplete.",
+    "Q05": "Frozen contract SHA matches captured pre-run snapshot, but strict temporal order before first candidate is not independently proven.",
+    "Q06": "Two p3 nodes passed for eight D4 transforms and 256 oriented-child combinations; no broader level2/cross-h claim.",
+    "Q07": "Only round8_p at exact resolved historical root uses measured partial R8 audit fields; wrong-path/non-R8 missing summary rejects. V1 inventory untouched; V2 inventory separate.",
+    "Q08": "Both original markdown regression attempts retained, latest is 5 passed in 0.11s."
+  },
+  "additional_root_audits": {
+    "old_field_raw_crosscheck": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/replay_crosscheck.json",
+      "sha256": "7075e914bdd713777a639bf843d37360aa4992ec241be7717e76bab974974c8a",
+      "bytes": 1633
+    },
+    "old_field_raw_audit": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/root_post_selection_joint_raw_audit.json",
+      "sha256": "828a340e3be1f3078c5d64fe82767c14d0a77a35ab469bb6fdeeb611bc56766c",
+      "bytes": 78395
+    },
+    "old_residual_scalar_audit": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/old_residual_scalar_audit.json",
+      "sha256": "2e80319a3361624614a24ada71687c34a07efb12e397fe8e0e129cf0f5c02875",
+      "bytes": 2540
+    },
+    "field_replay_watchdog": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/summary.json",
+      "sha256": "2a28af1c13fc8423a15ba123c883ab5eb0fa6dd8ce7b41cbafb1136a7b02f95b",
+      "bytes": 3539
+    },
+    "overlay_dependency_audit": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/overlay_dependency_audit.json",
+      "sha256": "439a7bef5f1e7d0982fb3140cc9f6b7d522e75ddddd31733d6040bcd04390015",
+      "bytes": 3322,
+      "status": "PASS_WITH_LIMITATIONS"
+    },
+    "cost_ledger_audit": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/cost_ledger_audit.json",
+      "sha256": "18cf21ea4da9ee6e173a6b4a12f24a01ef8cb0fd1d9d69cbe31fc57ab44f00d4",
+      "bytes": 870,
+      "status": "PASS"
+    }
+  },
+  "root_independent_audits_pending": [],
+  "scope_guard": "Stage1 direct diagnostic gate is PASS_WITH_LIMITATIONS: controlled direct-path diagnostic planning may proceed, but no model attempt may start until diagnostic_plan_v2.md and its machine contract are committed/reviewed. Production/full-repository gate remains blocked by the documented SLEPc ABI issue and full tracked collection errors. Freeze common 612 plus extra 224 semantics, reference identity, tolerances, resource limits, and max-six budget before revealing any new B result.",
+  "gate_decisions": {
+    "controlled_direct_diagnostic_gate": "PASS_WITH_LIMITATIONS",
+    "production_and_full_repository_gate": "BLOCKED_BY_SLEPC_ABI_AND_TRACKED_COLLECTION_ERRORS",
+    "formal_model_pde_attempts_in_stage1": 0,
+    "diagnostic_plan_and_machine_contract_required_before_any_stage2_model_attempt": true
+  }
+}

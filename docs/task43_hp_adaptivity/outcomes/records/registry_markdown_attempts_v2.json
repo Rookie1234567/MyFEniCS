@@ -1,0 +1,57 @@
+{
+  "schema": "task43.registry-markdown-test-attempts.v2",
+  "status": "TWO_EXISTING_ATTEMPTS_INDEXED_NO_RERUN",
+  "source_validation_record": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/final_review_package_validation_v1.json",
+    "sha256": "9bd7530d48b58df0318dc15acb252ba493d58944f122b36502c1c1ec56b9ba48"
+  },
+  "attempts": [
+    {
+      "attempt_id": "final_report_package_validation_attempt1",
+      "command": "python -m pytest -q src/test/test_183_development_model_registry_markdown.py",
+      "stdout": {
+        "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/registry_markdown_pytest.stdout",
+        "sha256": "d1978c1eb0cd573d5cf5e8ee23d605b25cb10239a5f893264096c00592fc2bbf",
+        "bytes": 98,
+        "text": ".....                                                                    [100%]\n5 passed in 0.08s\n"
+      },
+      "stderr": {
+        "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/registry_markdown_pytest.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "exit_code_file": {
+        "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt1/registry_markdown_pytest.exit_code.txt",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "text": "0"
+      },
+      "pytest_exit_code": 0,
+      "reported_pass_count": 5,
+      "reported_seconds": 0.08
+    },
+    {
+      "attempt_id": "final_report_package_validation_attempt2",
+      "command": "python -m pytest -q src/test/test_183_development_model_registry_markdown.py",
+      "stdout": {
+        "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/registry_markdown_pytest.stdout",
+        "sha256": "6b9ffd6b9a3baa1f0f65b43fd8e9939ac47909d796917593222ef0ccd5a23556",
+        "bytes": 98,
+        "text": ".....                                                                    [100%]\n5 passed in 0.11s\n"
+      },
+      "stderr": {
+        "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/registry_markdown_pytest.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "exit_code_file": {
+        "path": "benchmarks/artifacts/task43/final_report_package_validation_attempt2/registry_markdown_pytest.exit_code.txt",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "text": "0"
+      },
+      "pytest_exit_code": 0,
+      "reported_pass_count": 5,
+      "reported_seconds": 0.11
+    }
+  ],
+  "conclusion": "The same 5-test command passed twice: 0.08 s on package-validation attempt1 and 0.11 s on wording-refresh attempt2. V2 wording should use the second attempt as latest while retaining both records."
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "task43.post_selection_old_field_replay_record.v2",
+  "status": "STORED_FIELD_RAW_REPLAY_MATCHES_V1; SCOPE_LIMITS_RETAINED",
+  "new_formal_model_attempts": 0,
+  "source_HEAD": "fad2df0fb5c15ab1e14fabddf262a772c126cda5",
+  "crosscheck": {
+    "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/replay_crosscheck.json",
+    "sha256": "7075e914bdd713777a639bf843d37360aa4992ec241be7717e76bab974974c8a"
+  },
+  "old_V1_raw_audit": {
+    "path": "benchmarks/artifacts/task43/post_selection_joint_comparison_attempt1/root_review/root_post_selection_joint_raw_audit.json",
+    "sha256": "0eceaa946c7b1599f96021a417babec97292cb974b8dd8872501de47bf78f993"
+  },
+  "new_root_raw_audit": {
+    "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/root_post_selection_joint_raw_audit.json",
+    "sha256": "828a340e3be1f3078c5d64fe82767c14d0a77a35ab469bb6fdeeb611bc56766c"
+  },
+  "raw_inputs": {
+    "count": 14,
+    "hashes_identical_to_V1": true
+  },
+  "replay_scope": [
+    "Recomputed modal Poynting powers and weighted E/H/G comparisons from the original stored field sample arrays.",
+    "The root crosscheck reports all non-timing fields and raw-input hashes identical to V1.",
+    "The fields were not freshly sampled from solution coefficients.",
+    "A_volume differences are inherited from original records; no new A_volume volume integration was performed.",
+    "No fresh full-operator application or A6 residual qualification was performed."
+  ],
+  "watchdog": {
+    "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/summary.json",
+    "sha256": "2a28af1c13fc8423a15ba123c883ab5eb0fa6dd8ce7b41cbafb1136a7b02f95b",
+    "whole_wall_seconds": 46.21374210854992,
+    "simultaneous_tree_rss_peak_bytes": 1885057024,
+    "task_swap_peak_bytes": 0,
+    "global_swap_delta_bytes": 0,
+    "leader_exit_code": 0,
+    "descendants_cleared": true
+  },
+  "old_V1_summary_and_criteria_untouched": true,
+  "old_residual_scalar_audit": {
+    "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/old_residual_scalar_audit.json",
+    "sha256": "2e80319a3361624614a24ada71687c34a07efb12e397fe8e0e129cf0f5c02875",
+    "scope": "R9/R10 original trace/interior/modal norm arithmetic recomposition and saved 612-row D*alpha−moment check; Y6_1 original A6/condensed scalar extraction only.",
+    "limit": "No fresh operator application, no re-integration of saved moments, and no fresh A6 qualification.",
+    "unmonitored_arithmetic_elapsed_seconds_not_added_to_watchdog_wall": 0.143265
+  },
+  "scope_limits": [
+    "Raw observable replay uses stored sample arrays; fields were not freshly sampled from solution coefficients.",
+    "A_volume differences are inherited from original records; no new A_volume volume integration was performed.",
+    "Residual audit is arithmetic on stored scalar norms/moments; no full original operator was newly applied and no fresh A6 qualification was performed."
+  ]
+}

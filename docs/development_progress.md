@@ -18,6 +18,10 @@
 | 全仓 `python -m pytest -q` | 真实执行到collection：1 skip、8 errors、测试体0执行，pytest91.42s；watchdog104.270419s、树RSS峰406,917,120B、task/global swap增量0、exit2且后代清理 | 8个collection error=1个忽略Task43同名artifact模块冲突（两个副本路径但单error）+1个SLEPc key1211220注册冲突+6个旧忽略tmp/task42extra缺模块；不写成“8 tests失败”或“0 tests collected”，保留原始trace，不改环境/忽略配置 |
 | 成本分类 | 两次最终测试watchdog合计135.193513449747s，作为测试工作单列 | 原56份完整模型/组件watchdog 63,340.73598930752s，加R8 partial 3,109.3891972089186s为66,450.12518651644s观察下界；连测试简单相加为66,585.31869996618s，仍非完整campaign总成本 |
 
+### Task43 V2 review 补账（阶段一，2026-10-24）
+
+用户授权的Q02–Q08工程证据已经整理，当前无新正式模型PDE。原全仓collection的8个错误逐项保留，SLEPc real ABI与complex128/int64 PETSc冲突定位为Hybrid/SLEPc blocker；SLEPc-free路径补做当前source hash下的exact-sequence/local-Schur、mixed-p3/p4装配与cell-interior恢复、independent action、采样MPI2和同LU微型fixture。direct focused 40 passed、3个MPI2-only skip；这些节点已另在MPI2实测，每rank 4 passed；其他空间/装配/action 3 passed；同LU 27-cell组件1 passed并由watchdog记录，不是正式候选。Q03 base405隔离overlay的66项hash清单import通过，25个changed-test文件collect-only 157 items、0执行。Q04的56个summary逐项hash/分类/实际whole wall小计63,340.735989s；`post_selection_restore_attempt1`覆盖Y5_1/Y3/Y3_2完整恢复workflow，用原summary实测166.961722s；R8另保留不完整采样窗下界。Q05只证contract hash出现在pre-run snapshot，首candidate前的严格顺序未独立证明。Q06只覆盖两个p3 D4/8及oriented-child/256属性。Q07限制到精确R8 run路径，V1 inventory不改写。Q08两次文档回归均保留，最近5 passed/0.11s。阶段一直接诊断门已由主控标记PASS_WITH_LIMITATIONS；生产/全仓门仍因已记录的SLEPc ABI与collection问题阻塞。机器索引见[stage1_gate_v2](task43_hp_adaptivity/outcomes/records/stage1_gate_v2.json)，任何Stage2模型尝试仍须先提交并审阅V2计划和机器合同。新增旧场raw replay只用保存样本与原记录，没有从系数重采样、没有重算A_volume体积分、没有施加完整算子/fresh A6；不与正式PDE资格混淆。
+
 以上均为本地结果，不声称CI通过。独立后验compact与root raw/resource audit见[Task43结果](task43_hp_adaptivity/outcomes/summary.md)、[post-selection验证](task43_hp_adaptivity/outcomes/records/post_selection_existing_fields_validation_v1.json)、[final test compact](task43_hp_adaptivity/outcomes/records/final_test_attempts_v1.json)。完整机器账包含16次尝试与5份导入场；选择性依赖组、fresh PDE证据和reporting scripts边界见[manifest](task43_hp_adaptivity/outcomes/selective_merge_manifest.md)。当前状态等待ChatGPT外部审阅，未获merge approval，未合入master。
 
 下文保留各次阶段检查点原文用于追溯；其中“当前/下一步”只代表写作当日阶段，最终状态以本节和Task43 outcomes为准。

@@ -1,0 +1,112 @@
+{
+  "schema": "task43.full-repository-pytest-collection-error-index.v2",
+  "status": "EIGHT_ORIGINAL_COLLECTION_ERRORS_INDEXED; TEST_BODIES_DID_NOT_RUN",
+  "attempt_id": "final_full_repository_pytest_attempt1",
+  "command": "python -m pytest -q",
+  "source_HEAD": "3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0",
+  "activation": "scripts/activate_task40_phi90_pord64.sh",
+  "collection_result": {
+    "test_bodies_executed": 0,
+    "collection_skips": 1,
+    "collection_errors": 8,
+    "causes": {
+      "ignored_Task43_test_snapshot_name_collision": 1,
+      "SLEPc_registration": 1,
+      "old_ignored_Task42_scratch_missing_modules": 6
+    },
+    "pytest_reported_wall_seconds": 91.42
+  },
+  "pytest_exit_code": 2,
+  "raw_worker_log": {
+    "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/worker.log",
+    "sha256": "93662e5c157cebb9e5778a27c5513f241db99ec4b4389db599a5ab6a6738a7c7",
+    "bytes": 6362
+  },
+  "watchdog_summary": {
+    "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/summary.json",
+    "sha256": "668846e70bd461360f23b4c3b0cbeb7201afcf0d33838c414cf8d7cf0d319235",
+    "whole_wall_seconds": 104.27041949564591,
+    "leader_exit_code": 2,
+    "descendants_cleared": true
+  },
+  "errors": [
+    {
+      "ordinal": 1,
+      "kind": "ignored_Task43_module_basename_collision",
+      "reported_path": "benchmarks/artifacts/task43/mixed_hp_9_to_12/attempt_param_p3p4_p4p5/test_task43_mixed_hp_9_to_12.py",
+      "imported_copy_path": "benchmarks/artifacts/task43/mixed_hp_9_to_12/attempt_p3_p4_initial/test_task43_mixed_hp_9_to_12.py",
+      "reported_message": "import file mismatch: imported module test_task43_mixed_hp_9_to_12 has __file__ set to attempt_p3_p4_initial, not attempt_param_p3p4_p4p5",
+      "cause_count": 1,
+      "traceback_key": "pytest reports the imported module __file__ path and requested collection path; one collision spans two ignored artifact copies."
+    },
+    {
+      "ordinal": 2,
+      "kind": "SLEPc_registration_ABI_conflict",
+      "reported_path": "src/test/test_179_task035b_hybrid_static_condensation.py",
+      "import_chain": [
+        "src/coupling/hybrid_internal_modes.py",
+        "src/modes/mode_classification.py",
+        "src/modes/quadratic_beta_eigenproblem.py"
+      ],
+      "exception_type": "ValueError",
+      "exception_message": "key: 1211220, cannot register: <class 'slepc4py.SLEPc.ST'>, already registered: <class 'petsc4py.PETSc.Viewer'>",
+      "cause_count": 1,
+      "traceback_key": "slepc4py.SLEPc._initialize -> register -> petsc4py.PETSc.PyPetscType_Register."
+    },
+    {
+      "ordinal": 3,
+      "kind": "old_ignored_Task42_scratch_missing_module",
+      "reported_path": "tmp/task42extra/test_feinn_metric_verification_ml_draft.py",
+      "exception_type": "ModuleNotFoundError",
+      "missing_module": "src.solvers.feinn_metric_verification",
+      "import_line": "from src.solvers.feinn_metric_verification import PILOTS, selections",
+      "cause_count": 1
+    },
+    {
+      "ordinal": 4,
+      "kind": "old_ignored_Task42_scratch_missing_module",
+      "reported_path": "tmp/task42extra/test_v10_checker_draft.py",
+      "exception_type": "ModuleNotFoundError",
+      "missing_module": "benchmarks.check_task42extra_v10",
+      "import_line": "from benchmarks.check_task42extra_v10 import (",
+      "cause_count": 1
+    },
+    {
+      "ordinal": 5,
+      "kind": "old_ignored_Task42_scratch_missing_module",
+      "reported_path": "tmp/task42extra/development/test_feinn_authority_checker.py",
+      "exception_type": "ModuleNotFoundError",
+      "missing_module": "benchmarks.check_task42extra_v7",
+      "import_line": "from benchmarks.check_task42extra_v7 import error_pair, reference_gate, comparison_gate",
+      "cause_count": 1
+    },
+    {
+      "ordinal": 6,
+      "kind": "old_ignored_Task42_scratch_missing_module",
+      "reported_path": "tmp/task42extra/review_v24/peer_read/main/src/test/test_task40_w1_boundary_adapter.py",
+      "exception_type": "ModuleNotFoundError",
+      "missing_module": "src.solvers.directional_boundary",
+      "import_line": "from src.solvers.directional_boundary import (",
+      "cause_count": 1
+    },
+    {
+      "ordinal": 7,
+      "kind": "old_ignored_Task42_scratch_missing_module",
+      "reported_path": "tmp/task42extra/v30/future_versions/test_neural_wave_screening.py",
+      "exception_type": "ModuleNotFoundError",
+      "missing_module": "src.solvers.neural_wave_greedy",
+      "import_line": "from src.solvers.neural_wave_greedy import Patch, variable_projection",
+      "cause_count": 1
+    },
+    {
+      "ordinal": 8,
+      "kind": "old_ignored_Task42_scratch_missing_module",
+      "reported_path": "tmp/task42extra/v40/test_original_functionals.py",
+      "exception_type": "ModuleNotFoundError",
+      "missing_module": "src.solvers.ftt_capacity_checks",
+      "import_line": "from src.solvers.ftt_capacity_checks import functional_checks",
+      "cause_count": 1
+    }
+  ],
+  "interpretation": "The artifact collision names two ignored Task43 copy paths but is one pytest collection error. The SLEPc conflict is independently reproduced in isolated import-only probes and in a clean tracked collection; no environment rebuild or ignore change was applied. Six Task42 missing-module errors come from old ignored scratch files. This index preserves the original eight-error run."
+}

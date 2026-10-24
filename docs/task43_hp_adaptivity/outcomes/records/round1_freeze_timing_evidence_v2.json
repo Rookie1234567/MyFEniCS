@@ -1,0 +1,30 @@
+{
+  "schema": "task43.first-round-rule-freeze-evidence.v2",
+  "classification": "HASH_MATCHED; PRE-CANDIDATE TEMPORAL ORDER NOT INDEPENDENTLY PROVEN",
+  "contract": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "git_head_field": "6389b9f5e0a2151014021ad25618637cfd948c72"
+  },
+  "raw_snapshot": {
+    "head_path": "benchmarks/artifacts/task43/round1_candidates/attempt2/p_up_attempt3/source_snapshot_pre_run/head.txt",
+    "head_sha256": "ef0d97e5cac56156b2fd345eef8b3f511a81a18da159bbcde43c6fd3c9fe3102",
+    "head": "6389b9f5e0a2151014021ad25618637cfd948c72",
+    "frozen_inputs_path": "benchmarks/artifacts/task43/round1_candidates/attempt2/p_up_attempt3/source_snapshot_pre_run/frozen_inputs.sha256",
+    "frozen_inputs_sha256": "d8e3ddd857db943b50395778010be6c58e4dfd304ecb5f2c454b6c1510b8371d",
+    "contract_entry": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647  docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+    "worktree_status_path": "benchmarks/artifacts/task43/round1_candidates/attempt2/p_up_attempt3/source_snapshot_pre_run/worktree_status.txt",
+    "worktree_status_sha256": "7ec443dd5fc897cc6f8fe1a1c2bc39c6ec4d5c75010edee610269f25c6c1e05e",
+    "contract_listed_untracked": true
+  },
+  "candidate_observation": {
+    "path": "benchmarks/artifacts/task43/round1_candidates/attempt2/p_up_attempt3/watchdog_supervised/worker.log",
+    "sha256": "ec78337db231c5b3601d5a4765ae3816e54a49b9a4f12c6b23722528eb2bd7c8",
+    "first_event": "{\"candidate_id\": \"round1_p_up_p4_46\", \"case_id\": \"round1_candidate_mpi1\", \"elapsed_wall_seconds\": 6.211316213011742e-05, \"status\": \"begin\", \"task43_stage\": \"preflight\"}",
+    "has_contract_sha_in_first_event": false,
+    "watchdog_summary_path": "benchmarks/artifacts/task43/round1_candidates/attempt2/p_up_attempt3/watchdog_supervised/summary.json",
+    "watchdog_summary_sha256": "62ae766bcb2f5d2a8742d96e821c6660a867eddb8fe26dfaa6846a9a2b17de27",
+    "watchdog_contains_UTC_start_or_argv": false
+  },
+  "conclusion": "The pre-run snapshot contains the exact accepted-contract SHA and lists that file as untracked at snapshot time. The worker begins with a preflight event but does not record this contract SHA or an ordered contract-hash observation before candidate launch; the watchdog summary has no UTC start or argv. Therefore the saved evidence supports hash consistency and the declared pre-run snapshot, but does not independently prove strict first-candidate temporal order. No timestamp was inferred from file mtime."
+}

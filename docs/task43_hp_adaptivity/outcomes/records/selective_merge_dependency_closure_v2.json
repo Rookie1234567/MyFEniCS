@@ -1,0 +1,504 @@
+{
+  "schema": "task43.selective-merge-dependency-closure.v2",
+  "purpose": "Import/collection overlay for the actual proposed Task43 source/test set; files were copied into an isolated temporary worktree, not merged or committed to the baseline.",
+  "base_worktree": {
+    "path": "/tmp/task43_v2_q03_core_closure_405",
+    "head": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+    "status_clean_before_overlay": true
+  },
+  "source_identity": {
+    "branch": "task43_hp_adaptivity",
+    "head": "fad2df0fb5c15ab1e14fabddf262a772c126cda5"
+  },
+  "overlay_scope": "Every tracked src/ and benchmarks/ path changed from the fixed base through the reviewed Q06/Q07 commit, including explicit changed-test dependencies; no docs, artifacts, task files or ignored files were overlaid.",
+  "file_count": 66,
+  "files": [
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "6c97eafc40e0b9a3817a37184bea2cb8dbca224e41817fcdac17ffaa438bb94a",
+      "bytes": 45651,
+      "role": "reusable_runner_watchdog"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/__init__.py",
+      "sha256": "5e8806eae425d1f622bf4a4a18b2b300051ee4da84a6a1ea64abcb40bdbd1aab",
+      "bytes": 55,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "sha256": "e8ff5acb1359e77a238fc7192889a0c43f678a69ded89655f920518a37195c15",
+      "bytes": 3592,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/candidate_records.py",
+      "sha256": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+      "bytes": 5651,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py",
+      "sha256": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+      "bytes": 46529,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "sha256": "c791d99998986ae53d81d39bf4f916e73d1ed9f4eb9cca9bb6f42fac871ffda8",
+      "bytes": 62056,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "sha256": "904b537c9ef237c96b0ae2b15b5c21861957f4fd4fc9d42563aea214c3175239",
+      "bytes": 123484,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/profile.py",
+      "sha256": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+      "bytes": 18383,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reference_restore.py",
+      "sha256": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+      "bytes": 37787,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reporting/build_cycle_index.py",
+      "sha256": "84bfb0499050b7ab55737c50085e6e79c325bbcfa2b4ac4f9afb44afa17c2689",
+      "bytes": 4881,
+      "role": "compact_reporting_helper_or_generator"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reporting/build_final_review_figures.py",
+      "sha256": "e71711f80d1c03e8a5a0979af96b23b4f072b2310c5bd026d96a179894115be5",
+      "bytes": 9754,
+      "role": "compact_reporting_helper_or_generator"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reporting/build_unified_model_attempt_inventory.py",
+      "sha256": "9394887fbe1c2123b26b55efda11059628b0529ec681229c728d1fb92c767a9f",
+      "bytes": 16306,
+      "role": "compact_reporting_helper_or_generator"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reporting/watchdog_scope.py",
+      "sha256": "d5a6411f34450b0a06d13abf841211cda55b78e94c372b8d9ee4e972fbba201d",
+      "bytes": 872,
+      "role": "compact_reporting_helper_or_generator"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "sha256": "021809983043eda9b695f1aaa17e93dc7fa78dc70531691a26b7cd75814ce1a6",
+      "bytes": 42739,
+      "role": "research_runner_or_checker_dependency"
+    },
+    {
+      "path": "src/adaptivity/exact_sequence_variable_p.py",
+      "sha256": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "bytes": 41082,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/hcurl_broken_cell_trace.py",
+      "sha256": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "bytes": 86965,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/hcurl_broken_trace_graph.py",
+      "sha256": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "bytes": 63270,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/hcurl_hanging_trace.py",
+      "sha256": "350cd2999d50aaad62a85f8cda98a6994b6456a680d13142b3029922834af993",
+      "bytes": 51366,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/hcurl_trace_constraint_graph.py",
+      "sha256": "2cb443a46fa82f06ca625ba44ced3a8cbeed9282a81a80c9a53d85e3d958f371",
+      "bytes": 21218,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/physical_g_error.py",
+      "sha256": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "bytes": 12923,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/stage4_local_h.py",
+      "sha256": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "bytes": 37513,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/variable_p_degree_plan.py",
+      "sha256": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "bytes": 14551,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/variable_p_entity_map.py",
+      "sha256": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "bytes": 16078,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/adaptivity/variable_p_transfer.py",
+      "sha256": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "bytes": 23101,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/common/config_3d.py",
+      "sha256": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "bytes": 41010,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/common/modes_3d.py",
+      "sha256": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "bytes": 14316,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "bytes": 51318,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/geometry/task43_hp_adaptivity_axis_plan.py",
+      "sha256": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "bytes": 2710,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/io/native_capacity_profile.py",
+      "sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "bytes": 155147,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/postprocessing/physical_field_comparison.py",
+      "sha256": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "bytes": 11401,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/postprocessing/physical_field_sampling.py",
+      "sha256": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "bytes": 13568,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/postprocessing/rta_3d.py",
+      "sha256": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "bytes": 12055,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/runners/run_3d_cases.py",
+      "sha256": "4c7f82d452f71b120108420de4adda4952d2ab4ecb94e74eab9256a173128b8c",
+      "bytes": 29770,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/common_3d_case_flow.py",
+      "sha256": "f6646d69a0c4bc6a1e2f45a6ba1f072d0ba734032da735db054e125c317ce999",
+      "bytes": 109575,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/common_3d_forms.py",
+      "sha256": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "bytes": 9425,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "c298be94bc1a9b870cfddac0cd9a37d4fcfad881387da7d126d7b3d554875dd7",
+      "bytes": 375337,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_assembly.py",
+      "sha256": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "bytes": 78706,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "sha256": "32343f7501772437fca3c33c0524977fb2659a6177dce66e7b787db51d846e99",
+      "bytes": 44596,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/independent_active_action.py",
+      "sha256": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "bytes": 2522,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/petsc_residual_correction.py",
+      "sha256": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "bytes": 7746,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+      "sha256": "97276baa03fb9ba9713418ff98be081a433960bf6f1d06d4037768c91054f6b8",
+      "bytes": 2779,
+      "role": "production_core_or_shared_runner_dependency"
+    },
+    {
+      "path": "src/test/test_14_stage4_dtn_modes.py",
+      "sha256": "269e323095deb8a761a8df23c54078c8c207bbc0f4a9e607ca871e706b87f721",
+      "bytes": 19718,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_178_task035b_public_assembly_backend.py",
+      "sha256": "b6d8168c367102cd0308a74bd4f0e1c333bc37002067a5c0e70c353435fdbd4c",
+      "bytes": 11051,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_183_task035d_reference_active_space.py",
+      "sha256": "5054abac551283d921d0010892c29b4f4d77e59421c07734d84a954c65c76929",
+      "bytes": 15152,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_185_task035d_variable_p_petsc_assembly.py",
+      "sha256": "27b4a88e901cfe9933fd1bcd5668d4d56bd383497d05cd0b48ca231eb3c4edcc",
+      "bytes": 24427,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_186_task035d_variable_p_transfer.py",
+      "sha256": "447cb8e96a17184fe794c5448d67446c9bc2e76bf4c7f8e23548aecd5b09af29",
+      "bytes": 22371,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_188_task035d_variable_p_degree_plan.py",
+      "sha256": "deb7250beb6fb7b6692013ab2da12f4743d1fcf8e2881356714f71010b80f098",
+      "bytes": 7070,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_189_task035d_variable_p_reduction.py",
+      "sha256": "34a5917b3afa90f1511201b61acba429d021ddda3c381516538a007bf8eab9f9",
+      "bytes": 16173,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_197_task035d_hanging_trace.py",
+      "sha256": "ea4cf63c91581c73fa052a5b66c0ecab292bd4008f438c77e9dd790983034ed0",
+      "bytes": 6692,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_203_task035d_stage4_local_h.py",
+      "sha256": "b0c89643eb52b17d2047333afec9eb82150207c4d9c5c05529a27781b8595a3a",
+      "bytes": 20409,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_independent_active_action.py",
+      "sha256": "4858ae9070e22b966fe68fe821aa1af036896e79ff7b67d873ddec40c89be319",
+      "bytes": 3913,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_petsc_residual_correction.py",
+      "sha256": "8741f22ee27b52fa9e0bc136888575672807dc50b194fe6d7e930cf442a2df05",
+      "bytes": 7687,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_physical_field_comparison.py",
+      "sha256": "30445e73ab621cfdc37e7644fce8711d3e9b59b9196ffb03c974a7ee8a68da6b",
+      "bytes": 3804,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_physical_field_sampling.py",
+      "sha256": "06a5abca1cdf4ccc9f6c8935eab5e0a2ab4be950c29af40517ac551b54865c80",
+      "bytes": 4637,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_blocked_gram_tensor.py",
+      "sha256": "d2df23ec9116159d89a6a19d9cdf65409c5106b611e86cedc02d9e64841880f3",
+      "bytes": 5726,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_candidate_checkpoints.py",
+      "sha256": "992155d61e6500500700eda8ec986b44a75e061432689c28499bda0232008025",
+      "bytes": 2122,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_candidate_records.py",
+      "sha256": "2bf90260aa3719cab521598dff1dc2bc362e70756fe1f4f4600fd07a9c287dff",
+      "bytes": 21728,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_independent_active_action_fixture.py",
+      "sha256": "c562ebf10eda07e0926eff138f563a8e871caeb2633aed480e1b54748eb33f96",
+      "bytes": 22659,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_initial_profile.py",
+      "sha256": "6507bb3825247597dd8049a111ed4d1083501812b84761f4eac0fd7068941642",
+      "bytes": 10024,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_mixed_hp_9_to_12.py",
+      "sha256": "08902029aacfe02d93c1c7449320efd2a57395b4db671c7b635ca78d7296b56a",
+      "bytes": 29257,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_p_up_degree_closure.py",
+      "sha256": "8d622f3717a5ef7243559b2bc24c9196c5f8ce32c849a2f53b051a413a4af2ea",
+      "bytes": 3531,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_physical_g_error.py",
+      "sha256": "4b8ace9f0d1838c90121d2de8de6304031d952ed5c2e110f85cdfcde3759e51b",
+      "bytes": 5512,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_primal_p_transfer.py",
+      "sha256": "cd0ca4373b51bd4eb9df6a5bdb3f904de76e3a716cc13003cd2572ae1690cafa",
+      "bytes": 8843,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_reporting_watchdog_scope.py",
+      "sha256": "5aa0a9c82ec3ecd077c2b9183d11317658734d234f395e6e02637685999cbbd8",
+      "bytes": 1126,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_resource_profile.py",
+      "sha256": "de35366f1d0b354130b709036511f8fec198f4303205cd9acb6954263be4f0a7",
+      "bytes": 8826,
+      "role": "explicit_changed_test_dependency"
+    },
+    {
+      "path": "src/test/test_task43_variable_p_same_lu_correction.py",
+      "sha256": "1efef518a4102c2ca10b550cbacfc70784611cecfb4eefa9d72560c959ef6399",
+      "bytes": 7173,
+      "role": "explicit_changed_test_dependency"
+    }
+  ],
+  "static_dependency_evidence": [
+    {
+      "claim": "stage4_local_h imports LEGACY_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY, SimulationConfig3D, and variable_p_active_fe_dof_gate_limit from src.common.config_3d; those names are absent from base405 config.",
+      "paths": [
+        "src/adaptivity/stage4_local_h.py",
+        "src/common/config_3d.py"
+      ]
+    },
+    {
+      "claim": "dtn_port_3d unconditionally imports single_petsc_residual_correction_in_place from petsc_residual_correction; the imported module is absent in base405.",
+      "paths": [
+        "src/solvers/dtn_port_3d.py",
+        "src/solvers/petsc_residual_correction.py"
+      ]
+    },
+    {
+      "claim": "mesh_builder_3d lazily imports the Task43 axis plan; stage4 mesh support is therefore paired with the geometry plan module.",
+      "paths": [
+        "src/geometry/mesh_builder_3d.py",
+        "src/geometry/task43_hp_adaptivity_axis_plan.py"
+      ]
+    }
+  ],
+  "validation": {
+    "status": "OVERLAY_IMPORT_AND_COLLECTION_PASS; NO_TEST_BODIES_EXECUTED",
+    "import_check": {
+      "command": "python -c 'import src.adaptivity.stage4_local_h; import src.solvers.dtn_port_3d; import benchmarks.task43_hp_adaptivity.reference_restore; import benchmarks.task43_hp_adaptivity.reporting.watchdog_scope; print(\"selected_core_imports_pass\")'",
+      "command_record": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_import.command.txt",
+        "sha256": "b3b9409d0239a98a21186244639b4fb8ec1337a5bb0c5090e789a2dbfb8843f7"
+      },
+      "result": "selected_core_imports_pass; exit 0",
+      "raw_stdout": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_import.stdout",
+        "sha256": "843932bb7ac88713d92c3623a025c4b3d289ff8f67bd70e2a442604584c72a01"
+      },
+      "raw_stderr": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_import.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "collection_only": {
+      "command": "python -m pytest --collect-only -q src/test/test_14_stage4_dtn_modes.py src/test/test_178_task035b_public_assembly_backend.py src/test/test_183_task035d_reference_active_space.py src/test/test_185_task035d_variable_p_petsc_assembly.py src/test/test_186_task035d_variable_p_transfer.py src/test/test_188_task035d_variable_p_degree_plan.py src/test/test_189_task035d_variable_p_reduction.py src/test/test_197_task035d_hanging_trace.py src/test/test_203_task035d_stage4_local_h.py src/test/test_independent_active_action.py src/test/test_petsc_residual_correction.py src/test/test_physical_field_comparison.py src/test/test_physical_field_sampling.py src/test/test_task43_blocked_gram_tensor.py src/test/test_task43_candidate_checkpoints.py src/test/test_task43_candidate_records.py src/test/test_task43_independent_active_action_fixture.py src/test/test_task43_initial_profile.py src/test/test_task43_mixed_hp_9_to_12.py src/test/test_task43_p_up_degree_closure.py src/test/test_task43_physical_g_error.py src/test/test_task43_primal_p_transfer.py src/test/test_task43_reporting_watchdog_scope.py src/test/test_task43_resource_profile.py src/test/test_task43_variable_p_same_lu_correction.py",
+      "command_record": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.command.txt",
+        "sha256": "75e25adb3f933a3c0f62d50530740127901f6cf983a050618d420b83690bd6aa"
+      },
+      "result": {
+        "items_collected": 157,
+        "collection_errors": 0,
+        "collection_skips": 0,
+        "test_bodies_executed": 0,
+        "pytest_reported_wall_seconds": 2.52,
+        "exit_code": 0
+      },
+      "raw_stdout": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.stdout",
+        "sha256": "54d05a474728ea23f6bdaa2475c144849fffea8e8e17f9f2b8655e69c530defa"
+      },
+      "raw_stderr": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "raw_exit_code": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.exit_code.txt",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      "worktree_status_after_overlay": "dirty only by the 66 hash-listed staged dependency overlay; no baseline files were committed or merged"
+    },
+    "preserved_command_error": {
+      "attempt": "first collection invocation",
+      "issue": "The command named test_185_task035d_variable_petsc_assembly.py; the actual tracked path is test_185_task035d_variable_p_petsc_assembly.py.",
+      "result": "pytest exited 4 before collecting any node; no test body ran. This was a command-path typo, not an overlay dependency failure.",
+      "raw_stderr_path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect.stderr",
+      "raw_stderr_sha256": "0a555b51b9e833eb401abd6a8c6ab83dd1457933bf400079c9bc778c36f789b0",
+      "raw_exit_code_path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect.exit_code.txt",
+      "raw_exit_code_sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d",
+      "command_record": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt1.command.txt",
+        "sha256": "d0e170805448e53d23101f0bdd1e94f28a854a74a9ed263927635076dfbae38d"
+      }
+    },
+    "environment": {
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "CPU_affinity": [
+        1
+      ],
+      "fresh_PDE_optins": "unset",
+      "isolated_base_worktree": "/tmp/task43_v2_q03_core_closure_405"
+    }
+  }
+}

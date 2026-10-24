@@ -2,6 +2,8 @@
 
 Task43使用50×50 nm周期、z=−10…130 nm计算域、Si光栅17×20×120 nm、13.5 nm波长、89°/90°入射和s偏振。执行分支`task43_hp_adaptivity`，任务基线`405e3aff42ac421a4c99315df1ed9b96941ecbe4`。数值/比较代码与focused/full pytest使用source HEAD`3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；历史每次PDE仍使用各自原记录中的source snapshot/ABI/input identity。三份本轮新增报告生成器由送审compact和figure provenance中的脚本SHA绑定，不属于该HEAD；最终送审commit绑定它们。
 
+V2审阅补账（当前源码审阅HEAD `fad2df0fb5c15ab1e14fabddf262a772c126cda5`）未启动正式模型PDE。Q02将full collection的1+1+6错误和PETSc/SLEPc ABI阻塞逐项保留；SLEPc-free core通过针对性space、assembly/recovery、sampling/MPI2、comparison与same-LU组件回归。Q03隔离base405的66路径依赖overlay可import并收集157个测试节点，但没有执行节点，root核对源与overlay的66个hash并确认import来源正确。Q04核对56份实际summary及whole-watchdog小计，root独立复核通过；`post_selection_restore_attempt1`的166.961722s是覆盖Y5_1/Y3/Y3_2的完整恢复workflow wall。Q05确认contract hash匹配pre-run snapshot，但不独立宣称时间顺序已证。Q06仅增加p3 D4/256组合覆盖；Q07只按精确R8 run身份读取旧partial观察并生成独立V2 inventory；Q08保留两次5项Markdown合同结果，最近为5 passed/0.11s。V2阶段一直接诊断门为PASS_WITH_LIMITATIONS；生产与全仓门仍受SLEPc ABI和tracked collection阻塞，详见[stage1_gate_v2](task43_hp_adaptivity/outcomes/records/stage1_gate_v2.json)。后验field replay与残差scalar复核使用旧保存数组/记录，没有重采样或重新施加完整算子；A_volume未重新体积分，不能作为fresh A6资格。
+
 局部 h 把选中单元分小；局部 p 提高所选单元内的多项式阶次。二者试图把未知量投放到误差较大的区域，但都要处理邻接、周期与悬挂连接。自由度减少本身不证明精度相当，必须看独立场误差、端口功率和全过程成本。
 
 | 判断对象 | 实测结论 | 边界 |

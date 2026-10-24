@@ -1,0 +1,334 @@
+{
+  "schema": "task43.q02_collection_and_abi_evidence.v2",
+  "status": "FULL_COLLECTION_NEGATIVE_RETAINED; SLEPC_FREE_DIRECT_PATH_HAS_QUALIFIED_REGRESSION",
+  "scope": "No test configuration, golden, ignored-path scope, environment, or artifact copies were modified to reduce collection errors. The clean tracked collection used HEAD 7458 before the small Q06/Q07 commit; the new Q06/Q07 test nodes were collected and passed separately at current Q06/Q07 commit fad2df0.",
+  "original_full_repository_attempt": {
+    "source_HEAD": "3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0",
+    "command": "python -m pytest -q",
+    "result": {
+      "collection_skips": 1,
+      "collection_errors": 8,
+      "test_bodies_executed": 0,
+      "pytest_reported_wall_seconds": 91.42,
+      "exit_code": 2,
+      "error_class_counts": {
+        "ignored_Task43_artifact_module_collision": 1,
+        "SLEPc_key_1211220_registration_ABI_conflict": 1,
+        "old_ignored_Task42_scratch_missing_modules": 6
+      }
+    },
+    "raw_worker_log": {
+      "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/worker.log",
+      "sha256": "93662e5c157cebb9e5778a27c5513f241db99ec4b4389db599a5ab6a6738a7c7",
+      "bytes": 6362
+    },
+    "watchdog_summary": {
+      "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/summary.json",
+      "sha256": "668846e70bd461360f23b4c3b0cbeb7201afcf0d33838c414cf8d7cf0d319235",
+      "bytes": 3570
+    },
+    "resource_samples": {
+      "path": "benchmarks/artifacts/task43/final_full_repository_pytest_attempt1/watchdog/resources.jsonl",
+      "sha256": "06a70cf5b8feeb701440d9b1640b5478be7d9eb788e76382bed4c21ee110acf0",
+      "bytes": 380156
+    },
+    "error_index": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/full_repository_collection_error_index_v2.json",
+      "sha256": "1a0ea84f6b60b77606779182711ed47788a1d7f18b7994b8bd4e6930b4340b53",
+      "bytes": 5406
+    }
+  },
+  "clean_tracked_collection": {
+    "worktree_path": "/tmp/task43_v2_clean_tracked_collection",
+    "source_HEAD": "7458fadccde01d37ed93187ebe4c39177783d60b",
+    "worktree_clean_before_run": true,
+    "command": "python -m pytest --collect-only -q",
+    "result": {
+      "items_collected": 3121,
+      "collection_errors": 1,
+      "collection_skips": 0,
+      "test_bodies_executed": 0,
+      "blocker": "src/test/test_179_task035b_hybrid_static_condensation.py: SLEPc registration key 1211220 conflict with PETSc Viewer",
+      "pytest_reported_wall_seconds": 62.57,
+      "pytest_exit_code": 2,
+      "watchdog_whole_wall_seconds": 76.31309780385345,
+      "watchdog_exit_code": 2,
+      "tree_rss_peak_bytes": 368357376,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "terminal_observation": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/terminal_observation.json",
+      "sha256": "d3a21f15b104129d10ee75cf2e36dd071ad370a7674d96bd8b7611eb866429d2",
+      "bytes": 3075
+    },
+    "watchdog_summary": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/summary.json",
+      "sha256": "73360bf77beec37d7d26400c797c913d26c765d24e251b2fa5afe330a15cb40a",
+      "bytes": 3582
+    },
+    "raw_collection_log": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/worker.log",
+      "sha256": "abf57d1e76aa9e44d379bf49ca16a905f0a42f4170566474c271f5ff3a2a9941",
+      "bytes": 375915
+    },
+    "resource_samples": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/resources.jsonl",
+      "sha256": "22259cd02fefffaa92775d09603b50e2bae480c188c94386d304dcee249226e6",
+      "bytes": 178869
+    }
+  },
+  "abi": {
+    "probe": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/abi_and_slepc_probe.json",
+      "sha256": "ea37e716d94ac4854a26e55094dbcde5e7bf668439d49cb82349b796ab417bc3",
+      "bytes": 3746
+    },
+    "slepc_linkage": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/slepc_linkage_ldd.txt",
+      "sha256": "5a4244d93b0d9688eccab237b73c43bd7ecc6557f40b2a9e83dcfa2442284ba4",
+      "bytes": 1367
+    },
+    "custom_prefix_search_record": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/custom_prefix_slepc_search.txt",
+      "sha256": "81edcd4904a408f3838227fc6a079cc81f20406ac0440f101cf322934826f49b",
+      "bytes": 162
+    },
+    "native_activation": "scripts/activate_task40_phi90_pord64.sh",
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "python_version": "3.12.3",
+    "PETSc_version": "3.19.6",
+    "PETSc_scalar": "complex128",
+    "PETSc_int": "int64",
+    "MPI_size": 1,
+    "PETSc_extension": "custom pord64-overlay petsc4py; libpetsc.so.3.19 complex128/int64 stack",
+    "SLEPc_extension": "system /usr/lib/slepc/.../real; linked to libpetsc_real.so.3.19 and libslepc_real.so.3.19",
+    "import_only_probes": {
+      "slepc_alone_exit": 1,
+      "petsc_then_slepc_exit": 1,
+      "both_raise": "ValueError: key 1211220 cannot register SLEPc.ST; already registered PETSc.Viewer"
+    },
+    "interpretation": "This is an ABI/package mismatch blocker for SLEPc/Hybrid import in this environment. Qualified direct/PETSc path does not require slepc4py; this does not qualify Hybrid/SLEPc or make full repository collection pass."
+  },
+  "current_q06_q07_delta": {
+    "source_commit": "fad2df0fb5c15ab1e14fabddf262a772c126cda5",
+    "focused_new_test_command": "see q06_q07_component_validation_v2.json; 4 targeted tests passed, including 2 p3 orientation nodes and 2 exact watchdog-scope tests",
+    "note": "The complete repository collect-only command was not rerun after this small test/reporting-only delta; no numerical core source changed after 3da2fa6."
+  },
+  "production_vs_diagnostic_gate": {
+    "production_hybrid_SLEPc": "blocked by recorded environment ABI mismatch and full-suite collection error",
+    "limited_direct_diagnostics": "SLEPc-free direct path was exercised by the focused Task43 regression on the unchanged numerical core source; final current-commit retest is recorded separately after root queue release."
+  },
+  "current_commit_focused_direct_regression": {
+    "source_HEAD": "fad2df0fb5c15ab1e14fabddf262a772c126cda5",
+    "command": "python -m pytest -q src/test/test_task43_candidate_records.py src/test/test_task43_candidate_checkpoints.py src/test/test_task43_initial_profile.py src/test/test_task43_physical_g_error.py src/test/test_task43_p_up_degree_closure.py src/test/test_task43_resource_profile.py src/test/test_physical_field_comparison.py src/test/test_physical_field_sampling.py src/test/test_task43_independent_active_action_fixture.py::Task43IndependentActiveActionFixture::test_direct_factor_backend_cli_and_configuration",
+    "command_record": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.command.txt",
+      "sha256": "5d1a7f0efa94b4c3b36e55be26dddcf7e705bd4380595a9d7a8ec68473afe9f0"
+    },
+    "result": {
+      "passed": 40,
+      "skipped": 3,
+      "failed": 0,
+      "pytest_reported_wall_seconds": 14.44,
+      "exit_code": 0,
+      "test_bodies_executed": 40,
+      "new_formal_model_attempts": 0
+    },
+    "skips": [
+      {
+        "node": "src/test/test_physical_field_sampling.py::test_mpi2_non_affine_hex_rejection_is_collective",
+        "reason": "requires exactly two MPI ranks; current qualified test was MPI1"
+      },
+      {
+        "node": "src/test/test_physical_field_sampling.py::test_mpi2_owned_samples_merge_on_root_only",
+        "reason": "requires exactly two MPI ranks; current qualified test was MPI1"
+      },
+      {
+        "node": "src/test/test_physical_field_sampling.py::test_mpi2_root_merge_failure_is_reported_on_every_rank",
+        "reason": "requires exactly two MPI ranks; current qualified test was MPI1"
+      }
+    ],
+    "environment": {
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "CPU_affinity": [
+        1
+      ],
+      "fresh_PDE_optins": "unset",
+      "saved_fixture": "benchmarks/artifacts/task43/direct_backend_pair_component_attempt1/pair"
+    },
+    "raw_stdout": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.stdout",
+      "sha256": "9a63384c3dfe09c70774863842d19b015cdb0543adb79765493ce6ee01a1c505"
+    },
+    "raw_stderr": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "raw_exit_code": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.exit_code.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "scope": "SLEPc-free saved-fixture/core direct path only; not a full suite, not Hybrid qualification, and no new PDE."
+  },
+  "current_commit_component_regressions": {
+    "source_HEAD": "fad2df0fb5c15ab1e14fabddf262a772c126cda5",
+    "source_files_sha256": {
+      "src/solvers/dtn_port_3d.py": "c298be94bc1a9b870cfddac0cd9a37d4fcfad881387da7d126d7b3d554875dd7",
+      "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "src/adaptivity/hcurl_hanging_trace.py": "350cd2999d50aaad62a85f8cda98a6994b6456a680d13142b3029922834af993",
+      "src/test/test_183_task035d_reference_active_space.py": "5054abac551283d921d0010892c29b4f4d77e59421c07734d84a954c65c76929",
+      "src/test/test_185_task035d_variable_p_petsc_assembly.py": "27b4a88e901cfe9933fd1bcd5668d4d56bd383497d05cd0b48ca231eb3c4edcc",
+      "src/test/test_independent_active_action.py": "4858ae9070e22b966fe68fe821aa1af036896e79ff7b67d873ddec40c89be319",
+      "src/test/test_petsc_residual_correction.py": "8741f22ee27b52fa9e0bc136888575672807dc50b194fe6d7e930cf442a2df05",
+      "src/test/test_physical_field_sampling.py": "06a5abca1cdf4ccc9f6c8935eab5e0a2ab4be950c29af40517ac551b54865c80",
+      "src/test/test_task43_variable_p_same_lu_correction.py": "1efef518a4102c2ca10b550cbacfc70784611cecfb4eefa9d72560c959ef6399"
+    },
+    "spatial_assembly_and_active_action": {
+      "command": "python -m pytest -q src/test/test_183_task035d_reference_active_space.py::Task035dReferenceActiveSpaceTests::test_task43_p3_p4_mixed_exact_sequence_and_local_schur src/test/test_185_task035d_variable_p_petsc_assembly.py::Task035dVariablePPETScAssemblyTests::test_task43_mixed_p3_p4_assembles_and_recovers_cell_interiors src/test/test_independent_active_action.py",
+      "command_record": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.command.txt",
+        "sha256": "a10d7bb8d1d82444b5a7afff1e8001b963024b54fac4c408c276c1e0d7ca5253"
+      },
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "pytest_reported_wall_seconds": 51.34,
+        "exit_code": 0,
+        "new_formal_model_attempts": 0
+      },
+      "raw_stdout": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.stdout",
+        "sha256": "dfd1c5b96f67b0eb994762abbfab8b82a5adc40f7896aa19dc55bd3a5826c210"
+      },
+      "raw_stderr": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "raw_exit_code": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.exit_code.txt",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      "nodes": [
+        "Task035dReferenceActiveSpaceTests::test_task43_p3_p4_mixed_exact_sequence_and_local_schur",
+        "Task035dVariablePPETScAssemblyTests::test_task43_mixed_p3_p4_assembles_and_recovers_cell_interiors",
+        "test_projected_active_action_matches_explicit_augmented_matrix"
+      ],
+      "scope": "Current-hash local exact-sequence/Schur, assembly and cell-interior recovery, plus independent action fixture; no formal model candidate."
+    },
+    "physical_field_sampling_mpi2": {
+      "command": "mpiexec --bind-to none -n 2 taskset -c 1 python -m pytest -q src/test/test_physical_field_sampling.py",
+      "command_record": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.command.txt",
+        "sha256": "81592512d69f9d25244db3cca07e5faf3ac105792f40852e2deab798241c54ec"
+      },
+      "result": {
+        "ranks": 2,
+        "each_rank_reported": "4 passed",
+        "pytest_reported_wall_seconds_each": [
+          13.95,
+          13.89
+        ],
+        "exit_code": 0,
+        "new_formal_model_attempts": 0
+      },
+      "mpi2_nodes_exercised": [
+        "test_mpi2_non_affine_hex_rejection_is_collective",
+        "test_mpi2_owned_samples_merge_on_root_only",
+        "test_mpi2_root_merge_failure_is_reported_on_every_rank"
+      ],
+      "environment": {
+        "activation": "scripts/activate_task40_phi90_pord64.sh",
+        "CPU_affinity_per_rank": [
+          1
+        ],
+        "fresh_PDE_optins": "unset",
+        "module_sha256": "06a5abca1cdf4ccc9f6c8935eab5e0a2ab4be950c29af40517ac551b54865c80"
+      },
+      "raw_stdout": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.stdout",
+        "sha256": "c2b0822c4349e54344b075c5706447f32e3642436dc3b52314199ee157ebeccf"
+      },
+      "raw_stderr": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "raw_exit_code": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.exit_code.txt",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      "scope": "Only the pure sampling module under MPI2; validates three nodes skipped in the MPI1 focused run."
+    },
+    "same_lu_correction_component": {
+      "command": "python -m pytest -q src/test/test_task43_variable_p_same_lu_correction.py",
+      "command_record": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.command.txt",
+        "sha256": "f4dd70d7d2518a56d8a9dbe529a4911e7e219feb5cd21995be992135908ed788"
+      },
+      "result": {
+        "passed": 1,
+        "failed": 0,
+        "pytest_reported_wall_seconds": 148.21,
+        "watchdog_whole_wall_seconds": 156.69584573293105,
+        "exit_code": 0,
+        "new_formal_model_attempts": 0,
+        "new_formal_candidate_pdes": 0
+      },
+      "fixture": {
+        "name": "explicit 27-cell mixed-p4/p5 same-LU correction component",
+        "MPI_size": 1,
+        "CPU_affinity": [
+          1
+        ],
+        "threads_per_rank": 1,
+        "official_Task43_result": false,
+        "fixture_root": "/tmp/task43/v2_stage1_same_lu_component_attempt1"
+      },
+      "watchdog": {
+        "summary": {
+          "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/summary.json",
+          "sha256": "b08f1a11e4add41bf24aac88f9b02a39b507e28e94276022a796720f5d895a8f"
+        },
+        "resource_samples": {
+          "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/resources.jsonl",
+          "sha256": "a4a35edb3f4d5f57506a6e9acf9a996c7f13ab5b816ef76b0e27df45c25d37fb"
+        },
+        "worker_log": {
+          "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/worker.log",
+          "sha256": "4c8a066cd4d9150ea04b356b28c003bade33114ab1b81e0838f2dca07e7332f7"
+        },
+        "tree_rss_peak_bytes": 1054969856,
+        "task_tree_swap_peak_bytes": 0,
+        "global_swap_delta_pages": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "descendants_cleared": true
+      },
+      "raw_stdout": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.stdout",
+        "sha256": "a1d6804b303bffc5e9de9b82eab5dc072ce21349f5e20a09218fe89856774d1f"
+      },
+      "raw_stderr": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "raw_exit_code": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.exit_code.txt",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      "scope": "A small explicit regression fixture exercising same-LU correction before recovery/live gate; not a new formal candidate or accepted state."
+    },
+    "same_lu_residual_unit_module_existing_exact_hash_record": {
+      "record": "docs/task43_hp_adaptivity/outcomes/records/same_lu_residual_correction_component_v1.json",
+      "record_sha256": "077273a5c11588d0f88ce65bc335514097d61c454aa0acf60904447c909d5ca4",
+      "source_module_sha256": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "test_module_sha256": "8741f22ee27b52fa9e0bc136888575672807dc50b194fe6d7e930cf442a2df05",
+      "result": "4 passed in 0.99s",
+      "interpretation": "Same implementation/test module hashes as the existing component record; reused without repeating the test."
+    }
+  }
+}
