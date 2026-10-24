@@ -1,0 +1,41 @@
+{
+  "schema": "task43.v3.root_a2_g4_recheck.v1",
+  "captured_utc": "2026-10-24T10:37:15.740666+00:00",
+  "HEAD": "6fa371b28ddbb2b4c9123e5c8fdb185e97167d9b",
+  "checks": {
+    "source_files_match": true,
+    "input_files_match": true,
+    "launch_support_files_match": true,
+    "A2_96GiB_le_planning": true,
+    "MPI1": true,
+    "CPU1": true,
+    "complex128_int64": true,
+    "MUMPS": true,
+    "qualified_marker": true,
+    "A2_directory_absent": true,
+    "clean_worktree": true,
+    "A1_old_tree_absent": true,
+    "no_Task43_formal_worker": true
+  },
+  "rehashed_counts": {
+    "source_files": 60,
+    "input_files": 47,
+    "launch_support_files": 7
+  },
+  "memory_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 2051304480768,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 2051304480768,
+    "reserve_bytes": 324465057792,
+    "launch_cap_bytes": 206158430208,
+    "planning_cap_bytes": 206158430208,
+    "cgroup_limits": [],
+    "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+  },
+  "A2_planning_allowance_bytes": 103079215104,
+  "A1_old_pids_still_present": [],
+  "Task43_formal_workers": [],
+  "source_scope": "60 existing implementation/test bytes unchanged; one added sentinel-only test bound separately",
+  "fresh_launch_preflight_still_required": true
+}

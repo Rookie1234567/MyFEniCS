@@ -1,0 +1,55 @@
+{
+  "schema": "task43.v3.root_a2_actual_native_ledger_audit.v1",
+  "captured_utc": "2026-10-24T10:35:58.349743+00:00",
+  "component_record_path": "docs/task43_hp_adaptivity/outcomes/records/a2_native_workflow_ledger_component.json",
+  "component_record_sha256": "8e5e5f341d55b96ab5bbf2a3a86c14aa17772b92450cc6c4c81798c6404df584",
+  "checks": {
+    "raw_workflow_phase.json": true,
+    "raw_stages.jsonl": true,
+    "raw_p6_condensed_direct_summary.json": true,
+    "raw_task43_v3_partial_terminal.json": true,
+    "code_native_runner": true,
+    "code_native_adapter": true,
+    "code_physical_intermediate": true,
+    "test_sha": true,
+    "log_sha": true,
+    "actual_stage_sequence": true,
+    "sentinel_phase": true,
+    "sentinel_native_summary": true,
+    "fail_closed_terminal": true
+  },
+  "actual_stages": [
+    "workflow_started",
+    "p6_direct_resolved_profile_bound",
+    "p6_direct_mesh_setup_started",
+    "TASK43_V2_A2_Y6_1_R13_P6_DIRECT_FAILED"
+  ],
+  "actual_phase_terminal": {
+    "facts": {
+      "exception_message": "test sentinel before the first mesh/solver operation",
+      "exception_type": "_StopBeforeMesh",
+      "failed_stage": "p6_direct_mesh_setup_started"
+    },
+    "phase": "setup",
+    "phase_started_monotonic": 2762953.503925634,
+    "stage": "TASK43_V2_A2_Y6_1_R13_P6_DIRECT_FAILED",
+    "updated_monotonic": 2762953.521985739
+  },
+  "actual_native_failed_stage": "p6_direct_mesh_setup_started",
+  "actual_native_exception": "_StopBeforeMesh",
+  "raw_terminal_official": false,
+  "raw_terminal_continuation": {
+    "A1_R": false,
+    "A2_R": false,
+    "B": false,
+    "C": false,
+    "same_group_R": false
+  },
+  "test_result": "1 passed in 2.51s",
+  "test_sha256": "63dc239a212316d5f90da435ab2e531011481d8ec5a3fcac0d16edf1e45ffcd7",
+  "native_source_sha256": "33ad45943904b0777d23ad2f2f9b7ef6906221ccee44bd920faec23303df26f1",
+  "scope": "Native A2 entry only, real WorkflowLedger/profile/config processing and sentinel before actual mesh. Combined with prior real watchdog tiny-child and A2 adapter CLI fixture. No mesh, no solver, no formal dispatch; fixture resources are not current host capacity.",
+  "independence_from_A1": "A1 calls variable-p h100 route without WorkflowLedger; A2 directly constructs actual WorkflowLedger in run_p6_condensed_direct before its first mesh boundary. Shared watchdog ABI and persistence fixture evidence remains valid; A1 READY failed in route-specific wiring coverage.",
+  "actual_formal_count": 4,
+  "A2_ready_in_this_record": false
+}
