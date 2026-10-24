@@ -1,0 +1,167 @@
+{
+  "schema": "task43.v3.root-phase-ready.v1",
+  "recorded_utc": "2026-10-24T10:19:33.594098+00:00",
+  "authority_review_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+  "authority_section": "10",
+  "branch": "task43_hp_adaptivity",
+  "decision": "READY_FOR_ONE_A1_Q",
+  "phase": "A1_q",
+  "attempt": 2,
+  "reviewed_evidence_head": "4d67cba711697f78d339520e4ba28af134b372db",
+  "numerical_implementation_source_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b",
+  "launch_head_rule": "The commit containing this READY record, with only evidence/document additions after the reviewed source, must be clean, pushed, and recorded as the exact approved launch HEAD in the launch identity. All frozen source/input/plan/contract/script bytes must still match. No later implementation changes are authorized by this record.",
+  "records": [
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+      "sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_launch_preparation.json",
+      "sha256": "d871f7a66160b061608a6b705012db0b2d5b824a721c3b8d2b83cd778184c24c"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_final_validation.json",
+      "sha256": "c063e54d674c99d2f3aa4e09afe75ba4efb17600f750b84c0b67c12bfd14f980"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_g4_source_input_inventory.json",
+      "sha256": "58fb9a4100f9f04f9d2ffdfece8a4bb445b134aba906b6181310bf207a8d4547"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_resource_prediction.json",
+      "sha256": "2561afca2c2b01d86d13926aeebb9e6516835d04843d92ac4cc6374e99161489"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_final_source_review.json",
+      "sha256": "c0b31e4ec250e34643801d490ab9b794220971cf5b9ca4d50641144bedc853cf"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_g4_inventory_recheck.json",
+      "sha256": "4ab916ce293c54c8d6a9b193a6aab345c3beb10279eccc88fc591c7ad2d041ad"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_capacity_abi_audit.json",
+      "sha256": "e66dc99cbc61594f4defdddc19295ce0f9eacd3791373993fdd08f500ccd313f"
+    }
+  ],
+  "gates": {
+    "G0": {
+      "passed": true,
+      "formal_dispatches_actual": 3,
+      "missed_formal_dispatches_found": 0,
+      "old_terminals_rechecked": 3,
+      "source_input_terminal_resource_raws_read": true
+    },
+    "G1": {
+      "passed": true,
+      "basis": "root final source review + real fixture transport, fault injection, immutable primary/raw norm packets and fail-closed endpoints; no fresh PDE claim"
+    },
+    "G2": {
+      "passed": true,
+      "ABI_chain_whole_seconds": 11.727924823760986,
+      "ABI_chain_RSS_bytes": 161316864,
+      "swap_bytes": 0,
+      "phase_samples": 7,
+      "cleanup": true,
+      "actual_final_argv_bound": true
+    },
+    "G3": {
+      "passed": true,
+      "modal_channels_per_old_endpoint": 612,
+      "old_Av_auto": 0.6915175267821607,
+      "old_Av_q15": 0.6915175267821607,
+      "old_Av_q19": 0.6915175267821573,
+      "old_Av_max_difference": 3.4416913763379853e-15,
+      "old_Av_auto_not_relabelled": true,
+      "old_fields_points_weights_background_reference_read": true
+    },
+    "G4": {
+      "passed": true,
+      "focused_pass": 57,
+      "focused_skip": 1,
+      "final_changed_AST_node_pass": 1,
+      "Ruff_baseline_findings": 77,
+      "Ruff_final_findings": 77,
+      "Ruff_new_findings": 0,
+      "source_files_actual_rehashed": 60,
+      "input_files_actual_rehashed": 47,
+      "launch_scripts_actual_rehashed": 7,
+      "hash_mismatches": 0,
+      "A1_planning_envelope_bytes": 34359738368,
+      "actual_planning_cap_bytes": 206158430208,
+      "actual_launch_cap_bytes": 206158430208,
+      "actual_reserve_bytes": 324465057792,
+      "fresh_capacity_audit_utc": "2026-10-24T10:18:36.698959+00:00",
+      "MPI": 1,
+      "CPU": 1,
+      "threads": 1,
+      "complex128_int64_MUMPS_qualified": true
+    }
+  },
+  "dispatch": {
+    "maximum_new_dispatches": 1,
+    "actual_dispatch_consumes_quota_even_if_preflight_fails": true,
+    "A1_group_cumulative_limit": 2,
+    "attempt_root": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2",
+    "worker_argv": [
+      "python",
+      "-u",
+      "-m",
+      "benchmarks.task43_hp_adaptivity.h100_anchor",
+      "--case",
+      "round1_candidate_mpi1",
+      "--run-root",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run",
+      "--candidate-plan",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+      "--candidate-id",
+      "round10_p_up",
+      "--candidate-acceptance-contract",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+      "--candidate-parent-selection-record",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+      "--same-lu-solve-residual-correction",
+      "--direct-factor-backend",
+      "mumps",
+      "--same-lu-tightening",
+      "--v2-diagnostic-phase",
+      "A1_q",
+      "--v2-contract",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json",
+      "--v2-contract-sha256",
+      "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+      "--v3-failure-evidence",
+      "--v3-contract",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+      "--v3-plan",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+    ],
+    "whole_watchdog_seconds": 7200,
+    "extend_wall_limit": false,
+    "absolute_RSS_limit_bytes": 206158430208,
+    "dynamic_capacity_and_source_inputs_must_be_rechecked_immediately_before_dispatch": true,
+    "zero_task_swap_required": true,
+    "one_heavy_workflow": true,
+    "no_automatic_retry": true
+  },
+  "A2_status": "NOT_YET_READY: complete A1 terminal and review shared gates first; A2 remains eligible only for its separately authorized one attempt3 if valid",
+  "continuation": {
+    "A1_R": false,
+    "A2_R": false,
+    "B": false,
+    "C": false,
+    "same_accuracy_cost_campaign": false,
+    "iteration": false,
+    "fresh_baseline": false
+  },
+  "remaining_unallocated_slot_locked": true,
+  "numerical_endpoint_qualification": "not_run_at_this_READY; all original hard/q/extra gates remain mandatory",
+  "global_capabilities": {
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "accuracy": "NOT_PASSED",
+    "same_accuracy_full_cost": "NOT_ESTABLISHED",
+    "iteration": "NOT_RUN / NOT_QUALIFIED"
+  },
+  "merge_approval": false
+}

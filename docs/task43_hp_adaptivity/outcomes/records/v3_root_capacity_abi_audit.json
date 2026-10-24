@@ -1,0 +1,97 @@
+{
+  "schema": "task43.v3.root-capacity-audit.v1",
+  "captured_utc": "2026-10-24T10:18:36.698959+00:00",
+  "classification": "read_only_root_capacity_ABI_check_not_formal_dispatch",
+  "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+  "PETSc_version": [
+    3,
+    19,
+    6
+  ],
+  "scalar": "complex128",
+  "int": "int64",
+  "MPI": 1,
+  "affinity": [
+    1
+  ],
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1"
+  },
+  "memory_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 2059867897856,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 2059867897856,
+    "reserve_bytes": 324465057792,
+    "launch_cap_bytes": 206158430208,
+    "planning_cap_bytes": 206158430208,
+    "cgroup_limits": [],
+    "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+  },
+  "cpu1_busy_fraction_one_second": 0.4375,
+  "other_processes_pinned_exactly_CPU1": [
+    {
+      "pid": 22,
+      "comm": "cpuhp/1"
+    },
+    {
+      "pid": 23,
+      "comm": "idle_inject/1"
+    },
+    {
+      "pid": 24,
+      "comm": "migration/1"
+    },
+    {
+      "pid": 25,
+      "comm": "ksoftirqd/1"
+    },
+    {
+      "pid": 27,
+      "comm": "kworker/1:0H-events_highpri"
+    },
+    {
+      "pid": 326,
+      "comm": "irq/9-acpi"
+    },
+    {
+      "pid": 430,
+      "comm": "kworker/1:1H-kblockd"
+    },
+    {
+      "pid": 2141306,
+      "comm": "kworker/1:2-events"
+    },
+    {
+      "pid": 2157511,
+      "comm": "kworker/1:1-events"
+    },
+    {
+      "pid": 2164414,
+      "comm": "kworker/1:0-mm_percpu_wq"
+    },
+    {
+      "pid": 2164963,
+      "comm": "orted"
+    }
+  ],
+  "Task43_workers": [],
+  "gates": {
+    "qualified_activation": true,
+    "complex128": true,
+    "int64": true,
+    "MPI1": true,
+    "CPU1_affinity": true,
+    "MUMPS": true,
+    "threads1": true,
+    "no_Task43_worker": true,
+    "planning_cap_covers_A1_32GiB": true,
+    "planning_cap_covers_A2_96GiB": true
+  },
+  "formal_attempts_consumed": 0,
+  "limitation": "Root gate audit only; launcher must repeat actual source/input/ABI/capacity checks within its fresh preflight validity window. CPU busy includes migratory host tasks; no unrelated task is modified."
+}
