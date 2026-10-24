@@ -1,0 +1,209 @@
+{
+  "PDE_model_attempts_used": 0,
+  "attempt_count": 3,
+  "attempts": [
+    {
+      "PDE_solve_performed": false,
+      "attempt": 1,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "error": "FileExistsError: output_root was the already nonempty attempt directory containing watchdog evidence",
+      "launch_argv_preserved": false,
+      "leader_exit_code": 1,
+      "model_attempts_used": 0,
+      "process_tree_rss_peak_bytes": 229769216,
+      "process_tree_swap_peak_bytes": 0,
+      "resource_samples": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/resources.jsonl",
+        "sha256": "7a163bc92aec6c27a3f5a3882df16519e9930a8721f3794bc4af237b58b96bce"
+      },
+      "sampling_started": false,
+      "stage": "output_preflight_failure_before_restore",
+      "watchdog_samples": 8,
+      "watchdog_summary": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/summary.json",
+        "sha256": "6f1d228f99c9db1cd81a35d7ed257ccf2532d3bc9db9ffe4a7f2746438b1e54e"
+      },
+      "whole_watchdog_wall_seconds": 9.16105731902644,
+      "worker_log": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/worker.log",
+        "sha256": "b172a919b1e316edf5c67ef487db705f9232657c84cd4bc0b3ae7772cfa5a560"
+      }
+    },
+    {
+      "PDE_solve_performed": false,
+      "attempt": 2,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "error": "ValueError: restored R10 physical configuration hash differed because the solve-only Floquet slave elimination flag had been included in the old physics hash",
+      "launch_argv_preserved": false,
+      "leader_exit_code": 1,
+      "mesh_and_carrier_restore_reached": true,
+      "model_attempts_used": 0,
+      "process_tree_rss_peak_bytes": 325591040,
+      "process_tree_swap_peak_bytes": 0,
+      "resource_samples": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/resources.jsonl",
+        "sha256": "5c5d08838a474fecc0f95a732cde32d97648acfec1b33685f9f567c80d8ca43b"
+      },
+      "sampling_started": false,
+      "stage": "physical_identity_gate_before_quadrature_sampling",
+      "watchdog_samples": 6,
+      "watchdog_summary": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/summary.json",
+        "sha256": "dc7922ff1434fe741785326847bf9e85812a85d03789dd1a05261bad52656544"
+      },
+      "whole_watchdog_wall_seconds": 6.241353522054851,
+      "worker_log": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/worker.log",
+        "sha256": "04246df590ddde01dcc58ecf0c475e3ac24a74db4e8f08c7d11978e0a4e7a008"
+      }
+    },
+    {
+      "PDE_solve_performed": false,
+      "R13_mode_rows_sha256": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+      "accepted_parent_selection_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+      "all_recorded_numerical_sources_match": true,
+      "attempt": 3,
+      "candidate_plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+      "candidate_record_sha256": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "in_process_wall_seconds": 122.33620001887903,
+      "launch_argv_preserved": true,
+      "launch_command": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/run_attempt3.sh",
+        "sha256": "0f3c9f61f6a1c7777893762c6808357428002215c05bfc6db34200a949359100"
+      },
+      "leader_exit_code": 0,
+      "model_attempts_used": 0,
+      "process_tree_rss_peak_bytes": 711839744,
+      "process_tree_swap_peak_bytes": 0,
+      "q10_point_count": 180000,
+      "q8_point_count": 92160,
+      "recovered_storage_sha256": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf",
+      "resampling_record": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/legacy_r10_field_resampling.json",
+        "sha256": "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d"
+      },
+      "resource_samples": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/resources.jsonl",
+        "sha256": "e12854b976ef9ebbaf305defb953ae543c25ca027639ca9c2895d568b66cfaaf"
+      },
+      "restoration_config_comparison": {
+        "all_physical_fields_match": true,
+        "floquet_slave_elimination": {
+          "interpretation": "This is a solve/discrete-constraint setting, not a physical-field identity. The V2 A1 solve must explicitly set it true; its false restoration default only constructs the carrier space used to restore stored coefficients.",
+          "restored_carrier_config_default": false,
+          "solve_record": true
+        },
+        "physical_field_names_checked": [
+          "geometry_kind",
+          "scattering_background",
+          "electric_field_unit",
+          "magnetic_field_unit",
+          "lambda0",
+          "period_x",
+          "period_y",
+          "physical_z_min",
+          "physical_z_max",
+          "domain_z_min",
+          "domain_z_max",
+          "air_height",
+          "grating_bounds",
+          "grating_width_x",
+          "grating_width_y",
+          "grating_height",
+          "interface_z",
+          "substrate_thickness",
+          "incident_theta_deg",
+          "incident_phi_deg",
+          "incident_amplitude",
+          "incident_e0_v_per_m",
+          "polarization_kind",
+          "polarization",
+          "propagation_direction",
+          "wavevector",
+          "floquet_phase_x",
+          "floquet_phase_y",
+          "n_air",
+          "mu_r",
+          "n_substrate",
+          "n_grating",
+          "eps_air",
+          "eps_substrate",
+          "eps_grating",
+          "eps_r",
+          "grating_background_eps",
+          "grating_index",
+          "k0",
+          "magnetic_field_scale_A_per_m",
+          "use_floquet_xy",
+          "use_pml",
+          "pml_alpha",
+          "pml_bottom_thickness",
+          "pml_top_thickness",
+          "stage4_boundary_model",
+          "stage4_pml_outer_bc",
+          "mesh_cell_type_resolved"
+        ],
+        "scope": "The restored config is used to reconstruct the saved mesh and P6 carrier space for coefficient recovery/sampling; it is not a replay of the solve settings.",
+        "solver_and_reconstruction_setting_differences": [
+          {
+            "field": "petsc_extra_options",
+            "restored_carrier_config_value": {},
+            "solve_record_value": {
+              "pc_factor_mat_solver_type": "mumps"
+            }
+          },
+          {
+            "field": "stage4_assembly_time_cell_static_condensation",
+            "restored_carrier_config_value": false,
+            "solve_record_value": true
+          },
+          {
+            "field": "stage4_cell_static_condensation",
+            "restored_carrier_config_value": false,
+            "solve_record_value": true
+          },
+          {
+            "field": "stage4_floquet_slave_elimination",
+            "restored_carrier_config_value": false,
+            "solve_record_value": true
+          }
+        ]
+      },
+      "restored_discretization_sha256": "8315bc7a5ed116919201ec2de65b6785723b9909cb4bff4ac6a1024b0dd44c88",
+      "restored_physical_configuration_sha256": "2c8ea31ad16fa4ce3bf6ca91da5f2f8dd6c1f215c3fc7f41deba06fad08a1b1f",
+      "sample_arrays": {
+        "bytes": 85387889,
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/r10_q8_q10_field_samples.npz",
+        "sha256": "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71"
+      },
+      "sampled_volume_nm3": 350000.0,
+      "sampling_started": true,
+      "solver_recorded_source_file_count": 41,
+      "source_git_head": "7590d7ea8945700ee684481fe2f201237142c682",
+      "stage": "completed_same_space_restore_and_q8_q10_field_resampling",
+      "watchdog_samples": 167,
+      "watchdog_summary": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/summary.json",
+        "sha256": "2361d4ea9bd5b2308b5d332fe9418b2b382700a610fd1c07f17161df15339566"
+      },
+      "whole_watchdog_wall_seconds": 136.92583386879414,
+      "worker_log": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/worker.log",
+        "sha256": "9a263047842f44fdb018f53662bdf60608e61f39f9ba1f88eedd9cb6cbcc5ed3"
+      }
+    }
+  ],
+  "classification": "postprocessing_cost_and_evidence_ledger_not_model_attempts",
+  "cost_scope": "Sum of the three complete subreaper watchdog wall intervals only. Do not substitute the successful worker in-process interval for attempt 3 or count preflight wall without a watchdog.",
+  "preflight": {
+    "physical_configuration_comparison": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/preflight/config_comparison.json",
+    "restoration_is_not_solver_replay": true,
+    "restored_physical_fields_all_match": true
+  },
+  "schema": "task43.v2.legacy_r10_resampling_attempt_ledger.v1",
+  "whole_watchdog_wall_subtotal_seconds": 152.32824470987543
+}
