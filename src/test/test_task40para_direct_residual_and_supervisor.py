@@ -276,7 +276,11 @@ def test_task40_release_is_wired_before_field_and_absorption_postprocessing():
         and node.func.id == 'recover_p0_outputs'
     ]
     assert len(release_calls) == 2
-    assert len(output_calls) == 2
+    # The V3 opt-in adds an early primary-output call while retaining the
+    # default Task40 release-before-output branch and V2 release-after-output
+    # branch.  The early V3 call is before the default release line and is not
+    # part of the default postprocessing path.
+    assert len(output_calls) == 3
     release_conditions = {
         ast.unparse(node.test): node
         for node in ast.walk(tree)
@@ -312,7 +316,9 @@ def test_task40_release_is_wired_before_field_and_absorption_postprocessing():
         and isinstance(child.func, ast.Name)
         and child.func.id == "_release_task40_direct_algebra"
     )
-    assert legacy_release_line < min(call.lineno for call in output_calls)
+    legacy_output_calls = [call for call in output_calls if call.lineno > legacy_release_line]
+    assert len(legacy_output_calls) == 2
+    assert legacy_release_line < min(call.lineno for call in legacy_output_calls)
     assert v2_release_line > max(call.lineno for call in output_calls)
 
     def is_task40_family_guard(node):
@@ -411,10 +417,30 @@ def test_task43_v2_reads_mumps_info_before_releasing_factor():
         and isinstance(child.func, ast.Name)
         and child.func.id == "_task43_v2_normal_correction_audit"
     ]
-    assert len(normal_audit_calls) == 1
+    v2_normal_audit_calls = [
+        call
+        for call in normal_audit_calls
+        if any(
+            keyword.arg == "mumps_info_after_last_solve"
+            and ast.unparse(keyword.value)
+            == "summary['factor']['mumps_info_after_last_solve']"
+            for keyword in call.keywords
+        )
+    ]
+    v3_pre_extra_audit_calls = [
+        call
+        for call in normal_audit_calls
+        if any(
+            keyword.arg == "mumps_info_after_last_solve"
+            and ast.unparse(keyword.value) == "factor.info()"
+            for keyword in call.keywords
+        )
+    ]
+    assert len(v2_normal_audit_calls) == 1
+    assert len(v3_pre_extra_audit_calls) == 1
     mumps_info_argument = next(
         keyword.value
-        for keyword in normal_audit_calls[0].keywords
+        for keyword in v2_normal_audit_calls[0].keywords
         if keyword.arg == "mumps_info_after_last_solve"
     )
     assert ast.unparse(mumps_info_argument) == (

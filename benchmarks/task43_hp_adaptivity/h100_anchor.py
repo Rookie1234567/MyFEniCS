@@ -113,7 +113,7 @@ _V3_CONTRACT_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json"
 )
 _V3_PLAN_REL = Path("docs/task43_hp_adaptivity/diagnostic_plan_v3.md")
-_V3_CONTRACT_SHA256: str | None = "36182de5628aafff3814e8dc3fba32f38288192e62e1869311ecb95fed384694"
+_V3_CONTRACT_SHA256: str | None = "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898"
 _V3_PLAN_SHA256: str | None = "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7"
 _V2_LEGACY_R10_RECORD_SHA256 = "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d"
 _V2_LEGACY_R10_SAMPLE_SHA256 = "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71"

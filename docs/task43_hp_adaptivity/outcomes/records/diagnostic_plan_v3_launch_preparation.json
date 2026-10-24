@@ -4,7 +4,7 @@
   "authority": {
     "review_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
     "contract_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
-    "contract_sha256": "36182de5628aafff3814e8dc3fba32f38288192e62e1869311ecb95fed384694",
+    "contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
     "plan_path": "docs/task43_hp_adaptivity/diagnostic_plan_v3.md",
     "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
     "phase_specific_ready_required": true,

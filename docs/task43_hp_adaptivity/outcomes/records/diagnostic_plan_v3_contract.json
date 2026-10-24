@@ -274,7 +274,8 @@
       "src/solvers/hcurl_variable_p_reduction.py",
       "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
       "src/test/test_task43_v3_failure_safe_order.py",
-      "src/test/test_354_subreaper_watchdog.py"
+      "src/test/test_354_subreaper_watchdog.py",
+      "src/test/test_task40para_direct_residual_and_supervisor.py"
     ],
     "required_focused_test": "source scripts/activate_task40_phi90_pord64.sh && taskset -c 1 python -m pytest -q src/test/test_task43_v3_failure_safe_order.py",
     "required_static_checks": "Ruff scoped to changed Task43 files, compileall of changed Python paths, diff check, and JSON/Markdown contract parsing"
