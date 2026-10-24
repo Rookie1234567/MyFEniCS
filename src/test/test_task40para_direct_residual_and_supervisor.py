@@ -278,9 +278,36 @@ def test_task40_release_is_wired_before_field_and_absorption_postprocessing():
     assert len(release_calls) == 2
     # The V3 opt-in adds an early primary-output call while retaining the
     # default Task40 release-before-output branch and V2 release-after-output
-    # branch.  The early V3 call is before the default release line and is not
-    # part of the default postprocessing path.
+    # branch. Prove the extra call belongs to the V3-only body before excluding
+    # it from the default-path ordering assertion.
     assert len(output_calls) == 3
+    v3_output_guards = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.If)
+        and "task43_v3_diagnostic is not None" in ast.unparse(node.test)
+        and any(
+            isinstance(child, ast.Call)
+            and isinstance(child.func, ast.Name)
+            and child.func.id == "recover_p0_outputs"
+            for statement in node.body
+            for child in ast.walk(statement)
+        )
+    ]
+    assert len(v3_output_guards) == 1
+    v3_early_output_calls = [
+        child
+        for statement in v3_output_guards[0].body
+        for child in ast.walk(statement)
+        if isinstance(child, ast.Call)
+        and isinstance(child.func, ast.Name)
+        and child.func.id == "recover_p0_outputs"
+    ]
+    assert len(v3_early_output_calls) == 1
+    default_output_calls = [
+        call for call in output_calls if call is not v3_early_output_calls[0]
+    ]
+    assert len(default_output_calls) == 2
     release_conditions = {
         ast.unparse(node.test): node
         for node in ast.walk(tree)
@@ -316,9 +343,7 @@ def test_task40_release_is_wired_before_field_and_absorption_postprocessing():
         and isinstance(child.func, ast.Name)
         and child.func.id == "_release_task40_direct_algebra"
     )
-    legacy_output_calls = [call for call in output_calls if call.lineno > legacy_release_line]
-    assert len(legacy_output_calls) == 2
-    assert legacy_release_line < min(call.lineno for call in legacy_output_calls)
+    assert legacy_release_line < min(call.lineno for call in default_output_calls)
     assert v2_release_line > max(call.lineno for call in output_calls)
 
     def is_task40_family_guard(node):
