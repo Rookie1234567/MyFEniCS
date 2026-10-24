@@ -29,6 +29,9 @@ from src.runners.task41_p0_checker import (
     _task41_v6_candidate_producer_contract,
     _task41_v6_report_requires_prefix_qualification,
     compare_task41_p0_b0_saved_y_g_arrays,
+    task41_p0_v13_eq2_operation_graph,
+    task41_p0_v13_projected_eq2_identity,
+    task41_p0_v13_saved_adjoint_cell,
 )
 from src.runners import task41_p0_contract
 from src.runners.task40_v10_campaign import FixedCampaignWindow
@@ -36,6 +39,8 @@ from src.runners.workflow_timebase import clock_sample
 from scripts.task40_v20_service_workflow import (
     _run_task41_p0_saved_output_service,
     _task41_p0_checker_only_snapshot_identity,
+    _task41_p0_v13_independent_checker_authorization,
+    _task41_p0_v13_independent_checker_command,
     _run_task41_p0_service,
 )
 
@@ -426,7 +431,10 @@ def test_v11_saved_array_checker_recomputes_both_states_and_keeps_unbound_audit_
                 "old_identity_rhs": persist(old_rhs),
                 "old_identity_difference": persist(old_t - old_rhs),
             }
-            states.append({"state": label, "artifacts": state_artifacts})
+            states.append({
+                "state": label,
+                "review_identity": {"artifacts": state_artifacts},
+            })
             state_terms[label] = {
                 "delta_t": project(expansion, delta_t, selected_trace),
                 "C_S_t": project(expansion, C_S_t, selected_trace),
@@ -7018,3 +7026,488 @@ def test_task41_v11_saved_check_saves_structural_failure_json(
     assert result["official_result"] is False
     assert result["errors"] == ["AttributeError: synthetic legacy state schema"]
     assert result["raw_evidence_retained"] is True
+
+def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_scope(
+    tmp_path: Path,
+) -> None:
+    results_root = tmp_path / "results"
+    results_root.mkdir()
+    donor_contract = tmp_path / "donor-contract.json"
+    consumer_contract = tmp_path / "consumer-contract.json"
+    fixed_window = tmp_path / "fixed-window.json"
+    donor_summary = results_root / "donor-summary.json"
+    candidate_report = results_root / "candidate-v11.json"
+    diagnostic = results_root / "primary-v13.json"
+    raw_array = results_root / "raw-matrix.npy"
+    cache_receipt = results_root / "lambda-receipt.json"
+    output = results_root / "independent-check.json"
+    for path, payload in (
+        (donor_contract, b"donor-contract"),
+        (consumer_contract, b"consumer-contract"),
+        (fixed_window, b"fixed-window"),
+        (donor_summary, b"donor-summary"),
+        (candidate_report, b"candidate-report"),
+        (diagnostic, b"primary-diagnostic"),
+        (raw_array, b"raw-array"),
+        (cache_receipt, b"lambda-receipt"),
+    ):
+        path.write_bytes(payload)
+
+    command = _task41_p0_v13_independent_checker_command(
+        python="/qualified/python",
+        donor_contract_path=donor_contract,
+        donor_contract_sha256="a" * 64,
+        donor_summary_path=donor_summary,
+        donor_summary_sha256=hashlib.sha256(donor_summary.read_bytes()).hexdigest(),
+        consumer_contract_path=consumer_contract,
+        consumer_contract_sha256="b" * 64,
+        candidate_report_path=candidate_report,
+        candidate_report_sha256=hashlib.sha256(candidate_report.read_bytes()).hexdigest(),
+        diagnostic_path=diagnostic,
+        diagnostic_sha256=hashlib.sha256(diagnostic.read_bytes()).hexdigest(),
+        output_path=output,
+    )
+    assert command[:4] == [
+        "/qualified/python", "-m", "src.runners.task41_p0_checker",
+        "--v13-saved-adjoint-diagnostic-check",
+    ]
+    assert command[command.index("--donor-summary-sha256") + 1] == hashlib.sha256(
+        donor_summary.read_bytes()
+    ).hexdigest()
+    assert command[command.index("--output") + 1] == str(output.resolve())
+
+    authorization = _task41_p0_v13_independent_checker_authorization(
+        command=command,
+        already_authorized_inputs=[donor_contract, consumer_contract, fixed_window],
+        raw_result_inputs=[donor_summary, candidate_report, diagnostic, raw_array],
+        diagnostic_evidence_paths=[cache_receipt],
+        results_root=results_root,
+        campaign_window_sha256="c" * 64,
+        task41_contract_sha256="d" * 64,
+        source_sha="e" * 40,
+        source_branch="task41extra_phi90_p50x50_g17x20",
+        source_clean=True,
+    )
+    expected_paths = [
+        donor_contract.resolve(), consumer_contract.resolve(), fixed_window.resolve(),
+        donor_summary.resolve(), candidate_report.resolve(), diagnostic.resolve(),
+        raw_array.resolve(), cache_receipt.resolve(),
+    ]
+    assert authorization["input_paths"] == [str(path) for path in expected_paths]
+    assert authorization["input_sha256s"] == [
+        hashlib.sha256(path.read_bytes()).hexdigest() for path in expected_paths
+    ]
+    assert authorization["command_sha256"] == hashlib.sha256(
+        json.dumps(command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    assert authorization["purpose"] == "registered_read_only_required_checker"
+    assert authorization["source_clean"] is True
+
+    outside_raw = tmp_path / "unregistered-array.npy"
+    outside_raw.write_bytes(b"not authorized")
+    with pytest.raises(ValueError, match="escaped the registered results tree"):
+        _task41_p0_v13_independent_checker_authorization(
+            command=command,
+            already_authorized_inputs=[donor_contract, consumer_contract, fixed_window],
+            raw_result_inputs=[outside_raw],
+            diagnostic_evidence_paths=[cache_receipt],
+            results_root=results_root,
+            campaign_window_sha256="c" * 64,
+            task41_contract_sha256="d" * 64,
+            source_sha="e" * 40,
+            source_branch="task41extra_phi90_p50x50_g17x20",
+            source_clean=True,
+        )
+
+
+def test_v13_eq2_operation_graph_accounts_nonzero_chi_and_roundoff() -> None:
+    K = np.array([[3.0 + 1.0j, 0.25 - 0.5j], [0.5 + 0.75j, 2.0 - 1.0j]], dtype=np.complex128)
+    G = np.array([[0.2 + 0.1j], [-0.3 + 0.4j]], dtype=np.complex128)
+    J = np.array([[0.75 - 0.2j, 0.1 + 0.6j]], dtype=np.complex128)
+    L = np.array([[1.25 + 0.5j]], dtype=np.complex128)
+    R = np.array([[0.1 + 0.2j], [-0.3 + 0.05j]], dtype=np.complex128)
+    S = np.array([[2.0 - 0.1j]], dtype=np.complex128)
+    T = np.array([[0.2 + 0.3j, -0.1 + 0.5j]], dtype=np.complex128)
+    q = np.array([1.0 + 0.25j], dtype=np.complex128)
+    b = np.array([1.0e8 + 0.25j, -3.0e7 + 0.5j], dtype=np.complex128)
+    n = np.array([1.0e8 - 0.125j, -3.0e7 + 0.25j], dtype=np.complex128)
+    t = np.array([0.75 - 0.5j], dtype=np.complex128)
+    u = np.array([0.2 + 0.1j, -0.4 + 0.3j], dtype=np.complex128)
+    z_b = np.array([0.125 + 0.25j, -0.05 + 0.2j], dtype=np.complex128)
+    z_r = np.array([-0.2 + 0.1j, 0.15 - 0.3j], dtype=np.complex128)
+    r_i = b - n + np.array([0.125 + 0.0j, -0.0625 + 0.0j], dtype=np.complex128)
+    delta = K @ u + G @ t - n
+    r_b = b - K @ z_b
+    r_r = r_i - K @ z_r
+    p_hat = (K @ R + G) @ t
+    w_hat = R @ t + z_b - z_r - u
+    left = K @ w_hat
+    right = p_hat - delta - r_b + r_r
+    eta = left - right
+    result = task41_p0_v13_eq2_operation_graph(
+        cell_index=360, column=0, state="j0", K=K, G=G, J=J, L=L, R=R, S=S, T=T,
+        q=q, b_i=b, n_i=n, t_c=t, u_i=u, z_b=z_b, z_r=z_r, r_i=r_i,
+        delta_hat=delta, r_b_hat=r_b, r_r_hat=r_r, p_hat=p_hat,
+        left_hat=left, right_hat=right, eta_hat=eta,
+        saved_C_S_t=(S - L - J @ R) @ t,
+        frozen_denominator="2225.481253487629",
+    )
+    assert result["classification"] == "ADJOINT_DIAGNOSTIC"
+    assert result["denominator_used_as_gate"] is False
+    assert float(result["component_summaries"]["chi"]["max_abs"]) > 0.0
+    assert float(result["unexplained_residual"]["max_abs"]) < 1.0e-8
+    assert result["C_S_t_same_matrix_wide"]["difference"]["max_abs"] != "0"
+    decimal_check = result["decimal_operation_graph_crosscheck"]
+    expected_terms = {
+        "K_e_w", "e_L", "-e_p", "e_delta", "e_b",
+        "-e_r", "-e_H", "chi", "e_o",
+    }
+    assert decimal_check["component"] in {0, 1}
+    for precision in ("precision_50", "precision_80"):
+        record = decimal_check[precision]
+        assert set(record["terms"]) == expected_terms
+        assert set(record["longdouble_terms"]) == expected_terms
+        assert set(record["decimal_minus_longdouble_by_term"]) == expected_terms
+        assert len(record["sum"]) == 2
+        assert len(record["eta_hat_minus_sum"]) == 2
+        assert len(record["decimal_sum_minus_longdouble_sum"]) == 2
+    assert "saved_g_prod" not in result["g_attribution_terms"]
+    assert "not g_prod" in result["g_attribution_terms"]["local_reduction_difference_formula"]
+    from src.runners.task41_p0_checker import _task41_p0_v13_g_prod_from_fixed_terms
+
+    base = np.clongdouble(0.5 - 0.25j)
+    fixed_terms = [(360, np.clongdouble(0.1 + 0.2j)), (446, np.clongdouble(-0.05 + 0.1j))]
+    assert _task41_p0_v13_g_prod_from_fixed_terms(base, fixed_terms) == (
+        base + fixed_terms[0][1] + fixed_terms[1][1]
+    )
+    with pytest.raises(ValueError, match="cell order"):
+        _task41_p0_v13_g_prod_from_fixed_terms(base, list(reversed(fixed_terms)))
+
+
+def test_v13_independent_raw_group_rebuilds_nine_terms_and_projection_without_getrs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import scipy.linalg
+
+    from src.runners.task41_p0_checker import (
+        _task41_p0_v13_close_scalar,
+        _task41_p0_v13_pair_scalar,
+        _task41_p0_v13_recompute_group_from_original_inputs,
+    )
+
+    def forbidden_getrs(*_args: object, **_kwargs: object) -> np.ndarray:
+        raise AssertionError("raw V13 accounting checker must not call GETRS")
+
+    monkeypatch.setattr(scipy.linalg, "lu_solve", forbidden_getrs)
+    K = np.array([[3.0 + 1.0j, 0.25 - 0.5j], [0.5 + 0.75j, 2.0 - 1.0j]])
+    G = np.array([[0.2 + 0.1j], [-0.3 + 0.4j]])
+    J = np.array([[0.75 - 0.2j, 0.1 + 0.6j]])
+    L = np.array([[1.25 + 0.5j]])
+    R = np.array([[0.1 + 0.2j], [-0.3 + 0.05j]])
+    S = np.array([[2.0 - 0.1j]])
+    T = np.array([[0.2 + 0.3j, -0.1 + 0.5j]])
+    q = np.array([1.0 + 0.25j])
+    b = np.array([2.0 + 0.25j, -1.0 + 0.5j])
+    n = np.array([1.5 - 0.125j, -0.5 + 0.25j])
+    t = np.array([0.75 - 0.5j])
+    u = np.array([0.2 + 0.1j, -0.4 + 0.3j])
+    z_b = np.array([0.125 + 0.25j, -0.05 + 0.2j])
+    z_r = np.array([-0.2 + 0.1j, 0.15 - 0.3j])
+    r_i = b - n + np.array([0.125 + 0.0j, -0.0625 + 0.0j])
+    delta = K @ u + G @ t - n
+    r_b = b - K @ z_b
+    r_r = r_i - K @ z_r
+    p_hat = (K @ R + G) @ t
+    w_hat = R @ t + z_b - z_r - u
+    left = K @ w_hat
+    right = p_hat - delta - r_b + r_r
+    eta = left - right
+    lam = np.array([0.5 - 0.25j, -0.1 + 0.3j])
+    wide_K = np.asarray(K, dtype=np.clongdouble)
+    wide_J = np.asarray(J, dtype=np.clongdouble)
+    wide_q = np.asarray(q, dtype=np.clongdouble)
+    wide_lam = np.asarray(lam, dtype=np.clongdouble)
+    adjoint_residual = wide_J.conj().T @ wide_q - wide_K.conj().T @ wide_lam
+    saved_cst = (S - L - J @ R) @ t
+
+    raw = _task41_p0_v13_recompute_group_from_original_inputs(
+        K=K, G=G, J=J, L=L, R=R, S=S, T=T, q=q,
+        b_i=b, n_i=n, t_c=t, u_i=u, z_b=z_b, z_r=z_r, r_i=r_i,
+        delta_hat=delta, r_b_hat=r_b, r_r_hat=r_r, p_hat=p_hat,
+        left_hat=left, right_hat=right, eta_hat=eta, saved_C_S_t=saved_cst,
+        lambda_vector=lam,
+    )
+    graph = task41_p0_v13_eq2_operation_graph(
+        cell_index=360, column=0, state="j0", K=K, G=G, J=J, L=L, R=R, S=S, T=T,
+        q=q, b_i=b, n_i=n, t_c=t, u_i=u, z_b=z_b, z_r=z_r, r_i=r_i,
+        delta_hat=delta, r_b_hat=r_b, r_r_hat=r_r, p_hat=p_hat,
+        left_hat=left, right_hat=right, eta_hat=eta, saved_C_S_t=saved_cst,
+        lambda_vector=lam, adjoint_residual=adjoint_residual,
+        frozen_denominator="2225.481253487629",
+    )
+    assert set(raw["signed_vectors"]) == {
+        "K_e_w", "e_L", "-e_p", "e_delta", "e_b", "-e_r", "-e_H", "chi", "e_o"
+    }
+    from src.runners.task41_p0_checker import _task41_p0_v13_assert_serialized_vector_matches
+    for name, vector in raw["signed_vectors"].items():
+        _task41_p0_v13_assert_serialized_vector_matches(
+            graph["signed_vector"][name], vector, name
+        )
+    raw_projection = raw["projected_eq2_identity"]
+    graph_projection = graph["projected_eq2_identity"]
+    assert set(raw_projection["signed_terms"]) == {
+        "lambda_H_p_star", "-lambda_H_delta_star", "-lambda_H_r_b_star",
+        "lambda_H_r_r_star", "lambda_H_chi", "e_lambda_H_w_star",
+    }
+    for name, value in raw_projection["signed_terms"].items():
+        raw_scalar = _task41_p0_v13_pair_scalar(value, name)
+        graph_scalar = _task41_p0_v13_pair_scalar(
+            graph_projection["signed_terms"][name], name
+        )
+        assert _task41_p0_v13_close_scalar(
+            raw_scalar, graph_scalar, abs(raw_scalar) + abs(graph_scalar)
+        )
+    raw_minus_qhjzb = _task41_p0_v13_pair_scalar(
+        raw["minus_q_H_J_z_b_fixed_z_b"], "-qHJzb raw"
+    )
+    graph_minus_qhjzb = _task41_p0_v13_pair_scalar(
+        graph["g_attribution_terms"]["minus_q_H_J_z_b_fixed_z_b"], "-qHJzb graph"
+    )
+    assert _task41_p0_v13_close_scalar(
+        raw_minus_qhjzb, graph_minus_qhjzb,
+        abs(raw_minus_qhjzb) + abs(graph_minus_qhjzb),
+    )
+
+
+def test_v13_adjoint_is_atomically_saved_reused_and_never_solved_again(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import scipy.linalg
+
+    K = np.array([[2.0 + 0.2j, 0.1 - 0.3j], [0.4 + 0.1j, 1.7 - 0.15j]], dtype=np.complex128)
+    J = np.array([[0.5 + 0.2j, -0.1 + 0.4j], [0.3 - 0.2j, 0.6 + 0.1j]], dtype=np.complex128)
+    q = np.array([1.0 + 0.25j, -0.5j], dtype=np.complex128)
+    lu, pivots = scipy.linalg.lu_factor(K)
+    calls: list[int] = []
+    original = scipy.linalg.lu_solve
+
+    def counted(*args: object, **kwargs: object) -> np.ndarray:
+        calls.append(int(kwargs["trans"]))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(scipy.linalg, "lu_solve", counted)
+    identity = {"report_sha256": "a" * 64, "window_sha256": "b" * 64}
+    first = task41_p0_v13_saved_adjoint_cell(
+        cell_index=360, K=K, J=J, q=q, lu=lu, pivots=pivots,
+        output_dir=tmp_path, source_identity=identity,
+        campaign_source_identity={"consumer_sha": "old"},
+    )
+    assert first["reused"] is False
+    assert first["solve_elapsed_seconds"] >= 0
+    assert first["solve_seconds"] == first["solve_elapsed_seconds"]
+    assert first["receipt"]["solve_elapsed_seconds"] == first["solve_elapsed_seconds"]
+    assert first["receipt"]["purpose"] == "ADJOINT_DIAGNOSTIC"
+    assert first["receipt"]["transpose"] == 2
+    assert first["lambda_path"].endswith("cell360_adjoint_diagnostic.npz")
+    # A downstream checker error/retry reuses the first durable lambda.
+    resumed = task41_p0_v13_saved_adjoint_cell(
+        cell_index=360, K=K, J=J, q=q, lu=lu, pivots=pivots,
+        output_dir=tmp_path, source_identity=identity,
+        campaign_source_identity={"consumer_sha": "old"},
+    )
+    assert resumed["reused"] is True
+    assert resumed["solve_elapsed_seconds"] == first["solve_elapsed_seconds"]
+    assert resumed["solve_seconds"] == 0.0
+    assert np.array_equal(first["lambda"], resumed["lambda"])
+    residual = resumed["adjoint_residual_vector"]
+    assert np.max(np.abs(residual)) < 1.0e-14
+    # The second selected cell consumes the last and only other solve.
+    K2 = np.array([[1.8 + 0.1j, -0.2 + 0.25j], [0.3 + 0.2j, 2.2 - 0.1j]], dtype=np.complex128)
+    J2 = np.array([[0.15 + 0.3j, 0.4 - 0.2j], [-0.5j, 0.2 + 0.25j]], dtype=np.complex128)
+    q2 = np.array([0.75 - 0.1j, 0.2 + 0.4j], dtype=np.complex128)
+    lu2, pivots2 = scipy.linalg.lu_factor(K2)
+    second = task41_p0_v13_saved_adjoint_cell(
+        cell_index=446, K=K2, J=J2, q=q2, lu=lu2, pivots=pivots2,
+        output_dir=tmp_path, source_identity=identity,
+        campaign_source_identity={"consumer_sha": "old"},
+    )
+    assert second["reused"] is False
+    assert second["solve_calls"] == 2
+    assert len(calls) == 2 and calls == [2, 2]
+    # A consumer source update does not change the immutable donor/window scope.
+    first_new_source = task41_p0_v13_saved_adjoint_cell(
+        cell_index=360, K=K, J=J, q=q, lu=lu, pivots=pivots,
+        output_dir=tmp_path, source_identity=identity,
+        campaign_source_identity={"consumer_sha": "new"},
+    )
+    second_new_source = task41_p0_v13_saved_adjoint_cell(
+        cell_index=446, K=K2, J=J2, q=q2, lu=lu2, pivots=pivots2,
+        output_dir=tmp_path, source_identity=identity,
+        campaign_source_identity={"consumer_sha": "new"},
+    )
+    assert first_new_source["reused"] is True and second_new_source["reused"] is True
+    assert first_new_source["solve_elapsed_seconds"] == first["solve_elapsed_seconds"]
+    assert first_new_source["solve_seconds"] == 0.0
+    assert len(calls) == 2
+    with pytest.raises(ValueError, match="numerical scope/count"):
+        task41_p0_v13_saved_adjoint_cell(
+            cell_index=360, K=K, J=J, q=q + np.array([0.0, 0.01j]),
+            lu=lu, pivots=pivots, output_dir=tmp_path, source_identity=identity,
+            campaign_source_identity={"consumer_sha": "new"},
+        )
+    ledger = json.loads((tmp_path / "task41_p0_v13_adjoint_solve_ledger.json").read_text())
+    assert ledger["solve_calls"] == 2
+    assert ledger["completed_cells"] == [360, 446]
+    w_star = np.array([0.2 + 0.1j, -0.3j], dtype=np.complex128)
+    projected = task41_p0_v13_projected_eq2_identity(
+        q=q2, J=J2, w_star=w_star, p_star=K2 @ w_star,
+        delta_star=np.zeros(2, dtype=np.complex128),
+        r_b_star=np.zeros(2, dtype=np.complex128),
+        r_r_star=np.zeros(2, dtype=np.complex128),
+        chi=np.zeros(2, dtype=np.complex128),
+        lambda_vector=second["lambda"],
+        adjoint_residual=second["adjoint_residual_vector"],
+    )
+    assert projected["classification"] == "ADJOINT_DIAGNOSTIC"
+    assert projected["official_result"] is False
+    assert float(np.hypot(float(projected["unexplained_residual"][0]),
+                          float(projected["unexplained_residual"][1]))) < 1.0e-12
+
+
+def test_v13_global_d_eval_uses_n_t_once_and_excludes_error_bridge() -> None:
+    from src.runners.task41_p0_checker import _task41_p0_v13_global_d_eval
+
+    signed = [
+        {f"term{index}": np.clongdouble(index + 0.25j) for index in range(6)},
+        {f"term{index}": np.clongdouble(-index - 0.5j) for index in range(6)},
+    ]
+    local = [np.clongdouble(2.0 + 0.5j), np.clongdouble(-0.25 + 0.1j)]
+    cst = [np.clongdouble(0.75 - 0.2j), np.clongdouble(1.25 + 0.3j)]
+    residuals = [np.clongdouble(0.01 + 0.02j), np.clongdouble(-0.03 + 0.01j)]
+    minus_jzr = [np.clongdouble(-0.4 + 0.1j), np.clongdouble(0.2 - 0.05j)]
+    n_t = np.clongdouble(0.8 + 0.15j)
+    r_t = np.clongdouble(-0.2 + 0.05j)
+    expected = (
+        sum(local, np.clongdouble(0))
+        + sum(cst, np.clongdouble(0))
+        + sum((sum(row.values(), np.clongdouble(0)) for row in signed), np.clongdouble(0))
+        + sum(residuals, np.clongdouble(0))
+        - n_t - r_t - sum(minus_jzr, np.clongdouble(0))
+    )
+    result = _task41_p0_v13_global_d_eval(
+        local_ju_lt=local,
+        local_cst=cst,
+        adjoint_signed_terms_by_cell=signed,
+        projected_eq2_residual_by_cell=residuals,
+        global_native_action=n_t,
+        native_residual=r_t,
+        projected_minus_j_z_r_by_cell=minus_jzr,
+    )
+    assert result == expected
+    with pytest.raises(ValueError, match="six signed adjoint terms"):
+        _task41_p0_v13_global_d_eval(
+            local_ju_lt=local,
+            local_cst=cst,
+            adjoint_signed_terms_by_cell=[{}, signed[1]],
+            projected_eq2_residual_by_cell=residuals,
+            global_native_action=n_t,
+            native_residual=r_t,
+            projected_minus_j_z_r_by_cell=minus_jzr,
+        )
+
+
+def test_v13_shared_adjoint_cache_reuses_both_cells_across_attempts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import scipy.linalg
+
+    from src.runners.task41_p0_checker import task41_p0_v13_saved_adjoint_cell
+
+    K1 = np.array([[2.0 + 0.2j, 0.1 - 0.3j], [0.4 + 0.1j, 1.7 - 0.15j]])
+    J1 = np.array([[0.5 + 0.2j, -0.1 + 0.4j], [0.3 - 0.2j, 0.6 + 0.1j]])
+    q1 = np.array([1.0 + 0.25j, -0.5j])
+    K2 = np.array([[1.8 + 0.1j, -0.2 + 0.25j], [0.3 + 0.2j, 2.2 - 0.1j]])
+    J2 = np.array([[0.15 + 0.3j, 0.4 - 0.2j], [-0.5j, 0.2 + 0.25j]])
+    q2 = np.array([0.75 - 0.1j, 0.2 + 0.4j])
+    factorizations = [scipy.linalg.lu_factor(K1), scipy.linalg.lu_factor(K2)]
+    calls: list[int] = []
+    original = scipy.linalg.lu_solve
+
+    def counted(*args: object, **kwargs: object) -> np.ndarray:
+        calls.append(int(kwargs["trans"]))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(scipy.linalg, "lu_solve", counted)
+    cache_root = (
+        tmp_path / "task41_p0_saved_diagnostics_6h" / "window-sha"
+        / "selected_incident_replay" / "v13_adjoint_cache"
+    )
+    identity = {
+        "candidate_report_sha256": "a" * 64,
+        "donor_manifest_sha256": "b" * 64,
+        "window_sha256": "c" * 64,
+    }
+    first_attempt = tmp_path / "attempt01"
+    second_attempt = tmp_path / "attempt02"
+    first_attempt.mkdir()
+    second_attempt.mkdir()
+    for cell, K, J, q, (lu, pivots) in (
+        (360, K1, J1, q1, factorizations[0]),
+        (446, K2, J2, q2, factorizations[1]),
+    ):
+        saved = task41_p0_v13_saved_adjoint_cell(
+            cell_index=cell, K=K, J=J, q=q, lu=lu, pivots=pivots,
+            output_dir=cache_root, source_identity=identity,
+            campaign_source_identity={"consumer_source_sha": "attempt01"},
+        )
+        assert saved["reused"] is False
+        assert Path(saved["lambda_path"]).is_relative_to(cache_root)
+    assert calls == [2, 2]
+    for cell, K, J, q, (lu, pivots) in (
+        (360, K1, J1, q1, factorizations[0]),
+        (446, K2, J2, q2, factorizations[1]),
+    ):
+        resumed = task41_p0_v13_saved_adjoint_cell(
+            cell_index=cell, K=K, J=J, q=q, lu=lu, pivots=pivots,
+            output_dir=cache_root, source_identity=identity,
+            campaign_source_identity={"consumer_source_sha": "attempt02"},
+        )
+        assert resumed["reused"] is True
+    ledger = json.loads(
+        (cache_root / "task41_p0_v13_adjoint_solve_ledger.json").read_text()
+    )
+    assert ledger["solve_calls"] == 2
+    assert ledger["getrs_attempted"] is True
+    assert ledger["completed_cells"] == [360, 446]
+    assert calls == [2, 2]
+
+
+def test_v13_adjoint_reservation_without_saved_package_fails_closed(tmp_path: Path) -> None:
+    import scipy.linalg
+
+    K = np.eye(2, dtype=np.complex128)
+    J = np.ones((1, 2), dtype=np.complex128)
+    q = np.ones(1, dtype=np.complex128)
+    lu, pivots = scipy.linalg.lu_factor(K)
+    identity = {"report_sha256": "c" * 64}
+    with pytest.raises(ValueError, match="unresolved reserved solve"):
+        # Simulate an interrupted post-reservation/pre-package write. The durable
+        # ledger must prevent an unrecorded second GETRS on a later invocation.
+        from src.runners.task41_p0_checker import _task41_p0_v13_atomic_json
+        _task41_p0_v13_atomic_json(
+            tmp_path / "task41_p0_v13_adjoint_solve_ledger.json",
+            {
+                "schema": "task41.p0.v13.adjoint_solve_ledger.v1",
+                "purpose": "ADJOINT_DIAGNOSTIC",
+                "scope_identity": identity,
+                "solve_calls": 1,
+                "getrs_attempted": True,
+                "reservations": [{"cell_index": 360, "solve_call_ordinal": 1}],
+                "completed_cells": [],
+                "inflight_cell": 360,
+            },
+        )
+        task41_p0_v13_saved_adjoint_cell(
+            cell_index=360, K=K, J=J, q=q, lu=lu, pivots=pivots,
+            output_dir=tmp_path, source_identity=identity,
+        )

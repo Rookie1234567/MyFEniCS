@@ -3664,6 +3664,87 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
     )
 
 
+def _task41_p0_v13_independent_checker_command(
+    *,
+    python: str,
+    donor_contract_path: Path,
+    donor_contract_sha256: str,
+    donor_summary_path: Path,
+    donor_summary_sha256: str,
+    consumer_contract_path: Path,
+    consumer_contract_sha256: str,
+    candidate_report_path: Path,
+    candidate_report_sha256: str,
+    diagnostic_path: Path,
+    diagnostic_sha256: str,
+    output_path: Path,
+) -> list[str]:
+    """Build the exact read-only V13 closeout checker invocation."""
+    return [
+        python, "-m", "src.runners.task41_p0_checker",
+        "--v13-saved-adjoint-diagnostic-check",
+        "--contract", str(donor_contract_path.resolve(strict=True)),
+        "--contract-sha256", donor_contract_sha256,
+        "--summary", str(donor_summary_path.resolve(strict=True)),
+        "--donor-summary-sha256", donor_summary_sha256,
+        "--consumer-contract", str(consumer_contract_path.resolve(strict=True)),
+        "--consumer-contract-sha256", consumer_contract_sha256,
+        "--v11-report", str(candidate_report_path.resolve(strict=True)),
+        "--v11-report-sha256", candidate_report_sha256,
+        "--v13-diagnostic", str(diagnostic_path.resolve(strict=True)),
+        "--v13-diagnostic-sha256", diagnostic_sha256,
+        "--output", str(output_path.resolve()),
+    ]
+
+
+def _task41_p0_v13_independent_checker_authorization(
+    *,
+    command: list[str],
+    already_authorized_inputs: list[Path],
+    raw_result_inputs: list[Path],
+    diagnostic_evidence_paths: list[Path],
+    results_root: Path,
+    campaign_window_sha256: str,
+    task41_contract_sha256: str,
+    source_sha: str,
+    source_branch: str,
+    source_clean: bool,
+) -> dict[str, Any]:
+    """Bind the actual closeout command and its exact authorized/raw inputs.
+
+    Contract/window files already admitted by the campaign remain authorized by
+    exact path even when they live outside results_root. Newly discovered raw
+    report references and diagnostic/cache evidence must stay under results_root.
+    """
+    root = results_root.resolve(strict=True)
+    raw_paths = [Path(path).resolve(strict=True) for path in raw_result_inputs]
+    evidence_paths = [Path(path).resolve(strict=True) for path in diagnostic_evidence_paths]
+    if any(not path.is_relative_to(root) for path in (*raw_paths, *evidence_paths)):
+        raise ValueError("V13 raw/evidence closeout input escaped the registered results tree")
+    authorized_paths = [Path(path).resolve(strict=True) for path in already_authorized_inputs]
+    input_paths = list(dict.fromkeys((*authorized_paths, *raw_paths, *evidence_paths)))
+    command_payload = list(command)
+    return {
+        "schema": "task41.p0.closeout_checker_authorization.v1",
+        "phase": "closeout",
+        "purpose": "registered_read_only_required_checker",
+        "checker_kind": "task41_p0_v13_saved_adjoint_diagnostic_independent_check",
+        "command_sha256": hashlib.sha256(
+            json.dumps(
+                command_payload, separators=(",", ":"), ensure_ascii=False
+            ).encode("utf-8")
+        ).hexdigest(),
+        "input_paths": [str(path) for path in input_paths],
+        "input_sha256s": [_sha256_file(path) for path in input_paths],
+        "expected_channel_count": None,
+        "campaign_window_sha256": campaign_window_sha256,
+        "task41_contract_sha256": task41_contract_sha256,
+        "source_sha": source_sha,
+        "source_branch": source_branch,
+        "source_clean": source_clean,
+    }
+
+
 def _task40_v30_closeout_checker_authorization(
     *,
     command: list[str],
@@ -9574,6 +9655,7 @@ def _run_task41_p0_saved_output_service(
     b0_v8_selected_trace_star_metadata_only_mode: bool = False,
     b0_v8_selected_trace_star_candidate_replay_mode: bool = False,
     b0_v11_candidate_report_replayed_read_only_mode: bool = False,
+    b0_v13_saved_adjoint_diagnostic_mode: bool = False,
     candidate_producer_contract_path: Path | None = None,
     candidate_producer_contract_sha256: str | None = None,
     candidate_producer_source_sha: str | None = None,
@@ -11686,12 +11768,20 @@ def _run_task41_p0_saved_output_service(
                 assert v11_metadata_report_path is not None
                 assert v11_v9_compact_report_path is not None
                 assert candidate_report_payload is not None
-                checker_result_path = output_root / "task41_p0_v11_candidate_replay_saved_array_check.json"
+                checker_result_path = output_root / (
+                    "task41_p0_v13_saved_adjoint_diagnostic.json"
+                    if b0_v13_saved_adjoint_diagnostic_mode
+                    else "task41_p0_v11_candidate_replay_saved_array_check.json"
+                )
                 checker_command = [
                     python,
                     "-m",
                     "src.runners.task41_p0_checker",
-                    "--v11-candidate-replay-saved-check",
+                    (
+                        "--v13-saved-adjoint-diagnostic"
+                        if b0_v13_saved_adjoint_diagnostic_mode
+                        else "--v11-candidate-replay-saved-check"
+                    ),
                     "--contract",
                     str(donor_contract_path.resolve()),
                     "--contract-sha256",
@@ -11812,6 +11902,47 @@ def _run_task41_p0_saved_output_service(
                         window.path,
                     )
                 ))
+                if b0_v13_saved_adjoint_diagnostic_mode:
+                    accepted_root = candidate_report_path.parent.parent
+                    accepted_checker_path = (
+                        accepted_root / "attempt06"
+                        / "task41_p0_v11_candidate_replay_saved_array_check.json"
+                    ).resolve(strict=True)
+                    accepted_receipt_path = (
+                        accepted_root / "attempt06.service"
+                        / "task41_p0_service_receipt.json"
+                    ).resolve(strict=True)
+                    accepted_checker_sha = (
+                        "cdbd2a0a8d6ae62b61ad1a45b8bd4f62dae4c69ebb1f0f7923205ac85e4c3739"
+                    )
+                    accepted_receipt_sha = (
+                        "0b28a0f2b57aa17d515627097978a5470c7787ca9c61b15c07a0d25b14ae217f"
+                    )
+                    if (
+                        sha256_file(accepted_checker_path) != accepted_checker_sha
+                        or sha256_file(accepted_receipt_path) != accepted_receipt_sha
+                    ):
+                        raise ValueError("V13 accepted attempt06 checker or service receipt hash differs")
+                    accepted_receipt = read_json_object(
+                        accepted_receipt_path, "accepted attempt06 V11 service receipt"
+                    )
+                    accepted_checker_record = accepted_receipt.get(
+                        "candidate_replay_saved_array_checker"
+                    )
+                    if (
+                        accepted_receipt.get("candidate_report_sha256")
+                        != candidate_report_sha256
+                        or not isinstance(accepted_checker_record, Mapping)
+                        or accepted_checker_record.get("result_path")
+                        != str(accepted_checker_path)
+                        or accepted_checker_record.get("result_sha256")
+                        != accepted_checker_sha
+                        or accepted_checker_record.get("status") != "COMPLETED_READ_ONLY"
+                    ):
+                        raise ValueError("V13 accepted attempt06 receipt does not bind its checker")
+                    authorized_inputs.extend(
+                        [accepted_checker_path, accepted_receipt_path]
+                    )
                 checker_source_sha = subprocess.check_output(
                     ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
                 ).strip()
@@ -11828,7 +11959,11 @@ def _run_task41_p0_saved_output_service(
                     "schema": "task41.p0.closeout_checker_authorization.v1",
                     "phase": "closeout",
                     "purpose": "registered_read_only_required_checker",
-                    "checker_kind": "task41_p0_v11_selected_cell_saved_array_checker",
+                    "checker_kind": (
+                        "task41_p0_v13_saved_adjoint_diagnostic"
+                        if b0_v13_saved_adjoint_diagnostic_mode
+                        else "task41_p0_v11_selected_cell_saved_array_checker"
+                    ),
                     "command_sha256": hashlib.sha256(
                         json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
                     ).hexdigest(),
@@ -11841,7 +11976,8 @@ def _run_task41_p0_saved_output_service(
                     "source_branch": source_branch,
                     "source_clean": True,
                 }
-                if b0_v11_candidate_report_replayed_read_only_mode:
+                if (b0_v11_candidate_report_replayed_read_only_mode
+                        and not b0_v13_saved_adjoint_diagnostic_mode):
                     assert v11_metadata_report_path is not None
                     assert v11_v9_compact_report_path is not None
                     (
@@ -11963,39 +12099,427 @@ def _run_task41_p0_saved_output_service(
                     record["saved_diagnostics_disk_budget_precheck"] = (
                         saved_diagnostics_budget_check()
                     )
-                checker_watchdog = supervise(
-                    checker_command,
-                    service_directory / "v11_saved_array_checker_watchdog",
-                    wall_seconds=window.closeout_seconds,
-                    phase_path=service_directory / "v11_saved_array_checker_phase.json",
-                    campaign_phase="closeout",
-                    campaign_phase_authorization=checker_authorization,
-                    **common_watchdog,
-                )
+                if b0_v13_saved_adjoint_diagnostic_mode:
+                    assert v11_metadata_report_path is not None
+                    assert v11_v9_compact_report_path is not None
+                    from src.runners.task41_p0_v4_volume_only_audit import (
+                        TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+                    )
+                    from src.solvers.task41_v4_volume_only_audit import (
+                        TASK41_V4_DONOR_MANIFEST_SHA256,
+                        TASK41_V4_DONOR_NPY_BYTES,
+                    )
+
+                    compact_report_value = read_json_object(
+                        v11_v9_compact_report_path, "V9 compact volume audit"
+                    )
+                    compact_action_gate = compact_report_value.get(
+                        "candidate_full_action_gate"
+                    )
+                    existing_bytes = compact_report_value.get("existing_evidence_bytes")
+                    prior_bytes = compact_report_value.get("prior_new_evidence_bytes")
+                    new_bytes = compact_report_value.get("new_evidence_bytes")
+                    cumulative_bytes = compact_report_value.get("cumulative_evidence_bytes")
+                    if (
+                        sha256_file(v11_v9_compact_report_path)
+                        != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+                        or compact_report_value.get("schema")
+                        != "task41.p0.b0.v9.compact_volume_identity.v1"
+                        or compact_report_value.get("completed") is not True
+                        or compact_report_value.get("status") != "GATE_FAILED"
+                        or compact_report_value.get("official_result") is not False
+                        or compact_report_value.get("internal_rhs_strategy")
+                        != "same_lu_rhs_solve"
+                        or compact_report_value.get("donor_manifest_sha256")
+                        != TASK41_V4_DONOR_MANIFEST_SHA256
+                        or not isinstance(compact_action_gate, Mapping)
+                        or compact_action_gate.get("status") != "GATE_FAILED"
+                        or type(existing_bytes) is not int
+                        or existing_bytes != TASK41_V4_DONOR_NPY_BYTES
+                        or type(prior_bytes) is not int
+                        or prior_bytes < 0
+                        or type(new_bytes) is not int
+                        or new_bytes < 0
+                        or type(cumulative_bytes) is not int
+                        or cumulative_bytes != existing_bytes + prior_bytes + new_bytes
+                    ):
+                        raise ValueError(
+                            "V13 compact V9 summary or cumulative evidence totals differ"
+                        )
+                    saved_bound_raw_paths = []
+                    current_window_root = (
+                        results_root
+                        / "task41_p0_saved_diagnostics_6h"
+                        / str(contract.get("window", {}).get("sha256", ""))
+                    ).resolve()
+                    prior_metadata_window_bytes = (
+                        _task41_v12_prior_metadata_window_bytes(
+                            v11_metadata_report_path,
+                            current_window_root=current_window_root,
+                            results_root=results_root,
+                            execution_scope=contract.get("execution_scope"),
+                            stat_output_tree=stat_output_tree,
+                        )
+                    )
+                    saved_recorded_raw_bytes = cumulative_bytes + prior_metadata_window_bytes
+                    record["v9_existing_evidence_bytes"] = existing_bytes
+                    record["v9_prior_new_evidence_bytes"] = prior_bytes
+                    record["v9_new_evidence_bytes"] = new_bytes
+                    record["v9_cumulative_evidence_bytes"] = cumulative_bytes
+                    record["v11_prior_metadata_window_output_bytes"] = (
+                        prior_metadata_window_bytes
+                    )
+                    record["saved_diagnostics_disk_budget_precheck"] = (
+                        saved_diagnostics_budget_check()
+                    )
+                if b0_v13_saved_adjoint_diagnostic_mode:
+                    checker_watchdog = supervise(
+                        checker_command,
+                        service_directory / "v13_saved_adjoint_numeric_checker_watchdog",
+                        wall_seconds=window.cutoff_seconds,
+                        phase_path=service_directory / "v13_saved_adjoint_numeric_checker_phase.json",
+                        campaign_phase="numeric",
+                        **common_watchdog,
+                    )
+                else:
+                    checker_watchdog = supervise(
+                        checker_command,
+                        service_directory / "v11_saved_array_checker_watchdog",
+                        wall_seconds=window.closeout_seconds,
+                        phase_path=service_directory / "v11_saved_array_checker_phase.json",
+                        campaign_phase="closeout",
+                        campaign_phase_authorization=checker_authorization,
+                        **common_watchdog,
+                    )
                 checker_payload = (
-                    read_json_object(checker_result_path, "V11 saved-array checker result")
+                    read_json_object(checker_result_path, "V13 primary diagnostic")
                     if checker_result_path.is_file()
                     else None
                 )
-                checker_ok = bool(
-                    checker_watchdog.get("classification") == "COMPLETED"
-                    and checker_watchdog.get("leader_exit_code") == 0
-                    and isinstance(checker_payload, Mapping)
-                    and checker_payload.get("schema")
-                    == "task41.p0.v11.selected_trace_star_saved_array_independent_check.v1"
-                    and checker_payload.get("check_completed") is True
-                    and checker_payload.get("candidate_passed") is None
-                    and checker_payload.get("scientific_qualified") is False
-                    and checker_payload.get("official_result") is False
-                    and checker_payload.get("classification")
-                    == "INDEPENDENT_SAVED_ARRAY_CHECK_COMPLETED"
-                )
-                record["required_checker_status"] = (
-                    "independent_saved_array_check_completed"
-                    if checker_ok
-                    else "independent_saved_array_check_failed"
-                )
-                record["candidate_replay_saved_array_checker"] = {
+                independent_checker_record: dict[str, Any] | None = None
+                if b0_v13_saved_adjoint_diagnostic_mode:
+                    primary_checker_ok = bool(
+                        checker_watchdog.get("classification") == "COMPLETED"
+                        and checker_watchdog.get("leader_exit_code") == 0
+                        and isinstance(checker_payload, Mapping)
+                        and checker_payload.get("schema")
+                        == "task41.p0.v13.saved_adjoint_operation_graph.v1"
+                        and checker_payload.get("status") == "COMPLETED_ADJOINT_DIAGNOSTIC"
+                        and checker_payload.get("classification") == "ADJOINT_DIAGNOSTIC"
+                        and checker_payload.get("adjoint_solve_calls") == 2
+                        and checker_payload.get("group_count") == 8
+                        and len(checker_payload.get("global_rows", [])) == 2
+                        and all(
+                            len(item.get("state_rows", [])) == 2
+                            for item in checker_payload.get("global_rows", [])
+                        )
+                        and checker_payload.get("scientific_qualified") is False
+                        and checker_payload.get("official_result") is False
+                        and checker_payload.get("candidate_report_sha256")
+                        == candidate_report_sha256
+                    )
+                    independent_checker_ok = False
+                    if primary_checker_ok:
+                        assert checker_payload is not None
+                        diagnostic_sha256 = sha256_file(checker_result_path)
+                        expected_cache_root = (
+                            results_root
+                            / "task41_p0_saved_diagnostics_6h"
+                            / window.sha256
+                            / "selected_incident_replay"
+                            / "v13_adjoint_cache"
+                        ).resolve(strict=True)
+                        cache_root = Path(
+                            str(checker_payload.get("adjoint_cache_root", ""))
+                        ).resolve(strict=True)
+                        ledger_path = (
+                            expected_cache_root
+                            / "task41_p0_v13_adjoint_solve_ledger.json"
+                        ).resolve(strict=True)
+                        marker_path = (
+                            output_root / "task41_p0_v13_analysis_started.json"
+                        ).resolve(strict=True)
+                        if (
+                            cache_root != expected_cache_root
+                            or not cache_root.is_relative_to(results_root)
+                            or checker_payload.get("adjoint_solve_ledger_path")
+                            != str(ledger_path)
+                            or checker_payload.get("analysis_marker_path")
+                            != str(marker_path)
+                        ):
+                            raise ValueError("V13 primary diagnostic shared-cache binding differs")
+                        independent_result_path = output_root / (
+                            "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
+                        )
+                        independent_checker_command = _task41_p0_v13_independent_checker_command(
+                            python=python,
+                            donor_contract_path=donor_contract_path,
+                            donor_contract_sha256=donor_contract_sha256,
+                            donor_summary_path=donor_summary_path,
+                            donor_summary_sha256=sha256_file(
+                                donor_summary_path.resolve(strict=True)
+                            ),
+                            consumer_contract_path=contract_path,
+                            consumer_contract_sha256=contract_sha,
+                            candidate_report_path=candidate_report_path,
+                            candidate_report_sha256=candidate_report_sha256,
+                            diagnostic_path=checker_result_path,
+                            diagnostic_sha256=diagnostic_sha256,
+                            output_path=independent_result_path,
+                        )
+                        closeout_raw_inputs: list[Path] = []
+
+                        def authorize_ref(ref: Any, root: Path, label: str) -> None:
+                            if not isinstance(ref, Mapping) or not isinstance(
+                                ref.get("path"), str
+                            ):
+                                raise ValueError(f"V13 closeout {label} reference is malformed")
+                            raw_path = Path(str(ref["path"]))
+                            resolved = (
+                                raw_path if raw_path.is_absolute() else root / raw_path
+                            ).resolve(strict=True)
+                            if not resolved.is_relative_to(results_root):
+                                raise ValueError(
+                                    f"V13 closeout {label} escaped the registered results tree"
+                                )
+                            closeout_raw_inputs.append(resolved)
+
+                        metadata_payload = (
+                            metadata_report.get("selected_trace_star_metadata_only")
+                            if isinstance(metadata_report, Mapping)
+                            else None
+                        )
+                        metadata_cells_for_closeout = (
+                            metadata_payload.get("selected_cells")
+                            if isinstance(metadata_payload, Mapping)
+                            else None
+                        )
+                        if not isinstance(metadata_cells_for_closeout, list):
+                            raise ValueError("V13 closeout metadata cell refs are unavailable")
+                        for metadata_cell in metadata_cells_for_closeout:
+                            refs = metadata_cell.get("arrays")
+                            if not isinstance(refs, Mapping):
+                                raise ValueError("V13 closeout metadata array refs are malformed")
+                            for name in (
+                                "interior_positions", "trace_positions", "active_ids",
+                                "trace_expansion_data", "trace_expansion_indices",
+                                "trace_expansion_indptr",
+                            ):
+                                authorize_ref(
+                                    refs.get(name), v11_metadata_report_path.parent,
+                                    f"metadata/{name}",
+                                )
+                        if not isinstance(candidate_replay_payload, Mapping):
+                            raise ValueError("V13 closeout V11 replay payload is unavailable")
+                        replay_cells_for_closeout = candidate_replay_payload.get("cells")
+                        if not isinstance(replay_cells_for_closeout, list):
+                            raise ValueError("V13 closeout candidate cell refs are malformed")
+                        for replay_cell in replay_cells_for_closeout:
+                            refs = replay_cell.get("candidate_artifacts")
+                            if not isinstance(refs, Mapping):
+                                raise ValueError("V13 closeout candidate artifact refs are malformed")
+                            for name in (
+                                "oriented_tensor", "R", "S", "T",
+                                "interior_lu", "interior_lu_pivots",
+                            ):
+                                authorize_ref(
+                                    refs.get(name), candidate_report_path.parent,
+                                    f"candidate/{name}",
+                                )
+                        source_columns_for_closeout = candidate_replay_payload.get("columns")
+                        if not isinstance(source_columns_for_closeout, list):
+                            raise ValueError("V13 closeout V11 source columns are unavailable")
+                        for source_column in source_columns_for_closeout:
+                            incident = source_column.get("incident_cell_terms")
+                            if not isinstance(incident, list):
+                                raise ValueError("V13 closeout V11 incident refs are malformed")
+                            for incident_cell in incident:
+                                artifacts = incident_cell.get("artifacts")
+                                if not isinstance(artifacts, Mapping):
+                                    raise ValueError("V13 closeout common cell refs are malformed")
+                                for name in (
+                                    "S_action", "S_projected_active", "T_native_rhs",
+                                    "T_projected_active", "same_lu_minus_Jz_b",
+                                    "same_lu_projected_active", "same_lu_z_b",
+                                ):
+                                    authorize_ref(
+                                        artifacts.get(name), candidate_report_path.parent,
+                                        f"common/{name}",
+                                    )
+                                states = artifacts.get("states")
+                                if not isinstance(states, list):
+                                    raise ValueError("V13 closeout state refs are malformed")
+                                for source_state in states:
+                                    inputs = source_state.get("inputs")
+                                    if not isinstance(inputs, Mapping):
+                                        raise ValueError("V13 closeout state inputs are malformed")
+                                    for name in ("b_i", "n_i", "t_c", "u_i"):
+                                        authorize_ref(
+                                            inputs.get(name), candidate_report_path.parent,
+                                            f"state-input/{name}",
+                                        )
+                                    review_identity = source_state.get("review_identity")
+                                    review_refs = (
+                                        review_identity.get("artifacts")
+                                        if isinstance(review_identity, Mapping)
+                                        else None
+                                    )
+                                    if not isinstance(review_refs, Mapping):
+                                        raise ValueError("V13 closeout state review refs are malformed")
+                                    for name in (
+                                        "same_lu_z_r", "r_i", "delta_i", "delta_t",
+                                        "same_lu_minus_Jz_r", "r_b", "r_r", "E_R_t",
+                                        "review_eq2_left", "review_eq2_right",
+                                        "review_eq2_difference", "C_S_t",
+                                    ):
+                                        authorize_ref(
+                                            review_refs.get(name), candidate_report_path.parent,
+                                            f"state-review/{name}",
+                                        )
+                        donor_recovery = donor_summary_value.get("b0_recovery_evidence")
+                        donor_manifest_ref = (
+                            donor_recovery.get("manifest")
+                            if isinstance(donor_recovery, Mapping)
+                            else None
+                        )
+                        if not isinstance(donor_manifest_ref, Mapping):
+                            raise ValueError("V13 closeout donor summary lacks manifest")
+                        donor_manifest_raw = Path(str(donor_manifest_ref.get("path", "")))
+                        donor_manifest_for_closeout = (
+                            donor_manifest_raw
+                            if donor_manifest_raw.is_absolute()
+                            else donor_summary_path.parent / donor_manifest_raw
+                        ).resolve(strict=True)
+                        donor_manifest_payload = read_json_object(
+                            donor_manifest_for_closeout, "V13 donor manifest for closeout auth"
+                        )
+                        donor_columns_for_closeout = donor_manifest_payload.get("columns")
+                        if not isinstance(donor_columns_for_closeout, list):
+                            raise ValueError("V13 closeout donor columns are malformed")
+                        for donor_column in donor_columns_for_closeout:
+                            donor_artifacts = donor_column.get("artifacts")
+                            if not isinstance(donor_artifacts, Mapping):
+                                raise ValueError("V13 closeout donor artifact refs are malformed")
+                            authorize_ref(
+                                donor_artifacts.get("native_rhs"), donor_summary_path.parent,
+                                "donor/native_rhs",
+                            )
+                        cache_evidence_paths = [
+                            checker_result_path.resolve(strict=True),
+                            marker_path,
+                            ledger_path,
+                            *[
+                                (cache_root / f"task41_p0_v13_cell{cell}_adjoint_diagnostic.npz")
+                                .resolve(strict=True)
+                                for cell in (360, 446)
+                            ],
+                        ]
+                        if any(
+                            not path.is_relative_to(results_root)
+                            for path in cache_evidence_paths
+                        ):
+                            raise ValueError(
+                                "V13 diagnostic/cache authorization input escaped results root"
+                            )
+                        independent_checker_authorization = (
+                            _task41_p0_v13_independent_checker_authorization(
+                                command=independent_checker_command,
+                                already_authorized_inputs=authorized_inputs,
+                                raw_result_inputs=closeout_raw_inputs,
+                                diagnostic_evidence_paths=cache_evidence_paths,
+                                results_root=results_root,
+                                campaign_window_sha256=window.sha256,
+                                task41_contract_sha256=contract_sha,
+                                source_sha=checker_source_sha,
+                                source_branch=source_branch,
+                                source_clean=True,
+                            )
+                        )
+                        independent_watchdog = supervise(
+                            independent_checker_command,
+                            service_directory
+                            / "v13_saved_adjoint_independent_closeout_watchdog",
+                            wall_seconds=window.closeout_seconds,
+                            phase_path=service_directory
+                            / "v13_saved_adjoint_independent_closeout_phase.json",
+                            campaign_phase="closeout",
+                            campaign_phase_authorization=independent_checker_authorization,
+                            **common_watchdog,
+                        )
+                        independent_payload = (
+                            read_json_object(
+                                independent_result_path,
+                                "V13 independent closeout checker",
+                            )
+                            if independent_result_path.is_file()
+                            else None
+                        )
+                        independent_checker_ok = bool(
+                            independent_watchdog.get("classification") == "COMPLETED"
+                            and independent_watchdog.get("leader_exit_code") == 0
+                            and isinstance(independent_payload, Mapping)
+                            and independent_payload.get("schema")
+                            == "task41.p0.v13.saved_adjoint_diagnostic_independent_check.v1"
+                            and independent_payload.get("status") == "COMPLETED_READ_ONLY"
+                            and independent_payload.get("classification")
+                            == "INDEPENDENT_V13_ADJOINT_ACCOUNTING_RECHECK_COMPLETED"
+                            and independent_payload.get("getrs_calls") == 0
+                            and independent_payload.get("persisted_lambda_packages_reused") == 2
+                            and len(independent_payload.get("checked_global_rows", [])) == 4
+                            and independent_payload.get("official_result") is False
+                            and independent_payload.get("scientific_qualified") is False
+                            and independent_payload.get("diagnostic_sha256")
+                            == diagnostic_sha256
+                        )
+                        independent_checker_record = {
+                            "status": (
+                                "COMPLETED_READ_ONLY"
+                                if independent_checker_ok
+                                else "INCOMPLETE"
+                            ),
+                            "result_path": str(independent_result_path),
+                            "result_sha256": sha256_file(independent_result_path)
+                            if independent_result_path.is_file()
+                            else None,
+                            "watchdog": independent_watchdog,
+                            "official_result": False,
+                        }
+                    else:
+                        independent_checker_record = {
+                            "status": "not_run_primary_numeric_checker_incomplete",
+                            "result_path": None,
+                            "result_sha256": None,
+                            "official_result": False,
+                        }
+                    checker_ok = primary_checker_ok and independent_checker_ok
+                    checker_record_key = "saved_adjoint_diagnostic_checker"
+                    checker_status = (
+                        "saved_adjoint_primary_and_independent_closeout_completed"
+                        if checker_ok
+                        else "saved_adjoint_diagnostic_failed"
+                    )
+                else:
+                    checker_ok = bool(
+                        checker_watchdog.get("classification") == "COMPLETED"
+                        and checker_watchdog.get("leader_exit_code") == 0
+                        and isinstance(checker_payload, Mapping)
+                        and checker_payload.get("schema")
+                        == "task41.p0.v11.selected_trace_star_saved_array_independent_check.v1"
+                        and checker_payload.get("check_completed") is True
+                        and checker_payload.get("candidate_passed") is None
+                        and checker_payload.get("scientific_qualified") is False
+                        and checker_payload.get("official_result") is False
+                        and checker_payload.get("classification")
+                        == "INDEPENDENT_SAVED_ARRAY_CHECK_COMPLETED"
+                    )
+                    checker_record_key = "candidate_replay_saved_array_checker"
+                    checker_status = (
+                        "independent_saved_array_check_completed"
+                        if checker_ok
+                        else "independent_saved_array_check_failed"
+                    )
+                record["required_checker_status"] = checker_status
+                record[checker_record_key] = {
                     "status": "COMPLETED_READ_ONLY" if checker_ok else "INCOMPLETE",
                     "result_path": str(checker_result_path),
                     "result_sha256": sha256_file(checker_result_path)
@@ -12004,6 +12528,10 @@ def _run_task41_p0_saved_output_service(
                     "watchdog": checker_watchdog,
                     "official_result": False,
                 }
+                if b0_v13_saved_adjoint_diagnostic_mode:
+                    record["saved_adjoint_diagnostic_independent_checker"] = (
+                        independent_checker_record
+                    )
                 if not checker_ok:
                     result_code = 3
             else:
@@ -12011,21 +12539,59 @@ def _run_task41_p0_saved_output_service(
                 result_code = 3
             saved_diagnostics_budget = saved_diagnostics_budget_check(final=True)
             record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget
-            result_code = _task41_v11_candidate_replay_exit(
-                record,
-                worker_ok=worker_ok,
-                checker_ok=checker_ok,
-                service_ok=True,
-                finalization_ok=True,
-            )
-            if b0_v11_candidate_report_replayed_read_only_mode:
+            if b0_v13_saved_adjoint_diagnostic_mode:
+                result_code = 0 if worker_ok and checker_ok else 3
                 record["result_classification"] = (
-                    "V11_SAVED_CANDIDATE_REPLAY_RECHECKED"
+                    "V13_SAVED_ADJOINT_DIAGNOSTIC_COMPLETED"
                     if result_code == 0
-                    else "V11_SAVED_CANDIDATE_REPLAY_RECHECK_FAILED"
+                    else "V13_SAVED_ADJOINT_DIAGNOSTIC_FAILED"
                 )
-                record["numerical_work_started"] = False
+                record["official_result"] = False
+                record["scientific_qualified"] = False
+                diagnostic_started = (
+                    output_root / "task41_p0_v13_analysis_started.json"
+                ).is_file()
+                v13_cache_root = (
+                    results_root
+                    / "task41_p0_saved_diagnostics_6h"
+                    / window.sha256
+                    / "selected_incident_replay"
+                    / "v13_adjoint_cache"
+                ).resolve()
+                v13_ledger_path = (
+                    v13_cache_root / "task41_p0_v13_adjoint_solve_ledger.json"
+                )
+                if v13_ledger_path.is_file():
+                    v13_ledger = read_json_object(
+                        v13_ledger_path, "V13 adjoint solve ledger"
+                    )
+                    diagnostic_started = diagnostic_started or (
+                        v13_ledger.get("getrs_attempted") is True
+                        or (
+                            type(v13_ledger.get("solve_calls")) is int
+                            and v13_ledger.get("solve_calls") > 0
+                        )
+                    )
+                record["numerical_work_started"] = diagnostic_started
+                record["diagnostic_numerical_work_started"] = diagnostic_started
+                record["formal_pde_started"] = False
                 record["candidate_report_replayed_read_only"] = True
+            else:
+                result_code = _task41_v11_candidate_replay_exit(
+                    record,
+                    worker_ok=worker_ok,
+                    checker_ok=checker_ok,
+                    service_ok=True,
+                    finalization_ok=True,
+                )
+                if b0_v11_candidate_report_replayed_read_only_mode:
+                    record["result_classification"] = (
+                        "V11_SAVED_CANDIDATE_REPLAY_RECHECKED"
+                        if result_code == 0
+                        else "V11_SAVED_CANDIDATE_REPLAY_RECHECK_FAILED"
+                    )
+                    record["numerical_work_started"] = False
+                    record["candidate_report_replayed_read_only"] = True
             return result_code
         checker_snapshot = (
             None
@@ -12988,6 +13554,12 @@ def _run_task41_p0_service(
         and case_args[0] == "--task41-p0-saved-b0-evidence-audit"
         and "--v11-completed-candidate-report" in case_args
     )
+    b0_v13_saved_adjoint_diagnostic_mode = bool(
+        b0_v11_candidate_report_replayed_read_only_mode
+        and "--v13-operation-graph-adjoint" in case_args
+    )
+    if "--v13-operation-graph-adjoint" in case_args and not b0_v13_saved_adjoint_diagnostic_mode:
+        raise ValueError("V13 operation-graph route requires the hash-bound completed V11 report")
     b0_v9_saved_star_screen_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-v9-star-screen"
     )
@@ -13144,7 +13716,7 @@ def _run_task41_p0_service(
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14, 15, 18, 19, 20, 28}
+            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 28}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -13174,14 +13746,18 @@ def _run_task41_p0_service(
 
             b0_v4_geometry_pair_mode = True
             source_report_path = Path(case_args[13]).resolve(strict=True)
-        if len(case_args) == 15 and not b0_v4_volume_only_mode:
+        if len(case_args) in {15, 16} and not b0_v4_volume_only_mode:
             if b0_v11_candidate_report_replayed_read_only_mode:
                 if (
                     case_args[0] != "--task41-p0-saved-b0-evidence-audit"
                     or case_args[11] != "--v11-completed-candidate-report"
                     or case_args[13] != "--v11-completed-candidate-report-sha256"
+                    or (b0_v13_saved_adjoint_diagnostic_mode
+                        and (len(case_args) != 16
+                             or case_args[15] != "--v13-operation-graph-adjoint"))
+                    or (not b0_v13_saved_adjoint_diagnostic_mode and len(case_args) != 15)
                 ):
-                    raise ValueError("V11 read-only checker route requires its exact report and hash arguments")
+                    raise ValueError("V11/V13 saved checker route requires its exact report/hash arguments")
                 candidate_report_path = Path(case_args[12]).resolve(strict=True)
                 candidate_report_sha256 = case_args[14]
                 if (
@@ -14154,6 +14730,9 @@ def _run_task41_p0_service(
             ),
             b0_v11_candidate_report_replayed_read_only_mode=(
                 b0_v11_candidate_report_replayed_read_only_mode
+            ),
+            b0_v13_saved_adjoint_diagnostic_mode=(
+                b0_v13_saved_adjoint_diagnostic_mode
             ),
             candidate_producer_contract_path=candidate_producer_contract_path,
             candidate_producer_contract_sha256=candidate_producer_contract_sha256,

@@ -6233,6 +6233,2672 @@ def _task41_v11_saved_state_review_artifacts(
     return artifacts
 
 
+
+def _task41_p0_v13_wide(value: Any, label: str) -> np.ndarray:
+    array = np.asarray(value)
+    if array.dtype.kind not in "fc" or not np.isfinite(array).all():
+        raise ValueError(f"V13 {label} must be a finite floating/complex array")
+    return np.asarray(array, dtype=np.clongdouble)
+
+
+def _task41_p0_v13_pair(value: Any) -> list[str]:
+    scalar = np.clongdouble(value)
+    return [str(np.real(scalar)), str(np.imag(scalar))]
+
+
+def _task41_p0_v13_vector_summary(value: Any) -> dict[str, Any]:
+    array = _task41_p0_v13_wide(value, "summary vector").reshape(-1)
+    magnitudes = np.abs(array)
+    index = int(np.argmax(magnitudes)) if magnitudes.size else None
+    return {
+        "shape": [int(array.size)],
+        "max_abs": str(np.max(magnitudes)) if magnitudes.size else "0",
+        "max_abs_index": index,
+        "max_abs_value": _task41_p0_v13_pair(array[index]) if index is not None else None,
+        "squared_l2": str(np.sum(magnitudes * magnitudes, dtype=np.longdouble)),
+    }
+
+
+def _task41_p0_v13_array_difference_summary(saved: Any, recomputed: Any) -> dict[str, Any]:
+    saved_wide = _task41_p0_v13_wide(saved, "saved production array")
+    recomputed_wide = _task41_p0_v13_wide(recomputed, "recomputed production array")
+    if saved_wide.shape != recomputed_wide.shape:
+        raise ValueError("V13 production comparison array shapes differ")
+    return _task41_p0_v13_vector_summary(saved_wide - recomputed_wide)
+
+
+def task41_p0_v13_eq2_operation_graph(
+    *,
+    cell_index: int,
+    column: int,
+    state: str,
+    K: Any,
+    G: Any,
+    J: Any,
+    L: Any,
+    R: Any,
+    S: Any,
+    T: Any,
+    q: Any,
+    b_i: Any,
+    n_i: Any,
+    t_c: Any,
+    u_i: Any,
+    z_b: Any,
+    z_r: Any,
+    r_i: Any,
+    delta_hat: Any,
+    r_b_hat: Any,
+    r_r_hat: Any,
+    p_hat: Any,
+    left_hat: Any,
+    right_hat: Any,
+    eta_hat: Any,
+    saved_C_S_t: Any,
+    KR_plus_G_hat: Any = None,
+    frozen_denominator: Any = None,
+    lambda_vector: Any = None,
+    adjoint_residual: Any = None,
+) -> dict[str, Any]:
+    """Attribute the saved Eq2 discrepancy without changing production state."""
+    if cell_index not in {360, 446} or column not in {0, 1} or state not in {"j0", "j3"}:
+        raise ValueError("V13 operation graph is restricted to the two saved cells, columns, and states")
+    names = ("K", "G", "J", "L", "R", "S", "T", "q", "b_i", "n_i", "t_c",
+             "u_i", "z_b", "z_r", "r_i", "delta_hat", "r_b_hat", "r_r_hat",
+             "p_hat", "left_hat", "right_hat", "eta_hat", "saved_C_S_t")
+    values = locals()
+    a = {name: np.asarray(values[name]) for name in names}
+    if any(value.dtype.kind not in "fc" or not np.isfinite(value).all() for value in a.values()):
+        raise ValueError("V13 operation graph inputs must be finite floating/complex arrays")
+    K0, G0, J0, L0, R0, S0, T0 = (a[name].astype(np.complex128, copy=False)
+                                   for name in ("K", "G", "J", "L", "R", "S", "T"))
+    q0 = a["q"].astype(np.complex128, copy=False).reshape(-1)
+    b0, n0, t0, u0, zb0, zr0, ri0 = (
+        a[name].astype(np.complex128, copy=False).reshape(-1)
+        for name in ("b_i", "n_i", "t_c", "u_i", "z_b", "z_r", "r_i")
+    )
+    m, ni = J0.shape
+    if (K0.shape != (ni, ni) or G0.shape != (ni, m) or L0.shape != (m, m)
+            or R0.shape != (ni, m) or S0.shape != (m, m) or T0.shape != (m, ni)
+            or q0.shape != (m,) or any(x.shape != (ni,) for x in (b0, n0, u0, zb0, zr0, ri0))
+            or t0.shape != (m,)):
+        raise ValueError("V13 operation graph matrix/vector shapes differ")
+    # Recreate the producer's complex128 operation nodes and bind each to its saved array.
+    w_hat = R0 @ t0 + zb0 - zr0 - u0
+    delta_saved, rb_saved, rr_saved, p_saved, left_saved, right_saved, eta_saved = (
+        a[name].astype(np.complex128, copy=False).reshape(-1)
+        for name in ("delta_hat", "r_b_hat", "r_r_hat", "p_hat",
+                     "left_hat", "right_hat", "eta_hat")
+    )
+    if any(x.shape != (ni,) for x in (
+        delta_saved, rb_saved, rr_saved, p_saved, left_saved, right_saved, eta_saved
+    )):
+        raise ValueError("V13 saved Eq2 hats must use the interior-vector layout")
+    kr_plus_g = (
+        K0 @ R0 + G0
+        if KR_plus_G_hat is None
+        else np.asarray(KR_plus_G_hat, dtype=np.complex128)
+    )
+    if kr_plus_g.shape != (ni, m) or not np.isfinite(kr_plus_g).all():
+        raise ValueError("V13 complex128 K@R+G node has an invalid layout")
+    p0 = kr_plus_g @ t0
+    delta0 = K0 @ u0 + G0 @ t0 - n0
+    rb0 = b0 - K0 @ zb0
+    rr0 = ri0 - K0 @ zr0
+    left0 = K0 @ w_hat
+    right0 = p0 - delta0 - rb0 + rr0
+    eta0 = left0 - right0
+    if not all((
+        np.array_equal(delta0, delta_saved),
+        np.array_equal(rb0, rb_saved),
+        np.array_equal(rr0, rr_saved),
+        np.array_equal(p0, p_saved),
+        np.array_equal(left0, left_saved),
+        np.array_equal(right0, right_saved),
+        np.array_equal(eta0, eta_saved),
+    )):
+        raise ValueError("V13 recomputed complex128 operation nodes differ from saved arrays")
+    Kw, Gw, Jw, Lw, Rw, Sw, Tw = (
+        _task41_p0_v13_wide(a[name], name)
+        for name in ("K", "G", "J", "L", "R", "S", "T")
+    )
+    qw, bw, nw, tw, uw, zbw, zrw, riw = (
+        _task41_p0_v13_wide(value, name).reshape(-1)
+        for name, value in (("q", q0), ("b_i", b0), ("n_i", n0), ("t_c", t0),
+                            ("u_i", u0), ("z_b", zb0), ("z_r", zr0), ("r_i", ri0))
+    )
+    ww = Rw @ tw + zbw - zrw - uw
+    # Avoid K@R: evaluate the same-matrix action as two matvecs.
+    pstar = Kw @ (Rw @ tw) + Gw @ tw
+    deltastar = Kw @ uw + Gw @ tw - nw
+    rb_star = bw - Kw @ zbw
+    rr_star = riw - Kw @ zrw
+    chi = bw - nw - riw
+    what_wide = _task41_p0_v13_wide(w_hat, "w_hat").reshape(-1)
+    ew = what_wide - ww
+    eL = _task41_p0_v13_wide(left0, "left_hat").reshape(-1) - Kw @ what_wide
+    ep = _task41_p0_v13_wide(p0, "p_hat").reshape(-1) - pstar
+    edelta = _task41_p0_v13_wide(delta0, "delta_hat").reshape(-1) - deltastar
+    eb = _task41_p0_v13_wide(rb0, "r_b_hat").reshape(-1) - rb_star
+    er = _task41_p0_v13_wide(rr0, "r_r_hat").reshape(-1) - rr_star
+    hhat = _task41_p0_v13_wide(right0, "right_hat").reshape(-1)
+    eH = hhat - (
+        _task41_p0_v13_wide(p0, "p_hat").reshape(-1)
+        - _task41_p0_v13_wide(delta0, "delta_hat").reshape(-1)
+        - _task41_p0_v13_wide(rb0, "r_b_hat").reshape(-1)
+        + _task41_p0_v13_wide(rr0, "r_r_hat").reshape(-1)
+    )
+    eo = (
+        _task41_p0_v13_wide(eta0, "eta_hat").reshape(-1)
+        - (_task41_p0_v13_wide(left0, "left_hat").reshape(-1) - hhat)
+    )
+    terms = {
+        "K_e_w": Kw @ ew,
+        "e_L": eL,
+        "-e_p": -ep,
+        "e_delta": edelta,
+        "e_b": eb,
+        "-e_r": -er,
+        "-e_H": -eH,
+        "chi": chi,
+        "e_o": eo,
+    }
+    eta_wide = _task41_p0_v13_wide(eta0, "eta_hat").reshape(-1)
+    explained = sum(terms.values(), np.zeros_like(eta_wide, dtype=np.clongdouble))
+    unexplained = eta_wide - explained
+    decimal_component = int(np.argmax(np.abs(eta0)))
+    decimal_inputs = {
+        "K": K0, "G": G0, "R": R0, "t": t0, "u": u0, "b": b0, "n": n0,
+        "z_b": zb0, "z_r": zr0, "r_i": ri0, "w_hat": w_hat,
+        "left_hat": left0, "p_hat": p0, "delta_hat": delta0,
+        "r_b_hat": rb0, "r_r_hat": rr0, "right_hat": right0, "eta_hat": eta0,
+        "longdouble_terms": {
+            key: value[decimal_component] for key, value in terms.items()
+        },
+        "component": decimal_component,
+    }
+    import time
+    decimal_started = time.perf_counter()
+    decimal_precision_50 = _task41_p0_v13_decimal_eta_component(
+        **decimal_inputs, precision=50
+    )
+    decimal_precision_80 = _task41_p0_v13_decimal_eta_component(
+        **decimal_inputs, precision=80
+    )
+    decimal_elapsed_seconds = time.perf_counter() - decimal_started
+    decimal_eta = {
+        "component": decimal_component,
+        "input_arithmetic": "Decimal.from_float on original complex128 components",
+        "operation_scope": (
+            "nine signed eta-error terms at one selected component; matrix-vector only; "
+            "no K@R matrix product"
+        ),
+        "precision_50": decimal_precision_50,
+        "precision_80": decimal_precision_80,
+        "elapsed_seconds": decimal_elapsed_seconds,
+        "saved_complex128_component": _task41_p0_v13_pair(eta0[decimal_component]),
+    }
+    c_s_wide = Sw @ tw - Lw @ tw - Jw @ (Rw @ tw)
+    c_s_saved = _task41_p0_v13_wide(a["saved_C_S_t"], "saved C_S_t").reshape(-1)
+    if c_s_wide.shape != c_s_saved.shape:
+        raise ValueError("V13 C_S_t comparison shape differs")
+    # This plus expression is only a difference between two local reductions.
+    local_reduction_difference = Tw @ bw + Jw @ zbw
+    # The producer starts with the global b_t once, then accumulates only -E^H J z_b.
+    minus_qh_j_zb = -np.vdot(qw, Jw @ zbw)
+    delta_t_wide = Jw @ uw + Lw @ tw
+    j_w_star = Jw @ ww
+    j_e_w = Jw @ ew
+    minus_j_z_r = -(Jw @ zrw)
+    selected_trace_terms = {
+        "q_H_J_w_star": _task41_p0_v13_pair(np.vdot(qw, j_w_star)),
+        "q_H_J_e_w": _task41_p0_v13_pair(np.vdot(qw, j_e_w)),
+        "q_H_local_J_u_plus_L_t": _task41_p0_v13_pair(np.vdot(qw, delta_t_wide)),
+        "q_H_C_S_t": _task41_p0_v13_pair(np.vdot(qw, c_s_wide)),
+        "q_H_minus_J_z_r": _task41_p0_v13_pair(np.vdot(qw, minus_j_z_r)),
+    }
+    result: dict[str, Any] = {
+        "schema": "task41.p0.v13.eq2_operation_graph.v1",
+        "classification": "ADJOINT_DIAGNOSTIC",
+        "cell_index": cell_index,
+        "column": column,
+        "state": state,
+        "arithmetic": "saved_complex128_inputs_cast_to_numpy_clongdouble",
+        "longdouble_mantissa_bits": int(np.finfo(np.longdouble).nmant),
+        "signed_vector": {key: [_task41_p0_v13_pair(x) for x in value] for key, value in terms.items()},
+        "component_summaries": {key: _task41_p0_v13_vector_summary(value) for key, value in terms.items()},
+        "max_component_abs": str(max(
+            (np.max(np.abs(value)) for value in terms.values() if value.size),
+            default=np.longdouble(0),
+        )),
+        "squared_l2": str(sum(
+            (np.sum(np.abs(value) ** 2, dtype=np.longdouble) for value in terms.values()),
+            np.longdouble(0),
+        )),
+        "unexplained_residual": _task41_p0_v13_vector_summary(unexplained),
+        "unexplained_residual_vector": [_task41_p0_v13_pair(x) for x in unexplained],
+        "saved_eta_hat": [_task41_p0_v13_pair(x) for x in eta_wide],
+        "wide_identity_sum": [_task41_p0_v13_pair(x) for x in explained],
+        "decimal_operation_graph_crosscheck": decimal_eta,
+        "C_S_t_same_matrix_wide": {
+            "difference": _task41_p0_v13_vector_summary(c_s_wide - c_s_saved),
+            "formula": "S@t - L@t - J@(R@t)",
+        },
+        "selected_trace_row_terms": selected_trace_terms,
+        "g_attribution_terms": {
+            "minus_q_H_J_z_b_fixed_z_b": _task41_p0_v13_pair(minus_qh_j_zb),
+            "formula": "-q^H J z_b; accumulated in original cell order after one b_t initialization",
+            "local_reduction_difference_wide": _task41_p0_v13_vector_summary(local_reduction_difference),
+            "local_reduction_difference_projected": _task41_p0_v13_pair(
+                np.vdot(qw, local_reduction_difference)
+            ),
+            "local_reduction_difference_formula": "T@b_i + J@z_b; two-reduction difference only, not g_prod",
+        },
+        "projected_eq2_identity": (
+            task41_p0_v13_projected_eq2_identity(
+                q=q0, J=J0, w_star=ww, p_star=pstar, delta_star=deltastar,
+                r_b_star=rb_star, r_r_star=rr_star, chi=chi,
+                lambda_vector=lambda_vector, adjoint_residual=adjoint_residual,
+            )
+            if lambda_vector is not None and adjoint_residual is not None else None
+        ),
+        "denominator_side_info": frozen_denominator,
+        "denominator_used_as_gate": False,
+        "official_result": False,
+    }
+    result["dominant_signed_component"] = max(
+        result["component_summaries"],
+        key=lambda key: np.longdouble(result["component_summaries"][key]["max_abs"]),
+    )
+    return result
+
+
+def _task41_p0_v13_atomic_json(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_name, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except BaseException:
+        Path(temporary_name).unlink(missing_ok=True)
+        raise
+
+
+def _task41_p0_v13_array_identity(value: np.ndarray) -> str:
+    array = np.ascontiguousarray(value)
+    digest = hashlib.sha256()
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(json.dumps(list(array.shape), separators=(",", ":")).encode("ascii"))
+    digest.update(memoryview(array).cast("B"))
+    return digest.hexdigest()
+
+
+def _task41_p0_v13_lambda_package(path: Path) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    with np.load(path, allow_pickle=False) as package:
+        vector = np.asarray(package["lambda_vector"], dtype=np.complex128)
+        h = np.asarray(package["h_vector"], dtype=np.complex128)
+        raw_receipt = str(package["receipt_json"].item())
+    receipt = json.loads(raw_receipt)
+    if not isinstance(receipt, dict):
+        raise ValueError("V13 persisted adjoint receipt is malformed")
+    if (receipt.get("lambda_identity") != _task41_p0_v13_array_identity(vector)
+            or receipt.get("h_identity") != _task41_p0_v13_array_identity(h)
+            or vector.ndim != 1 or h.shape != vector.shape
+            or not np.isfinite(vector).all() or not np.isfinite(h).all()):
+        raise ValueError("V13 persisted adjoint vector/forcing identity differs")
+    return vector, h, receipt
+
+
+def _task41_p0_v13_write_lambda_package(
+    path: Path, vector: np.ndarray, h: np.ndarray, receipt: Mapping[str, Any]
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            np.savez(
+                stream,
+                lambda_vector=np.ascontiguousarray(vector, dtype=np.complex128),
+                h_vector=np.ascontiguousarray(h, dtype=np.complex128),
+                receipt_json=np.asarray(json.dumps(receipt, ensure_ascii=False, sort_keys=True)),
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_name, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except BaseException:
+        Path(temporary_name).unlink(missing_ok=True)
+        raise
+
+
+def task41_p0_v13_saved_adjoint_cell(
+    *,
+    cell_index: int,
+    K: Any,
+    J: Any,
+    q: Any,
+    lu: Any,
+    pivots: Any,
+    output_dir: Path,
+    source_identity: Mapping[str, Any],
+    campaign_source_identity: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Solve K^H lambda=J^Hq once per selected cell, then atomically cache it."""
+    if cell_index not in {360, 446}:
+        raise ValueError("V13 adjoint diagnostic only accepts cells 360 and 446")
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    ledger_path = output_dir / "task41_p0_v13_adjoint_solve_ledger.json"
+    package_path = output_dir / f"task41_p0_v13_cell{cell_index}_adjoint_diagnostic.npz"
+    scope_identity = dict(source_identity)
+    campaign_identity = dict(campaign_source_identity or {})
+    for identity in (scope_identity, campaign_identity):
+        if not all(isinstance(key, str) for key in identity):
+            raise ValueError("V13 adjoint identity keys must be strings")
+        json.dumps(identity, sort_keys=True)
+    # Validate every numerical input and owned pivot copy before reserving a solve.
+    K0 = np.asarray(K, dtype=np.complex128)
+    J0 = np.asarray(J, dtype=np.complex128)
+    q0 = np.asarray(q, dtype=np.complex128).reshape(-1)
+    lu0 = np.asarray(lu, dtype=np.complex128)
+    raw_pivots = np.asarray(pivots)
+    if (K0.ndim != 2 or K0.shape[0] != K0.shape[1] or J0.ndim != 2
+            or J0.shape[1] != K0.shape[0] or q0.shape != (J0.shape[0],)
+            or lu0.shape != K0.shape or raw_pivots.shape != (K0.shape[0],)
+            or raw_pivots.dtype.kind not in "iu"
+            or not all(np.isfinite(x).all() for x in (K0, J0, q0, lu0))
+            or np.any(raw_pivots < 0) or np.any(raw_pivots >= K0.shape[0])):
+        raise ValueError("V13 adjoint cell matrices/vectors/pivots are malformed")
+    piv = _task41_b0_owned_writable_lu_pivots(raw_pivots, order=K0.shape[0])
+    if (piv.dtype.kind not in "iu" or piv.shape != (K0.shape[0],)
+            or not piv.flags.owndata or not piv.flags.writeable
+            or np.any(piv < 0) or np.any(piv >= K0.shape[0])):
+        raise ValueError("V13 adjoint pivots are not a safe in-range writable copy")
+    h = np.asarray(J0.conj().T @ q0, dtype=np.complex128)
+    numerical_identity = {
+        "cell_index": cell_index,
+        "K": _task41_p0_v13_array_identity(K0),
+        "J": _task41_p0_v13_array_identity(J0),
+        "q": _task41_p0_v13_array_identity(q0),
+        "LU": _task41_p0_v13_array_identity(lu0),
+        "pivots": _task41_p0_v13_array_identity(piv),
+        "h": _task41_p0_v13_array_identity(h),
+        "transpose": 2,
+        "purpose": "ADJOINT_DIAGNOSTIC",
+    }
+    if ledger_path.is_file():
+        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+        if (not isinstance(ledger, dict)
+                or ledger.get("schema") != "task41.p0.v13.adjoint_solve_ledger.v1"
+                or ledger.get("scope_identity") != scope_identity
+                or type(ledger.get("solve_calls")) is not int
+                or ledger.get("solve_calls") not in {0, 1, 2}
+                or type(ledger.get("getrs_attempted")) is not bool
+                or not isinstance(ledger.get("reservations"), list)
+                or not isinstance(ledger.get("completed_cells"), list)
+                or not all(isinstance(item, dict) for item in ledger["reservations"])):
+            raise ValueError("V13 adjoint ledger scope or counts differ")
+    else:
+        ledger = {
+            "schema": "task41.p0.v13.adjoint_solve_ledger.v1",
+            "purpose": "ADJOINT_DIAGNOSTIC",
+            "scope_identity": scope_identity,
+            "created_campaign_source_identity": campaign_identity,
+            "solve_calls": 0,
+            "getrs_attempted": False,
+            "reservations": [],
+            "completed_cells": [],
+            "inflight_cell": None,
+        }
+        _task41_p0_v13_atomic_json(ledger_path, ledger)
+    if package_path.exists():
+        vector, saved_h, receipt = _task41_p0_v13_lambda_package(package_path)
+        solve_elapsed_seconds = receipt.get("solve_elapsed_seconds")
+        if (
+                not isinstance(solve_elapsed_seconds, (int, float))
+                or not np.isfinite(solve_elapsed_seconds)
+                or solve_elapsed_seconds < 0):
+            raise ValueError("V13 cached lambda receipt omits measured GETRS elapsed time")
+        if (receipt.get("cell_index") != cell_index
+                or receipt.get("purpose") != "ADJOINT_DIAGNOSTIC"
+                or receipt.get("transpose") != 2
+                or receipt.get("scope_identity") != scope_identity
+                or receipt.get("numerical_identity") != numerical_identity
+                or receipt.get("solve_call_ordinal") not in {1, 2}
+                or ledger["solve_calls"] < receipt["solve_call_ordinal"]
+                or not np.array_equal(saved_h, h)):
+            raise ValueError("V13 persisted adjoint package numerical scope/count differs")
+        if ledger.get("inflight_cell") == cell_index:
+            ledger["inflight_cell"] = None
+        elif ledger.get("inflight_cell") is not None:
+            raise ValueError("V13 has another unresolved reserved solve; refusing to continue")
+        if cell_index not in ledger["completed_cells"]:
+            ledger["completed_cells"].append(cell_index)
+        _task41_p0_v13_atomic_json(ledger_path, ledger)
+        reused = True
+    else:
+        if ledger.get("inflight_cell") is not None:
+            raise ValueError("V13 has an unresolved reserved solve; refusing to repeat GETRS")
+        prior = [item for item in ledger["reservations"] if item.get("cell_index") == cell_index]
+        if prior:
+            raise ValueError("V13 reserved solve has no persisted lambda; refusing to repeat GETRS")
+        if ledger["solve_calls"] >= 2 or cell_index in ledger["completed_cells"]:
+            raise ValueError("V13 adjoint diagnostic exceeds its two-solve allowance")
+        ordinal = ledger["solve_calls"] + 1
+        ledger["solve_calls"] = ordinal
+        ledger["getrs_attempted"] = True
+        ledger["inflight_cell"] = cell_index
+        ledger["reservations"].append({
+            "cell_index": cell_index,
+            "solve_call_ordinal": ordinal,
+            "numerical_identity": numerical_identity,
+        })
+        _task41_p0_v13_atomic_json(ledger_path, ledger)
+        import time
+        from scipy.linalg import lu_solve
+
+        solve_started = time.perf_counter()
+        vector = np.asarray(
+            lu_solve((lu0, piv), h, trans=2, check_finite=True),
+            dtype=np.complex128,
+        )
+        solve_elapsed_seconds = time.perf_counter() - solve_started
+        if vector.shape != h.shape or not np.isfinite(vector).all():
+            raise ValueError("V13 adjoint GETRS returned a malformed lambda")
+        receipt = {
+            "schema": "task41.p0.v13.adjoint_lambda_receipt.v1",
+            "purpose": "ADJOINT_DIAGNOSTIC",
+            "cell_index": cell_index,
+            "transpose": 2,
+            "solve_call_ordinal": ordinal,
+            "scope_identity": scope_identity,
+            "numerical_identity": numerical_identity,
+            "campaign_source_identity_at_solve": campaign_identity,
+            "lambda_identity": _task41_p0_v13_array_identity(vector),
+            "h_identity": _task41_p0_v13_array_identity(h),
+            "solve_elapsed_seconds": float(solve_elapsed_seconds),
+            "official_result": False,
+        }
+        # Persist immediately after GETRS, before wide residuals or row diagnostics.
+        _task41_p0_v13_write_lambda_package(package_path, vector, h, receipt)
+        ledger["inflight_cell"] = None
+        if cell_index not in ledger["completed_cells"]:
+            ledger["completed_cells"].append(cell_index)
+        _task41_p0_v13_atomic_json(ledger_path, ledger)
+        reused = False
+    Kw, Jw, qw, lw = (
+        _task41_p0_v13_wide(value, label)
+        for value, label in ((K0, "K"), (J0, "J"), (q0, "q"), (vector, "lambda"))
+    )
+    hwide = Jw.conj().T @ qw
+    elambda = hwide - Kw.conj().T @ lw
+    return {
+        "cell_index": cell_index,
+        "lambda": vector,
+        "lambda_path": str(package_path),
+        "receipt": receipt,
+        "reused": reused,
+        "solve_calls": int(ledger["solve_calls"]),
+        "solve_elapsed_seconds": float(solve_elapsed_seconds),
+        "solve_seconds": 0.0 if reused else float(solve_elapsed_seconds),
+        "adjoint_residual_vector": elambda,
+        "adjoint_residual": _task41_p0_v13_vector_summary(elambda),
+        "campaign_source_identity_current": campaign_identity,
+        "numerical_identity": numerical_identity,
+    }
+
+
+def _task41_p0_v13_decimal_complex(value: Any) -> tuple[Any, Any]:
+    from decimal import Decimal
+
+    scalar = complex(np.complex128(value))
+    return Decimal.from_float(scalar.real), Decimal.from_float(scalar.imag)
+
+
+def _task41_p0_v13_decimal_eta_component(
+    *,
+    K: np.ndarray,
+    G: np.ndarray,
+    R: np.ndarray,
+    t: np.ndarray,
+    u: np.ndarray,
+    b: np.ndarray,
+    n: np.ndarray,
+    z_b: np.ndarray,
+    z_r: np.ndarray,
+    r_i: np.ndarray,
+    w_hat: np.ndarray,
+    left_hat: np.ndarray,
+    p_hat: np.ndarray,
+    delta_hat: np.ndarray,
+    r_b_hat: np.ndarray,
+    r_r_hat: np.ndarray,
+    right_hat: np.ndarray,
+    eta_hat: np.ndarray,
+    longdouble_terms: Mapping[str, Any],
+    component: int,
+    precision: int,
+) -> dict[str, Any]:
+    """Rebuild the nine signed eta terms from exact binary64 inputs."""
+    from decimal import Decimal, localcontext
+
+    names = (
+        "K_e_w", "e_L", "-e_p", "e_delta", "e_b", "-e_r",
+        "-e_H", "chi", "e_o",
+    )
+    with localcontext() as context:
+        context.prec = precision
+
+        def cadd(left: tuple[Any, Any], right: tuple[Any, Any]) -> tuple[Any, Any]:
+            return left[0] + right[0], left[1] + right[1]
+
+        def csub(left: tuple[Any, Any], right: tuple[Any, Any]) -> tuple[Any, Any]:
+            return left[0] - right[0], left[1] - right[1]
+
+        def cneg(value: tuple[Any, Any]) -> tuple[Any, Any]:
+            return -value[0], -value[1]
+
+        def cmul(left: tuple[Any, Any], right: tuple[Any, Any]) -> tuple[Any, Any]:
+            return (
+                left[0] * right[0] - left[1] * right[1],
+                left[0] * right[1] + left[1] * right[0],
+            )
+
+        def dot_row(row: np.ndarray, vector: list[tuple[Any, Any]]) -> tuple[Any, Any]:
+            total = (Decimal(0), Decimal(0))
+            for left, right in zip(row, vector, strict=True):
+                total = cadd(total, cmul(_task41_p0_v13_decimal_complex(left), right))
+            return total
+
+        def decimal_vector(array: np.ndarray) -> list[tuple[Any, Any]]:
+            return [
+                _task41_p0_v13_decimal_complex(value)
+                for value in np.asarray(array, dtype=np.complex128).reshape(-1)
+            ]
+
+        kd, gd, rd = (
+            np.asarray(value, dtype=np.complex128)
+            for value in (K, G, R)
+        )
+        td, ud, bd, nd, zbd, zrd, rid, whatd = (
+            decimal_vector(value)
+            for value in (t, u, b, n, z_b, z_r, r_i, w_hat)
+        )
+        leftd, pd, deltad, rbd, rrd, rightd, etad = (
+            decimal_vector(value)[component]
+            for value in (
+                left_hat, p_hat, delta_hat, r_b_hat, r_r_hat, right_hat, eta_hat
+            )
+        )
+        rt = [dot_row(row, td) for row in rd]
+        wstar = [
+            csub(csub(cadd(rt[i], zbd[i]), zrd[i]), ud[i])
+            for i in range(len(rt))
+        ]
+        ew = [csub(whatd[i], wstar[i]) for i in range(len(whatd))]
+        krow, grow = kd[component], gd[component]
+        pstar = cadd(dot_row(krow, rt), dot_row(grow, td))
+        deltastar = csub(
+            cadd(dot_row(krow, ud), dot_row(grow, td)), nd[component]
+        )
+        rbstar = csub(bd[component], dot_row(krow, zbd))
+        rrstar = csub(rid[component], dot_row(krow, zrd))
+        terms = {
+            "K_e_w": dot_row(krow, ew),
+            "e_L": csub(leftd, dot_row(krow, whatd)),
+            "-e_p": cneg(csub(pd, pstar)),
+            "e_delta": csub(deltad, deltastar),
+            "e_b": csub(rbd, rbstar),
+            "-e_r": cneg(csub(rrd, rrstar)),
+            "-e_H": cneg(
+                csub(rightd, cadd(csub(pd, deltad), csub(rrd, rbd)))
+            ),
+            "chi": csub(csub(bd[component], nd[component]), rid[component]),
+            "e_o": csub(etad, csub(leftd, rightd)),
+        }
+        total = (Decimal(0), Decimal(0))
+        for name in names:
+            total = cadd(total, terms[name])
+        eta_minus_total = csub(etad, total)
+
+        def ld_decimal(value: Any) -> tuple[Any, Any]:
+            real = np.format_float_scientific(
+                np.longdouble(np.real(value)), unique=True, trim="k"
+            )
+            imag = np.format_float_scientific(
+                np.longdouble(np.imag(value)), unique=True, trim="k"
+            )
+            return Decimal(str(real)), Decimal(str(imag))
+
+        longdouble = {name: ld_decimal(longdouble_terms[name]) for name in names}
+        difference = {
+            name: csub(terms[name], longdouble[name]) for name in names
+        }
+        longdouble_total = (Decimal(0), Decimal(0))
+        for name in names:
+            longdouble_total = cadd(longdouble_total, longdouble[name])
+
+        def pair(value: tuple[Any, Any]) -> list[str]:
+            return [str(value[0]), str(value[1])]
+
+        return {
+            "precision": precision,
+            "terms": {name: pair(terms[name]) for name in names},
+            "sum": pair(total),
+            "eta_hat_minus_sum": pair(eta_minus_total),
+            "longdouble_terms": {
+                name: pair(longdouble[name]) for name in names
+            },
+            "decimal_minus_longdouble_by_term": {
+                name: pair(difference[name]) for name in names
+            },
+            "decimal_sum_minus_longdouble_sum": pair(
+                csub(total, longdouble_total)
+            ),
+        }
+
+
+def _task41_p0_v13_global_d_eval(
+    *,
+    local_ju_lt: Sequence[Any],
+    local_cst: Sequence[Any],
+    adjoint_signed_terms_by_cell: Sequence[Mapping[str, Any]],
+    projected_eq2_residual_by_cell: Sequence[Any],
+    global_native_action: Any,
+    native_residual: Any,
+    projected_minus_j_z_r_by_cell: Sequence[Any],
+) -> np.clongdouble:
+    if not (
+        len(local_ju_lt) == len(local_cst)
+        == len(adjoint_signed_terms_by_cell)
+        == len(projected_eq2_residual_by_cell)
+        == len(projected_minus_j_z_r_by_cell) == 2
+    ):
+        raise ValueError("V13 global d_eval requires exactly two ordered cell groups")
+    adjoint_sum = np.clongdouble(0)
+    for terms in adjoint_signed_terms_by_cell:
+        if not isinstance(terms, Mapping) or len(terms) != 6:
+            raise ValueError("V13 global d_eval requires six signed adjoint terms per cell")
+        adjoint_sum += sum(
+            (np.clongdouble(value) for value in terms.values()),
+            np.clongdouble(0),
+        )
+    return (
+        sum((np.clongdouble(value) for value in local_ju_lt), np.clongdouble(0))
+        + sum((np.clongdouble(value) for value in local_cst), np.clongdouble(0))
+        + adjoint_sum
+        + sum(
+            (np.clongdouble(value) for value in projected_eq2_residual_by_cell),
+            np.clongdouble(0),
+        )
+        - np.clongdouble(global_native_action)
+        - np.clongdouble(native_residual)
+        - sum(
+            (np.clongdouble(value) for value in projected_minus_j_z_r_by_cell),
+            np.clongdouble(0),
+        )
+    )
+
+
+def _task41_p0_v13_g_prod_from_fixed_terms(
+    b_t: Any, cell_terms: Sequence[tuple[int, Any]]
+) -> np.clongdouble:
+    if [cell for cell, _ in cell_terms] != [360, 446]:
+        raise ValueError("V13 g_prod contributions must retain cell order 360 then 446")
+    value = np.clongdouble(b_t)
+    for _, contribution in cell_terms:
+        value += np.clongdouble(contribution)
+    return value
+
+
+def task41_p0_v13_projected_eq2_identity(
+    *,
+    q: Any,
+    J: Any,
+    w_star: Any,
+    p_star: Any,
+    delta_star: Any,
+    r_b_star: Any,
+    r_r_star: Any,
+    chi: Any,
+    lambda_vector: Any,
+    adjoint_residual: Any,
+) -> dict[str, Any]:
+    qwide = _task41_p0_v13_wide(q, "q").reshape(-1)
+    Jwide = _task41_p0_v13_wide(J, "J")
+    w = _task41_p0_v13_wide(w_star, "w_star").reshape(-1)
+    lam = _task41_p0_v13_wide(lambda_vector, "lambda").reshape(-1)
+    elam = _task41_p0_v13_wide(adjoint_residual, "adjoint residual").reshape(-1)
+    vectors = {
+        "p_star": _task41_p0_v13_wide(p_star, "p_star").reshape(-1),
+        "delta_star": _task41_p0_v13_wide(delta_star, "delta_star").reshape(-1),
+        "r_b_star": _task41_p0_v13_wide(r_b_star, "r_b_star").reshape(-1),
+        "r_r_star": _task41_p0_v13_wide(r_r_star, "r_r_star").reshape(-1),
+        "chi": _task41_p0_v13_wide(chi, "chi").reshape(-1),
+    }
+    if (Jwide.shape != (qwide.size, w.size) or lam.size != w.size
+            or elam.size != w.size
+            or any(vector.size != w.size for vector in vectors.values())):
+        raise ValueError("V13 projected identity shapes differ")
+    Jw = Jwide @ w
+    lhs_pairs = [(qwide, Jw, 1)]
+    rhs_pairs = [
+        (lam, vectors["p_star"], 1),
+        (lam, vectors["delta_star"], -1),
+        (lam, vectors["r_b_star"], -1),
+        (lam, vectors["r_r_star"], 1),
+        (lam, vectors["chi"], 1),
+        (elam, w, 1),
+    ]
+    lhs = np.vdot(qwide, Jw)
+    terms = {
+        "lambda_H_p_star": np.vdot(lam, vectors["p_star"]),
+        "-lambda_H_delta_star": -np.vdot(lam, vectors["delta_star"]),
+        "-lambda_H_r_b_star": -np.vdot(lam, vectors["r_b_star"]),
+        "lambda_H_r_r_star": np.vdot(lam, vectors["r_r_star"]),
+        "lambda_H_chi": np.vdot(lam, vectors["chi"]),
+        "e_lambda_H_w_star": np.vdot(elam, w),
+    }
+    rhs = sum(terms.values(), np.clongdouble(0))
+    return {
+        "formula": "q^H J w*=lambda^H p*-lambda^H delta*-lambda^H r_b*+lambda^H r_r*+lambda^H chi+e_lambda^H w*",
+        "lhs": _task41_p0_v13_pair(lhs),
+        "signed_terms": {key: _task41_p0_v13_pair(value) for key, value in terms.items()},
+        "rhs": _task41_p0_v13_pair(rhs),
+        "unexplained_residual": _task41_p0_v13_pair(lhs - rhs),
+        "classification": "ADJOINT_DIAGNOSTIC",
+        "official_result": False,
+    }
+
+
+
+
+def check_task41_p0_v13_saved_adjoint_diagnostic(
+    *,
+    donor_summary_path: Path,
+    donor_contract_path: Path,
+    donor_contract_sha256: str,
+    consumer_contract_path: Path,
+    consumer_contract_sha256: str,
+    candidate_report_path: Path,
+    candidate_report_sha256: str,
+    output_path: Path,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Read only the V11 two-cell evidence and persist a bounded V13 attribution."""
+    import time
+    parent_started = time.perf_counter()
+    input_hash_read_seconds = 0.0
+    uninstrumented_sha256_file = sha256_file
+
+    def timed_sha256_file(path: Path) -> str:
+        nonlocal input_hash_read_seconds
+        started = time.perf_counter()
+        try:
+            return uninstrumented_sha256_file(path)
+        finally:
+            input_hash_read_seconds += time.perf_counter() - started
+
+    from scipy.sparse import csr_matrix
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        load_task41_p0_fixed_window,
+    )
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V11_METADATA_ORIGINAL_ROW as ORIGINAL,
+        TASK41_P0_V11_SELECTED_CELLS as CELLS,
+        TASK41_P0_V11_METADATA_REPORT_SHA256,
+        TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+    )
+    from src.solvers.task41_v4_volume_only_audit import (
+        TASK41_V4_DONOR_MANIFEST_SHA256,
+        TASK41_V4_FULL_STORAGE_ROWS,
+    )
+
+    repo_root = Path(repo_root).resolve(strict=True)
+    results_root = (repo_root / "results" / TASK41_MODEL_ID).resolve(strict=True)
+    report_path = Path(candidate_report_path).resolve(strict=True)
+    consumer_path = Path(consumer_contract_path).resolve(strict=True)
+    donor_path = Path(donor_contract_path).resolve(strict=True)
+    summary_path = Path(donor_summary_path).resolve(strict=True)
+    output_path = Path(output_path).resolve()
+    consumer, consumer_digest = require_task41_p0_contract(
+        consumer_path, expected_sha256=consumer_contract_sha256,
+        current_root=repo_root, check_current_source=True,
+        require_clean_source=True, case_id="B0",
+    )
+    donor_contract, donor_digest = require_task41_p0_contract(
+        donor_path, expected_sha256=donor_contract_sha256,
+        current_root=repo_root, check_current_source=False,
+        require_clean_source=False, case_id="B0",
+    )
+    window = load_task41_p0_fixed_window(
+        consumer, current_root=repo_root, require_current_boot=False
+    )
+    cache_root = (
+        results_root
+        / "task41_p0_saved_diagnostics_6h"
+        / window.sha256
+        / "selected_incident_replay"
+        / "v13_adjoint_cache"
+    ).resolve()
+    if not cache_root.is_relative_to(results_root):
+        raise ValueError("V13 shared adjoint cache escaped the results root")
+    if (consumer.get("execution_scope") != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+            or not report_path.is_relative_to(results_root)
+            or report_path.name != "task41_p0_v11_selected_trace_candidate_replay.json"
+            or timed_sha256_file(report_path) != candidate_report_sha256
+            or report_path.stat().st_size > 64 * 1024**2
+            or not summary_path.is_relative_to(results_root)
+            or summary_path.name != "task40_v10_p6_candidate_summary.json"
+            or output_path.exists()
+            or not output_path.is_relative_to(results_root)):
+        raise ValueError("V13 report, contract, summary, or output path is outside the saved scope")
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if (not isinstance(report, Mapping)
+            or report.get("schema") != "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1"
+            or report.get("status") != "COMPLETED_LOCAL_CANDIDATE_REPLAY"
+            or report.get("consumer_window_sha256") != window.sha256
+            or report.get("donor_contract_sha256") != donor_digest
+            or report.get("donor_manifest_sha256") != TASK41_V4_DONOR_MANIFEST_SHA256):
+        raise ValueError("V13 candidate receipt or fixed-window identity differs")
+    accepted_checker_path = report_path.parent.parent / "attempt06" / (
+        "task41_p0_v11_candidate_replay_saved_array_check.json"
+    )
+    accepted_receipt_path = report_path.parent.parent / "attempt06.service" / (
+        "task41_p0_service_receipt.json"
+    )
+    accepted_checker_sha256 = "cdbd2a0a8d6ae62b61ad1a45b8bd4f62dae4c69ebb1f0f7923205ac85e4c3739"
+    accepted_receipt_sha256 = "0b28a0f2b57aa17d515627097978a5470c7787ca9c61b15c07a0d25b14ae217f"
+    if (timed_sha256_file(accepted_checker_path) != accepted_checker_sha256
+            or timed_sha256_file(accepted_receipt_path) != accepted_receipt_sha256):
+        raise ValueError("V13 accepted attempt06 checker or service receipt hash differs")
+    accepted_checker = json.loads(accepted_checker_path.read_text(encoding="utf-8"))
+    accepted_receipt = json.loads(accepted_receipt_path.read_text(encoding="utf-8"))
+    accepted_checker_record = accepted_receipt.get("candidate_replay_saved_array_checker")
+    if (
+        accepted_checker.get("schema")
+        != "task41.p0.v11.selected_trace_star_saved_array_independent_check.v1"
+        or accepted_checker.get("classification") != "INDEPENDENT_SAVED_ARRAY_CHECK_COMPLETED"
+        or accepted_checker.get("check_completed") is not True
+        or accepted_checker.get("candidate_passed") is not None
+        or accepted_checker.get("scientific_qualified") is not False
+        or accepted_checker.get("official_result") is not False
+        or accepted_checker.get("candidate_report_sha256") != candidate_report_sha256
+        or accepted_checker.get("donor_manifest_sha256") != TASK41_V4_DONOR_MANIFEST_SHA256
+        or accepted_checker.get("metadata_report_sha256") != TASK41_P0_V11_METADATA_REPORT_SHA256
+        or accepted_checker.get("v9_compact_report_sha256") != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+        or accepted_receipt.get("candidate_report_sha256") != candidate_report_sha256
+        or accepted_receipt.get("candidate_replay_saved_array_checker", {}).get("status")
+        != "COMPLETED_READ_ONLY"
+        or accepted_checker_record.get("result_path") != str(accepted_checker_path)
+        or accepted_checker_record.get("result_sha256") != accepted_checker_sha256
+    ):
+        raise ValueError("V13 accepted attempt06 checker/receipt bindings differ")
+    replay = report.get("v11_selected_trace_candidate_replay")
+    if (not isinstance(replay, Mapping)
+            or replay.get("schema") != "task41.p0.v11.selected_trace_star_candidate_replay.v1"
+            or replay.get("status") != "COMPLETED_LOCAL_CANDIDATE_REPLAY"
+            or replay.get("scientific_qualified") is not False
+            or replay.get("selected_active_row") != 87567
+            or replay.get("selected_original_row") != ORIGINAL
+            or replay.get("incident_cell_order") != list(CELLS)
+            or replay.get("consumer_window_sha256") != window.sha256):
+        raise ValueError("V13 V11 replay scope or row identity differs")
+    metadata_path = Path(str(replay.get("metadata_report_path", ""))).resolve(strict=True)
+    if (not metadata_path.is_relative_to(results_root)
+            or metadata_path.name != "task41_p0_v8_selected_trace_star_metadata.json"
+            or replay.get("metadata_report_sha256") != TASK41_P0_V11_METADATA_REPORT_SHA256
+            or timed_sha256_file(metadata_path) != TASK41_P0_V11_METADATA_REPORT_SHA256):
+        raise ValueError("V13 metadata report path/hash differs from the frozen source")
+    metadata_report = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata = metadata_report.get("selected_trace_star_metadata_only")
+    if (metadata_report.get("schema") != "task41.p0.v8.selected_trace_star_metadata_only_receipt.v1"
+            or metadata_report.get("status") != "COMPLETED_METADATA_ONLY"
+            or not isinstance(metadata, Mapping)
+            or metadata.get("selected_active_row") != 87567
+            or metadata.get("selected_original_row") != ORIGINAL):
+        raise ValueError("V13 selected metadata report identity differs")
+    v9_path = Path(str(replay.get("v9_compact_report_path", ""))).resolve(strict=True)
+    if (not v9_path.is_relative_to(results_root)
+            or replay.get("v9_compact_report_sha256") != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+            or timed_sha256_file(v9_path) != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+            or v9_path.stat().st_size > 8 * 1024**2):
+        raise ValueError("V13 V9 compact summary path/hash differs")
+    v9_report = json.loads(v9_path.read_text(encoding="utf-8"))
+    if (v9_report.get("schema") != "task41.p0.b0.v9.compact_volume_identity.v1"
+            or v9_report.get("official_result") is not False):
+        raise ValueError("V13 V9 compact source is not diagnostic-only")
+    donor_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    recovery = donor_summary.get("b0_recovery_evidence")
+    manifest_ref = recovery.get("manifest") if isinstance(recovery, Mapping) else None
+    if not isinstance(manifest_ref, Mapping):
+        raise ValueError("V13 donor summary has no recovery manifest")
+    donor_run_root = summary_path.parent.resolve(strict=True)
+    raw_manifest_path = Path(str(manifest_ref.get("path", "")))
+    manifest_path = (raw_manifest_path if raw_manifest_path.is_absolute()
+                     else donor_run_root / raw_manifest_path).resolve(strict=True)
+    if (not manifest_path.is_relative_to(donor_run_root)
+            or manifest_ref.get("sha256") != TASK41_V4_DONOR_MANIFEST_SHA256
+            or timed_sha256_file(manifest_path) != TASK41_V4_DONOR_MANIFEST_SHA256):
+        raise ValueError("V13 donor manifest path/hash differs")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest_columns = manifest.get("columns")
+    if (manifest.get("full_storage_rows") != TASK41_V4_FULL_STORAGE_ROWS
+            or not isinstance(manifest_columns, list) or len(manifest_columns) != 2):
+        raise ValueError("V13 donor manifest layout differs")
+    b_t_by_column: dict[int, complex] = {}
+    for column_index, column_meta in enumerate(manifest_columns):
+        artifacts = column_meta.get("artifacts") if isinstance(column_meta, Mapping) else None
+        ref = artifacts.get("native_rhs") if isinstance(artifacts, Mapping) else None
+        if not isinstance(ref, Mapping):
+            raise ValueError(f"V13 donor column {column_index} omits native_rhs")
+        raw_path = Path(str(ref.get("path", "")))
+        native_rhs_path = (raw_path if raw_path.is_absolute() else donor_run_root / raw_path).resolve(strict=True)
+        if (not native_rhs_path.is_relative_to(donor_run_root)
+                or ref.get("shape") != [TASK41_V4_FULL_STORAGE_ROWS]
+                or ref.get("dtype") != "complex128"
+                or native_rhs_path.stat().st_size != ref.get("bytes")
+                or timed_sha256_file(native_rhs_path) != ref.get("sha256")):
+            raise ValueError(f"V13 donor column {column_index} native_rhs file identity differs")
+        # Hash-check the bound donor file, then read only the selected original-row scalar.
+        vector = np.load(native_rhs_path, mmap_mode="r", allow_pickle=False)
+        if vector.shape != (TASK41_V4_FULL_STORAGE_ROWS,) or vector.dtype != np.dtype(np.complex128):
+            raise ValueError(f"V13 donor column {column_index} native_rhs layout differs")
+        b_t_by_column[column_index] = complex(vector[ORIGINAL])
+
+    artifact_cache: dict[tuple[str, str], np.ndarray] = {}
+
+    def load_ref(ref: Any, *, root: Path, label: str) -> np.ndarray:
+        if not isinstance(ref, Mapping):
+            raise ValueError(f"V13 {label} reference is malformed")
+        raw_path = Path(str(ref.get("path", "")))
+        path = (raw_path if raw_path.is_absolute() else root / raw_path).resolve(strict=True)
+        digest = ref.get("sha256")
+        if (not path.is_relative_to(root.resolve(strict=True))
+                or not isinstance(digest, str)
+                or path.stat().st_size != ref.get("bytes")):
+            raise ValueError(f"V13 {label} path/size is outside the saved source")
+        key = (str(path), digest)
+        if key not in artifact_cache:
+            if timed_sha256_file(path) != digest:
+                raise ValueError(f"V13 {label} hash differs")
+            value = np.load(path, mmap_mode="r", allow_pickle=False)
+            if list(value.shape) != ref.get("shape") or str(value.dtype) != ref.get("dtype"):
+                raise ValueError(f"V13 {label} shape/dtype differs")
+            artifact_cache[key] = value
+        return artifact_cache[key]
+
+    metadata_cells = metadata.get("selected_cells")
+    report_cells = replay.get("cells")
+    report_columns = replay.get("columns")
+    if (not isinstance(metadata_cells, list) or [x.get("cell_index") for x in metadata_cells] != list(CELLS)
+            or not isinstance(report_cells, list) or [x.get("cell_index") for x in report_cells] != list(CELLS)
+            or not isinstance(report_columns, list) or len(report_columns) != 2):
+        raise ValueError("V13 selected cell/column coverage differs")
+    original_positions = {360: 375, 446: 75}
+    analysis_marker_path = output_path.parent / "task41_p0_v13_analysis_started.json"
+    if analysis_marker_path.exists():
+        raise ValueError("V13 durable analysis marker already exists for this attempt")
+    _task41_p0_v13_atomic_json(analysis_marker_path, {
+        "schema": "task41.p0.v13.analysis_started.v1",
+        "purpose": "ADJOINT_DIAGNOSTIC",
+        "candidate_report_sha256": candidate_report_sha256,
+        "window_sha256": window.sha256,
+        "consumer_source_sha": consumer.get("source", {}).get("sha"),
+        "official_result": False,
+    })
+    cells: dict[int, dict[str, Any]] = {}
+    lambda_rows: dict[int, dict[str, Any]] = {}
+    scope_identity = {
+        "candidate_report_sha256": candidate_report_sha256,
+        "donor_manifest_sha256": TASK41_V4_DONOR_MANIFEST_SHA256,
+        "window_sha256": window.sha256,
+    }
+    campaign_identity = {
+        "consumer_contract_sha256": consumer_digest,
+        "consumer_source_sha": consumer.get("source", {}).get("sha"),
+    }
+    for meta, record in zip(metadata_cells, report_cells, strict=True):
+        cell = int(meta["cell_index"])
+        if meta.get("selected_local_trace_rows") != [original_positions[cell]]:
+            raise ValueError(f"V13 cell {cell} selected local trace row differs")
+        arrays = meta.get("arrays")
+        candidate_refs = record.get("candidate_artifacts")
+        if not isinstance(arrays, Mapping) or not isinstance(candidate_refs, Mapping):
+            raise ValueError(f"V13 cell {cell} matrix/metadata refs are malformed")
+        local = {
+            name: load_ref(arrays[name], root=metadata_path.parent, label=f"cell{cell}/{name}")
+            for name in ("interior_positions", "trace_positions", "active_ids",
+                         "trace_expansion_data", "trace_expansion_indices", "trace_expansion_indptr")
+        }
+        interior = np.asarray(local["interior_positions"], dtype=np.int64)
+        trace = np.asarray(local["trace_positions"], dtype=np.int64)
+        ids = np.asarray(local["active_ids"], dtype=np.int64)
+        target = np.flatnonzero(ids == 87567)
+        if target.size != 1:
+            raise ValueError(f"V13 cell {cell} active trace target is not unique")
+        E = csr_matrix(
+            (np.asarray(local["trace_expansion_data"], dtype=np.complex128),
+             np.asarray(local["trace_expansion_indices"], dtype=np.int32),
+             np.asarray(local["trace_expansion_indptr"], dtype=np.int32)),
+            shape=(trace.size, ids.size),
+        )
+        if not E.has_canonical_format:
+            raise ValueError(f"V13 cell {cell} trace expansion is not canonical")
+        q = np.asarray(E.getcol(int(target[0])).toarray(), dtype=np.complex128).reshape(-1)
+        tensor = load_ref(candidate_refs["oriented_tensor"], root=report_path.parent,
+                          label=f"cell{cell}/oriented_tensor")
+        K = np.asarray(tensor[np.ix_(interior, interior)], dtype=np.complex128)
+        G = np.asarray(tensor[np.ix_(interior, trace)], dtype=np.complex128)
+        J = np.asarray(tensor[np.ix_(trace, interior)], dtype=np.complex128)
+        L = np.asarray(tensor[np.ix_(trace, trace)], dtype=np.complex128)
+        mats = {
+            name: np.asarray(load_ref(candidate_refs[name], root=report_path.parent,
+                                      label=f"cell{cell}/{name}"), dtype=np.complex128)
+            for name in ("R", "S", "T", "interior_lu")
+        }
+        pivots = np.asarray(load_ref(candidate_refs["interior_lu_pivots"],
+                                      root=report_path.parent, label=f"cell{cell}/pivots"))
+        if K.shape != mats["interior_lu"].shape or K.shape != (interior.size, interior.size):
+            raise ValueError(f"V13 cell {cell} K/LU shape differs")
+        kr_plus_g_hat = K @ mats["R"] + G
+        cells[cell] = {
+            "K": K, "G": G, "J": J, "L": L, "R": mats["R"], "S": mats["S"],
+            "KR_plus_G_hat": kr_plus_g_hat,
+            "T": mats["T"], "q": q, "lu": mats["interior_lu"], "pivots": pivots,
+            "trace_positions": trace,
+            "target_active_position": int(target[0]),
+        }
+        lambda_rows[cell] = task41_p0_v13_saved_adjoint_cell(
+            cell_index=cell, K=K, J=J, q=q, lu=mats["interior_lu"], pivots=pivots,
+            output_dir=cache_root, source_identity=scope_identity,
+            campaign_source_identity=campaign_identity,
+        )
+    group_records: list[dict[str, Any]] = []
+    column_rows: list[dict[str, Any]] = []
+
+    def complex_from_pair(value: Any, label: str) -> np.clongdouble:
+        if not isinstance(value, list) or len(value) != 2:
+            raise ValueError(f"V13 {label} must be a complex pair")
+        return np.clongdouble(value[0]) + 1j * np.clongdouble(value[1])
+    for column_index, column_report in enumerate(report_columns):
+        incident = column_report.get("incident_cell_terms")
+        if not isinstance(incident, list) or [item.get("cell_index") for item in incident] != list(CELLS):
+            raise ValueError(f"V13 column {column_index} cell order differs")
+        cell_g_terms: dict[str, list[tuple[int, np.clongdouble]]] = {"j0": [], "j3": []}
+        for term in incident:
+            cell = int(term["cell_index"])
+            common_artifacts = term.get("artifacts")
+            states = common_artifacts.get("states") if isinstance(common_artifacts, Mapping) else None
+            if not isinstance(states, list) or [x.get("state") for x in states] != ["j0", "j3"]:
+                raise ValueError(f"V13 cell {cell}/column {column_index} state order differs")
+            common_saved = {
+                name: load_ref(
+                    common_artifacts.get(name),
+                    root=report_path.parent,
+                    label=f"cell{cell}/column{column_index}/{name}",
+                )
+                for name in (
+                    "S_action", "S_projected_active", "T_native_rhs",
+                    "T_projected_active", "same_lu_minus_Jz_b",
+                    "same_lu_projected_active", "same_lu_z_b",
+                )
+            }
+            z_b = common_saved["same_lu_z_b"]
+            for state_item in states:
+                state_name = str(state_item["state"])
+                inputs = state_item.get("inputs")
+                review = _task41_v11_saved_state_review_artifacts(state_item)
+                loaded = {
+                    name: load_ref(inputs.get(name), root=report_path.parent,
+                                   label=f"cell{cell}/column{column_index}/{state_name}/{name}")
+                    for name in ("b_i", "n_i", "t_c", "u_i")
+                }
+                saved = {
+                    name: load_ref(review.get(name), root=report_path.parent,
+                                   label=f"cell{cell}/column{column_index}/{state_name}/{name}")
+                    for name in ("same_lu_z_r", "r_i", "delta_i", "delta_t",
+                                 "same_lu_minus_Jz_r", "r_b", "r_r", "E_R_t",
+                                 "review_eq2_left", "review_eq2_right", "review_eq2_difference",
+                                 "C_S_t", "old_Tb_plus_Jzb")
+                }
+                source = cells[cell]
+                denominator = (
+                    "2225.481253487629" if column_index == 0
+                    else "2225.4807123031883"
+                )
+                result = task41_p0_v13_eq2_operation_graph(
+                    cell_index=cell, column=column_index, state=state_name,
+                    K=source["K"], G=source["G"], J=source["J"], L=source["L"],
+                    R=source["R"], S=source["S"], T=source["T"], q=source["q"],
+                    KR_plus_G_hat=source["KR_plus_G_hat"],
+                    b_i=loaded["b_i"], n_i=loaded["n_i"], t_c=loaded["t_c"],
+                    u_i=loaded["u_i"], z_b=z_b, z_r=saved["same_lu_z_r"],
+                    r_i=saved["r_i"], delta_hat=saved["delta_i"], r_b_hat=saved["r_b"],
+                    r_r_hat=saved["r_r"], p_hat=saved["E_R_t"],
+                    left_hat=saved["review_eq2_left"], right_hat=saved["review_eq2_right"],
+                    eta_hat=saved["review_eq2_difference"], saved_C_S_t=saved["C_S_t"],
+                    frozen_denominator=denominator,
+                    lambda_vector=lambda_rows[cell]["lambda"],
+                    adjoint_residual=lambda_rows[cell]["adjoint_residual_vector"],
+                )
+                result["adjoint"] = {
+                    "lambda_path": lambda_rows[cell]["lambda_path"],
+                    "receipt": lambda_rows[cell]["receipt"],
+                    "reused": lambda_rows[cell]["reused"],
+                    "adjoint_residual": lambda_rows[cell]["adjoint_residual"],
+                }
+                active_position = source["target_active_position"]
+                s_action_binary64 = source["S"] @ loaded["t_c"]
+                t_rhs_binary64 = source["T"] @ loaded["b_i"]
+                minus_j_z_b_binary64 = -(source["J"] @ z_b)
+                minus_j_z_r_binary64 = -(source["J"] @ saved["same_lu_z_r"])
+                delta_t_binary64 = (
+                    source["J"] @ loaded["u_i"] + source["L"] @ loaded["t_c"]
+                )
+                w_hat_binary64 = (
+                    source["R"] @ loaded["t_c"]
+                    + z_b - saved["same_lu_z_r"] - loaded["u_i"]
+                )
+                w_hat_wide = (
+                    _task41_p0_v13_wide(source["R"], "R")
+                    @ _task41_p0_v13_wide(loaded["t_c"], "t_c")
+                    + _task41_p0_v13_wide(z_b, "z_b")
+                    - _task41_p0_v13_wide(saved["same_lu_z_r"], "z_r")
+                    - _task41_p0_v13_wide(loaded["u_i"], "u_i")
+                )
+                j_w_hat_binary64 = source["J"] @ w_hat_binary64
+                j_w_star_wide = (
+                    _task41_p0_v13_wide(source["J"], "J") @ w_hat_wide
+                )
+                j_e_w_wide = (
+                    _task41_p0_v13_wide(source["J"], "J")
+                    @ (
+                        _task41_p0_v13_wide(w_hat_binary64, "w_hat")
+                        - w_hat_wide
+                    )
+                )
+                q_binary64 = np.asarray(source["q"], dtype=np.complex128)
+                q_wide = _task41_p0_v13_wide(q_binary64, "q")
+                qh_jw_hat_binary64 = np.vdot(q_binary64, j_w_hat_binary64)
+                qh_jw_star_wide = np.vdot(q_wide, j_w_star_wide)
+                qh_jew_wide = np.vdot(q_wide, j_e_w_wide)
+                s_scatter_saved = common_saved["S_projected_active"][active_position]
+                t_scatter_saved = common_saved["T_projected_active"][active_position]
+                lu_scatter_saved = common_saved["same_lu_projected_active"][active_position]
+                result["production_operation_differences"] = {
+                    "quantification_only": True,
+                    "S_matvec_saved_minus_binary64_recomputed": (
+                        _task41_p0_v13_array_difference_summary(
+                            common_saved["S_action"], s_action_binary64
+                        )
+                    ),
+                    "T_native_rhs_matvec_saved_minus_binary64_recomputed": (
+                        _task41_p0_v13_array_difference_summary(
+                            common_saved["T_native_rhs"], t_rhs_binary64
+                        )
+                    ),
+                    "minus_J_z_b_matvec_saved_minus_binary64_recomputed": (
+                        _task41_p0_v13_array_difference_summary(
+                            common_saved["same_lu_minus_Jz_b"], minus_j_z_b_binary64
+                        )
+                    ),
+                    "minus_J_z_r_matvec_saved_minus_binary64_recomputed": (
+                        _task41_p0_v13_array_difference_summary(
+                            saved["same_lu_minus_Jz_r"], minus_j_z_r_binary64
+                        )
+                    ),
+                    "delta_t_matvec_saved_minus_binary64_recomputed": (
+                        _task41_p0_v13_array_difference_summary(
+                            saved["delta_t"], delta_t_binary64
+                        )
+                    ),
+                    "scatter_projected_active_minus_EH_saved_action": {
+                        "S_action": _task41_p0_v13_pair(
+                            np.clongdouble(s_scatter_saved)
+                            - np.clongdouble(np.vdot(q_binary64, common_saved["S_action"]))
+                        ),
+                        "T_native_rhs": _task41_p0_v13_pair(
+                            np.clongdouble(t_scatter_saved)
+                            - np.clongdouble(np.vdot(q_binary64, common_saved["T_native_rhs"]))
+                        ),
+                        "minus_J_z_b": _task41_p0_v13_pair(
+                            np.clongdouble(lu_scatter_saved)
+                            - np.clongdouble(np.vdot(
+                                q_binary64, common_saved["same_lu_minus_Jz_b"]
+                            ))
+                        ),
+                    },
+                    "scatter_projected_active_minus_EH_recomputed_action": {
+                        "S_action": _task41_p0_v13_pair(
+                            np.clongdouble(s_scatter_saved)
+                            - np.clongdouble(np.vdot(q_binary64, s_action_binary64))
+                        ),
+                        "T_native_rhs": _task41_p0_v13_pair(
+                            np.clongdouble(t_scatter_saved)
+                            - np.clongdouble(np.vdot(q_binary64, t_rhs_binary64))
+                        ),
+                        "minus_J_z_b": _task41_p0_v13_pair(
+                            np.clongdouble(lu_scatter_saved)
+                            - np.clongdouble(np.vdot(q_binary64, minus_j_z_b_binary64))
+                        ),
+                    },
+                    "w_hat_Jw_hat_evaluation": {
+                        "w_hat_minus_w_star_wide": _task41_p0_v13_vector_summary(
+                            _task41_p0_v13_wide(w_hat_binary64, "w_hat") - w_hat_wide
+                        ),
+                        "Jw_hat_binary64_minus_Jw_star_wide": (
+                            _task41_p0_v13_vector_summary(
+                                _task41_p0_v13_wide(j_w_hat_binary64, "Jw_hat")
+                                - j_w_star_wide
+                            )
+                        ),
+                        "q_H_Jw_hat_binary64": _task41_p0_v13_pair(qh_jw_hat_binary64),
+                        "q_H_Jw_star_wide": _task41_p0_v13_pair(qh_jw_star_wide),
+                        "q_H_J_e_w_wide_bridge_only": _task41_p0_v13_pair(qh_jew_wide),
+                        "q_H_Jw_hat_minus_star_minus_e_w": _task41_p0_v13_pair(
+                            np.clongdouble(qh_jw_hat_binary64)
+                            - qh_jw_star_wide - qh_jew_wide
+                        ),
+                    },
+                    "residual_reduction": {
+                        "saved_complex128_eta_hat": _task41_p0_v13_vector_summary(
+                            saved["review_eq2_difference"]
+                        ),
+                        "wide_eta_minus_signed_terms": result["unexplained_residual"],
+                        "decimal_nine_term_crosscheck": result[
+                            "decimal_operation_graph_crosscheck"
+                        ],
+                    },
+                }
+                group_records.append(result)
+                cell_g_terms[state_name].append((
+                    cell,
+                    np.clongdouble(
+                        result["g_attribution_terms"]["minus_q_H_J_z_b_fixed_z_b"][0]
+                    )
+                    + 1j * np.clongdouble(
+                        result["g_attribution_terms"]["minus_q_H_J_z_b_fixed_z_b"][1]
+                    ),
+                ))
+        saved_g = column_report.get("saved_g9")
+        saved_y = column_report.get("saved_y9")
+        beta = column_report.get("B_alpha_selected_original_row_applied_once")
+        if (not isinstance(saved_g, list) or len(saved_g) != 2
+                or not isinstance(saved_y, list) or len(saved_y) != 2):
+            raise ValueError(f"V13 column {column_index} saved y/g row is malformed")
+        g_prod = np.clongdouble(saved_g[0]) + 1j * np.clongdouble(saved_g[1])
+        y_saved = np.clongdouble(saved_y[0]) + 1j * np.clongdouble(saved_y[1])
+        identity_rows = [
+            item for item in replay.get("review_v11_local_identities", [])
+            if item.get("column") == column_index
+        ]
+        state_aggregates: list[dict[str, Any]] = []
+        for state_name in ("j0", "j3"):
+            identity_row = next((item for item in identity_rows if item.get("state") == state_name), None)
+            if not isinstance(identity_row, Mapping):
+                raise ValueError(f"V13 column {column_index}/{state_name} Eq1 identity is missing")
+            native_trace_pair = identity_row.get("global_native_action_row_subtracted_once")
+            if not isinstance(native_trace_pair, list) or len(native_trace_pair) != 2:
+                raise ValueError("V13 Eq1 global native action row is malformed")
+            native_trace = np.clongdouble(native_trace_pair[0]) + 1j * np.clongdouble(native_trace_pair[1])
+            g_eval = _task41_p0_v13_g_prod_from_fixed_terms(
+                b_t_by_column[column_index], cell_g_terms[state_name]
+            )
+            production_remainder = g_prod - g_eval
+            d_saved = y_saved - g_prod
+            groups_for_state = [
+                item for item in group_records
+                if item["column"] == column_index and item["state"] == state_name
+            ]
+            if [item["cell_index"] for item in groups_for_state] != list(CELLS):
+                raise ValueError("V13 global row is missing ordered cell attribution groups")
+            qh_local_ju_lt: list[np.clongdouble] = []
+            qh_cst: list[np.clongdouble] = []
+            qh_j_ew: list[np.clongdouble] = []
+            qh_jzr: list[np.clongdouble] = []
+            adjoint_terms_by_cell: list[dict[str, Any]] = []
+            adjoint_residuals_by_cell: list[np.clongdouble] = []
+            qh_jw_by_cell: list[np.clongdouble] = []
+            for group in groups_for_state:
+                local_terms = group.get("selected_trace_row_terms")
+                projected = group.get("projected_eq2_identity")
+                if not isinstance(local_terms, Mapping) or not isinstance(projected, Mapping):
+                    raise ValueError("V13 global row group lacks adjoint or local trace terms")
+                qh_local_ju_lt.append(complex_from_pair(
+                    local_terms.get("q_H_local_J_u_plus_L_t"), "q^H(Ju+Lt)"
+                ))
+                qh_cst.append(complex_from_pair(
+                    local_terms.get("q_H_C_S_t"), "q^H C_S_t"
+                ))
+                qh_j_ew.append(complex_from_pair(
+                    local_terms.get("q_H_J_e_w"), "q^H J e_w"
+                ))
+                qh_jzr.append(complex_from_pair(
+                    local_terms.get("q_H_minus_J_z_r"), "q^H(-Jz_r)"
+                ))
+                qh_jw_by_cell.append(complex_from_pair(
+                    local_terms.get("q_H_J_w_star"), "q^H Jw*"
+                ))
+                adjoint_terms = projected.get("signed_terms")
+                if not isinstance(adjoint_terms, Mapping):
+                    raise ValueError("V13 projected Eq2 omits signed adjoint terms")
+                adjoint_terms_by_cell.append({
+                    key: complex_from_pair(value, f"Eq2 {key}")
+                    for key, value in adjoint_terms.items()
+                })
+                eq2_residual = complex_from_pair(
+                    projected.get("unexplained_residual"), "Eq2 residual"
+                )
+                qh_jw = complex_from_pair(
+                    local_terms.get("q_H_J_w_star"), "q^H Jw*"
+                )
+                if qh_jw != complex_from_pair(projected.get("lhs"), "Eq2 lhs"):
+                    raise ValueError("V13 projected Eq2 lhs differs from the local Jw reconstruction")
+                adjoint_residuals_by_cell.append(eq2_residual)
+            saved_eq1_residual = complex_from_pair(
+                identity_row.get("equation_1_difference"), "saved Eq1 difference"
+            )
+            saved_native_residual = complex_from_pair(
+                identity_row.get("native_residual_row"), "native trace residual"
+            )
+            saved_lu_residual = complex_from_pair(
+                identity_row.get("sum_projected_minus_Jz_r"), "projected -Jz_r sum"
+            )
+            qh_minus_jzr_sum = sum(qh_jzr, np.clongdouble(0))
+            reconstructed_d = _task41_p0_v13_global_d_eval(
+                local_ju_lt=qh_local_ju_lt,
+                local_cst=qh_cst,
+                adjoint_signed_terms_by_cell=adjoint_terms_by_cell,
+                projected_eq2_residual_by_cell=adjoint_residuals_by_cell,
+                global_native_action=native_trace,
+                native_residual=saved_native_residual,
+                projected_minus_j_z_r_by_cell=qh_jzr,
+            )
+            replayed_d = complex_from_pair(
+                identity_row.get("d_lu_replayed_y_minus_g"), "replayed y-g"
+            )
+            saved_d = y_saved - g_prod
+            frozen_denominator_value = np.longdouble(
+                "2225.481253487629" if column_index == 0
+                else "2225.4807123031883"
+            )
+            d_eval_minus_saved = reconstructed_d - saved_d
+            d_eval_minus_replayed = reconstructed_d - replayed_d
+            state_aggregates.append({
+                "state": state_name,
+                "d_eval": _task41_p0_v13_pair(reconstructed_d),
+                "saved_original_d": _task41_p0_v13_pair(saved_d),
+                "d_eval_minus_saved_original_d": _task41_p0_v13_pair(
+                    d_eval_minus_saved
+                ),
+                "d_reconstruction": {
+                    "formula": (
+                        "d_eval=sum_cells(q^H(Ju+Lt)+q^H C_S_t+q^H Jw*)"
+                        "-N_t-r_t-sum_cells(q^H(-Jz_r)); "
+                        "each q^H Jw* is six signed adjoint terms plus its Eq2 residual"
+                    ),
+                    "local_Ju_plus_Lt": [
+                        _task41_p0_v13_pair(value) for value in qh_local_ju_lt
+                    ],
+                    "local_C_S_t": [_task41_p0_v13_pair(value) for value in qh_cst],
+                    "local_J_w_error_bridge_excluded_from_d_eval": [
+                        _task41_p0_v13_pair(value) for value in qh_j_ew
+                    ],
+                    "local_q_H_J_w_star": [_task41_p0_v13_pair(value) for value in qh_jw_by_cell],
+                    "adjoint_signed_terms_by_cell": [
+                        {key: _task41_p0_v13_pair(value) for key, value in row.items()}
+                        for row in adjoint_terms_by_cell
+                    ],
+                    "projected_Eq2_unexplained_residual_by_cell": [
+                        _task41_p0_v13_pair(value) for value in adjoint_residuals_by_cell
+                    ],
+                    "projected_minus_J_z_r_by_cell": [
+                        _task41_p0_v13_pair(value) for value in qh_jzr
+                    ],
+                    "saved_projected_minus_J_z_r_sum_comparison_only": _task41_p0_v13_pair(
+                        saved_lu_residual
+                    ),
+                    "computed_minus_saved_projected_minus_J_z_r_sum": _task41_p0_v13_pair(
+                        qh_minus_jzr_sum - saved_lu_residual
+                    ),
+                    "global_native_action_N_t_subtracted_once": _task41_p0_v13_pair(native_trace),
+                    "native_residual_r_t_subtracted_once": _task41_p0_v13_pair(
+                        saved_native_residual
+                    ),
+                    "saved_Eq1_difference_comparison_only_not_in_d_eval": _task41_p0_v13_pair(
+                        saved_eq1_residual
+                    ),
+                    "saved_original_d_y9_minus_g9": _task41_p0_v13_pair(saved_d),
+                    "replayed_d_lu_comparison_only": _task41_p0_v13_pair(replayed_d),
+                    "d_eval_minus_replayed_d_comparison_only": _task41_p0_v13_pair(
+                        d_eval_minus_replayed
+                    ),
+                    "reconstructed_d_lu": _task41_p0_v13_pair(reconstructed_d),
+                    "replayed_d_lu": _task41_p0_v13_pair(replayed_d),
+                    "reconstruction_minus_replayed_d": _task41_p0_v13_pair(
+                        d_eval_minus_replayed
+                    ),
+                    "reconstruction_minus_saved_original_d": _task41_p0_v13_pair(
+                        d_eval_minus_saved
+                    ),
+                    "frozen_denominator": str(frozen_denominator_value),
+                    "relative_residual_to_frozen_denominator": str(
+                        abs(d_eval_minus_saved) / frozen_denominator_value
+                    ),
+                    "relative_reconstruction_residual_to_frozen_denominator": str(
+                        abs(d_eval_minus_saved) / frozen_denominator_value
+                    ),
+                    "denominator_used_as_gate": False,
+                    "relative_residual_reference": "d_eval_minus_saved_original_d",
+                    "classification": "ADJOINT_DIAGNOSTIC",
+                },
+                "b_t_written_once": _task41_p0_v13_pair(b_t_by_column[column_index]),
+                "local_minus_EH_J_z_b_cell_order_360_then_446": [
+                    _task41_p0_v13_pair(value) for value in cell_g_terms[state_name]
+                ],
+                "g_eval_wide_fixed_z_b": _task41_p0_v13_pair(g_eval),
+                "saved_g_prod": _task41_p0_v13_pair(g_prod),
+                "saved_y9": _task41_p0_v13_pair(y_saved),
+                "production_accumulation_remainder": _task41_p0_v13_pair(production_remainder),
+                "global_native_action_row_subtracted_once_for_eq1": _task41_p0_v13_pair(native_trace),
+                "B_alpha_selected_original_row_applied_once": beta,
+                "saved_y9_minus_saved_g9": _task41_p0_v13_pair(d_saved),
+                "saved_equation_1_difference": identity_row.get("equation_1_difference"),
+                "global_native_rhs_row_written_once": _task41_p0_v13_pair(
+                    b_t_by_column[column_index]
+                ),
+                "saved_eq1_status": identity_row.get("equation_1_status"),
+                "classification": "ADJOINT_DIAGNOSTIC",
+                "official_result": False,
+            })
+        column_rows.append({
+            "column": column_index,
+            "state_rows": state_aggregates,
+            "saved_g_prod_actual": _task41_p0_v13_pair(g_prod),
+            "saved_y9": _task41_p0_v13_pair(y_saved),
+            "saved_original_d": _task41_p0_v13_pair(y_saved - g_prod),
+        })
+    payload = {
+        "schema": "task41.p0.v13.saved_adjoint_operation_graph.v1",
+        "status": "COMPLETED_ADJOINT_DIAGNOSTIC",
+        "classification": "ADJOINT_DIAGNOSTIC",
+        "candidate_report_path": str(report_path),
+        "candidate_report_sha256": candidate_report_sha256,
+        "adjoint_cache_root": str(cache_root),
+        "adjoint_solve_ledger_path": str(cache_root / "task41_p0_v13_adjoint_solve_ledger.json"),
+        "analysis_marker_path": str(analysis_marker_path),
+        "donor_contract_sha256": donor_digest,
+        "donor_summary_path": str(summary_path),
+        "donor_manifest_sha256": TASK41_V4_DONOR_MANIFEST_SHA256,
+        "consumer_contract_sha256": consumer_digest,
+        "consumer_source_sha": consumer.get("source", {}).get("sha"),
+        "window_sha256": window.sha256,
+        "metadata_report_sha256": TASK41_P0_V11_METADATA_REPORT_SHA256,
+        "v9_compact_report_sha256": TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+        "adjoint_solve_calls": max(row["solve_calls"] for row in lambda_rows.values()),
+        "adjoint_solve_limit": 2,
+        "adjoint_cells": {
+            str(cell): {
+                "lambda_path": row["lambda_path"],
+                "receipt": row["receipt"],
+                "reused": row["reused"],
+                "solve_elapsed_seconds": row["solve_elapsed_seconds"],
+                "solve_seconds": row["solve_seconds"],
+                "adjoint_residual": row["adjoint_residual"],
+            }
+            for cell, row in lambda_rows.items()
+        },
+        "accepted_attempt06_checker_sha256": accepted_checker_sha256,
+        "accepted_attempt06_service_receipt_sha256": accepted_receipt_sha256,
+        "group_count": len(group_records),
+        "groups": group_records,
+        "global_rows": column_rows,
+        "timing": {
+            "parent_elapsed_seconds": time.perf_counter() - parent_started,
+            "input_hash_read_seconds": input_hash_read_seconds,
+            "decimal_elapsed_seconds": sum(
+                float(group["decimal_operation_graph_crosscheck"]["elapsed_seconds"])
+                for group in group_records
+            ),
+            "decimal_elapsed_scope": "sum of per-group Decimal work; included in parent elapsed",
+        },
+        "scientific_qualified": False,
+        "official_result": False,
+        "raw_evidence_retained": True,
+    }
+    _task41_p0_v13_atomic_json(output_path, payload)
+    return payload
+
+
+
+
+def _task41_p0_v13_pair_scalar(value: Any, label: str) -> np.clongdouble:
+    if not isinstance(value, list) or len(value) != 2:
+        raise ValueError(f"V13 {label} must be a complex pair")
+    return np.clongdouble(value[0]) + 1j * np.clongdouble(value[1])
+
+
+def _task41_p0_v13_close_scalar(left: Any, right: Any, scale: Any) -> bool:
+    difference = abs(np.clongdouble(left) - np.clongdouble(right))
+    tolerance = np.finfo(np.longdouble).eps * np.longdouble(256) * max(
+        np.longdouble(1), np.longdouble(scale)
+    )
+    return bool(difference <= tolerance)
+
+
+def _task41_p0_v13_recompute_group_from_original_inputs(
+    *,
+    K: Any,
+    G: Any,
+    J: Any,
+    L: Any,
+    R: Any,
+    S: Any,
+    T: Any,
+    q: Any,
+    b_i: Any,
+    n_i: Any,
+    t_c: Any,
+    u_i: Any,
+    z_b: Any,
+    z_r: Any,
+    r_i: Any,
+    delta_hat: Any,
+    r_b_hat: Any,
+    r_r_hat: Any,
+    p_hat: Any,
+    left_hat: Any,
+    right_hat: Any,
+    eta_hat: Any,
+    saved_C_S_t: Any,
+    lambda_vector: Any,
+) -> dict[str, Any]:
+    """Rebuild a V13 group from source arrays without GETRS or saved V13 scalars."""
+    K0, G0, J0, L0, R0, S0, T0 = (
+        np.asarray(value, dtype=np.complex128)
+        for value in (K, G, J, L, R, S, T)
+    )
+    q0 = np.asarray(q, dtype=np.complex128).reshape(-1)
+    b0, n0, t0, u0, zb0, zr0, ri0 = (
+        np.asarray(value, dtype=np.complex128).reshape(-1)
+        for value in (b_i, n_i, t_c, u_i, z_b, z_r, r_i)
+    )
+    delta0, rb0, rr0, p0, left0, right0, eta0 = (
+        np.asarray(value, dtype=np.complex128).reshape(-1)
+        for value in (delta_hat, r_b_hat, r_r_hat, p_hat, left_hat, right_hat, eta_hat)
+    )
+    if (
+        K0.ndim != 2 or K0.shape[0] != K0.shape[1]
+        or J0.ndim != 2 or J0.shape[1] != K0.shape[0]
+        or G0.shape != (K0.shape[0], J0.shape[0])
+        or L0.shape != (J0.shape[0], J0.shape[0])
+        or R0.shape != (K0.shape[0], J0.shape[0])
+        or S0.shape != (J0.shape[0], J0.shape[0])
+        or T0.shape != (J0.shape[0], K0.shape[0])
+        or q0.shape != (J0.shape[0],)
+        or any(value.shape != (K0.shape[0],) for value in (
+            b0, n0, u0, zb0, zr0, ri0, delta0, rb0, rr0, p0, left0, right0, eta0
+        ))
+        or t0.shape != (J0.shape[0],)
+        or not all(np.isfinite(value).all() for value in (
+            K0, G0, J0, L0, R0, S0, T0, q0, b0, n0, t0, u0, zb0, zr0,
+            ri0, delta0, rb0, rr0, p0, left0, right0, eta0,
+        ))
+    ):
+        raise ValueError("V13 independent raw group arrays have invalid shapes or values")
+    w_hat = R0 @ t0 + zb0 - zr0 - u0
+    p_recomputed = (K0 @ R0 + G0) @ t0
+    delta_recomputed = K0 @ u0 + G0 @ t0 - n0
+    rb_recomputed = b0 - K0 @ zb0
+    rr_recomputed = ri0 - K0 @ zr0
+    left_recomputed = K0 @ w_hat
+    right_recomputed = p_recomputed - delta_recomputed - rb_recomputed + rr_recomputed
+    eta_recomputed = left_recomputed - right_recomputed
+    if not all((
+        np.array_equal(p_recomputed, p0),
+        np.array_equal(delta_recomputed, delta0),
+        np.array_equal(rb_recomputed, rb0),
+        np.array_equal(rr_recomputed, rr0),
+        np.array_equal(left_recomputed, left0),
+        np.array_equal(right_recomputed, right0),
+        np.array_equal(eta_recomputed, eta0),
+    )):
+        raise ValueError("V13 independent raw complex128 operation nodes differ from V11 arrays")
+
+    Kw, Gw, Jw, Lw, Rw, Sw = (
+        _task41_p0_v13_wide(value, name)
+        for name, value in (
+            ("K", K0), ("G", G0), ("J", J0), ("L", L0), ("R", R0), ("S", S0)
+        )
+    )
+    qw, bw, nw, tw, uw, zbw, zrw, riw = (
+        _task41_p0_v13_wide(value, name).reshape(-1)
+        for name, value, in (
+            ("q", q0), ("b_i", b0), ("n_i", n0), ("t_c", t0), ("u_i", u0),
+            ("z_b", zb0), ("z_r", zr0), ("r_i", ri0),
+        )
+    )
+    w_star = Rw @ tw + zbw - zrw - uw
+    p_star = Kw @ (Rw @ tw) + Gw @ tw
+    delta_star = Kw @ uw + Gw @ tw - nw
+    rb_star = bw - Kw @ zbw
+    rr_star = riw - Kw @ zrw
+    chi = bw - nw - riw
+    what_wide = _task41_p0_v13_wide(w_hat, "w_hat")
+    ew = what_wide - w_star
+    e_left = _task41_p0_v13_wide(left0, "left_hat") - Kw @ what_wide
+    e_p = _task41_p0_v13_wide(p0, "p_hat") - p_star
+    e_delta = _task41_p0_v13_wide(delta0, "delta_hat") - delta_star
+    e_b = _task41_p0_v13_wide(rb0, "r_b_hat") - rb_star
+    e_r = _task41_p0_v13_wide(rr0, "r_r_hat") - rr_star
+    right_wide = _task41_p0_v13_wide(right0, "right_hat")
+    e_h = right_wide - (
+        _task41_p0_v13_wide(p0, "p_hat")
+        - _task41_p0_v13_wide(delta0, "delta_hat")
+        - _task41_p0_v13_wide(rb0, "r_b_hat")
+        + _task41_p0_v13_wide(rr0, "r_r_hat")
+    )
+    eta_wide = _task41_p0_v13_wide(eta0, "eta_hat")
+    e_o = eta_wide - (
+        _task41_p0_v13_wide(left0, "left_hat") - right_wide
+    )
+    signed_vectors = {
+        "K_e_w": Kw @ ew,
+        "e_L": e_left,
+        "-e_p": -e_p,
+        "e_delta": e_delta,
+        "e_b": e_b,
+        "-e_r": -e_r,
+        "-e_H": -e_h,
+        "chi": chi,
+        "e_o": e_o,
+    }
+    explained = sum(
+        signed_vectors.values(),
+        np.zeros_like(eta_wide, dtype=np.clongdouble),
+    )
+    unexplained = eta_wide - explained
+    lambda_wide = _task41_p0_v13_wide(lambda_vector, "lambda").reshape(-1)
+    h_wide = Jw.conj().T @ qw
+    lambda_residual = h_wide - Kw.conj().T @ lambda_wide
+    projected = task41_p0_v13_projected_eq2_identity(
+        q=q0,
+        J=J0,
+        w_star=w_star,
+        p_star=p_star,
+        delta_star=delta_star,
+        r_b_star=rb_star,
+        r_r_star=rr_star,
+        chi=chi,
+        lambda_vector=lambda_wide,
+        adjoint_residual=lambda_residual,
+    )
+    delta_t_wide = Jw @ uw + Lw @ tw
+    c_s_wide = Sw @ tw - Lw @ tw - Jw @ (Rw @ tw)
+    minus_j_z_r = -(Jw @ zrw)
+    j_w_star = Jw @ w_star
+    j_e_w = Jw @ ew
+    minus_qh_j_z_b = -np.vdot(qw, Jw @ zbw)
+    return {
+        "signed_vectors": signed_vectors,
+        "unexplained_residual": _task41_p0_v13_vector_summary(unexplained),
+        "projected_eq2_identity": projected,
+        "selected_trace_row_terms": {
+            "q_H_J_w_star": _task41_p0_v13_pair(np.vdot(qw, j_w_star)),
+            "q_H_J_e_w": _task41_p0_v13_pair(np.vdot(qw, j_e_w)),
+            "q_H_local_J_u_plus_L_t": _task41_p0_v13_pair(
+                np.vdot(qw, delta_t_wide)
+            ),
+            "q_H_C_S_t": _task41_p0_v13_pair(np.vdot(qw, c_s_wide)),
+            "q_H_minus_J_z_r": _task41_p0_v13_pair(np.vdot(qw, minus_j_z_r)),
+        },
+        "minus_q_H_J_z_b_fixed_z_b": _task41_p0_v13_pair(minus_qh_j_z_b),
+        "binary64_nodes": {
+            "w_hat": w_hat,
+            "delta_t": J0 @ u0 + L0 @ t0,
+        },
+    }
+
+
+
+def _task41_p0_v13_assert_serialized_vector_matches(
+    saved: Any, expected: Any, label: str
+) -> None:
+    if not isinstance(saved, list):
+        raise ValueError(f"V13 {label} saved vector is malformed")
+    actual = np.asarray(
+        [_task41_p0_v13_pair_scalar(value, label) for value in saved],
+        dtype=np.clongdouble,
+    )
+    wanted = np.asarray(expected, dtype=np.clongdouble).reshape(-1)
+    if actual.shape != wanted.shape:
+        raise ValueError(f"V13 {label} vector shape differs from original-input recomputation")
+    scale = max(
+        np.max(np.abs(actual), initial=np.longdouble(0)),
+        np.max(np.abs(wanted), initial=np.longdouble(0)),
+        np.longdouble(1),
+    )
+    if any(
+        not _task41_p0_v13_close_scalar(left, right, scale)
+        for left, right in zip(actual, wanted, strict=True)
+    ):
+        raise ValueError(f"V13 {label} differs from original-input recomputation")
+
+
+def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
+    *,
+    diagnostic_path: Path,
+    diagnostic_sha256: str,
+    donor_summary_path: Path,
+    donor_summary_sha256: str,
+    donor_contract_path: Path,
+    donor_contract_sha256: str,
+    consumer_contract_path: Path,
+    consumer_contract_sha256: str,
+    candidate_report_path: Path,
+    candidate_report_sha256: str,
+    output_path: Path,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Independently check saved V13 inputs and cached lambda without any GETRS."""
+    import time
+    parent_started = time.perf_counter()
+    input_hash_read_seconds = 0.0
+    uninstrumented_sha256_file = sha256_file
+
+    def timed_sha256_file(path: Path) -> str:
+        nonlocal input_hash_read_seconds
+        started = time.perf_counter()
+        try:
+            return uninstrumented_sha256_file(path)
+        finally:
+            input_hash_read_seconds += time.perf_counter() - started
+
+    from scipy.sparse import csr_matrix
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        load_task41_p0_fixed_window,
+    )
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V11_METADATA_ACTIVE_ROW as ACTIVE,
+        TASK41_P0_V11_METADATA_ORIGINAL_ROW as ORIGINAL,
+        TASK41_P0_V11_SELECTED_CELLS as CELLS,
+        TASK41_P0_V11_METADATA_REPORT_SHA256,
+        TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+    )
+    from src.solvers.task41_v4_volume_only_audit import TASK41_V4_DONOR_MANIFEST_SHA256
+
+    repo_root = Path(repo_root).resolve(strict=True)
+    results_root = (repo_root / "results" / TASK41_MODEL_ID).resolve(strict=True)
+    diagnostic_path = Path(diagnostic_path).resolve(strict=True)
+    report_path = Path(candidate_report_path).resolve(strict=True)
+    donor_summary_path = Path(donor_summary_path).resolve(strict=True)
+    output_path = Path(output_path).resolve()
+    if (
+        not diagnostic_path.is_relative_to(results_root)
+        or diagnostic_path.stat().st_size > 16 * 1024**2
+        or timed_sha256_file(diagnostic_path) != diagnostic_sha256
+        or not report_path.is_relative_to(results_root)
+        or not donor_summary_path.is_relative_to(results_root)
+        or timed_sha256_file(donor_summary_path) != donor_summary_sha256
+        or report_path.name != "task41_p0_v11_selected_trace_candidate_replay.json"
+        or report_path.stat().st_size > 64 * 1024**2
+        or timed_sha256_file(report_path) != candidate_report_sha256
+        or output_path.exists()
+        or not output_path.is_relative_to(results_root)
+    ):
+        raise ValueError("V13 independent checker input/output path or hash differs")
+    donor_contract, donor_digest = require_task41_p0_contract(
+        Path(donor_contract_path).resolve(strict=True),
+        expected_sha256=donor_contract_sha256,
+        current_root=repo_root,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    consumer, consumer_digest = require_task41_p0_contract(
+        Path(consumer_contract_path).resolve(strict=True),
+        expected_sha256=consumer_contract_sha256,
+        current_root=repo_root,
+        check_current_source=True,
+        require_clean_source=True,
+        case_id="B0",
+    )
+    if consumer.get("execution_scope") != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE:
+        raise ValueError("V13 independent checker requires the V12 candidate-replay scope")
+    window = load_task41_p0_fixed_window(
+        consumer, current_root=repo_root, require_current_boot=False
+    )
+    cache_root = (
+        results_root
+        / "task41_p0_saved_diagnostics_6h"
+        / window.sha256
+        / "selected_incident_replay"
+        / "v13_adjoint_cache"
+    ).resolve()
+    if not cache_root.is_relative_to(results_root):
+        raise ValueError("V13 independent shared adjoint cache escaped results root")
+    diagnostic = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    replay = report.get("v11_selected_trace_candidate_replay")
+    if (
+        diagnostic.get("schema") != "task41.p0.v13.saved_adjoint_operation_graph.v1"
+        or diagnostic.get("status") != "COMPLETED_ADJOINT_DIAGNOSTIC"
+        or diagnostic.get("classification") != "ADJOINT_DIAGNOSTIC"
+        or diagnostic.get("official_result") is not False
+        or diagnostic.get("scientific_qualified") is not False
+        or diagnostic.get("candidate_report_sha256") != candidate_report_sha256
+        or diagnostic.get("donor_contract_sha256") != donor_digest
+        or diagnostic.get("consumer_contract_sha256") != consumer_digest
+        or diagnostic.get("window_sha256") != window.sha256
+        or diagnostic.get("adjoint_cache_root") != str(cache_root)
+        or diagnostic.get("adjoint_solve_ledger_path")
+        != str(cache_root / "task41_p0_v13_adjoint_solve_ledger.json")
+        or diagnostic.get("analysis_marker_path")
+        != str(diagnostic_path.parent / "task41_p0_v13_analysis_started.json")
+        or diagnostic.get("donor_manifest_sha256") != TASK41_V4_DONOR_MANIFEST_SHA256
+        or diagnostic.get("metadata_report_sha256") != TASK41_P0_V11_METADATA_REPORT_SHA256
+        or diagnostic.get("v9_compact_report_sha256") != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+        or diagnostic.get("accepted_attempt06_checker_sha256")
+        != "cdbd2a0a8d6ae62b61ad1a45b8bd4f62dae4c69ebb1f0f7923205ac85e4c3739"
+        or diagnostic.get("accepted_attempt06_service_receipt_sha256")
+        != "0b28a0f2b57aa17d515627097978a5470c7787ca9c61b15c07a0d25b14ae217f"
+        or not isinstance(replay, Mapping)
+        or replay.get("selected_active_row") != ACTIVE
+        or replay.get("selected_original_row") != ORIGINAL
+        or replay.get("incident_cell_order") != list(CELLS)
+        or replay.get("scientific_qualified") is not False
+    ):
+        raise ValueError("V13 independent checker scope or saved status differs")
+    donor_summary = json.loads(donor_summary_path.read_text(encoding="utf-8"))
+    recovery = donor_summary.get("b0_recovery_evidence")
+    manifest_ref = recovery.get("manifest") if isinstance(recovery, Mapping) else None
+    if not isinstance(manifest_ref, Mapping):
+        raise ValueError("V13 independent checker donor summary omits its manifest")
+    donor_run_root = donor_summary_path.parent.resolve(strict=True)
+    raw_manifest_path = Path(str(manifest_ref.get("path", "")))
+    manifest_path = (
+        raw_manifest_path
+        if raw_manifest_path.is_absolute()
+        else donor_run_root / raw_manifest_path
+    ).resolve(strict=True)
+    if (
+        not manifest_path.is_relative_to(donor_run_root)
+        or manifest_ref.get("sha256") != TASK41_V4_DONOR_MANIFEST_SHA256
+        or timed_sha256_file(manifest_path) != TASK41_V4_DONOR_MANIFEST_SHA256
+    ):
+        raise ValueError("V13 independent checker donor manifest identity differs")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    from src.solvers.task41_v4_volume_only_audit import TASK41_V4_FULL_STORAGE_ROWS
+    manifest_columns = manifest.get("columns")
+    if (
+        manifest.get("full_storage_rows") != TASK41_V4_FULL_STORAGE_ROWS
+        or not isinstance(manifest_columns, list)
+        or len(manifest_columns) != 2
+    ):
+        raise ValueError("V13 independent checker donor manifest layout differs")
+    b_t_by_column: dict[int, complex] = {}
+    for column_index, column_meta in enumerate(manifest_columns):
+        artifacts = column_meta.get("artifacts") if isinstance(column_meta, Mapping) else None
+        ref = artifacts.get("native_rhs") if isinstance(artifacts, Mapping) else None
+        if not isinstance(ref, Mapping):
+            raise ValueError(f"V13 independent checker donor column {column_index} omits native_rhs")
+        raw_path = Path(str(ref.get("path", "")))
+        native_rhs_path = (
+            raw_path if raw_path.is_absolute() else donor_run_root / raw_path
+        ).resolve(strict=True)
+        if (
+            not native_rhs_path.is_relative_to(donor_run_root)
+            or ref.get("shape") != [TASK41_V4_FULL_STORAGE_ROWS]
+            or ref.get("dtype") != "complex128"
+            or native_rhs_path.stat().st_size != ref.get("bytes")
+            or timed_sha256_file(native_rhs_path) != ref.get("sha256")
+        ):
+            raise ValueError(
+                f"V13 independent checker donor column {column_index} RHS identity differs"
+            )
+        native_rhs = np.load(native_rhs_path, mmap_mode="r", allow_pickle=False)
+        if (
+            native_rhs.shape != (TASK41_V4_FULL_STORAGE_ROWS,)
+            or native_rhs.dtype != np.dtype(np.complex128)
+        ):
+            raise ValueError(
+                f"V13 independent checker donor column {column_index} RHS layout differs"
+            )
+        b_t_by_column[column_index] = complex(native_rhs[ORIGINAL])
+
+    diagnostic_root = diagnostic_path.parent
+    marker_path = diagnostic_root / "task41_p0_v13_analysis_started.json"
+    marker = json.loads(marker_path.read_text(encoding="utf-8"))
+    if (
+        marker.get("schema") != "task41.p0.v13.analysis_started.v1"
+        or marker.get("purpose") != "ADJOINT_DIAGNOSTIC"
+        or marker.get("candidate_report_sha256") != candidate_report_sha256
+        or marker.get("window_sha256") != window.sha256
+        or marker.get("official_result") is not False
+    ):
+        raise ValueError("V13 durable analysis marker scope differs")
+    scope_identity = {
+        "candidate_report_sha256": candidate_report_sha256,
+        "donor_manifest_sha256": TASK41_V4_DONOR_MANIFEST_SHA256,
+        "window_sha256": window.sha256,
+    }
+    ledger_path = cache_root / "task41_p0_v13_adjoint_solve_ledger.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    if (
+        ledger.get("schema") != "task41.p0.v13.adjoint_solve_ledger.v1"
+        or ledger.get("purpose") != "ADJOINT_DIAGNOSTIC"
+        or ledger.get("scope_identity") != scope_identity
+        or ledger.get("solve_calls") != 2
+        or ledger.get("getrs_attempted") is not True
+        or ledger.get("completed_cells") != list(CELLS)
+        or ledger.get("inflight_cell") is not None
+        or not isinstance(ledger.get("reservations"), list)
+    ):
+        raise ValueError("V13 independent checker solve ledger differs")
+
+    verified_array_cache: dict[tuple[str, str], np.ndarray] = {}
+
+    def load_array(ref: Any, *, root: Path, label: str) -> np.ndarray:
+        if not isinstance(ref, Mapping):
+            raise ValueError(f"V13 independent checker {label} reference is malformed")
+        raw = Path(str(ref.get("path", "")))
+        path = (raw if raw.is_absolute() else root / raw).resolve(strict=True)
+        digest = ref.get("sha256")
+        if (
+            not path.is_relative_to(root.resolve(strict=True))
+            or type(ref.get("bytes")) is not int
+            or path.stat().st_size != ref["bytes"]
+            or not isinstance(digest, str)
+        ):
+            raise ValueError(f"V13 independent checker {label} path/size/hash differs")
+        key = (str(path), digest)
+        array = verified_array_cache.get(key)
+        if array is None:
+            if timed_sha256_file(path) != digest:
+                raise ValueError(f"V13 independent checker {label} path/size/hash differs")
+            array = np.load(path, mmap_mode="r", allow_pickle=False)
+            if list(array.shape) != ref.get("shape") or str(array.dtype) != ref.get("dtype"):
+                raise ValueError(f"V13 independent checker {label} shape/dtype differs")
+            verified_array_cache[key] = array
+        elif list(array.shape) != ref.get("shape") or str(array.dtype) != ref.get("dtype"):
+            raise ValueError(f"V13 independent checker {label} shape/dtype differs")
+        return array
+
+    metadata_path = Path(str(replay.get("metadata_report_path", ""))).resolve(strict=True)
+    if (
+        not metadata_path.is_relative_to(results_root)
+        or replay.get("metadata_report_sha256") != TASK41_P0_V11_METADATA_REPORT_SHA256
+        or timed_sha256_file(metadata_path) != TASK41_P0_V11_METADATA_REPORT_SHA256
+    ):
+        raise ValueError("V13 independent checker metadata report identity differs")
+    metadata_report = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata = metadata_report.get("selected_trace_star_metadata_only")
+    metadata_cells = metadata.get("selected_cells") if isinstance(metadata, Mapping) else None
+    report_cells = replay.get("cells")
+    if (
+        not isinstance(metadata_cells, list)
+        or [item.get("cell_index") for item in metadata_cells] != list(CELLS)
+        or not isinstance(report_cells, list)
+        or [item.get("cell_index") for item in report_cells] != list(CELLS)
+    ):
+        raise ValueError("V13 independent checker selected cell list differs")
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+    )
+    if (
+        replay.get("v9_compact_report_sha256") != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+        or timed_sha256_file(Path(str(replay.get("v9_compact_report_path", ""))).resolve(strict=True))
+        != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+    ):
+        raise ValueError("V13 independent checker V9 compact report identity differs")
+
+    reservations = ledger["reservations"]
+    if len(reservations) != 2:
+        raise ValueError("V13 independent checker expected exactly two reserved solves")
+    lambda_check_rows: dict[int, dict[str, Any]] = {}
+    cell_arrays: dict[int, dict[str, np.ndarray]] = {}
+    lambda_vectors: dict[int, np.ndarray] = {}
+    for ordinal, (meta, record) in enumerate(zip(metadata_cells, report_cells, strict=True), start=1):
+        cell = int(meta["cell_index"])
+        arrays = meta.get("arrays")
+        candidate_refs = record.get("candidate_artifacts")
+        if not isinstance(arrays, Mapping) or not isinstance(candidate_refs, Mapping):
+            raise ValueError(f"V13 independent checker cell {cell} refs are malformed")
+        local = {
+            name: load_array(arrays[name], root=metadata_path.parent, label=f"cell{cell}/{name}")
+            for name in (
+                "interior_positions", "trace_positions", "active_ids",
+                "trace_expansion_data", "trace_expansion_indices", "trace_expansion_indptr",
+            )
+        }
+        ids = np.asarray(local["active_ids"], dtype=np.int64)
+        target = np.flatnonzero(ids == ACTIVE)
+        if target.size != 1:
+            raise ValueError(f"V13 independent checker cell {cell} trace row is not unique")
+        E = csr_matrix(
+            (
+                np.asarray(local["trace_expansion_data"], dtype=np.complex128),
+                np.asarray(local["trace_expansion_indices"], dtype=np.int32),
+                np.asarray(local["trace_expansion_indptr"], dtype=np.int32),
+            ),
+            shape=(local["trace_positions"].size, ids.size),
+        )
+        if not E.has_canonical_format:
+            raise ValueError(f"V13 independent checker cell {cell} expansion is not canonical")
+        q = np.asarray(E.getcol(int(target[0])).toarray(), dtype=np.complex128).reshape(-1)
+        tensor = load_array(
+            candidate_refs["oriented_tensor"], root=report_path.parent,
+            label=f"cell{cell}/oriented tensor",
+        )
+        interior = np.asarray(local["interior_positions"], dtype=np.int64)
+        trace = np.asarray(local["trace_positions"], dtype=np.int64)
+        K = np.asarray(tensor[np.ix_(interior, interior)], dtype=np.complex128)
+        G = np.asarray(tensor[np.ix_(interior, trace)], dtype=np.complex128)
+        J = np.asarray(tensor[np.ix_(trace, interior)], dtype=np.complex128)
+        L = np.asarray(tensor[np.ix_(trace, trace)], dtype=np.complex128)
+        R = np.asarray(load_array(
+            candidate_refs["R"], root=report_path.parent, label=f"cell{cell}/R"
+        ), dtype=np.complex128)
+        S = np.asarray(load_array(
+            candidate_refs["S"], root=report_path.parent, label=f"cell{cell}/S"
+        ), dtype=np.complex128)
+        T = np.asarray(load_array(
+            candidate_refs["T"], root=report_path.parent, label=f"cell{cell}/T"
+        ), dtype=np.complex128)
+        lu = np.asarray(load_array(
+            candidate_refs["interior_lu"], root=report_path.parent, label=f"cell{cell}/LU"
+        ), dtype=np.complex128)
+        piv_raw = np.asarray(load_array(
+            candidate_refs["interior_lu_pivots"], root=report_path.parent,
+            label=f"cell{cell}/pivots",
+        ))
+        pivots = _task41_b0_owned_writable_lu_pivots(piv_raw, order=K.shape[0])
+        cell_arrays[cell] = {
+            "K": K, "G": G, "J": J, "L": L, "R": R, "S": S, "T": T, "q": q,
+        }
+        h = np.asarray(J.conj().T @ q, dtype=np.complex128)
+        numerical_identity = {
+            "cell_index": cell,
+            "K": _task41_p0_v13_array_identity(K),
+            "J": _task41_p0_v13_array_identity(J),
+            "q": _task41_p0_v13_array_identity(q),
+            "LU": _task41_p0_v13_array_identity(lu),
+            "pivots": _task41_p0_v13_array_identity(pivots),
+            "h": _task41_p0_v13_array_identity(h),
+            "transpose": 2,
+            "purpose": "ADJOINT_DIAGNOSTIC",
+        }
+        package_path = cache_root / f"task41_p0_v13_cell{cell}_adjoint_diagnostic.npz"
+        vector, saved_h, receipt = _task41_p0_v13_lambda_package(package_path)
+        reservation = reservations[ordinal - 1]
+        if (
+            receipt.get("schema") != "task41.p0.v13.adjoint_lambda_receipt.v1"
+            or receipt.get("purpose") != "ADJOINT_DIAGNOSTIC"
+            or receipt.get("cell_index") != cell
+            or receipt.get("transpose") != 2
+            or receipt.get("solve_call_ordinal") != ordinal
+            or receipt.get("scope_identity") != scope_identity
+            or receipt.get("numerical_identity") != numerical_identity
+            or not np.array_equal(saved_h, h)
+            or reservation.get("cell_index") != cell
+            or reservation.get("solve_call_ordinal") != ordinal
+            or reservation.get("numerical_identity") != numerical_identity
+        ):
+            raise ValueError(f"V13 independent checker cell {cell} lambda receipt differs")
+        campaign_identity_at_solve = receipt.get("campaign_source_identity_at_solve")
+        if (
+            not isinstance(campaign_identity_at_solve, Mapping)
+            or not all(isinstance(key, str) for key in campaign_identity_at_solve)
+            or receipt.get("official_result") is not False
+        ):
+            raise ValueError(f"V13 independent checker cell {cell} solve provenance is malformed")
+        Kw = _task41_p0_v13_wide(K, "K")
+        Jw = _task41_p0_v13_wide(J, "J")
+        qw = _task41_p0_v13_wide(q, "q")
+        lambdaw = _task41_p0_v13_wide(vector, "lambda")
+        hwide = Jw.conj().T @ qw
+        elambda = hwide - Kw.conj().T @ lambdaw
+        expected_summary = _task41_p0_v13_vector_summary(elambda)
+        output_cell = diagnostic.get("adjoint_cells", {}).get(str(cell))
+        solve_elapsed_seconds = receipt.get("solve_elapsed_seconds")
+        if (
+            not isinstance(output_cell, Mapping)
+            or output_cell.get("receipt") != receipt
+            or type(output_cell.get("reused")) is not bool
+            or not isinstance(solve_elapsed_seconds, (int, float))
+            or not np.isfinite(solve_elapsed_seconds)
+            or solve_elapsed_seconds < 0
+            or output_cell.get("solve_elapsed_seconds") != solve_elapsed_seconds
+            or output_cell.get("solve_seconds")
+            != (0.0 if output_cell.get("reused") else solve_elapsed_seconds)
+            or output_cell.get("adjoint_residual") != expected_summary
+        ):
+            raise ValueError(f"V13 independent checker cell {cell} adjoint timing/residual differs")
+        lambda_vectors[cell] = np.asarray(vector, dtype=np.complex128)
+        lambda_check_rows[cell] = {
+            "lambda_sha256": receipt["lambda_identity"],
+            "h_sha256": receipt["h_identity"],
+            "residual": expected_summary,
+        }
+
+    groups = diagnostic.get("groups")
+    global_rows = diagnostic.get("global_rows")
+    if (
+        diagnostic.get("adjoint_solve_calls") != 2
+        or diagnostic.get("group_count") != 8
+        or not isinstance(groups, list)
+        or len(groups) != 8
+        or not isinstance(global_rows, list)
+        or len(global_rows) != 2
+    ):
+        raise ValueError("V13 independent checker group/global row counts differ")
+    expected_group_keys = {
+        (cell, column, state)
+        for cell in CELLS for column in (0, 1) for state in ("j0", "j3")
+    }
+    actual_group_keys = {
+        (item.get("cell_index"), item.get("column"), item.get("state"))
+        for item in groups if isinstance(item, Mapping)
+    }
+    if actual_group_keys != expected_group_keys:
+        raise ValueError("V13 independent checker group coverage differs")
+    source_columns = replay.get("columns")
+    source_identity_rows = replay.get("review_v11_local_identities")
+    if (
+        not isinstance(source_columns, list) or len(source_columns) != 2
+        or not isinstance(source_identity_rows, list)
+    ):
+        raise ValueError("V13 independent checker raw V11 columns/identity rows are missing")
+    identity_by_key: dict[tuple[int, str], Mapping[str, Any]] = {}
+    for identity_row in source_identity_rows:
+        if not isinstance(identity_row, Mapping):
+            raise ValueError("V13 raw V11 local identity row is malformed")
+        key = (identity_row.get("column"), identity_row.get("state"))
+        if key in identity_by_key or key[0] not in (0, 1) or key[1] not in ("j0", "j3"):
+            raise ValueError("V13 raw V11 local identity row coverage differs")
+        identity_by_key[key] = identity_row
+    if set(identity_by_key) != {(column, state) for column in (0, 1) for state in ("j0", "j3")}:
+        raise ValueError("V13 raw V11 local identity row coverage is incomplete")
+    group_by_key = {
+        (item.get("cell_index"), item.get("column"), item.get("state")): item
+        for item in groups
+    }
+    raw_group_by_key: dict[tuple[int, int, str], dict[str, Any]] = {}
+    expected_projected_terms = {
+        "lambda_H_p_star", "-lambda_H_delta_star", "-lambda_H_r_b_star",
+        "lambda_H_r_r_star", "lambda_H_chi", "e_lambda_H_w_star",
+    }
+    for column_index, source_column in enumerate(source_columns):
+        incident = source_column.get("incident_cell_terms")
+        if not isinstance(incident, list) or [item.get("cell_index") for item in incident] != list(CELLS):
+            raise ValueError(f"V13 independent checker raw column {column_index} cell order differs")
+        for incident_item in incident:
+            cell = int(incident_item["cell_index"])
+            common_artifacts = incident_item.get("artifacts")
+            common_states = common_artifacts.get("states") if isinstance(common_artifacts, Mapping) else None
+            if (
+                cell not in cell_arrays
+                or not isinstance(common_artifacts, Mapping)
+                or not isinstance(common_states, list)
+                or [item.get("state") for item in common_states] != ["j0", "j3"]
+            ):
+                raise ValueError(f"V13 independent checker raw cell {cell} inputs are malformed")
+            z_b = load_array(
+                common_artifacts.get("same_lu_z_b"),
+                root=report_path.parent,
+                label=f"cell{cell}/column{column_index}/same_lu_z_b",
+            )
+            for state_item in common_states:
+                state_name = str(state_item["state"])
+                inputs = state_item.get("inputs")
+                review = _task41_v11_saved_state_review_artifacts(state_item)
+                if not isinstance(inputs, Mapping):
+                    raise ValueError(f"V13 independent checker raw {cell}/{state_name} inputs are malformed")
+                loaded = {
+                    name: load_array(
+                        inputs.get(name), root=report_path.parent,
+                        label=f"cell{cell}/column{column_index}/{state_name}/{name}",
+                    )
+                    for name in ("b_i", "n_i", "t_c", "u_i")
+                }
+                saved = {
+                    name: load_array(
+                        review.get(name), root=report_path.parent,
+                        label=f"cell{cell}/column{column_index}/{state_name}/{name}",
+                    )
+                    for name in (
+                        "same_lu_z_r", "r_i", "delta_i", "delta_t", "r_b", "r_r",
+                        "E_R_t", "review_eq2_left", "review_eq2_right",
+                        "review_eq2_difference", "C_S_t",
+                    )
+                }
+                source = cell_arrays[cell]
+                raw_group = _task41_p0_v13_recompute_group_from_original_inputs(
+                    K=source["K"], G=source["G"], J=source["J"], L=source["L"],
+                    R=source["R"], S=source["S"], T=source["T"], q=source["q"],
+                    b_i=loaded["b_i"], n_i=loaded["n_i"], t_c=loaded["t_c"],
+                    u_i=loaded["u_i"], z_b=z_b, z_r=saved["same_lu_z_r"],
+                    r_i=saved["r_i"], delta_hat=saved["delta_i"],
+                    r_b_hat=saved["r_b"], r_r_hat=saved["r_r"], p_hat=saved["E_R_t"],
+                    left_hat=saved["review_eq2_left"], right_hat=saved["review_eq2_right"],
+                    eta_hat=saved["review_eq2_difference"], saved_C_S_t=saved["C_S_t"],
+                    lambda_vector=lambda_vectors[cell],
+                )
+                key = (cell, column_index, state_name)
+                raw_group_by_key[key] = raw_group
+                reported_group = group_by_key[key]
+                reported_signed = reported_group.get("signed_vector")
+                if not isinstance(reported_signed, Mapping):
+                    raise ValueError(f"V13 independent checker {key} lacks signed vectors")
+                if set(reported_signed) != set(raw_group["signed_vectors"]):
+                    raise ValueError(f"V13 independent checker {key} nine-term names differ")
+                for term_name, vector in raw_group["signed_vectors"].items():
+                    _task41_p0_v13_assert_serialized_vector_matches(
+                        reported_signed[term_name], vector, f"{key}/{term_name}"
+                    )
+                reported_projected = reported_group.get("projected_eq2_identity")
+                raw_projected = raw_group["projected_eq2_identity"]
+                if (
+                    not isinstance(reported_projected, Mapping)
+                    or not isinstance(reported_projected.get("signed_terms"), Mapping)
+                    or set(reported_projected["signed_terms"]) != expected_projected_terms
+                    or set(raw_projected["signed_terms"]) != expected_projected_terms
+                ):
+                    raise ValueError(f"V13 independent checker {key} six projection terms differ")
+                for term_name in expected_projected_terms:
+                    left = _task41_p0_v13_pair_scalar(
+                        reported_projected["signed_terms"][term_name], f"{key}/{term_name}"
+                    )
+                    right = _task41_p0_v13_pair_scalar(
+                        raw_projected["signed_terms"][term_name], f"raw {key}/{term_name}"
+                    )
+                    if not _task41_p0_v13_close_scalar(left, right, abs(left) + abs(right)):
+                        raise ValueError(f"V13 independent checker {key}/{term_name} differs from raw inputs")
+                for scalar_name in ("lhs", "rhs", "unexplained_residual"):
+                    left = _task41_p0_v13_pair_scalar(
+                        reported_projected.get(scalar_name), f"{key}/{scalar_name}"
+                    )
+                    right = _task41_p0_v13_pair_scalar(
+                        raw_projected.get(scalar_name), f"raw {key}/{scalar_name}"
+                    )
+                    if not _task41_p0_v13_close_scalar(left, right, abs(left) + abs(right)):
+                        raise ValueError(f"V13 independent checker {key}/{scalar_name} differs from raw inputs")
+                reported_trace = reported_group.get("selected_trace_row_terms")
+                if not isinstance(reported_trace, Mapping):
+                    raise ValueError(f"V13 independent checker {key} lacks trace terms")
+                for term_name, raw_value in raw_group["selected_trace_row_terms"].items():
+                    left = _task41_p0_v13_pair_scalar(
+                        reported_trace.get(term_name), f"{key}/{term_name}"
+                    )
+                    right = _task41_p0_v13_pair_scalar(raw_value, f"raw {key}/{term_name}")
+                    if not _task41_p0_v13_close_scalar(left, right, abs(left) + abs(right)):
+                        raise ValueError(f"V13 independent checker {key}/{term_name} differs from raw inputs")
+                reported_g = reported_group.get("g_attribution_terms")
+                if not isinstance(reported_g, Mapping):
+                    raise ValueError(f"V13 independent checker {key} lacks g attribution")
+                left_minus_qhjzb = _task41_p0_v13_pair_scalar(
+                    reported_g.get("minus_q_H_J_z_b_fixed_z_b"), f"{key}/-qHJzb"
+                )
+                right_minus_qhjzb = _task41_p0_v13_pair_scalar(
+                    raw_group["minus_q_H_J_z_b_fixed_z_b"], f"raw {key}/-qHJzb"
+                )
+                if not _task41_p0_v13_close_scalar(
+                    left_minus_qhjzb, right_minus_qhjzb,
+                    abs(left_minus_qhjzb) + abs(right_minus_qhjzb),
+                ):
+                    raise ValueError(f"V13 independent checker {key}/-qHJzb differs from raw inputs")
+
+    checked_rows = []
+    for column_index, column in enumerate(global_rows):
+        if column.get("column") != column_index:
+            raise ValueError("V13 independent checker global column order differs")
+        state_rows = column.get("state_rows")
+        if not isinstance(state_rows, list) or [item.get("state") for item in state_rows] != ["j0", "j3"]:
+            raise ValueError("V13 independent checker state row order differs")
+        source_column = source_columns[column_index]
+        raw_saved_y = _task41_p0_v13_pair_scalar(source_column.get("saved_y9"), "raw V11 saved y9")
+        raw_saved_g = _task41_p0_v13_pair_scalar(source_column.get("saved_g9"), "raw V11 saved g9")
+        raw_saved_d = raw_saved_y - raw_saved_g
+        saved_y = _task41_p0_v13_pair_scalar(column.get("saved_y9"), "saved y9")
+        saved_g = _task41_p0_v13_pair_scalar(column.get("saved_g_prod_actual"), "saved g9")
+        saved_d_column = _task41_p0_v13_pair_scalar(column.get("saved_original_d"), "saved d")
+        if (
+            saved_y != raw_saved_y or saved_g != raw_saved_g
+            or saved_d_column != raw_saved_d or saved_y - saved_g != saved_d_column
+        ):
+            raise ValueError("V13 independent checker saved y/g/d differs from raw V11 source")
+        for row in state_rows:
+            state = row.get("state")
+            selected = [
+                item for item in groups
+                if item.get("column") == column_index and item.get("state") == state
+            ]
+            selected.sort(key=lambda item: item["cell_index"])
+            if [item["cell_index"] for item in selected] != list(CELLS):
+                raise ValueError("V13 independent checker row cell order differs")
+            for group in selected:
+                projected = group.get("projected_eq2_identity")
+                local_terms = group.get("selected_trace_row_terms")
+                if not isinstance(projected, Mapping) or not isinstance(local_terms, Mapping):
+                    raise ValueError("V13 independent checker row lacks projected Eq2 terms")
+                rhs_terms = projected.get("signed_terms")
+                if not isinstance(rhs_terms, Mapping):
+                    raise ValueError("V13 independent checker Eq2 signed terms are missing")
+                rhs = sum(
+                    (_task41_p0_v13_pair_scalar(value, f"Eq2 {key}")
+                     for key, value in rhs_terms.items()),
+                    np.clongdouble(0),
+                ) + _task41_p0_v13_pair_scalar(
+                    projected.get("unexplained_residual"), "Eq2 residual"
+                )
+                lhs = _task41_p0_v13_pair_scalar(projected.get("lhs"), "Eq2 lhs")
+                j_w = _task41_p0_v13_pair_scalar(local_terms.get("q_H_J_w_star"), "qHJw")
+                if not _task41_p0_v13_close_scalar(lhs, rhs, abs(lhs) + abs(rhs)) or not (
+                    _task41_p0_v13_close_scalar(lhs, j_w, abs(lhs) + abs(j_w))
+                ):
+                    raise ValueError("V13 independent checker Eq2 scalar identity differs")
+            detail = row.get("d_reconstruction")
+            if not isinstance(detail, Mapping):
+                raise ValueError("V13 independent checker global d reconstruction is missing")
+            raw_groups = [raw_group_by_key[(cell, column_index, state)] for cell in CELLS]
+            local_ju_lt = [
+                _task41_p0_v13_pair_scalar(
+                    group["selected_trace_row_terms"]["q_H_local_J_u_plus_L_t"], "raw Ju+Lt"
+                )
+                for group in raw_groups
+            ]
+            local_cst = [
+                _task41_p0_v13_pair_scalar(
+                    group["selected_trace_row_terms"]["q_H_C_S_t"], "raw CSt"
+                )
+                for group in raw_groups
+            ]
+            local_jew = [
+                _task41_p0_v13_pair_scalar(
+                    group["selected_trace_row_terms"]["q_H_J_e_w"], "raw J e_w bridge"
+                )
+                for group in raw_groups
+            ]
+            adjoint_rows = [
+                group["projected_eq2_identity"]["signed_terms"] for group in raw_groups
+            ]
+            eq2_residuals = [
+                _task41_p0_v13_pair_scalar(
+                    group["projected_eq2_identity"]["unexplained_residual"], "raw Eq2 residual"
+                )
+                for group in raw_groups
+            ]
+            qh_minus_jzr = [
+                _task41_p0_v13_pair_scalar(
+                    group["selected_trace_row_terms"]["q_H_minus_J_z_r"], "raw qH(-Jzr)"
+                )
+                for group in raw_groups
+            ]
+            for field_name, raw_values in (
+                ("local_Ju_plus_Lt", local_ju_lt),
+                ("local_C_S_t", local_cst),
+                ("local_J_w_error_bridge_excluded_from_d_eval", local_jew),
+                ("projected_Eq2_unexplained_residual_by_cell", eq2_residuals),
+                ("projected_minus_J_z_r_by_cell", qh_minus_jzr),
+            ):
+                saved_values = detail.get(field_name)
+                if not isinstance(saved_values, list) or len(saved_values) != 2:
+                    raise ValueError(f"V13 independent checker {field_name} has wrong coverage")
+                for saved_value, raw_value in zip(saved_values, raw_values, strict=True):
+                    saved_scalar = _task41_p0_v13_pair_scalar(saved_value, field_name)
+                    if not _task41_p0_v13_close_scalar(
+                        saved_scalar, raw_value, abs(saved_scalar) + abs(raw_value)
+                    ):
+                        raise ValueError(f"V13 independent checker {field_name} differs from raw arrays")
+            saved_adjoint_rows = detail.get("adjoint_signed_terms_by_cell")
+            if not isinstance(saved_adjoint_rows, list) or len(saved_adjoint_rows) != 2:
+                raise ValueError("V13 independent checker saved six-term rows have wrong coverage")
+            for saved_terms, raw_terms in zip(saved_adjoint_rows, adjoint_rows, strict=True):
+                if not isinstance(saved_terms, Mapping) or set(saved_terms) != set(raw_terms):
+                    raise ValueError("V13 independent checker saved six-term names differ from raw arrays")
+                for term_name, raw_value in raw_terms.items():
+                    saved_scalar = _task41_p0_v13_pair_scalar(
+                        saved_terms[term_name], f"saved {term_name}"
+                    )
+                    raw_scalar = _task41_p0_v13_pair_scalar(raw_value, f"raw {term_name}")
+                    if not _task41_p0_v13_close_scalar(
+                        saved_scalar, raw_scalar, abs(saved_scalar) + abs(raw_scalar)
+                    ):
+                        raise ValueError(f"V13 independent checker saved {term_name} differs from raw arrays")
+            if not (
+                len(local_ju_lt) == len(local_cst) == len(local_jew)
+                == len(adjoint_rows) == len(eq2_residuals) == len(qh_minus_jzr) == 2
+            ):
+                raise ValueError("V13 independent checker local d terms have wrong coverage")
+            signed_sum = np.clongdouble(0)
+            for terms in adjoint_rows:
+                if not isinstance(terms, Mapping) or len(terms) != 6:
+                    raise ValueError("V13 independent checker six signed Eq2 terms are malformed")
+                signed_sum += sum(
+                    (_task41_p0_v13_pair_scalar(value, "signed Eq2 term")
+                     for value in terms.values()),
+                    np.clongdouble(0),
+                )
+            source_identity = identity_by_key[(column_index, state)]
+            native_trace = _task41_p0_v13_pair_scalar(
+                source_identity.get("global_native_action_row_subtracted_once"), "raw V11 N_t"
+            )
+            native_residual = _task41_p0_v13_pair_scalar(
+                source_identity.get("native_residual_row"), "raw V11 r_t"
+            )
+            eq1_difference = _task41_p0_v13_pair_scalar(
+                source_identity.get("equation_1_difference"), "raw V11 Eq1 difference"
+            )
+            saved_lu_sum = _task41_p0_v13_pair_scalar(
+                source_identity.get("sum_projected_minus_Jz_r"), "raw V11 projected -Jz_r sum"
+            )
+            raw_replayed_d = _task41_p0_v13_pair_scalar(
+                source_identity.get("d_lu_replayed_y_minus_g"), "raw V11 replayed d"
+            )
+            for field_name, raw_value in (
+                ("global_native_action_N_t_subtracted_once", native_trace),
+                ("native_residual_r_t_subtracted_once", native_residual),
+                ("saved_Eq1_difference_comparison_only_not_in_d_eval", eq1_difference),
+                ("saved_projected_minus_J_z_r_sum_comparison_only", saved_lu_sum),
+                ("replayed_d_lu_comparison_only", raw_replayed_d),
+                ("saved_original_d_y9_minus_g9", raw_saved_d),
+            ):
+                saved_scalar = _task41_p0_v13_pair_scalar(detail.get(field_name), field_name)
+                if not _task41_p0_v13_close_scalar(
+                    saved_scalar, raw_value, abs(saved_scalar) + abs(raw_value)
+                ):
+                    raise ValueError(f"V13 independent checker {field_name} differs from raw V11 source")
+            signed_terms_for_eval = [
+                {
+                    key: _task41_p0_v13_pair_scalar(value, "signed Eq2 term")
+                    for key, value in terms.items()
+                }
+                for terms in adjoint_rows
+            ]
+            recomputed_d = _task41_p0_v13_global_d_eval(
+                local_ju_lt=local_ju_lt,
+                local_cst=local_cst,
+                adjoint_signed_terms_by_cell=signed_terms_for_eval,
+                projected_eq2_residual_by_cell=eq2_residuals,
+                global_native_action=native_trace,
+                native_residual=native_residual,
+                projected_minus_j_z_r_by_cell=qh_minus_jzr,
+            )
+            reported_d = _task41_p0_v13_pair_scalar(
+                detail.get("d_eval"), "reported d_eval"
+            )
+            row_d_eval = _task41_p0_v13_pair_scalar(row.get("d_eval"), "row d_eval")
+            row_saved_d = _task41_p0_v13_pair_scalar(
+                row.get("saved_original_d"), "row saved original d"
+            )
+            row_saved_residual = _task41_p0_v13_pair_scalar(
+                row.get("d_eval_minus_saved_original_d"), "row d_eval-saved d"
+            )
+            reported_replayed_d = raw_replayed_d
+            reported_saved_d = raw_saved_d
+            saved_d_residual = recomputed_d - reported_saved_d
+            reported_saved_residual = _task41_p0_v13_pair_scalar(
+                detail.get("d_eval_minus_saved_original_d"), "reported d_eval-saved d"
+            )
+            replay_residual = recomputed_d - reported_replayed_d
+            reported_replay_residual = _task41_p0_v13_pair_scalar(
+                detail.get("d_eval_minus_replayed_d_comparison_only"),
+                "reported d_eval-replayed d",
+            )
+            expected_formula = (
+                "d_eval=sum_cells(q^H(Ju+Lt)+q^H C_S_t+q^H Jw*)"
+                "-N_t-r_t-sum_cells(q^H(-Jz_r)); "
+                "each q^H Jw* is six signed adjoint terms plus its Eq2 residual"
+            )
+            scale = sum(
+                (abs(value) for values in (
+                    local_ju_lt, local_cst, eq2_residuals, qh_minus_jzr
+                ) for value in values),
+                abs(signed_sum) + abs(native_trace) + abs(native_residual),
+            )
+            if (
+                detail.get("formula") != expected_formula
+                or not _task41_p0_v13_close_scalar(recomputed_d, reported_d, scale)
+                or not _task41_p0_v13_close_scalar(row_d_eval, recomputed_d, scale)
+                or row_saved_d != reported_saved_d
+                or not _task41_p0_v13_close_scalar(
+                    row_saved_residual, saved_d_residual, scale
+                )
+                or not _task41_p0_v13_close_scalar(
+                    saved_d_residual, reported_saved_residual, scale
+                )
+                or not _task41_p0_v13_close_scalar(
+                    replay_residual, reported_replay_residual, scale
+                )
+                or reported_saved_d != saved_d_column
+                or detail.get("denominator_used_as_gate") is not False
+            ):
+                raise ValueError("V13 independent checker d_eval arithmetic/account differs")
+            expected_denominator = (
+                np.longdouble("2225.481253487629")
+                if column_index == 0
+                else np.longdouble("2225.4807123031883")
+            )
+            if detail.get("frozen_denominator") != str(expected_denominator):
+                raise ValueError("V13 independent checker fixed denominator differs")
+            relative = np.longdouble(abs(saved_d_residual)) / expected_denominator
+            reported_relative = np.longdouble(
+                detail.get("relative_residual_to_frozen_denominator", "nan")
+            )
+            if not _task41_p0_v13_close_scalar(
+                relative, reported_relative, max(abs(relative), np.longdouble(1))
+            ):
+                raise ValueError("V13 independent checker residual ratio differs")
+            reported_g = _task41_p0_v13_pair_scalar(row.get("saved_g_prod"), "saved g_prod")
+            row_b_t = _task41_p0_v13_pair_scalar(row.get("b_t_written_once"), "b_t")
+            row_g_eval = _task41_p0_v13_pair_scalar(row.get("g_eval_wide_fixed_z_b"), "g_eval")
+            raw_b_t = np.clongdouble(b_t_by_column[column_index])
+            if row_b_t != raw_b_t:
+                raise ValueError("V13 independent checker b_t differs from donor native_rhs source")
+            row_g_terms = [
+                _task41_p0_v13_pair_scalar(
+                    raw_group_by_key[(cell, column_index, state)][
+                        "minus_q_H_J_z_b_fixed_z_b"
+                    ],
+                    f"raw cell {cell} -qHJz_b",
+                )
+                for cell in CELLS
+            ]
+            saved_row_g_terms = row.get("local_minus_EH_J_z_b_cell_order_360_then_446")
+            if not isinstance(saved_row_g_terms, list) or len(saved_row_g_terms) != 2:
+                raise ValueError("V13 independent checker reported g attribution coverage differs")
+            for saved_value, raw_value in zip(saved_row_g_terms, row_g_terms, strict=True):
+                saved_scalar = _task41_p0_v13_pair_scalar(saved_value, "reported cell -qHJz_b")
+                if not _task41_p0_v13_close_scalar(
+                    saved_scalar, raw_value, abs(saved_scalar) + abs(raw_value)
+                ):
+                    raise ValueError("V13 independent checker -qHJz_b differs from raw arrays")
+            recomputed_g = raw_b_t
+            for value in row_g_terms:
+                recomputed_g += value
+            reported_g_remainder = _task41_p0_v13_pair_scalar(
+                row.get("production_accumulation_remainder"), "production g remainder"
+            )
+            if (
+                not _task41_p0_v13_close_scalar(recomputed_g, row_g_eval, abs(recomputed_g) + abs(row_g_eval))
+                or not _task41_p0_v13_close_scalar(
+                    reported_g - recomputed_g, reported_g_remainder,
+                    abs(reported_g) + abs(recomputed_g),
+                )
+                or reported_g != raw_saved_g
+                or saved_g != raw_saved_g
+                or not _task41_p0_v13_close_scalar(
+                    reported_g, saved_g, abs(reported_g) + abs(saved_g)
+                )
+            ):
+                raise ValueError("V13 independent checker one-time b_t/g_prod reconstruction differs")
+            checked_rows.append({
+                "column": column_index,
+                "state": state,
+                "d_eval": _task41_p0_v13_pair(recomputed_d),
+                "saved_original_d": _task41_p0_v13_pair(reported_saved_d),
+                "d_eval_minus_saved_original_d": _task41_p0_v13_pair(saved_d_residual),
+                "replayed_d_comparison_only": _task41_p0_v13_pair(reported_replayed_d),
+                "d_eval_minus_replayed_d_comparison_only": _task41_p0_v13_pair(replay_residual),
+                "relative_residual_to_fixed_denominator": str(relative),
+                "global_N_t_subtracted_once": _task41_p0_v13_pair(native_trace),
+                "native_r_t_subtracted_once": _task41_p0_v13_pair(native_residual),
+                "saved_Eq1_difference_comparison_only": _task41_p0_v13_pair(eq1_difference),
+                "saved_minus_computed_projected_minus_Jz_r_comparison_only": _task41_p0_v13_pair(
+                    saved_lu_sum - sum(qh_minus_jzr, np.clongdouble(0))
+                ),
+                "J_e_w_is_diagnostic_bridge_only": _task41_p0_v13_pair(
+                    sum(local_jew, np.clongdouble(0))
+                ),
+                "g_eval_reconstructed_from_one_b_t_plus_two_cell_terms": _task41_p0_v13_pair(
+                    recomputed_g
+                ),
+                "classification": "ADJOINT_DIAGNOSTIC",
+            })
+    result = {
+        "schema": "task41.p0.v13.saved_adjoint_diagnostic_independent_check.v1",
+        "status": "COMPLETED_READ_ONLY",
+        "classification": "INDEPENDENT_V13_ADJOINT_ACCOUNTING_RECHECK_COMPLETED",
+        "diagnostic_sha256": diagnostic_sha256,
+        "candidate_report_sha256": candidate_report_sha256,
+        "consumer_contract_sha256": consumer_digest,
+        "donor_contract_sha256": donor_digest,
+        "window_sha256": window.sha256,
+        "getrs_calls": 0,
+        "persisted_lambda_packages_reused": 2,
+        "lambda_checks": {str(cell): row for cell, row in lambda_check_rows.items()},
+        "checked_global_rows": checked_rows,
+        "timing": {
+            "parent_elapsed_seconds": time.perf_counter() - parent_started,
+            "input_hash_read_seconds": input_hash_read_seconds,
+            "decimal_elapsed_seconds": None,
+            "decimal_status": "NOT_RUN_IN_READ_ONLY_CLOSEOUT",
+            "hash_time_is_inclusive_of_parent": True,
+        },
+        "scientific_qualified": False,
+        "official_result": False,
+    }
+    _task41_p0_v13_atomic_json(output_path, result)
+    return result
+
+
+
 def _task41_v11_recompute_saved_candidate_arrays(
     report: Mapping[str, Any],
     metadata: Mapping[str, Any],
@@ -11199,7 +13865,10 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--v9-saved-star-screen", action="store_true")
     mode.add_argument("--v9-failed-terminal-audit", action="store_true")
     mode.add_argument("--v11-candidate-replay-saved-check", action="store_true")
+    mode.add_argument("--v13-saved-adjoint-diagnostic", action="store_true")
+    mode.add_argument("--v13-saved-adjoint-diagnostic-check", action="store_true")
     parser.add_argument("--summary", type=Path)
+    parser.add_argument("--donor-summary-sha256")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--numerical-output", type=Path)
     parser.add_argument("--run-root", type=Path)
@@ -11224,8 +13893,124 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v9-service-receipt-sha256")
     parser.add_argument("--v11-report", type=Path)
     parser.add_argument("--v11-report-sha256")
+    parser.add_argument("--v13-diagnostic", type=Path)
+    parser.add_argument("--v13-diagnostic-sha256")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
+    if args.v13_saved_adjoint_diagnostic_check:
+        if (
+            args.summary is None
+            or args.donor_summary_sha256 is None
+            or args.consumer_contract is None
+            or args.consumer_contract_sha256 is None
+            or args.v11_report is None
+            or args.v11_report_sha256 is None
+            or args.v13_diagnostic is None
+            or args.v13_diagnostic_sha256 is None
+            or args.input is not None
+            or args.saved_output_continuation_input is not None
+            or args.saved_b0_evidence_audit
+            or args.saved_b0_y_g_comparison
+            or args.v9_saved_star_screen
+            or args.v9_failed_terminal_audit
+            or any(value is not None for value in (
+                args.manifest, args.numerical_output, args.run_root,
+                args.mesh_actual_exact_report, args.mesh_actual_exact_report_sha256,
+                args.v8_report, args.v8_report_sha256,
+                args.v8_checker_result, args.v8_checker_result_sha256,
+                args.v6_report, args.v6_report_sha256,
+                args.v9_report, args.v9_report_sha256,
+                args.v9_summary, args.v9_summary_sha256,
+                args.v9_service_receipt, args.v9_service_receipt_sha256,
+            ))
+        ):
+            parser.error(
+                "V13 independent closeout check requires donor and consumer contracts, "
+                "hash-bound V11 report and primary V13 diagnostic"
+            )
+        try:
+            result = check_task41_p0_v13_saved_adjoint_diagnostic_independently(
+                diagnostic_path=args.v13_diagnostic,
+                diagnostic_sha256=args.v13_diagnostic_sha256,
+                donor_summary_path=args.summary,
+                donor_summary_sha256=args.donor_summary_sha256,
+                donor_contract_path=args.contract,
+                donor_contract_sha256=args.contract_sha256,
+                consumer_contract_path=args.consumer_contract,
+                consumer_contract_sha256=args.consumer_contract_sha256,
+                candidate_report_path=args.v11_report,
+                candidate_report_sha256=args.v11_report_sha256,
+                output_path=args.output,
+                repo_root=root,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError) as exc:
+            result = {
+                "schema": "task41.p0.v13.saved_adjoint_diagnostic_independent_check.v1",
+                "status": "INCOMPLETE",
+                "classification": "INDEPENDENT_V13_ADJOINT_ACCOUNTING_RECHECK_INCOMPLETE",
+                "official_result": False,
+                "errors": [f"{type(exc).__name__}: {exc}"],
+                "raw_evidence_retained": True,
+            }
+            output_path = args.output.resolve()
+            if not output_path.exists() and output_path.is_relative_to((root / "results").resolve()):
+                _task41_p0_v13_atomic_json(output_path, result)
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("status") == "COMPLETED_READ_ONLY" else 2
+    if args.v13_saved_adjoint_diagnostic:
+        if (
+            args.summary is None
+            or args.consumer_contract is None
+            or args.consumer_contract_sha256 is None
+            or args.v11_report is None
+            or args.v11_report_sha256 is None
+            or args.input is not None
+            or args.saved_output_continuation_input is not None
+            or args.saved_b0_evidence_audit
+            or args.saved_b0_y_g_comparison
+            or args.v9_saved_star_screen
+            or args.v9_failed_terminal_audit
+            or any(value is not None for value in (
+                args.manifest, args.numerical_output, args.run_root,
+                args.mesh_actual_exact_report, args.mesh_actual_exact_report_sha256,
+                args.v8_report, args.v8_report_sha256,
+                args.v8_checker_result, args.v8_checker_result_sha256,
+                args.v6_report, args.v6_report_sha256,
+                args.v9_report, args.v9_report_sha256,
+                args.v9_summary, args.v9_summary_sha256,
+                args.v9_service_receipt, args.v9_service_receipt_sha256,
+            ))
+        ):
+            parser.error(
+                "V13 saved adjoint diagnostic requires donor --contract, --summary, "
+                "consumer contract, and hash-bound --v11-report"
+            )
+        try:
+            result = check_task41_p0_v13_saved_adjoint_diagnostic(
+                donor_summary_path=args.summary,
+                donor_contract_path=args.contract,
+                donor_contract_sha256=args.contract_sha256,
+                consumer_contract_path=args.consumer_contract,
+                consumer_contract_sha256=args.consumer_contract_sha256,
+                candidate_report_path=args.v11_report,
+                candidate_report_sha256=args.v11_report_sha256,
+                output_path=args.output,
+                repo_root=root,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError) as exc:
+            result = {
+                "schema": "task41.p0.v13.saved_adjoint_operation_graph.v1",
+                "status": "INCOMPLETE",
+                "classification": "ADJOINT_DIAGNOSTIC_INCOMPLETE",
+                "official_result": False,
+                "errors": [f"{type(exc).__name__}: {exc}"],
+                "raw_evidence_retained": True,
+            }
+            output_path = args.output.resolve()
+            if not output_path.exists() and output_path.is_relative_to((root / "results").resolve()):
+                _task41_p0_v13_atomic_json(output_path, result)
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("status") == "COMPLETED_ADJOINT_DIAGNOSTIC" else 2
     if args.v11_candidate_replay_saved_check:
         if (
             args.summary is None
