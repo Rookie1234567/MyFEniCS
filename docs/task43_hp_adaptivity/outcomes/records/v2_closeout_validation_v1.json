@@ -1,0 +1,93 @@
+{
+  "schema": "task43.v2.closeout_validation.v1",
+  "status": "PASS_NO_NEW_BROKEN_LINKS; REGISTRY_MARKDOWN_5_PASSED",
+  "source_head_before_final_document_commit": "a879554d7149bef1187b31bd731b09629f33fef3",
+  "checks": {
+    "document_contract": {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/document_contract_check.py",
+      "actual_shell_invocation": "mkdir -p benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1 && source scripts/activate_task40_phi90_pord64.sh && python benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/document_contract_check.py | tee benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/document_contract_check.stdout.json",
+      "script_path": "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/document_contract_check.py",
+      "script_sha256": "fb626a71b4a0541f8111f8cc38d7d46d5cfce2a5e045f473504fd79f0fe67814",
+      "stdout_path": "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/document_contract_check.stdout.json",
+      "stdout_sha256": "2606de20c9f3301081bc79773e44a9cc141ddfe45dd2c2d98ade786db50276d4",
+      "result": "PASS_NO_NEW_BROKEN_LINKS",
+      "checked_documents": 6,
+      "local_links_checked": 325,
+      "table_rows_checked": 1485,
+      "table_cell_count_mismatches": 0,
+      "hash_bound_artifacts_checked": 22,
+      "json_contract": "compact parsed; formal watchdog subtotal recomputed from three attempts; support wall subtotals and original restore elapsed validated against raw records",
+      "commit_identity": "14 full SHA values in response and V2 compact exactly match git log from review base 7458fadccde01d37ed93187ebe4c39177783d60b to pre-final-document HEAD; all SHA length 40",
+      "inherited_link_note": {
+        "path": "docs/development_model_registry.md",
+        "target": "../tmp/task40_d13_y2_scale_homogeneous_launch_v1/terminal_receipt_20261017.json",
+        "line_at_pre_document_head": 1782,
+        "present_before_this_document_update": true,
+        "classification": "inherited unresolved external temporary-path link; no newly introduced local broken links"
+      }
+    },
+    "registry_markdown_pytest": {
+      "command": "set -o pipefail; mkdir -p benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1; source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py 2>&1 | tee benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/registry_markdown_pytest.log",
+      "exit_code": 0,
+      "result": "5 passed in 0.06s",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/registry_markdown_pytest.log",
+      "log_sha256": "d8723ee001feaaf2086b9ce1b811b05cd7fcaa5a6810308b70293e0529ba97f7",
+      "scope": "existing registry Markdown regression after the final registry text edits; no PDE"
+    },
+    "repository_full_pytest": {
+      "status": "not rerun for documentation-only closeout",
+      "prior_result": "one collection skip, eight collection errors, zero test bodies executed; preserved in final_test_attempts_v1.json and Q02 record",
+      "ci_claim": false
+    },
+    "fresh_formal_pde_after_final_profile_fix": false,
+    "static_source_validation": {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && ruff check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py && ruff format --check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py && python -m compileall -q benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py",
+      "exit_code": 0,
+      "result": "Ruff passed; two files already formatted; compileall passed; no pytest/PDE.",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/a2_profile_fix_static.log",
+      "log_sha256": "a3b39e82c315b070b1332e0daff197afe07136fa93d56379179c01d61c55b4ec",
+      "source_sha256": {
+        "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "e973262d6b1cd7190f0a688700f15dee28369baa0c951730088d3c009ee1ed0b",
+        "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "e2b68b740fa423c257dae4380bf3e4577e09d9a255d75fc9877af929ed569996"
+      }
+    }
+  },
+  "documents_and_compact_sha256": {
+    "docs/development_model_registry.md": "f8a9deb9573126d476a834d646372c36f9514fa524eec1baac9071e3ddc6d3b3",
+    "docs/development_progress.md": "cf0ea6fdcc1664721cbb37c3e43a713fd502b51de61329a9d2624ce41167c37c",
+    "docs/task43_hp_adaptivity/README.md": "1aaff51e609f879dae524351d3c3e3ea7c64fc126ec4a3ff51cf60ee3298cd85",
+    "docs/task43_hp_adaptivity/response_v2.md": "db1db4dc3d17e418704b74002419be723fda458689d36f082e623e206cc9b9ed",
+    "docs/task43_hp_adaptivity/outcomes/summary.md": "6b983e4bc3eff89a12ea2c6c69dedd2433ddb75d2ef9601134b61045ae32b861",
+    "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md": "4b558b870e46aa1b5f345b82254395c28601880aca3ded68c0b01e065993c03a",
+    "docs/task43_hp_adaptivity/outcomes/records/v2_formal_attempts_and_profile_fix_v1.json": "6bf88ad681ed93e079867bd3083573665f357085c3339dfb7e7658869d7906e8"
+  },
+  "source_commit_chain_since_review_base": {
+    "base": "7458fadccde01d37ed93187ebe4c39177783d60b",
+    "commit_count": 14,
+    "sequence_sha256": "7c8ef1919bb4e69168b7fbe750641762cb07105c98b425efe1271d2119319ac8",
+    "commits": [
+      "fad2df0fb5c15ab1e14fabddf262a772c126cda5",
+      "822ebcf12f9277d1e5b4d88b1e8a1112b80dee3f",
+      "ed39637fd56976d91353640ad5c984baefff2850",
+      "5d056b28ff61e5f3a2bac58431ea0b31531bdb2d",
+      "e7c12e03cb32cb4ab183186bd153b47c79807faf",
+      "5f466d69b777539b42d1e35f2777936d88c19d78",
+      "7590d7ea8945700ee684481fe2f201237142c682",
+      "68ed596bc354ce3e4d33e3a2f55c808c91100865",
+      "ed95df3370973c2f06168ed938666250587ece6d",
+      "2d775c9c00847f80eda7d09bd120be218603691e",
+      "647a85afeff121248cdbeecb3700fad93b8ee11d",
+      "a3657ca1f82fbac0b18aead39ad78285b0887c38",
+      "5b23aabe839effc1cb18f8a31820ea83219ec8d4",
+      "a879554d7149bef1187b31bd731b09629f33fef3"
+    ],
+    "final_document_commit_reported_out_of_band": true
+  },
+  "independent_root_reviews": {
+    "a1_q_terminal_audit_sha256": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf",
+    "a2_q_attempt1_terminal_audit_sha256": "d42ec693f3a88600d53d12c04ab733b801a6255b8025f56b2bcf3e4b5a6f16a5",
+    "a2_q_attempt2_terminal_audit_sha256": "6350cb416018cfa1a94cb82710868548f94e351403267399a66219386333f70b",
+    "a2_profile_fix_code_review_sha256": "9a09c786b7af42f4965f1e6ab32eb94a8d3cb4660314e7efd11ed4dc38a0a754",
+    "a2_profile_mismatch_replay_sha256": "6ab59492571b8b01f36d2b10ea26e93cb78fd40cea299925fd117fd42269eaa9"
+  }
+}

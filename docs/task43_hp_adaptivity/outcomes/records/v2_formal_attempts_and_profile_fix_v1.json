@@ -1,0 +1,315 @@
+{
+  "schema": "task43.v2.formal_attempts_and_profile_fix.v1",
+  "status": "PARTIAL_ENGINEERING_FAILURES_NO_V2_NUMERICAL_CONCLUSION",
+  "task_branch": "task43_hp_adaptivity",
+  "base_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+  "source_head_after_component_fix": "a879554d7149bef1187b31bd731b09629f33fef3",
+  "official_result": false,
+  "attempt_budget": {
+    "maximum_total": 6,
+    "formal_dispatches": 3,
+    "A1_q_started": 1,
+    "A1_R_started": 0,
+    "A2_q_started": 2,
+    "A2_R_started": 0,
+    "B_started": 0,
+    "C_started": 0,
+    "A2_quota": "2/2 exhausted",
+    "A1_pair": "closed_unqualified; A1_R prerequisite absent",
+    "A2_R": "not_run; one slot was explicitly reassigned once to the authorized A2_q retry",
+    "B_and_C": "locked_by_unqualified_A1_and_no_usable_candidate",
+    "within_A2_R_slot_reallocated_once": true,
+    "no_cross_group_or_further_redistribution": true
+  },
+  "formal_attempts": [
+    {
+      "phase": "A1_q",
+      "attempt": 1,
+      "classification": "WORKER_FAILED_ENGINEERING_OBSERVER_SERIALIZATION_UNQUALIFIED_ENDPOINT",
+      "source_head": "ed95df3370973c2f06168ed938666250587ece6d",
+      "selected_source_count": 43,
+      "source_post_hashes_match_pre": true,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/summary.json",
+        "sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+        "whole_wall_seconds": 4882.447373806033,
+        "leader_exit_code": 1,
+        "launcher_exit_code": 2,
+        "sample_count": 3930,
+        "sampled_simultaneous_process_tree_rss_peak_bytes": 9708847104,
+        "sampled_task_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "failure": "mpi4py could not pickle nested MappingProxyType observer metadata during the result broadcast; this is a transport/serialization failure, not a numerical method failure.",
+      "root_terminal_audit": {
+        "path": "benchmarks/artifacts/task43/v2_root_audit/a1_q_terminal_audit.json",
+        "sha256": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf"
+      },
+      "partial_saved_observations": {
+        "audit_path": "benchmarks/artifacts/task43/v2_root_audit/a1_q_partial_modal_diagnostics.json",
+        "audit_sha256": "25b421d85b77c0059ffcedeba5cad96e78be15a93384c0b6b0200802dd9c0c3a",
+        "scope": "612 complete R13 modal rows and saved material-volume values; not an endpoint qualification",
+        "old_R10_to_primary_max_channel_power_delta": 8.184619648687885e-12,
+        "old_R10_to_primary_max_amplitude_group_delta": 8.2694173937e-12,
+        "primary_to_extra_max_channel_power_delta": 2.5368596113e-14,
+        "primary_to_extra_max_amplitude_group_delta": 3.457149372e-14,
+        "primary_and_extra_energy_closure_abs": [
+          4.103828388224429e-12,
+          4.049649504622721e-12
+        ],
+        "missing": [
+          "primary q8/q10 field samples",
+          "persisted primary and extra independent A6 reports",
+          "completed endpoint record and official gate"
+        ]
+      }
+    },
+    {
+      "phase": "A2_q",
+      "attempt": 1,
+      "classification": "WORKER_FAILED_WATCHDOG_PHASE_PATH_WIRING_BEFORE_MESH_NO_NUMERICAL_RESULT",
+      "source_head": "a3657ca1f82fbac0b18aead39ad78285b0887c38",
+      "selected_source_count": 60,
+      "input_count": 34,
+      "source_and_input_post_hashes_match_pre": true,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/summary.json",
+        "sha256": "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+        "worker_log_sha256": "c720a66ddd9db53c942bd69c0f9256a61ee9755dc8f049d3c3ede81c12f8f44b",
+        "whole_wall_seconds": 18.740401392802596,
+        "leader_exit_code": 1,
+        "launcher_exit_code": 2,
+        "sample_count": 15,
+        "sampled_simultaneous_process_tree_rss_peak_bytes": 190795776,
+        "sampled_task_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "failure": "The native runner required PHYSICAL_WATCHDOG_PHASE_PATH, which the first wrapper did not pass. It exited before mesh construction or PDE work.",
+      "numeric_output_files": [],
+      "root_terminal_audit": {
+        "path": "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt1_terminal_audit.json",
+        "sha256": "d42ec693f3a88600d53d12c04ab733b801a6255b8025f56b2bcf3e4b5a6f16a5"
+      }
+    },
+    {
+      "phase": "A2_q",
+      "attempt": 2,
+      "classification": "WORKER_FAILED_NATIVE_PROFILE_METADATA_BINDING_BEFORE_MESH_NO_NUMERICAL_RESULT",
+      "source_head": "5b23aabe839effc1cb18f8a31820ea83219ec8d4",
+      "selected_source_count": 60,
+      "input_count": 42,
+      "source_and_input_post_hashes_match_pre": true,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/summary.json",
+        "sha256": "7a4fb9e3caa0c79ba97e928f494953abf4ce8c1afee89fb0308a22d61716f894",
+        "worker_log_sha256": "bd339a7bc331d93458d55459ff1e92a6efc44f3d6a34081df4b4bde172fbf804",
+        "workflow_phase_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/workflow_phase.json",
+        "workflow_phase_sha256": "93506415a8fd1993c77d2ffa393046c9e6f2eb5d9ce511ba0e8aff423ce4ac78",
+        "native_summary_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/run/p6_condensed_direct_summary.json",
+        "native_summary_sha256": "4687d48da452822b519ba7c57d12233b3d91a89e6b7510cbcd3336f63e473646",
+        "worker_abi_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/worker_abi_preflight.json",
+        "worker_abi_sha256": "72f7e78909cbf40076fe7e1c378c12a4b617783a66d86fed1b76b4470da6075c",
+        "launch_identity_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/launch_identity.json",
+        "launch_identity_sha256": "20c6b681db729f2a983f2316e300f7716c7d8239a1e5bb18fb6bc52146f2d835",
+        "whole_wall_seconds": 13.984614439308643,
+        "leader_exit_code": 1,
+        "watchdog_and_launcher_exit_code": 2,
+        "sample_count": 12,
+        "sampled_simultaneous_process_tree_rss_peak_bytes": 190918656,
+        "sampled_task_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "source_postcheck_exit_code": 0,
+        "input_postcheck_exit_code": 0
+      },
+      "failure": "The immutable Y6_1 resolved profile omitted component_options.directional_mesh_comparison.display_label, while the current profile facts include D15-Y6-1. The original native validator rejected this before mesh construction; no numerical output was produced.",
+      "raw_resolved_config": {
+        "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+        "sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc"
+      },
+      "root_profile_replay": {
+        "path": "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt2_profile_mismatch_replay.json",
+        "sha256": "6ab59492571b8b01f36d2b10ea26e93cb78fd40cea299925fd117fd42269eaa9",
+        "only_recursive_leaf_difference": "/component_options/directional_mesh_comparison/display_label",
+        "in_memory_only_label_normalization_passed_original_validator": true,
+        "numeric_resource_and_solver_facts_changed": false,
+        "mesh_or_pde_work": false
+      },
+      "root_terminal_audit": {
+        "path": "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt2_terminal_audit.json",
+        "sha256": "6350cb416018cfa1a94cb82710868548f94e351403267399a66219386333f70b"
+      }
+    }
+  ],
+  "formal_watchdog_whole_wall_total_seconds": 4915.1723896381445,
+  "formal_watchdog_cost_scope": "math.fsum of only the three dispatched formal watchdog whole-wall durations above; excludes support checks, unmonitored work, tests, field restoration, and root audit scripts",
+  "post_fix_validation": {
+    "commit": "a879554d7149bef1187b31bd731b09629f33fef3",
+    "files": {
+      "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "e973262d6b1cd7190f0a688700f15dee28369baa0c951730088d3c009ee1ed0b",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "e2b68b740fa423c257dae4380bf3e4577e09d9a255d75fc9877af929ed569996"
+    },
+    "change": "For the exact bound Y6_1 input only, normalize a missing display_label to D15-Y6-1 on an in-memory copy, verify every other full profile fact unchanged, then call the existing native _validate_resolved_profile. Original input bytes and default native validation remain unchanged.",
+    "helper_regression": {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_native_p6_diagnostic_helpers.py",
+      "result": "26 passed in 0.96s",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/pytest.log",
+      "log_sha256": "93dea898db3662b3e6019a6f2e1e42a3a272ef007613122cf73b8f859d7c087f"
+    },
+    "actual_read_only_frozen_input_preflight": {
+      "scope": "_load_a2_q_retry_authorization() plus _validate_frozen_inputs('A2_q'); does not call runner, construct mesh, or solve",
+      "result": "original native validator passed after missing-label-only in-memory normalization; numerical/resource/solver profile facts unchanged; formal_model_started=false",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/actual_frozen_input_preflight_20261024T054541Z.log",
+      "log_sha256": "decb239933873af944d19243d1c020f5fba6bc9a426f26e45e834b96e69e8e8b",
+      "exit_code": 0,
+      "resolved_config_sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc"
+    },
+    "root_profile_mismatch_replay": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt2_profile_mismatch_replay.json",
+      "sha256": "6ab59492571b8b01f36d2b10ea26e93cb78fd40cea299925fd117fd42269eaa9",
+      "scope": "original missing-label defect replay; it is distinct from the later metadata fix validation"
+    },
+    "root_profile_fix_code_review": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/a2_profile_fix_code_review.json",
+      "sha256": "9a09c786b7af42f4965f1e6ab32eb94a8d3cb4660314e7efd11ed4dc38a0a754",
+      "scope": "independent source and hash review of the local fix plus saved test/preflight logs; no root test rerun and no fresh PDE"
+    },
+    "fresh_pde_after_fix": "not_run; no attempt remains authorized",
+    "final_static_check": {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && ruff check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py && ruff format --check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py && python -m compileall -q benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py",
+      "actual_shell_invocation": "set -o pipefail; source scripts/activate_task40_phi90_pord64.sh && { ruff check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py && ruff format --check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py && python -m compileall -q benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py && printf 'compileall passed\\n'; } 2>&1 | tee benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/a2_profile_fix_static.log",
+      "exit_code": 0,
+      "result": "Ruff check passed; both files already formatted; compileall passed.",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/a2_profile_fix_static.log",
+      "log_sha256": "a3b39e82c315b070b1332e0daff197afe07136fa93d56379179c01d61c55b4ec",
+      "source_sha256": {
+        "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "e973262d6b1cd7190f0a688700f15dee28369baa0c951730088d3c009ee1ed0b",
+        "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "e2b68b740fa423c257dae4380bf3e4577e09d9a255d75fc9877af929ed569996"
+      },
+      "scope": "Static validation only; no pytest, runner, mesh, or PDE."
+    }
+  },
+  "stage1_evidence": {
+    "gate_path": "docs/task43_hp_adaptivity/outcomes/records/stage1_gate_v2.json",
+    "q_records_preserved": true,
+    "Q01_old_field_replay": "saved sample arrays and original records only; no coefficient resampling, no new A_volume integration, no fresh full operator/A6",
+    "Q02_full_repository_collection": "retained collection blockers; full test bodies did not execute; direct/core regressions are scoped and not a full-suite pass",
+    "Q03_overlay": "66-file hash/import/157-node collection closure only; no test bodies or numeric execution; new native A2 adapter is outside this overlay proof",
+    "Q04_historical_watchdogs": {
+      "inventory_path": "docs/task43_hp_adaptivity/outcomes/records/completed_watchdog_cost_inventory_v2.json",
+      "sha256": "f6ec7bd31ccee9b027de4c4bc3c1e6879b63b589a0c6fd82e983ce3d58eb3f30",
+      "root_cost_audit_path": "benchmarks/artifacts/task43/v2_root_audit/cost_ledger_audit.json",
+      "root_cost_audit_sha256": "18cf21ea4da9ee6e173a6b4a12f24a01ef8cb0fd1d9d69cbe31fc57ab44f00d4",
+      "summary_count": 56,
+      "whole_wall_seconds": 63340.73598930752,
+      "R8_partial_window_seconds": 3109.3891972089186
+    },
+    "Q05_freeze_timing": "contract hash was in pre-run snapshot; strict ordering before first candidate is not independently proven",
+    "Q06_p3": "two nodes tested across 8 D4 orientations and 256 oriented-child combinations",
+    "Q07_R8": "partial resource exception is bound only to exact R8 run identity; V1 inventory unchanged",
+    "Q08_registry_markdown": "two attempts retained; latest existing regression 5 passed in 0.11s"
+  },
+  "commit_history_since_7458_before_final_docs": [
+    "fad2df0fb5c15ab1e14fabddf262a772c126cda5",
+    "822ebcf12f9277d1e5b4d88b1e8a1112b80dee3f",
+    "ed39637fd56976d91353640ad5c984baefff2850",
+    "5d056b28ff61e5f3a2bac58431ea0b31531bdb2d",
+    "e7c12e03cb32cb4ab183186bd153b47c79807faf",
+    "5f466d69b777539b42d1e35f2777936d88c19d78",
+    "7590d7ea8945700ee684481fe2f201237142c682",
+    "68ed596bc354ce3e4d33e3a2f55c808c91100865",
+    "ed95df3370973c2f06168ed938666250587ece6d",
+    "2d775c9c00847f80eda7d09bd120be218603691e",
+    "647a85afeff121248cdbeecb3700fad93b8ee11d",
+    "a3657ca1f82fbac0b18aead39ad78285b0887c38",
+    "5b23aabe839effc1cb18f8a31820ea83219ec8d4",
+    "a879554d7149bef1187b31bd731b09629f33fef3"
+  ],
+  "interpretation": "The three V2 full-run dispatches ended before all required endpoint gates. The A1 partial modal deltas are not a q-qualification, A2 has no measured q/R perturbation, and the metadata fix only validates component/preflight compatibility. These engineering failures do not establish that the h/p method failed or passed.",
+  "support_work": {
+    "aggregation_policy": "Support work is itemized by source record. Do not add unmonitored work or support checks to formal_attempts or report a total campaign wall time.",
+    "legacy_r10_saved_field_resampling": {
+      "record_path": "docs/task43_hp_adaptivity/outcomes/records/v2_legacy_r10_resampling_attempts_v1.json",
+      "record_sha256": "22346bc8426213ed81aa17647da224d38e4648742b16a5aa33ba532bed090d46",
+      "formal_model_attempts": 0,
+      "workflow_attempts": 3,
+      "whole_watchdog_wall_subtotal_seconds": 152.32824470987543,
+      "scope": "Saved R10 coefficient recovery and q8/q10 field resampling; includes two preflight failures and one completed postprocessing workflow; not PDE solves."
+    },
+    "stage1_post_selection_restore_workflow": {
+      "summary_path": "benchmarks/artifacts/task43/post_selection_restore_attempt1/watchdog/summary.json",
+      "summary_sha256": "075c2d9dbc19a0d45dd069288723d6af1806fcc43256d18118c02c41bb05d8b6",
+      "whole_watchdog_wall_seconds": 166.96172243729234,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "scope": "One actual restore workflow covering Y5_1, Y3 and Y3_2; value copied from its original summary, not derived from another total."
+    },
+    "stage1_old_saved_field_joint_replay": {
+      "summary_path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/summary.json",
+      "summary_sha256": "2a28af1c13fc8423a15ba123c883ab5eb0fa6dd8ce7b41cbafb1136a7b02f95b",
+      "root_raw_audit_path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/root_post_selection_joint_raw_audit.json",
+      "root_raw_audit_sha256": "828a340e3be1f3078c5d64fe82767c14d0a77a35ab469bb6fdeeb611bc56766c",
+      "whole_watchdog_wall_seconds": 46.21374210854992,
+      "formal_model_attempts": 0,
+      "scope": "Stored sample replay and raw observable audit; A_volume reused from original records; no coefficient resampling, new volume integration, full operator application or fresh A6."
+    },
+    "stage1_collection_and_component_ledgers": [
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/q02_collection_and_abi_v2.json",
+        "sha256": "0bf9cd88cf08a185d17489cc99eb98e376d1783dc577ab36fc39bb5bad40330e",
+        "scope": "Original full-pytest and clean tracked collection blockers, ABI localization, and bounded direct-path regressions."
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/q06_q07_component_validation_v2.json",
+        "sha256": "c7339611a127971f274954878baecd60f289031f970e6b9e4c958f75d2fc01e8",
+        "scope": "p3 D4/oriented-child tests and exact-R8 reporting exception tests."
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/stage1_gate_v2.json",
+        "sha256": "2c3c6e65873d83b05b26a292a81494c95808bf9945301089f2bd9649a546c414",
+        "scope": "Root-reviewed Q01-Q08 gate and raw evidence references."
+      }
+    ],
+    "supporting_failures": [
+      {
+        "kind": "frozen_input_identity_preflight_support_failure",
+        "record_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/failed_frozen_input_identity_preflight.json",
+        "record_sha256": "730be5bf0a09985866ebf82c2bca9366e3bcccafbc225abdb0e7ca38e614d8fb",
+        "captured_output_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/failed_frozen_input_identity_preflight_captured_output.txt",
+        "captured_output_sha256": "31548489de9120d46c6c1490298f4000d29ced749017b585f9f3843c5c783800",
+        "formal_model_attempts": 0,
+        "watchdog_wall_seconds": null,
+        "wall_status": "not_measured",
+        "scope": "Support preflight used an incorrect restore_identity_record field; the path/hash helper was fixed and covered before any model run."
+      },
+      {
+        "kind": "sandbox_pmix_preflight_blocker",
+        "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/final_path_fix_preflight_20261024T053841Z_final.stdout.log",
+        "log_sha256": "595c6a72618d90ab232509a1c18237f67823ba9ef20911d5f7bdac41701f19dd",
+        "formal_model_attempts": 0,
+        "watchdog_wall_seconds": null,
+        "wall_status": "not_measured",
+        "scope": "Sandbox PMIx listener socket initialization failed; later qualified-host read-only preflight succeeded."
+      },
+      {
+        "kind": "early_clean_fixture_test_failure",
+        "record_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_retry_wiring_validation.json",
+        "record_sha256": "2e8fc4e905554b92225df6403b7e5424f905b8e574e394dd3c1e154d5f0b737a",
+        "formal_model_attempts": 0,
+        "result": "35 passed, 1 failed in 51.54s; NameError: identity_path was not defined.",
+        "raw_output_status": "Console output observed but not saved as a raw log; corrected final reruns have saved path and hashes in the same record.",
+        "wall_status": "pytest-reported duration only; no watchdog wall measured."
+      }
+    ],
+    "profile_fix_support_validation": {
+      "helper_pytest_log_path": "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/pytest.log",
+      "helper_pytest_log_sha256": "93dea898db3662b3e6019a6f2e1e42a3a272ef007613122cf73b8f859d7c087f",
+      "helper_pytest_result": "26 passed in 0.96s; clean fixtures, not actual legacy input replay.",
+      "actual_read_only_preflight_log_path": "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/actual_frozen_input_preflight_20261024T054541Z.log",
+      "actual_read_only_preflight_log_sha256": "decb239933873af944d19243d1c020f5fba6bc9a426f26e45e834b96e69e8e8b",
+      "root_code_review_path": "benchmarks/artifacts/task43/v2_root_audit/a2_profile_fix_code_review.json",
+      "root_code_review_sha256": "9a09c786b7af42f4965f1e6ab32eb94a8d3cb4660314e7efd11ed4dc38a0a754",
+      "fresh_pde": "not_run"
+    }
+  }
+}

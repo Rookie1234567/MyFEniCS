@@ -6,8 +6,8 @@
 |---|---|---|
 | G0 身份/环境 | native complex128/int64、MPI1/线程1、CPU1；正式记录分别绑定实际source/ABI/command | R8 supervisor资源终态与h1辅助ABI覆盖缺口单列，不能泛称所有provenance无条件PASS |
 | G1 可复现空间／G2 h/p闭环 | 真实场驱动9次接受更新；p3–6变阶及one-level局部h/周期/悬挂的已验组件、完整恢复、独立原方程A6及612已验；level2与跨h转移未资格化 | [最后接受transition9](records/round9_selection_transition9_v1.json)；中间接受不代表最终空间精度 |
-| 最后接受状态R9 | FE110472；η_G=3.995683423e−5，J∞=4.065061945；对Y6_1冻结比较的top(0,0,s)=4.065061945e−6、bottom(0,0,s)=2.148245071e−6均超1e−6；holdout另判 | accepted9冻结，不以R10替换 |
-| 未接受R10诊断 | 自然到180格全p6、FE118800；G改善8.412900702e−6<ε_G9.088158797e−6，故不产生transition10 | 对Y6_1的自身精度另判：仅top(0,0,s)功率差2.837172688e−6超1e−6，另611通道过；[拒绝证据](records/round10_rejected_candidate_v1.json) |
+| 最后接受状态R9 | FE110472；η_G=3.995683423e−5，J∞=4.065061945；相对Y6_1参考，top/bottom `(0,0,s)`功率绝对差为4.065061945e−6/2.148245071e−6，均超1e−6；holdout另判 | accepted9冻结，不以R10替换 |
+| 未接受R10诊断 | 自然到180格全p6、FE118800；G改善8.412900702e−6<ε_G9.088158797e−6，故不产生transition10 | 对Y6_1的自身精度另判：仅top `(0,0,s)`功率绝对差2.837172688e−6超1e−6，另611通道过；[拒绝证据](records/round10_rejected_candidate_v1.json) |
 | 真实h动作 | 初始父状态的600叶p3 h1重试完成；A6=8.745351252e−10，η=.245641161、J=300895.081，空间精度未达 | 全任务第14次求解尝试，属于原h1谱系的资格重试，不修改transition1；[真实h记录](records/h1_real_action_qualification_v1.json) |
 | G3 独立后验验证 | q8/q10九对完成，R9/R10对Y5_1均仍FAIL；以Y3为reference的R10对照单对PASS，Y3/Y3_2本身对Y6_1均FAIL；全原数组已独审 | 六场原场比较，无新PDE、无新accepted状态 |
 | 更少DoF与同精度成本 | 尚未完整证明 | R9比实际控制237600 FE少53.505%；R10少50%但未接受；单看规模或两场接近不能证明相同精度。任务书要求比较同精度全过程成本，但不要求成本必须获胜 |
@@ -207,6 +207,26 @@ q8→q10的全部九组归一指标变化最大为4.09006162e-13倍最终容差�
 | 组件与成本边界 | [G1](records/g1_components_v1.json)、[36格后端同问题资格](records/direct_factor_backend_component_v1.json)、[零载荷投影修复](records/sparse_zero_skip_component_v1.json) |
 | 审阅交付 | [response](../response_v1.md)、[依赖组manifest](selective_merge_manifest.md)、[测试compact](records/final_test_attempts_v1.json)；PARTIAL/CONTROLLED_NEGATIVE，等待ChatGPT外部审阅，未获merge approval |
 
+## V2诊断尝试与最终收口
+
+Stage1 Q01–Q08工程补账后，按冻结V2计划启动了3次正式诊断。三次均在取得所有端点资格证据前以工程错误结束；它们不能解释为h/p方法数值失败，也没有给出完整q/R扰动结论。三份原始watchdog与root审计保留在[V2正式尝试compact](records/v2_formal_attempts_and_profile_fix_v1.json)中。
+
+| 诊断端点 | 实际结果 | 原始观测和具体缺项 |
+|---|---|---|
+| A1_q attempt1 | worker在结果广播时失败；不是数值方法失败 | watchdog wall 4,882.447373806033s，采样进程树RSS峰9,708,847,104B、task-tree swap峰0、3,930个样本、后代清理。observer含嵌套`MappingProxyType`，mpi4py无法pickle。saved 612-modal比较有很小差值，但缺primary场样本和primary/extra独立A6持久记录，故endpoint不合格。 |
+| A2_q attempt1 | 缺watchdog phase-path参数，在网格/PDE前退出 | watchdog wall 18.740401392802596s、RSS峰190,795,776B、task swap0、15个样本；60个源码/34个输入前后hash一致；数值输出为空。 |
+| A2_q attempt2 | 原生resolved-profile元数据检查在网格前拒绝 | watchdog wall 13.984614439308643s、RSS峰190,918,656B、task swap0、12个样本；60个源码/42个输入前后hash一致，真实phase与ABI门通过。旧Y6_1文件只缺`display_label=D15-Y6-1`；没有mesh、装配、R/T/A、NNZ、残差或场输出。计划Y6的576 cells/380,160 FE不是本次装配实测。 |
+
+三次正式watchdog wall合计4,915.1723896381445s。该值仅合计上述正式dispatch完整watchdog wall；component测试、支持性preflight、旧场恢复和root审计另列。56份历史summary小计63,340.73598930752s以及R8不完整采样窗下界3,109.3891972089186s仍保持V1 Q04账本口径，不合并成全campaign总成本。
+
+预算实际为3/6：A1_q 1次、A2_q 2次。A2配额2/2已用尽；A1_q没有完整endpoint/A6证据，故A1_R冻结前置不成立。A2_R未运行，其中一个原A2_R槽位按前瞻授权仅重分配一次给A2_q attempt2。A1未资格化，因此B和依赖B的C锁定；没有跨组或进一步重分配，也没有任何后续模型获准启动。
+
+随后提交的profile兼容修复只针对hash绑定的旧Y6_1 resolved config：在内存副本中补齐唯一缺失的`display_label`，确认其余数值/资源事实完全一致，并调用原生`_validate_resolved_profile`。原resolved文件和native默认validator未修改。26个helper测试通过，真实read-only frozen-input preflight也通过；该修复属于组件/profile兼容性，不是fresh PDE，且没有重开已耗尽的A2预算。
+
+V1的最后接受态仍是R9（110,472 FE），最终空间精度不达标；R10因改善小于冻结噪声而拒绝。V2没有完整积分/端口扰动结论、独立q/R资格或h见证，也不改变上述科学判断。五项能力、Q01–Q08逐项回应、各次成本、root原件审计和测试命令见[response V2](../response_v2.md)与上述compact。Task43保持`PARTIAL / CONTROLLED_NEGATIVE`并等待外部审阅；未获merge approval，也未合入master。
+
+正式尝试以外的支持工作入口、可计量的独立watchdog费用、未监控时间的`not_measured`标记和保留的前置失败列于[V2 compact的support_work](records/v2_formal_attempts_and_profile_fix_v1.json)。这些费用不并入4,915.1723896381445s formal watchdog subtotal，也不拼成全campaign总额。
+
 
 ## V2阶段一（Q02–Q08）证据补账
 
@@ -216,7 +236,7 @@ q8→q10的全部九组归一指标变化最大为4.09006162e-13倍最终容差�
 |---|---|---|
 | Q02 全仓collection与ABI | 原8个collection error按1个Task43同名忽略artifact、1个SLEPc key1211220注册冲突、6个旧Task42 scratch缺模块逐项索引；clean tracked collection 3121项，另1个SLEPc阻塞；real SLEPc与complex128/int64 PETSc链接不兼容。当前direct regression含40 passed/3个MPI2-only skip；3个skip节点在同模块MPI2两rank另复验通过；空间/局部Schur、mixed p3/p4装配与内场恢复、independent active action为3 passed；当前same-LU 27-cell组件为1 passed，watchdog完整记录。 | 全仓pytest仍在collection中止、0测试体；SLEPc/Hybrid路径受环境阻塞；组件与saved-field fixture不是正式模型资格。原`test_petsc_residual_correction.py`相同测试和实现SHA已有4 passed记录，未重跑。 |
 | Q03 selective依赖闭包 | 从干净base405临时worktree叠加66个显式SHA文件；root逐文件核验主树/overlay hash、实际4个import来源、157节点原日志；25个changed-test依赖路径collect-only为0 errors/skip、0测试体。 | import/collection只证明闭包与可收集性，不代替数值测试；本次没有向base/master提交或合并overlay。审核原件`overlay_dependency_audit.json` SHA `439a7bef5f1e7d0982fb3140cc9f6b7d522e75ddddd31733d6040bcd04390015`。 |
-| Q04 56份workflow成本清单 | 去重后56份原始summary逐项列路径、hash、原分类及summary记录的whole watchdog elapsed；小计63,340.73598930752s。`post_selection_restore_attempt1`覆盖Y5_1/Y3/Y3_2的完整恢复workflow，取summary实测166.96172243729234s，不以总额倒算；root逐项成本审计通过。 | 56条含失败、监控失败、preview、比较和受控/中断记录，不是56次数值成功；R8缺summary，其3,109.389197s只算采样窗下界。审核原件核验56行、58个原件hash、R3原18行与V1 64个不可变文件。 |
+| Q04 56份workflow成本清单 | 去重后56份原始summary逐项列路径、hash、原分类及summary记录的whole watchdog elapsed；小计63,340.73598930752s。`post_selection_restore_attempt1`覆盖Y5_1/Y3/Y3_2的完整恢复workflow，原件[`watchdog/summary.json`](../../../benchmarks/artifacts/task43/post_selection_restore_attempt1/watchdog/summary.json) SHA `075c2d9dbc19a0d45dd069288723d6af1806fcc43256d18118c02c41bb05d8b6`记录实测166.96172243729234s，不以总额倒算；root逐项成本审计通过。 | 56条含失败、监控失败、preview、比较和受控/中断记录，不是56次数值成功；R8缺summary，其3,109.389197s只算采样窗下界。审核原件核验56行、58个原件hash、R3原18行与V1 64个不可变文件。 |
 | Q05 规则冻结时序 | 冻结acceptance contract SHA在候选pre-run snapshot中匹配，snapshot还列出当时untracked文件。 | 首个candidate之前的严格时间顺序没有独立证明；worker没有写合同hash的前置事件，不能从mtime猜时间。 |
 | Q06 p3方向组合 | 将p3加进原有完整D4八变换和256个oriented-child参数组，对应2个新p3节点通过。 | 只资格化这两个p3组件性质，不声称level2、跨h或一般MPI能力。 |
 | Q07 R8特例 | 只有`round8_p`且run.resolve精确等于原R8 run root才读取partial审计的观察量，生成器还核partial文件SHA；V2 inventory单独生成，V1 inventory保持字节不变。 | outer exit143、sender unknown、2491样本/3109.389197s观察窗与窗内RSS仍不是全程终态或资源峰。 |

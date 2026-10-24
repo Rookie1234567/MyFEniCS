@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；九次p更新已接受，最后状态R9；最终空间精度未达，等待ChatGPT外部审阅 |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；V2三次正式诊断尝试均因工程接线/元数据错误提前失败，未形成完整q/R数值结论；等待ChatGPT外部审阅 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -35,8 +35,11 @@
 
 - [结果与统一模型表](outcomes/summary.md)
 - [执行回应](response_v1.md)
+- [V2最终执行回应](response_v2.md)
 - [依赖组选择性合并清单](outcomes/selective_merge_manifest.md)
 - [后验六场比较compact](outcomes/records/post_selection_existing_fields_validation_v1.json)
 - [最终定向/全仓测试compact](outcomes/records/final_test_attempts_v1.json)
+- [V2正式尝试与元数据修复compact](outcomes/records/v2_formal_attempts_and_profile_fix_v1.json)
+- [V2最终文档与原件合同验证compact](outcomes/records/v2_closeout_validation_v1.json)
 
-数值/比较代码及最终pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；本轮新增报告工具由compact和图provenance内的脚本SHA绑定，最终送审commit绑定它们。旧 PDE 结果保留各次运行自己的 source snapshot/ABI/input 身份。执行分支 `task43_hp_adaptivity` 等待最终外部审阅，未获 merge approval，未合入 master。
+V1数值/比较代码及原focused/full pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；之后的报告工具和V2诊断入口分别由对应compact/source snapshot绑定。V2的A1/A2三次正式尝试在获取完整端点证据前因工程问题失败；随后仅完成profile组件及真实只读输入预检修复，没有新的PDE。旧PDE结果保留各次运行自己的source snapshot/ABI/input身份。执行分支 `task43_hp_adaptivity` 等待最终外部审阅，未获merge approval，未合入master。

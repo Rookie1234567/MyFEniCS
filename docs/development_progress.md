@@ -4,8 +4,8 @@
 
 | 最终判断 | 实测证据 | 结论边界 |
 |---|---|---|
-| p-up闭环 | R1–R9按冻结规则接受9次，最后接受态R9为110,472 FE（35,352 trace + 75,120 interior）；R9的两零级s功率误差为`4.065061945e−6`和`2.148245071e−6`，均高于`1e−6` | 最终空间精度仍FAIL；接受的是中间迭代状态，不是最终验收通过 |
-| R10自然候选 | 180格全p6、118,800 FE；G改善`8.412900702e−6`低于事前冻结噪声`9.088158797e−6`，所以拒绝且无transition10 | 自身对Y6_1仍有top `(0,0,s)=2.837172688e−6`越限；解的残差通过不等于空间精度通过 |
+| p-up闭环 | R1–R9按冻结规则接受9次，最后接受态R9为110,472 FE（35,352 trace + 75,120 interior）；相对Y6_1参考，top/bottom零级s通道功率绝对差为`4.065061945e−6`和`2.148245071e−6`，均高于`1e−6` | 最终空间精度仍FAIL；接受的是中间迭代状态，不是最终验收通过 |
+| R10自然候选 | 180格全p6、118,800 FE；G改善`8.412900702e−6`低于事前冻结噪声`9.088158797e−6`，所以拒绝且无transition10 | 自身对Y6_1仍有top零级s通道功率绝对差`2.837172688e−6`越限；解的残差通过不等于空间精度通过 |
 | 真实h动作 | 600个p3叶、47,235 FE、A6=`8.745351252e−10`，有完整612模式与共同场比较 | 数值资格已取得，但空间精度未达，不回写旧transition1 |
 | h10剪枝 | 内部DoF下界292,260已高于对照的237,600实际FE | derived目标DoF不可行；没有score剪枝/完整h空间/数值失败，actual trace/FE保持null |
 | 六场后验比较 | 联合1008子盒，q8 516,096点、q10 1,008,000点；九个有方向全场对均完成，q8/q10冻结结论相同，root独立重算raw field/power/Gauss/J及612通道 | Y5_1对R9/R10分别仍有2/1个零级s功率通道失败；以Y3为reference的Y3→R10单对PASS，其余控制或holdout比较限制详见compact。后验不反馈选择，不证明连续精度或参考自身q/R |
@@ -18,9 +18,15 @@
 | 全仓 `python -m pytest -q` | 真实执行到collection：1 skip、8 errors、测试体0执行，pytest91.42s；watchdog104.270419s、树RSS峰406,917,120B、task/global swap增量0、exit2且后代清理 | 8个collection error=1个忽略Task43同名artifact模块冲突（两个副本路径但单error）+1个SLEPc key1211220注册冲突+6个旧忽略tmp/task42extra缺模块；不写成“8 tests失败”或“0 tests collected”，保留原始trace，不改环境/忽略配置 |
 | 成本分类 | 两次最终测试watchdog合计135.193513449747s，作为测试工作单列 | 原56份完整模型/组件watchdog 63,340.73598930752s，加R8 partial 3,109.3891972089186s为66,450.12518651644s观察下界；连测试简单相加为66,585.31869996618s，仍非完整campaign总成本 |
 
+### Task43 V2正式诊断终态（2026-10-24）
+
+V2 Stage1的Q01–Q08门和冻结诊断计划完成后，按已审授权共dispatch 3/6个正式模型尝试：A1_q一次、A2_q两次。三者都在完整端点证据前被工程问题阻断，不能解释为h/p数值方法失败，也没有得到完整q/R扰动结论。A1_q在MPI observer广播中因嵌套`MappingProxyType`无法pickle而失败，watchdog 4882.447374s/进程树采样RSS峰9708847104B；仅保留612模态与已有体吸收部分证据，缺primary场采样及primary/extra A6持久报告。A2_q attempt1因wrapper缺`PHYSICAL_WATCHDOG_PHASE_PATH`在建网格前退出，18.740401s/190795776B；attempt2的Y6_1 resolved profile只缺原生派生的`display_label=D15-Y6-1`，在原native profile validator处于网格前失败，13.984614s/190918656B。两次均无装配、求解、R/T/A、残差或NNZ实测；计划Y6的576 cells和380160 FE不是本次结果。三者task-tree swap采样峰均为0，后代清理，source/input pre/post hash均符合各自terminal audit。
+
+formal watchdog wall仅这三次合计4915.1723896381445s；支持性检查与未监控审计另列。A2额度2/2已耗尽；A1_q不具备A1_R前置。A2_R阶段未运行，其中一个槽位按前瞻授权只重分配一次为A2_q attempt2。B及依赖B的C锁定，无跨组或进一步预算重分配，也不再启动模型。随后profile补丁仅在Y6_1配置内存副本补缺字段，使用原生validator通过，26个pure helper tests通过；这项是component/preflight验证，不是fresh PDE，也不重新打开A2预算。V1 accepted9/R9、R10拒绝、最终空间精度未达维持原裁决。逐项失败、wall、RSS、退出码和hash见[Task43 V2 compact](task43_hp_adaptivity/outcomes/records/v2_formal_attempts_and_profile_fix_v1.json)与[response V2](task43_hp_adaptivity/response_v2.md)。
+
 ### Task43 V2 review 补账（阶段一，2026-10-24）
 
-用户授权的Q02–Q08工程证据已经整理，当前无新正式模型PDE。原全仓collection的8个错误逐项保留，SLEPc real ABI与complex128/int64 PETSc冲突定位为Hybrid/SLEPc blocker；SLEPc-free路径补做当前source hash下的exact-sequence/local-Schur、mixed-p3/p4装配与cell-interior恢复、independent action、采样MPI2和同LU微型fixture。direct focused 40 passed、3个MPI2-only skip；这些节点已另在MPI2实测，每rank 4 passed；其他空间/装配/action 3 passed；同LU 27-cell组件1 passed并由watchdog记录，不是正式候选。Q03 base405隔离overlay的66项hash清单import通过，25个changed-test文件collect-only 157 items、0执行。Q04的56个summary逐项hash/分类/实际whole wall小计63,340.735989s；`post_selection_restore_attempt1`覆盖Y5_1/Y3/Y3_2完整恢复workflow，用原summary实测166.961722s；R8另保留不完整采样窗下界。Q05只证contract hash出现在pre-run snapshot，首candidate前的严格顺序未独立证明。Q06只覆盖两个p3 D4/8及oriented-child/256属性。Q07限制到精确R8 run路径，V1 inventory不改写。Q08两次文档回归均保留，最近5 passed/0.11s。阶段一直接诊断门已由主控标记PASS_WITH_LIMITATIONS；生产/全仓门仍因已记录的SLEPc ABI与collection问题阻塞。机器索引见[stage1_gate_v2](task43_hp_adaptivity/outcomes/records/stage1_gate_v2.json)，任何Stage2模型尝试仍须先提交并审阅V2计划和机器合同。新增旧场raw replay只用保存样本与原记录，没有从系数重采样、没有重算A_volume体积分、没有施加完整算子/fresh A6；不与正式PDE资格混淆。
+Stage1 gate形成时，用户授权的Q02–Q08工程证据已经整理；该阶段当时尚无新正式模型PDE。原全仓collection的8个错误逐项保留，SLEPc real ABI与complex128/int64 PETSc冲突定位为Hybrid/SLEPc blocker；SLEPc-free路径补做当前source hash下的exact-sequence/local-Schur、mixed-p3/p4装配与cell-interior恢复、independent action、采样MPI2和同LU微型fixture。direct focused 40 passed、3个MPI2-only skip；这些节点已另在MPI2实测，每rank 4 passed；其他空间/装配/action 3 passed；同LU 27-cell组件1 passed并由watchdog记录，不是正式候选。Q03 base405隔离overlay的66项hash清单import通过，25个changed-test文件collect-only 157 items、0执行。Q04的56个summary逐项hash/分类/实际whole wall小计63,340.735989s；`post_selection_restore_attempt1`覆盖Y5_1/Y3/Y3_2完整恢复workflow，用原summary实测166.961722s；R8另保留不完整采样窗下界。Q05只证contract hash出现在pre-run snapshot，首candidate前的严格顺序未独立证明。Q06只覆盖两个p3 D4/8及oriented-child/256属性。Q07限制到精确R8 run路径，V1 inventory不改写。Q08两次文档回归均保留，最近5 passed/0.11s。阶段一直接诊断门已由主控标记PASS_WITH_LIMITATIONS；生产/全仓门仍因已记录的SLEPc ABI与collection问题阻塞。机器索引见[stage1_gate_v2](task43_hp_adaptivity/outcomes/records/stage1_gate_v2.json)，任何Stage2模型尝试仍须先提交并审阅V2计划和机器合同。新增旧场raw replay只用保存样本与原记录，没有从系数重采样、没有重算A_volume体积分、没有施加完整算子/fresh A6；不与正式PDE资格混淆。
 
 以上均为本地结果，不声称CI通过。独立后验compact与root raw/resource audit见[Task43结果](task43_hp_adaptivity/outcomes/summary.md)、[post-selection验证](task43_hp_adaptivity/outcomes/records/post_selection_existing_fields_validation_v1.json)、[final test compact](task43_hp_adaptivity/outcomes/records/final_test_attempts_v1.json)。完整机器账包含16次尝试与5份导入场；选择性依赖组、fresh PDE证据和reporting scripts边界见[manifest](task43_hp_adaptivity/outcomes/selective_merge_manifest.md)。当前状态等待ChatGPT外部审阅，未获merge approval，未合入master。
 
