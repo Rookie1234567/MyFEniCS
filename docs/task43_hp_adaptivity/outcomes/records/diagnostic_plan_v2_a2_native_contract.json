@@ -1,0 +1,592 @@
+{
+  "schema": "task43.v2.finite_diagnostic_contract.v2",
+  "status": "frozen_for_execution",
+  "preserves_v1_status": "PARTIAL / CONTROLLED_NEGATIVE",
+  "formal_model_attempts": {
+    "total_max": 6,
+    "A1_max": 2,
+    "A2_max": 2,
+    "B_max": 1,
+    "C_max": 1,
+    "failed_and_full_runner_preflight_attempts_count": true,
+    "retries_and_baseline_rebuilds_count": true,
+    "current_v2_formal_models_run": 0
+  },
+  "physical_problem": {
+    "geometry": "rectangular Si block grating",
+    "period_x_nm": 50.0,
+    "period_y_nm": 50.0,
+    "domain_z_nm": [
+      -10.0,
+      130.0
+    ],
+    "grating_bounds_nm": [
+      [
+        16.5,
+        15.0,
+        0.0
+      ],
+      [
+        33.5,
+        35.0,
+        120.0
+      ]
+    ],
+    "domain_volume_nm3": 350000.0,
+    "wavelength_nm": 13.5,
+    "incident_theta_deg": 89.0,
+    "incident_phi_deg": 90.0,
+    "incident_polarization": "s",
+    "incident_amplitude_v_per_m": [
+      1.0,
+      0.0
+    ],
+    "field_units": {
+      "electric": "V/m",
+      "magnetic": "A/m"
+    },
+    "field_comparison_floors": {
+      "electric_norm": "sqrt(350000)",
+      "magnetic_norm": "0.002654418727984993*sqrt(350000)",
+      "physical_G": "sqrt(700000)",
+      "port_modal_amplitude": 1.0,
+      "phase_fit": false,
+      "primary_quadrature": "q10",
+      "same_point_q8_role": "sampling robustness cross-check; not integral convergence"
+    },
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "epsilon_air": [
+      1.0,
+      0.0
+    ],
+    "epsilon_substrate": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "epsilon_grating": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "resolved_physical_hash_required": true,
+    "discretization_hash_separate_from_physical_hash": true
+  },
+  "qualified_environment": {
+    "activation": "source scripts/activate_task40_phi90_pord64.sh",
+    "marker": "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION=1",
+    "python_version": "3.12.3",
+    "python_executable": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "petsc_version": "3.19.6",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int64",
+    "dolfinx_version": "0.10.0",
+    "basix_version": "0.10.0",
+    "mpi_implementation": "OpenMPI 4.1.6",
+    "mpi_size": 1,
+    "math_threads": 1,
+    "worker_cpu_affinity": "one actually available CPU, recorded per launch",
+    "slepc_route": "not used by direct diagnostic; matching complex/int64 SLEPc not available in this ABI and known system SLEPc import registration fails",
+    "environment_preflight_per_launch": true
+  },
+  "quadrature_and_modal_endpoints": {
+    "baseline_volume_q": 15,
+    "baseline_incident_and_port_q": 28,
+    "test_volume_q": 19,
+    "test_incident_and_port_q": 32,
+    "R13": {
+      "max_abs_m": 4,
+      "max_abs_n": 8,
+      "count": 612
+    },
+    "R14": {
+      "max_abs_m": 5,
+      "max_abs_n": 9,
+      "count": 836
+    },
+    "R14_common_count": 612,
+    "R14_new_tail_count": 224,
+    "missing_R14_tail_in_R13": "absent/null; never impute zero"
+  },
+  "spatial_core_identities": {
+    "A1_R10": {
+      "route": "Task43 assembly_time_variable_p_condensed",
+      "cells": [
+        3,
+        10,
+        6
+      ],
+      "cell_count": 180,
+      "p_distribution": {
+        "p6": 180
+      },
+      "independent_FE": 118800,
+      "actual_axes_nm": {
+        "x": [
+          0.0,
+          16.5,
+          33.5,
+          50.0
+        ],
+        "y": [
+          0.0,
+          5.0,
+          10.0,
+          15.0,
+          20.0,
+          25.0,
+          30.0,
+          35.0,
+          40.0,
+          45.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      },
+      "solver_settings": {
+        "backend": "assembly_time_variable_p_condensed",
+        "factor_solver": "PETSc MUMPS",
+        "assembly_time_static_condensation": true,
+        "cell_static_condensation": true,
+        "floquet_slave_elimination": true,
+        "normal_correction_policy": "one configured solver-normal correction; use this output before the extra diagnostic correction for q/R comparisons"
+      },
+      "source_identity_scope": "41 solve-recorded numerical source files match current hashes; this is the explicit source list, not the entire transitive dependency closure"
+    },
+    "A2_Y6_1": {
+      "route": "Task40 native P6 condensed direct",
+      "cells": [
+        6,
+        16,
+        6
+      ],
+      "cell_count": 576,
+      "trace_FE": 120960,
+      "cell_interior_FE": 259200,
+      "independent_FE": 380160,
+      "actual_axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          3.0,
+          6.0,
+          9.0,
+          12.0,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          38.0,
+          41.0,
+          44.0,
+          47.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      },
+      "identity_gate": "prove source/dependency, weak form, boundary/constraint, quadrature, space, and direct-route compatibility before A2; A1 or variable-p evidence cannot satisfy this gate",
+      "normal_correction_policy": {
+        "native_solver_setting": "max_same_factor_corrections=2",
+        "maximum_corrections_after_initial_solve": 2,
+        "maximum_total_linear_solves": 3,
+        "historical_Y6_1_actual_corrections": 1,
+        "endpoint_state_for_qr_comparison": "after the configured normal-correction strategy and before the extra diagnostic correction"
+      },
+      "extra_same_lu_gate": "each new A2 endpoint needs its own one-correction live-factor output-uncertainty check; if unavailable, endpoint is unqualified"
+    },
+    "B_R9_parent": {
+      "route": "R9 Task43 variable-p condensed",
+      "cells": [
+        3,
+        10,
+        6
+      ],
+      "p_distribution": {
+        "p5": 28,
+        "p6": 152
+      },
+      "quadrature": {
+        "volume": 15,
+        "incident_port": 28
+      },
+      "modal_rectangle": "R13",
+      "native_P6_equivalence_claim": false,
+      "required_pair_identity": "new candidate uses the same R9 variable-p parent route, q/R, source/plan lineage and physical problem except the frozen h action",
+      "reference_core_gate": "B is locked unless evidence covers the same numerical core across R9 parent, h candidate, and comparison reference; current evidence does not establish R9 variable-p and Y6_1 native-P6 core equivalence"
+    },
+    "C_uniform_p6_reference": {
+      "cells": [
+        9,
+        16,
+        6
+      ],
+      "cell_count": 864,
+      "degree": 6,
+      "actual_axes_nm": {
+        "x": [
+          0.0,
+          5.5,
+          11.0,
+          16.5,
+          22.166666666666668,
+          27.833333333333332,
+          33.5,
+          39.0,
+          44.5,
+          50.0
+        ],
+        "y": [
+          0.0,
+          3.0,
+          6.0,
+          9.0,
+          12.0,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          38.0,
+          41.0,
+          44.0,
+          47.0,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ]
+      },
+      "predicted_independent_FE": 570240,
+      "predicted_trace_FE": 181440,
+      "predicted_cell_interior_FE": 388800,
+      "FE_formula": "648*864 + 72*(9*16); periodic x/y, open z",
+      "prediction_is_not_measurement": true,
+      "novelty_search_scope": "Task40 axis catalog contained Y6_1/Y6_2 at 6x16x6; no exact 9x16x6 appeared in currently revealed Task43 list; repeat full launch-list/archive preflight before execution",
+      "quadrature": {
+        "volume": 19,
+        "incident_port": 32
+      },
+      "modal_rectangle": "R14",
+      "own_qr_qualification": "not established by this one attempt; do not borrow A2 qualification; only finite comparison unless independent same-C q/R evidence exists",
+      "comparison_to_B": "B is frozen q15/q28/R13; if both run, C minus B mixes space, q, and R effects and is not a pure spatial estimate",
+      "may_exceed_candidate_FE_limit": true
+    }
+  },
+  "phases": {
+    "A1": [
+      {
+        "id": "A1_q",
+        "reference": "original R10 q15/q28/R13",
+        "test": "same R10 variable-p space q19/q32/R13",
+        "changed_only": "volume and incident/port quadrature",
+        "attempts": 1
+      },
+      {
+        "id": "A1_R",
+        "reference": "new R10 q19/q32/R13",
+        "test": "same R10 variable-p space q19/q32/R14",
+        "changed_only": "DtN rectangle",
+        "attempts": 1
+      }
+    ],
+    "A2": [
+      {
+        "id": "A2_q",
+        "reference": "original Y6_1 q15/q28/R13",
+        "test": "same native P6 space q19/q32/R13",
+        "changed_only": "volume and incident/port quadrature",
+        "attempts": 1
+      },
+      {
+        "id": "A2_R",
+        "reference": "new Y6_1 q19/q32/R13",
+        "test": "same native P6 space q19/q32/R14",
+        "changed_only": "DtN rectangle",
+        "attempts": 1
+      }
+    ],
+    "B": {
+      "reference": "R9 original parent",
+      "test": "one-level h child from frozen R9 global cell 8",
+      "quadrature": {
+        "volume": 15,
+        "incident_port": 28
+      },
+      "modal_rectangle": "R13",
+      "limits": {
+        "candidate_FE_strictly_less_than": 237600,
+        "attempts": 1
+      },
+      "enabled_only_if": [
+        "A1_and_A2_all_qR_perturbations_within_10_percent",
+        "A1_and_A2_extra_same_lu_uncertainty_gates_pass",
+        "R9_parent_and_candidate_same_variable_p_route_and_frozen_qR",
+        "same_numerical_core_evidence_covers_R9_parent_candidate_and_comparison_reference",
+        "actual_mesh_and_plan_parent_identity_pass",
+        "candidate_actual_FE_below_strict_limit",
+        "resource_forecast_passes"
+      ],
+      "seed_global_cell": 8,
+      "seed_parent_degree": 5,
+      "seed_box_nm": [
+        [
+          16.5,
+          5.0,
+          -10.0
+        ],
+        [
+          33.5,
+          10.0,
+          0.0
+        ]
+      ],
+      "seed_audit_path": "benchmarks/artifacts/task43/v2_root_audit/seed_geometry_audit.json",
+      "seed_audit_sha256": "3fc78f7d728f357fc33b26decd0e6aaa5d3981197cdef4dc49f83633c169a524",
+      "no_replacement_seed": true,
+      "comparison_with_Y6_1": "cross-discretization/route finite vector only; no claim of native-P6 equivalence or transfer of R10 qualification"
+    },
+    "C": {
+      "geometry": "predeclared 9x16x6 uniform-p6 grid exactly as spatial_core_identities.C_uniform_p6_reference",
+      "reference_witness_role": "new h-rich independent mesh observation; not selected from B outcome",
+      "enabled_only_if": [
+        "archive novelty preflight passes within stated search scope",
+        "measured FE matches or explains predicted 570240",
+        "MUMPS structural resource forecast is conservatively within live planning cap",
+        "A1_and_A2_all_qR_perturbations_within_10_percent",
+        "A1_and_A2_extra_same_lu_uncertainty_gates_pass",
+        "no hard residual or resource stop",
+        "B_produced_usable_identity_and_hard_gate_passing_candidate_with_frozen_plan_mesh_full_output_and_hash"
+      ],
+      "own_qr_gate": "not_run; C alone does not establish it",
+      "qualified_independent_precision_claim": false,
+      "no_replacement_grid": true,
+      "not_run_if": "B remains locked, fails, stops, or produces no usable frozen candidate; do not run C as a standalone reference solve"
+    }
+  },
+  "output_perturbation_limits": {
+    "R_total_absolute": 1e-06,
+    "T_total_absolute": 1e-06,
+    "A_volume_absolute": 1e-06,
+    "R00_s_absolute": 1e-07,
+    "R00_p_absolute": 1e-07,
+    "R00_total_absolute": 1e-06,
+    "each_channel_power_ratio_absolute": 1e-07,
+    "top_bottom_s_p_port_amplitude_group_relative_with_unit_incident_modal_floor": 1e-05,
+    "total_and_scattered_E_H_relative_with_incident_floor": 1e-05,
+    "physical_G_relative_with_incident_G_floor_sqrt_2V": 1e-05,
+    "R14_tail_each_channel_power_ratio_absolute": 1e-07,
+    "R14_tail_per_side_aggregate_power_absolute": 1e-06,
+    "R14_tail_amplitude_group_relative_with_unit_incident_modal_floor": 1e-05,
+    "R14_tail_amplitude_denominator": "fixed unit incident-modal floor 1; R13 has no tail rows and no tail amplitude difference is fabricated",
+    "R14_joint_common_plus_tail_amplitude_norm_relative": 1e-05,
+    "joint_formula": "sqrt(common612_delta_L2^2 + tail224_L2^2) / max(R13_reference_group_L2, 1)",
+    "limits_are_0_1_times_frozen_final_tolerances": true,
+    "A_volume_provenance": "independent material-volume integral; old arithmetic-only replay must be labeled as such"
+  },
+  "hard_solver_gates": {
+    "full_explicit_true_residual_relative": 1e-08,
+    "independent_A6_original_equation_relative": 1e-08,
+    "direct_target_relative": 1e-08,
+    "condensed_residual_relative": 1e-09,
+    "energy_closure_absolute_abs_1_minus_R_minus_T_minus_Avolume": 1e-05,
+    "must_not_substitute_condensed_for_A6": true,
+    "normal_correction_recalculated_from_raw": "A1 retains the original KSP-specific requirement: finite nonnegative initial/corrected explicit residual norms and rhs-relative values, strict decrease in both, solution_updated=true, and positive correction KSP converged reason; status label alone is insufficient; explicit/A6/condensed gate ratios must also be nonnegative. For A2 native P6 MatSolve, because the frozen route does not use KSP, require each call to complete without exception, genuine MUMPS INFOG with INFOG(1)=0, symbolic_calls=1, numeric_calls=1, solve_calls=1+executed normal corrections, saved complete initial and corrected raw condensed b−Ax vectors plus one unchanged complete condensed RHS vector, and raw recomputation of finite nonnegative norms and same-RHS ratios with strict decrease after every executed correction; require solution_updated=true and report ksp_converged_reason=not_applicable_native_MatSolve. All original explicit/A6/condensed hard thresholds remain unchanged."
+  },
+  "extra_same_lu_uncertainty": {
+    "A1_max_per_new_endpoint": 1,
+    "A2_max_per_new_endpoint": 1,
+    "separate_from_solver_normal_correction": true,
+    "primary_qr_endpoint_state": "after each endpoint's configured solver-normal-correction policy and before the extra diagnostic correction; the extra output never replaces or selects the primary q/R endpoint",
+    "normal_correction_policy": {
+      "A1": "one configured solver-normal correction",
+      "A2": "preserve native Task40 max_same_factor_corrections=2: initial solve plus at most two normal corrections (three total solves); historical Y6_1 actually used one correction"
+    },
+    "required_before_and_after": [
+      "explicit_b_minus_Ax_finite",
+      "rhs_normalized_residual_finite",
+      "independent_A6_recomputed",
+      "condensed_residual",
+      "closure",
+      "full_R_T_A_modes_fields_E_H_G"
+    ],
+    "strict_decrease": [
+      "explicit_b_minus_Ax_norm_after < before",
+      "rhs_normalized_residual_after < before"
+    ],
+    "both_endpoint_gates": {
+      "A6_relative_max": 1e-08,
+      "condensed_relative_max": 1e-09,
+      "closure_absolute_max": 1e-05
+    },
+    "before_after_physical_output_delta_max_fraction_of_final_tolerance": 0.1,
+    "R14_expected_mode_count": 836,
+    "R13_expected_mode_count": 612,
+    "failed_gate": "preserve actual diagnostic; endpoint unqualified; no repeat correction"
+  },
+  "canonical_vertical_sidewalls": {
+    "status": "NOT_MEASURED",
+    "contract_path": "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+    "contract_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+    "meaning": "four vertical material faces x=16.5/33.5 nm and y=15/35 nm; one-sided mathematical full complex E/H traces from both Si and air material-side cells at zero offset",
+    "port_top_bottom_amplitude_groups_are_not_sidewalls": true,
+    "new_one_sided_sampler_in_this_round": false,
+    "qualification_claim": false
+  },
+  "resource_policy": {
+    "profile_identity": "task43_hp_adaptivity_resource_v1",
+    "simultaneous_tree_rss_absolute_cap_bytes": 206158430208,
+    "reserve_policy": "max(64 GiB, 15% of effective total memory)",
+    "launch_cap_policy": "min(192 GiB, 80% effective total, effective available minus reserve)",
+    "planning_cap_policy": "min(192 GiB, 75% effective total, launch cap)",
+    "runtime_available_memory_policy": "stop below effective reserve",
+    "task_tree_swap_max_bytes": 0,
+    "global_swap": "observe only; not attributed to this task",
+    "one_heavy_case_at_a_time": true,
+    "mpi": 1,
+    "math_threads": 1,
+    "cpu": "one actually available CPU, recorded per launch",
+    "whole_watchdog_seconds_by_phase": {
+      "A1_each": 7200,
+      "A2_each": 7200,
+      "B": 7200,
+      "C": 14400
+    },
+    "wall_basis": {
+      "R10_complete_watchdog_whole_seconds": 2588.517399974633,
+      "R9_complete_watchdog_whole_seconds": 2878.9347875751555,
+      "Y6_1_internal_runner_seconds_not_whole_watchdog": 1905.8774050269276,
+      "C_scale_note": "570240 predicted FE is 1.50x Y6_1 (380160 FE) and 4.80x R10; no matching full-watchdog calibration exists, so C additionally requires conservative rows/NNZ/MUMPS forecast below the actual dynamic planning cap"
+    },
+    "limits_are_caps_not_runtime_predictions": true
+  },
+  "postprocessing_costs_not_formal_model_attempts": {
+    "ledger": "docs/task43_hp_adaptivity/outcomes/records/v2_legacy_r10_resampling_attempts_v1.json",
+    "attempts": 3,
+    "whole_watchdog_wall_subtotal_seconds": 152.32824470987543,
+    "formal_model_attempts": 0,
+    "successful_resampled_q_points": {
+      "q8": 92160,
+      "q10": 180000
+    },
+    "successful_sample_hash": "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71"
+  },
+  "stopping": {
+    "hard_residual_or_resource_failure": "stop affected branch, preserve failure, no automatic retry",
+    "A_qR_perturbation_over_10_percent": "if hard gates pass and baseline is trustworthy, complete remaining predeclared A factor then lock B/C",
+    "extra_same_lu_output_uncertainty_failure": "if hard gates pass, continue the remaining predeclared R factor for that A branch; preserve uncertainty failure and lock B/C",
+    "A2_core_or_live_factor_uncertainty_gate_failure": "A2 endpoint unqualified; do not substitute another core",
+    "B_seed_or_FE_or_same_parent_identity_failure": "do not start B; no alternate seed",
+    "C_novelty_or_resource_forecast_failure": "do not start C; no alternate mesh",
+    "C_own_qr_missing": "finite full-vector comparison only; no independent precision claim",
+    "C_without_usable_frozen_B_candidate": "not_run; do not solve C independently"
+  },
+  "prohibited": [
+    "NN",
+    "FTT",
+    "cost_campaign",
+    "iterative_solver",
+    "0.7_nm",
+    "6x10x6_control_based_selection",
+    "R10_qualification_transfer_to_R9"
+  ],
+  "a2_native_applicability": {
+    "scope": [
+      "A2_q",
+      "A2_R"
+    ],
+    "effective_before_any_A2_attempt": true,
+    "does_not_apply_to": [
+      "A1_q",
+      "A1_R",
+      "B",
+      "C"
+    ],
+    "original_contract_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json",
+    "original_contract_sha256": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+    "original_plan_markdown_path": "docs/task43_hp_adaptivity/diagnostic_plan_v2.md",
+    "original_plan_markdown_sha256": "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e",
+    "normal_correction_interface": {
+      "A1_KSP": "retain the original requirement: finite, nonnegative raw explicit residual norms and rhs-relative values, strict decrease in both, solution_updated=true, positive KSP converged reason, and all original direct/A6/condensed thresholds.",
+      "A2_native_PETSc_MatSolve": "because this frozen native P6 route applies the existing MUMPS factor through PETSc MatSolve rather than KSP, require each recorded MatSolve call to complete without exception; preserve the genuine MUMPS INFOG record and require INFOG(1)=0; require symbolic_calls=1, numeric_calls=1, and solve_calls=1+executed normal corrections; save the complete initial and every corrected raw condensed b−Ax vector plus one unchanged complete condensed RHS vector, then recompute every residual norm and same-RHS ratio from these arrays, requiring finite nonnegative norms/ratios and strict decrease after every executed correction; require solution_updated=true. Report ksp_converged_reason=not_applicable_native_MatSolve and never synthesize a KSP reason.",
+      "rationale": "The historical Y6_1 native direct route uses the PETSc MatSolve method on an already factored MUMPS matrix; it has no KSP correction solve or positive KSP converged reason to report. This interface-specific clarification preserves the correction count, call, raw residual, strict-decrease, INFOG, and solution-update evidence."
+    },
+    "actual_attempt_budget_at_A2_freeze": {
+      "status": "frozen_before_A2",
+      "counts_at_A2_freeze": {
+        "A1_q_started": 1,
+        "A1_R_started": 0,
+        "A2_q_started": 0,
+        "A2_R_started": 0,
+        "B_started": 0,
+        "C_started": 0,
+        "total_started": 1,
+        "total_max": 6,
+        "remaining": 5,
+        "A1_quota_max": 2
+      },
+      "A1_pair_closed": true,
+      "A1_R_not_run_reason": "A1_q lacks the required endpoint/A6 evidence, so the frozen A1_R prerequisite cannot be met; no automatic retry is taken.",
+      "latest_A1_q_attempt_binding": {
+        "phase": "A1_q",
+        "attempt_path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1",
+        "terminal_status": "WORKER_FAILED",
+        "terminal_summary_sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+        "root_terminal_audit_path": "benchmarks/artifacts/task43/v2_root_audit/a1_q_terminal_audit.json",
+        "root_terminal_audit_sha256": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf",
+        "tracked_failure_record_path": "docs/task43_hp_adaptivity/outcomes/records/a1_q_failed_observer_serialization_v1.json",
+        "source_HEAD": "ed95df3370973c2f06168ed938666250587ece6d"
+      },
+      "attempt_budget_is_not_redistributed": true,
+      "freeze_update_required_before_any_A2_attempt": false,
+      "downstream_lock_reason": "A1_q is unqualified; B and C remain locked under the frozen gates."
+    }
+  }
+}

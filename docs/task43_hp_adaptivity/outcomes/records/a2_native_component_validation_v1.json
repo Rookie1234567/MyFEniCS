@@ -1,0 +1,105 @@
+{
+  "changed_source_sha256": {
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "2284d929f3e749351ca8727858ee9ff853d88a2615277eb34e27c280fd8a1e08",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
+    "src/runners/p6_condensed_direct.py": "f59634c7c0d37fff6a1792c50e4d1d8838fdb2f34784cb0daa00f64552ee6e08",
+    "src/test/test_task40para_direct_residual_and_supervisor.py": "2300a8ef8622992feb08e796de9394bbd7136d55d214c9ac3cf803f8b76e41bf",
+    "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "d60b94539c676e552f19f237d4b2771b7a24a01f674f30807cf1d89170ffbd49"
+  },
+  "final_component_tests": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_native_p6_diagnostic_helpers.py src/test/test_task40para_direct_residual_and_supervisor.py src/test/test_task39extra_v7_p6_direct_pipeline.py",
+    "command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands.json",
+    "command_manifest_sha256": "511962b1fb426368b2cbb0409a9c9a58443550ab29b0a53e676c3088a9d7d4da",
+    "formal_model_or_PDE_attempts": 0,
+    "host_qualified_abi": {
+      "DOLFINx": "0.10.0",
+      "MPI_size": 1,
+      "PETSc_int": "int64",
+      "PETSc_scalar": "complex128",
+      "qualified_activation": 1
+    },
+    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_attempt3.log",
+    "log_sha256": "a8a2db3a93bd7d3c32e56dd64ac67f5372f79ae65ef63a1cc76b087e3433675d",
+    "result": "33 passed in 7.55s"
+  },
+  "final_static_checks": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && ruff check <four A2 Python files> && ruff format --check <new adapter and helper test> && python -m compileall -q <four A2 Python files>",
+    "command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands.json",
+    "command_manifest_sha256": "511962b1fb426368b2cbb0409a9c9a58443550ab29b0a53e676c3088a9d7d4da",
+    "commands": {
+      "activation": "source scripts/activate_task40_phi90_pord64.sh",
+      "compileall": "python -m compileall -q src/runners/p6_condensed_direct.py src/test/test_task40para_direct_residual_and_supervisor.py benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py",
+      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_static_checks.log",
+      "log_sha256": "b2b95b2e619ede1a4ca6866691ac2175317e10f6389a56dda743f4e47076968c",
+      "ruff_check": "ruff check src/runners/p6_condensed_direct.py src/test/test_task40para_direct_residual_and_supervisor.py benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py",
+      "ruff_format": "ruff format --check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py"
+    },
+    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_static_checks.log",
+    "log_sha256": "b2b95b2e619ede1a4ca6866691ac2175317e10f6389a56dda743f4e47076968c",
+    "result": "Ruff check passed; two new files already formatted; compileall exit 0"
+  },
+  "formal_attempt_budget_at_freeze": {
+    "A1_R_started": 0,
+    "A1_pair_closed": true,
+    "A1_q_started": 1,
+    "A2_R_started": 0,
+    "A2_q_started": 0,
+    "B_started": 0,
+    "C_started": 0,
+    "remaining": 5,
+    "total_max": 6,
+    "total_started": 1,
+    "unused_A1_R_quota_redistributed": false
+  },
+  "frozen_A2_native_contract": {
+    "a1_q_terminal_root_audit_sha256": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf",
+    "a1_q_terminal_summary_sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+    "contract_sha256_embedded_in_adapter": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
+    "original_plan_sha256": "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e",
+    "original_v2_contract_sha256": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+    "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json",
+    "sha256": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0"
+  },
+  "input_identity_sha256": {
+    "Y6_1_R13_rows": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "Y6_1_recovered_space_bundle": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+    "Y6_1_resolved_config": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+    "Y6_1_restore_identity": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300",
+    "Y6_1_summary": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+    "a2_axis_profile_replay": "c221bb2fe211332c20f3259160d9953de60dce5411ebc66dd4d8de5e96c81acb",
+    "a2_mode_policy_replay": "008d806c25f925684c5d0c600d805cea2df4c714b70a5c08d8a4b0cd8549bf7d",
+    "a2_native_source_continuity_audit": "df200ed48659a7481f641583ecde63d4dd51d8f0d1a573dd38a86d8b0f0c932f",
+    "q10_samples": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
+    "q8_samples": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5"
+  },
+  "limitations": [
+    "No A2_q or A2_R endpoint was launched.",
+    "No full-repository pytest was run for this component-only change.",
+    "A1_q remains unqualified due observer serialization failure; A1_R, B, and C remain not_run/locked."
+  ],
+  "prevalidation_head": "2d775c9c00847f80eda7d09bd120be218603691e",
+  "schema": "task43.a2_native_p6_component_validation.v1",
+  "scope": "contract/code/test validation only; no A2 endpoint or PDE was started",
+  "superseded_validation_attempts": [
+    {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted.log",
+      "result": "32 passed, 1 failed: the test still expected the former unfrozen budget proposal; test was corrected to assert the final frozen A1 terminal budget.",
+      "sha256": "a583c1a83648c1d4ad0fb5f1477f393645e022e32c91f6dae675ab15b2a125df"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_attempt2.log",
+      "result": "33 passed in 6.44s against the budget before final wording-only lock explanation; final exact contract was re-run in the recorded final test.",
+      "sha256": "0f13105604a6e752f25fdacab27a4d12d423a787cf0eb58cc69dc236cb4ea24a"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/static_checks.log",
+      "result": "Ruff EXE002 after copy preserved executable mode; source modes were restored to repository 0644 and final standard Ruff check passed.",
+      "sha256": "101ddd0a25ed7fbbeb8bcfbd489ecce718cece37cc55c9247ed4fe4a12513a01"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/static_checks_attempt2.log",
+      "result": "Ruff check passed with EXE002 ignored; superseded by final standard Ruff check without ignores.",
+      "sha256": "bb1bacf0bc059fa036ececa8c4c7bdc42c0d548919f80aadd54026cfe956b9ee"
+    }
+  ]
+}

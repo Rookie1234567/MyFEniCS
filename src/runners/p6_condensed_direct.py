@@ -371,6 +371,762 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
     raise ValueError(f"unsupported p6 condensed-direct profile: {profile_identity}")
 
 
+def _task43_v2_native_p6_route(
+    profile_facts: Mapping[str, Any],
+    route: Mapping[str, Any],
+    diagnostic: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind one frozen Task43 V2 A2 endpoint onto the native Y6_1 route.
+
+    The legacy Task40 route remains the default.  This opt-in only changes the
+    volume/incident quadrature and finite modal rectangle recorded by the V2
+    contract; it preserves the native P6 solve and mode scaling policy.
+    """
+
+    from copy import deepcopy
+
+    from src.io.native_capacity_profile import (
+        TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE,
+        TASK40_PHI90_D15_PROFILES,
+        native_profile_facts,
+    )
+
+    if diagnostic.get("schema") != "task43.v2.native_p6_diagnostic.v1":
+        raise ValueError("unsupported Task43 native P6 diagnostic schema")
+    phase = diagnostic.get("phase")
+    if phase not in {"A2_q", "A2_R"}:
+        raise ValueError("Task43 native P6 diagnostic phase must be A2_q or A2_R")
+    profile_identity = profile_facts.get("identity")
+    if (
+        profile_identity not in TASK40_PHI90_D15_PROFILES
+        or TASK40_PHI90_D15_PROFILES[profile_identity] != "Y6_1"
+        or route.get("task40_mesh_case") != "Y6_1"
+        or route.get("family") != "task40_phi90"
+    ):
+        raise ValueError("Task43 A2 is bound only to the native Task40 Y6_1 P6 route")
+    if route.get("mode_basis_scale_policy") is not None:
+        raise ValueError("Task43 A2 must preserve the native unscaled boundary modes")
+    if (
+        diagnostic.get("volume_quadrature_degree") != 19
+        or diagnostic.get("surface_quadrature_degree") != 32
+        or diagnostic.get("normal_correction_limit") != 2
+        or diagnostic.get("extra_correction_limit") != 1
+    ):
+        raise ValueError(
+            "Task43 A2 quadrature/correction settings differ from its frozen plan"
+        )
+
+    result = deepcopy(dict(route))
+    if phase == "A2_q":
+        rectangle = [4, 8]
+        reference_label = "R13"
+        mode_count = 612
+        mode_sha256 = route.get("expected_mode_sha256")
+        inventory_scope = "R13_finite_rectangle_including_evanescent"
+    else:
+        r14_profile = native_profile_facts(TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE)
+        r14_mode = r14_profile["component_options"]["mode_selection"]
+        rectangle = [5, 9]
+        reference_label = "R14"
+        mode_count = 836
+        mode_sha256 = r14_mode.get("expected_mode_sha256")
+        inventory_scope = "R14_finite_rectangle_including_evanescent"
+    if type(mode_sha256) is not str or len(mode_sha256) != 64:
+        raise ValueError(f"Task43 {reference_label} inventory hash is unavailable")
+
+    result.update(
+        reference_mode_label=reference_label,
+        parent_rectangle_max_abs_m_n=list(rectangle),
+        active_rectangle_max_abs_m_n=list(rectangle),
+        expected_rectangle_max_abs_m_n=list(rectangle),
+        surface_quadrature_envelope_max_abs_m_n=list(rectangle),
+        expected_mode_count=mode_count,
+        parent_count=mode_count,
+        active_count=mode_count,
+        expected_mode_sha256=mode_sha256,
+        parent_sha256=None,
+        active_sha256=None,
+        selected_parent_indices_sha256=None,
+        parent_inventory_scope=inventory_scope,
+        surface_quadrature_degree=32,
+        mode_basis_scale_policy=None,
+        operator_scope=f"task43_v2_A2_{reference_label}_native_Y6_1_finite_rectangle",
+        residual_scope=f"A6_native_Y6_1_{reference_label}_active_rectangle",
+        summary_prefix=f"task43_v2_a2_y6_1_{reference_label.lower()}_p6_direct",
+        task43_v2_diagnostic_phase=phase,
+        task43_v2_volume_quadrature_degree=19,
+        task43_v2_surface_quadrature_degree=32,
+        task43_v2_normal_correction_limit=2,
+        task43_v2_extra_correction_limit=1,
+    )
+    result["direct_factor_evidence"] = dict(result["direct_factor_evidence"])
+    result["direct_factor_evidence"]["full_primal_projection_quadrature_degree"] = 32
+    return result
+
+
+def _task43_v2_volume_quadrature_metadata(
+    analyzed_metadata: Any,
+    analyzed_records: list[dict[str, Any]],
+    *,
+    diagnostic: Mapping[str, Any] | None,
+) -> tuple[tuple[dict[str, Any], dict[str, Any]], list[dict[str, Any]]]:
+    """Apply the explicitly frozen q19 override after live form analysis."""
+
+    metadata = tuple(dict(item) for item in analyzed_metadata)
+    records = [dict(item) for item in analyzed_records]
+    if diagnostic is None:
+        return metadata, records
+    if (
+        diagnostic.get("schema") != "task43.v2.native_p6_diagnostic.v1"
+        or diagnostic.get("volume_quadrature_degree") != 19
+    ):
+        raise ValueError("Task43 volume quadrature override is not frozen at q19")
+    expected_source = (
+        {"quadrature_degree": 15, "quadrature_rule": "default"},
+        {"quadrature_degree": 15, "quadrature_rule": "default"},
+    )
+    if metadata != expected_source:
+        raise ValueError(
+            "native Y6_1 analyzed volume forms no longer match the q15 baseline"
+        )
+    actual = tuple(
+        {"quadrature_degree": 19, "quadrature_rule": "default"} for _ in range(2)
+    )
+    actual_records = [
+        {
+            **record,
+            "analyzed_quadrature_degree": record["quadrature_degree"],
+            "quadrature_degree": 19,
+            "quadrature_rule": "default",
+            "quadrature_override": "task43_v2_explicit_volume_q19",
+        }
+        for record in records
+    ]
+    return actual, actual_records
+
+
+def _task43_v2_actual_form_integral_metadata(
+    form: Any, *, expected_degree: int
+) -> list[dict[str, Any]]:
+    """Read and verify quadrature metadata from the materialized UFL form."""
+
+    integrals = tuple(form.integrals())
+    if not integrals:
+        raise ValueError("Task43 A2 physical volume form has no UFL integrals")
+    metadata = [dict(integral.metadata()) for integral in integrals]
+    if any(
+        item.get("quadrature_degree") != int(expected_degree)
+        or item.get("quadrature_rule") != "default"
+        for item in metadata
+    ):
+        raise ValueError(
+            "Task43 A2 materialized volume form integral metadata differs from q19"
+        )
+    return metadata
+
+
+def _task43_v2_array_identity(value: Any) -> dict[str, Any]:
+    """Match reference_restore's dtype+shape+bytes identity for one array."""
+
+    array = np.ascontiguousarray(value)
+    digest = hashlib.sha256()
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(json.dumps(list(array.shape)).encode("ascii"))
+    digest.update(array.view(np.uint8))
+    return {
+        "dtype": array.dtype.str,
+        "shape": list(array.shape),
+        "sha256": digest.hexdigest(),
+    }
+
+
+def _task43_v2_active_explicit_residual_facts(
+    native_facts: Mapping[str, Any],
+    *,
+    expected_carrier_rows: int,
+    expected_port_rows: int,
+) -> dict[str, Any]:
+    """Measure zero-slave carrier plus port residual against the native RHS norm."""
+
+    carrier_residual = np.asarray(
+        native_facts["augmented_fe_residual"], dtype=np.complex128
+    )
+    port_residual = np.asarray(
+        native_facts["augmented_port_residual"], dtype=np.complex128
+    )
+    effective_rhs = np.asarray(
+        native_facts["native_effective_rhs"], dtype=np.complex128
+    )
+    if any(
+        array.ndim != 1 or array.size == 0
+        for array in (carrier_residual, port_residual, effective_rhs)
+    ):
+        raise ValueError(
+            "Task43 A2 full active-space residuals must be nonempty vectors"
+        )
+    carrier_norm = float(np.linalg.norm(carrier_residual))
+    port_norm = float(np.linalg.norm(port_residual))
+    rhs_norm = float(np.linalg.norm(effective_rhs))
+    combined_norm = float(np.hypot(carrier_norm, port_norm))
+    relative = combined_norm / max(rhs_norm, np.finfo(float).tiny)
+    layout_matches_expected = bool(
+        carrier_residual.size == int(expected_carrier_rows)
+        and effective_rhs.size == int(expected_carrier_rows)
+        and port_residual.size == int(expected_port_rows)
+    )
+    return {
+        "zero_slave_carrier_residual_norm": carrier_norm,
+        "port_residual_norm": port_norm,
+        "combined_residual_norm": combined_norm,
+        "native_effective_rhs_norm": rhs_norm,
+        "combined_relative": relative,
+        "carrier_residual_size": int(carrier_residual.size),
+        "port_residual_size": int(port_residual.size),
+        "native_effective_rhs_size": int(effective_rhs.size),
+        "layout_matches_expected": layout_matches_expected,
+        "finite": bool(
+            np.isfinite(carrier_residual).all()
+            and np.isfinite(port_residual).all()
+            and np.isfinite(effective_rhs).all()
+            and np.isfinite(
+                [carrier_norm, port_norm, rhs_norm, combined_norm, relative]
+            ).all()
+            and native_facts.get("rhs_is_mpc_dual") is True
+            and layout_matches_expected
+        ),
+        "normalization": "hypot(norm(zero_slave_carrier_residual), norm(augmented_port_residual)) / norm(native_effective_rhs)",
+        "carrier_layout_note": "augmented_fe_residual is stored on the zero-slave carrier (389832 rows on Y6_1), not the 380160 FE degree count; port vector has 612 or 836 modes",
+        "rhs_is_mpc_dual": bool(native_facts.get("rhs_is_mpc_dual")),
+    }
+
+
+def _task43_v2_normal_correction_audit(
+    history: list[Mapping[str, Any]],
+    *,
+    correction_count: int,
+    correction_limit: int,
+    rhs_norm: float,
+    mumps_info_after_last_solve: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Audit executed native MatSolve corrections from their saved residual ratios."""
+
+    rhs_norm = float(rhs_norm)
+    denominator = max(rhs_norm, np.finfo(float).tiny)
+    relatives = [float(row["relative_residual"]) for row in history]
+    structure_matches = bool(
+        len(history) == int(correction_count) + 1
+        and [int(row["correction"]) for row in history]
+        == list(range(int(correction_count) + 1))
+    )
+    if structure_matches:
+        for index, row in enumerate(history[1:], start=1):
+            structure_matches = bool(
+                structure_matches
+                and int(row.get("solve_calls", -1)) == 1 + index
+                and int(row.get("symbolic_calls", -1)) == 1
+                and int(row.get("numeric_calls", -1)) == 1
+                and row.get("petsc_matsolve_completed_without_exception") is True
+                and row.get("solution_updated") is True
+                and row.get("solver_method")
+                == "native_PETSc_MatSolve_with_MUMPS_factor"
+                and row.get("ksp_converged_reason") == "not_applicable_native_MatSolve"
+            )
+    if history:
+        structure_matches = bool(
+            structure_matches
+            and history[0].get("solution_updated") is False
+            and history[0].get("solver_method") == "initial_native_direct_solve"
+        )
+    finite_nonnegative = bool(
+        np.isfinite([rhs_norm, denominator, *relatives]).all()
+        and rhs_norm >= 0.0
+        and all(value >= 0.0 for value in relatives)
+    )
+    strict_decrease = all(after < before for before, after in pairwise(relatives))
+    infog = mumps_info_after_last_solve.get("infog")
+    mumps_info_no_failure = bool(
+        isinstance(infog, Mapping)
+        and isinstance(infog.get("1"), int)
+        and not isinstance(infog.get("1"), bool)
+        and infog.get("1") == 0
+    )
+    enriched = []
+    for index, row in enumerate(history):
+        relative = relatives[index]
+        enriched.append(
+            {
+                **row,
+                "relative_residual": relative,
+                "residual_norm_derived_from_recorded_ratio_and_denominator": (
+                    relative * denominator
+                ),
+                "residual_norm_status": "derived_from_recorded_ratio_and_effective_denominator",
+                "effective_denominator_norm": denominator,
+            }
+        )
+    passed = bool(
+        structure_matches
+        and finite_nonnegative
+        and strict_decrease
+        and mumps_info_no_failure
+        and 0 <= int(correction_count) <= int(correction_limit)
+    )
+    return {
+        "status": "PASS" if passed else "LIMITED",
+        "passed": passed,
+        "correction_count": int(correction_count),
+        "correction_limit": int(correction_limit),
+        "rhs_norm": rhs_norm,
+        "effective_denominator_norm": denominator,
+        "history": enriched,
+        "history_structure_matches_executed_native_calls": structure_matches,
+        "all_relative_residuals_finite_and_nonnegative": finite_nonnegative,
+        "every_executed_correction_strictly_decreased": strict_decrease,
+        "genuine_mumps_infog1_zero": mumps_info_no_failure,
+        "mumps_info_after_last_solve": dict(mumps_info_after_last_solve),
+        "residual_norm_provenance": (
+            "derived as recorded relative residual times max(unchanged condensed RHS norm, machine tiny)"
+        ),
+        "solver_method": "native_PETSc_MatSolve_with_MUMPS_factor",
+        "ksp_converged_reason": "not_applicable_native_MatSolve",
+        "qualification_note": (
+            None
+            if passed
+            else "normal correction hard gate failed; preserve this endpoint as nonqualified and do not proceed to A2_R, B, or C"
+        ),
+    }
+
+
+def _task43_v2_extra_lu_status(
+    helper_facts: Mapping[str, Any],
+    *,
+    condensed_strict_decrease: bool,
+    full_active_strict_decrease: bool,
+) -> dict[str, Any]:
+    """Preserve every same-factor helper gate before adding full-residual gates."""
+
+    helper_gates = {
+        "original_helper_status_passed": helper_facts.get("status") == "PASS",
+        "exactly_one_extra_solve": helper_facts.get("exactly_one_extra_solve") is True,
+        "factorization_calls_unchanged": helper_facts.get(
+            "factorization_calls_unchanged"
+        )
+        is True,
+        "finite": helper_facts.get("finite") is True,
+        "primary_solution_preserved": helper_facts.get("primary_solution_preserved")
+        is True,
+        "rhs_preserved": helper_facts.get("rhs_preserved") is True,
+        "matrix_object_identity_same": helper_facts.get("matrix_object_identity_same")
+        is True,
+    }
+    all_passed = bool(
+        all(helper_gates.values())
+        and condensed_strict_decrease
+        and full_active_strict_decrease
+    )
+    return {
+        "status": "PASS" if all_passed else "FAIL_UNCONTROLLED_EXTRA_CORRECTION",
+        "original_helper_status": helper_facts.get("status"),
+        "original_helper_gates": helper_gates,
+        "condensed_b_minus_Ax_strict_decrease": bool(condensed_strict_decrease),
+        "full_active_space_explicit_strict_decrease": bool(full_active_strict_decrease),
+    }
+
+
+def _task43_v2_one_extra_same_factor_correction(
+    factor: Any,
+    matrix: Any,
+    rhs: Any,
+    primary_solution: Any,
+) -> tuple[Any, dict[str, Any]]:
+    """Solve one residual correction on a copy, preserving the primary vector."""
+
+    matrix_object_id = id(matrix)
+    initial_solve_calls = int(factor.solve_calls)
+    initial_symbolic_calls = int(factor.symbolic_calls)
+    initial_numeric_calls = int(factor.numeric_calls)
+    primary_before = np.asarray(
+        primary_solution.getArray(readonly=True), dtype=np.complex128
+    ).copy()
+    rhs_before = np.asarray(rhs.getArray(readonly=True), dtype=np.complex128).copy()
+    action = rhs.duplicate()
+    residual = rhs.duplicate()
+    corrected_action = rhs.duplicate()
+    corrected_residual = rhs.duplicate()
+    correction = rhs.duplicate()
+    corrected_solution = primary_solution.duplicate()
+    try:
+        matrix.mult(primary_solution, action)
+        rhs.copy(residual)
+        residual.axpy(-1.0 + 0.0j, action)
+        initial_norm = float(residual.norm())
+        rhs_norm = float(rhs.norm())
+        initial_relative = initial_norm / max(rhs_norm, np.finfo(float).tiny)
+        initial_finite = bool(
+            np.isfinite(primary_before).all()
+            and np.isfinite(rhs_before).all()
+            and np.isfinite([initial_norm, rhs_norm, initial_relative]).all()
+        )
+        if not initial_finite:
+            raise FloatingPointError(
+                "Task43 extra-LU diagnostic refuses a non-finite primary input"
+            )
+
+        correction.set(0.0 + 0.0j)
+        factor.solve_repeated(residual, correction)
+        primary_solution.copy(corrected_solution)
+        corrected_solution.axpy(1.0 + 0.0j, correction)
+
+        matrix.mult(corrected_solution, corrected_action)
+        rhs.copy(corrected_residual)
+        corrected_residual.axpy(-1.0 + 0.0j, corrected_action)
+        corrected_norm = float(corrected_residual.norm())
+        corrected_relative = corrected_norm / max(rhs_norm, np.finfo(float).tiny)
+        primary_after = np.asarray(
+            primary_solution.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        rhs_after = np.asarray(rhs.getArray(readonly=True), dtype=np.complex128).copy()
+        arrays_finite = bool(
+            np.isfinite(primary_before).all()
+            and np.isfinite(rhs_before).all()
+            and np.isfinite(np.asarray(correction.getArray(readonly=True))).all()
+            and np.isfinite(
+                np.asarray(corrected_solution.getArray(readonly=True))
+            ).all()
+        )
+        strict_decrease = bool(
+            np.isfinite(
+                [initial_norm, corrected_norm, initial_relative, corrected_relative]
+            ).all()
+            and corrected_norm < initial_norm
+            and corrected_relative < initial_relative
+        )
+        solve_calls_after = int(factor.solve_calls)
+        symbolic_calls_after = int(factor.symbolic_calls)
+        numeric_calls_after = int(factor.numeric_calls)
+        primary_preserved = bool(np.array_equal(primary_after, primary_before))
+        rhs_preserved = bool(np.array_equal(rhs_after, rhs_before))
+        matrix_object_identity_same = id(matrix) == matrix_object_id
+        factorization_calls_unchanged = bool(
+            symbolic_calls_after == initial_symbolic_calls
+            and numeric_calls_after == initial_numeric_calls
+        )
+        exactly_one_solve = solve_calls_after - initial_solve_calls == 1
+        facts = {
+            "schema": "task43.v2.native_p6_extra_lu.v1",
+            "extra_correction_count": solve_calls_after - initial_solve_calls,
+            "exactly_one_extra_solve": exactly_one_solve,
+            "initial_factor_solve_calls": initial_solve_calls,
+            "final_factor_solve_calls": solve_calls_after,
+            "initial_factor_symbolic_calls": initial_symbolic_calls,
+            "final_factor_symbolic_calls": symbolic_calls_after,
+            "initial_factor_numeric_calls": initial_numeric_calls,
+            "final_factor_numeric_calls": numeric_calls_after,
+            "factorization_calls_unchanged": factorization_calls_unchanged,
+            "initial_explicit_residual_norm": initial_norm,
+            "initial_explicit_residual_relative": initial_relative,
+            "rhs_norm": rhs_norm,
+            "corrected_explicit_residual_norm": corrected_norm,
+            "corrected_explicit_residual_relative": corrected_relative,
+            "correction_norm": float(correction.norm()),
+            "finite": arrays_finite,
+            "strict_decrease": strict_decrease,
+            "primary_solution_preserved": primary_preserved,
+            "primary_solution_before_identity": _task43_v2_array_identity(
+                primary_before
+            ),
+            "primary_solution_after_identity": _task43_v2_array_identity(primary_after),
+            "rhs_preserved": rhs_preserved,
+            "rhs_before_identity": _task43_v2_array_identity(rhs_before),
+            "rhs_after_identity": _task43_v2_array_identity(rhs_after),
+            "matrix_object_identity_same": matrix_object_identity_same,
+            "matrix_object_id": matrix_object_id,
+            "matrix_content_scope": (
+                "same_factor_solve_repeated_only; helper performs no assembly or matrix write"
+            ),
+            "status": (
+                "PASS"
+                if exactly_one_solve
+                and factorization_calls_unchanged
+                and arrays_finite
+                and strict_decrease
+                and primary_preserved
+                and rhs_preserved
+                and matrix_object_identity_same
+                else "FAIL_UNCONTROLLED_EXTRA_CORRECTION"
+            ),
+        }
+        if not exactly_one_solve:
+            raise RuntimeError(
+                "Task43 extra-LU diagnostic did not perform exactly one solve"
+            )
+        if (
+            not primary_preserved
+            or not rhs_preserved
+            or not matrix_object_identity_same
+        ):
+            raise RuntimeError("Task43 extra-LU diagnostic mutated its primary inputs")
+        return corrected_solution, facts
+    except BaseException:
+        corrected_solution.destroy()
+        raise
+    finally:
+        for vector in (
+            action,
+            residual,
+            corrected_action,
+            corrected_residual,
+            correction,
+        ):
+            vector.destroy()
+
+
+def _task43_v2_verify_y6_reference_space(
+    levels: Mapping[str, Any], diagnostic: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Require the current native P6 mesh/DoF layout to match frozen Y6_1 bytes."""
+
+    bundle_path = Path(str(diagnostic["reference_space_bundle_path"]))
+    identity_path = Path(str(diagnostic["reference_space_identity_path"]))
+    expected_bundle_sha = str(diagnostic["reference_space_bundle_sha256"])
+    expected_identity_sha = str(diagnostic["reference_space_identity_sha256"])
+    if not bundle_path.is_absolute() or not identity_path.is_absolute():
+        raise ValueError(
+            "Task43 A2 frozen reference-space inputs must be absolute paths"
+        )
+    if _sha256_file_streaming(bundle_path) != expected_bundle_sha:
+        raise ValueError("Task43 A2 recovered Y6_1 space bundle hash changed")
+    if _sha256_file_streaming(identity_path) != expected_identity_sha:
+        raise ValueError("Task43 A2 Y6_1 restore identity hash changed")
+    identity_record = json.loads(identity_path.read_text(encoding="utf-8"))
+    bundle_identity = identity_record.get("recovered_bundle", {})
+    if bundle_identity.get("sha256") != expected_bundle_sha:
+        raise ValueError(
+            "Task43 A2 restore record does not bind the recovered Y6_1 bundle"
+        )
+    expected_arrays = bundle_identity.get("array_identities", {})
+    mesh = levels["mesh_data"].mesh
+    cell_map = mesh.topology.index_map(mesh.topology.dim)
+    cell_connectivity = mesh.topology.connectivity(mesh.topology.dim, 0)
+    if cell_connectivity is None:
+        mesh.topology.create_connectivity(mesh.topology.dim, 0)
+        cell_connectivity = mesh.topology.connectivity(mesh.topology.dim, 0)
+    if cell_connectivity is None:
+        raise RuntimeError("Task43 A2 current mesh lacks cell-to-vertex connectivity")
+    dofmap = levels["spaces"][6].dofmap
+    dof_index_map = dofmap.index_map
+    actual_arrays = {
+        "mesh_geometry_coordinates_nm": np.asarray(mesh.geometry.x),
+        "mesh_geometry_dofmap": np.asarray(mesh.geometry.dofmap),
+        "mesh_owned_cell_global_ids": np.asarray(
+            cell_map.local_to_global(np.arange(cell_map.size_local, dtype=np.int32)),
+            dtype=np.int64,
+        ),
+        "mesh_cell_vertex_dofmap": np.asarray(cell_connectivity.array),
+        "p6_function_space_cell_dofmap": np.asarray(dofmap.list),
+        "p6_owned_global_dof_block_ids": np.asarray(
+            dof_index_map.local_to_global(
+                np.arange(dof_index_map.size_local, dtype=np.int32)
+            ),
+            dtype=np.int64,
+        ),
+        "p6_ghost_global_dof_block_ids": np.asarray(
+            dof_index_map.ghosts, dtype=np.int64
+        ),
+    }
+    actual_identities: dict[str, dict[str, Any]] = {}
+    with np.load(bundle_path, allow_pickle=False) as reference:
+        for name, actual in actual_arrays.items():
+            if name not in reference or name not in expected_arrays:
+                raise ValueError(f"Task43 A2 Y6_1 reference lacks {name}")
+            current = np.ascontiguousarray(actual)
+            original = np.ascontiguousarray(reference[name])
+            if current.dtype != original.dtype or not np.array_equal(current, original):
+                raise ValueError(
+                    f"Task43 A2 current Y6_1 {name} differs from frozen reference"
+                )
+            observed = _task43_v2_array_identity(current)
+            if observed != expected_arrays[name]:
+                raise ValueError(
+                    f"Task43 A2 Y6_1 {name} identity differs from restore record"
+                )
+            actual_identities[name] = observed
+    space_sha = hashlib.sha256(
+        json.dumps(
+            actual_identities,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "schema": "task43.v2.native_y6_1_space_identity.v1",
+        "status": "PASS",
+        "bundle_sha256": expected_bundle_sha,
+        "restore_identity_sha256": expected_identity_sha,
+        "arrays": actual_identities,
+        "discretization_identity_sha256": space_sha,
+        "comparison_scope": "exact current mesh geometry/connectivity/P6 dofmap/global ids against frozen Y6_1 restore bundle",
+    }
+
+
+def _task43_v2_endpoint_identities(
+    cfg: Any,
+    levels: Mapping[str, Any],
+    modes: Any,
+    *,
+    space_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Hash physical coefficients separately from the exact native P6 space."""
+
+    from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
+        task43_v2_physical_configuration_identity,
+    )
+
+    mesh = levels["mesh_data"].mesh
+    axes = {
+        axis: np.unique(np.asarray(mesh.geometry.x)[:, index]).astype(np.float64)
+        for index, axis in enumerate(("x", "y", "z"))
+    }
+    space_sha = str(space_identity["discretization_identity_sha256"])
+    degree_plan_payload = {
+        "schema": "task43.v2.native_uniform_p6_degree_map.v1",
+        "degree": 6,
+        "global_cell_count": int(
+            mesh.topology.index_map(mesh.topology.dim).size_global
+        ),
+        "verified_space_identity_sha256": space_sha,
+    }
+    degree_plan_sha = hashlib.sha256(
+        json.dumps(
+            degree_plan_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    candidate_plan_sha = str(cfg.mesh_plan_sha256)
+    identity = task43_v2_physical_configuration_identity(
+        cfg.as_jsonable(),
+        axis_values_nm=axes,
+        candidate_plan_sha256=candidate_plan_sha,
+        active_degree_plan_sha256=degree_plan_sha,
+    )
+    actual_keys = tuple(
+        (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+        for mode in modes
+    )
+    phase = "A2_q" if len(actual_keys) == 612 else "A2_R"
+    from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
+        R13_MODE_KEYS,
+        R14_MODE_KEYS,
+    )
+
+    expected = R13_MODE_KEYS if phase == "A2_q" else R14_MODE_KEYS
+    if len(actual_keys) != len(expected) or set(actual_keys) != expected:
+        raise ValueError(
+            "Task43 A2 live modal inventory differs from its frozen identity"
+        )
+    return {
+        "schema": "task43.v2.native_y6_1_endpoint_identity.v1",
+        "phase": phase,
+        "physical_configuration": identity,
+        "physical_configuration_sha256": identity["sha256"],
+        "discretization_sha256": identity["discretization_identity"]["sha256"],
+        "candidate_plan_sha256": candidate_plan_sha,
+        "active_degree_plan": degree_plan_payload,
+        "active_degree_plan_sha256": degree_plan_sha,
+        "actual_axes_nm": {name: values.tolist() for name, values in axes.items()},
+        "ordered_mode_count": len(actual_keys),
+    }
+
+
+def _task43_v2_capture_fixed_field_samples(
+    field: Any,
+    cfg: Any,
+    diagnostic: Mapping[str, Any],
+) -> dict[str, np.ndarray]:
+    """Sample recovered E and curl(E) on the two frozen shared point arrays."""
+
+    from src.postprocessing.physical_field_comparison import (
+        magnetic_field_from_electric_curl,
+    )
+    from src.postprocessing.physical_field_sampling import (
+        prepare_cell_local_vector_field_export,
+        sample_cell_local_vector_fields,
+    )
+
+    specifications = diagnostic.get("field_reference_samples")
+    if not isinstance(specifications, Mapping) or set(specifications) != {"q8", "q10"}:
+        raise ValueError("Task43 A2 requires frozen q8 and q10 reference sample arrays")
+    export = prepare_cell_local_vector_field_export(field)
+    result: dict[str, np.ndarray] = {}
+    for order in (8, 10):
+        key = f"q{order}"
+        spec = specifications[key]
+        if not isinstance(spec, Mapping):
+            raise TypeError(f"Task43 A2 {key} sample identity must be an object")
+        path = Path(str(spec["path"]))
+        if not path.is_absolute() or _sha256_file_streaming(path) != spec.get("sha256"):
+            raise ValueError(f"Task43 A2 frozen {key} field sample input hash changed")
+        with np.load(path, allow_pickle=False) as reference:
+            point_key = str(spec["points_key"])
+            weight_key = str(spec["weights_key"])
+            if point_key not in reference or weight_key not in reference:
+                raise ValueError(
+                    f"Task43 A2 frozen {key} point/weight arrays are missing"
+                )
+            points = np.asarray(reference[point_key], dtype=np.float64).copy()
+            weights = np.asarray(reference[weight_key], dtype=np.float64).copy()
+        if (
+            points.ndim != 2
+            or points.shape[1] != 3
+            or points.shape[0] == 0
+            or weights.shape != (points.shape[0],)
+            or not np.isfinite(points).all()
+            or not np.isfinite(weights).all()
+            or np.any(weights <= 0.0)
+        ):
+            raise ValueError(f"Task43 A2 frozen {key} quadrature arrays are invalid")
+        sampled = sample_cell_local_vector_fields(
+            {
+                "E_total": export.electric_dgq6,
+                "curl_E_total": export.curl_electric_dgq6,
+            },
+            points,
+        )
+        if sampled is None:
+            raise RuntimeError("Task43 A2 MPI1 field sampler returned no root arrays")
+        electric = np.asarray(sampled["E_total"], dtype=np.complex128)
+        curl = np.asarray(sampled["curl_E_total"], dtype=np.complex128)
+        if (
+            electric.shape != (points.shape[0], 3)
+            or curl.shape != (points.shape[0], 3)
+            or not np.isfinite(electric).all()
+            or not np.isfinite(curl).all()
+        ):
+            raise FloatingPointError(
+                f"Task43 A2 {key} field samples are malformed or non-finite"
+            )
+        result[f"{key}_points_nm"] = points
+        result[f"{key}_weights_nm3"] = weights
+        magnetic = magnetic_field_from_electric_curl(
+            curl,
+            magnetic_field_scale_A_per_m=cfg.magnetic_field_scale_A_per_m,
+            k0_per_nm=cfg.k0,
+            mu_r=cfg.mu_r,
+        )
+        magnetic = np.asarray(magnetic, dtype=np.complex128)
+        if magnetic.shape != (points.shape[0], 3) or not np.isfinite(magnetic).all():
+            raise FloatingPointError(
+                f"Task43 A2 {key} H samples are malformed or non-finite"
+            )
+        result[f"{key}_E_total_code"] = electric
+        result[f"{key}_curl_E_total_code"] = curl
+        result[f"{key}_H_total_A_per_m"] = magnetic
+    return result
+
+
 def _validate_direct_condensed_dimensions(
     condensed: Any,
     *,
@@ -1752,6 +2508,7 @@ def _bounded_same_factor_condensed_refinement(
     initial_relative: float,
     relative_gate: float,
     max_corrections: int,
+    residual_snapshots: list[np.ndarray] | None = None,
     marker,
 ) -> tuple[float, int, list[dict[str, Any]]]:
     """Correct the materialized condensed residual through the same MUMPS factor."""
@@ -1760,8 +2517,25 @@ def _bounded_same_factor_condensed_refinement(
     matrix_object_id = id(matrix)
     relative = float(initial_relative)
     corrections = 0
-    history = [{"correction": 0, "relative_residual": relative}]
-    while np.isfinite(relative) and relative > float(relative_gate) and corrections < int(max_corrections):
+    history = [
+        {
+            "correction": 0,
+            "relative_residual": relative,
+            "solution_updated": False,
+            "solver_method": "initial_native_direct_solve",
+            "petsc_matsolve_completed_without_exception": None,
+            "ksp_converged_reason": "not_applicable_native_MatSolve",
+        }
+    ]
+    if residual_snapshots is not None:
+        residual_snapshots.append(
+            np.asarray(residual.getArray(readonly=True), dtype=np.complex128).copy()
+        )
+    while (
+        np.isfinite(relative)
+        and relative > float(relative_gate)
+        and corrections < int(max_corrections)
+    ):
         correction = rhs.duplicate()
         try:
             correction.set(0.0 + 0.0j)
@@ -1779,12 +2553,20 @@ def _bounded_same_factor_condensed_refinement(
         row = {
             "correction": corrections,
             "relative_residual": relative,
+            "solution_updated": True,
+            "solver_method": "native_PETSc_MatSolve_with_MUMPS_factor",
+            "petsc_matsolve_completed_without_exception": True,
+            "ksp_converged_reason": "not_applicable_native_MatSolve",
             "same_matrix_object_id": matrix_object_id,
             "symbolic_calls": int(factor.symbolic_calls),
             "numeric_calls": int(factor.numeric_calls),
             "solve_calls": int(factor.solve_calls),
         }
         history.append(row)
+        if residual_snapshots is not None:
+            residual_snapshots.append(
+                np.asarray(residual.getArray(readonly=True), dtype=np.complex128).copy()
+            )
         marker("p6_direct_same_factor_condensed_refinement", row)
     return relative, corrections, history
 
@@ -2139,8 +2921,13 @@ def run_p6_condensed_direct(
     run_directory: str | Path,
     *,
     source_sha: str | None,
+    task43_v2_diagnostic: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Execute one explicitly profiled p6 condensed direct full solve."""
+    """Execute one explicitly profiled p6 condensed direct full solve.
+
+    ``task43_v2_diagnostic`` is a separate, explicit opt-in for the frozen
+    Task43 A2 experiment.  Leaving it unset preserves the historical runner.
+    """
 
     from mpi4py import MPI
     from petsc4py import PETSc
@@ -2166,6 +2953,7 @@ def run_p6_condensed_direct(
         build_same_mesh_physical_action,
         destroy_same_mesh_physical_action,
         recover_p0_outputs,
+        restore_p0_full_field,
     )
     from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
     from src.solvers.hcurl_assembly_time_condensation import (
@@ -2216,13 +3004,28 @@ def run_p6_condensed_direct(
     schur_action_vector = None
     schur_residual_vector = None
     saved_field = None
+    extra_saved_field = None
+    extra_solution_vector = None
     native_facts = None
     output_facts = None
+    extra_native_facts = None
+    extra_lu_facts = None
+    extra_schur_relative = None
     route = None
+    task43_resource_gate = None
     same_matrix_lifecycle_verified = None
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
         route = _direct_run_contract(str(profile_facts["identity"]))
+        if task43_v2_diagnostic is not None:
+            route = _task43_v2_native_p6_route(
+                profile_facts, route, task43_v2_diagnostic
+            )
+            from benchmarks.task43_hp_adaptivity.profile import (
+                task43_watchdog_resource_gate_from_environment,
+            )
+
+            task43_resource_gate = task43_watchdog_resource_gate_from_environment()
         route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")
         route.setdefault("sparse_cutoff_relative_tolerance", 1.0e-13)
         if route["family"] == "task40_phi90" and route["sparse_cutoff_policy"] != (
@@ -2278,21 +3081,75 @@ def run_p6_condensed_direct(
             raise RuntimeError("p6 direct route requires 64-bit PetscInt")
         cap_value = os.environ.get("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES")
         policy_value = os.environ.get("PHYSICAL_WATCHDOG_RESOURCE_STOP_POLICY")
-        minimum_available_value = os.environ.get("PHYSICAL_WATCHDOG_MIN_AVAILABLE_BYTES")
-        if route["family"] == "dispersion_flat" and cap_value is None:
+        minimum_available_value = os.environ.get(
+            "PHYSICAL_WATCHDOG_MIN_AVAILABLE_BYTES"
+        )
+        if task43_resource_gate is not None:
+            if (
+                cap_value is None
+                or int(cap_value) != int(task43_resource_gate["launch_cap_bytes"])
+                or policy_value != "legacy"
+            ):
+                raise RuntimeError(
+                    "Task43 A2 watchdog cap/policy differs from its live resource profile"
+                )
+            profile_rss_cap = int(task43_resource_gate["launch_cap_bytes"])
+            profile_minimum_available = None
+        elif route["family"] == "dispersion_flat" and cap_value is None:
             raise RuntimeError("flat direct route requires the native watchdog RSS cap")
-        if profile_rss_cap is None:
+        if task43_resource_gate is None and profile_rss_cap is None:
             if cap_value is not None or policy_value != "host_available_floor_v1":
                 raise RuntimeError("Task40 requires host_available_floor_v1 without an RSS cap")
             if minimum_available_value is None or int(minimum_available_value) != int(
                 profile_minimum_available
             ):
-                raise RuntimeError("watchdog available-memory floor differs from Task40 profile")
-        elif cap_value is not None and int(cap_value) != profile_rss_cap:
-            raise RuntimeError("watchdog launch cap differs from the resolved profile RSS hard limit")
+                raise RuntimeError(
+                    "watchdog available-memory floor differs from Task40 profile"
+                )
+        elif (
+            task43_resource_gate is None
+            and cap_value is not None
+            and int(cap_value) != profile_rss_cap
+        ):
+            raise RuntimeError(
+                "watchdog launch cap differs from the resolved profile RSS hard limit"
+            )
+        if task43_resource_gate is not None:
+            summary["task43_v2_resource_gate"] = dict(task43_resource_gate)
+            summary["task40_profile_resource_facts_retained"] = dict(
+                profile_facts["resources"]
+            )
+            summary["rss_hard_limit_bytes"] = profile_rss_cap
+            summary["minimum_available_bytes"] = None
         cfg = simulation_config_3d_from_normalized(resolved_payload)
         if not isinstance(cfg, SimulationConfig3D):
             raise TypeError("resolved direct input did not create SimulationConfig3D")
+        if task43_v2_diagnostic is not None:
+            cfg.stage4_incident_quadrature_degree = int(
+                route["surface_quadrature_degree"]
+            )
+            cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
+            summary["task43_v2_diagnostic_identity"] = {
+                "phase": route["task43_v2_diagnostic_phase"],
+                "volume_quadrature_degree": 19,
+                "incident_quadrature_degree": int(
+                    cfg.stage4_incident_quadrature_degree
+                ),
+                "port_quadrature_degree": int(cfg.stage4_dtn_quadrature_degree),
+                "modal_rectangle_max_abs_m_n": list(
+                    route["parent_rectangle_max_abs_m_n"]
+                ),
+                "mode_basis_scale_policy": route["mode_basis_scale_policy"],
+                "normal_correction_max": route["max_same_factor_corrections"],
+                "extra_correction_max": 1,
+                "frozen_plan_sha256": task43_v2_diagnostic.get("contract_sha256"),
+                "a2_native_contract_sha256": task43_v2_diagnostic.get(
+                    "a2_native_contract_sha256"
+                ),
+                "frozen_plan_markdown_sha256": task43_v2_diagnostic.get(
+                    "plan_markdown_sha256"
+                ),
+            }
         if route["family"] == "task40_phi90":
             # Input keeps the public auto policy unchanged.  This profile
             # explicitly overrides it to its frozen finite rectangle.
@@ -2382,6 +3239,10 @@ def run_p6_condensed_direct(
         if mesh_evidence.get("status") != "PASS":
             raise ValueError("actual direct-run mesh evidence did not pass")
         summary["mesh_evidence"] = mesh_evidence
+        if task43_v2_diagnostic is not None:
+            summary["task43_v2_reference_space_identity"] = (
+                _task43_v2_verify_y6_reference_space(levels, task43_v2_diagnostic)
+            )
         ledger.marker("p6_direct_actual_mesh_qa_complete", mesh_evidence)
 
         parent_inventory = build_dynamic_mode_inventory(cfg)
@@ -2514,8 +3375,15 @@ def run_p6_condensed_direct(
         }
         ledger.marker("p6_direct_mode_inventory_complete", summary["mode_inventory"])
 
-        volume_quadrature_metadata, _volume_quadrature_records = (
+        analyzed_volume_quadrature_metadata, analyzed_volume_quadrature_records = (
             fine_volume_quadrature_metadata(levels, cfg)
+        )
+        volume_quadrature_metadata, _volume_quadrature_records = (
+            _task43_v2_volume_quadrature_metadata(
+                analyzed_volume_quadrature_metadata,
+                analyzed_volume_quadrature_records,
+                diagnostic=task43_v2_diagnostic,
+            )
         )
         if route["family"] == "dispersion_flat":
             if tuple(volume_quadrature_metadata) != (
@@ -2557,13 +3425,21 @@ def run_p6_condensed_direct(
                 surface_progress_interval=1024,
             )
         else:
-            expected_volume_metadata = (
-                {"quadrature_degree": 15, "quadrature_rule": "default"},
-                {"quadrature_degree": 15, "quadrature_rule": "default"},
+            expected_volume_degree = (
+                int(task43_v2_diagnostic["volume_quadrature_degree"])
+                if task43_v2_diagnostic is not None
+                else 15
+            )
+            expected_volume_metadata = tuple(
+                {
+                    "quadrature_degree": expected_volume_degree,
+                    "quadrature_rule": "default",
+                }
+                for _ in range(2)
             )
             if tuple(volume_quadrature_metadata) != expected_volume_metadata:
                 raise ValueError(
-                    "F5 p6 direct route must retain the historical volume q15 rule"
+                    "p6 direct route volume metadata differs from its frozen rule"
                 )
             parent_surface_kwargs = (
                 {
@@ -2656,6 +3532,15 @@ def run_p6_condensed_direct(
             ],
             "carrier_audit": carrier_sparse_audit,
             "volume_quadrature_metadata": volume_quadrature_metadata,
+            "volume_quadrature_metadata_analyzed_before_override": (
+                analyzed_volume_quadrature_metadata
+            ),
+            "volume_quadrature_metadata_used_by_condensation_form": (
+                volume_quadrature_metadata
+            ),
+            "volume_quadrature_metadata_used_by_independent_physical_action": (
+                volume_quadrature_metadata
+            ),
             "volume_quadrature_records": _volume_quadrature_records,
             "functional_store": False,
             "cross_mesh_fe_reuse": False,
@@ -2664,12 +3549,64 @@ def run_p6_condensed_direct(
             summary["checks"]["carrier_sparse_cutoff_identity"] = (
                 carrier_policy_identity_pass
             )
-        ledger.marker("p6_direct_surface_carrier_complete", summary["operator_identity"])
+        if task43_v2_diagnostic is not None:
+            summary["task43_v2_endpoint_identity"] = _task43_v2_endpoint_identities(
+                cfg,
+                levels,
+                bundle["modes"],
+                space_identity=summary["task43_v2_reference_space_identity"],
+            )
+            summary["task43_v2_input_bindings"] = {
+                key: task43_v2_diagnostic[key]
+                for key in (
+                    "contract_path",
+                    "contract_sha256",
+                    "a2_native_contract_path",
+                    "a2_native_contract_sha256",
+                    "plan_markdown_path",
+                    "plan_markdown_sha256",
+                    "reference_space_bundle_path",
+                    "reference_space_bundle_sha256",
+                    "reference_space_identity_path",
+                    "reference_space_identity_sha256",
+                    "field_reference_samples",
+                    "root_source_continuity_audit_path",
+                    "root_source_continuity_audit_sha256",
+                    "root_axis_profile_audit_path",
+                    "root_axis_profile_audit_sha256",
+                    "root_mode_policy_audit_path",
+                    "root_mode_policy_audit_sha256",
+                )
+            }
+        ledger.marker(
+            "p6_direct_surface_carrier_complete", summary["operator_identity"]
+        )
 
         # The source is assembled through the production incident top traction,
         # finalized MPC scatter, and modal DtN RHS composition path.  Keeping
         # this actual vector is also the common q160/q192 action witness input.
         full_rhs, rhs_facts = build_physical_rhs(bundle)
+        if task43_v2_diagnostic is not None:
+            observed_rhs_q = int(bundle["dtn_quadrature_degree"])
+            expected_incident_q = int(cfg.stage4_incident_quadrature_degree)
+            if observed_rhs_q != 32 or expected_incident_q != 32:
+                raise ValueError(
+                    "Task43 A2 incident/port RHS did not use the frozen q32 route"
+                )
+            rhs_facts["actual_incident_port_quadrature_degree"] = observed_rhs_q
+            rhs_facts["actual_incident_quadrature_route"] = (
+                "cfg.stage4_incident_quadrature_degree=32; "
+                "build_physical_rhs assembles _incident_top_traction_form with "
+                "bundle['dtn_quadrature_degree']"
+            )
+            summary["task43_v2_actual_quadrature_route"] = {
+                "incident_and_port_rhs": {
+                    "cfg_incident_degree": expected_incident_q,
+                    "bundle_dtn_degree": observed_rhs_q,
+                    "rhs_facts": dict(rhs_facts),
+                    "builder": "build_physical_rhs -> _incident_top_traction_form -> _assemble_mpc_vector(quadrature_degree=bundle['dtn_quadrature_degree'])",
+                }
+            }
         if full_rhs.getSize() != int(
             levels["spaces"][6].dofmap.index_map.size_global
             * levels["spaces"][6].dofmap.index_map_bs
@@ -2711,7 +3648,38 @@ def run_p6_condensed_direct(
         form_started = perf_counter()
         from dolfinx import fem
 
-        compiled_form = fem.form(bundle["volume_action"].bilinear_form)
+        if task43_v2_diagnostic is not None:
+            component_metadata = {
+                name: _task43_v2_actual_form_integral_metadata(
+                    action._bilinear_form, expected_degree=19
+                )
+                for name, action in bundle["volume_action"].component_actions.items()
+            }
+            if set(component_metadata) != {"curl", "material_mass"}:
+                raise ValueError(
+                    "Task43 A2 physical volume action lost its two native components"
+                )
+            combined_form = bundle["volume_action"].bilinear_form
+            combined_metadata = _task43_v2_actual_form_integral_metadata(
+                combined_form, expected_degree=19
+            )
+        else:
+            component_metadata = None
+            combined_form = bundle["volume_action"].bilinear_form
+            combined_metadata = None
+        compiled_form = fem.form(combined_form)
+        if task43_v2_diagnostic is not None:
+            summary["task43_v2_actual_quadrature_route"][
+                "volume_action_and_condensation"
+            ] = {
+                "metadata_passed_to_build_same_mesh_physical_action": volume_quadrature_metadata,
+                "builder_chain": "build_same_mesh_physical_action -> _build_split_volume_action(volume_quadrature_metadata=...)",
+                "actual_component_integral_metadata": component_metadata,
+                "actual_combined_form_integral_metadata": combined_metadata,
+                "condensation_compiled_form_source": "fem.form(bundle['volume_action'].bilinear_form)",
+                "same_bundle_form_drives_physical_action_and_condensation": True,
+                "quadrature_degree": 19,
+            }
         form_seconds = perf_counter() - form_started
         ledger.marker("p6_direct_volume_form_compiled", {
             "wall_seconds": form_seconds,
@@ -2908,6 +3876,9 @@ def run_p6_condensed_direct(
         }]
         condensed_gate = route.get("condensed_residual_gate")
         max_same_factor_corrections = int(route.get("max_same_factor_corrections", 0))
+        schur_refinement_residual_snapshots = (
+            [] if task43_v2_diagnostic is not None else None
+        )
         if condensed_gate is not None:
             schur_relative, schur_correction_count, schur_refinement_history = (
                 _bounded_same_factor_condensed_refinement(
@@ -2920,6 +3891,7 @@ def run_p6_condensed_direct(
                     initial_relative=schur_relative,
                     relative_gate=float(condensed_gate),
                     max_corrections=max_same_factor_corrections,
+                    residual_snapshots=schur_refinement_residual_snapshots,
                     marker=ledger.marker,
                 )
             )
@@ -3000,8 +3972,21 @@ def run_p6_condensed_direct(
         native_seconds = perf_counter() - native_started
         native_relative = float(native_facts["native_residual_relative"])
         native_identity_relative = float(native_facts["native_identity_relative"])
-        if not np.isfinite([native_relative, native_identity_relative, schur_relative]).all():
-            raise FloatingPointError("direct p6 or native A6 residual facts are non-finite")
+        active_explicit_facts = (
+            _task43_v2_active_explicit_residual_facts(
+                native_facts,
+                expected_carrier_rows=int(condensed.full_rows),
+                expected_port_rows=int(condensed.appended_rows),
+            )
+            if task43_v2_diagnostic is not None
+            else None
+        )
+        if not np.isfinite(
+            [native_relative, native_identity_relative, schur_relative]
+        ).all():
+            raise FloatingPointError(
+                "direct p6 or native A6 residual facts are non-finite"
+            )
         residual_key = route["residual_key"]
         residual_gate_key = route.get("residual_gate_key") or (
             "original_A6_n0_residual_pass"
@@ -3011,14 +3996,36 @@ def run_p6_condensed_direct(
         summary["residuals"] = {
             "condensed_direct_relative": schur_relative,
             residual_key: native_relative,
-            f"{residual_key}_gate": 1.0e-6,
+            f"{residual_key}_gate": (
+                1.0e-8 if task43_v2_diagnostic is not None else 1.0e-6
+            ),
             "native_identity_relative": native_identity_relative,
             "native_identity_formula": native_facts["native_identity_formula"],
             "operator_scope": route["residual_scope"],
             "wall_seconds": native_seconds,
             "rhs_norm": native_facts["native_rhs_norm"],
+            "native_A6_effective_rhs_norm": float(
+                np.linalg.norm(
+                    np.asarray(
+                        native_facts["native_effective_rhs"], dtype=np.complex128
+                    )
+                )
+            ),
             "finite": True,
         }
+        if active_explicit_facts is not None:
+            summary["residuals"].update(
+                full_active_space_explicit_relative=active_explicit_facts[
+                    "combined_relative"
+                ],
+                full_active_space_explicit_gate=1.0e-8,
+                full_active_space_explicit_residual_norm=active_explicit_facts[
+                    "combined_residual_norm"
+                ],
+                full_active_space_explicit_rhs_norm=active_explicit_facts[
+                    "native_effective_rhs_norm"
+                ],
+            )
         if route["family"] == "task40_phi90":
             summary["residuals"].update(
                 dtn_sparse_cutoff_policy=route["sparse_cutoff_policy"],
@@ -3043,10 +4050,18 @@ def run_p6_condensed_direct(
         summary["checks"].update(
             condensed_direct_residual_finite=True,
             **{residual_finite_key: True},
-            **{residual_gate_key: native_relative <= 1.0e-6},
+            **{
+                residual_gate_key: native_relative
+                <= (1.0e-8 if task43_v2_diagnostic is not None else 1.0e-6)
+            },
             native_condensed_identity_finite=True,
             native_condensed_identity_relative=native_identity_relative,
         )
+        if active_explicit_facts is not None:
+            summary["checks"]["full_active_space_explicit_residual_pass"] = bool(
+                active_explicit_facts["finite"]
+                and active_explicit_facts["combined_relative"] <= 1.0e-8
+            )
         if condensed_gate is not None:
             summary["checks"]["condensed_direct_residual_pass"] = bool(
                 schur_relative <= float(condensed_gate)
@@ -3069,6 +4084,157 @@ def run_p6_condensed_direct(
             raise ValueError("recovered p6 field vector has the wrong global size")
         saved_field.getArray()[:] = recovered
         saved_field.assemble()
+        if task43_v2_diagnostic is not None:
+            extra_solution_vector, extra_lu_facts = (
+                _task43_v2_one_extra_same_factor_correction(
+                    factor, matrix, rhs_vector, solution_vector
+                )
+            )
+            extra_action_vector = matrix.createVecLeft()
+            extra_residual_vector = rhs_vector.duplicate()
+            try:
+                matrix.mult(extra_solution_vector, extra_action_vector)
+                rhs_vector.copy(extra_residual_vector)
+                extra_residual_vector.axpy(PETSc.ScalarType(-1.0), extra_action_vector)
+                extra_schur_relative = float(extra_residual_vector.norm()) / max(
+                    float(rhs_vector.norm()), np.finfo(float).tiny
+                )
+                extra_schur_residual_array = np.asarray(
+                    extra_residual_vector.getArray(readonly=True),
+                    dtype=np.complex128,
+                ).copy()
+            finally:
+                extra_action_vector.destroy()
+                extra_residual_vector.destroy()
+            extra_solution_array = np.asarray(
+                extra_solution_vector.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            extra_native_facts = action.evaluate_native_residual(
+                extra_solution_array,
+                full_rhs_array,
+                native_apply,
+                rhs_is_mpc_dual=True,
+                reduced_residual=extra_schur_residual_array,
+            )
+            extra_active_explicit_facts = _task43_v2_active_explicit_residual_facts(
+                extra_native_facts,
+                expected_carrier_rows=int(condensed.full_rows),
+                expected_port_rows=int(condensed.appended_rows),
+            )
+            same_rhs_for_active_explicit = bool(
+                active_explicit_facts is not None
+                and np.array_equal(
+                    np.asarray(
+                        native_facts["native_effective_rhs"], dtype=np.complex128
+                    ),
+                    np.asarray(
+                        extra_native_facts["native_effective_rhs"],
+                        dtype=np.complex128,
+                    ),
+                )
+            )
+            full_explicit_strict_decrease = bool(
+                same_rhs_for_active_explicit
+                and extra_active_explicit_facts["finite"]
+                and extra_active_explicit_facts["combined_residual_norm"]
+                < active_explicit_facts["combined_residual_norm"]
+                and extra_active_explicit_facts["combined_relative"]
+                < active_explicit_facts["combined_relative"]
+            )
+            condensed_b_minus_ax_strict_decrease = bool(
+                extra_lu_facts["strict_decrease"]
+            )
+            final_extra_lu_status = _task43_v2_extra_lu_status(
+                extra_lu_facts,
+                condensed_strict_decrease=condensed_b_minus_ax_strict_decrease,
+                full_active_strict_decrease=full_explicit_strict_decrease,
+            )
+            extra_lu_facts.update(
+                original_helper_status=final_extra_lu_status["original_helper_status"],
+                original_helper_gates=final_extra_lu_status["original_helper_gates"],
+                condensed_b_minus_ax_strict_decrease=(
+                    condensed_b_minus_ax_strict_decrease
+                ),
+                condensed_b_minus_ax_scope=(
+                    "materialized_augmented_trace_port_matrix_only"
+                ),
+                full_active_space_explicit_before=active_explicit_facts,
+                full_active_space_explicit_after=extra_active_explicit_facts,
+                full_active_space_explicit_same_rhs=same_rhs_for_active_explicit,
+                full_active_space_explicit_strict_decrease=(
+                    full_explicit_strict_decrease
+                ),
+                status=final_extra_lu_status["status"],
+            )
+            extra_recovered = np.asarray(
+                extra_native_facts["storage_solution"], dtype=np.complex128
+            )
+            if (
+                extra_recovered.shape != (int(condensed.full_rows),)
+                or not np.isfinite(extra_recovered).all()
+            ):
+                raise ValueError(
+                    "Task43 A2 extra-LU recovered P6 field is incomplete or non-finite"
+                )
+            extra_saved_field = create_vector(
+                [
+                    (
+                        levels["spaces"][6].dofmap.index_map,
+                        int(levels["spaces"][6].dofmap.index_map_bs),
+                    )
+                ]
+            )
+            if extra_saved_field.getSize() != extra_recovered.size:
+                raise ValueError(
+                    "Task43 A2 extra-LU field has the wrong P6 storage layout"
+                )
+            extra_saved_field.getArray()[:] = extra_recovered
+            extra_saved_field.assemble()
+            extra_native_relative = float(
+                extra_native_facts["native_residual_relative"]
+            )
+            summary["task43_v2_extra_lu_diagnostic"] = {
+                "status": extra_lu_facts["status"],
+                "linear_correction": extra_lu_facts,
+                "condensed_residual_relative": extra_schur_relative,
+                "independent_A6_relative": extra_native_relative,
+                "full_active_space_explicit": {
+                    "before": active_explicit_facts,
+                    "after": extra_active_explicit_facts,
+                    "same_rhs": same_rhs_for_active_explicit,
+                    "strict_decrease": full_explicit_strict_decrease,
+                    "gate": 1.0e-8,
+                },
+                "independent_native_identity_relative": float(
+                    extra_native_facts["native_identity_relative"]
+                ),
+                "normal_correction_count_before_extra": schur_correction_count,
+                "extra_correction_count": extra_lu_facts["extra_correction_count"],
+                "primary_solution_state_preserved": extra_lu_facts[
+                    "primary_solution_preserved"
+                ],
+                "hard_solver_gates": {
+                    "explicit_residual_finite": bool(extra_lu_facts["finite"]),
+                    "independent_A6_le_1e_8": bool(
+                        np.isfinite(extra_native_relative)
+                        and 0.0 <= extra_native_relative <= 1.0e-8
+                    ),
+                    "condensed_residual_le_1e_9": bool(
+                        np.isfinite(extra_schur_relative)
+                        and 0.0 <= extra_schur_relative <= 1.0e-9
+                    ),
+                    "full_active_space_explicit_le_1e_8": bool(
+                        extra_active_explicit_facts["finite"]
+                        and extra_active_explicit_facts["combined_relative"] <= 1.0e-8
+                    ),
+                },
+                "output_uncertainty_comparison": "pending_output_and_sample_comparison",
+                "selection_eligible": False,
+            }
+            ledger.marker(
+                "task43_v2_extra_lu_correction_and_independent_a6_complete",
+                summary["task43_v2_extra_lu_diagnostic"],
+            )
         if route["family"] == "task40_phi90":
             evidence_contract = route["direct_factor_evidence"]
             witness = _task40_six_key_full_primal_witness(
@@ -3123,7 +4289,7 @@ def run_p6_condensed_direct(
             )
         del recovered
 
-        if route["family"] == "task40_phi90":
+        if route["family"] == "task40_phi90" and task43_v2_diagnostic is None:
             # The independent native A6 check and complete p6 storage recovery
             # are now finished.  Output processing consumes the recovered FE
             # field and physical bundle only, so release the large direct
@@ -3279,6 +4445,245 @@ def run_p6_condensed_direct(
             field_export_finite=bool(output_facts["electric_finite"]),
             auxiliary_export_finite=bool(output_facts["auxiliary_finite"]),
         )
+        if task43_v2_diagnostic is not None:
+            if extra_saved_field is None or extra_lu_facts is None:
+                raise RuntimeError(
+                    "Task43 A2 opt-in did not retain its extra-LU endpoint"
+                )
+            extra_output_dir = numerical_output / "task43_v2_extra_lu_output"
+            extra_output_facts = recover_p0_outputs(
+                bundle,
+                extra_saved_field,
+                extra_output_dir,
+                canonical_export=None,
+                export_all_port_modes=True,
+                active_port_outputs_only=output_policy["active_port_outputs_only"],
+                active_fe_port_output_contract=output_policy.get(
+                    "active_fe_port_output_contract"
+                ),
+            )
+            extra_auxiliary = np.asarray(
+                extra_output_facts.pop("auxiliary"), dtype=np.complex128
+            )
+            expected_extra_count = int(route["active_count"])
+            if (
+                extra_auxiliary.shape != (expected_extra_count,)
+                or not np.isfinite(extra_auxiliary).all()
+            ):
+                raise ValueError(
+                    "Task43 A2 extra-LU endpoint has incomplete modal outputs"
+                )
+            extra_output_facts["auxiliary"] = {
+                "count": int(extra_auxiliary.size),
+                "finite": True,
+                "complex128_payload_sha256": hashlib.sha256(
+                    memoryview(np.ascontiguousarray(extra_auxiliary)).cast("B")
+                ).hexdigest(),
+            }
+            extra_closure = extra_output_facts["volume_metrics"].get(
+                "energy_closure_error_port_volume"
+            )
+            if extra_closure is None or not np.isfinite(float(extra_closure)):
+                raise ValueError(
+                    "Task43 A2 extra-LU endpoint lacks finite energy closure"
+                )
+            primary_function = restore_p0_full_field(
+                bundle["setup"]["floquets"][6],
+                saved_field,
+                name="Task43_A2_primary_field_for_fixed_samples",
+            )
+            extra_function = restore_p0_full_field(
+                bundle["setup"]["floquets"][6],
+                extra_saved_field,
+                name="Task43_A2_extra_lu_field_for_fixed_samples",
+            )
+            try:
+                primary_samples = _task43_v2_capture_fixed_field_samples(
+                    primary_function, cfg, task43_v2_diagnostic
+                )
+                extra_samples = _task43_v2_capture_fixed_field_samples(
+                    extra_function, cfg, task43_v2_diagnostic
+                )
+            finally:
+                del primary_function
+                del extra_function
+            primary_samples_path = (
+                numerical_output / "task43_v2_primary_q8_q10_field_samples.npz"
+            )
+            extra_samples_path = (
+                numerical_output / "task43_v2_extra_lu_q8_q10_field_samples.npz"
+            )
+            np.savez_compressed(primary_samples_path, **primary_samples)
+            np.savez_compressed(extra_samples_path, **extra_samples)
+            residual_vectors_path = (
+                numerical_output / "task43_v2_extra_lu_residual_vectors.npz"
+            )
+            primary_condensed_rhs = np.asarray(
+                rhs_vector.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            extra_condensed_rhs = primary_condensed_rhs.copy()
+            primary_native_effective_rhs = np.asarray(
+                native_facts["native_effective_rhs"], dtype=np.complex128
+            ).copy()
+            extra_native_effective_rhs = np.asarray(
+                extra_native_facts["native_effective_rhs"], dtype=np.complex128
+            ).copy()
+            np.savez_compressed(
+                residual_vectors_path,
+                primary_condensed_b_minus_Ax=schur_residual_array,
+                primary_condensed_rhs=primary_condensed_rhs,
+                **{
+                    f"normal_correction_residual_{index}": values
+                    for index, values in enumerate(schur_refinement_residual_snapshots)
+                },
+                primary_condensed_solution=np.asarray(
+                    solution_vector.getArray(readonly=True), dtype=np.complex128
+                ).copy(),
+                primary_independent_A6_residual=np.asarray(
+                    native_facts["native_residual"], dtype=np.complex128
+                ),
+                primary_native_A6_effective_rhs=primary_native_effective_rhs,
+                primary_zero_slave_carrier_residual=np.asarray(
+                    native_facts["augmented_fe_residual"], dtype=np.complex128
+                ),
+                primary_augmented_port_residual=np.asarray(
+                    native_facts["augmented_port_residual"], dtype=np.complex128
+                ),
+                extra_lu_condensed_b_minus_Ax=extra_schur_residual_array,
+                extra_lu_condensed_rhs=extra_condensed_rhs,
+                extra_lu_condensed_solution=extra_solution_array,
+                extra_lu_independent_A6_residual=np.asarray(
+                    extra_native_facts["native_residual"], dtype=np.complex128
+                ),
+                extra_lu_native_A6_effective_rhs=extra_native_effective_rhs,
+                extra_lu_zero_slave_carrier_residual=np.asarray(
+                    extra_native_facts["augmented_fe_residual"], dtype=np.complex128
+                ),
+                extra_lu_augmented_port_residual=np.asarray(
+                    extra_native_facts["augmented_port_residual"], dtype=np.complex128
+                ),
+            )
+            summary["task43_v2_primary_endpoint_output"] = {
+                "modal_rows_path": str(
+                    numerical_output / "dtn_port_diffraction_orders_3d.json"
+                ),
+                "modal_rows_sha256": _sha256_file_streaming(
+                    numerical_output / "dtn_port_diffraction_orders_3d.json"
+                ),
+                "volume_absorption_path": str(
+                    numerical_output / "volume_absorption.json"
+                ),
+                "volume_absorption_sha256": _sha256_file_streaming(
+                    numerical_output / "volume_absorption.json"
+                ),
+                "field_samples_path": str(primary_samples_path),
+                "field_samples_sha256": _sha256_file_streaming(primary_samples_path),
+                "same_lu_residual_vectors_path": str(residual_vectors_path),
+                "same_lu_residual_vectors_sha256": _sha256_file_streaming(
+                    residual_vectors_path
+                ),
+                "condensed_rhs_norm": float(np.linalg.norm(primary_condensed_rhs)),
+                "native_A6_effective_rhs_norm": float(
+                    np.linalg.norm(primary_native_effective_rhs)
+                ),
+                "native_A6_denominator_definition": (
+                    "evaluate_native_residual native_effective_rhs = full_rhs - "
+                    "B*H_p^{-1}*port_rhs; the runner passes rhs_is_mpc_dual=True "
+                    "and port_rhs=None (zero), so the saved effective RHS is the "
+                    "actual denominator vector"
+                ),
+                "full_active_space_explicit": active_explicit_facts,
+            }
+            extra_native_relative = float(
+                extra_native_facts["native_residual_relative"]
+            )
+            extra_hard_gates = dict(
+                summary["task43_v2_extra_lu_diagnostic"]["hard_solver_gates"]
+            )
+            extra_hard_gates.update(
+                energy_closure_le_1e_5=abs(float(extra_closure)) <= 1.0e-5,
+                complete_modal_output_finite=bool(
+                    extra_output_facts["auxiliary"]["finite"]
+                    and extra_output_facts["electric_finite"]
+                ),
+            )
+            summary["task43_v2_extra_lu_diagnostic"].update(
+                hard_solver_gates=extra_hard_gates,
+                energy_closure_error_port_volume=float(extra_closure),
+                physical_output={
+                    "R_total": float(extra_output_facts["port_metrics"]["R_total"]),
+                    "T_total": float(extra_output_facts["port_metrics"]["T_total"]),
+                    "A_volume_total": float(
+                        extra_output_facts["volume_metrics"]["A_volume_total"]
+                    ),
+                    "R00_s": float(extra_output_facts["port_metrics"]["R00_s"]),
+                    "R00_p": float(extra_output_facts["port_metrics"]["R00_p"]),
+                    "R00_total": float(extra_output_facts["port_metrics"]["R00_total"]),
+                    "mode_count": expected_extra_count,
+                    "auxiliary_sha256": extra_output_facts["auxiliary"][
+                        "complex128_payload_sha256"
+                    ],
+                },
+                output_directory=str(extra_output_dir),
+                field_samples={
+                    "primary_path": str(primary_samples_path),
+                    "primary_sha256": _sha256_file_streaming(primary_samples_path),
+                    "extra_lu_path": str(extra_samples_path),
+                    "extra_lu_sha256": _sha256_file_streaming(extra_samples_path),
+                    "residual_vectors_path": str(residual_vectors_path),
+                    "residual_vectors_sha256": _sha256_file_streaming(
+                        residual_vectors_path
+                    ),
+                    "extra_modal_rows_path": str(
+                        extra_output_dir / "dtn_port_diffraction_orders_3d.json"
+                    ),
+                    "extra_modal_rows_sha256": _sha256_file_streaming(
+                        extra_output_dir / "dtn_port_diffraction_orders_3d.json"
+                    ),
+                    "extra_volume_absorption_path": str(
+                        extra_output_dir / "volume_absorption.json"
+                    ),
+                    "extra_volume_absorption_sha256": _sha256_file_streaming(
+                        extra_output_dir / "volume_absorption.json"
+                    ),
+                    "q8_point_count": int(primary_samples["q8_points_nm"].shape[0]),
+                    "q10_point_count": int(primary_samples["q10_points_nm"].shape[0]),
+                    "q8_same_point_weights": bool(
+                        np.array_equal(
+                            primary_samples["q8_points_nm"],
+                            extra_samples["q8_points_nm"],
+                        )
+                        and np.array_equal(
+                            primary_samples["q8_weights_nm3"],
+                            extra_samples["q8_weights_nm3"],
+                        )
+                    ),
+                    "q10_same_point_weights": bool(
+                        np.array_equal(
+                            primary_samples["q10_points_nm"],
+                            extra_samples["q10_points_nm"],
+                        )
+                        and np.array_equal(
+                            primary_samples["q10_weights_nm3"],
+                            extra_samples["q10_weights_nm3"],
+                        )
+                    ),
+                },
+                condensed_rhs_norm=float(np.linalg.norm(extra_condensed_rhs)),
+                native_A6_effective_rhs_norm=float(
+                    np.linalg.norm(extra_native_effective_rhs)
+                ),
+                native_A6_denominator_definition=(
+                    "evaluate_native_residual native_effective_rhs = full_rhs - "
+                    "B*H_p^{-1}*port_rhs; the runner passes rhs_is_mpc_dual=True "
+                    "and port_rhs=None (zero), so the saved effective RHS is the "
+                    "actual denominator vector"
+                ),
+                output_uncertainty_comparison="adapter_recomputes_modal_and_field_deltas_from_raw_outputs",
+            )
+            extra_native_facts = None
+            extra_solution_array = None
+            extra_recovered = None
         if route["family"] == "v7_aniso_n0":
             from src.runners.v7_n0_output_audit import saved_output_observation
 
@@ -3286,6 +4691,48 @@ def run_p6_condensed_direct(
                 numerical_output, output_facts, cfg, truncation
             )
             summary["v7_output_audit"] = output_audit
+        if route["family"] == "task40_phi90" and task43_v2_diagnostic is not None:
+            if factor is None or action is None or condensed is None or matrix is None:
+                raise RuntimeError(
+                    "Task43 A2 live factor/algebra disappeared before output completion"
+                )
+            summary["factor"].update(
+                solve_calls_after_extra_lu=int(factor.solve_calls),
+                symbolic_calls_after_extra_lu=int(factor.symbolic_calls),
+                numeric_calls_after_extra_lu=int(factor.numeric_calls),
+                mumps_info_after_extra_lu=factor.info(),
+            )
+            release_started = perf_counter()
+            release_facts = _release_task40_direct_algebra(
+                factor, action, action_view, condensed, matrix
+            )
+            release_facts.update(
+                boundary=(
+                    "after_primary_and_extra_LU_full_outputs_and_fixed_q8_q10_samples"
+                ),
+                release_wall_seconds=perf_counter() - release_started,
+                normal_solve_calls_before_extra=int(
+                    summary["task43_v2_extra_lu_diagnostic"]["linear_correction"][
+                        "initial_factor_solve_calls"
+                    ]
+                ),
+                extra_solve_calls=int(
+                    summary["task43_v2_extra_lu_diagnostic"]["linear_correction"][
+                        "extra_correction_count"
+                    ]
+                ),
+                output_uses_primary_and_extra_recovered_fields=True,
+            )
+            summary["direct_algebra_lifecycle"] = release_facts
+            ledger.marker(
+                "task43_v2_direct_algebra_released_after_full_outputs", release_facts
+            )
+            factor = None
+            action = None
+            action_view = None
+            condensed = None
+            matrix = None
+
         summary["matched_reference"] = {
             "status": "REFERENCE_AUTHORITY_LIMITED",
             "reference_availability": (
@@ -3326,28 +4773,86 @@ def run_p6_condensed_direct(
         summary["checks"]["same_materialized_matrix_symbolic_numeric_solve"] = bool(
             summary["factor"]["same_matrix_lifecycle_verified"]
         )
+        if task43_v2_diagnostic is not None:
+            condensed_rhs_norm = float(rhs_vector.norm())
+            normal_correction_audit = _task43_v2_normal_correction_audit(
+                schur_refinement_history,
+                correction_count=schur_correction_count,
+                correction_limit=max_same_factor_corrections,
+                rhs_norm=condensed_rhs_norm,
+                mumps_info_after_last_solve=summary["factor"][
+                    "mumps_info_after_last_solve"
+                ],
+            )
+            summary["factor"]["condensed_residual_refinement_history"] = (
+                normal_correction_audit["history"]
+            )
+            normal_correction_audit["mumps_info_after_last_solve"] = summary["factor"][
+                "mumps_info_after_last_solve"
+            ]
+            summary["task43_v2_normal_correction_audit"] = normal_correction_audit
+            summary["checks"]["normal_correction_raw_audit_pass"] = bool(
+                normal_correction_audit["passed"]
+            )
         modal_finite_key = "all_active_modal_amplitudes_finite"
         summary["checks"][modal_finite_key] = True
         if route["family"] == "v7_aniso_n0":
             # Retain the already-reviewed V7 report key as a compatibility alias.
             summary["checks"]["all_572_modal_amplitudes_finite"] = True
         required_checks = (
-            residual_gate_key,
-            modal_finite_key,
-            "rta_port_volume_energy_closure_pass",
-            "field_export_finite",
-            "auxiliary_export_finite",
-            "same_materialized_matrix_symbolic_numeric_solve",
-        ) + (("condensed_direct_residual_pass",) if condensed_gate is not None else ()) + (
-            ("carrier_sparse_cutoff_identity",)
-            if route["family"] == "task40_phi90"
-            else ()
-        ) + (
-            ("direct_factor_evidence_saved_before_release",)
-            if route["family"] == "task40_phi90"
-            else ()
+            (
+                residual_gate_key,
+                modal_finite_key,
+                "rta_port_volume_energy_closure_pass",
+                "field_export_finite",
+                "auxiliary_export_finite",
+                "same_materialized_matrix_symbolic_numeric_solve",
+            )
+            + (
+                ("condensed_direct_residual_pass",)
+                if condensed_gate is not None
+                else ()
+            )
+            + (
+                ("full_active_space_explicit_residual_pass",)
+                if task43_v2_diagnostic is not None
+                else ()
+            )
+            + (
+                ("normal_correction_raw_audit_pass",)
+                if task43_v2_diagnostic is not None
+                else ()
+            )
+            + (
+                ("carrier_sparse_cutoff_identity",)
+                if route["family"] == "task40_phi90"
+                else ()
+            )
+            + (
+                ("direct_factor_evidence_saved_before_release",)
+                if route["family"] == "task40_phi90"
+                else ()
+            )
         )
         passed = all(bool(summary["checks"].get(key)) for key in required_checks)
+        if task43_v2_diagnostic is not None:
+            blocking_checks = [
+                key for key in required_checks if not summary["checks"].get(key)
+            ]
+            summary["task43_v2_result_authority"] = {
+                "status": (
+                    "OFFICIAL_TASK43_ENDPOINT"
+                    if passed
+                    else "NON_OFFICIAL_TASK43_DIAGNOSTIC"
+                ),
+                "official_task43_result": bool(passed),
+                "blocking_checks": blocking_checks,
+                "A6_relative_gate": 1.0e-8,
+            }
+            if not passed:
+                summary["measured_endpoint_output_not_official"] = summary.pop(
+                    "official_result"
+                )
         route_label = route["summary_prefix"].upper().replace("_", "_")
         summary["status"] = (
             f"{route_label}_{'COMPLETED' if passed else 'GATE_FAILED'}_AUTHORITY_LIMITED"
@@ -3419,8 +4924,10 @@ def run_p6_condensed_direct(
             schur_residual_vector,
             schur_action_vector,
             solution_vector,
+            extra_solution_vector,
             rhs_vector,
             saved_field,
+            extra_saved_field,
             full_rhs,
         ):
             if vector is not None:
