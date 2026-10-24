@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import json
 
@@ -23,6 +24,7 @@ from benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic import (
     _require_a2_q_r13_same_source_identity,
     _validate_a2_native_contract_copy,
     _validate_a2_q_retry_record,
+    _validate_v2_y6_native_profile_payload,
     _validate_y6_recovered_bundle_binding,
 )
 from src.io.native_capacity_profile import TASK40_PHI90_D15_PROFILES
@@ -36,6 +38,7 @@ from src.runners.p6_condensed_direct import (
     _task43_v2_normal_correction_audit,
     _task43_v2_one_extra_same_factor_correction,
     _task43_v2_volume_quadrature_metadata,
+    _validate_resolved_profile,
 )
 
 
@@ -125,6 +128,87 @@ def _y6_1_route():
 
     profile_facts = native_profile_facts(profile_identity)
     return profile_facts, _direct_run_contract(profile_identity)
+
+
+def _native_y6_profile_payload():
+    from src.io.native_capacity_profile import native_profile_facts
+
+    identity = next(
+        identity
+        for identity, case in TASK40_PHI90_D15_PROFILES.items()
+        if case == "Y6_1"
+    )
+    return {
+        "method": {"kind": "full3d_direct"},
+        "solver": {"native_capacity_profile": identity},
+        "derived": {"native_capacity_profile": native_profile_facts(identity)},
+    }
+
+
+def test_task43_v2_native_profile_normalizes_only_missing_y6_display_label():
+    payload = _native_y6_profile_payload()
+    payload["derived"]["native_capacity_profile"]["component_options"][
+        "directional_mesh_comparison"
+    ].pop("display_label")
+    original = copy.deepcopy(payload)
+
+    with pytest.raises(ValueError, match="resolved direct profile facts differ"):
+        _validate_resolved_profile(payload)
+
+    normalized, report = _validate_v2_y6_native_profile_payload(
+        payload,
+        raw_path="benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+        raw_sha256="a" * 64,
+    )
+
+    assert payload == original
+    assert normalized is not payload
+    assert (
+        normalized["derived"]["native_capacity_profile"]["component_options"][
+            "directional_mesh_comparison"
+        ]["display_label"]
+        == "D15-Y6-1"
+    )
+    assert report["normalization_status"] == (
+        "missing_display_label_added_to_in_memory_copy"
+    )
+    assert report["raw_field_value"] == "<missing>"
+    assert report["normalized_field_value"] == "D15-Y6-1"
+    assert report["raw_resolved_config_sha256"] == "a" * 64
+    assert report["native_validator_passed_on_in_memory_copy"] is True
+    assert report["numeric_resource_and_solver_profile_facts_unchanged"] is True
+
+
+def test_task43_v2_native_profile_rejects_wrong_display_label():
+    payload = _native_y6_profile_payload()
+    payload["derived"]["native_capacity_profile"]["component_options"][
+        "directional_mesh_comparison"
+    ]["display_label"] = "wrong-label"
+
+    with pytest.raises(ValueError, match="incorrect display_label"):
+        _validate_v2_y6_native_profile_payload(
+            payload,
+            raw_path="frozen/resolved_config.json",
+            raw_sha256="b" * 64,
+        )
+
+
+@pytest.mark.parametrize("difference", ("resource", "numerical"))
+def test_task43_v2_native_profile_rejects_other_profile_drift(difference):
+    payload = _native_y6_profile_payload()
+    facts = payload["derived"]["native_capacity_profile"]
+    facts["component_options"]["directional_mesh_comparison"].pop("display_label")
+    if difference == "resource":
+        facts["resources"]["rss_hard_limit_bytes"] = 1
+    else:
+        facts["component_options"]["expected_global_cell_count"] += 1
+
+    with pytest.raises(ValueError, match="differs from the native profile beyond"):
+        _validate_v2_y6_native_profile_payload(
+            payload,
+            raw_path="frozen/resolved_config.json",
+            raw_sha256="c" * 64,
+        )
 
 
 def test_task43_a2_route_binds_y6_1_q_and_r_without_changing_scale_policy():

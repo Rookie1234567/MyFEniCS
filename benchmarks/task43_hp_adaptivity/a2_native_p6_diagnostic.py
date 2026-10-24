@@ -1196,6 +1196,104 @@ def _validate_y6_recovered_bundle_binding(
         )
 
 
+def _validate_v2_y6_native_profile_payload(
+    resolved_payload: dict[str, Any],
+    *,
+    raw_path: str,
+    raw_sha256: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Validate an in-memory V2 copy while preserving the immutable Y6 input."""
+
+    from src.io.native_capacity_profile import (
+        native_capacity_profile_identity,
+        native_profile_facts,
+    )
+    from src.io.resolved_config import canonical_json_bytes
+    from src.runners.p6_condensed_direct import _validate_resolved_profile
+
+    expected_identity = "task40para_phi90_13p5_D15_Y6_1_p6_direct_v1"
+    if (
+        not isinstance(raw_path, str)
+        or not raw_path
+        or not isinstance(raw_sha256, str)
+        or len(raw_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in raw_sha256)
+    ):
+        raise ValueError("V2 Y6 profile binding lacks a valid raw input identity")
+
+    normalized_payload = copy.deepcopy(resolved_payload)
+    method = normalized_payload.get("method")
+    solver = normalized_payload.get("solver")
+    derived = normalized_payload.get("derived")
+    if not isinstance(method, dict) or not isinstance(solver, dict):
+        raise TypeError("V2 Y6 profile input lacks method or solver identity")
+    if not isinstance(derived, dict):
+        raise TypeError("V2 Y6 profile input lacks derived facts")
+    identity = native_capacity_profile_identity(method.get("kind"), solver)
+    if identity != expected_identity:
+        raise ValueError(
+            "V2 profile compatibility is restricted to the frozen Y6_1 route"
+        )
+    actual_facts = derived.get("native_capacity_profile")
+    if not isinstance(actual_facts, dict):
+        raise TypeError("V2 Y6 resolved native profile facts are missing")
+
+    expected_facts = native_profile_facts(identity)
+    actual_mesh = actual_facts.get("component_options", {}).get(
+        "directional_mesh_comparison"
+    )
+    expected_mesh = expected_facts.get("component_options", {}).get(
+        "directional_mesh_comparison"
+    )
+    if not isinstance(actual_mesh, dict) or not isinstance(expected_mesh, dict):
+        raise TypeError("V2 Y6 directional mesh profile facts are missing")
+    expected_label = expected_mesh.get("display_label")
+    if not isinstance(expected_label, str) or not expected_label:
+        raise ValueError("current Y6 profile lacks its expected display label")
+
+    normalization_status = "already_matches_current_profile"
+    if "display_label" not in actual_mesh:
+        actual_mesh["display_label"] = expected_label
+        normalization_status = "missing_display_label_added_to_in_memory_copy"
+    elif actual_mesh["display_label"] != expected_label:
+        raise ValueError(
+            "V2 Y6 profile compatibility rejects an incorrect display_label"
+        )
+
+    if canonical_json_bytes(actual_facts) != canonical_json_bytes(expected_facts):
+        raise ValueError(
+            "V2 Y6 profile differs from the native profile beyond display_label compatibility"
+        )
+
+    validated_facts = _validate_resolved_profile(normalized_payload)
+    raw_facts = resolved_payload["derived"]["native_capacity_profile"]
+    report = {
+        "schema": "task43.v2.y6_native_profile_compatibility.v1",
+        "raw_resolved_config_path": raw_path,
+        "raw_resolved_config_sha256": raw_sha256,
+        "raw_profile_identity": identity,
+        "raw_profile_facts_sha256": hashlib.sha256(
+            canonical_json_bytes(raw_facts)
+        ).hexdigest(),
+        "native_validator": "src.runners.p6_condensed_direct._validate_resolved_profile",
+        "native_validator_passed_on_in_memory_copy": True,
+        "normalization_status": normalization_status,
+        "normalized_field": (
+            "derived.native_capacity_profile.component_options."
+            "directional_mesh_comparison.display_label"
+        ),
+        "raw_field_value": resolved_payload["derived"]["native_capacity_profile"][
+            "component_options"
+        ]["directional_mesh_comparison"].get("display_label", "<missing>"),
+        "normalized_field_value": expected_label,
+        "normalized_profile_facts_sha256": hashlib.sha256(
+            canonical_json_bytes(validated_facts)
+        ).hexdigest(),
+        "numeric_resource_and_solver_profile_facts_unchanged": True,
+    }
+    return normalized_payload, report
+
+
 def _validate_a2_native_contract_copy(
     original: dict[str, Any], a2_contract: dict[str, Any]
 ) -> None:
@@ -1591,9 +1689,18 @@ def _validate_frozen_inputs(phase: str) -> tuple[dict[str, Any], dict[str, Any]]
         "reference_resolved_config_sha256": _Y6_INPUT_SHA256,
         "reference_rows_path": str(rows_path),
     }
-    resolved_payload = _read_json(input_path)
+    raw_resolved_payload = _read_json(input_path)
+    resolved_payload, resolved_profile_compatibility = (
+        _validate_v2_y6_native_profile_payload(
+            raw_resolved_payload,
+            raw_path=str(input_path),
+            raw_sha256=_Y6_INPUT_SHA256,
+        )
+    )
+    diagnostic["resolved_profile_compatibility"] = resolved_profile_compatibility
     return diagnostic, {
         "resolved_payload": resolved_payload,
+        "resolved_profile_compatibility": resolved_profile_compatibility,
         "old_summary": old_summary,
         "a2_native_contract": a2_contract,
     }
@@ -2004,6 +2111,25 @@ def main(argv: list[str] | None = None) -> int:
         raise ValueError("A2 is fixed to the original Y6_1 resolved configuration")
     source_sha = str(diagnostic["current_source_sha"])
     output_dir.mkdir()
+    profile_preflight_path = output_dir / "resolved_native_profile_preflight.json"
+    profile_preflight = {
+        **frozen["resolved_profile_compatibility"],
+        "schema": "task43.v2.resolved_native_profile_preflight.v1",
+        "phase": args.phase,
+        "attempt": args.attempt,
+    }
+    profile_preflight_path.write_text(
+        json.dumps(profile_preflight, sort_keys=True, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    diagnostic["resolved_profile_preflight_path"] = str(profile_preflight_path)
+    diagnostic["resolved_profile_preflight_sha256"] = _sha256(profile_preflight_path)
+    frozen["resolved_profile_compatibility"]["preflight_record_path"] = str(
+        profile_preflight_path
+    )
+    frozen["resolved_profile_compatibility"]["preflight_record_sha256"] = diagnostic[
+        "resolved_profile_preflight_sha256"
+    ]
     from src.runners.p6_condensed_direct import run_p6_condensed_direct
 
     try:
@@ -2020,6 +2146,9 @@ def main(argv: list[str] | None = None) -> int:
         raise
     summary_path = Path(result["summary"])
     runner_summary = _read_json(summary_path)
+    runner_summary["task43_v2_resolved_profile_compatibility"] = frozen[
+        "resolved_profile_compatibility"
+    ]
     retry_binding = None
     if retry_authorization is not None:
         retry_binding = {
@@ -2031,11 +2160,10 @@ def main(argv: list[str] | None = None) -> int:
             ]["watchdog_summary_sha256"],
         }
         runner_summary["task43_v2_retry_authorization"] = retry_binding
-        summary_path.write_text(
-            json.dumps(runner_summary, sort_keys=True, indent=2, allow_nan=False)
-            + "\n",
-            encoding="utf-8",
-        )
+    summary_path.write_text(
+        json.dumps(runner_summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
     comparison = _comparison_record(
         args.phase,
         output_dir,
