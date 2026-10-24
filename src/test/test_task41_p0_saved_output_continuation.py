@@ -6473,7 +6473,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
             output_path = Path(command[command.index("--output") + 1])
             assert not output_path.exists()
             assert diagnostic_path.name == "task41_p0_v13_saved_adjoint_diagnostic.json"
-            assert output_path.parent == diagnostic_path.parent.parent / "attempt09"
+            assert output_path.parent == diagnostic_path.parent.parent / "attempt10"
             assert Path(command[command.index("--consumer-contract") + 1]) != Path(
                 command[command.index("--checker-contract") + 1]
             )
@@ -6946,7 +6946,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         json.dumps(accepted_receipt, sort_keys=True) + "\n", encoding="utf-8"
     )
 
-    existing_output_root = actual_output_root.with_name("attempt09")
+    existing_output_root = actual_output_root.with_name("attempt10")
     assert not existing_output_root.exists()
     existing_kwargs = dict(readonly_service_kwargs)
     existing_environment = dict(readonly_service_kwargs["environment"])
@@ -6983,7 +6983,7 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         **existing_kwargs
     )
     existing_receipt = json.loads(
-        (existing_output_root.with_name("attempt09.service")
+        (existing_output_root.with_name("attempt10.service")
          / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
     )
     assert existing_result == 0, {
@@ -7417,6 +7417,62 @@ def test_v13_primary_global_row_uses_actual_d_eval_and_reconstruction_field_layo
     assert "d_eval_minus_saved_original_d" not in detail
 
 
+def test_v13_cell_g_terms_unwrap_cell_tuple_and_separate_legacy_serialization_defect() -> None:
+    import numpy as np
+
+    from src.runners.task41_p0_checker import (
+        _task41_p0_v13_close_scalar,
+        _task41_p0_v13_pair_scalar,
+        _task41_p0_v13_saved_g_terms_status,
+        _task41_p0_v13_serialize_cell_g_terms,
+    )
+
+    raw_terms = [
+        np.clongdouble("129747.88502541421536")
+        + 1j * np.clongdouble("73967.63393588636314"),
+        np.clongdouble("8722.231885712845069")
+        + 1j * np.clongdouble("5597.59095473062405"),
+    ]
+    serialized = _task41_p0_v13_serialize_cell_g_terms(
+        [(360, raw_terms[0]), (446, raw_terms[1])]
+    )
+    assert len(serialized) == 2
+    assert all(
+        isinstance(pair, list)
+        and len(pair) == 2
+        and all(isinstance(component, str) and not component.startswith("[") for component in pair)
+        for pair in serialized
+    )
+    assert _task41_p0_v13_saved_g_terms_status(
+        serialized, raw_terms, label="fixture column 0 state j0"
+    ) == "MATCHED_BOUND_RAW_GROUPS"
+
+    actual_legacy_value = [
+        ["[   360.         129747.88502541]", "[    0.         73967.63393589]"],
+        ["[ 446.         8722.23188571]", "[   0.         5597.59095473]"],
+    ]
+    assert _task41_p0_v13_saved_g_terms_status(
+        actual_legacy_value, raw_terms, label="fixture column 0 state j0"
+    ) == "SERIALIZATION_DEFECT_CELL_VALUE_TUPLE_ARRAY_REPR"
+    corrected_terms = [
+        _task41_p0_v13_pair_scalar(pair, "fixture corrected raw term")
+        for pair in serialized
+    ]
+    assert all(
+        _task41_p0_v13_close_scalar(left, right, abs(left) + abs(right))
+        for left, right in zip(corrected_terms, raw_terms, strict=True)
+    )
+    with pytest.raises(
+        ValueError,
+        match="V13 fixture column 0 state j0 -qHJz_b saved cell term 0 complex-pair component parse failed",
+    ):
+        _task41_p0_v13_saved_g_terms_status(
+            [["not-a-pair", "not-a-pair"], serialized[1]],
+            raw_terms,
+            label="fixture column 0 state j0 -qHJz_b",
+        )
+
+
 def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_scope(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -7437,10 +7493,17 @@ def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_sc
     fixed_window.parent.mkdir(parents=True, exist_ok=True)
     donor_summary = results_root / "task40_v10_p6_candidate_summary.json"
     candidate_report = results_root / "task41_p0_v11_selected_trace_candidate_replay.json"
-    diagnostic = results_root / "task41_p0_v13_saved_adjoint_diagnostic.json"
+    diagnostic = (
+        results_root / "attempt09" / "task41_p0_v13_saved_adjoint_diagnostic.json"
+    )
     raw_array = results_root / "native-rhs.npy"
     cache_receipt = results_root / "lambda-receipt.json"
-    output = results_root / "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
+    output = (
+        diagnostic.parent.parent / "attempt10"
+        / "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
+    )
+    diagnostic.parent.mkdir(parents=True)
+    output.parent.mkdir(parents=True)
     for path, payload in (
         (donor_contract, b"donor-contract"),
         (consumer_contract, b"original-consumer-contract"),

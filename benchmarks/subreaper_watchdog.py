@@ -608,7 +608,7 @@ def _validate_campaign_closeout_authorization(
                 repository_root / 'results' / str(case['model_id'])
             ).resolve()
             expected_output_parent = (
-                diagnostic_path.parent.parent / 'attempt09'
+                diagnostic_path.parent.parent / 'attempt10'
                 if consumer_contract_argument != checker_contract_argument
                 else diagnostic_path.parent
             )

@@ -7708,9 +7708,9 @@ def check_task41_p0_v13_saved_adjoint_diagnostic(
                     "classification": "ADJOINT_DIAGNOSTIC",
                 },
                 "b_t_written_once": _task41_p0_v13_pair(b_t_by_column[column_index]),
-                "local_minus_EH_J_z_b_cell_order_360_then_446": [
-                    _task41_p0_v13_pair(value) for value in cell_g_terms[state_name]
-                ],
+                "local_minus_EH_J_z_b_cell_order_360_then_446": (
+                    _task41_p0_v13_serialize_cell_g_terms(cell_g_terms[state_name])
+                ),
                 "g_eval_wide_fixed_z_b": _task41_p0_v13_pair(g_eval),
                 "saved_g_prod": _task41_p0_v13_pair(g_prod),
                 "saved_y9": _task41_p0_v13_pair(y_saved),
@@ -7790,7 +7790,50 @@ def check_task41_p0_v13_saved_adjoint_diagnostic(
 def _task41_p0_v13_pair_scalar(value: Any, label: str) -> np.clongdouble:
     if not isinstance(value, list) or len(value) != 2:
         raise ValueError(f"V13 {label} must be a complex pair")
-    return np.clongdouble(value[0]) + 1j * np.clongdouble(value[1])
+    try:
+        return np.clongdouble(value[0]) + 1j * np.clongdouble(value[1])
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"V13 {label} complex-pair component parse failed: {exc}") from exc
+
+
+def _task41_p0_v13_serialize_cell_g_terms(
+    cell_g_terms: list[tuple[int, Any]],
+) -> list[list[str]]:
+    return [_task41_p0_v13_pair(value) for _cell, value in cell_g_terms]
+
+
+def _task41_p0_v13_saved_g_terms_status(
+    saved: Any,
+    raw_values: list[np.clongdouble],
+    *,
+    label: str,
+) -> str:
+    if not isinstance(saved, list) or len(saved) != len(raw_values):
+        raise ValueError(f"V13 {label} saved cell-term count differs from bound raw groups")
+    legacy_array_repr = all(
+        isinstance(pair, list)
+        and len(pair) == 2
+        and all(
+            isinstance(component, str)
+            and component.strip().startswith("[")
+            and component.strip().endswith("]")
+            for component in pair
+        )
+        for pair in saved
+    )
+    if legacy_array_repr:
+        return "SERIALIZATION_DEFECT_CELL_VALUE_TUPLE_ARRAY_REPR"
+    for index, (saved_pair, raw_value) in enumerate(zip(saved, raw_values, strict=True)):
+        saved_value = _task41_p0_v13_pair_scalar(
+            saved_pair, f"{label} saved cell term {index}"
+        )
+        if not _task41_p0_v13_close_scalar(
+            saved_value, raw_value, abs(saved_value) + abs(raw_value)
+        ):
+            raise ValueError(
+                f"V13 {label} saved cell term {index} differs from its bound raw group"
+            )
+    return "MATCHED_BOUND_RAW_GROUPS"
 
 
 def _task41_p0_v13_saved_global_row_d_values(
@@ -8660,6 +8703,7 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
                     raise ValueError(f"V13 independent checker {key}/-qHJzb differs from raw inputs")
 
     checked_rows = []
+    legacy_g_term_serialization_rows: list[dict[str, Any]] = []
     for column_index, column in enumerate(global_rows):
         if column.get("column") != column_index:
             raise ValueError("V13 independent checker global column order differs")
@@ -8941,14 +8985,20 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
                 for cell in CELLS
             ]
             saved_row_g_terms = row.get("local_minus_EH_J_z_b_cell_order_360_then_446")
-            if not isinstance(saved_row_g_terms, list) or len(saved_row_g_terms) != 2:
-                raise ValueError("V13 independent checker reported g attribution coverage differs")
-            for saved_value, raw_value in zip(saved_row_g_terms, row_g_terms, strict=True):
-                saved_scalar = _task41_p0_v13_pair_scalar(saved_value, "reported cell -qHJz_b")
-                if not _task41_p0_v13_close_scalar(
-                    saved_scalar, raw_value, abs(saved_scalar) + abs(raw_value)
-                ):
-                    raise ValueError("V13 independent checker -qHJz_b differs from raw arrays")
+            legacy_g_term_status = _task41_p0_v13_saved_g_terms_status(
+                saved_row_g_terms,
+                row_g_terms,
+                label=f"global column {column_index} state {state} -qHJz_b",
+            )
+            if legacy_g_term_status != "MATCHED_BOUND_RAW_GROUPS":
+                legacy_g_term_serialization_rows.append(
+                    {
+                        "column": column_index,
+                        "state": state,
+                        "status": "SERIALIZATION_DEFECT",
+                        "detail": legacy_g_term_status,
+                    }
+                )
             recomputed_g = raw_b_t
             for value in row_g_terms:
                 recomputed_g += value
@@ -8989,6 +9039,12 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
                 "g_eval_reconstructed_from_one_b_t_plus_two_cell_terms": _task41_p0_v13_pair(
                     recomputed_g
                 ),
+                "legacy_local_minus_EH_J_z_b_cell_order_360_then_446_status": (
+                    legacy_g_term_status
+                ),
+                "local_minus_EH_J_z_b_cell_order_360_then_446_reconstructed_from_bound_raw_groups": [
+                    _task41_p0_v13_pair(value) for value in row_g_terms
+                ],
                 "classification": "ADJOINT_DIAGNOSTIC",
             })
     result = {
@@ -9004,6 +9060,23 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
         "persisted_lambda_packages_reused": 2,
         "lambda_checks": {str(cell): row for cell, row in lambda_check_rows.items()},
         "checked_global_rows": checked_rows,
+        "legacy_g_term_serialization": {
+            "field": "local_minus_EH_J_z_b_cell_order_360_then_446",
+            "status": (
+                "SERIALIZATION_DEFECT"
+                if legacy_g_term_serialization_rows
+                else "MATCHED_BOUND_RAW_GROUPS"
+            ),
+            "defect_kind": (
+                "CELL_ID_VALUE_TUPLE_SERIALIZED_AS_COMPLEX_PAIR_ARRAY_REPR"
+                if legacy_g_term_serialization_rows
+                else None
+            ),
+            "affected_rows": legacy_g_term_serialization_rows,
+            "reconstructed_values_source": (
+                "hash_bound_raw_groups.minus_q_H_J_z_b_fixed_z_b"
+            ),
+        },
         "timing": {
             "parent_elapsed_seconds": time.perf_counter() - parent_started,
             "input_hash_read_seconds": input_hash_read_seconds,

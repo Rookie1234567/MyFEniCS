@@ -12373,11 +12373,11 @@ def _run_task41_p0_saved_output_service(
                             and (
                                 independent_result_path.exists()
                                 or independent_result_path.parent != output_root.resolve()
-                                or output_root.name != "attempt09"
+                                or output_root.name != "attempt10"
                             )
                         ):
                             raise ValueError(
-                                "V13 existing-diagnostic independent checker output must be new under attempt09"
+                                "V13 existing-diagnostic independent checker output must be new under attempt10"
                             )
                         independent_checker_command = _task41_p0_v13_independent_checker_command(
                             python=python,
@@ -14527,11 +14527,11 @@ def _run_task41_p0_service(
                         or diagnostic.get("official_result") is not False
                         or diagnostic.get("scientific_qualified") is not False
                         or continuation_output_root
-                        != expected_output_parent / "attempt09"
+                        != expected_output_parent / "attempt10"
                         or continuation_output_root.exists()
                     ):
                         raise ValueError(
-                            "V13 existing diagnostic, old consumer contract, current window, or attempt09 path differs"
+                            "V13 existing diagnostic, old consumer contract, current window, or attempt10 path differs"
                         )
                     v13_existing_diagnostic_payload = diagnostic
                     v13_diagnostic_consumer_contract = old_consumer_contract
