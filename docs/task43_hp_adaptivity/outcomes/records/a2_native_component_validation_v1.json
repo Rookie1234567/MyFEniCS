@@ -1,15 +1,25 @@
 {
   "changed_source_sha256": {
-    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "2284d929f3e749351ca8727858ee9ff853d88a2615277eb34e27c280fd8a1e08",
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "d7ba3b30ed47fb15c29d0a0c3f6c6c0a5132ebc812a882d73b00756ea0f95682",
     "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
     "src/runners/p6_condensed_direct.py": "f59634c7c0d37fff6a1792c50e4d1d8838fdb2f34784cb0daa00f64552ee6e08",
     "src/test/test_task40para_direct_residual_and_supervisor.py": "2300a8ef8622992feb08e796de9394bbd7136d55d214c9ac3cf803f8b76e41bf",
-    "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "d60b94539c676e552f19f237d4b2771b7a24a01f674f30807cf1d89170ffbd49"
+    "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "3cee7164147410c41137ae7be9b61a18309308a2ba62d056b554043a28b65fad"
+  },
+  "failed_support_preflight": {
+    "actual_preflight_script_sha256": "4f2fd4fedfd84c360bb0fd19553abcc717b5d1097c97a4edaa6f142e868358f7",
+    "adapter_sha256_at_failure": "442c5a96f0576edabf8fd0537b7080dc8f47abb940529f8e8cc52de9bedac08e",
+    "captured_output_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/failed_frozen_input_identity_preflight_captured_output.txt",
+    "classification": "support only; no PDE, mesh, or model attempt; no attempt count consumed",
+    "failure_reason": "Wrong restore_identity_record.json lookup; the actual bundle path/hash live at top-level recovered_bundle.path and recovered_bundle.sha256.",
+    "fix": "New helper validates that actual path resolves to the frozen bundle and that the recorded hash matches; regression covers the real record plus wrong path/hash.",
+    "record_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/failed_frozen_input_identity_preflight.json",
+    "record_sha256": "730be5bf0a09985866ebf82c2bca9366e3bcccafbc225abdb0e7ca38e614d8fb"
   },
   "final_component_tests": {
     "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_native_p6_diagnostic_helpers.py src/test/test_task40para_direct_residual_and_supervisor.py src/test/test_task39extra_v7_p6_direct_pipeline.py",
-    "command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands.json",
-    "command_manifest_sha256": "511962b1fb426368b2cbb0409a9c9a58443550ab29b0a53e676c3088a9d7d4da",
+    "exact_command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands_after_identity_fix.json",
+    "exact_command_manifest_sha256": "45ae3be90a3c4b00b667748a4764906fbd14a1e6b084201ea9daa211277318da",
     "formal_model_or_PDE_attempts": 0,
     "host_qualified_abi": {
       "DOLFINx": "0.10.0",
@@ -18,25 +28,16 @@
       "PETSc_scalar": "complex128",
       "qualified_activation": 1
     },
-    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_attempt3.log",
-    "log_sha256": "a8a2db3a93bd7d3c32e56dd64ac67f5372f79ae65ef63a1cc76b087e3433675d",
-    "result": "33 passed in 7.55s"
+    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_after_identity_fix.log",
+    "log_sha256": "b4f44fffe4f7800869f41de1ce0c670c36291dfe875c47ba8bd8255e9e470d32",
+    "result": "34 passed in 6.69s"
   },
   "final_static_checks": {
-    "command": "source scripts/activate_task40_phi90_pord64.sh && ruff check <four A2 Python files> && ruff format --check <new adapter and helper test> && python -m compileall -q <four A2 Python files>",
-    "command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands.json",
-    "command_manifest_sha256": "511962b1fb426368b2cbb0409a9c9a58443550ab29b0a53e676c3088a9d7d4da",
-    "commands": {
-      "activation": "source scripts/activate_task40_phi90_pord64.sh",
-      "compileall": "python -m compileall -q src/runners/p6_condensed_direct.py src/test/test_task40para_direct_residual_and_supervisor.py benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py",
-      "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_static_checks.log",
-      "log_sha256": "b2b95b2e619ede1a4ca6866691ac2175317e10f6389a56dda743f4e47076968c",
-      "ruff_check": "ruff check src/runners/p6_condensed_direct.py src/test/test_task40para_direct_residual_and_supervisor.py benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py",
-      "ruff_format": "ruff format --check benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py src/test/test_task43_v2_native_p6_diagnostic_helpers.py"
-    },
-    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_static_checks.log",
-    "log_sha256": "b2b95b2e619ede1a4ca6866691ac2175317e10f6389a56dda743f4e47076968c",
-    "result": "Ruff check passed; two new files already formatted; compileall exit 0"
+    "exact_command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands_after_identity_fix.json",
+    "exact_command_manifest_sha256": "45ae3be90a3c4b00b667748a4764906fbd14a1e6b084201ea9daa211277318da",
+    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/static_checks_after_identity_fix.log",
+    "log_sha256": "c16508e908473a6c02add51a44570152b58d82d2b08322ee1a7bcb5218a73f83",
+    "result": "Ruff check passed; two files already formatted; compileall exit 0"
   },
   "formal_attempt_budget_at_freeze": {
     "A1_R_started": 0,
@@ -72,14 +73,40 @@
     "q10_samples": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
     "q8_samples": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5"
   },
+  "latest_exact_command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands_after_identity_fix.json",
+  "latest_exact_command_manifest_sha256": "45ae3be90a3c4b00b667748a4764906fbd14a1e6b084201ea9daa211277318da",
   "limitations": [
     "No A2_q or A2_R endpoint was launched.",
     "No full-repository pytest was run for this component-only change.",
     "A1_q remains unqualified due observer serialization failure; A1_R, B, and C remain not_run/locked."
   ],
   "prevalidation_head": "2d775c9c00847f80eda7d09bd120be218603691e",
+  "prevalidation_head_for_identity_fix": "647a85afeff121248cdbeecb3700fad93b8ee11d",
+  "previous_component_tests_before_identity_fix": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_native_p6_diagnostic_helpers.py src/test/test_task40para_direct_residual_and_supervisor.py src/test/test_task39extra_v7_p6_direct_pipeline.py",
+    "command_manifest_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands.json",
+    "command_manifest_sha256": "511962b1fb426368b2cbb0409a9c9a58443550ab29b0a53e676c3088a9d7d4da",
+    "formal_model_or_PDE_attempts": 0,
+    "host_qualified_abi": {
+      "DOLFINx": "0.10.0",
+      "MPI_size": 1,
+      "PETSc_int": "int64",
+      "PETSc_scalar": "complex128",
+      "qualified_activation": 1
+    },
+    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_attempt3.log",
+    "log_sha256": "a8a2db3a93bd7d3c32e56dd64ac67f5372f79ae65ef63a1cc76b087e3433675d",
+    "result": "33 passed in 7.55s"
+  },
   "schema": "task43.a2_native_p6_component_validation.v1",
   "scope": "contract/code/test validation only; no A2 endpoint or PDE was started",
+  "source_hashes_before_identity_fix": {
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "2284d929f3e749351ca8727858ee9ff853d88a2615277eb34e27c280fd8a1e08",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
+    "src/runners/p6_condensed_direct.py": "f59634c7c0d37fff6a1792c50e4d1d8838fdb2f34784cb0daa00f64552ee6e08",
+    "src/test/test_task40para_direct_residual_and_supervisor.py": "2300a8ef8622992feb08e796de9394bbd7136d55d214c9ac3cf803f8b76e41bf",
+    "src/test/test_task43_v2_native_p6_diagnostic_helpers.py": "d60b94539c676e552f19f237d4b2771b7a24a01f674f30807cf1d89170ffbd49"
+  },
   "superseded_validation_attempts": [
     {
       "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted.log",

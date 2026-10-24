@@ -20,6 +20,7 @@ from benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic import (
     _require_a2_budget_frozen_before_attempt,
     _require_a2_q_r13_same_source_identity,
     _validate_a2_native_contract_copy,
+    _validate_y6_recovered_bundle_binding,
 )
 from src.io.native_capacity_profile import TASK40_PHI90_D15_PROFILES
 from src.runners.p6_condensed_direct import (
@@ -405,6 +406,31 @@ def test_task43_a2_output_directory_must_be_fresh_run_child(tmp_path):
     expected.mkdir()
     with pytest.raises(FileExistsError, match="already exists"):
         _a2_attempt_run_directory(attempt_root)
+
+
+def test_task43_y6_restore_identity_binds_actual_recovered_bundle_record():
+    identity_path = (
+        _REPO_ROOT
+        / "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json"
+    )
+    bundle_path = (
+        _REPO_ROOT
+        / "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz"
+    ).resolve()
+    bundle_sha256 = "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4"
+    identity = json.loads(identity_path.read_text(encoding="utf-8"))
+
+    _validate_y6_recovered_bundle_binding(identity, bundle_path, bundle_sha256)
+
+    wrong_path = json.loads(json.dumps(identity))
+    wrong_path["recovered_bundle"]["path"] = str(identity_path)
+    with pytest.raises(ValueError, match="does not bind"):
+        _validate_y6_recovered_bundle_binding(wrong_path, bundle_path, bundle_sha256)
+
+    wrong_hash = json.loads(json.dumps(identity))
+    wrong_hash["recovered_bundle"]["sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="does not bind"):
+        _validate_y6_recovered_bundle_binding(wrong_hash, bundle_path, bundle_sha256)
 
 
 def test_task43_a2_native_contract_is_only_scoped_interface_amendment():

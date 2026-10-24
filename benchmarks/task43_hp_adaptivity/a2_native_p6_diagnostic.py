@@ -939,6 +939,25 @@ def _bind_file(relative: Path, expected_sha256: str, *, label: str) -> Path:
     return path
 
 
+def _validate_y6_recovered_bundle_binding(
+    identity: dict[str, Any], expected_path: Path, expected_sha256: str
+) -> None:
+    """Bind the imported Y6 bundle through its actual restore-identity field."""
+
+    recovered_bundle = identity.get("recovered_bundle", {})
+    recorded_path = recovered_bundle.get("path")
+    recorded_sha256 = recovered_bundle.get("sha256")
+    if (
+        not isinstance(recorded_path, str)
+        or not recorded_path
+        or Path(recorded_path).resolve() != expected_path.resolve()
+        or recorded_sha256 != expected_sha256
+    ):
+        raise ValueError(
+            "Y6_1 restore identity does not bind the frozen recovered-space bundle"
+        )
+
+
 def _validate_a2_native_contract_copy(
     original: dict[str, Any], a2_contract: dict[str, Any]
 ) -> None:
@@ -1096,12 +1115,11 @@ def _validate_frozen_inputs(phase: str) -> tuple[dict[str, Any], dict[str, Any]]
         or old_summary.get("mode_inventory", {}).get("active_mode_count") != 612
         or old_identity.get("label") != "Y6_1"
         or old_identity.get("source_sha") != "6320ae621ddf94d39e9006628a5ef68b0dfdfffe"
-        or old_identity.get("input_artifacts", {})
-        .get("recovered_reference_bundle.npz", {})
-        .get("sha256")
-        != _Y6_BUNDLE_SHA256
     ):
         raise ValueError("Y6_1 frozen q15/q28/R13 baseline identity is incomplete")
+    _validate_y6_recovered_bundle_binding(
+        old_identity, space_bundle_path, _Y6_BUNDLE_SHA256
+    )
 
     sample_paths = {
         "q8": Path(
