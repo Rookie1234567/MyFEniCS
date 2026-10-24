@@ -337,3 +337,10 @@ ABI 是本机 qualified WSL complex128/int32；不是工作站正式 service 资
 实际工作站监督运行与fixture分开：补审确认旧action FAIL；y/g全域分解完成；metadata完整；selected attempt03身份路径bug，attempt04时间未准入。没有新局部数值PASS。详见[response_v11](../response_v11.md)和[原件](v11_closeout/evidence_index.json)。
 
 收口数据检查（不启动FE）：24份复制JSON原件字节/SHA与工作站索引一致；全部新增JSON可读；保存比较的Δy两列为0、Δg端口两列为0；response内相对证据链接均存在；最终`git diff --check`通过。轻量原件目录865524B（包含索引），原NPY与资源timeline仍在ignored artifacts。
+
+
+## Task41extra Review V12：saved-array checker 与文档收口（2026-10-24）
+
+attempt06受监督saved-array checker完成，184项数组重算为EXACT，data integrity=true；这是保存证据复核，不是FE、solver或科学资格测试。V12 attempt03另有局部producer工作：建立两格mesh/space并生成候选张量与LU，不能把整个V12概括成无FE工作。C1 native Linux ABI preflight通过：项目runtime Python、PETSc 3.25.6 complex128/int32、SLEPc 3.25.2、DOLFINx 0.10、mpi4py 4.1.2、MPI1。最终源码相关定向复验由主控记录为3 passed、59 deselected、1.82 s，运行在checker source 9a6ccdcefc12119275f1ce1082f154af5a881241；另有纯fixture定向测试test_saved_diagnostics_prepare_binds_scope_and_reuses_entry_source_window为1 passed in 0.21s，检查scope、entry source与window绑定，不代表数值通过。
+
+本次文档收口只做Markdown/JSON与链接结构核验及git diff --check；attempt04–06的saved-array checker正式attempt均已运行并保留；本次文档收口未追加checker。没有运行全仓pytest、Ruff或PDE，没有CI通过声明。attempt03/06源码与服务身份、数值结论和证据hash见[V12 response](../response_v12.md)及[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)。

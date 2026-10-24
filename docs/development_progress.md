@@ -3881,3 +3881,10 @@ V5 将局部凝聚 rank-2 张量改为直接读取原 mesh coordinates，并让�
 保存数据交叉比较把“算子作用的变化”和“右端项缩减的变化”拆开，避免从总差猜根因。完整V6/V9 y相同，Δg只在trace、port0；V9原误差2.6749770637124364e-10/5.613598120039757e-10仍超过1e-11。新受监督补审确认旧FAIL，旧terminal NOT_RUN保留。87567完整incident [360,446]已保存，但候选数值未运行：attempt04真实余额996.109s不足1020s工作估计/终止预留；不是新数学或内存失败。补审/比较/metadata父时间约175.032/39.381/111.712s，末两失败47.918/49.321s；父子不相加，task swap0，后代清场。
 
 当前可排除本次恶化来自作用y或port变化；GETRS/J/逐key矩阵重放和累加机制尚未区分。只建议后续授权后复用完整metadata补两cell局部证据，不重建全域/200q。完整场、精度、2TB48h不通过。证据：[response_v11](task41extra_phi90_p50x50_g17x20/response_v11.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v11_saved_diagnostics_20261023.json)。
+
+
+## Task41extra Review V12：两单元保存数组复核完成，科学资格未改变（2026-10-24）
+
+attempt03使用既有metadata与donor输入建立局部mesh/space，生成cells 360/446候选张量与LU并完成选中行重放；producer source为196aedecbef5d129588c629fc091682d7a2900f4，保存198项数组共76,009,104 B；attempt06 checker source为9a6ccdcefc12119275f1ce1082f154af5a881241，saved-only checker独立重算184项并精确复现producer结果。attempt01为inner service缺strict Task41 marker启动失败；attempt04为checker错读嵌套identity schema，不据此判donor真实不匹配。attempt01–05失败与attempt03 checker身份失败均保留。attempt06没有FE装配、因子分解、新candidate生成或PDE solve；candidate_passed=null、scientific_qualified=false、official_result=false。
+
+V9完整action仍为2.6749770637124364e-10与5.613598120039757e-10，高于1e-11。局部选中行只覆盖既有V9误差能量约0.00627258%/0.00664272%；equation1和equation2残差仅用于诊断，不能声称“只是舍入”，唯一根因仍未确定。attempt02–06父service合计510.8661423435005秒，attempt01成本UNKNOWN_NOT_MEASURED；attempt06树RSS与cgroup峰值分列、task swap为0。详见[Task41 V12 response](task41extra_phi90_p50x50_g17x20/response_v12.md)、[compact ledger](task41extra_phi90_p50x50_g17x20/outcomes/b0_v12_saved_array_checker_closeout_20261024.json)、[Task41 outcomes summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)。全域重验、200q/factor、KSP/FGMRES、完整场、A6、R/T/A、最终精度与2TB/48h仍未运行或未资格化。

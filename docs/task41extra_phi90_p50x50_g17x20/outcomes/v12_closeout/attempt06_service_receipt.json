@@ -1,0 +1,517 @@
+{
+  "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+  "activation_command": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; unset _MYFENICS_WSL_QUALIFIED_ACTIVATION; source scripts/task40_fresh_c1/activate_native_complex.sh \"$2\" \"$3\" \"$4\" native_linux; env -0 task40-v20-activation /home/fenics/Projects/laptop_share /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache",
+  "activation_identity": "task41_p0_native_complex:1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+  "candidate_replay_saved_array_checker": {
+    "official_result": false,
+    "result_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt06/task41_p0_v11_candidate_replay_saved_array_check.json",
+    "result_sha256": "cdbd2a0a8d6ae62b61ad1a45b8bd4f62dae4c69ebb1f0f7923205ac85e4c3739",
+    "status": "COMPLETED_READ_ONLY",
+    "watchdog": {
+      "cache_metadata_stable": true,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "COMPLETED",
+      "clock_end": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2729591.142634229,
+        "monotonic": 2729591.142631311,
+        "utc_ns": 1792804596281768768
+      },
+      "clock_info": {
+        "boottime": {
+          "available": true,
+          "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+          "resolution": 1e-09
+        },
+        "monotonic": {
+          "adjustable": false,
+          "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+          "monotonic": true,
+          "resolution": 1e-09
+        },
+        "utc": {
+          "adjustable": true,
+          "implementation": "clock_gettime(CLOCK_REALTIME)",
+          "monotonic": false,
+          "resolution": 1e-09
+        }
+      },
+      "clock_start": {
+        "boottime": 2729556.842461381,
+        "monotonic": 2729556.842449652,
+        "utc_ns": 1792804561981594989
+      },
+      "descendants_cleared": true,
+      "elapsed_seconds": 34.29932876303792,
+      "global_swap_activity": {
+        "baseline": {
+          "pswpin_pages": 4250573,
+          "pswpout_pages": 7183007
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "end": {
+          "pswpin_pages": 4250573,
+          "pswpout_pages": 7183007
+        },
+        "scope": "WSL-global diagnostic, not dedicated job"
+      },
+      "global_swap_gate_enforced": false,
+      "job_cgroup_swap": {
+        "end": {
+          "dedicated_job_cgroup": true,
+          "member_count": 1,
+          "memory_current_bytes": 126332928,
+          "memory_limit_bytes": 1649267441664,
+          "memory_peak_bytes": 504672256,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task41-p0-v12-attempt06-20261024T011456Z.service",
+          "readable": true,
+          "swap_current_bytes": 0
+        },
+        "gate_enforced": true,
+        "passed": true,
+        "peak_swap_current_bytes": 0,
+        "sample_count": 29,
+        "start_swap_current_bytes": 0
+      },
+      "job_cgroup_swap_gate_enforced": true,
+      "job_cgroup_swap_start_bytes": 0,
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "cap_policy": "min(split_domain_dynamic_process_tree_cap, explicit_tree_cap)",
+        "cgroup_limits": [
+          {
+            "anon_bytes": 117387264,
+            "current_bytes": 124874752,
+            "file_bytes": 1708032,
+            "file_dirty_bytes": 4096,
+            "limit_bytes": 1649267441664,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task41-p0-v12-attempt06-20261024T011456Z.service"
+          }
+        ],
+        "cgroup_memory_stats": [
+          {
+            "anon_bytes": 117387264,
+            "current_bytes": 124874752,
+            "file_bytes": 1708032,
+            "file_dirty_bytes": 4096,
+            "limit_bytes": 1649267441664,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task41-p0-v12-attempt06-20261024T011456Z.service"
+          },
+          {
+            "anon_bytes": 506142720,
+            "current_bytes": 284466311168,
+            "file_bytes": 276806348800,
+            "file_dirty_bytes": 32768,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+          },
+          {
+            "anon_bytes": 786313216,
+            "current_bytes": 285872021504,
+            "file_bytes": 277833674752,
+            "file_dirty_bytes": 49152,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+          },
+          {
+            "anon_bytes": 136787607552,
+            "current_bytes": 998321225728,
+            "file_bytes": 840163209216,
+            "file_dirty_bytes": 3264512,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+          },
+          {
+            "anon_bytes": 136795058176,
+            "current_bytes": 998462660608,
+            "file_bytes": 840286019584,
+            "file_dirty_bytes": 3264512,
+            "limit_bytes": null,
+            "path": "/sys/fs/cgroup/user.slice"
+          }
+        ],
+        "dynamic_launch_cap_bytes": 1649267441664,
+        "effective_available_after_reserves_bytes": 1649142566912,
+        "effective_available_bytes": 1649142566912,
+        "effective_total_bytes": 1649267441664,
+        "host_launch_available_bytes": 1913643900928,
+        "host_mem_available_bytes": 1982363377664,
+        "launch_cap_bytes": 1649267441664,
+        "mem_available_bytes": 1982363377664,
+        "mem_total_bytes": 2163100385280,
+        "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "reserve_bytes": 68719476736,
+        "reserve_domains_separated": true,
+        "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+        "static_tree_cap_bytes": null,
+        "task_cgroup_available_bytes": 1649142566912,
+        "task_cgroup_launch_available_bytes": 1649142566912,
+        "task_cgroup_reserve_bytes": 0,
+        "tree_cap_bytes": 1649267441664
+      },
+      "leader_exit_code": 0,
+      "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "observed_child_identities": [
+        {
+          "pid": 1371784,
+          "start_ticks": 272955684
+        }
+      ],
+      "observed_child_identity_coverage": "complete",
+      "observed_child_pids": [
+        1371784
+      ],
+      "process_tree_all_identity_complete": true,
+      "process_tree_all_status_readable": true,
+      "process_tree_identity_coverage": "complete",
+      "process_tree_identity_sample_count": 55,
+      "process_tree_samples": 29,
+      "process_tree_swap_gate_enforced": true,
+      "pss_sampling_policy": "disabled_by_profile",
+      "pss_status": "DISABLED_BY_PROFILE",
+      "remaining_child_pids": [],
+      "sampled_process_tree_pss_peak_bytes": null,
+      "sampled_process_tree_rss_peak_bytes": 670048256,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "samples": 29,
+      "source_state": "development_worktree; not formal PDE provenance",
+      "swap_policy": "worker_defined",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "task40_v10_campaign": {
+        "accounting_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v12_two_cell_candidate_replay_6h.jsonl",
+        "campaign_seconds": 21600.0,
+        "closeout_parent_flush_reserve_seconds": 30.0,
+        "closeout_reserve_seconds": 1200.0,
+        "deadline_utc_ns": 1792818767000000000,
+        "first_exact_monotonic_at_t0": "NOT_CAPTURED",
+        "numerical_cutoff_seconds": 20400.0,
+        "phase": "closeout",
+        "phase_authorization": {
+          "campaign_window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+          "checker_kind": "task41_p0_v11_selected_cell_saved_array_checker",
+          "command_sha256": "151e30b06e397072e96f943c5f38484ce4ec7cc2e739a7ccc2e3b8b3fb0859c3",
+          "expected_channel_count": null,
+          "input_paths": [
+            "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_9a6ccdcefc12119275f1ce1082f154af5a881241_v12_two_cell_candidate_replay.json",
+            "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_afbe91e5947ed18fb74d7105097e129c1b8b4cc7.json",
+            "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z/task40_v10_p6_candidate_summary.json",
+            "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z/task41_b0_recovery_manifest.json",
+            "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt03/task41_p0_v11_selected_trace_candidate_replay.json",
+            "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_196aedecbef5d129588c629fc091682d7a2900f4_v12_two_cell_candidate_replay.json",
+            "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata.json",
+            "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z/task41_p0_b0_v9_compact_volume_audit.json",
+            "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_967ad08d7da75ff8fa4e49bd63ed9abe53469d46.json",
+            "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02.service/task41_p0_service_receipt.json",
+            "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_saved_diagnostics_v12_two_cell_candidate_replay_6h.json"
+          ],
+          "input_sha256s": [
+            "8b6b23fb53cb5c3545f007aeaffbeb51836c9a7a536c25914ddeb23a314fe4bc",
+            "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+            "651c7a84db27e02c02879b10a28fe5580911678d25b5c7b8018a882d467c98d9",
+            "f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465",
+            "2463e322ea72160bfcca7f3345d149ab20e5b017982f1f9ed55010df0afa9876",
+            "94e31c40be1796b690d0184f8b7c61de753c15447e02d417758bb0fb333df355",
+            "332baa3a5253a8322b56615c7fe087e401f909c3c889fa048fccc3f9f2b9fcd3",
+            "e4db4e42b8a4f3b407ed0b00add8029f7e066aad6c38a2945d60e33ffbde7d93",
+            "af27a07502f72f5d3d1effecf98bda21f09e95cca230278e05ed1a63eeaf8931",
+            "ccf9c796ed38d21180e5336d59b8610a62fb869fc271dc3703a87cedb986eb4c",
+            "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6"
+          ],
+          "phase": "closeout",
+          "purpose": "registered_read_only_required_checker",
+          "schema": "task41.p0.closeout_checker_authorization.v1",
+          "source_branch": "task41extra_phi90_p50x50_g17x20",
+          "source_clean": true,
+          "source_sha": "9a6ccdcefc12119275f1ce1082f154af5a881241",
+          "task41_contract_sha256": "8b6b23fb53cb5c3545f007aeaffbeb51836c9a7a536c25914ddeb23a314fe4bc"
+        },
+        "phase_sub_budget_seconds": 1140.0,
+        "phase_termination_reserve_seconds": 60.0,
+        "t0_utc_ns": 1792797167000000000,
+        "watchdog_end_accounting": {
+          "adjacent_interval": {
+            "budget_seconds": 0.096679033,
+            "discrepancy_seconds": 1.389868335699429e-07,
+            "elapsed_seconds": {
+              "boottime": 0.09667896619066596,
+              "monotonic": 0.09667889401316643,
+              "utc": 0.096679033
+            },
+            "policy": "conservative_realtime",
+            "policy_version": 1,
+            "tolerance_seconds": 5.0,
+            "utc_minus_monotonic_seconds": 1.389868335699429e-07
+          },
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "bootstrap_charged_seconds": 415.349652253,
+          "campaign_window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+          "cumulative_charged_seconds": 7429.282588025234,
+          "cutoff_seconds": 20400.0,
+          "deadline_utc_ns": 1792818767000000000,
+          "label": "watchdog_end",
+          "phase": "closeout",
+          "previous_sample": {
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "boottime": 2729591.046360525,
+            "monotonic": 2729591.046359762,
+            "utc_ns": 1792804596185494169
+          },
+          "sample": {
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "boottime": 2729591.143039491,
+            "monotonic": 2729591.143038656,
+            "utc_ns": 1792804596282173202
+          },
+          "schema": "task40extra.review_v10_campaign_accounting.v1",
+          "sequence": 360,
+          "t0_utc_ns": 1792797167000000000,
+          "time_namespace_identity": {
+            "time": "time:[4026531834]",
+            "time_for_children": "time:[4026531834]"
+          }
+        },
+        "watchdog_start_accounting": {
+          "adjacent_interval": {
+            "budget_seconds": 4.346939117,
+            "discrepancy_seconds": 8.276016012942478e-06,
+            "elapsed_seconds": {
+              "boottime": 4.346938332077116,
+              "monotonic": 4.346930840983987,
+              "utc": 4.346939117
+            },
+            "policy": "conservative_realtime",
+            "policy_version": 1,
+            "tolerance_seconds": 5.0,
+            "utc_minus_monotonic_seconds": 8.276016012942478e-06
+          },
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "bootstrap_charged_seconds": 415.349652253,
+          "campaign_window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+          "cumulative_charged_seconds": 7394.867842996524,
+          "cutoff_seconds": 20400.0,
+          "deadline_utc_ns": 1792818767000000000,
+          "label": "watchdog_start_closeout",
+          "phase": "closeout",
+          "previous_sample": {
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "boottime": 2729552.381383246,
+            "monotonic": 2729552.381382122,
+            "utc_ns": 1792804557520516887
+          },
+          "sample": {
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "boottime": 2729556.728321578,
+            "monotonic": 2729556.728312963,
+            "utc_ns": 1792804561867456004
+          },
+          "schema": "task40extra.review_v10_campaign_accounting.v1",
+          "sequence": 330,
+          "t0_utc_ns": 1792797167000000000,
+          "time_namespace_identity": {
+            "time": "time:[4026531834]",
+            "time_for_children": "time:[4026531834]"
+          }
+        },
+        "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_saved_diagnostics_v12_two_cell_candidate_replay_6h.json",
+        "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6"
+      },
+      "time_end_observation": {
+        "exceeded": false,
+        "inclusive": true,
+        "limit_seconds": 1140.0,
+        "observed_seconds": 34.30031408240846,
+        "passed": true,
+        "time_gate_action": "enforce",
+        "time_gate_evaluated": true,
+        "time_policy": "enforce"
+      },
+      "time_exceeded": {
+        "active_pc": false,
+        "solve": false,
+        "workflow": false
+      },
+      "time_gate_action": "enforce",
+      "time_gate_evaluated": true,
+      "time_policy": "enforce",
+      "time_reference_seconds": {
+        "active_pc": null,
+        "solve": null,
+        "workflow": 1140.0
+      },
+      "timebase_policy": "conservative_realtime",
+      "timebase_policy_version": 1,
+      "workflow_clock_interval": {
+        "budget_seconds": 34.30031408240846,
+        "discrepancy_seconds": 8.811242878437042e-06,
+        "elapsed_seconds": {
+          "boottime": 34.30017284769565,
+          "monotonic": 34.30018165893853,
+          "utc": 34.300173779
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "step": {
+          "budget_seconds": 0.096545796,
+          "discrepancy_seconds": 2.101031801732267e-07,
+          "elapsed_seconds": {
+            "boottime": 0.09654558589681983,
+            "monotonic": 0.09654579311609268,
+            "utc": 0.096545796
+          },
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": 2.8839073212827415e-09
+        },
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -7.879938529242736e-06,
+        "utc_positive_excess_seconds": 1.4605576310319779e-05
+      }
+    }
+  },
+  "candidate_report_replayed_read_only": true,
+  "candidate_report_sha256": "2463e322ea72160bfcca7f3345d149ab20e5b017982f1f9ed55010df0afa9876",
+  "case_id": "B0",
+  "cgroup_start": {
+    "dedicated_job_cgroup": true,
+    "member_count": 1,
+    "memory_current_bytes": 122822656,
+    "memory_limit_bytes": 1649267441664,
+    "memory_peak_bytes": 176922624,
+    "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task41-p0-v12-attempt06-20261024T011456Z.service",
+    "readable": true,
+    "swap_current_bytes": 0
+  },
+  "checker_source_sha": "9a6ccdcefc12119275f1ce1082f154af5a881241",
+  "consumer_branch": "task41extra_phi90_p50x50_g17x20",
+  "consumer_output_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt06",
+  "consumer_source_sha": "9a6ccdcefc12119275f1ce1082f154af5a881241",
+  "continuation_status": "saved_evidence_audit_only",
+  "contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_9a6ccdcefc12119275f1ce1082f154af5a881241_v12_two_cell_candidate_replay.json",
+  "contract_sha256": "8b6b23fb53cb5c3545f007aeaffbeb51836c9a7a536c25914ddeb23a314fe4bc",
+  "donor_contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_afbe91e5947ed18fb74d7105097e129c1b8b4cc7.json",
+  "donor_contract_sha256": "9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c",
+  "donor_numerical_output": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z/numerical_output",
+  "donor_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+  "donor_summary_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z/task40_v10_p6_candidate_summary.json",
+  "host_reserve_bytes": 68719476736,
+  "input_path": "/home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+  "input_sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1",
+  "memory_swap_max_bytes": 0,
+  "mode": "saved_b0_v11_candidate_replay_recheck",
+  "numerical_work_started": false,
+  "official_result": false,
+  "preflight": {
+    "abi_module_paths": {
+      "dolfinx": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/dolfinx/__init__.py",
+      "mpi4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/mpi4py/__init__.py",
+      "petsc4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/petsc4py/__init__.py",
+      "slepc4py": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/slepc4py/__init__.py"
+    },
+    "int_type": "int32",
+    "mpi_size": 1,
+    "python": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "scalar_type": "complex128"
+  },
+  "preflight_command": [
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "-c",
+    "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+  ],
+  "producer_run_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z",
+  "producer_source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+  "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt06.service/task41_p0_service_receipt.json",
+  "required_checker_status": "independent_saved_array_check_completed",
+  "result_classification": "V11_SAVED_CANDIDATE_REPLAY_RECHECKED",
+  "saved_diagnostics_disk_budget": {
+    "bound_raw_artifact_bytes_stat_deduplicated": 9748018280,
+    "cumulative_raw_artifact_limit_bytes": 17179869184,
+    "current_invocation_bytes": 348264,
+    "free_space_bytes": 2042499801088,
+    "free_space_floor_bytes": 2147483648,
+    "recorded_cumulative_raw_artifact_bytes": 14993367461,
+    "reserved_remaining_new_evidence_bytes": 0,
+    "status": "POST_WRITE_CHECKED",
+    "window_output_tree_bytes": 81120655,
+    "window_wide_new_evidence_limit_bytes": 536870912
+  },
+  "saved_diagnostics_disk_budget_precheck": {
+    "bound_raw_artifact_bytes_stat_deduplicated": 9748018280,
+    "cumulative_raw_artifact_limit_bytes": 17179869184,
+    "current_invocation_bytes": 7766,
+    "free_space_bytes": 2042500812800,
+    "free_space_floor_bytes": 2147483648,
+    "recorded_cumulative_raw_artifact_bytes": 14993367461,
+    "reserved_remaining_new_evidence_bytes": 456090755,
+    "status": "PRE_CHECKER_ADMITTED",
+    "window_output_tree_bytes": 80780157,
+    "window_wide_new_evidence_limit_bytes": 536870912
+  },
+  "schema": "task41.p0.saved_output_service_receipt.v1",
+  "selected_active_row": 87567,
+  "service_elapsed_seconds": 39.97996959881857,
+  "service_entry_accounting": {
+    "adjacent_interval": {
+      "budget_seconds": 807.3044941560365,
+      "discrepancy_seconds": 1.6585036519245477e-05,
+      "elapsed_seconds": {
+        "boottime": 807.3044825047255,
+        "monotonic": 807.3044941560365,
+        "utc": 807.304477571
+      },
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "tolerance_seconds": 8.073044941560365,
+      "utc_minus_monotonic_seconds": -1.6585036519245477e-05
+    },
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap_charged_seconds": 415.349652253,
+    "campaign_window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+    "cumulative_charged_seconds": 7390.520903879524,
+    "cutoff_seconds": 20400.0,
+    "deadline_utc_ns": 1792818767000000000,
+    "label": "task41_p0_service_entered",
+    "phase": "numeric",
+    "previous_sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2728745.076900741,
+      "monotonic": 2728745.076887966,
+      "utc_ns": 1792803750216039316
+    },
+    "sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2729552.381383246,
+      "monotonic": 2729552.381382122,
+      "utc_ns": 1792804557520516887
+    },
+    "schema": "task40extra.review_v10_campaign_accounting.v1",
+    "sequence": 329,
+    "t0_utc_ns": 1792797167000000000,
+    "time_namespace_identity": {
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    }
+  },
+  "service_started_sample": {
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "boottime": 2729551.190449669,
+    "monotonic": 2729551.19044352,
+    "utc_ns": 1792804556329584591
+  },
+  "status": "completed",
+  "task_id": "task41extra_phi90_p50x50_g17x20",
+  "task_memory_max_bytes": 1649267441664,
+  "unit": "myfenics-case-task41-p0-v12-attempt06-20261024T011456Z",
+  "v11_prior_metadata_window_output_bytes": 3084821,
+  "v9_cumulative_evidence_bytes": 14990282640,
+  "v9_existing_evidence_bytes": 9379882344,
+  "v9_new_evidence_bytes": 368135936,
+  "v9_prior_new_evidence_bytes": 5242264360,
+  "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_saved_diagnostics_v12_two_cell_candidate_replay_6h.json",
+  "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6"
+}

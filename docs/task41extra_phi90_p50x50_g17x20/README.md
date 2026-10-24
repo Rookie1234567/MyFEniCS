@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-当前已完成V9及V10准备补充的授权计算，见[response_v9.md](response_v9.md)。局部筛选改善，但完整两列action为2.675e-10和5.614e-10，均超过1e-11；恢复与200q未启动。compact审计重现FAIL，正式terminal checker因缺numerical-output未运行。保存证据与旧失败保留，等待审阅。
+当前收口为V12两单元候选重放及保存数组复核，见[response_v12.md](response_v12.md)和[V12 compact](outcomes/b0_v12_saved_array_checker_closeout_20261024.json)。attempt03完成局部两格producer重放；attempt06精确复现184项保存数组，但candidate_passed=null、scientific_qualified=false、official_result=false。V9完整action仍FAIL；没有运行全域PDE。attempt01–06的失败与证据均保留。
 
 V6 的 `actual_qmetric_blocked_gram` 候选已构建 28,000 个 `mesh_actual_exact` 键；八个代表键的 raw/oriented 张量、K/G/J/L 与 R/T/S 局部筛查均通过 `1e-11`。候选完整两列作用的冻结分母相对误差为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，超过原 `1e-11` 门；独立 saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。按 Review V6 停在 full-action gate，不进入 200q、factor、KSP/FGMRES、完整场、A6 或 R/T/A。候选恢复也未通过 forward 门，且只做了初次恢复，没有耗尽三次修正额度。V3/V4/V5 均保留为各自历史阶段，不用 donor PASS 替代 V6 候选结果。
 

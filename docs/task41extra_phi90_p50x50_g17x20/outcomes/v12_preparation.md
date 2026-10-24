@@ -1,5 +1,6 @@
 # Task41 P0 V12 两单元续作准备
 
+> **历史准备快照：本文件记录的是attempt01前尚未执行的状态，已被V12执行结果取代。** attempt03已完成两格局部producer重放，attempt06已完成saved-array独立复核；当前结论以[response_v12](../response_v12.md)和[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)为准。下文命令和PENDING/NOT_RUN只描述当时的准备快照。
 **仅准备，未执行。** 六文件实现提交为 `234f587b2b602b88486d574cf8174d7bdad6b7c7`（分支 `task41extra_phi90_p50x50_g17x20`）；提交时工作树干净。主控报告定向测试 **11 passed / 46 deselected**，六文件 `py_compile`、`bash -n`、`git diff --check` 通过。本文记录准备阶段状态，运行时 `source_sha` 必须在所有文档冻结后动态取最终 HEAD。P0 工程准备费用无可核对账目：`UNKNOWN_NOT_MEASURED`，不是零。
 
 新 6 小时窗口仍待用户明确批准；授权记录、window/T0、V12 consumer contract、service 和数值计算均未创建/启动。科学状态 `NOT_RUN`。批准后由主控按固定 schema 创建 authorization JSON，`source_at_entry` 绑定最终冻结 HEAD；prepare 只在该文件已存在时才允许继续，并创建 T0/window 与 consumer contract。prepare 只执行一次；结果不明时先检查文件和账本，不通过重试刷新 T0。
@@ -19,7 +20,7 @@
 ## 冻结输入
 
 - V3 donor contract：`benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_afbe91e5947ed18fb74d7105097e129c1b8b4cc7.json`；SHA-256 `9e312f86cdd6b15fff9015faf4fb7dce19043fa3798a3f35cf2e57f79149713c`。
-- Donor summary：`results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z/task40_v10_p6_candidate_summary.json`，`numerical_output` 为同目录。
+- Donor summary：results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261019T053402.514018Z/task40_v10_p6_candidate_summary.json。本文准备时曾预期numerical_output子目录在同目录；attempt06 receipt后来确认该子目录当前不存在。V12 saved-only合同不依赖该目录，attempt06身份审核与184项重算成功，未创建目录；详见response_v12.md。
 - V11 metadata：`results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/bc646b17157eed567e2c5391df79e4eda681ab4028f9e86901e8c7fcfd9222b4/selected_incident_replay/attempt02/task41_p0_v8_selected_trace_star_metadata.json`；SHA-256 `332baa3a5253a8322b56615c7fe087e401f909c3c889fa048fccc3f9f2b9fcd3`。
 - V9 compact：`results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z/task41_p0_b0_v9_compact_volume_audit.json`；SHA-256 `e4db4e42b8a4f3b407ed0b00add8029f7e066aad6c38a2945d60e33ffbde7d93`。
 - FFCx C source：`benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache/fenics/libffcx_forms_2f92c03a20c09db3cb8f0382bec2294daa94ab16.c`；SHA-256 `d3302fba22074b755ac3b7d4a0b361af926ae7801aac25a7f1cd1d69cbeb9f03`。

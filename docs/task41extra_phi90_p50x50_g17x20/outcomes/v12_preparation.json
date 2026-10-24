@@ -73,5 +73,19 @@
     "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
     "abi_preflight": "complex128, int32, MPI1"
   },
-  "commands_document": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v12_preparation.md"
+  "commands_document": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v12_preparation.md",
+  "historical_snapshot": true,
+  "historical_snapshot_note": "记录attempt01启动前的PREPARATION_ONLY_NOT_EXECUTED状态；该状态已由后续attempt03局部candidate replay和attempt06 saved-array audit取代。",
+  "superseded_by": {
+    "response": "docs/task41extra_phi90_p50x50_g17x20/response_v12.md",
+    "compact": "docs/task41extra_phi90_p50x50_g17x20/outcomes/b0_v12_saved_array_checker_closeout_20261024.json",
+    "attempt06_checker_report": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt06/task41_p0_v11_candidate_replay_saved_array_check.json",
+    "producer_attempt03_report": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v12_closeout/attempt03_candidate_replay_report.json"
+  },
+  "later_execution": {
+    "attempt03_local_mesh_space_two_cell_tensor_lu_replay_completed": true,
+    "attempt06_saved_array_check_completed": true,
+    "scientific_qualified": false,
+    "official_result": false
+  }
 }

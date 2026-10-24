@@ -1,7 +1,15 @@
 # Task41 阶段结果
 
-> **V11最新：已完成保存数据补审与全域分解；局部数值重放未获时间准入。** V6/V9完整y逐位相同，Δg只在trace，V9完整action仍FAIL。active87567→original250113完整incident为[360,446]；两cell数值未开始，attempt04余额996.109s低于1020s估计及终止预留。旧失败和费用保留，不解锁200q。见[response_v11](../response_v11.md)、[compact](b0_v11_saved_diagnostics_20261023.json)、[原始索引](v11_closeout/evidence_index.json)。下方V9是历史完整作用试验，不是本轮新完整场。
+> **V12最新：两单元候选重放及保存数组复核完成，科学资格未改变。** attempt03建立必要原网格mesh/space并完成cells 360/446候选重放；attempt06精确复现184项保存数组，但candidate_passed=null、scientific_qualified=false、official_result=false。V9完整action仍FAIL；不解锁全域重验、200q或最终求解。见[response_v12](../response_v12.md)、[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)。下方V11及V9内容保留为历史阶段记录。
 
+
+| V12 项目 | 当前结果 | 范围边界 |
+|---|---|---|
+| Producer attempt03 | 建立必要原网格 mesh/space，重放 cells 360/446；198 项保存数组、76,009,104 B；source 196aedec… | 仅选中 trace 行的两格 |
+| Saved-only checker attempt06 | 184 项数组 EXACT，data integrity=true；checker source 9a6ccdce… | 不等于 candidate/scientific/official PASS |
+| 局部诊断 | 四行 equation1、八项 equation2；全局 native n_t 每列状态汇总后只减一次 | gamma 界不能证明“只是舍入”；唯一根因未定 |
+| 科学门 | V9 两列 2.6749770637124364e-10 / 5.613598120039757e-10 对 1e-11 仍 FAIL | V12 未重验全域 action；未解锁 200q 或求解 |
+| 后续 | 200q/factor、KSP/FGMRES、完整场、A6、R/T/A、最终精度、2TB/48h | NOT_RUN或未资格化 |
 
 > **V9 已形成首次正式 B0 结果。** 20261022T052401.200732Z 的两列 full-action 门均失败，compact independent checker 为 FAIL，正式 service terminal checker 因 numerical-output 目录缺失而 NOT_RUN；recovery 为 NOT_RUN_ACTION_GATE_FAILED，official_result=false。详见 [V9 response](../response_v9.md)、[run index](run_index.json) 与两级账。准备阶段测试和窗口资料仍保留在 [V9 preparation](v9_preparation.md)。
 
@@ -353,3 +361,18 @@ V7受监督saved-only服务父时长250.111 s，watchdog子时长200.484 s（包
 | 下一步边界 | 可由主控评估 reduce_rhs 的 -J solve(K,b_i) 局部稳定性建议；实施或全域重验尚未授权。200q、factor/KSP、完整场、A6和R/T/A均未运行 | V8 response |
 
 V8的局部反事实支持进一步审阅 RHS reduction 的求值次序：从同一保存K、J和b_i直接求 -J solve(K,b_i)，而非先形成T后乘b_i。它增加每个RHS的三角求解和J应用成本；本轮没有改生产路径，也未证明参考d或完整action改善。原始完整作用门仍失败，不能用局部投影差距缩小替代全域两列requalification。
+
+## Task41extra Review V12：两单元保存数组精确复核，科学资格未改变（2026-10-24）
+
+attempt03使用既有metadata与donor输入建立必要原网格mesh/space，生成cells 360/446候选张量与LU，并完成选中行局部重放；producer source 196aedecbef5d129588c629fc091682d7a2900f4，保存198项数组共76,009,104 B；报告SHA 2463e322ea72160bfcca7f3345d149ab20e5b017982f1f9ed55010df0afa9876，donor manifest SHA f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465；attempt06在冻结V12 consumer身份下完成saved-only独立checker，184项数组精确复现。attempt01–05的错误和负结果全部保留，attempt06为一次性unit exit 0且后代清场。历史numerical_output目录不存在，但attempt06合同不要求该目录；receipt与summary身份校验通过，没有创建目录。
+
+| 项目 | V12结果 | 资格边界 |
+|---|---|---|
+| 保存数组复核 | 184项exact reproduction，data integrity通过；y/g、j0/j3和存储T输出精确匹配 | attempt06只读保存数组；attempt03的局部producer建立mesh/space、张量与LU |
+| equation1 | 四行LHS/RHS/difference保存在response与compact；全部DIAGNOSTIC_ONLY | gamma上界远宽于差值，不能称为精确闭合或“只是舍入” |
+| equation2 | 8个局部difference范数约为gamma界的208–1047倍 | 局部残差诊断，不是full-action门或全域根因 |
+| 科学结果 | candidate_passed=null，scientific_qualified=false，official_result=false；V9完整action仍为2.6749770637124364e-10 / 5.613598120039757e-10，对1e-11仍FAIL | 两格只覆盖历史V9误差能量约0.00627258% / 0.00664272% |
+| 时间资源 | attempt02–06父service合计510.8661423435005s；attempt01为UNKNOWN_NOT_MEASURED；attempt06树RSS 670048256B、cgroup峰504672256B、task swap0 | worker时间嵌套在父service；余额只按attempt06最后保存的watchdog快照报告 |
+| 后续阶段 | 全域action重验、200q/factor、KSP/FGMRES、完整场、A6、R/T/A、最终精度、2TB/48h | NOT_RUN或未资格化 |
+
+详细signed terms、四个equation1行、八个equation2残差、attempt分类及原始hash见[response_v12](../response_v12.md)和[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)。没有声称唯一根因；局部矩阵重建、LU求解、乘法与累加/散射顺序的混合影响仍未分清。

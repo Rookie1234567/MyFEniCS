@@ -2526,3 +2526,17 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 保存数据交叉比较把“算子作用的变化”和“右端项缩减的变化”拆开，避免从总差猜根因。完整V6/V9 y相同，Δg只在trace、port0；V9原误差2.6749770637124364e-10/5.613598120039757e-10仍超过1e-11。新受监督补审确认旧FAIL，旧terminal NOT_RUN保留。87567完整incident [360,446]已保存，但候选数值未运行：attempt04真实余额996.109s不足1020s工作估计/终止预留；不是新数学或内存失败。补审/比较/metadata父时间约175.032/39.381/111.712s，末两失败47.918/49.321s；父子不相加，task swap0，后代清场。
 
 当前可排除本次恶化来自作用y或port变化；GETRS/J/逐key矩阵重放和累加机制尚未区分。只建议后续授权后复用完整metadata补两cell局部证据，不重建全域/200q。完整场、精度、2TB48h不通过。证据：[response_v11](task41extra_phi90_p50x50_g17x20/response_v11.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/b0_v11_saved_diagnostics_20261023.json)。
+
+
+## Task41extra Review V12：两单元保存数组复核（2026-10-24）
+
+| 登记项 | 实际结果 | 资格边界 |
+|---|---|---|
+| Producer attempt03 | source 196aedecbef5d129588c629fc091682d7a2900f4；建立必要原网格mesh/space并生成cells 360/446张量与LU；保存198项数组、76,009,104 B | 仅active row 87567对应两格；不是全域action或PDE资格 |
+| 两格输入身份 | producer report / replay manifest SHA-256 2463e322ea72160bfcca7f3345d149ab20e5b017982f1f9ed55010df0afa9876；donor manifest SHA-256 f55ac594382f40662954e19521ef9922d805abc64459cc7812877b12ec618465 | 原数组和source identity应复用，不重建 |
+| Saved-only checker attempt06 | checker source 9a6ccdcefc12119275f1ce1082f154af5a881241；184项精确重现，data integrity通过 | 不含FE、factorization或新candidate生成；candidate_passed=null、scientific_qualified=false、official_result=false |
+| 数值观察 | 四行equation1均为DIAGNOSTIC_ONLY；八项equation2差值超gamma上界约208–1047倍；native n_t按两个cell合计后只减一次 | 不以宽gamma界称“只是舍入”；矩阵重建、LU、乘法与累加/散射混合根因仍未分开 |
+| 原科学门 | V9 full-action相对差2.6749770637124364e-10 / 5.613598120039757e-10，对1e-11仍FAIL | V12未重验全域，不解锁200q、factor/KSP、完整场、A6、R/T/A或最终资格 |
+| 证据与资源 | attempt02–06父service合计510.8661423435005 s；attempt01为UNKNOWN_NOT_MEASURED。attempt06树RSS 670,048,256 B、cgroup峰504,672,256 B、task swap 0 | 父子计时不相加，RSS与cgroup是不同口径；窗口余额仅为最后watchdog快照 |
+
+详细定义、四组signed terms与n_t汇总、attempt负结果和下一步边界见[Task41 V12 response](task41extra_phi90_p50x50_g17x20/response_v12.md)、[compact ledger](task41extra_phi90_p50x50_g17x20/outcomes/b0_v12_saved_array_checker_closeout_20261024.json)及[原件快照](task41extra_phi90_p50x50_g17x20/outcomes/v12_closeout/)。

@@ -1527,15 +1527,125 @@
       "task_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "evidence": "v11_closeout/runs/v9_failed_terminal_audit/attempt03.service/task41_p0_service_receipt.json"
+    },
+    {
+      "attempt": "01",
+      "classification": "ENGINEERING_STARTUP_FAILURE_STRICT_TASK41_MARKER_MISSING",
+      "source_sha": null,
+      "consumer_contract_sha256": null,
+      "service_parent_seconds": null,
+      "cost": "UNKNOWN_NOT_MEASURED",
+      "error": "launcher_failure: direct inner service rejected before service because the strict Task41 marker was missing; a separate mutually-exclusive prepare-CLI invocation failure is not attempt01",
+      "evidence": "launcher_failure: inner service missing strict Task41 marker; no service receipt; UNKNOWN_NOT_MEASURED",
+      "review": "V12",
+      "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6"
+    },
+    {
+      "attempt": "02",
+      "classification": "CANDIDATE_REPLAY_INCOMPLETE_RETAINED",
+      "source_sha": "f04bde30d5e4381ff8016be6db1de68dcdc5718e",
+      "consumer_contract_sha256": "059e3f52aeca117422b78203a0cb80482527c0de9a3389079b269b9ef3afcd6a",
+      "service_parent_seconds": 221.62335750786588,
+      "process_tree_rss_peak_bytes": 2339008512,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "error": "ValueError: prepared candidate form integral IDs differ from frozen V9 curl/mass form",
+      "evidence": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt02.service/task41_p0_service_receipt.json",
+      "review": "V12",
+      "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+      "watchdog_substage_seconds": 182.01086949696764
+    },
+    {
+      "attempt": "03",
+      "classification": "LOCAL_CANDIDATE_REPLAY_COMPLETED_CHECKER_FAILED_RETAINED",
+      "source_sha": "196aedecbef5d129588c629fc091682d7a2900f4",
+      "consumer_contract_sha256": "94e31c40be1796b690d0184f8b7c61de753c15447e02d417758bb0fb333df355",
+      "local_candidate_replay_completed": true,
+      "saved_array_checker_completed": false,
+      "service_parent_seconds": 164.30380487,
+      "process_tree_rss_peak_bytes": 2344722432,
+      "checker_process_tree_rss_peak_bytes": 368214016,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "error": "ValueError: candidate replay receipt not bound to donor and current consumer",
+      "candidate_report_sha256": "2463e322ea72160bfcca7f3345d149ab20e5b017982f1f9ed55010df0afa9876",
+      "failed_checker_report_sha256": "cc8021baae9c218154b1d162d4c70e5fc8348927e52e4937b8e24789aaf776f9",
+      "candidate_actual_worker_elapsed_seconds": 148.448733087,
+      "form_evaluator_prepare_seconds": 51.777025161,
+      "two_cell_candidate_build_seconds": 3.444857046,
+      "diagnostic_getrs_12_seconds": 0.029665038,
+      "candidate_watchdog_substage_seconds": 152.827744981274,
+      "checker_watchdog_substage_seconds": 5.166881159879267,
+      "evidence": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v12_closeout/attempt03_candidate_replay_report.json",
+      "review": "V12",
+      "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6"
+    },
+    {
+      "attempt": "04",
+      "classification": "SAVED_ARRAY_CHECKER_SCHEMA_READ_ERROR_RETAINED",
+      "source_sha": "0878b3547171039e433d523ebe3347de9260283f",
+      "consumer_contract_sha256": "1f67b4aac5ad9aff67b441edf0bf5ea6ef969428ff22f8cdca87738a146a5211",
+      "service_parent_seconds": 44.1256278147921,
+      "process_tree_rss_peak_bytes": 548532224,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "error": "checker misread nested identity schema and reported a manifest/summary/contract mismatch; this does not establish a true donor identity mismatch",
+      "evidence": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt04.service/task41_p0_service_receipt.json",
+      "review": "V12",
+      "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+      "watchdog_substage_seconds": 9.757220470812172
+    },
+    {
+      "attempt": "05",
+      "classification": "SAVED_ARRAY_CHECK_EXCEPTION_RETAINED",
+      "source_sha": "192ace547ac59c65a4d557eb04e99ce578e0a199",
+      "consumer_contract_sha256": "0716051ccc765fea4da096daafa6c31c0a3d3f871a4ee1f45ac7ae54216d0ec3",
+      "service_parent_seconds": 40.83338255202398,
+      "process_tree_rss_peak_bytes": 672522240,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "error": "AttributeError: NoneType object has no attribute get while reading nested state artifacts; no numerical work",
+      "evidence": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6/selected_incident_replay/attempt05.service/task41_p0_service_receipt.json",
+      "review": "V12",
+      "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+      "watchdog_substage_seconds": 35.81202279077843
+    },
+    {
+      "attempt": "06",
+      "classification": "INDEPENDENT_SAVED_ARRAY_CHECK_COMPLETED",
+      "source_sha": "9a6ccdcefc12119275f1ce1082f154af5a881241",
+      "consumer_contract_sha256": "8b6b23fb53cb5c3545f007aeaffbeb51836c9a7a536c25914ddeb23a314fe4bc",
+      "service_unit": "myfenics-case-task41-p0-v12-attempt06-20261024T011456Z.service",
+      "service_parent_seconds": 39.97996959881857,
+      "process_tree_rss_peak_bytes": 670048256,
+      "task_cgroup_memory_peak_bytes": 504672256,
+      "task_cgroup_memory_current_bytes": 126332928,
+      "task_memory_limit_bytes": 1649267441664,
+      "task_swap_start_current_peak_bytes": [
+        0,
+        0,
+        0
+      ],
+      "descendants_cleared": true,
+      "exit_status": 0,
+      "exact_reproduction_status": "EXACT",
+      "saved_arrays_recomputed": 184,
+      "official_result": false,
+      "scientific_qualified": false,
+      "watchdog_substage_seconds": 34.29932876303792,
+      "evidence": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v12_closeout/attempt06_service_receipt.json",
+      "review": "V12",
+      "window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6"
     }
   ],
   "not_run": [
     "0.7nm_complete_field_and_target_solve",
-    "V11_selected_candidate_tensor_replay",
     "200q_reference_and_factors",
-    "final_0.7nm_accuracy_and_2TB_48h"
+    "final_0.7nm_accuracy_and_2TB_48h",
+    "full-domain two-column action requalification",
+    "V12 full-domain candidate or PDE"
   ],
-  "current_state": "V11_SAVED_AUDIT_GLOBAL_DECOMPOSITION_COMPLETE_SELECTED_REPLAY_TIME_NOT_ADMITTED",
+  "current_state": "V12_TWO_CELL_CANDIDATE_REPLAY_AND_SAVED_ARRAY_EXACT_AUDIT_COMPLETE_SCIENTIFIC_UNQUALIFIED",
   "v6_candidate_history": {
     "candidate_attempt": "20261020T124053Z_attempt10",
     "candidate_attempt_run_index_position": 38,
@@ -1674,5 +1784,19 @@
     },
     "missing_receipts_remain_unknown": true
   },
-  "v11_compact": "b0_v11_saved_diagnostics_20261023.json"
+  "v11_compact": "b0_v11_saved_diagnostics_20261023.json",
+  "v12_compact": "b0_v12_saved_array_checker_closeout_20261024.json",
+  "v12_service_parent_accounting": {
+    "measured_attempts": [
+      "02",
+      "03",
+      "04",
+      "05",
+      "06"
+    ],
+    "known_parent_seconds_sum": 510.8661423435005,
+    "attempt01_seconds": null,
+    "attempt01_cost_status": "UNKNOWN_NOT_MEASURED",
+    "worker_seconds_are_nested_substages": true
+  }
 }
