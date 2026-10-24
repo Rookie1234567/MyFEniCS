@@ -1,0 +1,77 @@
+{
+  "schema": "task43.v4.root_old_log_audit_index.v1",
+  "review_sha": "185ae91424c66780caa54a85e59eb3163cad3964",
+  "worktree_head": "185ae91424c66780caa54a85e59eb3163cad3964",
+  "scope": "N4 affinity attribution and N5 lifecycle, old logs only; no new PDE, resampling, integration or READY",
+  "entries": [
+    {
+      "tracked_path": "docs/task43_hp_adaptivity/outcomes/records/v4_root_audit/A2_q3_affinity_intervals.json",
+      "ignored_raw_path": "benchmarks/artifacts/task43/v4_root_audit/A2_q3_affinity_intervals.json",
+      "sha256": "b11ad35ee4ecdd5a3cd796d0369a94d492eb9da7c014875a37c1c3ad48b864fc",
+      "bytes": 166728
+    },
+    {
+      "tracked_path": "docs/task43_hp_adaptivity/outcomes/records/v4_root_audit/A2_q3_lifecycle_cost.json",
+      "ignored_raw_path": "benchmarks/artifacts/task43/v4_root_audit/A2_q3_lifecycle_cost.json",
+      "sha256": "0572e848dbaa3e8f44a56cc41c548177a5ea9084054bdd28f6c9260177f414e0",
+      "bytes": 20984
+    }
+  ],
+  "script": {
+    "path": "benchmarks/artifacts/task43/v4_root_audit/read_old_a2_timeline.py",
+    "sha256": "5587f5ab0189612c7be262030f3bbedab9b4fd9a0c9b62fd5d79b4362bcc4bd7"
+  },
+  "first_parse_preserved": {
+    "path": "benchmarks/artifacts/task43/v4_root_audit/first_parse",
+    "reason": "Successful first parse conservatively left truncated compiler comm as unknown; refined version identifies compiler cmdline and annotates missing command samples by same PID/start_ticks prior role. No numeric result or formal attempt changed.",
+    "files": {
+      "read_old_a2_timeline.py": "127614e68708600c30bcc003b265bbc6473c3b808799af12dbfe5d2cee77fb09",
+      "A2_q3_affinity_intervals.json": "2f7a8dfc01b34cb12acdf04e34c6907d2928c2bce9b6d4276df0f0b0f7bf4809",
+      "A2_q3_lifecycle_cost.json": "6e93ff6a91a6bb08b1cad1ba6bc2baa79c29d64436162bce3fae4a1f6263053e"
+    }
+  },
+  "monitored_support_runs": [
+    {
+      "kind": "read_only_historical_log_analysis_not_PDE",
+      "directory": "benchmarks/artifacts/task43/v4_root_audit/old_a2_logs_watchdog",
+      "classification": "COMPLETED",
+      "wall_seconds": 4.90493666799739,
+      "tree_RSS_peak_bytes": 129638400,
+      "task_swap_peak_bytes": 0,
+      "worker_exit": 0,
+      "descendants_cleared": true,
+      "wall_cap_seconds": 300.0,
+      "RSS_cap_bytes": 8589934592,
+      "files": {
+        "summary.json": "46b51259e71b7271b151780e5160c6c1f1eff131311fe2ac7ed3af79825f9279",
+        "resources.jsonl": "d4baa156c1c59403edc71ab973f22c60309a92888a22d0d57545357692842370",
+        "worker.log": "b6a09b9e3fb2c5d4ef0acde0e17fb9ea49f221209e459fab8962bc22d054a0f6"
+      }
+    },
+    {
+      "kind": "read_only_historical_log_analysis_not_PDE",
+      "directory": "benchmarks/artifacts/task43/v4_root_audit/old_a2_logs_watchdog_refined",
+      "classification": "COMPLETED",
+      "wall_seconds": 3.8028758759610355,
+      "tree_RSS_peak_bytes": 55881728,
+      "task_swap_peak_bytes": 0,
+      "worker_exit": 0,
+      "descendants_cleared": true,
+      "wall_cap_seconds": 300.0,
+      "RSS_cap_bytes": 8589934592,
+      "files": {
+        "summary.json": "3c899dabac043e8fb30d9bdef6dddecbd5a30d616302152ff6e097abdf8ebd93",
+        "resources.jsonl": "269c5af8dfb6e2ac3bf2aa77229bed77e31d2f57659d8889d8af659787cd517e",
+        "worker.log": "11bb39c7f43cc556f785b11fab379f6f4097264f98edbb35d0e84a50baf238ab"
+      }
+    }
+  ],
+  "whole_watchdog_subtotal_seconds": 8.707812543958426,
+  "included_in_this_round_1800_second_budget": true,
+  "formal_dispatches_added": 0,
+  "formal_budget_used": 5,
+  "formal_budget_original_max": 6,
+  "unused_sealed": 1,
+  "historical_cleanup_unchanged": "LIMITED_NOT_UNCONDITIONAL_PASS",
+  "note": "Prior exploratory file/header reads were unmonitored metadata inspection, not numerical tests; not included in this monitored subtotal."
+}

@@ -1,0 +1,711 @@
+{
+  "schema": "task43.v4_focused_validation.v1",
+  "identity": {
+    "branch": "task43_hp_adaptivity",
+    "review_report_commit": "185ae91424c66780caa54a85e59eb3163cad3964",
+    "reviewed_code_commit": "6f6bf3b6ad9b534eb12794a72471157218859de1",
+    "execution_start_head": "185ae91424c66780caa54a85e59eb3163cad3964",
+    "formal_dispatches_added": 0,
+    "formal_budget": {
+      "used": 5,
+      "maximum": 6,
+      "a1_used_of": "2/2",
+      "a2_used_of": "3/3",
+      "remaining_sealed": 1,
+      "a1_r_a2_r_b_c_iteration_cost_campaign_and_0p7nm": "locked"
+    },
+    "qualification": "N1-N4 code and fixture outcomes are engineering evidence only; no fresh PDE or endpoint qualification; production merge not approved"
+  },
+  "test_policy": {
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int64",
+    "mpi_ranks": 1,
+    "cpu_affinity": [
+      1
+    ],
+    "math_threads": 1,
+    "per_driver_wall_cap_seconds": 300,
+    "process_tree_rss_cap_bytes": 8589934592,
+    "task_tree_swap_cap_bytes": 0,
+    "aggregate_measured_watchdog_wall_cap_seconds": 1800,
+    "formal_pde": false
+  },
+  "test_runs": [
+    {
+      "name": "N1 actual A1 main ledger focused attempt 1",
+      "command": "python -m pytest -q src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary 'src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent[missing_phase]' 'src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent[wrong_parent]'",
+      "pytest_result": "2 passed, 1 failed in 8.76s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_actual_a1_ledger_focused_attempt1/watchdog/summary.json",
+        "classification": "WORKER_FAILED",
+        "whole_wall_seconds": 14.083377452101558,
+        "tree_rss_peak_bytes": 265490432,
+        "task_swap_peak_bytes": 0,
+        "samples": 16,
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "summary_sha256": "b0b9ca5cbdcf60dd0f7e097c87ea2b58b33827343e116fe1deb5690a7b5790cc",
+        "worker_log_sha256": "c9ee043d41fa16c69f4d89a5c14a790d61cecfe7c1a8256d9aaeb03c8455619b",
+        "resources_sha256": "7096f9b28afecf34fd6c3d0d2a7ef3e20c5f4a822dc588681478df5a9cf2e558"
+      },
+      "failure": "The real main-path fixture exposed a repeated phase-file guard after WorkflowLedger had created the phase file; corrected in attempt 2.",
+      "entry_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_actual_a1_ledger_focused_attempt1/run_focused.sh",
+        "sha256": "1cec7e69bb8758ad0578159babe8e8e4309c50cc94587788366e325523b42c35"
+      }
+    },
+    {
+      "name": "N1 actual A1 main ledger focused attempt 2",
+      "command": "python -m pytest -q src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary",
+      "pytest_result": "1 passed in 2.65s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_actual_a1_ledger_focused_attempt2/watchdog/summary.json",
+        "classification": "COMPLETED",
+        "whole_wall_seconds": 8.237007512245327,
+        "tree_rss_peak_bytes": 255578112,
+        "task_swap_peak_bytes": 0,
+        "samples": 11,
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "summary_sha256": "994424c7121b2176c295106b7fd48b7296352e66cdd1648ab6f789bbed7351ae",
+        "worker_log_sha256": "2707060d0053967e0d8f42fd64bb8f84bbf2129f25802012540d07777721c0e2",
+        "resources_sha256": "00a614f1ce5e8f751cce0bc64740dfdb90ce472bc70138a3cf751b2407b198fb"
+      },
+      "fixture_scope": "The real A1 main is redirected to a temporary run root and stopped by a sentinel at the first mesh-builder boundary; no PDE dispatch.",
+      "entry_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_actual_a1_ledger_focused_attempt2/run_positive.sh",
+        "sha256": "6f9b17482381da501cd0a8b0667cb229b0340388a2afc604b3bcbc7df8be18a9"
+      }
+    },
+    {
+      "name": "N1/N4 failure nodes attempt 1",
+      "command": "python -m pytest -q src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait",
+      "pytest_result": "2 passed, 1 failed in 15.16s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_failure_nodes_attempt1/watchdog/summary.json",
+        "classification": "WORKER_FAILED",
+        "whole_wall_seconds": 80.1084968992509,
+        "tree_rss_peak_bytes": 303206400,
+        "task_swap_peak_bytes": 0,
+        "samples": 152,
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "summary_sha256": "b6e63fac63862f342e0911990996a513640c278691ad23d08f4bf8c1e8fc4d67",
+        "worker_log_sha256": "4429e218e498030f670b4620376468b361accf01303e69b0ef59a7b98d8d66fc",
+        "resources_sha256": "30627d19e7a734e047461dca2e7bc34be020dcf181c2000c0999d9fc59d3bb33"
+      },
+      "failure": "The test shortened the final cleanup clearance together with the timeout trigger; later corrected to retain the production cleanup window.",
+      "launcher_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_failure_nodes_attempt1/run_focused.sh",
+        "sha256": "f22b494e0ca44ab4097cfcc176e798ea4ebb3a5fab873f91db0058b3115a450e"
+      },
+      "worker_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_failure_nodes_attempt1/run_test_worker.sh",
+        "sha256": "a186a20b79d05864cf040fef3aa8474f381ca5b1bd8cb1af6fd8dc95540cf302"
+      }
+    },
+    {
+      "name": "N1/N4 failure nodes attempt 2",
+      "command": "python -m pytest -q src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait",
+      "pytest_result": "1 passed, 2 failed in 4.41s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_failure_nodes_attempt2/watchdog/summary.json",
+        "classification": "WORKER_FAILED",
+        "whole_wall_seconds": 13.427295338362455,
+        "tree_rss_peak_bytes": 285200384,
+        "task_swap_peak_bytes": 0,
+        "samples": 23,
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "summary_sha256": "7bf4f082c40e665e19e3a239b6f2c251ed9317ab607415755c219ae584f78a5d",
+        "worker_log_sha256": "8c8a650cb2ac4123f289400f0e1fcb4bd78aac0a32734d2e2721e93cdf442b35",
+        "resources_sha256": "37ea63a0c845b0f51ce7e5e0deb9a32b0a4752caaa791189bfb2e58d4a4ee56c"
+      },
+      "failure": "An intermediate synthetic PID test change was invalid and reverted; the real-child regression was restored for the final targeted pass.",
+      "launcher_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_failure_nodes_attempt2/run_focused.sh",
+        "sha256": "1e115ed03d8e214be7710d595068262ae0056c095dc704099a6c563f0cecd658"
+      },
+      "worker_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_failure_nodes_attempt2/run_test_worker.sh",
+        "sha256": "0d155d6135e300b2605b54fd741cc3a4a039430bf0ac74efdb42b4827f39a546"
+      }
+    },
+    {
+      "name": "N1/N4/N2/N3 focused attempt 1 support precheck",
+      "command": "taskset -c 1 bash benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt1/run_focused.sh",
+      "result": "SUPPORT_PRECHECK_FAILED_BEFORE_WATCHDOG_OR_PYTEST",
+      "exit_code": 1,
+      "wall_measurement": "not_measured",
+      "record_path": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt1/preflight_attempt1.json",
+      "record_sha256": "e615d0a40eec0e78bdb2f6a568399e5309987a2735b09a586a0bf1d22adfc702",
+      "run_script_sha256": "21c93313e47dc934c6a1b404ef9aea902a517e86625691f795f9ab05c44e9c1b",
+      "failure": "A repository-relative interpreter-path assertion rejected the qualified external native venv; no watchdog directory or pytest process was created.",
+      "entry_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt1/run_focused.sh",
+        "sha256": "21c93313e47dc934c6a1b404ef9aea902a517e86625691f795f9ab05c44e9c1b"
+      }
+    },
+    {
+      "name": "N1/N4/N2/N3 focused attempt 2",
+      "command": "python -m pytest -q src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent[missing_phase] src/test/test_task43_v3_failure_safe_order.py::test_native_a2_field_sample_callback_preserves_q8_before_q10_failure src/test/test_task43_v3_failure_safe_order.py::test_a2_extra_raw_packet_precedes_output_recovery_sampling_and_failure_paths src/test/test_task43_v3_failure_safe_order.py::test_a2_extra_packet_survives_post_packet_recovery_or_transport_failure src/test/test_task43_v3_failure_safe_order.py::test_a2_adapter_postprocess_exception_demotes_native_result src/test/test_task43_v3_failure_safe_order.py::test_a2_adapter_guard_wraps_full_postprocess_callback src/test/test_task43_v3_failure_safe_order.py::test_partial_terminal_and_endpoint_failure_have_no_continuation_path src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait",
+      "pytest_result": "12 passed, 2 failed in 9.85s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt2/watchdog/summary.json",
+        "classification": "WORKER_FAILED",
+        "whole_wall_seconds": 19.754115522373468,
+        "tree_rss_peak_bytes": 313729024,
+        "task_swap_peak_bytes": 0,
+        "samples": 27,
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "summary_sha256": "1af4a9d62637807039c3c59b7fb9c390d8149dcf8313b582b1b35fcc741f7e97",
+        "worker_log_sha256": "201af628e9c5ede4e2224b55a91f481a5b134c2e22e0b9ed9238ab6909729798",
+        "resources_sha256": "47b9c55b6adef8b1bcfbb84bb540d7d9cf9bae369c6fb4c977a40e55d27e92bd"
+      },
+      "failure": "The A1 direct-parent fixture driver omitted --phase-path; the cache branch also assumed no previously legal signal. Both were corrected based on the actual CLI/resource semantics.",
+      "launcher_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt2/run_focused.sh",
+        "sha256": "fe279358223ddb048cd71c40761a8b29662167929c50d1c9eb83bb786ac4a825"
+      },
+      "worker_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt2/run_test_worker.sh",
+        "sha256": "dbd60fc69f0bc45347972e59974e3d3760c8101928c0ab5c021360481fffa9c6"
+      }
+    },
+    {
+      "name": "N4 descendant targeted attempt 3",
+      "command": "python -m pytest -q 'src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait[descendants-descendants did not clear after SIGKILL]'",
+      "pytest_result": "1 passed in 2.37s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/n4_descendant_node_attempt3/watchdog/summary.json",
+        "classification": "COMPLETED",
+        "whole_wall_seconds": 9.512317827902734,
+        "tree_rss_peak_bytes": 156299264,
+        "task_swap_peak_bytes": 0,
+        "samples": 16,
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "summary_sha256": "91a41ebaa4eac45d3dfb68b0b73287ce83984996bb7fff895712ac257b9ee8b5",
+        "worker_log_sha256": "fd5c644bd995d9d5f3bc3a01770be3fd380026a99467db23f0f390a7b2e48ae3",
+        "resources_sha256": "ff44e563477d22779040cd1f1e9ffd552a3d057ac0c1ee8e73d470d525f36416"
+      },
+      "test_scope": "Real sleeping descendant; only the test-trigger threshold is shortened and the original production cleanup clearance is restored before final cleanup.",
+      "launcher_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n4_descendant_node_attempt3/run_focused.sh",
+        "sha256": "077c2be0635735798a2a926df89af0da2ab185ca4732e85f74eb11ff4bc6f4c5"
+      },
+      "worker_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/n4_descendant_node_attempt3/run_test_worker.sh",
+        "sha256": "f600bb47e5a7f8503937fdf27af5dfab327d247726d58b7c8a5fe9a0dc66cf5c"
+      }
+    },
+    {
+      "name": "V4 final focused attempt 1",
+      "pytest_nodes": [
+        "src/test/test_task43_v3_native_workflow_ledger.py",
+        "src/test/test_task43_v3_failure_safe_order.py",
+        "src/test/test_354_subreaper_watchdog.py::test_orphan_setsid_child_is_sampled_and_reaped",
+        "src/test/test_354_subreaper_watchdog.py::test_cli_phase_path_exports_watchdog_identity_and_observes_workflow_ledger",
+        "src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait",
+        "src/test/test_354_subreaper_watchdog.py::test_measured_rss_policy_keeps_normal_exit_tail_and_pid_identity",
+        "src/test/test_183_development_model_registry_markdown.py"
+      ],
+      "pytest_result": "36 passed, 2 failed in 28.61s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/final_focused_attempt1/watchdog/summary.json",
+        "classification": "WORKER_FAILED",
+        "whole_wall_seconds": 38.32281270995736,
+        "tree_rss_peak_bytes": 342376448,
+        "task_swap_peak_bytes": 0,
+        "samples": 60,
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "summary_sha256": "f5415bd337e7f6553d8c835bc4b584bffc14089040c03af405a90a06ce065877",
+        "resources_sha256": "2fa2e13d673757623dc2cb13f8be0524d7d0fbb449c7a44f1efb6d7be9fb835f",
+        "worker_log_sha256": "79b122482f4a362fbd4fb98bcdd50d6b98941e2687e5852b7a7b72eec9eb6107",
+        "launcher_stdout_sha256": "0a28ab7d5c1d9ce401e2b51e8f78e1fa4d2da23945d68ddb21b934d949e53d3d",
+        "abi_preflight_sha256": "22596a2cf1572ece99b1924a7e02ada37824752b9367ad40f4e5da03825cf890"
+      },
+      "failures": [
+        "A1 identity unit fixture omitted the watchdog-created phase parent directory.",
+        "The generic RSS test inherited PHYSICAL_NATIVE_CAPACITY from the outer Task43 driver and was subject to the native profile's stricter argument contract."
+      ],
+      "note": "The two test-only conditions were corrected; no production source changed after this attempt.",
+      "command": "python -m pytest -q src/test/test_task43_v3_native_workflow_ledger.py src/test/test_task43_v3_failure_safe_order.py src/test/test_354_subreaper_watchdog.py::test_orphan_setsid_child_is_sampled_and_reaped src/test/test_354_subreaper_watchdog.py::test_cli_phase_path_exports_watchdog_identity_and_observes_workflow_ledger src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait src/test/test_354_subreaper_watchdog.py::test_measured_rss_policy_keeps_normal_exit_tail_and_pid_identity src/test/test_183_development_model_registry_markdown.py",
+      "launcher_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/final_focused_attempt1/run_focused.sh",
+        "sha256": "fb49b53305bcb50705814a7d1861239ca5288bc94308442f8b60747d429007e8"
+      },
+      "worker_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/final_focused_attempt1/run_test_worker.sh",
+        "sha256": "a69c04be1542ee24d33e38847c7365bdf6f164dc74d3e2864e4b6edd17249f16"
+      }
+    },
+    {
+      "name": "V4 final focused exact-node rerun",
+      "pytest_nodes": [
+        "src/test/test_task43_v3_failure_safe_order.py::test_v3_worker_requires_direct_watchdog_parent_and_absolute_phase[a1]",
+        "src/test/test_354_subreaper_watchdog.py::test_measured_rss_policy_keeps_normal_exit_tail_and_pid_identity"
+      ],
+      "pytest_result": "2 passed in 15.76s",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task43/v4_support/final_focused_rerun_two_nodes_attempt1/watchdog/summary.json",
+        "classification": "COMPLETED",
+        "whole_wall_seconds": 25.785564641002566,
+        "tree_rss_peak_bytes": 266899456,
+        "task_swap_peak_bytes": 0,
+        "samples": 34,
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "summary_sha256": "aea9e458a26fc94368acd919d4ec7ca9546c3519dbcddb873a25bd67bdefd2c3",
+        "resources_sha256": "c8fa15a98054aa181ed5cce1cffcd70feee56b8d565a14a3f71dad858affc3d2",
+        "worker_log_sha256": "5fdd050a7186ed250ef906e7a3db896ecd335b87026954d6c39df9d73cbb3673",
+        "launcher_stdout_sha256": "b5dbdaaa73bb20f0a31dc2cdae130c8f6ec3351f4b4af7019fe64eda9208d8e5",
+        "abi_preflight_sha256": "15b3bc7ad249c69de99d0de79c52951a8ee1b029e1734a94b19f9dfc352b07e2"
+      },
+      "command": "python -m pytest -q 'src/test/test_task43_v3_failure_safe_order.py::test_v3_worker_requires_direct_watchdog_parent_and_absolute_phase[a1]' src/test/test_354_subreaper_watchdog.py::test_measured_rss_policy_keeps_normal_exit_tail_and_pid_identity",
+      "launcher_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/final_focused_rerun_two_nodes_attempt1/run_focused.sh",
+        "sha256": "18bf08d3afc5c7cc2b091664d27fcf74009cabb17d469757a815af51f94808f9"
+      },
+      "worker_script": {
+        "path": "benchmarks/artifacts/task43/v4_support/final_focused_rerun_two_nodes_attempt1/run_test_worker.sh",
+        "sha256": "63b4cc6fad2021c9edec2c09948e6b9b16811062908a15e7954132c9d3ffb3d4"
+      }
+    },
+    {
+      "name": "V4 final affected-node supplement (root monitored driver)",
+      "pytest_nodes": [
+        "src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary",
+        "src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent",
+        "src/test/test_task43_v3_failure_safe_order.py::test_a2_adapter_postprocess_exception_demotes_native_result",
+        "src/test/test_task43_v3_failure_safe_order.py::test_a2_extra_packet_survives_post_packet_recovery_or_transport_failure",
+        "src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait"
+      ],
+      "pytest_expanded_cases": 9,
+      "command": "python -m pytest -q src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent src/test/test_task43_v3_failure_safe_order.py::test_a2_adapter_postprocess_exception_demotes_native_result src/test/test_task43_v3_failure_safe_order.py::test_a2_extra_packet_survives_post_packet_recovery_or_transport_failure src/test/test_354_subreaper_watchdog.py::test_stop_clearance_timeout_identifies_descendants_vs_cache_wait",
+      "pytest_result": "9 passed in 10.17s",
+      "source_sha256_during_test": {
+        "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "30a688b6d94fb59d7266b7083a38980d7f66a60aa1b64cff34cab5ce0290acdc",
+        "benchmarks/task43_hp_adaptivity/h100_anchor.py": "f93e025233281f6b11daf4045b05cf0eca741f40d15ede194db0a19e8c77f079",
+        "src/test/test_354_subreaper_watchdog.py": "cf2af21211fdc347e4a86396d95f10cb28bf2c4a56482d6a6775e5f7cf50b21d",
+        "src/test/test_task43_v3_failure_safe_order.py": "55084e19ab997f7e38ca811710e2f3f8603dfc9212787599bac81d6e14c2696a"
+      },
+      "post_test_change": {
+        "file": "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py",
+        "before_sha256": "30a688b6d94fb59d7266b7083a38980d7f66a60aa1b64cff34cab5ce0290acdc",
+        "after_sha256": "1ce7f24610a329f10f8f09da972d48dc120715f543a1302232f0b63a702f1929",
+        "identity_record": "benchmarks/artifacts/task43/v4_root_audit/final_static_finish/lint_comment_only_identity.json",
+        "identity_record_sha256": "fc63b4be8c80d5c7809ac88e91a2294457f3d42450efde1d869c1e46e6ed4a8d",
+        "same_AST_excluding_location_attributes": true,
+        "change_scope": "remove one unused BLE001 noqa only; no functional test rerun was needed for this comment-only change"
+      },
+      "watchdog": {
+        "summary": "benchmarks/artifacts/task43/v4_root_audit/final_static_recheck/watchdog/summary.json",
+        "summary_sha256": "16f4ed2160f89b606e72a9eaac2742cbea06c125e3d433a04ffafac948d6e857",
+        "resources_sha256": "7a9fa30d483ac73e168a18a3440897f7f04a6b1847170725d6ac2450abf45076",
+        "worker_log_sha256": "5ac6fe67f4119b633354df448bdb5a110e4cfb26c225fedfa001587ee9138b8d",
+        "classification": "COMPLETED",
+        "whole_wall_seconds": 16.787951719015837,
+        "tree_rss_peak_bytes": 300982272,
+        "task_swap_peak_bytes": 0,
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "samples": 29
+      },
+      "watchdog_launch_record": {
+        "path": "benchmarks/artifacts/task43/v4_root_audit/final_static_recheck/launch_record.json",
+        "sha256": "13c57eea0664ab9b9890db88f149d8fe6e38bb035549b9329506d69d3251626a",
+        "provenance": "actual root invocation recorded after the run; no launcher.sh was executed"
+      },
+      "driver_scripts": {
+        "worker.sh": "6d179e4cd109feda6ced4a6935650f16b36c41c31c80b4c6cd37c93789662609",
+        "check.py": "3f5a6b6fc96e37d5f275c23199fede2291291eedbd0b194f380fde9da75481e1"
+      },
+      "scope": "A1 true-main ledger fixture, A2 postprocess/extra packet failure fixtures, and both watchdog stop classifications; synthetic/sentinel only, no PDE."
+    }
+  ],
+  "historical_support_audit": {
+    "record": "docs/task43_hp_adaptivity/outcomes/records/v4_root_audit/index.json",
+    "sha256": "a1ab4735582011f9281b50a613459f8a4aa24a647ee06ebd17a139003e7524df",
+    "monitored_whole_wall_seconds": 8.707812543958426,
+    "classification": "two read-only historical log analyses; both COMPLETED, swap0; no PDE"
+  },
+  "measured_watchdog_budget": {
+    "executor_whole_wall_seconds": 209.23098790319636,
+    "root_read_only_whole_wall_seconds": 8.707812543958426,
+    "total_whole_wall_seconds": 244.26934023667127,
+    "cap_seconds": 1800,
+    "within_cap": true,
+    "rss_cap_bytes": 8589934592,
+    "observed_peak_bytes_across_drivers": 342376448,
+    "max_task_swap_bytes": 0,
+    "not_measured": [
+      "Earlier support preflight stopped before watchdog/pytest; its exact command and error JSON are retained, but it has no measured wall or process-tree resource sample.",
+      "Unmonitored file/hash/Markdown inspection is not added to the watchdog subtotal."
+    ],
+    "root_final_validation_driver_seconds": 26.33053978951648,
+    "static_driver_whole_wall_seconds": {
+      "final_static": 5.134289323817939,
+      "final_static_recheck": 16.787951719015837,
+      "final_static_finish": 4.4082987466827035,
+      "sum": 26.33053978951648
+    }
+  },
+  "v3_historical_test_scope": {
+    "focused_source_head": "81c97e7c3357bbed1b29cab4ff40f2997e8bafdc",
+    "result": "57 passed, 1 skipped; the skip required explicit TASK43_RUN_P6_FFCX_MATRIX_WITNESS=1",
+    "lifecycle_node_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b",
+    "lifecycle_node_result": "1 passed",
+    "ruff_baseline_head": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+    "ruff_diagnostics": 77,
+    "ruff_new_diagnostics": 0,
+    "scope_note": "Historical V3 evidence only; not a V4 final-byte test or static pass."
+  },
+  "source_test_sha256": {
+    "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "1ce7f24610a329f10f8f09da972d48dc120715f543a1302232f0b63a702f1929",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "f93e025233281f6b11daf4045b05cf0eca741f40d15ede194db0a19e8c77f079",
+    "src/runners/p6_condensed_direct.py": "6a8ad84dd2c7658e4c59ef0bbfac7ca98609ede800cb3cc9c775e3a1ae0b6f90",
+    "src/test/test_354_subreaper_watchdog.py": "cf2af21211fdc347e4a86396d95f10cb28bf2c4a56482d6a6775e5f7cf50b21d",
+    "src/test/test_task43_v3_failure_safe_order.py": "55084e19ab997f7e38ca811710e2f3f8603dfc9212787599bac81d6e14c2696a",
+    "src/test/test_task43_v3_native_workflow_ledger.py": "5bd50c0c79869fc7b5635d5b82901460df65ab96f38f571cb1c5340cbf97dcca"
+  },
+  "changed_document_sha256": {
+    "docs/development_model_registry.md": "fe2147c23c5c23b6e76fb3e4ba7be4397900dfaa1a1dd9f342c8ae0eb62b989d",
+    "docs/development_progress.md": "b15b6faa3c3d3f4d6505c2120c610337a2674d4199e5b190922ca930fdf010a4",
+    "docs/task43_hp_adaptivity/README.md": "5813881fcaa34ef3c438e9213170daced15c2ba1cc9068057688b6f79722e4f3",
+    "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md": "ec4b5d09c64ecc4f77d6c9e6759141d3742016af25ad5224c63b864fede259d8",
+    "docs/task43_hp_adaptivity/outcomes/summary.md": "556dc091ab85a78b0f607d91d5addbc3855b26e4bdbeb7cff4dd252f9cde6f74",
+    "docs/task43_hp_adaptivity/response_v4.md": "5f78f7a22218881b7d6c6e99ddf996560ea4e487ede4c890195f7132029c0629"
+  },
+  "static_and_document_checks": {
+    "status": "PASS_WITH_REVIEW_BASELINE_RUFF_DIAGNOSTICS",
+    "scope": "Final static/document driver covered eight changed Python files plus the listed Task43 V4 documents and records; this was not a full repository pytest or full repository Ruff run.",
+    "final_ruff": {
+      "changed_python_files": 8,
+      "current_diagnostics": 21,
+      "review_baseline_diagnostics": 21,
+      "new_diagnostics": 0,
+      "ruff_exit_code": 1,
+      "interpretation": "Ruff still reports 21 diagnostics already present in the review baseline; no added diagnostics remain. Do not claim Ruff clean."
+    },
+    "final_checks": {
+      "compileall_changed_python_files": "passed",
+      "json_parse_count": 4,
+      "changed_or_new_markdown_links_checked": 32,
+      "git_diff_check": "passed",
+      "protected_existing_records_reviews_and_plans_unchanged": true
+    },
+    "driver_runs": [
+      {
+        "name": "final_static",
+        "artifact_dir": "benchmarks/artifacts/task43/v4_root_audit/final_static",
+        "result_sha256": "986da162d3d0d1cce30b3d170ff4e2ee20b599575d583a724d4fd582a083f436",
+        "launch_record_sha256": "2c5a4c9efb8ad4411805fb8e08e28214a0fda477371a9df83bb21c3247e5ac11",
+        "worker_sha256": "077582236f1088551d71b886add303c0886989629d48cd35242eb9e080595eb0",
+        "check_sha256": "3f5a6b6fc96e37d5f275c23199fede2291291eedbd0b194f380fde9da75481e1",
+        "watchdog_summary_sha256": "88c2eeba3159ac635de2e4b513167fd8df35d8923cfab96b5a1fd8714a83904f",
+        "resources_sha256": "05bef2e5f9a79ea448acc5d57b8766100d0436b93370d8c0956c21a1b7fb7ed9",
+        "worker_log_sha256": "aeaea70b04ca1cb67d5ead855717d376b920f7b4f9252d2afaf9b818bc4d6220",
+        "ruff_current_sha256": "02782faf9c1876e963826f62259517e8e02bda176b6c0d0ba01456029c172114",
+        "ruff_review_baseline_sha256": "d8e8dad11b006c6a29eee75d89b0a39730e21789e778239b3164cc1ac05985e3",
+        "ruff_current_vs_baseline": "29 vs 21; 8 added diagnostics at this intermediate pass",
+        "whole_watchdog_seconds": 5.134289323817939,
+        "worker_script_wall_seconds": 1.5097703021019697,
+        "tree_rss_peak_bytes": 154148864,
+        "task_swap_peak_bytes": 0,
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "compileall": "passed",
+        "json_documents_parsed": 4,
+        "markdown_links_checked": 32,
+        "protected_records_unchanged": true
+      },
+      {
+        "name": "final_static_recheck",
+        "artifact_dir": "benchmarks/artifacts/task43/v4_root_audit/final_static_recheck",
+        "result_sha256": "613297f427e3ab118fea206a6fb585c41974749ff965404ba4bf721e8263eea8",
+        "launch_record_sha256": "13c57eea0664ab9b9890db88f149d8fe6e38bb035549b9329506d69d3251626a",
+        "worker_sha256": "6d179e4cd109feda6ced4a6935650f16b36c41c31c80b4c6cd37c93789662609",
+        "check_sha256": "3f5a6b6fc96e37d5f275c23199fede2291291eedbd0b194f380fde9da75481e1",
+        "watchdog_summary_sha256": "16f4ed2160f89b606e72a9eaac2742cbea06c125e3d433a04ffafac948d6e857",
+        "resources_sha256": "7a9fa30d483ac73e168a18a3440897f7f04a6b1847170725d6ac2450abf45076",
+        "worker_log_sha256": "5ac6fe67f4119b633354df448bdb5a110e4cfb26c225fedfa001587ee9138b8d",
+        "ruff_current_sha256": "307c9ef54057e67962019e4281a6104a5f969d41958ec5af2bfb2e83d6cef35d",
+        "ruff_review_baseline_sha256": "7cf997e5f07fa0da5465eb8e3d51330c3a7f9b658a166e14cc28d287e889b9ea",
+        "ruff_current_vs_baseline": "22 vs 21; one unused BLE001 noqa remained",
+        "whole_watchdog_seconds": 16.787951719015837,
+        "worker_script_wall_seconds": 0.7801384348422289,
+        "tree_rss_peak_bytes": 300982272,
+        "task_swap_peak_bytes": 0,
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "pytest_result": "9 affected cases passed in 10.17s",
+        "compileall": "passed",
+        "json_documents_parsed": 4,
+        "markdown_links_checked": 32,
+        "protected_records_unchanged": true
+      },
+      {
+        "name": "final_static_finish",
+        "artifact_dir": "benchmarks/artifacts/task43/v4_root_audit/final_static_finish",
+        "result_sha256": "5f3e27d496085ffbf9deb8224e69e86f014a260d41e6fe1ea542a62dab8557c4",
+        "launch_record_sha256": "94f151741780983618735bfe5c43e9dc4032e0b561acf5aa3be5ab51380bf93d",
+        "worker_sha256": "8ad25af4ea7d12940e7ecff1e47a5c2973585bcb2d186b44cc3f31c9368a8c97",
+        "check_sha256": "3f5a6b6fc96e37d5f275c23199fede2291291eedbd0b194f380fde9da75481e1",
+        "watchdog_summary_sha256": "e09774b2efffebcdb298a3f9371680c56c8546f6cf6c87c0c7d587d8cf2be89b",
+        "resources_sha256": "32c288be5277fe9faff1558d83130aa346323ae38f2531e8c372b8100b02ddf8",
+        "worker_log_sha256": "6fb5e0a1b7c28338b69544fff5e1cf1e5bf04b34658c87e9dd0b73790206a340",
+        "ruff_current_sha256": "273786e167c3a5db08e2bef74e6a5fde626c55e7d6c26724a91affda80a35fcf",
+        "ruff_review_baseline_sha256": "1360ee35d59cf5ec891acdcdc87c7ec667ac717d66a33ddeccc06daad1274c5b",
+        "identity_artifact": "benchmarks/artifacts/task43/v4_root_audit/final_static_finish/lint_comment_only_identity.json",
+        "identity_artifact_sha256": "fc63b4be8c80d5c7809ac88e91a2294457f3d42450efde1d869c1e46e6ed4a8d",
+        "ruff_current_vs_baseline": "21 vs 21; zero new diagnostics after removal of one unused noqa",
+        "whole_watchdog_seconds": 4.4082987466827035,
+        "worker_script_wall_seconds": 0.8315258431248367,
+        "tree_rss_peak_bytes": 134356992,
+        "task_swap_peak_bytes": 0,
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "compileall": "passed",
+        "json_documents_parsed": 4,
+        "markdown_links_checked": 32,
+        "protected_records_unchanged": true
+      }
+    ],
+    "launch_record_scope": "Each launch_record.json was written after the actual root tool invocation; it records the real outer watchdog argv/env and script hashes. No launcher.sh was executed for these static drivers.",
+    "final_source_file_sha256": {
+      "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "1ce7f24610a329f10f8f09da972d48dc120715f543a1302232f0b63a702f1929",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "f93e025233281f6b11daf4045b05cf0eca741f40d15ede194db0a19e8c77f079",
+      "src/runners/p6_condensed_direct.py": "6a8ad84dd2c7658e4c59ef0bbfac7ca98609ede800cb3cc9c775e3a1ae0b6f90",
+      "src/test/test_354_subreaper_watchdog.py": "cf2af21211fdc347e4a86396d95f10cb28bf2c4a56482d6a6775e5f7cf50b21d",
+      "src/test/test_task43_v3_failure_safe_order.py": "55084e19ab997f7e38ca811710e2f3f8603dfc9212787599bac81d6e14c2696a",
+      "src/test/test_task43_v3_native_workflow_ledger.py": "5bd50c0c79869fc7b5635d5b82901460df65ab96f38f571cb1c5340cbf97dcca"
+    },
+    "final_document_sha256": {
+      "docs/development_model_registry.md": "fe2147c23c5c23b6e76fb3e4ba7be4397900dfaa1a1dd9f342c8ae0eb62b989d",
+      "docs/development_progress.md": "b15b6faa3c3d3f4d6505c2120c610337a2674d4199e5b190922ca930fdf010a4",
+      "docs/task43_hp_adaptivity/README.md": "5813881fcaa34ef3c438e9213170daced15c2ba1cc9068057688b6f79722e4f3",
+      "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md": "ec4b5d09c64ecc4f77d6c9e6759141d3742016af25ad5224c63b864fede259d8",
+      "docs/task43_hp_adaptivity/outcomes/summary.md": "556dc091ab85a78b0f607d91d5addbc3855b26e4bdbeb7cff4dd252f9cde6f74",
+      "docs/task43_hp_adaptivity/response_v4.md": "5f78f7a22218881b7d6c6e99ddf996560ea4e487ede4c890195f7132029c0629"
+    },
+    "compact_after_metadata_update": {
+      "command": "jq empty docs/task43_hp_adaptivity/outcomes/records/v4_focused_validation_v1.json",
+      "exit_code": 0,
+      "scope": "Final compact JSON syntax check after inserting the three static-driver records; no tests or PDE rerun."
+    }
+  },
+  "fixture_observations": {
+    "synthetic_or_sentinel_only": true,
+    "N1_actual_A1_entry": {
+      "fixture": "benchmarks/artifacts/task43/v4_support/n1_actual_a1_ledger_pytest-40_fixture/",
+      "no_mesh_or_solver": true,
+      "first_mesh_builder_boundary": "sentinel raised _StopBeforeMesh after real h100 main had written phase/stage ledger",
+      "stage_sequence": [
+        "workflow_started",
+        "preflight_started",
+        "task43_v3_a1_worker_identity_bound",
+        "task43_v3_a1_candidate_inputs_bound",
+        "task43_preflight_end",
+        "task43_v3_a1_source_identity_bound",
+        "task43_mesh_build_started",
+        "task43_mesh_build_begin",
+        "mesh_setup_started",
+        "task43_v3_a1_mesh_setup_started",
+        "task43_v3_a1_failed"
+      ],
+      "watchdog_parent_equals_worker_parent": true,
+      "last_stage_exception_type": "_StopBeforeMesh",
+      "partial_terminal": {
+        "status": "INCOMPLETE",
+        "official_result": false,
+        "passed": false,
+        "candidate_selected": false,
+        "continuation_all_false": true,
+        "run_summary": "not_present"
+      },
+      "workflow_phase_sha256": "816f916682f32285e519a3c3c53d306441a81f87388c107c58e88d5349311c3d",
+      "stages_sha256": "fccfb2566c2111d00261a75a2b43564042fe9e6f8ec81a9d32cf37a3c069152a",
+      "terminal_sha256": "5c95b7f833e46b3b1018cfc43eef46a7c659c55995ac5ae542aa419f1a72aa85",
+      "identity_limits": "temporary pytest run root; sentinel prevents construction; engineering fixture, not PDE evidence",
+      "preservation_index_sha256": "8a71e0da2bdd4d45f6ebe8dd4426e97719c8ad95c5b40e6beb78db6a76ab1ea8"
+    },
+    "N2_A2_adapter_postprocess_fail_closed": {
+      "fixture": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt2/pytest-41_preserved/test_a2_adapter_postprocess_ex*/run/",
+      "synthetic_fixture": true,
+      "injected_cases": [
+        {
+          "case": "comparison successfully atomically written, then callback raises OSError",
+          "error": "injected V3 comparison failure",
+          "original_comparison_sidecar_sha256": "97496f699c47ea66065d2078ef9a7bbb81a6bd564cf8e0c3a4277840175bfd48",
+          "current_demoted_comparison_sha256": "d65d7c204ee2d009c22fbc094d96bc24c1f99e7948e4d2956c8d3c0ed615e1f7",
+          "partial_terminal_sha256": "e3748a8cd0777454c4023d3bd9ab4cc1bc3396c856abcf4db3a9f8f61f960393",
+          "current_comparison_sha256": "d65d7c204ee2d009c22fbc094d96bc24c1f99e7948e4d2956c8d3c0ed615e1f7",
+          "summary_sha256": "3b34359455fbca9cc80fca6b03740ac14caa7a6c7d72fc4daf125fd5a232f4e2",
+          "comparison_terminal_exception": "OSError"
+        },
+        {
+          "case": "summary is truncated, then callback raises OSError",
+          "error": "injected V3 adapter record failure",
+          "original_comparison_sidecar_sha256": "97496f699c47ea66065d2078ef9a7bbb81a6bd564cf8e0c3a4277840175bfd48",
+          "current_demoted_comparison_sha256": "7964be8247b66ac6c9fcb80ddcd0ed9b571c37b4c3a08844b9c3a42fa72caf24",
+          "partial_terminal_sha256": "28474a39dff9038cbb825a146bdac783a18e6ba4bb9c4763c624f9a683552fbc",
+          "current_comparison_sha256": "7964be8247b66ac6c9fcb80ddcd0ed9b571c37b4c3a08844b9c3a42fa72caf24",
+          "summary_sha256": "e1a56f78a1ca184da1c81ceb100d356fd2906d6140ea08ba39b3ee2dee076b52",
+          "comparison_terminal_exception": "OSError"
+        }
+      ],
+      "retained_measured_values": {
+        "R_total": 0.25000001,
+        "primary_perturbation_max_power_delta": 2.5e-08,
+        "authority_after_failure": "official_result=false; endpoint_qualified=false; same_group_R_factor_may_continue=false; continuation_all_false=true"
+      },
+      "primary_packet_sha256": "0e6c9e95c3070f19aca55e8f287200cd6589e2d2ef591369bd707e24df64a663",
+      "primary_q8_sha256": "1b6c2f69611db85885526a5f7b36f55d1aa67f83bb86681cd97e9e53cf9f1e22",
+      "primary_summary_keeps_measured_gate_values": true,
+      "primary_summary_hashes": {
+        "primary_packet": "0e6c9e95c3070f19aca55e8f287200cd6589e2d2ef591369bd707e24df64a663",
+        "primary_q8": "1b6c2f69611db85885526a5f7b36f55d1aa67f83bb86681cd97e9e53cf9f1e22"
+      }
+    },
+    "N3_A2_extra_and_sampler_failure_packets": {
+      "fixture_root": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt2/pytest-41_preserved/",
+      "synthetic_fixture": true,
+      "extra_failure_points": [
+        "post-packet field recovery failure",
+        "collective transport failure after packet broadcast"
+      ],
+      "extra_packet_npz_sha256": "5effb15f5cad456f87dd1e2c6ae3b7814f5a842e01d3053a65c61d56e97a916f",
+      "primary_packet_npz_sha256": "06239e5e07f2e06b6aaff41c3e88e920866d38d3cb54793ebbdc2c7eb5b42319",
+      "same_rhs_as_primary": true,
+      "extra_correction_count": 1,
+      "factorization_calls_unchanged": true,
+      "recomputed_record_metrics": {
+        "condensed_relative": 1e-12,
+        "independent_A6_relative": 6.324555320336758e-12,
+        "full_active_transformed_relative": 7.602631123499285e-11,
+        "full_active_strict_decrease": false,
+        "status": "FAIL_UNCONTROLLED_EXTRA_CORRECTION"
+      },
+      "sampler_case": {
+        "failure": "injected q10 sampler failure",
+        "q8_sample_retained": true,
+        "q8_npz_sha256": "7023625049cbb216340e680906679e8058349379b0e85c2d565264e99a351ac7",
+        "q10_sample": "not_written",
+        "partial_terminal_sha256": "357baccad19ed549bde799841f644c7d77d4b455d22bd4dc3ddbd5a5e6dfc90a",
+        "continuation_all_false": true,
+        "extra_q8_record_classification": "measured_extra_sample_not_official",
+        "E_total_shape": [
+          2,
+          3
+        ],
+        "curl_E_total_shape": [
+          2,
+          3
+        ],
+        "H_total_shape": [
+          2,
+          3
+        ],
+        "points_shape": [
+          2,
+          3
+        ],
+        "weights_shape": [
+          2
+        ],
+        "extra_before_output_sha256": "09a2828e7af3eb4bff0b1ebf519c051ea7620c92b3b2d9a145e19c2c03bd9be8",
+        "primary_before_extra_sha256": "cd7f0090e3d350963d78b97d01e34a6af6d2b27429e5a0092a98ed151e20f404"
+      },
+      "identity_limits": "small synthetic matrices/fields and injected callbacks; no solver/factorization/PDE",
+      "extra_packet_record_json": {
+        "phase": "A2_q",
+        "attempt": 3,
+        "same_condensed_rhs_as_primary": true,
+        "same_native_effective_rhs_as_primary": true,
+        "factor_counts": {
+          "extra_correction_count": 1,
+          "factorization_calls_unchanged": true
+        }
+      }
+    },
+    "N4_watchdog_timeout_classification": {
+      "fixture_root": "benchmarks/artifacts/task43/v4_support/n1_n4_n2_n3_focused_attempt2/pytest-41_preserved/test_stop_clearance_timeout_id*/",
+      "synthetic_children_only": true,
+      "descendants_case": {
+        "reason": "PERFORMANCE_CONTROLLED_STOP",
+        "exception": "descendants did not clear after SIGKILL",
+        "leader_exit_code": 0,
+        "first_SIGTERM_scope": "whole child tree",
+        "first_SIGKILL_scope": "whole child tree",
+        "observed_child_pids": [
+          2602493,
+          2602504
+        ],
+        "last_sample_live_children": [
+          2602504
+        ],
+        "remaining_child_pids": [],
+        "descendants_cleared": true,
+        "task_swap_peak_bytes": 0,
+        "summary_sha256": "ec3240a75d3a8432d9039b9b6e7496176d61d098a84e70d33f656f00d77cd4a8",
+        "stop_event_monotonic": 2782187.617050864,
+        "first_SIGTERM_monotonic": 2782187.617176349,
+        "first_SIGKILL_monotonic": 2782188.072313335,
+        "last_sample_members": [
+          {
+            "pid": 2602483,
+            "state": "R",
+            "rss_bytes": 38027264,
+            "swap_bytes": 0
+          },
+          {
+            "pid": 2602504,
+            "state": "S",
+            "rss_bytes": 9744384,
+            "swap_bytes": 0
+          }
+        ],
+        "resources_sha256": "1ebb8ef0dae3e98cd3da0e608467b8f0d26dce05f57c26069c78e862ebc0c5e3",
+        "observed_child_pids_absent_after_cleanup": true
+      },
+      "cache_case": {
+        "reason": "PERFORMANCE_CONTROLLED_STOP",
+        "exception": "descendants cleared but cache metadata did not stabilize",
+        "leader_exit_code": 0,
+        "observed_child_pids": [
+          2602568
+        ],
+        "last_sample_live_children": [],
+        "remaining_child_pids": [],
+        "descendants_cleared": true,
+        "cache_metadata_stable": false,
+        "task_swap_peak_bytes": 0,
+        "summary_sha256": "c0d90fd3b2050428a11bddfdd6670edfc7d204cb6aa21f7ab32168a3e69edeff",
+        "stop_event_monotonic": 2782191.808892443,
+        "first_SIGTERM_monotonic": 2782191.809077813,
+        "first_SIGKILL": null,
+        "last_sample_members": [
+          {
+            "pid": 2602553,
+            "state": "R",
+            "rss_bytes": 37974016,
+            "swap_bytes": 0
+          }
+        ],
+        "resources_sha256": "5ee55cbf9691e83232af1aaabbc31d0b16f10199e585ea87e9bea259f02a2db4",
+        "observed_child_pids_absent_after_cleanup": true
+      },
+      "identity_limits": "temporary child processes; bounded component behavior, not historical Task43 event replay"
+    }
+  }
+}

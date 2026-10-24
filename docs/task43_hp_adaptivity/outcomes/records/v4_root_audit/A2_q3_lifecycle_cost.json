@@ -1,0 +1,486 @@
+{
+  "schema": "task43.v4.old_a2_lifecycle_cost.v1",
+  "source_hashes": {
+    "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/summary.json": "5b15cbe6d8ec6c803bbe76d0b35e7f74c4eb33a3ecfe968acdadf6ed7394b2c1",
+    "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/resources.jsonl": "c80cf7e482fa851a9f5134a86a4bdb5aa7096b880071a276111db4c270f1a94a",
+    "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/stages.jsonl": "3283b93832b68d32c8b7889a9add61863f8a1a9b44e52d5a98cc70ce6ec029be"
+  },
+  "script_sha256": "5587f5ab0189612c7be262030f3bbedab9b4fd9a0c9b62fd5d79b4362bcc4bd7",
+  "scope": "read-only old stage/resource/terminal records; no new PDE/integration/sampling",
+  "clock_mapping": {
+    "method": "mean(resource timestamp_ns/1e9 minus elapsed_seconds), mapped through recorded stop monotonic/epoch",
+    "epoch_origin_derived": 1792838519.2360957,
+    "epoch_origin_spread_seconds": 0.008040904998779297,
+    "monotonic_origin_derived": 2763514.0969586903
+  },
+  "whole_watchdog_seconds": 7213.133929461241,
+  "configured_deadline_seconds": 7200,
+  "assembly_recorded_inner_timer_seconds": 4771.323931380641,
+  "operation_windows_nonadditive_with_segments": [
+    {
+      "label": "assembly window",
+      "start_marker": "p6_direct_volume_form_compiled",
+      "end_marker": "p6_direct_augmented_matrix_complete",
+      "elapsed_seconds": 4772.249341862276,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Includes boundary/ledger overhead; assembly inner timer separately recorded, do not add both."
+    },
+    {
+      "label": "symbolic window",
+      "start_marker": "p6_direct_rhs_ready",
+      "end_marker": "p6_mumps_symbolic_complete",
+      "elapsed_seconds": 19.25647353194654,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Includes preparation between these markers."
+    },
+    {
+      "label": "numeric factorization window",
+      "start_marker": "p6_mumps_symbolic_complete",
+      "end_marker": "p6_mumps_numeric_complete",
+      "elapsed_seconds": 1162.8408232182264,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Existing factorization interval, not solve-only time."
+    },
+    {
+      "label": "initial solve plus normal correction and residual work",
+      "start_marker": "p6_mumps_numeric_complete",
+      "end_marker": "p6_direct_same_factor_condensed_refinement",
+      "elapsed_seconds": 66.52361690159887,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Individual initial solve/correction timers not measured. solve_started is emitted afterward, so its tiny interval is not total solve cost."
+    },
+    {
+      "label": "primary recovery and A6",
+      "start_marker": "recovery_started",
+      "end_marker": "p6_direct_A6_native_Y6_1_R13_active_rectangle_residual_complete",
+      "elapsed_seconds": 154.39858706993982,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Includes complete recovery/independent checks within markers."
+    },
+    {
+      "label": "primary packet persistence window",
+      "start_marker": "p6_direct_A6_native_Y6_1_R13_active_rectangle_residual_complete",
+      "end_marker": "task43_v3_primary_before_extra_packet_saved",
+      "elapsed_seconds": 2.4226111192256212,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Includes metadata/array handling and storage."
+    },
+    {
+      "label": "primary physical outputs plus q8",
+      "start_marker": "task43_v3_primary_before_extra_packet_saved",
+      "end_marker": "task43_v3_primary_q8_sample_saved",
+      "elapsed_seconds": 179.03297539567575,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Modal/Av output and q8 not separately timed; no new integration/sampling is performed by this audit."
+    },
+    {
+      "label": "primary q10 window",
+      "start_marker": "task43_v3_primary_q8_sample_saved",
+      "end_marker": "task43_v3_primary_q10_sample_saved",
+      "elapsed_seconds": 156.60140519123524,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Includes q10 sampling and persistence."
+    },
+    {
+      "label": "extra correction plus independent residual checks",
+      "start_marker": "task43_v3_primary_q10_sample_saved",
+      "end_marker": "task43_v2_extra_lu_correction_and_independent_a6_complete",
+      "elapsed_seconds": 137.22638393379748,
+      "classification": "derived_interval_not_exclusive_operation_timer",
+      "scope_note": "Includes necessary algebraic recovery/A6, not an isolated extra MatSolve timer."
+    }
+  ],
+  "ordered_disjoint_stage_segments": [
+    {
+      "start_marker": "watchdog_start_derived",
+      "end_marker": "workflow_started",
+      "start_monotonic": 2763514.0969586903,
+      "end_monotonic": 2763522.448958728,
+      "elapsed_seconds": 8.35200003767386,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 7,
+      "sampled_tree_RSS_peak_bytes": 160567296,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "workflow_started",
+      "end_marker": "p6_direct_resolved_profile_bound",
+      "start_monotonic": 2763522.448958728,
+      "end_monotonic": 2763522.452432028,
+      "elapsed_seconds": 0.0034733000211417675,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "p6_direct_resolved_profile_bound",
+      "end_marker": "p6_direct_mesh_setup_started",
+      "start_monotonic": 2763522.452432028,
+      "end_monotonic": 2763522.454245792,
+      "elapsed_seconds": 0.001813763752579689,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "p6_direct_mesh_setup_started",
+      "end_marker": "p6_direct_actual_mesh_qa_complete",
+      "start_monotonic": 2763522.454245792,
+      "end_monotonic": 2763527.88479001,
+      "elapsed_seconds": 5.430544218048453,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 5,
+      "sampled_tree_RSS_peak_bytes": 312434688,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_actual_mesh_qa_complete",
+      "end_marker": "p6_direct_mode_inventory_complete",
+      "start_monotonic": 2763527.88479001,
+      "end_monotonic": 2763529.956728132,
+      "elapsed_seconds": 2.0719381221570075,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 2,
+      "sampled_tree_RSS_peak_bytes": 363073536,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_mode_inventory_complete",
+      "end_marker": "physical_mode_inventory_reused",
+      "start_monotonic": 2763529.956728132,
+      "end_monotonic": 2763530.11573072,
+      "elapsed_seconds": 0.1590025881305337,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "physical_mode_inventory_reused",
+      "end_marker": "physical_surface_forms_compile_started",
+      "start_monotonic": 2763530.11573072,
+      "end_monotonic": 2763530.117307415,
+      "elapsed_seconds": 0.0015766951255500317,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "physical_surface_forms_compile_started",
+      "end_marker": "physical_surface_forms_compile_complete",
+      "start_monotonic": 2763530.117307415,
+      "end_monotonic": 2763663.497141108,
+      "elapsed_seconds": 133.37983369268477,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 112,
+      "sampled_tree_RSS_peak_bytes": 1170132992,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "physical_surface_forms_compile_complete",
+      "end_marker": "physical_surface_carrier_build_started",
+      "start_monotonic": 2763663.497141108,
+      "end_monotonic": 2763663.498798926,
+      "elapsed_seconds": 0.001657817978411913,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "physical_surface_carrier_build_started",
+      "end_marker": "surface_carrier_workspace_ready",
+      "start_monotonic": 2763663.498798926,
+      "end_monotonic": 2763663.832530833,
+      "elapsed_seconds": 0.3337319069541991,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "surface_carrier_workspace_ready",
+      "end_marker": "surface_carrier_assembly_started",
+      "start_monotonic": 2763663.832530833,
+      "end_monotonic": 2763663.834505506,
+      "elapsed_seconds": 0.0019746730104088783,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "surface_carrier_assembly_started",
+      "end_marker": "surface_carrier_mode_progress",
+      "start_monotonic": 2763663.834505506,
+      "end_monotonic": 2763783.602530792,
+      "elapsed_seconds": 119.76802528603002,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 101,
+      "sampled_tree_RSS_peak_bytes": 756129792,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "surface_carrier_mode_progress",
+      "end_marker": "surface_carrier_assembly_complete",
+      "start_monotonic": 2763783.602530792,
+      "end_monotonic": 2763783.603463474,
+      "elapsed_seconds": 0.0009326823055744171,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "surface_carrier_assembly_complete",
+      "end_marker": "surface_carrier_normalize_validate_started",
+      "start_monotonic": 2763783.603463474,
+      "end_monotonic": 2763783.603900486,
+      "elapsed_seconds": 0.0004370119422674179,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "surface_carrier_normalize_validate_started",
+      "end_marker": "surface_carrier_normalize_validate_complete",
+      "start_monotonic": 2763783.603900486,
+      "end_monotonic": 2763784.454318152,
+      "elapsed_seconds": 0.8504176656715572,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 1,
+      "sampled_tree_RSS_peak_bytes": 929787904,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "surface_carrier_normalize_validate_complete",
+      "end_marker": "physical_surface_carrier_build_complete",
+      "start_monotonic": 2763784.454318152,
+      "end_monotonic": 2763784.457906661,
+      "elapsed_seconds": 0.0035885092802345753,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "physical_surface_carrier_build_complete",
+      "end_marker": "p6_direct_surface_carrier_complete",
+      "start_monotonic": 2763784.457906661,
+      "end_monotonic": 2763950.967998435,
+      "elapsed_seconds": 166.51009177369997,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 140,
+      "sampled_tree_RSS_peak_bytes": 2436255744,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_surface_carrier_complete",
+      "end_marker": "p6_direct_volume_form_compiled",
+      "start_monotonic": 2763950.967998435,
+      "end_monotonic": 2763951.654619408,
+      "elapsed_seconds": 0.6866209730505943,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 1,
+      "sampled_tree_RSS_peak_bytes": 1017425920,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_volume_form_compiled",
+      "end_marker": "p6_direct_augmented_matrix_complete",
+      "start_monotonic": 2763951.654619408,
+      "end_monotonic": 2768723.90396127,
+      "elapsed_seconds": 4772.249341862276,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 3956,
+      "sampled_tree_RSS_peak_bytes": 4725723136,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_augmented_matrix_complete",
+      "end_marker": "p6_direct_action_view_ready",
+      "start_monotonic": 2768723.90396127,
+      "end_monotonic": 2768771.104891075,
+      "elapsed_seconds": 47.20092980470508,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 39,
+      "sampled_tree_RSS_peak_bytes": 5923983360,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_action_view_ready",
+      "end_marker": "p6_direct_rhs_ready",
+      "start_monotonic": 2768771.104891075,
+      "end_monotonic": 2768771.657526107,
+      "elapsed_seconds": 0.5526350322179496,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 1,
+      "sampled_tree_RSS_peak_bytes": 5921886208,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_rhs_ready",
+      "end_marker": "p6_mumps_symbolic_complete",
+      "start_monotonic": 2768771.657526107,
+      "end_monotonic": 2768790.913999639,
+      "elapsed_seconds": 19.25647353194654,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 16,
+      "sampled_tree_RSS_peak_bytes": 7709171712,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_mumps_symbolic_complete",
+      "end_marker": "p6_mumps_numeric_complete",
+      "start_monotonic": 2768790.913999639,
+      "end_monotonic": 2769953.754822857,
+      "elapsed_seconds": 1162.8408232182264,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 954,
+      "sampled_tree_RSS_peak_bytes": 27098828800,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_mumps_numeric_complete",
+      "end_marker": "p6_direct_same_factor_condensed_refinement",
+      "start_monotonic": 2769953.754822857,
+      "end_monotonic": 2770020.278439759,
+      "elapsed_seconds": 66.52361690159887,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 54,
+      "sampled_tree_RSS_peak_bytes": 25312403456,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_same_factor_condensed_refinement",
+      "end_marker": "solve_started",
+      "start_monotonic": 2770020.278439759,
+      "end_monotonic": 2770020.285971699,
+      "elapsed_seconds": 0.007531940005719662,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "solve_started",
+      "end_marker": "p6_direct_materialized_solve_complete",
+      "start_monotonic": 2770020.285971699,
+      "end_monotonic": 2770020.288194946,
+      "elapsed_seconds": 0.0022232471965253353,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "p6_direct_materialized_solve_complete",
+      "end_marker": "recovery_started",
+      "start_monotonic": 2770020.288194946,
+      "end_monotonic": 2770020.289519052,
+      "elapsed_seconds": 0.0013241060078144073,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 0,
+      "sampled_tree_RSS_peak_bytes": null,
+      "sampled_tree_swap_peak_bytes": null
+    },
+    {
+      "start_marker": "recovery_started",
+      "end_marker": "p6_direct_A6_native_Y6_1_R13_active_rectangle_residual_complete",
+      "start_monotonic": 2770020.289519052,
+      "end_monotonic": 2770174.688106122,
+      "elapsed_seconds": 154.39858706993982,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 124,
+      "sampled_tree_RSS_peak_bytes": 25419264000,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "p6_direct_A6_native_Y6_1_R13_active_rectangle_residual_complete",
+      "end_marker": "task43_v3_primary_before_extra_packet_saved",
+      "start_monotonic": 2770174.688106122,
+      "end_monotonic": 2770177.110717241,
+      "elapsed_seconds": 2.4226111192256212,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 2,
+      "sampled_tree_RSS_peak_bytes": 25419268096,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "task43_v3_primary_before_extra_packet_saved",
+      "end_marker": "task43_v3_primary_q8_sample_saved",
+      "start_monotonic": 2770177.110717241,
+      "end_monotonic": 2770356.143692637,
+      "elapsed_seconds": 179.03297539567575,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 144,
+      "sampled_tree_RSS_peak_bytes": 25719771136,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "task43_v3_primary_q8_sample_saved",
+      "end_marker": "task43_v3_primary_q10_sample_saved",
+      "start_monotonic": 2770356.143692637,
+      "end_monotonic": 2770512.745097828,
+      "elapsed_seconds": 156.60140519123524,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 131,
+      "sampled_tree_RSS_peak_bytes": 25836793856,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "task43_v3_primary_q10_sample_saved",
+      "end_marker": "task43_v2_extra_lu_correction_and_independent_a6_complete",
+      "start_monotonic": 2770512.745097828,
+      "end_monotonic": 2770649.971481762,
+      "elapsed_seconds": 137.22638393379748,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 116,
+      "sampled_tree_RSS_peak_bytes": 25683001344,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "task43_v2_extra_lu_correction_and_independent_a6_complete",
+      "end_marker": "watchdog_stop",
+      "start_monotonic": 2770649.971481762,
+      "end_monotonic": 2770714.81039434,
+      "elapsed_seconds": 64.83891257829964,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 55,
+      "sampled_tree_RSS_peak_bytes": 26276761600,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "start_marker": "watchdog_stop",
+      "end_marker": "watchdog_terminal_derived",
+      "start_monotonic": 2770714.81039434,
+      "end_monotonic": 2770727.2308881516,
+      "elapsed_seconds": 12.420493811368942,
+      "classification": "derived_from_recorded_stage_boundaries",
+      "resource_samples": 10,
+      "sampled_tree_RSS_peak_bytes": 63991808,
+      "sampled_tree_swap_peak_bytes": 0
+    }
+  ],
+  "stage_segment_sum_seconds": 7213.133929461241,
+  "after_last_stage_to_stop_seconds": 64.83891257829964,
+  "after_last_stage_scope": "Post-extra unfinished work, no completion marker; do not attribute entirely to a particular witness or sampler.",
+  "stop_and_cleanup_seconds": 12.420493811368942,
+  "individually_unmeasured": [
+    "initial MatSolve",
+    "normal correction MatSolve",
+    "primary modal versus Av versus q8 split",
+    "extra MatSolve versus extra recovery/A6 split",
+    "unfinished post-extra witness/output/extra sample costs"
+  ],
+  "factor_lifetime_scope": "Source indicates factor retained through primary output/sampling and extra; resource RSS includes whole tree, cannot isolate factor allocation bytes.",
+  "comparison_policy": "No same-accuracy speedup, cold-cache comparison or campaign total inferred; do not add overlapping windows or RSS peaks.",
+  "preserved_endpoint": "INCOMPLETE_NOT_QUALIFIED",
+  "preserved_cleanup": "LIMITED_NOT_UNCONDITIONAL_PASS",
+  "formal_dispatches_added": 0,
+  "support_script_wall_seconds": 1.3154942514374852
+}

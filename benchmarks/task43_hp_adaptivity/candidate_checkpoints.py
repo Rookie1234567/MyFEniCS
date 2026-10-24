@@ -119,9 +119,13 @@ def write_atomic_npz(
         "continuation": {
             "same_group_R": False,
             "A1_R": False,
+            "A2_q": False,
             "A2_R": False,
+            "A2_q3": False,
             "B": False,
             "C": False,
+            "cost_campaign": False,
+            "iteration": False,
         },
         "arrays": array_identities,
         # Return exactly the JSON-safe representation that is embedded in the
@@ -166,6 +170,27 @@ def write_atomic_json(
     return {"path": str(path), "sha256": _sha256_file(path)}
 
 
+def write_atomic_bytes(
+    path: Path,
+    payload: bytes,
+    *,
+    refuse_overwrite: bool = True,
+) -> dict[str, Any]:
+    """Atomically preserve exact bytes when a later record needs demotion."""
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if refuse_overwrite and path.exists():
+        raise FileExistsError(f"refusing to overwrite evidence bytes {path}")
+    value = bytes(payload)
+    _replace_atomically(path, lambda stream: stream.write(value))
+    return {
+        "path": str(path),
+        "sha256": _sha256_file(path),
+        "bytes": len(value),
+    }
+
+
 def write_v3_primary_field_sample(
     path: Path,
     order: int,
@@ -204,6 +229,25 @@ def write_v3_primary_before_extra_packet(
     )
 
 
+def write_v3_extra_before_output_packet(
+    path: Path,
+    arrays: Mapping[str, np.ndarray],
+    *,
+    identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Persist extra raw vectors before physical output recovery or sampling."""
+
+    return write_atomic_npz(
+        path,
+        arrays,
+        schema="task43.v3.a2_extra_before_physical_output.v1",
+        classification=(
+            "measured_extra_state_after_A6_before_physical_output_not_official"
+        ),
+        identity=identity,
+    )
+
+
 def task43_v3_partial_terminal_record(
     *,
     phase: str | None,
@@ -215,6 +259,8 @@ def task43_v3_partial_terminal_record(
     pre_validation_checkpoint: Mapping[str, Any] | None,
     native_run_summary: Mapping[str, Any] | None = None,
     extra_q_samples: Mapping[str, Any] | None = None,
+    extra_before_output_packet: Mapping[str, Any] | None = None,
+    comparison_failure_reference: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build fail-closed status for a V3 endpoint stopped after partial work."""
 
@@ -226,11 +272,17 @@ def task43_v3_partial_terminal_record(
         "error": str(error),
         "source_identity": dict(source_identity),
         "primary_before_extra_packet": primary_before_extra_packet,
+        "extra_before_output_packet": extra_before_output_packet,
         "primary_q_samples": dict(primary_q_samples),
         "extra_q_samples": dict(extra_q_samples or {}),
         "primary_q8_q10_bundle": primary_q8_q10_bundle,
         "pre_validation_checkpoint": pre_validation_checkpoint,
         "native_run_summary_authority": native_run_summary,
+        "comparison_failure_reference": (
+            dict(comparison_failure_reference)
+            if comparison_failure_reference is not None
+            else None
+        ),
         "port_output_scope": (
             "solver-written modal outputs are measurements only; this terminal "
             "record is authoritative and the endpoint is not official"
@@ -245,9 +297,13 @@ def task43_v3_partial_terminal_record(
         "continuation": {
             "same_group_R": False,
             "A1_R": False,
+            "A2_q": False,
             "A2_R": False,
+            "A2_q3": False,
             "B": False,
             "C": False,
+            "cost_campaign": False,
+            "iteration": False,
         },
     }
 
@@ -262,7 +318,9 @@ def demote_v3_native_summary_after_error(
     primary_before_extra_packet: Mapping[str, Any] | None,
     primary_q_samples: Mapping[str, Any],
     extra_q_samples: Mapping[str, Any] | None = None,
+    extra_before_output_packet: Mapping[str, Any] | None = None,
     pre_validation_checkpoint: Mapping[str, Any] | None = None,
+    comparison_failure_reference: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Demote native solver outputs if V3 postprocessing or comparison fails."""
 
@@ -282,14 +340,26 @@ def demote_v3_native_summary_after_error(
     summary["continuation"] = {
         "same_group_R": False,
         "A1_R": False,
-        "A2_R": False,
         "A2_q": False,
+        "A2_R": False,
         "A2_q3": False,
         "B": False,
         "C": False,
+        "cost_campaign": False,
+        "iteration": False,
     }
     if isinstance(reported_result, Mapping):
         summary["measured_endpoint_output_not_official"] = reported_result
+    if comparison_failure_reference is not None:
+        summary["task43_v3_comparison_failure_reference"] = dict(
+            comparison_failure_reference
+        )
+    summary["task43_v3_endpoint_authority"] = {
+        "official_result": False,
+        "passed": False,
+        "status": summary["status"],
+        "continuation_all_false": True,
+    }
     terminal = task43_v3_partial_terminal_record(
         phase=phase,
         source_identity=source_identity,
@@ -306,15 +376,11 @@ def demote_v3_native_summary_after_error(
                 reported_result is not None
             ),
         },
+        extra_before_output_packet=extra_before_output_packet,
+        comparison_failure_reference=comparison_failure_reference,
     )
     terminal_ref = write_atomic_json(terminal_path, terminal)
     summary["task43_v3_partial_terminal"] = terminal_ref
-    summary["task43_v3_endpoint_authority"] = {
-        "official_result": False,
-        "passed": False,
-        "status": summary["status"],
-        "continuation_all_false": True,
-    }
     return terminal_ref
 
 

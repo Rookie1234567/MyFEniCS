@@ -137,6 +137,99 @@ print(json.dumps(result))
     assert not Path('/proc/' + proof.read_text()).exists()
 
 
+@pytest.mark.parametrize(
+    ('mode', 'expected_message'),
+    [
+        ('descendants', 'descendants did not clear after SIGKILL'),
+        ('cache', 'descendants cleared but cache metadata did not stabilize'),
+    ],
+)
+def test_stop_clearance_timeout_identifies_descendants_vs_cache_wait(
+    tmp_path, mode, expected_message
+):
+    directory = tmp_path / mode
+    monitor = f'''
+import json,sys
+from pathlib import Path
+import benchmarks.subreaper_watchdog as watchdog
+watchdog._STOP_CLEARANCE_EXTRA_SECONDS = .15
+mode = {mode!r}
+if mode == 'cache':
+    stamps = [0]
+    def changing_stamp(_path):
+        stamps[0] += 1
+        return str(stamps[0])
+    watchdog._cache_stamp = changing_stamp
+else:
+    real_signal_children = watchdog._signal_children
+    real_timeout_message = watchdog._stop_clearance_timeout_message
+    timeout_seen = [False]
+    def identify_timeout(children, exit_code):
+        message = real_timeout_message(children, exit_code)
+        timeout_seen[0] = bool(children)
+        if timeout_seen[0]:
+            watchdog._STOP_CLEARANCE_EXTRA_SECONDS = 10.0
+        return message
+    def delay_until_timeout(signum):
+        if timeout_seen[0]:
+            real_signal_children(signum)
+    watchdog._stop_clearance_timeout_message = identify_timeout
+    watchdog._signal_children = delay_until_timeout
+child = (
+    'import subprocess,sys; '
+    'subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); '
+    'raise SystemExit(0)'
+) if mode == 'descendants' else 'pass'
+result = watchdog.supervise(
+    [sys.executable, '-c', child], Path({str(directory)!r}),
+    wall_seconds=.05, interval=.02, grace_seconds=.05,
+)
+print(json.dumps(result))
+'''
+    process = subprocess.run(
+        [sys.executable, '-c', monitor], capture_output=True, text=True, check=False
+    )
+    assert process.returncode == 0, process.stdout + process.stderr
+    summary = json.loads((directory / 'summary.json').read_text())
+    assert summary['classification'] == 'PERFORMANCE_CONTROLLED_STOP'
+    assert summary['stop_event']['reason'] == 'PERFORMANCE_CONTROLLED_STOP'
+    assert summary['exception_type'] == 'RuntimeError'
+    assert summary['exception_message'] == expected_message
+    assert summary['cache_metadata_stable'] is False
+    assert summary['leader_exit_code'] == 0
+    if mode == 'descendants':
+        assert summary['descendants_cleared'] is True
+        assert summary['remaining_child_pids'] == []
+        assert summary['first_SIGTERM']['scope'] == 'whole child tree'
+        assert summary['first_SIGKILL']['scope'] == 'whole child tree'
+        assert summary['first_SIGTERM']['monotonic'] >= summary['stop_event']['monotonic']
+        assert summary['first_SIGKILL']['monotonic'] >= summary['first_SIGTERM']['monotonic']
+    else:
+        assert summary['descendants_cleared'] is True
+        assert summary['remaining_child_pids'] == []
+        for signal_name in ('first_SIGTERM', 'first_SIGKILL'):
+            signal_record = summary.get(signal_name)
+            if signal_record is not None:
+                assert signal_record['scope'] == 'whole child tree'
+                assert signal_record['monotonic'] >= summary['stop_event']['monotonic']
+    rows = [
+        json.loads(line)
+        for line in (directory / 'resources.jsonl').read_text().splitlines()
+    ]
+    assert rows
+    if mode == 'cache':
+        assert rows[-1]['live_or_unreaped_children'] == []
+        assert rows[-1]['exit_code'] == 0
+    else:
+        assert set(rows[-1]['live_or_unreaped_children']) <= set(
+            summary['observed_child_pids']
+        )
+    assert all(
+        not Path(f'/proc/{pid}').exists()
+        for pid in summary['observed_child_pids']
+    )
+
+
 def test_measured_rss_policy_keeps_global_swap_observe_only_and_declares_warning(tmp_path):
     directory = tmp_path / 'run'
     worker = 'import time; time.sleep(60)'
@@ -337,8 +430,9 @@ def test_measured_rss_policy_keeps_normal_exit_tail_and_pid_identity(tmp_path, m
     )
     worker = f'import subprocess,sys; subprocess.Popen([sys.executable,"-c",{child!r}])'
     monitor = f'''
-import json,sys
+import json,os,sys
 from pathlib import Path
+os.environ.pop('PHYSICAL_NATIVE_CAPACITY', None)
 import benchmarks.subreaper_watchdog as watchdog
 watchdog.memory_envelope = lambda: dict(
     launch_cap_bytes=1, planning_cap_bytes=1,

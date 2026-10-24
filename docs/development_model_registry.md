@@ -1,6 +1,17 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V3最新状态：五次正式dispatch，完整端点未资格化（2026-10-24）
+## Task43 V4最新状态：无新dispatch；有限整改不改变数值资格（2026-10-25）
+
+V4依Review V3 §9只执行N1–N6非PDE工程和文档收口。本轮新增正式dispatch为0；累计仍为5/6，A1 2/2、A2 3/3、最后1槽封存。A1_q2真实入口缺WorkflowLedger的历史现场问题及主控错误放行责任不追溯改写；A2_q3 native ledger路线真实成立，但其端点仍 `INCOMPLETE_NOT_OFFICIAL`，且extra full-active residual未严格下降。新增component验证没有授予新的正式计算或production资格。
+
+| V4改进范围 | 实际验证 | 结论边界 |
+|---|---|---|
+| A1真实入口账本 | main mesh-boundary sentinel检查phase/stages/failure terminal；mesh后端只到sentinel，assembly/solver为0；缺phase/错parent在构网前拒绝 | 新fixture不是A1正式attempt，不能回填V3现场G2 |
+| A2失败权限与extra留证 | comparison/summary两种OSError路径保持原异常、比较原件sidecar/hash、数值字段和primary hash，当前authority与continuation关闭；extra小数组packet在后续恢复/transport/q10故障前已可读并重算 | 不调用真实factor，不产生新物理端点；A2_q3旧extra严格下降负项保持 |
+| watchdog与旧生命周期审计 | 测试覆盖有后代清理超时及无后代cache等待超时；旧A2 CPU/阶段区间从已存5971条资源样本重算 | 历史A2 `LIMITED`不改分类；两个末尾空cmdline区间的身份关联及非重叠成本窗口限制保留 |
+| 总资格 | 五项能力不变；空间/选择 `PARTIAL`，精度 `NOT_PASSED`，同精度成本 `NOT_ESTABLISHED`，迭代 `NOT_RUN / NOT_QUALIFIED` | 无READY、无新正式dispatch、未批准生产合并；完整说明及log/hash见[Response V4](task43_hp_adaptivity/response_v4.md)与[V4 validation compact](task43_hp_adaptivity/outcomes/records/v4_focused_validation_v1.json) |
+
+## Task43 V3历史状态：五次正式dispatch，完整端点未资格化（2026-10-24）
 
 本节更新V2历史快照。V1 accepted9/R9仍为最后接受状态；原16次尝试和5份导入场只指V1机器inventory范围，不能代表V2/V3后的总dispatch。V2三次formal dispatch的wall小计为`4915.1723896381445s`；V3另有A1_q2与A2_q3两次，共5/6，A1组2/2、A2组3/3、剩余一个槽封存。
 

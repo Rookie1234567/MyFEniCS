@@ -23,6 +23,16 @@ from src.runners.workflow_timebase import (TimebaseInconsistency, budget_elapsed
     clock_info, clock_sample, ClockBudget, STRICT, POLICY_VERSION)
 
 _TASK43_RESOURCE_PROFILE_IDENTITY = 'task43_hp_adaptivity_resource_v1'
+_STOP_CLEARANCE_EXTRA_SECONDS = 10.0
+
+
+def _stop_clearance_timeout_message(children: dict[int, tuple[int, int]], exit_code):
+    """Name the stalled part of stop handling without changing its classification."""
+    if children:
+        return 'descendants did not clear after SIGKILL'
+    if exit_code is None:
+        return 'leader did not exit after SIGKILL after descendants cleared'
+    return 'descendants cleared but cache metadata did not stabilize'
 
 
 def memory_envelope() -> dict:
@@ -729,8 +739,12 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                     stable_since = None
                     cache_stamp = None
                 if stop_started is not None and (budget_elapsed(stop_clock, clock_sample())
-                        if timebase_guard else time.monotonic() - stop_started) > grace_seconds + 10:
-                    raise RuntimeError('descendants did not clear after SIGKILL')
+                        if timebase_guard else time.monotonic() - stop_started) > (
+                            grace_seconds + _STOP_CLEARANCE_EXTRA_SECONDS
+                        ):
+                    raise RuntimeError(
+                        _stop_clearance_timeout_message(children, exit_code)
+                    )
                 time.sleep(interval)
         summary['cache_metadata_stable'] = True
     except BaseException as exc:
@@ -750,10 +764,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                         'exception_message': str(exc), 'cache_metadata_stable': False})
     finally:
         # Also close the tree if sampling, JSON writing, or the parent fails.
-        deadline = time.monotonic() + grace_seconds + 10
+        deadline = time.monotonic() + grace_seconds + _STOP_CLEARANCE_EXTRA_SECONDS
         cleanup_clock = clock_sample() if timebase_guard else None
         while leader is not None and _children() and (budget_elapsed(cleanup_clock, clock_sample())
-                < grace_seconds + 10 if timebase_guard else time.monotonic() < deadline):
+                < grace_seconds + _STOP_CLEARANCE_EXTRA_SECONDS
+                if timebase_guard else time.monotonic() < deadline):
             _signal_children(signal.SIGKILL)
             leader.poll()
             _reap_adopted(leader.pid)

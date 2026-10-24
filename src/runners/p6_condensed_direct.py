@@ -3028,6 +3028,9 @@ def run_p6_condensed_direct(
     extra_lu_facts = None
     extra_schur_relative = None
     v3_primary_packet_record = None
+    v3_extra_packet_record = None
+    v3_primary_condensed_rhs = None
+    v3_primary_native_effective_rhs = None
     v3_primary_sample_records: dict[str, Any] = {}
     v3_extra_sample_records: dict[str, Any] = {}
     v3_primary_field_samples = None
@@ -4274,6 +4277,12 @@ def run_p6_condensed_direct(
                     native_facts["augmented_port_residual"], dtype=np.complex128
                 ).copy(),
             }
+            v3_primary_condensed_rhs = primary_arrays[
+                "primary_returned_trace_dtn_rhs"
+            ].copy()
+            v3_primary_native_effective_rhs = primary_arrays[
+                "primary_native_A6_effective_rhs"
+            ].copy()
             for index, values in enumerate(schur_refinement_residual_snapshots):
                 primary_arrays[f"normal_correction_b_minus_Ax_snapshot_{index}"] = (
                     np.asarray(values, dtype=np.complex128).copy()
@@ -4483,6 +4492,133 @@ def run_p6_condensed_direct(
             ):
                 raise ValueError(
                     "Task43 A2 extra-LU recovered P6 field is incomplete or non-finite"
+                )
+            if task43_v3_diagnostic is not None:
+                from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+                    write_v3_extra_before_output_packet,
+                )
+
+                extra_condensed_rhs_for_packet = np.asarray(
+                    rhs_vector.getArray(readonly=True), dtype=np.complex128
+                ).copy()
+                extra_native_rhs_for_packet = np.asarray(
+                    extra_native_facts["native_effective_rhs"], dtype=np.complex128
+                ).copy()
+                condensed_rhs_same = bool(
+                    v3_primary_condensed_rhs is not None
+                    and np.array_equal(
+                        v3_primary_condensed_rhs,
+                        extra_condensed_rhs_for_packet,
+                    )
+                )
+                native_rhs_same = bool(
+                    v3_primary_native_effective_rhs is not None
+                    and np.array_equal(
+                        v3_primary_native_effective_rhs,
+                        extra_native_rhs_for_packet,
+                    )
+                    and same_rhs_for_active_explicit
+                )
+                v3_extra_identity = {
+                    "phase": "A2_q",
+                    "attempt": 3,
+                    "source_sha": source_sha,
+                    "frozen_v3_contract_sha256": str(
+                        task43_v3_diagnostic["contract_sha256"]
+                    ),
+                    "frozen_v3_plan_sha256": str(
+                        task43_v3_diagnostic["plan_sha256"]
+                    ),
+                    "primary_before_extra_packet_path": v3_primary_packet_record[
+                        "npz_path"
+                    ],
+                    "primary_before_extra_packet_sha256": v3_primary_packet_record[
+                        "npz_sha256"
+                    ],
+                    "same_condensed_rhs_as_primary": condensed_rhs_same,
+                    "same_native_effective_rhs_as_primary": (
+                        native_rhs_same
+                    ),
+                    "factor_counts": {
+                        key: extra_lu_facts[key]
+                        for key in (
+                            "initial_factor_solve_calls",
+                            "final_factor_solve_calls",
+                            "initial_factor_symbolic_calls",
+                            "final_factor_symbolic_calls",
+                            "initial_factor_numeric_calls",
+                            "final_factor_numeric_calls",
+                            "extra_correction_count",
+                            "exactly_one_extra_solve",
+                            "factorization_calls_unchanged",
+                        )
+                    },
+                    "residual_metrics": {
+                        "primary_condensed_b_minus_Ax_relative": schur_relative,
+                        "extra_condensed_b_minus_Ax_relative": extra_schur_relative,
+                        "primary_independent_A6_relative": native_relative,
+                        "extra_independent_A6_relative": float(
+                            extra_native_facts["native_residual_relative"]
+                        ),
+                        "primary_full_active_transformed_relative": (
+                            active_explicit_facts["combined_relative"]
+                        ),
+                        "extra_full_active_transformed_relative": (
+                            extra_active_explicit_facts["combined_relative"]
+                        ),
+                        "extra_condensed_strict_decrease": (
+                            condensed_b_minus_ax_strict_decrease
+                        ),
+                        "extra_full_active_strict_decrease": (
+                            full_explicit_strict_decrease
+                        ),
+                        "extra_status": extra_lu_facts["status"],
+                    },
+                    "storage_scope": (
+                        "raw extra solution, condensed residual/RHS, independent A6 "
+                        "residual/effective RHS, zero-slave carrier and port residual; "
+                        "written after algebraic recovery and before physical output recovery"
+                    ),
+                }
+                v3_extra_arrays = {
+                    "extra_recovered_p6_storage": extra_recovered.copy(),
+                    "extra_condensed_solution": extra_solution_array.copy(),
+                    "extra_condensed_b_minus_Ax": extra_schur_residual_array.copy(),
+                    "extra_condensed_rhs": extra_condensed_rhs_for_packet.copy(),
+                    "primary_condensed_rhs": (
+                        v3_primary_condensed_rhs.copy()
+                        if v3_primary_condensed_rhs is not None
+                        else np.empty(0, dtype=np.complex128)
+                    ),
+                    "extra_independent_A6_residual": np.asarray(
+                        extra_native_facts["native_residual"], dtype=np.complex128
+                    ).copy(),
+                    "extra_native_A6_effective_rhs": extra_native_rhs_for_packet.copy(),
+                    "primary_native_A6_effective_rhs": (
+                        v3_primary_native_effective_rhs.copy()
+                        if v3_primary_native_effective_rhs is not None
+                        else np.empty(0, dtype=np.complex128)
+                    ),
+                    "extra_zero_slave_carrier_residual": np.asarray(
+                        extra_native_facts["augmented_fe_residual"],
+                        dtype=np.complex128,
+                    ).copy(),
+                    "extra_augmented_port_residual": np.asarray(
+                        extra_native_facts["augmented_port_residual"],
+                        dtype=np.complex128,
+                    ).copy(),
+                }
+                v3_extra_packet_record = write_v3_extra_before_output_packet(
+                    numerical_output / "task43_v3_extra_before_output.npz",
+                    v3_extra_arrays,
+                    identity=v3_extra_identity,
+                )
+                summary["task43_v3_extra_before_output_packet"] = (
+                    v3_extra_packet_record
+                )
+                ledger.marker(
+                    "task43_v3_extra_before_physical_output_packet_saved",
+                    v3_extra_packet_record,
                 )
             extra_saved_field = create_vector(
                 [
@@ -5288,6 +5424,7 @@ def run_p6_condensed_direct(
                     primary_before_extra_packet=v3_primary_packet_record,
                     primary_q_samples=v3_primary_sample_records,
                     extra_q_samples=v3_extra_sample_records,
+                    extra_before_output_packet=v3_extra_packet_record,
                 )
             except (OSError, TypeError, ValueError, RuntimeError) as demotion_error:
                 print(

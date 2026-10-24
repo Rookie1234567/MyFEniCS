@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；V2三次和V3两次正式dispatch共5/6，A1组2/2、A2组3/3，剩余1次封存。A1_q2因实际入口未接`WorkflowLedger`而在已构网/进入装配后受控停止；A2_q3已进入native workflow并保存primary partial数据，但在7200秒墙钟门后INCOMPLETE，且extra full-active residual未严格下降。没有完整q/R结论或production merge approval |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；V2三次和V3两次正式dispatch共5/6，A1组2/2、A2组3/3，剩余1次封存。本轮V4依Review V3 §9只做N1–N6非PDE整改，新增正式dispatch为0。A1_q2因实际入口未接`WorkflowLedger`而在已构网/进入装配后受控停止；A2_q3已进入native workflow并保存primary partial数据，但在7200秒墙钟门后INCOMPLETE，且extra full-active residual未严格下降。没有完整q/R结论或production merge approval |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -46,7 +46,9 @@
 - [A2_q3实际watchdog/worker命令摘录](outcomes/records/A2_q3_actual_launch_process_excerpt_v1.json)；[primary原向量/场样本独立复核](outcomes/records/v3_root_post_pde_audit/A2_q3_primary_raw_audit.json)
 - [A1_q2受控停止原件](outcomes/records/a1_q_attempt2/dispatch_and_stop_record.json)；[A2_q3历史READY](outcomes/records/v3_root_ready_A2_q_attempt3.json)；[A2_q3实际终态审计](outcomes/records/v3_root_post_pde_audit/A2_q3_terminal_audit.json)
 - [V3 G0–G3审计副本与支持费用索引](outcomes/records/v3_root_pre_pde_audit/index.json)
+- [V4执行回应：N1–N6有限整改](response_v4.md)；[V4最终focused验证索引](outcomes/records/v4_focused_validation_v1.json)
+- [V4旧A2 affinity区间与生命周期费用审计](outcomes/records/v4_root_audit/index.json)
 
 V1数值/比较代码及原focused/full pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；之后V2/V3入口和报告工具分别按各次source snapshot、测试及compact绑定。V2三次正式尝试在完整端点证据前遇到工程/输入绑定错误；V3的A1_q2实际路线漏接WorkflowLedger、A2_q3进入求解后被性能门停止。两项都没有完成完整新端点资格，且V1旧结果保留各自source/ABI/input身份。当前执行分支 `task43_hp_adaptivity` 等待外部审阅，未获merge approval，未合入master。
 
-V3单次A1_q attempt2已构网并进入装配路径，但在因子分解/求解完成及primary端点留证之前，由于真实A1入口没有创建要求的workflow phase ledger，按主控指令受控停止。原READY文件保留为历史授权记录，不能据此继续派发。原始summary分类、资源样本、PID/信号、60源码和47输入哈希及独立终态审核见[A1_q2停止记录](outcomes/records/a1_q_attempt2/dispatch_and_stop_record.json)与[root终态审计](outcomes/records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。A2 native入口在正式派发前先通过了一个于mesh-builder边界前触发sentinel的WorkflowLedger组件测试；该测试本身没有构网或消耗正式预算，随后另有[A2_q3 READY授权记录](outcomes/records/v3_root_ready_A2_q_attempt3.json)和实际native dispatch。A2_q3真实建立ledger并运行到受控停止，最终状态和primary原件审计见[post-PDE记录索引](outcomes/records/v3_root_post_pde_audit/index.json)。本轮不再派发其他模型。
+V3单次A1_q attempt2已构网并进入装配路径，但在因子分解/求解完成及primary端点留证之前，由于真实A1入口没有创建要求的workflow phase ledger，按主控指令受控停止。原READY文件保留为历史授权记录，不能据此继续派发。V4增加了真实A1入口的mesh-boundary组件测试，但不追溯改变该历史dispatch或READY效力。原始summary分类、资源样本、PID/信号、60源码和47输入哈希及独立终态审核见[A1_q2停止记录](outcomes/records/a1_q_attempt2/dispatch_and_stop_record.json)与[root终态审计](outcomes/records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。A2_q3真实建立native ledger并运行到受控停止，最终状态和primary原件审计见[post-PDE记录索引](outcomes/records/v3_root_post_pde_audit/index.json)。V4本轮新增正式dispatch为0，剩余1/6封存；具体工程整改、测试和N5费用边界见[Response V4](response_v4.md)及[V4验证compact](outcomes/records/v4_focused_validation_v1.json)。

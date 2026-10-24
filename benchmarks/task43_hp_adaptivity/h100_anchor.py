@@ -83,6 +83,7 @@ from src.postprocessing.physical_field_sampling import (
     sample_cell_local_vector_fields,
 )
 from src.postprocessing.rta_3d import compute_volume_absorption_3d
+from src.runners.physical_intermediate import WorkflowLedger
 from src.solvers.dtn_port_3d import (
     Stage4VariablePLiveView,
     _deep_readonly_copy,
@@ -190,6 +191,8 @@ def _log_stage(
     started: float,
     stage: str,
     status: str,
+    *,
+    workflow_ledger: WorkflowLedger | None = None,
     **details: Any,
 ) -> None:
     if comm.rank == 0:
@@ -206,6 +209,11 @@ def _log_stage(
             ),
             flush=True,
         )
+        if workflow_ledger is not None:
+            ledger_stage = f"task43_{stage}"
+            if status == "begin":
+                workflow_ledger.set_phase(ledger_stage)
+            workflow_ledger.marker(f"{ledger_stage}_{status}", details)
 
 
 def _validate_reference_run(
@@ -1334,6 +1342,7 @@ def _same_lu_tightening(
     initial_explicit_residual: dict[str, Any] | None = None,
     v2_endpoint_identity: dict[str, Any] | None = None,
     on_extra_sample=None,
+    workflow_ledger: WorkflowLedger | None = None,
 ) -> dict[str, Any]:
     """Apply one existing-KSP residual correction and capture the new state."""
 
@@ -1357,7 +1366,13 @@ def _same_lu_tightening(
     )
     before_condensed_residual = _plain_nested_containers(view.full_active_residual)
 
-    _log_stage(comm, started, "same_lu_residual_correction", "begin")
+    _log_stage(
+        comm,
+        started,
+        "same_lu_residual_correction",
+        "begin",
+        workflow_ledger=workflow_ledger,
+    )
     corrected_x, correction = single_petsc_residual_correction(
         view.A, view.b, view.x, view.ksp
     )
@@ -1397,7 +1412,13 @@ def _same_lu_tightening(
         try:
             updated_goal_context = dict(view.goal_context)
             updated_goal_context["auxiliary_values"] = corrected_auxiliary
-            _log_stage(comm, started, "same_lu_recovery_and_a6", "begin")
+            _log_stage(
+                comm,
+                started,
+                "same_lu_recovery_and_a6",
+                "begin",
+                workflow_ledger=workflow_ledger,
+            )
             condensed_residual = view.reduction.full_active_residual(
                 view.A, view.b, corrected_x, corrected_recovered
             )
@@ -1421,7 +1442,13 @@ def _same_lu_tightening(
             independent_active_action = compute_stage4_independent_active_action(
                 corrected_view
             )
-            _log_stage(comm, started, "same_lu_recovery_and_a6", "end")
+            _log_stage(
+                comm,
+                started,
+                "same_lu_recovery_and_a6",
+                "end",
+                workflow_ledger=workflow_ledger,
+            )
 
             root_error = None
             tight_root = run_root / "same_lu_tightening"
@@ -1447,7 +1474,13 @@ def _same_lu_tightening(
             before_a_volume = None
             before_port_metrics = _plain_nested_containers(view.port_metrics)
             if is_v2:
-                _log_stage(comm, started, "same_lu_before_volume_absorption", "begin")
+                _log_stage(
+                    comm,
+                    started,
+                    "same_lu_before_volume_absorption",
+                    "begin",
+                    workflow_ledger=workflow_ledger,
+                )
                 before_volume = compute_volume_absorption_3d(
                     view.mesh_data,
                     view.config,
@@ -1468,9 +1501,21 @@ def _same_lu_tightening(
                 before_port_metrics["energy_closure_error_dtn_port_modal_volume"] = float(
                     before_port_metrics["R_plus_T_plus_A_volume"] - 1.0
                 )
-                _log_stage(comm, started, "same_lu_before_volume_absorption", "end")
+                _log_stage(
+                    comm,
+                    started,
+                    "same_lu_before_volume_absorption",
+                    "end",
+                    workflow_ledger=workflow_ledger,
+                )
 
-            _log_stage(comm, started, "same_lu_volume_absorption", "begin")
+            _log_stage(
+                comm,
+                started,
+                "same_lu_volume_absorption",
+                "begin",
+                workflow_ledger=workflow_ledger,
+            )
             corrected_volume_root = (
                 tight_root / "after" / "volume" if is_v2 else tight_root / "volume"
             )
@@ -1494,7 +1539,13 @@ def _same_lu_tightening(
             corrected_port_metrics["energy_closure_error_dtn_port_modal_volume"] = float(
                 corrected_port_metrics["R_plus_T_plus_A_volume"] - 1.0
             )
-            _log_stage(comm, started, "same_lu_volume_absorption", "end")
+            _log_stage(
+                comm,
+                started,
+                "same_lu_volume_absorption",
+                "end",
+                workflow_ledger=workflow_ledger,
+            )
 
             write_error = None
             try:
@@ -1514,7 +1565,13 @@ def _same_lu_tightening(
             if write_error is not None:
                 raise RuntimeError(f"same-LU modal output failed: {write_error}")
 
-            _log_stage(comm, started, "same_lu_field_capture", "begin")
+            _log_stage(
+                comm,
+                started,
+                "same_lu_field_capture",
+                "begin",
+                workflow_ledger=workflow_ledger,
+            )
             corrected_fields = _field_capture(
                 corrected_recovered.field,
                 view.mesh_data,
@@ -1527,7 +1584,13 @@ def _same_lu_tightening(
             corrected_storage_arrays, corrected_storage_metadata = (
                 _active_solution_storage(corrected_view)
             )
-            _log_stage(comm, started, "same_lu_field_capture", "end")
+            _log_stage(
+                comm,
+                started,
+                "same_lu_field_capture",
+                "end",
+                workflow_ledger=workflow_ledger,
+            )
 
             result = None
             result_error = None
@@ -1837,7 +1900,13 @@ def _same_lu_tightening(
             result, result_error = comm.bcast((result, result_error), root=0)
             if result_error is not None:
                 raise RuntimeError(f"same-LU postprocessing failed: {result_error}")
-            _log_stage(comm, started, "same_lu_tightening", "end")
+            _log_stage(
+                comm,
+                started,
+                "same_lu_tightening",
+                "end",
+                workflow_ledger=workflow_ledger,
+            )
             return result
         finally:
             corrected_recovered.destroy()
@@ -2021,9 +2090,13 @@ def _write_v3_partial_terminal(
             endpoint["continuation"] = {
                 "same_group_R": False,
                 "A1_R": False,
+                "A2_q": False,
                 "A2_R": False,
+                "A2_q3": False,
                 "B": False,
                 "C": False,
+                "cost_campaign": False,
+                "iteration": False,
             }
             gates = endpoint.get("gates")
             if isinstance(gates, dict):
@@ -2662,7 +2735,9 @@ def _validate_v3_a1_entry_contract(contract: Mapping[str, Any]) -> None:
         raise ValueError("Task43 V3 A1_q2 entry differs from its frozen allocation")
 
 
-def _require_v3_watchdog_worker_identity() -> dict[str, Any]:
+def _require_v3_watchdog_worker_identity(
+    *, require_unused_phase_file: bool = True
+) -> dict[str, Any]:
     """Verify the post-exec A1 worker is the watchdog's direct child."""
 
     try:
@@ -2678,6 +2753,10 @@ def _require_v3_watchdog_worker_identity() -> dict[str, Any]:
     if not phase_path.is_absolute():
         raise RuntimeError("V3 A1 watchdog phase path must be absolute")
     phase_path = phase_path.resolve()
+    if not phase_path.parent.is_dir():
+        raise RuntimeError("V3 A1 watchdog phase parent directory is missing")
+    if require_unused_phase_file and phase_path.exists():
+        raise RuntimeError("V3 A1 watchdog phase file already exists")
     return {
         "worker_pid": os.getpid(),
         "worker_parent_pid": actual_parent,
@@ -3200,6 +3279,19 @@ def _run_impl(
     if _failure_context is not None:
         _failure_context["run_root"] = run_root
 
+    v3_workflow_ledger = None
+    if v3_failure_evidence_enabled and comm.rank == 0:
+        watchdog_identity = _require_v3_watchdog_worker_identity()
+        v3_workflow_ledger = WorkflowLedger(
+            run_root, Path(watchdog_identity["phase_path"])
+        )
+        v3_workflow_ledger.set_phase("preflight")
+        v3_workflow_ledger.marker(
+            "task43_v3_a1_worker_identity_bound", watchdog_identity
+        )
+        if _failure_context is not None:
+            _failure_context["workflow_ledger"] = v3_workflow_ledger
+
     if candidate_case:
         if any(value is None for value in (candidate_plan_path, candidate_id, candidate_acceptance_contract)):
             raise ValueError("candidate case requires plan, ID and frozen acceptance contract")
@@ -3253,6 +3345,17 @@ def _run_impl(
             != _V2_ACCEPTANCE_SHA256
         ):
             raise ValueError("V2 A1 candidate does not match the frozen R10 lineage")
+        if v3_workflow_ledger is not None:
+            v3_workflow_ledger.marker(
+                "task43_v3_a1_candidate_inputs_bound",
+                {
+                    "candidate_id": str(candidate_id),
+                    "candidate_plan_sha256": candidate_plan_sha256,
+                    "accepted_parent_selection_sha256": candidate_identity.get(
+                        "accepted_parent_selection_sha256"
+                    ),
+                },
+            )
 
     v2_reference_data = None
     if v2_diagnostic_phase == "A1_q":
@@ -3299,6 +3402,7 @@ def _run_impl(
         started,
         "preflight",
         "end",
+        workflow_ledger=v3_workflow_ledger,
         validated_references=sorted(reference_identities),
     )
 
@@ -3327,6 +3431,11 @@ def _run_impl(
         raise RuntimeError(f"could not capture run source snapshot: {source_error}")
     if _failure_context is not None:
         _failure_context["source_identity"] = source_identity
+    if v3_workflow_ledger is not None:
+        v3_workflow_ledger.marker(
+            "task43_v3_a1_source_identity_bound",
+            {"git_head": source_identity.get("git_head")},
+        )
     if v2_diagnostic:
         source_identity["v2_frozen_contract"] = {
             "contract_path": str(v2_contract_path),
@@ -3368,7 +3477,7 @@ def _run_impl(
             "attempt": 2,
         }
         source_identity["v3_watchdog_worker_identity"] = (
-            _require_v3_watchdog_worker_identity()
+            _require_v3_watchdog_worker_identity(require_unused_phase_file=False)
         )
     source_hashes_before = source_identity["file_sha256"]
 
@@ -3392,8 +3501,26 @@ def _run_impl(
         v2_phase_controls = _configure_v2_a1_endpoint(
             cfg, v2_diagnostic_phase, v2_contract
         )
-    _log_stage(comm, started, "mesh_build", "begin")
+    _log_stage(
+        comm,
+        started,
+        "mesh_build",
+        "begin",
+        workflow_ledger=v3_workflow_ledger,
+    )
+    if v3_workflow_ledger is not None:
+        v3_workflow_ledger.set_phase("mesh_setup")
+        v3_workflow_ledger.marker(
+            "task43_v3_a1_mesh_setup_started",
+            {
+                "case": case,
+                "geometry_profile": geometry_profile,
+                "candidate_plan_sha256": candidate_plan_sha256,
+            },
+        )
     mesh_data = build_airbox_mesh_3d(cfg, run_root / "resolved_mesh")
+    if v3_workflow_ledger is not None:
+        v3_workflow_ledger.marker("task43_v3_a1_mesh_setup_complete", {})
     axes = _mesh_axes(mesh_data.mesh, comm)
     _assert_mesh_profile(mesh_data, axes, geometry_profile)
     reference_axes = None
@@ -3514,6 +3641,7 @@ def _run_impl(
         started,
         "mesh_build",
         "end",
+        workflow_ledger=v3_workflow_ledger,
         global_cells=int(mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global),
         axis_cell_counts_xyz=[len(axis) - 1 for axis in axes],
         local_h_allow_no_refinement=(
@@ -3654,7 +3782,13 @@ def _run_impl(
         )
         if current_case or candidate_case:
             if comm.size == 1:
-                _log_stage(comm, started, "pre_validation_checkpoint", "begin")
+                _log_stage(
+                    comm,
+                    started,
+                    "pre_validation_checkpoint",
+                    "begin",
+                    workflow_ledger=v3_workflow_ledger,
+                )
                 storage_arrays, storage_metadata = _active_solution_storage(view)
                 modes = view.goal_context["modes"]
                 ordered_mode_keys = [
@@ -3743,6 +3877,7 @@ def _run_impl(
                     started,
                     "pre_validation_checkpoint",
                     "end",
+                    workflow_ledger=v3_workflow_ledger,
                     npz_sha256=captured["pre_validation_checkpoint"][
                         "npz_sha256"
                     ],
@@ -3757,7 +3892,13 @@ def _run_impl(
                 }
         def capture_primary_fields(*, capture_v3_samples: bool) -> None:
             capture_started = time.perf_counter()
-            _log_stage(comm, started, "field_capture", "begin")
+            _log_stage(
+                comm,
+                started,
+                "field_capture",
+                "begin",
+                workflow_ledger=v3_workflow_ledger,
+            )
             try:
                 capture(
                     view.field,
@@ -3772,6 +3913,7 @@ def _run_impl(
                     started,
                     "field_capture",
                     "failed",
+                    workflow_ledger=v3_workflow_ledger,
                     stage_duration_seconds=time.perf_counter() - capture_started,
                     error=repr(error),
                 )
@@ -3796,6 +3938,7 @@ def _run_impl(
                 started,
                 "field_capture",
                 "end",
+                workflow_ledger=v3_workflow_ledger,
                 stage_duration_seconds=time.perf_counter() - capture_started,
             )
 
@@ -3810,7 +3953,13 @@ def _run_impl(
             }
         )
         action_started = time.perf_counter()
-        _log_stage(comm, started, "independent_active_action", "begin")
+        _log_stage(
+            comm,
+            started,
+            "independent_active_action",
+            "begin",
+            workflow_ledger=v3_workflow_ledger,
+        )
         try:
             independent_action = compute_stage4_independent_active_action(
                 view, capture_raw_vectors=v3_failure_evidence_enabled
@@ -3829,6 +3978,7 @@ def _run_impl(
                 started,
                 "independent_active_action",
                 "failed",
+                workflow_ledger=v3_workflow_ledger,
                 stage_duration_seconds=time.perf_counter() - action_started,
                 error=repr(error),
             )
@@ -3838,6 +3988,7 @@ def _run_impl(
             started,
             "independent_active_action",
             "end",
+            workflow_ledger=v3_workflow_ledger,
             stage_duration_seconds=time.perf_counter() - action_started,
         )
         if v2_diagnostic:
@@ -4124,9 +4275,16 @@ def _run_impl(
                 on_extra_sample=(
                     _write_v3_extra_sample if v3_failure_evidence_enabled else None
                 ),
+                workflow_ledger=v3_workflow_ledger,
             )
 
-    _log_stage(comm, started, "solve_and_observe", "begin")
+    _log_stage(
+        comm,
+        started,
+        "solve_and_observe",
+        "begin",
+        workflow_ledger=v3_workflow_ledger,
+    )
     try:
         summary = run_stage4b_block_grating_3d_case(
             cfg,
@@ -4165,7 +4323,13 @@ def _run_impl(
                     flush=True,
                 )
         raise
-    _log_stage(comm, started, "solve_and_observe", "end")
+    _log_stage(
+        comm,
+        started,
+        "solve_and_observe",
+        "end",
+        workflow_ledger=v3_workflow_ledger,
+    )
     actual_factor_backend = summary.get("actual_pc_factor_solver_type")
     actual_live_factor_backend = captured.get("actual_live_factor_backend")
     if kind == "empty_h_active_p3" and actual_live_factor_backend != actual_factor_backend:
@@ -4192,7 +4356,13 @@ def _run_impl(
             "resolved modal inventory differs from the endpoint contract: "
             f"actual={captured.get('mode_count')}, expected={expected_mode_count}"
         )
-    _log_stage(comm, started, "record_and_compare", "begin")
+    _log_stage(
+        comm,
+        started,
+        "record_and_compare",
+        "begin",
+        workflow_ledger=v3_workflow_ledger,
+    )
     post_error = None
     task43_gated_official_result = None
     if comm.rank == 0:
@@ -4667,6 +4837,7 @@ def _run_impl(
                 started,
                 "record_and_compare",
                 gates["status"],
+                workflow_ledger=v3_workflow_ledger,
                 record_path=str(record_path),
             )
         except Exception as exc:  # noqa: BLE001 - broadcast rank-zero postsolve failures
@@ -4720,6 +4891,7 @@ def _run_impl(
             started,
             "record_and_compare",
             "failed",
+            workflow_ledger=v3_workflow_ledger,
             error=post_error,
         )
         raise RuntimeError(post_error)
@@ -4728,6 +4900,7 @@ def _run_impl(
         started,
         "case_complete",
         "end",
+        workflow_ledger=v3_workflow_ledger,
         total_wall_seconds=time.perf_counter() - started,
     )
     return summary
@@ -4750,7 +4923,9 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
     try:
         return run_impl(*args, **kwargs)
     except BaseException as error:
+        workflow_ledger = context.get("workflow_ledger")
         run_root = context.get("run_root")
+        terminal_record = None
         if (
             v3_enabled
             and run_root is not None
@@ -4758,17 +4933,40 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
             and MPI.COMM_WORLD.rank == 0
         ):
             try:
-                _write_v3_partial_terminal(
+                terminal_record = _write_v3_partial_terminal(
                     Path(run_root),
                     phase=context.get("phase"),
                     source_identity=context.get("source_identity") or {},
                     captured=context.get("captured") or {},
                     error=error,
                 )
-            except (OSError, TypeError, ValueError) as terminal_error:
+            # Do not replace the original solver exception with a write failure.
+            except BaseException as terminal_error:  # noqa: BLE001
                 print(
                     "failed to persist V3 failure terminal after escaped error: "
                     f"{type(terminal_error).__name__}: {terminal_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+        if v3_enabled and workflow_ledger is not None:
+            try:
+                failure_facts = {
+                    "previous_stage": workflow_ledger.last_stage,
+                    "exception_type": type(error).__name__,
+                    "exception_message": str(error),
+                }
+                if terminal_record is not None:
+                    failure_facts["terminal_reference"] = terminal_record
+                workflow_ledger.marker(
+                    "task43_v3_a1_failed",
+                    failure_facts,
+                    allow_stop=True,
+                )
+            # Do not replace the original solver exception with a ledger failure.
+            except BaseException as ledger_error:  # noqa: BLE001
+                print(
+                    "failed to persist V3 A1 workflow failure marker: "
+                    f"{type(ledger_error).__name__}: {ledger_error}",
                     file=sys.stderr,
                     flush=True,
                 )
@@ -4863,7 +5061,7 @@ def main(argv: list[str] | None = None) -> int:
             _validate_v3_a1_entry_contract(v3_contract)
             _validate_v3_consumed_formal_attempts(v3_contract, _REPOSITORY_ROOT)
             _require_v3_watchdog_worker_identity()
-        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        except (OSError, json.JSONDecodeError, RuntimeError, TypeError, ValueError) as exc:
             parser.error(f"V3 A1 frozen contract is invalid: {exc}")
     elif args.v3_contract is not None or args.v3_plan is not None:
         parser.error("V3 contract paths require --v3-failure-evidence")

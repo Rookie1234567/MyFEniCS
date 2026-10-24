@@ -1,4 +1,10 @@
-# Task43 当前收口（2026-10-24）：PARTIAL / CONTROLLED_NEGATIVE
+# Task43 当前收口（2026-10-25）：PARTIAL / CONTROLLED_NEGATIVE
+
+## V4：按 Review V3 §9 完成有限非PDE整改
+
+V4 未新增正式 PDE、dispatch、attempt 或 READY。N1 在 A1 实际 main 路径接入 WorkflowLedger 并以首次 mesh-builder sentinel 验证 phase/stages/失败 terminal；N2 对 A2 后处理 comparison/summary 异常实现原子记录及权限一致降级；N3 将 extra raw residual/RHS/solution packet 前移到物理输出恢复与采样之前，并在小数组上重算 returned condensed、A6 和 full-active residual；N4 watchdog 分辨残留后代与无后代时 cache 不稳定两类停止；N5 只读拆解旧 A2 资源时间区间。各项边界、失败重跑和费用见[Response V4](task43_hp_adaptivity/response_v4.md)及[V4验证compact](task43_hp_adaptivity/outcomes/records/v4_focused_validation_v1.json)。
+
+原正式预算不变：5/6已耗用，A1 2/2、A2 3/3，剩余1封存；下游仍锁定。此前 A1_q2 的实际入口没有 WorkflowLedger，主控在已构网并进入装配后受控停止，且责任来自此前将通用 fixture 外推为实际入口验证的放行判断；本轮修复与测试不追溯补足旧现场证据。A2_q3真实建立 native ledger，但端点仍不完整且 extra full-active 严格下降门失败。accepted9/R9是最后接受状态，最终精度仍未达，生产合并未批准。
 
 ## V3最新进展：两次新增formal dispatch均未取得完整端点资格
 

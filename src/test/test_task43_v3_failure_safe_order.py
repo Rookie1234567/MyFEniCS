@@ -118,7 +118,11 @@ def test_native_a2_field_sample_callback_preserves_q8_before_q10_failure(
 ):
     import src.postprocessing.physical_field_comparison as field_comparison
     import src.postprocessing.physical_field_sampling as field_sampling
-    from benchmarks.task43_hp_adaptivity.candidate_checkpoints import write_atomic_npz
+    from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+        write_atomic_npz,
+        write_v3_extra_before_output_packet,
+        write_v3_primary_before_extra_packet,
+    )
     from src.runners import p6_condensed_direct
 
     inputs = {}
@@ -160,6 +164,84 @@ def test_native_a2_field_sample_callback_preserves_q8_before_q10_failure(
         "magnetic_field_from_electric_curl",
         lambda curl, **_kwargs: np.asarray(curl, dtype=np.complex128) * 3.0,
     )
+    primary_packet = None
+    extra_packet = None
+    primary_packet_sha256 = None
+    if sample_role == "extra":
+        primary_packet = write_v3_primary_before_extra_packet(
+            tmp_path / "primary_before_extra.npz",
+            {
+                "primary_solution": np.asarray([1.0 + 0.5j, 2.0 - 1.0j]),
+                "primary_returned_trace_dtn_rhs": np.ones(2, dtype=np.complex128),
+                "primary_native_A6_effective_rhs": np.ones(2, dtype=np.complex128),
+                "primary_independent_A6_residual": np.full(2, 1.0e-11 + 0j),
+                "primary_zero_slave_carrier_residual": np.full(
+                    2, 1.0e-10 + 0j
+                ),
+                "primary_augmented_port_residual": np.asarray([1.0e-11 + 0j]),
+            },
+            identity={"phase": "A2_q", "attempt": 3},
+        )
+        primary_packet_sha256 = hashlib.sha256(
+            Path(primary_packet["npz_path"]).read_bytes()
+        ).hexdigest()
+        common_rhs = np.ones(2, dtype=np.complex128)
+        extra_condensed_residual = np.asarray([1.0e-12 + 0j, 2.0e-12 + 0j])
+        extra_a6_residual = np.asarray([1.0e-11 + 0j, 1.0e-11 + 0j])
+        extra_carrier_residual = np.asarray([1.2e-10 + 0j, 1.2e-10 + 0j])
+        extra_port_residual = np.asarray([1.0e-11 + 0j])
+        extra_condensed_relative = float(
+            np.linalg.norm(extra_condensed_residual) / np.linalg.norm(common_rhs)
+        )
+        extra_a6_relative = float(
+            np.linalg.norm(extra_a6_residual) / np.linalg.norm(common_rhs)
+        )
+        extra_full_active_relative = float(
+            np.hypot(
+                np.linalg.norm(extra_carrier_residual),
+                np.linalg.norm(extra_port_residual),
+            )
+            / np.linalg.norm(common_rhs)
+        )
+        extra_packet = write_v3_extra_before_output_packet(
+            tmp_path / "extra_before_output.npz",
+            {
+                "extra_recovered_p6_storage": np.asarray(
+                    [1.0 + 0.5j, 2.0 - 1.0j]
+                ),
+                "extra_condensed_solution": np.asarray(
+                    [1.0 + 0.5j, 2.0 - 1.0j]
+                ),
+                "extra_condensed_b_minus_Ax": extra_condensed_residual,
+                "extra_condensed_rhs": common_rhs.copy(),
+                "primary_condensed_rhs": common_rhs.copy(),
+                "extra_independent_A6_residual": extra_a6_residual,
+                "extra_native_A6_effective_rhs": common_rhs.copy(),
+                "primary_native_A6_effective_rhs": common_rhs.copy(),
+                "extra_zero_slave_carrier_residual": extra_carrier_residual,
+                "extra_augmented_port_residual": extra_port_residual,
+            },
+            identity={
+                "phase": "A2_q",
+                "attempt": 3,
+                "primary_before_extra_packet_sha256": primary_packet["npz_sha256"],
+                "same_condensed_rhs_as_primary": True,
+                "same_native_effective_rhs_as_primary": True,
+                "factor_counts": {
+                    "initial_factor_solve_calls": 2,
+                    "final_factor_solve_calls": 3,
+                    "exactly_one_extra_solve": True,
+                    "factorization_calls_unchanged": True,
+                },
+                "residual_metrics": {
+                    "extra_condensed_b_minus_Ax_relative": extra_condensed_relative,
+                    "extra_independent_A6_relative": extra_a6_relative,
+                    "extra_full_active_transformed_relative": extra_full_active_relative,
+                    "extra_full_active_strict_decrease": False,
+                    "extra_status": "FAIL_UNCONTROLLED_EXTRA_CORRECTION",
+                },
+            },
+        )
     primary_samples = {}
 
     def persist(order, sample):
@@ -201,6 +283,282 @@ def test_native_a2_field_sample_callback_preserves_q8_before_q10_failure(
         assert saved["H_total_A_per_m"].shape == (2, 3)
     assert not (tmp_path / f"{sample_role}_q10.npz").exists()
     assert q8_path != q8_path.with_name(f"{sample_role}_q10.npz")
+    if extra_packet is not None:
+        from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+            demote_v3_native_summary_after_error,
+        )
+
+        terminal_path = tmp_path / "task43_v3_partial_terminal.json"
+        summary = {
+            "source_sha": "d" * 40,
+            "status": "SOLVER_MEASURED",
+            "passed": True,
+            "official_result": {"R_total": 0.25},
+        }
+        demote_v3_native_summary_after_error(
+            summary,
+            terminal_path,
+            phase="A2_q",
+            source_identity={"source_sha": "d" * 40},
+            error=RuntimeError("injected q10 sampler failure"),
+            primary_before_extra_packet=primary_packet,
+            primary_q_samples={},
+            extra_q_samples=primary_samples,
+            extra_before_output_packet=extra_packet,
+        )
+        terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+        assert terminal["extra_before_output_packet"]["npz_sha256"] == extra_packet[
+            "npz_sha256"
+        ]
+        assert terminal["extra_q_samples"]["q8"]["npz_sha256"] == primary_samples[
+            "q8"
+        ]["npz_sha256"]
+        assert hashlib.sha256(Path(extra_packet["npz_path"]).read_bytes()).hexdigest() == (
+            extra_packet["npz_sha256"]
+        )
+        assert hashlib.sha256(
+            Path(primary_packet["npz_path"]).read_bytes()
+        ).hexdigest() == primary_packet_sha256
+        with np.load(extra_packet["npz_path"], allow_pickle=False) as saved:
+            condensed_relative = float(
+                np.linalg.norm(saved["extra_condensed_b_minus_Ax"])
+                / np.linalg.norm(saved["extra_condensed_rhs"])
+            )
+            a6_relative = float(
+                np.linalg.norm(saved["extra_independent_A6_residual"])
+                / np.linalg.norm(saved["extra_native_A6_effective_rhs"])
+            )
+            full_active_relative = float(
+                np.hypot(
+                    np.linalg.norm(saved["extra_zero_slave_carrier_residual"]),
+                    np.linalg.norm(saved["extra_augmented_port_residual"]),
+                )
+                / np.linalg.norm(saved["extra_native_A6_effective_rhs"])
+            )
+            assert np.array_equal(
+                saved["primary_condensed_rhs"], saved["extra_condensed_rhs"]
+            )
+            saved_record = json.loads(saved["__task43_record_json__"].tobytes())
+            saved_metrics = saved_record["identity"]["residual_metrics"]
+        assert condensed_relative == pytest.approx(
+            saved_metrics["extra_condensed_b_minus_Ax_relative"],
+            rel=1.0e-12,
+            abs=0.0,
+        )
+        assert a6_relative == pytest.approx(
+            saved_metrics["extra_independent_A6_relative"],
+            rel=1.0e-12,
+            abs=0.0,
+        )
+        assert full_active_relative == pytest.approx(
+            saved_metrics["extra_full_active_transformed_relative"],
+            rel=1.0e-12,
+            abs=0.0,
+        )
+        assert a6_relative < 1.0e-8
+        assert full_active_relative < 1.0e-8
+        assert saved_metrics["extra_full_active_strict_decrease"] is False
+        assert saved_metrics["extra_status"] == (
+            "FAIL_UNCONTROLLED_EXTRA_CORRECTION"
+        )
+
+
+def test_a2_extra_raw_packet_precedes_output_recovery_sampling_and_failure_paths():
+    source = (_ROOT / "src/runners/p6_condensed_direct.py").read_text(
+        encoding="utf-8"
+    )
+    extra_start = source.index("extra_native_facts = action.evaluate_native_residual(")
+    full_active = source.index(
+        "extra_active_explicit_facts = _task43_v2_active_explicit_residual_facts(",
+        extra_start,
+    )
+    recovered = source.index("extra_recovered = np.asarray(", full_active)
+    packet = source.index("v3_extra_packet_record = write_v3_extra_before_output_packet(", recovered)
+    extra_field = source.index("extra_saved_field = create_vector(", packet)
+    physical_output = source.index(
+        "extra_output_facts = recover_p0_outputs(", extra_field
+    )
+    field_restore = source.index(
+        'name="Task43_A2_extra_lu_field_for_fixed_samples"', physical_output
+    )
+    sample = source.index(
+        "extra_samples = _task43_v2_capture_fixed_field_samples(", field_restore
+    )
+    assert extra_start < full_active < recovered < packet < extra_field
+    assert packet < physical_output < field_restore < sample
+    failure_handler = source.split("except BaseException as exc:", 1)[-1]
+    assert "extra_before_output_packet=v3_extra_packet_record" in failure_handler
+
+
+@pytest.mark.parametrize("failure_point", ["extra_field_recovery", "collective_transport"])
+def test_a2_extra_packet_survives_post_packet_recovery_or_transport_failure(
+    tmp_path, failure_point
+):
+    from mpi4py import MPI
+
+    from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+        demote_v3_native_summary_after_error,
+        write_v3_extra_before_output_packet,
+        write_v3_primary_before_extra_packet,
+    )
+
+    primary = write_v3_primary_before_extra_packet(
+        tmp_path / "primary.npz",
+        {
+            "primary_returned_trace_dtn_rhs": np.asarray(
+                [1.0 + 0j, 2.0 + 0j]
+            ),
+            "primary_native_A6_effective_rhs": np.asarray(
+                [1.0 + 0j, 2.0 + 0j]
+            ),
+            "primary_independent_A6_residual": np.asarray(
+                [1.0e-11 + 0j, 1.0e-11 + 0j]
+            ),
+            "primary_zero_slave_carrier_residual": np.asarray(
+                [1.0e-10 + 0j, 1.0e-10 + 0j]
+            ),
+            "primary_augmented_port_residual": np.asarray([1.0e-11 + 0j]),
+        },
+        identity={"phase": "A2_q", "attempt": 3},
+    )
+    same_rhs = np.asarray([1.0 + 0j, 2.0 + 0j])
+    extra_arrays = {
+        "extra_condensed_solution": np.asarray([0.5 + 0.2j, 1.5 - 0.1j]),
+        "extra_condensed_b_minus_Ax": np.asarray(
+            [2.0e-12 + 0j, 1.0e-12 + 0j]
+        ),
+        "extra_condensed_rhs": same_rhs.copy(),
+        "primary_condensed_rhs": same_rhs.copy(),
+        "extra_independent_A6_residual": np.asarray(
+            [1.0e-11 + 0j, 1.0e-11 + 0j]
+        ),
+        "extra_native_A6_effective_rhs": same_rhs.copy(),
+        "primary_native_A6_effective_rhs": same_rhs.copy(),
+        "extra_zero_slave_carrier_residual": np.asarray(
+            [1.2e-10 + 0j, 1.2e-10 + 0j]
+        ),
+        "extra_augmented_port_residual": np.asarray([1.0e-11 + 0j]),
+    }
+    condensed_relative = float(
+        np.linalg.norm(extra_arrays["extra_condensed_b_minus_Ax"])
+        / np.linalg.norm(extra_arrays["extra_condensed_rhs"])
+    )
+    a6_relative = float(
+        np.linalg.norm(extra_arrays["extra_independent_A6_residual"])
+        / np.linalg.norm(extra_arrays["extra_native_A6_effective_rhs"])
+    )
+    full_active_relative = float(
+        np.hypot(
+            np.linalg.norm(extra_arrays["extra_zero_slave_carrier_residual"]),
+            np.linalg.norm(extra_arrays["extra_augmented_port_residual"]),
+        )
+        / np.linalg.norm(extra_arrays["extra_native_A6_effective_rhs"])
+    )
+    assert condensed_relative < 1.0e-9
+    assert a6_relative < 1.0e-8
+    assert full_active_relative < 1.0e-8
+    primary_bytes = Path(primary["npz_path"]).read_bytes()
+    primary_sha256 = hashlib.sha256(primary_bytes).hexdigest()
+    extra_identity = {
+        "phase": "A2_q",
+        "attempt": 3,
+        "primary_before_extra_packet_sha256": primary["npz_sha256"],
+        "same_condensed_rhs_as_primary": True,
+        "same_native_effective_rhs_as_primary": True,
+        "factor_counts": {
+            "extra_correction_count": 1,
+            "factorization_calls_unchanged": True,
+        },
+        "residual_metrics": {
+            "extra_condensed_b_minus_Ax_relative": condensed_relative,
+            "extra_independent_A6_relative": a6_relative,
+            "extra_full_active_transformed_relative": full_active_relative,
+            "extra_full_active_strict_decrease": False,
+            "extra_status": "FAIL_UNCONTROLLED_EXTRA_CORRECTION",
+        },
+    }
+    extra = write_v3_extra_before_output_packet(
+        tmp_path / "extra_before_output.npz",
+        extra_arrays,
+        identity=extra_identity,
+    )
+    saved_bytes = Path(extra["npz_path"]).read_bytes()
+    failure = None
+    try:
+        if failure_point == "extra_field_recovery":
+            raise RuntimeError("injected extra field recovery failure")
+        received = MPI.COMM_WORLD.bcast(extra, root=0)
+        assert received["npz_sha256"] == extra["npz_sha256"]
+        raise RuntimeError("injected post-packet transport failure")
+    except RuntimeError as exc:
+        failure = exc
+
+    summary = {"source_sha": "e" * 40, "status": "SOLVER_MEASURED", "passed": True}
+    terminal_path = tmp_path / "task43_v3_partial_terminal.json"
+    demote_v3_native_summary_after_error(
+        summary,
+        terminal_path,
+        phase="A2_q",
+        source_identity={"source_sha": "e" * 40},
+        error=failure,
+        primary_before_extra_packet=primary,
+        primary_q_samples={},
+        extra_before_output_packet=extra,
+    )
+    terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+    assert terminal["extra_before_output_packet"]["npz_sha256"] == extra[
+        "npz_sha256"
+    ]
+    assert Path(extra["npz_path"]).read_bytes() == saved_bytes
+    assert hashlib.sha256(Path(primary["npz_path"]).read_bytes()).hexdigest() == (
+        primary_sha256
+    )
+    with np.load(extra["npz_path"], allow_pickle=False) as saved:
+        recomputed_condensed = float(
+            np.linalg.norm(saved["extra_condensed_b_minus_Ax"])
+            / np.linalg.norm(saved["extra_condensed_rhs"])
+        )
+        recomputed_a6 = float(
+            np.linalg.norm(saved["extra_independent_A6_residual"])
+            / np.linalg.norm(saved["extra_native_A6_effective_rhs"])
+        )
+        recomputed_full_active = float(
+            np.hypot(
+                np.linalg.norm(saved["extra_zero_slave_carrier_residual"]),
+                np.linalg.norm(saved["extra_augmented_port_residual"]),
+            )
+            / np.linalg.norm(saved["extra_native_A6_effective_rhs"])
+        )
+        assert np.array_equal(
+            saved["primary_condensed_rhs"],
+            saved["extra_condensed_rhs"],
+        )
+        assert np.array_equal(
+            saved["primary_native_A6_effective_rhs"],
+            saved["extra_native_A6_effective_rhs"],
+        )
+        saved_record = json.loads(saved["__task43_record_json__"].tobytes())
+        saved_metrics = saved_record["identity"]["residual_metrics"]
+    assert recomputed_condensed == pytest.approx(
+        saved_metrics["extra_condensed_b_minus_Ax_relative"],
+        rel=1.0e-12,
+        abs=0.0,
+    )
+    assert recomputed_a6 == pytest.approx(
+        saved_metrics["extra_independent_A6_relative"],
+        rel=1.0e-12,
+        abs=0.0,
+    )
+    assert recomputed_full_active == pytest.approx(
+        saved_metrics["extra_full_active_transformed_relative"],
+        rel=1.0e-12,
+        abs=0.0,
+    )
+    assert saved_metrics["extra_full_active_strict_decrease"] is False
+    assert saved_metrics["extra_status"] == (
+        "FAIL_UNCONTROLLED_EXTRA_CORRECTION"
+    )
+    assert terminal["continuation_all_false"] is True
 
 
 @pytest.mark.parametrize("failure_stage", ["comparison", "record_write"])
@@ -210,7 +568,11 @@ def test_a2_adapter_postprocess_exception_demotes_native_result(
     from benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic import (
         _task43_v3_postprocess_fail_closed,
     )
-    from benchmarks.task43_hp_adaptivity.candidate_checkpoints import write_atomic_npz
+    from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+        write_atomic_bytes,
+        write_atomic_json,
+        write_atomic_npz,
+    )
 
     run_dir = tmp_path / "run"
     numerical = run_dir / "numerical_output"
@@ -229,54 +591,80 @@ def test_a2_adapter_postprocess_exception_demotes_native_result(
         classification="measured_primary_state_before_extra_not_official",
         identity={"phase": "A2_q", "attempt": 3},
     )
+    primary_bytes_before_failure = Path(packet["npz_path"]).read_bytes()
+    primary_sha256_before_failure = hashlib.sha256(
+        primary_bytes_before_failure
+    ).hexdigest()
     summary_path = run_dir / "p6_condensed_direct_summary.json"
-    summary_path.write_text(
-        json.dumps(
-            {
-                "source_sha": "a" * 40,
-                "status": "A2_Q_COMPLETED_AUTHORITY_LIMITED",
-                "passed": True,
-                "official_result": {"port_metrics": {"R_total": 0.25}},
-                "task43_v3_diagnostic_identity": {
-                    "contract_sha256": "b" * 64,
-                    "plan_sha256": "c" * 64,
-                },
-                "task43_v3_primary_before_extra_packet": packet,
-                "task43_v3_primary_field_samples": {"q8": q8},
-            },
-            sort_keys=True,
-        ),
-        encoding="utf-8",
+    original_summary = {
+        "source_sha": "a" * 40,
+        "status": "A2_Q_COMPLETED_AUTHORITY_LIMITED",
+        "passed": True,
+        "official_result": {"port_metrics": {"R_total": 0.25}},
+        "task43_v3_diagnostic_identity": {
+            "contract_sha256": "b" * 64,
+            "plan_sha256": "c" * 64,
+        },
+        "task43_v3_primary_before_extra_packet": packet,
+        "task43_v3_primary_field_samples": {"q8": q8},
+        "task43_v3_endpoint_authority": {
+            "official_result": True,
+            "passed": True,
+            "continuation_all_false": False,
+        },
+        "task43_v2_comparison": {
+            "endpoint_qualified": True,
+            "same_group_R_factor_may_continue": True,
+            "max_power_delta": 2.5e-8,
+        },
+    }
+    write_atomic_json(summary_path, original_summary)
+    comparison_path = run_dir / "comparison_record.json"
+    original_comparison_bytes = (
+        b'{\n  "endpoint_qualified": true,\n'
+        b'  "official_result": true,\n'
+        b'  "same_group_R_factor_may_continue": true,\n'
+        b'  "primary_perturbation_gate": {"max_power_delta": 2.5e-8},\n'
+        b'  "measured_R_total": 0.25000001\n}\n'
     )
 
     def failed_postprocess():
+        write_atomic_bytes(comparison_path, original_comparison_bytes)
         if failure_stage == "record_write":
-            # Model a partial adapter write followed by a record failure. The
-            # same production guard must demote the already-written native pass.
-            partial = json.loads(summary_path.read_text(encoding="utf-8"))
-            partial["task43_v3_invocation"] = {"attempt": 3}
-            summary_path.write_text(json.dumps(partial), encoding="utf-8")
+            # An interrupted adapter write may leave invalid JSON. The failure
+            # guard must use its pre-callback snapshot, not reread this file.
+            summary_path.write_text('{"partial":', encoding="utf-8")
             raise OSError("injected V3 adapter record failure")
-        raise ValueError("injected V3 comparison failure")
+        raise OSError("injected V3 comparison failure")
 
-    expected_exception = OSError if failure_stage == "record_write" else ValueError
     expected_message = (
         "injected V3 adapter record failure"
         if failure_stage == "record_write"
         else "injected V3 comparison failure"
     )
-    with pytest.raises(expected_exception, match=expected_message):
+    with pytest.raises(OSError, match=expected_message):
         _task43_v3_postprocess_fail_closed(
             failed_postprocess,
             summary_path=summary_path,
             run_directory=run_dir,
             phase="A2_q",
+            comparison_path=comparison_path,
         )
     demoted = json.loads(summary_path.read_text(encoding="utf-8"))
     assert demoted["official_result"] is False
     assert demoted["passed"] is False
     assert demoted["continuation_all_false"] is True
     assert demoted["selection_eligible"] is False
+    assert demoted["task43_v2_comparison"]["endpoint_qualified"] is False
+    assert demoted["task43_v2_comparison"]["same_group_R_factor_may_continue"] is False
+    assert demoted["task43_v3_endpoint_authority"]["official_result"] is False
+    assert demoted["task43_v3_endpoint_authority"]["passed"] is False
+    assert demoted["task43_v3_comparison_failure_reference"]["sha256"] == hashlib.sha256(
+        original_comparison_bytes
+    ).hexdigest()
+    assert demoted["task43_v3_postprocess_failure"]["exception_type"] == "OSError"
+    assert demoted["task43_v3_postprocess_failure"]["exception_message"] == expected_message
+    assert demoted["task43_v2_comparison"]["max_power_delta"] == 2.5e-8
     assert (
         demoted["measured_endpoint_output_not_official"]["port_metrics"]["R_total"]
         == 0.25
@@ -286,8 +674,27 @@ def test_a2_adapter_postprocess_exception_demotes_native_result(
     )
     assert terminal["status"] == "FAILED"
     assert terminal["primary_before_extra_packet"]["npz_sha256"] == packet["npz_sha256"]
+    assert hashlib.sha256(Path(packet["npz_path"]).read_bytes()).hexdigest() == (
+        primary_sha256_before_failure
+    )
     assert terminal["primary_q_samples"]["q8"]["npz_sha256"] == q8["npz_sha256"]
     assert terminal["continuation_all_false"] is True
+    assert terminal["error"] == expected_message
+    sidecar_ref = terminal["comparison_failure_reference"]
+    sidecar = Path(sidecar_ref["path"])
+    assert sidecar.read_bytes() == original_comparison_bytes
+    assert hashlib.sha256(sidecar.read_bytes()).hexdigest() == sidecar_ref["sha256"]
+    current_comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+    assert current_comparison["endpoint_qualified"] is False
+    assert current_comparison["same_group_R_factor_may_continue"] is False
+    assert current_comparison["measured_R_total"] == 0.25000001
+    assert current_comparison["original_record_sha256"] == sidecar_ref["sha256"]
+    assert (
+        demoted["task43_v2_comparison"]["sha256"]
+        == hashlib.sha256(comparison_path.read_bytes()).hexdigest()
+    )
+    assert demoted["task43_v3_postprocess_failure"]["exception_type"] == "OSError"
+    assert demoted["task43_v2_comparison"]["endpoint_qualified_before_failure"] is True
 
 
 def test_a2_adapter_guard_wraps_full_postprocess_callback():
@@ -299,9 +706,10 @@ def test_a2_adapter_guard_wraps_full_postprocess_callback():
         "\n    if v3_diagnostic is not None:\n        return _task43_v3_postprocess_fail_closed(",
         1,
     )[0]
-    assert "summary_path.write_text(" in callback
+    assert "write_postprocess_json(summary_path, runner_summary)" in callback
     assert "comparison_callback()" in callback
-    assert "comparison_path.write_text(" in callback
+    assert "write_postprocess_json(comparison_path, comparison)" in callback
+    assert "write_atomic_json(path, record, refuse_overwrite=False)" in callback
     assert "_task43_v3_postprocess_fail_closed(" in main
     assert "postprocess_native_result," in main
 
@@ -452,6 +860,7 @@ def test_v3_worker_requires_direct_watchdog_parent_and_absolute_phase(
 
     module = h100_anchor if route == "a1" else a2_native_p6_diagnostic
     phase_path = tmp_path / "watchdog" / "workflow_phase.json"
+    phase_path.parent.mkdir(parents=True)
     monkeypatch.setenv("PHYSICAL_WATCHDOG_PARENT_PID", "74001")
     monkeypatch.setenv("PHYSICAL_WATCHDOG_PHASE_PATH", str(phase_path))
     monkeypatch.setattr(module.os, "getppid", lambda: 74001)

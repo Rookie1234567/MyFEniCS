@@ -81,46 +81,211 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _preserve_and_demote_v3_comparison(
+    comparison_path: Path | None, *, phase: str, error: BaseException
+) -> dict[str, Any] | None:
+    """Retain exact comparison bytes, then remove their current authority."""
+
+    if comparison_path is None or not comparison_path.is_file():
+        return None
+
+    from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+        write_atomic_bytes,
+        write_atomic_json,
+    )
+
+    comparison_path = Path(comparison_path)
+    original_bytes = comparison_path.read_bytes()
+    original_sha256 = hashlib.sha256(original_bytes).hexdigest()
+    sidecar = comparison_path.with_name(
+        f"{comparison_path.name}.pre_failure.{original_sha256}.json"
+    )
+    if sidecar.exists():
+        if sidecar.read_bytes() != original_bytes:
+            raise FileExistsError(
+                f"pre-failure comparison sidecar differs from its source: {sidecar}"
+            )
+        original_ref = {
+            "path": str(sidecar),
+            "sha256": original_sha256,
+            "bytes": len(original_bytes),
+        }
+    else:
+        original_ref = write_atomic_bytes(sidecar, original_bytes)
+
+    try:
+        original = json.loads(original_bytes.decode("utf-8"))
+        if not isinstance(original, dict):
+            raise TypeError("comparison record must be a JSON object")
+        demoted = dict(original)
+        previous_qualification = original.get("endpoint_qualified")
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as parse_error:
+        demoted = {
+            "schema": "task43.v3.comparison_authority_failure.v1",
+            "original_record_parse_error": str(parse_error),
+        }
+        previous_qualification = None
+
+    demoted.update(
+        {
+            "original_record_path": str(comparison_path),
+            "original_record_sha256": original_sha256,
+            "original_endpoint_qualified": previous_qualification,
+            "postprocess_failure": {
+                "phase": phase,
+                "exception_type": type(error).__name__,
+                "exception_message": str(error),
+            },
+            "status": "FAILED_OR_INCOMPLETE_V3_POSTPROCESS",
+            "classification": "measured_or_partial_nonofficial_endpoint",
+            "authority": "DIAGNOSTIC_ONLY_PARTIAL_NONOFFICIAL",
+            "endpoint_qualified": False,
+            "official_result": False,
+            "passed": False,
+            "selection_eligible": False,
+            "selection_candidate": False,
+            "candidate_selected": False,
+            "same_group_R_factor_may_continue": False,
+            "A2_R_status": "locked_after_v3_postprocess_failure",
+            "continuation_all_false": True,
+            "continuation": {
+                "same_group_R": False,
+                "A1_R": False,
+                "A2_q": False,
+                "A2_R": False,
+                "A2_q3": False,
+                "B": False,
+                "C": False,
+                "cost_campaign": False,
+                "iteration": False,
+            },
+        }
+    )
+    write_atomic_json(comparison_path, demoted, refuse_overwrite=False)
+    return {
+        **original_ref,
+        "current_path": str(comparison_path),
+        "current_sha256": _sha256(comparison_path),
+        "authority_demoted": True,
+    }
+
+
 def _task43_v3_postprocess_fail_closed(
     comparison_callback,
     *,
     summary_path: Path,
     run_directory: Path,
     phase: str,
+    comparison_path: Path | None = None,
+    summary_snapshot: dict[str, Any] | None = None,
 ) -> Any:
-    """Demote a native summary if any V3 postprocessing step raises."""
+    """Demote cached native and comparison records without masking failures."""
+
+    # Read and deep-copy before any adapter writer can truncate either record.
+    cached_summary = copy.deepcopy(
+        summary_snapshot if summary_snapshot is not None else _read_json(summary_path)
+    )
 
     try:
         return comparison_callback()
+    # Demote authority even for process-level interruptions, then preserve the
+    # original exception for the caller.
     except BaseException as exc:
-        summary = _read_json(summary_path)
+        summary = cached_summary
         identity = summary.get("task43_v3_diagnostic_identity", {})
         from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
             demote_v3_native_summary_after_error,
+            write_atomic_json,
         )
 
-        demote_v3_native_summary_after_error(
-            summary,
-            run_directory / "numerical_output/task43_v3_partial_terminal.json",
-            phase=phase,
-            source_identity={
-                "source_sha": summary.get("source_sha"),
-                "frozen_v3_contract_sha256": identity.get("contract_sha256"),
-                "frozen_v3_plan_sha256": identity.get("plan_sha256"),
-            },
-            error=exc,
-            primary_before_extra_packet=summary.get(
-                "task43_v3_primary_before_extra_packet"
-            ),
-            primary_q_samples=summary.get("task43_v3_primary_field_samples", {}),
-            extra_q_samples=summary.get("task43_v3_extra_field_samples", {}),
-        )
-        temporary = summary_path.with_suffix(summary_path.suffix + ".tmp")
-        temporary.write_text(
-            json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
-            encoding="utf-8",
-        )
-        temporary.replace(summary_path)
+        comparison_reference = None
+        demotion_errors = []
+        try:
+            comparison_reference = _preserve_and_demote_v3_comparison(
+                comparison_path, phase=phase, error=exc
+            )
+        # Cleanup failures are recorded without replacing the callback error.
+        except BaseException as demotion_error:  # noqa: BLE001
+            demotion_errors.append(
+                f"comparison authority demotion: {type(demotion_error).__name__}: "
+                f"{demotion_error}"
+            )
+
+        reported_comparison = summary.get("task43_v2_comparison")
+        if isinstance(reported_comparison, dict):
+            reported_comparison["endpoint_qualified_before_failure"] = reported_comparison.get(
+                "endpoint_qualified"
+            )
+            reported_comparison.update(
+                endpoint_qualified=False,
+                same_group_R_factor_may_continue=False,
+                A2_R_status="locked_after_v3_postprocess_failure",
+                endpoint_qualification_scope=(
+                    "non-authoritative after V3 adapter postprocess failure"
+                ),
+                authority="DIAGNOSTIC_ONLY_PARTIAL_NONOFFICIAL",
+            )
+            if comparison_reference is not None:
+                reported_comparison.update(
+                    path=comparison_reference["current_path"],
+                    sha256=comparison_reference["current_sha256"],
+                    original_record_path=comparison_reference["path"],
+                    original_record_sha256=comparison_reference["sha256"],
+                )
+            summary["task43_v2_comparison"] = reported_comparison
+        summary["task43_v3_postprocess_failure"] = {
+            "phase": phase,
+            "exception_type": type(exc).__name__,
+            "exception_message": str(exc),
+            "comparison_failure_reference": comparison_reference,
+            "demotion_errors": demotion_errors,
+        }
+
+        try:
+            demote_v3_native_summary_after_error(
+                summary,
+                run_directory / "numerical_output/task43_v3_partial_terminal.json",
+                phase=phase,
+                source_identity={
+                    "source_sha": summary.get("source_sha"),
+                    "frozen_v3_contract_sha256": identity.get("contract_sha256"),
+                    "frozen_v3_plan_sha256": identity.get("plan_sha256"),
+                },
+                error=exc,
+                primary_before_extra_packet=summary.get(
+                    "task43_v3_primary_before_extra_packet"
+                ),
+                primary_q_samples=summary.get("task43_v3_primary_field_samples", {}),
+                extra_q_samples=summary.get("task43_v3_extra_field_samples", {}),
+                extra_before_output_packet=summary.get(
+                    "task43_v3_extra_before_output_packet"
+                ),
+                comparison_failure_reference=comparison_reference,
+            )
+        # Keep the original callback exception if terminal persistence fails.
+        except BaseException as demotion_error:  # noqa: BLE001
+            demotion_errors.append(
+                f"partial terminal write: {type(demotion_error).__name__}: "
+                f"{demotion_error}"
+            )
+            summary["task43_v3_postprocess_failure"]["demotion_errors"] = demotion_errors
+
+        try:
+            write_atomic_json(summary_path, summary, refuse_overwrite=False)
+        # Keep the original callback exception if summary persistence fails.
+        except BaseException as demotion_error:  # noqa: BLE001
+            print(
+                "Task43 V3 could not persist its fail-closed summary; "
+                f"original {type(exc).__name__} remains active: {demotion_error}",
+                file=sys.stderr,
+                flush=True,
+            )
+        if demotion_errors:
+            print(
+                "Task43 V3 failure-record warnings: " + "; ".join(demotion_errors),
+                file=sys.stderr,
+                flush=True,
+            )
         raise
 
 
@@ -2376,8 +2541,22 @@ def main(argv: list[str] | None = None) -> int:
             print(summary_path.read_text(encoding="utf-8"), file=sys.stderr)
         raise
     summary_path = output_dir / "p6_condensed_direct_summary.json"
+    comparison_path = output_dir / "comparison_record.json"
 
     def postprocess_native_result() -> int:
+        def write_postprocess_json(path: Path, record: dict[str, Any]) -> None:
+            if v3_diagnostic is not None:
+                from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+                    write_atomic_json,
+                )
+
+                write_atomic_json(path, record, refuse_overwrite=False)
+                return
+            path.write_text(
+                json.dumps(record, sort_keys=True, indent=2, allow_nan=False) + "\n",
+                encoding="utf-8",
+            )
+
         summary_path = Path(result["summary"])
         runner_summary = _read_json(summary_path)
         runner_summary["task43_v2_resolved_profile_compatibility"] = frozen[
@@ -2396,10 +2575,7 @@ def main(argv: list[str] | None = None) -> int:
                 ]["watchdog_summary_sha256"],
             }
             runner_summary["task43_v2_retry_authorization"] = retry_binding
-        summary_path.write_text(
-            json.dumps(runner_summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
-            encoding="utf-8",
-        )
+        write_postprocess_json(summary_path, runner_summary)
         comparison_callback = lambda: _comparison_record(
             args.phase,
             output_dir,
@@ -2426,11 +2602,7 @@ def main(argv: list[str] | None = None) -> int:
                     "local A2_q attempt-3 diagnostic only; no A2_R, B, or C continuation"
                 ),
             )
-        comparison_path = output_dir / "comparison_record.json"
-        comparison_path.write_text(
-            json.dumps(comparison, sort_keys=True, indent=2, allow_nan=False) + "\n",
-            encoding="utf-8",
-        )
+        write_postprocess_json(comparison_path, comparison)
         comparison["comparison_record_sha256"] = _sha256(comparison_path)
         summary = _read_json(summary_path)
         summary["task43_v2_comparison"] = {
@@ -2451,10 +2623,7 @@ def main(argv: list[str] | None = None) -> int:
                 "frozen A2 endpoint comparison",
             ),
         }
-        summary_path.write_text(
-            json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
-            encoding="utf-8",
-        )
+        write_postprocess_json(summary_path, summary)
         print(
             json.dumps(
                 {
@@ -2489,6 +2658,7 @@ def main(argv: list[str] | None = None) -> int:
             summary_path=summary_path,
             run_directory=output_dir,
             phase=args.phase,
+            comparison_path=comparison_path,
         )
     return postprocess_native_result()
 

@@ -1,5 +1,19 @@
 # Task43 结果：部分完成，受控负结果
 
+## 最新收口：V4 按 Review V3 §9 完成非PDE有限整改（2026-10-25）
+
+本轮未新增正式 PDE、dispatch、attempt 或 READY。N1 将 `WorkflowLedger` 接入 A1 的真实 opt-in main，并以首次 mesh-builder 边界 sentinel 验证 phase、stages 与失败 terminal；N2 针对 comparison 成功写出后回调异常、以及 summary 截断后记录异常，实施原子保存和 fail-closed authority demotion；N3 在 extra 独立 A6/full-active 计算后、物理输出恢复和采样前保存 raw packet；N4 区分“后代仍未清除”与“无后代但 cache metadata 未稳定”；N5 只读审计旧 A2 资源/阶段记录；N6 更新当前文档和验证索引。组件测试不改变 V3 正式终态，也不能把工程验证提升为数值或生产资格。
+
+| 当前量 | 状态 | 说明 |
+|---|---|---|
+| formal dispatch / 配额 | 5/6已用；A1 2/2、A2 3/3；剩余1封存 | V4新增0；不重试、不跨组重分配，A1_R/A2_R/B/C及其他下游仍锁定 |
+| A1_q2 | 历史受控停止 | 真实入口缺 `WorkflowLedger`，主控此前错误放行后主动停止；已构网并进入装配，但无因子分解/完成求解证据。历史READY仅保留，不再有效授权 |
+| A2_q3 | 历史 `INCOMPLETE_NOT_OFFICIAL` | 真实native phase ledger成立；primary部分字段经raw审计通过，但extra full-active residual未严格下降，7200秒门后完整endpoint/comparison未产出 |
+| G0–G4 | 分门叙述，不合并为总PASS | G0/G3/N5取证见历史原件审计；N1–N3为组件整改；A1现场G2不满足，A2真实入口G2成立；完整endpoint仍未资格化，生产合并未批准 |
+| 五项能力 | 空间/选择 `PARTIAL`；精度 `NOT_PASSED`；同精度全过程成本 `NOT_ESTABLISHED`；迭代 `NOT_RUN / NOT_QUALIFIED` | accepted9/R9仍为最后接受状态；0.7nm未运行 |
+
+N5旧日志生命周期和 affinity 记录见[V4 root audit index](records/v4_root_audit/index.json)。N1–N4 失败注入、final focused 和本地文档检查的实际命令、source/test SHA、完整 stdout 与 watchdog 费用见[V4 focused validation compact](records/v4_focused_validation_v1.json)。支持工作与 formal watchdog wall分账；未独立计时的操作标 `not_measured`，不与N5重叠阶段重复相加。详见[Response V4](../response_v4.md)。
+
 ## 最新收口：V3 两次有限诊断（2026-10-24）
 
 V1接受状态仍冻结在R9，最终空间精度未达。V3在原始最多6次formal dispatch额度内完成了两次获准尝试，累计共5/6次；A1组2/2、A2组3/3，剩余1次封存。A1_q2构网并进入装配后，因为实际A1入口没有建立要求的`WorkflowLedger`，由主控受控停止；A2_q3确实建立ledger、完成Y6_1网格与装配、保存primary和q8/q10场样本，但在7200秒墙钟门到期后停止，完整端点与比较未产出。两项均不是完整q/R资格，A1工程接线缺陷也不能归咎数值方法。
@@ -245,15 +259,15 @@ V1的最后接受态仍是R9（110,472 FE），最终空间精度不达标；R10
 
 正式尝试以外的支持工作入口、可计量的独立watchdog费用、未监控时间的`not_measured`标记和保留的前置失败列于[V2 compact的support_work](records/v2_formal_attempts_and_profile_fix_v1.json)。这些费用不并入4,915.1723896381445s formal watchdog subtotal，也不拼成全campaign总额。
 
-## V3整改与待审的有限诊断
+## V3正式诊断执行记录（A2 READY前的历史快照；最新整改见V4）
 
-V3已派发一次A1_q attempt2，预算累计4/6。实际入口构建了180格网格并进入装配路径，但未留下因子分解或求解完成证据；主控发现A1路径没有接入要求的WorkflowLedger后，按指令对该次运行受控停止。该结果是工程接线不完整，不是数值方法失败，也没有official primary/endpoint。原READY只作为这次派发的历史记录，不授权任何后续运行；A2未READY、未派发，A1_R/A2_R/B/C均锁定。原始终态和身份见[A1_q2执行记录](records/a1_q_attempt2/dispatch_and_stop_record.json)及[root独立终态审计](records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。
+V3已派发一次A1_q attempt2，预算累计4/6。实际入口构建了180格网格并进入装配路径，但未留下因子分解或求解完成证据；主控发现A1路径没有接入要求的WorkflowLedger后，按指令对该次运行受控停止。该结果是工程接线不完整，不是数值方法失败，也没有official primary/endpoint。A1_q2 READY仅是该次dispatch的历史授权记录，并因真实入口缺ledger不能支持后续派发；本段原有“A2未READY、未派发”只指A1停止后、A2 READY之前的时点。原始终态和身份见[A1_q2执行记录](records/a1_q_attempt2/dispatch_and_stop_record.json)及[root独立终态审计](records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。
 
 A2真实native入口另有一个受控组件测试：使用冻结Y6输入进入`run_p6_condensed_direct`，由该入口创建绝对phase文件和`stages.jsonl`，随后在首次mesh-builder边界触发sentinel，因此没有真实构网、solver调用或正式attempt消耗。该测试补充native入口的ledger接线证据，不签发A2 READY，见[组件测试记录](records/a2_native_workflow_ledger_component.json)。
 
-Root已复核G1故障注入/默认路径和G2真实watchdog tiny-child链；G0、G3复用带hash的旧记录。最终bounded focused在源码HEAD `81c97e7c`上为57 passed、1 skipped，随后最终HEAD `fc260b1e`上重跑唯一变动的生命周期AST节点，1 passed。跳过项是需显式开启的完整p6 FFCx矩阵见证，本轮未运行。compileall、JSON/Markdown和diff检查通过；Ruff仍有与`fd7ebd2a`基线相同的77项既有诊断，新增诊断为0，因此不称全量Ruff通过。命令、日志hash及root源码审阅见[最终验证索引](records/diagnostic_plan_v3_final_validation.json)和[root G1/G2复核](records/v3_root_final_source_review.json)。
+Root曾复核G1故障注入/默认路径和G2 watchdog tiny-child链；G0、G3复用带hash的旧记录。V3组件冻结阶段的历史定向回归在源码HEAD `81c97e7c3357bbed1b29cab4ff40f2997e8bafdc` 为57 passed/1 skipped（唯一skip是需显式启用的完整p6 FFCx矩阵见证）；在后续HEAD `fc260b1e204b8f8f3aeebf136e57de2165b4920b` 对最后改变的生命周期节点另有1 passed。Ruff历史检查为77项既有诊断；与`fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12`基线逐项比较仍为77项、无新增。以上只描述对应V3冻结源码及其历史日志，不代表V4最终字节的测试或静态检查；命令、日志hash及root源码审阅见[V3最终验证索引](records/diagnostic_plan_v3_final_validation.json)和[root G1/G2复核](records/v3_root_final_source_review.json)。V4 N1–N6实际测试以[最新V4验证索引](records/v4_focused_validation_v1.json)为准。
 
-本次A1尝试使用的资源预测为：A1锚点118,800 FE（37,800 trace+81,000 interior）、38,412行、32,419,692个已用矩阵非零元；旧 q15 R10 的进程树RSS峰为6,572,441,600B，而此前q19/q32 A1_q1部分尝试实测峰为9,708,847,104B、全程4,882.447秒，未完成完整端点。A2的Y6_1历史锚点为380,160 FE（120,960 trace+259,200 interior）、121,572行、112,458,734个已用非零元、进程树RSS峰26,919,141,376B。由于新留证会让输出与因子重叠，A1约32GiB、A2约96GiB是保守规划余量，均为预估而非实测峰值；实际仍受7200秒和192GiB硬门约束。60条源码、47项直接输入及7项启动支持hash见[阶段G4 source/input inventory](records/diagnostic_plan_v3_g4_source_input_inventory.json)及[root独立复核](records/v3_root_g4_inventory_recheck.json)，预测假设见[有限资源预估](records/diagnostic_plan_v3_resource_prediction.json)。Root曾完成G0–G4并为A1_q2单次派发签发READY；实际入口的ledger缺口使该次运行受控停止，该READY不再授权后续运行。当前没有后续READY、合并批准或0.7nm运行。
+本次A1尝试使用的资源预测为：A1锚点118,800 FE（37,800 trace+81,000 interior）、38,412行、32,419,692个已用矩阵非零元；旧 q15 R10 的进程树RSS峰为6,572,441,600B，而此前q19/q32 A1_q1部分尝试实测峰为9,708,847,104B、全程4,882.447秒，未完成完整端点。A2的Y6_1历史锚点为380,160 FE（120,960 trace+259,200 interior）、121,572行、112,458,734个已用非零元、进程树RSS峰26,919,141,376B。由于新留证会让输出与因子重叠，A1约32GiB、A2约96GiB是预估而非实测峰值；实际仍受7200秒和192GiB硬门约束。60条源码、47项直接输入及7项启动支持hash见[阶段G4 source/input inventory](records/diagnostic_plan_v3_g4_source_input_inventory.json)及[root独立复核](records/v3_root_g4_inventory_recheck.json)，预测假设见[有限资源预估](records/diagnostic_plan_v3_resource_prediction.json)。Root曾完成G0–G4并为A1_q2单次dispatch签发历史READY；实际ledger缺口使该次运行受控停止。A2_q3后的V4整改和当前状态见[Response V4](../response_v4.md)及[V4验证compact](records/v4_focused_validation_v1.json)。
 
 
 ## V2阶段一（Q02–Q08）证据补账

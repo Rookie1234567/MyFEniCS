@@ -23,6 +23,16 @@ _A2_NATIVE_CONTRACT_SHA256 = (
 _V2_PLAN_SHA256 = "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e"
 _V3_CONTRACT_SHA256 = "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898"
 _V3_PLAN_SHA256 = "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7"
+_V2_R10_PLAN = _REPO_ROOT / (
+    "benchmarks/artifacts/task43/round10_p_only_authority_attempt1/"
+    "plan_output/plans/round10_p_up.json"
+)
+_V2_ACCEPTANCE = _REPO_ROOT / (
+    "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json"
+)
+_V2_SELECTION = _REPO_ROOT / (
+    "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json"
+)
 
 
 class _StopBeforeMesh(RuntimeError):
@@ -155,3 +165,135 @@ def test_a2_native_entry_writes_workflow_ledger_before_mesh_or_solver(
     )
     assert summary["failed_stage"] == "p6_direct_mesh_setup_started"
     assert summary["exception_type"] == "_StopBeforeMesh"
+
+
+def _a1_v3_main_args(run_directory: Path) -> list[str]:
+    return [
+        "--case",
+        "round1_candidate_mpi1",
+        "--run-root",
+        str(run_directory),
+        "--candidate-plan",
+        str(_V2_R10_PLAN),
+        "--candidate-id",
+        "round10_p_up",
+        "--candidate-acceptance-contract",
+        str(_V2_ACCEPTANCE),
+        "--candidate-parent-selection-record",
+        str(_V2_SELECTION),
+        "--same-lu-solve-residual-correction",
+        "--direct-factor-backend",
+        "mumps",
+        "--same-lu-tightening",
+        "--v2-diagnostic-phase",
+        "A1_q",
+        "--v2-contract",
+        str(_REPO_ROOT / "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json"),
+        "--v2-contract-sha256",
+        "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+        "--v3-failure-evidence",
+        "--v3-contract",
+        str(_REPO_ROOT / "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json"),
+        "--v3-plan",
+        str(_REPO_ROOT / "docs/task43_hp_adaptivity/diagnostic_plan_v3.md"),
+    ]
+
+
+def test_a1_actual_main_records_ledger_before_mesh_boundary(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Drive the actual V3 CLI with a sentinel at its first mesh call."""
+
+    if not all(path.is_file() for path in (_V2_R10_PLAN, _V2_ACCEPTANCE, _V2_SELECTION)):
+        pytest.skip("frozen A1 candidate inputs are ignored workstation artifacts")
+
+    from benchmarks.task43_hp_adaptivity import h100_anchor
+
+    phase_path = tmp_path / "watchdog" / "workflow_phase.json"
+    phase_path.parent.mkdir()
+    monkeypatch.setenv("PHYSICAL_WATCHDOG_PHASE_PATH", str(phase_path.resolve()))
+    expected_parent = int(os.environ["PHYSICAL_WATCHDOG_PARENT_PID"])
+    assert expected_parent == os.getppid(), "test must run under the native watchdog"
+
+    run_directory = tmp_path / "a1_run"
+    mesh_calls: list[object] = []
+
+    def stop_before_mesh(*_args: object, **_kwargs: object) -> None:
+        assert phase_path.is_absolute() and phase_path.is_file()
+        phase_record = json.loads(phase_path.read_text(encoding="utf-8"))
+        assert phase_record["stage"] == "task43_v3_a1_mesh_setup_started"
+        current_stages = [
+            json.loads(line) for line in (run_directory / "stages.jsonl").read_text().splitlines()
+        ]
+        assert current_stages[-1]["stage"] == "task43_v3_a1_mesh_setup_started"
+        mesh_calls.append(object())
+        raise _StopBeforeMesh("sentinel at actual A1 mesh boundary")
+
+    solver_calls: list[object] = []
+
+    def fail_if_solver_called(*_args: object, **_kwargs: object) -> None:
+        solver_calls.append(object())
+        raise AssertionError("solver must not be reached by the mesh-boundary sentinel")
+
+    monkeypatch.setattr(h100_anchor, "build_airbox_mesh_3d", stop_before_mesh)
+    monkeypatch.setattr(
+        h100_anchor, "run_stage4b_block_grating_3d_case", fail_if_solver_called
+    )
+    with pytest.raises(_StopBeforeMesh, match="actual A1 mesh boundary"):
+        h100_anchor.main(_a1_v3_main_args(run_directory))
+
+    assert len(mesh_calls) == 1
+    assert not solver_calls
+    assert not (run_directory / "resolved_mesh").exists()
+    assert phase_path.is_file()
+    phase_record = json.loads(phase_path.read_text(encoding="utf-8"))
+    stages_path = run_directory / "stages.jsonl"
+    assert stages_path.is_file()
+    stages = [json.loads(line) for line in stages_path.read_text().splitlines()]
+    stage_names = [row["stage"] for row in stages]
+    assert stage_names[0] == "workflow_started"
+    assert "task43_v3_a1_worker_identity_bound" in stage_names
+    assert "task43_v3_a1_candidate_inputs_bound" in stage_names
+    assert "task43_v3_a1_mesh_setup_started" in stage_names
+    assert "task43_v3_a1_failed" in stage_names
+    assert stage_names[-1] == "task43_v3_a1_failed"
+    assert phase_record["stage"] == "task43_v3_a1_failed"
+    assert phase_record["facts"]["exception_type"] == "_StopBeforeMesh"
+    terminal = json.loads(
+        (run_directory / "task43_v3_partial_terminal.json").read_text(encoding="utf-8")
+    )
+    terminal_ref = phase_record["facts"]["terminal_reference"]
+    terminal_path = run_directory / "task43_v3_partial_terminal.json"
+    assert Path(terminal_ref["path"]) == terminal_path
+    assert terminal_ref["sha256"] == hashlib.sha256(terminal_path.read_bytes()).hexdigest()
+    assert terminal["status"] == "INCOMPLETE"
+    assert terminal["official_result"] is False
+    assert terminal["continuation_all_false"] is True
+    assert all(value is False for value in terminal["continuation"].values())
+    assert terminal["source_identity"]["git_head"]
+    assert terminal["continuation"]["cost_campaign"] is False
+    assert terminal["continuation"]["iteration"] is False
+
+
+@pytest.mark.parametrize("identity_failure", ["missing_phase", "wrong_parent"])
+def test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, identity_failure: str
+) -> None:
+    """Fail at CLI preflight before any run directory or mesh is created."""
+
+    from benchmarks.task43_hp_adaptivity import h100_anchor
+
+    if identity_failure == "missing_phase":
+        monkeypatch.delenv("PHYSICAL_WATCHDOG_PHASE_PATH", raising=False)
+    else:
+        phase_path = tmp_path / "watchdog" / "phase.json"
+        phase_path.parent.mkdir()
+        monkeypatch.setenv("PHYSICAL_WATCHDOG_PHASE_PATH", str(phase_path.resolve()))
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_PARENT_PID", str(os.getppid() + 100000)
+        )
+    run_directory = tmp_path / identity_failure
+    with pytest.raises(SystemExit) as error:
+        h100_anchor.main(_a1_v3_main_args(run_directory))
+    assert error.value.code == 2
+    assert not run_directory.exists()
