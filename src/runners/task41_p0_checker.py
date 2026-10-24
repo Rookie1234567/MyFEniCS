@@ -4397,6 +4397,52 @@ def load_task41_v4_volume_only_donor(
     }
 
 
+def _task41_v11_verified_donor_active_trace_rows(
+    *,
+    summary: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+    run_manifest: Mapping[str, Any],
+    expected_identity: Mapping[str, Any],
+    donor_contract_sha256: str,
+    donor_window_sha256: str,
+    run_root: Path,
+    global_row_count: int,
+    full_storage_rows: int,
+) -> int | None:
+    """Bind the frozen V4 donor manifest using its nested run identity and row split."""
+    manifest_identity = manifest.get("run_identity")
+    active_trace_rows = manifest.get("active_trace_rows")
+    port_rows = manifest.get("port_rows")
+    columns = manifest.get("columns")
+    if (
+        manifest.get("schema") != "task41.p0.b0.recovery_evidence.v1"
+        or not isinstance(manifest_identity, Mapping)
+        or type(active_trace_rows) is not int
+        or type(port_rows) is not int
+        or active_trace_rows <= 0
+        or port_rows <= 0
+        or active_trace_rows + port_rows != global_row_count
+        or summary.get("run_id") != expected_identity.get("run_id")
+        or summary.get("source_sha") != expected_identity.get("source_sha")
+        or any(
+            run_manifest.get(key) != value for key, value in expected_identity.items()
+        )
+        or Path(str(run_manifest.get("output_directory", ""))).resolve() != run_root
+        or manifest_identity.get("case_id") != "B0"
+        or manifest_identity.get("run_id") != expected_identity.get("run_id")
+        or manifest_identity.get("input_sha256") != expected_identity.get("input_sha256")
+        or manifest_identity.get("physical_model_sha256") != expected_identity.get("physical_model_sha256")
+        or manifest_identity.get("source_sha") != expected_identity.get("source_sha")
+        or manifest_identity.get("execution_contract_sha256") != donor_contract_sha256
+        or manifest_identity.get("campaign_window_sha256") != donor_window_sha256
+        or manifest.get("full_storage_rows") != full_storage_rows
+        or not isinstance(columns, list)
+        or len(columns) != 2
+    ):
+        return None
+    return active_trace_rows
+
+
 def _task41_v11_load_selected_donor_vectors(
     *,
     summary_path: Path,
@@ -4447,17 +4493,18 @@ def _task41_v11_load_selected_donor_vectors(
         if isinstance(donor_contract.get("source"), Mapping)
         else None,
     }
-    if (
-        summary.get("run_id") != case.get("run_id")
-        or manifest.get("run_id") != case.get("run_id")
-        or any(run_manifest.get(key) != value for key, value in expected_identity.items())
-        or Path(str(run_manifest.get("output_directory", ""))).resolve() != run_root
-        or manifest.get("contract_sha256") != donor_contract_sha256
-        or manifest.get("source_sha") != expected_identity["source_sha"]
-        or manifest.get("full_storage_rows") != TASK41_V4_FULL_STORAGE_ROWS
-        or not isinstance(manifest.get("columns"), list)
-        or len(manifest["columns"]) != 2
-    ):
+    active_trace_rows = _task41_v11_verified_donor_active_trace_rows(
+        summary=summary,
+        manifest=manifest,
+        run_manifest=run_manifest,
+        expected_identity=expected_identity,
+        donor_contract_sha256=donor_contract_sha256,
+        donor_window_sha256=str(donor_contract.get("window", {}).get("sha256", "")),
+        run_root=run_root,
+        global_row_count=TASK41_P0_V11_GLOBAL_ROW_COUNT,
+        full_storage_rows=TASK41_V4_FULL_STORAGE_ROWS,
+    )
+    if active_trace_rows is None:
         raise ValueError("V11 donor manifest, run summary, or frozen contract identity differs")
 
     artifact_cache: dict[tuple[str, str], np.ndarray] = {}
@@ -4496,7 +4543,7 @@ def _task41_v11_load_selected_donor_vectors(
         if (
             active.ndim != 1
             or active.dtype.kind not in "iu"
-            or active.size != TASK41_P0_V11_GLOBAL_ROW_COUNT
+            or active.size != active_trace_rows
             or any(np.asarray(loaded[name]).shape != (full_rows,) for name in ("known_field", "native_rhs", "native_volume_rhs"))
             or any(np.asarray(loaded[name]).dtype != np.dtype(np.complex128) for name in ("known_field", "native_rhs", "native_volume_rhs", "b_alpha_values"))
             or loaded["b_alpha_rows"].ndim != 1

@@ -6715,3 +6715,219 @@ def test_task41_p0_v11_verified_donor_manifest_accepts_legacy_inner_omission() -
     assert _task41_p0_v11_verified_donor_manifest_sha256(
         {"donor_manifest_sha256": "c" * 64}, {}, expected_sha256=frozen_sha
     ) is None
+
+
+
+def test_task41_v11_selected_donor_loader_binds_nested_identity_and_trace_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.runners import task41_p0_checker as checker
+    from src.runners import task41_p0_v4_volume_only_audit as v4_runner
+    from src.solvers import task41_v4_volume_only_audit as v4_audit
+
+    run_id = "task41extra_b0_p6_phi90_07nm_iterative"
+    source_sha = "a" * 40
+    input_sha = "b" * 64
+    physical_sha = "c" * 64
+    config_sha = "d" * 64
+    execution_contract_sha = "e" * 64
+    window_sha = "f" * 64
+    trace_rows = 5
+    port_rows = 2
+    global_rows = trace_rows + port_rows
+    full_rows = 10
+
+    monkeypatch.setattr(v4_runner, "TASK41_P0_V11_GLOBAL_ROW_COUNT", global_rows)
+    monkeypatch.setattr(v4_audit, "TASK41_V4_FULL_STORAGE_ROWS", full_rows)
+
+    case = {
+        "run_id": run_id,
+        "model_id": "task41extra_phi90_p50x50_g17x20",
+        "method": "iterative",
+        "mpi_size": 1,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": config_sha,
+    }
+    donor_contract = {
+        "case": case,
+        "source": {"sha": source_sha},
+        "window": {"sha256": window_sha},
+    }
+
+    def write_fixture(
+        name: str,
+        *,
+        manifest_window_sha: str = window_sha,
+        active_array_rows: int = trace_rows,
+    ) -> tuple[Path, Path]:
+        repo_root = tmp_path / name
+        run_root = (
+            repo_root
+            / "results"
+            / run_id
+            / "20261019T053402.514018Z"
+        )
+        run_root.mkdir(parents=True)
+        def save_array(label: str, value: np.ndarray) -> dict[str, object]:
+            path = run_root / f"{label}.npy"
+            np.save(path, value, allow_pickle=False)
+            payload = path.read_bytes()
+            return {
+                "path": path.name,
+                "bytes": len(payload),
+                "shape": list(value.shape),
+                "dtype": str(value.dtype),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+
+        columns = []
+        active = np.arange(active_array_rows, dtype=np.int64) + 20
+        for column_index in range(2):
+            prefix = f"column{column_index}"
+            artifacts = {
+                "active_original_rows": save_array(f"{prefix}_active", active.copy()),
+                "known_field": save_array(
+                    f"{prefix}_known",
+                    np.full(full_rows, 1 + column_index * 1j, dtype=np.complex128),
+                ),
+                "native_rhs": save_array(
+                    f"{prefix}_rhs",
+                    np.full(full_rows, 2 + column_index * 1j, dtype=np.complex128),
+                ),
+                "native_volume_rhs": save_array(
+                    f"{prefix}_volume_rhs",
+                    np.full(full_rows, 3 + column_index * 1j, dtype=np.complex128),
+                ),
+                "b_alpha_rows": save_array(
+                    f"{prefix}_alpha_rows", np.array([1, 4], dtype=np.int64)
+                ),
+                "b_alpha_values": save_array(
+                    f"{prefix}_alpha_values",
+                    np.array([4 + 1j, 5 + 2j], dtype=np.complex128),
+                ),
+                "recovered_storage": save_array(
+                    f"{prefix}_j0_storage",
+                    np.full(full_rows, 10 + column_index * 1j, dtype=np.complex128),
+                ),
+                "native_volume_action_recovered": save_array(
+                    f"{prefix}_j0_action",
+                    np.full(full_rows, 11 + column_index * 1j, dtype=np.complex128),
+                ),
+            }
+            refinement = []
+            for step in range(1, 4):
+                step_artifacts = {
+                    "storage": save_array(
+                        f"{prefix}_j{step}_storage",
+                        np.full(full_rows, 20 + step + column_index * 1j, dtype=np.complex128),
+                    ),
+                    "native_volume_action": save_array(
+                        f"{prefix}_j{step}_action",
+                        np.full(full_rows, 30 + step + column_index * 1j, dtype=np.complex128),
+                    ),
+                }
+                refinement.append({"step": step, "artifacts": step_artifacts})
+            columns.append({
+                "artifacts": artifacts,
+                "same_lu_refinement": refinement,
+            })
+
+        run_manifest = {
+            **case,
+            "source_sha": source_sha,
+            "output_directory": str(run_root.resolve()),
+        }
+        (run_root / "run_manifest.json").write_text(
+            json.dumps(run_manifest), encoding="utf-8"
+        )
+        manifest = {
+            "schema": "task41.p0.b0.recovery_evidence.v1",
+            "run_identity": {
+                "case_id": "B0",
+                "run_id": run_id,
+                "input_sha256": input_sha,
+                "physical_model_sha256": physical_sha,
+                "source_sha": source_sha,
+                "execution_contract_sha256": execution_contract_sha,
+                "campaign_window_sha256": manifest_window_sha,
+            },
+            "active_trace_rows": trace_rows,
+            "port_rows": port_rows,
+            "full_storage_rows": full_rows,
+            "columns": columns,
+            "input_identities": [
+                {"port_alpha": [0.7, -0.4]},
+                {"port_alpha": [0.8, 0.3]},
+            ],
+        }
+        manifest_path = run_root / "recovery_manifest.json"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        manifest_bytes = manifest_path.read_bytes()
+        manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
+        monkeypatch.setattr(
+            v4_audit, "TASK41_V4_DONOR_MANIFEST_SHA256", manifest_sha
+        )
+        summary_path = run_root / "task40_v10_p6_candidate_summary.json"
+        summary_path.write_text(
+            json.dumps({
+                "run_id": run_id,
+                "source_sha": source_sha,
+                "b0_recovery_evidence": {
+                    "manifest": {
+                        "path": manifest_path.name,
+                        "bytes": len(manifest_bytes),
+                        "sha256": manifest_sha,
+                    }
+                },
+            }),
+            encoding="utf-8",
+        )
+        return repo_root, summary_path
+
+    def load_fixture(repo_root: Path, summary_path: Path) -> dict[str, object]:
+        return checker._task41_v11_load_selected_donor_vectors(
+            summary_path=summary_path,
+            donor_contract=donor_contract,
+            donor_contract_sha256=execution_contract_sha,
+            repo_root=repo_root,
+        )
+
+    repo_root, summary_path = write_fixture("nested_identity")
+    loaded = load_fixture(repo_root, summary_path)
+    assert len(loaded["columns"]) == 2
+    for index, column in enumerate(loaded["columns"]):
+        assert column["active_original_rows"].shape == (trace_rows,)
+        assert column["port_alpha"] == pytest.approx(
+            complex((0.7, 0.8)[index], (-0.4, 0.3)[index])
+        )
+        assert np.array_equal(
+            column["states"][0]["storage"],
+            np.full(full_rows, 10 + index * 1j, dtype=np.complex128),
+        )
+        assert np.array_equal(
+            column["states"][1]["storage"],
+            np.full(full_rows, 23 + index * 1j, dtype=np.complex128),
+        )
+        assert np.array_equal(
+            column["states"][1]["native_volume_action"],
+            np.full(full_rows, 33 + index * 1j, dtype=np.complex128),
+        )
+
+    wrong_identity_root, wrong_identity_summary = write_fixture(
+        "wrong_nested_window_identity",
+        manifest_window_sha="0" * 64,
+    )
+    with pytest.raises(
+        ValueError, match="frozen contract identity differs"
+    ):
+        load_fixture(wrong_identity_root, wrong_identity_summary)
+
+    wrong_shape_root, wrong_shape_summary = write_fixture(
+        "global_rows_used_for_active_map",
+        active_array_rows=global_rows,
+    )
+    with pytest.raises(
+        ValueError, match="selected source vectors have invalid layout"
+    ):
+        load_fixture(wrong_shape_root, wrong_shape_summary)
