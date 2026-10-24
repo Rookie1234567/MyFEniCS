@@ -1,0 +1,956 @@
+{
+  "schema": "task43.v3.root_g0_launch_inventory.v1",
+  "review_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+  "classification": "READ_ONLY_ENUMERATION_NO_NEW_FORMAL_DISPATCH",
+  "enumeration": {
+    "path": "benchmarks/artifacts/task43/v3_root_audit/task43_artifact_file_enumeration.json",
+    "sha256": "1d339f281756dc31af9bbc5e14a67ae361f8fbb24ad46e03655c7c5cf2399db9",
+    "bytes": 392035
+  },
+  "enumerated_files": 2404,
+  "v2_files": 358,
+  "groups": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_a1_q_attempt1",
+      "classification": "host_preflight_only_no_formal_dispatch",
+      "canonical_dispatch_identity": null,
+      "file_count": 1,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_a1_q_attempt1/preflight/host_abi_capacity_preflight.json"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_attempt_support/pytest_mpi_sandbox_abort_attempt1",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 2,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_attempt_support/pytest_mpi_sandbox_abort_attempt1/attempt.json",
+          "sha256": "dd4581f07c7e75fa70383eee49a8a275cae256f60ea7445335e2308257c5e917",
+          "bytes": 1180
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_attempt_support/pytest_mpi_sandbox_abort_attempt1/worker.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1",
+      "classification": "prepared_launcher_not_dispatched",
+      "canonical_dispatch_identity": null,
+      "file_count": 10,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/README.md",
+          "sha256": "9aa4f3d7d7b225bcd0e310fbf5247d8d4333f3d3811a9e999be2e0b722dc3b90",
+          "bytes": 1846
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/launch.sh",
+          "sha256": "b5ed3086f365e082eb7f6bb9e8d5aa2e284b73c2b840a4767453bffcb4e3d589",
+          "bytes": 3002
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/__pycache__/abi_preflight.cpython-312.pyc",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/__pycache__/prepare_a1r_launch.cpython-312.pyc",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/a1_q_source_snapshot_reference/listed_sources.tar.gz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/a1_q_source_snapshot_reference/manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/abi_preflight.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/detach_launch.sh",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/prepare_a1r_launch.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_R_attempt1/source_snapshot_pre_run/listed_sources.sha256"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1",
+      "classification": "formal_dispatch",
+      "canonical_dispatch_identity": "A1_q_attempt1",
+      "file_count": 60,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/actual_launch_identity_initial.json",
+          "sha256": "4c37ae7d66ded2f9ebc1eff8f57ba9781b733727caa0ee41ad7cb12ccc4e99c5",
+          "bytes": 5577
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/launch.sh",
+          "sha256": "94848f76ec4436a385f2c25aa0afe5cbd8b2f8de4f08168fffea806d0d645d9c",
+          "bytes": 2537
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/launch_request_time_UTC.txt",
+          "sha256": "3cdc4a8a7ea181c9b218599fa7f407f90be95f6e8051e78bf2999fe75542e91e",
+          "bytes": 31
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/launcher_exit_code.txt",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+          "bytes": 2
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/launcher_pid.txt",
+          "sha256": "5ccd22921085e2c2382fc9eca7798368c2a1dfdf981b5bb7d67537d0ae78c40d",
+          "bytes": 8
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/supervisor_entry.sh",
+          "sha256": "daa00ba9c7556d11de91d4affe2b60b6fba42e3268c74c05aec8c40ef2fd5b71",
+          "bytes": 392
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/summary.json",
+          "sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+          "bytes": 4430
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/abi_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/abi_preflight.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/actual_launch_process_tree_initial.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/commit_identity.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/detach_launch.sh",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/detach_return_time_UTC.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/input_hashes_pre.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/inputs_precheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/launcher_exit_timestamp_utc.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/listed_sources_precheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/monitoring_snapshots.jsonl",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/preflight/abi_preflight_stdout.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/preflight/cpu1_abi_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/preflight/cpu1_abi_preflight.stdout.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/preflight_reference.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/preparation_input_hash_check.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/preparation_result.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/preparation_source_hash_check.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/prepare_attempt.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/candidate_plan.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/pre_validation_checkpoint.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/pre_validation_checkpoint.npz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/resolved_mesh/mesh_3d.h5",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/resolved_mesh/mesh_3d.xdmf",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/resolved_mesh/mesh_3d_partition_note.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/ports/dtn_auxiliary_amplitudes_3d.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/ports/dtn_port_diffraction_orders_3d.csv",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/ports/dtn_port_diffraction_orders_3d.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/ports/dtn_port_power_metrics_3d.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/ports/port_power.csv",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/ports/port_power.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/volume/volume_absorption.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/before/volume/volume_absorption.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/field_samples_q8_q10.npz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/recovered_solution_storage.npz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/dtn_auxiliary_amplitudes_3d.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/dtn_port_diffraction_orders_3d.csv",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/dtn_port_power_metrics_3d.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/port_power.csv",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/port_power.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/progress_3d.jsonl",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run_scope.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/serialization_fix_validation/pytest.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/source_snapshot_pre_run/listed_sources.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/source_snapshot_pre_run/listed_sources.tar.gz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/source_snapshot_pre_run/manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/supervisor_stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/worker.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/worker_abi_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/worker_argv.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/worker_command.txt"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 10,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_static_checks.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_after_identity_fix.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_attempt2.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_targeted_attempt3.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/final_validation_commands_after_identity_fix.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/static_checks.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/static_checks_after_identity_fix.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_contract_validation/static_checks_attempt2.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only",
+      "classification": "support_and_launcher_alias_to_formal_dispatch",
+      "canonical_dispatch_identity": "A2_q_attempt1",
+      "file_count": 27,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/launch.sh",
+          "sha256": "598ab6a129eb241cde759fe5e5f818f83b0779c9d72e047288edc5ed3b188b93",
+          "bytes": 5878
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/launcher_exit_code.txt",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+          "bytes": 2
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/launcher_pid.txt",
+          "sha256": "1786d6034a2a5df5204f8e8a9faced1af35c2c511e83b7eec9202ed7c15adaa2",
+          "bytes": 8
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/supervisor_entry.sh",
+          "sha256": "925e0b478478e2572c45a434e9c0cc5c3d3f4343fb5f18b02e42c3332d0a67db",
+          "bytes": 612
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/detach_launch.sh",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/detach_return_time_UTC.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/failed_frozen_input_identity_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/failed_frozen_input_identity_preflight_captured_output.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/fresh_prelaunch_20261024T051013Z_1791462.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/fresh_prelaunch_20261024T051013Z_1791462.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/fresh_prelaunch_review_20261024T050818Z.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/fresh_prelaunch_review_20261024T050846Z.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/fresh_prelaunch_review_20261024T050846Z.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/input_hashes_pre.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/input_hashes_prelaunch_20261024T051013Z_1791462.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/input_manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/launcher_exit_timestamp_utc.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/preflight_command_stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/prepare_launch_materials.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/run_preflight.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/source_hashes_prelaunch_20261024T051013Z_1791462.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/source_snapshot_pre_run/manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/source_snapshot_pre_run/selected_sources.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/source_snapshot_pre_run/selected_sources.tar.gz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/supervisor_stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/worker_abi_preflight.py"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1",
+      "classification": "formal_dispatch",
+      "canonical_dispatch_identity": "A2_q_attempt1",
+      "file_count": 26,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launch_identity.json",
+          "sha256": "07a6a88ac8e43888252e8517759ae22d8a3a149b7d2c98efd0fa5e8f9ce28ccf",
+          "bytes": 1086
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launch_request_time_UTC.txt",
+          "sha256": "d34d57f3175b8b1bd357d3fe976e65ac838e910fe5c61e9320bb4ae7dab580f9",
+          "bytes": 21
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launcher_exit_code.txt",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+          "bytes": 2
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/summary.json",
+          "sha256": "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+          "bytes": 3570
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/commit_identity.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/input_hashes_postcheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/input_hashes_pre.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/input_hashes_precheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/input_manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/input_postcheck_exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launcher_exit_timestamp_utc.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/post_run_HEAD.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/post_run_git_status.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/prelaunch_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/prelaunch_preflight.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/source_hashes_postcheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/source_hashes_precheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/source_postcheck_exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/source_snapshot_pre_run/manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/source_snapshot_pre_run/selected_sources.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/source_snapshot_pre_run/selected_sources.tar.gz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/worker.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog_exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/worker_abi_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/worker_command.txt"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2",
+      "classification": "formal_dispatch",
+      "canonical_dispatch_identity": "A2_q_attempt2",
+      "file_count": 29,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/launch_identity.json",
+          "sha256": "20c6b681db729f2a983f2316e300f7716c7d8239a1e5bb18fb6bc52146f2d835",
+          "bytes": 1792
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/launch_request_time_UTC.txt",
+          "sha256": "4f6549777cb510e2461b8228e2d94dd18533d46016cf95a95b30bc812ee30571",
+          "bytes": 21
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/launcher_exit_code.txt",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+          "bytes": 2
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/summary.json",
+          "sha256": "7a4fb9e3caa0c79ba97e928f494953abf4ce8c1afee89fb0308a22d61716f894",
+          "bytes": 3570
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/commit_identity.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/input_hashes_postcheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/input_hashes_pre.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/input_hashes_precheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/input_manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/input_postcheck_exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/launcher_exit_timestamp_utc.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/post_run_HEAD.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/post_run_git_status.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/prelaunch_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/prelaunch_preflight.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/run/p6_condensed_direct_summary.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/run/stages.jsonl",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/source_hashes_postcheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/source_hashes_precheck.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/source_postcheck_exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/source_snapshot_pre_run/manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/source_snapshot_pre_run/selected_sources.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/source_snapshot_pre_run/selected_sources.tar.gz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/worker.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/workflow_phase.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog_exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/worker_abi_preflight.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/worker_command.txt"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only",
+      "classification": "support_and_launcher_alias_to_formal_dispatch",
+      "canonical_dispatch_identity": "A2_q_attempt2",
+      "file_count": 30,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/launch.sh",
+          "sha256": "5939e2684d12f427525bbd9fd418ee2bae061ee266532cc493927329e946504a",
+          "bytes": 6877
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/launcher_exit_code.txt",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+          "bytes": 2
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/launcher_pid.txt",
+          "sha256": "46106b42804abf67b0c48c1e1ae26bfe73b1778af5d133283b5cc0620831c0a6",
+          "bytes": 8
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/supervisor_entry.sh",
+          "sha256": "846b37400a4393baed691a26d9c5b7a543b4c0c1be74926f299482dce926690d",
+          "bytes": 623
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/detach_launch.sh",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/detach_return_time_UTC.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/final_path_fix_preflight_20261024T053841Z_final.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/final_path_fix_preflight_20261024T053905Z_host.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/final_path_fix_preflight_20261024T053905Z_host.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/final_path_fix_preflight_20261024T053905Z_host.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/final_review_input_hashes.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/final_review_source_hashes.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/fresh_prelaunch_20261024T053933Z_1838340.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/fresh_prelaunch_20261024T053933Z_1838340.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/fresh_prelaunch_retry_review1.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/fresh_prelaunch_retry_review1.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/fresh_prelaunch_retry_review1.stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/input_hashes_pre.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/input_hashes_prelaunch_20261024T053933Z_1838340.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/input_manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/launcher_exit_timestamp_utc.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/prepare_launch_materials.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/run_preflight.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/source_hashes_prelaunch_20261024T053933Z_1838340.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/source_snapshot_pre_run/manifest.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/source_snapshot_pre_run/selected_sources.sha256",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/source_snapshot_pre_run/selected_sources.tar.gz",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/supervisor_stdout.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/syntax_checks.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/worker_abi_preflight.py"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt1",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 2,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt1/exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt1/pytest.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 4,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/actual_frozen_input_preflight_20261024T054541Z.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/actual_frozen_input_preflight_20261024T054541Z.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/exit_code.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/a2_profile_compatibility_fix_validation_attempt2/pytest.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt1",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 2,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt1/ruff.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt1/targeted_pytest.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 6,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/compile_json.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/ruff_baseline_delta.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/ruff_current.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/ruff_focused.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/ruff_format_check.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt2/targeted_pytest.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 7,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/environment.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/helper_pytest.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/lint_compile.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/ruff_baseline_a3657.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/ruff_baseline_delta.txt",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/ruff_current.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/retry_wiring_fix_validation_attempt3/ruff_summary.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 4,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/a2_profile_fix_static.log",
+        "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/document_contract_check.py",
+        "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/document_contract_check.stdout.json",
+        "benchmarks/artifacts/task43/v2_diagnostics/v2_closeout_validation_attempt1/registry_markdown_pytest.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1",
+      "classification": "old_coefficients_restore_resample_no_fresh_PDE",
+      "canonical_dispatch_identity": null,
+      "file_count": 3,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/summary.json",
+          "sha256": "6f1d228f99c9db1cd81a35d7ed257ccf2532d3bc9db9ffe4a7f2746438b1e54e",
+          "bytes": 3574
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/worker.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2",
+      "classification": "old_coefficients_restore_resample_no_fresh_PDE",
+      "canonical_dispatch_identity": null,
+      "file_count": 3,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/summary.json",
+          "sha256": "dc7922ff1434fe741785326847bf9e85812a85d03789dd1a05261bad52656544",
+          "bytes": 3572
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/worker.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3",
+      "classification": "old_coefficients_restore_resample_no_fresh_PDE",
+      "canonical_dispatch_identity": null,
+      "file_count": 10,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/summary.json",
+          "sha256": "2361d4ea9bd5b2308b5d332fe9418b2b382700a610fd1c07f17161df15339566",
+          "bytes": 3575
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/command.txt",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/legacy_r10_field_resampling.json",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/r10_q8_q10_field_samples.npz",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/preflight/command.txt",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/preflight/config_check.py",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/preflight/config_comparison.json",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/run_attempt3.sh",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/worker.log"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_root_audit",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 44,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/launch.sh",
+          "sha256": "bdd4a167a46b30f2778a6d05e6870822846a08fc969a87e6084c0848f7f5db85",
+          "bytes": 501
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/summary.json",
+          "sha256": "2a28af1c13fc8423a15ba123c883ab5eb0fa6dd8ce7b41cbafb1136a7b02f95b",
+          "bytes": 3539
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_root_audit/a1_implemented_source_continuity.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a1_q_partial_modal_diagnostics.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a1_q_primary_modal_preview.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a1_q_resource_samples_replay.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a1_q_terminal_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_axis_profile_replay.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_canonical_precommit_review.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_isolated_code_review.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_isolated_implementation_validation.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_mode_policy_replay.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_native_source_continuity.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_prelaunch_review_findings.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_profile_fix_code_review.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt1_terminal_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt2_launch_gate.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt2_profile_mismatch_replay.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt2_terminal_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_q_launch_gate.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_retry_committed_code_review.json",
+        "benchmarks/artifacts/task43/v2_root_audit/a2_y6_geometry_identity_replay.json",
+        "benchmarks/artifacts/task43/v2_root_audit/cost_ledger_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/final_review_package_audit_v2.json",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/host_admission.json",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/launch_exit_code.txt",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/old_residual_scalar_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/old_residual_scalar_audit.py",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/pre_run_plan.json",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/replay.py",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/replay_crosscheck.json",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/root_post_selection_joint_raw_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/worker.log",
+        "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/worker.sh",
+        "benchmarks/artifacts/task43/v2_root_audit/overlay_dependency_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/overlay_module_identity.json",
+        "benchmarks/artifacts/task43/v2_root_audit/pre_a2_v1_immutable_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/root_v2_stage1_cost_audit.py",
+        "benchmarks/artifacts/task43/v2_root_audit/seed_geometry_audit.json",
+        "benchmarks/artifacts/task43/v2_root_audit/stage1_root_audit_index_v2.json",
+        "benchmarks/artifacts/task43/v2_root_audit/v1_immutable_git_files.json",
+        "benchmarks/artifacts/task43/v2_root_audit/v1_terminal_summary_discovery.json",
+        "benchmarks/artifacts/task43/v2_root_audit/v2_modal_real_r13_schema_check.json"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_stage1_audit",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 73,
+      "launch_and_execution_marker_files": [
+        {
+          "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/launch.sh",
+          "sha256": "9bacca5f02e9b97e1c33b9a1f9c0af60aee586b054bddc05b7356b01b97164c2",
+          "bytes": 1325
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/summary.json",
+          "sha256": "73360bf77beec37d7d26400c797c913d26c765d24e251b2fa5afe330a15cb40a",
+          "bytes": 3582
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/summary.json",
+          "sha256": "b08f1a11e4add41bf24aac88f9b02a39b507e28e94276022a796720f5d895a8f",
+          "bytes": 1921
+        }
+      ],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_stage1_audit/abi_and_slepc_probe.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/abi_and_slepc_probe.json",
+        "benchmarks/artifacts/task43/v2_stage1_audit/abi_and_slepc_probe.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/abi_and_slepc_probe.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/supervisor.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/supervisor.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/terminal_observation.json",
+        "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/worker.log",
+        "benchmarks/artifacts/task43/v2_stage1_audit/custom_prefix_slepc_search.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_direct_focused_attempt1.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/resources.jsonl",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/worker.log",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_sampling_module_mpi2_attempt1.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q02_space_assembly_active_action_attempt1.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt1.command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_collect_attempt2.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_import.command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_import.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_import.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q03_core_closure_405_import.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_orientation_collect.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_orientation_collect.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_orientation_collect.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_p3_orientation_pytest.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_p3_orientation_pytest.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_p3_orientation_pytest.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_compileall.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_compileall.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_compileall.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_check.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_check.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_check.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_format.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_format.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_format.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_targeted.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_targeted.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_targeted.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_targeted_command.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_inventory_generator.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_inventory_generator.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_inventory_generator.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_r8_inventory_inspection.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_scope_test.exit_code.txt",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_scope_test.stderr",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_scope_test.stdout",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_v1_inventory_after.sha256",
+        "benchmarks/artifacts/task43/v2_stage1_audit/q07_v1_inventory_before.sha256",
+        "benchmarks/artifacts/task43/v2_stage1_audit/slepc_linkage_ldd.txt"
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1",
+      "classification": "support_component_or_read_only_audit",
+      "canonical_dispatch_identity": null,
+      "file_count": 5,
+      "launch_and_execution_marker_files": [],
+      "other_files": [
+        "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/cli_help.log",
+        "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/prior_25_pass_observation.json",
+        "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/pytest.log",
+        "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/static_checks.log",
+        "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/validation_index.json"
+      ]
+    }
+  ],
+  "watchdog_workflows": [
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/resources.jsonl",
+        "sha256": "91ce5cd02a51c462d38505e490fb5bb1ff7ff0672b7fea88ad63ea9f62668437",
+        "bytes": 23859555
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/summary.json",
+        "sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+        "bytes": 4430
+      },
+      "root_pid": 1582544,
+      "first_timestamp_ns": 1792811909538413847,
+      "command_members": [
+        "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog --wall-seconds 7200 --interval 1 -- bash -lc \nset -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nTASK43_ABI_RECORD_PATH=\"/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/worker_abi_preflight.json\" PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.h100_anchor --case round1_candidate_mpi1 --run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run --candidate-plan /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json --candidate-id round10_p_up --candidate-acceptance-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json --candidate-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --same-lu-solve-residual-correction --direct-factor-backend mumps --same-lu-tightening --v2-diagnostic-phase A1_q --v2-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json --v2-contract-sha256 33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+        "bash -lc \nset -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nTASK43_ABI_RECORD_PATH=\"/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/worker_abi_preflight.json\" PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.h100_anchor --case round1_candidate_mpi1 --run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run --candidate-plan /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json --candidate-id round10_p_up --candidate-acceptance-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json --candidate-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --same-lu-solve-residual-correction --direct-factor-backend mumps --same-lu-tightening --v2-diagnostic-phase A1_q --v2-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json --v2-contract-sha256 33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+        "python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/abi_preflight.py"
+      ],
+      "kind": "formal_dispatch",
+      "formal_id": "A1_q_attempt1",
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 4882.447373806033
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/resources.jsonl",
+        "sha256": "e8ec199904ec5412f74d6396fc93bb55132462908521910a9f6fc25923200a14",
+        "bytes": 59701
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/summary.json",
+        "sha256": "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+        "bytes": 3570
+      },
+      "root_pid": 1792023,
+      "first_timestamp_ns": 1792818629559870546,
+      "command_members": [
+        "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog --wall-seconds 7200 --interval 1 -- bash -lc \nset -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nTASK43_ABI_RECORD_PATH=\"/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/worker_abi_preflight.json\" \\\n  PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 \\\n  taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 1",
+        "bash -lc \nset -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nTASK43_ABI_RECORD_PATH=\"/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/worker_abi_preflight.json\" \\\n  PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 \\\n  taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 1",
+        "python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/worker_abi_preflight.py"
+      ],
+      "kind": "formal_dispatch",
+      "formal_id": "A2_q_attempt1",
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 18.740401392802596
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/resources.jsonl",
+        "sha256": "43d3b739f5738c4254ecc8f431de5b44c08c2a5f7e953852b0bf7fddab0ea379",
+        "bytes": 50007
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/summary.json",
+        "sha256": "7a4fb9e3caa0c79ba97e928f494953abf4ce8c1afee89fb0308a22d61716f894",
+        "bytes": 3570
+      },
+      "root_pid": 1838900,
+      "first_timestamp_ns": 1792820387635028213,
+      "command_members": [
+        "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog --wall-seconds 7200 --interval 1 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/workflow_phase.json -- bash -lc \nset -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nTASK43_ABI_RECORD_PATH=\"/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/worker_abi_preflight.json\" \\\n  PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 \\\n  taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 2",
+        "bash -lc \nset -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nTASK43_ABI_RECORD_PATH=\"/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/worker_abi_preflight.json\" \\\n  PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 \\\n  taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 2",
+        "python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/worker_abi_preflight.py"
+      ],
+      "kind": "formal_dispatch",
+      "formal_id": "A2_q_attempt2",
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 13.984614439308643
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/resources.jsonl",
+        "sha256": "7a163bc92aec6c27a3f5a3882df16519e9930a8721f3794bc4af237b58b96bce",
+        "bytes": 25261
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog/summary.json",
+        "sha256": "6f1d228f99c9db1cd81a35d7ed257ccf2532d3bc9db9ffe4a7f2746438b1e54e",
+        "bytes": 3574
+      },
+      "root_pid": 1482698,
+      "first_timestamp_ns": 1792808612880701977,
+      "command_members": [
+        "python benchmarks/subreaper_watchdog.py --directory benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1/watchdog --wall-seconds 900 --interval 1 --grace-seconds 10 --timebase-guard -- python benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py --output-root benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1",
+        "python benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py --output-root benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt1"
+      ],
+      "kind": "old_field_restore_resampling",
+      "formal_id": null,
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 9.16105731902644
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/resources.jsonl",
+        "sha256": "5c5d08838a474fecc0f95a732cde32d97648acfec1b33685f9f567c80d8ca43b",
+        "bytes": 18282
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog/summary.json",
+        "sha256": "dc7922ff1434fe741785326847bf9e85812a85d03789dd1a05261bad52656544",
+        "bytes": 3572
+      },
+      "root_pid": 1484363,
+      "first_timestamp_ns": 1792808686983429189,
+      "command_members": [
+        "python benchmarks/subreaper_watchdog.py --directory benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/watchdog --wall-seconds 900 --interval 1 --grace-seconds 10 --timebase-guard -- python benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py --output-root benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/fields",
+        "python benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py --output-root benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt2/fields"
+      ],
+      "kind": "old_field_restore_resampling",
+      "formal_id": null,
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 6.241353522054851
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/resources.jsonl",
+        "sha256": "e12854b976ef9ebbaf305defb953ae543c25ca027639ca9c2895d568b66cfaaf",
+        "bytes": 695029
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog/summary.json",
+        "sha256": "2361d4ea9bd5b2308b5d332fe9418b2b382700a610fd1c07f17161df15339566",
+        "bytes": 3575
+      },
+      "root_pid": 1493839,
+      "first_timestamp_ns": 1792809024019850898,
+      "command_members": [
+        "python benchmarks/subreaper_watchdog.py --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/watchdog --wall-seconds 900 --interval 0.25 --grace-seconds 2 --timebase-guard -- bash -lc cd /home/fenics/Projects/NN-Lab-V2 && source scripts/activate_task40_phi90_pord64.sh && python -m benchmarks.task43_hp_adaptivity.sample_v2_legacy_r10_fields --candidate-run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run --selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --output-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields",
+        "python -m benchmarks.task43_hp_adaptivity.sample_v2_legacy_r10_fields --candidate-run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run --selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --output-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields"
+      ],
+      "kind": "old_field_restore_resampling",
+      "formal_id": null,
+      "classification": "COMPLETED",
+      "whole_watchdog_seconds": 136.92583386879414
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/resources.jsonl",
+        "sha256": "e72854c913e90c9b2b3d25c36398fb19a56b34ba20b1a93228f889f04acce852",
+        "bytes": 119929
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog/summary.json",
+        "sha256": "2a28af1c13fc8423a15ba123c883ab5eb0fa6dd8ce7b41cbafb1136a7b02f95b",
+        "bytes": 3539
+      },
+      "root_pid": 1405137,
+      "first_timestamp_ns": 1792805803429289228,
+      "command_members": [
+        "python -u -m benchmarks.subreaper_watchdog --directory benchmarks/artifacts/task43/v2_root_audit/old_field_replay/watchdog --wall-seconds 900 --interval 1 -- bash benchmarks/artifacts/task43/v2_root_audit/old_field_replay/worker.sh",
+        "bash benchmarks/artifacts/task43/v2_root_audit/old_field_replay/worker.sh",
+        "python -"
+      ],
+      "kind": "support_test_or_saved_array_replay",
+      "formal_id": null,
+      "classification": "COMPLETED",
+      "whole_watchdog_seconds": 46.21374210854992
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/resources.jsonl",
+        "sha256": "22259cd02fefffaa92775d09603b50e2bae480c188c94386d304dcee249226e6",
+        "bytes": 178869
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog/summary.json",
+        "sha256": "73360bf77beec37d7d26400c797c913d26c765d24e251b2fa5afe330a15cb40a",
+        "bytes": 3582
+      },
+      "root_pid": 1388019,
+      "first_timestamp_ns": 1792805095375480438,
+      "command_members": [
+        "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/watchdog --wall-seconds 7200 --interval 1 -- bash -lc bash '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/launch.sh'",
+        "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_stage1_audit/clean_tracked_collection/launch.sh",
+        "git status --porcelain=v1 --untracked-files=all"
+      ],
+      "kind": "support_test_or_saved_array_replay",
+      "formal_id": null,
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 76.31309780385345
+    },
+    {
+      "resources": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/resources.jsonl",
+        "sha256": "a4a35edb3f4d5f57506a6e9acf9a996c7f13ab5b816ef76b0e27df45c25d37fb",
+        "bytes": 236915
+      },
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog/summary.json",
+        "sha256": "b08f1a11e4add41bf24aac88f9b02a39b507e28e94276022a796720f5d895a8f",
+        "bytes": 1921
+      },
+      "root_pid": 1422794,
+      "first_timestamp_ns": 1792806478183583209,
+      "command_members": [
+        "python -m benchmarks.subreaper_watchdog --directory benchmarks/artifacts/task43/v2_stage1_audit/q02_same_lu_component_attempt1/watchdog --wall-seconds 1800 --interval 1 -- taskset -c 1 python -m pytest -q src/test/test_task43_variable_p_same_lu_correction.py",
+        "python -m pytest -q src/test/test_task43_variable_p_same_lu_correction.py"
+      ],
+      "kind": "support_test_or_saved_array_replay",
+      "formal_id": null,
+      "classification": "COMPLETED",
+      "whole_watchdog_seconds": 156.69584573293105
+    }
+  ],
+  "support_launcher_aliases": [
+    {
+      "alias": "A2_prelaunch_review_only",
+      "formal_id": "A2_q_attempt1",
+      "supervisor": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_prelaunch_review_only/supervisor_entry.sh",
+        "sha256": "925e0b478478e2572c45a434e9c0cc5c3d3f4343fb5f18b02e42c3332d0a67db",
+        "bytes": 612
+      },
+      "same_exit_code": true
+    },
+    {
+      "alias": "A2_q_attempt2_prelaunch_review_only",
+      "formal_id": "A2_q_attempt2",
+      "supervisor": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2_prelaunch_review_only/supervisor_entry.sh",
+        "sha256": "846b37400a4393baed691a26d9c5b7a543b4c0c1be74926f299482dce926690d",
+        "bytes": 623
+      },
+      "same_exit_code": true
+    }
+  ],
+  "A1_R_prepared_only_checks": {
+    "no_root_launch_gate": true,
+    "no_watchdog_directory": true,
+    "no_run_directory": true
+  },
+  "formal_dispatch_count": 3,
+  "formal_ids": [
+    "A1_q_attempt1",
+    "A2_q_attempt1",
+    "A2_q_attempt2"
+  ],
+  "additional_formal_dispatch_found": false,
+  "formal_whole_wall_seconds": 4915.1723896381445,
+  "raw_terminal_recheck": {
+    "path": "benchmarks/artifacts/task43/v3_root_audit/three_historical_terminals_recheck.json",
+    "sha256": "fd73704c86430083ee1e6e1c7c348497b1261b3c454a06b7cd073826abccfd4b",
+    "bytes": 86706
+  },
+  "evidence_boundary": "Read-only canonical Task43 artifact tree enumeration and actual launcher/watchdog records; not proof that no undisclosed run ever occurred outside the recorded task paths. No historical files were modified. Presence of a prepared launcher alone is not a dispatch.",
+  "new_formal_dispatches_in_this_audit": 0
+}

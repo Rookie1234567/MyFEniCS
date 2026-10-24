@@ -1,0 +1,448 @@
+{
+  "schema": "task43.v3.launch_preparation.v1",
+  "classification": "frozen_launch_envelope_and_review_materials_only_no_attempt_directory_or_dispatch",
+  "authority": {
+    "review_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+    "contract_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+    "contract_sha256": "36182de5628aafff3814e8dc3fba32f38288192e62e1869311ecb95fed384694",
+    "plan_path": "docs/task43_hp_adaptivity/diagnostic_plan_v3.md",
+    "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+    "phase_specific_ready_required": true,
+    "formal_dispatch_authorized_by_this_record": false
+  },
+  "common": {
+    "repository": "/home/fenics/Projects/NN-Lab-V2",
+    "branch": "task43_hp_adaptivity",
+    "activation": "source scripts/activate_task40_phi90_pord64.sh",
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "watchdog_env": {
+      "PHYSICAL_NATIVE_CAPACITY": "task43_hp_adaptivity_resource_v1"
+    },
+    "resource": {
+      "wall_seconds": 7200,
+      "interval_seconds": 1,
+      "absolute_rss_cap_bytes": 206158430208,
+      "task_tree_swap_bytes_max": 0,
+      "CPU_affinity": [
+        1
+      ],
+      "MPI_ranks": 1,
+      "math_threads": 1,
+      "dynamic_cap_profile": "task43_hp_adaptivity_resource_v1"
+    },
+    "detach_argv_template": [
+      "nohup",
+      "setsid",
+      "bash",
+      "{attempt_root}/supervisor_entry.sh"
+    ],
+    "detach_redirect_template": {
+      "stdout": "{attempt_root}/supervisor_stdout.log",
+      "stderr": "same_as_stdout",
+      "stdin": "/dev/null",
+      "launcher_pid_file": "{attempt_root}/launcher_pid.txt"
+    },
+    "supervisor_behavior": "sets an EXIT trap that records launcher exit code and UTC; invokes launch.sh; launcher starts watchdog; watchdog itself is the direct parent PID registered in the worker environment.",
+    "watchdog_argv_template": [
+      "python",
+      "-u",
+      "-m",
+      "benchmarks.subreaper_watchdog",
+      "--directory",
+      "{attempt_root}/watchdog",
+      "--wall-seconds",
+      "7200",
+      "--interval",
+      "1",
+      "--phase-path",
+      "{attempt_root}/watchdog/workflow_phase.json",
+      "--",
+      "bash",
+      "-lc",
+      "{inner_shell_body}"
+    ],
+    "watchdog_child_environment": {
+      "PHYSICAL_WATCHDOG_PARENT_PID": "set by subreaper_watchdog.py to its os.getpid()",
+      "PHYSICAL_WATCHDOG_PHASE_PATH": "set by subreaper_watchdog.py to the absolute --phase-path",
+      "PHYSICAL_NATIVE_CAPACITY": "inherited task43_hp_adaptivity_resource_v1; watchdog computes reserve/launch/planning caps and exports its runtime facts"
+    },
+    "inner_shell_body_template": "set -euo pipefail; cd /home/fenics/Projects/NN-Lab-V2; source scripts/activate_task40_phi90_pord64.sh; export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1; TASK43_ABI_RECORD_PATH={attempt_root}/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u {attempt_root}/worker_abi_preflight.py; exec taskset -c 1 {worker_argv_shlex}",
+    "required_pre_dispatch_checks": [
+      "root has written phase-specific READY for the exact code/contract/plan identity",
+      "attempt_root, run, watchdog, phase file and launch PID file did not previously exist",
+      "fresh host preflight confirms no Task43 worker, CPU1 affinity/availability, MPI1, math threads1, native complex128/int64 ABI and MUMPS",
+      "fresh dynamic resource calculation under task43_hp_adaptivity_resource_v1 satisfies reserve, launch, planning, 192 GiB and zero task-swap gates",
+      "source/input manifest before hashes match the reviewed launch identity"
+    ],
+    "required_post_run_checks": [
+      "watchdog summary and resource samples bind the absolute phase path and exact worker argv",
+      "worker ABI record and source/input after hashes match before hashes",
+      "terminal classification, worker/launcher exits and descendant cleanup are recorded even on preflight failure",
+      "primary and partial evidence hashes remain unchanged; failure terminal and all continuation=false are present"
+    ],
+    "worker_process_parent_rule": "subreaper_watchdog sets PHYSICAL_WATCHDOG_PARENT_PID to its PID and passes the absolute --phase-path; the inner shell runs the ABI preflight as its own child, so that helper records but does not assert its immediate parent. The exec/taskset chain then replaces the watchdog child shell, and the actual A1/A2 worker asserts os.getppid() equals PHYSICAL_WATCHDOG_PARENT_PID.",
+    "preparation_failure_record": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_launch_materials_preparation_failure.json",
+      "sha256": "0bb978612cacfcf00d2e53fdb735a02945cf530694e0743dfff54397e2271768",
+      "scope": "Python template generator syntax/quoting error; watchdog parser usage exit with no child; formal roots absent; host process check found no Task43 worker; not a model attempt"
+    },
+    "review_materials_root": "/tmp/task43/v3_launch_review_materials",
+    "review_materials_are_executable_only_after_ready": true,
+    "preflight_record_shape": {
+      "classification": "ready_for_dispatch",
+      "required": [
+        "phase",
+        "HEAD",
+        "contract_sha256",
+        "plan_sha256",
+        "captured_utc",
+        "pre_dispatch_gates",
+        "source_file_sha256",
+        "input_file_sha256"
+      ],
+      "freshness_limit_seconds": 120,
+      "must_bind_dynamic_capacity_profile": "task43_hp_adaptivity_resource_v1",
+      "must_show_no_active_task43_worker": true,
+      "must_show_CPU1_MPI1_threads1_native_ABI_and_MUMPS": true
+    },
+    "review_materials_static_validation": {
+      "classification": "passed_syntax_compile_and_json_parse_no_model_or_mesh_executed",
+      "commands": [
+        "bash -n /tmp/task43/v3_launch_review_materials/A1_q_attempt2/{launch.sh,supervisor_entry.sh,detach_launch.sh} /tmp/task43/v3_launch_review_materials/A2_q_attempt3/{launch.sh,supervisor_entry.sh,detach_launch.sh} /tmp/task43/v3_launch_review_materials/run_tiny_component_attempt2.sh",
+        "source scripts/activate_task40_phi90_pord64.sh && python -m py_compile /tmp/task43/v3_launch_review_materials/worker_abi_preflight.py /tmp/task43/v3_launch_review_materials/tiny_workflow_child.py",
+        "python3 -m json.tool benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt2/attempt/workflow_ledger_proof.json"
+      ],
+      "stdout_log_path": "/tmp/task43/v3_launch_review_materials/static_syntax_validation.log",
+      "stdout_log_sha256": "4545c78ea3f7dfff0a0b6e4e9bbfa842f44e8f8bfc75b6625099ac720270c4a4",
+      "scope_note": "Syntax/compile/JSON parse only; did not execute the reviewed launch scripts, a solver, or mesh construction in this static step. The isolated watchdog component replay is itemized separately."
+    },
+    "g2_worker_abi_and_phase_path_component_replays": {
+      "scope": "isolated support-only real watchdog/ABI/WorkflowLedger component; no mesh, solver, or formal attempt directory",
+      "attempts": [
+        {
+          "attempt": 1,
+          "classification": "chain_assertions_succeeded_but_proof_json_invalid; G2_not_pass_until_readable_replay",
+          "watchdog_summary_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt1/attempt/watchdog/summary.json",
+          "watchdog_summary_sha256": "9b65b2c44f0680441102c9bf71b0b091963f6196c1fd1cde4b034521c4462917",
+          "worker_abi_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt1/attempt/worker_abi_preflight.json",
+          "worker_abi_sha256": "ce2f79876a92d893428921ba393d181ee96a5cef1f63ba45e243ad8296901b7c",
+          "workflow_proof_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt1/attempt/workflow_ledger_proof.json",
+          "workflow_proof_sha256": "77b56ac971916777e01f829fd5c969af61b2d7958e07a40a2c2ba5b6820c4991",
+          "workflow_proof_valid_json": false,
+          "workflow_proof_issue": "The raw file ends with literal backslash-n bytes; python3 -m json.tool reports Extra data at line 1 column 291. Its serialized values show actual_parent_pid equals watchdog_parent_pid and phase_exists_after_ledger=true, but the proof cannot be parsed and therefore does not pass G2.",
+          "proof_parse_check_log_path": "/tmp/task43/v3_launch_review_materials/attempt1_proof_json_parse_failure.log",
+          "proof_parse_check_log_sha256": "b2696f31490f03dfc1d41a4acb4fa9c818cf73010047438c21d25e21ccd4ed97",
+          "resources_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt1/attempt/watchdog/resources.jsonl",
+          "resources_sha256": "16d9a10d4d51935204b7540c0bbd51662eb86b034d5d7444ab277896b8feff8e",
+          "host_log_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt1/host_component.log",
+          "host_log_sha256": "6a52af6db2eca1ecdb384ee54a8222b526dc073a2713edabc3579d1ff1a28f5f",
+          "watchdog_whole_wall_seconds": 12.711930990684777,
+          "sampled_process_tree_rss_peak_bytes": 161431552,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "watchdog_exit": 0,
+          "descendants_cleared": true,
+          "note": "Preserved as-is; successful process/resource assertions do not turn an unreadable proof into a G2 pass."
+        },
+        {
+          "attempt": 2,
+          "classification": "readable_real_component_replay_pass",
+          "command_script_path": "/tmp/task43/v3_launch_review_materials/run_tiny_component_attempt2.sh",
+          "command_script_sha256": "27c3e4bc23b240a898ec274822736868e6f0ebd44795793e7a9ff451d0683856",
+          "worker_abi_script_path": "/tmp/task43/v3_launch_review_materials/worker_abi_preflight.py",
+          "worker_abi_script_sha256": "2e0fff0649444007374521b02e239e6863fef981a342f89a2d3ce7c19fe81e01",
+          "tiny_child_script_path": "/tmp/task43/v3_launch_review_materials/tiny_workflow_child.py",
+          "tiny_child_script_sha256": "41cb86e5a3b3a363afa1785f33da6b5e02f972781a4ba463124cbe02d4c82574",
+          "watchdog_summary_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt2/attempt/watchdog/summary.json",
+          "watchdog_summary_sha256": "7579400308aba268b9c285f7afc2bffa765a0dbd02c4a84fe22a029581affabe",
+          "worker_abi_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt2/attempt/worker_abi_preflight.json",
+          "worker_abi_sha256": "4e73712954e8345c1cb4fc4a8a7eeba4c0ad9588b4d8dfa9a651b8c7dc53ed55",
+          "workflow_proof_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt2/attempt/workflow_ledger_proof.json",
+          "workflow_proof_sha256": "d3fe720426d7f9c2bf382d67f980aa4f9140d7edfe0e17740ff7c9365c2aa35a",
+          "workflow_proof_valid_json": true,
+          "resources_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt2/attempt/watchdog/resources.jsonl",
+          "resources_sha256": "c13d99a1fee87db107851545585cde909c499396294af5495fbd7977da264475",
+          "worker_log_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt2/attempt/watchdog/worker.log",
+          "worker_log_sha256": "49335e6c2e91606615721985c14e4ff453e4c34d028b6ae0f2687266831abb40",
+          "host_log_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/v3_worker_abi_tiny_component_attempt2/host_component.log",
+          "host_log_sha256": "211a17d5a2ff6efcadff185bbab243146c9f895440d9bef129247ddb625e06d4",
+          "watchdog_whole_wall_seconds": 11.727924823760986,
+          "sampled_process_tree_rss_peak_bytes": 161316864,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "resource_samples": 21,
+          "watchdog_exit": 0,
+          "descendants_cleared": true,
+          "checks": {
+            "all_worker_abi_gates_true": true,
+            "phase_path_absolute_and_expected_before_ledger": true,
+            "phase_file_absent_during_preflight": true,
+            "workflow_ledger_created_phase_file": true,
+            "actual_worker_parent_equals_watchdog_pid": true,
+            "native_activation_cpu1_mpi1_threads1_complex128_int64_mumps": true
+          },
+          "note": "This is a support component pass only; it does not authorize or count as a formal PDE attempt."
+        }
+      ],
+      "support_whole_wall_sum_seconds": 24.439855814445764,
+      "final_g2_classification": "readable_replay_pass_after_attempt2_only",
+      "wall_scope_note": "Sum of two separate support watchdog whole-wall measurements only; exclude from formal-model wall accounting and do not add internal subprocess or per-sample stage timings."
+    }
+  },
+  "phases": [
+    {
+      "phase": "A1_q",
+      "attempt": 2,
+      "attempt_root": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2",
+      "attempt_root_must_be_absent": true,
+      "absolute_attempt_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2",
+      "absolute_watchdog_directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog",
+      "absolute_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/workflow_phase.json",
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.task43_hp_adaptivity.h100_anchor",
+        "--case",
+        "round1_candidate_mpi1",
+        "--run-root",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run",
+        "--candidate-plan",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+        "--candidate-id",
+        "round10_p_up",
+        "--candidate-acceptance-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+        "--candidate-parent-selection-record",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "--same-lu-solve-residual-correction",
+        "--direct-factor-backend",
+        "mumps",
+        "--same-lu-tightening",
+        "--v2-diagnostic-phase",
+        "A1_q",
+        "--v2-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json",
+        "--v2-contract-sha256",
+        "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+        "--v3-failure-evidence",
+        "--v3-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+        "--v3-plan",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+      ],
+      "watchdog_environment": {
+        "PHYSICAL_NATIVE_CAPACITY": "task43_hp_adaptivity_resource_v1"
+      },
+      "worker_affinity_prefix": [
+        "taskset",
+        "-c",
+        "1"
+      ],
+      "watchdog_command_prefix": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.subreaper_watchdog",
+        "--directory",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog",
+        "--wall-seconds",
+        "7200",
+        "--interval",
+        "1",
+        "--phase-path",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/workflow_phase.json",
+        "--",
+        "bash",
+        "-lc"
+      ],
+      "inner_shell_command_template": "set -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1\nTASK43_EXPECTED_ATTEMPT_ROOT=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2 TASK43_EXPECTED_PHASE=A1_q TASK43_ABI_RECORD_PATH=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.h100_anchor --case round1_candidate_mpi1 --run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run --candidate-plan /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json --candidate-id round10_p_up --candidate-acceptance-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json --candidate-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --same-lu-solve-residual-correction --direct-factor-backend mumps --same-lu-tightening --v2-diagnostic-phase A1_q --v2-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json --v2-contract-sha256 33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc --v3-failure-evidence --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md",
+      "worker_abi_preflight_copy": {
+        "source_path": "/tmp/task43/v3_launch_review_materials/worker_abi_preflight.py",
+        "source_sha256": "2e0fff0649444007374521b02e239e6863fef981a342f89a2d3ce7c19fe81e01",
+        "copied_to_attempt_root_before_watchdog_dispatch": "worker_abi_preflight.py",
+        "gates": [
+          "native qualified activation",
+          "qualified Python",
+          "PETSc complex128/int64",
+          "MPI1",
+          "MUMPS",
+          "CPU1 only",
+          "all math threads one",
+          "absolute live phase ledger",
+          "expected attempt-root identity"
+        ],
+        "immediate_parent_rule": "records its shell parent only; the actual solver adapter performs the direct-watchdog-parent assertion"
+      },
+      "reviewed_shell_files": {
+        "launch.sh": {
+          "path": "/tmp/task43/v3_launch_review_materials/A1_q_attempt2/launch.sh",
+          "sha256": "07036f7fc3d0a330a2833baff0bcb6e99938ac293018135ce6312c82c497fa2e",
+          "bytes": 5413
+        },
+        "supervisor_entry.sh": {
+          "path": "/tmp/task43/v3_launch_review_materials/A1_q_attempt2/supervisor_entry.sh",
+          "sha256": "7cc57d472734fb574bf0879fe5da5b5414425c671979d61b94bbd2a7c84c353a",
+          "bytes": 576
+        },
+        "detach_launch.sh": {
+          "path": "/tmp/task43/v3_launch_review_materials/A1_q_attempt2/detach_launch.sh",
+          "sha256": "11df770abdc385b96dfc4057ae7e6e708a2e9b0e4c851bc1cd48811aed4d2541",
+          "bytes": 612
+        }
+      },
+      "detached_command_template": "TASK43_V3_ROOT_LAUNCH_APPROVED=1 TASK43_V3_ROOT_READY_PHASE=A1_q TASK43_V3_ROOT_APPROVED_HEAD=<exact root READY HEAD> TASK43_V3_ROOT_APPROVED_CONTRACT_SHA256=<contract SHA> TASK43_V3_ROOT_APPROVED_PLAN_SHA256=<plan SHA> TASK43_V3_PREFLIGHT_JSON=<fresh root-reviewed preflight JSON> bash /tmp/task43/v3_launch_review_materials/A1_q_attempt2/detach_launch.sh",
+      "watchdog_launch_semantics": {
+        "outer_environment": {
+          "PHYSICAL_NATIVE_CAPACITY": "task43_hp_adaptivity_resource_v1"
+        },
+        "outer_argv": [
+          "python",
+          "-u",
+          "-m",
+          "benchmarks.subreaper_watchdog",
+          "--directory",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog",
+          "--wall-seconds",
+          "7200",
+          "--interval",
+          "1",
+          "--phase-path",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/workflow_phase.json",
+          "--",
+          "bash",
+          "-lc",
+          "set -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1\nTASK43_EXPECTED_ATTEMPT_ROOT=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2 TASK43_EXPECTED_PHASE=A1_q TASK43_ABI_RECORD_PATH=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.h100_anchor --case round1_candidate_mpi1 --run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run --candidate-plan /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json --candidate-id round10_p_up --candidate-acceptance-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json --candidate-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --same-lu-solve-residual-correction --direct-factor-backend mumps --same-lu-tightening --v2-diagnostic-phase A1_q --v2-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json --v2-contract-sha256 33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc --v3-failure-evidence --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+        ],
+        "child_affinity": [
+          "taskset",
+          "-c",
+          "1"
+        ],
+        "worker_is_exec_replacement_of_watchdog_child_shell": true,
+        "source_and_input_hashes_checked_before_and_after": true,
+        "formal_directory_created_only_after_ready_and_fresh_preflight": true
+      },
+      "rendered_launch_command": "PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog --wall-seconds 7200 --interval 1 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/workflow_phase.json -- bash -lc \"set -euo pipefail\\ncd /home/fenics/Projects/NN-Lab-V2\\nsource scripts/activate_task40_phi90_pord64.sh\\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1\\nTASK43_EXPECTED_ATTEMPT_ROOT=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2 TASK43_EXPECTED_PHASE=A1_q TASK43_ABI_RECORD_PATH=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.py\\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.h100_anchor --case round1_candidate_mpi1 --run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run --candidate-plan /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json --candidate-id round10_p_up --candidate-acceptance-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json --candidate-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --same-lu-solve-residual-correction --direct-factor-backend mumps --same-lu-tightening --v2-diagnostic-phase A1_q --v2-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json --v2-contract-sha256 33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc --v3-failure-evidence --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md\""
+    },
+    {
+      "phase": "A2_q",
+      "attempt": 3,
+      "attempt_root": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3",
+      "attempt_root_must_be_absent": true,
+      "absolute_attempt_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3",
+      "absolute_watchdog_directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog",
+      "absolute_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/workflow_phase.json",
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic",
+        "--phase",
+        "A2_q",
+        "--attempt",
+        "3",
+        "--v3-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+        "--v3-plan",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+      ],
+      "watchdog_environment": {
+        "PHYSICAL_NATIVE_CAPACITY": "task43_hp_adaptivity_resource_v1"
+      },
+      "worker_affinity_prefix": [
+        "taskset",
+        "-c",
+        "1"
+      ],
+      "watchdog_command_prefix": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.subreaper_watchdog",
+        "--directory",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog",
+        "--wall-seconds",
+        "7200",
+        "--interval",
+        "1",
+        "--phase-path",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/workflow_phase.json",
+        "--",
+        "bash",
+        "-lc"
+      ],
+      "inner_shell_command_template": "set -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1\nTASK43_EXPECTED_ATTEMPT_ROOT=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3 TASK43_EXPECTED_PHASE=A2_q TASK43_ABI_RECORD_PATH=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 3 --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md",
+      "worker_abi_preflight_copy": {
+        "source_path": "/tmp/task43/v3_launch_review_materials/worker_abi_preflight.py",
+        "source_sha256": "2e0fff0649444007374521b02e239e6863fef981a342f89a2d3ce7c19fe81e01",
+        "copied_to_attempt_root_before_watchdog_dispatch": "worker_abi_preflight.py",
+        "gates": [
+          "native qualified activation",
+          "qualified Python",
+          "PETSc complex128/int64",
+          "MPI1",
+          "MUMPS",
+          "CPU1 only",
+          "all math threads one",
+          "absolute live phase ledger",
+          "expected attempt-root identity"
+        ],
+        "immediate_parent_rule": "records its shell parent only; the actual solver adapter performs the direct-watchdog-parent assertion"
+      },
+      "reviewed_shell_files": {
+        "launch.sh": {
+          "path": "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/launch.sh",
+          "sha256": "6ca3a07300329544882423c792f6dd68c4da24062b363aefa070d7389e088514",
+          "bytes": 4533
+        },
+        "supervisor_entry.sh": {
+          "path": "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/supervisor_entry.sh",
+          "sha256": "e135349a99ce63135d5befc20563e96a268fc9c5be6f79c86d031caac7674e86",
+          "bytes": 576
+        },
+        "detach_launch.sh": {
+          "path": "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/detach_launch.sh",
+          "sha256": "c0d1748a9c6aba3d177f12e85b17079ada2d8f0e5cedf9e577509d018c9f77a8",
+          "bytes": 612
+        }
+      },
+      "detached_command_template": "TASK43_V3_ROOT_LAUNCH_APPROVED=1 TASK43_V3_ROOT_READY_PHASE=A2_q TASK43_V3_ROOT_APPROVED_HEAD=<exact root READY HEAD> TASK43_V3_ROOT_APPROVED_CONTRACT_SHA256=<contract SHA> TASK43_V3_ROOT_APPROVED_PLAN_SHA256=<plan SHA> TASK43_V3_PREFLIGHT_JSON=<fresh root-reviewed preflight JSON> bash /tmp/task43/v3_launch_review_materials/A2_q_attempt3/detach_launch.sh",
+      "watchdog_launch_semantics": {
+        "outer_environment": {
+          "PHYSICAL_NATIVE_CAPACITY": "task43_hp_adaptivity_resource_v1"
+        },
+        "outer_argv": [
+          "python",
+          "-u",
+          "-m",
+          "benchmarks.subreaper_watchdog",
+          "--directory",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog",
+          "--wall-seconds",
+          "7200",
+          "--interval",
+          "1",
+          "--phase-path",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/workflow_phase.json",
+          "--",
+          "bash",
+          "-lc",
+          "set -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1\nTASK43_EXPECTED_ATTEMPT_ROOT=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3 TASK43_EXPECTED_PHASE=A2_q TASK43_ABI_RECORD_PATH=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 3 --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+        ],
+        "child_affinity": [
+          "taskset",
+          "-c",
+          "1"
+        ],
+        "worker_is_exec_replacement_of_watchdog_child_shell": true,
+        "source_and_input_hashes_checked_before_and_after": true,
+        "formal_directory_created_only_after_ready_and_fresh_preflight": true
+      },
+      "rendered_launch_command": "PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog --wall-seconds 7200 --interval 1 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/workflow_phase.json -- bash -lc \"set -euo pipefail\\ncd /home/fenics/Projects/NN-Lab-V2\\nsource scripts/activate_task40_phi90_pord64.sh\\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1\\nTASK43_EXPECTED_ATTEMPT_ROOT=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3 TASK43_EXPECTED_PHASE=A2_q TASK43_ABI_RECORD_PATH=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.py\\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 3 --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md\""
+    }
+  ],
+  "watchdog_cli_component_binding": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g2_watchdog_cli_component.json",
+    "sha256": "ff17402290bbafb7208a046e3c151d402d452c61093b12b98aeb4bc8af774217",
+    "scope": "actual --phase-path absolute path, WorkflowLedger, parent PID, taskset CPU1, ABI/thread facts and dynamic cap; tiny child only; no mesh or solver"
+  }
+}

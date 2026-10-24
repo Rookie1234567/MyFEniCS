@@ -1,0 +1,27 @@
+{
+  "schema": "task43.v3.launch_materials_preparation_failure.v1",
+  "classification": "support_preparation_failed_no_formal_dispatch",
+  "captured_utc_date": "2026-10-24",
+  "operation": "Generate isolated /tmp launch-review materials using a Python heredoc passed to exec_command",
+  "cause": "The nested triple-quoted f-string in the generator was unterminated. The shell then interpreted the remaining text as commands.",
+  "observed_output": [
+    "SyntaxError: unterminated triple-quoted f-string literal (detected at line 149)",
+    "mkdir: cannot create directory ‘’: No such file or directory",
+    "cp: cannot stat '/worker_abi_preflight.py': No such file or directory",
+    "subreaper_watchdog.py: error: the following arguments are required: --directory, --wall-seconds",
+    "/bin/bash: line 158: --directory: command not found",
+    "/bin/bash: line 159: --phase-path: command not found",
+    "/bin/bash: line 169: /watchdog_exit_code.txt: Read-only file system"
+  ],
+  "watchdog_actual_argv": "python -u -m benchmarks.subreaper_watchdog with no --directory or --wall-seconds arguments; argparse printed usage and exited before any child launch",
+  "duration_seconds": null,
+  "duration_classification": "not_measured",
+  "formal_attempt_consumed": false,
+  "post_failure_checks": {
+    "A1_q_attempt2_root_absent": true,
+    "A2_q_attempt3_root_absent": true,
+    "host_pgrep_task43_watchdog_or_worker_matches": [],
+    "source": "require_escalated host read-only checks; no Task43 worker process found"
+  },
+  "source_command_recovery_limit": "The complete nested command was not persisted as a standalone file. Its original exec tool call and full output remain in the session transcript; no command body is reconstructed here."
+}

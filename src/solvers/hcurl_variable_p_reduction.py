@@ -610,17 +610,30 @@ class VariablePAssemblyTimeReduction:
         reduced_rhs: PETSc.Vec,
         reduced_solution: PETSc.Vec,
         recovered: VariablePRecoveredSolution,
+        *,
+        capture_raw_vectors: bool = False,
     ) -> dict[str, Any]:
         """Audit reduced and every eliminated active-interior equation."""
 
         residual = reduced_matrix.createVecLeft()
         reduced_matrix.mult(reduced_solution, residual)
         residual.axpy(PETSc.ScalarType(-1.0), reduced_rhs)
-        reduced_norm = _reduced_trace_auxiliary_norm(
+        raw_reduced_residual = (
+            np.asarray(residual.getArray(readonly=True), dtype=np.complex128).copy()
+            if capture_raw_vectors
+            else None
+        )
+        reduced_norm_result = _reduced_trace_auxiliary_norm(
             self.system,
             residual,
             trace_kind="dual",
+            return_action=capture_raw_vectors,
         )
+        if capture_raw_vectors:
+            reduced_norm, reduced_metric_action = reduced_norm_result
+        else:
+            reduced_norm = reduced_norm_result
+            reduced_metric_action = None
         residual.destroy()
 
         active_solution = _global_values(
@@ -641,6 +654,11 @@ class VariablePAssemblyTimeReduction:
                 self.system.entity_map.active_rows,
                 self.system.entity_map.mesh.comm,
             )
+        )
+        interior_residual = (
+            np.zeros_like(active_rhs, dtype=np.complex128)
+            if capture_raw_vectors
+            else None
         )
         local_interior_sq = 0.0
         local_interior_max = 0.0
@@ -663,6 +681,8 @@ class VariablePAssemblyTimeReduction:
             )
             action -= active_rhs[cell.interior_rows]
             action -= auxiliary_action[cell.interior_rows]
+            if interior_residual is not None:
+                interior_residual[cell.interior_rows] = action
             local_interior_sq += float(np.vdot(action, action).real)
             local_rhs = active_rhs[cell.interior_rows]
             local_interior_rhs_sq += float(
@@ -683,11 +703,17 @@ class VariablePAssemblyTimeReduction:
             comm.allreduce(local_interior_max, op=MPI.MAX)
         )
         full_norm = float(np.hypot(reduced_norm, interior_norm))
-        reduced_rhs_norm = _reduced_trace_auxiliary_norm(
+        rhs_norm_result = _reduced_trace_auxiliary_norm(
             self.system,
             reduced_rhs,
             trace_kind="dual",
+            return_action=capture_raw_vectors,
         )
+        if capture_raw_vectors:
+            reduced_rhs_norm, rhs_metric_action = rhs_norm_result
+        else:
+            reduced_rhs_norm = rhs_norm_result
+            rhs_metric_action = None
         interior_rhs_norm = float(
             np.sqrt(
                 comm.allreduce(local_interior_rhs_sq, op=MPI.SUM)
@@ -696,11 +722,17 @@ class VariablePAssemblyTimeReduction:
         rhs_norm = float(
             np.hypot(reduced_rhs_norm, interior_rhs_norm)
         )
-        reduced_solution_norm = _reduced_trace_auxiliary_norm(
+        solution_norm_result = _reduced_trace_auxiliary_norm(
             self.system,
             reduced_solution,
             trace_kind="primal",
+            return_action=capture_raw_vectors,
         )
+        if capture_raw_vectors:
+            reduced_solution_norm, solution_metric_action = solution_norm_result
+        else:
+            reduced_solution_norm = solution_norm_result
+            solution_metric_action = None
         interior_solution_norm = float(
             np.sqrt(
                 comm.allreduce(
@@ -712,7 +744,7 @@ class VariablePAssemblyTimeReduction:
         solution_norm = float(
             np.hypot(reduced_solution_norm, interior_solution_norm)
         )
-        return {
+        result = {
             "linear_system_rhs_norm": rhs_norm,
             "linear_system_solution_norm": solution_norm,
             "linear_system_residual_norm": full_norm,
@@ -758,6 +790,56 @@ class VariablePAssemblyTimeReduction:
             "full_p6_global_matrix_allocated_for_residual": False,
             "ordinary_default_changed": False,
         }
+        if capture_raw_vectors:
+            result["raw_vector_scope"] = {
+                "method": (
+                    "same-pass exact block-Gaussian transformed residual; reduced "
+                    "trace/DtN residual is retained in its constraint-induced dual "
+                    "coordinates, while eliminated active-interior rows are retained "
+                    "in active-cell coordinates"
+                ),
+                "reduced_trace_dtn_rows": int(reduced_rhs.getSize()),
+                "reduced_trace_dtn_owned_range": [
+                    int(value) for value in reduced_rhs.getOwnershipRange()
+                ],
+                "mpi_size": int(
+                    self.system.entity_map.mesh.comm.Get_size()
+                ),
+                "active_full_rows": int(active_solution.size),
+                "full_operator_norm_definition": (
+                    "sqrt(constraint-dual reduced-trace norm^2 + eliminated-interior "
+                    "Euclidean norm^2); do not take a plain concatenated Euclidean norm"
+                ),
+                "trace_metric_action_definition": (
+                    "same-pass Gram inverse action for dual residual/RHS and Gram "
+                    "action for primal solution; vdot(trace, action) plus auxiliary "
+                    "Euclidean contribution reproduces each reduced norm squared"
+                ),
+            }
+            result["raw_vectors"] = {
+                "reduced_trace_dtn_rhs_owned": np.asarray(
+                    reduced_rhs.getArray(readonly=True), dtype=np.complex128
+                ).copy(),
+                "reduced_trace_dtn_solution_owned": np.asarray(
+                    reduced_solution.getArray(readonly=True), dtype=np.complex128
+                ).copy(),
+                "reduced_trace_dtn_residual_Ax_minus_b_owned": raw_reduced_residual,
+                "reduced_trace_dtn_residual_trace_metric_action": (
+                    reduced_metric_action["trace_metric_action"]
+                ),
+                "reduced_trace_dtn_rhs_trace_metric_action": (
+                    rhs_metric_action["trace_metric_action"]
+                ),
+                "reduced_trace_dtn_solution_trace_metric_action": (
+                    solution_metric_action["trace_metric_action"]
+                ),
+                "active_full_rhs": np.asarray(active_rhs, dtype=np.complex128).copy(),
+                "active_full_solution": np.asarray(
+                    active_solution, dtype=np.complex128
+                ).copy(),
+                "eliminated_active_interior_residual": interior_residual,
+            }
+        return result
 
 
 def _global_values(
@@ -901,7 +983,8 @@ def _reduced_trace_auxiliary_norm(
     vector: PETSc.Vec,
     *,
     trace_kind: str,
-) -> float:
+    return_action: bool = False,
+) -> float | tuple[float, dict[str, np.ndarray]]:
     """Return the full trace-constraint invariant reduced vector norm."""
 
     if trace_kind not in {"dual", "primal"}:
@@ -915,9 +998,15 @@ def _reduced_trace_auxiliary_norm(
     trace = values[: system.active_trace_rows]
     auxiliary = values[system.active_trace_rows :]
     trace_sq = 0.0
+    trace_metric_action = (
+        np.zeros_like(trace, dtype=np.complex128) if return_action else None
+    )
     constraints = system.trace_constraints
     if constraints is None:
         trace_sq = float(np.vdot(trace, trace).real)
+        if return_action:
+            assert trace_metric_action is not None
+            trace_metric_action[:] = trace
     elif hasattr(constraints, "component_gram"):
         gram = constraints.component_gram
         expected_shape = (
@@ -965,6 +1054,9 @@ def _reduced_trace_auxiliary_norm(
                 "physical trace component Gram norm is not positive real"
             )
         trace_sq = max(float(contribution.real), 0.0)
+        if return_action:
+            assert trace_metric_action is not None
+            trace_metric_action[:] = gram_action
     else:
         seen = np.zeros(system.active_trace_rows, dtype=np.int8)
         blocks_by_root: dict[
@@ -1000,15 +1092,20 @@ def _reduced_trace_auxiliary_norm(
                 gram += expansion.conj().T @ expansion
             block_values = trace[rows]
             if trace_kind == "primal":
+                action = gram @ block_values
                 contribution = np.vdot(
                     block_values,
-                    gram @ block_values,
+                    action,
                 )
             else:
+                action = np.linalg.solve(gram, block_values)
                 contribution = np.vdot(
                     block_values,
-                    np.linalg.solve(gram, block_values),
+                    action,
                 )
+            if return_action:
+                assert trace_metric_action is not None
+                trace_metric_action[rows] = action
             trace_sq += float(contribution.real)
             seen[rows] += 1
         if not np.all(seen == 1):
@@ -1016,7 +1113,11 @@ def _reduced_trace_auxiliary_norm(
                 "periodic entity blocks do not partition trace coordinates"
             )
     auxiliary_sq = float(np.vdot(auxiliary, auxiliary).real)
-    return float(np.sqrt(max(trace_sq + auxiliary_sq, 0.0)))
+    norm = float(np.sqrt(max(trace_sq + auxiliary_sq, 0.0)))
+    if return_action:
+        assert trace_metric_action is not None
+        return norm, {"trace_metric_action": trace_metric_action}
+    return norm
 
 
 def _active_auxiliary_interior_action(

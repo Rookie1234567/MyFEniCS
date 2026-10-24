@@ -56,6 +56,7 @@ def test_cli_phase_path_exports_watchdog_identity_and_observes_workflow_ledger(t
         f'run=Path({str(run_directory)!r}); run.mkdir(parents=True,exist_ok=True); '
         'phase=Path(os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"]); '
         'assert phase.is_absolute(); '
+        'assert not phase.exists(); '
         'ledger=WorkflowLedger(run,phase); ledger.set_phase("solve"); '
         'phase_payload=json.loads(phase.read_text()); '
         f'proof=Path({str(proof_path)!r}); '

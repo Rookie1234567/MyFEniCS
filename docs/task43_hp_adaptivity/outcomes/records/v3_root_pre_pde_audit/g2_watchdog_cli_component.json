@@ -1,0 +1,179 @@
+{
+  "schema": "task43.v3.root_g2_watchdog_cli_component.v1",
+  "classification": "measured_component_no_PDE_no_formal_dispatch",
+  "source_head_at_test": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+  "source_files": {
+    "benchmarks/subreaper_watchdog.py": "a003d86ccc9f83db924b59842b7bcf242cace84d8ad96071221c4272402d4753",
+    "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+    "src/runners/workflow_timebase.py": "1327f64adce91535c9e35a42b213a7cfba7bffe0896e5631a041747f9a876eac",
+    "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3"
+  },
+  "component_argv": [
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "-u",
+    "-m",
+    "benchmarks.subreaper_watchdog",
+    "--directory",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny/watchdog",
+    "--wall-seconds",
+    "7200",
+    "--interval",
+    ".1",
+    "--phase-path",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny/watchdog/workflow_phase.json",
+    "--",
+    "taskset",
+    "-c",
+    "1",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "-u",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny/tiny_child.py",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny/component_ledger",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny/child_proof.json"
+  ],
+  "component_directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny",
+  "child_proof": {
+    "classification": "component_tiny_child_no_mesh_no_solver_no_formal_dispatch",
+    "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny/watchdog/workflow_phase.json",
+    "watchdog_pid": 2067566,
+    "actual_parent_pid": 2067566,
+    "worker_pid": 2067580,
+    "phase": {
+      "facts": {},
+      "phase": "solve",
+      "phase_started_monotonic": 2757205.535392001,
+      "stage": "solve_started",
+      "updated_monotonic": 2757205.535412179
+    },
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "CPU": [
+      1
+    ],
+    "MPI": 1,
+    "PETSc_version": [
+      3,
+      19,
+      6
+    ],
+    "scalar": "complex128",
+    "int": "int64",
+    "MUMPS_available": true,
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1976901492736,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1976901492736,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "forbidden_solver_module_loaded": false
+  },
+  "watchdog_summary": {
+    "workflow_deadline_seconds": 7200.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 206158430208,
+    "rss_warning_bytes": 175234665676,
+    "minimum_available_bytes": null,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+    "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+    "native_capacity_resource_facts": {
+      "resource_stop_policy": "legacy",
+      "absolute_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "reserve_min_bytes": 68719476736,
+      "reserve_fraction": 0.15,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "require_zero_swap": true,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+      "global_swap_delta_policy": "observe_only",
+      "stop_on_global_swap": false,
+      "pss_sampling_policy": "disabled_by_profile",
+      "concurrent_neighbor_authorized": false,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias"
+    },
+    "launch_memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1977149546496,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1977149546496,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      2067580,
+      2067598
+    ],
+    "sampled_process_tree_rss_peak_bytes": 136040448,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250586,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250586,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1977149546496,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1977149546496,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "samples": 12,
+    "elapsed_seconds": 7.100545139983296,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "resource_samples_count": 12,
+  "resource_samples_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_root_audit/g2_cli_component_vlqmvtny/watchdog/resources.jsonl",
+  "resource_samples_sha256": "6c8994f2441f6b0c5891a29c337046d7a103daa2915ae91a66601274aa4e6cc9",
+  "child_script_sha256": "c19cdcad98468f11ed63ace9542efc260d737e167c2c16e2e5afdbb2af1df71c",
+  "wall_seconds": 8.303391347173601,
+  "formal_attempts_consumed": 0,
+  "limitation": "Tests actual watchdog CLI, ledger, parent identity and direct ABI. Does not test A1/A2 formal adapter or qualify a numerical endpoint."
+}

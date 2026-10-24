@@ -122,6 +122,7 @@ class Stage4VariablePLiveView:
     port_operator_audit: Mapping[str, Any]
     full_active_residual: Mapping[str, Any]
     primal_solver_telemetry: Mapping[str, Any]
+    normal_correction_raw_vectors: Mapping[str, Any] | None = None
     volume_bilinear_form: Any | None = None
     volume_linear_form: Any | None = None
     dtn_surface_quadrature_degree: int | None = None
@@ -4823,6 +4824,8 @@ def _independent_active_action_project_p6_dual(
 
 def compute_stage4_independent_active_action(
     view: Stage4VariablePLiveView,
+    *,
+    capture_raw_vectors: bool = False,
 ) -> dict[str, Any]:
     """Independently evaluate the original variable-p Stage-4 active equations.
 
@@ -5137,7 +5140,7 @@ def compute_stage4_independent_active_action(
         and np.isfinite(rhs_norm)
         and np.isfinite(relative_residual)
     )
-    return {
+    result = {
         "schema_version": "stage4.independent-active-action.v1",
         "method": (
             "reassembled original volume action and incident/port vectors; "
@@ -5221,6 +5224,61 @@ def compute_stage4_independent_active_action(
         "independent_of_solver_condensed_residual": True,
         "inactive_carrier_tests_excluded": True,
     }
+    if capture_raw_vectors:
+        result["raw_vector_scope"] = {
+            "method": (
+                "same-pass original volume/incident/port action after actual "
+                "entity/Floquet projection, with active interiors and raw plus "
+                "solver-gauge modal lower rows retained"
+            ),
+            "trace_rows": trace_rows,
+            "active_interior_rows": int(residual_interior.size),
+            "modal_lower_rows": int(modal_gauge.size),
+            "norm_definition": (
+                "Euclidean norm of the independently assembled trace residual, "
+                "active-interior residual, and normalized modal-gauge rows; the "
+                "original unnormalized modal rows are also retained separately"
+            ),
+        }
+        result["raw_vectors"] = {
+            "independent_active_residual_trace": np.asarray(
+                residual_trace, dtype=np.complex128
+            ).copy(),
+            "independent_active_residual_cell_interior": np.asarray(
+                residual_interior, dtype=np.complex128
+            ).copy(),
+            "independent_active_rhs_trace": np.asarray(
+                rhs_trace, dtype=np.complex128
+            ).copy(),
+            "independent_active_rhs_cell_interior": np.asarray(
+                rhs_interior, dtype=np.complex128
+            ).copy(),
+            "independent_active_volume_action_minus_rhs_trace": np.asarray(
+                volume_trace, dtype=np.complex128
+            ).copy(),
+            "independent_active_volume_action_minus_rhs_cell_interior": np.asarray(
+                volume_interior, dtype=np.complex128
+            ).copy(),
+            "independent_active_incident_traction_trace": np.asarray(
+                incident_trace, dtype=np.complex128
+            ).copy(),
+            "independent_active_incident_traction_cell_interior": np.asarray(
+                incident_interior, dtype=np.complex128
+            ).copy(),
+            "independent_active_port_upper_alpha_trace": np.asarray(
+                port_alpha_trace, dtype=np.complex128
+            ).copy(),
+            "independent_active_port_upper_incident_trace": np.asarray(
+                port_incident_trace, dtype=np.complex128
+            ).copy(),
+            "independent_active_modal_lower_raw_original_equation": np.asarray(
+                modal_raw, dtype=np.complex128
+            ).copy(),
+            "independent_active_modal_lower_solver_gauge": np.asarray(
+                modal_gauge, dtype=np.complex128
+            ).copy(),
+        }
+    return result
 
 
 class _IndependentModeSurfaceMomentAssembler:
@@ -6498,6 +6556,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
     diagnostic_reference_incident_quadrature: bool = False,
     variable_p_single_lu_residual_correction: bool = False,
+    variable_p_capture_normal_correction_vectors: bool = False,
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
 
@@ -6575,6 +6634,17 @@ def _solve_stage4_dtn_port_total_field_impl(
         raise ValueError(
             "same-LU variable-p residual correction requires the built-in "
             "variable-p solve and its live observer"
+        )
+    if variable_p_capture_normal_correction_vectors and (
+        not variable_p_single_lu_residual_correction
+        or variable_p_live_observer is None
+        or int(
+            (mesh_data.mesh.comm if mesh_data is not None else V.mesh.comm).size
+        ) != 1
+    ):
+        raise ValueError(
+            "normal correction vector capture requires the MPI1 variable-p "
+            "live observer and its existing normal correction"
         )
     if canonical_vector_export and (
         not assembly_time_cell_static_condensation or variable_p_backend
@@ -8293,6 +8363,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     timing_details["stage4_dtn_linear_solve_seconds"] = setup_and_solve_seconds
 
     same_lu_residual_correction: dict[str, Any] | None = None
+    normal_correction_raw_vectors: dict[str, np.ndarray] | None = None
     if variable_p_single_lu_residual_correction:
         correction_started = time.perf_counter()
         _write_progress_event(
@@ -8313,6 +8384,35 @@ def _solve_stage4_dtn_port_total_field_impl(
             petsc_options=petsc_options,
             extra={"original_primal_ksp": original_primal_ksp},
         )
+        if variable_p_capture_normal_correction_vectors:
+            if comm.size != 1:
+                raise RuntimeError("normal correction vector capture is MPI1-only")
+
+            def snapshot(tag: str) -> None:
+                assert solve_A is not None and solve_b is not None and solve_x is not None
+                action = solve_b.duplicate()
+                residual = solve_b.duplicate()
+                try:
+                    solve_A.mult(solve_x, action)
+                    solve_b.copy(residual)
+                    residual.axpy(PETSc.ScalarType(-1.0), action)
+                    normal_correction_raw_vectors[f"{tag}_rhs"] = np.asarray(
+                        solve_b.getArray(readonly=True), dtype=np.complex128
+                    ).copy()
+                    normal_correction_raw_vectors[f"{tag}_solution"] = np.asarray(
+                        solve_x.getArray(readonly=True), dtype=np.complex128
+                    ).copy()
+                    normal_correction_raw_vectors[f"{tag}_residual_b_minus_Ax"] = (
+                        np.asarray(
+                            residual.getArray(readonly=True), dtype=np.complex128
+                        ).copy()
+                    )
+                finally:
+                    action.destroy()
+                    residual.destroy()
+
+            normal_correction_raw_vectors = {}
+            snapshot("before_normal_correction")
         same_lu_residual_correction = single_petsc_residual_correction_in_place(
             solve_A,
             solve_b,
@@ -8320,6 +8420,8 @@ def _solve_stage4_dtn_port_total_field_impl(
             ksp,
             enabled=True,
         )
+        if normal_correction_raw_vectors is not None:
+            snapshot("after_normal_correction")
         correction_seconds = float(
             comm.allreduce(time.perf_counter() - correction_started, op=MPI.MAX)
         )
@@ -8460,6 +8562,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             b_aug,
             x_aug,
             variable_p_recovered,
+            capture_raw_vectors=variable_p_capture_normal_correction_vectors,
         )
         if assembly_time_full_rhs is None:
             raise RuntimeError("variable-p full RHS lifecycle is invalid")
@@ -8946,8 +9049,17 @@ def _solve_stage4_dtn_port_total_field_impl(
                         "pc_factor_solver_type": solver_info[
                             "actual_pc_factor_solver_type"
                         ],
+                        "normal_correction_audit": solver_info.get(
+                            "variable_p_same_lu_residual_correction"
+                        ),
+                        "normal_correction_count": int(
+                            same_lu_residual_correction is not None
+                        ),
                         **dict(linear_residual),
                     }
+                ),
+                normal_correction_raw_vectors=_deep_readonly_copy(
+                    normal_correction_raw_vectors
                 ),
                 volume_bilinear_form=a,
                 volume_linear_form=L,
@@ -9065,6 +9177,7 @@ def solve_stage4_dtn_port_total_field(
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
     variable_p_single_lu_residual_correction: bool = False,
+    variable_p_capture_normal_correction_vectors: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -9085,6 +9198,7 @@ def solve_stage4_dtn_port_total_field(
             bool(canonical_vector_export),
             bool(diagnostic_reference_incident_quadrature),
             bool(variable_p_single_lu_residual_correction),
+            bool(variable_p_capture_normal_correction_vectors),
         )
     )
     if len(set(observer_flags)) != 1:
@@ -9120,6 +9234,9 @@ def solve_stage4_dtn_port_total_field(
             canonical_vector_export=canonical_vector_export,
             variable_p_single_lu_residual_correction=(
                 variable_p_single_lu_residual_correction
+            ),
+            variable_p_capture_normal_correction_vectors=(
+                variable_p_capture_normal_correction_vectors
             ),
             _recovery_cleanup_sink=recovered_cleanup,
         )

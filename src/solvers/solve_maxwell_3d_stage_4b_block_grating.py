@@ -23,6 +23,7 @@ def run_stage4b_block_grating_3d_case(
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
     variable_p_single_lu_residual_correction: bool = False,
+    variable_p_capture_normal_correction_vectors: bool = False,
     mesh_data_override=None,
 ) -> dict[str, object]:
     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
@@ -65,6 +66,9 @@ def run_stage4b_block_grating_3d_case(
         canonical_vector_export=canonical_vector_export,
         variable_p_single_lu_residual_correction=(
             variable_p_single_lu_residual_correction
+        ),
+        variable_p_capture_normal_correction_vectors=(
+            variable_p_capture_normal_correction_vectors
         ),
         mesh_data_override=mesh_data_override,
     )

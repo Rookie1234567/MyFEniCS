@@ -1045,8 +1045,10 @@ def _task43_v2_capture_fixed_field_samples(
     field: Any,
     cfg: Any,
     diagnostic: Mapping[str, Any],
+    *,
+    sample_callback: Any | None = None,
 ) -> dict[str, np.ndarray]:
-    """Sample recovered E and curl(E) on the two frozen shared point arrays."""
+    """Sample the frozen shared point arrays and persist each completed order promptly."""
 
     from src.postprocessing.physical_field_comparison import (
         magnetic_field_from_electric_curl,
@@ -1124,6 +1126,17 @@ def _task43_v2_capture_fixed_field_samples(
         result[f"{key}_E_total_code"] = electric
         result[f"{key}_curl_E_total_code"] = curl
         result[f"{key}_H_total_A_per_m"] = magnetic
+        if sample_callback is not None:
+            sample_callback(
+                order,
+                {
+                    "points_nm": points,
+                    "weights_nm3": weights,
+                    "E_total_code": electric,
+                    "curl_E_total_code": curl,
+                    "H_total_A_per_m": magnetic,
+                },
+            )
     return result
 
 
@@ -2922,11 +2935,14 @@ def run_p6_condensed_direct(
     *,
     source_sha: str | None,
     task43_v2_diagnostic: Mapping[str, Any] | None = None,
+    task43_v3_diagnostic: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Execute one explicitly profiled p6 condensed direct full solve.
 
     ``task43_v2_diagnostic`` is a separate, explicit opt-in for the frozen
-    Task43 A2 experiment.  Leaving it unset preserves the historical runner.
+    Task43 A2 experiment. ``task43_v3_diagnostic`` adds failure-safe primary
+    evidence ordering to that same route. Leaving both unset preserves the
+    historical runner.
     """
 
     from mpi4py import MPI
@@ -3011,10 +3027,33 @@ def run_p6_condensed_direct(
     extra_native_facts = None
     extra_lu_facts = None
     extra_schur_relative = None
+    v3_primary_packet_record = None
+    v3_primary_sample_records: dict[str, Any] = {}
+    v3_extra_sample_records: dict[str, Any] = {}
+    v3_primary_field_samples = None
+    v3_primary_output_facts = None
     route = None
     task43_resource_gate = None
     same_matrix_lifecycle_verified = None
     try:
+        if task43_v3_diagnostic is not None:
+            if task43_v2_diagnostic is None:
+                raise ValueError(
+                    "Task43 V3 native diagnostics require the reviewed V2 A2 route"
+                )
+            if (
+                task43_v3_diagnostic.get("phase") != "A2_q"
+                or int(task43_v3_diagnostic.get("attempt", -1)) != 3
+            ):
+                raise ValueError(
+                    "Task43 V3 native diagnostics are frozen for A2_q attempt 3"
+                )
+            for hash_key in ("contract_sha256", "plan_sha256"):
+                digest = str(task43_v3_diagnostic.get(hash_key, ""))
+                if len(digest) != 64 or any(
+                    char not in "0123456789abcdef" for char in digest
+                ):
+                    raise ValueError(f"Task43 V3 diagnostic {hash_key} is invalid")
         profile_facts = _validate_resolved_profile(resolved_payload)
         route = _direct_run_contract(str(profile_facts["identity"]))
         if task43_v2_diagnostic is not None:
@@ -3556,6 +3595,28 @@ def run_p6_condensed_direct(
                 bundle["modes"],
                 space_identity=summary["task43_v2_reference_space_identity"],
             )
+            if task43_v3_diagnostic is not None:
+                summary["task43_v3_diagnostic_identity"] = {
+                    "phase": "A2_q",
+                    "attempt": 3,
+                    "contract_path": str(task43_v3_diagnostic.get("contract_path")),
+                    "contract_sha256": str(task43_v3_diagnostic["contract_sha256"]),
+                    "plan_path": str(task43_v3_diagnostic.get("plan_path")),
+                    "plan_sha256": str(task43_v3_diagnostic["plan_sha256"]),
+                    "inherited_v2_contract_sha256": task43_v2_diagnostic[
+                        "contract_sha256"
+                    ],
+                    "inherited_a2_native_contract_sha256": task43_v2_diagnostic[
+                        "a2_native_contract_sha256"
+                    ],
+                    "source_sha": source_sha,
+                    "physical_configuration_sha256": summary[
+                        "task43_v2_endpoint_identity"
+                    ]["physical_configuration_sha256"],
+                    "discretization_sha256": summary["task43_v2_endpoint_identity"][
+                        "discretization_sha256"
+                    ],
+                }
             summary["task43_v2_input_bindings"] = {
                 key: task43_v2_diagnostic[key]
                 for key in (
@@ -4084,6 +4145,253 @@ def run_p6_condensed_direct(
             raise ValueError("recovered p6 field vector has the wrong global size")
         saved_field.getArray()[:] = recovered
         saved_field.assemble()
+        if task43_v3_diagnostic is not None:
+            from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+                write_atomic_npz,
+            )
+
+            if (
+                not isinstance(schur_refinement_residual_snapshots, list)
+                or len(schur_refinement_residual_snapshots)
+                != schur_correction_count + 1
+            ):
+                raise RuntimeError(
+                    "Task43 V3 lacks the initial and per-correction condensed residual vectors"
+                )
+            primary_normal_audit = _task43_v2_normal_correction_audit(
+                schur_refinement_history,
+                correction_count=schur_correction_count,
+                correction_limit=max_same_factor_corrections,
+                rhs_norm=float(rhs_vector.norm()),
+                mumps_info_after_last_solve=factor.info(),
+            )
+            summary["task43_v3_normal_correction_audit_before_extra"] = (
+                primary_normal_audit
+            )
+            v3_identity = {
+                "phase": "A2_q",
+                "attempt": 3,
+                "source_sha": source_sha,
+                "frozen_v3_contract_path": str(
+                    task43_v3_diagnostic.get("contract_path")
+                ),
+                "frozen_v3_contract_sha256": str(
+                    task43_v3_diagnostic["contract_sha256"]
+                ),
+                "frozen_v3_plan_path": str(task43_v3_diagnostic.get("plan_path")),
+                "frozen_v3_plan_sha256": str(task43_v3_diagnostic["plan_sha256"]),
+                "inherited_v2_contract_sha256": str(
+                    task43_v2_diagnostic.get("contract_sha256")
+                ),
+                "inherited_a2_native_contract_sha256": str(
+                    task43_v2_diagnostic.get("a2_native_contract_sha256")
+                ),
+                "resolved_profile_identity": profile_facts["identity"],
+                "resolved_config_path": task43_v2_diagnostic.get(
+                    "reference_resolved_config_path"
+                ),
+                "resolved_config_sha256": task43_v2_diagnostic.get(
+                    "reference_resolved_config_sha256"
+                ),
+                "reference_space_bundle_path": task43_v2_diagnostic.get(
+                    "reference_space_bundle_path"
+                ),
+                "reference_space_bundle_sha256": task43_v2_diagnostic.get(
+                    "reference_space_bundle_sha256"
+                ),
+                "reference_field_sample_sha256": {
+                    key: value.get("sha256")
+                    for key, value in task43_v2_diagnostic[
+                        "field_reference_samples"
+                    ].items()
+                },
+                "native_endpoint_space_identity": summary.get(
+                    "task43_v2_endpoint_identity"
+                ),
+                "operator_q": 19,
+                "incident_port_q": 32,
+                "modal_rectangle": "R13",
+                "mode_basis_scale_policy": route["mode_basis_scale_policy"],
+                "matrix_shape": [
+                    int(condensed.matrix.getSize()[0]),
+                    int(condensed.matrix.getSize()[1]),
+                ],
+                "full_p6_storage_rows": int(condensed.full_rows),
+                "active_trace_rows": int(condensed.active_rows),
+                "appended_port_rows": int(condensed.appended_rows),
+                "normal_correction_raw_scope": "materialized trace/DtN condensed b_minus_Ax",
+                "native_a6_raw_scope": "independent native original-equation residual and effective RHS",
+                "carrier_raw_scope": "zero-slave augmented FE carrier residual plus separate port residual",
+                "primary_solver_residual_metrics_before_extra": {
+                    "condensed_b_minus_Ax_relative": schur_relative,
+                    "condensed_gate": condensed_gate,
+                    "independent_A6_relative": native_relative,
+                    "independent_A6_gate": 1.0e-8,
+                    "full_active_space_transformed_relative": (
+                        None
+                        if active_explicit_facts is None
+                        else active_explicit_facts["combined_relative"]
+                    ),
+                    "full_active_space_transformed_gate": 1.0e-8,
+                    "normal_correction_raw_audit_passed": primary_normal_audit[
+                        "passed"
+                    ],
+                },
+                "normal_correction_audit": primary_normal_audit,
+                "factor_counts_before_extra": {
+                    "symbolic_calls": int(factor.symbolic_calls),
+                    "numeric_calls": int(factor.numeric_calls),
+                    "solve_calls": int(factor.solve_calls),
+                    "mumps_info": factor.info(),
+                },
+            }
+            primary_arrays = {
+                "primary_recovered_p6_storage": np.asarray(
+                    native_facts["storage_solution"], dtype=np.complex128
+                ).copy(),
+                "primary_full_physical_rhs": np.asarray(
+                    full_rhs_array, dtype=np.complex128
+                ).copy(),
+                "primary_returned_trace_dtn_rhs": np.asarray(
+                    rhs_vector.getArray(readonly=True), dtype=np.complex128
+                ).copy(),
+                "primary_returned_trace_dtn_solution": np.asarray(
+                    solution_vector.getArray(readonly=True), dtype=np.complex128
+                ).copy(),
+                "primary_returned_trace_dtn_b_minus_Ax": np.asarray(
+                    schur_residual_array, dtype=np.complex128
+                ).copy(),
+                "primary_independent_A6_residual": np.asarray(
+                    native_facts["native_residual"], dtype=np.complex128
+                ).copy(),
+                "primary_native_A6_effective_rhs": np.asarray(
+                    native_facts["native_effective_rhs"], dtype=np.complex128
+                ).copy(),
+                "primary_zero_slave_carrier_residual": np.asarray(
+                    native_facts["augmented_fe_residual"], dtype=np.complex128
+                ).copy(),
+                "primary_augmented_port_residual": np.asarray(
+                    native_facts["augmented_port_residual"], dtype=np.complex128
+                ).copy(),
+            }
+            for index, values in enumerate(schur_refinement_residual_snapshots):
+                primary_arrays[f"normal_correction_b_minus_Ax_snapshot_{index}"] = (
+                    np.asarray(values, dtype=np.complex128).copy()
+                )
+            v3_primary_packet_record = write_atomic_npz(
+                numerical_output / "task43_v3_primary_before_extra.npz",
+                primary_arrays,
+                schema="task43.v3.a2_primary_before_extra.v1",
+                classification="measured_primary_state_before_extra_not_official",
+                identity=v3_identity,
+            )
+            summary["task43_v3_primary_before_extra_packet"] = v3_primary_packet_record
+            summary["task43_v3_normal_correction_audit"] = primary_normal_audit
+            ledger.marker(
+                "task43_v3_primary_before_extra_packet_saved",
+                v3_primary_packet_record,
+            )
+
+            output_policy = _direct_output_policy(route)
+            if resolved_payload.get("output", {}).get(
+                "export_canonical_vectors", False
+            ):
+                raise RuntimeError(
+                    "Task43 V3 early primary output does not support canonical vector export"
+                )
+            v3_primary_output_facts = recover_p0_outputs(
+                bundle,
+                saved_field,
+                numerical_output,
+                canonical_export=None,
+                export_all_port_modes=True,
+                active_port_outputs_only=output_policy["active_port_outputs_only"],
+                active_fe_port_output_contract=output_policy.get(
+                    "active_fe_port_output_contract"
+                ),
+            )
+            primary_auxiliary = np.asarray(
+                v3_primary_output_facts["auxiliary"], dtype=np.complex128
+            )
+            if (
+                primary_auxiliary.shape != (route["active_count"],)
+                or not np.isfinite(primary_auxiliary).all()
+            ):
+                raise ValueError(
+                    "Task43 V3 primary output lacks finite complete modal amplitudes"
+                )
+            primary_closure = v3_primary_output_facts["volume_metrics"].get(
+                "energy_closure_error_port_volume"
+            )
+            if primary_closure is None or not np.isfinite(float(primary_closure)):
+                raise ValueError("Task43 V3 primary output lacks finite energy closure")
+            v3_primary_output_facts["energy_closure_error_port_volume"] = float(
+                primary_closure
+            )
+            primary_modal_path = (
+                numerical_output / "dtn_port_diffraction_orders_3d.json"
+            )
+            primary_volume_path = numerical_output / "volume_absorption.json"
+            summary["task43_v3_primary_physical_outputs_before_extra"] = {
+                "R_total": float(v3_primary_output_facts["port_metrics"]["R_total"]),
+                "T_total": float(v3_primary_output_facts["port_metrics"]["T_total"]),
+                "A_volume_total": float(
+                    v3_primary_output_facts["volume_metrics"]["A_volume_total"]
+                ),
+                "energy_closure_error_port_volume": float(primary_closure),
+                "mode_count": route["active_count"],
+                "modal_rows_path": str(primary_modal_path),
+                "modal_rows_sha256": _sha256_file_streaming(primary_modal_path),
+                "volume_absorption_path": str(primary_volume_path),
+                "volume_absorption_sha256": _sha256_file_streaming(primary_volume_path),
+                "classification": "measured_primary_physical_outputs_before_extra_not_official",
+            }
+            primary_function = restore_p0_full_field(
+                bundle["setup"]["floquets"][6],
+                saved_field,
+                name="Task43_V3_A2_primary_field_for_fixed_samples",
+            )
+
+            def persist_primary_order(
+                order: int, sample: Mapping[str, np.ndarray]
+            ) -> None:
+                sample_path = numerical_output / (
+                    f"task43_v3_primary_q{int(order)}_field_sample.npz"
+                )
+                sample_identity = {
+                    "phase": "A2_q",
+                    "attempt": 3,
+                    "source_sha": source_sha,
+                    "primary_before_extra_npz_sha256": v3_primary_packet_record[
+                        "npz_sha256"
+                    ],
+                    "quadrature_order": int(order),
+                    "reference_sample_sha256": task43_v2_diagnostic[
+                        "field_reference_samples"
+                    ][f"q{int(order)}"]["sha256"],
+                }
+                v3_primary_sample_records[f"q{int(order)}"] = write_atomic_npz(
+                    sample_path,
+                    sample,
+                    schema="task43.v3.a2_primary_field_sample.v1",
+                    classification="measured_primary_sample_before_extra_not_official",
+                    identity=sample_identity,
+                )
+                ledger.marker(
+                    f"task43_v3_primary_q{int(order)}_sample_saved",
+                    v3_primary_sample_records[f"q{int(order)}"],
+                )
+
+            try:
+                v3_primary_field_samples = _task43_v2_capture_fixed_field_samples(
+                    primary_function,
+                    cfg,
+                    task43_v2_diagnostic,
+                    sample_callback=persist_primary_order,
+                )
+            finally:
+                del primary_function
+            summary["task43_v3_primary_field_samples"] = dict(v3_primary_sample_records)
         if task43_v2_diagnostic is not None:
             extra_solution_vector, extra_lu_facts = (
                 _task43_v2_one_extra_same_factor_correction(
@@ -4387,17 +4695,20 @@ def run_p6_condensed_direct(
         should_export_canonical = bool(
             resolved_payload.get("output", {}).get("export_canonical_vectors", False)
         )
-        output_facts = recover_p0_outputs(
-            bundle,
-            saved_field,
-            numerical_output,
-            canonical_export=(canonical_export if should_export_canonical else None),
+        if v3_primary_output_facts is not None:
+            output_facts = v3_primary_output_facts
+        else:
+            output_facts = recover_p0_outputs(
+                bundle,
+                saved_field,
+                numerical_output,
+                canonical_export=(canonical_export if should_export_canonical else None),
             export_all_port_modes=True,
             active_port_outputs_only=output_policy["active_port_outputs_only"],
-            active_fe_port_output_contract=output_policy.get(
-                "active_fe_port_output_contract"
-            ),
-        )
+                active_fe_port_output_contract=output_policy.get(
+                    "active_fe_port_output_contract"
+                ),
+            )
         if route["family"] == "dispersion_flat":
             output_facts["flat_layer_reference_outputs"] = (
                 _write_direct_flat_reference_outputs(
@@ -4497,12 +4808,58 @@ def run_p6_condensed_direct(
                 extra_saved_field,
                 name="Task43_A2_extra_lu_field_for_fixed_samples",
             )
-            try:
-                primary_samples = _task43_v2_capture_fixed_field_samples(
-                    primary_function, cfg, task43_v2_diagnostic
+
+            def persist_extra_order(
+                order: int, sample: Mapping[str, np.ndarray]
+            ) -> None:
+                if task43_v3_diagnostic is None:
+                    return
+                sample_path = numerical_output / (
+                    f"task43_v3_extra_q{int(order)}_field_sample.npz"
                 )
+                sample_identity = {
+                    "phase": "A2_q",
+                    "attempt": 3,
+                    "source_sha": source_sha,
+                    "primary_before_extra_npz_sha256": v3_primary_packet_record[
+                        "npz_sha256"
+                    ],
+                    "quadrature_order": int(order),
+                    "reference_sample_sha256": task43_v2_diagnostic[
+                        "field_reference_samples"
+                    ][f"q{int(order)}"]["sha256"],
+                }
+                v3_extra_sample_records[f"q{int(order)}"] = write_atomic_npz(
+                    sample_path,
+                    sample,
+                    schema="task43.v3.a2_extra_field_sample.v1",
+                    classification="measured_extra_sample_after_extra_not_official",
+                    identity=sample_identity,
+                )
+                summary["task43_v3_extra_field_samples"] = dict(
+                    v3_extra_sample_records
+                )
+                ledger.marker(
+                    f"task43_v3_extra_q{int(order)}_sample_saved",
+                    v3_extra_sample_records[f"q{int(order)}"],
+                )
+
+            try:
+                if v3_primary_field_samples is not None:
+                    primary_samples = v3_primary_field_samples
+                else:
+                    primary_samples = _task43_v2_capture_fixed_field_samples(
+                        primary_function, cfg, task43_v2_diagnostic
+                    )
                 extra_samples = _task43_v2_capture_fixed_field_samples(
-                    extra_function, cfg, task43_v2_diagnostic
+                    extra_function,
+                    cfg,
+                    task43_v2_diagnostic,
+                    sample_callback=(
+                        persist_extra_order
+                        if task43_v3_diagnostic is not None
+                        else None
+                    ),
                 )
             finally:
                 del primary_function
@@ -4594,6 +4951,10 @@ def run_p6_condensed_direct(
                 ),
                 "full_active_space_explicit": active_explicit_facts,
             }
+            if task43_v3_diagnostic is not None:
+                summary["task43_v3_extra_field_samples"] = dict(
+                    v3_extra_sample_records
+                )
             extra_native_relative = float(
                 extra_native_facts["native_residual_relative"]
             )
@@ -4896,6 +5257,43 @@ def run_p6_condensed_direct(
             failed_phase=ledger.phase,
             elapsed_monotonic_seconds=time.monotonic() - ledger.started,
         )
+        if task43_v3_diagnostic is not None:
+            try:
+                from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+                    demote_v3_native_summary_after_error,
+                )
+
+                if v3_primary_sample_records:
+                    summary["task43_v3_primary_field_samples"] = dict(
+                        v3_primary_sample_records
+                    )
+                if v3_extra_sample_records:
+                    summary["task43_v3_extra_field_samples"] = dict(
+                        v3_extra_sample_records
+                    )
+                demote_v3_native_summary_after_error(
+                    summary,
+                    numerical_output / "task43_v3_partial_terminal.json",
+                    phase="A2_q",
+                    source_identity={
+                        "source_sha": source_sha,
+                        "frozen_v3_contract_sha256": task43_v3_diagnostic.get(
+                            "contract_sha256"
+                        ),
+                        "frozen_v3_plan_sha256": task43_v3_diagnostic.get(
+                            "plan_sha256"
+                        ),
+                    },
+                    error=exc,
+                    primary_before_extra_packet=v3_primary_packet_record,
+                    primary_q_samples=v3_primary_sample_records,
+                    extra_q_samples=v3_extra_sample_records,
+                )
+            except (OSError, TypeError, ValueError, RuntimeError) as demotion_error:
+                print(
+                    f"failed to demote Task43 V3 native summary: {demotion_error!r}",
+                    file=sys.stderr,
+                )
         try:
             _atomic_json(directory / "p6_condensed_direct_summary.json", summary)
         except (OSError, TypeError, ValueError) as write_error:

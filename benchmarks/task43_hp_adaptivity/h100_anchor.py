@@ -25,7 +25,12 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+    task43_v3_partial_terminal_record,
+    write_atomic_json,
+    write_atomic_npz,
     write_pre_validation_checkpoint,
+    write_v3_primary_before_extra_packet,
+    write_v3_primary_field_sample,
 )
 from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
@@ -104,6 +109,12 @@ _CURRENT_CASE = "current_active_p3_initial180_mpi1"
 _ROUND1_CANDIDATE_CASE = "round1_candidate_mpi1"
 _V2_CONTRACT_SHA256 = "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc"
 _V2_PLAN_MARKDOWN_SHA256 = "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e"
+_V3_CONTRACT_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json"
+)
+_V3_PLAN_REL = Path("docs/task43_hp_adaptivity/diagnostic_plan_v3.md")
+_V3_CONTRACT_SHA256: str | None = "36182de5628aafff3814e8dc3fba32f38288192e62e1869311ecb95fed384694"
+_V3_PLAN_SHA256: str | None = "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7"
 _V2_LEGACY_R10_RECORD_SHA256 = "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d"
 _V2_LEGACY_R10_SAMPLE_SHA256 = "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71"
 _V2_R10_PLAN_SHA256 = "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826"
@@ -845,6 +856,7 @@ def _field_capture(
     candidate_plan: dict[str, Any] | None = None,
     candidate_plan_sha256: str | None = None,
     sample_fields: bool = True,
+    on_sample=None,
 ) -> dict[str, Any]:
     export = prepare_cell_local_vector_field_export(field)
     axes = _mesh_axes(mesh_data.mesh, comm)
@@ -863,19 +875,19 @@ def _field_capture(
     samples: dict[str, dict[str, np.ndarray]] = {}
     sample_error = None
     for order in ((8, 10) if sample_fields else ()):
-        common_axes = [axes] if reference_axes is None else [reference_axes, axes]
-        quadrature = build_common_volume_quadrature(
-            common_axes, gauss_order=order
-        )
-        sampled = sample_cell_local_vector_fields(
-            {
-                "E_total": export.electric_dgq6,
-                "curl_E_total": export.curl_electric_dgq6,
-            },
-            quadrature.points_nm,
-        )
-        if comm.rank == 0:
-            try:
+        try:
+            common_axes = [axes] if reference_axes is None else [reference_axes, axes]
+            quadrature = build_common_volume_quadrature(
+                common_axes, gauss_order=order
+            )
+            sampled = sample_cell_local_vector_fields(
+                {
+                    "E_total": export.electric_dgq6,
+                    "curl_E_total": export.curl_electric_dgq6,
+                },
+                quadrature.points_nm,
+            )
+            if comm.rank == 0:
                 assert sampled is not None
                 curl = sampled["curl_E_total"]
                 magnetic = magnetic_field_from_electric_curl(
@@ -891,15 +903,10 @@ def _field_capture(
                     "curl_E_total": curl,
                     "H_total_A_per_m": magnetic,
                 }
-            except (
-                AssertionError,
-                IndexError,
-                OverflowError,
-                RuntimeError,
-                TypeError,
-                ValueError,
-            ) as exc:
-                sample_error = f"{type(exc).__name__}: {exc}"
+                if on_sample is not None:
+                    on_sample(order, samples[f"q{order}"])
+        except Exception as exc:  # noqa: BLE001 - fail closed on sampling/callback errors
+            sample_error = f"{type(exc).__name__}: {exc}"
         errors = comm.allgather(sample_error)
         if any(error is not None for error in errors):
             raise RuntimeError(
@@ -1326,6 +1333,7 @@ def _same_lu_tightening(
     initial_active_action: dict[str, Any] | None = None,
     initial_explicit_residual: dict[str, Any] | None = None,
     v2_endpoint_identity: dict[str, Any] | None = None,
+    on_extra_sample=None,
 ) -> dict[str, Any]:
     """Apply one existing-KSP residual correction and capture the new state."""
 
@@ -1514,6 +1522,7 @@ def _same_lu_tightening(
                 comm,
                 None,
                 "initial_180",
+                on_sample=on_extra_sample,
             )
             corrected_storage_arrays, corrected_storage_metadata = (
                 _active_solution_storage(corrected_view)
@@ -1714,6 +1723,20 @@ def _same_lu_tightening(
                                 and np.isfinite(condensed_relative)
                                 and condensed_relative <= 1.0e-9
                             ),
+                            **{
+                                f"before_{name}": passed
+                                for name, passed in _v3_residual_scope_gates(
+                                    before_explicit_residual,
+                                    before_condensed_residual,
+                                ).items()
+                            },
+                            **{
+                                f"after_{name}": passed
+                                for name, passed in _v3_residual_scope_gates(
+                                    corrected_reduced_residual,
+                                    condensed_residual,
+                                ).items()
+                            },
                             "before_and_after_energy_closure_le_1e-5": bool(
                                 np.isfinite(before_closure)
                                 and abs(before_closure) <= 1.0e-5
@@ -1873,7 +1896,9 @@ def _write_samples(
     path: Path,
     samples: dict[str, dict[str, np.ndarray]],
     axes: tuple[np.ndarray, ...],
-) -> None:
+    *,
+    identity: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     arrays: dict[str, np.ndarray] = {}
     arrays.update(
         {
@@ -1884,7 +1909,150 @@ def _write_samples(
     for key, values in samples.items():
         for name, value in values.items():
             arrays[f"{key}_{name}"] = np.asarray(value)
-    np.savez_compressed(path, **arrays)
+    if identity is None:
+        np.savez_compressed(path, **arrays)
+        return None
+    else:
+        return write_atomic_npz(
+            path,
+            arrays,
+            identity=identity,
+            schema="task43.v3.primary_q8_q10_samples.v1",
+            classification="measured_primary_samples_before_extra_correction_not_official",
+        )
+
+
+def _validate_v3_primary_packet_arrays(
+    packet_arrays: Mapping[str, np.ndarray], raw_vector_keys: set[str]
+) -> None:
+    """Validate V3 evidence arrays without flattening storage identity arrays."""
+
+    missing = raw_vector_keys.difference(packet_arrays)
+    if missing:
+        raise TypeError(f"V3 primary packet is missing raw vectors: {sorted(missing)}")
+    for name, raw_values in packet_arrays.items():
+        values = np.asarray(raw_values)
+        if values.dtype.hasobject:
+            raise TypeError(f"V3 primary packet array {name} has object dtype")
+        if not np.isfinite(values).all():
+            raise ValueError(f"V3 primary packet array {name} is non-finite")
+        if name in raw_vector_keys and values.ndim != 1:
+            raise ValueError(f"V3 primary raw vector {name} is not one-dimensional")
+
+
+def _write_v3_partial_terminal(
+    run_root: Path,
+    *,
+    phase: str | None,
+    source_identity: dict[str, Any],
+    captured: dict[str, Any],
+    error: BaseException | str,
+) -> dict[str, Any]:
+    """Demote any incomplete V3 endpoint while retaining before evidence."""
+
+    error_text = (
+        f"{type(error).__name__}: {error}"
+        if isinstance(error, BaseException)
+        else str(error)
+    )
+    terminal_path = (Path(run_root) / "task43_v3_partial_terminal.json").resolve()
+    run_summary_path = Path(run_root) / "solve" / "run_summary.json"
+    native_run_summary = {
+        "path": str(run_summary_path.resolve()),
+        "status": "not_present",
+        "sha256": _sha256_file(run_summary_path)
+        if run_summary_path.is_file()
+        else None,
+    }
+    if run_summary_path.is_file():
+        try:
+            run_summary = json.loads(run_summary_path.read_text(encoding="utf-8"))
+            if not isinstance(run_summary, dict):
+                raise TypeError("native run_summary.json is not an object")
+            original_sha256 = _sha256_file(run_summary_path)
+            legacy_official = run_summary.get(
+                "legacy_solver_reported_official_result",
+                run_summary.get("official_result"),
+            )
+            legacy_case_status = run_summary.get(
+                "legacy_solver_reported_case_status",
+                run_summary.get("case_status"),
+            )
+            run_summary["legacy_solver_reported_official_result"] = legacy_official
+            run_summary["legacy_solver_reported_case_status"] = legacy_case_status
+            run_summary["official_result"] = False
+            run_summary["diagnostic_only"] = True
+            run_summary["case_status"] = "failed_or_incomplete_task43_v3_endpoint"
+            run_summary["task43_v3_endpoint_authority"] = False
+            run_summary["task43_v3_failure_terminal_path"] = str(terminal_path)
+            run_summary["task43_v3_failure_error"] = error_text
+            written = write_atomic_json(
+                run_summary_path,
+                run_summary,
+                refuse_overwrite=False,
+            )
+            native_run_summary = {
+                "path": str(run_summary_path.resolve()),
+                "status": "demoted_to_diagnostic_only",
+                "pre_demote_sha256": original_sha256,
+                "post_demote_sha256": written["sha256"],
+                "legacy_solver_reported_official_result": legacy_official,
+                "legacy_solver_reported_case_status": legacy_case_status,
+            }
+        except (OSError, TypeError, ValueError) as summary_error:
+            native_run_summary["status"] = "demotion_failed"
+            native_run_summary["error"] = (
+                f"{type(summary_error).__name__}: {summary_error}"
+            )
+    endpoint_path = Path(run_root) / "task43_v2_a1_endpoint.json"
+    if endpoint_path.is_file():
+        try:
+            endpoint = json.loads(endpoint_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError):
+            endpoint = None
+        if isinstance(endpoint, dict):
+            endpoint["pass"] = False
+            endpoint["status"] = "FAILED_OR_INCOMPLETE_V3_POSTPROCESS"
+            endpoint["official_result"] = False
+            endpoint["selection_eligible"] = False
+            endpoint["selection_candidate"] = False
+            endpoint["candidate_selected"] = False
+            endpoint["continuation_all_false"] = True
+            endpoint["continuation"] = {
+                "same_group_R": False,
+                "A1_R": False,
+                "A2_R": False,
+                "B": False,
+                "C": False,
+            }
+            gates = endpoint.get("gates")
+            if isinstance(gates, dict):
+                gates["status"] = "failed"
+                if "pass" in gates:
+                    gates["pass"] = False
+                gates["continuation_all_false"] = True
+            endpoint["failure_error"] = error_text
+            endpoint["failure_terminal_path"] = str(
+                terminal_path
+            )
+            write_atomic_json(endpoint_path, endpoint, refuse_overwrite=False)
+    record = task43_v3_partial_terminal_record(
+        phase=phase,
+        source_identity=source_identity,
+        error=error_text,
+        primary_before_extra_packet=captured.get(
+            "v3_primary_before_extra_packet"
+        ),
+        primary_q_samples=captured.get("v3_primary_sample_records", {}),
+        extra_q_samples=captured.get("v3_extra_sample_records", {}),
+        primary_q8_q10_bundle=captured.get("v3_primary_q8_q10_samples"),
+        pre_validation_checkpoint=captured.get("pre_validation_checkpoint"),
+        native_run_summary=native_run_summary,
+    )
+    path = Path(run_root) / "task43_v3_partial_terminal.json"
+    if path.is_file():
+        return {"path": str(path), "sha256": _sha256_file(path)}
+    return write_atomic_json(path, record, refuse_overwrite=True)
 
 
 def _configure_direct_factor_backend(cfg, requested: str) -> None:
@@ -2403,6 +2571,159 @@ def _v2_a1_reference_endpoint(
     }
 
 
+def _v3_residual_scope_gates(
+    returned_trace_dtn_residual: Mapping[str, Any],
+    block_gaussian_full_active_residual: Mapping[str, Any],
+) -> dict[str, bool]:
+    """Apply V3 residual limits to the scopes their stored values actually describe.
+
+    Older endpoint names are retained for compatibility, but ``explicit`` is the
+    returned trace/DtN system and ``condensed`` is the block-Gaussian transformed
+    full-active residual.  V3 records both scopes explicitly and gates each against
+    its own frozen limit.
+    """
+
+    def relative(record: Mapping[str, Any]) -> float | None:
+        try:
+            value = float(record["linear_system_relative_residual"])
+        except (KeyError, TypeError, ValueError):
+            return None
+        return value if np.isfinite(value) and value >= 0.0 else None
+
+    returned_relative = relative(returned_trace_dtn_residual)
+    transformed_relative = relative(block_gaussian_full_active_residual)
+    return {
+        "returned_trace_dtn_condensed_relative_le_1e-9": (
+            returned_relative is not None and returned_relative <= 1.0e-9
+        ),
+        "block_gaussian_full_transformed_relative_le_1e-8": (
+            transformed_relative is not None and transformed_relative <= 1.0e-8
+        ),
+    }
+
+
+def _validate_v3_a1_entry_contract(contract: Mapping[str, Any]) -> None:
+    """Accept only the single frozen A1_q2 extension of the V2 plan."""
+
+    attempts = contract.get("formal_model_attempts", {})
+    authority = contract.get("authority", {})
+    immutable = contract.get("immutable_prior_contracts_and_review", {})
+    phases = contract.get("phases", {})
+    a1_rows = phases.get("A1", [])
+    row = next(
+        (
+            item
+            for item in a1_rows
+            if isinstance(item, Mapping) and item.get("id") == "A1_q"
+        ),
+        None,
+    )
+    prohibited = set(contract.get("prohibited", ()))
+    if (
+        contract.get("schema") != "task43.v3.finite_diagnostic_contract.v1"
+        or contract.get("status") != "frozen_for_execution"
+        or authority.get("review_commit")
+        != "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12"
+        or authority.get("review_path")
+        != "docs/task43_hp_adaptivity/review_report_v2.md"
+        or authority.get("execution_section") != "10"
+        or immutable.get("docs/task43_hp_adaptivity/review_report_v2.md")
+        != "7899e25ab9b2dee763dbc4b99255d98ed4c23ae935853a9f5cfb1f3ce99ffbbf"
+        or immutable.get(
+            "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json"
+        )
+        != "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc"
+        or immutable.get(
+            "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json"
+        )
+        != "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0"
+        or attempts.get("total_original_max") != 6
+        or attempts.get("already_consumed") != 3
+        or attempts.get("new_dispatches_max") != 2
+        or attempts.get("cumulative_max_after_this_review") != 5
+        or attempts.get("sealed_remaining_unallocated") != 1
+        or attempts.get("no_automatic_retry") is not True
+        or attempts.get("A1_cumulative_max_this_review") != 2
+        or attempts.get("A2_cumulative_max_this_review") != 3
+        or row is None
+        or row.get("attempt") != 2
+        or row.get("new_dispatches_max") != 1
+        or row.get("operator_q") != 19
+        or row.get("incident_port_q") != 32
+        or row.get("modal_rectangle") != "R13"
+        or row.get("normal_corrections") != 1
+        or row.get("extra_corrections_max") != 1
+        or not {"A1_R", "A2_R", "B", "C"}.issubset(prohibited)
+        or phases.get("A1_R", {}).get("authorized") is not False
+        or phases.get("A2_R", {}).get("authorized") is not False
+        or phases.get("B", {}).get("authorized") is not False
+        or phases.get("C", {}).get("authorized") is not False
+    ):
+        raise ValueError("Task43 V3 A1_q2 entry differs from its frozen allocation")
+
+
+def _require_v3_watchdog_worker_identity() -> dict[str, Any]:
+    """Verify the post-exec A1 worker is the watchdog's direct child."""
+
+    try:
+        expected_parent = int(os.environ["PHYSICAL_WATCHDOG_PARENT_PID"])
+        phase_path = Path(os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("V3 A1 requires native watchdog parent and phase identity") from exc
+    actual_parent = os.getppid()
+    if expected_parent != actual_parent:
+        raise RuntimeError(
+            "V3 A1 worker is not the direct child registered by its native watchdog"
+        )
+    if not phase_path.is_absolute():
+        raise RuntimeError("V3 A1 watchdog phase path must be absolute")
+    phase_path = phase_path.resolve()
+    return {
+        "worker_pid": os.getpid(),
+        "worker_parent_pid": actual_parent,
+        "watchdog_parent_pid_environment": expected_parent,
+        "direct_watchdog_parent_verified": True,
+        "phase_path": str(phase_path),
+    }
+
+
+def _validate_v3_consumed_formal_attempts(
+    contract: Mapping[str, Any], repository_root: Path
+) -> None:
+    """Verify the three counted V1/V2 dispatch terminals before either V3 route."""
+
+    entries = contract.get("formal_model_attempts", {}).get("consumed_attempts")
+    expected = (("A1_q", 1), ("A2_q", 1), ("A2_q", 2))
+    if not isinstance(entries, list) or len(entries) != len(expected):
+        raise ValueError("V3 allocation must bind exactly the three prior dispatches")
+    for entry, (phase, attempt) in zip(entries, expected, strict=True):
+        if (
+            not isinstance(entry, Mapping)
+            or entry.get("phase") != phase
+            or entry.get("attempt") != attempt
+        ):
+            raise ValueError("V3 prior dispatch inventory is incomplete or reordered")
+        attempt_root = repository_root / str(entry.get("attempt_root", ""))
+        summary_path = attempt_root / "watchdog/summary.json"
+        launcher_path = attempt_root / "launcher_exit_code.txt"
+        if (
+            not summary_path.is_file()
+            or _sha256_file(summary_path) != entry.get("watchdog_summary_sha256")
+            or not launcher_path.is_file()
+            or launcher_path.read_text(encoding="utf-8").strip()
+            != str(entry.get("launcher_exit"))
+        ):
+            raise ValueError(f"V3 prior {phase} attempt {attempt} evidence changed")
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if (
+            summary.get("classification") != entry.get("classification")
+            or summary.get("leader_exit_code") != entry.get("worker_exit")
+            or summary.get("descendants_cleared")
+            is not entry.get("descendants_cleared")
+        ):
+            raise ValueError(f"V3 prior {phase} attempt {attempt} terminal changed")
+
+
 def _v2_a1_endpoint_record(
     *,
     phase: str,
@@ -2519,6 +2840,7 @@ def _v2_a1_endpoint_record(
     condensed_relative = finite_or_none(
         condensed.get("linear_system_relative_residual")
     )
+    v3_scope_gates = _v3_residual_scope_gates(explicit, condensed)
     hard_gates = {
         "solver_completed": summary.get("case_status") == "completed",
         "actual_live_and_summary_factor_backend_mumps": (
@@ -2544,6 +2866,7 @@ def _v2_a1_endpoint_record(
             condensed_relative is not None
             and 0.0 <= condensed_relative <= 1.0e-9
         ),
+        **v3_scope_gates,
         "energy_closure_absolute_le_1e-5": bool(
             np.isfinite(closure) and abs(closure) <= 1.0e-5
         ),
@@ -2668,6 +2991,13 @@ def _v2_a1_endpoint_record(
         "recovered_solution_storage": storage_record,
         "hard_solver_gates": hard_gates,
         "hard_solver_gates_pass": all(hard_gates.values()),
+        "v3_residual_scope_metrics": {
+            "returned_trace_dtn_condensed_relative": explicit_relative,
+            "returned_trace_dtn_condensed_limit": 1.0e-9,
+            "block_gaussian_full_transformed_relative": condensed_relative,
+            "block_gaussian_full_transformed_limit": 1.0e-8,
+            "scope_gates": v3_scope_gates,
+        },
         "perturbation_gates": perturbation_gates,
         "gates": gates,
         "pass": gates_pass,
@@ -2680,7 +3010,7 @@ def _v2_a1_endpoint_record(
     }
 
 
-def _run(
+def _run_impl(
     case: str,
     run_root: Path,
     reference_run_root: Path | None,
@@ -2699,6 +3029,12 @@ def _run(
     v2_contract_path: Path | None = None,
     v2_contract_sha256: str | None = None,
     v2_reference_run_root: Path | None = None,
+    v3_failure_evidence_enabled: bool = False,
+    v3_contract_path: Path | None = None,
+    v3_contract_sha256: str | None = None,
+    v3_plan_path: Path | None = None,
+    v3_plan_sha256: str | None = None,
+    _failure_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
@@ -2706,6 +3042,23 @@ def _run(
     current_case = case == _CURRENT_CASE
     candidate_case = case == _ROUND1_CANDIDATE_CASE
     v2_diagnostic = v2_diagnostic_phase is not None
+    if v3_failure_evidence_enabled and not v2_diagnostic:
+        raise ValueError("V3 failure evidence requires a frozen V2 endpoint route")
+    v3_fields = (
+        v3_contract_path,
+        v3_contract_sha256,
+        v3_plan_path,
+        v3_plan_sha256,
+    )
+    if v3_failure_evidence_enabled:
+        if (
+            v2_diagnostic_phase != "A1_q"
+            or not candidate_case
+            or any(value is None for value in v3_fields)
+        ):
+            raise ValueError("V3 A1 evidence is fixed to A1_q attempt 2")
+    elif any(value is not None for value in v3_fields):
+        raise ValueError("V3 contract inputs require --v3-failure-evidence")
     if v2_diagnostic and not candidate_case:
         raise ValueError("V2 A1 diagnostics reuse only the accepted R10 candidate route")
     if v2_diagnostic and (
@@ -2775,11 +3128,19 @@ def _run(
         None
         if v2_reference_run_root is None
         else str(v2_reference_run_root.resolve()),
+        bool(v3_failure_evidence_enabled),
+        None if v3_contract_path is None else str(v3_contract_path.resolve()),
+        v3_contract_sha256,
+        None if v3_plan_path is None else str(v3_plan_path.resolve()),
+        v3_plan_sha256,
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
         raise RuntimeError("all MPI ranks must use identical run/reference roots")
     run_root = Path(root_contract[0])
+    if _failure_context is not None:
+        _failure_context["run_root"] = run_root
+        _failure_context["phase"] = v2_diagnostic_phase
     reference_run_root = (
         None if root_contract[1] is None else Path(root_contract[1])
     )
@@ -2811,6 +3172,11 @@ def _run(
     v2_reference_run_root = (
         None if root_contract[14] is None else Path(root_contract[14])
     )
+    v3_failure_evidence_enabled = bool(root_contract[15])
+    v3_contract_path = None if root_contract[16] is None else Path(root_contract[16])
+    v3_contract_sha256 = root_contract[17]
+    v3_plan_path = None if root_contract[18] is None else Path(root_contract[18])
+    v3_plan_sha256 = root_contract[19]
     v2_diagnostic = v2_diagnostic_phase is not None
     v2_contract = (
         _load_v2_diagnostic_contract(v2_contract_path, str(v2_contract_sha256))
@@ -2831,6 +3197,8 @@ def _run(
     if root_error is not None:
         raise RuntimeError(root_error)
     comm.Barrier()
+    if _failure_context is not None:
+        _failure_context["run_root"] = run_root
 
     if candidate_case:
         if any(value is None for value in (candidate_plan_path, candidate_id, candidate_acceptance_contract)):
@@ -2957,6 +3325,8 @@ def _run(
     source_identity, source_error = comm.bcast((source_identity, source_error), root=0)
     if source_error is not None:
         raise RuntimeError(f"could not capture run source snapshot: {source_error}")
+    if _failure_context is not None:
+        _failure_context["source_identity"] = source_identity
     if v2_diagnostic:
         source_identity["v2_frozen_contract"] = {
             "contract_path": str(v2_contract_path),
@@ -2981,6 +3351,25 @@ def _run(
                 raise ValueError(
                     "A1_R and A1_q must use identical tracked numerical source hashes"
                 )
+    if v3_failure_evidence_enabled:
+        if (
+            v3_contract_path is None
+            or v3_contract_sha256 != _V3_CONTRACT_SHA256
+            or v3_plan_path is None
+            or v3_plan_sha256 != _V3_PLAN_SHA256
+        ):
+            raise ValueError("V3 A1 frozen contract identity changed between ranks")
+        source_identity["v3_frozen_contract"] = {
+            "contract_path": str(v3_contract_path),
+            "contract_sha256": v3_contract_sha256,
+            "plan_path": str(v3_plan_path),
+            "plan_sha256": v3_plan_sha256,
+            "phase": v2_diagnostic_phase,
+            "attempt": 2,
+        }
+        source_identity["v3_watchdog_worker_identity"] = (
+            _require_v3_watchdog_worker_identity()
+        )
     source_hashes_before = source_identity["file_sha256"]
 
     cfg = _h100_config(
@@ -3150,8 +3539,17 @@ def _run(
         raise RuntimeError(f"unexpected assembly backend: {backend_audit}")
 
     captured: dict[str, Any] = {}
+    if _failure_context is not None:
+        _failure_context["captured"] = captured
 
-    def capture(field, live_mesh_data, live_cfg, goal_context) -> None:
+    def capture(
+        field,
+        live_mesh_data,
+        live_cfg,
+        goal_context,
+        *,
+        capture_v3_samples: bool = False,
+    ) -> None:
         field_mesh_profile = (
             "candidate_initial180" if candidate_case else geometry_profile
         )
@@ -3167,6 +3565,11 @@ def _run(
                 candidate_plan_sha256 if candidate_case else None
             ),
             sample_fields=(not candidate_case or v2_diagnostic),
+            on_sample=(
+                (lambda order, sample: _write_v3_primary_sample(order, sample))
+                if capture_v3_samples
+                else None
+            ),
         )
         modes = goal_context["modes"]
         captured["mode_count"] = len(modes)
@@ -3188,6 +3591,50 @@ def _run(
                     ),
                 },
             )
+
+    def _write_v3_primary_sample(order: int, sample: dict[str, np.ndarray]) -> None:
+        if not v3_failure_evidence_enabled or comm.rank != 0:
+            return
+        write_v3_primary_field_sample(
+            run_root / f"primary_before_extra_q{int(order)}_samples.npz",
+            order,
+            sample,
+            identity={
+                "phase": v2_diagnostic_phase,
+                "source_identity": source_identity,
+                "contract_sha256": v2_contract_sha256,
+                "quadrature_order": int(order),
+                "mesh_and_dof_order_sha256": captured.get(
+                    "solution_storage_metadata", {}
+                ).get("mesh_and_dof_order_sha256"),
+            },
+            sample_records=captured.setdefault("v3_primary_sample_records", {}),
+        )
+
+    def _write_v3_extra_sample(order: int, sample: dict[str, np.ndarray]) -> None:
+        if not v3_failure_evidence_enabled or comm.rank != 0:
+            return
+        sample_record = write_atomic_npz(
+            run_root
+            / "same_lu_tightening"
+            / "after"
+            / f"field_sample_q{int(order)}.npz",
+            sample,
+            schema="task43.v3.a1_extra_field_sample.v1",
+            classification="measured_extra_sample_after_extra_not_official",
+            identity={
+                "phase": v2_diagnostic_phase,
+                "source_identity": source_identity,
+                "contract_sha256": v2_contract_sha256,
+                "primary_before_extra_packet_sha256": captured.get(
+                    "v3_primary_before_extra_packet", {}
+                ).get("npz_sha256"),
+                "quadrature_order": int(order),
+            },
+        )
+        captured.setdefault("v3_extra_sample_records", {})[
+            f"q{int(order)}"
+        ] = sample_record
 
     def native_observer(**kwargs) -> None:
         capture(
@@ -3308,42 +3755,52 @@ def _run(
                     "official_result": False,
                     "mpi_size": int(comm.size),
                 }
-        capture_started = time.perf_counter()
-        _log_stage(comm, started, "field_capture", "begin")
-        try:
-            capture(view.field, view.mesh_data, view.config, view.goal_context)
-        except Exception as error:
+        def capture_primary_fields(*, capture_v3_samples: bool) -> None:
+            capture_started = time.perf_counter()
+            _log_stage(comm, started, "field_capture", "begin")
+            try:
+                capture(
+                    view.field,
+                    view.mesh_data,
+                    view.config,
+                    view.goal_context,
+                    capture_v3_samples=capture_v3_samples,
+                )
+            except Exception as error:
+                _log_stage(
+                    comm,
+                    started,
+                    "field_capture",
+                    "failed",
+                    stage_duration_seconds=time.perf_counter() - capture_started,
+                    error=repr(error),
+                )
+                raise
+            if v2_diagnostic:
+                storage_metadata = captured.get("solution_storage_metadata")
+                if not isinstance(storage_metadata, dict):
+                    raise RuntimeError("V2 endpoint lacks captured active-space identity")
+                captured["v2_endpoint_identity"] = _v2_endpoint_identity(
+                    view.config,
+                    view.goal_context["modes"],
+                    axes_nm=captured["fields"]["axes_nm"],
+                    candidate_plan_sha256=str(candidate_plan_sha256),
+                    active_degree_plan_sha256=str(
+                        storage_metadata["active_degree_plan_sha256"]
+                    ),
+                    phase=str(v2_diagnostic_phase),
+                    contract_sha256=str(v2_contract_sha256),
+                )
             _log_stage(
                 comm,
                 started,
                 "field_capture",
-                "failed",
+                "end",
                 stage_duration_seconds=time.perf_counter() - capture_started,
-                error=repr(error),
             )
-            raise
-        if v2_diagnostic:
-            storage_metadata = captured.get("solution_storage_metadata")
-            if not isinstance(storage_metadata, dict):
-                raise RuntimeError("V2 endpoint lacks captured active-space identity")
-            captured["v2_endpoint_identity"] = _v2_endpoint_identity(
-                view.config,
-                view.goal_context["modes"],
-                axes_nm=captured["fields"]["axes_nm"],
-                candidate_plan_sha256=str(candidate_plan_sha256),
-                active_degree_plan_sha256=str(
-                    storage_metadata["active_degree_plan_sha256"]
-                ),
-                phase=str(v2_diagnostic_phase),
-                contract_sha256=str(v2_contract_sha256),
-            )
-        _log_stage(
-            comm,
-            started,
-            "field_capture",
-            "end",
-            stage_duration_seconds=time.perf_counter() - capture_started,
-        )
+
+        if not v3_failure_evidence_enabled:
+            capture_primary_fields(capture_v3_samples=False)
         captured["distinct_physical_trace_degrees"] = sorted(
             {
                 int(value)
@@ -3355,9 +3812,17 @@ def _run(
         action_started = time.perf_counter()
         _log_stage(comm, started, "independent_active_action", "begin")
         try:
-            captured["independent_active_action"] = (
-                compute_stage4_independent_active_action(view)
+            independent_action = compute_stage4_independent_active_action(
+                view, capture_raw_vectors=v3_failure_evidence_enabled
             )
+            if v3_failure_evidence_enabled:
+                captured["independent_active_action_raw_vectors"] = (
+                    independent_action.pop("raw_vectors", None)
+                )
+                captured["independent_active_action_raw_vector_scope"] = (
+                    independent_action.pop("raw_vector_scope", None)
+                )
+            captured["independent_active_action"] = independent_action
         except Exception as error:
             _log_stage(
                 comm,
@@ -3379,8 +3844,19 @@ def _run(
             captured["explicit_active_residual"] = _linear_residual(
                 view.A, view.b, view.x
             )
+        if v3_failure_evidence_enabled:
+            captured["full_active_residual_raw_vectors"] = (
+                view.full_active_residual.get("raw_vectors")
+            )
+            captured["full_active_residual_raw_vector_scope"] = (
+                view.full_active_residual.get("raw_vector_scope")
+            )
         captured["condensed_residual"] = _plain_nested_containers(
-            view.full_active_residual
+            {
+                key: value
+                for key, value in view.full_active_residual.items()
+                if key not in {"raw_vectors", "raw_vector_scope"}
+            }
         )
         captured["port_metrics"] = _plain_nested_containers(view.port_metrics)
         audit = view.mesh_data.local_h_context.audit
@@ -3400,6 +3876,232 @@ def _run(
         captured["local_h_audit"]["closure_split_counts"] = dict(
             audit["forest"]["closure_split_counts"]
         )
+        if v3_failure_evidence_enabled:
+            raw_action = view.b.duplicate()
+            raw_residual = view.b.duplicate()
+            try:
+                view.A.mult(view.x, raw_action)
+                view.b.copy(raw_residual)
+                raw_residual.axpy(PETSc.ScalarType(-1.0), raw_action)
+                packet_arrays = {
+                    f"recovered_{name}": np.asarray(values)
+                    for name, values in captured["solution_storage_arrays"].items()
+                }
+                packet_arrays.update(
+                    returned_trace_dtn_rhs=np.asarray(
+                        view.b.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                    returned_trace_dtn_solution=np.asarray(
+                        view.x.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                    returned_trace_dtn_b_minus_Ax=np.asarray(
+                        raw_residual.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                )
+                full_raw = captured.get("full_active_residual_raw_vectors")
+                a6_raw = captured.get("independent_active_action_raw_vectors")
+                if not isinstance(full_raw, Mapping) or not isinstance(a6_raw, Mapping):
+                    raise TypeError(
+                        "V3 A1 observer did not retain full-active and independent-A6 raw vectors"
+                    )
+                if not isinstance(
+                    captured.get("full_active_residual_raw_vector_scope"), Mapping
+                ) or not isinstance(
+                    captured.get("independent_active_action_raw_vector_scope"), Mapping
+                ):
+                    raise TypeError("V3 A1 raw residual scope metadata is missing")
+                packet_arrays.update(
+                    {
+                        f"full_active_{name}": np.asarray(values)
+                        for name, values in full_raw.items()
+                    }
+                )
+                packet_arrays.update(
+                    {
+                        f"independent_A6_{name}": np.asarray(values)
+                        for name, values in a6_raw.items()
+                    }
+                )
+                normal_vectors = view.normal_correction_raw_vectors
+                if normal_vectors is None or set(normal_vectors) != {
+                    "before_normal_correction_rhs",
+                    "before_normal_correction_solution",
+                    "before_normal_correction_residual_b_minus_Ax",
+                    "after_normal_correction_rhs",
+                    "after_normal_correction_solution",
+                    "after_normal_correction_residual_b_minus_Ax",
+                }:
+                    raise RuntimeError(
+                        "V3 A1 observer lacks both raw normal-correction vector states"
+                    )
+                packet_arrays.update(
+                    {
+                        f"normal_{name}": np.asarray(values)
+                        for name, values in normal_vectors.items()
+                    }
+                )
+                raw_vector_keys = {
+                    "returned_trace_dtn_rhs",
+                    "returned_trace_dtn_solution",
+                    "returned_trace_dtn_b_minus_Ax",
+                    *{f"full_active_{name}" for name in full_raw},
+                    *{f"independent_A6_{name}" for name in a6_raw},
+                    *{f"normal_{name}" for name in normal_vectors},
+                }
+                _validate_v3_primary_packet_arrays(packet_arrays, raw_vector_keys)
+                active_rows = int(
+                    captured["solution_storage_metadata"]["active_rows"]
+                )
+                for key in (
+                    "full_active_active_full_rhs",
+                    "full_active_active_full_solution",
+                    "full_active_eliminated_active_interior_residual",
+                ):
+                    if packet_arrays[key].shape != (active_rows,):
+                        raise RuntimeError(
+                            f"V3 A1 raw vector {key} has the wrong active-row count"
+                        )
+                a6_rows = captured["independent_active_action"]["rows"]
+                for key, expected_size in (
+                    (
+                        "independent_A6_independent_active_residual_trace",
+                        int(a6_rows["independent_trace"]),
+                    ),
+                    (
+                        "independent_A6_independent_active_residual_cell_interior",
+                        int(a6_rows["active_cell_interior"]),
+                    ),
+                    (
+                        "independent_A6_independent_active_modal_lower_solver_gauge",
+                        int(a6_rows["modal_lower"]),
+                    ),
+                ):
+                    if packet_arrays[key].shape != (expected_size,):
+                        raise RuntimeError(
+                            f"V3 A1 raw vector {key} has the wrong row count"
+                        )
+            finally:
+                raw_action.destroy()
+                raw_residual.destroy()
+            port_path = run_root / "solve" / "dtn_port_diffraction_orders_3d.json"
+            packet_identity = {
+                "phase": v2_diagnostic_phase,
+                "source_identity": source_identity,
+                "contract_sha256": v2_contract_sha256,
+                "candidate_identity": candidate_identity,
+                "v2_endpoint_identity": _v2_endpoint_identity(
+                    view.config,
+                    view.goal_context["modes"],
+                    axes_nm={
+                        name: axis.tolist()
+                        for name, axis in zip(
+                            ("x", "y", "z"), axes, strict=True
+                        )
+                    },
+                    candidate_plan_sha256=str(candidate_plan_sha256),
+                    active_degree_plan_sha256=str(
+                        captured["solution_storage_metadata"][
+                            "active_degree_plan_sha256"
+                        ]
+                    ),
+                    phase=str(v2_diagnostic_phase),
+                    contract_sha256=str(v2_contract_sha256),
+                ),
+                "pre_validation_checkpoint": captured["pre_validation_checkpoint"],
+                "port_outputs_written_before_observer": bool(port_path.is_file()),
+                "port_output_sha256": (
+                    _sha256_file(port_path) if port_path.is_file() else None
+                ),
+                "normal_correction_audit": _plain_nested_containers(
+                    view.primal_solver_telemetry
+                ),
+                "normal_correction_count": view.primal_solver_telemetry[
+                    "normal_correction_count"
+                ],
+                "normal_correction_raw_vector_keys": sorted(normal_vectors),
+                "returned_trace_dtn_system_scope": (
+                    "view.A/b/x and b-Ax are the returned independent-trace/DtN "
+                    "reduced system; these arrays are not the full active-space residual"
+                ),
+                "returned_trace_dtn_matrix_shape": [
+                    int(value) for value in view.A.getSize()
+                ],
+                "returned_trace_dtn_residual_metrics": captured.get(
+                    "explicit_active_residual"
+                ),
+                "block_gaussian_full_active_residual_metrics": captured.get(
+                    "condensed_residual"
+                ),
+                "full_active_residual_scope": captured.get(
+                    "full_active_residual_raw_vector_scope"
+                ),
+                "independent_A6_raw_vector_scope": captured.get(
+                    "independent_active_action_raw_vector_scope"
+                ),
+                "independent_A6": captured["independent_active_action"],
+                "legacy_returned_system_residual_name": (
+                    "explicit_active_residual in the existing endpoint record refers "
+                    "to the returned reduced system; V3 packet uses the explicit scope above"
+                ),
+                "legacy_condensed_residual_name_scope": (
+                    "condensed_residual in existing endpoint records is the exact "
+                    "block-Gaussian transformed full-active residual; see the raw "
+                    "vector method/norm definition above"
+                ),
+                "condensed_residual": captured["condensed_residual"],
+                "port_metrics": captured["port_metrics"],
+                "extra_correction_status": "not_run_at_packet_time",
+                "official_result": False,
+                "passed": False,
+            }
+            packet_record = None
+            packet_error = None
+            if comm.rank == 0:
+                try:
+                    packet_record = write_v3_primary_before_extra_packet(
+                        run_root / "primary_before_extra.npz",
+                        packet_arrays,
+                        identity=packet_identity,
+                    )
+                    captured["v3_primary_before_extra_packet"] = packet_record
+                except (OSError, TypeError, ValueError) as error:
+                    packet_error = f"{type(error).__name__}: {error}"
+            packet_record, packet_error = comm.bcast(
+                (packet_record, packet_error), root=0
+            )
+            if packet_error is not None:
+                raise RuntimeError(f"V3 A1 primary packet write failed: {packet_error}")
+            captured["v3_primary_before_extra_packet"] = packet_record
+            capture_primary_fields(capture_v3_samples=True)
+            samples_path = run_root / "field_samples_q8_q10.npz"
+            sample_error = None
+            sample_record = None
+            if comm.rank == 0:
+                try:
+                    sample_record = _write_samples(
+                        samples_path,
+                        captured["fields"]["samples"],
+                        tuple(
+                            np.asarray(captured["fields"]["axes_nm"][axis])
+                            for axis in ("x", "y", "z")
+                        ),
+                        identity={
+                            "phase": v2_diagnostic_phase,
+                            "primary_before_extra_packet_sha256": packet_record[
+                                "npz_sha256"
+                            ],
+                            "source_identity": source_identity,
+                            "contract_sha256": v2_contract_sha256,
+                        },
+                    )
+                except (OSError, TypeError, ValueError) as error:
+                    sample_error = f"{type(error).__name__}: {error}"
+            sample_record, sample_error = comm.bcast(
+                (sample_record, sample_error), root=0
+            )
+            if sample_error is not None:
+                raise RuntimeError(f"V3 A1 aggregate sample write failed: {sample_error}")
+            captured["v3_primary_q8_q10_samples"] = sample_record
         if (current_case or candidate_case) and same_lu_tightening_enabled:
             captured["same_lu_tightening"] = _same_lu_tightening(
                 view,
@@ -3419,21 +4121,50 @@ def _run(
                 v2_endpoint_identity=(
                     captured.get("v2_endpoint_identity") if v2_diagnostic else None
                 ),
+                on_extra_sample=(
+                    _write_v3_extra_sample if v3_failure_evidence_enabled else None
+                ),
             )
 
     _log_stage(comm, started, "solve_and_observe", "begin")
-    summary = run_stage4b_block_grating_3d_case(
-        cfg,
-        run_root / "solve",
-        solution_observer=(native_observer if kind == "native_p3" else None),
-        variable_p_live_observer=(
-            active_observer if kind == "empty_h_active_p3" else None
-        ),
-        variable_p_single_lu_residual_correction=(
-            same_lu_solve_residual_correction_enabled
-        ),
-        mesh_data_override=mesh_data,
-    )
+    try:
+        summary = run_stage4b_block_grating_3d_case(
+            cfg,
+            run_root / "solve",
+            solution_observer=(native_observer if kind == "native_p3" else None),
+            variable_p_live_observer=(
+                active_observer if kind == "empty_h_active_p3" else None
+            ),
+            variable_p_single_lu_residual_correction=(
+                same_lu_solve_residual_correction_enabled
+            ),
+            variable_p_capture_normal_correction_vectors=(
+                v3_failure_evidence_enabled
+            ),
+            mesh_data_override=mesh_data,
+        )
+    except BaseException as error:
+        if v3_failure_evidence_enabled:
+            terminal_error = None
+            if comm.rank == 0:
+                try:
+                    _write_v3_partial_terminal(
+                        run_root,
+                        phase=v2_diagnostic_phase,
+                        source_identity=source_identity,
+                        captured=captured,
+                        error=error,
+                    )
+                except (OSError, TypeError, ValueError) as write_error:
+                    terminal_error = f"{type(write_error).__name__}: {write_error}"
+            terminal_error = comm.bcast(terminal_error, root=0)
+            if terminal_error is not None:
+                print(
+                    f"failed to persist V3 partial terminal: {terminal_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+        raise
     _log_stage(comm, started, "solve_and_observe", "end")
     actual_factor_backend = summary.get("actual_pc_factor_solver_type")
     actual_live_factor_backend = captured.get("actual_live_factor_backend")
@@ -3500,7 +4231,19 @@ def _run(
             samples_path = None
             if not candidate_case or v2_diagnostic:
                 samples_path = run_root / "field_samples_q8_q10.npz"
-                _write_samples(samples_path, fields["samples"], axes)
+                if v3_failure_evidence_enabled:
+                    sample_record = captured.get("v3_primary_q8_q10_samples")
+                    if (
+                        not isinstance(sample_record, dict)
+                        or not samples_path.is_file()
+                        or _sha256_file(samples_path)
+                        != sample_record.get("npz_sha256")
+                    ):
+                        raise RuntimeError(
+                            "V3 A1 primary q8/q10 bundle is absent or changed after its pre-extra write"
+                        )
+                else:
+                    _write_samples(samples_path, fields["samples"], axes)
             storage_record = None
             if current_case or candidate_case:
                 storage_arrays = captured.get("solution_storage_arrays")
@@ -3877,6 +4620,31 @@ def _run(
                     A_volume_total=a_volume,
                     contract_sha256=v2_contract_sha256,
                 )
+                if v3_failure_evidence_enabled:
+                    record["continuation"] = {
+                        "same_group_R": False,
+                        "A1_R": False,
+                        "A2_R": False,
+                        "B": False,
+                        "C": False,
+                    }
+                    record["continuation_all_false"] = True
+                    record["selection_eligible"] = False
+                    record["selection_candidate"] = False
+                    record["candidate_selected"] = False
+                    record["v3_primary_before_extra_packet"] = captured.get(
+                        "v3_primary_before_extra_packet"
+                    )
+                    record["v3_primary_samples"] = {
+                        "individual": captured.get("v3_primary_sample_records", {}),
+                        "q8_q10_bundle": captured.get(
+                            "v3_primary_q8_q10_samples"
+                        ),
+                    }
+                    record["v3_extra_samples"] = captured.get(
+                        "v3_extra_sample_records", {}
+                    )
+                    record["complete_v3_failure_safe_endpoint"] = True
                 gates = dict(record["gates"])
                 gates["pass"] = bool(record["pass"])
                 gates["status"] = "passed" if gates["pass"] else "failed"
@@ -3903,6 +4671,20 @@ def _run(
             )
         except Exception as exc:  # noqa: BLE001 - broadcast rank-zero postsolve failures
             post_error = f"{type(exc).__name__}: {exc}"
+            if v3_failure_evidence_enabled:
+                try:
+                    _write_v3_partial_terminal(
+                        run_root,
+                        phase=v2_diagnostic_phase,
+                        source_identity=source_identity,
+                        captured=captured,
+                        error=exc,
+                    )
+                except (OSError, TypeError, ValueError) as terminal_error:
+                    post_error += (
+                        f"; terminal-persist={type(terminal_error).__name__}: "
+                        f"{terminal_error}"
+                    )
             try:
                 (run_root / "task43_h100_anchor_postprocess_failure.json").write_text(
                     json.dumps(
@@ -3951,6 +4733,52 @@ def _run(
     return summary
 
 
+def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
+    """Persist a V3 terminal if any post-solve step escapes its local handler."""
+    from inspect import signature
+
+    bound = signature(_run_impl).bind_partial(*args, **kwargs)
+    arguments = bound.arguments
+    v3_enabled = bool(arguments.get("v3_failure_evidence_enabled", False))
+    context: dict[str, Any] = {
+        "run_root": arguments.get("run_root"),
+        "phase": arguments.get("v2_diagnostic_phase"),
+        "source_identity": {},
+        "captured": {},
+    }
+    kwargs["_failure_context"] = context
+    try:
+        return run_impl(*args, **kwargs)
+    except BaseException as error:
+        run_root = context.get("run_root")
+        if (
+            v3_enabled
+            and run_root is not None
+            and Path(run_root).is_dir()
+            and MPI.COMM_WORLD.rank == 0
+        ):
+            try:
+                _write_v3_partial_terminal(
+                    Path(run_root),
+                    phase=context.get("phase"),
+                    source_identity=context.get("source_identity") or {},
+                    captured=context.get("captured") or {},
+                    error=error,
+                )
+            except (OSError, TypeError, ValueError) as terminal_error:
+                print(
+                    "failed to persist V3 failure terminal after escaped error: "
+                    f"{type(terminal_error).__name__}: {terminal_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+        raise
+
+
+def _run(*args, **kwargs) -> dict[str, Any]:
+    return _run_with_v3_failure_terminal(_run_impl, *args, **kwargs)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", choices=tuple(_CASES), required=True)
@@ -3968,6 +4796,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v2-contract", type=Path)
     parser.add_argument("--v2-contract-sha256")
     parser.add_argument("--v2-reference-run-root", type=Path)
+    parser.add_argument(
+        "--v3-failure-evidence",
+        action="store_true",
+        help="persist V3 primary-before-extra evidence and explicit partial terminal status",
+    )
+    parser.add_argument("--v3-contract", type=Path)
+    parser.add_argument("--v3-plan", type=Path)
     parser.add_argument(
         "--direct-factor-backend", choices=("default", "mumps"), default="default",
         help="use the existing direct LU backend; default preserves prior configuration",
@@ -3996,6 +4831,42 @@ def main(argv: list[str] | None = None) -> int:
     is_native = kind == "native_p3"
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
     v2_diagnostic = args.v2_diagnostic_phase is not None
+    if args.v3_failure_evidence and not v2_diagnostic:
+        parser.error("--v3-failure-evidence requires --v2-diagnostic-phase")
+    if args.v3_failure_evidence:
+        if (
+            args.v2_diagnostic_phase != "A1_q"
+            or not is_candidate
+            or args.v3_contract is None
+            or args.v3_plan is None
+        ):
+            parser.error(
+                "V3 is fixed to A1_q attempt 2 and requires --v3-contract and --v3-plan"
+            )
+        if _V3_CONTRACT_SHA256 is None or _V3_PLAN_SHA256 is None:
+            parser.error("V3 contract bytes are not frozen in this source revision")
+        contract_path = _REPOSITORY_ROOT / _V3_CONTRACT_REL
+        plan_path = _REPOSITORY_ROOT / _V3_PLAN_REL
+        if (
+            args.v3_contract.resolve() != contract_path.resolve()
+            or args.v3_plan.resolve() != plan_path.resolve()
+        ):
+            parser.error("V3 CLI paths differ from the frozen repository files")
+        if (
+            _sha256_file(contract_path) != _V3_CONTRACT_SHA256
+            or _sha256_file(plan_path) != _V3_PLAN_SHA256
+        ):
+            parser.error("V3 contract or plan bytes differ from their frozen hashes")
+        try:
+            with contract_path.open("r", encoding="utf-8") as handle:
+                v3_contract = json.load(handle)
+            _validate_v3_a1_entry_contract(v3_contract)
+            _validate_v3_consumed_formal_attempts(v3_contract, _REPOSITORY_ROOT)
+            _require_v3_watchdog_worker_identity()
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            parser.error(f"V3 A1 frozen contract is invalid: {exc}")
+    elif args.v3_contract is not None or args.v3_plan is not None:
+        parser.error("V3 contract paths require --v3-failure-evidence")
     if args.same_lu_tightening and not (
         is_current or (is_candidate and v2_diagnostic)
     ):
@@ -4107,6 +4978,11 @@ def main(argv: list[str] | None = None) -> int:
         v2_contract_path=args.v2_contract,
         v2_contract_sha256=args.v2_contract_sha256,
         v2_reference_run_root=args.v2_reference_run_root,
+        v3_failure_evidence_enabled=args.v3_failure_evidence,
+        v3_contract_path=args.v3_contract,
+        v3_contract_sha256=_V3_CONTRACT_SHA256 if args.v3_failure_evidence else None,
+        v3_plan_path=args.v3_plan,
+        v3_plan_sha256=_V3_PLAN_SHA256 if args.v3_failure_evidence else None,
     )
     if comm.rank == 0:
         print(

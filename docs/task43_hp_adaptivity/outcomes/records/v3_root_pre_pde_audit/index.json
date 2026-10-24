@@ -1,0 +1,80 @@
+{
+  "schema": "task43.v3.root-pre-pde-audit-index.v1",
+  "classification": "read_only_checks_component_test_and_same_old_field_reintegration",
+  "authority_review_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+  "formal_attempts_consumed_by_these_audits": 0,
+  "historical_formal_dispatch_count_rechecked": 3,
+  "additional_recorded_formal_dispatch_found": false,
+  "ready_for_A1": false,
+  "ready_for_A2": false,
+  "scope": "G0/G2 watchdog component/G3 evidence only. Does not qualify final changed adapters, source, tests, contract, or dispatch. Audit source hashes and actual input identities are recorded inside individual files.",
+  "copies": [
+    {
+      "original_path": "benchmarks/artifacts/task43/v3_root_audit/g0_launch_inventory.json",
+      "committed_copy": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g0_launch_inventory.json",
+      "sha256": "16aa4acca9df1a8420a075954142c5536678b561da1cb646e8e0067f5853e072",
+      "bytes": 67358,
+      "copy_kind": "byte_identical_completed_root_audit_not_new_execution"
+    },
+    {
+      "original_path": "benchmarks/artifacts/task43/v3_root_audit/three_historical_terminals_recheck.json",
+      "committed_copy": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/three_historical_terminals_recheck.json",
+      "sha256": "fd73704c86430083ee1e6e1c7c348497b1261b3c454a06b7cd073826abccfd4b",
+      "bytes": 86706,
+      "copy_kind": "byte_identical_completed_root_audit_not_new_execution"
+    },
+    {
+      "original_path": "benchmarks/artifacts/task43/v3_root_audit/g0_g3_frozen_comparison_inputs.json",
+      "committed_copy": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g0_g3_frozen_comparison_inputs.json",
+      "sha256": "d0eab43e6fca75972b94ba4996e622252491ec5f287ef109f0d99100457ec06f",
+      "bytes": 431730,
+      "copy_kind": "byte_identical_completed_root_audit_not_new_execution"
+    },
+    {
+      "original_path": "benchmarks/artifacts/task43/v3_root_audit/g3_saved_mode_physics.json",
+      "committed_copy": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g3_saved_mode_physics.json",
+      "sha256": "a13e35ff2b59cb547371718dfbf58e784a2287fb8c60fa3961d81431c524461c",
+      "bytes": 255451,
+      "copy_kind": "byte_identical_completed_root_audit_not_new_execution"
+    },
+    {
+      "original_path": "benchmarks/artifacts/task43/v3_root_audit/g2_watchdog_cli_component.json",
+      "committed_copy": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g2_watchdog_cli_component.json",
+      "sha256": "ff17402290bbafb7208a046e3c151d402d452c61093b12b98aeb4bc8af774217",
+      "bytes": 7750,
+      "copy_kind": "byte_identical_completed_root_audit_not_new_execution"
+    },
+    {
+      "original_path": "benchmarks/artifacts/task43/v3_root_audit/old_y6_av_support/old_y6_av_three_rules.json",
+      "committed_copy": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/old_y6_av_support__old_y6_av_three_rules.json",
+      "sha256": "6f9835c893ac2b3ab8b39aeb1297ea0968667c336bc1e4179bf74fa738bb87dc",
+      "bytes": 18943,
+      "copy_kind": "byte_identical_completed_root_audit_not_new_execution"
+    },
+    {
+      "original_path": "benchmarks/artifacts/task43/v3_root_audit/old_y6_av_support_watchdog/summary.json",
+      "committed_copy": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/old_y6_av_support_watchdog__summary.json",
+      "sha256": "a4716977b1129986dca673ff4071d50ee2c7fd25ec39ab8ce9acf1128a1bd708",
+      "bytes": 3657,
+      "copy_kind": "byte_identical_completed_root_audit_not_new_execution"
+    }
+  ],
+  "cost_scope": {
+    "three_terminal_recheck_unmonitored_seconds": 26.132700433023274,
+    "old_field_input_read_unmonitored_seconds": 25.105821434874088,
+    "watchdog_cli_component_whole_seconds": 8.303391347173601,
+    "old_y6_av_whole_watchdog_seconds": 214.26300512300804,
+    "old_y6_av_integration_child_seconds_not_additive": 175.32053942326456,
+    "old_y6_av_simultaneous_process_tree_RSS_peak_bytes": 633880576,
+    "old_y6_av_task_swap_peak_bytes": 0,
+    "unrecorded_audit_wall": "not recorded; no invented timings",
+    "completeness": "These rows are selected root support work, not the full V3 test/support cost total."
+  },
+  "known_limits": [
+    "Recorded canonical Task43 paths were enumerated; this cannot certify undisclosed launches elsewhere.",
+    "Old automatic Av remains automatic; effective degree15 was observed in same-field supplementary integration, not rewritten into historical configuration.",
+    "Old modal boundary scaling differs between routes; physical amplitudes at boundary are compared.",
+    "Historical SLEPc/full-suite collection blocker remains outside the qualified direct route.",
+    "No new PDE or finite-element solve was performed by these audit scripts; Av support restored an old mesh/field and integrated it."
+  ]
+}

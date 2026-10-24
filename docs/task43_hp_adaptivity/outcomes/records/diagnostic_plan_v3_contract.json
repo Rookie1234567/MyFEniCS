@@ -1,0 +1,333 @@
+{
+  "schema": "task43.v3.finite_diagnostic_contract.v1",
+  "status": "frozen_for_execution",
+  "authority": {
+    "review_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+    "review_path": "docs/task43_hp_adaptivity/review_report_v2.md",
+    "execution_section": "10",
+    "reviewed_code": "fd4a63098893a82374f43f8c3066b74285e9c020",
+    "branch": "task43_hp_adaptivity",
+    "baseline_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4"
+  },
+  "immutable_prior_contracts_and_review": {
+    "docs/task43_hp_adaptivity/diagnostic_plan_v2.md": "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_q_retry_authorization.json": "f6b004d30e524a2c3560b6117983762c293602c5ddee8d92f2d9de40ffe073ed",
+    "docs/task43_hp_adaptivity/review_report_v2.md": "7899e25ab9b2dee763dbc4b99255d98ed4c23ae935853a9f5cfb1f3ce99ffbbf"
+  },
+  "preserves_v1_status": "PARTIAL / CONTROLLED_NEGATIVE",
+  "inheritance": {
+    "physical_problem": "diagnostic_plan_v2_contract.json#/physical_problem",
+    "qualified_environment": "existing qualified native complex128/int64 direct environment; no unrelated SLEPc/full-suite rebuild",
+    "spatial_core_identities": "unchanged R10 variable-p and Y6_1 native P6",
+    "output_perturbation_limits": "diagnostic_plan_v2_contract.json#/output_perturbation_limits unchanged",
+    "hard_solver_gates": "diagnostic_plan_v2_contract.json#/hard_solver_gates unchanged; corrected scope labels cannot relax historical gates",
+    "canonical_vertical_sidewalls": "unchanged; no new sidewall qualification",
+    "normal_correction_A2": "diagnostic_plan_v2_a2_native_contract.json unchanged at most two, actual count recorded"
+  },
+  "formal_model_attempts": {
+    "total_original_max": 6,
+    "already_consumed": 3,
+    "A1_already_consumed": 1,
+    "A2_already_consumed": 2,
+    "A1_cumulative_max_this_review": 2,
+    "A2_cumulative_max_this_review": 3,
+    "new_dispatches_max": 2,
+    "cumulative_max_after_this_review": 5,
+    "sealed_remaining_unallocated": 1,
+    "dispatch_including_preflight_failure_consumes_slot": true,
+    "no_automatic_retry": true,
+    "no_fresh_baseline_authorization": true,
+    "new_allocation_invalid_if_missing_historical_dispatch_found": true,
+    "consumed_attempts": [
+      {
+        "phase": "A1_q",
+        "attempt": 1,
+        "attempt_root": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1",
+        "watchdog_summary_sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+        "classification": "WORKER_FAILED",
+        "worker_exit": 1,
+        "launcher_exit": 2,
+        "descendants_cleared": true,
+        "root_terminal_audit_sha256": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf"
+      },
+      {
+        "phase": "A2_q",
+        "attempt": 1,
+        "attempt_root": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1",
+        "watchdog_summary_sha256": "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+        "classification": "WORKER_FAILED",
+        "worker_exit": 1,
+        "launcher_exit": 2,
+        "descendants_cleared": true,
+        "root_terminal_audit_sha256": "d42ec693f3a88600d53d12c04ab733b801a6255b8025f56b2bcf3e4b5a6f16a5"
+      },
+      {
+        "phase": "A2_q",
+        "attempt": 2,
+        "attempt_root": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2",
+        "watchdog_summary_sha256": "7a4fb9e3caa0c79ba97e928f494953abf4ce8c1afee89fb0308a22d61716f894",
+        "classification": "WORKER_FAILED",
+        "worker_exit": 1,
+        "launcher_exit": 2,
+        "descendants_cleared": true,
+        "root_terminal_audit_sha256": "6350cb416018cfa1a94cb82710868548f94e351403267399a66219386333f70b"
+      }
+    ],
+    "allocation_source": {
+      "A1_q_attempt2": "reallocated once from the old unrun A1_R slot",
+      "A2_q_attempt3": "reallocated once from the old B slot",
+      "no_cross_group_or_further_redistribution": true,
+      "C_slot_sealed": true
+    }
+  },
+  "phases": {
+    "A1": [
+      {
+        "id": "A1_q",
+        "attempt": 2,
+        "new_dispatches_max": 1,
+        "source_slot": "old unrun A1_R",
+        "reference": "old R10 q15/q28/R13 same spatial route",
+        "operator_q": 19,
+        "incident_port_q": 32,
+        "modal_rectangle": "R13",
+        "cells": 180,
+        "FE_predicted": 118800,
+        "normal_corrections": 1,
+        "extra_corrections_max": 1,
+        "ready_status_required": "READY_FOR_ONE_A1_Q",
+        "attempt_root": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2",
+        "run_directory": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run",
+        "route": "Task43 assembly_time_variable_p_condensed; MUMPS; same accepted R10 candidate plan/parent; variable-p/assembly condensation/space identity unchanged",
+        "Av_rule": "resolved cfg stage4_volume_quadrature_degree=19; existing absorption code constructs the UFL dx metadata from this cfg. Record resolved cfg and measured per-material Av. Do not claim a separately observed UFL metadata record unless actually emitted.",
+        "watchdog_seconds": 7200,
+        "worker_argv": [
+          "python",
+          "-u",
+          "-m",
+          "benchmarks.task43_hp_adaptivity.h100_anchor",
+          "--case",
+          "round1_candidate_mpi1",
+          "--run-root",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run",
+          "--candidate-plan",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+          "--candidate-id",
+          "round10_p_up",
+          "--candidate-acceptance-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+          "--candidate-parent-selection-record",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+          "--same-lu-solve-residual-correction",
+          "--direct-factor-backend",
+          "mumps",
+          "--same-lu-tightening",
+          "--v2-diagnostic-phase",
+          "A1_q",
+          "--v2-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json",
+          "--v2-contract-sha256",
+          "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+          "--v3-failure-evidence",
+          "--v3-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+          "--v3-plan",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+        ]
+      }
+    ],
+    "A2": [
+      {
+        "id": "A2_q",
+        "attempt": 3,
+        "new_dispatches_max": 1,
+        "source_slot": "old unrun B",
+        "reference": "old Y6_1 native P6 q15/q28/R13",
+        "operator_q": 19,
+        "incident_port_q": 32,
+        "modal_rectangle": "R13",
+        "cells": 576,
+        "FE_predicted": 380160,
+        "normal_corrections_max": 2,
+        "extra_corrections_max": 1,
+        "old_attempt_terminal_hashes": [
+          "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+          "7a4fb9e3caa0c79ba97e928f494953abf4ce8c1afee89fb0308a22d61716f894"
+        ],
+        "ready_status_required": "READY_FOR_ONE_A2_Q",
+        "attempt_root": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3",
+        "run_directory": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run",
+        "route": "Task40 native P6 condensed route with V3 opt-in diagnostics; source continuity only as bounded by v2_root_audit/a2_native_source_continuity.json",
+        "Av_rule": "native volume physical/condensation forms use explicit q19 with materialized metadata verified; recover_p0_outputs absorption retains native cfg automatic stage4_volume_quadrature_degree. Record cfg automatic state and measured per-material Av; effective degree 15 is only same-hash old-field support, not fresh endpoint metadata.",
+        "watchdog_seconds": 7200,
+        "worker_argv": [
+          "python",
+          "-u",
+          "-m",
+          "benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic",
+          "--phase",
+          "A2_q",
+          "--attempt",
+          "3",
+          "--v3-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+          "--v3-plan",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+        ]
+      }
+    ],
+    "A1_R": {
+      "authorized": false
+    },
+    "A2_R": {
+      "authorized": false
+    },
+    "B": {
+      "authorized": false
+    },
+    "C": {
+      "authorized": false,
+      "slot_sealed": true
+    }
+  },
+  "quadrature_and_modal_endpoints": {
+    "immutable_physical_spatial_modal_contract": "V2 original facts retained",
+    "Av_original_Y6_configuration": "automatic; historical config was not explicit q15",
+    "Av_old_field_supplement": "same hash-bound field auto/q15/q19, actual automatic absorption degree15 in current qualified FFCx; max Av difference 3.4416913763379853e-15",
+    "Av_new_A1": "A1 resolved cfg stage4_volume_quadrature_degree=19; existing absorption code constructs UFL dx metadata from this cfg. Record resolved cfg and measured per-material Av; do not claim a separately observed UFL metadata record unless emitted.",
+    "Av_new_A2": "A2 native physical volume forms/condensation explicitly use q19; recover_p0_outputs absorption remains automatic via native cfg.stage4_volume_quadrature_degree. Record automatic cfg state and measured per-material Av; effective degree 15 is same-hash old-field support, not fresh endpoint metadata.",
+    "Av_old_Y6_same_field_support": {
+      "evidence_path": "benchmarks/artifacts/task43/v3_root_audit/old_y6_av_support/old_y6_av_three_rules.json",
+      "sha256": "6f9835c893ac2b3ab8b39aeb1297ea0968667c336bc1e4179bf74fa738bb87dc",
+      "watchdog_summary_sha256": "a4716977b1129986dca673ff4071d50ee2c7fd25ec39ab8ce9acf1128a1bd708",
+      "automatic_and_q15_Av": 0.6915175267821607,
+      "q19_Av": 0.6915175267821573,
+      "maximum_absolute_difference": 3.4416913763379853e-15,
+      "automatic_effective_absorption_degree": 15,
+      "constant_region_volume_integral_degree": 3,
+      "identity": "same hash-bound stored Y6_1 fields; postprocessing only; no PDE"
+    }
+  },
+  "extra_same_lu_uncertainty": {
+    "primary": "normal correction completed, before extra; never choose better extra field",
+    "extra_max": 1,
+    "same_matrix_rhs_factor": true,
+    "before_package": "atomic immutable coefficients/checkpoint + raw normal vectors + full/condensed/A6 values and actual vector scopes before sampling and extra",
+    "each_completed_sample_saved_promptly": true,
+    "extra_transport_sampler_failure": "complete endpoint FAILED/INCOMPLETE; measured/partial evidence; no official/pass; all continuation false",
+    "normal_and_extra_requirements": "inherit V2/native strict residual decrease, counters, MUMPS INFOG; no fabricated KSP reason",
+    "primary_outputs_before_extra": "A2 persists primary modal/Av endpoint outputs and each q8/q10 sample before extra. A1 persists the primary core packet and each completed q8/q10 sample before extra; its primary R13/Av recovery outputs keep the existing same-LU recovery/output order. Do not rerecover/resample primary afterward.",
+    "factor_lifetime_cost": "A1 writes the primary raw packet and each completed q8/q10 sample before extra; its modal/Av outputs retain the existing same-LU recovery/output order. A2 writes primary modal/Av outputs and each completed q8/q10 sample before extra. These operations occur while the existing MUMPS factor remains live; account for the measured whole-process RSS and wall, not historical factor-released output-stage peak.",
+    "v3_failure_terminal": "any exception after solver dispatch through endpoint comparison/summary writes demotes native/solver authority, marks endpoint FAILED/INCOMPLETE and all continuation false; retain primary packet/sample hashes"
+  },
+  "resource_policy": {
+    "identity": "task43_hp_adaptivity_resource_v1",
+    "CPU": 1,
+    "MPI": 1,
+    "threads": 1,
+    "one_heavy_workflow": true,
+    "whole_watchdog_seconds_per_attempt": 7200,
+    "may_extend_wall_limit": false,
+    "absolute_RSS_cap_bytes": 206158430208,
+    "reserve": "max(64 GiB,15% effective total)",
+    "launch_cap": "min(192 GiB,80% effective total,available-reserve)",
+    "planning_cap": "min(192 GiB,75% effective total,launch cap)",
+    "task_tree_swap_bytes_max": 0,
+    "global_swap": "separate observation",
+    "cleanup": "whole descendant tree; preserve terminal and samples",
+    "capacity_preflight": "fresh CPU1 affinity/availability, native ABI, dynamic total/available memory and task43_hp_adaptivity_resource_v1 reserve/launch/planning-cap arithmetic before each dispatch; no interference with unrelated processes",
+    "extra_lifetime_note": "A1 saves the primary raw packet and each completed field sample before extra; its modal/Av outputs keep the existing recovery/output order. A2 saves primary modal/Av outputs and field samples before extra. The factor remains allocated for these stages; historic factor-released-before-output RSS is not a prediction of V3 peak."
+  },
+  "stopping": {
+    "gate_failure": "do not dispatch affected branch; archive controlled-stop/not-run evidence",
+    "local_numerical_negative": "stop only affected branch; other branch requires own and shared gates still valid",
+    "shared_environment_identity_transport_persistence_resource_defect": "invalidate affected shared gates and stop related work",
+    "after_dispatch_failure": "no retry under this authorization",
+    "even_if_both_q_pass": "all R/B/C continuations remain false"
+  },
+  "prohibited": [
+    "A1_R",
+    "A2_R",
+    "B",
+    "C",
+    "fresh baseline PDE",
+    "same-accuracy cost campaign",
+    "iterative wiring",
+    "NN/FTT",
+    "0.7 nm",
+    "blind parameter scans",
+    "new control framework",
+    "master commit or merge"
+  ],
+  "source_and_test_freeze": {
+    "status": "frozen test scope; final exact source hashes are bound externally after the final code freeze",
+    "self_hash_avoided": true,
+    "required_code_paths": [
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "src/runners/p6_condensed_direct.py",
+      "src/solvers/common_3d_case_flow.py",
+      "src/solvers/dtn_port_3d.py",
+      "src/solvers/hcurl_variable_p_reduction.py",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+      "src/test/test_task43_v3_failure_safe_order.py",
+      "src/test/test_354_subreaper_watchdog.py"
+    ],
+    "required_focused_test": "source scripts/activate_task40_phi90_pord64.sh && taskset -c 1 python -m pytest -q src/test/test_task43_v3_failure_safe_order.py",
+    "required_static_checks": "Ruff scoped to changed Task43 files, compileall of changed Python paths, diff check, and JSON/Markdown contract parsing"
+  },
+  "formal_argv_and_unique_directories": {
+    "status": "frozen worker argv; no formal launch without phase-specific root READY and fresh preflight",
+    "attempt_roots_must_be_absent": [
+      "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2",
+      "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3"
+    ],
+    "phase_watchdog_roots": {
+      "A1_q_attempt2": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog",
+      "A2_q_attempt3": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog"
+    },
+    "worker_argv_is_exact": true,
+    "parallel_or_retry_dispatch": false
+  },
+  "root_gates": {
+    "G0": {
+      "status": "root audit complete; executor must preserve reference in compact index",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g0_launch_inventory.json",
+      "sha256": "16aa4acca9df1a8420a075954142c5536678b561da1cb646e8e0067f5853e072",
+      "three_terminal_recheck_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/three_historical_terminals_recheck.json",
+      "three_terminal_recheck_sha256": "fd73704c86430083ee1e6e1c7c348497b1261b3c454a06b7cd073826abccfd4b"
+    },
+    "G1": {
+      "status": "awaiting root review; no phase READY has been issued"
+    },
+    "G2": {
+      "status": "watchdog CLI/ABI/ledger component passed; executor A2_q3 adapter fixture pending final test",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g2_watchdog_cli_component.json",
+      "sha256": "ff17402290bbafb7208a046e3c151d402d452c61093b12b98aeb4bc8af774217"
+    },
+    "G3": {
+      "status": "root old-field/mode and Av checks complete; executor records references and exact V3 q19 dispatch path",
+      "comparison_inputs_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g0_g3_frozen_comparison_inputs.json",
+      "comparison_inputs_sha256": "d0eab43e6fca75972b94ba4996e622252491ec5f287ef109f0d99100457ec06f",
+      "mode_physics_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g3_saved_mode_physics.json",
+      "mode_physics_sha256": "a13e35ff2b59cb547371718dfbf58e784a2287fb8c60fa3961d81431c524461c",
+      "old_y6_av_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/old_y6_av_support__old_y6_av_three_rules.json",
+      "old_y6_av_sha256": "6f9835c893ac2b3ab8b39aeb1297ea0968667c336bc1e4179bf74fa738bb87dc"
+    },
+    "G4": {
+      "status": "pending final source/test/contract hash index and root review; READY remains external and phase-specific"
+    },
+    "pre_pde_audit_index_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/index.json",
+    "pre_pde_audit_index_sha256": "ab2bab2fc8f50e7ff7838006e46526cc3a90e7c8b398c1df410e90657ab5d9eb"
+  },
+  "dispatch_authorization": {
+    "contract_effect": "freezes parameters and limits only; does not itself authorize dispatch",
+    "required_before_A1": "root has independently reviewed G0-G4 and recorded READY_FOR_ONE_A1_Q for this exact source/contract/plan HEAD",
+    "required_before_A2": "root has independently reviewed G0-G4 including A1 terminal and recorded READY_FOR_ONE_A2_Q for this exact source/contract/plan HEAD",
+    "without_phase_specific_root_ready": "no formal attempt directory, worker, or watchdog may be created",
+    "no_automatic_transition": true
+  }
+}

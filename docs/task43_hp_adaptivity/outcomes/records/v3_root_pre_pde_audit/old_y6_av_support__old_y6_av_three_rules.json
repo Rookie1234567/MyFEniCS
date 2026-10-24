@@ -1,0 +1,559 @@
+{
+  "schema": "task43.v3.old_y6_absorption_three_rule_postprocessing.v1",
+  "classification": "measured_same_hash_bound_old_field_reintegration_not_fresh_PDE",
+  "review_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+  "input_sha256": {
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_port_diffraction_orders_3d.json": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463"
+  },
+  "original_Y6_operator_q": 15,
+  "original_Y6_incident_port_q": 28,
+  "original_Y6_Av_rule": "automatic; never relabeled q15",
+  "restoration_helper_cfg_operator_degree": 15,
+  "restoration_note": "Reconstructed identical old mesh/function-space identity and copied saved recovered coefficients; no solve, factorization, new RHS or operator assembly. Config copy explicitly selects each absorption rule; old field and inputs unchanged.",
+  "mesh_identity": {
+    "mesh_geometry_coordinates_nm": {
+      "dtype": "<f8",
+      "shape": [
+        833,
+        3
+      ],
+      "sha256": "9da643a4285c69ec05b77890a96e9104943138174f8b55ead1f9853cea354666"
+    },
+    "mesh_geometry_dofmap": {
+      "dtype": "<i4",
+      "shape": [
+        576,
+        8
+      ],
+      "sha256": "6824c6d9dcf90fee7289dc045a79d73c0a4304b29e9ae90881e190210471fa0d"
+    },
+    "mesh_owned_cell_global_ids": {
+      "dtype": "<i8",
+      "shape": [
+        576
+      ],
+      "sha256": "a1c8ac01ae6cf0f9467724bf5233560cf7314a6782f0b0a8cc84464652583e7a"
+    },
+    "mesh_cell_vertex_dofmap": {
+      "dtype": "<i4",
+      "shape": [
+        4608
+      ],
+      "sha256": "6d0c88d5154cc7c10973ca53f7a94cb09b98cedea1b82b13e807de971735ba2c"
+    },
+    "p6_function_space_cell_dofmap": {
+      "dtype": "<i4",
+      "shape": [
+        576,
+        882
+      ],
+      "sha256": "271cde30385f47a2903837ad488bd1e32f0a3a0c41b8f3e651ae6f3dcc2bfc55"
+    },
+    "p6_owned_global_dof_block_ids": {
+      "dtype": "<i8",
+      "shape": [
+        389832
+      ],
+      "sha256": "1d1bb6d447592169c454b0463968f569bffa7a3e43e98366e6343b9d95d07270"
+    },
+    "p6_ghost_global_dof_block_ids": {
+      "dtype": "<i8",
+      "shape": [
+        0
+      ],
+      "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777"
+    }
+  },
+  "cell_count": 576,
+  "coefficient_count": 389832,
+  "coefficient_raw_sha256": "ad3aae405fc385a39cf8124c10f640bdf3e18caf4251de7a8edaf7dd58a6d29d",
+  "results": {
+    "automatic": {
+      "requested_Av_degree": null,
+      "requested_Av_rule": "automatic/default",
+      "actual_forms": [
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 3,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                3
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 3,
+                "quadrature_degree": 3,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 3,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                3
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 15,
+                "quadrature_degree": 15,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 2,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                2
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 3,
+                "quadrature_degree": 3,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 2,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                2
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 15,
+                "quadrature_degree": 15,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        }
+      ],
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 21.815508046604222,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 48,
+            "volume_nm3": 40800.0,
+            "n_complex": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "epsilon_r_complex": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "Im_epsilon_r": 0.0036493427323206554,
+            "material_label": "Si / silicon",
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 14.282683944078881,
+            "A_volume": 0.654703246588021
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 96,
+            "volume_nm3": 24999.999999999964,
+            "n_complex": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "epsilon_r_complex": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "Im_epsilon_r": 0.0036493427323206554,
+            "material_label": "Si / silicon",
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 0.8031222258051978,
+            "A_volume": 0.03681428019413973
+          }
+        },
+        "A_grating": 0.654703246588021,
+        "A_substrate": 0.03681428019413973,
+        "A_volume_grating": 0.654703246588021,
+        "A_volume_substrate": 0.03681428019413973,
+        "A_volume_total": 0.6915175267821607,
+        "A_port_balance_minus_A_volume_total": -3.601963172172873e-11,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 3.601963172172873e-11
+      },
+      "wall_seconds": 143.35661813011393
+    },
+    "q15": {
+      "requested_Av_degree": 15,
+      "requested_Av_rule": "default",
+      "actual_forms": [
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 3,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                3
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 3,
+                "quadrature_degree": 3,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 3,
+              "metadata": {
+                "quadrature_degree": 15,
+                "quadrature_rule": "default"
+              }
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                3
+              ],
+              "metadata": {
+                "quadrature_degree": 15,
+                "quadrature_rule": "default",
+                "estimated_polynomial_degree": 15
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 2,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                2
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 3,
+                "quadrature_degree": 3,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 2,
+              "metadata": {
+                "quadrature_degree": 15,
+                "quadrature_rule": "default"
+              }
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                2
+              ],
+              "metadata": {
+                "quadrature_degree": 15,
+                "quadrature_rule": "default",
+                "estimated_polynomial_degree": 15
+              }
+            }
+          ]
+        }
+      ],
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 21.815508046604222,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 48,
+            "volume_nm3": 40800.0,
+            "n_complex": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "epsilon_r_complex": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "Im_epsilon_r": 0.0036493427323206554,
+            "material_label": "Si / silicon",
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 14.282683944078881,
+            "A_volume": 0.654703246588021
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 96,
+            "volume_nm3": 24999.999999999964,
+            "n_complex": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "epsilon_r_complex": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "Im_epsilon_r": 0.0036493427323206554,
+            "material_label": "Si / silicon",
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 0.8031222258051978,
+            "A_volume": 0.03681428019413973
+          }
+        },
+        "A_grating": 0.654703246588021,
+        "A_substrate": 0.03681428019413973,
+        "A_volume_grating": 0.654703246588021,
+        "A_volume_substrate": 0.03681428019413973,
+        "A_volume_total": 0.6915175267821607,
+        "A_port_balance_minus_A_volume_total": -3.601963172172873e-11,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 3.601963172172873e-11
+      },
+      "wall_seconds": 7.5521361897699535
+    },
+    "q19": {
+      "requested_Av_degree": 19,
+      "requested_Av_rule": "default",
+      "actual_forms": [
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 3,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                3
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 3,
+                "quadrature_degree": 3,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 3,
+              "metadata": {
+                "quadrature_degree": 19,
+                "quadrature_rule": "default"
+              }
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                3
+              ],
+              "metadata": {
+                "quadrature_degree": 19,
+                "quadrature_rule": "default",
+                "estimated_polynomial_degree": 15
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 2,
+              "metadata": {}
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                2
+              ],
+              "metadata": {
+                "estimated_polynomial_degree": 3,
+                "quadrature_degree": 3,
+                "quadrature_rule": "default"
+              }
+            }
+          ]
+        },
+        {
+          "raw_integrals": [
+            {
+              "subdomain_id": 2,
+              "metadata": {
+                "quadrature_degree": 19,
+                "quadrature_rule": "default"
+              }
+            }
+          ],
+          "actual_ffcx_integrals": [
+            {
+              "subdomain_id": [
+                2
+              ],
+              "metadata": {
+                "quadrature_degree": 19,
+                "quadrature_rule": "default",
+                "estimated_polynomial_degree": 15
+              }
+            }
+          ]
+        }
+      ],
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 21.815508046604222,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 48,
+            "volume_nm3": 40800.0,
+            "n_complex": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "epsilon_r_complex": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "Im_epsilon_r": 0.0036493427323206554,
+            "material_label": "Si / silicon",
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 14.282683944078807,
+            "A_volume": 0.6547032465880176
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 96,
+            "volume_nm3": 24999.999999999964,
+            "n_complex": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "epsilon_r_complex": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "Im_epsilon_r": 0.0036493427323206554,
+            "material_label": "Si / silicon",
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 0.8031222258051955,
+            "A_volume": 0.03681428019413963
+          }
+        },
+        "A_grating": 0.6547032465880176,
+        "A_substrate": 0.03681428019413963,
+        "A_volume_grating": 0.6547032465880176,
+        "A_volume_substrate": 0.03681428019413963,
+        "A_volume_total": 0.6915175267821573,
+        "A_port_balance_minus_A_volume_total": -3.601619003035239e-11,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 3.6016301052654853e-11
+      },
+      "wall_seconds": 14.094098255969584
+    }
+  },
+  "differences": {
+    "q15_minus_automatic": 0.0,
+    "q19_minus_automatic": -3.4416913763379853e-15,
+    "q19_minus_q15": -3.4416913763379853e-15
+  },
+  "frozen_Av_perturbation_limit": 1e-06,
+  "all_three_rule_differences_within_frozen_limit": true,
+  "formal_attempts_consumed": 0,
+  "source_files": {
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "c791d99998986ae53d81d39bf4f916e73d1ed9f4eb9cca9bb6f42fac871ffda8",
+    "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+    "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+    "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154"
+  },
+  "FFCx_analysis_path": "/usr/lib/python3/dist-packages/ffcx/analysis.py",
+  "FFCx_analysis_sha256": "f69189314890ba9fd370dedec07125aca4a894fd3bb64214473518a2fffa3322",
+  "wall_seconds": 175.32053942326456,
+  "official_result": false,
+  "old_endpoint_status_unchanged": true
+}

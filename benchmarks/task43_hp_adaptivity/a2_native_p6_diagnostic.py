@@ -6,6 +6,7 @@ import argparse
 import copy
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from itertools import pairwise
@@ -32,6 +33,13 @@ _A2_Q_RETRY_REL = Path(
 )
 _A2_Q_RETRY_SHA256 = "f6b004d30e524a2c3560b6117983762c293602c5ddee8d92f2d9de40ffe073ed"
 _PLAN_SHA256 = "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e"
+_V3_CONTRACT_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json"
+)
+_V3_PLAN_REL = Path("docs/task43_hp_adaptivity/diagnostic_plan_v3.md")
+# Filled only when the V3 plan/contract and source are frozen for root review.
+_V3_CONTRACT_SHA256: str | None = "36182de5628aafff3814e8dc3fba32f38288192e62e1869311ecb95fed384694"
+_V3_PLAN_SHA256: str | None = "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7"
 _Y6_ROOT = Path("benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1")
 _Y6_INPUT_SHA256 = "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc"
 _Y6_SUMMARY_SHA256 = "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc"
@@ -71,6 +79,187 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise TypeError(f"expected JSON object at {path}")
     return value
+
+
+def _task43_v3_postprocess_fail_closed(
+    comparison_callback,
+    *,
+    summary_path: Path,
+    run_directory: Path,
+    phase: str,
+) -> Any:
+    """Demote a native summary if any V3 postprocessing step raises."""
+
+    try:
+        return comparison_callback()
+    except BaseException as exc:
+        summary = _read_json(summary_path)
+        identity = summary.get("task43_v3_diagnostic_identity", {})
+        from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+            demote_v3_native_summary_after_error,
+        )
+
+        demote_v3_native_summary_after_error(
+            summary,
+            run_directory / "numerical_output/task43_v3_partial_terminal.json",
+            phase=phase,
+            source_identity={
+                "source_sha": summary.get("source_sha"),
+                "frozen_v3_contract_sha256": identity.get("contract_sha256"),
+                "frozen_v3_plan_sha256": identity.get("plan_sha256"),
+            },
+            error=exc,
+            primary_before_extra_packet=summary.get(
+                "task43_v3_primary_before_extra_packet"
+            ),
+            primary_q_samples=summary.get("task43_v3_primary_field_samples", {}),
+            extra_q_samples=summary.get("task43_v3_extra_field_samples", {}),
+        )
+        temporary = summary_path.with_suffix(summary_path.suffix + ".tmp")
+        temporary.write_text(
+            json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(summary_path)
+        raise
+
+
+def _validate_v3_a2_entry_contract(
+    contract: dict[str, Any], *, phase: str, attempt: int
+) -> None:
+    """Check the bounded V3 A2_q allocation without changing prior contracts."""
+
+    if phase != "A2_q" or attempt != 3:
+        raise ValueError("Task43 V3 only freezes the A2_q attempt-3 route")
+    attempts = contract.get("formal_model_attempts", {})
+    phases = contract.get("phases", {})
+    a2_rows = phases.get("A2", [])
+    row = next(
+        (
+            item
+            for item in a2_rows
+            if isinstance(item, dict) and item.get("id") == phase
+        ),
+        None,
+    )
+    immutable = contract.get("immutable_prior_contracts_and_review", {})
+    authority = contract.get("authority", {})
+    prohibited = contract.get("prohibited", [])
+    terminal_hashes = row.get("old_attempt_terminal_hashes", []) if row else []
+    if (
+        contract.get("schema") != "task43.v3.finite_diagnostic_contract.v1"
+        or contract.get("status") != "frozen_for_execution"
+        or immutable.get(
+            "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json"
+        )
+        != _CONTRACT_SHA256
+        or immutable.get(
+            "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json"
+        )
+        != _A2_NATIVE_CONTRACT_SHA256
+        or attempts.get("total_original_max") != 6
+        or attempts.get("already_consumed") != 3
+        or attempts.get("new_dispatches_max") != 2
+        or attempts.get("cumulative_max_after_this_review") != 5
+        or attempts.get("sealed_remaining_unallocated") != 1
+        or attempts.get("no_automatic_retry") is not True
+        or attempts.get("A1_cumulative_max_this_review") != 2
+        or row is None
+        or row.get("attempt") != attempt
+        or row.get("new_dispatches_max") != 1
+        or row.get("operator_q") != 19
+        or row.get("incident_port_q") != 32
+        or row.get("modal_rectangle") != "R13"
+    ):
+        raise ValueError("Task43 V3 A2_q entry differs from its frozen allocation")
+    if (
+        authority.get("review_commit") != "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12"
+        or authority.get("review_path")
+        != "docs/task43_hp_adaptivity/review_report_v2.md"
+        or authority.get("execution_section") != "10"
+        or attempts.get("A2_cumulative_max_this_review") != 3
+        or row.get("normal_corrections_max") != 2
+        or row.get("extra_corrections_max") != 1
+        or len(terminal_hashes) != 2
+        or phases.get("A1_R", {}).get("authorized") is not False
+        or phases.get("A2_R", {}).get("authorized") is not False
+        or phases.get("B", {}).get("authorized") is not False
+        or phases.get("C", {}).get("authorized") is not False
+        or not {"A1_R", "A2_R", "B", "C"}.issubset(set(prohibited))
+    ):
+        raise ValueError("Task43 V3 A2_q contract leaves an unauthorized continuation")
+    review_path = _REPO_ROOT / str(authority["review_path"])
+    expected_review_sha = immutable.get(str(authority["review_path"]))
+    if (
+        not isinstance(expected_review_sha, str)
+        or _sha256(review_path) != expected_review_sha
+    ):
+        raise ValueError("Task43 V3 review bytes differ from the frozen review hash")
+    ancestry = subprocess.run(
+        [
+            "git",
+            "merge-base",
+            "--is-ancestor",
+            str(authority["review_commit"]),
+            "HEAD",
+        ],
+        cwd=_REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if ancestry.returncode != 0:
+        raise ValueError(
+            "Task43 V3 review commit is not an ancestor of the execution HEAD"
+        )
+    terminal_root = _REPO_ROOT / "benchmarks/artifacts/task43/v2_diagnostics"
+    for index, expected_hash in enumerate(terminal_hashes, start=1):
+        attempt_root = terminal_root / f"A2_q_attempt{index}"
+        summary_path = attempt_root / "watchdog/summary.json"
+        launcher_code_path = attempt_root / "launcher_exit_code.txt"
+        if (
+            not summary_path.is_file()
+            or _sha256(summary_path) != expected_hash
+            or not launcher_code_path.is_file()
+            or launcher_code_path.read_text(encoding="utf-8").strip() != "2"
+        ):
+            raise ValueError(
+                f"Task43 V3 A2_q attempt {index} terminal/launcher bytes changed"
+            )
+        terminal = _read_json(summary_path)
+        if (
+            terminal.get("classification") != "WORKER_FAILED"
+            or terminal.get("leader_exit_code") != 1
+            or terminal.get("descendants_cleared") is not True
+        ):
+            raise ValueError(
+                f"Task43 V3 A2_q attempt {index} is not the frozen failed/clean terminal"
+            )
+
+
+def _require_v3_watchdog_worker_identity() -> dict[str, Any]:
+    """Verify the post-exec adapter process is the watchdog's direct child."""
+
+    try:
+        expected_parent = int(os.environ["PHYSICAL_WATCHDOG_PARENT_PID"])
+        phase_path = Path(os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("V3 A2 requires native watchdog parent and phase identity") from exc
+    actual_parent = os.getppid()
+    if expected_parent != actual_parent:
+        raise RuntimeError(
+            "V3 A2 worker is not the direct child registered by its native watchdog"
+        )
+    if not phase_path.is_absolute():
+        raise RuntimeError("V3 A2 watchdog phase path must be absolute")
+    phase_path = phase_path.resolve()
+    return {
+        "worker_pid": os.getpid(),
+        "worker_parent_pid": actual_parent,
+        "watchdog_parent_pid_environment": expected_parent,
+        "direct_watchdog_parent_verified": True,
+        "phase_path": str(phase_path),
+    }
 
 
 def _raw_relative(
@@ -2080,23 +2269,64 @@ def _comparison_record(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=("A2_q", "A2_R"), required=True)
-    parser.add_argument("--attempt", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--attempt", type=int, choices=(1, 2, 3), default=1)
+    parser.add_argument("--v3-contract", type=Path)
+    parser.add_argument("--v3-plan", type=Path)
     parser.add_argument("--resolved-config", type=Path)
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args(argv)
 
     retry_authorization = None
+    v3_diagnostic = None
     if args.phase == "A2_R":
         _load_a2_q_retry_authorization()
         raise ValueError("A2_R was cancelled by the frozen A2_q retry authorization")
     if args.attempt == 2:
         if args.phase != "A2_q":
             raise ValueError("attempt 2 is frozen for A2_q only")
+        if args.v3_contract is not None or args.v3_plan is not None:
+            raise ValueError("V3 contract arguments are reserved for A2_q attempt 3")
         retry_authorization = _load_a2_q_retry_authorization()
+    if args.attempt == 3 or args.v3_contract is not None or args.v3_plan is not None:
+        if args.attempt != 3 or args.phase != "A2_q":
+            raise ValueError("V3 diagnostic entry is fixed to A2_q attempt 3")
+        if args.v3_contract is None or args.v3_plan is None:
+            raise ValueError("A2_q attempt 3 requires both frozen V3 contract files")
+        if _V3_CONTRACT_SHA256 is None or _V3_PLAN_SHA256 is None:
+            raise RuntimeError(
+                "Task43 V3 contract bytes are not yet frozen in the adapter"
+            )
+        contract_path = _bind_file(
+            _V3_CONTRACT_REL, _V3_CONTRACT_SHA256, label="V3 contract"
+        )
+        plan_path = _bind_file(_V3_PLAN_REL, _V3_PLAN_SHA256, label="V3 plan")
+        if (
+            args.v3_contract.resolve() != contract_path.resolve()
+            or args.v3_plan.resolve() != plan_path.resolve()
+        ):
+            raise ValueError("A2_q attempt 3 CLI paths differ from the frozen V3 files")
+        _validate_v3_a2_entry_contract(
+            _read_json(contract_path), phase=args.phase, attempt=args.attempt
+        )
+        v3_diagnostic = {
+            "phase": args.phase,
+            "attempt": args.attempt,
+            "contract_path": str(contract_path),
+            "contract_sha256": _V3_CONTRACT_SHA256,
+            "plan_path": str(plan_path),
+            "plan_sha256": _V3_PLAN_SHA256,
+            "watchdog_worker_identity": _require_v3_watchdog_worker_identity(),
+        }
+    elif args.attempt not in (1, 2):
+        raise ValueError("A2_q attempt 3 requires a frozen V3 contract")
 
     attempt_root = (
         _REPO_ROOT
-        / "benchmarks/artifacts/task43/v2_diagnostics"
+        / (
+            "benchmarks/artifacts/task43/v3_diagnostics"
+            if v3_diagnostic is not None
+            else "benchmarks/artifacts/task43/v2_diagnostics"
+        )
         / f"{args.phase}_attempt{args.attempt}"
     )
     output_dir = _a2_attempt_run_directory(attempt_root, args.output_dir)
@@ -2138,101 +2368,129 @@ def main(argv: list[str] | None = None) -> int:
             output_dir,
             source_sha=source_sha,
             task43_v2_diagnostic=diagnostic,
+            task43_v3_diagnostic=v3_diagnostic,
         )
     except BaseException:
         summary_path = output_dir / "p6_condensed_direct_summary.json"
         if summary_path.is_file():
             print(summary_path.read_text(encoding="utf-8"), file=sys.stderr)
         raise
-    summary_path = Path(result["summary"])
-    runner_summary = _read_json(summary_path)
-    runner_summary["task43_v2_resolved_profile_compatibility"] = frozen[
-        "resolved_profile_compatibility"
-    ]
-    retry_binding = None
-    if retry_authorization is not None:
-        retry_binding = {
-            "path": retry_authorization["path"],
-            "sha256": retry_authorization["sha256"],
-            "replaces_unused_A2_R_slot": True,
-            "attempt_1_watchdog_summary_sha256": retry_authorization["record"][
-                "consumed_attempt_1"
-            ]["watchdog_summary_sha256"],
-        }
-        runner_summary["task43_v2_retry_authorization"] = retry_binding
-    summary_path.write_text(
-        json.dumps(runner_summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    comparison = _comparison_record(
-        args.phase,
-        output_dir,
-        runner_summary,
-        diagnostic,
-        frozen["old_summary"],
-    )
-    if retry_binding is not None:
-        comparison["retry_authorization"] = retry_binding
-        comparison.update(
-            same_group_R_factor_may_continue=False,
-            A2_R_status="cancelled_by_A2_q_retry_authorization",
-            endpoint_qualification_scope=(
-                "local A2_q endpoint comparison only; does not establish a complete "
-                "A2 q/R reference or unlock B/C"
-            ),
-        )
-    comparison_path = output_dir / "comparison_record.json"
-    comparison_path.write_text(
-        json.dumps(comparison, sort_keys=True, indent=2, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    comparison["comparison_record_sha256"] = _sha256(comparison_path)
-    summary = _read_json(summary_path)
-    summary["task43_v2_comparison"] = {
-        "path": str(comparison_path),
-        "sha256": comparison["comparison_record_sha256"],
-        "endpoint_qualified": comparison["endpoint_qualified"],
-        "primary_perturbation_gate": comparison["primary_perturbation_gate"],
-        "hard_solver_gate": comparison["hard_solver_gate"],
-        "extra_same_lu_uncertainty_gate": comparison["extra_same_lu_uncertainty"][
-            "pass_10_percent_output_uncertainty_gate"
-        ],
-        "same_group_R_factor_may_continue": comparison[
-            "same_group_R_factor_may_continue"
-        ],
-        "A2_R_status": comparison.get("A2_R_status", "not_cancelled_by_retry"),
-        "endpoint_qualification_scope": comparison.get(
-            "endpoint_qualification_scope",
-            "frozen A2 endpoint comparison",
-        ),
-    }
-    summary_path.write_text(
-        json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    print(
-        json.dumps(
-            {
-                "phase": args.phase,
-                "attempt": args.attempt,
-                "runner_passed": result["passed"],
-                "endpoint_qualified": comparison["endpoint_qualified"],
-                "hard_solver_gate": comparison["hard_solver_gate"],
-                "same_group_R_factor_may_continue": comparison[
-                    "same_group_R_factor_may_continue"
-                ],
-                "summary": str(summary_path),
-                "comparison": str(comparison_path),
-                "comparison_sha256": _sha256(comparison_path),
-            },
-            sort_keys=True,
-        ),
-        flush=True,
-    )
-    # A failed perturbation/uncertainty gate is a preserved diagnostic result;
-    # only a hard solver failure blocks the predeclared same-space R factor.
-    return 0 if comparison["hard_solver_gate"] else 2
+    summary_path = output_dir / "p6_condensed_direct_summary.json"
 
+    def postprocess_native_result() -> int:
+        summary_path = Path(result["summary"])
+        runner_summary = _read_json(summary_path)
+        runner_summary["task43_v2_resolved_profile_compatibility"] = frozen[
+            "resolved_profile_compatibility"
+        ]
+        if v3_diagnostic is not None:
+            runner_summary["task43_v3_invocation"] = v3_diagnostic
+        retry_binding = None
+        if retry_authorization is not None:
+            retry_binding = {
+                "path": retry_authorization["path"],
+                "sha256": retry_authorization["sha256"],
+                "replaces_unused_A2_R_slot": True,
+                "attempt_1_watchdog_summary_sha256": retry_authorization["record"][
+                    "consumed_attempt_1"
+                ]["watchdog_summary_sha256"],
+            }
+            runner_summary["task43_v2_retry_authorization"] = retry_binding
+        summary_path.write_text(
+            json.dumps(runner_summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        comparison_callback = lambda: _comparison_record(
+            args.phase,
+            output_dir,
+            runner_summary,
+            diagnostic,
+            frozen["old_summary"],
+        )
+        comparison = comparison_callback()
+        if retry_binding is not None:
+            comparison["retry_authorization"] = retry_binding
+            comparison.update(
+                same_group_R_factor_may_continue=False,
+                A2_R_status="cancelled_by_A2_q_retry_authorization",
+                endpoint_qualification_scope=(
+                    "local A2_q endpoint comparison only; does not establish a complete "
+                    "A2 q/R reference or unlock B/C"
+                ),
+            )
+        if v3_diagnostic is not None:
+            comparison.update(
+                same_group_R_factor_may_continue=False,
+                A2_R_status="not_run_locked_by_V3_scope",
+                endpoint_qualification_scope=(
+                    "local A2_q attempt-3 diagnostic only; no A2_R, B, or C continuation"
+                ),
+            )
+        comparison_path = output_dir / "comparison_record.json"
+        comparison_path.write_text(
+            json.dumps(comparison, sort_keys=True, indent=2, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        comparison["comparison_record_sha256"] = _sha256(comparison_path)
+        summary = _read_json(summary_path)
+        summary["task43_v2_comparison"] = {
+            "path": str(comparison_path),
+            "sha256": comparison["comparison_record_sha256"],
+            "endpoint_qualified": comparison["endpoint_qualified"],
+            "primary_perturbation_gate": comparison["primary_perturbation_gate"],
+            "hard_solver_gate": comparison["hard_solver_gate"],
+            "extra_same_lu_uncertainty_gate": comparison["extra_same_lu_uncertainty"][
+                "pass_10_percent_output_uncertainty_gate"
+            ],
+            "same_group_R_factor_may_continue": comparison[
+                "same_group_R_factor_may_continue"
+            ],
+            "A2_R_status": comparison.get("A2_R_status", "not_cancelled_by_retry"),
+            "endpoint_qualification_scope": comparison.get(
+                "endpoint_qualification_scope",
+                "frozen A2 endpoint comparison",
+            ),
+        }
+        summary_path.write_text(
+            json.dumps(summary, sort_keys=True, indent=2, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        print(
+            json.dumps(
+                {
+                    "phase": args.phase,
+                    "attempt": args.attempt,
+                    "runner_passed": result["passed"],
+                    "endpoint_qualified": comparison["endpoint_qualified"],
+                    "hard_solver_gate": comparison["hard_solver_gate"],
+                    "same_group_R_factor_may_continue": comparison[
+                        "same_group_R_factor_may_continue"
+                    ],
+                    "summary": str(summary_path),
+                    "comparison": str(comparison_path),
+                    "comparison_sha256": _sha256(comparison_path),
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+        # V3 spends the former B slot only on A2_q attempt 3; all continuation
+        # paths remain closed even if the local endpoint gates pass.
+        if v3_diagnostic is not None:
+            return 0 if comparison["hard_solver_gate"] else 2
+        # A failed perturbation/uncertainty gate is a preserved diagnostic result;
+        # only a hard solver failure blocks the predeclared same-space R factor.
+        return 0 if comparison["hard_solver_gate"] else 2
+
+
+    if v3_diagnostic is not None:
+        return _task43_v3_postprocess_fail_closed(
+            postprocess_native_result,
+            summary_path=summary_path,
+            run_directory=output_dir,
+            phase=args.phase,
+        )
+    return postprocess_native_result()
 
 if __name__ == "__main__":
     raise SystemExit(main())
