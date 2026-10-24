@@ -76,8 +76,13 @@ _PHYSICAL_CONFIGURATION_FIELDS = (
     "physical_z_max",
     "domain_z_min",
     "domain_z_max",
+    "air_height",
     "grating_bounds",
+    "grating_width_x",
+    "grating_width_y",
+    "grating_height",
     "interface_z",
+    "substrate_thickness",
     "incident_theta_deg",
     "incident_phi_deg",
     "incident_amplitude",
@@ -86,6 +91,8 @@ _PHYSICAL_CONFIGURATION_FIELDS = (
     "polarization",
     "propagation_direction",
     "wavevector",
+    "floquet_phase_x",
+    "floquet_phase_y",
     "n_air",
     "mu_r",
     "n_substrate",
@@ -93,10 +100,19 @@ _PHYSICAL_CONFIGURATION_FIELDS = (
     "eps_air",
     "eps_substrate",
     "eps_grating",
+    "eps_r",
+    "grating_background_eps",
+    "grating_index",
     "k0",
     "magnetic_field_scale_A_per_m",
     "use_floquet_xy",
     "use_pml",
+    "pml_alpha",
+    "pml_bottom_thickness",
+    "pml_top_thickness",
+    "stage4_boundary_model",
+    "stage4_pml_outer_bc",
+    "stage4_floquet_slave_elimination",
     "mesh_cell_type_resolved",
 )
 
@@ -108,7 +124,7 @@ def task43_v2_physical_configuration_identity(
     candidate_plan_sha256: str,
     active_degree_plan_sha256: str,
 ) -> dict[str, Any]:
-    """Hash the shared physical problem, excluding quadrature and R-order controls."""
+    """Hash physical coefficients separately from the candidate discretization."""
 
     missing = [
         name for name in _PHYSICAL_CONFIGURATION_FIELDS if name not in resolved_config
@@ -135,14 +151,43 @@ def task43_v2_physical_configuration_identity(
             or any(character not in "0123456789abcdef" for character in digest)
         ):
             raise ValueError(f"{name} must be a lowercase SHA256 identity")
-    payload = {
+    physical_payload = {
         "schema": "task43.v2.shared_physical_configuration.v1",
         "resolved_physics": {
             name: resolved_config[name] for name in _PHYSICAL_CONFIGURATION_FIELDS
         },
+    }
+    physical_sha256 = hashlib.sha256(
+        json.dumps(
+            physical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    discretization_payload = {
+        "schema": "task43.v2.discretization_identity.v1",
         "actual_axis_values_nm": axes,
         "candidate_plan_sha256": candidate_plan_sha256,
         "active_degree_plan_sha256": active_degree_plan_sha256,
+    }
+    discretization_sha256 = hashlib.sha256(
+        json.dumps(
+            discretization_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "schema": physical_payload["schema"],
+        "sha256": physical_sha256,
+        "payload": physical_payload,
+        "discretization_identity": {
+            "schema": discretization_payload["schema"],
+            "sha256": discretization_sha256,
+            "payload": discretization_payload,
+        },
         "excluded_numerical_controls": [
             "volume/incident/port quadrature degrees",
             "DtN rectangle and derived outgoing mode inventory",
@@ -150,12 +195,6 @@ def task43_v2_physical_configuration_identity(
             "case name and output paths",
         ],
     }
-    digest = hashlib.sha256(
-        json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), allow_nan=False
-        ).encode("utf-8")
-    ).hexdigest()
-    return {"schema": payload["schema"], "sha256": digest, "payload": payload}
 
 
 def _mode_key(row: Mapping[str, Any]) -> ModeKey:
@@ -287,12 +326,199 @@ def _key_digest(keys: set[ModeKey] | frozenset[ModeKey]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _require_same_identity(reference: str, candidate: str, *, label: str) -> str:
+    for value in (reference, candidate):
+        if (
+            not isinstance(value, str)
+            or len(value) != 64
+            or any(character not in "0123456789abcdef" for character in value)
+        ):
+            raise ValueError(f"{label} identities must be lowercase SHA256 strings")
+    if reference != candidate:
+        raise ValueError(f"endpoints have different {label} identities")
+    return reference
+
+
+def compare_r13_modal_outputs(
+    reference_payload: Mapping[str, Any],
+    candidate_payload: Mapping[str, Any],
+    *,
+    reference_a_volume: float,
+    candidate_a_volume: float,
+    reference_physical_configuration_sha256: str,
+    candidate_physical_configuration_sha256: str,
+    reference_discretization_sha256: str,
+    candidate_discretization_sha256: str,
+) -> dict[str, Any]:
+    """Compare two complete R13 outputs on the same physical problem and FE space."""
+
+    physical_identity = _require_same_identity(
+        reference_physical_configuration_sha256,
+        candidate_physical_configuration_sha256,
+        label="physical configuration",
+    )
+    discretization_identity = _require_same_identity(
+        reference_discretization_sha256,
+        candidate_discretization_sha256,
+        label="discretization",
+    )
+    reference = _validated_rows(
+        reference_payload, label="reference R13", expected=R13_MODE_KEYS
+    )
+    candidate = _validated_rows(
+        candidate_payload, label="candidate R13", expected=R13_MODE_KEYS
+    )
+    reference_power = _power_aggregates(reference, reference_a_volume)
+    candidate_power = _power_aggregates(candidate, candidate_a_volume)
+    aggregate_differences = {
+        name: abs(candidate_power[name] - reference_power[name])
+        for name in _POWER_NAMES
+    }
+    aggregate_gates = {
+        name: {
+            "absolute_difference": difference,
+            "limit": PERTURBATION_LIMITS[name],
+            "pass": difference <= PERTURBATION_LIMITS[name],
+        }
+        for name, difference in aggregate_differences.items()
+    }
+
+    channel_rows: list[dict[str, Any]] = []
+    amplitude_rows: list[dict[str, Any]] = []
+    channel_differences: list[float] = []
+    amplitude_groups: dict[str, dict[str, Any]] = {}
+    for key in sorted(R13_MODE_KEYS):
+        reference_row = reference[key]
+        candidate_row = candidate[key]
+        reference_amplitude = _complex_pair(
+            reference_row["outgoing_amplitude_at_boundary"],
+            label=f"reference R13 {key}",
+        )
+        candidate_amplitude = _complex_pair(
+            candidate_row["outgoing_amplitude_at_boundary"],
+            label=f"candidate R13 {key}",
+        )
+        power_difference = abs(
+            float(candidate_row["power_ratio"]) - float(reference_row["power_ratio"])
+        )
+        amplitude_difference = candidate_amplitude - reference_amplitude
+        channel_differences.append(power_difference)
+        channel_rows.append(
+            {
+                "key": list(key),
+                "reference_power_ratio": float(reference_row["power_ratio"]),
+                "candidate_power_ratio": float(candidate_row["power_ratio"]),
+                "absolute_difference": power_difference,
+            }
+        )
+        amplitude_rows.append(
+            {
+                "key": list(key),
+                "reference_boundary_amplitude": [
+                    reference_amplitude.real,
+                    reference_amplitude.imag,
+                ],
+                "candidate_boundary_amplitude": [
+                    candidate_amplitude.real,
+                    candidate_amplitude.imag,
+                ],
+                "difference": [amplitude_difference.real, amplitude_difference.imag],
+                "absolute_difference": abs(amplitude_difference),
+            }
+        )
+    max_index = int(np.argmax(channel_differences))
+    channel_max = float(channel_differences[max_index])
+    channel_gate = channel_max <= PERTURBATION_LIMITS["individual_channel_power_ratio"]
+    for side in ("top", "bottom"):
+        for polarization in ("s", "p"):
+            keys = [
+                key
+                for key in sorted(R13_MODE_KEYS)
+                if key[0] == side and key[3] == polarization
+            ]
+            reference_values = np.asarray(
+                [
+                    _complex_pair(
+                        reference[key]["outgoing_amplitude_at_boundary"],
+                        label=f"reference R13 {key}",
+                    )
+                    for key in keys
+                ],
+                dtype=np.complex128,
+            )
+            candidate_values = np.asarray(
+                [
+                    _complex_pair(
+                        candidate[key]["outgoing_amplitude_at_boundary"],
+                        label=f"candidate R13 {key}",
+                    )
+                    for key in keys
+                ],
+                dtype=np.complex128,
+            )
+            reference_norm = float(np.linalg.norm(reference_values))
+            difference_norm = float(np.linalg.norm(candidate_values - reference_values))
+            relative = difference_norm / max(reference_norm, 1.0)
+            limit = PERTURBATION_LIMITS[
+                "boundary_amplitude_group_relative_with_incident_floor"
+            ]
+            amplitude_groups[f"{side}_{polarization}"] = {
+                "mode_count": len(keys),
+                "reference_l2": reference_norm,
+                "absolute_difference_l2": difference_norm,
+                "relative_with_unit_incident_modal_floor": relative,
+                "limit": limit,
+                "pass": relative <= limit,
+            }
+
+    passed = (
+        all(gate["pass"] for gate in aggregate_gates.values())
+        and channel_gate
+        and all(group["pass"] for group in amplitude_groups.values())
+    )
+    return {
+        "schema": "task43.v2_r13_same_space_modal_comparison.v1",
+        "selection_eligible": False,
+        "physical_configuration_identity_sha256": physical_identity,
+        "discretization_identity_sha256": discretization_identity,
+        "reference_inventory": {
+            "mode_count": 612,
+            "key_sha256": _key_digest(R13_MODE_KEYS),
+        },
+        "candidate_inventory": {
+            "mode_count": 612,
+            "key_sha256": _key_digest(R13_MODE_KEYS),
+        },
+        "aggregate_power": {
+            "reference": reference_power,
+            "candidate": candidate_power,
+            "absolute_differences": aggregate_differences,
+            "gates": aggregate_gates,
+        },
+        "per_channel_power_ratio": {
+            "maximum_absolute_difference": channel_max,
+            "maximum_key": channel_rows[max_index]["key"],
+            "limit": PERTURBATION_LIMITS["individual_channel_power_ratio"],
+            "pass": channel_gate,
+            "all_rows": channel_rows,
+        },
+        "boundary_amplitude_groups": amplitude_groups,
+        "boundary_amplitude_all_rows": amplitude_rows,
+        "pass_10_percent_perturbation_gate": bool(passed),
+        "threshold_basis": "0.1 times frozen Task43 final tolerances; exact R13 key matching",
+    }
+
+
 def compare_r13_r14_modal_outputs(
     r13_payload: Mapping[str, Any],
     r14_payload: Mapping[str, Any],
     *,
     r13_a_volume: float,
     r14_a_volume: float,
+    r13_physical_configuration_sha256: str,
+    r14_physical_configuration_sha256: str,
+    r13_discretization_sha256: str,
+    r14_discretization_sha256: str,
 ) -> dict[str, Any]:
     """Compare common R13 modes and measure the R14-only tail independently.
 
@@ -302,6 +528,16 @@ def compare_r13_r14_modal_outputs(
     volume-integral record.
     """
 
+    physical_identity = _require_same_identity(
+        r13_physical_configuration_sha256,
+        r14_physical_configuration_sha256,
+        label="physical configuration",
+    )
+    discretization_identity = _require_same_identity(
+        r13_discretization_sha256,
+        r14_discretization_sha256,
+        label="discretization",
+    )
     r13 = _validated_rows(r13_payload, label="R13", expected=R13_MODE_KEYS)
     r14 = _validated_rows(r14_payload, label="R14", expected=R14_MODE_KEYS)
     common = R13_MODE_KEYS & R14_MODE_KEYS
@@ -503,6 +739,13 @@ def compare_r13_r14_modal_outputs(
     all_gates = (
         all(item["pass"] for item in aggregate_gates.values())
         and channel_gate
+        and all(
+            item["within_10_percent_final_tolerance"] for item in common_groups.values()
+        )
+        and all(
+            item["within_10_percent_final_tolerance"]
+            for item in tail_amplitude_groups.values()
+        )
         and all(item["pass"] for item in joint_amplitude_groups.values())
         and tail_channel_gate
         and all(item["pass"] for item in tail_aggregate_gates.values())
@@ -511,6 +754,8 @@ def compare_r13_r14_modal_outputs(
         "schema": "task43.v2_r13_r14_modal_comparison.v1",
         "selection_eligible": False,
         "same_FE_space_different_port_operator": True,
+        "physical_configuration_identity_sha256": physical_identity,
+        "discretization_identity_sha256": discretization_identity,
         "reference_inventory": {
             "label": "R13",
             "mode_count": 612,

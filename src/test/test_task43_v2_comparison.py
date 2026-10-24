@@ -10,9 +10,17 @@ from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
     R13_MODE_KEYS,
     R14_MODE_KEYS,
     compare_field_sample_bundles,
+    compare_r13_modal_outputs,
     compare_r13_r14_modal_outputs,
     task43_v2_physical_configuration_identity,
 )
+
+_SAME_ENDPOINT_IDENTITIES = {
+    "r13_physical_configuration_sha256": "a" * 64,
+    "r14_physical_configuration_sha256": "a" * 64,
+    "r13_discretization_sha256": "b" * 64,
+    "r14_discretization_sha256": "b" * 64,
+}
 
 
 def _refresh_metrics(payload):
@@ -84,6 +92,7 @@ def test_r13_r14_common_modes_and_tail_are_separate_and_pass_when_small():
         r14,
         r13_a_volume=0.4,
         r14_a_volume=0.4,
+        **_SAME_ENDPOINT_IDENTITIES,
     )
 
     assert len(R13_MODE_KEYS) == result["common_inventory"]["mode_count"] == 612
@@ -108,6 +117,35 @@ def test_r13_r14_common_modes_and_tail_are_separate_and_pass_when_small():
     )
 
 
+def test_same_r13_comparison_requires_shared_physics_and_discretization():
+    r13 = _mode_payload(4, 8)
+    result = compare_r13_modal_outputs(
+        r13,
+        copy.deepcopy(r13),
+        reference_a_volume=0.4,
+        candidate_a_volume=0.4,
+        reference_physical_configuration_sha256="a" * 64,
+        candidate_physical_configuration_sha256="a" * 64,
+        reference_discretization_sha256="b" * 64,
+        candidate_discretization_sha256="b" * 64,
+    )
+    assert result["pass_10_percent_perturbation_gate"]
+    assert len(result["per_channel_power_ratio"]["all_rows"]) == 612
+    assert len(result["boundary_amplitude_all_rows"]) == 612
+
+    with pytest.raises(ValueError, match="different discretization"):
+        compare_r13_modal_outputs(
+            r13,
+            copy.deepcopy(r13),
+            reference_a_volume=0.4,
+            candidate_a_volume=0.4,
+            reference_physical_configuration_sha256="a" * 64,
+            candidate_physical_configuration_sha256="a" * 64,
+            reference_discretization_sha256="b" * 64,
+            candidate_discretization_sha256="c" * 64,
+        )
+
+
 def test_r14_tail_individual_power_is_a_real_gate():
     r13 = _mode_payload(4, 8)
     r14 = _mode_payload(5, 9, tail_amplitude=1.0e-8, tail_power=0.0)
@@ -127,9 +165,48 @@ def test_r14_tail_individual_power_is_a_real_gate():
         r14,
         r13_a_volume=0.4,
         r14_a_volume=0.4,
+        **_SAME_ENDPOINT_IDENTITIES,
     )
 
     assert not result["r14_tail_224"]["per_channel_power_ratio_maximum"]["pass"]
+    assert not result["pass_10_percent_perturbation_gate"]
+
+
+def test_r14_tail_amplitude_floor_gate_is_not_hidden_by_large_reference_norm():
+    r13 = _mode_payload(4, 8)
+    r14 = _mode_payload(5, 9)
+    for row in r13["orders"]:
+        if row["side"] == "top" and row["polarization"] == "s":
+            row["outgoing_amplitude_at_boundary"] = [10.0, 0.0]
+    tail_key = next(
+        key
+        for key in R14_MODE_KEYS - R13_MODE_KEYS
+        if key[0] == "top" and key[3] == "s"
+    )
+    tail_row = next(
+        row
+        for row in r14["orders"]
+        if (row["side"], row["m"], row["n"], row["polarization"]) == tail_key
+    )
+    tail_row["outgoing_amplitude_at_boundary"] = [2.0e-5, 0.0]
+
+    result = compare_r13_r14_modal_outputs(
+        r13,
+        r14,
+        r13_a_volume=0.4,
+        r14_a_volume=0.4,
+        **_SAME_ENDPOINT_IDENTITIES,
+    )
+
+    assert (
+        result["r14_tail_224"]["boundary_amplitude_groups"]["top_s"][
+            "relative_with_incident_floor"
+        ]
+        > 1.0e-5
+    )
+    assert not result["r14_tail_224"]["boundary_amplitude_groups"]["top_s"][
+        "within_10_percent_final_tolerance"
+    ]
     assert not result["pass_10_percent_perturbation_gate"]
 
 
@@ -152,6 +229,7 @@ def test_joint_common_and_tail_amplitude_envelope_is_a_gate():
         r14,
         r13_a_volume=0.4,
         r14_a_volume=0.4,
+        **_SAME_ENDPOINT_IDENTITIES,
     )
 
     group = result["common_612"]["full_inventory_extension_diagnostic_groups"]["top_s"]
@@ -185,8 +263,13 @@ def test_physical_configuration_identity_excludes_only_numerical_controls():
         "physical_z_max": 130.0,
         "domain_z_min": -10.0,
         "domain_z_max": 130.0,
+        "air_height": 130.0,
         "grating_bounds": {"x_min": 16.5, "x_max": 33.5},
+        "grating_width_x": 17.0,
+        "grating_width_y": 20.0,
+        "grating_height": 120.0,
         "interface_z": 0.0,
+        "substrate_thickness": 10.0,
         "incident_theta_deg": 89.0,
         "incident_phi_deg": 90.0,
         "incident_amplitude": [1.0, 0.0],
@@ -195,6 +278,8 @@ def test_physical_configuration_identity_excludes_only_numerical_controls():
         "polarization": [[-1.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
         "propagation_direction": [0.0, 1.0, 0.0],
         "wavevector": [[0.0, 0.0], [0.4, 0.0], [0.0, 0.0]],
+        "floquet_phase_x": [1.0, 0.0],
+        "floquet_phase_y": [0.8, 0.6],
         "n_air": [1.0, 0.0],
         "mu_r": [1.0, 0.0],
         "n_substrate": [0.9, 0.01],
@@ -202,10 +287,19 @@ def test_physical_configuration_identity_excludes_only_numerical_controls():
         "eps_air": [1.0, 0.0],
         "eps_substrate": [0.8, 0.02],
         "eps_grating": [0.8, 0.02],
+        "eps_r": [1.0, 0.0],
+        "grating_background_eps": [1.0, 0.0],
+        "grating_index": [0.9, 0.01],
         "k0": 0.4,
         "magnetic_field_scale_A_per_m": 0.002,
         "use_floquet_xy": True,
         "use_pml": False,
+        "pml_alpha": 5.0,
+        "pml_bottom_thickness": 0.0,
+        "pml_top_thickness": 0.0,
+        "stage4_boundary_model": "dtn_port",
+        "stage4_pml_outer_bc": "natural",
+        "stage4_floquet_slave_elimination": True,
         "mesh_cell_type_resolved": "hexahedron",
         "stage4_dtn_quadrature_degree": 28,
         "stage4_dtn_rectangle_max_n": 8,
@@ -228,6 +322,17 @@ def test_physical_configuration_identity_excludes_only_numerical_controls():
     assert (
         task43_v2_physical_configuration_identity(changed_physics, **kwargs)["sha256"]
         != baseline["sha256"]
+    )
+    changed_discretization = task43_v2_physical_configuration_identity(
+        config,
+        axis_values_nm={"x": [0.0, 0.5, 1.0], "y": [0.0, 1.0], "z": [0.0, 1.0]},
+        candidate_plan_sha256="c" * 64,
+        active_degree_plan_sha256="d" * 64,
+    )
+    assert changed_discretization["sha256"] == baseline["sha256"]
+    assert (
+        changed_discretization["discretization_identity"]["sha256"]
+        != baseline["discretization_identity"]["sha256"]
     )
 
 
@@ -256,6 +361,7 @@ def test_r13_inventory_must_be_complete_and_unique(mutation: str):
             r14,
             r13_a_volume=0.4,
             r14_a_volume=0.4,
+            **_SAME_ENDPOINT_IDENTITIES,
         )
 
 

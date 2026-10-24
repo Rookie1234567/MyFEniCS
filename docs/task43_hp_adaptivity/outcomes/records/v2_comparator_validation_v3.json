@@ -1,0 +1,43 @@
+{
+  "checks": [
+    {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_comparison.py",
+      "exit_code": 0,
+      "stdout": "............                                                             [100%]\n12 passed in 1.38s\n"
+    },
+    {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m ruff check benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py src/test/test_task43_v2_comparison.py && python -m ruff format --check benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py src/test/test_task43_v2_comparison.py",
+      "exit_code": 0,
+      "stdout": "All checks passed!\n3 files already formatted\n"
+    },
+    {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m py_compile benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py src/test/test_task43_v2_comparison.py",
+      "exit_code": 0,
+      "stdout": ""
+    }
+  ],
+  "environment": {
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "mpi_or_petsc_runtime_used_by_recording_script": false,
+    "native_qualified_activation": "1",
+    "numpy": "1.26.4",
+    "omp_num_threads": "1",
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python"
+  },
+  "inputs": {
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": {
+      "sha256": "31c36419616c309150eb4461c88f67f2453797e99a9495ea6b7c7b396a89e33e"
+    },
+    "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": {
+      "sha256": "527cbca693dfdcde7d773416ffc74f1484e42aea63663b378e49b2826e691777"
+    },
+    "src/test/test_task43_v2_comparison.py": {
+      "sha256": "91151cef15f6e13ea64cdbb6638d3da241c659f0b9c2f2e035be98dae0e1b0ce"
+    }
+  },
+  "model_attempts_used": 0,
+  "recorded_at_utc": "2026-10-24T02:23:53+00:00",
+  "result": "PASS",
+  "schema": "task43.v2_comparator_validation.v1",
+  "scope": "R13 same-space modal comparison, R13/R14 common-and-tail modes with shared physical and discretization identities, shared physical-configuration/discretization hashes, focused tests, and sampler syntax; no Task43 model PDE"
+}
