@@ -112,7 +112,6 @@ _PHYSICAL_CONFIGURATION_FIELDS = (
     "pml_top_thickness",
     "stage4_boundary_model",
     "stage4_pml_outer_bc",
-    "stage4_floquet_slave_elimination",
     "mesh_cell_type_resolved",
 )
 

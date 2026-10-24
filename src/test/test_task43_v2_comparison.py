@@ -14,6 +14,9 @@ from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
     compare_r13_r14_modal_outputs,
     task43_v2_physical_configuration_identity,
 )
+from benchmarks.task43_hp_adaptivity.sample_v2_legacy_r10_fields import (
+    _restoration_config_comparison,
+)
 
 _SAME_ENDPOINT_IDENTITIES = {
     "r13_physical_configuration_sha256": "a" * 64,
@@ -334,6 +337,52 @@ def test_physical_configuration_identity_excludes_only_numerical_controls():
         changed_discretization["discretization_identity"]["sha256"]
         != baseline["discretization_identity"]["sha256"]
     )
+
+
+def test_restoration_config_records_floquet_setting_outside_physics_identity():
+    solve_config = {
+        "incident_theta_deg": 89.0,
+        "stage4_floquet_slave_elimination": True,
+        "stage4_cell_static_condensation": True,
+    }
+    restored_config = {
+        "incident_theta_deg": 89.0,
+        "stage4_floquet_slave_elimination": False,
+        "stage4_cell_static_condensation": False,
+    }
+    comparison = _restoration_config_comparison(solve_config, restored_config)
+
+    assert comparison["all_physical_fields_match"]
+    assert comparison["floquet_slave_elimination"]["solve_record"] is True
+    assert (
+        comparison["floquet_slave_elimination"]["restored_carrier_config_default"]
+        is False
+    )
+    differences = {
+        item["field"]: item
+        for item in comparison["solver_and_reconstruction_setting_differences"]
+    }
+    assert differences["stage4_floquet_slave_elimination"]["solve_record_value"]
+    assert not differences["stage4_floquet_slave_elimination"][
+        "restored_carrier_config_value"
+    ]
+    assert (
+        "stage4_floquet_slave_elimination"
+        not in comparison["physical_field_names_checked"]
+    )
+
+
+def test_restoration_config_rejects_changed_physical_field():
+    solve_config = {
+        "incident_theta_deg": 89.0,
+        "stage4_floquet_slave_elimination": True,
+    }
+    restored_config = {
+        "incident_theta_deg": 88.0,
+        "stage4_floquet_slave_elimination": False,
+    }
+    with pytest.raises(ValueError, match="physical fields differ"):
+        _restoration_config_comparison(solve_config, restored_config)
 
 
 @pytest.mark.parametrize(

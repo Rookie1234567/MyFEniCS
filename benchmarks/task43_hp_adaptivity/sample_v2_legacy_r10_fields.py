@@ -22,10 +22,12 @@ from mpi4py import MPI
 from benchmarks.task43_hp_adaptivity import compare_initial_to_references as base
 from benchmarks.task43_hp_adaptivity import compare_round1_candidate as round1
 from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
+    _PHYSICAL_CONFIGURATION_FIELDS,
     R13_MODE_KEYS,
     _validated_rows,
     task43_v2_physical_configuration_identity,
 )
+from benchmarks.task43_hp_adaptivity.h100_anchor import _json_default
 from src.common.analytic_fields_3d import (
     electric_field_code_values,
     magnetic_field_code_values,
@@ -186,6 +188,68 @@ def _legacy_solver_source_compatibility(record: dict[str, Any]) -> dict[str, Any
     }
 
 
+def _json_value(value: Any) -> str:
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+        default=_json_default,
+    )
+
+
+def _restoration_config_comparison(
+    solve_config: dict[str, Any], restored_config: dict[str, Any]
+) -> dict[str, Any]:
+    physical_differences = [
+        name
+        for name in _PHYSICAL_CONFIGURATION_FIELDS
+        if _json_value(solve_config.get(name)) != _json_value(restored_config.get(name))
+    ]
+    if physical_differences:
+        raise ValueError(
+            "restored R10 physical fields differ from its solve record: "
+            f"{physical_differences}"
+        )
+    if solve_config.get("stage4_floquet_slave_elimination") is not True:
+        raise ValueError("R10 solve record lacks Floquet slave elimination=true")
+    if restored_config.get("stage4_floquet_slave_elimination") is not False:
+        raise ValueError(
+            "R10 restored carrier-space config changed its expected default"
+        )
+
+    differences = []
+    for name in sorted(set(solve_config) | set(restored_config)):
+        solve_value = solve_config.get(name)
+        restored_value = restored_config.get(name)
+        if _json_value(solve_value) != _json_value(restored_value):
+            differences.append(
+                {
+                    "field": name,
+                    "solve_record_value": solve_value,
+                    "restored_carrier_config_value": restored_value,
+                }
+            )
+    return {
+        "scope": (
+            "The restored config is used to reconstruct the saved mesh and P6 carrier "
+            "space for coefficient recovery/sampling; it is not a replay of the solve settings."
+        ),
+        "all_physical_fields_match": True,
+        "physical_field_names_checked": list(_PHYSICAL_CONFIGURATION_FIELDS),
+        "solver_and_reconstruction_setting_differences": differences,
+        "floquet_slave_elimination": {
+            "solve_record": True,
+            "restored_carrier_config_default": False,
+            "interpretation": (
+                "This is a solve/discrete-constraint setting, not a physical-field identity. "
+                "The V2 A1 solve must explicitly set it true; its false restoration default "
+                "only constructs the carrier space used to restore stored coefficients."
+            ),
+        },
+    }
+
+
 def _sample_endpoint(
     candidate: dict[str, Any],
 ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
@@ -236,6 +300,9 @@ def _sample_endpoint(
         raise ValueError(
             "restored R10 physical configuration differs from its solve record"
         )
+    restoration_config_comparison = _restoration_config_comparison(
+        record["resolved_config"], cfg.as_jsonable()
+    )
     arrays: dict[str, np.ndarray] = {}
     rules: dict[str, Any] = {}
     for order in (8, 10):
@@ -276,6 +343,7 @@ def _sample_endpoint(
         }
     return arrays, {
         "physical_configuration_identity": physical_identity,
+        "restoration_config_comparison": restoration_config_comparison,
         "active_degree_plan_sha256": active_degree_sha,
         "candidate_plan_sha256": candidate["plan_sha256"],
         "actual_axes_nm": {
@@ -381,6 +449,9 @@ def sample_legacy_r10_fields(
             "artifact": {"path": str(samples_path.resolve()), "sha256": sample_sha},
             "physical_configuration_identity": sampling_identity[
                 "physical_configuration_identity"
+            ],
+            "restoration_config_comparison": sampling_identity[
+                "restoration_config_comparison"
             ],
             "active_degree_plan_sha256": sampling_identity["active_degree_plan_sha256"],
             "candidate_plan_sha256": sampling_identity["candidate_plan_sha256"],
