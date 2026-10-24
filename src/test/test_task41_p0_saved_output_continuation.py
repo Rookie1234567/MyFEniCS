@@ -6931,3 +6931,90 @@ def test_task41_v11_selected_donor_loader_binds_nested_identity_and_trace_rows(
         ValueError, match="selected source vectors have invalid layout"
     ):
         load_fixture(wrong_shape_root, wrong_shape_summary)
+
+def test_task41_v11_saved_state_artifacts_follow_report_review_identity_shape() -> None:
+    from src.runners.task41_p0_checker import (
+        _task41_v11_saved_state_review_artifacts,
+    )
+
+    artifact_names = (
+        "C_S_t", "E_R_t", "delta_i", "delta_t",
+        "native_action_global_trace_slice", "native_action_i",
+        "old_Tb_plus_Jzb", "old_identity_difference", "old_identity_rhs",
+        "r_b", "r_i", "r_r", "review_eq2_difference", "review_eq2_left",
+        "review_eq2_right", "same_lu_minus_Jz_r", "same_lu_z_r",
+        "same_lu_z_r_timing", "u_i",
+    )
+    artifacts = {
+        name: {"path": f"{name}.npy", "sha256": "a" * 64}
+        for name in artifact_names
+    }
+    inputs = {
+        name: {"path": f"input_{name}.npy", "sha256": "b" * 64}
+        for name in ("b_i", "n_i", "n_t_global_trace_slice", "t_c", "u_i")
+    }
+    state_item = {
+        "state": "j0",
+        "inputs": inputs,
+        "review_identity": {
+            "artifacts": artifacts,
+            "equation_1_native_residual_row": [0.0, 0.0],
+            "equation_1_projected_minus_Jz_r_cell_contribution": [0.0, 0.0],
+            "equation_1_rhs_cell_contribution": [0.0, 0.0],
+            "equation_2_max_abs_difference": 0.0,
+            "equation_2_roundoff_bound": 0.0,
+            "equation_2_status": "PASS",
+            "old_Tb_Jzb_identity_max_abs_difference": 0.0,
+        },
+    }
+
+    assert _task41_v11_saved_state_review_artifacts(state_item) is artifacts
+    with pytest.raises(ValueError, match="review artifacts are malformed"):
+        _task41_v11_saved_state_review_artifacts({
+            "state": "j0",
+            "inputs": inputs,
+            "artifacts": artifacts,
+        })
+    with pytest.raises(ValueError, match="review artifacts are malformed"):
+        _task41_v11_saved_state_review_artifacts({
+            **state_item,
+            "review_identity": {"artifacts": None},
+        })
+
+def test_task41_v11_saved_check_saves_structural_failure_json(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.runners import task41_p0_checker as checker
+
+    repo_root = tmp_path / "repo"
+    fake_module_path = repo_root / "src" / "runners" / "task41_p0_checker.py"
+    fake_module_path.parent.mkdir(parents=True)
+    monkeypatch.setattr(checker, "__file__", str(fake_module_path))
+
+    def raise_legacy_schema_error(**_kwargs: object) -> dict[str, object]:
+        raise AttributeError("synthetic legacy state schema")
+
+    monkeypatch.setattr(
+        checker,
+        "check_task41_p0_v11_candidate_replay_saved_arrays",
+        raise_legacy_schema_error,
+    )
+    output_path = repo_root / "results" / "attempt06" / "failed_check.json"
+    result_code = checker.main([
+        "--v11-candidate-replay-saved-check",
+        "--summary", str(repo_root / "summary.json"),
+        "--contract", str(repo_root / "donor_contract.json"),
+        "--contract-sha256", "a" * 64,
+        "--consumer-contract", str(repo_root / "consumer_contract.json"),
+        "--consumer-contract-sha256", "b" * 64,
+        "--v11-report", str(repo_root / "attempt03_report.json"),
+        "--v11-report-sha256", "c" * 64,
+        "--output", str(output_path),
+    ])
+
+    assert result_code == 2
+    result = json.loads(output_path.read_text(encoding="utf-8"))
+    assert result["check_completed"] is False
+    assert result["official_result"] is False
+    assert result["errors"] == ["AttributeError: synthetic legacy state schema"]
+    assert result["raw_evidence_retained"] is True

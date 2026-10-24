@@ -6218,6 +6218,21 @@ def _task41_v8_assert_close(actual: Any, expected: Any, label: str) -> None:
         raise ValueError(f"V8 independent replay differs from saved {label}")
 
 
+def _task41_v11_saved_state_review_artifacts(
+    state_item: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Read saved state checks from the V11 report's review_identity envelope."""
+    review_identity = state_item.get("review_identity")
+    artifacts = (
+        review_identity.get("artifacts")
+        if isinstance(review_identity, Mapping)
+        else None
+    )
+    if not isinstance(artifacts, Mapping):
+        raise ValueError("V11 saved-state review artifacts are malformed")
+    return artifacts
+
+
 def _task41_v11_recompute_saved_candidate_arrays(
     report: Mapping[str, Any],
     metadata: Mapping[str, Any],
@@ -6460,7 +6475,7 @@ def _task41_v11_recompute_saved_candidate_arrays(
                 state_item = next((x for x in arts.get("states", []) if x.get("state") == label), None)
                 if not isinstance(state_item, Mapping):
                     raise ValueError(f"V11 cell {cell_id}/{label} saved arrays missing")
-                state_arts = state_item.get("artifacts")
+                state_arts = _task41_v11_saved_state_review_artifacts(state_item)
                 for name, value in (
                     ("u_i", u), ("native_action_i", n), ("native_action_global_trace_slice", n_t),
                     ("r_i", r_i), ("same_lu_z_r", z_r), ("same_lu_minus_Jz_r", minus_J_z_r),
@@ -11264,7 +11279,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_path=args.output,
                 repo_root=root,
             )
-        except (OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError) as exc:
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError, AttributeError) as exc:
             result = {
                 "schema": "task41.p0.v11.selected_trace_star_saved_array_independent_check.v1",
                 "check_completed": False,
