@@ -64,6 +64,98 @@ _FIELD_ARRAYS = (
     "H_scattered_A_per_m",
 )
 _POWER_NAMES = ("R_total", "T_total", "A_volume", "R00_s", "R00_p", "R00_total")
+_PHYSICAL_CONFIGURATION_FIELDS = (
+    "geometry_kind",
+    "scattering_background",
+    "electric_field_unit",
+    "magnetic_field_unit",
+    "lambda0",
+    "period_x",
+    "period_y",
+    "physical_z_min",
+    "physical_z_max",
+    "domain_z_min",
+    "domain_z_max",
+    "grating_bounds",
+    "interface_z",
+    "incident_theta_deg",
+    "incident_phi_deg",
+    "incident_amplitude",
+    "incident_e0_v_per_m",
+    "polarization_kind",
+    "polarization",
+    "propagation_direction",
+    "wavevector",
+    "n_air",
+    "mu_r",
+    "n_substrate",
+    "n_grating",
+    "eps_air",
+    "eps_substrate",
+    "eps_grating",
+    "k0",
+    "magnetic_field_scale_A_per_m",
+    "use_floquet_xy",
+    "use_pml",
+    "mesh_cell_type_resolved",
+)
+
+
+def task43_v2_physical_configuration_identity(
+    resolved_config: Mapping[str, Any],
+    *,
+    axis_values_nm: Mapping[str, Any],
+    candidate_plan_sha256: str,
+    active_degree_plan_sha256: str,
+) -> dict[str, Any]:
+    """Hash the shared physical problem, excluding quadrature and R-order controls."""
+
+    missing = [
+        name for name in _PHYSICAL_CONFIGURATION_FIELDS if name not in resolved_config
+    ]
+    if missing:
+        raise ValueError(f"resolved physical config is missing fields: {missing}")
+    axes: dict[str, list[float]] = {}
+    for axis in ("x", "y", "z"):
+        values = np.asarray(axis_values_nm[axis], dtype=np.float64)
+        if values.ndim != 1 or values.size < 2 or not np.all(np.isfinite(values)):
+            raise ValueError(
+                f"actual {axis} axis must be finite with at least two entries"
+            )
+        if np.any(np.diff(values) <= 0.0):
+            raise ValueError(f"actual {axis} axis must be strictly increasing")
+        axes[axis] = values.tolist()
+    for name, digest in (
+        ("candidate_plan_sha256", candidate_plan_sha256),
+        ("active_degree_plan_sha256", active_degree_plan_sha256),
+    ):
+        if (
+            not isinstance(digest, str)
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+        ):
+            raise ValueError(f"{name} must be a lowercase SHA256 identity")
+    payload = {
+        "schema": "task43.v2.shared_physical_configuration.v1",
+        "resolved_physics": {
+            name: resolved_config[name] for name in _PHYSICAL_CONFIGURATION_FIELDS
+        },
+        "actual_axis_values_nm": axes,
+        "candidate_plan_sha256": candidate_plan_sha256,
+        "active_degree_plan_sha256": active_degree_plan_sha256,
+        "excluded_numerical_controls": [
+            "volume/incident/port quadrature degrees",
+            "DtN rectangle and derived outgoing mode inventory",
+            "direct solver and preconditioner controls",
+            "case name and output paths",
+        ],
+    }
+    digest = hashlib.sha256(
+        json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+    ).hexdigest()
+    return {"schema": payload["schema"], "sha256": digest, "payload": payload}
 
 
 def _mode_key(row: Mapping[str, Any]) -> ModeKey:

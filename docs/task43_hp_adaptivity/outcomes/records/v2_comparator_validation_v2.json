@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_comparison.py",
+      "exit_code": 0,
+      "stdout": "..........                                                               [100%]\n10 passed in 0.93s\n"
+    },
+    {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m ruff check benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py src/test/test_task43_v2_comparison.py && python -m ruff format --check benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py src/test/test_task43_v2_comparison.py",
+      "exit_code": 0,
+      "stdout": "All checks passed!\n2 files already formatted\n"
+    },
+    {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m py_compile benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py src/test/test_task43_v2_comparison.py",
+      "exit_code": 0,
+      "stdout": ""
+    }
+  ],
+  "environment": {
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "mpi_or_petsc_runtime_used_by_recording_script": false,
+    "native_qualified_activation": "1",
+    "numpy": "1.26.4",
+    "omp_num_threads": "1",
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python"
+  },
+  "inputs": {
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": {
+      "sha256": "87eb586a98c63609db8433302a68956499061f4e7baa221ccf5f8aa203fd386e"
+    },
+    "src/test/test_task43_v2_comparison.py": {
+      "sha256": "7bf84fd3b72e68bef223a3d2a34583919ab0b6428a09427dac22182e7f4f3296"
+    }
+  },
+  "model_attempts_used": 0,
+  "recorded_at_utc": "2026-10-24T02:17:07+00:00",
+  "result": "PASS",
+  "schema": "task43.v2_comparator_validation.v1",
+  "scope": "physical-configuration identity for same-space endpoint matching; focused comparator tests only, with no Task43 model PDE or new field generation"
+}

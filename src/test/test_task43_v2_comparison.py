@@ -11,6 +11,7 @@ from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
     R14_MODE_KEYS,
     compare_field_sample_bundles,
     compare_r13_r14_modal_outputs,
+    task43_v2_physical_configuration_identity,
 )
 
 
@@ -169,6 +170,65 @@ def test_joint_common_and_tail_amplitude_envelope_is_a_gate():
     assert group["relative_extension_diagnostic_envelope"] > 1.0e-5
     assert not group["pass"]
     assert not result["pass_10_percent_perturbation_gate"]
+
+
+def test_physical_configuration_identity_excludes_only_numerical_controls():
+    config = {
+        "geometry_kind": "rectangular_block_grating",
+        "scattering_background": "layered",
+        "electric_field_unit": "V/m",
+        "magnetic_field_unit": "A/m",
+        "lambda0": 13.5,
+        "period_x": 50.0,
+        "period_y": 50.0,
+        "physical_z_min": -10.0,
+        "physical_z_max": 130.0,
+        "domain_z_min": -10.0,
+        "domain_z_max": 130.0,
+        "grating_bounds": {"x_min": 16.5, "x_max": 33.5},
+        "interface_z": 0.0,
+        "incident_theta_deg": 89.0,
+        "incident_phi_deg": 90.0,
+        "incident_amplitude": [1.0, 0.0],
+        "incident_e0_v_per_m": 1.0,
+        "polarization_kind": "s",
+        "polarization": [[-1.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+        "propagation_direction": [0.0, 1.0, 0.0],
+        "wavevector": [[0.0, 0.0], [0.4, 0.0], [0.0, 0.0]],
+        "n_air": [1.0, 0.0],
+        "mu_r": [1.0, 0.0],
+        "n_substrate": [0.9, 0.01],
+        "n_grating": [0.9, 0.01],
+        "eps_air": [1.0, 0.0],
+        "eps_substrate": [0.8, 0.02],
+        "eps_grating": [0.8, 0.02],
+        "k0": 0.4,
+        "magnetic_field_scale_A_per_m": 0.002,
+        "use_floquet_xy": True,
+        "use_pml": False,
+        "mesh_cell_type_resolved": "hexahedron",
+        "stage4_dtn_quadrature_degree": 28,
+        "stage4_dtn_rectangle_max_n": 8,
+    }
+    axes = {axis: [0.0, 1.0] for axis in ("x", "y", "z")}
+    kwargs = {
+        "axis_values_nm": axes,
+        "candidate_plan_sha256": "a" * 64,
+        "active_degree_plan_sha256": "b" * 64,
+    }
+    baseline = task43_v2_physical_configuration_identity(config, **kwargs)
+    changed_numerics = dict(
+        config, stage4_dtn_quadrature_degree=32, stage4_dtn_rectangle_max_n=9
+    )
+    assert (
+        task43_v2_physical_configuration_identity(changed_numerics, **kwargs)["sha256"]
+        == baseline["sha256"]
+    )
+    changed_physics = dict(config, incident_theta_deg=88.0)
+    assert (
+        task43_v2_physical_configuration_identity(changed_physics, **kwargs)["sha256"]
+        != baseline["sha256"]
+    )
 
 
 @pytest.mark.parametrize(
