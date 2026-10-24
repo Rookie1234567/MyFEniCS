@@ -8010,12 +8010,15 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
     donor_contract_sha256: str,
     consumer_contract_path: Path,
     consumer_contract_sha256: str,
+    checker_contract_path: Path,
+    checker_contract_sha256: str,
     candidate_report_path: Path,
     candidate_report_sha256: str,
     output_path: Path,
     repo_root: Path,
 ) -> dict[str, Any]:
     """Independently check saved V13 inputs and cached lambda without any GETRS."""
+    import subprocess
     import time
     parent_started = time.perf_counter()
     input_hash_read_seconds = 0.0
@@ -8071,19 +8074,92 @@ def check_task41_p0_v13_saved_adjoint_diagnostic_independently(
         require_clean_source=False,
         case_id="B0",
     )
+    continuation = os.environ.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION")
+    checker_only = os.environ.get("TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY") == "1"
+    if continuation not in {None, "1"} or (checker_only and continuation != "1"):
+        raise ValueError("V13 independent checker continuation markers are malformed")
+    if checker_only and os.environ.get("TASK41_P0_SAVED_B0_EVIDENCE_AUDIT") is not None:
+        raise ValueError("V13 checker-only continuation cannot use the saved B0 audit route")
     consumer, consumer_digest = require_task41_p0_contract(
         Path(consumer_contract_path).resolve(strict=True),
         expected_sha256=consumer_contract_sha256,
+        current_root=repo_root,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    checker_contract, checker_digest = require_task41_p0_contract(
+        Path(checker_contract_path).resolve(strict=True),
+        expected_sha256=checker_contract_sha256,
         current_root=repo_root,
         check_current_source=True,
         require_clean_source=True,
         case_id="B0",
     )
-    if consumer.get("execution_scope") != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE:
+    if (
+        os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1"
+        or Path(os.environ.get("TASK41_P0_CONTRACT_PATH", "")).resolve()
+        != Path(checker_contract_path).resolve()
+        or os.environ.get("TASK41_P0_CONTRACT_SHA256") != checker_digest
+    ):
+        raise ValueError("V13 checker execution contract differs from its strict service binding")
+    consumer_source = consumer.get("source", {}).get("sha")
+    checker_source = checker_contract.get("source", {}).get("sha")
+    if not re.fullmatch(r"[0-9a-f]{40}", str(consumer_source or "")):
+        raise ValueError("V13 saved consumer source identity is malformed")
+    if checker_only:
+        if (
+            os.environ.get("TASK41_P0_CONSUMER_SOURCE_SHA") != consumer_source
+            or os.environ.get("TASK41_P0_CHECKER_SOURCE_SHA") != checker_source
+            or Path(consumer_contract_path).resolve() == Path(checker_contract_path).resolve()
+            or consumer_source == checker_source
+        ):
+            raise ValueError("V13 checker-only source identities differ from the saved consumer/current checker")
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", str(consumer_source), str(checker_source)],
+            cwd=repo_root, check=False, capture_output=True, text=True,
+        )
+        if ancestry.returncode != 0:
+            raise ValueError("V13 current checker source does not descend from the saved consumer source")
+    elif (
+        continuation is not None
+        or os.environ.get("TASK41_P0_SAVED_B0_EVIDENCE_AUDIT") is not None
+        or os.environ.get("TASK41_P0_CONSUMER_SOURCE_SHA") is not None
+        or os.environ.get("TASK41_P0_CHECKER_SOURCE_SHA") not in {None, checker_source}
+        or Path(consumer_contract_path).resolve() != Path(checker_contract_path).resolve()
+        or consumer_digest != checker_digest
+        or consumer_source != checker_source
+    ):
+        raise ValueError("V13 same-source diagnostic consumer/checker identities differ")
+    if (
+        consumer.get("execution_scope") != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+        or checker_contract.get("execution_scope") != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+        or consumer.get("numerical_strategy", {}).get("internal_rhs_strategy") != "same_lu_rhs_solve"
+        or checker_contract.get("numerical_strategy", {}).get("internal_rhs_strategy") != "same_lu_rhs_solve"
+    ):
         raise ValueError("V13 independent checker requires the V12 candidate-replay scope")
-    window = load_task41_p0_fixed_window(
+    consumer_case = consumer.get("case")
+    checker_case = checker_contract.get("case")
+    identity_fields = (
+        "model_id", "run_id", "input_sha256", "physical_model_sha256",
+        "resolved_config_sha256",
+    )
+    if (
+        not isinstance(consumer_case, Mapping)
+        or not isinstance(checker_case, Mapping)
+        or any(consumer_case.get(key) != checker_case.get(key) for key in identity_fields)
+        or consumer_case.get("model_id") != TASK41_MODEL_ID
+        or task41_case_id_for_run_id(str(consumer_case.get("run_id", ""))) != "B0"
+    ):
+        raise ValueError("V13 saved consumer/current checker case identities differ")
+    consumer_window = load_task41_p0_fixed_window(
         consumer, current_root=repo_root, require_current_boot=False
     )
+    window = load_task41_p0_fixed_window(
+        checker_contract, current_root=repo_root, require_current_boot=False
+    )
+    if consumer_window.sha256 != window.sha256 or consumer_window.path != window.path:
+        raise ValueError("V13 saved consumer and current checker fixed windows differ")
     cache_root = (
         results_root
         / "task41_p0_saved_diagnostics_6h"
@@ -13876,6 +13952,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--contract-sha256", required=True)
     parser.add_argument("--consumer-contract", type=Path)
     parser.add_argument("--consumer-contract-sha256")
+    parser.add_argument("--checker-contract", type=Path)
+    parser.add_argument("--checker-contract-sha256")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--mesh-actual-exact-report", type=Path)
     parser.add_argument("--mesh-actual-exact-report-sha256")
@@ -13903,6 +13981,8 @@ def main(argv: list[str] | None = None) -> int:
             or args.donor_summary_sha256 is None
             or args.consumer_contract is None
             or args.consumer_contract_sha256 is None
+            or args.checker_contract is None
+            or args.checker_contract_sha256 is None
             or args.v11_report is None
             or args.v11_report_sha256 is None
             or args.v13_diagnostic is None
@@ -13938,6 +14018,8 @@ def main(argv: list[str] | None = None) -> int:
                 donor_contract_sha256=args.contract_sha256,
                 consumer_contract_path=args.consumer_contract,
                 consumer_contract_sha256=args.consumer_contract_sha256,
+                checker_contract_path=args.checker_contract,
+                checker_contract_sha256=args.checker_contract_sha256,
                 candidate_report_path=args.v11_report,
                 candidate_report_sha256=args.v11_report_sha256,
                 output_path=args.output,

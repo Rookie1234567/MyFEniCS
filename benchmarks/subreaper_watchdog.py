@@ -273,6 +273,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_b0_v9_failed_terminal_audit_checker',
         'task41_p0_b0_saved_y_g_comparison_checker',
         'task41_p0_v11_selected_cell_saved_array_checker',
+        'task41_p0_v13_saved_adjoint_diagnostic_independent_check',
     }:
         if contract_version != 41:
             raise ValueError('Task41 checker requires a Task41 P0 execution contract')
@@ -509,6 +510,193 @@ def _validate_campaign_closeout_authorization(
                 or output_path != Path(environment.get(result_env, '')).resolve()
             ):
                 raise ValueError('saved-diagnostics output or command inputs escaped their registered paths')
+        elif checker_kind == 'task41_p0_v13_saved_adjoint_diagnostic_independent_check':
+            from src.runners.task41_p0_contract import (
+                TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+                TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE,
+                require_task41_p0_contract,
+                task41_case_id_for_run_id,
+            )
+
+            case = contract.get('case')
+            scope = contract.get('execution_scope')
+            window = contract.get('window')
+            continuation = environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION')
+            checker_only = environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') == '1'
+            if (
+                contract_version != 41
+                or len(argv) != 30
+                or Path(argv[0]).resolve() != expected_python
+                or argv[1:4] != [
+                    '-m', 'src.runners.task41_p0_checker',
+                    '--v13-saved-adjoint-diagnostic-check',
+                ]
+                or argv[4::2] != [
+                    '--contract', '--contract-sha256', '--summary',
+                    '--donor-summary-sha256', '--consumer-contract',
+                    '--consumer-contract-sha256', '--checker-contract',
+                    '--checker-contract-sha256', '--v11-report',
+                    '--v11-report-sha256', '--v13-diagnostic',
+                    '--v13-diagnostic-sha256', '--output',
+                ]
+                or authorization.get('expected_channel_count') is not None
+                or continuation not in {None, '1'}
+                or (checker_only and continuation != '1')
+                or environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') is not None
+                or environment.get('TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT') is not None
+                or environment.get('TASK41_P0_B0_SAVED_Y_G_COMPARISON') is not None
+                or environment.get('TASK41_P0_B0_V9_SAVED_STAR_SCREEN') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY')
+                != ('1' if checker_only else None)
+                or not isinstance(case, dict)
+                or case.get('model_id') != 'task41extra_phi90_p50x50_g17x20'
+                or task41_case_id_for_run_id(str(case.get('run_id', ''))) != 'B0'
+                or not isinstance(scope, dict)
+                or scope != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+                or not isinstance(window, dict)
+                or window.get('path') != TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE.as_posix()
+                or window.get('sha256') != window_sha
+                or contract.get('numerical_strategy', {}).get('internal_rhs_strategy')
+                != 'same_lu_rhs_solve'
+                or contract.get('source', {}).get('sha') != authorization.get('source_sha')
+                or environment.get('TASK41_P0_CHECKER_SOURCE_SHA') not in {
+                    None, authorization.get('source_sha')
+                }
+                or authorization.get('source_branch') != contract.get('branch')
+            ):
+                raise ValueError(
+                    'closeout command is not the registered V13 saved-adjoint diagnostic checker'
+                )
+
+            raw_paths = authorization.get('input_paths')
+            raw_hashes = authorization.get('input_sha256s')
+            if (
+                not isinstance(raw_paths, list)
+                or not raw_paths
+                or not all(isinstance(value, str) for value in raw_paths)
+                or len(set(raw_paths)) != len(raw_paths)
+                or not isinstance(raw_hashes, list)
+                or len(raw_hashes) != len(raw_paths)
+                or not all(re.fullmatch(r'[0-9a-f]{64}', str(value)) for value in raw_hashes)
+            ):
+                raise ValueError('V13 independent checker input authorization is malformed')
+            authorized_hashes = dict(zip(raw_paths, raw_hashes, strict=True))
+            repository_root = Path.cwd().resolve()
+            for raw_path in raw_paths:
+                path = Path(raw_path)
+                if (
+                    not path.is_absolute()
+                    or path.resolve(strict=True) != path
+                    or not path.is_file()
+                    or not path.is_relative_to(repository_root)
+                ):
+                    raise ValueError('V13 independent checker input escaped the registered repository')
+
+            def require_v13_input(path: Path, *, expected_sha256: str) -> None:
+                canonical = str(path.resolve(strict=True))
+                if authorized_hashes.get(canonical) != expected_sha256:
+                    raise ValueError('V13 checker command input is not bound by its authorization hash')
+
+            donor_contract_path = Path(argv[5]).resolve(strict=True)
+            donor_summary_path = Path(argv[9]).resolve(strict=True)
+            consumer_contract_argument = Path(argv[13]).resolve(strict=True)
+            checker_contract_argument = Path(argv[17]).resolve(strict=True)
+            candidate_report_path = Path(argv[21]).resolve(strict=True)
+            diagnostic_path = Path(argv[25]).resolve(strict=True)
+            output_path = Path(argv[29]).resolve()
+            results_root = (
+                repository_root / 'results' / str(case['model_id'])
+            ).resolve()
+            if (
+                str(donor_contract_path) != argv[5]
+                or str(donor_summary_path) != argv[9]
+                or str(consumer_contract_argument) != argv[13]
+                or str(checker_contract_argument) != argv[17]
+                or str(candidate_report_path) != argv[21]
+                or str(diagnostic_path) != argv[25]
+                or checker_contract_argument != contract_file
+                or Path(contract_path).resolve() != contract_file
+                or argv[19] != contract_sha
+                or argv[19] != environment.get('TASK41_P0_CONTRACT_SHA256')
+                or donor_summary_path.name != 'task40_v10_p6_candidate_summary.json'
+                or candidate_report_path.name != 'task41_p0_v11_selected_trace_candidate_replay.json'
+                or diagnostic_path.name != 'task41_p0_v13_saved_adjoint_diagnostic.json'
+                or not donor_contract_path.is_relative_to(repository_root)
+                or not consumer_contract_argument.is_relative_to(repository_root)
+                or not donor_summary_path.is_relative_to(results_root)
+                or not candidate_report_path.is_relative_to(results_root)
+                or not diagnostic_path.is_relative_to(results_root)
+                or output_path.name
+                != 'task41_p0_v13_saved_adjoint_diagnostic_independent_check.json'
+                or output_path.parent != diagnostic_path.parent
+                or output_path.exists()
+                or not output_path.is_relative_to(results_root)
+            ):
+                raise ValueError('V13 independent checker command paths differ from the saved-diagnostics route')
+
+            consumer_contract, consumer_digest = require_task41_p0_contract(
+                consumer_contract_argument,
+                expected_sha256=argv[15],
+                current_root=repository_root,
+                check_current_source=False,
+                require_clean_source=False,
+                case_id='B0',
+            )
+            consumer_case = consumer_contract.get('case')
+            consumer_window = consumer_contract.get('window')
+            identity_fields = (
+                'model_id', 'run_id', 'input_sha256', 'physical_model_sha256',
+                'resolved_config_sha256',
+            )
+            consumer_window_path = Path(str(consumer_window.get('path', ''))) if isinstance(consumer_window, dict) else Path('')
+            if not consumer_window_path.is_absolute():
+                consumer_window_path = repository_root / consumer_window_path
+            current_window_path = Path(str(window_path))
+            if not current_window_path.is_absolute():
+                current_window_path = repository_root / current_window_path
+            if (
+                not isinstance(consumer_case, dict)
+                or task41_case_id_for_run_id(str(consumer_case.get('run_id', ''))) != 'B0'
+                or any(consumer_case.get(key) != case.get(key) for key in identity_fields)
+                or consumer_contract.get('execution_scope') != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+                or consumer_contract.get('numerical_strategy', {}).get('internal_rhs_strategy')
+                != 'same_lu_rhs_solve'
+                or not isinstance(consumer_window, dict)
+                or consumer_window_path.resolve(strict=True) != current_window_path.resolve(strict=True)
+                or consumer_window.get('sha256') != window_sha
+                or not re.fullmatch(r'[0-9a-f]{40}', str(consumer_contract.get('source', {}).get('sha', '')))
+                or argv[15] != consumer_digest
+            ):
+                raise ValueError('V13 original consumer contract differs from the current checker window/case')
+            if checker_only:
+                if (
+                    consumer_contract_argument == contract_file
+                    or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA')
+                    != consumer_contract.get('source', {}).get('sha')
+                    or environment.get('TASK41_P0_CHECKER_SOURCE_SHA')
+                    != authorization.get('source_sha')
+                    or consumer_contract.get('source', {}).get('sha')
+                    == authorization.get('source_sha')
+                ):
+                    raise ValueError('V13 checker-only command did not separate the saved consumer and current checker')
+            elif (
+                continuation is not None
+                or consumer_contract_argument != contract_file
+                or consumer_digest != contract_sha
+                or consumer_contract.get('source', {}).get('sha')
+                != authorization.get('source_sha')
+                or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA') is not None
+            ):
+                raise ValueError('V13 same-source closeout differs from its original consumer contract')
+
+            require_v13_input(donor_contract_path, expected_sha256=argv[7])
+            require_v13_input(donor_summary_path, expected_sha256=argv[11])
+            require_v13_input(consumer_contract_argument, expected_sha256=consumer_digest)
+            require_v13_input(checker_contract_argument, expected_sha256=contract_sha)
+            require_v13_input(candidate_report_path, expected_sha256=argv[23])
+            require_v13_input(diagnostic_path, expected_sha256=argv[27])
+            require_v13_input(Path(str(window_path)).resolve(strict=True), expected_sha256=str(window_sha))
+            input_paths = raw_paths
         elif checker_kind == 'task41_p0_v11_selected_cell_saved_array_checker':
             from src.runners.task41_p0_contract import (
                 TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,

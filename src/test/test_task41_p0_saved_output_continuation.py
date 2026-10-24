@@ -41,6 +41,8 @@ from scripts.task40_v20_service_workflow import (
     _task41_p0_checker_only_snapshot_identity,
     _task41_p0_v13_independent_checker_authorization,
     _task41_p0_v13_independent_checker_command,
+    _task41_p0_v13_independent_checker_environment,
+    _parse_task41_p0_v13_existing_adjoint_diagnostic_args,
     _run_task41_p0_service,
 )
 
@@ -6460,6 +6462,34 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         )
         assert validated == authorization
         assert kwargs["campaign_phase"] == "closeout"
+        if "--v13-saved-adjoint-diagnostic-check" in command:
+            path_options = (
+                "--contract", "--summary", "--consumer-contract",
+                "--checker-contract", "--v11-report", "--v13-diagnostic",
+            )
+            for option in path_options:
+                assert Path(command[command.index(option) + 1]).is_file(), option
+            diagnostic_path = Path(command[command.index("--v13-diagnostic") + 1])
+            output_path = Path(command[command.index("--output") + 1])
+            assert not output_path.exists()
+            assert diagnostic_path.name == "task41_p0_v13_saved_adjoint_diagnostic.json"
+            assert output_path.parent == diagnostic_path.parent
+            assert Path(command[command.index("--consumer-contract") + 1]) != Path(
+                command[command.index("--checker-contract") + 1]
+            )
+            result_payload = {
+                "schema": "task41.p0.v13.saved_adjoint_diagnostic_independent_check.v1",
+                "status": "COMPLETED_READ_ONLY",
+                "classification": "INDEPENDENT_V13_ADJOINT_ACCOUNTING_RECHECK_COMPLETED",
+                "getrs_calls": 0,
+                "persisted_lambda_packages_reused": 2,
+                "checked_global_rows": [{"row": index} for index in range(4)],
+                "official_result": False,
+                "scientific_qualified": False,
+                "diagnostic_sha256": command[command.index("--v13-diagnostic-sha256") + 1],
+            }
+            output_path.write_text(json.dumps(result_payload, sort_keys=True) + "\n")
+            return {"classification": "COMPLETED", "leader_exit_code": 0}
         monkeypatch.setattr(saved_checker, "require_task41_p0_contract", require_contract)
         monkeypatch.setattr(contract_module, "require_task41_p0_contract", require_contract)
         checker_result = saved_checker.main(list(command[3:]))
@@ -6699,6 +6729,284 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     )
     assert budget_final["bound_raw_artifact_bytes_stat_deduplicated"] > 0
     assert budget_final["reserved_remaining_new_evidence_bytes"] == 0
+
+    # Exercise the real saved-output service entry with an already-completed
+    # V13 diagnostic. The service must skip the primary checker and supervise
+    # only the independent closeout command, with every argv input present.
+    from src.solvers import task41_v4_volume_only_audit as v4_solver
+
+    existing_diagnostic_path = readonly_output_root / (
+        "task41_p0_v13_saved_adjoint_diagnostic.json"
+    )
+    marker_path = readonly_output_root / "task41_p0_v13_analysis_started.json"
+    cache_root = readonly_output_root.parent / "v13_adjoint_cache"
+    cache_root.mkdir(parents=True, exist_ok=True)
+    ledger_path = cache_root / "task41_p0_v13_adjoint_solve_ledger.json"
+    ledger_path.write_text(
+        json.dumps({"getrs_attempted": True, "solve_calls": 2}, sort_keys=True) + "\n"
+    )
+    marker_path.write_text('{"primary_attempt":"attempt07"}\n', encoding="utf-8")
+    for cell_index in (360, 446):
+        (cache_root / f"task41_p0_v13_cell{cell_index}_adjoint_diagnostic.npz").write_bytes(
+            f"fixture lambda package {cell_index}".encode()
+        )
+
+    # Supply hash-bound artifact references needed by the real closeout-input
+    # collector; the stub checker below validates argv identity, not numerics.
+    closeout_reference = readonly_output_root / "v13-closeout-reference.bin"
+    closeout_reference.write_bytes(b"read-only closeout fixture reference")
+    reference = {"path": str(closeout_reference.resolve())}
+    ref_names = (
+        "oriented_tensor", "R", "S", "T", "interior_lu", "interior_lu_pivots",
+    )
+    report = json.loads(frozen_candidate_report_path.read_text(encoding="utf-8"))
+    replay = report["v11_selected_trace_candidate_replay"]
+    replay["donor_manifest_sha256"] = v11_manifest_sha
+    replay["v9_compact_report_path"] = str(candidate_compact_path.resolve())
+    replay["v9_compact_report_sha256"] = compact_sha
+    replay["cells"] = [
+        {"cell_index": cell, "candidate_artifacts": {name: dict(reference) for name in ref_names}}
+        for cell in (360, 446)
+    ]
+    input_names = ("b_i", "n_i", "t_c", "u_i")
+    review_names = (
+        "same_lu_z_r", "r_i", "delta_i", "delta_t", "same_lu_minus_Jz_r",
+        "r_b", "r_r", "E_R_t", "review_eq2_left", "review_eq2_right",
+        "review_eq2_difference", "C_S_t",
+    )
+    incident_terms = []
+    for cell in (360, 446):
+        states = [
+            {
+                "inputs": {name: dict(reference) for name in input_names},
+                "review_identity": {
+                    "artifacts": {name: dict(reference) for name in review_names}
+                },
+            }
+            for _state in ("j0", "j3")
+        ]
+        incident_terms.append({
+            "cell_index": cell,
+            "artifacts": {
+                **{
+                    name: dict(reference)
+                    for name in (
+                        "S_action", "S_projected_active", "T_native_rhs",
+                        "T_projected_active", "same_lu_minus_Jz_b",
+                        "same_lu_projected_active", "same_lu_z_b",
+                    )
+                },
+                "states": states,
+            },
+        })
+    replay["columns"] = [
+        {"column": column, "incident_cell_terms": incident_terms}
+        for column in (0, 1)
+    ]
+    frozen_candidate_report_path.write_text(
+        json.dumps(report, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    frozen_candidate_report_sha = hashlib.sha256(
+        frozen_candidate_report_path.read_bytes()
+    ).hexdigest()
+
+    diagnostic_payload = {
+        "schema": "task41.p0.v13.saved_adjoint_operation_graph.v1",
+        "status": "COMPLETED_ADJOINT_DIAGNOSTIC",
+        "classification": "ADJOINT_DIAGNOSTIC",
+        "consumer_contract_sha256": consumer_contract_sha,
+        "consumer_source_sha": consumer_source_sha,
+        "candidate_report_path": str(frozen_candidate_report_path.resolve()),
+        "candidate_report_sha256": frozen_candidate_report_sha,
+        "adjoint_solve_calls": 2,
+        "group_count": 8,
+        "global_rows": [
+            {"state_rows": [{}, {}]}, {"state_rows": [{}, {}]},
+        ],
+        "analysis_marker_path": str(marker_path.resolve()),
+        "adjoint_cache_root": str(cache_root.resolve()),
+        "adjoint_solve_ledger_path": str(ledger_path.resolve()),
+        "official_result": False,
+        "scientific_qualified": False,
+    }
+    existing_diagnostic_path.write_text(
+        json.dumps(diagnostic_payload, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    existing_diagnostic_sha = hashlib.sha256(
+        existing_diagnostic_path.read_bytes()
+    ).hexdigest()
+
+    checker_source_sha = "b" * 40
+    checker_contract = json.loads(json.dumps(consumer_contract))
+    checker_contract["source"]["sha"] = checker_source_sha
+    checker_contract_path = repo_root / contract_module.contract_relative_path(
+        checker_source_sha,
+        "B0",
+        saved_diagnostics_instance=contract_module.TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+    )
+    checker_contract_path.parent.mkdir(parents=True, exist_ok=True)
+    checker_contract_path.write_text(
+        json.dumps(checker_contract, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    checker_contract_sha = hashlib.sha256(checker_contract_path.read_bytes()).hexdigest()
+    contract_bindings[checker_contract_path.resolve()] = (
+        checker_contract, checker_contract_sha
+    )
+
+    accepted_root = frozen_candidate_report_path.parent.parent
+    accepted_checker_path = accepted_root / "attempt06" / (
+        "task41_p0_v11_candidate_replay_saved_array_check.json"
+    )
+    accepted_receipt_path = accepted_root / "attempt06.service" / (
+        "task41_p0_service_receipt.json"
+    )
+    accepted_checker_sha = "cdbd2a0a8d6ae62b61ad1a45b8bd4f62dae4c69ebb1f0f7923205ac85e4c3739"
+    accepted_receipt_sha = "0b28a0f2b57aa17d515627097978a5470c7787ca9c61b15c07a0d25b14ae217f"
+    # The service pins the real attempt06 receipt hashes. Keep this synthetic
+    # fixture self-contained while exercising the same service branch.
+    accepted_receipt = json.loads(accepted_receipt_path.read_text(encoding="utf-8"))
+    accepted_receipt["candidate_report_sha256"] = frozen_candidate_report_sha
+    accepted_record = accepted_receipt["candidate_replay_saved_array_checker"]
+    accepted_record["result_path"] = str(accepted_checker_path.resolve())
+    accepted_record["result_sha256"] = accepted_checker_sha
+    accepted_receipt_path.write_text(
+        json.dumps(accepted_receipt, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    def v13_fixture_sha(path: Path) -> str:
+        resolved = Path(path).resolve()
+        if resolved == accepted_checker_path.resolve():
+            return accepted_checker_sha
+        if resolved == accepted_receipt_path.resolve():
+            return accepted_receipt_sha
+        return contract_module.sha256_file(resolved)
+
+    monkeypatch.setattr(service_workflow, "_sha256_file", v13_fixture_sha)
+    monkeypatch.setattr(watchdog, "_sha256_file", v13_fixture_sha)
+    monkeypatch.setattr(
+        service_workflow.subprocess, "check_output",
+        lambda command, **_kwargs: (
+            f"{checker_source_sha}\n"
+            if list(command)[1] == "rev-parse"
+            else f"{contract_module.TASK41_BRANCH}\n"
+        ),
+    )
+
+    def v13_watchdog_git(command, **_kwargs):
+        argv = tuple(command)
+        if argv == ("git", "rev-parse", "HEAD"):
+            return SimpleNamespace(returncode=0, stdout=f"{checker_source_sha}\n", stderr="")
+        if argv == ("git", "branch", "--show-current"):
+            return SimpleNamespace(returncode=0, stdout=f"{contract_module.TASK41_BRANCH}\n", stderr="")
+        if argv == ("git", "status", "--porcelain", "--untracked-files=normal"):
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if (
+            len(argv) == 5
+            and argv[:3] == ("git", "merge-base", "--is-ancestor")
+            and set(argv[3:]) == {consumer_source_sha, checker_source_sha}
+        ):
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        raise AssertionError(f"unexpected V13 watchdog git command: {argv}")
+
+    monkeypatch.setattr(watchdog, "subprocess", SimpleNamespace(run=v13_watchdog_git))
+    monkeypatch.setattr(
+        v4_solver, "TASK41_V4_DONOR_MANIFEST_SHA256", v11_manifest_sha
+    )
+    compact_payload = json.loads(candidate_compact_path.read_text(encoding="utf-8"))
+    compact_payload["donor_manifest_sha256"] = v11_manifest_sha
+    candidate_compact_path.write_text(
+        json.dumps(compact_payload, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    compact_sha = hashlib.sha256(candidate_compact_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(
+        service_workflow, "_sha256_file", v13_fixture_sha
+    )
+    monkeypatch.setattr(
+        __import__("src.runners.task41_p0_v4_volume_only_audit", fromlist=["x"]),
+        "TASK41_P0_V11_V9_COMPACT_REPORT_SHA256", compact_sha,
+    )
+    report = json.loads(frozen_candidate_report_path.read_text(encoding="utf-8"))
+    report["v9_compact_report_sha256"] = compact_sha
+    report["v11_selected_trace_candidate_replay"]["v9_compact_report_sha256"] = compact_sha
+    frozen_candidate_report_path.write_text(
+        json.dumps(report, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    frozen_candidate_report_sha = hashlib.sha256(
+        frozen_candidate_report_path.read_bytes()
+    ).hexdigest()
+    diagnostic_payload["candidate_report_sha256"] = frozen_candidate_report_sha
+    existing_diagnostic_path.write_text(
+        json.dumps(diagnostic_payload, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    existing_diagnostic_sha = hashlib.sha256(
+        existing_diagnostic_path.read_bytes()
+    ).hexdigest()
+    accepted_receipt["candidate_report_sha256"] = frozen_candidate_report_sha
+    accepted_receipt_path.write_text(
+        json.dumps(accepted_receipt, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    existing_output_root = actual_output_root.with_name("attempt08")
+    assert not existing_output_root.exists()
+    existing_kwargs = dict(readonly_service_kwargs)
+    existing_environment = dict(readonly_service_kwargs["environment"])
+    existing_environment.update({
+        "TASK41_P0_CHECKER_SOURCE_SHA": checker_source_sha,
+        "TASK41_P0_CONTRACT_PATH": str(checker_contract_path.resolve()),
+        "TASK41_P0_CONTRACT_SHA256": checker_contract_sha,
+        "TASK41_P0_EXECUTION_WINDOW_PATH": str(window.path),
+        "TASK41_P0_EXECUTION_WINDOW_SHA256": window.sha256,
+        "TASK41_P0_EXPECTED_SOURCE_SHA": checker_source_sha,
+        "TASK41_P0_B0_OUTPUT_DIR": str(existing_output_root.resolve()),
+    })
+    existing_kwargs.update({
+        "environment": existing_environment,
+        "contract": checker_contract,
+        "contract_path": checker_contract_path,
+        "contract_sha": checker_contract_sha,
+        "consumer_source_sha": checker_source_sha,
+        "output_root": existing_output_root,
+        "candidate_report_path": frozen_candidate_report_path,
+        "candidate_report_sha256": frozen_candidate_report_sha,
+        "b0_v13_saved_adjoint_diagnostic_mode": True,
+        "b0_v13_existing_adjoint_diagnostic_mode": True,
+        "v13_existing_diagnostic_path": existing_diagnostic_path,
+        "v13_existing_diagnostic_sha256": existing_diagnostic_sha,
+        "v13_diagnostic_consumer_contract_path": consumer_contract_path,
+        "v13_diagnostic_consumer_contract_sha256": consumer_contract_sha,
+        "v13_diagnostic_consumer_contract": consumer_contract,
+        "supervise": actual_service_supervise,
+        "sha256_file": v13_fixture_sha,
+    })
+    actual_supervise_calls.clear()
+    existing_result = service_workflow._run_task41_p0_saved_output_service(
+        **existing_kwargs
+    )
+    existing_receipt = json.loads(
+        (existing_output_root.with_name("attempt08.service")
+         / "task41_p0_service_receipt.json").read_text(encoding="utf-8")
+    )
+    assert existing_result == 0, {
+        "workflow_error": existing_receipt.get("workflow_error"),
+        "finalization_error": existing_receipt.get("finalization_error"),
+        "required_checker_status": existing_receipt.get("required_checker_status"),
+    }
+    assert len(actual_supervise_calls) == 1
+    existing_call = actual_supervise_calls[0]
+    assert existing_call["campaign_phase"] == "closeout"
+    existing_command = existing_call["command"]
+    assert "--v13-saved-adjoint-diagnostic-check" in existing_command
+    assert "--v13-saved-adjoint-diagnostic" not in existing_command
+    assert Path(existing_command[existing_command.index("--v13-diagnostic") + 1]) == existing_diagnostic_path
+    assert Path(existing_command[existing_command.index("--consumer-contract") + 1]) == consumer_contract_path
+    assert Path(existing_command[existing_command.index("--checker-contract") + 1]) == checker_contract_path
+    assert existing_receipt["result_classification"] == (
+        "V13_EXISTING_ADJOINT_DIAGNOSTIC_READ_ONLY_CLOSEOUT_COMPLETED"
+    )
+    assert existing_receipt["numerical_work_started"] is False
+    assert existing_receipt["diagnostic_numerical_work_started"] is True
+    assert existing_receipt["diagnostic_adjoint_solve_calls"] == 2
+    assert existing_receipt["saved_adjoint_diagnostic_reused"] is True
 
 
 def test_task41_p0_v11_verified_donor_manifest_accepts_legacy_inner_omission() -> None:
@@ -7027,23 +7335,68 @@ def test_task41_v11_saved_check_saves_structural_failure_json(
     assert result["errors"] == ["AttributeError: synthetic legacy state schema"]
     assert result["raw_evidence_retained"] is True
 
-def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_scope(
+def test_v13_existing_adjoint_diagnostic_arguments_are_exact_and_hash_bound(
     tmp_path: Path,
 ) -> None:
-    results_root = tmp_path / "results"
-    results_root.mkdir()
-    donor_contract = tmp_path / "donor-contract.json"
-    consumer_contract = tmp_path / "consumer-contract.json"
-    fixed_window = tmp_path / "fixed-window.json"
-    donor_summary = results_root / "donor-summary.json"
-    candidate_report = results_root / "candidate-v11.json"
-    diagnostic = results_root / "primary-v13.json"
-    raw_array = results_root / "raw-matrix.npy"
+    diagnostic = tmp_path / "attempt07-diagnostic.json"
+    consumer_contract = tmp_path / "old-consumer-contract.json"
+    diagnostic.write_bytes(b"saved diagnostic")
+    consumer_contract.write_bytes(b"old consumer contract")
+    diagnostic_sha256 = hashlib.sha256(diagnostic.read_bytes()).hexdigest()
+    consumer_contract_sha256 = hashlib.sha256(consumer_contract.read_bytes()).hexdigest()
+    args = [
+        "--task41-p0-saved-b0-evidence-audit", "--donor-contract", "donor.json",
+        "--donor-contract-sha256", "0" * 64, "--summary", "summary.json",
+        "--numerical-output", "numerical_output", "--output-dir", "attempt08",
+        "--v11-completed-candidate-report", "candidate.json",
+        "--v11-completed-candidate-report-sha256", "1" * 64,
+        "--v13-existing-adjoint-diagnostic", str(diagnostic),
+        "--v13-existing-adjoint-diagnostic-sha256", diagnostic_sha256,
+        "--v13-diagnostic-consumer-contract", str(consumer_contract),
+        "--v13-diagnostic-consumer-contract-sha256", consumer_contract_sha256,
+    ]
+    assert _parse_task41_p0_v13_existing_adjoint_diagnostic_args(args) == (
+        diagnostic.resolve(), diagnostic_sha256,
+        consumer_contract.resolve(), consumer_contract_sha256,
+    )
+    wrong_order = list(args)
+    wrong_order[15] = "--v13-operation-graph-adjoint"
+    with pytest.raises(ValueError, match="explicit path/hash pairs"):
+        _parse_task41_p0_v13_existing_adjoint_diagnostic_args(wrong_order)
+    wrong_hash = list(args)
+    wrong_hash[18] = "2" * 64
+    with pytest.raises(ValueError, match="hash differs"):
+        _parse_task41_p0_v13_existing_adjoint_diagnostic_args(wrong_hash)
+
+
+def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_scope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from benchmarks import subreaper_watchdog as watchdog
+
+    repo_root = tmp_path / "repo"
+    results_root = repo_root / "results" / task41_p0_contract.TASK41_MODEL_ID
+    artifact_root = repo_root / "benchmarks" / "artifacts" / "v13-closeout-fixture"
+    results_root.mkdir(parents=True)
+    artifact_root.mkdir(parents=True)
+    monkeypatch.chdir(repo_root)
+
+    donor_contract = artifact_root / "donor-contract.json"
+    consumer_contract = artifact_root / "consumer-contract.json"
+    checker_contract = artifact_root / "checker-contract.json"
+    window_relative = task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE
+    fixed_window = repo_root / window_relative
+    fixed_window.parent.mkdir(parents=True, exist_ok=True)
+    donor_summary = results_root / "task40_v10_p6_candidate_summary.json"
+    candidate_report = results_root / "task41_p0_v11_selected_trace_candidate_replay.json"
+    diagnostic = results_root / "task41_p0_v13_saved_adjoint_diagnostic.json"
+    raw_array = results_root / "native-rhs.npy"
     cache_receipt = results_root / "lambda-receipt.json"
-    output = results_root / "independent-check.json"
+    output = results_root / "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
     for path, payload in (
         (donor_contract, b"donor-contract"),
-        (consumer_contract, b"consumer-contract"),
+        (consumer_contract, b"original-consumer-contract"),
+        (checker_contract, b"current-checker-contract"),
         (fixed_window, b"fixed-window"),
         (donor_summary, b"donor-summary"),
         (candidate_report, b"candidate-report"),
@@ -7053,14 +7406,80 @@ def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_sc
     ):
         path.write_bytes(payload)
 
+    old_source = "a" * 40
+    current_source = "f" * 40
+    branch = task41_p0_contract.TASK41_BRANCH
+    runtime_prefix = Path(sys.executable).resolve().parent.parent
+    case = {
+        "model_id": task41_p0_contract.TASK41_MODEL_ID,
+        "run_id": task41_p0_contract.TASK41_B0_RUN_ID,
+        "input_sha256": "1" * 64,
+        "physical_model_sha256": "2" * 64,
+        "resolved_config_sha256": "3" * 64,
+    }
+    scope = task41_p0_contract.TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+    window = {
+        "path": window_relative.as_posix(),
+        "sha256": hashlib.sha256(fixed_window.read_bytes()).hexdigest(),
+        "scope": scope,
+    }
+    base_contract = {
+        "branch": branch,
+        "case": case,
+        "execution_scope": scope,
+        "window": window,
+        "numerical_strategy": {"internal_rhs_strategy": "same_lu_rhs_solve"},
+        "runtime": {"runtime_prefix": str(runtime_prefix)},
+    }
+    consumer = {**base_contract, "source": {"sha": old_source}}
+    checker = {**base_contract, "source": {"sha": current_source}}
+    consumer_digest = hashlib.sha256(consumer_contract.read_bytes()).hexdigest()
+    checker_digest = hashlib.sha256(checker_contract.read_bytes()).hexdigest()
+
+    def require_contract(
+        path: str | Path, *, expected_sha256: str, current_root: Path,
+        check_current_source: bool, require_clean_source: bool, case_id: str | None = None,
+    ) -> tuple[dict[str, object], str]:
+        canonical = Path(path).resolve()
+        assert current_root == repo_root
+        assert case_id in {None, "B0"}
+        if canonical == checker_contract.resolve():
+            assert expected_sha256 == checker_digest
+            return checker, checker_digest
+        if canonical == consumer_contract.resolve():
+            assert expected_sha256 == consumer_digest
+            assert check_current_source is False
+            assert require_clean_source is False
+            return consumer, consumer_digest
+        raise AssertionError(f"unexpected contract path: {canonical}")
+
+    monkeypatch.setattr(
+        task41_p0_contract, "require_task41_p0_contract", require_contract
+    )
+
+    def git_run(args: list[str], **kwargs: object) -> SimpleNamespace:
+        if args[:2] == ["git", "rev-parse"]:
+            return SimpleNamespace(returncode=0, stdout=current_source + "\n", stderr="")
+        if args[:2] == ["git", "branch"]:
+            return SimpleNamespace(returncode=0, stdout=branch + "\n", stderr="")
+        if args[:2] == ["git", "status"]:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if args[:3] == ["git", "merge-base", "--is-ancestor"]:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        raise AssertionError(f"unexpected git command: {args}; kwargs={kwargs}")
+
+    monkeypatch.setattr(watchdog.subprocess, "run", git_run)
+    python = str(runtime_prefix / "bin" / "python")
     command = _task41_p0_v13_independent_checker_command(
-        python="/qualified/python",
+        python=python,
         donor_contract_path=donor_contract,
-        donor_contract_sha256="a" * 64,
+        donor_contract_sha256=hashlib.sha256(donor_contract.read_bytes()).hexdigest(),
         donor_summary_path=donor_summary,
         donor_summary_sha256=hashlib.sha256(donor_summary.read_bytes()).hexdigest(),
         consumer_contract_path=consumer_contract,
-        consumer_contract_sha256="b" * 64,
+        consumer_contract_sha256=consumer_digest,
+        checker_contract_path=checker_contract,
+        checker_contract_sha256=checker_digest,
         candidate_report_path=candidate_report,
         candidate_report_sha256=hashlib.sha256(candidate_report.read_bytes()).hexdigest(),
         diagnostic_path=diagnostic,
@@ -7068,30 +7487,29 @@ def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_sc
         output_path=output,
     )
     assert command[:4] == [
-        "/qualified/python", "-m", "src.runners.task41_p0_checker",
+        python, "-m", "src.runners.task41_p0_checker",
         "--v13-saved-adjoint-diagnostic-check",
     ]
-    assert command[command.index("--donor-summary-sha256") + 1] == hashlib.sha256(
-        donor_summary.read_bytes()
-    ).hexdigest()
+    assert command[command.index("--consumer-contract") + 1] == str(consumer_contract.resolve())
+    assert command[command.index("--checker-contract") + 1] == str(checker_contract.resolve())
     assert command[command.index("--output") + 1] == str(output.resolve())
 
     authorization = _task41_p0_v13_independent_checker_authorization(
         command=command,
-        already_authorized_inputs=[donor_contract, consumer_contract, fixed_window],
+        already_authorized_inputs=[donor_contract, consumer_contract, checker_contract, fixed_window],
         raw_result_inputs=[donor_summary, candidate_report, diagnostic, raw_array],
         diagnostic_evidence_paths=[cache_receipt],
         results_root=results_root,
-        campaign_window_sha256="c" * 64,
-        task41_contract_sha256="d" * 64,
-        source_sha="e" * 40,
-        source_branch="task41extra_phi90_p50x50_g17x20",
+        campaign_window_sha256=window["sha256"],
+        task41_contract_sha256=checker_digest,
+        source_sha=current_source,
+        source_branch=branch,
         source_clean=True,
     )
     expected_paths = [
-        donor_contract.resolve(), consumer_contract.resolve(), fixed_window.resolve(),
-        donor_summary.resolve(), candidate_report.resolve(), diagnostic.resolve(),
-        raw_array.resolve(), cache_receipt.resolve(),
+        donor_contract.resolve(), consumer_contract.resolve(), checker_contract.resolve(),
+        fixed_window.resolve(), donor_summary.resolve(), candidate_report.resolve(),
+        diagnostic.resolve(), raw_array.resolve(), cache_receipt.resolve(),
     ]
     assert authorization["input_paths"] == [str(path) for path in expected_paths]
     assert authorization["input_sha256s"] == [
@@ -7103,22 +7521,73 @@ def test_v13_actual_independent_closeout_command_and_authorization_keep_exact_sc
     assert authorization["purpose"] == "registered_read_only_required_checker"
     assert authorization["source_clean"] is True
 
-    outside_raw = tmp_path / "unregistered-array.npy"
-    outside_raw.write_bytes(b"not authorized")
+    same_source_environment = _task41_p0_v13_independent_checker_environment(
+        {
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": current_source,
+        },
+        consumer_source_sha=current_source, checker_source_sha=current_source,
+    )
+    assert "TASK41_P0_SAVED_OUTPUT_CONTINUATION" not in same_source_environment
+    assert "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT" not in same_source_environment
+    assert "TASK41_P0_CONSUMER_SOURCE_SHA" not in same_source_environment
+    assert same_source_environment["TASK41_P0_CHECKER_SOURCE_SHA"] == current_source
+    environment = _task41_p0_v13_independent_checker_environment(
+        {
+            "TASK41_P0_STRICT_EXECUTION": "1",
+            "TASK41_P0_CONTRACT_PATH": str(checker_contract.resolve()),
+            "TASK41_P0_CONTRACT_SHA256": checker_digest,
+            "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT": "1",
+        },
+        consumer_source_sha=old_source, checker_source_sha=current_source,
+    )
+    campaign = SimpleNamespace(
+        path=fixed_window.resolve(), sha256=window["sha256"]
+    )
+    assert watchdog._validate_campaign_closeout_authorization(
+        command=command, campaign=campaign, authorization=authorization,
+        worker_environment=environment,
+    ) == authorization
+
+    primary_command = [
+        python, "-m", "src.runners.task41_p0_checker",
+        "--v13-saved-adjoint-diagnostic", "--summary", str(donor_summary.resolve()),
+        "--consumer-contract", str(consumer_contract.resolve()),
+        "--consumer-contract-sha256", consumer_digest,
+        "--checker-contract", str(checker_contract.resolve()),
+        "--checker-contract-sha256", checker_digest,
+        "--v11-report", str(candidate_report.resolve()),
+        "--v11-report-sha256", hashlib.sha256(candidate_report.read_bytes()).hexdigest(),
+        "--output", str(output.resolve()),
+    ]
+    primary_authorization = {
+        **authorization,
+        "command_sha256": hashlib.sha256(
+            json.dumps(primary_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+    }
+    with pytest.raises(ValueError, match="registered V13 saved-adjoint diagnostic checker"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=primary_command, campaign=campaign,
+            authorization=primary_authorization, worker_environment=environment,
+        )
+
+    outside_raw = tmp_path / "unregistered-native-rhs.npy"
+    outside_raw.write_bytes(b"outside the model results root")
     with pytest.raises(ValueError, match="escaped the registered results tree"):
         _task41_p0_v13_independent_checker_authorization(
             command=command,
-            already_authorized_inputs=[donor_contract, consumer_contract, fixed_window],
+            already_authorized_inputs=[donor_contract, consumer_contract, checker_contract, fixed_window],
             raw_result_inputs=[outside_raw],
             diagnostic_evidence_paths=[cache_receipt],
             results_root=results_root,
-            campaign_window_sha256="c" * 64,
-            task41_contract_sha256="d" * 64,
-            source_sha="e" * 40,
-            source_branch="task41extra_phi90_p50x50_g17x20",
+            campaign_window_sha256=window["sha256"],
+            task41_contract_sha256=checker_digest,
+            source_sha=current_source,
+            source_branch=branch,
             source_clean=True,
         )
-
 
 def test_v13_eq2_operation_graph_accounts_nonzero_chi_and_roundoff() -> None:
     K = np.array([[3.0 + 1.0j, 0.25 - 0.5j], [0.5 + 0.75j, 2.0 - 1.0j]], dtype=np.complex128)

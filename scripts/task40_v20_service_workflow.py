@@ -3673,6 +3673,8 @@ def _task41_p0_v13_independent_checker_command(
     donor_summary_sha256: str,
     consumer_contract_path: Path,
     consumer_contract_sha256: str,
+    checker_contract_path: Path,
+    checker_contract_sha256: str,
     candidate_report_path: Path,
     candidate_report_sha256: str,
     diagnostic_path: Path,
@@ -3689,12 +3691,81 @@ def _task41_p0_v13_independent_checker_command(
         "--donor-summary-sha256", donor_summary_sha256,
         "--consumer-contract", str(consumer_contract_path.resolve(strict=True)),
         "--consumer-contract-sha256", consumer_contract_sha256,
+        "--checker-contract", str(checker_contract_path.resolve(strict=True)),
+        "--checker-contract-sha256", checker_contract_sha256,
         "--v11-report", str(candidate_report_path.resolve(strict=True)),
         "--v11-report-sha256", candidate_report_sha256,
         "--v13-diagnostic", str(diagnostic_path.resolve(strict=True)),
         "--v13-diagnostic-sha256", diagnostic_sha256,
         "--output", str(output_path.resolve()),
     ]
+
+
+def _parse_task41_p0_v13_existing_adjoint_diagnostic_args(
+    case_args: list[str],
+) -> tuple[Path, str, Path, str]:
+    """Validate and hash-bind the explicit prior diagnostic and its consumer contract."""
+    expected_suffix = [
+        "--v13-existing-adjoint-diagnostic", None,
+        "--v13-existing-adjoint-diagnostic-sha256", None,
+        "--v13-diagnostic-consumer-contract", None,
+        "--v13-diagnostic-consumer-contract-sha256", None,
+    ]
+    if len(case_args) != 23 or any(
+        wanted is not None and got != wanted
+        for got, wanted in zip(case_args[15:], expected_suffix)
+    ):
+        raise ValueError("V13 existing-diagnostic route requires explicit path/hash pairs")
+    diagnostic_path = Path(case_args[16]).resolve(strict=True)
+    diagnostic_sha256 = case_args[18]
+    consumer_contract_path = Path(case_args[20]).resolve(strict=True)
+    consumer_contract_sha256 = case_args[22]
+    if (
+        re.fullmatch(r"[0-9a-f]{64}", diagnostic_sha256) is None
+        or _sha256_file(diagnostic_path) != diagnostic_sha256
+        or re.fullmatch(r"[0-9a-f]{64}", consumer_contract_sha256) is None
+        or _sha256_file(consumer_contract_path) != consumer_contract_sha256
+    ):
+        raise ValueError("V13 existing diagnostic or consumer contract hash differs")
+    return (
+        diagnostic_path,
+        diagnostic_sha256,
+        consumer_contract_path,
+        consumer_contract_sha256,
+    )
+
+
+def _task41_p0_v13_independent_checker_environment(
+    base_environment: Mapping[str, str],
+    *,
+    consumer_source_sha: str,
+    checker_source_sha: str,
+) -> dict[str, str]:
+    """Build an isolated read-only V13 checker environment for either source relation."""
+    if (
+        re.fullmatch(r"[0-9a-f]{40}", str(consumer_source_sha)) is None
+        or re.fullmatch(r"[0-9a-f]{40}", str(checker_source_sha)) is None
+    ):
+        raise ValueError("V13 independent checker source identities are malformed")
+    environment = dict(base_environment)
+    for marker in (
+        "TASK41_P0_SAVED_OUTPUT_CONTINUATION",
+        "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT",
+        "TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY",
+        "TASK41_P0_CONSUMER_SOURCE_SHA",
+        "TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT",
+        "TASK41_P0_B0_SAVED_Y_G_COMPARISON",
+        "TASK41_P0_B0_V9_SAVED_STAR_SCREEN",
+    ):
+        environment.pop(marker, None)
+    environment["TASK41_P0_CHECKER_SOURCE_SHA"] = checker_source_sha
+    if consumer_source_sha != checker_source_sha:
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": consumer_source_sha,
+        })
+    return environment
 
 
 def _task41_p0_v13_independent_checker_authorization(
@@ -9656,6 +9727,12 @@ def _run_task41_p0_saved_output_service(
     b0_v8_selected_trace_star_candidate_replay_mode: bool = False,
     b0_v11_candidate_report_replayed_read_only_mode: bool = False,
     b0_v13_saved_adjoint_diagnostic_mode: bool = False,
+    b0_v13_existing_adjoint_diagnostic_mode: bool = False,
+    v13_existing_diagnostic_path: Path | None = None,
+    v13_existing_diagnostic_sha256: str | None = None,
+    v13_diagnostic_consumer_contract_path: Path | None = None,
+    v13_diagnostic_consumer_contract_sha256: str | None = None,
+    v13_diagnostic_consumer_contract: Mapping[str, Any] | None = None,
     candidate_producer_contract_path: Path | None = None,
     candidate_producer_contract_sha256: str | None = None,
     candidate_producer_source_sha: str | None = None,
@@ -11890,6 +11967,11 @@ def _run_task41_p0_saved_output_service(
                     path.resolve(strict=True)
                     for path in (
                         contract_path,
+                        *(
+                            (v13_diagnostic_consumer_contract_path,)
+                            if b0_v13_existing_adjoint_diagnostic_mode
+                            else ()
+                        ),
                         donor_contract_path,
                         donor_summary_path,
                         donor_manifest_path,
@@ -12173,14 +12255,21 @@ def _run_task41_p0_saved_output_service(
                         saved_diagnostics_budget_check()
                     )
                 if b0_v13_saved_adjoint_diagnostic_mode:
-                    checker_watchdog = supervise(
-                        checker_command,
-                        service_directory / "v13_saved_adjoint_numeric_checker_watchdog",
-                        wall_seconds=window.cutoff_seconds,
-                        phase_path=service_directory / "v13_saved_adjoint_numeric_checker_phase.json",
-                        campaign_phase="numeric",
-                        **common_watchdog,
-                    )
+                    if b0_v13_existing_adjoint_diagnostic_mode:
+                        checker_watchdog = {
+                            "classification": "REUSED_HASH_BOUND_EXISTING_DIAGNOSTIC",
+                            "leader_exit_code": None,
+                            "supervised_in_this_service": False,
+                        }
+                    else:
+                        checker_watchdog = supervise(
+                            checker_command,
+                            service_directory / "v13_saved_adjoint_numeric_checker_watchdog",
+                            wall_seconds=window.cutoff_seconds,
+                            phase_path=service_directory / "v13_saved_adjoint_numeric_checker_phase.json",
+                            campaign_phase="numeric",
+                            **common_watchdog,
+                        )
                 else:
                     checker_watchdog = supervise(
                         checker_command,
@@ -12191,16 +12280,41 @@ def _run_task41_p0_saved_output_service(
                         campaign_phase_authorization=checker_authorization,
                         **common_watchdog,
                     )
+                v13_diagnostic_input_path = (
+                    v13_existing_diagnostic_path
+                    if b0_v13_existing_adjoint_diagnostic_mode
+                    else checker_result_path
+                )
                 checker_payload = (
-                    read_json_object(checker_result_path, "V13 primary diagnostic")
-                    if checker_result_path.is_file()
+                    read_json_object(
+                        v13_diagnostic_input_path,
+                        "V13 existing saved adjoint diagnostic"
+                        if b0_v13_existing_adjoint_diagnostic_mode
+                        else "V13 primary diagnostic",
+                    )
+                    if v13_diagnostic_input_path.is_file()
                     else None
                 )
                 independent_checker_record: dict[str, Any] | None = None
                 if b0_v13_saved_adjoint_diagnostic_mode:
+                    diagnostic_supervision_ok = bool(
+                        (
+                            b0_v13_existing_adjoint_diagnostic_mode
+                            and checker_watchdog.get("classification")
+                            == "REUSED_HASH_BOUND_EXISTING_DIAGNOSTIC"
+                            and v13_existing_diagnostic_path is not None
+                            and v13_existing_diagnostic_sha256 is not None
+                            and sha256_file(v13_existing_diagnostic_path)
+                            == v13_existing_diagnostic_sha256
+                        )
+                        or (
+                            not b0_v13_existing_adjoint_diagnostic_mode
+                            and checker_watchdog.get("classification") == "COMPLETED"
+                            and checker_watchdog.get("leader_exit_code") == 0
+                        )
+                    )
                     primary_checker_ok = bool(
-                        checker_watchdog.get("classification") == "COMPLETED"
-                        and checker_watchdog.get("leader_exit_code") == 0
+                        diagnostic_supervision_ok
                         and isinstance(checker_payload, Mapping)
                         and checker_payload.get("schema")
                         == "task41.p0.v13.saved_adjoint_operation_graph.v1"
@@ -12221,7 +12335,7 @@ def _run_task41_p0_saved_output_service(
                     independent_checker_ok = False
                     if primary_checker_ok:
                         assert checker_payload is not None
-                        diagnostic_sha256 = sha256_file(checker_result_path)
+                        diagnostic_sha256 = sha256_file(v13_diagnostic_input_path)
                         expected_cache_root = (
                             results_root
                             / "task41_p0_saved_diagnostics_6h"
@@ -12237,7 +12351,10 @@ def _run_task41_p0_saved_output_service(
                             / "task41_p0_v13_adjoint_solve_ledger.json"
                         ).resolve(strict=True)
                         marker_path = (
-                            output_root / "task41_p0_v13_analysis_started.json"
+                            v13_diagnostic_input_path.parent
+                            / "task41_p0_v13_analysis_started.json"
+                            if b0_v13_existing_adjoint_diagnostic_mode
+                            else output_root / "task41_p0_v13_analysis_started.json"
                         ).resolve(strict=True)
                         if (
                             cache_root != expected_cache_root
@@ -12248,9 +12365,22 @@ def _run_task41_p0_saved_output_service(
                             != str(marker_path)
                         ):
                             raise ValueError("V13 primary diagnostic shared-cache binding differs")
-                        independent_result_path = output_root / (
-                            "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
-                        )
+                        independent_result_path = (
+                            v13_diagnostic_input_path.parent
+                            if b0_v13_existing_adjoint_diagnostic_mode
+                            else output_root
+                        ) / "task41_p0_v13_saved_adjoint_diagnostic_independent_check.json"
+                        if (
+                            b0_v13_existing_adjoint_diagnostic_mode
+                            and (
+                                independent_result_path.exists()
+                                or independent_result_path.parent
+                                != v13_diagnostic_input_path.parent
+                            )
+                        ):
+                            raise ValueError(
+                                "V13 existing-diagnostic independent checker output must be a new attempt07 sibling"
+                            )
                         independent_checker_command = _task41_p0_v13_independent_checker_command(
                             python=python,
                             donor_contract_path=donor_contract_path,
@@ -12259,11 +12389,21 @@ def _run_task41_p0_saved_output_service(
                             donor_summary_sha256=sha256_file(
                                 donor_summary_path.resolve(strict=True)
                             ),
-                            consumer_contract_path=contract_path,
-                            consumer_contract_sha256=contract_sha,
+                            consumer_contract_path=(
+                                v13_diagnostic_consumer_contract_path
+                                if b0_v13_existing_adjoint_diagnostic_mode
+                                else contract_path
+                            ),
+                            consumer_contract_sha256=(
+                                v13_diagnostic_consumer_contract_sha256
+                                if b0_v13_existing_adjoint_diagnostic_mode
+                                else contract_sha
+                            ),
+                            checker_contract_path=contract_path,
+                            checker_contract_sha256=contract_sha,
                             candidate_report_path=candidate_report_path,
                             candidate_report_sha256=candidate_report_sha256,
-                            diagnostic_path=checker_result_path,
+                            diagnostic_path=v13_diagnostic_input_path,
                             diagnostic_sha256=diagnostic_sha256,
                             output_path=independent_result_path,
                         )
@@ -12405,7 +12545,7 @@ def _run_task41_p0_saved_output_service(
                                 "donor/native_rhs",
                             )
                         cache_evidence_paths = [
-                            checker_result_path.resolve(strict=True),
+                            v13_diagnostic_input_path.resolve(strict=True),
                             marker_path,
                             ledger_path,
                             *[
@@ -12435,6 +12575,24 @@ def _run_task41_p0_saved_output_service(
                                 source_clean=True,
                             )
                         )
+                        independent_checker_environment = (
+                            _task41_p0_v13_independent_checker_environment(
+                                environment,
+                                consumer_source_sha=str(
+                                    (
+                                        v13_diagnostic_consumer_contract.get("source", {}).get("sha", "")
+                                        if b0_v13_existing_adjoint_diagnostic_mode
+                                        and v13_diagnostic_consumer_contract is not None
+                                        else contract.get("source", {}).get("sha", "")
+                                    )
+                                ),
+                                checker_source_sha=checker_source_sha,
+                            )
+                        )
+                        independent_checker_watchdog_options = {
+                            **common_watchdog,
+                            "worker_environment": independent_checker_environment,
+                        }
                         independent_watchdog = supervise(
                             independent_checker_command,
                             service_directory
@@ -12444,7 +12602,7 @@ def _run_task41_p0_saved_output_service(
                             / "v13_saved_adjoint_independent_closeout_phase.json",
                             campaign_phase="closeout",
                             campaign_phase_authorization=independent_checker_authorization,
-                            **common_watchdog,
+                            **independent_checker_watchdog_options,
                         )
                         independent_payload = (
                             read_json_object(
@@ -12521,9 +12679,21 @@ def _run_task41_p0_saved_output_service(
                 record["required_checker_status"] = checker_status
                 record[checker_record_key] = {
                     "status": "COMPLETED_READ_ONLY" if checker_ok else "INCOMPLETE",
-                    "result_path": str(checker_result_path),
-                    "result_sha256": sha256_file(checker_result_path)
-                    if checker_result_path.is_file()
+                    "result_path": str(
+                        v13_diagnostic_input_path
+                        if b0_v13_saved_adjoint_diagnostic_mode
+                        else checker_result_path
+                    ),
+                    "result_sha256": sha256_file(
+                        v13_diagnostic_input_path
+                        if b0_v13_saved_adjoint_diagnostic_mode
+                        else checker_result_path
+                    )
+                    if (
+                        v13_diagnostic_input_path.is_file()
+                        if b0_v13_saved_adjoint_diagnostic_mode
+                        else checker_result_path.is_file()
+                    )
                     else None,
                     "watchdog": checker_watchdog,
                     "official_result": False,
@@ -12542,7 +12712,11 @@ def _run_task41_p0_saved_output_service(
             if b0_v13_saved_adjoint_diagnostic_mode:
                 result_code = 0 if worker_ok and checker_ok else 3
                 record["result_classification"] = (
-                    "V13_SAVED_ADJOINT_DIAGNOSTIC_COMPLETED"
+                    "V13_EXISTING_ADJOINT_DIAGNOSTIC_READ_ONLY_CLOSEOUT_COMPLETED"
+                    if result_code == 0 and b0_v13_existing_adjoint_diagnostic_mode
+                    else "V13_EXISTING_ADJOINT_DIAGNOSTIC_READ_ONLY_CLOSEOUT_FAILED"
+                    if b0_v13_existing_adjoint_diagnostic_mode
+                    else "V13_SAVED_ADJOINT_DIAGNOSTIC_COMPLETED"
                     if result_code == 0
                     else "V13_SAVED_ADJOINT_DIAGNOSTIC_FAILED"
                 )
@@ -12572,8 +12746,18 @@ def _run_task41_p0_saved_output_service(
                             and v13_ledger.get("solve_calls") > 0
                         )
                     )
-                record["numerical_work_started"] = diagnostic_started
+                record["numerical_work_started"] = (
+                    False if b0_v13_existing_adjoint_diagnostic_mode else diagnostic_started
+                )
                 record["diagnostic_numerical_work_started"] = diagnostic_started
+                record["saved_adjoint_diagnostic_reused"] = (
+                    b0_v13_existing_adjoint_diagnostic_mode
+                )
+                record["diagnostic_adjoint_solve_calls"] = (
+                    checker_payload.get("adjoint_solve_calls")
+                    if isinstance(checker_payload, Mapping)
+                    else None
+                )
                 record["formal_pde_started"] = False
                 record["candidate_report_replayed_read_only"] = True
             else:
@@ -13554,12 +13738,29 @@ def _run_task41_p0_service(
         and case_args[0] == "--task41-p0-saved-b0-evidence-audit"
         and "--v11-completed-candidate-report" in case_args
     )
-    b0_v13_saved_adjoint_diagnostic_mode = bool(
+    b0_v13_primary_adjoint_diagnostic_mode = bool(
         b0_v11_candidate_report_replayed_read_only_mode
         and "--v13-operation-graph-adjoint" in case_args
     )
-    if "--v13-operation-graph-adjoint" in case_args and not b0_v13_saved_adjoint_diagnostic_mode:
-        raise ValueError("V13 operation-graph route requires the hash-bound completed V11 report")
+    b0_v13_existing_adjoint_diagnostic_mode = bool(
+        b0_v11_candidate_report_replayed_read_only_mode
+        and "--v13-existing-adjoint-diagnostic" in case_args
+    )
+    if b0_v13_primary_adjoint_diagnostic_mode and b0_v13_existing_adjoint_diagnostic_mode:
+        raise ValueError("V13 primary and existing-diagnostic routes are mutually exclusive")
+    b0_v13_saved_adjoint_diagnostic_mode = bool(
+        b0_v13_primary_adjoint_diagnostic_mode
+        or b0_v13_existing_adjoint_diagnostic_mode
+    )
+    v13_route_options = (
+        "--v13-operation-graph-adjoint",
+        "--v13-existing-adjoint-diagnostic",
+        "--v13-existing-adjoint-diagnostic-sha256",
+        "--v13-diagnostic-consumer-contract",
+        "--v13-diagnostic-consumer-contract-sha256",
+    )
+    if any(option in case_args for option in v13_route_options) and not b0_v13_saved_adjoint_diagnostic_mode:
+        raise ValueError("V13 diagnostic routes require the hash-bound completed V11 report")
     b0_v9_saved_star_screen_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-v9-star-screen"
     )
@@ -13613,6 +13814,12 @@ def _run_task41_p0_service(
     v9_screen_output_path: Path | None = None
     candidate_report_path: Path | None = None
     candidate_report_sha256: str | None = None
+    v13_existing_diagnostic_path: Path | None = None
+    v13_existing_diagnostic_sha256: str | None = None
+    v13_diagnostic_consumer_contract_path: Path | None = None
+    v13_diagnostic_consumer_contract_sha256: str | None = None
+    v13_existing_diagnostic_payload: dict[str, Any] | None = None
+    v13_diagnostic_consumer_contract: Mapping[str, Any] | None = None
     candidate_producer_contract_path: Path | None = None
     candidate_producer_contract_sha256: str | None = None
     candidate_producer_source_sha: str | None = None
@@ -13716,7 +13923,7 @@ def _run_task41_p0_service(
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 28}
+            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 23, 28}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -13746,13 +13953,23 @@ def _run_task41_p0_service(
 
             b0_v4_geometry_pair_mode = True
             source_report_path = Path(case_args[13]).resolve(strict=True)
-        if len(case_args) in {15, 16} and not b0_v4_volume_only_mode:
+        if len(case_args) in {15, 16, 23} and not b0_v4_volume_only_mode:
             if b0_v11_candidate_report_replayed_read_only_mode:
+                existing_v13_suffix = [
+                    "--v13-existing-adjoint-diagnostic", None,
+                    "--v13-existing-adjoint-diagnostic-sha256", None,
+                    "--v13-diagnostic-consumer-contract", None,
+                    "--v13-diagnostic-consumer-contract-sha256", None,
+                ]
                 if (
                     case_args[0] != "--task41-p0-saved-b0-evidence-audit"
                     or case_args[11] != "--v11-completed-candidate-report"
                     or case_args[13] != "--v11-completed-candidate-report-sha256"
-                    or (b0_v13_saved_adjoint_diagnostic_mode
+                    or (b0_v13_existing_adjoint_diagnostic_mode
+                        and (len(case_args) != 23
+                             or any(wanted is not None and got != wanted
+                                    for got, wanted in zip(case_args[15:], existing_v13_suffix))))
+                    or (b0_v13_primary_adjoint_diagnostic_mode
                         and (len(case_args) != 16
                              or case_args[15] != "--v13-operation-graph-adjoint"))
                     or (not b0_v13_saved_adjoint_diagnostic_mode and len(case_args) != 15)
@@ -13768,6 +13985,13 @@ def _run_task41_p0_service(
                     or candidate_report_path.stat().st_size > 64 * 1024**2
                 ):
                     raise ValueError("V11 read-only candidate report path or hash differs")
+                if b0_v13_existing_adjoint_diagnostic_mode:
+                    (
+                        v13_existing_diagnostic_path,
+                        v13_existing_diagnostic_sha256,
+                        v13_diagnostic_consumer_contract_path,
+                        v13_diagnostic_consumer_contract_sha256,
+                    ) = _parse_task41_p0_v13_existing_adjoint_diagnostic_args(case_args)
                 candidate_report_value = read_json_object(
                     candidate_report_path, "V11 completed candidate replay report"
                 )
@@ -14204,6 +14428,115 @@ def _run_task41_p0_service(
                     / "selected_incident_replay"
                 )
                 attempt_pattern = r"attempt[0-9]{2,}"
+                if b0_v13_existing_adjoint_diagnostic_mode:
+                    assert v13_existing_diagnostic_path is not None
+                    assert v13_existing_diagnostic_sha256 is not None
+                    assert v13_diagnostic_consumer_contract_path is not None
+                    assert v13_diagnostic_consumer_contract_sha256 is not None
+                    from src.runners.task41_p0_contract import (
+                        TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+                    )
+
+                    diagnostic = read_json_object(
+                        v13_existing_diagnostic_path,
+                        "V13 existing saved adjoint diagnostic",
+                    )
+                    old_consumer_contract, old_consumer_digest = require_task41_p0_contract(
+                        v13_diagnostic_consumer_contract_path,
+                        expected_sha256=v13_diagnostic_consumer_contract_sha256,
+                        current_root=repo_root,
+                        check_current_source=False,
+                        require_clean_source=False,
+                        case_id="B0",
+                    )
+                    old_consumer_window = load_task41_p0_fixed_window(
+                        old_consumer_contract,
+                        current_root=repo_root,
+                        require_current_boot=False,
+                    )
+                    old_consumer_case = old_consumer_contract.get("case")
+                    current_case = contract.get("case")
+                    old_consumer_source = old_consumer_contract.get("source", {}).get("sha")
+                    expected_old_consumer_path = (
+                        repo_root
+                        / contract_relative_path(
+                            str(old_consumer_source),
+                            "B0",
+                            saved_diagnostics_instance=TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+                        )
+                    ).resolve(strict=True)
+                    expected_diagnostic_path = (
+                        expected_output_parent
+                        / "attempt07"
+                        / "task41_p0_v13_saved_adjoint_diagnostic.json"
+                    ).resolve(strict=True)
+                    expected_marker_path = (
+                        expected_output_parent
+                        / "attempt07"
+                        / "task41_p0_v13_analysis_started.json"
+                    ).resolve(strict=True)
+                    expected_cache_root = (expected_output_parent / "v13_adjoint_cache").resolve(strict=True)
+                    expected_ledger_path = (
+                        expected_cache_root / "task41_p0_v13_adjoint_solve_ledger.json"
+                    ).resolve(strict=True)
+                    global_rows = diagnostic.get("global_rows")
+                    if (
+                        v13_existing_diagnostic_path != expected_diagnostic_path
+                        or sha256_file(v13_existing_diagnostic_path)
+                        != v13_existing_diagnostic_sha256
+                        or v13_diagnostic_consumer_contract_path
+                        != expected_old_consumer_path
+                        or old_consumer_digest != v13_diagnostic_consumer_contract_sha256
+                        or old_consumer_window.sha256 != current_window.sha256
+                        or Path(old_consumer_window.path).resolve()
+                        != Path(current_window.path).resolve()
+                        or old_consumer_contract.get("execution_scope")
+                        != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+                        or old_consumer_contract.get("numerical_strategy", {}).get(
+                            "internal_rhs_strategy"
+                        ) != "same_lu_rhs_solve"
+                        or not isinstance(old_consumer_case, Mapping)
+                        or not isinstance(current_case, Mapping)
+                        or any(
+                            old_consumer_case.get(key) != current_case.get(key)
+                            for key in (
+                                "model_id", "run_id", "method", "mpi_size", "input_sha256",
+                                "physical_model_sha256", "resolved_config_sha256", "profile_identity",
+                                "solver_stage", "comparison_group", "geometry_identity",
+                            )
+                        )
+                        or diagnostic.get("schema")
+                        != "task41.p0.v13.saved_adjoint_operation_graph.v1"
+                        or diagnostic.get("status") != "COMPLETED_ADJOINT_DIAGNOSTIC"
+                        or diagnostic.get("classification") != "ADJOINT_DIAGNOSTIC"
+                        or diagnostic.get("consumer_contract_sha256") != old_consumer_digest
+                        or diagnostic.get("consumer_source_sha") != old_consumer_source
+                        or diagnostic.get("candidate_report_path") != str(candidate_report_path)
+                        or diagnostic.get("candidate_report_sha256") != candidate_report_sha256
+                        or diagnostic.get("adjoint_solve_calls") != 2
+                        or diagnostic.get("group_count") != 8
+                        or not isinstance(global_rows, list)
+                        or len(global_rows) != 2
+                        or any(
+                            not isinstance(item, Mapping)
+                            or not isinstance(item.get("state_rows"), list)
+                            or len(item["state_rows"]) != 2
+                            for item in global_rows
+                        )
+                        or diagnostic.get("analysis_marker_path") != str(expected_marker_path)
+                        or diagnostic.get("adjoint_cache_root") != str(expected_cache_root)
+                        or diagnostic.get("adjoint_solve_ledger_path") != str(expected_ledger_path)
+                        or diagnostic.get("official_result") is not False
+                        or diagnostic.get("scientific_qualified") is not False
+                        or continuation_output_root
+                        != expected_output_parent / "attempt08"
+                        or continuation_output_root.exists()
+                    ):
+                        raise ValueError(
+                            "V13 existing diagnostic, old consumer contract, current window, or attempt08 path differs"
+                        )
+                    v13_existing_diagnostic_payload = diagnostic
+                    v13_diagnostic_consumer_contract = old_consumer_contract
                 if (
                     not isinstance(replay, Mapping)
                     or candidate_report_path.name
@@ -14734,6 +15067,16 @@ def _run_task41_p0_service(
             b0_v13_saved_adjoint_diagnostic_mode=(
                 b0_v13_saved_adjoint_diagnostic_mode
             ),
+            b0_v13_existing_adjoint_diagnostic_mode=(
+                b0_v13_existing_adjoint_diagnostic_mode
+            ),
+            v13_existing_diagnostic_path=v13_existing_diagnostic_path,
+            v13_existing_diagnostic_sha256=v13_existing_diagnostic_sha256,
+            v13_diagnostic_consumer_contract_path=v13_diagnostic_consumer_contract_path,
+            v13_diagnostic_consumer_contract_sha256=(
+                v13_diagnostic_consumer_contract_sha256
+            ),
+            v13_diagnostic_consumer_contract=v13_diagnostic_consumer_contract,
             candidate_producer_contract_path=candidate_producer_contract_path,
             candidate_producer_contract_sha256=candidate_producer_contract_sha256,
             candidate_producer_source_sha=candidate_producer_source_sha,
