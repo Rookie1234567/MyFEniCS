@@ -182,17 +182,25 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         ]
         truncated = active_mode_count != parent_mode_count
         if truncated:
+            if len(active_rectangle) != 2 or any(value < 1 for value in active_rectangle):
+                raise ValueError("Task40 modal rectangle requires positive m/n bounds")
+            m_max, n_max = active_rectangle
+            policy = str(mode.get("policy", ""))
+            if policy == "explicit_symmetric_subrectangle_from_parent_v1":
+                if m_max != n_max:
+                    raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
+            elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
+                raise ValueError("Task40 truncated route has an unsupported selection policy")
             if (
-                len(active_rectangle) != 2
-                or active_rectangle[0] != active_rectangle[1]
-                or active_mode_count != 4 * (2 * active_rectangle[0] + 1) ** 2
+                active_rectangle[0] > int(mode["parent_rectangle_max_abs_m_n"][0])
+                or active_rectangle[1] > int(mode["parent_rectangle_max_abs_m_n"][1])
+                or active_mode_count != 4 * (2 * m_max + 1) * (2 * n_max + 1)
             ):
-                raise ValueError("Task40 modal rectangle count is not a symmetric two-port s/p subset")
-            k = active_rectangle[0]
+                raise ValueError("Task40 active rectangle count/bounds differ from its finite parent")
             required_evidence_keys = tuple(
                 key
                 for side in ("top", "bottom")
-                for key in ((side, -k, 0, "p"), (side, 0, 0, "s"), (side, k, 0, "p"))
+                for key in ((side, -m_max, 0, "p"), (side, 0, 0, "s"), (side, m_max, 0, "p"))
             )
         if (
             evidence.get("schema") != "task40.p6-direct-factor-evidence.v1"
@@ -270,6 +278,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             ),
             "parent_count": expected_mode_count,
             "expected_mode_sha256": mode.get("expected_mode_sha256"),
+            "parent_identity": mode.get("reference_identity"),
             "parent_sha256": None,
             "active_count": expected_active_mode_count,
             "active_sha256": expected_active_mode_sha256,
@@ -280,6 +289,12 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "expected_selected_signed_keys_sha256": mode.get(
                 "expected_selected_signed_keys_sha256"
             ),
+            "propagating_count": mode.get("expected_active_propagating_count"),
+            "power_carrying_count": mode.get("expected_active_power_carrying_count"),
+            "omitted_boundary_relative_l2_lower_bound": options.get(
+                "modal_truncation", {}
+            ).get("omitted_boundary_relative_l2_lower_bound"),
+            "quadrature_inventory": mode.get("quadrature_inventory"),
             "residual_key": "original_A6_active_rectangle_relative",
             "residual_scope": (
                 f"A6_{route_label}_{case_name}_{reference_label}_active_rectangle"
@@ -469,9 +484,12 @@ def _direct_output_policy(route: Mapping[str, Any]) -> dict[str, Any]:
             "parent_inventory_scope": route["parent_inventory_scope"],
             "parent_mode_count": route["parent_count"],
             "parent_mode_sha256": route["parent_sha256"],
+            "parent_identity": route.get("parent_identity"),
             "active_mode_count": route["active_count"],
             "active_mode_sha256": route["active_sha256"],
             "selection_policy": route["selection_policy"],
+            "active_rectangle_max_abs_m_n": route["active_rectangle_max_abs_m_n"],
+            "active_A6_scope": route["residual_scope"],
             "selected_parent_indices_sha256": route.get(
                 "selected_parent_indices_sha256"
             ),
@@ -628,7 +646,7 @@ def _build_f5_n0_inventory(parent_inventory, cfg):
 
 
 def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
-    """Select a symmetric Task40 rectangle from its exact finite parent order."""
+    """Select a frozen Task40 centered rectangle from its exact finite parent order."""
     from src.solvers.fullspace_dtn_action import (
         _canonical_json_bytes,
         build_ordered_mode_manifest,
@@ -642,7 +660,9 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         or len(parent_rows) != int(route["parent_count"])
         or str(parent_sha) != str(route["expected_mode_sha256"])
     ):
-        raise ValueError("Task40 modal selection requires its exact frozen R13 parent")
+        if str(route.get("reference_mode_label", "R13")).startswith("R13"):
+            raise ValueError("Task40 modal selection requires its exact frozen R13 parent")
+        raise ValueError("Task40 modal selection requires its exact frozen finite parent")
     for index, (mode, row) in enumerate(zip(parent_modes, parent_rows, strict=True)):
         if (
             not isinstance(row, Mapping)
@@ -652,18 +672,35 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
             or str(row.get("side")) != str(mode.side)
             or str(row.get("polarization")) != str(mode.polarization)
         ):
-            raise ValueError("Task40 R13 parent rows do not match live mode objects")
+            raise ValueError("Task40 finite-parent rows do not match live mode objects")
 
     rectangle = tuple(int(value) for value in route["active_rectangle_max_abs_m_n"])
-    if len(rectangle) != 2 or rectangle[0] != rectangle[1] or rectangle[0] < 1:
-        raise ValueError("Task40 truncation requires the declared symmetric m/n rectangle")
-    k = rectangle[0]
+    if len(rectangle) != 2 or any(value < 1 for value in rectangle):
+        raise ValueError("Task40 truncation requires positive centered m/n bounds")
+    m_max, n_max = rectangle
+    policy = str(route.get(
+        "selection_policy", "explicit_symmetric_subrectangle_from_parent_v1"
+    ))
+    if policy == "explicit_symmetric_subrectangle_from_parent_v1":
+        if m_max != n_max:
+            raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
+    elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
+        raise ValueError("Task40 rectangle selector received an unsupported policy")
+    parent_rectangle = tuple(
+        int(value) for value in route["parent_rectangle_max_abs_m_n"]
+    )
+    if (
+        len(parent_rectangle) != 2
+        or m_max > parent_rectangle[0]
+        or n_max > parent_rectangle[1]
+    ):
+        raise ValueError("Task40 active rectangle exceeds the exact finite parent")
     indices = tuple(
         index
         for index, mode in enumerate(parent_modes)
-        if abs(int(mode.m)) <= k and abs(int(mode.n)) <= k
+        if abs(int(mode.m)) <= m_max and abs(int(mode.n)) <= n_max
     )
-    expected_count = 4 * (2 * k + 1) ** 2
+    expected_count = 4 * (2 * m_max + 1) * (2 * n_max + 1)
     if len(indices) != expected_count or len(indices) != int(route["active_count"]):
         raise ValueError("Task40 live rectangle has an unexpected two-port s/p mode count")
 
@@ -680,7 +717,7 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
     key_sha = hashlib.sha256(_canonical_json_bytes(key_rows)).hexdigest()
     index_sha = hashlib.sha256(_canonical_json_bytes(list(indices))).hexdigest()
     if key_sha != route["expected_selected_signed_keys_sha256"]:
-        raise ValueError("Task40 selected signed keys differ from the frozen Y3 plan")
+        raise ValueError("Task40 selected signed keys differ from the frozen rectangle identity")
     if index_sha != route["expected_selected_parent_indices_sha256"]:
         raise ValueError("Task40 selected parent indices differ from the frozen Y3 plan")
 
@@ -688,8 +725,8 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         (side, m, n, polarization)
         for side in ("top", "bottom")
         for polarization in ("s", "p")
-        for m in range(-k, k + 1)
-        for n in range(-k, k + 1)
+        for m in range(-m_max, m_max + 1)
+        for n in range(-n_max, n_max + 1)
     }
     actual_keys = {
         (row["side"], row["m"], row["n"], row["polarization"])
@@ -705,7 +742,7 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         for side in ("bottom", "top")
         for polarization in ("s", "p")
     }
-    per_group = (2 * k + 1) ** 2
+    per_group = (2 * m_max + 1) * (2 * n_max + 1)
     if set(side_polarization_counts.values()) != {per_group}:
         raise ValueError("Task40 selected rectangle has unequal side/polarization groups")
 
@@ -717,9 +754,10 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         raise ValueError("Task40 active mode manifest differs from its frozen K identity")
     selection = {
         "schema": "task40.dtn-mode-selection.v1",
-        "policy": "explicit_symmetric_subrectangle_from_parent_v1",
+        "policy": policy,
         "parent_mode_count": len(parent_modes),
         "parent_mode_sha256": str(parent_sha),
+        "parent_identity": route.get("parent_identity"),
         "active_mode_count": len(active_modes),
         "active_mode_sha256": active_sha,
         "expected_active_mode_sha256": str(route["active_sha256"]),
@@ -728,7 +766,9 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         "selected_signed_keys_order": "preserved_from_exact_parent_inventory",
         "side_polarization_counts": side_polarization_counts,
         "active_rectangle_max_abs_m_n": list(rectangle),
-        "quadrature_inventory": "full_D15_Y3_R13_parent_inventory",
+        "quadrature_inventory": route.get(
+            "quadrature_inventory", "full_D15_Y3_R13_parent_inventory"
+        ),
         "operator_scope": route["operator_scope"],
     }
     return (active_modes, tuple(active_rows), active_sha), selection, indices
@@ -936,7 +976,11 @@ def _persist_task40_selected_inventory(
         if old_to_new[index] < 0
     ]
     index_payload = {
-        "schema": "task40.d15.modal-parent-index-map.v1",
+        "schema": (
+            "task40.d5c.modal-parent-index-map.v1"
+            if operator_scope.startswith("task40_phi90_D5C_Y7_R5_parent_to_")
+            else "task40.d15.modal-parent-index-map.v1"
+        ),
         "operator_selection": dict(selection),
         "selected_parent_indices": [int(index) for index in indices],
         "old_to_new": old_to_new,
@@ -944,7 +988,7 @@ def _persist_task40_selected_inventory(
         "omitted_parent_keys": omitted_keys,
         "omitted_values_policy": (
             "not computed in candidate solve; offline comparison zero-extends each candidate "
-            "over the exact 612-key parent reference"
+            f"over the exact {len(parent_modes)}-key finite parent reference"
         ),
     }
     index_encoded = _canonical_json_bytes(index_payload)
@@ -2839,7 +2883,9 @@ def run_p6_condensed_direct(
                     reference_label=route["reference_mode_label"],
                     parent_reference_label=route.get(
                         "quadrature_reference_label", "R13"
-                    ).replace("_full_612_parent", ""),
+                    ).replace("_full_612_parent", "").replace(
+                        "_full_3772_parent", ""
+                    ),
                     operator_scope=route["operator_scope"],
                 )
             else:

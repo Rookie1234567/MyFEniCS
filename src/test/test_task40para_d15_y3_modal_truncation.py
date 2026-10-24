@@ -156,6 +156,7 @@ def test_task40_rectangle_selector_preserves_exact_parent_order_and_hashes(
     route = {
         "parent_count": 612,
         "expected_mode_sha256": parent_sha,
+        "parent_rectangle_max_abs_m_n": [4, 8],
         "active_rectangle_max_abs_m_n": [k, k],
         "active_count": expected_count,
         "expected_selected_signed_keys_sha256": _canonical_sha(selected_key_rows),
@@ -219,6 +220,7 @@ def test_task40_rectangle_selector_rejects_parent_hash_or_key_drift(monkeypatch)
     route = {
         "parent_count": 612,
         "expected_mode_sha256": parent_sha,
+        "parent_rectangle_max_abs_m_n": [4, 8],
         "active_rectangle_max_abs_m_n": [1, 1],
         "active_count": 36,
         "expected_selected_signed_keys_sha256": _canonical_sha(selected_key_rows),

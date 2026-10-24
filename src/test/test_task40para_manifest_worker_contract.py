@@ -26,6 +26,13 @@ D5C_INPUTS = {
         "Y6", "Y7", "Y8", "Z1", "Z2", "Z3",
     )
 }
+D5C_MODAL_INPUTS = {
+    label: REPO / (
+        "input/task40para_phi90_mesh_modes_direct/"
+        f"d5c_y7_cut_{label.lower()}_r5_p6_direct.dat"
+    )
+    for label in ("M7_N9", "M9_N14", "M9_N20", "M10_N20")
+}
 Y3_INPUT = REPO / "input/task40para_phi90_mesh_modes_direct/d13_y3_r13_p6_direct.dat"
 Y3_K_INPUTS = {
     k: REPO
@@ -215,6 +222,66 @@ def test_task40_d5c_manifest_roundtrips_through_worker_payload_gate(tmp_path, ca
     assert errors == []
     assert resolved is not None
     assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+@pytest.mark.parametrize("label", tuple(D5C_MODAL_INPUTS))
+def test_task40_d5c_y7_modal_manifest_roundtrips_through_worker_payload_gate(
+    tmp_path, label
+):
+    from src.io.native_capacity_profile import TASK40_PHI90_D5C_MODAL_RECTANGLES
+
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path, D5C_MODAL_INPUTS[label]
+    )
+    profile = specification.derived["native_capacity_profile"]
+    options = profile["component_options"]
+    mode = options["mode_selection"]
+    route = profile["campaign_authorization"]["direct_route"]
+    rectangle = TASK40_PHI90_D5C_MODAL_RECTANGLES[label]
+    expected_count = int(rectangle["active_mode_count"])
+
+    assert profile["identity"] == (
+        f"task40para_phi90_5_D5C_Y7_CUT_{label}_p6_direct_v1"
+    )
+    assert options["task_family"] == "task40_phi90_d5c_modal_cutoff_direct"
+    assert options["directional_mesh_comparison"]["case"] == "Y7"
+    assert tuple(options["expected_axis_cell_counts"]) == (6, 30, 6)
+    assert mode["parent_inventory_scope"] == "R5_finite_rectangle_including_evanescent"
+    assert mode["expected_mode_count"] == 3772
+    assert mode["expected_mode_sha256"] == (
+        "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc"
+    )
+    assert tuple(mode["active_rectangle_max_abs_m_n"]) == tuple(rectangle["bounds"])
+    assert mode["expected_active_mode_count"] == expected_count
+    assert route["active_mode_count"] == expected_count
+    assert manifest["native_capacity_profile_identity"] == profile["identity"]
+    assert manifest["native_capacity_contract"]["direct_route"] == thaw(route)
+
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert errors == []
+    assert resolved is not None
+    assert resolved["derived"]["native_capacity_profile"] == thaw(profile)
+
+
+def test_task40_d5c_y7_modal_worker_rejects_manifest_rectangle_drift(tmp_path):
+    import json
+
+    specification, run_directory, manifest, resolved_sha, plan = _task40_manifest(
+        tmp_path, D5C_MODAL_INPUTS["M9_N20"]
+    )
+    manifest["native_capacity_contract"]["direct_route"][
+        "active_mode_count"
+    ] += 4
+    (run_directory / "run_manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    resolved, errors = _worker_validate(
+        specification, run_directory, resolved_sha, plan
+    )
+    assert resolved is not None
+    assert any("manifest condensed-direct route contract mismatch" in error for error in errors)
 
 
 def test_task40_z2_manifest_roundtrips_through_worker_payload_gate(tmp_path):

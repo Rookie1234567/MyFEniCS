@@ -24,6 +24,13 @@ D5C_INPUTS = {
         "Y6", "Y7", "Y8", "Z1", "Z2", "Z3",
     )
 }
+D5C_MODAL_INPUTS = {
+    label: REPO / (
+        "input/task40para_phi90_mesh_modes_direct/"
+        f"d5c_y7_cut_{label.lower()}_r5_p6_direct.dat"
+    )
+    for label in ("M7_N9", "M9_N14", "M9_N20", "M10_N20")
+}
 ROOT_PID = 81001
 MPI_PID = 81002
 PROXY_PID = 81003
@@ -378,6 +385,62 @@ def test_task40_run_case_rejects_cross_case_parallel_authorization_scope(
     updated_sha = hashlib.sha256(state["authorization_path"].read_bytes()).hexdigest()
     monkeypatch.setenv(
         "TASK40_PARALLEL_AUTHORIZATION_SHA256", updated_sha
+    )
+    from scripts.run_case import main
+
+    assert main([str(input_path)]) == 2
+    assert not state["fake_run"].exists()
+    assert "must bind one exact run" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("label", tuple(D5C_MODAL_INPUTS))
+def test_task40_run_case_allows_only_exact_authorized_d5c_y7_modal_rectangle(
+    label, tmp_path, monkeypatch, capsys
+):
+    input_path = D5C_MODAL_INPUTS[label]
+    from src.io import load_and_resolve
+
+    specification = load_and_resolve(input_path)
+    profile = specification.solver["native_capacity_profile"]
+    run_id = specification.identity["run_id"]
+    assert profile == run_id == f"task40para_phi90_5_D5C_Y7_CUT_{label}_p6_direct_v1"
+    state = _fixture(
+        tmp_path,
+        monkeypatch,
+        large_neighbor=True,
+        authorize=True,
+        task40_input_path=input_path,
+        task40_profile=profile,
+        task40_run_id=run_id,
+    )
+    from scripts.run_case import main
+
+    assert main([str(input_path)]) == 0
+    capsys.readouterr()
+    isolation = json.loads((state["fake_run"] / "workstation_isolation.json").read_text())
+    result = isolation["node_memory_admission"]
+    assert result["parallel_neighbor_authorized"] is True
+    assert result["blocking_active_solver_candidates"] == []
+    assert result["minimum_available_bytes"] == 64 * 1024**3
+    assert result["rss_hard_limit_bytes"] is None
+
+
+def test_task40_run_case_rejects_crossed_d5c_y7_modal_profile_run_identity(
+    tmp_path, monkeypatch, capsys
+):
+    input_path = D5C_MODAL_INPUTS["M7_N9"]
+    from src.io import load_and_resolve
+
+    specification = load_and_resolve(input_path)
+    profile = specification.solver["native_capacity_profile"]
+    state = _fixture(
+        tmp_path,
+        monkeypatch,
+        large_neighbor=True,
+        authorize=True,
+        task40_input_path=input_path,
+        task40_profile=profile,
+        task40_run_id="task40para_phi90_5_D5C_Y7_CUT_M9_N14_p6_direct_v1",
     )
     from scripts.run_case import main
 

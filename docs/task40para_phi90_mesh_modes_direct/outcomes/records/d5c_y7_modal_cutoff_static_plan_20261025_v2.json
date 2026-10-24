@@ -1,0 +1,429 @@
+{
+  "candidate_ladder": [
+    {
+      "M": 7,
+      "N": 9,
+      "active_mode_manifest_sha256": "d9116f9f4281e04594959cdad4f320d84bd6fc057f0c6aea0026f8bccc3088b0",
+      "active_rectangle_inclusive": {
+        "m": [
+          -7,
+          7
+        ],
+        "n": [
+          -9,
+          9
+        ],
+        "polarizations": [
+          "s",
+          "p"
+        ],
+        "ports": [
+          "top",
+          "bottom"
+        ]
+      },
+      "active_rectangle_max_abs_m_n": [
+        7,
+        9
+      ],
+      "all_3772_boundary_gate_guaranteed_fail": true,
+      "all_parent_comparison": "zero-extend candidate values across all 3772 signed keys",
+      "display_case": "D5C-Y7-M7_N9",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_filename": "d5c_y7_cut_m7_n9_r5_p6_direct.dat",
+      "label": "M7_N9",
+      "lower_bound_interpretation": "GUARANTEED_FAIL_1e-4_ALL_3772_BOUNDARY_GATE",
+      "omitted_boundary_amplitude_lower_bound_is_necessary_only": false,
+      "omitted_boundary_amplitude_relative_l2_lower_bound": 0.0022807358642310815,
+      "omitted_mode_count": 2632,
+      "omitted_power_carrying_count": 1680,
+      "omitted_propagating_count": 724,
+      "power_carrying_scope_includes_bottom_lossy_nonpropagating": true,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M7_N9_p6_direct_v1",
+      "retained_mode_count": 1140,
+      "retained_per_side_polarization": 285,
+      "retained_power_carrying_count": 826,
+      "retained_propagating_count": 506,
+      "retains_top_m0_nminus20_s": false,
+      "run_id": "task40para_phi90_5_D5C_Y7_CUT_M7_N9_p6_direct_v1",
+      "selected_parent_indices_sha256": "eab2478d4fd8d59355d9c02e91d0a2f0446508ea7ea8feeeaa272af51f20931d",
+      "selected_signed_keys_sha256": "f602a7ee68ce6ab0324ad385c54f3a89cffdcaeb13bafad3bbb60355398a1e44",
+      "selection_policy": "explicit_centered_rectangle_subrectangle_from_parent_v1",
+      "single_run_A6_is_full_R5_check": false,
+      "single_run_A6_scope": "original_p6_A6_active_rectangle_m7_n9"
+    },
+    {
+      "M": 9,
+      "N": 14,
+      "active_mode_manifest_sha256": "76bbf3e306af149b18781c59f23f5a8f2f08c42972802eb39dad3b5e2240aae2",
+      "active_rectangle_inclusive": {
+        "m": [
+          -9,
+          9
+        ],
+        "n": [
+          -14,
+          14
+        ],
+        "polarizations": [
+          "s",
+          "p"
+        ],
+        "ports": [
+          "top",
+          "bottom"
+        ]
+      },
+      "active_rectangle_max_abs_m_n": [
+        9,
+        14
+      ],
+      "all_3772_boundary_gate_guaranteed_fail": true,
+      "all_parent_comparison": "zero-extend candidate values across all 3772 signed keys",
+      "display_case": "D5C-Y7-M9_N14",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_filename": "d5c_y7_cut_m9_n14_r5_p6_direct.dat",
+      "label": "M9_N14",
+      "lower_bound_interpretation": "GUARANTEED_FAIL_1e-4_ALL_3772_BOUNDARY_GATE",
+      "omitted_boundary_amplitude_lower_bound_is_necessary_only": false,
+      "omitted_boundary_amplitude_relative_l2_lower_bound": 0.0011166163736995964,
+      "omitted_mode_count": 1568,
+      "omitted_power_carrying_count": 918,
+      "omitted_propagating_count": 268,
+      "power_carrying_scope_includes_bottom_lossy_nonpropagating": true,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M9_N14_p6_direct_v1",
+      "retained_mode_count": 2204,
+      "retained_per_side_polarization": 551,
+      "retained_power_carrying_count": 1588,
+      "retained_propagating_count": 962,
+      "retains_top_m0_nminus20_s": false,
+      "run_id": "task40para_phi90_5_D5C_Y7_CUT_M9_N14_p6_direct_v1",
+      "selected_parent_indices_sha256": "c10643cb419846e424106c80c3822701b2f98ff0c4b3610938bb303d31de3fc7",
+      "selected_signed_keys_sha256": "ab8c12edb474c35566045257b5ddab4edfa60fc89da365e6718b5035db3fe9fe",
+      "selection_policy": "explicit_centered_rectangle_subrectangle_from_parent_v1",
+      "single_run_A6_is_full_R5_check": false,
+      "single_run_A6_scope": "original_p6_A6_active_rectangle_m9_n14"
+    },
+    {
+      "M": 9,
+      "N": 20,
+      "active_mode_manifest_sha256": "48968a1684b2b1f4bbd92a534d91461be755d74a79ad298a0fd385591b69604e",
+      "active_rectangle_inclusive": {
+        "m": [
+          -9,
+          9
+        ],
+        "n": [
+          -20,
+          20
+        ],
+        "polarizations": [
+          "s",
+          "p"
+        ],
+        "ports": [
+          "top",
+          "bottom"
+        ]
+      },
+      "active_rectangle_max_abs_m_n": [
+        9,
+        20
+      ],
+      "all_3772_boundary_gate_guaranteed_fail": false,
+      "all_parent_comparison": "zero-extend candidate values across all 3772 signed keys",
+      "display_case": "D5C-Y7-M9_N20",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_filename": "d5c_y7_cut_m9_n20_r5_p6_direct.dat",
+      "label": "M9_N20",
+      "lower_bound_interpretation": "NECESSARY_ONLY; below_gate_is_not_a_PASS",
+      "omitted_boundary_amplitude_lower_bound_is_necessary_only": true,
+      "omitted_boundary_amplitude_relative_l2_lower_bound": 2.6496148892488354e-05,
+      "omitted_mode_count": 656,
+      "omitted_power_carrying_count": 328,
+      "omitted_propagating_count": 0,
+      "power_carrying_scope_includes_bottom_lossy_nonpropagating": true,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M9_N20_p6_direct_v1",
+      "retained_mode_count": 3116,
+      "retained_per_side_polarization": 779,
+      "retained_power_carrying_count": 2178,
+      "retained_propagating_count": 1230,
+      "retains_top_m0_nminus20_s": true,
+      "run_id": "task40para_phi90_5_D5C_Y7_CUT_M9_N20_p6_direct_v1",
+      "selected_parent_indices_sha256": "e95c6b363642949c4de741fb033b810dd3d271c25a22be3152f13e210c393a09",
+      "selected_signed_keys_sha256": "a055d9b35cf0ebea0e601eb88b2341cfcf85420a930b7cf351051f487499a472",
+      "selection_policy": "explicit_centered_rectangle_subrectangle_from_parent_v1",
+      "single_run_A6_is_full_R5_check": false,
+      "single_run_A6_scope": "original_p6_A6_active_rectangle_m9_n20"
+    },
+    {
+      "M": 10,
+      "N": 20,
+      "active_mode_manifest_sha256": "efe318d0756b8085610ad8fafe27d76e909d7c5725efd5471b955604bf3f85db",
+      "active_rectangle_inclusive": {
+        "m": [
+          -10,
+          10
+        ],
+        "n": [
+          -20,
+          20
+        ],
+        "polarizations": [
+          "s",
+          "p"
+        ],
+        "ports": [
+          "top",
+          "bottom"
+        ]
+      },
+      "active_rectangle_max_abs_m_n": [
+        10,
+        20
+      ],
+      "all_3772_boundary_gate_guaranteed_fail": false,
+      "all_parent_comparison": "zero-extend candidate values across all 3772 signed keys",
+      "display_case": "D5C-Y7-M10_N20",
+      "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+      "input_filename": "d5c_y7_cut_m10_n20_r5_p6_direct.dat",
+      "label": "M10_N20",
+      "lower_bound_interpretation": "NECESSARY_ONLY; below_gate_is_not_a_PASS",
+      "omitted_boundary_amplitude_lower_bound_is_necessary_only": true,
+      "omitted_boundary_amplitude_relative_l2_lower_bound": 7.626844689333332e-06,
+      "omitted_mode_count": 328,
+      "omitted_power_carrying_count": 164,
+      "omitted_propagating_count": 0,
+      "power_carrying_scope_includes_bottom_lossy_nonpropagating": true,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M10_N20_p6_direct_v1",
+      "retained_mode_count": 3444,
+      "retained_per_side_polarization": 861,
+      "retained_power_carrying_count": 2342,
+      "retained_propagating_count": 1230,
+      "retains_top_m0_nminus20_s": true,
+      "run_id": "task40para_phi90_5_D5C_Y7_CUT_M10_N20_p6_direct_v1",
+      "selected_parent_indices_sha256": "c701a88e10badd09bfbfa78d3facb0debb11f0acdfd2389ba95b3c2db124d532",
+      "selected_signed_keys_sha256": "ac3881afa72690b04a0a2ddc26cfd0c63a9d8ec6c21301726dcbd332811c4472",
+      "selection_policy": "explicit_centered_rectangle_subrectangle_from_parent_v1",
+      "single_run_A6_is_full_R5_check": false,
+      "single_run_A6_scope": "original_p6_A6_active_rectangle_m10_n20"
+    }
+  ],
+  "candidate_ladder_order": [
+    "M7_N9",
+    "M9_N14",
+    "M9_N20",
+    "M10_N20"
+  ],
+  "comparison_gates": {
+    "canonical_sidewall": "NOT_MEASURED",
+    "complex_relative_l2_no_phase_fit": {
+      "boundary_amplitude": 0.0001,
+      "phase_fit_or_interpolation": false,
+      "same_coordinate_complex_E": 0.0001,
+      "same_coordinate_complex_H": 0.0001
+    },
+    "global_abs": {
+      "A_balance": 1e-05,
+      "A_volume": 1e-05,
+      "R_total": 1e-05,
+      "T_total": 1e-05
+    },
+    "horizontal_Et_Ht": "report existing horizontal diagnostics; not a substitute for canonical sidewall",
+    "per_mode_abs_all_3772_signed_keys": {
+      "R": 1e-06,
+      "T": 1e-06,
+      "includes_R00": true,
+      "includes_power_carrying_nonpropagating": true,
+      "missing_candidate_keys": "zero_extend"
+    },
+    "scope_note": "Apply to the full 3772-key Y7 finite R5 reference; zero-extend missing candidate channels. Do not report common-mode-only success as full-reference success."
+  },
+  "corrected_reasoning": {
+    "Y7_Y8_size_correction": {
+      "Y7_cells": 1080,
+      "Y8_cells": 1224,
+      "statement": "Y7 and Y8 are different cell counts; any earlier same-size wording is corrected."
+    },
+    "corrected_v2": "Last two rectangles extend n through +/-20; the omitted-key lower bounds are necessary conditions only and do not predict actual comparison PASS.",
+    "original_v1_problem": "All four original rectangles omitted signed key top (m=0,n=-20,polarization=s), so each had an irreducible all-parent boundary L2 error above 1e-4."
+  },
+  "created_utc": "2026-10-24T18:41:28Z",
+  "execution_authorization": {
+    "continue_all_four_even_if_early_candidate_fails": true,
+    "current_turn_fe_started": false,
+    "execution_method": "independent systemd user service using the standard run_case sidecar; one candidate at a time",
+    "main_review_required_before_fresh": true,
+    "user_authorized_four_serial_candidates": true
+  },
+  "fixed_operator_contract": {
+    "authority": "AUTHORITY_LIMITED",
+    "azimuth_deg": 90.0,
+    "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    "grazing_angle_deg": 1.0,
+    "method": "p6 condensed direct MUMPS, one factor per distinct candidate, at most 2 same-factor corrections",
+    "parent": "saved finite R5 Y7 only; not infinite DtN",
+    "polarization": "s",
+    "sparse_cutoff": {
+      "identity_sha256": "d601c3aec1d625bef2b52031811b8dfa7cb2fed8fe7b2878959a75304945f5c9",
+      "policy": "scale_homogeneous_relative_only_v1",
+      "relative_tolerance": 1e-13
+    },
+    "surface_quadrature": {
+      "degree": 39,
+      "fixed_R5_plus_one_envelope_m_n": [
+        12,
+        21
+      ],
+      "rule": "default"
+    },
+    "volume_quadrature": {
+      "authority": "Y7 full-run parent metadata",
+      "degree": 15,
+      "rule": "default"
+    },
+    "wavelength_nm": 5.0
+  },
+  "four_candidate_summary": [
+    {
+      "M": 7,
+      "N": 9,
+      "active_mode_count": 1140,
+      "active_mode_sha256": "d9116f9f4281e04594959cdad4f320d84bd6fc057f0c6aea0026f8bccc3088b0",
+      "all_3772_boundary_gate_status_from_omitted_key_lower_bound": "GUARANTEED_FAIL",
+      "input_filename": "d5c_y7_cut_m7_n9_r5_p6_direct.dat",
+      "label": "M7_N9",
+      "omitted_boundary_relative_l2_lower_bound": 0.0022807358642310815,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M7_N9_p6_direct_v1",
+      "retained_power_carrying_count": 826,
+      "retained_propagating_count": 506,
+      "retains_top_0_minus20_s": false,
+      "selected_parent_indices_sha256": "eab2478d4fd8d59355d9c02e91d0a2f0446508ea7ea8feeeaa272af51f20931d",
+      "selected_signed_keys_sha256": "f602a7ee68ce6ab0324ad385c54f3a89cffdcaeb13bafad3bbb60355398a1e44"
+    },
+    {
+      "M": 9,
+      "N": 14,
+      "active_mode_count": 2204,
+      "active_mode_sha256": "76bbf3e306af149b18781c59f23f5a8f2f08c42972802eb39dad3b5e2240aae2",
+      "all_3772_boundary_gate_status_from_omitted_key_lower_bound": "GUARANTEED_FAIL",
+      "input_filename": "d5c_y7_cut_m9_n14_r5_p6_direct.dat",
+      "label": "M9_N14",
+      "omitted_boundary_relative_l2_lower_bound": 0.0011166163736995964,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M9_N14_p6_direct_v1",
+      "retained_power_carrying_count": 1588,
+      "retained_propagating_count": 962,
+      "retains_top_0_minus20_s": false,
+      "selected_parent_indices_sha256": "c10643cb419846e424106c80c3822701b2f98ff0c4b3610938bb303d31de3fc7",
+      "selected_signed_keys_sha256": "ab8c12edb474c35566045257b5ddab4edfa60fc89da365e6718b5035db3fe9fe"
+    },
+    {
+      "M": 9,
+      "N": 20,
+      "active_mode_count": 3116,
+      "active_mode_sha256": "48968a1684b2b1f4bbd92a534d91461be755d74a79ad298a0fd385591b69604e",
+      "all_3772_boundary_gate_status_from_omitted_key_lower_bound": "NECESSARY_ONLY_NOT_A_PASS",
+      "input_filename": "d5c_y7_cut_m9_n20_r5_p6_direct.dat",
+      "label": "M9_N20",
+      "omitted_boundary_relative_l2_lower_bound": 2.6496148892488354e-05,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M9_N20_p6_direct_v1",
+      "retained_power_carrying_count": 2178,
+      "retained_propagating_count": 1230,
+      "retains_top_0_minus20_s": true,
+      "selected_parent_indices_sha256": "e95c6b363642949c4de741fb033b810dd3d271c25a22be3152f13e210c393a09",
+      "selected_signed_keys_sha256": "a055d9b35cf0ebea0e601eb88b2341cfcf85420a930b7cf351051f487499a472"
+    },
+    {
+      "M": 10,
+      "N": 20,
+      "active_mode_count": 3444,
+      "active_mode_sha256": "efe318d0756b8085610ad8fafe27d76e909d7c5725efd5471b955604bf3f85db",
+      "all_3772_boundary_gate_status_from_omitted_key_lower_bound": "NECESSARY_ONLY_NOT_A_PASS",
+      "input_filename": "d5c_y7_cut_m10_n20_r5_p6_direct.dat",
+      "label": "M10_N20",
+      "omitted_boundary_relative_l2_lower_bound": 7.626844689333332e-06,
+      "profile_identity": "task40para_phi90_5_D5C_Y7_CUT_M10_N20_p6_direct_v1",
+      "retained_power_carrying_count": 2342,
+      "retained_propagating_count": 1230,
+      "retains_top_0_minus20_s": true,
+      "selected_parent_indices_sha256": "c701a88e10badd09bfbfa78d3facb0debb11f0acdfd2389ba95b3c2db124d532",
+      "selected_signed_keys_sha256": "ac3881afa72690b04a0a2ddc26cfd0c63a9d8ec6c21301726dcbd332811c4472"
+    }
+  ],
+  "lower_bound_logic": "An omitted signed boundary coordinate contributes orthogonally to retained coordinates in the all-key L2 norm, so retained modes cannot cancel the omitted contribution. V2 lower bounds 3/4 are necessary, not sufficient.",
+  "parent": {
+    "actual_mode_inventory_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+    "axis_sha256_le_f64": {
+      "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+      "y": "2dbea5cd468e6959c285266106d280ea2fa778bc63fe6bcce8fd47312cf8b668",
+      "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+    },
+    "cell_count": 1080,
+    "diffraction_output_sha256": "e22609314aced38e27fa681e065c00785a5ca5db05fc91f4672ac17ef02768fd",
+    "display_name": "D5C-Y7",
+    "expected_output_mode_keys": 3772,
+    "input_sha256": "53e82a6b60bacec37f34f1ce628c673fdfa376d666699c491c873a1b0b2f8bd6",
+    "mesh_cells": [
+      6,
+      30,
+      6
+    ],
+    "mode_count": 3772,
+    "mode_inventory_is_finite_R5_not_infinite_DtN": true,
+    "mode_manifest_sha256": "98d11bd13ffd652fb090ff799c7b104f0d3eed75fe6a6dd61d075957ecc8fa08",
+    "mode_sha256": "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc",
+    "physical_model_sha256": "af7e3fe0c0872420af56902aff4c8369a087b25cd7de9e8352930196fcb3c87c",
+    "power_carrying_count": 2506,
+    "power_carrying_note": "Bottom lossy medium: all 943 per side/polarization remain power-carrying, including nonpropagating modes; top has 310 per side/polarization.",
+    "propagating_count": 1230,
+    "rectangle_m": [
+      -11,
+      11
+    ],
+    "rectangle_n": [
+      -20,
+      20
+    ],
+    "resolved_config_sha256": "70943fba5c3531904651688371978d15afa0fc2fcfe447d6b6b31e1b4ff0047a",
+    "run_directory": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_5_D5C_Y7_p6_direct_v1__full3d_direct__mpi1__Mna/20261024T061944.262318Z",
+    "source_input_physical_resolved_axis_identity_reviewed": true,
+    "source_sha": "1207cb78889fba6de4fd03ea72a238b334aa61a7",
+    "tag_counts_air_substrate_grating": {
+      "air": 680,
+      "grating": 40,
+      "substrate": 360
+    }
+  },
+  "qualification_limits": [
+    "finite R5 only; not infinite DtN",
+    "FULL_DTN_NOT_VERIFIED",
+    "AUTHORITY_LIMITED",
+    "canonical sidewall NOT_MEASURED"
+  ],
+  "review_binding": {
+    "decision": "PARENT_IDENTITY_PASS_LADDER_REQUIRES_LAST_TWO_RECTANGLES_CORRECTION",
+    "path": "/tmp/task40_d5c_5nm_modal_cutoff_followup_20261025_v1/supervisor_static_review_rectangles_v1.json",
+    "sha256": "55f4f660b04885e206066a48be0dd257432ecb7a2b632accab55c91c09d8a930"
+  },
+  "schema": "task40.d5c.modal-cutoff.static-plan.v2",
+  "single_run_gates": {
+    "active_A6_relative": 1e-06,
+    "active_A6_scope": "each candidate rectangle only; never label this full-R5 A6 verification",
+    "condensed_relative": 1e-09,
+    "energy_closure": 1e-05,
+    "same_factor_correction_max": 2
+  },
+  "status": "IMPLEMENTATION_FROZEN_FOR_MAIN_REVIEW_NO_FE_STARTED",
+  "supersedes": {
+    "intermediate_v2_draft_sha256": "1aa607e7ae8696a06717a4470d03d776f4ce8d0cd60fc970ffed833f617d603f",
+    "reason": "v1 bounds omitted top signed key (m=0,n=-20,s) in every rectangle; preserve v1 unchanged as historical.",
+    "v1_path": "/tmp/task40_d5c_5nm_modal_cutoff_followup_20261025_v1/modal_cutoff_static_review_v1.json",
+    "v1_sha256": "917f7268c502f7aa1f888f78b176e71f4b23de495de9c9776f616b3660fb1e54"
+  },
+  "v1_candidate_label_mapping": {
+    "M10_N20": "cut4",
+    "M7_N9": "cut1",
+    "M9_N14": "cut2",
+    "M9_N20": "cut3"
+  }
+}

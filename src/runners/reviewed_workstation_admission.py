@@ -42,6 +42,13 @@ _TASK40_PARALLEL_ALLOWED_RUNS |= frozenset(
         'Z1', 'Z2', 'Z3'
     )
 )
+_TASK40_PARALLEL_ALLOWED_RUNS |= frozenset(
+    (
+        f'task40para_phi90_5_D5C_Y7_CUT_{label}_p6_direct_v1',
+        f'task40para_phi90_5_D5C_Y7_CUT_{label}_p6_direct_v1',
+    )
+    for label in ('M7_N9', 'M9_N14', 'M9_N20', 'M10_N20')
+)
 
 
 def _proc_root():

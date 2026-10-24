@@ -116,8 +116,49 @@ TASK40_PHI90_D5C_PROFILE_BY_CASE = {
         "Z1", "Z2", "Z3",
     )
 }
+TASK40_PHI90_D5C_MODAL_RECTANGLES = {
+    "M7_N9": {
+        "bounds": (7, 9), "active_mode_count": 1140,
+        "active_mode_sha256": "d9116f9f4281e04594959cdad4f320d84bd6fc057f0c6aea0026f8bccc3088b0",
+        "selected_parent_indices_sha256": "eab2478d4fd8d59355d9c02e91d0a2f0446508ea7ea8feeeaa272af51f20931d",
+        "selected_signed_keys_sha256": "f602a7ee68ce6ab0324ad385c54f3a89cffdcaeb13bafad3bbb60355398a1e44",
+        "omitted_boundary_relative_l2_lower_bound": 2.2807358642310815e-3,
+        "propagating_count": 506, "power_carrying_count": 826,
+    },
+    "M9_N14": {
+        "bounds": (9, 14), "active_mode_count": 2204,
+        "active_mode_sha256": "76bbf3e306af149b18781c59f23f5a8f2f08c42972802eb39dad3b5e2240aae2",
+        "selected_parent_indices_sha256": "c10643cb419846e424106c80c3822701b2f98ff0c4b3610938bb303d31de3fc7",
+        "selected_signed_keys_sha256": "ab8c12edb474c35566045257b5ddab4edfa60fc89da365e6718b5035db3fe9fe",
+        "omitted_boundary_relative_l2_lower_bound": 1.1166163736995964e-3,
+        "propagating_count": 962, "power_carrying_count": 1588,
+    },
+    "M9_N20": {
+        "bounds": (9, 20), "active_mode_count": 3116,
+        "active_mode_sha256": "48968a1684b2b1f4bbd92a534d91461be755d74a79ad298a0fd385591b69604e",
+        "selected_parent_indices_sha256": "e95c6b363642949c4de741fb033b810dd3d271c25a22be3152f13e210c393a09",
+        "selected_signed_keys_sha256": "a055d9b35cf0ebea0e601eb88b2341cfcf85420a930b7cf351051f487499a472",
+        "omitted_boundary_relative_l2_lower_bound": 2.6496148892488354e-5,
+        "propagating_count": 1230, "power_carrying_count": 2178,
+    },
+    "M10_N20": {
+        "bounds": (10, 20), "active_mode_count": 3444,
+        "active_mode_sha256": "efe318d0756b8085610ad8fafe27d76e909d7c5725efd5471b955604bf3f85db",
+        "selected_parent_indices_sha256": "c701a88e10badd09bfbfa78d3facb0debb11f0acdfd2389ba95b3c2db124d532",
+        "selected_signed_keys_sha256": "ac3881afa72690b04a0a2ddc26cfd0c63a9d8ec6c21301726dcbd332811c4472",
+        "omitted_boundary_relative_l2_lower_bound": 7.626844689333332e-6,
+        "propagating_count": 1230, "power_carrying_count": 2342,
+    },
+}
+TASK40_PHI90_D5C_MODAL_PROFILE_BY_CASE = {
+    label: f"task40para_phi90_5_D5C_Y7_CUT_{label}_p6_direct_v1"
+    for label in TASK40_PHI90_D5C_MODAL_RECTANGLES
+}
+TASK40_PHI90_D5C_MODAL_PROFILES = frozenset(
+    TASK40_PHI90_D5C_MODAL_PROFILE_BY_CASE.values()
+)
 TASK40_PHI90_D5C_PROFILES = frozenset(
-    TASK40_PHI90_D5C_PROFILE_BY_CASE.values()
+    {*TASK40_PHI90_D5C_PROFILE_BY_CASE.values(), *TASK40_PHI90_D5C_MODAL_PROFILES}
 )
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_B_p6_direct_v1"
@@ -1361,6 +1402,8 @@ def _task40_phi90_d5_profile_facts(identity):
 
 def _task40_phi90_d5c_profile_facts(identity):
     """Freeze one D5C coarse 5 nm case without changing the old D5 family."""
+    if identity in TASK40_PHI90_D5C_MODAL_PROFILES:
+        return _task40_phi90_d5c_modal_profile_facts(identity)
     from copy import deepcopy
 
     from src.geometry.task40_phi90_d5c_axis_plan import D5C_AXIS_PLANS
@@ -1496,6 +1539,201 @@ def _task40_phi90_d5c_profile_facts(identity):
             "User-authorized D5C coarse 5 nm study: one unique 2/2/2-per-segment "
             "baseline and eleven one-axis variants; historical D5 inputs/results remain unchanged."
         )
+    base["operator_scope"] = operator_scope
+    base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
+    base["resources"]["rss_hard_limit_bytes"] = None
+    return base
+
+
+def _task40_phi90_d5c_modal_profile_facts(identity):
+    """Freeze one same-grid D5C-Y7 subrectangle against its finite R5 parent."""
+    from copy import deepcopy
+
+    try:
+        label = next(
+            label for label, profile in TASK40_PHI90_D5C_MODAL_PROFILE_BY_CASE.items()
+            if profile == identity
+        )
+    except StopIteration as exc:
+        raise ValueError(f"unsupported D5C Y7 modal profile: {identity}") from exc
+
+    selection = TASK40_PHI90_D5C_MODAL_RECTANGLES[label]
+    m_max, n_max = (int(value) for value in selection["bounds"])
+    active_count = int(selection["active_mode_count"])
+    if active_count != 4 * (2 * m_max + 1) * (2 * n_max + 1):
+        raise ValueError(f"D5C modal rectangle {label} has an inconsistent count")
+
+    base = deepcopy(
+        _task40_phi90_d5c_profile_facts(TASK40_PHI90_D5C_PROFILE_BY_CASE["Y7"])
+    )
+    operator_scope = (
+        f"task40_phi90_D5C_Y7_R5_parent_to_{label}_finite_rectangle"
+    )
+    parent_mode_sha = (
+        "752333bbc4082b9d7f9f1c935433eeb8e4c8b5e44a74a27310944b6b8aa531bc"
+    )
+    parent_identity = {
+        "display_name": "D5C-Y7",
+        "run_directory": (
+            "/home/fenics/Projects/Maxwell3D-Phi90/results/"
+            "si_block_phi90_50x50_17x20_h120/"
+            "task40para_phi90_5_D5C_Y7_p6_direct_v1__full3d_direct__mpi1__Mna/"
+            "20261024T061944.262318Z"
+        ),
+        "source_sha": "1207cb78889fba6de4fd03ea72a238b334aa61a7",
+        "input_sha256": (
+            "53e82a6b60bacec37f34f1ce628c673fdfa376d666699c491c873a1b0b2f8bd6"
+        ),
+        "physical_model_sha256": (
+            "af7e3fe0c0872420af56902aff4c8369a087b25cd7de9e8352930196fcb3c87c"
+        ),
+        "resolved_config_sha256": (
+            "70943fba5c3531904651688371978d15afa0fc2fcfe447d6b6b31e1b4ff0047a"
+        ),
+        "axis_cell_counts": [6, 30, 6],
+        "axis_sha256_le_f64": {
+            "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+            "y": "2dbea5cd468e6959c285266106d280ea2fa778bc63fe6bcce8fd47312cf8b668",
+            "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6",
+        },
+        "parent_mode_count": 3772,
+        "parent_mode_sha256": parent_mode_sha,
+        "parent_mode_manifest_file_sha256": (
+            "98d11bd13ffd652fb090ff799c7b104f0d3eed75fe6a6dd61d075957ecc8fa08"
+        ),
+        "parent_diffraction_output_sha256": (
+            "e22609314aced38e27fa681e065c00785a5ca5db05fc91f4672ac17ef02768fd"
+        ),
+    }
+    active_rectangle = [m_max, n_max]
+    options = base["component_options"]
+    options["task_family"] = "task40_phi90_d5c_modal_cutoff_direct"
+    options["modal_truncation"] = {
+        "schema": "task40.d5c.y7.modal-rectangle.v2",
+        "display_case": f"D5C-Y7-{label}",
+        "geometry_reference_run_id": "task40para_phi90_5_D5C_Y7_p6_direct_v1",
+        "parent_mode_count": 3772,
+        "parent_mode_sha256": parent_mode_sha,
+        "parent_identity": parent_identity,
+        "active_rectangle_max_abs_m_n": active_rectangle,
+        "active_mode_count": active_count,
+        "active_mode_sha256": selection["active_mode_sha256"],
+        "selected_parent_indices_sha256": selection[
+            "selected_parent_indices_sha256"
+        ],
+        "selected_signed_keys_sha256": selection[
+            "selected_signed_keys_sha256"
+        ],
+        "retained_propagating_count": selection["propagating_count"],
+        "retained_power_carrying_count": selection["power_carrying_count"],
+        "omitted_boundary_relative_l2_lower_bound": selection[
+            "omitted_boundary_relative_l2_lower_bound"
+        ],
+        "omitted_reference_values": (
+            "not computed by candidate solve; compare against the saved Y7 finite R5 "
+            "parent by zero-extending every candidate over all 3772 signed keys"
+        ),
+        "single_run_a6_scope": (
+            f"original p6 A6 action on active M{m_max}/N{n_max} only; not full R5"
+        ),
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    }
+    options["mode_selection"].update(
+        schema="task40.dtn-mode-selection.v1",
+        policy="explicit_centered_rectangle_subrectangle_from_parent_v1",
+        reference_mode_label=f"R5_{label}",
+        parent_rectangle_max_abs_m_n=[11, 20],
+        active_rectangle_max_abs_m_n=active_rectangle,
+        parent_inventory_scope="R5_finite_rectangle_including_evanescent",
+        expected_mode_count=3772,
+        expected_mode_sha256=parent_mode_sha,
+        reference_identity=parent_identity,
+        expected_active_mode_count=active_count,
+        expected_active_mode_sha256=selection["active_mode_sha256"],
+        expected_selected_parent_indices_sha256=(
+            selection["selected_parent_indices_sha256"]
+        ),
+        expected_selected_signed_keys_sha256=(
+            selection["selected_signed_keys_sha256"]
+        ),
+        expected_active_propagating_count=selection["propagating_count"],
+        expected_active_power_carrying_count=selection["power_carrying_count"],
+        quadrature_reference_label="R5_full_3772_parent",
+        quadrature_inventory="full_D5C_Y7_R5_parent_inventory",
+        boundary_amplitude_scale_policy="boundary_magnitude_scaled_r5_v1",
+        operator_scope=operator_scope,
+    )
+    evidence_keys = []
+    for side in ("top", "bottom"):
+        evidence_keys.extend(
+            ((side, -m_max, 0, "p"), (side, 0, 0, "s"), (side, m_max, 0, "p"))
+        )
+    options["direct_factor_evidence"]["mode_keys"] = [
+        list(key) for key in evidence_keys
+    ]
+    options["direct_factor_evidence"]["active_residual_scope"] = (
+        f"original_p6_A6_active_M{m_max}_N{n_max}; not the full R5 rectangle"
+    )
+    options["directional_mesh_comparison"].update(
+        display_name=f"D5C-Y7-cut-{label}",
+        modal_parent_case="Y7_R5",
+        modal_rectangle_max_abs_m_n=active_rectangle,
+        modal_retained_mode_count=active_count,
+        modal_selection_policy=(
+            "explicit_centered_rectangle_subrectangle_from_parent_v1"
+        ),
+        candidate_not_convergence_claim=True,
+    )
+
+    base.update(
+        identity=identity,
+        route=f"TASK40_PHI90_D5C_Y7_CUT_{label}_P6_DIRECT",
+        operator_scope=operator_scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+    )
+    base["backend"].update(
+        independent_residual=(
+            f"original_full_p6_A6_active_candidate_rectangle_m{m_max}_n{n_max}_action"
+        ),
+        operator_scope=operator_scope,
+    )
+    base["condensed_route"].update(
+        operator_family=f"D5C_Y7_R5_active_M{m_max}_N{n_max}_finite_rectangle",
+        parent_mode_inventory="explicit_R5_rectangle_including_evanescent",
+        parent_mode_count=3772,
+        active_mode_inventory=f"M{m_max}_N{n_max}_centered_subrectangle",
+        operator_scope=operator_scope,
+    )
+    direct_route = base["campaign_authorization"]["direct_route"]
+    direct_route.update(
+        d5c_case="Y7",
+        modal_cutoff_case=label,
+        parent_mode_rectangle_max_abs_m_n=[11, 20],
+        active_mode_rectangle_max_abs_m_n=active_rectangle,
+        parent_mode_count=3772,
+        parent_mode_sha256=parent_mode_sha,
+        parent_identity=parent_identity,
+        active_mode_count=active_count,
+        active_mode_sha256=selection["active_mode_sha256"],
+        selected_parent_indices_sha256=(
+            selection["selected_parent_indices_sha256"]
+        ),
+        selected_signed_keys_sha256=selection["selected_signed_keys_sha256"],
+        geometry_reference_run_id="task40para_phi90_5_D5C_Y7_p6_direct_v1",
+        active_a6_scope=f"active_rectangle_m{m_max}_n{n_max}",
+        retained_propagating_count=selection["propagating_count"],
+        retained_power_carrying_count=selection["power_carrying_count"],
+        omitted_boundary_relative_l2_lower_bound=(
+            selection["omitted_boundary_relative_l2_lower_bound"]
+        ),
+        execution_order=label,
+    )
+    base["campaign_authorization"]["source"] = (
+        "User-authorized D5C-Y7 same-grid modal cutoff candidate against the "
+        "saved finite R5 parent; all four rectangles run sequentially regardless "
+        "of earlier results. Comparison zero-extends over all 3772 parent keys; "
+        "single-run A6 applies only to the active rectangle."
+    )
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
     base["resources"]["rss_hard_limit_bytes"] = None
