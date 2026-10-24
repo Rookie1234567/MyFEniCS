@@ -229,11 +229,13 @@ V1的最后接受态仍是R9（110,472 FE），最终空间精度不达标；R10
 
 ## V3整改与待审的有限诊断
 
-V3仅修正失败证据保存、watchdog phase/ABI 接线和 A2 profile 前置核验；当前没有V3正式dispatch或新PDE。预算仍为3/6已耗用，最多只剩合同允许的一次A1_q2和一次A2_q3，且分别要等root对精确源码、合同、输入和资源门写阶段READY；A1_R/A2_R/B/C保持锁定。
+V3已派发一次A1_q attempt2，预算累计4/6。实际入口构建了180格网格并进入装配路径，但未留下因子分解或求解完成证据；主控发现A1路径没有接入要求的WorkflowLedger后，按指令对该次运行受控停止。该结果是工程接线不完整，不是数值方法失败，也没有official primary/endpoint。原READY只作为这次派发的历史记录，不授权任何后续运行；A2未READY、未派发，A1_R/A2_R/B/C均锁定。原始终态和身份见[A1_q2执行记录](records/a1_q_attempt2/dispatch_and_stop_record.json)及[root独立终态审计](records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。
+
+A2真实native入口另有一个受控组件测试：使用冻结Y6输入进入`run_p6_condensed_direct`，由该入口创建绝对phase文件和`stages.jsonl`，随后在首次mesh-builder边界触发sentinel，因此没有真实构网、solver调用或正式attempt消耗。该测试补充native入口的ledger接线证据，不签发A2 READY，见[组件测试记录](records/a2_native_workflow_ledger_component.json)。
 
 Root已复核G1故障注入/默认路径和G2真实watchdog tiny-child链；G0、G3复用带hash的旧记录。最终bounded focused在源码HEAD `81c97e7c`上为57 passed、1 skipped，随后最终HEAD `fc260b1e`上重跑唯一变动的生命周期AST节点，1 passed。跳过项是需显式开启的完整p6 FFCx矩阵见证，本轮未运行。compileall、JSON/Markdown和diff检查通过；Ruff仍有与`fd7ebd2a`基线相同的77项既有诊断，新增诊断为0，因此不称全量Ruff通过。命令、日志hash及root源码审阅见[最终验证索引](records/diagnostic_plan_v3_final_validation.json)和[root G1/G2复核](records/v3_root_final_source_review.json)。
 
-下一轮的资源仅是预估：A1为118,800 FE（37,800 trace+81,000 interior）、38,412行、32,419,692个已用矩阵非零元；旧 q15 R10 的进程树RSS峰为6,572,441,600B，而已完成的 q19/q32 A1_q1 部分尝试实测峰为9,708,847,104B、全程4,882.447秒，未完成完整端点。A2的Y6_1历史锚点为380,160 FE（120,960 trace+259,200 interior）、121,572行、112,458,734个已用非零元、进程树RSS峰26,919,141,376B。由于新留证会让输出与因子重叠，暂按A1约32GiB、A2约96GiB作为保守规划余量，均为预估而非实测峰值；实际仍须通过fresh dynamic capacity gate，并受7200秒和192GiB硬门约束。60条源码、47项直接输入及7项启动支持hash见[阶段G4 source/input inventory](records/diagnostic_plan_v3_g4_source_input_inventory.json)及[root独立复核](records/v3_root_g4_inventory_recheck.json)，预测假设见[有限资源预估](records/diagnostic_plan_v3_resource_prediction.json)。这些记录待root完成G4签核；没有任何READY、合并批准或0.7nm运行。
+本次A1尝试使用的资源预测为：A1锚点118,800 FE（37,800 trace+81,000 interior）、38,412行、32,419,692个已用矩阵非零元；旧 q15 R10 的进程树RSS峰为6,572,441,600B，而此前q19/q32 A1_q1部分尝试实测峰为9,708,847,104B、全程4,882.447秒，未完成完整端点。A2的Y6_1历史锚点为380,160 FE（120,960 trace+259,200 interior）、121,572行、112,458,734个已用非零元、进程树RSS峰26,919,141,376B。由于新留证会让输出与因子重叠，A1约32GiB、A2约96GiB是保守规划余量，均为预估而非实测峰值；实际仍受7200秒和192GiB硬门约束。60条源码、47项直接输入及7项启动支持hash见[阶段G4 source/input inventory](records/diagnostic_plan_v3_g4_source_input_inventory.json)及[root独立复核](records/v3_root_g4_inventory_recheck.json)，预测假设见[有限资源预估](records/diagnostic_plan_v3_resource_prediction.json)。Root曾完成G0–G4并为A1_q2单次派发签发READY；实际入口的ledger缺口使该次运行受控停止，该READY不再授权后续运行。当前没有后续READY、合并批准或0.7nm运行。
 
 
 ## V2阶段一（Q02–Q08）证据补账

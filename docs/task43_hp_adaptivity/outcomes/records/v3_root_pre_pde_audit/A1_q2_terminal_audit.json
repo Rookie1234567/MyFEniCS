@@ -1,0 +1,41 @@
+{
+  "schema": "task43.v3.root_a1_q2_terminal_audit.v1",
+  "captured_utc": "2026-10-24T10:28:30.449163+00:00",
+  "implementation_and_launch_source_sha": "28dd150ac2917d6df272324e0b00b960064dad00",
+  "classification": "CONTROLLED_STOP_G2_A1_WORKFLOW_LEDGER_NOT_WIRED",
+  "watchdog_classification_preserved": "USER_CONTROLLED_STOP",
+  "actual_formal_dispatch_count": 4,
+  "A1_group_consumed": 2,
+  "A1_retry_authorized": false,
+  "samples_read": 134,
+  "peak_simultaneous_tree_rss_bytes_recomputed": 948682752,
+  "peak_tree_swap_bytes_recomputed": 0,
+  "whole_watchdog_elapsed_seconds": 159.36019697086886,
+  "nonempty_worker_phase_count": 0,
+  "workflow_phase_file_present": false,
+  "primary_and_sample_files_present": [],
+  "source_count_postcheck": 60,
+  "input_count_postcheck": 47,
+  "all_posthash_matches": true,
+  "terminal_leader_exit_code": -15,
+  "launcher_exit_code": 2,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "raw_sha256": {
+    "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/summary.json": "91e211de7e3bc54d12bcacfb565f2a8cc584d0afcd157350e5887d0f2283253b",
+    "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/resources.jsonl": "3ed591495cded424379a7ff5ff47e89b3a1d08ea81bde3ec5a4fff7505ec1637",
+    "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/source_input_hashes_postcheck.json": "1a593c51e51ef55c9a063fd6cd0f11c4b44b6fac392ab7d10d0a0c34c1255649",
+    "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.json": "ab9f9db6b999a85304556df61510046d7ff3a2cbf981896fcdfd81c70e3b041a",
+    "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/prelaunch_preflight.json": "c95ab9cd991c8c8e96c87322f3eb98412c833f726dd39ee7b5302334c6bd0a72"
+  },
+  "root_review_failure": "Root accepted tiny-child WorkflowLedger evidence without verifying actual A1 call. A1 guard validates parent/path only; no ledger is instantiated. Missing actual G2 was detected after dispatch; root ordered watchdog SIGTERM, not a numerical failure.",
+  "status_boundaries": {
+    "assembly_started": true,
+    "solve_completed": false,
+    "primary_endpoint": "NOT_AVAILABLE",
+    "q_comparison": "NOT_RUN",
+    "extra_correction": "NOT_RUN",
+    "numerical_success": "NOT_CLAIMED",
+    "A2": "NOT_YET_READY_PENDING_INDEPENDENT_GATE"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "schema": "task43.v3.a2_native_workflow_ledger_component.v1",
+  "classification": "support_component_test_not_formal_dispatch",
+  "purpose": "Exercise the native A2 runner entry through its WorkflowLedger setup, then stop at the first mesh-builder call before any real mesh or solver work.",
+  "test": {
+    "path": "src/test/test_task43_v3_native_workflow_ledger.py",
+    "sha256": "63dc239a212316d5f90da435ab2e531011481d8ec5a3fcac0d16edf1e45ffcd7",
+    "command": "source scripts/activate_task40_phi90_pord64.sh && export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1 && taskset -c 1 python -m pytest -q --basetemp=/tmp/task43/v3_a2_native_ledger_fixture_final src/test/test_task43_v3_native_workflow_ledger.py",
+    "result": "1 passed in 2.51s",
+    "runtime_scope": "The 2.51s is pytest-reported duration only; this component run had no whole-process watchdog or RSS sampling.",
+    "stdout_log_path": "benchmarks/artifacts/task43/v3_diagnostics/support_A2_native_workflow_ledger_component_attempt1/pytest.log",
+    "stdout_log_sha256": "a13f7c940b3d790c21bcfa35ee9a6c676918a4bd8c0b1ec5a0c1e00276cefe10",
+    "source_head": "28dd150ac2917d6df272324e0b00b960064dad00",
+    "source_state_note": "The test file was untracked when this run executed. Its exact bytes are bound by test.sha256; this is not described as a clean-commit checkout run.",
+    "qualification": {
+      "activation": "scripts/activate_task40_phi90_pord64.sh",
+      "cpu_affinity": [
+        1
+      ],
+      "mpi_world_size": 1,
+      "thread_counts": 1,
+      "petsc_scalar": "complex128",
+      "petsc_integer": "int64"
+    }
+  },
+  "frozen_inputs": {
+    "resolved_config_path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+    "resolved_config_sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+    "native_contract_sha256": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
+    "v2_contract_sha256": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+    "v3_contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
+    "v3_plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7"
+  },
+  "code_identities": {
+    "native_runner": {
+      "path": "src/runners/p6_condensed_direct.py",
+      "sha256": "33ad45943904b0777d23ad2f2f9b7ef6906221ccee44bd920faec23303df26f1"
+    },
+    "native_adapter": {
+      "path": "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py",
+      "sha256": "5c68a918b81b7032308bf9ede062a2910496a4a4b1a3fd848c223bee1346779d"
+    },
+    "physical_intermediate": {
+      "path": "src/runners/physical_intermediate.py",
+      "sha256": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4"
+    }
+  },
+  "fixture_scope": {
+    "native_entry_called": true,
+    "workflow_ledger_constructed_by_native_entry": true,
+    "absolute_phase_path_written": true,
+    "stages_written_by_native_entry": true,
+    "sentinel_at_first_mesh_builder": true,
+    "actual_mesh_built": false,
+    "solver_called": false,
+    "formal_attempt_budget_consumed": 0,
+    "resource_values_are_test_fixture_only": {
+      "launch_cap_bytes": 206158430208,
+      "planning_cap_bytes": 171798691840,
+      "reserve_bytes": 68719476736,
+      "not_a_host_capacity_measurement": true
+    }
+  },
+  "preserved_fixture_outputs": {
+    "directory": "benchmarks/artifacts/task43/v3_diagnostics/support_A2_native_workflow_ledger_component_attempt1",
+    "workflow_phase.json": "2c73d8ab5d021a390a2854da9a9e71194a35efcdd0a15b9639d66bbcf1818d63",
+    "stages.jsonl": "f139ff99c94448358f9a01f19d88b1ce63bd9c99e56641bf79805c492ebbea95",
+    "p6_condensed_direct_summary.json": "8f44e87645eda0227547a86b5f077384390042251f21ceac949ad9e0b9751423",
+    "task43_v3_partial_terminal.json": "5c5c2fc19ae22e131524b90922a460b171775bb0855970ebebf66d7e5a39b100"
+  },
+  "observed_output_excerpt": {
+    "workflow_phase": {
+      "phase": "setup",
+      "stage": "TASK43_V2_A2_Y6_1_R13_P6_DIRECT_FAILED",
+      "failed_stage": "p6_direct_mesh_setup_started",
+      "exception_type": "_StopBeforeMesh"
+    },
+    "stages_jsonl_sequence": [
+      "workflow_started",
+      "p6_direct_resolved_profile_bound",
+      "p6_direct_mesh_setup_started",
+      "TASK43_V2_A2_Y6_1_R13_P6_DIRECT_FAILED"
+    ],
+    "native_summary": {
+      "status": "INCOMPLETE",
+      "failed_stage": "p6_direct_mesh_setup_started",
+      "exception_type": "_StopBeforeMesh",
+      "official_result": false,
+      "passed": false,
+      "continuation_all_false": true,
+      "selection_candidate": false,
+      "selection_eligible": false
+    },
+    "v3_partial_terminal": {
+      "status": "INCOMPLETE",
+      "official_result": false,
+      "passed": false,
+      "continuation_all_false": true
+    }
+  },
+  "development_runs": [
+    {
+      "result": "1 passed in 2.40s",
+      "stdout_log_path": "benchmarks/artifacts/task43/v3_diagnostics/support_A2_native_workflow_ledger_component_attempt1/development_run1.log",
+      "stdout_log_sha256": "c9a4802b1e58c1e28ee37828e22ea5a5bce4aadd9dff73452d51ac965fd37f94",
+      "reason": "Initial smoke run; temporary files were not retained and its test-source hash was not recorded. It is not used as final evidence."
+    },
+    {
+      "result": "1 passed in 1.15s",
+      "stdout_log_path": "benchmarks/artifacts/task43/v3_diagnostics/support_A2_native_workflow_ledger_component_attempt1/development_run2.log",
+      "stdout_log_sha256": "2ab5bf1c418c4b50a82bb6d168950ab377ab0a377e4d5187213d9b176905f856",
+      "reason": "Run after import-order/format adjustments, with fixture outputs retained. The test source subsequently changed to add explicit activation-marker and int64 checks; this run is not used as final evidence."
+    }
+  ],
+  "scope_limit": "This component test establishes that the actual native A2 entry creates its workflow phase and stage ledger before the mesh-builder boundary. The sentinel prevents mesh construction and solver work; it does not authorize A2 or constitute a formal model result."
+}

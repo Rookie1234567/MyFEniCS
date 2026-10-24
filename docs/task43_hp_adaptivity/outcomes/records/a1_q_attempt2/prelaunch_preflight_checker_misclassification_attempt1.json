@@ -1,0 +1,340 @@
+{
+  "HEAD": "28dd150ac2917d6df272324e0b00b960064dad00",
+  "abi": {
+    "basix_version": "0.10.0",
+    "dolfinx_mpc_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+    "dolfinx_version": "0.10.0",
+    "mpi_size": 1,
+    "mumps_available": true,
+    "native_activation": "1",
+    "petsc_int": "int64",
+    "petsc_scalar": "complex128",
+    "petsc_version": [
+      3,
+      19,
+      6
+    ],
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "python_version": "3.12.3",
+    "threads": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "attempt": 2,
+  "base_ancestor": true,
+  "branch": "task43_hp_adaptivity",
+  "captured_utc": "2026-10-24T10:22:40.629778+00:00",
+  "classification": "pre_dispatch_gate_failed",
+  "contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
+  "cpu1": {
+    "affinity": [
+      1
+    ],
+    "busy_fraction": 0.030303030303030276,
+    "other_pinned_non_kernel_processes": [
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "orted",
+        "pid": 2168278,
+        "state": "S"
+      }
+    ],
+    "other_pinned_processes": [
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "cpuhp/1",
+        "pid": 22,
+        "state": "S"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "idle_inject/1",
+        "pid": 23,
+        "state": "S"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "migration/1",
+        "pid": 24,
+        "state": "S"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "ksoftirqd/1",
+        "pid": 25,
+        "state": "S"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "kworker/1:0H-events_highpri",
+        "pid": 27,
+        "state": "I"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "irq/9-acpi",
+        "pid": 326,
+        "state": "S"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "kworker/1:1H-kblockd",
+        "pid": 430,
+        "state": "I"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "kworker/1:2-events",
+        "pid": 2141306,
+        "state": "I"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "kworker/1:1-mm_percpu_wq",
+        "pid": 2157511,
+        "state": "I"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "kworker/1:0-events",
+        "pid": 2164414,
+        "state": "I"
+      },
+      {
+        "affinity": [
+          1
+        ],
+        "comm": "orted",
+        "pid": 2168278,
+        "state": "S"
+      }
+    ],
+    "sample_seconds": 1.0
+  },
+  "formal_attempt_directory_absent": true,
+  "formal_budget": {
+    "cumulative_after_dispatch": 4,
+    "historical_attempts_consumed": 3,
+    "maximum": 6,
+    "no_retry": true,
+    "this_dispatch_consumes": 1
+  },
+  "git_worktree_clean": true,
+  "hash_mismatches": {
+    "input": [],
+    "launch_support": [],
+    "source": []
+  },
+  "input_count": 47,
+  "input_file_sha256": {
+    "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_port_diffraction_orders_3d.json": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/p6_condensed_direct_summary.json": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+    "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+    "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+    "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300",
+    "benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_plan.json": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_recovered_solution_storage.npz": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf",
+    "benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+    "benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/run_summary.json": "be445b030b8e39169fc800e4c53aae0f85fcf8800312d7538518df67891d6376",
+    "benchmarks/artifacts/task43/round10_p_up_attempt1/run/task43_round1_candidate_record.json": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d",
+    "benchmarks/artifacts/task43/round10_p_up_attempt1/watchdog/summary.json": "ad4675ae06ae2a1122c94812837a539da647d2062e8b88c257930e7c57286b4a",
+    "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q10.npz": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
+    "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q8.npz": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5",
+    "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/launcher_exit_code.txt": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/summary.json": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launch_identity.json": "07a6a88ac8e43888252e8517759ae22d8a3a149b7d2c98efd0fa5e8f9ce28ccf",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/launcher_exit_code.txt": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/summary.json": "da13ba37df08870e92d52414c6ef979e0ab25cd5fdfce46f06e7bc220304b73a",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog/worker.log": "c720a66ddd9db53c942bd69c0f9256a61ee9755dc8f049d3c3ede81c12f8f44b",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt1/watchdog_exit_code.txt": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/launch_identity.json": "20c6b681db729f2a983f2316e300f7716c7d8239a1e5bb18fb6bc52146f2d835",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/launcher_exit_code.txt": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/watchdog/summary.json": "7a4fb9e3caa0c79ba97e928f494953abf4ce8c1afee89fb0308a22d61716f894",
+    "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/legacy_r10_field_resampling.json": "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d",
+    "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/r10_q8_q10_field_samples.npz": "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71",
+    "benchmarks/artifacts/task43/v2_root_audit/a1_implemented_source_continuity.json": "1a488730c9f72bb9324310d2d3be55a8503db9af3805331de393c85dd7b3e88b",
+    "benchmarks/artifacts/task43/v2_root_audit/a1_q_partial_modal_diagnostics.json": "25b421d85b77c0059ffcedeba5cad96e78be15a93384c0b6b0200802dd9c0c3a",
+    "benchmarks/artifacts/task43/v2_root_audit/a1_q_resource_samples_replay.json": "5bfb13f099aeafdad40417ed3b231d374e0315815539b44578f149ca223e7e29",
+    "benchmarks/artifacts/task43/v2_root_audit/a1_q_terminal_audit.json": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf",
+    "benchmarks/artifacts/task43/v2_root_audit/a2_axis_profile_replay.json": "c221bb2fe211332c20f3259160d9953de60dce5411ebc66dd4d8de5e96c81acb",
+    "benchmarks/artifacts/task43/v2_root_audit/a2_mode_policy_replay.json": "008d806c25f925684c5d0c600d805cea2df4c714b70a5c08d8a4b0cd8549bf7d",
+    "benchmarks/artifacts/task43/v2_root_audit/a2_native_source_continuity.json": "df200ed48659a7481f641583ecde63d4dd51d8f0d1a573dd38a86d8b0f0c932f",
+    "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt1_terminal_audit.json": "d42ec693f3a88600d53d12c04ab733b801a6255b8025f56b2bcf3e4b5a6f16a5",
+    "benchmarks/artifacts/task43/v2_root_audit/a2_q_attempt2_terminal_audit.json": "6350cb416018cfa1a94cb82710868548f94e351403267399a66219386333f70b",
+    "docs/task43_hp_adaptivity/diagnostic_plan_v2.md": "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e",
+    "docs/task43_hp_adaptivity/diagnostic_plan_v3.md": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_native_contract.json": "77c533673eba4178868ef22f4a27f8d7ecfbf50d6a47acbcbf2fe45b269960d0",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_a2_q_retry_authorization.json": "f6b004d30e524a2c3560b6117983762c293602c5ddee8d92f2d9de40ffe073ed",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
+    "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_launch_preparation.json": "d871f7a66160b061608a6b705012db0b2d5b824a721c3b8d2b83cd778184c24c",
+    "docs/task43_hp_adaptivity/outcomes/records/existing_validation_fields_v1.json": "8493acfd4485ef7c9b4c662708d7bac8df9934bf90dae550d8d392f59f630df0",
+    "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+    "docs/task43_hp_adaptivity/outcomes/records/v3_root_final_source_review.json": "c0b31e4ec250e34643801d490ab9b794220971cf5b9ca4d50641144bedc853cf",
+    "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/index.json": "ab2bab2fc8f50e7ff7838006e46526cc3a90e7c8b398c1df410e90657ab5d9eb"
+  },
+  "inventory_sha256": "58fb9a4100f9f04f9d2ffdfece8a4bb445b134aba906b6181310bf207a8d4547",
+  "launch_support_count": 7,
+  "launch_support_sha256": {
+    "/tmp/task43/v3_launch_review_materials/A1_q_attempt2/detach_launch.sh": "11df770abdc385b96dfc4057ae7e6e708a2e9b0e4c851bc1cd48811aed4d2541",
+    "/tmp/task43/v3_launch_review_materials/A1_q_attempt2/launch.sh": "07036f7fc3d0a330a2833baff0bcb6e99938ac293018135ce6312c82c497fa2e",
+    "/tmp/task43/v3_launch_review_materials/A1_q_attempt2/supervisor_entry.sh": "7cc57d472734fb574bf0879fe5da5b5414425c671979d61b94bbd2a7c84c353a",
+    "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/detach_launch.sh": "c0d1748a9c6aba3d177f12e85b17079ada2d8f0e5cedf9e577509d018c9f77a8",
+    "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/launch.sh": "6ca3a07300329544882423c792f6dd68c4da24062b363aefa070d7389e088514",
+    "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/supervisor_entry.sh": "e135349a99ce63135d5befc20563e96a268fc9c5be6f79c86d031caac7674e86",
+    "/tmp/task43/v3_launch_review_materials/worker_abi_preflight.py": "2e0fff0649444007374521b02e239e6863fef981a342f89a2d3ce7c19fe81e01"
+  },
+  "phase": "A1_q",
+  "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+  "pre_dispatch_gates": {
+    "47_inputs_match_frozen_hashes": true,
+    "60_sources_match_frozen_hashes": true,
+    "7_launch_support_files_match_frozen_hashes": true,
+    "MUMPS": true,
+    "approved_clean_pushed_head_and_branch": true,
+    "canonical_root_and_formal_attempt_paths_absent": true,
+    "complex128": true,
+    "contract_and_plan_hashes": true,
+    "cpu1_affinity": true,
+    "int64": true,
+    "launch_cap_within_192_gib": true,
+    "mpi1": true,
+    "native_linux_stack": false,
+    "no_cpu1_pinned_user_heavy_job": false,
+    "no_task43_worker_or_watchdog": true,
+    "planning_cap_covers_32_gib_envelope": true,
+    "qualified_native_activation": true,
+    "ready_record_hash_and_decision": true,
+    "reserve_minimum": true,
+    "task43_resource_profile": true,
+    "task_tree_swap_zero_before_dispatch": true,
+    "threads1": true
+  },
+  "resource": {
+    "A1_conservative_planning_envelope_bytes": 34359738368,
+    "dynamic_profile_policy": {
+      "absolute_cap_bytes": 206158430208,
+      "concurrent_neighbor_authorized": false,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "global_swap_delta_policy": "observe_only",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "planning_cap_bytes": 206158430208,
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "pss_sampling_policy": "disabled_by_profile",
+      "require_zero_swap": true,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias",
+      "reserve_fraction": 0.15,
+      "reserve_min_bytes": 68719476736,
+      "resource_stop_policy": "legacy",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "stop_on_global_swap": false,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap"
+    },
+    "effective_available_bytes": 2071362469888,
+    "effective_total_bytes": 2163100385280,
+    "launch_cap_bytes": 206158430208,
+    "planning_cap_bytes": 206158430208,
+    "planning_envelope_fits": true,
+    "profile": "task43_hp_adaptivity_resource_v1",
+    "reserve_bytes": 324465057792,
+    "task_swap_bytes_before_dispatch": 0,
+    "task_swap_gate_semantics": "no Task43 process exists pre-dispatch; active phase task swap is sampled by watchdog and must stay zero"
+  },
+  "root_ready_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_ready_A1_q_attempt2.json",
+  "root_ready_sha256": "4462e9d03c7931a7e945c1380881c5e7626fa37a26d0472de6f32b6bd5fa641a",
+  "schema": "task43.v3.pre_dispatch_host_preflight.v1",
+  "source_count": 60,
+  "source_file_sha256": {
+    "benchmarks/subreaper_watchdog.py": "a003d86ccc9f83db924b59842b7bcf242cace84d8ad96071221c4272402d4753",
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "5c68a918b81b7032308bf9ede062a2910496a4a4b1a3fd848c223bee1346779d",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "109f4c98ee84d96ae6ad5765fbb59d8d51252df000e5f89cb4741f5fe63fa2f2",
+    "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "9aeba00cc6aa535b47406af4e4a0509dd1f540384c545079a48034f9392d9064",
+    "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "021809983043eda9b695f1aaa17e93dc7fa78dc70531691a26b7cd75814ce1a6",
+    "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+    "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+    "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+    "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+    "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+    "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+    "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+    "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+    "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+    "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+    "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+    "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+    "src/geometry/task40_phi90_d15_axis_plan.py": "d670031e93ff86510208702b812a57f5e168c8e0e9a43797145d98af3dece258",
+    "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+    "src/io/input_validation.py": "6fa4e9cb2b25eb8c3424b01f2fa4770ca0ecd32b2c350e75bbcb2ddf8a0e11bd",
+    "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+    "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+    "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+    "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+    "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+    "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+    "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+    "src/runners/p6_condensed_direct.py": "33ad45943904b0777d23ad2f2f9b7ef6906221ccee44bd920faec23303df26f1",
+    "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+    "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+    "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+    "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+    "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+    "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+    "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+    "src/solvers/dtn_sparse_policy.py": "656ed94efa9bf4b82d9365fa17ed9d6b2b0fc7a27ea8ffdc6ab9af65d4f0a271",
+    "src/solvers/fullspace_dtn_action.py": "37c17abad2af32c0a37acde1f3a8b418c1c8e6f6aafa9e321b4d85d894ce833d",
+    "src/solvers/fullspace_physical_intermediate.py": "b292b6a82a49f1df07514f8498d6e9b6185c2a15c5d2703ebc91821cf6023d4f",
+    "src/solvers/fullspace_physical_intermediate_runtime.py": "ad89f79700a20a488c7a6de6e9d230a0d7b068a1d86423cbcabe7739a8d19fe2",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "7c4738bea78f56e7d6e663b3083719ac8546973e028fc2f3151fb8e8e5e3225c",
+    "src/solvers/fullspace_v17_p3_oracle.py": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+    "src/solvers/hcurl_assembly_time_condensation.py": "bdb09e1de10c34ca5b3c3cebfbfa47eb0adc0570e0923bf00038d8efeeb2a309",
+    "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+    "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+    "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+    "src/solvers/p4_cell_condensed_inverse.py": "76e35bdae9e149bec36049f444462c49caa2e29d1d87f5a3bb031dbaa931f9cc",
+    "src/solvers/p6_cell_condensed_action.py": "bf2e08a4c64f57181a23ed2c16d5d4ff5e290b944059b5ddf69f5109878053e9",
+    "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+    "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+    "src/test/test_354_subreaper_watchdog.py": "7f714b76aec2a2c09262466e045d2da5f139c6a21076f1d214bcc5848a0e6c5f",
+    "src/test/test_task40para_direct_residual_and_supervisor.py": "d2654246ad7c6dd779ed7ee4970e371813224ac0af7cbec388e1e8e07e5d8f77",
+    "src/test/test_task43_v3_failure_safe_order.py": "b425c3adcfd7cce342b2f8ddaa2f665c406ed87a0c4ebb6af2db40950fec29d6"
+  },
+  "task43_workers": [],
+  "upstream_HEAD": "28dd150ac2917d6df272324e0b00b960064dad00"
+}

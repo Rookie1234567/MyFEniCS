@@ -1,0 +1,142 @@
+{
+  "A1_dispatches_max": 2,
+  "A1_dispatches_used": 2,
+  "abi_preflight_pid": 2170673,
+  "attempt": 2,
+  "attempt_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2",
+  "authorization": {
+    "approved_head": "28dd150ac2917d6df272324e0b00b960064dad00",
+    "contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
+    "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+    "ready_record_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_ready_A1_q_attempt2.json",
+    "ready_record_sha256": "4462e9d03c7931a7e945c1380881c5e7626fa37a26d0472de6f32b6bd5fa641a"
+  },
+  "dispatch_budget_total": 6,
+  "dispatch_count_after_this_attempt": 4,
+  "dispatch_utc": "2026-10-24T10:24:56.781486+00:00",
+  "evidence": {
+    "independent_root_terminal_audit": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json",
+      "sha256": "359aef92ce0ee1927e3701f776396fb97195a048bad07fab3ce11cc3d45380c2"
+    },
+    "preflight_snapshots": [
+      {
+        "captured_utc": "2026-10-24T10:22:40.629778+00:00",
+        "classification": "pre_dispatch_gate_failed",
+        "path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/support_preflight_snapshots/prelaunch_preflight_checker_misclassification_attempt1.json",
+        "sha256": "12bf0780b60ac89a2a8c2eb782c1431df8d76322095eaf811574de448ba235d9"
+      },
+      {
+        "captured_utc": "2026-10-24T10:23:41.966818+00:00",
+        "classification": "pre_dispatch_gate_failed",
+        "path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/support_preflight_snapshots/prelaunch_preflight_checker_misclassification_attempt2.json",
+        "sha256": "33c83344fe097be44d625c337d5ca0ed1f50cce4ea49cb1b8f6a3e59b36b2b62"
+      },
+      {
+        "captured_utc": "2026-10-24T10:24:15.259428+00:00",
+        "classification": "ready_for_dispatch",
+        "path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/prelaunch_preflight.json",
+        "sha256": "c95ab9cd991c8c8e96c87322f3eb98412c833f726dd39ee7b5302334c6bd0a72"
+      }
+    ],
+    "resources_path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/resources.jsonl",
+    "resources_sha256": "3ed591495cded424379a7ff5ff47e89b3a1d08ea81bde3ec5a4fff7505ec1637",
+    "tracked_preflight_copies": [
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/a1_q_attempt2/prelaunch_preflight_checker_misclassification_attempt1.json",
+        "sha256": "12bf0780b60ac89a2a8c2eb782c1431df8d76322095eaf811574de448ba235d9"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/a1_q_attempt2/prelaunch_preflight_checker_misclassification_attempt2.json",
+        "sha256": "33c83344fe097be44d625c337d5ca0ed1f50cce4ea49cb1b8f6a3e59b36b2b62"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/a1_q_attempt2/prelaunch_preflight_pass.json",
+        "sha256": "c95ab9cd991c8c8e96c87322f3eb98412c833f726dd39ee7b5302334c6bd0a72"
+      }
+    ],
+    "watchdog_summary_path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/summary.json",
+    "watchdog_summary_sha256": "91e211de7e3bc54d12bcacfb565f2a8cc584d0afcd157350e5887d0f2283253b",
+    "worker_abi_path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/worker_abi_preflight.json",
+    "worker_abi_sha256": "ab9f9db6b999a85304556df61510046d7ff3a2cbf981896fcdfd81c70e3b041a",
+    "worker_log_path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/worker.log",
+    "worker_log_sha256": "e770a6058a8d92e8b2308c5e0865beb868011ed7db1a0ec99ded4117100a8d8c"
+  },
+  "launcher_pid": 2170605,
+  "numerical_scope": {
+    "axis_cell_counts_xyz": [
+      3,
+      10,
+      6
+    ],
+    "endpoint_or_primary_before_packet": false,
+    "entered_assembly_path": true,
+    "factorization_or_solve_completion_evidence": false,
+    "floquet_constraints": 5730,
+    "form_setup_completed": true,
+    "function_space_dofs": 124530,
+    "interpretation": "The run built the mesh and entered the assembly path; there is no saved factorization/solve-completion or endpoint evidence. This is an engineering controlled stop, not evidence that the numerical method failed.",
+    "mesh_built": true,
+    "mesh_cells": 180,
+    "official_numerical_endpoint": false
+  },
+  "phase": "A1_q",
+  "phase_instrumentation": {
+    "a1_route_progress_bytes": 20054,
+    "a1_route_progress_path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/run/solve/progress_3d.jsonl",
+    "a1_route_progress_sha256": "69de10f554f48c6d6a9c11015934081317042cd69519b048d0a58f13133f5315",
+    "limitation": "G2_A1_WORKFLOW_LEDGER_NOT_WIRED: the A1 h100 route checked the absolute phase path/direct watchdog parent but did not instantiate WorkflowLedger, so no workflow_phase.json or worker_phase samples were produced. Preserve empty phase observations; do not synthesize them.",
+    "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/watchdog/workflow_phase.json",
+    "watchdog_resource_samples_worker_phase": "{}",
+    "workflow_phase_file_exists_at_terminal": false
+  },
+  "schema": "task43.v3.a1_q_attempt2_execution_closeout.v1",
+  "solver_worker_pid": 2170662,
+  "source_input_integrity": {
+    "input_all_match": true,
+    "input_expected_count": 47,
+    "input_matches": 47,
+    "launch_support_expected_count": 7,
+    "postcheck_path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/source_input_hashes_postcheck.json",
+    "postcheck_sha256": "1a593c51e51ef55c9a063fd6cd0f11c4b44b6fac392ab7d10d0a0c34c1255649",
+    "prelaunch_hash_mismatches": {
+      "input": [],
+      "launch_support": [],
+      "source": []
+    },
+    "prelaunch_snapshot_path": "benchmarks/artifacts/task43/v3_diagnostics/A1_q_attempt2/prelaunch_preflight.json",
+    "prelaunch_snapshot_sha256": "c95ab9cd991c8c8e96c87322f3eb98412c833f726dd39ee7b5302334c6bd0a72",
+    "source_all_match": true,
+    "source_expected_count": 60,
+    "source_matches": 60
+  },
+  "stop_signal": {
+    "first_stop_utc": "2026-10-24T10:27:37.556014+00:00",
+    "requested_reason": "G2_A1_WORKFLOW_LEDGER_NOT_WIRED",
+    "sent_by": "Task43 executor at root direction",
+    "sent_utc": "2026-10-24T10:27:36.614605+00:00",
+    "signal": "SIGTERM",
+    "target_pid": 2170661,
+    "verified_start_ticks": 276249667
+  },
+  "terminal": {
+    "descendants_cleared": true,
+    "elapsed_seconds": 159.36019697086886,
+    "global_swap_delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "launcher_exit_code": 2,
+    "leader_exit_code": -15,
+    "remaining_child_pids": [],
+    "resource_samples": 134,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "sampled_simultaneous_process_tree_rss_peak_bytes": 948682752,
+    "supplemental_reason": "G2_A1_WORKFLOW_LEDGER_NOT_WIRED",
+    "watchdog_classification_preserved": "USER_CONTROLLED_STOP",
+    "watchdog_exit_code": 2
+  },
+  "watchdog_parent_pid": 2170607,
+  "watchdog_pid": 2170661,
+  "watchdog_start_ticks": 276249667
+}
