@@ -5025,6 +5025,7 @@ def _run_v11_selected_trace_star_candidate_replay(
         "metadata_consumer_contract_path": str(old_contract_path),
         "metadata_consumer_contract_sha256": old_contract_sha,
         "consumer_contract_sha256": consumer_contract_sha256,
+        "donor_manifest_sha256": donor["manifest_sha256"],
         "metadata_window_path": str(old_window.path),
         "metadata_window_sha256": old_window.sha256,
         "consumer_window_path": str(fixed_window.path),

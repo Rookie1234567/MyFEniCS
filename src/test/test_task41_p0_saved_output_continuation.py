@@ -4349,7 +4349,12 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
     window_sha = hashlib.sha256(saved_window_path.read_bytes()).hexdigest()
     producer_source_sha = "a" * 40
     producer_contract_path = repo_root / "producer_contract.json"
-    consumer_contract_path = repo_root / "consumer_contract.json"
+    consumer_contract_path = repo_root / contract_module.contract_relative_path(
+        consumer_source_sha,
+        "B0",
+        saved_diagnostics_instance=contract_module.TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+    )
+    consumer_contract_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_prefix = repo_root / "runtime"
     (runtime_prefix / "bin").mkdir(parents=True)
     (runtime_prefix / "bin" / "python").write_text("fixture python\n", encoding="utf-8")
@@ -6560,3 +6565,153 @@ def test_v9_failed_terminal_saved_service_completes_negative_audit_without_numer
         "V11_SELECTED_TRACE_CANDIDATE_REPLAY_CHECKED"
     )
     assert actual_service_receipt["official_result"] is False
+
+    # Recheck the frozen live report through the checker-only route, writing
+    # the independent result into a new attempt and leaving attempt06 intact.
+    frozen_candidate_report_path = actual_output_root / (
+        "task41_p0_v11_selected_trace_candidate_replay.json"
+    )
+    legacy_candidate_report = json.loads(
+        frozen_candidate_report_path.read_text(encoding="utf-8")
+    )
+    legacy_candidate_report["v11_selected_trace_candidate_replay"].pop(
+        "donor_manifest_sha256", None
+    )
+    frozen_candidate_report_path.write_text(
+        json.dumps(legacy_candidate_report, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    frozen_candidate_report_sha = hashlib.sha256(
+        frozen_candidate_report_path.read_bytes()
+    ).hexdigest()
+    readonly_output_root = actual_output_root.with_name("attempt07")
+    assert not readonly_output_root.exists()
+    readonly_service_kwargs = dict(actual_service_kwargs)
+    readonly_service_kwargs.update(
+        output_root=readonly_output_root,
+        checker_only=True,
+        b0_evidence_audit_mode=True,
+        b0_v8_selected_trace_star_mode=False,
+        b0_v8_selected_trace_star_metadata_only_mode=False,
+        b0_v8_selected_trace_star_candidate_replay_mode=False,
+        b0_v11_candidate_report_replayed_read_only_mode=True,
+        candidate_report_path=frozen_candidate_report_path,
+        candidate_report_sha256=frozen_candidate_report_sha,
+        candidate_producer_contract_path=consumer_contract_path,
+        candidate_producer_contract_sha256=consumer_contract_sha,
+        candidate_producer_source_sha=consumer_source_sha,
+        v11_metadata_report_path=candidate_metadata_path,
+        v11_metadata_report_sha256=metadata_sha,
+        v11_v9_compact_report_path=candidate_compact_path,
+        v11_v9_compact_report_sha256=compact_sha,
+    )
+    readonly_environment = dict(readonly_service_kwargs["environment"])
+    readonly_environment.pop("TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT", None)
+    readonly_environment.pop("TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH", None)
+    readonly_environment.update(
+        {
+            "TASK41_P0_B0_V11_CANDIDATE_REPLAY_READ_ONLY": "1",
+            "TASK41_P0_B0_V11_CANDIDATE_REPORT_PATH": str(
+                frozen_candidate_report_path.resolve()
+            ),
+            "TASK41_P0_B0_V11_CANDIDATE_REPORT_SHA256": frozen_candidate_report_sha,
+            "TASK41_P0_B0_V11_PRODUCER_CONTRACT_PATH": str(
+                consumer_contract_path.resolve()
+            ),
+            "TASK41_P0_B0_V11_PRODUCER_CONTRACT_SHA256": consumer_contract_sha,
+            "TASK41_P0_B0_OUTPUT_DIR": str(readonly_output_root.resolve()),
+        }
+    )
+    readonly_service_kwargs["environment"] = readonly_environment
+    actual_supervise_calls.clear()
+    readonly_service_result = service_workflow._run_task41_p0_saved_output_service(
+        **readonly_service_kwargs
+    )
+    readonly_receipt = json.loads(
+        (
+            readonly_output_root.with_name(readonly_output_root.name + ".service")
+            / "task41_p0_service_receipt.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert readonly_service_result == 0, {
+        "workflow_error": readonly_receipt.get("workflow_error"),
+        "finalization_error": readonly_receipt.get("finalization_error"),
+        "required_checker_status": readonly_receipt.get("required_checker_status"),
+        "checker_errors": [
+            error.rsplit("/", 1)[-1].rstrip("')") if "KeyError" in error else error
+            for error in (
+                json.loads(Path(actual_supervise_calls[-1]["command"][-1]).read_text())
+                .get("errors", [])
+                if actual_supervise_calls
+                and Path(actual_supervise_calls[-1]["command"][-1]).is_file()
+                else []
+            )
+        ],
+    }
+    assert len(actual_supervise_calls) == 1
+    readonly_call = actual_supervise_calls[0]
+    assert readonly_call["campaign_phase"] == "closeout"
+    readonly_command = readonly_call["command"]
+    assert "--selected-trace-star-candidate-replay" not in readonly_command
+    assert readonly_command[readonly_command.index("--v11-report") + 1] == str(
+        frozen_candidate_report_path
+    )
+    readonly_check_output = Path(readonly_command[-1])
+    assert readonly_check_output.parent == readonly_output_root
+    assert readonly_check_output.parent != frozen_candidate_report_path.parent
+    assert hashlib.sha256(frozen_candidate_report_path.read_bytes()).hexdigest() == (
+        frozen_candidate_report_sha
+    )
+    assert readonly_receipt["candidate_report_replayed_read_only"] is True
+    assert readonly_receipt["numerical_work_started"] is False
+    assert readonly_receipt["result_classification"] == (
+        "V11_SAVED_CANDIDATE_REPLAY_RECHECKED"
+    )
+    assert readonly_receipt["required_checker_status"] == (
+        "independent_saved_array_check_completed"
+    )
+    budget_precheck = readonly_receipt["saved_diagnostics_disk_budget_precheck"]
+    budget_final = readonly_receipt["saved_diagnostics_disk_budget"]
+    compact_cumulative_bytes = json.loads(
+        candidate_compact_path.read_text(encoding="utf-8")
+    )["cumulative_evidence_bytes"]
+    assert budget_precheck["status"] == "PRE_CHECKER_ADMITTED"
+    assert budget_final["status"] == "POST_WRITE_CHECKED"
+    assert budget_final["recorded_cumulative_raw_artifact_bytes"] == (
+        compact_cumulative_bytes
+        + readonly_receipt["v11_prior_metadata_window_output_bytes"]
+    )
+    assert budget_final["window_output_tree_bytes"] >= budget_precheck[
+        "window_output_tree_bytes"
+    ]
+    assert budget_final["window_output_tree_bytes"] >= sum(
+        path.stat().st_size
+        for path in actual_output_root.rglob("*")
+        if path.is_file()
+    )
+    assert budget_final["bound_raw_artifact_bytes_stat_deduplicated"] > 0
+    assert budget_final["reserved_remaining_new_evidence_bytes"] == 0
+
+
+def test_task41_p0_v11_verified_donor_manifest_accepts_legacy_inner_omission() -> None:
+    from src.runners.task41_p0_checker import (
+        _task41_p0_v11_verified_donor_manifest_sha256,
+    )
+
+    frozen_sha = "a" * 64
+    assert _task41_p0_v11_verified_donor_manifest_sha256(
+        {"donor_manifest_sha256": frozen_sha}, {}, expected_sha256=frozen_sha
+    ) == frozen_sha
+    assert _task41_p0_v11_verified_donor_manifest_sha256(
+        {"donor_manifest_sha256": frozen_sha},
+        {"donor_manifest_sha256": frozen_sha},
+        expected_sha256=frozen_sha,
+    ) == frozen_sha
+    assert _task41_p0_v11_verified_donor_manifest_sha256(
+        {"donor_manifest_sha256": frozen_sha},
+        {"donor_manifest_sha256": "b" * 64},
+        expected_sha256=frozen_sha,
+    ) is None
+    assert _task41_p0_v11_verified_donor_manifest_sha256(
+        {"donor_manifest_sha256": "c" * 64}, {}, expected_sha256=frozen_sha
+    ) is None

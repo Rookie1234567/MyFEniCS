@@ -4576,6 +4576,25 @@ def _task41_p0_v12_integral_profile_matches_frozen_evaluator(
     )
 
 
+def _task41_p0_v11_verified_donor_manifest_sha256(
+    envelope: Mapping[str, Any], replay: Any, *, expected_sha256: str
+) -> str | None:
+    """Accept the frozen envelope binding when the legacy inner receipt omits it."""
+    envelope_sha = envelope.get("donor_manifest_sha256")
+    if (
+        not isinstance(envelope_sha, str)
+        or re.fullmatch(r"[0-9a-f]{64}", envelope_sha) is None
+        or envelope_sha != expected_sha256
+        or not isinstance(replay, Mapping)
+        or (
+            "donor_manifest_sha256" in replay
+            and replay.get("donor_manifest_sha256") != envelope_sha
+        )
+    ):
+        return None
+    return envelope_sha
+
+
 def check_task41_p0_v11_candidate_replay_saved_arrays(
     *,
     summary_path: Path,
@@ -4590,7 +4609,9 @@ def check_task41_p0_v11_candidate_replay_saved_arrays(
 ) -> dict[str, Any]:
     """Read-only independent recheck of V11's saved two-cell arrays and row terms."""
     from src.runners.task41_p0_contract import (
+        TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
         TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        contract_relative_path,
         load_task41_p0_fixed_window,
     )
     from src.runners.task41_p0_v4_volume_only_audit import (
@@ -4661,6 +4682,69 @@ def check_task41_p0_v11_candidate_replay_saved_arrays(
         candidate_report_path, "V11 selected candidate replay receipt envelope"
     )
     replay = report_envelope.get("v11_selected_trace_candidate_replay")
+    producer_source_sha = report_envelope.get("consumer_source_sha")
+    producer_contract_sha256 = report_envelope.get("consumer_contract_sha256")
+    producer_contract_raw = report_envelope.get("consumer_contract_path")
+    if (
+        not isinstance(producer_source_sha, str)
+        or re.fullmatch(r"[0-9a-f]{40}", producer_source_sha) is None
+        or not isinstance(producer_contract_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", producer_contract_sha256) is None
+        or not isinstance(producer_contract_raw, str)
+    ):
+        raise ValueError("V11 receipt omits its producer consumer-contract binding")
+    producer_contract_path = Path(producer_contract_raw)
+    producer_contract_path = (
+        producer_contract_path
+        if producer_contract_path.is_absolute()
+        else repo_root / producer_contract_path
+    ).resolve(strict=True)
+    producer_contract, producer_contract_digest = require_task41_p0_contract(
+        producer_contract_path,
+        expected_sha256=producer_contract_sha256,
+        current_root=repo_root,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    expected_producer_contract_path = (
+        repo_root
+        / contract_relative_path(
+            producer_source_sha,
+            "B0",
+            saved_diagnostics_instance=TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+        )
+    ).resolve(strict=True)
+    producer_window = load_task41_p0_fixed_window(
+        producer_contract, current_root=repo_root, require_current_boot=False
+    )
+    verified_donor_manifest_sha256 = _task41_p0_v11_verified_donor_manifest_sha256(
+        report_envelope, replay, expected_sha256=TASK41_V4_DONOR_MANIFEST_SHA256
+    )
+    if (
+        producer_contract_path != expected_producer_contract_path
+        or producer_contract_digest != producer_contract_sha256
+        or producer_contract.get("source", {}).get("sha") != producer_source_sha
+        or producer_contract.get("execution_scope") != consumer_contract.get("execution_scope")
+        or producer_contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+        != consumer_contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+        or producer_contract.get("execution_scope") != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+        or producer_contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+        != "same_lu_rhs_solve"
+        or producer_window.sha256 != fixed_window.sha256
+        or Path(producer_window.path).resolve() != Path(fixed_window.path).resolve()
+        or not isinstance(producer_contract.get("case"), Mapping)
+        or any(
+            producer_contract["case"].get(field) != consumer_case.get(field)
+            for field in (
+                "model_id", "run_id", "method", "mpi_size", "input_sha256",
+                "physical_model_sha256", "resolved_config_sha256", "profile_identity",
+                "solver_stage", "comparison_group", "geometry_identity",
+            )
+        )
+        or verified_donor_manifest_sha256 is None
+    ):
+        raise ValueError("V11 producer and current checker contracts are not bound to one scope/window")
     expected_attempt_root = candidate_report_path.parent.resolve(strict=True)
     expected_volume_root = (
         expected_attempt_root / "selected_trace_star_candidate_replay"
@@ -4671,10 +4755,9 @@ def check_task41_p0_v11_candidate_replay_saved_arrays(
         != "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1"
         or report_envelope.get("status") != "COMPLETED_LOCAL_CANDIDATE_REPLAY"
         or Path(str(report_envelope.get("consumer_contract_path", ""))).resolve()
-        != Path(consumer_contract_path).resolve(strict=True)
-        or report_envelope.get("consumer_contract_sha256") != consumer_digest
-        or report_envelope.get("consumer_source_sha")
-        != consumer_contract.get("source", {}).get("sha")
+        != producer_contract_path
+        or report_envelope.get("consumer_contract_sha256") != producer_contract_digest
+        or report_envelope.get("consumer_source_sha") != producer_source_sha
         or Path(str(report_envelope.get("donor_contract_path", ""))).resolve()
         != Path(donor_contract_path).resolve(strict=True)
         or report_envelope.get("donor_contract_sha256") != donor_digest
@@ -4693,14 +4776,16 @@ def check_task41_p0_v11_candidate_replay_saved_arrays(
         or replay.get("schema")
         != "task41.p0.v11.selected_trace_star_candidate_replay.v1"
         or replay.get("status") != "COMPLETED_LOCAL_CANDIDATE_REPLAY"
-        or replay.get("consumer_contract_sha256") != consumer_digest
-        or replay.get("consumer_source_sha")
-        != consumer_contract.get("source", {}).get("sha")
+        or replay.get("consumer_contract_sha256") != producer_contract_digest
+        or replay.get("consumer_source_sha") != producer_source_sha
         or Path(str(replay.get("consumer_window_path", ""))).resolve()
         != Path(fixed_window.path).resolve()
         or replay.get("consumer_window_sha256") != fixed_window.sha256
-        or replay.get("donor_manifest_sha256")
-        != TASK41_V4_DONOR_MANIFEST_SHA256
+        or (
+            "donor_manifest_sha256" in replay
+            and replay.get("donor_manifest_sha256")
+            != verified_donor_manifest_sha256
+        )
         or replay.get("metadata_report_sha256")
         != TASK41_P0_V11_METADATA_REPORT_SHA256
         or report_envelope.get("selected_metadata_report_path")
@@ -4785,7 +4870,8 @@ def check_task41_p0_v11_candidate_replay_saved_arrays(
         or v9_report.get("status") != "GATE_FAILED"
         or v9_report.get("official_result") is not False
         or v9_report.get("internal_rhs_strategy") != "same_lu_rhs_solve"
-        or v9_report.get("donor_manifest_sha256") != report.get("donor_manifest_sha256")
+        or v9_report.get("donor_manifest_sha256")
+        != verified_donor_manifest_sha256
         or not isinstance(action_gate, Mapping)
         or action_gate.get("status") != "GATE_FAILED"
         or report.get("candidate_evaluator_identity") != v9_report.get("candidate_evaluator_identity")
@@ -4814,7 +4900,7 @@ def check_task41_p0_v11_candidate_replay_saved_arrays(
         donor_contract_sha256=donor_digest,
         repo_root=repo_root,
     )
-    if donor["manifest_sha256"] != report.get("donor_manifest_sha256"):
+    if donor["manifest_sha256"] != verified_donor_manifest_sha256:
         raise ValueError("V11 selected vector inputs differ from the report donor manifest")
 
     def load_report_array(record: Any, label: str) -> np.ndarray:

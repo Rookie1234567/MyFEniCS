@@ -9573,6 +9573,10 @@ def _run_task41_p0_saved_output_service(
     b0_v8_selected_trace_star_mode: bool = False,
     b0_v8_selected_trace_star_metadata_only_mode: bool = False,
     b0_v8_selected_trace_star_candidate_replay_mode: bool = False,
+    b0_v11_candidate_report_replayed_read_only_mode: bool = False,
+    candidate_producer_contract_path: Path | None = None,
+    candidate_producer_contract_sha256: str | None = None,
+    candidate_producer_source_sha: str | None = None,
     v11_metadata_report_path: Path | None = None,
     v11_metadata_report_sha256: str | None = None,
     v11_v9_compact_report_path: Path | None = None,
@@ -9951,7 +9955,10 @@ def _run_task41_p0_saved_output_service(
         )
     ):
         raise ValueError("Task41 V8 selected-star route has incompatible saved-audit or numeric-source bindings")
-    if not b0_v8_selected_trace_star_candidate_replay_mode and any(
+    if not (
+        b0_v8_selected_trace_star_candidate_replay_mode
+        or b0_v11_candidate_report_replayed_read_only_mode
+    ) and any(
         value is not None
         for value in (
             v11_metadata_report_path,
@@ -9993,16 +10000,26 @@ def _run_task41_p0_saved_output_service(
     if (
         not b0_v6_actual_qmetric_mode
         and not b0_v8_selected_trace_star_mode
+        and not b0_v11_candidate_report_replayed_read_only_mode
         and ffcx_c_source_path is not None
     ):
-        raise ValueError("Task41 FFCx C source is only valid with a V6 or V8 q-metric evaluator")
-    if b0_v6_actual_qmetric_mode or (
-        b0_v8_selected_trace_star_mode
+        raise ValueError("Task41 FFCx C source is only valid with a V6/V8 evaluator or readonly candidate recheck")
+    if ffcx_c_source_path is not None and (
+        b0_v6_actual_qmetric_mode
+        or b0_v8_selected_trace_star_mode
         and not b0_v8_selected_trace_star_metadata_only_mode
+        or b0_v11_candidate_report_replayed_read_only_mode
     ):
         ffcx_c_source_path = ffcx_c_source_path.resolve(strict=True)
         if ffcx_c_source_path.suffix != ".c":
-            raise ValueError("Task41 V6/V8 q-metric source must be the generated .c file")
+            raise ValueError("Task41 FFCx source must be the generated .c file")
+    if b0_v11_candidate_report_replayed_read_only_mode and ffcx_c_source_path is not None:
+        from src.runners.task41_p0_v4_volume_only_audit import (
+            TASK41_P0_V11_FFCX_C_SOURCE_SHA256,
+        )
+
+        if sha256_file(ffcx_c_source_path) != TASK41_P0_V11_FFCX_C_SOURCE_SHA256:
+            raise ValueError("readonly candidate recheck FFCx source differs from the frozen candidate receipt")
     if b0_v6_saved_candidate_audit_mode and (
         not b0_evidence_audit_mode
         or b0_v4_volume_only_mode
@@ -10083,12 +10100,10 @@ def _run_task41_p0_saved_output_service(
         or b0_v8_saved_trace_star_audit_mode
         or b0_v9_saved_star_screen_mode
         or b0_v9_failed_terminal_audit_mode
+        or b0_v11_candidate_report_replayed_read_only_mode
     ) and (candidate_report_path is not None or candidate_report_sha256 is not None):
         raise ValueError("Task41 candidate report binding is only valid for a saved checker route")
     candidate_report_payload: Mapping[str, Any] | None = None
-    candidate_producer_contract_path: Path | None = None
-    candidate_producer_contract_sha256: str | None = None
-    candidate_producer_source_sha: str | None = None
     candidate_geometry_reference_path: Path | None = None
     candidate_array_paths: list[Path] = []
     candidate_source_artifact_paths: list[Path] = []
@@ -10567,6 +10582,7 @@ def _run_task41_p0_saved_output_service(
             raise ValueError("saved-diagnostics disk gate received a different execution scope")
         if saved_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE and not (
             b0_v8_selected_trace_star_candidate_replay_mode
+            or b0_v11_candidate_report_replayed_read_only_mode
         ):
             raise ValueError("V12 two-cell scope only admits its selected candidate replay")
         window_sha = str(contract.get("window", {}).get("sha256", ""))
@@ -10577,6 +10593,7 @@ def _run_task41_p0_saved_output_service(
             else "selected_incident_replay"
             if b0_v8_selected_trace_star_metadata_only_mode
             or b0_v8_selected_trace_star_candidate_replay_mode
+            or b0_v11_candidate_report_replayed_read_only_mode
             else ""
         )
         mode_output_root = window_output_root / expected_name if expected_name else window_output_root
@@ -10669,6 +10686,8 @@ def _run_task41_p0_saved_output_service(
             if b0_saved_y_g_comparison_mode
             else "saved_b0_v9_failed_terminal_audit"
             if b0_v9_failed_terminal_audit_mode
+            else "saved_b0_v11_candidate_replay_recheck"
+            if b0_v11_candidate_report_replayed_read_only_mode
             else "saved_b0_v11_selected_trace_candidate_replay"
             if b0_v8_selected_trace_star_candidate_replay_mode
             else "saved_b0_v8_selected_trace_star_metadata_only"
@@ -11596,7 +11615,17 @@ def _run_task41_p0_saved_output_service(
                 if b0_evidence_audit_mode
                 else "outputs_ready_reused"
             )
-            if b0_v6_saved_candidate_audit_mode:
+            if b0_v11_candidate_report_replayed_read_only_mode:
+                assert candidate_report_path is not None
+                assert candidate_report_sha256 is not None
+                candidate_report_payload = read_json_object(
+                    candidate_report_path, "V11 completed candidate replay report"
+                )
+                volume_report_path = candidate_report_path
+                volume_payload = candidate_report_payload
+                record["candidate_report_replayed_read_only"] = True
+                record["candidate_report_sha256"] = candidate_report_sha256
+            elif b0_v6_saved_candidate_audit_mode:
                 assert candidate_report_path is not None
                 assert candidate_report_payload is not None
                 volume_report_path = candidate_report_path
@@ -11643,7 +11672,10 @@ def _run_task41_p0_saved_output_service(
             record["numerical_work_started"] = False
             result_code = 0 if worker_ok else 3
             return result_code
-        if b0_v8_selected_trace_star_candidate_replay_mode:
+        if (
+            b0_v8_selected_trace_star_candidate_replay_mode
+            or b0_v11_candidate_report_replayed_read_only_mode
+        ):
             checker_ok = False
             if worker_ok:
                 assert candidate_report_path is not None
@@ -11683,8 +11715,73 @@ def _run_task41_p0_saved_output_service(
                 old_contract_path = Path(
                     str(metadata_report.get("consumer_contract_path", ""))
                 ).resolve(strict=True)
+                candidate_report_envelope = volume_payload
+                if not isinstance(candidate_report_envelope, Mapping):
+                    raise ValueError("V11 candidate receipt envelope is unavailable")
+                candidate_replay_payload = (
+                    candidate_report_envelope.get("v11_selected_trace_candidate_replay")
+                    if b0_v11_candidate_report_replayed_read_only_mode
+                    else candidate_report_payload
+                )
+                if not isinstance(candidate_replay_payload, Mapping):
+                    raise ValueError("V11 candidate receipt omits its inner replay binding")
+                raw_producer_contract_path = candidate_report_envelope.get(
+                    "consumer_contract_path"
+                )
+                producer_contract_sha = candidate_report_envelope.get(
+                    "consumer_contract_sha256"
+                )
+                producer_source_sha = candidate_report_envelope.get(
+                    "consumer_source_sha"
+                )
+                if not isinstance(raw_producer_contract_path, str) or not isinstance(
+                    producer_contract_sha, str
+                ) or not isinstance(producer_source_sha, str):
+                    raise ValueError("V11 candidate receipt omits its producer contract identity")
+                report_producer_contract_path = Path(raw_producer_contract_path)
+                report_producer_contract_path = (
+                    report_producer_contract_path
+                    if report_producer_contract_path.is_absolute()
+                    else repo_root / report_producer_contract_path
+                ).resolve(strict=True)
+                if b0_v11_candidate_report_replayed_read_only_mode:
+                    if (
+                        candidate_producer_contract_path is None
+                        or candidate_producer_contract_path.resolve(strict=True)
+                        != report_producer_contract_path
+                        or candidate_producer_contract_sha256 != producer_contract_sha
+                        or candidate_producer_source_sha != producer_source_sha
+                    ):
+                        raise ValueError("V11 report producer contract differs from the prevalidated binding")
+                    candidate_producer_contract_path = report_producer_contract_path
+                    candidate_producer_contract_sha256 = producer_contract_sha
+                    candidate_producer_source_sha = producer_source_sha
+                else:
+                    current_source_sha = contract.get("source", {}).get("sha")
+                    if (
+                        report_producer_contract_path != contract_path.resolve(strict=True)
+                        or producer_contract_sha != contract_sha
+                        or producer_source_sha != current_source_sha
+                        or (
+                            candidate_producer_contract_path is not None
+                            and candidate_producer_contract_path.resolve(strict=True)
+                            != contract_path.resolve(strict=True)
+                        )
+                        or (
+                            candidate_producer_contract_sha256 is not None
+                            and candidate_producer_contract_sha256 != contract_sha
+                        )
+                        or (
+                            candidate_producer_source_sha is not None
+                            and candidate_producer_source_sha != current_source_sha
+                        )
+                    ):
+                        raise ValueError("live V11 candidate replay must bind its producer to the current contract")
+                    candidate_producer_contract_path = contract_path.resolve(strict=True)
+                    candidate_producer_contract_sha256 = contract_sha
+                    candidate_producer_source_sha = current_source_sha
                 metadata_receipt_path = Path(
-                    str(candidate_report_payload.get("metadata_service_receipt_path", ""))
+                    str(candidate_replay_payload.get("metadata_service_receipt_path", ""))
                 ).resolve(strict=True)
                 donor_summary_value = read_json_object(
                     donor_summary_path, "V11 saved donor summary"
@@ -11707,6 +11804,7 @@ def _run_task41_p0_saved_output_service(
                         donor_summary_path,
                         donor_manifest_path,
                         candidate_report_path,
+                        candidate_producer_contract_path,
                         v11_metadata_report_path,
                         v11_v9_compact_report_path,
                         old_contract_path,
@@ -11743,6 +11841,128 @@ def _run_task41_p0_saved_output_service(
                     "source_branch": source_branch,
                     "source_clean": True,
                 }
+                if b0_v11_candidate_report_replayed_read_only_mode:
+                    assert v11_metadata_report_path is not None
+                    assert v11_v9_compact_report_path is not None
+                    (
+                        donor_array_paths,
+                        donor_raw_bytes_stat_only,
+                        donor_manifest_sha256,
+                    ) = stat_only_b0_donor_arrays()
+                    compact_report_value = read_json_object(
+                        v11_v9_compact_report_path, "V9 compact volume audit"
+                    )
+                    compact_action_gate = compact_report_value.get(
+                        "candidate_full_action_gate"
+                    )
+                    if (
+                        compact_report_value.get("schema")
+                        != "task41.p0.b0.v9.compact_volume_identity.v1"
+                        or compact_report_value.get("completed") is not True
+                        or compact_report_value.get("status") != "GATE_FAILED"
+                        or compact_report_value.get("official_result") is not False
+                        or compact_report_value.get("internal_rhs_strategy")
+                        != "same_lu_rhs_solve"
+                        or compact_report_value.get("donor_manifest_sha256")
+                        != donor_manifest_sha256
+                        or not isinstance(compact_action_gate, Mapping)
+                        or compact_action_gate.get("status") != "GATE_FAILED"
+                    ):
+                        raise ValueError(
+                            "V11 readonly recheck V9 compact report is not the bound failed same-LU source"
+                        )
+                    existing_bytes = compact_report_value.get("existing_evidence_bytes")
+                    prior_bytes = compact_report_value.get("prior_new_evidence_bytes")
+                    new_bytes = compact_report_value.get("new_evidence_bytes")
+                    cumulative_bytes = compact_report_value.get("cumulative_evidence_bytes")
+                    if (
+                        type(existing_bytes) is not int
+                        or existing_bytes != donor_raw_bytes_stat_only
+                        or type(prior_bytes) is not int
+                        or prior_bytes < 0
+                        or type(new_bytes) is not int
+                        or new_bytes < 0
+                        or type(cumulative_bytes) is not int
+                        or cumulative_bytes != existing_bytes + prior_bytes + new_bytes
+                    ):
+                        raise ValueError(
+                            "V11 readonly recheck V9 raw-evidence totals are inconsistent"
+                        )
+                    compact_array_paths: list[Path] = []
+                    from src.runners.task41_p0_v4_volume_only_audit import (
+                        TASK41_P0_V11_GLOBAL_ROW_COUNT,
+                        TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256,
+                        TASK41_P0_V11_V9_REDUCED_RHS_ARRAY_SHA256,
+                    )
+
+                    for field, expected_sha in (
+                        (
+                            "full_action_artifact",
+                            TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256,
+                        ),
+                        (
+                            "full_reduced_rhs_artifact",
+                            TASK41_P0_V11_V9_REDUCED_RHS_ARRAY_SHA256,
+                        ),
+                    ):
+                        artifact = compact_action_gate.get(field)
+                        if (
+                            not isinstance(artifact, Mapping)
+                            or artifact.get("sha256") != expected_sha
+                            or artifact.get("shape")
+                            != [TASK41_P0_V11_GLOBAL_ROW_COUNT, 2]
+                            or artifact.get("dtype") != "complex128"
+                        ):
+                            raise ValueError(
+                                f"V11 readonly recheck V9 compact {field} binding differs"
+                            )
+                        paths = hash_bound_inputs(
+                            artifact,
+                            allowed_root=v11_v9_compact_report_path.parent,
+                            label=f"V9 {field}",
+                        )
+                        if len(paths) != 1 or not paths[0].is_relative_to(
+                            results_root
+                        ):
+                            raise ValueError(
+                                f"V11 readonly recheck V9 {field} escaped the registered results tree"
+                            )
+                        compact_array_paths.extend(paths)
+                    if len(set(compact_array_paths)) != 2:
+                        raise ValueError(
+                            "V11 readonly recheck V9 action and reduced-RHS arrays are not distinct"
+                        )
+                    saved_bound_raw_paths = [
+                        *donor_array_paths,
+                        *compact_array_paths,
+                    ]
+                    current_window_root = (
+                        results_root
+                        / "task41_p0_saved_diagnostics_6h"
+                        / str(contract.get("window", {}).get("sha256", ""))
+                    ).resolve()
+                    prior_metadata_window_bytes = (
+                        _task41_v12_prior_metadata_window_bytes(
+                            v11_metadata_report_path,
+                            current_window_root=current_window_root,
+                            results_root=results_root,
+                            execution_scope=contract.get("execution_scope"),
+                            stat_output_tree=stat_output_tree,
+                        )
+                    )
+                    saved_recorded_raw_bytes = (
+                        cumulative_bytes + prior_metadata_window_bytes
+                    )
+                    record["v9_existing_evidence_bytes"] = existing_bytes
+                    record["v9_prior_new_evidence_bytes"] = prior_bytes
+                    record["v9_new_evidence_bytes"] = new_bytes
+                    record["v9_cumulative_evidence_bytes"] = cumulative_bytes
+                    record["v11_prior_metadata_window_output_bytes"] = (
+                        prior_metadata_window_bytes
+                    )
+                    record["saved_diagnostics_disk_budget_precheck"] = (
+                        saved_diagnostics_budget_check()
+                    )
                 checker_watchdog = supervise(
                     checker_command,
                     service_directory / "v11_saved_array_checker_watchdog",
@@ -11798,6 +12018,14 @@ def _run_task41_p0_saved_output_service(
                 service_ok=True,
                 finalization_ok=True,
             )
+            if b0_v11_candidate_report_replayed_read_only_mode:
+                record["result_classification"] = (
+                    "V11_SAVED_CANDIDATE_REPLAY_RECHECKED"
+                    if result_code == 0
+                    else "V11_SAVED_CANDIDATE_REPLAY_RECHECK_FAILED"
+                )
+                record["numerical_work_started"] = False
+                record["candidate_report_replayed_read_only"] = True
             return result_code
         checker_snapshot = (
             None
@@ -12755,6 +12983,11 @@ def _run_task41_p0_service(
         b0_v8_selected_trace_star_mode
         and "--selected-trace-star-candidate-replay" in case_args
     )
+    b0_v11_candidate_report_replayed_read_only_mode = bool(
+        case_args
+        and case_args[0] == "--task41-p0-saved-b0-evidence-audit"
+        and "--v11-completed-candidate-report" in case_args
+    )
     b0_v9_saved_star_screen_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-v9-star-screen"
     )
@@ -12808,6 +13041,9 @@ def _run_task41_p0_service(
     v9_screen_output_path: Path | None = None
     candidate_report_path: Path | None = None
     candidate_report_sha256: str | None = None
+    candidate_producer_contract_path: Path | None = None
+    candidate_producer_contract_sha256: str | None = None
+    candidate_producer_source_sha: str | None = None
     v9_terminal_producer_contract_path: Path | None = None
     v9_terminal_producer_contract_sha256: str | None = None
     v9_terminal_summary_path: Path | None = None
@@ -12939,34 +13175,99 @@ def _run_task41_p0_service(
             b0_v4_geometry_pair_mode = True
             source_report_path = Path(case_args[13]).resolve(strict=True)
         if len(case_args) == 15 and not b0_v4_volume_only_mode:
-            if (
-                case_args[0] != "--task41-p0-saved-b0-evidence-audit"
-                or case_args[11] != "--mesh-actual-exact-report"
-                or case_args[13] != "--mesh-actual-exact-report-sha256"
-            ):
-                raise ValueError("V6 saved-candidate audit requires its explicit report path and SHA-256")
-            candidate_report_path = Path(case_args[12]).resolve(strict=True)
-            candidate_report_sha256 = case_args[14]
-            candidate_report_value = read_json_object(
-                candidate_report_path, "Task41 saved candidate report"
-            )
-            from src.runners.task41_p0_checker import (
-                _task41_mesh_actual_exact_candidate_profile,
-            )
-
-            candidate_profile_version = _task41_mesh_actual_exact_candidate_profile(
-                candidate_report_path, candidate_report_value
-            ).get("version")
-            if candidate_profile_version == "v8":
-                b0_v8_saved_trace_star_audit_mode = True
-            else:
-                b0_v6_saved_candidate_audit_mode = True
-                raw_geometry_reference = candidate_report_value.get(
-                    "geometry_reference_report_path"
+            if b0_v11_candidate_report_replayed_read_only_mode:
+                if (
+                    case_args[0] != "--task41-p0-saved-b0-evidence-audit"
+                    or case_args[11] != "--v11-completed-candidate-report"
+                    or case_args[13] != "--v11-completed-candidate-report-sha256"
+                ):
+                    raise ValueError("V11 read-only checker route requires its exact report and hash arguments")
+                candidate_report_path = Path(case_args[12]).resolve(strict=True)
+                candidate_report_sha256 = case_args[14]
+                if (
+                    candidate_report_path.name
+                    != "task41_p0_v11_selected_trace_candidate_replay.json"
+                    or not re.fullmatch(r"[0-9a-f]{64}", candidate_report_sha256)
+                    or sha256_file(candidate_report_path) != candidate_report_sha256
+                    or candidate_report_path.stat().st_size > 64 * 1024**2
+                ):
+                    raise ValueError("V11 read-only candidate report path or hash differs")
+                candidate_report_value = read_json_object(
+                    candidate_report_path, "V11 completed candidate replay report"
                 )
-                if not isinstance(raw_geometry_reference, str):
-                    raise ValueError("Task41 V6 candidate report omits its geometry reference path")
-                candidate_geometry_reference_path = Path(raw_geometry_reference).resolve(strict=True)
+                replay = candidate_report_value.get("v11_selected_trace_candidate_replay")
+                if (
+                    candidate_report_value.get("schema")
+                    != "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1"
+                    or candidate_report_value.get("status")
+                    != "COMPLETED_LOCAL_CANDIDATE_REPLAY"
+                    or not isinstance(replay, Mapping)
+                    or replay.get("schema")
+                    != "task41.p0.v11.selected_trace_star_candidate_replay.v1"
+                    or replay.get("status") != "COMPLETED_LOCAL_CANDIDATE_REPLAY"
+                    or replay.get("scientific_qualified") is not False
+                    or replay.get("incident_cell_order") != [360, 446]
+                ):
+                    raise ValueError("V11 read-only route requires a completed two-cell candidate receipt")
+                raw_producer_contract = candidate_report_value.get("consumer_contract_path")
+                candidate_producer_contract_sha256 = candidate_report_value.get(
+                    "consumer_contract_sha256"
+                )
+                candidate_producer_source_sha = candidate_report_value.get(
+                    "consumer_source_sha"
+                )
+                if not isinstance(raw_producer_contract, str):
+                    raise ValueError("V11 candidate receipt omits its producer consumer contract")
+                candidate_producer_contract_path = Path(raw_producer_contract)
+                candidate_producer_contract_path = (
+                    candidate_producer_contract_path
+                    if candidate_producer_contract_path.is_absolute()
+                    else repo_root / candidate_producer_contract_path
+                ).resolve(strict=True)
+                if not isinstance(candidate_producer_contract_sha256, str):
+                    raise ValueError("V11 candidate receipt omits its producer contract hash")
+                v11_metadata_report_path = Path(
+                    str(replay.get("metadata_report_path", ""))
+                ).resolve(strict=True)
+                v11_metadata_report_sha256 = str(
+                    replay.get("metadata_report_sha256", "")
+                )
+                v11_v9_compact_report_path = Path(
+                    str(replay.get("v9_compact_report_path", ""))
+                ).resolve(strict=True)
+                v11_v9_compact_report_sha256 = str(
+                    replay.get("v9_compact_report_sha256", "")
+                )
+                candidate_report_payload = candidate_report_value
+            else:
+                if (
+                    case_args[0] != "--task41-p0-saved-b0-evidence-audit"
+                    or case_args[11] != "--mesh-actual-exact-report"
+                    or case_args[13] != "--mesh-actual-exact-report-sha256"
+                ):
+                    raise ValueError("V6 saved-candidate audit requires its explicit report path and SHA-256")
+                candidate_report_path = Path(case_args[12]).resolve(strict=True)
+                candidate_report_sha256 = case_args[14]
+                candidate_report_value = read_json_object(
+                    candidate_report_path, "Task41 saved candidate report"
+                )
+                from src.runners.task41_p0_checker import (
+                    _task41_mesh_actual_exact_candidate_profile,
+                )
+
+                candidate_profile_version = _task41_mesh_actual_exact_candidate_profile(
+                    candidate_report_path, candidate_report_value
+                ).get("version")
+                if candidate_profile_version == "v8":
+                    b0_v8_saved_trace_star_audit_mode = True
+                else:
+                    b0_v6_saved_candidate_audit_mode = True
+                    raw_geometry_reference = candidate_report_value.get(
+                        "geometry_reference_report_path"
+                    )
+                    if not isinstance(raw_geometry_reference, str):
+                        raise ValueError("Task41 V6 candidate report omits its geometry reference path")
+                    candidate_geometry_reference_path = Path(raw_geometry_reference).resolve(strict=True)
         elif len(case_args) == 15:
             if (
                 not b0_v4_volume_only_mode
@@ -13083,6 +13384,7 @@ def _run_task41_p0_service(
         or b0_saved_y_g_comparison_mode
         or b0_v8_selected_trace_star_metadata_only_mode
         or b0_v8_selected_trace_star_candidate_replay_mode
+        or b0_v11_candidate_report_replayed_read_only_mode
     ):
         raise ValueError(
             "saved-diagnostics contract is restricted to the V9 failed-terminal audit "
@@ -13095,6 +13397,7 @@ def _run_task41_p0_service(
     if (
         b0_v8_selected_trace_star_metadata_only_mode
         or b0_v8_selected_trace_star_candidate_replay_mode
+        or b0_v11_candidate_report_replayed_read_only_mode
     ) and (
         saved_scope is None
         or "selected_incident_replay" not in saved_scope.get("actions", [])
@@ -13272,6 +13575,148 @@ def _run_task41_p0_service(
             ):
                 raise ValueError("saved B0 donor input/config hashes differ from the frozen contracts")
             continuation_run_root = donor_run_root
+            if b0_v11_candidate_report_replayed_read_only_mode:
+                assert candidate_report_path is not None
+                assert candidate_report_sha256 is not None
+                assert candidate_report_value is not None
+                assert candidate_producer_contract_path is not None
+                assert candidate_producer_contract_sha256 is not None
+                assert isinstance(candidate_producer_source_sha, str)
+                from src.runners.task41_p0_contract import (
+                    TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+                    TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+                    contract_relative_path,
+                    load_task41_p0_fixed_window,
+                )
+                from src.runners.task41_p0_v4_volume_only_audit import (
+                    TASK41_P0_V11_METADATA_REPORT_SHA256,
+                    TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+                )
+                from src.solvers.task41_v4_volume_only_audit import (
+                    TASK41_V4_DONOR_MANIFEST_SHA256,
+                )
+
+                replay = candidate_report_value.get("v11_selected_trace_candidate_replay")
+                current_window = load_task41_p0_fixed_window(
+                    contract, current_root=repo_root, require_current_boot=False
+                )
+                producer_contract, producer_contract_digest = require_task41_p0_contract(
+                    candidate_producer_contract_path,
+                    expected_sha256=candidate_producer_contract_sha256,
+                    current_root=repo_root,
+                    check_current_source=False,
+                    require_clean_source=False,
+                    case_id="B0",
+                )
+                expected_producer_contract_path = (
+                    repo_root
+                    / contract_relative_path(
+                        candidate_producer_source_sha,
+                        "B0",
+                        saved_diagnostics_instance=TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+                    )
+                ).resolve(strict=True)
+                producer_window = load_task41_p0_fixed_window(
+                    producer_contract, current_root=repo_root, require_current_boot=False
+                )
+                producer_case = producer_contract.get("case")
+                consumer_case = contract.get("case")
+                expected_output_parent = (
+                    results_root
+                    / "task41_p0_saved_diagnostics_6h"
+                    / current_window.sha256
+                    / "selected_incident_replay"
+                )
+                attempt_pattern = r"attempt[0-9]{2,}"
+                if (
+                    not isinstance(replay, Mapping)
+                    or candidate_report_path.name
+                    != "task41_p0_v11_selected_trace_candidate_replay.json"
+                    or not candidate_report_path.is_relative_to(results_root)
+                    or sha256_file(candidate_report_path) != candidate_report_sha256
+                    or candidate_report_value.get("schema")
+                    != "task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1"
+                    or candidate_report_value.get("status")
+                    != "COMPLETED_LOCAL_CANDIDATE_REPLAY"
+                    or candidate_report_value.get("consumer_contract_path")
+                    != str(candidate_producer_contract_path)
+                    or candidate_report_value.get("consumer_contract_sha256")
+                    != producer_contract_digest
+                    or candidate_report_value.get("consumer_source_sha")
+                    != candidate_producer_source_sha
+                    or candidate_producer_contract_path != expected_producer_contract_path
+                    or producer_contract_digest != candidate_producer_contract_sha256
+                    or producer_contract.get("source", {}).get("sha")
+                    != candidate_producer_source_sha
+                    or producer_contract.get("execution_scope")
+                    != TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE
+                    or producer_contract.get("execution_scope")
+                    != contract.get("execution_scope")
+                    or producer_contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+                    != "same_lu_rhs_solve"
+                    or producer_contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+                    != contract.get("numerical_strategy", {}).get("internal_rhs_strategy")
+                    or not isinstance(producer_case, Mapping)
+                    or any(
+                        producer_case.get(key) != consumer_case.get(key)
+                        for key in (
+                            "model_id", "run_id", "method", "mpi_size", "input_sha256",
+                            "physical_model_sha256", "resolved_config_sha256", "profile_identity",
+                            "solver_stage", "comparison_group", "geometry_identity",
+                        )
+                    )
+                    or producer_window.sha256 != current_window.sha256
+                    or Path(producer_window.path).resolve()
+                    != Path(current_window.path).resolve()
+                    or candidate_report_value.get("consumer_window_sha256")
+                    != current_window.sha256
+                    or Path(str(candidate_report_value.get("consumer_window_path", ""))).resolve()
+                    != Path(current_window.path).resolve()
+                    or replay.get("consumer_contract_sha256") != producer_contract_digest
+                    or replay.get("consumer_source_sha") != candidate_producer_source_sha
+                    or replay.get("consumer_window_sha256") != current_window.sha256
+                    or Path(str(replay.get("consumer_window_path", ""))).resolve()
+                    != Path(current_window.path).resolve()
+                    or candidate_report_value.get("donor_manifest_sha256")
+                    != TASK41_V4_DONOR_MANIFEST_SHA256
+                    or replay.get("metadata_report_sha256")
+                    != TASK41_P0_V11_METADATA_REPORT_SHA256
+                    or replay.get("v9_compact_report_sha256")
+                    != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+                    or Path(str(replay.get("metadata_report_path", ""))).resolve()
+                    != Path(str(candidate_report_value.get("selected_metadata_report_path", ""))).resolve()
+                    or replay.get("metadata_report_sha256")
+                    != candidate_report_value.get("selected_metadata_report_sha256")
+                    or Path(str(replay.get("v9_compact_report_path", ""))).resolve()
+                    != Path(str(candidate_report_value.get("v9_compact_report_path", ""))).resolve()
+                    or replay.get("v9_compact_report_sha256")
+                    != candidate_report_value.get("v9_compact_report_sha256")
+                    or v11_metadata_report_path is None
+                    or v11_v9_compact_report_path is None
+                    or v11_metadata_report_path.name
+                    != "task41_p0_v8_selected_trace_star_metadata.json"
+                    or v11_metadata_report_sha256
+                    != TASK41_P0_V11_METADATA_REPORT_SHA256
+                    or not v11_metadata_report_path.is_relative_to(results_root)
+                    or sha256_file(v11_metadata_report_path) != v11_metadata_report_sha256
+                    or v11_v9_compact_report_path.name
+                    != "task41_p0_b0_v9_compact_volume_audit.json"
+                    or v11_v9_compact_report_sha256
+                    != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+                    or not v11_v9_compact_report_path.is_relative_to(results_root)
+                    or sha256_file(v11_v9_compact_report_path)
+                    != v11_v9_compact_report_sha256
+                    or candidate_report_path.parent.parent != expected_output_parent
+                    or re.fullmatch(attempt_pattern, candidate_report_path.parent.name) is None
+                    or not continuation_output_root.is_relative_to(results_root)
+                    or continuation_output_root.parent != expected_output_parent
+                    or re.fullmatch(attempt_pattern, continuation_output_root.name) is None
+                    or continuation_output_root.exists()
+                    or continuation_output_root == candidate_report_path.parent
+                ):
+                    raise ValueError(
+                        "V11 read-only report, producer/current contracts, or new output path differ"
+                    )
         elif b0_v9_failed_terminal_audit_mode:
             assert continuation_run_root is not None
             assert continuation_output_root is not None
@@ -13578,6 +14023,23 @@ def _run_task41_p0_service(
             ),
             "TASK41_P0_B0_V4_VOLUME_ONLY": "1" if b0_v4_volume_only_mode else "0",
         })
+        if b0_v11_candidate_report_replayed_read_only_mode:
+            assert candidate_report_path is not None
+            assert candidate_report_sha256 is not None
+            assert candidate_producer_contract_path is not None
+            assert candidate_producer_contract_sha256 is not None
+            environment.update({
+                "TASK41_P0_B0_V11_CANDIDATE_REPLAY_READ_ONLY": "1",
+                "TASK41_P0_B0_V11_CANDIDATE_REPORT_PATH": str(candidate_report_path),
+                "TASK41_P0_B0_V11_CANDIDATE_REPORT_SHA256": candidate_report_sha256,
+                "TASK41_P0_B0_V11_PRODUCER_CONTRACT_PATH": str(
+                    candidate_producer_contract_path
+                ),
+                "TASK41_P0_B0_V11_PRODUCER_CONTRACT_SHA256": (
+                    candidate_producer_contract_sha256
+                ),
+                "TASK41_P0_B0_OUTPUT_DIR": str(continuation_output_root.resolve()),
+            })
         if b0_v5_mesh_actual_exact_mode:
             environment.update({
                 "TASK41_P0_B0_V5_MESH_ACTUAL_EXACT": "1",
@@ -13690,6 +14152,12 @@ def _run_task41_p0_service(
             b0_v8_selected_trace_star_candidate_replay_mode=(
                 b0_v8_selected_trace_star_candidate_replay_mode
             ),
+            b0_v11_candidate_report_replayed_read_only_mode=(
+                b0_v11_candidate_report_replayed_read_only_mode
+            ),
+            candidate_producer_contract_path=candidate_producer_contract_path,
+            candidate_producer_contract_sha256=candidate_producer_contract_sha256,
+            candidate_producer_source_sha=candidate_producer_source_sha,
             v11_metadata_report_path=v11_metadata_report_path,
             v11_metadata_report_sha256=v11_metadata_report_sha256,
             v11_v9_compact_report_path=v11_v9_compact_report_path,

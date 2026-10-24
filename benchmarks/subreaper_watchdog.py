@@ -511,9 +511,12 @@ def _validate_campaign_closeout_authorization(
                 raise ValueError('saved-diagnostics output or command inputs escaped their registered paths')
         elif checker_kind == 'task41_p0_v11_selected_cell_saved_array_checker':
             from src.runners.task41_p0_contract import (
+                TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
                 TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
                 TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE,
                 TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE,
+                contract_relative_path,
+                load_task41_p0_fixed_window,
                 task41_case_id_for_run_id,
                 require_task41_p0_contract,
             )
@@ -524,6 +527,9 @@ def _validate_campaign_closeout_authorization(
             case = contract.get('case')
             scope = contract.get('execution_scope')
             window = contract.get('window')
+            read_only_candidate_replay = (
+                environment.get('TASK41_P0_B0_V11_CANDIDATE_REPLAY_READ_ONLY') == '1'
+            )
             if (
                 Path(argv[0]).resolve() != expected_python
                 or len(argv) != 20
@@ -538,9 +544,15 @@ def _validate_campaign_closeout_authorization(
                 or authorization.get('expected_channel_count') is not None
                 or environment.get('TASK41_P0_SAVED_OUTPUT_CONTINUATION') != '1'
                 or environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') != '1'
-                or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT') != '1'
+                or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_AUDIT')
+                != ('1' if not read_only_candidate_replay else None)
+                or environment.get('TASK41_P0_B0_V11_CANDIDATE_REPLAY_READ_ONLY')
+                not in (None, '1')
                 or environment.get('TASK41_P0_B0_V8_SELECTED_TRACE_STAR_METADATA_ONLY') is not None
-                or environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is None
+                or (
+                    not read_only_candidate_replay
+                    and environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH') is None
+                )
                 or environment.get('TASK41_P0_B0_V9_SAVED_STAR_SCREEN') is not None
                 or environment.get('TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT') is not None
                 or environment.get('TASK41_P0_B0_SAVED_Y_G_COMPARISON') is not None
@@ -628,35 +640,109 @@ def _validate_campaign_closeout_authorization(
             ):
                 raise ValueError('V12 checker donor manifest path, size, or hash differs from its summary')
 
+            attempt_root = candidate_report_path.parent.resolve(strict=True)
+            window_output_root = (
+                results_root / 'task41_p0_saved_diagnostics_6h' / str(window['sha256'])
+            )
+            output_root = Path(environment.get('TASK41_P0_B0_OUTPUT_DIR', '')).resolve()
+            output_under_registered_attempt = (
+                output_path.parent == output_root
+                and output_root.parent == window_output_root / 'selected_incident_replay'
+                and re.fullmatch(r'attempt[0-9]{2,}', output_root.name) is not None
+                and output_root != attempt_root
+            )
+            valid_output_parent = (
+                output_under_registered_attempt
+                if read_only_candidate_replay
+                else output_path.parent == attempt_root
+            )
             if (
                 candidate_report_path.name != 'task41_p0_v11_selected_trace_candidate_replay.json'
                 or not candidate_report_path.is_relative_to(results_root)
                 or _sha256_file(candidate_report_path) != candidate_report_sha256
                 or not re.fullmatch(r'[0-9a-f]{64}', candidate_report_sha256)
                 or output_path.name != 'task41_p0_v11_candidate_replay_saved_array_check.json'
-                or output_path.parent != candidate_report_path.parent
+                or not valid_output_parent
                 or output_path.exists()
                 or not output_path.is_relative_to(results_root)
-            ):
-                raise ValueError('V12 checker candidate report or result path/hash differs')
-            attempt_root = candidate_report_path.parent.resolve(strict=True)
-            window_output_root = (
-                results_root / 'task41_p0_saved_diagnostics_6h' / str(window['sha256'])
-            )
-            if (
-                attempt_root.parent != window_output_root / 'selected_incident_replay'
+                or attempt_root.parent != window_output_root / 'selected_incident_replay'
                 or re.fullmatch(r'attempt[0-9]{2,}', attempt_root.name) is None
             ):
-                raise ValueError('V12 checker attempt is outside the fixed-window replay directory')
+                raise ValueError('V12 checker candidate report or result path/hash differs')
 
             envelope = json.loads(candidate_report_path.read_text(encoding='utf-8'))
             replay = envelope.get('v11_selected_trace_candidate_replay')
+            producer_contract_path = contract_file
+            producer_contract_digest = contract_sha
+            producer_source_sha = contract.get('source', {}).get('sha')
+            if read_only_candidate_replay:
+                producer_contract_path = Path(
+                    environment.get('TASK41_P0_B0_V11_PRODUCER_CONTRACT_PATH', '')
+                ).resolve(strict=True)
+                producer_contract_digest = environment.get(
+                    'TASK41_P0_B0_V11_PRODUCER_CONTRACT_SHA256'
+                )
+                producer_source_sha = envelope.get('consumer_source_sha')
+                if (
+                    not isinstance(producer_contract_digest, str)
+                    or not re.fullmatch(r'[0-9a-f]{64}', producer_contract_digest)
+                    or not isinstance(producer_source_sha, str)
+                    or not re.fullmatch(r'[0-9a-f]{40}', producer_source_sha)
+                    or environment.get('TASK41_P0_B0_V11_CANDIDATE_REPORT_PATH')
+                    != str(candidate_report_path)
+                    or environment.get('TASK41_P0_B0_V11_CANDIDATE_REPORT_SHA256')
+                    != candidate_report_sha256
+                    or environment.get('TASK41_P0_B0_OUTPUT_DIR') != str(output_root)
+                ):
+                    raise ValueError('V12 read-only checker route lacks its frozen producer/output bindings')
+                producer_contract, producer_digest = require_task41_p0_contract(
+                    producer_contract_path,
+                    expected_sha256=producer_contract_digest,
+                    current_root=root,
+                    check_current_source=False,
+                    require_clean_source=False,
+                    case_id='B0',
+                )
+                expected_producer_path = (
+                    root
+                    / contract_relative_path(
+                        producer_source_sha,
+                        'B0',
+                        saved_diagnostics_instance=TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+                    )
+                ).resolve(strict=True)
+                producer_case = producer_contract.get('case')
+                producer_window = load_task41_p0_fixed_window(
+                    producer_contract, current_root=root, require_current_boot=False
+                )
+                if (
+                    producer_contract_path != expected_producer_path
+                    or producer_digest != producer_contract_digest
+                    or producer_contract.get('source', {}).get('sha') != producer_source_sha
+                    or producer_contract.get('execution_scope') != scope
+                    or producer_contract.get('numerical_strategy', {}).get('internal_rhs_strategy')
+                    != 'same_lu_rhs_solve'
+                    or not isinstance(producer_case, dict)
+                    or any(
+                        producer_case.get(field) != case.get(field)
+                        for field in (
+                            'model_id', 'run_id', 'method', 'mpi_size', 'input_sha256',
+                            'physical_model_sha256', 'resolved_config_sha256', 'profile_identity',
+                            'solver_stage', 'comparison_group', 'geometry_identity',
+                        )
+                    )
+                    or producer_window.sha256 != campaign.sha256
+                    or Path(producer_window.path).resolve() != campaign.path.resolve()
+                ):
+                    raise ValueError('V12 read-only producer contract is outside the current B0 replay window')
             if (
                 envelope.get('schema')
                 != 'task41.p0.v11.selected_trace_star_candidate_replay_receipt.v1'
                 or envelope.get('status') != 'COMPLETED_LOCAL_CANDIDATE_REPLAY'
-                or Path(str(envelope.get('consumer_contract_path', ''))).resolve() != contract_file
-                or envelope.get('consumer_contract_sha256') != contract_sha
+                or Path(str(envelope.get('consumer_contract_path', ''))).resolve()
+                != producer_contract_path
+                or envelope.get('consumer_contract_sha256') != producer_contract_digest
+                or envelope.get('consumer_source_sha') != producer_source_sha
                 or Path(str(envelope.get('donor_contract_path', ''))).resolve() != donor_contract_path
                 or envelope.get('donor_contract_sha256') != donor_digest
                 or Path(str(envelope.get('consumer_window_path', ''))).resolve() != campaign.path.resolve()
@@ -674,6 +760,8 @@ def _validate_campaign_closeout_authorization(
                 or replay.get('selected_active_row') != 87567
                 or replay.get('selected_original_row') != 250113
                 or replay.get('incident_cell_order') != [360, 446]
+                or replay.get('consumer_contract_sha256') != producer_contract_digest
+                or replay.get('consumer_source_sha') != producer_source_sha
             ):
                 raise ValueError('V12 checker worker receipt is incomplete or misbound')
 
@@ -688,6 +776,7 @@ def _validate_campaign_closeout_authorization(
                 summary_path,
                 donor_manifest_path,
                 candidate_report_path,
+                producer_contract_path,
                 metadata_path,
                 compact_path,
                 old_contract_path,
@@ -707,6 +796,7 @@ def _validate_campaign_closeout_authorization(
             if (
                 authorized_hashes.get(str(donor_contract_path)) != donor_digest
                 or authorized_hashes.get(str(contract_file)) != contract_sha
+                or authorized_hashes.get(str(producer_contract_path)) != producer_contract_digest
                 or authorized_hashes.get(str(candidate_report_path)) != candidate_report_sha256
                 or replay.get('metadata_report_sha256') != authorized_hashes.get(str(metadata_path))
                 or replay.get('v9_compact_report_sha256') != authorized_hashes.get(str(compact_path))
@@ -728,13 +818,19 @@ def _validate_campaign_closeout_authorization(
                 or compact.get('donor_manifest_sha256') != manifest_record.get('sha256')
             ):
                 raise ValueError('V12 checker metadata or compact donor receipt is not registered')
-            ffcx_path = Path(environment['TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH']).resolve(strict=True)
-            if (
-                not ffcx_path.is_relative_to(root)
-                or replay.get('ffcx_c_source_sha256') != TASK41_P0_V11_FFCX_C_SOURCE_SHA256
-                or _sha256_file(ffcx_path) != TASK41_P0_V11_FFCX_C_SOURCE_SHA256
-            ):
+            if replay.get('ffcx_c_source_sha256') != TASK41_P0_V11_FFCX_C_SOURCE_SHA256:
                 raise ValueError('V12 checker FFCx source differs from the frozen candidate receipt')
+            ffcx_source_path = environment.get('TASK41_P0_B0_V8_FFCX_C_SOURCE_PATH')
+            if ffcx_source_path is None:
+                if not read_only_candidate_replay:
+                    raise ValueError('live V12 checker route requires its registered FFCx source')
+            else:
+                ffcx_path = Path(ffcx_source_path).resolve(strict=True)
+                if (
+                    not ffcx_path.is_relative_to(root)
+                    or _sha256_file(ffcx_path) != TASK41_P0_V11_FFCX_C_SOURCE_SHA256
+                ):
+                    raise ValueError('V12 checker FFCx source differs from the frozen candidate receipt')
             input_paths = expected_inputs
         elif checker_kind == 'task41_p0_b0_v9_saved_star_screen_checker':
             from src.runners.task41_p0_contract import (
