@@ -1,6 +1,19 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V2最终执行收口（2026-10-24）
+## Task43 V3最新状态：五次正式dispatch，完整端点未资格化（2026-10-24）
+
+本节更新V2历史快照。V1 accepted9/R9仍为最后接受状态；原16次尝试和5份导入场只指V1机器inventory范围，不能代表V2/V3后的总dispatch。V2三次formal dispatch的wall小计为`4915.1723896381445s`；V3另有A1_q2与A2_q3两次，共5/6，A1组2/2、A2组3/3、剩余一个槽封存。
+
+| V3对象 | 实测记录 | 结论边界 |
+|---|---|---|
+| A1_q attempt2 | 180格网格已构建并进入装配，未保存因子分解或求解完成证据；`159.36019697086886s` whole watchdog、树RSS采样峰`948682752B`、task swap峰0 | 因真实A1 route没有创建WorkflowLedger而受控停止；上一份READY作为历史原件保留并由该事实反证。不是Maxwell数值失败，A1_R不运行 |
+| A2_q attempt3 | Y6_1 native p6 / R13 612模式；q19 volume operator、q32 incident/port；576 cells；FE=380160 derived（carrier389832−constrained slave9672=trace120960+interior259200）；121572²矩阵，stored NNZ实测111681742（此前估计112458734另列）、allocated128135952；assembly `4771.323931s`；primary residual和q8/q10样本实测留存 | primary condensed/full-transformed/A6分别`3.04405e−12/1.19725e−11/3.07852e−10`，低于各自门。7200秒性能门后`INCOMPLETE_NOT_OFFICIAL`；extra full-active explicit relative residual`1.19725e−11→1.20684e−11`未严格下降，故extra不确定性门失败，虽condensed/A6下降且仍过hard gates。native summary、extra q样本和完整端点比较未产出；实际命令及终态见[closeout compact](task43_hp_adaptivity/outcomes/records/v3_formal_diagnostic_closeout_v1.json) |
+| A2_q3资源与清理 | 整个watchdog `7213.133929461241s`，5971样本、过程树RSS峰`27098828800B`、task swap峰0；资源时钟推导stop在`7200.713435649872s`，其后约`12.420494s`是停止和清理尾段 | 未延长计算。watchdog另记录cache-stability异常和`cache_metadata_stable=false`；最终root观察到descendants cleared且无遗留PID，因此清理证据为有限，不写成全项无条件通过 |
+| 同精度目标/总裁决 | R9仍未通过最终零级s功率门；五次V2/V3 formal wall为`12287.666516070254s` | `PARTIAL / CONTROLLED_NEGATIVE`；没有完整q/R端点比较、独立精度通过或同精度FE/成本结论。A1_R/A2_R/B/C与0.7nm均未运行，不再重试或重分配 |
+
+逐文件原始hash、preflight历史、primary及extra字段、缺失输出和范围限制见[Task43 V3 closeout compact](task43_hp_adaptivity/outcomes/records/v3_formal_diagnostic_closeout_v1.json)、[A1终态记录](task43_hp_adaptivity/outcomes/records/a1_q_attempt2/dispatch_and_stop_record.json)、[A2 root终态审计](task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_terminal_audit.json)和[primary raw audit](task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_primary_raw_audit.json)。分依赖组的研究/合并边界见[selective merge manifest](task43_hp_adaptivity/outcomes/selective_merge_manifest.md)。没有CI通过、生产合并批准或master合并声明。
+
+## Task43 V2最终执行收口（2026-10-24，历史快照）
 
 accepted9/R9仍为最后接受状态，空间精度及相近精度下更少FE尚未证明。V2 Stage1 Q01–Q08补账后，A1_q和A2_q共dispatch三次；三次均在完整新端点证据前发生工程/输入绑定失败，不产生完整q/R扰动结论。V1物理解及接受状态不改写。
 

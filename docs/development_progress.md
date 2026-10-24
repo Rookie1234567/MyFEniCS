@@ -1,4 +1,19 @@
-# Task43最终收口（2026-10-24）：accepted9冻结，PARTIAL / CONTROLLED_NEGATIVE
+# Task43 当前收口（2026-10-24）：PARTIAL / CONTROLLED_NEGATIVE
+
+## V3最新进展：两次新增formal dispatch均未取得完整端点资格
+
+V1 accepted9/R9和R10拒绝结论保持冻结；下文16次求解尝试/5份导入场均是V1 inventory历史范围，不包括V2/V3 dispatch。V2三次与V3两次合计5/6，A1组2/2、A2组3/3，剩余一个槽封存。
+
+| V3 dispatch | 实际执行/结果 | 全流程资源与判定 |
+|---|---|---|
+| A1_q attempt2 | 构建180格网格并进入装配，未保存因子分解/求解完成证据。真实A1入口没有建立要求的WorkflowLedger，因此主控受控停止；先前READY仅是历史授权且已被现场问题反证 | `159.36019697086886s` whole watchdog，树RSS采样峰`948682752B`、task swap峰0；非数值方法失败 |
+| A2_q attempt3 | native WorkflowLedger真实运行到recovery；Y6_1 `[6,16,6]` 576格，R13 612模式，q19 volume operator、q32 incident/port；FE=380160 derived（carrier389832−slave9672=trace120960+interior259200）；矩阵121572²、stored NNZ实测111681742（既有Y6预测112458734另列）、allocated128135952，assembly `4771.323931s` | whole watchdog `7213.133929461241s`，按资源时钟推导stop event为7200.71343565s，余下约12.420494s为停止/清理。过程树RSS峰27098828800B，task swap峰0。extra full-active explicit residual`1.1972486318e−11→1.2068417985e−11`未严格下降；native summary/完整comparison缺失，结果INCOMPLETE_NOT_OFFICIAL。实际watchdog/worker命令见[V3 closeout compact](task43_hp_adaptivity/outcomes/records/v3_formal_diagnostic_closeout_v1.json)关联的launch excerpt |
+
+A2 primary before-extra condensed/full-transformed/独立A6相对残差分别为`3.0440529386e−12`、`1.1972486318e−11`、`3.0785228123e−10`并由root从保存的raw vectors独立重算；612通道、四幅值组与q8/q10样本指标见[post-PDE audit index](task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/index.json)。extra向量未保存，extra严格下降结论沿用stage ledger标量，不能称raw独立复核。watchdog另记cache-stability异常，尽管最终审计时后代清除，cleanup只作有限判定。
+
+V2三次formal wall小计`4915.1723896381445s`，V3两次`7372.49412643211s`，五次whole-watchdog wall合计`12287.666516070254s`。支持费用见[V3 pre-PDE audit index](task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/index.json)及[V3 closeout compact](task43_hp_adaptivity/outcomes/records/v3_formal_diagnostic_closeout_v1.json)；未监控wall不推测。空间/选择为PARTIAL、精度NOT_PASSED、同精度全过程成本NOT_ESTABLISHED、迭代NOT_RUN/NOT_QUALIFIED，0.7nm未运行。A1_R/A2_R/B/C关闭，无merge approval或master合并；完整逐项解释见[Response V3](task43_hp_adaptivity/response_v3.md)。
+
+## V1历史结果与阶段检查点
 
 本任务研究用局部单元细分 h 或提高单元阶次 p 来减少达到目标精度所需的独立未知量。数值/比较代码及最终focused/full pytest使用source HEAD`3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；本轮新增报告生成器由compact和figure provenance中的脚本SHA绑定，最终送审commit绑定它们。分支`task43_hp_adaptivity`，基线`405e3aff42ac421a4c99315df1ed9b96941ecbe4`；各历史PDE仍绑定自己实际source snapshot/ABI/input，不把数值HEAD追溯套给旧求解。
 

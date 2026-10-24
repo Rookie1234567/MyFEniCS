@@ -1,5 +1,23 @@
 # Task43 结果：部分完成，受控负结果
 
+## 最新收口：V3 两次有限诊断（2026-10-24）
+
+V1接受状态仍冻结在R9，最终空间精度未达。V3在原始最多6次formal dispatch额度内完成了两次获准尝试，累计共5/6次；A1组2/2、A2组3/3，剩余1次封存。A1_q2构网并进入装配后，因为实际A1入口没有建立要求的`WorkflowLedger`，由主控受控停止；A2_q3确实建立ledger、完成Y6_1网格与装配、保存primary和q8/q10场样本，但在7200秒墙钟门到期后停止，完整端点与比较未产出。两项均不是完整q/R资格，A1工程接线缺陷也不能归咎数值方法。
+
+| V3 formal dispatch | 实测结果 | 分类、资源与缺口 |
+|---|---|---|
+| A1_q attempt2 | 180格网格已建并进入装配；无因子分解/完整求解结果 | `G2_A1_WORKFLOW_LEDGER_NOT_WIRED`受控停止；whole-watchdog `159.36019697086886 s`，采样树RSS峰`948682752 B`，task swap峰0。见[A1停止原件](records/a1_q_attempt2/dispatch_and_stop_record.json)和[独立终态审核](records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json) |
+| A2_q attempt3 | Y6_1 native p6网格576格，R13 612模式；q19体算子、q32入射/端口；FE=380160 derived（389832 carrier−9672 constrained slave=120960 trace+259200 interior）；矩阵121572²，stored NNZ实测111681742、allocated 128135952，assembly `4771.323931380641 s`。旧Y6 stored-NNZ预测112458734另列，不推测预测差异原因 | primary residual和样本均留存；extra full-active explicit residual略增且未严格下降；7200秒性能停止，native summary与完整端点比较缺失。whole-watchdog `7213.133929461241 s`（资源时钟导出的stop event `7200.713435649872 s`，后续清理`12.420493811368942 s`），树RSS峰`27098828800 B`，task swap峰0；cleanup另有cache-stability异常，最终观察到后代清除但仅列有限清理证据。详见[完整V3 compact](records/v3_formal_diagnostic_closeout_v1.json)、[实际launch excerpt](records/A2_q3_actual_launch_process_excerpt_v1.json)和[tracked root终态审计](records/v3_root_post_pde_audit/A2_q3_terminal_audit.json) |
+| 总账 | V2三次 `4915.1723896381445 s`；V3两次 `7372.49412643211 s`；五次formal watchdog小计 `12287.666516070254 s` | 只相加whole-watchdog wall，不含支持工作、未监控检查或R8不完整历史；RSS峰不可相加，也不是完整campaign成本 |
+
+A2_q3正常修正后的primary-before-extra指标由root从保存的raw vectors独立重算为：returned condensed `b−Ax`相对值`3.0440529386035694e−12`、full-active transformed `1.1972486317982494e−11`、独立原方程A6 `3.078522812304335e−10`，均低于各自冻结门。旧Y6_1→primary的612通道功率最大绝对差`4.507666462316706e−11`（限值`1e−7`，0通道失败）；四组边界复幅最大归一差`6.139994079567577e−11`（`1e−5`），能量闭合`5.071976172388304e−11`（`1e−5`）。q8/q10样本分别有516096/1008000个正权Gauss点，域体积约350000 nm³；E/H、散射E/H与G中最大归一差`6.04423083302925e−11`（`1e−5`）。native完整`comparison_record.json`未产出；root已独立复核保存的primary场和原向量，这些属于partial raw audit，不等于完整端点比较。root没有重新积分A_volume，而读取现有hash绑定材料积分记录；不作相位拟合。完整raw值和输入hash见[primary raw audit](records/v3_root_post_pde_audit/A2_q3_primary_raw_audit.json)，SHA256 `95524c004138eecbf59ce6a61cc87426558ea10746caee1f06164d93273d49ba`。
+
+extra后 full-active explicit residual从`1.1972486318e−11`升至`1.2068417985e−11`，没有严格下降，故extra不确定性门为负；condensed从`3.0440529386e−12`降至`2.4209863927e−12`，A6从`3.0785228123e−10`降至`3.0781012464e−10`。extra raw向量未保存，这些extra标量没有独立raw重算。没有extra样本、native summary或完整comparison record；不得由primary partial的数值接近推出完整端点、积分通过、截断通过或空间精度。
+
+V2 Stage1与V3 G0–G4原件、校验及支持性费用索引见[V3 pre-PDE证据索引](records/v3_root_pre_pde_audit/index.json)；三次V2 dispatch及历史原件见[V2 formal compact](records/v2_formal_attempts_and_profile_fix_v1.json)。A1_q2此前签发的READY已被实际入口没有workflow ledger这一事实反证，仅作为历史授权保留；A2_q3 READY只授权过该次dispatch。A1/A2各组额度均耗尽，不再重试或重分配；A1_R、A2_R、B、C未运行，剩余额度封存。用户要求的五项能力、逐项审查回应与合并边界见[Response V3](../response_v3.md)。
+
+以下统一模型表、选择轨迹和原最终测试均为V1历史结果；除本节明确追加外，不回写任何原场或选择记录。
+
 本任务检验：能否根据真实场差，把有限元单元局部细分（h）或提高表示阶次（p），以相近精度比用户的6×10×6、p6对照使用更少独立未知量。任务书还要求比较同精度的全过程成本，但不要求成本必须获胜。九次中间更新被接受，但最后接受状态仍未满足全部输出精度；第10轮求解数值合格，却因改善未超过事前冻结的参考噪声而未接受。选择已停止，后验holdout/control结果不再反馈选择。
 
 | 最终判断对象 | 当前结论 | 证据与边界 |
@@ -46,7 +64,7 @@ J∞把每个输出误差除以该输出允许值再取最大值，只有J∞≤
 
 ## 全部模型的功率与独立自由度
 
-下表统一分开零级 s/p 反射功率与二者之和；`R/T/A_volume`均为相对入射功率的无量纲比例，FE是完整场的独立未知量。前16项是本任务新求解尝试（包含失败和受控停止），后5项是从旧任务导入的场，不是新增求解。缺值写“—”，表示未产出或历史未记录。
+下表统一分开零级 s/p 反射功率与二者之和；`R/T/A_volume`均为相对入射功率的无量纲比例，FE是完整场的独立未知量。该表和[旧inventory V1](records/unified_model_attempt_inventory_v1.json)仅覆盖V1的16次完整求解尝试（12条lineage）以及5份从旧任务导入的场；它不包括V2/V3后续formal dispatch。缺值写“—”，表示未产出或历史未记录。V2/V3新尝试见本页开头的独立版本表与[V3 compact](records/v3_formal_diagnostic_closeout_v1.json)。
 
 | 模型/尝试 | 角色与状态 | R00_s | R00_p | R00_total | R_total | T_total | A_volume | 独立FE |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
@@ -177,7 +195,7 @@ q8→q10的全部九组归一指标变化最大为4.09006162e-13倍最终容差�
 
 资源峰指同一时刻整个进程树RSS，不是因子对象字节、单进程峰或对象累加。原WSL-global文字保留，实际是native host全机诊断；全机swap增量不直接归因Task43。各正式run的gate在启动前登记，未运行中静默延长。共享JIT不等于冷启动，均无CI通过或同问题后端加速结论。
 
-### 最终本地检查
+### V1最终本地检查（历史记录）
 
 | 检查 | 实际结果 | 证据和范围 |
 |---|---|---|

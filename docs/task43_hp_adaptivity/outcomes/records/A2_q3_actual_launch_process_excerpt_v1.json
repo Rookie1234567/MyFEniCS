@@ -1,0 +1,130 @@
+{
+  "schema": "task43.v3.actual_launch_process_excerpt.v1",
+  "classification": "read_only_excerpt_from_original_watchdog_resource_sample",
+  "source": {
+    "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/resources.jsonl",
+    "sha256": "c80cf7e482fa851a9f5134a86a4bdb5aa7096b880071a276111db4c270f1a94a",
+    "sample_line_number": 3,
+    "sample_line_sha256": "b43790694be362a416b3df41c1f219b01ccb56780068c69d929279d18a64a319",
+    "sample_elapsed_seconds": 2.5797472912818193,
+    "sample_timestamp_ns": 1792838521816314866,
+    "sample_stage": "workflow",
+    "note": "First saved resource row containing the actual Python native solver process; selected by exact comm/cmdline prefix, not an ABI shell that merely embeds the command."
+  },
+  "identity": {
+    "source_head": "d92c210a6704de99362f5e696d157d6c356d9efd",
+    "contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
+    "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+    "ready_record_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_ready_A2_q_attempt3.json",
+    "ready_record_sha256": "1c356e2a672435fc099a98216ad759f5a3e4a9679ea5511573f9c00770b70572",
+    "worker_abi_record_path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.json",
+    "worker_abi_record_sha256": "a8daf3ac571e2fcb9d307522afc0e59fd72140038dd761aac96b415970bf42e9",
+    "source_input_postcheck_path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/source_input_hashes_postcheck.json",
+    "source_input_postcheck_sha256": "1a593c51e51ef55c9a063fd6cd0f11c4b44b6fac392ab7d10d0a0c34c1255649",
+    "source_count": 60,
+    "input_count": 47,
+    "source_and_input_hashes_match": true
+  },
+  "processes": {
+    "watchdog": {
+      "pid": 2194642,
+      "ppid": 2194610,
+      "start_ticks": 276351379,
+      "affinity_at_sample": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog --wall-seconds 7200 --interval 1 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/workflow_phase.json -- bash -lc \nset -euo pipefail\ncd /home/fenics/Projects/NN-Lab-V2\nsource scripts/activate_task40_phi90_pord64.sh\nexport OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 BLIS_NUM_THREADS=1\nTASK43_EXPECTED_ATTEMPT_ROOT=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3 TASK43_EXPECTED_PHASE=A2_q TASK43_ABI_RECORD_PATH=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.json PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1 taskset -c 1 python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.py\nexec taskset -c 1 python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 3 --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+    },
+    "solver_worker": {
+      "pid": 2194643,
+      "ppid": 2194642,
+      "start_ticks": 276351410,
+      "affinity_at_sample": [
+        1
+      ],
+      "cmdline": "python -u -m benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic --phase A2_q --attempt 3 --v3-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json --v3-plan /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/diagnostic_plan_v3.md"
+    },
+    "parent_chain_verified": true
+  },
+  "worker_abi": {
+    "classification": "qualified_worker_abi_and_cpu_pass",
+    "phase": "A2_q",
+    "attempt_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3",
+    "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/workflow_phase.json",
+    "mpi_size": 1,
+    "petsc_scalar": "complex128",
+    "petsc_int": "int64",
+    "mumps_available": true,
+    "affinity": [
+      1
+    ],
+    "math_threads": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "fail_closed_gates": {
+      "absolute_expected_phase_path": true,
+      "all_math_threads_one": true,
+      "complex128": true,
+      "cpu1_only": true,
+      "int64": true,
+      "mpi1": true,
+      "mumps": true,
+      "native_linux": true,
+      "qualified_activation": true,
+      "qualified_python": true,
+      "task43_capacity_profile": true
+    },
+    "phase_ledger_created_by_workflow_ledger_after_worker_start": true
+  }
+}

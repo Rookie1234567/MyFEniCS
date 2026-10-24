@@ -1,0 +1,459 @@
+{
+  "schema": "task43.v3.formal_diagnostic_closeout.v1",
+  "classification": "PARTIAL_CONTROLLED_NEGATIVE",
+  "A1_q_attempt2_source_head": "28dd150ac2917d6df272324e0b00b960064dad00",
+  "base_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+  "formal_budget": {
+    "original_maximum": 6,
+    "dispatches_used": 5,
+    "sealed_remaining": 1,
+    "A1_used_and_maximum": [
+      2,
+      2
+    ],
+    "A2_used_and_maximum": [
+      3,
+      3
+    ],
+    "A1_R": "not_run_no_A1_q_qualified_endpoint",
+    "A2_R": "not_run",
+    "B": "locked",
+    "C": "locked_and_sealed",
+    "cross_group_or_further_reallocation": false,
+    "automatic_retry": false
+  },
+  "formal_watchdog_costs_seconds": {
+    "V2_three_dispatches": 4915.1723896381445,
+    "V3_A1_q_attempt2": 159.36019697086886,
+    "V3_A2_q_attempt3": 7213.133929461241,
+    "V3_two_dispatches_subtotal": 7372.49412643211,
+    "V2_plus_V3_five_dispatches_subtotal": 12287.666516070254,
+    "scope_note": "Observed formal watchdog elapsed only; excludes all support, component, unmonitored and incomplete historical work and is not a whole-campaign total."
+  },
+  "formal_attempts": [
+    {
+      "attempt": "A1_q_attempt1",
+      "version": "V2",
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 4882.447373806033,
+      "sampled_simultaneous_tree_rss_peak_bytes": 9708847104,
+      "task_tree_swap_peak_bytes": 0,
+      "conclusion": "Observer broadcast failed on nested MappingProxyType; partial modal facts are not a complete endpoint or q qualification.",
+      "evidence": "outcomes/records/v2_formal_attempts_and_profile_fix_v1.json"
+    },
+    {
+      "attempt": "A2_q_attempt1",
+      "version": "V2",
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 18.740401392802596,
+      "sampled_simultaneous_tree_rss_peak_bytes": 190795776,
+      "task_tree_swap_peak_bytes": 0,
+      "conclusion": "Missing PHYSICAL_WATCHDOG_PHASE_PATH; exited before mesh/PDE work.",
+      "evidence": "outcomes/records/v2_formal_attempts_and_profile_fix_v1.json"
+    },
+    {
+      "attempt": "A2_q_attempt2",
+      "version": "V2",
+      "classification": "WORKER_FAILED",
+      "whole_watchdog_seconds": 13.984614439308643,
+      "sampled_simultaneous_tree_rss_peak_bytes": 190918656,
+      "task_tree_swap_peak_bytes": 0,
+      "conclusion": "Native frozen-profile check rejected the hash-bound Y6_1 record because the derived display_label was absent; exited before mesh/PDE work.",
+      "evidence": "outcomes/records/v2_formal_attempts_and_profile_fix_v1.json"
+    },
+    {
+      "attempt": "A1_q_attempt2",
+      "version": "V3",
+      "classification": "CONTROLLED_STOP_G2_A1_WORKFLOW_LEDGER_NOT_WIRED",
+      "original_watchdog_classification": "USER_CONTROLLED_STOP",
+      "whole_watchdog_seconds": 159.36019697086886,
+      "sampled_simultaneous_tree_rss_peak_bytes": 948682752,
+      "task_tree_swap_peak_bytes": 0,
+      "actual_scope": "Built a 180-hexahedron mesh and entered assembly; no factorization or completed-solve evidence was saved.",
+      "stop_reason": "Root stopped the run after finding the real A1 route did not instantiate WorkflowLedger; the previous READY is historical and invalidated for further dispatch.",
+      "evidence": {
+        "dispatch_record": "outcomes/records/a1_q_attempt2/dispatch_and_stop_record.json",
+        "root_terminal_audit": "outcomes/records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json"
+      }
+    },
+    {
+      "attempt": "A2_q_attempt3",
+      "version": "V3",
+      "classification": "PERFORMANCE_CONTROLLED_STOP_INCOMPLETE_NOT_OFFICIAL",
+      "source_head": "d92c210a6704de99362f5e696d157d6c356d9efd",
+      "contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
+      "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+      "ready_record_sha256": "1c356e2a672435fc099a98216ad759f5a3e4a9679ea5511573f9c00770b70572",
+      "launch": {
+        "detached_launch_return_utc": "2026-10-24T10:41:54Z",
+        "launcher_pid": 2194608,
+        "watchdog_pid": 2194642,
+        "solver_worker_pid": 2194643,
+        "configured_deadline_seconds": 7200,
+        "hard_rss_cap_bytes": 206158430208,
+        "planning_envelope_bytes": 103079215104,
+        "resource_profile": "task43_hp_adaptivity_resource_v1",
+        "CPU_affinity": [
+          1
+        ],
+        "MPI_size": 1,
+        "threads_per_rank": 1,
+        "PETSc_scalar": "complex128",
+        "PETSc_integer": "int64",
+        "MUMPS_available": true,
+        "actual_process_command_excerpt": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/A2_q3_actual_launch_process_excerpt_v1.json",
+          "sha256": "fd7fda96351e8df9dcafc928875ef6502e41c4f17a6516fb984ee4cc79e703f9",
+          "source_resource_file_sha256": "c80cf7e482fa851a9f5134a86a4bdb5aa7096b880071a276111db4c270f1a94a",
+          "sample_line_number": 3,
+          "sample_elapsed_seconds": 2.5797472912818193,
+          "note": "Contains actual watchdog cmdline and the exact native solver worker cmdline/PPID from the first matching saved resource sample, plus hash-bound ABI/source/input identities."
+        }
+      },
+      "preflight_history": {
+        "attempt2_ready_but_unused_sha256": "9d66ff416674544b84a04d9e735833a0ca6443fb89bb09c4f956fc33ba33f34d",
+        "attempt3_actual_preflight_sha256": "9f41203e726c1d6704a632696e54085f1fc824b4aadd2431e34694fd5b813e41",
+        "attempt3_source_count": 60,
+        "attempt3_input_count": 47,
+        "attempt3_launch_support_count": 7,
+        "attempt3_all_launch_support_hashes_match_reviewed_attempt2": true,
+        "note": "Attempt 2 was a complete ready preflight but was not referenced by detach. Attempt 3 was the actual referenced snapshot; it lacked only the redundant named exact-reviewed-materials field, while every one of the seven reviewed launch-file hashes matched. The initial host helper path error is retained as support work and was corrected before dispatch."
+      },
+      "actual_work": {
+        "native_workflow_ledger_created": true,
+        "last_phase": "recovery",
+        "last_stage": "task43_v2_extra_lu_correction_and_independent_a6_complete",
+        "mesh": {
+          "case": "Y6_1",
+          "hexahedral_cells": 576,
+          "axis_cell_counts_xyz": [
+            6,
+            16,
+            6
+          ],
+          "material_tag_counts": {
+            "1": 432,
+            "2": 96,
+            "3": 48
+          },
+          "actual_axes_match_frozen_coordinates": true,
+          "active_degree": 6,
+          "active_trace_rows": 120960,
+          "carrier_storage_rows_including_constraints": 389832,
+          "constrained_slave_rows_derived": 9672,
+          "independent_FE_derived": 380160,
+          "independent_FE_split_derived": {
+            "trace": 120960,
+            "interior": 259200
+          },
+          "FE_identity_note": "Derived from the actual mesh/space ledger: 389832 carrier rows minus 9672 constrained slave rows equals 380160 independent FE; equivalently 120960 trace + 259200 interior. Carrier length itself is not FE."
+        },
+        "port_and_quadrature": {
+          "rectangle": "R13",
+          "ordered_modes": 612,
+          "volume_operator_quadrature_degree": 19,
+          "incident_and_port_quadrature_degree": 32,
+          "mode_basis_scale_policy": null
+        },
+        "matrix": {
+          "shape": [
+            121572,
+            121572
+          ],
+          "stored_nnz": 111681742,
+          "allocated_nnz": 128135952,
+          "stored_nnz_prediction_from_prior_Y6": 112458734,
+          "prediction_scope_note": "The planned prior-Y6 estimate is kept separate from the measured A2_q3 value; no cause for their difference is inferred.",
+          "assembly_wall_seconds": 4771.323931380641,
+          "factor_symbolic_calls": 1,
+          "factor_numeric_calls": 1,
+          "normal_corrections": 1,
+          "extra_same_factor_solves": 1
+        },
+        "primary_before_extra": {
+          "classification": "measured_primary_state_before_extra_not_official",
+          "selection_eligible": false,
+          "normal_correction_raw_audit_passed": true,
+          "condensed_b_minus_Ax_relative": 3.0440529386035517e-12,
+          "condensed_gate": 1e-09,
+          "full_active_space_transformed_relative": 1.1972486317982494e-11,
+          "full_active_space_transformed_gate": 1e-08,
+          "independent_A6_relative": 3.078522812304335e-10,
+          "independent_A6_gate": 1e-08,
+          "scope_note": "These are measured before the extra correction and are copied from the saved stage record; the primary packet preserves the corresponding raw arrays. They do not make the run official or complete the endpoint comparison."
+        },
+        "extra_correction": {
+          "status": "FAIL_UNCONTROLLED_EXTRA_CORRECTION",
+          "single_extra_solve": true,
+          "raw_extra_vectors_saved": false,
+          "full_active_space_explicit_relative_before": 1.1972486317982494e-11,
+          "full_active_space_explicit_relative_after": 1.2068417985488609e-11,
+          "full_active_space_explicit_gate": 1e-08,
+          "full_active_space_explicit_strict_decrease": false,
+          "condensed_relative_before": 3.0440529386035517e-12,
+          "condensed_relative_after": 2.4209863926974724e-12,
+          "condensed_gate": 1e-09,
+          "condensed_strict_decrease": true,
+          "independent_A6_relative_before": 3.078522812304335e-10,
+          "independent_A6_relative_after": 3.078101246418967e-10,
+          "independent_A6_gate": 1e-08,
+          "hard_residual_gates_after_extra": true,
+          "qualification": "The hard limits pass, but the full active explicit residual increased slightly and did not strictly decrease; therefore the extra-correction uncertainty gate fails. The saved ledger scalars were not independently recomputed from extra raw vectors because those vectors were not saved."
+        },
+        "field_samples": {
+          "five_plane_reference_sample_points": 12800,
+          "q8_points": 516096,
+          "q10_points": 1008000,
+          "classification": "measured_primary_before_extra_not_official",
+          "native_full_comparison_record": "not_produced",
+          "root_saved_primary_recheck": "completed for saved primary 612 modes and q8/q10 sample metrics; partial arithmetic only, not complete endpoint qualification",
+          "extra_q8_q10_samples": "not_produced"
+        }
+      },
+      "terminal": {
+        "watchdog_classification": "PERFORMANCE_CONTROLLED_STOP",
+        "watchdog_elapsed_seconds_including_stop_and_cleanup": 7213.133929461241,
+        "resource_sample_count": 5971,
+        "deadline_stop_event_utc": "2026-10-24T12:41:59.949531+00:00",
+        "deadline_stop_elapsed_seconds_derived_from_resource_clock": 7200.713435649872,
+        "first_SIGTERM_utc": "2026-10-24T12:41:59.949610+00:00",
+        "first_SIGKILL_utc": "2026-10-24T12:42:02.320763+00:00",
+        "cleanup_after_stop_seconds_derived": 12.420493811368942,
+        "last_resource_sample_utc": "2026-10-24T12:42:12.262537+00:00",
+        "last_resource_sample_elapsed_seconds": 7213.025633458048,
+        "sampled_simultaneous_process_tree_rss_peak_bytes": 27098828800,
+        "task_tree_swap_peak_bytes": 0,
+        "warning_samples": 0,
+        "cache_stability_exception": {
+          "stage": "cache_stability",
+          "type": "RuntimeError",
+          "message": "descendants did not clear after SIGKILL",
+          "cache_metadata_stable": false
+        },
+        "terminal_cleanup_observation": {
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "all_observed_child_and_launcher_pids_absent_at_root_audit": true,
+          "cleanup_gate": "LIMITED_NOT_UNCONDITIONAL_PASS"
+        },
+        "exit_codes": {
+          "solver_leader": -15,
+          "watchdog": 2,
+          "launcher": 2
+        },
+        "endpoint_status": "INCOMPLETE_NOT_OFFICIAL",
+        "native_runner_summary": "not_present_do_not_fabricate",
+        "missing_outputs": [
+          "run/p6_condensed_direct_summary.json",
+          "run/comparison_record.json",
+          "run/numerical_output/task43_v3_extra_q8_field_sample.npz",
+          "run/numerical_output/task43_v3_extra_q10_field_sample.npz"
+        ],
+        "continuation": {
+          "A1_R": false,
+          "A2_R": false,
+          "B": false,
+          "C": false,
+          "cost_campaign": false,
+          "iteration": false
+        }
+      },
+      "identity_files": {
+        "watchdog_summary": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/summary.json",
+          "sha256": "5b15cbe6d8ec6c803bbe76d0b35e7f74c4eb33a3ecfe968acdadf6ed7394b2c1"
+        },
+        "watchdog_resources": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/resources.jsonl",
+          "sha256": "c80cf7e482fa851a9f5134a86a4bdb5aa7096b880071a276111db4c270f1a94a"
+        },
+        "workflow_phase": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/workflow_phase.json",
+          "sha256": "194fbfb3c3c36d5bb01ae25db0e546105f684fcf3ef2bafc8f019520edd9f02c"
+        },
+        "stages": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/stages.jsonl",
+          "sha256": "3283b93832b68d32c8b7889a9add61863f8a1a9b44e52d5a98cc70ce6ec029be"
+        },
+        "worker_log": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/watchdog/worker.log",
+          "sha256": "2a42877b1995be72f80595636a7cf17400daebf7710095abf46b4bab3a7445ba"
+        },
+        "prelaunch_preflight_used": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/prelaunch_preflight.json",
+          "sha256": "9f41203e726c1d6704a632696e54085f1fc824b4aadd2431e34694fd5b813e41"
+        },
+        "worker_abi": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/worker_abi_preflight.json",
+          "sha256": "a8daf3ac571e2fcb9d307522afc0e59fd72140038dd761aac96b415970bf42e9"
+        },
+        "source_input_postcheck": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/source_input_hashes_postcheck.json",
+          "sha256": "1a593c51e51ef55c9a063fd6cd0f11c4b44b6fac392ab7d10d0a0c34c1255649",
+          "sources": 60,
+          "inputs": 47,
+          "all_match": true
+        },
+        "primary_before_extra_packet": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_before_extra.npz",
+          "sha256": "cc368ed3d9baa391d70b8c368ab2868e5e78c60df464184fbbfa6536c5077feb",
+          "bytes": 17451495
+        },
+        "primary_q8_sample": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_q8_field_sample.npz",
+          "sha256": "89a50aa029cd0c9f06748bbed679fede142063826e85815886a4e1e10ea4c16c",
+          "bytes": 73515428
+        },
+        "primary_q10_sample": {
+          "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_q10_field_sample.npz",
+          "sha256": "228fb211efa7da2b56fc7fec3ad38a89f89faba904bf5f6e54c400ad4d82e695",
+          "bytes": 143672562
+        },
+        "native_summary_absent": true,
+        "root_terminal_raw_audit": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_terminal_audit.json",
+          "sha256": "8adab35854f066f90a444c613de363fe06a861db35157ba3ec9d7f5ef5d3b0a2"
+        },
+        "root_primary_raw_audit_index": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/index.json",
+          "sha256": "2986fcb617de0323caa17982b7d776e526ff9edf463071b5037be8875511fc65"
+        }
+      }
+    }
+  ],
+  "support_costs_and_limits": {
+    "previous_stage_support_index": "outcomes/records/v3_root_pre_pde_audit/index.json",
+    "measured_support_work_seconds": {
+      "watchdog_cli_tiny_child": 8.303391347173601,
+      "old_y6_av_three_rule_watchdog": 214.26300512300804,
+      "old_field_comparison_input_read_unmonitored": 25.105821434874088,
+      "three_historical_terminal_recheck_unmonitored": 26.132700433023274,
+      "A2_q3_root_terminal_audit_unmonitored": 4.248258781153709
+    },
+    "non_additive_child_stage_seconds": {
+      "old_y6_av_integration_child": 175.32053942326456
+    },
+    "support_preflight_attempt2_ready_but_unused": "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/prelaunch_preflight_host_attempt2.json",
+    "support_preflight_attempt3_actual": "/tmp/task43/v3_launch_review_materials/A2_q_attempt3/prelaunch_preflight_host_attempt3.json",
+    "support_preflight_initial_path_error": "The first host helper looked for worker_abi_preflight.py in the launch-material directory instead of the frozen support directory; corrected before formal dispatch. No watchdog cost was measured.",
+    "root_raw_audit_attempts": [
+      {
+        "attempt": 1,
+        "classification": "support_script_failed_not_formal_dispatch",
+        "reason": "NPZ array identity was incorrectly assumed to hash payload bytes without dtype and shape; stopped at first array; evidence unchanged"
+      },
+      {
+        "attempt": 2,
+        "classification": "support_script_failed_not_formal_dispatch",
+        "reason": "Script expected a standalone historical volume_absorption file; stopped before field comparisons; original summary held the Av record"
+      },
+      {
+        "attempt": 3,
+        "classification": "support_export_failed_not_formal_dispatch",
+        "reason": "Arithmetic completed, but JSON export rejected numpy.bool_; no audit record was created"
+      },
+      {
+        "attempt": 4,
+        "classification": "completed_read_only_audit",
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_primary_raw_audit.json",
+        "record_sha256": "95524c004138eecbf59ce6a61cc87426558ea10746caee1f06164d93273d49ba",
+        "unmonitored_wall_seconds": 26.587500933092088
+      }
+    ],
+    "additional_primary_audit_index": "outcomes/records/v3_root_post_pde_audit/index.json",
+    "scope_note": "These selected costs are not a complete V3 support-work sum. Timed entries without watchdogs are measured_unmonitored; work with no recorded timer is not_measured.",
+    "additional_primary_audit_index_sha256": "2986fcb617de0323caa17982b7d776e526ff9edf463071b5037be8875511fc65"
+  },
+  "root_audit": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_terminal_audit.json",
+    "sha256": "8adab35854f066f90a444c613de363fe06a861db35157ba3ec9d7f5ef5d3b0a2",
+    "recomputed_resource_rows": 5971,
+    "recomputed_source_hashes": 60,
+    "recomputed_input_hashes": 47,
+    "all_observed_process_and_launcher_pids_absent_at_audit": true,
+    "cleanup_classification": "LIMITED_NOT_UNCONDITIONAL_PASS"
+  },
+  "root_primary_raw_audit": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_primary_raw_audit.json",
+    "sha256": "95524c004138eecbf59ce6a61cc87426558ea10746caee1f06164d93273d49ba",
+    "bytes": 350209,
+    "scope": "Independent arithmetic replay of saved primary vectors, 612 modal rows, q8/q10 saved sample arrays and existing Av record; no solve, resampling, matrix action or new Av integration.",
+    "unmonitored_wall_seconds": 26.587500933092088,
+    "primary_residuals_recomputed_from_raw": {
+      "condensed_relative": 3.0440529386035694e-12,
+      "condensed_limit": 1e-09,
+      "independent_A6_relative": 3.078522812304335e-10,
+      "independent_A6_limit": 1e-08,
+      "full_active_transformed_relative": 1.1972486317982494e-11,
+      "full_active_transformed_limit": 1e-08,
+      "normal_corrections": 1,
+      "normal_relative_history": [
+        2.2945939789534043e-09,
+        3.0440529386035694e-12
+      ],
+      "factor_symbolic_numeric_solve_calls_before_extra": [
+        1,
+        1,
+        2
+      ],
+      "MUMPS_INFOG_1": 0
+    },
+    "primary_modal_recheck": {
+      "ordered_channels": 612,
+      "failed_power_channels": 0,
+      "max_absolute_channel_power_difference_old_Y6_1_to_primary": 4.507666462316706e-11,
+      "channel_limit": 1e-07,
+      "max_normalized_boundary_amplitude_group_difference": 6.139994079567577e-11,
+      "amplitude_group_limit": 1e-05,
+      "energy_closure": 5.071976172388304e-11,
+      "closure_limit": 1e-05
+    },
+    "primary_field_recheck": {
+      "q8_points": 516096,
+      "q10_points": 1008000,
+      "positive_weights_and_Gauss_rule": true,
+      "domain_volume_nm3": 350000,
+      "worst_normalized_E_H_scattered_and_G_difference": 6.04423083302925e-11,
+      "field_floor_limit": 1e-05,
+      "phase_fit": false,
+      "Av_source": "Existing hash-bound material integral record; no new volume integration."
+    },
+    "endpoint_and_extra_limitations": {
+      "endpoint": "INCOMPLETE_NOT_QUALIFIED",
+      "primary_partial_components_within_their_limits": true,
+      "extra_raw_vectors_independently_replayed": false,
+      "extra_full_active_explicit_strict_decrease": false,
+      "native_summary_present": false,
+      "complete_q_r_comparison_present": false
+    },
+    "audit_index": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/index.json",
+      "sha256": "2986fcb617de0323caa17982b7d776e526ff9edf463071b5037be8875511fc65"
+    }
+  },
+  "V3_gate_status": {
+    "G0": "historical dispatch inventory and three V2 terminal rechecks completed by root; A1/A2 V3 attempts separately bound by this compact",
+    "G1_A1": "component and fault-injection checks passed; actual A1 stopped before primary persistence, so no live primary-packet evidence; the actual WorkflowLedger defect is recorded under G2_A1",
+    "G1_A2": "component and fault-injection checks passed; actual primary-before-extra packet and q8/q10 primary samples survived the incomplete endpoint and retained their hashes",
+    "G2_A1": "NOT_MET in the actual dispatch because no WorkflowLedger was created",
+    "G2_A2": "actual phase and stages were written and independently audited",
+    "G3": "pre-dispatch frozen old-field, Av-rule, 612-mode, q8/q10 point/weight, H/background and reference-direction checks passed; this does not qualify the post-dispatch endpoint",
+    "G4": "per-branch READY authorized only the one dispatch actually started; no further dispatch is authorized",
+    "merge": "NOT_APPROVED"
+  },
+  "final_documentation_validation": {
+    "registry_markdown_contract": {
+      "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py",
+      "stdout": ".....                                                                    [100%]\n5 passed in 0.06s\n",
+      "exit_code": 0,
+      "tested_registry_sha256": "979953cc6a777ea1f403f6a9294402008c3d12c5be189375609ff71f106d9978",
+      "scope_note": "Existing documentation contract only; no solver, mesh, MPI model, or full-suite run."
+    },
+    "lightweight_checks": {
+      "changed_markdown_local_links_checked": 45,
+      "missing_added_local_links": 0,
+      "closeout_and_actual_launch_excerpt_json_parse": "PASS",
+      "git_diff_check": "PASS"
+    }
+  }
+}

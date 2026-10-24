@@ -1,0 +1,9 @@
+{
+  "observed_utc": "2026-10-24T12:33:21.258426+00:00",
+  "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_before_extra.npz",
+  "bytes": 17451495,
+  "sha256": "cc368ed3d9baa391d70b8c368ab2868e5e78c60df464184fbbfa6536c5077feb",
+  "matches_saved_marker_sha": true,
+  "observed_live_stage": "task43_v3_primary_before_extra_packet_saved",
+  "purpose": "root read-only first hash observation; no numerical qualification; compare immutable bytes again after terminal"
+}

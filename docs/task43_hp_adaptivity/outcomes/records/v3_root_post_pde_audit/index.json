@@ -1,0 +1,116 @@
+{
+  "schema": "task43.v3.root_post_pde_audit_index.v1",
+  "created_utc": "2026-10-24T12:50:55.020281+00:00",
+  "formal_source_sha": "d92c210a6704de99362f5e696d157d6c356d9efd",
+  "entries": [
+    {
+      "tracked_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_terminal_audit.json",
+      "ignored_raw_path": "benchmarks/artifacts/task43/v3_root_audit/A2_q3_terminal_audit.json",
+      "sha256": "8adab35854f066f90a444c613de363fe06a861db35157ba3ec9d7f5ef5d3b0a2",
+      "bytes": 23163,
+      "byte_identical": true
+    },
+    {
+      "tracked_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_q3_primary_raw_audit.json",
+      "ignored_raw_path": "benchmarks/artifacts/task43/v3_root_audit/A2_q3_primary_raw_audit.json",
+      "sha256": "95524c004138eecbf59ce6a61cc87426558ea10746caee1f06164d93273d49ba",
+      "bytes": 350209,
+      "byte_identical": true
+    },
+    {
+      "tracked_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_primary_first_observation.json",
+      "ignored_raw_path": "benchmarks/artifacts/task43/v3_root_audit/A2_primary_first_observation.json",
+      "sha256": "6b411807d49cef227423c54c498d48c372e12311d4c4497f6b6f18ad96b06787",
+      "bytes": 552,
+      "byte_identical": true
+    },
+    {
+      "tracked_path": "docs/task43_hp_adaptivity/outcomes/records/v3_root_post_pde_audit/A2_primary_samples_first_observation.json",
+      "ignored_raw_path": "benchmarks/artifacts/task43/v3_root_audit/A2_primary_samples_first_observation.json",
+      "sha256": "2702abc4933dab4ffe3bf9805ead2f87aabf35d82e653ce488a4e02a4793e60f",
+      "bytes": 724,
+      "byte_identical": true
+    }
+  ],
+  "support_audit_attempts": [
+    {
+      "attempt": 1,
+      "kind": "read_only_saved_array_arithmetic_audit_not_PDE",
+      "status": "failed_support_script",
+      "reason": "audit script compared payload-only hash against packet identity that includes dtype+shape; stopped at first array; original evidence unchanged",
+      "wall_seconds": null,
+      "wall_scope": "not_measured",
+      "files": [
+        {
+          "path": "benchmarks/artifacts/task43/v3_root_audit/primary_audit_support_attempt1/stdout_stderr.log",
+          "sha256": "7d6a7d16b549466d5433b2850655a2a6dc1fc46897d7f02b265062919dab38e9"
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v3_root_audit/primary_audit_support_attempt1/v3_root_a2_primary_audit.py",
+          "sha256": "bce242dda9c164582e3fbd093836255c662f927ee6f802ea5eb917848a19ff9b"
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "kind": "read_only_saved_array_arithmetic_audit_not_PDE",
+      "status": "failed_support_script",
+      "reason": "audit script looked for old standalone volume_absorption.json absent from import; actual old volume_metrics exists in hash-bound historical summary; stopped before fields",
+      "wall_seconds": null,
+      "wall_scope": "not_measured",
+      "files": [
+        {
+          "path": "benchmarks/artifacts/task43/v3_root_audit/primary_audit_support_attempt2/stdout_stderr.log",
+          "sha256": "7200090e6e7c897045207ee17feb44b43435cc15a595636affb69e21ad799019"
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v3_root_audit/primary_audit_support_attempt2/v3_root_a2_primary_audit.py",
+          "sha256": "fe9e508011521d586d368f6936d20f27e7db8a217eb81a43e1e5b1bf0619c71e"
+        }
+      ]
+    },
+    {
+      "attempt": 3,
+      "kind": "read_only_saved_array_arithmetic_audit_not_PDE",
+      "status": "failed_support_script",
+      "reason": "all arithmetic completed, JSON export failed on numpy.bool_; no qualification record created; local serializer fix only",
+      "wall_seconds": null,
+      "wall_scope": "not_measured",
+      "files": [
+        {
+          "path": "benchmarks/artifacts/task43/v3_root_audit/primary_audit_support_attempt3/stdout_stderr.log",
+          "sha256": "3127eb48a7270db299c9f6fbc7b833d93948072d1c6b2c5a98f46f19ad492836"
+        },
+        {
+          "path": "benchmarks/artifacts/task43/v3_root_audit/primary_audit_support_attempt3/v3_root_a2_primary_audit.py",
+          "sha256": "42d0343b21acb14b2f5d6fc083e46dd2b21a9e20886232409b38b134cc0e6cf6"
+        }
+      ]
+    },
+    {
+      "attempt": 4,
+      "kind": "read_only_saved_array_arithmetic_audit_not_PDE",
+      "status": "completed",
+      "wall_seconds_unmonitored": 26.587500933092088,
+      "script_path": "benchmarks/artifacts/task43/v3_root_audit/v3_root_a2_primary_audit.py",
+      "script_sha256": "7b464bdf0cebbfed3da5a48cb6d18e3fb08d32b916bbd70351c3a2c94e1f9b51",
+      "log_path": "benchmarks/artifacts/task43/v3_root_audit/v3_root_a2_primary_audit_final.log",
+      "log_sha256": "aeca1f730c5476d1af233b23885febb4c8756dfce3975731e1da8ea0f94f8825",
+      "record_sha256": "95524c004138eecbf59ce6a61cc87426558ea10746caee1f06164d93273d49ba"
+    }
+  ],
+  "terminal_audit_script": {
+    "path": "benchmarks/artifacts/task43/v3_root_audit/v3_root_a2_terminal_audit.py",
+    "sha256": "d5bbc028bd2cc690b90bd8da32bcd7d40fc25fea775c982829a6a76b26e5aa20",
+    "wall_seconds_unmonitored": 4.248258781153709
+  },
+  "pre_audit_environment_probe": {
+    "sandbox_probe": "MPI singleton local socket denied before arrays; tool transcript retained, no new solver/mesh or formal dispatch",
+    "qualified_host_probe": "existing activation complex128/int64 confirmed; no environment rebuilt",
+    "formal_attempts_consumed": 0
+  },
+  "formal_dispatches_consumed_by_these_audits": 0,
+  "scope": "saved arrays and terminal/resource/hash read-only checks; no new PDE, mesh, operator application, resampling or Av integration",
+  "overall_endpoint": "INCOMPLETE_NOT_QUALIFIED",
+  "production_merge": "NOT_APPROVED"
+}

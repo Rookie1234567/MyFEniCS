@@ -1,0 +1,19 @@
+{
+  "observed_utc": "2026-10-24T12:39:09.986292+00:00",
+  "observed_live_stage": "task43_v3_primary_q10_sample_saved",
+  "files": {
+    "task43_v3_primary_before_extra.npz": {
+      "sha256": "cc368ed3d9baa391d70b8c368ab2868e5e78c60df464184fbbfa6536c5077feb",
+      "bytes": 17451495
+    },
+    "task43_v3_primary_q8_field_sample.npz": {
+      "sha256": "89a50aa029cd0c9f06748bbed679fede142063826e85815886a4e1e10ea4c16c",
+      "bytes": 73515428
+    },
+    "task43_v3_primary_q10_field_sample.npz": {
+      "sha256": "228fb211efa7da2b56fc7fec3ad38a89f89faba904bf5f6e54c400ad4d82e695",
+      "bytes": 143672562
+    }
+  },
+  "purpose": "root read-only hash snapshot before terminal; numerical audit deferred until terminal"
+}
