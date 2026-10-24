@@ -303,6 +303,70 @@ def test_physical_parent_selection_supports_rectangle_without_changing_n0():
         )
 
 
+def test_physical_parent_selection_supports_asymmetric_centered_rectangle():
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _expected_operator_parent_indices,
+    )
+
+    rows = tuple(
+        {
+            "mode_index": index,
+            "side": side,
+            "m": m,
+            "n": n,
+            "polarization": polarization,
+        }
+        for index, (side, m, n, polarization) in enumerate(
+            (side, m, n, polarization)
+            for side in ("top", "bottom")
+            for m in range(-8, 9)
+            for n in range(-10, 11)
+            for polarization in ("s", "p")
+        )
+    )
+    selected = _expected_operator_parent_indices(
+        rows,
+        {
+            "policy": "explicit_centered_rectangle_subrectangle_from_parent_v1",
+            "active_rectangle_max_abs_m_n": [7, 9],
+        },
+    )
+
+    expected = tuple(
+        index
+        for index, row in enumerate(rows)
+        if abs(row["m"]) <= 7 and abs(row["n"]) <= 9
+    )
+    assert selected == expected
+    assert len(selected) == 4 * 15 * 19 == 1140
+    assert all(abs(rows[index]["m"]) <= 7 for index in selected)
+    assert all(abs(rows[index]["n"]) <= 9 for index in selected)
+    assert any(abs(rows[index]["m"]) == 7 for index in selected)
+    assert any(abs(rows[index]["n"]) == 9 for index in selected)
+    assert {rows[index]["side"] for index in selected} == {"top", "bottom"}
+    assert {rows[index]["polarization"] for index in selected} == {"s", "p"}
+
+
+@pytest.mark.parametrize(
+    "bounds", (None, [7], [7, 0], [7, -9], [7.0, 9], [True, 9])
+)
+def test_physical_parent_selection_rejects_malformed_rectangle_bounds(bounds):
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _expected_operator_parent_indices,
+    )
+
+    rows = ({"mode_index": 0, "side": "top", "m": 0, "n": 0,
+             "polarization": "s"},)
+    with pytest.raises(ValueError, match="malformed"):
+        _expected_operator_parent_indices(
+            rows,
+            {
+                "policy": "explicit_centered_rectangle_subrectangle_from_parent_v1",
+                "active_rectangle_max_abs_m_n": bounds,
+            },
+        )
+
+
 @pytest.mark.parametrize("k,expected_count", sorted(K_COUNTS.items()))
 def test_task40_k_dat_resolves_to_y3_geometry_and_parent_quadrature(k, expected_count):
     from src.geometry.mesh_builder_3d import stage4_axis_plan

@@ -220,3 +220,75 @@ def test_d5c_y7_modal_selector_rejects_signed_key_hash_drift(monkeypatch):
     )
     with pytest.raises(ValueError, match="signed keys"):
         _build_task40_rectangle_inventory(_parent_inventory(), object(), route)
+
+
+@pytest.mark.parametrize("label", tuple(EXPECTED))
+def test_d5c_modal_case_loader_parent_runner_and_physical_selector_agree(label):
+    from src.io.input_validation import (
+        load_and_resolve,
+        simulation_config_3d_from_normalized,
+    )
+    from src.io.native_capacity_profile import TASK40_PHI90_D5C_MODAL_PROFILE_BY_CASE
+    from src.runners.p6_condensed_direct import (
+        _build_task40_rectangle_inventory,
+        _direct_run_contract,
+    )
+    from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _expected_operator_parent_indices,
+    )
+
+    run_id = TASK40_PHI90_D5C_MODAL_PROFILE_BY_CASE[label]
+    input_path = INPUT_DIR / f"d5c_y7_cut_{label.lower()}_r5_p6_direct.dat"
+    spec = load_and_resolve(input_path)
+    cfg = simulation_config_3d_from_normalized(spec.as_jsonable())
+    route = _direct_run_contract(run_id)
+    cfg.stage4_dtn_order_policy = "explicit_rectangle"
+    cfg.task40_dtn_rectangle_max_m = route["parent_rectangle_max_abs_m_n"][0]
+    cfg.task40_dtn_rectangle_max_n = route["parent_rectangle_max_abs_m_n"][1]
+    cfg.stage4_dtn_quadrature_degree = route["surface_quadrature_degree"]
+    if route.get("mode_basis_scale_policy") is not None:
+        cfg.task40_port_boundary_amplitude_scale_policy = route[
+            "mode_basis_scale_policy"
+        ]
+
+    parent = build_dynamic_mode_inventory(cfg)
+    assert len(parent[0]) == len(parent[1]) == route["parent_count"] == 3772
+    assert parent[2] == route["expected_mode_sha256"] == PARENT_SHA
+
+    active, selection, selected_indices = _build_task40_rectangle_inventory(
+        parent, cfg, route
+    )
+    physical_indices = _expected_operator_parent_indices(parent[1], selection)
+    m_max, n_max = route["active_rectangle_max_abs_m_n"]
+    expected_signed_keys = {
+        (side, m, n, pol)
+        for side in ("top", "bottom")
+        for pol in ("s", "p")
+        for m in range(-m_max, m_max + 1)
+        for n in range(-n_max, n_max + 1)
+    }
+    expected_indices = tuple(
+        index
+        for index, row in enumerate(parent[1])
+        if (row["side"], row["m"], row["n"], row["polarization"])
+        in expected_signed_keys
+    )
+    actual_signed_keys = {
+        (row["side"], row["m"], row["n"], row["polarization"])
+        for row in active[1]
+    }
+
+    assert route["selection_policy"] == (
+        "explicit_centered_rectangle_subrectangle_from_parent_v1"
+    )
+    assert selected_indices == physical_indices == expected_indices
+    assert actual_signed_keys == expected_signed_keys
+    assert len(selected_indices) == EXPECTED[label][0]
+    assert selection["selected_parent_indices_sha256"] == route[
+        "expected_selected_parent_indices_sha256"
+    ]
+    assert selection["selected_signed_keys_sha256"] == route[
+        "expected_selected_signed_keys_sha256"
+    ]
+    assert active[2] == route["active_sha256"]

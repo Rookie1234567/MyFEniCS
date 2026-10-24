@@ -54,6 +54,30 @@ def _expected_operator_parent_indices(
             if abs(int(row.get("m", 999999))) <= max_m
             and abs(int(row.get("n", 999999))) <= max_n
         )
+    if policy == "explicit_centered_rectangle_subrectangle_from_parent_v1":
+        try:
+            raw_rectangle = tuple(
+                operator_selection.get("active_rectangle_max_abs_m_n", ())
+            )
+        except TypeError as exc:
+            raise ValueError("operator selection rectangle is malformed") from exc
+        if (
+            len(raw_rectangle) != 2
+            or any(
+                isinstance(value, bool)
+                or not isinstance(value, (int, np.integer))
+                or int(value) < 1
+                for value in raw_rectangle
+            )
+        ):
+            raise ValueError("operator selection rectangle is malformed")
+        max_m, max_n = (int(value) for value in raw_rectangle)
+        return tuple(
+            index
+            for index, row in enumerate(parent_mode_rows)
+            if abs(int(row.get("m", 999999))) <= max_m
+            and abs(int(row.get("n", 999999))) <= max_n
+        )
     raise ValueError("operator selection policy is unsupported")
 
 
