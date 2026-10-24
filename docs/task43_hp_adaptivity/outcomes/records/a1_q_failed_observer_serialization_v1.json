@@ -1,0 +1,153 @@
+{
+  "schema": "task43.v2.a1_q_failed_observer_serialization.v1",
+  "classification": "failed_engineering_observer_serialization_unqualified_endpoint",
+  "attempt": {
+    "phase": "A1_q",
+    "attempt_number": 1,
+    "attempt_consumed": true,
+    "budget_after": {
+      "A1_q": 1,
+      "A1_R": 0,
+      "A2": 0,
+      "B": 0,
+      "C": 0,
+      "total": 1,
+      "maximum": 6,
+      "remaining": 5
+    },
+    "decision": "STOP_A1_NO_AUTOMATIC_RETRY_NO_A1_R; B_AND_C_LOCKED",
+    "official_endpoint": false,
+    "pde_method_failure": false,
+    "interpretation": "The solve produced some output files, but its live observer failed while transporting the extra-correction report. Missing full residual and primary-field evidence prevents endpoint qualification. This is an engineering serialization failure, not evidence that the numerical method failed."
+  },
+  "frozen_identity": {
+    "source_HEAD": "ed95df3370973c2f06168ed938666250587ece6d",
+    "source_snapshot_match": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/a1_q_terminal_audit.json",
+      "sha256": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf",
+      "matching_task_source_files": 43,
+      "all_match_pre_run_snapshot": true,
+      "working_tree_clean_at_launch_and_terminal": true
+    },
+    "source_continuity_audit": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/a1_implemented_source_continuity.json",
+      "sha256": "1a488730c9f72bb9324310d2d3be55a8503db9af3805331de393c85dd7b3e88b",
+      "scope": "The saved original R10-to-A1 source comparison; it is separate from the 43-file A1 pre/post snapshot match."
+    },
+    "diagnostic_plan_sha256": "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e",
+    "diagnostic_contract_sha256": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc"
+  },
+  "failure": {
+    "stage": "variable_p_live_observer",
+    "exception_type": "TypeError",
+    "message": "cannot pickle 'mappingproxy' object",
+    "worker_exit_code": 1,
+    "watchdog_launcher_exit_code": 2,
+    "historical_callsite": {
+      "path": "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "line": 1797,
+      "expression": "result, result_error = comm.bcast((result, result_error), root=0)"
+    },
+    "root_cause": "Deeply readonly observer metadata retained nested MappingProxyType objects after shallow dict(...) copies of port_metrics and full_active_residual. The root rank inserted these values into the same-LU result, then mpi4py failed while pickling the object for bcast.",
+    "worker_log": {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/worker.log",
+      "sha256": "170e34006534bd3fe63ee661252149f5a54f0f7041b15cda6cae475eaf1e2a34"
+    },
+    "progress_log": {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/progress_3d.jsonl",
+      "sha256": "d81b311d1a415d2e4b1edee4ecad485fa25f9f3cf007df65d6ac10ddab754053"
+    }
+  },
+  "resource_terminal": {
+    "watchdog_summary": {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/summary.json",
+      "sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 4882.447373806033,
+      "sampled_process_tree_rss_peak_bytes": 9708847104,
+      "sampled_task_vmswap_peak_bytes": 0,
+      "global_swap_delta_pages": 0,
+      "samples": 3930
+    },
+    "root_terminal_audit_sha256": "8d4c05d61c09f1870a11945f238ad5ba4ff573a19670472655ab817da4b124bf",
+    "root_resource_sample_replay": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/a1_q_resource_samples_replay.json",
+      "sha256": "5bfb13f099aeafdad40417ed3b231d374e0315815539b44578f149ca223e7e29",
+      "sample_count": 3930,
+      "peak_scope": "sampled simultaneous process-tree RSS; peak is not a continuous-time guarantee",
+      "sampled_process_tree_rss_peak_bytes": 9708847104,
+      "sampled_task_vmswap_peak_bytes": 0,
+      "monotonic_elapsed_seconds": 4882.297052395996,
+      "whole_watchdog_elapsed_seconds": 4882.447373806033
+    }
+  },
+  "saved_partial_observations": {
+    "partial_modal_audit": {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/a1_q_partial_modal_diagnostics.json",
+      "sha256": "25b421d85b77c0059ffcedeba5cad96e78be15a93384c0b6b0200802dd9c0c3a",
+      "scope": "612 complete modal complex amplitudes/powers plus material-volume integrals only; no A6 or primary field qualification.",
+      "old_R10_to_primary_modal_gate_pass": true,
+      "primary_to_extra_modal_gate_pass": true,
+      "old_to_primary_max_channel_power_difference": 8.184619648687885e-12,
+      "old_to_primary_max_modal_amplitude_group_difference": 8.2694173937e-12,
+      "primary_to_extra_max_channel_power_difference": 2.5368596113e-14,
+      "primary_to_extra_max_modal_amplitude_group_difference": 3.457149372e-14
+    },
+    "primary": {
+      "modal_rows": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+        "sha256": "4ea74f576940b51419078880e516714d9bb3ba4a9b7d6025a249bc0dcc9406b5",
+        "rows": 612,
+        "unique_ordered_keys": 612
+      },
+      "R_total": 0.25135730380308713,
+      "T_total": 0.05712763703007889,
+      "A_volume_total": 0.6915150591709378,
+      "energy_closure_abs": 4.103828388224429e-12,
+      "explicit_residual_relative_logged_not_reapplied": 5.177423112815622e-13,
+      "official_result": false
+    },
+    "extra_correction": {
+      "modal_rows": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/ports/dtn_port_diffraction_orders_3d.json",
+        "sha256": "20d025a9b572f43c4dbae26f7704397a6683da03a4d20e329e0c8c3ba56d7bd6",
+        "rows": 612,
+        "unique_ordered_keys": 612
+      },
+      "volume_absorption": {
+        "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/run/same_lu_tightening/after/volume/volume_absorption.json",
+        "sha256": "2b02de2ee74dc7e2c5c256b028e81480aed4165a9099c9365551dbc9c41acda7"
+      },
+      "R_total": 0.2513573038030618,
+      "T_total": 0.057127637030078025,
+      "A_volume_total": 0.6915150591709098,
+      "energy_closure_abs": 4.049649504622721e-12,
+      "official_result": false
+    },
+    "pre_validation_checkpoint_npz_sha256": "0e3553686a87afa639a09009ff8b244c530f5ccc7baacbcf055696ffa41f286d",
+    "extra_field_samples_sha256": "bc0a76598ebe13a62663cb9076c258c2226fd58340478d6e52164836f5e7b0ea",
+    "extra_recovered_solution_storage_sha256": "509f4451c4a7d6bc62691f2b020eb893328ce4cd1c43ba6bfe32771c09605f9c"
+  },
+  "missing_for_endpoint_qualification": [
+    "A1_q endpoint record JSON",
+    "primary q8/q10 field-sample NPZ",
+    "persisted primary full independent A6 report",
+    "persisted extra-correction full independent A6 report",
+    "completed solver summary and official endpoint gate"
+  ],
+  "prospective_fix_validation": {
+    "classification": "serialization_only; does not repair or reclassify this failed attempt",
+    "files": {
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "1571c9babe94f345e8c9e99446e0c5c2c09e9ba19532cef8f933f717dbe5cdb3",
+      "src/test/test_task43_v2_live_observer_transport.py": "c20a5b8359c94bb240c30732df92efd535b2a6a011aefa6bbbd9fbfd978c3856"
+    },
+    "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_live_observer_transport.py",
+    "execution": "canonical worktree, host, qualified native activation; no model run",
+    "result": "2 passed in 3.24s",
+    "log_path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/serialization_fix_validation/pytest.log",
+    "log_sha256": "e093ac1f34efad8ad6eab4bdc3abb4b93b9851230658054a8c39511ed3e8435d",
+    "native_A2_serialization_review": "A2 has no MPI object bcast/gather boundary in the native direct runner; its _atomic_json recursively normalizes collections.abc.Mapping and handles complex/NumPy arrays. The focused regression exercises MappingProxyType, complex scalars, read-only complex arrays, and this actual native summary writer."
+  }
+}

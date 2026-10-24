@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import time
+from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -454,6 +455,21 @@ def _json_default(value: Any) -> Any:
     if isinstance(value, complex):
         return [float(value.real), float(value.imag)]
     raise TypeError(f"cannot serialize {type(value).__name__}")
+
+
+def _plain_nested_containers(value: Any) -> Any:
+    """Copy read-only mappings to pickle/JSON-safe plain containers."""
+
+    if isinstance(value, Mapping):
+        return {
+            _plain_nested_containers(key): _plain_nested_containers(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, tuple):
+        return tuple(_plain_nested_containers(item) for item in value)
+    if isinstance(value, list):
+        return [_plain_nested_containers(item) for item in value]
+    return value
 
 
 def _h100_config(
@@ -1331,7 +1347,7 @@ def _same_lu_tightening(
         if initial_explicit_residual is not None
         else _linear_residual(view.A, view.b, view.x)
     )
-    before_condensed_residual = dict(view.full_active_residual)
+    before_condensed_residual = _plain_nested_containers(view.full_active_residual)
 
     _log_stage(comm, started, "same_lu_residual_correction", "begin")
     corrected_x, correction = single_petsc_residual_correction(
@@ -1421,7 +1437,7 @@ def _same_lu_tightening(
             comm.Barrier()
 
             before_a_volume = None
-            before_port_metrics = dict(view.port_metrics)
+            before_port_metrics = _plain_nested_containers(view.port_metrics)
             if is_v2:
                 _log_stage(comm, started, "same_lu_before_volume_absorption", "begin")
                 before_volume = compute_volume_absorption_3d(
@@ -1794,6 +1810,7 @@ def _same_lu_tightening(
                     }
                 except Exception as exc:  # noqa: BLE001 - broadcast root comparison failures collectively
                     result_error = f"{type(exc).__name__}: {exc}"
+            result = _plain_nested_containers(result)
             result, result_error = comm.bcast((result, result_error), root=0)
             if result_error is not None:
                 raise RuntimeError(f"same-LU postprocessing failed: {result_error}")
@@ -3362,8 +3379,10 @@ def _run(
             captured["explicit_active_residual"] = _linear_residual(
                 view.A, view.b, view.x
             )
-        captured["condensed_residual"] = dict(view.full_active_residual)
-        captured["port_metrics"] = dict(view.port_metrics)
+        captured["condensed_residual"] = _plain_nested_containers(
+            view.full_active_residual
+        )
+        captured["port_metrics"] = _plain_nested_containers(view.port_metrics)
         audit = view.mesh_data.local_h_context.audit
         captured["local_h_audit"] = {
             key: audit[key]
@@ -3864,7 +3883,12 @@ def _run(
                 record["gates"] = gates
                 task43_gated_official_result = False
             record_path.write_text(
-                json.dumps(record, indent=2, sort_keys=True, default=_json_default)
+                json.dumps(
+                    _plain_nested_containers(record),
+                    indent=2,
+                    sort_keys=True,
+                    default=_json_default,
+                )
                 + "\n",
                 encoding="utf-8",
             )
