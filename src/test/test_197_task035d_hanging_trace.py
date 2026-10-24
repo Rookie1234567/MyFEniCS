@@ -135,7 +135,7 @@ def test_all_hexa_face_trace_charts_are_isomorphisms_and_commute(
     )
 
 
-@pytest.mark.parametrize("degree", (4, 5, 6))
+@pytest.mark.parametrize("degree", (3, 4, 5, 6))
 def test_complete_quad_d4_transforms_match_task033_and_commute(
     degree: int,
 ) -> None:
@@ -157,7 +157,7 @@ def test_complete_quad_d4_transforms_match_task033_and_commute(
     ) <= 5.0e-11
 
 
-@pytest.mark.parametrize("degree", (4, 5, 6))
+@pytest.mark.parametrize("degree", (3, 4, 5, 6))
 def test_all_oriented_child_combinations_pass_catalog(
     degree: int,
 ) -> None:

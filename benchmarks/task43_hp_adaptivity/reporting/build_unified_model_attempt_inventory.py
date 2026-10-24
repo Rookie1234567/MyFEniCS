@@ -2,10 +2,18 @@ import hashlib
 import json
 from pathlib import Path
 
+from benchmarks.task43_hp_adaptivity.reporting.watchdog_scope import (
+    watchdog_resource_qualification,
+)
+
 r = Path(__file__).resolve().parents[3]
 records = r / "docs/task43_hp_adaptivity/outcomes/records"
 o = r / "docs/task43_hp_adaptivity/outcomes/records"
 inputs = {}
+scope_helper_path = Path(__file__).with_name("watchdog_scope.py")
+inputs[str(scope_helper_path)] = hashlib.sha256(
+    scope_helper_path.read_bytes()
+).hexdigest()
 
 
 def load(p):
@@ -186,6 +194,57 @@ for name, run, classification in entries:
     wdpaths = list(run.parent.glob("watchdog*/summary.json"))
     assert len(wdpaths) <= 1, (name, wdpaths)
     wd = load(wdpaths[0]) if wdpaths else None
+    resource_qualification = watchdog_resource_qualification(
+        name, wd is not None, run, r
+    )
+    partial_resource_observation = None
+    if wd is None:
+        r8_audit_path = records / "round8_independent_audit_v1.json"
+        r8_audit = load(r8_audit_path)
+        r8_pde_resources = r8_audit["resources"]["PDE"]
+        partial_identity = r8_pde_resources["partial_audit"]
+        partial_path = r / partial_identity["path"]
+        assert (
+            hashlib.sha256(partial_path.read_bytes()).hexdigest()
+            == partial_identity["sha256"]
+        )
+        assert name == "round8_p"
+        assert (
+            r8_audit["source_identity"]["HEAD_at_solve_and_comparison"]
+            == (record["source_identity"]["git_head"])
+        )
+        assert r8_audit["source_identity"]["clean_source_bytes_equal_git_HEAD"]
+        assert r8_pde_resources["original_summary_json_present"] is False
+        assert r8_pde_resources["observed_elapsed_lower_bound_seconds"] is not None
+        assert (
+            r8_pde_resources[
+                "observed_sample_window_tree_RSS_peak_bytes_not_lifecycle_peak"
+            ]
+            is not None
+        )
+        assert partial_path.resolve().is_relative_to(
+            (r / "benchmarks/artifacts/task43/round8_p_up_attempt1").resolve()
+        )
+        partial_resource_observation = {
+            "audit_record": ref(r8_audit_path),
+            "partial_terminal_executor_audit": ref(partial_path),
+            "observed_elapsed_lower_bound_seconds": r8_pde_resources[
+                "observed_elapsed_lower_bound_seconds"
+            ],
+            "observed_sample_count": r8_pde_resources["observed_sample_count"],
+            "observed_window_tree_RSS_peak_bytes_not_lifecycle_peak": r8_pde_resources[
+                "observed_sample_window_tree_RSS_peak_bytes_not_lifecycle_peak"
+            ],
+            "sample_window_task_VmSwap_peak_bytes": r8_pde_resources[
+                "sample_window_task_VmSwap_peak_bytes"
+            ],
+            "outer_tool_session_exit_code": r8_pde_resources[
+                "outer_tool_session_exit_code"
+            ],
+            "signal_sender": r8_pde_resources["signal_sender"],
+            "status": r8_pde_resources["status"],
+            "scope": "partial window only; no complete whole wall, lifetime peak, original exit, or original watchdog cleanup claim",
+        }
     row = {
         "model_attempt": name,
         "run_root": str(run.relative_to(r)),
@@ -217,11 +276,8 @@ for name, run, classification in entries:
         }
         if wd
         else None,
-        "resource_qualification": (
-            "complete_supervisor_record"
-            if wd
-            else "R8_supervisor_terminal_absent_partial_window_only"
-        ),
+        "resource_qualification": resource_qualification,
+        "partial_resource_observation": partial_resource_observation,
         "timing_scope": "Base includes new-process space; modal loop contains vector assembly; build/preallocation nested. Per-record wall ends before JSON/exit. Whole wall only watchdog. Missing values=null/not measured, never zero.",
     }
     if record:
@@ -244,8 +300,6 @@ for name, run, classification in entries:
     if events_path.exists():
         row["stage_log_identity"] = ref(events_path)
     if wd is None:
-        row["separate_observed_elapsed_lower_bound_seconds"] = 3109.3891972089186
-        row["separate_window_observed_tree_RSS_peak_bytes"] = 6844891136
         row["scope"] = (
             "R8 only sampled window; no whole-run peak/swap/exit/cleanup or full cost claim."
         )
@@ -319,8 +373,8 @@ for label in ["Y6_1", "Y6_2", "Y5_1", "Y3", "Y3_2"]:
         }
     )
 data = {
-    "schema": "task43.unified-model-attempt-inventory.v1",
-    "status": "FINAL_POSTSELECTION_COMPACT",
+    "schema": "task43.unified-model-attempt-inventory.v2",
+    "status": "V2_REBUILT_WITH_EXACT_R8_RESOURCE_EXCEPTION",
     "generator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     "new_fullsolver_attempt_count": 16,
     "scientific_lineages": 12,
@@ -331,7 +385,7 @@ data = {
     "scope": "All16 formal fullsolver attempts including failed/stopped/retry; existing small numerical-sanity fixtures separately indexed in g1/h100/direct-backend component records. Absent fields null, not inferred PASS. Raw summary identities bind rows/NNZ/timings/source/ABI.",
     "incomplete_resource_historical_R8_explicit": True,
 }
-(o / "unified_model_attempt_inventory_v1.json").write_text(
+(o / "unified_model_attempt_inventory_v2.json").write_text(
     json.dumps(data, indent=2, allow_nan=False) + "\n"
 )
 print(
@@ -340,5 +394,5 @@ print(
     "imported",
     len(external),
     "bytes",
-    (o / "unified_model_attempt_inventory_v1.json").stat().st_size,
+    (o / "unified_model_attempt_inventory_v2.json").stat().st_size,
 )

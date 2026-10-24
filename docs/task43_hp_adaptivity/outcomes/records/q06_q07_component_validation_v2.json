@@ -1,0 +1,123 @@
+{
+  "schema": "task43.q06_q07_component_validation.v2",
+  "base_head_before_changes": "7458fadccde01d37ed93187ebe4c39177783d60b",
+  "new_formal_model_pde_attempts": 0,
+  "code_and_test_sources": {
+    "benchmarks/task43_hp_adaptivity/reporting/build_unified_model_attempt_inventory.py": "9394887fbe1c2123b26b55efda11059628b0529ec681229c728d1fb92c767a9f",
+    "benchmarks/task43_hp_adaptivity/reporting/watchdog_scope.py": "d5a6411f34450b0a06d13abf841211cda55b78e94c372b8d9ee4e972fbba201d",
+    "src/test/test_task43_reporting_watchdog_scope.py": "5aa0a9c82ec3ecd077c2b9183d11317658734d234f395e6e02637685999cbbd8",
+    "src/test/test_197_task035d_hanging_trace.py": "ea4cf63c91581c73fa052a5b66c0ecab292bd4008f438c77e9dd790983034ed0"
+  },
+  "q06": {
+    "change": "Include p3 in the existing complete eight D4-transform and 256 oriented-child parameter sets.",
+    "test_nodes": [
+      "src/test/test_197_task035d_hanging_trace.py::test_complete_quad_d4_transforms_match_task033_and_commute[3]",
+      "src/test/test_197_task035d_hanging_trace.py::test_all_oriented_child_combinations_pass_catalog[3]"
+    ],
+    "result": "2 passed in the combined targeted command (4 total with Q07); only these p3 component properties are qualified. No level2, cross-h, or general MPI qualification."
+  },
+  "q07": {
+    "change": "Only model_attempt=round8_p at the exact resolved historical run root can use the partial resource exception; other missing-summary attempts raise ValueError. The generator verifies R8 source identity, partial audit path and SHA, and loads measurements from the existing audit JSON.",
+    "tests": "Exact R8 identity/wrong-path rejection, non-R8 missing-summary rejection, and complete-summary classification; 2 helper tests passed.",
+    "r8_audit": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round8_independent_audit_v1.json",
+      "sha256": "955c01efe8c1f77d09924d0b6afb2994c06fc78aecbd02bf50e3c248a7cf815a",
+      "bytes": 31564
+    },
+    "r8_partial_audit": {
+      "path": "benchmarks/artifacts/task43/round8_p_up_attempt1/partial_terminal_executor_audit.json",
+      "sha256": "00c54140b1a8551081afa193a220dd601f345eee1f091e806a3658c7edac6523",
+      "bytes": 6597
+    },
+    "source_declared_partial_audit_sha256": "00c54140b1a8551081afa193a220dd601f345eee1f091e806a3658c7edac6523",
+    "observed_values": {
+      "elapsed_lower_bound_seconds": 3109.3891972089186,
+      "sample_count": 2491,
+      "sample_window_tree_rss_peak_bytes_not_lifecycle_peak": 6844891136,
+      "sample_window_task_vmswap_peak_bytes": 0,
+      "outer_tool_session_exit_code": 143,
+      "signal_sender": "UNKNOWN"
+    },
+    "new_inventory": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/unified_model_attempt_inventory_v2.json",
+      "sha256": "4907d109b85fceb11160e5bdda97f2c4398e5b75dc66ae5e1901fcb6ba15666b",
+      "bytes": 275160
+    },
+    "v2_inventory_input_hash_for_scope_helper": "d5a6411f34450b0a06d13abf841211cda55b78e94c372b8d9ee4e972fbba201d",
+    "v1_inventory_sha256_before_and_after": "611f15308366f81a08db4a0c71b977294881d46d4427dd83de12a276bfcd22ab",
+    "v1_inventory_preserved": true
+  },
+  "targeted_test": {
+    "command": "python -m pytest -q src/test/test_task43_reporting_watchdog_scope.py \"src/test/test_197_task035d_hanging_trace.py::test_complete_quad_d4_transforms_match_task033_and_commute[3]\" \"src/test/test_197_task035d_hanging_trace.py::test_all_oriented_child_combinations_pass_catalog[3]\"",
+    "result": "....                                                                     [100%]\n4 passed in 1.76s",
+    "exit_code": 0,
+    "stdout": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_targeted.stdout",
+      "sha256": "24d9695b084f0b4f86323ff6fc6b47bb86cc59912b520d06328583c3208b8ad2",
+      "bytes": 98
+    },
+    "stderr": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_targeted.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "report_generator": {
+    "command": "python benchmarks/task43_hp_adaptivity/reporting/build_unified_model_attempt_inventory.py",
+    "result": "models 16 imported 5 bytes 275160",
+    "exit_code": 0,
+    "stdout": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q07_inventory_generator.stdout",
+      "sha256": "09dc8c96510947c63175c06c65d859c45644af9ff928d1b4006ce5f014d435b5",
+      "bytes": 34
+    },
+    "stderr": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q07_inventory_generator.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "ruff_check": {
+    "command": "ruff check benchmarks/task43_hp_adaptivity/reporting/build_unified_model_attempt_inventory.py benchmarks/task43_hp_adaptivity/reporting/watchdog_scope.py src/test/test_task43_reporting_watchdog_scope.py src/test/test_197_task035d_hanging_trace.py",
+    "exit_code": 0,
+    "stdout": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_check.stdout",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19
+    },
+    "stderr": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_check.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "ruff_format_check": {
+    "command": "ruff format --check benchmarks/task43_hp_adaptivity/reporting/build_unified_model_attempt_inventory.py benchmarks/task43_hp_adaptivity/reporting/watchdog_scope.py src/test/test_task43_reporting_watchdog_scope.py",
+    "exit_code": 0,
+    "stdout": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_format.stdout",
+      "sha256": "eee76f865de5a9f2456950f710ae5d5f9b5bd0ea02aa54f614c5eed6642a0bfd",
+      "bytes": 26
+    },
+    "stderr": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_ruff_format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "compileall": {
+    "command": "python -m compileall -q benchmarks/task43_hp_adaptivity/reporting/build_unified_model_attempt_inventory.py benchmarks/task43_hp_adaptivity/reporting/watchdog_scope.py src/test/test_task43_reporting_watchdog_scope.py src/test/test_197_task035d_hanging_trace.py",
+    "exit_code": 0,
+    "stdout": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_compileall.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "benchmarks/artifacts/task43/v2_stage1_audit/q06_q07_compileall.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "provenance_note": "Test and lint/compile raw logs are under the ignored v2_stage1_audit directory and individually hash-bound above. Full Task43 repository/test qualification is outside this small component record."
+}
