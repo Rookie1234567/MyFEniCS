@@ -1,0 +1,126 @@
+{
+  "schema": "task43.v3.root-final-source-review.v1",
+  "review_authority_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+  "reviewer": "root controller; independently read committed source diffs, test stdout and raw support records",
+  "implementation_source_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b",
+  "source_file_sha256": {
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "9aeba00cc6aa535b47406af4e4a0509dd1f540384c545079a48034f9392d9064",
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "5c68a918b81b7032308bf9ede062a2910496a4a4b1a3fd848c223bee1346779d",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "109f4c98ee84d96ae6ad5765fbb59d8d51252df000e5f89cb4741f5fe63fa2f2",
+    "src/runners/p6_condensed_direct.py": "33ad45943904b0777d23ad2f2f9b7ef6906221ccee44bd920faec23303df26f1",
+    "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+    "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+    "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+    "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+    "src/test/test_task43_v3_failure_safe_order.py": "b425c3adcfd7cce342b2f8ddaa2f665c406ed87a0c4ebb6af2db40950fec29d6",
+    "src/test/test_354_subreaper_watchdog.py": "7f714b76aec2a2c09262466e045d2da5f139c6a21076f1d214bcc5848a0e6c5f",
+    "src/test/test_task40para_direct_residual_and_supervisor.py": "d2654246ad7c6dd779ed7ee4970e371813224ac0af7cbec388e1e8e07e5d8f77"
+  },
+  "G1": {
+    "status": "component_and_source_review_passed_no_fresh_PDE",
+    "checked": [
+      "atomic before NPZ contains JSON-safe identity, coefficient/checkpoint, independent A6 and raw vectors before extra",
+      "actual MappingProxy/MPI1 transport and JSON/NPZ roundtrip fixture",
+      "normal correction vectors/counts and transformed metric-action norm scopes retained",
+      "primary/extra q8 callback survives q10 failure without overwriting earlier packet",
+      "extra/broadcast/record failure downgrades native/solver/endpoint official/pass and continuation",
+      "ordinary defaults retain original release/output path; early native primary output guarded by explicit V3 opt-in"
+    ],
+    "scope_limit": "These are small existing fixtures/fault injection and source review; no fresh R10 or Y6 endpoint qualification."
+  },
+  "G2": {
+    "status": "component_and_source_review_passed_pending_live_launch_capacity",
+    "ABI_component_attempt1": {
+      "whole_seconds": 12.711930990684777,
+      "RSS_peak_bytes": 161431552,
+      "swap_peak_bytes": 0,
+      "cleanup": true,
+      "result": "watchdog and ABI passed; proof JSON unreadable due literal newline, final G2 then not passed"
+    },
+    "ABI_component_attempt2": {
+      "whole_seconds": 11.727924823760986,
+      "RSS_peak_bytes": 161316864,
+      "swap_peak_bytes": 0,
+      "samples_recomputed": 21,
+      "phase_observation_samples": 7,
+      "actual_parent_pid": 2138249,
+      "watchdog_parent_pid": 2138249,
+      "cleanup": true,
+      "result": "readable proof; actual ABI helper before WorkflowLedger; no mesh/solver"
+    },
+    "exact_launch_bindings": "diagnostic_plan_v3_launch_preparation.json, reviewed source-before-python and phase-file lifecycle fixes",
+    "remaining": "fresh host CPU/ABI/capacity and source/input consistency at actual dispatch"
+  },
+  "test_evidence": {
+    "focused_source_head": "81c97e7c3357bbed1b29cab4ff40f2997e8bafdc",
+    "focused_result": {
+      "passed": 57,
+      "skipped": 1,
+      "seconds": 26.71
+    },
+    "focused_first_run_at_bc2c7e0": {
+      "passed": 55,
+      "skipped": 1,
+      "failed": 2,
+      "seconds": 25.24,
+      "failure_scope": "two old AST lifecycle expectations; preserved failure stdout"
+    },
+    "only_file_changed_after_focused": [
+      "src/test/test_task40para_direct_residual_and_supervisor.py"
+    ],
+    "final_head_targeted_result": {
+      "node": "src/test/test_task40para_direct_residual_and_supervisor.py::test_task40_release_is_wired_before_field_and_absorption_postprocessing",
+      "passed": 1,
+      "seconds": 1.01
+    },
+    "reused_source_bytes_verified_against_git": true,
+    "skip_reason": "TASK43_RUN_P6_FFCX_MATRIX_WITNESS is not 1; explicit expensive full-p6 FFCx tensor witness not rerun; old qualification scope only",
+    "logs": [
+      {
+        "path": "/tmp/task43/v3_final_validation/focused.log",
+        "sha256": "51e8f9fece2b153363503cbaaf27eed52c08a82e1a8503f170f96cd129b6c7ed"
+      },
+      {
+        "path": "/tmp/task43/v3_final_validation/focused_final.log",
+        "sha256": "15fd174fa5c32a873945329ad92094d4f615086ff58c97cca7dc1da36dedc1d4"
+      },
+      {
+        "path": "/tmp/task43/v3_final_validation/targeted_lifecycle_final.log",
+        "sha256": "24c9ce1961ed5102f26fdec23cd8d90e534ce5a732d74e525604d2e24ddf3284"
+      },
+      {
+        "path": "/tmp/task43/v3_final_validation/static_final.log",
+        "sha256": "bb011ceed969cbc741473b87b4f7b974f95fc1e0eeb2019144000d3e21c569c1"
+      },
+      {
+        "path": "/tmp/task43/v3_final_validation/compile_contract_markdown_final.log",
+        "sha256": "0e4a687af498aef59dd93e1fed247f3b0e0930fee8c4005ab26bb27b204fb40b"
+      },
+      {
+        "path": "/tmp/task43/v3_final_validation/ruff_baseline.json",
+        "sha256": "7bbe96b34974c56775211689e34bdb22ba91dcde9907567206219c0eb6d43d49"
+      },
+      {
+        "path": "/tmp/task43/v3_final_validation/ruff_current.json",
+        "sha256": "661e0e231dab2e4a3ffda57d35f913de04dd676d04466ce32f0236379086aed0"
+      }
+    ]
+  },
+  "static": {
+    "compileall_exit": 0,
+    "json_and_local_markdown_contract_exit": 0,
+    "diff_check_exit": 0,
+    "ruff_current_findings": 77,
+    "ruff_same_files_at_review_base_findings": 77,
+    "new_file_code_message_fingerprints_independently_recomputed": 0,
+    "full_ruff_passed": false,
+    "interpretation": "historical full-file findings retained; no unrelated formatting/refactoring"
+  },
+  "formal_attempts_consumed_by_this_review": 0,
+  "historical_attempts": 3,
+  "READY_FOR_ONE_A1_Q": false,
+  "READY_FOR_ONE_A2_Q": false,
+  "remaining_G4": "bounded resource prediction, final complete source/input identity and phase-specific root READY; final records/source hashes must be committed before formal launch",
+  "merge_qualified": false,
+  "full_repository_suite": "historical collection/SLEPc blocker retained; not rerun/rebuilt"
+}

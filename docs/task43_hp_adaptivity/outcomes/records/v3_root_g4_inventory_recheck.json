@@ -1,0 +1,25 @@
+{
+  "schema": "task43.v3.root-g4-inventory-recheck.v1",
+  "classification": "read_only_actual_file_hash_recheck_not_dispatch_preflight",
+  "source_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b",
+  "inventory_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_g4_source_input_inventory.json",
+  "inventory_sha256": "58fb9a4100f9f04f9d2ffdfece8a4bb445b134aba906b6181310bf207a8d4547",
+  "source_files": {
+    "count": 60,
+    "mismatches": []
+  },
+  "input_files": {
+    "count": 47,
+    "mismatches": []
+  },
+  "launch_support_files": {
+    "count": 7,
+    "mismatches": []
+  },
+  "method": "root independently streamed all listed current bytes through SHA256 and compared with frozen per-file hashes",
+  "wall_seconds_unmonitored": 6.372526029124856,
+  "formal_attempts_consumed": 0,
+  "fresh_pre_dispatch_recheck_still_required": true,
+  "READY_FOR_ONE_A1_Q": false,
+  "READY_FOR_ONE_A2_Q": false
+}

@@ -1,0 +1,271 @@
+{
+  "schema": "task43.v3.final_validation.v1",
+  "classification": "bounded_engineering_validation_before_any_v3_ready_or_dispatch",
+  "source_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b",
+  "review_authority_commit": "fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12",
+  "formal_attempts": {
+    "historical_v2_attempts_consumed": 3,
+    "v3_attempts_consumed": 0,
+    "cumulative_attempts_consumed": 3,
+    "maximum_cumulative_budget": 6,
+    "remaining_candidates": [
+      "A1_q_attempt2",
+      "A2_q_attempt3"
+    ],
+    "phase_specific_ready_required": true,
+    "no_quota_redistribution_or_automatic_retry": true,
+    "dispatch_authorized": false
+  },
+  "gate_status": {
+    "G0": {
+      "status": "root_audited",
+      "record": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g0_launch_inventory.json",
+      "record_sha256": "16aa4acca9df1a8420a075954142c5536678b561da1cb646e8e0067f5853e072",
+      "note": "2404 Task43 files and V2 artifact groups enumerated; 9 real watchdog launches (3 formal plus 6 support); launcher aliases not double-counted; A1_R was prepared only; no missing formal dispatch found."
+    },
+    "G1": {
+      "status": "root_component_and_source_review_passed",
+      "record": "docs/task43_hp_adaptivity/outcomes/records/v3_root_final_source_review.json",
+      "record_sha256": "c0b31e4ec250e34643801d490ab9b794220971cf5b9ca4d50641144bedc853cf",
+      "scope_limit": "Failure-safe persistence, raw residual scopes, normal/extra correction, demotion and default path were source-reviewed and exercised with finite fixtures/fault injection; this is not a fresh PDE endpoint qualification."
+    },
+    "G2": {
+      "status": "root_component_review_passed_pending_fresh_dispatch_capacity",
+      "record": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/g2_watchdog_cli_component.json",
+      "record_sha256": "ff17402290bbafb7208a046e3c151d402d452c61093b12b98aeb4bc8af774217",
+      "support_watchdog_whole_wall_sum_seconds": 24.439855814445764,
+      "support_attempts": [
+        {
+          "attempt": 1,
+          "whole_wall_seconds": 12.711930990684777,
+          "tree_rss_peak_bytes": 161431552,
+          "task_swap_peak_bytes": 0,
+          "watchdog_exit": 0,
+          "cleanup": true,
+          "classification": "actual_chain_assertions_succeeded_but_proof_json_unreadable; G2 not passed until replay"
+        },
+        {
+          "attempt": 2,
+          "whole_wall_seconds": 11.727924823760986,
+          "tree_rss_peak_bytes": 161316864,
+          "task_swap_peak_bytes": 0,
+          "resource_samples": 21,
+          "phase_observation_samples": 7,
+          "watchdog_exit": 0,
+          "cleanup": true,
+          "classification": "readable_actual_ABI_and_phase_chain_component_pass; no mesh or solver"
+        }
+      ]
+    },
+    "G3": {
+      "status": "root_audited_from_frozen_saved_data",
+      "record_index": "docs/task43_hp_adaptivity/outcomes/records/v3_root_pre_pde_audit/index.json",
+      "index_sha256": "ab2bab2fc8f50e7ff7838006e46526cc3a90e7c8b398c1df410e90657ab5d9eb",
+      "scope_limit": "Old R10/Y6_1 field/mode and Av auto/q15/q19 checks reused the bound support records; no fresh PDE and no V3 endpoint measurement."
+    },
+    "G4": {
+      "status": "prepared_pending_independent_root_signoff_and_fresh_phase_preflight",
+      "source_input_inventory": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_g4_source_input_inventory.json",
+      "source_input_inventory_sha256": "58fb9a4100f9f04f9d2ffdfece8a4bb445b134aba906b6181310bf207a8d4547",
+      "independent_inventory_recheck": "docs/task43_hp_adaptivity/outcomes/records/v3_root_g4_inventory_recheck.json",
+      "independent_inventory_recheck_sha256": "4ab916ce293c54c8d6a9b193a6aab345c3beb10279eccc88fc591c7ad2d041ad",
+      "independent_inventory_recheck_result": "60 source files + 47 direct inputs + 7 launch-support files; 0 SHA mismatches; 6.372526 s unmonitored read-only check",
+      "resource_prediction": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_resource_prediction.json",
+      "resource_prediction_sha256": "2561afca2c2b01d86d13926aeebb9e6516835d04843d92ac4cc6374e99161489",
+      "launch_preparation": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_launch_preparation.json",
+      "launch_preparation_sha256": "d871f7a66160b061608a6b705012db0b2d5b824a721c3b8d2b83cd778184c24c",
+      "ready_A1_q_attempt2": false,
+      "ready_A2_q_attempt3": false,
+      "fresh_host_preflight_performed": false
+    }
+  },
+  "frozen_plan_and_contract": {
+    "plan": "docs/task43_hp_adaptivity/diagnostic_plan_v3.md",
+    "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+    "contract": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_contract.json",
+    "contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898"
+  },
+  "focused_test_run": {
+    "source_head": "81c97e7c3357bbed1b29cab4ff40f2997e8bafdc",
+    "script": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/run_focused.sh",
+    "script_sha256": "eff6a263e4d81261b14a4304d28f14ce0ec6bc5cb28f95f254aff58d9c3ae06b",
+    "execution": "qualified task40 activation, CPU affinity 1, one MPI rank and one math thread; script executed taskset -c 1 python -m pytest -vv with the selectors listed below",
+    "selected_node_count": 52,
+    "selected_nodes": [
+      "src/test/test_task43_v3_failure_safe_order.py::test_a1_persists_primary_and_each_sample_before_same_lu_extra",
+      "src/test/test_task43_v3_failure_safe_order.py::test_normal_correction_vectors_are_copied_on_both_sides_of_existing_correction",
+      "src/test/test_task43_v3_failure_safe_order.py::test_partial_terminal_and_endpoint_failure_have_no_continuation_path",
+      "src/test/test_task43_v3_failure_safe_order.py::test_v3_residual_gates_use_returned_and_transformed_scopes_for_primary_and_extra",
+      "src/test/test_task43_v3_failure_safe_order.py::test_v3_packet_shape_check_preserves_recovered_storage_identity_shapes",
+      "src/test/test_task43_v3_failure_safe_order.py::test_native_a2_field_sample_callback_preserves_q8_before_q10_failure",
+      "src/test/test_task43_v3_failure_safe_order.py::test_a2_adapter_postprocess_exception_demotes_native_result",
+      "src/test/test_task43_v3_failure_safe_order.py::test_a2_adapter_guard_wraps_full_postprocess_callback",
+      "src/test/test_task43_v3_failure_safe_order.py::test_v3_a2_entry_rechecks_review_ancestry_and_actual_attempt_terminals",
+      "src/test/test_task43_v3_failure_safe_order.py::test_v3_a1_contract_and_consumed_attempts_use_frozen_phase_schema",
+      "src/test/test_task43_v3_failure_safe_order.py::test_v3_worker_requires_direct_watchdog_parent_and_absolute_phase",
+      "src/test/test_task43_v3_failure_safe_order.py::test_real_field_capture_callback_persists_q8_and_demotes_after_q10_failure",
+      "src/test/test_task43_v3_failure_safe_order.py::test_outer_v3_guard_records_escaped_postsolve_exception",
+      "src/test/test_task43_v3_failure_safe_order.py::test_raw_trace_metric_action_reproduces_the_existing_constraint_norm",
+      "src/test/test_task43_v3_failure_safe_order.py::test_a2_q3_adapter_cli_isolated_before_native_mesh_or_solver",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_v2_native_profile_normalizes_only_missing_y6_display_label",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_v2_native_profile_rejects_wrong_display_label",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_v2_native_profile_rejects_other_profile_drift",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_route_binds_y6_1_q_and_r_without_changing_scale_policy",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_route_rejects_wrong_profile_or_relaxed_settings",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_q19_metadata_changes_both_volume_form_metadata_records_only_in_optin",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_reads_q19_from_actual_ufl_integral_metadata",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_full_active_explicit_residual_combines_carrier_and_port_with_same_rhs",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_extra_lu_correction_uses_a_copy_and_performs_exactly_one_finite_decrease",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_raw_extra_lu_audit_rechecks_factor_counts_and_primary_identity",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_extra_lu_records_no_decrease_without_claiming_qualification",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_extra_lu_allows_exact_zero_residual_and_records_no_decrease",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_extra_lu_rejects_nonfinite_primary_before_factor_solve",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_normal_correction_raw_gate_recomputes_each_vector",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_raw_gate_roundtrips_native_writer_active_facts",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_output_directory_must_be_fresh_run_child",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_array_identity_binds_dtype_shape_and_bytes",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_y6_restore_identity_binding_schema_with_fixture",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_native_contract_is_only_scoped_interface_amendment",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_budget_is_frozen_to_actual_closed_a1_pair",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_q_retry_binds_attempt1_terminal_and_fixed_budget",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_r_requires_same_committed_q19_q32_r13_native_identity",
+      "src/test/test_task43_v2_native_p6_diagnostic_helpers.py::test_task43_a2_residual_reader_requires_raw_rhs_and_residual_arrays",
+      "src/test/test_task40para_direct_residual_and_supervisor.py::test_condensed_residual_uses_one_same_factor_correction_and_passes_gate",
+      "src/test/test_task40para_direct_residual_and_supervisor.py::test_v2_optional_refinement_snapshots_match_recorded_residual_ratios",
+      "src/test/test_task40para_direct_residual_and_supervisor.py::test_task40_release_is_wired_before_field_and_absorption_postprocessing",
+      "src/test/test_task40para_direct_residual_and_supervisor.py::test_task43_v2_reads_mumps_info_before_releasing_factor",
+      "src/test/test_task39extra_v7_p6_direct_pipeline.py::test_direct_runner_imports_quadrature_metadata_from_runtime_module",
+      "src/test/test_task39extra_v7_p6_direct_pipeline.py::test_v7_p6_direct_identity_roundtrips_through_real_worker_cfg",
+      "src/test/test_task39extra_v7_p6_direct_pipeline.py::test_worker_dispatch_selects_p6_direct_adapter_without_running_fe",
+      "src/test/test_task39extra_v7_p6_direct_pipeline.py::test_v7_direct_run_case_uses_the_native_rss_watchdog",
+      "src/test/test_task39extra_v7_p6_direct_pipeline.py::test_factor_lifecycle_uses_one_matrix_for_symbolic_numeric_solve",
+      "src/test/test_petsc_residual_correction.py::test_single_petsc_residual_correction_reuses_inputs_and_reduces_true_residual",
+      "src/test/test_petsc_residual_correction.py::test_in_place_residual_correction_updates_same_solution_only_after_improvement",
+      "src/test/test_354_subreaper_watchdog.py::test_cli_phase_path_exports_watchdog_identity_and_observes_workflow_ledger",
+      "src/test/test_task43_blocked_gram_tensor.py::test_task43_p6_carrier_grating_gram_matches_ffcx",
+      "src/test/test_task43_blocked_gram_tensor.py::test_task43_p6_carrier_blocked_gram_builds_active_p3"
+    ],
+    "result": {
+      "passed": 57,
+      "skipped": 1,
+      "failed": 0,
+      "reported_seconds": 26.71
+    },
+    "stdout": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/focused_full_clean_parent_81c97e7c.log",
+    "stdout_sha256": "15fd174fa5c32a873945329ad92094d4f615086ff58c97cca7dc1da36dedc1d4",
+    "skip_reason": "TASK43_RUN_P6_FFCX_MATRIX_WITNESS was not enabled; the opt-in complete-p6 FFCx witness was not rerun."
+  },
+  "final_source_delta_test": {
+    "source_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b",
+    "node": "src/test/test_task40para_direct_residual_and_supervisor.py::test_task40_release_is_wired_before_field_and_absorption_postprocessing",
+    "result": {
+      "passed": 1,
+      "failed": 0,
+      "reported_seconds": 1.01
+    },
+    "stdout": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/targeted_lifecycle_final_fc260b1e.log",
+    "stdout_sha256": "24c9ce1961ed5102f26fdec23cd8d90e534ce5a732d74e525604d2e24ddf3284",
+    "reuse_basis": "Root verified by Git byte comparison that only this test file changed after the 57/1 focused run; the single affected node was rerun at the final source HEAD."
+  },
+  "earlier_preserved_test_failure": {
+    "source_head": "bc2c7e0ac1b348feaed83047247d50294090a082",
+    "result": {
+      "passed": 55,
+      "failed": 2,
+      "skipped": 1,
+      "reported_seconds": 25.24
+    },
+    "classification": "two earlier AST lifecycle assertions were stale; preserved and corrected without deleting this failure record",
+    "stdout": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/focused_initial_failure.log",
+    "stdout_sha256": "51e8f9fece2b153363503cbaaf27eed52c08a82e1a8503f170f96cd129b6c7ed"
+  },
+  "static_checks": {
+    "stdout": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/compile_contract_markdown_final.log",
+    "stdout_sha256": "0e4a687af498aef59dd93e1fed247f3b0e0930fee8c4005ab26bb27b204fb40b",
+    "compileall": "passed",
+    "json_parse_and_hash_contracts": "passed for the recorded pre-index set of 11 JSON files; no self-hash validation claimed",
+    "local_markdown_links": "8 checked, 0 missing",
+    "git_diff_check": "passed against fd7ebd2a60eb6fd7d776f1ca68d367581e8f7d12..fc260b1e204b8f8f3aeebf136e57de2165b4920b before the final documentation-only additions",
+    "final_document_contract_check": {
+      "stdout": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/closeout_document_check_final.log",
+      "stdout_sha256": "dfdda3fa5282e58130aee7c331d4fe000b6ee788306b26a72e1aec115cdc44d9",
+      "result": "7 JSON documents parsed, 68 local Markdown links checked with 0 missing, current tracked diff check exit 0, final plan/contract/inventory/resource/root-audit cross-bindings and no-READY/resource-envelope assertions passed",
+      "self_hash_note": "This index is intentionally not hash-bound to its own bytes. Its syntax was parsed after this final check-log reference was added, avoiding a self-reference cycle."
+    }
+  },
+  "ruff": {
+    "full_ruff_passed": false,
+    "current_diagnostics": 77,
+    "review_base_diagnostics": 77,
+    "new_changed_line_diagnostics": 0,
+    "current_json": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/ruff_current.json",
+    "current_json_sha256": "661e0e231dab2e4a3ffda57d35f913de04dd676d04466ce32f0236379086aed0",
+    "review_base_json": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/ruff_fd7ebd2a_baseline.json",
+    "review_base_json_sha256": "7bbe96b34974c56775211689e34bdb22ba91dcde9907567206219c0eb6d43d49",
+    "comparison_stdout": "benchmarks/artifacts/task43/v3_root_audit/v3_final_validation/ruff_baseline_comparison.log",
+    "comparison_stdout_sha256": "a3561fecb611aba67c59d397a6a361912f10f5e7cf3d2928228d96a2b4ab361f"
+  },
+  "g4_resource_forecasts": {
+    "classification": "historical-route calibration and logical output-array allowance; high uncertainty; not fresh RSS or wall measurement",
+    "policy": {
+      "watchdog_wall_seconds_max": 7200,
+      "absolute_process_tree_rss_cap_bytes": 206158430208,
+      "task_tree_swap_bytes_max": 0,
+      "cpu_affinity": [
+        1
+      ],
+      "mpi_ranks": 1,
+      "math_threads": 1,
+      "dynamic_profile": "task43_hp_adaptivity_resource_v1"
+    },
+    "A1_q_attempt2": {
+      "FE_DOF_predicted": 118800,
+      "trace_DOF_predicted": 37800,
+      "interior_DOF_predicted": 81000,
+      "operator_rows_predicted": 38412,
+      "operator_nnz_used_predicted": 32419692,
+      "operator_nnz_allocated_predicted": 39926052,
+      "old_q15_factor_nnz_actual": 168268752,
+      "old_q15_whole_watchdog_wall_anchor_seconds": 2588.517399974633,
+      "old_q15_process_tree_rss_peak_anchor_bytes": 6572441600,
+      "same_q19_q32_A1_q1_whole_watchdog_wall_seconds": 4882.447373806033,
+      "same_q19_q32_A1_q1_process_tree_rss_peak_bytes": 9708847104,
+      "logical_before_after_field_array_allowance_gib": 1.0447,
+      "historical_plus_logical_array_lower_anchor_gib": 7.1658,
+      "conservative_dispatch_planning_envelope_gib": 32,
+      "uncertainty": "very high; same-q A1_q1 is partial and lacks complete endpoint output, so factor/output overlap is unmeasured; strict 7200 s and fresh dynamic cap govern"
+    },
+    "A2_q_attempt3": {
+      "FE_DOF_predicted": 380160,
+      "trace_DOF_predicted": 120960,
+      "interior_DOF_predicted": 259200,
+      "operator_rows_predicted": 121572,
+      "operator_nnz_used_predicted": 112458734,
+      "operator_nnz_allocated_predicted": 128135952,
+      "mumps_INFOG_16_17_actual_not_RSS": 20896,
+      "old_whole_watchdog_wall_anchor_seconds": 1909.738869767636,
+      "old_solver_internal_wall_not_whole_seconds": 1905.8774050269276,
+      "old_process_tree_rss_peak_anchor_bytes": 26919141376,
+      "logical_before_after_field_array_allowance_gib": 1.0447,
+      "historical_plus_logical_array_lower_anchor_gib": 26.1151,
+      "conservative_dispatch_planning_envelope_gib": 96,
+      "uncertainty": "very high; prior route released factor before output, V3 retains it through output; no measured overlap; fresh dynamic cap and 192 GiB hard cap govern"
+    }
+  },
+  "final_source_input_inventory": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_g4_source_input_inventory.json",
+    "sha256": "58fb9a4100f9f04f9d2ffdfece8a4bb445b134aba906b6181310bf207a8d4547",
+    "source_file_count": 60,
+    "direct_input_count": 47,
+    "current_review_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b",
+    "historical_a2_attempt2_manifest": "benchmarks/artifacts/task43/v2_diagnostics/A2_q_attempt2/input_manifest.json",
+    "historical_a2_attempt2_manifest_input_count": 42,
+    "historical_a2_attempt2_hashes_match": true,
+    "scope_note": "Review-time static inventory, not a fresh attempt-specific input closure. Rehash all selected source and direct inputs against the actual committed HEAD immediately before any future dispatch."
+  },
+  "prohibited_claims": [
+    "This validation does not create G4 root signoff or READY.",
+    "This validation is not PDE evidence, endpoint qualification, or merge approval.",
+    "The three V2 formal attempts are engineering entry failures, not evidence that hp adaptivity failed as a numerical method."
+  ]
+}

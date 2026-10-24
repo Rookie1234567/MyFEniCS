@@ -1,0 +1,121 @@
+{
+  "calibration_sources": [
+    {
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/watchdog/summary.json",
+      "sha256": "ad4675ae06ae2a1122c94812837a539da647d2062e8b88c257930e7c57286b4a"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/run_summary.json",
+      "sha256": "be445b030b8e39169fc800e4c53aae0f85fcf8800312d7538518df67891d6376"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v2_diagnostics/A1_q_attempt1/watchdog/summary.json",
+      "sha256": "df465af9e3274c343fcf7b28e07130bb1a9ad6bbc776b0c44d7a583b27f89728"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v2_root_audit/a1_q_resource_samples_replay.json",
+      "sha256": "5bfb13f099aeafdad40417ed3b231d374e0315815539b44578f149ca223e7e29"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/existing_validation_fields_v1.json",
+      "sha256": "8493acfd4485ef7c9b4c662708d7bac8df9934bf90dae550d8d392f59f630df0"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/p6_condensed_direct_summary.json",
+      "sha256": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc"
+    }
+  ],
+  "classification": "predicted_from_historical_same_route_anchors_not_fresh_measurement_or_launch_gate",
+  "common_limits": {
+    "absolute_rss_cap_bytes": 206158430208,
+    "cpu_affinity": [
+      1
+    ],
+    "dynamic_launch_planning_cap_must_be_recomputed_at_READY": true,
+    "dynamic_resource_profile": "task43_hp_adaptivity_resource_v1",
+    "math_threads": 1,
+    "mpi_ranks": 1,
+    "task_tree_swap_bytes_max": 0,
+    "watchdog_wall_seconds": 7200
+  },
+  "contract_sha256": "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898",
+  "input_inventory_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v3_g4_source_input_inventory.json",
+  "input_inventory_sha256": "58fb9a4100f9f04f9d2ffdfece8a4bb445b134aba906b6181310bf207a8d4547",
+  "no_formal_attempts_started_by_this_record": true,
+  "output_array_memory_estimate": {
+    "endpoint_states": 2,
+    "estimated_bytes": 1121734656,
+    "estimated_gib": 1.0447,
+    "formula": "(q8_points+q10_points) * (7 complex128 3-vectors + points_nm float64 3-vector + weights float64 scalar) * endpoint_states",
+    "q10_points": 1008000,
+    "q8_points": 516096,
+    "scope_note": "Conservative logical NumPy-array allowance for before/after field bundles; excludes solver objects, mesh/assembly temporary arrays and library caches; not observed RSS."
+  },
+  "phases": {
+    "A1_q_attempt2": {
+      "anchors": {
+        "prior_run_summary_active_trace_dofs": 37800,
+        "prior_run_summary_cell_interior_dofs": 81000,
+        "prior_run_summary_matrix_rows": 38412,
+        "prior_run_summary_factor_matrix_nnz": 168268752,
+        "prior_run_summary_nnz_allocated": 39926052,
+        "prior_run_summary_nnz_used": 32419692,
+        "same_quadrature_A1_q_attempt1_process_tree_rss_peak_bytes": 9708847104,
+        "same_quadrature_A1_q_attempt1_watchdog_wall_seconds": 4882.447373806033,
+        "same_route_prior_R10_process_tree_rss_peak_bytes": 6572441600,
+        "same_route_prior_R10_watchdog_wall_seconds": 2588.517399974633
+      },
+      "old_q15_q28_R10_plus_logical_array_lower_anchor_bytes": 7694176256,
+      "old_q15_q28_R10_plus_logical_array_lower_anchor_gib": 7.1658,
+      "same_quadrature_attempt_peak_rss_gib": 9.04,
+      "conservative_dispatch_planning_envelope_bytes": 34359738368,
+      "conservative_dispatch_planning_envelope_gib": 32,
+      "planning_envelope_basis": "Rounded up from about 3x the actual same-q19/q32 A1_q1 sampled peak (9.04 GiB); the extra margin covers unmeasured full field/output overlap, backend growth and JIT/cache uncertainty. It is a planning envelope, not a measured RSS or hard cap.",
+      "fe_dofs_predicted": 118800,
+      "geometry": "3x10x6 = 180 cells, all p6 variable-p route",
+      "predicted_active_trace_dofs": 37800,
+      "predicted_cell_interior_dofs": 81000,
+      "modal_rows": 612,
+      "nnz_allocated_predicted": 39926052,
+      "nnz_used_predicted": 32419692,
+      "nnz_semantics": "operator matrix storage used/allocated from the prior R10 run summary; factor-matrix NNZ is separately recorded above and is not the same quantity",
+      "rss_uncertainty": "Very high: prior A1_q1 ran the same q19/q32 settings and provides a 9.04 GiB observed sampled peak, but it terminated before complete endpoint output and does not calibrate the full retained-factor/output overlap. The 7.17 GiB value is the old q15/q28 R10 peak plus a logical-array allowance, not a q19/q32 measurement; use 32 GiB only as a conservative dispatch planning envelope, not a guarantee. READY requires a fresh dynamic cap; hard absolute cap is 192 GiB.",
+      "solved_rows_predicted": 38412,
+      "solved_rows_semantics": "independent trace rows plus 612 DtN port rows; cell interiors locally eliminated/recovered",
+      "wall_planning": "A1_q1 measured 4882.4474 s whole-watchdog on the same q19/q32 route but ended before complete endpoint output; treat this as an observed partial-workflow lower bound. The older q15/q28 R10 run was 2588.5174 s. Plan for 4882\u20137200 s with high uncertainty; 7200 s is a hard stop, never extended."
+    },
+    "A2_q_attempt3": {
+      "anchors": {
+        "mumps_INFOG_16_and_17": 20896,
+        "mumps_info_is_not_RSS": true,
+        "same_route_prior_Y6_matrix_rows": 121572,
+        "same_route_prior_Y6_nnz_allocated": 128135952,
+        "same_route_prior_Y6_nnz_used": 112458734,
+        "same_route_prior_Y6_process_tree_rss_peak_bytes": 26919141376,
+        "same_route_prior_Y6_solver_internal_wall_seconds_not_whole_watchdog": 1905.8774050269276,
+        "same_route_prior_Y6_watchdog_wall_seconds": 1909.738869767636
+      },
+      "historical_peak_plus_logical_output_array_lower_anchor_bytes": 28040876032,
+      "historical_peak_plus_logical_output_array_lower_anchor_gib": 26.1151,
+      "conservative_dispatch_planning_envelope_bytes": 103079215104,
+      "conservative_dispatch_planning_envelope_gib": 96,
+      "planning_envelope_basis": "Rounded up from about 3x the 26.12 GiB historical process-tree peak plus logical output-array allowance; the extra margin covers unmeasured retained-factor/output overlap, backend growth and JIT/cache uncertainty. It is a planning envelope, not a measured RSS or hard cap.",
+      "fe_dofs_predicted": 380160,
+      "geometry": "6x16x6 = 576 cells, uniform p6 native route",
+      "predicted_active_trace_dofs": 120960,
+      "predicted_cell_interior_dofs": 259200,
+      "modal_rows": 612,
+      "nnz_allocated_predicted": 128135952,
+      "nnz_used_predicted": 112458734,
+      "nnz_semantics": "native condensed operator matrix storage used/allocated from the prior Y6_1 summary; prior MUMPS INFOG values are not factor NNZ or process RSS",
+      "rss_uncertainty": "Very high: 26.12 GiB is the prior whole-tree RSS plus a logical allowance for before/after sampled arrays. Prior route released the factor before p0 output; V3 deliberately overlaps the factor with primary modal/Av/field outputs. Use 96 GiB (about 3x the 26.12 GiB lower anchor, rounded upward) as a conservative dispatch planning envelope, not a measured peak. MUMPS INFOG 16/17 are solver-reported units, not process RSS. No measured V3 overlap exists; fresh dynamic gate and 192 GiB absolute cap govern.",
+      "solved_rows_predicted": 121572,
+      "solved_rows_semantics": "120960 active trace rows plus 612 port rows; interiors locally condensed/recovered",
+      "wall_planning": "Historical native Y6 whole watchdog 1909.7389 s (not solver-internal 1905.8774 s). q19/q32 and factor-retained output change costs; planning anchor 1909\u20137200 s with high uncertainty and 7200 s hard stop, never extended."
+    }
+  },
+  "plan_sha256": "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7",
+  "prediction_limit": "These are preflight planning estimates only. They do not establish physical qualification, measured resource use, or READY. Each actual dispatch requires fresh host/resource/source/input checks.",
+  "schema": "task43.v3.resource_prediction.v1",
+  "source_head": "fc260b1e204b8f8f3aeebf136e57de2165b4920b"
+}

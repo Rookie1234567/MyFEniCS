@@ -227,6 +227,14 @@ V1的最后接受态仍是R9（110,472 FE），最终空间精度不达标；R10
 
 正式尝试以外的支持工作入口、可计量的独立watchdog费用、未监控时间的`not_measured`标记和保留的前置失败列于[V2 compact的support_work](records/v2_formal_attempts_and_profile_fix_v1.json)。这些费用不并入4,915.1723896381445s formal watchdog subtotal，也不拼成全campaign总额。
 
+## V3整改与待审的有限诊断
+
+V3仅修正失败证据保存、watchdog phase/ABI 接线和 A2 profile 前置核验；当前没有V3正式dispatch或新PDE。预算仍为3/6已耗用，最多只剩合同允许的一次A1_q2和一次A2_q3，且分别要等root对精确源码、合同、输入和资源门写阶段READY；A1_R/A2_R/B/C保持锁定。
+
+Root已复核G1故障注入/默认路径和G2真实watchdog tiny-child链；G0、G3复用带hash的旧记录。最终bounded focused在源码HEAD `81c97e7c`上为57 passed、1 skipped，随后最终HEAD `fc260b1e`上重跑唯一变动的生命周期AST节点，1 passed。跳过项是需显式开启的完整p6 FFCx矩阵见证，本轮未运行。compileall、JSON/Markdown和diff检查通过；Ruff仍有与`fd7ebd2a`基线相同的77项既有诊断，新增诊断为0，因此不称全量Ruff通过。命令、日志hash及root源码审阅见[最终验证索引](records/diagnostic_plan_v3_final_validation.json)和[root G1/G2复核](records/v3_root_final_source_review.json)。
+
+下一轮的资源仅是预估：A1为118,800 FE（37,800 trace+81,000 interior）、38,412行、32,419,692个已用矩阵非零元；旧 q15 R10 的进程树RSS峰为6,572,441,600B，而已完成的 q19/q32 A1_q1 部分尝试实测峰为9,708,847,104B、全程4,882.447秒，未完成完整端点。A2的Y6_1历史锚点为380,160 FE（120,960 trace+259,200 interior）、121,572行、112,458,734个已用非零元、进程树RSS峰26,919,141,376B。由于新留证会让输出与因子重叠，暂按A1约32GiB、A2约96GiB作为保守规划余量，均为预估而非实测峰值；实际仍须通过fresh dynamic capacity gate，并受7200秒和192GiB硬门约束。60条源码、47项直接输入及7项启动支持hash见[阶段G4 source/input inventory](records/diagnostic_plan_v3_g4_source_input_inventory.json)及[root独立复核](records/v3_root_g4_inventory_recheck.json)，预测假设见[有限资源预估](records/diagnostic_plan_v3_resource_prediction.json)。这些记录待root完成G4签核；没有任何READY、合并批准或0.7nm运行。
+
 
 ## V2阶段一（Q02–Q08）证据补账
 
