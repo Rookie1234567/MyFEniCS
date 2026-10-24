@@ -169,7 +169,8 @@
         "factor_solver": "PETSc MUMPS",
         "assembly_time_static_condensation": true,
         "cell_static_condensation": true,
-        "floquet_slave_elimination": true
+        "floquet_slave_elimination": true,
+        "normal_correction_policy": "one configured solver-normal correction; use this output before the extra diagnostic correction for q/R comparisons"
       },
       "source_identity_scope": "41 solve-recorded numerical source files match current hashes; this is the explicit source list, not the entire transitive dependency closure"
     },
@@ -224,6 +225,13 @@
         ]
       },
       "identity_gate": "prove source/dependency, weak form, boundary/constraint, quadrature, space, and direct-route compatibility before A2; A1 or variable-p evidence cannot satisfy this gate",
+      "normal_correction_policy": {
+        "native_solver_setting": "max_same_factor_corrections=2",
+        "maximum_corrections_after_initial_solve": 2,
+        "maximum_total_linear_solves": 3,
+        "historical_Y6_1_actual_corrections": 1,
+        "endpoint_state_for_qr_comparison": "after the configured normal-correction strategy and before the extra diagnostic correction"
+      },
       "extra_same_lu_gate": "each new A2 endpoint needs its own one-correction live-factor output-uncertainty check; if unavailable, endpoint is unqualified"
     },
     "B_R9_parent": {
@@ -359,6 +367,7 @@
       },
       "enabled_only_if": [
         "A1_and_A2_all_qR_perturbations_within_10_percent",
+        "A1_and_A2_extra_same_lu_uncertainty_gates_pass",
         "R9_parent_and_candidate_same_variable_p_route_and_frozen_qR",
         "same_numerical_core_evidence_covers_R9_parent_candidate_and_comparison_reference",
         "actual_mesh_and_plan_parent_identity_pass",
@@ -392,6 +401,7 @@
         "measured FE matches or explains predicted 570240",
         "MUMPS structural resource forecast is conservatively within live planning cap",
         "A1_and_A2_all_qR_perturbations_within_10_percent",
+        "A1_and_A2_extra_same_lu_uncertainty_gates_pass",
         "no hard residual or resource stop",
         "B_produced_usable_identity_and_hard_gate_passing_candidate_with_frozen_plan_mesh_full_output_and_hash"
       ],
@@ -427,12 +437,18 @@
     "direct_target_relative": 1e-08,
     "condensed_residual_relative": 1e-09,
     "energy_closure_absolute_abs_1_minus_R_minus_T_minus_Avolume": 1e-05,
-    "must_not_substitute_condensed_for_A6": true
+    "must_not_substitute_condensed_for_A6": true,
+    "normal_correction_recalculated_from_raw": "require finite nonnegative initial/corrected explicit residual norms and rhs-relative values, strict decrease in both, solution_updated=true, and positive correction KSP converged reason; status label alone is insufficient; explicit/A6/condensed gate ratios must also be nonnegative"
   },
   "extra_same_lu_uncertainty": {
     "A1_max_per_new_endpoint": 1,
     "A2_max_per_new_endpoint": 1,
     "separate_from_solver_normal_correction": true,
+    "primary_qr_endpoint_state": "after each endpoint's configured solver-normal-correction policy and before the extra diagnostic correction; the extra output never replaces or selects the primary q/R endpoint",
+    "normal_correction_policy": {
+      "A1": "one configured solver-normal correction",
+      "A2": "preserve native Task40 max_same_factor_corrections=2: initial solve plus at most two normal corrections (three total solves); historical Y6_1 actually used one correction"
+    },
     "required_before_and_after": [
       "explicit_b_minus_Ax_finite",
       "rhs_normalized_residual_finite",
@@ -505,6 +521,7 @@
   "stopping": {
     "hard_residual_or_resource_failure": "stop affected branch, preserve failure, no automatic retry",
     "A_qR_perturbation_over_10_percent": "if hard gates pass and baseline is trustworthy, complete remaining predeclared A factor then lock B/C",
+    "extra_same_lu_output_uncertainty_failure": "if hard gates pass, continue the remaining predeclared R factor for that A branch; preserve uncertainty failure and lock B/C",
     "A2_core_or_live_factor_uncertainty_gate_failure": "A2 endpoint unqualified; do not substitute another core",
     "B_seed_or_FE_or_same_parent_identity_failure": "do not start B; no alternate seed",
     "C_novelty_or_resource_forecast_failure": "do not start C; no alternate mesh",

@@ -29,6 +29,17 @@ from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
 from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
 )
+from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
+    R13_MODE_KEYS,
+    R14_MODE_KEYS,
+    compare_field_sample_bundles,
+    compare_r13_modal_outputs,
+    compare_r13_r14_modal_outputs,
+    task43_v2_physical_configuration_identity,
+)
+from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
+    _validated_rows as _v2_validated_rows,
+)
 from benchmarks.task43_hp_adaptivity.profile import (
     task43_initial_profile,
     task43_profile_identity,
@@ -90,6 +101,17 @@ _CASES = {
 }
 _CURRENT_CASE = "current_active_p3_initial180_mpi1"
 _ROUND1_CANDIDATE_CASE = "round1_candidate_mpi1"
+_V2_CONTRACT_SHA256 = "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc"
+_V2_PLAN_MARKDOWN_SHA256 = "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e"
+_V2_LEGACY_R10_RECORD_SHA256 = "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d"
+_V2_LEGACY_R10_SAMPLE_SHA256 = "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71"
+_V2_R10_PLAN_SHA256 = "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826"
+_V2_R10_RECORD_SHA256 = "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d"
+_V2_R10_ROWS_SHA256 = "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450"
+_V2_R10_STORAGE_SHA256 = "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf"
+_V2_SELECTION_SHA256 = "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9"
+_V2_ACCEPTANCE_SHA256 = "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647"
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 _THREAD_ENV = (
     "OMP_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
@@ -98,6 +120,8 @@ _THREAD_ENV = (
 )
 _SOURCE_FILES = (
     "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py",
+    "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py",
     "benchmarks/task43_hp_adaptivity/candidate_records.py",
     "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
     "benchmarks/task43_hp_adaptivity/round1_candidates.py",
@@ -1225,13 +1249,19 @@ def _tightening_field_metrics(
 def _tightening_modal_metrics(
     reference_rows: list[dict[str, Any]],
     candidate_rows: list[dict[str, Any]],
+    *,
+    expected_keys: frozenset[tuple[str, int, int, str]] = R13_MODE_KEYS,
 ) -> dict[str, Any]:
     def key(row: dict[str, Any]) -> tuple[str, int, int, str]:
         return str(row["side"]), int(row["m"]), int(row["n"]), str(row["polarization"])
 
     reference_keys = [key(row) for row in reference_rows]
     candidate_keys = [key(row) for row in candidate_rows]
-    if reference_keys != candidate_keys or len(reference_keys) != 612:
+    if (
+        reference_keys != candidate_keys
+        or len(reference_keys) != len(expected_keys)
+        or set(reference_keys) != expected_keys
+    ):
         raise ValueError("same-LU modal inventories differ or are incomplete")
     reference_amplitudes = _complex_rows(reference_rows)
     candidate_amplitudes = _complex_rows(candidate_rows)
@@ -1276,6 +1306,10 @@ def _same_lu_tightening(
     comm: MPI.Intracomm,
     started: float,
     initial_fields: dict[str, Any],
+    expected_keys: frozenset[tuple[str, int, int, str]] = R13_MODE_KEYS,
+    initial_active_action: dict[str, Any] | None = None,
+    initial_explicit_residual: dict[str, Any] | None = None,
+    v2_endpoint_identity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Apply one existing-KSP residual correction and capture the new state."""
 
@@ -1287,6 +1321,17 @@ def _same_lu_tightening(
     old_auxiliary_action = view.recovered.active_auxiliary_interior_action
     if old_auxiliary_action is not None and float(old_auxiliary_action.norm()) != 0.0:
         raise RuntimeError("same-LU correction found nonzero auxiliary interior action")
+    is_v2 = v2_endpoint_identity is not None
+    if is_v2 and (initial_active_action is None or initial_explicit_residual is None):
+        raise ValueError("V2 same-LU uncertainty requires both before-state residual audits")
+    if is_v2 and len(expected_keys) not in {612, 836}:
+        raise ValueError("V2 same-LU uncertainty requires the frozen R13 or R14 inventory")
+    before_explicit_residual = (
+        initial_explicit_residual
+        if initial_explicit_residual is not None
+        else _linear_residual(view.A, view.b, view.x)
+    )
+    before_condensed_residual = dict(view.full_active_residual)
 
     _log_stage(comm, started, "same_lu_residual_correction", "begin")
     corrected_x, correction = single_petsc_residual_correction(
@@ -1296,8 +1341,8 @@ def _same_lu_tightening(
         modes = tuple(view.goal_context["modes"])
         n_auxiliary = len(modes)
         n_fem_tail = int(corrected_x.getSize()) - n_auxiliary
-        if n_auxiliary != 612 or n_fem_tail < 0:
-            raise RuntimeError("corrected vector does not contain the full ordered R13 tail")
+        if n_auxiliary != len(expected_keys) or n_fem_tail < 0:
+            raise RuntimeError("corrected vector does not contain the full ordered modal tail")
         old_auxiliary = _gather_auxiliary_values(
             view.x, int(view.x.getSize()) - n_auxiliary, n_auxiliary, comm
         )
@@ -1356,7 +1401,11 @@ def _same_lu_tightening(
 
             root_error = None
             tight_root = run_root / "same_lu_tightening"
-            ports_root = tight_root / "ports"
+            ports_root = (
+                tight_root / "after" / "ports"
+                if is_v2
+                else tight_root / "ports"
+            )
             if comm.rank == 0:
                 try:
                     if tight_root.exists() and any(tight_root.iterdir()):
@@ -1371,12 +1420,41 @@ def _same_lu_tightening(
                 raise RuntimeError(root_error)
             comm.Barrier()
 
+            before_a_volume = None
+            before_port_metrics = dict(view.port_metrics)
+            if is_v2:
+                _log_stage(comm, started, "same_lu_before_volume_absorption", "begin")
+                before_volume = compute_volume_absorption_3d(
+                    view.mesh_data,
+                    view.config,
+                    view.recovered.field,
+                    tight_root / "before" / "volume",
+                    incident_power=incident_power_3d(view.config),
+                    port_metrics=before_port_metrics,
+                )
+                before_a_volume = before_volume.get("A_volume_total")
+                if before_a_volume is None or not np.isfinite(float(before_a_volume)):
+                    raise ValueError("same-LU before-state A_volume_total is missing or non-finite")
+                before_a_volume = float(before_a_volume)
+                before_port_metrics["R_plus_T_plus_A_volume"] = float(
+                    before_port_metrics["R_total"]
+                    + before_port_metrics["T_total"]
+                    + before_a_volume
+                )
+                before_port_metrics["energy_closure_error_dtn_port_modal_volume"] = float(
+                    before_port_metrics["R_plus_T_plus_A_volume"] - 1.0
+                )
+                _log_stage(comm, started, "same_lu_before_volume_absorption", "end")
+
             _log_stage(comm, started, "same_lu_volume_absorption", "begin")
+            corrected_volume_root = (
+                tight_root / "after" / "volume" if is_v2 else tight_root / "volume"
+            )
             corrected_volume = compute_volume_absorption_3d(
                 view.mesh_data,
                 view.config,
                 corrected_recovered.field,
-                tight_root / "volume",
+                corrected_volume_root,
                 incident_power=incident_power_3d(view.config),
                 port_metrics=corrected_port_metrics,
             )
@@ -1441,7 +1519,9 @@ def _same_lu_tightening(
                     with corrected_port_path.open(encoding="utf-8") as stream:
                         corrected_port = json.load(stream)
                     modal_metrics = _tightening_modal_metrics(
-                        original_port["orders"], corrected_port["orders"]
+                        original_port["orders"],
+                        corrected_port["orders"],
+                        expected_keys=expected_keys,
                     )
                     field_metrics = {
                         order: _tightening_field_metrics(
@@ -1496,6 +1576,166 @@ def _same_lu_tightening(
                     quality_gates["pass"] = all(
                         value is True for value in quality_gates.values()
                     )
+                    v2_uncertainty = None
+                    if is_v2:
+                        assert initial_active_action is not None
+                        before_a6_payload = initial_active_action[
+                            "full_solver_gauge_residual"
+                        ]
+                        before_a6 = float(
+                            before_a6_payload["relative_to_independent_rhs"]
+                        )
+                        before_condensed = float(
+                            before_condensed_residual[
+                                "linear_system_relative_residual"
+                            ]
+                        )
+                        before_reduced = float(
+                            before_explicit_residual["linear_system_relative_residual"]
+                        )
+                        before_explicit_norm = float(
+                            before_explicit_residual["linear_system_residual_norm"]
+                        )
+                        corrected_explicit_norm = float(
+                            corrected_reduced_residual["linear_system_residual_norm"]
+                        )
+                        before_closure = float(
+                            before_port_metrics[
+                                "energy_closure_error_dtn_port_modal_volume"
+                            ]
+                        )
+                        before_rows_path = run_root / "solve" / (
+                            "dtn_port_diffraction_orders_3d.json"
+                        )
+                        with before_rows_path.open(encoding="utf-8") as stream:
+                            before_payload = json.load(stream)
+                        physical_identity = v2_endpoint_identity[
+                            "physical_configuration"
+                        ]
+                        physical_sha = physical_identity["sha256"]
+                        discretization_sha = physical_identity[
+                            "discretization_identity"
+                        ]["sha256"]
+                        same_lu_modal = compare_r13_modal_outputs(
+                            before_payload,
+                            json.loads(corrected_port_path.read_text(encoding="utf-8")),
+                            reference_a_volume=before_a_volume,
+                            candidate_a_volume=corrected_a_volume,
+                            reference_physical_configuration_sha256=physical_sha,
+                            candidate_physical_configuration_sha256=physical_sha,
+                            reference_discretization_sha256=discretization_sha,
+                            candidate_discretization_sha256=discretization_sha,
+                            expected_keys=expected_keys,
+                        )
+                        field_comparisons = {}
+                        volume = float(
+                            view.config.period_x
+                            * view.config.period_y
+                            * (view.config.domain_z_max - view.config.domain_z_min)
+                        )
+                        e_floor = float(np.sqrt(volume))
+                        h_floor = e_floor * float(
+                            view.config.magnetic_field_scale_A_per_m
+                        )
+                        g_floor = float(np.sqrt(2.0 * volume))
+                        for order, before_sample in initial_fields["samples"].items():
+                            after_sample = corrected_fields["samples"][order]
+                            field_comparisons[order] = compare_field_sample_bundles(
+                                _v2_field_bundle_from_capture(
+                                    before_sample, view.config, physical_sha
+                                ),
+                                _v2_field_bundle_from_capture(
+                                    after_sample, view.config, physical_sha
+                                ),
+                                k0_per_nm=float(view.config.k0),
+                                magnetic_field_scale_A_per_m=float(
+                                    view.config.magnetic_field_scale_A_per_m
+                                ),
+                                mu_r=complex(view.config.mu_r),
+                                incident_e_norm_floor=e_floor,
+                                incident_h_norm_floor=h_floor,
+                                incident_g_norm_floor=g_floor,
+                            )
+                        a6_after = independent_a6
+                        explicit_finite = all(
+                            np.isfinite(value)
+                            for value in (
+                                before_explicit_norm,
+                                corrected_explicit_norm,
+                                before_reduced,
+                                reduced_relative,
+                            )
+                        )
+                        quality_gates = {
+                            "before_and_after_explicit_b_minus_Ax_finite": bool(
+                                explicit_finite
+                            ),
+                            "explicit_residual_norm_strictly_decreased": bool(
+                                explicit_finite
+                                and corrected_explicit_norm < before_explicit_norm
+                            ),
+                            "rhs_normalized_residual_strictly_decreased": bool(
+                                explicit_finite and reduced_relative < before_reduced
+                            ),
+                            "before_explicit_relative_le_1e-8": bool(
+                                np.isfinite(before_reduced) and before_reduced <= 1.0e-8
+                            ),
+                            "after_explicit_relative_le_1e-8": bool(
+                                np.isfinite(reduced_relative)
+                                and reduced_relative <= 1.0e-8
+                            ),
+                            "before_and_after_independent_A6_le_1e-8": bool(
+                                bool(before_a6_payload["finite"])
+                                and np.isfinite(before_a6)
+                                and before_a6 <= 1.0e-8
+                                and bool(independent_gauge["finite"])
+                                and np.isfinite(a6_after)
+                                and a6_after <= 1.0e-8
+                            ),
+                            "before_and_after_condensed_residual_le_1e-9": bool(
+                                np.isfinite(before_condensed)
+                                and before_condensed <= 1.0e-9
+                                and np.isfinite(condensed_relative)
+                                and condensed_relative <= 1.0e-9
+                            ),
+                            "before_and_after_energy_closure_le_1e-5": bool(
+                                np.isfinite(before_closure)
+                                and abs(before_closure) <= 1.0e-5
+                                and np.isfinite(corrected_closure)
+                                and abs(corrected_closure) <= 1.0e-5
+                            ),
+                            "all_modal_outputs_within_0p1_final_tolerance": bool(
+                                same_lu_modal["pass_10_percent_perturbation_gate"]
+                            ),
+                            "all_q8_q10_field_outputs_within_0p1_final_tolerance": bool(
+                                all(
+                                    item["pass_10_percent_perturbation_gate"]
+                                    for item in field_comparisons.values()
+                                )
+                            ),
+                        }
+                        v2_uncertainty = {
+                            "schema": "task43.v2.same_lu_output_uncertainty.v1",
+                            "extra_corrections_applied": 1,
+                            "separate_from_solver_normal_correction": True,
+                            "before_explicit_residual": before_explicit_residual,
+                            "after_explicit_residual": corrected_reduced_residual,
+                            "before_independent_A6": initial_active_action,
+                            "after_independent_A6": independent_active_action,
+                            "before_condensed_residual": before_condensed_residual,
+                            "after_condensed_residual": condensed_residual,
+                            "before_port_metrics": before_port_metrics,
+                            "after_port_metrics": corrected_port_metrics,
+                            "before_A_volume_total": before_a_volume,
+                            "after_A_volume_total": corrected_a_volume,
+                            "same_inventory_modal_comparison": same_lu_modal,
+                            "same_point_field_comparisons": field_comparisons,
+                            "gates": quality_gates,
+                            "pass": all(value is True for value in quality_gates.values()),
+                        }
+                    quality_gates["pass"] = all(
+                        value is True for value in quality_gates.values()
+                    )
                     samples_path = tight_root / "field_samples_q8_q10.npz"
                     _write_samples(
                         samples_path,
@@ -1525,6 +1765,7 @@ def _same_lu_tightening(
                         },
                         "corrected_A_volume_total": corrected_a_volume,
                         "quality_gates": quality_gates,
+                        "v2_output_uncertainty": v2_uncertainty,
                         "field_difference_from_initial_q8_q10": field_metrics,
                         "modal_difference_from_initial": modal_metrics,
                         "field_samples": {
@@ -1638,6 +1879,790 @@ def _configure_direct_factor_backend(cfg, requested: str) -> None:
         cfg.petsc_extra_options["pc_factor_mat_solver_type"] = "mumps"
 
 
+def _load_v2_diagnostic_contract(path: Path, expected_sha256: str) -> dict[str, Any]:
+    contract_path = path.resolve()
+    expected_path = (
+        _REPOSITORY_ROOT
+        / "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json"
+    ).resolve()
+    markdown_path = (
+        _REPOSITORY_ROOT / "docs/task43_hp_adaptivity/diagnostic_plan_v2.md"
+    )
+    if contract_path != expected_path:
+        raise ValueError("V2 diagnostics must use the tracked frozen contract path")
+    if expected_sha256 != _V2_CONTRACT_SHA256:
+        raise ValueError("V2 contract CLI SHA is not the frozen contract identity")
+    if _sha256_file(contract_path) != _V2_CONTRACT_SHA256:
+        raise ValueError("tracked V2 diagnostic contract hash changed")
+    if _sha256_file(markdown_path) != _V2_PLAN_MARKDOWN_SHA256:
+        raise ValueError("tracked V2 diagnostic plan hash changed")
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    if (
+        contract.get("schema") != "task43.v2.finite_diagnostic_contract.v2"
+        or contract.get("status") != "frozen_for_execution"
+        or contract.get("formal_model_attempts", {}).get("current_v2_formal_models_run")
+        != 0
+    ):
+        raise ValueError("V2 diagnostic contract is not the frozen executable contract")
+    return contract
+
+
+def _configure_v2_a1_endpoint(cfg, phase: str, contract: dict[str, Any]) -> dict[str, Any]:
+    phases = {item["id"]: item for item in contract["phases"]["A1"]}
+    if phase not in {"A1_q", "A1_R"} or phase not in phases:
+        raise ValueError(f"unsupported V2 A1 phase: {phase!r}")
+    if cfg.stage4_full3d_assembly_backend != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND:
+        raise ValueError("V2 A1 requires the recorded variable-p condensed route")
+    endpoint = contract["quadrature_and_modal_endpoints"]
+    cfg.stage4_volume_quadrature_degree = int(endpoint["test_volume_q"])
+    cfg.stage4_incident_quadrature_degree = int(endpoint["test_incident_and_port_q"])
+    cfg.stage4_dtn_quadrature_degree = int(endpoint["test_incident_and_port_q"])
+    modal_name = "R13" if phase == "A1_q" else "R14"
+    modal = endpoint[modal_name]
+    cfg.stage4_dtn_order_policy = "explicit_rectangle"
+    cfg.stage4_dtn_rectangle_max_m = int(modal["max_abs_m"])
+    cfg.stage4_dtn_rectangle_max_n = int(modal["max_abs_n"])
+    expected_mode_count = 4 * (2 * cfg.stage4_dtn_rectangle_max_m + 1) * (
+        2 * cfg.stage4_dtn_rectangle_max_n + 1
+    )
+    if expected_mode_count != int(modal["count"]):
+        raise ValueError("V2 contract mode rectangle and count disagree")
+    route = contract["spatial_core_identities"]["A1_R10"]["solver_settings"]
+    if route["backend"] != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND:
+        raise ValueError("V2 contract A1 route differs from the implemented backend")
+    cfg.stage4_cell_static_condensation = bool(route["cell_static_condensation"])
+    cfg.stage4_assembly_time_cell_static_condensation = bool(
+        route["assembly_time_static_condensation"]
+    )
+    cfg.stage4_floquet_slave_elimination = bool(route["floquet_slave_elimination"])
+    if not all(
+        (
+            cfg.stage4_cell_static_condensation,
+            cfg.stage4_assembly_time_cell_static_condensation,
+            cfg.stage4_floquet_slave_elimination,
+        )
+    ):
+        raise ValueError("V2 A1 must explicitly preserve all recorded condensation flags")
+    backend = resolve_stage4_full3d_assembly_backend(cfg, apply=False)
+    if backend["actual"] != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND:
+        raise ValueError(f"V2 A1 resolved an unexpected assembly backend: {backend}")
+    _configure_direct_factor_backend(cfg, "mumps")
+    return {
+        "phase": phase,
+        "reference": phases[phase]["reference"],
+        "test": phases[phase]["test"],
+        "changed_only": phases[phase]["changed_only"],
+        "quadrature": {
+            "volume": int(cfg.stage4_volume_quadrature_degree),
+            "incident": int(cfg.stage4_incident_quadrature_degree),
+            "ports": int(cfg.stage4_dtn_quadrature_degree),
+        },
+        "modal_rectangle": {
+            "max_abs_m": int(cfg.stage4_dtn_rectangle_max_m),
+            "max_abs_n": int(cfg.stage4_dtn_rectangle_max_n),
+            "mode_count": expected_mode_count,
+        },
+        "backend_audit": backend,
+        "factor_solver": "mumps",
+        "same_lu_solver_residual_correction_enabled": True,
+    }
+
+
+def _v2_endpoint_identity(
+    cfg,
+    modes,
+    *,
+    axes_nm: dict[str, Any],
+    candidate_plan_sha256: str,
+    active_degree_plan_sha256: str,
+    phase: str,
+    contract_sha256: str,
+) -> dict[str, Any]:
+    physical_identity = task43_v2_physical_configuration_identity(
+        cfg.as_jsonable(),
+        axis_values_nm=axes_nm,
+        candidate_plan_sha256=candidate_plan_sha256,
+        active_degree_plan_sha256=active_degree_plan_sha256,
+    )
+    expected_keys = R13_MODE_KEYS if phase == "A1_q" else R14_MODE_KEYS
+    actual_keys = {
+        (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+        for mode in modes
+    }
+    if len(modes) != len(expected_keys) or actual_keys != expected_keys:
+        raise ValueError(
+            f"{phase} resolved mode inventory has {len(actual_keys)} unexpected keys"
+        )
+    controls = {
+        "phase": phase,
+        "quadrature": {
+            "volume": int(cfg.stage4_volume_quadrature_degree),
+            "incident": int(cfg.stage4_incident_quadrature_degree),
+            "ports": int(cfg.stage4_dtn_quadrature_degree),
+        },
+        "modal_rectangle": {
+            "m": int(cfg.stage4_dtn_rectangle_max_m),
+            "n": int(cfg.stage4_dtn_rectangle_max_n),
+            "mode_count": len(modes),
+        },
+        "assembly_backend": str(cfg.stage4_full3d_assembly_backend),
+        "factor_solver": str(
+            dict(cfg.petsc_extra_options or {}).get("pc_factor_mat_solver_type", "")
+        ),
+        "stage4_cell_static_condensation": bool(cfg.stage4_cell_static_condensation),
+        "stage4_assembly_time_cell_static_condensation": bool(
+            cfg.stage4_assembly_time_cell_static_condensation
+        ),
+        "stage4_floquet_slave_elimination": bool(cfg.stage4_floquet_slave_elimination),
+    }
+    return {
+        "schema": "task43.v2.a1_endpoint_identity.v1",
+        "contract_sha256": contract_sha256,
+        "physical_configuration": physical_identity,
+        "numerical_controls": controls,
+        "numerical_controls_sha256": _sha256_json(controls),
+    }
+
+
+def _v2_field_bundle_from_capture(
+    sample: dict[str, np.ndarray], cfg, physical_configuration_sha256: str
+) -> dict[str, Any]:
+    points = np.asarray(sample["points_nm"], dtype=np.float64)
+    background_e = electric_field_code_values(cfg, points)
+    background_h = cfg.magnetic_field_scale_A_per_m * magnetic_field_code_values(
+        cfg, points
+    )
+    total_e = np.asarray(sample["E_total"], dtype=np.complex128)
+    total_h = np.asarray(sample["H_total_A_per_m"], dtype=np.complex128)
+    return {
+        "physical_configuration_identity_sha256": physical_configuration_sha256,
+        "points_nm": points,
+        "weights_nm3": np.asarray(sample["weights_nm3"], dtype=np.float64),
+        "E_total_code": total_e,
+        "curl_E_total_code": np.asarray(sample["curl_E_total"], dtype=np.complex128),
+        "H_total_A_per_m": total_h,
+        "incident_background_E_code": np.asarray(background_e, dtype=np.complex128),
+        "incident_background_H_A_per_m": np.asarray(background_h, dtype=np.complex128),
+        "E_scattered_code": scattered_field_samples(total_e, background_e),
+        "H_scattered_A_per_m": scattered_field_samples(total_h, background_h),
+    }
+
+
+def _v2_field_bundle_from_npz(
+    samples_path: Path,
+    order: int,
+    cfg,
+    physical_configuration_sha256: str,
+) -> dict[str, Any]:
+    prefix = f"q{order}_"
+    with np.load(samples_path, allow_pickle=False) as samples:
+        available = set(samples.files)
+        names = {
+            "points_nm": ("points_nm",),
+            "weights_nm3": ("weights_nm3",),
+            "E_total_code": ("E_total_code", "E_total"),
+            "curl_E_total_code": ("curl_E_total_code", "curl_E_total"),
+            "H_total_A_per_m": ("H_total_A_per_m",),
+        }
+        arrays = {}
+        for output, aliases in names.items():
+            matches = [prefix + alias for alias in aliases if prefix + alias in available]
+            if len(matches) != 1:
+                raise ValueError(
+                    f"{samples_path} q{order} sample must contain exactly one "
+                    f"{output} schema field; found {matches}"
+                )
+            arrays[output] = np.asarray(samples[matches[0]]).copy()
+    points = np.asarray(arrays["points_nm"], dtype=np.float64)
+    background_e = electric_field_code_values(cfg, points)
+    background_h = cfg.magnetic_field_scale_A_per_m * magnetic_field_code_values(
+        cfg, points
+    )
+    total_e = np.asarray(arrays["E_total_code"], dtype=np.complex128)
+    total_h = np.asarray(arrays["H_total_A_per_m"], dtype=np.complex128)
+    return {
+        "physical_configuration_identity_sha256": physical_configuration_sha256,
+        **arrays,
+        "incident_background_E_code": np.asarray(background_e, dtype=np.complex128),
+        "incident_background_H_A_per_m": np.asarray(background_h, dtype=np.complex128),
+        "E_scattered_code": scattered_field_samples(total_e, background_e),
+        "H_scattered_A_per_m": scattered_field_samples(total_h, background_h),
+    }
+
+
+def _v2_legacy_r10_reference() -> dict[str, Any]:
+    artifact_root = _REPOSITORY_ROOT / "benchmarks/artifacts/task43"
+    resampling_record_path = (
+        artifact_root
+        / "v2_legacy_r10_field_resampling_attempt3/fields/legacy_r10_field_resampling.json"
+    )
+    sample_path = (
+        artifact_root
+        / "v2_legacy_r10_field_resampling_attempt3/fields/r10_q8_q10_field_samples.npz"
+    )
+    run_root = artifact_root / "round10_p_up_attempt1/run"
+    record_path = run_root / "task43_round1_candidate_record.json"
+    rows_path = run_root / "solve/dtn_port_diffraction_orders_3d.json"
+    plan_path = run_root / "candidate_plan.json"
+    storage_path = run_root / "candidate_recovered_solution_storage.npz"
+    for path, expected, label in (
+        (
+            resampling_record_path,
+            _V2_LEGACY_R10_RECORD_SHA256,
+            "legacy R10 field resampling record",
+        ),
+        (sample_path, _V2_LEGACY_R10_SAMPLE_SHA256, "legacy R10 q8/q10 samples"),
+        (record_path, _V2_R10_RECORD_SHA256, "legacy R10 solver record"),
+        (plan_path, _V2_R10_PLAN_SHA256, "legacy R10 candidate plan"),
+        (storage_path, _V2_R10_STORAGE_SHA256, "legacy R10 recovered coefficients"),
+        (rows_path, _V2_R10_ROWS_SHA256, "legacy R10 R13 modal rows"),
+    ):
+        if _sha256_file(path) != expected:
+            raise ValueError(f"{label} hash differs from its frozen evidence identity")
+    resampling = json.loads(resampling_record_path.read_text(encoding="utf-8"))
+    if (
+        resampling.get("PDE_solve_performed") is not False
+        or resampling.get("candidate_id") != "round10_p_up"
+        or resampling.get("candidate_record_sha256") != _V2_R10_RECORD_SHA256
+        or resampling.get("plan_sha256") != _V2_R10_PLAN_SHA256
+        or resampling.get("recovered_storage_sha256") != _V2_R10_STORAGE_SHA256
+        or resampling.get("mode_rows_sha256") != _V2_R10_ROWS_SHA256
+    ):
+        raise ValueError("legacy R10 resampling identity does not bind the frozen solve")
+    compatibility = resampling.get("solver_source_compatibility", {})
+    if (
+        compatibility.get("all_recorded_numerical_sources_match") is not True
+        or compatibility.get("matching_source_file_count") != 41
+        or compatibility.get("mismatches") != []
+    ):
+        raise ValueError("legacy R10 numerical-source continuity evidence is incomplete")
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    payload = json.loads(rows_path.read_text(encoding="utf-8"))
+    _v2_validated_rows(
+        payload, label="legacy R10 q15/q28/R13", expected=R13_MODE_KEYS
+    )
+    controls = record["numerical_controls"]
+    if (
+        controls.get("volume_quadrature_degree") != 15
+        or controls.get("incident_and_port_quadrature_degree") != 28
+        or controls.get("ordered_mode_count") != 612
+    ):
+        raise ValueError("legacy R10 baseline does not use q15/q28/R13")
+    identity = resampling["sampling"]["physical_configuration_identity"]
+    return {
+        "phase": "frozen_R10_q15_q28_R13",
+        "record": record,
+        "record_path": record_path,
+        "record_sha256": _V2_R10_RECORD_SHA256,
+        "payload": payload,
+        "payload_path": rows_path,
+        "payload_sha256": _V2_R10_ROWS_SHA256,
+        "samples_path": sample_path,
+        "samples_sha256": _V2_LEGACY_R10_SAMPLE_SHA256,
+        "physical_configuration_identity": identity,
+        "physical_configuration_sha256": identity["sha256"],
+        "discretization_sha256": identity["discretization_identity"]["sha256"],
+        "A_volume_total": float(record["power"]["A_volume_total"]),
+        "solver_source_compatibility": compatibility,
+    }
+
+
+def _v2_normal_correction_passed(report: Any) -> bool:
+    if not isinstance(report, dict):
+        return False
+    try:
+        initial_norm = float(report["initial_condensed_residual_norm"])
+        corrected_norm = float(report["corrected_condensed_residual_norm"])
+        initial_relative = float(report["initial_condensed_relative_to_rhs"])
+        corrected_relative = float(report["corrected_condensed_relative_to_rhs"])
+        reason = int(report["correction_ksp"]["converged_reason"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return bool(
+        report.get("status") == "passed"
+        and report.get("solution_updated") is True
+        and all(
+            np.isfinite(value) and value >= 0.0
+            for value in (
+                initial_norm,
+                corrected_norm,
+                initial_relative,
+                corrected_relative,
+            )
+        )
+        and corrected_norm < initial_norm
+        and corrected_relative < initial_relative
+        and reason > 0
+    )
+
+
+def _v2_recompute_reference_hard_gates(
+    record: dict[str, Any], payload: dict[str, Any], expected_keys: set
+) -> dict[str, bool]:
+    """Recompute A1 hard gates from the saved solver and power measurements."""
+    solver = record.get("solver", {})
+    explicit = solver.get("explicit_b_minus_Ax", {})
+    independent_a6 = solver.get("independent_A6", {}).get(
+        "full_solver_gauge_residual", {}
+    )
+    condensed = solver.get("condensed_residual", {})
+    normal_correction = solver.get("normal_same_lu_correction")
+    local_h = solver.get("local_h_audit", {})
+    storage = record.get("recovered_solution_storage", {})
+    power = record.get("power", {})
+    aggregate = power.get("aggregate", {})
+    payload_metrics = payload.get("metrics", {})
+
+    def finite_or_none(value: Any) -> float | None:
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            return None
+        return parsed if np.isfinite(parsed) else None
+
+    explicit_relative = finite_or_none(
+        explicit.get("linear_system_relative_residual")
+    )
+    a6_relative = finite_or_none(independent_a6.get("relative_to_independent_rhs"))
+    condensed_relative = finite_or_none(
+        condensed.get("linear_system_relative_residual")
+    )
+    rows = payload.get("orders", [])
+    try:
+        rows_r_total = finite_or_none(sum(float(row["R"]) for row in rows))
+        rows_t_total = finite_or_none(sum(float(row["T"]) for row in rows))
+    except (KeyError, TypeError, ValueError):
+        rows_r_total = None
+        rows_t_total = None
+    payload_r_total = finite_or_none(payload_metrics.get("R_total"))
+    payload_t_total = finite_or_none(payload_metrics.get("T_total"))
+    record_r_total = finite_or_none(aggregate.get("R_total"))
+    record_t_total = finite_or_none(aggregate.get("T_total"))
+    a_volume = finite_or_none(power.get("A_volume_total"))
+    closure = (
+        rows_r_total + rows_t_total + a_volume - 1.0
+        if None not in (rows_r_total, rows_t_total, a_volume)
+        else None
+    )
+    stored_closure = finite_or_none(power.get("energy_closure_error"))
+    stored_sum = finite_or_none(power.get("R_plus_T_plus_A_volume"))
+    if (
+        closure is None
+        or stored_closure is None
+        or stored_sum is None
+        or None
+        in (
+            payload_r_total,
+            payload_t_total,
+            record_r_total,
+            record_t_total,
+            rows_r_total,
+            rows_t_total,
+        )
+    ):
+        closure_matches_record = False
+    else:
+        row_payload_aggregate_matches = bool(
+            np.isclose(rows_r_total, payload_r_total, rtol=2.0e-10, atol=1.0e-13)
+            and np.isclose(rows_t_total, payload_t_total, rtol=2.0e-10, atol=1.0e-13)
+            and np.isclose(rows_r_total, record_r_total, rtol=2.0e-10, atol=1.0e-13)
+            and np.isclose(rows_t_total, record_t_total, rtol=2.0e-10, atol=1.0e-13)
+        )
+        closure_matches_record = bool(
+            row_payload_aggregate_matches
+            and np.isclose(closure, stored_closure, rtol=1.0e-12, atol=1.0e-15)
+            and np.isclose(
+                closure + 1.0, stored_sum, rtol=1.0e-12, atol=1.0e-15
+            )
+        )
+
+    expected_inventory = "R13" if len(expected_keys) == len(R13_MODE_KEYS) else "R14"
+    recomputed = {
+        "solver_completed": solver.get("case_status") == "completed",
+        "actual_live_and_summary_factor_backend_mumps": (
+            solver.get("actual_direct_factor_backend") == "mumps"
+            and solver.get("actual_live_direct_factor_backend") == "mumps"
+        ),
+        "normal_same_lu_correction_passed": (
+            _v2_normal_correction_passed(normal_correction)
+        ),
+        "exact_complete_modal_inventory": (
+            record.get("modal_outputs", {}).get("inventory") == expected_inventory
+            and record.get("modal_outputs", {}).get("mode_count")
+            == len(expected_keys)
+            and len(rows) == len(expected_keys)
+        ),
+        "explicit_b_minus_Ax_relative_le_1e-8": bool(
+            explicit_relative is not None and 0.0 <= explicit_relative <= 1.0e-8
+        ),
+        "independent_A6_relative_le_1e-8": bool(
+            independent_a6.get("finite") is True
+            and a6_relative is not None
+            and 0.0 <= a6_relative <= 1.0e-8
+        ),
+        "condensed_residual_relative_le_1e-9": bool(
+            condensed_relative is not None
+            and 0.0 <= condensed_relative <= 1.0e-9
+        ),
+        "energy_closure_absolute_le_1e-5": bool(
+            closure_matches_record and abs(closure) <= 1.0e-5
+        ),
+        "local_h_closure_pass": local_h.get("pass") is True,
+        "variable_p_degree_plan_pass": storage.get("degree_plan_pass") is True,
+        "trace_constraint_closure_pass": (
+            storage.get("trace_constraints_pass") is True
+        ),
+        "active_fe_dof_resource_gate_pass": (
+            storage.get("active_fe_dof_gate_pass") is True
+        ),
+    }
+    stored = record.get("hard_solver_gates")
+    if stored != recomputed:
+        raise ValueError(
+            "A1 reference hard-gate fields disagree with recomputed solver/power evidence"
+        )
+    if record.get("hard_solver_gates_pass") is not all(recomputed.values()):
+        raise ValueError("A1 reference hard-gate summary disagrees with raw evidence")
+    return recomputed
+
+
+def _v2_a1_reference_endpoint(
+    run_root: Path,
+    *,
+    expected_phase: str,
+    contract_sha256: str,
+    require_hard_gates: bool = True,
+) -> dict[str, Any]:
+    record_path = run_root / "task43_v2_a1_endpoint.json"
+    if not record_path.is_file():
+        raise FileNotFoundError(f"missing V2 A1 reference endpoint: {record_path}")
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    if (
+        record.get("schema") != "task43.v2.a1_endpoint.v1"
+        or record.get("phase") != expected_phase
+        or record.get("contract_sha256") != contract_sha256
+        or record.get("candidate_id") != "round10_p_up"
+    ):
+        raise ValueError("A1 reference endpoint identity/phase/contract mismatch")
+    rows_path = Path(record["modal_outputs"]["file"]).resolve()
+    samples_path = Path(record["field_samples"]["file"]).resolve()
+    if rows_path != (run_root / "solve/dtn_port_diffraction_orders_3d.json").resolve():
+        raise ValueError("A1 reference modal output path differs from its run root")
+    if samples_path != (run_root / "field_samples_q8_q10.npz").resolve():
+        raise ValueError("A1 reference field sample path differs from its run root")
+    if _sha256_file(rows_path) != record["modal_outputs"]["sha256"]:
+        raise ValueError("A1 reference modal output hash differs from its record")
+    if _sha256_file(samples_path) != record["field_samples"]["sha256"]:
+        raise ValueError("A1 reference field sample hash differs from its record")
+    payload = json.loads(rows_path.read_text(encoding="utf-8"))
+    expected_keys = R13_MODE_KEYS if expected_phase == "A1_q" else R14_MODE_KEYS
+    _v2_validated_rows(
+        payload, label=f"A1 reference {expected_phase}", expected=expected_keys
+    )
+    hard_gates = _v2_recompute_reference_hard_gates(record, payload, expected_keys)
+    if require_hard_gates and not all(hard_gates.values()):
+        raise ValueError("A1_R requires the A1_q endpoint's recomputed hard gates to pass")
+    return {
+        "phase": expected_phase,
+        "record": record,
+        "record_path": record_path,
+        "record_sha256": _sha256_file(record_path),
+        "payload": payload,
+        "payload_path": rows_path,
+        "payload_sha256": record["modal_outputs"]["sha256"],
+        "samples_path": samples_path,
+        "samples_sha256": record["field_samples"]["sha256"],
+        "physical_configuration_identity": record["endpoint_identity"][
+            "physical_configuration"
+        ],
+        "physical_configuration_sha256": record["endpoint_identity"][
+            "physical_configuration"
+        ]["sha256"],
+        "discretization_sha256": record["endpoint_identity"][
+            "physical_configuration"
+        ]["discretization_identity"]["sha256"],
+        "A_volume_total": float(record["power"]["A_volume_total"]),
+        "recomputed_hard_solver_gates": hard_gates,
+    }
+
+
+def _v2_a1_endpoint_record(
+    *,
+    phase: str,
+    run_root: Path,
+    summary: dict[str, Any],
+    actual_factor_backend: str | None,
+    actual_live_factor_backend: str | None,
+    environment: dict[str, Any],
+    cfg,
+    candidate_identity: dict[str, Any],
+    source_identity: dict[str, Any],
+    endpoint_controls: dict[str, Any],
+    reference: dict[str, Any],
+    captured: dict[str, Any],
+    port_payload: dict[str, Any],
+    rows_path: Path,
+    samples_path: Path,
+    storage_record: dict[str, Any],
+    A_volume_total: float,
+    contract_sha256: str,
+) -> dict[str, Any]:
+    expected_keys = R13_MODE_KEYS if phase == "A1_q" else R14_MODE_KEYS
+    _v2_validated_rows(
+        port_payload, label=f"A1 endpoint {phase}", expected=expected_keys
+    )
+    endpoint_identity = captured["v2_endpoint_identity"]
+    physical_identity = endpoint_identity["physical_configuration"]
+    physical_sha256 = physical_identity["sha256"]
+    discretization_sha256 = physical_identity["discretization_identity"]["sha256"]
+    if phase == "A1_q":
+        modal_comparison = compare_r13_modal_outputs(
+            reference["payload"],
+            port_payload,
+            reference_a_volume=reference["A_volume_total"],
+            candidate_a_volume=A_volume_total,
+            reference_physical_configuration_sha256=(
+                reference["physical_configuration_sha256"]
+            ),
+            candidate_physical_configuration_sha256=physical_sha256,
+            reference_discretization_sha256=reference["discretization_sha256"],
+            candidate_discretization_sha256=discretization_sha256,
+            expected_keys=R13_MODE_KEYS,
+        )
+    elif phase == "A1_R":
+        modal_comparison = compare_r13_r14_modal_outputs(
+            reference["payload"],
+            port_payload,
+            r13_a_volume=reference["A_volume_total"],
+            r14_a_volume=A_volume_total,
+            r13_physical_configuration_sha256=(
+                reference["physical_configuration_sha256"]
+            ),
+            r14_physical_configuration_sha256=physical_sha256,
+            r13_discretization_sha256=reference["discretization_sha256"],
+            r14_discretization_sha256=discretization_sha256,
+        )
+    else:
+        raise ValueError(f"unsupported V2 A1 endpoint phase {phase!r}")
+
+    field_comparisons = {}
+    volume = float(
+        cfg.period_x * cfg.period_y * (cfg.domain_z_max - cfg.domain_z_min)
+    )
+    e_floor = float(np.sqrt(volume))
+    h_floor = e_floor * float(cfg.magnetic_field_scale_A_per_m)
+    g_floor = float(np.sqrt(2.0 * volume))
+    for order in (8, 10):
+        reference_bundle = _v2_field_bundle_from_npz(
+            reference["samples_path"],
+            order,
+            cfg,
+            reference["physical_configuration_sha256"],
+        )
+        current_bundle = _v2_field_bundle_from_capture(
+            captured["fields"]["samples"][f"q{order}"], cfg, physical_sha256
+        )
+        field_comparisons[f"q{order}"] = compare_field_sample_bundles(
+            reference_bundle,
+            current_bundle,
+            k0_per_nm=float(cfg.k0),
+            magnetic_field_scale_A_per_m=float(cfg.magnetic_field_scale_A_per_m),
+            mu_r=complex(cfg.mu_r),
+            incident_e_norm_floor=e_floor,
+            incident_h_norm_floor=h_floor,
+            incident_g_norm_floor=g_floor,
+        )
+
+    independent = captured["independent_active_action"][
+        "full_solver_gauge_residual"
+    ]
+    explicit = captured["explicit_active_residual"]
+    condensed = captured["condensed_residual"]
+    local_h = captured.get("local_h_audit", {})
+    storage_metadata = captured.get("solution_storage_metadata", {})
+    port_metrics = port_payload["metrics"]
+    closure = float(
+        float(port_metrics["R_total"])
+        + float(port_metrics["T_total"])
+        + A_volume_total
+        - 1.0
+    )
+    normal_correction = summary.get("variable_p_same_lu_residual_correction")
+    def finite_or_none(value: Any) -> float | None:
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            return None
+        return parsed if np.isfinite(parsed) else None
+
+    explicit_relative = finite_or_none(
+        explicit.get("linear_system_relative_residual")
+    )
+    a6_relative = finite_or_none(independent.get("relative_to_independent_rhs"))
+    condensed_relative = finite_or_none(
+        condensed.get("linear_system_relative_residual")
+    )
+    hard_gates = {
+        "solver_completed": summary.get("case_status") == "completed",
+        "actual_live_and_summary_factor_backend_mumps": (
+            actual_factor_backend == "mumps"
+            and actual_live_factor_backend == "mumps"
+        ),
+        "normal_same_lu_correction_passed": (
+            _v2_normal_correction_passed(normal_correction)
+        ),
+        "exact_complete_modal_inventory": (
+            int(captured.get("mode_count", -1)) == len(expected_keys)
+            and len(port_payload.get("orders", [])) == len(expected_keys)
+        ),
+        "explicit_b_minus_Ax_relative_le_1e-8": bool(
+            explicit_relative is not None and 0.0 <= explicit_relative <= 1.0e-8
+        ),
+        "independent_A6_relative_le_1e-8": bool(
+            independent.get("finite") is True
+            and a6_relative is not None
+            and 0.0 <= a6_relative <= 1.0e-8
+        ),
+        "condensed_residual_relative_le_1e-9": bool(
+            condensed_relative is not None
+            and 0.0 <= condensed_relative <= 1.0e-9
+        ),
+        "energy_closure_absolute_le_1e-5": bool(
+            np.isfinite(closure) and abs(closure) <= 1.0e-5
+        ),
+        "local_h_closure_pass": local_h.get("pass") is True,
+        "variable_p_degree_plan_pass": storage_metadata.get("degree_plan_pass")
+        is True,
+        "trace_constraint_closure_pass": storage_metadata.get(
+            "trace_constraints_pass"
+        )
+        is True,
+        "active_fe_dof_resource_gate_pass": storage_metadata.get(
+            "active_fe_dof_gate_pass"
+        )
+        is True,
+    }
+    modal_pass = modal_comparison.get("pass_10_percent_perturbation_gate") is True
+    field_gates = {
+        f"{order}_field_outputs_within_0p1_final_tolerance": (
+            field_comparisons[f"q{order}"].get("pass_10_percent_perturbation_gate")
+            is True
+        )
+        for order in (8, 10)
+    }
+    same_lu_result = captured.get("same_lu_tightening")
+    same_lu = (
+        same_lu_result.get("v2_output_uncertainty")
+        if isinstance(same_lu_result, dict)
+        else None
+    )
+    uncertainty_pass = isinstance(same_lu, dict) and same_lu.get("pass") is True
+    perturbation_gates = {
+        "modal_outputs_within_0p1_final_tolerance": modal_pass,
+        **field_gates,
+        "extra_same_lu_output_uncertainty_pass": uncertainty_pass,
+    }
+    gates = {
+        **{f"hard_{name}": value for name, value in hard_gates.items()},
+        **perturbation_gates,
+    }
+    gates_pass = all(value is True for value in gates.values())
+    return {
+        "schema": "task43.v2.a1_endpoint.v1",
+        "classification": "controlled_A1_factor_diagnostic_not_selection_eligible",
+        "contract_sha256": contract_sha256,
+        "selection_eligible": False,
+        "official_result": False,
+        "phase": phase,
+        "candidate_id": "round10_p_up",
+        "candidate_identity": candidate_identity,
+        "environment": environment,
+        "diagnostic_contract": {
+            "file": str(
+                _REPOSITORY_ROOT
+                / "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json"
+            ),
+            "sha256": contract_sha256,
+            "plan_markdown_sha256": _V2_PLAN_MARKDOWN_SHA256,
+        },
+        "endpoint_controls": endpoint_controls,
+        "endpoint_identity": endpoint_identity,
+        "reference": {
+            "phase": reference["phase"],
+            "record_file": str(reference["record_path"]),
+            "record_sha256": reference["record_sha256"],
+            "modal_outputs": {
+                "file": str(reference["payload_path"]),
+                "sha256": reference["payload_sha256"],
+            },
+            "field_samples": {
+                "file": str(reference["samples_path"]),
+                "sha256": reference["samples_sha256"],
+            },
+            "solver_source_compatibility": reference.get(
+                "solver_source_compatibility"
+            ),
+        },
+        "field_and_modal_endpoint_state": (
+            "after the solver's configured normal correction and before the one extra diagnostic correction"
+        ),
+        "solver": {
+            "case_status": summary.get("case_status"),
+            "actual_direct_factor_backend": actual_factor_backend,
+            "actual_live_direct_factor_backend": actual_live_factor_backend,
+            "normal_same_lu_correction": normal_correction,
+            "local_h_audit": local_h,
+            "explicit_b_minus_Ax": explicit,
+            "independent_A6": captured.get("independent_active_action"),
+            "condensed_residual": condensed,
+            "extra_same_lu_output_uncertainty": same_lu,
+        },
+        "power": {
+            "aggregate": port_metrics,
+            "A_volume_total": A_volume_total,
+            "R_plus_T_plus_A_volume": float(
+                float(port_metrics["R_total"])
+                + float(port_metrics["T_total"])
+                + A_volume_total
+            ),
+            "energy_closure_error": closure,
+            "channel_rows_file": str(rows_path.resolve()),
+            "channel_rows_sha256": _sha256_file(rows_path),
+        },
+        "modal_outputs": {
+            "file": str(rows_path.resolve()),
+            "sha256": _sha256_file(rows_path),
+            "inventory": "R13" if phase == "A1_q" else "R14",
+            "mode_count": len(expected_keys),
+            "comparison": modal_comparison,
+        },
+        "field_samples": {
+            "file": str(samples_path.resolve()),
+            "sha256": _sha256_file(samples_path),
+            "quadrature_orders": [8, 10],
+            "point_counts": {
+                key: int(value["weights_nm3"].size)
+                for key, value in captured["fields"]["samples"].items()
+            },
+            "physical_H_from_recovered_curl": True,
+            "phase_fit": False,
+            "comparison": field_comparisons,
+        },
+        "recovered_solution_storage": storage_record,
+        "hard_solver_gates": hard_gates,
+        "hard_solver_gates_pass": all(hard_gates.values()),
+        "perturbation_gates": perturbation_gates,
+        "gates": gates,
+        "pass": gates_pass,
+        "source_identity": source_identity,
+        "run_root": str(run_root.resolve()),
+        "not_run": [
+            "vertical material-side one-sided traces remain NOT_MEASURED",
+            "A2, B, and C remain subject to frozen diagnostic-plan gates",
+        ],
+    }
+
+
 def _run(
     case: str,
     run_root: Path,
@@ -1653,12 +2678,37 @@ def _run(
     candidate_parent_selection_record: Path | None = None,
     same_lu_solve_residual_correction_enabled: bool = False,
     direct_factor_backend: str = "default",
+    v2_diagnostic_phase: str | None = None,
+    v2_contract_path: Path | None = None,
+    v2_contract_sha256: str | None = None,
+    v2_reference_run_root: Path | None = None,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
     expected_size, kind = _CASES[case]
     current_case = case == _CURRENT_CASE
     candidate_case = case == _ROUND1_CANDIDATE_CASE
+    v2_diagnostic = v2_diagnostic_phase is not None
+    if v2_diagnostic and not candidate_case:
+        raise ValueError("V2 A1 diagnostics reuse only the accepted R10 candidate route")
+    if v2_diagnostic and (
+        candidate_id != "round10_p_up"
+        or not same_lu_tightening_enabled
+        or not same_lu_solve_residual_correction_enabled
+        or direct_factor_backend != "mumps"
+    ):
+        raise ValueError(
+            "V2 A1 requires the frozen R10 candidate, normal solver correction, "
+            "one extra same-LU check, and MUMPS"
+        )
+    if v2_diagnostic and (
+        v2_contract_path is None or v2_contract_sha256 is None
+    ):
+        raise ValueError("V2 A1 requires the frozen diagnostic contract and SHA")
+    if v2_diagnostic_phase == "A1_R" and v2_reference_run_root is None:
+        raise ValueError("A1_R requires the completed A1_q reference endpoint")
+    if v2_diagnostic_phase == "A1_q" and v2_reference_run_root is not None:
+        raise ValueError("A1_q uses the frozen original R10 reference, not a run path")
     if same_lu_solve_residual_correction_enabled and not candidate_case:
         raise ValueError(
             "same-LU solve residual correction is only enabled for a candidate case"
@@ -1702,6 +2752,12 @@ def _run(
         if candidate_parent_selection_record is None
         else str(candidate_parent_selection_record.resolve()),
         direct_factor_backend,
+        v2_diagnostic_phase,
+        None if v2_contract_path is None else str(v2_contract_path.resolve()),
+        v2_contract_sha256,
+        None
+        if v2_reference_run_root is None
+        else str(v2_reference_run_root.resolve()),
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
@@ -1731,6 +2787,18 @@ def _run(
     )
     candidate_parent_selection_record = (
         None if root_contract[9] is None else Path(root_contract[9])
+    )
+    v2_diagnostic_phase = root_contract[11]
+    v2_contract_path = None if root_contract[12] is None else Path(root_contract[12])
+    v2_contract_sha256 = root_contract[13]
+    v2_reference_run_root = (
+        None if root_contract[14] is None else Path(root_contract[14])
+    )
+    v2_diagnostic = v2_diagnostic_phase is not None
+    v2_contract = (
+        _load_v2_diagnostic_contract(v2_contract_path, str(v2_contract_sha256))
+        if v2_diagnostic
+        else None
     )
     root_error = None
     if comm.rank == 0:
@@ -1791,6 +2859,30 @@ def _run(
         comm.Barrier()
         candidate_identity["run_plan_path"] = str(candidate_plan_copy)
         candidate_identity["adaptive_round_id"] = str(candidate_id).split("_", 1)[0]
+        if v2_diagnostic and (
+            candidate_id != "round10_p_up"
+            or candidate_plan_sha256 != _V2_R10_PLAN_SHA256
+            or candidate_identity.get("accepted_parent_selection_sha256")
+            != _V2_SELECTION_SHA256
+            or candidate_identity.get("acceptance_contract_sha256")
+            != _V2_ACCEPTANCE_SHA256
+        ):
+            raise ValueError("V2 A1 candidate does not match the frozen R10 lineage")
+
+    v2_reference_data = None
+    if v2_diagnostic_phase == "A1_q":
+        v2_reference_data = _v2_legacy_r10_reference()
+    elif v2_diagnostic_phase == "A1_R":
+        assert v2_reference_run_root is not None
+        v2_reference_data = _v2_a1_reference_endpoint(
+            v2_reference_run_root,
+            expected_phase="A1_q",
+            contract_sha256=str(v2_contract_sha256),
+        )
+        if v2_reference_data["record"].get("candidate_identity", {}).get(
+            "plan_sha256"
+        ) != candidate_plan_sha256:
+            raise ValueError("A1_R reference endpoint uses another candidate plan")
 
     reference_identities: dict[str, Any] = {}
     references = []
@@ -1848,6 +2940,30 @@ def _run(
     source_identity, source_error = comm.bcast((source_identity, source_error), root=0)
     if source_error is not None:
         raise RuntimeError(f"could not capture run source snapshot: {source_error}")
+    if v2_diagnostic:
+        source_identity["v2_frozen_contract"] = {
+            "contract_path": str(v2_contract_path),
+            "contract_sha256": _V2_CONTRACT_SHA256,
+            "markdown_plan_sha256": _V2_PLAN_MARKDOWN_SHA256,
+        }
+        source_identity["v2_reference_endpoint"] = {
+            "phase": v2_reference_data["phase"],
+            "record_path": str(v2_reference_data["record_path"]),
+            "record_sha256": v2_reference_data["record_sha256"],
+            "modal_output_path": str(v2_reference_data["payload_path"]),
+            "modal_output_sha256": v2_reference_data["payload_sha256"],
+            "field_samples_path": str(v2_reference_data["samples_path"]),
+            "field_samples_sha256": v2_reference_data["samples_sha256"],
+        }
+        if v2_diagnostic_phase == "A1_R":
+            reference_files = v2_reference_data["record"]["source_identity"].get(
+                "file_sha256", {}
+            )
+            current_files = source_identity.get("file_sha256", {})
+            if reference_files != current_files:
+                raise ValueError(
+                    "A1_R and A1_q must use identical tracked numerical source hashes"
+                )
     source_hashes_before = source_identity["file_sha256"]
 
     cfg = _h100_config(
@@ -1864,6 +2980,12 @@ def _run(
         geometry_profile=geometry_profile,
     )
     _configure_direct_factor_backend(cfg, direct_factor_backend)
+    v2_phase_controls = None
+    if v2_diagnostic:
+        assert v2_contract is not None and v2_diagnostic_phase is not None
+        v2_phase_controls = _configure_v2_a1_endpoint(
+            cfg, v2_diagnostic_phase, v2_contract
+        )
     _log_stage(comm, started, "mesh_build", "begin")
     mesh_data = build_airbox_mesh_3d(cfg, run_root / "resolved_mesh")
     axes = _mesh_axes(mesh_data.mesh, comm)
@@ -2027,7 +3149,7 @@ def _run(
             candidate_plan_sha256=(
                 candidate_plan_sha256 if candidate_case else None
             ),
-            sample_fields=not candidate_case,
+            sample_fields=(not candidate_case or v2_diagnostic),
         )
         modes = goal_context["modes"]
         captured["mode_count"] = len(modes)
@@ -2035,7 +3157,7 @@ def _run(
             [str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)]
             for mode in modes
         ]
-        if current_case or candidate_case:
+        if (current_case or candidate_case) and not v2_diagnostic:
             captured["resolved_profile_identity"] = task43_profile_identity(
                 live_cfg,
                 modes,
@@ -2088,12 +3210,29 @@ def _run(
                     "global_cell_count": int(local_h_plan_identity["leaf_cell_count"]),
                     "leaf_cell_count": int(local_h_plan_identity["leaf_cell_count"]),
                 }
-                checkpoint_profile_identity = task43_profile_identity(
-                    view.config,
-                    modes,
-                    resolved_axes_nm=resolved_axes,
-                    resolved_mesh_audit=resolved_mesh_audit,
+                checkpoint_profile_identity = (
+                    None
+                    if v2_diagnostic
+                    else task43_profile_identity(
+                        view.config,
+                        modes,
+                        resolved_axes_nm=resolved_axes,
+                        resolved_mesh_audit=resolved_mesh_audit,
+                    )
                 )
+                checkpoint_v2_identity = None
+                if v2_diagnostic:
+                    checkpoint_v2_identity = _v2_endpoint_identity(
+                        view.config,
+                        modes,
+                        axes_nm=resolved_axes,
+                        candidate_plan_sha256=str(candidate_plan_sha256),
+                        active_degree_plan_sha256=str(
+                            storage_metadata["active_degree_plan_sha256"]
+                        ),
+                        phase=str(v2_diagnostic_phase),
+                        contract_sha256=str(v2_contract_sha256),
+                    )
                 checkpoint_identity = {
                     "case_id": case,
                     "candidate_id": candidate_id if candidate_case else None,
@@ -2113,6 +3252,7 @@ def _run(
                     "mpi_size": int(comm.size),
                     "source_identity": source_identity,
                     "resolved_profile_identity": checkpoint_profile_identity,
+                    "v2_endpoint_identity": checkpoint_v2_identity,
                     "resolved_axes_nm": resolved_axes,
                     "local_h_plan_identity": local_h_plan_identity,
                     "ordered_mode_count": len(ordered_mode_keys),
@@ -2165,6 +3305,21 @@ def _run(
                 error=repr(error),
             )
             raise
+        if v2_diagnostic:
+            storage_metadata = captured.get("solution_storage_metadata")
+            if not isinstance(storage_metadata, dict):
+                raise RuntimeError("V2 endpoint lacks captured active-space identity")
+            captured["v2_endpoint_identity"] = _v2_endpoint_identity(
+                view.config,
+                view.goal_context["modes"],
+                axes_nm=captured["fields"]["axes_nm"],
+                candidate_plan_sha256=str(candidate_plan_sha256),
+                active_degree_plan_sha256=str(
+                    storage_metadata["active_degree_plan_sha256"]
+                ),
+                phase=str(v2_diagnostic_phase),
+                contract_sha256=str(v2_contract_sha256),
+            )
         _log_stage(
             comm,
             started,
@@ -2203,6 +3358,10 @@ def _run(
             "end",
             stage_duration_seconds=time.perf_counter() - action_started,
         )
+        if v2_diagnostic:
+            captured["explicit_active_residual"] = _linear_residual(
+                view.A, view.b, view.x
+            )
         captured["condensed_residual"] = dict(view.full_active_residual)
         captured["port_metrics"] = dict(view.port_metrics)
         audit = view.mesh_data.local_h_context.audit
@@ -2229,6 +3388,18 @@ def _run(
                 comm=comm,
                 started=started,
                 initial_fields=captured["fields"],
+                expected_keys=(
+                    R13_MODE_KEYS if v2_diagnostic_phase == "A1_q" else R14_MODE_KEYS
+                ) if v2_diagnostic else R13_MODE_KEYS,
+                initial_active_action=(
+                    captured.get("independent_active_action") if v2_diagnostic else None
+                ),
+                initial_explicit_residual=(
+                    captured.get("explicit_active_residual") if v2_diagnostic else None
+                ),
+                v2_endpoint_identity=(
+                    captured.get("v2_endpoint_identity") if v2_diagnostic else None
+                ),
             )
 
     _log_stage(comm, started, "solve_and_observe", "begin")
@@ -2261,19 +3432,31 @@ def _run(
     }
     if source_hashes_before != source_hashes_after:
         raise RuntimeError("a source file changed while the PDE case was running")
-    if int(captured.get("mode_count", -1)) != 612:
-        raise RuntimeError(f"resolved R13 inventory is not 612 modes: {captured.get('mode_count')}")
+    expected_mode_count = len(
+        R13_MODE_KEYS
+        if not v2_diagnostic or v2_diagnostic_phase == "A1_q"
+        else R14_MODE_KEYS
+    )
+    if int(captured.get("mode_count", -1)) != expected_mode_count:
+        raise RuntimeError(
+            "resolved modal inventory differs from the endpoint contract: "
+            f"actual={captured.get('mode_count')}, expected={expected_mode_count}"
+        )
     _log_stage(comm, started, "record_and_compare", "begin")
     post_error = None
     task43_gated_official_result = None
     if comm.rank == 0:
         record_path = run_root / (
-            "task43_initial180_current_record.json"
-            if current_case
+            "task43_v2_a1_endpoint.json"
+            if v2_diagnostic
             else (
-                "task43_round1_candidate_record.json"
-                if candidate_case
-                else "task43_h100_anchor_record.json"
+                "task43_initial180_current_record.json"
+                if current_case
+                else (
+                    "task43_round1_candidate_record.json"
+                    if candidate_case
+                    else "task43_h100_anchor_record.json"
+                )
             )
         )
         try:
@@ -2281,9 +3464,10 @@ def _run(
             with orders_path.open(encoding="utf-8") as stream:
                 port_payload = json.load(stream)
             rows = port_payload["orders"]
-            if len(rows) != 612:
+            if len(rows) != expected_mode_count:
                 raise RuntimeError(
-                    f"serialized channel output has {len(rows)} rows, expected 612"
+                    "serialized channel output differs from the endpoint contract: "
+                    f"actual={len(rows)}, expected={expected_mode_count}"
                 )
             serialized_mode_keys = [
                 [row["side"], int(row["m"]), int(row["n"]), row["polarization"]]
@@ -2295,7 +3479,7 @@ def _run(
                 )
             fields = captured["fields"]
             samples_path = None
-            if not candidate_case:
+            if not candidate_case or v2_diagnostic:
                 samples_path = run_root / "field_samples_q8_q10.npz"
                 _write_samples(samples_path, fields["samples"], axes)
             storage_record = None
@@ -2335,7 +3519,11 @@ def _run(
                         or summary.get("official_result") is True
                     )
                 ),
-                "all_612_ordered_modes_present": len(rows) == 612,
+                (
+                    "all_expected_ordered_modes_present"
+                    if v2_diagnostic
+                    else "all_612_ordered_modes_present"
+                ): len(rows) == expected_mode_count,
             }
             small_direct_target_diagnostic = None
             if kind == "native_p3":
@@ -2602,7 +3790,7 @@ def _run(
                         "scattered_background": "analytic_flat_air_substrate_fresnel",
                         "phase_fit": False,
                     }
-                    if candidate_case
+                    if candidate_case and not v2_diagnostic
                     else {
                         "file": str(samples_path),
                         "sha256": _sha256_file(samples_path),
@@ -2644,12 +3832,43 @@ def _run(
                     ]
                 ),
             }
+            if v2_diagnostic:
+                assert v2_diagnostic_phase is not None
+                assert v2_phase_controls is not None
+                assert v2_reference_data is not None
+                assert v2_contract_sha256 is not None
+                assert samples_path is not None
+                record = _v2_a1_endpoint_record(
+                    phase=v2_diagnostic_phase,
+                    run_root=run_root,
+                    summary=summary,
+                    actual_factor_backend=actual_factor_backend,
+                    actual_live_factor_backend=actual_live_factor_backend,
+                    environment=environment,
+                    cfg=cfg,
+                    candidate_identity=candidate_identity or {},
+                    source_identity=source_identity,
+                    endpoint_controls=v2_phase_controls,
+                    reference=v2_reference_data,
+                    captured=captured,
+                    port_payload=port_payload,
+                    rows_path=orders_path,
+                    samples_path=samples_path,
+                    storage_record=storage_record,
+                    A_volume_total=a_volume,
+                    contract_sha256=v2_contract_sha256,
+                )
+                gates = dict(record["gates"])
+                gates["pass"] = bool(record["pass"])
+                gates["status"] = "passed" if gates["pass"] else "failed"
+                record["gates"] = gates
+                task43_gated_official_result = False
             record_path.write_text(
                 json.dumps(record, indent=2, sort_keys=True, default=_json_default)
                 + "\n",
                 encoding="utf-8",
             )
-            if not gates["pass"]:
+            if not gates["pass"] and not v2_diagnostic:
                 post_error = f"Task43 case gates failed; see {record_path}"
             _log_stage(
                 comm,
@@ -2721,6 +3940,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-marking-record", type=Path)
     parser.add_argument("--candidate-acceptance-contract", type=Path)
     parser.add_argument("--candidate-parent-selection-record", type=Path)
+    parser.add_argument("--v2-diagnostic-phase", choices=("A1_q", "A1_R"))
+    parser.add_argument("--v2-contract", type=Path)
+    parser.add_argument("--v2-contract-sha256")
+    parser.add_argument("--v2-reference-run-root", type=Path)
     parser.add_argument(
         "--direct-factor-backend", choices=("default", "mumps"), default="default",
         help="use the existing direct LU backend; default preserves prior configuration",
@@ -2748,8 +3971,13 @@ def main(argv: list[str] | None = None) -> int:
     is_candidate = args.case == _ROUND1_CANDIDATE_CASE
     is_native = kind == "native_p3"
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
-    if args.same_lu_tightening and not is_current:
-        parser.error("--same-lu-tightening is only valid for the frozen current case")
+    v2_diagnostic = args.v2_diagnostic_phase is not None
+    if args.same_lu_tightening and not (
+        is_current or (is_candidate and v2_diagnostic)
+    ):
+        parser.error(
+            "--same-lu-tightening is only valid for the frozen current or V2 A1 endpoint"
+        )
     if args.same_lu_solve_residual_correction and not is_candidate:
         parser.error(
             "--same-lu-solve-residual-correction is only valid for a candidate case"
@@ -2795,6 +4023,36 @@ def main(argv: list[str] | None = None) -> int:
         value is not None for value in round1_candidate_arguments
     ):
         parser.error("accepted-parent candidates do not take round-one initial inputs")
+    v2_arguments = (
+        args.v2_contract,
+        args.v2_contract_sha256,
+        args.v2_reference_run_root,
+    )
+    if v2_diagnostic:
+        if not is_candidate:
+            parser.error("V2 A1 diagnostics require --case round1_candidate_mpi1")
+        if args.candidate_parent_selection_record is None:
+            parser.error("V2 A1 diagnostics require the frozen R10 accepted-parent selection")
+        if args.candidate_id != "round10_p_up":
+            parser.error("V2 A1 diagnostics require --candidate-id round10_p_up")
+        if args.v2_contract is None or args.v2_contract_sha256 is None:
+            parser.error("V2 A1 diagnostics require --v2-contract and its exact SHA256")
+        if (
+            not args.same_lu_tightening
+            or not args.same_lu_solve_residual_correction
+            or args.direct_factor_backend != "mumps"
+        ):
+            parser.error(
+                "V2 A1 requires normal and one extra same-LU correction plus MUMPS"
+            )
+        if args.reference_run_root is not None or args.parallel_reference_run_root is not None:
+            parser.error("V2 A1 uses its explicit V2 reference path, not V1 references")
+        if args.v2_diagnostic_phase == "A1_q" and args.v2_reference_run_root is not None:
+            parser.error("A1_q binds the frozen original R10 baseline, not a run path")
+        if args.v2_diagnostic_phase == "A1_R" and args.v2_reference_run_root is None:
+            parser.error("A1_R requires --v2-reference-run-root from A1_q")
+    elif any(value is not None for value in v2_arguments):
+        parser.error("V2 contract/reference arguments require --v2-diagnostic-phase")
     all_candidate_arguments = (
         *candidate_core_arguments,
         *round1_candidate_arguments,
@@ -2821,6 +4079,10 @@ def main(argv: list[str] | None = None) -> int:
         same_lu_solve_residual_correction_enabled=(
             args.same_lu_solve_residual_correction
         ),
+        v2_diagnostic_phase=args.v2_diagnostic_phase,
+        v2_contract_path=args.v2_contract,
+        v2_contract_sha256=args.v2_contract_sha256,
+        v2_reference_run_root=args.v2_reference_run_root,
     )
     if comm.rank == 0:
         print(

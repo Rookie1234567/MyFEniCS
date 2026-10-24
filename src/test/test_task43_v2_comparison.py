@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import copy
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
+from benchmarks.task43_hp_adaptivity import h100_anchor
 from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
     PERTURBATION_LIMITS,
     R13_MODE_KEYS,
@@ -14,9 +16,11 @@ from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
     compare_r13_r14_modal_outputs,
     task43_v2_physical_configuration_identity,
 )
+from benchmarks.task43_hp_adaptivity.profile import task43_initial_profile
 from benchmarks.task43_hp_adaptivity.sample_v2_legacy_r10_fields import (
     _restoration_config_comparison,
 )
+from src.common.modes_3d import outgoing_port_modes_3d
 
 _SAME_ENDPOINT_IDENTITIES = {
     "r13_physical_configuration_sha256": "a" * 64,
@@ -146,6 +150,97 @@ def test_same_r13_comparison_requires_shared_physics_and_discretization():
             candidate_physical_configuration_sha256="a" * 64,
             reference_discretization_sha256="b" * 64,
             candidate_discretization_sha256="c" * 64,
+        )
+
+
+def test_same_r14_inventory_comparison_supports_all_836_same_lu_modes():
+    r14 = _mode_payload(5, 9)
+    result = compare_r13_modal_outputs(
+        r14,
+        copy.deepcopy(r14),
+        reference_a_volume=0.4,
+        candidate_a_volume=0.4,
+        reference_physical_configuration_sha256="a" * 64,
+        candidate_physical_configuration_sha256="a" * 64,
+        reference_discretization_sha256="b" * 64,
+        candidate_discretization_sha256="b" * 64,
+        expected_keys=R14_MODE_KEYS,
+    )
+
+    assert result["schema"] == "task43.v2_r14_same_space_modal_comparison.v1"
+    assert result["reference_inventory"]["mode_count"] == 836
+    assert result["candidate_inventory"]["mode_count"] == 836
+    assert len(result["per_channel_power_ratio"]["all_rows"]) == 836
+    assert (
+        sum(
+            group["mode_count"]
+            for group in result["boundary_amplitude_groups"].values()
+        )
+        == 836
+    )
+    assert result["pass_10_percent_perturbation_gate"]
+
+
+@pytest.mark.parametrize(
+    ("phase", "expected_keys", "expected_count"),
+    [
+        ("A1_q", R13_MODE_KEYS, 612),
+        ("A1_R", R14_MODE_KEYS, 836),
+    ],
+)
+def test_v2_a1_config_resolves_the_frozen_complete_mode_inventory(
+    phase, expected_keys, expected_count
+):
+    contract_path = (
+        h100_anchor._REPOSITORY_ROOT
+        / "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json"
+    )
+    contract = h100_anchor._load_v2_diagnostic_contract(
+        contract_path, h100_anchor._V2_CONTRACT_SHA256
+    )
+    cfg = task43_initial_profile(case_name="task43_v2_mode_configuration_test")
+    configuration = h100_anchor._configure_v2_a1_endpoint(cfg, phase, contract)
+    modes = outgoing_port_modes_3d(cfg)
+    actual_keys = {
+        (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+        for mode in modes
+    }
+
+    assert configuration["modal_rectangle"]["mode_count"] == expected_count
+    assert len(modes) == expected_count
+    assert actual_keys == expected_keys
+
+    endpoint_identity = h100_anchor._v2_endpoint_identity(
+        cfg,
+        modes,
+        axes_nm={
+            "x": cfg.mesh_axis_x_values,
+            "y": cfg.mesh_axis_y_values,
+            "z": cfg.mesh_axis_z_values,
+        },
+        candidate_plan_sha256="a" * 64,
+        active_degree_plan_sha256="b" * 64,
+        phase=phase,
+        contract_sha256=h100_anchor._V2_CONTRACT_SHA256,
+    )
+    assert (
+        endpoint_identity["numerical_controls"]["modal_rectangle"]["mode_count"]
+        == expected_count
+    )
+
+    with pytest.raises(ValueError, match="resolved mode inventory"):
+        h100_anchor._v2_endpoint_identity(
+            cfg,
+            [*modes, modes[-1]],
+            axes_nm={
+                "x": cfg.mesh_axis_x_values,
+                "y": cfg.mesh_axis_y_values,
+                "z": cfg.mesh_axis_z_values,
+            },
+            candidate_plan_sha256="a" * 64,
+            active_degree_plan_sha256="b" * 64,
+            phase=phase,
+            contract_sha256=h100_anchor._V2_CONTRACT_SHA256,
         )
 
 
@@ -499,3 +594,196 @@ def test_field_comparison_rejects_nonfinite_curl_wrong_h_and_wrong_scattered_fie
     wrong_scattered["E_scattered_code"][0, 0] += 1.0
     with pytest.raises(ValueError, match="scattered E does not match saved background"):
         compare_field_sample_bundles(reference, wrong_scattered, **scales)
+
+
+@pytest.mark.parametrize("writer_schema", ["current_writer", "legacy_resampler"])
+def test_v2_field_npz_reader_accepts_both_saved_sample_schemas(
+    tmp_path, monkeypatch, writer_schema
+):
+    points = np.asarray([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    weights = np.asarray([0.25, 0.75])
+    total_e = np.full((2, 3), 1.0 + 2.0j, dtype=np.complex128)
+    curl_e = np.full((2, 3), -0.5 + 0.25j, dtype=np.complex128)
+    total_h = np.full((2, 3), 0.75 - 0.5j, dtype=np.complex128)
+    path = tmp_path / f"{writer_schema}.npz"
+    if writer_schema == "current_writer":
+        h100_anchor._write_samples(
+            path,
+            {
+                "q8": {
+                    "points_nm": points,
+                    "weights_nm3": weights,
+                    "E_total": total_e,
+                    "curl_E_total": curl_e,
+                    "H_total_A_per_m": total_h,
+                }
+            },
+            (np.asarray([0.0, 1.0]), np.asarray([0.0, 1.0]), np.asarray([0.0, 1.0])),
+        )
+    else:
+        np.savez_compressed(
+            path,
+            q8_points_nm=points,
+            q8_weights_nm3=weights,
+            q8_E_total_code=total_e,
+            q8_curl_E_total_code=curl_e,
+            q8_H_total_A_per_m=total_h,
+        )
+
+    monkeypatch.setattr(
+        h100_anchor,
+        "electric_field_code_values",
+        lambda _cfg, actual_points: np.zeros_like(actual_points, dtype=np.complex128),
+    )
+    monkeypatch.setattr(
+        h100_anchor,
+        "magnetic_field_code_values",
+        lambda _cfg, actual_points: np.zeros_like(actual_points, dtype=np.complex128),
+    )
+    result = h100_anchor._v2_field_bundle_from_npz(
+        path, 8, SimpleNamespace(magnetic_field_scale_A_per_m=1.0), "a" * 64
+    )
+
+    np.testing.assert_array_equal(result["points_nm"], points)
+    np.testing.assert_array_equal(result["weights_nm3"], weights)
+    np.testing.assert_array_equal(result["E_total_code"], total_e)
+    np.testing.assert_array_equal(result["curl_E_total_code"], curl_e)
+    np.testing.assert_array_equal(result["H_total_A_per_m"], total_h)
+    assert result["physical_configuration_identity_sha256"] == "a" * 64
+
+
+def _hard_gate_reference_fixture(explicit_relative=1.0e-10):
+    gates = {
+        "solver_completed": True,
+        "actual_live_and_summary_factor_backend_mumps": True,
+        "normal_same_lu_correction_passed": True,
+        "exact_complete_modal_inventory": True,
+        "explicit_b_minus_Ax_relative_le_1e-8": explicit_relative <= 1.0e-8,
+        "independent_A6_relative_le_1e-8": True,
+        "condensed_residual_relative_le_1e-9": True,
+        "energy_closure_absolute_le_1e-5": True,
+        "local_h_closure_pass": True,
+        "variable_p_degree_plan_pass": True,
+        "trace_constraint_closure_pass": True,
+        "active_fe_dof_resource_gate_pass": True,
+    }
+    record = {
+        "solver": {
+            "case_status": "completed",
+            "actual_direct_factor_backend": "mumps",
+            "actual_live_direct_factor_backend": "mumps",
+            "normal_same_lu_correction": {
+                "status": "passed",
+                "solution_updated": True,
+                "initial_condensed_residual_norm": 1.0e-3,
+                "corrected_condensed_residual_norm": 1.0e-8,
+                "initial_condensed_relative_to_rhs": 1.0e-3,
+                "corrected_condensed_relative_to_rhs": 1.0e-8,
+                "correction_ksp": {"converged_reason": 2},
+            },
+            "explicit_b_minus_Ax": {
+                "linear_system_relative_residual": explicit_relative
+            },
+            "independent_A6": {
+                "full_solver_gauge_residual": {
+                    "finite": True,
+                    "relative_to_independent_rhs": 1.0e-10,
+                }
+            },
+            "condensed_residual": {"linear_system_relative_residual": 1.0e-10},
+            "local_h_audit": {"pass": True},
+        },
+        "recovered_solution_storage": {
+            "degree_plan_pass": True,
+            "trace_constraints_pass": True,
+            "active_fe_dof_gate_pass": True,
+        },
+        "modal_outputs": {"inventory": "R13", "mode_count": len(R13_MODE_KEYS)},
+        "power": {
+            "aggregate": {"R_total": 0.2, "T_total": 0.7},
+            "A_volume_total": 0.1,
+            "R_plus_T_plus_A_volume": 1.0,
+            "energy_closure_error": 0.0,
+        },
+        "hard_solver_gates": gates,
+        "hard_solver_gates_pass": True,
+    }
+    payload = _mode_payload(4, 8)
+    for row in payload["orders"]:
+        if row["side"] == "top":
+            row["power_ratio"] = 0.2 / 306
+            row["R"] = row["power_ratio"]
+        else:
+            row["power_ratio"] = 0.7 / 306
+            row["T"] = row["power_ratio"]
+    _refresh_metrics(payload)
+    return record, payload
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (
+            ("solver", "explicit_b_minus_Ax", "linear_system_relative_residual"),
+            1.0e-5,
+        ),
+        (
+            ("solver", "explicit_b_minus_Ax", "linear_system_relative_residual"),
+            -1.0e-10,
+        ),
+        (
+            (
+                "solver",
+                "independent_A6",
+                "full_solver_gauge_residual",
+                "relative_to_independent_rhs",
+            ),
+            1.0e-5,
+        ),
+        (
+            ("solver", "condensed_residual", "linear_system_relative_residual"),
+            1.0e-3,
+        ),
+        (("power", "A_volume_total"), 0.2),
+    ],
+)
+def test_a1_reference_hard_gates_recompute_raw_residual_and_power(path, value):
+    record, payload = _hard_gate_reference_fixture()
+    recomputed = h100_anchor._v2_recompute_reference_hard_gates(
+        record, payload, R13_MODE_KEYS
+    )
+    assert all(recomputed.values())
+
+    # Leave stored status/gate booleans claiming success while changing one of
+    # the saved raw solver or power values beyond its frozen gate.
+    target = record
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    with pytest.raises(ValueError, match="disagree with recomputed solver/power"):
+        h100_anchor._v2_recompute_reference_hard_gates(record, payload, R13_MODE_KEYS)
+
+
+def test_a1_reference_normal_correction_rechecks_raw_descent_and_ksp_reason():
+    report = {
+        "status": "passed",
+        "solution_updated": True,
+        "initial_condensed_residual_norm": 1.0e-3,
+        "corrected_condensed_residual_norm": 1.0e-8,
+        "initial_condensed_relative_to_rhs": 1.0e-3,
+        "corrected_condensed_relative_to_rhs": 1.0e-8,
+        "correction_ksp": {"converged_reason": 2},
+    }
+    assert h100_anchor._v2_normal_correction_passed(report)
+    report["corrected_condensed_residual_norm"] = 1.0e-3
+    assert not h100_anchor._v2_normal_correction_passed(report)
+    report["corrected_condensed_residual_norm"] = 1.0e-8
+    report["correction_ksp"]["converged_reason"] = 0
+    assert not h100_anchor._v2_normal_correction_passed(report)
+
+
+def test_a1_reference_hard_gate_rejects_power_rows_that_disagree_with_metrics():
+    record, payload = _hard_gate_reference_fixture()
+    payload["orders"][0]["R"] += 0.1
+    with pytest.raises(ValueError, match="disagree with recomputed solver/power"):
+        h100_anchor._v2_recompute_reference_hard_gates(record, payload, R13_MODE_KEYS)

@@ -1,0 +1,63 @@
+{
+  "schema": "task43.v2.a1_entry_validation.v1",
+  "classification": "targeted_code_and_contract_validation_no_formal_model",
+  "base_head_before_uncommitted_diff": "68ed596bc354ce3e4d33e3a2f55c808c91100865",
+  "pre_model_run_gate": {
+    "status": "no_formal_model_started",
+    "required_before_A1_q": "commit and non-interactive push the code/contract/validation index, capture exact remote SHA, and pass host queue/capacity/ABI/CPU preflight"
+  },
+  "formal_model_attempts": 0,
+  "frozen_plan": {
+    "markdown_path": "docs/task43_hp_adaptivity/diagnostic_plan_v2.md",
+    "markdown_sha256": "864330a9a8d7efeeb1e9e48c73cf48331a9a4963a1bcea1ae061c00c769b455e",
+    "contract_path": "docs/task43_hp_adaptivity/outcomes/records/diagnostic_plan_v2_contract.json",
+    "contract_sha256": "33a5d94ea8c61a26fb1d55c6268709fd283acc549beaeba429833aa68f5055cc"
+  },
+  "source_hashes": {
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "ac0a2ccb6ec569c5bbceb5249047100aacea06ed8cc7a1bf5243722973274f8f",
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+    "src/test/test_task43_v2_comparison.py": "837e320e30822856816aa6e755e6b5e29e6f84ba0bb19c3b7dd1cf917854b891"
+  },
+  "targeted_pytest_final": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && python -m pytest -q src/test/test_task43_v2_comparison.py",
+    "execution": "host, using qualified native activation",
+    "exit_code": 0,
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0,
+    "pytest_reported_wall_seconds": 4.04,
+    "log_path": "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/pytest.log",
+    "log_sha256": "f4896da90a8012f84590b7748514c2790658491069095d480562e5599e236fde"
+  },
+  "superseded_25_pass_observation": {
+    "path": "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/prior_25_pass_observation.json",
+    "sha256": "4d991b305a80692ef34f4c04aff7df074364c5d5386559d51e843a7f0412b73d"
+  },
+  "host_cli_help": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && python benchmarks/task43_hp_adaptivity/h100_anchor.py --help",
+    "exit_code": 0,
+    "no_mesh_or_model_solve": true,
+    "log_path": "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/cli_help.log",
+    "log_sha256": "a1093dd7ba08ef93a80102f21d2bc4d35691956499e349776625b58b0ae1e8d1"
+  },
+  "static_checks": {
+    "command": "source scripts/activate_task40_phi90_pord64.sh && python -m ruff check benchmarks/task43_hp_adaptivity/h100_anchor.py benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py src/test/test_task43_v2_comparison.py && python -m ruff format --check benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py src/test/test_task43_v2_comparison.py && python -m compileall -q benchmarks/task43_hp_adaptivity/h100_anchor.py benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py src/test/test_task43_v2_comparison.py && git diff --check",
+    "exit_code": 0,
+    "ruff_check": "passed",
+    "ruff_format_check": "passed for comparator and test file; legacy h100 file not whole-file reformatted",
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "log_path": "benchmarks/artifacts/task43/v2_validation/a1_entry_review_attempt1/static_checks.log",
+    "log_sha256": "0a124416867da641c6a801d521ea2f2c6f5939672626c7830e17909fd74b2347"
+  },
+  "sandbox_mpi_collection_failures": {
+    "attempt_count": 2,
+    "test_bodies_executed": 0,
+    "exit_codes": [1, 1],
+    "classification": "known OpenMPI/PMIx sandbox listener initialization failure; no retry in sandbox",
+    "attempt_record_path": "benchmarks/artifacts/task43/v2_attempt_support/pytest_mpi_sandbox_abort_attempt1/attempt.json",
+    "attempt_record_sha256": "dd4581f07c7e75fa70383eee49a8a275cae256f60ea7445335e2308257c5e917",
+    "transcribed_log_path": "benchmarks/artifacts/task43/v2_attempt_support/pytest_mpi_sandbox_abort_attempt1/worker.log",
+    "transcribed_log_sha256": "3485af3afe8a58aaabc5800db2a936ab995fafd18cd6e5268966328cd9de5387"
+  }
+}

@@ -34,7 +34,7 @@
 
 A1 的旧 baseline 场必须使用原 R10 保存系数，经本轮 attempt3 已 hash 绑定的恢复实现，在同一 q8/q10 体积 Gauss 点恢复；不借用 Y6_1 或 6×10×6 controls。其依据为原 R10 accepted-parent/candidate-plan/active-degree-map、storage 和 612 rows 身份，非从系数前缀近似。旧 source 41项同核只覆盖记录列出的 solve sources，不表示整个机器/转移依赖闭包均相同。A2 只能在通过上表身份门后，用真实 Y6_1 原系数/同 native-P6 restore 路线形成其对应相同物理 q8/q10 baseline；若身份不完整，不解 A2。
 
-A1/A2 的 q 扰动超过10%时，只要硬残差、资源和基线门都过，仍做本组预定 R 扰动，以区分原因；之后锁住 B/C。硬门失败、基线不可信或资源门失败则停止受影响分支，不自动重试、不将失败挪到另一个因素。A1/A2 全部 10% 通过才解锁 B；B 还要求同 R9 variable-p parent/candidate 的 plan、space、solver-input 门通过且 candidate 实际 FE `<237600`。B 不替换 seed、不随误差排名调整。
+A1/A2 的 q 扰动超过10%时，只要硬残差、资源和基线门都过，仍做本组预定 R 扰动，以区分原因；q/R主比较始终使用该端点既有 solver-normal-correction 策略完成、额外诊断 correction 开始之前的场。A1 每端点保留原有的一次常规 solver correction；A2 保留 native Task40 的 `max_same_factor_corrections=2` 策略，即初始求解后最多再做两次常规 correction（最多三次求解），并记录实际次数；Y6_1 历史记录实际只做了一次 correction。额外 correction 只用于核查同因子输出不确定性，不替换 q/R 主端点，也不能择优采用。若 A1_q 的 q 扰动或 extra-LU 不确定性门失败，但硬残差、资源和基线门通过，仍按预定方案完成 A1_R 并记录原因；失败后锁住 B/C。硬门失败、基线不可信或资源门失败则停止受影响分支，不自动重试、不将失败挪到另一个因素。A1/A2 的全部 q/R 比较及 extra-LU 输出不确定性门都通过才解锁 B；B 还要求同 R9 variable-p parent/candidate 的 plan、space、solver-input 门通过且 candidate 实际 FE `<237600`。B 不替换 seed、不随误差排名调整。
 
 B 的 seed 固定为 R9 G²贡献最高的 global cell 8，原 storage/plan/record 的三哈希已绑定。saved geometry 实际 bounds `[16.5,5,−10]→[33.5,10,0] nm`，parent p5；原 comparison 最大贡献 `1.3895613869617563e−5`。依据 `benchmarks/artifacts/task43/v2_root_audit/seed_geometry_audit.json` SHA256 `3fc78f7d728f357fc33b26decd0e6aaa5d3981197cdef4dc49f83633c169a524`。只作一层 h 闭包，周期与2:1 closure按已验证 builder；先实际构造并数FE、closure与资源，超过 FE 门即停止，不替换 seed。B 只有在同一数值核心资格证据同时覆盖 R9 parent、h candidate 与比较 reference 时才解锁；当前可见核验没有证明 R9 variable-p 与 Y6_1 native-P6 同核，因此该门目前未通过，不能用有限输出措辞绕过。若没有真实同核/等价审计通过，B 不运行。R9 与 Y6_1 核心未证等价前，不把二者交叉差叫作同核 spatial effect，也不移植 R10 的求解/接受资格给 R9。
 
@@ -50,7 +50,9 @@ R13→R14除了共同612输出，新增224必须独立保存每行复幅、功�
 
 所有新解的 solver gates：完整 active-space explicit true residual≤1e−8（保留 direct 原目标），A6 必须从独立原方程计算并≤1e−8；condensed residual≤1e−9；能量闭合 `abs(1−R−T−A_volume)≤1e−5`。不能用求解器递归残差/condensed residual 替代 A6，也不能用 `1−R−T` 回填吸收。
 
-新 A1、A2 每个 solver endpoint 最多额外做一次同因子 correction，与求解器自带的一次常规 correction 分开记录。修正前后都重算完整显式 `b−Ax`、同rhs归一残差、独立A6原方程、condensed residual、R/T/A、所有模态和完整 q8/q10 场量。资格需同时满足：两端 `b−Ax` 和归一残差有限、修正后严格下降；修正前后 A6 均≤1e−8、condensed均≤1e−9、closure均≤1e−5；before/after完整物理输出差逐项≤最终容差10%。只允许一次 correction，不复用 A1 结果声称 A2 已过。R14端点的same-LU comparison使用836 expected keys；V1默认仍612。
+新 A1、A2 每个 solver endpoint 最多额外做一次同因子 correction，与该端点原有 solver-normal-correction 策略分开记录。q/R主比较用正常策略结束、额外 correction 前的完整输出。A1 的正常 correction 固定为一次；A2 保留 native Task40 的 `max_same_factor_corrections=2`（初始求解后最多两次 correction，最多三次求解），并记录实际次数；历史 Y6_1 实际 correction 数为一。额外 correction 修正前后都重算完整显式 `b−Ax`、同rhs归一残差、独立A6原方程、condensed residual、R/T/A、所有模态和完整 q8/q10 场量。资格需同时满足：两端 `b−Ax` 和归一残差有限、修正后严格下降；修正前后 A6 均≤1e−8、condensed均≤1e−9、closure均≤1e−5；before/after完整物理输出差逐项≤最终容差10%。额外 correction 的失败记录为代数输出不确定性未受控；若端点硬门通过，仍依预定 q/R分支完成剩余 A 因素，但锁住 B/C。只允许一次额外 correction，不复用 A1 结果声称 A2 已过。R14端点的same-LU comparison使用836 expected keys；V1默认仍612。
+
+求解器自带的常规 correction 也从记录的原始数据复核：初始/修正后的显式残差范数与 RHS 相对值必须有限且都严格下降，`solution_updated=true`，correction KSP 收敛原因必须为正值；不能只采信 `status=passed` 标签。
 
 R14 tail/common 的 same-LU变化按同一端点 inventory比较；同因子变化也须纳入联合(common+tail)扰动。所有残差/输出门均由 checker 从原字段重算，记录 `pass/fail/not_run` 与每个失败的实值和限值。
 
@@ -69,7 +71,7 @@ Task43 单重型流程用资格化 native-capacity gate：绝对同时 process-t
 | A1各次 | 7200 s | 同一R10 118800 FE；R10已完成whole-watchdog为2588.517 s，7200约2.78倍，可覆盖启动/网格/端口/采样/单extra-LU；这是停止上界而非预测。 |
 | A2各次 | 7200 s | 同Y6_1 380160 FE=`120960+259200`；已知1905.877 s是native direct summary的内部runner时间，不是whole-watchdog。上界是该内部时间的3.78倍，并给完整watchdog/输出留额外空间；没有将1905.877宣称whole wall。若A2预估明显超cap，不启动。 |
 | B | 7200 s | FE严格低于237600（<2.0×R10），R9历史whole-watchdog 2878.935 s；7,200约为2.5×R9全工作流、2.78×R10，留出h closure与输出余量，非时间线性预测。 |
-| C | 14400 s | 预测570240 FE（约1.71×Y6_1、4.80×R10），没有同尺度Task43 whole-watchdog校准。14,400是7200的2倍并约5.56×R10实测全工作流；只有实际MUMPS rows/NNZ/可解释fill forecast在动态planning cap内才允许运行，不把比例当memory上界。forecast无法保守通过就不启动C。 |
+| C | 14400 s | 预测570240 FE（约1.50×Y6_1的380160 FE、4.80×R10），没有同尺度Task43 whole-watchdog校准。14,400是7200的2倍并约5.56×R10实测全工作流；只有实际MUMPS rows/NNZ/可解释fill forecast在动态planning cap内才允许运行，不把比例当memory上界。forecast无法保守通过就不启动C。 |
 
 C 还依赖 B 的已完成候选：即使 C 自身新颖性与资源预检通过，只要 B 未解锁或未形成上述可用且 hash 冻结的候选，C 仍记 `not_run`。
 

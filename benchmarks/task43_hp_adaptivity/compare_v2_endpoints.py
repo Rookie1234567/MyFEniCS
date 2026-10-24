@@ -348,8 +348,13 @@ def compare_r13_modal_outputs(
     candidate_physical_configuration_sha256: str,
     reference_discretization_sha256: str,
     candidate_discretization_sha256: str,
+    expected_keys: frozenset[ModeKey] = R13_MODE_KEYS,
 ) -> dict[str, Any]:
-    """Compare two complete R13 outputs on the same physical problem and FE space."""
+    """Compare a complete same-inventory output on one physical problem and FE space.
+
+    The default remains the frozen 612-row R13 contract.  Same-LU R14
+    uncertainty checks may pass the explicit 836-key R14 inventory.
+    """
 
     physical_identity = _require_same_identity(
         reference_physical_configuration_sha256,
@@ -361,11 +366,20 @@ def compare_r13_modal_outputs(
         candidate_discretization_sha256,
         label="discretization",
     )
+    if expected_keys not in (R13_MODE_KEYS, R14_MODE_KEYS):
+        raise ValueError(
+            "same-space comparison supports only the frozen R13 or R14 inventory"
+        )
     reference = _validated_rows(
-        reference_payload, label="reference R13", expected=R13_MODE_KEYS
+        reference_payload, label="reference mode inventory", expected=expected_keys
     )
     candidate = _validated_rows(
-        candidate_payload, label="candidate R13", expected=R13_MODE_KEYS
+        candidate_payload, label="candidate mode inventory", expected=expected_keys
+    )
+    inventory_label = (
+        "R13"
+        if expected_keys == R13_MODE_KEYS
+        else ("R14" if expected_keys == R14_MODE_KEYS else "custom")
     )
     reference_power = _power_aggregates(reference, reference_a_volume)
     candidate_power = _power_aggregates(candidate, candidate_a_volume)
@@ -386,16 +400,16 @@ def compare_r13_modal_outputs(
     amplitude_rows: list[dict[str, Any]] = []
     channel_differences: list[float] = []
     amplitude_groups: dict[str, dict[str, Any]] = {}
-    for key in sorted(R13_MODE_KEYS):
+    for key in sorted(expected_keys):
         reference_row = reference[key]
         candidate_row = candidate[key]
         reference_amplitude = _complex_pair(
             reference_row["outgoing_amplitude_at_boundary"],
-            label=f"reference R13 {key}",
+            label=f"reference {inventory_label} {key}",
         )
         candidate_amplitude = _complex_pair(
             candidate_row["outgoing_amplitude_at_boundary"],
-            label=f"candidate R13 {key}",
+            label=f"candidate mode {key}",
         )
         power_difference = abs(
             float(candidate_row["power_ratio"]) - float(reference_row["power_ratio"])
@@ -432,14 +446,14 @@ def compare_r13_modal_outputs(
         for polarization in ("s", "p"):
             keys = [
                 key
-                for key in sorted(R13_MODE_KEYS)
+                for key in sorted(expected_keys)
                 if key[0] == side and key[3] == polarization
             ]
             reference_values = np.asarray(
                 [
                     _complex_pair(
                         reference[key]["outgoing_amplitude_at_boundary"],
-                        label=f"reference R13 {key}",
+                        label=f"reference mode {key}",
                     )
                     for key in keys
                 ],
@@ -449,7 +463,7 @@ def compare_r13_modal_outputs(
                 [
                     _complex_pair(
                         candidate[key]["outgoing_amplitude_at_boundary"],
-                        label=f"candidate R13 {key}",
+                        label=f"candidate mode {key}",
                     )
                     for key in keys
                 ],
@@ -476,17 +490,19 @@ def compare_r13_modal_outputs(
         and all(group["pass"] for group in amplitude_groups.values())
     )
     return {
-        "schema": "task43.v2_r13_same_space_modal_comparison.v1",
+        "schema": f"task43.v2_{inventory_label.lower()}_same_space_modal_comparison.v1",
         "selection_eligible": False,
         "physical_configuration_identity_sha256": physical_identity,
         "discretization_identity_sha256": discretization_identity,
         "reference_inventory": {
-            "mode_count": 612,
-            "key_sha256": _key_digest(R13_MODE_KEYS),
+            "label": inventory_label,
+            "mode_count": len(expected_keys),
+            "key_sha256": _key_digest(expected_keys),
         },
         "candidate_inventory": {
-            "mode_count": 612,
-            "key_sha256": _key_digest(R13_MODE_KEYS),
+            "label": inventory_label,
+            "mode_count": len(expected_keys),
+            "key_sha256": _key_digest(expected_keys),
         },
         "aggregate_power": {
             "reference": reference_power,
@@ -504,7 +520,9 @@ def compare_r13_modal_outputs(
         "boundary_amplitude_groups": amplitude_groups,
         "boundary_amplitude_all_rows": amplitude_rows,
         "pass_10_percent_perturbation_gate": bool(passed),
-        "threshold_basis": "0.1 times frozen Task43 final tolerances; exact R13 key matching",
+        "threshold_basis": (
+            "0.1 times frozen Task43 final tolerances; exact same-inventory key matching"
+        ),
     }
 
 
