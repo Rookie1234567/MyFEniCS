@@ -9700,8 +9700,40 @@ class _Task41P0V14DecimalRecheckComplete(Exception):
     """Internal control flow to skip the numerical candidate worker."""
 
 
-def _parse_task41_p0_v14_candidate_suffix(case_args: Sequence[str]) -> tuple[Path, str, Path, str, Path, str, str]:
-    """Parse the exact V14 saved-input suffix for the existing B0 audit service."""
+def _parse_task41_p0_v14_extension_suffix(
+    suffix: Sequence[str],
+) -> tuple[Path, str, Path, str, Path, str, Path, str, Path, str]:
+    expected = [
+        "--v14-saved-star-extension",
+        "--v8-star-report", None,
+        "--v8-star-report-sha256", None,
+        "--prior-candidate-report", None,
+        "--prior-candidate-report-sha256", None,
+        "--prior-checker", None,
+        "--prior-checker-sha256", None,
+        "--prior-decimal-report", None,
+        "--prior-decimal-report-sha256", None,
+        "--prior-service-receipt", None,
+        "--prior-service-receipt-sha256", None,
+    ]
+    if len(suffix) != len(expected) or any(
+        wanted is not None and got != wanted
+        for got, wanted in zip(suffix, expected, strict=True)
+    ):
+        raise ValueError("V14 saved-star extension requires its exact hash-bound evidence suffix")
+    return (
+        Path(suffix[2]).resolve(strict=True), suffix[4],
+        Path(suffix[6]).resolve(strict=True), suffix[8],
+        Path(suffix[10]).resolve(strict=True), suffix[12],
+        Path(suffix[14]).resolve(strict=True), suffix[16],
+        Path(suffix[18]).resolve(strict=True), suffix[20],
+    )
+
+
+def _parse_task41_p0_v14_candidate_suffix(
+    case_args: Sequence[str],
+) -> tuple[Any, ...]:
+    """Parse V14's frozen source bindings and optional saved-star stage bindings."""
     expected_suffix = [
         "--v14-saved-rhs-candidate",
         "--v11-report", None,
@@ -9713,15 +9745,15 @@ def _parse_task41_p0_v14_candidate_suffix(case_args: Sequence[str]) -> tuple[Pat
         "--donor-summary-sha256", None,
     ]
     if (
-        len(case_args) != 26
+        len(case_args) not in {26, 47}
         or case_args[0] != "--task41-p0-saved-b0-evidence-audit"
         or any(
             wanted is not None and actual != wanted
-            for actual, wanted in zip(case_args[11:], expected_suffix, strict=True)
+            for actual, wanted in zip(case_args[11:26], expected_suffix, strict=True)
         )
     ):
         raise ValueError("V14 candidate service requires its exact saved-input path/hash suffix")
-    return (
+    base = (
         Path(case_args[13]).resolve(strict=True),
         case_args[15],
         Path(case_args[17]).resolve(strict=True),
@@ -9730,13 +9762,16 @@ def _parse_task41_p0_v14_candidate_suffix(case_args: Sequence[str]) -> tuple[Pat
         case_args[23],
         case_args[25],
     )
+    if len(case_args) == 26:
+        return base
+    return (*base, *_parse_task41_p0_v14_extension_suffix(case_args[26:]))
 
 
 def _parse_task41_p0_v14_decimal_recheck_suffix(
     case_args: Sequence[str],
-) -> tuple[Path, str, Path, str, Path, str, str, Path, str, Path, str, Path, str]:
-    """Parse V14's prior candidate inputs plus the checker-only Decimal diagnostic bindings."""
-    if len(case_args) != 39:
+) -> tuple[Any, ...]:
+    """Parse V14's checker-only Decimal inputs plus optional saved-star provenance."""
+    if len(case_args) not in {39, 60}:
         raise ValueError("V14 Decimal recheck requires its exact checker-only evidence suffix")
     base = _parse_task41_p0_v14_candidate_suffix(case_args[:26])
     expected = [
@@ -9748,18 +9783,23 @@ def _parse_task41_p0_v14_decimal_recheck_suffix(
         "--prior-independent-check", None,
         "--prior-independent-check-sha256", None,
     ]
-    suffix = case_args[26:]
+    suffix = case_args[26:39]
     if len(suffix) != len(expected) or any(
         wanted is not None and got != wanted
         for got, wanted in zip(suffix, expected, strict=True)
     ):
         raise ValueError("V14 Decimal recheck suffix labels/order differ")
-    return (
-        *base,
+    decimal = (
         Path(suffix[2]).resolve(strict=True), suffix[4],
         Path(suffix[6]).resolve(strict=True), suffix[8],
         Path(suffix[10]).resolve(strict=True), suffix[12],
     )
+    if len(case_args) == 39:
+        return (*base, *decimal)
+    if len(base) != 7:
+        raise ValueError("V14 Decimal extension repeats the candidate-stage extension bindings")
+    extension = _parse_task41_p0_v14_extension_suffix(case_args[39:])
+    return (*base, *decimal, *extension)
 
 
 def _run_task41_p0_saved_output_service(
@@ -9784,6 +9824,17 @@ def _run_task41_p0_saved_output_service(
     b0_saved_y_g_comparison_mode: bool = False,
     b0_v14_saved_rhs_candidate_mode: bool = False,
     b0_v14_decimal_residual_recheck_only_mode: bool = False,
+    b0_v14_saved_star_extension_mode: bool = False,
+    v14_v8_star_report_path: Path | None = None,
+    v14_v8_star_report_sha256: str | None = None,
+    v14_prior_candidate_report_path: Path | None = None,
+    v14_prior_candidate_report_sha256: str | None = None,
+    v14_prior_checker_path: Path | None = None,
+    v14_prior_checker_sha256: str | None = None,
+    v14_prior_decimal_report_path: Path | None = None,
+    v14_prior_decimal_report_sha256: str | None = None,
+    v14_prior_service_receipt_path: Path | None = None,
+    v14_prior_service_receipt_sha256: str | None = None,
     v14_source_consumer_contract_path: Path | None = None,
     v14_source_consumer_contract_sha256: str | None = None,
     v14_saved_candidate_report_path: Path | None = None,
@@ -10931,6 +10982,8 @@ def _run_task41_p0_saved_output_service(
             if b0_saved_y_g_comparison_mode
             else "saved_b0_v9_failed_terminal_audit"
             if b0_v9_failed_terminal_audit_mode
+            else "saved_b0_v14_saved_star_extension"
+            if b0_v14_saved_star_extension_mode
             else "saved_b0_v14_same_lu_rhs_candidate"
             if b0_v14_saved_rhs_candidate_mode
             else "saved_b0_v11_candidate_replay_recheck"
@@ -11115,6 +11168,30 @@ def _run_task41_p0_saved_output_service(
                 if v14_prior_independent_check_path is not None else None
             ),
             v14_prior_independent_check_sha256=v14_prior_independent_check_sha256,
+            v14_saved_star_extension=b0_v14_saved_star_extension_mode,
+            v14_v8_star_report_path=(
+                str(v14_v8_star_report_path) if v14_v8_star_report_path is not None else None
+            ),
+            v14_v8_star_report_sha256=v14_v8_star_report_sha256,
+            v14_prior_candidate_report_path=(
+                str(v14_prior_candidate_report_path)
+                if v14_prior_candidate_report_path is not None else None
+            ),
+            v14_prior_candidate_report_sha256=v14_prior_candidate_report_sha256,
+            v14_prior_checker_path=(
+                str(v14_prior_checker_path) if v14_prior_checker_path is not None else None
+            ),
+            v14_prior_checker_sha256=v14_prior_checker_sha256,
+            v14_prior_decimal_report_path=(
+                str(v14_prior_decimal_report_path)
+                if v14_prior_decimal_report_path is not None else None
+            ),
+            v14_prior_decimal_report_sha256=v14_prior_decimal_report_sha256,
+            v14_prior_service_receipt_path=(
+                str(v14_prior_service_receipt_path)
+                if v14_prior_service_receipt_path is not None else None
+            ),
+            v14_prior_service_receipt_sha256=v14_prior_service_receipt_sha256,
         )
     if b0_v4_geometry_pair_mode:
         assert source_report_path is not None
@@ -11181,6 +11258,7 @@ def _run_task41_p0_saved_output_service(
                 V14_DONOR_MANIFEST_SHA256,
                 V14_V11_REPORT_SHA256,
                 V14_SOURCE_WINDOW_SHA256,
+                V14_V8_STAR_REPORT_SHA256,
             )
             from src.runners.task41_p0_v4_volume_only_audit import (
                 TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
@@ -11218,6 +11296,45 @@ def _run_task41_p0_saved_output_service(
                 (v14_accepted_receipt_path, v14_accepted_receipt_sha256, V14_ACCEPTED_RECEIPT_SHA256, 16 * 1024**2),
                 (donor_summary_path, v14_donor_summary_sha256, None, 16 * 1024**2),
             )
+            v14_star_extension_args: list[str] = []
+            if b0_v14_saved_star_extension_mode:
+                extension_inputs = (
+                    v14_v8_star_report_path,
+                    v14_prior_candidate_report_path,
+                    v14_prior_checker_path,
+                    v14_prior_decimal_report_path,
+                    v14_prior_service_receipt_path,
+                )
+                extension_hashes = (
+                    v14_v8_star_report_sha256,
+                    v14_prior_candidate_report_sha256,
+                    v14_prior_checker_sha256,
+                    v14_prior_decimal_report_sha256,
+                    v14_prior_service_receipt_sha256,
+                )
+                if any(value is None for value in (*extension_inputs, *extension_hashes)):
+                    raise ValueError("V14 saved-star extension is missing a path or SHA-256 binding")
+                fixed_inputs = (
+                    *fixed_inputs,
+                    (v14_v8_star_report_path, v14_v8_star_report_sha256, V14_V8_STAR_REPORT_SHA256, 64 * 1024**2),
+                    (v14_prior_candidate_report_path, v14_prior_candidate_report_sha256, None, 16 * 1024**2),
+                    (v14_prior_checker_path, v14_prior_checker_sha256, None, 16 * 1024**2),
+                    (v14_prior_decimal_report_path, v14_prior_decimal_report_sha256, None, 16 * 1024**2),
+                    (v14_prior_service_receipt_path, v14_prior_service_receipt_sha256, None, 16 * 1024**2),
+                )
+                v14_star_extension_args = [
+                    "--v14-saved-star-extension",
+                    "--v8-star-report", str(v14_v8_star_report_path.resolve()),
+                    "--v8-star-report-sha256", str(v14_v8_star_report_sha256),
+                    "--prior-candidate-report", str(v14_prior_candidate_report_path.resolve()),
+                    "--prior-candidate-report-sha256", str(v14_prior_candidate_report_sha256),
+                    "--prior-checker", str(v14_prior_checker_path.resolve()),
+                    "--prior-checker-sha256", str(v14_prior_checker_sha256),
+                    "--prior-decimal-report", str(v14_prior_decimal_report_path.resolve()),
+                    "--prior-decimal-report-sha256", str(v14_prior_decimal_report_sha256),
+                    "--prior-service-receipt", str(v14_prior_service_receipt_path.resolve()),
+                    "--prior-service-receipt-sha256", str(v14_prior_service_receipt_sha256),
+                ]
             for path, declared_sha, required_sha, size_limit in fixed_inputs:
                 resolved = path.resolve(strict=True)
                 if (
@@ -11392,6 +11509,7 @@ def _run_task41_p0_saved_output_service(
                     "--decimal-residual-recheck-only",
                     "--output", str(decimal_report_path),
                 ]
+                checker_command.extend(v14_star_extension_args)
                 checker_watchdog = supervise(
                     checker_command,
                     service_directory / "v14_decimal_residual_checker_watchdog",
@@ -11418,8 +11536,12 @@ def _run_task41_p0_saved_output_service(
                     and decimal_payload.get("scientific_qualified") is False
                     and decimal_payload.get("candidate_passed")
                     in {True, False, None}
+                    and decimal_payload.get("stage")
+                    == ("saved_star_extension" if b0_v14_saved_star_extension_mode else "initial_screen")
                     and decimal_payload.get("conditional_star_coverage_unlocked")
-                    is (decimal_payload.get("candidate_passed") is True)
+                    is (not b0_v14_saved_star_extension_mode and decimal_payload.get("candidate_passed") is True)
+                    and decimal_payload.get("saved_coverage_ready")
+                    is (b0_v14_saved_star_extension_mode and decimal_payload.get("candidate_passed") is True)
                     and decimal_payload.get("full_owner_unlocked") is False
                     and decimal_payload.get("getrs_invoked") == 0
                     and decimal_payload.get("getrs_added") == 0
@@ -11453,11 +11575,18 @@ def _run_task41_p0_saved_output_service(
                     decimal_check_ok
                     and decimal_payload.get("conditional_star_coverage_unlocked") is True
                 )
+                record["saved_star_coverage_ready"] = bool(
+                    decimal_check_ok
+                    and b0_v14_saved_star_extension_mode
+                    and decimal_payload.get("saved_coverage_ready") is True
+                )
                 record["full_owner_unlocked"] = False
                 record["official_result"] = False
                 record["scientific_qualified"] = False
                 record["result_classification"] = (
-                    "V14_DECIMAL_SUPPLEMENTAL_PASS"
+                    "V14_SAVED_COVERAGE_DECIMAL_PASS_NOT_GLOBAL"
+                    if decimal_check_ok and b0_v14_saved_star_extension_mode and decimal_payload.get("candidate_passed") is True
+                    else "V14_DECIMAL_SUPPLEMENTAL_PASS"
                     if decimal_check_ok and decimal_payload.get("candidate_passed") is True
                     else "V14_DECIMAL_SUPPLEMENTAL_REJECTED"
                     if decimal_check_ok and decimal_payload.get("candidate_passed") is False
@@ -11488,6 +11617,7 @@ def _run_task41_p0_saved_output_service(
                 "--donor-contract-sha256", donor_contract_sha256,
                 "--output-dir", str(candidate_report_path.parent),
             ]
+            candidate_worker_command.extend(v14_star_extension_args)
             candidate_worker_attempted = True
             record["v14_candidate_worker_attempted"] = True
             candidate_watchdog = supervise(
@@ -11522,6 +11652,10 @@ def _run_task41_p0_saved_output_service(
                     and candidate_payload.get("consumer_contract_sha256") == contract_sha
                     and candidate_payload.get("consumer_window_sha256") == window.sha256
                     and candidate_payload.get("producer_report_sha256") == v14_producer_report_sha256
+                    and candidate_payload.get("scope", {}).get("stage")
+                    == ("saved_star_extension" if b0_v14_saved_star_extension_mode else "initial_screen")
+                    and candidate_payload.get("star_producer_report_sha256")
+                    == (v14_v8_star_report_sha256 if b0_v14_saved_star_extension_mode else None)
                 )
             record["v14_candidate_report_path"] = str(candidate_report_path)
             record["v14_candidate_report_sha256"] = candidate_report_sha256
@@ -11550,6 +11684,7 @@ def _run_task41_p0_saved_output_service(
                     "--candidate-report-sha256", candidate_report_sha256,
                     "--output", str(checker_result_path),
                 ]
+                checker_command.extend(v14_star_extension_args)
                 checker_watchdog = supervise(
                     checker_command,
                     service_directory / "v14_independent_checker_watchdog",
@@ -11577,15 +11712,25 @@ def _run_task41_p0_saved_output_service(
                         "LOCAL_CANDIDATE_PASS",
                         "LOCAL_CANDIDATE_REJECTED",
                         "INCONCLUSIVE",
+                        "SAVED_COVERAGE_READY_NOT_GLOBAL",
                     }
+                    and checker_payload.get("saved_coverage_ready")
+                    is (b0_v14_saved_star_extension_mode and checker_payload.get("candidate_passed") is True)
                 )
                 record["v14_independent_check_path"] = str(checker_result_path)
                 record["v14_independent_check_sha256"] = (
                     sha256_file(checker_result_path) if checker_result_path.is_file() else None
                 )
                 record["v14_candidate_passed"] = checker_payload.get("candidate_passed")
-                record["conditional_star_coverage_unlocked"] = (
-                    independent_check_ok and checker_payload.get("candidate_passed") is True
+                record["conditional_star_coverage_unlocked"] = bool(
+                    independent_check_ok
+                    and not b0_v14_saved_star_extension_mode
+                    and checker_payload.get("candidate_passed") is True
+                )
+                record["saved_star_coverage_ready"] = bool(
+                    independent_check_ok
+                    and b0_v14_saved_star_extension_mode
+                    and checker_payload.get("saved_coverage_ready") is True
                 )
             record["required_checker_status"] = (
                 "INDEPENDENT_CHECK_COMPLETED" if independent_check_ok
@@ -11597,7 +11742,9 @@ def _run_task41_p0_saved_output_service(
             record["scientific_qualified"] = False
             record["full_owner_unlocked"] = False
             record["result_classification"] = (
-                "V14_LOCAL_CANDIDATE_PASS"
+                "V14_SAVED_COVERAGE_READY_NOT_GLOBAL"
+                if independent_check_ok and b0_v14_saved_star_extension_mode and record.get("saved_star_coverage_ready") is True
+                else "V14_LOCAL_CANDIDATE_PASS"
                 if independent_check_ok and record.get("v14_candidate_passed") is True
                 else "V14_LOCAL_CANDIDATE_REJECTED"
                 if independent_check_ok and record.get("v14_candidate_passed") is False
@@ -14382,6 +14529,12 @@ def _run_task41_p0_service(
         b0_v14_saved_rhs_candidate_mode
         and "--v14-decimal-residual-recheck-only" in case_args
     )
+    b0_v14_saved_star_extension_mode = bool(
+        b0_v14_saved_rhs_candidate_mode
+        and "--v14-saved-star-extension" in case_args
+    )
+    if "--v14-saved-star-extension" in case_args and not b0_v14_saved_star_extension_mode:
+        raise ValueError("V14 saved-star extension requires the explicit V14 candidate service route")
     saved_output_mode = (
         continuation_mode
         or checker_only_mode
@@ -14446,6 +14599,16 @@ def _run_task41_p0_service(
     v14_saved_candidate_report_sha256: str | None = None
     v14_prior_independent_check_path: Path | None = None
     v14_prior_independent_check_sha256: str | None = None
+    v14_v8_star_report_path: Path | None = None
+    v14_v8_star_report_sha256: str | None = None
+    v14_prior_candidate_report_path: Path | None = None
+    v14_prior_candidate_report_sha256: str | None = None
+    v14_prior_checker_path: Path | None = None
+    v14_prior_checker_sha256: str | None = None
+    v14_prior_decimal_report_path: Path | None = None
+    v14_prior_decimal_report_sha256: str | None = None
+    v14_prior_service_receipt_path: Path | None = None
+    v14_prior_service_receipt_sha256: str | None = None
     if b0_v9_saved_star_screen_mode:
         if (
             len(case_args) != 11
@@ -14534,7 +14697,7 @@ def _run_task41_p0_service(
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 23, 26, 28, 39}
+            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 23, 26, 28, 39, 47, 60}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -14551,6 +14714,7 @@ def _run_task41_p0_service(
         continuation_output_root = Path(case_args[10]).resolve()
         if b0_v14_saved_rhs_candidate_mode:
             if b0_v14_decimal_residual_recheck_only_mode:
+                parsed_v14_decimal = _parse_task41_p0_v14_decimal_recheck_suffix(case_args)
                 (
                     v14_producer_report_path,
                     v14_producer_report_sha256,
@@ -14565,8 +14729,22 @@ def _run_task41_p0_service(
                     v14_saved_candidate_report_sha256,
                     v14_prior_independent_check_path,
                     v14_prior_independent_check_sha256,
-                ) = _parse_task41_p0_v14_decimal_recheck_suffix(case_args)
+                ) = parsed_v14_decimal[:13]
+                if b0_v14_saved_star_extension_mode:
+                    (
+                        v14_v8_star_report_path,
+                        v14_v8_star_report_sha256,
+                        v14_prior_candidate_report_path,
+                        v14_prior_candidate_report_sha256,
+                        v14_prior_checker_path,
+                        v14_prior_checker_sha256,
+                        v14_prior_decimal_report_path,
+                        v14_prior_decimal_report_sha256,
+                        v14_prior_service_receipt_path,
+                        v14_prior_service_receipt_sha256,
+                    ) = parsed_v14_decimal[13:]
             else:
+                parsed_v14_candidate = _parse_task41_p0_v14_candidate_suffix(case_args)
                 (
                     v14_producer_report_path,
                     v14_producer_report_sha256,
@@ -14575,7 +14753,20 @@ def _run_task41_p0_service(
                     v14_accepted_receipt_path,
                     v14_accepted_receipt_sha256,
                     v14_donor_summary_sha256,
-                ) = _parse_task41_p0_v14_candidate_suffix(case_args)
+                ) = parsed_v14_candidate[:7]
+                if b0_v14_saved_star_extension_mode:
+                    (
+                        v14_v8_star_report_path,
+                        v14_v8_star_report_sha256,
+                        v14_prior_candidate_report_path,
+                        v14_prior_candidate_report_sha256,
+                        v14_prior_checker_path,
+                        v14_prior_checker_sha256,
+                        v14_prior_decimal_report_path,
+                        v14_prior_decimal_report_sha256,
+                        v14_prior_service_receipt_path,
+                        v14_prior_service_receipt_sha256,
+                    ) = parsed_v14_candidate[7:]
             continuation_run_root = donor_summary_path.parent.resolve(strict=True)
         elif "--v14-saved-rhs-candidate" in case_args:
             raise ValueError("V14 candidate marker is only accepted in its explicit service route")
@@ -15695,6 +15886,17 @@ def _run_task41_p0_service(
             b0_v14_decimal_residual_recheck_only_mode=(
                 b0_v14_decimal_residual_recheck_only_mode
             ),
+            b0_v14_saved_star_extension_mode=b0_v14_saved_star_extension_mode,
+            v14_v8_star_report_path=v14_v8_star_report_path,
+            v14_v8_star_report_sha256=v14_v8_star_report_sha256,
+            v14_prior_candidate_report_path=v14_prior_candidate_report_path,
+            v14_prior_candidate_report_sha256=v14_prior_candidate_report_sha256,
+            v14_prior_checker_path=v14_prior_checker_path,
+            v14_prior_checker_sha256=v14_prior_checker_sha256,
+            v14_prior_decimal_report_path=v14_prior_decimal_report_path,
+            v14_prior_decimal_report_sha256=v14_prior_decimal_report_sha256,
+            v14_prior_service_receipt_path=v14_prior_service_receipt_path,
+            v14_prior_service_receipt_sha256=v14_prior_service_receipt_sha256,
             v14_source_consumer_contract_path=v14_source_consumer_contract_path,
             v14_source_consumer_contract_sha256=v14_source_consumer_contract_sha256,
             v14_saved_candidate_report_path=v14_saved_candidate_report_path,

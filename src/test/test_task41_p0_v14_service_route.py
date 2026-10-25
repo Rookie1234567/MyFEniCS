@@ -259,6 +259,7 @@ def test_v14_exact_suffix_drives_two_supervised_workers_and_records_numeric_reje
         if module_name == "src.runners.task41_p0_v14_saved_rhs_candidate":
             candidate_dir = Path(command[command.index("--output-dir") + 1])
             candidate_dir.mkdir(parents=True, exist_ok=True)
+            extension_mode = "--v14-saved-star-extension" in command
             _write_json(candidate_dir / "task41_p0_v14_saved_rhs_candidate.json", {
                 "schema": v14_io.V14_CANDIDATE_REPORT_SCHEMA,
                 "status": "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK",
@@ -267,19 +268,26 @@ def test_v14_exact_suffix_drives_two_supervised_workers_and_records_numeric_reje
                 "consumer_contract_sha256": contract_sha,
                 "consumer_window_sha256": new_window_sha,
                 "producer_report_sha256": v14_io.V14_V11_REPORT_SHA256,
+                "star_producer_report_sha256": (
+                    v14_io.V14_V8_STAR_REPORT_SHA256 if extension_mode else None
+                ),
+                "scope": {"stage": "saved_star_extension" if extension_mode else "initial_screen"},
             })
         elif module_name == "src.runners.task41_p0_v14_saved_rhs_checker":
             output_path = Path(command[command.index("--output") + 1])
+            extension_mode = "--v14-saved-star-extension" in command
             if "--decimal-residual-recheck-only" in command:
                 _write_json(output_path, {
                     "schema": "task41.p0.v14.saved_rhs_decimal_residual_recheck.v1",
-                    "status": "INCONCLUSIVE",
+                    "stage": "saved_star_extension" if extension_mode else "initial_screen",
+                    "status": "LOCAL_CANDIDATE_PASS" if extension_mode else "INCONCLUSIVE",
                     "classification": "DECIMAL_SUPPLEMENTAL_INDEPENDENT_CHECK",
                     "check_completed": True,
                     "official_result": False,
                     "scientific_qualified": False,
-                    "candidate_passed": None,
+                    "candidate_passed": True if extension_mode else None,
                     "conditional_star_coverage_unlocked": False,
+                    "saved_coverage_ready": extension_mode,
                     "full_owner_unlocked": False,
                     "getrs_invoked": 0,
                     "getrs_added": 0,
@@ -298,9 +306,10 @@ def test_v14_exact_suffix_drives_two_supervised_workers_and_records_numeric_reje
             else:
                 _write_json(output_path, {
                     "schema": v14_io.V14_CANDIDATE_CHECK_SCHEMA,
-                    "status": "LOCAL_CANDIDATE_REJECTED",
+                    "status": "INCONCLUSIVE" if extension_mode else "LOCAL_CANDIDATE_REJECTED",
                     "check_completed": True,
-                    "candidate_passed": False,
+                    "candidate_passed": None if extension_mode else False,
+                    "saved_coverage_ready": False,
                     "official_result": False,
                     "scientific_qualified": False,
                     "candidate_report_sha256": command[
@@ -541,3 +550,289 @@ def test_v14_exact_suffix_drives_two_supervised_workers_and_records_numeric_reje
     assert decimal_receipt["full_owner_unlocked"] is False
     assert decimal_receipt["official_result"] is False
     assert decimal_receipt["scientific_qualified"] is False
+
+
+
+    # The saved-star route accepts attempt paths by binding and SHA rather than
+    # pinning attempt01/03 names, and carries all five inputs into both workers.
+    v8_star_report_path = results_root / "v8-producer" / "saved_star_report.json"
+    _write_json(v8_star_report_path, {"schema": "synthetic-v8"})
+    accepted_hashes[v8_star_report_path.resolve()] = v14_io.V14_V8_STAR_REPORT_SHA256
+    prior_root = (
+        results_root / "task41_p0_saved_diagnostics_6h" / new_window_sha
+        / "selected_incident_replay" / "attempt99"
+    )
+    prior_candidate_path = prior_root / "candidate" / "prior_candidate.json"
+    prior_checker_path = prior_root / "prior_checker.json"
+    prior_decimal_path = prior_root / "prior_decimal.json"
+    prior_receipt_path = prior_root.with_name("attempt99.service") / "prior_receipt.json"
+    for path, name in (
+        (prior_candidate_path, "candidate"),
+        (prior_checker_path, "checker"),
+        (prior_decimal_path, "decimal"),
+        (prior_receipt_path, "receipt"),
+    ):
+        _write_json(path, {"synthetic": name})
+    extension_inputs = [
+        "--v14-saved-star-extension",
+        "--v8-star-report", str(v8_star_report_path),
+        "--v8-star-report-sha256", v14_io.V14_V8_STAR_REPORT_SHA256,
+        "--prior-candidate-report", str(prior_candidate_path),
+        "--prior-candidate-report-sha256", sha256_file(prior_candidate_path),
+        "--prior-checker", str(prior_checker_path),
+        "--prior-checker-sha256", sha256_file(prior_checker_path),
+        "--prior-decimal-report", str(prior_decimal_path),
+        "--prior-decimal-report-sha256", sha256_file(prior_decimal_path),
+        "--prior-service-receipt", str(prior_receipt_path),
+        "--prior-service-receipt-sha256", sha256_file(prior_receipt_path),
+    ]
+    parsed_extension = service_workflow._parse_task41_p0_v14_candidate_suffix(
+        [*suffix, *extension_inputs]
+    )
+    extension_output_root = (
+        results_root / "task41_p0_saved_diagnostics_6h" / new_window_sha
+        / "selected_incident_replay" / "attempt04"
+    )
+    extension_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="synthetic-v14-star-extension-service",
+        runtime_prefix=repo_root / ".venv",
+        environment=environment,
+        window=window,
+        contract=contract,
+        contract_path=contract_path,
+        contract_sha=contract_sha,
+        case_id="B0",
+        run_root=run_root,
+        output_root=extension_output_root,
+        consumer_source_sha=consumer_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_evidence_audit_mode=True,
+        b0_v14_saved_rhs_candidate_mode=True,
+        b0_v14_saved_star_extension_mode=True,
+        v14_producer_report_path=parsed_extension[0],
+        v14_producer_report_sha256=parsed_extension[1],
+        v14_accepted_checker_path=parsed_extension[2],
+        v14_accepted_checker_sha256=parsed_extension[3],
+        v14_accepted_receipt_path=parsed_extension[4],
+        v14_accepted_receipt_sha256=parsed_extension[5],
+        v14_donor_summary_sha256=parsed_extension[6],
+        v14_v8_star_report_path=parsed_extension[7],
+        v14_v8_star_report_sha256=parsed_extension[8],
+        v14_prior_candidate_report_path=parsed_extension[9],
+        v14_prior_candidate_report_sha256=parsed_extension[10],
+        v14_prior_checker_path=parsed_extension[11],
+        v14_prior_checker_sha256=parsed_extension[12],
+        v14_prior_decimal_report_path=parsed_extension[13],
+        v14_prior_decimal_report_sha256=parsed_extension[14],
+        v14_prior_service_receipt_path=parsed_extension[15],
+        v14_prior_service_receipt_sha256=parsed_extension[16],
+        donor_contract_path=donor_contract_path,
+        donor_contract_sha256=v14_io.V14_DONOR_CONTRACT_SHA256,
+        donor_summary_path=summary_path,
+        donor_numerical_output=numerical_output,
+        input_path=input_path,
+        activation_command=["activate", "synthetic"],
+        activation_identity="synthetic-qualified-activation",
+        preflight={"passed": True},
+        preflight_command=["python", "-m", "synthetic_preflight"],
+        cgroup_start={"dedicated_job_cgroup": True},
+        service_entry_accounting={"synthetic": True},
+        service_start_sample=service_workflow.clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_supervise,
+        sha256_file=sha256_file,
+    )
+    assert extension_result == 0
+    candidate_command = supervisor_calls[-2][0]
+    extension_checker_command = supervisor_calls[-1][0]
+    assert "--v14-saved-star-extension" in candidate_command
+    assert "--v14-saved-star-extension" in extension_checker_command
+    extension_receipt_path = (
+        extension_output_root.with_name(extension_output_root.name + ".service")
+        / "task41_p0_service_receipt.json"
+    )
+    extension_receipt = json.loads(extension_receipt_path.read_text(encoding="utf-8"))
+    assert extension_receipt["result_classification"] == "V14_LOCAL_CANDIDATE_INCONCLUSIVE"
+    assert extension_receipt["v14_saved_star_extension"] is True
+    assert extension_receipt["saved_star_coverage_ready"] is False
+    assert extension_receipt["conditional_star_coverage_unlocked"] is False
+    assert extension_receipt["full_owner_unlocked"] is False
+
+    # Run the parameterized Decimal supplemental route for that exact extension
+    # output; it is checker-only and must not invoke the candidate worker again.
+    extension_candidate_path = extension_output_root / "candidate" / "task41_p0_v14_saved_rhs_candidate.json"
+    extension_candidate_sha = sha256_file(extension_candidate_path)
+    extension_check_path = extension_output_root / "task41_p0_v14_saved_rhs_candidate_independent_check.json"
+    extension_check_sha = sha256_file(extension_check_path)
+    extension_decimal_output = (
+        results_root / "task41_p0_saved_diagnostics_6h" / new_window_sha
+        / "selected_incident_replay" / "attempt05"
+    )
+    extension_decimal_suffix = [
+        *suffix[:10], str(extension_decimal_output), *suffix[11:],
+        "--v14-decimal-residual-recheck-only",
+        "--source-consumer-contract", str(source_consumer_contract_path),
+        "--source-consumer-contract-sha256", source_consumer_contract_sha,
+        "--candidate-report", str(extension_candidate_path),
+        "--candidate-report-sha256", extension_candidate_sha,
+        "--prior-independent-check", str(extension_check_path),
+        "--prior-independent-check-sha256", extension_check_sha,
+        *extension_inputs,
+    ]
+    parsed_extension_decimal = service_workflow._parse_task41_p0_v14_decimal_recheck_suffix(
+        extension_decimal_suffix
+    )
+    extension_decimal_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="synthetic-v14-star-extension-decimal-service",
+        runtime_prefix=repo_root / ".venv",
+        environment=environment,
+        window=window,
+        contract=contract,
+        contract_path=contract_path,
+        contract_sha=contract_sha,
+        case_id="B0",
+        run_root=run_root,
+        output_root=extension_decimal_output,
+        consumer_source_sha=consumer_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_evidence_audit_mode=True,
+        b0_v14_saved_rhs_candidate_mode=True,
+        b0_v14_decimal_residual_recheck_only_mode=True,
+        b0_v14_saved_star_extension_mode=True,
+        v14_source_consumer_contract_path=parsed_extension_decimal[7],
+        v14_source_consumer_contract_sha256=parsed_extension_decimal[8],
+        v14_saved_candidate_report_path=parsed_extension_decimal[9],
+        v14_saved_candidate_report_sha256=parsed_extension_decimal[10],
+        v14_prior_independent_check_path=parsed_extension_decimal[11],
+        v14_prior_independent_check_sha256=parsed_extension_decimal[12],
+        v14_producer_report_path=parsed_extension_decimal[0],
+        v14_producer_report_sha256=parsed_extension_decimal[1],
+        v14_accepted_checker_path=parsed_extension_decimal[2],
+        v14_accepted_checker_sha256=parsed_extension_decimal[3],
+        v14_accepted_receipt_path=parsed_extension_decimal[4],
+        v14_accepted_receipt_sha256=parsed_extension_decimal[5],
+        v14_donor_summary_sha256=parsed_extension_decimal[6],
+        v14_v8_star_report_path=parsed_extension_decimal[13],
+        v14_v8_star_report_sha256=parsed_extension_decimal[14],
+        v14_prior_candidate_report_path=parsed_extension_decimal[15],
+        v14_prior_candidate_report_sha256=parsed_extension_decimal[16],
+        v14_prior_checker_path=parsed_extension_decimal[17],
+        v14_prior_checker_sha256=parsed_extension_decimal[18],
+        v14_prior_decimal_report_path=parsed_extension_decimal[19],
+        v14_prior_decimal_report_sha256=parsed_extension_decimal[20],
+        v14_prior_service_receipt_path=parsed_extension_decimal[21],
+        v14_prior_service_receipt_sha256=parsed_extension_decimal[22],
+        donor_contract_path=donor_contract_path,
+        donor_contract_sha256=v14_io.V14_DONOR_CONTRACT_SHA256,
+        donor_summary_path=summary_path,
+        donor_numerical_output=numerical_output,
+        input_path=input_path,
+        activation_command=["activate", "synthetic"],
+        activation_identity="synthetic-qualified-activation",
+        preflight={"passed": True},
+        preflight_command=["python", "-m", "synthetic_preflight"],
+        cgroup_start={"dedicated_job_cgroup": True},
+        service_entry_accounting={"synthetic": True},
+        service_start_sample=service_workflow.clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_supervise,
+        sha256_file=sha256_file,
+    )
+    assert extension_decimal_result == 0
+    extension_decimal_command = supervisor_calls[-1][0]
+    assert extension_decimal_command[2] == "src.runners.task41_p0_v14_saved_rhs_checker"
+    assert "--decimal-residual-recheck-only" in extension_decimal_command
+    assert "--v14-saved-star-extension" in extension_decimal_command
+    assert "src.runners.task41_p0_v14_saved_rhs_candidate" not in extension_decimal_command
+    extension_decimal_receipt_path = (
+        extension_decimal_output.with_name(extension_decimal_output.name + ".service")
+        / "task41_p0_service_receipt.json"
+    )
+    extension_decimal_receipt = json.loads(extension_decimal_receipt_path.read_text(encoding="utf-8"))
+    assert extension_decimal_receipt["result_classification"] == "V14_SAVED_COVERAGE_DECIMAL_PASS_NOT_GLOBAL"
+    assert extension_decimal_receipt["saved_star_coverage_ready"] is True
+    assert extension_decimal_receipt["conditional_star_coverage_unlocked"] is False
+    assert extension_decimal_receipt["full_owner_unlocked"] is False
+    assert extension_decimal_receipt["v14_candidate_worker_attempted"] is False
+    assert extension_decimal_receipt["getrs_added"] == 0
+
+
+def test_v14_saved_star_extension_exact_suffix_binds_all_inputs(tmp_path):
+    paths = {}
+    for name in (
+        "producer", "accepted_checker", "accepted_receipt", "v8_star",
+        "prior_candidate", "prior_checker", "prior_decimal", "prior_receipt",
+        "source_contract", "current_candidate", "current_checker",
+    ):
+        path = tmp_path / f"{name}.json"
+        _write_json(path, {"name": name})
+        paths[name] = path
+
+    base = [
+        "--task41-p0-saved-b0-evidence-audit",
+        "--donor-contract", str(paths["source_contract"]),
+        "--donor-contract-sha256", "d" * 64,
+        "--summary", str(paths["source_contract"]),
+        "--numerical-output", str(tmp_path),
+        "--output-dir", str(tmp_path / "attempt01"),
+        "--v14-saved-rhs-candidate",
+        "--v11-report", str(paths["producer"]),
+        "--v11-report-sha256", "1" * 64,
+        "--accepted-checker", str(paths["accepted_checker"]),
+        "--accepted-checker-sha256", "2" * 64,
+        "--accepted-receipt", str(paths["accepted_receipt"]),
+        "--accepted-receipt-sha256", "3" * 64,
+        "--donor-summary-sha256", "4" * 64,
+    ]
+    extension = [
+        "--v14-saved-star-extension",
+        "--v8-star-report", str(paths["v8_star"]),
+        "--v8-star-report-sha256", v14_io.V14_V8_STAR_REPORT_SHA256,
+        "--prior-candidate-report", str(paths["prior_candidate"]),
+        "--prior-candidate-report-sha256", "5" * 64,
+        "--prior-checker", str(paths["prior_checker"]),
+        "--prior-checker-sha256", "6" * 64,
+        "--prior-decimal-report", str(paths["prior_decimal"]),
+        "--prior-decimal-report-sha256", "7" * 64,
+        "--prior-service-receipt", str(paths["prior_receipt"]),
+        "--prior-service-receipt-sha256", "8" * 64,
+    ]
+    parsed = service_workflow._parse_task41_p0_v14_candidate_suffix([*base, *extension])
+    assert len([*base, *extension]) == 47
+    assert parsed[:7] == (
+        paths["producer"].resolve(), "1" * 64,
+        paths["accepted_checker"].resolve(), "2" * 64,
+        paths["accepted_receipt"].resolve(), "3" * 64, "4" * 64,
+    )
+    assert parsed[7:] == (
+        paths["v8_star"].resolve(), v14_io.V14_V8_STAR_REPORT_SHA256,
+        paths["prior_candidate"].resolve(), "5" * 64,
+        paths["prior_checker"].resolve(), "6" * 64,
+        paths["prior_decimal"].resolve(), "7" * 64,
+        paths["prior_receipt"].resolve(), "8" * 64,
+    )
+
+    decimal = [
+        "--v14-decimal-residual-recheck-only",
+        "--source-consumer-contract", str(paths["source_contract"]),
+        "--source-consumer-contract-sha256", "9" * 64,
+        "--candidate-report", str(paths["current_candidate"]),
+        "--candidate-report-sha256", "a" * 64,
+        "--prior-independent-check", str(paths["current_checker"]),
+        "--prior-independent-check-sha256", "b" * 64,
+    ]
+    parsed_decimal = service_workflow._parse_task41_p0_v14_decimal_recheck_suffix(
+        [*base, *decimal, *extension]
+    )
+    assert len([*base, *decimal, *extension]) == 60
+    assert parsed_decimal[:7] == parsed[:7]
+    assert parsed_decimal[7:13] == (
+        paths["source_contract"].resolve(), "9" * 64,
+        paths["current_candidate"].resolve(), "a" * 64,
+        paths["current_checker"].resolve(), "b" * 64,
+    )
+    assert parsed_decimal[13:] == parsed[7:]

@@ -21,7 +21,9 @@ from src.runners.task41_p0_v14_candidate_io import (
     V14_CANDIDATE_REPORT_SCHEMA,
     V14_CELLS,
     V14_COLUMNS,
+    V14_SOURCE_WINDOW_SHA256,
     load_v14_saved_candidate_inputs,
+    v14_matrix_identity_token,
 )
 from src.solvers.hcurl_assembly_time_condensation import project_internal_rhs_same_lu
 
@@ -93,8 +95,11 @@ def execute_candidate_rhs(
     if event_log.exists():
         raise FileExistsError(f"V14 candidate event log already exists: {event_log.name}")
     array_records: list[dict[str, Any]] = []
+    initial_z_ref: dict[str, Any] | None = None
+    initial_z_value: np.ndarray | None = None
     with event_log.open("x", encoding="utf-8") as events:
         def persist(record: Mapping[str, Any]) -> None:
+            nonlocal initial_z_ref, initial_z_value
             saved: dict[str, Any] = {"event": str(record.get("event"))}
             for field in (
                 "solved", "correction", "z_before", "residual", "delta", "z_after"
@@ -102,12 +107,19 @@ def execute_candidate_rhs(
                 value = record.get(field)
                 if value is None:
                     continue
-                if record.get("event") == "initial" and field == "solved" and not np.array_equal(value, expected_initial):
+                if (
+                    record.get("event") == "initial" and field == "solved"
+                    and expected_initial is not None
+                    and not np.array_equal(value, expected_initial)
+                ):
                     raise ValueError(f"V14 {label} initial z does not equal the frozen saved z_b")
                 if not isinstance(value, np.ndarray):
                     raise TypeError(f"V14 core callback field {field} is not an ndarray")
                 filename = f"{label}_{record.get('event')}_{record.get('step', 0)}_{field}.npy"
                 ref = _atomic_npy(output_dir / filename, value)
+                if record.get("event") == "initial" and field == "solved":
+                    initial_z_ref = ref
+                    initial_z_value = np.asarray(value, dtype=np.complex128).copy()
                 saved[field] = ref
                 array_records.append(ref)
                 evidence_budget[0] += int(ref["bytes"])
@@ -134,8 +146,12 @@ def execute_candidate_rhs(
             factor_matrix_identity=matrix_identity,
             step_callback=persist,
         )
+    if initial_z_ref is None or initial_z_value is None:
+        raise RuntimeError(f"V14 {label} core callback omitted the initial same-LU solution")
     return {
         "label": label,
+        "initial_z": initial_z_value,
+        "initial_z_ref": initial_z_ref,
         "final_z": np.asarray(z, dtype=np.complex128),
         "returned_correction": np.asarray(correction, dtype=np.complex128),
         "timing": timing,
@@ -149,16 +165,7 @@ def execute_candidate_rhs(
 
 
 def _identity_token(source: Mapping[str, Any], cell: int) -> str:
-    identity = {
-        "producer_report_sha256": source["producer_report_sha256"],
-        "cell_index": int(cell),
-        "actual_coordinate_sha256": source["cells"][cell]["actual_coordinate_sha256"],
-        "oriented_tensor_sha256": source["cells"][cell]["tensor_ref"]["sha256"],
-        "interior_lu_sha256": source["cells"][cell]["lu_ref"]["sha256"],
-    }
-    return hashlib.sha256(
-        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("ascii")
-    ).hexdigest()
+    return v14_matrix_identity_token(source, cell)
 
 
 def run_v14_saved_candidate(
@@ -171,20 +178,28 @@ def run_v14_saved_candidate(
         raise ValueError("V14 candidate output must stay under the Task41 results root")
     output.mkdir(parents=True, exist_ok=False)
     evidence_budget = [0]
+    cell_order = tuple(int(value) for value in source.get("cell_order", V14_CELLS))
+    columns = tuple(int(value) for value in source.get("columns", V14_COLUMNS))
+    stage = str(source.get("stage", "initial_screen"))
+    state_rows = list(source.get("state_rows") or [
+        {"column": column, "state": "j0" if column == 0 else "j3"}
+        for column in columns
+    ])
     marker = {
         "schema": "task41.p0.v14.saved_same_lu_rhs_candidate_started.v1",
+        "stage": stage,
         "consumer_contract_sha256": source["consumer_contract_sha256"],
         "consumer_window_sha256": source["consumer_window_sha256"],
         "producer_report_sha256": source["producer_report_sha256"],
+        "star_producer_report_sha256": source.get("star_producer_report_sha256"),
         "official_result": False,
     }
     _atomic_json(output / "candidate_started.json", marker)
     rhs_results: dict[tuple[int, int], dict[str, Any]] = {}
-    column_summaries: list[dict[str, Any]] = []
     getrs_total = 0
     core_started = time.perf_counter()
-    for column in V14_COLUMNS:
-        for cell in V14_CELLS:
+    for column in columns:
+        for cell in cell_order:
             local = source["cells"][cell]
             term = local["column_terms"][column]
             identity = _identity_token(source, cell)
@@ -197,18 +212,22 @@ def run_v14_saved_candidate(
                 actual_internal_matrix=local["K"],
                 matrix_identity=identity,
                 evidence_budget=evidence_budget,
-                expected_initial=term["old_z_b"],
+                expected_initial=term.get("old_z_b"),
             )
             projection = np.asarray(
                 local["trace_expansion"].conj().T @ result["returned_correction"],
                 dtype=np.complex128,
             ).reshape(-1)
+            baseline_correction = np.asarray(
+                -(local["J"] @ result["initial_z"]), dtype=np.complex128
+            )
+            baseline_projection = np.asarray(
+                local["trace_expansion"].conj().T @ baseline_correction,
+                dtype=np.complex128,
+            ).reshape(-1)
             projection_ref = _atomic_npy(
                 output / f"cell{cell}_column{column}_projected_active.npy", projection
             )
-            evidence_budget[0] += projection_ref["bytes"]
-            if evidence_budget[0] > V14_EVIDENCE_LIMIT_BYTES:
-                raise RuntimeError("V14 candidate evidence exceeded the 16 MiB package cap")
             final_z_ref = _atomic_npy(
                 output / f"cell{cell}_column{column}_final_z.npy", result["final_z"]
             )
@@ -216,7 +235,7 @@ def run_v14_saved_candidate(
                 output / f"cell{cell}_column{column}_returned_correction.npy",
                 result["returned_correction"],
             )
-            evidence_budget[0] += final_z_ref["bytes"] + correction_ref["bytes"]
+            evidence_budget[0] += projection_ref["bytes"] + final_z_ref["bytes"] + correction_ref["bytes"]
             if evidence_budget[0] > V14_EVIDENCE_LIMIT_BYTES:
                 raise RuntimeError("V14 candidate evidence exceeded the 16 MiB package cap")
             rhs_results[(cell, column)] = {
@@ -224,7 +243,12 @@ def run_v14_saved_candidate(
                 "column": column,
                 "matrix_identity": identity,
                 "b_i": term["b_i_ref"],
-                "old_z_b": term["old_z_b_ref"],
+                "old_z_b": term.get("old_z_b_ref"),
+                "baseline_mode": (
+                    "same_run_initial_core_solve"
+                    if term.get("old_z_b") is None else "accepted_saved_v11_same_lu_initial"
+                ),
+                "baseline_z": result["initial_z_ref"],
                 "actual_coordinate_sha256": local["actual_coordinate_sha256"],
                 "oriented_tensor": local["tensor_ref"],
                 "interior_lu": local["lu_ref"],
@@ -234,53 +258,75 @@ def run_v14_saved_candidate(
                 "returned_correction": correction_ref,
                 "projected_active": projection_ref,
                 "timing": result["timing"],
+                "baseline_projected_active": baseline_projection,
             }
             getrs_total += int(result["timing"].get("getrs_count", 0))
-        y = source["y_by_column"][column]
-        base_g = source["b_t_by_column"][column]
-        candidate_g = source["b_t_by_column"][column]
-        baseline_terms = []
-        candidate_terms = []
-        for cell in V14_CELLS:
+
+    column_summaries: list[dict[str, Any]] = []
+    for state_row in state_rows:
+        column = int(state_row["column"])
+        state = str(state_row["state"])
+        if column not in columns:
+            raise ValueError(f"V14 state row refers to unselected column {column}")
+        extension = stage == "saved_star_extension"
+        y = (
+            source["y_by_column_state"][(column, state)]
+            if extension else source["y_by_column"][column]
+        )
+        base_g = complex(source["b_t_by_column"][column])
+        candidate_g = complex(source["b_t_by_column"][column])
+        baseline_terms: list[complex] = []
+        candidate_terms: list[complex] = []
+        action_sources: list[dict[str, Any]] = []
+        for cell in cell_order:
             local = source["cells"][cell]
             term = local["column_terms"][column]
-            old_active = np.asarray(
-                local["trace_expansion"].conj().T @ term["old_correction"],
-                dtype=np.complex128,
-            ).reshape(-1)
+            if extension:
+                action_term = term["state_terms"][state]
+                action_ref = action_term["s_action_ref"]
+                baseline_projected = rhs_results[(cell, column)]["baseline_projected_active"]
+            else:
+                action_ref = term["s_action_ref"]
+                baseline_projected = np.asarray(
+                    local["trace_expansion"].conj().T @ term["old_correction"],
+                    dtype=np.complex128,
+                ).reshape(-1)
             new_ref = rhs_results[(cell, column)]["projected_active"]
             new_active = np.load(new_ref["path"], mmap_mode="r", allow_pickle=False)
-            baseline_piece = complex(old_active[local["target_active_position"]])
+            baseline_piece = complex(baseline_projected[local["target_active_position"]])
             candidate_piece = complex(new_active[local["target_active_position"]])
             baseline_terms.append(baseline_piece)
             candidate_terms.append(candidate_piece)
             base_g += baseline_piece
             candidate_g += candidate_piece
-        if base_g != source["baseline_g_by_column"][column]:
-            raise ValueError(f"V14 column {column} array-derived production-order g differs from the frozen V11 baseline")
-        candidate_d = y - candidate_g
-        baseline_d = y - base_g
+            action_sources.append(action_ref)
+        if not extension and base_g != source["baseline_g_by_column"][column]:
+            raise ValueError(
+                f"V14 column {column} array-derived production-order g differs from the frozen V11 baseline"
+            )
         column_summaries.append({
             "column": column,
-            "selected_original_row": int(TASK41_P0_V11_METADATA_ORIGINAL_ROW),
-            "selected_active_row": int(TASK41_P0_V11_METADATA_ACTIVE_ROW),
-            "incident_cell_order": list(V14_CELLS),
+            "state": state,
+            "state_pair": "j0_j3_shared_b_i" if extension else "single_saved_v11_state",
+            "selected_original_row": int(source.get("target_original_row", TASK41_P0_V11_METADATA_ORIGINAL_ROW)),
+            "selected_active_row": int(source.get("target_active_row", TASK41_P0_V11_METADATA_ACTIVE_ROW)),
+            "incident_cell_order": list(cell_order),
             "base_b_t": [float(source["b_t_by_column"][column].real), float(source["b_t_by_column"][column].imag)],
             "base_b_t_source": source["b_t_ref_by_column"][column],
             "b_alpha_row_used_once": [float(source["b_alpha_by_column"][column].real), float(source["b_alpha_by_column"][column].imag)],
             "b_alpha_sources": source["b_alpha_refs_by_column"][column],
-            "y_cell_s_action_sources": [source["cells"][cell]["column_terms"][column]["s_action_ref"] for cell in V14_CELLS],
+            "y_cell_s_action_sources": action_sources,
             "saved_y": [float(y.real), float(y.imag)],
             "baseline_g_replayed_cell_order": [float(base_g.real), float(base_g.imag)],
             "candidate_g_actual_returned_correction_cell_order": [float(candidate_g.real), float(candidate_g.imag)],
-            "baseline_d": [float(baseline_d.real), float(baseline_d.imag)],
-            "candidate_d": [float(candidate_d.real), float(candidate_d.imag)],
+            "baseline_d": [float((y - base_g).real), float((y - base_g).imag)],
+            "candidate_d": [float((y - candidate_g).real), float((y - candidate_g).imag)],
             "baseline_cell_terms": [[float(v.real), float(v.imag)] for v in baseline_terms],
             "candidate_cell_terms": [[float(v.real), float(v.imag)] for v in candidate_terms],
         })
     elapsed = float(time.perf_counter() - core_started)
     if getrs_total > 12:
-        raise RuntimeError("V14 initial screen exceeded its twelve-GETRS gate")
+        raise RuntimeError("V14 bounded saved candidate exceeded its twelve-GETRS gate")
     report = {
         "schema": V14_CANDIDATE_REPORT_SCHEMA,
         "status": "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK",
@@ -292,6 +338,8 @@ def run_v14_saved_candidate(
         "consumer_window_sha256": source["consumer_window_sha256"],
         "producer_report_path": str(source["producer_report_path"]),
         "producer_report_sha256": source["producer_report_sha256"],
+        "star_producer_report_path": source.get("star_producer_report_path"),
+        "star_producer_report_sha256": source.get("star_producer_report_sha256"),
         "accepted_checker_path": str(source["accepted_checker_path"]),
         "accepted_checker_sha256": source["accepted_checker_sha256"],
         "accepted_receipt_path": str(source["accepted_receipt_path"]),
@@ -300,21 +348,30 @@ def run_v14_saved_candidate(
         "donor_summary_sha256": source["donor_summary_sha256"],
         "donor_contract_sha256": source["donor_contract_sha256"],
         "donor_manifest_sha256": source["donor_manifest_sha256"],
-        "producer_window_sha256": "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6",
+        "producer_window_sha256": V14_SOURCE_WINDOW_SHA256,
         "scope": {
-            "stage": "initial_screen",
-            "cells": list(V14_CELLS),
-            "columns": list(V14_COLUMNS),
-            "states": ["j0" if value == 0 else "j3" for value in V14_COLUMNS],
-            "rhs_count": len(V14_CELLS) * len(V14_COLUMNS),
+            "stage": stage,
+            "cells": list(cell_order),
+            "columns": list(columns),
+            "states": sorted({str(item["state"]) for item in state_rows}),
+            "state_rows": [{"column": int(item["column"]), "state": str(item["state"])} for item in state_rows],
+            "rhs_count": len(cell_order) * len(columns),
             "max_correction_steps": 2,
             "max_initial_screen_getrs_count": 12,
-            "conditional_star_coverage_registered": True,
+            "conditional_star_coverage_registered": stage == "initial_screen",
+            "prior_stage_reused": source.get("prior_stage_reused"),
+            "star_cell_identities": source.get("star_cell_identities"),
             "full_owner": False,
         },
         "getrs_count": getrs_total,
         "elapsed_seconds_includes_step_persistence": elapsed,
-        "candidate_rhs": [rhs_results[key] for key in sorted(rhs_results, key=lambda item: (item[0], item[1]))],
+        "candidate_rhs": [
+            {
+                key: value for key, value in rhs_results[(cell, column)].items()
+                if key != "baseline_projected_active"
+            }
+            for cell in cell_order for column in columns
+        ],
         "production_order_rows": column_summaries,
         "new_evidence_bytes": evidence_budget[0],
         "raw_evidence_retained": True,
@@ -340,6 +397,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--donor-contract", required=True, type=Path)
     parser.add_argument("--donor-contract-sha256", required=True)
     parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--loader-only", action="store_true")
+    parser.add_argument("--v14-saved-star-extension", action="store_true")
+    parser.add_argument("--v8-star-report", type=Path)
+    parser.add_argument("--v8-star-report-sha256")
+    parser.add_argument("--prior-candidate-report", type=Path)
+    parser.add_argument("--prior-candidate-report-sha256")
+    parser.add_argument("--prior-checker", type=Path)
+    parser.add_argument("--prior-checker-sha256")
+    parser.add_argument("--prior-decimal-report", type=Path)
+    parser.add_argument("--prior-decimal-report-sha256")
+    parser.add_argument("--prior-service-receipt", type=Path)
+    parser.add_argument("--prior-service-receipt-sha256")
     return parser.parse_args(argv)
 
 
@@ -360,6 +429,44 @@ def main(argv: list[str] | None = None) -> int:
         donor_contract_path=args.donor_contract,
         donor_contract_sha256=args.donor_contract_sha256,
     )
+    extension_values = (
+        args.v8_star_report, args.v8_star_report_sha256,
+        args.prior_candidate_report, args.prior_candidate_report_sha256,
+        args.prior_checker, args.prior_checker_sha256,
+        args.prior_decimal_report, args.prior_decimal_report_sha256,
+        args.prior_service_receipt, args.prior_service_receipt_sha256,
+    )
+    if args.v14_saved_star_extension:
+        if any(value is None for value in extension_values):
+            raise ValueError("V14 star extension requires every V8/prior-stage path and SHA binding")
+        from src.runners.task41_p0_v14_candidate_io import load_v14_saved_star_extension_inputs
+        source = load_v14_saved_star_extension_inputs(
+            source=source,
+            v8_star_report_path=args.v8_star_report,
+            v8_star_report_sha256=args.v8_star_report_sha256,
+            prior_candidate_report_path=args.prior_candidate_report,
+            prior_candidate_report_sha256=args.prior_candidate_report_sha256,
+            prior_checker_path=args.prior_checker,
+            prior_checker_sha256=args.prior_checker_sha256,
+            prior_decimal_report_path=args.prior_decimal_report,
+            prior_decimal_report_sha256=args.prior_decimal_report_sha256,
+            prior_service_receipt_path=args.prior_service_receipt,
+            prior_service_receipt_sha256=args.prior_service_receipt_sha256,
+        )
+    elif any(value is not None for value in extension_values):
+        raise ValueError("V14 star extension evidence requires its explicit mode flag")
+    if args.loader_only:
+        print(json.dumps({
+            "status": "LOADER_ONLY_VALIDATED",
+            "stage": source.get("stage", "initial_screen"),
+            "cell_order": list(source.get("cell_order", V14_CELLS)),
+            "columns": list(source.get("columns", V14_COLUMNS)),
+            "state_rows": source.get("state_rows"),
+            "prior_stage_reused": source.get("prior_stage_reused"),
+            "star_cell_identities": source.get("star_cell_identities"),
+            "getrs_invoked": 0,
+        }, sort_keys=True))
+        return 0
     result = run_v14_saved_candidate(source=source, output_dir=args.output_dir)
     print(json.dumps({key: value for key, value in result.items() if key != "payload"}, sort_keys=True))
     return 0

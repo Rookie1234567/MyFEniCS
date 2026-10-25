@@ -38,6 +38,42 @@ V14_CANDIDATE_REPORT_SCHEMA = "task41.p0.v14.saved_same_lu_rhs_candidate.v1"
 V14_CANDIDATE_CHECK_SCHEMA = "task41.p0.v14.saved_same_lu_rhs_candidate_independent_check.v1"
 V14_CELLS = tuple(int(value) for value in TASK41_P0_V11_SELECTED_CELLS)
 V14_COLUMNS = (0, 1)
+V14_V8_STAR_REPORT_SHA256 = "1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f"
+V14_V8_STAR_CELLS = (23352, 23493)
+V14_V8_STAR_ACTIVE_ROW = 4_766_937
+V14_V8_STAR_ORIGINAL_ROW = 15_440_235
+V14_V8_STAR_IDENTITIES = {
+    23352: {
+        "cell_tag": 2,
+        "permutation": 4680,
+        "coordinate_sha256": "00be22d015fe207dd28a8c246380144e51b8ba2d7a3ff63562dfca38b65024e6",
+        "selected_local_trace_row": 375,
+    },
+    23493: {
+        "cell_tag": 1,
+        "permutation": 0,
+        "coordinate_sha256": "0fbdca58aeb8061e226f1c298a610bbd63f2f43fa15a6830afd3fa435a667ca6",
+        "selected_local_trace_row": 75,
+    },
+}
+
+
+def v14_matrix_identity_token(source: Mapping[str, Any], cell: int) -> str:
+    local = source["cells"][cell]
+    if "matrix_identity" in local:
+        return str(local["matrix_identity"])
+    identity = {
+        "producer_report_sha256": source.get(
+            "star_producer_report_sha256", source["producer_report_sha256"]
+        ),
+        "cell_index": int(cell),
+        "actual_coordinate_sha256": local["actual_coordinate_sha256"],
+        "oriented_tensor_sha256": local["tensor_ref"]["sha256"],
+        "interior_lu_sha256": local["lu_ref"]["sha256"],
+    }
+    return hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("ascii")
+    ).hexdigest()
 
 
 def _results_root(repo_root: Path) -> Path:
@@ -259,6 +295,9 @@ def load_v14_saved_candidate_inputs(
     b_t_ref_by_column: dict[int, Any] = {}
     b_alpha_by_column: dict[int, complex] = {}
     b_alpha_refs_by_column: dict[int, dict[str, Any]] = {}
+    native_rhs_arrays_by_column: dict[int, np.ndarray] = {}
+    b_alpha_rows_by_column: dict[int, np.ndarray] = {}
+    b_alpha_values_by_column: dict[int, np.ndarray] = {}
     for column_index, column in enumerate(columns_manifest):
         artifacts = column.get("artifacts") if isinstance(column, Mapping) else None
         if not isinstance(artifacts, Mapping):
@@ -288,6 +327,9 @@ def load_v14_saved_candidate_inputs(
             raise ValueError(f"V14 donor column {column_index} has duplicate selected B-alpha rows")
         b_t_by_column[column_index] = complex(native[TASK41_P0_V11_METADATA_ORIGINAL_ROW])
         b_t_ref_by_column[column_index] = artifacts.get("native_rhs")
+        native_rhs_arrays_by_column[column_index] = native
+        b_alpha_rows_by_column[column_index] = beta_rows
+        b_alpha_values_by_column[column_index] = beta_values
         beta = complex(selected_beta[0]) if selected_beta.size else 0.0 + 0.0j
         b_alpha_by_column[column_index] = beta
         b_alpha_refs_by_column[column_index] = {
@@ -444,6 +486,9 @@ def load_v14_saved_candidate_inputs(
         "metadata_report_sha256": str(metadata_sha),
         "b_t_by_column": b_t_by_column,
         "b_t_ref_by_column": b_t_ref_by_column,
+        "native_rhs_arrays_by_column": native_rhs_arrays_by_column,
+        "b_alpha_rows_by_column": b_alpha_rows_by_column,
+        "b_alpha_values_by_column": b_alpha_values_by_column,
         "b_alpha_by_column": b_alpha_by_column,
         "b_alpha_refs_by_column": b_alpha_refs_by_column,
         "y_by_column": y_by_column,
@@ -451,3 +496,470 @@ def load_v14_saved_candidate_inputs(
         "report_columns": report_columns,
         "cells": candidate_by_cell,
     }
+
+def _v14_required_report(path: str | Path, *, root: Path, expected_sha256: str, label: str) -> tuple[Path, dict[str, Any]]:
+    resolved = _checked_path(path, root=root, label=label)
+    report = _read_json(resolved, expected_sha256=expected_sha256, max_bytes=16 * 1024**2, label=label)
+    return resolved, report
+
+
+def _v14_star_prior_stage(
+    *,
+    source: Mapping[str, Any],
+    candidate_report_path: str | Path,
+    candidate_report_sha256: str,
+    prior_checker_path: str | Path,
+    prior_checker_sha256: str,
+    prior_decimal_path: str | Path,
+    prior_decimal_sha256: str,
+    prior_receipt_path: str | Path,
+    prior_receipt_sha256: str,
+) -> dict[str, Any]:
+    results_root = Path(source["results_root"]).resolve(strict=True)
+    window_sha = str(source["consumer_window_sha256"])
+    window_root = (
+        results_root / "task41_p0_saved_diagnostics_6h" / window_sha
+    ).resolve(strict=True)
+    supplied = {
+        "candidate": candidate_report_path,
+        "checker": prior_checker_path,
+        "decimal": prior_decimal_path,
+        "receipt": prior_receipt_path,
+    }
+    digests = {
+        "candidate": candidate_report_sha256,
+        "checker": prior_checker_sha256,
+        "decimal": prior_decimal_sha256,
+        "receipt": prior_receipt_sha256,
+    }
+    labels = {
+        "candidate": "prior V14 candidate",
+        "checker": "prior V14 independent checker",
+        "decimal": "prior V14 Decimal checker",
+        "receipt": "prior V14 service receipt",
+    }
+    loaded: dict[str, tuple[Path, dict[str, Any]]] = {}
+    for key, raw_path in supplied.items():
+        path = _checked_path(raw_path, root=results_root, label=labels[key])
+        if not path.is_relative_to(window_root):
+            raise ValueError(f"V14 prior {key} is outside the authorized fixed window")
+        digest = digests[key]
+        if not isinstance(digest, str) or len(digest) != 64:
+            raise ValueError(f"V14 prior {key} SHA-256 binding is malformed")
+        loaded[key] = _v14_required_report(
+            path, root=results_root, expected_sha256=digest, label=labels[key]
+        )
+
+    candidate_path, candidate = loaded["candidate"]
+    checker_path, checker = loaded["checker"]
+    decimal_path, decimal = loaded["decimal"]
+    receipt_path, receipt = loaded["receipt"]
+    candidate_scope = candidate.get("scope")
+    if not isinstance(candidate_scope, Mapping):
+        raise ValueError("V14 prior candidate scope is malformed")
+    consumer_sha = candidate.get("consumer_contract_sha256")
+    prior_consumer_path = Path(str(candidate.get("consumer_contract_path", ""))).resolve(strict=True)
+    repo_root = Path(source["repo_root"]).resolve(strict=True)
+    if not prior_consumer_path.is_relative_to(repo_root):
+        raise ValueError("V14 prior consumer contract escaped the repository root")
+    prior_consumer_contract, prior_consumer_digest = require_task41_p0_contract(
+        prior_consumer_path,
+        expected_sha256=consumer_sha,
+        current_root=repo_root,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    prior_consumer_window = load_task41_p0_fixed_window(
+        prior_consumer_contract, current_root=repo_root, require_current_boot=False
+    )
+    review_contract_path = Path(str(decimal.get("review_contract_path", ""))).resolve(strict=True)
+    review_contract_sha = decimal.get("review_contract_sha256")
+    if not review_contract_path.is_relative_to(repo_root):
+        raise ValueError("V14 prior Decimal review contract escaped the repository root")
+    review_contract, review_digest = require_task41_p0_contract(
+        review_contract_path,
+        expected_sha256=review_contract_sha,
+        current_root=repo_root,
+        check_current_source=False,
+        require_clean_source=False,
+        case_id="B0",
+    )
+    review_window = load_task41_p0_fixed_window(
+        review_contract, current_root=repo_root, require_current_boot=False
+    )
+    authorized_window_path = Path(
+        str(source["consumer_contract"].get("window", {}).get("path", ""))
+    ).resolve(strict=True)
+    if (
+        prior_consumer_contract.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+        or prior_consumer_window.sha256 != window_sha
+        or Path(prior_consumer_window.path).resolve() != authorized_window_path
+        or review_contract.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+        or review_digest != receipt.get("contract_sha256")
+        or review_window.sha256 != window_sha
+        or Path(review_window.path).resolve() != authorized_window_path
+        or review_contract.get("source", {}).get("sha") == prior_consumer_contract.get("source", {}).get("sha")
+    ):
+        raise ValueError("V14 prior/review contracts are not distinct-source bindings to the authorized fixed window")
+    if (
+        candidate.get("schema") != V14_CANDIDATE_REPORT_SCHEMA
+        or candidate.get("status") != "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK"
+        or candidate.get("consumer_window_sha256") != window_sha
+        or candidate.get("producer_report_sha256") != source["producer_report_sha256"]
+        or candidate_scope.get("stage") != "initial_screen"
+        or candidate_scope.get("cells") != list(V14_CELLS)
+        or candidate_scope.get("columns") != list(V14_COLUMNS)
+        or candidate.get("getrs_count") != 12
+        or checker.get("schema") != V14_CANDIDATE_CHECK_SCHEMA
+        or checker.get("status") != "INCONCLUSIVE"
+        or checker.get("check_completed") is not True
+        or checker.get("candidate_passed") is not None
+        or checker.get("candidate_report_path") != str(candidate_path)
+        or checker.get("candidate_report_sha256") != candidate_report_sha256
+        or checker.get("consumer_contract_sha256") != consumer_sha
+        or checker.get("consumer_window_sha256") != window_sha
+        or decimal.get("schema") != "task41.p0.v14.saved_rhs_decimal_residual_recheck.v1"
+        or decimal.get("status") != "LOCAL_CANDIDATE_PASS"
+        or decimal.get("candidate_passed") is not True
+        or decimal.get("check_completed") is not True
+        or decimal.get("official_result") is not False
+        or decimal.get("scientific_qualified") is not False
+        or decimal.get("conditional_star_coverage_unlocked") is not True
+        or decimal.get("full_owner_unlocked") is not False
+        or decimal.get("rhs_count") != 4
+        or decimal.get("state_count") != 8
+        or decimal.get("rows_per_state") != 450
+        or decimal.get("candidate_report_path") != str(candidate_path)
+        or decimal.get("candidate_report_sha256") != candidate_report_sha256
+        or decimal.get("consumer_contract_path") != str(prior_consumer_path)
+        or decimal.get("consumer_contract_sha256") != consumer_sha
+        or decimal.get("prior_independent_check_path") != str(checker_path)
+        or decimal.get("prior_independent_check_sha256") != prior_checker_sha256
+        or decimal.get("review_contract_sha256") != review_digest
+        or decimal.get("review_contract_path") != str(review_contract_path)
+        or decimal.get("review_contract_path") != receipt.get("contract_path")
+        or decimal.get("fixed_window_sha256") != window_sha
+        or decimal.get("getrs_invoked") != 0
+        or decimal.get("getrs_added") != 0
+        or receipt.get("schema") != "task41.p0.saved_output_service_receipt.v1"
+        or receipt.get("status") != "completed"
+        or receipt.get("result_classification") != "V14_DECIMAL_SUPPLEMENTAL_PASS"
+        or receipt.get("window_sha256") != window_sha
+        or receipt.get("v14_candidate_passed") is not True
+        or receipt.get("full_owner_unlocked") is not False
+        or receipt.get("official_result") is not False
+        or receipt.get("scientific_qualified") is not False
+        or receipt.get("v14_saved_candidate_report_path") != str(candidate_path)
+        or receipt.get("v14_saved_candidate_report_sha256") != candidate_report_sha256
+        or receipt.get("v14_prior_independent_check_path") != str(checker_path)
+        or receipt.get("v14_prior_independent_check_sha256") != prior_checker_sha256
+        or receipt.get("v14_decimal_residual_check_path") != str(decimal_path)
+        or receipt.get("v14_decimal_residual_check_sha256") != prior_decimal_sha256
+    ):
+        raise ValueError("V14 prior candidate/checker/receipt chain is not a completed same-window pass")
+    return {
+        "candidate_path": str(candidate_path),
+        "candidate_sha256": candidate_report_sha256,
+        "checker_path": str(checker_path),
+        "checker_sha256": prior_checker_sha256,
+        "decimal_path": str(decimal_path),
+        "decimal_sha256": prior_decimal_sha256,
+        "service_receipt_path": str(receipt_path),
+        "service_receipt_sha256": prior_receipt_sha256,
+        "candidate_status": candidate["status"],
+        "independent_checker_status": checker["status"],
+        "decimal_status": decimal["status"],
+        "prior_consumer_contract_sha256": prior_consumer_digest,
+        "decimal_review_contract_sha256": decimal["review_contract_sha256"],
+        "candidate_passed_by_decimal": True,
+        "getrs_reused": int(candidate["getrs_count"]),
+        "new_getrs_for_reuse": 0,
+        "cells_reused": list(V14_CELLS),
+        "columns_reused": list(V14_COLUMNS),
+    }
+
+
+def load_v14_saved_star_extension_inputs(
+    *,
+    source: Mapping[str, Any],
+    v8_star_report_path: str | Path,
+    v8_star_report_sha256: str,
+    prior_candidate_report_path: str | Path,
+    prior_candidate_report_sha256: str,
+    prior_checker_path: str | Path,
+    prior_checker_sha256: str,
+    prior_decimal_report_path: str | Path,
+    prior_decimal_report_sha256: str,
+    prior_service_receipt_path: str | Path,
+    prior_service_receipt_sha256: str,
+) -> dict[str, Any]:
+    """Parameterize the V14 reader for the two V8 saved stars without inventing historical z0."""
+    root = Path(source["results_root"]).resolve(strict=True)
+    prior = _v14_star_prior_stage(
+        source=source,
+        candidate_report_path=prior_candidate_report_path,
+        candidate_report_sha256=prior_candidate_report_sha256,
+        prior_checker_path=prior_checker_path,
+        prior_checker_sha256=prior_checker_sha256,
+        prior_decimal_path=prior_decimal_report_path,
+        prior_decimal_sha256=prior_decimal_report_sha256,
+        prior_receipt_path=prior_service_receipt_path,
+        prior_receipt_sha256=prior_service_receipt_sha256,
+    )
+    report_path, report = _v14_required_report(
+        v8_star_report_path, root=root, expected_sha256=V14_V8_STAR_REPORT_SHA256,
+        label="V8 selected-star producer report",
+    )
+    if (
+        v8_star_report_sha256 != V14_V8_STAR_REPORT_SHA256
+        or report.get("schema") != "task41.p0.v8.selected_trace_star_audit_receipt.v1"
+        or report.get("status") != "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
+    ):
+        raise ValueError("V14 V8 saved-star producer identity or status differs")
+    metadata = report.get("selected_trace_star_metadata")
+    audit = report.get("selected_trace_star_audit")
+    replay = audit.get("p3_production_row_replay") if isinstance(audit, Mapping) else None
+    selected_cells = metadata.get("selected_cells") if isinstance(metadata, Mapping) else None
+    if (
+        not isinstance(metadata, Mapping)
+        or metadata.get("schema") != "task41.p0.v8.selected_trace_star_metadata.v1"
+        or metadata.get("incident_cell_order") != list(V14_V8_STAR_CELLS)
+        or metadata.get("selected_active_row") != V14_V8_STAR_ACTIVE_ROW
+        or metadata.get("selected_original_row") != V14_V8_STAR_ORIGINAL_ROW
+        or not isinstance(selected_cells, list)
+        or [int(item.get("cell_index", -1)) for item in selected_cells] != list(V14_V8_STAR_CELLS)
+        or not isinstance(audit, Mapping)
+        or audit.get("status") != "COMPLETED_SELECTED_TRACE_STAR_AUDIT"
+        or not isinstance(replay, Mapping)
+        or replay.get("status") != "COMPLETED_LOCAL_ROW_REPLAY"
+        or replay.get("selected_active_row") != V14_V8_STAR_ACTIVE_ROW
+        or replay.get("selected_original_row") != V14_V8_STAR_ORIGINAL_ROW
+        or replay.get("complete_incident_cell_coverage") is not True
+    ):
+        raise ValueError("V14 V8 saved-star row/cell identity differs")
+    persisted = report.get("persisted_evidence_arrays")
+    if not isinstance(persisted, list):
+        raise ValueError("V14 V8 persisted array manifest is missing")
+    arrays_by_name: dict[str, Mapping[str, Any]] = {}
+    for ref in persisted:
+        if not isinstance(ref, Mapping) or not isinstance(ref.get("name"), str) or ref["name"] in arrays_by_name:
+            raise ValueError("V14 V8 persisted array manifest has malformed/duplicate names")
+        arrays_by_name[str(ref["name"])] = ref
+
+    def array(name: str, *, label: str, dtype: str | None = None) -> np.ndarray:
+        ref = arrays_by_name.get(name)
+        if not isinstance(ref, Mapping):
+            raise ValueError(f"V14 V8 saved-star array is missing: {name}")
+        return load_hash_bound_npy(ref, root=root, label=label, required_dtype=dtype)
+
+    local_records = audit.get("local_numeric_cell_identity_and_artifacts")
+    local_by_cell = {
+        int(item.get("cell_index", -1)): item
+        for item in local_records if isinstance(item, Mapping)
+    } if isinstance(local_records, list) else {}
+    cells: dict[int, dict[str, Any]] = {}
+    state_names = ("j0", "j3")
+    for item in selected_cells:
+        cell = int(item["cell_index"])
+        expected = V14_V8_STAR_IDENTITIES[cell]
+        local_record = local_by_cell.get(cell)
+        if (
+            item.get("cell_tag") != expected["cell_tag"]
+            or item.get("cell_permutation") != expected["permutation"]
+            or item.get("actual_coordinate_sha256") != expected["coordinate_sha256"]
+            or item.get("selected_local_trace_rows") != [expected["selected_local_trace_row"]]
+            or not isinstance(local_record, Mapping)
+            or local_record.get("tag") != expected["cell_tag"]
+            or local_record.get("permutation_and_direction") != expected["permutation"]
+            or local_record.get("actual_geometry_coordinates_sha256") != expected["coordinate_sha256"]
+        ):
+            raise ValueError(f"V14 V8 saved-star cell{cell} tag/direction/coordinate identity differs")
+        map_refs = metadata["cell_artifacts"][str(cell)]["arrays"]
+        map_arrays: dict[str, np.ndarray] = {}
+        for name in (
+            "interior_positions", "trace_positions", "trace_original_rows", "active_ids",
+            "trace_expansion_data", "trace_expansion_indices", "trace_expansion_indptr",
+            "selected_local_trace_rows", "selected_trace_coefficients",
+        ):
+            ref = map_refs.get(name)
+            if not isinstance(ref, Mapping) or arrays_by_name.get(ref.get("name")) != ref:
+                raise ValueError(f"V14 V8 cell{cell} {name} map is not bound by its producer manifest")
+            map_arrays[name] = load_hash_bound_npy(
+                ref, root=root, label=f"V8 cell{cell}/{name}",
+                required_dtype="complex128" if name in {"trace_expansion_data", "selected_trace_coefficients"}
+                else None,
+            )
+        interior = np.asarray(map_arrays["interior_positions"], dtype=np.int64)
+        trace = np.asarray(map_arrays["trace_positions"], dtype=np.int64)
+        active_ids = np.asarray(map_arrays["active_ids"], dtype=np.int64)
+        local_rows = np.asarray(map_arrays["selected_local_trace_rows"], dtype=np.int64)
+        selected_coefficients = np.asarray(map_arrays["selected_trace_coefficients"], dtype=np.complex128)
+        dim = int(interior.size + trace.size)
+        if (
+            interior.shape != (450,) or trace.shape != (432,) or dim != 882
+            or np.intersect1d(interior, trace).size
+            or not np.array_equal(np.sort(np.r_[interior, trace]), np.arange(dim))
+            or active_ids.shape != (432,) or not np.array_equal(np.sort(active_ids), active_ids)
+            or map_arrays["trace_original_rows"].shape != (432,)
+            or local_rows.shape != (1,)
+            or int(local_rows[0]) != expected["selected_local_trace_row"]
+            or map_arrays["trace_original_rows"][local_rows[0]] != V14_V8_STAR_ORIGINAL_ROW
+            or selected_coefficients.shape != (1,)
+            or selected_coefficients[0] != 1.0 + 0.0j
+        ):
+            raise ValueError(f"V14 V8 cell{cell} true interior/trace partition or target row differs")
+        target = np.flatnonzero(active_ids == V14_V8_STAR_ACTIVE_ROW)
+        if target.size != 1:
+            raise ValueError(f"V14 V8 cell{cell} active target row is not unique")
+        expansion = csr_matrix(
+            (
+                np.asarray(map_arrays["trace_expansion_data"], dtype=np.complex128),
+                np.asarray(map_arrays["trace_expansion_indices"], dtype=np.int32),
+                np.asarray(map_arrays["trace_expansion_indptr"], dtype=np.int32),
+            ),
+            shape=(trace.size, active_ids.size),
+        )
+        if (
+            not expansion.has_canonical_format
+            or expansion.indptr.shape != (trace.size + 1,)
+            or not np.array_equal(expansion[local_rows[0], :].toarray().reshape(-1), np.eye(1, active_ids.size, int(target[0]), dtype=np.complex128).reshape(-1))
+        ):
+            raise ValueError(f"V14 V8 cell{cell} selected trace row does not map to the frozen active target")
+        tensor_name = f"task41_p0_v8_selected_cell{cell}_candidate_oriented_tensor"
+        lu_name = f"task41_p0_v8_selected_cell{cell}_candidate_interior_lu"
+        pivots_name = f"task41_p0_v8_selected_cell{cell}_candidate_interior_lu_pivots"
+        tensor = array(tensor_name, label=f"V8 cell{cell}/candidate oriented tensor", dtype="complex128")
+        lu = array(lu_name, label=f"V8 cell{cell}/candidate interior LU", dtype="complex128")
+        pivots = array(pivots_name, label=f"V8 cell{cell}/candidate interior pivots", dtype="int32")
+        tensor_ref = arrays_by_name[tensor_name]
+        lu_ref = arrays_by_name[lu_name]
+        pivots_ref = arrays_by_name[pivots_name]
+        if tensor.shape != (dim, dim) or lu.shape != (interior.size, interior.size) or pivots.shape != (interior.size,):
+            raise ValueError(f"V14 V8 cell{cell} candidate tensor/LU/pivot dimensions differ")
+        identity_payload = {
+            "producer_report_sha256": V14_V8_STAR_REPORT_SHA256,
+            "cell_index": cell,
+            "coordinate_sha256": expected["coordinate_sha256"],
+            "tensor_sha256": tensor_ref["sha256"],
+            "interior_lu_sha256": lu_ref["sha256"],
+            "pivots_sha256": pivots_ref["sha256"],
+            "interior_positions_sha256": map_refs["interior_positions"]["sha256"],
+            "trace_positions_sha256": map_refs["trace_positions"]["sha256"],
+        }
+        matrix_identity = hashlib.sha256(
+            json.dumps(identity_payload, sort_keys=True, separators=(",", ":")).encode("ascii")
+        ).hexdigest()
+        local = {
+            "cell_index": cell,
+            "cell_tag": expected["cell_tag"],
+            "permutation": expected["permutation"],
+            "actual_coordinate_sha256": expected["coordinate_sha256"],
+            "interior_positions": interior,
+            "trace_positions": trace,
+            "active_ids": active_ids,
+            "trace_expansion": expansion,
+            "target_active_position": int(target[0]),
+            "K": np.asarray(tensor[np.ix_(interior, interior)], dtype=np.complex128),
+            "J": np.asarray(tensor[np.ix_(trace, interior)], dtype=np.complex128),
+            "LU": lu,
+            "pivots": pivots,
+            "tensor_ref": tensor_ref,
+            "lu_ref": lu_ref,
+            "pivots_ref": pivots_ref,
+            "matrix_identity": matrix_identity,
+            "column_terms": {},
+        }
+        for column in V14_COLUMNS:
+            state_terms: dict[str, dict[str, Any]] = {}
+            reference_b_i: np.ndarray | None = None
+            for state in state_names:
+                prefix = f"task41_p0_v8_selected_cell{cell}_col{column}_{state}"
+                b_i_name = f"{prefix}_input_b_i"
+                s_action_name = f"{prefix}_candidate_S_action"
+                b_i = array(b_i_name, label=f"V8 cell{cell}/column{column}/{state} input b_i", dtype="complex128")
+                s_action = array(s_action_name, label=f"V8 cell{cell}/column{column}/{state} candidate S_action", dtype="complex128")
+                if b_i.shape != (interior.size,) or s_action.shape != (trace.size,):
+                    raise ValueError(f"V14 V8 cell{cell}/column{column}/{state} saved RHS/action shape differs")
+                if reference_b_i is None:
+                    reference_b_i = b_i
+                elif not np.array_equal(reference_b_i, b_i):
+                    raise ValueError(f"V14 V8 cell{cell}/column{column} j0/j3 b_i is not bitwise equal")
+                state_terms[state] = {
+                    "b_i": b_i,
+                    "b_i_ref": arrays_by_name[b_i_name],
+                    "s_action": s_action,
+                    "s_action_ref": arrays_by_name[s_action_name],
+                }
+            local["column_terms"][column] = {
+                "b_i": reference_b_i,
+                "b_i_ref": state_terms["j0"]["b_i_ref"],
+                "old_z_b": None,
+                "old_z_b_ref": None,
+                "state_terms": state_terms,
+            }
+        cells[cell] = local
+
+    target_row = V14_V8_STAR_ORIGINAL_ROW
+    updated = dict(source)
+    updated.update({
+        "stage": "saved_star_extension",
+        "cell_order": V14_V8_STAR_CELLS,
+        "columns": V14_COLUMNS,
+        "state_rows": [
+            {"column": column, "state": state}
+            for column in V14_COLUMNS for state in state_names
+        ],
+        "target_active_row": V14_V8_STAR_ACTIVE_ROW,
+        "target_original_row": target_row,
+        "star_producer_report_path": str(report_path),
+        "star_producer_report_sha256": V14_V8_STAR_REPORT_SHA256,
+        "star_cell_identities": [
+            {
+                "cell_index": cell,
+                **V14_V8_STAR_IDENTITIES[cell],
+                "tensor_sha256": cells[cell]["tensor_ref"]["sha256"],
+                "interior_lu_sha256": cells[cell]["lu_ref"]["sha256"],
+                "pivots_sha256": cells[cell]["pivots_ref"]["sha256"],
+                "matrix_identity": cells[cell]["matrix_identity"],
+            }
+            for cell in V14_V8_STAR_CELLS
+        ],
+        "prior_stage_reused": prior,
+        "cells": cells,
+    })
+    b_t_by_column = {}
+    b_t_ref_by_column = dict(source["b_t_ref_by_column"])
+    b_alpha_by_column = {}
+    b_alpha_refs_by_column = dict(source["b_alpha_refs_by_column"])
+    for column in V14_COLUMNS:
+        native = source["native_rhs_arrays_by_column"][column]
+        beta_rows = source["b_alpha_rows_by_column"][column]
+        beta_values = source["b_alpha_values_by_column"][column]
+        if target_row >= native.size or np.any(beta_rows < 0) or np.any(beta_rows >= native.size):
+            raise ValueError(f"V14 V8 target row {target_row} is outside the donor storage")
+        selected = beta_values[beta_rows == target_row]
+        if selected.size > 1:
+            raise ValueError(f"V14 V8 target row {target_row} has duplicate B-alpha entries")
+        b_t_by_column[column] = complex(native[target_row])
+        b_alpha_by_column[column] = complex(selected[0]) if selected.size else 0.0 + 0.0j
+    updated["b_t_by_column"] = b_t_by_column
+    updated["b_t_ref_by_column"] = b_t_ref_by_column
+    updated["b_alpha_by_column"] = b_alpha_by_column
+    updated["b_alpha_refs_by_column"] = b_alpha_refs_by_column
+    y_by_column_state: dict[tuple[int, str], complex] = {}
+    for state_row in updated["state_rows"]:
+        column = int(state_row["column"])
+        state = str(state_row["state"])
+        y = 0.0 + 0.0j
+        for cell in V14_V8_STAR_CELLS:
+            local = cells[cell]
+            term = local["column_terms"][column]["state_terms"][state]
+            projected = np.asarray(
+                local["trace_expansion"].conj().T @ term["s_action"], dtype=np.complex128
+            ).reshape(-1)
+            y += complex(projected[local["target_active_position"]])
+        y += updated["b_alpha_by_column"][column]
+        y_by_column_state[(column, state)] = y
+    updated["y_by_column_state"] = y_by_column_state
+    return updated

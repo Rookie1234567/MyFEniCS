@@ -135,6 +135,93 @@ def _synthetic_source(root) -> dict[str, object]:
     }
 
 
+
+def _synthetic_saved_star_source(root) -> dict[str, object]:
+    source = _synthetic_source(root)
+    identity_by_cell = {
+        23352: {
+            "cell_tag": 2, "permutation": 4680,
+            "coordinate_sha256": "00be22d015fe207dd28a8c246380144e51b8ba2d7a3ff63562dfca38b65024e6",
+            "selected_local_trace_row": 375,
+        },
+        23493: {
+            "cell_tag": 1, "permutation": 0,
+            "coordinate_sha256": "0fbdca58aeb8061e226f1c298a610bbd63f2f43fa15a6830afd3fa435a667ca6",
+            "selected_local_trace_row": 75,
+        },
+    }
+    cells = {}
+    for old_cell, cell in zip(V14_CELLS, (23352, 23493), strict=True):
+        template = source["cells"][old_cell]
+        local = dict(template)
+        local.update({
+            "cell_index": cell,
+            "cell_tag": identity_by_cell[cell]["cell_tag"],
+            "permutation": identity_by_cell[cell]["permutation"],
+            "actual_coordinate_sha256": identity_by_cell[cell]["coordinate_sha256"],
+            "active_ids": np.array([4_766_937], dtype=np.int64),
+            "target_active_position": 0,
+            "matrix_identity": hashlib.sha256(f"star-cell-{cell}".encode()).hexdigest(),
+            "column_terms": {},
+        })
+        for column in V14_COLUMNS:
+            old_term = template["column_terms"][column]
+            state_terms = {}
+            for state in ("j0", "j3"):
+                action = np.asarray(old_term["s_action"], dtype=np.complex128).copy()
+                if state == "j3":
+                    action += np.asarray([0.125 - 0.0625j], dtype=np.complex128)
+                state_terms[state] = {
+                    "b_i": old_term["b_i"],
+                    "b_i_ref": old_term["b_i_ref"],
+                    "s_action": action,
+                    "s_action_ref": _ref(f"star{cell}_column{column}_{state}_s", shape=(1,)),
+                }
+            local["column_terms"][column] = {
+                "b_i": old_term["b_i"],
+                "b_i_ref": old_term["b_i_ref"],
+                "old_z_b": None,
+                "old_z_b_ref": None,
+                "state_terms": state_terms,
+            }
+        cells[cell] = local
+
+    state_rows = [
+        {"column": column, "state": state}
+        for column in V14_COLUMNS for state in ("j0", "j3")
+    ]
+    y_by_column_state = {}
+    for state_row in state_rows:
+        column, state = state_row["column"], state_row["state"]
+        y = 0.0 + 0.0j
+        for cell in (23352, 23493):
+            local = cells[cell]
+            term = local["column_terms"][column]["state_terms"][state]
+            projected = np.asarray(
+                local["trace_expansion"].conj().T @ term["s_action"], dtype=np.complex128
+            ).reshape(-1)
+            y += complex(projected[local["target_active_position"]])
+        y += complex(source["b_alpha_by_column"][column])
+        y_by_column_state[(column, state)] = y
+    source.update({
+        "stage": "saved_star_extension",
+        "cell_order": (23352, 23493),
+        "columns": V14_COLUMNS,
+        "state_rows": state_rows,
+        "target_active_row": 4_766_937,
+        "target_original_row": 15_440_235,
+        "star_producer_report_path": "/synthetic/v8-star-report.json",
+        "star_producer_report_sha256": "1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f",
+        "star_cell_identities": [
+            {"cell_index": cell, **identity_by_cell[cell]}
+            for cell in (23352, 23493)
+        ],
+        "prior_stage_reused": {"candidate_passed_by_decimal": True, "new_getrs_for_reuse": 0},
+        "cells": cells,
+        "y_by_column_state": y_by_column_state,
+    })
+    return source
+
 def test_v14_saved_candidate_full_synthetic_entrypoint_and_independent_checker(tmp_path):
     source = _synthetic_source(tmp_path)
     output = source["results_root"] / "synthetic_attempt"
@@ -212,3 +299,67 @@ def test_v14_saved_candidate_full_synthetic_entrypoint_and_independent_checker(t
         assert "returned correction is not the exact complex128 -J@z output" in str(exc)
     else:
         raise AssertionError("independently inconsistent returned correction was accepted")
+
+
+
+def test_v14_saved_star_extension_reuses_shared_rhs_and_checks_same_run_baseline(tmp_path):
+    source = _synthetic_saved_star_source(tmp_path)
+    output = source["results_root"] / "synthetic_star_attempt"
+    produced = run_v14_saved_candidate(source=source, output_dir=output)
+    report = produced["payload"]
+    assert report["scope"]["stage"] == "saved_star_extension"
+    assert report["scope"]["cells"] == [23352, 23493]
+    assert report["scope"]["state_rows"] == source["state_rows"]
+    assert report["scope"]["full_owner"] is False
+    assert report["star_producer_report_sha256"] == source["star_producer_report_sha256"]
+    assert len(report["candidate_rhs"]) == 4  # j0 and j3 share each cell/column b_i solve.
+    assert report["getrs_count"] <= 12
+    assert [
+        (row["column"], row["state"])
+        for row in report["production_order_rows"]
+    ] == [(0, "j0"), (0, "j3"), (1, "j0"), (1, "j3")]
+    for row in report["candidate_rhs"]:
+        assert row["old_z_b"] is None
+        assert row["baseline_mode"] == "same_run_initial_core_solve"
+        event_log = [
+            json.loads(line)
+            for line in Path(row["initial_and_step_log"]["path"]).read_text().splitlines()
+        ]
+        assert row["baseline_z"] == event_log[0]["solved"]
+        assert event_log[0]["initial_getrs_count"] == 1
+    check = check_v14_saved_candidate(
+        source=source,
+        candidate_report_path=produced["path"],
+        candidate_report_sha256=produced["sha256"],
+        output_path=source["results_root"] / "synthetic_star_check.json",
+    )
+    assert check["scope"]["stage"] == "saved_star_extension"
+    assert check["scope"]["cells"] == [23352, 23493]
+    assert check["full_owner_unlocked"] is False
+    assert check["conditional_star_coverage_unlocked"] is False
+    assert check["saved_coverage_ready"] is (check["candidate_passed"] is True)
+    assert len(check["production_order_d_checks"]) == 4
+    assert all(item["baseline_mode"] == "same_run_initial_core_solve" for item in check["rhs_checks"])
+
+
+def test_v14_checker_still_reads_attempt01_without_new_baseline_fields(tmp_path):
+    source = _synthetic_source(tmp_path)
+    output = source["results_root"] / "legacy_attempt"
+    produced = run_v14_saved_candidate(source=source, output_dir=output)
+    report_path = Path(produced["path"])
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["scope"].pop("state_rows", None)
+    for row in report["candidate_rhs"]:
+        row.pop("baseline_mode", None)
+        row.pop("baseline_z", None)
+    report_path.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    digest = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    checked = check_v14_saved_candidate(
+        source=source,
+        candidate_report_path=report_path,
+        candidate_report_sha256=digest,
+        output_path=source["results_root"] / "legacy_attempt_check.json",
+    )
+    assert checked["check_completed"] is True
+    assert checked["scope"]["stage"] == "initial_screen"
+    assert checked["full_owner_unlocked"] is False
