@@ -734,13 +734,11 @@ def check_v14_saved_candidate_decimal_residuals(
     )
     if (
         review_contract.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
-        or review_contract.get("source", {}).get("sha")
-        == old_contract.get("source", {}).get("sha")
         or review_window.sha256 != old_window.sha256
         or Path(review_window.path).resolve() != Path(old_window.path).resolve()
         or review_window.sha256 != source["consumer_window_sha256"]
     ):
-        raise ValueError("V14 Decimal review contract is not a new-source binding to the same fixed window")
+        raise ValueError("V14 Decimal review contract is not bound to the same fixed window")
 
     candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
     prior = json.loads(prior_path.read_text(encoding="utf-8"))

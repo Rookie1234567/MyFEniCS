@@ -3,11 +3,15 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse import csr_matrix
 
+import src.runners.task41_p0_v14_saved_rhs_checker as checker_module
+from src.runners.task41_p0_contract import TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
 from src.runners.task41_p0_v14_candidate_io import V14_CELLS, V14_COLUMNS
 from src.runners.task41_p0_v14_saved_rhs_candidate import run_v14_saved_candidate
 from src.runners.task41_p0_v14_saved_rhs_checker import check_v14_saved_candidate
@@ -363,3 +367,204 @@ def test_v14_checker_still_reads_attempt01_without_new_baseline_fields(tmp_path)
     assert checked["check_completed"] is True
     assert checked["scope"]["stage"] == "initial_screen"
     assert checked["full_owner_unlocked"] is False
+
+
+def test_v14_decimal_recheck_accepts_same_or_new_source_but_keeps_window_binding(
+    tmp_path, monkeypatch
+):
+    class CandidateReplayReached(Exception):
+        pass
+
+    def run_case(
+        name: str,
+        *,
+        consumer_source_sha: str,
+        review_source_sha: str,
+        same_window: bool,
+    ) -> None:
+        case_root = tmp_path / name
+        results_root = case_root / "results"
+        results_root.mkdir(parents=True)
+        fixed_window_path = case_root / "fixed-window.json"
+        fixed_window_bytes = b"fixed approved window"
+        fixed_window_path.write_bytes(fixed_window_bytes)
+        fixed_window_sha = hashlib.sha256(fixed_window_bytes).hexdigest()
+        review_window_path = fixed_window_path
+        review_window_sha = fixed_window_sha
+        if not same_window:
+            review_window_path = case_root / "different-window.json"
+            review_window_bytes = b"different approved window"
+            review_window_path.write_bytes(review_window_bytes)
+            review_window_sha = hashlib.sha256(review_window_bytes).hexdigest()
+
+        consumer_contract = {
+            "kind": "consumer",
+            "source": {"sha": consumer_source_sha},
+            "window": {"path": str(fixed_window_path), "sha256": fixed_window_sha},
+        }
+        consumer_contract_path = case_root / "consumer-contract.json"
+        consumer_contract_path.write_text(
+            json.dumps(consumer_contract, sort_keys=True), encoding="utf-8"
+        )
+        consumer_contract_sha = hashlib.sha256(
+            consumer_contract_path.read_bytes()
+        ).hexdigest()
+
+        review_contract = {
+            "kind": "review",
+            "execution_scope": TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+            "source": {"sha": review_source_sha},
+            "window": {
+                "path": str(review_window_path),
+                "sha256": review_window_sha,
+            },
+        }
+        review_contract_path = case_root / (
+            f"execution_contract_source_{review_source_sha}_v14_same_lu_rhs_candidate_6h.json"
+        )
+        review_contract_path.write_text(
+            json.dumps(review_contract, sort_keys=True), encoding="utf-8"
+        )
+        review_contract_sha = hashlib.sha256(
+            review_contract_path.read_bytes()
+        ).hexdigest()
+
+        candidate_path = results_root / "candidate.json"
+        prior_path = results_root / "prior-check.json"
+        candidate = {
+            "schema": checker_module.V14_CANDIDATE_REPORT_SCHEMA,
+            "status": "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK",
+            "official_result": False,
+            "scientific_qualified": False,
+            "consumer_contract_path": str(consumer_contract_path),
+            "consumer_contract_sha256": consumer_contract_sha,
+            "consumer_window_sha256": fixed_window_sha,
+            "getrs_count": 12,
+            "scope": {
+                "stage": "initial_screen",
+                "cells": list(V14_CELLS),
+                "columns": list(V14_COLUMNS),
+                "full_owner": False,
+            },
+            "candidate_rhs": [
+                {"cell_index": cell, "column": column}
+                for cell in V14_CELLS
+                for column in V14_COLUMNS
+            ],
+        }
+        candidate_path.write_text(
+            json.dumps(candidate, sort_keys=True), encoding="utf-8"
+        )
+        candidate_sha = hashlib.sha256(candidate_path.read_bytes()).hexdigest()
+        prior = {
+            "schema": checker_module.V14_CANDIDATE_CHECK_SCHEMA,
+            "status": "INCONCLUSIVE",
+            "check_completed": True,
+            "candidate_passed": None,
+            "official_result": False,
+            "scientific_qualified": False,
+            "candidate_report_path": str(candidate_path),
+            "candidate_report_sha256": candidate_sha,
+            "consumer_contract_sha256": consumer_contract_sha,
+            "consumer_window_sha256": fixed_window_sha,
+        }
+        prior_path.write_text(json.dumps(prior, sort_keys=True), encoding="utf-8")
+        prior_sha = hashlib.sha256(prior_path.read_bytes()).hexdigest()
+
+        calls = {}
+
+        def require_contract(
+            path,
+            *,
+            expected_sha256,
+            current_root,
+            check_current_source,
+            require_clean_source,
+            case_id,
+        ):
+            calls["contract"] = {
+                "path": Path(path).resolve(),
+                "expected_sha256": expected_sha256,
+                "check_current_source": check_current_source,
+                "require_clean_source": require_clean_source,
+                "case_id": case_id,
+            }
+            assert calls["contract"]["path"] == review_contract_path.resolve()
+            assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == expected_sha256
+            return review_contract, review_contract_sha
+
+        def load_window(contract, *, current_root, require_current_boot):
+            if contract["kind"] == "consumer":
+                return SimpleNamespace(
+                    path=fixed_window_path, sha256=fixed_window_sha
+                )
+            return SimpleNamespace(
+                path=review_window_path, sha256=review_window_sha
+            )
+
+        def stop_at_saved_array_replay(**kwargs):
+            raise CandidateReplayReached
+
+        with monkeypatch.context() as patch:
+            patch.setattr(
+                checker_module, "require_task41_p0_contract", require_contract
+            )
+            patch.setattr(
+                checker_module, "load_task41_p0_fixed_window", load_window
+            )
+            patch.setattr(
+                checker_module, "check_v14_saved_candidate",
+                stop_at_saved_array_replay,
+            )
+            kwargs = {
+                "repo_root": case_root,
+                "source": {
+                    "results_root": results_root,
+                    "consumer_contract": consumer_contract,
+                    "consumer_contract_path": str(consumer_contract_path),
+                    "consumer_contract_sha256": consumer_contract_sha,
+                    "consumer_window_sha256": fixed_window_sha,
+                },
+                "candidate_report_path": candidate_path,
+                "candidate_report_sha256": candidate_sha,
+                "prior_independent_check_path": prior_path,
+                "prior_independent_check_sha256": prior_sha,
+                "review_contract_path": review_contract_path,
+                "review_contract_sha256": review_contract_sha,
+                "output_path": results_root / "decimal-output.json",
+            }
+            if same_window:
+                with pytest.raises(CandidateReplayReached):
+                    checker_module.check_v14_saved_candidate_decimal_residuals(
+                        **kwargs
+                    )
+            else:
+                with pytest.raises(ValueError, match="same fixed window"):
+                    checker_module.check_v14_saved_candidate_decimal_residuals(
+                        **kwargs
+                    )
+
+        assert calls["contract"]["check_current_source"] is True
+        assert calls["contract"]["require_clean_source"] is True
+        assert calls["contract"]["case_id"] == "B0"
+
+    same_sha = "a" * 40
+    current_sha = "b" * 40
+    run_case(
+        "same-source",
+        consumer_source_sha=same_sha,
+        review_source_sha=same_sha,
+        same_window=True,
+    )
+    run_case(
+        "new-source",
+        consumer_source_sha=same_sha,
+        review_source_sha=current_sha,
+        same_window=True,
+    )
+    run_case(
+        "window-drift",
+        consumer_source_sha=same_sha,
+        review_source_sha=same_sha,
+        same_window=False,
+    )
