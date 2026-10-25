@@ -23,6 +23,7 @@ from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 import hashlib
 import json
+import math
 from pathlib import Path
 from time import perf_counter
 from types import MappingProxyType
@@ -145,48 +146,361 @@ def assembly_time_condensation_capacity_facts(
     }
 
 
+def _same_lu_binary64_compensated_residual(
+    actual_internal_matrix: np.ndarray,
+    internal_rhs: np.ndarray,
+    solved: np.ndarray,
+) -> np.ndarray:
+    """Evaluate b_i - K z with binary64 products and real/imag fsum.
+
+    Products are vectorized within one row and accumulated by fsum. The only
+    scratch is two reusable real vectors of length 2*n+1; this bounded local
+    evaluator neither reconstructs K from LU nor uses wider correction math.
+    """
+
+    dimension = int(internal_rhs.size)
+    residual = np.empty(dimension, dtype=np.complex128)
+    real_terms = np.empty(2 * dimension + 1, dtype=np.float64)
+    imag_terms = np.empty(2 * dimension + 1, dtype=np.float64)
+    z_real = solved.real
+    z_imag = solved.imag
+    for row in range(dimension):
+        real_terms[0] = float(internal_rhs[row].real)
+        imag_terms[0] = float(internal_rhs[row].imag)
+        k_real = actual_internal_matrix.real[row]
+        k_imag = actual_internal_matrix.imag[row]
+        np.multiply(k_real, z_real, out=real_terms[1::2])
+        np.negative(real_terms[1::2], out=real_terms[1::2])
+        np.multiply(k_imag, z_imag, out=real_terms[2::2])
+        np.multiply(k_real, z_imag, out=imag_terms[1::2])
+        np.negative(imag_terms[1::2], out=imag_terms[1::2])
+        np.multiply(k_imag, z_real, out=imag_terms[2::2])
+        np.negative(imag_terms[2::2], out=imag_terms[2::2])
+        try:
+            residual[row] = complex(
+                math.fsum(real_terms), math.fsum(imag_terms)
+            )
+        except (OverflowError, ValueError) as exc:
+            raise ValueError(
+                "same-LU compensated residual is not finite"
+            ) from exc
+    if not np.isfinite(residual).all():
+        raise ValueError("same-LU compensated residual is not finite")
+    return residual
+
 def project_internal_rhs_same_lu(
     factor: tuple[np.ndarray, np.ndarray],
     actual_trace_interior: np.ndarray,
     internal_rhs: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray, dict[str, float | bool]]:
-    """Solve ``K z = b_i`` once and return ``z`` and ``-J z``."""
+    *,
+    refinement_max_steps: int = 0,
+    actual_internal_matrix: np.ndarray | None = None,
+    actual_internal_matrix_identity: object | None = None,
+    factor_matrix_identity: object | None = None,
+    step_callback: Callable[[Mapping[str, Any]], None] | None = None,
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    """Solve K z = b_i and return the actual z and -J z.
+
+    The ordinary default remains the historical one-GETRS route. The sole
+    opt-in candidate is refinement_max_steps=2; it requires the original
+    actual/oriented K and matching owner identity tokens for that matrix and
+    LU. A callback may persist bounded step records and the final returned
+    pair without retaining an owner-wide history here. For the opt-in path,
+    core_seconds excludes callback duration, which is reported separately.
+    """
 
     core_started = perf_counter()
+    if (
+        isinstance(refinement_max_steps, (bool, np.bool_))
+        or not isinstance(refinement_max_steps, (int, np.integer))
+        or int(refinement_max_steps) not in (0, 2)
+    ):
+        raise ValueError(
+            "same-LU refinement limit must be disabled (0) or fixed at 2"
+        )
+    refinement_max_steps = int(refinement_max_steps)
+    if step_callback is not None and not callable(step_callback):
+        raise TypeError("same-LU step callback must be callable")
+    callback_seconds = 0.0
+
+    def emit_callback(record: Mapping[str, Any]) -> None:
+        nonlocal callback_seconds
+        if step_callback is None:
+            return
+        callback_started = perf_counter()
+        step_callback(record)
+        callback_seconds += float(perf_counter() - callback_started)
+
     rhs = np.asarray(internal_rhs, dtype=np.complex128)
     J = np.asarray(actual_trace_interior, dtype=np.complex128)
     if rhs.ndim != 1 or J.ndim != 2 or J.shape[1] != rhs.size:
         raise ValueError("same-LU RHS/J dimensions do not agree")
     if not np.isfinite(rhs).all():
         raise ValueError("same-LU RHS contains non-finite values")
+    if refinement_max_steps and not np.isfinite(J).all():
+        raise ValueError("same-LU J contains non-finite values")
+
+    actual_K = None
+    solve_factor = factor
+    if refinement_max_steps:
+        if actual_internal_matrix is None:
+            raise ValueError("same-LU refinement requires the original actual K")
+        if (
+            actual_internal_matrix_identity is None
+            or factor_matrix_identity is None
+        ):
+            raise ValueError(
+                "same-LU refinement requires both matrix identity tokens"
+            )
+        try:
+            identities_match = bool(
+                actual_internal_matrix_identity == factor_matrix_identity
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "same-LU matrix identity tokens are invalid"
+            ) from exc
+        if not identities_match:
+            raise ValueError("same-LU actual K and factor identities differ")
+
+        if not isinstance(factor, tuple) or len(factor) != 2:
+            raise ValueError(
+                "same-LU refinement requires a SciPy LU factor pair"
+            )
+        factor_lu = np.asarray(factor[0])
+        pivots = np.asarray(factor[1])
+        dimension = int(rhs.size)
+        if (
+            factor_lu.shape != (dimension, dimension)
+            or factor_lu.dtype != np.dtype(np.complex128)
+            or not np.isfinite(factor_lu).all()
+        ):
+            raise ValueError("same-LU refinement factor matrix is invalid")
+        try:
+            writable_pivots = prepare_saved_lu_pivots_for_getrs(
+                pivots, dimension=dimension
+            )
+        except ValueError as exc:
+            raise ValueError(
+                "same-LU refinement factor pivots are invalid"
+            ) from exc
+        solve_factor = (factor_lu, writable_pivots)
+        actual_K = np.asarray(actual_internal_matrix)
+        if (
+            actual_K.shape != (dimension, dimension)
+            or actual_K.dtype != np.dtype(np.complex128)
+            or not np.isfinite(actual_K).all()
+        ):
+            raise ValueError("same-LU refinement actual K is invalid")
+
     if not np.any(rhs):
-        return (
-            np.zeros(rhs.size, dtype=np.complex128),
-            np.zeros(J.shape[0], dtype=np.complex128),
-            {
-                "nonzero_rhs": False,
-                "getrs_seconds": 0.0,
-                "j_matvec_seconds": 0.0,
-                "core_seconds": float(perf_counter() - core_started),
-            },
-        )
+        solved = np.zeros(rhs.size, dtype=np.complex128)
+        correction = np.zeros(J.shape[0], dtype=np.complex128)
+        timing: dict[str, Any] = {
+            "nonzero_rhs": False,
+            "getrs_seconds": 0.0,
+            "j_matvec_seconds": 0.0,
+            "core_seconds": float(perf_counter() - core_started),
+        }
+        if refinement_max_steps:
+            timing.update(
+                {
+                    "refinement_max_steps": refinement_max_steps,
+                    "refinement_steps": 0,
+                    "initial_getrs_count": 0,
+                    "initial_getrs_seconds": 0.0,
+                    "correction_getrs_count": 0,
+                    "correction_getrs_seconds": 0.0,
+                    "getrs_count": 0,
+                    "residual_evaluation_count": 0,
+                    "residual_seconds": 0.0,
+                    "update_seconds": 0.0,
+                    "callback_seconds": 0.0,
+                    "stop_reason": "zero_rhs",
+                }
+            )
+            emit_callback(
+                {
+                    "event": "final",
+                    "solved": solved.copy(),
+                    "correction": correction.copy(),
+                    "getrs_count": 0,
+                    "stop_reason": "zero_rhs",
+                    "actual_internal_matrix_identity": actual_internal_matrix_identity,
+                    "factor_matrix_identity": factor_matrix_identity,
+                }
+            )
+            timing["callback_seconds"] = callback_seconds
+            timing["core_seconds"] = max(
+                0.0,
+                float(perf_counter() - core_started) - callback_seconds,
+            )
+        return solved, correction, timing
+
     started = perf_counter()
-    solved = lu_solve(factor, rhs)
+    solved = lu_solve(solve_factor, rhs)
     getrs_seconds = float(perf_counter() - started)
+    initial_getrs_seconds = getrs_seconds
+    correction_getrs_seconds = 0.0
     if not np.isfinite(solved).all():
         raise ValueError("same-LU internal RHS solve produced non-finite values")
+    if refinement_max_steps:
+        solved = np.asarray(solved)
+        if (
+            solved.shape != (rhs.size,)
+            or solved.dtype != np.dtype(np.complex128)
+        ):
+            raise ValueError(
+                "same-LU initial solve returned an invalid complex128 vector"
+            )
+        emit_callback(
+            {
+                "event": "initial",
+                "solved": solved.copy(),
+                "initial_getrs_count": 1,
+                "initial_getrs_seconds": initial_getrs_seconds,
+                "getrs_count": 1,
+                "actual_internal_matrix_identity": actual_internal_matrix_identity,
+                "factor_matrix_identity": factor_matrix_identity,
+            }
+        )
+
+    correction_getrs_count = 0
+    residual_evaluation_count = 0
+    residual_seconds = 0.0
+    update_seconds = 0.0
+    refinement_steps = 0
+    stop_reason = "disabled" if not refinement_max_steps else "max_steps"
+    if refinement_max_steps:
+        for step_index in range(refinement_max_steps):
+            z_before = np.asarray(solved, dtype=np.complex128)
+            started = perf_counter()
+            residual = _same_lu_binary64_compensated_residual(
+                actual_K, rhs, z_before
+            )
+            residual_seconds += float(perf_counter() - started)
+            residual_evaluation_count += 1
+            if not np.any(residual):
+                stop_reason = "exact_zero_residual"
+                if step_callback is not None:
+                    emit_callback(
+                        {
+                            "event": "correction_step",
+                            "step": step_index + 1,
+                            "z_before": z_before.copy(),
+                            "residual": residual.copy(),
+                            "delta": None,
+                            "z_after": z_before.copy(),
+                            "stop_reason": stop_reason,
+                            "correction_getrs_count": correction_getrs_count,
+                            "correction_getrs_seconds": correction_getrs_seconds,
+                            "getrs_count": 1 + correction_getrs_count,
+                            "actual_internal_matrix_identity": actual_internal_matrix_identity,
+                            "factor_matrix_identity": factor_matrix_identity,
+                            "residual_evaluation_count": residual_evaluation_count,
+                            "residual_seconds": residual_seconds,
+                        }
+                    )
+                break
+
+            started = perf_counter()
+            delta = lu_solve(solve_factor, residual)
+            correction_elapsed = float(perf_counter() - started)
+            getrs_seconds += correction_elapsed
+            correction_getrs_seconds += correction_elapsed
+            correction_getrs_count += 1
+            delta = np.asarray(delta)
+            if (
+                delta.shape != (rhs.size,)
+                or delta.dtype != np.dtype(np.complex128)
+                or not np.isfinite(delta).all()
+            ):
+                raise ValueError(
+                    "same-LU correction solve returned an invalid vector"
+                )
+            started = perf_counter()
+            updated = np.asarray(z_before + delta, dtype=np.complex128)
+            update_seconds += float(perf_counter() - started)
+            if not np.isfinite(updated).all():
+                raise ValueError(
+                    "same-LU correction update produced non-finite values"
+                )
+            refinement_steps += 1
+            unchanged = updated.tobytes(order="C") == z_before.tobytes(
+                order="C"
+            )
+            if step_callback is not None:
+                emit_callback(
+                    {
+                        "event": "correction_step",
+                        "step": step_index + 1,
+                        "z_before": z_before.copy(),
+                        "residual": residual.copy(),
+                        "delta": delta.copy(),
+                        "z_after": updated.copy(),
+                        "stop_reason": (
+                            "bitwise_unchanged_update" if unchanged else None
+                        ),
+                        "correction_getrs_count": correction_getrs_count,
+                        "correction_getrs_seconds": correction_getrs_seconds,
+                        "getrs_count": 1 + correction_getrs_count,
+                        "actual_internal_matrix_identity": actual_internal_matrix_identity,
+                        "factor_matrix_identity": factor_matrix_identity,
+                        "residual_evaluation_count": residual_evaluation_count,
+                        "residual_seconds": residual_seconds,
+                        "update_seconds": update_seconds,
+                    }
+                )
+            solved = updated
+            if unchanged:
+                stop_reason = "bitwise_unchanged_update"
+                break
+
     started = perf_counter()
     correction = -(J @ solved)
     j_matvec_seconds = float(perf_counter() - started)
     if not np.isfinite(correction).all():
         raise ValueError("same-LU internal RHS projection produced non-finite values")
-    return solved, correction, {
+    timing: dict[str, Any] = {
         "nonzero_rhs": True,
         "getrs_seconds": getrs_seconds,
         "j_matvec_seconds": j_matvec_seconds,
         "core_seconds": float(perf_counter() - core_started),
     }
-
+    if refinement_max_steps:
+        timing.update(
+            {
+                "refinement_max_steps": refinement_max_steps,
+                "refinement_steps": refinement_steps,
+                "initial_getrs_count": 1,
+                "initial_getrs_seconds": initial_getrs_seconds,
+                "correction_getrs_count": correction_getrs_count,
+                "correction_getrs_seconds": correction_getrs_seconds,
+                "getrs_count": 1 + correction_getrs_count,
+                "residual_evaluation_count": residual_evaluation_count,
+                "residual_seconds": residual_seconds,
+                "update_seconds": update_seconds,
+                "callback_seconds": callback_seconds,
+                "stop_reason": stop_reason,
+            }
+        )
+        emit_callback(
+            {
+                "event": "final",
+                "solved": solved.copy(),
+                "correction": correction.copy(),
+                "getrs_count": 1 + correction_getrs_count,
+                "stop_reason": stop_reason,
+                "actual_internal_matrix_identity": actual_internal_matrix_identity,
+                "factor_matrix_identity": factor_matrix_identity,
+            }
+        )
+        timing["callback_seconds"] = callback_seconds
+        timing["core_seconds"] = max(
+            0.0,
+            float(perf_counter() - core_started) - callback_seconds,
+        )
+    return solved, correction, timing
 
 def prepare_saved_lu_pivots_for_getrs(
     pivots: np.ndarray, *, dimension: int

@@ -3497,3 +3497,327 @@ def test_generated_port_action_matches_cached_with_unequal_modes_and_mpc_slave()
     finally:
         generated.destroy()
         cached.destroy()
+
+
+
+def test_same_lu_fixed_two_step_refinement_is_bounded_and_returns_actual_pair(monkeypatch) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    matrix = np.eye(2, dtype=np.complex128)
+    factor = lu_factor(matrix)
+    rhs = np.asarray([1.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+    J = np.asarray(
+        [[2.0 + 1.0j, -0.5j], [0.25 - 0.75j, 3.0 + 0.0j]],
+        dtype=np.complex128,
+    )
+    calls = []
+    records = []
+
+    def controlled_solve(_factor, values):
+        calls.append(np.asarray(values, dtype=np.complex128).copy())
+        if len(calls) == 1:
+            return np.zeros(2, dtype=np.complex128)
+        if len(calls) == 2:
+            return np.asarray([0.25 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+        if len(calls) == 3:
+            return np.asarray([0.5 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+        raise AssertionError("same-LU refinement exceeded two correction solves")
+
+    monkeypatch.setattr(hcurl, "lu_solve", controlled_solve)
+    solved, correction, timing = project_internal_rhs_same_lu(
+        factor,
+        J,
+        rhs,
+        refinement_max_steps=2,
+        actual_internal_matrix=matrix,
+        actual_internal_matrix_identity=("cell", 7, "oriented"),
+        factor_matrix_identity=("cell", 7, "oriented"),
+        step_callback=records.append,
+    )
+
+    np.testing.assert_array_equal(
+        solved, np.asarray([0.75 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+    )
+    np.testing.assert_array_equal(correction, -(J @ solved))
+    assert timing["initial_getrs_count"] == 1
+    assert timing["correction_getrs_count"] == 2
+    assert timing["getrs_count"] == len(calls) == 3
+    assert timing["refinement_steps"] == 2
+    assert timing["residual_evaluation_count"] == 2
+    assert timing["stop_reason"] == "max_steps"
+    assert [record["event"] for record in records] == [
+        "initial",
+        "correction_step",
+        "correction_step",
+        "final",
+    ]
+    np.testing.assert_array_equal(records[-1]["solved"], solved)
+    np.testing.assert_array_equal(records[-1]["correction"], correction)
+    np.testing.assert_array_equal(calls[1], np.asarray([1.0 + 0.0j, 0.0 + 0.0j]))
+    np.testing.assert_array_equal(calls[2], np.asarray([0.75 + 0.0j, 0.0 + 0.0j]))
+
+
+def test_same_lu_compensated_residual_uses_fixed_complex_signs_and_zero_getrs(
+    monkeypatch,
+) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    matrix = np.asarray(
+        [[1.0 + 2.0j, 3.0 - 4.0j], [0.0j, 1.0 + 0.0j]],
+        dtype=np.complex128,
+    )
+    factor = lu_factor(matrix)
+    J = np.asarray([[1.0 - 2.0j, 0.5 + 0.25j]], dtype=np.complex128)
+    rhs = np.asarray([10.0 + 20.0j, 0.0j], dtype=np.complex128)
+    initial = np.asarray([5.0 + 6.0j, 7.0 + 8.0j], dtype=np.complex128)
+    calls = []
+    records = []
+
+    def controlled_solve(_factor, _values):
+        calls.append(1)
+        if len(calls) == 1:
+            return initial.copy()
+        return np.zeros(2, dtype=np.complex128)
+
+    monkeypatch.setattr(hcurl, "lu_solve", controlled_solve)
+    project_internal_rhs_same_lu(
+        factor,
+        J,
+        rhs,
+        refinement_max_steps=2,
+        actual_internal_matrix=matrix,
+        actual_internal_matrix_identity="same-oriented-key",
+        factor_matrix_identity="same-oriented-key",
+        step_callback=records.append,
+    )
+
+    residual_record = records[1]
+    assert residual_record["event"] == "correction_step"
+    np.testing.assert_array_equal(
+        residual_record["residual"],
+        np.asarray([-36.0 + 8.0j, -7.0 - 8.0j], dtype=np.complex128),
+    )
+    assert residual_record["stop_reason"] == "bitwise_unchanged_update"
+    assert len(calls) == 2
+
+
+def test_same_lu_refinement_stops_on_exact_residual_and_zero_rhs_without_getrs(
+    monkeypatch,
+) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    matrix = np.eye(2, dtype=np.complex128)
+    factor = lu_factor(matrix)
+    J = np.eye(2, dtype=np.complex128)
+    identity = ("actual", "oriented")
+    calls = []
+
+    def counted_solve(_factor, values):
+        calls.append(np.asarray(values, dtype=np.complex128).copy())
+        return np.asarray(values, dtype=np.complex128).copy()
+
+    monkeypatch.setattr(hcurl, "lu_solve", counted_solve)
+    solved, correction, timing = project_internal_rhs_same_lu(
+        factor,
+        J,
+        np.asarray([1.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+        refinement_max_steps=2,
+        actual_internal_matrix=matrix,
+        actual_internal_matrix_identity=identity,
+        factor_matrix_identity=identity,
+    )
+    np.testing.assert_array_equal(solved, np.asarray([1.0 + 0.0j, 0.0j]))
+    np.testing.assert_array_equal(correction, -solved)
+    assert timing["getrs_count"] == 1
+    assert timing["correction_getrs_count"] == 0
+    assert timing["residual_evaluation_count"] == 1
+    assert timing["stop_reason"] == "exact_zero_residual"
+    assert len(calls) == 1
+
+    zero_solved, zero_correction, zero_timing = project_internal_rhs_same_lu(
+        factor,
+        J,
+        np.zeros(2, dtype=np.complex128),
+        refinement_max_steps=2,
+        actual_internal_matrix=matrix,
+        actual_internal_matrix_identity=identity,
+        factor_matrix_identity=identity,
+    )
+    np.testing.assert_array_equal(zero_solved, np.zeros(2, dtype=np.complex128))
+    np.testing.assert_array_equal(zero_correction, np.zeros(2, dtype=np.complex128))
+    assert zero_timing["getrs_count"] == 0
+    assert zero_timing["stop_reason"] == "zero_rhs"
+    assert len(calls) == 1
+
+
+def test_same_lu_refinement_rejects_wrong_identity_shape_and_step_limit() -> None:
+    matrix = np.eye(2, dtype=np.complex128)
+    factor = lu_factor(matrix)
+    J = np.eye(2, dtype=np.complex128)
+    rhs = np.asarray([1.0 + 0.0j, 0.0j], dtype=np.complex128)
+    bound = {
+        "refinement_max_steps": 2,
+        "actual_internal_matrix": matrix,
+        "actual_internal_matrix_identity": ("cell", 1, "oriented"),
+        "factor_matrix_identity": ("cell", 1, "oriented"),
+    }
+
+    with pytest.raises(ValueError, match="identities differ"):
+        project_internal_rhs_same_lu(
+            factor,
+            J,
+            rhs,
+            **{
+                **bound,
+                "factor_matrix_identity": ("cell", 2, "oriented"),
+            },
+        )
+    with pytest.raises(ValueError, match="actual K is invalid"):
+        project_internal_rhs_same_lu(
+            factor,
+            J,
+            rhs,
+            **{
+                **bound,
+                "actual_internal_matrix": np.asarray(
+                    [[1.0 + 0.0j, np.nan + 0.0j], [0.0j, 1.0 + 0.0j]],
+                    dtype=np.complex128,
+                ),
+            },
+        )
+    with pytest.raises(ValueError, match="fixed at 2"):
+        project_internal_rhs_same_lu(
+            factor,
+            J,
+            rhs,
+            **{**bound, "refinement_max_steps": 1},
+        )
+    with pytest.raises(ValueError, match="requires the original actual K"):
+        project_internal_rhs_same_lu(
+            factor,
+            J,
+            rhs,
+            refinement_max_steps=2,
+        )
+
+
+
+def test_same_lu_refinement_uses_real_complex_lu_and_owned_pivots(
+    monkeypatch,
+) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    matrix = np.asarray(
+        [[3.0 + 0.2j, 0.7 - 0.4j], [-0.3 + 0.8j, 2.5 - 0.1j]],
+        dtype=np.complex128,
+    )
+    J = np.asarray(
+        [[0.4 + 0.6j, -0.2 + 0.3j], [0.8 - 0.1j, 0.5 + 0.7j]],
+        dtype=np.complex128,
+    )
+    rhs = np.asarray([0.3 - 0.2j, 1.1 + 0.4j], dtype=np.complex128)
+    factor = lu_factor(matrix)
+    default_solved, default_correction, default_timing = (
+        project_internal_rhs_same_lu(factor, J, rhs)
+    )
+    np.testing.assert_allclose(
+        default_solved, lu_solve(factor, rhs), rtol=0.0, atol=0.0
+    )
+    np.testing.assert_array_equal(default_correction, -(J @ default_solved))
+    assert set(default_timing) == {
+        "nonzero_rhs",
+        "getrs_seconds",
+        "j_matvec_seconds",
+        "core_seconds",
+    }
+
+    readonly_pivots = np.array(factor[1], copy=True)
+    readonly_pivots.flags.writeable = False
+    readonly_factor = (factor[0], readonly_pivots)
+    original_solve = hcurl.lu_solve
+    observed_factors = []
+    records = []
+
+    def inspect_factor(solve_factor, values):
+        pivots = solve_factor[1]
+        assert pivots.dtype == np.dtype(np.int32)
+        assert pivots.flags.owndata and pivots.flags.writeable
+        observed_factors.append(solve_factor)
+        return original_solve(solve_factor, values)
+
+    monkeypatch.setattr(hcurl, "lu_solve", inspect_factor)
+    identity = ("actual-key", "orientation-1")
+    solved, correction, timing = project_internal_rhs_same_lu(
+        readonly_factor,
+        J,
+        rhs,
+        refinement_max_steps=2,
+        actual_internal_matrix=matrix,
+        actual_internal_matrix_identity=identity,
+        factor_matrix_identity=identity,
+        step_callback=records.append,
+    )
+
+    assert observed_factors
+    assert readonly_pivots.flags.writeable is False
+    assert records[0]["event"] == "initial"
+    np.testing.assert_array_equal(records[0]["solved"], default_solved)
+    np.testing.assert_allclose(matrix @ solved, rhs, rtol=2.0e-15, atol=2.0e-15)
+    np.testing.assert_array_equal(correction, -(J @ solved))
+    np.testing.assert_array_equal(records[-1]["solved"], solved)
+    np.testing.assert_array_equal(records[-1]["correction"], correction)
+    assert timing["getrs_count"] == 1 + timing["correction_getrs_count"]
+    assert timing["getrs_count"] == len(observed_factors)
+    assert timing["initial_getrs_seconds"] >= 0.0
+    assert timing["correction_getrs_seconds"] >= 0.0
+    assert timing["callback_seconds"] >= 0.0
+    assert timing["core_seconds"] >= 0.0
+
+
+def test_same_lu_compensated_residual_preserves_one_after_cancellation(
+    monkeypatch,
+) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    matrix = np.asarray(
+        [[1.0 + 0.0j, 1.0 + 0.0j, 1.0 + 0.0j],
+         [0.0j, 1.0 + 0.0j, 0.0j],
+         [0.0j, 0.0j, 1.0 + 0.0j]],
+        dtype=np.complex128,
+    )
+    factor = lu_factor(matrix)
+    J = np.eye(3, dtype=np.complex128)
+    rhs = np.asarray([2.0 + 0.0j, 0.0j, 0.0j], dtype=np.complex128)
+    initial = np.asarray(
+        [1.0e16 + 0.0j, 1.0 + 0.0j, -1.0e16 + 0.0j],
+        dtype=np.complex128,
+    )
+    calls = []
+    records = []
+
+    def controlled_solve(_factor, _values):
+        calls.append(1)
+        if len(calls) == 1:
+            return initial.copy()
+        return np.zeros(3, dtype=np.complex128)
+
+    monkeypatch.setattr(hcurl, "lu_solve", controlled_solve)
+    project_internal_rhs_same_lu(
+        factor,
+        J,
+        rhs,
+        refinement_max_steps=2,
+        actual_internal_matrix=matrix,
+        actual_internal_matrix_identity="actual-eye",
+        factor_matrix_identity="actual-eye",
+        step_callback=records.append,
+    )
+
+    residual_record = records[1]
+    assert residual_record["event"] == "correction_step"
+    np.testing.assert_array_equal(
+        residual_record["residual"],
+        np.asarray([1.0 + 0.0j, -1.0 + 0.0j, 1.0e16 + 0.0j]),
+    )
+    assert residual_record["stop_reason"] == "bitwise_unchanged_update"
+    assert len(calls) == 2
