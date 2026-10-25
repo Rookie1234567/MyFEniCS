@@ -1,0 +1,43 @@
+{
+  "stage": "S2_ROOT_ADOPT_EXISTING_CANDIDATE",
+  "utc": "2026-10-25T14:53:10.347681+00:00",
+  "prior_s1_sha256": "6f72d07d0fdeaf7141a95b69013608225fc99826f07af7f2fa9402c99401f000",
+  "candidates": [
+    {
+      "path": "/tmp/task43_v7_d3_proposal/run_d3.sh",
+      "bytes": 4166,
+      "lines": 103,
+      "sha256": "e84d2eb0bfcd257549fcd85b336d5ce9ea5f8faa72eef5261e7ca936d076127a",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v7_preparation_audit/candidate_draft/run_d3.sh",
+      "bytes": 4166,
+      "lines": 103,
+      "sha256": "e84d2eb0bfcd257549fcd85b336d5ce9ea5f8faa72eef5261e7ca936d076127a",
+      "matches": true
+    },
+    {
+      "path": "/tmp/task43_v7_d3_proposal/probe_import_affinity.py",
+      "bytes": 14891,
+      "lines": 371,
+      "sha256": "fa0dea6e8e049134c77c68e356eb377afeabd6080246e11b2e6acf5fbad3e1d4",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v7_preparation_audit/candidate_draft/probe_import_affinity.py",
+      "bytes": 14891,
+      "lines": 371,
+      "sha256": "fa0dea6e8e049134c77c68e356eb377afeabd6080246e11b2e6acf5fbad3e1d4",
+      "matches": true
+    }
+  ],
+  "restoration_performed": false,
+  "output_root_exists": false,
+  "issues": [],
+  "status": "ADOPTED_EXISTING_FIXED_BYTES",
+  "historical_order_failure_unchanged": true,
+  "sanity_dispatches_so_far": 0,
+  "d3_dispatches_so_far": 0,
+  "elapsed_seconds": 0.001154409721493721
+}

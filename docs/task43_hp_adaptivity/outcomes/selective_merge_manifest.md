@@ -1,6 +1,17 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V8 当前状态：D3准备门失败，停止且不合入
+## V9 当前状态：D3 有限工程复核完成；不改变生产合并资格
+
+V8前瞻许可只恢复一次D3 support运行。Root对固定启动/import/ABI/affinity链与20个S2 fixture字节的审计为`PASS_LIMITED_ENGINEERING`，issues=[]；没有mesh、assembly、solver或PDE，也没有数值核心改动。watchdog whole wall `8.763570327777416 s`、进程树RSS采样峰`180887552 B`、task VmSwap峰0、global swap增量0/0页，后代清理完成。trace共1010行/44 getter，getter均为CPU `[1]`，0成功setter、0 signal；采样不等同连续观测，trace从taskset后开始。
+
+| 合并组 | V9文件/作用 | 本轮证据 | 合并边界 |
+|---|---|---|---|
+| compact evidence/docs | `response_v9.md`、本manifest、Task43 README/summary、`docs/README.md`、模型总账、开发进展及`records/v9_d3_resume_closeout_v1.json` | D3原始阶段记录、19项synthetic sanity、20个target fixture、prelaunch/source hash和root终态审计副本归档在`records/v9_d3_sources/` | 仅支持固定启动链与fixture字节；不授予scientific/production/merge qualification |
+| runner / numerical core / checker | 无V9源码、数值行为或测试源码改动 | 未构网格、装配、求解或运行PDE | 不新增合入文件或改变原建议 |
+| research-only source/archive | `records/v9_d3_sources/{run_d3.sh,probe_import_affinity.py,sanity_once.py,root_terminal_audit.py}`与`preparation/`轻量原件 | driver和审计脚本按SHA逐字节绑定；preparation包含15 ELF/61 direct edges/3 bridge对象、prelaunch、sanity及root audit | 仅供审阅，不作为生产入口，不授权重跑或MPI扩展 |
+| do-not-merge / locked work | 历史V8失败、V7 review、合同、PDE原件与资格锁 | 历史记录均保留；D3支持一次额度已消耗 | formal仍5/6、A1 2/2、A2 3/3、最后一槽封存；无READY、merge approval或下游解锁 |
+
+## V8历史状态：D3准备门失败，停止且不合入
 
 V7 review 的唯一D3支持许可要求先完成§9.2静态输入/ELF核查，再生成候选。候选过早生成，首次机械patch/copy失败；因此准备未通过，D3没有dispatch，候选仅是`/tmp/task43_v7_d3_proposal/`中的未资格化草稿。没有本轮源代码、测试、native导入或PDE改动；输入/ELF依赖闭包未完成。详见[Response V8](../response_v8.md)与[准备收口记录](records/v8_d3_preparation_closeout_v1.json)。
 

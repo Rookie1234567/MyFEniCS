@@ -1,0 +1,106 @@
+{
+  "stage": "S3_SOURCE_FROZEN_FOR_ONE_D3_SUPPORT",
+  "utc": "2026-10-25T14:54:51.886523+00:00",
+  "review_sha": "ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba",
+  "specification_review_sha": "dc6c3c59cabebefec76f928f261a25670a2a8857",
+  "fixed_code_commit": "c245dd060882df4dc6f30224ac0fa8be93f764d2",
+  "git": {
+    "head": "ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba\n",
+    "branch": "task43_hp_adaptivity\n",
+    "upstream": "origin/task43_hp_adaptivity\n",
+    "status": "",
+    "diff": "",
+    "ahead_behind": "0\t0\n",
+    "worktrees": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nHEAD 922466da9d7faff408cbb47b7882d179320bdc44\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 922466da9d7faff408cbb47b7882d179320bdc44\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD c6a7ea25753f116cb7fa7ca871fd8cf29d449444\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Phi90\nHEAD 4b57126a5967f14efc379a3b8b0bd0a9d35df963\nbranch refs/heads/task40para_phi90_mesh_modes_direct\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 81c049e09a61efa38f8c7a6a762f02e8835c9b3f\nbranch refs/heads/task42_neural_coarse_inverse\n\nworktree /home/fenics/Projects/NN-Lab-V2\nHEAD ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba\nbranch refs/heads/task43_hp_adaptivity\n\nworktree /tmp/task43_v2_a2_development\nHEAD ed95df3370973c2f06168ed938666250587ece6d\ndetached\n\nworktree /tmp/task43_v2_clean_tracked_collection\nHEAD 7458fadccde01d37ed93187ebe4c39177783d60b\ndetached\n\nworktree /tmp/task43_v2_q03_core_closure_405\nHEAD 405e3aff42ac421a4c99315df1ed9b96941ecbe4\ndetached\n\n"
+  },
+  "source_manifest": [
+    {
+      "path": "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "sha256": "3296d5cab3a0ce5315acc8104eb6e0d2dc092a9681d53b8ce2fe011ed57ac790",
+      "bytes": 229341,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/benchmarks/task43_hp_adaptivity/h100_anchor.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py",
+      "sha256": "b5c68b85448b9d3afd887d722f759c9e5a6dd1abc152bf98628c4772b9b90bbc",
+      "bytes": 114823,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "sha256": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+      "bytes": 15080,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py"
+    },
+    {
+      "path": "src/io/native_capacity_profile.py",
+      "sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "bytes": 155147,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/src/io/native_capacity_profile.py"
+    },
+    {
+      "path": "src/test/test_task43_v3_failure_safe_order.py",
+      "sha256": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43",
+      "bytes": 77310,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/src/test/test_task43_v3_failure_safe_order.py"
+    },
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "bytes": 46422,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/benchmarks/subreaper_watchdog.py"
+    },
+    {
+      "path": "scripts/activate_task40_phi90_pord64.sh",
+      "sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "bytes": 3648,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/scripts/activate_task40_phi90_pord64.sh"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json",
+      "sha256": "f95078139839551c508ff396114b16858537e8f1f5002c96f181c0cd988316d1",
+      "bytes": 3719,
+      "matches_fixed_commit": true,
+      "snapshot": "benchmarks/artifacts/task43/v9_resume_preparation/prelaunch_source_snapshot/docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json"
+    }
+  ],
+  "predecessor_hashes": {
+    "root_s1_review.json": "6f72d07d0fdeaf7141a95b69013608225fc99826f07af7f2fa9402c99401f000",
+    "root_s2_adoption.json": "834314ef9a386f39aada91eee1cb1e1b86147b91bbe2674dea381dacb7d2b030",
+    "sanity_once.py": "fcefb49300b51356844df6b1276b6cdfc58bf881691e1d7d4414043370520ade",
+    "sanity_result.json": "721a7a674c55c1d2eb5e70b48a59b1d1a64e9cafb51c2e905d82eb1798a62b05",
+    "sanity.stdout": "721a7a674c55c1d2eb5e70b48a59b1d1a64e9cafb51c2e905d82eb1798a62b05",
+    "sanity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sanity.time": "a5b4c3b4c48689597bc6632b9e52a601eeccd00bb7dce85799078a9d86cc5407",
+    "sanity.exit_code": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "existing_d3_processes": [],
+  "output_root_exists": false,
+  "unique_command": "bash /tmp/task43_v7_d3_proposal/run_d3.sh",
+  "unique_output_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v7_support/d3_pml_ob1_import_probe_attempt1",
+  "sanity_attempts_used": 1,
+  "sanity_status": "PASSED",
+  "d3_attempts_used_before_launch": 0,
+  "d3_max_attempts": 1,
+  "resources": {
+    "cpu_affinity": [
+      1
+    ],
+    "mpi_size": 1,
+    "threads": 1,
+    "rss_max_bytes": 8589934592,
+    "actual_cap_must_be_no_larger": true,
+    "task_swap_bytes": 0,
+    "stop_work_seconds": 100,
+    "whole_watchdog_max_seconds": 120
+  },
+  "authority": "ONE_FIXED_SUPPORT_LAUNCH_ONLY; NO_FORMAL_PDE_READY",
+  "elapsed_seconds": 0.46455399272963405
+}

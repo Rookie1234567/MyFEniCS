@@ -1,0 +1,12 @@
+{
+  "stage": "post_D3_document_closeout_read_only",
+  "source": "root exec tool output chunk dceee1",
+  "commands_with_error": ["cat benchmarks/artifacts/task43/v9_resume_preparation/sanity.started.txt", "cat benchmarks/artifacts/task43/v9_resume_preparation/sanity.finished.txt"],
+  "stderr": ["cat: benchmarks/artifacts/task43/v9_resume_preparation/sanity.started.txt: No such file or directory", "cat: benchmarks/artifacts/task43/v9_resume_preparation/sanity.finished.txt: No such file or directory"],
+  "individual_cat_exit_codes": "not separately captured",
+  "combined_shell_exit_code": 0,
+  "combined_shell_exit_reason": "later sed and git diff --check succeeded; not evidence the cat commands succeeded",
+  "correction": "rg --files located existing sanity_started.txt and sanity_finished.txt; read only those files, no rerun of sanity or D3",
+  "elapsed_seconds": "not_measured",
+  "scope": "ordinary post-run filename typo, no change to candidate/source/input or qualification evidence"
+}

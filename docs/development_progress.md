@@ -1,6 +1,10 @@
 # Task43 当前收口（2026-10-25）：PARTIAL / CONTROLLED_NEGATIVE
 
-## Task43 V8当前状态：准备顺序未通过，未派发D3
+## Task43 V9当前状态：D3有限工程复核完成；科学资格不变
+
+V8候选顺序偏差和初次复制失败仍保留。V9在S1静态复核、S2固定字节采用、19项synthetic sanity及prelaunch 8-source snapshot后，执行了唯一一次D3 support。Root终态审计为`PASS_LIMITED_ENGINEERING`，只覆盖固定启动/import/ABI/affinity链与20个S2 fixture字节；20项通过，whole-watchdog 8.763570s、进程树RSS采样峰180887552B、task VmSwap采样峰0、global swap增量0、后代已清理。未构网、未装配、未求解、未运行PDE。六份trace共1010行、44次getter均为`[1]`、0成功setter/0 signal；这些是记录范围，不证明trace开始前的全生命周期affinity。root审计还注明PSS禁用、TID无独立start_ticks、没有`--cache-path`，空SHA稳定不等于JIT/global cache已核验。新增formal dispatch与PDE为0；历史额度5/6（A1 2/2、A2 3/3），最后1槽封存，五项能力与下游仍锁定，无READY或merge approval。见[Response V9](task43_hp_adaptivity/response_v9.md)、[D3 closeout](task43_hp_adaptivity/outcomes/records/v9_d3_resume_closeout_v1.json)及[完整轻量原件归档](task43_hp_adaptivity/outcomes/records/v9_d3_sources/README.md)。
+
+## Task43 V8历史状态：准备顺序未通过，未派发D3
 
 V8按V7 review §9准备唯一D3，但执行代理提前生成候选，首次机械复制失败；主控监督未及时拦下顺序偏差，现已裁决准备不合格并停止。候选hash符合目标仍只属未资格化草稿。15项ELF静态元数据已有记录，直接依赖闭包及完整输入核查未完成；sanity/native import/20项测试均`NOT_RUN`，完整ABI为`NOT_REACHED`，D3 dispatch为0/1。新增正式PDE、READY均为0，formal仍5/6、A1 2/2、A2 3/3、最后一槽封存。五项能力保持空间/选择PARTIAL、精度NOT_PASSED、同精度全过程成本NOT_ESTABLISHED、迭代NOT_RUN/NOT_QUALIFIED；全部既有下游锁定，不合并。新勘误订正V7进程归属、MPI初始化措辞及100秒工作停止/120秒含清理上限，历史原件不改。见[Response V8](task43_hp_adaptivity/response_v8.md)及[准备收口记录](task43_hp_adaptivity/outcomes/records/v8_d3_preparation_closeout_v1.json)。
 

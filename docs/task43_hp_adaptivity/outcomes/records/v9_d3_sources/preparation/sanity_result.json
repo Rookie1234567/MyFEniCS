@@ -1,0 +1,173 @@
+{
+  "kind": "ONE_STDLIB_AST_SYNTHETIC_SANITY",
+  "checks": {
+    "fixed_probe_identity": "PASS",
+    "isolated_parser_extraction": "PASS",
+    "cpu1_success": "PASS",
+    "non_cpu1_success": "PASS",
+    "multi_cpu_success": "PASS",
+    "failed_call": "PASS",
+    "unfinished": "PASS",
+    "resumed": "PASS",
+    "unknown_mask": "PASS",
+    "empty_mask": "PASS",
+    "pointer_mask": "PASS",
+    "stack_symbol": "PASS",
+    "unknown_token": "PASS",
+    "non_setter": "PASS",
+    "mixed_token_coverage": "PASS",
+    "actual_pml_record_and_gate_order": "PASS",
+    "unknown_and_non_cpu1_vetoes": "PASS",
+    "unchanged_other_functions": "PASS",
+    "fixed_four_selectors": "PASS"
+  },
+  "samples": [
+    {
+      "name": "cpu1_success",
+      "line": "1234.001 sched_setaffinity(0, 128, [1]) = 0"
+    },
+    {
+      "name": "non_cpu1_success",
+      "line": "1234.002 sched_setaffinity(27, 128, [3]) = 0"
+    },
+    {
+      "name": "multi_cpu_success",
+      "line": "1234.003 sched_setaffinity(0, 128, [1 2]) = 0"
+    },
+    {
+      "name": "failed_call",
+      "line": "1234.004 sched_setaffinity(0, 128, [1]) = -1 EINVAL (Invalid argument)"
+    },
+    {
+      "name": "unfinished",
+      "line": "1234.005 sched_setaffinity(0, 128, [1] <unfinished ...>"
+    },
+    {
+      "name": "resumed",
+      "line": "1234.006 <... sched_setaffinity resumed>) = 0"
+    },
+    {
+      "name": "unknown_mask",
+      "line": "1234.007 sched_setaffinity(0, 128, [...]) = 0"
+    },
+    {
+      "name": "empty_mask",
+      "line": "1234.008 sched_setaffinity(0, 128, []) = 0"
+    },
+    {
+      "name": "pointer_mask",
+      "line": "1234.009 sched_setaffinity(0, 128, 0x1234) = 0"
+    },
+    {
+      "name": "stack_symbol",
+      "line": " > /lib/libc.so.6(sched_setaffinity+0x12) [0x1234]"
+    },
+    {
+      "name": "unknown_token",
+      "line": "unrecognized sched_setaffinity token"
+    },
+    {
+      "name": "non_setter",
+      "line": "1234.010 sched_getaffinity(0, 128, [1]) = 8"
+    }
+  ],
+  "native_imports": false,
+  "probe_top_level_or_main_executed": false,
+  "details": {
+    "cpu1_success": {
+      "masks": [
+        [
+          1
+        ]
+      ],
+      "unknown": [],
+      "continuation_veto": false
+    },
+    "non_cpu1_success": {
+      "masks": [
+        [
+          3
+        ]
+      ],
+      "unknown": [],
+      "continuation_veto": true
+    },
+    "multi_cpu_success": {
+      "masks": [
+        [
+          1,
+          2
+        ]
+      ],
+      "unknown": [],
+      "continuation_veto": true
+    },
+    "failed_call": {
+      "masks": [],
+      "unknown": [
+        "synthetic.17: 1234.004 sched_setaffinity(0, 128, [1]) = -1 EINVAL (Invalid argument)"
+      ],
+      "continuation_veto": true
+    },
+    "unfinished": {
+      "masks": [],
+      "unknown": [
+        "synthetic.17: 1234.005 sched_setaffinity(0, 128, [1] <unfinished ...>"
+      ],
+      "continuation_veto": true
+    },
+    "resumed": {
+      "masks": [],
+      "unknown": [
+        "synthetic.17: 1234.006 <... sched_setaffinity resumed>) = 0"
+      ],
+      "continuation_veto": true
+    },
+    "unknown_mask": {
+      "masks": [],
+      "unknown": [
+        "synthetic.17: 1234.007 sched_setaffinity(0, 128, [...]) = 0"
+      ],
+      "continuation_veto": true
+    },
+    "empty_mask": {
+      "masks": [],
+      "unknown": [
+        "synthetic.17: 1234.008 sched_setaffinity(0, 128, []) = 0"
+      ],
+      "continuation_veto": true
+    },
+    "pointer_mask": {
+      "masks": [],
+      "unknown": [
+        "synthetic.17: 1234.009 sched_setaffinity(0, 128, 0x1234) = 0"
+      ],
+      "continuation_veto": true
+    },
+    "stack_symbol": {
+      "masks": [],
+      "unknown": [],
+      "continuation_veto": false
+    },
+    "unknown_token": {
+      "masks": [],
+      "unknown": [
+        "synthetic.17: unrecognized sched_setaffinity token"
+      ],
+      "continuation_veto": true
+    },
+    "non_setter": {
+      "masks": [],
+      "unknown": [],
+      "continuation_veto": false
+    },
+    "actual_pml_record_and_gate_order": {
+      "record_line": 122,
+      "append_line": 137,
+      "gate_line": 143
+    }
+  },
+  "status": "PASSED",
+  "elapsed_seconds": 0.04185436898842454,
+  "exit_code": 0
+}

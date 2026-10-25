@@ -1,6 +1,21 @@
 # Task43 结果：部分完成，受控负结果
 
-## V8 当前收口：V7 D3 准备不合格并停止
+## V9 当前状态：D3 有限工程终态复核完成；无科学或生产资格
+
+V8 review的前瞻许可只恢复一次D3 support运行，V8候选顺序/首次复制失败仍保留。V9 S1 root静态复核为15/15 ELF匹配、61条直接依赖边、3个桥接对象且issues=[]；S2采用既有冻结字节，19项stdlib/AST sanity通过后执行一次D3。root最终审计为`PASS_LIMITED_ENGINEERING`，范围严格限定在固定启动/import/ABI/affinity链与20个S2 fixture字节：worker/外层exit 0，`20 passed in 0.91s`；未建mesh、未装配、未求解、未运行PDE。六份trace共1010行，44次affinity getter均为CPU `[1]`，无成功setter、signal或trace错误；8个相关PID/TID在终态检查时均不存在。该有限审计不代表科学、生产、完整CI或merge资格。
+
+| 对象 | V9记录值 | 结论边界 |
+|---|---|---|
+| 新正式 PDE / formal dispatch | 0 / 0；累计formal仍5/6，A1 2/2、A2 3/3，最后一槽封存 | 支持运行不使用formal槽，也不解锁下游 |
+| S1/S2与sanity | 15/15 ELF、61条边、3桥接对象；19/19 sanity | activation未在S1 source；sanity未执行probe main；静态检查不等同运行 |
+| D3固定fixture | 20 passed / worker exit 0；四selector展开`1+4+12+3` | 固定合成fixture；不是full suite或数值模型 |
+| D3环境与affinity | MPI1、Open MPI 4.1.6、PETSc 3.19.6、complex128/int64，记录线程变量均为1；44 getters均`[1]`、0 setter/0 signal | trace始于taskset之后；TID没有独立start_ticks；不证明更广的生命周期/多MPI资格 |
+| D3 watchdog | `8.763570327777416 s`；13 samples；树RSS采样峰`180887552 B`、task VmSwap采样峰0、global swap增量0/0页；第13行elapsed `8.639170113019645 s`/RSS `38014976 B` | PSS禁用；资源为采样而非连续峰值。无`--cache-path`，`cache_metadata_stable=true`只覆盖空SHA，不表示JIT/global cache已核 |
+| 输出权限 | D3 support额度1/1已耗；无新READY或merge approval | 五项能力、formal预算及下游锁定不变 |
+
+原shell/probe/sanity字节、S1/S2/prelaunch与root终态轻量原件见[V9 D3 source archive](records/v9_d3_sources/README.md)及[V9 D3 resume closeout](records/v9_d3_resume_closeout_v1.json)。root审计原件SHA`6ea7fb7f72dc24372db7a9a28e7d3711adf8a827ed7df2da02847de5a2f0a4ba`。V8中的顺序/复制负项只属于当时阶段快照，不被回写成未发生。
+
+## V8 历史收口：V7 D3 准备不合格并停止
 
 V7 review 条件性允许一次D3支持运行，但必须先按§9.2完成静态输入/ELF核查再生成候选。执行代理提前生成了候选；首次机械patch/copy又以exit 1结束。主控判定准备顺序门失败并停止，不追认后续候选字节与目标hash相同为资格。候选只保留在`/tmp/task43_v7_d3_proposal/`供审阅，没有正式输出目录。
 

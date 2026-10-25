@@ -1,0 +1,186 @@
+{
+  "schema": "task43_v9_s1_static_summary_v1",
+  "scope": "S1 read-only preparation evidence only; no candidate edits, sanity, native imports, tests, D3 launch, or PDE",
+  "identity": {
+    "review": "docs/task43_hp_adaptivity/review_report_v8.md",
+    "review_sha256": "78dc4f6735049e0f62106149fb023f756d322edda81b715579d8894262073c77",
+    "head": "ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba",
+    "tracked_worktree_clean_at_read": true,
+    "root_s1_review": "benchmarks/artifacts/task43/v9_resume_preparation/root_s1_review.json",
+    "root_s1_review_scope": "independent review of frozen inputs, 15 ELF identities, 61 dependency edges, bridges, and MCA inputs; issues=[]; not a candidate sanity or launch authorization"
+  },
+  "historical_order_record": {
+    "source_record": "docs/task43_hp_adaptivity/outcomes/records/v8_d3_preparation_closeout_v1.json",
+    "source_record_sha256": "86d79c5f0e8a5363f0d1e0383a9acccddd67e99300cf49cf28571bfc31068774",
+    "events": [
+      {
+        "event": "D3 candidate files were produced before the required §9.2 static inputs were complete",
+        "time": "UNKNOWN",
+        "evidence": "V8 closeout records the ordering failure; no recoverable timestamp for initial candidate generation"
+      },
+      {
+        "event": "mechanical_prepare patched preserved-D2 in place, then copy from proposed-D3 failed",
+        "time": "UNKNOWN",
+        "elapsed_seconds": 0.03,
+        "exit_code": 1,
+        "script": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.sh",
+        "script_sha256": "ceeeace0abdfa7b0200e47946aa6ecb9a08c3d6bd63dc43bac6c435f4f7bfc9b",
+        "stdout": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.stdout",
+        "stdout_sha256": "f261e03397609b4d7a60f295a9d79fd756c9f329f5e4a2f278792ffd137b781e",
+        "stderr": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.stderr",
+        "stderr_sha256": "0b21405c106688e81aee86ff6fcb2f68536961d8baffeb1c3b0ae7bfaac2b02c",
+        "time_record": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.time"
+      },
+      {
+        "event": "candidate_relocate copied the patched bytes into the candidate path after the mechanical failure",
+        "time": "UNKNOWN",
+        "elapsed_seconds": 0.05,
+        "exit_code": 0,
+        "script": "benchmarks/artifacts/task43/v7_preparation_audit/raw/candidate_relocate.sh",
+        "script_sha256": "d6875199fb9705674bdfe23c0f09ac6462b04a50fae1edf4f0d9d263c3bd6091",
+        "stdout": "benchmarks/artifacts/task43/v7_preparation_audit/raw/candidate_relocate.stdout",
+        "stdout_sha256": "4cc4316e7b526d93038a913eb614b96e4d0473068d3f38c4cd49471d72123ff1",
+        "stderr": "benchmarks/artifacts/task43/v7_preparation_audit/raw/candidate_relocate.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "relative_order_to_stop_message": "not independently established"
+      },
+      {
+        "event": "root stop instruction: do not start D3; preserve evidence",
+        "time": "UNKNOWN",
+        "message_id": "UNKNOWN",
+        "source": "retained conversation summary and V8 closeout; original control-message timestamp/id unavailable",
+        "original_excerpt": "本轮停止 D3 启动，保留原始证据并交付 V8 受控停止记录。D3 尚未启动，次数未消耗。"
+      }
+    ],
+    "qualification": "The ordering failure remains in force. V9 did not regenerate, edit, or adopt the existing unqualified candidate."
+  },
+  "activation_and_mca": {
+    "activation_path": "scripts/activate_task40_phi90_pord64.sh",
+    "activation_sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "activation_was_sourced": false,
+    "actual_venv_source": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "venv_activate_sha256": "385c11bda947bee666f53387da2b751e71ed03e5d66be779d4a467364ad373a6",
+    "pyvenv_cfg_sha256": "262b4e9c7aab12f299ea7acf28960a368f73e7153accb5afb64df858ea614590",
+    "activation_effect": "The tracked script selects the shared venv and composes the five LD_LIBRARY_PATH directories listed in the raw activation record; it does not set the inspected MCA selector variables. Its five directories exist. No library was loaded to establish which path a process actually mapped.",
+    "login_source_scope": "Read-only inspection of bash -lc/login files: /etc/profile sources /etc/profile.d/*.sh; .profile points to .bashrc, which returns for non-interactive shells; GNOME-specific .gnomerc source condition was false in the observed tty shell and ~/.gnomerc was absent.",
+    "observed_environment_scope": "Current login-invoked shell before activation, not a native worker environment. OPAL_PREFIX, LD_LIBRARY_PATH/LD_PRELOAD, relevant OMPI_MCA/PMIX_MCA/PRTE_MCA/ORTE_MCA selectors, HWLOC_COMPONENTS and activation override roots were unset in the captured scope.",
+    "sysconfdir_evidence": {
+      "OPAL_PREFIX": "unset in captured shell",
+      "installed_libopen_pal_strings": "contains /etc/openmpi and the compiled parameter/override path templates",
+      "ordinary_config": "/etc/openmpi/openmpi-mca-params.conf",
+      "ordinary_config_owner": "openmpi-bin (dpkg-query -S)",
+      "ordinary_config_sha256": "ddadfed9edb0c84e8f332f7d2c4cee8414c22bc763d7963b98960b1aaf87d0c2",
+      "ordinary_config_values": "pml = ^ucx; btl = ^uct,openib,ofi; mtl = ^ofi",
+      "limit": "This is installed-path/string and package evidence for /etc/openmpi, not a direct read of the package's build-time sysconfdir source/config header."
+    },
+    "bounded_override_candidates": {
+      "present": ["/etc/openmpi/openmpi-mca-params.conf"],
+      "absent": [
+        "/home/fenics/.openmpi/mca-params.conf",
+        "/home/fenics/.openmpi/openmpi-mca-params.conf",
+        "/home/fenics/.openmpi/openmpi-mca-params-override.conf",
+        "/etc/openmpi/openmpi-mca-params-override.conf",
+        "/etc/openmpi/mca-params.conf",
+        "/etc/openmpi/mca-params-override.conf",
+        "/etc/openmpi-mca-params.conf",
+        "/etc/openmpi-mca-params-override.conf",
+        "/usr/etc/openmpi-mca-params.conf",
+        "/usr/etc/openmpi-mca-params-override.conf"
+      ],
+      "selector_variables_checked": [
+        "OPAL_PREFIX", "OMPI_MCA_mca_base_param_file_path", "OMPI_MCA_mca_base_param_file_path_force",
+        "OMPI_MCA_mca_base_param_file_prefix", "OMPI_MCA_mca_base_envar_file_prefix",
+        "OMPI_MCA_mca_base_env_list", "OMPI_MCA_mca_base_component_path", "OMPI_MCA_mca_param_files",
+        "OMPI_MCA_mca_base_override_param_file", "OMPI_MCA_pml", "OMPI_MCA_pml_base_pml",
+        "PMIX_MCA_mca_base_param_file_path", "PRTE_MCA_mca_base_param_file_path",
+        "ORTE_MCA_mca_base_param_file_path"
+      ],
+      "priority_limit": "The V8 review's fixed OpenMPI source references describe override-file/environment/ordinary-file precedence and long/short names. The captured login shell and bounded installed paths showed no selected high-priority override. No claim is made about a post-activation worker that was not run."
+    },
+    "raw_records": "benchmarks/artifacts/task43/v9_resume_preparation/raw/{activation_mca,login_sources,gnome_profile,login_selector_env,mca_registry_strings,mca_param_paths,inspect_mca_override_files,inspect_sysconfdir_ownership}.*"
+  },
+  "elf_and_dependency_map": {
+    "frozen_elf_recheck": {
+      "targets": 15,
+      "identity_match_against_v8": "15/15",
+      "exit_code": 0,
+      "elapsed_seconds": 4.84,
+      "stdout": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.stdout",
+      "stdout_sha256": "1ed5822173f54528544914c6e523fd2ce1241d0187a1df9f5fdf43df66201f6e"
+    },
+    "direct_needed": {
+      "frozen_15_objects_edges": 48,
+      "bridge_objects_edges": 13,
+      "bridge_count": 3,
+      "total_edges": 61,
+      "parent_objects": 18,
+      "unresolved_or_missing": 0,
+      "all_edges_resolution_source": "ld.so.cache",
+      "reviewed_soname_count_for_frozen_15": 18,
+      "runpath_observed": "/usr/lib/x86_64-linux-gnu/openmpi/lib",
+      "activation_ld_library_path_candidates": "five tracked-default directories exist; no direct edge used a path hit in those directories or the observed RUNPATH",
+      "stdout": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.stdout",
+      "stdout_sha256": "42700961db2b4ca1ae2206d93c18a6e0ad8986ec72b818b26a192b082eb005c4",
+      "elapsed_seconds": 37.52,
+      "method_limit": "Static readelf/hash/dpkg-query/ldconfig-cache mapping; no ldd, dlopen, import, or proof of historical process mappings."
+    },
+    "bridges": [
+      {
+        "soname": "libpsm_infinipath.so.1",
+        "realpath": "/usr/lib/libpsm1/libpsm_infinipath.so.1.16",
+        "sha256": "22326dcb62181903e978a3123929f26185b2ccae001b988d44fd88719f5c1fc2",
+        "build_id": "c0c162e535b7d5de4dca343449705a3b4c1edf70",
+        "needed": ["libinfinipath.so.4", "libuuid.so.1", "libc.so.6"],
+        "package": "libpsm-infinipath1 3.3+20.604758e7-6.3build1"
+      },
+      {
+        "soname": "libmca_common_ofi.so.10",
+        "realpath": "/usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2",
+        "sha256": "c6ff425c78528daf5e8b7df1276fb05e52535775681309ce86072784d436a6e3",
+        "build_id": "3b64b40f76196adf08db83a1502c12afff4d0a8e",
+        "needed": ["libfabric.so.1", "libhwloc.so.15", "libc.so.6"],
+        "package": "libopenmpi3t64:amd64 4.1.6-7ubuntu2"
+      },
+      {
+        "soname": "libfabric.so.1",
+        "realpath": "/usr/lib/x86_64-linux-gnu/libfabric.so.1.20.0",
+        "sha256": "f679d7aabc9126ee0c7d9780a2321ebef7d95d2d5ee14f1b123d67158a8f51d2",
+        "build_id": "0b100b742847dd3d0edde23a256f30dc848f21ec",
+        "needed": ["librdmacm.so.1", "libefa.so.1", "libibverbs.so.1", "libpsm_infinipath.so.1", "libpsm2.so.2", "libatomic.so.1", "libc.so.6"],
+        "package": "libfabric1:amd64 1.17.0-3build2"
+      }
+    ]
+  },
+  "fixed_sources_sha256": {
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "3296d5cab3a0ce5315acc8104eb6e0d2dc092a9681d53b8ce2fe011ed57ac790",
+    "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "b5c68b85448b9d3afd887d722f759c9e5a6dd1abc152bf98628c4772b9b90bbc",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+    "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+    "src/test/test_task43_v3_failure_safe_order.py": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43",
+    "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json": "f95078139839551c508ff396114b16858537e8f1f5002c96f181c0cd988316d1"
+  },
+  "timing_ledger": {
+    "v8_prior_explicit_actions_seconds": 9.464030618,
+    "v9_agent_recorded_commands_seconds": 45.19,
+    "v9_root_override_check_seconds": 0.06,
+    "v9_root_s1_review_internal_seconds": 0.007662117946892977,
+    "known_measured_action_subtotal_seconds": 54.72169273594689,
+    "scope": "Sum of recorded action timers only, not end-to-end wall time. Manual reading, editing, and hash packaging not independently measured."
+  },
+  "event_inventory_reference": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v7_affinity_trace_event_inventory_v1.json",
+    "sha256": "fa79c8cebf3efe938e95fcdf7f63ac477d0ae60428f9a6ac52c30850064c5507",
+    "scope": "Existing V7 204-event inventory; not reparsed in V9."
+  },
+  "run_status": {
+    "candidate_sanity": "NOT_RUN",
+    "native_import": "NOT_RUN",
+    "full_abi_preflight": "NOT_REACHED",
+    "fixed_20_tests": "NOT_RUN",
+    "D3_dispatch": "NOT_STARTED; no attempt consumed",
+    "formal_pde": "NOT_RUN",
+    "next_step": "Await root review of this S1 record. No S2/candidate action is recorded here."
+  }
+}
